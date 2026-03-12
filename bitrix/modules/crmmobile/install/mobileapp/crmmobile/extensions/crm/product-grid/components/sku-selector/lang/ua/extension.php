@@ -1,2 +1,0 @@
-<?php
-$MESS["PRODUCT_GRID_CONTROL_SKU_SELECTOR_BASE_PRICE_INFO"] = "Базова вартість";

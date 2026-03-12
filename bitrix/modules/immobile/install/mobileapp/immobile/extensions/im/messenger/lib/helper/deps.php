@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'utils/url',
+		'utils/uuid',
 		'assets/icons',
 		'device/connection',
 		'im:messenger/const',

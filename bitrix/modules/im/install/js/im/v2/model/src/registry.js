@@ -10,6 +10,7 @@ export { MarketModel } from './market/market';
 export { CountersModel } from './counters/counters';
 export { CopilotModel } from './copilot/copilot';
 export { AiAssistantModel } from './ai-assistant/ai-assistant';
+export { StickersModel } from './stickers/stickers';
 
 export { formatFieldsWithConfig } from './utils/validate';
 export type { FieldsConfig } from './utils/validate';
@@ -42,6 +43,7 @@ export type { SidebarFavoriteItem as ImModelSidebarFavoriteItem } from './type/s
 export type { SidebarTaskItem as ImModelSidebarTaskItem } from './type/sidebar/tasks';
 export type { SidebarMeetingItem as ImModelSidebarMeetingItem } from './type/sidebar/meetings';
 export type { SidebarFileItem as ImModelSidebarFileItem } from './type/sidebar/files';
+export type { SidebarSharedLinkItem as ImModelSidebarSharedLinkItem } from './type/sidebar/shared-link';
 export type { MarketApplication as ImModelMarketApplication } from './type/market';
 export type {
 	CopilotRole as ImModelCopilotRole,
@@ -56,4 +58,9 @@ export type { Anchor as ImModelAnchor } from './type/anchor';
 export type { TariffRestrictions as ImModelTariffRestrictions } from './application/nested-modules/tariff-restrictions/tariff-restrictions';
 export type { Transcription as ImModelTranscription } from './type/file';
 export type { Call, CallAssociatedEntity } from './type/call';
-export type { Sticker as ImModelSticker, StickerPack as ImModelStickerPack } from './type/sticker';
+export type {
+	Sticker as ImModelSticker,
+	Pack as ImModelStickerPack,
+	PackIdentifier as ImModelStickerPackIdentifier,
+	StickerIdentifier as ImModelStickerIdentifier,
+} from './type/stickers';

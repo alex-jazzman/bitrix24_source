@@ -4,12 +4,6 @@
 	gap: var(--ui-space-stack-xs);
 }
 
-.tasks-field-crm-item-container {
-	display: flex;
-	justify-content: space-between;
-	align-items: flex-start;
-}
-
 .tasks-field-crm-item {
 	z-index: 1;
 }
@@ -18,6 +12,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	padding: var(--ui-space-stack-3xs) 0;
 }
 
 .tasks-field-crm-skeleton {

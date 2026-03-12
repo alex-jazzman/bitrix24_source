@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/const', (require, exports, module) => {
 	const { AiAssistantButtonType } = require('im/messenger/const/ai-assistant-button');
+	const { AiTasksStatusType } = require('im/messenger/const/ai-task');
 	const { AppStatus } = require('im/messenger/const/app-status');
 	const {
 		AttachType,
@@ -21,6 +22,9 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		BotCode,
 		BotCommand,
 	} = require('im/messenger/const/bot');
+	const {
+		BackgroundUI,
+	} = require('im/messenger/const/background-ui');
 	const { ConnectionStatus } = require('im/messenger/const/connection-status');
 	const { CounterType } = require('im/messenger/const/counter');
 	const { EventType } = require('im/messenger/const/event-type');
@@ -81,9 +85,10 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { SidebarFileType, SidebarTab } = require('im/messenger/const/sidebar');
 	const { Promo, PromoType } = require('im/messenger/const/promo');
 	const { CopilotButtonType, CopilotPromptType } = require('im/messenger/const/copilot-button');
+	const { CopilotRoleType } = require('im/messenger/const/copilot-role');
 	const { ComponentCode } = require('im/messenger/const/component-code');
 	const { Analytics } = require('im/messenger/const/analytics');
-	const { NavigationTab, NavigationTabId, NavigationTabByComponent } = require('im/messenger/const/navigation-tab');
+	const { NavigationTabId } = require('im/messenger/const/navigation-tab');
 	const {
 		KeyboardButtonContext,
 		KeyboardButtonType,
@@ -109,9 +114,12 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { RefreshMode } = require('im/messenger/const/refresher');
 	const { TranscriptStatus, TranscriptResponseStatus } = require('im/messenger/const/transcript-status');
 	const { MessengerComponentRequestMethod } = require('im/messenger/const/messenger-component-request-method');
+	const { RecordMediaType } = require('im/messenger/const/record-media-type');
+	const { UploaderClientEvent } = require('im/messenger/const/upload');
 
 	module.exports = {
 		AiAssistantButtonType,
+		AiTasksStatusType,
 		AppStatus,
 		AudioEvents,
 		Analytics,
@@ -126,6 +134,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		BotType,
 		BotCode,
 		BotCommand,
+		BackgroundUI,
 		ConnectionStatus,
 		CounterType,
 		EventType,
@@ -175,10 +184,9 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		PromoType,
 		CopilotButtonType,
 		CopilotPromptType,
+		CopilotRoleType,
 		ComponentCode,
-		NavigationTab,
 		NavigationTabId,
-		NavigationTabByComponent,
 		KeyboardButtonContext,
 		KeyboardButtonType,
 		KeyboardButtonNewLineSeparator,
@@ -203,5 +211,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		TranscriptStatus,
 		TranscriptResponseStatus,
 		MessengerComponentRequestMethod,
+		RecordMediaType,
+		UploaderClientEvent,
 	};
 });

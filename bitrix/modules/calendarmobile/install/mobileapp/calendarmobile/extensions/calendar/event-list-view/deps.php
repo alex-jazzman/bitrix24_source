@@ -36,6 +36,7 @@ return [
 		'ui-system/blocks/chips/chip-filter',
 		'ui-system/blocks/status-block',
 		'ui-system/form/checkbox',
+		'ui-system/form/buttons/floating-action-button',
 
 		'statemanager/redux/store',
 		'statemanager/redux/connect',

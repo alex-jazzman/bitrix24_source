@@ -10,5 +10,5 @@ $MESS["CRM_ENTITY_ADDR_FRMT_SMPL_USA"] = "455 Larkspur Dr.<br/>California Spring
 $MESS["CRM_ENTITY_ADDR_FRMT_SMPL_UK"] = "49 Featherstone Street<br/>LONDON<br/>EC1Y 8SY<br/>UNITED KINGDOM";
 $MESS["CRM_ENTITY_ADDR_FRMT_SMPL_RUS"] = "ул. Лесная, д. 5, кв. 176<br/>Москва<br/>Россия<br/>125075";
 $MESS["CRM_ENTITY_ADDR_FRMT_SMPL_RUS2"] = "125075<br/>Россия<br/>Москва<br/>ул. Лесная, д. 5, кв. 176";
-$MESS["CRM_ENTITY_ADDR_FRMT_SMPL_UZ"] = "100084<br/>Узбекистан<br/>Ташкент<br/>Юнусабадский район<br/>ул. Инжобод, д.32, эт. 6, кв. 10";
+$MESS["CRM_ENTITY_ADDR_FRMT_SMPL_UZ"] = "100084<br/>Узбекистан<br/>Ташкент<br/>Юнусабадский район<br/>ул. Инжобод, д. 32, эт. 6, кв. 10";
 ?>

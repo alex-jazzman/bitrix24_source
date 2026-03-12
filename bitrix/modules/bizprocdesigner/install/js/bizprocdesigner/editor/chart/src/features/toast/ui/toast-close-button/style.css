@@ -1,0 +1,5 @@
+.editor-chart-toast-close-button {
+	all: unset;
+	display: flex;
+	cursor: pointer;
+}

@@ -6,5 +6,6 @@ $MESS["MCP_SELECTOR_PLAN_RESTRICTION_DESCRIPTION"] = "External services over MCP
 $MESS["MCP_SELECTOR_PLAN_RESTRICTION_TITLE"] = "MCP connections";
 $MESS["MCP_SELECTOR_QR_AUTH_TITLE"] = "Activate connections server";
 $MESS["MCP_SELECTOR_STATUS_CHIP_CONNECTED"] = "Connected";
+$MESS["MCP_SELECTOR_STATUS_CHIP_NOT_CONNECTED"] = "Not connected";
 $MESS["MCP_SELECTOR_TITLE"] = "Connections";
 $MESS["MCP_SELECTOR_TOAST_ADMIN_RESTRICTED"] = "Your Bitrix24 administrator doesn't allow connections.";

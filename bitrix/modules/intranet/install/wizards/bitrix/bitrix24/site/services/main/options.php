@@ -200,6 +200,7 @@ if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 		}
 	}
 }
+Bitrix\Main\Config\Option::set('intranet', 'hidden_langs_from_public', 'ua');
 Bitrix\Main\Config\Option::set("main", "move_js_to_body", "Y");
 
 \Bitrix\Main\Config\Option::set('crm', 'crm_lead_enabled_show', "Y");

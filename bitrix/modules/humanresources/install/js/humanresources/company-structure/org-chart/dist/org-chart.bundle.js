@@ -795,7 +795,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    });
 	  },
 	  fireUser: userId => {
-	    return humanresources_companyStructure_api.postData('intranet.user.fire', {
+	    return humanresources_companyStructure_api.postData('intranet.v2.User.fire', {
 	      userId
 	    });
 	  },
@@ -832,6 +832,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      ids,
 	      removeIds,
 	      withChildren
+	    });
+	  },
+	  getUserSettings: (userId, nodeId) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.UserSettings.get', {
+	      userId,
+	      nodeId
+	    });
+	  },
+	  saveUserSettings: (userId, nodeId, settings) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.UserSettings.save', {
+	      userId,
+	      nodeId,
+	      settings
 	    });
 	  }
 	};
@@ -1200,6 +1213,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  userInvite: 'userInvite',
 	  teamRights: 'teamRights',
 	  moveUserToAnotherDepartment: 'moveUserToAnotherDepartment',
+	  showMultiRoleUserSettings: 'showMultiRoleUserSettings',
 	  removeUserFromDepartment: 'removeUserFromDepartment',
 	  fireUserFromCompany: 'fireUserFromCompany',
 	  openChat: 'openChat',
@@ -4882,18 +4896,46 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  }
 	}
 
+	class ShowMultiRoleUserSettingsMenuItem extends AbstractMenuItem {
+	  constructor() {
+	    super({
+	      id: MenuActions.showMultiRoleUserSettings,
+	      title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_CHANGE_MULTI_ROLE_SETTINGS_TITLE'),
+	      description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_CHANGE_MULTI_ROLE_SETTINGS_SUBTITLE'),
+	      bIcon: {
+	        name: ui_iconSet_api_core.Actions.SETTINGS_2,
+	        size: 20,
+	        color: humanresources_companyStructure_utils.getColorCode('paletteBlue50')
+	      },
+	      permissionAction: humanresources_companyStructure_permissionChecker.PermissionActions.departmentSettingsEdit,
+	      dataTestId: 'hr-company-structure_menu__show-multi-role-user-settings-item'
+	    });
+	  }
+	  hasPermission(permissionChecker, entityId) {
+	    return permissionChecker.checkMultipleUsersSettingsAvailable() && permissionChecker.hasPermission(this.permissionAction, entityId);
+	  }
+	}
+
 	class UserListActionMenu extends AbstractActionMenu {
-	  constructor(entityId, entityType, isUserInvited) {
+	  constructor(entityId, entityType, isUserInvited, isUserMultiple) {
 	    super(entityId);
 	    this.isUserInvited = isUserInvited;
+	    this.isUserMultiple = isUserMultiple;
 	    this.entityType = entityType;
 	    this.items = this.getFilteredItems();
 	  }
 	  getItems() {
+	    let items = [];
 	    if (this.entityType === humanresources_companyStructure_utils.EntityTypes.team) {
-	      return [new MoveFromDepartmentMenuItem(this.entityType), new RemoveFromDepartmentMenuItem(this.entityType)];
+	      items = [new MoveFromDepartmentMenuItem(this.entityType), new RemoveFromDepartmentMenuItem(this.entityType)];
+	    } else {
+	      items = [new MoveFromDepartmentMenuItem(this.entityType)];
+	      if (this.isUserMultiple) {
+	        items.push(new ShowMultiRoleUserSettingsMenuItem());
+	      }
+	      items.push(new RemoveFromDepartmentMenuItem(this.entityType), new FireUserFromCompanyMenuItem(this.isUserInvited));
 	    }
-	    return [new MoveFromDepartmentMenuItem(this.entityType), new RemoveFromDepartmentMenuItem(this.entityType), new FireUserFromCompanyMenuItem(this.isUserInvited)];
+	    return items;
 	  }
 	}
 

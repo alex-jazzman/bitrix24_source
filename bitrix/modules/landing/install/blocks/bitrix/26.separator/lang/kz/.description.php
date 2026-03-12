@@ -1,3 +1,0 @@
-<?php
-$MESS["LANDING_BLOCK_9_SEPARATOR_LINE"] = "Бөлгіш";
-$MESS["LANDING_BLOCK_9_SEPARATOR_NAME"] = "Бөлгіш";

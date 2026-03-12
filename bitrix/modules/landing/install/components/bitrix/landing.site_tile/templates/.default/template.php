@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Landing\Copilot\Services\NameService;
+use Bitrix\Landing\Manager;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
 
@@ -24,7 +26,7 @@ Extension::load([
 
 $isAjax = $component->isAjax();
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-$zone = \Bitrix\Landing\Manager::getZone();
+$zone = Manager::getZone();
 ?>
 
 <script>
@@ -97,7 +99,7 @@ $zone = \Bitrix\Landing\Manager::getZone();
 		$features[] = $component->getMessageType('LANDING_SITE_TILE_EMPTY_FEAT5');
 	}
 	\trimArr($features, true);
-	$langImg = \Bitrix\Landing\Manager::availableOnlyForZone('ru') ? 'ru' : 'en';
+	$langImg = Manager::availableOnlyForZone('ru') ? 'ru' : 'en';
 	?>
 	<div class="landing-sites__grid-empty landing-sites__scope">
 		<div class="landing-sites__grid-empty--all-info">
@@ -112,7 +114,7 @@ $zone = \Bitrix\Landing\Manager::getZone();
 					<?php if (\Bitrix\Landing\Connector\Ai::isCopilotAvailable()): ?>
 						<div class="landing-sites__grid-empty--balloon">
 							<div class="ui-icon-set --copilot-ai landing-sites__grid-empty--balloon-icon"></div>
-							<div class="landing-sites__grid-empty--balloon-text"><?= $component->getMessageType('LANDING_SITE_TILE_EMPTY_BALLOON_TEXT')?></div>
+							<div class="landing-sites__grid-empty--balloon-text"><?= NameService::replaceCopilotName($component->getMessageType('LANDING_SITE_TILE_EMPTY_BALLOON_TEXT_MSGVER_1'))?></div>
 						</div>
 					<?php endif; ?>
 				</div>
@@ -154,6 +156,8 @@ $zone = \Bitrix\Landing\Manager::getZone();
 		let items = <?= \CUtil::PhpToJSObject(array_values($arParams['ITEMS']))?>;
 		let switchDomainPage = '<?= \CUtil::jsEscape($arParams['PAGE_URL_SITE_DOMAIN_SWITCH'])?>';
 		const isNeedCopilotPopup = <?= ($request->get('preset') === 'sites_ai' && !$arParams['ITEMS']) ? 'true' : 'false' ?>;
+		const createByCopilotText = '<?= CUtil::JSEscape(NameService::replaceCopilotName(Loc::getMessage('LANDING_SITE_TILE_COPILOT_LABEL_MSGVER_1')))?>';
+		const copilotGeneratedText = '<?= CUtil::JSEscape(NameService::replaceCopilotName(Loc::getMessage('LANDING_SITE_TILE_COPILOT_GENERATED_TEXT_MSGVER_1')))?>';
 		const lang = '<?= LANGUAGE_ID ?>';
 
 		<?if ($arParams['FEEDBACK_CODE']):?>
@@ -195,6 +199,8 @@ $zone = \Bitrix\Landing\Manager::getZone();
 			isNeedCreateCopilotPopup: isNeedCopilotPopup,
 			lang: lang,
 			zone: '<?= CUtil::JSEscape($zone)?>',
+			createByCopilotText: createByCopilotText,
+			copilotGeneratedText: copilotGeneratedText,
 		});
 
 		if (isNeedCopilotPopup && SiteTile.popupCopilot)

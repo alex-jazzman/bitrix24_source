@@ -1,5 +1,5 @@
-import {Event, Tag, Type, Text} from "main.core";
-import {BaseField} from "./base-field";
+import { Event, Tag, Type, Text } from 'main.core';
+import { BaseField } from './base-field';
 
 export class TextInput extends BaseField
 {
@@ -72,7 +72,7 @@ export class TextInput extends BaseField
 
 	renderContentField(): HTMLElement
 	{
-		const lockElement = !this.isEnable ? this.renderLockElement() : null;
+		const lockElement = this.isEnable ? null : this.renderLockElement();
 
 		return Tag.render`
 			<div id="${this.getId()}" class="ui-section__field-selector">
@@ -80,7 +80,7 @@ export class TextInput extends BaseField
 					<div class="ui-section__field-label_box">
 						<label for="${this.getName()}" class="ui-section__field-label">
 							${this.getLabel()}
-						</label> 
+						</label>
 						${lockElement}
 					</div>
 					<div class="ui-ctl ui-ctl-textbox ui-ctl-block ${this.inputDefaultWidth ? '' : 'ui-ctl-w100'}">

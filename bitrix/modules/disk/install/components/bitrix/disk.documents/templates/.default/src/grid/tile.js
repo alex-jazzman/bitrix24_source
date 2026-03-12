@@ -6,8 +6,12 @@ import getMenuItem from "../gridmenu/index";
 
 export default class Tile
 {
-	constructor()
+	#analytics;
+
+	constructor(analytics: any = null)
 	{
+		this.#analytics = analytics;
+
 		this.addReloadGrid();
 		this.addMenuActionLoader();
 		this.addFilterSequence();
@@ -46,7 +50,7 @@ export default class Tile
 			'Disk:Documents:TileGrid:MenuAction:FirstShow',
 			function({compatData: [row, objectId, menuPopup]}: BaseEvent) {
 				Backend
-					.getMenuActions(objectId)
+					.getMenuActions(objectId, this.#analytics)
 					.then(function({data}) {
 						const menu = menuPopup;
 						row.actions = [];

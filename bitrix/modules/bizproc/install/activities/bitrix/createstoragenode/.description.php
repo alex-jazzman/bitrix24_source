@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\FieldType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
@@ -26,8 +27,12 @@ $arActivityDescription =
 		->setReturn([
 			'StorageId' => [
 				'NAME' => Loc::getMessage('BPCSN_DESCRIPTION_STORAGE_ID'),
-				'TYPE' => 'int'
-			]
+				'TYPE' => FieldType::INT,
+			],
+			'CreateErrorText' => [
+				'NAME' => Loc::getMessage('BPCSN_DESCRIPTION_STORAGE_CREATE_ERROR_TEXT'),
+				'TYPE' => FieldType::STRING,
+			],
 		])
 		->setAdditionalResult(['StorageFields'])
 		->setSort(100)

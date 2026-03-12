@@ -1,5 +1,0 @@
-<?
-$MESS["OL_COMPONENT_LIST_ACTIONS_VIEW"] = "Переглянути";
-$MESS["OL_COMPONENT_LIST_ACTIONS_EDIT"] = "Редагувати";
-$MESS["OL_COMPONENT_LIST_ACTIONS_REMOVE"] = "Видалити лінію";
-?>

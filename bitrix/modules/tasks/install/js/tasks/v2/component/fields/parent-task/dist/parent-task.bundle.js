@@ -10,10 +10,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  id: tasks_v2_const.TaskField.Parent
 	});
 
-	var _taskId, _onUpdate, _dialog, _createDialog, _onItemChange, _items;
+	var _taskId, _withTemplates, _onUpdate, _templateEntity, _dialog, _createDialog, _onItemChange, _updateTemplatesVisibility, _items, _isTemplate;
 	const dialogs = {};
-	const parentTaskDialog = new (_taskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId"), _onUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUpdate"), _dialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog"), _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog"), _onItemChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onItemChange"), _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items"), class {
+	const parentTaskDialog = new (_taskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId"), _withTemplates = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("withTemplates"), _onUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUpdate"), _templateEntity = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateEntity"), _dialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog"), _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog"), _onItemChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onItemChange"), _updateTemplatesVisibility = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTemplatesVisibility"), _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items"), _isTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTemplate"), class {
 	  constructor() {
+	    Object.defineProperty(this, _isTemplate, {
+	      get: _get_isTemplate,
+	      set: void 0
+	    });
 	    Object.defineProperty(this, _items, {
 	      get: _get_items,
 	      set: void 0
@@ -32,25 +36,67 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _withTemplates, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _onUpdate, {
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _templateEntity, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _updateTemplatesVisibility, {
+	      writable: true,
+	      value: () => {
+	        if (!babelHelpers.classPrivateFieldLooseBase(this, _isTemplate)[_isTemplate] || !babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].isLoaded()) {
+	          return;
+	        }
+	        if (!babelHelpers.classPrivateFieldLooseBase(this, _withTemplates)[_withTemplates]) {
+	          if (babelHelpers.classPrivateFieldLooseBase(this, _templateEntity)[_templateEntity]) {
+	            return;
+	          }
+	          const items = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getEntityItems(tasks_v2_const.EntitySelectorEntity.Template);
+	          const tab = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getTab(tasks_v2_const.EntitySelectorEntity.Template);
+	          babelHelpers.classPrivateFieldLooseBase(this, _templateEntity)[_templateEntity] = {
+	            items,
+	            tab
+	          };
+	          items.forEach(it => it.setHidden(true));
+	          main_core.Dom.addClass(tab.getLabelContainer(), 'ui-selector-tab-label-hidden');
+	          if (tab.isSelected()) {
+	            babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].selectFirstTab();
+	          }
+	        } else if (babelHelpers.classPrivateFieldLooseBase(this, _templateEntity)[_templateEntity]) {
+	          const {
+	            items,
+	            tab
+	          } = babelHelpers.classPrivateFieldLooseBase(this, _templateEntity)[_templateEntity];
+	          items.forEach(it => it.setHidden(false));
+	          main_core.Dom.removeClass(tab.getLabelContainer(), 'ui-selector-tab-label-hidden');
+	          babelHelpers.classPrivateFieldLooseBase(this, _templateEntity)[_templateEntity] = null;
+	        }
+	      }
+	    });
 	  }
 	  show(params) {
+	    var _params$withTemplates;
 	    babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId] = params.taskId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _withTemplates)[_withTemplates] = (_params$withTemplates = params.withTemplates) != null ? _params$withTemplates : true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _onUpdate)[_onUpdate] = params.onClose;
 	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].selectItemsByIds(babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].showTo(params.targetNode);
+	    babelHelpers.classPrivateFieldLooseBase(this, _updateTemplatesVisibility)[_updateTemplatesVisibility]();
 	  }
 	})();
 	function _get_dialog() {
-	  var _dialogs$isTemplate;
-	  const isTemplate = tasks_v2_lib_idUtils.idUtils.isTemplate(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
-	  (_dialogs$isTemplate = dialogs[isTemplate]) != null ? _dialogs$isTemplate : dialogs[isTemplate] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog](isTemplate);
-	  return dialogs[isTemplate];
+	  var _babelHelpers$classPr, _dialogs$_babelHelper;
+	  (_dialogs$_babelHelper = dialogs[_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]]) != null ? _dialogs$_babelHelper : dialogs[_babelHelpers$classPr] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
+	  return dialogs[babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]];
 	}
-	function _createDialog2(isTemplate) {
+	function _createDialog2() {
 	  const onItemChange = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _onItemChange)[_onItemChange], 10, this);
 	  return new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
 	    context: 'tasks-card',
@@ -63,7 +109,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      options: {
 	        withTab: true
 	      }
-	    }, isTemplate && {
+	    }, babelHelpers.classPrivateFieldLooseBase(this, _isTemplate)[_isTemplate] && {
 	      id: tasks_v2_const.EntitySelectorEntity.Template,
 	      options: {
 	        withTab: true,
@@ -72,13 +118,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }].filter(it => it),
 	    preselectedItems: babelHelpers.classPrivateFieldLooseBase(this, _items)[_items],
 	    events: {
+	      onLoad: babelHelpers.classPrivateFieldLooseBase(this, _updateTemplatesVisibility)[_updateTemplatesVisibility],
 	      'Item:onSelect': onItemChange,
 	      'Item:onDeselect': onItemChange
 	    }
 	  });
 	}
 	async function _onItemChange2() {
-	  var _item$getId, _babelHelpers$classPr, _babelHelpers$classPr2;
+	  var _item$getId, _babelHelpers$classPr2, _babelHelpers$classPr3;
 	  const item = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getSelectedItems()[0];
 	  const isTemplate = (item == null ? void 0 : item.getEntityId()) === tasks_v2_const.EntitySelectorEntity.Template;
 	  const selectedTaskId = isTemplate ? tasks_v2_lib_idUtils.idUtils.boxTemplate(item.getId()) : (_item$getId = item == null ? void 0 : item.getId()) != null ? _item$getId : 0;
@@ -87,7 +134,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    void tasks_v2_lib_relationError.relationError.setTaskId(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]).showError(error, tasks_v2_const.TaskField.Parent);
 	    return;
 	  }
-	  (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdate))[_onUpdate]) == null ? void 0 : _babelHelpers$classPr.call(_babelHelpers$classPr2);
+	  (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdate))[_onUpdate]) == null ? void 0 : _babelHelpers$classPr2.call(_babelHelpers$classPr3);
 	}
 	function _get_items() {
 	  const parentId = tasks_v2_provider_service_taskService.taskService.getStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]).parentId;
@@ -95,6 +142,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  const isTemplate = tasks_v2_lib_idUtils.idUtils.isTemplate(parentId);
 	  const itemId = isTemplate ? [tasks_v2_const.EntitySelectorEntity.Template, templateId] : [tasks_v2_const.EntitySelectorEntity.Task, parentId];
 	  return parentId ? [itemId] : [];
+	}
+	function _get_isTemplate() {
+	  return tasks_v2_lib_idUtils.idUtils.isTemplate(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
 	}
 
 	// @vue/component
@@ -155,7 +205,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    handleEditClick() {
 	      parentTaskDialog.show({
 	        targetNode: this.$refs.add.$el,
-	        taskId: this.taskId
+	        taskId: this.taskId,
+	        withTemplates: !this.task.replicate && !this.task.isForNewUser
 	      });
 	    },
 	    async handleRemoveParentTask() {
@@ -163,13 +214,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<div class="tasks-field-parent-task" :data-task-id="taskId" :data-task-field-id="parentTaskMeta.id">
+		<div class="tasks-field-parent-task print-no-box-shadow" :data-task-id="taskId" :data-task-field-id="parentTaskMeta.id">
 			<div class="tasks-field-parent-task-title">
 				<div class="tasks-field-parent-task-main" :class="{ '--readonly': true }">
 					<BIcon :name="Outline.SUBTASK"/>
 					<TextMd accent>{{ title }}</TextMd>
 				</div>
-				<div v-if="task.rights.edit" v-hint="tooltip" class="tasks-field-parent-task-edit-container">
+				<div v-if="task.rights.edit" v-hint="tooltip" class="tasks-field-parent-task-edit-container print-ignore">
 					<BIcon
 						class="tasks-field-parent-task-icon"
 						:name="Outline.PLUS_L"
@@ -228,7 +279,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      parentTaskDialog.show({
 	        targetNode: this.$el,
 	        taskId: this.taskId,
-	        onUpdate: this.highlightField
+	        onUpdate: this.highlightField,
+	        withTemplates: !this.task.replicate && !this.task.isForNewUser
 	      });
 	    },
 	    highlightField() {

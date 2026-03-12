@@ -153,6 +153,7 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 		 * @param {number} [props.firstWeekday]
 		 * @param {string} [props.recursionMode]
 		 * @param {number} [props.createChatId]
+		 * @param {number} [props.createMailId]
 		 * @param {string} [props.uuid]
 		 * @param {number} [props.selectedDayTs]
 		 * @param {array} [props.participantsEntityList]
@@ -188,6 +189,7 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 			this.ownerId = props.ownerId;
 			this.calType = props.calType;
 			this.createChatId = props.createChatId;
+			this.createMailId = props.createMailId;
 			this.sectionId = props.sectionId;
 			this.user = props.user;
 			this.firstWeekday = props.firstWeekday;
@@ -470,6 +472,11 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 			if (this.createChatId)
 			{
 				fields.analyticsChatId = this.createChatId;
+			}
+
+			if (this.createMailId)
+			{
+				fields.analyticsMailId = this.createMailId;
 			}
 
 			return fields;

@@ -23,7 +23,7 @@ if (!empty($arResult['TASKS']['RUNNING']))
 {
 	foreach ($arResult['TASKS']['RUNNING'] as &$t)
 	{
-		if ($t['IS_INLINE'] == 'Y')
+		if (($t['IS_INLINE'] ?? '') === 'Y')
 		{
 			$controls = CBPDocument::getTaskControls($t);
 			$t['BUTTONS'] = $controls['BUTTONS'];

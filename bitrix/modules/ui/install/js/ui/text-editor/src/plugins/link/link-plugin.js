@@ -3,6 +3,7 @@ import { Browser, Event, Loc, Type, Validation } from 'main.core';
 
 import type { BBCodeElementNode } from 'ui.bbcode.model';
 import type { BaseEvent } from 'main.core.events';
+import { Outline } from 'ui.icon-set.api.core';
 import type {
 	BBCodeConversion,
 	BBCodeConversionFn,
@@ -606,7 +607,7 @@ export class LinkPlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('link', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --link-3"></span>');
+			button.setIcon(Outline.LINK);
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_LINK'));
 			button.setBlockType('link');
 			button.disableInsideUnformatted();

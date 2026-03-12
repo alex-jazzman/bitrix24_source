@@ -68,7 +68,7 @@
 					</div>
 					<!-- socials -->
 					<div class="landing-block-socials-container col-sm-4 col-md-3 g-mb-10 g-mb-0--md align-self-center">
-						<ul class="landing-block-cards-social list-inline g-pa-10--md g-mb-0 row align-items-center justify-content-center justify-content-sm-start">
+						<ul class="landing-block-cards-social list-inline g-pa-10--md g-mb-0 align-items-center justify-content-center justify-content-sm-start">
 							<li class="landing-block-node-social-item list-inline-item g-valign-middle g-mx-3 g-mb-6"
 								data-card-preset="facebook">
 								<a class="landing-block-node-social-link d-block u-icon-v3 u-icon-size--sm g-rounded-50x g-bg-gray-light-v4 g-color-main g-bg-primary--hover g-color-white--hover g-font-size-14"

@@ -16,3 +16,4 @@ $MESS["MAIL_CLIENT_CONFIG_DIRS_BTN_CANCEL_ALL"] = "Отменить все";
 
 $MESS["MAIL_CLIENT_MAILBOX_NOT_FOUND"] = "Ящик не найден";
 $MESS["MAIL_CLIENT_CONFIG_DIRS_MAX_LEVEL_DIRS"] = "Превышен максимальный уровень вложенности";
+$MESS["MAIL_CLIENT_CONFIG_DIRS_NO_NESTED_FOLDERS"] = "В этой папке нет дополнительных папок";

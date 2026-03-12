@@ -20,6 +20,7 @@ export const SubTasksChip = {
 		taskId: {},
 		isEdit: {},
 		isTemplate: {},
+		analytics: {},
 	},
 	setup(): { task: TaskModel }
 	{
@@ -64,6 +65,7 @@ export const SubTasksChip = {
 				targetNode,
 				taskId: this.taskId,
 				onClose: this.highlightField,
+				analytics: this.analytics,
 			});
 		},
 		highlightField(): void

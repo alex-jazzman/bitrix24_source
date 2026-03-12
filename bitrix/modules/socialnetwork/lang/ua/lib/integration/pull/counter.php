@@ -1,3 +1,0 @@
-<?php
-$MESS["SONET_COUNTER_TYPE_LIVEFEED"] = "Жива стрічка";
-$MESS["SONET_COUNTER_TYPE_LIVEFEED2"] = "Новини";

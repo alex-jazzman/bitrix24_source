@@ -10,13 +10,11 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
-import { usersDialog } from 'tasks.v2.lib.user-selector-dialog';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { checkListService } from 'tasks.v2.provider.service.check-list-service';
 import { EntityTypes, FileService, fileService } from 'tasks.v2.provider.service.file-service';
 
 import { highlighter } from 'tasks.v2.lib.highlighter';
-import type { UserModel } from 'tasks.v2.model.users';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
@@ -31,8 +29,11 @@ import { CheckListItemPanel } from '../check-list-item-panel/check-list-item-pan
 import { Context } from '../../lib/check-list-const';
 import { CheckListManager } from '../../lib/check-list-manager';
 import { CheckListNotifier } from '../../lib/check-list-notifier';
-
+import { CheckListParticipantService } from '../../lib/check-list-participant-service';
+import { CheckListChangeTracker } from '../../lib/check-list-change-tracker';
 import { PanelAction } from '../check-list-item-panel/check-list-item-panel-meta';
+
+import type { ParticipantType } from '../../lib/check-list-participant-service';
 
 import './check-list.css';
 
@@ -101,8 +102,6 @@ export const CheckList = {
 	{
 		return {
 			itemPanelIsShown: false,
-			checkListWasUpdated: false,
-			lastUpdatedCheckListId: 0,
 			itemId: null,
 			itemPanelStyles: {
 				top: '0',
@@ -303,27 +302,17 @@ export const CheckList = {
 				}
 			});
 		},
-		checkListWasUpdated(value: boolean): void
-		{
-			if (!this.currentItem)
+		checkLists: {
+			handler(): void
 			{
-				return;
-			}
-
-			if (value === true)
-			{
-				const parentItem = this.checkListManager.getRootParentByChildId(this.currentItem.id);
-
-				this.lastUpdatedCheckListId = parentItem ? parentItem.id : 0;
-			}
-		},
-		checkListId(value: boolean): void
-		{
-			const isNewCheckList = Type.isString(value);
-			if (isNewCheckList)
-			{
-				this.checkListWasUpdated = true;
-			}
+				if (this.checkListChangeTracker && !this.checkListChangeTracker.isInitialized())
+				{
+					void this.$nextTick(() => {
+						this.checkListChangeTracker.createSnapshot();
+					});
+				}
+			},
+			immediate: true,
 		},
 	},
 	created(): void
@@ -333,6 +322,14 @@ export const CheckList = {
 				checkLists: () => this.checkLists,
 			},
 		});
+
+		this.checkListChangeTracker = new CheckListChangeTracker({
+			computed: {
+				checkLists: () => this.checkLists,
+			},
+		});
+
+		this.checkListParticipantService = new CheckListParticipantService(this.taskId);
 	},
 	mounted(): void
 	{
@@ -389,8 +386,6 @@ export const CheckList = {
 			this.itemId = itemId;
 
 			this.handleUpdatingFreezeState();
-
-			this.checkListWasUpdated = true;
 		},
 		handleUpdatingFreezeState(): void
 		{
@@ -504,7 +499,13 @@ export const CheckList = {
 
 			this.cleanEmptyItems();
 
-			const checkListId = this.lastUpdatedCheckListId === 0 ? this.checkListId : this.lastUpdatedCheckListId;
+			const lastUpdatedId = this.checkListChangeTracker.hasChanges()
+				? this.checkListChangeTracker.getLastUpdatedCheckListId(
+					(id) => this.checkListManager.getRootParentByChildId(id),
+				)
+				: 0;
+
+			const checkListId = lastUpdatedId === 0 ? this.checkListId : lastUpdatedId;
 
 			this.$emit('close', this.deletingCheckListIds[checkListId] ? 0 : checkListId);
 
@@ -772,11 +773,9 @@ export const CheckList = {
 			if (!this.isDemoCheckListModified())
 			{
 				this.removeChecklists();
-
-				this.checkListWasUpdated = false;
 			}
 
-			if (this.checkListWasUpdated && this.isEdit)
+			if (this.checkListChangeTracker.hasChanges() && this.isEdit)
 			{
 				const deletingIds = new Set(Object.values(this.deletingCheckListIds));
 				const fullListDeletingIds = this.checkListManager.expandIdsWithChildren(deletingIds);
@@ -788,7 +787,7 @@ export const CheckList = {
 				await checkListService.save(this.taskId, checkListsToSave);
 			}
 
-			this.checkListWasUpdated = false;
+			this.checkListChangeTracker.reset();
 		},
 		isDemoCheckListModified(): boolean
 		{
@@ -800,7 +799,7 @@ export const CheckList = {
 			const [checkList] = this.checkLists;
 			if (!checkList)
 			{
-				return false;
+				return true;
 			}
 
 			const demoTitle = this.loc('TASKS_V2_CHECK_LIST_TITLE_NUMBER', { '#number#': 1 });
@@ -843,8 +842,6 @@ export const CheckList = {
 
 			await this.insertManyCheckLists(items);
 			void this.updateTask({ checklist });
-
-			this.checkListWasUpdated = true;
 
 			return parentId;
 		},
@@ -962,14 +959,6 @@ export const CheckList = {
 			}
 
 			const children = this.checkListManager.getChildren(item.id);
-
-			if (
-				item?.title
-				|| item.parentId === 0
-			)
-			{
-				this.checkListWasUpdated = true;
-			}
 
 			if (children.length > 0)
 			{
@@ -1143,8 +1132,6 @@ export const CheckList = {
 			{
 				void this.updateCheckList(this.currentItem.id, { isImportant: !this.currentItem.isImportant });
 			}
-
-			this.checkListWasUpdated = true;
 		},
 		attachFile(node: HTMLElement): void
 		{
@@ -1183,7 +1170,6 @@ export const CheckList = {
 				this.isItemPanelFreeze = fileServiceInstance.isUploading();
 				handleFreeze(this.isItemPanelFreeze || this.hasEmptyItem());
 				this.focusToItem(this.currentItem.id);
-				this.checkListWasUpdated = true;
 			});
 		},
 		getCurrentFileService(): ?FileService
@@ -1261,7 +1247,6 @@ export const CheckList = {
 				item,
 				(updates: CheckListModel[]) => {
 					void this.upsertCheckLists(updates);
-					this.checkListWasUpdated = true;
 
 					if (!item.groupMode?.active)
 					{
@@ -1291,7 +1276,6 @@ export const CheckList = {
 				item,
 				(updates: CheckListModel[]) => {
 					void this.upsertCheckLists(updates);
-					this.checkListWasUpdated = true;
 
 					if (!item.groupMode?.active)
 					{
@@ -1312,8 +1296,6 @@ export const CheckList = {
 
 				void this.forwardToNewChecklist(this.currentItem.id);
 			}
-
-			this.checkListWasUpdated = true;
 		},
 		async forwardToNewChecklist(itemId: number | string): Promise<void>
 		{
@@ -1464,64 +1446,27 @@ export const CheckList = {
 				this.removeItem(item.id);
 			});
 		},
-		showParticipantDialog(targetNode: HTMLElement, type: 'accomplices' | 'auditors'): void
+		showParticipantDialog(targetNode: HTMLElement, type: ParticipantType): void
 		{
-			const ids = this.currentItem[type].map((user: UserModel) => user.id);
-			const itemId = this.currentItem.id;
-			const handleClose = (usersIds: number[]) => {
-				this.saveParticipants(itemId, type, usersIds);
-
+			const handleClose = (): void => {
 				this.isItemPanelFreeze = false;
 
-				if (!this.itemGroupModeSelected && this.currentItem.id === itemId)
+				if (!this.itemGroupModeSelected)
 				{
-					this.focusToItem(itemId);
+					this.focusToItem(this.currentItem.id);
 				}
 
 				this.updatePanelPosition();
 			};
 
-			void usersDialog.show({
+			this.checkListParticipantService.showParticipantDialog({
 				targetNode,
-				ids,
-				withAngle: true,
+				type,
+				items: this.itemGroupModeSelected ? this.checkListManager.getAllSelectedItems() : [this.currentItem],
 				onClose: handleClose,
 			});
 
 			this.isItemPanelFreeze = true;
-		},
-		async saveParticipants(id: number | string, type: 'accomplices' | 'auditors', usersIds: number[]): void
-		{
-			const users = this.$store.getters[`${Model.Users}/getByIds`](usersIds);
-
-			if (this.itemGroupModeSelected)
-			{
-				const updates = this.checkListManager.getAllSelectedItems()
-					.map((item: CheckListModel) => ({
-						...item,
-						[type]: users,
-					}));
-
-				void this.upsertCheckLists(updates);
-			}
-			else
-			{
-				void this.updateCheckList(id, {
-					[type]: users,
-				});
-			}
-
-			const task = taskService.getStoreTask(this.taskId);
-			const existingIds = task[`${type}Ids`];
-			const mergedIds = [...new Set([...existingIds, ...usersIds])];
-
-			const fields = {
-				[`${type}Ids`]: mergedIds,
-			};
-
-			void this.updateTask(fields);
-
-			this.checkListWasUpdated = true;
 		},
 		activateGroupMode(parentItemId: number | string): void
 		{
@@ -1652,7 +1597,7 @@ export const CheckList = {
 						/>
 						<CheckListStub v-if="stub && !isPreview" @click="addCheckList"/>
 					</div>
-					<div v-show="!stub && !isPreview" class="tasks-check-list-footer" :class="contextClass">
+					<div v-show="!stub && !isPreview" class="tasks-check-list-footer print-ignore" :class="contextClass">
 						<UiButton
 							v-if="canCheckListAdd"
 							:text="loc('TASKS_V2_CHECK_LIST_NEW_BTN')"

@@ -1,4 +1,0 @@
-<?php
-$MESS["UI_TILE_SELECTOR_ADD"] = "жасау";
-$MESS["UI_TILE_SELECTOR_MORE"] = "Тағы #NUM#";
-$MESS["UI_TILE_SELECTOR_SELECT"] = "таңдау";

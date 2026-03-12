@@ -195,7 +195,7 @@ export const RelationTasks = {
 				<div 
 					v-if="!readonly && idsLoaded && !isLocked" 
 					v-hint="tooltip" 
-					class="tasks-field-relation-tasks-icon --add" 
+					class="tasks-field-relation-tasks-icon --add print-ignore" 
 					ref="add"
 				>
 					<BIcon

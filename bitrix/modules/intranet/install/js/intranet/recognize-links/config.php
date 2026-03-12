@@ -1,7 +1,5 @@
 <?php
 
-use Bitrix\Extranet\Service\ServiceContainer;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 

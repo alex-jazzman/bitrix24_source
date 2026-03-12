@@ -7,6 +7,7 @@ jn.define('ai/mcp-selector/ui/item', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { EntityCell, EntityCellMode } = require('ui-system/blocks/entity-cell');
 	const { Type } = require('type');
+	const { ChipStatusDesign } = require('ui-system/blocks/chips/chip-status');
 
 	class MCPSelectorItem extends LayoutComponent
 	{
@@ -37,12 +38,11 @@ jn.define('ai/mcp-selector/ui/item', (require, exports, module) => {
 		{
 			const { selectedAuthId, id, authorizations = [] } = this.props;
 
-			if (
-				Type.isArrayFilled(authorizations)
-				&& authorizations.some((auth) => selectedAuthId === auth.id)
-			)
+			if (Type.isArrayFilled(authorizations))
 			{
-				return true;
+				return authorizations.some((auth) => {
+					return selectedAuthId === auth.id && auth.mcpServerId === id;
+				});
 			}
 
 			return selectedAuthId === id;
@@ -50,7 +50,17 @@ jn.define('ai/mcp-selector/ui/item', (require, exports, module) => {
 
 		render()
 		{
-			const { isActive, disableDivider, iconUrl, name, subtitle, isLink, isDisabled } = this.props;
+			const {
+				isActive,
+				disableDivider,
+				iconUrl,
+				name,
+				subtitle,
+				isLink,
+				isDisabled,
+				authorizations,
+				isAuthorization,
+			} = this.props;
 
 			let mode = isLink ? EntityCellMode.GROUP : EntityCellMode.SINGLE;
 			if (isDisabled)
@@ -58,11 +68,19 @@ jn.define('ai/mcp-selector/ui/item', (require, exports, module) => {
 				mode = EntityCellMode.LOCKED;
 			}
 
+			const badgeHeader = (isActive && Type.isArrayFilled(authorizations))
+				? Loc.getMessage('MCP_SELECTOR_STATUS_CHIP_CONNECTED')
+				: Loc.getMessage('MCP_SELECTOR_STATUS_CHIP_NOT_CONNECTED');
+
 			return EntityCell({
 				title: name,
 				subtitle,
 				avatar: iconUrl.startsWith('http') ? iconUrl : withCurrentDomain(iconUrl),
-				badgeHeader: isActive ? Loc.getMessage('MCP_SELECTOR_STATUS_CHIP_CONNECTED') : null,
+				badgeHeader: isAuthorization ? null : badgeHeader,
+				badgeDesign:
+					(isActive && Type.isArrayFilled(authorizations))
+						? ChipStatusDesign.SUCCESS
+						: ChipStatusDesign.NEUTRAL,
 				divider: !disableDivider,
 				mode,
 				checked: this.isSelected,

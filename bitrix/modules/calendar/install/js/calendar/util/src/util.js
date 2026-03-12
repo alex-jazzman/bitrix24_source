@@ -1160,4 +1160,14 @@ export class Util
 				return sections;
 		}
 	}
+
+	static setBitrix24Enabled(value)
+	{
+		Util.bitrix24Enabled = value;
+	}
+
+	static isBitrix24Enabled()
+	{
+		return Util.bitrix24Enabled || false;
+	}
 }

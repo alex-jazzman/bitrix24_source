@@ -7,6 +7,10 @@ export type BaseActionType = {
 	selectedUsers: ?Array,
 	showPopups: ?boolean,
 	isCloud: ?boolean,
+	isFirstAdminConfirmationEnabled: ?boolean,
+	currentUserId: ?number,
+	currentUserName: ?string,
+	firstAdminId: ?number,
 };
 
 /**
@@ -37,6 +41,10 @@ export class BaseAction
 		this.selectedUsers = params.selectedUsers;
 		this.showPopups = params.showPopups ?? true;
 		this.isCloud = params.isCloud;
+		this.isFirstAdminConfirmationEnabled = params.isFirstAdminConfirmationEnabled;
+		this.currentUserId = params.currentUserId;
+		this.currentUserName = params.currentUserName;
+		this.firstAdminId = params.firstAdminId;
 	}
 
 	execute(): void

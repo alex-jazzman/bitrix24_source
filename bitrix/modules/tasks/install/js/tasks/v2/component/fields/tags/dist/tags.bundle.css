@@ -13,8 +13,6 @@
 	cursor: pointer;
 }
 
-
-
 .tasks-field-tag {
 	box-sizing: border-box;
 	position: relative;
@@ -22,7 +20,7 @@
 	max-width: calc(100% - var(--ui-space-stack-xs2));
 	margin: 0 var(--ui-space-inline-sm) var(--ui-space-stack-xs2) 0;
 	padding: var(--ui-space-stack-2xs) var(--ui-space-inline-sm2);
-	border-radius: var(--ui-border-radius-lg);
+	border-radius: var(--ui-border-radius-pill);
 	background: var(--ui-color-accent-soft-blue-3);
 	line-height: var(--ui-font-line-height-sm);
 }

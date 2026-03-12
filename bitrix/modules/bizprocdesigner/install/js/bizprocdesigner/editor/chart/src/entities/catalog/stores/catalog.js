@@ -52,11 +52,23 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 						.includes(preSearchText);
 				});
 
-			const foundedItems = [...new Map(
-				state.groups.flatMap((group) => group.items
-					.filter((item) => item.title.toLowerCase().includes(preSearchText))
-					.map((item) => [item.id, { ...item, parentGroup: group }])),
-			).values()];
+			const foundedItems = [
+				...new Map(
+					state.groups
+						.flatMap((group) => group.items
+							.filter((item) => item.title.toLowerCase().includes(preSearchText))
+							.map((item) => {
+								const key = item.presetId
+									? `${item.id}_${item.presetId}`
+									: item.id;
+
+								return [
+									key,
+									{ ...item, parentGroup: group },
+								];
+							})),
+				).values(),
+			];
 
 			return {
 				groups: foundedGroups,
@@ -80,13 +92,6 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 
 			groups.forEach((group, groupIdx) => {
 				group.items.forEach((item, itemIdx) => {
-					item.defaultSettings.ports = Object.entries(item.defaultSettings.ports)
-						.reduce((portsMap, [type, ports]) => {
-							portsMap[type] = ports?.map((port) => ({ ...port, type })) ?? [];
-
-							return portsMap;
-						}, {});
-
 					if (item.type === 'simple' || item.type === 'trigger')
 					{
 						groups[groupIdx].items[itemIdx].defaultSettings.width = 200;
@@ -181,10 +186,8 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 				defaultSettings: {
 					width: 200,
 					height: 200,
-					ports: {
-						input: [],
-						output: [],
-					},
+					ports: [],
+					frameColorName: 'grey',
 				},
 			};
 		},

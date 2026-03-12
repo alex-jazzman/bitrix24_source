@@ -3,16 +3,44 @@
 	flex-direction: column;
     flex-wrap: nowrap;
     height: 100%;
+	overflow: hidden;
+	border-radius: var(--ui-border-radius-3xl);
 }
 
-.bx-ui-smiles-elements-wrap, .bx-ui-smiles-emoji-wrap {
-	display: flex;
-	flex: 1 1 auto;
+.bx-ui-smiles-emoji-wrap, .bx-ui-smiles-set-grid {
+	padding: 20px 18px;
 	overflow: hidden;
 	overflow-y: auto;
-	align-items: center;
-	justify-content: center;
-	flex-wrap: wrap;
+}
+
+.bx-ui-smiles-emoji-wrap {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+.bx-ui-smiles-content {
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.bx-ui-smiles-emoji-grid, .bx-ui-smiles-set-grid {
+	display: grid;
+	gap: 18px;
+	place-items: center;
+	align-content: center;
+	justify-content: space-between;
+}
+
+.bx-ui-smiles-set-grid {
+	--ui-smiles-smile-max-weight: 86px;
+	grid-template-columns: repeat(auto-fill, clamp(26px, var(--ui-smiles-smile-max-weight), 86px));
+}
+
+.bx-ui-smiles-emoji-grid {
+	grid-template-columns: repeat(auto-fill, 26px);
+	padding: 16px 0 16px;
 }
 
 .bx-ui-smiles-elements {
@@ -20,34 +48,28 @@
 }
 
 .bx-ui-smiles-category {
-	text-align: center;
 	flex: 0 0 100%;
-	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-3);
 	font-weight: var(--ui-font-weight-regular, 400);
-	margin: 7px 0;
-}
-
-.bx-ui-smiles-emoji-wrap:first-child .bx-ui-smiles-category {
-	margin-top: 14px;
 }
 
 .bx-ui-smiles-smile {
 	display: flex;
-	min-height: 40px;
-	min-width: 40px;
-	max-height: 95px;
-	max-width: 96px;
-	padding: 7px;
+	min-height: 26px;
+	min-width: 26px;
+	max-height: 86px;
+	max-width: 86px;
 	cursor: pointer;
 	align-items: center;
-    justify-content: center;
+	justify-content: center;
 }
 
 .bx-ui-smiles-smile-icon {
 	display: inline-block;
 	object-fit: contain;
-	max-height: 95px;
-	max-width: 95px;
+	max-height: 72px;
+	max-width: 72px;
 }
 
 .bx-ui-smiles-set-emoji {
@@ -76,12 +98,14 @@
 
 .bx-ui-smiles-sets {
 	display: flex;
-	flex: 0 0 45px;
-	flex-wrap: wrap;
+	flex: 0 0 auto;
+	gap: 20px;
+	flex-wrap: nowrap;
 	justify-content: center;
-	height: 45px;
-	background-color: #f7f7f7;
-    border-top: 1px solid #f1eded;
+	border-top: 1px solid var(--ui-color-base-7);
+	padding: 12px 18px 12px 18px;
+	overflow-x: auto;
+	background-color: var(--ui-color-base-8);
 }
 
 .bx-ui-smiles-set {
@@ -165,4 +189,76 @@
 		stroke-dasharray: 89, 200;
 		stroke-dashoffset: -124px;
 	}
+}
+
+.bx-ui-smiles-category-filter {
+	min-height: 35px;
+	display: flex;
+	gap: 4px;
+	margin: 20px 16px 6px 16px;
+	justify-content: space-between;
+
+	overflow: hidden;
+	overflow-x: auto;
+}
+
+.bx-ui-smiles-category-filter-img {
+	max-height: 30px;
+	max-width: 30px;
+	min-height: 30px;
+	min-width: 30px;
+	display: flex;
+	border-radius: 100%;
+	cursor: pointer;
+	justify-content: center;
+	align-items: center;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.bx-ui-smiles-category-filter-img:hover {
+	background-color: #E8EAEB;
+}
+
+.bx-ui-smiles-category-filter-img-animals {
+	background-image: url('../images/smile-category-animals.svg');
+}
+
+.bx-ui-smiles-category-filter-img-flags {
+	background-image: url('../images/smile-category-flags.svg');
+}
+
+.bx-ui-smiles-category-filter-img-food {
+	background-image: url('../images/smile-category-food.svg');
+}
+
+.bx-ui-smiles-category-filter-img-hobby {
+	background-image: url('../images/smile-category-hobby.svg');
+}
+
+.bx-ui-smiles-category-filter-img-objects {
+	background-image: url('../images/smile-category-objects.svg');
+}
+
+.bx-ui-smiles-category-filter-img-people {
+	background-image: url('../images/smile-category-people.svg');
+}
+
+.bx-ui-smiles-category-filter-img-symbols {
+	background-image: url('../images/smile-category-symbols.svg');
+}
+
+.bx-ui-smiles-category-filter-img-travel {
+	background-image: url('../images/smile-category-travel.svg');
+}
+
+.bx-ui-smiles-box ::-webkit-scrollbar {
+	height: 4px;
+	width: 4px;
+}
+
+.bx-ui-smiles-box ::-webkit-scrollbar-thumb {
+	background: #dde2e6;
+	border-radius: 5px;
+	cursor: pointer;
 }

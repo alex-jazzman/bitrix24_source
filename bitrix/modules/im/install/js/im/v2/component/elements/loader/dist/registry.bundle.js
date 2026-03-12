@@ -33,6 +33,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const SpinnerSize = Object.freeze({
 	  XXS: 'XXS',
 	  XS: 'XS',
+	  M: 'M',
 	  S: 'S',
 	  L: 'L'
 	});
@@ -40,7 +41,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  grey: 'grey',
 	  blue: 'blue',
 	  copilot: 'copilot',
-	  white: 'white'
+	  white: 'white',
+	  mainPrimary: 'main-primary'
 	});
 
 	// @vue/component
@@ -99,11 +101,38 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	// @vue/component
+	const Shimmer = {
+	  name: 'ShimmerLoader',
+	  props: {
+	    width: {
+	      type: Number,
+	      required: true
+	    },
+	    height: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    containerStyles() {
+	      return {
+	        width: `${this.width}px`,
+	        height: `${this.height}px`
+	      };
+	    }
+	  },
+	  template: `
+		<div class="bx-im-elements-loader-shimmer__container" :style="containerStyles"></div>
+	`
+	};
+
 	exports.Loader = Loader;
 	exports.Spinner = Spinner;
 	exports.SpinnerSize = SpinnerSize;
 	exports.SpinnerColor = SpinnerColor;
 	exports.LineLoader = LineLoader;
+	exports.Shimmer = Shimmer;
 
 }((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX.UI));
 //# sourceMappingURL=registry.bundle.js.map

@@ -1,16 +1,18 @@
 import { ref, toValue, shallowRef } from 'ui.vue3';
 import { Type } from 'main.core';
-import { MenuItemOptions, MenuOptions, MenuManager } from 'main.popup';
+import { MenuItemOptions, MenuOptions, Popup, PopupOptions, Menu } from 'main.popup';
 import { useBlockDiagram } from './block-diagram';
 
 export type UseContextMenu = {
 	isOpen: boolean,
-	showContextMenu: (payload: { clientX: number, clientY: number }) => void,
+	showMenu: (point: { clientX: number, clientY: number }, options: ?MenuOptions) => void,
+	showPopup: (point: { clientX: number, clientY: number }, options: ?PopupOptions) => void,
 	closeContextMenu: () => void,
 	setOptions: (options: MenuOptions) => void,
 };
 
-export function useContextMenu(menuItems: MenuItemOptions[] = []): UseContextMenu
+// eslint-disable-next-line max-lines-per-function
+export function useContextMenu(): UseContextMenu
 {
 	const {
 		contextMenuLayerRef,
@@ -20,15 +22,7 @@ export function useContextMenu(menuItems: MenuItemOptions[] = []): UseContextMen
 		contextMenuInstance,
 		zoom,
 	} = useBlockDiagram();
-
-	contextMenuInstance.value = toValue(contextMenuInstance) || shallowRef(MenuManager.create(getMenuOptions()));
 	const isOpen = ref(false);
-	let options: MenuOptions = { items: menuItems };
-
-	function setOptions(newOptions: MenuOptions): void
-	{
-		options = getMenuOptions(newOptions);
-	}
 
 	function getItems(items: MenuItemOptions[] = []): MenuItemOptions[]
 	{
@@ -38,18 +32,22 @@ export function useContextMenu(menuItems: MenuItemOptions[] = []): UseContextMen
 				onclick: () => {
 					if (Type.isFunction(item.onclick))
 					{
-						item.onclick();
+						const point: Point = {
+							x: positionContextMenu.value.left,
+							y: positionContextMenu.value.top,
+						};
+						item.onclick(point);
 					}
 
-					closeMenu();
+					toValue(contextMenuInstance)?.close();
 				},
 			};
 		});
 	}
 
-	function getMenuOptions(additionalOptions: MenuOptions): MenuOptions
+	function getDefaultOptions(additionalOptions: MenuOptions = {}): MenuOptions
 	{
-		return {
+		const defaultOptions = {
 			id: 'block-diagram-context-menu',
 			bindElement: {
 				left: 0,
@@ -61,42 +59,60 @@ export function useContextMenu(menuItems: MenuItemOptions[] = []): UseContextMen
 			cacheable: false,
 			targetContainer: toValue(targetContainerRef),
 			...additionalOptions,
-			items: getItems(additionalOptions?.items ?? []),
 		};
+
+		if ('items' in additionalOptions)
+		{
+			defaultOptions.items = getItems(additionalOptions.items);
+		}
+
+		return defaultOptions;
 	}
 
-	function setDestroyHandler(handler: () => void): void
+	function updateContextMenuPosition(point: { clientX: number, clientY: number }): void
 	{
-		toValue(contextMenuInstance)
-			?.popupWindow
-			?.subscribeOnce('onDestroy', handler);
-	}
-
-	function showMenu(menuOptions: MenuOptions): void
-	{
-		toValue(contextMenuInstance)?.destroy();
-		contextMenuInstance.value = shallowRef(MenuManager.create(
-			getMenuOptions(menuOptions),
-		));
-		toValue(contextMenuInstance).show();
-	}
-
-	function closeMenu(): void
-	{
-		toValue(contextMenuInstance)?.close();
-	}
-
-	function showContextMenu(payload: { clientX: number, clientY: number }): void
-	{
-		const { clientX = 0, clientY = 0 } = payload;
+		const { clientX = 0, clientY = 0 } = point;
 		const { left, top } = toValue(contextMenuLayerRef)?.getBoundingClientRect() ?? { top: 0, left: 0 };
 		positionContextMenu.value.top = (clientY - top) / toValue(zoom);
 		positionContextMenu.value.left = (clientX - left) / toValue(zoom);
+	}
 
-		showMenu(options);
-		setDestroyHandler(() => {
-			isOpen.value = false;
-		});
+	function showMenu(
+		point: { clientX: number, clientY: number },
+		options: ?MenuOptions = null,
+	): void
+	{
+		updateContextMenuPosition(point);
+		toValue(contextMenuInstance)?.destroy();
+
+		contextMenuInstance.value = shallowRef(new Menu(getDefaultOptions(options)));
+		toValue(contextMenuInstance)
+			?.popupWindow
+			?.subscribeOnce('onDestroy', () => {
+				isOpen.value = false;
+			});
+
+		toValue(contextMenuInstance)?.show();
+
+		isOpen.value = true;
+		isOpenContextMenu.value = true;
+	}
+
+	function showPopup(
+		point: { clientX: number, clientY: number },
+		options: ?PopupOptions = null,
+	): void
+	{
+		updateContextMenuPosition(point);
+		toValue(contextMenuInstance)?.destroy();
+
+		contextMenuInstance.value = shallowRef(new Popup(getDefaultOptions(options)));
+		toValue(contextMenuInstance)
+			?.subscribeOnce('onDestroy', () => {
+				isOpen.value = false;
+			});
+
+		toValue(contextMenuInstance)?.show();
 
 		isOpen.value = true;
 		isOpenContextMenu.value = true;
@@ -107,13 +123,13 @@ export function useContextMenu(menuItems: MenuItemOptions[] = []): UseContextMen
 		isOpen.value = false;
 		isOpenContextMenu.value = false;
 
-		closeMenu();
+		toValue(contextMenuInstance)?.close();
 	}
 
 	return {
 		isOpen,
-		showContextMenu,
+		showMenu,
+		showPopup,
 		closeContextMenu,
-		setOptions,
 	};
 }

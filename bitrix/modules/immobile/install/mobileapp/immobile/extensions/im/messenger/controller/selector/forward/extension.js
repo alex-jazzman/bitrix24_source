@@ -6,7 +6,11 @@ jn.define('im/messenger/controller/selector/forward', (require, exports, module)
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/loc');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
+
 	const REPLY_MANAGER_KEY = 'reply-manager';
+	const MESSAGE_SENDER_KEY = 'message-sender';
 
 	class ForwardSelector
 	{
@@ -47,10 +51,29 @@ jn.define('im/messenger/controller/selector/forward', (require, exports, module)
 			} = this.props;
 
 			const dialogId = item.id;
+			const dialogHelper = DialogHelper.createByDialogId(dialogId);
 
 			if (onDialogSelected)
 			{
 				await onDialogSelected();
+			}
+
+			if (dialogHelper.isNotes && String(dialogId) !== String(fromDialogId))
+			{
+				const replyManager = locator.get(REPLY_MANAGER_KEY);
+
+				replyManager.startForwardingMessages(messageIds, false);
+				await locator.get(MESSAGE_SENDER_KEY).sendForwardMessageToNotes(dialogId);
+				replyManager.finishForwardingMessage(false);
+
+				const toastType = messageIds.length > 1 ? ToastType.forwardMessages : ToastType.forwardMessage;
+				Notification.showToast(toastType, null, {
+					onButtonTap() {
+						MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId });
+					},
+				});
+
+				return;
 			}
 
 			if (String(dialogId) === String(fromDialogId) && locator)

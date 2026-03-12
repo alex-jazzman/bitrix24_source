@@ -2,16 +2,12 @@
 
 namespace Bitrix\Mobile\AppTabs;
 
-use Bitrix\DiskMobile\AirDiskFeature;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Mobile\Config\Feature;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\MobileApp\Janative\Manager;
-use Bitrix\MobileApp\Mobile;
 use Bitrix\Socialnetwork\Helper\Path;
 use Bitrix\Mobile\Menu\Analytics;
 
@@ -142,40 +138,6 @@ class Stream implements Tabable
 		];
 
 		if (
-			Feature::isDisabled(AirDiskFeature::class)
-			&& in_array('files', $allowedFeatures, true)
-			&& Option::get('disk', 'successfully_converted', false)
-			&& ModuleManager::isModuleInstalled('disk')
-		)
-		{
-			$tabs[] = [
-				'id' => 'disk',
-				'title' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_DISK'),
-				'component' => [
-					'name' => 'JSStackComponent',
-					'title' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_DISK'),
-					'componentCode' => 'user.disk',
-					'scriptPath' => Manager::getComponentPath('user.disk'),
-					'rootWidget' => [
-						'name' => 'list',
-						'settings' => [
-							'objectName' => 'list',
-							'titleParams' => [
-								'useLargeTitleMode' => true,
-							],
-							'useSearch' => true,
-							'doNotHideSearchResult' => true,
-						],
-					],
-					'params' => [
-						'COMPONENT_CODE' => 'user.disk',
-						'destroyOnRemove'=> false
-					],
-				],
-			];
-		}
-
-		if (
 			!$isExtranetUser
 			&& ModuleManager::isModuleInstalled('bizproc')
 		)
@@ -207,17 +169,6 @@ class Stream implements Tabable
 			];
 		}
 */
-		if (
-			!$isExtranetUser
-			&& ModuleManager::isModuleInstalled('mail')
-		)
-		{
-			$tabs[] = [
-				'id' => 'mail',
-				'title' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_MAIL'),
-				'selectable' => false,
-			];
-		}
 
 		return [
 			'sort' => 200,
@@ -251,7 +202,6 @@ class Stream implements Tabable
 					'SITE_ID' => $this->context->siteId,
 					'CALENDAR_WEB_PATH' => $calendarWebPath,
 					'VIDEO_WEB_PATH' => SITE_DIR . 'conference/',
-					'MAIL_WEB_PATH' => SITE_DIR . 'mail/',
 				],
 			],
 		];

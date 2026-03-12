@@ -752,10 +752,11 @@ export class Editor
 			this.#getCalculatePriceFieldNames().forEach((name) => {
 				priceFields[name] = product.getField(name);
 			});
+			priceFields.CATALOG_PRICE = product.getField('CATALOG_PRICE');
 
 			products.push({
 				fields: priceFields,
-				id: product.getId()
+				id: product.getId(),
 			});
 		});
 
@@ -801,6 +802,7 @@ export class Editor
 					product.updateField(name, Text.toNumber(products[product.getId()][name]));
 				});
 				product.setField('CURRENCY', products[product.getId()]['CURRENCY_ID']);
+				product.setField('CATALOG_PRICE', products[product.getId()]['CATALOG_PRICE']);
 			}
 		});
 
@@ -855,6 +857,11 @@ export class Editor
 	getPricePrecision(): number
 	{
 		return this.getSettingValue('pricePrecision', DEFAULT_PRECISION);
+	}
+
+	getCalculationPricePrecision(): number
+	{
+		return this.getSettingValue('calculationPricePrecision', DEFAULT_PRECISION);
 	}
 
 	getQuantityPrecision(): number
@@ -1585,8 +1592,16 @@ export class Editor
 			product.getSelector()?.layout();
 			product.updateUiMeasure(
 				product.getField('MEASURE_CODE'),
-				Text.encode(product.getField('MEASURE_NAME'))
+				Text.encode(product.getField('MEASURE_NAME')),
 			);
+			if (
+				!this.canEditCatalogPrice()
+				&& product.getModel().isCatalogExisted()
+				&& Type.isNumber(fields.CATALOG_PRICE)
+			)
+			{
+				product.changeBasePrice(fields.CATALOG_PRICE);
+			}
 		}
 		else if (this.getSettingValue('newRowPosition') === 'bottom')
 		{

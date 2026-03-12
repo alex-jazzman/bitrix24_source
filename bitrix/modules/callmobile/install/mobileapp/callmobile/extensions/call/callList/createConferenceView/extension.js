@@ -9,6 +9,7 @@ jn.define('call/callList/createConferenceView', (require, exports, module) => {
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
 	const { restCall } = require('call/callList/utils');
+	const { CallListAnalyticsController } = require('call/callList/analyticsController');
 
 	const BACKDROP_DEFAULT_HEIGHT = 238;
 
@@ -64,6 +65,8 @@ jn.define('call/callList/createConferenceView', (require, exports, module) => {
 				const chatId = result.chatId;
 				if (chatId)
 				{
+					CallListAnalyticsController.sendSubmitConference();
+
 					const dialogId = `chat${chatId}`;
 
 					if (this.props.layout)

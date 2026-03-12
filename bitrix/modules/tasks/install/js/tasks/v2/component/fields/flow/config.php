@@ -14,7 +14,6 @@ return [
 	'js' => 'dist/flow.bundle.js',
 	'rel' => [
 		'main.sidepanel',
-		'ui.system.menu.vue',
 		'tasks.v2.component.elements.hover-pill',
 		'tasks.v2.component.elements.field-add',
 		'main.core',

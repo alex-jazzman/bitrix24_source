@@ -6,6 +6,9 @@ use Bitrix\Main\Localization\Loc;
 CJSCore::Init(["voximplant.common", "voximplant.callerid", "voximplant.numberrent", "ui.notification", "ui.alerts", "ui.buttons", "ui.buttons.icons", "sidepanel"]);
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 
+$documents = new CVoxImplantDocuments();
+$billingUrl = $documents->GetUploadUrl('RU');
+
 $button = new \Bitrix\UI\Buttons\Button([
 	'text' => Loc::getMessage('VOX_LINES_CREATE_NUMBER_GROUP'),
 	'icon' => \Bitrix\UI\Buttons\Icon::ADD,
@@ -17,6 +20,19 @@ $button = new \Bitrix\UI\Buttons\Button([
 $button->addAttribute('id', 'add-group');
 \Bitrix\UI\Toolbar\Facade\Toolbar::addButton($button);
 
+if ($arResult['SHOW_INTERNOD_WARNING'])
+{
+	$internodMessage = $arResult['INTERNOD_DEADLINE']
+		? GetMessage('VOX_LINES_INTERNOD_WARNING_WITH_DATE', ['#BILLING_URL#' => $billingUrl, '#DATE#' => $arResult['INTERNOD_DEADLINE']])
+		: GetMessage('VOX_LINES_INTERNOD_WARNING', ['#BILLING_URL#' => $billingUrl]);
+?>
+<div class="voximplant-internod-warning ui-alert ui-alert-warning">
+	<span class="ui-alert-message">
+		<?= $internodMessage ?>
+	</span>
+</div>
+<?php
+}
 
 $APPLICATION->IncludeComponent(
 	"bitrix:main.ui.grid",

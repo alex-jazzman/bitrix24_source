@@ -1,4 +1,0 @@
-<?php
-$MESS["CRM_HEADER_SECTION_COMPANY"] = "Компания";
-$MESS["CRM_HEADER_SECTION_CONTACT"] = "Байланыс";
-$MESS["CRM_HEADER_SECTION_DEAL"] = "Мәміле";

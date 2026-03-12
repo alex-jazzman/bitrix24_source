@@ -414,11 +414,6 @@ if($action === 'SAVE')
 	{
 		if(!empty($fields))
 		{
-			if(isset($fields['ASSIGNED_BY_ID']) && $fields['ASSIGNED_BY_ID'] > 0)
-			{
-				\Bitrix\Crm\Entity\EntityEditor::registerSelectedUser($fields['ASSIGNED_BY_ID']);
-			}
-
 			if($isCopyMode)
 			{
 				if(!isset($fields['ASSIGNED_BY_ID']))

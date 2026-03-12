@@ -3,27 +3,18 @@ import { Store } from 'ui.vue3.vuex';
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
+import { EntitySearch } from 'im.v2.lib.search';
 
-import type { SearchConfig } from 'im.v2.lib.search';
-import type { ImModelUser, ImModelChat, ImModelRecentItem } from 'im.v2.model';
+import { getRecentListItems } from './helpers/get-recent-items';
 
-type LocalSearchItem = {
-	dialogId: string,
-	dialog: ImModelChat,
-	user?: ImModelUser,
-	dateMessage: string,
-}
-
-export type SearchResultItem = {
-	dialogId: string,
-	dateMessage: string,
-};
+import type { SearchResultItem, LocalSearchItem, SearchConfig } from './types/types';
+import type { ImModelChat } from 'im.v2.model';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 export class LocalSearch
 {
-	#searchConfig: SearchConfig | undefined;
+	#searchConfig: SearchConfig;
 	#store: Store;
 
 	constructor(searchConfig: SearchConfig)
@@ -37,7 +28,7 @@ export class LocalSearch
 		const localItems = this.#getLocalItems(localCollection);
 		const result = this.#search(query, localItems);
 
-		return this.#filterByConfig(result);
+		return this.#excludeByConfig(result);
 	}
 
 	#search(query: string, localItems: LocalSearchItem[]): SearchResultItem[]
@@ -60,19 +51,20 @@ export class LocalSearch
 
 	#getRecentListItems(): LocalSearchItem[]
 	{
-		return this.#store.getters['recent/getSortedCollection'].map((item: ImModelRecentItem) => {
-			const itemDate = this.#getRecentItemDate(item);
+		const recentListItems = getRecentListItems({
+			withFakeUsers: true,
+			searchConfig: this.#searchConfig,
+		});
 
-			return this.#prepareRecentItem(item.dialogId, itemDate);
+		return recentListItems.map((item) => {
+			return this.#prepareRecentItem(item.dialogId, item.dateMessage);
 		});
 	}
 
 	#prepareRecentItem(dialogId: string, dateMessage: string): LocalSearchItem[]
 	{
-		const dialog = this.#store.getters['chats/get'](dialogId, true);
-		const isUser = dialog.type === ChatType.user;
-
-		const recentItem = { dialogId, dialog, dateMessage };
+		const recentItem = { dialogId, dateMessage, dialog: this.#getDialog(dialogId) };
+		const isUser = this.#isUser(dialogId);
 
 		if (isUser)
 		{
@@ -176,31 +168,42 @@ export class LocalSearch
 		return [...itemsMap.values()];
 	}
 
-	#filterByConfig(items: SearchResultItem[]): SearchResultItem[]
+	#excludeByConfig(items: SearchResultItem[]): SearchResultItem[]
 	{
-		if (!this.#searchConfig)
+		const exclude = this.#searchConfig?.exclude;
+
+		if (!exclude || exclude.length === 0)
 		{
 			return items;
 		}
 
 		return items.filter((item) => {
-			if (this.#searchConfig.chats && item.dialogId.startsWith('chat'))
+			const isUser = this.#isUser(item.dialogId);
+			const isChat = !isUser;
+
+			if (isChat && exclude.includes(EntitySearch.chats))
 			{
-				return true;
+				return false;
 			}
 
-			return !item.dialogId.startsWith('chat') && this.#searchConfig.users;
+			if (isUser && exclude.includes(EntitySearch.users))
+			{
+				return false;
+			}
+
+			return true;
 		});
 	}
 
-	#getRecentItemDate(item: ImModelRecentItem): string
+	#getDialog(dialogId: string): ImModelChat
 	{
-		const dateMessage: Date = this.#store.getters['recent/getMessage'](item.dialogId)?.date;
-		if (!dateMessage)
-		{
-			return '';
-		}
+		return this.#store.getters['chats/get'](dialogId, true);
+	}
 
-		return dateMessage.toISOString();
+	#isUser(dialogId: string): boolean
+	{
+		const { type } = this.#getDialog(dialogId);
+
+		return type === ChatType.user;
 	}
 }

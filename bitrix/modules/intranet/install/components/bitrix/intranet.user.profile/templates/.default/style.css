@@ -1720,261 +1720,6 @@ form.profile-post-form {
 	color: #fff;
 }
 
-.intranet-user-profile-stresslevel-widget {
-
-}
-
-/*Stress Level Widget*/
-.intranet-stress-level-widget {
-	display: block;
-	position: relative;
-	overflow: hidden;
-	width: 133px;
-	height: 78px;
-}
-
-.intranet-stress-level-widget:before,
-.intranet-stress-level-widget:after {
-	content: '';
-	position: absolute;
-	top: 10px;
-	right: 10px;
-	bottom: 5px;
-	left: 10px;
-	background: url(images/intranet-user-profile-stell-level-gradient.png) top center no-repeat;
-	background-size: 100% 101%;
-}
-
-.intranet-stress-level-widget:after {
-	background-image: url(images/intranet-user-profile-stell-level-mask.svg);
-}
-
-.intranet-stress-level-widget-arrow {
-	position: absolute;
-	width: 80px;
-	height: 80px;
-	top: 20px;
-	left: 50%;
-	margin: 0 0 0 -40px;
-	z-index: 9;
-	transform: rotate(0deg);
-	transition: .6s;
-}
-
-.intranet-stress-level-widget-arrow:before {
-	content: '';
-	position: absolute;
-	width: 60px;
-	height: 22px;
-	left: -18px;
-	top: 50%;
-	margin-top: -11px;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2268%22%20height%3D%2224%22%20viewBox%3D%220%200%2068%2024%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-opacity%3D%22.795%22%20fill-rule%3D%22evenodd%22%20stroke%3D%22%23FFF%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M34%2C47%20C27.9235253%2C47%2025%2C44.5578776%2025%2C37.409886%20C25%2C32.5193227%2027.3717514%2C14.3210372%2032.1301172%2C-17.3624362%20C32.2334247%2C-18.0503071%2032.769344%2C-18.5926143%2033.4559426%2C-18.7040649%20C34.3281364%2C-18.8456419%2035.14996%2C-18.2533599%2035.2915365%2C-17.3811686%20C40.4362531%2C14.3126671%2043%2C32.5128101%2043%2C37.409886%20C43%2C44.5578776%2040.0764747%2C47%2034%2C47%20Z%22%20transform%3D%22rotate%28-90%2034%2012.5%29%22/%3E%3C/svg%3E') center center no-repeat;
-	background-size: 100%;
-}
-
-.intranet-stress-level-widget-arrow:after {
-	content: '';
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	width: 51px;
-	height: 51px;
-	transform: translate(-50%,-50%);
-	border-radius: 85%;
-	background: #fff;
-	z-index: 9;
-}
-
-.intranet-stress-level-widget-content {
-	position: absolute;
-	top: 40px;
-	left: 50%;
-	transform: translateX(-50%);
-	z-index: 99;
-	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
-	color: #525c69;
-	text-align: center;
-}
-
-.intranet-stress-level-widget-content-title {
-	display: block;
-	overflow: hidden;
-	opacity: .7;
-	font-size: 10px;
-	line-height: 10px;
-}
-
-.intranet-stress-level-widget-content-progress {
-	font-size: 26px;
-	line-height: 26px;
-	letter-spacing: -0.45px;
-}
-
-.intranet-stress-level-widget-content-progress:after {
-	content: '%';
-	display: inline-block;
-	width: 14px;
-	margin-right: -14px;
-	vertical-align: middle;
-	padding-left: 2px;
-	opacity: 0.54;
-	transition: .2s;
-	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
-	font-size: 16px;
-}
-
-.intranet-stress-level-widget-content-progress-empty:after {
-	display: none;
-}
-/*Stress Level Widget end*/
-
-.intranet-user-profile-column-block-inline {}
-
-.intranet-user-profile-stresslevel-widget,
-.intranet-user-profile-stresslevel-info {
-	float: left;
-}
-
-.intranet-user-profile-stresslevel-widget {
-	width: 135px;
-}
-
-.intranet-user-profile-stresslevel-info {
-	float: right;
-	width: calc(360px - 135px - 60px);
-	padding: 12px 0 0 0;
-}
-
-.intranet-user-profile-stresslevel-info-withoiut-padding {
-	padding-top: 5px;
-	padding-bottom: 6px;
-}
-
-.intranet-user-profile-stresslevel-info-withoiut-padding .ui-btn {
-	margin-left: -8px;
-}
-
-.intranet-user-profile-stresslevel-info-withoiut-padding .intranet-user-profile-stresslevel-status-text {
-	padding: 0 0 11px 0;
-	min-height: 0;
-}
-
-.intranet-user-profile-stresslevel-info-block {
-	display: block;
-	margin-bottom: 7px;
-}
-
-.intranet-user-profile-stresslevel-status {
-	display: inline-block;
-	vertical-align: middle;
-	margin-left: -4px;
-	height: 21px;
-	padding: 0 12px;
-	border-radius: 11.5px;
-	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
-	font-size: 12px;
-	line-height: 21px;
-	color: #fff;
-	text-align: center;
-}
-
-.intranet-user-profile-stresslevel-status-green {
-	background-color: #9dcf00;
-}
-
-.intranet-user-profile-stresslevel-status-yellow {
-	background-color: #f7a700;
-}
-
-.intranet-user-profile-stresslevel-status-red {
-	background-color: #ff5752;
-}
-
-.intranet-user-profile-stresslevel-status-unknown {
-	background-color: #c8cbce;
-}
-
-.intranet-user-profile-stresslevel-status-info {
-	display: inline-block;
-	vertical-align: middle;
-	width: 24px;
-	height: 21px;
-	cursor: pointer;
-	opacity: .738;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2213%22%20height%3D%2213%22%20viewBox%3D%220%200%2013%2013%22%3E%3Cpath%20fill%3D%22%23B1B7C5%22%20d%3D%22M6.48909256%2C7.84708249e-05%20C10.0727505%2C7.84708249e-05%2012.9779759%2C2.90506841%2012.9779759%2C6.48914487%20C12.9779759%2C10.072672%2010.0727505%2C12.9778974%206.48909256%2C12.9778974%20C2.90525151%2C12.9778974%200%2C10.072672%200%2C6.48914487%20C0%2C2.90506841%202.90525151%2C7.84708249e-05%206.48909256%2C7.84708249e-05%20Z%20M6.4288003%2C8.78497668%20C6.2148869%2C8.78497668%206.03442028%2C8.85686673%205.88740045%2C9.00053276%20C5.74028936%2C9.14426723%205.66682508%2C9.32135722%205.66682508%2C9.53191682%20C5.66682508%2C9.7692384%205.74282183%2C9.95388016%205.8949294%2C10.0858421%20C6.04696853%2C10.2178268%206.2249255%2C10.2838763%206.42882311%2C10.2838763%20C6.62599031%2C10.2838763%206.79974931%2C10.2170055%206.95014576%2C10.0833553%20C7.10054221%2C9.94970502%207.17574044%2C9.7658846%207.17574044%2C9.53191682%20C7.17574044%2C9.32135722%207.10382757%2C9.14426723%206.96018436%2C9.00053276%20C6.81644989%2C8.85686673%206.63935989%2C8.78497668%206.4288003%2C8.78497668%20Z%20M6.54912658%2C2.69412575%20C6.02778112%2C2.69412575%205.57159528%2C2.80110527%205.18056908%2C3.01495022%20C4.78956568%2C3.22886362%204.49205814%2C3.49871939%204.28825178%2C3.82456316%20C4.08437698%2C4.15040692%203.9824624%2C4.47209836%203.9824624%2C4.78956902%20C3.9824624%2C4.94331928%204.04677787%2C5.08618678%204.17543163%2C5.21819435%20C4.30403976%2C5.35024754%204.46194234%2C5.41620569%204.6491622%2C5.41620569%20C4.96663286%2C5.41620569%205.18221176%2C5.22743442%205.29585325%2C4.84973217%20C5.41617953%2C4.48879894%205.56319937%2C4.21558936%205.737004%2C4.03010345%20C5.91074019%2C3.84461754%206.18144012%2C3.75187458%206.54912658%2C3.75187458%20C6.86322063%2C3.75187458%207.11975244%2C3.84384183%207.31863076%2C4.0275938%20C7.51744063%2C4.21143704%207.61691401%2C4.4370089%207.61691401%2C4.70435501%20C7.61691401%2C4.84142751%207.58431138%2C4.96839296%207.51915175%2C5.08534263%20C7.45396931%2C5.20238355%207.3737746%2C5.30842765%207.27852199%2C5.40368026%20C7.18326939%2C5.49893287%207.02865216%2C5.64015769%206.81480721%2C5.82728628%20C6.57082365%2C6.04119968%206.37694181%2C6.22581862%206.2332986%2C6.38123437%20C6.08956413%2C6.53660449%205.97427996%2C6.71707111%205.88740045%2C6.92263422%20C5.80045251%2C7.1281517%205.75705838%2C7.37129111%205.75705838%2C7.65202963%20C5.75705838%2C7.87595881%205.81635456%2C8.04474415%205.93501535%2C8.15834001%20C6.0536077%2C8.27200432%206.19985182%2C8.32879084%206.37365645%2C8.32879084%20C6.70780488%2C8.32879084%206.9066832%2C8.15503184%206.97020014%2C7.80742256%20C7.00693229%2C7.64370215%207.0344928%2C7.52917088%207.0529045%2C7.46403406%20C7.07122494%2C7.39885162%207.09716559%2C7.33369199%207.13061238%2C7.26850955%20C7.16399072%2C7.20337274%207.21498223%2C7.13152832%207.28351848%2C7.05297629%20C7.35196346%2C6.97446989%207.44308656%2C6.88336961%207.55672805%2C6.7797439%20C7.96778582%2C6.41212588%208.25267667%2C6.15059758%208.41144623%2C5.99518183%20C8.57014734%2C5.83981171%208.70721983%2C5.65516996%208.82252682%2C5.44125656%20C8.93783381%2C5.22743442%208.9954873%2C4.97840874%208.9954873%2C4.69431642%20C8.9954873%2C4.33338319%208.89437124%2C3.99923476%208.69220756%2C3.69171144%20C8.48995263%2C3.38427937%208.20344191%2C3.14113996%207.83247009%2C2.96231603%20C7.46149826%2C2.78358335%207.03367146%2C2.69412575%206.54912658%2C2.69412575%20Z%22/%3E%3C/svg%3E') center center no-repeat;
-}
-
-.intranet-user-profile-stresslevel-status-info:hover {
-	opacity: .9;
-}
-
-.intranet-user-profile-stresslevel-status-text {
-	display: block;
-	white-space: normal;
-	padding: 5px 0;
-	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-light, 300);
-	font-size: 16px;
-	color: #333;
-	line-height : 19px;
-	min-height: 48px;
-	box-sizing: border-box;
-}
-
-.intranet-user-profile-stresslevel-status-copy {
-	clear: both;
-	display: inline-block;
-	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	font-size: 13px;
-	color: #9b9b9b;
-	margin-top: 2px;
-	line-height: 20px;
-	cursor: pointer;
-	padding-bottom: 1px;
-	border-bottom: 1px dashed rgba(168,173,180,.4);
-}
-
-.intranet-user-profile-stresslevel-status-copy:hover {
-	border-bottom: 1px dashed rgba(168,173,180,1);
-}
-
-.intranet-user-profile-stresslevel-status-buttons {
-	clear: both;
-	display: block;
-	overflow: hidden;
-	margin-top: 10px;
-	padding: 15px 0 5px 0;
-	text-align: center;
-	border-top: 1px solid rgba(82,86,105,.1);
-}
-
-.intranet-user-profile-stresslevel-visible,
-.intranet-user-profile-stresslevel-invisible {
-	position: absolute;
-	width: 20px;
-	height: 20px;
-	left: 10px;
-	top: 5px;
-	opacity: .7;
-	cursor: pointer;
-	z-index: 99;
-	transition: .15s;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2218%22%20height%3D%2214%22%20viewBox%3D%220%200%2018%2014%22%3E%3Cpath%20fill%3D%22%23A8ADB4%22%20fill-rule%3D%22evenodd%22%20d%3D%22M13.9590775%2C0.210596928%20C14.242978%2C-0.0701989761%2014.6999878%2C-0.0701989761%2014.9838884%2C0.210596928%20L14.9838884%2C0.210596928%20L15.4965103%2C0.721919985%20C15.7784236%2C1.00434666%2015.7784236%2C1.46170647%2015.4965103%2C1.74413314%20L15.4965103%2C1.74413314%20L14.3504712%2C2.8871415%20C15.5828101%2C3.87146911%2016.6743603%2C5.02012434%2017.5946234%2C6.30101305%20C17.783529%2C6.57512189%2017.783529%2C6.93741427%2017.5946234%2C7.21152312%20C17.4374597%2C7.44055775%2013.6893448%2C12.8165936%208.86792774%2C12.8165936%20C7.63026248%2C12.7946363%206.4159136%2C12.4761648%205.32676662%2C11.8878994%20L5.32676662%2C11.8878994%20L3.57848338%2C13.6305541%20C3.29477628%2C13.9118203%202.83737958%2C13.9118203%202.55367248%2C13.6305541%20L2.55367248%2C13.6305541%20L2.04105055%2C13.119664%20C1.75923668%2C12.8375343%201.75923668%2C12.3804465%202.04105055%2C12.0983168%20L2.04105055%2C12.0983168%20L3.46028593%2C10.6825451%20C2.19746978%2C9.68549434%201.08029858%2C8.51673448%200.141232115%2C7.21022424%20C-0.0470773718%2C6.93640486%20-0.0470773718%2C6.57483244%200.141232115%2C6.30101305%20C0.298395765%2C6.07197842%204.04607771%2C0.695942522%208.8683607%2C0.695942522%20C10.1391715%2C0.719614796%2011.3849061%2C1.05375288%2012.4969793%2C1.66923146%20L12.4969793%2C1.66923146%20Z%20M13.0195592%2C4.21545576%20L11.7265864%2C5.50620448%20C11.9070301%2C5.90372807%2012.0075175%2C6.3452529%2012.0075175%2C6.81024784%20C12.0075175%2C8.55455719%2010.5934754%2C9.96859931%208.84916607%2C9.96859931%20C8.3810866%2C9.96859931%207.93678963%2C9.86677428%207.53721761%2C9.68406668%20L6.71742679%2C10.5015688%20C7.39514514%2C10.8021%208.12663885%2C10.9624778%208.86792774%2C10.9730597%20L8.86792774%2C10.9730597%20C11.936299%2C10.9726268%2014.6422847%2C7.90815207%2015.5514959%2C6.75561865%20C14.8096529%2C5.81288922%2013.9598774%2C4.96035283%2013.0195592%2C4.21545576%20L13.0195592%2C4.21545576%20Z%20M8.86792774%2C2.5390435%20C5.78959841%2C2.5390435%203.09010709%2C5.6022193%202.18349364%2C6.75518569%20C2.94523471%2C7.72313268%203.82126513%2C8.59538335%204.79249681%2C9.35293196%20L4.79249681%2C9.35293196%20L5.9918448%2C8.15768949%20C5.79877965%2C7.74900216%205.6908146%2C7.2922333%205.6908146%2C6.81024784%20C5.6908146%2C5.06593849%207.10485672%2C3.65189637%208.84916607%2C3.65189637%20C9.33433821%2C3.65189637%209.79395922%2C3.76129377%2010.2047076%2C3.95676711%20L11.1123805%2C3.05079951%20C10.4082058%2C2.72526186%209.64361807%2C2.55092878%208.86792774%2C2.5390435%20Z%22/%3E%3C/svg%3E') center center no-repeat;
-}
-
-.intranet-user-profile-stresslevel-invisible {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2218%22%20height%3D%2212%22%20viewBox%3D%220%200%2018%2012%22%3E%3Cpath%20fill%3D%22%23BFC3C8%22%20fill-rule%3D%22evenodd%22%20d%3D%22M9.00021252%2C1.14575016e-13%20C10.2899174%2C0.0234366356%2011.5541731%2C0.354248653%2012.6827802%2C0.963600643%20L14.5638292%2C2.16938739%20C15.8144901%2C3.14391683%2016.9222692%2C4.28113814%2017.8562143%2C5.54927666%20C18.0479286%2C5.82065697%2018.0479286%2C6.17934303%2017.8562143%2C6.45072334%20C17.696714%2C6.67747812%2013.8928734%2C12%208.99977313%2C12%20C7.74370668%2C11.9782612%206.51130326%2C11.6629599%205.40596321%2C11.0805501%20L3.5117323%2C9.88719414%20C2.23014103%2C8.90006821%201.09636009%2C7.7429424%200.143331907%2C6.4494374%20C-0.0477773025%2C6.17834366%20-0.0477773025%2C5.8203704%200.143331907%2C5.54927666%20C0.302832213%2C5.32252188%204.10623344%2C1.14575016e-13%209.00021252%2C1.14575016e-13%20Z%20M8.99977313%2C1.82475442%20C5.87567623%2C1.82475442%203.13604977%2C4.85743883%202.21595709%2C5.99892838%20C2.98902348%2C6.95724026%203.87807843%2C7.82080839%204.86375005%2C8.57081622%20L6.81729925%2C9.70801929%20C7.50509368%2C10.005559%208.24746301%2C10.1643404%208.99977313%2C10.1743883%20C12.1137639%2C10.1743883%2014.8599813%2C7.14041793%2015.7827104%2C5.99935703%20C15.0298379%2C5.0660117%2014.1674282%2C4.2219616%2013.2131297%2C3.48447937%20L11.2775957%2C2.33141632%20C10.5629516%2C2.00911914%209.78699617%2C1.83652139%208.99977313%2C1.82475442%20Z%20M8.98073252%2C2.92652975%20C10.7509757%2C2.92652975%2012.1860413%2C4.32649624%2012.1860413%2C6.05344243%20C12.1860413%2C7.78038862%2010.7509757%2C9.18035511%208.98073252%2C9.18035511%20C7.21048936%2C9.18035511%205.77542373%2C7.78038862%205.77542373%2C6.05344243%20C5.77542373%2C4.32649624%207.21048936%2C2.92652975%208.98073252%2C2.92652975%20Z%22/%3E%3C/svg%3E');
-}
-
-.intranet-user-profile-stresslevel-visible:hover,
-.intranet-user-profile-stresslevel-invisible:hover {
-	opacity: .9;
-}
-
 .intranet-user-profile-phone-icon {
 	display: inline-block;
 	width: 14px;
@@ -2013,6 +1758,113 @@ form.profile-post-form {
 	color: #525c69;
 }
 
+#popup-window-content-intranet-user-profile-confirm-popup {
+	background-color: var(--ui-color-palette-white-base);
+	font-size: var(--ui-font-size-xl);
+	font-family: 'Inter', var(--ui-font-family-helvetica), serif;
+	letter-spacing: var(--ui-text-letter-spacing-neg-3);
+	line-height: var(--ui-font-line-height-md);
+	font-weight: var(--ui-font-weight-regular);
+}
+
+.intranet-user-profile-confirm-popup-fire {
+	width: 400px;
+	padding: 0 !important;
+}
+
+.intranet-user-profile-confirm-popup-fire .popup-window-titlebar-text {
+	color: var(--ui-color-palette-black-base) !important;
+	padding: var(--ui-space-inset-2xs2) 0 var(--ui-space-inset-xs2) var(--ui-space-inset-xl) !important;
+}
+
+#popup-window-content-intranet-user-profile-confirm-popup.popup-window-content {
+	color: var(--ui-color-palette-gray-90) !important;
+	padding: 0 var(--ui-space-inset-xl) 0 var(--ui-space-inset-xl) !important;
+}
+
+.intranet-user-profile-confirm-popup-fire .popup-window-buttons {
+	padding: var(--ui-space-inset-xl) !important;
+}
+
+#popup-window-titlebar-intranet-user-profile-confirm-popup .popup-window-titlebar-text {
+	font-size: var(--ui-font-size-2xl);
+}
+.intranet-user-profile-confirm-popup-confirm-button {
+	margin-right: var(--ui-space-inset-sm);
+}
+
+.intranet-user-profile-admin-confirm-popup {
+	width: 690px;
+	padding: 0 !important;
+	font-family: 'Inter', var(--ui-font-family-helvetica), serif;
+}
+
+.intranet-user-profile-admin-confirm-popup .popup-window-buttons {
+	padding: var(--ui-space-inset-xl) !important;
+}
+
+.intranet-user-profile-admin-confirm-popup .popup-window-titlebar-text {
+	padding-left: var(--ui-space-inset-xl);
+	color: var(--ui-color-palette-black-base) !important;
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+#popup-window-content-intranet-user-profile-admin-confirm-popup {
+	background-color: var(--ui-color-palette-white-base);
+	font-size: var(--ui-font-size-xl);
+	letter-spacing: var(--ui-text-letter-spacing-neg-3);
+	line-height: var(--ui-font-line-height-md);
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-palette-gray-90) !important;
+	padding: 0 var(--ui-space-inset-xl) 0 var(--ui-space-inset-xl) !important;
+}
+
+.intranet-user-profile-admin-confirm-popup-content-blue-card {
+	padding: var(--ui-space-inset-xl);
+	background-color: var(--ui-color-accent-soft-blue-3);
+	border-radius: var(--ui-border-radius-lg);
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inset-xs2);
+}
+
+.intranet-user-profile-admin-confirm-popup-content-warning {
+	margin: var(--ui-space-inset-md2) 0 var(--ui-space-inset-xs2) 0;
+}
+
+.intranet-user-profile-admin-confirm-popup-content-more-link {
+	font-size: var(--ui-font-size-md);
+	margin: 0 0 var(--ui-space-inset-xs) 0 !important;
+}
+
+.intranet-user-profile-admin-confirm-popup-decline-button, .intranet-user-profile-admin-confirm-popup-set-integrator-button {
+	margin-right: var(--ui-space-inset-xl) !important;
+}
+
+.intranet-user-profile-rank-portal-creator {
+	background-color: var(--ui-color-accent-main-primary);
+	width: 15px;
+	padding-bottom: 5px;
+	cursor: pointer;
+}
+
+.intranet-user-profile-rank-portal-creator .intranet-user-profile-portal-creator-icon {
+	background-color: var(--ui-color-palette-white-base);
+}
+
+.intranet-user-profile-portal-creator-popup-link {
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.intranet-user-profile-portal-creator-popup {
+	font-family: 'Inter', var(--ui-font-family-helvetica), serif;
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-color-palette-gray-10);
+	letter-spacing: var(--ui-text-letter-spacing-neg-3);
+	line-height: var(--ui-font-line-height-md);
+}
 .intranet-user-profile-otp-deactivate__status {
 	width: 260px;
 	height: 44px;

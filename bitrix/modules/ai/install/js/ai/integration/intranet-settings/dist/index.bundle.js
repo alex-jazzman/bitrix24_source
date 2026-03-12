@@ -20,6 +20,7 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	var _buildGroup = /*#__PURE__*/new WeakSet();
 	var _buildItem = /*#__PURE__*/new WeakSet();
 	var _addField = /*#__PURE__*/new WeakSet();
+	var _showBitrixGptAgreementPopup = /*#__PURE__*/new WeakSet();
 	var _bindEvents = /*#__PURE__*/new WeakSet();
 	var AiPage = /*#__PURE__*/function (_BaseSettingsPage) {
 	  babelHelpers.inherits(AiPage, _BaseSettingsPage);
@@ -28,6 +29,7 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	    babelHelpers.classCallCheck(this, AiPage);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AiPage).call(this));
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _bindEvents);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _showBitrixGptAgreementPopup);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _addField);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _buildItem);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _buildGroup);
@@ -215,6 +217,20 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	    row: row
 	  };
 	}
+	function _showBitrixGptAgreementPopup2() {
+	  main_core.Runtime.loadExtension('ai.bitrixgpt-agreement-popup').then(function (_ref2) {
+	    var showBitrixGptAgreementPopup = _ref2.showBitrixGptAgreementPopup;
+	    return main_core.ajax.runAction('ai.bitrixgptagreement.getPopupData').then(function (response) {
+	      var data = response === null || response === void 0 ? void 0 : response.data;
+	      if (!main_core.Type.isPlainObject(data) || !main_core.Type.isNumber(data.attempt)) {
+	        return;
+	      }
+	      showBitrixGptAgreementPopup(data);
+	    });
+	  })["catch"](function (error) {
+	    console.error(error);
+	  });
+	}
 	function _bindEvents2() {
 	  var _this4 = this;
 	  if (babelHelpers.classPrivateFieldGet(this, _onSaveCheckers).length > 0) {
@@ -223,6 +239,7 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	        var _field$switcher;
 	        (_field$switcher = field.switcher) === null || _field$switcher === void 0 ? void 0 : _field$switcher.check(false, false);
 	      });
+	      _classPrivateMethodGet(_this4, _showBitrixGptAgreementPopup, _showBitrixGptAgreementPopup2).call(_this4);
 	    });
 	  }
 	  if (babelHelpers.classPrivateFieldGet(this, _itemRelations).length > 0) {
@@ -233,7 +250,9 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	          relation.children.forEach(function (child) {
 	            var _babelHelpers$classPr, _babelHelpers$classPr2;
 	            var node = (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this4, _itemFields)[child]) === null || _babelHelpers$classPr === void 0 ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.row) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.getRowView();
-	            node.hide();
+	            if (node) {
+	              node.hide();
+	            }
 	          });
 	        }
 	        main_core_events.EventEmitter.subscribe(parent.field, 'change', function (event) {

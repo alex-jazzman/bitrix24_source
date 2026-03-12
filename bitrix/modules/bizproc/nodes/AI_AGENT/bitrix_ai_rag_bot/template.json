@@ -71,10 +71,6 @@
                         "A7426_4464_6102_9845:i0"
                     ],
                     [
-                        "A7426_4464_6102_9845:o0",
-                        "A9988_4968_1175_9417:i0"
-                    ],
-                    [
                         "A6799_3346_2347_2123:o0",
                         "A5172_6770_9062_4959:i0"
                     ],
@@ -89,6 +85,106 @@
                     [
                         "A6799_3346_2347_2123:a0",
                         "A9610_6597_9992_4868:t0"
+                    ],
+                    [
+                        "A5172_6770_9062_4959:o0",
+                        "A8106_3093_8889_3355:i0"
+                    ],
+                    [
+                        "A4889_7438_8206_9038:o0",
+                        "A4632_2501_2036_1473:i0"
+                    ],
+                    [
+                        "A3922_7992_6256_9512:o0",
+                        "A8939_8471_4950_3897:i0"
+                    ],
+                    [
+                        "A3922_7992_6256_9512:o0",
+                        "A4460_4773_5285_8053:i0"
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o1",
+                        "A6818_8593_1799_2521:i0"
+                    ],
+                    [
+                        "A6799_3346_2347_2123:o0",
+                        "A6833_3320_3842_9837:i0"
+                    ],
+                    [
+                        "A6833_3320_3842_9837:o0",
+                        "A3922_7992_6256_9512:i0"
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o1",
+                        "A7868_4961_2315_7261:i0"
+                    ],
+                    [
+                        "A7426_4464_6102_9845:o0",
+                        "A4889_7438_8206_9038:i0"
+                    ],
+                    [
+                        "A2532_3871_3620_3427:o0",
+                        "A9737_6776_3554_8777:i0"
+                    ],
+                    [
+                        "A9737_6776_3554_8777:o1",
+                        "A9988_4968_1175_9417:i0"
+                    ],
+                    [
+                        "A7868_4961_2315_7261:o0",
+                        "A7443_4094_7448_4833:i0"
+                    ],
+                    [
+                        "A7443_4094_7448_4833:o0",
+                        "A2637_1165_8843_2682:i0"
+                    ],
+                    [
+                        "A2637_1165_8843_2682:o0",
+                        "A7930_3492_4440_1410:i0"
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o0",
+                        "A7930_3492_4440_1410:i0"
+                    ],
+                    [
+                        "A6833_3320_3842_9837:o1",
+                        "A3712_2922_5544_6850:i0"
+                    ],
+                    [
+                        "A6833_3320_3842_9837:o0",
+                        "A1908_2854_9166_1869:i0"
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o1",
+                        "A2577_2609_9029_7391:i0"
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o0",
+                        "A7645_2085_3700_8707:i0"
+                    ],
+                    [
+                        "A7868_4961_2315_7261:o0",
+                        "A8483_2519_9624_3890:i0"
+                    ],
+                    [
+                        "A3922_7992_6256_9512:o0",
+                        "A8681_6811_9133_2178:i0"
+                    ],
+                    [
+                        "A4889_7438_8206_9038:o0",
+                        "A7445_3035_2369_4564:i0"
+                    ],
+                    [
+                        "A4632_2501_2036_1473:o0",
+                        "A2479_5231_1058_7910:i0"
+                    ],
+                    [
+                        "A4632_2501_2036_1473:o0",
+                        "A2532_3871_3620_3427:i0"
+                    ],
+                    [
+                        "A7868_4961_2315_7261:o0",
+                        "A2637_1165_8843_2682:i0"
                     ]
                 ]
             },
@@ -101,9 +197,34 @@
                         "mcpUser": "{=A9700_4393_6634_9720:SenderId}",
                         "query": "{=A9700_4393_6634_9720:Message}",
                         "systemPrompt": "###BIZPROC_AI_AGENT_RAGCHATBOT_SYSTEMPROMPT_1###",
-                        "returnType": "text",
-                        "jsonSchema": "",
-                        "jsonPath": null,
+                        "returnType": "json",
+                        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"chatAnswer\": {\n      \"type\": \"string\",\n      \"description\": \"Human readeable answer\"\n    },\n    \"isKnowledgeBaseHasAnswer\": {\n      \"type\": \"boolean\",\n      \"description\": \"Is knowledge base has information for user request?\"\n    }\n  },\n  \"required\": [\n    \"chatAnswer\",\"isKnowledgeBaseHasAnswer\"\n  ]\n}",
+                        "jsonPath": {
+                            "chatAnswer": {
+                                "Id": "chatAnswer",
+                                "Type": "json",
+                                "BaseType": "string",
+                                "Name": "JSON:chatAnswer",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            },
+                            "isKnowledgeBaseHasAnswer": {
+                                "Id": "isKnowledgeBaseHasAnswer",
+                                "Type": "json",
+                                "BaseType": "bool",
+                                "Name": "JSON:isKnowledgeBaseHasAnswer",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            }
+                        },
                         "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_2###",
                         "EditorComment": ""
                     },
@@ -115,34 +236,27 @@
                             "x": 598,
                             "y": 470
                         },
-						"dimensions": {
-							"width": null,
-							"height": null
-						},
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "aux": [
-                                {
-                                    "id": "a0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "topAux": null
+                        "dimensions": {
+                            "width": null,
+                            "height": null
                         },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            },
+                            {
+                                "id": "a0",
+                                "title": "",
+                                "type": "aux"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_2###",
@@ -283,20 +397,18 @@
                             "width": null,
                             "height": null
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_3###",
@@ -327,29 +439,27 @@
                             "x": 936,
                             "y": 234
                         },
-						"dimensions": {
-							"width": null,
-							"height": null
-						},
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
+                        "dimensions": {
+                            "width": null,
+                            "height": null
                         },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_4###",
-							"colorIndex": 1,
-							"icon": "MESSENGER",
+                            "colorIndex": 1,
+                            "icon": "MESSENGER",
                             "updated": null,
                             "published": null
                         }
@@ -366,6 +476,7 @@
                             "{=Constant:SetupTemplateActivity_BTXo5PtF6w}"
                         ],
                         "message": "###BIZPROC_AI_AGENT_RAGCHATBOT_MESSAGE_1###",
+                        "asError": "N",
                         "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
                         "EditorComment": ""
                     },
@@ -374,27 +485,25 @@
                         "id": "A9988_4968_1175_9417",
                         "type": "simple",
                         "position": {
-                            "x": 1269,
-                            "y": 234
+                            "x": 2302,
+                            "y": 262
                         },
-						"dimensions": {
-							"width": null,
-							"height": null
-						},
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
+                        "dimensions": {
+                            "width": null,
+                            "height": null
                         },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
@@ -415,8 +524,9 @@
                         "recipient": [
                             "{=A9700_4393_6634_9720:SenderId}"
                         ],
-                        "message": "{{=if(strlen({=A6799_3346_2347_2123:aiResult}) > 0, {=A6799_3346_2347_2123:aiResult}, {=A6799_3346_2347_2123:errorMessage})}}",
-						"asError": "{{=if(strlen({=A6799_3346_2347_2123:aiResult}) > 0, 'N', 'Y')}}",
+                        "chatId": "{=A9700_4393_6634_9720:chatId}",
+                        "message": "{{=if(strlen({=A6799_3346_2347_2123:chatAnswer}) > 0, {=A6799_3346_2347_2123:chatAnswer}, {=A6799_3346_2347_2123:errorMessage})}}",
+                        "asError": "{{=if(strlen({=A6799_3346_2347_2123:aiResult}) > 0, 'N', 'Y')}}",
                         "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
                         "EditorComment": ""
                     },
@@ -428,24 +538,22 @@
                             "x": 949,
                             "y": 470
                         },
-						"dimensions": {
-							"width": null,
-							"height": null
-						},
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
+                        "dimensions": {
+                            "width": null,
+                            "height": null
                         },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
@@ -474,15 +582,13 @@
                             "width": null,
                             "height": null
                         },
-                        "ports": {
-                            "input": [],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "trigger",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_6###",
@@ -514,19 +620,17 @@
                             "x": 193,
                             "y": 470
                         },
-						"dimensions": {
-							"width": null,
-							"height": null
-						},
-                        "ports": {
-                            "input": [],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
+                        "dimensions": {
+                            "width": null,
+                            "height": null
                         },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "trigger",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_7###",
@@ -554,25 +658,687 @@
                             "x": 598,
                             "y": 607
                         },
-						"dimensions": {
-							"width": null,
-							"height": null
-						},
-                        "ports": {
-                            "input": [],
-                            "output": [],
-                            "topAux": [
-                                {
-                                    "id": "t0",
-                                    "position": 1
-                                }
-                            ]
+                        "dimensions": {
+                            "width": null,
+                            "height": null
                         },
+                        "ports": [
+                            {
+                                "id": "t0",
+                                "title": "",
+                                "type": "topAux"
+                            }
+                        ],
                         "node": {
                             "type": "tool",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_8###",
                             "colorIndex": 0,
                             "icon": "DATABASE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A4889_7438_8206_9038",
+                    "Type": "CreateStorageNode",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageTitle": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_STORAGETITLE_1###",
+                        "StorageDescription": "",
+                        "StorageCode": "RAG_SYSTEM_INFO_{=Workflow:TemplateId}",
+                        "Mode": "Y",
+                        "StorageFields": {
+                            "ID": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_1###",
+                                "Type": "int"
+                            },
+                            "CODE": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_2###",
+                                "Type": "string"
+                            },
+                            "DOCUMENT_ID": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_3###",
+                                "Type": "string"
+                            },
+                            "WORKFLOW_ID": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_4###",
+                                "Type": "string"
+                            },
+                            "TEMPLATE_ID": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_5###",
+                                "Type": "int"
+                            },
+                            "CREATED_BY": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_6###",
+                                "Type": "user"
+                            },
+                            "CREATED_TIME": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_7###",
+                                "Type": "datetime"
+                            },
+                            "startUser": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_8###",
+                                "Type": "user"
+                            },
+                            "missingGroupChatId": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_9###",
+                                "Type": "int"
+                            },
+                            "bot": {
+                                "Name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_10###",
+                                "Type": "string"
+                            }
+                        },
+                        "SelectedFields": [
+                            {
+                                "id": 0,
+                                "storageId": 0,
+                                "code": "startUser",
+                                "sort": 500,
+                                "name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_11###",
+                                "description": "",
+                                "type": "user",
+                                "multiple": false,
+                                "mandatory": false,
+                                "settings": null
+                            },
+                            {
+                                "id": 0,
+                                "storageId": 0,
+                                "code": "missingGroupChatId",
+                                "sort": 500,
+                                "name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_12###",
+                                "description": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_DESCRIPTION_1###",
+                                "type": "int",
+                                "multiple": false,
+                                "mandatory": false,
+                                "settings": null
+                            },
+                            {
+                                "id": 0,
+                                "storageId": 0,
+                                "code": "bot",
+                                "sort": 500,
+                                "name": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_13###",
+                                "description": "",
+                                "type": "string",
+                                "multiple": false,
+                                "mandatory": false,
+                                "settings": null
+                            }
+                        ],
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_1###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A4889_7438_8206_9038",
+                        "type": "simple",
+                        "position": {
+                            "x": 1215,
+                            "y": 234
+                        },
+                        "dimensions": {
+                            "width": 207.0500030517578,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_1###",
+                            "colorIndex": 5,
+                            "icon": "DATABASE",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A2532_3871_3620_3427",
+                    "Type": "WriteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "FieldValue": {
+                            "{=A4889_7438_8206_9038:startUser}": "{=A4791_5036_6881_3286:startedBy}",
+                            "{=A4889_7438_8206_9038:missingGroupChatId}": "{=A4632_2501_2036_1473:missingGroupChatId}",
+                            "{=A4889_7438_8206_9038:bot}": "{=A7426_4464_6102_9845:botId > user}"
+                        },
+                        "Author": "{=A4791_5036_6881_3286:startedBy}",
+                        "StorageId": null,
+                        "StorageCode": "RAG_SYSTEM_INFO_{=Workflow:TemplateId}",
+                        "Fields": {
+                            "{=A4889_7438_8206_9038:startUser}": {
+                                "Value": "{=A4791_5036_6881_3286:startedBy}",
+                                "FieldName": "{=A4889_7438_8206_9038:startUser}"
+                            },
+                            "{=A4889_7438_8206_9038:missingGroupChatId}": {
+                                "Value": "{=A4632_2501_2036_1473:missingGroupChatId}",
+                                "FieldName": "{=A4889_7438_8206_9038:missingGroupChatId}"
+                            },
+                            "{=A4889_7438_8206_9038:bot}": {
+                                "Value": "{=A7426_4464_6102_9845:botId > user}",
+                                "FieldName": "{=A4889_7438_8206_9038:bot}"
+                            }
+                        },
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2532_3871_3620_3427",
+                        "type": "simple",
+                        "position": {
+                            "x": 1766,
+                            "y": 234
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2###",
+                            "colorIndex": 5,
+                            "icon": "PLUS_M",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A4632_2501_2036_1473",
+                    "Type": "ReadDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageId": null,
+                        "StorageCode": "RAG_SYSTEM_INFO_{=Workflow:TemplateId}",
+                        "ReturnMode": "single",
+                        "ReturnFields": [],
+                        "ReturnFieldsByStorageCode": [
+                            "missingGroupChatId",
+                            "bot",
+                            "id"
+                        ],
+                        "DynamicFilterFields": {
+                            "items": []
+                        },
+                        "OutputFields": {
+                            "missingGroupChatId": {
+                                "Name": "missingGroupChatId",
+                                "FieldName": "missingGroupChatId",
+                                "Type": "string"
+                            },
+                            "bot": {
+                                "Name": "bot",
+                                "FieldName": "bot",
+                                "Type": "string"
+                            },
+                            "id": {
+                                "Name": "id",
+                                "FieldName": "id",
+                                "Type": "string"
+                            }
+                        },
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A4632_2501_2036_1473",
+                        "type": "simple",
+                        "position": {
+                            "x": 1493,
+                            "y": 234
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_3###",
+                            "colorIndex": 5,
+                            "icon": "DATA_READING",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A3922_7992_6256_9512",
+                    "Type": "ReadDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageId": null,
+                        "StorageCode": "RAG_SYSTEM_INFO_{=Workflow:TemplateId}",
+                        "ReturnMode": "single",
+                        "ReturnFields": [],
+                        "ReturnFieldsByStorageCode": [
+                            "missingGroupChatId",
+                            "startUser",
+                            "bot"
+                        ],
+                        "DynamicFilterFields": {
+                            "items": []
+                        },
+                        "OutputFields": {
+                            "missingGroupChatId": {
+                                "Name": "missingGroupChatId",
+                                "FieldName": "missingGroupChatId",
+                                "Type": "string"
+                            },
+                            "startUser": {
+                                "Name": "startUser",
+                                "FieldName": "startUser",
+                                "Type": "string"
+                            },
+                            "bot": {
+                                "Name": "bot",
+                                "FieldName": "bot",
+                                "Type": "string"
+                            }
+                        },
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A3922_7992_6256_9512",
+                        "type": "simple",
+                        "position": {
+                            "x": 1187,
+                            "y": 638
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_3###",
+                            "colorIndex": 5,
+                            "icon": "DATA_READING",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A4460_4773_5285_8053",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5###",
+                        "mixedcondition": [
+                            {
+                                "object": "A3922_7992_6256_9512",
+                                "field": "missingGroupChatId",
+                                "operator": "!empty",
+                                "value": "",
+                                "joiner": 0
+                            }
+                        ],
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A4460_4773_5285_8053",
+                        "type": "complex",
+                        "position": {
+                            "x": 1485,
+                            "y": 589
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 120
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output"
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5###",
+                            "colorIndex": 3,
+                            "icon": "CONDITION",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A6833_3320_3842_9837",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5###",
+                        "mixedcondition": [
+                            {
+                                "object": "A6799_3346_2347_2123",
+                                "field": "isKnowledgeBaseHasAnswer",
+                                "operator": "=",
+                                "value": "N",
+                                "joiner": 0
+                            },
+                            {
+                                "object": "A6799_3346_2347_2123",
+                                "field": "toolsUsed",
+                                "operator": "=",
+                                "value": "Y",
+                                "joiner": 0
+                            }
+                        ],
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6833_3320_3842_9837",
+                        "type": "complex",
+                        "position": {
+                            "x": 908,
+                            "y": 581
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 120
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output"
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5###",
+                            "colorIndex": 3,
+                            "icon": "CONDITION",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A7868_4961_2315_7261",
+                    "Type": "ImCreateGroupChatActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "ChatName": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_CHATNAME_1###",
+                        "Members": [
+                            "{{=merge({=A3922_7992_6256_9512:startUser},{=A3922_7992_6256_9512:bot})}}"
+                        ],
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_6###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A7868_4961_2315_7261",
+                        "type": "simple",
+                        "position": {
+                            "x": 1747,
+                            "y": 751
+                        },
+                        "dimensions": {
+                            "width": 216.10000610351562,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_6###",
+                            "colorIndex": 1,
+                            "icon": "CHATS",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A9737_6776_3554_8777",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5###",
+                        "EditorComment": "",
+                        "mixedcondition": [
+                            {
+                                "object": "A4632_2501_2036_1473",
+                                "field": "bot",
+                                "operator": "!empty",
+                                "value": "",
+                                "joiner": 0
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9737_6776_3554_8777",
+                        "type": "complex",
+                        "position": {
+                            "x": 2030,
+                            "y": 185
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 120
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output"
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5###",
+                            "colorIndex": 3,
+                            "icon": "CONDITION",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A2637_1165_8843_2682",
+                    "Type": "WriteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "FieldValue": {
+                            "missingGroupChatId": "{=A7868_4961_2315_7261:ChatId}",
+                            "startUser": "{=A3922_7992_6256_9512:startUser}",
+                            "bot": "{=A9700_4393_6634_9720:ActualBotId > user}"
+                        },
+                        "Author": "{=A3922_7992_6256_9512:startUser}",
+                        "StorageId": null,
+                        "StorageCode": "RAG_SYSTEM_INFO_{=Workflow:TemplateId}",
+                        "Fields": {
+                            "missingGroupChatId": {
+                                "Value": "{=A7868_4961_2315_7261:ChatId}",
+                                "FieldName": "missingGroupChatId"
+                            },
+                            "startUser": {
+                                "Value": "{=A3922_7992_6256_9512:startUser}",
+                                "FieldName": "startUser"
+                            },
+                            "bot": {
+                                "Value": "{=A9700_4393_6634_9720:ActualBotId > user}",
+                                "FieldName": "bot"
+                            }
+                        },
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2637_1165_8843_2682",
+                        "type": "simple",
+                        "position": {
+                            "x": 2036,
+                            "y": 751
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2###",
+                            "colorIndex": 5,
+                            "icon": "PLUS_M",
+                            "updated": null,
+                            "published": null
+                        }
+                    }
+                },
+                {
+                    "Name": "A7930_3492_4440_1410",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A9700_4393_6634_9720:ActualBotId}",
+                        "botCode": "",
+                        "recipient": null,
+                        "chatId": "{{=if({=A3922_7992_6256_9512:missingGroupChatId} > 0, {=A3922_7992_6256_9512:missingGroupChatId},{=A7868_4961_2315_7261:ChatId})}}",
+                        "message": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_MESSAGE_1###",
+                        "asError": "N",
+                        "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A7930_3492_4440_1410",
+                        "type": "simple",
+                        "position": {
+                            "x": 2298,
+                            "y": 648
+                        },
+                        "dimensions": {
+                            "width": 292.1166687011719,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
+                            "colorIndex": 2,
+                            "icon": "GO_TO_MESSAGE",
                             "updated": null,
                             "published": null
                         }

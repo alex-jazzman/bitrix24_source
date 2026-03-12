@@ -47,8 +47,6 @@ export class Img extends Base
 			event.preventDefault();
 			event.stopPropagation();
 
-			BX.Landing.UI.Button.ColorAction.hideAll();
-
 			if (!this.editPanel)
 			{
 				this.editPanel = new BX.Landing.UI.Panel.Content(this.selector, {

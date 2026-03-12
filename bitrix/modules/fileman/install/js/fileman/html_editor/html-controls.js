@@ -4028,18 +4028,15 @@ function __run()
 			endHeight,
 			startOpacity,
 			endOpacity,
-			i, row;
+			i;
 
 		if (animate)
 		{
 			for (i = 0; i < rows.length; i++)
 			{
-				row = this.rows[rows[i]];
+				const row = this.rows[rows[i]];
 				if (row && row.cont)
 				{
-					if (row.animation)
-						row.animation.stop();
-
 					row.cont.style.display = '';
 					if (show)
 					{
@@ -4056,6 +4053,11 @@ function __run()
 						endOpacity = 0;
 					}
 
+					// TODO: get fixed properly if it's not
+					// previously jabber:238368 threw an error when clicking "Additional Parameters"
+					// in adding and image in admin panel
+					// for both: step and complete
+					// probably remove both "...Old" variables
 					row.animation = new BX.easing({
 						_row: row,
 						duration : 300,
@@ -4064,12 +4066,20 @@ function __run()
 						transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
 						step : function(state)
 						{
-							_this.SetRowHeight(this._row.cont, state.height, state.opacity);
+							const contOld = this?._row?.cont;
+							const contNew = row.cont;
+							const contFinal = contOld || contNew;
+
+							_this.SetRowHeight(contFinal, state.height, state.opacity);
 						},
 						complete : function()
 						{
 							_this.CheckSize();
-							this._row.animation = null;
+							const rowOld = this?._row;
+							const rowNew = row;
+							const rowFinal = rowOld || rowNew;
+
+							rowFinal.animation = null;
 						}
 					});
 
@@ -4081,7 +4091,7 @@ function __run()
 		{
 			for (i = 0; i < rows.length; i++)
 			{
-				row = this.rows[rows[i]];
+				const row = this.rows[rows[i]];
 				if (row && row.cont)
 				{
 					if (show)
@@ -4105,19 +4115,20 @@ function __run()
 	{
 		if (tr && tr.cells)
 		{
+			const trStyle = tr.style;
+			trStyle.opacity = opacity / 100;
 			if (height == 0 || opacity == 0)
 			{
-				tr.style.display = 'none';
+				trStyle.display = 'none';
 			}
 			else
 			{
-				tr.style.display = '';
+				trStyle.display = '';
 			}
 
-			tr.style.opacity = opacity / 100;
 			for (var i = 0; i < tr.cells.length; i++)
 			{
-				tr.cells[i].style.height = height + 'px';
+				tr.cells[i].height = `${height}px`;
 			}
 		}
 	};

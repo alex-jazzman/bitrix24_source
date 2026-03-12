@@ -120,6 +120,7 @@ export const TaskSettingsPopup = {
 					matchesWorkTime: this.stateFlags.matchesWorkTime,
 					defaultRequireResult: this.stateFlags.defaultRequireResult,
 					defaultDeadline: this.deadlineUserOption,
+					allowsTimeTracking: this.stateFlags.allowsTimeTracking,
 				});
 			}
 

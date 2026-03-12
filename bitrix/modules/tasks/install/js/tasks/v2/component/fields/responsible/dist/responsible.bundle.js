@@ -3,16 +3,14 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_component_elements_participants,tasks_v2_component_elements_hint,tasks_v2_lib_ahaMoments,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,tasks_v2_const,ui_system_typography_vue,ui_switcher,ui_vue3_components_switcher,tasks_v2_component_elements_questionMark,main_core,ui_vue3,tasks_v2_component_elements_userAvatarList) {
+(function (exports,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_component_elements_participants,tasks_v2_lib_ahaMoments,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_provider_service_taskService,tasks_v2_const,ui_vue3_directives_hint,ui_system_typography_vue,ui_switcher,ui_vue3_components_switcher,tasks_v2_component_elements_questionMark,tasks_v2_component_elements_hint,tasks_v2_lib_idUtils,main_core,ui_vue3,tasks_v2_component_elements_userAvatarList) {
 	'use strict';
 
 	const responsibleMeta = Object.freeze({
 	  id: tasks_v2_const.TaskField.Responsible,
+	  hint: main_core.Loc.getMessage('TASKS_V2_RESPONSIBLE_MANY_AHA'),
 	  getTitle: isMany => {
-	    if (isMany) {
-	      return main_core.Loc.getMessage('TASKS_V2_RESPONSIBLE_TITLE_MANY');
-	    }
-	    return main_core.Loc.getMessage('TASKS_V2_RESPONSIBLE_TITLE');
+	    return isMany ? main_core.Loc.getMessage('TASKS_V2_RESPONSIBLE_TITLE_MANY') : main_core.Loc.getMessage('TASKS_V2_RESPONSIBLE_TITLE');
 	  }
 	});
 
@@ -24,36 +22,60 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    TextSm: ui_system_typography_vue.TextSm,
 	    QuestionMark: tasks_v2_component_elements_questionMark.QuestionMark
 	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  inject: {
+	    task: {},
+	    isTemplate: {}
+	  },
 	  props: {
-	    modelValue: {
+	    isChecked: {
 	      type: Boolean,
 	      required: true
 	    }
 	  },
-	  emits: ['update:modelValue'],
+	  emits: ['update:isChecked'],
+	  setup() {},
 	  computed: {
-	    switcherOptions() {
-	      return Object.freeze({
+	    disabled() {
+	      return this.isTemplate && (this.task.replicate || tasks_v2_lib_idUtils.idUtils.isTemplate(this.task.parentId));
+	    },
+	    options() {
+	      return {
 	        size: ui_switcher.SwitcherSize.extraSmall,
 	        useAirDesign: true
-	      });
+	      };
 	    },
-	    hint() {
-	      return this.loc('TASKS_V2_RESPONSIBLE_FOR_NEW_USER_HINT');
+	    tooltip() {
+	      if (!this.disabled) {
+	        return null;
+	      }
+	      return () => tasks_v2_component_elements_hint.tooltip({
+	        text: this.loc('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_NO_TYPE_NEW_TEMPLATE_NOTICE'),
+	        popupOptions: {
+	          offsetLeft: 10
+	        },
+	        timeout: 200
+	      });
 	    }
 	  },
 	  methods: {
-	    toggleChecked(checked) {
-	      this.$emit('update:modelValue', checked);
+	    handleClick() {
+	      if (!this.disabled) {
+	        this.$emit('update:isChecked', !this.isChecked);
+	      }
 	    }
 	  },
 	  template: `
-		<div class="tasks-field-responsible-for-new-user-switcher" @click="toggleChecked(!this.modelValue)">
-			<Switcher :isChecked="modelValue" :options="switcherOptions"/>
-			<TextSm className="tasks-field-responsible-for-new-user-switcher-label">
-				{{ loc('TASKS_V2_RESPONSIBLE_FOR_NEW_USER') }}
-			</TextSm>
-			<QuestionMark v-if="hint" :hintText="hint" :hintMaxWidth="320" @click.stop/>
+		<div :class="['tasks-field-responsible-new-user', { '--disabled': disabled }]">
+			<div v-hint="tooltip" class="tasks-field-responsible-new-user-switcher" @click="handleClick">
+				<Switcher :isChecked :options/>
+				<TextSm className="tasks-field-responsible-new-user-text">
+					{{ loc('TASKS_V2_RESPONSIBLE_FOR_NEW_USER') }}
+				</TextSm>
+			</div>
+			<QuestionMark :hintText="loc('TASKS_V2_RESPONSIBLE_FOR_NEW_USER_HINT')" :hintMaxWidth="320" @click.stop/>
 		</div>
 	`
 	};
@@ -113,7 +135,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      },
 	      set(isForNewUser) {
 	        void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-	          isForNewUser
+	          isForNewUser,
+	          responsibleIds: isForNewUser ? [0] : [this.currentUserId]
 	        });
 	      }
 	    },
@@ -152,14 +175,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        responsibleIds.push(this.task.responsibleIds[0]);
 	      }
 	      const currentIds = new Set(this.task.responsibleIds);
-	      if (responsibleIds.some(id => !currentIds.has(id))) {
-	        tasks_v2_lib_analytics.analytics.sendAssigneeChange(this.analytics, {
-	          cardType: this.cardType
-	        });
-	      }
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        responsibleIds
 	      });
+	      if (responsibleIds.some(id => !currentIds.has(id))) {
+	        var _this$task$auditorsId, _this$task$auditorsId2, _this$task$accomplice, _this$task$accomplice2;
+	        tasks_v2_lib_analytics.analytics.sendAssigneeChange(this.analytics, {
+	          cardType: this.cardType,
+	          taskId: main_core.Type.isNumber(this.taskId) ? this.taskId : 0,
+	          viewersCount: (_this$task$auditorsId = (_this$task$auditorsId2 = this.task.auditorsIds) == null ? void 0 : _this$task$auditorsId2.length) != null ? _this$task$auditorsId : 0,
+	          coexecutorsCount: (_this$task$accomplice = (_this$task$accomplice2 = this.task.accomplicesIds) == null ? void 0 : _this$task$accomplice2.length) != null ? _this$task$accomplice : 0
+	        });
+	      }
 	      if (responsibleIds.length > 1) {
 	        this.showManyAha();
 	      }
@@ -200,6 +227,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:userIds="task.responsibleIds"
 				:canAdd="task.rights.delegate || task.rights.changeResponsible"
 				:canRemove="task.rights.delegate || task.rights.changeResponsible"
+				:forceEdit="!isEdit"
 				:withHint="!isAdmin && !isEdit && task.creatorId !== currentUserId"
 				:hintText="loc('TASKS_V2_RESPONSIBLE_CANT_CHANGE')"
 				:single
@@ -207,10 +235,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:inline="avatarOnly || single"
 				:avatarOnly
 				:dataset
+				:showMenu="false"
 				@hintClick="handleHintClick"
 				@update="updateTask"
 			/>
-			<ForNewUserSwitcher v-if="!isEdit && isTemplate && !avatarOnly" v-model="forNewUser"/>
+			<ForNewUserSwitcher v-if="!isEdit && isTemplate && !avatarOnly && task.context !== 'flow'" v-model:isChecked="forNewUser"/>
 		</div>
 		<Hint v-if="isManyAhaShown" :bindElement="$refs.container" @close="isManyAhaShown = false">
 			<div class="tasks-field-responsible-many-aha">
@@ -224,5 +253,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.Responsible = Responsible;
 	exports.responsibleMeta = responsibleMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Const,BX.UI.System.Typography.Vue,BX.UI,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX,BX.Vue3,BX.Tasks.V2.Component.Elements));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Const,BX.Vue3.Directives,BX.UI.System.Typography.Vue,BX.UI,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX,BX.Vue3,BX.Tasks.V2.Component.Elements));
 //# sourceMappingURL=responsible.bundle.js.map

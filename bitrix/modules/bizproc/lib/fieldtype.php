@@ -82,6 +82,11 @@ class FieldType
 	public const DOCUMENT = 'document';
 
 	/**
+	 * type DOCUMENT_TYPE
+	 */
+	public const DOCUMENT_TYPE = 'document_type';
+
+	/**
 	 * type JSON
 	 */
 	public const JSON = 'json';
@@ -519,6 +524,7 @@ class FieldType
 			static::INTERNALSELECT => BaseType\InternalSelect::class,
 			static::ENTITYSELECTOR => BaseType\EntitySelector::class,
 			static::TIME => BaseType\Time::class,
+			static::DOCUMENT_TYPE => BaseType\DocumentType::class,
 		);
 	}
 
@@ -576,6 +582,7 @@ class FieldType
 		$normalized = [
 			'Id' => null,
 			'Type' => null,
+			'BaseType' => null,
 
 			'Name' => null,
 			'Description' => null,
@@ -615,6 +622,9 @@ class FieldType
 				case '3':
 					$normalized['Options'] = is_array($val)? $val : (string)$val;
 					break;
+				case 'BASETYPE':
+					$normalized['BaseType'] = is_string($val) ? $val : null;
+					break;
 				case 'SETTINGS':
 					$normalized['Settings'] = is_array($val) ? $val : null;
 					break;
@@ -623,10 +633,10 @@ class FieldType
 					break;
 				case 'NAME':
 				case 'TITLE':
-					$normalized['Name'] = (string)$val;
+					$normalized['Name'] = \CBPHelper::stringify($val);
 					break;
 				case 'DESCRIPTION':
-					$normalized['Description'] = (string)$val;
+					$normalized['Description'] = \CBPHelper::stringify($val);
 					break;
 				case 'DEFAULT':
 					$normalized['Default'] = $val;

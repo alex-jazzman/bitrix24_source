@@ -1,0 +1,11 @@
+<?php
+$MESS["CALL_GET_FOLLOWUP_ACTIVITY_DATE_END_BEFORE_DATE_START"] = "Earliest follow-up date in the selection must be earlier than the latest follow-up date.";
+$MESS["CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_PROPERTY_CALL_IDS_NAME"] = "Call IDs";
+$MESS["CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_PROPERTY_DATE_END_NAME"] = "Select follow-ups till:";
+$MESS["CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_PROPERTY_DATE_START_NAME"] = "Select follow-ups from:";
+$MESS["CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_PROPERTY_LIMIT_NAME"] = "Maximum number of calls:";
+$MESS["CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_PROPERTY_USER_NAME"] = "User";
+$MESS["CALL_GET_FOLLOWUP_ACTIVITY_LIMIT_INCORRECT"] = "Maximum number of calls must be a number from 1 to #MAX_LIMIT#.";
+$MESS["CALL_GET_FOLLOWUP_ACTIVITY_NO_DATE_START"] = "The date of the first follow-up is not specified.";
+$MESS["CALL_GET_FOLLOWUP_ACTIVITY_NO_MODULE_ERROR"] = "Module \"#MODULE#\" is not installed.";
+$MESS["CALL_GET_FOLLOWUP_ACTIVITY_NO_USER"] = "User is not specified.";

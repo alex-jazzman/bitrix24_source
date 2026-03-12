@@ -484,6 +484,25 @@ CREATE TABLE b_bp_workflow_template_draft
     INDEX ix_bp_wf_draft_user (USER_ID)
 );
 
+CREATE TABLE b_bp_task_archive (
+	ID int NOT NULL auto_increment,
+	WORKFLOW_ID varchar(32) NOT NULL,
+	TASKS_DATA mediumblob NOT NULL,
+	PRIMARY KEY (ID),
+	INDEX ix_bp_task_archive_wf_id(WORKFLOW_ID)
+);
+
+CREATE TABLE b_bp_task_archive_tasks
+(
+	ID int NOT NULL auto_increment,
+	ARCHIVE_ID int NOT NULL,
+	TASK_ID int NOT NULL,
+	COMPLETED_AT datetime NOT NULL,
+	primary key (ID),
+	INDEX ix_bp_task_archive_tasks_task_archive (TASK_ID, ARCHIVE_ID),
+	INDEX ix_bp_task_archive_tasks_archive_completed_at (ARCHIVE_ID, COMPLETED_AT)
+);
+
 CREATE TABLE b_bp_robot_version_index
 (
 	ID int NOT NULL AUTO_INCREMENT,

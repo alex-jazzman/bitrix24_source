@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core_events,im_v2_lib_layout,im_v2_lib_user,im_v2_lib_stickerManager,im_v2_lib_userStatus,im_v2_lib_logger,im_v2_lib_channel,im_v2_lib_utils,im_v2_const,im_v2_application_core,main_core,im_v2_model,ui_vue3_vuex) {
+(function (exports,main_core_events,im_v2_lib_layout,im_v2_lib_user,im_v2_lib_userStatus,im_v2_lib_logger,im_v2_lib_channel,im_v2_lib_utils,im_v2_application_core,ui_vue3_vuex,im_v2_model,im_v2_const,main_core) {
 	'use strict';
 
 	const isNumberOrString = target => {
@@ -505,8 +505,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}, {
 	  fieldName: 'chatId',
 	  targetFieldName: 'chatId',
-	  checkFunction: im_v2_model.isNumberOrString,
-	  formatFunction: im_v2_model.convertToNumber
+	  checkFunction: isNumberOrString,
+	  formatFunction: convertToNumber
 	}, {
 	  fieldName: 'date',
 	  targetFieldName: 'date',
@@ -515,12 +515,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}, {
 	  fieldName: 'text',
 	  targetFieldName: 'text',
-	  checkFunction: im_v2_model.isNumberOrString,
-	  formatFunction: im_v2_model.convertToString
+	  checkFunction: isNumberOrString,
+	  formatFunction: convertToString
 	}, {
 	  fieldName: ['senderId', 'authorId'],
 	  targetFieldName: 'authorId',
-	  checkFunction: im_v2_model.isNumberOrString,
+	  checkFunction: isNumberOrString,
 	  formatFunction: prepareAuthorId
 	}, {
 	  fieldName: 'sending',
@@ -592,8 +592,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}, {
 	  fieldName: 'replyId',
 	  targetFieldName: 'replyId',
-	  checkFunction: im_v2_model.isNumberOrString,
-	  formatFunction: im_v2_model.convertToNumber
+	  checkFunction: isNumberOrString,
+	  formatFunction: convertToNumber
 	}, {
 	  fieldName: 'forward',
 	  targetFieldName: 'forward',
@@ -774,7 +774,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        const reactions = state.collection[messageId];
 	        if (im_v2_application_core.Core.getUserId() === userId) {
-	          this.handleOwnReactions(reactions, payload);
+	          reactions.ownReactions.add(reaction);
 	        }
 	        if (!reactions.reactionCounters[reaction]) {
 	          reactions.reactionCounters[reaction] = 0;
@@ -808,16 +808,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	    };
 	  }
-	  handleOwnReactions(reactions, payload) {
-	    const {
-	      reaction,
-	      withReplace = true
-	    } = payload;
-	    if (withReplace) {
-	      this.removeAllCurrentUserReactions(reactions);
-	    }
-	    reactions.ownReactions.add(reaction);
-	  }
 	  addUserToReaction(reactions, payload) {
 	    const {
 	      userId,
@@ -827,17 +817,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      reactions.reactionUsers[reaction] = new Set();
 	    }
 	    reactions.reactionUsers[reaction].add(userId);
-	  }
-	  removeAllCurrentUserReactions(reactions) {
-	    reactions.ownReactions.forEach(reaction => {
-	      var _reactions$reactionUs2;
-	      (_reactions$reactionUs2 = reactions.reactionUsers[reaction]) == null ? void 0 : _reactions$reactionUs2.delete(im_v2_application_core.Core.getUserId());
-	      reactions.reactionCounters[reaction]--;
-	      if (reactions.reactionCounters[reaction] === 0) {
-	        delete reactions.reactionCounters[reaction];
-	      }
-	    });
-	    reactions.ownReactions = new Set();
 	  }
 	  prepareSetPayload(payload) {
 	    return payload.map(item => {
@@ -1355,335 +1334,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
-	const getStickersKeys = (target, currentResult, rawFields) => {
-	  const {
-	    id,
-	    type
-	  } = rawFields;
-	  const stickers = [];
-	  target.forEach(sticker => {
-	    const key = new im_v2_lib_stickerManager.StickerManager().makeStickerKey(sticker.id, id, type);
-	    stickers.push(key);
-	  });
-	  return stickers;
-	};
-	const preparePackKey = (target, currentResult, rawFields) => {
-	  const {
-	    id,
-	    type
-	  } = rawFields;
-	  return new im_v2_lib_stickerManager.StickerManager().makePackKey(id, type);
-	};
-	const prepareStickerKey = (target, currentResult, rawFields) => {
-	  const {
-	    id,
-	    packId,
-	    packType
-	  } = rawFields;
-	  return new im_v2_lib_stickerManager.StickerManager().makeStickerKey(id, packId, packType);
-	};
-
-	const messageFieldsConfig$1 = [{
-	  fieldName: ['id', 'temporaryId'],
-	  targetFieldName: 'messageId',
-	  checkFunction: [main_core.Type.isNumber, im_v2_lib_utils.Utils.text.isTempMessage]
-	}, {
-	  fieldName: 'stickerParams',
-	  targetFieldName: 'key',
-	  checkFunction: main_core.Type.isPlainObject,
-	  formatFunction: target => {
-	    const {
-	      id,
-	      packId,
-	      packType
-	    } = target;
-	    return new im_v2_lib_stickerManager.StickerManager().makeStickerKey(id, packId, packType);
-	  }
-	}, {
-	  fieldName: 'sticker',
-	  targetFieldName: 'key',
-	  checkFunction: main_core.Type.isBoolean,
-	  formatFunction: target => {
-	    return target ? '' : null;
-	  }
-	}, {
-	  fieldName: 'stickerParams',
-	  targetFieldName: 'uri',
-	  checkFunction: main_core.Type.isPlainObject,
-	  formatFunction: target => {
-	    return main_core.Type.isStringFilled(target.uri) ? target.uri : '';
-	  }
-	}, {
-	  fieldName: 'stickerParams',
-	  targetFieldName: 'type',
-	  checkFunction: main_core.Type.isPlainObject,
-	  formatFunction: target => {
-	    return main_core.Type.isStringFilled(target.type) ? target.type : '';
-	  }
-	}];
-	const packFieldsConfig = [{
-	  fieldName: 'id',
-	  targetFieldName: 'key',
-	  checkFunction: main_core.Type.isNumber,
-	  formatFunction: preparePackKey
-	}, {
-	  fieldName: 'name',
-	  targetFieldName: 'name',
-	  checkFunction: main_core.Type.isString
-	}, {
-	  fieldName: 'stickers',
-	  targetFieldName: 'stickers',
-	  checkFunction: main_core.Type.isArray,
-	  formatFunction: getStickersKeys
-	}];
-	const stickerFieldsConfig = [{
-	  fieldName: 'id',
-	  targetFieldName: 'key',
-	  checkFunction: main_core.Type.isNumber,
-	  formatFunction: prepareStickerKey
-	}, {
-	  fieldName: 'uri',
-	  targetFieldName: 'uri',
-	  checkFunction: main_core.Type.isString
-	}, {
-	  fieldName: 'type',
-	  targetFieldName: 'type',
-	  checkFunction: main_core.Type.isString
-	}];
-
-	const RECENT_LIMIT = 12;
-	var _formatMessageFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatMessageFields");
-	var _formatPackFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatPackFields");
-	var _formatStickerFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatStickerFields");
-	class StickersModel extends ui_vue3_vuex.BuilderModel {
-	  constructor(...args) {
-	    super(...args);
-	    Object.defineProperty(this, _formatStickerFields, {
-	      value: _formatStickerFields2
-	    });
-	    Object.defineProperty(this, _formatPackFields, {
-	      value: _formatPackFields2
-	    });
-	    Object.defineProperty(this, _formatMessageFields, {
-	      value: _formatMessageFields2
-	    });
-	  }
-	  getState() {
-	    return {
-	      stickers: new Map(),
-	      packs: new Map(),
-	      recent: [],
-	      stickerToMessageMap: {}
-	    };
-	  }
-
-	  // eslint-disable-next-line max-lines-per-function
-	  getGetters() {
-	    return {
-	      /** @function messages/stickers/getPackKeys */
-	      getPackKeys: state => {
-	        return [...state.packs.keys()];
-	      },
-	      /** @function messages/stickers/getRecent */
-	      getRecent: state => {
-	        return state.recent;
-	      },
-	      /** @function messages/stickers/isStickerMessage */
-	      isStickerMessage: state => messageId => {
-	        return !main_core.Type.isUndefined(state.stickerToMessageMap[messageId]);
-	      },
-	      /** @function messages/stickers/getStickerKeyByMessageId */
-	      getStickerKeyByMessageId: state => messageId => {
-	        return state.stickerToMessageMap[messageId] || null;
-	      },
-	      /** @function messages/stickers/getStickerByMessageId */
-	      getStickerByMessageId: state => messageId => {
-	        const stickerKey = state.stickerToMessageMap[messageId];
-	        if (!stickerKey) {
-	          return null;
-	        }
-	        return state.stickers.get(stickerKey) || null;
-	      },
-	      /** @function messages/stickers/getStickerByKey */
-	      getStickerByKey: state => stickerKey => {
-	        return state.stickers.get(stickerKey) || null;
-	      },
-	      /** @function messages/stickers/getPackByKey */
-	      getPackByKey: state => packKey => {
-	        return state.packs.get(packKey) || null;
-	      },
-	      /** @function messages/stickers/getPackCover */
-	      getPackCover: state => packKey => {
-	        const pack = state.packs.get(packKey);
-	        if (!pack || !main_core.Type.isArrayFilled(pack.stickers)) {
-	          return '';
-	        }
-	        const stickerKey = pack.stickers[0];
-	        const sticker = state.stickers.get(stickerKey) || null;
-	        return sticker ? sticker.uri : '';
-	      }
-	    };
-	  }
-	  getActions() {
-	    return {
-	      /** @function messages/stickers/setPacks */
-	      setPacks: (store, payload) => {
-	        payload.forEach(pack => {
-	          const {
-	            key: packKey,
-	            name,
-	            stickers
-	          } = babelHelpers.classPrivateFieldLooseBase(this, _formatPackFields)[_formatPackFields](pack);
-	          store.commit('addPack', {
-	            key: packKey,
-	            pack: {
-	              name,
-	              stickers
-	            }
-	          });
-	          pack.stickers.forEach(sticker => {
-	            const {
-	              id: packId,
-	              type: packType
-	            } = pack;
-	            const stickerFields = {
-	              packId,
-	              packType,
-	              ...sticker
-	            };
-	            const {
-	              key,
-	              uri,
-	              type
-	            } = babelHelpers.classPrivateFieldLooseBase(this, _formatStickerFields)[_formatStickerFields](stickerFields);
-	            store.commit('addSticker', {
-	              key,
-	              stickerData: {
-	                uri,
-	                type
-	              }
-	            });
-	          });
-	        });
-	      },
-	      /** @function messages/stickers/setRecentStickers */
-	      setRecentStickers: (store, payload) => {
-	        if (main_core.Type.isUndefined(payload)) {
-	          return;
-	        }
-	        const recent = [];
-	        payload.forEach(sticker => {
-	          const {
-	            key,
-	            uri,
-	            type
-	          } = babelHelpers.classPrivateFieldLooseBase(this, _formatStickerFields)[_formatStickerFields](sticker);
-	          recent.push(key);
-	          store.commit('addSticker', {
-	            key,
-	            stickerData: {
-	              uri,
-	              type
-	            }
-	          });
-	        });
-	        store.commit('setRecent', recent);
-	      },
-	      /** @function messages/stickers/updateRecentStickers */
-	      updateRecentStickers: (store, key) => {
-	        store.commit('updateRecent', key);
-	      },
-	      /** @function messages/stickers/setStickersFromMessages */
-	      setStickersFromMessages: (store, messages) => {
-	        messages.forEach(message => {
-	          const {
-	            key,
-	            uri,
-	            type,
-	            messageId
-	          } = babelHelpers.classPrivateFieldLooseBase(this, _formatMessageFields)[_formatMessageFields](message);
-	          const isSticker = main_core.Type.isString(key);
-	          if (!isSticker) {
-	            return;
-	          }
-	          const isCompleteSticker = uri && type;
-	          if (isCompleteSticker) {
-	            store.commit('addSticker', {
-	              key,
-	              stickerData: {
-	                uri,
-	                type
-	              }
-	            });
-	          }
-	          store.commit('setStickersToMessages', {
-	            key,
-	            messageId
-	          });
-	        });
-	      },
-	      /** @function messages/stickers/updateStickerToMessageMap */
-	      updateStickerToMessageMap: (store, payload) => {
-	        store.commit('updateStickerToMessageMap', payload);
-	      }
-	    };
-	  }
-
-	  /* eslint-disable no-param-reassign */
-	  getMutations() {
-	    return {
-	      addSticker: (state, payload) => {
-	        const {
-	          key,
-	          stickerData
-	        } = payload;
-	        state.stickers.set(key, stickerData);
-	      },
-	      addPack: (state, payload) => {
-	        const {
-	          key,
-	          pack
-	        } = payload;
-	        state.packs.set(key, pack);
-	      },
-	      setRecent: (state, payload) => {
-	        state.recent = payload;
-	      },
-	      updateRecent: (state, key) => {
-	        const filteredRecent = state.recent.filter(item => item !== key);
-	        filteredRecent.unshift(key);
-	        state.recent = filteredRecent.slice(0, RECENT_LIMIT);
-	      },
-	      setStickersToMessages: (state, payload) => {
-	        const {
-	          messageId,
-	          key
-	        } = payload;
-	        state.stickerToMessageMap[messageId] = key;
-	      },
-	      updateStickerToMessageMap: (state, payload) => {
-	        state.stickerToMessageMap[payload.newId] = state.stickerToMessageMap[payload.oldId];
-	      }
-	    };
-	  }
-	}
-	function _formatMessageFields2(message) {
-	  const options = main_core.Type.isPlainObject(message.params) ? {
-	    ...message.params
-	  } : {};
-	  const fields = {
-	    ...message,
-	    ...options
-	  };
-	  return im_v2_model.formatFieldsWithConfig(fields, messageFieldsConfig$1);
-	}
-	function _formatPackFields2(pack) {
-	  return im_v2_model.formatFieldsWithConfig(pack, packFieldsConfig);
-	}
-	function _formatStickerFields2(sticker) {
-	  return im_v2_model.formatFieldsWithConfig(sticker, stickerFieldsConfig);
-	}
-
 	var _findNextLoadingMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("findNextLoadingMessages");
 	var _formatFields$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
 	var _needToSwapAuthorId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needToSwapAuthorId");
@@ -1741,8 +1391,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      reactions: ReactionsModel,
 	      comments: CommentsModel,
 	      select: SelectModel,
-	      anchors: AnchorsModel,
-	      stickers: StickersModel
+	      anchors: AnchorsModel
 	    };
 	  }
 	  getState() {
@@ -2004,7 +1653,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        if (!Array.isArray(messages) && main_core.Type.isPlainObject(messages)) {
 	          messages = [messages];
 	        }
-	        store.dispatch('stickers/setStickersFromMessages', messages);
 	        messages = messages.map(message => {
 	          return {
 	            ...this.getElementState(),
@@ -2030,7 +1678,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        if (main_core.Type.isPlainObject(payload)) {
 	          preparedMessages = [payload];
 	        }
-	        store.dispatch('stickers/setStickersFromMessages', preparedMessages);
 	        preparedMessages = preparedMessages.map(message => {
 	          const currentMessage = store.state.collection[message.id];
 	          if (currentMessage) {
@@ -2063,7 +1710,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        store.commit('setChatCollection', {
 	          messages: [message]
 	        });
-	        store.dispatch('stickers/setStickersFromMessages', [payload]);
 	        return message.id;
 	      },
 	      /** @function messages/updateWithId */
@@ -2078,10 +1724,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        store.commit('updateWithId', {
 	          id,
 	          fields: babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1](fields)
-	        });
-	        void store.dispatch('stickers/updateStickerToMessageMap', {
-	          oldId: id,
-	          newId: fields.id
 	        });
 	      },
 	      /** @function messages/update */
@@ -5200,6 +4842,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        state.copilotCollection.delete(payload);
 	        state.collabCollection.delete(payload);
 	        state.taskCollection.delete(payload);
+	        state.unreadCollection.delete(payload);
 	      }
 	    };
 	  }
@@ -5336,6 +4979,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        return existingItem;
 	      },
+	      getSearchItemById: state => notificationId => {
+	        if (main_core.Type.isString(notificationId)) {
+	          const id = Number.parseInt(notificationId, 10);
+	          const existingItem = state.searchCollection.get(id);
+	          return existingItem != null ? existingItem : null;
+	        }
+	        const existingItem = state.searchCollection.get(notificationId);
+	        return existingItem != null ? existingItem : null;
+	      },
 	      getCounter: state => {
 	        return state.unreadCounter;
 	      }
@@ -5463,10 +5115,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          });
 	        });
 	      },
-	      readAllSimple: store => {
+	      readAllSimple: (store, payload = {}) => {
+	        const excludeIds = payload.excludeIds || [];
+	        const excludeIdsSet = new Set(excludeIds);
 	        const idsToMarkAsRead = [];
 	        store.state.collection.forEach(item => {
-	          if (!item.read && item.sectionCode === im_v2_const.NotificationTypesCodes.simple) {
+	          if (!item.read && item.sectionCode === im_v2_const.NotificationTypesCodes.simple && !excludeIdsSet.has(item.id)) {
 	            idsToMarkAsRead.push(item.id);
 	          }
 	        });
@@ -7921,6 +7575,146 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const sidebarSharedLinkFieldsConfig = [{
+	  fieldName: 'id',
+	  targetFieldName: 'id',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'code',
+	  targetFieldName: 'code',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'dateCreate',
+	  targetFieldName: 'dateCreate',
+	  checkFunction: main_core.Type.isString,
+	  formatFunction: im_v2_lib_utils.Utils.date.cast
+	}, {
+	  fieldName: 'dateExpire',
+	  targetFieldName: 'dateExpire',
+	  checkFunction: main_core.Type.isString,
+	  formatFunction: im_v2_lib_utils.Utils.date.cast
+	}, {
+	  fieldName: 'entityId',
+	  targetFieldName: 'entityId',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'entityType',
+	  targetFieldName: 'entityType',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'requireApproval',
+	  targetFieldName: 'requireApproval',
+	  checkFunction: main_core.Type.isBoolean
+	}, {
+	  fieldName: 'type',
+	  targetFieldName: 'type',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'url',
+	  targetFieldName: 'url',
+	  checkFunction: main_core.Type.isString
+	}];
+
+	const EntityType = {
+	  chat: 'chat'
+	};
+	class SharedLinkModel extends ui_vue3_vuex.BuilderModel {
+	  getState() {
+	    return {
+	      collection: {}
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      id: 0,
+	      code: '',
+	      dateCreate: new Date(),
+	      dateExpire: null,
+	      entityId: '',
+	      entityType: '',
+	      requireApproval: false,
+	      type: '',
+	      url: ''
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function sidebar/sharedLink/getChatInviteLink */
+	      getChatInviteLink: state => chatId => {
+	        const entityId = chatId.toString();
+	        return Object.values(state.collection).find(link => {
+	          return link.entityId === entityId && link.entityType === EntityType.chat;
+	        });
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function sidebar/sharedLink/set */
+	      set: (store, rawPayload) => {
+	        let payload = rawPayload;
+	        if (!Array.isArray(payload) && main_core.Type.isPlainObject(payload)) {
+	          payload = [payload];
+	        }
+	        const preparedLink = payload.map(link => {
+	          return this.formatFields(link);
+	        });
+	        preparedLink.forEach(link => {
+	          const existingLink = store.state.collection[link.id];
+	          if (existingLink) {
+	            store.commit('update', {
+	              id: link.id,
+	              fields: link
+	            });
+	            return;
+	          }
+	          store.commit('add', {
+	            id: link.id,
+	            fields: {
+	              ...this.getElementState(),
+	              ...link
+	            }
+	          });
+	        });
+	      },
+	      /** @function sidebar/sharedLink/regenerate */
+	      regenerate: (store, payload) => {
+	        const {
+	          newLink
+	        } = payload;
+	        const chatId = Number(newLink.entityId);
+	        const currentLink = im_v2_application_core.Core.getStore().getters['sidebar/sharedLink/getChatInviteLink'](chatId);
+	        void im_v2_application_core.Core.getStore().dispatch('sidebar/sharedLink/set', newLink);
+	        store.commit('delete', {
+	          id: currentLink.id
+	        });
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      add: (state, payload) => {
+	        // eslint-disable-next-line no-param-reassign
+	        state.collection[payload.id] = payload.fields;
+	      },
+	      update: (state, payload) => {
+	        // eslint-disable-next-line no-param-reassign
+	        state.collection[payload.id] = {
+	          ...state.collection[payload.id],
+	          ...payload.fields
+	        };
+	      },
+	      delete: (state, payload) => {
+	        // eslint-disable-next-line no-param-reassign
+	        delete state.collection[payload.id];
+	      }
+	    };
+	  }
+	  formatFields(fields) {
+	    return im_v2_model.formatFieldsWithConfig(fields, sidebarSharedLinkFieldsConfig);
+	  }
+	}
+
 	/* eslint-disable no-param-reassign */
 	class SidebarModel extends ui_vue3_vuex.BuilderModel {
 	  getName() {
@@ -7935,7 +7729,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      meetings: MeetingsModel,
 	      files: FilesModel$1,
 	      multidialog: MultidialogModel,
-	      messageSearch: MessageSearchModel
+	      messageSearch: MessageSearchModel,
+	      sharedLink: SharedLinkModel
 	    };
 	  }
 	  getState() {
@@ -9063,6 +8858,601 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const stickerFieldsConfig = [{
+	  fieldName: 'id',
+	  targetFieldName: 'id',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'packId',
+	  targetFieldName: 'packId',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'packType',
+	  targetFieldName: 'packType',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'uri',
+	  targetFieldName: 'uri',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'type',
+	  targetFieldName: 'type',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'width',
+	  targetFieldName: 'width',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'height',
+	  targetFieldName: 'height',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'sort',
+	  targetFieldName: 'sort',
+	  checkFunction: main_core.Type.isNumber
+	}];
+
+	const recentStickerConfig = [{
+	  fieldName: 'id',
+	  targetFieldName: 'id',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'packId',
+	  targetFieldName: 'packId',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'packType',
+	  targetFieldName: 'packType',
+	  checkFunction: main_core.Type.isString
+	}];
+
+	const RECENT_LIMIT = 12;
+
+	/* eslint-disable no-param-reassign */
+	var _formatFields$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
+	var _applyLimit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyLimit");
+	var _isEqual = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEqual");
+	class RecentStickersModel extends ui_vue3_vuex.BuilderModel {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _isEqual, {
+	      value: _isEqual2
+	    });
+	    Object.defineProperty(this, _applyLimit, {
+	      value: _applyLimit2
+	    });
+	    Object.defineProperty(this, _formatFields$5, {
+	      value: _formatFields2$5
+	    });
+	  }
+	  getState() {
+	    return {
+	      collection: []
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      id: 0,
+	      packId: 0,
+	      packType: ''
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function stickers/recent/get */
+	      get: (state, getters, rootState, rootGetters) => {
+	        return state.collection.map(recentSticker => {
+	          return rootGetters['stickers/get']({
+	            id: recentSticker.id,
+	            packId: recentSticker.packId,
+	            packType: recentSticker.packType
+	          });
+	        }).filter(sticker => Boolean(sticker));
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function stickers/recent/set */
+	      set: (store, payload) => {
+	        payload.forEach(sticker => {
+	          const preparedRecentSticker = babelHelpers.classPrivateFieldLooseBase(this, _formatFields$5)[_formatFields$5](sticker);
+	          store.commit('add', {
+	            ...this.getElementState(),
+	            ...preparedRecentSticker
+	          });
+	        });
+	      },
+	      /** @function stickers/recent/update */
+	      update: (store, payload) => {
+	        const preparedRecentSticker = babelHelpers.classPrivateFieldLooseBase(this, _formatFields$5)[_formatFields$5](payload);
+	        store.commit('update', {
+	          ...this.getElementState(),
+	          ...preparedRecentSticker
+	        });
+	      },
+	      /** @function stickers/recent/clear */
+	      clear: store => {
+	        store.commit('clear');
+	      },
+	      /** @function stickers/recent/delete */
+	      delete: (store, payload) => {
+	        store.commit('delete', payload);
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      add: (state, payload) => {
+	        state.collection.push(payload);
+	        babelHelpers.classPrivateFieldLooseBase(this, _applyLimit)[_applyLimit](state);
+	      },
+	      update: (state, payload) => {
+	        state.collection = state.collection.filter(sticker => {
+	          return !babelHelpers.classPrivateFieldLooseBase(this, _isEqual)[_isEqual](sticker, payload);
+	        });
+	        state.collection.unshift(payload);
+	        babelHelpers.classPrivateFieldLooseBase(this, _applyLimit)[_applyLimit](state);
+	      },
+	      clear: state => {
+	        state.collection = [];
+	      },
+	      delete: (state, payload) => {
+	        state.collection = state.collection.filter(sticker => {
+	          return !babelHelpers.classPrivateFieldLooseBase(this, _isEqual)[_isEqual](sticker, payload);
+	        });
+	      }
+	    };
+	  }
+	}
+	function _formatFields2$5(sticker) {
+	  return formatFieldsWithConfig(sticker, recentStickerConfig);
+	}
+	function _applyLimit2(state) {
+	  if (state.collection.length > RECENT_LIMIT) {
+	    state.collection = state.collection.slice(0, RECENT_LIMIT);
+	  }
+	}
+	function _isEqual2(firstSticker, secondSticker) {
+	  return firstSticker.id === secondSticker.id && firstSticker.packId === secondSticker.packId && firstSticker.packType === secondSticker.packType;
+	}
+
+	const stickerMessagesConfig = [{
+	  fieldName: 'messageId',
+	  targetFieldName: 'messageId',
+	  checkFunction: im_v2_model.isNumberOrString
+	}, {
+	  fieldName: 'id',
+	  targetFieldName: 'id',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'packId',
+	  targetFieldName: 'packId',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'packType',
+	  targetFieldName: 'packType',
+	  checkFunction: main_core.Type.isString
+	}];
+
+	var _formatFields$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
+	/* eslint-disable no-param-reassign */
+	class StickerMessagesModel extends ui_vue3_vuex.BuilderModel {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _formatFields$6, {
+	      value: _formatFields2$6
+	    });
+	  }
+	  getState() {
+	    return {
+	      collection: new Map()
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      id: 0,
+	      packId: 0,
+	      packType: ''
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function stickers/messages/isSticker */
+	      isSticker: state => messageId => {
+	        return state.collection.has(messageId);
+	      },
+	      /** @function stickers/messages/getStickerByMessageId */
+	      getStickerByMessageId: state => messageId => {
+	        return state.collection.get(messageId);
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function stickers/messages/set */
+	      set: (store, payload) => {
+	        payload.forEach(message => {
+	          const preparedStickerMessage = babelHelpers.classPrivateFieldLooseBase(this, _formatFields$6)[_formatFields$6](message);
+	          store.commit('add', {
+	            ...this.getElementState(),
+	            ...preparedStickerMessage
+	          });
+	        });
+	      },
+	      /** @function stickers/messages/updateWithId */
+	      updateWithId: (store, payload) => {
+	        const {
+	          oldId,
+	          newId
+	        } = payload;
+	        const tempMessageStickerIdentifier = store.state.collection.get(oldId);
+	        tempMessageStickerIdentifier.messageId = newId;
+	        store.commit('delete', oldId);
+	        store.commit('add', tempMessageStickerIdentifier);
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      add: (state, payload) => {
+	        const messageId = payload.messageId;
+	        delete payload.messageId;
+	        state.collection.set(messageId, payload);
+	      },
+	      delete: (state, payload) => {
+	        state.collection.delete(payload);
+	      }
+	    };
+	  }
+	}
+	function _formatFields2$6(stickerMessage) {
+	  return im_v2_model.formatFieldsWithConfig(stickerMessage, stickerMessagesConfig);
+	}
+
+	const packFieldsConfig = [{
+	  fieldName: 'id',
+	  targetFieldName: 'id',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'authorId',
+	  targetFieldName: 'authorId',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'name',
+	  targetFieldName: 'name',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'type',
+	  targetFieldName: 'type',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'isAdded',
+	  targetFieldName: 'isAdded',
+	  checkFunction: main_core.Type.isBoolean
+	}];
+
+	var _formatFields$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
+	var _getPackKey = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPackKey");
+	/* eslint-disable no-param-reassign */
+	class PacksModel extends ui_vue3_vuex.BuilderModel {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _getPackKey, {
+	      value: _getPackKey2
+	    });
+	    Object.defineProperty(this, _formatFields$7, {
+	      value: _formatFields2$7
+	    });
+	  }
+	  getState() {
+	    return {
+	      collection: new Map()
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      id: 0,
+	      key: '',
+	      type: '',
+	      name: '',
+	      authorId: null,
+	      isAdded: false
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function stickers/packs/get */
+	      get: state => {
+	        return [...state.collection.values()].filter(pack => pack.isAdded).sort((firstPack, secondPack) => {
+	          // Temporary manual sorting (until backend adds sort field):
+	          // - Custom packs: id desc
+	          // - Vendor packs: id desc
+	          if (firstPack.type !== secondPack.type) {
+	            return firstPack.type === im_v2_const.StickerPackType.custom ? -1 : 1;
+	          }
+	          return secondPack.id - firstPack.id;
+	        });
+	      },
+	      /** @function stickers/packs/getByIdentifier */
+	      getByIdentifier: state => ({
+	        id,
+	        type
+	      }) => {
+	        const packKey = babelHelpers.classPrivateFieldLooseBase(this, _getPackKey)[_getPackKey]({
+	          id,
+	          type
+	        });
+	        return state.collection.get(packKey);
+	      },
+	      /** @function stickers/packs/hasPack */
+	      hasPack: state => ({
+	        id,
+	        type
+	      }) => {
+	        const packKey = babelHelpers.classPrivateFieldLooseBase(this, _getPackKey)[_getPackKey]({
+	          id,
+	          type
+	        });
+	        return state.collection.has(packKey);
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function stickers/packs/set */
+	      set: (store, payload) => {
+	        payload.forEach(pack => {
+	          const preparedPack = babelHelpers.classPrivateFieldLooseBase(this, _formatFields$7)[_formatFields$7](pack);
+	          const packKey = babelHelpers.classPrivateFieldLooseBase(this, _getPackKey)[_getPackKey](preparedPack);
+	          store.commit('add', {
+	            key: packKey,
+	            pack: {
+	              ...this.getElementState(),
+	              ...preparedPack,
+	              key: packKey
+	            }
+	          });
+	        });
+	      },
+	      /** @function stickers/packs/link */
+	      link: (store, payload) => {
+	        const packKey = babelHelpers.classPrivateFieldLooseBase(this, _getPackKey)[_getPackKey](payload);
+	        store.commit('update', {
+	          key: packKey,
+	          fields: {
+	            isAdded: true
+	          }
+	        });
+	      },
+	      /** @function stickers/packs/rename */
+	      rename: (store, payload) => {
+	        if (!main_core.Type.isStringFilled(payload.name)) {
+	          return;
+	        }
+	        const packKey = babelHelpers.classPrivateFieldLooseBase(this, _getPackKey)[_getPackKey](payload);
+	        store.commit('update', {
+	          key: packKey,
+	          fields: {
+	            name: payload.name
+	          }
+	        });
+	      },
+	      /** @function stickers/packs/unlink */
+	      unlink: (store, payload) => {
+	        const packKey = babelHelpers.classPrivateFieldLooseBase(this, _getPackKey)[_getPackKey](payload);
+	        store.commit('update', {
+	          key: packKey,
+	          fields: {
+	            isAdded: false
+	          }
+	        });
+	      },
+	      /** @function stickers/packs/delete */
+	      delete: (store, payload) => {
+	        const packKey = babelHelpers.classPrivateFieldLooseBase(this, _getPackKey)[_getPackKey](payload);
+	        store.commit('delete', {
+	          key: packKey
+	        });
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      add: (state, payload) => {
+	        const {
+	          key,
+	          pack
+	        } = payload;
+	        state.collection.set(key, pack);
+	      },
+	      delete: (state, payload) => {
+	        state.collection.delete(payload.key);
+	      },
+	      update: (state, payload) => {
+	        const pack = state.collection.get(payload.key);
+	        if (!pack) {
+	          return;
+	        }
+	        state.collection.set(payload.key, {
+	          ...pack,
+	          ...payload.fields
+	        });
+	      }
+	    };
+	  }
+	}
+	function _formatFields2$7(pack) {
+	  return im_v2_model.formatFieldsWithConfig(pack, packFieldsConfig);
+	}
+	function _getPackKey2({
+	  id,
+	  type
+	}) {
+	  return `${id}:${type}`;
+	}
+
+	var _formatFields$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
+	var _getStickerKey = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getStickerKey");
+	/* eslint-disable no-param-reassign */
+	class StickersModel extends ui_vue3_vuex.BuilderModel {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _getStickerKey, {
+	      value: _getStickerKey2
+	    });
+	    Object.defineProperty(this, _formatFields$8, {
+	      value: _formatFields2$8
+	    });
+	  }
+	  getName() {
+	    return 'stickers';
+	  }
+	  getNestedModules() {
+	    return {
+	      packs: PacksModel,
+	      recent: RecentStickersModel,
+	      messages: StickerMessagesModel
+	    };
+	  }
+	  getState() {
+	    return {
+	      collection: new Map()
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      id: 0,
+	      packId: 0,
+	      packType: '',
+	      type: im_v2_const.StickerType.image,
+	      uri: '',
+	      width: 0,
+	      height: 0,
+	      sort: 0
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function stickers/get */
+	      get: state => ({
+	        id,
+	        packId,
+	        packType
+	      }) => {
+	        const stickerKey = babelHelpers.classPrivateFieldLooseBase(this, _getStickerKey)[_getStickerKey]({
+	          id,
+	          packId,
+	          packType
+	        });
+	        return state.collection.get(stickerKey);
+	      },
+	      /** @function stickers/getByPack */
+	      getByPack: state => ({
+	        id,
+	        type
+	      }) => {
+	        return [...state.collection.values()].filter(sticker => {
+	          return sticker.packId === id && sticker.packType === type;
+	        }).sort((sticker1, sticker2) => sticker1.sort - sticker2.sort);
+	      },
+	      /** @function stickers/getPackCover */
+	      getPackCover: (state, getters) => ({
+	        id,
+	        type
+	      }) => {
+	        const packsStickers = getters.getByPack({
+	          id,
+	          type
+	        });
+	        if (packsStickers.length > 0) {
+	          return packsStickers[0].uri;
+	        }
+	        return '';
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function stickers/set */
+	      set: (store, payload) => {
+	        payload.forEach(sticker => {
+	          const preparedSticker = babelHelpers.classPrivateFieldLooseBase(this, _formatFields$8)[_formatFields$8](sticker);
+	          const stickerKey = babelHelpers.classPrivateFieldLooseBase(this, _getStickerKey)[_getStickerKey](preparedSticker);
+	          store.commit('add', {
+	            key: stickerKey,
+	            sticker: {
+	              ...this.getElementState(),
+	              ...preparedSticker
+	            }
+	          });
+	        });
+	      },
+	      /** @function stickers/delete */
+	      delete: (store, payload) => {
+	        const {
+	          ids,
+	          packId,
+	          packType
+	        } = payload;
+	        ids.forEach(id => {
+	          const stickerKey = babelHelpers.classPrivateFieldLooseBase(this, _getStickerKey)[_getStickerKey]({
+	            id,
+	            packId,
+	            packType
+	          });
+	          store.commit('delete', stickerKey);
+	        });
+	      },
+	      /** @function stickers/deleteByPack */
+	      deleteByPack: (store, payload) => {
+	        const {
+	          id: packId,
+	          type: packType
+	        } = payload;
+	        [...store.state.collection.values()].forEach(sticker => {
+	          if (sticker.packId !== packId || sticker.packType !== packType) {
+	            return;
+	          }
+	          const {
+	            id
+	          } = sticker;
+	          const stickerKey = babelHelpers.classPrivateFieldLooseBase(this, _getStickerKey)[_getStickerKey]({
+	            id,
+	            packId,
+	            packType
+	          });
+	          store.commit('delete', stickerKey);
+	        });
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      add: (state, payload) => {
+	        const {
+	          key,
+	          sticker
+	        } = payload;
+	        state.collection.set(key, sticker);
+	      },
+	      delete: (state, key) => {
+	        state.collection.delete(key);
+	      }
+	    };
+	  }
+	}
+	function _formatFields2$8(rawSticker) {
+	  return formatFieldsWithConfig(rawSticker, stickerFieldsConfig);
+	}
+	function _getStickerKey2({
+	  id,
+	  packId,
+	  packType
+	}) {
+	  return `${packId}:${packType}:${id}`;
+	}
+
 	exports.ApplicationModel = ApplicationModel;
 	exports.MessagesModel = MessagesModel;
 	exports.ChatsModel = ChatsModel;
@@ -9075,6 +9465,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.CountersModel = CountersModel;
 	exports.CopilotModel = CopilotModel;
 	exports.AiAssistantModel = AiAssistantModel;
+	exports.StickersModel = StickersModel;
 	exports.formatFieldsWithConfig = formatFieldsWithConfig;
 	exports.convertToNumber = convertToNumber;
 	exports.convertToString = convertToString;
@@ -9083,5 +9474,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.prepareDraft = prepareDraft;
 	exports.prepareInvitation = prepareInvitation;
 
-}((this.BX.Messenger.v2.Model = this.BX.Messenger.v2.Model || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Application,BX,BX.Messenger.v2.Model,BX.Vue3.Vuex));
+}((this.BX.Messenger.v2.Model = this.BX.Messenger.v2.Model || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Vue3.Vuex,BX.Messenger.v2.Model,BX.Messenger.v2.Const,BX));
 //# sourceMappingURL=registry.bundle.js.map

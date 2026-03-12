@@ -148,7 +148,7 @@ export const UserFields = {
 	},
 	template: `
 		<div
-			class="tasks-field-user-fields"
+			class="tasks-field-user-fields print-no-box-shadow"
 			:data-task-id="taskId"
 			:data-task-field-id="userFieldsMeta.id"
 			@mousedown="onMouseDown"
@@ -182,7 +182,7 @@ export const UserFields = {
 			</template>
 			<div
 				v-if="!readonly && hasUnfilledFields"
-				class="tasks-field-user-fields-footer"
+				class="tasks-field-user-fields-footer print-ignore"
 			>
 				<TextXs className="tasks-field-user-fields-footer-text">
 					{{ footerText }}

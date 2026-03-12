@@ -1,4 +1,5 @@
 import './block-diagram.css';
+import type { MenuItemOptions } from 'ui.vue3.components.menu';
 import { onMounted, onUnmounted, useTemplateRef, computed, ref, toValue } from 'ui.vue3';
 import { CanvasTransform } from '../canvas-transform/canvas-transform';
 import { Connection } from '../connection/connection';
@@ -16,6 +17,7 @@ import {
 	useRegisterHooks,
 	useInitAppElements,
 	useDragAndDrop,
+	useContextMenu,
 } from '../../composables';
 import { getGroupBlockSlotName, getGroupConnectionSlotName } from '../../utils';
 
@@ -23,6 +25,8 @@ import { HOOK_NAMES, CURSOR_TYPES } from '../../constants';
 import type {
 	BlockGroupNames,
 	ConnectionGroupNames,
+	DiagramBlock,
+	DiagramConnection,
 } from '../../types';
 
 type BlockDiagramSetup = {
@@ -30,6 +34,7 @@ type BlockDiagramSetup = {
 	connectionGroupNames: ConnectionGroupNames;
 	getGroupBlockSlotName: typeof getGroupBlockSlotName;
 	getGroupConnectionSlotName: typeof getGroupConnectionSlotName;
+	openContextMenu: (event: MouseEvent) => void;
 };
 
 const UI_CANVAS_GRID_COLOR = '#A1B8D9';
@@ -43,6 +48,22 @@ const BLOCK_DIAGRAM_CLASS_NAMES = {
 	neSwResize: '--cursor-nesw-resize',
 	grabbing: '--grabbing',
 	disabled: '--disabled',
+};
+
+type Props = {
+	blocks: Array<DiagramBlock>,
+	connections: Array<DiagramConnection>,
+	canvasStyle: Object,
+	zoomSensitivity: number,
+	zoomSensitivityMouse: number,
+	zoom: number,
+	minZoom: number,
+	maxZoom: number,
+	historyHooks: Array<string>,
+	snapshotHandler: () => void,
+	revertHandler: () => void,
+	disabled: boolean,
+	contextMenuItems: Array<MenuItemOptions>,
 };
 
 // @vue/component
@@ -120,6 +141,15 @@ export const BlockDiagram = {
 			type: Boolean,
 			default: false,
 		},
+		enableGrouping: {
+			type: Boolean,
+			default: false,
+		},
+		/** @type Array<MenuItemOptions> */
+		contextMenuItems: {
+			type: Array,
+			default: () => ([]),
+		},
 	},
 	emits: [
 		'update:blocks',
@@ -140,16 +170,18 @@ export const BlockDiagram = {
 		HOOK_NAMES.CONNECTION_TRANSITION_END,
 		HOOK_NAMES.DROP_NEW_BLOCK,
 	],
-	setup(props, { emit }): BlockDiagramSetup
+	setup(props: Props, { emit }): BlockDiagramSetup
 	{
 		const {
 			blockGroupNames,
 			connectionGroupNames,
 			cursorType,
 		} = useBlockDiagram(props);
+
 		const initAppElements = useInitAppElements({
 			blockDiagramRef: useTemplateRef('blockDiagram'),
 		});
+
 		const { makeSnapshot } = useHistory();
 		const { dispose: disposeModelValue } = useModelValue(emit);
 		const { dispose: disposeWatchProps } = useWatchProps(props);
@@ -173,7 +205,6 @@ export const BlockDiagram = {
 			},
 		);
 		const { onDrop } = useDragAndDrop();
-
 		const isGrabbing = ref(false);
 
 		const blockDiagramClassNames = computed(() => ({
@@ -185,6 +216,8 @@ export const BlockDiagram = {
 			[BLOCK_DIAGRAM_CLASS_NAMES.nwSeResize]: toValue(cursorType) === CURSOR_TYPES.NWSE_RESIZE,
 			[BLOCK_DIAGRAM_CLASS_NAMES.neSwResize]: toValue(cursorType) === CURSOR_TYPES.NESW_RESIZE,
 		}));
+
+		const { showMenu } = useContextMenu();
 
 		onMounted(() => {
 			initAppElements.onMountedAppElements();
@@ -213,6 +246,17 @@ export const BlockDiagram = {
 			onDrop(event);
 		}
 
+		function openContextMenu(event: MouseEvent): void
+		{
+			if (props.contextMenuItems.length > 0)
+			{
+				showMenu(
+					{ clientX: event.clientX, clientY: event.clientY },
+					{ items: props.contextMenuItems },
+				);
+			}
+		}
+
 		return {
 			blockDiagramClassNames,
 			blockGroupNames,
@@ -222,6 +266,7 @@ export const BlockDiagram = {
 			onDragDrop,
 			onDragEnter,
 			onDragLeave,
+			openContextMenu,
 		};
 	},
 	template: `
@@ -237,7 +282,10 @@ export const BlockDiagram = {
 				:canvasStyle="canvasStyle"
 				:zoomSensitivity="zoomSensitivity"
 				:zoomSensitivityMouse="zoomSensitivityMouse"
+				@openContextMenu="openContextMenu"
+				:selectionEnabled="enableGrouping"
 			>
+				<slot name="group-selection-box"/>
 				<ContextMenuLayout>
 					<GroupedConnections>
 						<template

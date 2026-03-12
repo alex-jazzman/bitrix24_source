@@ -27,6 +27,7 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 	const { VoteTable } = require('im/messenger/db/table/vote');
 	const { ReadMessageQueueTable } = require('im/messenger/db/table/read-message-queue');
 	const { TranscriptTable } = require('im/messenger/db/table/transcript');
+	const { StickerTable } = require('im/messenger/db/table/sticker');
 
 	module.exports = {
 		OptionTable,
@@ -52,5 +53,6 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 		VoteTable,
 		ReadMessageQueueTable,
 		TranscriptTable,
+		StickerTable,
 	};
 });

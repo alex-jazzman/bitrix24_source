@@ -196,7 +196,8 @@ export class MenuItem
 		const subMenuContainer = this.#subMenu?.getPopupContainer();
 		if (!this.#subMenuHovered && subMenuContainer && !subMenuContainer.contains(event.relatedTarget))
 		{
-			const distance = mouse.getPosition().left - subMenuContainer.getBoundingClientRect().left;
+			const subMenuLeft = subMenuContainer.getBoundingClientRect().left + window.scrollX;
+			const distance = mouse.getPosition().left - subMenuLeft;
 			const distanceDelta = Math.abs(distance) - Math.abs(distance + mouse.getDelta().left);
 			if (distanceDelta <= 1)
 			{
@@ -229,10 +230,12 @@ export class MenuItem
 	#onShow = (): void => {
 		this.adjustSubMenu();
 		Dom.addClass(this.#element, '--hovered');
+		mouse.need(this);
 	};
 
 	#onClose = (): void => {
 		Dom.removeClass(this.#element, '--hovered');
+		mouse.notNeed(this);
 	};
 
 	#renderHeader(): HTMLElement

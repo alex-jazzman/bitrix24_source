@@ -14,6 +14,7 @@ $MESS['TASKS_V2_TASK_FULL_CARD_CANCEL'] = 'Отмена';
 //standalone end
 //lifecycle actions menu
 $MESS['TASKS_V2_TASK_FULL_CARD_START'] = 'Начать';
+$MESS['TASKS_V2_TASK_FULL_CARD_TAKE'] = 'Взять в работу';
 $MESS['TASKS_V2_TASK_FULL_CARD_DEFER'] = 'Отложить';
 $MESS['TASKS_V2_TASK_FULL_CARD_PAUSE'] = 'Приостановить';
 $MESS['TASKS_V2_TASK_FULL_CARD_PAUSE_TIMER'] = 'Пауза';

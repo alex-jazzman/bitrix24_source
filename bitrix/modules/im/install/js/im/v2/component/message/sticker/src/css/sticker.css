@@ -1,58 +1,47 @@
 .bx-im-message-sticker__container {
 	display: flex;
-	justify-content: flex-end;
 	position: relative;
 }
 
-.bx-im-message-base__wrap.--opponent .bx-im-message-sticker__container {
-	justify-content: flex-start;
-}
-
-.bx-im-message-sticker__content-container {
-	display: inline-block;
-	position: relative;
-	padding-right: 40px;
+.bx-im-message-sticker__header-container {
+	margin-bottom: 4px;
 }
 
 .bx-im-message-sticker__image {
-	display: flex;
-	align-items: center;
-	justify-content: center;
 	width: 166px;
-	height: 166px;
+	max-height: 166px;
+	min-height: 50px;
+	cursor: pointer;
 }
 
 .bx-im-message-sticker__image img {
 	display: block;
+	width: 100%;
 	height: 100%;
-}
-
-.bx-im-message-sticker__shimmer {
-	--im-message-sticker-size: 166px;
-
-	display: flex;
-	width: var(--im-message-sticker-size);
-	height: var(--im-message-sticker-size);
+	object-fit: contain;
 }
 
 .bx-im-message-sticker__message-status-container {
 	position: absolute;
-	right: 0;
 	bottom: 4px;
-	margin: 9px;
+}
+
+.bx-im-content-chat__container.--center-align .bx-im-message-sticker__message-status-container {
+	left: 142px;
+}
+
+.bx-im-content-chat__container.--left-align .bx-im-message-sticker__message-status-container {
+	left: 162px;
 }
 
 .bx-im-message-sticker__reactions-container {
 	display: flex;
+	margin-top: 4px;
+	max-width: 300px;
 	justify-content: flex-end;
 }
 
 .bx-im-message-base__wrap.--opponent .bx-im-message-sticker__reactions-container,
 .bx-im-content-chat__container.--left-align .bx-im-message-sticker__reactions-container {
 	justify-content: flex-start;
-}
-
-.bx-im-message-sticker__reactions {
-	margin-top: 4px;
-	max-width: 240px;
 }

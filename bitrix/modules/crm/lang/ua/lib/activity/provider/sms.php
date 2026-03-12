@@ -1,9 +1,0 @@
-<?php
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_CRM_ORDER_COMPLETED_NAME"] = "SMS-сповіщення про оформлення замовлення";
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_CRM_ORDER_PAID_NAME"] = "SMS-сповіщення про успішну оплату";
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_INCOMING"] = "Вхідне SMS повідомлення";
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_NAME"] = "SMS-повідомлення";
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_OUTGOING"] = "Вихідне SMS повідомлення";
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_SALESCENTER_DELIVERY_NAME_MSGVER_1"] = "SMS-повідомлення про доставку товарів";
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_SALESCENTER_PAYMENT_SENT_NAME_MSGVER_1"] = "SMS-повідомлення про відправку оплати";
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_SALESCENTER_TERMINAL_PAYMENT_PAID_NAME"] = "SMS-повідомлення з інформацією про оплату";

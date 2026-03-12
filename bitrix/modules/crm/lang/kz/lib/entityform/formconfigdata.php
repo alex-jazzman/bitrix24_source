@@ -1,4 +1,0 @@
-<?php
-$MESS["UI_FORM_CONFIG_CATEGORY"] = "Иірім";
-$MESS["UI_FORM_CONFIG_COPY_CONTEXT_BUTTON"] = "Ағымдағы иірімге көшіру";
-$MESS["UI_FORM_CONFIG_DELETE_CONTEXT_BUTTON"] = "Жою";

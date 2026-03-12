@@ -11,7 +11,6 @@ $config = [
 	'css' => 'dist/check-list.bundle.css',
 	'js' => 'dist/check-list.bundle.js',
 	'rel' => [
-		'tasks.v2.lib.user-selector-dialog',
 		'ui.vue3.components.button',
 		'ui.vue3.components.popup',
 		'tasks.v2.component.elements.bottom-sheet',
@@ -20,6 +19,7 @@ $config = [
 		'tasks.v2.component.elements.user-checkbox',
 		'tasks.v2.component.elements.progress-bar',
 		'ui.vue3.vuex',
+		'tasks.v2.lib.user-selector-dialog',
 		'ui.system.skeleton.vue',
 		'tasks.v2.component.elements.growing-text-area',
 		'tasks.v2.component.elements.user-avatar-list',

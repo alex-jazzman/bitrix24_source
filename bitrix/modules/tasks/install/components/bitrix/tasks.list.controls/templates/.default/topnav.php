@@ -3,6 +3,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -178,7 +180,7 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 	{
 		$menuItems[] = array(
 			"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_MSGVER_1"),
-			"URL" => \Bitrix\Tasks\Integration\Market\Router::getCategoryPath('tasks'),
+			"URL" => Container::getInstance()->getLinkService()->getMarket('category/tasks/'),
 			"ID" => "view_apps",
 		);
 	}

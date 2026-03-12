@@ -1,11 +1,10 @@
 import 'ui.icon-set.outline';
-import { Extension, Type } from 'main.core';
+import { Extension, Type, Event } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 import { getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
 
 import { EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType, Color } from 'im.v2.const';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
 import { DraftManager } from 'im.v2.lib.draft';
@@ -26,14 +25,15 @@ import { MessageManager } from 'im.v2.lib.message';
 import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
 import { InputSenderService } from './classes/input-sender-service';
 import { ResizeDirection, ResizeManager } from './classes/resize-manager';
+import { FormatToolbarManager, type BindPosition } from './classes/format-toolbar-manager';
 import { AudioInput } from './components/audio-input/audio-input';
-import { SmileSelector } from './components/smile-selector/smile-selector';
 import { EmoteSelector } from './components/emote-selector/emote-selector';
 import { UploadMenu } from './components/upload-menu/upload-menu';
 import { UploadPreviewPopup } from './components/upload-preview/upload-preview-popup';
 import { MentionPopup } from './components/mention/mention-popup';
 import { TextareaPanel } from './components/panel/panel';
 import { AutoDeleteSelector } from './components/auto-delete-selector/auto-delete-selector';
+import { FormatToolbar } from './components/format-toolbar/format-toolbar';
 
 import './css/textarea.css';
 
@@ -53,7 +53,6 @@ const ICON_SIZE = 24;
 export const ChatTextarea = {
 	components: {
 		UploadMenu,
-		SmileSelector,
 		EmoteSelector,
 		SendButton,
 		UploadPreviewPopup,
@@ -62,6 +61,7 @@ export const ChatTextarea = {
 		AudioInput,
 		AutoDeleteSelector,
 		BIcon,
+		FormatToolbar,
 	},
 	props: {
 		dialogId: {
@@ -116,6 +116,9 @@ export const ChatTextarea = {
 			panelContext: {
 				messageId: 0,
 			},
+
+			showFormatToolbar: false,
+			formatToolbarPosition: {},
 		};
 	},
 	computed:
@@ -199,18 +202,6 @@ export const ChatTextarea = {
 		{
 			return this.$refs.textarea === document.activeElement;
 		},
-		areStickersAvailable(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.stickersAvailable);
-		},
-		showSmileSelector(): boolean
-		{
-			return this.withSmileSelector && !this.areStickersAvailable;
-		},
-		showEmoteSelector(): boolean
-		{
-			return this.withSmileSelector && this.areStickersAvailable;
-		},
 	},
 	watch:
 	{
@@ -258,6 +249,7 @@ export const ChatTextarea = {
 	beforeUnmount()
 	{
 		this.resizeManager.destroy();
+		this.getToolbarManager().destroy();
 		this.unbindUploadingService();
 
 		EventEmitter.unsubscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
@@ -365,7 +357,7 @@ export const ChatTextarea = {
 				messageId: 0,
 			};
 
-			this.draftManager.setDraftPanel(this.dialogId, this.panelType, this.panelContext);
+			this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
 		},
 		openEditPanel(messageId: number)
 		{
@@ -389,9 +381,9 @@ export const ChatTextarea = {
 			this.text = Parser.prepareEdit(message);
 			this.focus();
 
-			this.draftManager.setDraftText(this.dialogId, this.text);
-			this.draftManager.setDraftPanel(this.dialogId, this.panelType, this.panelContext);
-			this.draftManager.setDraftMentions(this.dialogId, mentions);
+			this.getDraftManager().setDraftText(this.dialogId, this.text);
+			this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
+			this.getDraftManager().setDraftMentions(this.dialogId, mentions);
 		},
 		openReplyPanel(messageId: number)
 		{
@@ -403,7 +395,7 @@ export const ChatTextarea = {
 			this.panelContext.messageId = messageId;
 			this.focus();
 
-			this.draftManager.setDraftPanel(this.dialogId, this.panelType, this.panelContext);
+			this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
 		},
 		openForwardPanel(messagesIds: number[])
 		{
@@ -413,7 +405,7 @@ export const ChatTextarea = {
 			this.clear();
 			this.focus();
 
-			this.draftManager.setDraftPanel(this.dialogId, this.panelType, this.panelContext);
+			this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
 		},
 		toggleMarketPanel()
 		{
@@ -514,9 +506,15 @@ export const ChatTextarea = {
 
 			return EscEventAction.ignored;
 		},
+		onMouseUp(event: MouseEvent)
+		{
+			this.getToolbarManager().handleTextSelect(event, this.$refs.textarea);
+		},
 		async onKeyDown(event: KeyboardEvent)
 		{
 			Analytics.getInstance().onTypeMessage(this.dialog);
+
+			this.getToolbarManager().hide();
 
 			if (this.showMention && this.withMention)
 			{
@@ -635,7 +633,7 @@ export const ChatTextarea = {
 			}
 
 			const mentions = this.mentionManager.addMentionReplacement(mentionText, mentionReplacement);
-			this.draftManager.setDraftMentions(this.dialogId, mentions);
+			this.getDraftManager().setDraftMentions(this.dialogId, mentions);
 
 			const mentionSymbol = isMentionSymbol ? this.mentionManager.getMentionSymbol() : '';
 			textToReplace = `${mentionSymbol}${textToReplace}`;
@@ -742,6 +740,20 @@ export const ChatTextarea = {
 				this.closePanel();
 			}
 		},
+		onShowFormatToolbar(event: BaseEvent<{ bindPosition: BindPosition }>)
+		{
+			const { bindPosition } = event.getData();
+			this.formatToolbarPosition = bindPosition;
+			this.showFormatToolbar = true;
+		},
+		onHideFormatToolbar()
+		{
+			this.showFormatToolbar = false;
+		},
+		onFormatToolbarUpdateText(newText: string)
+		{
+			this.text = newText;
+		},
 		initResizeManager()
 		{
 			this.resizeManager = new ResizeManager({
@@ -811,6 +823,17 @@ export const ChatTextarea = {
 			}
 
 			return this.draftManager;
+		},
+		getToolbarManager(): FormatToolbarManager
+		{
+			if (!this.toolbarManager)
+			{
+				this.toolbarManager = new FormatToolbarManager();
+				this.toolbarManager.subscribe(FormatToolbarManager.events.show, this.onShowFormatToolbar);
+				this.toolbarManager.subscribe(FormatToolbarManager.events.hide, this.onHideFormatToolbar);
+			}
+
+			return this.toolbarManager;
 		},
 		getMessageService(): MessageService
 		{
@@ -956,6 +979,7 @@ export const ChatTextarea = {
 							:placeholder="textareaPlaceholder"
 							:maxlength="textareaMaxLength"
 							@keydown="onKeyDown"
+							@mouseup="onMouseUp"
 							@paste="onPaste"
 							class="bx-im-textarea__element"
 							ref="textarea"
@@ -977,12 +1001,8 @@ export const ChatTextarea = {
 							class="bx-im-textarea__icon"
 							@click="onMarketIconClick"
 						/>
-						<SmileSelector
-							v-if="showSmileSelector"
-							:dialogId="dialogId"
-						/>
 						<EmoteSelector
-							v-if="showEmoteSelector"
+							v-if="withSmileSelector"
 							:dialogId="dialogId"
 						/>
 						<AudioInput
@@ -1010,6 +1030,14 @@ export const ChatTextarea = {
 				:dialogId="dialogId"
 				:query="mentionQuery"
 				@close="closeMentionPopup"
+			/>
+			<FormatToolbar 
+				v-if="showFormatToolbar"
+				:dialogId="dialogId" 
+				:textarea="$refs.textarea" 
+				:targetPosition="formatToolbarPosition"
+				@updateText="onFormatToolbarUpdateText"
+				@close="showFormatToolbar = false"
 			/>
 		</div>
 	`,

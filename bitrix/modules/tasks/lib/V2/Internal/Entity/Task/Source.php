@@ -12,7 +12,7 @@ class Source implements ValueObjectInterface
 	use MapTypeTrait;
 
 	public function __construct(
-		public readonly ?string $type = null,
+		public readonly ?SourceType $type = null,
 		public readonly ?array $data = null
 	)
 	{
@@ -21,7 +21,7 @@ class Source implements ValueObjectInterface
 	public function toArray(): array
 	{
 		return [
-			'type' => $this->type,
+			'type' => $this->type?->value,
 			'data' => $this->data,
 		];
 	}
@@ -29,7 +29,7 @@ class Source implements ValueObjectInterface
 	public static function mapFromArray(array $props = []): static
 	{
 		return new static(
-			type: static::mapString($props, 'type'),
+			type: static::mapBackedEnum($props, 'type', SourceType::class),
 			data: [
 				'entityId' => static::mapInteger($props, 'entityId'),
 				'subEntityId' => static::mapInteger($props, 'subEntityId'),

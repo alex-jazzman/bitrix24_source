@@ -7,7 +7,7 @@ $MESS["TAB_PRESETS_NEW_SELECTED"] = "Выбрано";
 $MESS["TAB_PRESETS_NEW_ERROR"] = "Не удалось перейти к настройкам, попробуйте ещё раз. Если ошибка повторится, обратитесь к администратору вашего Битрикс24";
 $MESS["TAB_PRESETS_NEW_APPLY_ERROR"] = "Не удалось сохранить изменения, попробуйте ещё раз";
 
-$MESS["TAB_PRESETS_PRESET_BANNER_DESCRIPTION"] = "Выберите готовое меню или настройте своё, остальные инструменты в дополнительном меню";
+$MESS["TAB_PRESETS_PRESET_BANNER_DESCRIPTION"] = "Выберите готовое меню или настройте своё, остальные инструменты будут в дополнительном меню";
 $MESS["TAB_PRESETS_MANUAL_BANNER_DESCRIPTION"] = "Создайте для себя удобное рабочее пространство — только важное и нужное вам";
 
 $MESS["TAB_PRESETS_NEW_CONFIRM_TITLE"] = "Сменить нижнее меню?";

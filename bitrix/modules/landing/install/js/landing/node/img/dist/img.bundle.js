@@ -33,7 +33,6 @@ this.BX.Landing = this.BX.Landing || {};
 	    if (this.manifest.allowInlineEdit !== false && BX.Landing.Main.getInstance().isControlsEnabled() && (!BX.Landing.Node.Text.currentNode || !BX.Landing.Node.Text.currentNode.isEditable()) && !BX.Landing.UI.Panel.StylePanel.getInstance().isShown()) {
 	      event.preventDefault();
 	      event.stopPropagation();
-	      BX.Landing.UI.Button.ColorAction.hideAll();
 	      if (!this.editPanel) {
 	        this.editPanel = new BX.Landing.UI.Panel.Content(this.selector, {
 	          title: BX.Landing.Loc.getMessage('LANDING_IMAGE_PANEL_TITLE'),

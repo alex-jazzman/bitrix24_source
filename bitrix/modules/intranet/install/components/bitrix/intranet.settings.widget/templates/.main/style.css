@@ -38,13 +38,13 @@
 	overflow: hidden;
 }
 
-.bitrix24-theme-dark .intranet-settings-widget__header-name,
-.bitrix24-theme-default .intranet-settings-widget__header-name {
+.bitrix24-dark-theme .intranet-settings-widget__header-name,
+.bitrix24-default-theme .intranet-settings-widget__header-name {
 	color: var(--ui-color-base-90);
 }
 
-.bitrix24-theme-dark .intranet-settings-widget__header-btn.ui-icon-set,
-.bitrix24-theme-default .intranet-settings-widget__header-btn.ui-icon-set {
+.bitrix24-dark-theme .intranet-settings-widget__header-btn.ui-icon-set,
+.bitrix24-default-theme .intranet-settings-widget__header-btn.ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-base-90);
 }
 
@@ -361,14 +361,4 @@
 
 .intranet-setting__btn-copy.ui-btn:hover {
 	background-color: #60acfd;
-}
-
-.intranet-settings-widget__label-new {
-	position: absolute;
-	right: 24px;
-	top: -10px;
-}
-
-.intranet-settings-widget__label-new .ui-label-new {
-	--ui-label-background-color: var(--ui-color-palette-blue-50);
 }

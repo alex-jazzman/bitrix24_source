@@ -90,7 +90,7 @@ jn.define('call/callList/searchUserItem', (require, exports, module) => {
 				alignItems: 'center',
 			};
 
-			const finalUri = avatarPath ? `${currentDomain}${avatarPath}` : '';
+			const finalUri = this.getAvatarUri(avatarPath);
 			if (finalUri)
 			{
 				return Image({
@@ -111,6 +111,21 @@ jn.define('call/callList/searchUserItem', (require, exports, module) => {
 					},
 				}),
 			);
+		}
+
+		getAvatarUri(avatarPath)
+		{
+			if (!avatarPath)
+			{
+				return '';
+			}
+
+			if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://'))
+			{
+				return avatarPath;
+			}
+
+			return `${currentDomain}${avatarPath}`;
 		}
 	}
 

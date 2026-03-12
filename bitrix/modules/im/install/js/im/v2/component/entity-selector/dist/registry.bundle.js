@@ -13,7 +13,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const AddToChatContent = {
 	  name: 'AddToChatContent',
 	  components: {
-	    AddToChat: im_v2_component_search.AddToChat,
+	    AddToChatSearch: im_v2_component_search.AddToChatSearch,
 	    ChatButton: im_v2_component_elements_button.ChatButton
 	  },
 	  props: {
@@ -202,7 +202,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				</label>
 			</div>
 			<div class="bx-im-entity-selector-add-to-chat__search-result-container">
-				<AddToChat
+				<AddToChatSearch
 					:query="searchQuery"
 					:dialogId="dialogId"
 					:selectedItems="[...selectedItems]"
@@ -988,15 +988,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isInviteLinkAvailable() {
 	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.inviteByLinkAvailable);
 	    },
+	    isChangeInviteLanguageAvailable() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.changeInviteLanguageAvailable);
+	    },
 	    finalHeight() {
-	      const inviteLinkBlockHeight = 58 + 12;
 	      const tabsBlockHeight = 38;
+	      const inviteLinkBlockHeight = 58 + 12;
+	      const inviteLanguageBlockHeight = 44;
 	      let finalHeight = TAB_CONTENT_HEIGHT;
 	      if (this.isCollaber) {
 	        finalHeight -= tabsBlockHeight;
 	      }
 	      if (!this.isInviteLinkAvailable) {
 	        finalHeight -= inviteLinkBlockHeight;
+	      }
+	      if (!this.isChangeInviteLanguageAvailable) {
+	        finalHeight -= inviteLanguageBlockHeight;
 	      }
 	      return finalHeight;
 	    }

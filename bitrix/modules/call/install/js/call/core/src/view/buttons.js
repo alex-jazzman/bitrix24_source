@@ -730,6 +730,24 @@ export class TopButton
 			this.elements.text.className = `bx-messenger-videocall-top-button-text ${this.iconClass}`;
 		}
 	}
+
+	setBlocked(isBlocked)
+	{
+		if (this.blocked === isBlocked)
+		{
+			return;
+		}
+
+		this.blocked = isBlocked;
+		if (this.blocked)
+		{
+			Dom.addClass(this.elements.root, 'blocked');
+		}
+		else
+		{
+			Dom.removeClass(this.elements.root, 'blocked');
+		}
+	}
 }
 
 export class TopFramelessButton
@@ -904,6 +922,24 @@ export class ParticipantsButton
 			BX.remove(this.elements.rightContainer);
 		}
 	};
+
+	setBlocked(isBlocked)
+	{
+		if (this.blocked == isBlocked)
+		{
+			return;
+		}
+
+		this.blocked = isBlocked;
+		if (this.blocked)
+		{
+			Dom.addClass(this.elements.root, 'blocked');
+		}
+		else
+		{
+			Dom.removeClass(this.elements.root, 'blocked');
+		}
+	}
 }
 
 export class ParticipantsButtonMobile

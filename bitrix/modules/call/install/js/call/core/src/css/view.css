@@ -802,6 +802,13 @@
 	color: var(--call-view__button-color);
 }
 
+.bx-messenger-videocall-top-button.blocked {
+	cursor: default;
+	background-color: var(--call-view__button-background-color-blocked);
+	opacity: 0.4;
+	pointer-events: none;
+}
+
 .bx-messenger-videocall-top-button-frameless {
 	display: flex;
 	align-items: center;
@@ -1766,6 +1773,15 @@
 
 .bx-messenger-videocall-panel-icon-background.bx-messenger-videocall-panel-icon-background-hangup {
 	background-color: var(--call-view__button-background-color-hangup);
+}
+
+@media (hover: none) {
+	html:has(.bx-messenger-call),
+	body:has(.bx-messenger-call),
+	html:has(.bx-im-application-call-mobile-state),
+	body.bx-im-application-call-mobile-state{
+		overscroll-behavior: none;
+	}
 }
 
 body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-icon-background.bx-messenger-videocall-panel-icon-background-hangup {
@@ -3478,7 +3494,7 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 }
 
 .bx-messenger-videocall-fullscreen.bx-messenger-videocall-centered.bx-messenger-videocall-hidden-panels .bx-messenger-videocall-bottom {
-	transform: translateY(74px);
+	transform: translateY(96px);
 }
 
 .bx-messenger-videocall-fullscreen.bx-messenger-videocall-centered .bx-messenger-videocall-panel {
@@ -4387,7 +4403,7 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	font-size: var(--ui-font-size-md);
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: var(--ui-color-palette-white-base);
-	text-align: center;
+	text-align: left;
 	font-style: normal;
 	font-weight: var(--ui-font-weight-normal, 400);
 	line-height: var(--call-view__device-selector-device-item-line-height);

@@ -1,4 +1,5 @@
 <?php
+
 $MESS["TASK_COLUMN_CREATED_BY"] = "Постановщик";
 $MESS["TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1"] = "Исполнитель";
 $MESS["TASK_COLUMN_DEADLINE"] = "Крайний срок";

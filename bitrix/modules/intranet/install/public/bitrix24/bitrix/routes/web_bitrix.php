@@ -266,11 +266,11 @@ return function (RoutingConfigurator $routes) {
 		}
 	);
 
-	$routes->any('/video/{alias}(/?)([^/]*)', new PublicPageController('/desktop_app/router.php'))
+	$routes->any('/video/{alias}(/?)([^/]*)', new PublicPageController('/conference/videoconf.php'))
 		->where('alias', '[\.\-0-9a-zA-Z]+')
 		->default('videoconf', 1);
 
-	$routes->any('/extranet/video/{alias}(/?)([^/]*)', new PublicPageController('/desktop_app/router.php'))
+	$routes->any('/extranet/video/{alias}(/?)([^/]*)', new PublicPageController('/conference/videoconf.php'))
 		->where('alias', '[\.\-0-9a-zA-Z]+')
 		->default('videoconf', 1);
 

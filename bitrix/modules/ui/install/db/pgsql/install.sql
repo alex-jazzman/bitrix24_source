@@ -38,6 +38,7 @@ CREATE TABLE b_ui_file_uploader_temp_file (
   BUCKET_ID int,
   MODULE_ID varchar(50) NOT NULL,
   CONTROLLER varchar(255) NOT NULL,
+  CONTROLLER_OPTIONS text,
   CLOUD smallint NOT NULL DEFAULT 0,
   UPLOADED smallint NOT NULL DEFAULT 0,
   DELETED smallint NOT NULL DEFAULT 0,

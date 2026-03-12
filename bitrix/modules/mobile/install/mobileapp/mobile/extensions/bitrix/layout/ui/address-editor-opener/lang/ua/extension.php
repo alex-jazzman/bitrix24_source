@@ -1,4 +1,0 @@
-<?php
-$MESS["ADDRESS_EDITOR_OPENER_EDIT_ADDRESS"] = "Змінити адресу";
-$MESS["ADDRESS_EDITOR_OPENER_SPECIFY_ADDRESS"] = "Уведіть адресу";
-$MESS["ADDRESS_EDITOR_OPENER_VIEW_ADDRESS"] = "Переглянути адресу";

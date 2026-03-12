@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
+	'lang' => BX_ROOT.'/components/bitrix/tasks.task.template/templates/.default/template.php',
 	'css' => 'dist/replication.bundle.css',
 	'js' => 'dist/replication.bundle.js',
 	'rel' => [
@@ -15,6 +16,7 @@ return [
 		'ui.vue3',
 		'tasks.v2.component.elements.question-mark',
 		'tasks.v2.component.elements.select',
+		'tasks.v2.component.fields.replication',
 		'ui.vue3.components.popup',
 		'ui.system.input.vue',
 		'tasks.v2.component.elements.radio',
@@ -33,15 +35,16 @@ return [
 		'main.popup',
 		'tasks.v2.const',
 		'tasks.v2.lib.api-client',
-		'tasks.v2.lib.id-utils',
 		'main.date',
 		'tasks.v2.lib.timezone',
-		'tasks.v2.component.elements.hint',
+		'ui.vue3.directives.hint',
 		'ui.system.chip.vue',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
 		'tasks.v2.core',
 		'tasks.v2.lib.field-highlighter',
+		'tasks.v2.component.elements.hint',
+		'tasks.v2.lib.id-utils',
 		'tasks.v2.lib.show-limit',
 	],
 	'skip_core' => false,

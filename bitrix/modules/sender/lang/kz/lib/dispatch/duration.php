@@ -1,3 +1,0 @@
-<?php
-$MESS["SENDER_DISPATCH_DURATION_LESS_HOUR"] = "1 сағаттан аз";
-$MESS["SENDER_DISPATCH_DURATION_MORE_3_DAYS"] = "3 сағаттан көп";

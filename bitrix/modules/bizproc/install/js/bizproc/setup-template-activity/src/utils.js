@@ -1,3 +1,5 @@
+import { Type } from 'main.core';
+
 import {
 	CONSTANT_ID_PREFIX,
 	CONSTANT_TYPES,
@@ -81,7 +83,7 @@ export function convertConstants(constant: ConstantItem): ConstantConvertedData
 		Type: constant.constantType,
 		Required: 0,
 		Multiple: constant.multiple ? 1 : 0,
-		Options: (constant.options && constant.options.length > 0) ? constant.options : null,
+		Options: Type.isObject(constant.options) ? constant.options : null,
 		Default: constant.default,
 	};
 }
@@ -102,4 +104,24 @@ function generateRandomString(length: number): string
 export function generateConstantId(): string
 {
 	return CONSTANT_ID_PREFIX + generateRandomString(10);
+}
+
+export function getScrollParent(node: HTMLElement): HTMLElement | null
+{
+	let parent = node?.parentElement;
+
+	while (parent && parent !== document.body)
+	{
+		const style = window.getComputedStyle(parent);
+		const overflowY = style.overflowY;
+		const isScrollable = overflowY === 'auto' || overflowY === 'scroll';
+
+		if (isScrollable && parent.tagName !== 'FORM')
+		{
+			return parent;
+		}
+		parent = parent.parentElement;
+	}
+
+	return null;
 }

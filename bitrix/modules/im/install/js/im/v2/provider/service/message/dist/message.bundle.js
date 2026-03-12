@@ -18,8 +18,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _prepareTariffRestrictions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareTariffRestrictions");
 	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
 	var _sendAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
+	var _getStickerMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getStickerMessages");
 	class LoadService {
 	  constructor(chatId) {
+	    Object.defineProperty(this, _getStickerMessages, {
+	      value: _getStickerMessages2
+	    });
 	    Object.defineProperty(this, _sendAnalytics, {
 	      value: _sendAnalytics2
 	    });
@@ -328,7 +332,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    additionalMessages,
 	    commentInfo,
 	    copilot,
-	    tariffRestrictions
+	    tariffRestrictions,
+	    stickers
 	  } = rawData;
 	  const dialogPromise = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('chats/update', {
 	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().dialogId,
@@ -345,7 +350,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const commentInfoPromise = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/comments/set', commentInfo);
 	  const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	  const copilotPromise = copilotManager.handleChatLoadResponse(copilot);
-	  return Promise.all([dialogPromise, filesPromise, usersPromise, reactionsPromise, additionalMessagesPromise, commentInfoPromise, copilotPromise]);
+	  const stickersPromise = Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('stickers/messages/set', babelHelpers.classPrivateFieldLooseBase(this, _getStickerMessages)[_getStickerMessages](rawData)), babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('stickers/set', stickers)]);
+	  return Promise.all([dialogPromise, filesPromise, usersPromise, reactionsPromise, additionalMessagesPromise, commentInfoPromise, copilotPromise, stickersPromise]);
 	}
 	function _setDialogInited2(flag, wasInitedBefore = true) {
 	  const fields = {
@@ -391,6 +397,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  im_v2_lib_analytics.Analytics.getInstance().messageDelete.onNotFoundNotification({
 	    dialogId
 	  });
+	}
+	function _getStickerMessages2(rawData) {
+	  const stickerMessages = [];
+	  rawData.messages.forEach(message => {
+	    const isSticker = Boolean(message.params.STICKER_PARAMS);
+	    if (!isSticker) {
+	      return;
+	    }
+	    stickerMessages.push({
+	      messageId: message.id,
+	      ...message.params.STICKER_PARAMS
+	    });
+	  });
+	  return stickerMessages;
 	}
 	LoadService.MESSAGE_REQUEST_LIMIT = 25;
 

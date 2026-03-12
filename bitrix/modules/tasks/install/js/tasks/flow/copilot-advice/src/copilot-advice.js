@@ -1,3 +1,4 @@
+import { Extension } from 'main.core';
 import { Chat } from './chat';
 import { ExampleChat } from './example-chat';
 
@@ -33,5 +34,10 @@ export class CopilotAdvice
 
 		CopilotAdvice.currentChat = new Chat(flowData);
 		CopilotAdvice.currentChat.show();
+	}
+
+	static getCopilotName(): string
+	{
+		return Extension.getSettings('tasks.flow.copilot-advice').copilotName;
 	}
 }

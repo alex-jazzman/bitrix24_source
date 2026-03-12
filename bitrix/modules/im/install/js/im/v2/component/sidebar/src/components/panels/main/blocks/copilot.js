@@ -7,6 +7,9 @@ import { CopilotRole } from '../../../elements/copilot-role/copilot-role';
 import { AIModel } from '../../../elements/ai-model/ai-model';
 import { MuteChat } from '../../../elements/mute-chat/mute-chat';
 import { ChatMembersAvatars } from '../../../elements/chat-members-avatars/chat-members-avatars';
+import { SharedLink } from '../../../elements/shared-link/shared-link';
+import { isSharedLinkCopyAllowed } from '../../../../helpers/shared-link';
+import { SettingsSeparator } from '../components/settings-separator';
 
 import '../css/copilot-preview.css';
 
@@ -15,7 +18,16 @@ import type { ImModelChat } from 'im.v2.model';
 // @vue/component
 export const CopilotPreview = {
 	name: 'CopilotPreview',
-	components: { ChatAvatar, ChatTitle, MuteChat, ChatMembersAvatars, CopilotRole, AIModel },
+	components: {
+		ChatAvatar,
+		ChatTitle,
+		MuteChat,
+		ChatMembersAvatars,
+		CopilotRole,
+		AIModel,
+		SharedLink,
+		SettingsSeparator,
+	},
 	props: {
 		dialogId: {
 			type: String,
@@ -41,6 +53,10 @@ export const CopilotPreview = {
 		{
 			return FeatureManager.isFeatureAvailable(Feature.isAIModelChangeAllowed);
 		},
+		isSharedLinkCopyAllowed(): boolean
+		{
+			return isSharedLinkCopyAllowed(this.dialogId);
+		},
 	},
 	template: `
 		<div class="bx-im-sidebar-copilot-preview__scope">
@@ -57,6 +73,8 @@ export const CopilotPreview = {
 				<ChatMembersAvatars :showMembers="showMembers" :dialogId="dialogId" />
 			</div>
 			<div class="bx-im-sidebar-copilot-preview-group-chat__settings">
+				<SharedLink v-if="isSharedLinkCopyAllowed" :dialogId="dialogId" />
+				<SettingsSeparator />
 				<CopilotRole :dialogId="dialogId" />
 				<AIModel v-if="isAIModelChangeAllowed" :dialogId="dialogId" />
 				<MuteChat :dialogId="dialogId" />

@@ -34,6 +34,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @property-write int StorageId
  * @property-write ?array StorageFields
  * @property-write string Mode
+ * @property-write ?string CreateErrorText
  */
 class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivity
 {
@@ -46,16 +47,18 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 			'StorageDescription' => '',
 			'StorageCode' => '',
 			'SelectedFields' => [],
-			//'Mode' => 'Y',
+			'Mode' => 'Y',
 
 			//return
 			'StorageId' => 0,
-			'StorageFields' => null
+			'StorageFields' => null,
+			'CreateErrorText' => null,
 		];
 
 		$this->setPropertiesTypes([
-			'Title' => ['Type' => 'string'],
+			'Title' => ['Type' => FieldType::STRING],
 			'StorageId' => ['Type' => FieldType::INT],
+			'CreateErrorText' => ['Type' => FieldType::STRING],
 		]);
 	}
 
@@ -69,6 +72,8 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 				'#PROPERTY#' => Loc::getMessage('BPCSN_DESCRIPTION_TITLE_FIELD_NAME') ?? '',
 			]);
 			$errors->setError($error);
+
+			return $errors;
 		}
 
 		$currentUser =  new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
@@ -86,6 +91,8 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 			{
 				$errors->setError($error);
 			}
+
+			$this->CreateErrorText = $this->composeCreateErrorText($errors);
 
 			return $errors;
 		}
@@ -269,7 +276,7 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 		foreach ($systemFields as $systemField)
 		{
 			$storageFields[$systemField['ID']] = [
-				'Name' => Loc::getMessage('BPCSN_DESCRIPTION_SELECTED_FIELD_CODE') . ':' . $systemField['NAME'],
+				'Name' => $systemField['NAME'],
 				'Type' => $systemField['TYPE'],
 			];
 		}
@@ -297,7 +304,7 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 
 				$selectedFields[] = $storageField;
 				$data['StorageFields'][$storageField['code']] = [
-					'Name' => Loc::getMessage('BPCSN_DESCRIPTION_SELECTED_FIELD_CODE') . ':' . $storageField['name'],
+					'Name' => $storageField['name'],
 					'Type' => $storageField['type']
 				];
 			}
@@ -355,5 +362,19 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 		}
 
 		return $result;
+	}
+
+	private function composeCreateErrorText(\Bitrix\Main\ErrorCollection $errors): string
+	{
+		$messages = [];
+		foreach ($errors as $error)
+		{
+			if ($error instanceof \Bitrix\Main\Error && $error->getMessage())
+			{
+				$messages[] = $error->getMessage();
+			}
+		}
+
+		return implode(', ', $messages);
 	}
 }

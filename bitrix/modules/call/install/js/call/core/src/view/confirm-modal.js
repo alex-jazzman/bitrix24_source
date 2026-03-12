@@ -28,6 +28,7 @@ export class ConfirmModal
 		this.message = BX.type.isString(config.message) ? config.message : '';
 		this.yesButtonText = BX.type.isString(config.yesButtonText) ? config.yesButtonText : '';
 		this.noButtonText = BX.type.isString(config.noButtonText) ? config.noButtonText : '';
+		this.targetContainer = BX.type.isDomNode(config.targetContainer) ?  config.targetContainer : document.body;
 	}
 
 	#getButtons()
@@ -100,6 +101,7 @@ export class ConfirmModal
 				width: 420,
 				maxWidth: 420,
 				animation: 'fading',
+				targetContainer: this.targetContainer,
 				events: {
 					onPopupClose: () => {
 						this.callbacks.onClose();

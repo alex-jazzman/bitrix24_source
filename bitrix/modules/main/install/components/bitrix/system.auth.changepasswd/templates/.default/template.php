@@ -28,6 +28,7 @@ if (!empty($arParams["~AUTH_RESULT"]))
 	<? endif ?>
 	<input type="hidden" name="AUTH_FORM" value="Y">
 	<input type="hidden" name="TYPE" value="CHANGE_PWD">
+	<?= bitrix_sessid_post(); ?>
 	<table class="data-table bx-changepass-table">
 		<thead>
 			<tr>

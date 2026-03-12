@@ -1,3 +1,0 @@
-<?php
-$MESS["DISK_BLANK_FILE_DATA_NEW_FILE_BOARD"] = "Нова дошка";
-$MESS["DISK_BLANK_FILE_DATA_TYPE_BOARD"] = "Дошка";

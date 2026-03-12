@@ -14,6 +14,7 @@ import type { TagDto, TaskDto } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { mapRights } from './mappers';
+import { permissionBuilder } from './mappers/permission-builder';
 
 export const templateService = new class
 {
@@ -54,11 +55,11 @@ export const templateService = new class
 			await checkListService.load(id, tmpId);
 		}
 
-		taskService.updateStoreTask(tmpId, {
+		const fields = {
 			title: template.title,
 			description: template.description,
-			creatorId: Core.getParams().currentUser.id,
-			responsibleIds: template.responsibleIds,
+			creatorId: template.creatorId,
+			responsibleIds: template.isForNewUser ? [0] : template.responsibleIds,
 			deadlineAfter: template.deadlineAfter,
 			needsControl: template.needsControl,
 			startDatePlanAfter: template.startDatePlanAfter,
@@ -77,8 +78,24 @@ export const templateService = new class
 			relatedTaskIds: template.relatedTaskIds,
 			allowsTimeTracking: template.allowsTimeTracking,
 			estimatedTime: template.estimatedTime,
-			permissions: template.estimatedTime,
-		});
+			permissions: [],
+			userFields: template.userFields,
+			isForNewUser: template.isForNewUser,
+			replicate: template.replicate,
+			replicateParams: template.replicateParams,
+		};
+
+		fields.permissions = permissionBuilder.getPermissions(fields);
+
+		if (Type.isArrayFilled(fields.userFields))
+		{
+			fields.userFields = userFieldsManager.prepareUserFieldsForTaskFromTemplate(
+				fields.userFields,
+				Core.getParams().templateUserFieldScheme,
+			);
+		}
+
+		taskService.updateStoreTask(tmpId, fields);
 	}
 
 	async add(template: TaskModel): Promise<[number, ?Error]>
@@ -127,7 +144,7 @@ export const templateService = new class
 	{
 		try
 		{
-			const data = await apiClient.post(Endpoint.TemplateAdd, {
+			const data = await apiClient.post(Endpoint.TemplateCopy, {
 				template: TaskMappers.mapModelToDto({ ...template, id: template.copiedFromId }),
 			});
 
@@ -142,9 +159,12 @@ export const templateService = new class
 				initialTemplate: template,
 			});
 
-			if (template.checklist.length > 0)
+			if (template.checklist?.length > 0)
 			{
-				void checkListService.load(data.id);
+				void checkListService.save(
+					data.id,
+					this.$store.getters[`${Model.CheckList}/getByIds`](template.checklist),
+				);
 			}
 
 			return [data.id, null];
@@ -248,21 +268,7 @@ export const templateService = new class
 
 			data.templateId = 0;
 
-			if (task.responsibleIds.length > 1)
-			{
-				const multiResponsibleIds = task.responsibleIds.filter(
-					(id) => id !== Core.getParams().currentUser.id,
-				);
-
-				await apiClient.post(Endpoint.TaskMultiTaskAdd, {
-					taskId: data.id,
-					userIds: multiResponsibleIds,
-				});
-
-				subTasksService.addStore(task.id, multiResponsibleIds.map((id) => `userTask${id}`));
-			}
-
-			taskService.onAfterTaskAdded(task, data);
+			await taskService.onAfterTaskAdded(task, data);
 
 			return [data.id, null];
 		}
@@ -280,14 +286,14 @@ export const templateService = new class
 
 		if (!taskService.hasChanges(templateBefore, fields))
 		{
-			return;
+			return {};
 		}
 
 		taskService.updateStoreTask(id, fields);
 
 		if (!idUtils.isReal(id))
 		{
-			return;
+			return {};
 		}
 
 		EventEmitter.emit(EventName.TemplateBeforeUpdate, {
@@ -295,7 +301,7 @@ export const templateService = new class
 			fields: { id, ...fields },
 		});
 
-		await this.#updateDebounced(id, fields, templateBefore);
+		return this.#updateDebounced(id, fields, templateBefore);
 	}
 
 	async delete(id: string): Promise<void>
@@ -368,15 +374,19 @@ export const templateService = new class
 				Endpoint.TemplateUpdate,
 				{ template: TaskMappers.mapModelToDto({ id: templateId, ...fields }) },
 			);
+
+			promise.resolve({});
 		}
 		catch (error)
 		{
 			taskService.updateStoreTask(id, templateBefore);
 
 			console.error(Endpoint.TemplateUpdate, error);
-		}
 
-		promise.resolve();
+			promise.resolve({
+				[Endpoint.TemplateUpdate]: error.errors,
+			});
+		}
 	}
 
 	get $store(): Store

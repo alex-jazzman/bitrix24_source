@@ -254,6 +254,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 						logger.log('Mention: hide server loader');
 						this.hideLoader();
 					}
+
 					this.drawItems(dialogIdList);
 				},
 			};
@@ -511,6 +512,13 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				result.push(item);
 			});
 
+			const copilotMentionItem = this.getCopilotMentionItem();
+			const copilotMentionItemTitle = copilotMentionItem?.title.toLowerCase();
+			if (copilotMentionItemTitle.includes(this.curruntQuery.toLowerCase()))
+			{
+				result.push(copilotMentionItem);
+			}
+
 			logger.log('Mention: draw items', result);
 			if (this.isProcessed)
 			{
@@ -603,11 +611,6 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 		getAllUsersMentionItem()
 		{
-			if (!Feature.isMentionAllAvailable)
-			{
-				return null;
-			}
-
 			const helper = DialogHelper.createByDialogId(this.dialogId);
 			if (!helper)
 			{

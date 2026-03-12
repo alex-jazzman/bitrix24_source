@@ -184,11 +184,11 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 		},
 		leftCounterColor(color): void
 		{
-			this.button.getLeftCounter()?.setColor(color);
+			this.button.getLeftCounter()?.setStyle(color);
 		},
 		rightCounterColor(color): void
 		{
-			this.button.getRightCounter()?.setColor(color);
+			this.button.getRightCounter()?.setStyle(color);
 		},
 		leftCounterValue(value): void
 		{
@@ -204,7 +204,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 			{
 				this.button.setLeftCounter({
 					value,
-					color: this.leftCounterColor,
+					style: this.leftCounterColor,
 				});
 			}
 		},
@@ -222,7 +222,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 			{
 				this.button.setRightCounter({
 					value,
-					color: this.leftCounterColor,
+					style: this.rightCounterColor,
 				});
 			}
 		},
@@ -291,6 +291,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 			wide: this.wide,
 			removeLeftCorners: this.removeLeftCorners,
 			removeRightCorners: this.removeRightCorners,
+			state: this.state,
 		});
 
 		if (this.collapsed)

@@ -244,7 +244,9 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				}
 
 				payload.map((element) => {
-					return validate(element);
+					return validate(element, {
+						fromLocalDatabase: true,
+					});
 				}).forEach((element) => {
 					/** @type {DialoguesModelState} */
 					const existingItem = store.state.collection[element.dialogId];

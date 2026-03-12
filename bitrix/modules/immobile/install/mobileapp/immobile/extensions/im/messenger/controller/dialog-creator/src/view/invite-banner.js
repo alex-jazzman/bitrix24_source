@@ -8,11 +8,10 @@ jn.define('im/messenger/controller/dialog-creator/src/view/invite-banner', (requ
 	const { Indent } = require('tokens');
 
 	function InviteBanner({
-		totalEmployees = null,
+		accent = false,
 		onClick = () => {},
 	})
 	{
-		const accent = totalEmployees && totalEmployees < 5;
 		const leftIcon = Image({
 			style: {
 				width: 52,

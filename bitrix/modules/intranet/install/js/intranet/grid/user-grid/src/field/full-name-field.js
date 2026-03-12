@@ -1,5 +1,5 @@
 import { BaseField } from './base-field';
-import { Dom, Tag, Loc, Text } from 'main.core';
+import { Dom, Tag, Loc, Text, Extension } from 'main.core';
 import { Label, LabelColor } from 'ui.label';
 
 export type FullNameFieldType = {
@@ -9,6 +9,7 @@ export type FullNameFieldType = {
 	photoUrl: string,
 	role: string,
 	inviteStatus: string,
+	isFirstAdmin: ?boolean,
 }
 
 export class FullNameField extends BaseField
@@ -30,7 +31,7 @@ export class FullNameField extends BaseField
 				Dom.append(this.#getIntegratorBalloonContainer(), fullNameContainer);
 				break;
 			case 'admin':
-				Dom.append(this.#getAdminBalloonContainer(), fullNameContainer);
+				Dom.append(this.#getAdminBalloonContainer(params.isFirstAdmin), fullNameContainer);
 				break;
 			case 'extranet':
 				Dom.append(this.#getExtranetBalloonContainer(), fullNameContainer);
@@ -101,13 +102,26 @@ export class FullNameField extends BaseField
 	{
 		return Tag.render`
 			<span class="user-grid_role-label --integrator">
-				${Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_INTEGRATOR')}
+				${
+					Extension.getSettings('intranet.grid.user-grid')?.isRenamedIntegrator === 'Y'
+						? Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_INTEGRATOR_RENAMED')
+						: Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_INTEGRATOR')
+				}
 			</span>
 		`;
 	}
 
-	#getAdminBalloonContainer(): HTMLElement
+	#getAdminBalloonContainer(isFirstAdmin): HTMLElement
 	{
+		if (isFirstAdmin)
+		{
+			return Tag.render`
+				<span class="user-grid_role-label --first-admin">
+					${Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_FIRST_ADMIN')}
+				</span>
+			`;
+		}
+
 		return Tag.render`
 			<span class="user-grid_role-label --admin">
 				${Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_ADMIN')}

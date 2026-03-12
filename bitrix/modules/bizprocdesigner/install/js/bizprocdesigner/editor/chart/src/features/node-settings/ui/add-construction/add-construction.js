@@ -54,11 +54,6 @@ export const AddConstruction = {
 		},
 		getMenuItems(): Array<MenuItem>
 		{
-			// temporary
-			const isActionCardExists = (this.ruleCard?.constructions ?? []).some(
-				(construction) => construction.type === CONSTRUCTION_TYPES.ACTION,
-			);
-
 			return [
 				{
 					id: CONSTRUCTION_TYPES.AND_CONDITION,
@@ -78,7 +73,6 @@ export const AddConstruction = {
 					text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_MENU_ITEM'),
 					dataset: { testId: 'complexNodeRuleSettingsMenuItemConstructionAction' },
 					onclick: this.onClickMenuItem,
-					disabled: isActionCardExists,
 				},
 				{
 					id: CONSTRUCTION_TYPES.OUTPUT,

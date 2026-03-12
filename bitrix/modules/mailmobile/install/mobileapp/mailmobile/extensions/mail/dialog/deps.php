@@ -2,5 +2,6 @@
 
 return [
 	'extensions' => [
-	],
+        'mail:const',
+    ],
 ];

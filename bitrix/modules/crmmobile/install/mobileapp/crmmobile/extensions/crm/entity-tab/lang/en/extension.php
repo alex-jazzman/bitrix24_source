@@ -1,4 +1,10 @@
 <?php
+$MESS["M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_BUTTON_TEXT"] = "Configure comm channels";
+$MESS["M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_FEATURE_1"] = "Auto create deals from completed calls, emails or customers chats";
+$MESS["M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_FEATURE_2"] = "Full customer communication history is always available in the deal";
+$MESS["M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_FEATURE_3"] = "Communicate with customers via phone, email or messenger";
+$MESS["M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_TITLE"] = "Communication channels";
+$MESS["M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_TITLE"] = "Interface with customers without leaving your CRM";
 $MESS["M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE"] = "Insufficient permission to create item";
 $MESS["M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE_COMPANY"] = "Insufficient permission to create company";
 $MESS["M_CRM_ENTITY_TAB_FORBIDDEN_CREATE_TITLE_CONTACT"] = "Insufficient permission to create contact";

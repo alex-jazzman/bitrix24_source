@@ -101,24 +101,26 @@ jn.define('im/messenger-v2/controller/recent/service/empty-state/common', (requi
 		itemCollectionSizeChangedHandler = async (itemCollectionSize) => {
 			this.logger.log('itemCollectionSizeChangedHandler', itemCollectionSize);
 
-			if (itemCollectionSize === this.itemCollectionSize)
+			const needWelcomeScreen = itemCollectionSize === 0;
+			const isWelcomeScreenShown = this.isWelcomeScreenShown;
+			if (itemCollectionSize === this.itemCollectionSize && needWelcomeScreen === isWelcomeScreenShown)
 			{
-				this.logger.log('itemCollectionSizeChangedHandler skipped');
+				this.logger.log('itemCollectionSizeChangedHandler skipped', this.itemCollectionSize, isWelcomeScreenShown, itemCollectionSize, needWelcomeScreen);
 
 				return;
 			}
 
-			if (itemCollectionSize > 0)
-			{
-				await this.hide();
-			}
-			else
+			if (needWelcomeScreen)
 			{
 				await this.show();
 			}
+			else
+			{
+				await this.hide();
+			}
 
 			this.itemCollectionSize = itemCollectionSize;
-			this.logger.log('itemCollectionSizeChangedHandler complete');
+			this.logger.log('itemCollectionSizeChangedHandler complete', this.itemCollectionSize, isWelcomeScreenShown, itemCollectionSize, needWelcomeScreen);
 		};
 
 		/**

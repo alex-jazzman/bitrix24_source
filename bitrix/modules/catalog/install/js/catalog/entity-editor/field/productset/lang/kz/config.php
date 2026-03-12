@@ -1,4 +1,0 @@
-<?php
-$MESS["ENTITY_EDITOR_PRODUCT_SET_ALL_DESELECT_LABEL"] = "барлық таңдауды алып тастау";
-$MESS["ENTITY_EDITOR_PRODUCT_SET_ALL_SELECT_LABEL"] = "барлығын таңдау";
-$MESS["ENTITY_EDITOR_PRODUCT_SET_NOT_FILLED"] = "толтырылмады";

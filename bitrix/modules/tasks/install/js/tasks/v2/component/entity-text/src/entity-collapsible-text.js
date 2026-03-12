@@ -60,6 +60,7 @@ export const EntityCollapsibleText = {
 	{
 		return {
 			isOverflowing: false,
+			isOverflowChecked: false,
 			isMouseDown: false,
 			selectionMade: false,
 		};
@@ -103,10 +104,21 @@ export const EntityCollapsibleText = {
 		{
 			return this.hidden || this.showEditButton || this.showCollapseButton;
 		},
+		maxHeightStyle(): string
+		{
+			if (this.isOverflowChecked && !this.isOverflowing)
+			{
+				return 'none';
+			}
+
+			return this.opened ? 'none' : `${this.maxHeight}px`;
+		},
 	},
 	watch: {
 		async content(): void
 		{
+			this.isOverflowChecked = false;
+
 			await this.$nextTick();
 
 			this.updateIsOverflowing();
@@ -143,6 +155,7 @@ export const EntityCollapsibleText = {
 			const exceedsMaxHeight = htmlFormatterOffsetHeight > this.maxHeight;
 
 			this.isOverflowing = fitsWithinPreview && (!this.opened || exceedsMaxHeight);
+			this.isOverflowChecked = true;
 
 			if (!this.isOverflowing && this.showCollapseButton)
 			{
@@ -212,9 +225,9 @@ export const EntityCollapsibleText = {
 	template: `
 		<div
 			v-if="hasContent"
-			class="tasks-card-entity-collapsible-text"
+			class="tasks-card-entity-collapsible-text print-fit-height"
 			:class="{ '--disable-animation': openByDefault }"
-			:style="{ 'maxHeight': opened ? 'none' : maxHeight + 'px' }"
+			:style="{ 'maxHeight': maxHeightStyle }"
 			ref="preview"
 		>
 			<HtmlFormatterComponent
@@ -227,7 +240,7 @@ export const EntityCollapsibleText = {
 				@mouseup="onMouseUp"
 			/>
 			<template v-if="hidden && isOverflowing">
-				<div class="tasks-card-entity-collapsible-shadow">
+				<div class="tasks-card-entity-collapsible-shadow print-ignore">
 					<div class="tasks-card-entity-collapsible-shadow-white-bottom"/>
 				</div>
 			</template>
@@ -235,7 +248,7 @@ export const EntityCollapsibleText = {
 		<slot/>
 		<div
 			v-if="showFooter"
-			class="tasks-card-entity-collapsible-footer"
+			class="tasks-card-entity-collapsible-footer print-ignore"
 			:class="{
 				'--empty-content': !hasContent && hidden,
 				'--without-padding': !showFilesIndicator && hasFiles,

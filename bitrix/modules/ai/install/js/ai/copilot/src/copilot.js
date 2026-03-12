@@ -3,7 +3,6 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
 import { Engine, Text as PayloadText } from 'ai.engine';
 import { type CopilotImageController, type saveEventData } from 'ai.copilot.copilot-image-controller';
-import type { CopilotBanner as CopilotBannerType } from 'ai.copilot-banner';
 import { checkCopilotAgreement } from './helpers/check-copilot-agreement';
 
 import './css/main.css';
@@ -115,7 +114,6 @@ export class Copilot extends EventEmitter
 	#autoHide: boolean;
 	#container: HTMLElement | null = null;
 	#warningField: CopilotWarningResultField = null;
-	#copilotBanner: CopilotBannerType;
 	#copilotAgreementWasApplied: boolean;
 	#copilotImageController: CopilotImageController;
 	#copilotTextController: CopilotTextController;
@@ -251,13 +249,6 @@ export class Copilot extends EventEmitter
 				});
 
 				await this.#initCopilotTextControllerMenu();
-
-				if (this.#copilotTextController.isFirstLaunch())
-				{
-					const { AppsInstallerBanner } = await Runtime.loadExtension('ai.copilot-banner');
-
-					this.#copilotBanner = new AppsInstallerBanner({});
-				}
 			}
 			else
 			{
@@ -285,13 +276,6 @@ export class Copilot extends EventEmitter
 		if (this.#copilotTextController && this.#copilotTextController.isPromptsLoaded() === false)
 		{
 			console.error('AI.Copilot: Prompts were not loaded!');
-
-			return;
-		}
-
-		if (this.#copilotBanner)
-		{
-			this.#showCopilotAfterCopilotBanner(options);
 
 			return;
 		}
@@ -496,20 +480,6 @@ export class Copilot extends EventEmitter
 					this.#inputField.clearErrors();
 				},
 			},
-		});
-	}
-
-	#showCopilotAfterCopilotBanner(showCopilotOptions): void
-	{
-		this.#copilotBanner.show();
-
-		this.#copilotBanner.subscribe('action-finish-success', () => {
-			Copilot.showBanner = false;
-			this.#copilotBanner = null;
-			this.#engine.setBannerLaunched();
-			setTimeout(() => {
-				this.show(showCopilotOptions);
-			}, 300);
 		});
 	}
 

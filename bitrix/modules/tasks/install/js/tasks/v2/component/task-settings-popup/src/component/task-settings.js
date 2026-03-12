@@ -5,7 +5,6 @@ import { mapGetters } from 'ui.vue3.vuex';
 import { Core } from 'tasks.v2.core';
 import { Model } from 'tasks.v2.const';
 import type { TaskModel } from 'tasks.v2.model.tasks';
-import { showLimit } from 'tasks.v2.lib.show-limit';
 
 import { TaskSetting } from './setting/task-setting';
 import { TaskDeadlineDefaultSetting } from './setting/task-deadline-default-setting';
@@ -95,15 +94,6 @@ export const TaskSettings = {
 			},
 			set(value: boolean): void
 			{
-				if (this.isAutocompleteSubTasksLocked)
-				{
-					void showLimit({
-						featureId: Core.getParams().restrictions.relatedSubtaskDeadlines.featureId,
-					});
-
-					return;
-				}
-
 				this.localAutocompleteSubTasks = value;
 
 				this.emitFlagsUpdate({ autocompleteSubTasks: value });
@@ -116,15 +106,6 @@ export const TaskSettings = {
 			},
 			set(value: boolean): void
 			{
-				if (this.isTaskControlLocked)
-				{
-					void showLimit({
-						featureId: Core.getParams().restrictions.control.featureId,
-					});
-
-					return;
-				}
-
 				this.localFlags.needsControl = value;
 				this.emitFlagsUpdate({ needsControl: value });
 			},
@@ -158,15 +139,6 @@ export const TaskSettings = {
 			},
 			set(value: boolean): void
 			{
-				if (this.isMatchesWorkTimeLocked)
-				{
-					void showLimit({
-						featureId: Core.getParams().restrictions.skipWeekends.featureId,
-					});
-
-					return;
-				}
-
 				this.localFlags.matchesWorkTime = value;
 				this.emitFlagsUpdate({ matchesWorkTime: value });
 			},
@@ -175,13 +147,25 @@ export const TaskSettings = {
 		{
 			return !Core.getParams().restrictions.skipWeekends.available;
 		},
+		matchesWorkTimeFeatureId(): string
+		{
+			return Core.getParams().restrictions.skipWeekends.featureId;
+		},
 		isTaskControlLocked(): boolean
 		{
 			return !Core.getParams().restrictions.control.available;
 		},
+		taskControlFeatureId(): string
+		{
+			return Core.getParams().restrictions.control.featureId;
+		},
 		isAutocompleteSubTasksLocked(): boolean
 		{
 			return !Core.getParams().restrictions.relatedSubtaskDeadlines.available;
+		},
+		autocompleteSubTasksFeatureId(): string
+		{
+			return Core.getParams().restrictions.relatedSubtaskDeadlines.featureId;
 		},
 	},
 	created(): void
@@ -225,7 +209,8 @@ export const TaskSettings = {
 				v-model="taskControl"
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_CONTROL_LABEL')"
 				:questionMarkHint="loc('TASKS_V2_TASK_SETTINGS_POPUP_CONTROL_HINT')"
-				:lock="isMatchesWorkTimeLocked"
+				:lock="isTaskControlLocked"
+				:featureId="taskControlFeatureId"
 			/>
 			<TaskSetting
 				v-model="isDefaultDeadlineActive"
@@ -253,11 +238,13 @@ export const TaskSettings = {
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_WORK_TIME_LABEL')"
 				:questionMarkHint="loc('TASKS_V2_TASK_SETTINGS_POPUP_WORK_TIME_HINT')"
 				:lock="isMatchesWorkTimeLocked"
+				:featureId="matchesWorkTimeFeatureId"
 			/>
 			<TaskSetting
 				v-model="autocompleteSubTasks"
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_AUTO_COMPLETE_SUBTASKS_LABEL')"
 				:lock="isAutocompleteSubTasksLocked"
+				:featureId="autocompleteSubTasksFeatureId"
 			/>
 		</div>
 	`,

@@ -17,6 +17,7 @@ return [
 			\Bitrix\Mobile\Feature\MenuFeature::class,
 			\Bitrix\Mobile\Feature\SettingsV2Feature::class,
 			\Bitrix\Mobile\Feature\SecuritySettingsFeature::class,
+			\Bitrix\Mobile\Feature\AhaMomentFeature::class,
 		],
 		'readonly' => true,
 	],

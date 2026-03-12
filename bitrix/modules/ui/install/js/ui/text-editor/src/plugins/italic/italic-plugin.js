@@ -1,4 +1,5 @@
 import { Browser, Loc } from 'main.core';
+import { Outline } from 'ui.icon-set.api.core';
 
 import {
 	wrapNodeWith,
@@ -60,7 +61,7 @@ export class ItalicPlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('italic', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --italic"></span>');
+			button.setIcon(Outline.ITALIC);
 			button.setFormat('italic');
 			button.disableInsideUnformatted();
 			button.setTooltip(

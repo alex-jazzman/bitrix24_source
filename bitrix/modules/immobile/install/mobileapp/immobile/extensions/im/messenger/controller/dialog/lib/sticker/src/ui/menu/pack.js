@@ -2,6 +2,7 @@
  * @module im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack
  */
 jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack', (require, exports, module) => {
+	const { Color } = require('tokens');
 	const { UIMenu } = require('layout/ui/menu');
 	const { Icon } = require('assets/icons');
 
@@ -12,6 +13,9 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack', (requir
 	const ActionType = {
 		clearHistory: 'clearHistory',
 		delete: 'delete',
+		rename: 'rename',
+		edit: 'edit',
+		unlink: 'unlink',
 	};
 
 	/**
@@ -22,7 +26,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack', (requir
 		/**
 		 * @param ui
 		 * @param {Array<string>} actions
-		 * @param {{}} packData // TODO for second iteration
+		 * @param {{id: StickerPackId, type: StickerPackType}} packData
 		 */
 		constructor({ ui, actions, packData })
 		{
@@ -34,7 +38,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack', (requir
 		/**
 		 * @return {Record<string, Partial<UIMenuActionProps>>}
 		 */
-		get actionCollection()
+		get #actionCollection()
 		{
 			return {
 				[ActionType.clearHistory]: {
@@ -44,6 +48,46 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack', (requir
 					icon: Icon.BROOM,
 					onItemSelected: () => {
 						emitter.emit(StickerEventType.action.clearHistory, []);
+					},
+				},
+				[ActionType.delete]: {
+					id: 'delete',
+					testId: 'delete',
+					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_STICKER_MENU_PACK_DELETE_ACTION'),
+					icon: Icon.TRASHCAN,
+					isDestructive: true,
+					showTopSeparator: true,
+					onItemSelected: () => {
+						emitter.emit(StickerEventType.action.deletePack, [this.packData.id, this.packData.type]);
+					},
+				},
+				[ActionType.unlink]: {
+					id: 'unlink',
+					testId: 'unlink',
+					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_STICKER_MENU_PACK_UNLINK_ACTION'),
+					icon: Icon.TRASHCAN,
+					isDestructive: true,
+					showTopSeparator: true,
+					onItemSelected: () => {
+						emitter.emit(StickerEventType.action.unlinkPack, [this.packData.id, this.packData.type]);
+					},
+				},
+				[ActionType.rename]: {
+					id: 'rename',
+					testId: 'rename',
+					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_STICKER_MENU_PACK_RENAME_ACTION'),
+					icon: Icon.EDIT,
+					onItemSelected: () => {
+						emitter.emit(StickerEventType.action.rename, [this.packData.id, this.packData.type]);
+					},
+				},
+				[ActionType.edit]: {
+					id: 'edit',
+					testId: 'edit',
+					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_STICKER_MENU_PACK_EDIT_ACTION'),
+					icon: Icon.EDIT,
+					onItemSelected: () => {
+						emitter.emit(StickerEventType.action.edit, [this.packData.id, this.packData.type]);
 					},
 				},
 			};
@@ -63,7 +107,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack', (requir
 		#getActions()
 		{
 			return this.actions.map((actionId, index) => {
-				return this.actionCollection[actionId];
+				return this.#actionCollection[actionId];
 			});
 		}
 	}

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_URL_TIP'] = "Specifies the code in which the blog ID will be passed.";
 $MESS ['PATH_TO_BLOG_TIP'] = "The path to the main blog page. Example: blog_blog.php?page=blog&blog=#blog#.";
 $MESS ['PATH_TO_BLOG_CATEGORY_TIP'] = "The path to a blog page with a tag filter. Example: <nobr>blog_filter.php?page=blog&blog=#blog#<b>&category=#category#</b>.</nobr>";
@@ -15,4 +15,3 @@ $MESS ['CACHE_TYPE_TIP'] = "<i>Auto</i>: the cache is valid during the time pred
 $MESS ['CACHE_TIME_TIP'] = "Specify here the period of time during which the cache is valid.";
 $MESS ['PATH_TO_SMILE_TIP'] = "The path to a folder contaning smileys.";
 $MESS ['POST_PROPERTY_TIP'] = "Select here additional post properties that will be shown on the post view page.";
-?>

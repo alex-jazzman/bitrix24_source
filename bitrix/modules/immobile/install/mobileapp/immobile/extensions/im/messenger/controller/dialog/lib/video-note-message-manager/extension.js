@@ -8,6 +8,7 @@ jn.define('im/messenger/controller/dialog/lib/video-note-message-manager', (requ
 	const {
 		EventType,
 	} = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { MessagePlayer } = require('im/messenger/controller/dialog/lib/message-player');
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
@@ -28,21 +29,23 @@ jn.define('im/messenger/controller/dialog/lib/video-note-message-manager', (requ
 
 		/**
 		 *
-		 * @param {chatId} number
+		 * @param {DialogId} dialogId
+		 * @param {number} chatId
 		 * @param {DialogLocator} dialogLocator
 		 * @param {SendingService} sendingService
 		 */
-		constructor({ dialogLocator, dialogId, sendingService })
+		constructor({ dialogLocator, dialogId, chatId, sendingService })
 		{
 			this.dialogLocator = dialogLocator;
 			this.dialogId = dialogId;
+			this.chatId = chatId;
 			this.sendingService = sendingService;
 
 			this.store = this.dialogLocator.get('store');
 			this.view = this.dialogLocator.get('view');
 			this.chatService = this.dialogLocator.get('chat-service');
 
-			this.#videoNoteMessagePlayer = new MessagePlayer(this.store);
+			this.#videoNoteMessagePlayer = new MessagePlayer(this.store, dialogId);
 		}
 
 		get player()
@@ -97,7 +100,7 @@ jn.define('im/messenger/controller/dialog/lib/video-note-message-manager', (requ
 		 * @private
 		 */
 		submitHandler = (videoNote) => {
-			const { needConvert = false } = videoNote;
+			const { duration, needConvert = false } = videoNote;
 			const file = {
 				...videoNote,
 				isVideoNote: true,
@@ -115,7 +118,12 @@ jn.define('im/messenger/controller/dialog/lib/video-note-message-manager', (requ
 				};
 			}
 
-			AnalyticsService.getInstance().sendRecordVideoNote(this.dialogId, videoNote.duration);
+			if (Feature.isAiTaskCreationEnabled && Feature.isAiTaskCreationUISupported)
+			{
+				this.store.dispatch('messagesModel/interruptTaskAnimationMessages', { chatId: this.chatId });
+			}
+
+			AnalyticsService.getInstance().sendRecordVideoNote(this.dialogId, duration);
 			this.sendingService.sendFiles(this.dialogId, [file], '', params)
 				.catch((error) => logger.error(`${this.constructor.name}.submitHandler.sendFiles`, error))
 			;

@@ -301,9 +301,9 @@
 				},
 				{
 					resolveFunction: BX.MobileTools.threadIdFromMailMessage,
-					openFunction(threadId) {
+					openFunction({ threadId, source }) {
 						// eslint-disable-next-line no-undef
-						BXMobileApp.Events.postToComponent('mailbackground::router', [threadId, 0]);
+						BXMobileApp.Events.postToComponent('mailbackground::router', [threadId, 0, source]);
 					},
 				},
 				{
@@ -440,28 +440,6 @@
 								openDialogOptions.context = 'link';
 							}
 
-							if (params.dialogType === MessengerDialogType.chat)
-							{
-								BXMobileApp.Events.postToComponent(
-									'ImMobile.Messenger.Dialog:open',
-									openDialogOptions,
-									'im.messenger',
-								);
-
-								return;
-							}
-
-							if (params.dialogType === MessengerDialogType.copilot)
-							{
-								BXMobileApp.Events.postToComponent(
-									'ImMobile.Messenger.Dialog:open',
-									openDialogOptions,
-									'im.copilot.messenger',
-								);
-
-								return;
-							}
-
 							if (params.dialogType === MessengerDialogType.lines)
 							{
 								BXMobileApp.Events.postToComponent(
@@ -472,6 +450,12 @@
 
 								return;
 							}
+
+							BXMobileApp.Events.postToComponent(
+								'ImMobile.Messenger.Dialog:open',
+								openDialogOptions,
+								'im.messenger',
+							);
 
 							return;
 						}
@@ -764,10 +748,14 @@
 		},
 		threadIdFromMailMessage(url)
 		{
-			var result = url.match(/\/mail\/message\/(\d+)\/?/i);
+			const result = url.match(/\/mail\/message\/(\d+)\/?\??(?:.*?source=([^&]+))?/i);
+
 			if (result)
 			{
-				return result[1];
+				return {
+					threadId: result[1] || null,
+					source: result[2] || null,
+				};
 			}
 
 			return null;
@@ -932,6 +920,7 @@
 				/\/online\/\?IM_LINES=(chat\d+)&IM_MESSAGE=(\d+)/i,
 				/\/online\/\?IM_LINES=(chat\d+)/i,
 				/\/online\/\?IM_TASK=(chat\d+)/i,
+				/\/online\/\?IM_TASK=(chat\d+)&IM_MESSAGE=(\d+)/i,
 			];
 
 			const openlinesPrefix = 'imol|';

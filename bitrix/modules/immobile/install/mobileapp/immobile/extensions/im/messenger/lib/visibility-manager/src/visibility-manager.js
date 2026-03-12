@@ -15,7 +15,6 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 
 	const VISIBILITY_MANAGER_STORAGE_NAME = 'immobileVisibilityManager';
 	const VISIBLE_DIALOG_STORAGE_KEY = 'visibleDialog';
-	const ACTIVE_TAB_STORAGE_KEY = 'activeTab';
 
 	class VisibilityManager
 	{
@@ -203,26 +202,6 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 		async getVisibleDialogInfo()
 		{
 			return this.storage.get(VISIBLE_DIALOG_STORAGE_KEY);
-		}
-
-		// TODO: remove after MessengerV2 release
-		/**
-		 * @deprecated
-		 * @param {ActiveTabInfo} activeTabInfo
-		 */
-		async saveActiveTabInfo(activeTabInfo)
-		{
-			return this.storage.set(ACTIVE_TAB_STORAGE_KEY, activeTabInfo);
-		}
-
-		// TODO: remove after MessengerV2 release
-		/**
-		 * @deprecated
-		 * @return {Promise<ActiveTabInfo|null>}
-		 */
-		async getActiveTabInfo()
-		{
-			return this.storage.get(ACTIVE_TAB_STORAGE_KEY);
 		}
 
 		/**

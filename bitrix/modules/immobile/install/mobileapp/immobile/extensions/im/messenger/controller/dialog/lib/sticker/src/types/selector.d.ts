@@ -2,16 +2,16 @@ import {FullStickerData, StickerPackId, StickerPackModelState} from "../../../..
 import {DialogId} from "../../../../../../types/common";
 
 declare type StickerSelectorProps = {
-	mode: 'currentStickers' | 'pack',
-	packId?: StickerPackId, // for mode pack only
-	type?: string, // for mode pack only
 	close: () => void,
+	onCreate: (creationParams) => void;
 	dialogId: DialogId,
+	canEditPack: boolean,
+	canCreatePack: boolean,
 };
 
 declare type StickerSelectorState = {
 	isStickersLoaded: boolean,
 	packs: Array<StickerPackModelState>,
 	recentStickers: Array<FullStickerData>,
-	hasMore?: boolean,
+	hasNextPage: boolean,
 };

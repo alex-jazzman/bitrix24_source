@@ -261,6 +261,7 @@
 
 			let section = 'tasks';
 			let subSection = 'kanban';
+
 			switch (gridData.kanbanType)
 			{
 				case 'TL':
@@ -286,25 +287,40 @@
 				section = 'project';
 			}
 
-			BX.Runtime.loadExtension('ui.analytics').then(() => {
-				BX.UI.Analytics.sendData({
-					tool: 'tasks',
-					category: 'task_operations',
-					event: 'click_create',
-					type: 'task',
-					section,
-					subSection,
-					element: 'quick_button',
-				});
-			});
-
 			if (gridData.addItemInSlider === true && BX.SidePanel.Instance)
 			{
-				BX.SidePanel.Instance.open(gridData.pathToTaskCreate.replace('#task_id#', 0));
+				const path = BX.Uri.addParam(gridData.pathToTaskCreate.replace('#task_id#', 0), {
+					ta_sec: section,
+					ta_sub: subSection,
+					ta_el: 'quick_button',
+				});
+
+				BX.SidePanel.Instance.open(path);
 			}
 			else
 			{
 				BX.Kanban.Column.prototype.handleAddItemButtonClick.apply(this, arguments);
+
+				const analyticsData = {
+					tool: 'tasks',
+					category: 'task_operations',
+					type: 'quick_task',
+					event: 'click_create',
+					c_section: section,
+					c_sub_section: subSection,
+					c_element: 'quick_button',
+				};
+
+				if (BX.UI.Analytics)
+				{
+					BX.UI.Analytics.sendData(analyticsData);
+				}
+				else
+				{
+					BX.Runtime.loadExtension('ui.analytics').then(() => {
+						BX.UI.Analytics.sendData(analyticsData);
+					});
+				}
 			}
 		},
 

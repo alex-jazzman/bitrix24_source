@@ -5,6 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Mail\Helper\MailboxDirectoryHelper;
+use Bitrix\Mail\Internals\Entity\MailboxDirectory;
+
 $dirs = isset($arResult['DIRS']) ? $arResult['DIRS'] : [];
 $maxLevel = isset($arResult['MAX_LEVEL']) ? $arResult['MAX_LEVEL'] : 0;
 
@@ -12,6 +15,7 @@ $getTree = function ($dirs, $currentLevel = 1) use (&$getTree, $maxLevel)
 {
 	$result = '';
 
+	/** @var MailboxDirectory $dir */
 	foreach ($dirs as $dir)
 	{
 		$items = '';
@@ -26,11 +30,15 @@ $getTree = function ($dirs, $currentLevel = 1) use (&$getTree, $maxLevel)
 
 		$countSync = $dir->getCountSyncChildren();
 		$countChild = $dir->getCountChildren();
-		$hasChild = (bool)preg_match('/(HasChildren)/ix', $dir->getFlags());
+
+		$flags = $dir->getFlags();
+		$hasChild = MailboxDirectoryHelper::hasChildren($flags);
 
 		$button = '<span class="mail-config-dirs-level-box">
 			<span class="mail-config-dirs-plus-icon mail-config-dirs-level-button"></span>
 		</span>';
+
+		$isContainer = $dir->isVirtualFolder();
 
 		$input = sprintf(
 			'<input
@@ -42,6 +50,7 @@ $getTree = function ($dirs, $currentLevel = 1) use (&$getTree, $maxLevel)
 				data-id="%2$s"
 				data-haschild="%3$s"
 				data-level="%4$s"
+				data-iscontainer="%7$s"
 				id="%2$s"
 				%5$s
 				%6$s
@@ -51,7 +60,8 @@ $getTree = function ($dirs, $currentLevel = 1) use (&$getTree, $maxLevel)
 			$hasChild,
 			$dir->getLevel(),
 			$dir->isSync() ? 'checked ' : '',
-			$dir->isDisabled() ? 'disabled ' : ''
+			$dir->isDisabled() ? 'disabled ' : '',
+			$isContainer ? 'true' : 'false',
 		);
 
 		$label = sprintf(
@@ -65,7 +75,7 @@ $getTree = function ($dirs, $currentLevel = 1) use (&$getTree, $maxLevel)
 			htmlspecialcharsbx($dir->getName()),
 			$countSync > 0 ? ' show' : '',
 			$countSync,
-			$countChild
+			$countChild,
 		);
 
 		$result .= sprintf(
@@ -79,7 +89,7 @@ $getTree = function ($dirs, $currentLevel = 1) use (&$getTree, $maxLevel)
 			$hasChild ? $button : '',
 			$input,
 			$label,
-			$items
+			$items,
 		);
 	}
 

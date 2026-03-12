@@ -12,12 +12,13 @@
 	const { CallLogType } = require('call/const');
 	const { EmptyView } = require('call/callList/emptyView');
 	const { SearchController } = require('call/callList/searchController');
+	const { CallListAnalyticsController } = require('call/callList/analyticsController');
 	const { Icon } = require('ui-system/blocks/icon');
 
 	const SITE_ID = BX.componentParameters.get('SITE_ID', 's1');
-	const IS_CREATE_CALL_BUTTON_ENABLED = BX.componentParameters.get('IS_CREATE_CALL_BUTTON_ENABLED', false);
 	const PER_PAGE = 40;
 	const COMPONENT_ID = 'CALL_LIST';
+	const TAB_ID = 'call_list';
 
 	const SCOPES = Object.freeze({
 		ALL: 'all',
@@ -48,6 +49,7 @@
 		[SCOPES.OUTGOING]: { TYPE: CallLogType.Type.OUTGOING },
 		[SCOPES.ALL]: {},
 	});
+
 	class CallsListComponent extends LayoutComponent
 	{
 		constructor(props)
@@ -57,7 +59,7 @@
 			this.state = {
 				allItems: [],
 				tabItems: [],
-				selectedScopeId: 'all',
+				selectedScopeId: SCOPES.ALL,
 				missedCount: 0,
 				isReady: false,
 				isRefreshing: false,
@@ -65,11 +67,14 @@
 				searchQuery: '',
 				isSearchMode: false,
 				searchItems: [],
+				isLoadingTab: false,
 			};
 
 			this.isFetching = false;
 			this.hasMore = true;
 			this.lastId = 0;
+			this.unsubscribeFromPull = null;
+			this.wasEmptyBeforeSwitch = false;
 			this.loader = new LoaderItem(
 				{
 					enable: true,
@@ -80,6 +85,8 @@
 
 			BX.addCustomEvent('onUpdateUserCounters', this.onUpdateUserCounters.bind(this));
 			BX.addCustomEvent('onTabsSelected', this.onTabsSelected.bind(this));
+			BX.addCustomEvent('onTabsReSelected', this.onTabsReSelected.bind(this));
+			BX.addCustomEvent('onAppActive', this.onAppActive.bind(this));
 
 			this.pullSubscribe();
 			this.fetchList(true);
@@ -94,7 +101,7 @@
 
 		initFloatingButton()
 		{
-			if (!layout?.setFloatingButton || !IS_CREATE_CALL_BUTTON_ENABLED)
+			if (!layout?.setFloatingButton)
 			{
 				return;
 			}
@@ -102,13 +109,44 @@
 			layout.setFloatingButton({
 				type: 'plus',
 				callback: () => {
-					openFastCallView(layout);
+					this.onFloatingButtonClick();
 				},
 				icon: Icon.PLUS.getIconName(),
 				animation: 'hide_on_scroll',
 				showLoader: false,
 				accentByDefault: false,
 			});
+		}
+
+		onFloatingButtonClick()
+		{
+			CallListAnalyticsController.sendClickCreate(this.state.selectedScopeId);
+			openFastCallView(layout);
+		}
+
+		componentWillUnmount()
+		{
+			if (this.unsubscribeFromPull)
+			{
+				this.unsubscribeFromPull();
+				this.unsubscribeFromPull = null;
+			}
+
+			BX.removeCustomEvent('onUpdateUserCounters', this.onUpdateUserCounters.bind(this));
+			BX.removeCustomEvent('onTabsSelected', this.onTabsSelected.bind(this));
+			BX.removeCustomEvent('onTabsReSelected', this.onTabsReSelected.bind(this));
+			BX.removeCustomEvent('onAppActive', this.onAppActive.bind(this));
+
+			this.isMountedFlag = false;
+			this.cleanupOnExit();
+		}
+
+		onAppActive()
+		{
+			if (this.isMountedFlag)
+			{
+				this.fetchList(true);
+			}
 		}
 
 		async onRefresh()
@@ -131,14 +169,33 @@
 
 		onTabsSelected(id)
 		{
-			if (String(id) === 'call_list')
+			if (String(id) === TAB_ID)
 			{
 				this.isMountedFlag = true;
+				CallListAnalyticsController.sendOpenCallTab();
 			}
 			else if (this.isMountedFlag)
 			{
 				this.isMountedFlag = false;
 				this.cleanupOnExit();
+			}
+		}
+
+		onTabsReSelected(id)
+		{
+			if (String(id) !== TAB_ID)
+			{
+				return;
+			}
+
+			if (this.state.selectedScopeId !== SCOPES.ALL)
+			{
+				this.onTabChange(SCOPES.ALL);
+			}
+
+			if (this.tabsScrollRef)
+			{
+				this.tabsScrollRef.scrollToBegin(true);
 			}
 		}
 
@@ -199,7 +256,7 @@
 
 		pullSubscribe()
 		{
-			BX.PULL.subscribe({
+			this.unsubscribeFromPull = BX.PULL.subscribe({
 				moduleId: 'call',
 				callback: (data) => this.processPullEvent(data),
 			});
@@ -241,8 +298,14 @@
 			};
 
 			const mappedCall = this.normalizeCallData(callData);
+			const callId = String(mappedCall.id);
+
 			this.setState((prev) => {
-				const allItems = [mappedCall, ...prev.allItems];
+				const existingIndex = prev.allItems.findIndex((item) => String(item.id) === callId);
+				const allItems = existingIndex === -1
+					? [mappedCall, ...prev.allItems]
+					: prev.allItems.map((item, index) => (index === existingIndex ? mappedCall : item));
+
 				const tabItems = this.computeTabItems(allItems, prev.selectedScopeId);
 				const missedCount = this.recalcMissedCountFrom(allItems);
 				this.applyMissedCount(missedCount);
@@ -289,8 +352,34 @@
 
 		onCallLogCounterUpdate(params)
 		{
-			const counterValue = Number(params.counterValue) || 0;
-			this.applyMissedCount(counterValue);
+			const callIds = params.callIds || [];
+			const counterValue = params.counterValue ?? null;
+
+			if (counterValue !== null)
+			{
+				this.applyMissedCount(Number(counterValue));
+			}
+
+			if (callIds.length > 0)
+			{
+				this.setState((prev) => {
+					const allItems = prev.allItems.map((item) => {
+						if (callIds.includes(item.id))
+						{
+							return {
+								...item,
+								isUnseen: false,
+							};
+						}
+
+						return item;
+					});
+
+					const tabItems = this.computeTabItems(allItems, prev.selectedScopeId);
+
+					return { allItems, tabItems };
+				});
+			}
 		}
 
 		cleanupOnExit()
@@ -372,20 +461,29 @@
 		// when we left from missed tab - drop badges
 		onTabChange(scopeId)
 		{
-			if (this.state.selectedScopeId === CallLogType.Status.MISSED)
+			if (this.state.selectedScopeId === SCOPES.MISSED)
 			{
 				this.clearMissedTimer();
 			}
-			this.setState((prev) => {
-				const selectedScopeId = String(scopeId);
-				const tabItems = this.computeTabItems(prev.allItems, selectedScopeId);
 
-				return { selectedScopeId, tabItems };
+			const selectedScopeId = String(scopeId);
+
+			this.wasEmptyBeforeSwitch = (this.state.tabItems.length === 0);
+
+			this.setState({
+				selectedScopeId,
+				isLoadingTab: true,
 			}, () => {
 				this.fetchList(true);
-				if (String(scopeId) === CallLogType.Status.MISSED)
+
+				if (selectedScopeId === SCOPES.MISSED)
 				{
 					this.scheduleMissedTimer();
+				}
+
+				if (selectedScopeId !== SCOPES.ALL)
+				{
+					CallListAnalyticsController.sendTabChange(selectedScopeId);
 				}
 			});
 		}
@@ -468,7 +566,7 @@
 		{
 			if (this.isFetching)
 			{
-				return;
+				return Promise.resolve();
 			}
 			this.isFetching = true;
 
@@ -509,7 +607,7 @@
 					const list = reset ? mapped : [...prev.allItems, ...mapped];
 					const tabItems = this.computeTabItems(list, selectedScopeId);
 					let missedCount = prev.missedCount;
-					if (selectedScopeId === 'all')
+					if (selectedScopeId === SCOPES.ALL)
 					{
 						missedCount = this.recalcMissedCountFrom(list);
 						this.applyMissedCount(missedCount);
@@ -520,15 +618,22 @@
 						tabItems,
 						isReady: (isInitial ? true : prev.isReady),
 						missedCount,
+						isLoadingTab: false,
 					};
+				}, () => {
+					this.wasEmptyBeforeSwitch = false;
 				});
 
 				this.startSeenTimerIfNeeded();
+
+				return Promise.resolve();
 			}
 			catch (e)
 			{
 				console.error('[CallList][list][error]', e);
 				this.setState((prev) => prev);
+
+				return Promise.reject(e);
 			}
 			finally
 			{
@@ -542,6 +647,8 @@
 			const isGroup = dialogIdRaw.startsWith('chat') || item.chatType === 'group';
 			const avatarRel = String(item.avatar || '');
 			const avatarUri = avatarRel ? `${currentDomain}${avatarRel}` : null;
+
+			CallListAnalyticsController.sendCallClick(item, this.state.isSearchMode, this.state.selectedScopeId);
 
 			// telephony call
 			if (item.phone)
@@ -652,6 +759,7 @@
 			const dialogIdRaw = String(item.dialogId || (item.chatId ? `chat${item.chatId}` : ''));
 			if (dialogIdRaw)
 			{
+				CallListAnalyticsController.sendOpenChat();
 				DialogOpener.open({ dialogId: dialogIdRaw });
 			}
 		}
@@ -659,6 +767,9 @@
 		deleteCallItem(item)
 		{
 			const callId = Number(item.id) || item.id;
+
+			CallListAnalyticsController.sendDeleteCall(item, this.state.selectedScopeId);
+
 			restCall('call.CallLog.delete', { callId })
 				.then(() => {
 					this.setState((prev) => {
@@ -678,9 +789,18 @@
 			const callItems = this.getSortedItems();
 			const isSearch = this.state.isSearchMode;
 			const noData = (this.state.allItems.length === 0);
-			const showBodyLoader = (((!this.state.isReady) && !isSearch) || ((this.isFetching && noData) && !isSearch));
+			const showBodyLoader = (
+				((!this.state.isReady) && !isSearch)
+				|| ((this.isFetching && noData) && !isSearch)
+				|| (this.state.isLoadingTab && this.wasEmptyBeforeSwitch && !isSearch)
+			);
 			const unseenMissed = Number(this.state.missedCount || 0);
-			const showEmptyState = (!showBodyLoader && !isSearch && callItems.length === 0);
+			const showEmptyState = (
+				!showBodyLoader
+				&& !isSearch
+				&& !this.state.isLoadingTab
+				&& callItems.length === 0
+			);
 
 			const loaderView = View({
 				style: {
@@ -718,6 +838,9 @@
 				Tabs({
 					selectedScopeId: this.state.selectedScopeId,
 					missedTotal: unseenMissed,
+					onScrollRef: (ref) => {
+						this.tabsScrollRef = ref;
+					},
 					onChange: (scopeId) => this.onTabChange(scopeId),
 				}),
 				(showBodyLoader

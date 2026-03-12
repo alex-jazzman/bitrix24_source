@@ -13,7 +13,7 @@ body.im-chat-embedded {
 }
 
 .im-chat-embedded .app__main {
-	--content-area-left-shift: 18px;
+	--air-content-area-left-shift: 18px;
 }
 
 .im-chat-embedded .air-header {

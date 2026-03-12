@@ -4,10 +4,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
-$strPath2Lang = str_replace("\\", "/", __FILE__);
-$strPath2Lang = mb_substr($strPath2Lang, 0, mb_strlen($strPath2Lang) - mb_strlen("/install/index.php"));
-
-Loc::loadMessages($strPath2Lang. '/install.php');
+Loc::loadMessages(__FILE__);
 
 Class sale extends CModule
 {

@@ -41,4 +41,3 @@ $MESS["BLOG_BLOG_BLOG_NO_BLOG"] = "Блог не найден";
 $MESS["BLOG_BLOG_BLOG_LEAVED"] = "Вы вышли из друзей этого блога";
 $MESS["MESSAGE_COUNT"] = "Сообщения";
 $MESS["BLOG_BLOG_SESSID_WRONG"] = "Ваша сессия истекла, пожалуйста, повторите действие";
-?>

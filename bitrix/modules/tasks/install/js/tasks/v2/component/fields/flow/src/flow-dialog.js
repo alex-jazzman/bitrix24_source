@@ -6,6 +6,7 @@ import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-
 import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { FlowModel } from 'tasks.v2.model.flows';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 type Params = {
 	targetNode: HTMLElement,
@@ -52,18 +53,7 @@ class FlowDialog
 			},
 			popupOptions: {
 				events: {
-					onClose: async (): Promise<void> => {
-						const flow = await this.#fillStore();
-
-						if (flow)
-						{
-							const { id: flowId, templateId, groupId } = flow;
-							groupService.setHasScrumInfo(this.#taskId);
-							void taskService.update(this.#taskId, { flowId, templateId, groupId, stageId: 0 });
-						}
-
-						this.#onClose?.();
-					},
+					onClose: this.#handleFlowSelect,
 				},
 			},
 		});
@@ -82,6 +72,29 @@ class FlowDialog
 
 		return dialog;
 	}
+
+	#handleFlowSelect = async (): Promise<void> => {
+		if (!this.#dialog.isLoaded())
+		{
+			return;
+		}
+
+		const flow = await this.#fillStore();
+
+		if (flow?.id === this.#flowId)
+		{
+			return;
+		}
+
+		if (flow)
+		{
+			const { id: flowId, templateId, groupId } = flow;
+			groupService.setHasScrumInfo(this.#taskId);
+			void taskService.update(this.#taskId, { flowId, templateId, groupId, stageId: 0 });
+		}
+
+		this.#onClose?.();
+	};
 
 	#fillStore = async (): Promise<?FlowModel> => {
 		const item = this.#dialog.getSelectedItems()[0];
@@ -109,7 +122,12 @@ class FlowDialog
 
 	get #items(): ItemId[]
 	{
-		return [[EntitySelectorEntity.Flow, taskService.getStoreTask(this.#taskId).flowId]];
+		return [[EntitySelectorEntity.Flow, this.#flowId]];
+	}
+
+	get #flowId(): TaskModel
+	{
+		return taskService.getStoreTask(this.#taskId).flowId;
 	}
 }
 

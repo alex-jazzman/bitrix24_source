@@ -287,11 +287,6 @@ class BXInstallServices
 			closedir($h1);
 		}
 
-		if (LANGUAGE_ID != 'ru')
-		{
-			unset($arWizardsList['bitrix:demo']);
-		}
-
 		ksort($arWizardsList);
 
 		return array_values($arWizardsList);
@@ -788,6 +783,7 @@ class BXInstallServices
 		{
 			'en' => "https://store.bitrix24.com/profile/license-keys.php",
 			'de' => "https://store.bitrix24.de/profile/license-keys.php",
+			'kz' => "https://www.1c-bitrix.kz/support/key_info.php",
 			default => "https://www.1c-bitrix.ru/support/key_info.php",
 		};
 	}

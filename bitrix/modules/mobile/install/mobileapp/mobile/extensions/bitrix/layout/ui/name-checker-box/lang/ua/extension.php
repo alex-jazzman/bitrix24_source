@@ -1,5 +1,0 @@
-<?php
-$MESS["NAME_CHECKER_EXISTING_USERS_SUBTITLE"] = "Будуть одразу додані до колаби:\n#users#";
-$MESS["NAME_CHECKER_EXISTING_USERS_TITLE"] = "Уже є в Бітрікс24";
-$MESS["NAME_CHECKER_ITEM_FIRST_NAME_PLACEHOLDER"] = "Ім'я";
-$MESS["NAME_CHECKER_ITEM_SECOND_NAME_PLACEHOLDER"] = "Прізвище";

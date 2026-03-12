@@ -809,6 +809,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.typeStorage = new TypeStorage();
 	    _this.empty = true;
 	    _this.node = null;
+	    _this.sliderClosedExplicitly = false;
 	    return _this;
 	  }
 	  babelHelpers.createClass(List, [{
@@ -845,14 +846,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              }), new ui_buttons.CancelButton({
 	                onclick: function onclick() {
 	                  _this2.emit('reject');
-	                  _this2.sidePanelManager.close(false);
+	                  _this2.closeSidePanel();
 	                }
 	              })];
 	            }
 	          });
 	        },
 	        events: {
-	          onLoad: this.onLoadList.bind(this)
+	          onLoad: this.onLoadList.bind(this),
+	          onClose: function onClose() {
+	            var wasClosedExplicitly = _this2.sliderClosedExplicitly;
+	            _this2.sliderClosedExplicitly = false;
+	            if (wasClosedExplicitly) {
+	              return;
+	            }
+	            _this2.emit('reject');
+	          }
 	        }
 	      });
 	    }
@@ -874,12 +883,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.save().then(function (decision) {
 	        if (decision === 'resolve') {
 	          _this3.emit('resolve');
-	          _this3.sidePanelManager.close(false);
+	          _this3.closeSidePanel();
 	        } else if (decision === 'reject') {
 	          _this3.emit('reject');
-	          _this3.sidePanelManager.close(false);
+	          _this3.closeSidePanel();
 	        }
 	      });
+	    }
+	  }, {
+	    key: "closeSidePanel",
+	    value: function closeSidePanel() {
+	      this.sliderClosedExplicitly = true;
+	      this.sidePanelManager.close(false);
 	    }
 	  }, {
 	    key: "getListButtonText",
@@ -1143,7 +1158,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.groupId = parseInt(params.groupId, 10);
 	    _this.taskId = parseInt(params.taskId, 10);
 
-	    /* eslint-disable */
+	    // eslint-disable-next-line unicorn/no-abusive-eslint-disable
 	    _this.sidePanelManager = BX.SidePanel.Instance;
 	    /* eslint-enable */
 
@@ -1161,11 +1176,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    });
 	    _this.list.subscribe('resolve', function () {
 	      _this.emit('resolve');
-	      _this.sidePanelManager.close(false);
 	    });
 	    _this.list.subscribe('reject', function () {
 	      _this.emit('reject');
-	      _this.sidePanelManager.close(false);
 	    });
 	    _this.list.subscribe('showSettings', function (baseEvent) {
 	      var close = baseEvent.getData();
@@ -1195,6 +1208,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "show",
 	    value: function show() {
+	      // eslint-disable-next-line default-case
 	      switch (this.view) {
 	        case 'settings':
 	          this.showSettings();

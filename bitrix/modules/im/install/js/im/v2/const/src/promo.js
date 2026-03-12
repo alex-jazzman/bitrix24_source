@@ -14,4 +14,5 @@ export const PromoId = Object.freeze({
 	collaberNotAcceptInvitationOneDay: 'socialnetwork:CollaberNotAcceptInvitationOneDay-collab',
 	recentCreateChatInviteUsers: 'im:recent-create-chat-invite-users:22052025:all',
 	desktopModeSelection: 'im:desktop-mode-selection:13082025:all',
+	stickersAvailable: 'im:stickers-available:27112025:all',
 });

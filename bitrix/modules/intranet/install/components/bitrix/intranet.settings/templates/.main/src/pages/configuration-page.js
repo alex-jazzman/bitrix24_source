@@ -526,13 +526,6 @@ export class ConfigurationPage extends BaseSettingsPage
 			ConfigurationPage.addToSectionHelper(allCanBuyTariff, settingsSection, allCanBuyTariffRow);
 		}
 
-		if (this.hasValue('allowMeasureStressLevel'))
-		{
-			let allowMeasureStressLevel = new Checker(this.getValue('allowMeasureStressLevel'));
-			let allowMeasureStressLevelRow = new Row({});
-			ConfigurationPage.addToSectionHelper(allowMeasureStressLevel, settingsSection, allowMeasureStressLevelRow);
-		}
-
 		if (this.hasValue('collectGeoData'))
 		{
 			let collectGeoData = new Checker(this.getValue('collectGeoData'));

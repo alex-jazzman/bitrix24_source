@@ -10,10 +10,6 @@ export const DatePlanDate = {
 			type: Number,
 			required: true,
 		},
-		readonly: {
-			type: Boolean,
-			default: false,
-		},
 	},
 	setup(): Object
 	{
@@ -23,7 +19,7 @@ export const DatePlanDate = {
 	},
 	template: `
 		<div>
-			<HoverPill textOnly :readonly>
+			<HoverPill textOnly readonly>
 				<div>{{ calendar.formatDateTime(dateTs, { forceYear: true }) }}</div>
 			</HoverPill>
 		</div>

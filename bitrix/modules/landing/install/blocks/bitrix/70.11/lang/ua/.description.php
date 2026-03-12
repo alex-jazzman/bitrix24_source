@@ -1,7 +1,0 @@
-<?php
-$MESS["LANDING_BLOCK_WIDGET_70_11_BUTTON"] = "Кнопка";
-$MESS["LANDING_BLOCK_WIDGET_70_11_CONTAINER"] = "Контейнер";
-$MESS["LANDING_BLOCK_WIDGET_70_11_LINK"] = "Посилання";
-$MESS["LANDING_BLOCK_WIDGET_70_11_NAME"] = "Заголовок із текстом і двома кнопками";
-$MESS["LANDING_BLOCK_WIDGET_70_11_TEXT"] = "Текст";
-$MESS["LANDING_BLOCK_WIDGET_70_11_TITLE"] = "Заголовок";

@@ -57,8 +57,6 @@ export class Link extends Base
 
 		if (this.isAllowInlineEdit())
 		{
-			BX.Landing.UI.Button.ColorAction.hideAll();
-
 			if (!BX.Landing.UI.Panel.StylePanel.getInstance().isShown())
 			{
 				BX.Landing.UI.Panel.Link.getInstance().show(this);

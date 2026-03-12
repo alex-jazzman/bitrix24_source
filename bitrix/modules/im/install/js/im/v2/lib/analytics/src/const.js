@@ -43,6 +43,9 @@ export const AnalyticsEvent = Object.freeze({
 	unpinMessage: 'unpin_message',
 	pinnedMessageLimitException: 'pinned_message_limit_exception',
 	startSearch: 'start_search',
+	openSearch: 'open_search',
+	searchResult: 'search_result',
+	selectSearchResult: 'select_search_result',
 	selectRecipient: 'select_recipient',
 	selectUser: 'select_user',
 	openCreateMenu: 'open_create_menu',
@@ -68,6 +71,24 @@ export const AnalyticsEvent = Object.freeze({
 	modeOn: 'mode_on',
 	modeOff: 'mode_off',
 	clickMcpIntegrations: 'click_mcp_integrations',
+	notificationOpen: 'notif_open',
+	notificationUnsubscribe: 'notif_unsubscribe',
+	openEmoteSelector: 'open_emote_selector',
+	openStickerTab: 'open_sticker_tab',
+	viewStickerPopup: 'view_popup',
+	clickCreateStickerPack: 'click_create_stickerpack',
+	addStickerPack: 'add_stickerpack',
+	unpinChat: 'unpin_chat',
+	openProfile: 'open_profile',
+	findCommonChats: 'find_common_chats',
+	mute: 'mute',
+	unmute: 'unmute',
+	hideChat: 'hide_chat',
+	readAll: 'read_all',
+	leave: 'leave',
+	useFormatToolbar: 'use_text_formatting',
+	closeSearch: 'cancel_search',
+	selectSearchRecent: 'click_recent_suggest',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -76,6 +97,7 @@ export const AnalyticsTool = Object.freeze({
 	im: 'im',
 	infoHelper: 'InfoHelper',
 	inform: 'inform',
+	notification: 'notification',
 });
 
 export const AnalyticsCategory = Object.freeze({
@@ -96,6 +118,7 @@ export const AnalyticsCategory = Object.freeze({
 	updateAppPopup: 'update_app_popup',
 	audioMessage: 'audiomessage',
 	videoMessage: 'videomessage',
+	notificationOperations: 'notif_ops',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -113,6 +136,13 @@ export const AnalyticsType = Object.freeze({
 	oneWindow: 'single_window',
 	aiAssistant: 'aiAssistant',
 	think: 'think',
+	stickers: 'stickers',
+	formatBold: 'bold',
+	formatItalic: 'italic',
+	formatUnderline: 'underline',
+	formatStrikethrough: 'strikethrough',
+	formatLink: 'link',
+	formatCode: 'code',
 });
 
 export const AnalyticsSection = Object.freeze({
@@ -135,6 +165,10 @@ export const AnalyticsSection = Object.freeze({
 	chatEmptyState: 'chat_empty_state',
 	settings: 'settings',
 	miniChat: 'mini_chat',
+	stickerPackPopup: 'stickerpack_popup',
+	chatLayout: 'chat_tab',
+	taskCommentsLayout: 'tasksTask_tab',
+	notificationLayout: 'notification_tab',
 });
 
 export const AnalyticsSubSection = Object.freeze({
@@ -146,6 +180,9 @@ export const AnalyticsSubSection = Object.freeze({
 	chatList: 'chat_list',
 	window: 'window',
 	membersPanel: 'user_list',
+	recentContextMenu: 'recent_context_menu',
+	recentChats: 'recent_chats',
+	recentSearch: 'recent_search',
 });
 
 export const AnalyticsElement = Object.freeze({
@@ -159,6 +196,7 @@ export const AnalyticsElement = Object.freeze({
 export const AnalyticsStatus = Object.freeze({
 	success: 'success',
 	errorTurnedOff: 'error_turnedoff',
+	notFound: 'not_found',
 });
 
 export const CreateChatContext = Object.freeze({
@@ -169,4 +207,8 @@ export const MessagePinsTypes = Object.freeze({
 	single: 'single',
 	multiple: 'multiple',
 	selected: 'selected',
+});
+
+export const NotificationEntryPoint = Object.freeze({
+	quickAccessLabel: 'bell_button',
 });

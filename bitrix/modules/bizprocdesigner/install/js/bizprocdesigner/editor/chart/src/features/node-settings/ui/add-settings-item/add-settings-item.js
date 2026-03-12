@@ -3,6 +3,7 @@ import './style.css';
 import { BIcon } from 'ui.icon-set.api.vue';
 
 import { useLoc } from '../../../../shared/composables';
+import { PORT_TYPES } from '../../../../shared/constants';
 
 import { useNodeSettingsStore, generateNextInputPortId } from '../../../../entities/node-settings';
 
@@ -31,8 +32,16 @@ export const AddSettingsItem = {
 		const { getMessage } = useLoc();
 		const store = useNodeSettingsStore();
 		const actions = {
-			rule: () => store.addRule(),
-			connection: () => generateNextInputPortId(store.block.ports.input),
+			rule: () => {
+				const ruleId = store.addRule();
+				store.addRulePort(ruleId, PORT_TYPES.input);
+			},
+			connection: () => {
+				const connectionId = generateNextInputPortId(
+					store.ports.filter((port) => port.type === PORT_TYPES.input),
+				);
+				store.addConnectionPort(connectionId, PORT_TYPES.input);
+			},
 		};
 
 		return {
@@ -40,19 +49,11 @@ export const AddSettingsItem = {
 			actions,
 		};
 	},
-	methods:
-	{
-		onClick(): void
-		{
-			const itemId = this.actions[this.itemType]();
-			this.$emit('addItem', itemId);
-		},
-	},
 	template: `
 		<div
 			class="node-settings-add-item-button"
 			:data-test-id="$testId('complexNodeSettingsAdd', itemType)"
-			@click="onClick"
+			@click="actions[this.itemType]()"
 		>
 			<BIcon
 				class="node-settings-add-item-button__plus"

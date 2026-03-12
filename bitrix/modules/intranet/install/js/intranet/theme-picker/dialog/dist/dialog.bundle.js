@@ -280,6 +280,7 @@ this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {};
 	var _resetResources = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetResources");
 	var _getBgImage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBgImage");
 	var _getBgImageUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBgImageUrl");
+	var _isBgImageAnimated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBgImageAnimated");
 	var _getBgImageBlurred = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBgImageBlurred");
 	var _getBgImageBlurredUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBgImageBlurredUrl");
 	var _getBgColor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBgColor");
@@ -419,6 +420,9 @@ this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {};
 	    Object.defineProperty(this, _getBgImageBlurred, {
 	      value: _getBgImageBlurred2
 	    });
+	    Object.defineProperty(this, _isBgImageAnimated, {
+	      value: _isBgImageAnimated2
+	    });
 	    Object.defineProperty(this, _getBgImageUrl, {
 	      value: _getBgImageUrl2
 	    });
@@ -517,17 +521,17 @@ this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {};
 	          babelHelpers.classPrivateFieldLooseBase(this, _hideError)[_hideError]();
 	          const file = event.getData().file;
 	          const preview = file.getClientPreview();
-
-	          // console.time('blur');
 	          const {
 	            file: bgImageBlurred,
 	            color
 	          } = await blur(preview, 7);
-	          // console.timeEnd('blur');
-
-	          const bgImageBlurredUrl = URL.createObjectURL(bgImageBlurred);
-	          file.setCustomData('bgImageBlurred', bgImageBlurred);
-	          file.setCustomData('bgImageBlurredUrl', bgImageBlurredUrl);
+	          if (file.isAnimated()) {
+	            file.setCustomData('bgImageAnimated', true);
+	          } else {
+	            const bgImageBlurredUrl = URL.createObjectURL(bgImageBlurred);
+	            file.setCustomData('bgImageBlurred', bgImageBlurred);
+	            file.setCustomData('bgImageBlurredUrl', bgImageBlurredUrl);
+	          }
 	          (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _previewLoader)[_previewLoader]) == null ? void 0 : _babelHelpers$classPr4.destroy();
 	          babelHelpers.classPrivateFieldLooseBase(this, _previewLoader)[_previewLoader] = null;
 	          babelHelpers.classPrivateFieldLooseBase(this, _setBgColor)[_setBgColor](color);
@@ -560,13 +564,17 @@ this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {};
 	  var _babelHelpers$classPr6;
 	  return ((_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _getBgImage)[_getBgImage]()) == null ? void 0 : _babelHelpers$classPr6.getPreviewUrl()) || null;
 	}
-	function _getBgImageBlurred2() {
+	function _isBgImageAnimated2() {
 	  var _babelHelpers$classPr7;
-	  return ((_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _getBgImage)[_getBgImage]()) == null ? void 0 : _babelHelpers$classPr7.getCustomData('bgImageBlurred')) || null;
+	  return ((_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _getBgImage)[_getBgImage]()) == null ? void 0 : _babelHelpers$classPr7.getCustomData('bgImageAnimated')) || false;
+	}
+	function _getBgImageBlurred2() {
+	  var _babelHelpers$classPr8;
+	  return ((_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _getBgImage)[_getBgImage]()) == null ? void 0 : _babelHelpers$classPr8.getCustomData('bgImageBlurred')) || null;
 	}
 	function _getBgImageBlurredUrl2() {
-	  var _babelHelpers$classPr8;
-	  return ((_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _getBgImage)[_getBgImage]()) == null ? void 0 : _babelHelpers$classPr8.getCustomData('bgImageBlurredUrl')) || null;
+	  var _babelHelpers$classPr9;
+	  return ((_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _getBgImage)[_getBgImage]()) == null ? void 0 : _babelHelpers$classPr9.getCustomData('bgImageBlurredUrl')) || null;
 	}
 	function _getBgColor2() {
 	  const color = babelHelpers.classPrivateFieldLooseBase(this, _getControl)[_getControl]('field-bg-color').value;
@@ -651,6 +659,7 @@ this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {};
 	  const data = new FormData();
 	  data.append('bgImage', babelHelpers.classPrivateFieldLooseBase(this, _getBgImage)[_getBgImage]() ? babelHelpers.classPrivateFieldLooseBase(this, _getBgImage)[_getBgImage]().getClientPreview() : '');
 	  data.append('bgImageBlurred', babelHelpers.classPrivateFieldLooseBase(this, _getBgImageBlurred)[_getBgImageBlurred]() || '');
+	  data.append('bgImageAnimated', babelHelpers.classPrivateFieldLooseBase(this, _isBgImageAnimated)[_isBgImageAnimated]());
 	  data.append('bgColor', babelHelpers.classPrivateFieldLooseBase(this, _getBgColor)[_getBgColor]() || '');
 	  data.append('textColor', babelHelpers.classPrivateFieldLooseBase(this, _getTextColor)[_getTextColor]() || '');
 	  data.append('action', 'create');

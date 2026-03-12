@@ -1,13 +1,5 @@
-import { DialogId } from '../../../types/common';
-import { MessengerModel, PayloadData } from '../../base';
-
-export enum ChatType
-{
-	chat = 'chat',
-	open = 'open',
-	user = 'user',
-	notification = 'notification',
-}
+import { MessengerModel, PayloadData } from '../../../../messenger/model/base';
+import { DialogId } from '../../../../messenger/types/common';
 
 export enum MessageStatus
 {
@@ -51,65 +43,82 @@ export type RecentModelState = {
 	sticker: boolean,
 };
 
+export type RecentModelCollection = {
+	collection: Record<DialogId, RecentModelState>,
+	chatIdCollection: Set<string>,
+	copilotIdCollection: Set<string>,
+	channelIdCollection: Set<string>,
+	collabIdCollection: Set<string>,
+	taskIdCollection: Set<string>,
+}
+
+export type RecentMessengerModel = MessengerModel<RecentModelCollection>;
+
 export type RecentModelActions =
-	'recentModel/setState'
-	| 'recentModel/set'
-	| 'recentModel/setFromSync'
-	| 'recentModel/like'
-	| 'recentModel/setFromPush'
+	'recentModel/set'
+	| 'recentModel/setChat'
+	| 'recentModel/setCopilot'
+	| 'recentModel/setChannel'
+	| 'recentModel/setCollab'
+	| 'recentModel/setFirstPageByTab'
+	| 'recentModel/setByRecentConfigTabs'
+	| 'recentModel/setByNavigationTabs'
+	| 'recentModel/setGroupCollection'
+	| 'recentModel/hideByRecentConfigTabs'
+	| 'recentModel/hideByNavigationTabs'
 	| 'recentModel/delete'
-	| 'recentModel/deleteFromModel'
-	| 'recentModel/clearAllCounters'
+	| 'recentModel/deleteOpenChannel'
 	| 'recentModel/update'
+	| 'recentModel/like'
 
 export type RecentModelMutation =
-	'recentModel/setState'
+	'recentModel/setChatIdCollection'
+	| 'recentModel/setCopilotIdCollection'
+	| 'recentModel/setChannelIdCollection'
+	| 'recentModel/setCollabIdCollection'
+	| 'recentModel/storeIdCollection'
+	| 'recentModel/deleteFromChatIdCollection'
+	| 'recentModel/deleteFromCopilotIdCollection'
+	| 'recentModel/deleteFromChannelIdCollection'
+	| 'recentModel/deleteFromCollabIdCollection'
+	| 'recentModel/deleteFromTaskIdCollection'
 	| 'recentModel/add'
 	| 'recentModel/update'
 	| 'recentModel/delete'
+;
 
+export type RecentSetIdCollectionActions =
+	'setChat'
+	| 'setCollab'
+	| 'setCopilot'
+	| 'setChannel'
+	;
+export type RecentStoreIdCollectionActions = 'setFirstPageByTab';
 
-export type RecentSetStateActions = 'setState';
-export interface RecentSetStateData extends PayloadData
+export interface RecentSetIdCollectionData extends PayloadData
 {
-	collection: Array<RecentModelState>;
+	itemIds: Array<string>;
 }
 
-
-export type RecentAddActions = 'set';
-export interface RecentAddData extends PayloadData
+export interface RecentStoreIdCollectionData extends PayloadData
 {
-	recentItemList: Array<{
-		fields: Partial<RecentModelState>
-	}>;
+	tab: string;
+	itemIds: Array<string>;
 }
-
 
 export type RecentUpdateActions =
 	'set'
 	| 'update'
+	| 'setFromPush'
+	| 'setFromSync'
 	| 'like'
-	| 'clearAllCounters'
 	;
 export interface RecentUpdateData extends PayloadData
 {
-	recentItemList: Array<{
-		index: number,
-		fields: Partial<RecentModelState>,
-	}>;
+	recentItemList: Array<{ fields: Partial<RecentModelState> }>;
 }
 
-
-export type RecentDeleteActions = 'delete' | 'deleteFromModel';
 export interface RecentDeleteData extends PayloadData
 {
-	id: DialogId;
-	index: number;
+	id: string;
 }
-
-export type RecentModelCollection = {
-	collection: Array<RecentModelState>;
-	index: Record<DialogId, number>;
-}
-
-export type RecentMessengerModel = MessengerModel<RecentModelCollection>;

@@ -1,6 +1,7 @@
 import { CopilotChat, CopilotChatMessageType } from 'ai.copilot-chat.ui';
 import { Loc, Runtime } from 'main.core';
 import { getDefaultChatOptions } from './default-chat-options';
+import { CopilotAdvice } from './copilot-advice';
 
 export class ExampleChat
 {
@@ -14,6 +15,7 @@ export class ExampleChat
 	#createCopilotChat(): CopilotChat
 	{
 		const chat = new CopilotChat(getDefaultChatOptions());
+		const copilotName = CopilotAdvice.getCopilotName();
 
 		chat.addBotMessage({
 			content: '',
@@ -22,7 +24,9 @@ export class ExampleChat
 			dateCreated: (new Date()).toString(),
 			viewed: true,
 			params: {
-				title: Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_TITLE'),
+				title: Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_TITLE_MSGVER_1', {
+					'#COPILOT_NAME#': copilotName,
+				}),
 				subtitle: Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_SUBTITLE_EXAMPLE'),
 				content: Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_EXAMPLE'),
 			},

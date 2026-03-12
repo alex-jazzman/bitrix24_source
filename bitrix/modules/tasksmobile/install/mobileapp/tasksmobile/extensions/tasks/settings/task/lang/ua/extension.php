@@ -1,6 +1,0 @@
-<?php
-$MESS["TASKSMOBILE_SETTINGS_TASK_BETA_ACTIVE_TITLE"] = "Увімкнути бета-режим";
-$MESS["TASKSMOBILE_SETTINGS_TASK_BETA_NEW_CHECKLIST"] = "Нові контрольні списки";
-$MESS["TASKSMOBILE_SETTINGS_TASK_BETA_NOTIFICATION"] = "Перезавантажте застосунок";
-$MESS["TASKSMOBILE_SETTINGS_TASK_BETA_TITLE"] = "Нові завдання (бета)";
-$MESS["TASKSMOBILE_SETTINGS_TASK_TITLE"] = "Завдання";

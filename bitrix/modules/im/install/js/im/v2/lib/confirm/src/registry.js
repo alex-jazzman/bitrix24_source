@@ -7,4 +7,4 @@ export { showDownloadAllFilesConfirm } from './message/download-files';
 export { showNotificationsModeSwitchConfirm } from './settings/settings';
 export { showKickUserConfirm } from './user/user-kick';
 export { showCloseWithActiveCallConfirm } from './call/call';
-export { showReadMessagesConfirm } from './message/message-read';
+export { showStickerPackDeleteConfirm, showStickerPackUnlinkConfirm } from './sticker/sticker';

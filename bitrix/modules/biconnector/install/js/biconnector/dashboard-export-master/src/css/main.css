@@ -11,6 +11,7 @@
 
 .bic-export-header {
 	padding: 15px 36px 15px 18px;
+	min-width: 0;
 }
 
 .bic-export-subtitle {
@@ -28,6 +29,10 @@
 	line-height: 20px;
 	text-align: left;
 	color: var(--ui-color-base-default);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 100%;
 }
 
 .bic-export-hint {

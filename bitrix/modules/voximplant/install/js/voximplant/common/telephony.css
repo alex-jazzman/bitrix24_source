@@ -2891,6 +2891,38 @@
 	color: #d0021b;
 }
 
+.voximplant-grid-activation-state-active {
+	color: #719100;
+}
+
+.voximplant-grid-activation-state-activating {
+	color: #1d70b8;
+}
+
+.voximplant-grid-activation-state-deactivated {
+	color: #6c757d;
+}
+
+.voximplant-grid-activation-state-provisioning {
+	color: #6f42c1;
+}
+
+.voximplant-grid-activation-state-awaiting_business_phone_number_configuration {
+	color: #fd7e14;
+}
+
+.voximplant-grid-activation-state-legal_ownership_limit_reached {
+	color: #6c757d;
+}
+
+.voximplant-grid-activation-state-gosuslugi_declined {
+	color: #dc3545;
+}
+
+.voximplant-grid-activation-state-awaiting_gosuslugi_verification {
+	color: #ffc107;
+}
+
 .voximplant-grid-state-active {
 	color: #719100;
 }

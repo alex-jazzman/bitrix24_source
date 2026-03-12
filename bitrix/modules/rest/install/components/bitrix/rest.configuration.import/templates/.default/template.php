@@ -163,7 +163,7 @@ else
 						'IMPORT_CONTEXT' => $arResult['IMPORT_CONTEXT'],
 						'IMPORT_MANIFEST' => $arResult['IMPORT_MANIFEST_FILE'],
 						'MANIFEST_CODE' => $arResult['MANIFEST_CODE'],
-						'APP' => $arResult['APP'],
+						'APP' => $arResult['APP'] ?? null,
 						'FROM' => $arResult['FROM'],
 					),
 					$component,

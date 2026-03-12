@@ -1,0 +1,21 @@
+.bx-im-elements-loader-shimmer__container {
+	--im-elements-loader-shimmer__background: linear-gradient(
+		90deg,
+		rgba(237, 238, 240, 0) 0%,
+		rgba(210, 216, 227, 0.68) 50%,
+		rgba(221, 225, 233, 0) 100%
+	);
+
+	width: 100%;
+	height: 100%;
+	border-radius: 6px;
+	pointer-events: none;
+	background: var(--im-elements-loader-shimmer__background);
+	background-size: 200% 100%;
+	animation: bx-im-elements-loader-shimmer 3s linear infinite;
+}
+
+@keyframes bx-im-elements-loader-shimmer {
+	0% { background-position: -200% 0; }
+	100% { background-position: 200% 0; }
+}

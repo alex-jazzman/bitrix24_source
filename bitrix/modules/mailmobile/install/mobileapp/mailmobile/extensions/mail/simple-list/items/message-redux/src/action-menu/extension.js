@@ -3,27 +3,27 @@
  */
 jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Uuid } = require('utils/uuid');
 	const { Icon } = require('assets/icons');
-	const { Feature } = require('feature');
 	const { qrauth } = require('qrauth/utils');
 	const { UIMenu } = require('layout/ui/menu');
-	const { showRemoveToast } = require('toast/remove');
+	const { Alert, ButtonType } = require('alert');
+	const { showToast, showErrorToast, showRemoveToast } = require('toast');
 	const { Selector: FolderSelector } = require('mail/folder/selector');
 	const { BaseListMoreMenu } = require('layout/ui/list/base-more-menu');
 	const {
-		markAsRemoved,
-		unmarkAsRemoved,
 		markAsSelected,
 	} = require('mail/statemanager/redux/slices/messages');
 	const { selectFoldersByType, selectById: selectFolderById, selectCurrentFolder } = require('mail/statemanager/redux/slices/folders/selector');
 	const { selectCurrentMailboxId } = require('mail/statemanager/redux/slices/mailboxes/selector');
 	const {
-		remove,
 		moveToFolder,
 		changeReadStatus,
 		addToCrm,
 		addToChat,
 		addToTask,
+		addToEvent,
+		discussInChat,
 		sendBindingEvent,
 	} = require('mail/statemanager/redux/slices/messages/thunk');
 	const { selectById } = require('mail/statemanager/redux/slices/messages/selector');
@@ -31,6 +31,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 	const { openDetail } = require('mail/message/elements/contact/card');
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
+	const { Moment } = require('utils/date');
 
 	const Sections = {
 		CREATE: 'create',
@@ -50,8 +51,10 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 		IN_SPAM: 'in_spam',
 		CREATE_CHAT: 'create_chat',
 		OPEN_CHAT: 'open_chat',
+		DISCUSS_IN_CHAT: 'discuss_in_chat',
 		CREATE_POST: 'create_post',
 		CREATE_EVENT: 'create_event',
+		OPEN_EVENT: 'open_event',
 		CREATE_CRM: 'create_crm',
 		OPEN_CRM: 'open_crm',
 	};
@@ -68,6 +71,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 
 			this.objectId = objectId;
 			this.object = selectById(store.getState(), objectId);
+			this.isDetailCard = false;
 
 			const {
 				isRead,
@@ -75,6 +79,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 				chatBindId,
 				crmBindTypeId,
 				taskBindId,
+				eventBindId,
 			} = this.object || {};
 
 			this.isRead = isRead;
@@ -82,6 +87,20 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			this.chatBindId = chatBindId;
 			this.crmBindTypeId = crmBindTypeId;
 			this.taskBindId = taskBindId;
+			this.eventBindId = eventBindId;
+		}
+
+		openMoreMenu = (target) => {
+			const menuItems = this.getMenuItems();
+
+			this.menu = new UIMenu(menuItems);
+			this.menu.show({ target });
+		};
+
+		async show({ target, isDetailCard = false })
+		{
+			this.isDetailCard = isDetailCard;
+			this.openMoreMenu(target);
 		}
 
 		getSubCreateMenuItems()
@@ -96,7 +115,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 						showIcon: true,
 						title: Loc.getMessage('MAILMOBILE_ACTIONS_OPEN_TASK'),
 						sectionCode: Sections.CREATE,
-						icon: Icon.MAIL_CREATION_TASK,
+						icon: Icon.TASK,
 					},
 				));
 			}
@@ -108,7 +127,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 						showIcon: true,
 						title: Loc.getMessage('MAILMOBILE_ACTIONS_CREATE_TASK'),
 						sectionCode: Sections.CREATE,
-						icon: Icon.MAIL_CREATION_TASK,
+						icon: Icon.TASK,
 					},
 				));
 			}
@@ -121,7 +140,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 						showIcon: true,
 						title: Loc.getMessage('MAILMOBILE_ACTIONS_OPEN_CHAT'),
 						sectionCode: Sections.CREATE,
-						icon: Icon.MAIL_CREATION_CHAT,
+						icon: Icon.CHATS,
 					},
 				));
 			}
@@ -133,32 +152,44 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 						showIcon: true,
 						title: Loc.getMessage('MAILMOBILE_ACTIONS_CREATE_CHAT'),
 						sectionCode: Sections.CREATE,
-						icon: Icon.MAIL_CREATION_CHAT,
+						icon: Icon.CHATS,
 					},
 				));
 			}
 
-			/* menuItems.push(
-				this.createMenuItem(
+			if (this.eventBindId > 0)
+			{
+				menuItems.push(this.createMenuItem(
 					{
-						id: Actions.CREATE_POST,
+						id: Actions.OPEN_EVENT,
 						showIcon: true,
-						title: Loc.getMessage('MAILMOBILE_ACTIONS_CREATE_POST'),
+						title: Loc.getMessage('MAILMOBILE_ACTIONS_OPEN_EVENT'),
 						sectionCode: Sections.CREATE,
-						icon: Icon.MAIL_CREATION_POST,
+						icon: Icon.CALENDAR_WITH_SLOTS,
 					},
-				),
-			); */
+				));
+			}
+			else
+			{
+				menuItems.push(this.createMenuItem(
+					{
+						id: Actions.CREATE_EVENT,
+						showIcon: true,
+						title: Loc.getMessage('MAILMOBILE_ACTIONS_CREATE_EVENT'),
+						sectionCode: Sections.CREATE,
+						icon: Icon.CALENDAR_WITH_SLOTS,
+					},
+				));
+			}
 
-			/* menuItems.push(this.createMenuItem(
+			menuItems.push(this.createMenuItem(
 				{
-					id: Actions.CREATE_EVENT,
+					id: Actions.DISCUSS_IN_CHAT,
 					showIcon: true,
-					title: Loc.getMessage('MAILMOBILE_ACTIONS_CREATE_EVENT'),
+					title: Loc.getMessage('MAILMOBILE_ACTIONS_DISCUSS_IN_CHAT'),
 					sectionCode: Sections.CREATE,
-					icon: Icon.MAIL_CREATION_EVENT,
 				},
-			)); */
+			));
 
 			if (this.crmBindId > 0)
 			{
@@ -168,7 +199,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 						showIcon: true,
 						title: Loc.getMessage('MAILMOBILE_ACTIONS_OPEN_CRM'),
 						sectionCode: Sections.CREATE,
-						icon: Icon.MAIL_CREATION_CRM,
+						icon: Icon.CRM,
 					},
 				));
 			}
@@ -180,7 +211,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 						showIcon: true,
 						title: Loc.getMessage('MAILMOBILE_ACTIONS_CREATE_CRM'),
 						sectionCode: Sections.CREATE,
-						icon: Icon.MAIL_CREATION_CRM,
+						icon: Icon.CRM,
 					},
 				));
 			}
@@ -193,14 +224,17 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			const actions = [];
 			const currentFolder = selectCurrentFolder(store.getState());
 
-			actions.push(this.createMenuItem({
-				id: Actions.SELECT,
-				showIcon: true,
-				testId: 'mail-action-menu-item-select',
-				title: Loc.getMessage('MAILMOBILE_ACTIONS_SELECT'),
-				sectionCode: Sections.EDIT,
-				icon: Icon.CIRCLE_CHECK,
-			}));
+			if (!this.isDetailCard)
+			{
+				actions.push(this.createMenuItem({
+					id: Actions.SELECT,
+					showIcon: true,
+					testId: 'mail-action-menu-item-select',
+					title: Loc.getMessage('MAILMOBILE_ACTIONS_SELECT'),
+					sectionCode: Sections.EDIT,
+					icon: Icon.CIRCLE_CHECK,
+				}));
+			}
 
 			if (this.isRead)
 			{
@@ -251,17 +285,19 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			}
 
 			actions.push(...this.getSubCreateMenuItems());
-
-			actions.push(
-				this.createMenuItem({
-					id: Actions.REMOVE,
-					showIcon: true,
-					title: Loc.getMessage('MAILMOBILE_ACTIONS_REMOVE'),
-					sectionCode: Sections.REMOVE,
-					icon: Icon.TRASHCAN,
-					isDestructive: true,
-				}),
-			);
+			if (this.object)
+			{
+				actions.push(
+					this.createMenuItem({
+						id: Actions.REMOVE,
+						showIcon: true,
+						title: Loc.getMessage('MAILMOBILE_ACTIONS_IN_TRASH'),
+						sectionCode: Sections.REMOVE,
+						icon: Icon.TRASHCAN,
+						isDestructive: true,
+					}),
+				);
+			}
 
 			return actions;
 		}
@@ -284,8 +320,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			);
 		}
 
-		changeObjectFolder(props)
-		{
+		changeObjectFolder = (props) => {
 			const {
 				folderSignature = null,
 				folder: folderToMove = null,
@@ -320,8 +355,9 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			if (resolvedFolderToMove === null)
 			{
 				resolvedFolderToMove = Object.values(DefaultFolderType).some((type) => type.value === folderSignature)
-					? selectFoldersByType(store.getState(), folderSignature)?.find(() => true)
-					: selectFolderById(store.getState(), folderSignature);
+					? selectFoldersByType(store.getState(), folderSignature, true)?.find(() => true)
+					: selectFolderById(store.getState(), folderSignature)
+				;
 			}
 
 			if (!resolvedFolderToMove || !message)
@@ -329,8 +365,24 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 				return;
 			}
 
-			dispatch(moveToFolder({ objectIds: [objectId], objectUidIds: [message.uidId], folderPath: folderToMove.path }));
-		}
+			dispatch(moveToFolder({
+				objectIds: [objectId],
+				objectUidIds: [message.uidId],
+				folderPath: resolvedFolderToMove.path,
+			}));
+
+			const toastMessage = DefaultFolderType.isTrashFolder(resolvedFolderToMove.type)
+				? Loc.getMessage('MAILMOBILE_ACTIONS_IN_TRASH_TOAST')
+				: Loc.getMessage('MAILMOBILE_ACTIONS_IN_FOLDER_TOAST', { '#FOLDER_NAME#': resolvedFolderToMove.name })
+			;
+
+			if (this.isDetailCard && DefaultFolderType.isTrashFolder(resolvedFolderToMove.type))
+			{
+				layout.back();
+			}
+
+			showToast({ message: toastMessage });
+		};
 
 		selectObject(objectId)
 		{
@@ -383,6 +435,31 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			dispatch(addToChat({ objectId }));
 		}
 
+		discussInChat(objectId)
+		{
+			void requireLazy('im:messenger/api/dialog-selector').then(async ({ DialogSelector }) => {
+				const selector = new DialogSelector();
+				const { dialogId } = await selector.show({ title: Loc.getMessage('MAILMOBILE_ACTIONS_SELECT_CHAT') });
+
+				console.log(objectId, dialogId);
+
+				Alert.confirm(
+					Loc.getMessage('MAILMOBILE_ACTIONS_DISCUSS_IN_CHAT_CONFIRM_TITLE'),
+					Loc.getMessage('MAILMOBILE_ACTIONS_DISCUSS_IN_CHAT_CONFIRM_DESCRIPTIONS'),
+					[
+						{
+							text: Loc.getMessage('MAILMOBILE_ACTIONS_DISCUSS_IN_CHAT_CONFIRM_ACCEPT'),
+							onPress: this.#onAcceptDiscuss.bind(this, { objectId, dialogId }),
+						},
+						{
+							type: ButtonType.DESTRUCTIVE,
+							text: Loc.getMessage('MAILMOBILE_ACTIONS_DISCUSS_IN_CHAT_CONFIRM_CANCEL'),
+						},
+					],
+				);
+			});
+		}
+
 		createTaskEntity(objectId)
 		{
 			const message = selectById(store.getState(), objectId);
@@ -398,7 +475,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			}));
 		}
 
-		removeObject(objectId)
+		createEventEntity(objectId)
 		{
 			const message = selectById(store.getState(), objectId);
 			if (!message)
@@ -406,32 +483,27 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 				return;
 			}
 
-			const messageUidId = message.uidId;
+			BX.addCustomEvent('Calendar.EventEditForm::onAfterEventSave', this.#onCalendarEntrySaveHandler);
+			void requireLazy('calendar:entry').then(({ Entry }) => {
+				Entry.openEventEditForm({
+					ownerId: env.userId,
+					createMailId: objectId,
+					uuid: this.uuid = Uuid.getV4(),
+					description: this.createDescriptionForCalendarEvent(message),
+				});
+			});
+		}
 
-			if (!messageUidId)
-			{
-				return;
-			}
-
-			if (!Feature.isToastSupported())
-			{
-				dispatch(remove({ objectIds: [objectId], objectUidIds: [messageUidId] }));
-
-				return;
-			}
-
-			dispatch(markAsRemoved({ objectIds: [objectId] }));
-
-			showRemoveToast(
+		createDescriptionForCalendarEvent(message)
+		{
+			return Loc.getMessage(
+				'MAILMOBILE_ACTIONS_CREATE_EVENT_DESCRIPTION',
 				{
-					message: Loc.getMessage('MAILMOBILE_ACTIONS_REMOVE_TOAST_MESSAGE'),
-					offset: 86,
-					onButtonTap: () => {
-						dispatch(unmarkAsRemoved({ objectIds: [objectId] }));
-					},
-					onTimerOver: () => {
-						dispatch(remove({ objectIds: [objectId], objectUidIds: [messageUidId] }));
-					},
+					'#SUBJECT#': message.subject,
+					'#LINK#': `/mail/message/${message.id}?source=event`,
+					'#DATE#': Moment.createFromTimestamp(message.date).format('DD MMMM HH:mm'),
+					'#FROM#': `${this.fromFullName} ${this.fromEmail}`,
+					'#TO#': this.toEmail,
 				},
 			);
 		}
@@ -455,8 +527,27 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			});
 		}
 
+		openEventEntity()
+		{
+			void requireLazy('calendar:entry').then(({ Entry }) => {
+				Entry.openEventViewForm({ eventId: this.eventBindId });
+			});
+		}
+
+		#onAcceptDiscuss = ({ objectId, dialogId }) => {
+			dispatch(discussInChat({
+				messageId: objectId,
+				dialogId,
+			})).then(() => {
+				void requireLazy('im:messenger/api/dialog-opener').then(({ DialogOpener }) => {
+					DialogOpener.open({ dialogId });
+				});
+			}).catch((error) => {
+				showErrorToast(error);
+			});
+		};
+
 		onMenuItemSelected = (event, item) => {
-			// eslint-disable-next-line default-case
 			switch (item.id)
 			{
 				case Actions.SELECT:
@@ -472,7 +563,10 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 					this.openMover(this.objectId);
 					break;
 				case Actions.REMOVE:
-					this.removeObject(this.objectId);
+					this.changeObjectFolder({
+						objectId: this.objectId,
+						folderSignature: DefaultFolderType.TRASH.value,
+					});
 					break;
 				case Actions.IN_SPAM:
 					this.changeObjectFolder({
@@ -486,11 +580,20 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 				case Actions.CREATE_CRM:
 					this.createCrmEntity(this.objectId);
 					break;
+				case Actions.OPEN_EVENT:
+					this.openEventEntity();
+					break;
+				case Actions.CREATE_EVENT:
+					this.createEventEntity(this.objectId);
+					break;
 				case Actions.CREATE_CHAT:
 					this.createChatEntity(this.objectId);
 					break;
 				case Actions.OPEN_CHAT:
 					this.openChatEntity();
+					break;
+				case Actions.DISCUSS_IN_CHAT:
+					this.discussInChat(this.objectId);
 					break;
 				case Actions.OPEN_TASK:
 					this.openTaskEntity();
@@ -498,19 +601,40 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 				case Actions.CREATE_TASK:
 					this.createTaskEntity(this.objectId);
 					break;
+				default:
+					break;
 			}
 		};
 
-		openMoreMenu = (target) => {
-			const menuItems = this.getMenuItems();
+		#onCalendarEntrySaveHandler = (event) => {
+			const isEqualMessageId = this.objectId === event.createMailId;
+			const isEqualUuid = this.uuid === event.uuid;
+			BX.removeCustomEvent('Calendar.EventEditForm::onAfterEventSave', this.#onCalendarEntrySaveHandler);
 
-			this.menu = new UIMenu(menuItems);
-			this.menu.show({ target });
+			if (!isEqualMessageId || !isEqualUuid)
+			{
+				return;
+			}
+
+			dispatch(addToEvent({
+				messageId: this.objectId,
+				calendarEventId: event.eventId,
+			}));
 		};
 
-		async show(target)
+		get fromFullName()
 		{
-			this.openMoreMenu(target);
+			return this.object.from[0]?.customData?.name ?? '';
+		}
+
+		get fromEmail()
+		{
+			return this.object.from[0]?.customData?.email ?? '';
+		}
+
+		get toEmail()
+		{
+			return this.object.to[0]?.customData?.email ?? '';
 		}
 	}
 

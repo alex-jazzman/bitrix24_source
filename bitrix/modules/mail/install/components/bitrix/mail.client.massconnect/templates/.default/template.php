@@ -5,8 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Mail\Access\Permission\PermissionDictionary;
-use Bitrix\Mail\Helper\MailboxAccess;
+use Bitrix\Mail\Helper\MailAccess;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var array $arParams */
@@ -23,7 +24,11 @@ Toolbar::deleteFavoriteStar();
 
 $massconnectContainerId = 'mail-massconnect-container';
 
-$userAllowedLevel = MailboxAccess::getPermissionValue(PermissionDictionary::MAIL_MAILBOX_LIST_ITEM_EDIT);
+$permissions = [
+	'allowedLevels' => (int)MailAccess::getPermissionValue(PermissionDictionary::MAIL_MAILBOX_LIST_ITEM_EDIT),
+	'canEditCrmIntegration' => (bool)MailAccess::getPermissionValue(PermissionDictionary::MAIL_MAILBOX_CRM_INTEGRATION_EDIT),
+];
+
 ?>
 <div id="<?= $massconnectContainerId ?>" class="--ui-context-content-light"></div>
 <script>
@@ -37,13 +42,13 @@ $userAllowedLevel = MailboxAccess::getPermissionValue(PermissionDictionary::MAIL
 			source = slider.getData().get('source') || null;
 		}
 
-		const appContainerId = '<?= $massconnectContainerId ?>'
-		const allowedLevel = '<?= $userAllowedLevel ?>'
+		const appContainerId = '<?= $massconnectContainerId ?>';
+		const permissions = <?= Json::encode($permissions) ?>;
 		const isSmtpAvailable = '<?= $arResult['IS_SMTP_AVAILABLE'] ?>';
 
 		const massConnectApp = new BX.Mail.Massconnect.MassconnectForm({
 			appContainerId,
-			allowedLevel,
+			permissions,
 			source,
 			isSmtpAvailable,
 		});

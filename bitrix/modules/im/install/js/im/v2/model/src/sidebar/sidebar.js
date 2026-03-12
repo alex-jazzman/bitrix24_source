@@ -11,6 +11,7 @@ import { TasksModel } from './nested-modules/tasks/tasks';
 import { MeetingsModel } from './nested-modules/meeting/meeting';
 import { FilesModel } from './nested-modules/files/files';
 import { MultidialogModel } from './nested-modules/multidialog/multidialog';
+import { SharedLinkModel } from './nested-modules/shared-link/shared-link';
 
 import type { GetterTree, ActionTree, MutationTree, NestedModuleTree } from 'ui.vue3.vuex';
 
@@ -39,6 +40,7 @@ export class SidebarModel extends BuilderModel
 			files: FilesModel,
 			multidialog: MultidialogModel,
 			messageSearch: MessageSearchModel,
+			sharedLink: SharedLinkModel,
 		};
 	}
 

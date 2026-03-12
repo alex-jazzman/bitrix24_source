@@ -8,6 +8,7 @@ export { OnlinePullHandler } from './online';
 export { CounterPullHandler } from './counter';
 export { PromotionPullHandler } from './promotion';
 export { AnchorPullHandler } from './anchor';
+export { StickersPullHandler } from './stickers';
 
 export { NewMessageManager } from './recent/classes/new-message-manager';
 

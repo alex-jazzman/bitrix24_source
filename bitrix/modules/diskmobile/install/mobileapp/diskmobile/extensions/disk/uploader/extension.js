@@ -10,8 +10,6 @@ jn.define('disk/uploader', (require, exports, module) => {
 	const { Defaults } = require('disk/uploader/src/config');
 	const { DiskUploaderView } = require('disk/uploader/src/view');
 
-	const isAirUploaderEnabled = Boolean(jnExtensionData?.get('disk:uploader')?.isAirUploaderEnabled);
-
 	class DiskUploader
 	{
 		/**
@@ -20,20 +18,7 @@ jn.define('disk/uploader', (require, exports, module) => {
 		 */
 		static open(options)
 		{
-			if (isAirUploaderEnabled)
-			{
-				(new DiskUploader(options)).run();
-			}
-			else
-			{
-				// eslint-disable-next-line no-undef
-				bitrix24Disk.show({
-					listener: options.onCommit,
-					folderId: String(options.folderId),
-					storageId: String(options.storageId),
-					multipleUpload: true,
-				});
-			}
+			(new DiskUploader(options)).run();
 		}
 
 		/**
@@ -143,5 +128,5 @@ jn.define('disk/uploader', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { DiskUploader, isAirUploaderEnabled };
+	module.exports = { DiskUploader };
 });

@@ -6,11 +6,15 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var CBitrixComponent $component */
 /** @var CBitrixComponentTemplate $this */
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 use \Bitrix\UI;
 use \Bitrix\Disk;
 
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 $isBitrix24Template && $this->setViewTarget('below_pagetitle');
+$analytics = $arResult['ANALYTICS'] ?? [];
+$analytics['p2'] = 'special_button';
+$analytics = htmlspecialcharsbx(CUtil::JSEscape(Json::encode($analytics)));
 
 if(!isset($arResult['HIDE_BUTTONS']) || !$arResult['HIDE_BUTTONS']) {
 ?>
@@ -20,21 +24,21 @@ if(!isset($arResult['HIDE_BUTTONS']) || !$arResult['HIDE_BUTTONS']) {
 		<div class="disk-documents-control-panel-label">
 			<div class="disk-documents-control-panel-label-item"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE')?></div>
 		</div>
-		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createDocx();">
+		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createDocx(null, this, null, '<?= $analytics ?>');">
 			<div class="disk-documents-control-panel-card disk-documents-control-panel-card--doc">
 				<div class="disk-documents-control-panel-card-icon"></div>
 				<div class="disk-documents-control-panel-card-btn"></div>
 				<div class="disk-documents-control-panel-card-name"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_DOC')?></div>
 			</div>
 		</div>
-		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createXlsx();">
+		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createXlsx(null, this, null, '<?= $analytics ?>');">
 			<div class="disk-documents-control-panel-card disk-documents-control-panel-card--xls">
 				<div class="disk-documents-control-panel-card-icon"></div>
 				<div class="disk-documents-control-panel-card-btn"></div>
 				<div class="disk-documents-control-panel-card-name"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_XLS')?></div>
 			</div>
 		</div>
-		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createPptx();">
+		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createPptx(null, this, null, '<?= $analytics ?>');">
 			<div class="disk-documents-control-panel-card disk-documents-control-panel-card--ppt">
 				<div class="disk-documents-control-panel-card-icon"></div>
 				<div class="disk-documents-control-panel-card-btn"></div>
@@ -65,7 +69,7 @@ if ($arResult['STORAGE'])
 {
 	?>
 		<div class="disk-documents-control-panel-card-box">
-			<div class="disk-documents-control-panel-card disk-documents-control-panel-card-icon--docs" onmouseover="BX.onCustomEvent(window, 'onDiskUploadPopupShow', [this]);">
+			<div class="disk-documents-control-panel-card disk-documents-control-panel-card-icon--docs" onmouseenter="BX.onCustomEvent(window, 'onDiskUploadPopupShow', [this]);">
 				<div class="disk-documents-control-panel-card-icon"></div>
 				<div class="disk-documents-control-panel-card-btn"></div>
 				<div class="disk-documents-control-panel-card-name"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_OPEN_LOCAL')?></div>

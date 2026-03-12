@@ -522,6 +522,15 @@
 	color: var(--call-component-call-ai__gray-text-color);
 }
 
+.bx-call-component-call-ai-decryption-block__description {
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+	-webkit-hyphens: auto;
+	hyphens: auto;
+	-ms-hyphenate-limit-chars: 65;
+	hyphenate-limit-chars: 65;
+}
+
 .bx-call-component-call-ai-resume-block__description,
 .bx-call-component-call-ai-decryption-block__description {
 	margin: 0;

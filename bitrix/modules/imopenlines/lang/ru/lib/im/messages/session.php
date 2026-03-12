@@ -5,3 +5,4 @@ $MESS["IMOL_MESSAGE_SESSION_START_BY_MESSAGE_MULTI_MSGVER_1"] = "Этот диа
 $MESS["IMOL_MESSAGE_SESSION_START_BY_MULTI_DIALOG_SOURCE"] = "Из этого диалога создан новый диалог №#LINK#";
 $MESS["IMOL_MESSAGE_SESSION_START"] = "Начат новый диалог №#LINK#";
 $MESS['IMOL_MESSAGE_SESSION_REPLY_TIME_LIMIT_DEFAULT'] = 'В данном канале у оператора ограничено время на ответ. Подробнее в #A_START#статье#A_END#.';
+$MESS['IMOL_MESSAGE_SESSION_PREVIOUS_HISTORY'] = 'История предыдущих диалогов клиента:';

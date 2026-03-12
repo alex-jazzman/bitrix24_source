@@ -7,4 +7,3 @@ $MESS["STATUS_ENTITY_MOBILE_LAST_DATE_FIELD"] = "Мобильное прилож
 $MESS["STATUS_ENTITY_EVENT_ID_FIELD"] = "Идентификатор события";
 $MESS["STATUS_ENTITY_EVENT_UNTIL_DATE_FIELD"] = "Событие актуально до даты";
 $MESS["STATUS_ENTITY_COLOR_FIELD"] = "Цвет пользователя";
-?>

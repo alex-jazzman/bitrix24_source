@@ -414,7 +414,15 @@
 				itemsIds.push(items[i].getId());
 			}
 
-			const status = grid.hasResponseError(data) ? BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR : BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS;
+			let status = '';
+			if (data.errorCode && data.errorCode === 'CRM_FIELD_ERROR_REQUIRED')
+			{
+				status = BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR_FILLING_FIELDS
+			}
+			else
+			{
+				status = grid.hasResponseError(data) ? BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR : BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS;
+			}
 
 			grid.registerAnalyticsChangeStageEvent(items[0], this.getData().type, itemsIds, status);
 		},

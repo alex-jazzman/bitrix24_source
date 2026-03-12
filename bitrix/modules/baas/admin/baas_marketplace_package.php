@@ -28,6 +28,10 @@ if (!$baas->isAvailable())
 {
 	ShowError(Loc::getMessage('BAAS_IS_NOT_AVAILABLE'));
 }
+elseif (empty($packageCode))
+{
+	LocalRedirect('/bitrix/admin/baas_marketplace.php?lang=' . LANGUAGE_ID);
+}
 else
 {
 	$sTableID = 'b_baas_purchased_packages';
@@ -70,8 +74,7 @@ else
 					'LOGS',
 					'<a href="javascript:void(0);" 
 							data-action="download-logs" 
-							data-package-code="' . $purchasedPackage->getPackageCode(). '"
-							data-purchase-code="'. $purchasedPackage->getCode() . '"
+							data-purchased-package-code="'. $purchasedPackage->getCode() . '"
 							data-service-code="'. $purchasedService->getServiceCode() . '"
 						>' . Loc::getMessage('BAAS_PACKAGE_LOGS_ROW_DOWNLOAD') . '</a>'
 					);
@@ -117,12 +120,28 @@ else
 		});
 	};
 
-	const showResponse = (title, answer, response) => {
-		const {status, body} = response.data.httpResponse;
+	const showResponse = (response, title, answer) => {
+		let messageContent = `<p>Unknown error</p>`;
+		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0)
+		{
+			messageContent = response.errors.map(
+				err => `<p>${BX.util.htmlspecialchars(err.message || '')}</p>`
+			).join('');
+		}
+		else if (answer)
+		{
+			messageContent = answer;
+		}
+		else if (response.data && response.data.httpResponse && response.data.httpResponse.body)
+		{
+			messageContent = `<p>${response.data.httpResponse.body}</p>`;
+		}
+
+		const {status} = response.data.httpResponse;
 
 		BX.UI.Dialogs.MessageBox.show({
 			title: title || `Response with a status: ${status}`,
-			message: answer || `<p>${body}</p>`,
+			message: messageContent,
 			modal: true,
 			buttons: BX.UI.Dialogs.MessageBoxButtons.OK,
 			maxWidth: 1000
@@ -133,8 +152,7 @@ else
 
 		BX.bind(node, 'click', async () => {
 			BX.ajax.runAction('baas.Host.getPurchaseReport', {data: {
-				packageCode: node.dataset.packageCode,
-				purchaseCode: node.dataset.purchaseCode,
+				purchasedPackageCode: node.dataset.purchasedPackageCode,
 				serviceCode: node.dataset.serviceCode,
 			}})
 			.then((response) => { downloadAsFile(response.data); })

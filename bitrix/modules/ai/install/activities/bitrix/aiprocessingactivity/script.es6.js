@@ -24,6 +24,7 @@ class AiNodeBpJsonEditor
 	});
 
 	static TEXTAREA_MAX_HEIGHT = 500;
+	static TEXTAREA_MIN_HEIGHT = 50;
 	static VALIDATE_DEBOUNCE = 250;
 
 	lastJsonValue: string;
@@ -110,8 +111,10 @@ class AiNodeBpJsonEditor
 		{
 			return;
 		}
+
+		const minHeight = Math.max(jsonTextarea.scrollHeight, this.constructor.TEXTAREA_MIN_HEIGHT);
 		Dom.style(jsonTextarea, 'height', 'auto');
-		Dom.style(jsonTextarea, 'height', `${Math.min(jsonTextarea.scrollHeight, this.constructor.TEXTAREA_MAX_HEIGHT)}px`);
+		Dom.style(jsonTextarea, 'height', `${Math.min(minHeight, this.constructor.TEXTAREA_MAX_HEIGHT)}px`);
 	}
 
 	buildTemplate(): string

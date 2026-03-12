@@ -38,8 +38,8 @@ if ($route !== null)
 {
 	$application->setCurrentRoute($route);
 
-	// copy route parameters to the request
-	if ($route->getParametersValues())
+	// filling in global variables to reinitialize the context in include.php
+	if (!$route->getParametersValues()->isEmpty())
 	{
 		foreach ($route->getParametersValues()->getValues() as $name => $value)
 		{
@@ -51,15 +51,18 @@ if ($route !== null)
 	$_SERVER["REAL_FILE_PATH"] = '/bitrix/routing_index.php';
 	$controller = $route->getController();
 
+	$middlewares = $route->getOptions()->getMiddlewares();
+	foreach ($middlewares as $middleware)
+	{
+		if (is_callable($middleware))
+		{
+			call_user_func($middleware, $request);
+		}
+	}
+
 	if ($controller instanceof PublicPageController)
 	{
-		include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/virtual_io.php");
-		$io = CBXVirtualIo::GetInstance();
-
-		$_SERVER["REAL_FILE_PATH"] = $controller->getPath();
-
-		include_once($io->GetPhysicalName($_SERVER['DOCUMENT_ROOT'].$controller->getPath()));
-		die;
+		$controller->__invoke($route);
 	}
 	elseif ($controller instanceof \Closure)
 	{

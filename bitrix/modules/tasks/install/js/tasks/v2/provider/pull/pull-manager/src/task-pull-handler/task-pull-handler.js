@@ -9,6 +9,7 @@ import { subTasksService } from 'tasks.v2.provider.service.relation-service';
 import { GroupMappers, groupService, type StageDto } from 'tasks.v2.provider.service.group-service';
 import { flowService } from 'tasks.v2.provider.service.flow-service';
 import { userService } from 'tasks.v2.provider.service.user-service';
+import { fileService } from 'tasks.v2.provider.service.file-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { StageModel } from 'tasks.v2.model.stages';
 
@@ -67,13 +68,17 @@ export class TaskPullHandler extends BasePullHandler
 	};
 
 	#handleTaskUpdated = (data: PushData): void => {
-		const task = mapPushToModel(data);
+		data.AFTER.UF_CRM_TASK_DELETED = data.BEFORE.UF_CRM_TASK_DELETED;
+		data.AFTER.taskRequireResult = data.taskRequireResult;
+
+		const task = mapPushToModel(data.TASK_ID, data.AFTER);
+		const taskBefore = mapPushToModel(data.TASK_ID, data.BEFORE);
 
 		this.#upsertStage(data.AFTER.STAGE_INFO);
 
-		if (data.BEFORE.PARENT_ID)
+		if (taskBefore.parentId)
 		{
-			subTasksService.deleteStore(data.BEFORE.PARENT_ID, [task.id]);
+			subTasksService.deleteStore(taskBefore.parentId, [task.id]);
 		}
 
 		if (task.parentId)
@@ -81,17 +86,26 @@ export class TaskPullHandler extends BasePullHandler
 			subTasksService.addStore(task.parentId, [task.id]);
 		}
 
+		if (taskBefore.fileIds)
+		{
+			const removedFiles = taskBefore.fileIds.filter((fileId) => !task.fileIds.includes(fileId));
+
+			fileService.get(task.id).remove(removedFiles);
+		}
+
 		const { id, ...fields } = mapInstantFields(task);
 
-		void taskService.updateStoreTask(id, fields);
+		taskService.updateStoreTask(id, fields);
 	};
 
+	#pushedTasks: { [taskId: number]: TaskModel } = {};
+
 	#handleTaskUpdatedDelayed = async (data: PushData): Promise<void> => {
-		const task = mapPushToModel(data);
+		const task = mapPushToModel(data.TASK_ID, data.AFTER);
 
 		const { TaskFullCard } = await Runtime.loadExtension('tasks.v2.application.task-full-card');
 
-		if (data.USER_ID === this.#currentUserId && TaskFullCard.isCardOpened(task.id))
+		if (data.USER_ID === this.#currentUserId && TaskFullCard.isOpened(task.id))
 		{
 			return;
 		}
@@ -101,26 +115,35 @@ export class TaskPullHandler extends BasePullHandler
 			return;
 		}
 
+		this.#pushedTasks[task.id] = { ...this.#pushedTasks[task.id], ...task };
+
+		this.#handleTaskUpdatedDebounced(data);
+	};
+
+	#handleTaskUpdatedDebounced = Runtime.debounce(async (data: PushData) => {
+		const task = this.#pushedTasks[data.TASK_ID];
+		delete this.#pushedTasks[task.id];
+
 		if (this.#needToLoadTask(data))
 		{
-			await this.#loadTask(task);
+			await taskService.get(task.id);
 		}
 		else
 		{
 			await Promise.all([
 				this.#loadGroup(task),
 				this.#loadFlow(task),
-				this.#loadUsers(task),
-				this.#loadRights(task),
+				userService.list(this.#getUsersIds(task)),
+				taskService.getRights(task.id),
 			]);
 
 			const { id, ...fields } = task;
 
-			void taskService.updateStoreTask(id, fields);
+			taskService.updateStoreTask(id, fields);
 		}
 
 		EventEmitter.emit(EventName.TaskPullUpdated, { task: taskService.getStoreTask(task.id) });
-	};
+	}, 0);
 
 	#handleTaskViewed = (data): void => {};
 
@@ -145,11 +168,6 @@ export class TaskPullHandler extends BasePullHandler
 		}
 	}
 
-	#loadTask(task: TaskModel): void
-	{
-		void taskService.get(task.id);
-	}
-
 	#needToLoadTask(data: PushData): boolean
 	{
 		const notPushableFields = new Set([
@@ -166,7 +184,7 @@ export class TaskPullHandler extends BasePullHandler
 	{
 		if (this.#needToLoadGroup(task))
 		{
-			await groupService.getGroup(task.groupId);
+			await groupService.getGroupByTaskId(task.id);
 		}
 	}
 
@@ -190,20 +208,7 @@ export class TaskPullHandler extends BasePullHandler
 
 	#needToLoadFlow(task: TaskModel): boolean
 	{
-		return Boolean(task.flowId) && !this.$store.getters[`${Model.Flows}/getById`](task.flowId);
-	}
-
-	async #loadUsers(task: TaskModel): Promise<void>
-	{
-		if (this.#needToLoadUsers(task))
-		{
-			await userService.list(this.#getUsersIds(task));
-		}
-	}
-
-	#needToLoadUsers(task: TaskModel): boolean
-	{
-		return !userService.hasUsers(this.#getUsersIds(task));
+		return task.flowId && !this.$store.getters[`${Model.Flows}/getById`](task.flowId);
 	}
 
 	#getUsersIds(task: TaskModel): number[]
@@ -214,11 +219,6 @@ export class TaskPullHandler extends BasePullHandler
 			...(task.accomplicesIds ?? []),
 			...(task.auditorsIds ?? []),
 		].filter((id: ?number) => id);
-	}
-
-	async #loadRights(task: TaskModel): Promise<void>
-	{
-		await taskService.getRights(task.id);
 	}
 
 	get #currentUserId(): number

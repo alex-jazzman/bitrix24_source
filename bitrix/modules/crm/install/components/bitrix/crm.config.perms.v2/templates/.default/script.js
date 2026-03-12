@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,main_core,ui_dialogs_messagebox,ui_buttons,ui_accessrights_v2) {
+(function (exports,main_core,ui_accessrights_v2,ui_buttons,ui_dialogs_messagebox) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -63,19 +63,8 @@
 	      var selectedMember = this.AccessRights.getSelectedMember();
 	      this.AccessRights.destroy();
 	      loader.show();
-	      _classPrivateMethodGet(this, _runGetDataAjaxRequest, _runGetDataAjaxRequest2).call(this, controllerData).then(function (_ref) {
-	        var accessRightsData = _ref.accessRightsData,
-	          maxVisibleUserGroups = _ref.maxVisibleUserGroups,
-	          additionalSaveParams = _ref.additionalSaveParams,
-	          userSortConfig = _ref.userSortConfig,
-	          userSortConfigName = _ref.userSortConfigName;
-	        _this.AccessRightsOption = _objectSpread(_objectSpread({}, _this.AccessRightsOption), {}, {
-	          userGroups: accessRightsData.userGroups,
-	          accessRights: accessRightsData.accessRights,
-	          maxVisibleUserGroups: maxVisibleUserGroups,
-	          additionalSaveParams: additionalSaveParams,
-	          userSortConfig: userSortConfig,
-	          userSortConfigName: userSortConfigName,
+	      _classPrivateMethodGet(this, _runGetDataAjaxRequest, _runGetDataAjaxRequest2).call(this, controllerData).then(function (options) {
+	        _this.AccessRightsOption = _objectSpread(_objectSpread({}, options), {}, {
 	          selectedMember: selectedMember
 	        });
 	        _this.AccessRights = new ui_accessrights_v2.App(_this.AccessRightsOption);
@@ -132,7 +121,7 @@
 	  return new Promise(function (resolve, reject) {
 	    main_core.ajax.runComponentAction('bitrix:crm.config.perms.v2', 'getData', {
 	      mode: 'class',
-	      data: {
+	      json: {
 	        controllerData: controllerData
 	      }
 	    }).then(function (response) {
@@ -154,7 +143,7 @@
 	        button.setWaiting(true);
 	        _this2.AccessRights.sendActionRequest().then(function () {
 	          document.querySelector("[data-menu-id=\"".concat(controllerData.menuId, "\"]")).click();
-	        })["catch"]()["finally"](function () {
+	        })["catch"](function () {})["finally"](function () {
 	          box.close();
 	        });
 	      }
@@ -182,5 +171,5 @@
 	}
 	namespace.ConfigPermsComponent = ConfigPermsComponent;
 
-}((this.window = this.window || {}),BX,BX.UI.Dialogs,BX.UI,BX.UI.AccessRights.V2));
+}((this.window = this.window || {}),BX,BX.UI.AccessRights.V2,BX.UI,BX.UI.Dialogs));
 //# sourceMappingURL=script.js.map

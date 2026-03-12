@@ -8,10 +8,13 @@ use Bitrix\Im\V2\Analytics\Event\MessageEvent;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Chat\FavoriteChat;
 use Bitrix\Im\V2\Message;
+use Bitrix\Im\V2\Message\Reaction\ReactionService;
+use Bitrix\Im\V2\Message\Sticker\StickerItem;
 
 class MessageAnalytics extends ChatAnalytics
 {
 	protected const SEND_MESSAGE = 'send_message';
+	protected const SEND_STICKER = 'send_sticker';
 	protected const ADD_REACTION = 'add_reaction';
 	protected const SHARE_MESSAGE = 'share_message';
 	protected const DELETE_MESSAGE = 'delete_message';
@@ -44,17 +47,25 @@ class MessageAnalytics extends ChatAnalytics
 				?->send()
 			;
 
+			$this->addSendSticker($this->message->getSticker());
 			(new FileAnalytics($this->chat))->addAttachFilesEvent($this->message);
 		});
 	}
 
-	public function addAddReaction(string $reaction): void
+	public function addAddReaction(string $reaction, int $reactionAuthorId): void
 	{
-		$this->async(function () use ($reaction) {
+		$this->async(function () use ($reaction, $reactionAuthorId) {
+			$reactionCount =
+				(new ReactionService($this->message))
+					->withContextUser($reactionAuthorId)
+					->getReactionCount()
+			;
+
 			$this
 				->createMessageEvent(self::ADD_REACTION)
 				?->setType($reaction)
-				?->setMessageP4($this->message->getAuthorId())
+				?->setReactionP3($reactionCount)
+				?->setReactionP4($this->message->getAuthorId())
 				?->send()
 			;
 		});
@@ -105,6 +116,23 @@ class MessageAnalytics extends ChatAnalytics
 				->send()
 			;
 		});
+	}
+
+	protected function addSendSticker(?StickerItem $sticker): void
+	{
+		if ($sticker === null)
+		{
+			return;
+		}
+
+		$this
+			->createChatEvent(self::SEND_STICKER)
+			?->setType($sticker->packType->value)
+			?->setP2(null)
+			?->setP4(null)
+			?->setP5(null)
+			?->send()
+		;
 	}
 
 	protected function createMessageEvent(

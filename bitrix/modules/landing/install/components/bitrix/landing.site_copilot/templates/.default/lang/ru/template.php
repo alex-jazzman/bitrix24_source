@@ -1,5 +1,5 @@
 <?php
-$MESS['LANDING_SITE_PAGE_TITLE'] = 'Сайт с CoPilot';
+$MESS['LANDING_SITE_PAGE_TITLE_MSGVER_1'] = 'Сайт с #COPILOT_NAME#';
 $MESS['LANDING_SITE_COPILOT_CREATED_1'] = 'Создаю концепцию сайта';
 $MESS['LANDING_SITE_COPILOT_CREATED_2'] = 'Формирую стиль';
 $MESS['LANDING_SITE_COPILOT_CREATED_3'] = 'Настраиваю макет';

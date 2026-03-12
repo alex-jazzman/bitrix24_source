@@ -1,5 +1,4 @@
 <?php
-
 $MESS['SEO_ANALYTICS_SERVICE_HELPERS_YANDEX_SENDER_HTTP_ERROR_UNKNOWN'] = 'Неизвестная ошибка';
 $MESS['SEO_ANALYTICS_SERVICE_HELPERS_YANDEX_SENDER_HTTP_ERROR_201'] = 'Отчет успешно поставлен в очередь в режиме офлайн';
 $MESS['SEO_ANALYTICS_SERVICE_HELPERS_YANDEX_SENDER_HTTP_ERROR_202'] = 'Отчет формируется в режиме offline';

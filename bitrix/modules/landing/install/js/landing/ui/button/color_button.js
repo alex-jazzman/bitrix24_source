@@ -40,8 +40,6 @@
 
 	BX.Landing.UI.Button.ColorAction.instances = [];
 
-	BX.Landing.UI.Button.ColorAction.hideAll = function() {};
-
 	BX.Landing.UI.Button.ColorAction.prototype = {
 		constructor: BX.Landing.UI.Button.ColorAction,
 		__proto__: BX.Landing.UI.Button.EditorAction.prototype,
@@ -59,18 +57,20 @@
 			BX.Dom.addClass(this.layout, '--wait');
 			this.loader.show();
 
+			const editorPanelInstance = BX.Landing.UI.Panel.EditorPanel.getInstance();
+
 			let contentRoot = null;
-			const currentElement = BX.Landing.UI.Panel.EditorPanel.getInstance().currentElement;
+			const currentElement = editorPanelInstance.currentElement;
 			if (BX.Landing.PageObject.getRootWindow().document === currentElement.ownerDocument)
 			{
-				contentRoot = BX.Landing.UI.Panel.EditorPanel.getInstance().layout.ownerDocument.body;
+				contentRoot = editorPanelInstance.layout.ownerDocument.body;
 			}
 			else
 			{
 				contentRoot = BX.Landing.PageObject.getEditorWindow();
 			}
 			this.colorField.createPopup({
-				bindElement: BX.Landing.UI.Panel.EditorPanel.getInstance().layout,
+				bindElement: editorPanelInstance.layout,
 				contentRoot,
 				isNeedCalcPopupOffset: false,
 				analytics: this.getAnalyticsParams(),
@@ -83,6 +83,16 @@
 			});
 			this.colorField.colorPopup.subscribe('onHexColorPopupChange', (e) => {
 				this.onColorSelected(e.data);
+			});
+			editorPanelInstance.subscribe('onButtonClick', (e) => {
+				this.colorField.colorPopup.getPopup().close();
+			});
+			BX.addCustomEvent('BX.Landing.Editor:disable', () => {
+				this.colorField.colorPopup.getPopup().close();
+			});
+
+			this.colorField.colorPopup.subscribe('onPopupClick', (e) => {
+				this.restoreSavedSelection();
 			});
 
 			const selection = this.contextDocument.getSelection();
@@ -101,12 +111,7 @@
 		 */
 		onColorSelected: function(color)
 		{
-			if (this.savedRange)
-			{
-				const selection = this.contextDocument.getSelection();
-				selection.removeAllRanges();
-				selection.addRange(this.savedRange);
-			}
+			this.restoreSavedSelection();
 
 			this.contextDocument.execCommand(this.id, false, color);
 
@@ -131,6 +136,16 @@
 		onPopupClose: function()
 		{
 			BX.Landing.UI.Panel.EditorPanel.getInstance().disableSimpleScrollMode();
+		},
+
+		restoreSavedSelection: function()
+		{
+			if (this.savedRange)
+			{
+				const selection = this.contextDocument.getSelection();
+				selection.removeAllRanges();
+				selection.addRange(this.savedRange);
+			}
 		},
 
 		/**

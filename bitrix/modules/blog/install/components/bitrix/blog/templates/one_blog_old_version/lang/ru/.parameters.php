@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['USER_PROPERTY_NAME'] = "Название закладки с доп. свойствами";
 $MESS ['ONE_BLOG_BLOG_URL'] = "Символическое имя блога";
 $MESS ['BC_NAME_TEMPLATE'] = "Отображение имени";
@@ -8,4 +8,3 @@ $MESS ['BC_PATH_TO_CONPANY_DEPARTMENT'] = "Шаблон пути к страни
 $MESS ['BC_PATH_TO_VIDEO_CALL'] = "Страница видеозвонка";
 $MESS ['BC_PATH_TO_SONET_USER_PROFILE'] = "Шаблон пути к странице пользователя соцсети";
 $MESS ['BC_PATH_TO_MESSAGES_CHAT'] = "Шаблон пути к чату с пользователем";
-?>

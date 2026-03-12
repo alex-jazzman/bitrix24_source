@@ -1,0 +1,49 @@
+.bx-disk-promo-boost-button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+	--height: 33px;
+	height: var(--height);
+	border-radius: calc(var(--height) / 2);
+	padding: 2px 12px 2px 36px;
+	background: radial-gradient(109.2% 109.2% at 9.27% 9.23%, #f9be74 0%, #fb7595 50%, #b55cce 100%);
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,.02);
+	border: none;
+	cursor: pointer;
+	gap: 4px;
+	transition: .1s;
+}
+
+.bx-disk-promo-boost-button:hover,
+.bx-disk-promo-boost-button:active {
+	transition: 0s;
+}
+
+.bx-disk-promo-boost-button:hover {
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+
+.bx-disk-promo-boost-button:active {
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,0);
+}
+
+.bx-disk-promo-boost-button:focus-visible {
+	outline: none;
+}
+
+.bx-disk-promo-boost-button::before {
+	content: '';
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	left: 6px;
+	background: url(img/boost-icon.svg) no-repeat 50% 50%;
+}
+
+.bx-disk-promo-boost-button > span {
+	color: #fff;
+	font-family: var(--ui-font-family-helvetica);
+	font-size: 12px;
+	font-weight: 700;
+}

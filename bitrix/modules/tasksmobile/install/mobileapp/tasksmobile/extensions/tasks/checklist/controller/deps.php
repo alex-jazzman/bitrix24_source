@@ -4,11 +4,10 @@ return [
 	'extensions' => [
 		'loc',
 		'toast',
-		'utils/object',
 		'utils/function',
+		'utils/object',
 		'utils/validation',
-
-		'tasks:checklist/widget',
 		'tasks:checklist/flat-tree',
+		'tasks:checklist/widget',
 	],
 ];

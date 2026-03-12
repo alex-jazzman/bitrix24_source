@@ -6,6 +6,7 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { calendar } from 'tasks.v2.lib.calendar';
+import { userFieldsManager } from '../user-fields-manager';
 
 import './fields.css';
 
@@ -60,7 +61,7 @@ export const UserFieldDate = {
 				return dateString;
 			}
 
-			return calendar.formatDateTime(date.getTime());
+			return calendar.formatDateTime(date.getTime(), { removeOffset: true });
 		},
 		tryParseDate(dateString: string): Date | null
 		{
@@ -73,9 +74,7 @@ export const UserFieldDate = {
 					return null;
 				}
 
-				date.setTime(date.getTime() + date.getTimezoneOffset() * 60000);
-
-				return date;
+				return userFieldsManager.correctDatetimeStringWithT(dateString, date);
 			}
 
 			const parsedDate = DateTimeFormat.parse(dateString);
@@ -94,7 +93,7 @@ export const UserFieldDate = {
 	},
 	template: `
 		<div
-			class="tasks-user-field --date"
+			class="tasks-user-field print-no-border --date"
 			:class="{ '--last': isLast }"
 		>
 			<TextXs

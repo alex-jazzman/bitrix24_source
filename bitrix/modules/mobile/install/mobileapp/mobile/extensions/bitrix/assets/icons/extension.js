@@ -7,6 +7,7 @@ jn.define('assets/icons', (require, exports, module) => {
 	const { DiskIcon, resolveFileIcon, resolveFolderIcon, FileType } = require('assets/icons/src/disk');
 	const { ReactionIcon } = require('assets/icons/src/reaction');
 	const { GratitudeIcon } = require('assets/icons/src/gratitude');
+	const { Social } = require('assets/icons/src/social');
 
 	module.exports = {
 		Icon,
@@ -17,5 +18,6 @@ jn.define('assets/icons', (require, exports, module) => {
 		FileType,
 		ReactionIcon,
 		GratitudeIcon,
+		Social,
 	};
 });

@@ -1,6 +1,0 @@
-<?
-$MESS["CRM_ACTIVITY_COMPLEX_NAME"] = "Справи";
-$MESS["CRM_ACTIVITY_COMPLEX_DESCRIPTION"] = "Справи";
-$MESS["CRM_NAME"] = "CRM";
-$MESS["CRM_ACTIVITY_NAME"] = "Справи";
-?>

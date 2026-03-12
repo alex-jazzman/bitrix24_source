@@ -5,6 +5,10 @@ if(!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var array $arParams */
 /** @var array $arResult */
 
+use Bitrix\Main\UI;
+
+UI\Extension::load(["intranet.old-interface.intranet-common"]);
+
 $APPLICATION->AddHeadScript('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js');
 
 $namePrefix = CUtil::jsEscape($arResult['NAME']);

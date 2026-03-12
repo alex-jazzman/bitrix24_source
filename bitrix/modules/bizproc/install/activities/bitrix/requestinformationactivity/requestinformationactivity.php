@@ -194,24 +194,27 @@ class CBPRequestInformationActivity extends CBPCompositeActivity implements
 		$taskParameters["DOCUMENT_TYPE"] = $this->getDocumentType();
 		$taskParameters["FIELD_TYPES"] = $documentService->getDocumentFieldTypes($taskParameters["DOCUMENT_TYPE"]);
 		$taskParameters["REQUEST"] = [];
-		$taskParameters["TaskButtonMessage"] =
-			$this->isPropertyExists("TaskButtonMessage")
-				? $this->TaskButtonMessage
-				: Loc::getMessage("BPRIA_ACT_BUTTON1")
+
+		$taskParameters['TaskButtonMessage'] =
+			$this->isPropertyExists('TaskButtonMessage')
+				? CBPHelper::stringify($this->TaskButtonMessage)
+				: Loc::getMessage('BPRIA_ACT_BUTTON1')
 		;
-		if ($taskParameters["TaskButtonMessage"] == '')
+		if (CBPHelper::isEmptyValue($taskParameters['TaskButtonMessage']))
 		{
-			$taskParameters["TaskButtonMessage"] = Loc::getMessage("BPRIA_ACT_BUTTON1");
+			$taskParameters['TaskButtonMessage'] = Loc::getMessage('BPRIA_ACT_BUTTON1');
 		}
+
 		$taskParameters['CommentLabelMessage'] =
 			$this->isPropertyExists('CommentLabelMessage')
-				? $this->CommentLabelMessage
+				? CBPHelper::stringify($this->CommentLabelMessage)
 				: Loc::getMessage('BPRIA_ACT_COMMENT_1')
 		;
-		if ($taskParameters['CommentLabelMessage'] == '')
+		if (CBPHelper::isEmptyValue($taskParameters['CommentLabelMessage']))
 		{
 			$taskParameters['CommentLabelMessage'] = Loc::getMessage('BPRIA_ACT_COMMENT_1');
 		}
+
 		$taskParameters["ShowComment"] = $this->isPropertyExists("ShowComment") ? $this->ShowComment : "Y";
 		if ($taskParameters["ShowComment"] != "Y" && $taskParameters["ShowComment"] != "N")
 		{

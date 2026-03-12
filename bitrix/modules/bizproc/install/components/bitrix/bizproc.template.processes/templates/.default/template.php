@@ -87,6 +87,7 @@ foreach ($templates as $row)
 	$gridRows[] = [
 		'id' => $row['ID'],
 		'columns' => [
+			'ID' => $row['ID'],
 			'NAME' => createNameCell($row['NAME']),
 			'ACTIONS' => $row['ACTIONS'],
 			'EDITOR' => createUserCell($row['EDITOR'] ?? []),
@@ -97,6 +98,10 @@ foreach ($templates as $row)
 			[
 				'TEXT' => Loc::getMessage('BIZPROC_TEMPLATE_PROCESSES_DELETE_BUTTON_TEXT'),
 				'ONCLICK' => "BX.Bizproc.Component.TemplateProcesses.Instance.deleteTemplateAction({$row['ID']})",
+			],
+			[
+				'TEXT' => Loc::getMessage('BIZPROC_TEMPLATE_PROCESSES_EDIT_BUTTON_TEXT'),
+				'ONCLICK' => "BX.Bizproc.Component.TemplateProcesses.Instance.editTemplateAction({$row['ID']})",
 			],
 		],
 	];
@@ -114,7 +119,7 @@ $APPLICATION->IncludeComponent(
 		'GRID_ID' => $arResult['gridId'],
 		'COLUMNS' => $arResult['gridColumns'],
 		'ROWS' => $gridRows,
-		'SHOW_ROW_CHECKBOXES' => false,
+		'SHOW_ROW_CHECKBOXES' => true,
 		'NAV_OBJECT' => $arResult['pageNavigation'],
 		'AJAX_MODE' => 'Y',
 		'AJAX_ID' => CAjax::getComponentID('bitrix:bizproc.template.processes', '.default', ''),
@@ -128,7 +133,7 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_NEXT_PAGE' => $pageNavigation->getCurrentPage() < $pageNavigation->getPageCount(),
 		'CURRENT_PAGE' => $pageNavigation->getCurrentPage(),
 		'NAV_PARAM_NAME' => $arResult['navigationId'],
-		'SHOW_SELECTED_COUNTER' => false,
+		'SHOW_SELECTED_COUNTER' => true,
 		'SHOW_TOTAL_COUNTER' => true,
 		'TOTAL_ROWS_COUNT' => $arResult['pageNavigation']->getRecordCount(),
 		'SHOW_PAGESIZE' => true,

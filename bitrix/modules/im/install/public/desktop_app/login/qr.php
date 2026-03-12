@@ -20,19 +20,6 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/desktop_app/headers.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/desktop_app/login/helper.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
-$controller = new \Bitrix\Main\Controller\QrCodeAuth();
-if (!$controller->isAllowed())
-{
-	sendResponse(
-		[
-			"success" => false,
-			"code" => "qrcodeauth_error",
-			"reason" => "QR code authentication is disabled"
-		],
-		"404 Not found"
-	);
-}
-
 if (!$USER->IsAuthorized())
 {
 	sendResponse(

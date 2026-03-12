@@ -12,6 +12,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	// @vue/component
 	const MessengerPopup = {
 	  name: 'MessengerPopup',
+	  provide() {
+	    return {
+	      disableAutoHide: this.disableAutoHide,
+	      enableAutoHide: this.enableAutoHide
+	    };
+	  },
 	  props: {
 	    id: {
 	      type: String,

@@ -295,6 +295,10 @@ BX.Helper =
 		{
 			this.showCounter(num);
 		}
+		else
+		{
+			this.counter?.destroy();
+		}
 
 		this.notifyNum = num;
 	},

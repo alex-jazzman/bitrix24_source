@@ -1,4 +1,4 @@
-import { Dom } from 'main.core';
+import { Dom, Type } from 'main.core';
 import { Popup } from 'main.popup';
 import { EventEmitter } from 'main.core.events'
 import '../css/participants-permission-popup.css';
@@ -52,7 +52,9 @@ export class ParticipantsPermissionPopup
 				BX.type.isFunction(config.onOpen)
 					? config.onOpen
 					: BX.DoNothing,
-		}
+		};
+
+		this.targetContainer = Type.isDomNode(config.targetContainer) ? config.targetContainer : document.body;
 
 		this.eventEmitter = new EventEmitter(this, 'ParticipantsPermissionPopup');
 
@@ -67,7 +69,7 @@ export class ParticipantsPermissionPopup
 				&& this.currentBitrixCall.associatedEntity.advanced['chatType'] === 'videoconf');*/
 
 		this.isShowRoomSettings = BX.prop.getObject(config, 'showRoomSettings', false);
-		
+
 		if (
 			!Util.getRoomPermissions().ScreenShareEnabled
 			|| !Util.getRoomPermissions().AudioEnabled
@@ -151,7 +153,7 @@ export class ParticipantsPermissionPopup
 		{
 			this.elements.roomPermissions.classList.remove('permissions-uncollapsed');
 		}
-		
+
 		this.callbacks.onPermissionCollapseStateChanged(this.isShowRoomSettings);
 	}
 
@@ -256,7 +258,7 @@ export class ParticipantsPermissionPopup
 	{
 		const participantsButton = document.querySelector('.bx-messenger-videocall-top-button-text.callcontrol');
 		const self = this;
-		
+
 		if (!participantsButton)
 		{
 			return;
@@ -272,7 +274,7 @@ export class ParticipantsPermissionPopup
 		const settingsElements = this.renderSettingsElements();
 		this.elements.roomSettings.innerHTML = '';
 		this.elements.roomSettings.append(...settingsElements);
-		
+
 		if (this.isShowRoomSettings)
 		{
 			this.elements.roomPermissions?.classList.add('permissions-uncollapsed');
@@ -281,37 +283,37 @@ export class ParticipantsPermissionPopup
 		{
 			this.elements.roomPermissions?.classList.remove('permissions-uncollapsed');
 		}
-		
-		
 
 		this.popup = new Popup({
-			className : 'bx-call-participants-permission-popup',
+			className: 'bx-call-participants-permission-popup',
 			bindElement: participantsButton,
-			targetContainer: document.body,
+			targetContainer: this.targetContainer,
 			content: this.elements.root,
 			offsetTop: 10,
 			bindOptions: {
-				position: 'bottom'
+				position: 'bottom',
 			},
 			autoHide: true,
 			closeByEsc: true,
-			angle: {position: 'top'},
+			angle: {
+				position: 'top',
+			},
 			contentNoPaddings: true,
 			animation: 'fading',
 			events: {
-				onPopupClose: function ()
+				onPopupClose()
 				{
 					self.callbacks.onClose();
 					this.destroy();
 				},
-				onPopupShow: function ()
+				onPopupShow()
 				{
 					self.callbacks.onOpen();
 				},
-				onPopupDestroy: function ()
+				onPopupDestroy()
 				{
 					self.popup = null;
-				}
+				},
 			},
 		});
 	}

@@ -1,3 +1,0 @@
-<?php
-$MESS["REACTION_LIST_WIDGET_ALL_REACTIONS"] = "Барлығы";
-$MESS["REACTION_LIST_WIDGET_NO_REACTIONS"] = "Реакциялар жоқ";

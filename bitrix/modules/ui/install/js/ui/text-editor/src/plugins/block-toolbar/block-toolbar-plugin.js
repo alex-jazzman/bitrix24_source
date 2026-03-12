@@ -1,4 +1,5 @@
 import { Dom, Event, Tag, Type, Text } from 'main.core';
+import { Outline } from 'ui.icon-set.api.core';
 import { HIDE_DIALOG_COMMAND } from '../../commands';
 import BasePlugin from '../base-plugin';
 import { type TextEditor } from '../../text-editor';
@@ -262,7 +263,7 @@ export class BlockToolbarPlugin extends BasePlugin
 						ondragend="${this.#handleDragEnd.bind(this)}"
 					>
 						<div 
-							class="ui-icon-set --more-points" 
+							class="ui-icon-set --${Outline.DRAG_S}" 
 							style="--ui-icon-set__icon-size: 24px; margin-left: -4px"
 						></div>
 					</div>

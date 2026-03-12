@@ -26,5 +26,8 @@ return [
 		'./src/vote/model',
 		'./src/vote/default-element',
 		'./src/vote/validator',
+		'./src/playback/model',
+		'./src/playback/default-element',
+		'./src/playback/validator',
 	],
 ];

@@ -12,6 +12,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 	const { StoreSkuSelector } = require('catalog/store/sku-selector');
 	const { DocumentType } = require('catalog/store/document-type');
 	const { Haptics } = require('haptics');
+	const { Money, MoneyView } = require('layout/ui/money');
 
 	/**
 	 * @class StoreProductCard

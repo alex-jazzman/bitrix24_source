@@ -16,4 +16,3 @@ $MESS["SEO_ROBOT_CRAWL_DELAY"] = "Интервал";
 $MESS["SEO_ROBOT_ACTION_SITEMAP"] = "Карта сайта (Sitemap)";
 $MESS["SEO_ROBOT_ACTION_SITEMAP_URL"] = "Ссылка на карту сайта";
 $MESS["SEO_ROBOT_ACTION_SITEMAP_TITLE"] = "Указать ссылку на файл sitemap.xml";
-?>

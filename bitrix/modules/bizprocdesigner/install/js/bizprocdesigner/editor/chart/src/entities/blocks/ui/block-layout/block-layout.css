@@ -12,56 +12,82 @@
 	top: 0;
 	bottom: 0;
 	left: -18px;
-	z-index: 0;
+	z-index: 1;
 	width: 17px;
 	height: 29px;
 	margin: auto;
 }
 
 .editor-chart-block-layout .editor-chart-block-layout__top-menu {
-	display: none;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
 	position: absolute;
-	top: -23px;
+	top: -27px;
 	right: 0;
 	left: auto;
-	align-items: center;
-	gap: 8px;
-	height: 25px;
-	width: max-content;
+	height: 27px;
 	white-space: nowrap;
-	z-index: 1;
+	z-index: -2;
 }
 
 .editor-chart-block-layout__top-menu-title {
-	display: flex;
-	justify-content: flex-start;
-	align-items: center;
-	flex-shrink: 2;
-	width: calc(100% - 100px);
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .editor-chart-block-layout .editor-chart-block-layout__top-menu-content {
-	display: flex;
+	display: none;
 	justify-content: flex-end;
 	align-items: flex-start;
-	gap: 3px;
-	flex-grow: 1;
-	height: 16px;
+	height: 18px;
 	padding: 0 3px;
 	background: #ECF0F2; /* token will be povided later */
 	border-radius: 4px;
 }
 
-.editor-chart-block-layout:hover .editor-chart-block-layout__top-menu {
+.editor-chart-block-layout.--opened-menu .editor-chart-block-layout__top-menu-content {
 	display: flex;
 }
 
-.editor-chart-block-layout:hover .editor-chart-block-layout__top-menu.--hide {
+.editor-chart-block-layout.--hoverable:hover .editor-chart-block-layout__top-menu-content {
+	display: flex;
+}
+
+.editor-chart-block-container.--highlighted .editor-chart-block-layout__top-menu-content {
+	display: flex;
+}
+
+.editor-chart-block-layout.--hoverable:hover .editor-chart-block-layout__top-menu.--hide,
+.editor-chart-block-layout__top-menu.--hide .editor-chart-block-layout__top-menu-content,
+.editor-chart-block-layout__top-menu.--hide .editor-chart-block-layout__top-menu-title {
 	display: none;
+}
+
+.editor-chart-block-layout.--hoverable .editor-chart-block-layout__top-menu.--show {
+	display: flex;
 }
 
 .editor-chart-block-layout .editor-chart-block-layout__top-menu.--show {
 	display: flex;
+}
+
+.editor-chart-block-layout.--hoverable:hover:after {
+	content: '';
+    display: block;
+    position: absolute;
+    z-index: 0;
+    top: -6px;
+    bottom: -6px;
+    left: -6px;
+    right: -6px;
+    border-radius: 12px;
+    background-color: transparent;
+	box-sizing: border-box;
 }
 
 .editor-chart-block-layout .editor-chart-block-layout__content {
@@ -90,7 +116,7 @@
 	position: absolute;
 	left: 0;
 	right: 0;
-	bottom: -20px;
+	bottom: -24px;
 	height: 16px;
 }
 

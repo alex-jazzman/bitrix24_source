@@ -34,9 +34,6 @@ $arActivityDescription = (
 		'SORT' => 2200,
 		'IS_SUPPORTING_ROBOT' => true,
 	])
-	->setNodeActionSettings([
-		'INCLUDE' => ['taskscomplexactivity'],
-	])
 ;
 
 if (defined(FieldType::class . '::DOCUMENT'))

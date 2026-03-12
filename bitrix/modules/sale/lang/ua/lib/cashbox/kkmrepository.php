@@ -1,4 +1,0 @@
-<?php
-$MESS["SALE_CASHBOX_KKM_ATOL"] = "АТОЛ";
-$MESS["SALE_CASHBOX_KKM_EVOTOR"] = "Еватор";
-$MESS["SALE_CASHBOX_KKM_SHTRIHM"] = "Штрих-М";

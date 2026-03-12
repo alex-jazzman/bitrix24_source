@@ -74,7 +74,7 @@ export const RoundVideoPlayer = {
 		{
 			return this.playbackState === PlaybackState.loading;
 		},
-		isMuted(): boolean
+		isAutoplay(): boolean
 		{
 			return this.playbackMode === PlaybackMode.autoplay;
 		},
@@ -253,6 +253,11 @@ export const RoundVideoPlayer = {
 
 			this.observer = new IntersectionObserver((entries) => {
 				entries.forEach((entry) => {
+					if (!this.isAutoplay)
+					{
+						return;
+					}
+
 					if (entry.isIntersecting)
 					{
 						this.playVideo();
@@ -296,7 +301,7 @@ export const RoundVideoPlayer = {
 	template: `
 		<div class="bx-im-round-video-player__container">
 			<FadeAnimation :duration="200">
-				<div v-if="isMuted" class="bx-im-round-video-player__mute">
+				<div v-if="isAutoplay" class="bx-im-round-video-player__mute">
 					<BIcon
 						:name="OutlineIcons.SOUND_OFF"
 						:color="Color.white"

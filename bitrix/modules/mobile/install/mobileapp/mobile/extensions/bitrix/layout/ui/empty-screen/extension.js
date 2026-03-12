@@ -4,6 +4,7 @@
 jn.define('layout/ui/empty-screen', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Color } = require('tokens');
+	const { Feature } = require('feature');
 	const { stringify } = require('utils/string');
 	const { mergeImmutable } = require('utils/object');
 	const { PureComponent } = require('layout/pure-component');
@@ -154,6 +155,29 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 
 		render()
 		{
+			if (Feature.isRefreshViewFixEnabled())
+			{
+				return View(
+					{
+						style: this.rootContainerStyle,
+						safeArea: {
+							bottom: true,
+						},
+					},
+					this.renderRefreshView(
+						View(
+							{
+								style: {
+									flex: 1,
+									minHeight: 290,
+								},
+							},
+						),
+					),
+					this.renderContent(),
+				);
+			}
+
 			return View(
 				{
 					style: this.rootContainerStyle,
@@ -161,34 +185,36 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 						bottom: true,
 					},
 				},
-				View(
-					{
-						clickable: false,
-						style: this.containerStyle,
+				this.renderRefreshView(this.renderContent()),
+			);
+		}
+
+		renderRefreshView(content)
+		{
+			return RefreshView(
+				{
+					style: {
+						flexDirection: 'column',
+						flexGrow: 1,
 					},
-					this.renderIcon(),
-					this.renderTitle(),
-					this.renderDescription(),
-				),
-				RefreshView(
-					{
-						style: {
-							flexDirection: 'column',
-							flexGrow: 1,
-						},
-						refreshing: false,
-						enabled: this.isRefreshable,
-						onRefresh: () => this.props.onRefresh(),
-					},
-					View(
-						{
-							style: {
-								flex: 1,
-								minHeight: 290,
-							},
-						},
-					),
-				),
+					refreshing: false,
+					enabled: this.isRefreshable,
+					onRefresh: () => this.props.onRefresh(),
+				},
+				content,
+			);
+		}
+
+		renderContent()
+		{
+			return View(
+				{
+					clickable: false,
+					style: this.containerStyle,
+				},
+				this.renderIcon(),
+				this.renderTitle(),
+				this.renderDescription(),
 			);
 		}
 

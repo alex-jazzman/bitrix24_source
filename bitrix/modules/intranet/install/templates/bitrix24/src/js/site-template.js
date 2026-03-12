@@ -2,6 +2,7 @@ import { Type, Reflection, Runtime, Dom, Browser } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { ChatMenu } from './chat-menu';
 import { Composite } from './composite';
+import { LeftMenu } from './left-menu';
 import { RightBar } from './right-bar';
 import { Header } from './header/header';
 import { Footer } from './footer';
@@ -10,13 +11,14 @@ import { CollaborationMenu } from './collaboration-menu';
 
 export class SiteTemplate
 {
-	#rightBar: RightBar = null;
-	#header: Header = null;
-	#footer: Footer = null;
-	#composite: Composite = null;
-	#chatMenu: ChatMenu = null;
-	#goTopButton: GoTopButton = null;
-	#collaborationMenu: CollaborationMenu = null;
+	#leftMenu: LeftMenu | null = null;
+	#rightBar: RightBar | null = null;
+	#header: Header | null = null;
+	#footer: Footer | null = null;
+	#composite: Composite | null = null;
+	#chatMenu: ChatMenu | null = null;
+	#goTopButton: GoTopButton | null = null;
+	#collaborationMenu: CollaborationMenu | null = null;
 
 	constructor()
 	{
@@ -27,6 +29,7 @@ export class SiteTemplate
 		this.#patchJSClock();
 
 		this.#goTopButton = new GoTopButton();
+		this.#leftMenu = new LeftMenu();
 		this.#rightBar = new RightBar({
 			goTopButton: this.#goTopButton,
 		});
@@ -37,6 +40,11 @@ export class SiteTemplate
 		this.#collaborationMenu = new CollaborationMenu();
 
 		this.#applyUserAgentRules();
+	}
+
+	getLeftMenu(): LeftMenu
+	{
+		return this.#leftMenu;
 	}
 
 	getRightBar(): RightBar
@@ -67,6 +75,105 @@ export class SiteTemplate
 	getCollaborationMenu(): CollaborationMenu
 	{
 		return this.#collaborationMenu;
+	}
+
+	enterFullscreen(): void
+	{
+		if (this.isFullscreen())
+		{
+			return;
+		}
+
+		if (!this.#supportViewTransition())
+		{
+			this.#enterFullscreen();
+			this.#dispatchResizeEvent();
+
+			return;
+		}
+
+		const transition = document.startViewTransition(() => {
+			this.#enterFullscreen();
+		});
+
+		transition.finished.then(() => {
+			this.#dispatchResizeEvent();
+		}).catch(() => {
+			// fail silently
+		});
+	}
+
+	exitFullscreen(): void
+	{
+		if (!this.isFullscreen())
+		{
+			return;
+		}
+
+		if (!this.#supportViewTransition())
+		{
+			this.#exitFullscreen();
+			this.#dispatchResizeEvent();
+
+			return;
+		}
+
+		const transition = document.startViewTransition(() => {
+			this.#exitFullscreen();
+		});
+
+		transition.finished.then(() => {
+			this.#dispatchResizeEvent();
+		}).catch(() => {
+			// fail silently
+		});
+	}
+
+	toggleFullscreen(): void
+	{
+		if (this.isFullscreen())
+		{
+			this.exitFullscreen();
+		}
+		else
+		{
+			this.enterFullscreen();
+		}
+	}
+
+	isFullscreen(): boolean
+	{
+		return Dom.hasClass(document.body, 'air-fullscreen-mode');
+	}
+
+	#supportViewTransition(): boolean
+	{
+		return Type.isFunction(document.startViewTransition) && !Browser.isSafari();
+	}
+
+	#enterFullscreen(): void
+	{
+		Dom.addClass(document.body, 'air-fullscreen-mode');
+
+		this.getLeftMenu().hide();
+		this.getHeader().hide();
+		this.getFooter().hide();
+		this.getRightBar().hide();
+	}
+
+	#exitFullscreen(): void
+	{
+		Dom.removeClass(document.body, 'air-fullscreen-mode');
+
+		this.getLeftMenu().show();
+		this.getHeader().show();
+		this.getFooter().show();
+		this.getRightBar().show();
+	}
+
+	#dispatchResizeEvent(): void
+	{
+		window.dispatchEvent(new Event('resize'));
 	}
 
 	#patchPopupMenu(): void

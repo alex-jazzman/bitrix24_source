@@ -40,7 +40,7 @@
 .tasks-onboarding-new-card-popup-content {
 	display: flex;
 	position: relative;
-	height: 525px;
+	min-height: 525px;
 	width: 925px;
 	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 	border-radius: 24px;

@@ -18,6 +18,7 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 	const { CommentWriter } = require('im/messenger/db/model-writer/src/vuex/comment');
 	const { VoteWriter } = require('im/messenger/db/model-writer/vuex/vote');
 	const { TranscriptWriter } = require('im/messenger/db/model-writer/vuex/transcript');
+	const { StickerWriter } = require('im/messenger/db/model-writer/vuex/sticker');
 
 	class VuexModelWriter
 	{
@@ -69,6 +70,7 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 			this.commentWriter = new CommentWriter(writerOptions);
 			this.voteWriter = new VoteWriter(writerOptions);
 			this.transcriptWriter = new TranscriptWriter(writerOptions);
+			this.stickerWriter = new StickerWriter(writerOptions);
 		}
 	}
 

@@ -7,6 +7,8 @@ import type {UserModel} from './user-registry'
 import {MediaStreamsKinds} from '../call_api';
 import Util from '../util';
 import { Utils } from 'im.v2.lib.utils';
+import { LOCAL_STREAM_QUALITY_HEIGHT } from '../stream_quality';
+import { Hardware } from '../call_hardware';
 
 type CallUserElements = {
 	root?: HTMLElement,
@@ -943,36 +945,25 @@ export class CallUser
 
 		if (failedTracksResult)
 		{
-			statsString += `Failed subscribe to:\n`;
+			statsString += 'Failed subscribe to:\n';
 			statsString += failedTracksResult;
 		}
 
-
 		if (cameraStats || !screenStats)
 		{
-			statsString += `Video stats:\n`;
+			statsString += 'Video stats:\n';
 			statsString += this._formatVideoStats(cameraStats);
 		}
 
 		if (screenStats)
 		{
-			if (screenStats)
-			{
-				statsString += `\n\n`;
-			}
-
-			statsString += `Screen share stats:\n`;
+			statsString += '\n\nScreen share stats:\n';
 			statsString += this._formatVideoStats(screenStats);
 		}
 
 		if (audioStats)
 		{
-			if (cameraStats || screenStats)
-			{
-				statsString += `\n\n`;
-			}
-
-			statsString += `Audio stats:\n`;
+			statsString += '\n\nAudio stats:\n';
 			statsString += `Bitrate: ${audioStats?.bitrate || 0}\n`;
 			statsString += `PacketsLost: ${audioStats?.packetsLostExtended || 0}\n`;
 			statsString += `Codec: ${audioStats?.codecName || '-'}`;
@@ -1939,6 +1930,11 @@ export class CallUser
 
 	hasVideo()
 	{
+		if (Hardware.maxLocalStreamQualityHeight === LOCAL_STREAM_QUALITY_HEIGHT.NO_VIDEO)
+		{
+			return false;
+		}
+
 		return this.userModel.state == UserState.Connected && (!!this._videoTrack || !!this._videoRenderer);
 	}
 

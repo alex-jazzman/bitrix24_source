@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\HumanResources\Public\Service\UserSettingsService;
 use Bitrix\HumanResources\Repository\NodeSettingsRepository;
 use Bitrix\HumanResources\Type\StructureAction;
 
@@ -32,6 +33,9 @@ return [
 			],
 			'humanresources.service.internal.accessService' => [
 				'className' => \Bitrix\HumanResources\Internals\Service\Structure\AccessService::class,
+			],
+			'humanresources.service.internal.userSettingsService' => [
+				'className' => \Bitrix\HumanResources\Internals\Service\Structure\UserSettingsService::class,
 			],
 			'humanresources.repository.node' => [
 				'className' => \Bitrix\HumanResources\Repository\NodeRepository::class,
@@ -125,6 +129,9 @@ return [
 			],
 			'humanresources.service.public.nodeSettings' => [
 				'className' => \Bitrix\HumanResources\Public\Service\NodeSettingsService::class,
+			],
+			'humanresources.service.public.userSettings' => [
+				'className' => \Bitrix\HumanResources\Public\Service\UserSettingsService::class,
 			],
 			'humanresources.util.cache' => [
 				'className' => \Bitrix\HumanResources\Util\CacheManager::class
@@ -260,7 +267,7 @@ return [
 				'className' => \Bitrix\HumanResources\Public\Service\Department\UserService::class,
 			],
 			'humanresources.repository.internal.nodeRepository' => [
-				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\Node\NodeRepository::class,
+				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\NodeRepository::class,
 			],
 			'humanresources.internal.repository.structure.nodeAccessCode' => [
 				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\NodeAccessCodeRepository::class,
@@ -269,10 +276,19 @@ return [
 				'className' => \Bitrix\HumanResources\Internals\Service\Structure\NodeAccessCodeService::class,
 			],
 			'humanresources.internal.repository.structure.node.nodeMemberRepository' => [
-				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\Node\NodeMemberRepository::class,
+				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\NodeMemberRepository::class,
+			],
+			'humanresources.repository.internal.userSettingsRepository' => [
+				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\UserSettingsRepository::class,
 			],
 			'humanresources.public.service.node.userService' => [
 				'className' => \Bitrix\HumanResources\Public\Service\Node\UserService::class,
+			],
+			'humanresources.public.service.nodeMemberService' => [
+				'className' => \Bitrix\HumanResources\Public\Service\NodeMemberService::class,
+			],
+			'humanresources.private.internal.service.structure.roleService' => [
+				'className' => \Bitrix\HumanResources\Internals\Service\Structure\RoleService::class,
 			],
 		],
 	],

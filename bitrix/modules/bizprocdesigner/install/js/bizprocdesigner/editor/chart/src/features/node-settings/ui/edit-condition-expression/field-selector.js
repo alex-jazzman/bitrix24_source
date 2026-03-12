@@ -52,7 +52,17 @@ export class FieldSelector
 
 	#getValue(item: Item): ConditionExpressionField
 	{
-		return item.getCustomData().get(CustomDataFieldKey);
+		const field = { ...item.getCustomData().get(CustomDataFieldKey) };
+
+		if (item.getEntityId() === 'bizproc-document')
+		{
+			return {
+				...field,
+				fieldId: item.getId(),
+			};
+		}
+
+		return field;
 	}
 
 	#getEntities(): EntityOptions[]
@@ -67,6 +77,11 @@ export class FieldSelector
 	#getTabs(): TabOptions[]
 	{
 		return [
+			{
+				id: 'documents',
+				title: Loc.getMessage('BIZPROCDESIGNER_SELECTOR_TAB_DOCUMENTS'),
+				icon: 'elements',
+			},
 			{
 				id: 'returns',
 				title: Loc.getMessage('BIZPROCDESIGNER_SELECTOR_TAB_RETURNS'),
@@ -173,11 +188,32 @@ export class FieldSelector
 	{
 		const fullTitle = block.activity.Properties.Title;
 
-		const { properties } = block.activity.ReturnProperties.reduce(
+		const { documents, properties } = block.activity.ReturnProperties.reduce(
 			(res, property) => {
+				const activityName = block.activity?.Name || block.id;
 				const id = `${block.id}:${property.Id}`;
 				if (property.Type === 'document')
 				{
+					res.documents.push({
+						id,
+						entityId: 'bizproc-document',
+						entityType: 'document',
+						title: fullTitle,
+						customData: {
+							idTemplate: `${property.Id}.#FIELD#`,
+							document: property.Default,
+							[CustomDataFieldKey]: {
+								object: activityName,
+							},
+						},
+						nodeOptions: {
+							open: false,
+							dynamic: true,
+						},
+						searchable: false,
+						tabs: 'documents',
+					});
+
 					return res;
 				}
 
@@ -189,7 +225,7 @@ export class FieldSelector
 					block,
 					customData: {
 						[CustomDataFieldKey]: {
-							object: block.id,
+							object: activityName,
 							fieldId: property.Id,
 							type: property.Type,
 							multiple: property.Multiple,
@@ -199,10 +235,15 @@ export class FieldSelector
 
 				return res;
 			},
-			{ properties: [] },
+			{ documents: [], properties: [] },
 		);
 
 		const result = [];
+
+		if (Type.isArrayFilled(documents))
+		{
+			result.push(...documents);
+		}
 
 		if (Type.isArrayFilled(properties))
 		{
@@ -233,15 +274,47 @@ export class FieldSelector
 			}
 		});
 
+		const { documents, activities } = childrenProperties.reduce(
+			(res, child) => {
+				if (child)
+				{
+					if (child.entityId === 'bizproc-document')
+					{
+						res.documents.push(child);
+					}
+					else
+					{
+						res.activities.push(child);
+					}
+				}
+
+				return res;
+			},
+			{ documents: [], activities: [] },
+		);
+
 		const properties = [];
-		if (Type.isArrayFilled(childrenProperties))
+
+		if (Type.isArrayFilled(documents))
+		{
+			properties.push({
+				id: block.id,
+				entityId: 'block-node',
+				tabs: 'documents',
+				title: block.activity.Properties.Title,
+				children: documents,
+				searchable: false,
+			});
+		}
+
+		if (Type.isArrayFilled(activities))
 		{
 			properties.push({
 				id: block.id,
 				entityId: 'block-node',
 				tabs: 'returns',
 				title: block.activity.Properties.Title,
-				children: childrenProperties,
+				children: activities,
 				searchable: false,
 			});
 		}

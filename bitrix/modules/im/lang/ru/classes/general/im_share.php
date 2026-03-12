@@ -8,4 +8,3 @@ $MESS["IM_SHARE_CHAT_POST_2"] = 'На основании сообщения со
 $MESS["IM_SHARE_CHAT_CHAT"] = 'На основании сообщения был создан чат.';
 $MESS["IM_SHARE_CHAT_CHAT_WELCOME"] = 'Этот чат был создан на основании сообщения в чате #CHAT#.';
 $MESS["IM_SHARE_CHAT_CHAT_JOIN"] = 'Присоединиться';
-?>

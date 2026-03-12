@@ -1,5 +1,5 @@
 import { Color } from 'im.v2.const';
-import { CrmNotificationIconTitleClass, SonetNotificationIconTitleClass } from '../../../const/const';
+import { CrmNotificationIconTitleClass } from '../../../const/const';
 import { DetailedChangedValue } from '../../base/changed';
 import { DetailedGrid } from '../../base/grid';
 import { DetailedText } from '../../base/text';

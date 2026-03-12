@@ -1,6 +1,7 @@
 .bx-im-market-apps-panel__scope {
 	--im-market-apps-panel__border-color_container: #edeef0;
 	--im-market-apps-panel__color_empty-state-text: #525c69;
+	--im-market-apps-panel__color_empty-state-link: var(--ui-color-link-primary-base);
 	--im-market-apps-panel__color_more-items-button-text: #008dba;
 	--im-market-apps-panel__background-color_more-items-button-hover: #ecfafe;
 	--im-market-apps-panel__background-image_empty-state: url('../images/market-apps-empty-state.svg');
@@ -32,8 +33,8 @@
 	height: 32px;
 	padding: 9px 10px 9px 8px;
 	border-radius: 100px;
-	font: var(--im-font-size-xs)/var(--im-font-line-height-2xs) var(--im-font-family-system);
-	font-weight: var(--im-font-weight-medium);
+	font: var(--ui-font-size-xs)/var(--ui-font-line-height-2xs) var(--ui-font-family-primary);
+	font-weight: var(--ui-font-weight-medium);
 	color: var(--im-market-apps-panel__color_more-items-button-text);
 }
 
@@ -62,7 +63,12 @@
 }
 
 .bx-im-market-apps-panel__empty-state-text {
-	font: var(--im-font-size-lg)/var(--im-font-line-height-2xs) var(--im-font-family-system);
-	font-weight: var(--im-font-weight-medium);
+	font: var(--ui-font-size-lg)/var(--ui-font-line-height-2xs) var(--ui-font-family-primary);
+	font-weight: var(--ui-font-weight-medium);
 	color: var(--im-market-apps-panel__color_empty-state-text);
+}
+
+.bx-im-market-apps-panel__empty-state-link {
+	cursor: pointer;
+	color: var(--im-market-apps-panel__color_empty-state-link);
 }

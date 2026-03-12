@@ -3,9 +3,8 @@ import { BLine } from 'ui.system.skeleton.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Core } from 'tasks.v2.core';
 import { Model } from 'tasks.v2.const';
-import { AddButton } from 'tasks.v2.component.elements.add-button';
+import { FieldHoverButton } from 'tasks.v2.component.elements.field-hover-button';
 import { FieldAdd } from 'tasks.v2.component.elements.field-add';
 import { crmService, CrmMappers } from 'tasks.v2.provider.service.crm-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
@@ -23,13 +22,14 @@ const maxCount = 7;
 // @vue/component
 export const Crm = {
 	components: {
-		AddButton,
+		FieldHoverButton,
 		TextSm,
 		BLine,
 		FieldAdd,
 		CrmItem,
 	},
 	inject: {
+		settings: {},
 		task: {},
 		taskId: {},
 		isEdit: {},
@@ -98,7 +98,22 @@ export const Crm = {
 		},
 		isLocked(): boolean
 		{
-			return !Core.getParams().restrictions.crmIntegration.available;
+			return !this.settings.restrictions.crmIntegration.available;
+		},
+	},
+	watch: {
+		'task.crmItemIds': {
+			async handler(): Promise<void>
+			{
+				if (!this.isEdit)
+				{
+					return;
+				}
+
+				await crmService.list(this.taskId, this.task.crmItemIds);
+
+				crmDialog.fillDialog(this.taskId);
+			},
 		},
 	},
 	mounted(): void
@@ -109,7 +124,7 @@ export const Crm = {
 		}
 		else
 		{
-			crmDialog.init(this.taskId);
+			crmDialog.fillDialog(this.taskId);
 		}
 	},
 	methods: {
@@ -125,7 +140,7 @@ export const Crm = {
 			if (this.isLocked)
 			{
 				void showLimit({
-					featureId: Core.getParams().restrictions.crmIntegration.featureId,
+					featureId: this.settings.restrictions.crmIntegration.featureId,
 				});
 
 				return;
@@ -155,8 +170,9 @@ export const Crm = {
 			@mouseenter="isHovered = true"
 			@mouseleave="isHovered = false"
 		>
-			<AddButton 
+			<FieldHoverButton
 				v-if="isAddActive"
+				:icon="Outline.PLUS_L"
 				:isVisible="isAddVisible"
 				:isLocked
 				@click="handleClick"
@@ -167,7 +183,7 @@ export const Crm = {
 				:data-task-field-id="crmMeta.id"
 				:data-task-crm-item-ids="task.crmItemIds?.join(',')"
 			>
-				<FieldAdd 
+				<FieldAdd
 					v-if="isEmpty"
 					:icon="Outline.CRM"
 					:isLocked
@@ -179,14 +195,14 @@ export const Crm = {
 					</template>
 				</div>
 				<template v-for="item in visibleItems" :key="item.id">
-					<CrmItem :item @edit="showDialog" @clear="handleClear(item.id)"/>
+					<CrmItem :item @clear="handleClear"/>
 				</template>
 				<template v-if="isExpanded" v-for="item in collapsedItems" :key="item.id">
-					<CrmItem :item @edit="showDialog" @clear="handleClear(item.id)"/>
+					<CrmItem :item @clear="handleClear"/>
 				</template>
 				<TextSm
 					v-if="collapsedItems.length > 0"
-					class="tasks-field-crm-expand"
+					class="tasks-field-crm-expand print-font-color-base-1"
 					@click.capture.stop="isExpanded = !isExpanded"
 				>
 					{{ expandButtonText }}

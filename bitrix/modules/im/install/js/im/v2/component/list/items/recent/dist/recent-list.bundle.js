@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_list_items_elements_inputActionIndicator,im_v2_component_elements_chatTitle,im_v2_lib_dateFormatter,im_v2_lib_channel,main_date,im_v2_lib_parser,ui_iconSet_api_vue,im_public,im_v2_component_elements_avatar,im_v2_component_elements_button,im_v2_lib_feature,im_v2_lib_invite,call_component_activeCallList,main_core,im_v2_application_core,im_v2_const,main_core_events,im_v2_component_elements_listLoadingState,im_v2_lib_createChat,im_v2_lib_draft,im_v2_lib_menu,im_v2_lib_utils,im_v2_provider_service_recent,im_v2_component_list_items_elements_emptyState) {
+(function (exports,im_v2_component_list_items_elements_inputActionIndicator,im_v2_component_elements_chatTitle,im_v2_lib_dateFormatter,im_v2_lib_channel,main_date,im_v2_lib_parser,ui_iconSet_api_vue,im_public,im_v2_lib_createChat,im_v2_component_elements_avatar,im_v2_component_elements_button,im_v2_lib_feature,im_v2_lib_invite,call_component_activeCallList,main_core,main_core_events,im_v2_application_core,im_v2_const,im_v2_component_elements_listLoadingState,im_v2_lib_draft,im_v2_lib_menu,im_v2_lib_utils,im_v2_provider_service_recent,im_v2_component_list_items_elements_emptyState) {
 	'use strict';
 
 	const HiddenTitleByChatType = {
@@ -767,18 +767,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  components: {
 	    LoadingState: im_v2_component_elements_listLoadingState.ListLoadingState,
 	    RecentItem,
-	    ActiveCallList,
-	    CreateChat,
-	    EmptyState,
 	    RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
 	  },
 	  emits: ['chatClick'],
 	  data() {
 	    return {
 	      isLoading: false,
-	      isLoadingNextPage: false,
-	      listIsScrolled: false,
-	      isCreatingChat: false
+	      isLoadingNextPage: false
 	    };
 	  },
 	  computed: {
@@ -814,7 +809,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      emitter: this.getEmitter()
 	    });
 	    this.initLikeManager();
-	    this.initCreateChatManager();
 	    this.isLoading = true;
 	    await this.getUnreadRecentService().loadFirstPage({
 	      ignorePreloadedItems: true
@@ -825,12 +819,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  beforeUnmount() {
 	    this.contextMenuManager.destroy();
 	    this.destroyLikeManager();
-	    this.destroyCreateChatManager();
 	  },
 	  methods: {
 	    async onScroll(event) {
-	      this.listIsScrolled = event.target.scrollTop > 0;
-	      this.getUnreadRecentService().hasMoreItemsToLoad = true;
 	      this.contextMenuManager.close();
 	      if (!im_v2_lib_utils.Utils.dom.isOneScreenRemaining(event.target) || !this.getUnreadRecentService().hasMoreItemsToLoad) {
 	        return;
@@ -852,17 +843,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        compactMode: false
 	      };
 	      const positionTarget = {
-	        left: event.clientX,
-	        top: event.clientY
+	        left: event.pageX,
+	        top: event.pageY
 	      };
 	      this.contextMenuManager.openMenu(context, positionTarget);
 	      event.preventDefault();
-	    },
-	    onCallClick({
-	      item,
-	      $event
-	    }) {
-	      this.onClick(item, $event);
 	    },
 	    initLikeManager() {
 	      this.likeManager = new LikeManager();
@@ -870,18 +855,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    destroyLikeManager() {
 	      this.likeManager.destroy();
-	    },
-	    initCreateChatManager() {
-	      if (im_v2_lib_createChat.CreateChatManager.getInstance().isCreating()) {
-	        this.isCreatingChat = true;
-	      }
-	      this.onCreationStatusChange = event => {
-	        this.isCreatingChat = event.getData();
-	      };
-	      im_v2_lib_createChat.CreateChatManager.getInstance().subscribe(im_v2_lib_createChat.CreateChatManager.events.creationStatusChange, this.onCreationStatusChange);
-	    },
-	    destroyCreateChatManager() {
-	      im_v2_lib_createChat.CreateChatManager.getInstance().unsubscribe(im_v2_lib_createChat.CreateChatManager.events.creationStatusChange, this.onCreationStatusChange);
 	    },
 	    getUnreadRecentService() {
 	      if (!this.service) {
@@ -898,8 +871,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  template: `
 		<div class="bx-im-list-recent__container">
-			<ActiveCallList :listIsScrolled="listIsScrolled" @onCallClick="onCallClick"/>
-			<CreateChat v-if="isCreatingChat" />
 			<LoadingState v-if="isLoading" />
 			<div v-else @scroll="onScroll" class="bx-im-list-recent__scroll-container">
 				<RecentEmptyState
@@ -1040,8 +1011,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        compactMode: false
 	      };
 	      const positionTarget = {
-	        left: event.clientX,
-	        top: event.clientY
+	        left: event.pageX,
+	        top: event.pageY
 	      };
 	      this.contextMenuManager.openMenu(context, positionTarget);
 	      event.preventDefault();
@@ -1138,5 +1109,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.RecentItem = RecentItem;
 	exports.RecentUnreadList = RecentUnreadList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX?.Messenger?.v2?.Component?.List??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Call?.Component??{},BX??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Const??{},BX?.Event??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.List??{}));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX?.Messenger?.v2?.Component?.List??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Call?.Component??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.List??{}));
 //# sourceMappingURL=recent-list.bundle.js.map

@@ -101,6 +101,11 @@ export class LinkPage extends Page
 		return this.#container;
 	}
 
+	hasShownButtonPanel(): boolean
+	{
+		return false;
+	}
+
 	#renderCopyBtnDescription(): HTMLElement
 	{
 		return Tag.render`

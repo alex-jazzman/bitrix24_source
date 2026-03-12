@@ -116,9 +116,9 @@ export class MobilePopup extends EventEmitter
 			<div class="intranet-mobile-popup">
 				<div class="intranet-mobile-popup__content-wrapper">
 					<div class="intranet-mobile-popup__main">
-						<span class="intranet-mobile-popup__title">${Loc.getMessage('INTRANET_RECOGNIZE_LINKS_TITLE')}</span>
+						<span class="intranet-mobile-popup__title">${Loc.getMessage('INTRANET_MOBILE_POPUP_TITLE')}</span>
 						${this.#renderImage()}
-						<p class="intranet-mobile-popup__description">${Loc.getMessage('INTRANET_RECOGNIZE_LINKS_DESCRIPTION')}</p>
+						<p class="intranet-mobile-popup__description">${Loc.getMessage('INTRANET_MOBILE_POPUP_DESCRIPTION')}</p>
 						${this.#renderContinueButton()}
 					</div>
 					${this.#renderFooter()}
@@ -153,13 +153,13 @@ export class MobilePopup extends EventEmitter
 
 	#renderContinueButton(): HTMLElement
 	{
-		let text = Loc.getMessage('INTRANET_RECOGNIZE_LINKS_CONTINUE');
+		let text = Loc.getMessage('INTRANET_MOBILE_POPUP_CONTINUE');
 		if (
 			(this.#isTablet && this.#isTabletContinueButton)
 			|| (!this.#isTablet && this.#isMobileContinueButton)
 		)
 		{
-			text = Loc.getMessage('INTRANET_RECOGNIZE_LINKS_OPEN_APP');
+			text = Loc.getMessage('INTRANET_MOBILE_POPUP_OPEN_APP');
 		}
 
 		return new Button({
@@ -181,7 +181,7 @@ export class MobilePopup extends EventEmitter
 	#renderHideButton(): HTMLElement
 	{
 		return new CloseButton({
-			text: Loc.getMessage('INTRANET_RECOGNIZE_LINKS_CONTINUE_IN_BROWSER'),
+			text: Loc.getMessage('INTRANET_MOBILE_POPUP_CONTINUE_IN_BROWSER'),
 			className: 'intranet-mobile-popup__button intranet-mobile-popup__button--hide',
 			size: Button.Size.SMALL,
 			onclick: () => {

@@ -17,7 +17,6 @@ return [
 		'biconnector.apache-superset-dashboard-manager',
 		'ui.buttons',
 		'ui.dialogs.messagebox',
-		'ui.textcrop',
 		'ui.entity-selector',
 		'ui.forms',
 	],

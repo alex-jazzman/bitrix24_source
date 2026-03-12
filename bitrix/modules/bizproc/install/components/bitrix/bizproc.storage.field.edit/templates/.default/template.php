@@ -51,6 +51,18 @@ $hasErrors = (!empty($arResult['errors']) && is_array($arResult['errors']));
 				name="storageId"
 				value="<?= (int)$arParams['storageId'] ?>"
 			>
+			<?php if ($arResult['field']['id'] > 0): ?>
+				<input
+					type="hidden"
+					name="type"
+					value="<?= htmlspecialcharsbx($arResult['field']['type']) ?>"
+				>
+				<input
+					type="hidden"
+					name="multiple"
+					value="<?= $arResult['field']['multiple'] ? 'Y' : 'N' ?>"
+				>
+			<?php endif; ?>
 			<div class="ui-form-row">
 				<div class="ui-form-label">
 					<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($arResult['form']['type']['label']) ?></div>

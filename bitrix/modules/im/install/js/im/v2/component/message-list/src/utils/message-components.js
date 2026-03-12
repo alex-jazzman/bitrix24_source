@@ -18,6 +18,7 @@ import { ConferenceCreationMessage } from 'im.v2.component.message.creation.conf
 import { SupervisorUpdateFeatureMessage } from 'im.v2.component.message.supervisor.update-feature';
 import { SupervisorEnableFeatureMessage } from 'im.v2.component.message.supervisor.enable-feature';
 import { SignMessage } from 'im.v2.component.message.sign';
+import { AdminMessage } from 'im.v2.component.message.admin';
 import { CheckInMessage } from 'im.v2.component.message.check-in';
 import { OwnChatCreationMessage } from 'im.v2.component.message.creation.own-chat';
 import { ZoomInviteMessage } from 'im.v2.component.message.zoom-invite';
@@ -58,6 +59,7 @@ export const MessageComponents = {
 	SupervisorEnableFeatureMessage,
 	ChatCopilotAddedUsersMessage,
 	SignMessage,
+	AdminMessage,
 	GeneralChatCreationMessage,
 	GeneralChannelCreationMessage,
 	ChannelCreationMessage,

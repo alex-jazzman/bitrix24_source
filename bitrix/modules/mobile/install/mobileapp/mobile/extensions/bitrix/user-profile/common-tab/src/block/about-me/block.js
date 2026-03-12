@@ -12,7 +12,7 @@ jn.define('user-profile/common-tab/src/block/about-me/block', (require, exports,
 		{
 			const {
 				aboutMe = {
-					text: 'some temporary text about me',
+					text: '',
 					files: [],
 				},
 				isEditMode,
@@ -31,12 +31,9 @@ jn.define('user-profile/common-tab/src/block/about-me/block', (require, exports,
 
 		isAvailable()
 		{
-			// todo: uncomment after intranet api will be finished
-			/* const { aboutMe, isEditMode } = this.props;
+			const { aboutMe, isEditMode } = this.props;
 
-			return isEditMode || aboutMe.text?.trim() !== ''; */
-
-			return false;
+			return !isEditMode && aboutMe?.text?.trim() !== '';
 		}
 
 		getTitle()

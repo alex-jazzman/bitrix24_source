@@ -13,6 +13,18 @@ jn.define('im/messenger/controller/dialog/lib/onboarding/src/condition', (requir
 
 	class Condition extends ConditionBase
 	{
+		static isAttachmentButtonEnabled()
+		{
+			return (ctx) => {
+				if (!ctx)
+				{
+					return false;
+				}
+
+				return ctx.canHaveAttachments === true;
+			};
+		}
+
 		static isDirectChat()
 		{
 			return (ctx) => {

@@ -1,7 +1,6 @@
 import { SettingsSection } from 'im.v2.const';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { FeedbackManager } from 'im.v2.lib.feedback';
 
 import { SectionMetaData } from '../sections';
@@ -37,11 +36,6 @@ export const SectionList = {
 			if (!DesktopApi.isDesktop())
 			{
 				disabledSections.add(SettingsSection.desktop);
-			}
-
-			if (FeatureManager.isFeatureAvailable(Feature.isNotificationsStandalone))
-			{
-				disabledSections.add(SettingsSection.notification);
 			}
 
 			return disabledSections;

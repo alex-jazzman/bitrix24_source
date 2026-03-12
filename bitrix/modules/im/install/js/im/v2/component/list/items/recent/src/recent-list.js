@@ -23,7 +23,7 @@ import type { EventEmitter } from 'main.core.events';
 import type { ImModelRecentItem, ImModelCallItem } from 'im.v2.model';
 
 export { RecentItem } from './components/recent-item/recent-item';
-export { RecentUnreadList } from './components/modes/recent-unread-list';
+export { RecentUnreadList } from './components/modes/unread-recent-list';
 
 // @vue/component
 export const RecentList = {
@@ -157,8 +157,8 @@ export const RecentList = {
 			};
 
 			const positionTarget = {
-				left: event.clientX,
-				top: event.clientY,
+				left: event.pageX,
+				top: event.pageY,
 			};
 
 			this.contextMenuManager.openMenu(context, positionTarget);

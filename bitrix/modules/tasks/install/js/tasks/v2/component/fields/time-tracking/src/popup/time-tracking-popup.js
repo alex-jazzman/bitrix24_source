@@ -1,6 +1,5 @@
 import { Type } from 'main.core';
 import type { PopupOptions } from 'main.popup';
-import { EventName, Model } from 'tasks.v2.const';
 
 import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
@@ -12,8 +11,10 @@ import 'ui.icon-set.outline';
 import { Popup } from 'ui.vue3.components.popup';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
-import { taskService } from 'tasks.v2.provider.service.task-service';
+import { EventName, Model } from 'tasks.v2.const';
+import { stateService } from 'tasks.v2.provider.service.state-service';
 import { statusService } from 'tasks.v2.provider.service.status-service';
+import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel, TimerModel } from 'tasks.v2.model.tasks';
 
 import './time-tracking-popup.css';
@@ -34,6 +35,7 @@ export const TaskTrackingPopup = {
 	inject: {
 		task: {},
 		taskId: {},
+		isEdit: {},
 	},
 	props: {
 		bindElement: {
@@ -63,6 +65,7 @@ export const TaskTrackingPopup = {
 	computed: {
 		...mapGetters({
 			currentUserId: `${Model.Interface}/currentUserId`,
+			stateFlags: `${Model.Interface}/stateFlags`,
 		}),
 		options(): PopupOptions
 		{
@@ -144,6 +147,7 @@ export const TaskTrackingPopup = {
 	},
 	created(): void
 	{
+		this.localAllowsTimeTracking = this.task.allowsTimeTracking ?? true;
 		this.localEstimatedTime = this.task.estimatedTime ?? 0;
 
 		this.save();
@@ -202,11 +206,21 @@ export const TaskTrackingPopup = {
 
 			this.localAllowsTimeTracking = localAllowsTimeTracking;
 		},
-		save(): void
+		async save(): Promise<void>
 		{
 			if (this.task.allowsTimeTracking !== this.localAllowsTimeTracking)
 			{
 				this.$bitrix.eventEmitter.emit(EventName.TimeTrackingChange);
+			}
+
+			if (!this.isEdit)
+			{
+				await this.$store.dispatch(
+					`${Model.Interface}/updateStateFlags`,
+					{ allowsTimeTracking: this.localAllowsTimeTracking },
+				);
+
+				void stateService.set(this.stateFlags);
 			}
 
 			void taskService.update(this.taskId, {

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLB_GROUP_NAV"] = "Комментарии";
 $MESS["BLB_DATE_CREATE"] = "Дата создания";
 $MESS["BLB_AUTHOR_ID"] = "Автор";
@@ -33,4 +33,3 @@ $MESS["BLB_STOP_LIST"] = "стоп-лист";
 $MESS["MAIN_ADMIN_LIST_SELECTED"] = "Выбрано:";
 $MESS["MAIN_ADMIN_LIST_CHECKED"] = "Отмечено:";
 $MESS["MAIN_ADMIN_LIST_DELETE"] = "удалить";
-?>

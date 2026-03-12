@@ -8,6 +8,7 @@ import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { UserModel } from 'tasks.v2.model.users';
 
 import { CheckListManager } from '../../../lib/check-list-manager';
+import { MentionManager } from '../../../lib/mention/mention-manager';
 
 // @vue/component
 export const CheckListItemMixin = {
@@ -58,6 +59,10 @@ export const CheckListItemMixin = {
 		{
 			return this.$store.getters[`${Model.CheckList}/getById`](this.id);
 		},
+		isItemEdit(): boolean
+		{
+			return Type.isNumber(this.item.id);
+		},
 		canAdd(): boolean
 		{
 			if (!this.isEdit)
@@ -91,6 +96,11 @@ export const CheckListItemMixin = {
 		},
 		canToggle(): boolean
 		{
+			if (this.readOnly && !this.isItemEdit && this.isEdit)
+			{
+				return false;
+			}
+
 			return this.item?.actions.toggle === true;
 		},
 		hasAttachments(): boolean
@@ -127,6 +137,10 @@ export const CheckListItemMixin = {
 		textColor(): string
 		{
 			return this.completed ? 'var(--ui-color-base-4)' : 'var(--ui-color-base-1)';
+		},
+		linkColor(): string
+		{
+			return this.completed ? 'var(--ui-color-base-4)' : 'var(--ui-color-accent-main-link)';
 		},
 		groupMode(): boolean
 		{
@@ -170,6 +184,11 @@ export const CheckListItemMixin = {
 				checkLists: () => this.checkLists,
 			},
 		});
+
+		this.mentionManager = new MentionManager({
+			taskId: this.taskId,
+			itemId: this.item.id,
+		});
 	},
 	mounted(): void
 	{
@@ -192,6 +211,10 @@ export const CheckListItemMixin = {
 		handleEmptyBlur(): void
 		{
 			this.$emit('emptyBlur', this.id);
+		},
+		handleLinkClick(event: PointerEvent): void
+		{
+			event.stopPropagation();
 		},
 		updateCheckList(id: number | string, fields: Partial<CheckListModel>): Promise<void>
 		{
@@ -302,6 +325,22 @@ export const CheckListItemMixin = {
 			scrollContainer.scrollTo({
 				top: offsetTopInsideContainer - 200,
 				behavior: 'smooth',
+			});
+		},
+		handleInput(value: string): void
+		{
+			const currentTitle = this.item.title;
+			this.updateTitle(value);
+
+			const textareaContainer = this.$refs.growingTextArea.$el;
+			const textarea = textareaContainer?.querySelector('textarea');
+			const cursorPosition = textarea?.selectionStart || 0;
+
+			void this.mentionManager.handleInput({
+				item: this.item,
+				isEntered: currentTitle.length < value.length,
+				cursorPosition,
+				targetNode: textareaContainer,
 			});
 		},
 	},

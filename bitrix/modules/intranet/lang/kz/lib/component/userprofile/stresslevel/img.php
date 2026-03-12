@@ -1,4 +1,0 @@
-<?php
-$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_IMG_POWERED"] = "Күйзеліс бақылауыңызда!";
-$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_IMG_POWERED2"] = "Адамдарға қамқорлық жасауға көмектесеміз";
-$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_IMG_VALUE_CAPTION"] = "күйзеліс";

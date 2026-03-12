@@ -7,6 +7,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { openChat } = require('crm/entity-tab/type/traits/open-chat');
 	const { Icon } = require('ui-system/blocks/icon');
+	const { FeatureBanner } = require('layout/ui/feature-banner');
 
 	/**
 	 * @class Base
@@ -47,6 +48,11 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 			return this.params.userInfo || null;
 		}
 
+		getParentWidget()
+		{
+			return this.params.parentWidget || PageManager;
+		}
+
 		/**
 		 * @return {{
 		 * image: ImageProps,
@@ -59,6 +65,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 			const image = this.getEmptyImage();
 			const text = this.getEmptyEntityScreenDescriptionText();
 			const title = this.getEmptyScreenTitle();
+			const parentWidget = this.getParentWidget();
 
 			return {
 				image,
@@ -72,16 +79,30 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 						textAlign: 'center',
 						lineHeightMultiple: 1.2,
 					},
-					onLinkClick: (url) => {
-						qrauth.open({
-							title: Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_REDIRECT_TITLE'),
-							redirectUrl: url,
-							layout,
-							analyticsSection: 'crm',
-						});
-					},
+					onLinkClick: (params) => this.showFeatureBanner(parentWidget, params?.url),
 				}),
 			};
+		}
+
+		showFeatureBanner(parentWidget, redirectUrl)
+		{
+			void FeatureBanner.show(parentWidget, {
+				featureItems: [
+					Loc.getMessage('M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_FEATURE_1'),
+					Loc.getMessage('M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_FEATURE_2'),
+					Loc.getMessage('M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_FEATURE_3'),
+				],
+				qrauth: {
+					redirectUrl,
+					analyticsSection: 'crm',
+					title: Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_REDIRECT_TITLE'),
+				},
+				title: Loc.getMessage('M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_TITLE'),
+				buttonText: Loc.getMessage('M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_BUTTON_TEXT'),
+				params: {
+					title: Loc.getMessage('M_CRM_ENTITY_TAB_COMMUNICATION_DESCRIPTION_BANNER_TITLE'),
+				},
+			});
 		}
 
 		getEmptyScreenTitle()

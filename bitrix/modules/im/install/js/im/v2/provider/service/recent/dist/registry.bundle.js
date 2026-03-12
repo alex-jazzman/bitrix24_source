@@ -12,11 +12,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _messages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messages");
 	var _files = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("files");
 	var _recentItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("recentItems");
+	var _stickerMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stickerMessages");
 	var _extractUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractUser");
 	var _extractChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractChat");
 	var _extractMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractMessage");
 	var _extractRecentItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractRecentItem");
 	var _extractBirthdayItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractBirthdayItems");
+	var _extractStickerMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractStickerMessage");
 	var _prepareGroupChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareGroupChat");
 	var _prepareChatForUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareChatForUser");
 	var _prepareChatForAdditionalUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareChatForAdditionalUser");
@@ -38,6 +40,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _prepareGroupChat, {
 	      value: _prepareGroupChat2
+	    });
+	    Object.defineProperty(this, _extractStickerMessage, {
+	      value: _extractStickerMessage2
 	    });
 	    Object.defineProperty(this, _extractBirthdayItems, {
 	      value: _extractBirthdayItems2
@@ -82,6 +87,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      writable: true,
 	      value: {}
 	    });
+	    Object.defineProperty(this, _stickerMessages, {
+	      writable: true,
+	      value: {}
+	    });
 	    const {
 	      rawData,
 	      withBirthdays = true
@@ -100,6 +109,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _extractChat)[_extractChat](item);
 	      babelHelpers.classPrivateFieldLooseBase(this, _extractMessage)[_extractMessage](item);
 	      babelHelpers.classPrivateFieldLooseBase(this, _extractRecentItem)[_extractRecentItem](item);
+	      babelHelpers.classPrivateFieldLooseBase(this, _extractStickerMessage)[_extractStickerMessage](item);
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _extractBirthdayItems)[_extractBirthdayItems]();
 	    return {
@@ -109,7 +119,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      files: Object.values(babelHelpers.classPrivateFieldLooseBase(this, _files)[_files]),
 	      recentItems: Object.values(babelHelpers.classPrivateFieldLooseBase(this, _recentItems)[_recentItems]),
 	      copilot,
-	      messagesAutoDeleteConfigs
+	      messagesAutoDeleteConfigs,
+	      stickerMessages: Object.values(babelHelpers.classPrivateFieldLooseBase(this, _stickerMessages)[_stickerMessages])
 	    };
 	  }
 	}
@@ -206,6 +217,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      };
 	    }
 	  });
+	}
+	function _extractStickerMessage2(item) {
+	  var _item$message2;
+	  const messageId = (_item$message2 = item.message) == null ? void 0 : _item$message2.id;
+	  if (!messageId || !item.message.sticker) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _stickerMessages)[_stickerMessages][messageId] = {
+	    ...item.message.sticker,
+	    messageId
+	  };
 	}
 	function _prepareGroupChat2(item) {
 	  return {
@@ -344,9 +366,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      hasMore
 	    } = result.data();
 	    this.lastMessageDate = this.getLastMessageDate(items);
-	    if (!hasMore) {
-	      this.hasMoreItemsToLoad = false;
-	    }
+	    this.hasMoreItemsToLoad = hasMore;
 	    this.isLoading = false;
 	    return this.updateModels(result.data());
 	  }
@@ -375,7 +395,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      files,
 	      recentItems,
 	      copilot,
-	      messagesAutoDeleteConfigs
+	      messagesAutoDeleteConfigs,
+	      stickerMessages
 	    } = extractedItems;
 	    im_v2_lib_logger.Logger.warn('LegacyRecentService: prepared data for models', extractedItems);
 	    const usersPromise = im_v2_application_core.Core.getStore().dispatch('users/set', users);
@@ -384,9 +405,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const messagesPromise = im_v2_application_core.Core.getStore().dispatch('messages/store', messages);
 	    const filesPromise = im_v2_application_core.Core.getStore().dispatch('files/set', files);
 	    const recentPromise = im_v2_application_core.Core.getStore().dispatch(this.getModelSaveMethod(), recentItems);
+	    const stickersPromise = im_v2_application_core.Core.getStore().dispatch('stickers/messages/set', stickerMessages);
 	    const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	    const copilotPromise = copilotManager.handleRecentListResponse(copilot);
-	    return Promise.all([usersPromise, dialoguesPromise, messagesPromise, filesPromise, recentPromise, copilotPromise, autoDeletePromise]);
+	    return Promise.all([usersPromise, dialoguesPromise, messagesPromise, filesPromise, recentPromise, copilotPromise, autoDeletePromise, stickersPromise]);
 	  }
 	  getLastMessageDate(items) {
 	    if (items.length === 0) {

@@ -1,0 +1,1 @@
+{"version":3,"file":"separator.map.js","names":["document","querySelector","BX","addCustomEvent","event","block","style","overflow"],"sources":["separator.js"],"mappings":"CAAC,WACA,aAEA,GAAIA,SAASC,cAAc,wBAA0B,KACrD,CACCC,GAAGC,eAAe,yBAAyB,SAASC,GAEnD,GAAIA,EAAMC,MAAMJ,cAAc,8BAAgC,KAC9D,CACCG,EAAMC,MAAMC,MAAMC,SAAW,QAC9B,CACD,GACD,CACA,EAbA","ignoreList":[]}

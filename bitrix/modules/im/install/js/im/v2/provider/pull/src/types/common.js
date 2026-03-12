@@ -1,7 +1,7 @@
 import type { StatusGroupName } from 'imopenlines.v2.const';
 
 import type { BotType, UserType } from 'im.v2.const';
-import type { RawReaction, RawShortUser } from 'im.v2.provider.service.types';
+import type { RawReaction, RawShortUser, RawSticker } from 'im.v2.provider.service.types';
 
 export type PullExtraParams = {
 	im_revision: number,
@@ -149,6 +149,7 @@ export type RawMessage = {
 		reactions: RawReaction[],
 		users: RawUser[],
 		usersShort: RawShortUser[],
+		stickers: RawSticker[],
 	},
 };
 

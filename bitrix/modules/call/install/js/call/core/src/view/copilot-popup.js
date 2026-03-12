@@ -1,4 +1,4 @@
-import { Dom, Loc } from 'main.core';
+import { Dom, Loc, Type } from 'main.core';
 import { Popup } from 'main.popup';
 import { Analytics } from 'call.lib.analytics';
 import '../css/copilot-popup.css';
@@ -14,12 +14,13 @@ export class CopilotPopup
 		this.isCopilotActive = config.isCopilotActive;
 		this.isCopilotFeaturesEnabled = config.isCopilotFeaturesEnabled;
 		this.callId = config.callId;
+		this.targetContainer = Type.isDomNode(config.targetContainer) ? config.targetContainer : document.body;
 
 		this.callbacks = {
 			updateCopilotState: BX.type.isFunction(config.updateCopilotState) ? config.updateCopilotState : BX.DoNothing,
 			onClose: BX.type.isFunction(config.onClose) ? config.onClose : BX.DoNothing,
-		}
-	};
+		};
+	}
 
 	getPopupTemplate()
 	{
@@ -266,12 +267,12 @@ export class CopilotPopup
 		this.getPopupTemplate();
 
 		this.popup = new Popup({
-			className : "bx-call-copilot-popup",
+			className: 'bx-call-copilot-popup',
 			bindElement: copilotButton,
-			targetContainer: document.body,
+			targetContainer: this.targetContainer,
 			content: this.popupTemplate,
 			bindOptions: {
-				position: "top"
+				position: 'top',
 			},
 			autoHide: true,
 			closeByEsc: true,
@@ -279,7 +280,7 @@ export class CopilotPopup
 			contentBackground: '#190A37',
 			darkMode: true,
 			contentNoPaddings: true,
-			animation: "fading",
+			animation: 'fading',
 			width: 364,
 			padding: 0,
 			angle: {
@@ -289,16 +290,16 @@ export class CopilotPopup
 			offsetLeft: -118,
 			contentBorderRadius: '18px',
 			events: {
-				onPopupClose: function ()
+				onPopupClose()
 				{
 					self.callbacks.onClose();
 					this.destroy();
 				},
-				onPopupDestroy: function ()
+				onPopupDestroy()
 				{
 					self.popup = null;
-				}
-			}
+				},
+			},
 		});
 	}
 

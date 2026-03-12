@@ -18,11 +18,10 @@ return [
 	'js' => 'dist/crm.bundle.js',
 	'rel' => [
 		'ui.system.skeleton.vue',
-		'tasks.v2.component.elements.add-button',
+		'tasks.v2.component.elements.field-hover-button',
 		'tasks.v2.component.elements.field-add',
 		'ui.vue3.components.rich-loc',
 		'ui.system.typography.vue',
-		'ui.system.menu.vue',
 		'tasks.v2.component.elements.hover-pill',
 		'main.core',
 		'tasks.v2.const',

@@ -1,3 +1,5 @@
+import { Type } from 'main.core';
+
 import { TextXs } from 'ui.system.typography.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
@@ -66,9 +68,12 @@ export const Responsible = {
 			{
 				return this.task.isForNewUser;
 			},
-			set(isForNewUser: boolean)
+			set(isForNewUser: boolean): void
 			{
-				void taskService.update(this.taskId, { isForNewUser });
+				void taskService.update(this.taskId, {
+					isForNewUser,
+					responsibleIds: isForNewUser ? [0] : [this.currentUserId],
+				});
 			},
 		},
 		currentUserId(): number
@@ -117,14 +122,18 @@ export const Responsible = {
 			}
 
 			const currentIds = new Set(this.task.responsibleIds);
+
+			void taskService.update(this.taskId, { responsibleIds });
+
 			if (responsibleIds.some((id) => !currentIds.has(id)))
 			{
 				analytics.sendAssigneeChange(this.analytics, {
 					cardType: this.cardType,
+					taskId: Type.isNumber(this.taskId) ? this.taskId : 0,
+					viewersCount: this.task.auditorsIds?.length ?? 0,
+					coexecutorsCount: this.task.accomplicesIds?.length ?? 0,
 				});
 			}
-
-			void taskService.update(this.taskId, { responsibleIds });
 
 			if (responsibleIds.length > 1)
 			{
@@ -170,6 +179,7 @@ export const Responsible = {
 				:userIds="task.responsibleIds"
 				:canAdd="task.rights.delegate || task.rights.changeResponsible"
 				:canRemove="task.rights.delegate || task.rights.changeResponsible"
+				:forceEdit="!isEdit"
 				:withHint="!isAdmin && !isEdit && task.creatorId !== currentUserId"
 				:hintText="loc('TASKS_V2_RESPONSIBLE_CANT_CHANGE')"
 				:single
@@ -177,10 +187,11 @@ export const Responsible = {
 				:inline="avatarOnly || single"
 				:avatarOnly
 				:dataset
+				:showMenu="false"
 				@hintClick="handleHintClick"
 				@update="updateTask"
 			/>
-			<ForNewUserSwitcher v-if="!isEdit && isTemplate && !avatarOnly" v-model="forNewUser"/>
+			<ForNewUserSwitcher v-if="!isEdit && isTemplate && !avatarOnly && task.context !== 'flow'" v-model:isChecked="forNewUser"/>
 		</div>
 		<Hint v-if="isManyAhaShown" :bindElement="$refs.container" @close="isManyAhaShown = false">
 			<div class="tasks-field-responsible-many-aha">

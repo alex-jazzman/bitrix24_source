@@ -20,21 +20,29 @@
 
 .ui-block-diagram-search-result__title {
 	margin: 0;
+	font: var(--ui-font-size-sm) var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-base-3);
+	line-height: 17px;
 }
 
 .ui-block-diagram-search-result__count {
 	display: inline-block;
-	height: 22px;
-	margin-right: 10px;
-	padding: 3px 10px;
+	height: 21px;
+	margin-right: 4px;
+	padding: 2px 8px;
 	border-radius: 20px;
-	line-height: 22px;
+	font: var(--ui-font-size-sm) var(--ui-font-family-system);
+	color: var(--ui-color-base-2);
+	line-height: 17px;
 	white-space: nowrap;
-	background-color: var(--ui-color-tag-1);
+	background-color: var(--ui-color-accent-soft-blue-3);
+	box-sizing: border-box;
 }
 
 .ui-block-diagram-search-result__nav {
 	display: flex;
-	justify-content: space-around;
+	justify-content: space-between;
 	align-items: center;
+	gap: 2px;
 }

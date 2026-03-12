@@ -1,4 +1,0 @@
-<?php
-$MESS["CRM_TOUR_ENTITY_DETAILS_MENUBAR_MESSAGE_NEW_CHANS_AVAILABLE_BUTTON"] = "Мессенджерлерді қосу";
-$MESS["CRM_TOUR_ENTITY_DETAILS_MENUBAR_MESSAGE_NEW_CHANS_AVAILABLE_TEXT"] = "WhatsApp немесе Telegram қосып, клиенттерге бірінші болып жазыңыз";
-$MESS["CRM_TOUR_ENTITY_DETAILS_MENUBAR_MESSAGE_NEW_CHANS_AVAILABLE_TITLE"] = "Жаңа байланыс арналарын қосты";

@@ -510,45 +510,54 @@
 
 	BXCrmActivityEmail.prototype.initMessageBody = function ()
 	{
-		var emailContainerId = 'activity_' + this.options.activityId + '_body';
+		this.initIframe();
+	};
 
-		initEmailLinks(emailContainerId);
-		initQuotes(emailContainerId);
-	}
-
-	function initEmailLinks(emailContainerId)
+	BXCrmActivityEmail.prototype.initIframe = function()
 	{
-		// target links
-		const emailLinks = typeof document.querySelectorAll != 'undefined'
-			? document.querySelectorAll('#' + emailContainerId + ' a')
-			: BX.findChildren(BX(emailContainerId), { tag: 'a' }, true);
-		for (const i in emailLinks)
+		const options = this.options;
+		const messageBodyElement = document.getElementById(options.bodyElementId);
+		if (!messageBodyElement)
 		{
-			if (!emailLinks.hasOwnProperty(i))
-				continue;
-
-			if (emailLinks[i] && emailLinks[i].setAttribute)
-				emailLinks[i].setAttribute('target', '_blank');
+			return;
 		}
-	}
 
-	function initQuotes(emailContainerId)
-	{
-		// unfold quotes
-		const quotesList = typeof document.querySelectorAll != 'undefined'
-			? document.querySelectorAll('#' + emailContainerId + ' blockquote')
-			: BX.findChildren(BX(emailContainerId), { tag: 'blockquote' }, true);
-		for (const i in quotesList)
+		const activityId = parseInt(messageBodyElement.dataset.activityId, 10);
+		const useAjax = messageBodyElement.dataset.useAjax === '1';
+
+		if (!useAjax)
 		{
-			if (!quotesList.hasOwnProperty(i))
-				continue;
-
-			BX.bind(quotesList[i], 'click', function ()
+			const messageHtml = messageBodyElement.dataset.messageHtml;
+			if (messageHtml)
 			{
-				BX.addClass(this, 'crm-email-quote-unfolded');
+				this.renderMessageBody(messageBodyElement, messageHtml, activityId);
+			}
+		}
+	};
+
+	BXCrmActivityEmail.prototype.renderMessageBody = function(container, html, activityId)
+	{
+		if (!this.messageBody)
+		{
+			this.messageBody = new BX.Mail.MessageBody({
+				container,
+				messageId: activityId,
+				prefix: 'crm-mail-msg',
 			});
 		}
-	}
+
+		this.messageBody.renderTo(html);
+	};
+
+	BXCrmActivityEmail.prototype.insertBodyText = function (html)
+	{
+		const messageBodyElement = document.getElementById(this.options.bodyElementId);
+		if (messageBodyElement)
+		{
+			const activityId = this.options.activityId;
+			this.renderMessageBody(messageBodyElement, html, activityId);
+		}
+	};
 
 	BXCrmActivityEmail.handleFooterButtonClick = function (form, button)
 	{
@@ -1127,16 +1136,6 @@
 			}
 		}
 	};
-
-	BXCrmActivityEmail.prototype.insertBodyText = function (html)
-	{
-		const messageBodyElement = document.getElementById(this.options.bodyElementId);
-		if (messageBodyElement)
-		{
-			messageBodyElement.innerHTML = html;
-			this.initMessageBody();
-		}
-	}
 
 	BXCrmActivityEmail.prototype.showError = function ()
 	{

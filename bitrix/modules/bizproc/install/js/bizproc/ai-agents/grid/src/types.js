@@ -1,4 +1,4 @@
-import { ACTION_TYPE, AJAX_REQUEST_TYPE } from './constants';
+import { ACTION_TYPE, AJAX_REQUEST_TYPE, GRID_API_ACTION } from './constants';
 
 export type AgentInfoFieldType = {
 	name: string,
@@ -19,6 +19,7 @@ export type EmployeeFieldType = {
 export type LaunchControlFieldType = {
 	agentId: number,
 	launchedAt: ?number,
+	ragFilesStatuses: ?RagFilesStatusesDataType,
 };
 
 export type DepartmentFieldType = {
@@ -27,9 +28,13 @@ export type DepartmentFieldType = {
 
 export type UsedByFieldFieldType = {
 	users?: UserFieldType[],
+	chats?: ChatInfo[],
+	departments?: DepartmentFieldType[],
+};
+
+export type ChatInfo = {
 	chatId?: string,
 	chatName?: string,
-	departments?: DepartmentFieldType[],
 };
 
 export type LoadIndicatorFieldType = {
@@ -50,22 +55,23 @@ export type SetFilterType = {
 
 export type runActionConfig = {
 	actionId: string,
-	options: Array<{ [key: string]: any }>,
-	params: Array<{ [key: string]: any }>,
+	isGroupAction: ?boolean,
+	params: BaseActionParams,
+	filter: ?Object,
 };
 
-export type BaseActionType = {
-	grid: ?BX.Main.grid,
+export type BaseActionParams = {
 	showPopups: ?boolean,
 	filter: ?Object,
 };
 
 export type AjaxRequestType = $Values<typeof AJAX_REQUEST_TYPE>;
 export type ActionType = $Values<typeof ACTION_TYPE>;
+export type GridApiAction = $Values<typeof GRID_API_ACTION>;
 
 export type ActionConfig = {
 	type: AjaxRequestType,
-	name: string,
+	name: GridApiAction,
 	component?: string,
 	options?: {
 		[key: string]: any,
@@ -126,8 +132,42 @@ export type GridColumns = {
 	LAUNCH_CONTROL: string,
 	NAME: string,
 	USED_BY: string,
-}
+};
 
 export type GridRowAction = {
 	[key: string]: any,
-}
+};
+
+export type BaseAjaxResponse = {
+	status: string,
+	data: Array,
+	errors: BaseAjaxError[],
+};
+
+export type BaseAjaxError = {
+	message: string,
+	code: number | string | null,
+	customData: ?Array<{ [key: string]: any }>,
+};
+
+export type ExtensionSettings = {
+	tariffInfo: {
+		isAiAgentsAvailable: boolean,
+		aiAgentsTariffSliderCode: ?string,
+	},
+};
+
+export type RagFilesStatusesDataType = {
+	status: ?string,
+	statusMessage: ?string,
+	descriptionMessage: ?string,
+	files: RagFileStatusDataType[],
+	iconClass: string,
+};
+
+export type RagFileStatusDataType = {
+	fileName: string,
+	status: ?string,
+	statusMessage: ?string,
+	iconClass: string,
+};

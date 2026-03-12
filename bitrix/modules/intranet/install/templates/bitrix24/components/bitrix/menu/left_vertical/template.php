@@ -364,7 +364,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 		<div class="menu-items-footer-inner">
 			<div class="menu-settings-save-btn">
 				<button class="ui-btn --air --wide ui-btn-no-caps --style-outline-accent-2">
-					<?=Loc::getMessage("MENU_EDIT_READY_FULL")?>
+					<?=Loc::getMessage("MENU_EDIT_READY_FULL_MSGVER_1")?>
 				</button>
 			</div>
 			<?php if ($arResult['CURRENT_PRESET_ID'] !== 'collab'): ?>
@@ -495,7 +495,7 @@ BX.message({
 	MENU_CUSTOM_PRESET_SUCCESS: '<?=GetMessageJS("MENU_CUSTOM_PRESET_SUCCESS2")?>',
 	MENU_DELETE_CUSTOM_ITEM_FROM_ALL: '<?=GetMessageJS("MENU_DELETE_CUSTOM_ITEM_FROM_ALL")?>',
 	MENU_SETTINGS_MODE: '<?=GetMessageJS("MENU_SETTINGS_MODE")?>',
-	MENU_EDIT_READY_FULL: '<?=GetMessageJS("MENU_EDIT_READY_FULL")?>',
+	MENU_EDIT_READY_FULL: '<?=GetMessageJS("MENU_EDIT_READY_FULL_MSGVER_1")?>',
 	MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION: '<?=GetMessageJS("MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION")?>',
 	MENU_SITE_MAP: '<?=GetMessageJS("MENU_SITE_MAP")?>',
 	MENU_HELP: '<?=GetMessageJS("MENU_HELP")?>',
@@ -533,27 +533,6 @@ elseif (isset($arResult["SHOW_IMPORT_CONFIGURATION"]))
 ?>
 </script>
 <?php
-// for a composite
-$js = <<<HTML
-
-<script>
-if (
-	BX.Intranet
-	&& BX.Intranet.LeftMenu
-	&& !BX.Intranet.LeftMenu.initPagetitleStar()
-)
-{
-	BX.ready(function() {
-		BX.Intranet.LeftMenu.initPagetitleStar()
-	});
-}
-</script>
-HTML;
-
-
-$APPLICATION->AddViewContent("below_pagetitle", $js, 10);
-
-
 $frame = $this->createFrame()->begin('');
 $counters = $isCompositeMode ? \CUtil::PhpToJSObject($arAllItemsCounters) : '{}';
 ?>

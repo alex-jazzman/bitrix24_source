@@ -1,6 +1,7 @@
 .b24-hover-pill {
 	--b24-hover-pill-content-pl: 2px;
 	--b24-hover-pill-content-pr: 10px;
+	--hover-color: var(--ui-color-accent-soft-blue-3);
 
 	position: relative;
 	min-width: 0;
@@ -9,14 +10,17 @@
 	border-radius: var(--ui-border-radius-pill);
 }
 
+.b24-hover-pill.--alert {
+	--hover-color: var(--ui-color-accent-soft-red-3);
+}
+
 .b24-hover-pill:not(.--readonly) {
 	cursor: pointer;
 }
 
 .b24-hover-pill:not(.--readonly):hover,
 .b24-hover-pill:not(.--readonly).--active {
-	--hover-color: rgba(var(--ui-color-palette-black-solid-rgb), 0.03);
-	box-shadow: 0 0 0 2px var(--hover-color);
+	/*box-shadow: 0 0 0 2px var(--hover-color);*/
 	background: var(--hover-color);
 }
 

@@ -1,3 +1,0 @@
-<?
-$MESS["CRM_ACTIVITY_PROVIDER_TASK_NAME"] = "Завдання";
-?>

@@ -1,6 +1,6 @@
 import { Outline } from 'ui.icon-set.api.vue';
 
-import { ActionButton } from './action-button';
+import { ActionButton } from 'tasks.v2.component.entity-text';
 
 // @vue/component
 export const FullDescription = {
@@ -16,7 +16,7 @@ export const FullDescription = {
 	},
 	template: `
 		<ActionButton
-			:icon-name="Outline.GO_TO_L"
+			:iconName="Outline.GO_TO_L"
 			:title="loc('TASKS_V2_DESCRIPTION_BUTTON_EXPAND')"
 		/>
 	`,

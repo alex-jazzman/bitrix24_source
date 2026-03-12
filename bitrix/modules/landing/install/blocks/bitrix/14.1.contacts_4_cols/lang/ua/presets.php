@@ -1,4 +1,0 @@
-<?
-$MESS["LANDING_BLOCK__CONTACTS__PRESET_LINK"] = "З посиланням";
-$MESS["LANDING_BLOCK__CONTACTS__PRESET_TEXT"] = "Текст";
-?>

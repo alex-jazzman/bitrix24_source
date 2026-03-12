@@ -429,7 +429,7 @@ export const CheckListParentItem = {
 	template: `
 		<div
 			ref="item"
-			class="check-list-widget-parent-item"
+			class="check-list-widget-parent-item print-no-before"
 			:class="{
 				'--complete': completed,
 				'--collapsed': collapsed,
@@ -464,12 +464,14 @@ export const CheckListParentItem = {
 					:placeholder="loc('TASKS_V2_CHECK_LIST_LIST_PLACEHOLDER')"
 					:readonly="textReadOnly"
 					:fontColor="textColor"
+					:linkColor
 					:fontSize
 					:lineHeight="20"
 					:fontWeight="500"
 					@click="handleTextClick"
+					@linkClick="handleLinkClick"
 					@update:modelValue="updateTitle"
-					@input="updateTitle"
+					@input="handleInput"
 					@focus="handleFocus"
 					@emptyFocus="scrollToItem"
 					@blur="handleBlur"
@@ -518,15 +520,21 @@ export const CheckListParentItem = {
 							v-model:checked="item.myFilterActive"
 						/>
 					</div>
-					<div class="check-list-widget-parent-item-main-action-actions">
-						<BIcon ref="more" :name="Outline.MORE_L" @click="showMenu"/>
+					<div class="check-list-widget-parent-item-main-action-actions print-ignore">
+						<BIcon 
+							:name="Outline.MORE_L"
+							:size="isPreview ? 20 : 24"
+							@click="showMenu"
+							ref="more"
+						/>
 						<BIcon
 							:name="collapsed ? Outline.CHEVRON_DOWN_L : Outline.CHEVRON_TOP_L"
+							:size="isPreview ? 20 : 24"
 							@click="toggleCollapse()"
 						/>
 					</div>
 				</div>
-				<div v-if="isSticky && !isPreview" class="check-list-widget-parent-item-empty"/>
+				<div v-if="isSticky && !isPreview" class="check-list-widget-parent-item-empty print-ignore"/>
 			</div>
 			<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 		</div>

@@ -57,6 +57,7 @@ export class UserModel
 			wasRenamed: BX.prop.getBoolean(config, "wasRenamed", false),
 			renameRequested: BX.prop.getBoolean(config, "renameRequested", false),
 			direction: BX.prop.getString(config, "direction", EndpointDirection.SendRecv),
+			prevScreenState: BX.prop.getBoolean(config, "prevScreenState", false),
 		};
 
 		for (let fieldName in this.data)

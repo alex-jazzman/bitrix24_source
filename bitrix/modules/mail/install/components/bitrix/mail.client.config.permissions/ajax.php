@@ -5,10 +5,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die;
 }
 
-use Bitrix\Mail\Access\MailAccessController;
-use Bitrix\Mail\Access\MailActionDictionary;
 use Bitrix\Mail\Access\Service\RolePermissionService;
 use Bitrix\Mail\Access\Service\RoleRelationService;
+use Bitrix\Mail\Helper\LicenseManager;
+use Bitrix\Mail\Helper\MailAccess;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -21,11 +21,7 @@ class MailConfigPermissionsAjaxController extends Main\Engine\Controller
 {
 	public function savePermissionsAction(array $userGroups = [], ?array $deletedUserGroups = null): ?array
 	{
-		if (
-			!$this->getCurrentUser()
-			|| !MailAccessController::can($this->getCurrentUser()->getId(), MailActionDictionary::ACTION_CONFIG_PERMISSIONS_EDIT)
-			|| !\Bitrix\Mail\Helper\LicenseManager::isAccessRightsEnabled()
-		)
+		if (!$this->checkPermissionAvailability())
 		{
 			$this->addError(new Main\Error(
 				Loc::getMessage('MAIL_CONFIG_PERMISSIONS_SAVE_PERMISSIONS_NO_ACCESS_ERROR'),
@@ -62,5 +58,29 @@ class MailConfigPermissionsAjaxController extends Main\Engine\Controller
 		}
 
 		return null;
+	}
+
+	public function loadAction(): array
+	{
+		if (!$this->checkPermissionAvailability())
+		{
+			$this->addError(new Main\Error('Access denied', 'ACCESS_DENIED'));
+
+			return [];
+		}
+
+		$permissionService = new RolePermissionService();
+
+		return [
+			'USER_GROUPS' => $permissionService->getUserGroups(),
+			'ACCESS_RIGHTS' => $permissionService->getAccessRights(),
+		];
+	}
+
+	private function checkPermissionAvailability(): bool
+	{
+		return $this->getCurrentUser()
+			&& MailAccess::hasCurrentUserAccessToPermission()
+			&& LicenseManager::isAccessRightsEnabled();
 	}
 }

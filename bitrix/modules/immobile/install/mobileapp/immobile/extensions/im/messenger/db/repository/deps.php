@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'utils/object',
+		'utils/url',
 		'im:messenger/lib/feature',
 		'im:chat/utils',
 		'im:messenger/db/table',
@@ -12,7 +13,6 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/permission-manager',
 		'im:messenger/const',
-		'utils/url',
 	],
 	'bundle' => [
 		'./src/option',
@@ -38,5 +38,6 @@ return [
 		'./src/vote',
 		'./src/read-message-queue',
 		'./src/transcript',
+		'./src/sticker',
 	],
 ];

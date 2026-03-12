@@ -61,6 +61,7 @@
     padding-left: 4px;
     font: var(--ui-font-weight-medium) 12px/14px var(--ui-font-family-system);
 	color: var(--ui-color-palette-gray-70);
+	position: relative;
 }
 
 
@@ -124,20 +125,26 @@
 
 .ui-block-diagram-search-bar {
 	display: flex;
-	flex-wrap: wrap;
+	flex-direction: column;
+	flex-wrap: nowrap;
 	align-items: center;
-	gap: 6px;
+	gap: 8px;
 	width: auto;
-	max-width: 350px;
+	/* max-width: 350px; */
 	padding: 6px;
 	border-radius: 8px;
 	background: var(--ui-color-palette-white-base);
 	box-shadow: 0 1px 2px 0 rgba(var(--ui-color-palette-black-solid-rgb), 0.13);
 }
 
+.ui-block-diagram-search-bar.--opened {
+	padding: 8px;
+}
+
 .ui-block-diagram-search-bar__search-result {
 	width: 100%;
-	padding: 0 8px 0 15px;
+	padding: 0 0 0 4px;
+	box-sizing: border-box;
 }
 
 .ui-block-diagram-moveable-block {
@@ -381,6 +388,14 @@
 	        user-select: none;
 }
 
+.ui-block-diagram-canvas-transform.--grab {
+	cursor: grab;
+}
+
+.ui-block-diagram-canvas-transform.--grabbing {
+	cursor: grabbing;
+}
+
 .ui-block-diagram-canvas-transform__canvas {
 	width: 100%;
 	height: 100%;
@@ -400,6 +415,26 @@
 	width: 100%;
 	height: 100%;
 	transform-origin: 0 0;
+}
+
+.ui-block-diagram-selection-rect {
+	position: absolute;
+	background-color: rgb(from var(--ui-color-accent-main-link) r g b / 0.1);
+	border: 1px dashed var(--ui-color-blue-57);
+	border-radius: 4px;
+	pointer-events: none;
+	z-index: 9999;
+}
+
+.ui-block-diagram-group-box {
+	position: absolute;
+	border: 2px solid var(--ui-color-blue-57);
+	z-index: 90;
+	border-radius: 4px;
+}
+
+.ui-block-diagram .ui-block-diagram-group-box + .ui-block-diagram-context-menu__layout {
+	z-index: auto;
 }
 
 .ui-block-diagram .ui-block-diagram-context-menu__layout {
@@ -569,6 +604,18 @@
     line-height: 19px;
     letter-spacing: -0.05px;
     text-align: center;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1px solid var(--ui-color-gray-20);
+    padding: 4px 8px;
+}
+
+.ui-block-diagram-percent:hover {
+    background: var(--ui-color-bg-state-hover-default);
+}
+
+.ui-block-diagram-percent.--selected {
+    background: var(--ui-color-bg-state-click-default);
 }
 
 .ui-block-diagram-percent:after {
@@ -584,6 +631,10 @@
 	color: var(--ui-color-palette-gray-50);
 }
 
+.ui-block-diagram-percent-menu {
+    transform: translate(15px, calc(-100% - 10px));
+}
+
 .ui-block-diagram-canvas-map {
 	width: 100%;
 	height: 100%;
@@ -591,8 +642,6 @@
 }
 
 .ui-block-diagram-canvas-map__block {
-	fill: var(--ui-color-palette-gray-15);
-	color: var(--ui-color-palette-gray-15);
 	stroke: none;
 }
 
@@ -603,6 +652,10 @@
 }
 
 .ui-block-diagram-canvas-map-btn {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+
 	padding: 0;
 	border: none;
 	background-color: transparent;
@@ -610,16 +663,13 @@
 }
 
 .ui-block-diagram-canvas-map-btn__icon {
-	fill: var(--ui-color-palette-gray-40);
-	color: var(--ui-color-palette-gray-40);
 	stroke: none;
 }
 
-.ui-block-diagram-canvas-map-btn__rect {
-	fill: var(--ui-color-palette-gray-40);
-	color: var(--ui-color-palette-gray-40);
-	stroke: none;
+.ui-block-diagram-canvas-map-btn__icon:hover {
+	fill: var(--ui-color-accent-main-primary);
 }
+
 .ui-block-diagram-search-result {
 	display: flex;
 	flex-direction: row;
@@ -642,32 +692,40 @@
 
 .ui-block-diagram-search-result__title {
 	margin: 0;
+	font: var(--ui-font-size-sm) var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-base-3);
+	line-height: 17px;
 }
 
 .ui-block-diagram-search-result__count {
 	display: inline-block;
-	height: 22px;
-	margin-right: 10px;
-	padding: 3px 10px;
+	height: 21px;
+	margin-right: 4px;
+	padding: 2px 8px;
 	border-radius: 20px;
-	line-height: 22px;
+	font: var(--ui-font-size-sm) var(--ui-font-family-system);
+	color: var(--ui-color-base-2);
+	line-height: 17px;
 	white-space: nowrap;
-	background-color: var(--ui-color-tag-1);
+	background-color: var(--ui-color-accent-soft-blue-3);
+	box-sizing: border-box;
 }
 
 .ui-block-diagram-search-result__nav {
 	display: flex;
-	justify-content: space-around;
+	justify-content: space-between;
 	align-items: center;
+	gap: 2px;
 }
 .ui-block-diagram-search-nav-btn {
 	display: block;
-	height: 25px;
-	width: 25px;
+	height: 18px;
+	width: 18px;
 	padding: 0;
 	border: none;
 	color: var(--ui-color-link-primary-base);
-	line-height: 25px;
+	line-height: 18px;
 	text-align: center;
 	background-color: transparent;
 	cursor: pointer;
@@ -681,16 +739,21 @@
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
+	gap: 4px;
 	width: 0;
-	height: 32px;
-	padding: 0 10px;
+	height: 28px;
+	padding: 0 8px;
 	border-radius: 5px;
-	border: 1px solid var(--ui-color-accent-main-primary);
+	border: 1px solid var(--ui-color-design-outline-stroke);
 	box-sizing: border-box;
 }
 
 .ui-block-diagram-search-input.--open {
-	width: 323px;
+	width: 268px;
+}
+
+.ui-block-diagram-search-input.--focus {
+	border: 1px solid var(--ui-color-accent-main-primary);
 }
 
 .ui-block-diagram-search-input.ui-block-diagram-open-search-bar .ui-block-diagram-search-input__input,
@@ -707,12 +770,13 @@
 
 .ui-block-diagram-search-input__input {
 	width: calc(100% - 48px);
-	height: 30px;
-	padding-left: 10px;
+	height: 28px;
+	padding-left: 0;
 	padding-right: 12px;
 	border: none;
 	font: var(--ui-font-size-md) var(--ui-font-family-system);
 	color: var(--ui-color-base-90);
+	letter-spacing: var(--ui-letter-spacing-l);
 	outline: none;
 	background-color: inherit;
 	box-sizing: border-box;
@@ -720,18 +784,19 @@
 
 .ui-block-diagram-search-input__input::placeholder {
 	font: var(--ui-font-size-md) var(--ui-font-family-system);
-	color: var(--ui-color-base-60);
+	color: var(--ui-color-design-outline-content-secondary);
+	letter-spacing: var(--ui-letter-spacing-l);
 }
 
 .ui-block-diagram-search-input__icon {
-	width: 24px;
-	height: 24px;
+	width: 20px;
+	height: 20px;
 	background-color: var(--ui-color-gray-50);
 }
 
 .ui-block-diagram-search-input__clear-btn {
-	width: 24px;
-	height: 24px;
+	width: 20px;
+	height: 20px;
 	padding: 0;
 	border: none;
 	background-color: transparent;
@@ -743,13 +808,13 @@
 }
 
 @keyframes block-diagram-open-search-bar { 
-	0% { width: 36px; height: 32px; }
-	100% { width: 323px; height: 32px; }
+	0% { width: 36px; height: 28px; }
+	100% { width: 268px; height: 28px; }
 }
 
 @keyframes block-diagram-close-search-bar { 
-	0% { width: 323px; height: 32px; }
-	100% { width: 36px; height: 32px; }
+	0% { width: 268px; height: 28px; }
+	100% { width: 36px; height: 28px; }
 }
 
 

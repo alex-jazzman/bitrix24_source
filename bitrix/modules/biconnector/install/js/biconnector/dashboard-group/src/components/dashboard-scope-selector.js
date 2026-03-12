@@ -16,7 +16,6 @@ export const DashboardScopeSelector: BitrixVueComponentProps = {
 	},
 	data(): Object {
 		return {
-			scopeNameLengthLimit: 30,
 			initialScopedIds: [],
 		};
 	},
@@ -63,13 +62,13 @@ export const DashboardScopeSelector: BitrixVueComponentProps = {
 			const formattedScopes = [];
 			for (const [index: number, scope: Scope] of this.visibleScopes.entries())
 			{
-				const name = this.formatScopeName(scope.name);
+				const name = scope.name;
 				const suffix: string = index < this.visibleScopes.length - 1 ? ', ' : '';
 
 				const element: string = `
 					<span 
 						class="scope-name"
-						title="${scope.name.length > this.scopeNameLengthLimit ? Text.encode(scope.name) : ''}"
+						title="${Text.encode(scope.name)}"
 					>
 						${Text.encode(name + suffix)}
 					</span>
@@ -95,15 +94,6 @@ export const DashboardScopeSelector: BitrixVueComponentProps = {
 		'onScopeChange',
 	],
 	methods: {
-		formatScopeName(scopeName: string): string
-		{
-			if (scopeName.length < this.scopeNameLengthLimit)
-			{
-				return scopeName;
-			}
-
-			return `${scopeName.slice(0, this.scopeNameLengthLimit)}...`;
-		},
 		openSelector(): void
 		{
 			if (!this.dialog)
@@ -131,7 +121,7 @@ export const DashboardScopeSelector: BitrixVueComponentProps = {
 				id: 'dashboard-scope-selector',
 				targetNode: this.$refs.dashboardScopes,
 				width: 350,
-				height: 300,
+				height: 370,
 				dropdownMode: true,
 				compactView: true,
 				showAvatars: false,
@@ -344,14 +334,19 @@ export const DashboardScopeSelector: BitrixVueComponentProps = {
 	},
 	template: `
 		<div class="group-dashboard-scopes-container">
-			<span class="scope-list scope-list-dashboard" @click="openSelector">
-				<span
-					v-if="scopes.length > 0"
-					v-html="scopeText"
-				></span>
-				<span v-else class="scope-list-empty">
-					{{$Bitrix.Loc.getMessage('BI_GROUP_DASHBOARD_SCOPES_EMPTY')}}
-				</span>
+			<span 
+				class="scope-list scope-list-dashboard"
+				@click="openSelector"
+				v-if="scopes.length > 0"
+				v-html="scopeText"
+			>
+			</span>
+			<span
+				class="scope-list-empty"
+				@click="openSelector"
+				v-else
+			>
+				{{$Bitrix.Loc.getMessage('BI_GROUP_DASHBOARD_SCOPES_EMPTY')}}
 			</span>
 			<span ref="dashboardScopes"></span>
 		</div>

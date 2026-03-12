@@ -14,13 +14,24 @@ enum EventType: string
 	case ChatUserAdd = 'chatUserAdd';
 	case ChatUserLeave = 'chatUserLeave';
 	case FileTranscription = 'fileTranscription';
+	case SharingLinkGenerate = 'sharingLinkGenerate';
+	case SharingLinkUpdate = 'sharingLinkUpdate';
 	case ChatHide = 'chatHide';
 	case MessageSend = 'messageChat';
 	case PrivateMessageSend = 'message';
 	case ChatMute = 'chatMuteNotify';
 	case RecentUpdate = 'recentUpdate';
-	case RecentStickerDelete = 'recentStickerDelete';
-	case RecentStickerDeleteAll = 'recentStickerDeleteAll';
 	case ReadAll = 'readAllChats';
 	case ReadAllByType = 'readAllChatsByType';
+	case StickerPackAdd = 'stickerPackAdd';
+	case StickerAdd = 'stickerAdd';
+	case StickerPackDelete = 'stickerPackDelete';
+	case StickerDelete = 'stickerDelete';
+	case StickerPackLink = 'stickerPackLink';
+	case StickerPackUnlink = 'stickerPackUnlink';
+	case StickerPackRename = 'stickerPackRename';
+	case StickerRecentDelete = 'stickerRecentDelete';
+	case StickerRecentDeleteAll = 'stickerRecentDeleteAll';
+	case AutoTaskStatus = 'autoTaskStatus';
+	case ChatPin = 'chatPin';
 }

@@ -60,7 +60,7 @@ jn.define('settings-v2/ui/items/src/security-banner', (require, exports, module)
 			const controllersValuesArray = Object.values(this.controllersValues);
 
 			this.setState({
-				progressSize: controllersValuesArray.length,
+				progressSize: controllersValuesArray.filter((value) => !Type.isNil(value)).length,
 				progressCount: controllersValuesArray.filter(Boolean).length,
 			});
 		}

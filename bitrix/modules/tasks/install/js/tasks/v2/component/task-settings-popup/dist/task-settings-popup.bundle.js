@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,ui_vue3_components_button,ui_vue3_components_popup,tasks_v2_provider_service_deadlineService,tasks_v2_provider_service_taskService,tasks_v2_provider_service_stateService,tasks_v2_core,tasks_v2_lib_showLimit,ui_switcher,ui_vue3_components_switcher,tasks_v2_component_elements_questionMark,ui_forms,main_core,main_date,ui_vue3_vuex,ui_datePicker,ui_vue3_components_richLoc,ui_system_typography_vue,ui_system_input_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_calendar) {
+(function (exports,ui_vue3_components_button,ui_vue3_components_popup,tasks_v2_provider_service_deadlineService,tasks_v2_provider_service_taskService,tasks_v2_provider_service_stateService,tasks_v2_core,ui_switcher,ui_vue3_components_switcher,tasks_v2_lib_showLimit,tasks_v2_component_elements_questionMark,ui_forms,main_core,main_date,ui_vue3_vuex,ui_datePicker,ui_vue3_components_richLoc,ui_system_typography_vue,ui_system_input_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_calendar) {
 	'use strict';
 
 	// @vue/component
@@ -30,6 +30,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    lock: {
 	      type: Boolean,
 	      default: false
+	    },
+	    featureId: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  emits: ['update:modelValue'],
@@ -51,7 +55,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  },
 	  methods: {
 	    handleContainerClick() {
+	      if (this.lock) {
+	        this.handleLockClick();
+	        return;
+	      }
 	      this.$emit('update:modelValue', !this.modelValue);
+	    },
+	    handleLockClick() {
+	      if (!this.featureId) {
+	        return;
+	      }
+	      void tasks_v2_lib_showLimit.showLimit({
+	        featureId: this.featureId
+	      });
 	    }
 	  },
 	  template: `
@@ -73,6 +89,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					v-if="lock"
 					:name="Outline.LOCK_M"
 					class="tasks-task-setting-switcher-lock"
+					@click="handleLockClick"
 				/>
 			</div>
 			<div v-if="modelValue && $slots.default" class="tasks-task-setting-content">
@@ -571,12 +588,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        return this.localAutocompleteSubTasks === true;
 	      },
 	      set(value) {
-	        if (this.isAutocompleteSubTasksLocked) {
-	          void tasks_v2_lib_showLimit.showLimit({
-	            featureId: tasks_v2_core.Core.getParams().restrictions.relatedSubtaskDeadlines.featureId
-	          });
-	          return;
-	        }
 	        this.localAutocompleteSubTasks = value;
 	        this.emitFlagsUpdate({
 	          autocompleteSubTasks: value
@@ -588,12 +599,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        return this.localFlags.needsControl === true;
 	      },
 	      set(value) {
-	        if (this.isTaskControlLocked) {
-	          void tasks_v2_lib_showLimit.showLimit({
-	            featureId: tasks_v2_core.Core.getParams().restrictions.control.featureId
-	          });
-	          return;
-	        }
 	        this.localFlags.needsControl = value;
 	        this.emitFlagsUpdate({
 	          needsControl: value
@@ -623,12 +628,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        return this.localFlags.matchesWorkTime === true;
 	      },
 	      set(value) {
-	        if (this.isMatchesWorkTimeLocked) {
-	          void tasks_v2_lib_showLimit.showLimit({
-	            featureId: tasks_v2_core.Core.getParams().restrictions.skipWeekends.featureId
-	          });
-	          return;
-	        }
 	        this.localFlags.matchesWorkTime = value;
 	        this.emitFlagsUpdate({
 	          matchesWorkTime: value
@@ -638,11 +637,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    isMatchesWorkTimeLocked() {
 	      return !tasks_v2_core.Core.getParams().restrictions.skipWeekends.available;
 	    },
+	    matchesWorkTimeFeatureId() {
+	      return tasks_v2_core.Core.getParams().restrictions.skipWeekends.featureId;
+	    },
 	    isTaskControlLocked() {
 	      return !tasks_v2_core.Core.getParams().restrictions.control.available;
 	    },
+	    taskControlFeatureId() {
+	      return tasks_v2_core.Core.getParams().restrictions.control.featureId;
+	    },
 	    isAutocompleteSubTasksLocked() {
 	      return !tasks_v2_core.Core.getParams().restrictions.relatedSubtaskDeadlines.available;
+	    },
+	    autocompleteSubTasksFeatureId() {
+	      return tasks_v2_core.Core.getParams().restrictions.relatedSubtaskDeadlines.featureId;
 	    }
 	  },
 	  created() {
@@ -676,7 +684,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				v-model="taskControl"
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_CONTROL_LABEL')"
 				:questionMarkHint="loc('TASKS_V2_TASK_SETTINGS_POPUP_CONTROL_HINT')"
-				:lock="isMatchesWorkTimeLocked"
+				:lock="isTaskControlLocked"
+				:featureId="taskControlFeatureId"
 			/>
 			<TaskSetting
 				v-model="isDefaultDeadlineActive"
@@ -704,11 +713,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_WORK_TIME_LABEL')"
 				:questionMarkHint="loc('TASKS_V2_TASK_SETTINGS_POPUP_WORK_TIME_HINT')"
 				:lock="isMatchesWorkTimeLocked"
+				:featureId="matchesWorkTimeFeatureId"
 			/>
 			<TaskSetting
 				v-model="autocompleteSubTasks"
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_AUTO_COMPLETE_SUBTASKS_LABEL')"
 				:lock="isAutocompleteSubTasksLocked"
+				:featureId="autocompleteSubTasksFeatureId"
 			/>
 		</div>
 	`
@@ -791,7 +802,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          needsControl: this.stateFlags.needsControl,
 	          matchesWorkTime: this.stateFlags.matchesWorkTime,
 	          defaultRequireResult: this.stateFlags.defaultRequireResult,
-	          defaultDeadline: this.deadlineUserOption
+	          defaultDeadline: this.deadlineUserOption,
+	          allowsTimeTracking: this.stateFlags.allowsTimeTracking
 	        });
 	      }
 	      await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
@@ -873,5 +885,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.TaskSettingsPopup = TaskSettingsPopup;
 
-}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX.Vue3.Components,BX.UI.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.UI,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX,BX,BX.Main,BX.Vue3.Vuex,BX.UI.DatePicker,BX.UI.Vue3.Components,BX.UI.System.Typography.Vue,BX.UI.System.Input.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX.Vue3.Components,BX.UI.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2,BX.UI,BX.UI.Vue3.Components,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX,BX,BX.Main,BX.Vue3.Vuex,BX.UI.DatePicker,BX.UI.Vue3.Components,BX.UI.System.Typography.Vue,BX.UI.System.Input.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib));
 //# sourceMappingURL=task-settings-popup.bundle.js.map

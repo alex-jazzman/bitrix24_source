@@ -21,6 +21,21 @@
 	max-width: 600px;
 }
 
+.setting-selector-button--disabled {
+	opacity: 0.8;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+.setting-selector-button--disabled:hover {
+	background-color: transparent;
+}
+
+.setting-selector-button--disabled .setting-selector-button-text {
+	color: var(--ui-color-base-70);
+	border-bottom: 1px dashed var(--ui-color-base-40);
+}
+
 .setting-selector-container
 {
 	display: inline;

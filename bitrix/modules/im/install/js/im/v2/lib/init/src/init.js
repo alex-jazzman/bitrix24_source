@@ -1,3 +1,5 @@
+import { SidePanel } from 'main.sidepanel';
+
 import { Core } from 'im.v2.application.core';
 import { CallManager } from 'im.v2.lib.call';
 import { PhoneManager } from 'im.v2.lib.phone';
@@ -13,9 +15,18 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { UpdateStateManager } from 'im.v2.lib.update-state.manager';
 import { Router } from 'im.v2.lib.router';
 
+import { BindingsManager } from './classes/bindings';
 import { PreloadedEntity } from './const/const';
+import { BindingsCondition } from './const/bindings';
 
 import type { JsonObject } from 'main.core';
+
+type AnchorLink = {
+	anchor: HTMLElement,
+	matches: Array,
+	target: string,
+	url: string,
+};
 
 export class InitManager
 {
@@ -50,6 +61,7 @@ export class InitManager
 		this.#initAvailableAIModelsList();
 		this.#initPreloadedEntities();
 		this.#initCurrentUserAdminStatus();
+		this.#initBindings();
 
 		CounterManager.init();
 		PermissionManager.init();
@@ -153,5 +165,22 @@ export class InitManager
 	{
 		const { isCurrentUserAdmin } = Core.getApplicationData();
 		void Core.getStore().dispatch('users/setCurrentUserAdminStatus', isCurrentUserAdmin);
+	}
+
+	#initBindings(): void
+	{
+		SidePanel.Instance.bindAnchors({
+			rules: [
+				{
+					condition: Object.values(BindingsCondition),
+					handler(event: PointerEvent, link: AnchorLink)
+					{
+						(new BindingsManager()).routeLink(link.url);
+
+						event.preventDefault();
+					},
+				},
+			],
+		});
 	}
 }

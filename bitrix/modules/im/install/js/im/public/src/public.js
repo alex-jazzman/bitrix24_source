@@ -3,10 +3,12 @@ import { Type, Extension, Reflection, type JsonObject } from 'main.core';
 import { legacyMessenger, legacyDesktop } from './legacy';
 import { desktop } from './desktop';
 import { prepareSettingsSection } from './functions/settings';
+import { SharedLinkService } from './classes/shared-link';
 
 import type { NavigationMenuItemParams } from 'im.v2.lib.navigation';
 import type { CreatableChatType, OpenChatCreationParams } from 'im.v2.component.content.chat-forms.forms';
 import type { ChatEmbeddedApplicationType, ChatEmbeddedApplicationInstance } from 'im.v2.application.launch';
+import type { JoinChatResult } from './classes/shared-link';
 
 type Opener = {
 	openChat: (dialogId?: string, messageId?: number) => Promise,
@@ -386,6 +388,26 @@ class Messenger
 
 		const CallManager = Reflection.getClass('BX.Messenger.v2.Lib.CallManager');
 		CallManager?.getInstance().toggleDebugFlag(debug);
+	}
+
+	async joinChatByCode(code: string): Promise<void>
+	{
+		const { Notifier } = Reflection.getClass('BX.Messenger.v2.Lib');
+
+		try
+		{
+			const { dialogId }: JoinChatResult = await (new SharedLinkService()).joinChatByCode(code);
+			void this.openChat(dialogId);
+		}
+		catch
+		{
+			if (Notifier)
+			{
+				Notifier.sharedLink.onClickInvalidLinkError();
+			}
+
+			console.error('Messenger.joinChatByCode error');
+		}
 	}
 
 	async saveFileToDisk(fileId: number | string): Promise<void>

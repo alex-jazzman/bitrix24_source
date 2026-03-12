@@ -1,3 +1,0 @@
-<?php
-$MESS["CRM_PRODUCT_PROP_DOWNLOAD"] = "Жүктеу";
-$MESS["CRM_PRODUCT_PROP_ENLARGE"] = "Үлкейту";

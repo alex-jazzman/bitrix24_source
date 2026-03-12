@@ -1,3 +1,0 @@
-<?php
-$MESS["SIGN_USER_PARTY_POPUP_TAB_DEPARTMENTS"] = "Бөлімдер";
-$MESS["SIGN_USER_PARTY_POPUP_TAB_MEMBERS"] = "Қызметкерлер";

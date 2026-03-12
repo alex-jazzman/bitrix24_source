@@ -236,7 +236,7 @@ function updateUserData(callId, users)
 			return;
 		}
 
-		BX.ajax.runAction('im.call.getUsers', {
+		BX.ajax.runAction('call.CallManager.getUsers', {
 			data: {
 				callId,
 				userIds: usersToUpdate,
@@ -653,7 +653,7 @@ const getUuidv4 = () =>
 
 function reportConnectionResult(callId, connectionResult)
 {
-	BX.ajax.runAction("im.call.reportConnection", {
+	BX.ajax.runAction("call.CallManager.reportConnection", {
 		data: {
 			callId: callId,
 			connectionResult: connectionResult
@@ -997,6 +997,45 @@ const isConferenceChatEnabled = () =>
 	return BX.message('conference_chat_enabled');
 }
 
+/**
+ * @param {string|Error} error
+ * @returns {string}
+ */
+function getCallConnectionErrorCode(error)
+{
+	let errorCode = 'UNKNOWN_ERROR';
+	if (Type.isString(error) && error)
+	{
+		errorCode = error;
+	}
+	else if (Type.isObject(error) && error instanceof JoinResponseError)
+	{
+		errorCode = error.name;
+	}
+	else if (Type.isObject(error) && error.code)
+	{
+		errorCode = error.code === 'access_denied' ? 'ACCESS_DENIED' : error.code;
+	}
+
+	return errorCode;
+}
+
+/**
+ * @param {{message: string}|Error} error
+ * @returns {string}
+ */
+function getCallConnectionErrorMessage(error)
+{
+	let errorMessage = error?.message ?? '';
+	if (Type.isObject(error) && error instanceof Error && error.name !== 'Error' && !(error instanceof JoinResponseError))
+	{
+		// additional error type for js error
+		errorMessage = `${error.name}: ${error.message}`;
+	}
+
+	return errorMessage;
+}
+
 const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => {
 	if (!Type.isPlainObject(callOptions))
 	{
@@ -1005,81 +1044,101 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 
 	return new Promise(async (resolve, reject) =>
 	{
-		abortController = new AbortController();
-		const callBalancerUrl = CallSettingsManager.callBalancerUrl;
+		try
+		{
+			abortController = new AbortController();
+			const callBalancerUrl = CallSettingsManager.callBalancerUrl;
+			const url = `${callBalancerUrl}/v2/join?mustCreate=${Boolean(mustCreate)}`;
 
-		const roomType = callOptions.provider === Provider.Plain && CallSettingsManager.isJwtInPlainCallsEnabled()
-			? RoomType.Personal
-			: RoomType.Small;
-		const url = `${callBalancerUrl}/v2/join?mustCreate=${Boolean(mustCreate)}`;
+			const userToken = await CallTokenManager.getUserToken(chatId);
+			const isPlainCall = callOptions.provider === Provider.Plain;
+			const roomType = RoomType.Small;
 
-		const userToken = await CallTokenManager.getUserToken(chatId);
+			const data = JSON.stringify({
+				userToken,
+				roomType,
+				isOneToOne: isPlainCall,
+				clientVersion: ClientVersion,
+				clientPlatform: ClientPlatform,
+				...callOptions,
+			});
 
-		const data = JSON.stringify({
-			userToken,
-			roomType,
-			clientVersion: ClientVersion,
-			clientPlatform: ClientPlatform,
-			...callOptions,
-		});
-
-		let responseInfo = null;
-		fetch(url, {
-			method: 'POST',
-			body: data,
-			signal: abortController.signal,
-		})
-			.then((response) => {
-				responseInfo = { status: response?.status, ok: response?.ok };
-
-				return response.json();
+			let responseInfo = null;
+			fetch(url, {
+				method: 'POST',
+				body: data,
+				signal: abortController.signal,
 			})
-			.catch((error) => {
-				if (error instanceof SyntaxError)
-				{
-					throw new JoinResponseError(error.message, JoinRequestFailedCodes.JsonParsingError);
-				}
-				else
-				{
-					throw error;
-				}
-			})
-			.then((response) => {
-				if (!responseInfo?.ok)
-				{
-					if (response?.error)
+				.catch((error) => {
+					if (error instanceof TypeError)
 					{
-						throw new JoinResponseError(response?.error?.message, response?.error?.code);
+						throw new JoinResponseError(error, JoinRequestFailedCodes.FailedRequest);
 					}
 					else
 					{
-						throw new JoinResponseError(`Response status: ${responseInfo.status}`, JoinRequestFailedCodes.UnexpectedResponse);
+						throw error;
 					}
-				}
-				resolve(response);
-			})
-			.catch((error) => {
-				try
-				{
-					if (error?.xhr?.responseText)
+				})
+				.then((response) => {
+					responseInfo = { status: response?.status, ok: response?.ok };
+
+					return response.json();
+				})
+				.catch((error) => {
+					if (Type.isObject(error) && error.name === 'AbortError')
 					{
-						const response = JSON.parse(error.xhr.responseText);
-						if (response.error)
+						throw new JoinResponseError(error, JoinRequestFailedCodes.AbortedRequest);
+					}
+					else if (error instanceof SyntaxError)
+					{
+						throw new JoinResponseError(error, JoinRequestFailedCodes.JsonParsingError);
+					}
+					else
+					{
+						throw error;
+					}
+				})
+				.then((response) => {
+					if (!responseInfo?.ok)
+					{
+						if (response?.error)
 						{
-							reject(response);
+							throw new JoinResponseError(response?.error?.message, response?.error?.code);
+						}
+						else
+						{
+							throw new JoinResponseError(`Response status: ${responseInfo.status}`, JoinRequestFailedCodes.UnexpectedResponse);
 						}
 					}
-				}
-				catch (e)
-				{
-					reject(e);
-				}
+					resolve(response);
+				})
+				.catch((error) => {
+					try
+					{
+						if (error?.xhr?.responseText)
+						{
+							const response = JSON.parse(error.xhr.responseText);
+							if (response.error)
+							{
+								reject(response);
+							}
+						}
+					}
+					catch (e)
+					{
+						reject(e);
+					}
 
-				reject(error);
-			})
-			.finally(() => {
-				abortController = null;
-			});
+					reject(error);
+				})
+				.finally(() => {
+					abortController = null;
+				});
+		}
+		catch (error)
+		{
+			reject(error);
+		}
 	});
 };
 
@@ -1155,19 +1214,41 @@ const countDisableCameraNewJoinedUsersFeature = () =>
 	return Extension.getSettings('call.core')?.countDisableCameraNewJoinedUsersFeature;
 }
 
+const isStreamQualityFeatureEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isStreamQualityFeatureEnabled;
+}
+
 const isPictureInPictureFeatureEnabled = () =>
 {
 	return Extension.getSettings('call.core')?.isPictureInPictureFeatureEnabled;
 }
 
-const isNewQOSEnabled = () =>
+const isMetricsEnabled = () =>
 {
-	return Extension.getSettings('call.core')?.isNewQOSEnabled;
+	return Extension.getSettings('call.core')?.isMetricsEnabled;
+}
+
+const isMetricsLogsEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isMetricsLogsEnabled;
 }
 
 const isKibanaLogsEnabled = () =>
 {
 	return Extension.getSettings('call.core')?.isKibanaLogsEnabled;
+}
+
+let localConsoleLogsEnabled = false;
+
+const setConsoleLogsEnabled = (enabled: boolean = true) =>
+{
+	localConsoleLogsEnabled = !!enabled;
+}
+
+const isConsoleLogsEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isConsoleLogsEnabled || localConsoleLogsEnabled;
 }
 
 const isChatMountInPage = () =>
@@ -1299,10 +1380,12 @@ export default {
 	useTcpSdp,
 	openArticle,
 	getAiSettings,
+	isStreamQualityFeatureEnabled,
 	getCloudRecordSettings,
 	isUserControlFeatureEnabled,
 	isPictureInPictureFeatureEnabled,
-	isNewQOSEnabled,
+	isMetricsEnabled,
+	isMetricsLogsEnabled,
 	sendLog,
 	isChatMountInPage,
 	roomPermissions,
@@ -1323,9 +1406,13 @@ export default {
 	isDisableCameraNewJoinedUsersFeatureEnabled,
 	countDisableCameraNewJoinedUsersFeature,
 	isKibanaLogsEnabled,
+	isConsoleLogsEnabled,
+	setConsoleLogsEnabled,
 	deepParseJSON,
 	isCloudRecordEnabled,
 	isCloudRecordTariffEnabled,
 	isCommonRecordStateInactive,
 	isCloudRecordLogEnabled,
+	getCallConnectionErrorCode,
+	getCallConnectionErrorMessage,
 };

@@ -840,7 +840,7 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 	          result = _context6.sent;
 	          Guide = result[0].Guide;
 	          BannerDispatcher = result[1].BannerDispatcher;
-	          BannerDispatcher.critical.toQueue(function (onDone) {
+	          BannerDispatcher.normal.toQueue(function (onDone) {
 	            var guide = new Guide({
 	              id: 'share-prompt-grid-create-prompt-hint',
 	              simpleMode: true,

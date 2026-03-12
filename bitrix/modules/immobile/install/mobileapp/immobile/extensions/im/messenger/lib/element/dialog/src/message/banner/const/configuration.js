@@ -14,6 +14,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 
 	const { ButtonType, ButtonDesignType, ImageNameType, ButtonId } = require('im/messenger/lib/element/dialog/message/banner/const/type');
 	const { SignMetaData } = require('im/messenger/lib/element/dialog/message/banner/banners/sign/configuration');
+	const { AdminMetaData } = require('im/messenger/lib/element/dialog/src/message/banner/banners/admin/configuration');
 
 	/**
 	 * @type {BannerMetaData}
@@ -157,6 +158,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 			},
 		},
 		[MessageParams.ComponentId.SignMessage]: SignMetaData,
+		[MessageParams.ComponentId.AdminMessage]: AdminMetaData,
 	};
 
 	/**

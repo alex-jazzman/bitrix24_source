@@ -1,12 +1,16 @@
 import { type LoadableExtensionEntry } from '../load-extension';
 import { type RawAsset, loadAssets } from './load-assets';
 import { type ExtensionAssets, parseExtensionHtml } from './parse-extension-html';
+import { tryLoad } from './try-load';
 import { loadAll } from './utils';
 
 export async function processExtensions(map: Map<string, LoadableExtensionEntry>)
 {
 	const loadableExtensions: Array<string> = [...map.keys()];
-	const rawAssets: Array<RawAsset> = await loadAssets({ extension: loadableExtensions });
+	const rawAssets: Array<RawAsset> = await tryLoad(
+		loadableExtensions,
+		() => loadAssets({ extension: loadableExtensions }),
+	) ?? [];
 
 	rawAssets.forEach((rawAsset: RawAsset) => {
 		const preparedHtml = rawAsset.html ?? '';
@@ -24,8 +28,14 @@ export async function processExtensions(map: Map<string, LoadableExtensionEntry>
 
 		void Promise
 			.all([
-				loadAll(extensionAssets.externalScripts),
-				loadAll(extensionAssets.externalStyles),
+				tryLoad(
+					loadableExtensions,
+					() => loadAll(extensionAssets.externalScripts),
+				),
+				tryLoad(
+					loadableExtensions,
+					() => loadAll(extensionAssets.externalStyles),
+				),
 			])
 			.then(() => {
 				extensionAssets.inlineAfterScripts.forEach((script: string) => {

@@ -9,6 +9,7 @@ export const MenuActions = Object.freeze({
 	teamRights: 'teamRights',
 
 	moveUserToAnotherDepartment: 'moveUserToAnotherDepartment',
+	showMultiRoleUserSettings: 'showMultiRoleUserSettings',
 	removeUserFromDepartment: 'removeUserFromDepartment',
 	fireUserFromCompany: 'fireUserFromCompany',
 

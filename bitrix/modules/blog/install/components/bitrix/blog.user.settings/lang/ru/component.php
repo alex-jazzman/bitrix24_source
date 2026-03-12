@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_MODULE_NOT_INSTALL"] = "Модуль блогов не установлен.";
 $MESS["B_B_US_TITLE"] = "Пользователи";
 $MESS["B_B_US_TITLE_BLOG"] = "Пользователи блога &quot;#NAME#&quot;";
@@ -10,4 +10,3 @@ $MESS["BLOG_BLOG_ADD_F_POS_ADDED"] = "Посетитель &quot;#NAME#&quot; д
 $MESS["BLOG_BLOG_ADD_F_POS_ADD_ERROR"] = "Ошибка добавления посетителя &quot;#NAME#&quot; в список желающих вступить в друзья";
 $MESS["BLOG_BLOG_ADD_F_POS_NOT_FOUND"] = "Посетитель &quot;#NAME#&quot; не найден";
 $MESS["BLOG_BLOG_SESSID_WRONG"] = "Ваша сессия истекла, пожалуйста, повторите действие";
-?>

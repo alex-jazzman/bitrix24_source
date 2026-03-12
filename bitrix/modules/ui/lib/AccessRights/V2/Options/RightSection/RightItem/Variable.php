@@ -15,6 +15,7 @@ class Variable implements JsonSerializable, Arrayable
 	protected array $requires = [];
 	protected ?bool $isSecondary = null;
 	protected ?string $hint = null;
+	protected ?bool $isUseGroupHeadValuesInHint = null;
 
 	public function __construct(
 		protected int|string $id,
@@ -157,6 +158,18 @@ class Variable implements JsonSerializable, Arrayable
 		return $this;
 	}
 
+	public function getIsUseGroupHeadValuesInHint(): ?bool
+	{
+		return $this->isUseGroupHeadValuesInHint;
+	}
+
+	public function setIsUseGroupHeadValuesInHint(?bool $isUseGroupHeadValuesInHint): static
+	{
+		$this->isUseGroupHeadValuesInHint = $isUseGroupHeadValuesInHint;
+
+		return $this;
+	}
+
 	public function toArray(): array
 	{
 		return [
@@ -170,11 +183,77 @@ class Variable implements JsonSerializable, Arrayable
 			'requires' => $this->getRequires(),
 			'secondary' => $this->isSecondary(),
 			'hint' => $this->getHint(),
+			'isUseGroupHeadValuesInHint' => $this->getIsUseGroupHeadValuesInHint(),
 		];
 	}
 
 	public function jsonSerialize(): array
 	{
 		return $this->toArray();
+	}
+
+	public static function tryFromArray(array $data): ?self
+	{
+		if (!isset($data['id']))
+		{
+			return null;
+		}
+
+		if (!isset($data['title']) || !is_string($data['title']))
+		{
+			return null;
+		}
+
+		$variable = new self(
+			$data['id'],
+			$data['title'],
+		);
+
+		if (isset($data['entityId']))
+		{
+			$variable->setEntityId((string)$data['entityId']);
+		}
+
+		if (isset($data['supertitle']))
+		{
+			$variable->setSupertitle((string)$data['supertitle']);
+		}
+
+		if (isset($data['avatar']))
+		{
+			$variable->setAvatar((string)$data['avatar']);
+		}
+
+		if (isset($data['avatarOptions']) && is_array($data['avatarOptions']))
+		{
+			$variable->setAvatarOptions($data['avatarOptions']);
+		}
+
+		if (isset($data['conflictsWith']) && is_array($data['conflictsWith']))
+		{
+			$variable->setConflictsWith($data['conflictsWith']);
+		}
+
+		if (isset($data['requires']) && is_array($data['requires']))
+		{
+			$variable->setRequires($data['requires']);
+		}
+
+		if (isset($data['secondary']))
+		{
+			$variable->setIsSecondary((bool)$data['secondary']);
+		}
+
+		if (isset($data['hint']))
+		{
+			$variable->setHint((string)$data['hint']);
+		}
+
+		if (isset($data['isUseGroupHeadValuesInHint']))
+		{
+			$variable->setIsUseGroupHeadValuesInHint((bool)$data['isUseGroupHeadValuesInHint']);
+		}
+
+		return $variable;
 	}
 }

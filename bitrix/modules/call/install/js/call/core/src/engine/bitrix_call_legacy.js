@@ -39,12 +39,12 @@ import { CallStreamManager } from '../media-stream-manager';
  */
 
 const ajaxActions = {
-	invite: 'im.call.invite',
-	answer: 'im.call.answer',
-	decline: 'im.call.decline',
-	hangup: 'im.call.hangup',
-	ping: 'im.call.ping',
-	finish: 'im.call.finish',
+	invite: 'call.CallManager.invite',
+	answer: 'call.CallManager.answer',
+	decline: 'call.CallManager.decline',
+	hangup: 'call.CallManager.hangup',
+	ping: 'call.CallManager.ping',
+	finish: 'call.CallManager.finish',
 };
 
 const pullEvents = {
@@ -573,11 +573,6 @@ export class BitrixCallLegacy extends AbstractCall
 			});
 		}
 	}
-
-	useHdVideo(flag)
-	{
-		this.videoHd = (flag === true);
-	};
 
 	setMainStream(userId)
 	{

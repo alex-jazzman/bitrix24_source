@@ -62,11 +62,6 @@ jn.define('settings-v2/const', (require, exports, module) => {
 		SYSTEM: 'system',
 	};
 
-	const StyleType = {
-		ZEFIR: 'zefir',
-		DEFAULT: 'default',
-	};
-
 	const VideoQualityType = {
 		HIGH: 'HQ',
 		MEDIUM: 'MQ',
@@ -92,6 +87,7 @@ jn.define('settings-v2/const', (require, exports, module) => {
 
 	const NativeSettingsId = {
 		CACHE_INTERVAL: 'cache_interval',
+		CACHE_OTHER: 'cache_other',
 		CACHE_FILES: 'cache_files',
 		CACHE_MEDIA: 'cache_media',
 		APP_STYLE: 'app_style',
@@ -105,6 +101,7 @@ jn.define('settings-v2/const', (require, exports, module) => {
 		MAIL: 'mail',
 		SOCIALNETWORK: 'socialnetwork',
 		VOXIMPLANT: 'voximplant',
+		HIGHT_PUSH_OTP: 'hight-push-otp',
 	};
 
 	const SECURITY_SETTINGS_KEY = 'security-settings';
@@ -141,7 +138,6 @@ jn.define('settings-v2/const', (require, exports, module) => {
 		SettingsPageId,
 		SettingItemType,
 		ThemeType,
-		StyleType,
 		VideoQualityType,
 		ASSET_PATH,
 		EventType,

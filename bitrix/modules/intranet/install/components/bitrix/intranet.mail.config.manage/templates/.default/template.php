@@ -20,7 +20,7 @@ $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pa
 
 \CJSCore::init(array('socnetlogdest', 'popup', 'fx', 'ui.design-tokens'));
 $APPLICATION->setAdditionalCSS('/bitrix/components/bitrix/main.post.form/templates/.default/style.css');
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
 
 $currentUser = $arParams['CURRENT_USER'];
 $currentUser['__id'] = sprintf('U%u', $currentUser['ID']);

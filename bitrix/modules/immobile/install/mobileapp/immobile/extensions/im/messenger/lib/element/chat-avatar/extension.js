@@ -113,7 +113,9 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				backBorderWidth: 0,
 				backColor: Color.accentMainPrimaryalt.toHex(), // only IOS
 				hideOutline: true,
-				uri: CopilotAsset.mentionSvgUrl,
+				/** @desc CopilotAsset.mentionSvgUrl is not working on Android */
+				// uri: CopilotAsset.mentionSvgUrl,
+				uri: CopilotAsset.mentionPngUrl,
 				placeholder: {
 					type: placeholderType.svg,
 					backgroundColor: Color.accentSoftElementViolet.toHex(),

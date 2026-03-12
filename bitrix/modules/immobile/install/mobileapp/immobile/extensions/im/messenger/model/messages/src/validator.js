@@ -254,6 +254,11 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			result.lastReactionId = fields.lastReactionId;
 		}
 
+		if (Type.isPlainObject(fields.visualState))
+		{
+			result.visualState = { ...fields.visualState };
+		}
+
 		return result;
 	}
 
@@ -323,12 +328,8 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 
 				stickerParams = {
 					id: preparedValue.id,
-					type: preparedValue.type,
 					packId: preparedValue.packId,
 					packType: preparedValue.packType,
-					uri: withCurrentDomain(preparedValue.uri),
-					height: preparedValue.height,
-					width: preparedValue.width,
 				};
 			}
 			else

@@ -49,6 +49,7 @@ $MESS["TASKS_V2_TASK_FULL_CARD_START"] = "Start";
 $MESS["TASKS_V2_TASK_FULL_CARD_STOP_BEING_AUDITOR_ACTION"] = "Unfollow";
 $MESS["TASKS_V2_TASK_FULL_CARD_STOP_BEING_AUDITOR_NOTIF_FAIL"] = "Cannot remove your observer role from this task.";
 $MESS["TASKS_V2_TASK_FULL_CARD_STOP_BEING_AUDITOR_NOTIF_SUCC"] = "You are no longer observer in this task.";
+$MESS["TASKS_V2_TASK_FULL_CARD_TAKE"] = "Accept task";
 $MESS["TASKS_V2_TASK_FULL_CARD_UNFAVOR_ACTION"] = "Remove from Favorites";
 $MESS["TASKS_V2_TASK_FULL_CARD_UNFAVOR_NOTIF_FAIL"] = "Could not remove task from Favorites.";
 $MESS["TASKS_V2_TASK_FULL_CARD_UNFAVOR_NOTIF_SUCC"] = "Task has been removed from Favorites.";

@@ -412,7 +412,6 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 		const result = clone(elementState);
 		if (userId.toString() === MessengerParams.getUserId().toString())
 		{
-			removeAllCurrentUserReactions(result);
 			result.ownReactions.add(reaction);
 		}
 
@@ -437,44 +436,6 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 		result.reactionCounters[reaction]++;
 
 		return result;
-	}
-
-	/**
-	 *
-	 * @param {ReactionsModelState} reactions
-	 */
-	function removeAllCurrentUserReactions(reactions)
-	{
-		if (Feature.isMultipleReactionsEnabled)
-		{
-			return;
-		}
-
-		reactions.ownReactions.forEach((reaction) => {
-			if (!reactions.reactionUsers.has(reaction))
-			{
-				return;
-			}
-
-			const newUsers = reactions.reactionUsers.get(reaction)
-				.filter((userId) => userId.toString() !== MessengerParams.getUserId().toString())
-			;
-
-			reactions.reactionUsers.set(reaction, newUsers);
-
-			if (newUsers.length === 0)
-			{
-				reactions.reactionUsers.delete(reaction);
-			}
-
-			reactions.reactionCounters[reaction]--;
-			if (reactions.reactionCounters[reaction] === 0)
-			{
-				delete reactions.reactionCounters[reaction];
-			}
-		});
-
-		reactions.ownReactions = new Set();
 	}
 
 	module.exports = { reactionsModel };

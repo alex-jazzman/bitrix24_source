@@ -4,12 +4,6 @@
 jn.define('im/messenger/provider/services/chat/read', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
-	const {
-		ComponentCode,
-	} = require('im/messenger/const');
-	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType } = require('im/messenger/const');
-	const { Feature } = require('im/messenger/lib/feature');
 
 	const logger = getLogger('read-service--chat');
 	const READ_TIMEOUT = 300;
@@ -128,22 +122,6 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 			unreadMessageList,
 		})
 		{
-			if (!Feature.isMessengerV2Enabled)
-			{
-				MessengerEmitter.emit(
-					EventType.dialog.internal.readMessages,
-					{
-						messageIdList,
-						chatId,
-						lastReadId,
-						unreadMessageList,
-					},
-					ComponentCode.imNavigation,
-				);
-
-				return;
-			}
-
 			serviceLocator.get('read-service').readMessages({
 				messageIdList,
 				chatId,

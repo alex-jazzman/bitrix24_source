@@ -4,12 +4,14 @@ const Tool = Object.freeze({
 
 const Category = Object.freeze({
 	TaskOperations: 'task_operations',
+	TimeTracking: 'time_tracking',
 });
 
 const Event = Object.freeze({
 	DeadlineSet: 'deadline_set',
 	AssigneeChange: 'assignee_change',
 	TaskComplete: 'task_complete',
+	TaskView: 'task_view',
 	TaskCreate: 'task_create',
 	AddChecklist: 'add_checklist',
 	TaskCreateWithChecklist: 'task_create_with_checklist',
@@ -20,15 +22,24 @@ const Event = Object.freeze({
 	ClickCreate: 'click_create',
 	RoleClick: 'role_click',
 	RoleClickType: 'role_click_type',
+	PatternTaskCreate: 'pattern_task_create',
+	SubTaskAdd: 'subtask_add',
+	AddCoexecutor: 'add_coexecutor',
+	AddViewer: 'add_viewer',
+	StatusSummaryAdd: 'status_summary_add',
+	TimeEntryCreate: 'time_entry_create',
 });
 
 const Type = Object.freeze({
 	TaskMini: 'task_mini',
 	Task: 'task',
+	Auto: 'auto',
+	Manual: 'manual',
 });
 
 const Section = Object.freeze({
-	test: 'test',
+	Tasks: 'tasks',
+	Templates: 'templates',
 });
 
 const TaskState = Object.freeze({
@@ -39,6 +50,8 @@ const TaskState = Object.freeze({
 const SubSection = Object.freeze({
 	FullTaskForm: 'full_task_form',
 	TaskCard: 'task_card',
+	Chat: 'chat',
+	TemplatesCard: 'templates_card',
 	MyFiles: 'my_files',
 	Bitrix24Files: 'bitrix24_files',
 });
@@ -57,6 +70,16 @@ const Element = Object.freeze({
 	RoleDoingButton: 'role_doing_button',
 	RoleAssignedButton: 'role_assigned_button',
 	RoleWatchingButton: 'role_watching_button',
+	CreateButton: 'create_button',
+	ContextMenu: 'context_menu',
+	ContextMenuSubtask: 'context_menu_subtask',
+	ContextMenuTemplateTask: 'context_menu_template_task',
+	CompleteButton: 'complete_button',
+	DeadlineField: 'deadline_field',
+	CoexecutorButton: 'coexecutor_button',
+	ViewerButton: 'viewer_button',
+	AddResult: 'add_result',
+	ChatContextMenu: 'chat_context_menu',
 });
 
 const Status = Object.freeze({
@@ -79,6 +102,7 @@ const Params = Object.freeze({
 	FileExtension: (extension: string): string => `ext_${extension}`,
 	IsDemo: (isDemo: string): string => `isDemo_${isDemo ? 'Y' : 'N'}`,
 	FilterEnabled: (enabled: string): string => `filter_${enabled ? 'on' : 'off'}`,
+	TaskId: (taskId: number): string => `taskId_${taskId}`,
 });
 
 export const Analytics = Object.freeze({

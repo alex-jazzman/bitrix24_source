@@ -2,11 +2,15 @@
  * @module im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/pack-header
  */
 jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/pack-header', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Color } = require('tokens');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Text4 } = require('ui-system/typography/text');
 
-	const { GridSection } = require('im/messenger/controller/dialog/lib/sticker/src/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+
+	const { GridSection, StickerEventType } = require('im/messenger/controller/dialog/lib/sticker/src/const');
+	const { emitter } = require('im/messenger/controller/dialog/lib/sticker/src/utils/emitter');
 	const { PackMenu, ActionType } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack');
 
 	/**
@@ -15,6 +19,45 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/pack-head
 	 */
 	class StickerPackHeader extends LayoutComponent
 	{
+		static #currentUserId;
+
+		static get currentUserId()
+		{
+			this.#currentUserId = this.#currentUserId ?? serviceLocator.get('core').getUserId();
+
+			return this.#currentUserId;
+		}
+
+		constructor(props)
+		{
+			super(props);
+
+			this.state = {
+				title: props.title,
+			};
+		}
+
+		componentDidMount()
+		{
+			super.componentDidMount();
+			emitter.on(StickerEventType.grid.rename, this.renameHandler);
+		}
+
+		componentWillUnmount()
+		{
+			super.componentWillUnmount();
+			emitter.off(StickerEventType.grid.rename, this.renameHandler);
+		}
+
+		componentWillReceiveProps(props)
+		{
+			super.componentWillReceiveProps(props);
+			if (Type.isString(props.title))
+			{
+				this.state.title = props.title;
+			}
+		}
+
 		render()
 		{
 			return View(
@@ -41,11 +84,19 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/pack-head
 						flexGrow: 2,
 					},
 				},
-				Text4({
-					text: this.props.title,
-					color: Color.base4,
-					accent: true,
-				}),
+				View(
+					{
+						style: {
+							width: '90%',
+						},
+					},
+					Text4({
+						text: this.state.title,
+						color: Color.base4,
+						accent: true,
+						ellipsize: 'end',
+					}),
+				),
 			);
 		}
 
@@ -80,10 +131,22 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/pack-head
 			const menu = new PackMenu({
 				ui: this.moreButtonRef,
 				actions: this.#getMenuActions(),
-				packData: {},
+				packData: {
+					id: this.props.sectionData.packId,
+					type: this.props.sectionData.packType,
+				},
 			});
 
 			menu.show();
+		};
+
+		renameHandler = (packId, packType, name) => {
+			if (this.props.sectionData.packId === packId && this.props.sectionData.packType === packType)
+			{
+				this.setState({
+					title: name,
+				});
+			}
 		};
 
 		#getMenuActions()
@@ -93,13 +156,30 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/pack-head
 				return [];
 			}
 
-			const result = [];
 			if (this.props.sectionType === GridSection.recent)
 			{
-				result.push(ActionType.clearHistory);
+				return [
+					ActionType.clearHistory,
+				];
 			}
 
-			return result;
+			if (this.props.sectionData.authorId !== StickerPackHeader.currentUserId)
+			{
+				return [ActionType.unlink];
+			}
+
+			if (this.props.sectionData.authorId === StickerPackHeader.currentUserId)
+			{
+				const data = [];
+				if (this.props.canEditPack)
+				{
+					data.push(ActionType.edit);
+				}
+
+				return [...data, ActionType.delete];
+			}
+
+			return [];
 		}
 	}
 

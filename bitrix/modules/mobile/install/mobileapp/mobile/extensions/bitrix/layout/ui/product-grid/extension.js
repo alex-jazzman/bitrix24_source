@@ -9,7 +9,7 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 	const { FadeView } = require('animation/components/fade-view');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { Random } = require('utils/random');
-	const { FloatingButtonComponent } = require('layout/ui/floating-button');
+	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 
 	/**
 	 * Class provides basic implementation of product grid and must be inherited to concrete use case.
@@ -113,6 +113,7 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 							: this.renderEmptyScreen();
 					},
 				}),
+				this.renderAddItemButton(),
 			);
 		}
 
@@ -198,7 +199,6 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 						return null;
 					},
 				}),
-				this.renderAddItemButton(),
 			);
 		}
 
@@ -270,7 +270,6 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 					styles: this.getEmptyScreenStyles(),
 					backgroundColor: this.getEmptyScreenBackgroundColor(),
 				}),
-				this.renderAddItemButton(),
 			);
 		}
 
@@ -343,6 +342,21 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'showFloatingButton', true);
 		}
 
+		renderAddItemButton()
+		{
+			if (this.props.showFloatingButton && this.props.isNeedRenderFloatingButton && this.props.layout)
+			{
+				this.floatingButton = new FloatingActionButton({
+					layout: this.props.layout,
+					onClick: () => this.onAddItemButtonClick(),
+					onLongClick: () => this.onAddItemButtonLongClick(),
+				});
+				this.floatingButton.show();
+			}
+
+			return null;
+		}
+
 		/**
 		 * @return {string}
 		 */
@@ -357,24 +371,6 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 		get totalSumCaption()
 		{
 			return BX.prop.getString(this.props, 'totalSumCaption', '');
-		}
-
-		/**
-		 * Renders floating button to add new items (only to editable grid).
-		 * @returns {LayoutComponent|null}
-		 */
-		renderAddItemButton()
-		{
-			if (this.isEditable() && this.showFloatingButton)
-			{
-				return new FloatingButtonComponent({
-					testId: 'productGridAddItemButton',
-					onClick: () => this.onAddItemButtonClick(),
-					onLongClick: () => this.onAddItemButtonLongClick(),
-				});
-			}
-
-			return null;
 		}
 
 		/**

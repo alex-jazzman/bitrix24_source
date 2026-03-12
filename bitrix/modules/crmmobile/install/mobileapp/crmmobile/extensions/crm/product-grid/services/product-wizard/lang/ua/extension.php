@@ -1,2 +1,0 @@
-<?php
-$MESS["PRODUCT_GRID_SERVICE_PRODUCT_WIZARD_TITLE"] = "Новий товар";

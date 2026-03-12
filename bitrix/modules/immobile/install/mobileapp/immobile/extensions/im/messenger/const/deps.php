@@ -6,10 +6,12 @@ return [
 	],
 	'bundle' => [
 		'./src/ai-assistant-button',
+		'./src/ai-task',
 		'./src/analytics',
 		'./src/attach',
 		'./src/attach-picker',
 		'./src/app-status',
+		'./src/background-ui',
 		'./src/bot',
 		'./src/connection-status',
 		'./src/counter',
@@ -39,6 +41,7 @@ return [
 		'./src/sidebar',
 		'./src/promo',
 		'./src/copilot-button',
+		'./src/copilot-role',
 		'./src/component-code',
 		'./src/cache',
 		'./src/navigation-tab',
@@ -60,5 +63,7 @@ return [
 		'./src/refresher',
 		'./src/transcript-status',
 		'./src/messenger-component-request-method',
+		'./src/record-media-type',
+		'./src/upload',
 	],
 ];

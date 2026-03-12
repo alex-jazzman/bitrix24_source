@@ -7,9 +7,9 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 	const {
 		EventType,
 		ComponentCode,
+		NavigationTabId,
 	} = require('im/messenger/const');
 	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
-	const { getApiVersion } = require('im/messenger/api/api-version');
 
 	/**
 	 * @param {TabOptions} options
@@ -17,7 +17,16 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 	 */
 	async function openChatsTab(options)
 	{
-		return openTab(ComponentCode.imMessenger, options);
+		return openTab(NavigationTabId.chats, options);
+	}
+
+	/**
+	 * @param {TabOptions} options
+	 * @return {Promise}
+	 */
+	async function openTasksTab(options)
+	{
+		return openTab(NavigationTabId.task, options);
 	}
 
 	/**
@@ -26,7 +35,7 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 	 */
 	async function openCopilotTab(options)
 	{
-		return openTab(ComponentCode.imCopilotMessenger, options);
+		return openTab(NavigationTabId.copilot, options);
 	}
 
 	/**
@@ -35,7 +44,7 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 	 */
 	async function openChannelsTab(options)
 	{
-		return openTab(ComponentCode.imChannelMessenger, options);
+		return openTab(NavigationTabId.channel, options);
 	}
 
 	/**
@@ -44,7 +53,7 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 	 */
 	async function openCollabsTab(options)
 	{
-		return openTab(ComponentCode.imCollabMessenger, options);
+		return openTab(NavigationTabId.collab, options);
 	}
 
 	/**
@@ -53,33 +62,22 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 	 */
 	async function openLinesTab(options)
 	{
-		return openTab(ComponentCode.imOpenlinesRecent, options);
+		return openTab(NavigationTabId.openlines, options);
 	}
 
 	/**
+	 * @param {string} tabId
 	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openNotificationsTab(options)
+	async function openTab(tabId, options)
 	{
-		return openTab(ComponentCode.imNotify, options);
-	}
-
-	/**
-	 * @param {string} tabComponentCode
-	 * @param {TabOptions} options
-	 * @return {Promise}
-	 */
-	async function openTab(tabComponentCode, options)
-	{
-		if (!Object.values(ComponentCode).includes(tabComponentCode))
+		if (!NavigationTabId[tabId])
 		{
-			const error = new Error(`im: Error changing tab, tab ${tabComponentCode} does not exist.`);
+			const error = new Error(`im: Error changing tab, tab ${tabId} does not exist.`);
 
 			return Promise.reject(error);
 		}
-
-		const apiVersion = await getApiVersion();
 
 		const {
 			promise,
@@ -88,19 +86,13 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 		} = createPromiseWithResolvers();
 		try
 		{
-			const { sendChangeTabEvent } = require(`im/messenger/api/tab/v${apiVersion}`);
-
 			registerChangeTabResultHandler(
-				tabComponentCode,
+				tabId,
 				resolve,
 				reject,
 			);
 
-			sendChangeTabEvent(tabComponentCode, options)
-				.catch((error) => {
-					console.error('Messenger api: openTab error', error);
-				})
-			;
+			sendChangeTabEvent(tabId, options);
 		}
 		catch (error)
 		{
@@ -110,10 +102,10 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 		return promise;
 	}
 
-	function registerChangeTabResultHandler(tabComponentCode, successHandler, errorHandler)
+	function registerChangeTabResultHandler(targetTabId, successHandler, errorHandler)
 	{
-		const handler = ({ componentCode, errorText }) => {
-			if (componentCode !== tabComponentCode)
+		const handler = ({ tabId, errorText }) => {
+			if (tabId !== targetTabId)
 			{
 				return;
 			}
@@ -135,12 +127,21 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 		return handler;
 	}
 
+	function sendChangeTabEvent(tabId, options)
+	{
+		BX.postComponentEvent(
+			EventType.navigation.changeTab,
+			[tabId, options],
+			ComponentCode.imMessenger,
+		);
+	}
+
 	module.exports = {
 		openChatsTab,
+		openTasksTab,
 		openCopilotTab,
 		openChannelsTab,
 		openCollabsTab,
-		openNotificationsTab,
 		openLinesTab,
 	};
 });

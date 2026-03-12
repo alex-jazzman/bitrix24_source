@@ -7,8 +7,10 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admi
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/sale/prolog.php');
 Main\Loader::includeModule('sale');
 
+/** @global CAdminPage $adminPage */
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $listUrl = $selfFolderUrl."sale_discount.php?lang=".LANGUAGE_ID;
+/** @global CAdminSidePanelHelper $adminSidePanelHelper */
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
 $saleModulePermissions = $APPLICATION->GetGroupRight('sale');
@@ -85,26 +87,6 @@ else
 
 $arFields = array();
 
-if (
-	check_bitrix_sessid()
-	&& !$readOnly
-	&& $_SERVER['REQUEST_METHOD'] == 'POST'
-	&& !empty($_POST['AJAX_ACTION'])
-)
-{
-	switch ($_POST['AJAX_ACTION'])
-	{
-		case 'getUserName':
-			$userId = (int)$_POST['USER_ID'];
-			$APPLICATION->RestartBuffer();
-			echo Main\Web\Json::encode(array(
-				'userId' => $userId,
-				'name' => \Bitrix\Sale\Helpers\Admin\OrderEdit::getUserName($userId),
-			));
-			CMain::FinalActions();
-	}
-}
-
 $additionalFields = [];
 if (
 	check_bitrix_sessid()
@@ -113,8 +95,6 @@ if (
 	&& isset($_POST['Update']) && (string)$_POST['Update'] == 'Y'
 )
 {
-	$adminSidePanelHelper->decodeUriComponent();
-
 	$CONDITIONS = null;
 	$ACTIONS = null;
 

@@ -5,7 +5,7 @@ jn.define('settings-v2/ui/items/src/cache-banner', (require, exports, module) =>
 	const { createTestIdGenerator } = require('utils/test');
 	const { Area } = require('ui-system/layout/area');
 	const { Indent, Color } = require('tokens');
-	const { EventType, NativeSettingsId } = require('settings-v2/const');
+	const { EventType } = require('settings-v2/const');
 	const { NativeCacheService } = require('settings-v2/services/native');
 	const { formatFileSize } = require('utils/file');
 	const { H4, Text4 } = require('ui-system/typography');
@@ -30,11 +30,14 @@ jn.define('settings-v2/ui/items/src/cache-banner', (require, exports, module) =>
 		}
 
 		loadCacheSize = async () => {
-			const fileSize = await NativeCacheService.getSettingValueById(NativeSettingsId.CACHE_FILES);
-			const mediaSize = await NativeCacheService.getSettingValueById(NativeSettingsId.CACHE_MEDIA);
+			const otherSize = await NativeCacheService.getOtherCacheSize();
+			const mediaSize = await NativeCacheService.getMediaCacheSize();
+			const totalSize = await NativeCacheService.getTotalCacheSize();
+
 			this.setState({
-				fileSize: fileSize - mediaSize,
+				otherSize,
 				mediaSize,
+				totalSize,
 			});
 		};
 
@@ -56,8 +59,7 @@ jn.define('settings-v2/ui/items/src/cache-banner', (require, exports, module) =>
 
 		render()
 		{
-			const { fileSize, mediaSize } = this.state;
-			const totalSize = fileSize + mediaSize;
+			const { totalSize } = this.state;
 			const GB_SIZE = 1024 * 1024 * 1024;
 			const precision = totalSize > GB_SIZE ? 2 : 0;
 
@@ -152,22 +154,21 @@ jn.define('settings-v2/ui/items/src/cache-banner', (require, exports, module) =>
 
 		createSvgCircle()
 		{
-			const { fileSize = 0, mediaSize = 0 } = this.state;
-			const totalSize = fileSize + mediaSize;
+			const { totalSize = 0, otherSize = 0 } = this.state;
 
 			if (totalSize === 0)
 			{
 				return this.renderEmptyCircle();
 			}
 
-			const filePercentage = (fileSize / totalSize) * 100 > 90 ? 90 : (fileSize / totalSize) * 100;
+			const otherPercentage = (otherSize / totalSize) * 100 > 90 ? 90 : (otherSize / totalSize) * 100;
 
 			const center = VIEW_BOX_SIZE / 2;
 
 			return `
 				<svg width="${VIEW_BOX_SIZE}" height="${CIRCLE_SIZE}" viewBox="0 0 ${VIEW_BOX_SIZE} ${CIRCLE_SIZE}" fill="none" xmlns="http://www.w3.org/2000/svg">
-					${this.generateArcSegment(center, center, CIRCLE_RADIUS, 0, filePercentage, Color.accentMainPrimaryalt.toHex())}
-					${this.generateArcSegment(center, center, CIRCLE_RADIUS, filePercentage, 100, Color.accentMainSuccess.toHex())}
+					${this.generateArcSegment(center, center, CIRCLE_RADIUS, 0, otherPercentage, Color.accentMainPrimaryalt.toHex())}
+					${this.generateArcSegment(center, center, CIRCLE_RADIUS, otherPercentage, 100, Color.accentMainSuccess.toHex())}
 				</svg>
 			`;
 		}

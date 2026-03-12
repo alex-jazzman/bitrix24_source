@@ -1,0 +1,6 @@
+<?php
+$MESS["IM_ACTIVITIES_GET_USER_MESSAGES_DESCRIPTION"] = "Finds and fetches messages from the specified user's chat.";
+$MESS["IM_ACTIVITIES_GET_USER_MESSAGES_NAME"] = "Get user chat messages";
+$MESS["IM_ACTIVITIES_GET_USER_MESSAGES_RETURN_CHAT_COUNT"] = "Number of chats";
+$MESS["IM_ACTIVITIES_GET_USER_MESSAGES_RETURN_ERROR_MESSAGE"] = "Error message";
+$MESS["IM_ACTIVITIES_GET_USER_MESSAGES_RETURN_MESSAGE_COLLECTION"] = "Message collection (JSON)";

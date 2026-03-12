@@ -13,6 +13,13 @@ jn.define('im/messenger/lib/parser/functions/common', (require, exports, module)
 			return text;
 		},
 
+		collapseDuplicateBreaks(text)
+		{
+			text = text.replace(/\[br]\[br]/gi, '[br]');
+
+			return text;
+		},
+
 		simplifyBreakLine(text, replaceLetter = ' ')
 		{
 			text = text.replace(/<br><br \/>/ig, '<br />');

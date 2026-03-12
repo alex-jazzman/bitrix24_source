@@ -249,6 +249,7 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 			await this.store.dispatch('recentModel/update', [{
 				id: dialogId,
 				avatar: params.avatar,
+				lastActivityDate: recentItem.lastActivityDate,
 			}]);
 		}
 
@@ -277,6 +278,7 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 			await this.store.dispatch('recentModel/update', [{
 				id: dialogId,
 				avatar: params.color,
+				lastActivityDate: recentItem.lastActivityDate,
 			}]);
 		}
 
@@ -507,7 +509,7 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 
 			await this.store.dispatch('recentModel/like', {
 				messageId: actualReactions.reaction?.messageId,
-				id: dialogId,
+				id: recentItem?.id || String(dialogId),
 				liked,
 			});
 		}
@@ -536,6 +538,7 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 			await this.store.dispatch('recentModel/update', [{
 				id: dialogId,
 				message,
+				lastActivityDate: currentRecentItem.lastActivityDate,
 			}]);
 			this.#saveShareDialogCache();
 		}
@@ -624,6 +627,7 @@ jn.define('im/messenger-v2/provider/pull/recent', (require, exports, module) => 
 				await this.store.dispatch('recentModel/update', [{
 					id: params.dialogId,
 					message,
+					lastActivityDate: recentItem.lastActivityDate,
 				}]);
 			}
 		}

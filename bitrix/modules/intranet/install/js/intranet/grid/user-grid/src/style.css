@@ -41,6 +41,10 @@
 	color: var(--ui-color-palette-green-60);
 }
 
+.user-grid_role-label.--first-admin {
+	color: var(--ui-color-palette-green-60);
+}
+
 .user-grid_role-label.--extranet {
 	color: var(--ui-color-palette-orange-60);
 }

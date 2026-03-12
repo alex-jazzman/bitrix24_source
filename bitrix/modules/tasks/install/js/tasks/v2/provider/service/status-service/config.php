@@ -11,6 +11,7 @@ return [
 		'main.core',
 		'tasks.v2.core',
 		'tasks.v2.const',
+		'tasks.v2.lib.analytics',
 		'tasks.v2.lib.scrum-manager',
 		'tasks.v2.lib.api-client',
 		'tasks.v2.lib.id-utils',

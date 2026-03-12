@@ -21,4 +21,5 @@ return array(
 		'nodes' => [
 		],
 	),
+	'assets' => [],
 );

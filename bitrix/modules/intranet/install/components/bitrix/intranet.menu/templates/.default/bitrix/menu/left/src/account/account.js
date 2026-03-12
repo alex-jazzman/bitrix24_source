@@ -206,7 +206,7 @@ export class Account
 
 	viewDesktopUser(): void
 	{
-		if (this.currentUser === null)
+		if (Type.isNil(this.currentUser))
 		{
 			return;
 		}
@@ -266,7 +266,7 @@ export class Account
 
 	viewPopupAccounts(): void
 	{
-		if (this.currentUser === null)
+		if (Type.isNil(this.currentUser))
 		{
 			return;
 		}
@@ -281,6 +281,7 @@ export class Account
 
 		this.removeElements('intranet__desktop-menu_popup-header');
 
+		const profileUrl = this.currentUser.profile || '';
 		const item = Tag.render`
 			<div class="intranet__desktop-menu_popup-header">
 				<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-popup">
@@ -288,8 +289,7 @@ export class Account
 				</span>
 				<span class="intranet__desktop-menu_popup-label">${this.currentUser.portal}</span>
 				<div
-					class="intranet__desktop-menu_popup-header-user ${this.currentUser.profile ? 'intranet__desktop-menu_popup-header-user--chevron' : ''}"
-					onclick="if (this.currentUser.profile) { BX.SidePanel.Instance.open('${this.currentUser.profile}'); }"
+					class="intranet__desktop-menu_popup-header-user ${profileUrl ? 'intranet__desktop-menu_popup-header-user--chevron' : ''}"
 					>
 					<span class="intranet__desktop-menu_popup-name">
 						${`${this.currentUser.first_name} ${this.currentUser.last_name}`}
@@ -298,6 +298,14 @@ export class Account
 				</div>
 			</div>
 		`;
+
+		if (profileUrl)
+		{
+			const headerUser = item.querySelector('.intranet__desktop-menu_popup-header-user');
+			Event.bind(headerUser, 'click', () => {
+				BX.SidePanel.Instance.open(profileUrl);
+			});
+		}
 
 		Dom.insertBefore(item, menuPopup.firstElementChild);
 

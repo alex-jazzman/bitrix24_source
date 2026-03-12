@@ -12,7 +12,6 @@ return [
 		'./dist/list-item.bundle.css',
 	],
 	'rel' => [
-		'main.polyfill.core',
 		'market.popup-install',
 		'market.popup-uninstall',
 		'ui.vue3.pinia',
@@ -22,6 +21,7 @@ return [
 		'ui.icon-set.api.vue',
 		'main.popup',
 		'market.market-links',
+		'main.core',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

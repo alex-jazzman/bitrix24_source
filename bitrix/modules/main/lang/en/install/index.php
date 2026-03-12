@@ -91,6 +91,7 @@ $MESS["MAIN_INSTALL_EVENT_TYPE_NEW_DEVICE_LOGIN_DESC"] = "#USER_ID# - User ID
 #DEVICE# - Device
 #BROWSER# - Browser
 #PLATFORM# - Platform
+#DEVICE_INFO# - Device, Browser, Platform 
 #USER_AGENT# - User agent
 #IP# - IP address
 #DATE# - Date

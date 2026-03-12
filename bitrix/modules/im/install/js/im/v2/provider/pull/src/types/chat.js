@@ -4,6 +4,7 @@ import { CounterType } from 'im.v2.const';
 
 import type { InputActionType } from 'im.v2.lib.input-action';
 import type { RawUser } from './common';
+import type { RecentTypeItem } from './recent';
 
 type CounterTypeItem = $Values<typeof CounterType>;
 
@@ -68,7 +69,11 @@ export type ChatUnreadParams = {
 	counter: number,
 	markedId: number | "0",
 	lines: boolean,
-	counterType: CounterTypeItem
+	counterType: CounterTypeItem,
+	recentConfig: {
+		chatId: number,
+		sections: RecentTypeItem[],
+	},
 };
 
 export type ChatMuteNotifyParams = {

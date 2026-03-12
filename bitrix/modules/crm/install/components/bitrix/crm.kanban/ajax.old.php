@@ -279,6 +279,11 @@ if ($result !== null)
 			'fatal' => $result['FATAL'] ?? false,
 		];
 
+		if(isset($result['ERROR_CODE']))
+		{
+			$data['errorCode'] = $result['ERROR_CODE'];
+		}
+
 		print Json::encode(JsonCompatibleConverter::convert($data, true));
 	}
 	elseif (isset($result['ITEMS']))

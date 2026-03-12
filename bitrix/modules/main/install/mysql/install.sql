@@ -238,7 +238,8 @@ CREATE TABLE b_user
 	INDEX IX_B_USER_XML_ID (XML_ID),
 	INDEX ix_user_last_login(LAST_LOGIN),
 	INDEX ix_user_date_register(DATE_REGISTER),
-	INDEX ix_b_user_external_auth_id_active (EXTERNAL_AUTH_ID, ACTIVE)
+	INDEX ix_b_user_external_auth_id_active (EXTERNAL_AUTH_ID, ACTIVE),
+	INDEX ix_b_user_personal_birthdate (PERSONAL_BIRTHDATE)
 );
 
 CREATE TABLE b_user_password
@@ -492,7 +493,8 @@ CREATE TABLE b_user_option
 	VALUE mediumtext null,
 	COMMON char(1) not null default 'N',
 	PRIMARY KEY (ID),
-	UNIQUE INDEX ux_user_category_name(USER_ID, CATEGORY, NAME)
+	UNIQUE INDEX ux_user_category_name(USER_ID, CATEGORY, NAME),
+	INDEX ix_b_user_option_category_name (CATEGORY, NAME)
 );
 
 CREATE TABLE b_captcha
@@ -742,7 +744,8 @@ CREATE TABLE b_rating_voting_reaction
 
 CREATE TABLE b_rating_prepare
 (
-	ID int NULL
+	ID int not null,
+	PRIMARY KEY (ID)
 );
 
 CREATE TABLE b_rating_rule
@@ -967,8 +970,8 @@ CREATE TABLE b_user_access
 	PRIMARY KEY (ID),
 	UNIQUE INDEX ux_ua_user_access (USER_ID, ACCESS_CODE),
 	INDEX ix_ua_user_provider (USER_ID, PROVIDER_ID),
-	INDEX ix_ua_access (ACCESS_CODE),
-	INDEX ix_ua_provider (PROVIDER_ID)
+	INDEX ix_ua_provider (PROVIDER_ID),
+	INDEX ix_b_user_access_access_code_user_id (ACCESS_CODE, USER_ID)
 );
 
 insert into b_user_access (USER_ID, PROVIDER_ID, ACCESS_CODE) values (0, 'group', 'G2');
@@ -1313,8 +1316,8 @@ CREATE TABLE b_consent_user_consent
   ORIGIN_ID VARCHAR(30) DEFAULT NULL,
   ORIGINATOR_ID VARCHAR(30) DEFAULT NULL,
   PRIMARY KEY (ID),
-  INDEX IX_B_CONSENT_USER_CONSENT (AGREEMENT_ID),
-  INDEX IX_CONSENT_USER_CONSENT_USER_ORIGIN (USER_ID, ORIGIN_ID)
+  INDEX IX_CONSENT_USER_CONSENT_USER_ORIGIN (USER_ID, ORIGIN_ID),
+  INDEX ix_b_consent_user_consent_agreement_id_user_id (AGREEMENT_ID, USER_ID)
 );
 
 CREATE TABLE b_consent_agreement

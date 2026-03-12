@@ -13,13 +13,18 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 	const {
 		MessageType,
 		DialogType,
+		FileType,
 	} = require('im/messenger/const');
 	const {
 		InputQuoteType,
 	} = require('im/messenger/view/dialog');
+	const { getFileTypeByExtension, getFileExtension } = require('im/messenger/lib/helper');
 	const { parser } = require('im/messenger/lib/parser');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
+	const { getLogger } = require('im/messenger/lib/logger');
+
+	const logger = getLogger('dialog--reply-manager');
 
 	const QUOTE_DELIMITER = '-'.repeat(54);
 	const SHORT_NAME_SYMBOLS_LIMIT = 12;
@@ -227,25 +232,30 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 		/**
 		 *
-		 * @param {Message} message
+		 * @param {Message | MessageId} message
 		 */
 		setForwardMessage(message)
 		{
-			if (!Type.isObject(message))
+			if (!Type.isObject(message) && !Type.isNumber(message) && !Type.isStringFilled(message))
 			{
-				const messageModel = this.store.getters['messagesModel/getById'](Number(message));
+				logger.error(`${this.constructor.name}.setForwardMessage message is not valid`, message);
 
-				// eslint-disable-next-line no-param-reassign
-				message = this.dialogLocator.get('message-ui-converter').createMessage(messageModel);
+				return;
 			}
 
-			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			const messageId = message?.id ?? message;
+			const messageModel = this.store.getters['messagesModel/getById'](Number(messageId));
+			const messageProps = Type.isObject(message)
+				? message
+				: this.dialogLocator.get('message-ui-converter').createMessage(messageModel);
+
+
 			const forwardMessage = {
-				id: modelMessage.id,
+				id: messageModel.id,
 			};
 
-			forwardMessage.username = message.username;
-			if (message.type === MessageType.systemText)
+			forwardMessage.username = messageProps.username;
+			if (messageProps.type === MessageType.systemText)
 			{
 				forwardMessage.username = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_FORWARD_DEFAULT_TITLE');
 			}
@@ -253,12 +263,12 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			forwardMessage.message = [
 				{
 					type: 'text',
-					text: parser.simplifyMessage(modelMessage),
+					text: parser.simplifyMessage(messageModel),
 				},
 			];
 
 			this.forwardMessage = forwardMessage;
-			this.forwardMessageIds = [modelMessage.id];
+			this.forwardMessageIds = [messageModel.id];
 		}
 
 		/**
@@ -316,6 +326,21 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			};
 
 			this.forwardMessageIds = sortedMessageIds;
+		}
+
+		/**
+		 * @param {Array<MessageId | Message>} messageIds
+		 */
+		setForwardMessages(messageIds)
+		{
+			if (messageIds.length === 1)
+			{
+				this.setForwardMessage(messageIds[0]);
+			}
+			else
+			{
+				this.setForwardMessageFromIdList(messageIds);
+			}
 		}
 
 		/**
@@ -510,29 +535,28 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		/**
 		 *
 		 * @param {Array<number || string || Message>} messageIds
+		 * @param {boolean} useInput
 		 */
-		startForwardingMessages(messageIds)
+		startForwardingMessages(messageIds, useInput = true)
 		{
-			if (this.isAttachInProcess)
+			if (this.isAttachInProcess && useInput)
 			{
 				this.#resetAttachingFilesProcess();
 			}
 
-			if (this.isEditInProcess)
+			if (this.isEditInProcess && useInput)
 			{
 				this.#isForwardInBackground = true;
 
 				return;
 			}
-			this.#isForwardInProcess = true;
 
-			if (messageIds.length === 1)
+			this.#isForwardInProcess = true;
+			this.setForwardMessages(messageIds);
+
+			if (!useInput)
 			{
-				this.setForwardMessage(messageIds[0]);
-			}
-			else
-			{
-				this.setForwardMessageFromIdList(messageIds);
+				return;
 			}
 
 			const message = this.getForwardMessage();
@@ -579,7 +603,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 			const params = {
 				type: InputQuoteType.forward,
-				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_ATTACHING_FILES_TITLE'),
+				title: this.#getAttachFileTitle(files),
 				text: Loc.getMessagePlural('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_ATTACHING_FILES_SUBTITLE', count, { '#COUNT#': count }),
 				icon: {
 					name: Icon.IMAGE.getIconName(),
@@ -644,23 +668,31 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 				if (this.isForwardInBackground)
 				{
 					this.startForwardingMessages(this.getForwardMessage());
-
-					return;
 				}
 			});
 		}
 
-		finishForwardingMessage()
+		/**
+		 * @param {boolean} shouldClearInputActions
+		 */
+		finishForwardingMessage(shouldClearInputActions = true)
 		{
 			this.#isForwardInProcess = false;
 			if (this.isQuoteInBackground)
 			{
 				this.#isQuoteInBackground = false;
 			}
+
+			this.dialogView.enableAlwaysSendButtonMode(false);
+
+			if (!shouldClearInputActions)
+			{
+				return;
+			}
+
 			this.dialogView.clearInput();
 			this.draftManager.clearDraft();
 			this.dialogView.removeInputQuote();
-			this.dialogView.enableAlwaysSendButtonMode(false);
 		}
 
 		initializeEditingMessage(message, initWithForward)
@@ -700,6 +732,48 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		isHasQuote(message)
 		{
 			return Boolean(message.params?.replyId);
+		}
+
+		/**
+		 * @param {Array<DeviceFile>} files
+		 * @return {string}
+		 */
+		#getAttachFileTitle(files)
+		{
+			const extensions = files.map((file) => {
+				const extension = getFileExtension(file.name).toLowerCase();
+
+				return getFileTypeByExtension(extension);
+			});
+
+			const isSingleFile = extensions.length === 1;
+			if (isSingleFile)
+			{
+				if (extensions[0] === FileType.video)
+				{
+					return Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_ATTACHING_FILES_VIDEO_TITLE');
+				}
+
+				if (extensions[0] === FileType.image)
+				{
+					return Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_ATTACHING_FILES_IMAGE_TITLE');
+				}
+
+				return Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_ATTACHING_FILES_SINGLE_FILE_TITLE', {
+					'#FILE_NAME#': files[0].name,
+				});
+			}
+
+			const isMediaGallery = extensions.every((extension) => {
+				return extension === FileType.image || extension === FileType.video;
+			});
+
+			if (isMediaGallery)
+			{
+				return Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_ATTACHING_FILES_GALLERY_TITLE');
+			}
+
+			return Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLAY_MANAGER_ATTACHING_FILES_TITLE');
 		}
 	}
 

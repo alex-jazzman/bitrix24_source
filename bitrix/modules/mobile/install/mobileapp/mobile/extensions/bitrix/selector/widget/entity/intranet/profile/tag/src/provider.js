@@ -1,12 +1,13 @@
 /**
- * @module selector/widget/entity/intranet/profile/tag/provider
+ * @module selector/widget/entity/intranet/profile/tag/src/provider
  */
 
-jn.define('selector/widget/entity/intranet/profile/tag/provider', (require, exports, module) => {
+jn.define('selector/widget/entity/intranet/profile/tag/src/provider', (require, exports, module) => {
 	const { CommonSelectorProvider } = require('selector/providers/common');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { Icon } = require('ui-system/blocks/icon');
 	const { Color } = require('tokens');
+	const { uniqBy } = require('utils/array');
 
 	const SEARCH_ACTION = 'mobile.Profile.searchTags';
 
@@ -51,21 +52,29 @@ jn.define('selector/widget/entity/intranet/profile/tag/provider', (require, expo
 			return response.data.tags;
 		}
 
+		getAllItems()
+		{
+			const items = [
+				...this.options.selectedItems,
+				...this.cache.get('recent'),
+				...this.cache.get('items', !this.canUseRecent),
+			];
+
+			return uniqBy(items, 'name');
+		}
+
 		handleResent = (response) => {
-			let { tags } = response.data;
-			const selectedItems = this.options.selectedItems;
+			const { tags } = response.data;
+			const { selectedItems } = this.options;
+			const mergedTags = uniqBy([...tags, ...selectedItems], 'name');
 
-			tags = tags.filter((tag) => {
-				return !selectedItems.some((selectedItem) => selectedItem.name === tag.name);
-			});
-
-			const items = tags;
+			const items = mergedTags;
 			if (items.length > 0)
 			{
 				this.addItems(items, true);
 			}
 
-			const result = this.prepareItems(tags);
+			const result = this.prepareItems(mergedTags);
 			this.cache.save(result, 'recent', { saveDisk: true });
 
 			this.listener.onRecentResult(result, false);
@@ -83,6 +92,8 @@ jn.define('selector/widget/entity/intranet/profile/tag/provider', (require, expo
 				useLetterImage: false,
 				params: {
 					name: tag.name,
+					id: tag.name,
+					type: 'profile-tag',
 				},
 				avatar: {
 					type: 'square',

@@ -3,7 +3,10 @@
  */
 jn.define('rest/run-action-executor/src/request-manager', (require, exports, module) => {
 	const REQUEST_STORAGE_NAME = 'requestExecutorStore';
-	const REQUEST_TIMEOUT_MS = 1100;
+	const isAndroid = Application.getPlatform() === 'android';
+
+	// fix strange setInterval behavior on Android devices
+	const REQUEST_TIMEOUT_MS = isAndroid ? 1500 : 1100;
 	const REQUEST_INTERVAL_MS = 50;
 	const PULSE_INTERVAL_MS = 1000;
 

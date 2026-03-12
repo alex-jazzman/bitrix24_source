@@ -250,7 +250,7 @@ export const CheckListChildItem = {
 	template: `
 		<div
 			ref="item"
-			class="check-list-widget-child-item"
+			class="check-list-widget-child-item print-no-before"
 			:class="{
 				'--complete': completed,
 				'--group-mode': groupMode,
@@ -293,10 +293,12 @@ export const CheckListChildItem = {
 					:placeholder="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
 					:readonly="textReadOnly"
 					:fontColor="textColor"
+					:linkColor
 					:fontSize="15"
 					:lineHeight="20"
 					@update:modelValue="updateTitle"
-					@input="updateTitle"
+					@linkClick="handleLinkClick"
+					@input="handleInput"
 					@focus="handleFocus"
 					@blur="handleBlur"
 					@emptyBlur="handleEmptyBlur"
@@ -316,7 +318,7 @@ export const CheckListChildItem = {
 				<div v-else class="check-list-widget-child-item-action-stub"/>
 			</div>
 			<template v-if="hasAttachments">
-				<div class="check-list-widget-item-attach">
+				<div class="check-list-widget-item-attach print-ignore">
 					<div v-if="hasUsers" class="check-list-widget-item-attach-users">
 						<div v-if="hasAccomplices" class="check-list-widget-item-attach-users-list">
 							<BIcon :name="Outline.GROUP"/>

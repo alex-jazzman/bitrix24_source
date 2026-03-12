@@ -14,6 +14,7 @@
 	 */
 	BX.Disk.Document.EditProcess = function(parameters)
 	{
+		this.typeFile = parameters.typeFile;
 		this.objectId = parameters.objectId;
 		this.attachedObjectId = parameters.attachedObjectId;
 		this.serviceCode = parameters.serviceCode;
@@ -22,35 +23,76 @@
 		this.onAfterSave = null;
 		this.modalWindow = parameters.modalWindow;
 		this.handlerOnSliderMessage = null;
+		this.checkPromoBoost = parameters.checkPromoBoost || false;
 		this.byUnifiedLink = parameters.byUnifiedLink || false;
+		this.triggerNode = parameters.triggerNode || null;
 
-		if(BX.type.isFunction(parameters.onAfterSave))
+		if (BX.type.isFunction(parameters.onAfterSave))
 		{
 			this.onAfterSave = parameters.onAfterSave;
 		}
+
+		this.onlyOfficeSessionRestrictions =
+			BX
+				.Disk
+				.OnlyOfficeSessionRestrictions
+				.DocumentEditSessionLimit
+				.getInstance()
+		;
+
+		this.analytics = parameters.analytics || null;
+		this.isCreate = false;
 	};
 
 	BX.Disk.Document.EditProcess.prototype =
 	{
 		start: function ()
 		{
-			var hasPromoPopups = BX.getClass('BX.Disk.OnlyOfficePromo.PromoPopup');
 			if (this.serviceCode === 'onlyoffice')
 			{
-				if (hasPromoPopups)
+				const onlyOfficePromoActions = new BX.Disk.OnlyOfficePromoActions.OnlyOfficePromoActions();
+				if (onlyOfficePromoActions.shouldShow())
 				{
-					if (BX.Disk.OnlyOfficePromo.PromoPopup.shouldBlockViewAndEdit())
-					{
-						BX.Disk.OnlyOfficePromo.PromoPopup.showCommonPromoForNonPaid();
+					onlyOfficePromoActions.show(this.triggerNode);
 
-						return;
-					}
-					if (BX.Disk.OnlyOfficePromo.PromoPopup.shouldShowEditPromo())
+					if (this.onlyOfficeSessionRestrictions.isExceeded())
 					{
-						BX.Disk.OnlyOfficePromo.PromoPopup.showEditPromo();
+						const analyticsDocumentType = {
+							docx: 'doc',
+							xlsx: 'sheet',
+							pptx: 'pres',
+						}[this.typeFile] || this.typeFile;
 
-						return;
+						if (this.isCreate)
+						{
+							const data = {
+								tool: 'docs',
+								category: 'docs',
+								event: 'create',
+								c_element: this.analytics?.c_element,
+								status: 'error_limit',
+								p3: analyticsDocumentType,
+							};
+
+							if (this.analytics?.p2)
+							{
+								data.p2 = this.analytics.p2;
+							}
+
+							BX.UI.Analytics.sendData(data);
+						}
+
+						BX.UI.Analytics.sendData({
+							tool: 'docs',
+							category: 'docs',
+							event: 'oo_limit_edit',
+							c_sub_section: this.analytics?.c_sub_section || 'old_element',
+							c_element: this.analytics?.c_element,
+							p3: analyticsDocumentType,
+						});
 					}
+
+					return;
 				}
 
 				if (this.byUnifiedLink)
@@ -61,12 +103,6 @@
 				{
 					this.openSlider();
 				}
-
-				return;
-			}
-			else if (hasPromoPopups && BX.Disk.OnlyOfficePromo.PromoPopup.shouldShowEndDemo())
-			{
-				BX.Disk.OnlyOfficePromo.PromoPopup.showEndOfDemo();
 
 				return;
 			}
@@ -84,8 +120,8 @@
 				action: 'disk.api.documentService.goToEdit',
 				serviceCode: this.serviceCode,
 				objectId: this.objectId || 0,
-				attachedObjectId: this.attachedObjectId || 0
-			}
+				attachedObjectId: this.attachedObjectId || 0,
+			};
 		},
 
 		getSliderData: function()

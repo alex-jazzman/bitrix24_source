@@ -23,6 +23,7 @@ $APPLICATION->IncludeComponent(
 		],
 		"USE_UI_TOOLBAR" => "N",
 		"PLAIN_VIEW" => "Y",
+		"HIDE_TOOLBAR" => "Y",
 		"USE_PADDING" => false,
 		"PAGE_MODE" => false,
 		"USE_BACKGROUND_CONTENT" => false,

@@ -1,26 +1,40 @@
-import {FullStickerData, StickerPackId, StickerPackModelState} from "../../../../../../model/sticker-pack/src/types";
+import {
+	PackWithStickers,
+	StickerPackId,
+	StickerPackState, StickerPackType, StickerState
+} from "../../../../../../model/sticker-pack/src/types";
 
 declare type StickerNavigationBarProps = {
 	isLoaded: boolean,
-	packs: Array<StickerPackModelState>,
-	recentStickers: Array<FullStickerData>,
-	isLoadMode: boolean,
+	packs: Array<PackWithStickers>,
+	recentStickers: Array<StickerState>,
+	hasNextPage: boolean,
+	canCreatePack: boolean,
+	ref: (ref: StickerNavigationBar) => void,
+	onLoadNextPage: (pack: StickerPackState) => void,
 }
 
-declare type StickerNavigationBarState = {}
+declare type StickerNavigationBarState = {
+	rows: Array<object>,
+	packs: Array<PackWithStickers>,
+	hasNextPage: boolean,
+}
 
 declare type StickerPackNavigationButtonProps = {
 	uri: string;
 	packId: StickerPackId,
-	packType: string,
+	packType: StickerPackType,
 	isActive: boolean,
+	onClick: (packId: StickerPackId, packType: StickerPackType) => void,
 }
 
 declare type StickerPackNavigationButtonState = {
 	isActive: boolean,
+	isVisible: boolean,
 }
 
 declare type RecentStickersNavigationButtonProps = {
+	onClick: () => void;
 	isActive: boolean,
 }
 

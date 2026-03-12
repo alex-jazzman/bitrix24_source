@@ -1,2 +1,0 @@
-<?php
-$MESS["UI_SELECTOR_HIDDEN_ITEM_TITLE"] = "Приховано";

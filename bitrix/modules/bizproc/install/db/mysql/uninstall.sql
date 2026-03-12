@@ -32,6 +32,8 @@ DROP TABLE if exists b_bp_workflow_template_settings;
 DROP TABLE if exists b_bp_workflow_template_user_option;
 DROP TABLE if exists b_bp_document_type_user_option;
 DROP TABLE if exists b_bp_workflow_template_draft;
+DROP TABLE if exists b_bp_task_archive;
+DROP TABLE if exists b_bp_task_archive_tasks;
 DROP TABLE if exists b_bp_robot_version_index;
 DROP TABLE if exists b_bp_workflow_template_trigger;
 DROP TABLE if exists b_bp_storage_type;

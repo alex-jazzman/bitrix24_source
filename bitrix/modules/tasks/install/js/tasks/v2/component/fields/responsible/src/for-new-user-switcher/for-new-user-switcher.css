@@ -1,12 +1,25 @@
-.tasks-field-responsible-for-new-user-switcher {
+.tasks-field-responsible-new-user {
+	--text-color: var(--ui-color-base-3);
 	display: flex;
 	gap: var(--ui-space-inline-xs);
 	align-items: center;
+	max-width: max-content;
 	margin-top: 8px;
 	padding: 0 2px;
+	cursor: pointer;
 }
 
-.tasks-field-responsible-for-new-user-switcher-label {
-	color: var(--ui-color-base-3);
-	cursor: pointer;
+.tasks-field-responsible-new-user.--disabled {
+	--text-color: var(--ui-color-base-5);
+	cursor: default;
+}
+
+.tasks-field-responsible-new-user-switcher {
+	display: flex;
+	gap: var(--ui-space-inline-xs);
+	align-items: center;
+}
+
+.tasks-field-responsible-new-user-text {
+	color: var(--text-color);
 }

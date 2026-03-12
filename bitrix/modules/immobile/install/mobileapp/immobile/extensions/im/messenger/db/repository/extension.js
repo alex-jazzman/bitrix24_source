@@ -22,6 +22,7 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 	const { VoteRepository } = require('im/messenger/db/repository/vote');
 	const { ReadMessageQueueRepository } = require('im/messenger/db/repository/read-message-queue');
 	const { TranscriptRepository } = require('im/messenger/db/repository/transcript');
+	const { StickerRepository } = require('im/messenger/db/repository/sticker');
 
 	module.exports = {
 		OptionRepository,
@@ -44,5 +45,6 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 		VoteRepository,
 		ReadMessageQueueRepository,
 		TranscriptRepository,
+		StickerRepository,
 	};
 });

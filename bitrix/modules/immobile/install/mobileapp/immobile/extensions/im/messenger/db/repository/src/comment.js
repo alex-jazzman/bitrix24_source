@@ -4,6 +4,8 @@
 jn.define('im/messenger/db/repository/comment', (require, exports, module) => {
 
 	const { CommentTable } = require('im/messenger/db/table');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const logger = getLoggerWithContext('repository--copilot', 'CommentRepository');
 
 	/**
 	 * @class CommentRepository
@@ -41,6 +43,19 @@ jn.define('im/messenger/db/repository/comment', (require, exports, module) => {
 		async getByCommentChatId(commentChatId)
 		{
 			return this.commentTable.getById(commentChatId);
+		}
+
+		/**
+		 * @param {number} parentChatId
+		 * @return {Array<RelationCommentInfo>}
+		 */
+		async getByParentChatId(parentChatId)
+		{
+			const result = await this.commentTable.getList({ filter: { parentChatId } });
+
+			logger.log(`${this.constructor.name}.getByParentChatId.items:`, result?.items);
+
+			return result?.items ?? [];
 		}
 
 		/**

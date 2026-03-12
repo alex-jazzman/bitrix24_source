@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_CORE_MEMBER_ALREADY_SIGNED'] = 'Документ уже подписан данным участником.';
 $MESS['SIGN_CORE_MEMBER_NOT_VERIFIED'] = 'Участник не верифицирован.';
 $MESS['SIGN_CORE_MEMBER_ALREADY_VERIFIED'] = 'Участник уже верифицирован.';

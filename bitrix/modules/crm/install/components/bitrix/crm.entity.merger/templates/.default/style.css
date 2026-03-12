@@ -627,6 +627,10 @@ div.crm-entity-merger-sidebar div.ui-entity-editor-section-header,
 
 /* region Bottom Panel */
 
+.crm-entity-merger-panel {
+	flex-direction: column;
+}
+
 .crm-entity-merger-panel.ui-button-panel {
 	position: relative;
 	padding: 0;

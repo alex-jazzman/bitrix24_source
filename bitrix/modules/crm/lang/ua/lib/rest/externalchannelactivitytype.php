@@ -1,5 +1,0 @@
-<?
-$MESS["CRM_EXTERNAL_CHANNEL_ACTIVITY_TYPE_ACTIVITY"] = "Імпорт документів";
-$MESS["CRM_EXTERNAL_CHANNEL_ACTIVITY_TYPE_AGENT"] = "Імпорт компаній/контактів";
-$MESS["CRM_EXTERNAL_CHANNEL_ACTIVITY_TYPE_ACTIVITY_FACE_CARD"] = "Роздрібний чек з 1С Face-карт";
-?>

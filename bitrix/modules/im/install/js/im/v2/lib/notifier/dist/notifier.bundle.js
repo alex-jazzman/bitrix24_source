@@ -77,6 +77,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGES_PIN_LIMIT_ERROR', {
 	      '#MAX_PINS#': pinLimit
 	    }));
+	  },
+	  onCopyIdComplete() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHAT_COPY_ID_COMPLETE'));
 	  }
 	};
 
@@ -217,6 +220,37 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
+	const StickerNotifier = {
+	  handleLimits(error) {
+	    if (error.code === im_v2_const.ErrorCode.sticker.maxStickers) {
+	      this.onAddStickerError();
+	    } else if (error.code === im_v2_const.ErrorCode.sticker.maxPacks) {
+	      this.onAddPackError();
+	    }
+	  },
+	  onLinkPackComplete() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_STICKER_PACK_LINK_COMPLETE'));
+	  },
+	  onLinkPackError() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_STICKER_PACK_LINK_ERROR'));
+	  },
+	  onAddStickerError() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_STICKERS_LIMIT_ERROR'));
+	  },
+	  onAddPackError() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_STICKER_PACK_LIMIT_ERROR'));
+	  },
+	  onCreatePackComplete() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_STICKER_PACK_CREATE_COMPLETE'));
+	  },
+	  onUpdatePackComplete() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_STICKER_PACK_UPDATE_COMPLETE'));
+	  },
+	  onRemovePackComplete() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_STICKER_PACK_REMOVE_COMPLETE'));
+	  }
+	};
+
 	const SupportNotifier = {
 	  onVoteClosedError() {
 	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_VOTE_CLOSED_ERROR'));
@@ -295,6 +329,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
+	const SharedLinkNotifier = {
+	  onCopyIndividualLinkComplete() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_COPY_INDIVIDUAL_COMPLETE'));
+	  },
+	  onClickInvalidLinkError() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_CLICK_INVALID_ERROR'));
+	  },
+	  onChangeLinkComplete() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_CHANGE_COMPLETE'));
+	  },
+	  onChangeLinkError() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_CHANGE_ERROR'));
+	  }
+	};
+
 	const Notifier = {
 	  chat: ChatNotifier,
 	  message: MessageNotifier,
@@ -306,7 +355,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  speech: SpeechNotifier,
 	  call: CallNotifier,
 	  recent: RecentNotifier,
+	  sharedLink: SharedLinkNotifier,
 	  notification: NotificationNotifier,
+	  sticker: StickerNotifier,
 	  onCopyTextComplete() {
 	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_TEXT_COPY_COMPLETE'));
 	  },

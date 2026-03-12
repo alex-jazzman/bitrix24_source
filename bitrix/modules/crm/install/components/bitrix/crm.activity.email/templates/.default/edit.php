@@ -45,6 +45,7 @@ $rcptLast = array(
 
 Bitrix\Main\UI\Extension::load([
 	"crm.integration.ui.banner-dispatcher",
+	"mail.message-body",
 ]);
 
 echo (Tour\AhaMomentSaveLastTemplate::getInstance())->build();

@@ -1,3 +1,0 @@
-<?php
-$MESS["MOBILE_MENU_AHA_MOMENT_INVITATION_BUTTON"] = "Так, запросити";
-$MESS["MOBILE_MENU_AHA_MOMENT_MENU_SETTINGS_BUTTON"] = "Налаштувати меню";

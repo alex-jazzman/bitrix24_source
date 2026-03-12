@@ -69,6 +69,10 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		modeOn: 'mode_on',
 		modeOff: 'mode_off',
 		clickMCPIntegrations: 'click_mcp_integrations',
+		openNotifications: 'open_notifications',
+		openStickerTab: 'open_sticker_tab',
+		clickCreateStickerPack: 'click_create_stickerpack',
+		addStickerPack: 'add_stickerpack',
 	});
 
 	const Tool = Object.freeze({
@@ -90,6 +94,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		audiomessage: 'audiomessage',
 		audioplayer: 'audioplayer',
 		videomessage: 'videomessage',
+		stickers: 'stickers',
 	});
 
 	const Type = Object.freeze({
@@ -214,6 +219,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		chatTab: 'chat_tab',
 		channelTab: 'channel_tab',
 		collabTab: 'collab_tab',
+		taskTab: 'tasksTask_tab',
 		notificationTab: 'notification_tab',
 		sidebar: 'sidebar',
 		activeChat: 'active_chat',
@@ -230,6 +236,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		chatTextarea: 'chat_textarea',
 		messageContextMenu: 'message_context_menu',
 		callMessage: 'call_message',
+		messenger: 'messenger',
+		stickerPackPopup: 'stickerpack_popup',
 	});
 
 	const SubSection = Object.freeze({

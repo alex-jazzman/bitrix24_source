@@ -200,6 +200,13 @@ jn.define('im/messenger-v2/controller/recent/service/database-load/common', (req
 					savePromiseList.push(this.store.dispatch('draftModel/setFromLocalDatabase', page.draft));
 				}
 
+				if (Type.isArrayFilled(page.stickers))
+				{
+					savePromiseList.push(this.store.dispatch('stickerPackModel/addStickers', {
+						stickers: page.stickers,
+					}));
+				}
+
 				await Promise.all(savePromiseList);
 
 				if (Type.isArrayFilled(page.items))

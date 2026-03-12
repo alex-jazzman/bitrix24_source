@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 this.BX.Landing.UI = this.BX.Landing.UI || {};
@@ -5,14 +6,11 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var CardsForm = /*#__PURE__*/function (_BaseForm) {
 	  babelHelpers.inherits(CardsForm, _BaseForm);
-
 	  function CardsForm() {
 	    var _this;
-
 	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, CardsForm);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CardsForm).call(this, options));
@@ -41,19 +39,14 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        y: -65
 	      }
 	    });
-
 	    _this.draggable.subscribe('end', _this.onDragEnd);
-
 	    setTimeout(function () {
 	      _this.value = _this.serialize();
 	    });
-
 	    _this.adjustLastFormState();
-
 	    main_core.Dom.append(_this.addButton.layout, _this.footer);
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(CardsForm, [{
 	    key: "createAddButton",
 	    value: function createAddButton() {
@@ -74,7 +67,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    key: "onDragEnd",
 	    value: function onDragEnd() {
 	      var _this2 = this;
-
 	      // @todo: Need add sort:end event for Draggable
 	      setTimeout(function () {
 	        _this2.sortForms();
@@ -91,9 +83,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      });
 	      this.childForms.forEach(function (form, index) {
 	        var _form$selector$split = form.selector.split('@'),
-	            _form$selector$split2 = babelHelpers.slicedToArray(_form$selector$split, 1),
-	            code = _form$selector$split2[0];
-
+	          _form$selector$split2 = babelHelpers.slicedToArray(_form$selector$split, 1),
+	          code = _form$selector$split2[0];
 	        form.selector = "".concat(code, "@").concat(index);
 	      });
 	    }
@@ -119,7 +110,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      if (main_core.Type.isPlainObject(this.presets) && Object.keys(this.presets).length > 0) {
 	        this.showPresetsPopup();
 	      } else {
-	        this.addEmptyCard();
+	        this.addCardFromFirst();
 	      }
 	    }
 	  }, {
@@ -136,24 +127,19 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      this.addChildForm(newForm);
 	      this.adjustLastFormState();
 	      this.popup.close();
-
 	      if (main_core.Type.isPlainObject(preset.values)) {
 	        newForm.fields.forEach(function (field) {
 	          var code = field.selector.split('@')[0];
-
 	          if (code in preset.values) {
 	            field.setValue(preset.values[code]);
-
 	            if (field instanceof landing_ui_field_textfield.TextField) {
 	              BX.fireEvent(field.input, 'input');
 	            }
 	          }
-
 	          if (main_core.Type.isArray(preset.disallow)) {
 	            var isDisallow = !!preset.disallow.find(function (fieldCode) {
 	              return code === fieldCode;
 	            });
-
 	            if (isDisallow) {
 	              field.layout.hidden = true;
 	            }
@@ -165,14 +151,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    key: "showPresetsPopup",
 	    value: function showPresetsPopup() {
 	      var _this3 = this;
-
 	      if (this.popup) {
 	        CardsForm.popups.map(function (popup) {
 	          popup.popupWindow.close();
 	          popup.popupWindow.destroy();
 	        });
 	      }
-
 	      this.popup = new BX.PopupMenuWindow({
 	        id: 'cards_list_' + main_core.Text.getRandom(),
 	        bindElement: this.addButton.layout,
@@ -214,14 +198,11 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    key: "onMouseWheel",
 	    value: function onMouseWheel(event) {
 	      var _this4 = this;
-
 	      event.stopPropagation();
 	      event.preventDefault();
 	      var delta = landing_ui_panel_content.Content.getDeltaFromEvent(event);
-
 	      var _this$popup$popupWind = this.popup.popupWindow.getContentContainer(),
-	          scrollTop = _this$popup$popupWind.scrollTop;
-
+	        scrollTop = _this$popup$popupWind.scrollTop;
 	      requestAnimationFrame(function () {
 	        _this4.popup.popupWindow.contentContainer.scrollTop = scrollTop - delta.y;
 	      });
@@ -237,22 +218,16 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    key: "adjustPopupPosition",
 	    value: function adjustPopupPosition() {
 	      var _this5 = this;
-
 	      if (this.popup.popupWindow) {
 	        requestAnimationFrame(function () {
 	          var offsetParent = _this5.addButton.layout.closest('.landing-ui-panel-content-body-content');
-
 	          var buttonTop = BX.Landing.Utils.offsetTop(_this5.addButton.layout, offsetParent);
 	          var buttonLeft = BX.Landing.Utils.offsetLeft(_this5.addButton.layout, offsetParent);
-
 	          var buttonRect = _this5.addButton.layout.getBoundingClientRect();
-
 	          var popupRect = _this5.popup.popupWindow.popupContainer.getBoundingClientRect();
-
 	          var yOffset = 14;
 	          _this5.popup.popupWindow.popupContainer.style.top = "".concat(buttonTop + buttonRect.height + yOffset, "px");
 	          _this5.popup.popupWindow.popupContainer.style.left = "".concat(buttonLeft - popupRect.width / 2 + buttonRect.width / 2, "px");
-
 	          _this5.popup.popupWindow.setAngle({
 	            offset: 83,
 	            position: 'top'
@@ -261,19 +236,28 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      }
 	    }
 	  }, {
-	    key: "addEmptyCard",
-	    value: function addEmptyCard() {
+	    key: "addCardFromFirst",
+	    value: function addCardFromFirst() {
 	      var newData = main_core.Runtime.clone(this.childForms[0].data);
 	      var newSelector = "".concat(newData.selector.split('@')[0], "@").concat(this.childForms.length);
 	      newData.selector = newSelector;
 	      var newForm = this.childForms[0].clone(newData);
 	      newForm.oldIndex = this.childForms.length;
 	      newForm.selector = newSelector;
-	      newForm.fields.forEach(function (field) {
-	        return field.reset();
-	      });
 	      this.addChildForm(newForm);
 	      this.adjustLastFormState();
+	    }
+	  }, {
+	    key: "resetCardFields",
+	    value: function resetCardFields(form) {
+	      if (!main_core.Type.isObject(form)) {
+	        return;
+	      }
+	      form.fields.forEach(function (field) {
+	        if (main_core.Type.isFunction(field.reset)) {
+	          field.reset();
+	        }
+	      });
 	    }
 	  }, {
 	    key: "getVisibleForms",
@@ -286,12 +270,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    key: "adjustLastFormState",
 	    value: function adjustLastFormState() {
 	      var visibleItems = this.getVisibleForms();
-
 	      if (visibleItems.length === 1) {
 	        main_core.Dom.addClass(visibleItems[0], 'landing-ui-disallow-remove');
 	        return;
 	      }
-
 	      babelHelpers.toConsumableArray(visibleItems).forEach(function (item) {
 	        main_core.Dom.removeClass(item, 'landing-ui-disallow-remove');
 	      });
@@ -307,7 +289,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	     * Gets indexes map
 	     * @return {Object}
 	     */
-
 	  }, {
 	    key: "getIndexesMap",
 	    value: function getIndexesMap() {
@@ -321,12 +302,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      return this.childForms.reduce(function (acc, form) {
 	        if (main_core.Type.isPlainObject(form.preset)) {
 	          var _form$selector$split3 = form.selector.split('@'),
-	              _form$selector$split4 = babelHelpers.slicedToArray(_form$selector$split3, 2),
-	              index = _form$selector$split4[1];
-
+	            _form$selector$split4 = babelHelpers.slicedToArray(_form$selector$split3, 2),
+	            index = _form$selector$split4[1];
 	          acc[index] = form.preset.id;
 	        }
-
 	        return acc;
 	      }, {});
 	    }

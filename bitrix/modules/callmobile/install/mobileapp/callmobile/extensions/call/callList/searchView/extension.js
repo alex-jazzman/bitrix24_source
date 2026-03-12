@@ -35,12 +35,20 @@ jn.define('call/callList/searchView', (require, exports, module) => {
 		{
 			const { items, loading } = this.state;
 
-			if (items === null && !loading)
+			if (!items)
 			{
-				return null;
+				return loading
+					? View({
+						style: {
+							flex: 1,
+							alignItems: 'center',
+							justifyContent: 'center',
+						},
+					}, new LoaderItem({ enable: true, text: '' }))
+					: null;
 			}
 
-			if (Array.isArray(items) && items.length === 0 && !loading)
+			if (items.length === 0 && !loading)
 			{
 				return EmptyView({
 					text: {
@@ -72,7 +80,7 @@ jn.define('call/callList/searchView', (require, exports, module) => {
 				IS_IOS_PLATFORM && View(
 					{
 						style: {
-							height: 60,
+							height: 250,
 						},
 					},
 				),

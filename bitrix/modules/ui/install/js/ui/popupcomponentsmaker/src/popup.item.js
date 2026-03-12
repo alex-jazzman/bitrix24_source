@@ -25,6 +25,7 @@ export default class PopupComponentsMakerItem extends EventEmitter
 		this.sizeLoader = 45;
 		this.asyncSecondary = null;
 		this.margin = null;
+		this.borderColor = null;
 
 		this.setParams(options);
 
@@ -67,6 +68,7 @@ export default class PopupComponentsMakerItem extends EventEmitter
 		this.attrs = Type.isPlainObject(options?.attrs) ? options.attrs : this.attrs;
 		this.minHeight = Type.isString(options?.minHeight) ? options.minHeight : this.minHeight;
 		this.margin = Type.isString(options.margin) ? options.margin : this.margin;
+		this.borderColor = Type.isString(options.borderColor) ? options.borderColor : this.borderColor;
 		this.sizeLoader = Type.isNumber(options?.sizeLoader) ? options.sizeLoader : this.sizeLoader;
 		this.asyncSecondary = (options?.asyncSecondary instanceof Promise)
 			? options.asyncSecondary
@@ -80,7 +82,7 @@ export default class PopupComponentsMakerItem extends EventEmitter
 		{
 			this.loader = new Loader({
 				target: this.getContainer(),
-				size: this.sizeLoader
+				size: this.sizeLoader,
 			});
 		}
 
@@ -208,6 +210,11 @@ export default class PopupComponentsMakerItem extends EventEmitter
 		if (this.margin)
 		{
 			Dom.style(this.layout.container, 'margin', this.margin);
+		}
+
+		if (this.borderColor)
+		{
+			Dom.style(this.layout.container, 'border', `1px solid ${this.borderColor}`);
 		}
 
 		if (this.asyncSecondary)

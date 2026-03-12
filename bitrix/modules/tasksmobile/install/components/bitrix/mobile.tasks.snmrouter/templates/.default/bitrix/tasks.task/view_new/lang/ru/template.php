@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["TASKS_DEPENDENCY_START"] = "Старт";
 $MESS["TASKS_DEPENDENCY_END"] = "Финиш";
 $MESS["TASKS_STATUS_METASTATE_EXPIRED"] = "Просрочена";
@@ -88,4 +89,3 @@ $MESS["MB_TASKS_TASK_SETTINGS_ACCOMPLICES"] = "соисполнители";
 $MESS["MB_TASKS_ADD_COMMENT_FIRST"] = 'Оставьте первый комментарий к задаче';
 $MESS["TASKS_EMPTY_BLOCK_CHECKLIST"] = 'Чек-лист задачи пока пуст';
 $MESS["TASKS_EMPTY_BLOCK_FILES"] = 'Файлов пока нет';
-?>

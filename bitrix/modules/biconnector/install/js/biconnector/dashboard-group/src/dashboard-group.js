@@ -41,7 +41,7 @@ export class DashboardGroup
 		{
 			group = {
 				id: 'new_G0',
-				name: Loc.getMessage('BI_GROUP_NAME_NEW'),
+				name: '',
 				type: GroupType.custom,
 				scopes: [],
 				dashboardIds: [],

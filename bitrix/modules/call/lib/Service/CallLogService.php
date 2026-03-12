@@ -6,9 +6,8 @@ use Bitrix\Call\Logger\Logger;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Call\Model\CallUserLogTable;
 use Bitrix\Call\Model\CallUserLogCountersTable;
-use Bitrix\Call\Service\CallLogPushService;
 use Bitrix\Call\Counter;
-use Bitrix\Im\Call\Call;
+use Bitrix\Call\Call;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\DB\DuplicateEntryException;
@@ -400,7 +399,7 @@ class CallLogService
 
 		// Load call object using standard method
 		$callObject = Call::loadWithId($sourceCallId);
-		if (!$callObject)
+		if (!$callObject instanceof Call)
 		{
 			return [];
 		}
@@ -431,6 +430,11 @@ class CallLogService
 			$result['dialogId'] = (string)$chatEntity->getEntityId($currentUserId);
 			$result['chatType'] = 'private';
 		}
+		elseif ($callObject->getType() === \Bitrix\Call\Call::TYPE_PERMANENT)
+		{
+			$result['dialogId'] = 'chat' . $callObject->getChatId();
+			$result['chatType'] = 'videoconf';
+		}
 		else
 		{
 			$result['dialogId'] = 'chat' . $callObject->getChatId();
@@ -452,7 +456,7 @@ class CallLogService
 		$startDate = $call->getStartDate();
 		$endDate = $call->getEndDate();
 
-		if (!$startDate || !$endDate)
+		if (!$startDate instanceof \DateTime || !$endDate instanceof \DateTime)
 		{
 			return 0;
 		}
@@ -504,7 +508,7 @@ class CallLogService
 
 		$newCounterValue = $this->getMissedCounter($userId);
 
-		CallLogPushService::sendCounterUpdate($userId, $newCounterValue);
+		CallLogPushService::sendCounterUpdate($userId, $newCounterValue, $callIds);
 
 		return $newCounterValue;
 	}
@@ -517,14 +521,15 @@ class CallLogService
 	 */
 	public function markAllAsSeen(int $userId): int
 	{
-		// Delete all counters for user
-		CallUserLogCountersTable::deleteByFilter(['USER_ID' => $userId]);
+		$callIds = array_column(
+			CallUserLogCountersTable::query()
+				->setSelect(['USERLOG_ID'])
+				->where('USER_ID', $userId)
+				->fetchAll(),
+			'USERLOG_ID'
+		);
 
-		Counter::clearCache($userId);
-
-		CallLogPushService::sendCounterUpdate($userId, 0);
-
-		return 0;
+		return $this->markAsSeen($userId, $callIds);
 	}
 
 	/**
@@ -616,9 +621,9 @@ class CallLogService
 		{
 			$existingRecord = CallUserLogTable::getList([
 				'filter' => [
-					'SOURCE_TYPE' => $sourceType,
-					'SOURCE_CALL_ID' => $sourceCallId,
-					'USER_ID' => $userId
+					'=SOURCE_TYPE' => $sourceType,
+					'=SOURCE_CALL_ID' => $sourceCallId,
+					'=USER_ID' => $userId
 				],
 				'select' => ['ID', 'STATUS'],
 				'limit' => 1
@@ -739,7 +744,11 @@ class CallLogService
 			return null;
 		}
 
-		$entity = $factory->getItem($entityId);
+		$field = $entityTypeId === \CCrmOwnerType::Contact
+			? \Bitrix\Crm\Item::FIELD_NAME_FULL_NAME
+			: \Bitrix\Crm\Item::FIELD_NAME_TITLE
+		;
+		$entity = $factory->getItem($entityId, [$field]);
 		if (!$entity)
 		{
 			return null;

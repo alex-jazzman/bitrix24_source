@@ -171,7 +171,6 @@ $MESS["CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED"] = "Данная возможно
 $MESS["CONFIG_NETWORK_AVAILABLE_TITLE"] = "Доступно только в коммерческих тарифах \"Битрикс24\"";
 $MESS["CONFIG_SHOW_YEAR_FOR_FEMALE"] = "Показывать год рождения в профиле женщин";
 $MESS["CONFIG_SHOW_YEAR"] = "Показывать год рождения в профиле сотрудников";
-$MESS["CONFIG_STRESSLEVEL_AVAILABLE"] = "Разрешить замер и показ уровня стресса в профиле сотрудников";
 $MESS["CONFIG_DISK_ALLOW_USE_EXTENDED_FULLTEXT"] = "Искать по содержимому документов Диска";
 $MESS["CONFIG_DISK_LOCK_EXTENDED_FULLTEXT_POPUP_TEXT"] = "Доступно только при повышении тарифа";
 $MESS["CONFIG_DISK_EXTENDED_FULLTEXT_INFO"] = "По техническим причинам поиск временно ограничен. Для включения поиска обратитесь в техническую поддержку.";

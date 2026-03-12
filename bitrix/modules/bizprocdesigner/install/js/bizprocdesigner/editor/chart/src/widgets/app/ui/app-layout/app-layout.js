@@ -40,6 +40,10 @@ export const AppLayout = {
 			<template #bottom-right-toolbar>
 				<slot name="bottom-right-toolbar"/>
 			</template>
+			
+			<template #top-middle-anchor>
+				<slot name="top-middle-anchor"/>
+			</template>
 
 			<template #settings>
 				<slot name="settings"/>

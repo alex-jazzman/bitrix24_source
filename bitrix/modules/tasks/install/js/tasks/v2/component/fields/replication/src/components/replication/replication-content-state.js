@@ -34,7 +34,7 @@ export const ReplicationContentState = {
 		{
 			void taskService.update(this.taskId, {
 				replicate: false,
-				replicateParams: null,
+				replicateParams: this.task.replicateParams,
 			});
 		},
 	},

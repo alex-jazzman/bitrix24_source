@@ -1,2 +1,0 @@
-<?php
-$MESS["SALESCENTER_PRODUCT_STEP_CONTINUE"] = "Продовжити";

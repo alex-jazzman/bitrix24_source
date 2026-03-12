@@ -848,7 +848,7 @@
 		getUsersData()
 		{
 			const callId = BX.componentParameters.get('callId');
-			BX.ajax.runAction('im.call.getUsers', { data: { callId } })
+			BX.ajax.runAction('call.CallManager.getUsers', { data: { callId } })
 				.then((response) => {
 					this.setState({
 						users: { ...response.data },

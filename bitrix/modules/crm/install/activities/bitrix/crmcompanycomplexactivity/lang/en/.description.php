@@ -1,0 +1,6 @@
+<?php
+$MESS["CRM_COMPLEX_ACTIVITY_COMPANY_DESCRIPTION"] = "Creates and modifies companies, assigns responsible persons and observers, and performs other company related actions.";
+$MESS["CRM_COMPLEX_ACTIVITY_COMPANY_DESCRIPTION_NODE_ACTION_CHANGE_COMPANY"] = "Modify company";
+$MESS["CRM_COMPLEX_ACTIVITY_COMPANY_DESCRIPTION_NODE_ACTION_CREATE_COMPANY"] = "Create company";
+$MESS["CRM_COMPLEX_ACTIVITY_COMPANY_DESCRIPTION_NODE_ACTION_DELETE_COMPANY"] = "Delete company";
+$MESS["CRM_COMPLEX_ACTIVITY_COMPANY_NAME"] = "Company";

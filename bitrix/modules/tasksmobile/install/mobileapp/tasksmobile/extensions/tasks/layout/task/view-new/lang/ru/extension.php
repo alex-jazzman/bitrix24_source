@@ -26,6 +26,8 @@ $MESS['M_TASK_FORM_FIELD_CHECKLIST_TITLE'] = 'Чеклисты';
 $MESS['M_TASK_DETAILS_START_BUTTON'] = 'Начать';
 $MESS['M_TASK_DETAILS_APPROVE_BUTTON'] = 'Принять';
 $MESS['M_TASK_TOAST_FILES_DELETE_DENIED'] = "Нельзя удалить файлы, добавленные другим сотрудником";
+$MESS['M_TASK_DETAILS_UNFOLLOW_SUCCESS'] = 'Вы перестали наблюдать за задачей';
+$MESS['M_TASK_DETAILS_FOLLOW_SUCCESS'] = 'Вы стали наблюдателем в задаче';
 
 $MESS['M_TASK_RATING_LIKE_QUESTION'] = "Вам нравится?";
 $MESS['M_TASK_RATING_LIKE_YES'] = "Да";

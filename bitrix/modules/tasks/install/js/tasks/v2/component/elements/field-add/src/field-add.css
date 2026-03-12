@@ -4,7 +4,12 @@
 	gap: var(--ui-space-inline-2xs2);
 	color: var(--ui-color-accent-main-primary);
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
-	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-size: 24px;
+}
+
+.b24-field-add.--disabled {
+	color: var(--ui-color-base-5);
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
 }
 
 .b24-field-add__lock {

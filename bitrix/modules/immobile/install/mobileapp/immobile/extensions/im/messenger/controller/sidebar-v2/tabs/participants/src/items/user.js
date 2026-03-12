@@ -103,6 +103,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 
 			void UserProfile.open({
 				ownerId: this.getUserId(),
+				analyticsSection: 'im_sidebar_participants',
 			});
 		}
 

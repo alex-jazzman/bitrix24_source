@@ -25,13 +25,6 @@ export const SelectEmployees = {
 
 	mixins: [LocalizationMixin],
 
-	props: {
-		allowedLevels: {
-			type: Array,
-			default: null,
-		},
-	},
-
 	emits: ['update:validity'],
 
 	data(): Object
@@ -52,6 +45,7 @@ export const SelectEmployees = {
 				'addedEmployees',
 				'isLoginColumnShown',
 				'analyticsSource',
+				'permissions',
 			],
 		),
 		set(): Set
@@ -180,7 +174,7 @@ export const SelectEmployees = {
 							forSearch: true,
 							allowSelectRootDepartment: true,
 							restricted: 'view',
-							allowedPermissionLevels: this.allowedLevels,
+							allowedPermissionLevels: this.permissions.allowedLevels,
 						},
 					},
 				],

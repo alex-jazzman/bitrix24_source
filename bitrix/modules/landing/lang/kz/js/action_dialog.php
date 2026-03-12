@@ -1,5 +1,0 @@
-<?php
-$MESS["LANDING_ACTION_DIALOG_CANCEL_BUTTON"] = "Болдырмау";
-$MESS["LANDING_ACTION_DIALOG_CONFIRM_BUTTON"] = "Жалғастыру";
-$MESS["LANDING_ACTION_DIALOG_CONTENT"] = "Әрекетті растаңыз";
-$MESS["LANDING_ACTION_DIALOG_TITLE"] = "Назар аударыңыз";

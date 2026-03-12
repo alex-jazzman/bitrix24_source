@@ -2,7 +2,6 @@
  * @module mail/chain/action-panel
  */
 jn.define('mail/chain/action-panel', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { throttle } = require('utils/function');
 	const { Color, Corner } = require('tokens');
@@ -98,9 +97,12 @@ jn.define('mail/chain/action-panel', (require, exports, module) => {
 			shadowProps,
 			View(
 				{
+					ref: (ref) => {
+						this.buttonRef = ref;
+					},
 					testId: (`mail-action-panel-button-${buttonKey}`),
 					onClick: () => {
-						action();
+						action(this.buttonRef);
 					},
 					style: {
 						...wrapStyle,

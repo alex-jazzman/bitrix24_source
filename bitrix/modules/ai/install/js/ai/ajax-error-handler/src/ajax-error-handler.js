@@ -1,5 +1,6 @@
 import { Dom, Runtime, Type, Extension } from 'main.core';
 import { prepareBaasContext } from './helpers';
+import type { CopilotInput } from 'ai.copilot';
 
 export type HandleGenerateErrorParams = {
 	errorCode: string;
@@ -8,7 +9,12 @@ export type HandleGenerateErrorParams = {
 	baasOptions: HandleGenerateErrorParamsBaasOptions;
 	showSliderWithMsg?: string;
 	sliderCode?: string;
+	forceCodeRules?: ForceCodeRuleItems[];
+	forceOption?: ForceOptions;
+	copilotInput?: CopilotInput;
 };
+
+type ForceCodeRuleItems = 'code' | 'msgPlainText' | 'msgHtml' | 'msgBBCode' | 'sliderCode';
 
 type HandleGenerateErrorParamsBaasOptions = {
 	context: string;
@@ -17,11 +23,20 @@ type HandleGenerateErrorParamsBaasOptions = {
 	useSlider?: boolean;
 }
 
+type ForceOptions = {
+	code?: string;
+	msgPlainText?: string;
+	msgHtml?: string;
+	msgBBCode?: string;
+}
+
 const ErrorCode = {
+	ERROR_CODE_FORCE: 'ERROR_CODE_FORCE',
 	MONTHLY_LIMIT: 'LIMIT_IS_EXCEEDED_MONTHLY',
 	DAILY_LIMIT: 'LIMIT_IS_EXCEEDED_DAILY',
 	TARIFF_LIMIT: 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF',
 	BAAS_LIMIT: 'LIMIT_IS_EXCEEDED_BAAS',
+	BAAS_RATE_LIMIT: 'LIMIT_IS_EXCEEDED_BAAS_RATE_LIMIT',
 	OTHER: 'AI_ENGINE_ERROR_OTHER',
 	PROVIDER: 'AI_ENGINE_ERROR_PROVIDER',
 };
@@ -43,6 +58,25 @@ export class AjaxErrorHandler
 
 		switch (code)
 		{
+			case ErrorCode.ERROR_CODE_FORCE:
+			{
+				if (handleGenerateErrorParams?.forceCodeRules?.length && handleGenerateErrorParams.forceOption)
+				{
+					const result = this.#handleForceError(
+						handleGenerateErrorParams.forceCodeRules,
+						handleGenerateErrorParams.forceOption,
+						handleGenerateErrorParams.copilotInput
+					);
+
+					if (result)
+					{
+						return;
+					}
+				}
+
+				return this.#handleProviderError();
+			}
+
 			case ErrorCode.MONTHLY_LIMIT:
 			{
 				return this.#handleMonthlyLimitError(handleGenerateErrorParams?.sliderCode);
@@ -64,7 +98,7 @@ export class AjaxErrorHandler
 					return this.#handleMonthlyLimitError(handleGenerateErrorParams.sliderCode);
 				}
 
-				return this.#handleBaasLimitError(handleGenerateErrorParams.baasOptions);
+				return this.#handleBaasLimitError(handleGenerateErrorParams.baasOptions, handleGenerateErrorParams.sliderCode);
 			}
 
 			case ErrorCode.OTHER:
@@ -124,6 +158,91 @@ export class AjaxErrorHandler
 		AjaxErrorHandler.#showInfoHelper(
 			sliderCode ?? 'limit_copilot_requests',
 		);
+	}
+
+	static #handleForceError(
+		forceCodeRules: ForceCodeRuleItems[],
+		forceOption: ForceOptions,
+		bindElement: ?CopilotInput
+	): boolean
+	{
+		if (!forceCodeRules?.length)
+		{
+			return false;
+		}
+
+		if (forceCodeRules.includes('slider') && forceOption?.sliderCode)
+		{
+			forceOption.sliderCode?.includes('redirect=detail&code')
+				? top.BX.Helper.show(forceOption.sliderCode)
+				: BX?.UI?.InfoHelper.show(forceOption.sliderCode);
+		}
+
+		if (forceCodeRules.includes('msgWithHtmlLink'))
+		{
+			return this.#sendMsg('msgWithHtmlLink', forceOption, bindElement)
+		}
+
+		if (forceCodeRules.includes('code'))
+		{
+			return this.#sendMsg('code', forceOption, bindElement)
+		}
+
+		if (forceCodeRules.includes('msgPlainText'))
+		{
+			return this.#sendMsg('msgPlainText', forceOption, bindElement)
+		}
+
+		return false;
+	}
+
+	static #sendMsg(
+		forceCodeRule: string,
+		forceOption: ForceOptions,
+		bindElement: ?CopilotInput
+	): boolean
+	{
+
+		const msg = this.#getError(forceCodeRule, forceOption);
+		if (!msg)
+		{
+			return false;
+		}
+
+		bindElement.setErrors([{
+			code: 'ERROR_CODE_FORCE',
+			message: msg,
+			customData: {
+				clickHandler: () => command.execute(),
+			},
+		}]);
+
+		return true;
+	}
+
+	static #getError(forceCodeRule: string, forceOption: ForceOptions): string
+	{
+		if (forceCodeRule === 'code' && forceOption?.code)
+		{
+			return forceOption?.code;
+		}
+
+		if (forceCodeRule === 'msgPlainText' && forceOption?.msgPlainText)
+		{
+			return forceOption?.msgPlainText;
+		}
+
+		if (forceCodeRule === 'msgHtml' && forceOption?.msgHtml)
+		{
+			return forceOption?.msgHtml;
+		}
+
+		if (forceCodeRule === 'msgBBCode' && forceOption?.msgBBCode)
+		{
+			return forceOption?.msgBBCode;
+		}
+
+		return '';
 	}
 
 	// eslint-disable-next-line sonarjs/no-identical-functions
@@ -200,6 +319,25 @@ export class AjaxErrorHandler
 
 		switch (code)
 		{
+			case ErrorCode.ERROR_CODE_FORCE:
+			{
+				if (handleGenerateErrorParams.forceCodeRules && handleGenerateErrorParams.forceOption)
+				{
+					const result = this.#handleForceError(
+						handleGenerateErrorParams.forceCodeRules,
+						handleGenerateErrorParams.forceOption,
+						handleGenerateErrorParams.copilotInput
+					);
+
+					if (result)
+					{
+						return;
+					}
+				}
+
+				return this.#handleProviderError();
+			}
+
 			case ErrorCode.MONTHLY_LIMIT:
 			{
 				return this.#handleMonthlyLimitError(handleGenerateErrorParams?.sliderCode);

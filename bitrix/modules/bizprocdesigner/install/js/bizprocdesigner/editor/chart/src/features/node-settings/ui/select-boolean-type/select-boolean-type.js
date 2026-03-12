@@ -8,7 +8,7 @@ import {
 	useNodeSettingsStore,
 	CONSTRUCTION_TYPES,
 	CONSTRUCTION_LABELS,
-	type СonstructionLabels,
+	type ConstructionLabels,
 	// eslint-disable-next-line no-unused-vars
 	type Construction,
 } from '../../../../entities/node-settings';
@@ -31,14 +31,19 @@ export const SelectBooleanType = {
 
 		return { getMessage };
 	},
-	data(): { selectedType: string; }
-	{
-		return {
-			selectedType: CONSTRUCTION_TYPES.AND_CONDITION,
-		};
-	},
 	computed:
 	{
+		selectedType:
+		{
+			get(): string
+			{
+				return this.construction.type;
+			},
+			set(value: string): void
+			{
+				this.selectBooleanType(value);
+			},
+		},
 		booleanTypes(): Array<$Values<typeof CONSTRUCTION_TYPES>>
 		{
 			return [
@@ -46,7 +51,7 @@ export const SelectBooleanType = {
 				CONSTRUCTION_TYPES.OR_CONDITION,
 			];
 		},
-		constructionLabels(): СonstructionLabels
+		constructionLabels(): ConstructionLabels
 		{
 			return CONSTRUCTION_LABELS;
 		},

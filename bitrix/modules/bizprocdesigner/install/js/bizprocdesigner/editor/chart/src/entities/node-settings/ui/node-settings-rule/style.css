@@ -1,11 +1,10 @@
 .node-settings-rule {
 	display: flex;
-	align-items: center;
 	border: 1px solid rgba(0, 0, 0, 0.05);
 	border-radius: var(--ui-border-radius-sm);
-	padding: 8px 8px 6px;
+	padding: 8px 8px 6px 4px;
 	font-size: 14px;
-	line-height: 19px;
+	line-height: 20px;
 	cursor: pointer;
 	margin-top: 8px;
 }
@@ -33,18 +32,17 @@
 .node-settings-rule__actions {
 	margin-left: auto;
 	display: flex;
-	align-items: center;
 }
 
 .node-settings-rule__title {
 	font-weight: var(--ui-font-weight-semi-bold);
-	color: #0154C8;
+	color: var(--ui-color-accent-soft-element-blue);
 	margin: 0 15px 0 10px;
 }
 
 .node-settings-rule__construction {
 	font-size: 14px;
-	line-height: 19px;
+	line-height: 20px;
 	display: flex;
 	gap: 6px;
 }
@@ -77,8 +75,9 @@
 	margin-bottom: 7px;
 }
 
-.node-settings-rule__construction.--condition ~ .node-settings-rule__construction {
-	padding-left: 19px;
+.node-settings-rule__construction.--condition + .node-settings-rule__construction:before {
+	visibility: hidden;
+	content: attr(data-if-indent);
 }
 
 .node-settings-rule__card-container {

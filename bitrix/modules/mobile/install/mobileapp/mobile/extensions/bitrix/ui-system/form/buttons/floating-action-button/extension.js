@@ -2,262 +2,238 @@
  * @module ui-system/form/buttons/floating-action-button
  */
 jn.define('ui-system/form/buttons/floating-action-button', (require, exports, module) => {
-	const { Component } = require('tokens');
-	const { PropTypes } = require('utils/validation');
-	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { FloatingActionButtonMode } = require('ui-system/form/buttons/floating-action-button/src/mode-enum');
+	const { Icon } = require('assets/icons');
 	const { FloatingActionButtonType } = require('ui-system/form/buttons/floating-action-button/src/type-enum');
-	const { BaseEnum } = require('utils/enums/base');
-	const { BaseIcon } = require('assets/icons/src/base');
+	const { Type } = require('type');
+	const { PropTypes } = require('utils/validation');
 
-	const BUTTON_SIZE = 58;
+	const DEFAULT_TEST_ID = 'floating-action-button';
 
 	/**
 	 * @class FloatingActionButton
 	 * @param {string} testId
-	 * @param {boolean} accent
+	 * @param {boolean} accentByDefault
 	 * @param {boolean} showLoader
-	 * @param {boolean} safeArea
-	 * @param {string} icon
-	 * @param {string} type
-	 * @param {object} parentLayout
+	 * @param {Icon} icon
+	 * @param {FloatingActionButtonType} type
+	 * @param {object} layout
 	 * @param {Function} onClick
 	 * @param {Function} onLongClick
+	 *
+	 * @see mobile/install/mobileapp/mobile/extensions/bitrix/testing/tests/floating-action-button/extension.js
 	 */
-	class FloatingActionButton extends LayoutComponent
+	class FloatingActionButton
 	{
-		constructor(props)
-		{
-			super(props);
+		#options = {};
 
-			this.#initNativeButton();
+		constructor(props = {})
+		{
+			if (!props.layout)
+			{
+				throw new Error('FloatingActionButton: props.layout is required');
+			}
+
+			PropTypes.validate(FloatingActionButton.propTypes, props, 'FloatingActionButton');
+
+			this.props = props;
+			this.setOptions(props);
+
+			this.#subscribeEventListeners();
 		}
 
-		static supportNative(layout)
+		get #layout()
 		{
-			return typeof layout?.setFloatingButton === 'function';
+			return this.props.layout;
+		}
+
+		get #type()
+		{
+			return this.#options.type;
+		}
+
+		get #accentByDefault()
+		{
+			return this.#options.accentByDefault;
+		}
+
+		get #showLoader()
+		{
+			return this.#options.showLoader;
+		}
+
+		get #icon()
+		{
+			return this.#options.icon;
+		}
+
+		get #onClick()
+		{
+			return this.props.onClick ?? null;
+		}
+
+		get #onLongClick()
+		{
+			return this.props.onLongClick ?? null;
+		}
+
+		setOptions(props = {}, forceUpdate = false)
+		{
+			this.#options = {
+				testId: props.testId || DEFAULT_TEST_ID,
+				type: props.type ?? FloatingActionButtonType.COMMON,
+				accentByDefault: props.accentByDefault ?? false,
+				showLoader: props.showLoader ?? false,
+				icon: props.icon ?? null,
+				spotlightIds: props.spotlightIds ?? null,
+			};
+
+			if (forceUpdate)
+			{
+				this.update();
+			}
+
+			return this;
+		}
+
+		updateOption(key, value, forceUpdate = false)
+		{
+			this.#options[key] = value;
+
+			if (forceUpdate)
+			{
+				this.update();
+			}
+
+			return this;
 		}
 
 		/**
-		 * @returns {FloatingActionButtonMode}
+		 * @public
+		 * @param {boolean} accent
+		 * @param {boolean} forceUpdate
+		 * @return {FloatingActionButton}
 		 */
-		getMode()
+		setAccentByDefault(accent = false, forceUpdate = false)
 		{
-			return this.isAccentButton()
-				? FloatingActionButtonMode.ACCENT
-				: FloatingActionButtonMode.BASE;
+			if (Type.isBoolean(accent) && this.#accentByDefault !== accent)
+			{
+				this.updateOption('accentByDefault', accent, forceUpdate);
+			}
+
+			return this;
 		}
 
 		/**
-		 * @returns {Object}
+		 * @public
+		 * @param {boolean} showLoader
+		 * @param {boolean} forceUpdate
+		 * @return {FloatingActionButton}
 		 */
-		getButtonColor()
+		setShowLoader(showLoader = false, forceUpdate = false)
 		{
-			return this.getMode().getButtonColor();
-		}
-
-		getIconColor()
-		{
-			return this.getMode().getIconColor();
-		}
-
-		getLayout()
-		{
-			const { parentLayout } = this.props;
-
-			return parentLayout;
-		}
-
-		isAccentButton()
-		{
-			const { accentByDefault, accent } = this.props;
-
-			if (typeof accent !== 'undefined')
+			if (Type.isBoolean(showLoader) && this.#showLoader !== showLoader)
 			{
-				if (Application.isBeta())
-				{
-					console.warn('The "accent" parameter is deprecated. Please use "accentByDefault" instead.');
-				}
-
-				return Boolean(accent);
+				this.updateOption('showLoader', showLoader, forceUpdate);
 			}
 
-			return Boolean(accentByDefault);
-		}
-
-		shouldSafeArea()
-		{
-			const { safeArea } = this.props;
-
-			return Boolean(safeArea);
-		}
-
-		#getIcon()
-		{
-			const { icon } = this.props;
-
-			return Icon.resolve(icon, Icon.PLUS);
-		}
-
-		render()
-		{
-			if (FloatingActionButton.supportNative(this.getLayout()))
-			{
-				return null;
-			}
-
-			const { testId } = this.props;
-
-			return View(
-				{
-					ref: (ref) => {
-						this.ref = ref;
-					},
-					testId,
-					style: {
-						width: BUTTON_SIZE,
-						height: BUTTON_SIZE,
-						alignItems: 'center',
-						justifyContent: 'center',
-						backgroundColor: this.getButtonColor(),
-						borderRadius: Component.popupCorner.toNumber(),
-					},
-					onClick: this.#handleOnClick,
-					onLongClick: this.#handleOnLongClick,
-				},
-				IconView({
-					size: 32,
-					icon: this.#getIcon(),
-					color: this.getIconColor(),
-				}),
-			);
-		}
-
-		#handleOnClick = () => {
-			const { onClick } = this.props;
-
-			if (onClick)
-			{
-				onClick();
-			}
-		};
-
-		#handleOnLongClick = () => {
-			const { onLongClick } = this.props;
-
-			if (onLongClick)
-			{
-				onLongClick();
-			}
-		};
-
-		#initNativeButton()
-		{
-			if (!FloatingActionButton.supportNative(this.getLayout()))
-			{
-				return;
-			}
-
-			this.setFloatingButton(this.props);
-
-			this.#initListeners();
-		}
-
-		transformProps(props)
-		{
-			return Object.keys(props).reduce((accumulator, key) => {
-				const value = props[key];
-
-				if (!value || typeof value === 'function' || key === 'parentLayout')
-				{
-					return accumulator;
-				}
-
-				if (value instanceof BaseIcon)
-				{
-					return { ...accumulator, [key]: value.getIconName() };
-				}
-
-				if (value instanceof BaseEnum)
-				{
-					return { ...accumulator, [key]: value.getValue() };
-				}
-
-				return { ...accumulator, [key]: value };
-			}, {});
-		}
-
-		#initListeners()
-		{
-			this.getLayout().removeAllListeners('floatingButtonTap');
-			this.getLayout().removeAllListeners('floatingButtonLongTap');
-
-			this.getLayout().on('floatingButtonTap', this.#handleOnClick);
-			this.getLayout().on('floatingButtonLongTap', this.#handleOnLongClick);
+			return this;
 		}
 
 		/**
-		 * @param {Object} params
-		 * @param {boolean} [params.accentByDefault]
-		 * @param {boolean} [params.hide]
-		 * @param {boolean}  [params.showLoader]
-		 * @param {string} [params.type]
-		 * @param {Object} [params.icon]
+		 * @public
+		 * @param {Icon} newIcon
+		 * @param {boolean} forceUpdate
+		 * @return {FloatingActionButton}
 		 */
-		setFloatingButton(params = {})
+		setIcon(newIcon, forceUpdate = false)
 		{
-			const transformedProps = this.transformProps(this.props);
-			const {
-				hide = false,
-				safeArea = this.shouldSafeArea(),
-				accentByDefault = this.isAccentButton(),
-			} = params;
+			if (Icon.hasIcon(newIcon) && !newIcon.equal(this.#icon))
+			{
+				this.updateOption('icon', Icon.resolve(newIcon, Icon.PLUS), forceUpdate);
+			}
 
-			const floatingActionButtonParams = hide
-				? {}
-				: {
-					...transformedProps,
-					accentByDefault,
-					safeArea,
-					callback: () => {},
-				};
-
-			this.getLayout().setFloatingButton(floatingActionButtonParams);
+			return this;
 		}
 
-		hide()
+		/**
+		 * @public
+		 * @param {FloatingActionButtonType} newType
+		 * @param {boolean} forceUpdate
+		 */
+		setType(newType = FloatingActionButtonType.COMMON, forceUpdate = false)
 		{
-			this.setFloatingButton({ hide: true });
+			if (FloatingActionButtonType.has(newType) && !newType.equal(this.#type))
+			{
+				this.updateOption('type', newType, forceUpdate);
+			}
+
+			return this;
 		}
 
+		#subscribeEventListeners()
+		{
+			this.#layout.removeAllListeners('floatingButtonTap');
+			this.#layout.removeAllListeners('floatingButtonLongTap');
+
+			if (this.#onClick)
+			{
+				this.#layout.on('floatingButtonTap', this.#onClick);
+			}
+
+			if (this.#onLongClick)
+			{
+				this.#layout.on('floatingButtonLongTap', this.#onLongClick);
+			}
+		}
+
+		#getNativeProps()
+		{
+			return {
+				...this.#options,
+				icon: this.#icon?.getIconName(),
+				type: this.#type?.getValue(),
+			};
+		}
+
+		/**
+		 * @public
+		 */
 		show()
 		{
-			this.setFloatingButton({ hide: false });
+			this.#layout.setFloatingButton(this.#getNativeProps());
+		}
+
+		/**
+		 * @public
+		 */
+		update()
+		{
+			this.#layout.setFloatingButton(this.#getNativeProps());
+		}
+
+		/**
+		 * @public
+		 */
+		hide()
+		{
+			this.#layout.setFloatingButton({});
 		}
 	}
 
-	FloatingActionButton.defaultProps = {
-		accentByDefault: false,
-		showLoader: false,
-		safeArea: false,
-	};
-
 	FloatingActionButton.propTypes = {
-		safeArea: PropTypes.bool,
 		testId: PropTypes.string.isRequired,
+		layout: PropTypes.object.isRequired,
 		accentByDefault: PropTypes.bool,
-		onLongClick: PropTypes.func,
-		onClick: PropTypes.func,
-		parentLayout: PropTypes.object,
 		showLoader: PropTypes.bool,
-		type: PropTypes.instanceOf(FloatingActionButtonType),
 		icon: PropTypes.instanceOf(Icon),
+		type: PropTypes.instanceOf(FloatingActionButtonType),
+		onClick: PropTypes.func,
+		onLongClick: PropTypes.func,
 		spotlightIds: PropTypes.object,
 	};
 
 	module.exports = {
-		FloatingActionButton: (props) => new FloatingActionButton(props),
-		FloatingActionButtonSupportNative: FloatingActionButton.supportNative,
+		FloatingActionButton,
 		FloatingActionButtonType,
 	};
 });

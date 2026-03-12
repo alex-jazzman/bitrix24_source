@@ -11,9 +11,7 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { runAction, callMethod } = require('im/messenger/lib/rest');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
-	const { CounterStorageWriter } = require('im/messenger/lib/counters/counter-manager/storage/writer');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { CounterHelper } = require('im/messenger/lib/helper');
 
 	const { ReadMessageQueue } = require('im/messenger/provider/services/read/read-message-queue');
@@ -35,14 +33,6 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 		{
 			this.logger = getLoggerWithContext('counters--read-message-service', this);
 			this.#subscribeEvents();
-
-			if (!Feature.isMessengerV2Enabled)
-			{
-				this.#subscribeStoreEvents();
-				this.readMessagesFromQueue().catch((error) => {
-					this.logger.error('initializing readMessagesFromQueue error', error);
-				});
-			}
 		}
 
 		/**
@@ -55,13 +45,7 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 				return this.#counterStorageWriter;
 			}
 
-			if (Feature.isMessengerV2Enabled)
-			{
-				this.#counterStorageWriter = new CounterStoreWriter();
-
-				return this.#counterStorageWriter;
-			}
-			this.#counterStorageWriter = CounterStorageWriter.getInstance();
+			this.#counterStorageWriter = new CounterStoreWriter();
 
 			return this.#counterStorageWriter;
 		}

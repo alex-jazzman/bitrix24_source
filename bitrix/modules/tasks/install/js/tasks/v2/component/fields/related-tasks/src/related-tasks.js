@@ -10,6 +10,7 @@ export const RelatedTasks = {
 	},
 	inject: {
 		taskId: {},
+		analytics: {},
 	},
 	setup(): Object
 	{
@@ -23,6 +24,7 @@ export const RelatedTasks = {
 			relatedTasksDialog.show({
 				targetNode,
 				taskId: this.taskId,
+				analytics: this.analytics,
 			});
 		},
 	},

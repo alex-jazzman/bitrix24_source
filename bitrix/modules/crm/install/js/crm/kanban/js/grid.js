@@ -1770,6 +1770,10 @@ BX.CRM.Kanban.Grid.prototype = {
 				{
 					this.registerAnalyticsChangeStageEvent(item, columnType, ids, this._analyticsDictionary.STATUS_SUCCESS)
 				}
+				else
+				{
+					this.registerAnalyticsChangeStageEvent(item, columnType, ids, this._analyticsDictionary.STATUS_ERROR_FILLING_FIELDS)
+				}
 
 				if (
 					this.getData().useItemPlanner

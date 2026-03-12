@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core_events,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,ui_system_menu,im_v2_lib_chat,im_v2_lib_message,im_v2_lib_promo,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_v2_lib_notifier,im_v2_lib_feature,im_v2_const,im_v2_lib_channel,im_v2_lib_analytics,im_v2_lib_copilot,main_core,ui_iconSet_api_core,im_v2_application_core,im_v2_lib_feedback) {
+(function (exports,main_core_events,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,im_v2_lib_chat,im_v2_lib_message,im_v2_lib_promo,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_feature,im_v2_lib_channel,im_v2_lib_analytics,im_v2_lib_copilot,im_v2_lib_feedback,im_v2_lib_notifier,im_v2_lib_permission,im_v2_lib_confirm,main_core,ui_iconSet_api_core,ui_system_menu,im_v2_application_core,im_v2_provider_service_sending,im_v2_provider_service_sticker,im_v2_const) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
@@ -46,7 +46,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      closeByEsc: true,
 	      className: this.getMenuClassName(),
 	      items: babelHelpers.classPrivateFieldLooseBase(this, _prepareItems)[_prepareItems](),
-	      sections: this.getMenuGroups()
+	      sections: this.getMenuGroups(),
+	      events: {
+	        onClose: () => this.close(),
+	        onDestroy: () => this.destroy()
+	      }
 	    };
 	  }
 	  getMenuItems() {
@@ -66,10 +70,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getMenuClassName() {
 	    return '';
 	  }
-	  onClosePopup() {
-	    this.close();
-	  }
 	  close() {
+	    this.emit(BaseMenu.events.close);
 	    if (!this.menuInstance) {
 	      return;
 	    }
@@ -91,6 +93,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.destroy();
 	  });
 	}
+	BaseMenu.events = {
+	  close: 'close'
+	};
 
 	const MenuSectionCode = {
 	  first: 'first',
@@ -100,6 +105,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _leaveChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("leaveChat");
 	var _leaveCollab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("leaveCollab");
 	var _canHideChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canHideChat");
+	var _getRecentItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecentItem");
 	var _isInvitationActive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isInvitationActive");
 	var _canResendInvitation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canResendInvitation");
 	class RecentMenu extends BaseMenu {
@@ -110,6 +116,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _isInvitationActive, {
 	      value: _isInvitationActive2
+	    });
+	    Object.defineProperty(this, _getRecentItem, {
+	      value: _getRecentItem2
 	    });
 	    Object.defineProperty(this, _canHideChat, {
 	      value: _canHideChat2
@@ -188,8 +197,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      onClick: () => {
 	        if (showReadOption) {
 	          this.chatService.readDialog(dialogId);
+	          im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onRead(dialogId);
 	        } else {
 	          this.chatService.unreadDialog(dialogId);
+	          im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onUnread(dialogId);
 	        }
 	        this.menuInstance.close();
 	      }
@@ -197,21 +208,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getPinMessageItem() {
 	    const {
-	      recentItem,
 	      dialogId
 	    } = this.context;
-	    if (!recentItem) {
+	    if (this.isGuestRole()) {
 	      return null;
 	    }
-	    const isPinned = recentItem.pinned;
+	    const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _getRecentItem)[_getRecentItem]();
+	    const isPinned = recentItem ? recentItem.pinned : false;
 	    return {
 	      title: isPinned ? main_core.Loc.getMessage('IM_LIB_MENU_UNPIN_MSGVER_1') : main_core.Loc.getMessage('IM_LIB_MENU_PIN_MSGVER_1'),
 	      onClick: () => {
 	        if (isPinned) {
 	          this.chatService.unpinChat(dialogId);
+	          im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onUnpin(dialogId);
 	        } else {
 	          this.chatService.pinChat(dialogId);
-	          im_v2_lib_analytics.Analytics.getInstance().chatPins.onPin(dialogId);
+	          im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onPin(dialogId);
 	        }
 	        this.menuInstance.close();
 	      }
@@ -232,8 +244,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      onClick: () => {
 	        if (isMuted) {
 	          this.chatService.unmuteChat(dialogId);
+	          im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onUnmute(dialogId);
 	        } else {
 	          this.chatService.muteChat(dialogId);
+	          im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onMute(dialogId);
 	        }
 	        this.menuInstance.close();
 	      }
@@ -248,6 +262,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
 	      onClick: () => {
 	        BX.SidePanel.Instance.open(profileUri);
+	        im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onOpenProfile(this.context.dialogId);
 	        this.menuInstance.close();
 	      }
 	    };
@@ -260,6 +275,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_LIB_MENU_HIDE_MSGVER_1'),
 	      onClick: () => {
 	        im_v2_provider_service_recent.LegacyRecentService.getInstance().hideChat(this.context.dialogId);
+	        im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onHide(this.context.dialogId);
 	        this.menuInstance.close();
 	      }
 	    };
@@ -286,6 +302,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          standalone: true,
 	          dialogId: this.context.dialogId
 	        });
+	        im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onFindChatsWithUser(this.context.dialogId);
 	        this.menuInstance.close();
 	      }
 	    };
@@ -367,17 +384,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  isChannel() {
 	    return im_v2_lib_channel.ChannelManager.isChannel(this.context.dialogId);
 	  }
-	  isCommentsChat() {
-	    const {
-	      type
-	    } = this.store.getters['chats/get'](this.context.dialogId, true);
-	    return type === im_v2_const.ChatType.comment;
-	  }
 	  isCollabChat() {
 	    const {
 	      type
 	    } = this.store.getters['chats/get'](this.context.dialogId, true);
 	    return type === im_v2_const.ChatType.collab;
+	  }
+	  isOpenChat() {
+	    const {
+	      type
+	    } = this.store.getters['chats/get'](this.context.dialogId, true);
+	    return type === im_v2_const.ChatType.open;
+	  }
+	  isGuestRole() {
+	    const {
+	      role
+	    } = this.store.getters['chats/get'](this.context.dialogId, true);
+	    return role === im_v2_const.UserRole.guest;
 	  }
 	  isChatWithCurrentUser() {
 	    return this.getCurrentUserId() === Number.parseInt(this.context.dialogId, 10);
@@ -396,6 +419,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const userChoice = await im_v2_lib_confirm.showLeaveChatConfirm(this.context.dialogId);
 	      if (userChoice === true) {
 	        this.chatService.leaveChat(this.context.dialogId);
+	        im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onLeave(this.context.dialogId);
 	      }
 	    }
 	  };
@@ -420,9 +444,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _canHideChat2() {
 	  const {
-	    recentItem,
 	    dialogId
 	  } = this.context;
+	  const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _getRecentItem)[_getRecentItem]();
 	  if (!recentItem) {
 	    return null;
 	  }
@@ -430,6 +454,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const isFakeUser = recentItem.isFakeElement;
 	  const isAiAssistantBot = this.store.getters['users/bots/isAiAssistant'](dialogId);
 	  return !isInvitation && !isFakeUser && !isAiAssistantBot;
+	}
+	function _getRecentItem2() {
+	  return this.context.recentItem || this.store.getters['recent/get'](this.context.dialogId);
 	}
 	function _isInvitationActive2() {
 	  const {
@@ -557,24 +584,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  second: 'second',
 	  third: 'third'
 	};
+	var _isStickerMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isStickerMessage");
 	var _needNestedMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needNestedMenu");
-	var _isOwnMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isOwnMessage");
-	var _isDeletedMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDeletedMessage");
 	var _getFirstFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFirstFile");
 	var _isSingleFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSingleFile");
-	var _isRealMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRealMessage");
 	var _onDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDelete");
 	var _isDeletionCancelled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDeletionCancelled");
 	var _getDownloadSingleFileItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDownloadSingleFileItem");
 	var _getDownloadSeveralFilesItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDownloadSeveralFilesItem");
 	var _arePinsExceedLimit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("arePinsExceedLimit");
-	var _canSendMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canSendMessage");
 	class MessageMenu extends BaseMenu {
 	  constructor(applicationContext) {
 	    super();
-	    Object.defineProperty(this, _canSendMessage, {
-	      value: _canSendMessage2
-	    });
 	    Object.defineProperty(this, _arePinsExceedLimit, {
 	      value: _arePinsExceedLimit2
 	    });
@@ -590,23 +611,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _onDelete, {
 	      value: _onDelete2
 	    });
-	    Object.defineProperty(this, _isRealMessage, {
-	      value: _isRealMessage2
-	    });
 	    Object.defineProperty(this, _isSingleFile, {
 	      value: _isSingleFile2
 	    });
 	    Object.defineProperty(this, _getFirstFile, {
 	      value: _getFirstFile2
 	    });
-	    Object.defineProperty(this, _isDeletedMessage, {
-	      value: _isDeletedMessage2
-	    });
-	    Object.defineProperty(this, _isOwnMessage, {
-	      value: _isOwnMessage2
-	    });
 	    Object.defineProperty(this, _needNestedMenu, {
 	      value: _needNestedMenu2
+	    });
+	    Object.defineProperty(this, _isStickerMessage, {
+	      value: _isStickerMessage2
 	    });
 	    this.maxPins = 20;
 	    this.id = 'bx-im-message-context-menu';
@@ -646,7 +661,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }];
 	  }
 	  getSelectItem() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]() || !babelHelpers.classPrivateFieldLooseBase(this, _isRealMessage)[_isRealMessage]()) {
+	    if (this.isDeletedMessage() || !this.isRealMessage()) {
 	      return null;
 	    }
 	    return {
@@ -677,7 +692,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getForwardItem() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]() || !babelHelpers.classPrivateFieldLooseBase(this, _isRealMessage)[_isRealMessage]()) {
+	    if (this.isDeletedMessage() || !this.isRealMessage()) {
 	      return null;
 	    }
 	    return {
@@ -693,7 +708,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getCopyItem() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]() || this.context.text.trim().length === 0) {
+	    if (this.isDeletedMessage() || this.context.text.trim().length === 0) {
 	      return null;
 	    }
 	    return {
@@ -750,7 +765,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getPinItem() {
 	    const canPin = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.pinMessage, this.context.dialogId);
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]() || !canPin) {
+	    if (this.isDeletedMessage() || !canPin) {
 	      return null;
 	    }
 	    const isPinned = this.store.getters['messages/pin/isPinned']({
@@ -782,7 +797,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getFavoriteItem() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]()) {
+	    if (this.isDeletedMessage()) {
 	      return null;
 	    }
 	    const isInFavorite = this.store.getters['sidebar/favorites/isFavoriteMessage'](this.context.chatId, this.context.id);
@@ -808,7 +823,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getMarkItem() {
-	    const canUnread = this.context.viewed && !babelHelpers.classPrivateFieldLooseBase(this, _isOwnMessage)[_isOwnMessage]();
+	    const canUnread = this.context.viewed && !this.isOwnMessage();
 	    const dialog = this.store.getters['chats/getByChatId'](this.context.chatId);
 	    const isMarked = this.context.id === dialog.markedId;
 	    if (!canUnread || isMarked) {
@@ -828,7 +843,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getCreateTaskItem() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]()) {
+	    if (this.isDeletedMessage() || babelHelpers.classPrivateFieldLooseBase(this, _isStickerMessage)[_isStickerMessage]()) {
 	      return null;
 	    }
 	    return {
@@ -843,7 +858,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getCreateMeetingItem() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]()) {
+	    if (this.isDeletedMessage() || babelHelpers.classPrivateFieldLooseBase(this, _isStickerMessage)[_isStickerMessage]()) {
 	      return null;
 	    }
 	    return {
@@ -878,7 +893,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCopilotMentionAvailable)) {
 	      return null;
 	    }
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _canSendMessage)[_canSendMessage]()) {
+	    if (!this.canSendMessage() || this.isDeletedMessage()) {
 	      return null;
 	    }
 	    const isChannel = im_v2_lib_channel.ChannelManager.isChannel(this.context.dialogId);
@@ -908,12 +923,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getDeleteItem() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]()) {
+	    if (this.isDeletedMessage()) {
 	      return null;
 	    }
 	    const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
 	    const canDeleteOthersMessage = permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.deleteOthersMessage, this.context.dialogId);
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isOwnMessage)[_isOwnMessage]() && !canDeleteOthersMessage) {
+	    if (!this.isOwnMessage() && !canDeleteOthersMessage) {
 	      return null;
 	    }
 	    return {
@@ -992,26 +1007,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
 	    return [...this.groupItems(firstGroupItems, NestedMenuSectionCode.first), ...this.groupItems(this.getMarketItems(), NestedMenuSectionCode.second)];
 	  }
+	  isOwnMessage() {
+	    return this.context.authorId === im_v2_application_core.Core.getUserId();
+	  }
+	  isDeletedMessage() {
+	    return this.context.isDeleted;
+	  }
+	  isRealMessage() {
+	    return this.store.getters['messages/isRealMessage'](this.context.id);
+	  }
+	  canSendMessage() {
+	    const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](this.context.dialogId, true);
+	    if (!dialog.isTextareaEnabled) {
+	      return false;
+	    }
+	    return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.send, this.context.dialogId);
+	  }
+	}
+	function _isStickerMessage2() {
+	  return this.store.getters['stickers/messages/isSticker'](this.context.id);
 	}
 	function _needNestedMenu2(additionalItems) {
 	  const NESTED_MENU_MIN_ITEMS = 3;
 	  const menuItems = additionalItems.filter(item => item !== null);
 	  return menuItems.length >= NESTED_MENU_MIN_ITEMS;
 	}
-	function _isOwnMessage2() {
-	  return this.context.authorId === im_v2_application_core.Core.getUserId();
-	}
-	function _isDeletedMessage2() {
-	  return this.context.isDeleted;
-	}
 	function _getFirstFile2() {
 	  return this.store.getters['files/get'](this.context.files[0]);
 	}
 	function _isSingleFile2() {
 	  return this.context.files.length === 1;
-	}
-	function _isRealMessage2() {
-	  return this.store.getters['messages/isRealMessage'](this.context.id);
 	}
 	async function _onDelete2() {
 	  const {
@@ -1093,13 +1118,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _arePinsExceedLimit2() {
 	  const pins = this.store.getters['messages/pin/getPinned'](this.context.chatId);
 	  return pins.length >= this.maxPins;
-	}
-	function _canSendMessage2() {
-	  const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](this.context.dialogId, true);
-	  if (!dialog.isTextareaEnabled) {
-	    return false;
-	  }
-	  return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.send, this.context.dialogId);
 	}
 
 	class ChannelMessageMenu extends MessageMenu {
@@ -1249,10 +1267,40 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_LIB_MENU_AI_ASSISTANT_FEEDBACK'),
 	      icon: ui_iconSet_api_core.Outline.FEEDBACK,
 	      onClick: () => {
-	        void new im_v2_lib_feedback.FeedbackManager().openAiAssistantForm();
+	        void new im_v2_lib_feedback.FeedbackManager().openAiAssistantForm({});
 	        this.menuInstance.close();
 	      }
 	    };
+	  }
+	}
+
+	class TaskCommentsMessageMenu extends MessageMenu {
+	  getMenuItems() {
+	    const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getAskCopilotItem(), this.getCreateTaskItem(), this.getAddResultItem(), this.getRemoveResultItem(), ...this.getAdditionalItems()];
+	    const secondGroupItems = [this.getDeleteItem()];
+	    return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
+	  }
+	  getNestedItems() {
+	    const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
+	    return this.groupItems(firstGroupItems, NestedMenuSectionCode.first);
+	  }
+	  getMenuGroups() {
+	    return [{
+	      code: MenuSectionCode$1.first
+	    }, {
+	      code: MenuSectionCode$1.second
+	    }];
+	  }
+	  getNestedMenuGroups() {
+	    return [{
+	      code: NestedMenuSectionCode.first
+	    }];
+	  }
+	  getAddResultItem() {
+	    return null;
+	  }
+	  getRemoveResultItem() {
+	    return null;
 	  }
 	}
 
@@ -1267,11 +1315,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _getDefaultMenuClass = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDefaultMenuClass");
 	var _getCustomMenuClass = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCustomMenuClass");
 	var _getClassByMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getClassByMap");
-	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
+	var _getChatType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatType");
 	var _isChannel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChannel");
 	var _isComment = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isComment");
 	var _isCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCopilot");
 	var _isAiAssistant = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAiAssistant");
+	var _isTaskComments = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTaskComments");
 	var _hasMenuForMessageType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasMenuForMessageType");
 	var _getMenuForMessageType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMenuForMessageType");
 	class MessageMenuManager {
@@ -1288,6 +1337,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _hasMenuForMessageType, {
 	      value: _hasMenuForMessageType2
 	    });
+	    Object.defineProperty(this, _isTaskComments, {
+	      value: _isTaskComments2
+	    });
 	    Object.defineProperty(this, _isAiAssistant, {
 	      value: _isAiAssistant2
 	    });
@@ -1300,8 +1352,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _isChannel, {
 	      value: _isChannel2
 	    });
-	    Object.defineProperty(this, _getDialog, {
-	      value: _getDialog2
+	    Object.defineProperty(this, _getChatType, {
+	      value: _getChatType2
 	    });
 	    Object.defineProperty(this, _getClassByMap, {
 	      value: _getClassByMap2
@@ -1385,6 +1437,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultMenuByCallback)[_defaultMenuByCallback].set(babelHelpers.classPrivateFieldLooseBase(this, _isComment)[_isComment].bind(this), CommentsMessageMenu);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultMenuByCallback)[_defaultMenuByCallback].set(babelHelpers.classPrivateFieldLooseBase(this, _isCopilot)[_isCopilot].bind(this), CopilotMessageMenu);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultMenuByCallback)[_defaultMenuByCallback].set(babelHelpers.classPrivateFieldLooseBase(this, _isAiAssistant)[_isAiAssistant].bind(this), AiAssistantMessageMenu);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultMenuByCallback)[_defaultMenuByCallback].set(babelHelpers.classPrivateFieldLooseBase(this, _isTaskComments)[_isTaskComments].bind(this), TaskCommentsMessageMenu);
 	}
 	function _isCustomMenuAllowed2(context) {
 	  return !im_v2_lib_channel.ChannelManager.isCommentsPostMessage(context, context.dialogId);
@@ -1408,21 +1461,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  return null;
 	}
-	function _getDialog2(dialogId) {
-	  return im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	function _getChatType2(dialogId) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	  return chat.type;
 	}
 	function _isChannel2(context) {
 	  return im_v2_lib_channel.ChannelManager.isChannel(context.dialogId);
 	}
 	function _isComment2(context) {
-	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](context.dialogId);
-	  return chat.type === im_v2_const.ChatType.comment;
+	  const type = babelHelpers.classPrivateFieldLooseBase(this, _getChatType)[_getChatType](context.dialogId);
+	  return type === im_v2_const.ChatType.comment;
 	}
 	function _isCopilot2(context) {
 	  return new im_v2_lib_copilot.CopilotManager().isCopilotChat(context.dialogId);
 	}
 	function _isAiAssistant2(context) {
 	  return im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](context.dialogId);
+	}
+	function _isTaskComments2(context) {
+	  const type = babelHelpers.classPrivateFieldLooseBase(this, _getChatType)[_getChatType](context.dialogId);
+	  return type === im_v2_const.ChatType.taskComments;
 	}
 	function _hasMenuForMessageType2(messageType) {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _menuByMessageType)[_menuByMessageType].has(messageType);
@@ -1435,12 +1493,244 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  value: null
 	});
 
+	const MenuSectionCode$2 = {
+	  first: 'first',
+	  second: 'second'
+	};
+	var _isPackOwner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPackOwner");
+	var _isVendorStickerPack = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isVendorStickerPack");
+	var _canUnlinkPack = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canUnlinkPack");
+	var _canDeletePack = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canDeletePack");
+	class StickerPackMenu extends BaseMenu {
+	  constructor() {
+	    super();
+	    Object.defineProperty(this, _canDeletePack, {
+	      value: _canDeletePack2
+	    });
+	    Object.defineProperty(this, _canUnlinkPack, {
+	      value: _canUnlinkPack2
+	    });
+	    Object.defineProperty(this, _isVendorStickerPack, {
+	      value: _isVendorStickerPack2
+	    });
+	    Object.defineProperty(this, _isPackOwner, {
+	      value: _isPackOwner2
+	    });
+	    this.id = im_v2_const.PopupType.stickerPackContextMenu;
+	  }
+	  getMenuOptions() {
+	    return {
+	      ...super.getMenuOptions(),
+	      angle: false
+	    };
+	  }
+	  getMenuItems() {
+	    if (this.context.isRecent) {
+	      return [this.getClearRecentItem()];
+	    }
+	    return [...this.groupItems([this.getEditPackItem()], MenuSectionCode$2.first), ...this.groupItems([this.getUnlinkPackItem(), this.getDeletePackItem()], MenuSectionCode$2.second)];
+	  }
+	  getMenuGroups() {
+	    return this.getMenuItems().map(menuItem => {
+	      return {
+	        code: menuItem.sectionCode
+	      };
+	    });
+	  }
+	  getEditPackItem() {
+	    if (!im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.changeStickerPack)) {
+	      return null;
+	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isPackOwner)[_isPackOwner]()) {
+	      return null;
+	    }
+	    return {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_EDIT_STICKER_PACK'),
+	      icon: ui_iconSet_api_core.Outline.EDIT_M,
+	      onClick: () => {
+	        this.emit(StickerPackMenu.events.showPackForm);
+	      }
+	    };
+	  }
+	  getDeletePackItem() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _canDeletePack)[_canDeletePack]()) {
+	      return null;
+	    }
+	    return {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_REMOVE_STICKER_PACK'),
+	      design: ui_system_menu.MenuItemDesign.Alert,
+	      icon: ui_iconSet_api_core.Outline.TRASHCAN,
+	      onClick: async () => {
+	        const confirmResult = await im_v2_lib_confirm.showStickerPackDeleteConfirm();
+	        if (!confirmResult) {
+	          return;
+	        }
+	        this.emit(StickerPackMenu.events.closeParentPopup);
+	        await im_v2_provider_service_sticker.StickerService.getInstance().deletePack({
+	          id: this.context.pack.id,
+	          type: this.context.pack.type
+	        });
+	        im_v2_lib_notifier.Notifier.sticker.onRemovePackComplete();
+	      }
+	    };
+	  }
+	  getUnlinkPackItem() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _canUnlinkPack)[_canUnlinkPack]()) {
+	      return null;
+	    }
+	    return {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_UNLINK_STICKER_PACK'),
+	      design: ui_system_menu.MenuItemDesign.Alert,
+	      icon: ui_iconSet_api_core.Outline.TRASHCAN,
+	      onClick: async () => {
+	        const confirmResult = await im_v2_lib_confirm.showStickerPackUnlinkConfirm();
+	        if (!confirmResult) {
+	          return;
+	        }
+	        this.emit(StickerPackMenu.events.closeParentPopup);
+	        await im_v2_provider_service_sticker.StickerService.getInstance().unlinkPack({
+	          id: this.context.pack.id,
+	          type: this.context.pack.type
+	        });
+	        im_v2_lib_notifier.Notifier.sticker.onRemovePackComplete();
+	      }
+	    };
+	  }
+	  getClearRecentItem() {
+	    return {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_CLEAR_RECENT_STICKERS'),
+	      icon: ui_iconSet_api_core.Outline.BROOM,
+	      onClick: () => {
+	        void im_v2_provider_service_sticker.StickerService.getInstance().clearRecent();
+	      }
+	    };
+	  }
+	}
+	function _isPackOwner2() {
+	  return this.context.pack.authorId === im_v2_application_core.Core.getUserId();
+	}
+	function _isVendorStickerPack2() {
+	  return this.context.packType === im_v2_const.StickerPackType.vendor;
+	}
+	function _canUnlinkPack2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isVendorStickerPack)[_isVendorStickerPack]()) {
+	    return false;
+	  }
+	  if (!this.context.pack.isAdded) {
+	    return false;
+	  }
+	  return !babelHelpers.classPrivateFieldLooseBase(this, _isPackOwner)[_isPackOwner]();
+	}
+	function _canDeletePack2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isVendorStickerPack)[_isVendorStickerPack]()) {
+	    return false;
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _isPackOwner)[_isPackOwner]();
+	}
+	StickerPackMenu.events = {
+	  showPackForm: 'showPackForm',
+	  closeParentPopup: 'closeParentPopup'
+	};
+
+	var _isPackOwner$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPackOwner");
+	class StickerMenu extends BaseMenu {
+	  constructor() {
+	    super();
+	    Object.defineProperty(this, _isPackOwner$1, {
+	      value: _isPackOwner2$1
+	    });
+	    this.id = im_v2_const.PopupType.stickerContextMenu;
+	  }
+	  getMenuOptions() {
+	    return {
+	      ...super.getMenuOptions(),
+	      angle: false
+	    };
+	  }
+	  getMenuItems() {
+	    return [this.getSendItem(), this.getRemoveFromRecentItem(), this.getDeleteFromPackItem()];
+	  }
+	  getSendItem() {
+	    return {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_SEND_STICKER'),
+	      icon: ui_iconSet_api_core.Outline.SEND,
+	      onClick: () => {
+	        this.emit(StickerMenu.events.closeParentPopup);
+	        void im_v2_provider_service_sending.SendingService.getInstance().sendMessageWithSticker({
+	          dialogId: this.context.dialogId,
+	          stickerParams: {
+	            id: this.context.sticker.id,
+	            packId: this.context.sticker.packId,
+	            packType: this.context.sticker.packType
+	          }
+	        });
+	        this.menuInstance.close();
+	      }
+	    };
+	  }
+	  getDeleteFromPackItem() {
+	    if (this.context.isRecent) {
+	      return null;
+	    }
+	    const isPacksOwner = babelHelpers.classPrivateFieldLooseBase(this, _isPackOwner$1)[_isPackOwner$1]();
+	    if (!isPacksOwner) {
+	      return null;
+	    }
+	    return {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_REMOVE_STICKER'),
+	      design: ui_system_menu.MenuItemDesign.Alert,
+	      icon: ui_iconSet_api_core.Outline.TRASHCAN,
+	      onClick: () => {
+	        void im_v2_provider_service_sticker.StickerService.getInstance().deleteStickerFromPack({
+	          ids: [this.context.sticker.id],
+	          packId: this.context.sticker.packId,
+	          packType: this.context.sticker.packType
+	        });
+	        this.menuInstance.close();
+	      }
+	    };
+	  }
+	  getRemoveFromRecentItem() {
+	    if (!this.context.isRecent) {
+	      return null;
+	    }
+	    return {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_REMOVE_RECENT_STICKER'),
+	      icon: ui_iconSet_api_core.Outline.CIRCLE_MINUS,
+	      design: ui_system_menu.MenuItemDesign.Alert,
+	      onClick: () => {
+	        void im_v2_provider_service_sticker.StickerService.getInstance().removeFromRecent({
+	          id: this.context.sticker.id,
+	          packId: this.context.sticker.packId,
+	          packType: this.context.sticker.packType
+	        });
+	      }
+	    };
+	  }
+	}
+	function _isPackOwner2$1() {
+	  const pack = im_v2_application_core.Core.getStore().getters['stickers/packs/getByIdentifier']({
+	    id: this.context.sticker.packId,
+	    type: this.context.sticker.packType
+	  });
+	  if (!pack) {
+	    return false;
+	  }
+	  return pack.authorId === im_v2_application_core.Core.getUserId();
+	}
+	StickerMenu.events = {
+	  closeParentPopup: 'closeParentPopup'
+	};
+
 	exports.BaseMenu = BaseMenu;
 	exports.RecentMenu = RecentMenu;
 	exports.UserMenu = UserMenu;
 	exports.MessageMenuManager = MessageMenuManager;
 	exports.MessageMenu = MessageMenu;
 	exports.AiAssistantMessageMenu = AiAssistantMessageMenu;
+	exports.StickerPackMenu = StickerPackMenu;
+	exports.StickerMenu = StickerMenu;
+	exports.TaskCommentsMessageMenu = TaskCommentsMessageMenu;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.Messenger.v2.Application,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.UI.System,BX.Messenger.v2.Application,BX.Messenger.v2.Service,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Const));
 //# sourceMappingURL=registry.bundle.js.map

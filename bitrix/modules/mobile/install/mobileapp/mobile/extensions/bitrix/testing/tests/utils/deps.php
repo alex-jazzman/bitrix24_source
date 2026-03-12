@@ -2,10 +2,15 @@
 
 return [
 	'extensions' => [
+		'loc',
 		'testing',
 		'utils',
-		'utils/object',
-		'utils/type',
 		'utils/file',
+		'utils/function',
+		'utils/hash',
+		'utils/object',
+		'utils/random',
+		'utils/string',
+		'utils/type',
 	],
 ];

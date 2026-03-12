@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_lib_userSelectorDialog,ui_vue3_components_button,ui_vue3_components_popup,tasks_v2_component_elements_bottomSheet,ui_draganddrop_draggable,ui_vue3_components_menu,tasks_v2_component_elements_userCheckbox,tasks_v2_component_elements_progressBar,ui_vue3_vuex,ui_system_skeleton_vue,tasks_v2_component_elements_growingTextArea,tasks_v2_component_elements_userAvatarList,tasks_v2_lib_highlighter,tasks_v2_component_elements_userFieldWidgetComponent,tasks_v2_component_elements_checkbox,ui_iconSet_actions,ui_vue3_directives_hint,tasks_v2_core,tasks_v2_component_elements_hint,ui_notification,main_core,main_core_events,tasks_v2_provider_service_checkListService,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_animated,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_fileService,tasks_v2_provider_service_taskService) {
+(function (exports,ui_vue3_components_button,ui_vue3_components_popup,tasks_v2_component_elements_bottomSheet,ui_draganddrop_draggable,ui_vue3_components_menu,tasks_v2_component_elements_userCheckbox,tasks_v2_component_elements_progressBar,ui_vue3_vuex,tasks_v2_lib_userSelectorDialog,ui_system_skeleton_vue,tasks_v2_component_elements_growingTextArea,tasks_v2_component_elements_userAvatarList,tasks_v2_lib_highlighter,tasks_v2_component_elements_userFieldWidgetComponent,tasks_v2_component_elements_checkbox,ui_iconSet_actions,ui_vue3_directives_hint,tasks_v2_core,tasks_v2_component_elements_hint,ui_notification,main_core,main_core_events,tasks_v2_provider_service_checkListService,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_animated,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_fileService,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	const checkListMeta = Object.freeze({
@@ -72,6 +72,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        padding: 0,
 	        autoHide: true,
 	        closeByEsc: true,
+	        overlay: {
+	          backgroundColor: 'transparent'
+	        },
 	        animation: {
 	          showClassName: 'tasks-check-list-popup-show',
 	          closeClassName: 'tasks-check-list-popup-close',
@@ -106,15 +109,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  mounted() {
 	    main_core.Event.bind(window, 'resize', this.resize);
-	    main_core.Event.bind(document, 'keydown', this.handleKeyDown, {
-	      capture: true
-	    });
 	  },
 	  beforeUnmount() {
 	    main_core.Event.unbind(window, 'resize', this.resize);
-	    main_core.Event.unbind(document, 'keydown', this.handleKeyDown, {
-	      capture: true
-	    });
 	  },
 	  methods: {
 	    resize() {
@@ -137,12 +134,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.resizeObserver.disconnect();
 	      this.$bitrix.eventEmitter.emit(tasks_v2_const.EventName.CloseCheckList);
 	      this.$emit('close');
-	    },
-	    handleKeyDown(event) {
-	      if (event.key === 'Escape') {
-	        this.$emit('close');
-	        event.stopPropagation();
-	      }
 	    }
 	  },
 	  template: `
@@ -176,27 +167,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  watch: {
 	    async isShown(value) {
 	      await this.$nextTick();
-	      if (value === true) {
-	        main_core.Event.bind(document, 'keydown', this.handleKeyDown, {
-	          capture: true
-	        });
-	      } else {
-	        main_core.Event.unbind(document, 'keydown', this.handleKeyDown, {
-	          capture: true
-	        });
-	      }
 	      this.$emit('isShown', value);
 	    }
 	  },
 	  methods: {
 	    handleClose() {
 	      this.$emit('close');
-	    },
-	    handleKeyDown(event) {
-	      if (event.key === 'Escape') {
-	        this.handleClose();
-	        event.stopPropagation();
-	      }
 	    }
 	  },
 	  template: `
@@ -926,7 +902,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					<slot/>
 					<div
 						v-if="canCheckListAdd"
-						class="tasks-check-list-list-content-row --footer"
+						class="tasks-check-list-list-content-row --footer print-ignore"
 						@click="$emit('addFastCheckList')"
 					>
 						<div
@@ -1527,6 +1503,282 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _draggable$1)[_draggable$1].setOptions(options);
 	}
 
+	const MENTION_REGEX = /^([+@])(\p{L}+)?$/u;
+	class MentionMatcher {
+	  static match(text, startMatchPosition, currentPosition) {
+	    const afterPositionText = text.slice(startMatchPosition, currentPosition);
+	    const match = MENTION_REGEX.exec(afterPositionText);
+	    return match ? match[0] : '';
+	  }
+	}
+
+	var _taskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId");
+	var _dialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog");
+	var _saveParticipants = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveParticipants");
+	var _updateCheckListItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateCheckListItems");
+	var _mergeTaskParticipants = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mergeTaskParticipants");
+	var _updateTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTask");
+	var _updateCheckList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateCheckList");
+	var _upsertCheckLists = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("upsertCheckLists");
+	class CheckListParticipantService {
+	  constructor(taskId) {
+	    Object.defineProperty(this, _upsertCheckLists, {
+	      value: _upsertCheckLists2
+	    });
+	    Object.defineProperty(this, _updateCheckList, {
+	      value: _updateCheckList2
+	    });
+	    Object.defineProperty(this, _updateTask, {
+	      value: _updateTask2
+	    });
+	    Object.defineProperty(this, _mergeTaskParticipants, {
+	      value: _mergeTaskParticipants2
+	    });
+	    Object.defineProperty(this, _updateCheckListItems, {
+	      value: _updateCheckListItems2
+	    });
+	    Object.defineProperty(this, _saveParticipants, {
+	      value: _saveParticipants2
+	    });
+	    Object.defineProperty(this, _taskId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _dialog, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId] = taskId;
+	  }
+	  showParticipantDialog(params) {
+	    var _params$items, _params$isMultiple, _params$withAngle, _params$enableSearch;
+	    if (!((_params$items = params.items) != null && _params$items.length)) {
+	      console.error('CheckListParticipantService: items cannot be empty');
+	      return;
+	    }
+	    const participants = params.items[0][params.type];
+	    const selectedUserIds = main_core.Type.isArrayFilled(participants) ? participants.map(user => user.id) : [];
+	    const handleClose = userIds => {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _saveParticipants)[_saveParticipants](params.items, params.type, userIds);
+	      params.onClose == null ? void 0 : params.onClose(userIds);
+	    };
+	    void tasks_v2_lib_userSelectorDialog.usersDialog.show({
+	      targetNode: params.targetNode,
+	      ids: selectedUserIds,
+	      onSelect: params.onSelect,
+	      onDeselect: params.onDeselect,
+	      onClose: handleClose,
+	      isMultiple: (_params$isMultiple = params.isMultiple) != null ? _params$isMultiple : true,
+	      withAngle: (_params$withAngle = params.withAngle) != null ? _params$withAngle : true,
+	      enableSearch: (_params$enableSearch = params.enableSearch) != null ? _params$enableSearch : true
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog] = tasks_v2_lib_userSelectorDialog.usersDialog.getDialog();
+	  }
+	  updateSearch(searchQuery) {
+	    var _babelHelpers$classPr;
+	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog]) == null ? void 0 : _babelHelpers$classPr.search(searchQuery);
+	  }
+	  isDialogOpen() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog]) {
+	      return false;
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].isOpen();
+	  }
+	  closeDialog() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog]) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].hide();
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog] = null;
+	  }
+	  get $store() {
+	    return tasks_v2_core.Core.getStore();
+	  }
+	}
+	async function _saveParticipants2(checkListItems, type, userIds) {
+	  const users = this.$store.getters[`${tasks_v2_const.Model.Users}/getByIds`](userIds);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _updateCheckListItems)[_updateCheckListItems](checkListItems, type, users);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _mergeTaskParticipants)[_mergeTaskParticipants](type, userIds);
+	}
+	async function _updateCheckListItems2(checkListItems, type, users) {
+	  if (checkListItems.length > 1) {
+	    const updatedItems = checkListItems.map(item => ({
+	      ...item,
+	      [type]: users
+	    }));
+	    await babelHelpers.classPrivateFieldLooseBase(this, _upsertCheckLists)[_upsertCheckLists](updatedItems);
+	  } else {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _updateCheckList)[_updateCheckList](checkListItems[0].id, {
+	      [type]: users
+	    });
+	  }
+	}
+	async function _mergeTaskParticipants2(type, newUserIds) {
+	  const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
+	  const participantIdsKey = `${type}Ids`;
+	  const existingUserIds = task[participantIdsKey] || [];
+	  const mergedUserIds = [...new Set([...existingUserIds, ...newUserIds])];
+	  await babelHelpers.classPrivateFieldLooseBase(this, _updateTask)[_updateTask]({
+	    [participantIdsKey]: mergedUserIds
+	  });
+	}
+	async function _updateTask2(fields) {
+	  return tasks_v2_provider_service_taskService.taskService.updateStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId], fields);
+	}
+	async function _updateCheckList2(id, fields) {
+	  return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	    id,
+	    fields
+	  });
+	}
+	async function _upsertCheckLists2(items) {
+	  return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, items);
+	}
+
+	var _itemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("itemId");
+	var _participantService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("participantService");
+	var _currentItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentItem");
+	var _currentMention = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentMention");
+	var _extractMention = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractMention");
+	var _updateParticipantSearch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateParticipantSearch");
+	var _openParticipantDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openParticipantDialog");
+	var _handleMentionSelected = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleMentionSelected");
+	var _closeParticipantDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeParticipantDialog");
+	var _resetMentionState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetMentionState");
+	var _removeMentionFromTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeMentionFromTitle");
+	var _buildTitleWithoutMention = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildTitleWithoutMention");
+	var _updateCheckList$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateCheckList");
+	class MentionManager {
+	  constructor(_params) {
+	    Object.defineProperty(this, _updateCheckList$1, {
+	      value: _updateCheckList2$1
+	    });
+	    Object.defineProperty(this, _buildTitleWithoutMention, {
+	      value: _buildTitleWithoutMention2
+	    });
+	    Object.defineProperty(this, _removeMentionFromTitle, {
+	      value: _removeMentionFromTitle2
+	    });
+	    Object.defineProperty(this, _resetMentionState, {
+	      value: _resetMentionState2
+	    });
+	    Object.defineProperty(this, _closeParticipantDialog, {
+	      value: _closeParticipantDialog2
+	    });
+	    Object.defineProperty(this, _handleMentionSelected, {
+	      value: _handleMentionSelected2
+	    });
+	    Object.defineProperty(this, _openParticipantDialog, {
+	      value: _openParticipantDialog2
+	    });
+	    Object.defineProperty(this, _updateParticipantSearch, {
+	      value: _updateParticipantSearch2
+	    });
+	    Object.defineProperty(this, _extractMention, {
+	      value: _extractMention2
+	    });
+	    Object.defineProperty(this, _itemId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _participantService, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _currentItem, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _currentMention, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _itemId)[_itemId] = _params.itemId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _participantService)[_participantService] = new CheckListParticipantService(_params.taskId);
+	  }
+	  async handleInput(params) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _itemId)[_itemId] !== params.item.id) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentItem)[_currentItem] = params.item;
+	    const mention = babelHelpers.classPrivateFieldLooseBase(this, _extractMention)[_extractMention](params);
+	    if (!mention) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _closeParticipantDialog)[_closeParticipantDialog]();
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentMention)[_currentMention] = mention;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _participantService)[_participantService].isDialogOpen()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _updateParticipantSearch)[_updateParticipantSearch](mention);
+	    } else if (params.isEntered) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _openParticipantDialog)[_openParticipantDialog](params.targetNode);
+	    }
+	  }
+	  get $store() {
+	    return tasks_v2_core.Core.getStore();
+	  }
+	}
+	function _extractMention2(params) {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  const startPosition = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _currentMention)[_currentMention]) == null ? void 0 : _babelHelpers$classPr2.startPosition) != null ? _babelHelpers$classPr : params.cursorPosition - 1;
+	  const matchedText = MentionMatcher.match(params.item.title, startPosition, params.cursorPosition);
+	  if (!main_core.Type.isStringFilled(matchedText)) {
+	    return null;
+	  }
+	  return {
+	    text: matchedText,
+	    startPosition
+	  };
+	}
+	function _updateParticipantSearch2(mention) {
+	  const searchText = mention.text.slice(1); // remove trigger character (@, +)
+	  babelHelpers.classPrivateFieldLooseBase(this, _participantService)[_participantService].updateSearch(searchText);
+	}
+	function _openParticipantDialog2(targetNode) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _participantService)[_participantService].showParticipantDialog({
+	    targetNode,
+	    type: 'auditors',
+	    items: [babelHelpers.classPrivateFieldLooseBase(this, _currentItem)[_currentItem]],
+	    isMultiple: true,
+	    withAngle: false,
+	    enableSearch: false,
+	    onSelect: () => babelHelpers.classPrivateFieldLooseBase(this, _handleMentionSelected)[_handleMentionSelected](),
+	    onDeselect: () => babelHelpers.classPrivateFieldLooseBase(this, _handleMentionSelected)[_handleMentionSelected](),
+	    onClose: () => babelHelpers.classPrivateFieldLooseBase(this, _resetMentionState)[_resetMentionState]()
+	  });
+	}
+	function _handleMentionSelected2() {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _removeMentionFromTitle)[_removeMentionFromTitle]();
+	  babelHelpers.classPrivateFieldLooseBase(this, _closeParticipantDialog)[_closeParticipantDialog]();
+	}
+	function _closeParticipantDialog2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _participantService)[_participantService].closeDialog();
+	  babelHelpers.classPrivateFieldLooseBase(this, _resetMentionState)[_resetMentionState]();
+	}
+	function _resetMentionState2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _participantService)[_participantService].updateSearch('');
+	  babelHelpers.classPrivateFieldLooseBase(this, _currentMention)[_currentMention] = null;
+	}
+	async function _removeMentionFromTitle2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _currentMention)[_currentMention]) {
+	    return;
+	  }
+	  const newTitle = babelHelpers.classPrivateFieldLooseBase(this, _buildTitleWithoutMention)[_buildTitleWithoutMention](babelHelpers.classPrivateFieldLooseBase(this, _currentItem)[_currentItem].title, babelHelpers.classPrivateFieldLooseBase(this, _currentMention)[_currentMention]);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _updateCheckList$1)[_updateCheckList$1](babelHelpers.classPrivateFieldLooseBase(this, _currentItem)[_currentItem].id, {
+	    title: newTitle
+	  });
+	}
+	function _buildTitleWithoutMention2(currentTitle, mention) {
+	  const beforeMention = currentTitle.slice(0, mention.startPosition);
+	  const afterMention = currentTitle.slice(mention.startPosition + mention.text.length);
+	  return beforeMention + afterMention;
+	}
+	async function _updateCheckList2$1(id, fields) {
+	  return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	    id,
+	    fields
+	  });
+	}
+
 	// @vue/component
 	const CheckListItemMixin = {
 	  inject: {
@@ -1564,6 +1816,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    item() {
 	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getById`](this.id);
 	    },
+	    isItemEdit() {
+	      return main_core.Type.isNumber(this.item.id);
+	    },
 	    canAdd() {
 	      if (!this.isEdit) {
 	        return true;
@@ -1588,6 +1843,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    canToggle() {
 	      var _this$item4;
+	      if (this.readOnly && !this.isItemEdit && this.isEdit) {
+	        return false;
+	      }
 	      return ((_this$item4 = this.item) == null ? void 0 : _this$item4.actions.toggle) === true;
 	    },
 	    hasAttachments() {
@@ -1615,6 +1873,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    textColor() {
 	      return this.completed ? 'var(--ui-color-base-4)' : 'var(--ui-color-base-1)';
+	    },
+	    linkColor() {
+	      return this.completed ? 'var(--ui-color-base-4)' : 'var(--ui-color-accent-main-link)';
 	    },
 	    groupMode() {
 	      var _this$item$groupMode;
@@ -1646,6 +1907,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        checkLists: () => this.checkLists
 	      }
 	    });
+	    this.mentionManager = new MentionManager({
+	      taskId: this.taskId,
+	      itemId: this.item.id
+	    });
 	  },
 	  mounted() {
 	    setTimeout(() => {
@@ -1662,6 +1927,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    handleEmptyBlur() {
 	      this.$emit('emptyBlur', this.id);
+	    },
+	    handleLinkClick(event) {
+	      event.stopPropagation();
 	    },
 	    updateCheckList(id, fields) {
 	      this.$emit('update', this.id);
@@ -1749,6 +2017,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      scrollContainer.scrollTo({
 	        top: offsetTopInsideContainer - 200,
 	        behavior: 'smooth'
+	      });
+	    },
+	    handleInput(value) {
+	      const currentTitle = this.item.title;
+	      this.updateTitle(value);
+	      const textareaContainer = this.$refs.growingTextArea.$el;
+	      const textarea = textareaContainer == null ? void 0 : textareaContainer.querySelector('textarea');
+	      const cursorPosition = (textarea == null ? void 0 : textarea.selectionStart) || 0;
+	      void this.mentionManager.handleInput({
+	        item: this.item,
+	        isEntered: currentTitle.length < value.length,
+	        cursorPosition,
+	        targetNode: textareaContainer
 	      });
 	    }
 	  }
@@ -2042,7 +2323,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  template: `
 		<div
 			ref="item"
-			class="check-list-widget-parent-item"
+			class="check-list-widget-parent-item print-no-before"
 			:class="{
 				'--complete': completed,
 				'--collapsed': collapsed,
@@ -2077,12 +2358,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:placeholder="loc('TASKS_V2_CHECK_LIST_LIST_PLACEHOLDER')"
 					:readonly="textReadOnly"
 					:fontColor="textColor"
+					:linkColor
 					:fontSize
 					:lineHeight="20"
 					:fontWeight="500"
 					@click="handleTextClick"
+					@linkClick="handleLinkClick"
 					@update:modelValue="updateTitle"
-					@input="updateTitle"
+					@input="handleInput"
 					@focus="handleFocus"
 					@emptyFocus="scrollToItem"
 					@blur="handleBlur"
@@ -2131,15 +2414,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							v-model:checked="item.myFilterActive"
 						/>
 					</div>
-					<div class="check-list-widget-parent-item-main-action-actions">
-						<BIcon ref="more" :name="Outline.MORE_L" @click="showMenu"/>
+					<div class="check-list-widget-parent-item-main-action-actions print-ignore">
+						<BIcon 
+							:name="Outline.MORE_L"
+							:size="isPreview ? 20 : 24"
+							@click="showMenu"
+							ref="more"
+						/>
 						<BIcon
 							:name="collapsed ? Outline.CHEVRON_DOWN_L : Outline.CHEVRON_TOP_L"
+							:size="isPreview ? 20 : 24"
 							@click="toggleCollapse()"
 						/>
 					</div>
 				</div>
-				<div v-if="isSticky && !isPreview" class="check-list-widget-parent-item-empty"/>
+				<div v-if="isSticky && !isPreview" class="check-list-widget-parent-item-empty print-ignore"/>
 			</div>
 			<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 		</div>
@@ -2353,7 +2642,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  template: `
 		<div
 			ref="item"
-			class="check-list-widget-child-item"
+			class="check-list-widget-child-item print-no-before"
 			:class="{
 				'--complete': completed,
 				'--group-mode': groupMode,
@@ -2396,10 +2685,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:placeholder="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
 					:readonly="textReadOnly"
 					:fontColor="textColor"
+					:linkColor
 					:fontSize="15"
 					:lineHeight="20"
 					@update:modelValue="updateTitle"
-					@input="updateTitle"
+					@linkClick="handleLinkClick"
+					@input="handleInput"
 					@focus="handleFocus"
 					@blur="handleBlur"
 					@emptyBlur="handleEmptyBlur"
@@ -2419,7 +2710,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<div v-else class="check-list-widget-child-item-action-stub"/>
 			</div>
 			<template v-if="hasAttachments">
-				<div class="check-list-widget-item-attach">
+				<div class="check-list-widget-item-attach print-ignore">
 					<div v-if="hasUsers" class="check-list-widget-item-attach-users">
 						<div v-if="hasAccomplices" class="check-list-widget-item-attach-users-list">
 							<BIcon :name="Outline.GROUP"/>
@@ -2468,7 +2759,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div
-			class="check-list-widget-add-item"
+			class="check-list-widget-add-item print-ignore"
 			:class="{'--preview': isPreview}"
 			@mousedown="$emit('addItem')"
 		>
@@ -2535,7 +2826,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<div class="check-list-widget-group-completed-list-title">
 				{{ completedParentsLabel }}
 			</div>
-			<div class="check-list-widget-group-completed-list-action">
+			<div class="check-list-widget-group-completed-list-action print-ignore">
 				<BIcon :name="Actions.CHEVRON_RIGHT"/>
 			</div>
 		</div>
@@ -2816,7 +3107,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<li
 					v-for="(parentItem, parentItemIndex) in parentCheckLists"
 					:key="'parent-' + parentItem.id + parentItemIndex"
-					class="check-list-widget-item --parent check-list-draggable-list"
+					class="check-list-widget-item --parent check-list-draggable-list print-no-page-break print-no-box-shadow print-font-color-base-1-recursive"
 					:class="{
 						'--preview': isPreview,
 						'--collapsed': isCollapsed(parentItem, parentItemIndex),
@@ -2899,7 +3190,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<li
 					v-if="isPreview && totalCompletedParents > 0"
 					key="completed-list"
-					class="check-list-widget-item --completed-list"
+					class="check-list-widget-item --completed-list print-no-box-shadow"
 				>
 					<CheckListGroupCompletedList :totalCompletedParents @click="showFirstCompletedCheckList"/>
 				</li>
@@ -3325,6 +3616,160 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _content)[_content].replace('#countdown#', babelHelpers.classPrivateFieldLooseBase(this, _counter)[_counter]);
 	}
 
+	var _params$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
+	var _initialSnapshot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initialSnapshot");
+	var _isInitialized = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isInitialized");
+	var _hasItemChanged = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasItemChanged");
+	var _arraysChanged = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("arraysChanged");
+	var _findFirstChangedItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("findFirstChangedItemId");
+	var _getCheckLists$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCheckLists");
+	class CheckListChangeTracker {
+	  constructor(params) {
+	    Object.defineProperty(this, _getCheckLists$1, {
+	      value: _getCheckLists2$1
+	    });
+	    Object.defineProperty(this, _findFirstChangedItemId, {
+	      value: _findFirstChangedItemId2
+	    });
+	    Object.defineProperty(this, _arraysChanged, {
+	      value: _arraysChanged2
+	    });
+	    Object.defineProperty(this, _hasItemChanged, {
+	      value: _hasItemChanged2
+	    });
+	    Object.defineProperty(this, _params$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _initialSnapshot, {
+	      writable: true,
+	      value: new Map()
+	    });
+	    Object.defineProperty(this, _isInitialized, {
+	      writable: true,
+	      value: false
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1] = params;
+	  }
+	  createSnapshot() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _initialSnapshot)[_initialSnapshot].clear();
+	    const checkLists = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists$1)[_getCheckLists$1]();
+	    checkLists.forEach(item => {
+	      const children = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists$1)[_getCheckLists$1]().filter(child => child.parentId === item.id).map(child => child.id);
+	      babelHelpers.classPrivateFieldLooseBase(this, _initialSnapshot)[_initialSnapshot].set(item.id, {
+	        id: item.id,
+	        title: item.title || '',
+	        parentId: item.parentId || 0,
+	        sortIndex: item.sortIndex || 0,
+	        isImportant: item.isImportant || false,
+	        isComplete: item.isComplete || false,
+	        accomplices: [...(item.accomplices || [])],
+	        auditors: [...(item.auditors || [])],
+	        attachments: [...(item.attachments || [])],
+	        childrenIds: children
+	      });
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _isInitialized)[_isInitialized] = true;
+	  }
+	  hasChanges() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isInitialized)[_isInitialized]) {
+	      return false;
+	    }
+	    const currentCheckLists = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists$1)[_getCheckLists$1]();
+	    const currentIds = new Set(currentCheckLists.map(item => item.id));
+	    const initialIds = new Set(babelHelpers.classPrivateFieldLooseBase(this, _initialSnapshot)[_initialSnapshot].keys());
+	    if (currentIds.size !== initialIds.size) {
+	      return true;
+	    }
+	    for (const id of initialIds) {
+	      if (!currentIds.has(id)) {
+	        return true;
+	      }
+	    }
+	    for (const currentItem of currentCheckLists) {
+	      const initialItem = babelHelpers.classPrivateFieldLooseBase(this, _initialSnapshot)[_initialSnapshot].get(currentItem.id);
+	      if (!initialItem) {
+	        return true;
+	      }
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _hasItemChanged)[_hasItemChanged](currentItem, initialItem)) {
+	        return true;
+	      }
+	    }
+	    return false;
+	  }
+	  getLastUpdatedCheckListId(getRootParentByChildId) {
+	    if (!this.hasChanges()) {
+	      return 0;
+	    }
+	    const changedItemId = babelHelpers.classPrivateFieldLooseBase(this, _findFirstChangedItemId)[_findFirstChangedItemId]();
+	    if (!changedItemId) {
+	      return 0;
+	    }
+	    const rootParent = getRootParentByChildId(changedItemId);
+	    return rootParent ? rootParent.id : 0;
+	  }
+	  reset() {
+	    this.createSnapshot();
+	  }
+	  isInitialized() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isInitialized)[_isInitialized];
+	  }
+	}
+	function _hasItemChanged2(currentItem, initialItem) {
+	  if (currentItem.title !== initialItem.title || currentItem.parentId !== initialItem.parentId || currentItem.sortIndex !== initialItem.sortIndex || currentItem.isImportant !== initialItem.isImportant || currentItem.isComplete !== initialItem.isComplete) {
+	    return true;
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _arraysChanged)[_arraysChanged](currentItem.accomplices || [], initialItem.accomplices)) {
+	    return true;
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _arraysChanged)[_arraysChanged](currentItem.auditors || [], initialItem.auditors)) {
+	    return true;
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _arraysChanged)[_arraysChanged](currentItem.attachments || [], initialItem.attachments)) {
+	    return true;
+	  }
+	  const currentChildren = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists$1)[_getCheckLists$1]().filter(child => child.parentId === currentItem.id).map(child => child.id);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _arraysChanged)[_arraysChanged](currentChildren, initialItem.childrenIds);
+	}
+	function _arraysChanged2(current, initial) {
+	  if (current.length !== initial.length) {
+	    return true;
+	  }
+	  if (current.length > 0 && main_core.Type.isObjectLike(current[0]) && !main_core.Type.isUndefined(current[0].id)) {
+	    const currentIds = new Set(current.map(item => item.id));
+	    const initialIds = new Set(initial.map(item => item.id));
+	    if (currentIds.size !== initialIds.size) {
+	      return true;
+	    }
+	    for (const id of currentIds) {
+	      if (!initialIds.has(id)) {
+	        return true;
+	      }
+	    }
+	  } else {
+	    for (const [i, element] of current.entries()) {
+	      if (element !== initial[i]) {
+	        return true;
+	      }
+	    }
+	  }
+	  return false;
+	}
+	function _findFirstChangedItemId2() {
+	  const currentCheckLists = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists$1)[_getCheckLists$1]();
+	  for (const currentItem of currentCheckLists) {
+	    const initialItem = babelHelpers.classPrivateFieldLooseBase(this, _initialSnapshot)[_initialSnapshot].get(currentItem.id);
+	    if (!initialItem || babelHelpers.classPrivateFieldLooseBase(this, _hasItemChanged)[_hasItemChanged](currentItem, initialItem)) {
+	      return currentItem.id;
+	    }
+	  }
+	  return null;
+	}
+	function _getCheckLists2$1() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
+	  return (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1]) == null ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.computed) == null ? void 0 : _babelHelpers$classPr3.checkLists()) != null ? _babelHelpers$classPr : [];
+	}
+
 	// @vue/component
 	const CheckList = {
 	  name: 'TaskCheckList',
@@ -3387,8 +3832,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  data() {
 	    return {
 	      itemPanelIsShown: false,
-	      checkListWasUpdated: false,
-	      lastUpdatedCheckListId: 0,
 	      itemId: null,
 	      itemPanelStyles: {
 	        top: '0',
@@ -3538,20 +3981,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        }
 	      });
 	    },
-	    checkListWasUpdated(value) {
-	      if (!this.currentItem) {
-	        return;
-	      }
-	      if (value === true) {
-	        const parentItem = this.checkListManager.getRootParentByChildId(this.currentItem.id);
-	        this.lastUpdatedCheckListId = parentItem ? parentItem.id : 0;
-	      }
-	    },
-	    checkListId(value) {
-	      const isNewCheckList = main_core.Type.isString(value);
-	      if (isNewCheckList) {
-	        this.checkListWasUpdated = true;
-	      }
+	    checkLists: {
+	      handler() {
+	        if (this.checkListChangeTracker && !this.checkListChangeTracker.isInitialized()) {
+	          void this.$nextTick(() => {
+	            this.checkListChangeTracker.createSnapshot();
+	          });
+	        }
+	      },
+	      immediate: true
 	    }
 	  },
 	  created() {
@@ -3560,6 +3998,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        checkLists: () => this.checkLists
 	      }
 	    });
+	    this.checkListChangeTracker = new CheckListChangeTracker({
+	      computed: {
+	        checkLists: () => this.checkLists
+	      }
+	    });
+	    this.checkListParticipantService = new CheckListParticipantService(this.taskId);
 	  },
 	  mounted() {
 	    if (this.isAutonomous || this.isPreview) {
@@ -3597,7 +4041,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    handleUpdate(itemId) {
 	      this.itemId = itemId;
 	      this.handleUpdatingFreezeState();
-	      this.checkListWasUpdated = true;
 	    },
 	    handleUpdatingFreezeState() {
 	      if (!this.isFreeze && (this.hasEmptyItem() || this.getItemIdWithUploadingFiles())) {
@@ -3662,7 +4105,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        return;
 	      }
 	      this.cleanEmptyItems();
-	      const checkListId = this.lastUpdatedCheckListId === 0 ? this.checkListId : this.lastUpdatedCheckListId;
+	      const lastUpdatedId = this.checkListChangeTracker.hasChanges() ? this.checkListChangeTracker.getLastUpdatedCheckListId(id => this.checkListManager.getRootParentByChildId(id)) : 0;
+	      const checkListId = lastUpdatedId === 0 ? this.checkListId : lastUpdatedId;
 	      this.$emit('close', this.deletingCheckListIds[checkListId] ? 0 : checkListId);
 	      await this.saveCheckList();
 	      this.closing = false;
@@ -3842,9 +4286,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    async saveCheckList() {
 	      if (!this.isDemoCheckListModified()) {
 	        this.removeChecklists();
-	        this.checkListWasUpdated = false;
 	      }
-	      if (this.checkListWasUpdated && this.isEdit) {
+	      if (this.checkListChangeTracker.hasChanges() && this.isEdit) {
 	        const deletingIds = new Set(Object.values(this.deletingCheckListIds));
 	        const fullListDeletingIds = this.checkListManager.expandIdsWithChildren(deletingIds);
 	        const checkListsToSave = this.checkLists.filter(checkList => {
@@ -3852,7 +4295,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        });
 	        await tasks_v2_provider_service_checkListService.checkListService.save(this.taskId, checkListsToSave);
 	      }
-	      this.checkListWasUpdated = false;
+	      this.checkListChangeTracker.reset();
 	    },
 	    isDemoCheckListModified() {
 	      if (this.getCheckListsNumber() > 1) {
@@ -3860,7 +4303,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	      const [checkList] = this.checkLists;
 	      if (!checkList) {
-	        return false;
+	        return true;
 	      }
 	      const demoTitle = this.loc('TASKS_V2_CHECK_LIST_TITLE_NUMBER', {
 	        '#number#': 1
@@ -3891,7 +4334,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      void this.updateTask({
 	        checklist
 	      });
-	      this.checkListWasUpdated = true;
 	      return parentId;
 	    },
 	    async addFastCheckList() {
@@ -3986,9 +4428,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        return;
 	      }
 	      const children = this.checkListManager.getChildren(item.id);
-	      if (item != null && item.title || item.parentId === 0) {
-	        this.checkListWasUpdated = true;
-	      }
 	      if (children.length > 0) {
 	        children.forEach(child => {
 	          this.removeItem(child.id, false);
@@ -4110,7 +4549,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          isImportant: !this.currentItem.isImportant
 	        });
 	      }
-	      this.checkListWasUpdated = true;
 	    },
 	    attachFile(node) {
 	      var _this$fileServiceInst;
@@ -4141,7 +4579,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.isItemPanelFreeze = fileServiceInstance.isUploading();
 	        handleFreeze(this.isItemPanelFreeze || this.hasEmptyItem());
 	        this.focusToItem(this.currentItem.id);
-	        this.checkListWasUpdated = true;
 	      });
 	    },
 	    getCurrentFileService() {
@@ -4189,7 +4626,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.checkListManager.moveRight(item, updates => {
 	        var _item$groupMode;
 	        void this.upsertCheckLists(updates);
-	        this.checkListWasUpdated = true;
 	        if (!((_item$groupMode = item.groupMode) != null && _item$groupMode.active)) {
 	          this.focusToItem(item.id);
 	        }
@@ -4208,7 +4644,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.checkListManager.moveLeft(item, updates => {
 	        var _item$groupMode2;
 	        void this.upsertCheckLists(updates);
-	        this.checkListWasUpdated = true;
 	        if (!((_item$groupMode2 = item.groupMode) != null && _item$groupMode2.active)) {
 	          this.focusToItem(item.id);
 	        }
@@ -4221,7 +4656,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.hideItemPanel();
 	        void this.forwardToNewChecklist(this.currentItem.id);
 	      }
-	      this.checkListWasUpdated = true;
 	    },
 	    async forwardToNewChecklist(itemId) {
 	      const newParentId = await this.addCheckList(true);
@@ -4329,45 +4763,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      });
 	    },
 	    showParticipantDialog(targetNode, type) {
-	      const ids = this.currentItem[type].map(user => user.id);
-	      const itemId = this.currentItem.id;
-	      const handleClose = usersIds => {
-	        this.saveParticipants(itemId, type, usersIds);
+	      const handleClose = () => {
 	        this.isItemPanelFreeze = false;
-	        if (!this.itemGroupModeSelected && this.currentItem.id === itemId) {
-	          this.focusToItem(itemId);
+	        if (!this.itemGroupModeSelected) {
+	          this.focusToItem(this.currentItem.id);
 	        }
 	        this.updatePanelPosition();
 	      };
-	      void tasks_v2_lib_userSelectorDialog.usersDialog.show({
+	      this.checkListParticipantService.showParticipantDialog({
 	        targetNode,
-	        ids,
-	        withAngle: true,
+	        type,
+	        items: this.itemGroupModeSelected ? this.checkListManager.getAllSelectedItems() : [this.currentItem],
 	        onClose: handleClose
 	      });
 	      this.isItemPanelFreeze = true;
-	    },
-	    async saveParticipants(id, type, usersIds) {
-	      const users = this.$store.getters[`${tasks_v2_const.Model.Users}/getByIds`](usersIds);
-	      if (this.itemGroupModeSelected) {
-	        const updates = this.checkListManager.getAllSelectedItems().map(item => ({
-	          ...item,
-	          [type]: users
-	        }));
-	        void this.upsertCheckLists(updates);
-	      } else {
-	        void this.updateCheckList(id, {
-	          [type]: users
-	        });
-	      }
-	      const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
-	      const existingIds = task[`${type}Ids`];
-	      const mergedIds = [...new Set([...existingIds, ...usersIds])];
-	      const fields = {
-	        [`${type}Ids`]: mergedIds
-	      };
-	      void this.updateTask(fields);
-	      this.checkListWasUpdated = true;
 	    },
 	    activateGroupMode(parentItemId) {
 	      this.itemId = parentItemId;
@@ -4478,7 +4887,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						/>
 						<CheckListStub v-if="stub && !isPreview" @click="addCheckList"/>
 					</div>
-					<div v-show="!stub && !isPreview" class="tasks-check-list-footer" :class="contextClass">
+					<div v-show="!stub && !isPreview" class="tasks-check-list-footer print-ignore" :class="contextClass">
 						<UiButton
 							v-if="canCheckListAdd"
 							:text="loc('TASKS_V2_CHECK_LIST_NEW_BTN')"
@@ -4590,11 +4999,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    });
 	  },
 	  mounted() {
-	    this.$bitrix.eventEmitter.subscribe(tasks_v2_const.EventName.AiAddCheckList, this.handleAiAdd);
+	    this.$bitrix.eventEmitter.subscribe(tasks_v2_const.EventName.AddCheckListFromText, this.handleAddFromText);
 	    this.$bitrix.eventEmitter.subscribe(tasks_v2_const.EventName.CloseCheckList, this.handleFieldClose);
 	  },
 	  beforeUnmount() {
-	    this.$bitrix.eventEmitter.unsubscribe(tasks_v2_const.EventName.AiAddCheckList, this.handleAiAdd);
+	    this.$bitrix.eventEmitter.unsubscribe(tasks_v2_const.EventName.AddCheckListFromText, this.handleAddFromText);
 	    this.$bitrix.eventEmitter.unsubscribe(tasks_v2_const.EventName.CloseCheckList, this.handleFieldClose);
 	  },
 	  methods: {
@@ -4610,8 +5019,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        }
 	      }
 	    },
-	    async handleAiAdd(baseEvent) {
-	      const checkListId = await this.buildAiCheckList(baseEvent.getData());
+	    async handleAddFromText(baseEvent) {
+	      const checkListId = await this.buildCheckList(baseEvent.getData());
 	      await this.highlightField();
 	      this.checkListManager.scrollToCheckList(this.$root.$el, checkListId, 'smooth');
 	      if (this.isEdit) {
@@ -4647,7 +5056,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        checklist: [parentId, childId]
 	      });
 	    },
-	    async buildAiCheckList(baseText) {
+	    async buildCheckList(baseText) {
 	      if (!main_core.Type.isString(baseText) || baseText === '') {
 	        return '';
 	      }
@@ -4714,5 +5123,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.CheckListList = CheckListList;
 	exports.checkListMeta = checkListMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Lib,BX.Vue3.Components,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.UI.DragAndDrop,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Vue3.Vuex,BX.UI.System.Skeleton.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Vue3.Directives,BX.Tasks.V2,BX.Tasks.V2.Component.Elements,BX,BX,BX.Event,BX.Tasks.V2.Provider.Service,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Components,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.UI.DragAndDrop,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Vue3.Vuex,BX.Tasks.V2.Lib,BX.UI.System.Skeleton.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Vue3.Directives,BX.Tasks.V2,BX.Tasks.V2.Component.Elements,BX,BX,BX.Event,BX.Tasks.V2.Provider.Service,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=check-list.bundle.js.map

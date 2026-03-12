@@ -1,7 +1,7 @@
 import './catalog-item.css';
 import { computed, ref, useTemplateRef, toValue } from 'ui.vue3';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
-import { DragBlock } from 'ui.block-diagram';
+import { DragBlock, useContextMenu } from 'ui.block-diagram';
 import { Type } from 'main.core';
 import type { DragData } from 'ui.block-diagram';
 import { createUniqueId } from '../../../../shared/utils';
@@ -45,15 +45,15 @@ const ICON_WRAPPER_CLASS_NAMES = {
 };
 
 const ICON_COLORS = {
-	0: '#9C5CEF',
-	1: '#188AE6',
-	2: '#E08907',
-	3: '#8E96A2',
-	4: '#3CB811',
-	5: '#52BCBC',
-	6: '#B4B959',
-	7: '#FFFFFF',
-	8: '#FFFFFF',
+	0: 'var(--designer-bp-ai-icons)',
+	1: 'var(--designer-bp-entities-icons)',
+	2: 'var(--designer-bp-employe-icons)',
+	3: 'var(--designer-bp-technical-icons)',
+	4: 'var(--designer-bp-communication-icons)',
+	5: 'var(--designer-bp-storage-icons)',
+	6: 'var(--designer-bp-afiliate-icons)',
+	7: 'var(--ui-color-palette-white-base)',
+	8: 'var(--ui-color-palette-white-base)',
 };
 
 const DEFAULT_ICON_NAME = Outline.FOLDER;
@@ -125,6 +125,8 @@ export const CatalogItem = {
 			dragImage: draggedItem,
 		}));
 
+		const { closeContextMenu } = useContextMenu();
+
 		function getIconName(name: ?string): string
 		{
 			if (name && Object.prototype.hasOwnProperty.call(iconSet, name))
@@ -170,7 +172,12 @@ export const CatalogItem = {
 				returnProperties = [],
 				colorIndex,
 				icon = DEFAULT_ICON_NAME,
-				defaultSettings: { width, height, ports = { input: [], output: [], aux: [], topAux: [] } },
+				defaultSettings: {
+					width,
+					height,
+					ports = [],
+					frameColorName = null,
+				},
 			} = toValue(item);
 
 			return {
@@ -201,6 +208,7 @@ export const CatalogItem = {
 					icon,
 					title,
 					type,
+					...(frameColorName !== null ? { frameColorName } : {}),
 				},
 			};
 		}
@@ -232,7 +240,7 @@ export const CatalogItem = {
 
 			const trimmedUrl = url.trim();
 
-			const allowedProtocols = ['https://',];
+			const allowedProtocols = ['https://'];
 			const isSafeProtocol = allowedProtocols.some((protocol) => trimmedUrl.startsWith(protocol));
 
 			if (!isSafeProtocol)
@@ -241,6 +249,11 @@ export const CatalogItem = {
 			}
 
 			return trimmedUrl;
+		}
+
+		function onDragStart(): void
+		{
+			closeContextMenu();
 		}
 
 		return {
@@ -254,6 +267,7 @@ export const CatalogItem = {
 			getIconColor,
 			isUrl,
 			getBackgroundImage,
+			onDragStart,
 		};
 	},
 	template: `
@@ -261,6 +275,7 @@ export const CatalogItem = {
 			v-drag-block="getDragPayload"
 			:class="catalogItemClassNames"
 			:data-test-id="$testId('catalogItem', item.id)"
+			@dragstart="onDragStart"
 		>
 			<div
 				ref="draggedItem"
@@ -271,19 +286,21 @@ export const CatalogItem = {
 					:item="preparedBlock"
 				/>
 			</div>
-			<div :class="iconWrapperClassNames">
-				<div
-					v-if="isUrl(item.icon)"
-					:style="getBackgroundImage(item.icon)"
-					class="ui-selector-item-avatar"
-				/>
-				<BIcon
-					v-else
-					:name="getIconName(item.icon)"
-					:color="getIconColor(item.colorIndex)"
-					:size="28"
-					class="editor-chart-catalog-item__icon"
-				/>
+			<div class="editor-chart-catalog-item__icon-container">
+				<div :class="iconWrapperClassNames">
+					<div
+						v-if="isUrl(item.icon)"
+						:style="getBackgroundImage(item.icon)"
+						class="ui-selector-item-avatar"
+					/>
+					<BIcon
+						v-else
+						:name="getIconName(item.icon)"
+						:color="getIconColor(item.colorIndex)"
+						:size="28"
+						class="editor-chart-catalog-item__icon"
+					/>
+				</div>
 			</div>
 			<div class="editor-chart-catalog-item__content">
 				<div class="editor-chart-catalog-item__title">

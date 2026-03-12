@@ -17,7 +17,6 @@ this.BX = this.BX || {};
 	var _renderApplyButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderApplyButton");
 	var _renderCancelButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCancelButton");
 	var _handleClickOnAcceptBtn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleClickOnAcceptBtn");
-	var _getFullAgreementLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFullAgreementLink");
 	var _acceptAgreement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("acceptAgreement");
 	var _validateOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("validateOptions");
 	class CopilotAgreement {
@@ -27,9 +26,6 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _acceptAgreement, {
 	      value: _acceptAgreement2
-	    });
-	    Object.defineProperty(this, _getFullAgreementLink, {
-	      value: _getFullAgreementLink2
 	    });
 	    Object.defineProperty(this, _handleClickOnAcceptBtn, {
 	      value: _handleClickOnAcceptBtn2
@@ -226,16 +222,6 @@ this.BX = this.BX || {};
 	  } finally {
 	    button.setState(null);
 	  }
-	}
-	function _getFullAgreementLink2() {
-	  const zone = main_core.Extension.getSettings('ai.copilot-agreement').zone;
-	  const linksByZone = {
-	    ru: 'https://www.bitrix24.ru/about/terms-of-use-ai.php',
-	    kz: 'https://www.bitrix24.kz/about/terms-of-use-ai.php',
-	    by: 'https://www.bitrix24.by/about/terms-of-use-ai.php',
-	    en: 'https://www.bitrix24.com/terms/bitrix24copilot-rules.php'
-	  };
-	  return linksByZone[zone] || linksByZone.en;
 	}
 	async function _acceptAgreement2() {
 	  const result = await babelHelpers.classPrivateFieldLooseBase(this, _engine)[_engine].acceptAgreement();

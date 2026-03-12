@@ -5,14 +5,12 @@ import { mapState } from 'ui.vue3.pinia';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { FeatureCode } from 'bizprocdesigner.feature';
 
-import { useLoc, useFeature, useActivationMenu } from '../../../../shared/composables';
+import { useLoc, useFeature } from '../../../../shared/composables';
+import { PORT_TYPES, BLOCK_TYPES, ACTIVATION_STATUS } from '../../../../shared/constants';
 
 import { useNodeSettingsStore } from '../../../../entities/node-settings';
 import { diagramStore, BlockHeader, BlockIcon } from '../../../../entities/blocks';
-import { BLOCK_TYPES } from '../../../../shared/constants';
 
-// eslint-disable-next-line no-unused-vars
-import type { Block } from '../../../../shared/types';
 import { IconButton } from '../../../../shared/ui';
 
 // @vue/component
@@ -32,8 +30,12 @@ export const EditNodeSettingsForm = {
 			type: Object,
 			required: true,
 		},
+		ports:
+		{
+			type: Object,
+			required: true,
+		},
 	},
-	emits: ['updateTitle', 'updateDescription'],
 	setup(): { getMessage: () => string; }
 	{
 		const store: diagramStore = diagramStore();
@@ -47,12 +49,6 @@ export const EditNodeSettingsForm = {
 			store,
 		};
 	},
-	data(): { activationMenuHelper: useActivationMenu | null, }
-	{
-		return {
-			activationMenuHelper: null,
-		};
-	},
 	computed:
 	{
 		...mapState(useNodeSettingsStore, ['nodeSettings']),
@@ -62,7 +58,12 @@ export const EditNodeSettingsForm = {
 		},
 		rulePorts(): Array<TPort>
 		{
-			return this.block.ports.input.filter((port) => !port.isConnectionPort);
+			return this.ports
+				.filter((port) => port.type === PORT_TYPES.input && !port.isConnectionPort);
+		},
+		rulePortsLength(): number
+		{
+			return this.rulePorts.length;
 		},
 		areConnectionsAvailable(): boolean
 		{
@@ -75,7 +76,7 @@ export const EditNodeSettingsForm = {
 		},
 		activationIcon(): string
 		{
-			return this.block.activity.Activated === 'Y'
+			return this.block.activity.Activated === ACTIVATION_STATUS.ACTIVE
 				? this.iconSet.PAUSE_L
 				: this.iconSet.PLAY_L;
 		},
@@ -97,18 +98,28 @@ export const EditNodeSettingsForm = {
 			return this.block.node?.type === BLOCK_TYPES.TOOL ? 0 : this.block.node?.colorIndex;
 		},
 	},
-	created() {
-		this.activationMenuHelper = useActivationMenu(this.store);
+	watch:
+	{
+		rulePortsLength(): void
+		{
+			this.$nextTick(() => {
+				const { scrollHeight, clientHeight } = this.$el;
+				if (scrollHeight > clientHeight)
+				{
+					this.$el.scrollTop = scrollHeight - clientHeight;
+				}
+			});
+		},
 	},
 	methods:
 	{
 		onChangeTitle({ target: { value: title } }: InputEvent): void
 		{
-			this.$emit('updateTitle', title);
+			this.nodeSettings.title = title;
 		},
 		onChangeDescription({ target: { value: description } }: InputEvent): void
 		{
-			this.$emit('updateDescription', description);
+			this.nodeSettings.description = description;
 		},
 		isUrl(value: string): boolean
 		{
@@ -128,15 +139,19 @@ export const EditNodeSettingsForm = {
 				return false;
 			}
 		},
-		showActivationMenu(event: MouseEvent): void
+		toggleActivation(event: MouseEvent): void
 		{
-			this.activationMenuHelper.showActivationMenu(event, this.block);
+			this.store.toggleBlockActivation(this.block.id, true);
 		},
 	},
 	template: `
 		<div class="node-settings-form">
 			<div class="node-settings-form__node-brief">
-				<BlockHeader :block="block" :subIconExternal="isUrl(block.node?.icon)">
+				<BlockHeader
+					:block="block"
+					:subIconExternal="isUrl(block.node?.icon)"
+					:title="nodeSettings.title"
+				>
 					<template #icon>
 						<BlockIcon
 							:iconName="icon"
@@ -160,7 +175,7 @@ export const EditNodeSettingsForm = {
 				</BlockHeader>
 				<IconButton
 					:icon-name="activationIcon"
-					@click="showActivationMenu"
+					@click="toggleActivation"
 				/>
 			</div>
 			<div class="node-settings-form__section-delimeter"></div>
@@ -173,7 +188,7 @@ export const EditNodeSettingsForm = {
 						<input type="text"
 							class="ui-ctl-element"
 							:placeholder="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_PLACEHOLDER')"
-							:value="block.node.title"
+							:value="nodeSettings.title"
 							:data-test-id="$testId('complexNodeName')"
 							@input="onChangeTitle"
 						/>

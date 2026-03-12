@@ -18,6 +18,7 @@ use Bitrix\Tasks\V2\Internal\Access\Service\TaskAccessService;
 use Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher;
 use Bitrix\Tasks\V2\Internal\Integration\CRM\Access\Service\CrmAccessService;
 use Bitrix\Tasks\V2\Internal\Integration\Disk\Repository\DiskFileRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Integration\Im\Chat;
 use Bitrix\Tasks\V2\Internal\Integration\Im\Repository\MessageRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Integration\Intranet\Service\ToolService;
 use Bitrix\Tasks\V2\Internal\Integration\Intranet\Service\UserUrlService;
@@ -57,6 +58,7 @@ use Bitrix\Tasks\V2\Internal\Service\Esg\EgressController;
 use Bitrix\Tasks\V2\Internal\Service\Esg\EgressInterface;
 use Bitrix\Tasks\V2\Internal\Service\Extension\ConfigService;
 use Bitrix\Tasks\V2\Internal\Service\FeatureService;
+use Bitrix\Tasks\V2\Internal\Service\Feedback\FeedbackService;
 use Bitrix\Tasks\V2\Internal\Service\Link\LinkService;
 use Bitrix\Tasks\V2\Internal\Service\TariffService;
 use Bitrix\Tasks\V2\Internal\Service\DeleteTaskService;
@@ -86,7 +88,6 @@ use Bitrix\Tasks\V2\Public\Provider\CheckListProvider;
 use Bitrix\Tasks\V2\Public\Provider\Counter\RoleProvider;
 use Bitrix\Tasks\V2\Internal\Service\TaskLegacyFeatureService;
 use Bitrix\Tasks\V2\Public\Provider\DeadlineProvider;
-use Bitrix\Tasks\V2\Public\Provider\TaskFromTemplateProvider;
 use Bitrix\Tasks\V2\Internal\Service\Task\CopyTaskService;
 use Bitrix\Tasks\V2\Public\Provider\TariffProvider;
 
@@ -498,5 +499,15 @@ class Container extends AbstractContainer
 	public function getCopyTaskService(): CopyTaskService
 	{
 		return $this->get(CopyTaskService::class);
+	}
+
+	public function getFeedbackService(): FeedbackService
+	{
+		return $this->get(FeedbackService::class);
+	}
+
+	public function getChatIntegration(): Chat
+	{
+		return $this->get(Chat::class);
 	}
 }

@@ -1,15 +1,29 @@
 import { ajax } from 'main.core';
-import { CopyAndStartActionResponse, FetchAiAgentRowResponse } from './types';
 
-const post = async (action: string, data: Object): Promise => {
-	const response = await ajax.runAction(`bizproc.v2.${action}`, {
-		method: 'POST',
-		json: data || {},
-	});
+import { GRID_API_ACTION } from './constants';
+import type {
+	GridApiAction,
+	BaseAjaxResponse,
+	CopyAndStartActionResponse,
+	FetchAiAgentRowResponse,
+} from './types';
+import { AjaxErrorHandler } from './handler/ajax-error-handler';
 
-	if (response.status === 'success')
+const post = async (action: GridApiAction, data: Object): Promise => {
+	try
 	{
+		const response: BaseAjaxResponse = await ajax.runAction(`bizproc.v2.${action}`, {
+			method: 'POST',
+			json: data || {},
+		});
+
 		return response.data;
+	}
+	catch (error)
+	{
+		const ajaxErrorHandler = new AjaxErrorHandler();
+
+		ajaxErrorHandler.handle(action, error);
 	}
 
 	return null;
@@ -17,13 +31,13 @@ const post = async (action: string, data: Object): Promise => {
 
 const gridApi: { ... } = {
 	startTemplate: (templateId: number): Promise<void> => {
-		return post('Integration.AiAgent.Template.start', { templateId });
+		return post(GRID_API_ACTION.START_TEMPLATE, { templateId });
 	},
 	copyAndStartTemplate: (templateId: number): Promise<CopyAndStartActionResponse> => {
-		return post('Integration.AiAgent.Template.copyAndStart', { templateId });
+		return post(GRID_API_ACTION.COPY_AND_START_TEMPLATE, { templateId });
 	},
 	fetchRow: (templateId: number): Promise<FetchAiAgentRowResponse> => {
-		return post('Integration.AiAgent.Template.fetchRow', { templateId });
+		return post(GRID_API_ACTION.FETCH_ROW, { templateId });
 	},
 };
 

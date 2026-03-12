@@ -64,10 +64,10 @@ export const Toolbar = {
 			return Object.keys(this.search.order.currentValue).length > 0;
 		},
 		getMarketLogoTitle: function() {
-			return this.$root.marketLogoTitle.length ? this.$root.marketLogoTitle : this.$Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_TITLE');
+			return this.$root.marketLogoTitle.length ? this.$root.marketLogoTitle : this.$Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_TITLE_MSGVER_1');
 		},
 		getMarketToolbarTitle: function() {
-			return this.$root.marketToolbarTitle.length ? this.$root.marketToolbarTitle : this.$Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_PLUS_TITLE');
+			return this.$root.marketToolbarTitle.length ? this.$root.marketToolbarTitle : this.$Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_PLUS_TITLE_MSGVER_1');
 		},
 	},
 	created: function () {
@@ -77,6 +77,19 @@ export const Toolbar = {
 		this.bindEvents();
 		this.createMoreMenu();
 		this.createSearchFilterMenu();
+
+		BX.MarketToolbar = BX.MarketToolbar || {};
+		BX.MarketToolbar.catalogClick = this.catalogClick.bind(this);
+
+		const urlParams = new URLSearchParams(window.location.search);
+		if (urlParams.get('openCatalog') === 'Y')
+		{
+			urlParams.delete('openCatalog');
+			const newUrl = window.location.pathname + (urlParams.toString() ? `?${urlParams.toString()}` : '');
+			window.history.replaceState({}, '', newUrl);
+
+			this.catalogClick();
+		}
 	},
 	methods: {
 		bindEvents: function() {
@@ -91,7 +104,7 @@ export const Toolbar = {
 			});
 
 			Event.bind(this.$refs.marketSearchInput, 'keydown', (event) => {
-				if (event.code.toLowerCase() === 'escape') 
+				if (event.code.toLowerCase() === 'escape')
 				{
 					this.cleanSearch();
 					this.closeDropdown();
@@ -615,7 +628,7 @@ export const Toolbar = {
 					<input type="text"
 						   id="market-search-input"
 						   ref="marketSearchInput"
-						   :placeholder="$Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_SEARCH_PLACEHOLDER'+ $root.marketNameMessageCode)"
+						   :placeholder="$Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_SEARCH_PLACEHOLDER_MSGVER_1'+ $root.marketNameMessageCode)"
 						   autocomplete="off"
 						   v-model="search.text"
 						   class="ui-ctl-element ui-ctl-textbox"
@@ -791,10 +804,8 @@ export const Toolbar = {
 										<svg width="92" height="92" viewBox="0 0 92 92" fill="none" xmlns="http://www.w3.org/2000/svg">
 											<path fill-rule="evenodd" clip-rule="evenodd" d="M56.6536 62.8186C52.8102 65.3422 48.2117 66.8102 43.2703 66.8102C29.7864 66.8102 18.8555 55.8793 18.8555 42.3953C18.8555 28.9114 29.7864 17.9805 43.2703 17.9805C56.7543 17.9805 67.6852 28.9114 67.6852 42.3953C67.6852 47.3367 66.2172 51.9352 63.6936 55.7786L76.3834 68.4684C77.8804 69.9654 77.8804 72.3925 76.3834 73.8895L74.7645 75.5084C73.2675 77.0054 70.8404 77.0054 69.3434 75.5084L56.6536 62.8186ZM60.7095 42.3953C60.7095 52.0267 52.9017 59.8345 43.2703 59.8345C33.6389 59.8345 25.8311 52.0267 25.8311 42.3953C25.8311 32.7639 33.6389 24.9561 43.2703 24.9561C52.9017 24.9561 60.7095 32.7639 60.7095 42.3953Z" fill="#DFE0E3"/>
 										</svg>
-										<div class="market-menu-catalog__search-info">
-											{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_NO_SEARCH_RESULT') }}
-										</div>
-										<div class="market-menu-catalog__search-text">'{{ search.notFoundText }}'</div>
+										<div class="market-menu-catalog__search-title">{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_NO_SEARCH_RESULT_TITLE') }}</div>
+										<div class="market-menu-catalog__search-description">{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_NO_SEARCH_RESULT_DESCRIPTION') }}</div>
 									</div>
 									<template v-else>
 										<div class="market-menu-catalog__search-head">

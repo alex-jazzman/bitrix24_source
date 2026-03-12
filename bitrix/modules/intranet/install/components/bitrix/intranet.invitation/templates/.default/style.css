@@ -277,6 +277,7 @@
 }
 
 .invite-dialog-inv-link-block {
+	border-top: 1px solid rgba(82, 92, 105, .1);
 	margin-top: 0 !important;
 	padding-top: 0 !important;
 }
@@ -1073,4 +1074,392 @@
 .intranet-invitation-dialog-link {
 	text-decoration: underline;
 	cursor: pointer;
+}
+
+.popup-window-tabs-content.popup-window-tabs-content-invite {
+	background: #fff;
+	padding: 0;
+	border: none;
+}
+
+.popup-window-tabs-content-invite .popup-window-tab-content {
+	background: #fff;
+	padding: 0;
+}
+
+.invite-dialog-inv-form-wrap .invite-dialog-inv-form {
+	padding-bottom: 0;
+}
+
+.invite-dialog-inv-text-field {
+	background: #f4f4f4;
+	border: 1px solid #e3e6e9;
+	border-radius: 2px;
+	color: rgba(83, 92, 105, .5);
+	padding: 10px 15px;
+	margin-right: 13px;
+	min-height: 100px;
+	box-sizing: border-box;
+	width: 615px;
+}
+
+.invite-dialog-inv-form-wrap .invite-dialog-inv-form {
+	padding-bottom: 0;
+}
+
+.invite-dialog-wrap {
+	border: 1px solid #c6cdd3;
+	border-radius: 2px;
+	padding: 10px;
+	background: #fff;
+}
+
+.invite-dialog-inner {
+	background: #eef2f4;
+	border-radius: 2px;
+	padding: 10px 16px 20px;
+}
+
+.invite-dialog-phone-item {
+	position: relative;
+	margin-bottom: 7px;
+	display: flex;
+	align-items: center;
+}
+
+.invite-dialog-phone-flag-block {
+	position: absolute;
+	top: 9px;
+	left: 10px;
+	border-right: 1px solid #d1d4d8;
+	padding: 0 22px 0 0;
+	box-sizing: border-box;
+	cursor: pointer;
+	height: 19px;
+	display: flex;
+	align-items: center;
+	background: transparent url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%226%22%20height%3D%223%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3%203l3-3H0z%22%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E) no-repeat left 25px top 8px;
+}
+
+.invite-dialog-phone-input {
+	background: #fff;
+	border: 1px solid #c4c7cc;
+	border-radius: 1px;
+	font-size: 15px;
+	line-height: 19px;
+	padding: 8px 10px 8px 57px;
+}
+
+.invite-dialog-phone-label, .invite-dialog-inv-label {
+	color: #80868e;
+	font-size: 14px;
+	margin-bottom: 8px;
+	display: inline-block;
+}
+
+.invite-dialog-inv-label {
+	margin-bottom: 0;
+}
+
+.invite-dialog-phone-list-add {
+	color: #80868e;
+	border-bottom: 1px dashed rgba(82, 92, 105, .3);
+	transition: border-color .2s linear;
+}
+
+.invite-dialog-phone-list-add:hover {
+	border-color: rgba(82, 92, 105, .8);
+	color: #80868e;
+}
+
+.invite-dialog-phone-delete {
+	cursor: pointer;
+	width: 25px;
+	height: 25px;
+	display: inline-block;
+	opacity: .5;
+	transition: opacity .2s linear;
+	background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHZpZXdCb3g9IjAgMCAxMCAxMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNy43ODcgMUw1IDMuNzg3IDIuMjEzIDEgMSAyLjIxMyAzLjc4NyA1IDEgNy43ODcgMi4yMTMgOSA1IDYuMjEzIDcuNzg3IDkgOSA3Ljc4NyA2LjIxMyA1IDkgMi4yMTMiIGZpbGw9IiM5OTkiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==) no-repeat center;
+}
+
+.invite-dialog-phone-delete:hover {
+	opacity: 1;
+}
+
+.invite-dialog-inv-form-wrap {
+	background: #f9fafa;
+	padding-bottom: 13px;
+}
+
+.invite-dialog-inv-text {
+	margin-left: 13px;
+}
+
+.invite-dialog-sonetgroup-wrap {
+	margin-bottom: 10px;
+	max-width: 500px;
+	background: #fff;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	line-height: 20px;
+}
+
+.invite-dialog-inv-block {
+	padding: 15px 0;
+	width: 520px;
+	color: #000;
+	font-weight: var(--ui-font-weight-bold);
+	font-size: 14px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	line-height: 20px;
+}
+
+.invite-dialog-inv-link {
+	border-bottom: 1px dashed #2067b0;
+	color: #2067b0;
+	cursor: pointer;
+}
+
+a.invite-dialog-inv-link,
+a.invite-dialog-inv-link:active,
+a.invite-dialog-inv-link:visited,
+a.invite-dialog-inv-link:hover { text-decoration: none; }
+
+.invite-dialog-inv-form {
+	padding: 21px 16px 15px 15px;
+	min-width: 490px;
+	background-color: #f9fafa;
+}
+
+.invite-dialog-inv-form .errortext {
+	padding-bottom: 10px;
+	color: #f00;
+}
+
+.invite-dialog-inv-form-table {
+	width: 100%;
+	border: none;
+	border-spacing: 0;
+}
+
+.invite-dialog-inv-form-l {
+	padding: 9px 10px 18px 3px;
+	width: 85px;
+	color: #555;
+	vertical-align: top;
+	text-shadow: 0 1px #fcfdfd;
+	font-size: 14px;
+}
+
+.invite-dialog-inv-form-r {
+	padding: 0 0 18px;
+}
+
+.invite-dialog-inv-form-footer .invite-dialog-inv-form-l,
+.invite-dialog-inv-form-footer .invite-dialog-inv-form-r {
+	padding-bottom: 0;
+	border-top: 1px solid #e5e8e9;
+}
+
+.invite-dialog-inv-form-footer .invite-dialog-inv-form-l { padding-top: 29px; }
+
+.invite-dialog-inv-form-footer .invite-dialog-inv-form-r { padding-top: 20px; }
+
+.invite-dialog-inv-form-inp {
+	padding: 0 0 0 2%;
+	width: 97%;
+	height: 30px;
+	border: 1px solid;
+	border-color: #b9bcbe #bdc1c3 #c1c5c8;
+	border-radius: 2px;
+	background-color: #fff;
+	font-size: 13px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.invite-dialog-inv-form-textarea {
+	overflow: auto;
+	padding: 10px;
+	width: 93%;
+	height: 75px;
+	border: 1px solid;
+	border-color: #b9bcbe #bdc1c3 #c1c5c8;
+	border-radius: 2px;
+	background-color: #fff;
+	font-size: 13px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	resize: none;
+}
+
+.invite-dialog-inv-form-textarea-active { color: #000 !important; }
+
+.invite-dialog-inv-form-select {
+	padding: 5px 3px 5px 0;
+	width: 100%;
+	height: 32px;
+	outline: none;
+	border: 1px solid;
+	border-color: #b9bcbe #bdc1c3 #c1c5c8;
+	border-radius: 2px;
+	background-color: #fff;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.invite-dialog-inv-form-hidden-text {
+	padding-top: 7px;
+	height: 32px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.invite-dialog-inv-form-checkbox-wrap { padding-top: 12px; }
+
+.invite-dialog-inv-form-checkbox {
+	vertical-align: middle;
+}
+
+.invite-dialog-inv-form-checkbox-label {
+	display: inline-block;
+	margin-left: 2px;
+	color: #555;
+	vertical-align: middle;
+	font-size: 13px;
+}
+
+.invite-dialog-inv-text-bold {
+	padding: 10px 0;
+	color: #555;
+	font-weight: normal;
+	font-size: 14px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.invite-dialog-inv-success-block { padding: 10px; }
+
+.invite-dialog-box-info-set {
+	margin-top: 4px;
+	border: 1px solid #d9e5e7;
+	background-color: #fafcfc;
+	color: #555;
+}
+
+.invite-dialog-box-info-set.invite-dialog-box-info-set-inactive {
+	border: 1px solid #f3f7f8;
+	background-color: #f3f7f8;
+	box-shadow: none;
+}
+
+.invite-dialog-box-info-block {
+	overflow: hidden;
+	padding: 7px;
+	white-space: nowrap;
+}
+
+.invite-dialog-box-info-set-inactive .invite-dialog-box-info-block-body { display: none; }
+
+.invite-dialog-box-info-btn {
+	display: inline-block;
+	padding: 0 5px;
+	height: 23px;
+	border: 1px solid;
+	border-color: #fafcfc;
+	border-radius: 2px;
+	color: #2067b0;
+	vertical-align: middle;
+	text-shadow: 0 1px #fff;
+	font-weight: var(--ui-font-weight-bold);
+	font-size: 13px;
+	line-height: 23px;
+	cursor: pointer;
+}
+
+.invite-dialog-box-info-set.invite-dialog-box-info-set-inactive .invite-dialog-box-info-btn {
+	border: 1px solid #f3f7f8;
+}
+
+.invite-dialog-box-info-btn-active {
+	border-color: #adb2ba #bac0c7 #dae0e3;
+	background-image: -webkit-linear-gradient(top, #dae3e6, #e4ebed);
+	background-image: -moz-linear-gradient(top, #dae3e6, #e4ebed);
+	background-image: -ms-linear-gradient(top, #dae3e6, #e4ebed);
+	background-image: -o-linear-gradient(top, #dae3e6, #e4ebed);
+	background-image: linear-gradient(to bottom, #dae3e6, #e4ebed);
+}
+
+.invite-dialog-box-info-btn-text { border-bottom: 1px dashed #2067b0; }
+
+.invite-dialog-box-info-btn-active .invite-dialog-box-info-btn-text { border-bottom: none; }
+
+.invite-dialog-box-info-text {
+	display: inline-block;
+	margin: 0 8px;
+	vertical-align: middle;
+	font-size: 14px;
+}
+
+.invite-dialog-box-info-left,
+.invite-dialog-box-info-right {
+	display: inline-block;
+	margin-right: 3%;
+	width: 47%;
+	vertical-align: top;
+}
+
+.invite-dialog-box-info-right { margin: 0 0 0 3%; }
+
+.invite-dialog-box-info-label {
+	display: block;
+	padding-bottom: 5px;
+	color: #555;
+	font-size: 14px;
+}
+
+.invite-dialog-box-info-close-open {
+	float: right;
+	padding-right: 11px;
+	background: url(../../images/intranet/intranet-mail-popup-arrows.png) no-repeat right 100px;
+	color: #8a8b8b;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.invite-dialog-box-info-open { background-position: right 7px; }
+
+.invite-dialog-box-info-close { background-position: right -10px; }
+
+.invite-dialog-form-table {
+	margin-bottom: 6px;
+	width: 100%;
+}
+
+.invite-dialog-form-table td {
+	padding: 0;
+	vertical-align: top;
+	text-align: right;
+}
+
+.invite-dialog-form-table td:first-child { text-align: left; }
+
+.invite-dialog-update-link {
+	border-bottom: 1px dashed;
+	color: rgba(128, 128, 128, 0.48);
+	text-decoration: none;
+}
+
+.invite-dialog-copy-link {
+	margin-top: 7px;
+	color: rgba(128, 128, 128, 0.87);
+	font-size: 13px;
+	cursor: pointer;
+	display: inline-block;
+	margin-left: 6px;
+}
+
+.invite-dialog-settings {
+	border-bottom: 1px dashed;
+	text-decoration: none;
+}
+
+.invite-dialog-settings-link {
+	margin-top: 10px;
+	color: rgba(128, 128, 128, 0.87);
+	font-size: 11px;
 }

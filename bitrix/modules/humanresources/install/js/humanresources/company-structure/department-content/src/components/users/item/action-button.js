@@ -1,14 +1,26 @@
-import { RouteActionMenu, ConfirmationPopup, MoveUserPopup } from 'humanresources.company-structure.structure-components';
 import { Text } from 'main.core';
+import { UI } from 'ui.notification';
+import { mapState } from 'ui.vue3.pinia';
+import { RouteActionMenu, ConfirmationPopup, MoveUserPopup } from 'humanresources.company-structure.structure-components';
 import { UserListActionMenu, MenuActions } from 'humanresources.company-structure.org-chart';
-import { DepartmentAPI } from '../../../api';
 import { memberRoles } from 'humanresources.company-structure.api';
 import { useChartStore, UserService } from 'humanresources.company-structure.chart-store';
-import { mapState } from 'ui.vue3.pinia';
-import { UI } from 'ui.notification';
 import { EntityTypes } from 'humanresources.company-structure.utils';
+import { MultiRoleUserSettingsPopup } from './multi-role-user-settings-popup';
+import { DepartmentAPI } from '../../../api';
 
 import './styles/action-button.css';
+
+type ActionButtonDataType = {
+	menuVisible: Record<number, boolean>,
+	showRemoveUserConfirmationPopup: boolean,
+	showRemoveUserConfirmationActionLoader: boolean,
+	showMoveUserPopup: boolean,
+	showMoveUserPopupOnlyMoveMode: boolean,
+	showFireUserPopup: boolean,
+	showMultiRoleUserSettings: boolean,
+	fireUserLoad: boolean,
+}
 
 export const UserListItemActionButton = {
 	name: 'userList',
@@ -22,15 +34,20 @@ export const UserListItemActionButton = {
 			type: Number,
 			required: true,
 		},
+		isUserMultiple: {
+			type: Boolean,
+			required: true,
+		},
 	},
 
 	components: {
 		RouteActionMenu,
 		ConfirmationPopup,
 		MoveUserPopup,
+		MultiRoleUserSettingsPopup,
 	},
 
-	data(): Object
+	data(): ActionButtonDataType
 	{
 		return {
 			menuVisible: {},
@@ -39,12 +56,13 @@ export const UserListItemActionButton = {
 			showMoveUserPopup: false,
 			showMoveUserPopupOnlyMoveMode: false,
 			showFireUserPopup: false,
+			showMultiRoleUserSettings: false,
 			fireUserLoad: false,
 		};
 	},
 
 	methods: {
-		toggleMenu(userId)
+		toggleMenu(userId): void
 		{
 			this.menuVisible[userId] = !this.menuVisible[userId];
 		},
@@ -76,6 +94,11 @@ export const UserListItemActionButton = {
 			if (actionId === MenuActions.fireUserFromCompany)
 			{
 				this.showFireUserPopup = true;
+			}
+
+			if (actionId === MenuActions.showMultiRoleUserSettings)
+			{
+				this.showMultiRoleUserSettings = true;
 			}
 		},
 		async removeUser(): Promise<void>
@@ -152,7 +175,14 @@ export const UserListItemActionButton = {
 			}
 			catch (error)
 			{
-				if (error.code !== 'STRUCTURE_ACCESS_DENIED')
+				if (error.code === 'FIRST_ADMIN_UPDATE_FORBIDDEN')
+				{
+					UI.Notification.Center.notify({
+						content: error.message,
+						autoHideDelay: 2000,
+					});
+				}
+				else if (error.code !== 'STRUCTURE_ACCESS_DENIED')
 				{
 					UI.Notification.Center.notify({
 						content: this.user.isInvited
@@ -185,19 +215,22 @@ export const UserListItemActionButton = {
 		{
 			this.showMoveUserPopup = false;
 		},
+		handleMultiRoleSettingsPopupClose(): void
+		{
+			this.showMultiRoleUserSettings = false;
+		},
 		getMemberKeyByValue(value: string): string
 		{
 			return Object.keys(memberRoles).find((key) => memberRoles[key] === value) || '';
 		},
 	},
 
-	created(): void
-	{
-		this.menu = new UserListActionMenu(this.focusedNode, this.entityType, this.user.isInvited);
-	},
-
 	computed: {
 		...mapState(useChartStore, ['focusedNode', 'departments']),
+		menu(): UserListActionMenu
+		{
+			return new UserListActionMenu(this.focusedNode, this.entityType, this.user.isInvited, this.isUserMultiple);
+		},
 		memberRoles(): typeof memberRoles
 		{
 			return memberRoles;
@@ -341,6 +374,11 @@ export const UserListItemActionButton = {
 			@action="handleMoveUserAction"
 			@close="handleMoveUserClose"
 			@remove="removeUser"
+		/>
+		<MultiRoleUserSettingsPopup
+			v-if="showMultiRoleUserSettings"
+			:user="user"
+			@close="handleMultiRoleSettingsPopupClose"
 		/>
 	`,
 };

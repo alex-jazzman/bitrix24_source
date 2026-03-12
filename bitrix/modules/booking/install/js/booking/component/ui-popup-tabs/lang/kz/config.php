@@ -1,3 +1,0 @@
-<?php
-$MESS["BOOKING_POPUP_TWO_TABS_CANSEL"] = "Болдырмау";
-$MESS["BOOKING_POPUP_TWO_TABS_SAVE"] = "Сақтау";

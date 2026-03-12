@@ -181,18 +181,12 @@ if ($arResult["SHOW_BITRIX24_THEME"] === "Y")
 	$themePicker->showBodyAssets();
 }
 
-$classes = ['ui-slider-page'];
-if ($arParams['USE_UI_TOOLBAR'])
-{
-	$classes[] = '--use-ui-toolbar';
-}
-
+$classes = ['ui-slider-page', '--use-ui-toolbar'];
 if (defined('AIR_SITE_TEMPLATE'))
 {
 	$classes[] = '--air --ui-reset-bg-blur';
 }
 
-$showToolbar = $arParams['USE_UI_TOOLBAR'] || (!$arParams['HIDE_TOOLBAR'] && !$arParams['PLAIN_VIEW']);
 ?>
 <div class="<?=join(' ', $classes)?>"><?php
 		$APPLICATION->AddBufferContent(function() {
@@ -222,45 +216,14 @@ $showToolbar = $arParams['USE_UI_TOOLBAR'] || (!$arParams['HIDE_TOOLBAR'] && !$a
 				}
 			?></div>
 			<?php
-			if ($showToolbar):
+			if ($arResult['SHOW_TOOLBAR']):
 			?>
 			<div class="ui-side-panel-toolbar<?if (!$arParams['USE_UI_TOOLBAR_MARGIN']):?> --no-margin<?endif?>">
 			<?php
-			if (!$arParams['USE_UI_TOOLBAR'])
-			{
-				?>
-				<div class="ui-side-panel-wrap-title-wrap" style="<?=($arParams['PLAIN_VIEW'] ? 'display: none;' : '')?>">
-					<div class="ui-side-panel-wrap-title-inner-container">
-						<div class="ui-side-panel-wrap-title-menu ui-side-panel-wrap-title-last-item-in-a-row">
-							<?php $APPLICATION->ShowViewContent("pagetitle"); ?>
-						</div>
-						<div class="ui-side-panel-wrap-title">
-							<div class="ui-side-panel-wrap-title-box" >
-								<span id="pagetitle" class="ui-side-panel-wrap-title-item">
-									<span class="ui-side-panel-wrap-title-name-item ui-side-panel-wrap-title-name"><?php $APPLICATION->ShowTitle(false); ?></span>
-									<span class="ui-side-panel-wrap-title-edit-button" style="display: none;"></span>
-									<input type="text" class="ui-side-panel-wrap-title-item ui-side-panel-wrap-title-input" style="display: none;">
-								</span>
-								<span class="ui-side-panel-wrap-subtitle-box">
-									<span class="ui-side-panel-wrap-subtitle-item"></span>
-									<span class="ui-side-panel-wrap-subtitle-control"></span>
-								</span>
-							</div>
-							<?php $APPLICATION->ShowViewContent("inside_pagetitle_below"); ?>
-						</div>
-						<?php $APPLICATION->ShowViewContent("inside_pagetitle"); ?>
-					</div>
-				</div>
-				<script>console.error('Side Panel Wrapper: do not use an old toolbar.')</script>
-				<?php
-			}
-			else
-			{
-				$APPLICATION->IncludeComponent('bitrix:ui.toolbar', '', [
-					'FAVORITES_TITLE_TEMPLATE' => (!empty($arParams['~UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE']) ? $arParams['~UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE'] : ''),
-					'FAVORITES_URL' => (!empty($arParams['UI_TOOLBAR_FAVORITES_URL']) ? $arParams['UI_TOOLBAR_FAVORITES_URL'] : ''),
-				]);
-			}
+			$APPLICATION->IncludeComponent('bitrix:ui.toolbar', '', [
+				'FAVORITES_TITLE_TEMPLATE' => (!empty($arParams['~UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE']) ? $arParams['~UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE'] : ''),
+				'FAVORITES_URL' => (!empty($arParams['UI_TOOLBAR_FAVORITES_URL']) ? $arParams['UI_TOOLBAR_FAVORITES_URL'] : ''),
+			]);
 			?>
 			</div>
 			<?php endif;?>

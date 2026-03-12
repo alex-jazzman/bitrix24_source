@@ -1,0 +1,27 @@
+.bx-im-content-notification-filter-popup__wrapper {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 100%;
+	height: 100%;
+	padding: 24px 12px 24px 24px;
+}
+
+.bx-im-content-notification-filter-popup__fields-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	overflow-y: auto;
+	flex: 1;
+	padding-right: 12px;
+	padding-bottom: 12px;
+}
+
+.bx-im-content-notification-filter-popup__actions-container {
+	display: flex;
+	justify-content: center;
+	gap: 8px;
+	flex-shrink: 0;
+	margin-top: 24px;
+	padding-right: 16px;
+}

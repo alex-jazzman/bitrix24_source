@@ -4,9 +4,10 @@
 
 jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
-	const { isEmpty } = require('utils/object');
 	const { isFunction } = require('utils/object');
 	const { withCurrentDomain } = require('utils/url');
+	const { isNil } = require('utils/type');
+	const { isEmpty, omitBy } = require('utils/object');
 	const { Component, Corner, Color } = require('tokens');
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { PureComponent } = require('layout/pure-component');
@@ -144,7 +145,7 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			accent.accentColor = this.#getAccentColor();
 			accent.accentType = this.#getAccentType();
 
-			return accent;
+			return omitBy(accent, isNil);
 		}
 
 		/**
@@ -357,7 +358,12 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 
 			const accentGradients = Array.isArray(accentGradientColors)
 				? accentGradientColors
-				: this.getAvatarAccentGradient().getValue();
+				: this.getAvatarAccentGradient();
+
+			if (!accentGradients)
+			{
+				return null;
+			}
 
 			const start = accentGradients[0];
 			const middle = accentGradients[1] || start;
@@ -373,7 +379,12 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 		{
 			const { accentGradient } = this.props;
 
-			return AvatarAccentGradient.resolve(accentGradient, AvatarAccentGradient.BLUE);
+			if (AvatarAccentGradient.has(accentGradient))
+			{
+				return accentGradient.getValue();
+			}
+
+			return null;
 		}
 
 		getEmptyAvatar()

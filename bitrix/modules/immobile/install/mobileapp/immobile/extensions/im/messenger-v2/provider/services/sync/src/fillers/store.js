@@ -9,6 +9,7 @@ jn.define('im/messenger-v2/provider/services/sync/fillers/store', (require, expo
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
 	const { SyncFillerBase } = require('im/messenger/provider/services/sync/fillers/base');
+	const { StickerDataProvider } = require('im/messenger/provider/data');
 
 	const logger = getLoggerWithContext('sync-service', 'SyncFillerStore');
 
@@ -38,6 +39,7 @@ jn.define('im/messenger-v2/provider/services/sync/fillers/store', (require, expo
 
 		async updateModels(syncListResult)
 		{
+			await this.processStickers(syncListResult);
 			await super.updateModels(syncListResult);
 			await this.processCounters(syncListResult);
 		}
@@ -191,6 +193,28 @@ jn.define('im/messenger-v2/provider/services/sync/fillers/store', (require, expo
 			await this.store.dispatch('counterModel/delete', {
 				chatIdList: deletedChats,
 			});
+		}
+
+		/**
+		 * @param {SyncListResult} syncListResult
+		 */
+		async processStickers(syncListResult)
+		{
+			const {
+				stickers,
+				messages,
+			} = syncListResult;
+
+			if (Type.isArrayFilled(stickers))
+			{
+				await this.store.dispatch('stickerPackModel/addStickers', {
+					stickers,
+				});
+			}
+
+			const stickerDataProvider = new StickerDataProvider();
+
+			await stickerDataProvider.removeDeletedStickers(messages, stickers);
 		}
 	}
 

@@ -41,6 +41,7 @@ jn.define('call/calls/users', (require, exports, module) => {
 		this.onUpdate = {
 			talking: this._onUpdateTalking.bind(this),
 			state: this._onUpdateState.bind(this),
+			microphoneState: this._onUpdateMicrophoneState.bind(this),
 		};
 
 		this.talkingStop = null;
@@ -98,6 +99,13 @@ jn.define('call/calls/users', (require, exports, module) => {
 			this.talking = false;
 			this.screenState = false;
 			this.floorRequestState = false;
+		}
+	};
+
+	UserModel.prototype._onUpdateMicrophoneState = function(isMicrophoneOn) {
+		if (!isMicrophoneOn)
+		{
+			this.talking = false;
 		}
 	};
 

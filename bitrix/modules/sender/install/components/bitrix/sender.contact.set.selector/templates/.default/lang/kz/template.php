@@ -1,4 +1,0 @@
-<?php
-$MESS["SENDER_CONTACT_SET_SELECTOR_BUTTON_SELECT"] = "жинақты таңдау";
-$MESS["SENDER_CONTACT_SET_SELECTOR_SEARCHER_TITLE"] = "Мекенжайлар жинақтары";
-$MESS["SENDER_CONTACT_SET_SELECTOR_TITLE"] = "Мекенжайлар жинақтары";

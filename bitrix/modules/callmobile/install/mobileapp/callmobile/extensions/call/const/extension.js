@@ -7,6 +7,7 @@ jn.define('call/const', (require, exports, module) => {
 	const { DialogType } = require('call/const/dialog-type');
 	const { CallLogType } = require('call/const/log-type');
 	const { ConnectionType } = require('call/const/connection-type');
+	const { RecordStatus } = require('call/const/record-status');
 
 	module.exports = {
 		Analytics,
@@ -14,5 +15,6 @@ jn.define('call/const', (require, exports, module) => {
 		DialogType,
 		CallLogType,
 		ConnectionType,
+		RecordStatus,
 	};
 });

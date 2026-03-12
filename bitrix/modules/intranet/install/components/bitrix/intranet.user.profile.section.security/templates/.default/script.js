@@ -430,26 +430,16 @@ this.BX = this.BX || {};
 	function _createSuccessContentByEmail2() {
 	  return main_core.Tag.render(_t || (_t = _`
 			<div class="b24network-account-popup-inner">
-				<div class="b24network-account-popup-title">
-					${0}
-				</div>
-				<div class="b24network-account-popup-text">${0}</div>
-				<div class="b24network-account-popup-text">${0}</div>
 				<div class="b24network-account-popup-text">${0}</div>
 			</div>
-		`), main_core.Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_TITLE_SUCCESS'), main_core.Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_EMAIL_1'), main_core.Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_EMAIL_2'), main_core.Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_EMAIL_3'));
+		`), main_core.Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_EMAIL_MSGVER_1'));
 	}
 	function _createSuccessContentByPhone2() {
 	  return main_core.Tag.render(_t2 || (_t2 = _`
 			<div class="b24network-account-popup-inner">
-				<div class="b24network-account-popup-title">
-					${0}
-				</div>
-				<div class="b24network-account-popup-text">${0}</div>
-				<div class="b24network-account-popup-text">${0}</div>
 				<div class="b24network-account-popup-text">${0}</div>
 			</div>
-		`), main_core.Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_TITLE_SUCCESS'), main_core.Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_PHONE_1'), main_core.Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_PHONE_2'), main_core.Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_PHONE_3'));
+		`), main_core.Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_PHONE_MSGVER_1'));
 	}
 	function _createErrorContent2(errorMessage) {
 	  return main_core.Tag.render(_t3 || (_t3 = _`

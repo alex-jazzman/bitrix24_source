@@ -13,12 +13,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Tasks: 'tasks'
 	});
 	const Category = Object.freeze({
-	  TaskOperations: 'task_operations'
+	  TaskOperations: 'task_operations',
+	  TimeTracking: 'time_tracking'
 	});
 	const Event = Object.freeze({
 	  DeadlineSet: 'deadline_set',
 	  AssigneeChange: 'assignee_change',
 	  TaskComplete: 'task_complete',
+	  TaskView: 'task_view',
 	  TaskCreate: 'task_create',
 	  AddChecklist: 'add_checklist',
 	  TaskCreateWithChecklist: 'task_create_with_checklist',
@@ -28,14 +30,23 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  FillTaskFormView: 'full_task_form_view',
 	  ClickCreate: 'click_create',
 	  RoleClick: 'role_click',
-	  RoleClickType: 'role_click_type'
+	  RoleClickType: 'role_click_type',
+	  PatternTaskCreate: 'pattern_task_create',
+	  SubTaskAdd: 'subtask_add',
+	  AddCoexecutor: 'add_coexecutor',
+	  AddViewer: 'add_viewer',
+	  StatusSummaryAdd: 'status_summary_add',
+	  TimeEntryCreate: 'time_entry_create'
 	});
 	const Type = Object.freeze({
 	  TaskMini: 'task_mini',
-	  Task: 'task'
+	  Task: 'task',
+	  Auto: 'auto',
+	  Manual: 'manual'
 	});
 	const Section = Object.freeze({
-	  test: 'test'
+	  Tasks: 'tasks',
+	  Templates: 'templates'
 	});
 	const TaskState = Object.freeze({
 	  New: 'new',
@@ -44,6 +55,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	const SubSection = Object.freeze({
 	  FullTaskForm: 'full_task_form',
 	  TaskCard: 'task_card',
+	  Chat: 'chat',
+	  TemplatesCard: 'templates_card',
 	  MyFiles: 'my_files',
 	  Bitrix24Files: 'bitrix24_files'
 	});
@@ -60,7 +73,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  RoleHelpButton: 'role_help_button',
 	  RoleDoingButton: 'role_doing_button',
 	  RoleAssignedButton: 'role_assigned_button',
-	  RoleWatchingButton: 'role_watching_button'
+	  RoleWatchingButton: 'role_watching_button',
+	  CreateButton: 'create_button',
+	  ContextMenu: 'context_menu',
+	  ContextMenuSubtask: 'context_menu_subtask',
+	  ContextMenuTemplateTask: 'context_menu_template_task',
+	  CompleteButton: 'complete_button',
+	  DeadlineField: 'deadline_field',
+	  CoexecutorButton: 'coexecutor_button',
+	  ViewerButton: 'viewer_button',
+	  AddResult: 'add_result',
+	  ChatContextMenu: 'chat_context_menu'
 	});
 	const Status = Object.freeze({
 	  Success: 'success',
@@ -80,7 +103,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  FilesCount: count => `filesCount_${count}`,
 	  FileExtension: extension => `ext_${extension}`,
 	  IsDemo: isDemo => `isDemo_${isDemo ? 'Y' : 'N'}`,
-	  FilterEnabled: enabled => `filter_${enabled ? 'on' : 'off'}`
+	  FilterEnabled: enabled => `filter_${enabled ? 'on' : 'off'}`,
+	  TaskId: taskId => `taskId_${taskId}`
 	});
 	const Analytics = Object.freeze({
 	  Tool,
@@ -166,12 +190,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  TagDeleted: 'tasks:card:tagDeleted',
 	  UserMenuExternalItems: 'tasks:card:userMenuExternalItems',
 	  OpenSliderCard: 'tasks:card:openSliderCard',
-	  OpenViewSliderCard: 'tasks:card:openViewSliderCard',
 	  OpenGrid: 'tasks:card:openGrid',
 	  ShowOverlay: 'tasks:card:showOverlay',
 	  HideOverlay: 'tasks:card:hideOverlay',
 	  AdjustPosition: 'tasks:card:adjustPosition',
-	  AiAddCheckList: 'tasks:card:check-list:aiAdd',
+	  AddCheckListFromText: 'tasks:card:check-list:addFromText',
 	  CloseCheckList: 'tasks:card:check-list:close',
 	  OpenDeadlinePicker: 'tasks:deadline:openPicker',
 	  OpenResultFromChat: 'task:card:open-result-from-chat',
@@ -179,10 +202,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  DeleteResultFromChat: 'task:card:delete-result-from-chat',
 	  RequiredResultsMissing: 'task:card:required-results-missing',
 	  ResultAdded: 'task:card:result-added',
+	  ResultSuccessfulAdded: 'task:card:result-successful-added',
 	  ResultUpdated: 'task:card:result-updated',
 	  ResultFromMessageAdded: 'task:card:result-from-message-added',
+	  OpenPrefilledResultForm: 'task:card:open-prefilled-result-form',
 	  TimeTrackingChange: 'task:card:timeTackingChange',
-	  NotifyGrid: 'tasksTaskEvent',
+	  LegacyTasksTaskEvent: 'tasksTaskEvent',
 	  DescriptionConflictDetected: 'tasks:description:conflictDetected',
 	  HighlightCheckListItem: 'tasks:card:check-list-item:highlight',
 	  ShowCheckList: 'tasks:card:check-list:show',
@@ -326,6 +351,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Accomplices: 'accomplicesIds',
 	  Auditors: 'auditorsIds',
 	  CheckList: 'checklist',
+	  CreatedDate: 'createdTs',
 	  Creator: 'creatorId',
 	  Crm: 'crmItemIds',
 	  DatePlan: 'datePlan',
@@ -400,12 +426,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  LegacyUserFieldGetTask: 'LegacyUserField.getTask',
 	  LegacyUserFieldGetTemplate: 'LegacyUserField.getTemplate',
 	  TaskStatusStart: 'Task.Status.start',
+	  TaskStatusTake: 'Task.Status.take',
 	  TaskStatusDisapprove: 'Task.Status.disapprove',
 	  TaskStatusDefer: 'Task.Status.defer',
 	  TaskStatusApprove: 'Task.Status.approve',
 	  TaskStatusPause: 'Task.Status.pause',
 	  TaskStatusComplete: 'Task.Status.complete',
 	  TaskStatusRenew: 'Task.Status.renew',
+	  TaskTrackingTimerStart: 'Task.Tracking.Timer.start',
+	  TaskTrackingTimerStop: 'Task.Tracking.Timer.stop',
 	  TaskDeadlineGetDeadlineChangeCount: 'Task.Deadline.getDeadlineChangeCount',
 	  TaskDeadlineCleanChangeLog: 'Task.Deadline.cleanChangeLog',
 	  TaskTimeTrackingAdd: 'Task.Tracking.ElapsedTime.add',
@@ -419,6 +448,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  GroupUrlGet: 'Group.Url.get',
 	  GroupStageList: 'Group.Stage.list',
 	  GroupGet: 'Group.get',
+	  GroupGetByTaskId: 'Group.getByTaskId',
 	  ScrumUpdateTask: 'Scrum.updateTask',
 	  ScrumGetTaskInfo: 'Scrum.getTaskInfo',
 	  CheckListGet: 'CheckList.get',
@@ -440,7 +470,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  TemplateHistoryGetGrid: 'Template.History.getGrid',
 	  TaskMarkSet: 'Task.Mark.set',
 	  TemplateAdd: 'Template.add',
-	  TemplateCopy: 'Template.copy',
+	  TemplateCopy: 'Copy.Template.copy',
 	  TemplateGet: 'Template.get',
 	  TemplateUpdate: 'Template.update',
 	  TemplateDelete: 'Template.delete',

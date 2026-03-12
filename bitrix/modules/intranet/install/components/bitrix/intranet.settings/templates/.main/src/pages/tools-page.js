@@ -1,9 +1,29 @@
 import { EventEmitter } from 'main.core.events';
 import { Draggable } from 'ui.draganddrop.draggable';
 import { Section, Row } from 'ui.section';
+import { Switcher } from 'ui.switcher';
 import { SwitcherNestedItem, SwitcherNested } from 'ui.switcher-nested';
 import { Loc, Type, Event as EventBX, Dom, Tag } from 'main.core';
 import { SettingsSection, SettingsRow, BaseSettingsPage } from 'ui.form-elements.field';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+
+type ToolConfig = {
+	menuId: string,
+	code: string,
+	name: string,
+	enabled: boolean,
+	default: boolean,
+	'settings-path'?: string,
+	'settings-title'?: string,
+	'infohelper-slider'?: string,
+	subgroups: { [subgroupCode: string]: Object },
+	disableConfirmation: {
+		isNeeded: boolean,
+		title?: string,
+		text?: string,
+		confirmCaption: string,
+	},
+}
 
 export class ToolsPage extends BaseSettingsPage
 {
@@ -45,13 +65,13 @@ export class ToolsPage extends BaseSettingsPage
 
 	#renderToolsSelectors(): void
 	{
-		const tools = this.getValue('tools');
+		const tools: ToolConfig[] = this.getValue('tools');
 		const startSort = [];
 		const toolSelectors = [];
 
 		Object.keys(tools).forEach((item) => {
 			startSort.push(tools[item].menuId)
-			const tool = tools[item];
+			const tool: ToolConfig = tools[item];
 			const subgroups = tool.subgroups;
 			let toolSelectorItems = [];
 
@@ -77,6 +97,24 @@ export class ToolsPage extends BaseSettingsPage
 					: Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED', {'#TOOL#': tool.name}),
 			});
 			toolSelectors.push(toolSelector);
+
+			if (tool.disableConfirmation.isNeeded)
+			{
+				const switcher = Switcher.getById(tool.code);
+				if (switcher)
+				{
+					EventEmitter.subscribe(
+						switcher,
+						'toggled',
+						() => {
+							if (!switcher.isChecked())
+							{
+								this.#showDisableConfirmation(tool, switcher);
+							}
+						}
+					);
+				}
+			}
 
 			const toolSelectorSection = new SettingsSection({
 				section: toolSelector,
@@ -285,5 +323,20 @@ export class ToolsPage extends BaseSettingsPage
 				closeByEsc: true,
 			}
 		);
+	}
+
+	#showDisableConfirmation(tool: ToolConfig): void
+	{
+		MessageBox.show({
+			title: tool.disableConfirmation.title,
+			message: tool.disableConfirmation.text,
+			useAirDesign: true,
+			okCaption: tool.disableConfirmation.confirmCaption,
+			buttons: MessageBoxButtons.OK,
+			maxWidth: 360,
+			popupOptions: {
+				id: 'disable-tool-confirmation-' + tool.code,
+			},
+		});
 	}
 }

@@ -48,7 +48,6 @@ $arActivityDescription =
 			'SORT' => 2700,
 		])
 		->setNodeActionSettings([
-			'INCLUDE' => ['crmdealcomplexactivity'],
 			'HANDLES_DOCUMENT' => true,
 		])
 		->set('AI_DESCRIPTION', 'Changes element status and completes workflow')

@@ -24,22 +24,55 @@ jn.define('call/callList/item', (require, exports, module) => {
 			this.state = { pressed: false };
 		}
 
+		getSubtitleText(item)
+		{
+			const timeStr = (item.duration > 0) ? formatDuration(item.duration) : '';
+
+			if (item.status === STATUS.MISSED)
+			{
+				return BX.message('MOBILEAPP_CALL_LIST_MISSED_TYPE');
+			}
+
+			if (item.type === TYPE.INCOMING)
+			{
+				return timeStr
+					? BX.message('MOBILEAPP_CALL_LIST_MISSED_INCOMING_TIME').replace('#TIME#', timeStr)
+					: BX.message('MOBILEAPP_CALL_LIST_MISSED_INCOMING');
+			}
+
+			if (item.type === TYPE.OUTGOING)
+			{
+				return timeStr
+					? BX.message('MOBILEAPP_CALL_LIST_MISSED_OUTGOING_TIME').replace('#TIME#', timeStr)
+					: BX.message('MOBILEAPP_CALL_LIST_MISSED_OUTGOING');
+			}
+
+			return BX.message('MOBILEAPP_CALL_LIST_MISSED_OUTGOING');
+		}
+
+		getCallIcon(item)
+		{
+			let iconName = ICONS.outgoing;
+
+			if (item.status === STATUS.MISSED)
+			{
+				iconName = ICONS.missed;
+			}
+			else if (item.type === TYPE.INCOMING)
+			{
+				iconName = ICONS.incoming;
+			}
+			else if (item.type === TYPE.OUTGOING)
+			{
+				iconName = ICONS.outgoing;
+			}
+
+			return `${currentDomain}/bitrix/images/mobile/icons/${iconName}.svg`;
+		}
+
 		render()
 		{
 			const { item, timeLabel, titleColor, showMissedBadge, onClick } = this.props;
-
-			const iconMap = ICONS;
-
-			const isIncoming = (item.type === TYPE.INCOMING);
-			const dirText = (item.status === STATUS.MISSED)
-				? BX.message('MOBILEAPP_CALL_LIST_MISSED_TYPE')
-				: (isIncoming ? BX.message('MOBILEAPP_CALL_LIST_MISSED_INCOMING') : BX.message('MOBILEAPP_CALL_LIST_MISSED_OUTGOING'));
-
-			let durationTitle = '';
-			if (item.status !== STATUS.MISSED && item.duration > 0)
-			{
-				durationTitle = ` – ${formatDuration(item.duration)}`;
-			}
 
 			const subtitleComponent = View(
 				{
@@ -56,11 +89,11 @@ jn.define('call/callList/item', (require, exports, module) => {
 					},
 					tintColor: Color.base3.toHex(),
 					svg: {
-						uri: `${currentDomain}/bitrix/images/mobile/icons/${item.status === STATUS.MISSED ? iconMap.missed : (isIncoming ? iconMap.incoming : iconMap.outgoing)}.svg`,
+						uri: this.getCallIcon(item),
 					},
 				}),
 				Text({
-					text: `${dirText}${durationTitle}`,
+					text: this.getSubtitleText(item),
 					style: {
 						color: Color.base4.toHex(),
 						fontSize: 15,

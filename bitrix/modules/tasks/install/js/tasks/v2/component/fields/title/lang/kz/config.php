@@ -1,3 +1,0 @@
-<?php
-$MESS["TASKS_V2_TEMPLATE_TITLE_PLACEHOLDER"] = "Қалып атауы";
-$MESS["TASKS_V2_TITLE_PLACEHOLDER"] = "Міндет атауы";

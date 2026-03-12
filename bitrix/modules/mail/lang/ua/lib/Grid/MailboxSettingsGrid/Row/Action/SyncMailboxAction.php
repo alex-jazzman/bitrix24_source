@@ -1,2 +1,0 @@
-<?php
-$MESS["MAIL_MAILBOX_LIST_ROW_ACTIONS_SYNC_MAILBOX"] = "Запустити ручну синхронізацію";

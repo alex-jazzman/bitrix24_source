@@ -97,6 +97,9 @@ return [
 			\CUserTypeManager::class => [
 				'constructor' => static fn() => $GLOBALS['USER_FIELD_MANAGER'],
 			],
+			\CUserFieldEnum::class => [
+				'className' => \CUserFieldEnum::class,
+			],
 		],
 	],
 ];

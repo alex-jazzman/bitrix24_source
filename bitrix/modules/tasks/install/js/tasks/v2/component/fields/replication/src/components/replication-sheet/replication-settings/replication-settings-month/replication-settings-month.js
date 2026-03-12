@@ -175,33 +175,29 @@ export const ReplicationSettingsMonth = {
 		},
 	},
 	template: `
-		<div>
-			<div class="tasks-field-replication-sheet__stack">
-				<ReplicationSettingsMonthlyByDayOfMonth
-					v-model:monthlyType="monthlyType"
-					v-model:dayNumber="monthlyDayNum"
-				/>
-				<ReplicationSettingsMonthlyByDayOfWeek
-					v-model:monthlyType="monthlyType"
-					v-model:weekDay="monthlyWeekDay"
-					v-model:weekDayNumber="monthlyWeekDayNum"
-				/>
-			</div>
-			<div class="tasks-field-replication-sheet__stack">
-				<ReplicationInterval
-					v-model:useInterval="useInterval"
-					v-model:interval="interval"
-					:period
-				>
-					<template #hint>
-						<QuestionMark
-							class="tasks-replication-sheet-action-row__hint"
-							:hintText
-							:hintMaxWidth="260"
-						/>
-					</template>
-				</ReplicationInterval>
-			</div>
+		<div class="tasks-field-replication-sheet__stack">
+			<ReplicationSettingsMonthlyByDayOfMonth
+				v-model:monthlyType="monthlyType"
+				v-model:dayNumber="monthlyDayNum"
+			/>
+			<ReplicationSettingsMonthlyByDayOfWeek
+				v-model:monthlyType="monthlyType"
+				v-model:weekDay="monthlyWeekDay"
+				v-model:weekDayNumber="monthlyWeekDayNum"
+			/>
+			<ReplicationInterval
+				v-model:useInterval="useInterval"
+				v-model:interval="interval"
+				:period
+			>
+				<template #hint>
+					<QuestionMark
+						class="tasks-replication-sheet-action-row__hint"
+						:hintText
+						:hintMaxWidth="260"
+					/>
+				</template>
+			</ReplicationInterval>
 		</div>
 	`,
 };

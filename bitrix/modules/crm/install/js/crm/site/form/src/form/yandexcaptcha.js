@@ -77,7 +77,7 @@ class YandexCaptcha
 		}
 
 		this.#target = target;
-		window.smartCaptcha.render(target, {
+		this.#widgetId = window.smartCaptcha.render(target, {
 			sitekey: this.getKey(),
 			invisible: true,
 			callback: (response): void => {

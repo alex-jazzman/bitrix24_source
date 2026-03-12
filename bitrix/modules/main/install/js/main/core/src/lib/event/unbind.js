@@ -4,7 +4,7 @@ import registry from './registry';
 import fetchSupportedListenerOptions from './fetch-supported-listener-options';
 
 export default function unbind(
-	target: Element,
+	target: EventTarget,
 	eventName: string,
 	handler: Function,
 	options?: {
@@ -14,10 +14,7 @@ export default function unbind(
 	},
 ): void
 {
-	if (
-		!Type.isObject(target)
-		|| !Type.isFunction(target.removeEventListener)
-	)
+	if (!Type.isEventTargetLike(target))
 	{
 		return;
 	}
@@ -27,6 +24,7 @@ export default function unbind(
 	if (eventName in aliases)
 	{
 		aliases[eventName].forEach((key) => {
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
 			target.removeEventListener(key, handler, listenerOptions);
 			registry.delete(target, key, handler);
 		});
@@ -34,6 +32,7 @@ export default function unbind(
 		return;
 	}
 
+	// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
 	target.removeEventListener(eventName, handler, listenerOptions);
 	registry.delete(target, eventName, handler);
 }

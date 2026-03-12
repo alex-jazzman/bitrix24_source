@@ -11,6 +11,11 @@ jn.define('im/messenger/model/comment/validator', (require, exports, module) => 
 	{
 		const result = {};
 
+		if (Type.isNumber(fields.commentChatId))
+		{
+			result.chatId = fields.commentChatId;
+		}
+
 		if (Type.isNumber(fields.chatId))
 		{
 			result.chatId = fields.chatId;
@@ -21,9 +26,19 @@ jn.define('im/messenger/model/comment/validator', (require, exports, module) => 
 			result.dialogId = fields.dialogId;
 		}
 
+		if (Type.isNil(result.dialogId) && !Type.isNil(result.chatId))
+		{
+			result.dialogId = `chat${result.chatId}`;
+		}
+
 		if (Type.isNumber(fields.messageCount))
 		{
 			result.messageCount = fields.messageCount;
+		}
+
+		if (Type.isNumber(fields.parentMessageId))
+		{
+			result.messageId = fields.parentMessageId;
 		}
 
 		if (Type.isNumber(fields.messageId))

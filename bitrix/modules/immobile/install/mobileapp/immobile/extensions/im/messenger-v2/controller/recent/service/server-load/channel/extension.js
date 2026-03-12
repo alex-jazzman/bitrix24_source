@@ -188,6 +188,7 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/channel', (requ
 				this.store.dispatch('dialoguesModel/set', modelData.dialogues),
 				this.store.dispatch('filesModel/set', modelData.files),
 				this.store.dispatch('messagesModel/store', modelData.messages),
+				this.store.dispatch('stickerPackModel/addStickers', { stickers: modelData.stickers }),
 			]);
 
 			const recentAction = firstPage ? 'recentModel/setFirstPageByTab' : 'recentModel/setChannel';
@@ -199,7 +200,7 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/channel', (requ
 
 		/**
 		 * @param {imV2RecentChannelTailResult} recentData
-		 * @returns {{users, dialogues, files, recent: *[], messages: *[]}}
+		 * @returns {{users, dialogues, files, recent: *[], messages: *[], stickers: Array<StickerState>}}
 		 */
 		prepareDataForModels(recentData)
 		{
@@ -209,6 +210,7 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/channel', (requ
 				files: recentData.files,
 				recent: [],
 				messages: [...recentData.messages, ...recentData.additionalMessages],
+				stickers: recentData.stickers,
 			};
 
 			recentData.recentItems.forEach((recentItem) => {

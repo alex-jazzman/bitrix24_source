@@ -12,7 +12,7 @@ use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\ActionFilter\Scope;
 use Bitrix\Main\Engine\ActionFilter\Authentication;
 use Bitrix\Main\Access\Exception\AccessException;
-use Bitrix\Im\Call\Call;
+use Bitrix\Call\Call;
 
 
 class CallAiAjaxController extends Controller
@@ -66,7 +66,7 @@ class CallAiAjaxController extends Controller
 			throw new InvalidArgumentException('CallAI: Incorrect parameter callId');
 		}
 
-		$this->call = \Bitrix\Im\Call\Registry::getCallWithId($this->callId);
+		$this->call = \Bitrix\Call\Call\Registry::getCallWithId($this->callId);
 		if (!$this->call)
 		{
 			throw new InvalidArgumentException('CallAI: Incorrect parameter callId');

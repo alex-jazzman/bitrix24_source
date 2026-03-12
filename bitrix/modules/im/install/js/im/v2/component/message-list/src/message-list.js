@@ -162,7 +162,7 @@ export const MessageList = {
 		insertTextQuote(message: ImModelMessage): void
 		{
 			this.getEmitter().emit(EventType.textarea.insertText, {
-				text: Quote.prepareQuoteText(message),
+				text: Quote.prepareInlineMessageQuote(message),
 				withNewLine: true,
 				replace: false,
 				dialogId: this.dialogId,
@@ -230,8 +230,8 @@ export const MessageList = {
 			const messageMenuManager = MessageMenuManager.getInstance();
 
 			let target = {
-				left: event.clientX,
-				top: event.clientY,
+				left: event.pageX,
+				top: event.pageY,
 			};
 
 			if (bindElement)

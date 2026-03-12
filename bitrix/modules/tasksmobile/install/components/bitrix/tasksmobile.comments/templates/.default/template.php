@@ -29,7 +29,7 @@ Extension::load([
 ]);
 
 $taskId = (int)$arResult['TASK_ID'];
-$isChatFeatureDisabled = Option::get('tasksmobile', 'feature_chat_enabled', 'off') !== 'on';
+$isChatFeatureDisabled = Option::get('tasksmobile', 'feature_chat_enabled', 'on') !== 'on';
 ?>
 
 <script>

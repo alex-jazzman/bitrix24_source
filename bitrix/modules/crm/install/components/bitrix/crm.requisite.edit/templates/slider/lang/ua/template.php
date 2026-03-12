@@ -1,4 +1,0 @@
-<?
-$MESS["CRM_REQUISITE_EDIT_BUTTON_CANCEL"] = "Скасувати";
-$MESS["CRM_REQUISITE_EDIT_BUTTON_SAVE"] = "Зберегти";
-?>

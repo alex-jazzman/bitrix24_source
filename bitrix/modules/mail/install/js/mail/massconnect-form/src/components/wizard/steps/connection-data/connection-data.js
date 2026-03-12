@@ -1,9 +1,9 @@
-import { useWizardStore } from '../../../../store/wizard.js';
-import { mapState } from 'ui.vue3.pinia';
-import { BInput } from 'ui.system.input.vue';
-import { InputSize, InputDesign } from 'ui.system.input';
-import { LocalizationMixin } from '../../../../mixins/localization-mixin';
 import { sendData as analyticsSendData } from 'ui.analytics';
+import { InputDesign, InputSize } from 'ui.system.input';
+import { BInput } from 'ui.system.input.vue';
+import { mapState } from 'ui.vue3.pinia';
+import { LocalizationMixin } from '../../../../mixins/localization-mixin';
+import { useWizardStore } from '../../../../store/wizard.js';
 import './connection-data.css';
 
 // @vue/component
@@ -129,6 +129,18 @@ export const ConnectionData = {
 				c_section: this.analyticsSource,
 			});
 		},
+		handleImapPortInput(port: string): void
+		{
+			this.connectionSettings.imapPort = this.getSanitizedValue(port);
+		},
+		handleSmtpPortInput(port: string): void
+		{
+			this.connectionSettings.smtpSettings.port = this.getSanitizedValue(port);
+		},
+		getSanitizedValue(value: ?string): string
+		{
+			return String(value ?? '').replaceAll(/\D/g, '');
+		},
 	},
 
 	// language=Vue
@@ -174,6 +186,7 @@ export const ConnectionData = {
 						:design="InputDesign.DEFAULT"
 						v-model="connectionSettings.imapPort"
 						:error="imapPortError"
+						@input="handleImapPortInput(connectionSettings.imapPort)"
 					/>
 				</div>
 				<div class="mail_massconnect__connection-data_checkbox-group">
@@ -213,6 +226,7 @@ export const ConnectionData = {
 						:design="InputDesign.DEFAULT"
 						v-model="connectionSettings.smtpSettings.port"
 						:error="smtpPortError"
+						@input="handleSmtpPortInput(connectionSettings.smtpSettings.port)"
 					/>
 				</div>
 				<div class="mail_massconnect__connection-data_checkbox-group">

@@ -12,4 +12,3 @@ $MESS["RELATION_ENTITY_LAST_READ_FIELD"] = "Идентификатор посл�
 $MESS["RELATION_ENTITY_STATUS_FIELD"] = "Статус";
 $MESS["RELATION_ENTITY_CALL_STATUS_FIELD"] = "Статус звонка";
 $MESS["RELATION_ENTITY_NOTIFY_BLOCK_FIELD"] = "Нотификация";
-?>

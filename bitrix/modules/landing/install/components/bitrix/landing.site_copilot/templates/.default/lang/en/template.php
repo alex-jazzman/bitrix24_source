@@ -9,4 +9,4 @@ $MESS["LANDING_SITE_COPILOT_CREATED_7"] = "Selecting blocks";
 $MESS["LANDING_SITE_COPILOT_CREATED_8"] = "Creating buttons";
 $MESS["LANDING_SITE_COPILOT_CREATED_9"] = "Almost done";
 $MESS["LANDING_SITE_COPILOT_CREATED_10"] = "Your website is coming right up";
-$MESS["LANDING_SITE_PAGE_TITLE"] = "CoPilot web designer";
+$MESS["LANDING_SITE_PAGE_TITLE_MSGVER_1"] = "#COPILOT_NAME# web designer";

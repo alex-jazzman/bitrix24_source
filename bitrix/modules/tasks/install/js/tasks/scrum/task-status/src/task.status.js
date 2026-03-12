@@ -229,9 +229,9 @@ export class TaskStatus
 	{
 		return new Promise((resolve, reject) => {
 			const dod = new Dod({
+				taskId,
 				groupId: this.groupId,
-				taskId: taskId
-			})
+			});
 
 			dod.subscribe('resolve', () => resolve());
 			dod.subscribe('reject', () => reject());

@@ -40,10 +40,18 @@ this.BX = this.BX || {};
 	    value: function setValue(value) {
 	      babelHelpers.classPrivateFieldGet(this, _counter).update(value);
 	    }
+	    /*
+	    @deprecated use setStyle instead
+	     */
 	  }, {
 	    key: "setColor",
 	    value: function setColor(color) {
 	      babelHelpers.classPrivateFieldGet(this, _counter).setColor(color);
+	    }
+	  }, {
+	    key: "setStyle",
+	    value: function setStyle(style) {
+	      babelHelpers.classPrivateFieldGet(this, _counter).setStyle(style);
 	    }
 	  }, {
 	    key: "validateOptions",

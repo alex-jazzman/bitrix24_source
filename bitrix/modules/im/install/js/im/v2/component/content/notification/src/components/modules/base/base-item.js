@@ -37,10 +37,6 @@ export const BaseNotificationItem = {
 			type: Object,
 			required: true,
 		},
-		searchMode: {
-			type: Boolean,
-			default: false,
-		},
 	},
 	emits: [
 		'buttonsClick',
@@ -73,7 +69,7 @@ export const BaseNotificationItem = {
 		},
 		isUnread(): boolean
 		{
-			return !this.notificationItem.read && !this.searchMode;
+			return !this.notificationItem.read;
 		},
 		userData(): ImModelUser
 		{

@@ -5,4 +5,3 @@ $MESS["BLOG_BLOG_BLOG_COMMENTS"] = "Комментариев:";
 $MESS["BLOG_BLOG_BLOG_NO_AVAIBLE_MES"] = "Доступных сообщений нет";
 $MESS["BLOG_BLOG_BLOG_VIEWS"] = "Просмотров:";
 $MESS["BLOG_PHOTO"] = "Фото:";
-?>

@@ -92,11 +92,11 @@ Extension::load([
 	'ui.tour',
 	'pull.queuemanager',
 	'ui.avatar',
+	'intranet.old-interface.intranet-common',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/tasks/task-iframe-popup.js');
 
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 $collabClass = $arResult['IS_COLLAB'] ? 'sn-collab-tasks__wrapper' : '';
 
 $timeManagerData = [];
@@ -609,7 +609,7 @@ CJSCore::Init("spotlight");
 			showPopup();
 		}
 		BX.Tasks.KanbanComponent.filterId = '<?=$gridID?>';
-		
+
 		BX.TasksTimerManager.onDataRecieved(<?=Json::encode($timeManagerData)?>);
 
 		<?php if ($arResult['IS_COLLAB']): ?>

@@ -916,17 +916,15 @@
 		var filter = BX.Main.filterManager.getById(gridId);
 		var dir = filter.getFilterFieldsValues()['DIR'];
 
-		var pr = BX.ajax.runComponentAction(
-			'bitrix:mail.client',
-			'syncMailbox',
+		var pr = BX.ajax.runAction(
+			'mail.mailboxconnecting.syncMailbox',
 			{
-				mode: 'ajax',
 				data: {
 					id: self.mailbox.ID,
 					dir: dir || self.mailbox.OPTIONS.inboxDir,
-					onlySyncCurrent: onlySyncCurrent === undefined ? false : onlySyncCurrent,
-				}
-			}
+					onlySyncCurrent: onlySyncCurrent === undefined ? 0 : Number(onlySyncCurrent),
+				},
+			},
 		);
 
 		pr.then(

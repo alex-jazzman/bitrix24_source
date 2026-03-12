@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_BLOG_CLNDR_P_M'] = "Предыдущий месяц";
 $MESS ['BLOG_BLOG_CLNDR_N_M'] = "Следующий месяц";
 $MESS ['BLOG_BLOG_CLNDR_D_1'] = "Пн";
@@ -20,4 +20,3 @@ $MESS ['BLOG_BLOG_CLNDR_M_9'] = "Сентябрь";
 $MESS ['BLOG_BLOG_CLNDR_M_10'] = "Октябрь";
 $MESS ['BLOG_BLOG_CLNDR_M_11'] = "Ноябрь";
 $MESS ['BLOG_BLOG_CLNDR_M_12'] = "Декабрь";
-?>

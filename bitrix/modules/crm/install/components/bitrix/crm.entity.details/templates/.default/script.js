@@ -56,8 +56,8 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 
 			this._externalEventHandler = BX.delegate(this.onExternalEvent, this);
 			BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
-
 			BX.addCustomEvent(window, "BX.Crm.EntityEditor:onFailedValidation", this.onFailedValidation.bind(this));
+			BX.addCustomEvent("onPullEvent-crm", this.onPullEventHandlerCrm.bind(this));
 
 			this.doInitialize();
 		},
@@ -493,7 +493,18 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 					setTimeout(function(){field.focus()}, 350);
 				}
 			}
-		}
+		},
+		onPullEventHandlerCrm: function(command, params)
+		{
+			const deleteItemTag = `ITEMUPDATED_${this.getEntityTypeName()}_${this.getEntityId()}`;
+			if (
+				deleteItemTag.toUpperCase() === command.toUpperCase()
+				&& params.eventName.toUpperCase() === 'ITEMDELETED'
+			)
+			{
+				window.setTimeout(() => window.location.reload(), 10);
+			}
+		},
 	};
 	BX.Crm.EntityDetailManager.items = {};
 	BX.Crm.EntityDetailManager.get = function(id)

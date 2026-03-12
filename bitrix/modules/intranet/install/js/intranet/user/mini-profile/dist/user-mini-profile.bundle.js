@@ -881,10 +881,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
+	var _Extension$getSetting;
 	const UserRoleTitleByCode = {
 	  shop: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_SHOP'),
 	  email: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_EMAIL'),
-	  integrator: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_INTEGRATOR'),
+	  integrator: ((_Extension$getSetting = main_core.Extension.getSettings('intranet.user.mini-profile')) == null ? void 0 : _Extension$getSetting.isRenamedIntegrator) === 'Y' ? main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_INTEGRATOR_RENAMED') : main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_INTEGRATOR'),
 	  visitor: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_VISITOR')
 	};
 
@@ -1222,6 +1223,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    shouldShowMessengerActionButtons() {
 	      return ChatService.isMessengerAvailable() && this.canChat;
 	    },
+	    currentUserId() {
+	      return Number(this.loc('USER_ID'));
+	    },
+	    isOwnProfile() {
+	      return this.userId === this.currentUserId;
+	    },
 	    avatarType() {
 	      var _UserAvatarTypeByRole;
 	      return (_UserAvatarTypeByRole = UserAvatarTypeByRole[this.info.role]) != null ? _UserAvatarTypeByRole : 'round';
@@ -1230,6 +1237,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  methods: {
 	    openChat() {
 	      ChatService.openMessenger(this.userId);
+	    },
+	    openNotes() {
+	      ChatService.openMessenger(this.currentUserId);
 	    },
 	    call(withVideo = true) {
 	      ChatService.call(this.userId, withVideo);
@@ -1296,41 +1306,56 @@ this.BX.Intranet = this.BX.Intranet || {};
 			<div v-if="shouldShowMessengerActionButtons"
 				class="intranet-user-mini-profile__base-info__actions"
 			>
-				<div class="intranet-user-mini-profile__base-info__action">
-					<button
-						class="ui-btn ui-btn-sm ui-btn-no-caps --air --wide --style-outline-accent-2"
-						data-test-id="usermp_chat-button"
-						@click="openChat"
-					>
-					<span class="ui-btn-text">
-						{{ loc('INTRANET_USER_MINI_PROFILE_ACTION_CHAT') }}
-					</span>
-					</button>
-				</div>
-				<div class="intranet-user-mini-profile__base-info__action">
-					<div class="ui-btn-split --air ui-btn-sm --style-filled ui-btn-no-caps">
+				<template v-if="isOwnProfile">
+					<div class="intranet-user-mini-profile__base-info__action">
 						<button
-							class="ui-btn-main --air"
-							data-test-id="usermp_call-video-button"
-							@click="call()"
+							class="ui-btn ui-btn-sm ui-btn-no-caps --air --wide --style-outline-accent-2"
+							data-test-id="usermp_notes-button"
+							@click="openNotes"
 						>
 							<span class="ui-btn-text">
-								{{ loc('INTRANET_USER_MINI_PROFILE_ACTION_CALL_WITH_VIDEO') }}
+								{{ loc('INTRANET_USER_MINI_PROFILE_ACTION_NOTES') }}
 							</span>
 						</button>
+					</div>
+				</template>
+				<template v-else>
+					<div class="intranet-user-mini-profile__base-info__action">
 						<button
-							ref="callActionMenu"
-							class="ui-btn-menu"
-							data-test-id="usermp_call-menu-button"
-							@click="isShowCallMenu = !isShowCallMenu"
+							class="ui-btn ui-btn-sm ui-btn-no-caps --air --wide --style-outline-accent-2"
+							data-test-id="usermp_chat-button"
+							@click="openChat"
 						>
-							<BMenu v-if="isShowCallMenu"
-								:options="callMenuPopupOptions"
-								@close="isShowCallMenu = false"
-							/>
+							<span class="ui-btn-text">
+								{{ loc('INTRANET_USER_MINI_PROFILE_ACTION_CHAT') }}
+							</span>
 						</button>
 					</div>
-				</div>
+					<div class="intranet-user-mini-profile__base-info__action">
+						<div class="ui-btn-split --air ui-btn-sm --style-filled ui-btn-no-caps">
+							<button
+								class="ui-btn-main --air"
+								data-test-id="usermp_call-video-button"
+								@click="call()"
+							>
+								<span class="ui-btn-text">
+									{{ loc('INTRANET_USER_MINI_PROFILE_ACTION_CALL_WITH_VIDEO') }}
+								</span>
+							</button>
+							<button
+								ref="callActionMenu"
+								class="ui-btn-menu"
+								data-test-id="usermp_call-menu-button"
+								@click="isShowCallMenu = !isShowCallMenu"
+							>
+								<BMenu v-if="isShowCallMenu"
+									:options="callMenuPopupOptions"
+									@close="isShowCallMenu = false"
+								/>
+							</button>
+						</div>
+					</div>
+				</template>
 			</div>
 			<div v-if="isShowExpand"
 				class="intranet-user-mini-profile__expand"
@@ -1812,32 +1837,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      return Object.values((_this$backendData$str5 = (_this$backendData$str6 = this.backendData.structure) == null ? void 0 : _this$backendData$str6.departmentDictionary) != null ? _this$backendData$str5 : {});
 	    },
 	    heads() {
-	      var _this$backendData$str7, _this$backendData$str8, _this$backendData$str9, _this$backendData$str10, _this$backendData$str11, _this$backendData$str12;
-	      const userDepartmentIds = (_this$backendData$str7 = (_this$backendData$str8 = this.backendData.structure) == null ? void 0 : _this$backendData$str8.userDepartmentIds) != null ? _this$backendData$str7 : [];
-	      const departmentDictionary = (_this$backendData$str9 = (_this$backendData$str10 = this.backendData.structure) == null ? void 0 : _this$backendData$str10.departmentDictionary) != null ? _this$backendData$str9 : [];
-	      const headDictionary = (_this$backendData$str11 = (_this$backendData$str12 = this.backendData.structure) == null ? void 0 : _this$backendData$str12.headDictionary) != null ? _this$backendData$str11 : [];
-	      const headList = [];
-	      const headIds = new Set();
-	      userDepartmentIds.forEach(departmentId => {
-	        /** @type DepartmentType | null */
-	        const department = departmentDictionary[departmentId];
-	        if (!department) {
-	          return;
+	      var _this$backendData$str7, _this$backendData$str8, _this$backendData$str9;
+	      const userHeadIds = (_this$backendData$str7 = this.backendData.structure.userHeadIds) != null ? _this$backendData$str7 : [];
+	      if (userHeadIds.length === 0) {
+	        return [];
+	      }
+	      const headDictionary = (_this$backendData$str8 = (_this$backendData$str9 = this.backendData.structure) == null ? void 0 : _this$backendData$str9.headDictionary) != null ? _this$backendData$str8 : {};
+	      const heads = [];
+	      userHeadIds.forEach(id => {
+	        const head = headDictionary[id];
+	        if (head) {
+	          heads.push(head);
 	        }
-	        const {
-	          headIds: departmentHeadIds
-	        } = department;
-	        if (departmentHeadIds.includes(this.userId)) {
-	          return;
-	        }
-	        departmentHeadIds.forEach(headId => {
-	          if (!headIds.has(headId) && headDictionary[headId]) {
-	            headList.push(headDictionary[headId]);
-	            headIds.add(headId);
-	          }
-	        });
 	      });
-	      return headList.filter(head => head.id !== this.userId);
+	      return heads;
 	    },
 	    canShowDepartments() {
 	      return this.userDepartments.length > 0;

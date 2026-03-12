@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_dateFormatter,ui_vue3,im_v2_component_elements_attach,im_v2_component_elements_keyboard,main_core_events,ui_reaction_item_vue,im_v2_component_elements_userListPopup,im_v2_provider_service_user,im_v2_lib_logger,im_v2_lib_rest,ui_reactionsSelect,ui_reaction_picker,ui_reaction_item,im_v2_lib_feature,im_v2_component_elements_chatTitle,im_v2_lib_utils,im_v2_application_core,im_v2_lib_menu,im_v2_provider_service_sending,im_v2_provider_service_message,im_v2_provider_service_uploading,ui_system_menu,ui_iconSet_api_vue,im_v2_lib_copilot,im_v2_const,im_v2_component_elements_avatar,im_v2_lib_permission,im_v2_component_animation,im_v2_provider_service_comments,im_v2_lib_parser,main_core,im_v2_lib_channel) {
+(function (exports,im_v2_lib_dateFormatter,ui_vue3,im_v2_component_elements_attach,im_v2_component_elements_keyboard,main_core_events,ui_reaction_item_vue,im_v2_component_elements_userListPopup,im_v2_provider_service_user,im_v2_lib_logger,im_v2_lib_rest,ui_reaction_picker,ui_reaction_item,im_v2_component_elements_chatTitle,im_v2_lib_utils,im_v2_application_core,im_v2_lib_menu,im_v2_provider_service_sending,im_v2_provider_service_message,im_v2_provider_service_uploading,ui_system_menu,ui_iconSet_api_vue,im_v2_lib_copilot,im_v2_const,im_v2_component_elements_avatar,im_v2_lib_permission,im_v2_component_animation,im_v2_provider_service_comments,im_v2_lib_parser,main_core,im_v2_lib_channel) {
 	'use strict';
 
 	// @vue/component
@@ -418,12 +418,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        reaction
 	      }
 	    };
-	    const canSetMultipleReactions = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.reactionsV2Available);
 	    void im_v2_application_core.Core.getStore().dispatch('messages/reactions/setReaction', {
 	      messageId,
 	      reaction,
-	      userId: im_v2_application_core.Core.getUserId(),
-	      withReplace: !canSetMultipleReactions
+	      userId: im_v2_application_core.Core.getUserId()
 	    });
 	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageReactionAdd, payload).catch(([error]) => {
 	      console.error('ReactionService: error setting reaction', error);
@@ -661,16 +659,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.startHideTimer();
 	    },
 	    showSelector() {
-	      if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.reactionsV2Available)) {
-	        this.selector = new ui_reaction_picker.ReactionPicker({
-	          target: this.$refs.selector
-	        });
-	      } else {
-	        this.selector = new ui_reactionsSelect.ReactionsSelect({
-	          name: 'im-base-message-reaction-selector',
-	          position: this.$refs.selector
-	        });
-	      }
+	      this.selector = new ui_reaction_picker.ReactionPicker({
+	        target: this.$refs.selector
+	      });
 	      this.subscribeToSelectorEvents();
 	      this.selector.show();
 	    },
@@ -749,6 +740,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: false
 	    }
 	  },
+	  data() {
+	    return {
+	      isExpanded: false,
+	      isExpandable: false
+	    };
+	  },
 	  computed: {
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
@@ -786,20 +783,92 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    canShowReply() {
 	      return !main_core.Type.isNil(this.replyMessage);
+	    },
+	    isActiveQuote() {
+	      return this.replyContext !== NO_CONTEXT_TAG;
+	    },
+	    quoteClasses() {
+	      return {
+	        '--expanded': this.isExpanded,
+	        '--collapsed': !this.isExpanded,
+	        '--clickable': this.isActiveQuote || this.isExpandable
+	      };
+	    },
+	    toggleLabel() {
+	      return this.isExpanded ? this.loc('IM_PARSER_QUOTE_COLLAPSE') : this.loc('IM_PARSER_QUOTE_EXPAND');
 	    }
 	  },
+	  watch: {
+	    replyText() {
+	      void this.updateToggleAvailability();
+	    }
+	  },
+	  mounted() {
+	    void this.updateToggleAvailability();
+	  },
 	  methods: {
+	    toggleExpanded() {
+	      if (!this.isExpandable) {
+	        return;
+	      }
+	      this.isExpanded = !this.isExpanded;
+	    },
+	    async updateToggleAvailability() {
+	      await this.$nextTick();
+	      const textNode = this.$refs.text;
+	      if (!textNode) {
+	        return;
+	      }
+	      const isOverflowing = textNode.scrollHeight > textNode.clientHeight + 1;
+	      this.isExpandable = isOverflowing;
+	      if (!isOverflowing) {
+	        this.isExpanded = false;
+	      }
+	    },
+	    hasSelectedText() {
+	      const selection = window.getSelection().toString().trim();
+	      return main_core.Type.isStringFilled(selection);
+	    },
+	    onQuoteClick(event) {
+	      const isInteractiveClick = event.target instanceof HTMLElement && event.target.closest('a');
+	      if (isInteractiveClick) {
+	        event.stopPropagation();
+	        return;
+	      }
+	      if (this.hasSelectedText()) {
+	        event.stopPropagation();
+	        return;
+	      }
+	      if (this.isActiveQuote || !this.isExpandable) {
+	        return;
+	      }
+	      this.toggleExpanded();
+	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
-		<div v-if="canShowReply" class="bx-im-message-quote" :data-context="replyContext">
+		<div
+			v-if="canShowReply"
+			class="bx-im-message-quote --reply"
+			:class="quoteClasses"
+			:data-context="replyContext"
+			@click="onQuoteClick"
+		>
 			<div class="bx-im-message-quote__wrap">
 				<div class="bx-im-message-quote__name">
 					<div class="bx-im-message-quote__name-text">{{ replyTitle }}</div>
 				</div>
-				<div class="bx-im-message-quote__text" v-html="replyText"></div>
+				<div ref="text" class="bx-im-message-quote__text" v-html="replyText"></div>
+				<button
+					v-if="isExpandable"
+					type="button"
+					class="bx-im-message-quote__toggle"
+					@click.stop="toggleExpanded"
+				>
+					{{ toggleLabel }}
+				</button>
 			</div>
 		</div>
 	`
@@ -1278,10 +1347,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        return this.loc('IM_MESSAGE_COMMENTS_PANEL_ICON_UNSUBSCRIBE');
 	      }
 	      return this.loc('IM_MESSAGE_COMMENTS_PANEL_ICON_SUBSCRIBE');
+	    },
+	    isRealMessage() {
+	      return this.$store.getters['messages/isRealMessage'](this.message.id);
 	    }
 	  },
 	  methods: {
 	    onCommentsClick() {
+	      if (!this.isRealMessage) {
+	        return;
+	      }
 	      const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
 	      if (!permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.openComments, this.dialogId)) {
 	        return;
@@ -1534,5 +1609,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.DefaultMessageContent = DefaultMessageContent$$1;
 	exports.CompactCommentsPanel = CompactCommentsPanel;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Lib,BX.Vue3,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Event,BX.UI.Reaction.Item.Vue,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Ui,BX.UI.Reaction.Picker,BX.UI.Reaction.Item,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.UI.System,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Lib,BX.Vue3,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Event,BX.UI.Reaction.Item.Vue,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Reaction.Picker,BX.UI.Reaction.Item,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.UI.System,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

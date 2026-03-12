@@ -1,2 +1,2 @@
 <?php
-$MESS["REST_V3_EXCEPTIONS_INVALIDPAGINATIONEXCEPTION"] = 'Invalid pagination parameter "#PAGE#".';
+$MESS["REST_V3_EXCEPTION_INVALIDPAGINATIONEXCEPTION"] = 'Invalid pagination parameter "#PAGE#".';

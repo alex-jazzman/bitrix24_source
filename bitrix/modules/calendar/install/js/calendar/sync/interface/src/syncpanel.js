@@ -34,6 +34,7 @@ export default class SyncPanel
 			events: {
 				onLoad: () => {
 					this.displayConnectionUnits();
+					this.allowBitrix24IfEnabled();
 				}
 			},
 			cacheable: false,
@@ -207,5 +208,13 @@ export default class SyncPanel
 		Dom.replace(document.querySelector('#calendar-sync-status-block'), this.blockStatusContent);
 		this.displayConnectionUnits();
 		this.auxiliarySyncPanel?.refresh(status, connectionsProviders);
+	}
+
+	allowBitrix24IfEnabled()
+	{
+		if (BX.Calendar.Util.isBitrix24Enabled() === true && typeof window.BXDesktopSystem !== 'undefined')
+		{
+			window.BXDesktopSystem.AllowFrame('https://www.bitrix24.com/');
+		}
 	}
 }

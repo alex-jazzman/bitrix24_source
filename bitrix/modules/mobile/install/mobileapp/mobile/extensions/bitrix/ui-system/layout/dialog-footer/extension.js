@@ -13,6 +13,7 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 
 	/**
 	 * @typedef {Object} DialogFooterProps
+	 * @property {string} testId
 	 * @property {boolean} [safeArea]
 	 * @property {Function} onLayoutFooterHeight
 	 * @property {ButtonProps | Function} [keyboardButton]
@@ -60,15 +61,17 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 
 		render()
 		{
+			const { testId } = this.props;
 			const footerContent = this.renderFooterContent();
 
 			if (!footerContent)
 			{
-				return null;
+				return View();
 			}
 
 			return View(
 				{
+					testId,
 					safeArea: {
 						bottom: this.isSafeArea(),
 					},
@@ -101,11 +104,16 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 				return keyboardButton(keyboardButtonParams);
 			}
 
+			if (isEmpty(keyboardButtonParams))
+			{
+				return null;
+			}
+
 			return Button(keyboardButtonParams);
 		}
 
 		/**
-		 * @returns {ButtonProps}
+		 * @returns {ButtonProps|{}}
 		 */
 		getKeyboardButtonParams()
 		{
@@ -119,18 +127,30 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 				onLayout: this.#handleOnLayoutFooter,
 			};
 
-			if (isObjectLike(keyboardButton))
+			if (isFunction(keyboardButton))
 			{
-				return { ...keyboardButton, ...baseParams };
+				return baseParams;
 			}
 
-			return baseParams;
+			if (!isObjectLike(keyboardButton))
+			{
+				return {};
+			}
+
+			return { ...keyboardButton, ...baseParams };
 		}
 
 		renderFooterContent()
 		{
 			if (this.#isKeyboardShown())
 			{
+				if (!this.#hasKeyboardButton())
+				{
+					this.#handleOnLayoutFooter({ height: 0, width: 0 });
+
+					return null;
+				}
+
 				return View(
 					{
 						onLayout: this.#handleOnLayoutFooter,
@@ -144,7 +164,6 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 			}
 
 			const footerContent = this.#getChildren();
-
 			if (!footerContent)
 			{
 				return null;
@@ -238,6 +257,13 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 
 			return Boolean(isKeyboardShown);
 		}
+
+		#hasKeyboardButton()
+		{
+			const { keyboardButton } = this.props;
+
+			return Boolean(keyboardButton);
+		}
 	}
 
 	DialogFooter.defaultProps = {
@@ -246,6 +272,7 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 	};
 
 	DialogFooter.propTypes = {
+		testId: PropTypes.string.isRequired,
 		safeArea: PropTypes.bool,
 		keyboardButton: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
 		backgroundColor: PropTypes.instanceOf(Color),

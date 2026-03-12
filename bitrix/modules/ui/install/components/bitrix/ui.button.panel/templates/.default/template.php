@@ -3,6 +3,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\UI\Buttons\AirButtonStyle;
 
 /** @var CMain $APPLICATION */
 /** @var array $arParams */
@@ -56,23 +57,23 @@ BX.ready(function () {
 			$item['CLASS_NAME'] = '';
 			if ($item['TYPE'] === UiButtonPanel::TYPE_SAVE)
 			{
-				$item['CLASS_NAME'] = 'ui-btn-success';
+				$item['CLASS_NAME'] = AirButtonStyle::FILLED;
 			}
 			elseif ($item['TYPE'] === UiButtonPanel::TYPE_APPLY)
 			{
-				$item['CLASS_NAME'] = 'ui-btn-primary';
+				$item['CLASS_NAME'] = AirButtonStyle::OUTLINE_ACCENT_2;
 			}
 			elseif ($item['TYPE'] === UiButtonPanel::TYPE_CANCEL)
 			{
-				$item['CLASS_NAME'] = 'ui-btn-link';
+				$item['CLASS_NAME'] = AirButtonStyle::PLAIN;
 			}
 			elseif ($item['TYPE'] === UiButtonPanel::TYPE_CLOSE)
 			{
-				$item['CLASS_NAME'] = 'ui-btn-light-border';
+				$item['CLASS_NAME'] = AirButtonStyle::PLAIN;
 			}
 			elseif ($item['TYPE'] === UiButtonPanel::TYPE_BUTTON)
 			{
-				$item['CLASS_NAME'] = 'ui-btn-light-border';
+				$item['CLASS_NAME'] = AirButtonStyle::OUTLINE;
 			}
 
 			switch ($item['TYPE'])
@@ -85,9 +86,9 @@ BX.ready(function () {
 						id="<?=htmlspecialcharsbx($item['ID'])?>"
 						name="<?=htmlspecialcharsbx($item['NAME'])?>"
 						value="<?=htmlspecialcharsbx($item['VALUE'])?>"
-						class="ui-btn <?=htmlspecialcharsbx($item['CLASS_NAME'])?>"
+						class="ui-btn ui-btn-no-caps ui-btn-lg --air <?=htmlspecialcharsbx($item['CLASS_NAME'])?>"
 						<?if(!empty($item['ONCLICK'])):?>onclick="<?=htmlspecialcharsbx($item['ONCLICK'])?>"<?endif?>
-					><?=htmlspecialcharsbx($item['CAPTION'])?></button>
+					><span class="ui-btn-text"><?=htmlspecialcharsbx($item['CAPTION'])?></span></button>
 					<?
 					break;
 
@@ -97,10 +98,10 @@ BX.ready(function () {
 					<a
 						id="<?=htmlspecialcharsbx($item['ID'])?>"
 						name="<?=htmlspecialcharsbx($item['NAME'])?>"
-						class="ui-btn <?=htmlspecialcharsbx($item['CLASS_NAME'])?>"
+						class="ui-btn ui-btn-no-caps ui-btn-lg --air <?=htmlspecialcharsbx($item['CLASS_NAME'])?>"
 						<?if(!empty($item['LINK'])):?>href="<?=htmlspecialcharsbx(\CUtil::JSEscape($item['LINK']))?>"<?endif?>
 						<?if(!empty($item['ONCLICK'])):?>onclick="<?=htmlspecialcharsbx($item['ONCLICK'])?>"<?endif?>
-					><?=htmlspecialcharsbx($item['CAPTION'])?></a>
+					><span class="ui-btn-text"><?=htmlspecialcharsbx($item['CAPTION'])?></span></a>
 					<?
 					break;
 
@@ -112,12 +113,12 @@ BX.ready(function () {
 					if ($item['TYPE'] == UiButtonPanel::TYPE_REMOVE)
 					{
 						?>
-						<button class="ui-btn ui-btn-light ui-btn-icon-remove"
+						<button class="ui-btn ui-btn-no-caps ui-btn-lg --air ui-icon-set__scope --with-left-icon <?=AirButtonStyle::PLAIN ?> ui-btn-icon-remove"
 							id="<?= htmlspecialcharsbx($item['ID']) ?>"
 							name="<?= htmlspecialcharsbx($item['NAME']) ?>"
 							value="Y"
 							<?if (!empty($item['ONCLICK'])): ?>onclick="<?= htmlspecialcharsbx($item['ONCLICK']) ?>"<?endif ?>
-						><?= htmlspecialcharsbx($item['CAPTION']) ?></button>
+						><span class="ui-btn-text"><?= htmlspecialcharsbx($item['CAPTION']) ?></span></button>
 						<?
 					}
 					else

@@ -173,12 +173,6 @@ class ItemFieldsCaster implements ICaster
 
 				return $file;
 
-			case FieldType::DATETIME:
-				if ($value && is_string($value))
-				{
-					return new DateTime($value);
-				}
-
 			default:
 				return $value;
 		}

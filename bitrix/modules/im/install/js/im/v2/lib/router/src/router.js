@@ -51,6 +51,11 @@ export const Router = {
 			const dialogId = urlParams.get(GetParameter.openCollab);
 			void Messenger.openCollab(dialogId ?? '');
 		}
+		else if (urlParams.has(GetParameter.openSharedLink))
+		{
+			const code = urlParams.get(GetParameter.openSharedLink);
+			void Messenger.joinChatByCode(code);
+		}
 		else if (urlParams.has(GetParameter.openTaskComments))
 		{
 			const dialogId = urlParams.get(GetParameter.openTaskComments);

@@ -1,5 +1,6 @@
 import { Text, Loc, Type, Dom } from 'main.core';
 
+import { Notifier } from 'ui.notification-manager';
 import type { Store } from 'ui.vue3.vuex';
 
 import { idUtils } from 'tasks.v2.lib.id-utils';
@@ -12,31 +13,33 @@ import { userFieldsMeta } from 'tasks.v2.component.fields.user-fields';
 
 import './user-fields-slider.css';
 
+export type UserFieldsSliderOpenParams = {
+	taskId: number | string,
+	isTemplate: boolean,
+	templateId: number | null,
+	copiedFromId: number | string | null,
+};
+
 class UserFieldsSlider
 {
 	#cacheContent: Map<number, HTMLElement>;
 	#cacheRequest: Map<number, string>;
-	#currentTaskId: number | string;
-	#currentIsTemplate: boolean;
-	#currentTemplateId: number | null;
+	#currentParams: UserFieldsSliderOpenParams;
 
 	constructor()
 	{
 		this.#cacheContent = new Map();
 		this.#cacheRequest = new Map();
-		this.#currentTaskId = 0;
-		this.#currentIsTemplate = false;
+		this.#currentParams = {};
 	}
 
-	async open(taskId: number | string, isTemplate: boolean, templateId: number | null): void
+	async open(params: UserFieldsSliderOpenParams): void
 	{
-		this.#currentTaskId = taskId;
-		this.#currentIsTemplate = isTemplate;
-		this.#currentTemplateId = templateId;
+		this.#currentParams = params;
 
-		if (this.#cacheContent.has(taskId))
+		if (this.#cacheContent.has(this.#currentTaskId))
 		{
-			const userFieldsElement = this.#cacheContent.get(taskId);
+			const userFieldsElement = this.#cacheContent.get(this.#currentTaskId);
 			if (userFieldsElement)
 			{
 				this.#openSlider(userFieldsElement);
@@ -50,7 +53,7 @@ class UserFieldsSlider
 		const userFieldsElement = document.createElement('div');
 		BX.Runtime.html(userFieldsElement, content, { useAdjacentHTML: true });
 
-		this.#cacheContent.set(taskId, userFieldsElement);
+		this.#cacheContent.set(this.#currentTaskId, userFieldsElement);
 		this.#openSlider(userFieldsElement);
 	}
 
@@ -64,17 +67,38 @@ class UserFieldsSlider
 		try
 		{
 			let html = '';
-			if (this.#currentIsTemplate)
+			if (this.#currentCopiedFromId)
 			{
-				html = await this.#getTemplateContent();
+				if (this.#currentIsTemplate)
+				{
+					const id = idUtils.unbox(this.#currentCopiedFromId);
+
+					html = await this.#getTemplateContent(id);
+				}
+				else
+				{
+					const id = Type.isNumber(this.#currentCopiedFromId) ? this.#currentCopiedFromId : 0;
+
+					html = await this.#getTasksContent(id);
+				}
+			}
+			else if (this.#currentIsTemplate)
+			{
+				const id = idUtils.unbox(this.#currentTaskId);
+
+				html = await this.#getTemplateContent(id);
 			}
 			else if (this.#currentTemplateId)
 			{
-				html = await this.#getTaskFromTemplateContent();
+				const id = this.#currentTemplateId ?? 0;
+
+				html = await this.#getTaskFromTemplateContent(id);
 			}
 			else
 			{
-				html = await this.#getTasksContent();
+				const id = Type.isNumber(this.#currentTaskId) ? this.#currentTaskId : 0;
+
+				html = await this.#getTasksContent(id);
 			}
 
 			const content = this.#render(html);
@@ -91,31 +115,23 @@ class UserFieldsSlider
 		}
 	}
 
-	async #getTasksContent(): Promise<string>
+	async #getTasksContent(id): Promise<string>
 	{
-		const id = Type.isNumber(this.#currentTaskId) ? this.#currentTaskId : 0;
 		const data = await apiClient.post(Endpoint.LegacyUserFieldGetTask, { task: { id } });
 
 		return data?.html ?? '';
 	}
 
-	async #getTemplateContent(): Promise<string>
+	async #getTemplateContent(id): Promise<string>
 	{
-		const id = idUtils.unbox(this.#currentTaskId);
 		const data = await apiClient.post(Endpoint.LegacyUserFieldGetTemplate, { template: { id } });
 
 		return data?.html ?? '';
 	}
 
-	async #getTaskFromTemplateContent(): Promise<string>
+	async #getTaskFromTemplateContent(id): Promise<string>
 	{
-		const id = this.#currentTemplateId ?? 0;
-		const data = await apiClient.post(Endpoint.LegacyUserFieldGetTemplate, {
-			template: {
-				id,
-				task: { id: this.#currentTaskId },
-			},
-		});
+		const data = await apiClient.post('LegacyUserField.getTaskFromTemplate', { template: { id } });
 
 		return data?.html ?? '';
 	}
@@ -132,12 +148,45 @@ class UserFieldsSlider
 			customRightBoundary: 0,
 			contentCallback: () => content,
 			events: {
-				onCloseComplete: () => this.#handleSliderClose(),
+				onClose: this.#handleSliderClose,
+				onCloseComplete: () => this.#handleSliderCloseComplete(),
 			},
 		});
 	}
 
-	#handleSliderClose(): void
+	#handleSliderClose = (): void => {
+		const container = document.getElementById('user-fields-slider-content');
+
+		if (!container)
+		{
+			return;
+		}
+
+		const { scheme } = this.#collectUserFieldsData(container);
+
+		if (this.#currentIsTemplate)
+		{
+			void this.$store.dispatch(`${Model.Interface}/updateTemplateUserFieldScheme`, scheme);
+
+			const taskScheme = [...this.$store.getters[`${Model.Interface}/taskUserFieldScheme`]];
+
+			taskScheme.push(...scheme.filter((it) => !taskScheme.some(({ id }) => id === it.id)));
+
+			void this.$store.dispatch(`${Model.Interface}/updateTaskUserFieldScheme`, taskScheme);
+		}
+		else
+		{
+			void this.$store.dispatch(`${Model.Interface}/updateTaskUserFieldScheme`, scheme);
+
+			const templateScheme = [...this.$store.getters[`${Model.Interface}/templateUserFieldScheme`]];
+
+			templateScheme.push(...scheme.filter((it) => !templateScheme.some(({ id }) => id === it.id)));
+
+			void this.$store.dispatch(`${Model.Interface}/updateTemplateUserFieldScheme`, templateScheme);
+		}
+	};
+
+	#handleSliderCloseComplete(): void
 	{
 		// Hacks for BX.calendar
 		const calendar = BX.calendar?.get();
@@ -203,21 +252,35 @@ class UserFieldsSlider
 	{
 		return `
 			<div class="tasks-task-full-card-user-fields-footer">
-				<button class="ui-btn --air ui-btn-lg --style-filled ui-btn-no-caps" onclick="top.BX.Tasks.V2.Component.userFieldsSlider.handleConfirm();">
-					<span class="ui-btn-text">
-						<span class="ui-btn-text-inner">
-							${Loc.getMessage('TASKS_V2_USER_FIELDS_SLIDER_CONFIRM')}
-						</span>
-					</span>
-				</button>
-				<button class="ui-btn --air ui-btn-lg --style-plain ui-btn-no-caps" onclick="top.BX.SidePanel.Instance.close();">
-					<span class="ui-btn-text">
-						<span class="ui-btn-text-inner">
-							${Loc.getMessage('TASKS_V2_USER_FIELDS_SLIDER_CANCEL')}
-						</span>
-					</span>
-				</button>
+				${this.#renderConfirmButton()}
+				${this.#renderCancelButton()}
 			</div>
+		`;
+	}
+
+	#renderConfirmButton(): string
+	{
+		return `
+			<button class="ui-btn --air ui-btn-lg --style-filled ui-btn-no-caps" onclick="top.BX.Tasks.V2.Component.userFieldsSlider.handleConfirm();">
+				<span class="ui-btn-text">
+					<span class="ui-btn-text-inner">
+						${Loc.getMessage('TASKS_V2_USER_FIELDS_SLIDER_CONFIRM')}
+					</span>
+				</span>
+			</button>
+		`;
+	}
+
+	#renderCancelButton(): string
+	{
+		return `
+			<button class="ui-btn --air ui-btn-lg --style-plain ui-btn-no-caps" onclick="top.BX.SidePanel.Instance.close();">
+				<span class="ui-btn-text">
+					<span class="ui-btn-text-inner">
+						${Loc.getMessage('TASKS_V2_USER_FIELDS_SLIDER_CANCEL')}
+					</span>
+				</span>
+			</button>
 		`;
 	}
 
@@ -230,32 +293,42 @@ class UserFieldsSlider
 			return;
 		}
 
-		const { userFields, scheme } = this.#collectUserFieldsData(container);
+		const { userFields } = this.#collectUserFieldsData(container);
 
 		if (this.#currentIsTemplate)
 		{
-			await this.updateTemplateUserFields(userFields, scheme);
+			void this.updateTemplateUserFields(userFields);
 		}
 		else
 		{
-			await this.updateTaskUserFields(userFields, scheme);
+			void this.updateTaskUserFields(userFields);
 		}
 
 		BX.SidePanel.Instance.close();
 	}
 
-	async updateTaskUserFields(userFields: Array, scheme: Array): void
+	async updateTaskUserFields(userFields: Array): void
 	{
-		await this.$store.dispatch(`${Model.Interface}/updateTaskUserFieldScheme`, scheme);
+		const result = await taskService.update(this.#currentTaskId, { userFields });
 
-		void taskService.update(this.#currentTaskId, { userFields });
+		if (result[Endpoint.TaskUpdate]?.length)
+		{
+			const error = result[Endpoint.TaskUpdate][0];
+
+			this.#showError(error);
+		}
 	}
 
-	async updateTemplateUserFields(userFields: Array, scheme: Array): void
+	async updateTemplateUserFields(userFields: Array): void
 	{
-		await this.$store.dispatch(`${Model.Interface}/updateTemplateUserFieldScheme`, scheme);
+		const result = await templateService.update(this.#currentTaskId, { userFields });
 
-		void templateService.update(this.#currentTaskId, { userFields });
+		if (result[Endpoint.TemplateUpdate]?.length)
+		{
+			const error = result[Endpoint.TemplateUpdate][0];
+
+			this.#showError(error);
+		}
 	}
 
 	#convertToArray(userFields: Object): Array
@@ -372,6 +445,34 @@ class UserFieldsSlider
 		}
 
 		return value;
+	}
+
+	#showError(error): void
+	{
+		Notifier.notifyViaBrowserProvider({
+			id: 'tasks-user-fields-update-error',
+			text: error?.message,
+		});
+	}
+
+	get #currentTaskId(): number | string
+	{
+		return this.#currentParams.taskId;
+	}
+
+	get #currentIsTemplate(): boolean
+	{
+		return this.#currentParams.isTemplate;
+	}
+
+	get #currentTemplateId(): number | null
+	{
+		return this.#currentParams.templateId;
+	}
+
+	get #currentCopiedFromId(): number | string | null
+	{
+		return this.#currentParams.copiedFromId;
 	}
 
 	get $store(): Store

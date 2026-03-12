@@ -9,6 +9,14 @@
 	user-select: none;
 }
 
+.ui-block-diagram-canvas-transform.--grab {
+	cursor: grab;
+}
+
+.ui-block-diagram-canvas-transform.--grabbing {
+	cursor: grabbing;
+}
+
 .ui-block-diagram-canvas-transform__canvas {
 	width: 100%;
 	height: 100%;
@@ -28,4 +36,24 @@
 	width: 100%;
 	height: 100%;
 	transform-origin: 0 0;
+}
+
+.ui-block-diagram-selection-rect {
+	position: absolute;
+	background-color: rgb(from var(--ui-color-accent-main-link) r g b / 0.1);
+	border: 1px dashed var(--ui-color-blue-57);
+	border-radius: 4px;
+	pointer-events: none;
+	z-index: 9999;
+}
+
+.ui-block-diagram-group-box {
+	position: absolute;
+	border: 2px solid var(--ui-color-blue-57);
+	z-index: 90;
+	border-radius: 4px;
+}
+
+.ui-block-diagram .ui-block-diagram-group-box + .ui-block-diagram-context-menu__layout {
+	z-index: auto;
 }

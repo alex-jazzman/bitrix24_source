@@ -41,9 +41,9 @@ jn.define('calendar/event-list-view/layout/event-list', (require, exports, modul
 			return this.props.layout;
 		}
 
-		get floatingActionButtonRef()
+		get floatingActionButton()
 		{
-			return this.props.floatingActionButtonRef;
+			return this.props.floatingActionButton;
 		}
 
 		get events()
@@ -60,21 +60,20 @@ jn.define('calendar/event-list-view/layout/event-list', (require, exports, modul
 		{
 			super.componentDidUpdate(prevProps, prevState);
 
-			if (!this.events || !this.floatingActionButtonRef)
+			if (!this.events || !this.floatingActionButton)
 			{
 				return;
 			}
 
 			if (this.isSearchMode || this.isInvitationPresetEnabled)
 			{
-				this.floatingActionButtonRef?.hide();
+				this.floatingActionButton?.hide();
 			}
 			else
 			{
-				this.floatingActionButtonRef?.setFloatingButton({
-					hide: false,
-					accentByDefault: !Type.isArrayFilled(this.events),
-				});
+				this.floatingActionButton
+					.setAccentByDefault(!Type.isArrayFilled(this.events))
+					.show();
 			}
 		}
 

@@ -10,7 +10,7 @@ import { TaskCard, type Params } from 'tasks.v2.application.task-card';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { TaskMappers } from 'tasks.v2.provider.service.task-service';
 import { Core } from 'tasks.v2.core';
-import { EventName, GroupType, Model } from 'tasks.v2.const';
+import { EventName, GroupType, Model, Analytics } from 'tasks.v2.const';
 import { UserTypes } from 'tasks.v2.model.users';
 
 import { App } from './component/app';
@@ -37,6 +37,11 @@ export class TaskCompactCard
 
 	async mount(popup: Popup): Promise<void>
 	{
+		if (popup.isDestroyed())
+		{
+			return;
+		}
+
 		this.#popup = popup;
 
 		await this.#mountApplication(popup.getContentContainer());
@@ -128,7 +133,7 @@ export class TaskCompactCard
 			ta_sec: this.#params.analytics?.context,
 			ta_sub: this.#params.analytics?.additionalContext,
 			ta_el: this.#params.analytics?.element,
-			p1: settings.isDemo ? 'isDemo_Y' : 'isDemo_N',
+			p1: Analytics.Params.IsDemo(settings.isDemo),
 			p2: settings.userType,
 		});
 

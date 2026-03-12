@@ -78,6 +78,10 @@
 	margin-left: 5px;
 }
 
+.block-complex__content_col-value-text.--placeholder {
+	color: #a4abb2;
+}
+
 .block-complex__content_col.--right .block-complex__content_col-value {
 	justify-content: flex-end;
 }

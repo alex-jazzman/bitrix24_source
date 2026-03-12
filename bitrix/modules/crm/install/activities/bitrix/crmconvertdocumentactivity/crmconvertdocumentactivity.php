@@ -172,8 +172,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			&& $this->GetRootActivity()->getDocumentEventType() === CBPDocumentEventType::Automation
 		)
 		{
-			$this->workflow->Terminate();
-			throw new \Bitrix\Main\SystemException('TerminateActivity');
+			$this->workflow->terminate();
 		}
 	}
 

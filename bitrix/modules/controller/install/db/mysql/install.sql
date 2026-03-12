@@ -52,7 +52,11 @@ CREATE TABLE b_controller_member
 	COUNTERS_UPDATED datetime,
 	PRIMARY KEY pk_b_controller_member(ID),
 	UNIQUE KEY ux_cntr_memberid(MEMBER_ID),
-	KEY ix_active_group(ACTIVE, CONTROLLER_GROUP_ID)
+	KEY ix_active_group(ACTIVE, CONTROLLER_GROUP_ID),
+	KEY ix_contr_mem_name (NAME),
+	KEY ix_counter_last_auth (COUNTER_LAST_AUTH),
+	KEY ix_contr_mem_url (URL),
+	KEY ix_member_counters (COUNTERS_UPDATED)
 );
 
 CREATE TABLE b_controller_member_log
@@ -108,7 +112,7 @@ CREATE TABLE b_controller_command
 
 CREATE TABLE b_controller_log
 (
-	ID int(11) NOT NULL auto_increment,
+	ID bigint NOT NULL auto_increment,
 	TIMESTAMP_X timestamp NOT NULL,
 	CONTROLLER_MEMBER_ID int(11) NOT NULL,
 	NAME varchar(255) NOT NULL,

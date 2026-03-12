@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["TASKS_DEPENDENCY_START"] = "Старт";
 $MESS["TASKS_DEPENDENCY_END"] = "Финиш";
 $MESS["TASKS_STATUS_METASTATE_EXPIRED"] = "Просрочена";
@@ -84,4 +85,3 @@ $MESS["TASKS_TT_CANCEL"] = "Отменить";
 $MESS["TASKS_TT_ERROR1_TITLE"] = "По другой задаче уже ведется учет времени";
 $MESS["TASKS_TT_ERROR1_DESC"] = "Вами уже ведется учет времени по задаче \"#TITLE#\". Она будет поставлена на паузу, продолжить?";
 $MESS["MB_TASKS_TASK_SETTINGS_ACCOMPLICES"] = "соисполнители";
-?>

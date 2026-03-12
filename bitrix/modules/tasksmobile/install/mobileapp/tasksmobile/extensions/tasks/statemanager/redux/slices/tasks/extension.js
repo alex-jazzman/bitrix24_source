@@ -54,6 +54,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		delegate,
 		follow,
 		unfollow,
+		updateAuditors,
 		startTimer,
 		pauseTimer,
 		start,
@@ -102,6 +103,8 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		followFulfilled,
 		unfollowPending,
 		unfollowFulfilled,
+		updateAuditorsPending,
+		updateAuditorsFulfilled,
 		startTimerPending,
 		startTimerFulfilled,
 		pauseTimerPending,
@@ -316,6 +319,8 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 				.addCase(follow.fulfilled, followFulfilled)
 				.addCase(unfollow.pending, unfollowPending)
 				.addCase(unfollow.fulfilled, unfollowFulfilled)
+				.addCase(updateAuditors.pending, updateAuditorsPending)
+				.addCase(updateAuditors.fulfilled, updateAuditorsFulfilled)
 				.addCase(startTimer.pending, startTimerPending)
 				.addCase(startTimer.fulfilled, startTimerFulfilled)
 				.addCase(pauseTimer.pending, pauseTimerPending)
@@ -454,6 +459,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		delegate,
 		follow,
 		unfollow,
+		updateAuditors,
 		startTimer,
 		pauseTimer,
 		start,

@@ -42,11 +42,12 @@ Loader::includeModule('intranet');
 
 \Bitrix\Main\UI\Extension::load([
 	'intranet.sidepanel.air',
+	'intranet.old-interface.intranet-common',
 	'socialnetwork.slider',
 	'calendar.sliderloader',
 	'ui.counter',
 	'ui.buttons',
-	'ui.icon-set.solid'
+	'ui.icon-set.solid',
 ]);
 
 $isBitrix24Cloud = ModuleManager::isModuleInstalled('bitrix24');
@@ -153,7 +154,7 @@ $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapse
 		?>
 		</div>
 		<div class="app__main">
-			<header class="app__header">
+			<header class="app__header" id="app-header">
 				<div class="air-header --air-context-blurred-bg" id="header">
 					<div class="air-header__personal-info"><?php
 						$APPLICATION->includeComponent('bitrix:intranet.search.title', 'air', [

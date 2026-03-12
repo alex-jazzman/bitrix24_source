@@ -14,6 +14,7 @@ import { EmojiTab } from './tabs/emoji-tab';
 import { LoadingTab } from './tabs/loading-tab';
 import { SmilesSetTab } from './tabs/smiles-set-tab';
 import { isLinux, isMac, isWindows } from './utils';
+import { Chip, ChipDesign, ChipSize } from 'ui.system.chip.vue';
 
 // @vue/component
 export const Smiles = {
@@ -23,6 +24,7 @@ export const Smiles = {
 		LoadingTab,
 		SmilesSetTab,
 		EmojiTab,
+		Chip,
 	},
 	directives: {
 		lazyload,
@@ -34,13 +36,20 @@ export const Smiles = {
 		},
 	},
 	emits: ['selectSmile', 'selectSet'],
+	setup(): Object
+	{
+		return {
+			ChipDesign,
+			ChipSize,
+		};
+	},
 	data(): Object
 	{
 		return {
 			smiles: [],
 			sets: [],
 			setSelected: 0,
-			mode: 'smile',
+			mode: 'emoji',
 			emojiIcon: '\uD83D\uDE0D',
 		};
 	},
@@ -99,13 +108,13 @@ export const Smiles = {
 	},
 	created()
 	{
-		if (this.isShowSmiles)
-		{
-			this.mode = 'smile';
-		}
-		else if (this.isShowEmoji)
+		if (this.isShowEmoji)
 		{
 			this.mode = 'emoji';
+		}
+		else if (this.isShowSmiles)
+		{
+			this.mode = 'smile';
 		}
 
 		if (this.isShowSmiles)
@@ -180,37 +189,35 @@ export const Smiles = {
 	// language=Vue
 	template: `
 		<div class="bx-ui-smiles-box">
-			<div class="bx-ui-smiles-elements-wrap" ref="elements">
-				<LoadingTab v-if="isLoading"/>
-				<SmilesSetTab v-else-if="isSmileMode" :smiles="smiles" @selectSmile="selectSmile"/>
-				<EmojiTab v-else-if="isEmojiMode" @selectSmile="selectSmile"/>
+			<div class="bx-ui-smiles-content">
+				<LoadingTab v-if="isLoading" ref="elements"/>
+				<EmojiTab v-else-if="isEmojiMode" @selectSmile="selectSmile" ref="elements"/>
+				<SmilesSetTab v-else-if="isSmileMode" :smiles="smiles" @selectSmile="selectSmile" ref="elements"/>
 			</div>
 			<template v-if="isShowTabsSelector">
 				<div class="bx-ui-smiles-sets">
+					<div v-if="isShowEmoji">
+						<Chip
+							:text="$Bitrix.Loc.getMessage('UI_VUE_SMILES_SETS_EMOJI')"
+							:title="$Bitrix.Loc.getMessage('UI_VUE_SMILES_SETS_EMOJI')"
+							:rounded = true
+							:size="ChipSize.Sm"
+							:design="isEmojiMode ? ChipDesign.Filled : ChipDesign.OUTLINE_NO_ACCENT"
+							@click="switchToEmoji"
+						/>
+					</div>
 					<template v-if="isShowSmiles">
 						<template v-for="set in sets">
-							<div :class="['bx-ui-smiles-set', {'bx-ui-smiles-set-selected': set.selected}]">
-								<img v-lazyload
-									 :key="set.id"
-									 class="bx-ui-smiles-set-icon"
-									 :data-lazyload-src="set.image"
-									 data-lazyload-error-class="bx-ui-smiles-set-icon-error"
-									 :title="set.name"
-									 @click="selectSet(set.id)"
-								/>
-							</div>
+							<Chip
+								:text="$Bitrix.Loc.getMessage('UI_VUE_SMILES_SETS_SMILES')"
+								:title="set.name"
+								:rounded = true
+								:size="ChipSize.Sm"
+								:design="isSmileMode && set.selected ? ChipDesign.Filled : ChipDesign.OUTLINE_NO_ACCENT"
+								@click="selectSet(set.id)"
+							/>
 						</template>
 					</template>
-					<div v-if="isShowEmoji" :class="[
-						'bx-ui-smiles-set',
-						{
-							'bx-ui-smiles-set-selected': isEmojiMode,
-						},
-					]">
-						<div :class="['bx-ui-smiles-set-icon', emojiIconStyle]" @click="switchToEmoji">
-							{{ emojiIcon }}
-						</div>
-					</div>
 				</div>
 			</template>
 		</div>

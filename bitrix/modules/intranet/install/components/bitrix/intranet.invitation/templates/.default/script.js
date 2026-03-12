@@ -1,10 +1,129 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_analytics,emailInvitationInput,ui_fonts_inter,ui_buttons,main_popup,ui_switcher,intranet_invitationInput,ui_entitySelector,DepartmentControl,main_core,main_core_events) {
+(function (exports,ui_analytics,emailInvitationInput,ui_fonts_inter,ui_buttons,main_popup,ui_switcher,intranet_invitationInput,main_core_events,ui_entitySelector,DepartmentControl,main_core,ui_notification) {
 	'use strict';
 
 	DepartmentControl = DepartmentControl && DepartmentControl.hasOwnProperty('default') ? DepartmentControl['default'] : DepartmentControl;
+
+	class ActiveDirectory {
+	  showForm() {
+	    BX.UI.Feedback.Form.open({
+	      id: 'intranet-active-directory',
+	      forms: [{
+	        zones: ['ru'],
+	        id: 309,
+	        lang: 'ru',
+	        sec: 'fbc0n3'
+	      }]
+	    });
+	  }
+	}
+
+	var _cSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cSection");
+	var _isAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdmin");
+	var _getAdminAllowMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAdminAllowMode");
+	var _getIsAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIsAdmin");
+	var _getCSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCSection");
+	class Analytics {
+	  constructor(cSection, isAdmin) {
+	    Object.defineProperty(this, _getCSection, {
+	      value: _getCSection2
+	    });
+	    Object.defineProperty(this, _getIsAdmin, {
+	      value: _getIsAdmin2
+	    });
+	    Object.defineProperty(this, _getAdminAllowMode, {
+	      value: _getAdminAllowMode2
+	    });
+	    Object.defineProperty(this, _cSection, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _isAdmin, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _cSection)[_cSection] = cSection;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] = isAdmin;
+	  }
+	  send() {
+	    ui_analytics.sendData({
+	      tool: Analytics.TOOLS,
+	      category: Analytics.CATEGORY_INVITATION,
+	      event: Analytics.EVENT_COPY,
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getCSection)[_getCSection](),
+	      p1: babelHelpers.classPrivateFieldLooseBase(this, _getIsAdmin)[_getIsAdmin](),
+	      p2: babelHelpers.classPrivateFieldLooseBase(this, _getAdminAllowMode)[_getAdminAllowMode]()
+	    });
+	  }
+	  sendTabData(section, subSection) {
+	    if (!section) {
+	      return;
+	    }
+	    ui_analytics.sendData({
+	      tool: Analytics.TOOLS,
+	      category: Analytics.CATEGORY_INVITATION,
+	      event: Analytics.EVENT_TAB_VIEW,
+	      c_section: section,
+	      c_sub_section: subSection
+	    });
+	  }
+	  sendOpenSliderData(section) {
+	    ui_analytics.sendData({
+	      tool: Analytics.TOOLS,
+	      category: Analytics.CATEGORY_INVITATION,
+	      event: Analytics.EVENT_OPEN_SLIDER_INVITATION,
+	      c_section: section
+	    });
+	  }
+	  sendOpenLocalEmailPopup() {
+	    ui_analytics.sendData({
+	      tool: Analytics.TOOLS,
+	      category: Analytics.CATEGORY_INVITATION,
+	      event: Analytics.EVENT_TAB_VIEW,
+	      c_sub_section: Analytics.TAB_EMAIL
+	    });
+	  }
+	  sendLocalEmailProgram() {
+	    ui_analytics.sendData({
+	      tool: Analytics.TOOLS,
+	      category: Analytics.CATEGORY_INVITATION,
+	      event: Analytics.EVENT_LOCAL_MAIL
+	    });
+	  }
+	}
+	function _getAdminAllowMode2() {
+	  var _document$querySelect;
+	  return (_document$querySelect = document.querySelector('#allow_register_confirm')) != null && _document$querySelect.checked ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N;
+	}
+	function _getIsAdmin2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] ? Analytics.IS_ADMIN_Y : Analytics.IS_ADMIN_N;
+	}
+	function _getCSection2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _cSection)[_cSection].source;
+	}
+	Analytics.TOOLS = 'Invitation';
+	Analytics.TOOLS_HEADER = 'headerPopup';
+	Analytics.EVENT_OPEN_SLIDER_INVITATION = 'drawer_open';
+	Analytics.CATEGORY_INVITATION = 'invitation';
+	Analytics.EVENT_COPY = 'copy_invitation_link';
+	Analytics.ADMIN_ALLOW_MODE_Y = 'askAdminToAllow_Y';
+	Analytics.ADMIN_ALLOW_MODE_N = 'askAdminToAllow_N';
+	Analytics.IS_ADMIN_Y = 'isAdmin_Y';
+	Analytics.IS_ADMIN_N = 'isAdmin_N';
+	Analytics.EVENT_TAB_VIEW = 'tab_view';
+	Analytics.EVENT_LOCAL_MAIL = 'invitation_local_mail';
+	Analytics.TAB_EMAIL = 'tab_by_email';
+	Analytics.TAB_MASS = 'tab_mass';
+	Analytics.TAB_DEPARTMENT = 'tab_department';
+	Analytics.TAB_INTEGRATOR = 'tab_integrator';
+	Analytics.TAB_LINK = 'by_link';
+	Analytics.TAB_REGISTRATION = 'registration';
+	Analytics.TAB_EXTRANET = 'extranet';
+	Analytics.TAB_AD = 'AD';
+	Analytics.TAB_LOCAL_EMAIL = 'tab_by_local_email';
+	Analytics.TAB_PHONE = 'tab_by_phone';
 
 	let _ = t => t,
 	  _t;
@@ -440,6 +559,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  getButtonState() {
 	    return SubmitButton.ENABLED_STATE;
 	  }
+	  hasShownButtonPanel() {
+	    return true;
+	  }
 	}
 
 	var _pages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pages");
@@ -530,111 +652,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages].delete(code);
 	  }
 	}
-
-	var _cSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cSection");
-	var _isAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdmin");
-	var _getAdminAllowMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAdminAllowMode");
-	var _getIsAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIsAdmin");
-	var _getCSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCSection");
-	class Analytics {
-	  constructor(cSection, isAdmin) {
-	    Object.defineProperty(this, _getCSection, {
-	      value: _getCSection2
-	    });
-	    Object.defineProperty(this, _getIsAdmin, {
-	      value: _getIsAdmin2
-	    });
-	    Object.defineProperty(this, _getAdminAllowMode, {
-	      value: _getAdminAllowMode2
-	    });
-	    Object.defineProperty(this, _cSection, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isAdmin, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _cSection)[_cSection] = cSection;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] = isAdmin;
-	  }
-	  send() {
-	    ui_analytics.sendData({
-	      tool: Analytics.TOOLS,
-	      category: Analytics.CATEGORY_INVITATION,
-	      event: Analytics.EVENT_COPY,
-	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getCSection)[_getCSection](),
-	      p1: babelHelpers.classPrivateFieldLooseBase(this, _getIsAdmin)[_getIsAdmin](),
-	      p2: babelHelpers.classPrivateFieldLooseBase(this, _getAdminAllowMode)[_getAdminAllowMode]()
-	    });
-	  }
-	  sendTabData(section, subSection) {
-	    if (!section) {
-	      return;
-	    }
-	    ui_analytics.sendData({
-	      tool: Analytics.TOOLS,
-	      category: Analytics.CATEGORY_INVITATION,
-	      event: Analytics.EVENT_TAB_VIEW,
-	      c_section: section,
-	      c_sub_section: subSection
-	    });
-	  }
-	  sendOpenSliderData(section) {
-	    ui_analytics.sendData({
-	      tool: Analytics.TOOLS,
-	      category: Analytics.CATEGORY_INVITATION,
-	      event: Analytics.EVENT_OPEN_SLIDER_INVITATION,
-	      c_section: section
-	    });
-	  }
-	  sendOpenLocalEmailPopup() {
-	    ui_analytics.sendData({
-	      tool: Analytics.TOOLS,
-	      category: Analytics.CATEGORY_INVITATION,
-	      event: Analytics.EVENT_TAB_VIEW,
-	      c_sub_section: Analytics.TAB_EMAIL
-	    });
-	  }
-	  sendLocalEmailProgram() {
-	    ui_analytics.sendData({
-	      tool: Analytics.TOOLS,
-	      category: Analytics.CATEGORY_INVITATION,
-	      event: Analytics.EVENT_LOCAL_MAIL
-	    });
-	  }
-	}
-	function _getAdminAllowMode2() {
-	  var _document$querySelect;
-	  return (_document$querySelect = document.querySelector('#allow_register_confirm')) != null && _document$querySelect.checked ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N;
-	}
-	function _getIsAdmin2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] ? Analytics.IS_ADMIN_Y : Analytics.IS_ADMIN_N;
-	}
-	function _getCSection2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cSection)[_cSection].source;
-	}
-	Analytics.TOOLS = 'Invitation';
-	Analytics.TOOLS_HEADER = 'headerPopup';
-	Analytics.EVENT_OPEN_SLIDER_INVITATION = 'drawer_open';
-	Analytics.CATEGORY_INVITATION = 'invitation';
-	Analytics.EVENT_COPY = 'copy_invitation_link';
-	Analytics.ADMIN_ALLOW_MODE_Y = 'askAdminToAllow_Y';
-	Analytics.ADMIN_ALLOW_MODE_N = 'askAdminToAllow_N';
-	Analytics.IS_ADMIN_Y = 'isAdmin_Y';
-	Analytics.IS_ADMIN_N = 'isAdmin_N';
-	Analytics.EVENT_TAB_VIEW = 'tab_view';
-	Analytics.EVENT_LOCAL_MAIL = 'invitation_local_mail';
-	Analytics.TAB_EMAIL = 'tab_by_email';
-	Analytics.TAB_MASS = 'tab_mass';
-	Analytics.TAB_DEPARTMENT = 'tab_department';
-	Analytics.TAB_INTEGRATOR = 'tab_integrator';
-	Analytics.TAB_LINK = 'by_link';
-	Analytics.TAB_REGISTRATION = 'registration';
-	Analytics.TAB_EXTRANET = 'extranet';
-	Analytics.TAB_AD = 'AD';
-	Analytics.TAB_LOCAL_EMAIL = 'tab_by_local_email';
-	Analytics.TAB_PHONE = 'tab_by_phone';
 
 	var _componentName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("componentName");
 	var _signedParameters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedParameters");
@@ -1797,7 +1814,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					</div>
 				</form>
 			</div>
-		`), main_core.Loc.getMessage('BX24_INVITE_DIALOG_TAB_INTEGRATOR_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL'));
+		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_SECTION'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER'));
 	    const input = babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6].querySelector('input');
 	    const closeIcon = input.nextElementSibling;
 	    main_core.Event.bind(input, 'input', () => {
@@ -1840,7 +1857,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      closeIcon: false,
 	      overlay: true,
 	      contentPadding: 10,
-	      titleBar: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE'),
+	      titleBar: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_POPUP_TITLE'),
 	      content: message,
 	      offsetLeft: 100,
 	      buttons: [new ui_buttons.CreateButton({
@@ -1880,8 +1897,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _transport$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
 	var _departmentControl$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
 	var _page = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("page");
+	var _previousSwitcherState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previousSwitcherState");
+	var _previousConfirmCheckboxState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previousConfirmCheckboxState");
+	var _applySettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applySettings");
+	var _restoreSwitcherState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restoreSwitcherState");
+	var _restoreConfirmCheckboxState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restoreConfirmCheckboxState");
 	class SelfRegister {
 	  constructor(options) {
+	    var _babelHelpers$classPr, _confirmCheckbox$chec;
+	    Object.defineProperty(this, _restoreConfirmCheckboxState, {
+	      value: _restoreConfirmCheckboxState2
+	    });
+	    Object.defineProperty(this, _restoreSwitcherState, {
+	      value: _restoreSwitcherState2
+	    });
+	    Object.defineProperty(this, _applySettings, {
+	      value: _applySettings2
+	    });
 	    Object.defineProperty(this, _container$7, {
 	      writable: true,
 	      value: void 0
@@ -1906,12 +1938,24 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _previousSwitcherState, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _previousConfirmCheckboxState, {
+	      writable: true,
+	      value: false
+	    });
+	    this.confirmationPopup = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7] = options.container;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isEnabled)[_isEnabled] = options.isSelfRegisterEnabled;
 	    babelHelpers.classPrivateFieldLooseBase(this, _analytics$2)[_analytics$2] = options.analytics;
 	    babelHelpers.classPrivateFieldLooseBase(this, _transport$1)[_transport$1] = options.transport;
 	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$4)[_departmentControl$4] = options.departmentControl;
 	    babelHelpers.classPrivateFieldLooseBase(this, _page)[_page] = options.page;
+	    babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] = babelHelpers.classPrivateFieldLooseBase(this, _isEnabled)[_isEnabled];
+	    const _confirmCheckbox = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7]) == null ? void 0 : _babelHelpers$classPr.querySelector("[data-role='allowRegisterConfirm']");
+	    babelHelpers.classPrivateFieldLooseBase(this, _previousConfirmCheckboxState)[_previousConfirmCheckboxState] = (_confirmCheckbox$chec = _confirmCheckbox == null ? void 0 : _confirmCheckbox.checked) != null ? _confirmCheckbox$chec : false;
 	    if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7])) {
 	      this.bindActions();
 	      const switcherNode = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector('.invite-dialog-fast-reg-control-switcher');
@@ -1940,6 +1984,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      const data = event.getData();
 	      this.showNotificationPopup(data);
 	    });
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.Navigation:onBeforeChangePage', () => {
+	      var _this$confirmationPop;
+	      (_this$confirmationPop = this.confirmationPopup) == null ? void 0 : _this$confirmationPop.close();
+	      babelHelpers.classPrivateFieldLooseBase(this, _restoreConfirmCheckboxState)[_restoreConfirmCheckboxState]();
+	    });
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onSendDataSuccess', () => {
+	      var _babelHelpers$classPr2, _currentConfirmCheckb;
+	      const currentConfirmCheckbox = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7]) == null ? void 0 : _babelHelpers$classPr2.querySelector("[data-role='allowRegisterConfirm']");
+	      babelHelpers.classPrivateFieldLooseBase(this, _previousConfirmCheckboxState)[_previousConfirmCheckboxState] = (_currentConfirmCheckb = currentConfirmCheckbox == null ? void 0 : currentConfirmCheckbox.checked) != null ? _currentConfirmCheckb : false;
+	    });
 	  }
 	  bindActions() {
 	    const regenerateButton = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfRegenerateSecretButton']");
@@ -1957,16 +2011,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    const allowRegisterConfirm = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='allowRegisterConfirm']");
 	    if (main_core.Type.isDomNode(allowRegisterConfirm)) {
 	      main_core.Event.bind(allowRegisterConfirm, 'change', () => {
-	        main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
+	        var _BX, _BX$Intranet, _BX$Intranet$Invitati, _BX2, _BX2$Intranet, _BX2$Intranet$Invitat;
+	        (_BX = BX) == null ? void 0 : (_BX$Intranet = _BX.Intranet) == null ? void 0 : (_BX$Intranet$Invitati = _BX$Intranet.Invitation) == null ? void 0 : _BX$Intranet$Invitati.Form.submitButton.enable();
 	        babelHelpers.classPrivateFieldLooseBase(this, _page)[_page].setButtonState(SubmitButton.ENABLED_STATE);
 	        this.toggleWhiteList(allowRegisterConfirm);
+	        (_BX2 = BX) == null ? void 0 : (_BX2$Intranet = _BX2.Intranet) == null ? void 0 : (_BX2$Intranet$Invitat = _BX2$Intranet.Invitation) == null ? void 0 : _BX2$Intranet$Invitat.Form.changeStateOfButtonPanel('show');
 	      });
 	    }
 	    const selfWhiteList = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfWhiteList']");
 	    if (main_core.Type.isDomNode(selfWhiteList)) {
 	      main_core.Event.bind(selfWhiteList, 'input', () => {
+	        var _BX3, _BX3$Intranet, _BX3$Intranet$Invitat, _BX4, _BX4$Intranet, _BX4$Intranet$Invitat;
 	        babelHelpers.classPrivateFieldLooseBase(this, _page)[_page].setButtonState(SubmitButton.ENABLED_STATE);
-	        main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
+	        (_BX3 = BX) == null ? void 0 : (_BX3$Intranet = _BX3.Intranet) == null ? void 0 : (_BX3$Intranet$Invitat = _BX3$Intranet.Invitation) == null ? void 0 : _BX3$Intranet$Invitat.Form.submitButton.enable();
+	        (_BX4 = BX) == null ? void 0 : (_BX4$Intranet = _BX4.Intranet) == null ? void 0 : (_BX4$Intranet$Invitat = _BX4$Intranet.Invitation) == null ? void 0 : _BX4$Intranet$Invitat.Form.changeStateOfButtonPanel('show');
 	      });
 	    }
 	  }
@@ -1979,12 +2037,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }).then(response => {
 	      top.BX.UI.Notification.Center.notify({
 	        content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'),
-	        autoHideDelay: 2500
+	        autoHideDelay: 2500,
+	        useAirDesign: true
 	      });
 	    }, response => {
 	      top.BX.UI.Notification.Center.notify({
 	        content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'),
-	        autoHideDelay: 2500
+	        autoHideDelay: 2500,
+	        useAirDesign: true
 	      });
 	    });
 	  }
@@ -2007,7 +2067,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        this.copyToClipboard(invitationUrl).then(r => {
 	          top.BX.UI.Notification.Center.notify({
 	            content: main_core.Loc.getMessage('BX24_INVITE_DIALOG_COPY_URL'),
-	            autoHideDelay: 2500
+	            autoHideDelay: 2500,
+	            useAirDesign: true
 	          });
 	        }).catch(e => {
 	          console.log(e);
@@ -2073,49 +2134,91 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_OK'),
 	        color: BX.UI.Button.Color.PRIMARY,
 	        round: true,
-	        events: {
-	          click() {
-	            popup.close();
-	            main_core_events.EventEmitter.emit(data.page, 'BX.Intranet.Invitation:submit', {
-	              context: data.context,
-	              isConfirm: true
-	            });
-	          }
+	        onclick: () => {
+	          babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] = this.switcher.checked;
+	          main_core_events.EventEmitter.emit(data.page, 'BX.Intranet.Invitation:submit', {
+	            context: data.context,
+	            isConfirm: true
+	          });
+	          popup.close();
 	        }
-	      }), new BX.UI.ApplyButton({
+	      }), new BX.UI.Button({
 	        text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_CANCEL'),
 	        round: true,
-	        events: {
-	          click() {
-	            popup.close();
-	          }
+	        color: BX.UI.Button.Color.LIGHT_BORDER,
+	        onclick: () => {
+	          popup.close();
 	        }
 	      })],
 	      events: {
-	        onClose: () => {
+	        onClose: (restoreState = true) => {
+	          if (restoreState) {
+	            babelHelpers.classPrivateFieldLooseBase(this, _restoreSwitcherState)[_restoreSwitcherState]();
+	          }
 	          main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onSubmitReady');
+	          this.confirmationPopup = null;
+	          popup.destroy();
 	        }
 	      }
 	    });
+	    this.confirmationPopup = popup;
 	    popup.show();
 	  }
 	  toggleSettings() {
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
-	    babelHelpers.classPrivateFieldLooseBase(this, _page)[_page].setButtonState(SubmitButton.ENABLED_STATE);
-	    const controlBlock = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector(".js-invite-dialog-fast-reg-control-container");
-	    if (main_core.Type.isDomNode(controlBlock)) {
-	      main_core.Dom.toggleClass(controlBlock, 'disallow-registration');
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] === this.switcher.checked) {
+	      var _this$confirmationPop2;
+	      (_this$confirmationPop2 = this.confirmationPopup) == null ? void 0 : _this$confirmationPop2.close();
+	      return;
 	    }
-	    const settingsBlock = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfSettingsBlock']");
-	    if (main_core.Type.isDomNode(settingsBlock)) {
-	      main_core.Dom.style(settingsBlock, 'display', this.switcher.checked ? 'block' : 'none');
+	    if (this.switcher.checked === true) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] = true;
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _applySettings)[_applySettings]();
 	  }
 	  toggleWhiteList(inputElement) {
 	    const selfWhiteList = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfWhiteList']");
 	    if (main_core.Type.isDomNode(selfWhiteList)) {
 	      main_core.Dom.style(selfWhiteList, 'display', inputElement.checked ? 'block' : 'none');
 	    }
+	  }
+	}
+	function _applySettings2() {
+	  var _BX5, _BX5$Intranet, _BX5$Intranet$Invitat, _BX6, _BX6$Intranet, _BX6$Intranet$Invitat, _BX7, _BX7$Intranet, _BX7$Intranet$Invitat;
+	  (_BX5 = BX) == null ? void 0 : (_BX5$Intranet = _BX5.Intranet) == null ? void 0 : (_BX5$Intranet$Invitat = _BX5$Intranet.Invitation) == null ? void 0 : _BX5$Intranet$Invitat.Form.submitButton.enable();
+	  babelHelpers.classPrivateFieldLooseBase(this, _page)[_page].setButtonState(SubmitButton.ENABLED_STATE);
+	  const controlBlock = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector('.js-invite-dialog-fast-reg-control-container');
+	  if (main_core.Type.isDomNode(controlBlock)) {
+	    main_core.Dom.toggleClass(controlBlock, 'disallow-registration');
+	  }
+	  const settingsBlock = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector('[data-role=\'selfSettingsBlock\']');
+	  if (main_core.Type.isDomNode(settingsBlock)) {
+	    main_core.Dom.style(settingsBlock, 'display', this.switcher.checked ? 'block' : 'none');
+	  }
+	  (_BX6 = BX) == null ? void 0 : (_BX6$Intranet = _BX6.Intranet) == null ? void 0 : (_BX6$Intranet$Invitat = _BX6$Intranet.Invitation) == null ? void 0 : _BX6$Intranet$Invitat.Form.handleSubmitClick();
+	  (_BX7 = BX) == null ? void 0 : (_BX7$Intranet = _BX7.Intranet) == null ? void 0 : (_BX7$Intranet$Invitat = _BX7$Intranet.Invitation) == null ? void 0 : _BX7$Intranet$Invitat.Form.changeStateOfButtonPanel('hide');
+	}
+	function _restoreSwitcherState2() {
+	  this.switcher.check(babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState], false);
+	  const controlBlock = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector('.js-invite-dialog-fast-reg-control-container');
+	  if (main_core.Type.isDomNode(controlBlock)) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] === true) {
+	      main_core.Dom.removeClass(controlBlock, 'disallow-registration');
+	    } else {
+	      main_core.Dom.addClass(controlBlock, 'disallow-registration');
+	    }
+	  }
+	  const settingsBlock = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfSettingsBlock']");
+	  if (main_core.Type.isDomNode(settingsBlock)) {
+	    main_core.Dom.style(settingsBlock, 'display', babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] ? 'block' : 'none');
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _restoreConfirmCheckboxState)[_restoreConfirmCheckboxState]();
+	}
+	function _restoreConfirmCheckboxState2() {
+	  var _babelHelpers$classPr3;
+	  const confirmCheckbox = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7]) == null ? void 0 : _babelHelpers$classPr3.querySelector("[data-role='allowRegisterConfirm']");
+	  if (main_core.Type.isDomNode(confirmCheckbox)) {
+	    confirmCheckbox.checked = babelHelpers.classPrivateFieldLooseBase(this, _previousConfirmCheckboxState)[_previousConfirmCheckboxState];
+	    this.toggleWhiteList(confirmCheckbox);
 	  }
 	}
 
@@ -2273,6 +2376,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      page: this
 	    });
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8];
+	  }
+	  hasShownButtonPanel() {
+	    return false;
 	  }
 	  getAnalyticTab() {
 	    return Analytics.TAB_LINK;
@@ -2996,30 +3102,42 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	class ActiveDirectory {
-	  showForm() {
-	    BX.UI.Feedback.Form.open({
-	      id: 'intranet-active-directory',
-	      forms: [{
-	        zones: ['ru'],
-	        id: 309,
-	        lang: 'ru',
-	        sec: 'fbc0n3'
-	      }]
-	    });
-	  }
-	}
-
 	var _initMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initMenu");
+	var _enrichRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enrichRequest");
+	var _handleRequestError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleRequestError");
+	var _handleRequestSuccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleRequestSuccess");
+	var _showNotification$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotification");
 	class Form extends main_core_events.EventEmitter {
 	  constructor(formParams) {
-	    var _this$navigation, _this$navigation2;
 	    super();
+	    Object.defineProperty(this, _showNotification$1, {
+	      value: _showNotification2$1
+	    });
+	    Object.defineProperty(this, _handleRequestSuccess, {
+	      value: _handleRequestSuccess2
+	    });
+	    Object.defineProperty(this, _handleRequestError, {
+	      value: _handleRequestError2
+	    });
+	    Object.defineProperty(this, _enrichRequest, {
+	      value: _enrichRequest2
+	    });
 	    Object.defineProperty(this, _initMenu, {
 	      value: _initMenu2
 	    });
 	    this.setEventNamespace('BX.Intranet.Invitation');
 	    const params = main_core.Type.isPlainObject(formParams) ? formParams : {};
+	    this.initParams(params);
+	    this.initUI();
+	    this.initSubmitButton();
+	    this.initAnalytics();
+	    this.initNavigation();
+	    this.initArrow();
+	    this.subscribeEvents();
+	    this.hideButtonPanelForLinkPage();
+	    BX.Intranet.Invitation.Form = this;
+	  }
+	  initParams(params) {
 	    this.menuContainer = params.menuContainerNode;
 	    this.subMenuContainer = params.subMenuContainerNode;
 	    this.contentContainer = params.contentContainerNode;
@@ -3044,6 +3162,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      componentName: params.componentName,
 	      signedParameters: params.signedParameters
 	    });
+	  }
+	  initUI() {
 	    if (main_core.Type.isDomNode(this.contentContainer)) {
 	      this.messageBar = new MessageBar({
 	        errorContainer: this.contentContainer.querySelector("[data-role='error-message']"),
@@ -3054,43 +3174,42 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (main_core.Type.isDomNode(this.menuContainer)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _initMenu)[_initMenu]();
 	    }
+	  }
+	  initSubmitButton() {
 	    this.submitButton = new SubmitButton({
 	      node: document.querySelector('#intranet-invitation-btn'),
 	      events: {
 	        click: event => {
-	          if (!this.isCreatorEmailConfirmed && !(this.navigation.current() instanceof LinkPage) && !(this.navigation.current() instanceof LocalEmailPage)) {
-	            this.messageBar.showError(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
-	            return;
-	          }
-	          if (!this.submitButton.isWaiting() && this.submitButton.isEnabled()) {
-	            this.submitButton.wait();
-	            main_core_events.EventEmitter.emit(this.navigation.current(), 'BX.Intranet.Invitation:submit', {
-	              context: this
-	            });
-	            if (this.isCloud) {
-	              BX.userOptions.del('intranet.invitation', 'open_invitation_form_ts');
-	            }
-	          }
+	          this.handleSubmitClick();
 	        }
 	      }
 	    });
-	    this.analytics = new Analytics(this.analyticsLabel, this.isAdmin);
-	    this.analytics.sendOpenSliderData(this.analyticsLabel.source);
+	  }
+	  initArrow() {
 	    this.arrowBox = document.querySelector('.invite-wrap-decal-arrow');
 	    if (main_core.Type.isDomNode(this.arrowBox)) {
 	      this.arrowRect = this.arrowBox.getBoundingClientRect();
 	      this.arrowHeight = this.arrowRect.height;
 	      this.setSetupArrow();
 	    }
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onChangeForm', () => {
-	      this.submitButton.enable();
-	    });
+	  }
+	  initAnalytics() {
+	    this.analytics = new Analytics(this.analyticsLabel, this.isAdmin);
+	    this.analytics.sendOpenSliderData(this.analyticsLabel.source);
+	  }
+	  initNavigation() {
+	    var _this$navigation, _this$navigation2;
 	    this.navigation = this.createNavigation();
 	    (_this$navigation = this.navigation) == null ? void 0 : _this$navigation.subscribe('onBeforeChangePage', () => {
 	      this.messageBar.hideAll();
 	    });
 	    (_this$navigation2 = this.navigation) == null ? void 0 : _this$navigation2.subscribe('onAfterChangePage', this.onAfterChangePage.bind(this));
 	    this.navigation.showFirst();
+	  }
+	  subscribeEvents() {
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onChangeForm', () => {
+	      this.submitButton.enable();
+	    });
 	    this.subscribe('BX.Intranet.Invitation:onSendData', this.onSendRequest.bind(this));
 	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onSubmitReady', () => {
 	      this.submitButton.ready();
@@ -3101,10 +3220,50 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onSubmitWait', () => {
 	      this.submitButton.wait();
 	    });
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:changeButtonPanelState', event => {
+	      var _event$getData;
+	      const state = ((_event$getData = event.getData()) == null ? void 0 : _event$getData.state) || 'show';
+	      this.changeStateOfButtonPanel(state);
+	    });
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:toggleSelfRegister', event => {
+	      this.onSendRequest(event);
+	    });
+	  }
+	  handleSubmitClick() {
+	    if (!this.isCreatorEmailConfirmed && !(this.navigation.current() instanceof LinkPage) && !(this.navigation.current() instanceof LocalEmailPage)) {
+	      this.messageBar.showError(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
+	      return;
+	    }
+	    if (!this.submitButton.isWaiting() && this.submitButton.isEnabled()) {
+	      this.submitButton.wait();
+	      main_core_events.EventEmitter.emit(this.navigation.current(), 'BX.Intranet.Invitation:submit', {
+	        context: this
+	      });
+	      if (this.isCloud) {
+	        BX.userOptions.del('intranet.invitation', 'open_invitation_form_ts');
+	      }
+	    }
+	  }
+	  hideButtonPanelForLinkPage() {
+	    const currentPage = this.navigation.current();
+	    if (currentPage.hasShownButtonPanel() === false) {
+	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', {
+	        state: 'hide'
+	      });
+	    }
 	  }
 	  onAfterChangePage(event) {
 	    const section = this.getSubSection();
 	    const page = event.getData().current;
+	    if (page.hasShownButtonPanel()) {
+	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', {
+	        state: 'show'
+	      });
+	    } else {
+	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', {
+	        state: 'hide'
+	      });
+	    }
 	    let subSection = null;
 	    if (page) {
 	      subSection = page.getAnalyticTab();
@@ -3161,52 +3320,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  onSendRequest(event) {
 	    this.submitButton.disable();
 	    const request = event.getData();
+	    const currentPage = this.navigation.current();
 	    this.messageBar.hideAll();
 	    if (main_core.Type.isArray(request.errors) && request.errors.length > 0) {
-	      this.submitButton.enable();
-	      this.submitButton.ready();
-	      this.messageBar.showError(request.errors[0]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _handleRequestError)[_handleRequestError](request.errors, currentPage, false);
 	      return;
 	    }
-	    request.userOptions = this.userOptions;
-	    request.analyticsData = this.analyticsLabel;
-	    request.data.analyticsData = this.analyticsLabel;
-	    // eslint-disable-next-line promise/catch-or-return
-	    this.transport.send(request).then(response => {
-	      this.submitButton.ready();
-	      if (response.data) {
-	        if ((request == null ? void 0 : request.action) === 'self') {
-	          this.messageBar.showSuccess(response.data);
-	          this.isSelfRegisterEnabled = request.data.allow_register === 'Y';
-	          main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
-	            selfEnabled: this.isSelfRegisterEnabled
-	          });
-	        } else if (this.useLocalEmailProgram && (request == null ? void 0 : request.action) === 'invite' && (request == null ? void 0 : request.type) === 'invite-email') {
-	          main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:InviteSuccess');
-	        } else {
-	          this.changeContent('success');
-	          this.submitButton.sendSuccessEvent(response.data);
-	        }
-	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:onInviteRequestSuccess', {
-	          response
-	        });
-	      }
-	      main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onClose', () => {
-	        BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
-	      });
-	    }, response => {
-	      this.submitButton.enable();
-	      this.submitButton.ready();
-	      if (response.data === 'user_limit') {
-	        // eslint-disable-next-line no-undef
-	        B24.licenseInfoPopup.show('featureID', main_core.Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TITLE'), main_core.Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TEXT'));
-	      } else {
-	        this.messageBar.showError(response.errors[0].message);
-	      }
-	      if ((request == null ? void 0 : request.action) === 'invite' && this.useLocalEmailProgram && (request == null ? void 0 : request.type) === 'invite-email') {
-	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:InviteFailed');
-	      }
-	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _enrichRequest)[_enrichRequest](request);
+	    this.transport.send(request).then(response => babelHelpers.classPrivateFieldLooseBase(this, _handleRequestSuccess)[_handleRequestSuccess](response, request, currentPage), response => babelHelpers.classPrivateFieldLooseBase(this, _handleRequestError)[_handleRequestError](response.errors, currentPage, true, response, request)).catch(() => {});
 	  }
 	  createDepartmentControl() {
 	    var _this$userOptions, _this$userOptions2;
@@ -3259,6 +3380,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      this.updateArrow();
 	    });
 	  }
+	  changeStateOfButtonPanel(state = 'show') {
+	    const buttonPanel = document.getElementById('ui-button-panel');
+	    const elements = [this.arrowBox, buttonPanel];
+	    elements.forEach(element => {
+	      if (main_core.Type.isDomNode(element)) {
+	        main_core.Dom.style(element, {
+	          display: state === 'show' ? '' : 'none'
+	        });
+	      }
+	    });
+	  }
 	}
 	function _initMenu2() {
 	  this.menuItems = Array.prototype.slice.call(this.menuContainer.querySelectorAll('a'));
@@ -3278,9 +3410,80 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  });
 	}
+	function _enrichRequest2(request) {
+	  request.userOptions = this.userOptions;
+	  request.analyticsData = this.analyticsLabel;
+	  if (request.data) {
+	    request.data.analyticsData = this.analyticsLabel;
+	  }
+	}
+	function _handleRequestError2(errors, currentPage, isPromise = false, response = {}, request = {}) {
+	  var _errors$;
+	  this.submitButton.enable();
+	  this.submitButton.ready();
+	  const errorMsg = (errors == null ? void 0 : (_errors$ = errors[0]) == null ? void 0 : _errors$.message) || (errors == null ? void 0 : errors[0]) || main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_UNKNOWN_ERROR');
+	  const hasButtonPanel = (currentPage == null ? void 0 : currentPage.hasShownButtonPanel == null ? void 0 : currentPage.hasShownButtonPanel()) === false;
+	  if (isPromise && (response == null ? void 0 : response.data) === 'user_limit') {
+	    // eslint-disable-next-line no-undef
+	    B24.licenseInfoPopup.show('featureID', main_core.Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TITLE'), main_core.Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TEXT'));
+	    return;
+	  }
+	  if (hasButtonPanel) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _showNotification$1)[_showNotification$1](errorMsg);
+	  } else {
+	    this.messageBar.showError(errorMsg);
+	  }
+	  if (isPromise && (request == null ? void 0 : request.action) === 'invite' && this.useLocalEmailProgram && (request == null ? void 0 : request.type) === 'invite-email') {
+	    main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:InviteFailed');
+	  }
+	}
+	function _handleRequestSuccess2(response, request, currentPage) {
+	  this.submitButton.ready();
+	  if (!response.data) {
+	    return;
+	  }
+	  const hasButtonPanel = (currentPage == null ? void 0 : currentPage.hasShownButtonPanel == null ? void 0 : currentPage.hasShownButtonPanel()) === false;
+	  const emitGlobal = (event, data = {}) => {
+	    main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, event, data);
+	  };
+	  if ((request == null ? void 0 : request.action) === 'self') {
+	    if (hasButtonPanel) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _showNotification$1)[_showNotification$1](response.data);
+	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', {
+	        state: 'hide'
+	      });
+	    } else {
+	      this.messageBar.showSuccess(response.data);
+	    }
+	    this.isSelfRegisterEnabled = request.data.allow_register === 'Y';
+	    emitGlobal('BX.Intranet.Invitation:selfChange', {
+	      selfEnabled: this.isSelfRegisterEnabled
+	    });
+	    emitGlobal('BX.Intranet.Invitation:onSendDataSuccess');
+	  } else if (this.useLocalEmailProgram && (request == null ? void 0 : request.action) === 'invite' && (request == null ? void 0 : request.type) === 'invite-email') {
+	    emitGlobal('BX.Intranet.Invitation:InviteSuccess');
+	  } else {
+	    this.changeContent('success');
+	    this.submitButton.sendSuccessEvent(response.data);
+	  }
+	  emitGlobal('BX.Intranet.Invitation:onInviteRequestSuccess', {
+	    response
+	  });
+	  main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onClose', () => {
+	    BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
+	  });
+	}
+	function _showNotification2$1(message) {
+	  ui_notification.UI.Notification.Center.notify({
+	    content: message,
+	    autoHideDelay: 3500,
+	    useAirDesign: true,
+	    position: 'top-right'
+	  });
+	}
 
 	exports.Form = Form;
 	exports.MassInvitationField = MassInvitationField;
 
-}((this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}),BX.UI.Analytics,BX,BX,BX.UI,BX.Main,BX.UI,BX.Intranet,BX.UI.EntitySelector,BX.Intranet,BX,BX.Event));
+}((this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}),BX.UI.Analytics,BX,BX,BX.UI,BX.Main,BX.UI,BX.Intranet,BX.Event,BX.UI.EntitySelector,BX.Intranet,BX,BX));
 //# sourceMappingURL=script.js.map

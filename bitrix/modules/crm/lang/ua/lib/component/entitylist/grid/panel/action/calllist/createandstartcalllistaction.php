@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_GRID_PANEL_ACTION_CALL_LIST_CREATE_AND_START"] = "Обдзвонити";

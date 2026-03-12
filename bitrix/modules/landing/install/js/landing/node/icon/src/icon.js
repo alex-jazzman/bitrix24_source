@@ -12,7 +12,6 @@ export class Icon extends Img
 	{
 		super(options);
 		this.type = 'icon';
-		this.node.addEventListener('click', this.onClick.bind(this));
 	}
 
 	/**
@@ -99,6 +98,7 @@ export class Icon extends Img
 	onClick(event)
 	{
 		BX.Event.EventEmitter.emit('BX.Landing.Node.Icon:onClick');
+		super.onClick(event);
 	}
 }
 

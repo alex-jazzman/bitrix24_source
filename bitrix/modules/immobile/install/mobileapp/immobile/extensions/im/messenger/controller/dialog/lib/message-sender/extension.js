@@ -312,6 +312,22 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		}
 
 		/**
+		 * @param {DialogId} dialogId
+		 * @returns {Promise<void>}
+		 */
+		async sendForwardMessageToNotes(dialogId)
+		{
+			const sendMessageParams = this.#prepareMessageToSend({
+				dialogId,
+			});
+
+			await this.#sendMessageToAnotherDialog(sendMessageParams)
+				.catch((error) => {
+					logger.error('#sendMessageToAnotherDialog error', error);
+				});
+		}
+
+		/**
 		 * @param {number|Object} index
 		 * @param {MessagesModelState|Message} message
 		 * @returns {Promise<void>}
@@ -332,6 +348,13 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 
 			if (modelMessage.params.componentId === MessageParams.ComponentId.VoteMessage)
 			{
+				return;
+			}
+
+			if (Type.isStringFilled(modelMessage.forward?.id))
+			{
+				await this.#resendForwardMessage(index, modelMessage);
+
 				return;
 			}
 
@@ -388,7 +411,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		}
 
 		/**
-		 * @param sendMessageParams
+		 * @param {SendMessageParams} sendMessageParams
 		 * @param {{shouldFinishTextFieldActions: boolean}} options
 		 * @return {Promise<void>}
 		 */
@@ -406,11 +429,28 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 
 					await this.view.scrollToBottomSmoothly();
 					await this.#sendMessageToServer(sendMessageParams);
-
 					AppRatingClient.increaseSendMessageCounter(this.dialogHelper?.isCopilot);
 				})
 				.catch((error) => logger.error('sendMessage.error', error))
 			;
+		}
+
+		/**
+		 * @param {SendMessageParams} sendMessageParams
+		 * @return {Promise<void>}
+		 */
+		async #sendMessageToAnotherDialog(sendMessageParams)
+		{
+			try
+			{
+				await this.#sendMessageToModel(sendMessageParams);
+				await this.#sendMessageToServer(sendMessageParams);
+				AppRatingClient.increaseSendMessageCounter(this.dialogHelper?.isCopilot);
+			}
+			catch (error)
+			{
+				logger.error('sendMessageToAnotherDialog.error', error);
+			}
 		}
 
 		/**
@@ -440,19 +480,19 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		 * @param {string} text
 		 * @param {StickerParams} [stickerParams]
 		 * @param [promptCode]
-		 * @return {{message, forwardingMessages: *[], requestParams: {dialogId: *, text: string, templateId: string}}}
+		 * @return {SendMessageParams}
 		 */
 		#prepareMessageToSend({
 			text = '',
 			stickerParams = null,
 			promptCode = null,
+			dialogId = this.dialogId,
 		})
 		{
-			const dialogId = this.dialogId;
 			const forwardingMessages = [];
 
 			const messageUuid = Uuid.getV4();
-			const messageBuilder = new OutgoingMessageBuilder(this.dialogId, messageUuid);
+			const messageBuilder = new OutgoingMessageBuilder(dialogId, messageUuid);
 
 			const requestParams = {
 				dialogId,
@@ -480,6 +520,9 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 
 			if (Type.isStringFilled(text))
 			{
+				// eslint-disable-next-line no-param-reassign
+				text = text.trim();
+
 				messageBuilder.addProperty('text', text);
 			}
 
@@ -532,7 +575,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		}
 
 		/**
-		 * @param {{message: MessagesModelState, forwardingMessages: Array<MessagesModelState>}} sendMessageParams
+		 * @param {SendMessageParams} sendMessageParams
 		 * @return {Promise<void>}
 		 */
 		async #sendMessageToModel(sendMessageParams)
@@ -577,7 +620,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 
 		/**
 		 * @private
-		 * @param {{message: Object, forwardingMessages: Array<Object|null>, requestParams: Object}} sendMessageParams
+		 * @param {SendMessageParams} sendMessageParams
 		 * @return {Promise}
 		 */
 		async #sendMessageToServer(sendMessageParams)
@@ -833,6 +876,43 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		}
 
 		/**
+		 * @desc Resend break message
+		 * @param {number | {message: Message, index: null}} index
+		 * @param {MessagesModelState} rawMessage
+		 * @private
+		 */
+		async #resendForwardMessage(index, rawMessage)
+		{
+			const {
+				message,
+				messageIndex,
+				forwardIds,
+				forwardingMessages,
+			} = this.#prepareResendingParams(index, rawMessage);
+
+			logger.log(`${this.constructor.name}.resendMessage`, messageIndex, message);
+			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			const messageToSend = {
+				dialogId: this.dialogId,
+				messageType: 'self',
+				templateId: message.id,
+				forwardIds,
+			};
+
+			if (messageIndex > 0)
+			{
+				await this.#rerenderResendingMessage(message.id, modelMessage);
+			}
+			await this.#markMessageAsSending(message.id);
+
+			return this.#sendMessageToServer({
+				requestParams: messageToSend,
+				message: modelMessage,
+				forwardingMessages,
+			});
+		}
+
+		/**
 		 * @param {number | {message: Message, index: null}} index
 		 * @param {MessagesModelState} message
 		 * @return {{message, messageIndex: number}}
@@ -855,7 +935,20 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				messageIndex = index;
 			}
 
-			return { message, messageIndex };
+			const forwardIds = {};
+			const forwardingMessages = [];
+			if (message.forward?.id)
+			{
+				forwardIds[message.templateId] = message.forward.id.split('/')[1];
+				forwardingMessages.push(message);
+			}
+
+			return {
+				message,
+				messageIndex,
+				forwardIds,
+				forwardingMessages,
+			};
 		}
 
 		/**

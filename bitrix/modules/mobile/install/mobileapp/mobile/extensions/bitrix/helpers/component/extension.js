@@ -1,4 +1,11 @@
-(() => {
+/**
+ * @module helpers/component
+ */
+jn.define('helpers/component', (require, exports, module) => {
+
+	/**
+	 * @class ComponentHelper
+	 */
 	class ComponentHelper
 	{
 		/**
@@ -14,11 +21,14 @@
 		 */
 		static openList(options = {})
 		{
-			const widgetParams = {};
-			widgetParams.name = 'list';
 			const canOpenInDefault = options.canOpenInDefault || false;
-			widgetParams.settings = options.widgetParams || {};
-			widgetParams.settings.objectName = options.object;
+			const widgetParams = {
+				name: 'list',
+				settings: {
+					...options.widgetParams,
+					objectName: options.object,
+				},
+			};
 			PageManager.openComponent(
 				'JSStackComponent',
 				{
@@ -43,10 +53,13 @@
 		 */
 		static openForm(options = {})
 		{
-			const widgetParams = {};
-			widgetParams.name = 'form';
-			widgetParams.settings = options.widgetParams || {};
-			widgetParams.settings.objectName = options.object;
+			const widgetParams = {
+				name: 'form',
+				settings: {
+					...options.widgetParams,
+					objectName: options.object,
+				},
+			};
 			PageManager.openComponent(
 				'JSStackComponent',
 				{
@@ -64,6 +77,7 @@
 		 * @param options.version - name of component (display in debugger)
 		 * @param options.object - name of list object
 		 * @param options.widgetParams - parameters of list widget
+		 * @param options.canOpenInDefault - parameter to allow opening in default navigation stack
 		 * @param options.componentParams - parameters of component which will be available thought BX.componentsParameters
 		 * @param parentWidget
 		 */
@@ -73,25 +87,27 @@
 			{
 				throw new Error('Component name is empty.');
 			}
-			const canOpenInDefault = options.canOpenInDefault || false;
 
 			let version = options.version;
 			if (!version)
 			{
-				version = availableComponents[options.name] && availableComponents[options.name].version || '1.0';
+				version = (availableComponents[options.name] && availableComponents[options.name].version) || '1.0';
 			}
 
-			const widgetParams = {};
-			widgetParams.name = 'layout';
-			widgetParams.settings = options.widgetParams || {};
-			widgetParams.settings.objectName = 'layout';
+			const widgetParams = {
+				name: 'layout',
+				settings: {
+					...options.widgetParams,
+					objectName: 'layout',
+				},
+			};
 
 			PageManager.openComponent(
 				'JSStackComponent',
 				{
 					scriptPath: `/mobileapp/jn/${options.name}/?version=${version}`,
 					componentCode: options.name,
-					canOpenInDefault,
+					canOpenInDefault: Boolean(options.canOpenInDefault),
 					params: options.componentParams,
 					rootWidget: widgetParams,
 				},
@@ -99,6 +115,14 @@
 			);
 		}
 	}
+
+	module.exports = {
+		ComponentHelper,
+	};
+});
+
+(() => {
+	const { ComponentHelper } = jn.require('helpers/component');
 
 	this.ComponentHelper = ComponentHelper;
 })();

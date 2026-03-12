@@ -28,6 +28,7 @@
 }
 
 .b24-growing-text-area-display {
+	width: 100%;
 	font-family: inherit;
 	overflow: hidden;
 	display: -webkit-box;
@@ -46,4 +47,14 @@
 
 .b24-growing-text-area-popup {
 	word-break: break-word;
+}
+
+.b24-growing-text-area-link {
+	color: var(--ui-color-accent-main-link);
+}
+
+.b24-growing-text-area-link:hover {
+	color: var(--ui-color-accent-main-link) !important;
+	text-decoration: underline;
+	transition: color 0.2s linear;
 }

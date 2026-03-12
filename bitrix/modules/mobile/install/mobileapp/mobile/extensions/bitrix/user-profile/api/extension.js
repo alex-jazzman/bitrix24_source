@@ -80,9 +80,30 @@ jn.define('user-profile/api', (require, exports, module) => {
 		});
 	};
 
+	const getChatId = (userId) => {
+		return new Promise((resolve, reject) => {
+			BX.rest.callMethod(
+				'call.CallLog.getChat',
+				{ userId },
+				(result) => {
+					if (result.error())
+					{
+						reject(result.error());
+
+						return;
+					}
+
+					const data = result.data();
+					resolve(data.chatId);
+				},
+			);
+		});
+	};
+
 	module.exports = {
 		fetchTabs,
 		getTabsRunActionExecutor,
 		fetchNewProfileFeatureEnabled,
+		getChatId,
 	};
 });

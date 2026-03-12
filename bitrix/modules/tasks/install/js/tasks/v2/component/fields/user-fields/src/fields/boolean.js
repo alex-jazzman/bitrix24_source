@@ -48,7 +48,7 @@ export const UserFieldBoolean = {
 	},
 	template: `
 		<div
-			class="tasks-user-field --boolean"
+			class="tasks-user-field print-no-border --boolean"
 			:class="{ '--last': isLast }"
 		>
 			<div class="tasks-user-field-boolean-row">

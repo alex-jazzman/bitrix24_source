@@ -57,6 +57,7 @@ jn.define('mail/message/elements/messagebody', (require, exports, module) => {
 
 		return View(
 			{
+				testId: 'mail-message-body-content',
 				style: {
 					marginLeft: 12,
 					marginRight: 12,
@@ -180,6 +181,7 @@ jn.define('mail/message/elements/messagebody', (require, exports, module) => {
 			{
 				subject = View(
 					{
+						testId: 'mail-message-subject',
 						style: {
 							paddingLeft: 20,
 							paddingRight: 20,

@@ -4,4 +4,3 @@ $MESS["COMMAND_LANG_ENTITY_COMMAND_ID_FIELD"] = "Идентификатор ко
 $MESS["COMMAND_LANG_ENTITY_LANGUAGE_ID_FIELD"] = "Идентификатор языка";
 $MESS["COMMAND_LANG_ENTITY_TITLE_FIELD"] = "Описание команды";
 $MESS["COMMAND_LANG_ENTITY_PARAMS_FIELD"] = "Описание параметров команды";
-?>

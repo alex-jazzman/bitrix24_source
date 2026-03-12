@@ -1,4 +1,0 @@
-<?php
-$MESS["SECURITY_USER_RECOVERY_CODES_DESCRIPTION"] = "OTP резервтік кодтарын басқару";
-$MESS["SECURITY_USER_RECOVERY_CODES_NAME"] = "OTP резервтік кодтары";
-$MESS["SECURITY_USER_RECOVERY_CODES_SECURITY_SERVICE"] = "Қауіпсіздік";

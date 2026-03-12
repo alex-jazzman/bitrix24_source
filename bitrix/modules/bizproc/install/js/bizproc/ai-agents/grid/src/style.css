@@ -63,6 +63,10 @@
 	pointer-events: none;
 }
 
+.agent-grid_user-photo.agent-grid_user-photo-stub {
+	cursor: unset;
+}
+
 .agent-grid_employee-card {
 	display: flex;
 	align-items: center;
@@ -221,6 +225,8 @@
 .agent-grid-chat-container {
 	display: flex;
 	gap: 2px;
+	cursor: pointer;
+	align-items: center;
 }
 
 .agent-grid-chat-name {
@@ -232,22 +238,25 @@
 }
 
 .agent-grid-chat-link {
-	display: -webkit-box;
-	-webkit-line-clamp: 1;
-	-webkit-box-orient: vertical;
+	display: block;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 	overflow: hidden;
 
-	white-space: normal;
+	min-width: 0;
+	max-width: 200px;
+
 	color: var(--ui-color-base-70);
 	letter-spacing: var(--ui-text-letter-spacing-neg-3);
-	text-underline-position: under;
-	-webkit-text-decoration-color: var(--ui-color-base-30);
-			text-decoration: underline;
-	-webkit-text-decoration-style: var(--ui-text-decoration-style-dashed);
-			text-decoration-color: var(--ui-color-base-30);
-	text-decoration-style: var(--ui-text-decoration-style-dashed);
+	text-decoration: underline;
+	text-decoration-style: dashed;
+	text-decoration-color: var(--ui-color-base-30);
 	cursor: pointer;
 	transition: .2s;
+}
+
+html:not(.bx-firefox) .agent-grid-chat-link {
+	text-underline-position: under;
 }
 
 .main-grid-cell-content a.agent-grid-chat-link:hover,
@@ -289,7 +298,8 @@
 }
 
 .agent-grid-department-in-list,
-.agent-grid-user-in-list {
+.agent-grid-user-in-list,
+.agent-grid-chats-in-list {
 	display: flex;
 	align-items: center;
 	gap: 4px;
@@ -299,8 +309,13 @@
 	cursor: pointer;
 }
 
+.agent-grid-chats-in-list {
+	padding: 4px 10px 8px 8px;
+}
+
 .agent-grid-department-in-list:hover::before,
-.agent-grid-user-in-list:hover::before {
+.agent-grid-user-in-list:hover::before,
+.agent-grid-chats-in-list:hover::before {
 	content: '';
 	display: block;
 	position: absolute;
@@ -326,7 +341,8 @@
 }
 
 .agent-grid-departments-list-wrapper,
-.agent-grid-users-list-wrapper {
+.agent-grid-users-list-wrapper,
+.agent-grid-chats-list-wrapper {
 	display: flex;
 	flex-direction: column;
 	padding: 4px 0;
@@ -335,12 +351,33 @@
 }
 
 .agent-grid-departments-list-wrapper .agent-grid-department-label,
-.agent-grid-users-list-wrapper .agent-grid-user-full-name {
+.agent-grid-users-list-wrapper .agent-grid-user-full-name,
+.agent-grid-chats-list-wrapper .ai-agents-chats-counter {
 	max-width: 100%
 }
 
 .agents-grid-popup .popup-window-content {
 	border-radius: var(--popup-window-border-radius);
+}
+
+.ai-agents-chats-counter-wrapper {
+	position: relative;
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+
+	padding: 1px 6px 1px 6px;
+
+	border-radius: var(--ui-border-radius-xl);
+	margin-left: 2px;
+	background-color: var(--ui-color-gray-10);
+
+	cursor: pointer;
+	transition: 0.6s linear;
+}
+.ai-agents-chats-counter {
+	color: var(--ui-color-base-3);
 }
 
 /* Launch Control Field */
@@ -388,4 +425,46 @@
 	100% {
 		background-color: #ffffff;
 	}
+}
+
+.launch-control-field-rag-files-statuses {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	width: 100%
+}
+
+.launch-control-field-rag-files-statuses.process .main-grid-rag-status-icon {
+	width: 20px !important;
+	height: 20px !important;
+	background: url(../images/file-loader.png) no-repeat 0 0;
+	background-size: 100%;
+	transition: opacity 0.2s linear;
+	position: relative;
+	left: -3px;
+}
+
+.launch-control-field-rag-files-statuses.process .main-grid-rag-status-icon {
+	opacity: 1;
+	animation: grid-load 2s linear infinite;
+}
+
+.launch-control-field-rag-files-statuses.cross .main-grid-rag-status-icon {
+	position: relative;
+	display: inline-block;
+	mask: var(--o-ui-icon-set__path_cross-l) -5px no-repeat;
+	vertical-align: middle;
+	background-color: var(--ui-color-text-alert);
+}
+
+.launch-control-field-rag-files-hint,
+.main-grid-rag-status-icon {
+	line-height: 23px;
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	flex-grow: 0;
+}
+.launch-control-field-rag-files-hint > span {
+	margin: 0;
 }

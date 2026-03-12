@@ -1,0 +1,21 @@
+.editor-chart-block-status-publish-error {
+	display: flex;
+	align-items: center;
+	height: 16px;
+	margin: 0;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-4xs);
+	letter-spacing: 0;
+	color: var(--ui-color-base-3);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.editor-chart-block-status-publish-error__icon {
+	display: block;
+	width: 16px;
+	height: 16px;
+	top: 2px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-red-50);
+}

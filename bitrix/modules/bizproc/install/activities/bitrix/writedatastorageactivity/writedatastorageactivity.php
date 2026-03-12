@@ -15,16 +15,25 @@ use Bitrix\Bizproc\Public\Provider\StorageItemProvider;
 use Bitrix\Bizproc\Public\Provider\StorageTypeProvider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
+use Bitrix\Bizproc\Activity\PropertiesDialog;
+use Bitrix\Bizproc\FieldType;
+use Bitrix\Bizproc\Internal\Service\StorageField\FieldService;
 
 /**
  * @property-write ?int StorageId
  * @property-write ?string StorageCode
  * @property-write ?array FieldValue
  * @property-write ?int Author
- * @property-write ?string ItemCode
+ * @property-write ?int ItemId
+ * @property-write ?array DynamicFilterFields
+ * @property-write ?string RewriteMode
+ * @property-write string IsExpanded
  */
 class CBPWriteDataStorageActivity extends CBPActivity
 {
+	use \Bitrix\Bizproc\Activity\Mixins\EntityFilter;
+
 	private array $complexDocumentId = [];
 	private const MODE_NEW_ITEM = 'newItem';
 	private const MODE_MERGE_FIELDS = 'mergeFields';
@@ -38,15 +47,17 @@ class CBPWriteDataStorageActivity extends CBPActivity
 			'StorageCode' => null,
 			'FieldValue' => null,
 			'Author' => null,
-			//'ItemId' => null,
-			//'RewriteMode' => null,
+			'ItemId' => null,
+			'DynamicFilterFields' => null,
+			'RewriteMode' => null,
+			'IsExpanded' => 'Y',
 		];
 	}
 
 	public function execute()
 	{
 		$fieldValue = $this->FieldValue;
-		//$rewriteMode = $this->RewriteMode ?? self::MODE_NEW_ITEM;
+		$rewriteMode = $this->RewriteMode ?? self::MODE_NEW_ITEM;
 		$storageId = (int)$this->StorageId;
 		if ($storageId <= 0 && empty($this->StorageCode))
 		{
@@ -69,26 +80,32 @@ class CBPWriteDataStorageActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-//		$itemId = (int)$this->ItemId;
-//		if (($rewriteMode === self::MODE_MERGE_FIELDS || $rewriteMode === self::MODE_REWRITE_FIELDS) && $itemId <= 0)
-//		{
-//			$this->trackError(Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_WRONG_ITEM_ID'));
-//
-//			return CBPActivityExecutionStatus::Closed;
-//		}
-
 		$this->findStorageTypeId();
-		$storageFields = self::getSystemFields() + self::getStorageFields((int)$this->StorageId);
-		$fieldsData = $this->filterStorageFields($storageFields, $fieldValue);
+		if ((int)$this->StorageId <= 0)
+		{
+			return CBPActivityExecutionStatus::Closed;
+		}
 
-//		$saveResult = match ($rewriteMode)
-//		{
-//			self::MODE_NEW_ITEM => $this->createNewStorageItem($fieldsData),
-//			self::MODE_MERGE_FIELDS => $this->updateStorageItem($fieldsData, $authorId),
-//			self::MODE_REWRITE_FIELDS => $this->updateStorageItem($fieldsData, $authorId, false),
-//			default => $this->handleUnknownRewriteMode($rewriteMode)
-//		};
-		$saveResult = $this->createNewStorageItem($fieldsData, $authorId);
+		$storageFields = self::getSystemFields() + self::getStorageFields((int)$this->StorageId);
+		$storageFieldMap = array_column($storageFields, null, 'FieldName');
+		$fieldsData = $this->filterStorageFields($storageFieldMap, $fieldValue);
+
+		$this->ItemId = $this->findStorageItemId();
+		$itemId = (int)$this->ItemId;
+		if (($rewriteMode === self::MODE_MERGE_FIELDS || $rewriteMode === self::MODE_REWRITE_FIELDS) && $itemId <= 0)
+		{
+			$this->trackError(Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_WRONG_ITEM_ID') ?? '');
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$saveResult = match ($rewriteMode)
+		{
+			self::MODE_NEW_ITEM => $this->createNewStorageItem($fieldsData, $authorId),
+			self::MODE_MERGE_FIELDS => $this->updateStorageItem($fieldsData, $authorId, $storageFieldMap),
+			self::MODE_REWRITE_FIELDS => $this->updateStorageItem($fieldsData, $authorId, $storageFieldMap, false),
+			default => $this->handleUnknownRewriteMode($rewriteMode)
+		};
 		if (!$saveResult->isSuccess())
 		{
 			$this->trackError($saveResult->getErrorMessages()[0]);
@@ -140,6 +157,7 @@ class CBPWriteDataStorageActivity extends CBPActivity
 	private function updateStorageItem(
 		array $fieldsData,
 		int $authorId,
+		array $storageFields,
 		bool $mergeMode = true
 	): Result
 	{
@@ -186,15 +204,18 @@ class CBPWriteDataStorageActivity extends CBPActivity
 
 				$newValue = $fieldsData[$key];
 
-				if ($value === null)
+				if ($value === null || $value === '')
 				{
 					// fill empty value with new data
 					$result[$key] = $newValue;
 				}
-				elseif (is_array($newValue))
+				elseif ($storageFields[$key]['Multiple'])
 				{
 					// Append new elements to the array
-					$result[$key] = array_merge((array)$value, $newValue);
+					$value = is_array($value) ? $value : [$value];
+					$newValue= is_array($newValue) ? $newValue : [$newValue];
+					$merged = array_merge($value, $newValue);
+					$result[$key] = array_values(array_filter($merged, static fn($v) => $v !== null && $v !== ''));
 				}
 				//in other cases keep the current data
 			}
@@ -298,7 +319,7 @@ class CBPWriteDataStorageActivity extends CBPActivity
 		$siteId = ''
 	)
 	{
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
+		$dialog = new PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $arWorkflowTemplate,
@@ -332,6 +353,86 @@ class CBPWriteDataStorageActivity extends CBPActivity
 		return $dialog;
 	}
 
+	protected static function getFilteringFieldsMap($storageId): array
+	{
+		$supportedFields = [
+			'ID',
+			'CODE',
+			'WORKFLOW_ID',
+			'DOCUMENT_ID',
+			'TEMPLATE_ID',
+			'CREATED_BY',
+			'CREATED_TIME',
+		];
+
+		$map = [];
+		$fieldService = new FieldService((int)$storageId);
+		$fields = $fieldService->getEntityFields();
+
+		foreach ($fields as $key => $field)
+		{
+			if (in_array($field['ID'], $supportedFields, true))
+			{
+				$type = $field['TYPE'];
+				if ($type === 'integer')
+				{
+					$type = FieldType::INT;
+				}
+
+				$map[$field['ID']] = [
+					'Id' => $field['ID'],
+					'Name' => $field['NAME'],
+					'Type' => $type,
+					'Expression' => "{{{$field['NAME']}}}",
+					'SystemExpression' => "{=Storage:{$field['ID']}}",
+					'Options' => null,
+					'Settings' => null,
+					'Multiple' => false,
+				];
+			}
+		}
+
+		return $map;
+	}
+
+	private static function getStorageTypes(): array
+	{
+		$options = [];
+
+		$provider = new StorageTypeProvider();
+		$storages = $provider->getAllForActivity();
+
+		foreach ($storages as $storage)
+		{
+			$options[$storage->getId()] = $storage->getTitle();
+		}
+
+		return $options;
+	}
+
+	protected function findStorageItemId(): int
+	{
+		if (!$this->StorageId)
+		{
+			$this->findStorageTypeId();
+		}
+
+		$conditionGroup = new ConditionGroup((array)($this->DynamicFilterFields ?? []));
+		$provider = new StorageItemProvider((int)$this->StorageId);
+
+		$documentType = \Bitrix\Bizproc\Public\Entity\Document\Workflow::getComplexType();
+		$fieldsMap = static::getFilteringFieldsMap($this->StorageId);
+		$filter = $this->getOrmFilter($conditionGroup, $documentType, $fieldsMap);
+		$item = $provider->getItems([
+			'filter' => $filter,
+			'select' => ['ID'],
+			'order' => ['ID' => 'DESC'],
+			'limit' => 1,
+		])?->getFirstCollectionItem();
+
+		return $item ? $item->getId() : 0;
+	}
+
 	protected static function getPropertiesMap(array $documentType, array $context = []): array
 	{
 		$provider = new StorageTypeProvider();
@@ -347,8 +448,15 @@ class CBPWriteDataStorageActivity extends CBPActivity
 			];
 		}
 
-//		$rewriteMode = $context['RewriteMode'] ?? null;
-//		$isUpdate = $rewriteMode === self::MODE_MERGE_FIELDS || $rewriteMode === self::MODE_REWRITE_FIELDS;
+		$filteringFieldsMap = [
+			0 => array_values(static::getFilteringFieldsMap(0))
+		];
+		$storages = static::getStorageTypes();
+
+		foreach ($storages as $id => $title)
+		{
+			$filteringFieldsMap[$id] = array_values(static::getFilteringFieldsMap($id));
+		}
 
 		return [
 			'Author' => [
@@ -374,27 +482,24 @@ class CBPWriteDataStorageActivity extends CBPActivity
 				'Required' => false,
 				'AllowSelection' => true,
 			],
-//			'RewriteMode' => [
-//				'Name' => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_RECORD_MODE'),
-//				'FieldName' => 'RewriteMode',
-//				'Type' => 'select',
-//				'Required' => true,
-//				'AllowSelection' => false,
-//				'Options' => [
-//					self::MODE_NEW_ITEM => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_NEW_ITEM'),
-//					self::MODE_MERGE_FIELDS => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_MERGE_FIELDS'),
-//					self::MODE_REWRITE_FIELDS => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_REWRITE_FIELDS'),
-//				],
-//				'Default' => self::MODE_NEW_ITEM,
-//			],
-//			'ItemId' => [
-//				'Name' => 'ID',
-//				'FieldName' => 'ItemId',
-//				'Type' => 'int',
-//				'Required' => $isUpdate,
-//				'AllowSelection' => true,
-//				'Hidden' => !$isUpdate,
-//			],
+			'RewriteMode' => [
+				'Name' => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_RECORD_MODE'),
+				'FieldName' => 'RewriteMode',
+				'Type' => 'select',
+				'Required' => true,
+				'AllowSelection' => false,
+				'Options' => [
+					self::MODE_NEW_ITEM => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_NEW_ITEM'),
+					self::MODE_MERGE_FIELDS => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_MERGE_FIELDS'),
+					self::MODE_REWRITE_FIELDS => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_REWRITE_FIELDS'),
+				],
+				'Default' => self::MODE_NEW_ITEM,
+			],
+			'DynamicFilterFields' => [
+				'Name' => 'ID',
+				'FieldName' => 'DynamicFilterFields',
+				'Map' => $filteringFieldsMap,
+			],
 			'Fields' => [
 				'Name' => 'Fields',
 				'FieldName' => 'Fields',
@@ -402,6 +507,15 @@ class CBPWriteDataStorageActivity extends CBPActivity
 				'Required' => false,
 				'AllowSelection' => false,
 				'Hidden' => true,
+			],
+			'IsExpanded' => [
+				'Name' => '',
+				'FieldName' => 'IsExpanded',
+				'Type' => FieldType::STRING,
+				'Required' => false,
+				'AllowSelection' => false,
+				'Hidden' => true,
+				'Default' => 'Y',
 			],
 		];
 	}
@@ -475,8 +589,18 @@ class CBPWriteDataStorageActivity extends CBPActivity
 			return false;
 		}
 
+		$dialog = new PropertiesDialog(__FILE__, [
+			'documentType' => $documentType,
+			'activityName' => $activityName,
+			'workflowTemplate' => $workflowTemplate,
+			'workflowParameters' => $workflowParameters,
+			'workflowVariables' => $workflowVariables,
+			'currentValues' => $currentValues,
+		]);
+
 		$properties['FieldValue'] = array_column($properties['Fields'], 'Value', 'FieldName');
 		$currentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($workflowTemplate, $activityName);
+		$properties['DynamicFilterFields'] = static::extractFilterFromProperties($dialog, $fieldsMap)->getData();
 		$currentActivity['Properties'] = $properties;
 
 		return true;
@@ -489,7 +613,7 @@ class CBPWriteDataStorageActivity extends CBPActivity
 	{
 		$errors = [];
 
-		$fieldsMap = static::getPropertiesMap($arTestProperties/*, ['RewriteMode' => $arTestProperties['RewriteMode']]*/);
+		$fieldsMap = static::getPropertiesMap($arTestProperties, ['RewriteMode' => $arTestProperties['RewriteMode'] ?? '']);
 		foreach ($fieldsMap as $propertyKey => $fieldProperties)
 		{
 			if (

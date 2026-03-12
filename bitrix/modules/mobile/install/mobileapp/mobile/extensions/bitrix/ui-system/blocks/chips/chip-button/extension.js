@@ -30,6 +30,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	 * @property {boolean} [compact=false]
 	 * @property {boolean} [rounded=true]
 	 * @property {boolean} [disabled=false]
+	 * @property {boolean} [withPressed=false]
 	 * @property {ChipButtonMode} [mode=ChipButtonMode.SOLID]
 	 * @property {ChipButtonDesign} [design=ChipButtonDesign.PRIMARY]
 	 * @property {ChipButtonSize} [size=ChipButtonSize.M]
@@ -415,13 +416,13 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 
 		getBackgroundColor()
 		{
-			const { backgroundColor: propsBackgroundColor } = this.props;
+			const { backgroundColor: propsBackgroundColor, withPressed } = this.props;
 			const { backgroundColor: designBackgroundColor } = this.design;
 			const backgroundColor = propsBackgroundColor || designBackgroundColor;
 
 			if (backgroundColor)
 			{
-				return backgroundColor.withPressed?.();
+				return withPressed ? backgroundColor.withPressed?.() : backgroundColor.toHex();
 			}
 
 			return null;
@@ -557,6 +558,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 		compact: false,
 		rounded: true,
 		disabled: false,
+		withPressed: false,
 		dropdown: false,
 		loading: false,
 		content: null,
@@ -569,6 +571,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 		loading: PropTypes.bool,
 		compact: PropTypes.bool,
 		disabled: PropTypes.bool,
+		withPressed: PropTypes.bool,
 		badge: PropTypes.object,
 		avatar: PropTypes.object,
 		rounded: PropTypes.bool,

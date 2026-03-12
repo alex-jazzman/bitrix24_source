@@ -33,6 +33,7 @@ jn.define('im/messenger/model/messages/default-element', (require, exports, modu
 		reactionsViewed: true,
 		lastReactionId: '',
 		stickerParams: null,
+		visualState: {},
 	});
 
 	module.exports = {

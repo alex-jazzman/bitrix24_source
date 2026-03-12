@@ -12,15 +12,19 @@ jn.define('layout/ui/scroll-view', (require, exports, module) => {
 	 * @param {boolean} [props.horizontal]
 	 * @param {boolean} [props.bounces]
 	 * @param {function} [props.onScroll]
+	 * @param {function} [props.onClick]
 	 * @param {Array<View>} [props.children]
 	 * @param {Object} [props.viewProps]
 	 * @param {...*} [restChildren]
 	 * @returns {ScrollViewMethods}
 	 */
 	const UIScrollView = (props, ...restChildren) => {
-		const { children, viewProps = {}, ...rest } = props;
+		const { children, viewProps = {}, onClick, ...rest } = props;
 
-		let wrapperViewProps = viewProps;
+		let wrapperViewProps = {
+			...viewProps,
+			onClick,
+		};
 
 		if (rest.horizontal)
 		{

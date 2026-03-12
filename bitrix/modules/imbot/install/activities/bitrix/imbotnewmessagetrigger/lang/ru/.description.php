@@ -4,3 +4,5 @@ $MESS['BPCDT_DESCR_DESCR'] = 'Триггер срабатывает, когда 
 $MESS['BPCDT_DESCR_MESSAGE_RESULT'] = 'Сообщение от пользователя';
 $MESS['BPCDT_DESCR_MESSAGE_SENDER'] = 'Отправитель сообщения';
 $MESS['BPCDT_DESCR_MESSAGE_ACTUAL_BOT_ID'] = 'Идентификатор чат-бота';
+$MESS['BPCDT_DESCR_MESSAGE_CHAT_ID'] = 'Идентификатор чата';
+$MESS['BPCDT_DESCR_MESSAGE_IS_GROUP_CHAT'] = 'Отправлено в групповом чате';

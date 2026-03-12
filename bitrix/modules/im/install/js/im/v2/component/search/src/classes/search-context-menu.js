@@ -1,32 +1,26 @@
 import { Loc } from 'main.core';
 
-import { Messenger } from 'im.public';
-import { Utils } from 'im.v2.lib.utils';
-import { BaseMenu } from 'im.v2.lib.menu';
-import { CallManager } from 'im.v2.lib.call';
-import { PermissionManager } from 'im.v2.lib.permission';
-import { EventType, SidebarDetailBlock, UserType } from 'im.v2.const';
+import { RecentMenu, BaseMenu } from 'im.v2.lib.menu';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 import type { MenuItemOptions } from 'ui.system.menu';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelUser } from 'im.v2.model';
 import type { ApplicationContext } from 'im.v2.const';
 
-export class SearchContextMenu extends BaseMenu
+export class SearchContextMenu extends RecentMenu
 {
-	callManager: CallManager;
-	emitter: EventEmitter;
+	static events = {
+		...BaseMenu.events,
+		openItem: 'openItem',
+	};
+
+	chatService: ChatService;
 
 	constructor(applicationContext: ApplicationContext)
 	{
-		super();
+		super(applicationContext);
 
 		this.id = 'im-chat-search-context-menu';
-		this.callManager = CallManager.getInstance();
-		this.permissionManager = PermissionManager.getInstance();
-
-		const { emitter } = applicationContext;
-		this.emitter = emitter;
+		this.chatService = new ChatService();
 	}
 
 	getMenuItems(): MenuItemOptions | null[]
@@ -35,6 +29,8 @@ export class SearchContextMenu extends BaseMenu
 			this.getOpenItem(),
 			this.getOpenProfileItem(),
 			this.getChatsWithUserItem(),
+			this.getPinMessageItem(),
+			this.getJoinItem(),
 		];
 	}
 
@@ -43,76 +39,28 @@ export class SearchContextMenu extends BaseMenu
 		return {
 			title: Loc.getMessage('IM_LIB_MENU_OPEN'),
 			onClick: () => {
-				void Messenger.openChat(this.context.dialogId);
+				this.emit(SearchContextMenu.events.openItem, { dialogId: this.context.dialogId });
 				this.menuInstance.close();
 			},
 		};
 	}
 
-	getOpenProfileItem(): ?MenuItemOptions
+	getJoinItem(): ?MenuItemOptions
 	{
-		if (!this.isUser() || this.isBot())
+		const { dialogId } = this.context;
+		if (!this.isGuestRole())
 		{
 			return null;
 		}
 
-		const profileUri = Utils.user.getProfileLink(this.context.dialogId);
-
 		return {
-			title: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
+			title: this.isOpenChat()
+				? Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHAT')
+				: Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHANNEL'),
 			onClick: () => {
-				BX.SidePanel.Instance.open(profileUri);
+				this.chatService.joinChat(dialogId);
 				this.menuInstance.close();
 			},
 		};
-	}
-
-	getChatsWithUserItem(): ?MenuItemOptions
-	{
-		if (!this.isUser() || this.isBot() || this.isChatWithCurrentUser())
-		{
-			return null;
-		}
-
-		const isAnyChatOpened = this.store.getters['application/getLayout'].entityId.length > 0;
-
-		return {
-			title: Loc.getMessage('IM_LIB_MENU_FIND_SHARED_CHATS'),
-			onClick: async () => {
-				if (!isAnyChatOpened)
-				{
-					await Messenger.openChat(this.context.dialogId);
-				}
-
-				this.emitter.emit(EventType.sidebar.open, {
-					panel: SidebarDetailBlock.chatsWithUser,
-					standalone: true,
-					dialogId: this.context.dialogId,
-				});
-				this.menuInstance.close();
-			},
-		};
-	}
-
-	isUser(): boolean
-	{
-		return this.store.getters['chats/isUser'](this.context.dialogId);
-	}
-
-	isBot(): boolean
-	{
-		if (!this.isUser())
-		{
-			return false;
-		}
-
-		const user: ImModelUser = this.store.getters['users/get'](this.context.dialogId);
-
-		return user.type === UserType.bot;
-	}
-
-	isChatWithCurrentUser(): boolean
-	{
-		return this.getCurrentUserId() === Number.parseInt(this.context.dialogId, 10);
 	}
 }

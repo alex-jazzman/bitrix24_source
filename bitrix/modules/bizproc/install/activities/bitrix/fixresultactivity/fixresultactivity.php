@@ -208,7 +208,7 @@ class CBPFixResultActivity extends BaseActivity
 				if ($activity && method_exists($activity, 'makeResultFromId'))
 				{
 					$resultId = $activity->__get($values['ResultItem']['field']);
-					if ((is_int($resultId)))
+					if ((is_int($resultId)) && $resultId > 0)
 					{
 						$result = $activity->makeResultFromId($resultId);
 						$resultValue = $result->data;

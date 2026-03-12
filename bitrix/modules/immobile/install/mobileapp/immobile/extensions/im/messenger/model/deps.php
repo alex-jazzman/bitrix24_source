@@ -15,5 +15,6 @@ return [
 		'im:messenger/model/comment',
 		'im:messenger/model/anchor',
 		'im:messenger/model/sticker-pack',
+		'im:messenger/model/recent',
 	],
 ];

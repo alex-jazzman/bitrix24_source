@@ -62,6 +62,8 @@ export function useState(): State
 		revertHandler: null,
 
 		highlitedBlockIds: [],
+		isSelectionActive: false,
+		selectionWorldRect: null,
 
 		animationQueue: null,
 		currentAnimationItem: null,

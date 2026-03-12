@@ -9,4 +9,4 @@ $MESS["INTRANET_USER_OTP_LIST_ENABLE_DEF_BTN"] = "Enable protection";
 $MESS["INTRANET_USER_OTP_LIST_SMS"] = "SMS code";
 $MESS["INTRANET_USER_OTP_LIST_SMS_DESCRIPTION"] = "SMS code to confirm login if you don't have access to the app.";
 $MESS["INTRANET_USER_OTP_LIST_SMS_HINT"] = "Confirm this number or provide a new one to receive login confirmation codes.";
-$MESS["INTRANET_USER_OTP_LIST_SMS_HINT_WITHOUT_CONNECT"] = "Enter phone number to receive login confirmation codes.";
+$MESS["INTRANET_USER_OTP_LIST_SMS_HINT_WITHOUT_CONNECT"] = "Specify phone number to receive login confirmation codes.";

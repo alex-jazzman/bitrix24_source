@@ -10,6 +10,7 @@ use Bitrix\Sender\Internals\CommonAjax;
 use Bitrix\Sender\Internals\QueryController as Controller;
 use Bitrix\Sender\ListTable;
 use Bitrix\Sender\Posting\SegmentDataBuilder;
+use Bitrix\Sender\Security;
 use Bitrix\Sender\UI;
 use Bitrix\Sender\Entity;
 
@@ -65,6 +66,16 @@ $actions[] = Controller\Action::create('getFilterData')->setHandler(
 			'num' => 0,
 			'count' => Connector\DataCounter::getDefaultArray(),
 		));
+
+		if (!Security\Access::getInstance()->canModifySegments())
+		{
+			Security\AccessChecker::addError(
+				$content->getErrorCollection(),
+				Security\AccessChecker::ERR_CODE_EDIT,
+			);
+
+			return;
+		}
 
 		$filterId = $request->get('filterId');
 		$groupId = $request->get('groupId');

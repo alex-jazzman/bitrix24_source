@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports,main_popup,disk_users,main_core_events,disk_sharingLegacyPopup,disk_externalLink,disk_onlyofficePromoPopup,ui_buttons,main_core_cache,main_core,pull_client) {
+(function (exports,main_popup,disk_users,main_core_events,disk_sharingLegacyPopup,disk_externalLink,ui_buttons,ui_iconSet_outline,disk_promoBoost,disk_onlyofficePromoActions,ui_dialogs_messagebox,main_core_cache,main_core,pull_client) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -401,14 +401,15 @@ this.BX.Disk = this.BX.Disk || {};
 	  }
 	  babelHelpers.createClass(CustomErrorControl, [{
 	    key: "showWhenTooLarge",
-	    value: function showWhenTooLarge(fileName, container, targetNode, linkToDownload) {
+	    value: function showWhenTooLarge(fileName, container, targetNode, linkToDownload, downloadSizeValue) {
 	      this.showCommonWarning({
 	        container: container,
 	        targetNode: targetNode,
 	        title: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_TITLE'),
 	        description: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_DESCR'),
 	        fileName: fileName,
-	        linkToDownload: linkToDownload
+	        linkToDownload: linkToDownload,
+	        downloadSizeValue: downloadSizeValue
 	      });
 	    }
 	  }, {
@@ -431,20 +432,29 @@ this.BX.Disk = this.BX.Disk || {};
 	      }
 	      var downloadButtonNode = '';
 	      if (options.linkToDownload) {
+	        var downloadSize = '';
+	        if (options.downloadSizeValue) {
+	          downloadSize = options.downloadSizeValue;
+	        }
 	        var downloadButton = new ui_buttons.Button({
 	          text: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_DOWNLOAD'),
 	          round: true,
+	          noCaps: true,
 	          tag: ui_buttons.Button.Tag.LINK,
 	          link: options.linkToDownload,
-	          color: ui_buttons.Button.Color.SUCCESS,
-	          className: 'disk-fe-office-warning-btn',
+	          color: ui_buttons.AirButtonStyle.FILLED,
+	          className: '--air disk-fe-office-warning-btn',
+	          icon: ui_buttons.ButtonIcon.DOWNLOAD,
+	          iconPosition: 'left',
+	          size: ui_buttons.ButtonSize.LARGE,
 	          props: {
 	            target: '_blank'
 	          }
 	        });
 	        downloadButtonNode = downloadButton.render();
+	        downloadButton.setText("".concat(main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_DOWNLOAD'), " ").concat(downloadSize));
 	      }
-	      var errorControl = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"disk-fe-office-warning-wrap\">\n\t\t\t\t<div class=\"disk-fe-office-warning-overlay\"></div>\n\t\t\t\t<div class=\"disk-fe-office-warning-box\">\n\t\t\t\t\t<div class=\"disk-fe-office-warning-icon\"></div>\n\t\t\t\t\t<div class=\"disk-fe-office-warning-title\">", "</div>\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"disk-fe-office-warning-desc\">", "</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), options.title, fileNameNode, options.description, downloadButtonNode);
+	      var errorControl = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"disk-fe-office-warning-wrap\">\n\t\t\t\t<div class=\"disk-fe-office-warning-overlay\"></div>\n\t\t\t\t<div class=\"disk-fe-office-warning-box\">\n\t\t\t\t\t<div class=\"disk-fe-office-warning-icon\"></div>\n\t\t\t\t\t<div class=\"disk-fe-office-warning-title\">", "</div>\t\t\t\t\n\t\t\t\t\t<div class=\"disk-fe-office-warning-desc\">", "</div>\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), options.title, options.description, fileNameNode, downloadButtonNode);
 	      main_core.Dom.addClass(options.container, containerClass);
 	      main_core.Dom.prepend(errorControl, options.targetNode);
 	    }
@@ -452,6 +462,8 @@ this.BX.Disk = this.BX.Disk || {};
 	  return CustomErrorControl;
 	}();
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -472,7 +484,9 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.defineProperty(this, "linkToEdit", null);
 	    babelHelpers.defineProperty(this, "linkToView", null);
 	    babelHelpers.defineProperty(this, "linkToDownload", null);
+	    babelHelpers.defineProperty(this, "downloadSizeValue", null);
 	    babelHelpers.defineProperty(this, "pullConfig", null);
+	    babelHelpers.defineProperty(this, "pullUserConfig", null);
 	    babelHelpers.defineProperty(this, "editButton", null);
 	    babelHelpers.defineProperty(this, "setupSharingButton", null);
 	    babelHelpers.defineProperty(this, "documentWasChanged", false);
@@ -481,13 +495,23 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.defineProperty(this, "usersInDocument", null);
 	    babelHelpers.defineProperty(this, "sharingControlType", null);
 	    babelHelpers.defineProperty(this, "brokenDocumentOpened", false);
+	    babelHelpers.defineProperty(this, "sessionBoostOptions", null);
 	    babelHelpers.defineProperty(this, "unifiedLinkAccessOnly", false);
+	    babelHelpers.defineProperty(this, "promoShowImmediately", false);
+	    babelHelpers.defineProperty(this, "onlyOfficePromoActions", null);
+	    babelHelpers.defineProperty(this, "realtimeForceReloadTag", null);
+	    babelHelpers.defineProperty(this, "realtimeForceReloadCommand", null);
+	    babelHelpers.defineProperty(this, "autoForceReloadAfter", null);
+	    babelHelpers.defineProperty(this, "texts", null);
+	    babelHelpers.defineProperty(this, "userPullClient", null);
 	    var options = main_core.Type.isPlainObject(editorOptions) ? editorOptions : {};
 	    this.pullConfig = options.pullConfig;
+	    this.pullUserConfig = options.pullUserConfig;
 	    this.documentSession = options.documentSession;
 	    this.linkToEdit = options.linkToEdit;
 	    this.linkToView = options.linkToView;
 	    this.linkToDownload = options.linkToDownload;
+	    this.downloadSizeValue = options.downloadSizeValue;
 	    this.targetNode = options.targetNode;
 	    this.userBoxNode = options.userBoxNode;
 	    this.editorNode = options.editorNode;
@@ -506,7 +530,15 @@ this.BX.Disk = this.BX.Disk || {};
 	      context: this.context,
 	      userBoxNode: this.userBoxNode
 	    });
+	    this.sessionBoostButton = disk_promoBoost.Factory.getSessionBoostButton(editorOptions.sessionBoostButtonContainerId);
+	    this.sessionBoostOptions = options.sessionBoostOptions;
 	    this.unifiedLinkAccessOnly = options.unifiedLinkAccessOnly;
+	    this.promoShowImmediately = options.promoShowImmediately;
+	    this.onlyOfficePromoActions = new disk_onlyofficePromoActions.OnlyOfficePromoActions();
+	    this.realtimeForceReloadTag = options.realtimeForceReloadTag;
+	    this.realtimeForceReloadCommand = options.realtimeForceReloadCommand;
+	    this.autoForceReloadAfter = options.autoForceReloadAfter || 300000; // default is 5 minutes in ms
+	    this.texts = options.texts || {};
 	    this.initializeEditor(options.editorJson);
 	    var currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
 	    if (currentSlider) {
@@ -518,8 +550,17 @@ this.BX.Disk = this.BX.Disk || {};
 	    if (this.isEditMode()) {
 	      this.registerTimerToTrackWork();
 	    }
-	    if (disk_onlyofficePromoPopup.PromoPopup.shouldShowViewPromo()) {
-	      disk_onlyofficePromoPopup.PromoPopup.showViewPromo();
+	    if (this.promoShowImmediately && this.onlyOfficePromoActions.shouldShow()) {
+	      this.onlyOfficePromoActions.show(this.editButton.getMainButton().button, true);
+	    }
+	    if (disk_promoBoost.Checker.isSessionBoostAvailable()) {
+	      var _this$sessionBoostOpt;
+	      this.sessionBoostButton.init();
+	      this.sessionBoostButton.setOverlayToWidget();
+	      if (this.isEditMode() && (_this$sessionBoostOpt = this.sessionBoostOptions) !== null && _this$sessionBoostOpt !== void 0 && _this$sessionBoostOpt.shouldShowButtonWidgetInstantly) {
+	        this.showSessionBoostWidgetOnBoostButton();
+	        this.saveWidgetOnBoostButtonView();
+	      }
 	    }
 	  }
 	  babelHelpers.createClass(OnlyOffice, [{
@@ -536,32 +577,35 @@ this.BX.Disk = this.BX.Disk || {};
 	        });
 	        BX.PULL.start(this.pullConfig);
 	      }
+	      if (this.pullUserConfig) {
+	        this.userPullClient = new pull_client.PullClient();
+	        this.userPullClient.start(this.pullUserConfig);
+	      }
 	    }
 	  }, {
 	    key: "bindEvents",
 	    value: function bindEvents() {
 	      var _this = this;
-	      main_core_events.EventEmitter.subscribe("SidePanel.Slider:onClose", this.handleSliderClose.bind(this));
-	      window.addEventListener("beforeunload", this.handleClose.bind(this));
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', this.handleSliderClose.bind(this));
+	      main_core_events.EventEmitter.subscribe(window, 'beforeunload', this.handleClose.bind(this));
 	      if (window.top !== window) {
-	        window.addEventListener("message", function (event) {
+	        main_core_events.EventEmitter.subscribe(window, 'message', function (event) {
 	          if (event.data === 'closeIframe') {
 	            _this.handleClose();
 	          }
 	        });
 	      }
 	      if (this.editorJson.document.permissions.edit === true && this.editButton) {
-	        if (this.editButton.hasOwnProperty('mainButton')) {
+	        if (Object.prototype.hasOwnProperty.call(this.editButton, 'mainButton')) {
 	          this.editButton.getMainButton().bindEvent('click', this.handleClickEditButton.bind(this));
 	          var menuWindow = this.editButton.getMenuWindow();
 	          var menuItems = main_core.Runtime.clone(menuWindow.getMenuItems());
-	          for (var i = 0; i < menuItems.length; i++) {
-	            var menuItem = menuItems[i];
+	          menuItems.forEach(function (menuItem) {
 	            var menuItemOptions = main_core.Runtime.clone(menuItem.options);
-	            menuItemOptions.onclick = this.handleClickEditSubItems.bind(this);
+	            menuItemOptions.onclick = _this.handleClickEditSubItems.bind(_this);
 	            menuWindow.removeMenuItem(menuItem.getId());
 	            menuWindow.addMenuItem(menuItemOptions);
-	          }
+	          });
 	        } else {
 	          this.editButton.bindEvent('click', this.handleClickEditButton.bind(this));
 	        }
@@ -587,11 +631,42 @@ this.BX.Disk = this.BX.Disk || {};
 	        context: this.context,
 	        userManager: this.usersInDocument
 	      }));
+	      if (this.userPullClient && this.realtimeForceReloadTag) {
+	        this.userPullClient.extendWatch(this.realtimeForceReloadTag);
+	        this.userPullClient.subscribe({
+	          type: BX.PullClient.SubscriptionType.Server,
+	          moduleId: 'disk',
+	          command: this.realtimeForceReloadCommand,
+	          callback: function callback(data) {
+	            var message = {
+	              regular: _this.texts.forceReloadRegularServer,
+	              booster: _this.texts.forceReloadBoosterServer
+	            }[data.newServersType] || _this.texts.forceReloadUndefinedServer;
+	            var mb = new ui_dialogs_messagebox.MessageBox({
+	              message: message,
+	              modal: true,
+	              onOk: function onOk() {
+	                return location.reload();
+	              },
+	              okCaption: _this.texts.forceReloadPopupOkButton,
+	              buttons: ui_dialogs_messagebox.MessageBoxButtons.OK
+	            });
+	            mb.show();
+	            setTimeout(function () {
+	              location.reload();
+	            }, _this.autoForceReloadAfter);
+	          }
+	        });
+	      }
 	    }
 	  }, {
 	    key: "initializeEditor",
 	    value: function initializeEditor(options) {
-	      options.events = {
+	      var _options$document, _options$document$per;
+	      if (!options) {
+	        return;
+	      }
+	      options.events = _objectSpread(_objectSpread({}, options.events), {}, {
 	        onDocumentStateChange: this.handleDocumentStateChange.bind(this),
 	        onDocumentReady: this.handleDocumentReady.bind(this),
 	        onMetaChange: this.handleMetaChange.bind(this),
@@ -599,8 +674,8 @@ this.BX.Disk = this.BX.Disk || {};
 	        onWarning: this.handleWarning.bind(this),
 	        onError: this.handleError.bind(this),
 	        onRequestClose: this.handleRequestClose.bind(this)
-	      };
-	      if (options.document.permissions.rename) {
+	      });
+	      if ((_options$document = options.document) !== null && _options$document !== void 0 && (_options$document$per = _options$document.permissions) !== null && _options$document$per !== void 0 && _options$document$per.rename) {
 	        options.events.onRequestRename = this.handleRequestRename.bind(this);
 	      }
 	      this.editorJson = options;
@@ -650,11 +725,36 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleClickEditButton",
 	    value: function handleClickEditButton() {
-	      if (disk_onlyofficePromoPopup.PromoPopup.shouldShowEditPromo()) {
-	        disk_onlyofficePromoPopup.PromoPopup.showEditPromo();
+	      if (this.onlyOfficePromoActions.shouldShow()) {
+	        this.onlyOfficePromoActions.show(this.editButton.getMainButton().button, true);
+	        BX.UI.Analytics.sendData({
+	          tool: 'docs',
+	          category: 'docs',
+	          event: 'oo_limit_edit',
+	          c_sub_section: 'old_element',
+	          c_element: 'view_mode',
+	          p3: this.context.object.docType,
+	          p4: "fileId_".concat(this.context.object.id)
+	        });
 	        return;
 	      }
 	      this.handleRequestEditRights();
+	    }
+	  }, {
+	    key: "showSessionBoostWidgetOnBoostButton",
+	    value: function showSessionBoostWidgetOnBoostButton() {
+	      this.sessionBoostButton.showWidget();
+	    }
+	  }, {
+	    key: "saveWidgetOnBoostButtonView",
+	    value: function saveWidgetOnBoostButtonView() {
+	      if (this.sessionBoostOptions !== null) {
+	        var _this$sessionBoostOpt2 = this.sessionBoostOptions.optionParamsToControlButtonWidgetDisplay,
+	          category = _this$sessionBoostOpt2.category,
+	          name = _this$sessionBoostOpt2.name;
+	        main_core.userOptions.save(category, name, null, Math.floor(Date.now() / 1000));
+	        main_core.userOptions.send(null);
+	      }
 	    }
 	  }, {
 	    key: "handleClickSharing",
@@ -678,6 +778,8 @@ this.BX.Disk = this.BX.Disk || {};
 	        case disk_sharingLegacyPopup.SharingControlType.BLOCKED_BY_FEATURE:
 	          BX.UI.InfoHelper.show('limit_office_files_access_permissions');
 	          break;
+	        default:
+	          console.warn('Unknown sharingControlType', this.sharingControlType);
 	      }
 	    }
 	  }, {
@@ -727,7 +829,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleRequestClose",
 	    value: function handleRequestClose() {
-	      console.log('handleRequestClose');
 	      var currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
 	      if (!currentSlider) {
 	        return;
@@ -750,7 +851,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleSliderClose",
 	    value: function handleSliderClose(event) {
-	      console.log('handleSliderClose');
 	      var currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
 	      if (!currentSlider) {
 	        return;
@@ -782,7 +882,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleClose",
 	    value: function handleClose() {
-	      console.log('handleClose');
 	      pull_client.PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'exitDocument', {
 	        fromUserId: this.context.currentUser.id
 	      });
@@ -849,7 +948,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        this.processBrokenDocument();
 	      } else if (d.data.errorCode === -84) {
 	        setTimeout(function () {
-	          new CustomErrorControl().showWhenTooLarge(_this3.context.object.name, _this3.getEditorWrapperNode(), _this3.getContainer(), _this3.linkToDownload);
+	          new CustomErrorControl().showWhenTooLarge(_this3.context.object.name, _this3.getEditorWrapperNode(), _this3.getContainer(), _this3.linkToDownload, _this3.downloadSizeValue);
 	        }, 100);
 	      }
 	    }
@@ -959,7 +1058,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      documentSessionId: this.context.documentSession.id,
 	      documentSessionHash: this.context.documentSession.hash
 	    }
-	  });
+	  }).then(function (responce) {});
 	}
 
 	var Waiting = /*#__PURE__*/function () {
@@ -1018,5 +1117,5 @@ this.BX.Disk = this.BX.Disk || {};
 	exports.Waiting = Waiting;
 	exports.CustomErrorControl = CustomErrorControl;
 
-}((this.BX.Disk.Editor = this.BX.Disk.Editor || {}),BX.Main,BX.Disk,BX.Event,BX.Disk.Sharing,BX.Disk,BX.Disk.OnlyOfficePromo,BX.UI,BX.Cache,BX,BX));
+}((this.BX.Disk.Editor = this.BX.Disk.Editor || {}),BX.Main,BX.Disk,BX.Event,BX.Disk.Sharing,BX.Disk,BX.UI,BX,BX.Disk.PromoBoost,BX.Disk.OnlyOfficePromoActions,BX.UI.Dialogs,BX.Cache,BX,BX));
 //# sourceMappingURL=script.js.map

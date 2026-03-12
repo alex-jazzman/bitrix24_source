@@ -16,6 +16,7 @@ use Bitrix\Tasks\Control\Exception\TaskStopDeleteException;
 use Bitrix\Tasks\Control\Exception\TaskUpdateException;
 use Bitrix\Tasks\Control\Exception\WrongTaskIdException;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
+use Bitrix\Tasks\Internals\Counter\Role;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\V2\Internal\Entity;
@@ -231,7 +232,9 @@ class TaskRepository implements TaskRepositoryInterface
 
 		if ($currentTask === null)
 		{
-			throw new TaskUpdateException('Not found');
+			$message = Loc::getMessage('TASKS_UNKNOWN_UPDATE_ERROR');
+
+			throw new TaskNotExistsException($message);
 		}
 
 		$fields = $this->ormTaskMapper->mapFromEntity($task);
@@ -327,11 +330,34 @@ class TaskRepository implements TaskRepositoryInterface
 		return $result->fetchAll();
 	}
 
-	public function findTasksIdsWithChatIdsAndActiveCountersByUserIdAndGroupId(int $userId, ?int $groupId = null): array
+	public function findTasksIdsWithChatIdsAndActiveCountersByUserIdAndGroupId(
+		int $userId,
+		?int $groupId = null,
+		?string $role = null,
+	): array
 	{
-		$result = TaskTable::query()
-			->setSelect(['ID', 'TASK_CHAT_ID' => 'CHAT_TASK.CHAT_ID'])
-			->where('GROUP_ID', $groupId)
+		$query = TaskTable::query()
+			->setSelect(['ID', 'TASK_CHAT_ID' => 'CHAT_TASK.CHAT_ID']);
+
+		if ($groupId !== null)
+		{
+			$query->where('GROUP_ID', $groupId);
+		}
+
+		$memberRole = null;
+		if ($role !== null && array_key_exists($role, Role::ROLE_MAP))
+		{
+			$memberRole = Role::ROLE_MAP[$role];
+		}
+
+		if ($memberRole !== null)
+		{
+			$query
+				->where('MEMBERS.USER_ID', $userId)
+				->where('MEMBERS.TYPE', $memberRole);
+		}
+
+		$result = $query
 			->where('COUNTERS.USER_ID', $userId)
 			->whereIn('COUNTERS.TYPE', [
 				CounterDictionary::COUNTER_MY_NEW_COMMENTS,
@@ -343,8 +369,8 @@ class TaskRepository implements TaskRepositoryInterface
 				CounterDictionary::COUNTER_ORIGINATOR_NEW_COMMENTS,
 				CounterDictionary::COUNTER_ORIGINATOR_MUTED_NEW_COMMENTS,
 			])
-			->exec()->fetchAll();
+			->exec();
 
-		return $result;
+		return $result->fetchAll();
 	}
 }

@@ -1,8 +1,0 @@
-<?
-$MESS["CRM_CALENDAR_VIEW_MODE_DATECREATE"] = "Дата створення";
-$MESS["CRM_CALENDAR_VIEW_MODE_USERFIELD"] = "#USERFIELD_NAME#";
-$MESS["CRM_CALENDAR_USERFIELD_HELP_MENU"] = "Бронювання ресурсів";
-$MESS["CRM_CALENDAR_SETTINGS"] = "Налаштування календаря";
-$MESS["CRM_CALENDAR_SETTINGS_DATE"] = "По даті створення";
-$MESS["CRM_CALENDAR_SETTINGS_PROPERTY"] = "По властивості \"#USERFIELD_NAME#\"";
-?>

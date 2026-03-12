@@ -201,6 +201,7 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/collab', (requi
 					this.store.dispatch('usersModel/set', modelData.users),
 					this.store.dispatch('messagesModel/store', modelData.messages),
 					this.store.dispatch('filesModel/set', modelData.files),
+					this.store.dispatch('stickerPackModel/addStickers', { stickers: modelData.stickers }),
 					this.store.dispatch('dialoguesModel/set', modelData.dialogues),
 					this.store.dispatch('counterModel/setList', { counterList: modelData.counterState }),
 					this.store.dispatch(
@@ -234,6 +235,7 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/collab', (requi
 				recent: [],
 				messages: [],
 				counterState: [],
+				stickers: [],
 			};
 
 			if (Type.isArray(recentData.users))
@@ -309,6 +311,11 @@ jn.define('im/messenger-v2/controller/recent/service/server-load/collab', (requi
 					const counterData = ServerLoadUtils.buildCounterState(chat);
 					result.counterState.push(counterData);
 				});
+			}
+
+			if (Type.isArrayFilled(recentData.stickers))
+			{
+				result.stickers = recentData.stickers;
 			}
 
 			return result;

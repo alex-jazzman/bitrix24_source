@@ -3,6 +3,7 @@
  */
 jn.define('mail/chain', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { Haptics } = require('haptics');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
 	const { Moment } = require('utils/date');
 	const { dayShortMonth, shortTime } = require('utils/date/formats');
@@ -13,6 +14,7 @@ jn.define('mail/chain', (require, exports, module) => {
 	const { Icon, MoreButton } = require('mail/message/elements/icon');
 	const { ContactList } = require('mail/message/elements/contact/list');
 	const { getChainPromise, getMessagePromise, deleteMessage, getMessageNeighbors } = require('mail/message/tools/connector');
+	const { ActionMenu } = require('mail/simple-list/items/message-redux/src/action-menu');
 	const { MessageBody } = require('mail/message/elements/messagebody');
 	const { MailOpener } = require('mail/opener');
 	const { NotifyManager } = require('notify-manager');
@@ -194,6 +196,7 @@ jn.define('mail/chain', (require, exports, module) => {
 		return View(
 			{
 				style,
+				testId: 'message-card-direction-incoming',
 			},
 			Image({
 				style: styleImage,
@@ -234,6 +237,7 @@ jn.define('mail/chain', (require, exports, module) => {
 			format: 'big',
 			list: from,
 			fieldId: id,
+			testId: 'message-card-header-contact-from',
 		}));
 
 		if (format === 'full')
@@ -251,6 +255,7 @@ jn.define('mail/chain', (require, exports, module) => {
 						format: 'little',
 						list: item.list,
 						title: titles.fields[key],
+						testId: `message-card-header-contact-${key}`,
 					}),
 				);
 			}));
@@ -384,6 +389,7 @@ jn.define('mail/chain', (require, exports, module) => {
 				widget,
 				isCrmMessage,
 				startEmailSender = null,
+				source = 'mail',
 			} = props;
 
 			super();
@@ -391,20 +397,18 @@ jn.define('mail/chain', (require, exports, module) => {
 			this.constant = {
 				isCrmMessage,
 				startEmailSender,
+				source,
 			};
 
+			this.threadId = threadId;
 			this.layout = widget;
 
 			this.actions = {
 				replyButton: this.replyMessageAction.bind(this),
 				replyAllButton: this.replyAllMessageAction.bind(this),
 				forwardButton: this.forwardAction.bind(this),
+				moreButton: isCrmMessage ? this.showContextMenu.bind(this) : this.openMoreMenuAction.bind(this),
 			};
-
-			if (isCrmMessage)
-			{
-				this.actions.moreButton = this.showContextMenu.bind(this);
-			}
 
 			this.setChain(threadId, chain.list, chain.properties, false);
 		}
@@ -473,6 +477,7 @@ jn.define('mail/chain', (require, exports, module) => {
 						svg: {
 							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.6676 7.15039L13.1405 11.6774L12 12.8003L10.8811 11.6774L6.35404 7.15039L4.75657 8.74786L12.0107 16.002L19.2649 8.74786L17.6676 7.15039Z" fill="${AppTheme.colors.base4}"/></svg>`,
 						},
+						testID: 'right-button-flipping-up',
 						callback: disabledButtons ? undefined : this.flippingChain.bind(this, nextId, this.constant.isCrmMessage),
 					},
 				);
@@ -485,6 +490,7 @@ jn.define('mail/chain', (require, exports, module) => {
 						svg: {
 							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.6676 7.15039L13.1405 11.6774L12 12.8003L10.8811 11.6774L6.35404 7.15039L4.75657 8.74786L12.0107 16.002L19.2649 8.74786L17.6676 7.15039Z" fill="${AppTheme.colors.base6}"/></svg>`,
 						},
+						testID: 'right-button-flipping-up',
 					},
 				);
 			}
@@ -497,6 +503,7 @@ jn.define('mail/chain', (require, exports, module) => {
 						svg: {
 							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.34319 15.9915L10.8702 11.4644L11.9893 10.3407L13.1296 11.4644L17.6567 15.9915L19.2542 14.394L12 7.13983L4.74585 14.394L6.34319 15.9915Z" fill="${AppTheme.colors.base4}"/></svg>`,
 						},
+						testID: 'right-button-flipping-down',
 						callback: disabledButtons ? undefined : this.flippingChain.bind(this, prevId, this.constant.isCrmMessage),
 					},
 				);
@@ -509,6 +516,7 @@ jn.define('mail/chain', (require, exports, module) => {
 						svg: {
 							content: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.34319 15.9915L10.8702 11.4644L11.9893 10.3407L13.1296 11.4644L17.6567 15.9915L19.2542 14.394L12 7.13983L4.74585 14.394L6.34319 15.9915Z" fill="${AppTheme.colors.base6}"/></svg>`,
 						},
+						testID: 'right-button-flipping-down',
 					},
 				);
 			}
@@ -732,6 +740,8 @@ jn.define('mail/chain', (require, exports, module) => {
 				owner: header.owner,
 				contacts,
 				reply_message_body: this.getBodyHtml(cardId),
+				element: 'reply',
+				source: this.constant.source,
 			};
 		}
 
@@ -772,6 +782,8 @@ jn.define('mail/chain', (require, exports, module) => {
 				contacts: this.clearFromEmployeeEmails([...message.to, ...message.from], message.employees),
 				cc: this.clearFromEmployeeEmails([...message.cc, ...message.bcc], message.employees),
 				reply_message_body: this.getBodyHtml(cardId),
+				source: this.constant.source,
+				element: 'reply_all',
 			};
 		}
 
@@ -791,6 +803,8 @@ jn.define('mail/chain', (require, exports, module) => {
 				owner: message.owner,
 				reply_message_body: this.getBodyHtml(cardId),
 				isForward: 1,
+				source: this.constant.source,
+				element: 'forward',
 			};
 		}
 
@@ -819,6 +833,12 @@ jn.define('mail/chain', (require, exports, module) => {
 		forwardAction(cardId = this.lastIncomingCardId)
 		{
 			MailOpener.openSend(this.getForwardParams(cardId));
+		}
+
+		openMoreMenuAction(target)
+		{
+			Haptics.impactLight();
+			void new ActionMenu(this.threadId).show({ target, isDetailCard: true });
 		}
 
 		hideChainItem(cardId)
@@ -887,25 +907,18 @@ jn.define('mail/chain', (require, exports, module) => {
 		{
 			const chain = this.state.chain;
 
-			if (chain[id].body === undefined)
+			if (
+				chain[id].body === undefined ||
+				(Array.isArray(chain[id].attachments) && chain[id].attachments.length === 0)
+			)
 			{
-				getMessagePromise(chain[id].id, true, false, this.constant.isCrmMessage).then((response) => {
+				chain[id].attachments = '';
+				chain[id].body = '';
+
+				getMessagePromise(chain[id].id, true, true, this.constant.isCrmMessage).then((response) => {
 					const chain = this.state.chain;
 					const message = response.data;
 					chain[id].body = message.body;
-					this.setState({
-						chain,
-					});
-				});
-			}
-
-			if (Array.isArray(chain[id].attachments) && chain[id].attachments.length === 0)
-			{
-				chain[id].attachments = '';
-
-				getMessagePromise(chain[id].id, false, true, this.constant.isCrmMessage).then((response) => {
-					const chain = this.state.chain;
-					const message = response.data;
 					chain[id].attachments = message.attachments;
 					this.setState({
 						chain,

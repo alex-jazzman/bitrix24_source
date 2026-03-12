@@ -5,13 +5,13 @@ jn.define('im/messenger/model/sticker-pack/normalizer', (require, exports, modul
 	const { Type } = require('type');
 	const { withCurrentDomain } = require('utils/url');
 	/**
-	 * @param {StickerPackModelState} fields
-	 * @return {StickerPackModelState}
+	 * @param {Partial<StickerPackState>} fields
+	 * @return {Partial<StickerPackState>}
 	 */
 	function normalizeStickerPack(fields)
 	{
 		/**
-		 * @type {Partial<StickerPackModelState>}
+		 * @type {Partial<StickerPackState>}
 		 */
 		const result = {};
 
@@ -30,16 +30,26 @@ jn.define('im/messenger/model/sticker-pack/normalizer', (require, exports, modul
 			result.name = fields.name;
 		}
 
+		if (Type.isNumber(fields.authorId))
+		{
+			result.authorId = fields.authorId;
+		}
+
+		if (Type.isBoolean(fields.isAdded))
+		{
+			result.isAdded = fields.isAdded;
+		}
+
 		return result;
 	}
 
 	/**
-	 * @param {FullStickerData} fields
-	 * @return {FullStickerData}
+	 * @param {Partial<RecentStickerState>} fields
+	 * @return {Partial<RecentStickerState>}
 	 */
 	function normalizeRecentSticker(fields)
 	{
-		/** @type {Partial<FullStickerData>} */
+		/** @type {Partial<RecentStickerState>} */
 		const result = {};
 
 		if (Type.isNumber(fields.id))
@@ -57,27 +67,12 @@ jn.define('im/messenger/model/sticker-pack/normalizer', (require, exports, modul
 			result.packType = fields.packType;
 		}
 
-		if (Type.isStringFilled(fields.uri))
-		{
-			result.uri = withCurrentDomain(fields.uri);
-		}
-
-		if (Type.isNumber(fields.height))
-		{
-			result.height = fields.height;
-		}
-
-		if (Type.isNumber(fields.width))
-		{
-			result.width = fields.width;
-		}
-
 		return result;
 	}
 
 	/**
-	 * @param {StickerState} fields
-	 * @return {StickerState}
+	 * @param {Partial<StickerState>} fields
+	 * @return {Partial<StickerState>}
 	 */
 	function normalizeSticker(fields)
 	{
@@ -85,7 +80,7 @@ jn.define('im/messenger/model/sticker-pack/normalizer', (require, exports, modul
 		 * @type {Partial<StickerState>}
 		 */
 		const result = {};
-		if (Type.isNumber(fields.id))
+		if (Type.isNumber(fields.id) || Type.isStringFilled(fields.id))
 		{
 			result.id = fields.id;
 		}
@@ -108,6 +103,21 @@ jn.define('im/messenger/model/sticker-pack/normalizer', (require, exports, modul
 		if (Type.isNumber(fields.width))
 		{
 			result.width = fields.width;
+		}
+
+		if (Type.isNumber(fields.packId) || Type.isStringFilled(fields.packId))
+		{
+			result.packId = fields.packId;
+		}
+
+		if (Type.isStringFilled(fields.packType))
+		{
+			result.packType = fields.packType;
+		}
+
+		if (Type.isNumber(fields.sort))
+		{
+			result.sort = fields.sort;
 		}
 
 		return result;

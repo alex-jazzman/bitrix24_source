@@ -1,3 +1,4 @@
+import { Type } from 'main.core';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
@@ -5,6 +6,7 @@ import 'ui.icon-set.outline';
 import { Core } from 'tasks.v2.core';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { showLimit } from 'tasks.v2.lib.show-limit';
+import { analytics } from 'tasks.v2.lib.analytics';
 import { usersDialog } from 'tasks.v2.lib.user-selector-dialog';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -19,6 +21,8 @@ export const AuditorsChip = {
 	inject: {
 		task: {},
 		taskId: {},
+		analytics: {},
+		cardType: {},
 	},
 	setup(): { task: TaskModel }
 	{
@@ -72,6 +76,13 @@ export const AuditorsChip = {
 			if (!this.isSelected && auditorsIds.length > 0)
 			{
 				this.highlightField();
+
+				analytics.sendAddViewer(this.analytics, {
+					cardType: this.cardType,
+					taskId: Type.isNumber(this.taskId) ? this.taskId : 0,
+					viewersCount: auditorsIds.length,
+					coexecutorsCount: this.task.accomplicesIds?.length ?? 0,
+				});
 			}
 
 			void taskService.update(this.taskId, { auditorsIds });

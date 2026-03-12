@@ -70,6 +70,10 @@ export const AppLayout = {
 				<section :class="bottomRightClassNames">
 					<slot name="bottom-right-toolbar"/>
 				</section>
+				
+				<section class="editor-chart-app-layout__top-middle-anchor">
+					<slot name="top-middle-anchor"/>
+				</section>
 
 				<transition
 					name="fade-settings-panel"

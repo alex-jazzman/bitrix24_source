@@ -1,5 +1,0 @@
-<?php
-$MESS["LEARNING_COURSE_COMPLEX_DESC"] = "Оқу курсы";
-$MESS["LEARNING_COURSE_COMPLEX_NAME"] = "Оқу курсы";
-$MESS["LEARNING_COURSE_SERVICE"] = "Курстар";
-$MESS["LEARNING_SERVICE"] = "Оқыту";

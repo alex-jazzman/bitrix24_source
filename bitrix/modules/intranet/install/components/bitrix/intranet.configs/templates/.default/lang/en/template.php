@@ -179,7 +179,6 @@ $MESS["CONFIG_SEND_OTP_PUSH"] = "Send chat and push notifications about authenti
 $MESS["CONFIG_SHOW_FIRED_EMPLOYEES"] = "Show dismissed employees";
 $MESS["CONFIG_SHOW_YEAR"] = "Show year of birth in user profile";
 $MESS["CONFIG_SHOW_YEAR_FOR_FEMALE"] = "Show date of birth in female profiles";
-$MESS["CONFIG_STRESSLEVEL_AVAILABLE"] = "Allow to measure and show stress level in user profile";
 $MESS["CONFIG_TIME_FORMAT"] = "Time format";
 $MESS["CONFIG_TIME_FORMAT_12"] = "12 hour";
 $MESS["CONFIG_TIME_FORMAT_24"] = "24 hour";

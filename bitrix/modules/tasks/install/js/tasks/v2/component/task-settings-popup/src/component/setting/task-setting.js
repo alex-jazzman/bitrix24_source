@@ -3,6 +3,7 @@ import { SwitcherSize, type SwitcherOptions } from 'ui.switcher';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { Switcher } from 'ui.vue3.components.switcher';
 
+import { showLimit } from 'tasks.v2.lib.show-limit';
 import { QuestionMark } from 'tasks.v2.component.elements.question-mark';
 
 import './task-setting.css';
@@ -33,6 +34,10 @@ export const TaskSetting = {
 			type: Boolean,
 			default: false,
 		},
+		featureId: {
+			type: String,
+			default: '',
+		},
 	},
 	emits: ['update:modelValue'],
 	setup(): Object
@@ -57,7 +62,25 @@ export const TaskSetting = {
 	methods: {
 		handleContainerClick(): void
 		{
+			if (this.lock)
+			{
+				this.handleLockClick();
+
+				return;
+			}
+
 			this.$emit('update:modelValue', !this.modelValue);
+		},
+		handleLockClick(): void
+		{
+			if (!this.featureId)
+			{
+				return;
+			}
+
+			void showLimit({
+				featureId: this.featureId,
+			});
 		},
 	},
 	template: `
@@ -79,6 +102,7 @@ export const TaskSetting = {
 					v-if="lock"
 					:name="Outline.LOCK_M"
 					class="tasks-task-setting-switcher-lock"
+					@click="handleLockClick"
 				/>
 			</div>
 			<div v-if="modelValue && $slots.default" class="tasks-task-setting-content">

@@ -115,7 +115,7 @@ export class WidgetLoader
 
 		if (config.footer)
 		{
-			this.addFooterSkeleton(config.footer.height ?? 6);
+			this.addFooterSkeleton(config.footer.height ?? 6, config.footer.count ?? 2);
 		}
 
 		return this;
@@ -163,9 +163,9 @@ export class WidgetLoader
 		return this;
 	}
 
-	addFooterSkeleton(height: number): WidgetLoader
+	addFooterSkeleton(height: number, count: number): WidgetLoader
 	{
-		Dom.append(this.#createFooterSkeleton(height), this.getPopup().getPopupContainer());
+		Dom.append(this.#createFooterSkeleton(height, count), this.getPopup().getPopupContainer());
 
 		return this;
 	}
@@ -229,15 +229,21 @@ export class WidgetLoader
 		`;
 	}
 
-	#createFooterSkeleton(height: number = 6): HTMLElement
+	#createFooterSkeleton(height: number = 6, count: number = 2): HTMLElement
 	{
+		let lines = '';
+		for (let i = 0; i < count; i++)
+		{
+			lines += `<div style="height: ${height}px" class="intranet-widget-skeleton__line"></div>`;
+		}
+
 		return Tag.render`
-			<div class="intranet-widget-skeleton__footer">
-				<div style="height: ${height}px" class="intranet-widget-skeleton__line"></div>
-				<div style="height: ${height}px" class="intranet-widget-skeleton__line"></div>
-			</div>
-		`;
+		<div class="intranet-widget-skeleton__footer">
+			${lines}
+		</div>
+	`;
 	}
+
 
 	#createAvatarWidgetHeaderSkeleton(config: Object): HTMLElement
 	{

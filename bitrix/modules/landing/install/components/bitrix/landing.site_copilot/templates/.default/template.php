@@ -13,6 +13,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Landing\Copilot\Services\NameService;
 use Bitrix\Landing\Manager;
 use Bitrix\Landing\Copilot;
 
@@ -44,7 +45,7 @@ $setMessForJS = array_reduce($keysForMessJs, static function($carry, $key) use (
 	return $carry;
 }, []);
 
-Manager::setPageTitle(Loc::getMessage('LANDING_SITE_PAGE_TITLE'));
+Manager::setPageTitle(NameService::replaceCopilotName(Loc::getMessage('LANDING_SITE_PAGE_TITLE_MSGVER_1')));
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 'landing-site-copilot-body');
@@ -94,7 +95,7 @@ $helperFrameOpenUrl = $arResult['HELPER_FRAME_OPEN_URL'] ?? null;
 				<input
 					class="landing-selector-input-text"
 					id="landing-selector-input"
-					value="<?= Loc::getMessage('LANDING_CMP_TOP_PANEL_SITE_NAME') ?>">
+					value="<?= NameService::replaceCopilotName(Loc::getMessage('LANDING_CMP_TOP_PANEL_SITE_NAME_MSGVER_1')) ?>">
 			</label>
 		</div>
 		<button class="landing-ui-panel-top-pub-btn landing-ui-panel-top-pub-btn-auto landing-ui-panel-top-pub-btn-enable" id="landing-popup-publication-btn" data-hint="Параметры автопубликации" data-hint-no-icon="" data-hint-init="y">

@@ -1,4 +1,3 @@
-import { groupMeta } from 'tasks.v2.component.fields.group';
 import { FileStatus, UploaderFileInfo } from 'ui.uploader.core';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Animated, Outline } from 'ui.icon-set.api.vue';
@@ -9,8 +8,8 @@ import { GroupType, Model, CardType } from 'tasks.v2.const';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { analytics } from 'tasks.v2.lib.analytics';
 import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
-import type { GroupModel } from 'tasks.v2.model.groups';
+import { type TaskModel } from 'tasks.v2.model.tasks';
+import { type GroupModel } from 'tasks.v2.model.groups';
 
 import { filesMeta } from './files-meta';
 import { FilesPopup } from './files-popup/files-popup';
@@ -119,12 +118,12 @@ export const FilesChip = {
 	mounted(): void
 	{
 		this.fileService.subscribe('onFileAdd', this.handleFileAdd);
-		this.fileService.subscribe('onFileComplete', this.handleFileComplete);
+		this.fileService.subscribe('onFileAttach', this.handleFileAttach);
 	},
 	beforeUnmount(): void
 	{
 		this.fileService.unsubscribe('onFileAdd', this.handleFileAdd);
-		this.fileService.unsubscribe('onFileComplete', this.handleFileComplete);
+		this.fileService.unsubscribe('onFileAttach', this.handleFileAttach);
 	},
 	methods: {
 		handleFileAdd(): void
@@ -134,7 +133,7 @@ export const FilesChip = {
 				this.showPopup();
 			}
 		},
-		handleFileComplete(event): void
+		handleFileAttach(event): void
 		{
 			this.sendAnalytics(event.getData());
 		},

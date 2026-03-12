@@ -249,8 +249,8 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 						<input class="main-mail-form-field-value" type="text"
 							id="<?=$htmlFieldId ?>_value"
 							name="<?=htmlspecialcharsbx($field['name']) ?>"
-							value="<?=htmlspecialcharsbx($field['value']) ?>"
-							placeholder="<?=htmlspecialcharsbx($field['placeholder']) ?>">
+							value="<?=htmlspecialcharsbx($field['value'] ?? '') ?>"
+							placeholder="<?=htmlspecialcharsbx($field['placeholder'] ?? '') ?>">
 						<span class="main-mail-form-field-value-menu-ext-button"></span>
 					</div>
 				</td>

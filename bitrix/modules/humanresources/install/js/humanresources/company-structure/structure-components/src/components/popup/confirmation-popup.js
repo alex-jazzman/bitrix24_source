@@ -16,56 +16,49 @@ export const ConfirmationPopup = {
 	props: {
 		title: {
 			type: String,
-			required: false,
 			default: null,
 		},
 		withoutTitleBar: {
 			type: Boolean,
-			required: false,
 			default: false,
 		},
 		description: {
 			type: String,
-			required: false,
 		},
 		onlyConfirmButtonMode: {
 			type: Boolean,
-			required: false,
 			default: false,
 		},
 		confirmBtnText: {
 			type: String,
-			required: false,
 			default: null,
 		},
 		showActionButtonLoader: {
 			type: Boolean,
-			required: false,
 			default: false,
 		},
 		lockActionButton: {
 			type: Boolean,
-			required: false,
 			default: false,
 		},
 		cancelBtnText: {
 			type: String,
-			required: false,
 			default: null,
 		},
 		bindElement: {
 			type: HTMLElement,
-			required: false,
 			default: null,
 		},
 		width: {
 			type: Number,
-			required: false,
 			default: 300,
+		},
+		padding: {
+			type: Number,
+			default: 0,
 		},
 		confirmButtonClass: {
 			type: String,
-			required: false,
 			default: 'ui-btn-primary',
 		},
 	},
@@ -126,7 +119,7 @@ export const ConfirmationPopup = {
 				overlay: this.bindElement === null ? { opacity: 40 } : false,
 				contentNoPaddings: true,
 				contentPadding: 0,
-				padding: 0,
+				padding: this.padding,
 				className: 'hr_structure_confirmation_popup',
 				autoHide: false,
 				draggable: true,

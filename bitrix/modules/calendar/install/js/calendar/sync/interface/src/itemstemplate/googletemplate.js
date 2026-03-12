@@ -35,9 +35,9 @@ export default class GoogleTemplate extends InterfaceTemplate
 		this.handleSuccessConnectionDebounce = Runtime.debounce(this.handleSuccessConnection, this.HANDLE_CONNECTION_DELAY, this);
 	}
 
-	createConnection()
+	async createConnection()
 	{
-		const syncLink = this.provider.getSyncLink();
+		const syncLink = await this.provider.getSyncLink();
 		BX.util.popup(syncLink, 500, 600);
 
 		Event.bind(window, 'hashchange', this.handleSuccessConnectionDebounce);
@@ -120,11 +120,11 @@ export default class GoogleTemplate extends InterfaceTemplate
 		messageBox.show();
 	}
 
-	handleConnectButton()
+	async handleConnectButton()
 	{
 		if (this.provider.hasSetSyncGoogleSettings())
 		{
-			this.createConnection();
+			await this.createConnection();
 		}
 		else
 		{

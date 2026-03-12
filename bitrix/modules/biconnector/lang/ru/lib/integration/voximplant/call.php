@@ -11,6 +11,7 @@ $MESS['VI_BIC_CALL_FIELD_PHONE_NUMBER'] = "Номер абонента";
 $MESS['VI_BIC_CALL_FIELD_CALL_TYPE'] = "Тип вызова";
 $MESS['VI_BIC_CALL_FIELD_CALL_TYPE_FULL'] = "1 - исходящий, 2 - входящий, 3 - входящий с перенаправлением, 4 - обратный звонок";
 $MESS['VI_BIC_CALL_FIELD_CALL_DURATION'] = "Продолжительность звонка в секундах";
+$MESS['VI_BIC_CALL_FIELD_RECORD_DURATION'] = "Продолжительность разговора в секундах";
 $MESS['VI_BIC_CALL_FIELD_CALL_START_TIME'] = "Время начала звонка";
 $MESS['VI_BIC_CALL_FIELD_CALL_STATUS_CODE'] = "Код вызова с расшифровкой";
 $MESS['VI_BIC_CALL_FIELD_CALL_STATUS_CODE_ID'] = "Идентификатор кода вызова";

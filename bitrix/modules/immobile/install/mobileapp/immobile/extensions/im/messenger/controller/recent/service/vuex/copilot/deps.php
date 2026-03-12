@@ -1,0 +1,14 @@
+<?php
+
+return [
+	'extensions' => [
+		'type',
+		'utils/array',
+		'im:messenger/const',
+		'im:messenger/lib/helper',
+		'im:messenger/lib/di/service-locator',
+		'im:messenger/controller/recent/service/base',
+		'im:messenger/controller/recent/service/vuex/lib/handlers/anchor',
+		'im:messenger/controller/recent/service/vuex/lib/handlers/counter',
+	],
+];

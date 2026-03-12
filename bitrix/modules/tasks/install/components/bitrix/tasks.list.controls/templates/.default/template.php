@@ -1,7 +1,6 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 
 if($arParams['USE_TITLE_TARGET'] !== 'N')
 {

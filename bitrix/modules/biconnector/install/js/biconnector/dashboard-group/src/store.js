@@ -26,6 +26,11 @@ export class Store
 				{
 					state.group.name = groupName;
 				},
+				setEmptyGroupName(state: GroupAppState, groupName: string)
+				{
+					state.group.name = groupName;
+					Store.initialGroup.name = groupName;
+				},
 				addDashboard(state: GroupAppState, dashboard: Dashboard)
 				{
 					state.group.dashboardIds.unshift(dashboard.id);
@@ -165,6 +170,10 @@ export class Store
 				{
 					return state.group.type === GroupType.system;
 				},
+				isNewGroup(state: GroupAppState): boolean
+				{
+					return String(state.group.id ?? '').startsWith('new_');
+				},
 				groupData(state: GroupAppState): Group
 				{
 					return {
@@ -230,10 +239,7 @@ export class Store
 							return false;
 						}
 
-						if (
-							dashboard.createdById === user.id
-							|| dashboard.ownerId === user.id
-						)
+						if (dashboard.createdById === user.id)
 						{
 							return false;
 						}

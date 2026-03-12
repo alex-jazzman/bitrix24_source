@@ -1,3 +1,7 @@
+DROP TABLE IF EXISTS b_call_session;
+DROP TABLE IF EXISTS b_call_user;
+DROP TABLE IF EXISTS b_call_conference;
+DROP TABLE IF EXISTS b_call_conference_user_role;
 DROP TABLE IF EXISTS b_call_track;
 DROP TABLE IF EXISTS b_call_ai_task;
 DROP TABLE IF EXISTS b_call_outcome;

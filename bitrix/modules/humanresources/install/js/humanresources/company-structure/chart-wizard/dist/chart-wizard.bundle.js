@@ -105,7 +105,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			v-for="(user, index) in users.slice(0, headItemsCount)"
 		>
 			<img
-				:src="user.avatar || defaultAvatar"
+				:src="user.avatar ? encodeURI(user.avatar) : defaultAvatar"
 				class="chart-wizard-tree-preview__node_head-avatar --placeholder"
 				:class="{ '--deputy': isDeputy, '--old': isExistingDepartment }"
 			/>
@@ -2220,6 +2220,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
+	const HEAD_TYPE_ENTITY_ID = 'head-type';
+
 	// @vue/component
 	const Settings = {
 	  name: 'NodeSettings',
@@ -2230,12 +2232,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    /** @type {Record<string, Set>} */
 	    settings: {
-	      type: Object,
-	      required: false,
-	      default: () => {}
-	    },
-	    /** @type {Record<string, boolean>} */
-	    features: {
 	      type: Object,
 	      required: false,
 	      default: () => {}
@@ -2253,9 +2249,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: Array,
 	      required: false,
 	      default: () => []
+	    },
+	    isEditMode: {
+	      type: Boolean,
+	      required: true
 	    }
 	  },
 	  emits: ['applyData'],
+	  data() {
+	    return {
+	      permissionChecker: null
+	    };
+	  },
 	  computed: {
 	    isTeamEntity() {
 	      return this.entityType === humanresources_companyStructure_utils.EntityTypes.team;
@@ -2266,6 +2271,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      }
 	      const bpSettings = this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority];
 	      return !bpSettings || bpSettings.size === 0;
+	    },
+	    isReportsHeadNotSelected() {
+	      if (!this.isTeamEntity) {
+	        return false;
+	      }
+	      const reportsSettings = this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority];
+	      return !reportsSettings || reportsSettings.size === 0;
 	    },
 	    businessDescription() {
 	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BUSINESS_PROC_DESCRIPTION', {
@@ -2281,56 +2293,45 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_HINT_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_HINT_TITLE');
 	    },
 	    businessProcWarningText() {
-	      if (this.isTeamEntity) {
+	      const settingsType = humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority;
+	      const phrasePrefix = 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC';
+	      if (this.isTeamEntity || this.isBpSelectorLocked) {
 	        return null;
 	      }
-	      const memberRoles = humanresources_companyStructure_api.getMemberRoles(this.entityType);
-	      const hasHead = this.heads.some(item => item.role === memberRoles.head);
-	      const hasDeputy = this.heads.some(item => item.role === memberRoles.deputyHead);
-	      const headSelected = this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority].has(AuthorityTypes.departmentHead);
-	      const deputySelected = this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority].has(AuthorityTypes.departmentDeputy);
-	      if (headSelected && hasHead && deputySelected && !hasDeputy) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_HAS_HEAD_NO_DEPUTY');
+	      return this.getWarningTest(settingsType, phrasePrefix);
+	    },
+	    reportWarningText() {
+	      const settingsType = humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority;
+	      const phrasePrefix = 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT';
+	      if (this.isTeamEntity || this.isReportSelectorLocked) {
+	        return null;
 	      }
-	      if (headSelected && !hasHead && deputySelected && hasDeputy) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_NO_HEAD_HAS_DEPUTY');
-	      }
-	      if (headSelected && !hasHead && deputySelected && !hasDeputy) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_NO_HEAD_NO_DEPUTY');
-	      }
-	      if (headSelected && !hasHead && !deputySelected) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_NO_HEAD');
-	      }
-	      if (!headSelected && deputySelected && !hasDeputy) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_NO_DEPUTY');
-	      }
-	      if (!headSelected && !deputySelected) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_EMPTY');
-	      }
-	      return null;
+	      return this.getWarningTest(settingsType, phrasePrefix);
+	    },
+	    isBpSelectorLocked() {
+	      return this.isTeamEntity ? false : !this.permissionChecker.checkDepartmentBPSettingsAvailable();
+	    },
+	    isReportSelectorLocked() {
+	      return this.isTeamEntity ? !this.permissionChecker.checkTeamReportSettingsAvailable() : !this.permissionChecker.checkDepartmentReportsSettingsAvailable();
 	    }
 	  },
 	  watch: {
 	    settings: {
 	      handler(payload) {
-	        if (payload[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]) {
-	          const businessProcPreselected = this.getTagItems(false).filter(item => payload[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority].has(item.id));
-	          businessProcPreselected.forEach(businessProcPreselectedItem => {
-	            const item = this.businessProcSelector.dialog.getItem(['head-type', businessProcPreselectedItem.id]);
-	            if (item) {
-	              this.initBpValues.add(businessProcPreselectedItem.id);
-	              item.select();
-	            }
-	          });
-	        }
+	        this.initSettingsValue(payload, humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority);
+	        this.initSettingsValue(payload, humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority);
 	      }
 	    }
 	  },
 	  created() {
 	    this.hints = [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_HINT_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_HINT_2')];
-	    this.initBpValues = new Set();
-	    this.businessProcSelector = this.getTagSelector(humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority, false);
-	    this.reportsSelector = this.getTagSelector(humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority, true);
+	    this.permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
+	    this.initialSettingsValues = {
+	      [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: new Set(),
+	      [humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]: new Set()
+	    };
+	    this.initBPSelector();
+	    this.initReportsSelector();
 	  },
 	  mounted() {
 	    this.businessProcSelector.renderTo(this.$refs['business-proc-selector']);
@@ -2339,7 +2340,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  activated() {
 	    this.$emit('applyData', {
 	      isDepartmentDataChanged: false,
-	      isValid: !this.isBusinessProcHeadNotSelected
+	      isValid: !this.isBusinessProcHeadNotSelected && !this.isReportsHeadNotSelected
 	    });
 	  },
 	  methods: {
@@ -2351,10 +2352,61 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        apiEntityChanged: humanresources_companyStructure_utils.WizardApiEntityChangedDict.settings,
 	        settings: this.settings,
 	        isDepartmentDataChanged: true,
-	        isValid: !this.isBusinessProcHeadNotSelected
+	        isValid: !this.isBusinessProcHeadNotSelected && !this.isReportsHeadNotSelected
 	      });
 	    },
-	    getTagSelector(settingType, locked) {
+	    initSettingsValue(payload, settingType) {
+	      if (!payload[settingType]) {
+	        return;
+	      }
+	      const preselectedItems = this.getTagItems(false, true).filter(item => payload[settingType].has(item.id));
+	      preselectedItems.forEach(preselectedItem => {
+	        const selector = settingType === humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority ? this.businessProcSelector : this.reportsSelector;
+	        const item = selector.dialog.getItem([HEAD_TYPE_ENTITY_ID, preselectedItem.id]);
+	        if (item) {
+	          this.initialSettingsValues[settingType].add(preselectedItem.id);
+	          item.select();
+	        }
+	      });
+	    },
+	    initBPSelector() {
+	      // deputy is always available for departments
+	      const canDeselectHead = this.permissionChecker.checkDeputyApprovalBPAvailable() || !this.isTeamEntity;
+	      const canSelectDeputy = this.permissionChecker.checkDeputyApprovalBPAvailable() || !this.isTeamEntity;
+	      this.businessProcSelector = this.getTagSelector(humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority, this.isBpSelectorLocked, canDeselectHead, canSelectDeputy);
+	    },
+	    initReportsSelector() {
+	      const canSelectDeputy = this.permissionChecker.checkDeputyGetReportsAvailable() || !this.isTeamEntity;
+	      this.reportsSelector = this.getTagSelector(humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority, this.isReportSelectorLocked, false, canSelectDeputy);
+	    },
+	    getWarningTest(settingsType, phrasePrefix) {
+	      const memberRoles = humanresources_companyStructure_api.getMemberRoles(this.entityType);
+	      const hasHead = this.heads.some(item => item.role === memberRoles.head);
+	      const hasDeputy = this.heads.some(item => item.role === memberRoles.deputyHead);
+	      const headSelected = this.settings[settingsType].has(AuthorityTypes.departmentHead);
+	      const deputySelected = this.settings[settingsType].has(AuthorityTypes.departmentDeputy);
+	      if (headSelected && hasHead && deputySelected && !hasDeputy) {
+	        return this.loc(`${phrasePrefix}_HAS_HEAD_NO_DEPUTY`);
+	      }
+	      if (headSelected && !hasHead && deputySelected && hasDeputy) {
+	        return this.loc(`${phrasePrefix}_NO_HEAD_HAS_DEPUTY`);
+	      }
+	      if (headSelected && !hasHead && deputySelected && !hasDeputy) {
+	        return this.loc(`${phrasePrefix}_NO_HEAD_NO_DEPUTY`);
+	      }
+	      if (headSelected && !hasHead && !deputySelected) {
+	        return this.loc(`${phrasePrefix}_NO_HEAD`);
+	      }
+	      if (!headSelected && deputySelected && !hasDeputy) {
+	        return this.loc(`${phrasePrefix}_NO_DEPUTY`);
+	      }
+	      if (!headSelected && !deputySelected) {
+	        return this.loc(`${phrasePrefix}_EMPTY`);
+	      }
+	      return null;
+	    },
+	    getTagSelector(settingType, isLocked, canUnselectHead, isDeputyAvailable) {
+	      const items = this.getTagItems(isLocked, isDeputyAvailable);
 	      return new ui_entitySelector.TagSelector({
 	        events: {
 	          onTagAdd: event => {
@@ -2362,8 +2414,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	              tag
 	            } = event.getData();
 	            this.settings[settingType].add(tag.id);
-	            if (this.initBpValues.has(tag.id)) {
-	              this.initBpValues.delete(tag.id);
+	            if (this.initialSettingsValues[settingType].has(tag.id)) {
+	              this.initialSettingsValues[settingType].delete(tag.id);
 	            } else {
 	              this.applyData();
 	            }
@@ -2378,9 +2430,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        },
 	        multiple: true,
 	        id: 'head-type-selector',
-	        locked,
+	        locked: isLocked,
 	        tagFontWeight: '700',
-	        showAddButton: !locked,
+	        showAddButton: !isLocked,
 	        dialogOptions: {
 	          id: 'head-type-selector',
 	          events: {
@@ -2395,17 +2447,17 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            }
 	          },
 	          width: 400,
-	          height: 200,
+	          height: 220,
 	          tagMaxWidth: 400,
 	          dropdownMode: true,
 	          showAvatars: false,
-	          selectedItems: this.getTagItems(locked).filter(item => this.settings[settingType].has(item.id)),
-	          items: this.getTagItems(locked),
-	          undeselectedItems: this.features.isDeputyApprovesBPAvailable || !this.isTeamEntity ? [] : [['head-type', AuthorityTypes.departmentHead]]
+	          selectedItems: items.filter(item => this.settings[settingType].has(item.id)),
+	          items,
+	          undeselectedItems: canUnselectHead ? [] : [[HEAD_TYPE_ENTITY_ID, AuthorityTypes.departmentHead]]
 	        }
 	      });
 	    },
-	    getTagItems(locked) {
+	    getTagItems(isLocked, isDeputyAvailable) {
 	      const lockedTagOptions = {
 	        bgColor: '#BDC1C6',
 	        textColor: '#525C69'
@@ -2434,49 +2486,50 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          justifyContent: 'right'
 	        }
 	      };
-	      const deputyOptions = this.features.isDeputyApprovesBPAvailable || !this.isTeamEntity ? {
+	      const deputyOptions = isDeputyAvailable ? {
 	        customData: {
 	          selectable: true
 	        }
 	      } : soonItemOptions;
 	      const departmentHead = {
 	        id: AuthorityTypes.departmentHead,
-	        entityId: 'head-type',
+	        entityId: HEAD_TYPE_ENTITY_ID,
 	        tabs: 'recents',
 	        title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_HEAD_ITEM'),
-	        tagOptions: locked ? lockedTagOptions : departmentTagOptions,
+	        tagOptions: isLocked ? lockedTagOptions : departmentTagOptions,
 	        customData: {
 	          selectable: true
 	        }
 	      };
 	      const teamHead = {
 	        id: AuthorityTypes.teamHead,
-	        entityId: 'head-type',
+	        entityId: HEAD_TYPE_ENTITY_ID,
 	        tabs: 'recents',
 	        title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TEAM_HEAD_ITEM'),
-	        tagOptions: locked ? lockedTagOptions : teamTagOptions,
+	        tagOptions: isLocked ? lockedTagOptions : teamTagOptions,
 	        customData: {
 	          selectable: true
 	        }
 	      };
 	      const departmentDeputy = {
 	        id: AuthorityTypes.departmentDeputy,
-	        entityId: 'head-type',
+	        entityId: HEAD_TYPE_ENTITY_ID,
 	        tabs: 'recents',
 	        title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_DEPUTY_ITEM'),
-	        tagOptions: locked ? lockedTagOptions : departmentTagOptions,
+	        tagOptions: isLocked ? lockedTagOptions : departmentTagOptions,
 	        ...deputyOptions
 	      };
 	      const teamDeputy = {
 	        id: AuthorityTypes.teamDeputy,
-	        entityId: 'head-type',
+	        entityId: HEAD_TYPE_ENTITY_ID,
 	        tabs: 'recents',
 	        title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TEAM_DEPUTY_ITEM'),
-	        tagOptions: locked ? lockedTagOptions : teamTagOptions,
+	        tagOptions: isLocked ? lockedTagOptions : teamTagOptions,
 	        ...deputyOptions
 	      };
 	      if (this.isTeamEntity) {
-	        return this.features.isDeputyApprovesBPAvailable ? [departmentHead, departmentDeputy, teamHead, teamDeputy] : [departmentHead, teamHead, departmentDeputy, teamDeputy];
+	        // put deputies if they are locked, otherwise put after corresponding heads
+	        return isDeputyAvailable ? [departmentHead, departmentDeputy, teamHead, teamDeputy] : [departmentHead, teamHead, departmentDeputy, teamDeputy];
 	      }
 	      return [departmentHead, departmentDeputy];
 	    },
@@ -2485,12 +2538,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        event.preventDefault();
 	        top.BX.Helper.show('redirect=detail&code=25455744');
 	      }
+	    },
+	    goToReportHelp(event) {
+	      if (top.BX.Helper) {
+	        event.preventDefault();
+	        top.BX.Helper.show('redirect=detail&code=27450586');
+	      }
 	    }
 	  },
 	  template: `
 		<div class="chart-wizard__settings">
 			<div class="chart-wizard__settings__item" :class="{ '--team': isTeamEntity }">
-				<div class="chart-wizard__settings__item-hint">
+				<div v-if="!isEditMode" class="chart-wizard__settings__item-hint">
 					<div class="chart-wizard__settings__item-hint_logo"></div>
 					<div class="chart-wizard__settings__item-hint_text">
 						<div class="chart-wizard__settings__item-hint_title">
@@ -2505,10 +2564,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					</div>
 				</div>
 				<div class="chart-wizard__settings__item-options">
-					<div class="chart-wizard__settings__item-options__item-content_title"
-						 :data-title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_ACCESS_TITLE')"
+					<div 
+						class="chart-wizard__settings__item-options__item-content_title"
+						:class="{'--soon': isBpSelectorLocked}"
+						:data-title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_ACCESS_TITLE')"
 					>
-						<div class="chart-wizard__settings__item-options__item-content_title-text">
+						<div 
+							class="chart-wizard__settings__item-options__item-content_title-text"
+							:class="{'--soon': isBpSelectorLocked}"
+						>
 							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BUSINESS_PROC_TITLE') }}
 						</div>
 						<span v-if="isTeamEntity" class="ui-hint" @click="goToBPHelp">
@@ -2516,7 +2580,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						</span>
 					</div>
 					<div class="chart-wizard__settings__item-description-container">
-						<span class="chart-wizard__settings__item-description-text" v-html="businessDescription">
+						<span 
+							class="chart-wizard__settings__item-description-text"
+							:class="{'--soon': isBpSelectorLocked}"
+							v-html="businessDescription"
+						>
 						</span>
 					</div>
 					<div
@@ -2545,18 +2613,27 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					</div>
 				</div>
 				<div class="chart-wizard__settings__item-options">
-					<div class="chart-wizard__settings__item-options__item-content_title --soon"
-						 :data-title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_ACCESS_TITLE')"
+					<div 
+						class="chart-wizard__settings__item-options__item-content_title"
+						:class="{'--soon': isReportSelectorLocked}"
+						:data-title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_ACCESS_TITLE')"
 					>
-						<div class="chart-wizard__settings__item-options__item-content_title-text --soon">
+						<div 
+							class="chart-wizard__settings__item-options__item-content_title-text"
+							:class="{'--soon': isReportSelectorLocked}"
+						>
 							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORTS_TITLE') }}
 						</div>
-						<span v-if="isTeamEntity" class="chart-wizard__settings_ui-hint-disabled">
+						<span v-if="isTeamEntity" class="ui-hint" @click="goToReportHelp">
 							<span class="ui-hint-icon"/>
 						</span>
 					</div>
 					<div class="chart-wizard__settings__item-description-container">
-						<span class="chart-wizard__settings__item-description-text --soon" v-html="reportsDescriptions">
+						<span 
+							class="chart-wizard__settings__item-description-text"
+							:class="{'--soon': isReportSelectorLocked}" 
+							v-html="reportsDescriptions"
+						>
 						</span>
 					</div>
 					<div
@@ -2564,6 +2641,24 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						ref="reports-selector"
 						data-test-id="hr-company-structure__settings__reports-selector"
 					/>
+					<div
+						v-if="isReportsHeadNotSelected"
+						class="chart-wizard__settings__item-options-error"
+					>
+						<div class="ui-icon-set --warning"></div>
+						<span class="chart-wizard__settings__item-options-error-message">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORTS_HEAD_ERROR') }}
+						</span>
+					</div>
+					<div
+						v-else-if="reportWarningText"
+						class="chart-wizard__settings__item-options-warning"
+					>
+						<div class="ui-icon-set --warning"></div>
+						<span>
+							{{ reportWarningText }}
+						</span>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -2900,7 +2995,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      if (!this.permissionChecker) {
 	        return false;
 	      }
-	      return this.permissionChecker.checkDepartmentSettingsAvailable();
+	      return this.permissionChecker.checkDepartmentBPSettingsAvailable() || this.permissionChecker.checkDepartmentReportsSettingsAvailable();
 	    },
 	    componentInfo() {
 	      if (!this.currentStep.isPermitted) {
@@ -2966,7 +3061,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            features: {
 	              isDeputyApprovesBPAvailable: this.isDeputyApprovesBPAvailable
 	            },
-	            shouldErrorHighlight: this.shouldErrorHighlight
+	            shouldErrorHighlight: this.shouldErrorHighlight,
+	            isEditMode: this.isEditMode
 	          }
 	        },
 	        [StepIds.entities]: {
@@ -3356,6 +3452,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return WizardAPI.saveUsers(departmentId, ids, parentId);
 	    },
 	    async create() {
+	      if (!this.isValidStep) {
+	        this.shouldErrorHighlight = true;
+	        return;
+	      }
 	      const {
 	        name,
 	        parentId,
@@ -3388,6 +3488,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        const nodeSettings = {
 	          [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: {
 	            values: [...settings[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]],
+	            replace: true
+	          },
+	          [humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]: {
+	            values: [...settings[humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]],
 	            replace: true
 	          }
 	        };
@@ -3496,6 +3600,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      const settingsPromise = this.apiEntityChanged.has(humanresources_companyStructure_utils.WizardApiEntityChangedDict.settings) ? WizardAPI.updateSettings(id, {
 	        [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: {
 	          values: [...settings[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]],
+	          replace: true
+	        },
+	        [humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]: {
+	          values: [...settings[humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]],
 	          replace: true
 	        }
 	      }, parentId) : Promise.resolve();
@@ -3778,7 +3886,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					<button
 						v-show="!isEditMode && stepIndex === steps.length - 1"
 						class="ui-btn ui-btn-primary ui-btn-round chart-wizard__button"
-						:class="{ 'ui-btn-wait': waiting }"
+						:class="{ 'ui-btn-wait': waiting, 'ui-btn-disabled': !isValidStep, }"
 						@click="create"
 						data-test-id="hr-company-structure_chart-wizard__create-button"
 					>

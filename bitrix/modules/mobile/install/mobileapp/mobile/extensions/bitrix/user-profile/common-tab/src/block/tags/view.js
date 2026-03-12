@@ -228,9 +228,11 @@ jn.define('user-profile/common-tab/src/block/tags/view', (require, exports, modu
 
 		onClickAddTagButton = () => {
 			const selector = ProfileTagSelector.make({
-				closeOnSelect: true,
+				closeOnSelect: false,
 				events: {
-					onSelectedChanged: (tags) => this.onAddTag(tags[0]),
+					onSelectedChanged: (newTags) => {
+						this.onChange(newTags);
+					},
 					onCreate: (data) => {
 						this.onCreateTag(data.items[0]);
 					},
@@ -239,6 +241,8 @@ jn.define('user-profile/common-tab/src/block/tags/view', (require, exports, modu
 					ownerId: this.ownerId,
 					selectedItems: this.items,
 				},
+				initSelectedIds: this.items.map((item) => item.name),
+				allowMultipleSelection: true,
 				widgetParams: {
 					backdrop: {
 						mediumPositionPercent: 80,
@@ -251,10 +255,6 @@ jn.define('user-profile/common-tab/src/block/tags/view', (require, exports, modu
 
 		onCreateTag = (tag) => {
 			tag.name = tag.name.trim().toLowerCase();
-			this.onChange([...this.items, tag]);
-		};
-
-		onAddTag = (tag) => {
 			this.onChange(uniqBy([...this.items, tag], 'name'));
 		};
 

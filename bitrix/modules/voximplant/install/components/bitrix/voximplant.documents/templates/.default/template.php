@@ -10,6 +10,23 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 ?>
 <div class="ui-slider-section">
     <div class="tel-set-item">
+
+<?php
+if ($arResult['SHOW_INTERNOD_WARNING'])
+{
+	$internodMessage = $arResult['INTERNOD_DEADLINE']
+		? GetMessage('VOX_LINES_INTERNOD_WARNING_WITH_DATE', ['#BILLING_URL#' => $billingUrl, '#DATE#' => $arResult['INTERNOD_DEADLINE']])
+		: GetMessage('VOX_LINES_INTERNOD_WARNING', ['#BILLING_URL#' => $billingUrl]);
+?>
+		<div class="voximplant-internod-warning ui-alert ui-alert-warning">
+			<span class="ui-alert-message">
+				<?= $internodMessage ?>
+			</span>
+		</div>
+<?php
+}
+?>
+
         <div class="bx-vi-docs-body">
 			<?=GetMessage('VI_DOCS_BODY_2');?>
 			<? if (empty($arResult['DOCUMENTS'])): ?>

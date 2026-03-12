@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["TASK_COLUMN_CREATED_BY"] = "постановщик";
 $MESS["TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1"] = "исполнитель";
 $MESS["TASK_COLUMN_DEADLINE"] = "срок";
@@ -19,4 +20,3 @@ $MESS["TASKS_EMPTY_LIST"] = "Список задач пуст";
 $MESS["TASKS_EMPTY_LIST1"] = "Создать задачу";
 $MESS["TASKS_EMPTY_LIST2"] = "Задачи не найдены";
 $MESS["TASKS_ALL_TASKS"] = "Все";
-?>

@@ -1,73 +1,62 @@
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
-import { Color } from 'im.v2.const';
-
-import { RECENT_PACK_KEY } from '../tab-stickers';
+import { StickerManager } from 'im.v2.lib.sticker';
 
 import '../css/header-item.css';
 
-const ICON_SIZE = 28;
+import type { ImModelStickerPack } from 'im.v2.model';
 
 // @vue/component
 export const HeaderItem = {
 	name: 'HeaderItem',
 	components: { BIcon },
 	props: {
-		packKey: {
-			type: String,
+		pack: {
+			type: Object,
 			required: true,
 		},
-		active: {
+		isActive: {
 			type: Boolean,
-			default: false,
+			required: true,
 		},
 	},
 	computed: {
 		OutlineIcons: () => OutlineIcons,
-		ICON_SIZE: () => ICON_SIZE,
-		Color: () => Color,
+		packItem(): ImModelStickerPack
+		{
+			return this.pack;
+		},
+		isRecentPack(): boolean
+		{
+			return StickerManager.isRecentPack(this.packItem);
+		},
 		packName(): string
 		{
-			if (this.packKey === RECENT_PACK_KEY)
-			{
-				return this.loc('IM_TEXTAREA_STICKER_SELECTOR_STICKERS_RECENT');
-			}
-
-			const pack = this.$store.getters['messages/stickers/getPackByKey'](this.packKey);
-
-			return pack?.name || '';
-		},
-		isRecent(): boolean
-		{
-			return this.packKey === RECENT_PACK_KEY;
-		},
-		classes(): { [className: string]: boolean }
-		{
-			return { '--active': this.active };
+			return this.packItem.name;
 		},
 		packCover(): string
 		{
-			return this.$store.getters['messages/stickers/getPackCover'](this.packKey);
-		},
-	},
-	methods: {
-		loc(phraseCode: string): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
+			return this.$store.getters['stickers/getPackCover']({
+				id: this.packItem.id,
+				type: this.packItem.type,
+			});
 		},
 	},
 	template: `
-		<div class="bx-im-stickers-header__item" :class="classes" :title="packName">
+		<div 
+			:title="packName"
+			:class="{'--active': this.isActive}" 
+			class="bx-im-stickers-header__item" 
+		>
 			<BIcon
-				v-if="isRecent"
+				v-if="isRecentPack"
 				:name="OutlineIcons.CLOCK"
-				:color="Color.gray90"
-				:title="loc('IM_TEXTAREA_STICKER_SELECTOR_STICKERS_RECENT')"
-				:size="ICON_SIZE"
 			/>
-			<span v-else>
-				<img v-if="packCover" :src="packCover" alt="" loading="lazy"/>
-			</span>
+			<BIcon
+				v-else-if="!packCover"
+				:name="OutlineIcons.STICKER"
+			/>
+			<img v-else :src="packCover" alt="" loading="lazy" draggable="false" />
 		</div>
 	`,
 };

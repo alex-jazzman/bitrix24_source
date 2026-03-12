@@ -66,6 +66,7 @@ CJSCore::RegisterExt('crm_common', array(
 	'rel' => [
 		'ui.design-tokens',
 		'ui.fonts.opensans',
+		'intranet.old-interface.intranet-common'
 	]
 ));
 

@@ -27,8 +27,8 @@ return [
 	'css' => 'dist/copilot-banner.bundle.css',
 	'js' => 'dist/copilot-banner.bundle.js',
 	'rel' => [
-		'main.popup',
 		'main.core',
+		'main.popup',
 		'ui.icon-set.api.core',
 		'ui.hint',
 		'main.core.events',

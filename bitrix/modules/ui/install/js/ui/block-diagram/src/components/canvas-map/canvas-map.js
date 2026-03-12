@@ -1,10 +1,10 @@
 import './canvas-map.css';
 import { Type } from 'main.core';
-import { toValue, ref, computed, toRefs, useTemplateRef } from 'ui.vue3';
+import { toValue, computed, toRefs, useTemplateRef, reactive } from 'ui.vue3';
 import { useBlockDiagram, useCanvas } from '../../composables';
 import type { DiagramBlock } from '../../types';
 
-type CursorRectPosition = {
+type ViewportIndicatorRect = {
 	x: number;
 	y: number;
 	width: number;
@@ -14,21 +14,27 @@ type CursorRectPosition = {
 type CanvasMapSetup = {
 	mapWidth: number;
 	mapHeight: number;
-	preparedBlock: Array<DiagramBlock>,
+	sortedBlocks: Array<DiagramBlock>,
 	canvasMapStyle: { [string]: string };
-	startDiagramX: number;
-	startDiagramY: number;
-	scaleMap: number;
-	cursorRectPosition: CursorRectPosition;
+	contentOffsetX: number;
+	contentOffsetY: number;
+	renderScale: number;
+	viewportIndicator: ViewportIndicatorRect;
 	onMapMouseDown: (event: MouseEvent) => void;
 	onMapMouseMove: (event: MouseEvent) => void;
 	onMapMouseUp: (event: MouseEvent) => void;
+	getBlockColor: (block: ?DiagramBlock) => string;
 };
 
-const CURSOR_RECT_STROKE_WIDTH: number = 2;
+const MAP_PADDING: number = 50;
 
-const FIRST_EMPTY_BLOCK_ID = 'firstCanvasBlock';
-const LAST_EMPTY_BLOCK_ID = 'lastCanvasBlock';
+const DEFAULT_BLOCK_COLOR = 'var(--ui-color-palette-gray-15)';
+const DEFAULT_FRAME_BLOCK_COLOR = 'rgba(0,0,0,0.05)';
+const FRAME_BLOCK_TYPE = 'frame';
+const INTERACTION_STATE_MODES = {
+	CURSOR: 'cursor',
+	MAP: 'map',
+};
 
 // @vue/component
 export const CanvasMap = {
@@ -41,6 +47,10 @@ export const CanvasMap = {
 		mapHeight: {
 			type: Number,
 			default: 183,
+		},
+		blockColors: {
+			type: Object,
+			default: () => {},
 		},
 	},
 	// eslint-disable-next-line max-lines-per-function
@@ -55,150 +65,151 @@ export const CanvasMap = {
 			zoom,
 		} = useBlockDiagram();
 		const { setCamera } = useCanvas();
-		const { mapWidth, mapHeight } = toRefs(props);
+		const { mapWidth, mapHeight, blockColors } = toRefs(props);
 		const mapEl = useTemplateRef('map');
 
-		let mapElLeft: number = 0;
-		let mapElTop: number = 0;
-
-		const isDragged = ref(false);
+		const interactionState = reactive({
+			isDragging: false,
+			mode: null,
+			dragOffsetX: 0,
+			dragOffsetY: 0,
+			mapRect: null,
+		});
 
 		const canvasMapStyle = computed((): { [string]: string } => ({
 			width: `${toValue(mapWidth)}px`,
 			height: `${toValue(mapHeight)}px`,
 		}));
 
-		const preparedBlock = computed((): Array<DiagramBlock> => {
-			if (toValue(blocks).length === 1)
+		const layoutData = computed(() => {
+			const items = toValue(blocks);
+
+			if (!Type.isArrayFilled(items))
 			{
-				return [
-					{
-						id: FIRST_EMPTY_BLOCK_ID,
-						position: {
-							x: 0,
-							y: 0,
-						},
-						dimensions: {
-							width: 0,
-							height: 0,
-						},
-					},
-					{ ...toValue(blocks)[0] },
-					{
-						id: LAST_EMPTY_BLOCK_ID,
-						position: {
-							x: props.mapWidth,
-							y: props.mapHeight,
-						},
-						dimensions: {
-							width: 0,
-							height: 0,
-						},
-					},
-				];
+				const cWidth = toValue(canvasWidth);
+				const cHeight = toValue(canvasHeight);
+
+				return {
+					sortedBlocks: [],
+					minX: 0,
+					minY: 0,
+					width: cWidth ? 2 * cWidth : 1000,
+					height: cHeight ? 2 * cHeight : 1000,
+				};
 			}
 
-			return toValue(blocks);
-		});
+			let minX = Infinity;
+			let minY = Infinity;
+			let maxX = -Infinity;
+			let maxY = -Infinity;
 
-		const startDiagramX = computed((): number => {
-			return toValue(preparedBlock)
-				.reduce((min, block) => Math.min(min, block.position.x), Infinity);
-		});
+			const frames = [];
+			const content = [];
 
-		const startDiagramY = computed((): number => {
-			return toValue(preparedBlock)
-				.reduce((min, block) => Math.min(min, block.position.y), Infinity);
-		});
+			items.forEach((block: DiagramBlock) => {
+				const { x, y } = block.position;
+				const { width, height } = block.dimensions;
 
-		const diagramWidth = computed((): number => {
-			if (!Type.isArrayFilled(toValue(blocks)))
-			{
-				return props.mapWidth;
-			}
+				minX = Math.min(minX, x);
+				minY = Math.min(minY, y);
+				maxX = Math.max(maxX, x + width);
+				maxY = Math.max(maxY, y + height);
 
-			const maxX: number = toValue(preparedBlock).reduce(
-				(max, block): number => Math.max(max, block.position.x + block.dimensions.width),
-				-Infinity,
-			);
-
-			return maxX - toValue(startDiagramX);
-		});
-
-		const diagramHeight = computed((): number => {
-			if (!Type.isArrayFilled(toValue(blocks)))
-			{
-				return props.mapHeight;
-			}
-
-			const maxY: number = toValue(preparedBlock).reduce(
-				(max, block) => Math.max(max, block.position.y + block.dimensions.height),
-				-Infinity,
-			);
-
-			return maxY - toValue(startDiagramY);
-		});
-
-		const scaleMap = computed((): number => {
-			return Math.min(
-				toValue(mapWidth) / toValue(diagramWidth),
-				toValue(mapHeight) / toValue(diagramHeight),
-			);
-		});
-
-		const cursorRectWidth = computed((): number => {
-			return toValue(canvasWidth) * toValue(scaleMap) / toValue(zoom);
-		});
-
-		const cursorRectHeight = computed((): number => {
-			return toValue(canvasHeight) * toValue(scaleMap) / toValue(zoom);
-		});
-
-		const cursorRectPosition = computed((): CursorRectPosition => {
-			let width = toValue(cursorRectWidth);
-			let height = toValue(cursorRectHeight);
-
-			let x = (toValue(transformX) - toValue(startDiagramX)) * toValue(scaleMap);
-			let y = (toValue(transformY) - toValue(startDiagramY)) * toValue(scaleMap);
-
-			[x, width] = width > toValue(mapWidth)
-				? [1, toValue(mapWidth) - CURSOR_RECT_STROKE_WIDTH]
-				: [x, width];
-
-			[y, height] = height > toValue(mapHeight)
-				? [1, toValue(mapHeight) - CURSOR_RECT_STROKE_WIDTH]
-				: [y, height];
-
-			x = x < 0 ? 1 : x;
-			y = y < 0 ? 1 : y;
-
-			x = (x + width) > toValue(mapWidth)
-				? toValue(mapWidth) - width - CURSOR_RECT_STROKE_WIDTH
-				: x;
-			y = (y + height) > toValue(mapHeight)
-				? toValue(mapHeight) - height - CURSOR_RECT_STROKE_WIDTH
-				: y;
+				if (block?.type === FRAME_BLOCK_TYPE)
+				{
+					frames.push(block);
+				}
+				else
+				{
+					content.push(block);
+				}
+			});
 
 			return {
-				x,
-				y,
-				width,
-				height,
+				sortedBlocks: [
+					...content,
+					...frames,
+				],
+				minX: minX - MAP_PADDING,
+				minY: minY - MAP_PADDING,
+				width: (maxX + MAP_PADDING) - (minX - MAP_PADDING),
+				height: (maxY + MAP_PADDING) - (minY - MAP_PADDING),
 			};
 		});
 
-		function updateCameraPosition(event: MouseEvent): void
-		{
-			const x: number = event.clientX - mapElLeft;
-			const y: number = event.clientY - mapElTop;
+		const sortedBlocks = computed(() => toValue(layoutData).sortedBlocks);
+		const contentOffsetX = computed(() => toValue(layoutData).minX);
+		const contentOffsetY = computed(() => toValue(layoutData).minY);
 
-			const canvasX: number = x / toValue(scaleMap) + toValue(startDiagramX);
-			const canvasY: number = y / toValue(scaleMap) + toValue(startDiagramY);
+		const renderScale = computed((): number => {
+			const { width, height } = toValue(layoutData);
+
+			if (width <= 0 || height <= 0)
+			{
+				return 1;
+			}
+
+			return Math.min(
+				toValue(mapWidth) / width,
+				toValue(mapHeight) / height,
+			);
+		});
+
+		const viewportIndicator = computed((): ViewportIndicatorRect => {
+			const scale = toValue(renderScale);
+			const currentZoom = toValue(zoom);
+
+			const width = toValue(canvasWidth) * scale / currentZoom;
+			const height = toValue(canvasHeight) * scale / currentZoom;
+
+			const x = (toValue(transformX) - toValue(contentOffsetX)) * scale;
+			const y = (toValue(transformY) - toValue(contentOffsetY)) * scale;
+
+			return { x, y, width, height };
+		});
+
+		function isPointInViewport(x: number, y: number): boolean
+		{
+			const indicator = toValue(viewportIndicator);
+
+			return (
+				x >= indicator.x
+				&& x <= indicator.x + indicator.width
+				&& y >= indicator.y
+				&& y <= indicator.y + indicator.height
+			);
+		}
+
+		function updateCamera(clientX: number, clientY: number): void
+		{
+			if (!interactionState.mapRect)
+			{
+				return;
+			}
+
+			const mouseRelX = clientX - interactionState.mapRect.left;
+			const mouseRelY = clientY - interactionState.mapRect.top;
+
+			const indicator = toValue(viewportIndicator);
+			const scale = toValue(renderScale);
+			const currentZoom = toValue(zoom);
+
+			let targetMapX = mouseRelX - indicator.width;
+			let targetMapY = mouseRelY - indicator.height;
+
+			if (interactionState.mode === INTERACTION_STATE_MODES.CURSOR)
+			{
+				targetMapX = mouseRelX - interactionState.dragOffsetX - (indicator.width / 2);
+				targetMapY = mouseRelY - interactionState.dragOffsetY - (indicator.height / 2);
+			}
+
+			const canvasX = targetMapX / scale + toValue(contentOffsetX);
+			const canvasY = targetMapY / scale + toValue(contentOffsetY);
 
 			setCamera({
-				x: canvasX - (toValue(canvasWidth) / toValue(zoom) / 2),
-				y: canvasY - (toValue(canvasHeight) / toValue(zoom) / 2),
-				zoom: toValue(zoom),
+				x: canvasX + (toValue(canvasWidth) / currentZoom / 2),
+				y: canvasY + (toValue(canvasHeight) / currentZoom / 2),
+				zoom: currentZoom,
 				viewportX: 0,
 				viewportY: 0,
 			});
@@ -206,43 +217,85 @@ export const CanvasMap = {
 
 		function onMapMouseDown(event: MouseEvent): void
 		{
-			isDragged.value = true;
+			event.preventDefault();
 
-			if (toValue(mapEl))
-			{
-				const { left, top } = toValue(mapEl).getBoundingClientRect();
-				[mapElLeft, mapElTop] = [left, top];
-			}
-
-			updateCameraPosition(event);
-		}
-
-		function onMapMouseMove(event: MouseEvent): void
-		{
-			if (!toValue(isDragged))
+			const el = toValue(mapEl);
+			if (!el)
 			{
 				return;
 			}
 
-			updateCameraPosition(event);
+			const rect = el.getBoundingClientRect();
+			interactionState.mapRect = rect;
+			interactionState.isDragging = true;
+
+			const mouseRelX = event.clientX - rect.left;
+			const mouseRelY = event.clientY - rect.top;
+
+			if (isPointInViewport(mouseRelX, mouseRelY))
+			{
+				const indicator = toValue(viewportIndicator);
+				interactionState.mode = INTERACTION_STATE_MODES.CURSOR;
+				interactionState.dragOffsetX = mouseRelX - indicator.x;
+				interactionState.dragOffsetY = mouseRelY - indicator.y;
+			}
+			else
+			{
+				interactionState.mode = INTERACTION_STATE_MODES.MAP;
+				interactionState.dragOffsetX = 0;
+				interactionState.dragOffsetY = 0;
+				updateCamera(event.clientX, event.clientY);
+			}
+		}
+
+		function onMapMouseMove(event: MouseEvent): void
+		{
+			if (!interactionState.isDragging)
+			{
+				return;
+			}
+
+			event.preventDefault();
+			updateCamera(event.clientX, event.clientY);
 		}
 
 		function onMapMouseUp(event: MouseEvent): void
 		{
-			isDragged.value = false;
-			updateCameraPosition(event);
+			interactionState.isDragging = false;
+			interactionState.mode = null;
+		}
+
+		function getBlockColor(block: ?DiagramBlock): string
+		{
+			const blockType = block?.node?.type;
+			const colorIndex = block?.node?.colorIndex;
+
+			if (blockType === FRAME_BLOCK_TYPE)
+			{
+				return DEFAULT_FRAME_BLOCK_COLOR;
+			}
+
+			if (colorIndex === null || colorIndex === false)
+			{
+				return DEFAULT_BLOCK_COLOR;
+			}
+
+			const palette = toValue(blockColors) ?? {};
+
+			return palette[colorIndex] || DEFAULT_BLOCK_COLOR;
 		}
 
 		return {
-			preparedBlock,
+			sortedBlocks,
 			canvasMapStyle,
-			startDiagramX,
-			startDiagramY,
-			scaleMap,
-			cursorRectPosition,
+			contentOffsetX,
+			contentOffsetY,
+			renderScale,
+			viewportIndicator,
 			onMapMouseDown,
 			onMapMouseMove,
 			onMapMouseUp,
+			getBlockColor,
 		};
 	},
 	template: `
@@ -255,23 +308,25 @@ export const CanvasMap = {
 				@mousedown="onMapMouseDown"
 				@mousemove="onMapMouseMove"
 				@mouseup="onMapMouseUp"
+				@mouseleave="onMapMouseUp"
 			>
 				<rect
-					v-for="block in preparedBlock"
+					v-for="block in sortedBlocks"
 					:key="block.id"
-					:x="(block.position.x - startDiagramX) * scaleMap"
-					:y="(block.position.y - startDiagramY) * scaleMap"
-					:width="block.dimensions.width * scaleMap"
-					:height="block.dimensions.height * scaleMap"
+					:x="(block.position.x - contentOffsetX) * renderScale"
+					:y="(block.position.y - contentOffsetY) * renderScale"
+					:width="block.dimensions.width * renderScale"
+					:height="block.dimensions.height * renderScale"
 					:rx="2"
+					:fill="getBlockColor(block)"
 					class="ui-block-diagram-canvas-map__block"
 				/>
 				<rect
-					:x="cursorRectPosition.x"
-					:y="cursorRectPosition.y"
-					:width="cursorRectPosition.width"
-					:height="cursorRectPosition.height"
-					:rx="3"
+					:x="viewportIndicator.x"
+					:y="viewportIndicator.y"
+					:width="viewportIndicator.width"
+					:height="viewportIndicator.height"
+					:rx="4"
 					class="ui-block-diagram-canvas-map__cursor"
 				/>
 			</svg>

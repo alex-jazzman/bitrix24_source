@@ -33,6 +33,7 @@ if (!empty($arParams["~AUTH_RESULT"]))
 
 		<input type="hidden" name="AUTH_FORM" value="Y" />
 		<input type="hidden" name="TYPE" value="OTP" />
+		<?= bitrix_sessid_post(); ?>
 
 		<table class="bx-auth-table">
 			<tr>

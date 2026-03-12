@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Type, Runtime } from 'main.core';
 import { Uploader } from 'ui.uploader.core';
 import 'disk.document';
 import { DocumentService, DocumentType } from '../const';
@@ -6,8 +6,10 @@ import { DocumentService, DocumentType } from '../const';
 type CreateDocumentOptions = {
 	uploader: Uploader,
 	documentType: 'docx' | 'xlsx' | 'pptx' | 'board',
-	onAddFile: Function,
+	onAddFile?: Function,
+	onSuccess?: Function,
 	documentHandlers: { name: string, code: string, supportsUnifiedLink: boolean }[],
+	node: ?HTMLElement,
 };
 
 export const createDocumentDialog = (options: CreateDocumentOptions = {}): void => {
@@ -52,6 +54,7 @@ export const createDocumentDialog = (options: CreateDocumentOptions = {}): void 
 				);
 
 				onAddFile?.();
+				options.onSuccess?.(response);
 
 				if (newTab !== null && response.openUrl)
 				{
@@ -63,6 +66,7 @@ export const createDocumentDialog = (options: CreateDocumentOptions = {}): void 
 	else
 	{
 		const documentService = BX.Disk.getDocumentService();
+
 		const byUnifiedLink = options.documentHandlers.some((handler) => handler.supportsUnifiedLink
 			&& handler.code === documentService);
 
@@ -86,6 +90,7 @@ export const createDocumentDialog = (options: CreateDocumentOptions = {}): void 
 				);
 
 				onAddFile?.();
+				options.onSuccess?.(response);
 			}
 		};
 
@@ -93,8 +98,13 @@ export const createDocumentDialog = (options: CreateDocumentOptions = {}): void 
 			typeFile: documentType,
 			serviceCode: documentService,
 			byUnifiedLink,
+			triggerNode: options.node,
 			onAfterSave: saveCallback,
 			onAfterCreateFile: saveCallback,
+			analytics: {
+				c_sub_section: 'new_element',
+				c_element: 'docs_attach',
+			},
 		});
 
 		createProcess.start();

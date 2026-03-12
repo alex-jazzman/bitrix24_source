@@ -279,7 +279,7 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 				Text(
 					{
 						style: styles.itemText(isHorizontalPositioning),
-						numberOfLines: 2,
+						numberOfLines: 3,
 						ellipsize: 'end',
 						text,
 					},
@@ -333,6 +333,7 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 					if (this.props.menu)
 					{
 						this.props.menu.close(() => qrauth.open({
+							showHint: true,
 							...this.qrauthParameters,
 							layout: this.parentWidget,
 						}));

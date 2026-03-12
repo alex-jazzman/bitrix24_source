@@ -7,7 +7,7 @@ jn.define('settings-v2/ui/items/src/cache-info-button', (require, exports, modul
 	const { createTestIdGenerator } = require('utils/test');
 	const { NativeCacheService } = require('settings-v2/services/native');
 	const { formatFileSize } = require('utils/file');
-	const { EventType, NativeSettingsId } = require('settings-v2/const');
+	const { EventType } = require('settings-v2/const');
 	const { SettingEmitter } = require('settings-v2/emitter');
 	const { showToast } = require('toast');
 	const { Loc } = require('loc');
@@ -42,16 +42,15 @@ jn.define('settings-v2/ui/items/src/cache-info-button', (require, exports, modul
 		};
 
 		loadCacheSize = async () => {
-			const fileSize = await NativeCacheService.getSettingValueById(NativeSettingsId.CACHE_FILES);
+			const totalSize = await NativeCacheService.getTotalCacheSize();
 			this.setState({
-				fileSize,
+				totalSize,
 			});
 		};
 
 		render()
 		{
-			const { fileSize } = this.state;
-			const totalSize = fileSize;
+			const { totalSize } = this.state;
 			const GB_SIZE = 1024 * 1024 * 1024;
 			const precision = totalSize > GB_SIZE ? 2 : 0;
 			const cacheSizeText = formatFileSize(totalSize, precision);

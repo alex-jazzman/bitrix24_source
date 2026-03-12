@@ -102,6 +102,11 @@ jn.define('feature', (require, exports, module) => {
 		{
 			return Boolean(feature?.isFeatureEnabled('jnlayout_take_snapshot'));
 		}
+
+		static isRefreshViewFixEnabled()
+		{
+			return Application.getPlatform() !== 'android' || Boolean(feature?.isFeatureEnabled('refresh_view_fixed'));
+		}
 	}
 
 	/**

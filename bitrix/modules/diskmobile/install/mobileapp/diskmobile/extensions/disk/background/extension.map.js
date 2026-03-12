@@ -1,0 +1,1 @@
+{"version":3,"file":"extension.map.js","names":["BX","addCustomEvent","async","params","require","ext","jn","inAppUrl","open","url","canOpenInDefault"],"sources":["extension.js"],"mappings":"AAAA,MACCA,GAAGC,eAAe,oBAAoBC,MAAOC,EAAS,CAAC,KACtD,MAAMC,EAAWC,GAAQC,GAAGF,QAAQC,GACpC,MAAME,SAAEA,GAAaH,EAAQ,cAE7BG,EAASC,KAAKL,EAAOM,IAAK,CAAEC,iBAAkB,MAAO,GAEtD,EAPD","ignoreList":[]}

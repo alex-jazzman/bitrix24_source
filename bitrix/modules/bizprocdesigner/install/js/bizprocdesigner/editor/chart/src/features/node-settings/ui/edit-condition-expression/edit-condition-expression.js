@@ -4,13 +4,12 @@ import { diagramStore } from '../../../../entities/blocks';
 import { ValueSelector } from '../../../../entities/common-node-settings';
 // eslint-disable-next-line no-unused-vars
 import type { ConditionConstruction, ConditionExpressionField } from '../../../../entities/node-settings';
-import { evaluateConditionExpressionFieldTitle } from '../../../../entities/node-settings/utils';
 import { useLoc } from '../../../../shared/composables';
 
-// eslint-disable-next-line no-unused-vars
 import {
 	useNodeSettingsStore,
 	CONSTRUCTION_OPERATORS,
+	evaluateConditionExpressionFieldTitle,
 } from '../../../../entities/node-settings';
 import { OperatorPhraseCodes, OperatorRequiresValue } from './const';
 import { FieldSelector } from './field-selector';
@@ -177,6 +176,7 @@ export const EditConditionExpression = {
 					<div
 						ref="fieldChooseMenu"
 						class="ui-ctl-element"
+						:title="selectedFieldTitle"
 						@click="onShowFieldChooseMenu"
 					>
 						{{ selectedFieldTitle }}

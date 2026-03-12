@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
-use Bitrix\BIConnector\Configuration\Feature;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
@@ -33,7 +32,7 @@ if (!function_exists('renderBIAnalyticsColumn'))
 		$flowId = $data['flowId'];
 
 		$onclick = getBIOnclick($dashboards, $flowId);
-		$hint =getBIEmptyHint($dashboards, $isDashboardsExist);
+		$hint = getBIEmptyHint($dashboards, $isDashboardsExist);
 
 		return <<<HTML
 			<div class="tasks-flow__list-cell $disableClass">
@@ -96,14 +95,6 @@ if (!function_exists('getBIEmptyHint'))
 			}
 
 			return '';
-		}
-
-		if (
-			Loader::includeModule('biconnector')
-			&& !Feature::isBuilderEnabled()
-		)
-		{
-			return getHint(Loc::getMessage('TASKS_FLOW_LIST_BI_CONSTRUCTOR_TARIFF_ERROR'));
 		}
 
 		if (

@@ -1,14 +1,16 @@
-"use strict";
+'use strict';
+
 /**
  * @bxjs_lang_path component.php
  */
 
 /* Clean session variables after page restart */
-if (typeof clearInterval == 'undefined')
+if (typeof clearInterval === 'undefined')
 {
 	clearInterval = (id) => clearTimeout(id);
 }
-if (typeof ChatUserList != 'undefined' && typeof ChatUserList.cleaner != 'undefined')
+
+if (typeof ChatUserList !== 'undefined' && typeof ChatUserList.cleaner !== 'undefined')
 {
 	ChatUserList.cleaner();
 }
@@ -33,18 +35,19 @@ ChatUserList.init = function()
 	if (!this.dialogId)
 	{
 		this.close();
+
 		return false;
 	}
 
 	/* set cross-links in class */
-	let links = ['base', 'event', 'rest'];
+	const links = ['base', 'event', 'rest'];
 	links.forEach((subClass) => {
-		if (typeof this[subClass] != 'undefined')
+		if (typeof this[subClass] !== 'undefined')
 		{
 			links.forEach((element) => {
 				if (element == 'base')
 				{
-					this[subClass]['base'] = this;
+					this[subClass].base = this;
 				}
 				else if (subClass != element)
 				{
@@ -68,13 +71,14 @@ ChatUserList.openUserProfile = function(userId, userData = {})
 
 	void UserProfile.open({
 		ownerId: userId,
+		analyticsSection: 'im_chat_user_list',
 		widgetParams: {
 			imageUrl: ChatUtils.getAvatar(userData.avatar),
 			title: userData.name,
 			workPosition: userData.work_position,
 			name: userData.name,
 			isBackdrop: this.isBackdrop,
-			url: currentDomain+'/mobile/users/?user_id='+userId+'&FROM_DIALOG=Y',
+			url: `${currentDomain}/mobile/users/?user_id=${userId}&FROM_DIALOG=Y`,
 		},
 	});
 
@@ -84,12 +88,14 @@ ChatUserList.openUserProfile = function(userId, userData = {})
 ChatUserList.alert = function(text)
 {
 	ChatUserListInterface.showAlert(text);
+
 	return true;
 };
 
 ChatUserList.close = function()
 {
 	ChatUserListInterface.close();
+
 	return true;
 };
 
@@ -100,17 +106,16 @@ ChatUserList.cleaner = function()
 	console.warn('ChatUserList.cleaner: OK');
 };
 
-
 /* Event API */
 ChatUserList.event = {};
 
-ChatUserList.event.init = function ()
+ChatUserList.event.init = function()
 {
 	this.debug = false;
 
 	this.handlersList = {
-		onItemAction : this.onItemAction,
-		onItemSelected : this.onItemSelected
+		onItemAction: this.onItemAction,
+		onItemSelected: this.onItemSelected,
 	};
 
 	ChatUserListInterface.setListener(this.router.bind(this));
@@ -120,10 +125,10 @@ ChatUserList.event.init = function ()
 		if (this.base.users.length <= 0)
 		{
 			this.base.items.push({
-				title : BX.message("IM_USER_LIST_EMPTY"),
-				type:"button",
+				title: BX.message('IM_USER_LIST_EMPTY'),
+				type: 'button',
 				unselectable: true,
-				params: { action: 'empty'}
+				params: { action: 'empty' },
 			});
 		}
 		else
@@ -142,11 +147,11 @@ ChatUserList.event.router = function(eventName, eventResult)
 {
 	if (this.handlersList[eventName])
 	{
-		this.handlersList[eventName].apply(this, [eventResult])
+		this.handlersList[eventName].apply(this, [eventResult]);
 	}
 	else if (this.debug)
 	{
-		console.info('ChatUserList.event.router: skipped event - '+eventName+' '+JSON.stringify(eventResult));
+		console.info(`ChatUserList.event.router: skipped event - ${eventName} ${JSON.stringify(eventResult)}`);
 	}
 };
 
@@ -185,7 +190,6 @@ ChatUserList.event.onItemSelected = function(event)
 		return false;
 	}
 
-
 	this.base.openUserProfile(event.params.id, {
 		avatar: event.imageUrl,
 		name: event.title,
@@ -195,55 +199,51 @@ ChatUserList.event.onItemSelected = function(event)
 	return true;
 };
 
-
 /* Rest API */
 ChatUserList.rest = {};
 
-ChatUserList.rest.userDelete = function (userId)
+ChatUserList.rest.userDelete = function(userId)
 {
-	BX.rest.callMethod('im.chat.user.delete', {'DIALOG_ID': this.base.dialogId, 'USER_ID': userId})
-		.then((result) =>
-		{
+	BX.rest.callMethod('im.chat.user.delete', { DIALOG_ID: this.base.dialogId, USER_ID: userId })
+		.then((result) => {
 			if (result.data())
 			{
-				this.base.items = this.base.items.filter(element => element.id != userId);
+				this.base.items = this.base.items.filter((element) => element.id != userId);
 				console.info(`ChatUserList.rest.userDelete: user ${userId} deleted`);
 			}
 			else
 			{
-				console.error("ChatUserList.rest.userDelete: we have some problems on server\n", result.answer);
+				console.error('ChatUserList.rest.userDelete: we have some problems on server\n', result.answer);
 				this.base.alert(BX.message('IM_USER_API_ERROR'));
 			}
 		})
-		.catch((result) =>
-		{
-			let error = result.error();
+		.catch((result) => {
+			const error = result.error();
 			if (error.ex.error == 'NO_INTERNET_CONNECTION')
 			{
-				console.error("ChatUserList.rest.userDelete - error: connection error", error.ex);
+				console.error('ChatUserList.rest.userDelete - error: connection error', error.ex);
 				this.base.alert(BX.message('IM_USER_CONNECTION_ERROR'));
 			}
 			else
 			{
-				console.error("ChatUserList.rest.userDelete - error: we have some problems on server\n", result.answer);
+				console.error('ChatUserList.rest.userDelete - error: we have some problems on server\n', result.answer);
 				this.base.alert(BX.message('IM_USER_API_ERROR'));
 			}
 		});
 };
 
-ChatUserList.rest.setOwner = function (userId)
+ChatUserList.rest.setOwner = function(userId)
 {
-	BX.rest.callMethod('im.chat.setOwner', {'DIALOG_ID': this.base.dialogId, 'USER_ID': userId})
-		.then((result) =>
-		{
+	BX.rest.callMethod('im.chat.setOwner', { DIALOG_ID: this.base.dialogId, USER_ID: userId })
+		.then((result) => {
 			if (result.data())
 			{
-				this.base.items = this.base.items.map(item => {
+				this.base.items = this.base.items.map((item) => {
 					item.actions = [];
 
 					if (item.id == userId)
 					{
-						item.styles.title.image = {name: 'name_status_owner'};
+						item.styles.title.image = { name: 'name_status_owner' };
 					}
 					else if (
 						item.styles
@@ -262,46 +262,43 @@ ChatUserList.rest.setOwner = function (userId)
 			}
 			else
 			{
-				console.error("ChatUserList.rest.setOwner: we have some problems on server\n", result.answer);
+				console.error('ChatUserList.rest.setOwner: we have some problems on server\n', result.answer);
 				this.base.alert(BX.message('IM_USER_API_ERROR'));
 			}
 		})
-		.catch((result) =>
-		{
-			let error = result.error();
+		.catch((result) => {
+			const error = result.error();
 			if (error.ex.error == 'NO_INTERNET_CONNECTION')
 			{
-				console.error("ChatUserList.rest.setOwner - error: connection error", error.ex);
+				console.error('ChatUserList.rest.setOwner - error: connection error', error.ex);
 				this.base.alert(BX.message('IM_USER_CONNECTION_ERROR'));
 			}
 			else
 			{
-				console.error("ChatUserList.rest.setOwner - error: we have some problems on server\n", result.answer);
+				console.error('ChatUserList.rest.setOwner - error: we have some problems on server\n', result.answer);
 				this.base.alert(BX.message('IM_USER_API_ERROR'));
 			}
 		});
 };
 
-ChatUserList.rest.userListGet = function (users)
+ChatUserList.rest.userListGet = function(users)
 {
 	let restMethod = 'im.user.list.get';
-	let restParams = {ID: users, RESULT_TYPE: 'array'};
+	let restParams = { ID: users, RESULT_TYPE: 'array' };
 
 	if (!users)
 	{
 		restMethod = 'im.dialog.users.get';
-		restParams = {DIALOG_ID: this.base.dialogId};
+		restParams = { DIALOG_ID: this.base.dialogId };
 	}
 
-	BX.rest.callMethod(restMethod, restParams).then((result) =>
-	{
+	BX.rest.callMethod(restMethod, restParams).then((result) => {
 		if (result.data())
 		{
 			const items = [];
 
-			result.data().forEach(element =>
-			{
-				let item = ChatDataConverter.getSearchElementFormat(element);
+			result.data().forEach((element) => {
+				const item = ChatDataConverter.getSearchElementFormat(element);
 				item.actions = [];
 
 				if (this.base.type === 'USERS')
@@ -312,15 +309,15 @@ ChatUserList.rest.userListGet = function (users)
 						{
 							if (
 								this.base.userId !== item.id
-								&& linesUsers.indexOf(item.id) < 0
+								&& !linesUsers.includes(item.id)
 							)
 							{
 								item.actions.push({
-									title : BX.message("IM_USER_LIST_KICK"),
-									identifier : "kick",
-									iconName : "action_delete",
-									destruct : true,
-									color : "#df532d"
+									title: BX.message('IM_USER_LIST_KICK'),
+									identifier: 'kick',
+									iconName: 'action_delete',
+									destruct: true,
+									color: '#df532d',
 								});
 							}
 						}
@@ -340,17 +337,17 @@ ChatUserList.rest.userListGet = function (users)
 								if (!element.extranet)
 								{
 									item.actions.push({
-										title : BX.message("IM_USER_LIST_OWNER"),
-										identifier : "owner",
-										color : "#aac337"
+										title: BX.message('IM_USER_LIST_OWNER'),
+										identifier: 'owner',
+										color: '#aac337',
 									});
 								}
 
 								item.actions.push({
-									title : BX.message("IM_USER_LIST_KICK"),
-									identifier : "kick",
-									destruct : true,
-									color : "#df532d"
+									title: BX.message('IM_USER_LIST_KICK'),
+									identifier: 'kick',
+									destruct: true,
+									color: '#df532d',
 								});
 							}
 						}
@@ -358,7 +355,7 @@ ChatUserList.rest.userListGet = function (users)
 
 					if (item.id === this.base.dialogOwnerId)
 					{
-						item.styles.title.image = {name: 'name_status_owner'};
+						item.styles.title.image = { name: 'name_status_owner' };
 					}
 				}
 
@@ -372,24 +369,23 @@ ChatUserList.rest.userListGet = function (users)
 		}
 		else
 		{
-			console.error("ChatUserList.rest.userListGet: we have some problems on server\n", result.answer);
+			console.error('ChatUserList.rest.userListGet: we have some problems on server\n', result.answer);
 			this.base.alert(BX.message('IM_USER_API_ERROR'));
 		}
 	})
-	.catch((result) =>
-	{
-		let error = result.error();
-		if (error.ex.error === 'NO_INTERNET_CONNECTION')
-		{
-			console.error("ChatUserList.rest.userListGet - error: connection error", error.ex);
-			this.base.alert(BX.message('IM_USER_CONNECTION_ERROR'));
-		}
-		else
-		{
-			console.error("ChatUserList.rest.userListGet - error: we have some problems on server\n", result.answer);
-			this.base.alert(BX.message('IM_USER_API_ERROR'));
-		}
-	});
+		.catch((result) => {
+			const error = result.error();
+			if (error.ex.error === 'NO_INTERNET_CONNECTION')
+			{
+				console.error('ChatUserList.rest.userListGet - error: connection error', error.ex);
+				this.base.alert(BX.message('IM_USER_CONNECTION_ERROR'));
+			}
+			else
+			{
+				console.error('ChatUserList.rest.userListGet - error: we have some problems on server\n', result.answer);
+				this.base.alert(BX.message('IM_USER_API_ERROR'));
+			}
+		});
 };
 
 /* Initialization */

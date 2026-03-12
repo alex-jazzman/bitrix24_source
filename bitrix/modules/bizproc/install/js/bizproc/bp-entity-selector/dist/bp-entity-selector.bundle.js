@@ -1,16 +1,82 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
-(function (exports,main_core,ui_entitySelector) {
+(function (exports,ui_entitySelector,main_core) {
 	'use strict';
 
-	var _templateObject, _templateObject2;
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	var _templateObject;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _bindEvent = /*#__PURE__*/new WeakSet();
+	var _onItemCreated = /*#__PURE__*/new WeakSet();
+	var Footer = /*#__PURE__*/function (_DefaultFooter) {
+	  babelHelpers.inherits(Footer, _DefaultFooter);
+	  function Footer(dialog, options) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, Footer);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Footer).call(this, dialog, options));
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _onItemCreated);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _bindEvent);
+	    _this.label = options.label ? options.label.toString() : '';
+	    _this.url = options.url ? options.url.toString() : '';
+	    _this.itemLink = options.itemLink ? options.itemLink.toString() : '';
+	    return _this;
+	  }
+	  babelHelpers.createClass(Footer, [{
+	    key: "getContent",
+	    value: function getContent() {
+	      var link = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"ui-selector-footer-link ui-selector-footer-link-add\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), main_core.Text.encode(this.label));
+	      _classPrivateMethodGet(this, _bindEvent, _bindEvent2).call(this, link);
+	      return link;
+	    }
+	  }]);
+	  return Footer;
+	}(ui_entitySelector.DefaultFooter);
+	function _bindEvent2(link) {
+	  var _this2 = this;
+	  main_core.Event.bind(link, 'click', function (event) {
+	    event.preventDefault();
+	    BX.SidePanel.Instance.open(_this2.url, {
+	      width: 1000,
+	      requestMethod: 'post',
+	      events: {
+	        onCloseComplete: function onCloseComplete(event) {
+	          var slider = event.getSlider();
+	          var dictionary = slider ? slider.getData() : null;
+	          var data = null;
+	          if (dictionary && dictionary.has('data')) {
+	            var rawData = dictionary.get('data');
+	            data = {
+	              id: rawData.storageId || rawData.id || null,
+	              title: rawData.storageTitle || rawData.title || ''
+	            };
+	            if (data) {
+	              _classPrivateMethodGet(_this2, _onItemCreated, _onItemCreated2).call(_this2, data);
+	            }
+	          }
+	        }
+	      }
+	    });
+	  });
+	}
+	function _onItemCreated2(data) {
+	  var item = this.getDialog().addItem({
+	    id: data.id,
+	    entityId: this.getDialog().getEntities()[0].id,
+	    title: data.title,
+	    link: "".concat(this.itemLink).concat(data.id)
+	  });
+	  item.select();
+	}
+
+	var _templateObject$1, _templateObject2;
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _containerId = /*#__PURE__*/new WeakMap();
 	var _config = /*#__PURE__*/new WeakMap();
 	var _inputName = /*#__PURE__*/new WeakMap();
@@ -30,14 +96,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var EntitySelector = /*#__PURE__*/function () {
 	  function EntitySelector(options) {
 	    babelHelpers.classCallCheck(this, EntitySelector);
-	    _classPrivateMethodInitSpec(this, _parseInitialValue);
-	    _classPrivateMethodInitSpec(this, _appendInput);
-	    _classPrivateMethodInitSpec(this, _renderHiddenInputs);
-	    _classPrivateMethodInitSpec(this, _updateInputValues);
-	    _classPrivateMethodInitSpec(this, _bindEvents);
-	    _classPrivateMethodInitSpec(this, _createHiddenInputsContainer);
-	    _classPrivateMethodInitSpec(this, _createSelector);
-	    _classPrivateMethodInitSpec(this, _isMultiple);
+	    _classPrivateMethodInitSpec$1(this, _parseInitialValue);
+	    _classPrivateMethodInitSpec$1(this, _appendInput);
+	    _classPrivateMethodInitSpec$1(this, _renderHiddenInputs);
+	    _classPrivateMethodInitSpec$1(this, _updateInputValues);
+	    _classPrivateMethodInitSpec$1(this, _bindEvents);
+	    _classPrivateMethodInitSpec$1(this, _createHiddenInputsContainer);
+	    _classPrivateMethodInitSpec$1(this, _createSelector);
+	    _classPrivateMethodInitSpec$1(this, _isMultiple);
 	    _classPrivateFieldInitSpec(this, _containerId, {
 	      writable: true,
 	      value: void 0
@@ -83,10 +149,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      if (!babelHelpers.classPrivateFieldGet(this, _container)) {
 	        return;
 	      }
-	      _classPrivateMethodGet(this, _createSelector, _createSelector2).call(this);
-	      _classPrivateMethodGet(this, _createHiddenInputsContainer, _createHiddenInputsContainer2).call(this);
-	      _classPrivateMethodGet(this, _renderHiddenInputs, _renderHiddenInputs2).call(this, _classPrivateMethodGet(this, _parseInitialValue, _parseInitialValue2).call(this, babelHelpers.classPrivateFieldGet(this, _initialValue)));
-	      _classPrivateMethodGet(this, _bindEvents, _bindEvents2).call(this);
+	      _classPrivateMethodGet$1(this, _createSelector, _createSelector2).call(this);
+	      _classPrivateMethodGet$1(this, _createHiddenInputsContainer, _createHiddenInputsContainer2).call(this);
+	      _classPrivateMethodGet$1(this, _renderHiddenInputs, _renderHiddenInputs2).call(this, _classPrivateMethodGet$1(this, _parseInitialValue, _parseInitialValue2).call(this, babelHelpers.classPrivateFieldGet(this, _initialValue)));
+	      _classPrivateMethodGet$1(this, _bindEvents, _bindEvents2).call(this);
 	    }
 	  }, {
 	    key: "destroy",
@@ -130,11 +196,15 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return multiple === true;
 	}
 	function _createSelector2() {
+	  if (babelHelpers.classPrivateFieldGet(this, _config).dialogOptions.footerOptions) {
+	    babelHelpers.classPrivateFieldGet(this, _config).dialogOptions.footer = Footer;
+	  }
+	  babelHelpers.classPrivateFieldGet(this, _config).dialogOptions.id = "entityselector_".concat(babelHelpers.classPrivateFieldGet(this, _inputName));
 	  babelHelpers.classPrivateFieldSet(this, _selector, new ui_entitySelector.TagSelector(babelHelpers.classPrivateFieldGet(this, _config)));
 	  babelHelpers.classPrivateFieldGet(this, _selector).renderTo(babelHelpers.classPrivateFieldGet(this, _container));
 	}
 	function _createHiddenInputsContainer2() {
-	  babelHelpers.classPrivateFieldSet(this, _hiddenInputsContainer, main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div></div>"]))));
+	  babelHelpers.classPrivateFieldSet(this, _hiddenInputsContainer, main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div></div>"]))));
 	  main_core.Dom.hide(babelHelpers.classPrivateFieldGet(this, _hiddenInputsContainer));
 	  main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _hiddenInputsContainer), babelHelpers.classPrivateFieldGet(this, _container));
 	}
@@ -145,10 +215,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    return;
 	  }
 	  babelHelpers.classPrivateFieldGet(this, _selector).dialog.subscribe('Item:onSelect', function (event) {
-	    _classPrivateMethodGet(_this, _updateInputValues, _updateInputValues2).call(_this);
+	    _classPrivateMethodGet$1(_this, _updateInputValues, _updateInputValues2).call(_this);
 	  });
 	  babelHelpers.classPrivateFieldGet(this, _selector).dialog.subscribe('Item:onDeselect', function (event) {
-	    _classPrivateMethodGet(_this, _updateInputValues, _updateInputValues2).call(_this);
+	    _classPrivateMethodGet$1(_this, _updateInputValues, _updateInputValues2).call(_this);
 	  });
 	}
 	function _updateInputValues2() {
@@ -163,7 +233,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  var values = selectedItems.map(function (item) {
 	    return String(item.getId());
 	  });
-	  _classPrivateMethodGet(this, _renderHiddenInputs, _renderHiddenInputs2).call(this, values);
+	  _classPrivateMethodGet$1(this, _renderHiddenInputs, _renderHiddenInputs2).call(this, values);
 	}
 	function _renderHiddenInputs2(values) {
 	  var _this2 = this;
@@ -172,11 +242,11 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }
 	  main_core.Dom.clean(babelHelpers.classPrivateFieldGet(this, _hiddenInputsContainer));
 	  if (values.length === 0) {
-	    _classPrivateMethodGet(this, _appendInput, _appendInput2).call(this, '');
+	    _classPrivateMethodGet$1(this, _appendInput, _appendInput2).call(this, '');
 	    return;
 	  }
 	  values.forEach(function (value) {
-	    _classPrivateMethodGet(_this2, _appendInput, _appendInput2).call(_this2, value);
+	    _classPrivateMethodGet$1(_this2, _appendInput, _appendInput2).call(_this2, value);
 	  });
 	}
 	function _appendInput2(value) {
@@ -184,7 +254,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    return;
 	  }
 	  var input = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" />"])));
-	  input.name = _classPrivateMethodGet(this, _isMultiple, _isMultiple2).call(this) ? "".concat(babelHelpers.classPrivateFieldGet(this, _inputName), "[]") : babelHelpers.classPrivateFieldGet(this, _inputName);
+	  input.name = _classPrivateMethodGet$1(this, _isMultiple, _isMultiple2).call(this) ? "".concat(babelHelpers.classPrivateFieldGet(this, _inputName), "[]") : babelHelpers.classPrivateFieldGet(this, _inputName);
 	  input.value = value;
 	  main_core.Dom.append(input, babelHelpers.classPrivateFieldGet(this, _hiddenInputsContainer));
 	}
@@ -192,7 +262,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  if (!value) {
 	    return [];
 	  }
-	  if (_classPrivateMethodGet(this, _isMultiple, _isMultiple2).call(this) && main_core.Type.isArray(value)) {
+	  if (_classPrivateMethodGet$1(this, _isMultiple, _isMultiple2).call(this) && main_core.Type.isArray(value)) {
 	    return value;
 	  }
 	  return [value];
@@ -202,5 +272,5 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 
 	exports.EntitySelector = EntitySelector;
 
-}((this.BX.Bizproc.EntitySelector = this.BX.Bizproc.EntitySelector || {}),BX,BX.UI.EntitySelector));
+}((this.BX.Bizproc.EntitySelector = this.BX.Bizproc.EntitySelector || {}),BX.UI.EntitySelector,BX));
 //# sourceMappingURL=bp-entity-selector.bundle.js.map

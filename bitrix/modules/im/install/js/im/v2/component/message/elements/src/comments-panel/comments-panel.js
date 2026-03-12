@@ -102,10 +102,19 @@ export const CommentsPanel = {
 
 			return this.loc('IM_MESSAGE_COMMENTS_PANEL_ICON_SUBSCRIBE');
 		},
+		isRealMessage(): boolean
+		{
+			return this.$store.getters['messages/isRealMessage'](this.message.id);
+		},
 	},
 	methods: {
 		onCommentsClick()
 		{
+			if (!this.isRealMessage)
+			{
+				return;
+			}
+
 			const permissionManager = PermissionManager.getInstance();
 			if (!permissionManager.canPerformActionByRole(ActionByRole.openComments, this.dialogId))
 			{

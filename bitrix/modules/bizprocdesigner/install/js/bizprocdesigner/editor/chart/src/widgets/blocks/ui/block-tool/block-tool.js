@@ -1,27 +1,33 @@
 import { MoveableBlock } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
 import { Type } from 'main.core';
-import { isBlockActivated } from '../../../../entities/blocks/utils';
+import type { MenuItemOptions } from 'ui.vue3.components.menu';
+import { isBlockActivated, getBlockUserTitle } from '../../../../entities/blocks/utils';
 import { IconDivider, IconButton } from '../../../../shared/ui';
-// eslint-disable-next-line no-unused-vars
-import type { Block, BlockId } from '../../../../shared/types';
 import {
 	BlockContainer,
 	BlockLayout,
 	BlockHeader,
 	BlockIcon,
 	PortsInOutCenter,
+	BlockTopTitle,
 } from '../../../../entities/blocks';
 import {
 	DeleteBlockIconBtn,
 	UpdatePublishedStatusLabel,
 } from '../../../../features/blocks';
 
+import type { Block } from '../../../../shared/types';
+
 import { BlockMediator } from '../../lib';
 
 type BlockToolSetup = {
 	iconSet: { [string]: string };
-	onOpenBlockSettings: (event: MouseEvent) => void;
+	blockMediator: BlockMediator;
+};
+
+type Props = {
+	block: Block,
 };
 
 // @vue/component
@@ -38,6 +44,7 @@ export const BlockTool = {
 		IconDivider,
 		IconButton,
 		PortsInOutCenter,
+		BlockTopTitle,
 	},
 	props: {
 		/** @type Block */
@@ -46,12 +53,26 @@ export const BlockTool = {
 			required: true,
 		},
 	},
-	setup(props): BlockToolSetup
+	setup(props: Props): BlockToolSetup
 	{
 		return {
 			iconSet: Outline,
 			blockMediator: new BlockMediator(),
 		};
+	},
+	computed: {
+		isBlockActivated(): boolean
+		{
+			return isBlockActivated(this.block);
+		},
+		userTitle(): ?string
+		{
+			return getBlockUserTitle(this.block);
+		},
+		contextMenuItems(): Array<MenuItemOptions>
+		{
+			return this.blockMediator.getCommonBlockMenuOptions(this.block);
+		},
 	},
 	methods: {
 		isUrl(value: string): boolean
@@ -109,35 +130,31 @@ export const BlockTool = {
 			};
 		},
 	},
-	computed: {
-		isBlockActivated(): boolean
-		{
-			return isBlockActivated(this.block);
-		}
-	},
 	template: `
 		<MoveableBlock :block="block">
-			<template #default="{ isHighlighted, isDragged, isDisabled }">
+			<template #default="{ isHighlighted, isDragged, isDisabled, isMakeNewConnection }">
 				<BlockContainer
 					:width="200"
-					:highlighted="isHighlighted"
+					:highlighted="isHighlighted && !isDragged"
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
-					:contextMenuItems="[
-						blockMediator.getCtxMenuItemShowSimpleSettings(block),
-						blockMediator.getCtxMenuItemDeleteBlock(block),
-					]"
+					:hoverable="!isMakeNewConnection"
+					:contextMenuItems="contextMenuItems"
 					@dblclick.stop="blockMediator.showCommonNodeSettings(block)"
 				>
 					<BlockLayout
 						:block="block"
-						:moreMenuItems="[
-							blockMediator.getCtxMenuItemShowSimpleSettings(block),
-							blockMediator.getCtxMenuItemDeleteBlock(block),
-						]"
+						:moreMenuItems="contextMenuItems"
 						:dragged="isDragged"
 						:disabled="isDisabled"
+						:hoverable="!isMakeNewConnection"
 					>
+						<template #top-menu-title>
+							<BlockTopTitle
+								:title="userTitle"
+								:description="block.activity.Properties.EditorComment"
+							/>
+						</template>
 						<template #top-menu>
 							<DeleteBlockIconBtn
 								:blockId="block.id"

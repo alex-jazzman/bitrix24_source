@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Tasks\V2\Internal\Integration\Im;
+use Bitrix\Tasks\V2\Internal\Integration\Rest;
+use Bitrix\Tasks\V2\Internal\Integration\Bizproc;
 
 return [
 	'value' => [
@@ -16,10 +18,11 @@ return [
 			Im\EventHandler\OnAfterReadMessageEvent\SendPushNotification::class,
 		],
 		\Bitrix\Im\V2\Chat\ExternalChat\Event\AfterSendMessageEvent::class => [
+			Im\EventHandler\OnAfterSendMessageEvent\UpdateLastActivityDate::class,
 			Im\EventHandler\OnAfterSendMessageEvent\AddUserToAuditors::class,
 			Im\EventHandler\OnAfterSendMessageEvent\UpdateCounters::class,
 			Im\EventHandler\OnAfterSendMessageEvent\SendPushNotification::class,
-			Im\EventHandler\OnAfterSendMessageEvent\UpdateLastActivityDate::class,
+			Rest\EventHandler\OnAfterSendMessageEvent\ExecuteRestEvent::class,
 		],
 		\Bitrix\Im\V2\Chat\ExternalChat\Event\AfterMuteEvent::class => [
 			Im\EventHandler\OnAfterMuteEvent\TaskSync::class,
@@ -31,6 +34,12 @@ return [
 		\Bitrix\Im\V2\Message\Event\AfterReadAllChatsByTypeEvent::class => [
 			Im\EventHandler\OnAfterReadAllChatsByTypeTasksTask\UpdateCounters::class,
 			Im\EventHandler\OnAfterReadAllChatsByTypeTasksTask\SendPushNotification::class,
+		],
+		\Bitrix\Im\V2\Chat\ExternalChat\Event\AfterUsersAddEvent::class => [
+			Im\EventHandler\OnAfterUsersAdded\AddUsersToAuditors::class,
+		],
+		\Bitrix\Bizproc\Public\Event\Document\OnGetDocumentTypeEvent\OnGetDocumentTypeEvent::class => [
+			Bizproc\EventHandler\OnGetDocumentTypeEvent\GetDocumentTypes::class,
 		],
 	],
 ];

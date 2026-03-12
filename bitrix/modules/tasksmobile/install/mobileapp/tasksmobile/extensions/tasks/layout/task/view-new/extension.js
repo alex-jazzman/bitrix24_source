@@ -66,6 +66,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		selectDatePlan,
 		setAttachedFiles,
 		updateDeadline,
+		updateAuditors,
+		follow,
+		unfollow,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { groupsUpserted, groupsAddedFromEntitySelector, selectGroupById } = require(
 		'tasks/statemanager/redux/slices/groups',
@@ -1422,6 +1425,46 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 							reason,
 						}),
 					);
+
+					break;
+				}
+
+				case Field.AUDITORS: {
+					const oldAuditors = (this.#task.auditors || []).map(Number);
+					const newAuditors = (value || []).map(Number);
+
+					const added = newAuditors.filter((id) => !oldAuditors.includes(id));
+					const deleted = oldAuditors.filter((id) => !newAuditors.includes(id));
+
+					if (added.length === 0 && deleted.length === 0)
+					{
+						break;
+					}
+
+					const currentUserId = Number(env.userId);
+
+					const isFollowing = added.includes(currentUserId);
+					const isUnfollowing = deleted.includes(currentUserId);
+
+					dispatch(updateAuditors({
+						taskId: this.#taskId,
+						added,
+						deleted,
+						currentUserId,
+					}));
+
+					if (isFollowing)
+					{
+						showToast({
+							message: Loc.getMessage('M_TASK_DETAILS_FOLLOW_SUCCESS'),
+						}, this.layout);
+					}
+					else if (isUnfollowing)
+					{
+						showToast({
+							message: Loc.getMessage('M_TASK_DETAILS_UNFOLLOW_SUCCESS'),
+						}, this.layout);
+					}
 
 					break;
 				}

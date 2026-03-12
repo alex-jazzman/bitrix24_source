@@ -77,7 +77,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 
 			try
 			{
-				const ajaxResult = await runAction(RestMethod.imV2ChatUserList, {
+				const ajaxResult = await runAction(RestMethod.imV2ChatMentionList, {
 					data: queryParams,
 				});
 
@@ -94,31 +94,20 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 
 		/**
 		 *
-		 * @param {Array<RawUser>} ajaxResult
+		 * @param {{users: Array<RawUser>}} ajaxResult
 		 * @return {Array<number>}
 		 */
 		async processChatParticipantsResult(ajaxResult)
 		{
-			if (!Type.isArrayFilled(ajaxResult))
+			const users = ajaxResult?.users;
+			if (!Type.isArrayFilled(users))
 			{
 				return [];
 			}
 
-			void await this.serverService.storeUpdater.setUsersToModel(ajaxResult);
+			await this.serverService.storeUpdater.setUsersToModel(users);
 
-			return ajaxResult
-				.filter((user) => this.filterChatParticipant(user))
-				.map((user) => user.id);
-		}
-
-		/**
-		 * @protected
-		 * @param {RawUser} user
-		 * @return {boolean}
-		 */
-		filterChatParticipant(user)
-		{
-			return Number(user.id) !== MessengerParams.getUserId();
+			return users.map((user) => user.id);
 		}
 
 		closeSession()

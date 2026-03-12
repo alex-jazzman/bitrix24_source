@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_IMAGE"] = "Изображение";
 $MESS["BLOG_DELETE"] = "удалить";
 $MESS["BLOG_CATEGORY"] = "Теги";
@@ -74,4 +74,3 @@ $MESS["BLOG_SEND_MICRO"] = "Отправить";
 $MESS["BLOG_SEND_MICRO_NEW"] = "Добавить";
 $MESS["BLOG_POST_AUTOSAVE"] = "Данные сообщения не были сохранены. ";
 $MESS["BLOG_POST_GROUP_CHOOSE"] = "Написать в группу";
-?>

@@ -353,6 +353,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.canDisapprove = actions.canDisapprove ?? preparedTask.canDisapprove;
 				preparedTask.canDefer = actions.canDefer ?? preparedTask.canDefer;
 				preparedTask.canCreate = actions.canCreate ?? preparedTask.canCreate;
+				preparedTask.canUpdateAuditors = actions.canUpdateAuditors ?? preparedTask.canUpdateAuditors;
 			}
 
 			const userFieldNames = serverTask.userFieldNames;
@@ -497,6 +498,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				canDisapprove: false,
 				canDefer: false,
 				canCreate: false,
+				canUpdateAuditors: false,
 
 				isRemoved: false,
 				isExpired: false,
@@ -598,6 +600,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				canUpdateCreator: true,
 				canUpdateResponsible: true,
 				canUpdateAccomplices: true,
+				canUpdateAuditors: true,
 				canDelegate: false,
 				canTake: false,
 				canUpdateMark: true,

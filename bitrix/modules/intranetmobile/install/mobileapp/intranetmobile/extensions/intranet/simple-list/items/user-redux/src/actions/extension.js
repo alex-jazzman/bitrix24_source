@@ -2,11 +2,9 @@
  * @module intranet/simple-list/items/user-redux/src/actions
  */
 jn.define('intranet/simple-list/items/user-redux/src/actions', (require, exports, module) => {
-	const { confirmDestructiveAction, confirmDefaultAction } = require('alert');
-	const { Loc } = require('loc');
 	const { Color } = require('tokens');
+	const { confirmDestructiveAction, confirmDefaultAction } = require('alert');
 	const { dispatch } = require('statemanager/redux/store');
-	const { EmployeeActions } = require('intranet/enum');
 	const {
 		deleteInvitation,
 		fireEmployee,
@@ -17,8 +15,11 @@ jn.define('intranet/simple-list/items/user-redux/src/actions', (require, exports
 		changeDepartment,
 	} = require('intranet/statemanager/redux/slices/employees/thunk');
 	const { DepartmentSelector } = require('selector/widget/entity/intranet/department');
-	const store = require('statemanager/redux/store');
+	const { EmployeeActions } = require('intranet/enum');
+	const { isRequestAdminFireEnabled } = require('intranet/simple-list/items/user-redux/src/actions/src/utils');
+	const { Loc } = require('loc');
 	const { selectById } = require('intranet/statemanager/redux/slices/employees/selector');
+	const store = require('statemanager/redux/store');
 
 	/**
 	 * @class Actions
@@ -51,12 +52,28 @@ jn.define('intranet/simple-list/items/user-redux/src/actions', (require, exports
 						},
 					});
 				},
-				[EmployeeActions.FIRE.getValue()]: ({ userId }, title) => {
+				[EmployeeActions.FIRE.getValue()]: ({ userId, isRootAdmin, fullName }, title) => {
 					confirmDestructiveAction({
 						title: title || Loc.getMessage('MOBILE_USERS_USER_ACTIONS_FIRE_TITLE'),
 						description: Loc.getMessage('MOBILE_USERS_USER_ACTIONS_FIRE_DESCRIPTION'),
 						destructionText: Loc.getMessage('MOBILE_USERS_USER_ACTIONS_FIRE_ACCEPT'),
-						onDestruct: () => {
+						onDestruct: async () => {
+							const fireAdminRequestEnabled = await isRequestAdminFireEnabled();
+							if (isRootAdmin && fireAdminRequestEnabled)
+							{
+								const { RequestAdminFireConfirmation } = await requireLazy('intranet:fire-admin');
+								if (RequestAdminFireConfirmation)
+								{
+									RequestAdminFireConfirmation.open({
+										currentAdminId: userId,
+										currentAdminFullName: fullName,
+										initiatorId: Number(env.userId),
+									});
+								}
+
+								return;
+							}
+
 							dispatch(
 								fireEmployee({
 									userId,

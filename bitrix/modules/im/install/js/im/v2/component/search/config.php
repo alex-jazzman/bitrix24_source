@@ -15,10 +15,8 @@ return [
 	'rel' => [
 		'im.v2.component.elements.loader',
 		'im.v2.lib.logger',
-		'im.public',
 		'im.v2.lib.menu',
-		'im.v2.lib.call',
-		'im.v2.lib.permission',
+		'im.v2.provider.service.chat',
 		'im.v2.lib.text-highlighter',
 		'im.v2.lib.date-formatter',
 		'im.v2.component.elements.chat-title',

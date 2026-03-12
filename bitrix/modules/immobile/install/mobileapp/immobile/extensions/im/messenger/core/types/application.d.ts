@@ -23,4 +23,5 @@ declare type MessengerCoreRepository = {
 	vote: VoteRepository,
 	readMessageQueue: ReadMessageQueueRepository,
 	transcript: TranscriptRepository,
+	sticker: StickerRepository,
 }

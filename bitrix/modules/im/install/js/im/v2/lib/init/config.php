@@ -10,6 +10,7 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
+		'main.sidepanel',
 		'im.v2.application.core',
 		'im.v2.lib.call',
 		'im.v2.lib.phone',
@@ -24,6 +25,8 @@ return [
 		'im.v2.lib.permission',
 		'im.v2.lib.update-state.manager',
 		'im.v2.lib.router',
+		'im.public',
+		'im.v2.const',
 	],
 	'skip_core' => true,
 ];

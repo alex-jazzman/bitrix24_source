@@ -8,5 +8,6 @@ return [
 		'./src/debug',
 		'./src/loc',
 		'./src/cache',
+		'./src/style',
 	],
 ];

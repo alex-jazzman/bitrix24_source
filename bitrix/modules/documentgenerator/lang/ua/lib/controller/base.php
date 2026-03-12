@@ -1,3 +1,0 @@
-<?php
-$MESS["DOCGEN_CONTROLLER_DOCUMENT_NOT_FOUND_ERROR"] = "Документ не знайдено.";
-$MESS["DOCGEN_CONTROLLER_TEMPLATE_NOT_FOUND_ERROR"] = "Шаблон не знайдено.";

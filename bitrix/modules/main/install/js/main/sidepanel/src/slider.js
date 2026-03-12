@@ -195,7 +195,7 @@ export class Slider
 			});
 
 			BX.clipboard.bindCopyClick(
-				this.copyLinkLabel.getIconBox(),
+				this.copyLinkLabel.getContainer(),
 				{
 					text: () => {
 						const link = document.createElement('a');

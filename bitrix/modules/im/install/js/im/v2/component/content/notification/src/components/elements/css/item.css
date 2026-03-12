@@ -76,7 +76,7 @@
 .bx-im-content-notification-item-content__container {
 	flex: 1;
 	overflow: hidden;
-	margin-right: 100px;
+	margin-right: 110px;
 	padding-bottom: 7px;
 	max-width: 552px;
 }
@@ -119,7 +119,7 @@
 }
 
 .bx-im-content-notification-item-content__date {
-	font: var(--im-font-size-4xs)/var(--im-font-line-height-2xs) var(--im-font-family-system);
+	font: var(--im-font-size-sm)/var(--im-font-line-height-2xs) var(--im-font-family-system);
 	color: var(--im-notification-item-content__color_date);
 }
 
@@ -145,6 +145,10 @@
 .bx-im-content-notification-item-content__details-value {
 	display: flex;
 	align-items: center;
+}
+
+.bx-im-content-notification-item-content__details-value br{
+	display: none;
 }
 
 .bx-im-content-notification-item-content__details-name {
@@ -230,9 +234,14 @@
 	white-space: normal;
 }
 
+.bx-im-content-notification-item-content__details-item.--changed {
+	display: flex;
+	flex-wrap: wrap;
+}
+
 .bx-im-content-notification-item-header__subject {
 	max-width: 100%;
-	margin-right: 80px;
+	margin-right: 110px;
 }
 
 .bx-im-content-notification-item-header__subject .bx-im-chat-title__container {
@@ -241,6 +250,10 @@
 
 .bx-im-content-notification-item-header__subject span {
 	display: inline;
+}
+
+.bx-im-content-notification-item-header__subject .bx-im-chat-title__icon {
+	display: inline-block;
 }
 
 .bx-im-content-notification-item-content__details-users {
@@ -266,6 +279,7 @@
 .bx-im-content-notification-item-content__plain {
 	max-width: 552px;
 	padding-top: 3px;
+	margin-right: 110px;
 }
 
 .bx-im-content-notification-item-content__plain-text {

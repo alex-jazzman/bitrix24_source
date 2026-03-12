@@ -5,8 +5,6 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 	const { RestMethod } = require('im/messenger/const');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	const logger = getLoggerWithContext('dialog--chat-service', 'CommentsService');
@@ -24,9 +22,8 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 
 		subscribe(dialogId)
 		{
-			this.store.dispatch('dialoguesModel/unmute', { dialogId });
-
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+
 			this.store.dispatch('commentModel/subscribe', { messageId: dialog.parentMessageId });
 
 			return runAction(RestMethod.imV2ChatCommentSubscribe, {
@@ -55,8 +52,6 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 
 		unsubscribe(dialogId)
 		{
-			this.store.dispatch('dialoguesModel/mute', { dialogId });
-
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
 			this.store.dispatch('commentModel/unsubscribe', { messageId: dialog.parentMessageId });
 
@@ -100,18 +95,15 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 		// eslint-disable-next-line consistent-return
 		async #readChannelCommentsLocal(chatId)
 		{
-			if (Feature.isMessengerV2Enabled)
+			try
 			{
-				try
-				{
-					await this.store.dispatch('counterModel/readChildChatsCounters', {
-						parentChatId: chatId,
-					});
-				}
-				catch (error)
-				{
-					logger.error('readChannelCommentsLocal error', error);
-				}
+				await this.store.dispatch('counterModel/readChildChatsCounters', {
+					parentChatId: chatId,
+				});
+			}
+			catch (error)
+			{
+				logger.error('readChannelCommentsLocal error', error);
 			}
 
 			const currentChannelCounter = this.store.getters['commentModel/getChannelCounters'](chatId);
@@ -123,7 +115,7 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 			try
 			{
 				await this.store.dispatch('commentModel/deleteChannelCounters', { channelId: chatId });
-				MessengerCounterSender.getInstance().sendReadChannelComments(chatId);
+
 				serviceLocator.get('tab-counters').updateDelayed();
 			}
 			catch (error)

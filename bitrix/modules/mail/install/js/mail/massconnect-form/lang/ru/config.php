@@ -59,6 +59,7 @@ $MESS['MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_MAIL_TITLE'] = 'Нас
 
 $MESS['MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_MAIL_SYNC_LABEL'] = 'Забрать письма из ящика за #PERIOD#';
 
+$MESS['MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CRM_NO_ACCESS_HINT'] = 'Настраивать связь с CRM могут только сотрудники с правами на изменение этих настроек. Обратитесь к администратору вашего Битрикс24, чтобы получить доступ или настроить интеграцию';
 $MESS['MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CRM_TITLE'] = 'Интеграция с CRM';
 
 $MESS['MAIL_MASSCONNECT_FORM_SELECT_MAILBOX_SETTINGS_CRM_SYNC_LABEL'] = 'Синхронизировать письма с CRM за #PERIOD#';

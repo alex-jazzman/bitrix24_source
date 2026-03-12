@@ -10,7 +10,12 @@ import { Analytics } from 'im.v2.lib.analytics';
 import { Notifier } from 'im.v2.lib.notifier';
 
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
-import type { RawMessage, RawCommentInfo, RawTariffRestrictions } from 'im.v2.provider.service.types';
+import type {
+	RawMessage,
+	RawCommentInfo,
+	RawTariffRestrictions,
+	RawStickerMessage,
+} from 'im.v2.provider.service.types';
 import type { PaginationRestResult } from '../types/message';
 
 export class LoadService
@@ -359,6 +364,7 @@ export class LoadService
 			commentInfo,
 			copilot,
 			tariffRestrictions,
+			stickers,
 		} = rawData;
 
 		const dialogPromise = this.#store.dispatch('chats/update', {
@@ -380,6 +386,11 @@ export class LoadService
 		const copilotManager = new CopilotManager();
 		const copilotPromise = copilotManager.handleChatLoadResponse(copilot);
 
+		const stickersPromise = Promise.all([
+			this.#store.dispatch('stickers/messages/set', this.#getStickerMessages(rawData)),
+			this.#store.dispatch('stickers/set', stickers),
+		]);
+
 		return Promise.all([
 			dialogPromise,
 			filesPromise,
@@ -388,6 +399,7 @@ export class LoadService
 			additionalMessagesPromise,
 			commentInfoPromise,
 			copilotPromise,
+			stickersPromise,
 		]);
 	}
 
@@ -444,5 +456,24 @@ export class LoadService
 		const chat = this.#getDialog();
 		const dialogId = chat.dialogId;
 		Analytics.getInstance().messageDelete.onNotFoundNotification({ dialogId });
+	}
+
+	#getStickerMessages(rawData: PaginationRestResult): RawStickerMessage[]
+	{
+		const stickerMessages = [];
+		rawData.messages.forEach((message) => {
+			const isSticker = Boolean(message.params.STICKER_PARAMS);
+			if (!isSticker)
+			{
+				return;
+			}
+
+			stickerMessages.push({
+				messageId: message.id,
+				...message.params.STICKER_PARAMS,
+			});
+		});
+
+		return stickerMessages;
 	}
 }

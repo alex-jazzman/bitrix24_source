@@ -9,8 +9,12 @@ return [
 	'js' => 'dist/templates-button.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3.components.button',
+		'ui.icon-set.api.vue',
+		'ui.system.typography.vue',
+		'ui.icon-set.outline',
 		'tasks.v2.const',
+		'tasks.v2.component.elements.hover-pill',
+		'tasks.v2.provider.service.task-service',
 		'tasks.v2.lib.entity-selector-dialog',
 	],
 	'skip_core' => true,

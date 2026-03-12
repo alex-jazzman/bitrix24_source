@@ -6,6 +6,7 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 		createToggle,
 		createSection,
 		createUserSelector,
+		createBanner,
 	} = require('settings-v2/structure/helpers/item-create-helper');
 	const {
 		createSecurityInfo,
@@ -14,15 +15,18 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 	} = require('settings-v2/structure/helpers/security-item-create-helper');
 	const { Loc } = require('loc');
 	const { NativeSettingController } = require('settings-v2/controller/native');
-	const { SettingsPageId, EventType, SecurityOption } = require('settings-v2/const');
+	const { SettingsPageId, EventType, SecurityOption, BannerImageName } = require('settings-v2/const');
 	const { SecuritySettingsController } = require('settings-v2/controller/security');
 	const { SettingEmitter } = require('settings-v2/emitter');
 	const { qrauth } = require('qrauth/utils');
 	const { SecuritySettingsService } = require('settings-v2/services/security-settings');
 	const { Type } = require('type');
+	const { FeedbackForm } = require('layout/ui/feedback-form-opener');
+	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { DialogOpener } = require('im/messenger/api/dialog-opener');
 
-	const userSelectorSafeScreenshotsId = 'security-safe-screenshots-users';
-	const userSelectorSafeCopyTextId = 'security-safe-copy-text-users';
+	const userSelectorSafeScreenshotsId = 'security-safe-users-screenshots';
+	const userSelectorSafeCopyTextId = 'security-safe-users-copy-text';
 
 	const isIOS = Application.getPlatform() === 'ios';
 
@@ -37,7 +41,7 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 	const createFaceIdController = () => {
 		return new NativeSettingController({
 			settingId: SecurityOption.IS_BIOMETRIC_AUTH_ENABLED,
-			fallbackValue: false,
+			fallbackValue: null,
 		}).setOnChange((newValue) => {
 			SettingEmitter.emit(EventType.changeSecurityState, {
 				settingId: SecurityOption.IS_BIOMETRIC_AUTH_ENABLED,
@@ -52,10 +56,11 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 		const isBiometricAuthEnabled = await createFaceIdController().get();
 
 		return {
-			isCopyTextDisabled: securityData.isCopyTextDisabled ?? false,
-			isTakeScreenshotDisabled: securityData.isTakeScreenshotDisabled ?? false,
-			isOtpMandatory: securityData.isOtpMandatory ?? false,
+			isCopyTextDisabled: Boolean(securityData.isCopyTextDisabled),
+			isTakeScreenshotDisabled: Boolean(securityData.isTakeScreenshotDisabled),
+			isOtpMandatory: Boolean(securityData.isOtpMandatory),
 			isBiometricAuthEnabled,
+			isHighPushOtpPromote: Boolean(securityData.isHighPushOtpPromote),
 		};
 	};
 
@@ -130,7 +135,7 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 	};
 
 	const prepare2FASection = (settingsData) => {
-		return [
+		const items = [
 			createSecurityInfo({
 				id: 'security-account',
 				title: Loc.getMessage('SETTINGS_V2_STRUCTURE_SECURITY_SAFE_ACCOUNT'),
@@ -166,8 +171,53 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 					});
 				},
 				prefilter: () => env.isAdmin,
+				divider: false,
 			}),
 		];
+
+		if (env.isAdmin && settingsData.isHighPushOtpPromote)
+		{
+			items.push(
+				createBanner({
+					id: '2fa-necessity-banner',
+					bannerImageName: BannerImageName.HIGHT_PUSH_OTP,
+					text: Loc.getMessage('SETTINGS_V2_STRUCTURE_SECURITY_ADMIN_2FA_NECESSITY_BANNER_DESCRIPTION'),
+					onLinkClick: async () => {
+						const openFeedbackForm = () => {
+							(new FeedbackForm({
+								senderPage: 'settings_v2.security',
+							})).open({
+								title: Loc.getMessage('SETTINGS_V2_STRUCTURE_SECURITY_FEEDBACK'),
+							});
+						};
+
+						try
+						{
+							const response = await (new RunActionExecutor('mobile.Support.getBotId'))
+								.setSkipRequestIfCacheExists()
+								.call(true);
+							const { botId } = response.data;
+
+							if (botId)
+							{
+								DialogOpener.open({ dialogId: botId });
+							}
+							else
+							{
+								openFeedbackForm();
+							}
+						}
+						catch (e)
+						{
+							console.error(e);
+							openFeedbackForm();
+						}
+					},
+				}),
+			);
+		}
+
+		return items;
 	};
 
 	const SecurityPage = {

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['PATH_TO_BLOG_TIP'] = "Указывается путь к главной странице конкретного блога. Например: blog_blog.php?page=blog&blog=#blog#.";
 $MESS ['PATH_TO_BLOG_INDEX_TIP'] = "Указывается путь к главной странице. Например: blog.php.";
 $MESS ['PATH_TO_DRAFT_TIP'] = "Указывается путь к странице с недописанными сообщениями блога. Например: blog_b_draft.php?page=draft&blog=#blog#.";
@@ -15,4 +15,3 @@ $MESS ['USER_VAR_TIP'] = "Задается имя переменной, кото
 $MESS ['BLOG_URL_TIP'] = "Поле содержит код, в котором передается идентификатор блога.";
 $MESS ['SET_NAV_CHAIN_TIP'] = "При отмеченной опции будет добавлен пункт в цепочку навигации.";
 $MESS ['PATH_TO_USER_TIP'] = "Указывается путь к странице профиля пользователя. Например: blog_user.php?page=user&user_id=#user_id#.";
-?>

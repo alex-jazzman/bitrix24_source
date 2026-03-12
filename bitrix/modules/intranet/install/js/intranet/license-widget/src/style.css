@@ -70,6 +70,19 @@
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
+.license-widget-item-help {
+	display: inline-block;
+	height: 11px;
+	width: 11px;
+	margin-left: 5px;
+	margin-top: 2px;
+	background-image: url(../img/b24-license-widget_helper-icon.svg);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	cursor: pointer;
+}
+
 .license-widget-item-name.--flex {
 	display: flex;
 	align-items: flex-end;

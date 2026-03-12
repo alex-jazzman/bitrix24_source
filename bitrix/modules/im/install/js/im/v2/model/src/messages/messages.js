@@ -15,7 +15,6 @@ import { ReactionsModel } from './nested-modules/reactions';
 import { CommentsModel } from './nested-modules/comments/comments';
 import { SelectModel } from './nested-modules/select';
 import { AnchorsModel } from './nested-modules/anchors/anchors';
-import { StickersModel } from './nested-modules/stickers/stickers';
 
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 import type { JsonObject } from 'main.core';
@@ -52,7 +51,6 @@ export class MessagesModel extends BuilderModel
 			comments: CommentsModel,
 			select: SelectModel,
 			anchors: AnchorsModel,
-			stickers: StickersModel,
 		};
 	}
 
@@ -358,8 +356,6 @@ export class MessagesModel extends BuilderModel
 					messages = [messages];
 				}
 
-				store.dispatch('stickers/setStickersFromMessages', messages);
-
 				messages = messages.map((message: RawMessage) => {
 					return { ...this.getElementState(), ...this.#formatFields(message) };
 				});
@@ -379,8 +375,6 @@ export class MessagesModel extends BuilderModel
 				{
 					preparedMessages = [payload];
 				}
-
-				store.dispatch('stickers/setStickersFromMessages', preparedMessages);
 
 				preparedMessages = preparedMessages.map((message: RawMessage) => {
 					const currentMessage: ImModelMessage = store.state.collection[message.id];
@@ -414,8 +408,6 @@ export class MessagesModel extends BuilderModel
 					messages: [message],
 				});
 
-				store.dispatch('stickers/setStickersFromMessages', [payload]);
-
 				return message.id;
 			},
 			/** @function messages/updateWithId */
@@ -430,7 +422,6 @@ export class MessagesModel extends BuilderModel
 					id,
 					fields: this.#formatFields(fields),
 				});
-				void store.dispatch('stickers/updateStickerToMessageMap', { oldId: id, newId: fields.id });
 			},
 			/** @function messages/update */
 			update: (store, payload: {id: string | number, fields: Object}) => {

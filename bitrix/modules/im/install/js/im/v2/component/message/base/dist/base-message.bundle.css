@@ -1,8 +1,8 @@
 .bx-im-message-base__scope {
-	--im-message-base__padding-top_body: 9px;
-	--im-message-base__padding-right_body: 10px;
+	--im-message-base__padding-top_body: 8px;
+	--im-message-base__padding-right_body: 12px;
 	--im-message-base__padding-bottom_body: 6px;
-	--im-message-base__padding-left_body: 14px;
+	--im-message-base__padding-left_body: 12px;
 	--im-message-base__padding_body:
 		var(--im-message-base__padding-top_body)
 		var(--im-message-base__padding-right_body)

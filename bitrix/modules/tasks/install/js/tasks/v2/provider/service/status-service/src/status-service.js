@@ -2,6 +2,7 @@ import { Event } from 'main.core';
 
 import { Core } from 'tasks.v2.core';
 import { EventName, Model, TaskStatus, Endpoint } from 'tasks.v2.const';
+import { analytics } from 'tasks.v2.lib.analytics';
 import { ScrumManager } from 'tasks.v2.lib.scrum-manager';
 import { apiClient } from 'tasks.v2.lib.api-client';
 import { idUtils } from 'tasks.v2.lib.id-utils';
@@ -15,9 +16,27 @@ export const statusService = new class
 		await this.#updateStatus(id, Endpoint.TaskStatusStart, TaskStatus.InProgress);
 	}
 
-	async startTimer(id: number): Promise<void>
+	async take(id: number, analyticsParams: Object = {}): Promise<void>
 	{
-		await this.#updateStatus(id, 'Task.Tracking.Timer.start', TaskStatus.InProgress);
+		await this.#updateStatus(id, Endpoint.TaskStatusTake, TaskStatus.InProgress);
+
+		const task = taskService.getStoreTask(id);
+
+		if (task.allowsTimeTracking)
+		{
+			analytics.sendAutoTimeTracking(analyticsParams, {
+				taskId: id,
+			});
+		}
+	}
+
+	async startTimer(id: number, analyticsParams: Object = {}): Promise<void>
+	{
+		await this.#updateStatus(id, Endpoint.TaskTrackingTimerStart, TaskStatus.InProgress);
+
+		analytics.sendAutoTimeTracking(analyticsParams, {
+			taskId: id,
+		});
 	}
 
 	async disapprove(id: number): Promise<void>
@@ -42,10 +61,10 @@ export const statusService = new class
 
 	async pauseTimer(id: number): Promise<void>
 	{
-		await this.#updateStatus(id, 'Task.Tracking.Timer.stop', TaskStatus.Pending);
+		await this.#updateStatus(id, Endpoint.TaskTrackingTimerStop, TaskStatus.Pending);
 	}
 
-	async complete(id: number): Promise<void>
+	async complete(id: number, analyticsParams: Object = {}): Promise<void>
 	{
 		const task = taskService.getStoreTask(id);
 		if (!task)
@@ -93,6 +112,10 @@ export const statusService = new class
 		{
 			void scrumManager?.handleParentState();
 		}
+
+		analytics.sendTaskComplete(analyticsParams, {
+			taskId: task.id,
+		});
 
 		void resultService.closeResults(id);
 	}

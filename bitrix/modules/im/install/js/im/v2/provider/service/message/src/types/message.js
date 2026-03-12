@@ -7,6 +7,7 @@ import type {
 	RawReaction,
 	RawShortUser,
 	RawTariffRestrictions,
+	RawSticker,
 } from 'im.v2.provider.service.types';
 
 export type PaginationRestResult = {
@@ -22,6 +23,7 @@ export type PaginationRestResult = {
 	hasNextPage?: boolean,
 	copilot: RawCopilot,
 	tariffRestrictions: RawTariffRestrictions,
+	stickers: RawSticker[],
 };
 
 export type TranscriptionResponse = {

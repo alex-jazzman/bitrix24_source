@@ -659,7 +659,7 @@ BX.Tasks.GridActions = {
 			function(response) {
 				if (action === 'complete')
 				{
-					this.sendAnalyticsOnTaskComplete();
+					this.sendAnalyticsOnTaskComplete(taskId);
 				}
 
 				if (action === 'delete')
@@ -1348,7 +1348,7 @@ BX.Tasks.GridActions = {
 		};
 	},
 
-	sendAnalyticsOnTaskComplete: function ()
+	sendAnalyticsOnTaskComplete: function (taskId)
 	{
 		const analyticsData = {
 			tool: 'tasks',
@@ -1358,6 +1358,7 @@ BX.Tasks.GridActions = {
 			c_section: BX.Tasks.Grid.groupId ? 'project' : 'tasks',
 			c_element: 'context_menu',
 			c_sub_section: 'list',
+			p1: `taskId_${taskId}`,
 		};
 
 		if (BX.UI.Analytics)

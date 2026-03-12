@@ -51,6 +51,8 @@ this.BX = this.BX || {};
 	    snapshotHandler: null,
 	    revertHandler: null,
 	    highlitedBlockIds: [],
+	    isSelectionActive: false,
+	    selectionWorldRect: null,
 	    animationQueue: null,
 	    currentAnimationItem: null,
 	    isPauseAnimation: false,
@@ -109,6 +111,11 @@ this.BX = this.BX || {};
 	  STANDING: 2,
 	  RESIZABLE: 1
 	};
+	const INPUT_TAGS = Object.freeze({
+	  INPUT: true,
+	  TEXTAREA: true,
+	  SELECT: true
+	});
 
 	const DIR_ACCESSOR_X = 'x';
 	const DIR_ACCESSOR_Y = 'y';
@@ -1757,6 +1764,15 @@ this.BX = this.BX || {};
 	  zoomOut(zoomStep) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _setCameraZoom)[_setCameraZoom](zoomStep * -1);
 	  }
+	  setZoom(zoom) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].applyLandmark(babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].createLandmark({
+	      x: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].x,
+	      y: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].y,
+	      viewportX: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].width / 2,
+	      viewportY: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].height / 2,
+	      zoom
+	    }));
+	  }
 	  setCameraZoomByWheel(event, zoomChange = 0) {
 	    const newZoom = Math.max(babelHelpers.classPrivateFieldLooseBase(this, _minZoom)[_minZoom], Math.min(babelHelpers.classPrivateFieldLooseBase(this, _maxZoom)[_maxZoom], (babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].zoom + zoomChange) * 2 ** (event.deltaY * -0.01)));
 	    const viewport = this.clientToViewport({
@@ -2345,10 +2361,7 @@ this.BX = this.BX || {};
 	  };
 	  const addConnection = newConnection => {
 	    if (!isExistConnection(newConnection)) {
-	      hooks.changedConnections.trigger(commandPush({
-	        id: main_core.Text.getRandom(),
-	        ...newConnection
-	      }));
+	      hooks.changedConnections.trigger(commandPush(newConnection));
 	      hooks.createConnection.trigger(newConnection);
 	    }
 	  };
@@ -2440,8 +2453,7 @@ this.BX = this.BX || {};
 	    let nearest = null;
 	    let nearestDistance = Infinity;
 	    state.blocks.forEach(block => {
-	      const allPorts = [...block.ports.input, ...block.ports.output];
-	      allPorts.forEach(port => {
+	      block.ports.forEach(port => {
 	        const {
 	          x,
 	          y
@@ -2483,8 +2495,7 @@ this.BX = this.BX || {};
 	      ...block
 	    });
 	    const movingConnections = [];
-	    const allPorts = [...block.ports.input, ...block.ports.output];
-	    allPorts.forEach(port => {
+	    block.ports.forEach(port => {
 	      const connections = state.connections.filter(connection => {
 	        const {
 	          targetBlockId,
@@ -2549,6 +2560,12 @@ this.BX = this.BX || {};
 	    state.portsRectMap[blockId][portId].width = width;
 	    state.portsRectMap[blockId][portId].height = height;
 	  };
+	  const setSelectionActive = value => {
+	    state.isSelectionActive = value;
+	  };
+	  const setSelectionWorldRect = rect => {
+	    state.selectionWorldRect = rect;
+	  };
 	  return {
 	    setState,
 	    updateCanvasTransform,
@@ -2567,7 +2584,9 @@ this.BX = this.BX || {};
 	    resetMovingBlock,
 	    setHistoryHandlers,
 	    setPortOffsetByBlockId,
-	    updatePortPosition
+	    updatePortPosition,
+	    setSelectionActive,
+	    setSelectionWorldRect
 	  };
 	}
 
@@ -2582,6 +2601,9 @@ this.BX = this.BX || {};
 	  const canvasId = ui_vue3.computed(() => {
 	    var _state$canvasRef$canv, _state$canvasRef;
 	    return (_state$canvasRef$canv = (_state$canvasRef = state.canvasRef) == null ? void 0 : _state$canvasRef.canvasId) != null ? _state$canvasRef$canv : null;
+	  });
+	  const isMakeNewConnection = ui_vue3.computed(() => {
+	    return state.newConnection !== null;
 	  });
 	  const groupedBlocks = ui_vue3.computed(() => {
 	    return state.blocks.reduce((acc, block) => {
@@ -2631,7 +2653,8 @@ this.BX = this.BX || {};
 	    groupedConnections,
 	    connectionGroupNames,
 	    isAnimate,
-	    isDisabledBlockDiagram
+	    isDisabledBlockDiagram,
+	    isMakeNewConnection
 	  };
 	}
 
@@ -2692,7 +2715,8 @@ this.BX = this.BX || {};
 	  return (_app$config$globalPro3 = app.config.globalProperties) == null ? void 0 : _app$config$globalPro3.$blockDiagram;
 	}
 
-	function useContextMenu(menuItems = []) {
+	// eslint-disable-next-line max-lines-per-function
+	function useContextMenu() {
 	  const {
 	    contextMenuLayerRef,
 	    targetContainerRef,
@@ -2701,30 +2725,27 @@ this.BX = this.BX || {};
 	    contextMenuInstance,
 	    zoom
 	  } = useBlockDiagram();
-	  contextMenuInstance.value = ui_vue3.toValue(contextMenuInstance) || ui_vue3.shallowRef(main_popup.MenuManager.create(getMenuOptions()));
 	  const isOpen = ui_vue3.ref(false);
-	  let options = {
-	    items: menuItems
-	  };
-	  function setOptions(newOptions) {
-	    options = getMenuOptions(newOptions);
-	  }
 	  function getItems(items = []) {
 	    return items.map(item => {
 	      return {
 	        ...item,
 	        onclick: () => {
+	          var _toValue;
 	          if (main_core.Type.isFunction(item.onclick)) {
-	            item.onclick();
+	            const point = {
+	              x: positionContextMenu.value.left,
+	              y: positionContextMenu.value.top
+	            };
+	            item.onclick(point);
 	          }
-	          closeMenu();
+	          (_toValue = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue.close();
 	        }
 	      };
 	    });
 	  }
-	  function getMenuOptions(additionalOptions) {
-	    var _additionalOptions$it;
-	    return {
+	  function getDefaultOptions(additionalOptions = {}) {
+	    const defaultOptions = {
 	      id: 'block-diagram-context-menu',
 	      bindElement: {
 	        left: 0,
@@ -2735,56 +2756,64 @@ this.BX = this.BX || {};
 	      draggable: false,
 	      cacheable: false,
 	      targetContainer: ui_vue3.toValue(targetContainerRef),
-	      ...additionalOptions,
-	      items: getItems((_additionalOptions$it = additionalOptions == null ? void 0 : additionalOptions.items) != null ? _additionalOptions$it : [])
+	      ...additionalOptions
 	    };
+	    if ('items' in additionalOptions) {
+	      defaultOptions.items = getItems(additionalOptions.items);
+	    }
+	    return defaultOptions;
 	  }
-	  function setDestroyHandler(handler) {
-	    var _toValue, _toValue$popupWindow;
-	    (_toValue = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : (_toValue$popupWindow = _toValue.popupWindow) == null ? void 0 : _toValue$popupWindow.subscribeOnce('onDestroy', handler);
-	  }
-	  function showMenu(menuOptions) {
-	    var _toValue2;
-	    (_toValue2 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue2.destroy();
-	    contextMenuInstance.value = ui_vue3.shallowRef(main_popup.MenuManager.create(getMenuOptions(menuOptions)));
-	    ui_vue3.toValue(contextMenuInstance).show();
-	  }
-	  function closeMenu() {
-	    var _toValue3;
-	    (_toValue3 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue3.close();
-	  }
-	  function showContextMenu(payload) {
-	    var _toValue$getBoundingC, _toValue4;
+	  function updateContextMenuPosition(point) {
+	    var _toValue$getBoundingC, _toValue2;
 	    const {
 	      clientX = 0,
 	      clientY = 0
-	    } = payload;
+	    } = point;
 	    const {
 	      left,
 	      top
-	    } = (_toValue$getBoundingC = (_toValue4 = ui_vue3.toValue(contextMenuLayerRef)) == null ? void 0 : _toValue4.getBoundingClientRect()) != null ? _toValue$getBoundingC : {
+	    } = (_toValue$getBoundingC = (_toValue2 = ui_vue3.toValue(contextMenuLayerRef)) == null ? void 0 : _toValue2.getBoundingClientRect()) != null ? _toValue$getBoundingC : {
 	      top: 0,
 	      left: 0
 	    };
 	    positionContextMenu.value.top = (clientY - top) / ui_vue3.toValue(zoom);
 	    positionContextMenu.value.left = (clientX - left) / ui_vue3.toValue(zoom);
-	    showMenu(options);
-	    setDestroyHandler(() => {
+	  }
+	  function showMenu(point, options = null) {
+	    var _toValue3, _toValue4, _toValue4$popupWindow, _toValue5;
+	    updateContextMenuPosition(point);
+	    (_toValue3 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue3.destroy();
+	    contextMenuInstance.value = ui_vue3.shallowRef(new main_popup.Menu(getDefaultOptions(options)));
+	    (_toValue4 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : (_toValue4$popupWindow = _toValue4.popupWindow) == null ? void 0 : _toValue4$popupWindow.subscribeOnce('onDestroy', () => {
 	      isOpen.value = false;
 	    });
+	    (_toValue5 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue5.show();
+	    isOpen.value = true;
+	    isOpenContextMenu.value = true;
+	  }
+	  function showPopup(point, options = null) {
+	    var _toValue6, _toValue7, _toValue8;
+	    updateContextMenuPosition(point);
+	    (_toValue6 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue6.destroy();
+	    contextMenuInstance.value = ui_vue3.shallowRef(new main_popup.Popup(getDefaultOptions(options)));
+	    (_toValue7 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue7.subscribeOnce('onDestroy', () => {
+	      isOpen.value = false;
+	    });
+	    (_toValue8 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue8.show();
 	    isOpen.value = true;
 	    isOpenContextMenu.value = true;
 	  }
 	  function closeContextMenu() {
+	    var _toValue9;
 	    isOpen.value = false;
 	    isOpenContextMenu.value = false;
-	    closeMenu();
+	    (_toValue9 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue9.close();
 	  }
 	  return {
 	    isOpen,
-	    showContextMenu,
-	    closeContextMenu,
-	    setOptions
+	    showMenu,
+	    showPopup,
+	    closeContextMenu
 	  };
 	}
 
@@ -2847,6 +2876,7 @@ this.BX = this.BX || {};
 	      return normalyzeFn(newConnection);
 	    }
 	    return {
+	      id: newConnection.id,
 	      sourceBlockId: newConnection.sourceBlockId,
 	      sourcePortId: newConnection.sourcePortId,
 	      targetBlockId: newConnection.targetBlockId,
@@ -2866,6 +2896,7 @@ this.BX = this.BX || {};
 	      y: portRect.y + portRect.height / 2
 	    };
 	    newConnection.value = {
+	      id: main_core.Text.getRandom(),
 	      sourceBlockId: ui_vue3.toValue(block).id,
 	      sourcePortId: ui_vue3.toValue(port).id,
 	      sourcePort: {
@@ -2999,12 +3030,15 @@ this.BX = this.BX || {};
 	    setMovingBlock,
 	    updateMovingBlockPosition,
 	    resetMovingBlock,
-	    setPortOffsetByBlockId
+	    setPortOffsetByBlockId,
+	    blocks: allBlocksRef,
+	    highlitedBlockIds
 	  } = useBlockDiagram();
 	  let prevValueBlockX = 0;
 	  let prevValueBlockY = 0;
 	  const offsetBlockX = ui_vue3.ref(0);
 	  const offsetBlockY = ui_vue3.ref(0);
+	  let cachedGroupBlocks = [];
 	  const x = ui_vue3.ref(ui_vue3.toValue(block).position.x);
 	  const y = ui_vue3.ref(ui_vue3.toValue(block).position.y);
 	  ui_vue3.watchEffect(() => {
@@ -3028,12 +3062,24 @@ this.BX = this.BX || {};
 	      return;
 	    }
 	    event.stopPropagation();
+	    const blockId = ui_vue3.toValue(block).id;
+	    const selectedIds = ui_vue3.toValue(highlitedBlockIds);
+	    const isSelected = selectedIds.includes(blockId);
+	    if (!isSelected) {
+	      highlitedBlockIds.value = [blockId];
+	    }
 	    setMovingBlock(ui_vue3.toValue(block));
 	    hooks.startDragBlock.trigger(block);
 	    prevValueBlockX = ui_vue3.toValue(block).position.x;
 	    prevValueBlockY = ui_vue3.toValue(block).position.y;
 	    offsetBlockX.value = Math.round(event.clientX - ui_vue3.toValue(block).position.x * ui_vue3.toValue(zoom));
 	    offsetBlockY.value = Math.round(event.clientY - ui_vue3.toValue(block).position.y * ui_vue3.toValue(zoom));
+	    cachedGroupBlocks = [];
+	    const groupIds = ui_vue3.toValue(highlitedBlockIds);
+	    if (groupIds.length > 1) {
+	      const allBlocks = ui_vue3.toValue(allBlocksRef);
+	      cachedGroupBlocks = allBlocks.filter(b => groupIds.includes(b.id) && b.id !== blockId);
+	    }
 	    isDragged.value = true;
 	    main_core.Event.bind(document, 'mousemove', onMouseMove);
 	    main_core.Event.bind(document, 'mouseup', onMouseUp);
@@ -3044,8 +3090,22 @@ this.BX = this.BX || {};
 	    }
 	    event.stopPropagation();
 	    hooks.moveDragBlock.trigger(block);
-	    x.value = Math.round((event.clientX - ui_vue3.toValue(offsetBlockX)) / ui_vue3.toValue(zoom));
-	    y.value = Math.round((event.clientY - ui_vue3.toValue(offsetBlockY)) / ui_vue3.toValue(zoom));
+	    const newX = Math.round((event.clientX - ui_vue3.toValue(offsetBlockX)) / ui_vue3.toValue(zoom));
+	    const newY = Math.round((event.clientY - ui_vue3.toValue(offsetBlockY)) / ui_vue3.toValue(zoom));
+	    const deltaX = newX - prevValueBlockX;
+	    const deltaY = newY - prevValueBlockY;
+	    x.value = newX;
+	    y.value = newY;
+	    for (const targetBlock of cachedGroupBlocks) {
+	      targetBlock.position.x += deltaX;
+	      targetBlock.position.y += deltaY;
+	      if (setPortOffsetByBlockId) {
+	        setPortOffsetByBlockId(targetBlock.id, {
+	          x: -deltaX,
+	          y: -deltaY
+	        });
+	      }
+	    }
 	    updateMovingBlockPosition(x.value, y.value);
 	    setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
 	      x: prevValueBlockX - x.value,
@@ -3061,23 +3121,47 @@ this.BX = this.BX || {};
 	    }
 	    const positionX = Math.round((event.clientX - ui_vue3.toValue(offsetBlockX)) / ui_vue3.toValue(zoom));
 	    const positionY = Math.round((event.clientY - ui_vue3.toValue(offsetBlockY)) / ui_vue3.toValue(zoom));
-	    const newBlock = {
-	      ...ui_vue3.toValue(block),
-	      position: {
-	        ...ui_vue3.toValue(block).position,
-	        x: positionX,
-	        y: positionY
+	    const isMoved = ui_vue3.toValue(block).position.x !== positionX || ui_vue3.toValue(block).position.y !== positionY;
+	    if (isMoved) {
+	      cachedGroupBlocks.forEach(targetBlock => {
+	        const finalX = targetBlock.position.x;
+	        const finalY = targetBlock.position.y;
+	        const newBlockState = {
+	          ...targetBlock,
+	          position: {
+	            ...targetBlock.position,
+	            x: finalX,
+	            y: finalY
+	          }
+	        };
+	        if (setPortOffsetByBlockId) {
+	          setPortOffsetByBlockId(targetBlock.id, {
+	            x: 0,
+	            y: 0
+	          });
+	        }
+	        updateBlock(newBlockState);
+	        hooks.endDragBlock.trigger(newBlockState);
+	      });
+	      const currentBlockState = {
+	        ...ui_vue3.toValue(block),
+	        position: {
+	          ...ui_vue3.toValue(block).position,
+	          x: positionX,
+	          y: positionY
+	        }
+	      };
+	      if (setPortOffsetByBlockId) {
+	        setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
+	          x: prevValueBlockX - positionX,
+	          y: prevValueBlockY - positionY
+	        });
 	      }
-	    };
-	    setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
-	      x: prevValueBlockX - positionX,
-	      y: prevValueBlockY - positionY
-	    });
-	    updateBlock(newBlock);
-	    if (ui_vue3.toValue(block).position.x !== newBlock.position.x || ui_vue3.toValue(block).position.y !== newBlock.position.y) {
-	      hooks.endDragBlock.trigger(newBlock);
+	      updateBlock(currentBlockState);
+	      hooks.endDragBlock.trigger(currentBlockState);
 	    }
 	    resetMovingBlock();
+	    cachedGroupBlocks = [];
 	    offsetBlockX.value = 0;
 	    offsetBlockY.value = 0;
 	    isDragged.value = false;
@@ -3273,9 +3357,13 @@ this.BX = this.BX || {};
 	    var _toValue2;
 	    (_toValue2 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue2.zoomOut(zoomStep);
 	  }
-	  function setCamera(params) {
+	  function setZoom(zoomValue) {
 	    var _toValue3;
-	    (_toValue3 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue3.setCamera(params);
+	    (_toValue3 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue3.setZoom(zoomValue);
+	  }
+	  function setCamera(params) {
+	    var _toValue4;
+	    (_toValue4 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue4.setCamera(params);
 	  }
 	  function goToBlockById(id) {
 	    const block = ui_vue3.toValue(blocks).find(block => block.id === id);
@@ -3300,6 +3388,7 @@ this.BX = this.BX || {};
 	  return {
 	    zoomIn,
 	    zoomOut,
+	    setZoom,
 	    setCamera,
 	    goToBlockById
 	  };
@@ -3797,7 +3886,7 @@ this.BX = this.BX || {};
 	    if (!ui_vue3.toValue(dragOn) || ui_vue3.toValue(isDisabledBlockDiagram)) {
 	      return;
 	    }
-	    if (event.buttons !== 1) {
+	    if (event.buttons !== 1 && event.buttons !== 4) {
 	      dragOn.value = false;
 	      isDragging.value = false;
 	      return;
@@ -4180,10 +4269,409 @@ this.BX = this.BX || {};
 	  };
 	}
 
+	function useCanvasSelection(params) {
+	  const {
+	    zoom,
+	    setSelectionWorldRect,
+	    setSelectionActive,
+	    isSelectionActive
+	  } = useBlockDiagram();
+	  const {
+	    rootRef,
+	    transformLayoutRef
+	  } = params;
+	  const selectionRect = ui_vue3.ref({
+	    x: 0,
+	    y: 0,
+	    width: 0,
+	    height: 0
+	  });
+	  let startClientX = 0;
+	  let startClientY = 0;
+	  let cachedRootRect = null;
+	  let cachedLayerRect = null;
+	  function start(event) {
+	    const root = ui_vue3.toValue(rootRef);
+	    const layer = ui_vue3.toValue(transformLayoutRef);
+	    if (!root || !layer) {
+	      return;
+	    }
+	    startClientX = event.clientX;
+	    startClientY = event.clientY;
+	    cachedRootRect = root.getBoundingClientRect();
+	    cachedLayerRect = layer.getBoundingClientRect();
+	    const visualStartX = startClientX - cachedRootRect.left;
+	    const visualStartY = startClientY - cachedRootRect.top;
+	    setSelectionActive(true);
+	    selectionRect.value = {
+	      x: visualStartX,
+	      y: visualStartY,
+	      width: 0,
+	      height: 0
+	    };
+	  }
+	  function move(event) {
+	    if (!ui_vue3.toValue(isSelectionActive) || !cachedRootRect || !cachedLayerRect) {
+	      return;
+	    }
+	    const root = ui_vue3.toValue(rootRef);
+	    const layer = ui_vue3.toValue(transformLayoutRef);
+	    const currentZoom = ui_vue3.toValue(zoom);
+	    if (!root || !layer || !currentZoom) {
+	      return;
+	    }
+	    const visualStartX = startClientX - cachedRootRect.left;
+	    const visualStartY = startClientY - cachedRootRect.top;
+	    const currentVisualX = event.clientX - cachedRootRect.left;
+	    const currentVisualY = event.clientY - cachedRootRect.top;
+	    selectionRect.value = {
+	      x: Math.min(visualStartX, currentVisualX),
+	      y: Math.min(visualStartY, currentVisualY),
+	      width: Math.abs(currentVisualX - visualStartX),
+	      height: Math.abs(currentVisualY - visualStartY)
+	    };
+	    const startLayerX = startClientX - cachedLayerRect.left;
+	    const startLayerY = startClientY - cachedLayerRect.top;
+	    const currentLayerX = event.clientX - cachedLayerRect.left;
+	    const currentLayerY = event.clientY - cachedLayerRect.top;
+	    setSelectionWorldRect({
+	      x: Math.min(startLayerX, currentLayerX) / currentZoom,
+	      y: Math.min(startLayerY, currentLayerY) / currentZoom,
+	      width: Math.abs(currentLayerX - startLayerX) / currentZoom,
+	      height: Math.abs(currentLayerY - startLayerY) / currentZoom
+	    });
+	  }
+	  function end() {
+	    if (ui_vue3.toValue(isSelectionActive)) {
+	      setSelectionActive(false);
+	      setSelectionWorldRect(null);
+	      selectionRect.value = {
+	        x: 0,
+	        y: 0,
+	        width: 0,
+	        height: 0
+	      };
+	    }
+	    cachedRootRect = null;
+	    cachedLayerRect = null;
+	  }
+	  return {
+	    isSelecting: isSelectionActive,
+	    selectionRect,
+	    start,
+	    move,
+	    end
+	  };
+	}
+
+	function useGroupDragLogic(closeContextMenu) {
+	  const {
+	    blocks: uiBlocksRef,
+	    zoom,
+	    updateBlock,
+	    setPortOffsetByBlockId,
+	    highlitedBlockIds
+	  } = useBlockDiagram();
+	  let checkBoxDragStartX = 0;
+	  let checkBoxDragStartY = 0;
+	  let lastDeltaX = 0;
+	  let lastDeltaY = 0;
+	  let movingItems = [];
+	  function onGroupMouseDown(event) {
+	    event.stopPropagation();
+	    closeContextMenu();
+	    if (event.button !== 0) {
+	      return;
+	    }
+	    checkBoxDragStartX = event.clientX;
+	    checkBoxDragStartY = event.clientY;
+	    lastDeltaX = 0;
+	    lastDeltaY = 0;
+	    movingItems = [];
+	    const ids = ui_vue3.toValue(highlitedBlockIds);
+	    const blocks = ui_vue3.toValue(uiBlocksRef);
+	    ids.forEach(id => {
+	      const block = blocks.find(item => item.id === id);
+	      if (block) {
+	        movingItems.push({
+	          block,
+	          startX: Number(block.position.x),
+	          startY: Number(block.position.y)
+	        });
+	      }
+	    });
+	    main_core.Event.bind(window, 'mousemove', onGroupMouseMove);
+	    main_core.Event.bind(window, 'mouseup', onGroupMouseUp);
+	  }
+	  function onGroupMouseMove(event) {
+	    event.preventDefault();
+	    const currentZoom = ui_vue3.toValue(zoom);
+	    if (!currentZoom) {
+	      return;
+	    }
+	    const totalDeltaX = (event.clientX - checkBoxDragStartX) / currentZoom;
+	    const totalDeltaY = (event.clientY - checkBoxDragStartY) / currentZoom;
+	    const stepX = totalDeltaX - lastDeltaX;
+	    const stepY = totalDeltaY - lastDeltaY;
+	    lastDeltaX = totalDeltaX;
+	    lastDeltaY = totalDeltaY;
+	    for (const item of movingItems) {
+	      const {
+	        block,
+	        startX,
+	        startY
+	      } = item;
+	      block.position.x = startX + totalDeltaX;
+	      block.position.y = startY + totalDeltaY;
+	      if (setPortOffsetByBlockId) {
+	        setPortOffsetByBlockId(block.id, {
+	          x: -stepX,
+	          y: -stepY
+	        });
+	      }
+	    }
+	  }
+	  function onGroupMouseUp() {
+	    main_core.Event.unbind(window, 'mousemove', onGroupMouseMove);
+	    main_core.Event.unbind(window, 'mouseup', onGroupMouseUp);
+	    for (const item of movingItems) {
+	      const {
+	        block
+	      } = item;
+	      block.position.x = Math.round(block.position.x);
+	      block.position.y = Math.round(block.position.y);
+	      if (setPortOffsetByBlockId) {
+	        setPortOffsetByBlockId(block.id, {
+	          x: 0,
+	          y: 0
+	        });
+	      }
+	      updateBlock({
+	        ...block
+	      });
+	    }
+	    movingItems = [];
+	  }
+	  return {
+	    onGroupMouseDown
+	  };
+	}
+
+	function useGroupSelectionLogic(closeContextMenu, options) {
+	  const {
+	    blocks: uiBlocksRef,
+	    transformLayoutRef,
+	    highlitedBlockIds,
+	    setSelectionActive,
+	    isSelectionActive
+	  } = useBlockDiagram();
+	  const width = options.defaultBlockSize.width;
+	  const height = options.defaultBlockSize.height;
+	  const getBlockDimensions = (block, container) => {
+	    var _block$dimensions, _block$dimensions2;
+	    let w = (_block$dimensions = block.dimensions) == null ? void 0 : _block$dimensions.width;
+	    let h = (_block$dimensions2 = block.dimensions) == null ? void 0 : _block$dimensions2.height;
+	    if (!w || !h) {
+	      const el = container == null ? void 0 : container.querySelector(`[data-id="${block.id}"]`);
+	      if (el) {
+	        w = el.offsetWidth;
+	        h = el.offsetHeight;
+	      } else {
+	        w = width;
+	        h = height;
+	      }
+	    }
+	    return {
+	      w,
+	      h
+	    };
+	  };
+	  const getSelectionBoxPadding = () => {
+	    const pad = ui_vue3.toValue(options.padding);
+	    if (main_core.Type.isNumber(pad)) {
+	      return {
+	        top: pad,
+	        right: pad,
+	        bottom: pad,
+	        left: pad
+	      };
+	    }
+	    return {
+	      top: pad.top,
+	      right: pad.right,
+	      bottom: pad.bottom,
+	      left: pad.left
+	    };
+	  };
+	  function onCanvasSelect(worldRect) {
+	    if (!worldRect) {
+	      setSelectionActive(false);
+	      return;
+	    }
+	    const blocks = ui_vue3.toValue(uiBlocksRef);
+	    const container = ui_vue3.toValue(transformLayoutRef);
+	    const intersectingIds = new Set();
+	    blocks.forEach(block => {
+	      const {
+	        x,
+	        y
+	      } = block.position;
+	      const {
+	        w,
+	        h
+	      } = getBlockDimensions(block, container);
+	      const isIntersecting = worldRect.x < x + w && worldRect.x + worldRect.width > x && worldRect.y < y + h && worldRect.y + worldRect.height > y;
+	      if (isIntersecting) {
+	        intersectingIds.add(block.id);
+	      }
+	    });
+	    const currentIds = ui_vue3.toValue(highlitedBlockIds) || [];
+	    const nextIds = currentIds.filter(id => intersectingIds.has(id));
+	    intersectingIds.forEach(id => {
+	      if (!nextIds.includes(id)) {
+	        nextIds.push(id);
+	      }
+	    });
+	    highlitedBlockIds.value = nextIds;
+	  }
+	  function onSelectionStart() {
+	    setSelectionActive(true);
+	    closeContextMenu();
+	    highlitedBlockIds.value = [];
+	  }
+	  const groupSelectionStyle = ui_vue3.computed(() => {
+	    if (ui_vue3.toValue(isSelectionActive)) {
+	      return null;
+	    }
+	    const ids = ui_vue3.toValue(highlitedBlockIds) || [];
+	    if (ids.length <= 1) {
+	      return null;
+	    }
+	    let minX = Infinity;
+	    let minY = Infinity;
+	    let maxX = -Infinity;
+	    let maxY = -Infinity;
+	    let hasBlocks = false;
+	    const blocks = ui_vue3.toValue(uiBlocksRef);
+	    const container = ui_vue3.toValue(transformLayoutRef);
+	    ids.forEach(id => {
+	      const block = blocks.find(item => item.id === id);
+	      if (block) {
+	        hasBlocks = true;
+	        const {
+	          x,
+	          y
+	        } = block.position;
+	        const {
+	          w,
+	          h
+	        } = getBlockDimensions(block, container);
+	        minX = Math.min(minX, x);
+	        minY = Math.min(minY, y);
+	        maxX = Math.max(maxX, x + w);
+	        maxY = Math.max(maxY, y + h);
+	      }
+	    });
+	    if (!hasBlocks) {
+	      return null;
+	    }
+	    const padding = getSelectionBoxPadding();
+	    return {
+	      left: `${minX - padding.left}px`,
+	      top: `${minY - padding.top}px`,
+	      width: `${maxX - minX + padding.left + padding.right}px`,
+	      height: `${maxY - minY + padding.top + padding.bottom}px`
+	    };
+	  });
+	  return {
+	    onCanvasSelect,
+	    onSelectionStart,
+	    groupSelectionStyle
+	  };
+	}
+
+	const MODIFIER_KEYS = new Set(['control', 'meta', 'shift', 'alt', 'command', 'option', 'ctrl', 'mod']);
+	const KEY_CODE_PREFIX = 'Key';
+	function useKeyboardShortcuts(shortcuts) {
+	  let mouseX = 0;
+	  let mouseY = 0;
+	  const isMac = main_core.Browser.isMac();
+	  const preparedShortcuts = shortcuts.map(({
+	    keys,
+	    handler
+	  }) => {
+	    const lowerKeys = keys.map(k => k.toLowerCase());
+	    const keySet = new Set(lowerKeys);
+	    const hasMod = keySet.has('mod');
+	    const needCtrl = keySet.has('ctrl') || hasMod && !isMac;
+	    const needMeta = keySet.has('meta') || hasMod && isMac;
+	    const mainKey = lowerKeys.find(k => !MODIFIER_KEYS.has(k));
+	    if (!mainKey) {
+	      console.error('Invalid shortcut config: no main key found', keys);
+	    }
+	    return {
+	      mainKey: mainKey || '',
+	      requiredModifiers: {
+	        ctrl: needCtrl,
+	        meta: needMeta,
+	        shift: keySet.has('shift'),
+	        alt: keySet.has('alt')
+	      },
+	      handler
+	    };
+	  });
+	  function onMouseMove(event) {
+	    mouseX = event.clientX;
+	    mouseY = event.clientY;
+	  }
+	  function onKeyDown(event) {
+	    const target = event.target;
+	    const pressedKey = event.code.startsWith(KEY_CODE_PREFIX) ? event.code.slice(KEY_CODE_PREFIX.length).toLowerCase() : event.key.toLowerCase();
+	    if (MODIFIER_KEYS.has(pressedKey)) {
+	      return;
+	    }
+	    const isInputActive = target.tagName in INPUT_TAGS || target.isContentEditable;
+	    if (isInputActive) {
+	      return;
+	    }
+	    for (const shortcut of preparedShortcuts) {
+	      if (shortcut.mainKey !== pressedKey) {
+	        continue;
+	      }
+	      const {
+	        ctrl,
+	        meta,
+	        shift,
+	        alt
+	      } = shortcut.requiredModifiers;
+	      const isMatch = event.ctrlKey === ctrl && event.metaKey === meta && event.shiftKey === shift && event.altKey === alt;
+	      if (isMatch) {
+	        event.preventDefault();
+	        shortcut.handler(event, {
+	          x: mouseX,
+	          y: mouseY
+	        });
+	        return;
+	      }
+	    }
+	  }
+	  ui_vue3.onMounted(() => {
+	    main_core.Event.bind(window, 'keydown', onKeyDown);
+	    main_core.Event.bind(window, 'mousemove', onMouseMove);
+	  });
+	  ui_vue3.onUnmounted(() => {
+	    main_core.Event.unbind(window, 'keydown', onKeyDown);
+	    main_core.Event.unbind(window, 'mousemove', onMouseMove);
+	  });
+	}
+
 	const CANVAS_TRANSFORM_CLASS_NAMES = {
 	  base: 'ui-block-diagram-canvas-transform',
-	  dragging: '--dragging'
+	  dragging: '--dragging',
+	  grabbing: '--grabbing',
+	  grab: '--grab'
 	};
+	const KEY_SPACE = 'Space';
 
 	// @vue/component
 	const CanvasTransform = {
@@ -4200,50 +4688,155 @@ this.BX = this.BX || {};
 	    zoomSensitivityMouse: {
 	      type: Number,
 	      default: 0.04
+	    },
+	    selectionEnabled: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
-	  setup(props) {
+	  emits: ['openContextMenu'],
+	  setup(props, {
+	    emit
+	  }) {
+	    const rootRef = ui_vue3.useTemplateRef('rootRef');
+	    const canvasRef = ui_vue3.useTemplateRef('canvasLayout');
+	    const transformLayoutRef = ui_vue3.useTemplateRef('transformLayout');
+	    const isSpacePressed = ui_vue3.ref(false);
+	    const isPanning = ui_vue3.ref(false);
 	    const {
 	      isDragging,
 	      onMounted: onMountedCanvasTransform,
-	      onUmounted: onUnmountedCanvasTransform,
-	      onMouseDown,
-	      onMouseMove,
-	      onMouseUp,
+	      onUnmounted: onUnmountedCanvasTransform,
+	      onMouseDown: onPanStart,
+	      onMouseMove: onPanMove,
+	      onMouseUp: onPanEnd,
 	      onWheel
 	    } = useCanvasTransfrom({
-	      canvasRef: ui_vue3.useTemplateRef('canvasLayout'),
-	      transformLayoutRef: ui_vue3.useTemplateRef('transformLayout'),
+	      canvasRef,
+	      transformLayoutRef,
 	      canvasStyle: props.canvasStyle,
 	      zoomSensitivity: props.zoomSensitivity,
 	      zoomSensitivityMouse: props.zoomSensitivityMouse
 	    });
+	    const {
+	      isSelecting,
+	      selectionRect,
+	      start: onSelectionStart,
+	      move: onSelectionMove,
+	      end: onSelectionEnd
+	    } = useCanvasSelection({
+	      rootRef,
+	      transformLayoutRef
+	    });
 	    const canvasTransformClassNames = ui_vue3.computed(() => ({
 	      [CANVAS_TRANSFORM_CLASS_NAMES.base]: true,
-	      [CANVAS_TRANSFORM_CLASS_NAMES.dragging]: ui_vue3.toValue(isDragging)
+	      [CANVAS_TRANSFORM_CLASS_NAMES.dragging]: ui_vue3.toValue(isDragging),
+	      [CANVAS_TRANSFORM_CLASS_NAMES.grabbing]: ui_vue3.toValue(isPanning),
+	      [CANVAS_TRANSFORM_CLASS_NAMES.grab]: ui_vue3.toValue(isSpacePressed) && !ui_vue3.toValue(isPanning)
 	    }));
 	    ui_vue3.onMounted(() => {
 	      onMountedCanvasTransform();
+	      main_core.Event.bind(window, 'keydown', onKeyDown);
+	      main_core.Event.bind(window, 'keyup', onKeyUp);
 	    });
 	    ui_vue3.onUnmounted(() => {
 	      onUnmountedCanvasTransform();
+	      main_core.Event.unbind(window, 'keydown', onKeyDown);
+	      main_core.Event.unbind(window, 'keyup', onKeyUp);
 	    });
+	    function onMouseDown(event) {
+	      if (event.button === 2) {
+	        return;
+	      }
+	      const isMiddleClick = event.button === 1;
+	      const isLeftClick = event.button === 0;
+	      const isSpace = ui_vue3.toValue(isSpacePressed);
+	      const shouldPan = isMiddleClick || isLeftClick && (isSpace || !props.selectionEnabled);
+	      const shouldSelect = isLeftClick && !isSpace && props.selectionEnabled;
+	      if (shouldPan) {
+	        if (ui_vue3.toValue(isSelecting)) {
+	          onSelectionEnd();
+	        }
+	        isPanning.value = true;
+	        if (isMiddleClick || isLeftClick && !props.selectionEnabled) {
+	          event.preventDefault();
+	        }
+	        onPanStart(event);
+	      } else if (shouldSelect) {
+	        isPanning.value = false;
+	        event.preventDefault();
+	        onSelectionStart(event);
+	      }
+	    }
+	    function onMouseMove(event) {
+	      if (ui_vue3.toValue(isSelecting) && ui_vue3.toValue(isSpacePressed)) {
+	        onSelectionEnd();
+	        isPanning.value = true;
+	        onPanStart(event);
+	      }
+	      if (ui_vue3.toValue(isSelecting)) {
+	        onSelectionMove(event);
+	      } else if (ui_vue3.toValue(isPanning)) {
+	        onPanMove(event);
+	      }
+	    }
+	    function onMouseUp() {
+	      if (ui_vue3.toValue(isSelecting)) {
+	        onSelectionEnd();
+	      }
+	      if (ui_vue3.toValue(isPanning)) {
+	        isPanning.value = false;
+	        onPanEnd();
+	      }
+	    }
+	    const onKeyDown = event => {
+	      if (event.code !== KEY_SPACE) {
+	        return;
+	      }
+	      if (event.repeat) {
+	        return;
+	      }
+	      const target = event.target;
+	      const isInputActive = target.tagName in INPUT_TAGS || target.isContentEditable;
+	      if (isInputActive) {
+	        return;
+	      }
+	      isSpacePressed.value = true;
+	    };
+	    const onKeyUp = event => {
+	      if (event.code === KEY_SPACE) {
+	        isSpacePressed.value = false;
+	      }
+	    };
+	    function openContextMenu(event) {
+	      var _event$target;
+	      if (event.target === ui_vue3.toValue(canvasRef) || ((_event$target = event.target) == null ? void 0 : _event$target.parentElement) === ui_vue3.toValue(transformLayoutRef)) {
+	        emit('openContextMenu', event);
+	      }
+	    }
 	    return {
+	      rootRef,
+	      canvasRef,
+	      transformLayoutRef,
 	      canvasTransformClassNames,
 	      onMouseDown,
 	      onMouseMove,
 	      onMouseUp,
-	      onWheel
+	      onWheel,
+	      openContextMenu,
+	      isSelecting,
+	      selectionRect
 	    };
 	  },
 	  template: `
 		<div
+			ref="rootRef"
 			:class="canvasTransformClassNames"
 			@mousedown="onMouseDown"
 			@mousemove="onMouseMove"
 			@mouseup="onMouseUp"
 			@wheel="onWheel"
-			@contextmenu.prevent
+			@contextmenu.prevent="openContextMenu"
 		>
 			<canvas
 				ref="canvasLayout"
@@ -4254,6 +4847,15 @@ this.BX = this.BX || {};
 				class="ui-block-diagram-canvas-transform__transform"
 			>
 				<slot/>
+			</div>
+			<div v-if="isSelecting" class="ui-block-diagram-selection-rect"
+				 :style="{
+					left: selectionRect.x + 'px',
+					top: selectionRect.y + 'px',
+					width: selectionRect.width + 'px',
+					height: selectionRect.height + 'px'
+				}"
+			>
 			</div>
 		</div>
 	`
@@ -4301,14 +4903,21 @@ this.BX = this.BX || {};
 	    const loc = useLoc();
 	    const {
 	      isOpen,
-	      showContextMenu
-	    } = useContextMenu([{
-	      id: 'deleteConnection',
-	      text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_CONNECTION_CONTEXT_MENU_ITEM'),
-	      onclick: () => {
-	        deleteConnectionById(props.connection.id);
+	      showMenu
+	    } = useContextMenu();
+	    const preparedContextMenuItems = ui_vue3.computed(() => {
+	      const defaultItems = [{
+	        id: 'deleteConnection',
+	        text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_CONNECTION_CONTEXT_MENU_ITEM'),
+	        onclick: () => {
+	          this.deleteConnectionById(this.connection.id);
+	        }
+	      }];
+	      if (props.contextMenuItems.length > 0) {
+	        return props.contextMenuItems;
 	      }
-	    }]);
+	      return defaultItems;
+	    });
 	    const targetConnectionClasses = ui_vue3.computed(() => ({
 	      [TARGET_CONNECTION_CLASSES.base]: true,
 	      [TARGET_CONNECTION_CLASSES.active]: ui_vue3.toValue(isOpen)
@@ -4329,14 +4938,18 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      event.preventDefault();
-	      showContextMenu(event);
+	      showMenu(event, {
+	        items: ui_vue3.toValue(preparedContextMenuItems)
+	      });
 	    }
 	    return {
 	      isDisabled,
 	      connectionPathInfo,
 	      targetConnectionClasses,
 	      barPosition,
-	      onOpenContextMenu
+	      onOpenContextMenu,
+	      loc,
+	      deleteConnectionById
 	    };
 	  },
 	  template: `
@@ -4441,6 +5054,7 @@ this.BX = this.BX || {};
 				:ref="instance.targetContainerRef"
 				:style="targetContainerStyle"
 				class="ui-block-diagram-context-menu__target-container"
+				@mousedown.stop
 			/>
 		</div>
 	`
@@ -4700,6 +5314,9 @@ this.BX = this.BX || {};
 	      block
 	    } = ui_vue3.toRefs(props);
 	    const {
+	      isMakeNewConnection
+	    } = useBlockDiagram();
+	    const {
 	      blockZindex,
 	      isHiglitedBlock,
 	      isDisabled
@@ -4731,6 +5348,7 @@ this.BX = this.BX || {};
 	      isHiglitedBlock,
 	      isDisabled,
 	      isDragged,
+	      isMakeNewConnection,
 	      blockStyle,
 	      blockZindex,
 	      blockPositionStyle,
@@ -4743,6 +5361,7 @@ this.BX = this.BX || {};
 			:style="blockStyle"
 			ref="blockEl"
 			:data-test-id="$blockDiagramTestId('block', block.id)"
+			:data-id="block.id"
 			@mousedown="onMouseDownSelectBlock"
 		>
 			<slot
@@ -4750,6 +5369,7 @@ this.BX = this.BX || {};
 				:isHighlighted="isHiglitedBlock"
 				:isDragged="isDragged"
 				:isDisabled="isDisabled"
+				:isMakeNewConnection="isMakeNewConnection"
 			/>
 		</div>
 	`
@@ -4854,6 +5474,8 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// eslint-disable-next-line no-unused-vars
+
 	const BLOCK_CONTENT_STUB_CLASS_NAMES = {
 	  base: 'ui-block-diagram-block-content-stub',
 	  highlighted: '--highlighted'
@@ -4890,14 +5512,8 @@ this.BX = this.BX || {};
 	    } = useBlockDiagram();
 	    const loc = useLoc();
 	    const {
-	      showContextMenu
-	    } = useContextMenu([{
-	      id: 'deleteConnection',
-	      text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_BLOCK_CONTEXT_MENU_ITEM'),
-	      onclick: () => {
-	        deleteBlockById(props.block.id);
-	      }
-	    }]);
+	      showMenu
+	    } = useContextMenu();
 	    const blockContentClassNames = ui_vue3.computed(() => ({
 	      [BLOCK_CONTENT_STUB_CLASS_NAMES.base]: true,
 	      [BLOCK_CONTENT_STUB_CLASS_NAMES.highlighted]: props.highlighted
@@ -4911,9 +5527,17 @@ this.BX = this.BX || {};
 	        clientX,
 	        clientY
 	      } = event;
-	      showContextMenu({
+	      showMenu({
 	        clientX,
 	        clientY
+	      }, {
+	        items: [{
+	          id: 'deleteConnection',
+	          text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_BLOCK_CONTEXT_MENU_ITEM'),
+	          onclick: () => {
+	            deleteBlockById(props.block.id);
+	          }
+	        }]
 	      });
 	    }
 	    return {
@@ -4980,7 +5604,6 @@ this.BX = this.BX || {};
 	  grabbing: '--grabbing',
 	  disabled: '--disabled'
 	};
-
 	// @vue/component
 	const BlockDiagram = {
 	  name: 'block-diagram',
@@ -5049,6 +5672,15 @@ this.BX = this.BX || {};
 	    disabled: {
 	      type: Boolean,
 	      default: false
+	    },
+	    enableGrouping: {
+	      type: Boolean,
+	      default: false
+	    },
+	    /** @type Array<MenuItemOptions> */
+	    contextMenuItems: {
+	      type: Array,
+	      default: () => []
 	    }
 	  },
 	  emits: ['update:blocks', 'update:connections', HOOK_NAMES.CHANGED_BLOCKS, HOOK_NAMES.CHANGED_CONNECTIONS, HOOK_NAMES.START_DRAG_BLOCK, HOOK_NAMES.MOVE_DRAG_BLOCK, HOOK_NAMES.END_DRAG_BLOCK, HOOK_NAMES.ADD_BLOCK, HOOK_NAMES.UPDATE_BLOCK, HOOK_NAMES.DELETE_BLOCK, HOOK_NAMES.CREATE_CONNECTION, HOOK_NAMES.DELETE_CONNECTION, HOOK_NAMES.BLOCK_TRANSITION_START, HOOK_NAMES.BLOCK_TRANSITION_END, HOOK_NAMES.CONNECTION_TRANSITION_START, HOOK_NAMES.CONNECTION_TRANSITION_END, HOOK_NAMES.DROP_NEW_BLOCK],
@@ -5100,6 +5732,9 @@ this.BX = this.BX || {};
 	      [BLOCK_DIAGRAM_CLASS_NAMES.nwSeResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.NWSE_RESIZE,
 	      [BLOCK_DIAGRAM_CLASS_NAMES.neSwResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.NESW_RESIZE
 	    }));
+	    const {
+	      showMenu
+	    } = useContextMenu();
 	    ui_vue3.onMounted(() => {
 	      initAppElements.onMountedAppElements();
 	    });
@@ -5119,6 +5754,16 @@ this.BX = this.BX || {};
 	      isGrabbing.value = false;
 	      onDrop(event);
 	    }
+	    function openContextMenu(event) {
+	      if (props.contextMenuItems.length > 0) {
+	        showMenu({
+	          clientX: event.clientX,
+	          clientY: event.clientY
+	        }, {
+	          items: props.contextMenuItems
+	        });
+	      }
+	    }
 	    return {
 	      blockDiagramClassNames,
 	      blockGroupNames,
@@ -5127,7 +5772,8 @@ this.BX = this.BX || {};
 	      getGroupConnectionSlotName,
 	      onDragDrop,
 	      onDragEnter,
-	      onDragLeave
+	      onDragLeave,
+	      openContextMenu
 	    };
 	  },
 	  template: `
@@ -5143,7 +5789,10 @@ this.BX = this.BX || {};
 				:canvasStyle="canvasStyle"
 				:zoomSensitivity="zoomSensitivity"
 				:zoomSensitivityMouse="zoomSensitivityMouse"
+				@openContextMenu="openContextMenu"
+				:selectionEnabled="enableGrouping"
 			>
+				<slot name="group-selection-box"/>
 				<ContextMenuLayout>
 					<GroupedConnections>
 						<template
@@ -5428,29 +6077,75 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const ZOOM_PRESET = [0.5, 0.7, 1, 2];
+
 	// @vue/component
 	const ZoomPercent = {
 	  name: 'zoom-percent',
 	  setup(props) {
 	    const {
-	      zoom
+	      zoom,
+	      isDisabledBlockDiagram
 	    } = useBlockDiagram();
+	    const {
+	      setZoom
+	    } = useCanvas();
+	    const {
+	      showMenu,
+	      isOpen
+	    } = useContextMenu();
 	    const percent = ui_vue3.computed(() => {
 	      var _toValue;
 	      return (((_toValue = ui_vue3.toValue(zoom)) != null ? _toValue : 0) * 100).toFixed(0);
 	    });
+	    const root = ui_vue3.ref(null);
+	    function onOpenZoomPresetMenu() {
+	      if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+	        return;
+	      }
+	      const options = {
+	        className: 'ui-block-diagram-percent-menu',
+	        minWidth: 106,
+	        targetContainer: root.value.parentElement,
+	        items: ZOOM_PRESET.map(value => {
+	          return {
+	            text: `${value * 100}%`,
+	            onclick: () => setZoom(value)
+	          };
+	        })
+	      };
+	      showMenu({
+	        clientX: 0,
+	        clientY: 0
+	      }, options);
+	    }
 	    return {
-	      percent
+	      percent,
+	      root,
+	      isOpen,
+	      onOpenZoomPresetMenu
 	    };
 	  },
 	  template: `
-		<span class="ui-block-diagram-percent">{{ percent }}</span>
+		<span
+			class="ui-block-diagram-percent"
+			:class="{ '--selected': isOpen }"
+			ref="root"
+			@click="onOpenZoomPresetMenu"
+		>
+			{{ percent }}
+		</span>
 	`
 	};
 
-	const CURSOR_RECT_STROKE_WIDTH = 2;
-	const FIRST_EMPTY_BLOCK_ID = 'firstCanvasBlock';
-	const LAST_EMPTY_BLOCK_ID = 'lastCanvasBlock';
+	const MAP_PADDING = 50;
+	const DEFAULT_BLOCK_COLOR = 'var(--ui-color-palette-gray-15)';
+	const DEFAULT_FRAME_BLOCK_COLOR = 'rgba(0,0,0,0.05)';
+	const FRAME_BLOCK_TYPE = 'frame';
+	const INTERACTION_STATE_MODES = {
+	  CURSOR: 'cursor',
+	  MAP: 'map'
+	};
 
 	// @vue/component
 	const CanvasMap = {
@@ -5463,6 +6158,10 @@ this.BX = this.BX || {};
 	    mapHeight: {
 	      type: Number,
 	      default: 183
+	    },
+	    blockColors: {
+	      type: Object,
+	      default: () => {}
 	    }
 	  },
 	  // eslint-disable-next-line max-lines-per-function
@@ -5482,84 +6181,87 @@ this.BX = this.BX || {};
 	    } = useCanvas();
 	    const {
 	      mapWidth,
-	      mapHeight
+	      mapHeight,
+	      blockColors
 	    } = ui_vue3.toRefs(props);
 	    const mapEl = ui_vue3.useTemplateRef('map');
-	    let mapElLeft = 0;
-	    let mapElTop = 0;
-	    const isDragged = ui_vue3.ref(false);
+	    const interactionState = ui_vue3.reactive({
+	      isDragging: false,
+	      mode: null,
+	      dragOffsetX: 0,
+	      dragOffsetY: 0,
+	      mapRect: null
+	    });
 	    const canvasMapStyle = ui_vue3.computed(() => ({
 	      width: `${ui_vue3.toValue(mapWidth)}px`,
 	      height: `${ui_vue3.toValue(mapHeight)}px`
 	    }));
-	    const preparedBlock = ui_vue3.computed(() => {
-	      if (ui_vue3.toValue(blocks).length === 1) {
-	        return [{
-	          id: FIRST_EMPTY_BLOCK_ID,
-	          position: {
-	            x: 0,
-	            y: 0
-	          },
-	          dimensions: {
-	            width: 0,
-	            height: 0
-	          }
-	        }, {
-	          ...ui_vue3.toValue(blocks)[0]
-	        }, {
-	          id: LAST_EMPTY_BLOCK_ID,
-	          position: {
-	            x: props.mapWidth,
-	            y: props.mapHeight
-	          },
-	          dimensions: {
-	            width: 0,
-	            height: 0
-	          }
-	        }];
+	    const layoutData = ui_vue3.computed(() => {
+	      const items = ui_vue3.toValue(blocks);
+	      if (!main_core.Type.isArrayFilled(items)) {
+	        const cWidth = ui_vue3.toValue(canvasWidth);
+	        const cHeight = ui_vue3.toValue(canvasHeight);
+	        return {
+	          sortedBlocks: [],
+	          minX: 0,
+	          minY: 0,
+	          width: cWidth ? 2 * cWidth : 1000,
+	          height: cHeight ? 2 * cHeight : 1000
+	        };
 	      }
-	      return ui_vue3.toValue(blocks);
+	      let minX = Infinity;
+	      let minY = Infinity;
+	      let maxX = -Infinity;
+	      let maxY = -Infinity;
+	      const frames = [];
+	      const content = [];
+	      items.forEach(block => {
+	        const {
+	          x,
+	          y
+	        } = block.position;
+	        const {
+	          width,
+	          height
+	        } = block.dimensions;
+	        minX = Math.min(minX, x);
+	        minY = Math.min(minY, y);
+	        maxX = Math.max(maxX, x + width);
+	        maxY = Math.max(maxY, y + height);
+	        if ((block == null ? void 0 : block.type) === FRAME_BLOCK_TYPE) {
+	          frames.push(block);
+	        } else {
+	          content.push(block);
+	        }
+	      });
+	      return {
+	        sortedBlocks: [...content, ...frames],
+	        minX: minX - MAP_PADDING,
+	        minY: minY - MAP_PADDING,
+	        width: maxX + MAP_PADDING - (minX - MAP_PADDING),
+	        height: maxY + MAP_PADDING - (minY - MAP_PADDING)
+	      };
 	    });
-	    const startDiagramX = ui_vue3.computed(() => {
-	      return ui_vue3.toValue(preparedBlock).reduce((min, block) => Math.min(min, block.position.x), Infinity);
-	    });
-	    const startDiagramY = ui_vue3.computed(() => {
-	      return ui_vue3.toValue(preparedBlock).reduce((min, block) => Math.min(min, block.position.y), Infinity);
-	    });
-	    const diagramWidth = ui_vue3.computed(() => {
-	      if (!main_core.Type.isArrayFilled(ui_vue3.toValue(blocks))) {
-	        return props.mapWidth;
+	    const sortedBlocks = ui_vue3.computed(() => ui_vue3.toValue(layoutData).sortedBlocks);
+	    const contentOffsetX = ui_vue3.computed(() => ui_vue3.toValue(layoutData).minX);
+	    const contentOffsetY = ui_vue3.computed(() => ui_vue3.toValue(layoutData).minY);
+	    const renderScale = ui_vue3.computed(() => {
+	      const {
+	        width,
+	        height
+	      } = ui_vue3.toValue(layoutData);
+	      if (width <= 0 || height <= 0) {
+	        return 1;
 	      }
-	      const maxX = ui_vue3.toValue(preparedBlock).reduce((max, block) => Math.max(max, block.position.x + block.dimensions.width), -Infinity);
-	      return maxX - ui_vue3.toValue(startDiagramX);
+	      return Math.min(ui_vue3.toValue(mapWidth) / width, ui_vue3.toValue(mapHeight) / height);
 	    });
-	    const diagramHeight = ui_vue3.computed(() => {
-	      if (!main_core.Type.isArrayFilled(ui_vue3.toValue(blocks))) {
-	        return props.mapHeight;
-	      }
-	      const maxY = ui_vue3.toValue(preparedBlock).reduce((max, block) => Math.max(max, block.position.y + block.dimensions.height), -Infinity);
-	      return maxY - ui_vue3.toValue(startDiagramY);
-	    });
-	    const scaleMap = ui_vue3.computed(() => {
-	      return Math.min(ui_vue3.toValue(mapWidth) / ui_vue3.toValue(diagramWidth), ui_vue3.toValue(mapHeight) / ui_vue3.toValue(diagramHeight));
-	    });
-	    const cursorRectWidth = ui_vue3.computed(() => {
-	      return ui_vue3.toValue(canvasWidth) * ui_vue3.toValue(scaleMap) / ui_vue3.toValue(zoom);
-	    });
-	    const cursorRectHeight = ui_vue3.computed(() => {
-	      return ui_vue3.toValue(canvasHeight) * ui_vue3.toValue(scaleMap) / ui_vue3.toValue(zoom);
-	    });
-	    const cursorRectPosition = ui_vue3.computed(() => {
-	      let width = ui_vue3.toValue(cursorRectWidth);
-	      let height = ui_vue3.toValue(cursorRectHeight);
-	      let x = (ui_vue3.toValue(transformX) - ui_vue3.toValue(startDiagramX)) * ui_vue3.toValue(scaleMap);
-	      let y = (ui_vue3.toValue(transformY) - ui_vue3.toValue(startDiagramY)) * ui_vue3.toValue(scaleMap);
-	      [x, width] = width > ui_vue3.toValue(mapWidth) ? [1, ui_vue3.toValue(mapWidth) - CURSOR_RECT_STROKE_WIDTH] : [x, width];
-	      [y, height] = height > ui_vue3.toValue(mapHeight) ? [1, ui_vue3.toValue(mapHeight) - CURSOR_RECT_STROKE_WIDTH] : [y, height];
-	      x = x < 0 ? 1 : x;
-	      y = y < 0 ? 1 : y;
-	      x = x + width > ui_vue3.toValue(mapWidth) ? ui_vue3.toValue(mapWidth) - width - CURSOR_RECT_STROKE_WIDTH : x;
-	      y = y + height > ui_vue3.toValue(mapHeight) ? ui_vue3.toValue(mapHeight) - height - CURSOR_RECT_STROKE_WIDTH : y;
+	    const viewportIndicator = ui_vue3.computed(() => {
+	      const scale = ui_vue3.toValue(renderScale);
+	      const currentZoom = ui_vue3.toValue(zoom);
+	      const width = ui_vue3.toValue(canvasWidth) * scale / currentZoom;
+	      const height = ui_vue3.toValue(canvasHeight) * scale / currentZoom;
+	      const x = (ui_vue3.toValue(transformX) - ui_vue3.toValue(contentOffsetX)) * scale;
+	      const y = (ui_vue3.toValue(transformY) - ui_vue3.toValue(contentOffsetY)) * scale;
 	      return {
 	        x,
 	        y,
@@ -5567,50 +6269,93 @@ this.BX = this.BX || {};
 	        height
 	      };
 	    });
-	    function updateCameraPosition(event) {
-	      const x = event.clientX - mapElLeft;
-	      const y = event.clientY - mapElTop;
-	      const canvasX = x / ui_vue3.toValue(scaleMap) + ui_vue3.toValue(startDiagramX);
-	      const canvasY = y / ui_vue3.toValue(scaleMap) + ui_vue3.toValue(startDiagramY);
+	    function isPointInViewport(x, y) {
+	      const indicator = ui_vue3.toValue(viewportIndicator);
+	      return x >= indicator.x && x <= indicator.x + indicator.width && y >= indicator.y && y <= indicator.y + indicator.height;
+	    }
+	    function updateCamera(clientX, clientY) {
+	      if (!interactionState.mapRect) {
+	        return;
+	      }
+	      const mouseRelX = clientX - interactionState.mapRect.left;
+	      const mouseRelY = clientY - interactionState.mapRect.top;
+	      const indicator = ui_vue3.toValue(viewportIndicator);
+	      const scale = ui_vue3.toValue(renderScale);
+	      const currentZoom = ui_vue3.toValue(zoom);
+	      let targetMapX = mouseRelX - indicator.width;
+	      let targetMapY = mouseRelY - indicator.height;
+	      if (interactionState.mode === INTERACTION_STATE_MODES.CURSOR) {
+	        targetMapX = mouseRelX - interactionState.dragOffsetX - indicator.width / 2;
+	        targetMapY = mouseRelY - interactionState.dragOffsetY - indicator.height / 2;
+	      }
+	      const canvasX = targetMapX / scale + ui_vue3.toValue(contentOffsetX);
+	      const canvasY = targetMapY / scale + ui_vue3.toValue(contentOffsetY);
 	      setCamera({
-	        x: canvasX - ui_vue3.toValue(canvasWidth) / ui_vue3.toValue(zoom) / 2,
-	        y: canvasY - ui_vue3.toValue(canvasHeight) / ui_vue3.toValue(zoom) / 2,
-	        zoom: ui_vue3.toValue(zoom),
+	        x: canvasX + ui_vue3.toValue(canvasWidth) / currentZoom / 2,
+	        y: canvasY + ui_vue3.toValue(canvasHeight) / currentZoom / 2,
+	        zoom: currentZoom,
 	        viewportX: 0,
 	        viewportY: 0
 	      });
 	    }
 	    function onMapMouseDown(event) {
-	      isDragged.value = true;
-	      if (ui_vue3.toValue(mapEl)) {
-	        const {
-	          left,
-	          top
-	        } = ui_vue3.toValue(mapEl).getBoundingClientRect();
-	        [mapElLeft, mapElTop] = [left, top];
-	      }
-	      updateCameraPosition(event);
-	    }
-	    function onMapMouseMove(event) {
-	      if (!ui_vue3.toValue(isDragged)) {
+	      event.preventDefault();
+	      const el = ui_vue3.toValue(mapEl);
+	      if (!el) {
 	        return;
 	      }
-	      updateCameraPosition(event);
+	      const rect = el.getBoundingClientRect();
+	      interactionState.mapRect = rect;
+	      interactionState.isDragging = true;
+	      const mouseRelX = event.clientX - rect.left;
+	      const mouseRelY = event.clientY - rect.top;
+	      if (isPointInViewport(mouseRelX, mouseRelY)) {
+	        const indicator = ui_vue3.toValue(viewportIndicator);
+	        interactionState.mode = INTERACTION_STATE_MODES.CURSOR;
+	        interactionState.dragOffsetX = mouseRelX - indicator.x;
+	        interactionState.dragOffsetY = mouseRelY - indicator.y;
+	      } else {
+	        interactionState.mode = INTERACTION_STATE_MODES.MAP;
+	        interactionState.dragOffsetX = 0;
+	        interactionState.dragOffsetY = 0;
+	        updateCamera(event.clientX, event.clientY);
+	      }
+	    }
+	    function onMapMouseMove(event) {
+	      if (!interactionState.isDragging) {
+	        return;
+	      }
+	      event.preventDefault();
+	      updateCamera(event.clientX, event.clientY);
 	    }
 	    function onMapMouseUp(event) {
-	      isDragged.value = false;
-	      updateCameraPosition(event);
+	      interactionState.isDragging = false;
+	      interactionState.mode = null;
+	    }
+	    function getBlockColor(block) {
+	      var _block$node, _block$node2, _toValue;
+	      const blockType = block == null ? void 0 : (_block$node = block.node) == null ? void 0 : _block$node.type;
+	      const colorIndex = block == null ? void 0 : (_block$node2 = block.node) == null ? void 0 : _block$node2.colorIndex;
+	      if (blockType === FRAME_BLOCK_TYPE) {
+	        return DEFAULT_FRAME_BLOCK_COLOR;
+	      }
+	      if (colorIndex === null || colorIndex === false) {
+	        return DEFAULT_BLOCK_COLOR;
+	      }
+	      const palette = (_toValue = ui_vue3.toValue(blockColors)) != null ? _toValue : {};
+	      return palette[colorIndex] || DEFAULT_BLOCK_COLOR;
 	    }
 	    return {
-	      preparedBlock,
+	      sortedBlocks,
 	      canvasMapStyle,
-	      startDiagramX,
-	      startDiagramY,
-	      scaleMap,
-	      cursorRectPosition,
+	      contentOffsetX,
+	      contentOffsetY,
+	      renderScale,
+	      viewportIndicator,
 	      onMapMouseDown,
 	      onMapMouseMove,
-	      onMapMouseUp
+	      onMapMouseUp,
+	      getBlockColor
 	    };
 	  },
 	  template: `
@@ -5623,23 +6368,25 @@ this.BX = this.BX || {};
 				@mousedown="onMapMouseDown"
 				@mousemove="onMapMouseMove"
 				@mouseup="onMapMouseUp"
+				@mouseleave="onMapMouseUp"
 			>
 				<rect
-					v-for="block in preparedBlock"
+					v-for="block in sortedBlocks"
 					:key="block.id"
-					:x="(block.position.x - startDiagramX) * scaleMap"
-					:y="(block.position.y - startDiagramY) * scaleMap"
-					:width="block.dimensions.width * scaleMap"
-					:height="block.dimensions.height * scaleMap"
+					:x="(block.position.x - contentOffsetX) * renderScale"
+					:y="(block.position.y - contentOffsetY) * renderScale"
+					:width="block.dimensions.width * renderScale"
+					:height="block.dimensions.height * renderScale"
 					:rx="2"
+					:fill="getBlockColor(block)"
 					class="ui-block-diagram-canvas-map__block"
 				/>
 				<rect
-					:x="cursorRectPosition.x"
-					:y="cursorRectPosition.y"
-					:width="cursorRectPosition.width"
-					:height="cursorRectPosition.height"
-					:rx="3"
+					:x="viewportIndicator.x"
+					:y="viewportIndicator.y"
+					:width="viewportIndicator.width"
+					:height="viewportIndicator.height"
+					:rx="4"
 					class="ui-block-diagram-canvas-map__cursor"
 				/>
 			</svg>
@@ -5647,56 +6394,45 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const DEFAULT_ICON_COLOR = 'var(--ui-color-base-4)';
+	const DEFAULT_CLICKED_ICON_COLOR = 'var(--ui-color-accent-main-primary)';
+
 	// @vue/component
 	const CanvasMapBtn = {
 	  name: 'canvas-map-btn',
 	  props: {
 	    width: {
 	      type: Number,
-	      default: 75
+	      default: 28
 	    },
 	    height: {
 	      type: Number,
 	      default: 32
+	    },
+	    iconColor: {
+	      type: String,
+	      default: DEFAULT_ICON_COLOR
+	    },
+	    clickedIconColor: {
+	      type: String,
+	      default: DEFAULT_CLICKED_ICON_COLOR
+	    },
+	    isActive: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  setup(props) {
-	    const {
-	      blocks
-	    } = useBlockDiagram();
 	    const btnStyle = ui_vue3.computed(() => ({
 	      width: `${props.width}px`,
 	      height: `${props.height}px`
 	    }));
-	    const startDiagramX = ui_vue3.computed(() => {
-	      return ui_vue3.toValue(blocks).reduce((min, block) => Math.min(min, block.position.x), Infinity);
-	    });
-	    const startDiagramY = ui_vue3.computed(() => {
-	      return ui_vue3.toValue(blocks).reduce((min, block) => Math.min(min, block.position.y), Infinity);
-	    });
-	    const diagramWidth = ui_vue3.computed(() => {
-	      if (!main_core.Type.isArrayFilled(ui_vue3.toValue(blocks))) {
-	        return props.width;
-	      }
-	      const maxX = ui_vue3.toValue(blocks).reduce((max, block) => Math.max(max, block.position.x + block.dimensions.width), -Infinity);
-	      return maxX - ui_vue3.toValue(startDiagramX);
-	    });
-	    const diagramHeight = ui_vue3.computed(() => {
-	      if (!main_core.Type.isArrayFilled(ui_vue3.toValue(blocks))) {
-	        return props.height;
-	      }
-	      const maxY = ui_vue3.toValue(blocks).reduce((max, block) => Math.max(max, block.position.y + block.dimensions.height), -Infinity);
-	      return maxY - ui_vue3.toValue(startDiagramY);
-	    });
-	    const scaleButton = ui_vue3.computed(() => {
-	      return Math.min(props.width / ui_vue3.toValue(diagramWidth), props.height / ui_vue3.toValue(diagramHeight));
+	    const currentIconColor = ui_vue3.computed(() => {
+	      return props.isActive ? props.clickedIconColor : props.iconColor;
 	    });
 	    return {
-	      blocks,
 	      btnStyle,
-	      startDiagramX,
-	      startDiagramY,
-	      scaleButton
+	      currentIconColor
 	    };
 	  },
 	  template: `
@@ -5705,19 +6441,13 @@ this.BX = this.BX || {};
 			class="ui-block-diagram-canvas-map-btn"
 		>
 			<svg
-				:width="width"
-				:height="height"
+				width="24"
+				height="24"
 				class="ui-block-diagram-canvas-map-btn__icon"
+				:fill="currentIconColor"
 			>
-				<rect
-					v-for="block in blocks"
-					:key="block.id"
-					:x="(block.position.x - startDiagramX) * scaleButton"
-					:y="(block.position.y - startDiagramY) * scaleButton"
-					:width="block.dimensions.width * scaleButton"
-					:height="block.dimensions.height * scaleButton"
-					:rx="1"
-					class="ui-block-diagram-canvas-map-btn__rect"
+				<path
+					d="M9.75 4.5498C9.8674 4.54983 9.97803 4.57878 10.0752 4.62988L14.25 6.7168L18.4365 4.62402C18.6535 4.51553 18.9118 4.52675 19.1182 4.6543C19.3244 4.78187 19.4502 5.00748 19.4502 5.25V16.5C19.4501 16.7651 19.2996 17.0074 19.0625 17.126L14.5752 19.3691C14.4835 19.4174 14.3796 19.4461 14.2695 19.4492C14.263 19.4494 14.2565 19.4502 14.25 19.4502C14.2419 19.4502 14.2337 19.4495 14.2256 19.4492C14.1172 19.4455 14.0143 19.4168 13.9238 19.3691L9.75 17.2822L5.5625 19.376C5.34565 19.4843 5.08807 19.4731 4.88184 19.3457C4.67552 19.2182 4.54987 18.9925 4.5498 18.75V7.5C4.5498 7.23498 4.69956 6.99266 4.93652 6.87402L9.42383 4.62988C9.52111 4.57866 9.63242 4.5498 9.75 4.5498ZM5.9502 7.93262V17.6172L9.0498 16.0674V6.38281L5.9502 7.93262ZM10.4502 16.0674L13.5498 17.6172V7.93262L10.4502 6.38281V16.0674ZM14.9502 7.93262V17.6172L18.0498 16.0674V6.38281L14.9502 7.93262Z"
 				/>
 			</svg>
 		</button>
@@ -5728,7 +6458,7 @@ this.BX = this.BX || {};
 	  left: 'left',
 	  right: 'right'
 	};
-	const GORIZONTAL_MAP_POSITION = {
+	const HORIZONTAL_MAP_POSITION = {
 	  top: 'top',
 	  bottom: 'bottom'
 	};
@@ -5760,6 +6490,10 @@ this.BX = this.BX || {};
 	      type: String,
 	      default: POSITION_MAP_DEFAULT_VALUES
 	    },
+	    blockColors: {
+	      type: Object,
+	      default: () => {}
+	    },
 	    disabled: {
 	      type: Boolean,
 	      default: false
@@ -5769,7 +6503,7 @@ this.BX = this.BX || {};
 	  setup(props) {
 	    const isShowMap = ui_vue3.ref(false);
 	    const mapPositionClasses = ui_vue3.computed(() => {
-	      const isTop = props.positionMap.toLowerCase().includes(GORIZONTAL_MAP_POSITION.top);
+	      const isTop = props.positionMap.toLowerCase().includes(HORIZONTAL_MAP_POSITION.top);
 	      const isLeft = props.positionMap.toLowerCase().includes(VERTICAL_MAP_POSITION.left);
 	      return {
 	        [MAP_CLASSES.base]: true,
@@ -5797,6 +6531,7 @@ this.BX = this.BX || {};
 		<div class="ui-block-diagram-canvas-zoom-bar">
 			<div class="ui-block-diagram-canvas-zoom-bar__locate">
 				<CanvasMapBtn
+					:isActive="isShowMap"
 					:data-test-id="$blockDiagramTestId('zoomOpenMapBtn')"
 					@click="onToggleMap"
 				/>
@@ -5819,6 +6554,7 @@ this.BX = this.BX || {};
 						<CanvasMap
 							:mapSize="310"
 							:data-test-id="$blockDiagramTestId('zoomCanvasMap')"
+							:blockColors="blockColors"
 						/>
 					</div>
 				</transition>
@@ -5874,9 +6610,22 @@ this.BX = this.BX || {};
 	// @vue/component
 	const SearchNavBtn = {
 	  name: 'search-nav-btn',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    iconName: {
+	      type: String,
+	      required: true
+	    }
+	  },
 	  template: `
 		<button class="ui-block-diagram-search-nav-btn">
-			<slot/>
+			<BIcon
+				:name="iconName"
+				:size="18"
+				class="ui-block-diagram-search-nav-btn__icon"
+			/>
 		</button>
 	`
 	};
@@ -5905,7 +6654,8 @@ this.BX = this.BX || {};
 
 	const SEARCH_INPUT_CLASS_NAMES = {
 	  base: 'ui-block-diagram-search-input',
-	  open: '--open'
+	  open: '--open',
+	  focus: '--focus'
 	};
 
 	// @vue/component
@@ -5920,6 +6670,10 @@ this.BX = this.BX || {};
 	      type: String,
 	      default: ''
 	    },
+	    open: {
+	      type: Boolean,
+	      default: false
+	    },
 	    placeholder: {
 	      type: String,
 	      default: ''
@@ -5929,7 +6683,7 @@ this.BX = this.BX || {};
 	      default: false
 	    }
 	  },
-	  emits: ['update:value', 'clear'],
+	  emits: ['update:value', 'clear', 'update:open'],
 	  setup(props, {
 	    emit
 	  }) {
@@ -5937,6 +6691,7 @@ this.BX = this.BX || {};
 	    const searchInput = ui_vue3.useTemplateRef('searchInput');
 	    const showSearchBtn = ui_vue3.ref(true);
 	    const showSearchBar = ui_vue3.ref(false);
+	    const isFocus = ui_vue3.ref(false);
 	    const placeholderOrDefaultValue = ui_vue3.computed(() => {
 	      if (props.placeholder) {
 	        return props.placeholder;
@@ -5945,7 +6700,8 @@ this.BX = this.BX || {};
 	    });
 	    const searchInputClassNames = ui_vue3.computed(() => ({
 	      [SEARCH_INPUT_CLASS_NAMES.base]: true,
-	      [SEARCH_INPUT_CLASS_NAMES.open]: ui_vue3.toValue(showSearchBar)
+	      [SEARCH_INPUT_CLASS_NAMES.open]: ui_vue3.toValue(showSearchBar),
+	      [SEARCH_INPUT_CLASS_NAMES.focus]: ui_vue3.toValue(isFocus)
 	    }));
 	    function onInput(event) {
 	      if (props.disabled) {
@@ -5953,7 +6709,8 @@ this.BX = this.BX || {};
 	      }
 	      emit('update:value', event.target.value);
 	    }
-	    function onClear() {
+	    function onClear(event) {
+	      event.stopPropagation();
 	      if (props.disabled) {
 	        return;
 	      }
@@ -5963,15 +6720,26 @@ this.BX = this.BX || {};
 	    function onAfterEnterTransition() {
 	      ui_vue3.nextTick(() => {
 	        var _toValue;
-	        return (_toValue = ui_vue3.toValue(searchInput)) == null ? void 0 : _toValue.focus();
+	        isFocus.value = true;
+	        (_toValue = ui_vue3.toValue(searchInput)) == null ? void 0 : _toValue.focus();
 	      });
 	    }
 	    function onLeaveTransition() {
 	      showSearchBtn.value = true;
+	      emit('update:open', false);
 	    }
 	    function onOpenSearchBar() {
 	      showSearchBar.value = true;
 	      showSearchBtn.value = false;
+	      emit('update:open', true);
+	    }
+	    function onClickSearchInput() {
+	      var _toValue2;
+	      isFocus.value = true;
+	      (_toValue2 = ui_vue3.toValue(searchInput)) == null ? void 0 : _toValue2.focus();
+	    }
+	    function onBlurSearchInput() {
+	      isFocus.value = false;
 	    }
 	    function collapseSearchBar() {
 	      showSearchBar.value = false;
@@ -5987,6 +6755,8 @@ this.BX = this.BX || {};
 	      onAfterEnterTransition,
 	      onLeaveTransition,
 	      onOpenSearchBar,
+	      onClickSearchInput,
+	      onBlurSearchInput,
 	      collapseSearchBar
 	    };
 	  },
@@ -6007,10 +6777,11 @@ this.BX = this.BX || {};
 				v-show="showSearchBar"
 				:class="searchInputClassNames"
 				ref="searchBar"
+				@click="onClickSearchInput"
 			>
 				<BIcon
 					:name="iconSet.SEARCH"
-					:size="24"
+					:size="20"
 					class="ui-block-diagram-search-input__icon"
 				/>
 				<input
@@ -6021,6 +6792,7 @@ this.BX = this.BX || {};
 					type="text"
 					class="ui-block-diagram-search-input__input"
 					@input="onInput"
+					@blur="onBlurSearchInput"
 				/>
 				<button
 					class="ui-block-diagram-search-input__clear-btn"
@@ -6029,7 +6801,7 @@ this.BX = this.BX || {};
 				>
 					<BIcon
 						:name="iconSet.CROSS_L"
-						:size="24"
+						:size="20"
 						class="ui-block-diagram-search-input__clear-btn-icon"
 					/>
 				</button>
@@ -6038,11 +6810,15 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const SEARCH_BAR_CLASS_NAMES = {
+	  base: 'ui-block-diagram-search-bar',
+	  opened: '--opened'
+	};
+
 	// @vue/component
 	const SearchBar = {
 	  name: 'SearchBar',
 	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
 	    SearchResult,
 	    SearchNavBtn,
 	    SearchInput,
@@ -6095,6 +6871,7 @@ this.BX = this.BX || {};
 	    const searchPanel = ui_vue3.useTemplateRef('searchPanel');
 	    const searchInputRef = ui_vue3.useTemplateRef('searchInput');
 	    const currentBlockIndex = ui_vue3.ref(0);
+	    const isOpenedSearchBar = ui_vue3.ref(false);
 	    const isDisabled = ui_vue3.computed(() => {
 	      return props.disabled || ui_vue3.toValue(isDisabledBlockDiagram);
 	    });
@@ -6113,6 +6890,10 @@ this.BX = this.BX || {};
 	      }
 	      return loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_SEARCH_RESULT_TITLE');
 	    });
+	    const searchBarClassNames = ui_vue3.computed(() => ({
+	      [SEARCH_BAR_CLASS_NAMES.base]: true,
+	      [SEARCH_BAR_CLASS_NAMES.opened]: ui_vue3.toValue(isOpenedSearchBar)
+	    }));
 	    ui_vue3.watch(foundBlocks, newBlocks => {
 	      currentBlockIndex.value = 0;
 	      if (ui_vue3.toValue(newBlocks).length > 0) {
@@ -6170,6 +6951,8 @@ this.BX = this.BX || {};
 	    }
 	    return {
 	      iconSet: ui_iconSet_api_vue.Outline,
+	      searchBarClassNames,
+	      isOpenedSearchBar,
 	      isDisabled,
 	      placeholderOrDefaultValue,
 	      searchResultTitleOrDefaultValue,
@@ -6185,10 +6968,11 @@ this.BX = this.BX || {};
 	  },
 	  template: `
 		<div
-			class="ui-block-diagram-search-bar"
+			:class="searchBarClassNames"
 			ref="searchPanel"
 		>
 			<SearchInput
+				v-model:open="isOpenedSearchBar"
 				:value="seachText"
 				:placeholder="placeholderOrDefaultValue"
 				:disabled="isDisabled"
@@ -6205,17 +6989,15 @@ this.BX = this.BX || {};
 					:count="labelResult"
 				>
 					<SearchNavBtn
+						:iconName="iconSet.CHEVRON_LEFT_L"
 						:data-test-id="$blockDiagramTestId('searchResultPrevBtn')"
 						@click="onGoToPrevBlock"
-					>
-						&lt;
-					</SearchNavBtn>
+					/>
 					<SearchNavBtn
+						:iconName="iconSet.CHEVRON_RIGHT_L"
 						:data-test-id="$blockDiagramTestId('searchResultNextBtn')"
 						@click="onGoToNextBlock"
-					>
-						&gt;
-					</SearchNavBtn>
+					/>
 				</SearchResult>
 			</div>
 		</div>
@@ -6363,6 +7145,85 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const DEFAULT_SELECTION_PADDING = 17;
+	const DEFAULT_BLOCK_SIZE = {
+	  width: 150,
+	  height: 100
+	};
+	const GroupSelectionBox = {
+	  name: 'GroupSelectionBox',
+	  props: {
+	    menuItems: {
+	      type: Array,
+	      default: () => []
+	    },
+	    padding: {
+	      type: [Number, Object],
+	      default: DEFAULT_SELECTION_PADDING
+	    },
+	    defaultBlockSize: {
+	      type: Object,
+	      default: DEFAULT_BLOCK_SIZE
+	    }
+	  },
+	  setup(props) {
+	    const highlightedBlocks = useHighlightedBlocks();
+	    const {
+	      selectionWorldRect,
+	      isSelectionActive
+	    } = useBlockDiagram();
+	    const {
+	      showMenu,
+	      closeContextMenu
+	    } = useContextMenu();
+	    const {
+	      onCanvasSelect,
+	      onSelectionStart,
+	      groupSelectionStyle
+	    } = useGroupSelectionLogic(closeContextMenu, {
+	      padding: ui_vue3.computed(() => props.padding),
+	      defaultBlockSize: props.defaultBlockSize
+	    });
+	    ui_vue3.watch(selectionWorldRect, newRect => {
+	      onCanvasSelect(newRect);
+	    });
+	    ui_vue3.watch(isSelectionActive, isActive => {
+	      if (isActive) {
+	        onSelectionStart();
+	      }
+	    });
+	    const {
+	      onGroupMouseDown
+	    } = useGroupDragLogic(closeContextMenu);
+	    function onGroupContextMenu(event) {
+	      const ids = ui_vue3.toValue(highlightedBlocks.highlitedBlockIds);
+	      if (!ids || ids.length === 0 || props.menuItems.length === 0) {
+	        return;
+	      }
+	      showMenu({
+	        clientX: event.clientX,
+	        clientY: event.clientY
+	      }, {
+	        items: props.menuItems
+	      });
+	    }
+	    return {
+	      groupSelectionStyle,
+	      onGroupMouseDown,
+	      onGroupContextMenu
+	    };
+	  },
+	  template: `
+		<div
+			v-if="groupSelectionStyle"
+			:style="groupSelectionStyle"
+			class="ui-block-diagram-group-box"
+			@mousedown="onGroupMouseDown"
+			@contextmenu.prevent.stop="onGroupContextMenu"
+		></div>
+	`
+	};
+
 	let _ = t => t,
 	  _t;
 	let copiedDragItem = null;
@@ -6446,6 +7307,7 @@ this.BX = this.BX || {};
 	exports.ResizableBlock = ResizableBlock;
 	exports.Port = Port;
 	exports.Connection = Connection;
+	exports.GroupSelectionBox = GroupSelectionBox;
 	exports.DeleteConnectionBtn = DeleteConnectionBtn;
 	exports.transformPoint = transformPoint;
 	exports.useBlockDiagram = useBlockDiagram;
@@ -6462,6 +7324,9 @@ this.BX = this.BX || {};
 	exports.useConnectionState = useConnectionState;
 	exports.useNewConnectionState = useNewConnectionState;
 	exports.useDragAndDrop = useDragAndDrop;
+	exports.useGroupSelectionLogic = useGroupSelectionLogic;
+	exports.useGroupDragLogic = useGroupDragLogic;
+	exports.useKeyboardShortcuts = useKeyboardShortcuts;
 	exports.DragBlock = DragBlock;
 
 }((this.BX.UI = this.BX.UI || {}),BX.Main,BX,BX.UI.IconSet,BX,BX.Vue3));

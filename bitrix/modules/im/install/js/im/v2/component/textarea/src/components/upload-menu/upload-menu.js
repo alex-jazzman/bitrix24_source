@@ -69,11 +69,13 @@ export const UploadMenu = {
 					icon: MenuItemIcon.task,
 					title: this.loc('IM_TEXTAREA_SELECT_TASK'),
 					clickHandler: this.onCreateTaskClick,
+					showCondition: () => !this.isCopilotChat,
 				},
 				{
 					icon: MenuItemIcon.meeting,
 					title: this.loc('IM_TEXTAREA_SELECT_MEETING'),
 					clickHandler: this.onCreateMeetingClick,
+					showCondition: () => !this.isCopilotChat,
 				},
 				{
 					icon: MenuItemIcon.calendarSlot,
@@ -126,6 +128,10 @@ export const UploadMenu = {
 		chatType(): $Values<typeof ChatType>
 		{
 			return this.dialog.type;
+		},
+		isCopilotChat(): boolean
+		{
+			return this.chatType === ChatType.copilot;
 		},
 		chatId(): number
 		{

@@ -297,9 +297,10 @@ class CAutoCheck
 			];
 		}
 
+		$docRoot = rtrim($_SERVER["DOCUMENT_ROOT"], '/');
 		$arError = false;
 		$moduleId = $modulesList[$session["MNUM"]];
-		$moduleFolder = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $moduleId . "/";
+		$moduleFolder = $docRoot . "/bitrix/modules/" . $moduleId . "/";
 		$fileCount = 0;
 		$modifiedFileCount = 0;
 		$unknownFileCount = 0;
@@ -321,7 +322,7 @@ class CAutoCheck
 
 			$message = "";
 			$unknownMessage = "";
-			if (empty($result["error"]))
+			if (!empty($result) && empty($result["error"]))
 			{
 				$except = [
 					'SUBDIR' => [
@@ -329,6 +330,10 @@ class CAutoCheck
 					],
 					"FOLDERS" => [
 						"ua",
+						$docRoot . "/bitrix/modules/main/install/templates/lang", // deleted components 1.0
+					],
+					"FILES" => [
+						$docRoot . "/bitrix/modules/main/admin/define.php",
 					],
 				];
 				$moduleFiles = [];
@@ -359,7 +364,7 @@ class CAutoCheck
 						{
 							if (str_starts_with($relFile, $key))
 							{
-								$filePath = str_replace($key, $_SERVER["DOCUMENT_ROOT"] . $value, $relFile);
+								$filePath = str_replace($key, $docRoot . $value, $relFile);
 								if (file_exists($filePath) && md5_file($filePath) !== $checksum)
 								{
 									$modifiedFileCount++;
@@ -386,7 +391,7 @@ class CAutoCheck
 			}
 			else
 			{
-				if ($result["error"] != "unknow module id")
+				if (empty($result) || $result["error"] != "unknow module id")
 				{
 					$state["MESSAGE"] = GetMessage("CL_CANT_CHECK", ["#module_id#" => $moduleId]) . "\n";
 					$arError = true;

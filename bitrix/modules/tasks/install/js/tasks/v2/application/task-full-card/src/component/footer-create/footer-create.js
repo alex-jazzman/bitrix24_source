@@ -45,7 +45,7 @@ export const FooterCreate = {
 			required: true,
 		},
 	},
-	emits: ['addTask', 'copyTask', 'fromTemplate', 'template', 'update:creationError', 'close'],
+	emits: ['addTask', 'copyTask', 'fromTemplate', 'update:creationError', 'close'],
 	setup(): Object
 	{
 		return {
@@ -70,7 +70,7 @@ export const FooterCreate = {
 		},
 	},
 	template: `
-		<div class="tasks-full-card-footer">
+		<div class="tasks-full-card-footer print-ignore">
 			<div class="tasks-full-card-footer-create">
 				<div class="tasks-full-card-footer-main-buttons">
 					<AddTaskButton
@@ -87,7 +87,7 @@ export const FooterCreate = {
 						@click="$emit('close')"
 					/>
 				</div>
-				<TemplatesButton v-if="!isTemplate && isTemplateEnabled" @template="$emit('template', $event)"/>
+				<TemplatesButton v-if="!isTemplate && isTemplateEnabled"/>
 				<TemplatePermissionsButton v-if="isTemplate"/>
 			</div>
 		</div>

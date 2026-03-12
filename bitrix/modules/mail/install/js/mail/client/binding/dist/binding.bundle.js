@@ -174,9 +174,6 @@ this.BX.Mail = this.BX.Mail || {};
 	          case 'chat':
 	            BX.Mail.Secretary.getInstance(this.getMessageId(true)).openChat();
 	            break;
-	          case 'task':
-	            BX.Mail.Secretary.getInstance(this.getMessageId(true)).onTaskAction('task_view', 'view_button');
-	            break;
 	        }
 	      } else if (!babelHelpers.classPrivateFieldGet(this, _wait)) {
 	        switch (this.getType()) {

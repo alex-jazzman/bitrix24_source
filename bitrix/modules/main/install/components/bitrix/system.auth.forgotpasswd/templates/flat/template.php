@@ -33,6 +33,7 @@ if(!empty($arParams["~AUTH_RESULT"]["MESSAGE"])):
 <?endif?>
 		<input type="hidden" name="AUTH_FORM" value="Y">
 		<input type="hidden" name="TYPE" value="SEND_PWD">
+		<?= bitrix_sessid_post(); ?>
 
 		<div class="bx-authform-formgroup-container">
 			<div class="bx-authform-label-container"><?echo GetMessage("AUTH_LOGIN_EMAIL")?></div>

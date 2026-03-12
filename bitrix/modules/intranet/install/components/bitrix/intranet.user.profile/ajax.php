@@ -2,6 +2,7 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die;
 
+use Bitrix\Intranet\Public\Service\IntegratorService;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\User;
@@ -234,10 +235,9 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 						"TO_USER_ID" => $this->userId,
 						"FROM_USER_ID" => 0,
 						"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
-						"NOTIFY_MODULE" => "bitrix24",
-						"NOTIFY_MESSAGE" => $isCollaber
-							? Loc::getMessage("INTRANET_USER_PROFILE_MOVE_COLLAB_TO_INTRANET_NOTIFY_MSGVER_1")
-							: Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_NOTIFY"),
+						"NOTIFY_MODULE" => "intranet",
+						"NOTIFY_TITLE" => Loc::getMessage('INTRANET_USER_PROFILE_MOVE_TO_INTRANET_NOTIFY_TITLE'),
+						"NOTIFY_MESSAGE" => Loc::getMessage('INTRANET_USER_PROFILE_MOVE_TO_INTRANET_NOTIFY_MESSAGE'),
 					];
 					\CIMNotify::Add($arMessageFields);
 				}
@@ -428,7 +428,10 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 
 		if (!Integrator::isMoreIntegratorsAvailable())
 		{
-			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("INTRANET_USER_PROFILE_INTEGRATOR_COUNT_ERROR")));
+			$message = IntegratorService::createByDefault()->isRenamedIntegrator()
+				? Loc::getMessage('INTRANET_USER_PROFILE_INTEGRATOR_COUNT_ERROR_RENAMED')
+				: Loc::getMessage('INTRANET_USER_PROFILE_INTEGRATOR_COUNT_ERROR');
+			$this->addError(new \Bitrix\Main\Error($message));
 
 			return false;
 		}
@@ -557,7 +560,6 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 				'TARGET_ID' => $targetId,
 				'SITE_TEMPLATE_ID' => $siteTemplateId,
 				'PATH_TO_USER_PROFILE' => $urls['PATH_TO_USER_PROFILE'] ?? '',
-				'PATH_TO_USER_STRESSLEVEL' => $urls['PATH_TO_USER_STRESSLEVEL'] ?? '',
 				'PATH_TO_USER_COMMON_SECURITY' => $urls['PATH_TO_USER_COMMON_SECURITY'] ?? '',
 			],
 		);

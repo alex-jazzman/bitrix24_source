@@ -5,6 +5,4 @@ return [
 		'im:messenger/const',
 		'im:messenger/lib/logger',
 	],
-	'bundle' => [
-	],
 ];

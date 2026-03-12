@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 	const { Type } = require('type');
+	const { Uuid } = require('utils/uuid');
 
 	const {
 		FileType,
@@ -11,6 +12,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		MessageComponent,
 		MessageParams,
 		TranscriptStatus,
+		DialogType,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -40,6 +42,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		MessageComponent.supervisorUpdateFeature,
 		MessageComponent.supervisorEnableFeature,
 		MessageComponent.sign,
+		MessageComponent.admin,
 		MessageComponent.checkIn,
 		MessageComponent.generalChatCreationMessage,
 		MessageComponent.generalChannelCreationMessage,
@@ -341,12 +344,16 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 		get isSticker()
 		{
-			return Type.isStringFilled(this.messageModel.stickerParams?.uri);
+			return Type.isPlainObject(this.messageModel.stickerParams)
+				&& Type.isPlainObject(this.#store.getters['stickerPackModel/getStickerData'](this.messageModel.stickerParams))
+			;
 		}
 
 		get isDeletedSticker()
 		{
-			return Type.isNull(this.messageModel.stickerParams?.uri);
+			return Type.isPlainObject(this.messageModel.stickerParams)
+				&& !Type.isPlainObject(this.#store.getters['stickerPackModel/getStickerData'](this.messageModel.stickerParams))
+			;
 		}
 
 		get isCustom()
@@ -452,6 +459,14 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return Boolean(userModel?.bot);
 		}
 
+		/**
+		 * @return {boolean}
+		 */
+		get isTemplateId()
+		{
+			return Type.isStringFilled(this.messageId) && Uuid.isV4(this.messageId);
+		}
+
 		getComponentId()
 		{
 			if (this.isDeleted)
@@ -497,8 +512,11 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			}
 
 			const dialogId = dialog.dialogId;
+			const openDialogParamName = dialog.type === DialogType.tasksTask
+				? UrlGetParameter.openTaskChat
+				: UrlGetParameter.openChat;
 
-			return `${host}/online/?${UrlGetParameter.openChat}=${dialogId}&${UrlGetParameter.openMessage}=${messageId}`;
+			return `${host}/online/?${openDialogParamName}=${dialogId}&${UrlGetParameter.openMessage}=${messageId}`;
 		}
 
 		/**

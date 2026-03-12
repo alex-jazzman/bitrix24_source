@@ -1,4 +1,0 @@
-<?php
-$MESS["LANDING_MPWIDGET_BASE_COLOR_BUTTON"] = "Батырма түсі";
-$MESS["LANDING_MPWIDGET_BASE_COLOR_HEADERS"] = "Тақырыпат түсі";
-$MESS["LANDING_MPWIDGET_BASE_COLOR_TEXT"] = "Мәтіннің түсі";

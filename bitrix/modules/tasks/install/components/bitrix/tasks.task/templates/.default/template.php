@@ -40,9 +40,8 @@ Extension::load([
 	'tasks.flow.entity-selector',
 	'tasks.deadline.notification',
 	'pull.client',
+	'intranet.old-interface.intranet-common',
 ]);
-
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 /** intranet-settings-support */
 if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)

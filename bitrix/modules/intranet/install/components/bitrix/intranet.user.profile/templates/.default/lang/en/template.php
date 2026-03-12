@@ -19,6 +19,7 @@ $MESS["INTRANET_USER_PROFILE_CHAT_HISTORY"] = "Message log";
 $MESS["INTRANET_USER_PROFILE_CLOSE"] = "Close";
 $MESS["INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1"] = "No";
 $MESS["INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR"] = "Make partner";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR_RENAMED"] = "Make a Bitrix24 Partner";
 $MESS["INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1"] = "Yes";
 $MESS["INTRANET_USER_PROFILE_CONTACT_INFO"] = "Contact information";
 $MESS["INTRANET_USER_PROFILE_DELETE"] = "Delete";
@@ -37,6 +38,8 @@ $MESS["INTRANET_USER_PROFILE_FIRE_CONFIRM"] = "The employee will not be able to 
 Are you sure you want to dismiss the employee?";
 $MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "You cannot delete the invited user from Bitrix24 because there are bindings to other entities. Deactivate (dismiss) the user to close their access to this Bitrix24.
 <br><br>Do you want to dismiss the user?";
+$MESS["INTRANET_USER_PROFILE_FIRE_POPUP_TITLE"] = "Dismiss employee";
+$MESS["INTRANET_USER_PROFILE_FIRST_ADMIN_REQUEST_SENT"] = "[b]Request sent[/b][br]You will be notified when #NAME# responds to your request.";
 $MESS["INTRANET_USER_PROFILE_HIRE"] = "Hire";
 $MESS["INTRANET_USER_PROFILE_HIRE_CONFIRM"] = "The employee will be able to log on to Bitrix24 and will be seen in the company structure.
 <br/><br/>
@@ -47,6 +50,11 @@ Partner level permissions are sufficient to set up and configure your Bitrix24. 
 <br/><br/>
 Select a Bitrix24 Partner you would like to work with <a target=\"_blank\" href=\"https://www.bitrix24.com/partners/\" >here</a>.";
 $MESS["INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE"] = "OK";
+$MESS["INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_RENAMED"] = "This email does not belong to any Bitrix24 Partner we know. Only the certified Bitrix24 Partners have respective access permissions. Bitrix24 Partners have access to your Bitrix24 which is why only the certified persons and companies can get a Bitrix24 Partner status. Make sure the email address is correct.
+<br/><br/>
+Partner level permissions are sufficient to set up and configure your Bitrix24. We strongly advise against granting third parties administrator access because they can accidentally or maliciously dismiss all employees and gain full control of your Bitrix24.
+<br/><br/>
+Select a Bitrix24 Partner you would like to work with <a target=\"_blank\" href=\"https://www.bitrix24.com/partners/\" >here</a>.";
 $MESS["INTRANET_USER_PROFILE_INTERESTS_STUB_BUTTON"] = "Tell about your interests";
 $MESS["INTRANET_USER_PROFILE_INTERESTS_STUB_BUTTON_2"] = "Select interests";
 $MESS["INTRANET_USER_PROFILE_INTERESTS_STUB_TEXT"] = "Create or join interests. Find friends who share your interests.";
@@ -61,7 +69,12 @@ $MESS["INTRANET_USER_PROFILE_MOVE"] = "Hire";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM"] = "Your Bitrix24 has reached maximum possible number of administrators.<br/>Your administrator privileges will be revoked if you set this user as administrator. Are you sure you want to transfer admin permissions to this user?";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM_PROMO"] = "#LINK_START#Get more out of your Bitrix24#LINK_END#";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION_MSGVER_1"] = "Administrators have full access to user and customer personal information. They can invite and dismiss users and employees, change user permissions and Bitrix24 settings. Do you want to make this user an administrator?";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_HINT"] = "Remember that Partner access permissions are sufficient to configure your Bitrix24.";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_HINT_RENAMED"] = "Remember that Bitrix24 Partner access permissions are sufficient to set up and configure your Bitrix24.";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_LINK"] = "Learn more about your Bitrix24's security";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_NOTE"] = "If this person is not your company's employee, make sure you can trust them before granting them the Administrator permissions.";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE"] = "Assign user as administrator";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_WARNING"] = "Granting outside contractors the Administrator permissions is not recommended because they can remove all users from the system and take control over your Bitrix24.";
 $MESS["INTRANET_USER_PROFILE_MOVE_TO_INTRANET_MSGVER_1"] = "Hire as an employee";
 $MESS["INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE"] = "Hire as an employee";
 $MESS["INTRANET_USER_PROFILE_MSG_1_invited"] = "Invitation was not accepted";
@@ -69,6 +82,7 @@ $MESS["INTRANET_USER_PROFILE_NO"] = "No";
 $MESS["INTRANET_USER_PROFILE_OTP_DEACTIVATED"] = "TFA disabled for this account.";
 $MESS["INTRANET_USER_PROFILE_PASSWORDS"] = "Passwords";
 $MESS["INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"] = "Are you sure you want to delete the photo?";
+$MESS["INTRANET_USER_PROFILE_PORTAL_CREATOR_POPUP"] = "This is your Bitrix24's primary administrator. The primary administrator's consent is required to dismiss them. [span]Learn more[/span]";
 $MESS["INTRANET_USER_PROFILE_QUIT_ADMIN_MODE"] = "Exit Admin mode";
 $MESS["INTRANET_USER_PROFILE_REINVITE"] = "Invite again";
 $MESS["INTRANET_USER_PROFILE_REINVITE_SUCCESS"] = "Invitation has been sent";
@@ -82,17 +96,16 @@ $MESS["INTRANET_USER_PROFILE_SAVE"] = "Save";
 $MESS["INTRANET_USER_PROFILE_SECURITY"] = "Security";
 $MESS["INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS"] = "Assign admin permissions";
 $MESS["INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS"] = "Grant Bitrix24 partner's rights";
+$MESS["INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS_RENAMED"] = "Make a Bitrix24 Partner";
 $MESS["INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM"] = "Certified Bitrix24 partners can help you with the setup or fine-tune your Bitrix24 to your company's workflows: the CRM, Open Channels, documentation, telephony, reports and other business tools. 
 #LINK_START#Learn more#LINK_END#
 <br/><br/>
 #NAME# will receive full access permissions, with exception of rights to invite or dismiss administrators. 
 Are you sure you want to grant Bitrix24 partner's rights to this user?";
-$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_BUTTON"] = "How to measure?";
-$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT"] = "stress";
-$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_TITLE"] = "Measure your stress level";
-$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_INVISIBLE"] = "Other users cannot view your stress level.";
-$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_VISIBLE"] = "Other users can view your stress level.";
-$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_SHARE_LINK"] = "copy to the Clipboard";
+$MESS["INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM_RENAMED"] = "Certified Bitrix24 Partners can help you set up and tailor your Bitrix24 to match your company's workflows: the CRM, Open Channels, telephony, reports and other business tools.
+#LINK_START#Learn more#LINK_END#
+<br/><br/>
+#NAME# will receive full access permissions except for inviting or dismissing administrators. Are you sure you want to grant this user Bitrix24 Partner permissions?";
 $MESS["INTRANET_USER_PROFILE_SYNCHRONIZE"] = "Synchronize";
 $MESS["INTRANET_USER_PROFILE_TAGS_MODIFY"] = "edit";
 $MESS["INTRANET_USER_PROFILE_TAGS_POPUP_ADD"] = "Add item";
@@ -110,6 +123,7 @@ $MESS["INTRANET_USER_PROFILE_UNLIM"] = "unlimited";
 $MESS["INTRANET_USER_PROFILE_VIDEOCALL"] = "Video call";
 $MESS["INTRANET_USER_PROFILE_VIEW_ACCESS_DENIED"] = "Access to user profile is denied.";
 $MESS["INTRANET_USER_PROFILE_YES"] = "Yes";
+$MESS["INTRANET_USER_PROFILE_YES_FIRE"] = "Yes";
 $MESS["INTRANET_USER_PROFILE_admin"] = "Administrator";
 $MESS["INTRANET_USER_PROFILE_collaber"] = "Guest";
 $MESS["INTRANET_USER_PROFILE_email"] = "Email user";
@@ -117,6 +131,7 @@ $MESS["INTRANET_USER_PROFILE_employee"] = "Actions";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Extranet";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Dismissed";
 $MESS["INTRANET_USER_PROFILE_integrator"] = "Bitrix24 partner";
+$MESS["INTRANET_USER_PROFILE_integrator_RENAMED"] = "Bitrix24 Partner";
 $MESS["INTRANET_USER_PROFILE_invited"] = "Invited";
 $MESS["INTRANET_USER_PROFILE_shop"] = "Web store user";
 $MESS["INTRANET_USER_PROFILE_visitor"] = "Guest";

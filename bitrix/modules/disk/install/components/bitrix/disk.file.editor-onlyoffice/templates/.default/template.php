@@ -48,6 +48,7 @@ Extension::load([
 	'disk.sharing-legacy-popup',
 	'disk.onlyoffice-promo-popup',
 	'disk.external-link',
+	'disk.promo-boost',
 	'ui.forms',
 	'ui.alerts',
 	'main.loader',
@@ -60,6 +61,8 @@ Extension::load([
 	'popup',
     'ui.dialogs.messagebox',
 	'ui.icon-set.main',
+	'ui.feedback.form',
+	'disk.onlyoffice-promo-actions',
 ]);
 
 Asset::getInstance()->addString('<script src="' . $arResult['SERVER'] . '/web-apps/apps/api/documents/api.js"></script>');
@@ -188,9 +191,23 @@ if (Context::getCurrent()->getLanguage() !== 'ru')
 {
     $headerLogoClass = 'disk-fe-office-header-logo--eng';
 }
-$GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
-?>
 
+$boostButtonContainerId = 'oo-editor-boost-button-container';
+
+$GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
+
+$limitSlider = $arResult['LIMIT_SLIDER'] ?? null;
+?>
+<style>
+	.ui-popupcomponentsmaker__header {
+		background: radial-gradient(117.4% 131.09% at -2.79% -4.03%, #1D49B9 0%, #53C7F9 100%), linear-gradient(180deg, #4756F4 0%, #669AFB 35.72%, #C4D6FD 73.82%, rgba(248, 248, 248, 0.00) 100%);
+	}
+
+	.ui-popupcomponentmaker .popup-window-angly--arrow {
+		background: rgb(73, 127, 228);
+		background: #467cdf;
+	}
+</style>
 <div data-id="<?= $containerId ?>-wrapper">
 	<div class="disk-fe-office-header">
 		<div class="disk-fe-office-header-left">
@@ -200,6 +217,7 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 			</div>
 		</div>
 		<div class="disk-fe-office-header-right">
+			<div id="<?= $boostButtonContainerId?>" class="disk-fe-office-header-boost-button"<?php if (!$editMode): ?> style="margin-right: 18px;"<?php endif;?>></div>
 			<?php if (!$editMode): ?>
 				<?= $editButton ? $editButton->render(false) : '' ?>
 			<?php endif ?>
@@ -234,6 +252,7 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 			setupSharing: '<?= $setupSharingButton ? $setupSharingButton->getUniqId() : '' ?>'
 		},
         pullConfig: <?= Json::encode($arResult['PULL_CONFIG']) ?>,
+		pullUserConfig: <?= Json::encode($arResult['PULL_USER_CONFIG']) ?>,
 		publicChannel: '<?= $arResult['PUBLIC_CHANNEL'] ?>',
         linkToEdit: '<?= $arResult['EDITOR']['ALLOW_EDIT'] ? $arResult['LINK_TO_EDIT'] : '' ?>',
         linkToView: '<?= $arResult['LINK_OPEN_NEW_WINDOW'] ?>',
@@ -247,6 +266,7 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 			name: '<?= \CUtil::JSEscape($arResult['OBJECT']['NAME']) ?>',
 			size: <?= (int)$arResult['OBJECT']['SIZE'] ?>,
 			uniqueCode: '<?= \CUtil::JSEscape($arResult['FILE_UNIQUE_CODE']) ?>',
+			docType: '<?= \CUtil::JSEscape($arResult['OBJECT']['DOC_TYPE']) ?>',
 		},
 		attachedObject: {
 			id: <?= $arResult['ATTACHED_OBJECT']['ID'] ?: 'null' ?>,
@@ -254,5 +274,30 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
         sharingControlType: '<?= $arResult['SHARING_CONTROL_TYPE'] ?>',
 		currentUser: <?= $arResult['CURRENT_USER'] ?>,
 		unifiedLinkAccessOnly: <?= Json::encode($arResult['UNIFIED_LINK_ACCESS_ONLY']) ?>,
+		downloadSizeValue: '<?= \CUtil::JSEscape($arResult['OBJECT']['SIZE_READABLE']) ?>',
+		sessionBoostButtonContainerId: '<?= $boostButtonContainerId?>',
+		sessionBoostOptions: <?= Json::encode($arResult['SESSION_BOOST_OPTIONS']) ?>,
+		promoShowImmediately: <?= Json::encode($arResult['PROMO_SHOW_IMMEDIATELY'])  ?>,
+		realtimeForceReloadTag: '<?= \CUtil::JSEscape($arResult['REALTIME_FORCE_RELOAD_TAG'] ?? null) ?>',
+		realtimeForceReloadCommand: '<?= \CUtil::JSEscape($arResult['REALTIME_FORCE_RELOAD_COMMAND'] ?? null) ?>',
+		autoForceReloadAfter: <?= Json::encode($arResult['AUTO_FORCE_RELOAD_AFTER'] ?? null) ?>,
+		texts: {
+			forceReloadRegularServer: '<?= Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_REGULAR_SERVER') ?>',
+			forceReloadBoosterServer: '<?= Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_BOOSTER_SERVER') ?>',
+			forceReloadUndefinedServer: '<?= Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_UNDEFINED_SERVER') ?>',
+			forceReloadPopupOkButton: '<?= Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_POPUP_OK_BUTTON') ?>',
+		},
 	});
+
+	<?php if ($limitSlider === 'tariff'): ?>
+	BX.UI.InfoHelper.show('<?= $arResult['LIMIT_SLIDER_TARIFF_ID'] ?>');
+	<?php elseif ($limitSlider === 'feedbackForm'): ?>
+	BX.UI.Feedback.Form.open(
+		{
+			id: Math.random()+'',
+			forms: <?= $arResult['LIMIT_SLIDER_FEEDBACK_FORM_PARAMS']['forms'] ?>,
+			presets: <?= $arResult['LIMIT_SLIDER_FEEDBACK_FORM_PARAMS']['presets'] ?>,
+		}
+	);
+	<?php endif; ?>
 </script>

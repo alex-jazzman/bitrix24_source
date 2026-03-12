@@ -36,7 +36,7 @@ $titles = [
 	'4' => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_AUTO_TITLE_4'),
 ];
 $texts = [
-	'1' => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_AUTO_TEXT_MSGVER_1'),
+	'1' => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_AUTO_TEXT_MSGVER_2'),
 	'2' => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_AUTO_TEXT_2'),
 	'3' => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_AUTO_TEXT_3'),
 	'4' => Loc::getMessage('BLOCK_MP_WIDGET_VIBE_AUTO_TEXT_4'),

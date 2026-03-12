@@ -1,2 +1,2 @@
 <?php
-$MESS["REST_V3_EXCEPTIONS_INVALIDSELECTEXCEPTION"] = 'Invalid select expression "#SELECT#".';
+$MESS["REST_V3_EXCEPTION_INVALIDSELECTEXCEPTION"] = 'Invalid select expression "#SELECT#".';

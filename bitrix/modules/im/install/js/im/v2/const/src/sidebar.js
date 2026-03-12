@@ -15,6 +15,7 @@ export const SidebarDetailBlock = Object.freeze({
 	messageSearch: 'messageSearch',
 	chatsWithUser: 'chatsWithUser',
 	multidialog: 'multidialog',
+	sharedLink: 'sharedLink',
 	none: '',
 });
 

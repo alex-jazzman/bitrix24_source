@@ -86,6 +86,7 @@ export const PersonItem = {
 								inviteEmployeeLink: false,
 								intranetUsersOnly: true,
 								nameTemplate: '#LAST_NAME# #NAME# #SECOND_NAME#',
+								activeUsers: null,
 							},
 						},
 					],

@@ -1,4 +1,5 @@
 <?php
+
 $MESS["MB_TASKS_BASE_SETTINGS"] = "Main task parameters";
 $MESS["MB_TASKS_BASE_SETTINGS_DESCRIPTION"] = "things to do";
 $MESS["MB_TASKS_BASE_SETTINGS_DESCRIPTION_PLACEHOLDER"] = "Task description";

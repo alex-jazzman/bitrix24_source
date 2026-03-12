@@ -10,16 +10,16 @@ import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { CallStreamManager } from '../media-stream-manager';
 
 const ajaxActions = {
-	invite: 'im.call.invite',
-	cancel: 'im.call.cancel',
-	answer: 'im.call.answer',
-	decline: 'im.call.decline',
-	hangup: 'im.call.hangup',
-	ping: 'im.call.ping',
-	negotiationNeeded: 'im.call.negotiationNeeded',
-	connectionOffer: 'im.call.connectionOffer',
-	connectionAnswer: 'im.call.connectionAnswer',
-	iceCandidate: 'im.call.iceCandidate'
+	invite: 'call.CallManager.invite',
+	cancel: 'call.CallManager.cancel',
+	answer: 'call.CallManager.answer',
+	decline: 'call.CallManager.decline',
+	hangup: 'call.CallManager.hangup',
+	ping: 'call.CallManager.ping',
+	negotiationNeeded: 'call.CallManager.negotiationNeeded',
+	connectionOffer: 'call.CallManager.connectionOffer',
+	connectionAnswer: 'call.CallManager.connectionAnswer',
+	iceCandidate: 'call.CallManager.iceCandidate'
 };
 
 const pullEvents = {
@@ -379,11 +379,6 @@ export class PlainCall extends AbstractCall
 		}
 	};
 
-	useHdVideo(flag)
-	{
-		this.videoHd = (flag === true);
-	};
-
 	/**
 	 * @param { Object } commonRecordState
 	 * @param { string } commonRecordState.action
@@ -525,7 +520,7 @@ export class PlainCall extends AbstractCall
 
 		if (this.microphoneId)
 		{
-			audio.deviceId = {ideal: this.microphoneId};
+			audio.deviceId = { exact: this.microphoneId };
 		}
 
 		if (!this.enableMicAutoParameters)
@@ -2159,8 +2154,6 @@ class Peer
 		this.reconnectAfterDisconnectTimeout = null;
 
 		this.connectionAttempt = 0;
-		this.hasStun = false;
-		this.hasTurn = false;
 
 		this._outgoingVideoTrack = null;
 		Object.defineProperty(this, 'outgoingVideoTrack', {
@@ -2661,7 +2654,6 @@ class Peer
 				state: calculatedState,
 				previousState: this.calculatedState,
 				isLegacyMobile: this.isLegacyMobile,
-				networkProblem: !this.hasStun || !this.hasTurn
 			});
 			this.calculatedState = calculatedState;
 		}
@@ -2985,8 +2977,6 @@ class Peer
 		this.peerConnection.addEventListener("removestream", this._onPeerConnectionRemoveStreamHandler);
 
 		this.failureReason = '';
-		this.hasStun = false;
-		this.hasTurn = false;
 		this.updateCalculatedState();
 
 		this.startStatisticsGathering();
@@ -3051,20 +3041,6 @@ class Peer
 				this.localIceCandidates.push(candidate.toJSON());
 				this.updateCandidatesTimeout();
 			}
-
-			const match = candidate.candidate.match(/typ\s(\w+)?/);
-			if (match)
-			{
-				const type = match[1];
-				if (type == "srflx")
-				{
-					this.hasStun = true;
-				}
-				else if (type == "relay")
-				{
-					this.hasTurn = true;
-				}
-			}
 		}
 	};
 
@@ -3108,21 +3084,6 @@ class Peer
 		if (connection.iceGatheringState === 'complete')
 		{
 			this.log("User " + this.userId + ": ICE gathering complete");
-			if (!this.hasStun || !this.hasTurn)
-			{
-				const s = [];
-				if (!this.hasTurn)
-				{
-					s.push("TURN");
-				}
-				if (!this.hasStun)
-				{
-					s.push("STUN");
-				}
-				this.log("Connectivity problem detected: no ICE candidates from " + s.join(" and ") + " servers");
-				console.error("Connectivity problem detected: no ICE candidates from " + s.join(" and ") + " servers");
-				this.callbacks.onNetworkProblem();
-			}
 
 			if (!this.getSignaling().isIceTricklingAllowed())
 			{
@@ -3634,7 +3595,6 @@ class Peer
 		clearTimeout(this.reconnectAfterDisconnectTimeout);
 
 		this.connectionAttempt++;
-
 
 		if (this.connectionAttempt > 3)
 		{

@@ -11,7 +11,17 @@ use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Web\Json;
 
 \Bitrix\Main\UI\Extension::load(
-	['ui.buttons', 'ui.hint', 'ui.notification', 'ui.alerts', 'ui.dialogs.messagebox', 'ui.entity-selector']
+	[
+		'ui.buttons',
+		'ui.hint',
+		'ui.notification',
+		'ui.alerts',
+		'ui.dialogs.messagebox',
+		'ui.entity-selector',
+		'bizproc.automation',
+		'bizproc.router',
+		'bizproc.storage-selector',
+	]
 );
 
 $messages = array_merge(
@@ -27,16 +37,6 @@ $messages = array_merge(
 Asset::getInstance()->addJs(Path::normalize('/bitrix/activities/bitrix/readdatastorageactivity/script.js'));
 
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
-global $APPLICATION;
-$APPLICATION->IncludeComponent(
-	'bitrix:bizproc.automation',
-	'',
-	[
-		'API_MODE' => 'Y',
-		'DOCUMENT_TYPE' => $dialog->getDocumentType(),
-	]
-);
-
 $map = $dialog->getMap();
 $returnFieldsProperty = $map['ReturnFields'];
 $returnFieldsByStorageCode = $map['ReturnFieldsByStorageCode'];

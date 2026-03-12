@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_MENU_BLOGS_LIST'] = "Главная страница блога";
 $MESS ['BLOG_MENU_BLOGS_LIST_TITLE'] = "Главная страница блога";
 $MESS ['BLOG_MENU_CURRENT_BLOG'] = "Блог";
@@ -29,4 +29,3 @@ $MESS ['BLOG_MENU_BLOG_EDIT'] = "Настройка блога";
 $MESS ['BLOG_MENU_BLOG_EDIT_TITLE'] = "Настройка моего блога";
 $MESS ['BLOG_MENU_FR_B_F'] = "Стать другом";
 $MESS ['BLOG_MENU_FR_A_F'] = "Добавить в друзья";
-?>

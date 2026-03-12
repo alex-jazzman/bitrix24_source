@@ -36,6 +36,7 @@ export type TaskDto = {
 	containsRelatedTasks: boolean,
 	containsGanttLinks: boolean,
 	containsPlacements: boolean,
+	containsCommentFiles: boolean,
 	requireResult: boolean,
 	containsResults: boolean,
 	numberOfReminders: number,
@@ -93,6 +94,7 @@ export type TaskSliderData = {
 	FLOW_ID: string,
 	TEMPLATE: string,
 	COPY: string,
+	context: string,
 	DEADLINE_TS: number,
 	IS_IMPORTANT: string,
 	FILE_IDS: string[],
@@ -106,6 +108,8 @@ export type TaskSliderData = {
 	MAIL_SUBJECT: string,
 	MAIL_FROM: string,
 	MAIL_DATE: string,
+	IM_CHAT_ID: number,
+	IM_MESSAGE_ID: number,
 };
 
 type Priority = 'low' | 'average' | 'high';

@@ -2,7 +2,7 @@
 
 use Bitrix\Disk;
 use Bitrix\Disk\Document;
-use Bitrix\Im\Call\Call;
+use Bitrix\Call\Call;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Engine;
@@ -70,6 +70,13 @@ class DiskFileEditorTemplatesController extends Engine\Controller
 		if (!Loader::includeModule('im'))
 		{
 			$this->addError(new Error("Required module `im` was not found"));
+
+			return false;
+		}
+
+		if (!Loader::includeModule('call'))
+		{
+			$this->addError(new Error("Required module `call` was not found"));
 
 			return false;
 		}

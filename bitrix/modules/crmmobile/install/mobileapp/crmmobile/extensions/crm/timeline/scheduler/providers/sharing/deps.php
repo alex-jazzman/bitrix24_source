@@ -25,7 +25,10 @@ return [
 		'calendar:sharing',
 		'calendar:layout/dialog/dialog-sharing',
 		'imconnector:consents/notification-service',
-	],
+        'notify-manager',
+        'assets/icons',
+        'mail:dialog',
+    ],
 	'bundle' => [
 		'./src/settings-menu',
 		'./src/layout',

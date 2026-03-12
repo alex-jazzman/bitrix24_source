@@ -1,6 +1,7 @@
 <?php
 /** @global CMain $APPLICATION */
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Internals;
 
@@ -70,7 +71,20 @@ if (!empty($_GET['action']))
 	$preset->executeAjaxAction((string)$_GET['action']);
 }
 
+$conn = Application::getConnection();
+$conn->startTransaction();
 $preset->exec();
+if (!$preset->hasErrors())
+{
+	$conn->commitTransaction();
+}
+else
+{
+	$conn->rollbackTransaction();
+}
+unset(
+	$conn,
+);
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 

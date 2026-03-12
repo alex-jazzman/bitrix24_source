@@ -21,14 +21,15 @@ const ICON_CLASS_NAMES = {
 };
 
 const ICON_COLORS = {
-	0: '#9C5CEF',
-	1: '#188AE6',
-	2: '#E08907',
-	3: '#8E96A2',
-	4: '#3CB811',
-	5: '#52BCBC',
-	6: '#B4B959',
-	7: '#FFFFFF',
+	0: 'var(--designer-bp-ai-icons)',
+	1: 'var(--designer-bp-entities-icons)',
+	2: 'var(--designer-bp-employe-icons)',
+	3: 'var(--designer-bp-technical-icons)',
+	4: 'var(--designer-bp-communication-icons)',
+	5: 'var(--designer-bp-storage-icons)',
+	6: 'var(--designer-bp-afiliate-icons)',
+	7: 'var(--ui-color-palette-white-base)',
+	8: 'var(--ui-color-palette-white-base)',
 };
 
 const DEFAULT_ICON_NAME = Outline.FILE;

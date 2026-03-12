@@ -1,4 +1,0 @@
-<?
-$MESS["LANDING_BLOCK_MENU10__SOCIALS__PRESET_VK"] = "ВКонтакті";
-$MESS["LANDING_BLOCK_MENU10__SOCIALS__PRESET_OK"] = "Однокласники";
-?>

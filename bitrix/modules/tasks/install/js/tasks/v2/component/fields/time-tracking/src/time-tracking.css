@@ -1,6 +1,6 @@
 .tasks-task-time-tracking {
-	max-width: max-content;
-	white-space: nowrap;
+	display: flex;
+	gap: var(--ui-space-inline-sm);
 }
 
 .tasks-task-time-tracking-icon {

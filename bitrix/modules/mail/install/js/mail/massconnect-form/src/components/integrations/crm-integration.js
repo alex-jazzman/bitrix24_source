@@ -1,5 +1,6 @@
 import { Switcher } from 'ui.vue3.components.switcher';
 import { SwitcherSize } from 'ui.switcher';
+import { hint, type HintParams } from 'ui.vue3.directives.hint';
 import { CrmIntegrationSettingsType } from '../../utils/crm-integration-settings-type';
 import { BitrixSettingSelector } from '../tools/bitrix-setting-selector';
 import { UserSelector } from '../tools/user-selector';
@@ -12,6 +13,8 @@ import './integrations.css';
 // @vue/component
 export const CrmIntegration = {
 	name: 'crm-integration',
+
+	directives: { hint },
 
 	components: {
 		Switcher,
@@ -26,6 +29,10 @@ export const CrmIntegration = {
 		modelValue: {
 			type: Object,
 			required: true,
+		},
+		canEditCrmIntegration: {
+			type: Boolean,
+			default: false,
 		},
 	},
 
@@ -88,6 +95,32 @@ export const CrmIntegration = {
 				useAirDesign: true,
 			};
 		},
+		noAccessHintParams(): HintParams
+		{
+			return {
+				text: this.loc('MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CRM_NO_ACCESS_HINT'),
+				popupOptions: {
+					className: 'mail_massconnect-hint',
+					darkMode: false,
+					offsetTop: 2,
+					background: 'var(--ui-color-bg-content-inapp)',
+					padding: 6,
+					angle: true,
+					targetContainer: document.body,
+					offsetLeft: 20,
+				},
+			};
+		},
+	},
+
+	methods: {
+		handleSwitcherClick(): void
+		{
+			if (this.canEditCrmIntegration)
+			{
+				this.localModelValue.enabled = !this.localModelValue.enabled;
+			}
+		},
 	},
 
 	// language=Vue
@@ -103,11 +136,15 @@ export const CrmIntegration = {
 						{{ loc('MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CRM_TITLE') }}
 					</span>
 				</div>
-				<Switcher
-					:isChecked="localModelValue.enabled"
-					:options="switcherOptions"
-					@click="localModelValue.enabled = !localModelValue.enabled"
-				/>
+				<div class="mail_massconnect__integration-block_switcher-container" >
+					<Switcher
+						:isChecked="localModelValue.enabled"
+						:isDisabled="!canEditCrmIntegration"
+						:options="switcherOptions"
+						v-hint="!canEditCrmIntegration ? noAccessHintParams : undefined"
+						@click="handleSwitcherClick"
+					/>
+				</div>
 			</div>
 			<transition name="mail_massconnect__integration-block_slide-down">
 				<div v-if="localModelValue.enabled" class="mail_massconnect__integration-block_content-wrapper">

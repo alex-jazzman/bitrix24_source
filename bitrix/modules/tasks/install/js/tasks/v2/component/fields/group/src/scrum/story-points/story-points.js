@@ -66,7 +66,7 @@ export const StoryPoints = {
 			/>
 			<TextXs
 				v-else
-				className="tasks-field-story-points-text"
+				className="tasks-field-story-points-text print-background-white print-font-color-base-1"
 				@click="handleClick"
 			>
 				{{ storyPoints || '-' }}

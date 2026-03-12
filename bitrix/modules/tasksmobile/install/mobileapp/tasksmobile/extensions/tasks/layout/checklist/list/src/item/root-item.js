@@ -92,7 +92,7 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 		 */
 		getPlaceholder(item)
 		{
-			return this.#getPrevTitle() || Loc.getMessage('TASKSMOBILE_LAYOUT_LIST_INPUT_PLACEHOLDER');
+			return Loc.getMessage('TASKSMOBILE_LAYOUT_LIST_INPUT_PLACEHOLDER');
 		}
 
 		handleOnBlur()

@@ -1,2 +1,0 @@
-<?php
-$MESS["SIGN_B2E_SIGNERS_LIST_COPY_TITLE"] = "#TITLE# (көшірме)";

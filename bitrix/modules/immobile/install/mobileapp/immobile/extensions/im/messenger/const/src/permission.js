@@ -13,6 +13,8 @@ jn.define('im/messenger/const/permission', (require, exports, module) => {
 		getOpenlines: 'getOpenlines',
 		leaveCollab: 'leaveCollab',
 		changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
+		createStickerPack: 'createStickerPack',
+		changeStickerPack: 'changeStickerPack',
 	});
 
 	const DialogPermissions = Object.freeze({

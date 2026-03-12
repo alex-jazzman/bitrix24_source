@@ -198,3 +198,12 @@ create table if not exists b_intranet_user_annual_summary
 	PRIMARY KEY (ID),
 	UNIQUE INDEX ux_user_name(USER_ID, NAME)
 );
+
+CREATE TABLE IF NOT EXISTS b_intranet_user
+(
+	ID int NOT NULL AUTO_INCREMENT,
+	USER_ID int NOT NULL UNIQUE,
+	INITIALIZED varchar(1) NOT NULL DEFAULT 'N',
+	PRIMARY KEY(ID),
+	INDEX IX_B_USER_ID_INITIALIZED (USER_ID, INITIALIZED)
+);

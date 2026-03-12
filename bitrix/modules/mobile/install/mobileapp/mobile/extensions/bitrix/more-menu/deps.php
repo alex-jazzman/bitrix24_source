@@ -23,5 +23,6 @@ return [
 		'utils/object',
 		'utils/test',
 		'utils/validation',
+		'apptheme',
 	],
 ];

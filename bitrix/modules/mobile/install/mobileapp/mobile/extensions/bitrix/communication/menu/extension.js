@@ -5,7 +5,7 @@ jn.define('communication/menu', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { AnalyticsEvent } = require('analytics');
 	const { ContextMenu } = require('layout/ui/context-menu');
-	const ConnectionTypeSvg = require('assets/communication/menu');
+	const { Icon } = require('assets/icons');
 	const { ImType, PhoneType, EmailType, isOpenLine, getOpenLineTitle } = require('communication/connection');
 	const { CommunicationEvents } = require('communication/events');
 	const { EventEmitter } = require('event-emitter');
@@ -33,8 +33,14 @@ jn.define('communication/menu', (require, exports, module) => {
 	}
 
 	const ENTITY_ICONS = {
-		[TypeName.Contact]: EntitySvg.contactCreate(AppTheme.colors.base3),
-		[TypeName.Company]: EntitySvg.companyCreate(AppTheme.colors.base3),
+		[TypeName.Contact]: Icon.ADD_PERSON,
+		[TypeName.Company]: Icon.COMPANY,
+	};
+
+	const ConnectionTypeIcons = {
+		[PhoneType]: Icon.CALL_BACK,
+		[EmailType]: Icon.MAIL,
+		[ImType]: Icon.OPEN_CHANNELS,
 	};
 
 	const CLIENT_ACTIONS_CODE = 'CLIENT_ACTIONS';
@@ -280,11 +286,8 @@ jn.define('communication/menu', (require, exports, module) => {
 				id: `${sectionCode}_${connectionType}_STUB`,
 				sectionCode,
 				title,
-				data: {
-					svgIcon: ConnectionTypeSvg[connectionType](AppTheme.colors.base3),
-				},
+				icon: ConnectionTypeIcons[connectionType],
 				isSemitransparent: true,
-				isCustomIconColor: true,
 				onClickCallback: (action, itemId, { parentWidget }) => parentWidget.close(async () => {
 					const { MultiFieldDrawer } = await requireLazy('crm:multi-field-drawer') || {};
 
@@ -370,9 +373,7 @@ jn.define('communication/menu', (require, exports, module) => {
 				subtitle: hidden ? null : this.getSubtitle(complexName, value, connectionType),
 				isSelected,
 				showSelectedImage,
-				data: {
-					svgIcon: ConnectionTypeSvg[connectionType](),
-				},
+				icon: ConnectionTypeIcons[connectionType],
 				closeCallback: this.onCloseCommunicationMenu,
 				onClickCallback: () => {
 					return onClickCallback(params, connectionType);
@@ -555,7 +556,7 @@ jn.define('communication/menu', (require, exports, module) => {
 						id: `CLIENT_ADD_${entityTypeName}`,
 						sectionCode: CLIENT_ACTIONS_CODE,
 						title: Loc.getMessage(`M_CRM_COMMUNICATION_MENU_ADD_${entityTypeName}`),
-						data: { svgIcon: ENTITY_ICONS[entityTypeName] },
+						icon: ENTITY_ICONS[entityTypeName],
 						onClickCallback: () => {
 							const closeCallback = () => {
 								const analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {}))

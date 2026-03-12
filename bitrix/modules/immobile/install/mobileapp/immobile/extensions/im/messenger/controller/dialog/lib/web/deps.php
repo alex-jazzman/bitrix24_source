@@ -9,7 +9,6 @@ return [
 		'im:chat/const/background',
 		'im:messenger/const',
 		'im:messenger/loc',
-		'im:messenger/lib/feature',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/params',
 		'im:messenger/lib/theme',

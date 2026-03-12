@@ -1,5 +1,6 @@
-import { Type, Runtime, Loc, Event, Dom } from 'main.core';
+import { Type, Runtime, Loc, Event } from 'main.core';
 import type { BBCodeElementNode } from 'ui.bbcode.model';
+import { Outline } from 'ui.icon-set.api.core';
 
 import type {
 	BBCodeConversionOutput,
@@ -9,8 +10,7 @@ import type {
 	BBCodeExportOutput,
 } from '../../bbcode';
 import { DIALOG_VISIBILITY_COMMAND, HIDE_DIALOG_COMMAND } from '../../commands';
-import { getEditorPaddings } from '../../helpers/get-editor-paddings';
-import { $getSelectionPosition } from '../../helpers/get-selection-position';
+import { $adjustDialogPosition } from '../../helpers/adjust-dialog-position';
 import Button from '../../toolbar/button';
 import type { SchemeValidationOptions } from '../../types/scheme-validation-options';
 
@@ -98,7 +98,6 @@ export class MentionPlugin extends BasePlugin
 	#removeKeyboardCommandsLock: Function = null;
 	#removeUpdateListener: Function = null;
 	#onEditorScroll: Function = this.#handleEditorScroll.bind(this);
-	#lastPosition: { left: number, top: number } = null;
 	#timeoutId: number = null;
 	#triggerByAtSign: boolean = false;
 
@@ -319,7 +318,7 @@ export class MentionPlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('mention', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --mention"></span>');
+			button.setIcon(Outline.MENTION);
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_MENTION'));
 			button.disableInsideUnformatted();
 			button.subscribe('onClick', (): void => {
@@ -683,47 +682,7 @@ export class MentionPlugin extends BasePlugin
 	#adjustDialogPosition(): void
 	{
 		this.getEditor().update(() => {
-			const selectionPosition = $getSelectionPosition(this.getEditor(), $getSelection(), document.body);
-			if (selectionPosition === null)
-			{
-				return;
-			}
-
-			const { top, left, bottom } = selectionPosition;
-			const scrollerRect: DOMRect = Dom.getPosition(this.getEditor().getScrollerContainer());
-			const popupWidth = 400;
-			const editorPaddings = getEditorPaddings(this.getEditor());
-
-			let offsetLeft = 10;
-			if (left - offsetLeft < scrollerRect.left)
-			{
-				// Left boundary
-				const overflow = scrollerRect.left - (left - offsetLeft);
-				offsetLeft -= overflow + editorPaddings.left;
-			}
-			else if (scrollerRect.right < (left + popupWidth - offsetLeft))
-			{
-				// Right boundary
-				offsetLeft += (left + popupWidth - offsetLeft) - scrollerRect.right + editorPaddings.right;
-			}
-
-			if (bottom < scrollerRect.top || top > scrollerRect.bottom)
-			{
-				Dom.addClass(this.#dialog.getPopup().getPopupContainer(), 'ui-text-editor-mention-popup__hidden');
-			}
-			else
-			{
-				Dom.removeClass(this.#dialog.getPopup().getPopupContainer(), 'ui-text-editor-mention-popup__hidden');
-
-				this.#dialog.show();
-				if (this.#lastPosition === null || this.#lastPosition.top !== bottom)
-				{
-					this.#lastPosition = { left: left - offsetLeft, top: bottom };
-				}
-
-				this.#dialog.getPopup().setBindElement(this.#lastPosition);
-				this.#dialog.getPopup().adjustPosition({ forceBindPosition: true, forceTop: true });
-			}
+			$adjustDialogPosition(this.#dialog.getPopup(), this.getEditor());
 		});
 	}
 
@@ -734,7 +693,6 @@ export class MentionPlugin extends BasePlugin
 
 	#handleHideOrDestroy(): void
 	{
-		this.#lastPosition = null;
 		this.#unlockKeyboardCommands();
 		this.#stopMentionListening();
 		Event.unbind(this.getEditor().getScrollerContainer(), 'scroll', this.#onEditorScroll);

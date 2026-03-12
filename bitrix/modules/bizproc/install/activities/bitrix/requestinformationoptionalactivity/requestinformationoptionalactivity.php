@@ -49,15 +49,16 @@ class CBPRequestInformationOptionalActivity extends CBPRequestInformationActivit
 
 		$taskParameters['TaskButtonCancelMessage'] =
 			$this->IsPropertyExists('TaskButtonCancelMessage')
-				? $this->TaskButtonCancelMessage
-				: GetMessage("BPRIOA_ACT_BUTTON2")
+				? CBPHelper::stringify($this->TaskButtonCancelMessage)
+				: Loc::getMessage('BPRIOA_ACT_BUTTON2')
 		;
 		$taskParameters['SaveVariables'] = CBPHelper::getBool($this->SaveVariables);
 
-		if ($taskParameters['TaskButtonCancelMessage'] == '')
+		if (CBPHelper::isEmptyValue($taskParameters['TaskButtonCancelMessage']))
 		{
-			$taskParameters['TaskButtonCancelMessage'] = GetMessage("BPRIOA_ACT_BUTTON2");
+			$taskParameters['TaskButtonCancelMessage'] = Loc::getMessage('BPRIOA_ACT_BUTTON2');
 		}
+
 		return $taskParameters;
 	}
 

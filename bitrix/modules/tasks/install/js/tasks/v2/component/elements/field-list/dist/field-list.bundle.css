@@ -5,20 +5,36 @@
 	display: grid;
 	grid-template-columns: -webkit-max-content auto;
 	grid-template-columns: max-content auto;
-	gap: var(--gap);
+	gap: var(--gap) 0;
 	align-items: center;
 	grid-auto-rows: minmax(var(--min-row-height), auto);
 	font-size: var(--ui-font-size-lg);
 }
 
+.b24-field-list-row {
+	display: contents;
+}
+
 .b24-field-list-title {
+	display: flex;
 	position: relative;
 	align-self: start;
 	line-height: var(--min-row-height);
 	color: var(--ui-color-base-3);
 	font-size: var(--ui-font-size-md);
 	min-width: 162px;
+	height: 100%;
+	padding-right: var(--gap);
 	cursor: default;
+}
+
+.b24-field-list-title-hint {
+	padding-left: var(--ui-space-inline-2xs);
+	padding-top: var(--ui-space-stack-2xs);
+}
+
+.b24-field-list-row:hover .b24-field-list-title {
+	color: var(--ui-color-base-2);
 }
 
 .b24-field-list-title.--with-separator {

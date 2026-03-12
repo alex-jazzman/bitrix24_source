@@ -7,12 +7,10 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/view/dialog',
 		'im:messenger/lib/helper',
-		'im:messenger/lib/emitter',
 		'im:messenger/lib/feature',
-		'im:messenger/lib/ui/notification',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/plan-limit',
-		'im:messenger/provider/services/component-code',
+		'im:messenger/lib/ui/notification',
 	],
 	'bundle' => [
 		'./src/context-manager',

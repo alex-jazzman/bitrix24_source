@@ -172,7 +172,9 @@ export const ChartWizard = {
 				return false;
 			}
 
-			return this.permissionChecker.checkDepartmentSettingsAvailable();
+			return this.permissionChecker.checkDepartmentBPSettingsAvailable()
+				|| this.permissionChecker.checkDepartmentReportsSettingsAvailable()
+			;
 		},
 		componentInfo(): { name: string, params?: Object }
 		{
@@ -243,6 +245,7 @@ export const ChartWizard = {
 							isDeputyApprovesBPAvailable: this.isDeputyApprovesBPAvailable,
 						},
 						shouldErrorHighlight: this.shouldErrorHighlight,
+						isEditMode: this.isEditMode,
 					},
 				},
 				[StepIds.entities]: {
@@ -298,7 +301,7 @@ export const ChartWizard = {
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
-		mapRawSettings(rawSettings: number[]): Object<string, Set<(string)>>
+		mapRawSettings(rawSettings: { settingsType: string, settingsValue: string }[]): Object<string, Set<(string)>>
 		{
 			return rawSettings.reduce((acc, { settingsType, settingsValue }) => {
 				if (!Object.hasOwn(acc, settingsType))
@@ -723,6 +726,13 @@ export const ChartWizard = {
 		},
 		async create(): Promise<void>
 		{
+			if (!this.isValidStep)
+			{
+				this.shouldErrorHighlight = true;
+
+				return;
+			}
+
 			const {
 				name,
 				parentId,
@@ -756,6 +766,11 @@ export const ChartWizard = {
 					[NodeSettingsTypes.businessProcAuthority]:
 						{
 							values: [...settings[NodeSettingsTypes.businessProcAuthority]],
+							replace: true,
+						},
+					[NodeSettingsTypes.reportsAuthority]:
+						{
+							values: [...settings[NodeSettingsTypes.reportsAuthority]],
 							replace: true,
 						},
 				};
@@ -926,6 +941,10 @@ export const ChartWizard = {
 					{
 						[NodeSettingsTypes.businessProcAuthority]: {
 							values: [...settings[NodeSettingsTypes.businessProcAuthority]],
+							replace: true,
+						},
+						[NodeSettingsTypes.reportsAuthority]: {
+							values: [...settings[NodeSettingsTypes.reportsAuthority]],
 							replace: true,
 						},
 					},
@@ -1282,7 +1301,7 @@ export const ChartWizard = {
 					<button
 						v-show="!isEditMode && stepIndex === steps.length - 1"
 						class="ui-btn ui-btn-primary ui-btn-round chart-wizard__button"
-						:class="{ 'ui-btn-wait': waiting }"
+						:class="{ 'ui-btn-wait': waiting, 'ui-btn-disabled': !isValidStep, }"
 						@click="create"
 						data-test-id="hr-company-structure_chart-wizard__create-button"
 					>

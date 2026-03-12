@@ -1137,7 +1137,7 @@ this.BX = this.BX || {};
 	    this.options = options;
 	  }
 	  show() {
-	    ui_bannerDispatcher.BannerDispatcher.critical.toQueue(onDone => {
+	    ui_bannerDispatcher.BannerDispatcher.high.toQueue(onDone => {
 	      const panel = babelHelpers.classPrivateFieldLooseBase(this, _getPanel)[_getPanel](onDone);
 	      panel.show();
 	      babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics]('show_notification_panel');

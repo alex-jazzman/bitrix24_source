@@ -27,6 +27,7 @@ export const MailboxSettings = {
 				'crmSettings',
 				'calendarSettings',
 				'analyticsSource',
+				'permissions',
 			],
 		),
 		switcherOptions(): Object
@@ -76,6 +77,7 @@ export const MailboxSettings = {
 
 			<CrmIntegration
 				:model-value="crmSettings"
+				:can-edit-crm-integration="permissions.canEditCrmIntegration"
 				@update:model-value="setCrmSettings($event)"
 			/>
 

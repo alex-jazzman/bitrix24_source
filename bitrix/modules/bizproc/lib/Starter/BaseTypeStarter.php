@@ -25,6 +25,7 @@ abstract class BaseTypeStarter
 	protected array $events = [];
 	protected array $templateIds = [];
 	protected int $userId = 0;
+	protected ?int $delay = null;
 	protected bool $isTriggerApplied = false;
 
 	protected array $startedWorkflows = [];
@@ -81,6 +82,13 @@ abstract class BaseTypeStarter
 	public function setContext(Context $context): self
 	{
 		$this->context = $context;
+
+		return $this;
+	}
+
+	public function setDelay(?int $delay = null): self
+	{
+		$this->delay = $delay;
 
 		return $this;
 	}
@@ -162,9 +170,9 @@ abstract class BaseTypeStarter
 		return false;
 	}
 
-	protected function validateParameters(int $templateId, array $templateParameters): ?array
+	protected function validateParameters(int $templateId, array $templateParameters, ?array $complexDocumentType = null): ?array
 	{
-		if (!$this->parameters || !$this->document?->complexType)
+		if (!$this->parameters)
 		{
 			// todo: default values or empty?
 			return [];
@@ -175,7 +183,13 @@ abstract class BaseTypeStarter
 			return $this->parameters->getValues($templateId, $templateParameters);
 		}
 
-		$result = $this->parameters->getValidatedValues($templateId, $templateParameters, $this->document->complexType);
+		$complexDocumentType ??= $this->document?->complexType;
+		if (!$complexDocumentType)
+		{
+			return [];
+		}
+
+		$result = $this->parameters->getValidatedValues($templateId, $templateParameters, $complexDocumentType);
 		if ($result->isSuccess())
 		{
 			return $result->getData()['values'];
@@ -238,6 +252,7 @@ abstract class BaseTypeStarter
 	protected function startWorkflow(int $templateId, array $complexDocumentId, array $parameters): ?string
 	{
 		$errors = [];
+		$parameters[\CBPDocument::PARAM_START_WORKFLOW_DELAY] = $this->delay;
 		$workflowId = \CBPDocument::startWorkflow($templateId, $complexDocumentId, $parameters, $errors);
 		if ($errors)
 		{

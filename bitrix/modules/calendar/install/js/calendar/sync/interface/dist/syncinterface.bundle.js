@@ -496,18 +496,20 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    main_core.Event.bind(this.moreButton, 'click', this.handleItemClick.bind(this));
 	    return this.moreButton;
 	  }
-	  handleItemClick(e) {
+	  async handleItemClick(e) {
 	    const status = this.connectionProvider.getStatus();
 	    if ([this.connectionProvider.STATUS_SUCCESS, this.connectionProvider.STATUS_FAILED, this.connectionProvider.STATUS_REFUSED].includes(status)) {
 	      if (this.connectionProvider.hasMenu()) {
-	        this.connectionProvider.showMenu(getComputedStyle(this.moreButton).display !== 'none' ? this.moreButton : this.button);
+	        this.connectionProvider.showMenu(getComputedStyle(this.moreButton).display === 'none' ? this.button : this.moreButton);
 	      } else if (this.connectionProvider.getConnectStatus()) {
 	        this.connectionProvider.openActiveConnectionSlider(this.connectionProvider.getConnection());
 	      } else {
 	        this.connectionProvider.openInfoConnectionSlider();
 	      }
 	    } else if (status === this.connectionProvider.STATUS_NOT_CONNECTED) {
-	      this.getConnectionTemplate().handleConnectButton();
+	      main_core.Dom.addClass(this.button, 'ui-btn-wait');
+	      await this.getConnectionTemplate().handleConnectButton();
+	      main_core.Dom.removeClass(this.button, 'ui-btn-wait');
 	    }
 	  }
 	  formatSyncTime(date) {
@@ -558,6 +560,7 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	      events: {
 	        onLoad: () => {
 	          this.displayConnectionUnits();
+	          this.allowBitrix24IfEnabled();
 	        }
 	      },
 	      cacheable: false,
@@ -698,6 +701,11 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    main_core.Dom.replace(document.querySelector('#calendar-sync-status-block'), this.blockStatusContent);
 	    this.displayConnectionUnits();
 	    (_this$auxiliarySyncPa = this.auxiliarySyncPanel) == null ? void 0 : _this$auxiliarySyncPa.refresh(status, connectionsProviders);
+	  }
+	  allowBitrix24IfEnabled() {
+	    if (BX.Calendar.Util.isBitrix24Enabled() === true && typeof window.BXDesktopSystem !== 'undefined') {
+	      window.BXDesktopSystem.AllowFrame('https://www.bitrix24.com/');
+	    }
 	  }
 	}
 
@@ -1177,15 +1185,15 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    }
 	    main_core.Dom.replace(document.getElementById('status-info-block'), (_this$statusBlock2 = this.statusBlock) == null ? void 0 : _this$statusBlock2.getContent());
 	  }
-	  reconnect() {
+	  async reconnect() {
 	    if (!this.provider.doSupportReconnectionScenario()) {
 	      return;
 	    }
 	    this.provider.startReconnecting();
-	    this.handleConnectButton();
+	    await this.handleConnectButton();
 	    this.provider.closeSlider();
 	  }
-	  handleConnectButton() {}
+	  async handleConnectButton() {}
 	  getDisconnectButton() {
 	    // <button class="ui-btn ui-btn-primary ui-btn-round calendar-sync__account-btn">
 	    // 	<div class="ui-icon-set --refresh-4"></div>
@@ -1356,7 +1364,7 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    });
 	    messageBox.show();
 	  }
-	  handleConnectButton() {
+	  async handleConnectButton() {
 	    this.provider.openInfoConnectionSlider(this.provider.getFirstFailedConnection());
 	  }
 	}
@@ -2162,8 +2170,8 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    this.sectionList = [];
 	    this.handleSuccessConnectionDebounce = main_core.Runtime.debounce(this.handleSuccessConnection, this.HANDLE_CONNECTION_DELAY, this);
 	  }
-	  createConnection() {
-	    const syncLink = this.provider.getSyncLink();
+	  async createConnection() {
+	    const syncLink = await this.provider.getSyncLink();
 	    BX.util.popup(syncLink, 500, 600);
 	    main_core.Event.bind(window, 'hashchange', this.handleSuccessConnectionDebounce);
 	    main_core.Event.bind(window, 'message', this.handleSuccessConnectionDebounce);
@@ -2224,9 +2232,9 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    });
 	    messageBox.show();
 	  }
-	  handleConnectButton() {
+	  async handleConnectButton() {
 	    if (this.provider.hasSetSyncGoogleSettings()) {
-	      this.createConnection();
+	      await this.createConnection();
 	    } else {
 	      this.provider.endReconnecting();
 	      this.showAlertPopup();
@@ -2861,7 +2869,7 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    this.runUpdateInfo();
 	    this.showUpdateSectionListNotification();
 	  }
-	  handleConnectButton() {
+	  async handleConnectButton() {
 	    this.initPopup();
 	    if (calendar_util.Util.isIphoneConnected() || calendar_util.Util.isMacConnected()) {
 	      this.alertSyncPopup.show();
@@ -3000,8 +3008,8 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    this.sectionList = [];
 	    this.handleSuccessConnectionDebounce = main_core.Runtime.debounce(this.handleSuccessConnection, this.HANDLE_CONNECTION_DELAY, this);
 	  }
-	  createConnection() {
-	    const syncLink = this.provider.getSyncLink();
+	  async createConnection() {
+	    const syncLink = await this.provider.getSyncLink();
 	    BX.util.popup(syncLink, 500, 600);
 	    main_core.Event.bind(window, 'hashchange', this.handleSuccessConnectionDebounce);
 	  }
@@ -3025,9 +3033,9 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    this.runUpdateInfo();
 	    this.showUpdateSectionListNotification();
 	  }
-	  handleConnectButton() {
+	  async handleConnectButton() {
 	    if (this.provider.hasSetSyncOffice365Settings()) {
-	      this.createConnection();
+	      await this.createConnection();
 	    } else {
 	      this.showAlertPopup();
 	    }

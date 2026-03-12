@@ -915,6 +915,9 @@ this.BX.UI = this.BX.UI || {};
 	  isUploadFailed() {
 	    return this.getStatus() === FileStatus.UPLOAD_FAILED;
 	  }
+	  isInProgress() {
+	    return [FileStatus.LOADING, FileStatus.PENDING, FileStatus.PREPARING, FileStatus.UPLOADING].includes(this.getStatus());
+	  }
 	  getBinary() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _file)[_file];
 	  }
@@ -4008,6 +4011,7 @@ this.BX.UI = this.BX.UI || {};
 	var _browsingNodes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("browsingNodes");
 	var _dropNodes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dropNodes");
 	var _pastingNodes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pastingNodes");
+	var _destroying = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroying");
 	var _setLoadEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setLoadEvents");
 	var _setUploadEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setUploadEvents");
 	var _setRemoveEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setRemoveEvents");
@@ -4213,6 +4217,10 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: new Set()
 	    });
+	    Object.defineProperty(this, _destroying, {
+	      writable: true,
+	      value: false
+	    });
 	    this.setEventNamespace('BX.UI.Uploader');
 	    babelHelpers.classPrivateFieldLooseBase(this, _onBeforeUploadHandler)[_onBeforeUploadHandler] = babelHelpers.classPrivateFieldLooseBase(this, _handleBeforeUpload)[_handleBeforeUpload].bind(this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _onFileStatusChangeHandler)[_onFileStatusChangeHandler] = babelHelpers.classPrivateFieldLooseBase(this, _handleFileStatusChange)[_handleFileStatusChange].bind(this);
@@ -4402,7 +4410,14 @@ this.BX.UI = this.BX.UI || {};
 	      this.emit('onStop');
 	    }
 	  }
+	  isDestroyed() {
+	    return false;
+	  }
 	  destroy(options) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _destroying)[_destroying]) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _destroying)[_destroying] = true;
 	    this.emit(UploaderEvent.DESTROY);
 	    this.unassignBrowseAll();
 	    this.unassignDropzoneAll();
@@ -4419,6 +4434,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _ignoredFileNames)[_ignoredFileNames] = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _filters)[_filters] = null;
 	    Object.setPrototypeOf(this, null);
+	    this.isDestroyed = () => true;
 	  }
 	  removeFiles(options) {
 	    this.getFiles().forEach(file => {
@@ -4679,6 +4695,12 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getPendingFileCount() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _files)[_files].filter(file => file.isReadyToUpload()).length;
+	  }
+	  isInProgress() {
+	    if (this.getStatus() === UploaderStatus.STARTED) {
+	      return true;
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _files)[_files].some(file => file.isInProgress());
 	  }
 	  static getImageExtensions() {
 	    return this.getGlobalOption('imageExtensions', ['jpg', 'bmp', 'jpeg', 'jpe', 'gif', 'png', 'webp']);

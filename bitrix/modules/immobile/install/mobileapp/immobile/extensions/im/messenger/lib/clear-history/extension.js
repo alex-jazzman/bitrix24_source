@@ -2,7 +2,6 @@
  * @module im/messenger/lib/clear-history
  */
 jn.define('im/messenger/lib/clear-history', (require, exports, module) => {
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessageDataProvider } = require('im/messenger/provider/data');
@@ -27,8 +26,7 @@ jn.define('im/messenger/lib/clear-history', (require, exports, module) => {
 			const chatId = DialogHelper.getDialogModel(dialogId)?.chatId;
 			if (chatId)
 			{
-				TabCounters.deleteCounterByChatId(chatId);
-				TabCounters.update();
+				await store.dispatch('counterModel/delete', { chatIdList: [chatId] });
 			}
 		}
 

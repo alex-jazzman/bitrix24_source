@@ -12,12 +12,12 @@ const { paragraph, ul, ol, li, br, text, link } = require('./html');
 
 async function toggleBulletList(page)
 {
-	await clickToolbarButton(page, 'bulleted-list');
+	await clickToolbarButton(page, 'o-bulleted-list');
 }
 
 async function toggleNumberedList(page)
 {
-	await clickToolbarButton(page, 'numbered-list');
+	await clickToolbarButton(page, 'o-numbered-list');
 }
 
 test.describe.parallel('Nested List', () => {

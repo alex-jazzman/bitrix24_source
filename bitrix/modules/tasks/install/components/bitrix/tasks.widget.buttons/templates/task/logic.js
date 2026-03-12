@@ -405,7 +405,7 @@ BX.namespace('Tasks.Component');
 					{
 						if (action === 'complete')
 						{
-							this.sendAnalyticsOnTaskComplete();
+							this.sendAnalyticsOnTaskComplete(taskId);
 						}
 
 						if (action === 'delete')
@@ -765,7 +765,7 @@ BX.namespace('Tasks.Component');
 				this.getDayPlan().updatePlanner();
 			},
 
-			sendAnalyticsOnTaskComplete: function ()
+			sendAnalyticsOnTaskComplete: function (taskId)
 			{
 				let analyticsData = {
 					tool: 'tasks',
@@ -775,6 +775,7 @@ BX.namespace('Tasks.Component');
 					c_section: 'tasks',
 					c_element: 'complete_button',
 					c_sub_section: 'task_card',
+					p1: `taskId_${taskId}`,
 				};
 
 				if (this.option('isCollab'))

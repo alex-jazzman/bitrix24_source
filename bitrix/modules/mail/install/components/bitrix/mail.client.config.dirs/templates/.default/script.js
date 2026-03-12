@@ -46,6 +46,88 @@
 
 			this.loadData();
 			this.addEvents();
+
+			this.selectAll(true, { withSpinner: true, loadAllContainers: true });
+		},
+		/**
+		 * @param {boolean} val
+		 * @param {{ withSpinner?: boolean, loadAllContainers?: boolean }} [options]
+		 * @returns {Promise<void>}
+		 */
+		selectAll: async function(val, options = {}) {
+			const withSpinner = options.withSpinner === true;
+			const loadAllContainers = options.loadAllContainers === true;
+
+			const items = Object.values(this.items || {});
+			const loadPromises = [];
+
+			for (let i = 0; i < items.length; i++)
+			{
+				const item = items[i];
+
+				if (!val)
+				{
+					continue;
+				}
+
+				if (!loadAllContainers && item.container.offsetHeight === 0)
+				{
+					continue;
+				}
+
+				const isContainerWithChildren = item.isContainer
+					&& item.hasChild
+					&& item.hasChild !== 'false'
+					&& !item.subMenu;
+
+				if (isContainerWithChildren)
+				{
+					if (withSpinner)
+					{
+						loadPromises.push(this.loadItemWithSpinner(item));
+					}
+					else
+					{
+						loadPromises.push(item.loadChildrenForSelectAll());
+					}
+				}
+			}
+
+			if (loadPromises.length > 0)
+			{
+				try
+				{
+					await Promise.all(loadPromises);
+				}
+				catch (error)
+				{
+					console.error('Error loading children:', error);
+				}
+			}
+
+			this.doSelectAll(val);
+			if (this.selectAllButton)
+			{
+				this.selectAllButton.setChecked(val);
+			}
+		},
+
+		/**
+		 * @param {BX.Mail.Client.Config.Dirs.DropdownMenuItem} item
+		 * @returns {Promise<void>}
+		 */
+		loadItemWithSpinner: async function(item)
+		{
+			item.showSpinner();
+
+			try
+			{
+				await item.loadChildrenForSelectAll();
+			}
+			finally
+			{
+				item.hideSpinner();
+			}
 		},
 
 		loadData: function ()
@@ -62,6 +144,7 @@
 				options.path = options.checkbox ? options.checkbox.dataset.path : null;
 				options.hasChild = options.checkbox ? options.checkbox.dataset.haschild : false;
 				options.level = options.checkbox ? parseInt(options.checkbox.dataset.level) : 0;
+				options.isContainer = options.checkbox ? options.checkbox.dataset.iscontainer === 'true' : false;
 				options.defaultChecked = options.checkbox ? options.checkbox.checked : null;
 				options.root = this;
 				options.levelButton = options.container.querySelector(this.itemContentSelector + ' ' + this.levelButtonSelector);
@@ -198,7 +281,7 @@
 			this.selectAll(e.target.checked);
 		},
 
-		selectAll: function (val)
+		doSelectAll: function (val)
 		{
 			for (var i in this.items)
 			{
@@ -244,6 +327,7 @@
 		this.defaultChecked = options.defaultChecked;
 		this.hasChild = options.hasChild;
 		this.level = options.level;
+		this.isContainer = options.isContainer || false;
 		this.subMenuOpen = options.subMenuOpen || false;
 		this.subMenu = options.subMenu || null;
 		this.parent = options.parent || null;
@@ -273,13 +357,17 @@
 			this.loadData();
 			this.addEvents();
 
-			if (!this.hasSyncChildren())
+			if (this.isContainer)
 			{
-				this.hideSubmenu();
+				this.showSubmenu();
+			}
+			else if (this.hasSyncChildren())
+			{
+				this.showSubmenu();
 			}
 			else
 			{
-				this.showSubmenu();
+				this.hideSubmenu();
 			}
 		},
 
@@ -459,6 +547,15 @@
 			}).then(
 				function (response)
 				{
+					const dirs = response.data && response.data.dirs;
+					if (!dirs || dirs.length === 0)
+					{
+						this.notify(BX.message('MAIL_CLIENT_CONFIG_DIRS_NO_NESTED_FOLDERS'));
+						this.markAsNoChildren();
+
+						return;
+					}
+
 					this.reloadData(response.data);
 
 					this.levelButton.hideLoader();
@@ -484,6 +581,44 @@
 			);
 		},
 
+		/**
+		 * Loads children for "select all" (one request per folder).
+		 * TODO: if too many requests are sent when using mail, add a batch method to load folders in bulk.
+		 * @returns {Promise<void>}
+		 */
+		loadChildrenForSelectAll: async function()
+		{
+			const item = {
+				path: this.path,
+				dirMd5: this.id,
+			};
+
+			try
+			{
+				const response = await BX.ajax.runComponentAction('bitrix:mail.client.config.dirs', 'level', {
+					mode: 'class',
+					data: {
+						mailboxId: this.root.mailboxId,
+						dir: item,
+					},
+				});
+
+				const dirs = response.data && response.data.dirs;
+				if (!dirs || dirs.length === 0)
+				{
+					this.markAsNoChildren();
+
+					return;
+				}
+
+				this.reloadData(response.data);
+			}
+			catch (error)
+			{
+				console.error('Error loading children:', error);
+			}
+		},
+
 		notify: function (text, delay)
 		{
 			top.BX.UI.Notification.Center.notify({
@@ -491,6 +626,12 @@
 				content: text,
 				category: 'mailbox-dirs',
 			});
+		},
+
+		markAsNoChildren: function ()
+		{
+			this.hasChild = false;
+			this.levelButton.hide();
 		},
 
 		onChangeCheckbox: function (e)
@@ -533,6 +674,22 @@
 			if (this.checkbox.checked !== val)
 			{
 				this.checkbox.click();
+			}
+		},
+
+		showSpinner()
+		{
+			if (this.levelButton)
+			{
+				this.levelButton.showLoader();
+			}
+		},
+
+		hideSpinner()
+		{
+			if (this.levelButton)
+			{
+				this.levelButton.hideLoader();
 			}
 		},
 
@@ -975,7 +1132,22 @@
 
 			for (var i = 0; i < dirs.length; i++)
 			{
-				var hasChild = /(HasChildren)/i.test(dirs[i].FLAGS);
+				// Check for children using HasChildren flag or fallback for servers without CHILDREN extension (e.g., Mail.ru)
+				var flags = dirs[i].FLAGS || '';
+				var hasChild = /(\\HasChildren)/i.test(flags);
+
+				if (!hasChild)
+				{
+					var hasNoChildren = /(\\HasNoChildren)/i.test(flags);
+					var noInferiors = /(\\Noinferiors)/i.test(flags);
+
+					// If server doesn't explicitly say "no children", assume there might be some
+					if (!hasNoChildren && !noInferiors)
+					{
+						hasChild = true;
+					}
+				}
+
 				var item = {};
 				item.id = dirs[i].PATH;
 				item.text = dirs[i].NAME;
@@ -985,6 +1157,7 @@
 					'path': dirs[i].PATH,
 					'dirMd5': dirs[i].DIR_MD5,
 					'isDisabled': dirs[i].IS_DISABLED,
+					'isContainer': dirs[i].IS_CONTAINER || false,
 					'hasChild': hasChild
 				};
 				item.items = dirs[i].CHILDREN && dirs[i].CHILDREN.length ? this.getDataDropdownMenu(dirs[i].CHILDREN) : (
@@ -1088,6 +1261,16 @@
 		getButton: function ()
 		{
 			return this.button;
+		},
+
+		hide: function ()
+		{
+			if (!this.button)
+			{
+				return;
+			}
+
+			this.button.style.display = 'none';
 		},
 
 		showLoader: function ()
@@ -1194,6 +1377,14 @@
 
 			this.button.checked = val;
 			this.update();
+		},
+
+		hide: function ()
+		{
+			if (this.button && this.button.parentNode)
+			{
+				this.button.parentNode.style.display = 'none';
+			}
 		}
 	};
 

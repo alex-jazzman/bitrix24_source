@@ -9,6 +9,7 @@ export class TaskRecentMenu extends RecentMenu
 		return [
 			this.getUnreadMessageItem(),
 			this.getPinMessageItem(),
+			this.getMuteItem(),
 			this.getHideItem(),
 		];
 	}

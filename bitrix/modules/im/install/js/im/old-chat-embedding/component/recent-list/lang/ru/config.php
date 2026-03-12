@@ -13,3 +13,4 @@ $MESS['IM_RECENT_CHAT_TYPE_GROUP'] = "Групповой чат";
 $MESS['IM_RECENT_EMPTY'] = "Нет чатов";
 $MESS['IM_RECENT_CHAT_SELF'] = "это вы";
 $MESS['IM_RECENT_DELETED_MESSAGE'] = "Это сообщение было удалено.";
+

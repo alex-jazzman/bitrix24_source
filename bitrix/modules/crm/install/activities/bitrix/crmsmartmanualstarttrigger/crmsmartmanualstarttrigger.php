@@ -131,6 +131,7 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 		return [
 			self::PARAM_SMART_TYPE_ID => [
 				'Name' => Loc::getMessage('BP_CRM_DEAL_MANUAL_START_TRIGGER_FIELD_SMART_TYPE'),
+				'FieldName' => self::PARAM_SMART_TYPE_ID,
 				'Type' => FieldType::SELECT,
 				'Options' => $smartList,
 				'AllowSelection' => false,
@@ -138,6 +139,7 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 			],
 			self::PARAM_CATEGORY_ID => [
 				'Name' => Loc::getMessage('BP_CRM_DEAL_MANUAL_START_TRIGGER_FIELD_CATEGORY_ID'),
+				'FieldName' => self::PARAM_CATEGORY_ID,
 				'Type' => FieldType::CUSTOM,
 				'CustomType' => self::CRM_SMART_CATEGORY_SELECT,
 				'Settings' => [

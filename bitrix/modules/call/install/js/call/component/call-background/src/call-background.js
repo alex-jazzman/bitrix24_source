@@ -53,7 +53,7 @@ BitrixVue.component('bx-im-component-settings-call-background',
 		this.selected = this.defaultValue.id;
 		this.limit = {};
 
-		Rest.callMethod("im.v2.call.background.get").then((response) => {
+		Rest.callMethod("call.Desktop.Background.get").then((response) => {
 			this.loading = false;
 
 			this.diskFolderId = response.data().upload.folderId;
@@ -232,7 +232,7 @@ BitrixVue.component('bx-im-component-settings-call-background',
 
 			this.select(element);
 
-			Rest.callMethod('im.v2.call.background.commit', {
+			Rest.callMethod('call.Desktop.Background.commit', {
 				fileId: element.id
 			});
 		});

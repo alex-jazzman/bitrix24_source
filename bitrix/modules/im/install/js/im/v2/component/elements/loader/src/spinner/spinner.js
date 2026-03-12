@@ -3,6 +3,7 @@ import './spinner.css';
 export const SpinnerSize = Object.freeze({
 	XXS: 'XXS',
 	XS: 'XS',
+	M: 'M',
 	S: 'S',
 	L: 'L',
 });
@@ -12,6 +13,7 @@ export const SpinnerColor = Object.freeze({
 	blue: 'blue',
 	copilot: 'copilot',
 	white: 'white',
+	mainPrimary: 'main-primary',
 });
 
 // @vue/component

@@ -46,6 +46,7 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 		const stateFlags: StateFlags = this.getVariable('stateFlags', {
 			needsControl: false,
 			matchesWorkTime: false,
+			allowsTimeTracking: false,
 		});
 
 		const deadlineUserOption: DeadlineUserOption = this.getVariable('deadlineUserOption', {
@@ -57,6 +58,7 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 
 		return {
 			id: 0,
+			groupId: 0,
 			title: '',
 			isImportant: false,
 			description: '',
@@ -82,6 +84,7 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			statusChangedTs: Date.now(),
 			needsControl: stateFlags.needsControl,
 			matchesWorkTime: stateFlags.matchesWorkTime,
+			allowsTimeTracking: stateFlags.allowsTimeTracking,
 			filledFields: {},
 			parentId: 0,
 			subTaskIds: [],

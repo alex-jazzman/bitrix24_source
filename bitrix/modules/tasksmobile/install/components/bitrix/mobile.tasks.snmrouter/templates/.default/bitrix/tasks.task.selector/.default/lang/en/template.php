@@ -1,4 +1,5 @@
 <?php
+
 $MESS["TASKS_ALL_TASKS"] = "All";
 $MESS["TASKS_EMPTY_LIST"] = "Task list is empty";
 $MESS["TASKS_EMPTY_LIST1"] = "Create task";

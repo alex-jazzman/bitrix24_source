@@ -16,6 +16,7 @@ use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Project\UserOption\UserOptionTypeDictionary;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Buttons\SettingsButton;
 
@@ -182,7 +183,7 @@ if ($isBitrix24Template)
 			'items' => [
 				[
 					'text' => Loc::getMessage('TASKS_PROJECTS_SCRUM_MIGRATION'),
-					'href' => \Bitrix\Tasks\Integration\Market\Router::getBasePath().'?tag[]=migrator&tag[]=tasks',
+					'href' => Container::getInstance()->getLinkService()->getMarket('?tag[]=migrator&tag[]=tasks'),
 					'onclick' => new JsCode('arguments[1].getMenuWindow().close();'),
 				],
 			],
@@ -274,7 +275,7 @@ if ($arResult['isScrumList'] && is_array($stub) && count($stub) > 2)
 	$asanaIcon = $templateFolder. '/images/tasks-projects-asana.svg';
 	$trelloIcon = $templateFolder. '/images/tasks-projects-trello.svg';
 
-	$marketPath = \Bitrix\Tasks\Integration\Market\Router::getBasePath();
+	$marketPath = Container::getInstance()->getLinkService()->getMarket();
 
 	$stub = <<<HTML
 		<div class="tasks-scrum__transfer--contant">

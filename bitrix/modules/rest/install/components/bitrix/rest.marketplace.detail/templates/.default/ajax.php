@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Localization\Loc;
+
 define("NOT_CHECK_PERMISSIONS", true);
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 IncludeModuleLangFile(__FILE__);
@@ -50,11 +53,18 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix
 					"NOTIFY_EVENT" => "admin_notification",
 					"NOTIFY_TAG" => "REST|APP_INSTALL_REQUEST|".$USER->GetID()."|TO|".$id,
 					"NOTIFY_SUB_TAG" => "REST|APP_INSTALL_REQUEST",
-					"NOTIFY_MESSAGE" => GetMessage("REST_APP_INSTALL_REQUEST_TEXT", array("#USER_NAME#" => $userName, "#APP_NAME#" => $_POST["appName"])),
+					"NOTIFY_MESSAGE" => Loc::getMessage('REST_APP_INSTALL_REQUEST_MESSAGE', ['#APP_NAME#' => $_POST['appName']]),
 					"NOTIFY_BUTTONS" => Array(
 						array('TITLE' => GetMessage("REST_APP_INSTALL_REQUEST_ACCEPT"), 'VALUE' => 'Y', 'TYPE' => 'accept', 'APP_URL' => "/marketplace/detail/".$_POST["appCode"]."/", 'APP_NAME' => $_POST["appName"]),
 						array('TITLE' => GetMessage("REST_APP_INSTALL_REQUEST_CANCEL"), 'VALUE' => 'N', 'TYPE' => 'cancel'),
 					),
+					"PARAMS" => [
+						'COMPONENT_ID' => 'DefaultEntity',
+						'COMPONENT_PARAMS' => [
+							'SUBJECT' => Loc::getMessage('REST_APP_INSTALL_REQUEST_NOTIFY_SUBJECT', ['#APP_NAME#' => $_POST['appName']]),
+							'PLAIN_TEXT' => Loc::getMessage('REST_APP_INSTALL_REQUEST_NOTIFY_PLAIN_TEXT'),
+						],
+					],
 				);
 				\CIMNotify::Add($arMessageFields);
 			}

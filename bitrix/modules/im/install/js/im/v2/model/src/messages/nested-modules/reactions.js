@@ -11,8 +11,6 @@ type ReactionPayload = {
 	reaction: string
 };
 
-type SetReactionPayload = ReactionPayload & { withReplace?: boolean };
-
 type RawReactions = {
 	messageId: number,
 	reactionCounters: ReactionCounters,
@@ -68,7 +66,7 @@ export class ReactionsModel extends BuilderModel
 				store.commit('set', this.prepareSetPayload(payload));
 			},
 			/** @function messages/reactions/setReaction */
-			setReaction: (store: Store, payload: ReactionPayload & { withReplace: boolean }) => {
+			setReaction: (store: Store, payload: ReactionPayload) => {
 				store.commit('setReaction', payload);
 			},
 			/** @function messages/reactions/removeReaction */
@@ -113,7 +111,7 @@ export class ReactionsModel extends BuilderModel
 					};
 				});
 			},
-			setReaction: (state: ReactionsState, payload: SetReactionPayload) => {
+			setReaction: (state: ReactionsState, payload: ReactionPayload) => {
 				const { messageId, userId, reaction } = payload;
 				if (!state.collection[messageId])
 				{
@@ -124,7 +122,7 @@ export class ReactionsModel extends BuilderModel
 
 				if (Core.getUserId() === userId)
 				{
-					this.handleOwnReactions(reactions, payload);
+					reactions.ownReactions.add(reaction);
 				}
 
 				if (!reactions.reactionCounters[reaction])
@@ -163,18 +161,7 @@ export class ReactionsModel extends BuilderModel
 		};
 	}
 
-	handleOwnReactions(reactions: ImModelReactions, payload: SetReactionPayload)
-	{
-		const { reaction, withReplace = true } = payload;
-		if (withReplace)
-		{
-			this.removeAllCurrentUserReactions(reactions);
-		}
-
-		reactions.ownReactions.add(reaction);
-	}
-
-	addUserToReaction(reactions: ImModelReactions, payload: SetReactionPayload)
+	addUserToReaction(reactions: ImModelReactions, payload: ReactionPayload)
 	{
 		const { userId, reaction } = payload;
 
@@ -184,20 +171,6 @@ export class ReactionsModel extends BuilderModel
 		}
 
 		reactions.reactionUsers[reaction].add(userId);
-	}
-
-	removeAllCurrentUserReactions(reactions: ImModelReactions)
-	{
-		reactions.ownReactions.forEach((reaction) => {
-			reactions.reactionUsers[reaction]?.delete(Core.getUserId());
-			reactions.reactionCounters[reaction]--;
-			if (reactions.reactionCounters[reaction] === 0)
-			{
-				delete reactions.reactionCounters[reaction];
-			}
-		});
-
-		reactions.ownReactions = new Set();
 	}
 
 	prepareSetPayload(payload: RawReactionsList): RawReactionsList

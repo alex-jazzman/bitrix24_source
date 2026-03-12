@@ -1,3 +1,0 @@
-<?php
-$MESS["MOBILE_TOAST_REMOVE_CANCEL"] = "Скасувати";
-$MESS["MOBILE_TOAST_REMOVE_DEFAULT_MESSAGE"] = "Видалити?";

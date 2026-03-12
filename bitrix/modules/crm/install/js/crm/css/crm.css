@@ -565,6 +565,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 }
 
 .crm-list-top-bar {
+	background:#fff;
 	border-radius: var(--ui-border-radius-md);
 	padding: 10px 12px 9px 12px;
 	margin-bottom: var(--ui-space-stack-2xs, 8px);

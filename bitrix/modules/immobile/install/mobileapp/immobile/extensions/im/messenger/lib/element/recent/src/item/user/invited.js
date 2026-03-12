@@ -36,6 +36,7 @@ jn.define('im/messenger/lib/element/recent/item/user/invited', (require, exports
 		createSubtitleStyle()
 		{
 			this.styles.subtitle = {
+				showBBCode: true,
 				font: {
 					size: '14',
 					color: Theme.colors.accentSoftElementBlue,

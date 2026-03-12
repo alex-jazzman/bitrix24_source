@@ -7,6 +7,7 @@ import 'ui.icon-set.outline';
 import { Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
+import { SettingsLabel } from 'tasks.v2.component.elements.settings-label';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import type { TaskModel, TimerModel } from 'tasks.v2.model.tasks';
 import { showLimit } from 'tasks.v2.lib.show-limit';
@@ -24,6 +25,7 @@ export const TimeTracking = {
 	components: {
 		BIcon,
 		HoverPill,
+		SettingsLabel,
 		TextMd,
 		TaskTrackingPopup,
 		TimeTrackingSheet,
@@ -56,6 +58,7 @@ export const TimeTracking = {
 	{
 		return {
 			isPopupShown: false,
+			isFieldHovered: false,
 			localTimeSpent: 0,
 		};
 	},
@@ -86,6 +89,10 @@ export const TimeTracking = {
 		},
 		isLocked(): boolean
 		{
+			return !Core.getParams().restrictions.timeElapsed.available;
+		},
+		isTimeTrackingLocked(): boolean
+		{
 			return !Core.getParams().restrictions.timeTracking.available;
 		},
 	},
@@ -94,7 +101,7 @@ export const TimeTracking = {
 		{
 			if (this.isLocked)
 			{
-				this.showLimit();
+				void showLimit({ featureId: Core.getParams().restrictions.timeElapsed.featureId });
 
 				return;
 			}
@@ -122,32 +129,29 @@ export const TimeTracking = {
 		{
 			void fieldHighlighter.setContainer(this.$root.$el).highlight(timeTrackingMeta.id);
 		},
-		popupShown(): void
+		handleSettingsClick(): void
 		{
-			if (this.isLocked)
+			if (this.isTimeTrackingLocked)
 			{
-				this.showLimit();
+				void showLimit({ featureId: Core.getParams().restrictions.timeTracking.featureId });
 
 				return;
 			}
 
 			this.isPopupShown = true;
 		},
-		showLimit(): void
-		{
-			void showLimit({
-				featureId: Core.getParams().restrictions.timeTracking.featureId,
-			});
-		},
 	},
 	template: `
-		<div class="tasks-task-time-tracking" :data-task-field-id="timeTrackingMeta.id">
+		<div 
+			class="tasks-task-time-tracking" 
+			:data-task-field-id="timeTrackingMeta.id"
+			@mouseover="isFieldHovered = true"
+			@mouseleave="isFieldHovered = false"
+		>
 			<HoverPill
-				ref="timer"
-				:withSettings="task.rights.edit"
 				:readonly
 				@click="handleClick"
-				@settings="popupShown"
+				ref="timer"
 			>
 				<BIcon class="tasks-task-time-tracking-icon" :name="Outline.TIMER"/>
 				<TimeTrackingTimer
@@ -157,10 +161,21 @@ export const TimeTracking = {
 					@update="handleTimerUpdate"
 				/>
 			</HoverPill>
+			<div 
+				v-if="task.rights.edit && !isTimeTrackingLocked" 
+				class="tasks-task-time-tracking-settings"
+				ref="settings"
+			>
+				<SettingsLabel
+					v-if="isFieldHovered || isPopupShown"
+					data-time-tracking-settings
+					@click="handleSettingsClick"
+				/>
+			</div>
 		</div>
 		<TaskTrackingPopup
 			v-if="isPopupShown"
-			:bindElement="$refs.timer.$el"
+			:bindElement="$refs.settings"
 			:timeSpent
 			@close="handleClosePopup"
 		/>

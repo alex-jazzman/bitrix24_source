@@ -101,12 +101,7 @@ export function useActions({ state, getters, hooks }): UseActions
 	const addConnection = (newConnection: DiagramAddConnection): void => {
 		if (!isExistConnection(newConnection))
 		{
-			hooks.changedConnections.trigger(
-				commandToArray.commandPush({
-					id: Text.getRandom(),
-					...newConnection,
-				}),
-			);
+			hooks.changedConnections.trigger(commandToArray.commandPush(newConnection));
 			hooks.createConnection.trigger(newConnection);
 		}
 	};
@@ -226,9 +221,7 @@ export function useActions({ state, getters, hooks }): UseActions
 		let nearestDistance: number = Infinity;
 
 		state.blocks.forEach((block): void => {
-			const allPorts: Array = [...block.ports.input, ...block.ports.output];
-
-			allPorts.forEach((port): void => {
+			block.ports.forEach((port): void => {
 				const { x, y } = getPortAbsolutePosition(block, port);
 				const dx: number = clientX - x;
 				const dy: number = clientY - y;
@@ -261,9 +254,7 @@ export function useActions({ state, getters, hooks }): UseActions
 		state.movingBlock = toRaw({ ...block });
 		const movingConnections = [];
 
-		const allPorts = [...block.ports.input, ...block.ports.output];
-
-		allPorts.forEach((port) => {
+		block.ports.forEach((port) => {
 			const connections = state.connections.filter((connection) => {
 				const {
 					targetBlockId,
@@ -341,6 +332,14 @@ export function useActions({ state, getters, hooks }): UseActions
 		state.portsRectMap[blockId][portId].height = height;
 	};
 
+	const setSelectionActive = (value: boolean): void => {
+		state.isSelectionActive = value;
+	};
+
+	const setSelectionWorldRect = (rect: Rect | null): void => {
+		state.selectionWorldRect = rect;
+	};
+
 	return {
 		setState,
 		updateCanvasTransform,
@@ -360,5 +359,7 @@ export function useActions({ state, getters, hooks }): UseActions
 		setHistoryHandlers,
 		setPortOffsetByBlockId,
 		updatePortPosition,
+		setSelectionActive,
+		setSelectionWorldRect,
 	};
 }

@@ -851,7 +851,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    textEditor: ui_textEditor.TextEditor
 	  },
 	  data() {
-	    var _segment$id, _segment$isEnabled, _settings$ai, _settings$ai2, _settings$baas, _segment$entityCatego, _segment$entityStageI, _segment$assignmentUs, _segment$entityTitleP, _segment$callAssessme;
+	    var _segment$id, _segment$isEnabled, _settings$ai, _settings$baas, _segment$entityCatego, _segment$entityStageI, _segment$assignmentUs, _segment$entityTitleP, _segment$callAssessme;
 	    const {
 	      segment,
 	      textEditor,
@@ -862,7 +862,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    const isEnabled = (_segment$isEnabled = segment == null ? void 0 : segment.isEnabled) != null ? _segment$isEnabled : null;
 	    const firstCategory = categories[0];
 	    let isAiEnabled = false;
-	    if ((_settings$ai = settings.ai) != null && _settings$ai.isAvailable && ((_settings$ai2 = settings.ai) != null && _settings$ai2.isSponsored || (_settings$baas = settings.baas) != null && _settings$baas.hasPackage)) {
+	    if ((_settings$ai = settings.ai) != null && _settings$ai.isAvailable && (_settings$baas = settings.baas) != null && _settings$baas.hasPackage) {
 	      var _segment$isAiEnabled;
 	      isAiEnabled = (_segment$isAiEnabled = segment.isAiEnabled) != null ? _segment$isAiEnabled : true;
 	    }
@@ -1059,17 +1059,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    readOnly() {
 	      return this.settings.isReadOnly;
 	    },
-	    isSponsored() {
-	      var _this$settings$ai$isS, _this$settings$ai;
-	      return (_this$settings$ai$isS = (_this$settings$ai = this.settings.ai) == null ? void 0 : _this$settings$ai.isSponsored) != null ? _this$settings$ai$isS : false;
-	    },
 	    isAiAvailable() {
-	      var _this$settings$ai$isA, _this$settings$ai2;
-	      return (_this$settings$ai$isA = (_this$settings$ai2 = this.settings.ai) == null ? void 0 : _this$settings$ai2.isAvailable) != null ? _this$settings$ai$isA : false;
+	      var _this$settings$ai$isA, _this$settings$ai;
+	      return (_this$settings$ai$isA = (_this$settings$ai = this.settings.ai) == null ? void 0 : _this$settings$ai.isAvailable) != null ? _this$settings$ai$isA : false;
 	    },
 	    aiDisabledSliderCode() {
-	      var _this$settings$ai$aiD, _this$settings$ai3;
-	      return (_this$settings$ai$aiD = (_this$settings$ai3 = this.settings.ai) == null ? void 0 : _this$settings$ai3.aiDisabledSliderCode) != null ? _this$settings$ai$aiD : null;
+	      var _this$settings$ai$aiD, _this$settings$ai2;
+	      return (_this$settings$ai$aiD = (_this$settings$ai2 = this.settings.ai) == null ? void 0 : _this$settings$ai2.aiDisabledSliderCode) != null ? _this$settings$ai$aiD : null;
 	    },
 	    isBaasAvailable() {
 	      var _this$settings$baas$i, _this$settings$baas;
@@ -1112,7 +1108,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  watch: {
 	    currentIsAiEnabled(value) {
-	      if (this.isAiAvailable && (this.isSponsored || this.isBaasHasPackage)) {
+	      if (this.isAiAvailable && this.isBaasHasPackage) {
 	        this.currentIsAiEnabled = value;
 	        return;
 	      }
@@ -1154,7 +1150,7 @@ this.BX.Crm = this.BX.Crm || {};
 					<section class="crm-repeat-sale__segment-section --active">
 						<div
 							class="crm-repeat-sale__segment-fields-row"
-							v-if="isBaasAvailable || isSponsored"
+							v-if="isBaasAvailable"
 						>
 							<div class="crm-repeat-sale__segment-field">
 								<AiSwitcherComponent

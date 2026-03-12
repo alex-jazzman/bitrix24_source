@@ -1,4 +1,0 @@
-<?php
-$MESS["SHIPMENT_REALIZATION_ENTITY_ID_FIELD"] = "Идентификатор";
-$MESS["SHIPMENT_REALIZATION_ENTITY_IS_REALIZATION_FIELD"] = "Іске асыру бглыпх табалоды";
-$MESS["SHIPMENT_REALIZATION_ENTITY_SHIPMENT_ID_FIELD"] = "Жөнелту идентификаторы";

@@ -1,2 +1,0 @@
-<?php
-$MESS["IMMOBILE_RECENT_RENDER_ITEM_LOADING"] = "Жүктеу...";

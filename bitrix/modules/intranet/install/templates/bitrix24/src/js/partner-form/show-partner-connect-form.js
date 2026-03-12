@@ -6,7 +6,9 @@ export type ShowPartnerFormParams = {
 	partnerName: string;
 	partnerUrl: string;
 	forms: PartnerForm[] | null;
-	messages: { [string]: string }
+	messages: { [string]: string };
+	partnerLogo?: string;
+	publicDomain: string;
 };
 
 export async function showPartnerConnectForm(params: ShowPartnerFormParams)
@@ -26,15 +28,21 @@ type ShowPartnerFormPopupOptions = {
 	partnerId: string;
 	partnerName: string;
 	partnerUrl: string;
+	partnerLogo?: string;
 	arParams: Object;
+	publicDomain: string;
 }
 async function showPartnerFormPopup(options: ShowPartnerFormPopupOptions): Popup
 {
 	const titleBar = options.titleBar;
 	const sendButtonText = options.sendButtonText;
 	const partnerName = options.partnerName;
-	const partnerUrl = options.partnerUrl;
+	const partnerLogo = options.partnerLogo;
+	const partnerCardUrl = `${options.publicDomain}partners/partner/${options.partnerId}/`;
 
+	const hasCustomLogo = partnerLogo && partnerLogo !== '';
+	const logoClass = hasCustomLogo ? 'bitrix24-partner__popup-content_name--custom-logo' : '';
+	const logoStyle = hasCustomLogo ? `style="background-image: url('${encodeURI(partnerLogo)}')"` : '';
 	const [{ Popup }, { Button, ButtonColor }] = await Promise.all([
 		Runtime.loadExtension('main.popup'),
 		Runtime.loadExtension('ui.buttons'),
@@ -58,8 +66,8 @@ async function showPartnerFormPopup(options: ShowPartnerFormPopupOptions): Popup
 			<div class="bitrix24-partner__popup-content">
 				<div class="bitrix24-partner__popup-content_title">${Loc.getMessage('PARTNER_TITLE_FOR_NAME')}</div>
 				<div class="bitrix24-partner__popup-content_main">
-					<div class="bitrix24-partner__popup-content_name">${partnerName}</div>
-					<a class="bitrix24-partner__popup-content_link" href="${encodeURI(partnerUrl)}" target="_blank">${Loc.getMessage('PARTNER_LINK_NAME_MORE')}</a>
+					<div class="bitrix24-partner__popup-content_name ${logoClass}" ${logoStyle}>${partnerName}</div>
+					<a class="bitrix24-partner__popup-content_link" href="${encodeURI(partnerCardUrl)}" target="_blank">${Loc.getMessage('PARTNER_LINK_NAME_MORE')}</a>
 				</div>
 				<div class="bitrix24-partner__popup-content_desc">${Loc.getMessage('PARTNER_POPUP_DESCRIPTION_BOTTOM')}</div>
 			</div>

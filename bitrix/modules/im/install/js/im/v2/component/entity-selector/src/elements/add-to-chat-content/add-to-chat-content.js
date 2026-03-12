@@ -2,7 +2,7 @@ import { TagSelector } from 'ui.entity-selector';
 
 import { Analytics } from 'im.v2.lib.analytics';
 import { ChatType, EventType, UserType } from 'im.v2.const';
-import { AddToChat } from 'im.v2.component.search';
+import { AddToChatSearch } from 'im.v2.component.search';
 import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
 import { ChannelManager } from 'im.v2.lib.channel';
 
@@ -18,7 +18,7 @@ const DEFAULT_CONTAINER_HEIGHT = 600;
 // @vue/component
 export const AddToChatContent = {
 	name: 'AddToChatContent',
-	components: { AddToChat, ChatButton },
+	components: { AddToChatSearch, ChatButton },
 	props: {
 		dialogId: {
 			type: String,
@@ -220,7 +220,7 @@ export const AddToChatContent = {
 				</label>
 			</div>
 			<div class="bx-im-entity-selector-add-to-chat__search-result-container">
-				<AddToChat
+				<AddToChatSearch
 					:query="searchQuery"
 					:dialogId="dialogId"
 					:selectedItems="[...selectedItems]"

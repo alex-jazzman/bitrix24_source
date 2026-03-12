@@ -35,6 +35,13 @@ export function getSelectedVariables(
 	return selectedVariables;
 }
 
+export function isUseGroupHeadValuesInHintByVariables(
+	selectedVariables: VariableCollection,
+): boolean
+{
+	return [...selectedVariables].some(([, value]) => value.isUseGroupHeadValuesInHint === true);
+}
+
 export function getMultipleSelectedVariablesTitle(selectedVariables: VariableCollection): string
 {
 	const lastVariable: Variable = [...selectedVariables.values()].pop();
@@ -69,9 +76,10 @@ export function getMultipleSelectedVariablesHintHtml(
 	selectedVariables: VariableCollection,
 	hintTitle: string,
 	allVariables: VariableCollection,
+	isInherit: boolean = false,
 ): string
 {
-	if (selectedVariables.size < 2)
+	if (!isInherit && selectedVariables.size < 2)
 	{
 		return '';
 	}

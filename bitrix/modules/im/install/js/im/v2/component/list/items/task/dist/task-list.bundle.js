@@ -39,7 +39,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	class TaskRecentMenu extends im_v2_lib_menu.RecentMenu {
 	  getMenuItems() {
-	    return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getHideItem()];
+	    return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getMuteItem(), this.getHideItem()];
 	  }
 	}
 

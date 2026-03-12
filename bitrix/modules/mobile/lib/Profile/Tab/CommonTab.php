@@ -11,6 +11,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Profile\Enum\TabContextType;
 use Bitrix\Mobile\Profile\Enum\TabType;
 use Bitrix\Mobile\Profile\Enum\UserStatus;
+use Bitrix\Mobile\Profile\Provider\AboutMeProvider;
 use Bitrix\Mobile\Profile\Provider\GratitudeProvider;
 use Bitrix\Mobile\Profile\Provider\ProfileProvider;
 use Bitrix\Mobile\Profile\Provider\TagProvider;
@@ -82,7 +83,8 @@ class CommonTab extends BaseProfileTab
 		}
 
 		$owner = $userOwner[0];
-		$statusData = $this->getOwnerStatusData($owner);
+		$commonFields = $this->getCommonFields();
+		$statusData = $this->getOwnerStatusData($owner, $commonFields);
 		$tagsData = $this->getTagsData();
 		$users = [$owner, ...UserRepository::getByIds($tagsData['userIds'])];
 
@@ -94,8 +96,10 @@ class CommonTab extends BaseProfileTab
 			'tags' => $tagsData['tags'],
 			'departments' => $this->getDepartmentData(),
 			'efficiency' => $this->getEfficiencyData(),
-			'commonFields' => $this->getCommonFields(),
+			'commonFields' => $commonFields,
 			'currentTheme' => (new ThemeProvider($this->ownerId))->getCurrentTheme(),
+			'inviteSettings' => (new InviteProvider())->getInviteSettings(),
+			'aboutMe' => $this->getAboutMeData(),
 		];
 	}
 
@@ -105,6 +109,7 @@ class CommonTab extends BaseProfileTab
 		$sectionCollection = UserProfileProvider::createByDefault()
 			->getByUserId($this->ownerId)
 			->fieldSectionCollection;
+		$canUseTelephony = $this->getCanUseTelephony();
 
 		foreach ($sectionCollection as $section)
 		{
@@ -119,6 +124,10 @@ class CommonTab extends BaseProfileTab
 			foreach ($section->userFieldCollection as $userField)
 			{
 				$field = $userField->toArray();
+				if ($field['type'] === 'phone')
+				{
+					$field['canUseTelephony'] = $canUseTelephony;
+				}
 				$sectionData['fields'][] = $field;
 			}
 
@@ -130,19 +139,47 @@ class CommonTab extends BaseProfileTab
 
 	/**
 	 * @param \Bitrix\Mobile\Provider\CommonUserDto $owner
+	 * @param array $commonFields
 	 * @return array
 	 */
-	private function getOwnerStatusData(CommonUserDto $owner): array
+	private function getOwnerStatusData(CommonUserDto $owner, array $commonFields): array
 	{
 		$result = [
 			'onVacationDateTo' => '',
 			'lastSeenText' => '',
+			'inviteStatus' => $this->getOwnerInviteStatus(),
+			'isBirthday' => false,
 		];
 
-		$isFired = $this->isOwnerFired();
+		foreach ($commonFields as $section)
+		{
+			if (!isset($section['fields']) || !is_array($section['fields']))
+			{
+				continue;
+			}
+
+			foreach ($section['fields'] as $field)
+			{
+				if (($field['id'] ?? null) === 'PERSONAL_BIRTHDAY')
+				{
+					$result['isBirthday'] = \CIntranetUtils::IsToday($field['value'] ?? null);
+					break 2;
+				}
+			}
+		}
+
+		$isFired = $result['inviteStatus'] === InvitationStatus::FIRED;
 		if ($isFired)
 		{
 			$result['status'] = UserStatus::FIRED;
+
+			return $result;
+		}
+
+		$isInvited = $result['inviteStatus'] === InvitationStatus::INVITED;
+		if ($isInvited)
+		{
+			$result['status'] = UserStatus::INVITED;
 
 			return $result;
 		}
@@ -259,6 +296,18 @@ class CommonTab extends BaseProfileTab
 		return $intranetUser->getInviteStatus() === InvitationStatus::FIRED;
 	}
 
+	private function getOwnerInviteStatus(): ?InvitationStatus
+	{
+		$this->userRepository = ServiceContainer::getInstance()->userRepository();
+		$intranetUser = $this->userRepository->findUsersByIds([$this->ownerId])->first();
+		if (empty($intranetUser))
+		{
+			return null;
+		}
+
+		return $intranetUser->getInviteStatus();
+	}
+
 	/**
 	 * @return array
 	 * @throws LoaderException
@@ -273,8 +322,6 @@ class CommonTab extends BaseProfileTab
 
 	private function getTagsData(): array
 	{
-		$tagProvider = new TagProvider();
-
 		return (new TagProvider())->getTagsList($this->ownerId);
 	}
 
@@ -309,11 +356,20 @@ class CommonTab extends BaseProfileTab
 		];
 	}
 
+	private function getCanUseTelephony(): bool
+	{
+		if (!Loader::includeModule('voximplant'))
+		{
+			return false;
+		}
+
+		return \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls();
+	}
+
 	private function getDepartmentData(): array
 	{
 		$result = [
 			'departmentHierarchies' => [],
-			'canInviteUsers' => false,
 			'canUseTelephony' => false,
 		];
 		if (!Loader::includeModule('intranetmobile'))
@@ -322,11 +378,13 @@ class CommonTab extends BaseProfileTab
 		}
 		$result['departmentHierarchies'] = (new DepartmentProvider())->getUserDepartments($this->ownerId);
 		$result['canInviteUsers'] = (new InviteProvider())->getInviteSettings()['canCurrentUserInvite'];
-		$result['canUseTelephony'] = (
-			Loader::includeModule('voximplant')
-			&& \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls()
-		);
+		$result['canUseTelephony'] = $this->getCanUseTelephony();
 
 		return $result;
+	}
+
+	private function getAboutMeData(): array
+	{
+		return (new AboutMeProvider($this->ownerId))->getData();
 	}
 }

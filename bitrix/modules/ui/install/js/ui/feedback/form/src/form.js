@@ -85,8 +85,9 @@ export class Form
 
 	init(options): void
 	{
-		this.cached = false;
+		this.showTitle = Type.isBoolean(options.showTitle) ? options.showTitle : true;
 
+		this.cached = false;
 		if (options.map !== undefined)
 		{
 			this.map = options.map;
@@ -99,7 +100,6 @@ export class Form
 		this.presets = options.presets || {};
 		this.form = options.form || {};
 		this.title = options.title || '';
-		this.showTitle = Type.isBoolean(options.showTitle) ? options.showTitle : true;
 
 		if (options.button)
 		{

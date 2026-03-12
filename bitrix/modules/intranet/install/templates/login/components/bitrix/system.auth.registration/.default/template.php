@@ -264,10 +264,10 @@ $isConfirmRegistrationBlockVisible = (
 			isEmailRequired: '<?=$arResult['EMAIL_REQUIRED'] ? 'Y' : 'N'?>',
 			isConfirmRegistrationBlockVisible: '<?=$isConfirmRegistrationBlockVisible ? 'Y' : 'N'?>',
 			isCaptchaAvailable: '<?=($arResult['USE_CAPTCHA'] === 'Y' ? 'Y' : 'N')?>',
-			userName: '<?=($arResult['USER_NAME'] ?: '')?>',
-			userLastName: '<?=($arResult['USER_LAST_NAME'] ?: '')?>',
-			userLogin: '<?=($arResult['USER_LOGIN'] ?: '')?>',
-			userEmail: '<?=($arResult['USER_EMAIL'] ?: '')?>',
+			userName: '<?=(CUtil::JSEscape($arResult['USER_NAME']) ?: '')?>',
+			userLastName: '<?=(CUtil::JSEscape($arResult['USER_LAST_NAME']) ?: '')?>',
+			userLogin: '<?=(CUtil::JSEscape($arResult['USER_LOGIN']) ?: '')?>',
+			userEmail: '<?=(CUtil::JSEscape($arResult['USER_EMAIL']) ?: '')?>',
 		};
 		new BX.Intranet.SystemAuthRegistration(params);
 	});

@@ -30,7 +30,7 @@ export class Dod extends EventEmitter
 		this.groupId = parseInt(params.groupId, 10);
 		this.taskId = parseInt(params.taskId, 10);
 
-		/* eslint-disable */
+		// eslint-disable-next-line unicorn/no-abusive-eslint-disable
 		this.sidePanelManager = BX.SidePanel.Instance;
 		/* eslint-enable */
 
@@ -39,23 +39,21 @@ export class Dod extends EventEmitter
 		this.settings = new Settings({
 			requestSender: this.requestSender,
 			groupId: this.groupId,
-			taskId: this.taskId
+			taskId: this.taskId,
 		});
 
 		this.list = new List({
 			requestSender: this.requestSender,
 			groupId: this.groupId,
 			taskId: this.taskId,
-			skipNotifications: params.skipNotifications
+			skipNotifications: params.skipNotifications,
 		});
 
 		this.list.subscribe('resolve', () => {
 			this.emit('resolve');
-			this.sidePanelManager.close(false);
 		});
 		this.list.subscribe('reject', () => {
 			this.emit('reject');
-			this.sidePanelManager.close(false);
 		});
 		this.list.subscribe('showSettings', (baseEvent: BaseEvent) => {
 			const close: boolean = baseEvent.getData();
@@ -74,7 +72,7 @@ export class Dod extends EventEmitter
 	{
 		return this.requestSender.isNecessary({
 			groupId: this.groupId,
-			taskId: this.taskId
+			taskId: this.taskId,
 		})
 			.then((response) => {
 				return response.data;
@@ -87,7 +85,8 @@ export class Dod extends EventEmitter
 
 	show()
 	{
-		switch(this.view)
+		// eslint-disable-next-line default-case
+		switch (this.view)
 		{
 			case 'settings':
 				this.showSettings();

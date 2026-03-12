@@ -1,6 +1,6 @@
 import { Type } from 'main.core';
 
-type BBCodeTokenType =
+export type BBCodeTokenType =
 	| 'OPEN_TAG'
 	| 'CLOSE_TAG'
 	| 'TEXT'
@@ -11,7 +11,7 @@ type BaseBBCodeToken = {
 	type: BBCodeTokenType,
 };
 
-type BBCodeOpenTagToken = BaseBBCodeToken & {
+export type BBCodeOpenTagToken = BaseBBCodeToken & {
 	type: 'OPEN_TAG',
 	name: string,
 	value: ?string,
@@ -21,20 +21,20 @@ type BBCodeOpenTagToken = BaseBBCodeToken & {
 	unclosed: boolean,
 };
 
-type BBCodeCloseTagToken = BaseBBCodeToken & {
+export type BBCodeCloseTagToken = BaseBBCodeToken & {
 	type: 'CLOSE_TAG',
 };
 
-type BBCodeTextToken = BaseBBCodeToken & {
+export type BBCodeTextToken = BaseBBCodeToken & {
 	type: 'TEXT',
 	content: string,
 };
 
-type BBCodeLinebreakToken = BaseBBCodeToken & {
+export type BBCodeLinebreakToken = BaseBBCodeToken & {
 	type: 'LINEBREAK',
 };
 
-type BBCodeTabToken = BaseBBCodeToken & {
+export type BBCodeTabToken = BaseBBCodeToken & {
 	type: 'TAB',
 };
 
@@ -85,7 +85,6 @@ export class BBCodeTokenizer
 	tokenize(bbcode: string): Array<BBCodeToken>
 	{
 		const tokens: Array<BBCodeToken> = [];
-		const listNestingLevels: Array<boolean> = [];
 
 		let lastIndex = 0;
 		bbcode.replace(TAG_REGEX_GS, (fullTag: string, slash: ?string, tagName: string, attrs: ?string, index: number) => {
@@ -100,62 +99,7 @@ export class BBCodeTokenizer
 			const attributes = this.parseAttributes(attrs);
 			const lowerCaseTagName: string = BBCodeTokenizer.toLowerCase(tagName);
 
-			if (lowerCaseTagName === 'list' && isOpeningTag)
-			{
-				listNestingLevels.push(false);
-
-				tokens.push({
-					type: 'OPEN_TAG',
-					name: lowerCaseTagName,
-					value: attributes.value,
-					attributes: Object.fromEntries(attributes.attributes),
-				});
-			}
-			else if (lowerCaseTagName === 'list' && !isOpeningTag)
-			{
-				if (listNestingLevels.length > 0)
-				{
-					if (listNestingLevels[listNestingLevels.length - 1])
-					{
-						tokens.push({
-							type: 'CLOSE_TAG',
-							name: '*',
-						});
-
-						listNestingLevels[listNestingLevels.length - 1] = false;
-					}
-
-					listNestingLevels.pop();
-				}
-
-				tokens.push({
-					type: 'CLOSE_TAG',
-					name: lowerCaseTagName,
-				});
-			}
-			else if (lowerCaseTagName === '*' && isOpeningTag)
-			{
-				if (listNestingLevels.length > 0)
-				{
-					if (listNestingLevels[listNestingLevels.length - 1])
-					{
-						tokens.push({
-							type: 'CLOSE_TAG',
-							name: '*',
-						});
-					}
-
-					listNestingLevels[listNestingLevels.length - 1] = true;
-				}
-
-				tokens.push({
-					type: 'OPEN_TAG',
-					name: lowerCaseTagName,
-					value: attributes.value,
-					attributes: Object.fromEntries(attributes.attributes),
-				});
-			}
-			else if (isOpeningTag)
+			if (isOpeningTag)
 			{
 				const nextContent: string = bbcode.slice(startIndex);
 				const unclosed: boolean = !nextContent.includes(`[/${tagName}]`);
@@ -183,19 +127,6 @@ export class BBCodeTokenizer
 		{
 			const remainingText = bbcode.slice(lastIndex);
 			tokens.push(...this.parseText(remainingText));
-		}
-
-		for (let i = listNestingLevels.length - 1; i >= 0; i--)
-		{
-			if (listNestingLevels[i])
-			{
-				tokens.push({
-					type: 'CLOSE_TAG',
-					name: '*',
-				});
-
-				listNestingLevels[i] = false;
-			}
 		}
 
 		return tokens;

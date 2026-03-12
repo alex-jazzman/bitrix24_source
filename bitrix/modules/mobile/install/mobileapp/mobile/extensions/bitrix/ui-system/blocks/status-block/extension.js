@@ -7,6 +7,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 	const { mergeImmutable } = require('utils/object');
 	const { Color, Indent, Component } = require('tokens');
 	const { BBCodeText } = require('ui-system/typography/bbcodetext');
+	const { Feature } = require('feature');
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { PropTypes } = require('utils/validation');
 	const { Align } = require('utils/enums/style');
@@ -31,6 +32,19 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 	 */
 	class StatusBlock extends LayoutComponent
 	{
+		get containerStyle()
+		{
+			const { style = {} } = this.props;
+
+			return mergeImmutable(
+				{
+					width: '100%',
+					height: '100%',
+				},
+				style,
+			);
+		}
+
 		render()
 		{
 			const { emptyScreen } = this.props;
@@ -42,34 +56,67 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 
 		renderEmptyScreen()
 		{
-			const { style = {}, forwardRef, preventRefresh } = this.props;
+			const { forwardRef } = this.props;
+
+			if (Feature.isRefreshViewFixEnabled())
+			{
+				return View(
+					{
+						ref: forwardRef,
+						style: this.containerStyle,
+						safeArea: { bottom: true },
+					},
+					this.renderRefreshView(
+						View({
+							style: {
+								flex: 1,
+							},
+						}),
+					),
+					View(
+						{
+							style: {
+								position: 'absolute',
+								top: 0,
+								left: 0,
+								right: 0,
+								bottom: 0,
+								flexDirection: 'column',
+								justifyContent: 'center',
+								alignItems: 'center',
+							},
+							clickable: false,
+						},
+						this.renderStatusContent(),
+					),
+				);
+			}
 
 			return View(
 				{
 					ref: forwardRef,
-					style: mergeImmutable(
-						{
-							width: '100%',
-							height: '100%',
-						},
-						style,
-					),
-					safeArea: {
-						bottom: true,
-					},
+					style: this.containerStyle,
+					safeArea: { bottom: true },
 				},
-				RefreshView(
-					{
-						style: {
-							flexDirection: 'column',
-							flexGrow: 1,
-						},
-						refreshing: false,
-						enabled: preventRefresh ? false : this.isRefreshable,
-						onRefresh: this.handleOnRefresh,
+				this.renderRefreshView(this.renderStatusContent()),
+			);
+		}
+
+		renderRefreshView(content)
+		{
+			const { preventRefresh } = this.props;
+
+			return RefreshView(
+				{
+					style: {
+						flexDirection: 'column',
+						flexGrow: 1,
 					},
-					this.renderStatusContent(),
-				),
+					refreshing: false,
+					enabled: preventRefresh ? false : this.isRefreshable,
+					onRefresh: this.handleOnRefresh,
+				},
+				content,
 			);
 		}
 
@@ -81,6 +128,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 				{
 					ref: forwardRef,
 					testId,
+					clickable: false,
 					style: mergeImmutable(
 						{
 							flexGrow: 1,
@@ -105,7 +153,12 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 				return null;
 			}
 
-			return image;
+			return View(
+				{
+					clickable: false,
+				},
+				image,
+			);
 		}
 
 		renderTextBlock()
@@ -113,6 +166,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 			return View(
 				{
 					style: {
+						clickable: false,
 						alignItems: 'center',
 						paddingVertical: Indent.XL3.toNumber(),
 						paddingHorizontal: Component.paddingLrMore.toNumber(),

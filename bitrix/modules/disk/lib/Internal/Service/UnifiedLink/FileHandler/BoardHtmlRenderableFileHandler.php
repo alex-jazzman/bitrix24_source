@@ -6,6 +6,7 @@ namespace Bitrix\Disk\Internal\Service\UnifiedLink\FileHandler;
 
 use Bitrix\Disk\Controller\Integration\Flipchart;
 use Bitrix\Disk\Document\DocumentSource;
+use Bitrix\Disk\Document\Flipchart\BoardService;
 use Bitrix\Disk\Document\Flipchart\Configuration;
 use Bitrix\Disk\Document\Flipchart\SessionManager;
 use Bitrix\Disk\Document\Models\DocumentSession;
@@ -106,6 +107,9 @@ class BoardHtmlRenderableFileHandler implements HtmlRenderableFileHandler
 
 		$avatarUri = (new Uri($documentSession->getUser()->getAvatarSrc()))->toAbsolute();
 
+		$file = $documentSession->getFile();
+		$showTemplatesModal = isset($file) && BoardService::shouldShowTemplateModal($file);
+
 		$content = $GLOBALS['APPLICATION']->includeComponent(
 			'bitrix:ui.sidepanel.wrapper',
 			'',
@@ -119,10 +123,11 @@ class BoardHtmlRenderableFileHandler implements HtmlRenderableFileHandler
 					'USERNAME' => $documentSession->getUser()->getFormattedName(),
 					'AVATAR_URL' => $avatarUri,
 					'CAN_EDIT_BOARD' => true,
-					'SHOW_TEMPLATES_MODAL' => false,
+					'SHOW_TEMPLATES_MODAL' => $showTemplatesModal,
 					'EXTERNAL_LINK_MODE' => false,
 					'UNIFIED_LINK_ACCESS_ONLY' => !$documentSession->canUserRead(CurrentUser::get()),
 					'FILE_UNIQUE_CODE' => $documentSession->getFile()?->getUniqueCode(),
+					'ORIGINAL_FILE' => $this->file,
 				],
 				'PLAIN_VIEW' => true,
 				'IFRAME_MODE' => true,

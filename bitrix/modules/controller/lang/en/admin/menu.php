@@ -18,7 +18,5 @@ $MESS["CTRLR_MENU_SITE_TITLE"] = "Manage Client Sites";
 $MESS["CTRLR_MENU_TASK_NAME"] = "Tasks";
 $MESS["CTRLR_MENU_TASK_TITLE"] = "Tasks for remote execution at client sites";
 $MESS["CTRLR_MENU_TITLE"] = "Site Controller";
-$MESS["CTRLR_MENU_UPD_NAME"] = "Update Sites";
-$MESS["CTRLR_MENU_UPD_TYPE"] = "Update client sites";
 $MESS["CTRLR_MENU_UPLOAD_NAME"] = "Upload File";
 $MESS["CTRLR_MENU_UPLOAD_TITLE"] = "Send files to client sites";

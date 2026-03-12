@@ -13,6 +13,7 @@ use CBitrix24;
 
 class Bitrix24
 {
+	public const CIS_ZONES = ['ru', 'by', 'kz', 'uz'];
 	private const SHARD_ZONE = [
 		'ru' => 'ru',
 		'de' => 'de',
@@ -106,9 +107,12 @@ class Bitrix24
 	 */
 	public static function isWestZone(): bool
 	{
-		$zone = self::getPortalZone();
+		return !in_array(self::getPortalZone(), self::CIS_ZONES, true);
+	}
 
-		return $zone !== 'ru' && $zone !== 'by' && $zone !== 'kz' && $zone !== 'uz';
+	public static function isCisZone(): bool
+	{
+		return in_array(self::getPortalZone(), self::CIS_ZONES, true);
 	}
 
 	/**

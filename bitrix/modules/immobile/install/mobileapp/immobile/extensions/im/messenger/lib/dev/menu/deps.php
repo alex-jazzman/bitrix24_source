@@ -35,5 +35,6 @@ return [
 		'./src/vuex-manager',
 		'./src/playground',
 		'./src/dialog-snippets',
+		'./src/recent-snippets',
 	],
 ];

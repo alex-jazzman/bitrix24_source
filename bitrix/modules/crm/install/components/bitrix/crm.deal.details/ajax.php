@@ -767,7 +767,6 @@ elseif($action === 'SAVE')
 				$dealFields = array_merge($dealFields, $fields);
 				$isNew = true;
 			}
-			$result = Recurring\Manager::createEntity($dealFields,	$recurringFields, Recurring\Manager::DEAL);
 
 			if (is_array($productRows) && !empty($productRows))
 			{
@@ -775,7 +774,13 @@ elseif($action === 'SAVE')
 				{
 					unset($product['ID'], $product['OWNER_ID']);
 				}
+
+				unset($product);
+
+				$dealFields[\Bitrix\Crm\Item::FIELD_NAME_PRODUCTS] = $productRows;
 			}
+
+			$result = Recurring\Manager::createEntity($dealFields, $recurringFields, Recurring\Manager::DEAL);
 
 			if($isNew)
 			{
@@ -811,11 +816,6 @@ elseif($action === 'SAVE')
 		$requisiteInfo = null;
 		if (!empty($fields) && !isset($isRecurringSaving))
 		{
-			if(isset($fields['ASSIGNED_BY_ID']) && $fields['ASSIGNED_BY_ID'] > 0)
-			{
-				\Bitrix\Crm\Entity\EntityEditor::registerSelectedUser($fields['ASSIGNED_BY_ID']);
-			}
-
 			if($isCopyMode)
 			{
 				if(!isset($fields['ASSIGNED_BY_ID']))
@@ -902,6 +902,17 @@ elseif($action === 'SAVE')
 						$itemBeforeSave->setFromCompatibleData($fields);
 
 						$inventoryManagementChecker = new Crm\Reservation\Component\InventoryManagementChecker($itemBeforeSave);
+						if ($enableProductRows)
+						{
+							$productRowsCheckResult = $inventoryManagementChecker->checkProductRows($productRows, []);
+							if (!$productRowsCheckResult->isSuccess())
+							{
+								__CrmDealDetailsEndJsonResonse([
+									'ERROR' => current($productRowsCheckResult->getErrorMessages()),
+								]);
+							}
+						}
+
 						$inventoryManagementCheckResult = $inventoryManagementChecker->checkBeforeAdd($fields);
 						$fields = $inventoryManagementCheckResult->getData();
 					}
@@ -1001,6 +1012,20 @@ elseif($action === 'SAVE')
 						}
 
 						$inventoryManagementChecker = new Crm\Reservation\Component\InventoryManagementChecker($itemBeforeSave);
+						if ($enableProductRows)
+						{
+							$productRowsCheckResult = $inventoryManagementChecker->checkProductRows(
+								$productRows,
+								$originalProductRows
+							);
+							if (!$productRowsCheckResult->isSuccess())
+							{
+								__CrmDealDetailsEndJsonResonse([
+									'ERROR' => current($productRowsCheckResult->getErrorMessages()),
+								]);
+							}
+						}
+
 						$inventoryManagementCheckResult = $inventoryManagementChecker->checkBeforeUpdate($fields);
 						if (!$inventoryManagementCheckResult->isSuccess())
 						{

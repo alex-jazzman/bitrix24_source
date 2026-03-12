@@ -1,3 +1,0 @@
-<?php
-$MESS["DELIVERY_EXTRA_SERVICE_QUANTITY_PRICE"] = "Бір дана үшін бағасы";
-$MESS["DELIVERY_EXTRA_SERVICE_QUANTITY_TITLE"] = "Сандық қызмет";

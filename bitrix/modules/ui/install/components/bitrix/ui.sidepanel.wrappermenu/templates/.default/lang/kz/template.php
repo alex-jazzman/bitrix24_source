@@ -1,4 +1,0 @@
-<?php
-$MESS["UI_SIDEPANEL_MENU_ADD_ITEM"] = "парақшаны қосу";
-$MESS["UI_SIDEPANEL_MENU_BUTTON_CLOSE"] = "Орау";
-$MESS["UI_SIDEPANEL_MENU_BUTTON_OPEN"] = "Ашу";

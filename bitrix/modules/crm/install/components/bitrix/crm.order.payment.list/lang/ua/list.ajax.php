@@ -1,3 +1,0 @@
-<?
-$MESS["CRM_ORDER_PAYMENT_LIST_ROW_COUNT"] = "Всього: #ROW_COUNT#";
-?>

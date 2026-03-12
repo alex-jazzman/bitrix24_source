@@ -152,7 +152,7 @@ else:
 							<input type="checkbox" id="mp_tos_license" value="N">
 							<label for="mp_tos_license">
 								<?=Loc::getMessage(
-									'MARKET_INSTALL_TERMS_OF_SERVICE_TEXT',
+									'MARKET_INSTALL_TERMS_OF_SERVICE_TEXT_MSGVER_1',
 									[
 										'#LINK#' => $arResult['TERMS_OF_SERVICE_LINK']
 									]
@@ -190,7 +190,7 @@ else:
 	<script>
 		BX.message({
 			"MARKET_INSTALL_LICENSE_ERROR" : "<?= GetMessageJS("MARKET_INSTALL_LICENSE_ERROR") ?>",
-			"MARKET_INSTALL_TOS_ERROR" : "<?= GetMessageJS("MARKET_INSTALL_TOS_ERROR") ?>",
+			"MARKET_INSTALL_TOS_ERROR_MSGVER_1" : "<?= GetMessageJS("MARKET_INSTALL_TOS_ERROR_MSGVER_1") ?>",
 		});
 		BX.ready(function () {
 			BX.Market.Install.init(<?=Json::encode(

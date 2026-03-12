@@ -1,5 +1,5 @@
 /* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
-import { Tag, Dom, Type, Cache, Event, Browser, Text } from 'main.core';
+import { Tag, Dom, Type, Cache, Event, Browser, Text, Extension } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { SettingsCollection } from 'main.core.collections';
 import { DefaultBBCodeScheme, type BBCodeScheme } from 'ui.bbcode.model';
@@ -228,6 +228,13 @@ export class TextEditor extends EventEmitter
 	static getDefaultOptions(): TextEditorOptions
 	{
 		return {};
+	}
+
+	static getGlobalOption(path: string, defaultValue: any = null): any
+	{
+		const settings = Extension.getSettings('ui.text-editor');
+
+		return settings.get(path, defaultValue);
 	}
 
 	getComponentRegistry(): ComponentRegistry
@@ -583,7 +590,7 @@ export class TextEditor extends EventEmitter
 		}
 	}
 
-	clear(options?: ClearOptions): void
+	clear(focus: boolean = true, options: ClearOptions = {}): void
 	{
 		const updateOptions = {
 			discrete: Type.isPlainObject(options) && options.discrete === true,
@@ -595,13 +602,12 @@ export class TextEditor extends EventEmitter
 			root.clear();
 			root.append(paragraph);
 
-			// const selection = $getSelection();
-			// if (selection !== null)
-			// {
-			// 	paragraph.select();
-			// }
-
 			$setSelection(null);
+
+			if (focus)
+			{
+				paragraph.select();
+			}
 		}, updateOptions);
 	}
 
@@ -763,7 +769,7 @@ export class TextEditor extends EventEmitter
 				this.#collapsingState = CollapsingState.COLLAPSED;
 				Dom.addClass(this.getRootContainer(), '--collapsed');
 				this.emit('onCollapsingToggle', { isOpen: false });
-				this.clear();
+				this.clear(false);
 				this.clearHistory();
 				if (!initialState)
 				{
@@ -875,7 +881,7 @@ export class TextEditor extends EventEmitter
 		{
 			Dom.addClass(this.getRootContainer(), '--collapsed');
 			this.#collapsingState = CollapsingState.COLLAPSED;
-			this.clear();
+			this.clear(false);
 			this.clearHistory();
 			this.blur();
 		}

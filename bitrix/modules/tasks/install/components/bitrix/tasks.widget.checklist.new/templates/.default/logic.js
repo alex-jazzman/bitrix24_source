@@ -30,7 +30,7 @@ BX.Tasks.CheckList = (function()
 
 	CheckList.prototype.bindControls = function()
 	{
-		var form = this.renderTo.closest('form');
+		const form = this.renderTo?.closest('form');
 		if (form)
 		{
 			BX.bind(form, 'submit', BX.proxy(function() {
@@ -38,7 +38,7 @@ BX.Tasks.CheckList = (function()
 			}, this));
 		}
 
-		var addChecklistNode = document.getElementById('addCheckList_' + this.suffixDomId);
+		let addChecklistNode = document.getElementById('addCheckList_' + this.suffixDomId);
 		if (!addChecklistNode)
 		{
 			addChecklistNode = top.document.getElementById('addCheckList_' + this.suffixDomId);

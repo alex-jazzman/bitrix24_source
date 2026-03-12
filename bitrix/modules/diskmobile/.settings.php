@@ -10,11 +10,4 @@ return [
 		],
 		'readonly' => true,
 	],
-	'feature-flags' => [
-		'value' => [
-			\Bitrix\DiskMobile\AirDiskFeature::class,
-			\Bitrix\DiskMobile\LegacyUploaderFeature::class,
-		],
-		'readonly' => true,
-	],
 ];

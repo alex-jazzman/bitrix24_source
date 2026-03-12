@@ -172,7 +172,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		{
 			return {
 				title: copilotData.name,
-				titleColor: Color.base1.toHex(),
+				titleColor: Color.copilotAccentPrimary.toHex(),
 				description: Loc.getMessage('IMMOBILE_MESSENGER_CHAT_TITLE_MENTION_COPILOT_DESCRIPTION'),
 			};
 		}
@@ -233,6 +233,13 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				return;
 			}
 
+			if (dialogHelper.isComment)
+			{
+				this.#setCommentTitleIcons();
+
+				return;
+			}
+
 			if (dialogHelper.isMuted)
 			{
 				this.titleIcons = {
@@ -248,6 +255,21 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				this.titleIcons = {
 					right: {
 						name: Icon.SMALL_TIMER_DOT.getIconName(),
+						tintColor: AppTheme.colors.base3,
+					},
+				};
+			}
+		}
+
+		#setCommentTitleIcons()
+		{
+			const commentInfo = this.store.getters['commentModel/getByDialogId'](this.dialogId);
+
+			if (!commentInfo?.isUserSubscribed)
+			{
+				this.titleIcons = {
+					right: {
+						name: Icon.SMALL_NOTIFICATION_OFF.getIconName(),
 						tintColor: AppTheme.colors.base3,
 					},
 				};

@@ -18,6 +18,5 @@ return [
 		'notify-manager',
 		'haptics',
 		'layout/pure-component',
-		'utils/email',
-	],
+		'utils/email', 'analytics',],
 ];

@@ -9,7 +9,7 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 	const icons = {
 		chevron: Icon.CHEVRON_TO_THE_RIGHT,
 		task: Icon.CIRCLE_CHECK,
-		chat: Icon.MESSAGE,
+		chat: Icon.MESSAGES,
 		crm: Icon.CRM,
 		menu: Icon.APPS,
 		terminal: Icon.PAYMENT_TERMINAL,
@@ -25,6 +25,7 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 		file: Icon.FILE,
 		call_list: Icon.PHONE_UP,
 		mail: Icon.MAIL,
+		check_in: Icon.LOCATION,
 	};
 
 	const presetInfoImagePath = {

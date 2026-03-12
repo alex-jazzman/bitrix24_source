@@ -17,3 +17,19 @@ export type PromotionCallbackData = {
 	read?: boolean,
 	promoId?: string,
 }
+
+export interface PromotionTriggerOptions {
+	triggerType: string;
+	eventName: string | MessengerStoreMutation;
+	promoId: string;
+	condition?: (payload?: any) => boolean;
+	action: (payload?: any) => void;
+}
+
+export interface PromotionTrigger {
+	type: string;
+	eventName: string | MessengerStoreMutation;
+	promoId: string;
+	action: (payload?: any) => void;
+	unsubscriber: () => void;
+}

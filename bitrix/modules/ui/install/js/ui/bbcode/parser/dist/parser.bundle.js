@@ -55,7 +55,6 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  tokenize(bbcode) {
 	    const tokens = [];
-	    const listNestingLevels = [];
 	    let lastIndex = 0;
 	    bbcode.replace(TAG_REGEX_GS, (fullTag, slash, tagName, attrs, index) => {
 	      if (index > lastIndex) {
@@ -66,46 +65,7 @@ this.BX.UI = this.BX.UI || {};
 	      const startIndex = fullTag.length + index;
 	      const attributes = this.parseAttributes(attrs);
 	      const lowerCaseTagName = BBCodeTokenizer.toLowerCase(tagName);
-	      if (lowerCaseTagName === 'list' && isOpeningTag) {
-	        listNestingLevels.push(false);
-	        tokens.push({
-	          type: 'OPEN_TAG',
-	          name: lowerCaseTagName,
-	          value: attributes.value,
-	          attributes: Object.fromEntries(attributes.attributes)
-	        });
-	      } else if (lowerCaseTagName === 'list' && !isOpeningTag) {
-	        if (listNestingLevels.length > 0) {
-	          if (listNestingLevels[listNestingLevels.length - 1]) {
-	            tokens.push({
-	              type: 'CLOSE_TAG',
-	              name: '*'
-	            });
-	            listNestingLevels[listNestingLevels.length - 1] = false;
-	          }
-	          listNestingLevels.pop();
-	        }
-	        tokens.push({
-	          type: 'CLOSE_TAG',
-	          name: lowerCaseTagName
-	        });
-	      } else if (lowerCaseTagName === '*' && isOpeningTag) {
-	        if (listNestingLevels.length > 0) {
-	          if (listNestingLevels[listNestingLevels.length - 1]) {
-	            tokens.push({
-	              type: 'CLOSE_TAG',
-	              name: '*'
-	            });
-	          }
-	          listNestingLevels[listNestingLevels.length - 1] = true;
-	        }
-	        tokens.push({
-	          type: 'OPEN_TAG',
-	          name: lowerCaseTagName,
-	          value: attributes.value,
-	          attributes: Object.fromEntries(attributes.attributes)
-	        });
-	      } else if (isOpeningTag) {
+	      if (isOpeningTag) {
 	        const nextContent = bbcode.slice(startIndex);
 	        const unclosed = !nextContent.includes(`[/${tagName}]`);
 	        tokens.push({
@@ -126,15 +86,6 @@ this.BX.UI = this.BX.UI || {};
 	    if (lastIndex < bbcode.length) {
 	      const remainingText = bbcode.slice(lastIndex);
 	      tokens.push(...this.parseText(remainingText));
-	    }
-	    for (let i = listNestingLevels.length - 1; i >= 0; i--) {
-	      if (listNestingLevels[i]) {
-	        tokens.push({
-	          type: 'CLOSE_TAG',
-	          name: '*'
-	        });
-	        listNestingLevels[i] = false;
-	      }
 	    }
 	    return tokens;
 	  }
@@ -300,13 +251,144 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	    return sourceAttributes;
 	  }
+	  normalizeTokens(tokens) {
+	    const result = [];
+	    const stack = [];
+	    const getLastListTokenIndex = () => {
+	      for (let i = stack.length - 1; i >= 0; i--) {
+	        if (stack[i].name.toLowerCase() === 'list') {
+	          return stack[i].tokenIndex;
+	        }
+	      }
+	      return -1;
+	    };
+	    const popAndClose = () => {
+	      const entry = stack.pop();
+	      if (!entry) {
+	        return;
+	      }
+	      const token = result[entry.tokenIndex];
+	      if ((token == null ? void 0 : token.type) === 'OPEN_TAG') {
+	        token.unclosed = false;
+	      }
+	      result.push({
+	        type: 'CLOSE_TAG',
+	        name: entry.name,
+	        autoClosed: true
+	      });
+	    };
+	    for (const token of tokens) {
+	      if (token.type === 'OPEN_TAG') {
+	        const {
+	          name,
+	          value = '',
+	          attributes = {},
+	          unclosed = false
+	        } = token;
+	        const tagScheme = this.getScheme().getTagScheme(name);
+	        const isVoid = tagScheme && tagScheme.isVoid();
+	        const isBlock = tagScheme && tagScheme.hasGroup('#block');
+	        if (isBlock) {
+	          // Автозакрытие только тегов с unclosed: true перед блочным тегом,
+	          // но НЕ закрывать [*] из других списков
+	          while (stack.length > 0) {
+	            const topOfStack = stack[stack.length - 1];
+	            const tokenInResult = result[topOfStack.tokenIndex];
+
+	            // Проверяем, является ли верхний тег в стеке unclosed
+	            if ((tokenInResult == null ? void 0 : tokenInResult.type) === 'OPEN_TAG' && tokenInResult.unclosed === true) {
+	              // Защита: не закрывать [*], если он принадлежит другому списку
+	              if (topOfStack.name === '*' && topOfStack.nearestListTokenIndex !== -1) {
+	                // Прерываем автозакрытие, если тег [*] относится к списку
+	                break;
+	              }
+	              popAndClose(); // Закрываем его
+	            } else {
+	              // Если тег не OPEN_TAG или не unclosed, останавливаем закрытие
+	              break;
+	            }
+	          }
+	        }
+	        let shouldAddToStack = !isVoid;
+	        if (name === '*') {
+	          const lastListIdx = getLastListTokenIndex();
+	          if (lastListIdx === -1) {
+	            shouldAddToStack = false;
+	          } else {
+	            let prevStarIndex = -1;
+	            for (let i = stack.length - 1; i >= 0; i--) {
+	              if (stack[i].name === '*' && stack[i].nearestListTokenIndex === lastListIdx) {
+	                prevStarIndex = i;
+	                break;
+	              }
+	            }
+	            if (prevStarIndex !== -1) {
+	              // eslint-disable-next-line max-depth
+	              while (stack.length - 1 >= prevStarIndex) {
+	                popAndClose();
+	              }
+	            }
+	          }
+	        }
+	        result.push({
+	          type: 'OPEN_TAG',
+	          name,
+	          value,
+	          attributes: {
+	            ...attributes
+	          },
+	          unclosed
+	        });
+	        if (shouldAddToStack) {
+	          stack.push({
+	            name,
+	            tokenIndex: result.length - 1,
+	            nearestListTokenIndex: getLastListTokenIndex()
+	          });
+	        }
+	      } else if (token.type === 'CLOSE_TAG') {
+	        const {
+	          name
+	        } = token;
+	        let matchIdx = -1;
+	        for (let i = stack.length - 1; i >= 0; i--) {
+	          if (stack[i].name === name) {
+	            matchIdx = i;
+	            break;
+	          }
+	        }
+	        if (matchIdx === -1) {
+	          result.push({
+	            type: 'CLOSE_TAG',
+	            name,
+	            orphaned: true
+	          });
+	        } else {
+	          while (stack.length - 1 > matchIdx) {
+	            popAndClose();
+	          }
+	          stack.pop();
+	          result.push({
+	            type: 'CLOSE_TAG',
+	            name
+	          });
+	        }
+	      } else {
+	        result.push(token);
+	      }
+	    }
+	    while (stack.length > 0) {
+	      popAndClose();
+	    }
+	    return result;
+	  }
 	  parse(bbcode) {
-	    const tokenizer = new BBCodeTokenizer();
-	    const tokens = tokenizer.tokenize(bbcode);
 	    const result = parserScheme.createRoot();
 	    const stack = [result];
 	    const wasOpened = [];
 	    let level = 0;
+	    const tokenizer = new BBCodeTokenizer();
+	    const tokens = this.normalizeTokens(tokenizer.tokenize(bbcode));
 	    tokens.forEach(token => {
 	      const parent = stack[level];
 	      switch (token.type) {

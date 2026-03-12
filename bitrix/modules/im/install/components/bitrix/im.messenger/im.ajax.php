@@ -2076,19 +2076,19 @@ else if (isImPostRequest('IM_CREATE_ZOOM_CONF'))
 	$chatId = \Bitrix\Im\Dialog::getChatId($_POST['CHAT_ID']);
 	$userId = $USER->GetId();
 
-	if (!\Bitrix\Im\Call\Integration\Zoom::isActive())
+	if (!\Bitrix\Im\Integration\Socialservices\Zoom::isActive())
 	{
 		echo \Bitrix\Im\Common::objectEncode(Array(
 			'ERROR' => 'NOT_ACTIVE'
 		));
 	}
-	elseif (!\Bitrix\Im\Call\Integration\Zoom::isAvailable())
+	elseif (!\Bitrix\Im\Integration\Socialservices\Zoom::isAvailable())
 	{
 		echo \Bitrix\Im\Common::objectEncode(Array(
 			'ERROR' => 'NOT_AVAILABLE'
 		));
 	}
-	elseif (!\Bitrix\Im\Call\Integration\Zoom::isConnected($userId))
+	elseif (!\Bitrix\Im\Integration\Socialservices\Zoom::isConnected($userId))
 	{
 		echo \Bitrix\Im\Common::objectEncode(Array(
 			'ERROR' => 'NOT_CONNECTED',
@@ -2102,7 +2102,7 @@ else if (isImPostRequest('IM_CREATE_ZOOM_CONF'))
 	}
 	else
 	{
-		$zoom = new \Bitrix\Im\Call\Integration\Zoom($userId, $_POST['CHAT_ID']);
+		$zoom = new \Bitrix\Im\Integration\Socialservices\Zoom($userId, $_POST['CHAT_ID']);
 		$link = $zoom->getImChatConferenceUrl();
 		if (empty($link))
 		{

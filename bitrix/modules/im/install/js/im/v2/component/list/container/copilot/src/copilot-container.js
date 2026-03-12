@@ -1,13 +1,10 @@
 import { Messenger } from 'im.public';
-import { CopilotRolesDialog } from 'im.v2.component.elements.copilot-roles-dialog';
 import { CopilotList } from 'im.v2.component.list.items.copilot';
 import { ActionByUserType, ChatType, Layout } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
 import { CopilotService } from 'im.v2.provider.service.copilot';
 import { PermissionManager } from 'im.v2.lib.permission';
-
-import { RoleSelectorMini } from './components/role-selector-mini/role-selector-mini';
 
 import './css/copilot-container.css';
 
@@ -16,13 +13,11 @@ import type { JsonObject } from 'main.core';
 // @vue/component
 export const CopilotListContainer = {
 	name: 'CopilotListContainer',
-	components: { CopilotList, RoleSelectorMini, CopilotRolesDialog },
+	components: { CopilotList },
 	emits: ['selectEntity'],
 	data(): JsonObject
 	{
 		return {
-			showRoleSelector: false,
-			showRolesDialog: false,
 			isCreatingChat: false,
 		};
 	},
@@ -37,17 +32,12 @@ export const CopilotListContainer = {
 	{
 		Logger.warn('List: Copilot container created');
 	},
-	deactivated()
-	{
-		this.showRolesDialog = false;
-		this.showRoleSelector = false;
-	},
 	methods:
 	{
 		async onCreateChatClick()
 		{
 			Analytics.getInstance().chatCreate.onStartClick(ChatType.copilot);
-			this.showRoleSelector = true;
+			await this.createChat();
 		},
 		onChatClick(dialogId)
 		{
@@ -64,8 +54,6 @@ export const CopilotListContainer = {
 		},
 		async createChat(roleCode: string)
 		{
-			this.showRoleSelector = false;
-			this.showRolesDialog = false;
 			this.isCreatingChat = true;
 
 			const newDialogId = await this.getCopilotService().createChat({ roleCode })
@@ -79,15 +67,6 @@ export const CopilotListContainer = {
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
-		},
-		onCopilotDialogSelectRole(role)
-		{
-			void this.createChat(role.code);
-		},
-		onOpenMainSelector()
-		{
-			this.showRoleSelector = false;
-			this.showRolesDialog = true;
 		},
 	},
 	template: `
@@ -109,18 +88,6 @@ export const CopilotListContainer = {
 					<CopilotList @chatClick="onChatClick" />
 				</div>
 			</div>
-			<RoleSelectorMini
-				v-if="showRoleSelector"
-				:bindElement="$refs.createChatButton"
-				@close="showRoleSelector = false"
-				@selectedRole="createChat"
-				@openMainSelector="onOpenMainSelector"
-			/>
-			<CopilotRolesDialog
-				v-if="showRolesDialog"
-				@selectRole="onCopilotDialogSelectRole"
-				@close="showRolesDialog = false"
-			/>
 		</div>
 	`,
 };

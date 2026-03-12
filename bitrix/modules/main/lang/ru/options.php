@@ -279,3 +279,5 @@ $MESS['main_option_event_log_file'] = 'Записывать события в ф
 $MESS['main_option_event_log_file_path'] = 'Полный путь к файлу:';
 $MESS['MAIN_EVENT_LOG_GROUP_EDIT'] = 'Записывать редактирование группы:';
 $MESS['main_options_device_history_notify_only'] = 'Оповещать только указанных пользователей:';
+$MESS['main_options_secure_auth_forms'] = 'Защитить формы авторизации от CSRF:';
+$MESS['main_options_select_country'] = '(выберите страну)';

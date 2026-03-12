@@ -22,7 +22,7 @@ export const CheckListAddItem = {
 	},
 	template: `
 		<div
-			class="check-list-widget-add-item"
+			class="check-list-widget-add-item print-ignore"
 			:class="{'--preview': isPreview}"
 			@mousedown="$emit('addItem')"
 		>

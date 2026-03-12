@@ -63,7 +63,9 @@ export const LinkItem = {
 
 			if (this.searchQuery.length === 0)
 			{
-				return Utils.text.convertHtmlEntities(descriptionToShow);
+				const decodedDescription = Utils.text.convertHtmlEntities(descriptionToShow);
+
+				return Text.encode(decodedDescription);
 			}
 
 			return highlightText(Text.encode(descriptionToShow), this.searchQuery);

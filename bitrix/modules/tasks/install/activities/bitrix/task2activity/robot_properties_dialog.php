@@ -105,8 +105,11 @@ $visibleFields = array_merge(
 );
 foreach ($visibleFields as $fieldId)
 {
-	$renderDocumentField($taskFieldsMap[$fieldId]);
-	unset($taskFieldsMap[$fieldId]);
+	if (isset($taskFieldsMap[$fieldId]))
+	{
+		$renderDocumentField($taskFieldsMap[$fieldId]);
+		unset($taskFieldsMap[$fieldId]);
+	}
 }
 ?>
 <style type="text/css">

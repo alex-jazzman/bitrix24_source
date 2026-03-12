@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports) {
 	'use strict';
@@ -29,7 +30,7 @@ this.BX = this.BX || {};
 				</div>
 				<button class="ui-btn ui-btn-light-border"
 						onclick="BX.Helper.show('redirect=detail&code=17227276')"
-				>{{ $Bitrix.Loc.getMessage('MARKET_SCOPE_JS_BTN_MORE') }}</button>
+				>{{ $Bitrix.Loc.getMessage('MARKET_SCOPE_JS_BTN_MORE_MSGVER_1') }}</button>
 			</div>
 			
 			<div class="market-app__scope-list_content">

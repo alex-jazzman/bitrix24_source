@@ -2,24 +2,31 @@
 
 namespace Bitrix\Call\Controller;
 
-use Bitrix\Call\DTO\CloudRecordingRequest;
-use Bitrix\Call\DTO\CloudRecordingErrorRequest;
-use Bitrix\Call\DTO\FileInfo;
-use Bitrix\Call\Integration\AI\ChatMessage;
-use Bitrix\Im\Call\Registry;
+use Bitrix\Call\Analytics\FollowUpAnalytics;
+use Bitrix\Call\Integration\AI\CallAISettings;
+use Bitrix\Call\Logger\Logger;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Error;
-use Bitrix\Im\V2\Chat;
-use Bitrix\Im\V2\Message;
+use Bitrix\Main\Service\MicroService\BaseReceiver;
 use Bitrix\Call\Track;
 use Bitrix\Call\Model\CallTrackTable;
 use Bitrix\Call\Track\TrackService;
-use Bitrix\Call\Controller\Filter\UniqueRequestFilter;
-use Bitrix\Main\UI\Viewer\PreviewManager;
-use Bitrix\Main\Service\MicroService\BaseReceiver;
+use Bitrix\Call\Track\CloudRecordExpectationAgent;
+use Bitrix\Call\DTO\CloudRecordingRequest;
+use Bitrix\Call\DTO\CloudRecordingErrorRequest;
+use Bitrix\Call\DTO\FileInfo;
+use Bitrix\Call\NotifyService;
+use Bitrix\Call\CallChatMessage;
+use Bitrix\Call\Call\Registry;
+use Bitrix\Im\V2\Message\Send\SendingConfig;
+use Bitrix\Im\V2\Service\Context;
+use Bitrix\Im\V2\Chat;
 
+
+/**
+ * @internal
+ */
 class Cloud extends BaseReceiver
 {
 	public function getAutoWiredParameters(): array
@@ -71,28 +78,27 @@ class Cloud extends BaseReceiver
 			return null;
 		}
 
-		$chatId = $call->getChatId();
-
-		// Get chat instance
-		$chat = Chat::getInstance($chatId);
+		$chat = Chat::getInstance($call->getChatId());
 		if (!$chat || $chat instanceof \Bitrix\Im\V2\Chat\NullChat)
 		{
 			$this->addError(new Error('Chat not found', 'chat_not_found'));
 			return null;
 		}
 
-		// Create and send message to chat
-		$message = new Message();
-		$message->setMessage(Loc::getMessage('CALL_CLOUD_RECORDING_PREPARE_MESSAGE'));
-		$message->markAsSystem(true);
-
-		$sendResult = $chat->sendMessage($message);
-
-		if (!$sendResult->isSuccess())
+		if (NotifyService::getInstance()->findMessage($chat->getId(), $call->getId(), NotifyService::MESSAGE_TYPE_CLOUD_RECORD_PREPARE) !== null)
 		{
-			$this->addErrors($sendResult->getErrors());
-			return null;
+			return ['result' => true];
 		}
+
+		$message = CallChatMessage::makeCloudRecordPrepareMessage($call, $chat);
+
+		$sendingConfig = (new SendingConfig())
+			->enableSkipCounterIncrements()
+			->enableSkipUrlIndex()
+		;
+		$context = (new Context())->setUser($call->getInitiatorId());
+
+		NotifyService::getInstance()->sendMessageDeferred($chat, $message, $sendingConfig, $context);
 
 		return ['result' => true];
 	}
@@ -107,170 +113,159 @@ class Cloud extends BaseReceiver
 	{
 		Loader::includeModule('im');
 
-		if (!$recordingRequest->roomId) 
+		$log = CallAISettings::isLoggingEnable();
+		$logger = Logger::getInstance();
+
+		$log && $logger->info('Cloud::recordingReadyAction: Starting. {' . var_export($recordingRequest, true) . '}');
+
+		if (!$recordingRequest->roomId || !$recordingRequest->recording)
 		{
-			$this->addError(new Error('Room Id is required', 'room_id_required'));
+			$log && $logger->error("Cloud::recordingReadyAction: bad input");
+			$this->addError(new Error('Bad input', 'bad_input'));
 			return null;
 		}
 
 		$call = Registry::getCallWithUuid($recordingRequest->roomId);
 		if (!$call)
 		{
+			$log && $logger->error("Cloud::recordingReadyAction: call {$recordingRequest->roomId} not found");
 			$this->addError(new Error('Call not found', 'call_not_found'));
 			return null;
 		}
 
-		$record = null;
-		if ($recordingRequest->recording)
+		(new FollowUpAnalytics($call))
+			->sendTelemetry(
+				source: null,
+				status: 'success',
+				event: 'cloud_record_ready_action'
+			);
+
+		$recordingData = $recordingRequest->recording;
+		$recordingData['type'] = Track::TYPE_VIDEO_RECORD;
+		$recordTrack = $this->makeTrack($call, new FileInfo($recordingData));
+		if (!$recordTrack)
 		{
-			$recordingData = $recordingRequest->recording;
-			if (is_array($recordingData) && empty($recordingData['type']))
-			{
-				$recordingData['type'] = Track::TYPE_VIDEO_RECORD;
-			}
-			$recording = new FileInfo($recordingData);
-			$record = $this->downloadTrack($call, $recording);
-		}
-		if (!$record)
-		{
+			$log && $logger->error("Cloud::recordingReadyAction: failed to create record track");
+			(new FollowUpAnalytics($call))
+				->sendTelemetry(
+					source: null,
+					status: 'success',
+					event: 'cloud_record_track_not_created'
+				);
 			return null;
 		}
 
+		$log && $logger->info("Cloud::recordingReadyAction: record track created: {$recordTrack->getId()}");
+		(new FollowUpAnalytics($call))
+			->sendTelemetry(
+				source: null,
+				status: 'success',
+				event: 'cloud_record_track_created_' . $recordTrack->getId()
+			);
+
+		$previewTrack = null;
 		if ($recordingRequest->preview)
 		{
+			$log && $logger->info("Cloud::recordingReadyAction: make preview track from request");
+
 			$previewData = $recordingRequest->preview;
-			if (is_array($previewData) && empty($previewData['type']))
-			{
-				$previewData['type'] = Track::TYPE_VIDEO_PREVIEW;
-			}
-			$preview = new FileInfo($previewData);
-			$preview = $this->downloadTrack($call, $preview);
-			if (!$preview)
-			{
-				return null;
-			}
-
-			(new PreviewManager())->setPreviewImageId($record->getFileId(), $preview->getFileId());
+			$previewData['type'] = Track::TYPE_VIDEO_PREVIEW;
+			$previewTrack = $this->makeTrack($call, new FileInfo($previewData));
 		}
 
-		$this->sendRecordingReadyMessage($call, $record);
+		if (!$recordingRequest->preview && str_starts_with($recordTrack->getFileMimeType(), 'video/'))
+		{
+			$log && $logger->info("Cloud::recordingReadyAction: make default preview track");
+			$result = TrackService::getInstance()->createDefaultPreview($call->getId());
+			if (!$result->isSuccess())
+			{
+				$log && $logger->error(
+					"Cloud::recordingReadyAction: failed to create preview track -> "
+					. implode("\n", $result->getErrors())
+				);
+				$this->addErrors($result->getErrors());
+			}
+			else
+			{
+				$previewTrack = $result->getData()['track'];
+			}
+		}
 
-		return ['result' => true];
+		if ($previewTrack)
+		{
+			$log && $logger->info("Cloud::recordingReadyAction: preview track created: {$previewTrack->getId()}");
+			(new FollowUpAnalytics($call))
+				->sendTelemetry(
+					source: null,
+					status: 'success',
+					event: 'cloud_record_preview_track_created_' . $previewTrack->getId()
+				);
+		}
+
+		$result = true;
+		$downloadStarted = false;
+
+		if ($previewTrack && !$previewTrack->getDownloaded())
+		{
+			$log && $logger->info("Cloud::recordingReadyAction: start to download preview track");
+			(new FollowUpAnalytics($call))
+				->sendTelemetry(
+					source: null,
+					status: 'success',
+					event: 'cloud_record_start_download_preview_track_' . $previewTrack->getId()
+				);
+
+			$result &= $this->downloadTrack($previewTrack);
+			$downloadStarted |= $result;
+		}
+
+		if (!$recordTrack->getDownloaded())
+		{
+			$log && $logger->info("Cloud::recordingReadyAction: start to download record track");
+			(new FollowUpAnalytics($call))
+				->sendTelemetry(
+					source: null,
+					status: 'success',
+					event: 'cloud_record_start_download_track_' . $recordTrack->getId()
+				);
+
+			$result &= $this->downloadTrack($recordTrack);
+			$downloadStarted |= $result;
+		}
+
+		if ($downloadStarted)
+		{
+			CloudRecordExpectationAgent::scheduleAgent($call->getId());
+		}
+
+		$log && $logger->info("Cloud::recordingReadyAction: finish. Result: " . ($result ? 'true' : 'false'));
+		return ['result' => $result];
 	}
 
 	/**
-	 * Send message to chat about recording ready
+	 * Create track record in database from file info
 	 *
-	 * @param \Bitrix\Im\Call\Call $call
-	 * @param Track $track
-	 * @return void
+	 * @param \Bitrix\Call\Call $call Call instance
+	 * @param FileInfo $fileInfo File information (url, name, mime, size, type)
+	 * @return Track|null Track instance on success, null on failure
 	 */
-	private function sendRecordingReadyMessage(\Bitrix\Im\Call\Call $call, Track $track): void
+	private function makeTrack(\Bitrix\Call\Call $call, FileInfo $fileInfo): ?Track
 	{
-		Loader::includeModule('im');
+		$log = CallAISettings::isLoggingEnable();
+		$logger = Logger::getInstance();
 
-		$chat = Chat::getInstance($call->getChatId());
-		if (!$chat || $chat instanceof \Bitrix\Im\V2\Chat\NullChat)
-		{
-			return;
-		}
+		$log && $logger->info("Cloud::makeTrack: starting. Create {$fileInfo->type} track for call {$call->getId()}");
 
-		$userId = $call->getActionUserId() ?: $call->getInitiatorId();
-		if ($track->getFileId() && !$track->getDiskFileId())
-		{
-			$diskFileIds = \CIMDisk::UploadFileFromMain(
-				$call->getChatId(),
-				[$track->getFileId()],
-				$userId
-			);
-
-			if (!$diskFileIds || empty($diskFileIds[0]))
-			{
-				return;
-			}
-
-			$diskFileId = $diskFileIds[0];
-			$track->setDiskFileId($diskFileId);
-			$track->save();
-		}
-
-		if ($track->getDiskFileId())
-		{
-			\CIMDisk::UploadFileFromDisk(
-				$call->getChatId(),
-				['upload' . $track->getDiskFileId()],
-				'',
-				['USER_ID' => $userId]
-			);
-		}
-
-		// Try to get direct download URL from Disk
-		$downloadUrl = null;
-		if ($track->getDiskFileId() && Loader::includeModule('disk'))
-		{
-			$diskFile = \Bitrix\Disk\File::getById($track->getDiskFileId());
-			if ($diskFile)
-			{
-				$urlManager = \Bitrix\Disk\Driver::getInstance()->getUrlManager();
-				$downloadUrl = $urlManager->getUrlForDownloadFile($diskFile, true);
-			}
-		}
-
-		// Fallback to controller URL if Disk URL is not available
-		if (!$downloadUrl)
-		{
-			$downloadUrl = $track->getUrl(true, true);
-		}
-
-		$messageUrl = ChatMessage::makeCallStartMessageLink($call->getId(), $chat->getId());
-
-		$message = new Message();
-		$message->setMessage(Loc::getMessage('CALL_CLOUD_RECORDING_READY_MESSAGE', [
-			'#DOWNLOAD_URL#' => $downloadUrl,
-			'#CALL_ID#' => $call->getId(),
-			'#CALL_START#' => $messageUrl,
-		]));
-		$message->markAsSystem(true);
-		$chat->sendMessage($message);
-	}
-
-	/**
-	 * Download and create track record from file info
-	 *
-	 * Creates a new track record in the database, downloads the file from the provided URL,
-	 * and attaches it to Bitrix Disk if needed. Handles both video recordings and preview files.
-	 *
-	 * @param \Bitrix\Im\Call\Call $call The call instance to associate the track with
-	 * @param FileInfo $fileInfo File information containing URL, name, mime type, size, etc.
-	 * @return Track|null Returns Track instance on success, null on failure
-	 * 
-	 * @see FileInfo For file information structure
-	 * @see Track For track entity details
-	 * @see TrackService::downloadTrackFile() For actual file download logic
-	 * 
-	 * @example
-	 * $fileInfo = new FileInfo([
-	 *     'url' => 'https://example.com/video.mp4',
-	 *     'name' => 'recording.mp4',
-	 *     'mime' => 'video/mp4',
-	 *     'size' => 1024000,
-	 *     'type' => Track::TYPE_VIDEO_RECORD
-	 * ]);
-	 * $track = $this->downloadTrack($call, $fileInfo);
-	 */
-	private function downloadTrack(\Bitrix\Im\Call\Call $call, FileInfo $fileInfo): ?Track
-	{
 		$trackList = CallTrackTable::query()
 			->setSelect(['ID'])
 			->where('CALL_ID', $call->getId())
-			->where('DOWNLOAD_URL', $fileInfo->url)
+			->where('TYPE', $fileInfo->type)
 			->setLimit(1)
-			->exec()
-		;
-		if ($trackList->getSelectedRowsCount() > 0)
-		{
-			$this->addError(new Error('Track already exists', 'track_duplicate_error'));
-			return null;
+			->exec();
+		if ($trackList->getSelectedRowsCount() > 0) {
+			$existingTrack = $trackList->fetch();
+			$log && $logger->info("Cloud::makeTrack: Track already exists: {$existingTrack['ID']}");
+			return CallTrackTable::getById($existingTrack['ID'])->fetchObject();
 		}
 
 		// Create track record
@@ -306,22 +301,39 @@ class Cloud extends BaseReceiver
 		$saveResult = $track->save();
 		if (!$saveResult->isSuccess())
 		{
+			$log && $logger->error(
+				"Cloud::makeTrack: failed to save {$fileInfo->type} track for call {$call->getId()} -> "
+				. implode("\n", $saveResult->getErrors())
+			);
 			$this->addErrors($saveResult->getErrors());
 			return null;
 		}
 
+		$log && $logger->info("Cloud::makeTrack: finish. {$fileInfo->type} track for call {$call->getId()} created: {$track->getId()}");
+
+		return $track;
+	}
+
+	/**
+	 * Schedule track file download via agent
+	 *
+	 * @param Track $track Track to download
+	 * @return bool True on success, false on failure
+	 */
+	private function downloadTrack(Track $track): bool
+	{
 		$trackService = TrackService::getInstance();
-		if ($trackService->doNeedDownloadTrack($track)) 
+		if ($trackService->doNeedDownloadTrack($track))
 		{
 			$downloadResult = $trackService->downloadTrackFile($track, true);
 			if (!$downloadResult->isSuccess())
 			{
 				$this->addErrors($downloadResult->getErrors());
-				return null;
+				return false;
 			}
 		}
 
-		return $track;
+		return true;
 	}
 
 	/**
@@ -355,16 +367,15 @@ class Cloud extends BaseReceiver
 		if ($chat && !($chat instanceof \Bitrix\Im\V2\Chat\NullChat))
 		{
 			$errorText = $recordingError->errorMessage ?: $recordingError->errorCode;
-			$messageUrl = ChatMessage::makeCallStartMessageLink($call->getId(), $chat->getId());
+			$message = CallChatMessage::makeCloudRecordErrorMessage($call, $chat, $errorText);
 
-			$message = new Message();
-			$message->setMessage(Loc::getMessage('CALL_CLOUD_RECORDING_ERROR_MESSAGE', [
-				'#ERROR#' => $errorText,
-				'#CALL_ID#' => $call->getId(),
-				'#CALL_START#' => $messageUrl,
-			]));
-			$message->markAsSystem(true);
-			$chat->sendMessage($message);
+			$sendingConfig = (new SendingConfig())
+				->enableSkipCounterIncrements()
+				->enableSkipUrlIndex()
+			;
+			$context = (new Context())->setUser($call->getInitiatorId());
+
+			NotifyService::getInstance()->sendMessageDeferred($chat, $message, $sendingConfig, $context);
 		}
 
 		return ['result' => true];

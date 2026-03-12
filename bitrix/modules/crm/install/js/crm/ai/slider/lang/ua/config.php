@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_COPILOT_WRAPPER_HELP_BUTTON_TITLE"] = "Допомога";

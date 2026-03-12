@@ -31,7 +31,7 @@ jn.define('im/messenger/lib/reasoning', (require, exports, module) => {
 			const engineCode = copilotModel.engine?.code || copilotModel.chats?.[0]?.engine;
 			const engine = MessengerParams.getCopilotAvailableEngines().find((item) => item.code === engineCode);
 
-			return Boolean(engine.supportsReasoning);
+			return Boolean(engine?.supportsReasoning);
 		}
 	}
 

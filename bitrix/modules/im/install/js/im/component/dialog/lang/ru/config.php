@@ -12,4 +12,3 @@ $MESS["IM_MESSENGER_DIALOG_WRITES_MESSAGE"] = "#USER# пишет сообщен�
 $MESS["IM_MESSENGER_DIALOG_LOAD_MESSAGES"] = "Загрузка сообщений...";
 
 $MESS["IM_QUOTE_PANEL_DEFAULT_TITLE"] = "Системное сообщение";
-?>

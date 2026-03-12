@@ -26,6 +26,7 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 	 * @property {Icon} [rightIcon]
 	 * @property {function} [forwardRef]
 	 * @property {function} [onClick]
+	 * @property {function} [onLongClick]
 	 * @property {boolean} [accent=false]
 	 * @property {LinkMode} [mode=LinkMode.PLAIN]
 	 * @property {LinkDesign} [design=LinkDesign.PRIMARY]
@@ -71,6 +72,7 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 							flexShrink: 1,
 						},
 						onClick: this.#handleOnClick,
+						onLongClick: this.#handleOnLongClick,
 					},
 					this.#renderIcon(leftIcon, {
 						marginRight: Indent.XS2.toNumber(),
@@ -136,6 +138,10 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 			{
 				onClick(href);
 			}
+		};
+
+		#handleOnLongClick = () => {
+			this.props.onLongClick?.();
 		};
 
 		getBorderStyle()

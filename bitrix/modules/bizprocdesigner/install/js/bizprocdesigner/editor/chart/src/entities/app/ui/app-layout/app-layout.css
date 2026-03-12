@@ -32,16 +32,26 @@
 	transition: transform 0.3s ease;
 }
 
+.editor-chart-app-layout__top-middle-anchor {
+	display: flex;
+	position: absolute;
+	top: 0;
+	left: 50%;
+	z-index: 16;
+	max-width: 740px;
+	transform: translate(-50%, 0%);
+}
+
 .editor-chart-app-layout__top-right-toolbar.--shifted {
 	transform: translateX(-479px);
 }
 
 .editor-chart-app-layout__bottom-right-toolbar {
+	display: flex;
 	position: absolute;
 	right: 8px;
 	bottom: 8px;
 	z-index: 2;
-	display: flex;
 	justify-content: flex-end;
 	align-items: flex-start;
 	gap: 8px;
@@ -54,7 +64,7 @@
 }
 
 .editor-chart-app-layout__bottom-right-toolbar .ui-block-diagram-canvas-map__cursor {
-	stroke: var(--ui-color-blue-50);
+	stroke: var(--ui-color-blue-57);
 }
 
 .editor-chart-app-layout__bottom-right-toolbar.--shifted {
@@ -139,16 +149,15 @@
 }
 
 .editor-chart-app-layout__preview-panel-content {
-	position: realite;
+	position: relative;
 	width: 100%;
 	height: 100%;
-	overflow-y: scroll;
-	overflow-x: hidden;
+	overflow: hidden;
 }
 
 .fade-preview-panel-enter-active,
 .fade-preview-panel-leave-active {
-	transition: opacity 0.2s easy;
+	transition: opacity 0.2s ease;
 }
 
 .fade-preview-panel-enter-from {

@@ -221,6 +221,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	        const fileIds = new Set(babelHelpers.classPrivateFieldLooseBase(this, _entityFileIds)[_entityFileIds]);
 	        if (!babelHelpers.classPrivateFieldLooseBase(this, _getIdsByObjectId)[_getIdsByObjectId](file.customData.objectId).some(id => fileIds.has(id))) {
 	          babelHelpers.classPrivateFieldLooseBase(this, _attachFiles)[_attachFiles]([...fileIds, file.serverFileId], file);
+	          this.emit('onFileAttach', file);
 	        }
 	        this.emit('onFileComplete', file);
 	      },
@@ -324,26 +325,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader().destroy();
 	    babelHelpers.classPrivateFieldLooseBase(this, _unbindEvents)[_unbindEvents]();
 	  }
-	  async sync(ids) {
-	    if (!main_core.Type.isArrayFilled(ids)) {
-	      return;
-	    }
-	    if (ids.every(id => babelHelpers.classPrivateFieldLooseBase(this, _loadedIds)[_loadedIds].has(id))) {
-	      this.getFileItems().forEach(file => {
-	        const uploaderIds = [file.serverFileId];
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _isObjectId)[_isObjectId](file.serverFileId)) {
-	          const objectId = Number(file.serverFileId.slice(1));
-	          uploaderIds.push(...babelHelpers.classPrivateFieldLooseBase(this, _getIdsByObjectId)[_getIdsByObjectId](objectId));
-	        }
-	        if (uploaderIds.some(id => ids.includes(id))) {
-	          return;
-	        }
-	        babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader().removeFile(file.id);
-	      });
-	    }
-	    await this.list(ids);
-	  }
 	  async list(ids) {
+	    if (!main_core.Type.isArrayFilled(ids)) {
+	      return [];
+	    }
 	    const unloadedIds = ids.filter(id => !babelHelpers.classPrivateFieldLooseBase(this, _loadedIds)[_loadedIds].has(id));
 	    if (unloadedIds.length === 0) {
 	      await Promise.all(babelHelpers.classPrivateFieldLooseBase(this, _promises)[_promises]);
@@ -364,6 +349,25 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      console.error(tasks_v2_const.Endpoint.FileListObjects, error);
 	      return [];
 	    }
+	  }
+	  remove(idsToRemove) {
+	    const uploaderFiles = this.getFileItems().map(({
+	      id,
+	      serverFileId
+	    }) => ({
+	      id,
+	      serverFileId
+	    }));
+	    uploaderFiles.forEach(file => {
+	      const fileIds = new Set([file.serverFileId]);
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _isObjectId)[_isObjectId](file.serverFileId)) {
+	        const objectId = Number(file.serverFileId.slice(1));
+	        babelHelpers.classPrivateFieldLooseBase(this, _getIdsByObjectId)[_getIdsByObjectId](objectId).forEach(id => fileIds.add(id));
+	      }
+	      if ([...fileIds].some(id => idsToRemove.includes(id))) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader().removeFile(file.id);
+	      }
+	    });
 	  }
 	  loadFilesFromData(data) {
 	    const ids = data.map(fileDto => fileDto.id);
@@ -515,61 +519,63 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  return String(id).startsWith('n');
 	}
 	async function _saveAttachedFiles2() {
-	  if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach])) {
-	    const id = tasks_v2_lib_idUtils.idUtils.unbox(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]);
-	    try {
-	      const ids = babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach].map(file => file.serverFileId);
-	      babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach] = [];
-	      if (tasks_v2_lib_idUtils.idUtils.isTemplate(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId])) {
-	        await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateUpdate, {
-	          template: {
-	            id,
-	            fileIds: babelHelpers.classPrivateFieldLooseBase(this, _entityFileIds)[_entityFileIds]
-	          }
-	        });
-	      } else {
-	        await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.FileAttach, {
-	          task: {
-	            id
-	          },
-	          ids
-	        });
-	      }
-	    } catch (error) {
-	      console.error('FileService: saveAttachedFiles error', error);
-	      this.notifyError(main_core.Loc.getMessage('TASKS_V2_NOTIFY_FILE_ATTACH_ERROR'));
+	  if (!main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach])) {
+	    return;
+	  }
+	  const id = tasks_v2_lib_idUtils.idUtils.unbox(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]);
+	  try {
+	    const ids = babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach].map(file => file.serverFileId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _filesToAttach)[_filesToAttach] = [];
+	    if (tasks_v2_lib_idUtils.idUtils.isTemplate(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId])) {
+	      await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateUpdate, {
+	        template: {
+	          id,
+	          fileIds: babelHelpers.classPrivateFieldLooseBase(this, _entityFileIds)[_entityFileIds]
+	        }
+	      });
+	    } else {
+	      await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.FileAttach, {
+	        task: {
+	          id
+	        },
+	        ids
+	      });
 	    }
+	  } catch (error) {
+	    console.error('FileService: saveAttachedFiles error', error);
+	    this.notifyError(main_core.Loc.getMessage('TASKS_V2_NOTIFY_FILE_ATTACH_ERROR'));
 	  }
 	}
 	async function _saveDetachedFiles2() {
-	  if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach])) {
-	    const id = tasks_v2_lib_idUtils.idUtils.unbox(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]);
-	    const filesBeforeDetach = babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach];
-	    try {
-	      const ids = babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach].map(file => file.serverFileId);
-	      babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach] = [];
-	      if (tasks_v2_lib_idUtils.idUtils.isTemplate(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId])) {
-	        await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateUpdate, {
-	          template: {
-	            id,
-	            fileIds: babelHelpers.classPrivateFieldLooseBase(this, _entityFileIds)[_entityFileIds]
-	          }
-	        });
-	      } else {
-	        await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.FileDetach, {
-	          task: {
-	            id
-	          },
-	          ids
-	        });
-	      }
-	    } catch (error) {
-	      console.error('FileService: saveDetachedFiles error', error);
-	      babelHelpers.classPrivateFieldLooseBase(this, _isDetachedErrorMode)[_isDetachedErrorMode] = true;
-	      babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader().addFiles(filesBeforeDetach);
-	      babelHelpers.classPrivateFieldLooseBase(this, _isDetachedErrorMode)[_isDetachedErrorMode] = false;
-	      this.notifyError(main_core.Loc.getMessage('TASKS_V2_NOTIFY_FILE_DETACH_ERROR'));
+	  if (!main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach])) {
+	    return;
+	  }
+	  const id = tasks_v2_lib_idUtils.idUtils.unbox(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]);
+	  const filesBeforeDetach = babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach];
+	  try {
+	    const ids = babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach].map(file => file.serverFileId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _filesToDetach)[_filesToDetach] = [];
+	    if (tasks_v2_lib_idUtils.idUtils.isTemplate(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId])) {
+	      await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateUpdate, {
+	        template: {
+	          id,
+	          fileIds: babelHelpers.classPrivateFieldLooseBase(this, _entityFileIds)[_entityFileIds]
+	        }
+	      });
+	    } else {
+	      await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.FileDetach, {
+	        task: {
+	          id
+	        },
+	        ids
+	      });
 	    }
+	  } catch (error) {
+	    console.error('FileService: saveDetachedFiles error', error);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isDetachedErrorMode)[_isDetachedErrorMode] = true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader().addFiles(filesBeforeDetach);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isDetachedErrorMode)[_isDetachedErrorMode] = false;
+	    this.notifyError(main_core.Loc.getMessage('TASKS_V2_NOTIFY_FILE_DETACH_ERROR'));
 	  }
 	}
 	function _get_entityFileIds() {

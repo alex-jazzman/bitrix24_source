@@ -380,7 +380,12 @@ class CheckLicenseKey extends CWizardStep
 			closedir($handle);
 		}
 
-		$uri = LANGUAGE_ID == "ru" ? "https://www.1c-bitrix.ru/bsm_register_key.php" : "https://www.bitrixsoft.com/bsm_register_key.php";
+		$uri = match (LANGUAGE_ID)
+		{
+			'ru' => "https://www.1c-bitrix.ru/bsm_register_key.php",
+			'kz' => "https://www.1c-bitrix.kz/bsm_register_key.php",
+			default => "https://www.bitrixsoft.com/bsm_register_key.php",
+		};
 
 		$query = [
 			"sur_name" => trim($wizard->GetVar("user_surname")),
@@ -702,7 +707,7 @@ class RequirementStep extends CWizardStep
 	protected $memoryMin = 256;
 	protected $memoryRecommend = 512;
 	protected $diskSizeMin = 1500;
-	protected $phpMinVersion = "8.1.0";
+	protected $phpMinVersion = "8.2.0";
 	protected $apacheMinVersion = "2.0";
 	protected $nginxMinVersion = "1.22.0";
 	protected $bitrixVmMinVersion = '9.0.0';
@@ -1490,7 +1495,7 @@ RewriteRule ^.+\.php$ /bitrix/httest/404.php
 class CreateDBStep extends CWizardStep
 {
 	const MIN_MYSQL_VERSION = '8.0.0';
-	const MIN_PGSQL_VERSION = '11.0.0';
+	const MIN_PGSQL_VERSION = '13.0.0';
 
 	var $dbType;
 	var $dbUser;

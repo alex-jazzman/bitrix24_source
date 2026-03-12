@@ -31,7 +31,7 @@ jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, 
 			super(modelMessage, options);
 
 			this.setMessage(Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_NEW'));
-			this.setShowReaction(false);
+			this.setShowReaction(null, false);
 			this.setCanBeQuoted(false);
 			this.setCanBeChecked(false);
 			this.setIsBackgroundOn(true);

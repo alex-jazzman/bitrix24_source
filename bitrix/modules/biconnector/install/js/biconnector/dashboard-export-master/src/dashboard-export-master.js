@@ -6,7 +6,6 @@ import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { Button } from 'ui.buttons';
 import { MessageBox } from 'ui.dialogs.messagebox';
-import { TextCrop } from 'ui.textcrop';
 import { Dialog } from 'ui.entity-selector';
 import 'ui.forms';
 import './css/main.css';
@@ -75,13 +74,6 @@ export class DashboardExportMaster
 			padding: 0,
 		});
 		this.#popup.show();
-
-		const dashboardTitle = new TextCrop({
-			rows: 1,
-			resize: true,
-			target: document.querySelector('.bic-export-dashboard-title'),
-		});
-		dashboardTitle.init();
 
 		this.#exportButton = new Button({
 			text: Loc.getMessage('BIC_EXPORT_BUTTON'),
@@ -181,7 +173,7 @@ export class DashboardExportMaster
 			<div class="bic-export-container">
 				<div class="bic-export-header">
 					<div class="bic-export-subtitle">${Loc.getMessage('BIC_EXPORT_SUBTITLE')}</div>
-					<div class="bic-export-dashboard-title">${dashboardData.title}</div>
+					<div class="bic-export-dashboard-title" title="${dashboardData.title}">${dashboardData.title}</div>
 				</div>
 				<div class="bic-export-separator"></div>
 				<div class="bic-export-body">

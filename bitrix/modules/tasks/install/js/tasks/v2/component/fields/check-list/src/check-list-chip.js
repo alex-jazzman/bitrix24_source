@@ -118,12 +118,12 @@ export const CheckListChip = {
 	},
 	mounted(): void
 	{
-		this.$bitrix.eventEmitter.subscribe(EventName.AiAddCheckList, this.handleAiAdd);
+		this.$bitrix.eventEmitter.subscribe(EventName.AddCheckListFromText, this.handleAddFromText);
 		this.$bitrix.eventEmitter.subscribe(EventName.CloseCheckList, this.handleFieldClose);
 	},
 	beforeUnmount(): void
 	{
-		this.$bitrix.eventEmitter.unsubscribe(EventName.AiAddCheckList, this.handleAiAdd);
+		this.$bitrix.eventEmitter.unsubscribe(EventName.AddCheckListFromText, this.handleAddFromText);
 		this.$bitrix.eventEmitter.unsubscribe(EventName.CloseCheckList, this.handleFieldClose);
 	},
 	methods: {
@@ -146,9 +146,9 @@ export const CheckListChip = {
 				}
 			}
 		},
-		async handleAiAdd(baseEvent: BaseEvent): Promise<void>
+		async handleAddFromText(baseEvent: BaseEvent): Promise<void>
 		{
-			const checkListId = await this.buildAiCheckList(baseEvent.getData());
+			const checkListId = await this.buildCheckList(baseEvent.getData());
 
 			await this.highlightField();
 
@@ -197,7 +197,7 @@ export const CheckListChip = {
 				checklist: [parentId, childId],
 			});
 		},
-		async buildAiCheckList(baseText: string): Promise<string>
+		async buildCheckList(baseText: string): Promise<string>
 		{
 			if (!Type.isString(baseText) || baseText === '')
 			{

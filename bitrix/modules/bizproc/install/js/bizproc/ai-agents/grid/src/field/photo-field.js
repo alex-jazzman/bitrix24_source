@@ -20,6 +20,11 @@ export class PhotoField extends BaseField
 		avatar?.renderTo(this.getFieldNode());
 
 		Dom.addClass(this.getFieldNode(), 'agent-grid_user-photo');
+
+		if (!params?.user?.id)
+		{
+			Dom.addClass(this.getFieldNode(), 'agent-grid_user-photo-stub');
+		}
 	}
 
 	addMiniProfile(params: EmployeeFieldType): void

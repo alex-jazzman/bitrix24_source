@@ -36,7 +36,6 @@ $arActivityDescription = [
 		'SORT' => 2800,
 	],
 	'NODE_ACTION_SETTINGS' => [
-		'INCLUDE' => ['crmdealcomplexactivity'],
 		'HANDLES_DOCUMENT' => true,
 	],
 	'AI_DESCRIPTION' => 'Moves deal to the specified category and stage and stops all current unfinished robots and workflows',

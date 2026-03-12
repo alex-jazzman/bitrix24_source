@@ -14,6 +14,7 @@ import { EntitySelectorEntity } from 'tasks.v2.const';
 import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
 
 import { DefaultEditorOptions } from './default-editor-options';
+import { CheckListPlugin } from './editor-plugins/check-list-plugin';
 
 export const EntityTextTypes = Object.freeze({
 	Task: 'task',
@@ -127,6 +128,9 @@ export class EntityTextEditor extends EventEmitter
 				},
 			},
 			removePlugins: [],
+			extraPlugins: [
+				CheckListPlugin,
+			],
 			copilot: this.#getCopilotParams(),
 		};
 
@@ -152,6 +156,9 @@ export class EntityTextEditor extends EventEmitter
 
 	#subscribeToEvents(): void
 	{
+		const checkListPlugin: CheckListPlugin = this.#editor.getPlugin(CheckListPlugin.getName());
+		checkListPlugin.getEmitter().subscribe('checkListButtonClick', this.handleClickInCheckList);
+
 		this.#fileService.subscribe('onFileComplete', this.onFileComplete);
 		this.#fileService.subscribe('onFileRemove', this.onFileRemove);
 
@@ -160,6 +167,9 @@ export class EntityTextEditor extends EventEmitter
 
 	#unsubscribeToEvents(): void
 	{
+		const checkListPlugin: CheckListPlugin = this.#editor.getPlugin(CheckListPlugin.getName());
+		checkListPlugin.getEmitter().unsubscribe('checkListButtonClick', this.handleClickInCheckList);
+
 		this.#fileService.unsubscribe('onFileComplete', this.onFileComplete);
 		this.#fileService.unsubscribe('onFileRemove', this.onFileRemove);
 
@@ -287,6 +297,12 @@ export class EntityTextEditor extends EventEmitter
 		}
 
 		this.emit('editorBlurred');
+	};
+
+	handleClickInCheckList = (baseEvent: BaseEvent): void => {
+		const selectionText = baseEvent.getData();
+
+		this.emit('addCheckList', selectionText);
 	};
 
 	onFileComplete = (event: BaseEvent): void => {

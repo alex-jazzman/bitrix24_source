@@ -2,22 +2,12 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
-(function (exports,ui_vue3,ui_vue3_vuex,main_core_events,ui_analytics,crm_integration_analytics,crm_router,ui_dialogs_messagebox,ui_entitySelector,crm_toolbarComponent,ui_infoHelper,main_core) {
+(function (exports,ui_vue3,ui_vue3_vuex,main_core_events,crm_integration_analytics,crm_router,ui_analytics,ui_dialogs_messagebox,ui_entitySelector,crm_toolbarComponent,ui_infoHelper,main_core) {
 	'use strict';
 
 	function createSaveAnalyticsBuilder(store) {
 	  var builder = store.getters.isNew ? new crm_integration_analytics.Builder.Automation.AutomatedSolution.CreateEvent() : new crm_integration_analytics.Builder.Automation.AutomatedSolution.EditEvent();
 	  return builder.setId(store.state.automatedSolution.id).setTypeIds(store.state.automatedSolution.typeIds);
-	}
-	function wrapPromiseInAnalytics(promise, builder) {
-	  ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_ATTEMPT).buildData());
-	  return promise.then(function (thenResult) {
-	    ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_SUCCESS).buildData());
-	    return thenResult;
-	  })["catch"](function (error) {
-	    ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).buildData());
-	    throw error;
-	  });
 	}
 
 	var Card = {
@@ -187,8 +177,14 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	      });
 	    },
 	    save: function save() {
+	      var _this4 = this;
 	      var builder = createSaveAnalyticsBuilder(this.$store).setElement(crm_integration_analytics.Dictionary.ELEMENT_SAVE_IS_REQUIRED_TO_PROCEED_POPUP);
-	      return wrapPromiseInAnalytics(this.$store.dispatch('save'), builder);
+	      return this.$store.dispatch('save').then(function () {
+	        ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_SUCCESS).setId(_this4.$store.state.automatedSolution.id).buildData());
+	      })["catch"](function (error) {
+	        ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).setId(_this4.$store.state.automatedSolution.id).buildData());
+	        throw error;
+	      });
 	    }
 	  },
 	  template: "\n\t\t<div>\n\t\t\t<div class=\"ui-title-3\">{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_TAB_TITLE_TYPES') }}</div>\n\t\t\t<Card\n\t\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_TITLE')\"\n\t\t\t\t:description=\"$Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_DESCRIPTION')\"\n\t\t\t/>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CREATE_TYPE') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"boundTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CRM_TYPES') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"crmTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_EXTERNAL_TYPES') }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div ref=\"externalTypesTagSelectorContainer\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isShowPermissionsResetAlert\" class=\"ui-alert ui-alert-warning\">\n\t\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_AUTOMATED_SOLUTION_DETAILS_PERMISSIONS_WILL_BE_RESET_ALERT') }}\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t</div>\n\t"
@@ -292,12 +288,15 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	    save: function save() {
 	      var _this = this;
 	      var builder = this.analyticsBuilder.setElement(crm_integration_analytics.Dictionary.ELEMENT_CREATE_BUTTON);
-	      wrapPromiseInAnalytics(this.$store.dispatch('save'), builder).then(function () {
+	      this.$store.dispatch('save').then(function () {
+	        ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_SUCCESS).setId(_this.$store.state.automatedSolution.id).buildData());
+
 	        // don't register cancel event when this slider closes
 	        _this.isCancelEventAlreadyRegistered = true;
 	        _this.$Bitrix.Application.get().closeSliderOrRedirect();
-	      })["catch"](function () {}) // errors will be displayed reactively
-	      ["finally"](function () {
+	      })["catch"](function () {
+	        ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).setId(_this.$store.state.automatedSolution.id).buildData());
+	      })["finally"](function () {
 	        return _this.unlockButtons();
 	      });
 	    },
@@ -308,9 +307,12 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 	      // don't register cancel event when this slider closes.
 	      // we set this flag here because for some reason slider starts to close before the promise is resolved
 	      this.isCancelEventAlreadyRegistered = true;
-	      wrapPromiseInAnalytics(this.$store.dispatch('delete'), builder).then(function () {
+	      this.$store.dispatch('delete').then(function () {
+	        ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_SUCCESS).buildData());
 	        _this2.$Bitrix.Application.get().closeSliderOrRedirect();
 	      })["catch"](function () {
+	        ui_analytics.sendData(builder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).buildData());
+
 	        // errors will be displayed reactively
 
 	        // okay, may be the slider won't be closed after all since we've failed
@@ -753,5 +755,5 @@ this.BX.Crm.AutomatedSolution = this.BX.Crm.AutomatedSolution || {};
 
 	exports.App = App;
 
-}((this.BX.Crm.AutomatedSolution.Details = this.BX.Crm.AutomatedSolution.Details || {}),BX.Vue3,BX.Vue3.Vuex,BX.Event,BX.UI.Analytics,BX.Crm.Integration.Analytics,BX.Crm,BX.UI.Dialogs,BX.UI.EntitySelector,BX.Crm,BX.UI,BX));
+}((this.BX.Crm.AutomatedSolution.Details = this.BX.Crm.AutomatedSolution.Details || {}),BX.Vue3,BX.Vue3.Vuex,BX.Event,BX.Crm.Integration.Analytics,BX.Crm,BX.UI.Analytics,BX.UI.Dialogs,BX.UI.EntitySelector,BX.Crm,BX.UI,BX));
 //# sourceMappingURL=script.js.map

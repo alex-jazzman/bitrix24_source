@@ -778,8 +778,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 */
 		updateVideoNoteByMessageId(message)
 		{
-			const messageModel = this.getMessage(message.id);
-			message.setPlayVideoNote(messageModel.isPlaying, messageModel.playingTime);
+			const { isPlaying, playingTime } = this.store.getters['messagesModel/playbackModel/getPlayback'](this.dialogId, message.id);
+			message.setPlayVideoNote(isPlaying, playingTime);
 
 			return message;
 		}

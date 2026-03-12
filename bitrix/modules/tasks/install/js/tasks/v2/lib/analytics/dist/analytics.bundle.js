@@ -6,6 +6,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	'use strict';
 
 	const settings = main_core.Extension.getSettings('tasks.v2.lib.analytics');
+	var _sendRoleChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendRoleChange");
 	var _sendData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendData");
 	var _getTypeFromCardType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTypeFromCardType");
 	class AnalyticsSender {
@@ -16,39 +17,98 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _sendData, {
 	      value: _sendData2
 	    });
+	    Object.defineProperty(this, _sendRoleChange, {
+	      value: _sendRoleChange2
+	    });
 	  }
-	  sendOpenCard(params, options) {
+	  sendClickCreate(params, options) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
 	      event: tasks_v2_const.Analytics.Event.ClickCreate,
-	      type: tasks_v2_const.Analytics.Type.TaskMini,
-	      c_section: params.context,
-	      c_sub_section: params.additionalContext,
-	      c_element: params.element,
+	      type: babelHelpers.classPrivateFieldLooseBase(this, _getTypeFromCardType)[_getTypeFromCardType](options.cardType),
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      ...(params.additionalContext ? {
+	        c_sub_section: params.additionalContext
+	      } : {}),
+	      ...(params.element ? {
+	        c_element: params.element
+	      } : {}),
 	      status: tasks_v2_const.Analytics.Status.Success,
+	      p1: tasks_v2_const.Analytics.Params.IsDemo(settings.isDemo),
 	      p2: settings.userType,
+	      p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
 	      ...(options.collabId ? {
 	        p4: tasks_v2_const.Analytics.Params.CollabId(options.collabId)
-	      } : {})
+	      } : {}),
+	      p5: tasks_v2_const.Analytics.Params.CoexecutorsCount(options.coexecutorsCount)
+	    });
+	  }
+	  sendTaskView(params, options) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	      event: tasks_v2_const.Analytics.Event.TaskView,
+	      type: tasks_v2_const.Analytics.Type.Task,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      ...(params.additionalContext ? {
+	        c_sub_section: params.additionalContext
+	      } : {}),
+	      ...(params.element ? {
+	        c_element: params.element
+	      } : {}),
+	      status: tasks_v2_const.Analytics.Status.Success,
+	      p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId),
+	      p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
+	      p5: tasks_v2_const.Analytics.Params.CoexecutorsCount(options.coexecutorsCount)
+	    });
+	  }
+	  sendTaskComplete(params, options) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	      event: tasks_v2_const.Analytics.Event.TaskComplete,
+	      type: tasks_v2_const.Analytics.Type.Task,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      ...(params.additionalContext ? {
+	        c_sub_section: params.additionalContext
+	      } : {}),
+	      ...(params.element ? {
+	        c_element: params.element
+	      } : {}),
+	      status: tasks_v2_const.Analytics.Status.Success,
+	      p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId)
 	    });
 	  }
 	  sendOpenFullCard(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
 	      event: tasks_v2_const.Analytics.Event.FillTaskFormView,
 	      type: tasks_v2_const.Analytics.Type.TaskMini,
-	      c_section: params.context,
-	      c_sub_section: tasks_v2_const.Analytics.SubSection.Full,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      c_sub_section: tasks_v2_const.Analytics.SubSection.FullTaskForm,
 	      c_element: tasks_v2_const.Analytics.Element.FullFormButton,
-	      status: tasks_v2_const.Analytics.Status.Success
+	      status: tasks_v2_const.Analytics.Status.Success,
+	      p1: tasks_v2_const.Analytics.Params.IsDemo(settings.isDemo)
 	    });
 	  }
 	  sendAddTask(params, options) {
+	    var _options$event;
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
-	      event: tasks_v2_const.Analytics.Event.TaskCreate,
-	      type: tasks_v2_const.Analytics.Type.TaskMini,
-	      c_section: params.context,
-	      c_sub_section: params.additionalContext,
-	      c_element: params.element,
+	      event: (_options$event = options.event) != null ? _options$event : tasks_v2_const.Analytics.Event.TaskCreate,
+	      type: babelHelpers.classPrivateFieldLooseBase(this, _getTypeFromCardType)[_getTypeFromCardType](options.cardType),
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      ...(params.additionalContext ? {
+	        c_sub_section: params.additionalContext
+	      } : {}),
+	      ...(params.element ? {
+	        c_element: params.element
+	      } : {}),
 	      status: options.isSuccess ? tasks_v2_const.Analytics.Status.Success : tasks_v2_const.Analytics.Status.Error,
+	      p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId),
 	      p2: settings.userType,
 	      p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
 	      ...(options.collabId ? {
@@ -60,11 +120,18 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  sendAddTaskWithCheckList(params, options) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
 	      event: tasks_v2_const.Analytics.Event.TaskCreateWithChecklist,
-	      type: tasks_v2_const.Analytics.Type.TaskMini,
-	      c_section: params.context,
-	      c_sub_section: params.additionalContext,
-	      c_element: params.element,
+	      type: babelHelpers.classPrivateFieldLooseBase(this, _getTypeFromCardType)[_getTypeFromCardType](options.cardType),
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      ...(params.additionalContext ? {
+	        c_sub_section: params.additionalContext
+	      } : {}),
+	      ...(params.element ? {
+	        c_element: params.element
+	      } : {}),
 	      status: tasks_v2_const.Analytics.Status.Success,
+	      p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId),
 	      p2: settings.userType,
 	      p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
 	      ...(options.collabId ? {
@@ -76,8 +143,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  sendDescription(params, options) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
 	      event: tasks_v2_const.Analytics.Event.DescriptionTask,
-	      type: tasks_v2_const.Analytics.Type.TaskMini,
-	      c_section: params.context,
+	      type: babelHelpers.classPrivateFieldLooseBase(this, _getTypeFromCardType)[_getTypeFromCardType](options.cardType),
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
 	      c_sub_section: tasks_v2_const.Analytics.SubSection.TaskCard,
 	      status: tasks_v2_const.Analytics.Status.Success,
 	      p2: tasks_v2_const.Analytics.Params.HasDescription(options.hasDescription),
@@ -88,9 +157,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
 	      event: tasks_v2_const.Analytics.Event.AddProject,
 	      type: babelHelpers.classPrivateFieldLooseBase(this, _getTypeFromCardType)[_getTypeFromCardType](options.cardType),
-	      c_section: params.context,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      c_sub_section: tasks_v2_const.Analytics.SubSection.TaskCard,
 	      c_element: tasks_v2_const.Analytics.Element.ProjectButton,
 	      status: tasks_v2_const.Analytics.Status.Success,
+	      ...(options.taskId ? {
+	        p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId)
+	      } : {}),
 	      p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
 	      p5: tasks_v2_const.Analytics.Params.CoexecutorsCount(options.coexecutorsCount)
 	    });
@@ -99,20 +174,38 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
 	      event: tasks_v2_const.Analytics.Event.DeadlineSet,
 	      type: babelHelpers.classPrivateFieldLooseBase(this, _getTypeFromCardType)[_getTypeFromCardType](options.cardType),
-	      c_section: params.context,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
 	      c_sub_section: tasks_v2_const.Analytics.SubSection.TaskCard,
 	      c_element: options.element,
-	      status: tasks_v2_const.Analytics.Status.Success
+	      status: tasks_v2_const.Analytics.Status.Success,
+	      ...(options.taskId ? {
+	        p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId)
+	      } : {}),
+	      p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
+	      p5: tasks_v2_const.Analytics.Params.CoexecutorsCount(options.coexecutorsCount)
 	    });
 	  }
 	  sendAssigneeChange(params, options) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendRoleChange)[_sendRoleChange](params, {
+	      ...options,
 	      event: tasks_v2_const.Analytics.Event.AssigneeChange,
-	      type: babelHelpers.classPrivateFieldLooseBase(this, _getTypeFromCardType)[_getTypeFromCardType](options.cardType),
-	      c_section: params.context,
-	      c_sub_section: tasks_v2_const.Analytics.SubSection.TaskCard,
-	      c_element: tasks_v2_const.Analytics.Element.ChangeButton,
-	      status: tasks_v2_const.Analytics.Status.Success
+	      element: tasks_v2_const.Analytics.Element.ChangeButton
+	    });
+	  }
+	  sendAddCoexecutor(params, options) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendRoleChange)[_sendRoleChange](params, {
+	      ...options,
+	      event: tasks_v2_const.Analytics.Event.AddCoexecutor,
+	      element: tasks_v2_const.Analytics.Element.CoexecutorButton
+	    });
+	  }
+	  sendAddViewer(params, options) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendRoleChange)[_sendRoleChange](params, {
+	      ...options,
+	      event: tasks_v2_const.Analytics.Event.AddViewer,
+	      element: tasks_v2_const.Analytics.Element.ViewerButton
 	    });
 	  }
 	  sendAttachFile(params, options) {
@@ -123,7 +216,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
 	      event: tasks_v2_const.Analytics.Event.AttachFile,
 	      type: babelHelpers.classPrivateFieldLooseBase(this, _getTypeFromCardType)[_getTypeFromCardType](options.cardType),
-	      c_section: params.context,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
 	      c_sub_section: subSection,
 	      c_element: tasks_v2_const.Analytics.Element.UploadButton,
 	      status: tasks_v2_const.Analytics.Status.Success,
@@ -136,26 +231,34 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      p5: tasks_v2_const.Analytics.Params.FileExtension(options.fileExtension)
 	    });
 	  }
-	  sendAddChecklist(params, options) {
+	  sendStatusSummaryAdd(params, options) {
+	    var _options$subSection, _options$element;
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
-	      event: tasks_v2_const.Analytics.Event.AddChecklist,
+	      event: tasks_v2_const.Analytics.Event.StatusSummaryAdd,
 	      type: babelHelpers.classPrivateFieldLooseBase(this, _getTypeFromCardType)[_getTypeFromCardType](options.cardType),
-	      c_section: params.context,
-	      c_sub_section: options.isNewTask ? tasks_v2_const.Analytics.TaskState.New : tasks_v2_const.Analytics.TaskState.Existing,
-	      c_element: tasks_v2_const.Analytics.Element.CheckListButton,
-	      status: tasks_v2_const.Analytics.Status.Success,
-	      p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
-	      p4: tasks_v2_const.Analytics.Params.ChecklistPointsCount(options.checklistPointsCount),
-	      p5: tasks_v2_const.Analytics.Params.CoexecutorsCount(options.coexecutorsCount)
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      c_sub_section: (_options$subSection = options == null ? void 0 : options.subSection) != null ? _options$subSection : tasks_v2_const.Analytics.SubSection.TaskCard,
+	      c_element: (_options$element = options == null ? void 0 : options.element) != null ? _options$element : tasks_v2_const.Analytics.Element.AddResult,
+	      status: options.isSuccess ? tasks_v2_const.Analytics.Status.Success : tasks_v2_const.Analytics.Status.Error,
+	      ...(options.taskId ? {
+	        p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId)
+	      } : {})
 	    });
 	  }
 	  sendRoleClick(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
 	      event: tasks_v2_const.Analytics.Event.RoleClick,
 	      type: tasks_v2_const.Analytics.Type.Task,
-	      c_section: params.context,
-	      c_sub_section: params.additionalContext,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      ...(params.additionalContext ? {
+	        c_sub_section: params.additionalContext
+	      } : {}),
 	      c_element: tasks_v2_const.Analytics.Element.RoleButton,
+	      status: tasks_v2_const.Analytics.Status.Success,
 	      p1: tasks_v2_const.Analytics.Params.IsDemo(settings.isDemo)
 	    });
 	  }
@@ -170,13 +273,60 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
 	      event: tasks_v2_const.Analytics.Event.RoleClickType,
 	      type: tasks_v2_const.Analytics.Type.Task,
-	      c_section: params.context,
-	      c_sub_section: params.additionalContext,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      ...(params.additionalContext ? {
+	        c_sub_section: params.additionalContext
+	      } : {}),
 	      c_element: element,
 	      p1: tasks_v2_const.Analytics.Params.IsDemo(settings.isDemo),
 	      p2: tasks_v2_const.Analytics.Params.FilterEnabled(options.isFilterEnabled)
 	    });
 	  }
+	  sendManualTimeTracking(params, options) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	      category: tasks_v2_const.Analytics.Category.TimeTracking,
+	      event: tasks_v2_const.Analytics.Event.TimeEntryCreate,
+	      type: tasks_v2_const.Analytics.Type.Manual,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      c_sub_section: tasks_v2_const.Analytics.SubSection.TaskCard,
+	      status: tasks_v2_const.Analytics.Status.Success,
+	      p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId)
+	    });
+	  }
+	  sendAutoTimeTracking(params, options) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	      category: tasks_v2_const.Analytics.Category.TimeTracking,
+	      event: tasks_v2_const.Analytics.Event.TimeEntryCreate,
+	      type: tasks_v2_const.Analytics.Type.Auto,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      c_sub_section: tasks_v2_const.Analytics.SubSection.TaskCard,
+	      status: tasks_v2_const.Analytics.Status.Success,
+	      p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId)
+	    });
+	  }
+	}
+	function _sendRoleChange2(params, options) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	    event: options.event,
+	    type: babelHelpers.classPrivateFieldLooseBase(this, _getTypeFromCardType)[_getTypeFromCardType](options.cardType),
+	    ...(params.context ? {
+	      c_section: params.context
+	    } : {}),
+	    c_sub_section: tasks_v2_const.Analytics.SubSection.TaskCard,
+	    c_element: options.element,
+	    status: tasks_v2_const.Analytics.Status.Success,
+	    ...(options.taskId ? {
+	      p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId)
+	    } : {}),
+	    p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
+	    p5: tasks_v2_const.Analytics.Params.CoexecutorsCount(options.coexecutorsCount)
+	  });
 	}
 	function _sendData2(data) {
 	  ui_analytics.sendData({

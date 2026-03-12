@@ -1,8 +1,0 @@
-<?
-$MESS["DISCOUNT_PRESET_DEFAULT_PRODUCT_PRODUCT_TITLE"] = "Знижка на товар";
-$MESS["DISCOUNT_PRESET_DEFAULT_PRODUCT_PROPERTY_TITLE"] = "Знижка на товар з певною властивістю";
-$MESS["DISCOUNT_PRESET_DEFAULT_PAYMENT_DISCOUNT_TITLE"] = "Знижка на платіжну систему";
-$MESS["DISCOUNT_PRESET_DEFAULT_PAYMENT_EXTRA_TITLE"] = "Націнка на платіжну систему";
-$MESS["DISCOUNT_PRESET_DEFAULT_DELIVERY_DISCOUNT_TITLE"] = "Знижка на службу доставки";
-$MESS["DISCOUNT_PRESET_DEFAULT_DELIVERY_EXTRA_TITLE"] = "Націнка на службу доставки";
-?>

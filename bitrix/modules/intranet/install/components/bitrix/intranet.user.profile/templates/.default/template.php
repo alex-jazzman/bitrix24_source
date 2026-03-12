@@ -16,11 +16,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI;
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 'no-all-paddings no-background');
+$isRenamedIntegrator = \Bitrix\Intranet\Public\Service\IntegratorService::createByDefault()->isRenamedIntegrator();
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.buttons',
@@ -28,6 +30,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 	'ui.tooltip',
 	'ui.hint',
 	'ui.icons.b24',
+	'ui.icon-set.solid',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.avatar-editor',
@@ -58,7 +61,6 @@ if (!$arResult['Permissions']['view'])
 }
 
 Page\Asset::getInstance()->addJs($templateFolder.'/js/utils.js');
-Page\Asset::getInstance()->addJs($templateFolder.'/js/stresslevel.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/grats.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/profilepost.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/tags.js');
@@ -136,7 +138,8 @@ if (
 		<div class="intranet-user-profile-column-block">
 			<div class="intranet-user-profile-rank">
 				<?php
-				$haveAvailableActions = in_array(true, $arResult['ACTIONS_AVAILABILITY'], true);
+				$availableMenuActions = $arResult['ACTIONS_AVAILABILITY'];
+				$haveAvailableActions = isset($availableMenuActions['fire']) && $availableMenuActions['fire'] === true;
 
 				if (
 					!empty($arResult["User"]["STATUS"])
@@ -160,10 +163,21 @@ if (
 					}
 					?>
 					<div class="<?= implode(' ', $classList) ?>" data-role="user-profile-actions-button">
-						<span><?=mb_strtoupper(
-							Loc::getMessage("INTRANET_USER_PROFILE_MSG_1_".$arResult["User"]["STATUS"])
-							?? Loc::getMessage("INTRANET_USER_PROFILE_".$arResult["User"]["STATUS"]
-							))?></span>
+						<span>
+							<?php
+								if ($arResult['User']['STATUS'] === 'integrator' && $isRenamedIntegrator)
+								{
+									echo mb_strtoupper(Loc::getMessage('INTRANET_USER_PROFILE_integrator_RENAMED'));
+								}
+								else
+								{
+									echo mb_strtoupper(
+										Loc::getMessage("INTRANET_USER_PROFILE_MSG_1_".$arResult["User"]["STATUS"])
+										?? Loc::getMessage("INTRANET_USER_PROFILE_".$arResult["User"]["STATUS"])
+									);
+								}
+							?>
+						</span>
 						<?php
 						if ($arResult["Permissions"]['edit'] || $haveAvailableActions)
 						{
@@ -176,6 +190,13 @@ if (
 					<?php
 				}
 				?>
+				<?php if($arResult['User']['IS_FIRST_ADMIN'] && $arResult['isFirstAdminConfirmationEnabled']): ?>
+					<link rel="stylesheet" href="/bitrix/modules/ui/install/js/ui/icon-set/solid/style.css">
+
+					<div id="intranet-user-profile-portal-creator" class="intranet-user-profile-rank-item intranet-user-profile-rank-portal-creator">
+						<div class="ui-icon-set --s-crown-1 intranet-user-profile-portal-creator-icon"></div>
+					</div>
+				<?php endif;?>
 			</div>
 
 			<div class="intranet-user-profile-status-info">
@@ -313,55 +334,6 @@ if (
 			?>
 		</div>
 		<?php
-
-		if (
-			$arResult["StressLevel"]['AVAILABLE'] === 'Y'
-			&& !$arResult["isExtranetSite"]
-			&& isset($arResult["User"]["STATUS"])
-			&& !in_array($arResult["User"]["STATUS"], ['email', 'extranet', 'collaber'])
-		)
-		{
-			?>
-			<div class="intranet-user-profile-column-block intranet-user-profile-column-block-inline" id="intranet-user-profile-stresslevel-noresult" style="display: none;">
-				<div id="intranet-user-profile-stresslevel-noresult-widget" class="intranet-user-profile-stresslevel-widget"></div>
-				<div class="intranet-user-profile-stresslevel-info intranet-user-profile-stresslevel-info-withoiut-padding">
-					<div class="intranet-user-profile-stresslevel-status-text"><?=Loc::getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_TITLE')?></div>
-					<span id="intranet-user-profile-stresslevel-check" class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-round"><?=Loc::getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_BUTTON')?></span>
-				</div>
-			</div>
-			<div class="intranet-user-profile-column-block intranet-user-profile-column-block-inline" id="intranet-user-profile-stresslevel-result" style="display: none;">
-				<div id="intranet-user-profile-stresslevel-result-perms-close" class="intranet-user-profile-stresslevel-invisible" data-hint="<?=Loc::getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_VISIBLE')?>" data-hint-no-icon style="display: none;"></div>
-				<div id="intranet-user-profile-stresslevel-result-perms-open" class="intranet-user-profile-stresslevel-visible" data-hint="<?=Loc::getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_INVISIBLE')?>" data-hint-no-icon style="display: none;"></div>
-				<div id="intranet-user-profile-stresslevel-widget" class="intranet-user-profile-stresslevel-widget"></div>
-				<div class="intranet-user-profile-stresslevel-info">
-					<div class="intranet-user-profile-stresslevel-info-block">
-						<?php
-						foreach($arResult["StressLevel"]["TYPES_LIST"] as $type => $description)
-						{
-							?>
-							<div id="intranet-user-profile-stresslevel-status-<?=htmlspecialcharsbx($type)?>" class="intranet-user-profile-stresslevel-status intranet-user-profile-stresslevel-status-<?=htmlspecialcharsbx($type)?>" style="display: none;"></div>
-							<?php
-						}
-						?>
-						<div id="intranet-user-profile-stresslevel-status-info" class="intranet-user-profile-stresslevel-status-info" data-hint="" data-hint-no-icon></div>
-					</div>
-					<div id="intranet-user-profile-stresslevel-comment" class="intranet-user-profile-stresslevel-status-text"></div>
-					<?php
-					if (
-						$arResult["StressLevel"]["IMAGE_SUPPORT"] === 'Y'
-						&& (int)$USER->getId() === (int)$arResult["User"]["ID"]
-					)
-					{
-						?>
-						<div id="intranet-user-profile-stresslevel-status-copy" class="intranet-user-profile-stresslevel-status-copy"><?=Loc::getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_SHARE_LINK')?></div>
-						<?php
-					}
-					?>
-				</div>
-			</div>
-			<?php
-		}
-
 		if ($arResult["IsOwnProfile"] && $arResult["User"]["STATUS"] !== "email")
 		{
 			?>
@@ -909,6 +881,8 @@ if ($arResult["adminRightsRestricted"])
 		"INTRANET_USER_PROFILE_DELETE_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_DELETE_CONFIRM")) ?>",
 		"INTRANET_USER_PROFILE_HIRE_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_HIRE_CONFIRM")) ?>",
 		"INTRANET_USER_PROFILE_YES" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_YES")) ?>",
+		"INTRANET_USER_PROFILE_YES_FIRE":"<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_YES_FIRE")) ?>",
+		"INTRANET_USER_PROFILE_FIRE_POPUP_TITLE": "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE_POPUP_TITLE")) ?>",
 		"INTRANET_USER_PROFILE_NO" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_NO")) ?>",
 		"INTRANET_USER_PROFILE_MOVE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE")) ?>",
 		"INTRANET_USER_PROFILE_CLOSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CLOSE")) ?>",
@@ -920,8 +894,12 @@ if ($arResult["adminRightsRestricted"])
 			'[helpdesklink]' => '<a href="javascript:top.BX.Helper.show(\'redirect=detail&code=20682986\');">',
 			'[/helpdesklink]' => '</a>'
 		])) ?>",
+		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_HINT": "<?= CUtil::JSEscape(Loc::getMessage($isRenamedIntegrator ? 'INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_HINT_RENAMED' : 'INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_HINT')) ?>",
+		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_NOTE": "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_NOTE")) ?>",
+		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_WARNING": "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_WARNING")) ?>",
+		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_LINK": "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_LINK")) ?>",
 		"INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1")) ?>",
-		"INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR")) ?>",
+		"INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR" : "<?= CUtil::JSEscape(Loc::getMessage($isRenamedIntegrator ? 'INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR_RENAMED' : 'INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR')) ?>",
 		"INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1")) ?>",
 		"INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM")) ?>",
 		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM" : "<?= CUtil::JSEscape($moveRightsConfirmText) ?>",
@@ -935,23 +913,43 @@ if ($arResult["adminRightsRestricted"])
 		"INTRANET_USER_PROFILE_TAGS_POPUP_HINT_3" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_HINT_3")) ?>",
 		"INTRANET_USER_PROFILE_TAGS_POPUP_HINT_2" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_HINT_2")) ?>",
 		"INTRANET_USER_FIILDS_SETTINGS" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_FIILDS_SETTINGS")) ?>",
-		"INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS")) ?>",
+		"INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS" : "<?= CUtil::JSEscape(Loc::getMessage($isRenamedIntegrator ? 'INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS_RENAMED' : 'INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS')) ?>",
 		"INTRANET_USER_PROFILE_FIRE_INVITED_USER" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE_INVITED_USER")) ?>",
 		"INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM" : "<?= CUtil::JSEscape(
-			Loc::getMessage("INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM", array(
+			Loc::getMessage($isRenamedIntegrator ? 'INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM_RENAMED' : 'INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM', [
 				"#NAME#" => "<b>".$arResult["User"]["FULL_NAME"]."</b>",
 				"#LINK_START#" => "<a href=\"javascript:void(0)\" onclick='top.BX.Helper.show(\"redirect=detail&code=7725333\");'>",
 				"#LINK_END#" => "</a>"
-			))
+			])
 		) ?>",
-		"INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT")) ?>",
 		"INTRANET_USER_PROFILE_ACTION_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_ACTION_CONFIRM")) ?>",
 		"INTRANET_USERPROFILE_ACTION_REFUSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USERPROFILE_ACTION_REFUSE")) ?>",
 		"INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE")) ?>",
-		"INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER")) ?>",
+		"INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER" : "<?= CUtil::JSEscape(
+				Loc::getMessage($isRenamedIntegrator ? 'INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_RENAMED' : 'INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER', [
+						'#PARTNER_URL#' => $arResult['PARTNER_URL'] ?? '',
+				])
+		) ?>",
 		'INTRANET_USER_PROFILE_AVATAR_CAMERA' : '<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_AVATAR_CAMERA")) ?>',
 		'INTRANET_USER_PROFILE_AVATAR_LOAD' : '<?= CUtil::JSEscape(Loc::getMessage('INTRANET_USER_PROFILE_AVATAR_LOAD')) ?>',
 		'INTRANET_USER_PROFILE_AVATAR_MASK' : '<?= CUtil::JSEscape(Loc::getMessage('INTRANET_USER_PROFILE_AVATAR_MASK')) ?>',
+		'INTRANET_USER_PROFILE_FIRST_ADMIN_REQUEST_SENT': '<?= CUtil::JSEscape(
+			Loc::getMessage(
+				'INTRANET_USER_PROFILE_FIRST_ADMIN_REQUEST_SENT',
+				[
+					'[br]' => '<br>',
+					'#NAME#' => $arResult['User']['FULL_NAME'],
+				]
+			)
+		) ?>',
+		'INTRANET_USER_PROFILE_PORTAL_CREATOR_POPUP': "<?= CUtil::JSEscape(
+			Loc::getMessage("INTRANET_USER_PROFILE_PORTAL_CREATOR_POPUP",
+				[
+					'[span]' => '<span class="intranet-user-profile-portal-creator-popup-link">',
+					'[/span]' => '</span>',
+				],
+			),
+		) ?>",
 	});
 
 	new BX.Intranet.UserProfile.Manager({
@@ -960,6 +958,8 @@ if ($arResult["adminRightsRestricted"])
 		canEditProfile: '<?=$arResult["Permissions"]['edit'] ? "Y" : "N"?>',
 		badgesData: <?= (CUtil::phpToJSObject(!empty($arResult['Gratitudes']['BADGES']) ? $arResult['Gratitudes']['BADGES'] : [])) ?>,
 		gratPostListPageSize: <?= (int)$arParams['GRAT_POST_LIST_PAGE_SIZE'] ?>,
+		currentUserId: <?= (int)$arResult["CurrentUser"]["ID"] ?>,
+		currentUserName: '<?= \CUtil::JSEscape($arResult["CurrentUser"]["FORMATTED_NAME"])?>',
 		userId: <?= (int)$arResult["User"]["ID"] ?>,
 		userStatus: <?= CUtil::PhpToJSObject($arResult["User"]["STATUS"]) ?>,
 		isCollaber: "<?=($arResult["User"]["IS_COLLABER"] ?? null) ? "Y" : "N"?>",
@@ -992,8 +992,10 @@ if ($arResult["adminRightsRestricted"])
 		userpicUploadAttribute: <?= \Bitrix\Main\Web\Json::encode(UI\Avatar\Mask\Helper::getHTMLAttribute($arResult["User"]["PERSONAL_PHOTO"])) ?>,
 		actionsAvailability: <?= \Bitrix\Main\Web\Json::encode($arResult['ACTIONS_AVAILABILITY']) ?>,
 		rootDepartment: <?= \Bitrix\Main\Web\Json::encode($arResult['ROOT_DEPARTMENT']) ?>,
+		isUserFirstAdmin: <?= Json::encode($arResult['User']['IS_FIRST_ADMIN']) ?>,
 		workPosition: '<?= ($arResult["IsOwnProfile"] || $arResult["Permissions"]['edit']) ? \CUtil::JSEscape($arResult["User"]["WORK_POSITION"] ?? '') : '' ?>',
 		otp: <?= \CUtil::PhpToJSObject($arResult["OTP"] ?? []) ?>,
+		isFirstAdminConfirmationEnabled: <?= Json::encode($arResult['isFirstAdminConfirmationEnabled']) ?>,
 	});
 </script>
 

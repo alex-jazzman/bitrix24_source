@@ -33,8 +33,8 @@ class Market extends \CModule
 			$this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
 		}
 
-		$this->MODULE_NAME = Loc::getMessage('MARKET_INSTALL_NAME');
-		$this->MODULE_DESCRIPTION = Loc::getMessage('MARKET_INSTALL_DESCRIPTION');
+		$this->MODULE_NAME = Loc::getMessage('MARKET_INSTALL_NAME_MSGVER_1');
+		$this->MODULE_DESCRIPTION = Loc::getMessage('MARKET_INSTALL_DESCRIPTION_MSGVER_1');
 		$this->MODULE_FOLDER = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID;
 	}
 
@@ -398,7 +398,7 @@ class Market extends \CModule
 			if ($step < 2)
 			{
 				$APPLICATION->includeAdminFile(
-					Loc::getMessage('MARKET_INSTALL_TITLE'),
+					Loc::getMessage('MARKET_INSTALL_TITLE_MSGVER_1'),
 					$this->MODULE_FOLDER . '/install/step1.php'
 				);
 			}
@@ -415,7 +415,7 @@ class Market extends \CModule
 				}
 				$GLOBALS['errors'] = $this->errors;
 				$APPLICATION->includeAdminFile(
-					Loc::getMessage('MARKET_INSTALL_TITLE'),
+					Loc::getMessage('MARKET_INSTALL_TITLE_MSGVER_1'),
 					$this->MODULE_FOLDER . '/install/step2.php'
 				);
 			}
@@ -431,7 +431,7 @@ class Market extends \CModule
 			if ($step < 2)
 			{
 				$APPLICATION->includeAdminFile(
-					Loc::getMessage('MARKET_UNINSTALL_TITLE'),
+					Loc::getMessage('MARKET_UNINSTALL_TITLE_MSGVER_1'),
 					$this->MODULE_FOLDER . '/install/unstep1.php'
 				);
 			}
@@ -443,7 +443,7 @@ class Market extends \CModule
 				$this->unInstallFiles();
 				$GLOBALS['errors'] = $this->errors;
 				$APPLICATION->includeAdminFile(
-					Loc::getMessage('MARKET_UNINSTALL_TITLE'),
+					Loc::getMessage('MARKET_UNINSTALL_TITLE_MSGVER_1'),
 					$this->MODULE_FOLDER . '/install/unstep2.php'
 				);
 			}

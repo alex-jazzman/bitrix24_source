@@ -1,2 +1,0 @@
-<?php
-$MESS["INTRANET_USER_FILTER_COLLABER"] = "Гість";

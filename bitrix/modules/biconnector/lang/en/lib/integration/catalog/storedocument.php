@@ -1,0 +1,18 @@
+<?php
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_CURRENCY"] = "Inventory object currency";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_DATE_CREATE"] = "Created on";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_DATE_MODIFY"] = "Modified on";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_DOC_TYPE"] = "Inventory object type";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_DOC_TYPE_CODE"] = "Inventory object type code";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_ID"] = "Unique inventory object ID";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_RESPONSIBLE"] = "Responsible person ID and name";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_RESPONSIBLE_ID"] = "Responsible person ID";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_RESPONSIBLE_NAME"] = "Responsible person name";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_STATUS"] = "Inventory object status";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_STATUS_CODE"] = "Inventory object processed";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_STATUS_CODE_FULL"] = "Inventory object processed, Y/N";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_TITLE"] = "Inventory object name";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_TOTAL"] = "Inventory object total";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_WAS_CANCELLED"] = "Inventory object canceled";
+$MESS["CATALOG_STORE_DOCUMENT_FIELD_WAS_CANCELLED_FULL"] = "Inventory object canceled, Y/N";
+$MESS["CATALOG_STORE_DOCUMENT_TABLE"] = "Inventory objects";

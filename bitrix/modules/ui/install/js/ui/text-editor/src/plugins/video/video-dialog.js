@@ -2,6 +2,7 @@ import { Tag, Type, Dom, Loc } from 'main.core';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { Popup, PopupTarget, PopupTargetOptions } from 'main.popup';
+import { Outline } from 'ui.icon-set.api.core';
 import { sanitizeUrl } from '../../helpers/sanitize-url';
 
 import './video-dialog.css';
@@ -134,7 +135,7 @@ export default class VideoDialog extends EventEmitter
 							onclick="${this.#handleSaveBtnClick.bind(this)}"
 							data-testid="video-dialog-save-btn"
 						>
-							<span class="ui-icon-set --check"></span>
+							<span class="ui-icon-set --${Outline.CHECK_L}"></span>
 						</button>
 						<button 
 							type="button" 
@@ -142,7 +143,7 @@ export default class VideoDialog extends EventEmitter
 							onclick="${this.#handleCancelBtnClick.bind(this)}"
 							data-testid="video-dialog-cancel-btn"
 						>
-							<span class="ui-icon-set --cross-60"></span>
+							<span class="ui-icon-set --${Outline.CROSS_L}"></span>
 						</button>
 					</div>
 					${this.getStatusContainer()}

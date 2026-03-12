@@ -1,3 +1,0 @@
-<?php
-$MESS["SETTINGS_V2_CONTROLLER_RELOADED_SETTING_CHANGE_DESCRIPTION"] = "Застосунок буде перезавантажено для застосування змін.";
-$MESS["SETTINGS_V2_CONTROLLER_RELOADED_SETTING_CHANGE_TITLE"] = "Увага";

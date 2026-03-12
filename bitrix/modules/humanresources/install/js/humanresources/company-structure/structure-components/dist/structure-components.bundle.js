@@ -576,56 +576,49 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  props: {
 	    title: {
 	      type: String,
-	      required: false,
 	      default: null
 	    },
 	    withoutTitleBar: {
 	      type: Boolean,
-	      required: false,
 	      default: false
 	    },
 	    description: {
-	      type: String,
-	      required: false
+	      type: String
 	    },
 	    onlyConfirmButtonMode: {
 	      type: Boolean,
-	      required: false,
 	      default: false
 	    },
 	    confirmBtnText: {
 	      type: String,
-	      required: false,
 	      default: null
 	    },
 	    showActionButtonLoader: {
 	      type: Boolean,
-	      required: false,
 	      default: false
 	    },
 	    lockActionButton: {
 	      type: Boolean,
-	      required: false,
 	      default: false
 	    },
 	    cancelBtnText: {
 	      type: String,
-	      required: false,
 	      default: null
 	    },
 	    bindElement: {
 	      type: HTMLElement,
-	      required: false,
 	      default: null
 	    },
 	    width: {
 	      type: Number,
-	      required: false,
 	      default: 300
+	    },
+	    padding: {
+	      type: Number,
+	      default: 0
 	    },
 	    confirmButtonClass: {
 	      type: String,
-	      required: false,
 	      default: 'ui-btn-primary'
 	    }
 	  },
@@ -681,7 +674,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        } : false,
 	        contentNoPaddings: true,
 	        contentPadding: 0,
-	        padding: 0,
+	        padding: this.padding,
 	        className: 'hr_structure_confirmation_popup',
 	        autoHide: false,
 	        draggable: true,
@@ -1099,8 +1092,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	                tab.select();
 	              }
 	              if (!['recents', 'search'].includes(tab.id)) {
-	                tab.deselect();
-	                tab.setVisible(false);
+	                dialog.removeTab(tab.id);
 	              }
 	            }
 	          },
@@ -1181,6 +1173,44 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 		</div>
 	`
 	};
+
+	let _$3 = t => t,
+	  _t$3,
+	  _t2;
+	class CommunicationsStub extends ui_entitySelector.BaseStub {
+	  constructor(...args) {
+	    super(...args);
+	    this.content = null;
+	  }
+	  getContainer() {
+	    return this.cache.remember('container', () => {
+	      const title = main_core.Type.isStringFilled(this.getOption('title')) ? this.getOption('title') : '';
+	      const {
+	        stubContainer,
+	        stubTitles
+	      } = main_core.Tag.render(_t$3 || (_t$3 = _$3`
+				<div ref="stubContainer" class="communication-dialog-stub-container">
+					<div class="communication-dialog-stub-icon"></div>
+					<div ref="stubTitles" class="communication-dialog-stub-titles">
+						<div class="communication-dialog-stub-title">${0}</div>
+					</div>
+				</div>
+			`), title);
+	      const subtitleElement = this.getSubtitleElement();
+	      if (subtitleElement) {
+	        main_core.Dom.append(subtitleElement, stubTitles);
+	      }
+	      return stubContainer;
+	    });
+	  }
+	  getSubtitleElement() {
+	    const subtitle = this.getOption('subtitle');
+	    return subtitle ? main_core.Tag.render(_t2 || (_t2 = _$3`<div class="communication-dialog-stub-subtitle">${0}</div>`), subtitle) : null;
+	  }
+	  render() {
+	    return this.getContainer();
+	  }
+	}
 
 	const getChatDialogEntity = function () {
 	  return {
@@ -1290,7 +1320,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  }
 	  return {
 	    visible: false,
-	    stub: true,
+	    stub: CommunicationsStub.prototype.constructor,
 	    stubOptions: {
 	      title,
 	      subtitle

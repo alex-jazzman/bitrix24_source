@@ -1,3 +1,0 @@
-<?php
-$MESS["SELECTOR_COMPONENT_IBLOCK_SECTION_START_TYPING_TEXT"] = "Список розділів порожній.";
-$MESS["SELECTOR_COMPONENT_IBLOCK_SECTION_TITLE"] = "Розділ інфоблока";

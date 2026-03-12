@@ -1,8 +1,10 @@
 <?php
+$MESS["BIZPROC_SDA_CREATE_NEW_STORAGE"] = "Create new field";
 $MESS["BIZPROC_SDA_DELETE_ERROR_ITEM"] = "Error deleting item #ITEM_ID#.";
 $MESS["BIZPROC_SDA_DELETE_MODE"] = "Delete mode";
 $MESS["BIZPROC_SDA_DELETE_MODE_ALL"] = "Delete all rows";
 $MESS["BIZPROC_SDA_DELETE_MODE_MULTIPLE"] = "Delete rows matching filter";
+$MESS["BIZPROC_SDA_EMPTY_STORAGE_ID_OR_CODE"] = "Storage not selected, or storage symbolic code not specified.";
 $MESS["BIZPROC_SDA_FILTER_FIELDS_COLLAPSED_TEXT"] = "Filter applied, click Expand to view.";
 $MESS["BIZPROC_SDA_FILTER_FIELDS_PROPERTY"] = "Field filter";
 $MESS["BIZPROC_SDA_INVALID_DELETE_MODE"] = "Incorrect delete mode selected.";

@@ -382,6 +382,40 @@ jn.define('testing/matchers', (require, exports, module) => {
 		}
 	}
 
+	class ContainsMatcher
+	{
+		constructor(actual, expected)
+		{
+			this.actualValue = actual;
+			this.expectedValue = expected;
+		}
+
+		isArray(value)
+		{
+			return Array.isArray(value);
+		}
+
+		isString(value)
+		{
+			return typeof value === 'string';
+		}
+
+		match()
+		{
+			if (this.isArray(this.actualValue))
+			{
+				return this.actualValue.includes(this.expectedValue);
+			}
+
+			if (this.isString(this.actualValue))
+			{
+				return this.actualValue.includes(this.expectedValue);
+			}
+
+			return false;
+		}
+	}
+
 	module.exports = {
 		TestingMatcher,
 		ExactMatcher,
@@ -397,5 +431,6 @@ jn.define('testing/matchers', (require, exports, module) => {
 		RegexMatcher,
 		LessThanMatcher,
 		GreaterThanMatcher,
+		ContainsMatcher,
 	};
 });

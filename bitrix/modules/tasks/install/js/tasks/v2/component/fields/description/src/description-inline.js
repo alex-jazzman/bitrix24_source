@@ -102,6 +102,7 @@ export const DescriptionInline = {
 			this.isFocused = false;
 
 			const description = this.editor.getText();
+
 			void taskService.update(this.taskId, { description });
 		},
 		handleEditorChange(): void

@@ -24,7 +24,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 				enabled: true,
 			};
 
-			this.floatingActionButtonRef = null;
+			this.floatingActionButton = null;
 			this.initFloatingButton();
 
 			this.onSelectCategoryHandler = this.onSelectCategory.bind(this);
@@ -38,29 +38,34 @@ jn.define('crm/category-list', (require, exports, module) => {
 
 		initFloatingButton()
 		{
-			if (this.isReadOnly() || !this.canUserEditCategory())
-			{
-				return;
-			}
-
-			this.floatingActionButtonRef = FloatingActionButton({
+			this.floatingActionButton = new FloatingActionButton({
 				testId: 'category-list-create-category-button',
-				parentLayout: this.props.layout,
+				layout: this.props.layout,
 				onClick: () => this.onCreateCategory(),
 			});
 		}
 
 		componentDidMount()
 		{
-			this.floatingActionButtonRef?.setFloatingButton({
-				hide: false,
-			});
+			if (!this.isReadOnly() && this.canUserEditCategory())
+			{
+				this.floatingActionButton.show();
+			}
 		}
 
 		componentWillReceiveProps(props)
 		{
 			this.state.categories = BX.prop.getArray(props, 'categories', []);
 			this.state.currentCategoryId = props.currentCategoryId;
+
+			if (props.readOnly || !props.canUserEditCategory)
+			{
+				this.floatingActionButton.hide();
+			}
+			else
+			{
+				this.floatingActionButton.show();
+			}
 		}
 
 		onCreateCategory()

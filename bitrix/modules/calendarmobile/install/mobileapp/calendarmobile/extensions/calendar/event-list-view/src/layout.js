@@ -62,7 +62,7 @@ jn.define('calendar/event-list-view/layout', (require, exports, module) => {
 		{
 			return new EventList({
 				layout: this.props.layout,
-				floatingActionButtonRef: this.props.floatingActionButtonRef,
+				floatingActionButton: this.props.floatingActionButton,
 			});
 		}
 	}

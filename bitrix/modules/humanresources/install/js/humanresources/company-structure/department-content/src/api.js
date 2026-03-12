@@ -31,7 +31,7 @@ export const DepartmentAPI = {
 		});
 	},
 	fireUser: (userId: number): Promise<void> => {
-		return postData('intranet.user.fire', {
+		return postData('intranet.v2.User.fire', {
 			userId,
 		});
 	},
@@ -83,6 +83,19 @@ export const DepartmentAPI = {
 			ids,
 			removeIds,
 			withChildren,
+		});
+	},
+	getUserSettings: (userId: number, nodeId: number): Promise<void> => {
+		return postData('humanresources.api.Structure.UserSettings.get', {
+			userId,
+			nodeId,
+		});
+	},
+	saveUserSettings: (userId: number, nodeId: number, settings: Record<string, Number[]>): Promise<void> => {
+		return postData('humanresources.api.Structure.UserSettings.save', {
+			userId,
+			nodeId,
+			settings,
 		});
 	},
 };

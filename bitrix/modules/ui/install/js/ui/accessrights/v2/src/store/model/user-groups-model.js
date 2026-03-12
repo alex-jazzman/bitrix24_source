@@ -179,6 +179,11 @@ export class UserGroupsModel extends BuilderModel
 					isModified: state.collection.get(userGroupId).isNew,
 				};
 			},
+			getAccessRightValue: (state, getters) => (userGroup: UserGroup, sectionCode: string, valueId: string): AccessRightValue => {
+				const value = userGroup.accessRights.get(valueId);
+
+				return value ?? getters.getEmptyAccessRightValue(userGroup.id, sectionCode, valueId);
+			},
 			defaultAccessRightValues: (state, getters, rootState): Map<string, AccessRightValue> => {
 				const result = new Map();
 

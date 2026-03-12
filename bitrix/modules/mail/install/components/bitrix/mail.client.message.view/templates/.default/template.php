@@ -18,7 +18,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.fonts.opensans',
 	'ui.icons.b24',
 	'ui.alerts',
-	'ui.sidepanel.page-swapper'
+	'ui.sidepanel.page-swapper',
+	'mail.message-body',
 ]);
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 $bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
@@ -32,7 +33,7 @@ $source = $_REQUEST['source'];
 $openedSource = null;
 if ($source)
 {
-	$openedSource = Helper\Message::getAnalyticsSourceByType($source) ?? $source;
+	$openedSource = Helper\AnalyticsHelper::getAnalyticsSourceByType($source) ?? $source;
 }
 
 $urlParams = [

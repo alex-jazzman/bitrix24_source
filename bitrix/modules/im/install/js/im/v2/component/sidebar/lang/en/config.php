@@ -1,7 +1,6 @@
 <?php
 $MESS["IM_SIDEBAR_ADD_BUTTON_TEXT"] = "Add";
 $MESS["IM_SIDEBAR_AI_MODEL_POPUP_HELP"] = "Which provider is best for me?";
-$MESS["IM_SIDEBAR_AI_MODEL_POPUP_MARKET"] = "Select in Market";
 $MESS["IM_SIDEBAR_AI_MODEL_POPUP_MARKET_MSGVER_1"] = "Select in Market";
 $MESS["IM_SIDEBAR_AI_MODEL_POPUP_SETTINGS"] = "Settings";
 $MESS["IM_SIDEBAR_AUDIO_EMPTY"] = "There are no audio files.";
@@ -46,6 +45,7 @@ $MESS["IM_SIDEBAR_MEETINGS_EMPTY"] = "There are no meetings.";
 $MESS["IM_SIDEBAR_MEETING_DETAIL_TITLE"] = "Meetings";
 $MESS["IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE"] = "Subscribers: #NUMBER#";
 $MESS["IM_SIDEBAR_MEMBERS_DETAIL_TITLE"] = "Members: #NUMBER#";
+$MESS["IM_SIDEBAR_MENU_COPY_DIALOG_ID"] = "Copy chat ID";
 $MESS["IM_SIDEBAR_MENU_COPY_INVITE_LINK"] = "Copy link";
 $MESS["IM_SIDEBAR_MENU_COPY_LINK"] = "Copy link";
 $MESS["IM_SIDEBAR_MENU_COPY_MEETING_LINK"] = "Copy meeting link";
@@ -78,6 +78,9 @@ $MESS["IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE"] = "This view will show found mess
 $MESS["IM_SIDEBAR_SEARCH_RESULT_START_TITLE"] = "This pane will show your search results.";
 $MESS["IM_SIDEBAR_SHARED_CHATS_TITLE"] = "Chats with user";
 $MESS["IM_SIDEBAR_SHARED_CHAT_DETAIL_TITLE"] = "Chats with user";
+$MESS["IM_SIDEBAR_SHARED_LINK_CHANGE_MENU"] = "Create new link";
+$MESS["IM_SIDEBAR_SHARED_LINK_COPY_MENU"] = "Copy";
+$MESS["IM_SIDEBAR_SHARED_LINK_DESCRIPTION_MSGVER_1"] = "Chat invite link";
 $MESS["IM_SIDEBAR_SUPPORT_TICKET_ADD_BUTTON_TEXT"] = "Open new";
 $MESS["IM_SIDEBAR_SUPPORT_TICKET_DETAIL_TITLE"] = "All chats";
 $MESS["IM_SIDEBAR_SUPPORT_TICKET_LIMIT"] = "Maximum number of pending techsupport tickets exceeded.";

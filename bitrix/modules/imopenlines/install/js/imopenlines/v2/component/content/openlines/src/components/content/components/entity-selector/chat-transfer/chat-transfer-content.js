@@ -1,7 +1,7 @@
 import { TagSelector } from 'ui.entity-selector';
 
 import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
-import { AddToChat as ChatSearch } from 'im.v2.component.search';
+import { AddToChatSearch as ChatSearch } from 'im.v2.component.search';
 import { TransferService } from 'imopenlines.v2.provider.service';
 
 import type { JsonObject } from 'main.core';

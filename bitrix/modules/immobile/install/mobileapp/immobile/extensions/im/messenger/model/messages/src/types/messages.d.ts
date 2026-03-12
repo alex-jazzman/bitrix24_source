@@ -49,7 +49,15 @@ export type MessagesModelState = {
 	vote?: VoteModelState,
 	reactionsViewed: boolean,
 	lastReactionId: string,
-	stickerParams?: FullStickerData,
+	stickerParams?: {
+		id: number,
+		packId: StickerPackId,
+		packType: StickerPackType,
+	},
+	visualState?: {
+		aiTaskStatus?: string | null,
+		type?: string | null,
+	},
 }
 
 declare type MessageParams = {
@@ -62,8 +70,13 @@ declare type MessageParams = {
 	componentId: string,
 	COMPONENT_PARAMS?: Object,
 	CHAT_MESSAGE?: number,
-	STICKER_PARAMS: object,
+	STICKER_PARAMS: {
+		id: number,
+		packId: StickerPackId,
+		packType: StickerPackType,
+	},
 	replyId: number,
+	AI_TASK_TRIGGER_MESSAGE_ID: number,
 }
 
 declare type AttachConfig = {
@@ -180,6 +193,7 @@ export type MessagesModelActions =
 	| 'messagesModel/updateList'
 	| 'messagesModel/updateListFromSync'
 	| 'messagesModel/updateReactionState'
+	| 'messagesModel/updateVisualState'
 	| 'messagesModel/updateParams'
 	| 'messagesModel/delete'
 	| 'messagesModel/readMessages'
@@ -195,6 +209,7 @@ export type MessagesModelActions =
 	| 'messagesModel/clearChatCollection'
 	| 'messagesModel/disableKeyboardByMessageId'
 	| 'messagesModel/setPlayingState'
+	| 'messagesModel/interruptTaskAnimationMessages'
 
 export type MessagesModelMutation =
 	'messagesModel/setChatCollection'
@@ -266,6 +281,7 @@ export type MessagesUpdateActions =
 	| 'setViewedByOthers'
 	| 'updateLoadTextProgress'
 	| 'updateReactionState'
+	| 'updateVisualState'
 	| 'setPlayingState'
 	| 'deleteAttach'
 	;

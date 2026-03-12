@@ -71,6 +71,7 @@ jn.define('intranet/simple-list/items/user-redux/user-content', (require, export
 			department,
 			actions,
 			requestStatus,
+			email,
 		} = user;
 
 		const isMobileInstalled = isAndroidAppInstalled || isIosAppInstalled;
@@ -102,6 +103,7 @@ jn.define('intranet/simple-list/items/user-redux/user-content', (require, export
 				actions,
 				requestStatus,
 				canUserBeReinvited,
+				email,
 			},
 		};
 	};

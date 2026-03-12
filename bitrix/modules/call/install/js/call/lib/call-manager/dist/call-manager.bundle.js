@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports,main_core_events,ui_vue3_vuex,call_core,im_public,im_v2_lib_slider,im_v2_const,im_v2_lib_logger,im_v2_lib_promo,im_v2_lib_soundNotification,im_v2_lib_desktopApi,rest_client,call_lib_callSliderManager,im_call_compatible,main_core,ui_buttons,im_v2_application_core) {
+(function (exports,main_core_events,call_core,im_public,im_v2_provider_service_chat,im_v2_lib_slider,im_v2_const,im_v2_lib_logger,im_v2_lib_promo,im_v2_lib_soundNotification,im_v2_lib_desktopApi,rest_client,call_lib_callSliderManager,im_call_compatible,main_core,ui_buttons,im_v2_application_core) {
 	'use strict';
 
 	let _ = t => t,
@@ -43,7 +43,10 @@ this.BX.Call = this.BX.Call || {};
 	        id: 'im.userDataFilter'
 	      }]
 	    }],
-	    footer: getFooter(handleAddCLick, handleCancelCLick)
+	    footer: getFooter(handleAddCLick, handleCancelCLick),
+	    popupOptions: {
+	      targetContainer: params.targetContainer
+	    }
 	  });
 	  dialog.show();
 	  return Promise.resolve({
@@ -73,13 +76,13 @@ this.BX.Call = this.BX.Call || {};
 	};
 
 	var _controller = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("controller");
-	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _openChatActionByChatType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openChatActionByChatType");
 	var _onCallJoinHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCallJoinHandler");
 	var _onCallLeaveHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCallLeaveHandler");
 	var _onCallDestroyHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCallDestroyHandler");
 	var _getController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getController");
+	var _getChatService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatService");
 	var _subscribeToEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToEvents");
 	var _subscribeToCallEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToCallEvents");
 	var _unsubscribeFromCallEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unsubscribeFromCallEvents");
@@ -168,14 +171,13 @@ this.BX.Call = this.BX.Call || {};
 	    Object.defineProperty(this, _subscribeToEvents, {
 	      value: _subscribeToEvents2
 	    });
+	    Object.defineProperty(this, _getChatService, {
+	      value: _getChatService2
+	    });
 	    Object.defineProperty(this, _getController, {
 	      value: _getController2
 	    });
 	    Object.defineProperty(this, _controller, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _store, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -355,9 +357,23 @@ this.BX.Call = this.BX.Call || {};
 	      isSliderFocused: () => im_v2_lib_slider.MessengerSlider.getInstance().isFocused(),
 	      isThemeDark: () => false,
 	      openMessenger: (dialogId, force = false) => {
-	        const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId);
-	        if (!force && dialog && dialog.type in babelHelpers.classPrivateFieldLooseBase(this, _openChatActionByChatType)[_openChatActionByChatType]) {
-	          return babelHelpers.classPrivateFieldLooseBase(this, _openChatActionByChatType)[_openChatActionByChatType][dialog.type](dialogId);
+	        var _BX, _BX$SidePanel, _sidePanel$getPageUrl;
+	        if (!force) {
+	          const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId);
+	          if (dialog && dialog.type in babelHelpers.classPrivateFieldLooseBase(this, _openChatActionByChatType)[_openChatActionByChatType]) {
+	            return babelHelpers.classPrivateFieldLooseBase(this, _openChatActionByChatType)[_openChatActionByChatType][dialog.type](dialogId);
+	          }
+	        }
+	        const sidePanel = (_BX = BX) == null ? void 0 : (_BX$SidePanel = _BX.SidePanel) == null ? void 0 : _BX$SidePanel.Instance;
+	        const hasChatUnderSlider = (sidePanel == null ? void 0 : sidePanel.getOpenSlidersCount == null ? void 0 : sidePanel.getOpenSlidersCount()) > 0 && (sidePanel == null ? void 0 : sidePanel.getPageUrl == null ? void 0 : (_sidePanel$getPageUrl = sidePanel.getPageUrl()) == null ? void 0 : _sidePanel$getPageUrl.includes('/online/'));
+	        if (hasChatUnderSlider) {
+	          const topSlider = sidePanel == null ? void 0 : sidePanel.getTopSlider == null ? void 0 : sidePanel.getTopSlider();
+	          if (topSlider != null && topSlider.close) {
+	            return new Promise(resolve => {
+	              topSlider.close(false, resolve);
+	            }).then(() => im_public.Messenger.openChat(dialogId));
+	          }
+	          return im_public.Messenger.openChat(dialogId);
 	        }
 	        return im_public.Messenger.openChat(dialogId);
 	      },
@@ -401,6 +417,12 @@ this.BX.Call = this.BX.Call || {};
 	      }
 	    }
 	  });
+	}
+	function _getChatService2() {
+	  if (!this.chatService) {
+	    this.chatService = new im_v2_provider_service_chat.ChatService();
+	  }
+	  return this.chatService;
 	}
 	function _subscribeToEvents2() {
 	  main_core_events.EventEmitter.subscribe(im_v2_const.EventType.layout.onLayoutChange, babelHelpers.classPrivateFieldLooseBase(this, _onOpenChat)[_onOpenChat].bind(this));
@@ -523,7 +545,7 @@ this.BX.Call = this.BX.Call || {};
 	function _getChatInfo2(dialogId) {
 	  const chatInfo = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
 	  if (chatInfo.chatId === 0) {
-	    return im_public.Messenger.openChat(dialogId).then(() => {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getChatService)[_getChatService]().loadChat(dialogId).then(() => {
 	      const updatedChatInfo = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
 	      return babelHelpers.classPrivateFieldLooseBase(this, _prepareChatInfo)[_prepareChatInfo](updatedChatInfo);
 	    }).catch(error => {
@@ -580,5 +602,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.CallManager = CallManager;
 
-}((this.BX.Call.Lib = this.BX.Call.Lib || {}),BX.Event,BX.Vue3.Vuex,BX.Call,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Call.Lib,BX,BX,BX.UI,BX.Messenger.v2.Application));
+}((this.BX.Call.Lib = this.BX.Call.Lib || {}),BX.Event,BX.Call,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Call.Lib,BX,BX,BX.UI,BX.Messenger.v2.Application));
 //# sourceMappingURL=call-manager.bundle.js.map

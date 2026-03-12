@@ -1,3 +1,4 @@
+import { ChatType } from 'im.v2.const';
 import { Parser } from 'im.v2.lib.parser';
 
 import { CounterControl } from './counter-control';
@@ -31,6 +32,10 @@ export const HeaderPin = {
 			type: Number,
 			required: true,
 		},
+		contextDialogId: {
+			type: String,
+			required: true,
+		},
 	},
 	emits: ['toggleList', 'messageUnpin', 'messageClick'],
 	computed:
@@ -55,8 +60,19 @@ export const HeaderPin = {
 		{
 			return Parser.purifyMessage(this.typedMessage);
 		},
+		isCommentChatContext(): boolean
+		{
+			const dialog = this.$store.getters['chats/get'](this.contextDialogId, true);
+
+			return dialog.type === ChatType.comment;
+		},
 		title(): string
 		{
+			if (this.isCommentChatContext)
+			{
+				return this.loc('IM_DIALOG_CHAT_PINNED_TITLE_IN_CHANNEL');
+			}
+
 			return this.loc(
 				this.isSinglePin
 					? 'IM_DIALOG_CHAT_PINNED_TITLE'

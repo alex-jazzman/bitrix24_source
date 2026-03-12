@@ -21,6 +21,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      type: String,
 	      required: true
 	    },
+	    disabled: {
+	      type: Boolean,
+	      default: false
+	    },
 	    isLocked: {
 	      type: Boolean,
 	      default: false
@@ -28,7 +32,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<HoverPill>
-			<div class="b24-field-add">
+			<div :class="['b24-field-add', { '--disabled': disabled }]">
 				<BIcon :name="icon"/>
 				<div>{{ loc('TASKS_V2_FIELD_ADD') }}</div>
 				<BIcon v-if="isLocked" :name="Outline.LOCK_L" class="b24-field-add__lock"/>

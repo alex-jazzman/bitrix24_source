@@ -4,12 +4,15 @@ import { mapState, mapActions } from 'ui.vue3.pinia';
 import { MenuManager, type MenuItem } from 'main.popup';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { diagramStore } from '../../../../entities/blocks';
-import { evaluateActionExpressionDocumentTitle } from '../../../../entities/node-settings/utils';
 
 import { useLoc } from '../../../../shared/composables';
 
-// eslint-disable-next-line no-unused-vars
-import { useNodeSettingsStore, type Action, type Construction } from '../../../../entities/node-settings';
+import {
+	useNodeSettingsStore,
+	evaluateActionExpressionDocumentTitle,
+	isActionExpressionDocumentCorrect,
+	type ActionDictEntry,
+} from '../../../../entities/node-settings';
 import type { ActivityData } from '../../../../shared/types';
 import { DocumentSelector } from './document-selector';
 
@@ -53,7 +56,7 @@ export const EditActionExpression = {
 
 			return store.getAllBlockAncestors(this.block, this.currentRuleId);
 		},
-		selectedAction(): Action
+		selectedAction(): ActionDictEntry
 		{
 			return this.nodeSettings.actions.get(this.selectedActionId);
 		},
@@ -89,7 +92,10 @@ export const EditActionExpression = {
 			{
 				get(): string
 				{
-					return this.construction.expression.document;
+					return isActionExpressionDocumentCorrect(this.connectedBlocks, this.construction.expression.document)
+						? this.construction.expression.document
+						: ''
+					;
 				},
 				set(document: string | null): void
 				{
@@ -213,6 +219,7 @@ export const EditActionExpression = {
 					<slot
 						:actionId="selectedActionId"
 						:activityData="actionValue"
+						:selectedDocument="selectedDocument"
 					/>
 				</div>
 			</div>

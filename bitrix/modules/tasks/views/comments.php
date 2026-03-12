@@ -30,6 +30,18 @@ if ($taskId <= 0)
 	echo 'Task not found';
 }
 
+Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.tooltip',
+	'ui.viewer',
+	'disk.document',
+	'disk.viewer.actions',
+	'disk.viewer.document-item',
+	'disk.viewer.board-item',
+	'loader',
+]);
+
 if ($request->get('IFRAME') === 'Y')
 {
 	Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/tasks/lib/V2/Infrastructure/Controller/LegacyComment.php');

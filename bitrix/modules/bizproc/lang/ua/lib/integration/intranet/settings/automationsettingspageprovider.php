@@ -1,2 +1,0 @@
-<?php
-$MESS["BIZPROC_AUTOMATION_SETTINGS_PROVIDER_TITLE"] = "Автоматизація";

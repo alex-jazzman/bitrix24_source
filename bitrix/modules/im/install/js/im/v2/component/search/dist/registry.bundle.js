@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_component_elements_loader,im_v2_lib_logger,im_public,im_v2_lib_menu,im_v2_lib_call,im_v2_lib_permission,im_v2_lib_textHighlighter,im_v2_lib_dateFormatter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_component_elements_searchInput,ui_designTokens,ui_fonts_opensans,main_core,main_core_events,im_v2_application_core,im_v2_lib_utils,im_v2_const,im_v2_lib_analytics,im_v2_lib_search,im_v2_component_elements_scrollWithGradient) {
+(function (exports,im_v2_component_elements_loader,im_v2_lib_logger,im_v2_lib_menu,im_v2_provider_service_chat,im_v2_lib_textHighlighter,im_v2_lib_dateFormatter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_component_elements_searchInput,ui_designTokens,ui_fonts_opensans,main_core,main_core_events,im_v2_application_core,im_v2_lib_utils,im_v2_const,im_v2_lib_analytics,im_v2_lib_search,im_v2_component_elements_scrollWithGradient) {
 	'use strict';
 
 	const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
@@ -150,76 +150,67 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return filledRecentItems;
 	}
 
-	class SearchContextMenu extends im_v2_lib_menu.BaseMenu {
+	class SearchContextMenu extends im_v2_lib_menu.RecentMenu {
 	  constructor(applicationContext) {
-	    super();
+	    super(applicationContext);
 	    this.id = 'im-chat-search-context-menu';
-	    this.callManager = im_v2_lib_call.CallManager.getInstance();
-	    this.permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
-	    const {
-	      emitter
-	    } = applicationContext;
-	    this.emitter = emitter;
+	    this.chatService = new im_v2_provider_service_chat.ChatService();
 	  }
 	  getMenuItems() {
-	    return [this.getOpenItem(), this.getOpenProfileItem(), this.getChatsWithUserItem()];
+	    return [this.getOpenItem(), this.getOpenProfileItem(), this.getChatsWithUserItem(), this.getPinMessageItem(), this.getJoinItem()];
 	  }
 	  getOpenItem() {
 	    return {
 	      title: main_core.Loc.getMessage('IM_LIB_MENU_OPEN'),
 	      onClick: () => {
-	        void im_public.Messenger.openChat(this.context.dialogId);
-	        this.menuInstance.close();
-	      }
-	    };
-	  }
-	  getOpenProfileItem() {
-	    if (!this.isUser() || this.isBot()) {
-	      return null;
-	    }
-	    const profileUri = im_v2_lib_utils.Utils.user.getProfileLink(this.context.dialogId);
-	    return {
-	      title: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
-	      onClick: () => {
-	        BX.SidePanel.Instance.open(profileUri);
-	        this.menuInstance.close();
-	      }
-	    };
-	  }
-	  getChatsWithUserItem() {
-	    if (!this.isUser() || this.isBot() || this.isChatWithCurrentUser()) {
-	      return null;
-	    }
-	    const isAnyChatOpened = this.store.getters['application/getLayout'].entityId.length > 0;
-	    return {
-	      title: main_core.Loc.getMessage('IM_LIB_MENU_FIND_SHARED_CHATS'),
-	      onClick: async () => {
-	        if (!isAnyChatOpened) {
-	          await im_public.Messenger.openChat(this.context.dialogId);
-	        }
-	        this.emitter.emit(im_v2_const.EventType.sidebar.open, {
-	          panel: im_v2_const.SidebarDetailBlock.chatsWithUser,
-	          standalone: true,
+	        this.emit(SearchContextMenu.events.openItem, {
 	          dialogId: this.context.dialogId
 	        });
 	        this.menuInstance.close();
 	      }
 	    };
 	  }
-	  isUser() {
-	    return this.store.getters['chats/isUser'](this.context.dialogId);
-	  }
-	  isBot() {
-	    if (!this.isUser()) {
-	      return false;
+	  getJoinItem() {
+	    const {
+	      dialogId
+	    } = this.context;
+	    if (!this.isGuestRole()) {
+	      return null;
 	    }
-	    const user = this.store.getters['users/get'](this.context.dialogId);
-	    return user.type === im_v2_const.UserType.bot;
-	  }
-	  isChatWithCurrentUser() {
-	    return this.getCurrentUserId() === Number.parseInt(this.context.dialogId, 10);
+	    return {
+	      title: this.isOpenChat() ? main_core.Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHAT') : main_core.Loc.getMessage('IM_SEARCH_ITEM_JOIN_TO_CHANNEL'),
+	      onClick: () => {
+	        this.chatService.joinChat(dialogId);
+	        this.menuInstance.close();
+	      }
+	    };
 	  }
 	}
+	SearchContextMenu.events = {
+	  ...im_v2_lib_menu.BaseMenu.events,
+	  openItem: 'openItem'
+	};
+
+	const EntitySearchType = {
+	  addToChat: 'addToChat',
+	  messageForward: 'messageForward'
+	};
+	const EntitySearchConfig = {
+	  [EntitySearchType.addToChat]: {
+	    exclude: [im_v2_lib_search.EntitySearch.chats]
+	  },
+	  [EntitySearchType.messageForward]: {
+	    exclude: []
+	  }
+	};
+	const RecentSectionSearchConfig = {
+	  [im_v2_const.RecentType.taskComments]: {
+	    searchRecentSection: im_v2_const.RecentType.taskComments
+	  },
+	  [im_v2_const.RecentType.default]: {
+	    searchRecentSection: im_v2_const.RecentType.default
+	  }
+	};
 
 	const getFirstItemFromSearchResults = ({
 	  searchResult,
@@ -311,6 +302,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    replaceWithNotes: {
 	      type: Boolean,
 	      default: true
+	    },
+	    titleTwoLine: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['clickItem', 'openContextMenu'],
@@ -427,6 +422,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						:textToHighlight="query"
 						:customType="titleType"
 						:showItsYou="!replaceWithNotes"
+						:twoLine="titleTwoLine"
 					/>
 					<div v-if="withDate && formattedDate" class="bx-im-search-item__date">
 						<span>{{ formattedDate }}</span>
@@ -612,7 +608,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
-	const ChatSearch = {
+	const RecentSectionSearch = {
 	  name: 'ChatSearch',
 	  components: {
 	    ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient,
@@ -629,9 +625,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    searchMode: {
 	      type: Boolean,
 	      required: true
+	    },
+	    showUsersCarousel: {
+	      type: Boolean,
+	      default: true
+	    },
+	    recentSection: {
+	      type: String,
+	      required: true
 	    }
 	  },
-	  emits: ['loading', 'closeSearch'],
+	  emits: ['loading', 'openItem', 'closeSearch'],
 	  data() {
 	    return {
 	      isRecentLoading: false,
@@ -642,6 +646,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  },
 	  computed: {
+	    layout() {
+	      return this.$store.getters['application/getLayout'];
+	    },
+	    layoutName() {
+	      return this.layout.name;
+	    },
 	    cleanQuery() {
 	      return this.query.trim().toLowerCase();
 	    },
@@ -670,14 +680,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.contextMenuManager = new SearchContextMenu({
-	      emitter: this.getEmitter()
-	    });
-	    this.searchService = new SearchService({
-	      chats: true,
-	      users: true
-	    });
+	    this.searchService = new SearchService(RecentSectionSearchConfig[this.recentSection]);
 	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
+	    this.initContextMenu();
 	    this.getEmitter().subscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 	    void this.loadRecentSearchFromServer();
 	  },
@@ -685,6 +690,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.getEmitter().unsubscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 	  },
 	  methods: {
+	    initContextMenu() {
+	      this.contextMenuManager = new SearchContextMenu({
+	        emitter: this.getEmitter()
+	      });
+	      this.contextMenuManager.subscribe(SearchContextMenu.events.openItem, event => {
+	        this.$emit('openItem', event.getData());
+	      });
+	    },
 	    async loadRecentSearchFromServer() {
 	      this.isRecentLoading = true;
 	      this.recentItems = await this.searchService.loadLatestResults();
@@ -697,6 +710,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return;
 	        }
 	        this.searchResult = im_v2_lib_search.sortByDate(result);
+	        this.sendSearchResultAnalytics();
+	        im_v2_lib_analytics.Analytics.getInstance().recentSearch.onStart(this.layoutName);
 	      }
 	      if (query.length >= getMinTokenSize()) {
 	        this.isServerLoading = true;
@@ -717,6 +732,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const mergedItems = mergeSearchItems(this.searchResult, searchResult);
 	      this.searchResult = im_v2_lib_search.sortByDate(mergedItems);
 	      this.stopLoader();
+	    },
+	    sendSearchResultAnalytics() {
+	      if (this.searchResult.length === 0) {
+	        im_v2_lib_analytics.Analytics.getInstance().recentSearch.onShowNotFoundResult(this.layoutName);
+	        return;
+	      }
+	      im_v2_lib_analytics.Analytics.getInstance().recentSearch.onShowSuccessResult(this.layoutName);
 	    },
 	    stopLoader() {
 	      this.currentServerQueries--;
@@ -740,13 +762,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    onScroll() {
 	      this.contextMenuManager.destroy();
 	    },
+	    onClickRecentChatItem(event) {
+	      im_v2_lib_analytics.Analytics.getInstance().recentSearch.onSelectFromRecentChats(this.layoutName, event.dialogId);
+	      void this.onClickItem(event);
+	    },
+	    onClickRecentSearchItem(event) {
+	      im_v2_lib_analytics.Analytics.getInstance().recentSearch.onSelectFromRecentSearch(this.layoutName, event.dialogId);
+	      void this.onClickItem(event);
+	    },
+	    onClickSearchResultItem(event, itemIndex) {
+	      im_v2_lib_analytics.Analytics.getInstance().recentSearch.onSelectFromSearchResult(this.layoutName, itemIndex + 1);
+	      void this.onClickItem(event);
+	    },
 	    async onClickItem(event) {
 	      const {
 	        dialogId,
 	        nativeEvent
 	      } = event;
 	      this.searchService.saveItemToRecentSearch(dialogId);
-	      void im_public.Messenger.openChat(dialogId);
+	      this.$emit('openItem', {
+	        dialogId
+	      });
 	      if (!im_v2_lib_utils.Utils.key.isAltOrOption(nativeEvent)) {
 	        this.$emit('closeSearch');
 	      }
@@ -787,7 +823,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div class="bx-im-chat-search__container">
 				<template v-if="showLatestSearchResult">
 					<RecentUsersCarousel
-						@clickItem="onClickItem"
+						v-if="showUsersCarousel"
+						@clickItem="onClickRecentChatItem"
 						@openContextMenu="onOpenContextMenu"
 					/>
 					<div class="bx-im-chat-search__title">{{ loc('IM_SEARCH_SECTION_RECENT') }}</div>
@@ -796,21 +833,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						:key="item.dialogId"
 						:dialogId="item.dialogId"
 						:replaceWithNotes="true"
-						@clickItem="onClickItem"
+						:titleTwoLine="true"
+						@clickItem="onClickRecentSearchItem"
 						@openContextMenu="onOpenContextMenu"
 					/>
 					<Loader v-if="isRecentLoading" class="bx-im-chat-search__loader" />
 				</template>
 				<template v-else>
 					<SearchItem
-						v-for="item in searchResult"
+						v-for="(item, index) in searchResult"
 						:key="item.dialogId"
 						:dialogId="item.dialogId"
 						:dateMessage="item.dateMessage"
 						:withDate="true"
 						:query="cleanQuery"
 						:replaceWithNotes="true"
-						@clickItem="onClickItem"
+						:titleTwoLine="true"
+						@clickItem="onClickSearchResultItem($event, index)"
 						@openContextMenu="onOpenContextMenu"
 					/>
 					<EmptyState v-if="isEmptyState" />
@@ -842,6 +881,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    withIcon: {
 	      type: Boolean,
 	      default: true
+	    },
+	    placeholder: {
+	      type: String,
+	      default: main_core.Loc.getMessage('IM_SEARCH_INPUT_PLACEHOLDER_V2')
 	    }
 	  },
 	  emits: ['closeSearch', 'openSearch', 'updateSearch'],
@@ -862,21 +905,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    getEmitter() {
 	      return this.$Bitrix.eventEmitter;
-	    },
-	    loc(key) {
-	      return this.$Bitrix.Loc.getMessage(key);
 	    }
 	  },
 	  template: `
 		<SearchInput
-			:placeholder="loc('IM_SEARCH_INPUT_PLACEHOLDER_V2')"
+			:placeholder="placeholder"
 			:searchMode="searchMode"
 			:isLoading="isLoading"
 			:withLoader="true"
 			:delayForFocusOnStart="delayForFocusOnStart"
 			:withIcon="withIcon"
 			@inputFocus="onInputFocus"
-			@inputBlur="onClose"
 			@queryChange="onInputUpdate"
 			@keyPressed="onKeyPressed"
 			@close="onClose"
@@ -886,7 +925,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
-	const AddToChat = {
+	const AddToChatSearch = {
 	  name: 'AddToChat',
 	  components: {
 	    ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient,
@@ -933,10 +972,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.searchService = new SearchService({
-	      chats: false,
-	      users: true
-	    });
+	    this.searchService = new SearchService(EntitySearchConfig[EntitySearchType.addToChat]);
 	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
 	    this.recentSearchItems = im_v2_lib_search.getUsersFromRecentItems({
 	      withFakeUsers: true
@@ -1120,10 +1156,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.searchService = new SearchService({
-	      chats: true,
-	      users: true
-	    });
+	    this.searchService = new SearchService(EntitySearchConfig[EntitySearchType.messageForward]);
 	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
 	    this.recentListItems = im_v2_lib_search.getRecentListItems({
 	      withFakeUsers: true
@@ -1244,10 +1277,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	exports.ChatSearch = ChatSearch;
+	exports.RecentSectionSearch = RecentSectionSearch;
 	exports.ChatSearchInput = ChatSearchInput;
-	exports.AddToChat = AddToChat;
+	exports.AddToChatSearch = AddToChatSearch;
 	exports.ForwardSearch = ForwardSearch;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=registry.bundle.js.map

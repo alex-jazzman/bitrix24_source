@@ -102,7 +102,7 @@ jn.define('ai/mcp-selector/data-provider', (require, exports, module) => {
 				id: auth.id,
 				serverId: item.id,
 				isAuthorization: true,
-				name: this.getUserLogin(auth.userId),
+				name: auth.name ?? this.getUserLogin(auth.userId),
 				iconUrl: item.iconUrl,
 				onSelect: item.onSelect,
 				userId: auth.userId,

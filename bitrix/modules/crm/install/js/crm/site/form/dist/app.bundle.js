@@ -6546,7 +6546,7 @@ var Vue = exports.Vue;
             return;
           }
           babelHelpers.classPrivateFieldSet(this, _target$1, target);
-          window.smartCaptcha.render(target, {
+          babelHelpers.classPrivateFieldSet(this, _widgetId$1, window.smartCaptcha.render(target, {
             sitekey: this.getKey(),
             invisible: true,
             callback: function callback(response) {
@@ -6556,7 +6556,7 @@ var Vue = exports.Vue;
                 babelHelpers.classPrivateFieldSet(_this, _callback$1, null);
               }
             }
-          });
+          }));
         }
       }]);
       return YandexCaptcha;

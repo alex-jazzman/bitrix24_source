@@ -45,6 +45,7 @@ $config = [
 		'tasks.v2.component.fields.email',
 		'tasks.v2.component.fields.user-fields',
 		'tasks.v2.component.fields.placements',
+		'tasks.v2.component.fields.created-date',
 		'tasks.v2.provider.service.file-service',
 		'tasks.v2.provider.service.deadline-service',
 		'tasks.v2.component.fields.title',

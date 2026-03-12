@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_MODULE_NOT_INSTALL'] = "Модуль блогов не установлен.";
 $MESS ['B_B_MES_REQUEST_ALREADY'] = "Ваша заявка уже находится на рассмотрении у автора блога";
 $MESS ['B_B_MES_REQUEST_ADDED'] = "Ваша заявка принята к рассмотрению автором блога";
@@ -22,4 +22,3 @@ $MESS ['BLOG_BLOG_BLOG_MES_HIDE_ERROR'] = "Ошибка cкрытия сообщ
 $MESS ['BLOG_BLOG_BLOG_MES_HIDE_NO_RIGHTS'] = "У вас нет прав на скрытие этого сообщения";
 $MESS ['MICROBLOG_SONET_MODULE_NOT_AVAIBLE'] = "Микроблоги недоступны для данного пользователя.";
 $MESS ['MICROBLOG_TITLE'] = "Микроблог";
-?>

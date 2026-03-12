@@ -12,6 +12,10 @@ export const BlockHeader = {
 			type: Boolean,
 			default: false,
 		},
+		title: {
+			type: String,
+			default: '',
+		},
 	},
 	template: `
 		<div class="editor-chart-block-header">
@@ -29,7 +33,7 @@ export const BlockHeader = {
 					<slot name="subIcon"/>
 				</div>
 			</template>
-			<div class="editor-chart-block-header__title">{{ block.node?.title }}</div>
+			<div class="editor-chart-block-header__title">{{ title || block.node?.title }}</div>
 		</div>
 	`,
 };

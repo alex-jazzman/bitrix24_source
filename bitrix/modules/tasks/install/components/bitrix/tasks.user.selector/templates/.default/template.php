@@ -3,7 +3,7 @@ if(!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\UI;
 
-UI\Extension::load("ui.tooltip");
+UI\Extension::load(["ui.tooltip", "intranet.old-interface.intranet-common"]);
 
 $ajaxUrl = $this->__component->GetPath() 
 	. "/ajax.php?lang=" . LANGUAGE_ID 

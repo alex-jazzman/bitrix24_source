@@ -1,4 +1,4 @@
-import { Loc } from 'main.core';
+import { Extension, Loc } from 'main.core';
 
 type CopilotPromoPopupPresetConfig = {
 	videoSrc: {
@@ -38,15 +38,21 @@ export const CopilotPromoPopupPresetData: CopilotPromoPopupPresets = Object.free
 			ru: '/bitrix/js/ai/copilot-promo-popup/videos/ru/siteWithCopilot.webm',
 		},
 		videoContainerMinHeight: 226,
-		title: 'CoPilot',
-		text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_SITE_WITH_COPILOT_TEXT'),
+		title: getCopilotName(),
+		text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_SITE_WITH_COPILOT_TEXT_MSGVER_1'),
 	},
 });
 
 function getTextWithReplaceAccent(messageCode: string): string
 {
 	return Loc.getMessage(messageCode, {
+		'#COPILOT_NAME#': getCopilotName(),
 		'#ACCENT#': '<span style="color: var(--ui-color-copilot-primary);">',
 		'#/ACCENT#': '</span>',
 	});
+}
+
+function getCopilotName(): string
+{
+	return Extension.getSettings('ai.copilot-promo-popup').copilotName;
 }

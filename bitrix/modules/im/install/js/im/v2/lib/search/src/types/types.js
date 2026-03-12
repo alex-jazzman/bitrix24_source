@@ -1,3 +1,7 @@
+import { RecentType } from 'im.v2.const';
+
+import { EntitySearch } from '../const/const';
+
 import type { ImModelChat, ImModelUser } from 'im.v2.model';
 import type { RawUser, RawChat } from 'im.v2.provider.service.types';
 
@@ -32,7 +36,7 @@ export type SearchResultItem = {
 
 type EntitySelectorProviderEntity = {
 	id: string,
-	options: Object,
+	options: SearchConfig,
 	dynamicLoad: boolean,
 	dynamicSearch: boolean,
 };
@@ -47,7 +51,12 @@ export type EntitySelectorRequestConfig = {
 	}
 };
 
-export type SearchConfig = {
-	chats: boolean,
-	users: boolean,
+type RecentSectionSearchConfigType = {
+	searchRecentSection: $Values<typeof RecentType>,
 };
+
+export type EntitySearchConfigType = {
+	exclude: $Values<typeof EntitySearch>[],
+}
+
+export type SearchConfig = RecentSectionSearchConfigType | EntitySearchConfigType;

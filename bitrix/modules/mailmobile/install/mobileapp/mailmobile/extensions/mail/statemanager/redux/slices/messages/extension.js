@@ -5,16 +5,18 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 	const { isOffline } = require('device/connection');
 
 	const { createSlice } = require('statemanager/redux/toolkit');
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 
 	const { sliceName, messagesListAdapter } = require('mail/statemanager/redux/slices/messages/meta');
-	const { remove, changeReadStatus, moveToFolder, addToChat } = require('mail/statemanager/redux/slices/messages/thunk');
+	const { remove, changeReadStatus, moveToFolder, addToChat, addToEvent } = require('mail/statemanager/redux/slices/messages/thunk');
 	const {
 		removePending,
 		removeFulfilled,
 		changeReadStatusPending,
 		changeReadStatusFulfilled,
 		addToChatFulfilled,
+		addToEventFulfilled,
 	} = require('mail/statemanager/redux/slices/messages/extra-reducer');
 	const { MessageModel } = require('mail/statemanager/redux/slices/messages/model/message');
 
@@ -22,13 +24,16 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 		return messages.map((message) => MessageModel.prepareReduxMailFromServer(message));
 	};
 
+	const defaultState = {
+		...messagesListAdapter.getInitialState(),
+		isMultiSelectMode: false,
+		selectedIds: [],
+	};
+	const initialState = StateCache.getReducerState(sliceName, defaultState);
+
 	const messageListSlice = createSlice({
 		name: sliceName,
-		initialState: {
-			...messagesListAdapter.getInitialState(),
-			isMultiSelectMode: false,
-			selectedIds: [],
-		},
+		initialState,
 		reducers: {
 			mailsUpsertedFromServer: {
 				reducer: messagesListAdapter.upsertMany,
@@ -211,6 +216,7 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 		},
 		extraReducers: (builder) => {
 			builder
+				.addCase(addToEvent.fulfilled, addToEventFulfilled)
 				.addCase(remove.pending, removePending)
 				.addCase(remove.fulfilled, removeFulfilled)
 				.addCase(changeReadStatus.pending, changeReadStatusPending)

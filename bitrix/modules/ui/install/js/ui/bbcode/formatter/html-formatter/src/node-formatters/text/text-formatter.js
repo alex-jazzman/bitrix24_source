@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { NodeFormatter, type NodeFormatterOptions, type ConvertCallbackOptions } from 'ui.bbcode.formatter';
 import { type BBCodeNode } from 'ui.bbcode.model';
 import { type Smiley, SmileyManager, SmileyParser } from 'ui.smiley';
@@ -71,8 +72,10 @@ export class TextNodeFormatter extends NodeFormatter
 		img.alt = smiley.getTyping();
 		if (smiley.getWidth() > 0 && smiley.getHeight() > 0)
 		{
-			img.width = smiley.getWidth();
-			img.height = smiley.getHeight();
+			Dom.style(img, {
+				width: `${smiley.getWidth()}px`,
+				height: `${smiley.getHeight()}px`,
+			});
 		}
 
 		return img;

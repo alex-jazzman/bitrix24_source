@@ -131,26 +131,47 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    var _babelHelpers$classPr5;
 	    return (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].commentInfo) != null ? _babelHelpers$classPr5 : [];
 	  }
-	  getCollabInfo() {
+	  getStickerMessages() {
+	    const stickerMessages = [];
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].messages) {
+	      return stickerMessages;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].messages.forEach(message => {
+	      const isSticker = Boolean(message.params.STICKER_PARAMS);
+	      if (!isSticker) {
+	        return;
+	      }
+	      stickerMessages.push({
+	        messageId: message.id,
+	        ...message.params.STICKER_PARAMS
+	      });
+	    });
+	    return stickerMessages;
+	  }
+	  getStickers() {
 	    var _babelHelpers$classPr6;
-	    return (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].collabInfo) != null ? _babelHelpers$classPr6 : null;
+	    return (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].stickers) != null ? _babelHelpers$classPr6 : [];
+	  }
+	  getCollabInfo() {
+	    var _babelHelpers$classPr7;
+	    return (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].collabInfo) != null ? _babelHelpers$classPr7 : null;
 	  }
 	  getMessagesToStore() {
-	    var _babelHelpers$classPr7;
-	    return (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].additionalMessages) != null ? _babelHelpers$classPr7 : [];
+	    var _babelHelpers$classPr8;
+	    return (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].additionalMessages) != null ? _babelHelpers$classPr8 : [];
 	  }
 	  getPinnedMessageIds() {
-	    var _babelHelpers$classPr8;
+	    var _babelHelpers$classPr9;
 	    const pinnedMessageIds = [];
-	    const pins = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].pins) != null ? _babelHelpers$classPr8 : [];
+	    const pins = (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].pins) != null ? _babelHelpers$classPr9 : [];
 	    pins.forEach(pin => {
 	      pinnedMessageIds.push(pin.messageId);
 	    });
 	    return pinnedMessageIds;
 	  }
 	  getReactions() {
-	    var _babelHelpers$classPr9;
-	    return (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].reactions) != null ? _babelHelpers$classPr9 : [];
+	    var _babelHelpers$classPr10;
+	    return (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].reactions) != null ? _babelHelpers$classPr10 : [];
 	  }
 	  getCopilot() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult].copilot;
@@ -403,7 +424,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    chatId: extractor.getChatId(),
 	    collabInfo: extractor.getCollabInfo()
 	  });
-	  await Promise.all([chatsPromise, filesPromise, usersPromise, messagesPromise, copilotPromise, openLinesPromise, collabPromise, autoDeletePromise]);
+	  const stickersPromise = Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('stickers/messages/set', extractor.getStickerMessages()), babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('stickers/set', extractor.getStickers())]);
+	  await Promise.all([chatsPromise, filesPromise, usersPromise, messagesPromise, copilotPromise, openLinesPromise, collabPromise, autoDeletePromise, stickersPromise]);
 	  return {
 	    dialogId: extractor.getDialogId(),
 	    chatId: extractor.getChatId()
@@ -1334,8 +1356,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  void babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('chats/update', {
 	    dialogId,
 	    fields: {
-	      inited: false
+	      inited: false,
+	      role: im_v2_const.UserRole.guest
 	    }
+	  });
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('recent/pin', {
+	    id: dialogId,
+	    action: false
 	  });
 	  void babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('recent/hide', {
 	    id: dialogId

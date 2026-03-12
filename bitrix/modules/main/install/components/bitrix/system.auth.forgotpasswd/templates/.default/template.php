@@ -17,6 +17,7 @@ if ($arResult["BACKURL"] <> '')
 ?>
 	<input type="hidden" name="AUTH_FORM" value="Y">
 	<input type="hidden" name="TYPE" value="SEND_PWD">
+	<?= bitrix_sessid_post(); ?>
 
 	<p><?echo GetMessage("sys_forgot_pass_label")?></p>
 

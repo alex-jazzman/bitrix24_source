@@ -9,4 +9,3 @@ $MESS ['BI_BLOG_URL'] = "Путь блога";
 $MESS ['BI_CATEGORY_ID'] = "Идентификатор тега для фильтрации";
 $MESS ['BLOG_PROPERTY_LIST'] = "Какие свойства блога выводить";
 $MESS ['B_VARIABLE_ALIASES'] = "Имена переменных";
-?>

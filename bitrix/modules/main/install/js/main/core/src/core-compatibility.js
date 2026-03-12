@@ -18,12 +18,14 @@ import BaseEvent from './lib/event/base-event';
 import { Easing } from './lib/animation/easing';
 import { FX } from './lib/animation/fx';
 import { localStorage } from './lib/local-storage';
+import { Page } from './lib/page';
 
 // BX.*
 export const {getClass, namespace} = Reflection;
 export const message = messageFunction;
 export const easing = Easing;
 export const fx = FX;
+export const PageObject = Page;
 
 /**
  * @memberOf BX

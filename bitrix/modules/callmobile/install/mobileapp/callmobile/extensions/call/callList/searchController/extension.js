@@ -2,8 +2,9 @@
  * @module call/callList/searchController
  */
 jn.define('call/callList/searchController', (require, exports, module) => {
+	const { CallListAnalyticsController } = require('call/callList/analyticsController');
 	const { CallListSearchView } = require('call/callList/searchView');
-	const { restCall, normalizeUserAvatarPath } = require('call/callList/utils');
+	const { restCall, searchUsers } = require('call/callList/utils');
 
 	const PER_PAGE = 40;
 
@@ -14,6 +15,7 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 			this.component = component;
 			this.searchView = null;
 			this.searchTimer = null;
+			this.searchAnalyticsSent = false;
 		}
 
 		setupSearch()
@@ -60,6 +62,12 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 
 		onSearchTextChanged(text)
 		{
+			if (!this.searchAnalyticsSent)
+			{
+				CallListAnalyticsController.sendStartSearch();
+				this.searchAnalyticsSent = true;
+			}
+
 			const query = String(text || '');
 			const minTokenSize = Number(BX.componentParameters.get('SEARCH_MIN_SIZE', 3));
 			const isActive = (query.trim().length >= minTokenSize);
@@ -74,6 +82,8 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 			{
 				this.applySearchResults(null);
 
+				this.setLoading(false);
+
 				return;
 			}
 
@@ -82,18 +92,37 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 
 		async performSearch(query)
 		{
+			this.setLoading(true);
+
+			let callItems = [];
+			let userItems = [];
+
 			try
 			{
-				const callItems = await this.searchCalls(query);
-				const existingUserIds = this.getExistingUserIds(callItems);
-				const userItems = await this.searchUsers(query, existingUserIds);
+				callItems = await this.searchCalls(query);
+			}
+			catch (error)
+			{
+				console.error('[CallList][search][calls][error]', error);
+			}
 
-				this.applySearchResults([...callItems, ...userItems]);
+			try
+			{
+				const existingUserIds = this.getExistingUserIds(callItems);
+				existingUserIds.add(env.userId);
+
+				userItems = await searchUsers(query, {
+					limit: 10,
+					excludeUserIds: existingUserIds,
+				});
 			}
 			catch (error)
 			{
 				console.error('[CallList][search][users][error]', error);
 			}
+
+			this.applySearchResults([...callItems, ...userItems]);
+			this.setLoading(false);
 		}
 
 		async searchCalls(query)
@@ -122,67 +151,31 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 			return existingUserIds;
 		}
 
-		async searchUsers(query, existingUserIds)
-		{
-			const userRes = await restCall('im.search.user', {
-				FIND: query,
-				LIMIT: 10,
-				OFFSET: 0,
-			});
-
-			let rawUsers = [];
-			if (userRes)
-			{
-				rawUsers = Array.isArray(userRes) ? userRes : Object.values(userRes);
-			}
-
-			const filteredUsers = rawUsers.filter((user) => !existingUserIds.has(String(user.id)));
-
-			return Promise.all(
-				filteredUsers.map(async (user) => {
-					let chatId = 0;
-
-					const dialogRes = await restCall('im.dialog.get', {
-						DIALOG_ID: user.id,
-					});
-
-					if (dialogRes)
-					{
-						chatId = dialogRes.id || 0;
-					}
-
-					return {
-						chatId,
-						id: `user-${user.id}`,
-						key: `user-${user.id}`,
-						ts: 0,
-						title: user.name || '',
-						phone: '',
-						phoneNumber: '',
-						sourceType: 'user',
-						dialogId: String(user.id),
-						chatType: 'private',
-						avatar: normalizeUserAvatarPath(user.avatar),
-						workPosition: (user.work_position || user.workPosition || ''),
-						userColor: (user.color || ''),
-						isUnseen: false,
-						duration: 0,
-					};
-				}),
-			);
-		}
-
 		onSearchCancel()
 		{
 			this.component.setState({ searchQuery: '', isSearchMode: false, searchItems: null });
+
+			this.setLoading(false);
 		}
 
 		onSearchHide()
 		{
 			this.component.setState({ searchQuery: '', isSearchMode: false, searchItems: null });
+			this.searchAnalyticsSent = false;
+
 			if (this.searchView && typeof this.searchView.setItems === 'function')
 			{
 				this.searchView.setItems(null);
+			}
+
+			this.setLoading(false);
+		}
+
+		setLoading(loading)
+		{
+			if (this.searchView?.setLoading)
+			{
+				this.searchView.setLoading(loading);
 			}
 		}
 

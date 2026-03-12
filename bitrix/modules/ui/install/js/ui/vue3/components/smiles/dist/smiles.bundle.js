@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Vue3 = this.BX.Vue3 || {};
-(function (exports,rest_client,ui_dexie,ui_vue3_directives_lazyload) {
+(function (exports,rest_client,ui_dexie,ui_vue3_directives_lazyload,ui_system_chip_vue) {
 	'use strict';
 
 	class SmileManager {
@@ -3098,23 +3098,52 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	        return category.showForWindows;
 	      }
 	      return true;
+	    },
+	    scrollToCategory(categoryCode) {
+	      const allCategories = this.$refs.category;
+	      const container = this.$refs['emoji-container'];
+	      if (container && allCategories) {
+	        const targetCategory = allCategories.find(el => el.dataset.categoryCode === categoryCode);
+	        if (targetCategory) {
+	          container.scrollTo({
+	            top: targetCategory.offsetTop - 64,
+	            behavior: 'smooth'
+	          });
+	        }
+	      }
 	    }
 	  },
 	  template: `
-		<div v-for="category in emoji" class="bx-ui-smiles-emoji-wrap">
-			<template v-if="isShowCategory(category)">
-				<div class="bx-ui-smiles-category">
-					{{ $Bitrix.Loc.getMessage('UI_VUE_SMILES_EMOJI_CATEGORY_' + category.code) }}
-				</div>
-				<template v-for="element in category.emoji">
-					<div class="bx-ui-smiles-smile" style="font-size: 28px;">
-						<div class="bx-ui-smiles-smile-icon" @click="selectSmile(element.symbol)">
-							{{ element.symbol }}
-						</div>
-					</div>
-				</template>
+		<div class="bx-ui-smiles-category-filter">
+			<template v-for="category in emoji">
+				<div
+					v-if="isShowCategory(category)"
+					class="bx-ui-smiles-category-filter-img"
+					:class="'bx-ui-smiles-category-filter-img-' + category.code.toLowerCase()"
+					:title="$Bitrix.Loc.getMessage('UI_VUE_SMILES_EMOJI_CATEGORY_' + category.code)"
+					@click="scrollToCategory(category.code)"
+				/>
 			</template>
 		</div>
+		<div class="bx-ui-smiles-emoji-wrap" ref="emoji-container">
+			<div v-for="category in emoji">
+				<template v-if="isShowCategory(category)">
+					<div class="bx-ui-smiles-category" ref="category" :data-category-code="category.code">
+						{{ $Bitrix.Loc.getMessage('UI_VUE_SMILES_EMOJI_CATEGORY_' + category.code) }}
+					</div>
+					<div class="bx-ui-smiles-emoji-grid">
+						<template v-for="element in category.emoji">
+							<div class="bx-ui-smiles-smile" style="font-size: 22px;">
+								<div class="bx-ui-smiles-smile-icon" @click="selectSmile(element.symbol)">
+									{{ element.symbol }}
+								</div>
+							</div>
+						</template>
+					</div>
+				</template>
+			</div>
+		</div>
+		
 	`
 	};
 
@@ -3163,23 +3192,35 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      });
 	    }
 	  },
+	  computed: {
+	    maxWidthSmile() {
+	      var _Math$max;
+	      return ((_Math$max = Math.max(...this.smiles.map(item => item.originalWidth))) != null ? _Math$max : 0) * 0.5;
+	    }
+	  },
 	  // language=Vue
 	  template: `
-		<template v-for="smile in smiles">
-			<div class="bx-ui-smiles-smile">
-				<img v-lazyload :key="smile.id" 
-					 class="bx-ui-smiles-smile-icon"
-					 :data-lazyload-src="smile.image"
-					 data-lazyload-error-class="bx-ui-smiles-smile-icon-error"
-					 :title="smile.name"
-					 :style="{
+		<div
+			class="bx-ui-smiles-set-grid" 
+			:style="{
+				'--ui-smiles-smile-max-weight': maxWidthSmile + 'px'
+			}">
+			<template v-for="smile in smiles">
+				<div class="bx-ui-smiles-smile">
+					<img v-lazyload :key="smile.id"
+						 class="bx-ui-smiles-smile-icon"
+						 :data-lazyload-src="smile.image"
+						 data-lazyload-error-class="bx-ui-smiles-smile-icon-error"
+						 :title="smile.name"
+						 :style="{
 						height: (smile.originalHeight*0.5)+'px',
 						width: (smile.originalWidth*0.5)+'px',
 					}"
-					 @click="selectSmile(smile.typing)"
-				/>
-			</div>
-		</template>
+						 @click="selectSmile(smile.typing)"
+					/>
+				</div>
+			</template>
+		</div>
 	`
 	};
 
@@ -3199,7 +3240,8 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	  components: {
 	    LoadingTab,
 	    SmilesSetTab,
-	    EmojiTab
+	    EmojiTab,
+	    Chip: ui_system_chip_vue.Chip
 	  },
 	  directives: {
 	    lazyload: ui_vue3_directives_lazyload.lazyload
@@ -3211,12 +3253,18 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	    }
 	  },
 	  emits: ['selectSmile', 'selectSet'],
+	  setup() {
+	    return {
+	      ChipDesign: ui_system_chip_vue.ChipDesign,
+	      ChipSize: ui_system_chip_vue.ChipSize
+	    };
+	  },
 	  data() {
 	    return {
 	      smiles: [],
 	      sets: [],
 	      setSelected: 0,
-	      mode: 'smile',
+	      mode: 'emoji',
 	      emojiIcon: '\uD83D\uDE0D'
 	    };
 	  },
@@ -3258,10 +3306,10 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	    }
 	  },
 	  created() {
-	    if (this.isShowSmiles) {
-	      this.mode = 'smile';
-	    } else if (this.isShowEmoji) {
+	    if (this.isShowEmoji) {
 	      this.mode = 'emoji';
+	    } else if (this.isShowSmiles) {
+	      this.mode = 'smile';
 	    }
 	    if (this.isShowSmiles) {
 	      this.smilesController = new SmileManager(this.$Bitrix.RestClient.get());
@@ -3324,37 +3372,35 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	  // language=Vue
 	  template: `
 		<div class="bx-ui-smiles-box">
-			<div class="bx-ui-smiles-elements-wrap" ref="elements">
-				<LoadingTab v-if="isLoading"/>
-				<SmilesSetTab v-else-if="isSmileMode" :smiles="smiles" @selectSmile="selectSmile"/>
-				<EmojiTab v-else-if="isEmojiMode" @selectSmile="selectSmile"/>
+			<div class="bx-ui-smiles-content">
+				<LoadingTab v-if="isLoading" ref="elements"/>
+				<EmojiTab v-else-if="isEmojiMode" @selectSmile="selectSmile" ref="elements"/>
+				<SmilesSetTab v-else-if="isSmileMode" :smiles="smiles" @selectSmile="selectSmile" ref="elements"/>
 			</div>
 			<template v-if="isShowTabsSelector">
 				<div class="bx-ui-smiles-sets">
+					<div v-if="isShowEmoji">
+						<Chip
+							:text="$Bitrix.Loc.getMessage('UI_VUE_SMILES_SETS_EMOJI')"
+							:title="$Bitrix.Loc.getMessage('UI_VUE_SMILES_SETS_EMOJI')"
+							:rounded = true
+							:size="ChipSize.Sm"
+							:design="isEmojiMode ? ChipDesign.Filled : ChipDesign.OUTLINE_NO_ACCENT"
+							@click="switchToEmoji"
+						/>
+					</div>
 					<template v-if="isShowSmiles">
 						<template v-for="set in sets">
-							<div :class="['bx-ui-smiles-set', {'bx-ui-smiles-set-selected': set.selected}]">
-								<img v-lazyload
-									 :key="set.id"
-									 class="bx-ui-smiles-set-icon"
-									 :data-lazyload-src="set.image"
-									 data-lazyload-error-class="bx-ui-smiles-set-icon-error"
-									 :title="set.name"
-									 @click="selectSet(set.id)"
-								/>
-							</div>
+							<Chip
+								:text="$Bitrix.Loc.getMessage('UI_VUE_SMILES_SETS_SMILES')"
+								:title="set.name"
+								:rounded = true
+								:size="ChipSize.Sm"
+								:design="isSmileMode && set.selected ? ChipDesign.Filled : ChipDesign.OUTLINE_NO_ACCENT"
+								@click="selectSet(set.id)"
+							/>
 						</template>
 					</template>
-					<div v-if="isShowEmoji" :class="[
-						'bx-ui-smiles-set',
-						{
-							'bx-ui-smiles-set-selected': isEmojiMode,
-						},
-					]">
-						<div :class="['bx-ui-smiles-set-icon', emojiIconStyle]" @click="switchToEmoji">
-							{{ emojiIcon }}
-						</div>
-					</div>
 				</div>
 			</template>
 		</div>
@@ -3364,5 +3410,5 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	exports.Smiles = Smiles;
 	exports.emoji = emoji;
 
-}((this.BX.Vue3.Components = this.BX.Vue3.Components || {}),BX,BX.DexieExport,BX.Vue3.Directives));
+}((this.BX.Vue3.Components = this.BX.Vue3.Components || {}),BX,BX.DexieExport,BX.Vue3.Directives,BX.UI.System.Chip.Vue));
 //# sourceMappingURL=smiles.bundle.js.map

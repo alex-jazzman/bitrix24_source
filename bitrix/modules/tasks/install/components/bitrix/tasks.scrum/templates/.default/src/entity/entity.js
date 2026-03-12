@@ -221,25 +221,6 @@ export class Entity extends EventEmitter
 		this.pageNumberItems--;
 	}
 
-	recalculateItemsSort()
-	{
-		const listItemsNode = this.getListItemsNode();
-		if (!listItemsNode)
-		{
-			return;
-		}
-
-		let sort = 1;
-		listItemsNode.querySelectorAll('.tasks-scrum-item').forEach((node: HTMLElement) => {
-			const item = this.getItems().get(parseInt(node.dataset.id, 10));
-			if (item)
-			{
-				item.setSort(sort);
-				sort++;
-			}
-		});
-	}
-
 	setItem(newItem: Item)
 	{
 		this.items.set(newItem.getId(), newItem);

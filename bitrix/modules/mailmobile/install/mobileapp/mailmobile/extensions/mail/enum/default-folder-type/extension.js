@@ -32,6 +32,15 @@ jn.define('mail/enum/default-folder-type', (require, exports, module) => {
 				|| value === DefaultFolderType.SPAM.value
 			;
 		}
+
+		/**
+		 * @param {DefaultFolderType.value} value
+		 * @returns {Boolean}
+		 * */
+		static isTrashFolder(value)
+		{
+			return value === DefaultFolderType.TRASH.value;
+		}
 	}
 
 	module.exports = { DefaultFolderType };

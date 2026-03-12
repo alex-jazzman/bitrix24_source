@@ -412,7 +412,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	  }
 	  setValue(value) {
 	    if (main_core.Type.isPlainObject(value)) {
-	      this.input.setValue(BX.Landing.Utils.escapeText(value.text));
+	      this.input.setValue(main_core.Text.decode(value.text));
 	      this.hrefInput.setValue(value.href);
 	      this.targetInput.setValue(BX.Landing.Utils.escapeText(value.target));
 	    }

@@ -22,9 +22,8 @@ Extension::load([
 	'ui.buttons.icons',
 	'ui.hint',
 	'tasks.deadline.menu',
+	'intranet.old-interface.intranet-common',
 ]);
-
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 Loc::loadMessages(__FILE__);
 

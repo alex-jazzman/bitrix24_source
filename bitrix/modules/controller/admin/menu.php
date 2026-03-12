@@ -76,17 +76,6 @@ if ($USER->CanDoOperation('controller_log_view'))
 	];
 }
 
-if ($USER->CanDoOperation('controller_member_updates_run') && ControllerIsSharedMode())
-{
-	$aMenu['items'][] = [
-		'text' => GetMessage('CTRLR_MENU_UPD_NAME'),
-		'url' => 'controller_update.php?lang=' . LANGUAGE_ID,
-		'module_id' => 'controller',
-		'more_url' => [],
-		'title' => GetMessage('CTRLR_MENU_UPD_TYPE'),
-	];
-}
-
 if ($USER->CanDoOperation('controller_run_command'))
 {
 	$aMenu['items'][] = [

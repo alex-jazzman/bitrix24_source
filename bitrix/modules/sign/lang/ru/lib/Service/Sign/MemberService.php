@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_SERVICE_MEMBER_DOCUMENT_NOT_FOUND'] = 'Документ не найден';
 $MESS['SIGN_SERVICE_MEMBER_ADD_ERROR'] = 'Не можем добавить этого участника';
 $MESS['SIGN_SERVICE_MEMBER_NOT_FOUND'] = 'Участник подписания не найден - Такого участника нет';

@@ -40,6 +40,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    compact: {
 	      type: Boolean,
 	      default: false
+	    },
+	    alert: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['clear', 'settings'],
@@ -55,7 +59,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        '--no-offset': this.noOffset,
 	        '--readonly': this.readonly,
 	        '--active': this.active,
-	        '--compact': this.compact
+	        '--compact': this.compact,
+	        '--alert': this.alert
 	      };
 	    }
 	  },

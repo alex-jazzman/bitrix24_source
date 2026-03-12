@@ -9,11 +9,9 @@ return [
 	'js' => 'dist/recent-container.bundle.js',
 	'rel' => [
 		'main.core.events',
-		'im.v2.component.list.items.recent',
 		'im.v2.component.search',
 		'im.v2.lib.logger',
 		'im.v2.provider.service.chat',
-		'im.v2.lib.confirm',
 		'im.v2.component.list.container.elements.base-header-menu',
 		'ui.info-helper',
 		'im.public',
@@ -30,6 +28,8 @@ return [
 		'im.v2.lib.invite',
 		'im.v2.lib.promo',
 		'im.v2.const',
+		'im.v2.component.animation',
+		'im.v2.component.list.items.recent',
 	],
 	'skip_core' => false,
 ];

@@ -17,6 +17,7 @@ return [
 		'rest.client',
 		'ui.dexie',
 		'ui.vue3.directives.lazyload',
+		'ui.system.chip.vue',
 	],
 	'skip_core' => true,
 ];

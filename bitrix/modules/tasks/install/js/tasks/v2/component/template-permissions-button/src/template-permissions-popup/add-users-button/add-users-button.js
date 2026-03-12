@@ -112,7 +112,15 @@ export const AddUsersButton = {
 		},
 		update(): void
 		{
-			const permissions = this.selector.getSelectedItems().map((it: Item) => permissionBuilder.buildFromItem(it));
+			const permissions = this.selector.getSelectedItems().map((it: Item) => {
+				const permission = permissionBuilder.buildFromItem(it);
+				const existingPermission = this.permissions.find(({ entityType, entityId }) => {
+					return entityType === permission.entityType && entityId === permission.entityId;
+				});
+
+				return existingPermission ?? permission;
+			});
+
 			this.$emit('update:permissions', permissions);
 		},
 	},

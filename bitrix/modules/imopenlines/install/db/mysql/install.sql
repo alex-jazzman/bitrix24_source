@@ -61,6 +61,7 @@ CREATE TABLE b_imopenlines_session
 	EXTRA_USER_LEVEL varchar(255) NULL,
 	EXTRA_PORTAL_TYPE varchar(255) NULL,
 	EXTRA_URL varchar(255) NULL,
+	EXTRA_DEVICE_TYPE varchar(50) NULL,
 	IS_FIRST char(1) not null,
 	LAST_SEND_MAIL_ID int(11) not null default 0,
 	USER_LANG varchar(5) null,

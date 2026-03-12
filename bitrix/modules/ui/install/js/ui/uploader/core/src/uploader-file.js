@@ -474,6 +474,16 @@ export default class UploaderFile extends EventEmitter
 		return this.getStatus() === FileStatus.UPLOAD_FAILED;
 	}
 
+	isInProgress(): boolean
+	{
+		return [
+			FileStatus.LOADING,
+			FileStatus.PENDING,
+			FileStatus.PREPARING,
+			FileStatus.UPLOADING,
+		].includes(this.getStatus());
+	}
+
 	getBinary(): ?File
 	{
 		return this.#file;

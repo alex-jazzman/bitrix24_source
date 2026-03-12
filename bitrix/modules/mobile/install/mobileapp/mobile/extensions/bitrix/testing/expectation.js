@@ -19,6 +19,7 @@ jn.define('testing/expectation', (require, exports, module) => {
 		RegexMatcher,
 		LessThanMatcher,
 		GreaterThanMatcher,
+		ContainsMatcher,
 	} = require('testing/matchers');
 
 	class TestingExpectation
@@ -136,6 +137,11 @@ jn.define('testing/expectation', (require, exports, module) => {
 		toBeGreaterThan(expectedValue)
 		{
 			return this.apply(new GreaterThanMatcher(this.actualValue, expectedValue));
+		}
+
+		toContain(item)
+		{
+			return this.apply(new ContainsMatcher(this.actualValue, item));
 		}
 	}
 

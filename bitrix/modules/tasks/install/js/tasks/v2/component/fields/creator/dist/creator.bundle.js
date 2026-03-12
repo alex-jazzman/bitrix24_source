@@ -76,6 +76,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			single
 			inline
 			:dataset
+			:showMenu="false"
 			@hintClick="handleHintClick"
 			@update="updateTask"
 		/>

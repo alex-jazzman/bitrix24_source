@@ -13,12 +13,26 @@ describe('Local Storage', () => {
 		localStorage.set('object', { a: 1, b: '2' });
 		localStorage.set('bool', false);
 		localStorage.set('bool2', true);
+		localStorage.set('array', [1, 2, 3]);
+		localStorage.set('array2', [
+			{ a: 1, b: '2' },
+			{ c: 1, d: true },
+			{ e: [1, 2, 3] },
+			{ f: { a: 'name' } },
+		]);
 
 		assert.equal(localStorage.get('string'), 'my string');
 		assert.equal(localStorage.get('number'), 456);
 		assert.deepEqual(localStorage.get('object'), { a: 1, b: '2' });
 		assert.equal(localStorage.get('bool'), false);
 		assert.equal(localStorage.get('bool2'), true);
+		assert.deepEqual(localStorage.get('array'), [1, 2, 3]);
+		assert.deepEqual(localStorage.get('array2'), [
+			{ a: 1, b: '2' },
+			{ c: 1, d: true },
+			{ e: [1, 2, 3] },
+			{ f: { a: 'name' } },
+		]);
 	});
 
 	it('Should remove values', () => {
@@ -50,9 +64,9 @@ describe('Local Storage', () => {
 		assert.equal(localStorage.get('my-ttl-6'), 'my-ttl-6');
 		assert.equal(localStorage.get('my-ttl-11'), 'my-ttl-11');
 
-		assert.equal(getNative('my-ttl-2'), 'my-ttl-2');
-		assert.equal(getNative('my-ttl-6'), 'my-ttl-6');
-		assert.equal(getNative('my-ttl-11'), 'my-ttl-11');
+		assert.equal(getNative('my-ttl-2'), '"my-ttl-2"');
+		assert.equal(getNative('my-ttl-6'), '"my-ttl-6"');
+		assert.equal(getNative('my-ttl-11'), '"my-ttl-11"');
 
 		setTimeout(() => {
 			assert.equal(localStorage.get('my-ttl-2'), null);
@@ -62,14 +76,14 @@ describe('Local Storage', () => {
 
 		setTimeout(() => {
 			assert.equal(localStorage.get('my-ttl-2'), null);
-			assert.equal(getNative('my-ttl-6'), 'my-ttl-6');
-			assert.equal(getNative('my-ttl-11'), 'my-ttl-11');
+			assert.equal(getNative('my-ttl-6'), '"my-ttl-6"');
+			assert.equal(getNative('my-ttl-11'), '"my-ttl-11"');
 		}, 5000);
 
 		setTimeout(() => {
 			assert.equal(getNative('my-ttl-2'), null);
 			assert.equal(getNative('my-ttl-6'), null);
-			assert.equal(getNative('my-ttl-11'), 'my-ttl-11');
+			assert.equal(getNative('my-ttl-11'), '"my-ttl-11"');
 		}, 10500);
 
 		setTimeout(() => {

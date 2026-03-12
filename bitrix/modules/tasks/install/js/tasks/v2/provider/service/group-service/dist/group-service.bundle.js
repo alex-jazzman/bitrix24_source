@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,tasks_v2_core,tasks_v2_const,tasks_v2_lib_apiClient,tasks_v2_provider_service_taskService) {
+(function (exports,main_core,tasks_v2_core,tasks_v2_const,tasks_v2_lib_apiClient,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	function mapDtoToModel(groupDto) {
@@ -19,13 +19,14 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  };
 	}
 	function mapStageDtoToModel(stageDto) {
-	  return {
+	  const stage = {
 	    id: stageDto.id,
 	    title: stageDto.title,
 	    color: stageDto.color,
 	    systemType: stageDto.systemType,
 	    sort: stageDto.sort
 	  };
+	  return Object.fromEntries(Object.entries(stage).filter(([, value]) => !main_core.Type.isNil(value)));
 	}
 
 	var _scrumInfoPromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrumInfoPromises");
@@ -91,6 +92,21 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      return null;
 	    }
 	  }
+	  async getGroupByTaskId(id) {
+	    try {
+	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.GroupGetByTaskId, {
+	        task: {
+	          id
+	        }
+	      });
+	      const group = mapDtoToModel(data);
+	      await tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.Groups}/insert`, group);
+	      return group;
+	    } catch (error) {
+	      console.error('GroupService: getGroupByTaskId error', error);
+	      return null;
+	    }
+	  }
 	  async getScrumInfo(taskId) {
 	    if (this.hasScrumInfo(taskId)) {
 	      await babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoPromises)[_scrumInfoPromises][taskId];
@@ -112,6 +128,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    }
 	  }
 	  setHasScrumInfo(taskId) {
+	    tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, {
+	      epicId: 0,
+	      storyPoints: ''
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoPromises)[_scrumInfoPromises][taskId] = new Resolvable();
 	    babelHelpers.classPrivateFieldLooseBase(this, _scrumInfoPromises)[_scrumInfoPromises][taskId].resolve();
 	  }
@@ -172,5 +192,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	exports.GroupMappers = GroupMappers;
 	exports.groupService = groupService;
 
-}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=group-service.bundle.js.map

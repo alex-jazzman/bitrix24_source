@@ -1,2 +1,2 @@
 <?
-$MESS['REST_V3_EXCEPTIONS_LOGICEXCEPTION'] = 'Ошибка на уровне бизнес логики приложения';
+$MESS['REST_V3_EXCEPTION_LOGICEXCEPTION'] = 'Ошибка на уровне бизнес логики приложения';

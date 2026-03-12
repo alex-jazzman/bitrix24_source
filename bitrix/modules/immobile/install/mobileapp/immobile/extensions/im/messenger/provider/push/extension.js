@@ -4,7 +4,6 @@
 jn.define('im/messenger/provider/push', (require, exports, module) => {
 	/* @global ChatDataConverter */
 	const { Type } = require('type');
-	const { clone } = require('utils/object');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -12,11 +11,9 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		EventType,
 		ComponentCode,
 		OpenDialogContextType,
-		WaitingEntity,
 		NavigationTabId,
 	} = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { ComponentRequestBroadcaster } = require('im/messenger/lib/component-request-broadcaster');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const logger = getLoggerWithContext('push-handler', 'PushHandler');
 
@@ -26,8 +23,6 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		{
 			this.store = serviceLocator.get('core').getStore();
 			this.manager = Application.getNotificationHistory('im_message');
-
-			this.manager.setOnChangeListener(this.handleChange.bind(this));
 
 			this.storedPullEvents = [];
 		}
@@ -44,13 +39,6 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			this.storedPullEvents = [];
 
 			return list;
-		}
-
-		handleChange()
-		{
-			BX.onViewLoaded(() => {
-				this.updateList();
-			});
 		}
 
 		async getRawPushEvents()
@@ -145,93 +133,6 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			return eventList;
 		}
 
-		async updateList(needClearHistory = true)
-		{
-			const eventList = await this.getPushEventList();
-			logger.info('updateList: parse push messages', eventList);
-
-			const isDialogOpen = this.store.getters['applicationModel/isSomeDialogOpen'];
-
-			eventList.forEach((event) => { // TODO: delete after transferring the openlines dialog to a new widget
-				const storedEvent = clone(event.params);
-				if (storedEvent.message.params?.FILE_ID?.length > 0)
-				{
-					storedEvent.message.text = '';
-					storedEvent.message.textOriginal = '';
-				}
-
-				if (isDialogOpen)
-				{
-					BX.postWebEvent('chatrecent::push::get', storedEvent);
-				}
-				else
-				{
-					this.storedPullEvents = this.storedPullEvents
-						.filter((pullEvent) => pullEvent.message.id !== storedEvent.message.id)
-					;
-					this.storedPullEvents.push(storedEvent);
-				}
-			});
-
-			if (Feature.isInstantPushEnabled && eventList.length > 0)
-			{
-				try
-				{
-					await this.sendEventsToComponents(eventList);
-				}
-				catch (error)
-				{
-					logger.error('updateList: an error occurred when broadcasting push messages', eventList, error);
-				}
-				finally
-				{
-					logger.warn('updateList: broadcasting messages was completed');
-				}
-			}
-
-			if (needClearHistory)
-			{
-				this.clearHistory();
-			}
-
-			return eventList;
-		}
-
-		/**
-		 *
-		 * @param {Array<MessengerPushEvent>} eventList
-		 * @return {Promise<void>}
-		 */
-		async sendEventsToComponents(eventList)
-		{
-			const requestOptionList = [
-				{
-					toComponent: ComponentCode.imMessenger,
-					data: eventList,
-					handlerId: WaitingEntity.push.messageHandler.chat,
-				},
-				{
-					toComponent: ComponentCode.imMessenger,
-					data: eventList,
-					handlerId: WaitingEntity.push.messageHandler.database,
-				},
-				{
-					toComponent: ComponentCode.imCopilotMessenger,
-					data: eventList,
-					handlerId: WaitingEntity.push.messageHandler.copilot,
-				},
-				{
-					toComponent: ComponentCode.imNavigation,
-					data: eventList,
-					handlerId: WaitingEntity.push.messageHandler.counter,
-				},
-			];
-
-			return ComponentRequestBroadcaster.getInstance()
-				.send(EventType.push.messageBatch, requestOptionList)
-			;
-		}
-
 		async executeAction()
 		{
 			if (Application.isBackground())
@@ -274,21 +175,9 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			{
 				if (MessengerParams.isOpenlinesOperator() && pushParams.CHAT_TYPE === 'L')
 				{
-					if (Feature.isMessengerV2Enabled)
-					{
-						const navigationController = serviceLocator.get('navigation-controller');
-						navigationController.makeMessengerTabActive();
-						navigationController.setActiveTab(NavigationTabId.openlines);
-
-						return false;
-					}
-
-					if (!PageManager.getNavigator().isActiveTab())
-					{
-						PageManager.getNavigator().makeTabActive();
-					}
-
-					BX.postComponentEvent('onTabChange', ['openlines'], ComponentCode.imNavigation);
+					const navigationController = serviceLocator.get('navigation-controller');
+					void navigationController.makeMessengerTabActive();
+					void navigationController.setActiveTab(NavigationTabId.openlines);
 
 					return false;
 				}
@@ -309,7 +198,6 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 					openDialogParams.messageId = pushParams.PARAMS.MESSAGE_ID;
 				}
 
-				BX.postComponentEvent('onTabChange', ['chats'], ComponentCode.imNavigation);
 				MessengerEmitter.emit(EventType.messenger.openDialog, openDialogParams, ComponentCode.imMessenger);
 
 				return true;
@@ -354,20 +242,9 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 
 		#openDialog(openDialogParams)
 		{
-			if (Feature.isMessengerV2Enabled)
-			{
-				serviceLocator.get('dialog-manager').openDialog(openDialogParams)
-					.catch((error) => {
-						logger.error('openDialog error', error);
-					});
-
-				return;
-			}
-			MessengerEmitter.emit(
-				EventType.messenger.openDialog,
-				openDialogParams,
-				ComponentCode.imMessenger,
-			);
+			serviceLocator.get('dialog-manager').openDialog(openDialogParams).catch((error) => {
+				logger.error('openDialog error', error);
+			});
 		}
 	}
 

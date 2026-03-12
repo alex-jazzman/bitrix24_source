@@ -1,5 +1,3 @@
-/* eslint-disable es/no-nullish-coalescing-operators */
-/* eslint-disable es/no-optional-chaining */
 /* eslint-disable no-param-reassign */
 
 /**
@@ -8,18 +6,17 @@
 jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', (require, exports, module) => {
 	const { Type } = require('type');
 	const { AnalyticsEvent } = require('analytics');
-
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
-	const { EventType, ComponentCode, DialogType, OpenDialogContextType, Analytics, NavigationTabByComponent } = require('im/messenger/const');
+	const {
+		EventType,
+		OpenDialogContextType,
+		Analytics,
+	} = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { getLogger } = require('im/messenger/lib/logger');
-	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { SoftLoader } = require('im/messenger/lib/helper');
-	const { ComponentCodeService } = require('im/messenger/provider/services/component-code');
 	const { openPlanLimitsWidgetByError, openPlanLimitsWidget } = require('im/messenger/lib/plan-limit');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const logger = getLogger('dialog--context-manager');
@@ -369,81 +366,12 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			context = OpenDialogContextType.default,
 		)
 		{
-			if (Feature.isMessengerV2Enabled)
-			{
-				serviceLocator.get('dialog-manager').openDialog({
-					dialogId,
-					messageId,
-					withMessageHighlight,
-					context,
-				})
-					.catch((error) => {
-						logger.error(`${this.constructor.name}.#goToAnotherDialogMessageContext error`, error);
-
-						ComponentCodeService.showToastByErrorCode(error[0]?.code);
-					});
-
-				return;
-			}
-			let componentCode = null;
-			try
-			{
-				componentCode = await this.#getComponentCode(dialogId, messageId, parentMessageId);
-			}
-			catch (error)
-			{
-				this.#logError(`goToAnotherDialogMessageContext.getComponentCode catch: ${error[0]?.code}`);
-
-				ComponentCodeService.showToastByErrorCode(error[0]?.code);
-
-				return;
-			}
-
-			this.#log(`#goToAnotherDialogMessageContext: dialogId: ${dialogId}, messageId: ${messageId}, withMessageHighlight: ${withMessageHighlight} componentCode: ${componentCode}`);
-			if (!componentCode)
-			{
-				Notification.showComingSoon();
-
-				return;
-			}
-
-			MessengerEmitter.emit(
-				EventType.navigation.broadCastEventCheckTabPreload,
-				{
-					broadCastEvent: EventType.messenger.openDialog,
-					toTab: NavigationTabByComponent[componentCode],
-					data: {
-						dialogId,
-						messageId,
-						withMessageHighlight,
-						checkComponentCode: false,
-						context,
-					},
-				},
-				ComponentCode.imNavigation,
-			);
-		}
-
-		/**
-		 * @param {number|string} dialogId
-		 * @param {number|string} messageId
-		 * @param {number|string|null} [parentMessageId]
-		 * @return Promise<string|null>
-		 */
-		async #getComponentCode(dialogId, messageId, parentMessageId = null)
-		{
-			// forwarded message from CoPilot
-			if (Type.isStringFilled(parentMessageId) || Type.isNumber(parentMessageId))
-			{
-				const modelMessage = this.#store.getters['messagesModel/getById'](parentMessageId);
-				const chatType = modelMessage?.forward?.chatType;
-				if (chatType === DialogType.copilot)
-				{
-					return ComponentCode.imCopilotMessenger;
-				}
-			}
-
-			return (new ComponentCodeService()).getCodeByDialogId(dialogId, ComponentCode.imMessenger);
+			return serviceLocator.get('dialog-manager').openDialog({
+				dialogId,
+				messageId,
+				withMessageHighlight,
+				context,
+			});
 		}
 
 		/**

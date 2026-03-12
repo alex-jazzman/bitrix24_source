@@ -1,4 +1,4 @@
-import { Extension } from 'main.core';
+import { Extension, Type } from 'main.core';
 
 export type CallSettingsType = {
 	jwtCallsEnabled?: boolean,
@@ -6,10 +6,18 @@ export type CallSettingsType = {
 	plainCallFollowUpEnabled ?: boolean,
 	plainCallCloudRecordingEnabled ?: boolean,
 	callBalancerUrl?: string,
+	noiseSuppressionEnabled?: boolean,
+	accidentLogSendIntervalSecs?: number,
+	accidentLogGroupMaxAgeSecs?: number,
 };
+
+const defaultNoiseSuppressionEnabled = false;
 
 class CallSettings
 {
+	#accidentLogSendIntervalSecs = 0;
+	#accidentLogGroupMaxAgeSecs = 0;
+	#noiseSuppressionEnabled = defaultNoiseSuppressionEnabled;
 	constructor()
 	{
 		this.jwtCallsEnabled = false;
@@ -31,6 +39,11 @@ class CallSettings
 			this.jwtCallsEnabled = settings.jwtCallsEnabled;
 		}
 
+		if (settings.noiseSuppressionEnabled !== undefined)
+		{
+			this.noiseSuppressionEnabled = settings.noiseSuppressionEnabled;
+		}
+
 		if (settings.plainCallsUseJwt !== undefined)
 		{
 			this.plainCallsUseJwt = settings.plainCallsUseJwt;
@@ -49,6 +62,16 @@ class CallSettings
 		if (settings.callBalancerUrl !== undefined)
 		{
 			this.callBalancerUrl = settings.callBalancerUrl;
+		}
+
+		if (Type.isNumber(settings.accidentLogSendIntervalSecs) && settings.accidentLogSendIntervalSecs > 0)
+		{
+			this.accidentLogSendIntervalSecs = settings.accidentLogSendIntervalSecs;
+		}
+
+		if (Type.isNumber(settings.accidentLogGroupMaxAgeSecs) && settings.accidentLogGroupMaxAgeSecs > 0)
+		{
+			this.accidentLogGroupMaxAgeSecs = settings.accidentLogGroupMaxAgeSecs;
 		}
 	}
 
@@ -105,6 +128,36 @@ class CallSettings
 	isJwtInPlainCallsEnabled(): boolean
 	{
 		return this.jwtCallsEnabled && this.plainCallsUseJwt;
+	}
+
+	get noiseSuppressionEnabled(): boolean
+	{
+		return this.#noiseSuppressionEnabled ?? defaultNoiseSuppressionEnabled;
+	}
+
+	set noiseSuppressionEnabled(value: boolean)
+	{
+		this.#noiseSuppressionEnabled = value;
+	}
+
+	get accidentLogSendIntervalSecs(): number
+	{
+		return this.#accidentLogSendIntervalSecs || 0;
+	}
+
+	set accidentLogSendIntervalSecs(value: number)
+	{
+		this.#accidentLogSendIntervalSecs = value || 0;
+	}
+
+	get accidentLogGroupMaxAgeSecs(): number
+	{
+		return this.#accidentLogGroupMaxAgeSecs || 0;
+	}
+
+	set accidentLogGroupMaxAgeSecs(value: number)
+	{
+		this.#accidentLogGroupMaxAgeSecs = value || 0;
 	}
 }
 

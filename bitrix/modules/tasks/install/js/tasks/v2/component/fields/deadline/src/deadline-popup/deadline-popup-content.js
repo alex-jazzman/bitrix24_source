@@ -1,4 +1,4 @@
-import { Dom } from 'main.core';
+import { Dom, Type } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import type { BaseEvent } from 'main.core.events';
 
@@ -262,7 +262,6 @@ export const DeadlinePopupContent = {
 				{
 					this.close();
 				}
-				this.sendAnalytics(Analytics.Element.Calendar);
 
 				this.hour = hour;
 			});
@@ -301,9 +300,9 @@ export const DeadlinePopupContent = {
 			}
 
 			const date = new Date(timestamp);
-			const [y, m, d] = [date.getFullYear(), date.getMonth(), date.getDate()];
+			const [year, mount, day] = [date.getFullYear(), date.getMonth(), date.getDate()];
 
-			this.datePicker.selectDate(new Date(`${m + 1}/${d}/${y} ${calendar.dayEndTime}`));
+			this.datePicker.selectDate(new Date(`${mount + 1}/${day}/${year} ${calendar.dayEndTime}`));
 			this.sendAnalytics(Analytics.Element.DeadlinePreset);
 
 			this.close();
@@ -315,8 +314,11 @@ export const DeadlinePopupContent = {
 		sendAnalytics(element: string): void
 		{
 			analytics.sendDeadlineSet(this.analytics, {
-				cardType: this.cardType,
 				element,
+				cardType: this.cardType,
+				taskId: Type.isNumber(this.taskId) ? this.taskId : 0,
+				viewersCount: this.task.auditorsIds?.length ?? 0,
+				coexecutorsCount: this.task.accomplicesIds?.length ?? 0,
 			});
 		},
 		async handleDayFocus(event: BaseEvent): Promise<void>
@@ -333,7 +335,8 @@ export const DeadlinePopupContent = {
 				.getMonthContainer()
 				.querySelector(
 					`.ui-day-picker-day[data-year="${year}"][data-month="${month}"][data-day="${day}"]`,
-				);
+				)
+			;
 			if (!dayElement)
 			{
 				return;

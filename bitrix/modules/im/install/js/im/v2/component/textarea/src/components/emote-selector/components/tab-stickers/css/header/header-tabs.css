@@ -1,0 +1,24 @@
+.bx-im-sticker-header-tabs__container {
+	display: flex;
+	align-items: center;
+	height: 46px;
+	box-sizing: border-box;
+	padding: 0 0 0 12px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-gutter: stable;
+	position: relative;
+	scrollbar-width: none;
+}
+
+.bx-im-sticker-header-tabs__container::-webkit-scrollbar {
+	display: none;
+}
+
+.bx-im-sticker-header-tabs__item {
+	margin-right: 10px;
+}
+
+.bx-im-sticker-header-tabs__add-button {
+	margin-right: 8px;
+}

@@ -19,8 +19,7 @@ use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar\ButtonLocation;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
-$APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 
 Loc::loadMessages(__FILE__);
 

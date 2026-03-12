@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["GENERAL_PAGE_GROUP_ID"] = "Blogs group";
 $MESS["GENERAL_PAGE_PATH_TO_BLOG"] = "Path to User's Blog";
 $MESS["GENERAL_PAGE_PATH_TO_POST"] = "Path to user blog post";
@@ -28,4 +28,3 @@ $MESS["BC_SHARE_TEMPLATE"] = "Social Network Bookmarks Template";
 $MESS["BC_SHARE_SYSTEM"] = "Use Social Networks And Bookmarks";
 $MESS["BC_SHARE_SHORTEN_URL_LOGIN"] = "bit.ly Login";
 $MESS["BC_SHARE_SHORTEN_URL_KEY"] = "bit.ly Key";
-?>

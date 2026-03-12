@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Bitrix24\MailCounter;
 use Bitrix\Mail;
+use Bitrix\Mail\Helper\MailboxAccess;
 use Bitrix\Mail\Helper\Message;
 use Bitrix\Mail\Integration\Calendar\ICal\ICalMailManager;
 use Bitrix\Mail\Integration\Intranet\Secretary;
@@ -41,7 +42,7 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 	{
 		parent::init();
 
-		$this->isCrmEnable = \Bitrix\Mail\Integration\Crm\Permissions::getInstance()->hasAccessToCrm();
+		$this->isCrmEnable = MailboxAccess::hasCurrentUserAccessToEditMailboxIntegrationCrm();
 	}
 
 

@@ -53,11 +53,17 @@ export class PlaceholderPlugin extends BasePlugin
 				const mentionEnabled = mentionPlugin !== null && mentionPlugin.shouldTriggerByAtSign();
 				if (copilotEnabled && mentionEnabled)
 				{
-					paragraphPlaceholder = Loc.getMessage('TEXT_EDITOR_PLACEHOLDER_MENTION_COPILOT');
+					paragraphPlaceholder = Loc.getMessage(
+						'TEXT_EDITOR_PLACEHOLDER_MENTION_BITRIX_GPT',
+						{ '#COPILOT_NAME#': copilotPlugin.getCopilotName() },
+					);
 				}
 				else if (copilotEnabled)
 				{
-					paragraphPlaceholder = Loc.getMessage('TEXT_EDITOR_PLACEHOLDER_COPILOT');
+					paragraphPlaceholder = Loc.getMessage(
+						'TEXT_EDITOR_PLACEHOLDER_BITRIX_GPT',
+						{ '#COPILOT_NAME#': copilotPlugin.getCopilotName() },
+					);
 				}
 				else if (mentionEnabled)
 				{

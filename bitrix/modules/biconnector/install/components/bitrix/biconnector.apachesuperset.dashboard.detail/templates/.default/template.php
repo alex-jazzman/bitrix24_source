@@ -28,11 +28,7 @@ Extension::load([
 	'ui.lottie',
 ]);
 
-$analyticSource = Context::getCurrent()->getRequest()->get('openFrom') ?? 'grid';
-if (isset($arResult['OPEN_LOGIN_POPUP']) && $arResult['OPEN_LOGIN_POPUP'])
-{
-	$analyticSource = 'copy';
-}
+$analyticSource = Context::getCurrent()->getRequest()->get('openFrom') ?? 'direct';
 
 $analyticScope = Context::getCurrent()->getRequest()->get('scope');
 
@@ -168,7 +164,6 @@ if ($limitManager->isLimitByLicence() && !$limitManager->checkLimitWarning())
 		new BX.BIConnector.ApacheSuperset.Dashboard.Detail.create(
 			<?= Json::encode([
 				'appNodeId' => 'dashboard',
-				'openLoginPopup' => $arResult['OPEN_LOGIN_POPUP'],
 				'canExport' => $arResult['CAN_EXPORT'],
 				'canEdit' => $arResult['CAN_EDIT'],
 				'analyticSource' => $analyticSource,

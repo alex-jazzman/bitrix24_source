@@ -29,3 +29,11 @@ $MESS['IM_LIB_MENU_USER_WRITE'] = "Написать лично";
 $MESS["IM_LIB_MENU_AI_ASSISTANT_FEEDBACK"] = "Обратная связь";
 
 $MESS["IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL"] = "Посмотреть в канале";
+
+$MESS["IM_LIB_MENU_EDIT_STICKER_PACK"] = "Редактировать";
+$MESS["IM_LIB_MENU_REMOVE_STICKER_PACK"] = "Удалить у всех";
+$MESS["IM_LIB_MENU_UNLINK_STICKER_PACK"] = "Удалить у меня";
+$MESS["IM_LIB_MENU_REMOVE_RECENT_STICKER"] = "Удалить из недавних";
+$MESS["IM_LIB_MENU_CLEAR_RECENT_STICKERS"] = "Очистить недавние";
+$MESS["IM_LIB_MENU_SEND_STICKER"] = "Отправить в чат";
+$MESS["IM_LIB_MENU_REMOVE_STICKER"] = "Удалить из набора";

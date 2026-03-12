@@ -7,4 +7,6 @@ $MESS["MAIL_MAILBOX_CONNECTOR_CLIENT_IMAP_AUTH_ERR_EXT"] = "Authentication error
 $MESS["MAIL_MAILBOX_CONNECTOR_CLIENT_LIMIT_ERROR"] = "Maximum number of mailboxes exceeded. Upgrade to one of the major plans.";
 $MESS["MAIL_MAILBOX_CONNECTOR_CLIENT_OAUTH_ERROR"] = "Authentication error.";
 $MESS["MAIL_MAILBOX_CONNECTOR_CLIENT_THERE_ARE_NO_MAIL_SERVICES"] = "Email service provider is not in the service list. Please contact your Bitrix24 administrator.";
+$MESS["MAIL_MAILBOX_CONNECTOR_REMOVE_DELETE_ERROR_DENIED"] = "Insufficient permission to disconnect this mailbox. Please contact your Bitrix24 administrator.";
+$MESS["MAIL_MAILBOX_CONNECTOR_REMOVE_DELETE_ERROR_NO_MAILBOX"] = "This mailbox is already disconnected.";
 $MESS["MAIL_MAILBOX_CONNECTOR_SMTP_PASS_BAD_SYMBOLS"] = "SMTP password includes invalid characters. Please contact your Bitrix24 administrator.";

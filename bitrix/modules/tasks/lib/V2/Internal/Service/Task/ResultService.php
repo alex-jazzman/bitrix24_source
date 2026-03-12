@@ -65,17 +65,6 @@ class ResultService
 	{
 		$task = $this->getTask($taskId)->cloneWith(['requireResult' => $require]);
 
-		if ($require)
-		{
-			$this->chatNotification->notify(
-				NotificationType::ResultRequested,
-				$task,
-				[
-					'triggeredBy' => $this->userRepository->getByIds([$userId])->findOneById($userId)
-				]
-			);
-		}
-
 		$config = new UpdateConfig(
 			userId: $userId,
 			useConsistency: $useConsistency,
@@ -134,6 +123,7 @@ class ResultService
 			createdAtTs: time(),
 			updatedAtTs: time(),
 			status: Result\Status::Open,
+			type: $result->type,
 			fileIds: $result->fileIds,
 			previewId: $result->previewId,
 			messageId: $result->messageId,
@@ -197,13 +187,19 @@ class ResultService
 			throw new ResultNotFoundException('Result not found');
 		}
 
-		$updatedResult = Result::mapFromArray([
-			...$resultInDb->toArray(),
-			...array_filter(
-				$result->toArray(),
-				static fn($value) => $value !== null
-			),
-		]);
+		$updatedResult = new Result(
+			id: $resultInDb->id,
+			taskId: $resultInDb->taskId,
+			text: $result->text ?? $resultInDb->text,
+			author: $resultInDb->author,
+			createdAtTs: $resultInDb->createdAtTs,
+			updatedAtTs: time(),
+			status: $result->status ?? $resultInDb->status,
+			type: $result->type ?? $resultInDb->type,
+			fileIds: $result->fileIds ?? $resultInDb->fileIds,
+			previewId: $result->previewId ?? $resultInDb->previewId,
+			messageId: $resultInDb->messageId,
+		);
 
 		$this->taskResultRepository->save($updatedResult, $userId);
 
@@ -331,7 +327,7 @@ class ResultService
 	{
 		$this->automationService->onTaskFieldChanged(
 			taskId: $taskId,
-			updatedFields: ['RESULT' => $result->text],
+			updatedFields: ['COMMENT_RESULT' => $result->text],
 		);
 	}
 
@@ -373,6 +369,7 @@ class ResultService
 				'dateTs' => $result->createdAtTs,
 				'fileIds' => $result->fileIds ?? [],
 				'messageId' => $result->messageId ?? 0,
+				'type' => $result->type ?? null,
 			],
 		);
 	}

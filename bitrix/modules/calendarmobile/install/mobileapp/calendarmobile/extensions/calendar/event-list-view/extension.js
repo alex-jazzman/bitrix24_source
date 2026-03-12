@@ -36,7 +36,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 		{
 			super(props);
 
-			this.floatingActionButtonRef = null;
+			this.floatingActionButton = null;
 
 			this.syncErrorAhaShowed = false;
 
@@ -266,9 +266,9 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 		{
 			if (!this.readOnly)
 			{
-				this.floatingActionButtonRef = FloatingActionButton({
+				this.floatingActionButton = new FloatingActionButton({
 					testId: 'calendar_event_list_ADD_BTN',
-					parentLayout: this.layout,
+					layout: this.layout,
 					onClick: this.handleFloatingButtonClick,
 				});
 			}
@@ -415,7 +415,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 		{
 			return new Layout({
 				layout: this.layout,
-				floatingActionButtonRef: this.floatingActionButtonRef,
+				floatingActionButton: this.floatingActionButton,
 				syncInfo: this.props.syncInfo,
 			});
 		}

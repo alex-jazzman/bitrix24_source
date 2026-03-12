@@ -78,6 +78,21 @@ export class EntityListPopup
 		{
 			const iconNode = Tag.render`<div class="ui-icon ui-icon-common-company"><i></i></div>`;
 
+			if (Type.isStringFilled(entity.pathToStructure))
+			{
+				return Tag.render`
+					<a
+						href="${entity.pathToStructure}"
+						target="_blank"
+						title="${Text.encode(entity.name)}"
+						class="mailbox-grid_user-list-popup-popup-img --icon"
+					>
+						<span class="mailbox-grid_user-list-popup-popup-avatar-new --icon">${iconNode}</span>
+						<span class="mailbox-grid_user-list-popup-popup-name-link">${Text.encode(entity.name)}</span>
+					</a>
+				`;
+			}
+
 			return Tag.render`
 				<div
 					class="mailbox-grid_user-list-popup-popup-img --icon"

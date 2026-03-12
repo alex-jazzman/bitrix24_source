@@ -87,15 +87,28 @@ foreach ($arResult['LIST'] as $task)
 	$taskLink = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_USER_TASKS_TASK'],
 		[
-			'user_id' => User::getId(),
+			'user_id' => $userId,
 			'task_id' => $taskId,
 			'action' => 'view',
 		]
 	);
+
+	$analytics = \Bitrix\Tasks\Helper\Analytics::getInstance($userId);
+	$taskLink = (new Uri($taskLink))
+		->addParams(
+			[
+				'ta_sec' => $analytics::SECTION['tasks'],
+				'ta_sub' => $analytics::SUB_SECTION['efficiency'],
+				'ta_el' => $analytics::ELEMENT['title_click'],
+			],
+		)
+		->getUri()
+	;
+
 	$groupLink = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_GROUP_LIST'],
 		[
-			'user_id' => User::getId(),
+			'user_id' => $userId,
 			'group_id' => $task['GROUP_ID'],
 		]
 	);

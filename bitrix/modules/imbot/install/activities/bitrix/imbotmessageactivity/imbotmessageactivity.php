@@ -21,6 +21,7 @@ class CBPImBotMessageActivity extends CBPActivity
 	private const PARAM_MESSAGE = 'message';
 	private const PARAM_BOT_CODE = 'botCode';
 	private const PARAM_AS_ERROR = 'asError';
+	private const PARAM_CHAT_ID = 'chatId';
 
 	public function __construct($name)
 	{
@@ -32,6 +33,7 @@ class CBPImBotMessageActivity extends CBPActivity
 			self::PARAM_MESSAGE => '',
 			self::PARAM_BOT_CODE => null,
 			self::PARAM_AS_ERROR => null,
+			self::PARAM_CHAT_ID => null,
 		];
 	}
 
@@ -54,6 +56,14 @@ class CBPImBotMessageActivity extends CBPActivity
 			];
 		}
 
+		if (empty($arTestProperties[self::PARAM_RECIPIENT]) && empty($arTestProperties[self::PARAM_CHAT_ID]))
+		{
+			$errors[] = [
+				'code' => 'NotExist',
+				'message' => Loc::getMessage('IMBOT_MESSAGE_ACTIVITY_PROPERTY_CHAT_ID_OR_RECIPIENT_EMPTY'),
+			];
+		}
+
 		return array_merge($errors, parent::ValidateProperties($arTestProperties, $user));
 	}
 
@@ -64,7 +74,6 @@ class CBPImBotMessageActivity extends CBPActivity
 			'parameter' => $param,
 			'message' => match ($param)
 			{
-				self::PARAM_RECIPIENT => Loc::getMessage('IMBOT_MESSAGE_ACTIVITY_PROPERTY_RECIPIENT_EMPTY'),
 				self::PARAM_MESSAGE => Loc::getMessage('IMBOT_MESSAGE_ACTIVITY_PROPERTY_MESSAGE_EMPTY'),
 			},
 		];
@@ -164,8 +173,12 @@ class CBPImBotMessageActivity extends CBPActivity
 				'Name' => Loc::getMessage('IMBOT_MESSAGE_ACTIVITY_PROPERTY_RECIPIENT'),
 				'FieldName' => self::PARAM_RECIPIENT,
 				'Type' => FieldType::USER,
-				'Required' => true,
 				'Multiple' => true,
+			],
+			self::PARAM_CHAT_ID => [
+				'Name' => Loc::getMessage('IMBOT_MESSAGE_ACTIVITY_PROPERTY_CHAT_ID'),
+				'FieldName' => self::PARAM_CHAT_ID,
+				'Type' => FieldType::INT,
 			],
 			self::PARAM_MESSAGE => [
 				'Name' => Loc::getMessage('IMBOT_MESSAGE_ACTIVITY_PROPERTY_MESSAGE'),
@@ -215,14 +228,6 @@ class CBPImBotMessageActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$recipients = CBPHelper::ExtractUsers($this->{self::PARAM_RECIPIENT}, $this->getDocumentId());
-		if (empty($recipients))
-		{
-			$this->trackError((string)Loc::getMessage('IMBOT_MESSAGE_ACTIVITY_PROPERTY_RECIPIENT_EMPTY'));
-
-			return CBPActivityExecutionStatus::Closed;
-		}
-
 		$botId = $this->getBotIdWithCodeIfNeeded();
 		if (empty($botId))
 		{
@@ -240,28 +245,44 @@ class CBPImBotMessageActivity extends CBPActivity
 
 		$asError = CBPHelper::getBool($this->{self::PARAM_AS_ERROR});
 		$message = $this->prepareMessageToSend($message);
+		$chatId = (int)$this->{self::PARAM_CHAT_ID};
+		if ($chatId > 0)
+		{
+			$this->sendAndTrackError($botId, "chat{$chatId}", $message, $asError);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$recipients = CBPHelper::ExtractUsers($this->{self::PARAM_RECIPIENT}, $this->getDocumentId());
+		if (empty($recipients))
+		{
+			$this->trackError((string)Loc::getMessage('IMBOT_MESSAGE_ACTIVITY_PROPERTY_RECIPIENT_EMPTY'));
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		foreach ($recipients as $recipient)
 		{
-			$this->sendAndTrackError($botId, $recipient, $message, $asError);
+			$this->sendAndTrackError($botId, (string)$recipient, $message, $asError);
 		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	private function sendAndTrackError(int $botId, int $recipient, string $message, bool $asError): void
+	private function sendAndTrackError(int $botId, string $dialogId, string $message, bool $asError): void
 	{
-		$sent = $this->sendBotPrivateMessage($botId, $recipient, $message, $asError);
+		$sent = $this->sendByDialogId($botId, $dialogId, $message, $asError);
 		if (!$sent)
 		{
 			$this->trackErrorFromGlobalVariables();
 		}
 	}
 
-	private function sendBotPrivateMessage(int $botId, int $recipient, string $message, bool $asError): bool
+	private function sendByDialogId(int $botId, string $dialogId, string $message, bool $asError): bool
 	{
 		$botIdentifier = ['BOT_ID' => $botId];
 		$messageFields = [
-			'DIALOG_ID' => $recipient,
+			'DIALOG_ID' => $dialogId,
 			'MESSAGE' => $message,
 		];
 

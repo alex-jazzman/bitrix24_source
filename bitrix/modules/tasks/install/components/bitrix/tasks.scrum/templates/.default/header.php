@@ -13,13 +13,14 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
-use Bitrix\Tasks\Kanban\Sort\Factory\MenuFactory;
 use Bitrix\Tasks\Kanban\Sort\Item\MenuItem;
-use Bitrix\Tasks\Kanban\Sort\Item\SortTitle;
 use Bitrix\Tasks\Kanban\Sort\Menu;
 use Bitrix\Tasks\UI\ScopeDictionary;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\UI\Buttons;
 
 Extension::load([
 	'tasks.kanban-sort',
@@ -38,6 +39,7 @@ Extension::load([
 	'ui.fonts.opensans',
 	'ui.analytics',
 	'ui.navigationpanel',
+	'ui.feedback.form',
 ]);
 
 Extension::load('date');
@@ -70,6 +72,7 @@ $viewName = $this->getComponent()->getTemplatePage();
 $messages = Loc::loadLanguageFile(__FILE__);
 
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
+$feedbackParams = Json::encode(Container::getInstance()->getFeedbackService()->getParams());
 
 /** @var Filter $filterInstance */
 $filterInstance = $arResult['filterInstance'];
@@ -234,6 +237,27 @@ if ($isBitrix24Template)
 		}
 		?>
 		<div id="tasks-scrum-right-container" class="ui-actions-bar__buttons">
+			<?php
+
+			if ($isBitrix24Template)
+			{
+				$button = (new Buttons\Button())
+					->setText(Container::getInstance()->getFeedbackService()->getTitle())
+					->setColor(Buttons\Color::LIGHT_BORDER)
+					->setSize(Buttons\Size::SMALL)
+					->bindEvent('click', new Buttons\JsCode(
+						"BX.UI.Feedback.Form.open({$feedbackParams});"
+					))
+					->setCollapsedIcon(Buttons\Icon::LIST)
+					->addAttribute('id', 'tasks-feedback-button')
+					->render(false)
+				;
+
+				?>
+				<?= $button ?>
+				<?php
+			}
+			?>
 		</div>
 	</div>
 

@@ -114,6 +114,7 @@
 	--ui-icon-set-solid__path_verification: url('/bitrix/js/ui/icon-set/solid/images/verification.svg');
 	--ui-icon-set-solid__path_wallet: url('/bitrix/js/ui/icon-set/solid/images/wallet.svg');
 	--ui-icon-set-solid__path_window-flag: url('/bitrix/js/ui/icon-set/solid/images/window-flag.svg');
+	--ui-icon-set-solid__path_crown-1: url('/bitrix/js/ui/icon-set/solid/images/crown-1.svg');
 }
 
 .ui-icon-set.--s-3-persons {
@@ -570,4 +571,8 @@
 
 .ui-icon-set.--s-window-flag {
 	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_window-flag);
+}
+
+.ui-icon-set.--s-crown-1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_crown-1);
 }

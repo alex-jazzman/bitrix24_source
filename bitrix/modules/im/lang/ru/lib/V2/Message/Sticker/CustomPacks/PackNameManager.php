@@ -1,0 +1,11 @@
+<?php
+$MESS["IM_MESSAGE_STICKER_PACK_NAME_RED"] = "Красный набор";
+$MESS["IM_MESSAGE_STICKER_PACK_NAME_GREEN"] = "Зеленый набор";
+$MESS["IM_MESSAGE_STICKER_PACK_NAME_MINT"] = "Мятный набор";
+$MESS["IM_MESSAGE_STICKER_PACK_NAME_LIGHT_BLUE"] = "Небесный набор";
+$MESS["IM_MESSAGE_STICKER_PACK_NAME_DARK_BLUE"] = "Синий набор";
+$MESS["IM_MESSAGE_STICKER_PACK_NAME_PURPLE"] = "Фиолетовый набор";
+$MESS["IM_MESSAGE_STICKER_PACK_NAME_AQUA"] = "Аквамариновый набор";
+$MESS["IM_MESSAGE_STICKER_PACK_NAME_PINK"] = "Розовый набор";
+$MESS["IM_MESSAGE_STICKER_PACK_NAME_LIME"] = "Салатовый набор";
+$MESS["IM_MESSAGE_STICKER_PACK_NAME_BROWN"] = "Бурый набор";

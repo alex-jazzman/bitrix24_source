@@ -1,5 +1,4 @@
-import { Engine } from 'ai.engine';
-import { Event, Loc, Runtime, Type } from 'main.core';
+import { Event, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Button as ButtonUI, ButtonState } from 'ui.buttons';
 
@@ -21,7 +20,6 @@ const CALL_SCORING_SCENARIO = 'call_scoring';
 export class Call extends CopilotBase
 {
 	#isCopilotWelcomeTourShown: boolean = false;
-	#isCopilotBannerShown: boolean = false;
 
 	// region Base overridden methods
 	onInitialize(item: ConfigurableItem): void
@@ -128,48 +126,9 @@ export class Call extends CopilotBase
 		};
 	}
 
-	supportsCopilotBanner(): boolean
-	{
-		return this.#isCopilotBannerShown;
-	}
-
 	useInfoHelper(): boolean
 	{
 		return true;
-	}
-
-	async showCopilotBanner(item: ConfigurableItem, actionData: Object): void
-	{
-		const {
-			AppsInstallerBanner,
-			AppsInstallerBannerEvents,
-		} = await Runtime.loadExtension('ai.copilot-banner');
-		const portalZone = Loc.getMessage('PORTAL_ZONE');
-		const copilotBannerOptions = {
-			isWestZone: portalZone !== 'ru' && portalZone !== 'by' && portalZone !== 'kz',
-		};
-
-		const copilotBanner = new AppsInstallerBanner(copilotBannerOptions);
-		copilotBanner.show();
-		copilotBanner.subscribe(AppsInstallerBannerEvents.actionStart, () => {
-			// eslint-disable-next-line no-console
-			console.info('Install app started');
-		});
-		copilotBanner.subscribe(AppsInstallerBannerEvents.actionFinishSuccess, () => {
-			setTimeout(() => {
-				(new Engine()).setBannerLaunched();
-
-				this.#isCopilotBannerShown = true;
-			}, 500);
-		});
-
-		copilotBanner.subscribe(AppsInstallerBannerEvents.actionFinishFailed, () => {
-			console.error('Install app failed. Try installing the application manually.');
-
-			setTimeout(() => {
-				this.showMarketMessageBox();
-			}, 500);
-		});
 	}
 	// endregion
 

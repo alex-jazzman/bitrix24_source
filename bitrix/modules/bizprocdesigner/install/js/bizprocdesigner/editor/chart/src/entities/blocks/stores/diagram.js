@@ -18,27 +18,10 @@ import type {
 	PortId,
 	Port,
 	DiagramTemplate,
+	TimestampMap,
 } from '../../../shared/types';
-import { PORT_TYPES } from '../../../shared/constants';
 
 export type PortType = 'input' | 'output' | 'aux' | 'top_aux';
-
-type PortParams = {
-	portId: PortId,
-	type: PortType,
-	label: string,
-	portTitle?: string,
-};
-
-const PORT_LABELS = Object.freeze({
-	input: 'G',
-	output: 'E',
-});
-
-const PORT_POSITIONS = Object.freeze({
-	left: 'left',
-	right: 'right',
-});
 
 const BLOCK_TYPES = {
 	SetupTemplateActivity: 'SetupTemplateActivity',
@@ -57,6 +40,9 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 		isOnline: true,
 		blockCurrentTimestamps: {},
 		blockSavedTimestamps: {},
+		blockCurrentPublishErrors: {},
+		connectionCurrentTimestamps: {},
+		connectionSavedTimestamps: {},
 		templatePublishStatus: TEMPLATE_PUBLISH_STATUSES.MAIN,
 	}),
 	getters: {
@@ -72,6 +58,8 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 			isOnline: state.isOnline,
 			blockCurrentTimestamps: state.blockCurrentTimestamps,
 			blockSavedTimestamps: state.blockSavedTimestamps,
+			connectionCurrentTimestamps: state.connectionCurrentTimestamps,
+			connectionSavedTimestamps: state.connectionSavedTimestamps,
 		}),
 	},
 	actions: {
@@ -143,31 +131,29 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 			this.documentType = diagramData?.documentType ?? [];
 			this.documentTypeSigned = diagramData?.documentTypeSigned ?? '';
 			this.template = diagramData?.template ?? {};
-			this.blocks = this.normalyzeBlocks(diagramData?.blocks ?? []);
-			this.setConnections(diagramData?.connections ?? []);
+			this.blocks = diagramData?.blocks ?? [];
+			this.connections = diagramData?.connections ?? [];
 
+			const now = Date.now();
 			for (const block of this.blocks)
 			{
-				const now = Date.now();
 				this.blockCurrentTimestamps[block.id] = block.node.updated ?? now;
+			}
+
+			for (const block of diagramData.publishedBlocks)
+			{
 				this.blockSavedTimestamps[block.id] = block.node.published ?? now;
 			}
-		},
-		normalyzeBlocks(blocks: Array<Block>): Array<Block>
-		{
-			return blocks.map((block) => {
-				const groupedPorts = Object.entries(block.ports)
-					.reduce((portsMap, [type, ports]) => {
-						portsMap[type] = ports?.map((port) => ({ ...port, type })) ?? [];
 
-						return portsMap;
-					}, {});
+			for (const connection of this.connections)
+			{
+				this.connectionCurrentTimestamps[connection.id] = connection.createdAt ?? now;
+			}
 
-				return {
-					...block,
-					ports: groupedPorts,
-				};
-			});
+			for (const connection of diagramData.publishedConnection)
+			{
+				this.connectionSavedTimestamps[connection.id] = connection.createdAt ?? now;
+			}
 		},
 		getDeleteHandlerForBlockType(blockType: string): ?Function
 		{
@@ -238,10 +224,15 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 				});
 
 			this.blocks.splice(blockIndex, 1);
+			delete this.blockCurrentTimestamps[blockId];
 		},
 		setBlockCurrentTimestamp(block: Block): void
 		{
 			this.blockCurrentTimestamps[block.id] = Date.now();
+		},
+		setConnectionCurrentTimestamp(connectionId: string): void
+		{
+			this.connectionCurrentTimestamps[connectionId] = Date.now();
 		},
 		updateBlockActivityField(id: string, activity: ActivityData): void
 		{
@@ -251,6 +242,7 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 				block.activity = activity;
 			}
 			this.updateBlockTimestamp(block);
+			this.clearBlockErrorStatus(id);
 		},
 		updateBlockId(oldId: string, newId: string): void
 		{
@@ -293,18 +285,6 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 				}
 			});
 		},
-		updateTitle(newTitle: string): void
-		{
-			this.template.NAME = newTitle;
-		},
-		updateDescription(newDescription: string): void
-		{
-			this.template.DESCRIPTION = newDescription;
-		},
-		updateTemplateId(templateId: number): void
-		{
-			this.templateId = templateId;
-		},
 		setBlocks(blocks: Block[]): void
 		{
 			this.blocks = blocks;
@@ -324,9 +304,15 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 
 			this.blocks[blockIndex].node.publicationState = false;
 		},
-		setInputPorts(block: Block, inputPorts: Array<Port>): void
+		setPorts(blockId: BlockId, ports: Array<Port>): void
 		{
-			Object.assign(block.ports, { input: inputPorts });
+			const block = this.blocks.find((b) => b.id === blockId);
+			if (!block)
+			{
+				return;
+			}
+
+			block.ports = ports;
 		},
 		async updateTemplateData(data: DiagramTemplate)
 		{
@@ -344,8 +330,11 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 					node: {
 						...block.node,
 						updated: this.blockCurrentTimestamps[block.id],
-						published: this.blockSavedTimestamps[block.id],
 					},
+				})),
+				connections: this.connections.map((connection) => ({
+					...connection,
+					createdAt: this.connectionCurrentTimestamps[connection.id],
 				})),
 			};
 
@@ -357,25 +346,62 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 		},
 		async publicTemplate()
 		{
+			const now = Date.now();
 			const requestData = {
 				...this.diagramData,
 				blocks: this.blocks.map((block) => ({
 					...block,
 					node: {
 						...block.node,
-						updated: null,
-						published: null,
+						updated: now,
+						published: now,
 					},
+				})),
+				connections: this.connections.map((connection) => ({
+					...connection,
+					createdAt: this.connectionCurrentTimestamps[connection.id],
 				})),
 			};
 
-			const { templateId } = await editorAPI.publicDiagramData(requestData);
-			if (Type.isNumber(templateId))
+			try
 			{
-				this.blockSavedTimestamps = { ...this.blockCurrentTimestamps };
-				this.templateId = templateId;
-				this.draftId = 0;
+				const { templateId } = await editorAPI.publicDiagramData(requestData);
+				this.blockCurrentPublishErrors = {};
+				if (Type.isNumber(templateId))
+				{
+					this.blockSavedTimestamps = { ...this.blockCurrentTimestamps };
+					this.connectionSavedTimestamps = { ...this.connectionCurrentTimestamps };
+					this.templateId = templateId;
+					this.draftId = 0;
+				}
 			}
+			catch (e)
+			{
+				if (Type.isArrayFilled(e.data?.activityErrors))
+				{
+					this.setBlocksErrorStatus(e.data.activityErrors);
+				}
+
+				throw e;
+			}
+		},
+		setBlocksErrorStatus(activityErrors: Array<{ code: string, activityName: string, message: string }>)
+		{
+			this.blockCurrentPublishErrors = {};
+
+			activityErrors.forEach((error) => {
+				const { activityName, code } = error;
+				if (!Type.isStringFilled(activityName))
+				{
+					return;
+				}
+
+				this.blockCurrentPublishErrors[activityName] = { code };
+			});
+		},
+		clearBlockErrorStatus(blockId: BlockId): void
+		{
+			delete this.blockCurrentPublishErrors[blockId];
 		},
 		updateStatus(isOnline: boolean)
 		{
@@ -385,9 +411,24 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 		{
 			this.blockCurrentTimestamps[block.id] = Date.now();
 		},
-		setBlockCurrentTimestamps(blockCurrentTimestamps)
+		setBlockCurrentTimestamps(blockCurrentTimestamps: ?TimestampMap): void
 		{
-			Object.assign(this.blockCurrentTimestamps, blockCurrentTimestamps);
+			Object.keys(this.blockCurrentTimestamps).forEach((key) => delete this.blockCurrentTimestamps[key]);
+			Object.assign(this.blockCurrentTimestamps, blockCurrentTimestamps ?? {});
+		},
+		setConnectionCurrentTimestamps(connectionCurrentTimestamps: ?TimestampMap): void
+		{
+			Object.keys(this.connectionCurrentTimestamps).forEach((key) => delete this.connectionCurrentTimestamps[key]);
+			Object.assign(this.connectionCurrentTimestamps, connectionCurrentTimestamps ?? {});
+		},
+		setDiagramData(diagramData: DiagramData): void
+		{
+			this.templateId = diagramData.templateId;
+			this.documentType = diagramData.documentType;
+			this.companyName = diagramData.companyName;
+			this.template = diagramData.template;
+			this.blocks = diagramData.blocks;
+			this.connections = diagramData.connections;
 		},
 		updateExistedBlockProperties(newBlocks: Block[]): void
 		{
@@ -410,24 +451,7 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 				}
 			}
 		},
-		updateNodeTitle(block: Block, title: string): void
-		{
-			Object.assign(block.node, { title });
-		},
-		createPort(ports: Array<Port>, { portId, type, label, portTitle }: PortParams): Port
-		{
-			const lastPort = ports[ports.length - 1] ?? null;
-			const [, count] = (lastPort?.title?.split(label) ?? []);
-			const title = portTitle ?? `${label}${Number(count ?? 0) + 1}`;
-
-			return {
-				id: portId,
-				title,
-				type,
-				position: type === PORT_TYPES.input ? PORT_POSITIONS.left : PORT_POSITIONS.right,
-			};
-		},
-		addRulePort(blockId: BlockId, portId: string, type: PortType, portTitle: ?string): void
+		updateNodeTitle(blockId: BlockId, title: string): void
 		{
 			const block = this.blocks.find((b) => b.id === blockId);
 			if (!block)
@@ -435,46 +459,7 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 				return;
 			}
 
-			const { ports } = block;
-			let currentPorts = ports.input;
-			let label = PORT_LABELS.input;
-			if (type === PORT_TYPES.output)
-			{
-				currentPorts = ports.output;
-				label = PORT_LABELS.output;
-			}
-
-			const rulePorts = currentPorts.filter((p) => !p.isConnectionPort);
-			const port = this.createPort(rulePorts, { portId, type, label, portTitle });
-			currentPorts.push(port);
-		},
-		addConnectionPort(blockId: BlockId, portId: string, type: PortType): void
-		{
-			const block = this.blocks.find((b) => b.id === blockId);
-			if (!block)
-			{
-				return;
-			}
-
-			const { ports } = block;
-			const currentPorts = type === PORT_TYPES.input ? ports.input : ports.output;
-			const connectionPorts = currentPorts.filter((p) => p.isConnectionPort);
-			const port = this.createPort(connectionPorts, { portId, type, label: 'NG' });
-			currentPorts.push({ ...port, isConnectionPort: true });
-		},
-		deletePort(blockId: BlockId, portId: string, type?: PortType): void
-		{
-			const block = this.blocks.find((b) => b.id === blockId);
-			if (!block)
-			{
-				return;
-			}
-
-			const { ports } = block;
-			const currentPorts = type === PORT_TYPES.output ? ports.output : ports.input;
-
-			const deletedPort = currentPorts.find((port) => portId === port.id);
-			currentPorts.splice(currentPorts.indexOf(deletedPort), 1);
+			block.node.title = title;
 		},
 		updateTemplateConstants(event): void
 		{
@@ -522,9 +507,17 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 			}
 
 			const newActivatedState = block.activity.Activated === 'Y' ? 'N' : 'Y';
+			const actionLabel =	newActivatedState === 'N'
+				? (Loc.getMessage('BIZPROCDESIGNER_STORES_DIAGRAM_ACTIVATE_OFF') ?? '')
+				: (Loc.getMessage('BIZPROCDESIGNER_STORES_DIAGRAM_ACTIVATE_ON') ?? '')
+			;
 			const applyChanges = () => {
 				block.activity.Activated = newActivatedState;
 				this.updateBlockActivityField(blockId, block.activity);
+				UI.Notification.Center.notify({
+					content: actionLabel,
+					autoHideDelay: 4000,
+				});
 			};
 
 			if (skipDraft)
@@ -534,22 +527,42 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 				return;
 			}
 
-			const actionLabel = newActivatedState === 'N'
-				? (Loc.getMessage('BIZPROCDESIGNER_STORES_DIAGRAM_ACTIVATE_OFF') ?? '')
-				: (Loc.getMessage('BIZPROCDESIGNER_STORES_DIAGRAM_ACTIVATE_ON') ?? '');
 			try
 			{
 				applyChanges();
 				await this.publicDraft();
-				UI.Notification.Center.notify({
-					content: actionLabel,
-					autoHideDelay: 4000,
-				});
 			}
 			catch (error)
 			{
 				handleResponseError(error);
 			}
+		},
+		updateBlockPublishStatus(block: Block): void
+		{
+			try
+			{
+				this.setBlockCurrentTimestamp(block);
+				this.publicDraft();
+				this.updateStatus(true);
+			}
+			catch
+			{
+				this.updateStatus(false);
+			}
+		},
+		addBlock(block: Block): void
+		{
+			this.blocks.push(block);
+		},
+		updateFrameColorName(blockId: BlockId, colorName: string): void
+		{
+			const block = this.blocks.find((b) => b.id === blockId);
+			if (!block)
+			{
+				return;
+			}
+
+			block.node.frameColorName = colorName;
 		},
 	},
 });

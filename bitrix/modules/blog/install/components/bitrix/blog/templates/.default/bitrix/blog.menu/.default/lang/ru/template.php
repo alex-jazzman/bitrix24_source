@@ -7,4 +7,3 @@ $MESS ['BLOG_MENU_ADD_MESSAGE'] = "Новое сообщение";
 $MESS ['BLOG_MENU_ADD_MESSAGE_TITLE'] = "Написать новое сообщение";
 $MESS ['BLOG_MENU_SETTINGS'] = "Настройки";
 $MESS ['BLOG_MENU_SETTINGS_TITLE'] = "Перейти в настройки блога";
-?>

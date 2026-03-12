@@ -41,5 +41,6 @@ return [
 		'./src/version/26',
 		'./src/version/27',
 		'./src/version/28',
+		'./src/version/29',
 	],
 ];

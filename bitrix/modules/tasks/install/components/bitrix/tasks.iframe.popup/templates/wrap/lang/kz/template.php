@@ -1,2 +1,0 @@
-<?php
-$MESS["TASKS_TIP_TEMPLATE_LINK_COPIED_TEMPLATE_BAR_TITLE"] = "Міндет қалыптары";

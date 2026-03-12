@@ -73,6 +73,7 @@ jn.define('calendar/event-edit-form/button/save-event', (require, exports, modul
 				eventId,
 				uuid: State.uuid,
 				createChatId: State.createChatId,
+				createMailId: State.createMailId,
 				fields: State.getFields(),
 			}]);
 

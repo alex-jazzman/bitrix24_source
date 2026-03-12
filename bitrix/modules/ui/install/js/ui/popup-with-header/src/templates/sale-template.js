@@ -1,5 +1,5 @@
-import { Cache, Dom, Tag } from 'main.core';
-import { Button, ButtonTag } from 'ui.buttons';
+import { Cache, Dom, Tag, Type } from 'main.core';
+import { AirButtonStyle, Button, ButtonColor, ButtonTag } from 'ui.buttons';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
 import type {
 	ButtonConfig,
@@ -15,11 +15,13 @@ export class SaleTemplate extends BaseTemplate
 {
 	#cache = new Cache.MemoryCache();
 	options: SalePopupTemplateOptions;
+	#analyticsCallback: ?Function;
 
 	constructor(options: SalePopupTemplateOptions = {})
 	{
 		super();
 		this.options = options;
+		this.#analyticsCallback = Type.isFunction(options.analyticsCallback) ? options.analyticsCallback : null;
 	}
 
 	getContent(): Array<ResultContent>
@@ -39,6 +41,7 @@ export class SaleTemplate extends BaseTemplate
 					html: itemContent,
 					background: item.styles?.background,
 					margin: index === 0 ? '12px 0 0 0' : null,
+					borderColor: item.styles?.borderColor,
 				});
 			});
 
@@ -49,20 +52,19 @@ export class SaleTemplate extends BaseTemplate
 	#getItemContent(config: SalePopupTemplateItemConfig): HTMLElement
 	{
 		return Tag.render`
-			<div class="ui-popupconstructor-content-item-wrapper">
-				<div class="ui-popupconstructor-content-item-wrapper_information">
+			<div class="ui-popupconstructor-content-item-wrapper --noflex">
+				<div class="ui-popupconstructor-content-item-wrapper__header">
 					<div class="ui-popupconstructor-content-item-wrapper-title">
 						${config.icon ? this.#getIcon(config.icon) : null}
 						${config.title ? this.#getTitle(config.title) : null}
 					</div>
-					<div>
-						${config.description ? this.#getDescription(config.description) : null}
-						${config.more ? this.#getMoreLink(config.more, config.button) : null}
+					<div class="ui-popupconstructor-content-item__header-button">
+						${config.button ? this.#getButton(config.button) : null}
 					</div>
 				</div>
-				<div class="ui-popupconstructor-content-item-wrapper_button">
-					${config.button ? this.#getButton(config.button) : null}
-					${config.button.description ? this.#getButtonDescription(config.button.description) : null}
+				<div>
+					${config.description ? this.#getDescription(config.description) : null}
+					${config.more ? this.#getMoreLink(config.more, config.button) : null}
 				</div>
 			</div>
 		`;
@@ -120,9 +122,9 @@ export class SaleTemplate extends BaseTemplate
 				top.BX.Helper.show(`redirect=detail&code=${config.articleId}`);
 			}
 
-			if (this.options?.analyticsCallback)
+			if (this.#analyticsCallback)
 			{
-				this.options.analyticsCallback('click-more', configMainButton.url);
+				this.#analyticsCallback('click-more', configMainButton.url);
 			}
 		};
 
@@ -139,22 +141,27 @@ export class SaleTemplate extends BaseTemplate
 		const buttonTag = config.target ? ButtonTag.BUTTON : ButtonTag.LINK;
 
 		const button = new Button({
-			round: true,
 			text: config.text,
 			size: Button.Size.EXTRA_SMALL,
-			color: Button.Color.SUCCESS,
+			useAirDesign: true,
+			style: config?.airStyle ?? AirButtonStyle.FILLED,
+			color: ButtonColor.PRIMARY,
 			noCaps: true,
 			tag: buttonTag,
 			link: config.target ? null : config.url,
+			wide: true,
+			events: {
+				mousedown: () => {
+					if (this.#analyticsCallback)
+					{
+						this.#analyticsCallback(config?.analyticsEvent ?? 'click-button', config.url);
+					}
+				},
+			},
 			onclick: () => {
 				if (config.target)
 				{
 					window.open(config.url, config.target);
-				}
-
-				if (this.options?.analyticsCallback)
-				{
-					this.options.analyticsCallback('click-button', config.url);
 				}
 			},
 		});

@@ -1,0 +1,64 @@
+.hr-company-structure__multi-role-user-settings_container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	min-height: 493px;
+}
+
+.hr-company-structure__multi-role-user-settings_hint-panel {
+	padding: 16px;
+	border-radius: 12px;
+	background-color: var(--ui-color-palette-blue-15);
+	color: var(--ui-color-black-base);
+	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-system));
+}
+
+.hr-company-structure__multi-role-user-settings_option-title {
+	display: flex;
+	align-items: center;
+	font: 14px/22px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-color-black-base);
+}
+
+.hr-company-structure__multi-role-user-settings_option {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.hr-company-structure__multi-role-user-settings_option-title.--soon:after {
+	content: attr(data-title);
+	display: inline-block;
+	background: var(--ui-color-palette-blue-50);
+	font: var(--ui-font-weight-bold) 8px/10px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-color-palette-white-base);
+	text-transform: uppercase;
+	padding: 3px 10px 3px 8px;
+	border-radius: 17px;
+	vertical-align: bottom;
+}
+
+.hr-company-structure__multi-role-user-settings_ui-hint-disabled {
+	 display: inline-block;
+	 width: 26px;
+	 height: 26px;
+	 transition: opacity .3s;
+	 opacity: .45;
+	 text-align: center;
+	 line-height: 26px;
+}
+
+.hr-company-structure__multi-role-user-settings_item-options-error {
+	display: flex;
+	align-items: center;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-field-color-warning);
+	margin-top: 3px;
+}
+
+.hr-company-structure__multi-role-user-settings_item-options-error .ui-icon-set.--warning {
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-field-color-warning);
+	margin-bottom: -2px;
+	margin-right: 2px;
+}

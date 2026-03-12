@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_MESSAGESENDER_PAGE_RECOMMENDATIONS_TITLE"] = "Рекомендації";

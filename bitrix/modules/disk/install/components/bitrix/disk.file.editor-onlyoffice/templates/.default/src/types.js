@@ -16,6 +16,15 @@ export type CommonWarningOptions = {
 	fileName: string,
 	description: string,
 	linkToDownload: string,
+	downloadSizeValue: string;
+};
+
+export type SessionBoostOptions = {
+	shouldShowButtonWidgetInstantly: boolean,
+	optionParamsToControlButtonWidgetDisplay: {
+		category: string,
+		name: string,
+	},
 };
 
 export type EditorOptions = {
@@ -38,6 +47,9 @@ export type EditorOptions = {
 	publicChannel: string,
 	sharingControlType: ?SharingControlType,
 	unifiedLinkAccessOnly: boolean,
+	sessionBoostButtonContainerId: string,
+	sessionBoostOptions: ?SessionBoostOptions,
+	promoShowImmediately: boolean,
 };
 
 export type Context = {
@@ -64,6 +76,7 @@ export type BaseObject = {
 	size: ?number,
 	updatedBy: ?number,
 	uniqueCode: ?string,
+	docType: ?string,
 }
 
 export type AttachedObject = {

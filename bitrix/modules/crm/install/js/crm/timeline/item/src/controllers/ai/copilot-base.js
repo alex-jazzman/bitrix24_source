@@ -16,7 +16,6 @@ declare type CoPilotAdditionalInfoData =
 {
 	sliderCode: ?string,
 	isAiMarketplaceAppsExist: ?boolean,
-	isCopilotBannerNeedShow: ?boolean,
 	code: ?string,
 	msgPlainText: ?string,
 	msgHtml: ?string,
@@ -47,11 +46,8 @@ export class CopilotBase extends Base
 	// region Methods to override
 	getCopilotConfig(): CopilotConfig
 	{
-		console.error('Method "getCopilotConfig" must be overridden');
+		throw new Error('Method "getCopilotConfig" must be overridden');
 	}
-
-	showCopilotBanner(item: ConfigurableItem, actionData: Object): void
-	{}
 
 	getAdditionalRequestData(actionData: Object): Object
 	{
@@ -59,11 +55,6 @@ export class CopilotBase extends Base
 	}
 
 	useInfoHelper(): boolean
-	{
-		return false;
-	}
-
-	supportsCopilotBanner(): boolean
 	{
 		return false;
 	}
@@ -80,22 +71,6 @@ export class CopilotBase extends Base
 		{
 			this.#launchCopilot(item, actionData);
 		}
-	}
-
-	showMarketMessageBox(): void
-	{
-		MessageBox.show({
-			title: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
-			message: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
-				'[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
-				'[/helpdesklink]': '</a>',
-			}),
-			modal: true,
-			buttons: MessageBoxButtons.OK_CANCEL,
-			okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
-			onOk: () => Router.openSlider(Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK')),
-			onCancel: (messageBox) => messageBox.close(),
-		});
 	}
 
 	async #showCopilotAgreement(item: ConfigurableItem, actionData: Object): Promise<void>
@@ -196,7 +171,7 @@ export class CopilotBase extends Base
 		const customData: ?CoPilotAdditionalInfoData = response.errors[0].customData;
 		if (customData)
 		{
-			this.#showAdditionalInfo(customData, item, actionData);
+			this.#showAdditionalInfo(customData, item);
 
 			btnUI.setState(prevState || ButtonState.ACTIVE);
 		}
@@ -224,7 +199,7 @@ export class CopilotBase extends Base
 		}, COPILOT_BUTTON_DISABLE_DELAY);
 	}
 
-	#showAdditionalInfo(data: CoPilotAdditionalInfoData, item: ConfigurableItem, actionData: Object): void
+	#showAdditionalInfo(data: CoPilotAdditionalInfoData, item: ConfigurableItem): void
 	{
 		if (this.#isSliderCodeExist(data))
 		{
@@ -232,20 +207,14 @@ export class CopilotBase extends Base
 		}
 		else if (this.#isAiMarketplaceAppsExist(data))
 		{
-			if (this.#shouldShowCopilotBanner(data))
-			{
-				this.showCopilotBanner(item, actionData);
-			}
-			else
-			{
-				this.showMarketMessageBox();
-			}
+			this.#showMarketMessageBox();
 		}
 		else if (data.code === 'blocked_provider')
 		{
 			if (Type.isStringFilled(data.sliderCode))
 			{
 				this.#showInfoSlider(data.sliderCode);
+
 				return;
 			}
 
@@ -269,11 +238,6 @@ export class CopilotBase extends Base
 		{
 			this.#showFeedbackMessageBox();
 		}
-	}
-
-	#shouldShowCopilotBanner(data: CoPilotAdditionalInfoData): boolean
-	{
-		return data.isCopilotBannerNeedShow && this.supportsCopilotBanner();
 	}
 
 	#handleSliderCode(data: CoPilotAdditionalInfoData, item: ConfigurableItem): void
@@ -379,6 +343,22 @@ export class CopilotBase extends Base
 				lang: 'en',
 				sec: '3sd3le',
 			}],
+		});
+	}
+
+	#showMarketMessageBox(): void
+	{
+		MessageBox.show({
+			title: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
+			message: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
+				'[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
+				'[/helpdesklink]': '</a>',
+			}),
+			modal: true,
+			buttons: MessageBoxButtons.OK_CANCEL,
+			okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
+			onOk: () => Router.openSlider(Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK')),
+			onCancel: (messageBox) => messageBox.close(),
 		});
 	}
 

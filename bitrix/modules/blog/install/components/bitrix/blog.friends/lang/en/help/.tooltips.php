@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['MESSAGE_COUNT_TIP'] = "Maximum number of messages that can be displayed on a page.";
 $MESS ['PATH_TO_BLOG_TIP'] = "The path to the main blog page. Example: blog_blog.php?page=blog&blog=#blog#.";
 $MESS ['PATH_TO_BLOG_CATEGORY_TIP'] = "The path to a blog page with a tag filter. Example: <nobr>blog_filter.php?page=blog&blog=#blog#<b>&category=#category#</b>.</nobr>";
@@ -12,4 +12,3 @@ $MESS ['USER_VAR_TIP'] = "Specify here the name of a variable to which the blog 
 $MESS ['PAGE_VAR_TIP'] = "Specify here the name of a variable to which the blog page will be passed.";
 $MESS ['ID_TIP'] = "Specifies the code in which the user ID will be passed.";
 $MESS ['SET_TITLE_TIP'] = "If the option is active, the page title will be set to <nobr><b>My Friends</b>.</nobr>";
-?>

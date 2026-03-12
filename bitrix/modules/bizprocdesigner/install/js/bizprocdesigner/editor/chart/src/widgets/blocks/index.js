@@ -8,3 +8,4 @@ export * from './ui/diagram-menu/diagram-menu';
 export * from './ui/autosave-status/autosave-status';
 export * from './ui/template-name/template-name';
 export * from './ui/publish-dropdown-button/publish-dropdown-button';
+export * from './ui/toast-error-block-navigation-button/toast-error-block-navigation-button';

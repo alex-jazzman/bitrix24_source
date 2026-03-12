@@ -65,10 +65,7 @@ export const Segment = {
 		const firstCategory = categories[0];
 
 		let isAiEnabled = false;
-		if (
-			settings.ai?.isAvailable
-			&& (settings.ai?.isSponsored || settings.baas?.hasPackage)
-		)
+		if (settings.ai?.isAvailable && settings.baas?.hasPackage)
 		{
 			isAiEnabled = segment.isAiEnabled ?? true;
 		}
@@ -331,10 +328,6 @@ export const Segment = {
 		{
 			return this.settings.isReadOnly;
 		},
-		isSponsored(): boolean
-		{
-			return this.settings.ai?.isSponsored ?? false;
-		},
 		isAiAvailable(): boolean
 		{
 			return this.settings.ai?.isAvailable ?? false;
@@ -393,13 +386,7 @@ export const Segment = {
 	watch: {
 		currentIsAiEnabled(value: boolean): void
 		{
-			if (
-				this.isAiAvailable
-				&& (
-					this.isSponsored
-					|| this.isBaasHasPackage
-				)
-			)
+			if (this.isAiAvailable && this.isBaasHasPackage)
 			{
 				this.currentIsAiEnabled = value;
 
@@ -450,7 +437,7 @@ export const Segment = {
 					<section class="crm-repeat-sale__segment-section --active">
 						<div
 							class="crm-repeat-sale__segment-fields-row"
-							v-if="isBaasAvailable || isSponsored"
+							v-if="isBaasAvailable"
 						>
 							<div class="crm-repeat-sale__segment-field">
 								<AiSwitcherComponent

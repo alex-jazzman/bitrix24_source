@@ -1,3 +1,0 @@
-<?php
-$MESS["CRM_TIMELINE_BIZPROC_TERMINATED_TEXT"] = "Болдырылмады";
-$MESS["CRM_TIMELINE_BIZPROC_TERMINATED_TITLE"] = "Бизнес-процесс";

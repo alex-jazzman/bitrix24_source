@@ -1,0 +1,49 @@
+.bx-disk-promo-boost-button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+	--height: 33px;
+	height: var(--height);
+	border-radius: calc(var(--height) / 2);
+	padding: 2px 12px 2px 36px;
+	background: radial-gradient(109.2% 109.2% at 9.27% 9.23%, #f9be74 0%, #fb7595 50%, #b55cce 100%);
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,.02);
+	border: none;
+	cursor: pointer;
+	gap: 4px;
+	transition: .1s;
+}
+
+.bx-disk-promo-boost-button:hover,
+.bx-disk-promo-boost-button:active {
+	transition: 0s;
+}
+
+.bx-disk-promo-boost-button:hover {
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+
+.bx-disk-promo-boost-button:active {
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,0);
+}
+
+.bx-disk-promo-boost-button:focus-visible {
+	outline: none;
+}
+
+.bx-disk-promo-boost-button::before {
+	content: '';
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	left: 6px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='25' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect y='.5' width='24' height='24' rx='12' fill='%23fff'/%3E%3Crect x='.5' y='1' width='23' height='23' rx='11.5' stroke='%23000' stroke-opacity='.02'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.756 17.532c-1.048.095-2.021-.271-2.846-.961-.824-.69-1.355-1.58-1.443-2.622a36.489 36.489 0 01-2.332-.536c.841-2.163 2.447-2.741 3.452-2.882.161-.23.34-.462.539-.698 2.401-2.852 7.823-4.142 8.48-3.593.657.55.324 6.096-2.077 8.949a9.983 9.983 0 01-.589.642c.038 1.01-.248 2.697-2.248 3.903a36.17 36.17 0 01-.936-2.202zm.995-2.873a1.714 1.714 0 01-2.41.21 1.7 1.7 0 01-.21-2.4 1.714 1.714 0 012.409-.21 1.7 1.7 0 01.21 2.4zm.522-3.272a.92.92 0 001.294-.113.913.913 0 00-.113-1.289.92.92 0 00-1.294.113.913.913 0 00.113 1.29zm-4.916 5.754c.447.358.937.624 1.459.778-1.695.992-3.112 1.535-3.334 1.357-.223-.178.09-1.605.82-3.371.249.464.609.879 1.055 1.236z' fill='url(%23paint0_radial_6319_168294)'/%3E%3Cdefs%3E%3CradialGradient id='paint0_radial_6319_168294' cx='0' cy='0' r='1' gradientUnits='userSpaceOnUse' gradientTransform='matrix(9.97691 10.38661 -10.38128 9.97179 6.319 7.373)'%3E%3Cstop stop-color='%23F9BE74'/%3E%3Cstop offset='.5' stop-color='%23FB7595'/%3E%3Cstop offset='1' stop-color='%23B55CCE'/%3E%3C/radialGradient%3E%3C/defs%3E%3C/svg%3E") no-repeat 50% 50%;
+}
+
+.bx-disk-promo-boost-button > span {
+	color: #fff;
+	font-family: var(--ui-font-family-helvetica);
+	font-size: 12px;
+	font-weight: 700;
+}

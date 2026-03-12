@@ -1,3 +1,0 @@
-<?php
-$MESS["MENU_BITRIX24_SECTION_EXTRANET"] = "Екстранет";
-$MESS["MENU_BITRIX24_SECTION_GROUPS"] = "Групи";

@@ -4,11 +4,21 @@ this.BX.UI = this.BX.UI || {};
 (function (exports,main_popup,ui_iconSet_main,ui_buttons,ui_cnt,ui_iconSet_api_core,ui_iconSet_outline,main_core) {
 	'use strict';
 
+	var _needTo = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needTo");
+	var _needCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needCount");
 	var _delta = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("delta");
 	var _position = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("position");
 	var _update = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("update");
 	class Mouse {
 	  constructor() {
+	    Object.defineProperty(this, _needTo, {
+	      writable: true,
+	      value: new WeakSet()
+	    });
+	    Object.defineProperty(this, _needCount, {
+	      writable: true,
+	      value: 0
+	    });
 	    Object.defineProperty(this, _delta, {
 	      writable: true,
 	      value: {
@@ -37,7 +47,24 @@ this.BX.UI = this.BX.UI || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _position)[_position] = position;
 	      }
 	    });
+	  }
+	  need(needTo) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _needTo)[_needTo].has(needTo)) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _needTo)[_needTo].add(needTo);
+	    babelHelpers.classPrivateFieldLooseBase(this, _needCount)[_needCount]++;
 	    main_core.Event.bind(window, 'mousemove', babelHelpers.classPrivateFieldLooseBase(this, _update)[_update]);
+	  }
+	  notNeed(needTo) {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _needTo)[_needTo].has(needTo)) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _needTo)[_needTo].delete(needTo);
+	    babelHelpers.classPrivateFieldLooseBase(this, _needCount)[_needCount]--;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _needCount)[_needCount] === 0) {
+	      main_core.Event.unbind(window, 'mousemove', babelHelpers.classPrivateFieldLooseBase(this, _update)[_update]);
+	    }
 	  }
 	  getPosition() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _position)[_position];
@@ -284,7 +311,8 @@ this.BX.UI = this.BX.UI || {};
 	        clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _showTimeout)[_showTimeout]);
 	        const subMenuContainer = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _subMenu)[_subMenu]) == null ? void 0 : _babelHelpers$classPr6.getPopupContainer();
 	        if (!babelHelpers.classPrivateFieldLooseBase(this, _subMenuHovered)[_subMenuHovered] && subMenuContainer && !subMenuContainer.contains(event.relatedTarget)) {
-	          const distance = mouse.getPosition().left - subMenuContainer.getBoundingClientRect().left;
+	          const subMenuLeft = subMenuContainer.getBoundingClientRect().left + window.scrollX;
+	          const distance = mouse.getPosition().left - subMenuLeft;
 	          const distanceDelta = Math.abs(distance) - Math.abs(distance + mouse.getDelta().left);
 	          if (distanceDelta <= 1) {
 	            this.closeSubMenu();
@@ -308,12 +336,14 @@ this.BX.UI = this.BX.UI || {};
 	      value: () => {
 	        this.adjustSubMenu();
 	        main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _element)[_element], '--hovered');
+	        mouse.need(this);
 	      }
 	    });
 	    Object.defineProperty(this, _onClose, {
 	      writable: true,
 	      value: () => {
 	        main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _element)[_element], '--hovered');
+	        mouse.notNeed(this);
 	      }
 	    });
 	    const defaultItemOptions = {

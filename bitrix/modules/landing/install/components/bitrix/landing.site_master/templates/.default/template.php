@@ -97,7 +97,7 @@ $step = max(0, min($step, $stepMax));
 	</div>
 	<div class="landing-sm-phone-wrapper">
 		<div class="landing-sm-phone">
-			<?$lang = LANGUAGE_ID === 'ru' ? 'ru' : 'en';?>
+			<?$lang = in_array(LANGUAGE_ID, ['ru', 'kz']) ? 'ru' : 'en';?>
 			<?if ($step != 3):?>
 				<div class="landing-sm-phone-pic">
 				<?if ($step === 1):?>

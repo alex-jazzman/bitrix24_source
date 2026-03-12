@@ -33,7 +33,6 @@ $arActivityDescription = (
 		'GROUP' => ['elementControl'],
 	])
 	->setNodeActionSettings([
-		'INCLUDE' => ['taskscomplexactivity'],
 		'HANDLES_DOCUMENT' => true,
 	])
 	->toArray()

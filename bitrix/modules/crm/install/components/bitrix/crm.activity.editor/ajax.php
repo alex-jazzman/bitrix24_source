@@ -2562,6 +2562,7 @@ elseif($action == 'SAVE_EMAIL')
 				'cc'      => join(', ', $rawCc),
 				'bcc'     => join(', ', $bcc),
 			],
+			'SANITIZE_ON_VIEW' => 1,
 		],
 	], false, false, array('REGISTER_SONET_EVENT' => true));
 

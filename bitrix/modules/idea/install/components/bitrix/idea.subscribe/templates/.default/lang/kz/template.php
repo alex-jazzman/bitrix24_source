@@ -1,6 +1,0 @@
-<?php
-$MESS["IDEA_SUBSCRIBE_AUTHOR"] = "Автор";
-$MESS["IDEA_SUBSCRIBE_PUBLISHED"] = "Жарияланды";
-$MESS["IDEA_SUBSCRIBE_STATUS"] = "Мәртебе";
-$MESS["IDEA_SUBSCRIBE_TITLE"] = "Атауы";
-$MESS["IDEA_SUBSCRIBE_TOTAL"] = "Жазылым";

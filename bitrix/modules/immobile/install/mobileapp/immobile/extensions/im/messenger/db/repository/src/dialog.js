@@ -10,7 +10,7 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 		DialogTable,
 		MessageTable,
 	} = require('im/messenger/db/table');
-	const { DateHelper } = require('im/messenger/lib/helper');
+	const { DateHelper, Url } = require('im/messenger/lib/helper');
 	const { DialogBackgroundId } = require('im/messenger/const');
 	const { DialogInternalRepository } = require('im/messenger/db/repository/internal/dialog');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -228,7 +228,8 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 
 			if (Type.isString(dialog.avatar))
 			{
-				result.avatar = dialog.avatar;
+				const urlHelper = new Url(dialog.avatar);
+				result.avatar = urlHelper.getPreparedAvatarUrl();
 			}
 
 			if (Type.isStringFilled(dialog.color))

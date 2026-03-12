@@ -247,6 +247,7 @@ export class PickerBase extends Base
 					|| firstError?.code === 'LIMIT_IS_EXCEEDED_DAILY'
 					|| firstError?.code === 'LIMIT_IS_EXCEEDED_BAAS'
 					|| firstError?.code === 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF'
+					|| firstError?.code === 'ERROR_CODE_FORCE'
 				)
 				{
 					AjaxErrorHandler.handleImageGenerateError({
@@ -258,6 +259,9 @@ export class PickerBase extends Base
 							useSlider: firstError?.customData?.showSliderWithMsg ?? true,
 							context: 'notSet',
 						},
+						forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
+						forceOption: firstError?.customData,
+						bindElement: this.context.querySelector('.ai__picker_submit-btn'),
 					});
 
 					this.textMessage.finishLoading();

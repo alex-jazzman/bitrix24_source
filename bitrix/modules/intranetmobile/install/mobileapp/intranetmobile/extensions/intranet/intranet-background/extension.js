@@ -3,7 +3,6 @@
  */
 jn.define('intranet/background', (require, exports, module) => {
 	const { isModuleInstalled } = require('module');
-	const { ResultsYearUIManager } = require('intranet/results-year/ui-manager');
 
 	class IntranetBackground
 	{
@@ -20,8 +19,6 @@ jn.define('intranet/background', (require, exports, module) => {
 
 			const { Onboarding, CaseName } = require('intranet/onboarding');
 			void Onboarding.tryToShow(CaseName.IS_USER_ALONE);
-
-			ResultsYearUIManager.openComponentInBackground();
 		}
 	}
 

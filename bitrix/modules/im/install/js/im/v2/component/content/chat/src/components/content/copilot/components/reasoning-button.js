@@ -62,12 +62,14 @@ export const ReasoningButton = {
 			};
 		},
 	},
-	created()
-	{
-		if (this.isActive)
+	watch: {
+		isReasoningAvailableInModel(isAvailable: boolean)
 		{
-			this.$store.dispatch('copilot/chats/toggleReasoning', this.dialogId);
-		}
+			if (!isAvailable && this.isActive)
+			{
+				this.$store.dispatch('copilot/chats/toggleReasoning', this.dialogId);
+			}
+		},
 	},
 	methods: {
 		toggle()

@@ -359,6 +359,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 			copyId: true,
 			extraSettings: task.canUpdate,
 			canCreate: task.canCreate,
+			canUpdateAuditors: task.canUpdateAuditors,
 		}),
 	);
 

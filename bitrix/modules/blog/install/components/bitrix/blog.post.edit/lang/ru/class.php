@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_MODULE_NOT_INSTALL"] = "Модуль блогов не установлен.";
 $MESS["B_B_MES_NO_BLOG"] = "Блог не найден";
 $MESS["BLOG_POST_EDIT"] = "Редактирование сообщения";
@@ -21,4 +21,3 @@ $MESS["B_B_MES_NO_GROUP_ACTIVE"] = "Функционал отключен для
 $MESS["B_B_MES_NO_GROUP_RIGHTS"] = "Недостаточно прав для создания сообщения в группе социальной сети";
 $MESS["BLOG_EMPTY_TITLE_PLACEHOLDER"] = "Изображение";
 $MESS["B_B_PC_DUPLICATE_POST"] = "Ваше сообщение уже добавлено";
-?>

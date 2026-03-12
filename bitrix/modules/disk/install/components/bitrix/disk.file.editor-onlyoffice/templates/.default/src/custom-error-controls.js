@@ -1,10 +1,11 @@
 import {Dom, Loc, Tag, Text} from "main.core";
-import {Button} from "ui.buttons";
+import { Button, ButtonSize, ButtonIcon, AirButtonStyle } from "ui.buttons";
 import type {CommonWarningOptions} from "./types";
+import 'ui.icon-set.outline';
 
 export default class CustomErrorControl
 {
-	showWhenTooLarge(fileName: string, container: HTMLElement, targetNode: HTMLElement, linkToDownload: string): void
+	showWhenTooLarge(fileName: string, container: HTMLElement, targetNode: HTMLElement, linkToDownload: string, downloadSizeValue: string): void
 	{
 		this.showCommonWarning({
 			container: container,
@@ -13,6 +14,7 @@ export default class CustomErrorControl
 			description: Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_DESCR'),
 			fileName: fileName,
 			linkToDownload: linkToDownload,
+			downloadSizeValue: downloadSizeValue,
 		});
 	}
 
@@ -39,18 +41,31 @@ export default class CustomErrorControl
 		let downloadButtonNode = '';
 		if (options.linkToDownload)
 		{
+			let downloadSize = '';
+			if (options.downloadSizeValue)
+			{
+				downloadSize = options.downloadSizeValue;
+			}
+
 			const downloadButton = new Button({
 				text: Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_DOWNLOAD'),
 				round: true,
+				noCaps: true,
 				tag: Button.Tag.LINK,
 				link: options.linkToDownload,
-				color: Button.Color.SUCCESS,
-				className: 'disk-fe-office-warning-btn',
+				color: AirButtonStyle.FILLED,
+				className: '--air disk-fe-office-warning-btn',
+				icon: ButtonIcon.DOWNLOAD,
+				iconPosition: 'left',
+				size: ButtonSize.LARGE,
 				props: {
 					target: '_blank',
-				}
+				},
 			});
 			downloadButtonNode = downloadButton.render();
+			downloadButton.setText(
+				`${Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_DOWNLOAD')} ${downloadSize}`,
+			);
 		}
 
 		const errorControl = Tag.render`
@@ -58,9 +73,9 @@ export default class CustomErrorControl
 				<div class="disk-fe-office-warning-overlay"></div>
 				<div class="disk-fe-office-warning-box">
 					<div class="disk-fe-office-warning-icon"></div>
-					<div class="disk-fe-office-warning-title">${options.title}</div>
-					${fileNameNode}
+					<div class="disk-fe-office-warning-title">${options.title}</div>				
 					<div class="disk-fe-office-warning-desc">${options.description}</div>
+					${fileNameNode}
 					${downloadButtonNode}
 				</div>
 			</div>

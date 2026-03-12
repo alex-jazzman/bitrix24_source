@@ -11,6 +11,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/block', (require, exp
 		prepareProps(commonTabData)
 		{
 			const {
+				ownerId,
 				isEditMode,
 				onChange,
 				onFocus,
@@ -19,6 +20,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/block', (require, exp
 			} = commonTabData ?? {};
 
 			return {
+				ownerId,
 				testId: 'common-fields-card',
 				isEditMode,
 				onChange,

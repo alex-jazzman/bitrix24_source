@@ -8,7 +8,7 @@ import { locMixin } from 'ui.vue3.mixins.loc-mixin';
 
 import { TaskCard, type Params } from 'tasks.v2.application.task-card';
 import { Core } from 'tasks.v2.core';
-import { EventName, Model } from 'tasks.v2.const';
+import { EventName } from 'tasks.v2.const';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { TaskMappers } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -39,11 +39,9 @@ export class TaskFullCard
 		}
 	}
 
-	static isCardOpened(taskId: number): boolean
+	static isOpened(taskId: number): boolean
 	{
-		const task = Core.getStore()?.getters[`${Model.Tasks}/getById`](taskId);
-
-		return openedCards.has(task?.id);
+		return openedCards.has(taskId);
 	}
 
 	async mount(slider: Slider): Promise<void>
@@ -156,7 +154,6 @@ export class TaskFullCard
 			[EventName.TemplateBeforeUpdate]: this.#handleTemplateUpdate,
 			[EventName.CloseFullCard]: this.#onClose,
 			[EventName.TryCloseFullCard]: this.#onTryClose,
-			[EventName.OpenViewSliderCard]: this.#openViewSliderCard,
 			[EventName.OpenCompactCard]: this.#openCompactCard,
 			[EventName.OpenGrid]: this.#openGrid,
 			[EventName.OpenTemplateHistory]: this.#openTemplateHistory,
@@ -194,7 +191,10 @@ export class TaskFullCard
 	#handleTaskCardInit = (event: BaseEvent): void => {
 		const task: TaskModel = event.getData().task;
 
-		this.#updateSliderTitle(task.title);
+		if (task.id === this.#params.taskId)
+		{
+			this.#updateSliderTitle(task.title);
+		}
 	};
 
 	#handleTaskAdd = (event: BaseEvent): void => {
@@ -280,27 +280,6 @@ export class TaskFullCard
 			this.#isCloseConfirmed = true;
 			this.#slider.close();
 		}
-	};
-
-	#openViewSliderCard = (baseEvent: BaseEvent): void => {
-		const { taskId } = baseEvent.getData();
-
-		this.#shouldCloseComplete = false;
-
-		SidePanel.Instance.open(new Uri(TaskCard.getUrl(taskId)).setQueryParam('OLD_FORM', 'Y').toString(), {
-			cacheable: false,
-			requestMethod: 'post',
-			events: {
-				onCloseComplete: (): void => {
-					if (this.#params.closeCompleteUrl)
-					{
-						location.href = this.#params.closeCompleteUrl;
-					}
-				},
-			},
-		});
-
-		this.#slider.close(true);
 	};
 
 	#openHistory = async (baseEvent: BaseEvent): Promise<void> => {

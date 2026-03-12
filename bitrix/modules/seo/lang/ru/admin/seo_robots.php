@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS['SEO_ROBOTS_EDIT_TITLE'] = 'Управление robots.txt';
 $MESS["SEO_ROBOTS_CHOOSE_SITE"] = "Выберите сайт:";
 $MESS['SEO_ROBOTS_common'] = 'Общие правила';
@@ -28,4 +28,3 @@ $MESS['SEO_ROBOTS_ERROR_NO_ROBOTS'] = 'Файл #PATH# не найден!';
 $MESS['SEO_ROBOTS_ERROR_NO_ROBOTS_MESSAGE'] = 'Его необходимо создать как можно скорее.';
 $MESS['SEO_ROBOTS_HINT'] = '<a href="https://support.google.com/webmasters/answer/156449?hl=ru" target="_blank">Руководство по управлению robots.txt в документации Google.</a>';
 $MESS['SEO_ROBOTS_HINT_1C'] = '<a href="http://help.yandex.ru/webmaster/controlling-robot/robots-txt.xml" target="_blank">Руководство по управлению robots.txt в документации Яндекс.</a><br /><a href="https://support.google.com/webmasters/answer/156449?hl=ru" target="_blank">Руководство по управлению robots.txt в документации Google.</a>';
-?>

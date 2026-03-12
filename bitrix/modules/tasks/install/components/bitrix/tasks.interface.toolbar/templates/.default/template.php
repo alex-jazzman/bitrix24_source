@@ -4,7 +4,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
@@ -23,6 +22,8 @@ use Bitrix\Tasks\Update\SortConverter;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 use Bitrix\Tasks\Util\View;
 use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\UI\Buttons;
 
 /**
  * @global CMain $APPLICATION
@@ -40,14 +41,18 @@ Extension::load([
 	'ui.fonts.opensans',
 	'ui.hint',
 	'ui.navigationpanel',
-	'ui.actions-bar'
+	'ui.actions-bar',
+	'ui.feedback.form',
 ]);
 
 $showViewMode = (isset($arParams['SHOW_VIEW_MODE']) && $arParams['SHOW_VIEW_MODE'] === 'Y');
 $showNavigation = $showViewMode && !($arParams['PROJECT_VIEW'] === 'Y' && !$arParams['GROUP_ID']);
-$showChatButton = FormV2Feature::isOn() && Option::get('im', 'is_tasks_recent_list_available') === 'Y' && $showNavigation;
+$showChatButton = FormV2Feature::isOn() && $showNavigation && $arResult['SHOW_COUNTERS'];
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 $isExtranetUser = (bool)Bitrix\Tasks\Integration\Extranet\User::isExtranet();
+$viewState = \Bitrix\Tasks\Helper\Analytics::getInstance((int)$arResult['USER_ID'], (int)($arParams['GROUP_ID'] ?? 0))->getViewStateName();
+$feedbackParams = Json::encode(Container::getInstance()->getFeedbackService()->getParams());
+
 if ($isBitrix24Template)
 {
 	$this->SetViewTarget("below_pagetitle");
@@ -152,6 +157,7 @@ if ($showNewTaskChatButtonPopup)
 				'COUNTERS' => ($arParams['COUNTERS'] ?? []),
 				'FILTER_FIELD' => $arParams['FILTER_FIELD'],
 				'TASKS_CHAT_URI' => $tasksChatUri,
+				'VIEW_STATE' =>	$viewState,
 			],
 			$component,
 		);
@@ -160,6 +166,26 @@ if ($showNewTaskChatButtonPopup)
 <?php if (!$isExtranetUser):?>
 		<div class="ui-actions-bar__buttons" id="task-interface-toolbar__buttons">
 			<?php
+
+			if ($isBitrix24Template)
+			{
+				$button = (new Buttons\Button())
+					->setText(Container::getInstance()->getFeedbackService()->getTitle())
+					->setColor(Buttons\Color::LIGHT_BORDER)
+					->setSize(Buttons\Size::SMALL)
+					->bindEvent('click', new Buttons\JsCode(
+						"BX.UI.Feedback.Form.open({$feedbackParams});"
+					))
+					->setCollapsedIcon(Buttons\Icon::LIST)
+					->addAttribute('id', 'tasks-feedback-button')
+					->render(false)
+				;
+
+				?>
+				<?= $button ?>
+				<?php
+			}
+
 			$robotBtnIgnoreList = [
 				ScopeDictionary::SCOPE_SCRUM_PROJECTS_GRID,
 			];

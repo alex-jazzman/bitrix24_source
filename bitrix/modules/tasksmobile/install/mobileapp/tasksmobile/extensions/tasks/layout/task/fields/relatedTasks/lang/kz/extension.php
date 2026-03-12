@@ -1,3 +1,0 @@
-<?php
-$MESS["TASKSMOBILE_LAYOUT_TASK_FIELDS_RELATED_TASKS"] = "Байланысқан міндеттер";
-$MESS["TASKSMOBILE_LAYOUT_TASK_FIELDS_RELATED_TASKS_MSGVER_1"] = "Байланысқан міндеттер";

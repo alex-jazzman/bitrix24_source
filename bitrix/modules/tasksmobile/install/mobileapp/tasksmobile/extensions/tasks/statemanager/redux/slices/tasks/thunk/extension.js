@@ -143,6 +143,38 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 		{ condition },
 	);
 
+	const updateAuditors = createAsyncThunk(
+		'tasks:tasks/updateAuditors',
+		async ({ taskId, added, deleted, currentUserId }) => {
+			let lastResponse = { status: 'success', data: {}, errors: [] };
+			if (Array.isArray(added) && added.length > 0)
+			{
+				const follow = added.length === 1 && added[0] === currentUserId;
+				const action = follow ? 'tasksmobile.Task.follow' : 'tasksmobile.Task.addAuditors';
+				const options = follow ? { taskId } : { taskId, auditorIds: added };
+
+				lastResponse = await runActionPromise({ action, options });
+
+				if (lastResponse.status !== 'success')
+				{
+					return lastResponse;
+				}
+			}
+
+			if (Array.isArray(deleted) && deleted.length > 0)
+			{
+				const unfollow = deleted.length === 1 && deleted[0] === currentUserId;
+				const action = unfollow ? 'tasksmobile.Task.unfollow' : 'tasksmobile.Task.deleteAuditors';
+				const options = unfollow ? { taskId } : { taskId, auditorIds: deleted };
+
+				lastResponse = await runActionPromise({ action, options });
+			}
+
+			return lastResponse;
+		},
+		{ condition },
+	);
+
 	const startTimer = createAsyncThunk(
 		'tasks:tasks/startTimer',
 		({ taskId }) => runActionPromise({
@@ -357,6 +389,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 		delegate,
 		follow,
 		unfollow,
+		updateAuditors,
 		startTimer,
 		pauseTimer,
 		start,

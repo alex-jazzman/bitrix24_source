@@ -40,6 +40,7 @@ export type StructureType = {
 	userDepartmentIds: Array<number>,
 	headDictionary: HeadDictionary,
 	teams: Array<TeamType>,
+	userHeadIds: Array<number>,
 };
 
 export type HeadDictionary = Record<string, UserData>;

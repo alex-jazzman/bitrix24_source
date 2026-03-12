@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["BPABL_TITLE"] = "Business Process #ID#";
 $MESS["BPABL_INVALID_WF"] = "The business process is not found.";
 $MESS["BPABL_NO_PERMS"] = "You do not have permission to access this element business process.";
@@ -47,4 +48,3 @@ $MESS["CBBWL_C_ADMIN_MODE_SIMPLE"] = "Simple";
 $MESS["BPWC_WLCT_F_MODIFIED_BY"] = "Modified By";
 $MESS["CBBWL_C_TYPE"] = "Type";
 $MESS["BPWC_WLC_NOT_SET"] = "[not set]";
-?>

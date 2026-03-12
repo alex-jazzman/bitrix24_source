@@ -44,6 +44,8 @@ export default class Item
 		this.popupConfig = null;
 		this.loader = null;
 		this.copilotProcess = Type.isBoolean(options.copilotProcess) ? options.copilotProcess : null;
+		this.createByCopilotText = options.createByCopilotText ?? '';
+		this.copilotGeneratedText = options.copilotGeneratedText ?? '';
 
 		this.$container = null;
 		this.$containerWrapper = null;
@@ -644,11 +646,10 @@ export default class Item
 
 			if (this.copilotProcess === false)
 			{
-				const copilotLabelText = Loc.getMessage('LANDING_SITE_TILE_COPILOT_LABEL');
 				const copilotLabel = Tag.render`
 					<div class="landing-sites__preview-copilot-label">
 						<i class="ui-icon-set --copilot-ai"></i>
-						<div class="">${copilotLabelText}</div>
+						<div class="">${this.createByCopilotText}</div>
 					</i>
 				`;
 				this.$containerPreviewImage.appendChild(copilotLabel);
@@ -897,7 +898,7 @@ export default class Item
 				? Tag.render`
 					<div class="landing-sites__preview-show copilot-label">
 					    <i class="ui-icon-set --copilot-ai"></i>
-					    ${Loc.getMessage('LANDING_SITE_TILE_COPILOT_GENERATED_TEXT')}
+					    ${this.copilotGeneratedText}
 					</div>
 				`
 				: '';

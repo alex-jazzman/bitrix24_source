@@ -1,0 +1,23 @@
+.bx-im-message-sticker-fallback__container {
+	--im-message-sticker-fallback__background-color_content: rgba(var(--im-color-palette-black-solid-rgb), 0.3);
+	--im-message-sticker-fallback__color_content: rgba(var(--im-color-palette-white-base-rgb), 0.7);
+	--ui-icon-set__icon-color: var(--im-message-sticker-fallback__color_content);
+	--ui-icon-set__icon-size: 26px;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 124px;
+	max-width: 166px;
+}
+
+.bx-im-message-sticker-fallback__content {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	border-radius: 6px;
+	padding: 4px 6px;
+	background-color: var(--im-message-sticker-fallback__background-color_content);
+	color: var(--im-message-sticker-fallback__color_content);
+	font: var(--im-font-size-sm)/14px var(--im-font-family-system);
+}

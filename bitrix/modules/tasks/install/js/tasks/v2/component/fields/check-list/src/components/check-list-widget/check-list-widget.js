@@ -385,7 +385,7 @@ export const CheckListWidget = {
 				<li
 					v-for="(parentItem, parentItemIndex) in parentCheckLists"
 					:key="'parent-' + parentItem.id + parentItemIndex"
-					class="check-list-widget-item --parent check-list-draggable-list"
+					class="check-list-widget-item --parent check-list-draggable-list print-no-page-break print-no-box-shadow print-font-color-base-1-recursive"
 					:class="{
 						'--preview': isPreview,
 						'--collapsed': isCollapsed(parentItem, parentItemIndex),
@@ -468,7 +468,7 @@ export const CheckListWidget = {
 				<li
 					v-if="isPreview && totalCompletedParents > 0"
 					key="completed-list"
-					class="check-list-widget-item --completed-list"
+					class="check-list-widget-item --completed-list print-no-box-shadow"
 				>
 					<CheckListGroupCompletedList :totalCompletedParents @click="showFirstCompletedCheckList"/>
 				</li>

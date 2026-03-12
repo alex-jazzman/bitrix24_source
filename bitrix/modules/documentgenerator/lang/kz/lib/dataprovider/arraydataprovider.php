@@ -1,3 +1,0 @@
-<?php
-$MESS["DOCGEN_DATAPROVIDER_ARRAY_INDEX_TITLE"] = "Ағымдағы нөмір";
-$MESS["DOCGEN_DATAPROVIDER_ARRAY_NUMBER_TITLE"] = "Элементтер саны";

@@ -11,5 +11,6 @@ return [
 		'haptics',
 		'utils/object',
 		'imconnector:connectors/telegram',
+		'assets/icons',
 	],
 ];

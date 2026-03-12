@@ -1,3 +1,0 @@
-<?php
-$MESS["DAV_EXPORT_FILTER_ALL"] = "Барлығы";
-$MESS["DAV_EXPORT_FILTER_RESPONSIBLE"] = "Өз";

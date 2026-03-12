@@ -1,8 +1,10 @@
 <?php
 $MESS["INTRANET_JS_CONTROL_BALLOON_ADMIN"] = "Администратор";
+$MESS["INTRANET_JS_CONTROL_BALLOON_FIRST_ADMIN"] = "Главный администратор";
 $MESS["INTRANET_JS_CONTROL_BALLOON_EXTRANET"] = "Экстранет";
 $MESS["INTRANET_JS_CONTROL_BALLOON_COLLABER"] = "Гость";
 $MESS["INTRANET_JS_CONTROL_BALLOON_INTEGRATOR"] = "Интегратор";
+$MESS["INTRANET_JS_CONTROL_BALLOON_INTEGRATOR_RENAMED"] = "Специалист по внедрению";
 $MESS["INTRANET_JS_CONTROL_BALLOON_INVITATION_NOT_ACCEPTED"] = "Приглашение ещё не принято";
 $MESS["INTRANET_JS_CONTROL_BALLOON_NOT_CONFIRMED"] = "Ждёт подтверждения входа";
 $MESS["INTRANET_JS_CONTROL_BALLOON_ADD_DEPARTMENT"] = "Выбрать отдел";
@@ -77,3 +79,5 @@ $MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE_REMAIN
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE_CLOUD"] = "Переведите #USER_LIST# в интранет, чтобы добавить в отдел. Это можно сделать в профиле сотрудника";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE_CLOUD_SINGLE"] = "Переведите #USER# в интранет, чтобы добавить в отдел. Это можно сделать в профиле сотрудника";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_EXTRANET_CHANGE_DEPARTMENT_MESSAGE_CLOUD_REMAINING"] = "Переведите #USER_LIST# и еще #USER_REMAINING# в интранет, чтобы добавить в отдел. Это можно сделать в профиле сотрудника";
+
+$MESS['INTRANET_USER_LIST_FIRST_GROUP_ACTION_FIRST_ADMIN_REQUEST_SENT'] = '[b]Запрос отправлен[/b][br] Когда главный администратор ответит, вам придёт уведомление';

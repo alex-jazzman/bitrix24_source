@@ -1,5 +1,0 @@
-<?php
-$MESS["CRM_INVOICE_COMPLEX_DESCRIPTION"] = "Шоттар";
-$MESS["CRM_INVOICE_COMPLEX_NAME"] = "Шоттар";
-$MESS["CRM_INVOICE_NAME"] = "Шоттар";
-$MESS["CRM_NAME"] = "CRM";

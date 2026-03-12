@@ -6,7 +6,7 @@ use Bitrix\Tasks\Integration\Recyclebin\Task;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
 ?>
 <script>
 	BX.message({

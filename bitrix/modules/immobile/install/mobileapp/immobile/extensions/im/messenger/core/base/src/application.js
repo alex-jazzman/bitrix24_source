@@ -33,11 +33,11 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		// SidebarFileRepository, TODO: The backend is not ready yet
 		VoteRepository,
 		TranscriptRepository,
+		StickerRepository,
 	} = require('im/messenger/db/repository');
 	const { Updater } = require('im/messenger/db/update');
 	const {
 		applicationModel,
-		recentModel,
 		counterModel,
 		messagesModel,
 		usersModel,
@@ -89,6 +89,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				// sidebarFile: null, TODO: The backend is not ready yet
 				vote: null,
 				transcript: null,
+				sticker: null,
 			};
 
 			this.store = null;
@@ -198,6 +199,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				// this.repository.sidebarFile.sidebarFileTable.drop(); TODO: The backend is not ready yet
 				this.repository.vote.voteTable.drop();
 				this.repository.transcript.transcriptTable.drop();
+				this.repository.sticker.stickerTable.drop();
 
 				logger.warn('CoreApplication drop database complete');
 			};
@@ -224,6 +226,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				// counter: new CounterRepository(),
 				vote: new VoteRepository(),
 				transcript: new TranscriptRepository(),
+				sticker: new StickerRepository(),
 			};
 		}
 
@@ -258,13 +261,13 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			this.repository.draft.draftTable.createDatabaseTableInstance();
 			this.repository.comment.commentTable.createDatabaseTableInstance();
 			this.repository.transcript.transcriptTable.createDatabaseTableInstance();
+			this.repository.sticker.stickerTable.createDatabaseTableInstance();
 		}
 
 		getStoreModules()
 		{
 			return clone({
 				applicationModel,
-				recentModel,
 				counterModel,
 				messagesModel,
 				usersModel,

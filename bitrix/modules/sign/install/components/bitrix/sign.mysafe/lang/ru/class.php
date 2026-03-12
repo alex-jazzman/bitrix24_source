@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_MYSAFE_TITLE'] = "Мой сейф";
 $MESS['SIGN_MYSAFE_ID_GRID_COLUMN_NAME'] = "ID";
 $MESS['SIGN_MYSAFE_TITLE_GRID_COLUMN_NAME'] = "Документ";

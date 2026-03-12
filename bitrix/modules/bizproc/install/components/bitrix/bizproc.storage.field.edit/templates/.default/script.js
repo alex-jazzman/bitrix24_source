@@ -4,16 +4,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 (function (exports,main_core,ui_buttons,ui_dialogs_messagebox,main_loader) {
 	'use strict';
 
-	var _collectFormFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collectFormFields");
-	var _setNestedValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setNestedValue");
 	class StorageFieldEdit {
 	  constructor(options) {
-	    Object.defineProperty(this, _setNestedValue, {
-	      value: _setNestedValue2
-	    });
-	    Object.defineProperty(this, _collectFormFields, {
-	      value: _collectFormFields2
-	    });
 	    this.formNode = null;
 	    this.errorsContainer = null;
 	    this.tabs = new Map();
@@ -53,10 +45,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    if (!this.formNode) {
 	      return;
 	    }
-	    const userTypeIdSelector = this.getInput('type');
-	    if (userTypeIdSelector) {
-	      main_core.Event.bind(userTypeIdSelector, 'change', this.handleUserTypeChange.bind(this));
-	    }
 	    main_core.Event.bind(this.formNode, 'submit', event => {
 	      var _event$submitter;
 	      event.preventDefault();
@@ -86,14 +74,20 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    }
 	  }
 	  onHandleSubmitForm(eventName) {
-	    const fields = babelHelpers.classPrivateFieldLooseBase(this, _collectFormFields)[_collectFormFields]();
-	    const isUpdate = fields.id > 0;
+	    const formPrepared = main_core.ajax.prepareForm(this.formNode);
+	    if (!formPrepared || !formPrepared.data) {
+	      return;
+	    }
+	    const {
+	      data
+	    } = formPrepared;
+	    const isUpdate = data.id > 0;
 	    const isRemove = eventName === 'remove';
 	    if (isRemove) {
 	      var _Loc$getMessage, _Loc$getMessage2;
 	      ui_dialogs_messagebox.MessageBox.confirm((_Loc$getMessage = main_core.Loc.getMessage('BIZPROC_STORAGE_FIELD_EDIT_CONFIRM_MESSAGE')) != null ? _Loc$getMessage : '', messageBox => {
-	        this.sendForm('bizproc.storage.deleteField', {
-	          id: fields.id
+	        this.sendForm('bizproc.v2.StorageField.delete', {
+	          id: data.id
 	        }, 'BIZPROC_STORAGE_FIELD_EDIT_DELETE_MESSAGE', messageBox);
 	      }, (_Loc$getMessage2 = main_core.Loc.getMessage('BIZPROC_STORAGE_FIELD_EDIT_CONFIRM_MESSAGE_OK')) != null ? _Loc$getMessage2 : '', messageBox => {
 	        messageBox.close();
@@ -101,13 +95,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      });
 	      return;
 	    }
-	    let action = isUpdate ? 'bizproc.storage.updateField' : 'bizproc.storage.addField';
+	    let action = isUpdate ? 'bizproc.v2.StorageField.update' : 'bizproc.v2.StorageField.add';
 	    let successMessageCode = 'BIZPROC_STORAGE_FIELD_EDIT_SAVE_MESSAGE';
-	    const data = {
-	      field: fields
-	    };
 	    if (this.skipSave) {
-	      action = 'bizproc.storage.getPreparedForm';
+	      action = 'bizproc.v2.StorageField.getPreparedForm';
 	      successMessageCode = 'BIZPROC_STORAGE_FIELD_EDIT_ADD_MESSAGE';
 	    }
 	    data.format = true;
@@ -133,9 +124,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        const slider = BX.SidePanel.Instance.getTopSlider();
 	        if (slider) {
 	          const dictionary = slider.getData();
-	          const fieldData = action === 'bizproc.storage.deleteField' ? {
+	          const fieldData = action === 'bizproc.v2.StorageField.delete' ? {
 	            id: (data == null ? void 0 : data.id) || null,
-	            action: action
+	            action
 	          } : response.data;
 	          dictionary.set('data', fieldData);
 	          slider.close();
@@ -170,15 +161,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      }
 	    });
 	  }
-	  handleUserTypeChange() {
-	    const userTypeId = this.getSelectedUserTypeId();
-	    if (!userTypeId) {
-	      return;
-	    }
-
-	    // TODO render default value
-	  }
-
 	  getSettingsContainer() {
 	    this.container = this.formNode;
 	    if (this.container && !this.settingsContainer) {
@@ -291,42 +273,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      this.instance.showTab(tabName);
 	    }
 	  }
-	}
-	function _collectFormFields2() {
-	  const disabledElements = this.formNode.querySelectorAll('[disabled]');
-	  disabledElements.forEach(el => {
-	    el.removeAttribute('disabled');
-	  });
-	  const formData = new FormData(this.formNode);
-	  const fields = {};
-	  const checkboxes = this.formNode.querySelectorAll('input[type="checkbox"]');
-	  checkboxes.forEach(checkbox => {
-	    if (!checkbox.checked) {
-	      formData.set(checkbox.name, 'N');
-	    }
-	  });
-	  for (const [key, value] of formData.entries()) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _setNestedValue)[_setNestedValue](fields, key, value);
-	  }
-	  disabledElements.forEach(el => {
-	    el.setAttribute('disabled', 'disabled');
-	  });
-	  return fields;
-	}
-	function _setNestedValue2(obj, key, value) {
-	  const keys = key.match(/[^[\]]+/g);
-	  if (!keys) {
-	    return;
-	  }
-	  let current = obj;
-	  for (let i = 0; i < keys.length - 1; i++) {
-	    const part = keys[i];
-	    if (!current[part] || !main_core.Type.isObject(current[part])) {
-	      current[part] = {};
-	    }
-	    current = current[part];
-	  }
-	  current[keys[keys.length - 1]] = value;
 	}
 	StorageFieldEdit.instance = null;
 

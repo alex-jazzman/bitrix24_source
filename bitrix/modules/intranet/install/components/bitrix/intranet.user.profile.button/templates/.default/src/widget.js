@@ -113,16 +113,16 @@ export default class Widget extends EventEmitter
 					backgroundColor: '#fafafa',
 				}
 			],
-			this.#getCompanyPulse(!!this.#getStressLevel()) ?
+			this.#getCompanyPulse(false) ?
 			[
 				{
-					html: this.#getCompanyPulse(!!this.#getStressLevel()),
+					html: this.#getCompanyPulse(false),
 					overflow: true,
 					marginBottom: 24,
-					flex: this.#getStressLevel() ? 0.5 : 1,
-					minHeight: this.#getStressLevel() ? '115px' : '56px',
+					flex: 1,
+					minHeight: '56px',
 				},
-				this.#getStressLevel(),
+				null,
 			] : null,
 			this.#getOTPContainer(this.#getDeskTopContainer() === null) && this.#getDeskTopContainer() ?
 			[
@@ -496,22 +496,6 @@ export default class Widget extends EventEmitter
 			);
 
 			return SignDocument.getPromise(isLocked);
-		});
-	}
-
-	#getStressLevel(): Promise
-	{
-		if (this.#features['stressLevel'] !== 'Y')
-		{
-			return null;
-		}
-		return this.#cache.remember('getStressLevel', () => {
-			return StressLevel.getPromise({
-				signedParameters: this.#cache.get('componentParams').signedParameters,
-				componentName: this.#cache.get('componentParams').componentName,
-				userId: this.#profile.ID,
-				data: this.#features['stressLevelData'] ?? null
-			});
 		});
 	}
 

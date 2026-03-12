@@ -6,6 +6,7 @@ const AUX = 'aux';
 export function normalyzeInputOutputConnection(newConnection: DiagramNewConnection): DiagramAddConnection
 {
 	const {
+		id,
 		sourceBlockId,
 		sourcePortId,
 		sourcePort,
@@ -16,6 +17,7 @@ export function normalyzeInputOutputConnection(newConnection: DiagramNewConnecti
 	if (sourcePort.type === PORT_TYPES.output)
 	{
 		return {
+			id,
 			sourceBlockId,
 			sourcePortId,
 			targetBlockId,
@@ -24,6 +26,7 @@ export function normalyzeInputOutputConnection(newConnection: DiagramNewConnecti
 	}
 
 	return {
+		id,
 		sourceBlockId: targetBlockId,
 		sourcePortId: targetPortId,
 		targetBlockId: sourceBlockId,

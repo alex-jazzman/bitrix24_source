@@ -20,7 +20,11 @@
 }
 
 input[type="text"][data-role="inline-selector-target"] {
-	padding-right: 32px;
+	padding-right: 40px;
+}
+
+.bizproc-automation-popup-settings .bizproc-automation-popup-select {
+	position: relative;
 }
 
 .bizproc-automation-popup-settings input[type="button"][data-role="bp-selector-button"], .bizproc-automation-popup-settings .bizproc-automation-popup-select-dotted {
@@ -70,4 +74,31 @@ input[type="text"][data-role="inline-selector-target"] {
 	width: 100% !important;
 	max-width: 85% !important;
 	background-position: 202px -152px;
+}
+
+#row_filter_fields .node-settings-edit-caption {
+	display: none;
+}
+
+.bizproc-automation-popup-settings-title {
+	font-size: 13px;
+	line-height: normal;
+}
+
+.bizproc-automation-popup-settings__condition-help {
+	font-size: 13px;
+	line-height: normal;
+	color: #000;
+}
+
+.bizproc-automation-popup-settings {
+	margin-top: 12px;
+}
+
+.field-row .bizproc-automation-popup-settings-link {
+	display: block !important;
+}
+
+.field-row .ui-tag-selector-tag-content {
+	display: block !important;
 }

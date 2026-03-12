@@ -1,3 +1,0 @@
-<?php
-$MESS["INTRANET_SETTINGS_TOOLS_SITES_AND_SHOP_MAIN"] = "Сайттар мен Дүкендер";
-$MESS["INTRANET_SETTINGS_TOOLS_SITES_MAIN"] = "Сайттар";

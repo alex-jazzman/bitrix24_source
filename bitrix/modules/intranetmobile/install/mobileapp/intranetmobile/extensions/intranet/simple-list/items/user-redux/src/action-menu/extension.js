@@ -9,7 +9,8 @@ jn.define('intranet/simple-list/items/user-redux/action-menu', (require, exports
 	const { selectActions } = require('intranet/statemanager/redux/slices/employees/selector');
 	const { Actions } = require('intranet/simple-list/items/user-redux/src/actions');
 	const { Icon } = require('assets/icons');
-	const { Reinvite } = require('intranet/reinvite');
+	const { ReinviteEntry } = require('intranet/reinvite/entry');
+	const { isCloudAccount } = require('user/account');
 
 	/**
 	 * @class ActionMenu
@@ -42,7 +43,7 @@ jn.define('intranet/simple-list/items/user-redux/action-menu', (require, exports
 
 		getActions()
 		{
-			return {
+			const actions = {
 				[EmployeeActions.DELETE_INVITATION.getValue()]: {
 					id: EmployeeActions.DELETE_INVITATION.getValue(),
 					title: Loc.getMessage('MOBILE_USERS_USER_ACTIONS_DELETE_INVITATION'),
@@ -58,7 +59,11 @@ jn.define('intranet/simple-list/items/user-redux/action-menu', (require, exports
 					sectionCode: 'delete',
 					iconName: Icon.TRASHCAN,
 					isDestructive: true,
-					onItemSelected: () => Actions.list[EmployeeActions.FIRE.getValue()]({ userId: this.user.id }),
+					onItemSelected: () => Actions.list[EmployeeActions.FIRE.getValue()]({
+						userId: this.user.id,
+						isRootAdmin: this.user.isRootAdmin,
+						fullName: this.user.fullName,
+					}),
 					sort: 500,
 				},
 				[EmployeeActions.HIRE.getValue()]: {
@@ -67,6 +72,14 @@ jn.define('intranet/simple-list/items/user-redux/action-menu', (require, exports
 					sectionCode: 'general',
 					iconName: Icon.CHECK,
 					onItemSelected: () => Actions.list[EmployeeActions.HIRE.getValue()]({ userId: this.user.id }),
+				},
+				[EmployeeActions.REINVITE.getValue()]: {
+					id: EmployeeActions.REINVITE.getValue(),
+					title: Loc.getMessage('MOBILE_USERS_USER_ACTIONS_REINVITE'),
+					sectionCode: 'general',
+					iconName: Icon.REFRESH,
+					onItemSelected: () => Actions.list[EmployeeActions.REINVITE.getValue()]({ userId: this.user.id }),
+					sort: 100,
 				},
 				[EmployeeActions.REINVITE_WITH_CHANGE_CONTACT.getValue()]: {
 					id: EmployeeActions.REINVITE_WITH_CHANGE_CONTACT.getValue(),
@@ -117,24 +130,35 @@ jn.define('intranet/simple-list/items/user-redux/action-menu', (require, exports
 					sort: 300,
 				},
 			};
+
+			if (isCloudAccount())
+			{
+				delete actions[EmployeeActions.REINVITE.getValue()];
+			}
+			else
+			{
+				delete actions[EmployeeActions.REINVITE_WITH_CHANGE_CONTACT.getValue()];
+				delete actions[EmployeeActions.CHANGE_PHONE.getValue()];
+				delete actions[EmployeeActions.CHANGE_EMAIL.getValue()];
+			}
+
+			return actions;
 		}
 
 		openReinvite(title = Loc.getMessage('MOBILE_USERS_USER_ACTIONS_REINVITE'))
 		{
-			Reinvite.open(
-				{
-					parentWidget: layout,
-					userId: this.user.id,
-					title,
-					onSave: (newValue, valueType) => {
-						Actions.list[EmployeeActions.REINVITE_WITH_CHANGE_CONTACT.getValue()]({
-							userId: this.user.id,
-							[valueType]: newValue,
-						});
-					},
+			void ReinviteEntry.tryToOpenReinvite({
+				userId: this.user.id,
+				parentWidget: layout,
+				widgetTitle: title,
+				onSave: (newValue, valueType) => {
+					Actions.list[EmployeeActions.REINVITE_WITH_CHANGE_CONTACT.getValue()]({
+						userId: this.user.id,
+						[valueType]: newValue,
+					});
 				},
-			);
-		};
+			});
+		}
 	}
 
 	module.exports = { ActionMenu };

@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/helper/url', (require, exports, module) => {
 	const { Type } = require('type');
-	const { URL } = require('utils/url');
+	const { URL, withCurrentDomain } = require('utils/url');
 
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
@@ -167,6 +167,30 @@ jn.define('im/messenger/lib/helper/url', (require, exports, module) => {
 			return [...smileUrlCollection].some(
 				(smilePath) => normalizedUrl.endsWith(smilePath) || smilePath.endsWith(normalizedUrl),
 			);
+		}
+
+		/**
+		 * @return {string}
+		 */
+		getPreparedAvatarUrl()
+		{
+			let result = '';
+
+			if (!this.href || this.href.endsWith('/js/im/images/blank.gif'))
+			{
+				result = '';
+			}
+			else
+			{
+				result = withCurrentDomain(this.href);
+			}
+
+			if (result)
+			{
+				result = encodeURI(result);
+			}
+
+			return result;
 		}
 	}
 

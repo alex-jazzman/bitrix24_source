@@ -2,7 +2,15 @@ import { Loc, Type } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import { Core } from 'im.v2.application.core';
-import { ActionByRole, EventType, SidebarDetailBlock, ChatType, UserType, ActionByUserType } from 'im.v2.const';
+import {
+	ActionByRole,
+	EventType,
+	SidebarDetailBlock,
+	ChatType,
+	UserType,
+	ActionByUserType,
+	UserRole,
+} from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
 import { LegacyRecentService } from 'im.v2.provider.service.recent';
 import { ChatService } from 'im.v2.provider.service.chat';
@@ -145,10 +153,12 @@ export class RecentMenu extends BaseMenu
 				if (showReadOption)
 				{
 					this.chatService.readDialog(dialogId);
+					Analytics.getInstance().recentContextMenu.onRead(dialogId);
 				}
 				else
 				{
 					this.chatService.unreadDialog(dialogId);
+					Analytics.getInstance().recentContextMenu.onUnread(dialogId);
 				}
 				this.menuInstance.close();
 			},
@@ -157,25 +167,29 @@ export class RecentMenu extends BaseMenu
 
 	getPinMessageItem(): ?MenuItemOptions
 	{
-		const { recentItem, dialogId } = this.context;
-		if (!recentItem)
+		const { dialogId } = this.context;
+		if (this.isGuestRole())
 		{
 			return null;
 		}
 
-		const isPinned = recentItem.pinned;
+		const recentItem = this.#getRecentItem();
+		const isPinned = recentItem ? recentItem.pinned : false;
 
 		return {
-			title: isPinned ? Loc.getMessage('IM_LIB_MENU_UNPIN_MSGVER_1') : Loc.getMessage('IM_LIB_MENU_PIN_MSGVER_1'),
+			title: isPinned
+				? Loc.getMessage('IM_LIB_MENU_UNPIN_MSGVER_1')
+				: Loc.getMessage('IM_LIB_MENU_PIN_MSGVER_1'),
 			onClick: () => {
 				if (isPinned)
 				{
 					this.chatService.unpinChat(dialogId);
+					Analytics.getInstance().recentContextMenu.onUnpin(dialogId);
 				}
 				else
 				{
 					this.chatService.pinChat(dialogId);
-					Analytics.getInstance().chatPins.onPin(dialogId);
+					Analytics.getInstance().recentContextMenu.onPin(dialogId);
 				}
 				this.menuInstance.close();
 			},
@@ -200,10 +214,12 @@ export class RecentMenu extends BaseMenu
 				if (isMuted)
 				{
 					this.chatService.unmuteChat(dialogId);
+					Analytics.getInstance().recentContextMenu.onUnmute(dialogId);
 				}
 				else
 				{
 					this.chatService.muteChat(dialogId);
+					Analytics.getInstance().recentContextMenu.onMute(dialogId);
 				}
 				this.menuInstance.close();
 			},
@@ -223,6 +239,7 @@ export class RecentMenu extends BaseMenu
 			title: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
 			onClick: () => {
 				BX.SidePanel.Instance.open(profileUri);
+				Analytics.getInstance().recentContextMenu.onOpenProfile(this.context.dialogId);
 				this.menuInstance.close();
 			},
 		};
@@ -239,7 +256,7 @@ export class RecentMenu extends BaseMenu
 			title: Loc.getMessage('IM_LIB_MENU_HIDE_MSGVER_1'),
 			onClick: () => {
 				LegacyRecentService.getInstance().hideChat(this.context.dialogId);
-
+				Analytics.getInstance().recentContextMenu.onHide(this.context.dialogId);
 				this.menuInstance.close();
 			},
 		};
@@ -277,6 +294,7 @@ export class RecentMenu extends BaseMenu
 					standalone: true,
 					dialogId: this.context.dialogId,
 				});
+				Analytics.getInstance().recentContextMenu.onFindChatsWithUser(this.context.dialogId);
 				this.menuInstance.close();
 			},
 		};
@@ -383,18 +401,25 @@ export class RecentMenu extends BaseMenu
 		return ChannelManager.isChannel(this.context.dialogId);
 	}
 
-	isCommentsChat(): boolean
-	{
-		const { type }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
-
-		return type === ChatType.comment;
-	}
-
 	isCollabChat(): boolean
 	{
 		const { type }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
 
 		return type === ChatType.collab;
+	}
+
+	isOpenChat(): boolean
+	{
+		const { type }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
+
+		return type === ChatType.open;
+	}
+
+	isGuestRole(): boolean
+	{
+		const { role }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
+
+		return role === UserRole.guest;
 	}
 
 	isChatWithCurrentUser(): boolean
@@ -423,6 +448,7 @@ export class RecentMenu extends BaseMenu
 				if (userChoice === true)
 				{
 					this.chatService.leaveChat(this.context.dialogId);
+					Analytics.getInstance().recentContextMenu.onLeave(this.context.dialogId);
 				}
 			},
 		};
@@ -452,9 +478,10 @@ export class RecentMenu extends BaseMenu
 		};
 	}
 
-	#canHideChat(): boolean
+	#canHideChat(): ?boolean
 	{
-		const { recentItem, dialogId } = this.context;
+		const { dialogId } = this.context;
+		const recentItem = this.#getRecentItem();
 		if (!recentItem)
 		{
 			return null;
@@ -465,6 +492,11 @@ export class RecentMenu extends BaseMenu
 		const isAiAssistantBot = this.store.getters['users/bots/isAiAssistant'](dialogId);
 
 		return !isInvitation && !isFakeUser && !isAiAssistantBot;
+	}
+
+	#getRecentItem(): ?ImModelRecentItem
+	{
+		return this.context.recentItem || this.store.getters['recent/get'](this.context.dialogId);
 	}
 
 	#isInvitationActive(): boolean

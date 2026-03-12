@@ -26,3 +26,5 @@ $MESS['IM_LIST_RECENT_EMPTY_STATE_SUBTITLE'] = "Сотрудники, котор
 $MESS['IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS'] = "Пригласить коллег";
 
 $MESS['IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE'] = "Непрочитанных нет";
+
+$MESS['IM_LIST_UNREAD_RECENT_SLIDER_TITLE'] = "Непрочитанные";

@@ -427,7 +427,7 @@ export async function clickToolbarButton(page, buttonId)
 
 export async function insertSampleImage(page)
 {
-	await clickToolbarButton(page, 'incert-image');
+	await clickToolbarButton(page, 'o-image');
 
 	await page.getByTestId('image-dialog-textbox').fill('https://i.pinimg.com/564x/3d/d8/3f/3dd83fc6cfce54d3ad2bcc992cd5ed18.jpg');
 	await page.getByTestId('image-dialog-save-btn').click();
@@ -437,7 +437,7 @@ export async function insertSampleImage(page)
 
 export async function insertYoutubeVideo(page)
 {
-	await clickToolbarButton(page, 'insert-video');
+	await clickToolbarButton(page, 'o-record-video');
 
 	await page.getByTestId('video-dialog-textbox').fill('https://www.youtube.com/watch?v=_6j7HRZFXP4');
 	await page.getByTestId('video-dialog-save-btn').click();
@@ -445,28 +445,28 @@ export async function insertYoutubeVideo(page)
 
 export async function insertTable(page, rows = 2, columns = 3)
 {
-	await clickToolbarButton(page, 'table-editor');
+	await clickToolbarButton(page, 'o-table');
 	await page.locator(`[data-column='${columns}'][data-row='${rows}']`).click();
 }
 
 export async function insertCodeBlock(page)
 {
-	await clickToolbarButton(page, 'enclose-text-in-code-tag');
+	await clickToolbarButton(page, 'o-developer-resources');
 }
 
 export async function toggleCodeBlock(page)
 {
-	await clickToolbarButton(page, 'enclose-text-in-code-tag');
+	await clickToolbarButton(page, 'o-developer-resources');
 }
 
 export async function insertSpoiler(page)
 {
-	await clickToolbarButton(page, 'insert-spoiler');
+	await clickToolbarButton(page, 'o-spoiler');
 }
 
 export async function toggleLink(page, link)
 {
-	await clickToolbarButton(page, 'link-3');
+	await clickToolbarButton(page, 'o-link');
 	await page.getByTestId('link-textbox-input').fill(link);
 	await page.getByTestId('save-link-btn').click();
 }

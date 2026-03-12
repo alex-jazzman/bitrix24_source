@@ -20,7 +20,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  computed: {
 	    saveButtonClass() {
 	      return {
-	        'ui-btn-base-light': this.saveLocked,
+	        'ui-btn-disabled': this.saveLocked,
 	        'app-root__button--blocked': this.saveLocked,
 	        'ui-btn-success': !this.saveLocked
 	      };
@@ -61,11 +61,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			<div class="ui-button-panel-wrapper" ref="buttonsPanel">
 				<div class="ui-button-panel">
 					<div class="app-root__button-wrapper" :class="saveLocked ? 'app-root__button-wrapper--blocked' : ''">
-						<button class="ui-btn ui-btn-md app-root__button" :class="saveButtonClass" @click="onCreateButtonClick" ref="saveButton">
+						<button class="ui-btn ui-btn-no-caps ui-btn-lg --air --style-filled app-root__button" :class="saveButtonClass" @click="onCreateButtonClick" ref="saveButton">
 							{{ saveButtonText }}
 						</button>
 					</div>
-					<button class="ui-btn ui-btn-md ui-btn-link app-root__button" @click="onCancelButtonClick">
+					<button class="ui-btn ui-btn-no-caps ui-btn-lg --air --style-plain app-root__button" @click="onCancelButtonClick">
 						{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CANCEL') }}
 					</button>
 				</div>

@@ -1,9 +1,0 @@
-<?php
-$MESS["IMCONNECTOR_UPDATER_DISCONNECT_OLD_BOTFRAMEWORK_ADMIN_NOTIFY"] = "Компанія Microsoft з 31 жовтня 2019 року найбільше не приймає запити на публікацію чат-ботів Skype.<br>Канал Microsoft Bot Framework більше не можна підключити до Відкритих ліній Бітрікс24.<br>Усі чат-боти, підключені через платформу Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email та ін.), будуть примусово відключені. <a href=\"#HREF#\" target=\"_blank\">Докладніше</a>";
-$MESS["IMCONNECTOR_UPDATER_DISCONNECT_OLD_BOTFRAMEWORK_CHAT"] = "Компанія Microsoft з 31 жовтня 2019 року найбільше не приймає запити на публікацію чат-ботів Skype.
-Канал Microsoft Bot Framework більше не можна підключити до Відкритих ліній Бітрікс24.
-Усі чат-боти, підключені через платформу Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email та ін.), будуть примусово відключені.  #A_START#Детальніше#A_END#.";
-$MESS["IMCONNECTOR_UPDATER_NOTICE_BOTFRAMEWORK_ADMIN_NOTIFY"] = "Компанія Microsoft з 31 жовтня 2019 року найбільше не приймає запити на публікацію чат-ботів Skype.<br>Найближчим часом стане недоступним підключення каналу Microsoft Bot Framework до Відкритих ліній Бітрікс24.<br>Усі чат-боти, підключені через платформу Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email та ін.), будуть примусово відключені. <a href=\"#HREF#\" target=\"_blank\">Докладніше</a>";
-$MESS["IMCONNECTOR_UPDATER_NOTICE_BOTFRAMEWORK_CHAT"] = "Компанія Microsoft з 31 жовтня 2019 року найбільше не приймає запити на публікацію чат-ботів Skype.
-Найближчим часом стане недоступним підключення каналу Microsoft Bot Framework до Відкритих ліній Бітрікс24.
-Усі чат-боти, підключені через платформу Microsoft Bot Framework (Skype, Slack, Kik, GroupMe, SMS, email та ін.), будуть примусово відключені.  #A_START#Детальніше#A_END#.";

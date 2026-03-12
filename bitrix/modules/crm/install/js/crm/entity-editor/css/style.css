@@ -299,6 +299,11 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 /*region Widget content*/
 .crm-entity-widget-content {
 	position: relative;
+	padding: 18px 0 15px;
+}
+
+.ui-entity-editor-section-content .crm-entity-widget-content {
+	padding: 0;
 	margin-bottom: 15px;
 }
 

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_component_elements_fieldList,tasks_v2_const,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,main_core,ui_datePicker,ui_vue3_components_button,ui_system_input_vue,ui_system_menu_vue,tasks_v2_core,tasks_v2_component_elements_bottomSheet,tasks_v2_component_elements_duration,tasks_v2_lib_calendar,tasks_v2_lib_timezone,tasks_v2_provider_service_taskService,tasks_v2_lib_showLimit,ui_system_typography_vue,ui_switcher,ui_vue3_components_switcher,tasks_v2_component_elements_questionMark,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_lib_fieldHighlighter) {
+(function (exports,ui_iconSet_api_core,tasks_v2_component_elements_fieldList,tasks_v2_component_elements_fieldHoverButton,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,main_core,ui_datePicker,ui_notificationManager,ui_vue3_components_button,ui_system_input_vue,ui_system_menu_vue,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_bottomSheet,tasks_v2_component_elements_duration,tasks_v2_lib_calendar,tasks_v2_lib_timezone,tasks_v2_provider_service_taskService,tasks_v2_lib_showLimit,ui_system_typography_vue,ui_switcher,ui_vue3_components_switcher,tasks_v2_component_elements_questionMark,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_lib_fieldHighlighter) {
 	'use strict';
 
 	const datePlanMeta = Object.freeze({
@@ -19,10 +19,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    dateTs: {
 	      type: Number,
 	      required: true
-	    },
-	    readonly: {
-	      type: Boolean,
-	      default: false
 	    }
 	  },
 	  setup() {
@@ -32,7 +28,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div>
-			<HoverPill textOnly :readonly>
+			<HoverPill textOnly readonly>
 				<div>{{ calendar.formatDateTime(dateTs, { forceYear: true }) }}</div>
 			</HoverPill>
 		</div>
@@ -247,10 +243,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    allowsChangeDatePlan: {
 	      get() {
-	        var _this$task$allowsChan;
-	        return (_this$task$allowsChan = this.task.allowsChangeDatePlan) != null ? _this$task$allowsChan : false;
+	        var _this$task$allowsChan2;
+	        if (this.isTemplate) {
+	          var _this$task$allowsChan;
+	          return (_this$task$allowsChan = this.task.allowsChangeDeadline) != null ? _this$task$allowsChan : false;
+	        }
+	        return (_this$task$allowsChan2 = this.task.allowsChangeDatePlan) != null ? _this$task$allowsChan2 : false;
 	      },
 	      set(allowsChangeDatePlan) {
+	        if (this.isTemplate) {
+	          void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+	            allowsChangeDeadline: allowsChangeDatePlan
+	          });
+	          return;
+	        }
 	        void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	          allowsChangeDatePlan
 	        });
@@ -292,6 +298,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    this.updateDuration(this.task.startPlanTs, this.task.endPlanTs);
 	    this.startDatePlanAfter = this.task.startDatePlanAfter;
 	    this.templateDuration = this.task.endDatePlanAfter - this.task.startDatePlanAfter;
+	    this.showErrorDebounced = main_core.Runtime.debounce(this.showError, 300, this);
 	  },
 	  methods: {
 	    clearStart() {
@@ -429,23 +436,42 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    close() {
 	      if (this.isTemplate) {
-	        void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-	          startDatePlanAfter: this.startDatePlanAfter,
-	          endDatePlanAfter: this.startDatePlanAfter + this.templateDuration,
-	          matchesWorkTime: this.matchesWorkTime
-	        });
+	        this.handleTemplateUpdate();
 	      } else if (!this.maxDurationReached) {
-	        void tasks_v2_provider_service_taskService.taskService.update(this.taskId, Object.fromEntries(Object.entries({
-	          startPlanTs: this.matchesSubTasksTime ? undefined : this.startTs,
-	          endPlanTs: this.matchesSubTasksTime ? undefined : this.endTs,
-	          matchesWorkTime: this.matchesWorkTime,
-	          matchesSubTasksTime: this.matchesSubTasksTime
-	        }).filter(([, value]) => !main_core.Type.isUndefined(value))));
+	        void this.handleTaskUpdate();
 	      }
 	      if (this.wasEmpty && this.wasFilled) {
 	        void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(datePlanMeta.id);
 	      }
 	      this.$emit('close');
+	    },
+	    handleTemplateUpdate() {
+	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+	        startDatePlanAfter: Number(this.startDatePlanAfter),
+	        endDatePlanAfter: Number(this.startDatePlanAfter + this.templateDuration),
+	        matchesWorkTime: this.matchesWorkTime
+	      });
+	    },
+	    async handleTaskUpdate() {
+	      var _result$Endpoint$Task;
+	      tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(true);
+	      const result = await tasks_v2_provider_service_taskService.taskService.update(this.taskId, Object.fromEntries(Object.entries({
+	        startPlanTs: this.matchesSubTasksTime ? undefined : Number(this.startTs),
+	        endPlanTs: this.matchesSubTasksTime ? undefined : Number(this.endTs),
+	        matchesWorkTime: this.matchesWorkTime,
+	        matchesSubTasksTime: this.matchesSubTasksTime
+	      }).filter(([, value]) => !main_core.Type.isUndefined(value))));
+	      tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(false);
+	      if ((_result$Endpoint$Task = result[tasks_v2_const.Endpoint.TaskPlanUpdate]) != null && _result$Endpoint$Task.length) {
+	        const error = result[tasks_v2_const.Endpoint.TaskPlanUpdate][0];
+	        this.showErrorDebounced(error);
+	      }
+	    },
+	    showError(error) {
+	      ui_notificationManager.Notifier.notifyViaBrowserProvider({
+	        id: 'tasks-date-plan-update-error',
+	        text: error == null ? void 0 : error.message
+	      });
 	    }
 	  },
 	  template: `
@@ -545,6 +571,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	const DatePlan = {
 	  components: {
 	    FieldList: tasks_v2_component_elements_fieldList.FieldList,
+	    FieldHoverButton: tasks_v2_component_elements_fieldHoverButton.FieldHoverButton,
 	    DatePlanSheet
 	  },
 	  inject: {
@@ -565,7 +592,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  emits: ['update:isSheetShown'],
 	  setup() {
 	    return {
+	      Outline: ui_iconSet_api_core.Outline,
 	      datePlanMeta
+	    };
+	  },
+	  data() {
+	    return {
+	      isHovered: false
 	    };
 	  },
 	  computed: {
@@ -611,15 +644,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        title: this.loc('TASKS_V2_DATE_PLAN_FIELD_START'),
 	        component: DatePlanDate,
 	        props: {
-	          dateTs: this.task.startPlanTs,
-	          readonly: this.readonly
+	          dateTs: this.task.startPlanTs
 	        }
 	      }, {
 	        title: this.loc('TASKS_V2_DATE_PLAN_FIELD_END'),
 	        component: DatePlanDate,
 	        props: {
-	          dateTs: this.task.endPlanTs,
-	          readonly: this.readonly
+	          dateTs: this.task.endPlanTs
 	        }
 	      }].filter(({
 	        props: {
@@ -643,15 +674,26 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div
-			class="tasks-field-date-plan"
-			:class="{ '--readonly': readonly }"
-			:data-task-id="taskId"
-			:data-task-field-id="datePlanMeta.id"
-			:data-task-plan-start="task.startPlanTs"
-			:data-task-plan-end="task.endPlanTs"
-			@click="handleClick"
+			@mouseenter="isHovered = true"
+			@mouseleave="isHovered = false"
 		>
-			<FieldList :fields/>
+			<FieldHoverButton
+				v-if="!readonly"
+				:icon="Outline.EDIT_L"
+				:isVisible="isHovered"
+				@click="handleClick"
+			/>
+			<div
+				class="tasks-field-date-plan"
+				:class="{ '--readonly': readonly }"
+				:data-task-id="taskId"
+				:data-task-field-id="datePlanMeta.id"
+				:data-task-plan-start="task.startPlanTs"
+				:data-task-plan-end="task.endPlanTs"
+				@click="handleClick"
+			>
+				<FieldList :fields/>
+			</div>
 		</div>
 		<DatePlanSheet v-if="isSheetShown" :sheetBindProps @close="setSheetShown(false)"/>
 	`
@@ -728,5 +770,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.DatePlanSheet = DatePlanSheet;
 	exports.datePlanMeta = datePlanMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.UI.DatePicker,BX.Vue3.Components,BX.UI.System.Input.Vue,BX.UI.System.Menu,BX.Tasks.V2,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX.UI.System.Typography.Vue,BX.UI,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.IconSet,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.UI.DatePicker,BX.UI.NotificationManager,BX.Vue3.Components,BX.UI.System.Input.Vue,BX.UI.System.Menu,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX.UI.System.Typography.Vue,BX.UI,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Lib));
 //# sourceMappingURL=date-plan.bundle.js.map

@@ -166,6 +166,7 @@ jn.define('im/messenger/controller/vote/result/user-list', (require, exports, mo
 			void UserProfile.open({
 				ownerId: userId,
 				parentWidget: this.parentWidget,
+				analyticsSection: 'im_messenger_vote_result_user_list',
 			});
 		}
 	}

@@ -15,4 +15,8 @@ export const ErrorCode = Object.freeze({
 	file: {
 		maxFileSize: 'MAX_FILE_SIZE_EXCEEDED',
 	},
+	sticker: {
+		maxPacks: 'MAX_PACKS_ERROR',
+		maxStickers: 'MAX_STICKERS_ERROR',
+	},
 });

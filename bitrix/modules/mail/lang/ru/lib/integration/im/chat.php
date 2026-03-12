@@ -1,0 +1,9 @@
+<?php
+$MESS["MAIL_POST_DISCUSS_MESSAGE_RECEIVED_DATE"] = "Получено: #RECEIVED_DATE#";
+$MESS["MAIL_POST_DISCUSS_MESSAGE_FROM"] = "От: #FROM#";
+$MESS["MAIL_POST_DISCUSS_MESSAGE_TO"] = "Кому: #TO#";
+$MESS["MAIL_POST_DISCUSS_MESSAGE_BODY"] = "Текст письма: #BODY#";
+$MESS["MAIL_POST_DISCUSS_MESSAGE_SUBJECT"] = "Письмо: \n #SUBJECT#";
+
+$MESS["MAIL_POST_WELCOME_MESSAGE"] = "Чат создан из письма \"#MAIL_TITLE#\"";
+$MESS["MAIL_CREATE_MAIL_CHAT_EMPTY_SUBJECT"] = "Письмо #MESSAGE_ID#";

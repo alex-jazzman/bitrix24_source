@@ -31,6 +31,7 @@ jn.define('im/messenger/controller/user-profile', (require, exports, module) => 
 			this.layoutWidget = await MobileUserProfile.open({
 				ownerId: this.userId,
 				parentWidget: this.parentWidget,
+				analyticsSection: 'im_user_profile_controller',
 			});
 
 			layoutWidget.on(EventType.view.close, () => {

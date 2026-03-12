@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_INSTALL_NAME'] = "Блоги";
 $MESS ['BLOG_INSTALL_DESCRIPTION'] = "Модуль дает возможность ведения блогов на сайте.";
 $MESS ['BLOG_INSTALL_TITLE'] = "Установка модуля блогов";
@@ -14,4 +14,3 @@ $MESS ['BLI_INSTALL_EMAIL'] = "Создать почтовые шаблоны";
 $MESS ['BLI_DELETE_EMAIL'] = "Удалить почтовые шаблоны";
 $MESS ['BLI_INSTALL_404'] = "Установить публичную часть в режиме SEF";
 $MESS ['BLI_INSTALL_SMILES'] = "Установить смайлы";
-?>

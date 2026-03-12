@@ -30,11 +30,16 @@ import { MessagePins } from './classes/message-pins';
 import { MessageForward } from './classes/message-forward';
 import { MessageContextMenu } from './classes/message-context-menu';
 import { SliderInvite } from './classes/slider-invite';
-import { ChatPins } from './classes/chat-pins';
 import { DesktopMode } from './classes/desktop-mode';
 import { ChatInviteLink } from './classes/chat-invite-link';
 import { AiAssistant } from './classes/ai-assistant';
 import { Player } from './classes/player';
+import { Notification } from './classes/notification';
+import { Stickers } from './classes/stickers';
+import { MessageSearch } from './classes/message-search';
+import { RecentContextMenu } from './classes/recent-context-menu';
+import { FormatToolbar } from './classes/format-toolbar';
+import { RecentSearch } from './classes/recent-search';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -67,11 +72,16 @@ export class Analytics
 	messageForward: MessageForward = new MessageForward();
 	messageContextMenu: MessageContextMenu = new MessageContextMenu();
 	sliderInvite: SliderInvite = new SliderInvite();
-	chatPins: ChatPins = new ChatPins();
 	desktopMode: DesktopMode = new DesktopMode();
 	chatInviteLink: ChatInviteLink = new ChatInviteLink();
 	aiAssistant: AiAssistant = new AiAssistant();
 	player: Player = new Player();
+	notification: Notification = new Notification();
+	stickers: Stickers = new Stickers();
+	messageSearch: MessageSearch = new MessageSearch();
+	recentContextMenu: RecentContextMenu = new RecentContextMenu();
+	formatToolbar: FormatToolbar = new FormatToolbar();
+	recentSearch: RecentSearch = new RecentSearch();
 
 	static #instance: Analytics;
 

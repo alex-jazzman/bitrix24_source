@@ -1,5 +1,6 @@
 import { Loc, Type, Text } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { showLimit } from 'tasks.v2.lib.show-limit';
 
 import { mapGetters } from 'ui.vue3.vuex';
 import { hint } from 'ui.vue3.directives.hint';
@@ -21,7 +22,6 @@ import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { resultsMeta } from './results-meta';
 import { ResultCardItem } from './components/result/result-card-item';
-import { ResultsActionButton } from './results-action-button';
 import { ResultRequiredAha } from './components/result-required-aha/result-required-aha';
 import { ResultListSheet } from './components/result-list-sheet/result-list-sheet';
 import { ResultEditorSheet } from './components/result-editor-sheet/result-editor-sheet';
@@ -39,7 +39,6 @@ export const Results = {
 		TextXs,
 		ResultCardItem,
 		ResultRequiredAha,
-		ResultsActionButton,
 		ResultEditorSheet,
 		ResultListSheet,
 	},
@@ -167,7 +166,7 @@ export const Results = {
 					title: this.loc('TASKS_V2_RESULT_NOT_REQUIRED'),
 					design: 'alert',
 					icon: Outline.CROSS_L,
-					onClick: () => this.setRequireResult(false),
+					onClick: this.handleUnrequireResult,
 					dataset: {
 						id: `MenuResultNotRequire-${this.taskId}`,
 					},
@@ -175,12 +174,21 @@ export const Results = {
 				!this.requireResult && {
 					title: this.loc('TASKS_V2_RESULT_REQUIRE'),
 					icon: Outline.WINDOW_FLAG,
-					onClick: () => this.setRequireResult(true),
+					isLocked: this.isLocked,
+					onClick: this.handleRequireResult,
 					dataset: {
 						id: `MenuResultRequire-${this.taskId}`,
 					},
 				},
 			];
+		},
+		isLocked(): boolean
+		{
+			return !Core.getParams().restrictions.requiredResult.available;
+		},
+		featureId(): string
+		{
+			return Core.getParams().restrictions.requiredResult.featureId;
 		},
 	},
 	watch: {
@@ -261,6 +269,27 @@ export const Results = {
 		{
 			this.handleResponsibleHintClose();
 			this.openAddResultSheet();
+		},
+		handleRequireResult(): void
+		{
+			if (this.isLocked)
+			{
+				void showLimit({
+					code: `limit_${this.featureId}`,
+					bindElement: this.$refs.moreIcon.$el,
+					analytics: {
+						type: 'limit_tasks_status_summary',
+					},
+				});
+
+				return;
+			}
+
+			this.setRequireResult(true);
+		},
+		handleUnrequireResult(): void
+		{
+			this.setRequireResult(false);
 		},
 		async setRequireResult(requireResult: boolean): void
 		{
@@ -396,7 +425,7 @@ export const Results = {
 	},
 	template: `
 		<div
-			class="tasks-field-results"
+			class="tasks-field-results print-no-box-shadow"
 			:data-task-id="taskId"
 		>
 			<template v-if="lastResultId">
@@ -417,13 +446,13 @@ export const Results = {
 					>
 						<div class="tasks-field-results-more-text">{{ moreText }}</div>
 						<BIcon
-							class="tasks-field-results-title-icon --auto-left"
+							class="tasks-field-results-title-icon --auto-left print-ignore"
 							:name="Outline.CHEVRON_RIGHT_L"
 							hoverable
 						/>
 					</div>
 					<div
-						class="tasks-field-results-more"
+						class="tasks-field-results-more print-ignore"
 						:class="{ '--border': showMore }"
 						@click="openAddResultSheet"
 					>

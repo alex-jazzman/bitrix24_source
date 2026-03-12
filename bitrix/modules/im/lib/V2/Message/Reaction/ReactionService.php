@@ -11,6 +11,7 @@ use Bitrix\Im\V2\Common\ContextCustomer;
 use Bitrix\Im\V2\Message;
 use Bitrix\Im\V2\Result;
 use Bitrix\Imopenlines\MessageParameter;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
 
 class ReactionService
@@ -39,11 +40,6 @@ class ReactionService
 			->setReaction($reaction)
 		;
 
-		if (!Features::isMultipleReactionsAvailable())
-		{
-			$this->deleteAllReactions();
-		}
-
 		try
 		{
 			$saveResult = $reactionItem->save();
@@ -68,7 +64,7 @@ class ReactionService
 		}
 
 		(new PushService())->add($reactionItem);
-		(new MessageAnalytics($this->message))->addAddReaction($reaction);
+		(new MessageAnalytics($this->message))->addAddReaction($reaction, $reactionItem->getUserId());
 		(new ReactionEvent($this->message, $reactionItem, ReactionEvent::ADD_REACTION))->sendBotEvent();
 
 		$this->addAnchors($reaction);
@@ -108,6 +104,18 @@ class ReactionService
 		$this->deleteAnchor();
 
 		return $result;
+	}
+
+	public function getReactionCount(): int
+	{
+		$result = ReactionTable::query()
+			->addSelect(Query::expr()->count('*'), 'COUNT')
+			->where('MESSAGE_ID', $this->message->getMessageId())
+			->where('USER_ID', $this->getContext()->getUserId())
+			->fetch() ?: []
+		;
+
+		return (int)($result['COUNT'] ?? 0);
 	}
 
 	private function processAddForLiveChat(string $reaction): void

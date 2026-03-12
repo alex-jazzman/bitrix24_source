@@ -195,31 +195,34 @@ class CBPApproveActivity extends CBPCompositeActivity implements
 		$arParameters['DOCUMENT_URL'] = $documentService->getDocumentAdminPage($documentId);
 		$arParameters['TaskButton1Message'] =
 			$this->isPropertyExists('TaskButton1Message')
-				? $this->TaskButton1Message
+				? CBPHelper::stringify($this->TaskButton1Message)
 				: Loc::getMessage('BPAA_ACT_BUTTON1')
 		;
-		if ($arParameters['TaskButton1Message'] == '')
+		if (CBPHelper::isEmptyValue($arParameters['TaskButton1Message']))
 		{
 			$arParameters['TaskButton1Message'] = Loc::getMessage('BPAA_ACT_BUTTON1');
 		}
+
 		$arParameters['TaskButton2Message'] =
 			$this->isPropertyExists('TaskButton2Message')
-				? $this->TaskButton2Message
+				? CBPHelper::stringify($this->TaskButton2Message)
 				: Loc::getMessage('BPAA_ACT_BUTTON2_MSGVER_1')
 		;
-		if ($arParameters['TaskButton2Message'] == '')
+		if (CBPHelper::isEmptyValue($arParameters['TaskButton2Message']))
 		{
 			$arParameters['TaskButton2Message'] = Loc::getMessage('BPAA_ACT_BUTTON2_MSGVER_1');
 		}
+
 		$arParameters['CommentLabelMessage'] =
 			$this->isPropertyExists('CommentLabelMessage')
-				? $this->CommentLabelMessage
+				? CBPHelper::stringify($this->CommentLabelMessage)
 				: Loc::getMessage('BPAA_ACT_COMMENT_1')
 		;
-		if ($arParameters['CommentLabelMessage'] === '')
+		if (CBPHelper::isEmptyValue($arParameters['CommentLabelMessage']))
 		{
 			$arParameters['CommentLabelMessage'] = Loc::getMessage('BPAA_ACT_COMMENT_1');
 		}
+
 		$arParameters['ShowComment'] = $this->isPropertyExists('ShowComment') ? $this->ShowComment : 'Y';
 		if ($arParameters['ShowComment'] != 'Y' && $arParameters['ShowComment'] != 'N')
 		{

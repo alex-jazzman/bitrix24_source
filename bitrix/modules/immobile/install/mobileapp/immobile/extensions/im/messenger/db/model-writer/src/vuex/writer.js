@@ -25,6 +25,7 @@ jn.define('im/messenger/db/model-writer/vuex/writer', (require, exports, module)
 		 *  pinMessage: PinMessageRepository,
 		 *  comment: CommentRepository,
 		 *  vote: VoteRepository,
+		 *  sticker: StickerRepository,
 		 * }} options.repository
 		 */
 		constructor(options)

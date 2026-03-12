@@ -1,14 +1,16 @@
+import { Runtime } from 'main.core';
 import { DurationFormat } from 'main.date';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 
 import { mapGetters } from 'ui.vue3.vuex';
+import { Notifier } from 'ui.notification-manager';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
 import { TextMd, Text2Xs } from 'ui.system.typography.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
-import { Model, EventName, TaskStatus } from 'tasks.v2.const';
+import { Model, EventName, TaskStatus, Endpoint } from 'tasks.v2.const';
 import { TaskSettingsPopup } from 'tasks.v2.component.task-settings-popup';
 import { SettingsLabel } from 'tasks.v2.component.elements.settings-label';
 import { Hint, tooltip } from 'tasks.v2.component.elements.hint';
@@ -74,6 +76,7 @@ export const Deadline = {
 	{
 		return {
 			nowTs: Date.now(),
+			isFieldHovered: false,
 			isPopupShown: false,
 			isSettingsPopupShown: false,
 			isExceededHintShown: false,
@@ -103,8 +106,14 @@ export const Deadline = {
 		},
 		expiredDuration(): number
 		{
-			const isCompleted = this.task.status === TaskStatus.Completed;
-			const cannotExpire = this.isTemplate || !this.deadlineTs || this.isFlowFilledOnAdd || isCompleted;
+			const isCompleted = this.task.status === TaskStatus.Completed
+				|| this.task.status === TaskStatus.SupposedlyCompleted
+			;
+			const cannotExpire = this.isTemplate
+				|| !this.deadlineTs
+				|| this.isFlowFilledOnAdd
+				|| isCompleted
+			;
 
 			return cannotExpire ? 0 : this.nowTs - this.deadlineTs;
 		},
@@ -140,6 +149,25 @@ export const Deadline = {
 				return this.loc('TASKS_V2_TASK_LIST_DEADLINE_EXPIRED', {
 					'#DURATION#': new DurationFormat(this.expiredDuration).formatClosest(),
 				});
+			}
+
+			return calendar.formatDateTime(this.deadlineTs);
+		},
+		deadlineFormattedForPrint(): string
+		{
+			if (this.isFlowFilledOnAdd)
+			{
+				return this.loc('TASKS_V2_DEADLINE_AUTO');
+			}
+
+			if (!this.deadlineTs)
+			{
+				return this.loc('TASKS_V2_DEADLINE_EMPTY');
+			}
+
+			if (this.isTemplate)
+			{
+				return calendar.formatDuration(this.deadlineTs, this.task.matchesWorkTime);
 			}
 
 			return calendar.formatDateTime(this.deadlineTs);
@@ -227,6 +255,10 @@ export const Deadline = {
 		}, 1000);
 
 		EventEmitter.subscribe(EventName.OpenDeadlinePicker, this.handleOpenDeadlinePickerEvent);
+	},
+	created(): void
+	{
+		this.showErrorDebounce = Runtime.debounce(this.showError, 300);
 	},
 	updated(): void
 	{
@@ -334,18 +366,36 @@ export const Deadline = {
 		},
 		async setDeadline(dateTs: number): Promise<void>
 		{
-			this.dateTs = dateTs;
+			this.dateTs = null;
 			if (this.isTemplate)
 			{
 				await taskService.update(this.taskId, { deadlineAfter: dateTs });
 			}
 			else
 			{
-				await taskService.update(this.taskId, {
+				taskService.setSilentErrorMode(true);
+
+				const result = await taskService.update(this.taskId, {
 					deadlineTs: dateTs,
 					deadlineChangeReason: this.changeReason,
 				});
+
+				taskService.setSilentErrorMode(false);
+
+				if (result[Endpoint.TaskDeadlineUpdate]?.length)
+				{
+					const error = result[Endpoint.TaskDeadlineUpdate][0];
+
+					this.showErrorDebounce(error);
+				}
 			}
+		},
+		showError(error): void
+		{
+			Notifier.notifyViaBrowserProvider({
+				id: 'task-notify-deadline-update-error',
+				text: error?.message,
+			});
 		},
 	},
 	template: `
@@ -356,6 +406,8 @@ export const Deadline = {
 			:data-task-id="taskId"
 			:data-task-field-id="deadlineMeta.id"
 			:data-task-field-value="task.deadlineTs"
+			@mouseover="isFieldHovered = true"
+			@mouseleave="isFieldHovered = false"
 			ref="container"
 		>
 			<div class="tasks-field-deadline-inner">
@@ -365,25 +417,44 @@ export const Deadline = {
 					:textOnly="compact"
 					:noOffset="compact"
 					:active="isPopupShown"
-					ref="deadline"
+					:alert="isExpired"
 					@click="handleClick"
 					@clear="handleCrossClick"
 					@keydown="handleKeydown"
 					@mouseover="isExceededHintShown = true"
 					@mouseleave="isExceededHintShown = false"
+					ref="deadline"
 				>
-					<BIcon v-if="!compact" class="tasks-field-deadline-icon" :name="iconName" ref="deadlineIcon"/>
-					<TextMd class="tasks-field-deadline-text" :accent="isExpired">{{ deadlineFormatted }}</TextMd>
+					<BIcon
+						v-if="!compact"
+						class="tasks-field-deadline-icon" 
+						:name="iconName"
+						ref="deadlineIcon"
+					/>
+					<TextMd 
+						class="tasks-field-deadline-text print-ignore" 
+						:accent="isExpired"
+					>
+						{{ deadlineFormatted }}
+					</TextMd>
+					<TextMd
+						class="tasks-field-deadline-text --display-none print-display-block" 
+						:accent="isExpired">{{ deadlineFormattedForPrint }}
+					</TextMd>
 				</HoverPill>
-				<div v-if="!isFlowFilledOnAdd && !isTemplate && !compact" ref="settings" class="tasks-field-deadline-settings-label">
+				<div
+					v-if="!isFlowFilledOnAdd && !isTemplate && !compact"
+					class="tasks-field-deadline-settings-label"
+					ref="settings"
+				>
 					<SettingsLabel
-						v-if="canChangeSettings && (isHovered || isSettingsPopupShown)"
+						v-if="canChangeSettings && (isHovered || isFieldHovered || isSettingsPopupShown)"
 						data-settings-label
 						@click="isSettingsPopupShown = true"
 					/>
 				</div>
 			</div>
-			<Text2Xs v-if="isExpired && !compact" class="tasks-field-deadline-expired">{{ expiredFormatted }}</Text2Xs>
+			<Text2Xs v-if="isExpired && !compact" class="tasks-field-deadline-expired print-ignore">{{ expiredFormatted }}</Text2Xs>
 		</div>
 		<DeadlinePopup
 			v-if="!isTemplate && isPopupShown"

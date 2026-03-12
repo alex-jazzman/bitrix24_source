@@ -1,2 +1,0 @@
-<?php
-$MESS["CATALOG_PRODUCT_SEARCH_PLACEHOLDER"] = "Знайти товари";

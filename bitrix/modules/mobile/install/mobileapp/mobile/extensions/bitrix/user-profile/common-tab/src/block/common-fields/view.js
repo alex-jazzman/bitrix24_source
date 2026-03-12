@@ -11,6 +11,13 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 	const { BaseEditWrapper } = require('user-profile/common-tab/src/block/base-edit');
 	const { isFieldValueEmpty, isFieldVisible } = require('user-profile/common-tab/src/block/common-fields/src/utils');
 	const { PropTypes } = require('utils/validation');
+	const {
+		SocialSection,
+		SOCIAL_SECTION_ID,
+	} = require('user-profile/common-tab/src/block/common-fields/src/social-section');
+
+	const { connect } = require('statemanager/redux/connect');
+	const { usersSelector } = require('statemanager/redux/slices/users');
 
 	const ViewModeFieldIds = ['PERSONAL_MOBILE', 'UF_PHONE_INNER', 'EMAIL', 'DEPARTMENT_HEAD', 'DEPARTMENT', 'TEAM', 'PERSONAL_BIRTHDAY'];
 
@@ -29,11 +36,47 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 		constructor(props)
 		{
 			super(props);
+
 			this.getTestId = createTestIdGenerator({
 				prefix: 'common-fields-block',
 				context: this,
 			});
 			this.changedFields = {};
+
+			this.#initState(this.props);
+		}
+
+		componentWillReceiveProps(props)
+		{
+			this.#initState(props);
+		}
+
+		#initState(props)
+		{
+			const { sections = [], email, personalMobile } = props;
+
+			this.state = {
+				sections: this.#updateSectionsWithReduxData(sections, email, personalMobile),
+			};
+		}
+
+		#updateSectionsWithReduxData(sections, email, personalMobile)
+		{
+			sections.forEach(({ fields }) => {
+				const emailField = fields.find(((field) => field.id === 'EMAIL'));
+				if (emailField)
+				{
+					emailField.value = email || emailField.value;
+				}
+
+				const personalMobileField = fields.find(((field) => field.id === 'PERSONAL_MOBILE'));
+				if (personalMobileField)
+				{
+					personalMobileField.value = personalMobile || personalMobileField.value;
+				}
+			});
+
+			return sections;
 		}
 
 		render()
@@ -50,10 +93,8 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 
 		#renderEditModeSections()
 		{
-			const { sections = [] } = this.props;
-			const renderedSections = sections.map(
-				(section) => this.#renderEditModeSection(section),
-			);
+			const { sections = [] } = this.state;
+			const renderedSections = sections.map((section) => this.#renderEditModeSection(section));
 
 			return View(
 				{
@@ -65,8 +106,21 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 
 		#renderEditModeSection(section)
 		{
-			const { isEditMode, onFocus } = this.props;
-			const { title, fields = [] } = section;
+			const { isEditMode, onFocus, parentWidget } = this.props;
+			const { id, title, fields = [] } = section;
+
+			if (id === SOCIAL_SECTION_ID)
+			{
+				return new SocialSection({
+					isEditMode,
+					parentWidget,
+					title,
+					fields,
+					testId: this.getTestId('social-section'),
+					onSocialValueChange: this.onFieldValueChange.bind(this),
+				});
+			}
+
 			const renderedFields = fields
 				.filter((field) => this.#isFieldVisibleInEditMode(field))
 				.map((field, index) => FieldFactory.create(field.type, {
@@ -113,7 +167,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 
 		#getFieldById(fieldId)
 		{
-			const { sections = [] } = this.props;
+			const { sections = [] } = this.state;
 
 			return sections
 				.flatMap((section) => section.fields || [])
@@ -122,7 +176,8 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 
 		#renderViewModeFields()
 		{
-			const { isEditMode, parentWidget, sections = [] } = this.props;
+			const { isEditMode, parentWidget } = this.props;
+			const { sections = [] } = this.state;
 
 			const renderedFields = sections
 				.flatMap((section) => section.fields || [])
@@ -163,7 +218,9 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 		}
 
 		onShowAllFieldsLinkClick = () => {
-			const { sections = [], parentWidget } = this.props;
+			const { parentWidget } = this.props;
+			const { sections = [] } = this.state;
+
 			openInfoBox({
 				testId: this.getTestId('common-fields-details'),
 				sections,
@@ -196,11 +253,20 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 		parentWidget: PropTypes.object,
 	};
 
+	const mapStateToProps = (state, { ownerId }) => {
+		const { email, personalMobile } = usersSelector.selectById(state, ownerId);
+
+		return {
+			email,
+			personalMobile,
+		};
+	};
+
 	module.exports = {
 		/**
 		 * @property {CommonFieldsProps} props
 		 * @returns {CommonFields}
 		 */
-		CommonFields: (props) => new CommonFields(props),
+		CommonFields: connect(mapStateToProps)(CommonFields),
 	};
 });

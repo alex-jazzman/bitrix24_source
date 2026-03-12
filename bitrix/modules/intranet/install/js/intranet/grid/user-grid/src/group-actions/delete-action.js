@@ -39,6 +39,11 @@ export class DeleteAction extends BaseAction
 					grid: this.grid,
 					filter: this.userFilter,
 					showPopups: false,
+					isCloud: this.isCloud,
+					isFirstAdminConfirmationEnabled: this.isFirstAdminConfirmationEnabled,
+					currentUserId: this.currentUserId,
+					currentUserName: this.currentUserName,
+					firstAdminId: this.firstAdminId,
 				})).execute();
 			},
 			onNo: () => {

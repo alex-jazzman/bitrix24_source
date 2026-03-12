@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main\Application;
 use Bitrix\Main\ModuleManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -66,7 +65,6 @@ return [
 		return [
 			'lang_additional' => [
 				'AI_APP_COLLECTION_MARKET_LINK' => \Bitrix\Crm\Integration\AI\AIManager::getAiAppCollectionMarketLink(),
-				'PORTAL_ZONE' => mb_strtolower(Application::getInstance()->getLicense()->getRegion() ?? ''),
 			],
 		];
 	}

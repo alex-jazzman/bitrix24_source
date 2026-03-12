@@ -6,7 +6,7 @@ import { useLoc } from '../../../../shared/composables';
 // eslint-disable-next-line no-unused-vars
 import { Port, Block } from '../../../../shared/types';
 
-import { CONSTRUCTION_LABELS, GENERAL_CONSTRUCTION_TYPES, CONSTRUCTION_OPERATORS } from '../../constants';
+import { CONSTRUCTION_LABELS, GENERAL_CONSTRUCTION_TYPES } from '../../constants';
 import { evaluateConditionExpressionFieldTitle } from '../../utils';
 
 import type {
@@ -14,10 +14,9 @@ import type {
 	// eslint-disable-next-line no-unused-vars
 	NodeSettings,
 	GeneralConstructionTypes,
-	СonstructionOperators,
-	СonstructionLabels,
+	ConstructionLabels,
 	Construction,
-} from '../types';
+} from '../../types';
 
 // @vue/component
 export const NodeSettingsRule = {
@@ -65,17 +64,17 @@ export const NodeSettingsRule = {
 		{
 			return this.rule?.isFilled;
 		},
-		constructionLabels(): СonstructionLabels
+		constructionLabels(): ConstructionLabels
 		{
 			return CONSTRUCTION_LABELS;
-		},
-		constructionOperators(): СonstructionOperators
-		{
-			return CONSTRUCTION_OPERATORS;
 		},
 		generalConstructionTypes(): GeneralConstructionTypes
 		{
 			return GENERAL_CONSTRUCTION_TYPES;
+		},
+		ifLabel(): string
+		{
+			return this.getMessage(CONSTRUCTION_LABELS['condition:if']);
 		},
 	},
 	methods:
@@ -126,7 +125,8 @@ export const NodeSettingsRule = {
 		>
 			<BIcon
 				class="node-settings-rule__dnd-icon"
-				name="drag-s"
+				:size="20"
+				name="drag-m"
 				color="#828b95"
 			/>
 			<span class="node-settings-rule__title">
@@ -146,6 +146,7 @@ export const NodeSettingsRule = {
 						:key="construction.id"
 						class="node-settings-rule__construction"
 						:class="['--' + generalConstructionTypes[construction.type]]"
+						:data-if-indent="ifLabel"
 					>
 						<span class="node-settings-rule__construction_type">
 							{{ getMessage(constructionLabels[construction.type]) }}
@@ -157,7 +158,7 @@ export const NodeSettingsRule = {
 							v-if="construction.expression.operator"
 							class="node-settings-rule__expression-part"
 						>
-							{{ constructionOperators[construction.expression.operator] }}
+							{{ construction.expression.operator }}
 						</span>
 						<span
 							v-if="generalConstructionTypes[construction.type] !== generalConstructionTypes.action"
@@ -178,7 +179,7 @@ export const NodeSettingsRule = {
 				<BIcon
 					:size="20"
 					class="node-settings-rule__edit-icon"
-					name="pencil-40"
+					name="edit-m"
 					color="#c9ccd0"
 				/>
 				<BIcon

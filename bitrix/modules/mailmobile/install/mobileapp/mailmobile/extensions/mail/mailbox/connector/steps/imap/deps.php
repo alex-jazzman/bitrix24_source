@@ -2,13 +2,9 @@
 
 return [
 	'extensions' => [
-		'layout/ui/fields/string',
-		'layout/ui/fields/email',
-		'layout/ui/fields/number',
 		'utils/function',
 		'utils/string',
 		'utils/object',
-		'layout/ui/switcher',
 		'utils/function',
 		'haptics',
 		'layout/ui/wizard/step',
@@ -16,5 +12,13 @@ return [
 		'crm:salescenter/progress-bar-number',
 		'notify-manager',
 		'apptheme',
+        'ui-system/form/inputs/email',
+		'ui-system/form/inputs/string',
+		'utils/email',
+		'layout/pure-component',
+		'ui-system/form/inputs/number',
+		'ui-system/blocks/switcher',
+		'tokens',
+		'ui-system/form/buttons/button',
 	],
 ];

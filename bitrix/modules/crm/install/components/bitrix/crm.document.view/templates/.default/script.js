@@ -242,7 +242,7 @@
 			}
 			else
 			{
-				this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS'));
+				this.showError(BX.Loc.getMessage('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS_MSGVER_1'));
 			}
 		}, this));
 
@@ -793,7 +793,7 @@
 			}
 			else
 			{
-				message = BX.Loc.getMessage('CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR');
+				message = BX.Loc.getMessage('CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR_MSGVER_1');
 			}
 
 			this.showError(message);
@@ -1076,11 +1076,11 @@
 		}
 		else if (this.preview.imageUrl)
 		{
-			this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR'));
+			this.showError(BX.Loc.getMessage('CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR'));
 		}
 		else
 		{
-			this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS'));
+			this.showError(BX.Loc.getMessage('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS_MSGVER_1'));
 		}
 	};
 

@@ -2,6 +2,7 @@
  * @module im/messenger/lib/integration/tasksmobile/comments/opener
  */
 jn.define('im/messenger/lib/integration/tasksmobile/comments/opener', (require, exports, module) => {
+	const { Type } = require('type');
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
 	const {
 		SidebarContextMenuActionId,
@@ -11,9 +12,10 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/opener', (require, 
 	/**
 	 * @param {number} chatId
 	 * @param {number} taskId
+	 * @param {number?} messageId
 	 * @return {Promise<DialoguesModelState>}
 	 */
-	async function openTaskComments(chatId, taskId)
+	async function openTaskComments(chatId, taskId, messageId)
 	{
 		/** @type ChatIntegrationSettings */
 		const integrationSettings = {
@@ -58,10 +60,19 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/opener', (require, 
 			},
 		};
 
-		return DialogOpener.open({
+		/** @type DialogOpenOptions */
+		const options = {
 			dialogId: `chat${chatId}`,
 			integrationSettings,
-		});
+		};
+
+		if (Type.isNumber(messageId))
+		{
+			options.messageId = messageId;
+			options.withMessageHighlight = true;
+		}
+
+		return DialogOpener.open(options);
 	}
 
 	module.exports = {

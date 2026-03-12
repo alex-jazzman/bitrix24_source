@@ -64,6 +64,7 @@ if (!empty($arResult['PRODUCT_VAT_LIST']) && is_array($arResult['PRODUCT_VAT_LIS
 	}
 }
 
+$calculatePricePrecision = $arResult['PRICE_CALCULATION_PRECISION'];
 $pricePrecision = $arResult['PRICE_PRECISION'];
 $quantityPrecision = $arResult['QUANTITY_PRECISION'];
 $commonPrecision = $arResult['COMMON_PRECISION'];
@@ -113,6 +114,7 @@ $editorConfig = [
 	'rowIdPrefix' => $rowIdPrefix,
 
 	'pricePrecision' => $pricePrecision,
+	'calculationPricePrecision' => $calculatePricePrecision,
 	'quantityPrecision' => $quantityPrecision,
 	'commonPrecision' => $commonPrecision,
 
@@ -202,6 +204,7 @@ $grid['ROWS']['template_0'] = [
 	'SKU_PROPERTIES' => [],
 	'PRODUCT_PROPERTIES' => [],
 	'STORE_MAP' => [],
+	'CATALOG_PRICE' => null,
 ];
 
 $visibleColumnsIds = array_column($grid['VISIBLE_COLUMNS'], 'id');
@@ -284,6 +287,7 @@ foreach ($grid['ROWS'] as $product)
 		'IMAGE_INFO' => $rawProduct['IMAGE_INFO'] ?? null,
 		'STORE_MAP' => $rawProduct['STORE_MAP'] ?? [],
 		'TYPE' => $rawProduct['TYPE'] ?? Crm\ProductType::TYPE_PRODUCT,
+		'CATALOG_PRICE' => $rawProduct['CATALOG_PRICE'],
 	];
 
 	// clear overhead fields

@@ -1,2 +1,0 @@
-<?php
-$MESS["SERVICES_SECTION_LEARNING"] = "Оқыту";

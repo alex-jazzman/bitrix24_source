@@ -1,4 +1,5 @@
 <?php
+
 $MESS["TASK_COLUMN_TITLE"] = "Название задачи";
 $MESS["TASK_COLUMN_DEADLINE"] = "Срок";
 $MESS["TASK_COLUMN_CREATED_BY"] = "Постановщик";

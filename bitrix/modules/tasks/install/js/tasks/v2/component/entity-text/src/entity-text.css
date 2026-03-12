@@ -149,3 +149,32 @@
 	width: 100%;
 	background: linear-gradient(180deg, rgba(255, 255, 255, 0.00) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 1) 87.5%);
 }
+
+.tasks-card-entity-text-action-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 32px;
+	padding: 0;
+	margin: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+	border-radius: var(--ui-border-radius-3xs);
+}
+
+.tasks-card-entity-text-action-button-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-card-entity-text-action-button-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+}
+
+.tasks-card-entity-text-action-button-text-copilot {
+	color: var(--ui-color-copilot-primary);
+}

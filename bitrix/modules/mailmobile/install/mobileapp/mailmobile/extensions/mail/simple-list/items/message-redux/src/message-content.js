@@ -107,6 +107,11 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 			return this.props.item.taskBindId ?? 0;
 		}
 
+		get eventBindId()
+		{
+			return this.props.item.eventBindId ?? 0;
+		}
+
 		render()
 		{
 			return View(
@@ -336,6 +341,14 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 				));
 			}
 
+			if (this.eventBindId)
+			{
+				bindings.push(this.capsule(
+					Loc.getMessage('MAILMOBILE_GRID_MESSAGE_BINDING_EVENT_TITLE'),
+					this.openBindingEntity.bind(this, 'event'),
+				));
+			}
+
 			return View(
 				{
 					style: {
@@ -412,6 +425,9 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 				case 'task':
 					actionMenu.openTaskEntity();
 					break;
+				case 'event':
+					actionMenu.openEventEntity();
+					break;
 				default:
 					break;
 			}
@@ -421,7 +437,12 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 			if (!this.isMultiSelectMode)
 			{
 				Haptics.impactLight();
-				void new ActionMenu(this.props.item.id).show(this.containerRef);
+				void new ActionMenu(this.props.item.id).show(
+					{
+						target: this.containerRef,
+						multiSelect: true,
+					},
+				);
 			}
 		};
 

@@ -5,7 +5,7 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
 
 $templateId = $arResult['TEMPLATE_DATA']['ID'];
 $prefix = htmlspecialcharsbx($arResult['TEMPLATE_DATA']['INPUT_PREFIX'] ?? null);

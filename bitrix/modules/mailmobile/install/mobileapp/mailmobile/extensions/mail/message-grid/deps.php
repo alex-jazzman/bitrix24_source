@@ -43,6 +43,7 @@ return [
 		'mail:statemanager/redux/slices/mailboxes/selector',
 		'mail:message/elements/avatar',
 		'im:messenger/lib/feature',
+		'analytics',
 	],
 	'bundle' => [
 		'./navigation/src/sorting',

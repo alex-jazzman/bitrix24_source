@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 (function (exports,landing_node_base,main_core) {
@@ -41,7 +42,6 @@ this.BX.Landing = this.BX.Landing || {};
 	      event.stopPropagation();
 	    }
 	    if (this.isAllowInlineEdit()) {
-	      BX.Landing.UI.Button.ColorAction.hideAll();
 	      if (!BX.Landing.UI.Panel.StylePanel.getInstance().isShown()) {
 	        BX.Landing.UI.Panel.Link.getInstance().show(this);
 	      }

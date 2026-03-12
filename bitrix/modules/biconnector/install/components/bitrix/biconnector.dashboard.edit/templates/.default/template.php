@@ -33,6 +33,27 @@ if (isset($arResult['ERRORS']['BASE']) && is_array($arResult['ERRORS']['BASE']))
 {
 	foreach ($arResult['ERRORS']['BASE'] as $error)
 	{
+		if (is_array($error))
+		{
+			$message = (string)($error['MESSAGE'] ?? '');
+
+			if (empty($message))
+			{
+				continue;
+			}
+
+			if (!empty($error['IS_HTML']))
+			{
+				?>
+				<div class="ui-alert ui-alert-danger">
+					<span class="ui-alert-message"><?= $message ?></span>
+				</div>
+				<?php
+
+				continue;
+			}
+		}
+
 		ShowError($error);
 	}
 }

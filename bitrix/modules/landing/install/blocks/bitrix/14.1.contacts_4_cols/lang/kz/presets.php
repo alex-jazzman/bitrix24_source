@@ -1,3 +1,0 @@
-<?php
-$MESS["LANDING_BLOCK__CONTACTS__PRESET_LINK"] = "Сілтемемен бірге";
-$MESS["LANDING_BLOCK__CONTACTS__PRESET_TEXT"] = "Мәтін";

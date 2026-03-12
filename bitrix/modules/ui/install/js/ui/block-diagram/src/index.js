@@ -6,6 +6,7 @@ export { MoveableBlock } from './components/moveable-block/moveable-block';
 export { ResizableBlock } from './components/resizable-block/resizable-block';
 export { Port } from './components/port/port';
 export { Connection } from './components/connection/connection';
+export { GroupSelectionBox } from './components/group-selection-box/group-selection-box';
 export { DeleteConnectionBtn } from './components/delete-connection-btn/delete-connection-btn';
 export { transformPoint } from './utils';
 export {
@@ -23,5 +24,9 @@ export {
 	useConnectionState,
 	useNewConnectionState,
 	useDragAndDrop,
+	useGroupSelectionLogic,
+	useGroupDragLogic,
+	useKeyboardShortcuts,
 } from './composables';
 export { DragBlock } from './directives';
+export type { Point } from './types';

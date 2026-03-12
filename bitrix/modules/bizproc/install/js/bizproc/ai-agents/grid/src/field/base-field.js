@@ -1,4 +1,5 @@
 import { Dom } from 'main.core';
+import { GridManager } from 'bizproc.ai-agents.grid';
 
 export class BaseField
 {
@@ -31,16 +32,14 @@ export class BaseField
 		return this.#fieldId;
 	}
 
-	getGrid(): BX.Main.grid | null
+	getGridManager(): ?GridManager
 	{
-		let grid = null;
-
-		if (this.#gridId)
+		if (!this.#gridId)
 		{
-			grid = BX.Main.gridManager.getById(this.#gridId);
+			return null;
 		}
 
-		return grid?.instance;
+		return GridManager.getInstance(this.#gridId);
 	}
 
 	getFieldNode(): HTMLElement

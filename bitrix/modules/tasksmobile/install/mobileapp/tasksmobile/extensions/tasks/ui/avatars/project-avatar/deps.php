@@ -2,9 +2,9 @@
 
 return [
 	'extensions' => [
-		'ui-system/blocks/avatar',
+		'statemanager/redux/connect',
 		'statemanager/redux/store',
-
+		'ui-system/blocks/avatar',
 		'tasks:statemanager/redux/slices/groups',
 	],
 	'bundle' => [

@@ -7,10 +7,10 @@ jn.define('more-menu/block/company/whats-new', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
 	const { connect } = require('statemanager/redux/connect');
 	const { selectNewCount } = require('statemanager/redux/slices/whats-new');
-	const { Indent, Color, Corner } = require('tokens');
+	const { Indent, Color } = require('tokens');
 	const { MoreMenuAnalytics } = require('more-menu/analytics');
 	const { PropTypes } = require('utils/validation');
-	const { Card } = require('ui-system/layout/card');
+	const { Card, CardCorner } = require('ui-system/layout/card');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Text3 } = require('ui-system/typography/text');
 	const { BadgeCounter, BadgeCounterSize, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
@@ -48,8 +48,8 @@ jn.define('more-menu/block/company/whats-new', (require, exports, module) => {
 					{
 						testId,
 						onClick: this.openWhatsNew,
+						corner: CardCorner.XL,
 						style: {
-							borderRadius: Corner.XL.toNumber(),
 							backgroundColor: Color.bgContentSecondaryInvert.toHex(),
 						},
 					},

@@ -49,7 +49,9 @@ export const Checkbox = {
 				:disabled="disabled"
 				@click="handleClick"
 			>
-			<span></span>
+			<span
+				class="print-after-border-color-base-1 print-border-color-base-1 print-background-white"
+			></span>
 		</component>
 	`,
 };

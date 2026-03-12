@@ -4,13 +4,10 @@
 jn.define('intranet/reinvite', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
-	const { qrauth } = require('qrauth/utils');
 	const { Color, Indent, Component } = require('tokens');
 	const { isPhoneNumber } = require('utils/phone');
 	const { isValidEmail } = require('utils/email');
-	const { BottomSheet } = require('bottom-sheet');
-	const { showErrorToast } = require('toast');
-
+	const { PropTypes } = require('utils/validation');
 	const { Icon } = require('ui-system/blocks/icon');
 	const { Area } = require('ui-system/layout/area');
 	const { Box } = require('ui-system/layout/box');
@@ -21,14 +18,9 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 	const { ChipButton, ChipButtonDesign, ChipButtonMode } = require('ui-system/blocks/chips/chip-button');
 	const { BBCodeText } = require('ui-system/typography/bbcodetext');
 	const { Avatar } = require('ui-system/blocks/avatar');
-	const { StatusBox } = require('layout/ui/status-box');
-	const { makeLibraryImagePath } = require('asset-manager');
 
-	const store = require('statemanager/redux/store');
-	const { selectWholeUserById } = require('intranet/statemanager/redux/slices/employees/selector');
-	const { RunActionExecutor } = require('rest/run-action-executor');
-
-	const isAndroid = Application.getPlatform() === 'android';
+	const { getState } = require('statemanager/redux/store');
+	const { usersSelector } = require('statemanager/redux/slices/users');
 
 	const REINVITE_PHONE_TYPE = 'phone';
 	const REINVITE_EMAIL_TYPE = 'email';
@@ -38,15 +30,35 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 	 */
 	class Reinvite extends LayoutComponent
 	{
+		static getStartingLayoutHeight()
+		{
+			const titleHeight = 44;
+			const areaPadding = Component.areaPaddingTFirst.toNumber();
+			const chipHeight = 32 + Indent.XS.toNumber() + Indent.XL2.toNumber();
+			const inputHeight = 42 + Indent.M.toNumber() + Indent.XL2.toNumber();
+			const buttonHeight = 42 + 2 * Indent.XL2.toNumber();
+			const descriptionHeight = 66 + Indent.M.toNumber();
+
+			return (
+				titleHeight
+				+ areaPadding
+				+ chipHeight
+				+ inputHeight
+				+ buttonHeight
+				+ descriptionHeight
+			);
+		}
+
 		constructor(props)
 		{
 			super(props);
 
-			this.layoutWidget = null;
-			this.canOpen = false;
-			this.inviteStatusBoxIsOpened = false;
+			this.user = usersSelector.selectById(getState(), Number(this.props.userId)) ?? null;
+			if (!this.user)
+			{
+				throw new Error('User not found');
+			}
 
-			this.user = selectWholeUserById(store.getState(), Number(this.userId)) ?? {};
 			this.state = {
 				phone: this.user.personalMobile,
 				email: this.user.email,
@@ -54,300 +66,80 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 			};
 		}
 
-		get userId()
-		{
-			return this.props.userId;
-		}
-
-		isEmailInvite()
-		{
-			return Type.isStringFilled(this.user.email);
-		}
-
-		isPhoneInvite()
-		{
-			return Type.isStringFilled(this.user.personalMobile);
-		}
-
-		/**
-		 * @param {Object} data
-		 * @param {Object} [data.parentWidget]
-		 * @param {string} [data.title]
-		 */
-		static async open(data)
-		{
-			const parentWidget = data.parentWidget || PageManager;
-			const reinvite = new Reinvite(data);
-			await reinvite.fetchInviteSettings(parentWidget);
-
-			if (!reinvite.canOpen)
-			{
-				return;
-			}
-
-			const bottomSheet = new BottomSheet({
-				component: reinvite,
-				titleParams: {
-					type: 'dialog',
-					text: data.title ?? Loc.getMessage('M_INTRANET_REINVITE_TITLE'),
-					largeMode: true,
-				},
-			});
-			bottomSheet
-				.setParentWidget(parentWidget)
-				.setBackgroundColor(Color.bgSecondary.toHex())
-				.setNavigationBarColor(Color.bgSecondary.toHex())
-				.disableShowOnTop()
-				.disableOnlyMediumPosition()
-				.setMediumPositionHeight(Reinvite.getStartingLayoutHeight())
-				.enableBounce()
-				.enableSwipe()
-				.disableHorizontalSwipe()
-				.enableResizeContent()
-				.enableAdoptHeightByKeyboard()
-				.open()
-				.then((layoutWidget) => {
-					reinvite.layoutWidget = layoutWidget;
-				})
-				.catch((error) => {
-					console.error('Failed to open widget:', error);
-				});
-		}
-
-		static getStartingLayoutHeight()
-		{
-			const TITLE_HEIGHT = 44;
-			const AREA_PADDING = Component.areaPaddingTFirst.toNumber();
-			const CHIP_HEIGHT = 32 + Indent.XL2.toNumber() + Indent.XS.toNumber();
-			const INPUT_HEIGHT = 42 + Indent.M.toNumber() + Indent.XL2.toNumber();
-			const BUTTON_HEIGHT = 42 + Indent.XL2.toNumber() * 2;
-			const DESCRIPTION_HEIGHT = 66 + Indent.M.toNumber();
-
-			return TITLE_HEIGHT
-				+ AREA_PADDING
-				+ CHIP_HEIGHT
-				+ INPUT_HEIGHT
-				+ BUTTON_HEIGHT
-				+ DESCRIPTION_HEIGHT;
-		}
-
-		async fetchInviteSettings(parentWidget)
-		{
-			(new RunActionExecutor('intranetmobile.invite.getInviteSettings'))
-				.setCacheTtl(3600 * 24)
-				.setCacheId('inviteSettings')
-				.setHandler((response) => this.fetchInviteSettingsHandler(response, parentWidget))
-				.setCacheHandler((response) => this.fetchInviteSettingsHandler(response, parentWidget))
-				.call(true);
-		}
-
-		fetchInviteSettingsHandler = (response, parentWidget) => {
-			const responseHasErrors = response.errors && response.errors.length > 0;
-			if (responseHasErrors)
-			{
-				showErrorToast(response.errors[0].message);
-				this.canOpen = false;
-
-				return;
-			}
-
-			const {
-				isBitrix24Included,
-				adminInBoxRedirectLink,
-			} = response.data;
-
-			if (!isBitrix24Included)
-			{
-				if (env.isAdmin)
-				{
-					this.openBoxAdminCanInviteInWeb(adminInBoxRedirectLink, parentWidget);
-				}
-				else
-				{
-					this.openBoxOnlyAdminCanInvite(parentWidget);
-				}
-				this.canOpen = false;
-
-				return;
-			}
-
-			this.canOpen = true;
-		};
-
-		openBoxAdminCanInviteInWeb(adminInBoxRedirectLink, parentWidget)
-		{
-			if (this.inviteStatusBoxIsOpened)
-			{
-				return;
-			}
-
-			this.inviteStatusBoxIsOpened = true;
-
-			StatusBox.open({
-				backdropTitle: Loc.getMessage('M_INTRANET_REINVITE_TITLE'),
-				testId: 'status-box-reinvite-in-web',
-				imageUri: makeLibraryImagePath('user-locked.svg', 'invite-status-box', 'intranet'),
-				description: Loc.getMessage('M_INTRANET_REINVITE_ADMIN_ONLY_IN_WEB_BOX_TEXT'),
-				buttonText: Loc.getMessage('M_INTRANET_REINVITE_GO_TO_WEB_BUTTON_TEXT'),
-				parentWidget,
-				onButtonClick: () => {
-					setTimeout(() => {
-						qrauth.open({
-							redirectUrl: adminInBoxRedirectLink,
-							showHint: true,
-							analyticsSection: 'userList',
-						});
-					}, 500);
-				},
-			});
-		}
-
-		openBoxOnlyAdminCanInvite(parentWidget)
-		{
-			if (this.inviteStatusBoxIsOpened)
-			{
-				return;
-			}
-
-			this.inviteStatusBoxIsOpened = true;
-
-			StatusBox.open({
-				backdropTitle: Loc.getMessage('M_INTRANET_REINVITE_TITLE'),
-				testId: 'status-box-no-permission',
-				imageUri: makeLibraryImagePath('user-locked.svg', 'invite-status-box', 'intranet'),
-				parentWidget,
-				description: Loc.getMessage('M_INTRANET_REINVITE_ADMIN_ONLY_BOX_TEXT'),
-				buttonText: Loc.getMessage('M_INTRANET_REINVITE_DISABLED_BOX_BUTTON_TEXT'),
-			});
-		}
-
-		componentDidMount()
-		{
-			super.componentDidMount();
-
-			Keyboard.on(Keyboard.Event.WillHide, () => {
-				this.layoutWidget.setBottomSheetHeight(Reinvite.getStartingLayoutHeight());
-			});
-		}
-
-		componentWillUnmount()
-		{
-			super.componentWillUnmount();
-			Keyboard.on(Keyboard.Event.WillHide, () => {});
-		}
-
 		render()
 		{
 			return Box(
 				{
+					safeArea: {
+						bottom: true,
+					},
 					resizableByKeyboard: true,
-					safeArea: { bottom: true },
-					footer: this.renderFooter(),
+					footer: this.#renderFooter(),
 				},
 				Area(
 					{
 						isFirst: true,
-						excludePaddingSide: { bottom: true },
-						style: {
-							flex: 1,
-							justifyContent: 'space-between',
-						},
 					},
 					View(
 						{
 							style: {
-								flexDirection: 'row',
-								flexWrap: 'wrap',
-								justifyContent: 'center',
+								alignItems: 'center',
 								paddingHorizontal: Indent.M.toNumber(),
 							},
 						},
-						this.renderUserChip(),
-						this.renderInput(),
-						this.renderDescription(),
+						this.#renderUserChip(),
+						this.#renderInput(),
+						this.#renderDescription(),
 					),
 				),
 			);
 		}
 
-		renderDescription()
-		{
-			const descriptionText = this.isEmailInvite()
-				? Loc.getMessage('M_INTRANET_REINVITE_DESCRIPTION_EMAIL_TEXT')
-				: Loc.getMessage('M_INTRANET_REINVITE_DESCRIPTION_PHONE_TEXT');
-			const buttonText = Loc.getMessage('M_INTRANET_REINVITE_DESCRIPTION_BUTTON_TEXT');
-			const articleCode = '17729332';
-			const articleUrl = helpdesk.getArticleUrl(articleCode);
-
-			return View(
-				{
-					style: {
-						paddingTop: Indent.M.toNumber(),
-						paddingHorizontal: Indent.XL2.toNumber(),
-					},
-				},
-				BBCodeText({
-					style: {
-						textAlign: 'center',
-					},
-					color: Color.base2.toHex(),
-					size: 4,
-					linksUnderline: false,
-					onLinkClick: () => {
-						helpdesk.openHelpArticle(articleCode, 'helpdesk');
-					},
-					value: `${descriptionText} [COLOR=${Color.accentMainLink.toHex()}][URL=${articleUrl}]${buttonText}[/URL][/COLOR]`,
-				}),
-			);
-		}
-
-		renderFooter()
+		#renderFooter()
 		{
 			return BoxFooter(
 				{
-					safeArea: !isAndroid,
 					keyboardButton: {
-						text: Loc.getMessage('M_INTRANET_REINVITE_SEND_BUTTON'),
-						loading: this.state.loading,
-						onClick: this.save,
 						testId: 'reinvite-keyboard-send-button',
+						text: Loc.getMessage('M_INTRANET_REINVITE_SEND_BUTTON'),
+						onClick: this.save,
 					},
 				},
 				Button({
+					testId: 'reinvite-send-button',
+					text: Loc.getMessage('M_INTRANET_REINVITE_SEND_BUTTON'),
 					design: ButtonDesign.FILLED,
 					size: ButtonSize.L,
-					text: Loc.getMessage('M_INTRANET_REINVITE_SEND_BUTTON'),
 					stretched: true,
-					onClick: this.save,
-					testId: 'reinvite-send-button',
 					disabled: this.state.inputError !== null,
+					onClick: this.save,
 				}),
 			);
 		}
 
-		renderUserChip()
+		#renderUserChip()
 		{
 			return ChipButton({
-				rounded: false,
 				style: {
-					marginBottom: Indent.XL2.toNumber(),
 					marginTop: Indent.XS.toNumber(),
+					marginBottom: Indent.XL2.toNumber(),
 				},
+				rounded: false,
 				mode: ChipButtonMode.OUTLINE,
 				design: ChipButtonDesign.GREY,
 				avatar: Avatar({
-					id: this.userId,
+					id: this.user.id,
 					size: 20,
 				}),
 				text: this.user.fullName,
 			});
 		}
 
-		renderInput()
+		#renderInput()
 		{
-			const { phone, inputError, email } = this.state;
+			const { phone, email, inputError } = this.state;
 
-			if (this.isEmailInvite())
+			if (this.#isEmailInvite())
 			{
 				return EmailInput({
 					value: email,
@@ -371,7 +163,7 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 				});
 			}
 
-			if (this.isPhoneInvite())
+			if (this.#isPhoneInvite())
 			{
 				return PhoneInput({
 					value: phone,
@@ -392,35 +184,71 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 					testId: 'reinvite-phone-input',
 				});
 			}
+
 			console.error('User must have either phone or email to reinvite');
 
 			return null;
 		}
 
+		#renderDescription()
+		{
+			const articleCode = '25477392';
+			const articleUrl = helpdesk.getArticleUrl(articleCode);
+			const descriptionText = Loc.getMessage(
+				this.#isEmailInvite()
+					? 'M_INTRANET_REINVITE_DESCRIPTION_EMAIL_TEXT'
+					: 'M_INTRANET_REINVITE_DESCRIPTION_PHONE_TEXT',
+				{
+					'#LINK_START#': `[URL=${articleUrl}]`,
+					'#LINK_END#': '[/URL]',
+				},
+			);
+
+			return View(
+				{
+					style: {
+						paddingTop: Indent.M.toNumber(),
+						paddingHorizontal: Indent.XL2.toNumber(),
+					},
+				},
+				BBCodeText({
+					style: {
+						textAlign: 'center',
+					},
+					size: 4,
+					color: Color.base2.toHex(),
+					linksUnderline: false,
+					value: descriptionText,
+					onLinkClick: () => helpdesk.openHelpArticle(articleCode, 'helpdesk'),
+				}),
+			);
+		}
+
+		handleInputRef = (ref) => {
+			this.inputRef = ref;
+			this.inputRef?.focus();
+		};
+
 		onChangeEmail = (newEmail) => {
 			this.setState({
 				email: newEmail,
-				inputError: Type.isStringFilled(newEmail)
-					? null
-					: Loc.getMessage('M_INTRANET_REINVITE_EMAIL_INPUT_EMPTY_EMAIL'),
+				inputError: (
+					Type.isStringFilled(newEmail)
+						? null
+						: Loc.getMessage('M_INTRANET_REINVITE_EMAIL_INPUT_EMPTY_EMAIL')
+				),
 			});
 		};
 
 		onChangePhone = (newPhone) => {
 			this.setState({
 				phone: newPhone,
-				inputError: Type.isStringFilled(newPhone)
-					? null
-					: Loc.getMessage('M_INTRANET_REINVITE_PHONE_INPUT_EMPTY_NUMBER'),
+				inputError: (
+					Type.isStringFilled(newPhone)
+						? null
+						: Loc.getMessage('M_INTRANET_REINVITE_PHONE_INPUT_EMPTY_NUMBER')
+				),
 			});
-		};
-
-		handleInputRef = (ref) => {
-			this.inputRef = ref;
-			if (this.inputRef)
-			{
-				this.inputRef.focus();
-			}
 		};
 
 		save = () => {
@@ -452,14 +280,26 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 			const newValue = phone ?? email;
 			const valueType = phone ? REINVITE_PHONE_TYPE : REINVITE_EMAIL_TYPE;
 
-			if (this.props.onSave)
-			{
-				this.props.onSave(newValue, valueType);
-			}
-
-			this.layoutWidget.close();
+			this.props.onSave?.(newValue, valueType);
+			this.props.layoutWidget.close();
 		};
+
+		#isEmailInvite()
+		{
+			return Type.isStringFilled(this.user.email);
+		}
+
+		#isPhoneInvite()
+		{
+			return Type.isStringFilled(this.user.personalMobile);
+		}
 	}
+
+	Reinvite.propTypes = {
+		userId: PropTypes.number.isRequired,
+		onSave: PropTypes.func.isRequired,
+		layoutWidget: PropTypes.object.isRequired,
+	};
 
 	module.exports = { Reinvite };
 });

@@ -1,9 +1,0 @@
-<?
-$MESS["CRM_ORDER_BUYER_EDIT_GENERAL_TITLE"] = "Реєстраційна інформація";
-$MESS["CRM_ORDER_BUYER_EDIT_GROUP_TITLE"] = "Групи покупця";
-$MESS["CRM_ORDER_BUYER_EDIT_YES"] = "Так";
-$MESS["CRM_ORDER_BUYER_EDIT_NO"] = "Ні";
-$MESS["CRM_ORDER_BUYER_EDIT_BUTTON_SAVE"] = "Зберегти";
-$MESS["CRM_ORDER_BUYER_EDIT_BUTTON_APPLY"] = "Застосувати";
-$MESS["CRM_ORDER_BUYER_EDIT_BUTTON_CANCEL"] = "Скасувати";
-?>

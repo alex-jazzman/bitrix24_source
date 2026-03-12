@@ -51,7 +51,7 @@ export class MarketExpiredCurtain
 
 	show(): void
 	{
-		BannerDispatcher.critical.toQueue((onDone) => {
+		BannerDispatcher.high.toQueue((onDone) => {
 			const panel = this.#getPanel(onDone);
 			panel.show();
 			this.#sendAnalytics('show_notification_panel');

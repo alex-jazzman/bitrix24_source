@@ -94,6 +94,7 @@ class UpdateService
 		[$task, $fields] = (new EntityFieldService())->prepare($task, $config, $fullTaskData);
 
 		$taskObjectBeforeUpdate = $compatibilityRepository->getTaskObject($task->getId());
+		$taskObjectBeforeUpdate->cacheCrmFields();
 
 		$this->counterService->collect($task->getId());
 
@@ -103,7 +104,8 @@ class UpdateService
 
 		$changes = $this->getChanges($fields, $fullTaskData);
 
-		(new UpdateMembers($config))($fields, $fullTaskData, $changes);
+		$updateMemberService = new UpdateMembers($config);
+		$updateMemberInfo = $updateMemberService($fields, $fullTaskData, $changes);
 
 		(new UpdateParameters($config))($fields, $fullTaskData);
 
@@ -171,8 +173,15 @@ class UpdateService
 
 		(new SendPush($config))($fullTaskData, $sourceTaskData, $changes);
 
+		(new StopTimer($config))($fullTaskData);
+
+		(new RunIntegration($config))($fields, $taskObjectBeforeUpdate);
+
 		// get task object with prepopulated data
+		$this->repository->invalidate($taskObject->getId());
+
 		$taskAfterUpdate = $this->repository->getById($taskObject->getId());
+
 		if ($taskAfterUpdate === null)
 		{
 			throw new TaskNotExistsException();
@@ -204,11 +213,27 @@ class UpdateService
 			taskBeforeUpdate: $entityBefore,
 		));
 
-		(new StopTimer($config))($fullTaskData);
-
-		(new RunIntegration($config))($fields, $taskObjectBeforeUpdate);
-
 		(new RunInternalEvent())($entityBefore, $taskAfterUpdate);
+
+		if ($task->responsible || $entityBefore->responsible->id !== $taskAfterUpdate->responsible->id)
+		{
+			$context = \Bitrix\Main\Context::getCurrent();
+			Container::getInstance()
+				->getLogger()
+				->logWarning(
+					[
+						'targetUserId' => $task->responsible?->id,
+						'taskId' => $task->id,
+						'requestStartTime' => $context?->getServer()->get('REQUEST_TIME_FLOAT'),
+						'action' => $context?->getRequest()->get('action'),
+						'responsibleBefore' => $entityBefore->responsible->id,
+						'responsibleAfter' => $taskAfterUpdate->responsible->id,
+						'members' => $updateMemberInfo,
+						'trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS),
+					],
+					'TASKS_UPDATE_RESPONSIBLE_DEBUG'
+				);
+		}
 
 		return [$taskAfterUpdate, $fields, $entityBefore, $taskObjectBeforeUpdate, $sourceTaskData];
 	}

@@ -54,15 +54,26 @@ export const Connection = {
 		} = useConnectionState(props.connection);
 		const { deleteConnectionById } = useBlockDiagram();
 		const loc = useLoc();
-		const { isOpen, showContextMenu } = useContextMenu([
-			{
-				id: 'deleteConnection',
-				text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_CONNECTION_CONTEXT_MENU_ITEM'),
-				onclick: () => {
-					deleteConnectionById(props.connection.id);
+		const { isOpen, showMenu } = useContextMenu();
+
+		const preparedContextMenuItems = computed(() => {
+			const defaultItems = [
+				{
+					id: 'deleteConnection',
+					text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_CONNECTION_CONTEXT_MENU_ITEM'),
+					onclick: () => {
+						this.deleteConnectionById(this.connection.id);
+					},
 				},
-			},
-		]);
+			];
+
+			if (props.contextMenuItems.length > 0)
+			{
+				return props.contextMenuItems;
+			}
+
+			return defaultItems;
+		});
 
 		const targetConnectionClasses = computed((): { [string]: boolean } => ({
 			[TARGET_CONNECTION_CLASSES.base]: true,
@@ -86,7 +97,10 @@ export const Connection = {
 			}
 
 			event.preventDefault();
-			showContextMenu(event);
+			showMenu(
+				event,
+				{ items: toValue(preparedContextMenuItems) },
+			);
 		}
 
 		return {
@@ -95,6 +109,8 @@ export const Connection = {
 			targetConnectionClasses,
 			barPosition,
 			onOpenContextMenu,
+			loc,
+			deleteConnectionById,
 		};
 	},
 	template: `

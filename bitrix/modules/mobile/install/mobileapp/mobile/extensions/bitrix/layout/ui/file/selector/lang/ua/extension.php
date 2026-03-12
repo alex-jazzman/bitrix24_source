@@ -1,4 +1,0 @@
-<?php
-$MESS["UI_FILE_SELECTOR_DEFAULT_TITLE"] = "Файли (#NUM#)";
-$MESS["UI_FILE_SELECTOR_SAVE_BUTTON"] = "Зберегти";
-$MESS["UI_FILE_SELECTOR_SAVE_BUTTON_LOADING"] = "Зберігаємо...";

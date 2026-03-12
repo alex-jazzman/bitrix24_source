@@ -141,8 +141,7 @@ export const ManagementDialog = {
 
 							if (!['recents', 'search'].includes(tab.id))
 							{
-								tab.deselect();
-								tab.setVisible(false);
+								dialog.removeTab(tab.id);
 							}
 						}
 					},

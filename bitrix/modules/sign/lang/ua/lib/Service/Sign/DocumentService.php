@@ -1,7 +1,0 @@
-<?php
-$MESS["SIGN_SERVICE_DOCUMENT_BLANK_NOT_FOUND"] = "Шаблон не знайдено.";
-$MESS["SIGN_SERVICE_DOCUMENT_FILE_EMPTY"] = "Файл порожній.";
-$MESS["SIGN_SERVICE_DOCUMENT_NOT_FOUND"] = "Документ не знайдено.";
-$MESS["SIGN_SERVICE_DOCUMENT_TITLE_FORMAT"] = "#TITLE# № #NUM#";
-$MESS["SIGN_SERVICE_DOCUMENT_TITLE_PLACEHOLDER"] = "#DOC_NAME# від #DATE#";
-$MESS["SIGN_SERVICE_DOCUMENT_USER_NOT_FOUND"] = "Співробітника, відповідального за документ, не знайдено у вашому Бітрікс24.";

@@ -2,6 +2,7 @@
 
 import { Loc, Type } from 'main.core';
 import { CodeParser, type CodeToken } from 'ui.code-parser';
+import { Outline } from 'ui.icon-set.api.core';
 import { $insertDataTransferForPlainText } from 'ui.lexical.clipboard';
 
 import {
@@ -158,7 +159,7 @@ export class CodePlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('code', () => {
 			const button = new Button();
-			button.setContent('<span class="ui-icon-set --enclose-text-in-code-tag"></span>');
+			button.setIcon(Outline.DEVELOPER_RESOURCES);
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_CODE'));
 			button.setBlockType('code');
 			button.subscribe('onClick', () => {

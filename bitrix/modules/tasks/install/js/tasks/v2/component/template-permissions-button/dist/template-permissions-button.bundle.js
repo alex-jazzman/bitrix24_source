@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,tasks_v2_lib_showLimit,ui_vue3_components_popup,ui_system_typography_vue,tasks_v2_provider_service_taskService,ui_vue3_components_menu,tasks_v2_component_elements_userLabel,ui_iconSet_api_vue,ui_vue3_components_button,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_templateService) {
+(function (exports,tasks_v2_lib_showLimit,tasks_v2_component_elements_hoverPill,ui_vue3_components_popup,ui_system_typography_vue,tasks_v2_provider_service_taskService,ui_vue3_components_menu,tasks_v2_component_elements_userLabel,ui_iconSet_api_vue,ui_vue3_components_button,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_templateService) {
 	'use strict';
 
 	// @vue/component
@@ -213,7 +213,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      setTimeout(() => this.freeze());
 	    },
 	    update() {
-	      const permissions = this.selector.getSelectedItems().map(it => tasks_v2_provider_service_templateService.permissionBuilder.buildFromItem(it));
+	      const permissions = this.selector.getSelectedItems().map(it => {
+	        const permission = tasks_v2_provider_service_templateService.permissionBuilder.buildFromItem(it);
+	        const existingPermission = this.permissions.find(({
+	          entityType,
+	          entityId
+	        }) => {
+	          return entityType === permission.entityType && entityId === permission.entityId;
+	        });
+	        return existingPermission != null ? existingPermission : permission;
+	      });
 	      this.$emit('update:permissions', permissions);
 	    }
 	  },
@@ -363,7 +372,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
 	    TemplatePermissionsPopup,
-	    UiButton: ui_vue3_components_button.Button
+	    UiButton: ui_vue3_components_button.Button,
+	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
+	    TextSm: ui_system_typography_vue.TextSm
 	  },
 	  inject: {
 	    task: {}
@@ -407,22 +418,37 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  },
 	  template: `
 		<div class="tasks--template-permissions-button">
-			<div class="tasks--template-permissions-button--wrapper" @click="showPopup">
-				<UiButton
-					:text="loc('TASKS_V2_TEMPLATE_PERMISSIONS_BUTTON')"
-					:size="ButtonSize.SMALL"
-					:style="AirButtonStyle.PLAIN_NO_ACCENT"
-					:leftIcon="buttonIcon"
-					noCaps
-				/>
-				<div
-					v-if="!isLocked"
-					class="tasks--template-permissions-button--counter"
-				>
-					<BIcon :name="Outline.GROUP" :size="18" color="var(--ui-color-accent-main-primary)"/>
-					<span class="tasks--template-permissions-button--counter__count">{{ permissions.length }}</span>
+			<HoverPill @click="showPopup">
+				<div class="tasks--template-permissions-button--wrapper">
+					<BIcon
+						:name="Outline.SETTINGS"
+						:size="24"
+						color="var(--ui-color-base-3)"
+					/>
+					<TextSm className="tasks--template-permissions-button--text">
+						{{ loc('TASKS_V2_TEMPLATE_PERMISSIONS_BUTTON') }}
+					</TextSm>
+					<BIcon
+						v-if="isLocked"
+						:name="Outline.LOCK_L"
+						:size="24"
+						color="var(--ui-color-accent-main-primary-alt-2)"
+					/>
+					<div
+						v-else
+						class="tasks--template-permissions-button--counter"
+					>
+						<BIcon
+							:name="Outline.GROUP"
+							:size="18"
+							color="var(--ui-color-accent-main-primary)"
+						/>
+						<span class="tasks--template-permissions-button--counter__count">
+							{{ permissions.length }}
+						</span>
+					</div>
 				</div>
-			</div>
+			</HoverPill>
 			<TemplatePermissionsPopup
 				v-if="!isLocked && shown"
 				:bindElement="$el"
@@ -434,5 +460,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.TemplatePermissionsButton = TemplatePermissionsButton;
 
-}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.UI.System.Typography.Vue,BX.Tasks.V2.Provider.Service,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.UI.IconSet,BX.Vue3.Components,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.UI.Vue3.Components,BX.UI.System.Typography.Vue,BX.Tasks.V2.Provider.Service,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.UI.IconSet,BX.Vue3.Components,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=template-permissions-button.bundle.js.map

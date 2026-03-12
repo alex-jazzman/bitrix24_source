@@ -16,7 +16,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
 	    BMenu: ui_system_menu_vue.BMenu,
-	    Hint: tasks_v2_component_elements_hint.Hint,
 	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill
 	  },
 	  directives: {
@@ -24,7 +23,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  inject: {
 	    task: {},
-	    taskId: {}
+	    taskId: {},
+	    analytics: {}
 	  },
 	  setup() {
 	    return {
@@ -34,7 +34,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  data() {
 	    return {
-	      isHintShown: false,
 	      isMenuShown: false
 	    };
 	  },
@@ -65,22 +64,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return (_statuses$this$task$s2 = statuses[this.task.status]) != null ? _statuses$this$task$s2 : this.loc('TASKS_V2_STATUS_PENDING');
 	    },
 	    statusAtFormatted() {
-	      const statuses = {
-	        [tasks_v2_const.TaskStatus.Pending]: 'TASKS_V2_STATUS_PENDING_FROM',
-	        [tasks_v2_const.TaskStatus.InProgress]: 'TASKS_V2_STATUS_IN_PROGRESS_FROM',
-	        [tasks_v2_const.TaskStatus.SupposedlyCompleted]: 'TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_FROM_MSGVER_1',
-	        [tasks_v2_const.TaskStatus.Completed]: 'TASKS_V2_STATUS_COMPLETED_AT_MSGVER_1',
-	        [tasks_v2_const.TaskStatus.Deferred]: 'TASKS_V2_STATUS_DEFERRED_AT'
-	      };
-	      return this.loc(statuses[this.task.status], {
+	      return this.loc('TASKS_V2_STATUS_FROM', {
 	        '#DATE#': this.formatDate(this.statusChangedTs),
 	        '#TIME#': this.formatTime(this.statusChangedTs)
-	      });
-	    },
-	    createdAtFormatted() {
-	      return this.loc('TASKS_V2_STATUS_CREATED_AT', {
-	        '#DATE#': this.formatDate(this.task.createdTs),
-	        '#TIME#': this.formatTime(this.task.createdTs)
 	      });
 	    },
 	    statusChangedTs() {
@@ -109,6 +95,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    hasMenuItems() {
 	      return this.menuItems.length > 0;
 	    },
+	    tooltip() {
+	      return () => tasks_v2_component_elements_hint.tooltip({
+	        text: this.statusAtFormatted,
+	        popupOptions: {
+	          offsetLeft: 40
+	        },
+	        timeout: 200
+	      });
+	    },
 	    controlTooltip() {
 	      return () => tasks_v2_component_elements_hint.tooltip({
 	        text: this.loc('TASKS_V2_STATUS_NEEDS_CONTROL_HINT'),
@@ -132,30 +127,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (!this.hasMenuItems) {
 	        return;
 	      }
-	      this.clearTimeouts();
-	      if (this.isHintShown) {
-	        this.closePopup();
-	      }
 	      this.isMenuShown = true;
-	    },
-	    handleMouseEnter() {
-	      this.clearTimeouts();
-	      this.showTimeout = setTimeout(() => this.showPopup(), 1500);
-	    },
-	    handleMouseLeave() {
-	      this.clearTimeouts();
-	      this.closePopup();
-	    },
-	    showPopup() {
-	      this.clearTimeouts();
-	      this.isHintShown = true;
-	    },
-	    closePopup() {
-	      this.clearTimeouts();
-	      this.isHintShown = false;
-	    },
-	    clearTimeouts() {
-	      clearTimeout(this.showTimeout);
 	    },
 	    getStartItem() {
 	      return {
@@ -184,7 +156,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        dataset: {
 	          id: 'tasks-status-menu-complete'
 	        },
-	        onClick: () => tasks_v2_provider_service_statusService.statusService.complete(this.taskId)
+	        onClick: () => {
+	          var _this$analytics$conte, _this$analytics, _this$analytics$addit, _this$analytics2;
+	          void tasks_v2_provider_service_statusService.statusService.complete(this.taskId, {
+	            context: (_this$analytics$conte = (_this$analytics = this.analytics) == null ? void 0 : _this$analytics.context) != null ? _this$analytics$conte : tasks_v2_const.Analytics.Section.Tasks,
+	            additionalContext: (_this$analytics$addit = (_this$analytics2 = this.analytics) == null ? void 0 : _this$analytics2.additionalContext) != null ? _this$analytics$addit : tasks_v2_const.Analytics.SubSection.TaskCard,
+	            element: tasks_v2_const.Analytics.Element.ContextMenu
+	          });
+	        }
 	      };
 	    },
 	    getDeferItem() {
@@ -229,14 +208,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-field-value="task.status"
 			:data-task-created-ts="task.createdTs"
 			:data-task-status-changes-ts="statusChangedTs"
-			ref="container"
 		>
 			<HoverPill
-				class="tasks-field-status-info"
+				v-hint="tooltip"
 				:active="isMenuShown"
 				:readonly="!hasMenuItems"
-				@mouseenter="handleMouseEnter"
-				@mouseleave="handleMouseLeave"
 				@click="handleClick"
 				ref="clickable"
 			>
@@ -251,12 +227,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				/>
 			</div>
 		</div>
-		<Hint v-if="isHintShown" :bindElement="$refs.container" @close="closePopup">
-			<div class="tasks-field-status-hint">
-				<div>{{ statusAtFormatted }}</div>
-				<div>{{ createdAtFormatted }}</div>
-			</div>
-		</Hint>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 	`
 	};

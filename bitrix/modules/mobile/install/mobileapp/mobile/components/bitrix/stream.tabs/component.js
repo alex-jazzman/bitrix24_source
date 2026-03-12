@@ -14,7 +14,6 @@
 				bp2: 'bp2',
 				calendar: 'calendar',
 				video: 'video',
-				mail: 'mail',
 			};
 		}
 
@@ -128,15 +127,6 @@
 					showHint: true,
 					title: BX.message('MOBILE_STREAM_TABS_VIDEO_TITLE'),
 					analyticsSection: 'conference',
-				});
-			}
-			else if (tabId === StreamTabs.tabNames.mail)
-			{
-				qrauth.open({
-					redirectUrl: BX.componentParameters.get('MAIL_WEB_PATH', '/mail/'),
-					showHint: true,
-					title: BX.message('MOBILE_STREAM_TABS_MAIL_TITLE'),
-					analyticsSection: 'mail',
 				});
 			}
 		}

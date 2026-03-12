@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,ui_codeParser,ui_bbcode_parser,ui_textEditor,ui_lexical_clipboard,ui_smiley,ui_videoService,main_core_collections,ui_bbcode_model,ui_lexical_selection,ui_lexical_richText,ui_lexical_table,main_core_events,ui_lexical_history,main_popup,main_core_cache,ui_iconSet_editor,ui_lexical_list,ui_lexical_link,ui_lexical_text,ui_lexical_core,ui_lexical_utils,main_core) {
+(function (exports,ui_codeParser,ui_bbcode_parser,ui_textEditor,ui_lexical_clipboard,ui_smiley,ui_videoService,main_core_collections,ui_bbcode_model,ui_lexical_selection,ui_lexical_richText,ui_lexical_table,main_core_events,ui_lexical_history,ui_iconSet_api_core,main_popup,main_core_cache,ui_lexical_list,ui_lexical_link,ui_lexical_text,ui_lexical_core,ui_lexical_utils,main_core) {
 	'use strict';
 
 	const HIDE_DIALOG_COMMAND = ui_lexical_core.createCommand('HIDE_DIALOG_COMMAND');
@@ -509,6 +509,9 @@ this.BX.UI = this.BX.UI || {};
 	      this.getContainer().append(content);
 	    }
 	  }
+	  setIcon(icon) {
+	    this.setContent(`<span class="ui-icon-set --${main_core.Text.encode(icon)}"></span>`);
+	  }
 	  setFormat(format) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _format)[_format] = format;
 	  }
@@ -941,7 +944,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2() {
 	  this.getEditor().getComponentRegistry().register('quote', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --quote"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.QUOTE);
 	    button.setBlockType('quote');
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_QUOTE'));
 	    button.subscribe('onClick', () => {
@@ -1220,7 +1223,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$1() {
 	  this.getEditor().getComponentRegistry().register('spoiler', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --insert-spoiler"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.SPOILER);
 	    button.setBlockType('spoiler');
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_SPOILER'));
 	    button.subscribe('onClick', () => {
@@ -2596,7 +2599,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$2() {
 	  this.getEditor().getComponentRegistry().register('code', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --enclose-text-in-code-tag"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.DEVELOPER_RESOURCES);
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_CODE'));
 	    button.setBlockType('code');
 	    button.subscribe('onClick', () => {
@@ -5283,7 +5286,7 @@ this.BX.UI = this.BX.UI || {};
 							onclick="${0}"
 							data-testid="image-dialog-save-btn"
 						>
-							<span class="ui-icon-set --check"></span>
+							<span class="ui-icon-set --${0}"></span>
 						</button>
 						<button 
 							type="button" 
@@ -5291,11 +5294,11 @@ this.BX.UI = this.BX.UI || {};
 							onclick="${0}"
 							data-testid="image-dialog-cancel-btn"
 						>
-							<span class="ui-icon-set --cross-60"></span>
+							<span class="ui-icon-set --${0}"></span>
 						</button>
 					</div>
 				</div>
-			`), main_core.Loc.getMessage('TEXT_EDITOR_IMAGE_URL'), this.getUrlTextBox(), babelHelpers.classPrivateFieldLooseBase(this, _handleSaveBtnClick)[_handleSaveBtnClick].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _handleCancelBtnClick)[_handleCancelBtnClick].bind(this));
+			`), main_core.Loc.getMessage('TEXT_EDITOR_IMAGE_URL'), this.getUrlTextBox(), babelHelpers.classPrivateFieldLooseBase(this, _handleSaveBtnClick)[_handleSaveBtnClick].bind(this), ui_iconSet_api_core.Outline.CHECK_L, babelHelpers.classPrivateFieldLooseBase(this, _handleCancelBtnClick)[_handleCancelBtnClick].bind(this), ui_iconSet_api_core.Outline.CROSS_L);
 	    });
 	  }
 	  getUrlTextBox() {
@@ -5548,7 +5551,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$3() {
 	  this.getEditor().getComponentRegistry().register('image', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --incert-image"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.IMAGE);
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_IMAGE'));
 	    button.disableInsideUnformatted();
 	    button.subscribe('onClick', () => {
@@ -5727,7 +5730,6 @@ this.BX.UI = this.BX.UI || {};
 	var _removeKeyboardCommandsLock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeKeyboardCommandsLock");
 	var _removeUpdateListener = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeUpdateListener");
 	var _onEditorScroll$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEditorScroll");
-	var _lastPosition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastPosition");
 	var _timeoutId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("timeoutId");
 	var _triggerByAtSign = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("triggerByAtSign");
 	var _dialogOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogOptions");
@@ -5846,10 +5848,6 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _onEditorScroll$1, {
 	      writable: true,
 	      value: babelHelpers.classPrivateFieldLooseBase(this, _handleEditorScroll$1)[_handleEditorScroll$1].bind(this)
-	    });
-	    Object.defineProperty(this, _lastPosition, {
-	      writable: true,
-	      value: null
 	    });
 	    Object.defineProperty(this, _timeoutId, {
 	      writable: true,
@@ -6012,7 +6010,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$4() {
 	  this.getEditor().getComponentRegistry().register('mention', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --mention"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.MENTION);
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_MENTION'));
 	    button.disableInsideUnformatted();
 	    button.subscribe('onClick', () => {
@@ -6261,51 +6259,13 @@ this.BX.UI = this.BX.UI || {};
 	}
 	function _adjustDialogPosition2() {
 	  this.getEditor().update(() => {
-	    const selectionPosition = $getSelectionPosition(this.getEditor(), ui_lexical_core.$getSelection(), document.body);
-	    if (selectionPosition === null) {
-	      return;
-	    }
-	    const {
-	      top,
-	      left,
-	      bottom
-	    } = selectionPosition;
-	    const scrollerRect = main_core.Dom.getPosition(this.getEditor().getScrollerContainer());
-	    const popupWidth = 400;
-	    const editorPaddings = getEditorPaddings(this.getEditor());
-	    let offsetLeft = 10;
-	    if (left - offsetLeft < scrollerRect.left) {
-	      // Left boundary
-	      const overflow = scrollerRect.left - (left - offsetLeft);
-	      offsetLeft -= overflow + editorPaddings.left;
-	    } else if (scrollerRect.right < left + popupWidth - offsetLeft) {
-	      // Right boundary
-	      offsetLeft += left + popupWidth - offsetLeft - scrollerRect.right + editorPaddings.right;
-	    }
-	    if (bottom < scrollerRect.top || top > scrollerRect.bottom) {
-	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getPopup().getPopupContainer(), 'ui-text-editor-mention-popup__hidden');
-	    } else {
-	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getPopup().getPopupContainer(), 'ui-text-editor-mention-popup__hidden');
-	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].show();
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _lastPosition)[_lastPosition] === null || babelHelpers.classPrivateFieldLooseBase(this, _lastPosition)[_lastPosition].top !== bottom) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _lastPosition)[_lastPosition] = {
-	          left: left - offsetLeft,
-	          top: bottom
-	        };
-	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getPopup().setBindElement(babelHelpers.classPrivateFieldLooseBase(this, _lastPosition)[_lastPosition]);
-	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getPopup().adjustPosition({
-	        forceBindPosition: true,
-	        forceTop: true
-	      });
-	    }
+	    $adjustDialogPosition(babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getPopup(), this.getEditor());
 	  });
 	}
 	function _handleEditorScroll2$1() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _adjustDialogPosition)[_adjustDialogPosition]();
 	}
 	function _handleHideOrDestroy2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _lastPosition)[_lastPosition] = null;
 	  babelHelpers.classPrivateFieldLooseBase(this, _unlockKeyboardCommands)[_unlockKeyboardCommands]();
 	  babelHelpers.classPrivateFieldLooseBase(this, _stopMentionListening)[_stopMentionListening]();
 	  main_core.Event.unbind(this.getEditor().getScrollerContainer(), 'scroll', babelHelpers.classPrivateFieldLooseBase(this, _onEditorScroll$1)[_onEditorScroll$1]);
@@ -6488,16 +6448,17 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getPopup() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _popup$1)[_popup$1] === null) {
-	      const popupWidth = 360;
+	      const popupWidth = 332;
 	      const targetNode = this.getTargetNode();
 	      const rect = targetNode.getBoundingClientRect();
 	      const targetNodeWidth = rect.width;
 	      babelHelpers.classPrivateFieldLooseBase(this, _popup$1)[_popup$1] = new main_popup.Popup({
+	        background: '#F7F9FA',
 	        autoHide: true,
 	        padding: 0,
 	        closeByEsc: true,
 	        width: popupWidth,
-	        height: 250,
+	        height: 360,
 	        bindElement: this.getTargetNode(),
 	        events: {
 	          onClose: () => {
@@ -6713,7 +6674,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$5() {
 	  this.getEditor().getComponentRegistry().register('smileys', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --insert-emoji"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.SMILE);
 	    button.disableInsideUnformatted();
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_SMILEYS'));
 	    button.subscribe('onClick', () => {
@@ -7137,7 +7098,7 @@ this.BX.UI = this.BX.UI || {};
 							onclick="${0}"
 							data-testid="video-dialog-save-btn"
 						>
-							<span class="ui-icon-set --check"></span>
+							<span class="ui-icon-set --${0}"></span>
 						</button>
 						<button 
 							type="button" 
@@ -7145,12 +7106,12 @@ this.BX.UI = this.BX.UI || {};
 							onclick="${0}"
 							data-testid="video-dialog-cancel-btn"
 						>
-							<span class="ui-icon-set --cross-60"></span>
+							<span class="ui-icon-set --${0}"></span>
 						</button>
 					</div>
 					${0}
 				</div>
-			`), main_core.Loc.getMessage('TEXT_EDITOR_VIDEO_INSERT_TITLE'), this.getUrlTextBox(), babelHelpers.classPrivateFieldLooseBase(this, _handleSaveBtnClick$1)[_handleSaveBtnClick$1].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _handleCancelBtnClick$1)[_handleCancelBtnClick$1].bind(this), this.getStatusContainer());
+			`), main_core.Loc.getMessage('TEXT_EDITOR_VIDEO_INSERT_TITLE'), this.getUrlTextBox(), babelHelpers.classPrivateFieldLooseBase(this, _handleSaveBtnClick$1)[_handleSaveBtnClick$1].bind(this), ui_iconSet_api_core.Outline.CHECK_L, babelHelpers.classPrivateFieldLooseBase(this, _handleCancelBtnClick$1)[_handleCancelBtnClick$1].bind(this), ui_iconSet_api_core.Outline.CROSS_L, this.getStatusContainer());
 	    });
 	  }
 	  getUrlTextBox() {
@@ -7439,7 +7400,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$6() {
 	  this.getEditor().getComponentRegistry().register('video', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --insert-video"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.RECORD_VIDEO);
 	    button.disableInsideUnformatted();
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_VIDEO'));
 	    button.subscribe('onClick', () => {
@@ -8202,7 +8163,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$7() {
 	  this.getEditor().getComponentRegistry().register('bold', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --bold"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.BOLD);
 	    button.setFormat('bold');
 	    button.disableInsideUnformatted();
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_BOLD', {
@@ -8258,7 +8219,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$8() {
 	  this.getEditor().getComponentRegistry().register('italic', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --italic"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.ITALIC);
 	    button.setFormat('italic');
 	    button.disableInsideUnformatted();
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_ITALIC', {
@@ -8340,7 +8301,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$9() {
 	  this.getEditor().getComponentRegistry().register('strikethrough', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --strikethrough"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.STRIKETHROUGH);
 	    button.setFormat('strikethrough');
 	    button.disableInsideUnformatted();
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_STRIKETHROUGH', {
@@ -8396,7 +8357,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$a() {
 	  this.getEditor().getComponentRegistry().register('underline', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --underline"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.UNDERLINE);
 	    button.setFormat('underline');
 	    button.disableInsideUnformatted();
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_UNDERLINE', {
@@ -8494,7 +8455,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$b() {
 	  this.getEditor().getComponentRegistry().register('clear-format', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --remove-formatting"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.TEXT_FORMAT_RESET);
 	    button.disableInsideUnformatted();
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_CLEAR_FORMATTING'));
 	    button.subscribe('onClick', () => {
@@ -8688,7 +8649,7 @@ this.BX.UI = this.BX.UI || {};
 							onclick="${0}"
 							data-testid="save-link-btn"
 						>
-							<span class="ui-icon-set --check"></span>
+							<span class="ui-icon-set --${0}"></span>
 						</button>
 						<button 
 							type="button" 
@@ -8696,7 +8657,7 @@ this.BX.UI = this.BX.UI || {};
 							onclick="${0}"
 							data-testid="cancel-link-btn"
 						>
-							<span class="ui-icon-set --cross-60"></span>
+							<span class="ui-icon-set --${0}"></span>
 						</button>
 					</div>
 					<div class="ui-text-editor-link-preview">
@@ -8707,7 +8668,7 @@ this.BX.UI = this.BX.UI || {};
 							onclick="${0}"
 							data-testid="edit-link-btn"
 						>
-							<span class="ui-icon-set --pencil-60"></span>
+							<span class="ui-icon-set --${0}"></span>
 						</button>
 						<button 
 							type="button" 
@@ -8715,11 +8676,11 @@ this.BX.UI = this.BX.UI || {};
 							onclick="${0}"
 							data-testid="unlink-btn"
 						>
-							<span class="ui-icon-set --delete-hyperlink"></span>
+							<span class="ui-icon-set --${0}"></span>
 						</button>
 					</div>
 				</div>
-			`), main_core.Loc.getMessage('TEXT_EDITOR_LINK_URL'), this.getLinkTextBox(), babelHelpers.classPrivateFieldLooseBase(this, _handleSaveBtnClick$2)[_handleSaveBtnClick$2].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _handleCancelBtnClick$2)[_handleCancelBtnClick$2].bind(this), this.getLinkLabel(), babelHelpers.classPrivateFieldLooseBase(this, _handleEditBtnClick)[_handleEditBtnClick].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _handleUnlinkBtnClick)[_handleUnlinkBtnClick].bind(this));
+			`), main_core.Loc.getMessage('TEXT_EDITOR_LINK_URL'), this.getLinkTextBox(), babelHelpers.classPrivateFieldLooseBase(this, _handleSaveBtnClick$2)[_handleSaveBtnClick$2].bind(this), ui_iconSet_api_core.Outline.CHECK_L, babelHelpers.classPrivateFieldLooseBase(this, _handleCancelBtnClick$2)[_handleCancelBtnClick$2].bind(this), ui_iconSet_api_core.Outline.CROSS_L, this.getLinkLabel(), babelHelpers.classPrivateFieldLooseBase(this, _handleEditBtnClick)[_handleEditBtnClick].bind(this), ui_iconSet_api_core.Outline.EDIT_L, babelHelpers.classPrivateFieldLooseBase(this, _handleUnlinkBtnClick)[_handleUnlinkBtnClick].bind(this), ui_iconSet_api_core.Outline.UNLINK);
 	    });
 	  }
 	  getLinkTextBox() {
@@ -9256,7 +9217,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$c() {
 	  this.getEditor().getComponentRegistry().register('link', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --link-3"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.LINK);
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_LINK'));
 	    button.setBlockType('link');
 	    button.disableInsideUnformatted();
@@ -9797,7 +9758,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$d() {
 	  this.getEditor().getComponentRegistry().register('bulleted-list', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --bulleted-list"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.BULLETED_LIST);
 	    button.setBlockType('bullet');
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_BULLETED_LIST'));
 	    button.subscribe('onClick', () => {
@@ -9814,7 +9775,7 @@ this.BX.UI = this.BX.UI || {};
 	  });
 	  this.getEditor().getComponentRegistry().register('numbered-list', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --numbered-list"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.NUMBERED_LIST);
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_NUMBERED_LIST'));
 	    button.setBlockType('number');
 	    button.subscribe('onClick', () => {
@@ -10184,7 +10145,7 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$e() {
 	  this.getEditor().getComponentRegistry().register('table', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --table-editor"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.TABLE);
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_TABLE'));
 	    button.subscribe('onClick', () => {
 	      this.getEditor().dispatchCommand(INSERT_TABLE_DIALOG_COMMAND, {
@@ -10530,6 +10491,9 @@ this.BX.UI = this.BX.UI || {};
 	  isCopilotShown() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot] !== null && babelHelpers.classPrivateFieldLooseBase(this, _copilot)[_copilot].isShown();
 	  }
+	  getCopilotName() {
+	    return TextEditor.getGlobalOption('copilot.name', main_core.Loc.getMessage('TEXT_EDITOR_BTN_COPILOT'));
+	  }
 	  show({
 	    onShow,
 	    onError
@@ -10610,13 +10574,13 @@ this.BX.UI = this.BX.UI || {};
 	function _registerComponents2$f() {
 	  this.getEditor().getComponentRegistry().register('copilot', () => {
 	    const button = new Button();
-	    const copilotIconClass = '--copilot-ai';
-	    const refreshIconClass = '--refresh-5 ui-text-editor-copilot-loading';
+	    const copilotIconClass = `--${ui_iconSet_api_core.Outline.COPILOT}`;
+	    const refreshIconClass = `--${ui_iconSet_api_core.Outline.REFRESH} ui-text-editor-copilot-loading`;
 	    const icon = main_core.Tag.render(_t$b || (_t$b = _$b`
-				<span class="ui-icon-set ${0}" style="--ui-icon-set__icon-color: #8e52ec"></span>
+				<span class="ui-icon-set ${0}" style="--ui-icon-set__icon-color: var(--ui-color-copilot-primary)"></span>
 			`), copilotIconClass);
 	    button.setContent(icon);
-	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_COPILOT'));
+	    button.setTooltip(this.getCopilotName());
 	    button.subscribe('onClick', () => {
 	      this.getEditor().focus();
 	      if (this.isCopilotLoading()) {
@@ -10850,7 +10814,7 @@ this.BX.UI = this.BX.UI || {};
 	  let canUndo = false;
 	  this.getEditor().getComponentRegistry().register('undo', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --undo"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.UNDO);
 	    button.setDisabled(!canUndo);
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_UNDO', {
 	      '#keystroke#': main_core.Browser.isMac() ? '⌘Z' : 'Ctrl+Z'
@@ -10871,7 +10835,7 @@ this.BX.UI = this.BX.UI || {};
 	  let canRedo = false;
 	  this.getEditor().getComponentRegistry().register('redo', () => {
 	    const button = new Button();
-	    button.setContent('<span class="ui-icon-set --redo"></span>');
+	    button.setIcon(ui_iconSet_api_core.Outline.REDO);
 	    button.setDisabled(!canRedo);
 	    button.setTooltip(main_core.Loc.getMessage('TEXT_EDITOR_BTN_REDO', {
 	      '#keystroke#': main_core.Browser.isMac() ? '⌘⇧Z' : 'Ctrl+Y'
@@ -11030,12 +10994,12 @@ this.BX.UI = this.BX.UI || {};
 						ondragend="${0}"
 					>
 						<div 
-							class="ui-icon-set --more-points" 
+							class="ui-icon-set --${0}" 
 							style="--ui-icon-set__icon-size: 24px; margin-left: -4px"
 						></div>
 					</div>
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _handleDragStart)[_handleDragStart].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _handleDragEnd)[_handleDragEnd].bind(this));
+			`), babelHelpers.classPrivateFieldLooseBase(this, _handleDragStart)[_handleDragStart].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _handleDragEnd)[_handleDragEnd].bind(this), ui_iconSet_api_core.Outline.DRAG_S);
 	    }
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container$2)[_container$2];
 	  }
@@ -11973,9 +11937,13 @@ this.BX.UI = this.BX.UI || {};
 	        const mentionPlugin = this.getEditor().getPlugin('Mention');
 	        const mentionEnabled = mentionPlugin !== null && mentionPlugin.shouldTriggerByAtSign();
 	        if (copilotEnabled && mentionEnabled) {
-	          paragraphPlaceholder = main_core.Loc.getMessage('TEXT_EDITOR_PLACEHOLDER_MENTION_COPILOT');
+	          paragraphPlaceholder = main_core.Loc.getMessage('TEXT_EDITOR_PLACEHOLDER_MENTION_BITRIX_GPT', {
+	            '#COPILOT_NAME#': copilotPlugin.getCopilotName()
+	          });
 	        } else if (copilotEnabled) {
-	          paragraphPlaceholder = main_core.Loc.getMessage('TEXT_EDITOR_PLACEHOLDER_COPILOT');
+	          paragraphPlaceholder = main_core.Loc.getMessage('TEXT_EDITOR_PLACEHOLDER_BITRIX_GPT', {
+	            '#COPILOT_NAME#': copilotPlugin.getCopilotName()
+	          });
 	        } else if (mentionEnabled) {
 	          paragraphPlaceholder = main_core.Loc.getMessage('TEXT_EDITOR_PLACEHOLDER_MENTION');
 	        }
@@ -12316,6 +12284,10 @@ this.BX.UI = this.BX.UI || {};
 	  static getDefaultOptions() {
 	    return {};
 	  }
+	  static getGlobalOption(path, defaultValue = null) {
+	    const settings = main_core.Extension.getSettings('ui.text-editor');
+	    return settings.get(path, defaultValue);
+	  }
 	  getComponentRegistry() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _componentRegistry)[_componentRegistry];
 	  }
@@ -12358,7 +12330,7 @@ this.BX.UI = this.BX.UI || {};
 	      }, updateOptions);
 	    }
 	  }
-	  clear(options) {
+	  clear(focus = true, options = {}) {
 	    const updateOptions = {
 	      discrete: main_core.Type.isPlainObject(options) && options.discrete === true
 	    };
@@ -12367,14 +12339,10 @@ this.BX.UI = this.BX.UI || {};
 	      const paragraph = ui_lexical_core.$createParagraphNode();
 	      root.clear();
 	      root.append(paragraph);
-
-	      // const selection = $getSelection();
-	      // if (selection !== null)
-	      // {
-	      // 	paragraph.select();
-	      // }
-
 	      ui_lexical_core.$setSelection(null);
+	      if (focus) {
+	        paragraph.select();
+	      }
 	    }, updateOptions);
 	  }
 	  clearHistory() {
@@ -12958,7 +12926,7 @@ this.BX.UI = this.BX.UI || {};
 	      this.emit('onCollapsingToggle', {
 	        isOpen: false
 	      });
-	      this.clear();
+	      this.clear(false);
 	      this.clearHistory();
 	      if (!initialState) {
 	        this.blur();
@@ -13033,7 +13001,7 @@ this.BX.UI = this.BX.UI || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] === CollapsingState.COLLAPSING) {
 	    main_core.Dom.addClass(this.getRootContainer(), '--collapsed');
 	    babelHelpers.classPrivateFieldLooseBase(this, _collapsingState)[_collapsingState] = CollapsingState.COLLAPSED;
-	    this.clear();
+	    this.clear(false);
 	    this.clearHistory();
 	    this.blur();
 	  } else {
@@ -13204,5 +13172,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.Constants = Constants;
 	exports.Debug = Debug;
 
-}((this.BX.UI.TextEditor = this.BX.UI.TextEditor || {}),BX.UI.CodeParser,BX.UI.BBCode,BX.UI.TextEditor,BX.UI.Lexical.Clipboard,BX.UI.Smiley,BX.UI.VideoService,BX.Collections,BX.UI.BBCode,BX.UI.Lexical.Selection,BX.UI.Lexical.RichText,BX.UI.Lexical.Table,BX.Event,BX.UI.Lexical.History,BX.Main,BX.Cache,BX,BX.UI.Lexical.List,BX.UI.Lexical.Link,BX.UI.Lexical.Text,BX.UI.Lexical.Core,BX.UI.Lexical.Utils,BX));
+}((this.BX.UI.TextEditor = this.BX.UI.TextEditor || {}),BX.UI.CodeParser,BX.UI.BBCode,BX.UI.TextEditor,BX.UI.Lexical.Clipboard,BX.UI.Smiley,BX.UI.VideoService,BX.Collections,BX.UI.BBCode,BX.UI.Lexical.Selection,BX.UI.Lexical.RichText,BX.UI.Lexical.Table,BX.Event,BX.UI.Lexical.History,BX.UI.IconSet,BX.Main,BX.Cache,BX.UI.Lexical.List,BX.UI.Lexical.Link,BX.UI.Lexical.Text,BX.UI.Lexical.Core,BX.UI.Lexical.Utils,BX));
 //# sourceMappingURL=text-editor.bundle.js.map

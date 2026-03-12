@@ -74,8 +74,13 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 			->disableAutomation()
 		;
 		$updateResult = $operation->launch();
-
 		$errorMessages = $updateResult->getErrorMessages();
+
+		if ($errorMessages)
+		{
+			$this->trackError(implode(', ', $errorMessages));
+			unset($errorMessages);
+		}
 
 		if ($updateResult->isSuccess())
 		{
@@ -90,39 +95,24 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 			if (!$terminateResult->isSuccess())
 			{
 				$errorMessages = $terminateResult->getErrorMessages();
-				$this->WriteToTrackingService(
-					implode(', ', $errorMessages),
-					0,
-					CBPTrackingType::Error
-				);
-			}
-			else
-			{
-				$itemBeforeSave = $operation->getItemBeforeSave();
-
-				$starter = new Crm\Automation\Starter($item->getEntityTypeId(), $item->getId());
-				$starter->setContextToBizproc()->runOnUpdate(
-					Crm\Automation\Helper::prepareCompatibleData(
-						$itemBeforeSave->getEntityTypeId(),
-						$itemBeforeSave->getCompatibleData(\Bitrix\Main\ORM\Objectify\Values::CURRENT),
-					),
-					Crm\Automation\Helper::prepareCompatibleData(
-						$itemBeforeSave->getEntityTypeId(),
-						$itemBeforeSave->getCompatibleData(\Bitrix\Main\ORM\Objectify\Values::ACTUAL),
-					)
-				);
+				$this->trackError(implode(', ', $errorMessages));
 			}
 
-			throw new Exception('TerminateWorkflow');
-		}
+			$itemBeforeSave = $operation->getItemBeforeSave();
 
-		if ($errorMessages)
-		{
-			$this->WriteToTrackingService(
-				implode(', ', $errorMessages),
-				0,
-				CBPTrackingType::Error
+			$starter = new Crm\Automation\Starter($item->getEntityTypeId(), $item->getId());
+			$starter->setContextToBizproc()->runOnUpdate(
+				Crm\Automation\Helper::prepareCompatibleData(
+					$itemBeforeSave->getEntityTypeId(),
+					$itemBeforeSave->getCompatibleData(\Bitrix\Main\ORM\Objectify\Values::CURRENT),
+				),
+				Crm\Automation\Helper::prepareCompatibleData(
+					$itemBeforeSave->getEntityTypeId(),
+					$itemBeforeSave->getCompatibleData(\Bitrix\Main\ORM\Objectify\Values::ACTUAL),
+				)
 			);
+
+			return CBPActivityExecutionStatus::Closed;
 		}
 	}
 
@@ -131,9 +121,7 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 		$result = new \Bitrix\Main\Result();
 
 		$documentId = $this->GetDocumentId();
-		$instanceIds = \Bitrix\Bizproc\WorkflowInstanceTable::getIdsByDocument($documentId);
-		$instanceIds[] = $this->GetWorkflowInstanceId();
-		$instanceIds = array_unique($instanceIds);
+		$instanceIds = \CCrmBizProcHelper::getDocumentNotNodesInstanceIds($documentId);
 
 		foreach ($instanceIds as $instanceId)
 		{

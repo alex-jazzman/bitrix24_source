@@ -1,4 +1,3 @@
-import { DateTimeFormat } from 'main.date';
 import type { BaseEvent } from 'main.core.events';
 
 import { RichLoc } from 'ui.vue3.components.rich-loc';
@@ -24,47 +23,33 @@ export const ReplicationStartTime = {
 	},
 	emits: ['update'],
 	computed: {
-		createTime: {
-			get(): string
+		startTs: {
+			get(): number
 			{
-				return this.replicateParams.time;
+				return this.replicateParams.startTs;
 			},
-			set(value: string): void
+			set(startTs: number): void
 			{
-				this.$emit('update', { time: value });
+				this.$emit('update', { startTs });
 			},
 		},
-		startTimeTs(): number
+		startTimeFormatted(): string
 		{
-			return TimeStringConverter.toTimestamp(this.createTime);
+			return TimeStringConverter.format(this.startTs);
 		},
-		starTimeLocale(): string
-		{
-			return TimeStringConverter.toTimeString(
-				this.startTimeTs,
-				timezone.getOffset(this.startTimeTs),
-			);
-		},
-	},
-	beforeMount(): void
-	{
-		if (!this.replicateParams.time)
-		{
-			this.createTime = calendar.dayStartTime;
-		}
 	},
 	methods: {
 		showPicker(): void
 		{
 			this.datePicker ??= new DatePicker({
-				selectedDates: [this.startTimeTs + timezone.getOffset(this.startTimeTs)],
+				selectedDates: [this.startTs + timezone.getOffset(this.startTs)],
 				type: 'time',
 				events: {
 					[DatePickerEvent.SELECT]: (event: BaseEvent) => {
 						const { date } = event.getData();
 						const dateTs = calendar.createDateFromUtc(date).getTime();
 
-						this.updateTime(dateTs - timezone.getOffset(dateTs));
+						this.startTs = dateTs - timezone.getOffset(dateTs);
 					},
 				},
 				popupOptions: {
@@ -74,10 +59,6 @@ export const ReplicationStartTime = {
 
 			this.datePicker.setTargetNode(this.$refs.time.$el);
 			this.datePicker.show();
-		},
-		updateTime(dateTs: number): void
-		{
-			this.createTime = DateTimeFormat.format('H:i', new Date(dateTs));
 		},
 	},
 	template: `
@@ -89,7 +70,7 @@ export const ReplicationStartTime = {
 			>
 				<template #time>
 					<HoverPill textOnly noOffset ref="time" @click="showPicker">
-						<span class="tasks-field-replication-link">{{ starTimeLocale }}</span>
+						<span class="tasks-field-replication-link">{{ startTimeFormatted }}</span>
 					</HoverPill>
 				</template>
 			</RichLoc>

@@ -3,6 +3,7 @@
  */
 jn.define('in-app-url/routes/bitrix24', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { requireLazy } = require('require-lazy');
 	const { ComponentOpener } = require('whats-new/ui-manager/component-opener');
 
 	module.exports = function(inAppUrl) {
@@ -56,23 +57,21 @@ jn.define('in-app-url/routes/bitrix24', (require, exports, module) => {
 				Promise.all([
 					requireLazy('im:messenger/api/dialog-opener'),
 					requireLazy('tourist', false),
-				])
-					.then(([{ DialogOpener }, { Tourist }]) => {
-						return DialogOpener
-							.open({ dialogId: Number(botId) })
-							.then(() => Tourist.remember('show_support', {}));
-					})
-					.catch(async (error) => {
-						console.error('Error in support opener:', error);
+				]).then(([{ DialogOpener }, { Tourist }]) => {
+					return DialogOpener
+						.open({ dialogId: Number(botId) })
+						.then(() => Tourist.remember('show_support', {}));
+				}).catch(async (error) => {
+					console.error('Error in support opener:', error);
 
-						const { showErrorToast } = await requireLazy('toast', false);
-						showErrorToast(
-							{
-								message: Loc.getMessage('MENU_BITRIX24_SUPPORT24_ERROR_TEXT'),
-							},
-							this.layout,
-						);
-					});
+					const { showErrorToast } = await requireLazy('toast', false);
+					showErrorToast(
+						{
+							message: Loc.getMessage('MENU_BITRIX24_SUPPORT24_ERROR_TEXT'),
+						},
+						this.layout,
+					);
+				});
 			}
 			else
 			{

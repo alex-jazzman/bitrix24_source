@@ -1,0 +1,11 @@
+<?php
+$MESS['CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_PROPERTY_CALL_IDS_NAME'] = 'Идентификаторы звонков';
+$MESS['CALL_GET_FOLLOWUP_ACTIVITY_NO_MODULE_ERROR'] = 'Модуль #MODULE# не установлен';
+$MESS['CALL_GET_FOLLOWUP_ACTIVITY_NO_DATE_START'] = 'Дата начала периода не задана';
+$MESS['CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_PROPERTY_USER_NAME'] = 'Пользователь';
+$MESS['CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_PROPERTY_DATE_START_NAME'] = 'Дата начала периода выборки';
+$MESS['CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_PROPERTY_DATE_END_NAME'] = 'Дата окончания периода выборки';
+$MESS['CALL_GET_FOLLOWUP_ACTIVITY_DESCRIPTION_PROPERTY_LIMIT_NAME'] = 'Лимит количества звонков';
+$MESS['CALL_GET_FOLLOWUP_ACTIVITY_DATE_END_BEFORE_DATE_START'] = 'Дата окончания должна быть позже, чем дате начала выборки';
+$MESS['CALL_GET_FOLLOWUP_ACTIVITY_NO_USER'] = 'Пользователь не задан';
+$MESS['CALL_GET_FOLLOWUP_ACTIVITY_LIMIT_INCORRECT'] = 'Лимит должен быть числом в промежутке от 1 до #MAX_LIMIT#';

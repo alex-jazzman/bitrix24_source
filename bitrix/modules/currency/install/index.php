@@ -192,7 +192,7 @@ class currency extends CModule
 		}
 		if ($region === null)
 		{
-			$region = Main\Application::getInstance()->getLicense()->getRegion();
+			$region = Option::get('main', '~PARAM_CLIENT_LANG', null) ?? null;
 		}
 		if ($region === null)
 		{

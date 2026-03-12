@@ -2,6 +2,8 @@
  * @module catalog/store/activation-wizard
  */
 jn.define('catalog/store/activation-wizard', (require, exports, module) => {
+	const { QRCodeAuthComponent } = require('qrauth');
+
 	const STORE_CONTROL_DISABLED_CONDUCT_ERROR_CODE = 'store_control_disabled_conduct';
 	const REALIZATION_NOT_USED_INVENTORY_MANAGEMENT_ERROR_CODE = 'REALIZATION_NOT_USED_INVENTORY_MANAGEMENT';
 

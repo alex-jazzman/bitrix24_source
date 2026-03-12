@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_CORE_BLOCK_TEXT_TITLE'] = 'Текст';
 $MESS['SIGN_CORE_BLOCK_TEXT_HINT'] = 'Поле для ввода любой текстовой информации, например, условий договора';
 $MESS['SIGN_CORE_BLOCK_DATE_TITLE'] = 'Дата';

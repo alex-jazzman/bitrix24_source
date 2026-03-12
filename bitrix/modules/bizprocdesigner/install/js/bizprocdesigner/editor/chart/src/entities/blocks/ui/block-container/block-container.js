@@ -1,6 +1,6 @@
 import './block-container.css';
-import { computed } from 'ui.vue3';
-import { useContextMenu } from 'ui.block-diagram';
+import { computed, toValue } from 'ui.vue3';
+import { useContextMenu, useBlockDiagram } from 'ui.block-diagram';
 import { BLOCK_COLOR_NAMES } from '../../constants';
 // eslint-disable-next-line no-unused-vars
 import type { MenuItemOptions } from 'ui.vue3.components.menu';
@@ -14,6 +14,7 @@ const BLOCK_CONTAINER_CLASS_NAMES = {
 	base: 'editor-chart-block-container',
 	highlighted: '--highlighted',
 	deactivated: '--deactivated',
+	hoverable: '--hoverable',
 	[BLOCK_COLOR_NAMES.WHITE]: '--white',
 	[BLOCK_COLOR_NAMES.ORANGE]: '--orange',
 	[BLOCK_COLOR_NAMES.BLUE]: '--blue',
@@ -48,27 +49,32 @@ export const BlockContainer = {
 			type: Boolean,
 			default: false,
 		},
-		colorName: {
+		hoverable: {
+			type: Boolean,
+			default: true,
+		},
+		backgroundColor: {
 			type: String,
-			default: BLOCK_COLOR_NAMES.WHITE,
-			validator(name): boolean
-			{
-				return Object.values(BLOCK_COLOR_NAMES).includes(name);
-			},
+			default: null,
+		},
+		borderColor: {
+			type: String,
+			default: null,
 		},
 	},
 	setup(props): BlockContainerSetup
 	{
 		const {
 			isOpen: isOpenContextMenu,
-			showContextMenu,
-		} = useContextMenu(props.contextMenuItems);
+			showMenu,
+		} = useContextMenu();
+		const { isSelectionActive } = useBlockDiagram();
 
 		const blockContainerClassNames = computed((): { [string]: boolean } => ({
 			[BLOCK_CONTAINER_CLASS_NAMES.base]: true,
 			[BLOCK_CONTAINER_CLASS_NAMES.highlighted]: props.highlighted,
 			[BLOCK_CONTAINER_CLASS_NAMES.deactivated]: props.deactivated,
-			[BLOCK_CONTAINER_CLASS_NAMES[props.colorName]]: true,
+			[BLOCK_CONTAINER_CLASS_NAMES.hoverable]: props.hoverable,
 		}));
 
 		const blockContainerStyle = computed((): { [string]: string } => {
@@ -84,6 +90,16 @@ export const BlockContainer = {
 				style.height = `${props.height}px`;
 			}
 
+			if (props.backgroundColor !== null)
+			{
+				style.backgroundColor = props.backgroundColor;
+			}
+
+			if (props.borderColor !== null)
+			{
+				style.borderColor = props.borderColor;
+			}
+
 			return style;
 		});
 
@@ -96,7 +112,10 @@ export const BlockContainer = {
 				return;
 			}
 
-			showContextMenu(event);
+			showMenu(
+				{ clientX: event.clientX, clientY: event.clientY },
+				{ items: props.contextMenuItems },
+			);
 		}
 
 		return {

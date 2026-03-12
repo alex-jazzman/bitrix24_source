@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/user-fields-slider.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.notification-manager',
 		'tasks.v2.lib.id-utils',
 		'tasks.v2.const',
 		'tasks.v2.core',

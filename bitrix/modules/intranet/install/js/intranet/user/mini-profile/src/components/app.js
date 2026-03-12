@@ -73,38 +73,23 @@ export const UserMiniProfileComponent = {
 		},
 		heads(): Array<UserData>
 		{
-			const userDepartmentIds = this.backendData.structure?.userDepartmentIds ?? [];
-			const departmentDictionary = this.backendData.structure?.departmentDictionary ?? [];
+			const userHeadIds = this.backendData.structure.userHeadIds ?? [];
+			if (userHeadIds.length === 0)
+			{
+				return [];
+			}
 
-			const headDictionary = this.backendData.structure?.headDictionary ?? [];
-
-			const headList = [];
-			const headIds: Set<number> = new Set();
-
-			userDepartmentIds.forEach((departmentId: number) => {
-				/** @type DepartmentType | null */
-				const department = departmentDictionary[departmentId];
-				if (!department)
+			const headDictionary = this.backendData.structure?.headDictionary ?? {};
+			const heads = [];
+			userHeadIds.forEach((id: number) => {
+				const head = headDictionary[id];
+				if (head)
 				{
-					return;
+					heads.push(head);
 				}
-
-				const { headIds: departmentHeadIds } = department;
-				if (departmentHeadIds.includes(this.userId))
-				{
-					return;
-				}
-
-				departmentHeadIds.forEach((headId) => {
-					if (!headIds.has(headId) && headDictionary[headId])
-					{
-						headList.push(headDictionary[headId]);
-						headIds.add(headId);
-					}
-				});
 			});
 
-			return headList.filter((head) => head.id !== this.userId);
+			return heads;
 		},
 		canShowDepartments(): boolean
 		{

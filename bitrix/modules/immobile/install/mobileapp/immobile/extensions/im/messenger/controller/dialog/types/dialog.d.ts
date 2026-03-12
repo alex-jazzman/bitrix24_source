@@ -87,4 +87,9 @@ declare type DialogLocatorServices = Partial<{
 	'message-ui-converter': MessageUiConverter
 }>
 
+declare type DialogSendAudioHandlerEventData = {
+	duration: number
+	localAudioUrl: string,
+}
+
 declare type DialogLocator = IServiceLocator<DialogLocatorServices>;

@@ -274,8 +274,14 @@
 	margin-top: -2px;
 }
 
-.biconnector-grid-group-name-link{
+.biconnector-grid-name-link {
 	cursor: pointer;
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
+	color: var(--ui-color-link-primary-base);
+}
+
+.biconnector-grid-name-link .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-link-primary-base);
+	margin-right: 2px;
 }

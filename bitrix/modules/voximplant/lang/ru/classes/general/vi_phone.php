@@ -190,5 +190,21 @@ $MESS["VI_PHONE_DESCRIPTION_RENT_DESCRIPTION"] = "Месячный платеж 
 $MESS["VI_PHONE_DESCRIPTION_RENT_STATUS"] = "Оплачен до #PAID_UNTIL#";
 $MESS["VI_PHONE_DESCRIPTION_RENT_TO_DELETE_DESCRIPTION"] = "Автопродление отключено";
 $MESS["VI_PHONE_DESCRIPTION_RENT_TO_DELETE_STATUS"] = "Запланирован к отключению #DISCONNECT_DATE#";
-
-?>
+$MESS["VI_ACTIVATION_STATUS_NAME_ACTIVE"] = "Активен";
+$MESS["VI_ACTIVATION_STATUS_NAME_ACTIVATING"] = "В процессе активации";
+$MESS["VI_ACTIVATION_STATUS_NAME_DEACTIVATED"] = "Неактивен";
+$MESS["VI_ACTIVATION_STATUS_NAME_PROVISIONING"] = "В процессе активации";
+$MESS["VI_ACTIVATION_STATUS_NAME_AWAITING_BUSINESS_PHONE_NUMBER_CONFIGURATION"] = "Регистрация на Госуслугах";
+$MESS["VI_ACTIVATION_STATUS_NAME_LEGAL_OWNERSHIP_LIMIT_REACHED"] = "Активация приостановлена";
+$MESS["VI_ACTIVATION_STATUS_NAME_GOSUSLUGI_DECLINED"] = "Неактивен";
+$MESS["VI_ACTIVATION_STATUS_NAME_AWAITING_GOSUSLUGI_VERIFICATION"] = "Номер отключен провайдером";
+$MESS["VI_ACTIVATION_STATUS_NAME_SELF_BAN_ENABLED"] = "Неактивен (самозапрет на Госуслугах)";
+$MESS["VI_ACTIVATION_STATUS_DESC_ACTIVE"] = "Номер активирован. Можно пользоваться услугами";
+$MESS["VI_ACTIVATION_STATUS_DESC_ACTIVATING"] = "Ожидается активация номера";
+$MESS["VI_ACTIVATION_STATUS_DESC_DEACTIVATED"] = "Номер неактивен. Услуги не оказываются";
+$MESS["VI_ACTIVATION_STATUS_DESC_PROVISIONING"] = "Ожидается активация номера";
+$MESS["VI_ACTIVATION_STATUS_DESC_AWAITING_BUSINESS_PHONE_NUMBER_CONFIGURATION"] = "Необходимо зарегистрировать корпоративный номер на Госуслугах. Без регистрации связь будет недоступна. Подробнее";
+$MESS["VI_ACTIVATION_STATUS_DESC_LEGAL_OWNERSHIP_LIMIT_REACHED"] = "Активация номера приостановлена. Вы достигли лимита в 20 подключенных номеров";
+$MESS["VI_ACTIVATION_STATUS_DESC_GOSUSLUGI_DECLINED"] = "Номер неактивен. Услуги не оказываются";
+$MESS["VI_ACTIVATION_STATUS_DESC_AWAITING_GOSUSLUGI_VERIFICATION"] = "Номер отключен провайдером. Подтвердите владение номером на Госуслугах";
+$MESS["VI_ACTIVATION_STATUS_DESC_SELF_BAN_ENABLED"] = "Не удалось активировать номер. У вас на Госуслугах установлен самозапрет на заключение договоров об оказании услуг подвижной радиотелефонной связи";

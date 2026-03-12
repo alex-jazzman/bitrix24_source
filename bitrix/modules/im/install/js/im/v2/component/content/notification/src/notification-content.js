@@ -1,6 +1,6 @@
 import 'main.polyfill.intersectionobserver';
 import { Dom, Event, Runtime, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { mapState } from 'ui.vue3.vuex';
 
 import { Logger } from 'im.v2.lib.logger';
@@ -15,8 +15,8 @@ import { NotificationMenu } from './classes/notification-menu';
 
 import { NotificationComponents } from './components';
 import { ItemPlaceholder } from './components/elements/placeholder';
-import { SearchPanel } from './components/elements/search-panel';
 import { ScrollButton } from './components/elements/scroll-button';
+import { NotificationFilter } from './filter/notification-filter';
 import { NotificationSearchService } from './classes/notification-search-service';
 import { NotificationReadService } from './classes/notification-read-service';
 
@@ -31,9 +31,9 @@ export const NotificationContent = {
 	name: 'NotificationContent',
 	components:
 	{
-		SearchPanel,
 		ItemPlaceholder,
 		ScrollButton,
+		NotificationFilter,
 		UserListPopup,
 		Loader,
 	},
@@ -59,9 +59,9 @@ export const NotificationContent = {
 			readQueue: new Set(),
 			isNextPageLoading: false,
 			notificationsOnScreen: new Set(),
+			markedAsUnreadIds: new Set(),
 
 			windowFocused: false,
-			showSearchPanel: false,
 			showSearchResult: false,
 
 			popupBindElement: null,
@@ -83,6 +83,10 @@ export const NotificationContent = {
 			return this.notifications.filter((notification) => {
 				return notification.sectionCode === NotificationTypesCodes.confirm;
 			});
+		},
+		hasNotifications(): boolean
+		{
+			return this.notificationCollection.length > 0
 		},
 		hasConfirmNotifications(): boolean
 		{
@@ -150,17 +154,6 @@ export const NotificationContent = {
 			unreadCounter: (state) => state.notifications.unreadCounter,
 		}),
 	},
-	watch:
-	{
-		showSearchPanel(newValue: boolean, oldValue: boolean)
-		{
-			if (newValue === false && oldValue === true)
-			{
-				this.showSearchResult = false;
-				this.$store.dispatch('notifications/clearSearchResult');
-			}
-		},
-	},
 	created()
 	{
 		this.notificationService = new NotificationService();
@@ -173,6 +166,11 @@ export const NotificationContent = {
 		Event.bind(window, 'blur', this.onWindowBlur);
 
 		this.initObserver();
+
+		EventEmitter.subscribe(
+			NotificationMenu.events.markAsUnreadClick,
+			this.onMarkAsUnreadClick,
+		);
 	},
 	async mounted()
 	{
@@ -188,7 +186,7 @@ export const NotificationContent = {
 	{
 		if (this.initialLoadComplete && this.enableAutoRead)
 		{
-			this.notificationReadService.readAll();
+			this.notificationReadService.readAll([...this.markedAsUnreadIds]);
 		}
 
 		this.notificationService.destroy();
@@ -202,6 +200,11 @@ export const NotificationContent = {
 
 		Event.unbind(window, 'focus', this.onWindowFocus);
 		Event.unbind(window, 'blur', this.onWindowBlur);
+
+		EventEmitter.unsubscribe(
+			NotificationMenu.events.markAsUnreadClick,
+			this.onMarkAsUnreadClick,
+		);
 	},
 	methods:
 	{
@@ -390,7 +393,13 @@ export const NotificationContent = {
 		},
 		onSearch(event)
 		{
-			if (event.searchQuery.length < 3 && event.searchType === '' && event.searchDate === '')
+			if (
+				event.searchQuery?.length < 3
+				&& event.searchTypes?.length === 0
+				&& event.searchDate === ''
+				&& (event.searchDateFrom === '' || event.searchDateTo === '')
+				&& event.searchAuthors?.length === 0
+			)
 			{
 				this.showSearchResult = false;
 
@@ -434,18 +443,34 @@ export const NotificationContent = {
 		},
 		onDoubleClick(notificationId: number)
 		{
-			if (this.enableAutoRead)
-			{
-				return;
-			}
+			const notification = this.$store.getters['notifications/getById'](notificationId) || this.$store.getters['notifications/getSearchItemById'](notificationId);
 
-			const notification = this.$store.getters['notifications/getById'](notificationId);
 			if (!notification)
 			{
 				return;
 			}
 
 			Event.EventEmitter.emit(NotificationMenu.events.markAsUnreadClick, notification);
+		},
+		onMarkAsUnreadClick(event: BaseEvent): void
+		{
+			const notification = event.getData();
+
+			if (!notification)
+			{
+				return;
+			}
+
+			const notificationId = notification.id;
+
+			if (notification.read)
+			{
+				this.markedAsUnreadIds.add(notificationId);
+			}
+			else
+			{
+				this.markedAsUnreadIds.delete(notificationId);
+			}
 		},
 		getNotificationsBackgroundStyle(): BackgroundStyle
 		{
@@ -456,32 +481,26 @@ export const NotificationContent = {
 		<div class="bx-im-content-notification__container --ui-context-content-light">
 			<div class="bx-im-content-notification__header-container">
 				<div class="bx-im-content-notification__header">
-					<div class="bx-im-content-notification__header-panel-container">
-						<div class="bx-im-content-notification__panel-title_icon"></div>
-						<div class="bx-im-content-notification__panel_text">
-							{{ $Bitrix.Loc.getMessage('IM_NOTIFICATIONS_HEADER') }}
+					<div class="bx-im-content-notification__header-left-container">
+						<div class="bx-im-content-notification__header-panel-container">
+							<div class="bx-im-content-notification__panel-title_icon"></div>
+							<div class="bx-im-content-notification__panel_text">
+								{{ $Bitrix.Loc.getMessage('IM_NOTIFICATIONS_HEADER') }}
+							</div>
 						</div>
+						<NotificationFilter
+							v-if="hasNotifications"
+							:schema="schema"
+							@search="onSearch"
+						/>
 					</div>
-					<div v-if="notificationCollection.length > 0" class="bx-im-content-notification__header-buttons-container">
+					<div v-if="hasNotifications" class="bx-im-content-notification__header-buttons-container">
 						<div
-							class="bx-im-content-notification__header_button bx-im-content-notification__header_filter-button"
-							:class="[showSearchPanel ? '--active' : '']"
-							@click="showSearchPanel = !showSearchPanel"
-							:title="$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_OPEN_BUTTON')"
-						></div>
-						<div
-							v-if="!enableAutoRead"
 							class="bx-im-content-notification__header-menu"
 							@click="onClickHeaderMenu"
 						></div>
 					</div>
 				</div>
-				<SearchPanel 
-					v-if="showSearchPanel" 
-					:schema="schema" 
-					@search="onSearch" 
-					@close="showSearchPanel = false" 
-				/>
 			</div>
 			<div class="bx-im-content-notification__elements-container">
 				<div

@@ -48,7 +48,7 @@ BX.Market.Install =
 
 		if (BX('mp_tos_license') && !BX('mp_tos_license').checked)
 		{
-			this.showError(BX.message('MARKET_INSTALL_TOS_ERROR'));
+			this.showError(BX.message('MARKET_INSTALL_TOS_ERROR_MSGVER_1'));
 			return;
 		}
 

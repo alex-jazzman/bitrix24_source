@@ -126,6 +126,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return (_AvailableSectionName = AvailableSectionNameMap[rawSectionName]) != null ? _AvailableSectionName : '';
 	};
 
+	class SharedLinkService {
+	  joinChatByCode(code) {
+	    const {
+	      runAction
+	    } = main_core.Reflection.getClass('BX.Messenger.v2.Lib');
+	    const {
+	      RestMethod
+	    } = main_core.Reflection.getClass('BX.Messenger.v2.Const');
+	    if (!runAction || !RestMethod) {
+	      return Promise.resolve();
+	    }
+	    return runAction(RestMethod.imV2ChatJoinByCode, {
+	      data: {
+	        code
+	      }
+	    }).catch(([error]) => {
+	      console.error('SharedLinkService: joinChatByCode error', error);
+	      throw error;
+	    });
+	  }
+	}
+
 	class Messenger {
 	  constructor() {
 	    this.v2enabled = false;
@@ -369,6 +391,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    PhoneManager == null ? void 0 : PhoneManager.getInstance().toggleDebugFlag(debug);
 	    const CallManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.CallManager');
 	    CallManager == null ? void 0 : CallManager.getInstance().toggleDebugFlag(debug);
+	  }
+	  async joinChatByCode(code) {
+	    const {
+	      Notifier
+	    } = main_core.Reflection.getClass('BX.Messenger.v2.Lib');
+	    try {
+	      const {
+	        dialogId
+	      } = await new SharedLinkService().joinChatByCode(code);
+	      void this.openChat(dialogId);
+	    } catch {
+	      if (Notifier) {
+	        Notifier.sharedLink.onClickInvalidLinkError();
+	      }
+	      console.error('Messenger.joinChatByCode error');
+	    }
 	  }
 	  async saveFileToDisk(fileId) {
 	    const {

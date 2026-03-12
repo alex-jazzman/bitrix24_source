@@ -29,7 +29,7 @@ jn.define('calendar/onboarding/src/condition', (require, exports, module) => {
 			};
 		}
 
-		static shouldShowNewMenuHint()
+		static isNotCollaber()
 		{
 			return (context) => {
 				return !env.isCollaber;

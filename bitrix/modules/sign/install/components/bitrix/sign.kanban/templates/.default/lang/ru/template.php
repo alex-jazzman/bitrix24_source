@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_KANBAN_STUB_HEADER_TITLE_MSGVER_1'] = 'Битрикс24 Подпись';
 $MESS['SIGN_KANBAN_STUB_HEADER_DESCRIPTION'] = 'Бесплатно для бизнеса. Удобно для людей.';
 $MESS['SIGN_KANBAN_STUB_BODY_FEATURE_1'] = 'Подписывайте неограниченное число документов с клиентами по СМС, E-mail или WhatsApp';

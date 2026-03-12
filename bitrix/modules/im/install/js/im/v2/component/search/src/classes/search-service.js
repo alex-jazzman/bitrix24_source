@@ -5,7 +5,7 @@ import {
 	getSearchConfig,
 	LocalSearch,
 	StoreUpdater,
-	SearchConfig,
+	type SearchConfig,
 	type ImRecentProviderItem,
 	type SearchResultItem,
 } from 'im.v2.lib.search';
@@ -25,7 +25,7 @@ export class SearchService
 	#searchConfig: SearchConfig;
 	#storeUpdater: StoreUpdater;
 
-	constructor(searchConfig)
+	constructor(searchConfig: SearchConfig)
 	{
 		this.#searchConfig = searchConfig;
 		this.#storeUpdater = new StoreUpdater();
@@ -68,7 +68,7 @@ export class SearchService
 		return searchResult;
 	}
 
-	saveItemToRecentSearch(dialogId: string): void
+	saveItemToRecentSearch(dialogId: string)
 	{
 		const recentItems = [{ id: dialogId, entityId: EntityId }];
 

@@ -1,5 +1,0 @@
-<?php
-$MESS["CONTACT_CENTER_CRM_FORMS_CREATE"] = "Нысан құру";
-$MESS["CONTACT_CENTER_CRM_FORMS_HELP"] = "Бұл қалай жұмыс істейді";
-$MESS["CONTACT_CENTER_CRM_FORMS_VIEW_ALL"] = "Нысан тізімі";
-$MESS["ICCL_MARKETPLACE_APPLICATION_NOT_FOUND_ERROR"] = "Қосымша табылмады";

@@ -1,5 +1,0 @@
-<?php
-$MESS["BIZPROC_AUTOMATION_PARALLEL_ACTIVITY"] = "Параллельді орындау";
-$MESS["BIZPROC_AUTOMATION_ROBOT_DELAY_ACTIVITY"] = "Роботтың кідірісі";
-$MESS["BIZPROC_AUTOMATION_TEMPLATE_NAME"] = "Автоматтандыру қалыбы (#STATUS#)";
-$MESS["BIZPROC_AUTOMATION_TEMPLATE_SCRIPT_NAME"] = "Жаңа сценарий";

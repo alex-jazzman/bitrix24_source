@@ -5,6 +5,7 @@ import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { EventType } from 'im.v2.const';
 import { Parser } from 'im.v2.lib.parser';
 import { highlightText } from 'im.v2.lib.text-highlighter';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import './css/search-item.css';
 
@@ -60,6 +61,7 @@ export const SearchItem = {
 				messageId: this.messageId,
 				dialogId: this.dialogId,
 			});
+			Analytics.getInstance().messageSearch.onSearchResultClick(this.dialogId);
 		},
 		onMessageBodyClick(event)
 		{

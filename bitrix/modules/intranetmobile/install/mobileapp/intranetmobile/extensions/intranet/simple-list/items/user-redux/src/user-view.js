@@ -6,18 +6,18 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 	const { Indent, Color, Component } = require('tokens');
 	const { Loc } = require('loc');
 	const { showSafeToast } = require('toast');
-	const { Icon } = require('ui-system/blocks/icon');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { Text2, Text5, Text6 } = require('ui-system/typography/text');
 	const { ChipStatus, ChipStatusMode, ChipStatusDesign } = require('ui-system/blocks/chips/chip-status');
 	const { ChipButton, ChipButtonDesign, ChipButtonMode } = require('ui-system/blocks/chips/chip-button');
 	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
-	const { Button, ButtonSize } = require('ui-system/form/buttons');
 	const { Avatar } = require('ui-system/blocks/avatar');
 	const { UserName } = require('layout/ui/user/user-name');
 	const { ActionMenu } = require('intranet/simple-list/items/user-redux/action-menu');
 	const { Actions } = require('intranet/simple-list/items/user-redux/src/actions');
 	const { EmployeeActions, EmployeeStatus, RequestStatus } = require('intranet/enum');
 	const { openPhoneMenu } = require('communication/phone-menu');
+	const { openEmailMenu } = require('communication/email-menu');
 	const { selectById } = require('intranet/statemanager/redux/slices/employees/selector');
 	const store = require('statemanager/redux/store');
 	const { useCallback } = require('utils/function');
@@ -58,14 +58,13 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 						justifyContent: 'space-between',
 						alignItems: 'flex-start',
 						alignContent: 'flex-start',
-						paddingTop: Indent.L.toNumber(),
 						paddingBottom: Indent.XL3.toNumber(),
 					},
 				},
 				View(
 					{
 						style: {
-							paddingTop: 10, // hack to align with buttons
+							paddingTop: 10 + Indent.L.toNumber(), // hack to align with buttons
 						},
 					},
 					Avatar({
@@ -90,6 +89,7 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 						flex: 1,
 						flexDirection: 'row',
 						flexWrap: 'wrap',
+						paddingTop: Indent.L.toNumber(),
 						paddingHorizontal: Indent.L.toNumber(),
 					},
 				},
@@ -196,10 +196,13 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 
 		renderButtons()
 		{
-			const { employeeStatus, id, personalMobile, personalPhone, canInvite } = this.props;
+			const { employeeStatus, id, personalMobile, personalPhone, email, canInvite } = this.props;
 			const isInvited = employeeStatus === EmployeeStatus.INVITED.getValue();
+			const isInvitedByEmail = isInvited && Boolean(email);
+			const isInvitedByPhone = isInvited && (Boolean(personalMobile) || Boolean(personalPhone));
 
 			const menu = new ActionMenu({ userId: id, canInvite });
+			const size = 24;
 
 			return View(
 				{
@@ -207,29 +210,60 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 						flexDirection: 'row',
 						justifyContent: 'flex-end',
 						alignSelf: 'flex-start',
+						alignItems: 'center',
 					},
 				},
-				(!isInvited || personalMobile || personalPhone) && Button({
-					size: ButtonSize.M,
-					leftIcon: isInvited ? Icon.PHONE_UP : Icon.CHATS,
-					leftIconColor: Color.base4,
-					backgroundColor: Color.bgContentPrimary,
-					onClick: isInvited ? this.openPhoneMenu : this.openChat,
-					testId: isInvited ? 'user-view-open-phone-menu' : 'user-view-open-chat-button',
-					style: {
-						marginRight: menu.hasActions() ? Indent.S.toNumber() : 0,
-					},
+				!isInvited && this.renderIconButton({
+					testId: 'user-view-open-chat-button',
+					icon: Icon.CHATS,
+					onClick: this.openChat,
 				}),
-				menu.hasActions() && Button({
-					size: ButtonSize.M,
-					leftIcon: Icon.MORE,
-					leftIconColor: Color.base4,
-					backgroundColor: Color.bgContentPrimary,
-					onClick: useCallback(() => menu.show(this.moreButtonRef)),
-					testId: 'user-view-open-action-menu-button',
-					forwardRef: (ref) => {
-						this.moreButtonRef = ref;
+				isInvitedByEmail && this.renderIconButton({
+					testId: 'user-view-open-email-menu',
+					icon: Icon.MAIL,
+					onClick: this.openEmailMenu,
+				}),
+				!isInvitedByEmail && isInvitedByPhone && this.renderIconButton({
+					testId: 'user-view-open-phone-menu',
+					icon: Icon.PHONE_UP,
+					onClick: this.openPhoneMenu,
+				}),
+				menu.hasActions() && View(
+					{
+						style: {
+							paddingVertical: Indent.L.toNumber(),
+							paddingLeft: Indent.S.toNumber(),
+						},
+						onClick: useCallback(() => menu.show(this.moreButtonRef)),
 					},
+					IconView({
+						size,
+						icon: Icon.MORE,
+						color: Color.base4,
+						testId: 'user-view-open-action-menu-button',
+						forwardRef: (ref) => {
+							this.moreButtonRef = ref;
+						},
+					}),
+				),
+			);
+		}
+
+		renderIconButton({ testId, icon, onClick })
+		{
+			return View(
+				{
+					style: {
+						paddingVertical: Indent.L.toNumber(),
+						paddingHorizontal: Indent.S.toNumber(),
+					},
+					onClick,
+				},
+				IconView({
+					icon,
+					testId,
+					size: 24,
+					color: Color.base4,
 				}),
 			);
 		}
@@ -407,6 +441,13 @@ jn.define('intranet/simple-list/items/user-redux/user-view', (require, exports, 
 				},
 				layout,
 			);
+		};
+
+		openEmailMenu = () => {
+			void openEmailMenu({
+				email: this.props.email,
+				layoutWidget: layout,
+			});
 		};
 
 		openPhoneMenu = () => {

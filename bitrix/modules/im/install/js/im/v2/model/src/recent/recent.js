@@ -605,6 +605,7 @@ export class RecentModel extends BuilderModel
 				state.copilotCollection.delete(payload);
 				state.collabCollection.delete(payload);
 				state.taskCollection.delete(payload);
+				state.unreadCollection.delete(payload);
 			},
 		};
 	}

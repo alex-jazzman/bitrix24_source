@@ -30,6 +30,16 @@ jn.define('onboarding/testing-tool', (require, exports, module) => {
 			RegisteredCaseId.ON_GROUP_CHAT_VIEW,
 			RegisteredCaseId.ON_FILES_APPEARS_IN_CHAT,
 		],
+		crm: [
+			RegisteredCaseId.ON_NO_CRM_DEALS,
+			RegisteredCaseId.ON_ACTIVE_TAB_COUNTER,
+			RegisteredCaseId.ON_DEALS_AT_DIFFERENT_STAGES,
+			RegisteredCaseId.ON_MORE_THAN_TWO_TUNNELS,
+			RegisteredCaseId.ON_DEAL_CONTACT_FILLED,
+			RegisteredCaseId.ON_PAYMENT_ON_DEAL,
+			RegisteredCaseId.ON_DETAIL_CARD_TELEGRAM_BOT,
+			RegisteredCaseId.ON_CUSTOM_PRESET_APPEARED,
+		],
 	};
 
 	class OnboardingTestingTool extends BaseManualTestingTool
@@ -59,6 +69,10 @@ jn.define('onboarding/testing-tool', (require, exports, module) => {
 					},
 					{
 						id: 'menu',
+						isShown: false,
+					},
+					{
+						id: 'crm',
 						isShown: false,
 					},
 				],
@@ -230,6 +244,38 @@ jn.define('onboarding/testing-tool', (require, exports, module) => {
 				{
 					id: RegisteredCaseId.ON_FILES_APPEARS_IN_CHAT,
 					title: `[Чат]: ${RegisteredCaseId.ON_FILES_APPEARS_IN_CHAT}`,
+				},
+				{
+					id: RegisteredCaseId.ON_NO_CRM_DEALS,
+					title: `[CRM]: ${RegisteredCaseId.ON_NO_CRM_DEALS}`,
+				},
+				{
+					id: RegisteredCaseId.ON_ACTIVE_TAB_COUNTER,
+					title: `[CRM]: ${RegisteredCaseId.ON_ACTIVE_TAB_COUNTER}`,
+				},
+				{
+					id: RegisteredCaseId.ON_DEALS_AT_DIFFERENT_STAGES,
+					title: `[CRM]: ${RegisteredCaseId.ON_DEALS_AT_DIFFERENT_STAGES}`,
+				},
+				{
+					id: RegisteredCaseId.ON_MORE_THAN_TWO_TUNNELS,
+					title: `[CRM]: ${RegisteredCaseId.ON_MORE_THAN_TWO_TUNNELS}`,
+				},
+				{
+					id: RegisteredCaseId.ON_DEAL_CONTACT_FILLED,
+					title: `[CRM]: ${RegisteredCaseId.ON_DEAL_CONTACT_FILLED}`,
+				},
+				{
+					id: RegisteredCaseId.ON_PAYMENT_ON_DEAL,
+					title: `[CRM]: ${RegisteredCaseId.ON_PAYMENT_ON_DEAL}`,
+				},
+				{
+					id: RegisteredCaseId.ON_DETAIL_CARD_TELEGRAM_BOT,
+					title: `[CRM]: ${RegisteredCaseId.ON_DETAIL_CARD_TELEGRAM_BOT}`,
+				},
+				{
+					id: RegisteredCaseId.ON_CUSTOM_PRESET_APPEARED,
+					title: `[CRM]: ${RegisteredCaseId.ON_CUSTOM_PRESET_APPEARED}`,
 				},
 			];
 		}

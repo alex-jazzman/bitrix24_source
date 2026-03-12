@@ -1,2 +1,0 @@
-<?php
-$MESS["OPEN_DESKTOP_NOTIFICATION_QRAUTH_TITLE"] = "Веб-нұсқаға өту";

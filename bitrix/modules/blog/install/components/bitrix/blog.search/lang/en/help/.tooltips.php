@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['PAGE_RESULT_COUNT_TIP'] = "The number of search results that can be displayed on one page.";
 $MESS ['SEARCH_PAGE_TIP'] = "The path to a search page. Example: blog_search.php.";
 $MESS ['PATH_TO_BLOG_TIP'] = "The path to the main blog page. Example: blog_blog.php?page=blog&blog=#blog#.";
@@ -9,4 +9,3 @@ $MESS ['POST_VAR_TIP'] = "Specify here the name of a variable to which the blog 
 $MESS ['USER_VAR_TIP'] = "Specify here the name of a variable to which the blog user ID will be passed.";
 $MESS ['PAGE_VAR_TIP'] = "Specify here the name of a variable to which the blog page will be passed.";
 $MESS ['SET_TITLE_TIP'] = "If the option is active, the page title will be set to <b>Blog Search</b>.";
-?>

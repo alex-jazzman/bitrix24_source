@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_CALENDAR_SHARING_EVENT_FULL_DAY_INFO"] = "#EVENT_DATE# (увесь день)";

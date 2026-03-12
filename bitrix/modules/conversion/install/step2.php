@@ -7,7 +7,7 @@ if (! check_bitrix_sessid())
 	return;
 }
 
-echo CAdminMessage::ShowNote(Loc::getMessage('MOD_INST_OK'));
+CAdminMessage::ShowNote(Loc::getMessage('MOD_INST_OK'));
 
 ?>
 <form action="<?=$APPLICATION->GetCurPage()?>">

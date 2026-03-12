@@ -1,5 +1,5 @@
 <?php
-$MESS["MARKET_LIST_ITEM_JS_HERE_UNAVAILABLE"] = "Приложение удалено из Маркета или временно недоступно";
+$MESS["MARKET_LIST_ITEM_JS_HERE_UNAVAILABLE_MSGVER_1"] = "Приложение удалено из Маркетплейса или временно недоступно";
 $MESS["MARKET_LIST_ITEM_JS_BTN_ACCESS"] = "Доступ";
 $MESS["MARKET_LIST_ITEM_JS_BTN_DELETE"] = "Удалить";
 $MESS["MARKET_LIST_ITEM_JS_BTN_INSTALL"] = "Установить";

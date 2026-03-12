@@ -15,4 +15,3 @@ $MESS ['SEO_OPT_COUNTERS'] = "Отображаемые счетчики";
 $MESS ['SEO_OPT_SEARCHERS'] = "Поисковые системы, используемые для анализа";
 $MESS ['SEO_OPT_SEARCHERS_SELECTED'] = "Сейчас выбрано";
 $MESS ['SEO_OPT_ERR_NO_STATS'] = "Эта функция недоступна без модуля Веб-аналитики";
-?>

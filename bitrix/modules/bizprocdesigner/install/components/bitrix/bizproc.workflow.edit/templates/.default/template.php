@@ -205,7 +205,7 @@ if ($arParams['BACK_URL'])
 					}).then((response) => {
 						let applyUrl = '<?= CUtil::JSEscape($applyUrl)?>';
 						const url = applyUrl.replace('#ID#', response.data);
-						const backUrl = '<?= CUtil::JSEscape(urlencode($arParams['BACK_URL']))?>';
+						const backUrl = '<?= CUtil::JSEscape(urlencode($arParams['BACK_URL'] ?? ''))?>';
 						if (backUrl)
 						{
 							applyUrl = BX.Uri.addParam(url, {back_url: backUrl});
@@ -300,6 +300,13 @@ if ($arParams['BACK_URL'])
 			fields.TRACK_ON = workflowTemplateTrackOn ?? null;
 		}
 
+		const templateType = window.rootActivity.Type;
+		const activitiesCnt = Object.keys(window.arAllId).length;
+		const stateMachineStates = templateType === 'StateMachineWorkflowActivity'
+			? window.rootActivity.childActivities.length
+			: null
+		;
+
 		BX.ajax.runAction('bizprocdesigner.Template.save', {
 			json: {
 				templateId: BPTemplateId || 0,
@@ -307,11 +314,20 @@ if ($arParams['BACK_URL'])
 				c: 'bitrix:bizproc.workflow.edit',
 				signedParameters: '<?=CUtil::JSEscape($this->getComponent()->getSignedParameters())?>',
 			},
+			analytics: {
+				tool: 'automation',
+				category: 'bizproc_operations',
+				event: 'template_save',
+				c_section: 'bizprocdesigner',
+				type: templateType,
+				p1: activitiesCnt,
+				p2: stateMachineStates,
+			},
 		}).then((response) => {
 			const saveUrl = '<?= CUtil::JSEscape($saveUrl)?>';
 			let applyUrl = '<?= CUtil::JSEscape($applyUrl)?>';
 			const url = applyUrl.replace('#ID#', response.data);
-			const backUrl = '<?= CUtil::JSEscape(urlencode($arParams['BACK_URL']))?>';
+			const backUrl = '<?= CUtil::JSEscape(urlencode($arParams['BACK_URL'] ?? ''))?>';
 			if (backUrl)
 			{
 				applyUrl = BX.Uri.addParam(url, {back_url: backUrl});

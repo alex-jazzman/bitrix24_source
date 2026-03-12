@@ -1,0 +1,2 @@
+<?php
+$MESS['INTRANET_USER_COMMAND_FIRE_FIRST_ADMIN_UPDATE_FORBIDDEN_ERROR'] = 'Уволить главного администратора можно только с его согласия — отправьте запрос в виджете профиля или из списка сотрудников';

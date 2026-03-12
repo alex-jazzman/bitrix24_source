@@ -99,7 +99,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      value: _openForm2
 	    });
 	  }
-	  async openAiAssistantForm() {
+	  async openAiAssistantForm(params) {
+	    var _params$contextId, _params$message;
 	    const {
 	      id,
 	      forms
@@ -109,7 +110,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      id: formattedId,
 	      forms,
 	      presets: {
-	        sender_page: FormContext.aiAssistantBot
+	        sender_page: FormContext.aiAssistantBot,
+	        contextId: (_params$contextId = params.contextId) != null ? _params$contextId : '',
+	        message: (_params$message = params.message) != null ? _params$message : ''
 	      }
 	    };
 	    void babelHelpers.classPrivateFieldLooseBase(this, _openForm)[_openForm](config);

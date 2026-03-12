@@ -6,6 +6,7 @@ $MESS["IM_TEXTAREA_ICON_SEND_TEXT"] = "Отправить сообщение (#S
 $MESS["IM_TEXTAREA_ICON_UPLOAD_TITLE"] = "Прикрепить";
 $MESS["IM_TEXTAREA_ICON_APPLICATION"] = "Панель приложений";
 $MESS["IM_TEXTAREA_ICON_SMILE"] = "Смайлы и GIF-картинки";
+$MESS["IM_TEXTAREA_ICON_EMOTE"] = "Эмодзи и стикеры";
 $MESS["IM_TEXTAREA_EMOJI_CATEGORY_PEOPLE"] = "Смайлы и люди";
 $MESS["IM_TEXTAREA_EMOJI_CATEGORY_ANIMALS"] = "Животные и природа";
 $MESS["IM_TEXTAREA_EMOJI_CATEGORY_FOOD"] = "Еда и напитки";
@@ -37,7 +38,7 @@ $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_TITLE"] = "Создать картинку";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_SUBTITLE"] = "AI создаст любую картинку по вашему описанию";
 $MESS["IM_TEXTAREA_MARKET_APPS_SHOW_MORE_BUTTON"] = "Ещё +#NUMBER#";
 $MESS["IM_TEXTAREA_MARKET_OTHER_APPS"] = "Остальные приложения";
-$MESS["IM_TEXTAREA_MARKET_APPS_EMPTY_STATE_MSGVER_1"] = "Вы пока не добавили приложение, установите его в Маркетплейсе";
+$MESS["IM_TEXTAREA_MARKET_APPS_EMPTY_STATE_MSGVER_2"] = "Вы пока не добавили приложение, установите его в [url]Маркетплейсе[/url]";
 $MESS["IM_TEXTAREA_SMILE_SELECTOR_SMILES_TAB"] = "Смайлы";
 $MESS["IM_TEXTAREA_STICKER_SELECTOR_EMOJI_TAB"] = "Эмодзи";
 $MESS["IM_TEXTAREA_STICKER_SELECTOR_STICKER_TAB"] = "Стикеры";
@@ -85,3 +86,17 @@ $MESS["IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TITLE"] = "Все";
 $MESS["IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_AVATAR_TITLE"] = "Все";
 $MESS["IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_SUBTITLE"] = "Все участники";
 $MESS["IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TEXT"] = "Все";
+
+$MESS["IM_TEXTAREA_EMOTE_POPUP_PROMO_TITLE"] = "Стикер вместо сотни слов 🔥";
+$MESS["IM_TEXTAREA_EMOTE_POPUP_PROMO_DESCRIPTION"] = "Теперь делиться эмоциями ещё быстрее. Можно использовать готовые стикеры и создавать свои";
+
+
+$MESS["IM_TEXTAREA_FORMAT_TOOLBAR_LINK_LABEL"] = "адрес ссылки";
+$MESS["IM_TEXTAREA_FORMAT_TOOLBAR_LINK_PLACEHOLDER"] = "https://";
+$MESS["IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_BOLD"] = "Жирный";
+$MESS["IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_ITALIC"] = "Курсив";
+$MESS["IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_UNDERLINE"] = "Подчёркнутый";
+$MESS["IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_STRIKETHROUGH"] = "Зачёркнутый";
+$MESS["IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_CODE"] = "Код";
+$MESS["IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_QUOTE"] = "Цитата";
+$MESS["IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_LINK"] = "Вставить ссылку";

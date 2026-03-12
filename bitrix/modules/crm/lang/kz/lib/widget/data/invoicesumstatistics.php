@@ -1,3 +1,0 @@
-<?php
-$MESS["CRM_INVOICE_SUM_STAT_PRESET_OVERALL_COUNT"] = "Шоттар саны";
-$MESS["CRM_INVOICE_SUM_STAT_PRESET_OVERALL_SUM"] = "Шоттар сомасы";

@@ -47,6 +47,23 @@ export type PreparedUploadFile = {
 	dialogId: DialogId,
 }
 
+export type PreparedMessage = {
+	text: string,
+	fileIds: string,
+	temporaryMessageId: string,
+	dialogId: DialogId,
+	diskFolderId: number,
+	previousId: number,
+}
+
+export type SendMessageParams = {
+	text?: string,
+	fileIds?: string,
+	temporaryMessageId: string,
+	dialogId: DialogId,
+	diskFolderId: number,
+}
+
 export type DeviceFile = {
 	height: number,
 	id: string,

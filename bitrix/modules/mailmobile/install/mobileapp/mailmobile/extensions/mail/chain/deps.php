@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'haptics',
 		'helpers/component',
 		'layout/ui/context-menu',
 		'layout/ui/file',
@@ -15,11 +16,12 @@ return [
 		'mail:chain/action-panel',
 		'mail:message/tools/connector',
 		'mail:message/elements/contact/list',
+		'mail:simple-list/items/message-redux/src/action-menu',
 		'mail:message/elements/messagebody',
 		'mail:message/elements/icon',
 		'mail:message/elements/avatar',
 		'mail:opener',
 		'notify-manager',
-        'mail:const',
-    ],
+		'mail:const',
+	],
 ];

@@ -139,7 +139,7 @@ export const ListApps = {
 		checkUrlParams: function () {
 			const urlParams = new URLSearchParams(window.location.search);
 			const tag = urlParams.get('tag');
-			if (this.result.FILTER_TAGS.some(x => x.name === tag)) {
+			if (Array.isArray(this.filters) && this.result.FILTER_TAGS.some(x => x.name === tag)) {
 				this.result.SELECTED_TAG = tag;
 				this.filterTag(tag);
 			}
@@ -380,6 +380,9 @@ export const ListApps = {
 				targetPosition.right > windowPosition.left &&
 				targetPosition.left < windowPosition.right;
 		},
+		openCatalog() {
+			BX.MarketToolbar.catalogClick();
+		},
 	},
 	template: `
 		<img class="market-skeleton-img"
@@ -471,7 +474,11 @@ export const ListApps = {
 						<div class="market-catalog__elements_no-updates-icon">
 							<img src="/bitrix/js/market/images/no-apps.svg" alt="">
 						</div>
-						<div class="market-catalog__elements_no-updates-title">{{ $Bitrix.Loc.getMessage('MARKET_LIST_APPS_JS_NO_APPS_MATCHING_YOUR_REQUEST') }}</div>
+						<div class="market-catalog__elements_no-updates-title">{{ $Bitrix.Loc.getMessage('MARKET_LIST_APPS_JS_NO_APPS_MATCHING_YOUR_REQUEST_TITLE') }}</div>
+						<div class="market-catalog__elements_no-updates-description">{{ $Bitrix.Loc.getMessage('MARKET_LIST_APPS_JS_NO_APPS_MATCHING_YOUR_REQUEST_DESCRIPTION') }}</div>
+						<div class="market-catalog__elements_no-updates-button">
+							<button class="ui-btn --air --style-outline-accent-2" @click="openCatalog">{{ $Bitrix.Loc.getMessage('MARKET_LIST_APPS_JS_NO_APPS_MATCHING_YOUR_REQUEST_CATALOG_BUTTON') }}</button>
+						</div>
 					</div>
 					<div class="market-catalog__elements_no-updates" v-if="isFavorites">
 						<div class="market-catalog__elements_no-updates-icon">

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'utils/object',
 		'im:messenger/core/base',
 		'im:messenger/model/recent',
 		'im:messenger/model/users',

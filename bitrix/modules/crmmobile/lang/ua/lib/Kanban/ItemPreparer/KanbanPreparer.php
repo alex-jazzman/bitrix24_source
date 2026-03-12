@@ -1,4 +1,0 @@
-<?php
-$MESS["M_CRM_KANBAN_ENTITY_REPEATED_APPROACH_DEAL"] = "повторне звернення";
-$MESS["M_CRM_KANBAN_ITEM_PREPARER_REPEATED_DEAL"] = "повторна угода";
-$MESS["M_CRM_KANBAN_ITEM_PREPARER_REPEATED_LEAD"] = "повторний лід";

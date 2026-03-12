@@ -7,7 +7,7 @@ if (! check_bitrix_sessid())
 	return;
 }
 
-echo CAdminMessage::ShowNote(Loc::getMessage('MOD_UNINST_OK'));
+CAdminMessage::ShowNote(Loc::getMessage('MOD_UNINST_OK'));
 
 ?>
 <form action="<?=$APPLICATION->GetCurPage()?>">

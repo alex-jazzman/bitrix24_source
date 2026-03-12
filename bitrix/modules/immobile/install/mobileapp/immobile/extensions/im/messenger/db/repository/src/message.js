@@ -14,6 +14,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 		MessagePushTable,
 		MessageTableGetLinkedListDirection,
 		VoteTable,
+		StickerTable,
 	} = require('im/messenger/db/table');
 	const { merge } = require('utils/object');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -43,6 +44,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			this.messageTable = new MessageTable();
 			this.messagePushTable = new MessagePushTable();
 			this.voteTable = new VoteTable();
+			this.stickerTable = new StickerTable();
 		}
 
 		/**
@@ -321,6 +323,11 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 					...contextMessage.voteList,
 					...bottomPage.voteList,
 				],
+				stickerList: [
+					...topPage.stickerList,
+					...contextMessage.stickerList,
+					...bottomPage.stickerList,
+				],
 				hasContextMessage: Type.isArrayFilled(contextMessage.messageList),
 			};
 
@@ -340,6 +347,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			const fileIdList = new Set();
 			const authorIdList = [];
 			const messageIdList = new Set();
+			const stickerParamsList = [];
 			messageList.items.forEach((message) => {
 				const modelMessage = message;
 
@@ -362,6 +370,11 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				{
 					additionalMessageIdList.add(modelMessage.params.replyId);
 				}
+
+				if (Type.isPlainObject(modelMessage.stickerParams))
+				{
+					stickerParamsList.push(modelMessage.stickerParams);
+				}
 			});
 
 			const additionalMessageList = await this.messageTable.getListByIds([...additionalMessageIdList]);
@@ -379,6 +392,11 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				{
 					authorIdList.push(modelMessage.authorId);
 				}
+
+				if (Type.isPlainObject(modelMessage.stickerParams))
+				{
+					stickerParamsList.push(modelMessage.stickerParams);
+				}
 			});
 
 			const fileList = await this.fileTable.getListByIds([...fileIdList]);
@@ -395,6 +413,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			const userList = await this.userTable.getListByIds([...userIdList]);
 
 			const voteList = await this.voteTable.getListByIds([...messageIdList]);
+			const stickerList = await this.stickerTable.getStickerList(stickerParamsList);
 
 			return {
 				messageList: modelMessageList.reverse(),
@@ -403,6 +422,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				fileList: fileList.items,
 				reactionList: reactionList.items,
 				voteList: voteList.items,
+				stickerList: stickerList.items,
 			};
 		}
 
@@ -573,6 +593,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				userList: [],
 				fileList: [],
 				reactionList: [],
+				stickerList: [],
 			};
 		}
 

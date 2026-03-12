@@ -11,7 +11,7 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
-import { EventName, Model, CardType, GroupType } from 'tasks.v2.const';
+import { EventName, Model, CardType, GroupType, Analytics } from 'tasks.v2.const';
 import { AddTaskButton } from 'tasks.v2.component.add-task-button';
 import { Title as FieldTitle } from 'tasks.v2.component.fields.title';
 import { Importance } from 'tasks.v2.component.fields.importance';
@@ -30,6 +30,7 @@ import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { GroupModel } from 'tasks.v2.model.groups';
+import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { AppField, AppChip } from 'tasks.v2.application.task-card';
 
 import { FullCardButton } from './full-card-button/full-card-button';
@@ -54,6 +55,7 @@ export const App = {
 	provide(): Object
 	{
 		return {
+			settings: Core.getParams(),
 			analytics: this.analytics,
 			cardType: CardType.Compact,
 			/** @type { TaskModel } */
@@ -100,7 +102,6 @@ export const App = {
 			isCheckListPopupShown: false,
 			creationError: false,
 			popupCount: 0,
-			isHovered: false,
 		};
 	},
 	computed: {
@@ -122,6 +123,15 @@ export const App = {
 		{
 			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
 		},
+		checklist(): CheckListModel[]
+		{
+			if (!this.task.checklist)
+			{
+				return [];
+			}
+
+			return this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
+		},
 		fields(): AppField[]
 		{
 			return [
@@ -140,7 +150,7 @@ export const App = {
 						taskId: this.taskId,
 						isTemplate: this.isTemplate,
 						isAutonomous: true,
-						isHovered: this.isHovered,
+						isHovered: false,
 					},
 				},
 				Core.getParams().features.disk && {
@@ -192,16 +202,17 @@ export const App = {
 			deadlineTs: this.initialTask.deadlineTs ?? this.defaultDeadlineTs,
 			needsControl: this.stateFlags.needsControl ?? null,
 			matchesWorkTime: this.stateFlags.matchesWorkTime ?? null,
+			allowsTimeTracking: this.stateFlags.allowsTimeTracking ?? null,
 			requireResult: this.stateFlags.defaultRequireResult ?? false,
 		});
 
-		if (this.task.fileIds?.length > 0)
-		{
-			void fileService.get(this.taskId).list(this.task.fileIds);
-		}
+		void fileService.get(this.taskId).list(this.task.fileIds);
 
-		analytics.sendOpenCard(this.analytics, {
+		analytics.sendClickCreate(this.analytics, {
 			collabId: this.group?.type === GroupType.Collab ? this.group.id : null,
+			cardType: CardType.Compact,
+			viewersCount: this.initialTask?.auditorsIds?.length ?? 0,
+			coexecutorsCount: this.initialTask?.accomplicesIds?.length ?? 0,
 		});
 	},
 	mounted(): void
@@ -247,6 +258,8 @@ export const App = {
 		},
 		async addTask(): void
 		{
+			const checklists = this.checklist;
+
 			const [id, error] = await taskService.add(this.task);
 
 			if (!id)
@@ -258,28 +271,30 @@ export const App = {
 					text: error.message,
 				});
 
-				this.sendAddTaskAnalytics(false);
+				this.sendAddTaskAnalytics(false, checklists);
 
 				return;
 			}
 
 			this.taskId = id;
 
-			this.sendAddTaskAnalytics(true);
+			this.sendAddTaskAnalytics(true, checklists);
 
 			analytics.sendDescription(this.analytics, {
 				hasDescription: Type.isStringFilled(this.task?.description),
 				hasScroll: this.$refs?.description?.hasScroll(),
+				cardType: CardType.Compact,
 			});
 
 			fileService.replace(this.id, id);
 
-			EventEmitter.emit(EventName.NotifyGrid, new BaseEvent({
+			EventEmitter.emit(EventName.LegacyTasksTaskEvent, new BaseEvent({
 				data: id,
 				compatData: [
 					'ADD',
 					{
-						task: this.task,
+						task: { ID: id },
+						taskUgly: { id },
 						options: {},
 					},
 				],
@@ -287,20 +302,48 @@ export const App = {
 
 			this.close();
 		},
-		sendAddTaskAnalytics(isSuccess: boolean): void
+		sendAddTaskAnalytics(isSuccess: boolean, checklists: CheckListModel[]): void
 		{
 			const collabId = this.group?.type === GroupType.Collab ? this.group.id : null;
-			const checkLists = this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
-			if (checkLists.length > 0)
+			const viewersCount = this.task.auditorsIds.length;
+			const coexecutorsCount = this.task.accomplicesIds.length;
+
+			if (this.task.templateId)
 			{
-				const checklistCount = checkLists.filter(({ parentId }) => parentId === 0).length;
-				const checklistItemsCount = checkLists.filter(({ parentId }) => parentId !== 0).length;
+				analytics.sendAddTask(this.analytics, {
+					isSuccess,
+					collabId,
+					viewersCount,
+					coexecutorsCount,
+					event: Analytics.Event.PatternTaskCreate,
+					cardType: CardType.Compact,
+					taskId: this.taskId,
+				});
+			}
+			else if (this.task.parentId)
+			{
+				analytics.sendAddTask(this.analytics, {
+					isSuccess,
+					collabId,
+					viewersCount,
+					coexecutorsCount,
+					event: Analytics.Event.SubTaskAdd,
+					cardType: CardType.Compact,
+					taskId: this.taskId,
+				});
+			}
+			else if (checklists.length > 0)
+			{
+				const checklistCount = checklists.filter(({ parentId }) => parentId === 0).length;
+				const checklistItemsCount = checklists.filter(({ parentId }) => parentId !== 0).length;
 				analytics.sendAddTaskWithCheckList(this.analytics, {
 					isSuccess,
 					collabId,
 					viewersCount: this.task.auditorsIds.length,
 					checklistCount,
 					checklistItemsCount,
+					cardType: CardType.Compact,
+					taskId: this.taskId,
 				});
 			}
 			else
@@ -308,8 +351,11 @@ export const App = {
 				analytics.sendAddTask(this.analytics, {
 					isSuccess,
 					collabId,
-					viewersCount: this.task.auditorsIds.length,
-					coexecutorsCount: this.task.accomplicesIds.length,
+					viewersCount,
+					coexecutorsCount,
+					event: Analytics.Event.TaskCreate,
+					cardType: CardType.Compact,
+					taskId: this.taskId,
 				});
 			}
 		},
@@ -390,10 +436,6 @@ export const App = {
 			{
 				this.$refs.addTaskButton.handleClick();
 			}
-			else if (event.key === 'Escape')
-			{
-				setTimeout(() => this.close());
-			}
 		},
 		destroy(): void
 		{
@@ -420,11 +462,7 @@ export const App = {
 						/>
 					</div>
 					<DescriptionInline ref="description"/>
-					<div
-						class="tasks-compact-card-fields-list"
-						@mouseover="isHovered = true"
-						@mouseleave="isHovered = false"
-					>
+					<div class="tasks-compact-card-fields-list">
 						<FieldList :fields="primaryFields"/>
 					</div>
 					<CheckList

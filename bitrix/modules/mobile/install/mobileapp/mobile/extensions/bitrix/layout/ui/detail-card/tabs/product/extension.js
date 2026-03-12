@@ -47,6 +47,20 @@ jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
 			return TabType.PRODUCT;
 		}
 
+		isEditable()
+		{
+			return Boolean(this.state?.result?.document?.editable);
+		}
+
+		needShowFloatingButton()
+		{
+			return this.isEditable();
+		}
+
+		floatingButtonHandler = () => {
+			this.showAddProductMenu();
+		};
+
 		onChangeCurrency(newCurrency)
 		{
 			if (this.productsRef)
@@ -185,4 +199,3 @@ jn.define('layout/ui/detail-card/tabs/product', (require, exports, module) => {
 
 	module.exports = { ProductTab };
 });
-

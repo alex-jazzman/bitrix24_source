@@ -266,7 +266,7 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 			{
 				resolvedFolderToMove = Object.values(DefaultFolderType).some((type) => type.value === folderSignature)
 					? selectFoldersByType(store.getState(), folderSignature, true)?.find(() => true)
-					: selectFolderById(store.getState(), folderSignature, true)
+					: selectFolderById(store.getState(), folderSignature)
 				;
 			}
 

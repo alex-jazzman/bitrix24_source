@@ -12,6 +12,19 @@
     cursor: pointer;
 }
 
+.editor-chart-block-container.--hoverable:hover:after {
+    content: '';
+    display: block;
+    position: absolute;
+    z-index: -1;
+    top: -6px;
+    bottom: -6px;
+    left: -6px;
+    right: -6px;
+    border-radius: 12px;
+    background-color: var(--ui-color-divider-vibrant-accent);
+}
+
 .editor-chart-block-container.--highlighted,
 .editor-chart-block-container.--highlighted.--white,
 .editor-chart-block-container.--highlighted.--orange,

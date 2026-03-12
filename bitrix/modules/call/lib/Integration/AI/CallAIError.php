@@ -7,6 +7,10 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * @internal
+ */
+
 class CallAIError extends \Bitrix\Call\Error
 {
 	public const
@@ -57,6 +61,7 @@ class CallAIError extends \Bitrix\Call\Error
 		{
 			$error->code = $processingError->getCode();
 			$error->message = static::htmlToBbCodeLink($processingError->getMessage());
+			$error->customData = $processingError->getCustomData();
 		}
 
 		if (
@@ -107,8 +112,8 @@ class CallAIError extends \Bitrix\Call\Error
 				 * @var \Bitrix\AI\Payload\IPayload $payload
 				 */
 				$payload = $payloadResult->getData()['payload'];
-				$context = $task->getAIEngineContext();
-				$engine = $task->getAIEngine($context);
+				//$context = $task->getAIEngineContext();
+				//$engine = $task->getAIEngine($context);
 
 				$history = \Bitrix\AI\Model\HistoryTable::getList([
 					'filter' => [

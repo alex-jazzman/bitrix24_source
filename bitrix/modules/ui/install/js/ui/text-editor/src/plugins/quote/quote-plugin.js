@@ -1,6 +1,7 @@
 import { Loc, Type } from 'main.core';
 
 import type { BBCodeElementNode } from 'ui.bbcode.model';
+import { Outline } from 'ui.icon-set.api.core';
 
 import {
 	$getSelection,
@@ -247,7 +248,7 @@ export class QuotePlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('quote', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --quote"></span>');
+			button.setIcon(Outline.QUOTE);
 			button.setBlockType('quote');
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_QUOTE'));
 			button.subscribe('onClick', (): void => {

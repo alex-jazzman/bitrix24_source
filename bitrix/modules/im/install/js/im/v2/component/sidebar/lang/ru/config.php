@@ -4,6 +4,9 @@ $MESS['IM_SIDEBAR_COMMENTS_POST_PREVIEW_TITLE'] = "Комментарии";
 $MESS['IM_SIDEBAR_ENABLE_NOTIFICATION_TITLE_2'] = "Звук";
 $MESS['IM_SIDEBAR_ENABLE_AUTODELETE_TITLE'] = "Автоудаление сообщений";
 $MESS['IM_SIDEBAR_AUTODELETE_NO_PERMISSION'] = "Недостаточно прав для работы с автоудалением. [helpdesklink]Подробнее[/helpdesklink]";
+$MESS['IM_SIDEBAR_SHARED_LINK_DESCRIPTION_MSGVER_1'] = "Ссылка на приглашение в чат";
+$MESS['IM_SIDEBAR_SHARED_LINK_COPY_MENU'] = "Копировать";
+$MESS['IM_SIDEBAR_SHARED_LINK_CHANGE_MENU'] = "Сменить";
 
 $MESS['IM_SIDEBAR_CREATE_GROUP_CHAT'] = "Создать групповой чат";
 $MESS['IM_SIDEBAR_COPY_INVITE_LINK'] = "Скопировать ссылку на чат";
@@ -58,6 +61,7 @@ $MESS['IM_SIDEBAR_MENU_DELETE_MEETING_CONNECTION'] = "Удалить связь 
 $MESS['IM_SIDEBAR_MENU_MANAGER_ADD'] = "Сделать администратором";
 $MESS['IM_SIDEBAR_MENU_MANAGER_REMOVE'] = "Исключить из администраторов";
 $MESS['IM_SIDEBAR_MENU_COPY_INVITE_LINK'] = "Копировать ссылку";
+$MESS['IM_SIDEBAR_MENU_COPY_DIALOG_ID'] = "Копировать ID чата";
 
 // empty states
 $MESS['IM_SIDEBAR_LINKS_EMPTY'] = "Нет ссылок";

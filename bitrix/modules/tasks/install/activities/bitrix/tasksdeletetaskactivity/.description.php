@@ -33,7 +33,6 @@ $arActivityDescription = (
 		'GROUP' => ['taskManagement'],
 	])
 	->setNodeActionSettings([
-		'INCLUDE' => ['taskscomplexactivity'],
 		'HANDLES_DOCUMENT' => true,
 	])
 	->toArray()

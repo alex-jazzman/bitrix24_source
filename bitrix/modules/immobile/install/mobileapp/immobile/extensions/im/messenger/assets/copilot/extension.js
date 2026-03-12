@@ -13,6 +13,11 @@ jn.define('im/messenger/assets/copilot', (require, exports, module) => {
 		{
 			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/copilot/svg/mention.svg`;
 		}
+
+		static get mentionPngUrl()
+		{
+			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/copilot/png/mention.png`;
+		}
 	}
 
 	module.exports = { CopilotAsset };

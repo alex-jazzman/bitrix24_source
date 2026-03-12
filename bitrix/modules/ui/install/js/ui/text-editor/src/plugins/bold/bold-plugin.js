@@ -1,4 +1,5 @@
 import { Loc, Browser } from 'main.core';
+import { Outline } from 'ui.icon-set.api.core';
 import { type TextNode } from 'ui.lexical.core';
 
 import {
@@ -72,7 +73,7 @@ export class BoldPlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('bold', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --bold"></span>');
+			button.setIcon(Outline.BOLD);
 			button.setFormat('bold');
 			button.disableInsideUnformatted();
 			button.setTooltip(

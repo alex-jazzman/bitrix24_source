@@ -1,4 +1,3 @@
-import { Event } from 'main.core';
 import { BottomSheet } from 'tasks.v2.component.elements.bottom-sheet';
 
 // @vue/component
@@ -27,15 +26,6 @@ export const CheckListSheet = {
 		{
 			await this.$nextTick();
 
-			if (value === true)
-			{
-				Event.bind(document, 'keydown', this.handleKeyDown, { capture: true });
-			}
-			else
-			{
-				Event.unbind(document, 'keydown', this.handleKeyDown, { capture: true });
-			}
-
 			this.$emit('isShown', value);
 		},
 	},
@@ -43,15 +33,6 @@ export const CheckListSheet = {
 		handleClose(): void
 		{
 			this.$emit('close');
-		},
-		handleKeyDown(event: KeyboardEvent): void
-		{
-			if (event.key === 'Escape')
-			{
-				this.handleClose();
-
-				event.stopPropagation();
-			}
 		},
 	},
 	template: `

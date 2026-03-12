@@ -8,7 +8,6 @@ return [
 	'css' => 'dist/side-panel.bundle.css',
 	'js' => 'dist/side-panel.bundle.js',
 	'rel' => [
-		'main.pageobject',
 		'clipboard',
 		'ui.fonts.opensans',
 		'popup',

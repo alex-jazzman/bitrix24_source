@@ -7,3 +7,4 @@ $MESS['IMBOT_CREATE_BOT_ACTIVITY_MODULE_NOT_INSTALLED'] = 'Чтобы созда
 $MESS['IMBOT_CREATE_BOT_ACTIVITY_CREATE_ERROR'] = 'Не удалось создать чат-бота';
 $MESS['IMBOT_CREATE_BOT_ACTIVITY_PROPERTY_BOT_CODE'] = 'Уникальный код чат-бота';
 $MESS['IMBOT_CREATE_BOT_ACTIVITY_PROPERTY_BOT_CODE_DESCRIPTION'] = 'Будут отредактированы настройки чат-бота с указанным уникальным кодом, если он уже существует';
+$MESS['IMBOT_CREATE_BOT_ACTIVITY_PROPERTY_AVATAR_UPLOAD'] = 'Загрузить аватар чат-бота';

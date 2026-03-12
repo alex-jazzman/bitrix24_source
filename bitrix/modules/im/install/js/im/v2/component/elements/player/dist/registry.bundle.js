@@ -548,7 +548,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isLoaded() {
 	      return this.playbackState === PlaybackState.loading;
 	    },
-	    isMuted() {
+	    isAutoplay() {
 	      return this.playbackMode === PlaybackMode.autoplay;
 	    },
 	    formattedTime() {
@@ -692,6 +692,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      this.observer = new IntersectionObserver(entries => {
 	        entries.forEach(entry => {
+	          if (!this.isAutoplay) {
+	            return;
+	          }
 	          if (entry.isIntersecting) {
 	            this.playVideo();
 	          } else {
@@ -727,7 +730,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  template: `
 		<div class="bx-im-round-video-player__container">
 			<FadeAnimation :duration="200">
-				<div v-if="isMuted" class="bx-im-round-video-player__mute">
+				<div v-if="isAutoplay" class="bx-im-round-video-player__mute">
 					<BIcon
 						:name="OutlineIcons.SOUND_OFF"
 						:color="Color.white"
@@ -917,15 +920,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.$store.getters['files/getTranscription'](this.file.id);
 	    },
 	    text() {
+	      var _this$transcription$t, _this$transcription;
 	      return im_v2_lib_parser.Parser.decode({
-	        text: this.transcription.transcriptText
+	        text: (_this$transcription$t = (_this$transcription = this.transcription) == null ? void 0 : _this$transcription.transcriptText) != null ? _this$transcription$t : ''
 	      });
 	    },
 	    isError() {
-	      return this.transcription && this.transcription.status === im_v2_const.TranscriptionStatus.ERROR;
+	      return Boolean(this.transcription && this.transcription.status === im_v2_const.TranscriptionStatus.ERROR);
 	    },
 	    isLimitError() {
-	      return this.transcription && this.transcription.errorCode === LIMIT_ERROR_CODE;
+	      return Boolean(this.transcription && this.transcription.errorCode === LIMIT_ERROR_CODE);
 	    },
 	    errorText() {
 	      if (this.isLimitError) {
@@ -934,8 +938,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const code = ErrorMessageByType[this.file.type];
 	      return this.loc(code);
 	    },
-	    showDivider() {
+	    needToShowDivider() {
 	      return this.isOpened && Boolean(this.message.text);
+	    },
+	    needToShowDisclaimer() {
+	      var _this$transcription2;
+	      return !this.isError && Boolean((_this$transcription2 = this.transcription) == null ? void 0 : _this$transcription2.transcriptText);
 	    },
 	    message() {
 	      return this.$store.getters['messages/getById'](this.messageId);
@@ -972,9 +980,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							</span>
 						</template>
 					</RichLoc>
+					<template v-if="needToShowDisclaimer">
+						<div class="bx-im-transcription-text__disclaimer-divider"></div>
+						<div class="bx-im-transcription-text__disclaimer">
+							{{ loc('IM_MESSAGE_FILE_TRANSCRIPTION_DISCLAIMER') }}
+						</div>
+					</template>
 				</div>
 			</ExpandAnimation>
-			<div v-if="showDivider" class="bx-im-transcription-text__divider"></div>
+			<div v-if="needToShowDivider" class="bx-im-transcription-text__divider"></div>
 		</div>
 	`
 	};
@@ -1066,7 +1080,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.$Bitrix.Data.get(ID_KEY, []);
 	    },
 	    currentRateLabel() {
-	      return this.isPlaying ? `${this.currentRate}x` : '';
+	      return `${this.currentRate}x`;
 	    },
 	    metaInfo() {
 	      return `${this.fileSize}, ${this.labelTime}`;
@@ -1376,12 +1390,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						class="bx-im-audio-player__rate-button-container"
 					>
 						<button
-							:class="{'--active': isPlaying}"
+							:class="{'--hidden': !isPlaying}"
 							@click="changeRate"
 						>
-						<span :class="{'bx-im-audio-player__rate-icon': !isPlaying}">
 							{{ currentRateLabel }}
-						</span>
 						</button>
 					</div>
 					<button

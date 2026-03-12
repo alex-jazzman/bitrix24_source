@@ -48,6 +48,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  unpinMessage: 'unpin_message',
 	  pinnedMessageLimitException: 'pinned_message_limit_exception',
 	  startSearch: 'start_search',
+	  openSearch: 'open_search',
+	  searchResult: 'search_result',
+	  selectSearchResult: 'select_search_result',
 	  selectRecipient: 'select_recipient',
 	  selectUser: 'select_user',
 	  openCreateMenu: 'open_create_menu',
@@ -72,14 +75,33 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  askCopilot: 'ask_copilot',
 	  modeOn: 'mode_on',
 	  modeOff: 'mode_off',
-	  clickMcpIntegrations: 'click_mcp_integrations'
+	  clickMcpIntegrations: 'click_mcp_integrations',
+	  notificationOpen: 'notif_open',
+	  notificationUnsubscribe: 'notif_unsubscribe',
+	  openEmoteSelector: 'open_emote_selector',
+	  openStickerTab: 'open_sticker_tab',
+	  viewStickerPopup: 'view_popup',
+	  clickCreateStickerPack: 'click_create_stickerpack',
+	  addStickerPack: 'add_stickerpack',
+	  unpinChat: 'unpin_chat',
+	  openProfile: 'open_profile',
+	  findCommonChats: 'find_common_chats',
+	  mute: 'mute',
+	  unmute: 'unmute',
+	  hideChat: 'hide_chat',
+	  readAll: 'read_all',
+	  leave: 'leave',
+	  useFormatToolbar: 'use_text_formatting',
+	  closeSearch: 'cancel_search',
+	  selectSearchRecent: 'click_recent_suggest'
 	});
 	const AnalyticsTool = Object.freeze({
 	  ai: 'ai',
 	  checkin: 'checkin',
 	  im: 'im',
 	  infoHelper: 'InfoHelper',
-	  inform: 'inform'
+	  inform: 'inform',
+	  notification: 'notification'
 	});
 	const AnalyticsCategory = Object.freeze({
 	  chatOperations: 'chat_operations',
@@ -98,7 +120,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  collab: 'collab',
 	  updateAppPopup: 'update_app_popup',
 	  audioMessage: 'audiomessage',
-	  videoMessage: 'videomessage'
+	  videoMessage: 'videomessage',
+	  notificationOperations: 'notif_ops'
 	});
 	const AnalyticsType = Object.freeze({
 	  ai: 'ai',
@@ -114,7 +137,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  selectAppMode: 'select_app_mode',
 	  oneWindow: 'single_window',
 	  aiAssistant: 'aiAssistant',
-	  think: 'think'
+	  think: 'think',
+	  stickers: 'stickers',
+	  formatBold: 'bold',
+	  formatItalic: 'italic',
+	  formatUnderline: 'underline',
+	  formatStrikethrough: 'strikethrough',
+	  formatLink: 'link',
+	  formatCode: 'code'
 	});
 	const AnalyticsSection = Object.freeze({
 	  copilotTab: 'copilot_tab',
@@ -135,7 +165,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  chatCreateMenu: 'chat_create_menu',
 	  chatEmptyState: 'chat_empty_state',
 	  settings: 'settings',
-	  miniChat: 'mini_chat'
+	  miniChat: 'mini_chat',
+	  stickerPackPopup: 'stickerpack_popup',
+	  chatLayout: 'chat_tab',
+	  taskCommentsLayout: 'tasksTask_tab',
+	  notificationLayout: 'notification_tab'
 	});
 	const AnalyticsSubSection = Object.freeze({
 	  contextMenu: 'context_menu',
@@ -145,7 +179,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  chatSidebar: 'chat_sidebar',
 	  chatList: 'chat_list',
 	  window: 'window',
-	  membersPanel: 'user_list'
+	  membersPanel: 'user_list',
+	  recentContextMenu: 'recent_context_menu',
+	  recentChats: 'recent_chats',
+	  recentSearch: 'recent_search'
 	});
 	const AnalyticsElement = Object.freeze({
 	  initialBanner: 'initial_banner',
@@ -156,7 +193,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	});
 	const AnalyticsStatus = Object.freeze({
 	  success: 'success',
-	  errorTurnedOff: 'error_turnedoff'
+	  errorTurnedOff: 'error_turnedoff',
+	  notFound: 'not_found'
 	});
 	const CreateChatContext = Object.freeze({
 	  collabEmptyState: 'collab_empty_state'
@@ -165,6 +203,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  single: 'single',
 	  multiple: 'multiple',
 	  selected: 'selected'
+	});
+	const NotificationEntryPoint = Object.freeze({
+	  quickAccessLabel: 'bell_button'
 	});
 
 	function getCollabId(chatId) {
@@ -1371,22 +1412,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
-	class ChatPins {
-	  onPin(dialogId) {
-	    if (!isNotes(dialogId)) {
-	      return;
-	    }
-	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
-	    const params = {
-	      tool: AnalyticsTool.im,
-	      category: getCategoryByChatType(chat.type),
-	      event: AnalyticsEvent.pinChat,
-	      p1: getChatType(chat)
-	    };
-	    ui_analytics.sendData(params);
-	  }
-	}
-
 	var _buildModeEnableData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildModeEnableData");
 	class DesktopMode {
 	  constructor() {
@@ -1570,6 +1595,430 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return AnalyticsCategory.audioMessage;
 	}
 
+	class Notification {
+	  onOpenFromQuickAccessPanel() {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.notification,
+	      category: AnalyticsCategory.notificationOperations,
+	      event: AnalyticsEvent.notificationOpen,
+	      c_element: NotificationEntryPoint.quickAccessLabel
+	    });
+	  }
+	  onUnsubscribeFromNotification(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.notification,
+	      category: AnalyticsCategory.notificationOperations,
+	      event: AnalyticsEvent.notificationUnsubscribe,
+	      p1: params.moduleId,
+	      p2: params.optionName
+	    });
+	  }
+	}
+
+	var _getChatCategory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatCategory");
+	var _getChatType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatType");
+	class Stickers {
+	  constructor() {
+	    Object.defineProperty(this, _getChatType, {
+	      value: _getChatType2
+	    });
+	    Object.defineProperty(this, _getChatCategory, {
+	      value: _getChatCategory2
+	    });
+	  }
+	  onOpenEmoteSelector(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.openEmoteSelector,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory)[_getChatCategory](dialogId),
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType)[_getChatType](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onOpenStickerTab(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.openStickerTab,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory)[_getChatCategory](dialogId),
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType)[_getChatType](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onViewPromoPopup(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.viewStickerPopup,
+	      type: AnalyticsType.stickers,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory)[_getChatCategory](dialogId),
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType)[_getChatType](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onShowCreateForm(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.clickCreateStickerPack,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory)[_getChatCategory](dialogId),
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType)[_getChatType](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onLinkPackFromPopup(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.addStickerPack,
+	      c_section: AnalyticsSection.stickerPackPopup,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory)[_getChatCategory](dialogId),
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType)[_getChatType](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	}
+	function _getChatCategory2(dialogId) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	  return getCategoryByChatType(chat.type);
+	}
+	function _getChatType2(dialogId) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	  return getChatType(chat);
+	}
+
+	var _getChatCategory$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatCategory");
+	var _getChatType$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatType");
+	class MessageSearch {
+	  constructor() {
+	    Object.defineProperty(this, _getChatType$1, {
+	      value: _getChatType2$1
+	    });
+	    Object.defineProperty(this, _getChatCategory$1, {
+	      value: _getChatCategory2$1
+	    });
+	  }
+	  onOpenSearchPanel(dialogId) {
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getChatType$1)[_getChatType$1](dialogId);
+	    const params = {
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$1)[_getChatCategory$1](dialogId),
+	      event: AnalyticsEvent.openSearch,
+	      c_section: AnalyticsSection.chatSidebar,
+	      p1: `chatType_${chatType}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onStartSearch(dialogId) {
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getChatType$1)[_getChatType$1](dialogId);
+	    const params = {
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$1)[_getChatCategory$1](dialogId),
+	      event: AnalyticsEvent.startSearch,
+	      c_section: AnalyticsSection.chatSidebar,
+	      p1: `chatType_${chatType}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onGetSearchResult(dialogId, searchResult) {
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getChatType$1)[_getChatType$1](dialogId);
+	    const status = searchResult.length > 0 ? AnalyticsStatus.success : AnalyticsStatus.notFound;
+	    const params = {
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$1)[_getChatCategory$1](dialogId),
+	      event: AnalyticsEvent.searchResult,
+	      c_section: AnalyticsSection.chatSidebar,
+	      status,
+	      p1: `chatType_${chatType}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onSearchResultClick(dialogId) {
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getChatType$1)[_getChatType$1](dialogId);
+	    const params = {
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$1)[_getChatCategory$1](dialogId),
+	      event: AnalyticsEvent.selectSearchResult,
+	      c_section: AnalyticsSection.chatSidebar,
+	      p1: `chatType_${chatType}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	}
+	function _getChatCategory2$1(dialogId) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	  return getCategoryByChatType(chat.type);
+	}
+	function _getChatType2$1(dialogId) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	  return getChatType(chat);
+	}
+
+	var _getChatCategory$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatCategory");
+	var _getChatType$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatType");
+	var _getLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLayout");
+	class RecentContextMenu {
+	  constructor() {
+	    Object.defineProperty(this, _getLayout, {
+	      value: _getLayout2
+	    });
+	    Object.defineProperty(this, _getChatType$2, {
+	      value: _getChatType2$2
+	    });
+	    Object.defineProperty(this, _getChatCategory$2, {
+	      value: _getChatCategory2$2
+	    });
+	  }
+	  onUnread(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.seeLater,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$2)[_getChatCategory$2](dialogId),
+	      c_section: `${babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]()}_tab`,
+	      c_sub_section: AnalyticsSubSection.recentContextMenu,
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType$2)[_getChatType$2](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onPin(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.pinChat,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$2)[_getChatCategory$2](dialogId),
+	      c_section: `${babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]()}_tab`,
+	      c_sub_section: AnalyticsSubSection.recentContextMenu,
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType$2)[_getChatType$2](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onUnpin(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.unpinChat,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$2)[_getChatCategory$2](dialogId),
+	      c_section: `${babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]()}_tab`,
+	      c_sub_section: AnalyticsSubSection.recentContextMenu,
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType$2)[_getChatType$2](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onOpenProfile(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.openProfile,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$2)[_getChatCategory$2](dialogId),
+	      c_section: `${babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]()}_tab`,
+	      c_sub_section: AnalyticsSubSection.recentContextMenu,
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType$2)[_getChatType$2](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onFindChatsWithUser(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.findCommonChats,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$2)[_getChatCategory$2](dialogId),
+	      c_section: `${babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]()}_tab`,
+	      c_sub_section: AnalyticsSubSection.recentContextMenu,
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType$2)[_getChatType$2](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onMute(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.mute,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$2)[_getChatCategory$2](dialogId),
+	      c_section: `${babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]()}_tab`,
+	      c_sub_section: AnalyticsSubSection.recentContextMenu,
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType$2)[_getChatType$2](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onUnmute(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.unmute,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$2)[_getChatCategory$2](dialogId),
+	      c_section: `${babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]()}_tab`,
+	      c_sub_section: AnalyticsSubSection.recentContextMenu,
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType$2)[_getChatType$2](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onHide(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.hideChat,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$2)[_getChatCategory$2](dialogId),
+	      c_section: `${babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]()}_tab`,
+	      c_sub_section: AnalyticsSubSection.recentContextMenu,
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType$2)[_getChatType$2](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onRead(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.readAll,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$2)[_getChatCategory$2](dialogId),
+	      c_section: `${babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]()}_tab`,
+	      c_sub_section: AnalyticsSubSection.recentContextMenu,
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType$2)[_getChatType$2](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	  onLeave(dialogId) {
+	    const params = {
+	      event: AnalyticsEvent.leave,
+	      tool: AnalyticsTool.im,
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getChatCategory$2)[_getChatCategory$2](dialogId),
+	      c_section: `${babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]()}_tab`,
+	      c_sub_section: AnalyticsSubSection.recentContextMenu,
+	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _getChatType$2)[_getChatType$2](dialogId)}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	}
+	function _getChatCategory2$2(dialogId) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	  return getCategoryByChatType(chat.type);
+	}
+	function _getChatType2$2(dialogId) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	  return getChatType(chat);
+	}
+	function _getLayout2() {
+	  return im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
+	}
+
+	var _sendData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendData");
+	class FormatToolbar {
+	  constructor() {
+	    Object.defineProperty(this, _sendData, {
+	      value: _sendData2
+	    });
+	  }
+	  onCodeClick(dialogId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData](dialogId, AnalyticsType.formatCode);
+	  }
+	  onLinkClick(dialogId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData](dialogId, AnalyticsType.formatLink);
+	  }
+	  onStrikethroughClick(dialogId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData](dialogId, AnalyticsType.formatStrikethrough);
+	  }
+	  onUnderlineClick(dialogId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData](dialogId, AnalyticsType.formatUnderline);
+	  }
+	  onItalicClick(dialogId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData](dialogId, AnalyticsType.formatItalic);
+	  }
+	  onBoldClick(dialogId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData](dialogId, AnalyticsType.formatBold);
+	  }
+	}
+	function _sendData2(dialogId, type) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	  const chatType = getChatType(chat);
+	  ui_analytics.sendData({
+	    tool: AnalyticsTool.im,
+	    category: getCategoryByChatType(chatType),
+	    event: AnalyticsEvent.useFormatToolbar,
+	    p1: `chatType_${chatType}`,
+	    type
+	  });
+	}
+
+	const SectionByLayoutName = {
+	  [im_v2_const.Layout.chat]: AnalyticsSection.chatLayout,
+	  [im_v2_const.Layout.notification]: AnalyticsSection.notificationLayout,
+	  [im_v2_const.Layout.taskComments]: AnalyticsSection.taskCommentsLayout
+	};
+	var _hasSearchedBefore$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasSearchedBefore");
+	var _onShowResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onShowResult");
+	var _onSelectFromRecent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelectFromRecent");
+	class RecentSearch {
+	  constructor() {
+	    Object.defineProperty(this, _onSelectFromRecent, {
+	      value: _onSelectFromRecent2
+	    });
+	    Object.defineProperty(this, _onShowResult, {
+	      value: _onShowResult2
+	    });
+	    Object.defineProperty(this, _hasSearchedBefore$2, {
+	      writable: true,
+	      value: {}
+	    });
+	  }
+	  onStart(layoutName) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _hasSearchedBefore$2)[_hasSearchedBefore$2][layoutName]) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _hasSearchedBefore$2)[_hasSearchedBefore$2][layoutName] = true;
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.messenger,
+	      event: AnalyticsEvent.startSearch,
+	      c_section: SectionByLayoutName[layoutName]
+	    });
+	  }
+	  onOpen(layoutName) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.messenger,
+	      event: AnalyticsEvent.openSearch,
+	      c_section: SectionByLayoutName[layoutName]
+	    });
+	  }
+	  onClose(layoutName) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _hasSearchedBefore$2)[_hasSearchedBefore$2][layoutName] = false;
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.messenger,
+	      event: AnalyticsEvent.closeSearch,
+	      c_section: SectionByLayoutName[layoutName]
+	    });
+	  }
+	  onSelectFromSearchResult(layoutName, position) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.messenger,
+	      event: AnalyticsEvent.selectSearchResult,
+	      c_section: SectionByLayoutName[layoutName],
+	      p3: `position_${position}`
+	    });
+	  }
+	  onSelectFromRecentSearch(layoutName, dialogId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _onSelectFromRecent)[_onSelectFromRecent](layoutName, dialogId, AnalyticsSubSection.recentSearch);
+	  }
+	  onSelectFromRecentChats(layoutName, dialogId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _onSelectFromRecent)[_onSelectFromRecent](layoutName, dialogId, AnalyticsSubSection.recentChats);
+	  }
+	  onShowSuccessResult(layoutName) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _onShowResult)[_onShowResult](layoutName, AnalyticsStatus.success);
+	  }
+	  onShowNotFoundResult(layoutName) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _onShowResult)[_onShowResult](layoutName, AnalyticsStatus.notFound);
+	  }
+	}
+	function _onShowResult2(layoutName, status) {
+	  ui_analytics.sendData({
+	    tool: AnalyticsTool.im,
+	    category: AnalyticsCategory.messenger,
+	    event: AnalyticsEvent.searchResult,
+	    c_section: SectionByLayoutName[layoutName],
+	    status
+	  });
+	}
+	function _onSelectFromRecent2(layoutName, dialogId, subSection) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	  ui_analytics.sendData({
+	    tool: AnalyticsTool.im,
+	    category: AnalyticsCategory.messenger,
+	    event: AnalyticsEvent.selectSearchRecent,
+	    c_section: SectionByLayoutName[layoutName],
+	    c_sub_section: subSection,
+	    p1: `chatType_${getChatType(chat)}`
+	  });
+	}
+
 	var _excludedChats = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("excludedChats");
 	var _chatsWithTyping = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatsWithTyping");
 	var _currentTab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTab");
@@ -1605,11 +2054,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.messageForward = new MessageForward();
 	    this.messageContextMenu = new MessageContextMenu();
 	    this.sliderInvite = new SliderInvite();
-	    this.chatPins = new ChatPins();
 	    this.desktopMode = new DesktopMode();
 	    this.chatInviteLink = new ChatInviteLink();
 	    this.aiAssistant = new AiAssistant();
 	    this.player = new Player();
+	    this.notification = new Notification();
+	    this.stickers = new Stickers();
+	    this.messageSearch = new MessageSearch();
+	    this.recentContextMenu = new RecentContextMenu();
+	    this.formatToolbar = new FormatToolbar();
+	    this.recentSearch = new RecentSearch();
 	  }
 	  static getInstance() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {

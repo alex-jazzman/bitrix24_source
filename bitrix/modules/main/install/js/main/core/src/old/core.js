@@ -64,7 +64,7 @@
 		space: /\s+/,
 		ltrim: /^[\s\r\n]+/g,
 		rtrim: /[\s\r\n]+$/g,
-		style: /<link.*?(rel="stylesheet"|type="text\/css")[^>]*>/i,
+		style: /<link[^>]*?(rel="stylesheet"|type="text\/css")[^>]*>/i,
 		style_href: /href=["\']([^"\']+)["\']/i
 	};
 
@@ -2387,7 +2387,7 @@
 	const assets = {};
 	const loadingAssetCallbacks = {};
 
-	BX.load = function(items, callback, doc)
+	BX.load = function(items, callback, doc, reject)
 	{
 		if (!BX.isReady)
 		{
@@ -2403,10 +2403,10 @@
 
 		callback = BX.Type.isFunction(callback) ? callback : () => {};
 
-		return loadAsync(items, callback, doc);
+		return loadAsync(items, callback, doc, reject);
 	};
 
-	function loadAsync(items, callback, doc)
+	function loadAsync(items, callback, doc, reject)
 	{
 		if (!BX.type.isArray(items))
 		{
@@ -2420,7 +2420,7 @@
 			const nextAsset = queue.shift();
 			if (nextAsset)
 			{
-				load(nextAsset, onLoad, doc);
+				load(nextAsset, onLoad, doc, reject);
 			}
 			else if (allLoaded())
 			{
@@ -2458,7 +2458,7 @@
 			const parallelLoads = Math.min(queue.length, maxParallelLoads);
 			const firstPackage = queue.splice(0, parallelLoads);
 			firstPackage.forEach(asset => {
-				load(asset, onLoad, doc);
+				load(asset, onLoad, doc, reject);
 			});
 		}
 		else
@@ -2467,7 +2467,7 @@
 		}
 	}
 
-	function load(asset, callback, doc)
+	function load(asset, callback, doc, reject)
 	{
 		callback = callback || BX.DoNothing;
 
@@ -2491,6 +2491,12 @@
 
 		asset.state = LOADING;
 
+		const onReject = () => {
+			delete assets[asset.name];
+			delete loadingAssetCallbacks[asset.name];
+			reject();
+		};
+
 		loadAsset(
 			asset,
 			function () {
@@ -2506,11 +2512,12 @@
 
 				delete loadingAssetCallbacks[asset.name];
 			},
-			doc
+			doc,
+			BX.Type.isFunction(reject) ? onReject : null,
 		);
 	}
 
-	function loadAsset(asset, callback, doc)
+	function loadAsset(asset, callback, doc, reject)
 	{
 		callback = callback || BX.DoNothing;
 
@@ -2519,11 +2526,27 @@
 			window.clearTimeout(asset.errorTimeout);
 			window.clearTimeout(asset.cssTimeout);
 			ele.onload = ele.onreadystatechange = ele.onerror = null;
-			callback();
+			if (BX.Type.isFunction(reject))
+			{
+				reject();
+			}
+			else
+			{
+				callback();
+			}
 		}
 
 		function process(event)
 		{
+			if (ext === "css")
+			{
+				cssList.push(normalizeMinUrl(normalizeUrl(asset.url)));
+			}
+			else
+			{
+				jsList.push(normalizeMinUrl(normalizeUrl(asset.url)));
+			}
+
 			event = event || window.event;
 			if (event.type === "load" || (/loaded|complete/.test(ele.readyState) && (!doc.documentMode || doc.documentMode < 9)))
 			{
@@ -2581,15 +2604,6 @@
 		asset.errorTimeout = window.setTimeout(function () {
 			error({type: "timeout"});
 		}, 7000);
-
-		if (ext === "css")
-		{
-			cssList.push(normalizeMinUrl(normalizeUrl(asset.url)));
-		}
-		else
-		{
-			jsList.push(normalizeMinUrl(normalizeUrl(asset.url)));
-		}
 
 		let templateLink = null;
 		const head = doc.head || doc.getElementsByTagName("head")[0];
@@ -2792,18 +2806,7 @@
 
 	BX.reload = function(back_url, bAddClearCache)
 	{
-		if (window !== window.top)
-		{
-			BX.Runtime
-				.loadExtension('main.pageobject')
-				.then(function() {
-					reloadInternal(back_url, bAddClearCache);
-				});
-		}
-		else
-		{
-			reloadInternal(back_url, bAddClearCache);
-		}
+		reloadInternal(back_url, bAddClearCache);
 	};
 
 	BX.clearCache = function()

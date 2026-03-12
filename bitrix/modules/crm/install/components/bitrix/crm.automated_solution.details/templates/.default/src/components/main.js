@@ -2,7 +2,7 @@ import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Dom, Type } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { sendData as sendAnalyticsData } from 'ui.analytics';
-import { createSaveAnalyticsBuilder, wrapPromiseInAnalytics } from '../helpers/analytics';
+import { createSaveAnalyticsBuilder } from '../helpers/analytics';
 import type { Error } from '../store';
 import { CommonTab } from './tabs/common-tab';
 import { TypesTab } from './tabs/types-tab';
@@ -128,14 +128,30 @@ export const Main = {
 				.setElement(Dictionary.ELEMENT_CREATE_BUTTON)
 			;
 
-			wrapPromiseInAnalytics(this.$store.dispatch('save'), builder)
+			this.$store.dispatch('save')
 				.then(() => {
+					sendAnalyticsData(
+						builder
+							.setStatus(Dictionary.STATUS_SUCCESS)
+							.setId(this.$store.state.automatedSolution.id)
+							.buildData()
+						,
+					);
+
 					// don't register cancel event when this slider closes
 					this.isCancelEventAlreadyRegistered = true;
 
 					this.$Bitrix.Application.get().closeSliderOrRedirect();
 				})
-				.catch(() => {}) // errors will be displayed reactively
+				.catch(() => {
+					sendAnalyticsData(
+						builder
+							.setStatus(Dictionary.STATUS_ERROR)
+							.setId(this.$store.state.automatedSolution.id)
+							.buildData()
+						,
+					);
+				})
 				.finally(() => this.unlockButtons())
 			;
 		},
@@ -151,11 +167,25 @@ export const Main = {
 			// we set this flag here because for some reason slider starts to close before the promise is resolved
 			this.isCancelEventAlreadyRegistered = true;
 
-			wrapPromiseInAnalytics(this.$store.dispatch('delete'), builder)
+			this.$store.dispatch('delete')
 				.then(() => {
+					sendAnalyticsData(
+						builder
+							.setStatus(Dictionary.STATUS_SUCCESS)
+							.buildData()
+						,
+					);
+
 					this.$Bitrix.Application.get().closeSliderOrRedirect();
 				})
 				.catch(() => {
+					sendAnalyticsData(
+						builder
+							.setStatus(Dictionary.STATUS_ERROR)
+							.buildData()
+						,
+					);
+
 					// errors will be displayed reactively
 
 					// okay, may be the slider won't be closed after all since we've failed

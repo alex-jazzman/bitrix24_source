@@ -5,9 +5,9 @@ namespace Bitrix\Call\Controller;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Service\MicroService\BaseReceiver;
-use Bitrix\Im\Call\Call;
-use Bitrix\Im\Call\CallUser;
-use Bitrix\Im\V2\Call\CallFactory;
+use Bitrix\Call\Call;
+use Bitrix\Call\CallUser;
+use Bitrix\Call\CallFactory;
 use Bitrix\Call\Error;
 use Bitrix\Call\Logger\Logger;
 use Bitrix\Call\Track\TrackError;
@@ -21,7 +21,9 @@ use Bitrix\Call\Integration\AI\CallAISettings;
 use Bitrix\Call\Integration\AI\CallAIService;
 use Bitrix\Call\Analytics\FollowUpAnalytics;
 
-
+/**
+ * @internal
+ */
 class CallController extends BaseReceiver
 {
 	public function getAutoWiredParameters(): array
@@ -63,7 +65,7 @@ class CallController extends BaseReceiver
 
 		$call = CallFactory::searchActiveByUuid(Call::PROVIDER_BITRIX, $callRequest->callUuid);
 		if (!isset($call))
- 		{
+		{
 			$this->addError(new Error(Error::CALL_NOT_FOUND));
 
 			return null;
@@ -210,20 +212,22 @@ class CallController extends BaseReceiver
 
 		$trackService = TrackService::getInstance();
 
-		$processResult = $trackService->processTrack($track);
-		if (!$processResult->isSuccess())
+		if ($track->getType() === \Bitrix\Call\Track::TYPE_TRACK_PACK)
 		{
-			$this->addErrors($processResult->getErrors());
+			$processResult = $trackService->processTrack($track);
+			if (!$processResult->isSuccess())
+			{
+				$this->addErrors($processResult->getErrors());
 
-			$error = $processResult->getError();
-			(new FollowUpAnalytics($call))
-				->sendTelemetry(
-					source: null,
-					status: 'error',
-					event: 'track_processing_error',
-					error: $error
-				)
-			;
+				$error = $processResult->getError();
+				(new FollowUpAnalytics($call))
+					->sendTelemetry(
+						source: null,
+						status: 'error',
+						event: 'track_processing_error',
+						error: $error
+					);
+			}
 		}
 
 		if ($trackService->doNeedDownloadTrack($track))
@@ -233,6 +237,33 @@ class CallController extends BaseReceiver
 			{
 				$this->addErrors($downloadResult->getErrors());
 				return null;
+			}
+
+			// Check if download is still in progress (chunked download)
+			$downloadData = $downloadResult->getData();
+			if (isset($downloadData['status']) && $downloadData['status'] === 'in_progress')
+			{
+				// Download will continue via agent
+				return ['result' => true, 'status' => 'in_progress'];
+			}
+		}
+		else
+		{
+			// Track already downloaded, process it directly
+			$processResult = $trackService->processTrack($track);
+			if (!$processResult->isSuccess())
+			{
+				$this->addErrors($processResult->getErrors());
+
+				$error = $processResult->getError();
+				(new FollowUpAnalytics($call))
+					->sendTelemetry(
+						source: null,
+						status: 'error',
+						event: 'track_processing_error',
+						error: $error
+					)
+				;
 			}
 		}
 
@@ -272,15 +303,10 @@ class CallController extends BaseReceiver
 		CallAIService::getInstance()->removeExpectation($call->getId());
 		$log && $logger->info("Removed AI expectation agent for call #{$call->getId()} due to track error: ".($trackError->errorCode ?? '-'));
 
-		if (!$call->isAiAnalyzeEnabled())
-		{
-			return null;
-		}
-
 		$call
 			->disableAudioRecord()
+			->disableAiAnalyze()
 			->save();
-
 
 		$call->getSignaling()
 			->sendSwitchTrackRecordStatus(0, false, $trackError->errorCode);

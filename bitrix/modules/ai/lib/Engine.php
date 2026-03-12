@@ -3,11 +3,14 @@
 namespace Bitrix\AI;
 
 use Bitrix\AI\Engine\Cloud;
+use Bitrix\AI\Engine\Service\BitrixEngineService;
 use Bitrix\AI\Engine\Enum\Category;
 use Bitrix\AI\Engine\IEngine;
 use Bitrix\AI\Engine\IQueue;
 use Bitrix\AI\Engine\IQueueOptional;
+use Bitrix\AI\Facade\Analytics;
 use Bitrix\AI\Facade\Bitrix24;
+use Bitrix\AI\Facade\Portal;
 use Bitrix\AI\Facade\User;
 use Bitrix\AI\Limiter\Enums\ErrorLimit;
 use Bitrix\AI\Limiter\LimitControlService;
@@ -21,6 +24,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\DI\ServiceLocator;
 
 Loc::loadMessages(__FILE__);
 
@@ -73,6 +77,7 @@ class Engine
 	public static function isExistByCode(string $category, string $code): bool
 	{
 		self::loadThirdParty();
+		self::getBitrixEngineService()->initDefaultEngines();
 
 		$code = mb_strtolower($code);
 		foreach (self::$engines[$category] ?? [] as $engine)
@@ -147,6 +152,7 @@ class Engine
 	public static function getList(string $category, Context $context): array
 	{
 		self::loadThirdParty();
+		self::getBitrixEngineService()->initDefaultEngines();
 
 		$engines = [];
 		foreach (self::$engines[$category] ?? [] as $item)
@@ -183,6 +189,8 @@ class Engine
 
 			$available[] = $engine;
 		}
+
+		usort($available, static fn(IEngine $a, IEngine $b): int => strcasecmp($a->getName(), $b->getName()));
 
 		return $available;
 	}
@@ -231,7 +239,9 @@ class Engine
 				$hasSelectedEngine = true;
 			}
 			$agreement = $engine->getAgreement();
+
 			$engines[] = [
+				'preffered' => $engine->isPreferredForQuality(),
 				'code' => $engine->getCode(),
 				'title' => $engine->getName(),
 				'partner' => $engine->isThirdParty(),
@@ -253,6 +263,8 @@ class Engine
 			$engines[0]['selected'] = true;
 		}
 
+		usort($engines, static fn(array $a, array $b): int => strcasecmp($a['title'], $b['title']));
+
 		return $engines;
 	}
 
@@ -267,6 +279,7 @@ class Engine
 	public static function getByCode(string $code, Context $context, ?string $category = null): ?self
 	{
 		self::loadThirdParty();
+		self::getBitrixEngineService()->initDefaultEngines();
 
 		foreach (self::getCategories() as $cCode)
 		{
@@ -315,6 +328,7 @@ class Engine
 		}
 
 		self::loadThirdParty();
+		self::getBitrixEngineService()->initDefaultEngines();
 
 		$selectedEngine = Config::getValue(self::getConfigCode($category, $quality));
 
@@ -869,6 +883,11 @@ class Engine
 
 	public function throwErrorLimit(ReserveRequest $reservedRequest): void
 	{
+		Analytics::sendAiQueryLimitEvent(
+			$reservedRequest->getErrorLimit()->value . '-' . $reservedRequest->getPromoLimitCode(),
+			$this->getIEngine()->getContext()->getModuleId(),
+		);
+
 		if ($reservedRequest->getErrorLimit() === ErrorLimit::BAAS_LIMIT)
 		{
 			$this->throwError(self::ERRORS['LIMIT_IS_EXCEEDED'], '_BAAS');
@@ -940,16 +959,16 @@ class Engine
 	{
 		$customData = null;
 		$rewriteErrorMessage = null;
-		if ($suffixErrorCode === '_BAAS_RATE_LIMIT' && Bitrix24::isMarketAvailable())
+		if ($suffixErrorCode === '_BAAS_RATE_LIMIT' && Portal::isMarketAvailable())
 		{
 			$rewriteErrorMessage = $customData['msgForIm'] = Loc::getMessage('AI_ENGINE_ERROR_RATE_LIMIT_BAAS_MARKET');
 			$customData['showSliderWithMsg'] = false;
 		}
 
-		if ($suffixErrorCode === '_BAAS' && Bitrix24::isMarketAvailable())
+		if ($suffixErrorCode === '_BAAS' && Portal::isMarketAvailable())
 		{
 			$customData['msgForIm'] = Loc::getMessage(
-				'AI_ENGINE_ERROR_LIMIT_BAAS_MARKET',
+				'AI_ENGINE_ERROR_LIMIT_BAAS_MARKET_MSGVER_1',
 				['#LINK#' => '/online/?FEATURE_PROMOTER=limit_subscription_market_access_buy_marketplus']
 			);
 			$customData['showSliderWithMsg'] = false;
@@ -984,5 +1003,10 @@ class Engine
 	{
 		$event = new Event('ai', self::EVENT_NAME_ENGINE_ADDED);
 		$event->send();
+	}
+
+	protected static function getBitrixEngineService()
+	{
+		return ServiceLocator::getInstance()->get(BitrixEngineService::class);
 	}
 }

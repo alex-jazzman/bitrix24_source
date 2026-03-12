@@ -65,6 +65,8 @@
 		const isSendFiles = BX.componentParameters.get('isSendFiles', false);
 		const senders = BX.componentParameters.get('senders', []);
 		const clients = BX.componentParameters.get('clients', []);
+		const source = BX.componentParameters.get('source', 'mail');
+		const element = BX.componentParameters.get('element', 'compose_button');
 		const clientIdsByType = BX.componentParameters.get('clientIdsByType', {
 			contacts: [],
 			company: [],
@@ -99,6 +101,8 @@
 			isCrmMessage,
 			ownerEntity,
 			isForward,
+			source,
+			element,
 			widget: this.layout,
 		};
 

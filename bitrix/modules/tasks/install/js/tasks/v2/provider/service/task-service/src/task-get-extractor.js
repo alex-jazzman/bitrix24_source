@@ -31,7 +31,7 @@ export class TaskGetExtractor
 
 	getGroup(): GroupModel | null
 	{
-		return this.#data.group ? GroupMappers.mapDtoToModel(this.#data.group) : null;
+		return this.#data.group?.id ? GroupMappers.mapDtoToModel(this.#data.group) : null;
 	}
 
 	getStages(): StageModel[]

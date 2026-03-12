@@ -24,7 +24,7 @@ export const PinnedMessages = {
 	{
 		dialogId: {
 			type: String,
-			default: '',
+			required: true,
 		},
 		messages: {
 			type: Array,
@@ -147,6 +147,7 @@ export const PinnedMessages = {
 				:showUnpinIcon="showUnpinIcon"
 				:totalPinCounter="totalPinCounter"
 				:isListOpened="isListOpened"
+				:contextDialogId="dialogId"
 				@toggleList="toggleList"
 				@messageUnpin="$emit('messageUnpin', upcomingMessage.id)"
 				@messageClick="clickOnHeaderMessage"

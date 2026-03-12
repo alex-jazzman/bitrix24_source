@@ -28,6 +28,7 @@ type ExtractionResult = {
 	recentItems: RawLegacyRecentItem[],
 	copilot?: RawCopilot,
 	messagesAutoDeleteConfigs: RawMessagesAutoDeleteConfig[],
+	stickerMessages: RawLegacyRecentItem[],
 };
 
 export class RecentDataExtractor
@@ -40,6 +41,7 @@ export class RecentDataExtractor
 	#messages: { [id: string]: RawMessage } = {};
 	#files: { [id: string]: RecentFile } = {};
 	#recentItems: { [id: string]: RawLegacyRecentItem } = {};
+	#stickerMessages: { [id: string]: RawLegacyRecentItem } = {};
 
 	constructor(params: { rawData: RecentRestResult, withBirthdays?: boolean })
 	{
@@ -56,6 +58,7 @@ export class RecentDataExtractor
 			this.#extractChat(item);
 			this.#extractMessage(item);
 			this.#extractRecentItem(item);
+			this.#extractStickerMessage(item);
 		});
 
 		this.#extractBirthdayItems();
@@ -68,6 +71,7 @@ export class RecentDataExtractor
 			recentItems: Object.values(this.#recentItems),
 			copilot,
 			messagesAutoDeleteConfigs,
+			stickerMessages: Object.values(this.#stickerMessages),
 		};
 	}
 
@@ -189,6 +193,17 @@ export class RecentDataExtractor
 				this.#messages[messageId] = { id: messageId };
 			}
 		});
+	}
+
+	#extractStickerMessage(item: RawLegacyRecentItem)
+	{
+		const messageId = item.message?.id;
+		if (!messageId || !item.message.sticker)
+		{
+			return;
+		}
+
+		this.#stickerMessages[messageId] = { ...item.message.sticker, messageId };
 	}
 
 	#prepareGroupChat(item: RawLegacyRecentItem): RawChat

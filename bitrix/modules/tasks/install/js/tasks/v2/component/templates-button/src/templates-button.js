@@ -1,12 +1,20 @@
-import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { TextSm } from 'ui.system.typography.vue';
+import 'ui.icon-set.outline';
 
 import { EntitySelectorEntity } from 'tasks.v2.const';
+import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
+import { taskService } from 'tasks.v2.provider.service.task-service';
 import { EntitySelectorDialog } from 'tasks.v2.lib.entity-selector-dialog';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
+import './templates-button.css';
+
 export const TemplatesButton = {
 	components: {
-		UiButton,
+		BIcon,
+		TextSm,
+		HoverPill,
 	},
 	inject: {
 		task: {},
@@ -14,11 +22,9 @@ export const TemplatesButton = {
 	setup(): { task: TaskModel }
 	{
 		return {
-			ButtonSize,
-			AirButtonStyle,
+			Outline,
 		};
 	},
-	emits: ['template'],
 	beforeUnmount(): void
 	{
 		this.dialog?.destroy();
@@ -45,7 +51,7 @@ export const TemplatesButton = {
 							const templateId = this.dialog.getSelectedItems()[0]?.getId();
 							if (templateId > 0)
 							{
-								this.$emit('template', templateId);
+								void taskService.updateStoreTask(this.task.id, { templateId });
 							}
 						},
 					},
@@ -57,13 +63,12 @@ export const TemplatesButton = {
 	},
 	template: `
 		<div ref="button">
-			<UiButton
-				:text="loc('TASKS_V2_TEMPLATES')"
-				:size="ButtonSize.SMALL"
-				:style="AirButtonStyle.PLAIN_NO_ACCENT"
-				dropdown
-				@click="showDialog"
-			/>
+			<HoverPill @click="showDialog">
+				<div class="tasks-full-card-templates-button-container">
+					<div class="tasks-full-card-templates-button-container-text">{{ loc('TASKS_V2_TEMPLATES') }}</div>
+					<BIcon :name="Outline.CHEVRON_DOWN_L" color="var(--ui-color-design-plain-na-content)"/>
+				</div>
+			</HoverPill>
 		</div>
 	`,
 };

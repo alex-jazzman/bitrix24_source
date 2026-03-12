@@ -2,7 +2,6 @@
 import { Dom, Tag, Type, Event } from 'main.core';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 
-import 'ui.icon-set.editor';
 import { UNFORMATTED } from '../constants';
 
 import {

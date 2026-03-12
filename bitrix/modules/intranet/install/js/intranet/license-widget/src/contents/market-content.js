@@ -46,9 +46,25 @@ export class MarketContent extends Content
 					<span>
 						${this.getOptions().title}
 					</span>
+					${this.#getHelpIcon()}
 				</div>
 			`;
 		});
+	}
+
+	#getHelpIcon(): HTMLElement
+	{
+		if (this.getOptions().isPaid || this.getOptions().isDemo)
+		{
+			return Tag.render`<span class="license-widget-item-help" onclick="${() => this.#showHelper()}"></span>`;
+		}
+
+		return '';
+	}
+
+	#showHelper(): void
+	{
+		FeaturePromotersRegistry.getPromoter({ code: this.getOptions().description.landingCode }).show();
 	}
 
 	getIcon(): HTMLElement
@@ -103,13 +119,9 @@ export class MarketContent extends Content
 	getDescriptionLink(): HTMLDivElement
 	{
 		return this.cache.remember('description-link', () => {
-			const showHelper = () => {
-				FeaturePromotersRegistry.getPromoter({ code: this.getOptions().description.landingCode }).show();
-			};
-
 			return Tag.render`
 				<div class="license-widget-item-link">
-					<span class="license-widget-item-link-text" onclick="${showHelper}">
+					<span class="license-widget-item-link-text" onclick="${() => this.#showHelper()}">
 						${this.getOptions().description.text}
 					</span>
 				</div>

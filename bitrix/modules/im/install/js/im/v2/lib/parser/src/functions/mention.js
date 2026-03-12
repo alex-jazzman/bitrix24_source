@@ -11,6 +11,12 @@ const SpecialMentionHandlers = {
 	[SpecialMentionDialogId.allParticipants]: (userName) => ParserMention.renderAllParticipantsMention(userName),
 };
 
+const MENTION_BASE_CLASS = 'bx-im-mention';
+const MentionModifier = {
+	highlight: '--highlight',
+	extranet: '--extranet',
+};
+
 export const ParserMention = {
 	decode(text): string
 	{
@@ -45,15 +51,15 @@ export const ParserMention = {
 				userName = `User ${userId}`;
 			}
 
-			let className = 'bx-im-mention';
+			let className = MENTION_BASE_CLASS;
 			if (getCore().getUserId() === userId)
 			{
-				className += ' --highlight';
+				className += ` ${MentionModifier.highlight}`;
 			}
 
 			if (user && user.type === UserType.extranet)
 			{
-				className += ' --extranet';
+				className += ` ${MentionModifier.extranet}`;
 			}
 
 			return Dom.create({
@@ -87,7 +93,7 @@ export const ParserMention = {
 			return Dom.create({
 				tag: 'span',
 				attrs: {
-					className: 'bx-im-mention',
+					className: MENTION_BASE_CLASS,
 					'data-type': (isLines ? MessageMentionType.lines : MessageMentionType.chat),
 					'data-value': (isLines ? `imol|${chatId}` : `chat${chatId}`),
 				},
@@ -133,7 +139,7 @@ export const ParserMention = {
 			return Dom.create({
 				tag: 'span',
 				attrs: {
-					className: 'bx-im-mention',
+					className: MENTION_BASE_CLASS,
 					'data-type': MessageMentionType.context,
 					'data-dialog-id': dialogId,
 					'data-message-id': messageId,
@@ -209,9 +215,9 @@ export const ParserMention = {
 		mentionHandler.handleClick(event);
 	},
 
-	renderAllParticipantsMention(userName: string): HTMLElement
+	renderAllParticipantsMention(userName: string): string
 	{
-		const className = 'bx-im-mention';
+		const className = `${MENTION_BASE_CLASS} ${MentionModifier.highlight}`;
 
 		return Dom.create({
 			tag: 'span',

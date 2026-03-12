@@ -3,6 +3,7 @@
  */
 jn.define('utils/object', (require, exports, module) => {
 	const { md5 } = require('utils/hash');
+	const { isNil } = require('utils/type');
 	const { useCallback } = require('utils/function');
 
 	/**
@@ -612,6 +613,40 @@ jn.define('utils/object', (require, exports, module) => {
 		return result;
 	}
 
+	/**
+	 * @param {object} object``
+	 * @param {function(value: *, key: string): boolean} [predicate]
+	 * @returns {object}
+	 */
+	function omitBy(object, predicate = Boolean)
+	{
+		if (isNil(object))
+		{
+			return {};
+		}
+
+		return Object.fromEntries(
+			Object.entries(object).filter(([key, value]) => !predicate(value, key)),
+		);
+	}
+
+	/**
+	 * @param {object} object
+	 * @param {function(value: *, key: string): boolean} [predicate]
+	 * @returns {object}
+	 */
+	function pickBy(object, predicate = Boolean)
+	{
+		if (isNil(object))
+		{
+			return {};
+		}
+
+		return Object.fromEntries(
+			Object.entries(object).filter(([key, value]) => predicate(value, key)),
+		);
+	}
+
 	module.exports = {
 		clone,
 		merge,
@@ -622,6 +657,8 @@ jn.define('utils/object', (require, exports, module) => {
 		isEqual,
 		isObjectLike,
 		isArray,
+		omitBy,
+		pickBy,
 		isMap,
 		isSet,
 		isEmpty,

@@ -302,10 +302,12 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 
 		shouldRenderCollabName()
 		{
+			const isCollabContext = State.calType === CalendarType.USER && env.isCollaber;
+
 			return this.event.getCollabId()
 				&& CollabManager.getCollabName(this.event.getCollabId())
 				&& !this.event.isDeclined()
-				&& !this.event.isGroupCalendar()
+				&& (isCollabContext ? true : !this.event.isGroupCalendar())
 			;
 		}
 

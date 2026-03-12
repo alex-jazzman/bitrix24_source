@@ -1,2 +1,0 @@
-<?php
-$MESS["MAIL_CONFIG_PERMISSIONS_CANCEL_BUTTON_TEXT"] = "Болдырмау";

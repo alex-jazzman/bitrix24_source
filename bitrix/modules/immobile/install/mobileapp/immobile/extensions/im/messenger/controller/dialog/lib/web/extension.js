@@ -10,7 +10,6 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 
 	const AppTheme = require('apptheme');
 	const { NavigationTabId } = require('im/messenger/const');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
@@ -307,13 +306,6 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 
 		static changeTabTo(tabId)
 		{
-			if (!Feature.isMessengerV2Enabled)
-			{
-				BX.postComponentEvent('onTabChange', [tabId], 'im.navigation');
-
-				return;
-			}
-
 			if (!serviceLocator.has('navigation-controller'))
 			{
 				return;

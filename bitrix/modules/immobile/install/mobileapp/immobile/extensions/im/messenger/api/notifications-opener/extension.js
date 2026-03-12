@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/api/notifications-opener', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	function getTopMenuNotificationsButton(parentWidget)
 	{
@@ -45,6 +46,8 @@ jn.define('im/messenger/api/notifications-opener', (require, exports, module) =>
 				},
 			},
 		);
+
+		AnalyticsService.getInstance().sendOpenNotifications();
 	}
 
 	module.exports = {

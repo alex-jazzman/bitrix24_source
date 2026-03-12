@@ -13,8 +13,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	var _ids = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ids");
 	var _onClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClose");
 	var _onUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUpdate");
+	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	var _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog");
 	var _createFooter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createFooter");
+	var _clickCreate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clickCreate");
 	var _addTaskItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addTaskItems");
 	var _deleteTaskItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteTaskItems");
 	var _updateTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTask");
@@ -62,6 +64,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _addTaskItems, {
 	      value: _addTaskItems2
 	    });
+	    Object.defineProperty(this, _clickCreate, {
+	      value: _clickCreate2
+	    });
 	    Object.defineProperty(this, _createFooter, {
 	      value: _createFooter2
 	    });
@@ -92,6 +97,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _analytics, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta] = meta;
 	    main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.TaskAdded, event => {
 	      const task = event.getData().task;
@@ -107,6 +116,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId] = params.taskId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _onClose)[_onClose] = params.onClose;
 	    babelHelpers.classPrivateFieldLooseBase(this, _onUpdate)[_onUpdate] = params.onUpdate;
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = params.analytics;
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _ids)[_ids] && !babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].service.areIdsLoaded(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId])) {
 	      return;
 	    }
@@ -164,27 +174,33 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  const footer = main_core.Tag.render(_t || (_t = _`
 			<span class="ui-selector-footer-link ui-selector-footer-link-add">${0}</span>
 		`), babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].footerText);
-	  main_core.Event.bind(footer, 'click', () => {
-	    var _this$dialog$getTagSe;
-	    tasks_v2_application_taskCard.TaskCard.showCompactCard({
-	      title: (_this$dialog$getTagSe = this.dialog.getTagSelector()) == null ? void 0 : _this$dialog$getTagSe.getTextBoxValue(),
-	      groupId: babelHelpers.classPrivateFieldLooseBase(this, _task)[_task].groupId,
-	      [babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].relationToField]: babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]
-	    });
-	    this.dialog.clearSearch();
-	    this.dialog.freeze();
-	    const unfreeze = () => {
-	      this.dialog.unfreeze();
-	      main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.CardClosed, unfreeze);
-	      main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.FullCardClosed, unfreeze);
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _ids)[_ids]) {
-	        this.dialog.hide();
-	      }
-	    };
-	    main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.CardClosed, unfreeze);
-	    main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.FullCardClosed, unfreeze);
-	  });
+	  main_core.Event.bind(footer, 'click', babelHelpers.classPrivateFieldLooseBase(this, _clickCreate)[_clickCreate].bind(this));
 	  return footer;
+	}
+	function _clickCreate2() {
+	  var _this$dialog$getTagSe, _babelHelpers$classPr6, _babelHelpers$classPr7;
+	  tasks_v2_application_taskCard.TaskCard.showCompactCard({
+	    title: (_this$dialog$getTagSe = this.dialog.getTagSelector()) == null ? void 0 : _this$dialog$getTagSe.getTextBoxValue(),
+	    groupId: babelHelpers.classPrivateFieldLooseBase(this, _task)[_task].groupId,
+	    [babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].relationToField]: babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId],
+	    analytics: {
+	      context: (_babelHelpers$classPr6 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics]) == null ? void 0 : _babelHelpers$classPr7.context) != null ? _babelHelpers$classPr6 : tasks_v2_const.Analytics.Section.Tasks,
+	      additionalContext: tasks_v2_const.Analytics.SubSection.TaskCard,
+	      element: tasks_v2_const.Analytics.Element.CreateButton
+	    }
+	  });
+	  this.dialog.clearSearch();
+	  this.dialog.freeze();
+	  const unfreeze = () => {
+	    this.dialog.unfreeze();
+	    main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.CardClosed, unfreeze);
+	    main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.FullCardClosed, unfreeze);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _ids)[_ids]) {
+	      this.dialog.hide();
+	    }
+	  };
+	  main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.CardClosed, unfreeze);
+	  main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.FullCardClosed, unfreeze);
 	}
 	function _addTaskItems2(ids) {
 	  if (!this.dialog || babelHelpers.classPrivateFieldLooseBase(this, _isTemplate)[_isTemplate]) {
@@ -217,9 +233,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  const idsToDelete = currentTaskIds.filter(id => !newTaskIds.includes(id));
 	  const idsToAdd = newTaskIds.filter(id => !currentTaskIds.includes(id));
 	  if (idsToDelete.length > 0 || idsToAdd.length > 0) {
-	    var _babelHelpers$classPr6, _babelHelpers$classPr7;
+	    var _babelHelpers$classPr8, _babelHelpers$classPr9;
 	    await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].service.delete(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId], idsToDelete), babelHelpers.classPrivateFieldLooseBase(this, _add)[_add](idsToAdd)]);
-	    (_babelHelpers$classPr6 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdate))[_onUpdate]) == null ? void 0 : _babelHelpers$classPr6.call(_babelHelpers$classPr7);
+	    (_babelHelpers$classPr8 = (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdate))[_onUpdate]) == null ? void 0 : _babelHelpers$classPr8.call(_babelHelpers$classPr9);
 	  }
 	}
 	async function _add2(ids) {
@@ -245,8 +261,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  };
 	}
 	function _get_items() {
-	  var _ref, _babelHelpers$classPr8, _babelHelpers$classPr9;
-	  return babelHelpers.classPrivateFieldLooseBase(this, _mapIdsToItemIds)[_mapIdsToItemIds]((_ref = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _ids)[_ids]) != null ? _babelHelpers$classPr8 : (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _task)[_task]) == null ? void 0 : _babelHelpers$classPr9[babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].idsField]) != null ? _ref : []);
+	  var _ref, _babelHelpers$classPr10, _babelHelpers$classPr11;
+	  return babelHelpers.classPrivateFieldLooseBase(this, _mapIdsToItemIds)[_mapIdsToItemIds]((_ref = (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _ids)[_ids]) != null ? _babelHelpers$classPr10 : (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _task)[_task]) == null ? void 0 : _babelHelpers$classPr11[babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].idsField]) != null ? _ref : []);
 	}
 	function _mapIdsToItemIds2(ids) {
 	  return ids.map(id => [babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId], tasks_v2_lib_idUtils.idUtils.unbox(id)]);

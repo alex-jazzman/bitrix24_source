@@ -207,6 +207,36 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		upsertOne(state, action, oldTaskState, newTaskState);
 	};
 
+	const prepareUpdateAuditorsNewState = (oldTaskState, added, deleted) => {
+		const existingAuditors = oldTaskState.auditors || [];
+		const existingSet = new Set(existingAuditors);
+		const deletedSet = new Set(deleted.map((id) => Number(id)));
+
+		const newAuditors = [
+			...existingAuditors.filter((id) => !deletedSet.has(id)),
+			...added.map((id) => Number(id)).filter((id) => !existingSet.has(id)),
+		];
+
+		const newTaskState = {
+			...oldTaskState,
+			auditors: newAuditors,
+			isConsideredForCounterChange: true,
+		};
+
+		return prepareNewReduxState(newTaskState);
+	};
+
+	const updateAuditorsPending = (state, action) => {
+		const { taskId, added, deleted } = action.meta.arg;
+
+		const oldTaskState = state.entities[taskId];
+		if (oldTaskState)
+		{
+			const newTaskState = prepareUpdateAuditorsNewState(oldTaskState, added, deleted);
+			upsertOne(state, action, oldTaskState, newTaskState);
+		}
+	};
+
 	const prepareStartTimerNewState = (oldTaskState) => ({
 		...oldTaskState,
 		status: TaskStatus.IN_PROGRESS,
@@ -842,6 +872,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 
 	const unfollowFulfilled = onCommonActionFulfilled;
 
+	const updateAuditorsFulfilled = onCommonActionFulfilled;
+
 	const startTimerFulfilled = onCommonActionFulfilled;
 
 	const pauseTimerFulfilled = onCommonActionFulfilled;
@@ -1023,6 +1055,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		followFulfilled,
 		unfollowPending,
 		unfollowFulfilled,
+		updateAuditorsPending,
+		updateAuditorsFulfilled,
 		startTimerPending,
 		startTimerFulfilled,
 		pauseTimerPending,

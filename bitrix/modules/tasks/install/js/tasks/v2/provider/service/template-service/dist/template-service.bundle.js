@@ -22,7 +22,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  getPermissions(task) {
 	    var _task$permissions;
 	    const currentUserId = tasks_v2_core.Core.getParams().currentUser.id;
-	    const permissions = (_task$permissions = task.permissions) != null ? _task$permissions : [];
+	    const permissions = ((_task$permissions = task.permissions) != null ? _task$permissions : []).map(p => ({
+	      ...p
+	    }));
 	    babelHelpers.classPrivateFieldLooseBase(this, _grantUser)[_grantUser](currentUserId, permissions);
 	    if (!tasks_v2_lib_idUtils.idUtils.isReal(task.id) && task.creatorId !== currentUserId) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _grantUser)[_grantUser](task.creatorId, permissions);
@@ -217,11 +219,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    if (((_template$checklist = template.checklist) == null ? void 0 : _template$checklist.length) > 0) {
 	      await tasks_v2_provider_service_checkListService.checkListService.load(id, tmpId);
 	    }
-	    tasks_v2_provider_service_taskService.taskService.updateStoreTask(tmpId, {
+	    const fields = {
 	      title: template.title,
 	      description: template.description,
-	      creatorId: tasks_v2_core.Core.getParams().currentUser.id,
-	      responsibleIds: template.responsibleIds,
+	      creatorId: template.creatorId,
+	      responsibleIds: template.isForNewUser ? [0] : template.responsibleIds,
 	      deadlineAfter: template.deadlineAfter,
 	      needsControl: template.needsControl,
 	      startDatePlanAfter: template.startDatePlanAfter,
@@ -240,8 +242,17 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      relatedTaskIds: template.relatedTaskIds,
 	      allowsTimeTracking: template.allowsTimeTracking,
 	      estimatedTime: template.estimatedTime,
-	      permissions: template.estimatedTime
-	    });
+	      permissions: [],
+	      userFields: template.userFields,
+	      isForNewUser: template.isForNewUser,
+	      replicate: template.replicate,
+	      replicateParams: template.replicateParams
+	    };
+	    fields.permissions = permissionBuilder.getPermissions(fields);
+	    if (main_core.Type.isArrayFilled(fields.userFields)) {
+	      fields.userFields = tasks_v2_component_fields_userFields.userFieldsManager.prepareUserFieldsForTaskFromTemplate(fields.userFields, tasks_v2_core.Core.getParams().templateUserFieldScheme);
+	    }
+	    tasks_v2_provider_service_taskService.taskService.updateStoreTask(tmpId, fields);
 	  }
 	  async add(template) {
 	    try {
@@ -276,7 +287,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 	  async copy(template) {
 	    try {
-	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateAdd, {
+	      var _template$checklist3;
+	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateCopy, {
 	        template: tasks_v2_provider_service_taskService.TaskMappers.mapModelToDto({
 	          ...template,
 	          id: template.copiedFromId
@@ -294,8 +306,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	        template: tasks_v2_provider_service_taskService.taskService.getStoreTask(data.id),
 	        initialTemplate: template
 	      });
-	      if (template.checklist.length > 0) {
-	        void tasks_v2_provider_service_checkListService.checkListService.load(data.id);
+	      if (((_template$checklist3 = template.checklist) == null ? void 0 : _template$checklist3.length) > 0) {
+	        void tasks_v2_provider_service_checkListService.checkListService.save(data.id, this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](template.checklist));
 	      }
 	      return [data.id, null];
 	    } catch (error) {
@@ -367,15 +379,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	        withSubTasks
 	      });
 	      data.templateId = 0;
-	      if (task.responsibleIds.length > 1) {
-	        const multiResponsibleIds = task.responsibleIds.filter(id => id !== tasks_v2_core.Core.getParams().currentUser.id);
-	        await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskMultiTaskAdd, {
-	          taskId: data.id,
-	          userIds: multiResponsibleIds
-	        });
-	        tasks_v2_provider_service_relationService.subTasksService.addStore(task.id, multiResponsibleIds.map(id => `userTask${id}`));
-	      }
-	      tasks_v2_provider_service_taskService.taskService.onAfterTaskAdded(task, data);
+	      await tasks_v2_provider_service_taskService.taskService.onAfterTaskAdded(task, data);
 	      return [data.id, null];
 	    } catch (error) {
 	      var _error$errors3, _error$errors3$;
@@ -386,11 +390,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  async update(id, fields) {
 	    const templateBefore = tasks_v2_provider_service_taskService.taskService.getStoreTask(id);
 	    if (!tasks_v2_provider_service_taskService.taskService.hasChanges(templateBefore, fields)) {
-	      return;
+	      return {};
 	    }
 	    tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, fields);
 	    if (!tasks_v2_lib_idUtils.idUtils.isReal(id)) {
-	      return;
+	      return {};
 	    }
 	    main_core_events.EventEmitter.emit(tasks_v2_const.EventName.TemplateBeforeUpdate, {
 	      template: tasks_v2_provider_service_taskService.taskService.getStoreTask(id),
@@ -399,7 +403,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	        ...fields
 	      }
 	    });
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateDebounced)[_updateDebounced](id, fields, templateBefore);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _updateDebounced)[_updateDebounced](id, fields, templateBefore);
 	  }
 	  async delete(id) {
 	    const templateBeforeDelete = tasks_v2_provider_service_taskService.taskService.getStoreTask(id);
@@ -457,11 +461,14 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	        ...fields
 	      })
 	    });
+	    promise.resolve({});
 	  } catch (error) {
 	    tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, templateBefore);
 	    console.error(tasks_v2_const.Endpoint.TemplateUpdate, error);
+	    promise.resolve({
+	      [tasks_v2_const.Endpoint.TemplateUpdate]: error.errors
+	    });
 	  }
-	  promise.resolve();
 	}
 	function Resolvable() {
 	  const promise = new Promise(resolve => {

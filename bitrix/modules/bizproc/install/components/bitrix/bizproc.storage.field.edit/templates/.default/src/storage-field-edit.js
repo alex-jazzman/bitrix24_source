@@ -1,4 +1,4 @@
-import { Type, Dom, Event, Loc, Reflection, ajax, Runtime } from 'main.core';
+import { Type, Dom, Event, Loc, Reflection, ajax } from 'main.core';
 import { Button, ButtonManager } from 'ui.buttons';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { Loader } from 'main.loader';
@@ -71,12 +71,6 @@ export class StorageFieldEdit
 			return;
 		}
 
-		const userTypeIdSelector = this.getInput('type');
-		if (userTypeIdSelector)
-		{
-			Event.bind(userTypeIdSelector, 'change', this.handleUserTypeChange.bind(this));
-		}
-
 		Event.bind(this.formNode, 'submit', (event: Event) => {
 			event.preventDefault();
 			const eventName = event.submitter?.name;
@@ -118,8 +112,13 @@ export class StorageFieldEdit
 
 	onHandleSubmitForm(eventName: string): void
 	{
-		const fields = this.#collectFormFields();
-		const isUpdate = fields.id > 0;
+		const formPrepared = ajax.prepareForm(this.formNode);
+		if (!formPrepared || !formPrepared.data)
+		{
+			return;
+		}
+		const { data } = formPrepared;
+		const isUpdate = data.id > 0;
 		const isRemove = eventName === 'remove';
 
 		if (isRemove)
@@ -128,8 +127,8 @@ export class StorageFieldEdit
 				Loc.getMessage('BIZPROC_STORAGE_FIELD_EDIT_CONFIRM_MESSAGE') ?? '',
 				(messageBox) => {
 					this.sendForm(
-						'bizproc.storage.deleteField',
-						{ id: fields.id },
+						'bizproc.v2.StorageField.delete',
+						{ id: data.id },
 						'BIZPROC_STORAGE_FIELD_EDIT_DELETE_MESSAGE',
 						messageBox,
 					);
@@ -144,13 +143,12 @@ export class StorageFieldEdit
 			return;
 		}
 
-		let action = isUpdate ? 'bizproc.storage.updateField' : 'bizproc.storage.addField';
+		let action = isUpdate ? 'bizproc.v2.StorageField.update' : 'bizproc.v2.StorageField.add';
 		let successMessageCode = 'BIZPROC_STORAGE_FIELD_EDIT_SAVE_MESSAGE';
-		const data = { field: fields };
 		if (this.skipSave)
 		{
-			action = 'bizproc.storage.getPreparedForm';
-			successMessageCode = 'BIZPROC_STORAGE_FIELD_EDIT_ADD_MESSAGE'
+			action = 'bizproc.v2.StorageField.getPreparedForm';
+			successMessageCode = 'BIZPROC_STORAGE_FIELD_EDIT_ADD_MESSAGE';
 		}
 
 		data.format = true;
@@ -160,58 +158,6 @@ export class StorageFieldEdit
 			data,
 			successMessageCode,
 		);
-	}
-
-	#collectFormFields(): Record<string, any>
-	{
-		const disabledElements = this.formNode.querySelectorAll('[disabled]');
-		disabledElements.forEach((el) => {
-			el.removeAttribute('disabled');
-		});
-
-		const formData = new FormData(this.formNode);
-		const fields: Record<string, any> = {};
-
-		const checkboxes = this.formNode.querySelectorAll('input[type="checkbox"]');
-		checkboxes.forEach((checkbox) => {
-			if (!checkbox.checked)
-			{
-				formData.set(checkbox.name, 'N');
-			}
-		});
-
-		for (const [key, value] of formData.entries())
-		{
-			this.#setNestedValue(fields, key, value);
-		}
-
-		disabledElements.forEach((el) => {
-			el.setAttribute('disabled', 'disabled');
-		});
-
-		return fields;
-	}
-
-	#setNestedValue(obj: Object, key: string, value): void
-	{
-		const keys = key.match(/[^[\]]+/g);
-		if (!keys)
-		{
-			return;
-		}
-
-		let current = obj;
-		for (let i = 0; i < keys.length - 1; i++)
-		{
-			const part = keys[i];
-			if (!current[part] || !Type.isObject(current[part]))
-			{
-				current[part] = {};
-			}
-			current = current[part];
-		}
-
-		current[keys[keys.length - 1]] = value;
 	}
 
 	sendForm(action: string, data: Object, successMessageCode: string, messageBox?: any): void
@@ -241,8 +187,8 @@ export class StorageFieldEdit
 					if (slider)
 					{
 						const dictionary: BX.SidePanel.Dictionary = slider.getData();
-						const fieldData = (action === 'bizproc.storage.deleteField')
-							? { id: data?.id || null, action: action }
+						const fieldData = (action === 'bizproc.v2.StorageField.delete')
+							? { id: data?.id || null, action }
 							: response.data
 						;
 						dictionary.set(
@@ -295,24 +241,13 @@ export class StorageFieldEdit
 		});
 	}
 
-	handleUserTypeChange(): void
-	{
-		const userTypeId = this.getSelectedUserTypeId();
-		if (!userTypeId)
-		{
-			return;
-		}
-
-		// TODO render default value
-	}
-
 	getSettingsContainer(): ?Element
 	{
 		this.container = this.formNode;
 		if (this.container && !this.settingsContainer)
 		{
 			this.settingsContainer = this.container.querySelector(
-				'[data-role="bizproc-storage-field-settings-container"]'
+				'[data-role="bizproc-storage-field-settings-container"]',
 			);
 		}
 

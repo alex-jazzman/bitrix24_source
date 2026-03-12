@@ -3,6 +3,7 @@
 use Bitrix\Main\Loader;
 use Bitrix\Mail\Helper;
 
+\Bitrix\Main\UI\Extension::load(['mail.message-body']);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 
 $renderLog = function($log) use ($arResult)

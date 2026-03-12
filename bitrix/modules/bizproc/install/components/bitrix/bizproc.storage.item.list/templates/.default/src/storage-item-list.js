@@ -17,7 +17,7 @@ export class StorageItemList
 		MessageBox.confirm(
 			Loc.getMessage('BIZPROC_STORAGE_ITEM_LIST_CONFIRM_MESSAGE') ?? '',
 			(messageBox) => {
-				BX.ajax.runAction('bizproc.storage.delete', { data: {id: storageId} })
+				BX.ajax.runAction('bizproc.storage.delete', { data: { id: storageId } })
 					.then((response) => {
 						if (response.data)
 						{
@@ -38,7 +38,7 @@ export class StorageItemList
 
 							top.BX.Event.EventEmitter.emit(
 								'BX.Bizproc.Component.StorageItemList:onStorageRemove',
-								{ storageId: storageId }
+								{ storageId },
 							);
 						}
 					})

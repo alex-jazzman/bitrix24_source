@@ -42,9 +42,17 @@ export class ButtonCounter
 		this.#counter.update(value);
 	}
 
+	/*
+	@deprecated use setStyle instead
+	 */
 	setColor(color: string): void
 	{
 		this.#counter.setColor(color);
+	}
+
+	setStyle(style: ButtonCounterStyle): void
+	{
+		this.#counter.setStyle(style);
 	}
 
 	validateOptions(options: ButtonCounterOptions): void

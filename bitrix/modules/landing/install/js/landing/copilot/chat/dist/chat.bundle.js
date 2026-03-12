@@ -12,6 +12,12 @@ this.BX.Landing = this.BX.Landing || {};
 	    const entityId = options.entityId;
 	    const chatId = (_options$chatId = options.chatId) != null ? _options$chatId : null;
 	    const scenario = (_options$scenario = options.scenario) != null ? _options$scenario : 'site_with_ai';
+	    const chatTitle = main_core.Loc.getMessage('LANDING_COPILOT_CHAT_TITLE_MSGVER_2', {
+	      '#COPILOT_NAME#': this.getCopilotName()
+	    });
+	    const chatBotTitle = main_core.Loc.getMessage('LANDING_COPILOT_CHAT_BOT_TITLE_MSGVER_2', {
+	      '#COPILOT_NAME#': this.getCopilotName()
+	    });
 	    return new BX.AI.CopilotChat.Core.CopilotChat({
 	      entityId,
 	      chatId,
@@ -42,12 +48,12 @@ this.BX.Landing = this.BX.Landing || {};
 	          }
 	        },
 	        header: {
-	          title: main_core.Loc.getMessage('LANDING_COPILOT_CHAT_TITLE'),
+	          title: chatTitle,
 	          subtitle: main_core.Loc.getMessage('LANDING_COPILOT_CHAT_SUBTITLE'),
 	          avatar: '/bitrix/js/landing/copilot/chat/images/avatar.png?v2'
 	        },
 	        botOptions: {
-	          messageTitle: main_core.Loc.getMessage('LANDING_COPILOT_CHAT_BOT_TITLE'),
+	          messageTitle: chatBotTitle,
 	          avatar: '/bitrix/js/landing/copilot/chat/images/avatar.png?v2'
 	        },
 	        slots: {
@@ -81,6 +87,9 @@ this.BX.Landing = this.BX.Landing || {};
 	  }
 	  static getTopPanelHeight() {
 	    return 66;
+	  }
+	  static getCopilotName() {
+	    return main_core.Extension.getSettings('landing.copilot.chat').copilotName;
 	  }
 	}
 	Chat.CopilotChatEvents = ai_copilotChat_core.CopilotChatEvents;

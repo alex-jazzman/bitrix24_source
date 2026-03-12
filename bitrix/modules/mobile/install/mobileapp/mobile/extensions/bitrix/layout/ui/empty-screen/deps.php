@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'feature',
 		'tokens',
 		'utils/string',
 		'utils/object',

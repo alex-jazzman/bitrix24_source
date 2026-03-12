@@ -1,5 +1,0 @@
-<?php
-$MESS["CRM_NAME"] = "CRM";
-$MESS["CRM_PRODUCT_MENU_DESCRIPTION"] = "Туллбар";
-$MESS["CRM_PRODUCT_MENU_NAME"] = "Туллбар";
-$MESS["CRM_PRODUCT_NAME"] = "Тауарлар";

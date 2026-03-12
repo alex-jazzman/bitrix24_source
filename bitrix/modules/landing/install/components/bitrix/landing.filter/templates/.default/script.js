@@ -59,7 +59,7 @@
 				.then((exports) => {
 					const createButton = BX.Landing.Component.Filter.createButton.button;
 					const { CopilotPromoPopup, BannerDispatcher, Metrika } = exports;
-					BannerDispatcher.high.toQueue((onDone) => {
+					BannerDispatcher.normal.toQueue((onDone) => {
 						const metrika = new Metrika(true);
 						metrika.sendData({
 							category: 'site',

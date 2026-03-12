@@ -400,14 +400,20 @@ this.BX.UI.Reaction = this.BX.UI.Reaction || {};
 	            className: `ui-reaction__lottie-animation --${babelHelpers.classPrivateFieldLooseBase(this, _name)[_name]}`
 	          }
 	        });
-	        main_core.bind(babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation], 'DOMLoaded', () => {
+
+	        // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+	        babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation].addEventListener('DOMLoaded', () => {
 	          babelHelpers.classPrivateFieldLooseBase(this, _animatedReaction)[_animatedReaction] = wrapper;
 	          resolve();
 	        });
-	        main_core.bind(babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation], 'data_failed', () => {
+
+	        // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+	        babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation].addEventListener('data_failed', () => {
 	          reject(new Error('UI.ReactionsSelect: V2: Lottie animation data failed to load:'));
 	        });
-	        main_core.bind(babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation], 'loopComplete', () => {
+
+	        // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+	        babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation].addEventListener('loopComplete', () => {
 	          if (babelHelpers.classPrivateFieldLooseBase(this, _infiniteAnimate)[_infiniteAnimate] === false || babelHelpers.classPrivateFieldLooseBase(this, _isAnimationPaused)[_isAnimationPaused]) {
 	            babelHelpers.classPrivateFieldLooseBase(this, _lottieAnimation)[_lottieAnimation].pause();
 	            babelHelpers.classPrivateFieldLooseBase(this, _switchAnimatedToStatic)[_switchAnimatedToStatic]();

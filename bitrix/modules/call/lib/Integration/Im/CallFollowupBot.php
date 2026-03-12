@@ -11,13 +11,18 @@ use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Message;
 use Bitrix\Im\V2\Message\Params;
 use Bitrix\Im\V2\Message\Send\SendingConfig;
+use Bitrix\Im\V2\Service\Context;
 use Bitrix\ImBot;
+use Bitrix\Call\Call\Registry;
 use Bitrix\Call\NotifyService;
 use Bitrix\Call\Integration\AI\ChatMessage;
 use Bitrix\Call\Integration\AI\CallAIService;
 
 \Bitrix\Main\Loader::includeModule('imbot');
 
+/**
+ * @internal
+ */
 class CallFollowupBot extends ImBot\Bot\Base
 {
 	public const MODULE_ID = 'call';
@@ -63,23 +68,31 @@ class CallFollowupBot extends ImBot\Bot\Base
 			if (preg_match("/CALL_ID:([0-9]+)/i", $messageFields['COMMAND_PARAMS'], $matches))
 			{
 				$callId = (int)$matches[1];
-				$call = Im\Call\Registry::getCallWithId($callId);
+				$call = Registry::getCallWithId($callId);
 				if ($call)
 				{
 					$result = CallAIService::getInstance()->restartCallAiTask($callId);
 					if ($result->isSuccess())
 					{
 						$chat = Chat::getInstance($call->getChatId());
-						if (NotifyService::getInstance()->findMessage($chat->getId(), $callId, NotifyService::MESSAGE_TYPE_AI_START, 1) === null)
+						if (
+							!NotifyService::getInstance()->isMessageShown($callId, NotifyService::MESSAGE_TYPE_AI_START)
+							&& NotifyService::getInstance()->findMessage($chat->getId(), $callId, NotifyService::MESSAGE_TYPE_AI_START, 1) === null
+						)
 						{
 							$message = ChatMessage::generateTaskStartMessage($callId, $chat);
 							if ($message)
 							{
 								$sendingConfig = (new SendingConfig())
+									->enableSkipCommandExecution()
 									->enableSkipCounterIncrements()
 									->enableSkipUrlIndex()
 								;
-								NotifyService::getInstance()->sendMessageDeferred($chat, $message, $sendingConfig);
+								$context = (new Context())->setUser($call->getInitiatorId());
+								NotifyService::getInstance()
+									->sendMessageDeferred($chat, $message, $sendingConfig, $context)
+									->setMessageShown($callId, NotifyService::MESSAGE_TYPE_AI_START)
+								;
 							}
 						}
 					}

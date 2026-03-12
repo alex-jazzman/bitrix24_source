@@ -5,19 +5,22 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 	const { Hint } = require('ui-system/popups/aha-moment/src/hint');
 	const { PropTypes } = require('utils/validation');
 	const { AnalyticsEvent } = require('analytics');
-	const { Type } = require('type');
+	const { Spotlight } = require('ui-system/popups/aha-moment/src/spotlight');
 
 	const ButtonType = {
 		CLOSE: 'close',
 		GO_TO_FEATURE: 'go_to_feature',
 	};
 
+	const extensionData = jnExtensionData.get('ui-system/popups/aha-moment');
+	const momentsEnabled = extensionData?.momentsEnabled;
+
 	/**
 	 * @class AhaMoment
 	 * @param {object} props
 	 * @return AhaMoment
 	 */
-	class AhaMoment extends LayoutComponent
+	class AhaMoment
 	{
 		static isShown = false;
 
@@ -28,7 +31,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		 * @param {object} props
 		 * @param {number} props.testId
 		 * @param {object} props.targetRef
-		 * @param {boolean} [props.disableHideByOutsideClick]
+		 * @param {boolean} [props.disableHideByOutsideClick=true]
 		 * @param {object} [props.analyticsLabel]
 		 * @param {string} [props.bottomButtonType]
 		 * @param {object} [props.spotlightParams]
@@ -51,27 +54,31 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 				delay = 0,
 			} = props;
 
-			if (!targetRef)
+			if (!targetRef || !momentsEnabled)
 			{
 				return;
 			}
 
+			const controller = new AhaMoment({});
+
 			if (delay > 0)
 			{
 				setTimeout(() => {
-					AhaMoment.showSpotlight(props);
+					controller.#showSpotlight(props);
 				}, delay);
 
 				return;
 			}
 
-			AhaMoment.showSpotlight(props);
+			controller.#showSpotlight(props);
 		}
 
-		static showSpotlight(props)
+		#showSpotlight(props)
 		{
-			const { spotlight, targetParams } = AhaMoment.createSpotlight(props);
-			const component = AhaMoment.createAhaMoment(props, spotlight, targetParams);
+			const spotlight = new Spotlight(props.targetRef, props);
+			const targetParams = spotlight.setTarget(props.targetParams);
+
+			const component = this.#createAhaMoment(props, spotlight, targetParams);
 
 			if (!AhaMoment.isShown)
 			{
@@ -82,36 +89,14 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 			component.sendAnalytics({
 				event: 'show',
 			});
-		}
 
-		static createSpotlight(props)
-		{
-			const {
-				targetRef,
-				closeButton = true,
-				buttonText,
-				targetParams: targetParamsProps = {},
-			} = props;
-
-			let { disableHideByOutsideClick } = props;
-
-			if (Type.isNil(disableHideByOutsideClick))
+			if (props.onShow)
 			{
-				disableHideByOutsideClick = Boolean(buttonText) || closeButton;
+				props.onShow();
 			}
-
-			const spotlight = dialogs.createSpotlight();
-			const targetParams = spotlight.setTarget(targetRef, {
-				useHighlight: false,
-				type: 'rectangle',
-				disableHideByOutsideClick,
-				...targetParamsProps,
-			});
-
-			return { spotlight, targetParams };
 		}
 
-		static createAhaMoment(props, spotlight, targetParams)
+		#createAhaMoment(props, spotlight, targetParams)
 		{
 			const {
 				targetRef,
@@ -123,13 +108,22 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 
 			const component = new AhaMoment({
 				...restProps,
-				spotlightRef: spotlight,
 				targetParams,
 				closeButton,
 				buttonText,
+				spotlightRef: spotlight,
 			});
+			const hintComponent = Hint({
+				...restProps,
+				targetParams,
+				closeButton,
+				buttonText,
+				onClose: component.handleOnClose,
+				onClick: component.handleOnClick,
+			});
+
 			spotlight.setHandler(component.#eventHandler);
-			spotlight.setComponent(component, {
+			spotlight.setComponent(hintComponent, {
 				showPointer: false,
 				pointerMargin: spotlightParams?.pointerMargin ?? 2,
 				...spotlightParams,
@@ -140,13 +134,8 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 
 		constructor(props)
 		{
-			super(props);
+			this.props = props;
 			this.#setupAutoClose();
-		}
-
-		componentWillUnmount()
-		{
-			this.#clearAutoCloseTimer();
 		}
 
 		#setupAutoClose()
@@ -193,6 +182,14 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 			}).send();
 		}
 
+		#sendButtonClickAnalytics(type)
+		{
+			this.sendAnalytics({
+				event: 'сlick_button',
+				type,
+			});
+		}
+
 		/**
 		 * @param {SpotlightHandlersType} eventName
 		 */
@@ -214,10 +211,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 				return;
 			}
 
-			this.sendAnalytics({
-				event: 'сlick_button',
-				type: 'close',
-			});
+			this.#sendButtonClickAnalytics(ButtonType.CLOSE);
 		};
 
 		closeSpotlight()
@@ -242,10 +236,7 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 					onClose();
 				}
 
-				this.sendAnalytics({
-					event: 'сlick_button',
-					type: 'close',
-				});
+				this.#sendButtonClickAnalytics(ButtonType.CLOSE);
 			}
 		};
 
@@ -266,21 +257,9 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 					console.warn('\'bottomButtonType\' for AhaMoment is not provided');
 				}
 
-				this.sendAnalytics({
-					event: 'сlick_button',
-					type: bottomButtonType,
-				});
+				this.#sendButtonClickAnalytics(bottomButtonType);
 			}
 		};
-
-		render()
-		{
-			return Hint({
-				...this.props,
-				onClose: this.handleOnClose,
-				onClick: this.handleOnClick,
-			});
-		}
 	}
 
 	AhaMoment.defaultProps = {

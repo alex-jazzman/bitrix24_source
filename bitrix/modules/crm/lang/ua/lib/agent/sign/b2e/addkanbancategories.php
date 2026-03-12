@@ -1,3 +1,0 @@
-<?php
-$MESS["CRM_SMART_B2E_FROM_EMPLOYEE_CATEGORY_NAME"] = "Від співробітників";
-$MESS["CRM_SMART_B2E_TO_EMPLOYEE_CATEGORY_NAME"] = "Від компанії";

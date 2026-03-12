@@ -51,7 +51,7 @@
 }
 
 .check-list-widget-item.--parent.--preview:not(.--hidden) {
-	padding: 0 12px 0 12px;
+	padding: 0 14px 0 14px;
 }
 
 .check-list-widget-item.--parent.--preview.--collapsed:not(.--hidden) {
@@ -265,19 +265,19 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	gap: 16px;
+	gap: 12px;
 }
 
 .check-list-widget-parent-item-main-action {
 	display: flex;
 	align-items: center;
-	gap: 16px;
+	gap: 12px;
 }
 
 .check-list-widget-parent-item-main-action-actions {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: 12px;
 }
 
 .check-list-widget-parent-item-main-action-actions .ui-icon-set {
@@ -375,6 +375,7 @@
 .check-list-widget-child-item-title {
 	width: 100%;
 	margin-top: 5px;
+	flex: 1;
 }
 
 .check-list-widget-child-item.--preview.--toggleable .check-list-widget-child-item-title .b24-growing-text-area-edit {

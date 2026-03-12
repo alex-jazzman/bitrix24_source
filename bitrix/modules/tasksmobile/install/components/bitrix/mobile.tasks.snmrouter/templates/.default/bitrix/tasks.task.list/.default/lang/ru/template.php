@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["TASK_COLUMN_CREATED_BY"] = "постановщик";
 $MESS["TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1"] = "исполнитель";
 $MESS["TASK_COLUMN_DEADLINE"] = "срок";
@@ -56,5 +57,3 @@ $MESS["TASKS_TT_PAUSE"] = "Остановить";
 $MESS["TASKS_TT_CANCEL"] = "Отменить";
 $MESS["TASKS_TT_ERROR1_TITLE"] = "По другой задаче уже ведется учет времени";
 $MESS["TASKS_TT_ERROR1_DESC"] = "Вами уже ведется учет времени по задаче \"#TITLE#\". Она будет поставлена на паузу, продолжить?";
-
-?>

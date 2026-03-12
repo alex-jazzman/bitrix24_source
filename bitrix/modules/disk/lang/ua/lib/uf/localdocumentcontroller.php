@@ -1,6 +1,0 @@
-<?
-$MESS["DISK_UF_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_FIND_ATTACHED_OBJECT"] = "Не вдалося знайти прикріплений об'єкт.";
-$MESS["DISK_UF_LOCAL_DOC_CONTROLLER_ERROR_BAD_RIGHTS"] = "Недостатньо прав для роботи з файлом.";
-$MESS["DISK_UF_LOCAL_DOC_CONTROLLER_UPLOAD_NEW_VERSION_IN_COMMENT_M"] = "Завантажив новий файл";
-$MESS["DISK_UF_LOCAL_DOC_CONTROLLER_UPLOAD_NEW_VERSION_IN_COMMENT_F"] = "Завантажила новий файл";
-?>

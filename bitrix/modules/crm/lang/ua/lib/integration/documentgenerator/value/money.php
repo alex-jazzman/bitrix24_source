@@ -1,3 +1,0 @@
-<?
-$MESS['CRM_DOCGEN_VALUE_MONEY_TITLE'] = "Гроші";
-?>

@@ -34,9 +34,11 @@ export class Office365Provider extends ConnectionProvider
 		return true;
 	}
 
-	getSyncLink()
+	async getSyncLink()
 	{
-		return this.syncLink;
+		const { data } = await BX.ajax.runAction('calendar.api.syncajax.getSyncLinks');
+
+		return data.office365 || this.syncLink;
 	}
 
 	hasSetSyncOffice365Settings()

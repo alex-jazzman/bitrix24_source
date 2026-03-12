@@ -6,3 +6,4 @@ $MESS["BI_CONNECTOR_CONFIGURATION_ACTION_DOWNLOAD_BTN"] = "Download";
 $MESS["BI_CONNECTOR_CONFIGURATION_ACTION_ERROR_DATA_STUDIO_SAVE_KEY"] = "Error creating access key.";
 $MESS["BI_CONNECTOR_CONFIGURATION_ACTION_EXPORT_HOLD"] = "Export is not available.";
 $MESS["BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_TARIFF_ERROR"] = "BI Builder is not available on your plan. Please contact your Bitrix24 administrator.";
+$MESS["BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_TOOL_DISABLED"] = "BI Builder is disabled. Please contact your supervisor or Bitrix24 administrator.";

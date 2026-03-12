@@ -9,6 +9,7 @@ import { ChannelMessageMenu } from './classes/channel';
 import { CommentsMessageMenu } from './classes/comments';
 import { CopilotMessageMenu } from './classes/copilot';
 import { AiAssistantMessageMenu } from './classes/ai-assistant';
+import { TaskCommentsMessageMenu } from './classes/task-comments';
 
 import type { ImModelChat } from 'im.v2.model';
 import type { MessageMenuContext } from 'im.v2.lib.menu';
@@ -110,6 +111,7 @@ export class MessageMenuManager
 		this.#defaultMenuByCallback.set(this.#isComment.bind(this), CommentsMessageMenu);
 		this.#defaultMenuByCallback.set(this.#isCopilot.bind(this), CopilotMessageMenu);
 		this.#defaultMenuByCallback.set(this.#isAiAssistant.bind(this), AiAssistantMessageMenu);
+		this.#defaultMenuByCallback.set(this.#isTaskComments.bind(this), TaskCommentsMessageMenu);
 	}
 
 	#isCustomMenuAllowed(context: MessageMenuContext): boolean
@@ -148,9 +150,11 @@ export class MessageMenuManager
 		return null;
 	}
 
-	#getDialog(dialogId: string): ImModelChat
+	#getChatType(dialogId: string): $Values<typeof ChatType>
 	{
-		return Core.getStore().getters['chats/get'](dialogId, true);
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
+
+		return chat.type;
 	}
 
 	#isChannel(context: MessageMenuContext): boolean
@@ -160,9 +164,9 @@ export class MessageMenuManager
 
 	#isComment(context: MessageMenuContext): boolean
 	{
-		const chat = this.#getDialog(context.dialogId);
+		const type = this.#getChatType(context.dialogId);
 
-		return chat.type === ChatType.comment;
+		return type === ChatType.comment;
 	}
 
 	#isCopilot(context: MessageMenuContext): boolean
@@ -173,6 +177,13 @@ export class MessageMenuManager
 	#isAiAssistant(context: MessageMenuContext): boolean
 	{
 		return Core.getStore().getters['users/bots/isAiAssistant'](context.dialogId);
+	}
+
+	#isTaskComments(context: MessageMenuContext): boolean
+	{
+		const type = this.#getChatType(context.dialogId);
+
+		return type === ChatType.taskComments;
 	}
 
 	#hasMenuForMessageType(messageType: MessageType): boolean

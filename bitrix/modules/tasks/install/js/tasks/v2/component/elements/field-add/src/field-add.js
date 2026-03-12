@@ -19,6 +19,10 @@ export const FieldAdd = {
 			type: String,
 			required: true,
 		},
+		disabled: {
+			type: Boolean,
+			default: false,
+		},
 		isLocked: {
 			type: Boolean,
 			default: false,
@@ -26,7 +30,7 @@ export const FieldAdd = {
 	},
 	template: `
 		<HoverPill>
-			<div class="b24-field-add">
+			<div :class="['b24-field-add', { '--disabled': disabled }]">
 				<BIcon :name="icon"/>
 				<div>{{ loc('TASKS_V2_FIELD_ADD') }}</div>
 				<BIcon v-if="isLocked" :name="Outline.LOCK_L" class="b24-field-add__lock"/>

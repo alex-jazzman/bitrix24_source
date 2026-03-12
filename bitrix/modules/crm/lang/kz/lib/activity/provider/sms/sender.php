@@ -1,5 +1,0 @@
-<?php
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_CHANNEL_NOT_FOUND"] = "Жіберу арнасы табылмады";
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_WRONG_CHANNEL"] = "Белгісіз жіберу арнасы";
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_WRONG_FROM"] = "Қате жіберуші";
-$MESS["CRM_ACTIVITY_PROVIDER_SMS_WRONG_TO"] = "Қате алушы";

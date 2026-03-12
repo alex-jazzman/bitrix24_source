@@ -1,26 +1,20 @@
 .bx-im-sticker-item {
-	--im-stickers__sticker-grid-size: 70px;
-
-	width: var(--im-stickers__sticker-grid-size);
-	height: var(--im-stickers__sticker-grid-size);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	position: relative;
+	width: 85px;
+	height: 85px;
 	border-radius: 6px;
-	flex: 0 0 auto;
-	padding: 9px;
-	background: transparent;
-	transition: background-color .12s ease;
+	flex-shrink: 0;
+	padding: 7px 6px 6px 7px;
 	cursor: pointer;
+	transition: padding 0.2s ease;
 }
 
 .bx-im-sticker-item:hover {
-	background: rgba(var(--im-color-palette-gray-90-rgb), .06);
+	padding: 0;
 }
 
 .bx-im-sticker-item img {
 	display: block;
 	width: 100%;
 	height: 100%;
+	object-fit: contain;
 }

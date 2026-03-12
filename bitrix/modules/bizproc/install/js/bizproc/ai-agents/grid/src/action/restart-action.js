@@ -1,6 +1,6 @@
-import { Type, Loc } from 'main.core';
+import { Type } from 'main.core';
 
-import { ACTION_TYPE, AJAX_REQUEST_TYPE } from '../constants';
+import { ACTION_TYPE, AJAX_REQUEST_TYPE, GRID_API_ACTION } from '../constants';
 
 import type {
 	RestartActionParams,
@@ -26,6 +26,8 @@ export class RestartAction extends BaseAction
 
 	setActionParams(params: RestartActionParams): void
 	{
+		super.setActionParams(params);
+
 		this.templateId = Number.parseInt(params.templateId, 10);
 	}
 
@@ -33,7 +35,7 @@ export class RestartAction extends BaseAction
 	{
 		return {
 			type: AJAX_REQUEST_TYPE.CONTROLLER,
-			name: 'Integration.AiAgent.Template.start',
+			name: GRID_API_ACTION.RESTART,
 		};
 	}
 

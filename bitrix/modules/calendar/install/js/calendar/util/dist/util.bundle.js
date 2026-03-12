@@ -785,6 +785,12 @@ this.BX = this.BX || {};
 	        return sections;
 	    }
 	  }
+	  static setBitrix24Enabled(value) {
+	    Util.bitrix24Enabled = value;
+	  }
+	  static isBitrix24Enabled() {
+	    return Util.bitrix24Enabled || false;
+	  }
 	}
 	Util.PLANNER_PULL_TAG = 'calendar-planner-#USER_ID#';
 	Util.PLANNER_WATCH_LIST = [];

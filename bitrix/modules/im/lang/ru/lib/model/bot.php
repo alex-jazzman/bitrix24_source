@@ -19,4 +19,3 @@ $MESS["BOT_ENTITY_COUNT_USER_FIELD"] = "Счетчик приглашений в
 $MESS["BOT_ENTITY_APP_ID_FIELD"] = "Идентификатор REST приложения";
 $MESS["BOT_ENTITY_VERIFIED_FIELD"] = "Флаг идентификации";
 $MESS["BOT_ENTITY_OPENLINE_FIELD"] = "Флаг поддержки открытых линий";
-?>

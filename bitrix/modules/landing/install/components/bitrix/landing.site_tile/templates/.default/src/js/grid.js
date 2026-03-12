@@ -18,6 +18,8 @@ export class SiteTile
 		this.siteTileItems = [];
 		this.$container = null;
 		this.scroller = null;
+		this.createByCopilotText = options.createByCopilotText || null;
+		this.copilotGeneratedText = options.copilotGeneratedText || null;
 		let videoSrc = '/bitrix/components/bitrix/landing.site_tile/templates/.default/video/en/siteWithCopilot.webm';
 		this.zone = options.zone || null;
 		if (options.lang === 'ru')
@@ -30,7 +32,7 @@ export class SiteTile
 			Runtime.loadExtension(['ui.banner-dispatcher'])
 				.then((exports) => {
 					const { BannerDispatcher } = exports;
-					BannerDispatcher.critical.toQueue((onDone) => {
+					BannerDispatcher.high.toQueue((onDone) => {
 						const metrika = new Metrika(true);
 						metrika.sendData({
 							category: 'site',
@@ -100,6 +102,8 @@ export class SiteTile
 				articles: item.articles || null,
 				grid: this,
 				copilotProcess: item.copilotProcess,
+				createByCopilotText: this.createByCopilotText,
+				copilotGeneratedText: this.copilotGeneratedText,
 			});
 		});
 

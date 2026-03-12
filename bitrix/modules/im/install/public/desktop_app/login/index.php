@@ -88,6 +88,30 @@ if ($result !== true || !$USER->IsAuthorized())
 	{
 		//user must enter OTP
 		$answer["needOtp"] = true;
+
+		if ($user = \CUser::GetByLogin($postLogin)->fetch())
+		{
+			$userID = $user['ID'];
+			$otp = \Bitrix\Security\Mfa\Otp::getByUser($userID);
+
+			if ($otp->getType() === \Bitrix\Security\Mfa\OtpType::Push)
+			{
+				\CHTTP::SetStatus('401 Unauthorized');
+				header('Content-Type: application/json');
+				$link = (new \Bitrix\Im\V2\Application\Config())->getDesktopDownloadLink();
+				$text = GetMessage('DESKTOP_APP_PUSH_OTP_ERROR', [
+					'[LINK]' => "<a style='color:#ffffff;border-bottom: 1px dashed #ffffff; text-decoration: none; font-weight: bold;' href='$link'>",
+					'[/LINK]' => '</a>'
+				]);
+				$answer = [
+					'success' => false,
+					'reason' => "<div style='position:absolute;top:0;left:0;padding:20px;background:red;width:100%'>$text</div>"
+				];
+				echo json_encode($answer, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+				\Bitrix\Main\Application::getInstance()->end();
+			}
+		}
 	}
 
 	if ($result && $result["CODE"])

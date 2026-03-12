@@ -168,8 +168,10 @@ export class UserService
 	{
 		void this.#store.dispatch('chats/update', {
 			dialogId,
-			fields: { inited: false },
+			fields: { inited: false, role: UserRole.guest },
 		});
+
+		void this.#store.dispatch('recent/pin', { id: dialogId, action: false });
 		void this.#store.dispatch('recent/hide', { id: dialogId });
 
 		const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);

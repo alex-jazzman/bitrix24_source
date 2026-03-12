@@ -53,7 +53,7 @@ export const Title = {
 	template: `
 		<GrowingTextArea
 			v-model="title"
-			class="tasks-field-title"
+			class="tasks-field-title print-padding-left-inset-md"
 			:data-task-id="taskId"
 			:data-task-field-id="titleMeta.id"
 			:data-task-field-value="task.title"

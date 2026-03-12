@@ -63,6 +63,8 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			this.scrollViewRef = null;
 			this.fieldsManager = new FieldChangeManager();
 			this.closeButtonUpdated = false;
+			this.pendingScrollRef = null;
+			this.isKeyboardVisible = false;
 
 			this.state = {
 				data: props.data ?? {},
@@ -92,7 +94,8 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 				});
 			}
 
-			Keyboard.on(Keyboard.Event.Hidden, () => this.#updateSaveButtonState());
+			Keyboard.on(Keyboard.Event.Hidden, this.#onKeyboardHidden);
+			Keyboard.on(Keyboard.Event.Shown, this.#onKeyboardShown);
 		}
 
 		componentDidUpdate()
@@ -117,11 +120,25 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 
 		componentWillUnmount()
 		{
-			Keyboard.off(Keyboard.Event.Hidden, () => this.#updateSaveButtonState());
+			Keyboard.off(Keyboard.Event.Hidden, this.#onKeyboardHidden);
+			Keyboard.off(Keyboard.Event.Shown, this.#onKeyboardShown);
 		}
 
-		#updateSaveButtonState()
-		{
+		#onKeyboardHidden = () => {
+			this.isKeyboardVisible = false;
+			this.#updateSaveButtonState();
+		};
+
+		#onKeyboardShown = () => {
+			this.isKeyboardVisible = true;
+			if (this.pendingScrollRef)
+			{
+				this.#scrollToField(this.pendingScrollRef);
+				this.pendingScrollRef = null;
+			}
+		};
+
+		#updateSaveButtonState() {
 			if (!this.saveButtonRef)
 			{
 				return;
@@ -150,11 +167,6 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 						{
 							style: {
 								opacity: this.contentOpacity,
-							},
-							keyboardButton: {
-								text: Loc.getMessage('M_PROFILE_EDIT_BUTTON_SUBMIT'),
-								testId: this.getTestId('button-submit'),
-								onClick: () => Keyboard.dismiss(),
 							},
 						},
 						() => ([
@@ -189,6 +201,8 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 					),
 					withScroll: true,
 					testId: this.getTestId('box'),
+					onPan: () => Keyboard.dismiss(),
+					resizableByKeyboard: true,
 				},
 				AreaList(
 					{
@@ -254,13 +268,24 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			});
 		}
 
-		onFieldFocus = async (ref) => {
+		onFieldFocus = (ref) => {
+			this.pendingScrollRef = ref;
+
+			if (this.isKeyboardVisible)
+			{
+				this.#scrollToField(ref);
+				this.pendingScrollRef = null;
+			}
+		};
+
+		#scrollToField(ref)
+		{
 			const position = this.scrollViewRef?.getPosition(ref);
 			if (position)
 			{
 				this.scrollViewRef?.scrollTo({ y: position.y - 20, animated: true });
 			}
-		};
+		}
 
 		bindScrollViewRef = (ref) => {
 			this.scrollViewRef = ref;

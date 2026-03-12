@@ -199,6 +199,23 @@ export default class Type
 	}
 
 	/**
+	 * Checks that value is EventTarget like object
+	 * @param value
+	 * @return {boolean}
+	 */
+	static isEventTargetLike(value: any): boolean
+	{
+		return (
+			Type.isObject(value)
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+			&& Type.isFunction(value.addEventListener)
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+			&& Type.isFunction(value.removeEventListener)
+			&& Type.isFunction(value.dispatchEvent)
+		);
+	}
+
+	/**
 	 * Checks that value is text node
 	 * @param value
 	 * @return {boolean}
@@ -350,5 +367,17 @@ export default class Type
 	static isFormData(value: any)
 	{
 		return value instanceof FormData;
+	}
+
+	static isJsonValue(value: any): boolean
+	{
+		return (
+			Type.isPlainObject(value)
+			|| Type.isString(value)
+			|| Type.isNumber(value)
+			|| Type.isBoolean(value)
+			|| Type.isNull(value)
+			|| Type.isArray(value)
+		);
 	}
 }

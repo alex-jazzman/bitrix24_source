@@ -13,6 +13,7 @@ jn.define('onboarding/const', (require, exports, module) => {
 
 	const CaseName = {
 		ON_PROFILE_SHOULD_BE_FILLED: 'mobile:onProfileShouldBeFilled',
+		ON_DETAIL_CARD_TELEGRAM_BOT: 'mobile:onDetailCardTelegramBot',
 	};
 
 	const Preset = {

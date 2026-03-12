@@ -14,6 +14,7 @@ export class CloudRecordInfoPopup
 		this.popupTemplate = null;
 		this.isCloudRecordFeaturesEnabled = config.isCloudRecordFeaturesEnabled;
 		this.callId = config.callId;
+		this.targetContainer = config.targetContainer || document.body;
 
 		this.callbacks = {
 			turnOn: BX.type.isFunction(config.turnOn) ? config.turnOn : BX.DoNothing,
@@ -281,9 +282,9 @@ export class CloudRecordInfoPopup
 		}
 
 		this.popup = new Popup({
-			className: 'call-cloud-record-info-popup',
 			bindElement,
-			targetContainer: document.body,
+			className: 'call-cloud-record-info-popup',
+			targetContainer: this.targetContainer,
 			content: this.popupTemplate,
 			bindOptions: {
 				position: 'top',

@@ -50,12 +50,18 @@ export class PopupHeader extends PopupComponentsMakerItem
 	{
 		const previewImage = `url('${Text.encode(theme.previewImage)}')`;
 		Dom.style(container, 'backgroundImage', previewImage);
-		Dom.removeClass(this.layout.container, 'bitrix24-theme-default bitrix24-theme-dark bitrix24-theme-light');
-		let themeClass = 'bitrix24-theme-default';
+
+		if (theme.previewColor)
+		{
+			Dom.style(container, 'backgroundColor', theme.previewColor);
+		}
+
+		Dom.removeClass(this.layout.container, 'bitrix24-dark-theme bitrix24-light-theme bitrix24-default-theme');
+		let themeClass = 'bitrix24-default-theme';
 
 		if (theme.id !== 'default')
 		{
-			themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-theme-dark' : 'bitrix24-theme-light';
+			themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-dark-theme' : 'bitrix24-light-theme';
 		}
 
 		Dom.addClass(this.layout.container, themeClass);

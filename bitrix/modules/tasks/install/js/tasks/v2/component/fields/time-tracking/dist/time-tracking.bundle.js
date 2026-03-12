@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_component_elements_hoverPill,ui_switcher,ui_vue3_components_switcher,tasks_v2_provider_service_taskService,tasks_v2_provider_service_statusService,tasks_v2_component_elements_bottomSheet,tasks_v2_component_elements_userAvatarList,ui_dialogs_messagebox,tasks_v2_lib_highlighter,tasks_v2_provider_service_timeTrackingService,ui_system_input_vue,ui_vue3_components_button,ui_datePicker,tasks_v2_lib_calendar,main_date,ui_system_typography_vue,ui_vue3_directives_hint,tasks_v2_component_elements_userLabel,tasks_v2_component_elements_hint,tasks_v2_lib_timezone,ui_system_skeleton_vue,ui_vue3_components_popup,ui_tooltip,tasks_v2_component_elements_userAvatar,main_core,ui_vue3_vuex,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_showLimit) {
+(function (exports,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_settingsLabel,ui_switcher,ui_vue3_components_switcher,tasks_v2_provider_service_stateService,tasks_v2_provider_service_statusService,tasks_v2_provider_service_taskService,tasks_v2_component_elements_bottomSheet,tasks_v2_component_elements_userAvatarList,ui_dialogs_messagebox,tasks_v2_lib_analytics,tasks_v2_lib_highlighter,tasks_v2_provider_service_timeTrackingService,ui_system_input_vue,ui_vue3_components_button,ui_datePicker,tasks_v2_lib_calendar,main_date,ui_system_typography_vue,ui_vue3_directives_hint,tasks_v2_component_elements_userLabel,tasks_v2_component_elements_hint,tasks_v2_lib_timezone,ui_system_skeleton_vue,ui_vue3_components_popup,ui_tooltip,tasks_v2_component_elements_userAvatar,main_core,ui_vue3_vuex,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_showLimit) {
 	'use strict';
 
 	// @vue/component
@@ -21,7 +21,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  inject: {
 	    task: {},
-	    taskId: {}
+	    taskId: {},
+	    isEdit: {}
 	  },
 	  props: {
 	    bindElement: {
@@ -48,7 +49,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
-	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
+	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`,
+	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`
 	    }),
 	    options() {
 	      return {
@@ -109,7 +111,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  created() {
-	    var _this$task$estimatedT;
+	    var _this$task$allowsTime, _this$task$estimatedT;
+	    this.localAllowsTimeTracking = (_this$task$allowsTime = this.task.allowsTimeTracking) != null ? _this$task$allowsTime : true;
 	    this.localEstimatedTime = (_this$task$estimatedT = this.task.estimatedTime) != null ? _this$task$estimatedT : 0;
 	    this.save();
 	  },
@@ -153,9 +156,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	      this.localAllowsTimeTracking = localAllowsTimeTracking;
 	    },
-	    save() {
+	    async save() {
 	      if (this.task.allowsTimeTracking !== this.localAllowsTimeTracking) {
 	        this.$bitrix.eventEmitter.emit(tasks_v2_const.EventName.TimeTrackingChange);
+	      }
+	      if (!this.isEdit) {
+	        await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateStateFlags`, {
+	          allowsTimeTracking: this.localAllowsTimeTracking
+	        });
+	        void tasks_v2_provider_service_stateService.stateService.set(this.stateFlags);
 	      }
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        allowsTimeTracking: this.localAllowsTimeTracking,
@@ -486,6 +495,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          bindElement: this.$refs.calendarInput.$el,
 	          bindOptions: {
 	            forceBindPosition: true
+	          },
+	          events: {
+	            onClose: () => {
+	              this.isCalendarShown = false;
+	            }
 	          }
 	        },
 	        selectedDates: [selectedDateTs],
@@ -496,7 +510,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	              date
 	            } = event.getData();
 	            this.localCreatedAt = tasks_v2_lib_calendar.calendar.createDateFromUtc(date);
-	            this.isCalendarShown = false;
 	          }
 	        }
 	      });
@@ -522,11 +535,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      const localCreatedAt = new Date(this.localCreatedAt.getTime() - offset);
 	      this.$emit('save', {
 	        taskId: this.taskId,
-	        userId: this.currentUserId,
 	        createdAtTs: Math.floor(localCreatedAt.getTime() / 1000),
 	        seconds: this.localSeconds,
 	        text: this.localText,
-	        source: 'manual'
+	        source: 'manual',
+	        rights: {
+	          edit: true,
+	          remove: true
+	        }
 	      });
 	    }
 	  },
@@ -629,6 +645,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    elapsedTime() {
 	      return this.$store.getters[`${tasks_v2_const.Model.ElapsedTimes}/getById`](this.elapsedId);
 	    },
+	    isEdit() {
+	      var _this$elapsedTime;
+	      return main_core.Type.isNumber((_this$elapsedTime = this.elapsedTime) == null ? void 0 : _this$elapsedTime.id);
+	    },
 	    elapsedTimeDate() {
 	      const format = this.loc('TASKS_V2_DATE_TIME_FORMAT', {
 	        '#DATE#': main_date.DateTimeFormat.getFormat('FORMAT_DATE'),
@@ -682,13 +702,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						class="tasks-time-tracking-list-column --action"
 					>
 						<div
-							v-if="isItemHovered && elapsedTime.rights.edit"
+							v-if="isItemHovered && elapsedTime.rights.edit && isEdit"
 							ref="edit" @click="$emit('edit')"
 						>
 							<BIcon v-hint="editTooltip" :name="Outline.EDIT_L" hoverable/>
 						</div>
 						<div
-							v-if="isItemHovered && elapsedTime.rights.remove"
+							v-if="isItemHovered && elapsedTime.rights.remove && isEdit"
 							ref="remove" @click="$emit('remove')"
 						>
 							<BIcon v-hint="removeTooltip" :name="Outline.TRASHCAN" hoverable/>
@@ -711,7 +731,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    TimeTrackingListItemView
 	  },
 	  inject: {
-	    taskId: {}
+	    task: {},
+	    taskId: {},
+	    analytics: {}
 	  },
 	  props: {
 	    elapsedId: {
@@ -724,6 +746,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  emits: ['save', 'edit', 'cancel'],
+	  setup() {},
 	  data() {
 	    return {
 	      localElapsedId: this.elapsedId,
@@ -737,6 +760,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    isEdit() {
 	      var _this$elapsedTime;
 	      return main_core.Type.isNumber((_this$elapsedTime = this.elapsedTime) == null ? void 0 : _this$elapsedTime.id);
+	    },
+	    isTimeTrackingLocked() {
+	      return !tasks_v2_core.Core.getParams().restrictions.timeTracking.available;
 	    }
 	  },
 	  watch: {
@@ -761,6 +787,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.localElapsedId = await tasks_v2_provider_service_timeTrackingService.timeTrackingService.add(this.taskId, {
 	          id: this.elapsedId,
 	          ...localElapsedTime
+	        });
+	        tasks_v2_lib_analytics.analytics.sendManualTimeTracking(this.analytics, {
+	          taskId: this.taskId
 	        });
 	      }
 	    },
@@ -1133,11 +1162,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div class="tasks-task-time-tracking-timer">
-			<div class="tasks-task-time-tracking-timer-current" :class="currentTimeClass">
+			<div class="tasks-task-time-tracking-timer-current print-font-color-base-1" :class="currentTimeClass">
 				{{ formattedCurrentTime }}
 			</div>
-			<div v-if="hasTotalTime" class="tasks-task-time-tracking-timer-separator"> / </div>
-			<div v-if="hasTotalTime" class="tasks-task-time-tracking-timer-total" :class="totalTimeClass">
+			<div v-if="hasTotalTime" class="tasks-task-time-tracking-timer-separator print-font-color-base-1"> / </div>
+			<div v-if="hasTotalTime" class="tasks-task-time-tracking-timer-total print-font-color-base-1" :class="totalTimeClass">
 				{{ formattedTotalTime }}
 			</div>
 		</div>
@@ -1200,6 +1229,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      contribution: []
 	    };
 	  },
+	  computed: {
+	    isTimeTrackingLocked() {
+	      return !tasks_v2_core.Core.getParams().restrictions.timeTracking.available;
+	    }
+	  },
 	  async mounted() {
 	    if (this.task.numberOfElapsedTimes > 0) {
 	      void this.loadParticipants();
@@ -1242,7 +1276,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					<div class="tasks-task-time-tracking-sheet-header-icons">
 						<BIcon
 							ref="filterIcon"
-							v-if="task.rights.edit"
+							v-if="task.rights.edit && !isTimeTrackingLocked"
 							class="tasks-task-time-tracking-sheet-filter"
 							:name="Outline.FILTER_2_LINES"
 							hoverable
@@ -1335,6 +1369,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
 	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
+	    SettingsLabel: tasks_v2_component_elements_settingsLabel.SettingsLabel,
 	    TextMd: ui_system_typography_vue.TextMd,
 	    TaskTrackingPopup,
 	    TimeTrackingSheet,
@@ -1342,6 +1377,151 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  inject: {
 	    task: {},
+	    isEdit: {},
+	    isTemplate: {}
+	  },
+	  props: {
+	    isSheetShown: {
+	      type: Boolean,
+	      required: true
+	    },
+	    sheetBindProps: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  emits: ['update:isSheetShown'],
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline,
+	      timeTrackingMeta
+	    };
+	  },
+	  data() {
+	    return {
+	      isPopupShown: false,
+	      isFieldHovered: false,
+	      localTimeSpent: 0
+	    };
+	  },
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
+	    }),
+	    timer() {
+	      var _this$task$timers;
+	      return (_this$task$timers = this.task.timers) == null ? void 0 : _this$task$timers.find(timer => timer.userId === this.currentUserId);
+	    },
+	    readonly() {
+	      return this.isTemplate || !this.isEdit;
+	    },
+	    timeSpent() {
+	      var _this$timer$startedAt, _this$timer;
+	      const currentTs = Math.floor(Date.now() / 1000);
+	      const timerStartedTs = (_this$timer$startedAt = (_this$timer = this.timer) == null ? void 0 : _this$timer.startedAtTs) != null ? _this$timer$startedAt : 0;
+	      const timeSpent = timerStartedTs === 0 ? this.task.timeSpent : this.task.timeSpent + currentTs - timerStartedTs;
+	      return main_core.Type.isNumber(timeSpent) ? timeSpent : 0;
+	    },
+	    isLocked() {
+	      return !tasks_v2_core.Core.getParams().restrictions.timeElapsed.available;
+	    },
+	    isTimeTrackingLocked() {
+	      return !tasks_v2_core.Core.getParams().restrictions.timeTracking.available;
+	    }
+	  },
+	  methods: {
+	    handleClick() {
+	      if (this.isLocked) {
+	        void tasks_v2_lib_showLimit.showLimit({
+	          featureId: tasks_v2_core.Core.getParams().restrictions.timeElapsed.featureId
+	        });
+	        return;
+	      }
+	      if (!this.readonly) {
+	        this.setSheetShown(true);
+	      }
+	    },
+	    handleClosePopup() {
+	      this.isPopupShown = false;
+	      this.highlightField();
+	    },
+	    handleTimerUpdate(currentTime) {
+	      this.localTimeSpent = currentTime;
+	    },
+	    setSheetShown(isShown) {
+	      this.$emit('update:isSheetShown', isShown);
+	    },
+	    highlightField() {
+	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(timeTrackingMeta.id);
+	    },
+	    handleSettingsClick() {
+	      if (this.isTimeTrackingLocked) {
+	        void tasks_v2_lib_showLimit.showLimit({
+	          featureId: tasks_v2_core.Core.getParams().restrictions.timeTracking.featureId
+	        });
+	        return;
+	      }
+	      this.isPopupShown = true;
+	    }
+	  },
+	  template: `
+		<div 
+			class="tasks-task-time-tracking" 
+			:data-task-field-id="timeTrackingMeta.id"
+			@mouseover="isFieldHovered = true"
+			@mouseleave="isFieldHovered = false"
+		>
+			<HoverPill
+				:readonly
+				@click="handleClick"
+				ref="timer"
+			>
+				<BIcon class="tasks-task-time-tracking-icon" :name="Outline.TIMER"/>
+				<TimeTrackingTimer
+					:timeSpent
+					:totalTime="task.estimatedTime"
+					:isRunning="Boolean(timer)"
+					@update="handleTimerUpdate"
+				/>
+			</HoverPill>
+			<div 
+				v-if="task.rights.edit && !isTimeTrackingLocked" 
+				class="tasks-task-time-tracking-settings"
+				ref="settings"
+			>
+				<SettingsLabel
+					v-if="isFieldHovered || isPopupShown"
+					data-time-tracking-settings
+					@click="handleSettingsClick"
+				/>
+			</div>
+		</div>
+		<TaskTrackingPopup
+			v-if="isPopupShown"
+			:bindElement="$refs.settings"
+			:timeSpent
+			@close="handleClosePopup"
+		/>
+		<TimeTrackingSheet
+			v-if="isSheetShown"
+			:sheetBindProps
+			:timeSpent
+			:isTimerRunning="Boolean(timer)"
+			@close="setSheetShown(false)"
+		/>
+	`
+	};
+
+	// @vue/component
+	const TimeTrackingChip = {
+	  components: {
+	    Chip: ui_system_chip_vue.Chip,
+	    TaskTrackingPopup,
+	    TimeTrackingSheet
+	  },
+	  inject: {
+	    task: {},
+	    taskId: {},
 	    isEdit: {},
 	    isTemplate: {}
 	  },
@@ -1376,128 +1556,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      var _this$task$timers;
 	      return (_this$task$timers = this.task.timers) == null ? void 0 : _this$task$timers.find(timer => timer.userId === this.currentUserId);
 	    },
-	    readonly() {
-	      return this.isTemplate || !this.isEdit;
-	    },
-	    timeSpent() {
-	      var _this$timer$startedAt, _this$timer;
-	      const currentTs = Math.floor(Date.now() / 1000);
-	      const timerStartedTs = (_this$timer$startedAt = (_this$timer = this.timer) == null ? void 0 : _this$timer.startedAtTs) != null ? _this$timer$startedAt : 0;
-	      const timeSpent = timerStartedTs === 0 ? this.task.timeSpent : this.task.timeSpent + currentTs - timerStartedTs;
-	      return main_core.Type.isNumber(timeSpent) ? timeSpent : 0;
-	    },
-	    isLocked() {
-	      return !tasks_v2_core.Core.getParams().restrictions.timeTracking.available;
-	    }
-	  },
-	  methods: {
-	    handleClick() {
-	      if (this.isLocked) {
-	        this.showLimit();
-	        return;
-	      }
-	      if (!this.readonly) {
-	        this.setSheetShown(true);
-	      }
-	    },
-	    handleClosePopup() {
-	      this.isPopupShown = false;
-	      this.highlightField();
-	    },
-	    handleTimerUpdate(currentTime) {
-	      this.localTimeSpent = currentTime;
-	    },
-	    setSheetShown(isShown) {
-	      this.$emit('update:isSheetShown', isShown);
-	    },
-	    highlightField() {
-	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(timeTrackingMeta.id);
-	    },
-	    popupShown() {
-	      if (this.isLocked) {
-	        this.showLimit();
-	        return;
-	      }
-	      this.isPopupShown = true;
-	    },
-	    showLimit() {
-	      void tasks_v2_lib_showLimit.showLimit({
-	        featureId: tasks_v2_core.Core.getParams().restrictions.timeTracking.featureId
-	      });
-	    }
-	  },
-	  template: `
-		<div class="tasks-task-time-tracking" :data-task-field-id="timeTrackingMeta.id">
-			<HoverPill
-				ref="timer"
-				:withSettings="task.rights.edit"
-				:readonly
-				@click="handleClick"
-				@settings="popupShown"
-			>
-				<BIcon class="tasks-task-time-tracking-icon" :name="Outline.TIMER"/>
-				<TimeTrackingTimer
-					:timeSpent
-					:totalTime="task.estimatedTime"
-					:isRunning="Boolean(timer)"
-					@update="handleTimerUpdate"
-				/>
-			</HoverPill>
-		</div>
-		<TaskTrackingPopup
-			v-if="isPopupShown"
-			:bindElement="$refs.timer.$el"
-			:timeSpent
-			@close="handleClosePopup"
-		/>
-		<TimeTrackingSheet
-			v-if="isSheetShown"
-			:sheetBindProps
-			:timeSpent
-			:isTimerRunning="Boolean(timer)"
-			@close="setSheetShown(false)"
-		/>
-	`
-	};
-
-	// @vue/component
-	const TimeTrackingChip = {
-	  components: {
-	    Chip: ui_system_chip_vue.Chip,
-	    TaskTrackingPopup
-	  },
-	  inject: {
-	    task: {},
-	    taskId: {}
-	  },
-	  emits: ['update:isSheetShown'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_vue.Outline,
-	      timeTrackingMeta
-	    };
-	  },
-	  data() {
-	    return {
-	      isPopupShown: false,
-	      localTimeSpent: 0
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
-	    }),
-	    timer() {
-	      var _this$task$timers;
-	      return (_this$task$timers = this.task.timers) == null ? void 0 : _this$task$timers.find(timer => timer.userId === this.currentUserId);
-	    },
 	    design() {
 	      return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
 	    },
 	    isSelected() {
-	      return this.task.allowsTimeTracking;
+	      return this.task.allowsTimeTracking || this.task.numberOfElapsedTimes;
+	    },
+	    readonly() {
+	      return this.isTemplate || !this.isEdit;
 	    },
 	    isLocked() {
+	      return !tasks_v2_core.Core.getParams().restrictions.timeElapsed.available;
+	    },
+	    isTimeTrackingLocked() {
 	      return !tasks_v2_core.Core.getParams().restrictions.timeTracking.available;
 	    }
 	  },
@@ -1512,12 +1583,22 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    handleClick() {
 	      if (this.isLocked) {
 	        void tasks_v2_lib_showLimit.showLimit({
-	          featureId: tasks_v2_core.Core.getParams().restrictions.timeTracking.featureId
+	          featureId: tasks_v2_core.Core.getParams().restrictions.timeElapsed.featureId
 	        });
+	        return;
+	      }
+	      if (this.canOnlyAddFirstElapsedTime()) {
+	        this.setSheetShown(true);
 	        return;
 	      }
 	      if (this.isSelected) {
 	        this.highlightField();
+	        return;
+	      }
+	      if (this.isTimeTrackingLocked) {
+	        void tasks_v2_lib_showLimit.showLimit({
+	          featureId: tasks_v2_core.Core.getParams().restrictions.timeTracking.featureId
+	        });
 	        return;
 	      }
 	      this.isPopupShown = true;
@@ -1526,8 +1607,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.isPopupShown = false;
 	      this.highlightField();
 	    },
+	    setSheetShown(isShown) {
+	      this.$emit('update:isSheetShown', isShown);
+	    },
 	    highlightField() {
 	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(timeTrackingMeta.id);
+	    },
+	    canOnlyAddFirstElapsedTime() {
+	      return (!this.task.rights.edit || this.isTimeTrackingLocked) && this.task.rights.elapsedTime && !this.task.numberOfElapsedTimes && !this.readonly;
 	    }
 	  },
 	  template: `
@@ -1548,6 +1635,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:timeSpent="localTimeSpent"
 			@close="handleClosePopup"
 		/>
+		<TimeTrackingSheet
+			v-if="isSheetShown"
+			:sheetBindProps
+			:timeSpent="localTimeSpent"
+			:isTimerRunning="Boolean(timer)"
+			@close="setSheetShown(false)"
+		/>
 	`
 	};
 
@@ -1556,5 +1650,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.timeTrackingMeta = timeTrackingMeta;
 	exports.TimeTrackingTimer = TimeTrackingTimer;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.UI,BX.UI.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.Dialogs,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.System.Input.Vue,BX.Vue3.Components,BX.UI.DatePicker,BX.Tasks.V2.Lib,BX.Main,BX.UI.System.Typography.Vue,BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.UI.System.Skeleton.Vue,BX.UI.Vue3.Components,BX.UI,BX.Tasks.V2.Component.Elements,BX,BX.Vue3.Vuex,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI,BX.UI.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.Dialogs,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.System.Input.Vue,BX.Vue3.Components,BX.UI.DatePicker,BX.Tasks.V2.Lib,BX.Main,BX.UI.System.Typography.Vue,BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.UI.System.Skeleton.Vue,BX.UI.Vue3.Components,BX.UI,BX.Tasks.V2.Component.Elements,BX,BX.Vue3.Vuex,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib));
 //# sourceMappingURL=time-tracking.bundle.js.map

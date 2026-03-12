@@ -1,5 +1,7 @@
+import { Notifier } from 'ui.notification-manager';
+
 import { Core } from 'tasks.v2.core';
-import { EntitySelectorEntity, Model } from 'tasks.v2.const';
+import { EntitySelectorEntity, Model, Endpoint } from 'tasks.v2.const';
 import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { groupService } from 'tasks.v2.provider.service.group-service';
@@ -44,18 +46,45 @@ export const groupDialog = new class
 			},
 			popupOptions: {
 				events: {
-					onClose: async (): Promise<void> => {
-						const groupId = await this.#fillStore();
-
-						groupService.setHasScrumInfo(this.#taskId);
-						void taskService.update(this.#taskId, { groupId, stageId: 0 });
-
-						this.#onClose?.(groupId);
-					},
+					onClose: this.#handleGroupSelect,
 				},
 			},
 		});
 	}
+
+	#handleGroupSelect = async (): Promise<void> => {
+		if (!this.#dialog.isLoaded())
+		{
+			return;
+		}
+
+		const groupId = await this.#fillStore();
+
+		if (this.#groupId === groupId)
+		{
+			return;
+		}
+
+		groupService.setHasScrumInfo(this.#taskId);
+
+		this.#onClose?.(groupId);
+
+		taskService.setSilentErrorMode(true);
+
+		const result = await taskService.update(this.#taskId, { groupId, stageId: 0 });
+
+		taskService.setSilentErrorMode(false);
+
+		if (result[Endpoint.TaskUpdate]?.length)
+		{
+			const error = result[Endpoint.TaskUpdate][0];
+
+			Notifier.notifyViaBrowserProvider({
+				id: 'task-notify-update-group-error',
+				text: error?.message,
+			});
+		}
+	};
 
 	#fillStore = async (): Promise<number> => {
 		const item = this.#dialog.getSelectedItems()[0];
@@ -78,8 +107,11 @@ export const groupDialog = new class
 
 	get #items(): ItemId[]
 	{
-		const groupId = taskService.getStoreTask(this.#taskId).groupId;
+		return this.#groupId ? [[EntitySelectorEntity.Project, this.#groupId]] : [];
+	}
 
-		return groupId ? [[EntitySelectorEntity.Project, groupId]] : [];
+	get #groupId(): ?number
+	{
+		return taskService.getStoreTask(this.#taskId).groupId;
 	}
 }();

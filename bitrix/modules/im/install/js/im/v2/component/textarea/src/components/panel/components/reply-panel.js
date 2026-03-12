@@ -67,7 +67,7 @@ export const ReplyPanel = {
 		},
 		isSticker(): boolean
 		{
-			return this.$store.getters['messages/stickers/isStickerMessage'](this.message.id);
+			return this.$store.getters['stickers/messages/isSticker'](this.message.id);
 		},
 		messageText(): string
 		{

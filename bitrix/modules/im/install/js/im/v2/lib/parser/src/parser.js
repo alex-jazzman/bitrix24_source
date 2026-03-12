@@ -183,7 +183,7 @@ export const Parser = {
 	purifyMessage(message: ImModelMessage): string
 	{
 		const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](message.id);
-		const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](message.id);
+		const isSticker = getCore().getStore().getters['stickers/messages/isSticker'](message.id);
 
 		return this.purify({
 			text: message.text,
@@ -306,7 +306,7 @@ export const Parser = {
 		let text = quoteText === '' ? message.text : quoteText;
 
 		const files = getCore().getStore().getters['messages/getMessageFiles'](id);
-		const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](id);
+		const isSticker = getCore().getStore().getters['stickers/messages/isSticker'](id);
 
 		text = Text.encode(text.trim());
 
@@ -387,7 +387,7 @@ export const Parser = {
 		{
 			attach = [message.attach];
 		}
-		const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](recentMessage.messageId);
+		const isSticker = getCore().getStore().getters['stickers/messages/isSticker'](recentMessage.messageId);
 
 		return { files, attach, text: message.text, isSticker };
 	},

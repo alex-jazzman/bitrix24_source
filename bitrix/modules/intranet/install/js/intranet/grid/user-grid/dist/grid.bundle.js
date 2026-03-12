@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_avatar,ui_label,ui_formElements_field,ui_cnt,intranet_reinvite,ui_iconSet_main,ui_dialogs_messagebox,im_public,ui_entitySelector,main_core) {
+(function (exports,ui_avatar,ui_label,ui_cnt,intranet_reinvite,ui_iconSet_main,bitrix24_firstAdminGuard,ui_formElements_field,ui_dialogs_messagebox,im_public,ui_entitySelector,main_core) {
 	'use strict';
 
 	var _fieldId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fieldId");
@@ -69,7 +69,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  _t4,
 	  _t5,
 	  _t6,
-	  _t7;
+	  _t7,
+	  _t8;
 	var _getFullNameLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFullNameLink");
 	var _getInvitedLabelContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInvitedLabelContainer");
 	var _getWaitingConfirmationLabelContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWaitingConfirmationLabelContainer");
@@ -118,7 +119,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getIntegratorBalloonContainer)[_getIntegratorBalloonContainer](), fullNameContainer);
 	        break;
 	      case 'admin':
-	        main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getAdminBalloonContainer)[_getAdminBalloonContainer](), fullNameContainer);
+	        main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getAdminBalloonContainer)[_getAdminBalloonContainer](params.isFirstAdmin), fullNameContainer);
 	        break;
 	      case 'extranet':
 	        main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getExtranetBalloonContainer)[_getExtranetBalloonContainer](), fullNameContainer);
@@ -173,28 +174,36 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return main_core.Tag.render(_t3 || (_t3 = _`<div class="user-grid_position-label">${0}</div>`), position);
 	}
 	function _getIntegratorBalloonContainer2() {
+	  var _Extension$getSetting;
 	  return main_core.Tag.render(_t4 || (_t4 = _`
 			<span class="user-grid_role-label --integrator">
 				${0}
 			</span>
-		`), main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_INTEGRATOR'));
+		`), ((_Extension$getSetting = main_core.Extension.getSettings('intranet.grid.user-grid')) == null ? void 0 : _Extension$getSetting.isRenamedIntegrator) === 'Y' ? main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_INTEGRATOR_RENAMED') : main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_INTEGRATOR'));
 	}
-	function _getAdminBalloonContainer2() {
-	  return main_core.Tag.render(_t5 || (_t5 = _`
+	function _getAdminBalloonContainer2(isFirstAdmin) {
+	  if (isFirstAdmin) {
+	    return main_core.Tag.render(_t5 || (_t5 = _`
+				<span class="user-grid_role-label --first-admin">
+					${0}
+				</span>
+			`), main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_FIRST_ADMIN'));
+	  }
+	  return main_core.Tag.render(_t6 || (_t6 = _`
 			<span class="user-grid_role-label --admin">
 				${0}
 			</span>
 		`), main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_ADMIN'));
 	}
 	function _getExtranetBalloonContainer2() {
-	  return main_core.Tag.render(_t6 || (_t6 = _`
+	  return main_core.Tag.render(_t7 || (_t7 = _`
 			<span class="user-grid_role-label --extranet">
 				${0}
 			</span>
 		`), main_core.Loc.getMessage('INTRANET_JS_CONTROL_BALLOON_EXTRANET'));
 	}
 	function _getCollaberBalloonContainer2() {
-	  return main_core.Tag.render(_t7 || (_t7 = _`
+	  return main_core.Tag.render(_t8 || (_t8 = _`
 			<span class="user-grid_role-label --collaber">
 				${0}
 			</span>
@@ -221,18 +230,27 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	var _grid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("grid");
+	var _firstAdminId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("firstAdminId");
 	class GridManager {
-	  constructor(gridId) {
+	  constructor(gridId, isCloud = false, isFirstAdminConfirmationEnabled = false) {
 	    var _BX$Main$gridManager$;
 	    Object.defineProperty(this, _grid, {
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _firstAdminId, {
+	      writable: true,
+	      value: undefined
+	    });
+	    this.isCloud = false;
+	    this.isFirstAdminConfirmationEnabled = false;
 	    babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid] = (_BX$Main$gridManager$ = BX.Main.gridManager.getById(gridId)) == null ? void 0 : _BX$Main$gridManager$.instance;
+	    this.isCloud = isCloud;
+	    this.isFirstAdminConfirmationEnabled = isFirstAdminConfirmationEnabled;
 	  }
-	  static getInstance(gridId) {
+	  static getInstance(gridId, isCloud = false, isFirstAdminConfirmationEnabled = false) {
 	    if (!this.instances[gridId]) {
-	      this.instances[gridId] = new GridManager(gridId);
+	      this.instances[gridId] = new GridManager(gridId, isCloud, isFirstAdminConfirmationEnabled);
 	    }
 	    return this.instances[gridId];
 	  }
@@ -332,23 +350,74 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    var _params$userId, _params$action;
 	    const userId = (_params$userId = params.userId) != null ? _params$userId : null;
 	    const action = (_params$action = params.action) != null ? _params$action : null;
-	    if (userId) {
+	    if (!userId) {
+	      return;
+	    }
+	    if (action === 'fire' || action === 'deleteOrFire') {
+	      this.handleFirstAdminFireSingle(userId, params.userFullName, params.currentUserId, action);
+	    } else {
 	      this.confirmUser(action, () => {
-	        const row = babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getRows().getById(params.userId);
-	        row == null ? void 0 : row.stateLoad();
-	        if (['fire', 'restore', 'deleteOrFire'].includes(action)) {
-	          main_core.ajax.runAction(`intranet.v2.User.${action}`, {
+	        this.executeUserAction(userId, action);
+	      });
+	    }
+	  }
+	  handleFirstAdminFireSingle(userId, userFullName, currentUserId, action = 'fire') {
+	    const fallbackAction = () => {
+	      this.confirmUser(action, () => {
+	        this.executeUserAction(userId, action);
+	      });
+	    };
+	    if (!this.isCloud || !this.isFirstAdminConfirmationEnabled) {
+	      fallbackAction();
+	      return;
+	    }
+	    this.checkIfFirstAdmin(userId).then(isFirstAdmin => {
+	      if (isFirstAdmin) {
+	        const guard = new bitrix24_firstAdminGuard.FirstAdminGuard(userFullName || '', currentUserId || 0, userId);
+	        guard.confirmAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest', () => {
+	          main_core.ajax.runAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest', {
 	            data: {
-	              userId
+	              userId: Number(currentUserId),
+	              toUser: Number(userId)
 	            }
-	          }).then(() => {
-	            row == null ? void 0 : row.update();
-	          }).catch(response => {
-	            row == null ? void 0 : row.stateUnload();
-	            const errors = response.errors.map(error => error.message);
-	            ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
+	          }).then(response => {
+	            if (response.status === 'success') {
+	              BX.UI.Notification.Center.notify({
+	                content: main_core.Loc.getMessage('INTRANET_USER_LIST_FIRST_GROUP_ACTION_FIRST_ADMIN_REQUEST_SENT', {
+	                  '[b]': '<b>',
+	                  '[/b]': '</b>',
+	                  '[br]': '<br>'
+	                }),
+	                autoHide: true,
+	                autoHideDelay: 3000,
+	                useAirDesign: true
+	              });
+	            }
+	          }).catch(() => {
+	            ui_formElements_field.ErrorCollection.showSystemError('An error occurred while sending fire request');
 	          });
+	        }, () => {});
+	      } else {
+	        fallbackAction();
+	      }
+	    }).catch(() => {
+	      fallbackAction();
+	    });
+	  }
+	  executeUserAction(userId, action) {
+	    const row = babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getRows().getById(userId);
+	    row == null ? void 0 : row.stateLoad();
+	    if (['fire', 'restore', 'deleteOrFire'].includes(action)) {
+	      main_core.ajax.runAction(`intranet.v2.User.${action}`, {
+	        data: {
+	          userId
 	        }
+	      }).then(() => {
+	        row == null ? void 0 : row.update();
+	      }).catch(response => {
+	        row == null ? void 0 : row.stateUnload();
+	        const errors = response.errors.map(error => error.message);
+	        ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
 	      });
 	    }
 	  }
@@ -420,6 +489,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      default:
 	        return null;
 	    }
+	  }
+	  getFirstAdminId() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _firstAdminId)[_firstAdminId] !== undefined) {
+	      return Promise.resolve(babelHelpers.classPrivateFieldLooseBase(this, _firstAdminId)[_firstAdminId]);
+	    }
+	    return main_core.ajax.runAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.getPortalCreator').then(response => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _firstAdminId)[_firstAdminId] = Number(response.data.id);
+	      return babelHelpers.classPrivateFieldLooseBase(this, _firstAdminId)[_firstAdminId];
+	    }).catch(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _firstAdminId)[_firstAdminId] = null;
+	      return null;
+	    });
+	  }
+	  checkIfFirstAdmin(userId) {
+	    return this.getFirstAdminId().then(firstAdminId => {
+	      return firstAdminId && Number(userId) === Number(firstAdminId);
+	    });
 	  }
 	}
 	GridManager.instances = [];
@@ -537,17 +623,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      bindElement: button.getContainer(),
 	      inputValue: (_ref = (_params$email = params.email) != null ? _params$email : params.phoneNumber) != null ? _ref : '',
 	      transport: babelHelpers.classPrivateFieldLooseBase(this, _updateData)[_updateData].bind(params)
-	      // transport: (data) => {
-	      // 	if (!Type.isStringFilled(data.get('newEmail')) && !Type.isBoolean(data.get('newPhone'))) {
-	      // 		top.console.error('Empty new email or phone');
-	      // 		return;
-	      // 	}
-	      // 	if ((data.get('newEmail') === '' || data.get('newEmail') === null) && (data.get('newPhone') === '' || data.get('newPhone') === null)) {
-	      // 		top.console.error('Empty new email or phone');
-	      // 		return;
-	      // 	}
-	      // 	this.#updateData(data);
-	      // },
 	    });
 	    //This is a hack. When the row is updated, a new button is created.
 	    reinvitePopup.getPopup().setBindElement(button.getContainer());
@@ -661,6 +736,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    this.selectedUsers = params.selectedUsers;
 	    this.showPopups = (_params$showPopups = params.showPopups) != null ? _params$showPopups : true;
 	    this.isCloud = params.isCloud;
+	    this.isFirstAdminConfirmationEnabled = params.isFirstAdminConfirmationEnabled;
+	    this.currentUserId = params.currentUserId;
+	    this.currentUserName = params.currentUserName;
+	    this.firstAdminId = params.firstAdminId;
 	  }
 	  execute() {
 	    const confirmationPopup = this.showPopups ? this.getConfirmationPopup() : null;
@@ -786,6 +865,70 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  static getActionId() {
 	    return 'fire';
 	  }
+	  execute() {
+	    const confirmationPopup = this.showPopups ? this.getConfirmationPopup() : null;
+	    if (confirmationPopup) {
+	      confirmationPopup.setOkCallback(() => {
+	        confirmationPopup.close();
+	        this.executeAfterConfirmation();
+	      });
+	      confirmationPopup.show();
+	    } else {
+	      this.executeAfterConfirmation();
+	    }
+	  }
+	  executeAfterConfirmation() {
+	    if (this.firstAdminId) {
+	      var _this$selectedUsers;
+	      const selectedRows = (_this$selectedUsers = this.selectedUsers) != null ? _this$selectedUsers : this.grid.getRows().getSelectedIds();
+	      const isFirstAdminSelected = selectedRows.some(userId => Number(userId) === Number(this.firstAdminId));
+	      if (isFirstAdminSelected) {
+	        this.handleFirstAdminFire();
+	        return;
+	      }
+	    }
+	    this.sendActionRequest();
+	  }
+	  handleFirstAdminFire() {
+	    const guard = new bitrix24_firstAdminGuard.FirstAdminGuard(this.currentUserName || '', this.currentUserId || 0, this.firstAdminId);
+	    guard.confirmAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest', () => {
+	      var _this$selectedUsers2;
+	      main_core.ajax.runAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest', {
+	        data: {
+	          userId: Number(this.currentUserId),
+	          toUser: Number(this.firstAdminId)
+	        }
+	      }).then(fireResponse => {
+	        if (fireResponse.status === 'success') {
+	          BX.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('INTRANET_USER_LIST_FIRST_GROUP_ACTION_FIRST_ADMIN_REQUEST_SENT', {
+	              '[b]': '<b>',
+	              '[/b]': '</b>',
+	              '[br]': '<br>'
+	            }),
+	            autoHide: true,
+	            autoHideDelay: 3000,
+	            useAirDesign: true
+	          });
+	        }
+	      }).catch(error => {
+	        ui_formElements_field.ErrorCollection.showSystemError('An error occurred while sending fire request');
+	      });
+	      const selectedRows = (_this$selectedUsers2 = this.selectedUsers) != null ? _this$selectedUsers2 : this.grid.getRows().getSelectedIds();
+	      const nonFirstAdminUsers = selectedRows.filter(userId => Number(userId) !== Number(this.firstAdminId));
+	      if (nonFirstAdminUsers.length > 0) {
+	        this.selectedUsers = nonFirstAdminUsers;
+	        this.sendActionRequest();
+	      } else {
+	        this.grid.reload();
+	      }
+	    }, () => {
+	      var _this$selectedUsers3;
+	      const selectedRows = (_this$selectedUsers3 = this.selectedUsers) != null ? _this$selectedUsers3 : this.grid.getRows().getSelectedIds();
+	      this.selectedUsers = selectedRows.filter(id => Number(id) !== Number(this.firstAdminId));
+	      this.sendActionRequest();
+	    });
+	  }
 	  getConfirmationPopup() {
 	    return new ui_dialogs_messagebox.MessageBox({
 	      message: main_core.Loc.getMessage('INTRANET_USER_LIST_GROUP_ACTION_FIRE_MESSAGE'),
@@ -832,7 +975,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          selectedUsers: Object.keys(activeUsers),
 	          grid: this.grid,
 	          filter: this.userFilter,
-	          showPopups: false
+	          showPopups: false,
+	          isCloud: this.isCloud,
+	          isFirstAdminConfirmationEnabled: this.isFirstAdminConfirmationEnabled,
+	          currentUserId: this.currentUserId,
+	          currentUserName: this.currentUserName,
+	          firstAdminId: this.firstAdminId
 	        }).execute();
 	      },
 	      onNo: () => {
@@ -928,7 +1076,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          selectedUsers: Object.keys(activeUsers),
 	          grid: this.grid,
 	          filter: this.userFilter,
-	          showPopups: false
+	          showPopups: false,
+	          isCloud: this.isCloud,
+	          isFirstAdminConfirmationEnabled: this.isFirstAdminConfirmationEnabled,
+	          currentUserId: this.currentUserId,
+	          currentUserName: this.currentUserName,
+	          firstAdminId: this.firstAdminId
 	        }).execute();
 	      }
 	    });
@@ -1114,15 +1267,47 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  static executeAction(params) {
 	    try {
 	      var _BX$Main$gridManager$;
-	      const action = ActionFactory.createAction(params.actionId, {
-	        grid: (_BX$Main$gridManager$ = BX.Main.gridManager.getById(params.gridId)) == null ? void 0 : _BX$Main$gridManager$.instance,
-	        filter: params.filter,
-	        isCloud: params.isCloud
-	      });
-	      action.execute();
+	      const grid = (_BX$Main$gridManager$ = BX.Main.gridManager.getById(params.gridId)) == null ? void 0 : _BX$Main$gridManager$.instance;
+	      if (params.isCloud && params.isFirstAdminConfirmationEnabled) {
+	        Panel.checkFirstAdminInSelection(grid).then(firstAdminId => {
+	          const action = ActionFactory.createAction(params.actionId, {
+	            grid,
+	            filter: params.filter,
+	            isCloud: params.isCloud,
+	            isFirstAdminConfirmationEnabled: params.isFirstAdminConfirmationEnabled,
+	            currentUserId: params.currentUserId,
+	            currentUserName: params.currentUserName,
+	            firstAdminId
+	          });
+	          action.execute();
+	        }).catch(error => {
+	          console.error('Error checking first admin in selection:', error);
+	        });
+	      } else {
+	        const action = ActionFactory.createAction(params.actionId, {
+	          grid,
+	          filter: params.filter,
+	          isCloud: params.isCloud,
+	          isFirstAdminConfirmationEnabled: params.isFirstAdminConfirmationEnabled,
+	          currentUserId: params.currentUserId,
+	          currentUserName: params.currentUserName,
+	          firstAdminId: null
+	        });
+	        action.execute();
+	      }
 	    } catch (error) {
 	      console.error('Error executing action:', error);
 	    }
+	  }
+	  static checkFirstAdminInSelection(grid) {
+	    const selectedRows = grid.getRows().getSelectedIds();
+	    return main_core.ajax.runAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.getPortalCreator').then(response => {
+	      const portalCreatorId = Number(response.data.id);
+	      const found = selectedRows.find(userId => Number(userId) === portalCreatorId);
+	      return found ? portalCreatorId : null;
+	    }).catch(() => {
+	      return null;
+	    });
 	  }
 	}
 
@@ -1135,5 +1320,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.GridManager = GridManager;
 	exports.Panel = Panel;
 
-}((this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}),BX.UI,BX.UI,BX.UI.FormElements,BX.UI,BX.Intranet.Reinvite,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.UI.EntitySelector,BX));
+}((this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}),BX.UI,BX.UI,BX.UI,BX.Intranet.Reinvite,BX,BX.Bitrix24,BX.UI.FormElements,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.UI.EntitySelector,BX));
 //# sourceMappingURL=grid.bundle.js.map

@@ -8,132 +8,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	Options.eventNameSpace = 'BX.Intranet.Userprofile:';
 
 	let _ = t => t,
-	  _t,
-	  _t2;
-	class StressLevel {
-	  constructor() {}
-	  static getOpenSliderFunction(url) {
-	    if (main_core.Type.isStringFilled(url)) {
-	      return () => {
-	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, Options.eventNameSpace + 'onNeedToHide');
-	        BX.SidePanel.Instance.open(url, {
-	          cacheable: false,
-	          data: {},
-	          width: 500
-	        });
-	      };
-	    }
-	    return () => {};
-	  }
-	  static showData(data) {
-	    data.value = parseInt(data.value || 0);
-	    const result = main_core.Tag.render(_t || (_t = _`
-			<div class="system-auth-form__item system-auth-form__scope --vertical" id="user-indicator-pulse">
-				<div class="system-auth-form__item-block --margin-bottom">
-					<div class="system-auth-form__stress-widget">
-						<div data-role="value-degree" class="system-auth-form__stress-widget--arrow" style="transform: rotate(90deg);"></div>
-						<div class="system-auth-form__stress-widget--content">
-							<div class="system-auth-form__stress-widget--content-title">${0}</div>
-							<div data-role="value" class="system-auth-form__stress-widget--content-progress ${0}">0</div>
-						</div>
-					</div>
-					<div class="system-auth-form__item-container --stress-widget-sp">
-						<div class="system-auth-form__item-block --center --width-100">
-							<span class="system-auth-form__stress-widget--status  --flex --${0}">${0}</span>
-							<span class="system-auth-form__icon-help" onclick="${0}"></span>
-						</div>
-						<div class="system-auth-form__item-title --link-dotted" onclick="${0}">${0}</div>
-					</div>
-				</div>
-				<div class="system-auth-form__item-block --flex --center">
-					<div class="system-auth-form__stress-widget--message">${0}</div>
-				</div>
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT'), data.value > 0 ? '' : '--empty', main_core.Text.encode(data.type), main_core.Text.encode(data.typeDescription), this.getOpenSliderFunction(data.url.result), this.getOpenSliderFunction(data.url.check), main_core.Loc.getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_BUTTON'), main_core.Text.encode(data.comment));
-	    setTimeout(() => {
-	      const intervalId = setInterval(value => {
-	        value.current++;
-	        value.node.innerHTML = value.current;
-	        if (value.current >= value.end) {
-	          clearInterval(intervalId);
-	        }
-	      }, 600 / data.value, {
-	        current: 0,
-	        end: data.value,
-	        node: result.querySelector('[data-role="value"]')
-	      });
-	      result.querySelector('[data-role="value-degree"]').style.transform = 'rotate(' + 1.8 * data.value + 'deg)';
-	    }, 1000);
-	    return result;
-	  }
-	  static showEmpty({
-	    url: {
-	      check
-	    }
-	  }) {
-	    return main_core.Tag.render(_t2 || (_t2 = _`
-			<div class="system-auth-form__item system-auth-form__scope --vertical --empty-stress --clickable" onclick="${0}">
-				<div class="system-auth-form__item-block --margin-bottom">
-					<div class="system-auth-form__stress-widget">
-						<div data-role="value-degree" class="system-auth-form__stress-widget--arrow" style="transform: rotate(90deg);"></div>
-						<div class="system-auth-form__stress-widget--content">
-							<div class="system-auth-form__stress-widget--content-title">${0}</div>
-							<div data-role="value" class="system-auth-form__stress-widget--content-progress --empty">?</div>
-						</div>
-					</div>
-					<div class="system-auth-form__item-container --stress-widget-sp">
-						<div class="system-auth-form__stress-widget--message">${0}</div>
-					</div>
-				</div>
-				<div class="system-auth-form__item-block --flex --center">
-					<div class="system-auth-form__item-title --link-dotted">${0}</div>
-				</div>
-				<div class="system-auth-form__item-new">
-					<div class="system-auth-form__item-new--title">${0}</div>
-				</div>
-			</div>`), this.getOpenSliderFunction(check), main_core.Loc.getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_BUTTON'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_COME_ON'));
-	  }
-	  static getPromise({
-	    signedParameters,
-	    componentName,
-	    userId,
-	    data
-	  }) {
-	    return new Promise((resolve, reject) => {
-	      const promise = data ? Promise.resolve({
-	        data
-	      }) : main_core.ajax.runAction('socialnetwork.api.user.stresslevel.get', {
-	        signedParameters: signedParameters,
-	        data: {
-	          c: componentName,
-	          fields: {
-	            userId: userId
-	          }
-	        }
-	      });
-	      promise.then(({
-	        data
-	      }) => {
-	        if (data && data.id !== undefined && data.value !== undefined) {
-	          return resolve(this.showData(data));
-	        }
-	        const node = main_core.Loc.getMessage('USER_ID') === userId ? this.showEmpty(data) : document.createElement('DIV');
-	        return resolve(node);
-	      }).catch(error => {
-	        resolve(this.showData({
-	          id: undefined,
-	          value: undefined,
-	          urls: {
-	            check: undefined
-	          }
-	        }));
-	      });
-	    });
-	  }
-	}
-
-	let _$1 = t => t,
-	  _t$1;
+	  _t;
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
 	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	class ThemePicker extends main_core_events.EventEmitter {
@@ -192,7 +67,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      BX.Intranet.Bitrix24.ThemePicker.Singleton.showDialog(false);
 	      main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, Options.eventNameSpace + ':onOpen');
 	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = main_core.Tag.render(_t$1 || (_t$1 = _$1`
+	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = main_core.Tag.render(_t || (_t = _`
 			<div class="system-auth-form__item system-auth-form__scope --border ${0} --padding-sm">
 				<div class="system-auth-form__item-logo">
 					<div data-role="preview-color" class="system-auth-form__item-logo--image --theme"></div>
@@ -221,9 +96,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	let _$2 = t => t,
-	  _t$2,
-	  _t2$1,
+	let _$1 = t => t,
+	  _t$1,
+	  _t2,
 	  _t3,
 	  _t4,
 	  _t5,
@@ -246,7 +121,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _renderUsers)[_renderUsers]();
 	    let div;
 	    if (!this.data['ENABLED']) {
-	      div = main_core.Tag.render(_t$2 || (_t$2 = _$2`
+	      div = main_core.Tag.render(_t$1 || (_t$1 = _$1`
 			<div class="system-auth-form__item system-auth-form__scope --without-stat">
 				<div class="system-auth-form__item-container --flex --column">
 					<div class="system-auth-form__item-title">${0}</div>
@@ -257,7 +132,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			</div>
 		`), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_DISABLED'));
 	    } else if (range > 0 && myPosition > 0) {
-	      div = main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
+	      div = main_core.Tag.render(_t2 || (_t2 = _$1`
 			<div class="system-auth-form__item system-auth-form__scope --clickable" onclick="${0}">
 				<div class="system-auth-form__item-container">
 					<div class="system-auth-form__item-title --without-margin">${0}</div>
@@ -282,7 +157,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }), userList);
 	    } else {
 	      const onclick = range > 0 ? this.onclickHandle : () => {};
-	      div = main_core.Tag.render(_t3 || (_t3 = _$2`
+	      div = main_core.Tag.render(_t3 || (_t3 = _$1`
 			<div class="system-auth-form__item system-auth-form__scope --without-stat ${0}" onclick="${0}">
 				<div class="system-auth-form__item-container --flex --column">
 					<div class="system-auth-form__item-title">${0}</div>
@@ -308,7 +183,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      userList,
 	      range
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _renderUsers)[_renderUsers]();
-	    const div = main_core.Tag.render(_t4 || (_t4 = _$2`
+	    const div = main_core.Tag.render(_t4 || (_t4 = _$1`
 			<div class="system-auth-form__item system-auth-form__scope --center --padding-ustat ${0}">
 				<div class="system-auth-form__item-image">
 					<div class="system-auth-form__item-image--src --ustat"></div>
@@ -369,7 +244,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          errorNode.className = 'ui-alert-message';
 	          node.appendChild(errorNode);
 	        });
-	        resolve(main_core.Tag.render(_t5 || (_t5 = _$2`
+	        resolve(main_core.Tag.render(_t5 || (_t5 = _$1`
 						<div class="ui-alert ui-alert-danger">
 							${0}
 						</div>`), node));
@@ -388,7 +263,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  const dataResult = myPosition > 5 ? [...usersData.slice(0, 3), ...usersData.slice(-1), null] : usersData;
 	  dataResult.forEach((userRating, index) => {
 	    if (userRating === null) {
-	      userList.appendChild(main_core.Tag.render(_t6 || (_t6 = _$2`<div class="system-auth-form__userlist-item --list"></div>`)));
+	      userList.appendChild(main_core.Tag.render(_t6 || (_t6 = _$1`<div class="system-auth-form__userlist-item --list"></div>`)));
 	      return;
 	    }
 	    let fullName = userRating['ACTIVITY'];
@@ -401,7 +276,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (isCurrentUser) {
 	      myActivity = userRating['ACTIVITY'];
 	    }
-	    userList.appendChild(main_core.Tag.render(_t7 || (_t7 = _$2`
+	    userList.appendChild(main_core.Tag.render(_t7 || (_t7 = _$1`
 						<div title="${0}" class="system-auth-form__userlist-item ui-icon ui-icon ui-icon-common-user">
 							<i ${0}></i>
 						</div>
@@ -415,9 +290,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  };
 	}
 
-	let _$3 = t => t,
-	  _t$3,
-	  _t2$2,
+	let _$2 = t => t,
+	  _t$2,
+	  _t2$1,
 	  _t3$1,
 	  _t4$1,
 	  _t5$1,
@@ -485,7 +360,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        BX.UI.InfoHelper.show("limit_office_login_history");
 	      }
 	    };
-	    let loginHistoryWidget = main_core.Tag.render(_t$3 || (_t$3 = _$3`
+	    let loginHistoryWidget = main_core.Tag.render(_t$2 || (_t$2 = _$2`
 				<div class="system-auth-form__item system-auth-form__scope --vertical --padding-sm">
 					<div class="system-auth-form__item-container --center ${0}">
 						<div class="system-auth-form__item-logo">
@@ -522,7 +397,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        keys.forEach(key => {
 	          const description = babelHelpers.classPrivateFieldLooseBase(UserLoginHistory, _prepareDescriptionLoginHistory)[_prepareDescriptionLoginHistory](devices[key]['DEVICE_PLATFORM'], devices[key]['GEOLOCATION'], devices[key]['BROWSER']);
 	          const time = babelHelpers.classPrivateFieldLooseBase(UserLoginHistory, _prepareDateTimeForLoginHistory)[_prepareDateTimeForLoginHistory](devices[key]['LOGIN_DATE']);
-	          const device = main_core.Tag.render(_t2$2 || (_t2$2 = _$3`
+	          const device = main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
 						<div class="system-auth-form__visited-item">
 							<div data-hint='${0}' class="system-auth-form__visited-icon --${0}" onclick="${0}" data-hint-no-icon></div>
 							<script>
@@ -561,11 +436,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    BX.Helper.show('redirect=detail&code=16615982');
 	  };
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isActive)[_isActive]()) {
-	    return main_core.Tag.render(_t3$1 || (_t3$1 = _$3`
+	    return main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
 				<div class="ui-qr-popupcomponentmaker__btn" onclick=\"${0}\">${0}</div>
 			`), handlerLogoutButton, main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE'));
 	  } else if (!babelHelpers.classPrivateFieldLooseBase(this, _isConfigured)[_isConfigured]()) {
-	    return main_core.Tag.render(_t4$1 || (_t4$1 = _$3`
+	    return main_core.Tag.render(_t4$1 || (_t4$1 = _$2`
 				<div class='system-auth-form__settings' onclick="${0}">${0}</div>
 			`), showConfigureSlider, main_core.Loc.getMessage('INTRANET_USER_PROFILE_CONFIGURE'));
 	  }
@@ -573,7 +448,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _getBottomButton2(handler) {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isActive)[_isActive]()) {
-	    return main_core.Tag.render(_t5$1 || (_t5$1 = _$3`
+	    return main_core.Tag.render(_t5$1 || (_t5$1 = _$2`
 				<div class="system-auth-form__item-container">
 					<div class="system-auth-form__show-history" onclick="${0}">
 						${0}
@@ -589,7 +464,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    BX.UI.InfoHelper.show("limit_office_login_history");
 	  };
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isAvailable)[_isAvailable]()) {
-	    return main_core.Tag.render(_t6$1 || (_t6$1 = _$3`
+	    return main_core.Tag.render(_t6$1 || (_t6$1 = _$2`
 				<div class="system-auth-form__item-title-logo --lock" onclick="${0}">
 					<i></i>
 				</div>
@@ -670,9 +545,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  value: _prepareDescriptionLoginHistory2
 	});
 
-	let _$4 = t => t,
-	  _t$4,
-	  _t2$3;
+	let _$3 = t => t,
+	  _t$3,
+	  _t2$2;
 	var _hidden = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hidden");
 	var _disabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disabled");
 	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
@@ -697,7 +572,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	    const disabled = babelHelpers.classPrivateFieldLooseBase(this, _disabled)[_disabled];
 	    return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('hcmLinkSalaryVacationLayout', () => {
-	      const layout = main_core.Tag.render(_t$4 || (_t$4 = _$4`
+	      const layout = main_core.Tag.render(_t$3 || (_t$3 = _$3`
 				<div class="system-auth-form__scope system-auth-form__hcmlink ${0}"
 					${0}
 					data-hint-no-icon
@@ -734,7 +609,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _getMenuButton2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('hcmLinkSalaryVacationMenuButton', () => {
-	    return main_core.Tag.render(_t2$3 || (_t2$3 = _$4`
+	    return main_core.Tag.render(_t2$2 || (_t2$2 = _$3`
 				<div class="system-auth-form__btn--hcmlink ui-icon-set --chevron-right"></div>
 			`));
 	  });
@@ -776,9 +651,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  value: void 0
 	});
 
-	let _$5 = t => t,
-	  _t$5,
-	  _t2$4;
+	let _$4 = t => t,
+	  _t$4,
+	  _t2$3;
 	const analyticsContext = {
 	  category: 'documents',
 	  c_section: 'ava_menu',
@@ -804,7 +679,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _getLayout2(isLocked) {
 	  const lockedClass = isLocked ? ' --lock' : '';
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('layout', () => {
-	    const layout = main_core.Tag.render(_t2$4 || (_t2$4 = _$5`
+	    const layout = main_core.Tag.render(_t2$3 || (_t2$3 = _$4`
 				<div>
 					<div class="system-auth-form__scope system-auth-form__sign">
 						<div class="system-auth-form__item-container --flex" style="flex-direction:row;">
@@ -870,16 +745,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	});
 	Object.defineProperty(SignDocument, _container$1, {
 	  writable: true,
-	  value: main_core.Tag.render(_t$5 || (_t$5 = _$5`<div id="sign-b2e-employee-settings-container"></div>`))
+	  value: main_core.Tag.render(_t$4 || (_t$4 = _$4`<div id="sign-b2e-employee-settings-container"></div>`))
 	});
 	Object.defineProperty(SignDocument, _cache$1, {
 	  writable: true,
 	  value: new main_core_cache.MemoryCache()
 	});
 
-	let _$6 = t => t,
-	  _t$6,
-	  _t2$5,
+	let _$5 = t => t,
+	  _t$5,
+	  _t2$4,
 	  _t3$2,
 	  _t4$2,
 	  _t5$2,
@@ -906,13 +781,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        console.error('Otp page is not defined. Check the component params');
 	      }
 	    };
-	    const button = isInstalled ? main_core.Tag.render(_t$6 || (_t$6 = _$6`<div class="ui-qr-popupcomponentmaker__btn" style="margin-top: auto" onclick="${0}">${0}</div>`), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURNED_ON')) : main_core.Tag.render(_t2$5 || (_t2$5 = _$6`<div class="ui-qr-popupcomponentmaker__btn" style="margin-top: auto" onclick="${0}">${0}</div>`), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURN_ON'));
+	    const button = isInstalled ? main_core.Tag.render(_t$5 || (_t$5 = _$5`<div class="ui-qr-popupcomponentmaker__btn" style="margin-top: auto" onclick="${0}">${0}</div>`), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURNED_ON')) : main_core.Tag.render(_t2$4 || (_t2$4 = _$5`<div class="ui-qr-popupcomponentmaker__btn" style="margin-top: auto" onclick="${0}">${0}</div>`), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURN_ON'));
 	    const onclickHelp = () => {
 	      top.BX.Helper.show('redirect=detail&code=17728602');
 	      main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, Options.eventNameSpace + ':onOpen');
 	    };
 	    if (this.isSingle !== true) {
-	      return main_core.Tag.render(_t3$2 || (_t3$2 = _$6`
+	      return main_core.Tag.render(_t3$2 || (_t3$2 = _$5`
 				<div class="system-auth-form__item system-auth-form__scope --padding-bottom-10 ${0}">
 					<div class="system-auth-form__item-logo">
 						<div class="system-auth-form__item-logo--image --authentication"></div>
@@ -929,7 +804,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					</div>
 					${0}
 				</div>
-			`), isInstalled ? ' --active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_MESSAGE'), onclickHelp, isInstalled ? main_core.Tag.render(_t4$2 || (_t4$2 = _$6`
+			`), isInstalled ? ' --active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_MESSAGE'), onclickHelp, isInstalled ? main_core.Tag.render(_t4$2 || (_t4$2 = _$5`
 								<div class="system-auth-form__item-title --link-dotted" onclick="${0}">${0}</div>
 							`), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_CONFIGURE')) : '', button, isInstalled ? '' : `
 						<div class="system-auth-form__item-new">
@@ -963,7 +838,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      });
 	      menuPopup.toggle();
 	    };
-	    return main_core.Tag.render(_t5$2 || (_t5$2 = _$6`
+	    return main_core.Tag.render(_t5$2 || (_t5$2 = _$5`
 				<div class="system-auth-form__item system-auth-form__scope --padding-sm-all ${0} --vertical --center">
 					<div class="system-auth-form__item-logo --margin-bottom --center system-auth-form__item-container --flex">
 						<div class="system-auth-form__item-logo--image --authentication"></div>
@@ -982,16 +857,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 					</div>
 					${0}
 				</div>
-		`), isInstalled ? ' --active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_MESSAGE'), onclickHelp, isInstalled ? main_core.Tag.render(_t6$2 || (_t6$2 = _$6`<div class="system-auth-form__config --absolute" onclick="${0}"></div>`), popupClick) : '', button, isInstalled ? '' : `
+		`), isInstalled ? ' --active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_MESSAGE'), onclickHelp, isInstalled ? main_core.Tag.render(_t6$2 || (_t6$2 = _$5`<div class="system-auth-form__config --absolute" onclick="${0}"></div>`), popupClick) : '', button, isInstalled ? '' : `
 						<div class="system-auth-form__item-new system-auth-form__item-new-icon --ssl">
 							<div class="system-auth-form__item-new--title">${main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_TITLE')}</div>
 						</div>`);
 	  }
 	}
 
-	let _$7 = t => t,
-	  _t$7,
-	  _t2$6,
+	let _$6 = t => t,
+	  _t$6,
+	  _t2$5,
 	  _t3$3,
 	  _t4$3,
 	  _t5$3,
@@ -1024,7 +899,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _getCompanyPulse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCompanyPulse");
 	var _savePhoto = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("savePhoto");
 	var _getSignDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSignDocument");
-	var _getStressLevel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getStressLevel");
 	var _getQrContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getQrContainer");
 	var _getDeskTopContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDeskTopContainer");
 	var _getOTPContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOTPContainer");
@@ -1073,9 +947,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	    Object.defineProperty(this, _getQrContainer, {
 	      value: _getQrContainer2
-	    });
-	    Object.defineProperty(this, _getStressLevel, {
-	      value: _getStressLevel2
 	    });
 	    Object.defineProperty(this, _getSignDocument, {
 	      value: _getSignDocument2
@@ -1193,13 +1064,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }, {
 	      html: babelHelpers.classPrivateFieldLooseBase(this, _getMaskContainer)[_getMaskContainer](),
 	      backgroundColor: '#fafafa'
-	    }], babelHelpers.classPrivateFieldLooseBase(this, _getCompanyPulse)[_getCompanyPulse](!!babelHelpers.classPrivateFieldLooseBase(this, _getStressLevel)[_getStressLevel]()) ? [{
-	      html: babelHelpers.classPrivateFieldLooseBase(this, _getCompanyPulse)[_getCompanyPulse](!!babelHelpers.classPrivateFieldLooseBase(this, _getStressLevel)[_getStressLevel]()),
-	      overflow: true,
-	      marginBottom: 24,
-	      flex: babelHelpers.classPrivateFieldLooseBase(this, _getStressLevel)[_getStressLevel]() ? 0.5 : 1,
-	      minHeight: babelHelpers.classPrivateFieldLooseBase(this, _getStressLevel)[_getStressLevel]() ? '115px' : '56px'
-	    }, babelHelpers.classPrivateFieldLooseBase(this, _getStressLevel)[_getStressLevel]()] : null, babelHelpers.classPrivateFieldLooseBase(this, _getOTPContainer)[_getOTPContainer](babelHelpers.classPrivateFieldLooseBase(this, _getDeskTopContainer)[_getDeskTopContainer]() === null) && babelHelpers.classPrivateFieldLooseBase(this, _getDeskTopContainer)[_getDeskTopContainer]() ? [{
+	    }], babelHelpers.classPrivateFieldLooseBase(this, _getOTPContainer)[_getOTPContainer](babelHelpers.classPrivateFieldLooseBase(this, _getDeskTopContainer)[_getDeskTopContainer]() === null) && babelHelpers.classPrivateFieldLooseBase(this, _getDeskTopContainer)[_getDeskTopContainer]() ? [{
 	      flex: 0.5,
 	      html: babelHelpers.classPrivateFieldLooseBase(this, _getQrContainer)[_getQrContainer](0.7),
 	      minHeight: '190px'
@@ -1306,14 +1171,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      });
 	      avatarNode = avatar.getContainer();
 	    } else {
-	      avatarNode = main_core.Tag.render(_t$7 || (_t$7 = _$7`
+	      avatarNode = main_core.Tag.render(_t$6 || (_t$6 = _$6`
 					<span class="system-auth-form__profile-avatar--image"
 						${0}>
 					</span>
 				`), babelHelpers.classPrivateFieldLooseBase(this, _profile)[_profile].PHOTO ? `
 							style="background-size: cover; background-image: url('${encodeURI(babelHelpers.classPrivateFieldLooseBase(this, _profile)[_profile].PHOTO)}')"` : '');
 	    }
-	    const nameNode = main_core.Tag.render(_t2$6 || (_t2$6 = _$7`
+	    const nameNode = main_core.Tag.render(_t2$5 || (_t2$5 = _$6`
 				<div class="system-auth-form__profile-name">${0}</div>
 			`), babelHelpers.classPrivateFieldLooseBase(this, _profile)[_profile].FULL_NAME);
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.UserProfile:Avatar:changed', ({
@@ -1342,7 +1207,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _profile)[_profile].STATUS && (babelHelpers.classPrivateFieldLooseBase(this, _profile)[_profile].STATUS !== 'collaber' || workPosition === '') && main_core.Loc.hasMessage('INTRANET_USER_PROFILE_' + babelHelpers.classPrivateFieldLooseBase(this, _profile)[_profile].STATUS)) {
 	      workPosition = main_core.Loc.getMessage('INTRANET_USER_PROFILE_' + babelHelpers.classPrivateFieldLooseBase(this, _profile)[_profile].STATUS);
 	    }
-	    return main_core.Tag.render(_t3$3 || (_t3$3 = _$7`
+	    return main_core.Tag.render(_t3$3 || (_t3$3 = _$6`
 				<div class="system-auth-form__item system-auth-form__scope --clickable" onclick="${0}">
 					<div class="system-auth-form__profile">
 						<div class="system-auth-form__profile-avatar">
@@ -1390,7 +1255,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _features)[_features]['b24netPanel'] !== 'Y') {
 	      return null;
 	    }
-	    return main_core.Tag.render(_t4$3 || (_t4$3 = _$7`
+	    return main_core.Tag.render(_t4$3 || (_t4$3 = _$6`
 				<a class="system-auth-form__item system-auth-form__scope --center --padding-sm --clickable" href="${0}">
 					<div class="system-auth-form__item-logo">
 						<div class="system-auth-form__item-logo--image --network"></div>
@@ -1410,7 +1275,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _features)[_features]['adminPanel'] !== 'Y') {
 	      return null;
 	    }
-	    return main_core.Tag.render(_t5$3 || (_t5$3 = _$7`
+	    return main_core.Tag.render(_t5$3 || (_t5$3 = _$6`
 				<a class="system-auth-form__item system-auth-form__scope --center --padding-sm --clickable" href="/bitrix/admin/">
 					<div class="system-auth-form__item-logo">
 						<div class="system-auth-form__item-logo--image --admin-panel"></div>
@@ -1432,7 +1297,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _getMaskContainer2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('Mask', () => {
-	    return main_core.Tag.render(_t6$3 || (_t6$3 = _$7`
+	    return main_core.Tag.render(_t6$3 || (_t6$3 = _$6`
 				<div class="system-auth-form__item system-auth-form__scope --padding-sm">
 					<div class="system-auth-form__item-logo">
 						<div class="system-auth-form__item-logo--image --mask"></div>
@@ -1500,20 +1365,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return SignDocument.getPromise(isLocked);
 	  });
 	}
-	function _getStressLevel2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _features)[_features]['stressLevel'] !== 'Y') {
-	    return null;
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('getStressLevel', () => {
-	    var _babelHelpers$classPr4;
-	    return StressLevel.getPromise({
-	      signedParameters: babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].get('componentParams').signedParameters,
-	      componentName: babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].get('componentParams').componentName,
-	      userId: babelHelpers.classPrivateFieldLooseBase(this, _profile)[_profile].ID,
-	      data: (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _features)[_features]['stressLevelData']) != null ? _babelHelpers$classPr4 : null
-	    });
-	  });
-	}
 	function _getQrContainer2(flex) {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('getQrContainer', () => {
 	    return new Promise((resolve, reject) => {
@@ -1536,7 +1387,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        let node;
 	        if (flex !== 2 && flex !== 0) {
 	          // for a small size
-	          node = main_core.Tag.render(_t7$1 || (_t7$1 = _$7`
+	          node = main_core.Tag.render(_t7$1 || (_t7$1 = _$6`
 					<div class="system-auth-form__item system-auth-form__scope" style="padding: 10px 14px">
 						<div class="system-auth-form__item-container --center --column --center">
 							<div class="system-auth-form__item-title --center --margin-xl">${0}</div>
@@ -1549,7 +1400,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				`), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'));
 	        } else if (flex === 0) {
 	          //full size
-	          node = main_core.Tag.render(_t8 || (_t8 = _$7`
+	          node = main_core.Tag.render(_t8 || (_t8 = _$6`
 					<div class="system-auth-form__item system-auth-form__scope --padding-qr-xl">
 						<div class="system-auth-form__item-container --column --flex --flex-start">
 							<div class="system-auth-form__item-title --l">${0}</div>
@@ -1567,7 +1418,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				`), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
 	        } else {
 	          // for flex 2. It is kind of middle
-	          node = main_core.Tag.render(_t9 || (_t9 = _$7`
+	          node = main_core.Tag.render(_t9 || (_t9 = _$6`
 					<div class="system-auth-form__item system-auth-form__scope --padding-mid-qr">
 						<div class="system-auth-form__item-container --column --flex --flex-start">
 							<div class="system-auth-form__item-title --block">
@@ -1703,7 +1554,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        });
 	        menuPopup.toggle();
 	      };
-	      return main_core.Tag.render(_t10 || (_t10 = _$7`
+	      return main_core.Tag.render(_t10 || (_t10 = _$6`
 					<div data-role="desktop-item" class="system-auth-form__item system-auth-form__scope --padding-sm-all ${0} --vertical --center">
 						<div class="system-auth-form__item-logo --margin-bottom --center system-auth-form__item-container --flex">
 							<div class="system-auth-form__item-logo--image ${0}"></div>
@@ -1718,10 +1569,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 							</a>
 						</div>
 					</div>
-				`), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? main_core.Tag.render(_t11 || (_t11 = _$7`<div class="system-auth-form__config --absolute" onclick="${0}"></div>`), popupClick) : '', title, linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
+				`), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? main_core.Tag.render(_t11 || (_t11 = _$6`<div class="system-auth-form__config --absolute" onclick="${0}"></div>`), popupClick) : '', title, linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
 	    }
 	    const getLinkForHiddenState = () => {
-	      const link = main_core.Tag.render(_t12 || (_t12 = _$7`
+	      const link = main_core.Tag.render(_t12 || (_t12 = _$6`
 					<a href="${0}" class="system-auth-form__item-title --link-dotted">${0}</a>
 				`), linkToDistributive, main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'));
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _features)[_features].browser === 'Linux') {
@@ -1729,7 +1580,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	      return link;
 	    };
-	    return main_core.Tag.render(_t13 || (_t13 = _$7`
+	    return main_core.Tag.render(_t13 || (_t13 = _$6`
 				<div class="system-auth-form__item system-auth-form__scope --padding-bottom-10 ${0}">
 					<div class="system-auth-form__item-logo">
 						<div class="system-auth-form__item-logo--image ${0}"></div>
@@ -1772,7 +1623,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return null;
 	  }
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('getBindingsContainer', () => {
-	    const div = main_core.Tag.render(_t14 || (_t14 = _$7`
+	    const div = main_core.Tag.render(_t14 || (_t14 = _$6`
 				<div class="system-auth-form__item --hover system-auth-form__scope --center --padding-sm">
 					<div class="system-auth-form__item-logo">
 						<div class="system-auth-form__item-logo--image --binding"></div>
@@ -1807,7 +1658,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return null;
 	  }
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('getNotificationContainer', () => {
-	    const div = main_core.Tag.render(_t15 || (_t15 = _$7`
+	    const div = main_core.Tag.render(_t15 || (_t15 = _$6`
 				<div class="system-auth-form__item --hover system-auth-form__scope --padding-sm">
 					<div class="system-auth-form__item-logo">
 						<div class="system-auth-form__item-logo--image --notification"></div>
@@ -1842,7 +1693,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    };
 
 	    //TODO
-	    return main_core.Tag.render(_t16 || (_t16 = _$7`
+	    return main_core.Tag.render(_t16 || (_t16 = _$6`
 				<div class="system-auth-form__item system-auth-form__scope --padding-sm">
 					<div class="system-auth-form__item-logo">
 						<div class="system-auth-form__item-logo--image --logout"></div>

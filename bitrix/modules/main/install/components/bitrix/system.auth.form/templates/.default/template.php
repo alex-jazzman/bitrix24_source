@@ -23,6 +23,7 @@ if ($arResult['SHOW_ERRORS'] === 'Y' && $arResult['ERROR'] && !empty($arResult['
 <?endforeach?>
 	<input type="hidden" name="AUTH_FORM" value="Y" />
 	<input type="hidden" name="TYPE" value="AUTH" />
+	<?= bitrix_sessid_post(); ?>
 	<table width="95%">
 		<tr>
 			<td colspan="2">
@@ -133,6 +134,7 @@ elseif($arResult["FORM_TYPE"] == "otp"):
 <?endif?>
 	<input type="hidden" name="AUTH_FORM" value="Y" />
 	<input type="hidden" name="TYPE" value="OTP" />
+	<?= bitrix_sessid_post(); ?>
 	<table width="95%">
 		<tr>
 			<td colspan="2">

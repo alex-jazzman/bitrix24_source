@@ -324,9 +324,15 @@ class CBPSetFieldActivity extends CBPActivity implements IBPActivityExternalEven
 				'workflowParameters' => $arWorkflowParameters,
 				'workflowVariables' => $arWorkflowVariables,
 				'currentValues' => $arCurrentValues,
-				'formName' => $formName
-			]
+				'formName' => $formName,
+			],
 		);
+
+		$isNodeWorkflow = ($arWorkflowTemplate[0]['Type'] ?? null) === 'NodeWorkflowActivity';
+		if ($isNodeWorkflow)
+		{
+			$dialog->setDialogFileName('node_properties_dialog.php');
+		}
 
 		$dialog->setMap(static::getPropertiesMap($documentType));
 

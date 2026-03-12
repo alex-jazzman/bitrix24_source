@@ -378,7 +378,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] || force) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = document.querySelector(`[data-id="${babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].itemCode}"]`);
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].offsetTop) {
+	    const isVisible = Boolean(babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].offsetWidth || babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].offsetHeight || babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].getClientRects().length > 0);
+	    if (!isVisible) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].parentElement.nextElementSibling;
 	    }
 	  }
@@ -3621,6 +3622,19 @@ this.BX.Crm = this.BX.Crm || {};
 	          rounded: true,
 	          link: '##',
 	          events: {
+	            onShow: event => {
+	              const {
+	                data
+	              } = event;
+	              let airClassList = 'crm-whats-new-slide-air';
+	              if (main_core.Type.isArrayFilled(data.guide.steps[0].buttons)) {
+	                airClassList += ' --with-buttons';
+	              }
+	              if (main_core.Type.isStringFilled(data.guide.steps[0].iconSrc)) {
+	                airClassList += ' --with-icon';
+	              }
+	              main_core.Dom.addClass(data.guide.getPopup().getPopupContainer(), airClassList);
+	            },
 	            onClose: () => {
 	              BX.userOptions.save(MODULE_ID, USER_SEEN_OPTION, babelHelpers.classPrivateFieldLooseBase(this, _id)[_id], true);
 	              babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight$1)[_getSpotlight$1]().close();
@@ -3694,9 +3708,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1];
 	}
 	function _getTarget2() {
-	  var _target;
 	  let target = document.querySelector(`[data-id="${babelHelpers.classPrivateFieldLooseBase(this, _id)[_id]}"]`);
-	  if ((_target = target) != null && _target.offsetTop) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isVisible$1)[_isVisible$1](target)) {
 	    target = target.parentElement.nextElementSibling;
 	  }
 	  return target;

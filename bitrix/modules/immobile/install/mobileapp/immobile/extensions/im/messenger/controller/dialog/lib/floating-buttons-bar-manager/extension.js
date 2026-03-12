@@ -10,7 +10,6 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 
 	const { AnchorType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { RestMethod } = require('im/messenger/const');
 
 	const ButtonId = {
@@ -210,11 +209,7 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 		};
 
 		getCommentsButton = () => {
-			const postsCountWithCounters = Feature.isMessengerV2Enabled
-				? this.store.getters['counterModel/getNumberChildCounters'](this.getChatId())
-				: this.store.getters['commentModel/getPostsCountWithCounters'](this.getChatId())
-			;
-
+			const postsCountWithCounters = this.store.getters['counterModel/getNumberChildCounters'](this.getChatId());
 			if (!postsCountWithCounters)
 			{
 				return null;
@@ -520,15 +515,6 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 
 		#getCommentChatIds()
 		{
-			if (!Feature.isMessengerV2Enabled)
-			{
-				const channelComments = this.store.getters['commentModel/getChannelCounterCollection'](this.getChatId());
-
-				return Object.keys(channelComments).map((chatId) => {
-					return Number(chatId);
-				});
-			}
-
 			const counterList = this.store.getters['counterModel/getByParentChatId'](this.getChatId());
 
 			return counterList.map((counterState) => counterState.chatId);

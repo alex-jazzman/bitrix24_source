@@ -1333,6 +1333,30 @@ export const Outline = Object.freeze({
 	DOCUMENT_SIGN: 'o-document-sign',
 	BLACK_LIST: 'o-black-list',
 	IMPORTANT_TASK: 'o-important-task',
+	ADD_DATABASE: 'o-add-database',
+	BANK_CARD: 'o-bank-card',
+	CIRCLECHECK_FORWARD: 'o-circlecheck-forward',
+	CROWN_1: 'o-crown-1',
+	DIAL_10: 'o-dial-10',
+	DIAL_20: 'o-dial-20',
+	DOCUMENT_LINK: 'o-document-link',
+	DOCUMENT_PRINT: 'o-document-print',
+	LIST_AI_2: 'o-list-ai-2',
+	PARTS_RECORD: 'o-parts-record',
+	PARTS_RECORD_PLAY: 'o-parts-record-play',
+	PARTS_RECORD_STOP: 'o-parts-record-stop',
+	PLANNING_2: 'o-planning-2',
+	SEEN_ITEMS: 'o-seen-items',
+	SHOP_ORDER: 'o-shop-order',
+	SSO: 'o-sso',
+	TABLE: 'o-table',
+	TASK_FIRE: 'o-task-fire',
+	UNIVERSAL_ACCESS: 'o-universal-access',
+	VISITED_ITEMS: 'o-visited-items',
+	WEBHOOK: 'o-webhook',
+	TEXT_FORMAT_RESET: 'o-text-format-reset',
+	SPOILER: 'o-spoiler',
+	OPEN_NEW: 'o-open-new',
 });
 
 export const Solid = Object.freeze({
@@ -1450,6 +1474,7 @@ export const Solid = Object.freeze({
 	VERIFICATION: 's-verification',
 	WALLET: 's-wallet',
 	WINDOW_FLAG: 's-window-flag',
+	CROWN_1: 's-crown-1',
 });
 
 export const SmallOutline = Object.freeze({

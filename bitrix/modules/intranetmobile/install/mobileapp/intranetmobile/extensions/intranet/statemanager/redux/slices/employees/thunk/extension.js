@@ -63,7 +63,7 @@ jn.define('intranet/statemanager/redux/slices/employees/thunk', (require, export
 			try
 			{
 				const response = await runActionPromise({
-					action: 'intranet.invite.reinviteWithChangeContact',
+					action: 'intranetmobile.invite.reinviteWithChangeContact',
 					options: {
 						userId,
 						newEmail: email || null,

@@ -1,8 +1,0 @@
-<?php
-$MESS["SELECTOR_COMPONENT_INVITE_BANNER_DESCRIPTION"] = "Разом ви швидше оціните переваги Бітрікс24.";
-$MESS["SELECTOR_COMPONENT_INVITE_BANNER_TITLE"] = "Запросіть колег";
-$MESS["SELECTOR_COMPONENT_INVITE_SEARCH_WITH_CREATION"] = "Знайти або запросити";
-$MESS["SELECTOR_COMPONENT_INVITE_USER_TAG"] = "Запросити";
-$MESS["SELECTOR_COMPONENT_INVITING_USER_TAG"] = "Запросити";
-$MESS["SELECTOR_COMPONENT_PICK_USER_2"] = "Користувач";
-$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_USER"] = "Почніть друкувати для вибору користувача";

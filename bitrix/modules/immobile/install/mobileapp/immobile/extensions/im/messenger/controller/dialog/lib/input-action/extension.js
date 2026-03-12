@@ -24,6 +24,7 @@ jn.define('im/messenger/controller/dialog/lib/input-action', (require, exports, 
 		{
 			/** @type {DialogLocator} */
 			this.dialogLocator = dialogLocator;
+
 			/**
 			 * @desc Id timer timeout for canceling request rest
 			 * @private
@@ -47,6 +48,15 @@ jn.define('im/messenger/controller/dialog/lib/input-action', (require, exports, 
 		get chatService()
 		{
 			return this.dialogLocator.get('chat-service');
+		}
+
+		/**
+		 * @private
+		 * @return {DialogView}
+		 */
+		get view()
+		{
+			return this.dialogLocator.get('view');
 		}
 
 		/**
@@ -93,7 +103,7 @@ jn.define('im/messenger/controller/dialog/lib/input-action', (require, exports, 
 			this.cancelInputActionRequest();
 			this.holdInputActionTimerId = setTimeout(() => {
 				this.chatService.inputActionNotify(this.dialogId, UserInputAction.recordingVoice)
-					.catch((err) => logger.error('startRecordVoice.recordVoiceMessageNotify',	err));
+					.catch((err) => logger.error('startRecordVoice.recordVoiceMessageNotify', err));
 			}, this.HOLD_REST);
 		}
 

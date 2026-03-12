@@ -260,7 +260,7 @@
 			}
 		}
 
-		const items = [...styles, ...scripts];
+		const items = [...styles.map((style) => ({ url: style, ext: 'css' })), ...scripts];
 		if (items.length > 0)
 		{
 			BX.load(items, callback);
@@ -279,7 +279,7 @@
 			return result;
 		}
 
-		const parts = BX.processHTML(block.PROPS.STRINGS.join(''), false);
+		const parts = BX.processHTML(block.PROPS.STRINGS.join('\n'), false);
 		for (let i = 0, l = parts.SCRIPT.length; i < l; i++)
 		{
 			const script = parts.SCRIPT[i];

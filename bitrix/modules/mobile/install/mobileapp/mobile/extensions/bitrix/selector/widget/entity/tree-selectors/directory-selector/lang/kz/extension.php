@@ -1,3 +1,0 @@
-<?php
-$MESS["DIRECTORY_SELECTOR_SELECT_DIRECTORY_ITEM"] = "Осы директорияны таңдаңыз";
-$MESS["DIRECTORY_SELECTOR_USER_ROOT_DIRECTORY_TITLE"] = "Менің файлдарым";

@@ -6,6 +6,9 @@ use ArrayIterator;
 use Bitrix\Bizproc\Activity\ActivityDescription;
 use Bitrix\Bizproc\Activity\Mixins\ActivityFilterChecker;
 
+/**
+ * @extends \IteratorAggregate<ActivityDescription>
+ */
 final class Activities implements \IteratorAggregate, \JsonSerializable
 {
 	use ActivityFilterChecker;
@@ -85,6 +88,15 @@ final class Activities implements \IteratorAggregate, \JsonSerializable
 		$filtered = array_filter($this->items, $callback, ARRAY_FILTER_USE_BOTH);
 
 		return new self($filtered);
+	}
+
+	/**
+	 * @param callable(ActivityDescription):mixed $callback
+	 * @return array
+	 */
+	public function map(callable $callback): array
+	{
+		return array_map($callback, $this->items);
 	}
 
 	/**

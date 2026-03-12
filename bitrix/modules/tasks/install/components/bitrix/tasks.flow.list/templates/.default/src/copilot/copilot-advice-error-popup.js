@@ -27,11 +27,11 @@ export class CopilotAdviceErrorPopup
 				<div class="tasks-flow__copilot-advice-error-popup-title">
 					<span class="tasks-flow__copilot-advice-error-popup-icon ui-icon-set --copilot-ai"/>
 					<span class="tasks-flow__copilot-advice-error-popup-title-text">
-						${Loc.getMessage(messages.titleCode)}
+						${Loc.getMessage(messages.titleCode, { '#COPILOT_NAME#': CopilotAdvice.getCopilotName() })}
 					</span>
 				</div>
 				<div class="tasks-flow__copilot-advice-error-popup-description">
-					${Loc.getMessage(messages.descriptionCode)}
+					${Loc.getMessage(messages.descriptionCode, { '#COPILOT_NAME#': CopilotAdvice.getCopilotName() })}
 				</div>
 				<div class="tasks-flow__copilot-advice-error-popup-example">
 					<span class="tasks-flow__copilot-advice-error-popup-example-text" ref="exampleLink">
@@ -72,20 +72,20 @@ export class CopilotAdviceErrorPopup
 		{
 			case CopilotAdviceErrorTypes.UnexpectedError: {
 				titleCode = 'TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_TITLE';
-				descriptionCode = 'TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_DESCRIPTION';
+				descriptionCode = 'TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_DESCRIPTION_MSGVER_1';
 
 				break;
 			}
 
 			case CopilotAdviceErrorTypes.AdviceFetching: {
-				titleCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_TITLE';
+				titleCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_TITLE_MSGVER_1';
 				descriptionCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_DESCRIPTION';
 
 				break;
 			}
 
 			case CopilotAdviceErrorTypes.RateLimit: {
-				titleCode = 'TASKS_FLOW_LIST_COPILOT_RATE_LIMIT_POPUP_TITLE';
+				titleCode = 'TASKS_FLOW_LIST_COPILOT_RATE_LIMIT_POPUP_TITLE_MSGVER_1';
 				descriptionCode = 'TASKS_FLOW_LIST_COPILOT_RATE_LIMIT_POPUP_DESCRIPTION';
 
 				break;
@@ -93,8 +93,8 @@ export class CopilotAdviceErrorPopup
 
 			case CopilotAdviceErrorTypes.NotEnoughTasks:
 			default: {
-				titleCode = 'TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE';
-				descriptionCode = 'TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_DESCRIPTION';
+				titleCode = 'TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE_MSGVER_1';
+				descriptionCode = 'TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_DESCRIPTION_MSGVER_1';
 
 				break;
 			}

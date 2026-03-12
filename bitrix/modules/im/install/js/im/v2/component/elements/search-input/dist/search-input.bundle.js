@@ -38,7 +38,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: null
 	    }
 	  },
-	  emits: ['queryChange', 'inputFocus', 'inputBlur', 'keyPressed', 'close', 'closeByEsc'],
+	  emits: ['queryChange', 'inputFocus', 'keyPressed', 'close', 'closeByEsc'],
 	  data() {
 	    return {
 	      query: '',

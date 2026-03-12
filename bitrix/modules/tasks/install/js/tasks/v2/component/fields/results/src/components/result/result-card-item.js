@@ -249,7 +249,7 @@ export const ResultCardItem = {
 	},
 	template: `
 		<div
-			class="tasks-field-results-result --card"
+			class="tasks-field-results-result --card print-no-border print-no-box-shadow"
 			:data-task-field-id="resultsMeta.id"
 			data-field-container
 		>
@@ -262,7 +262,7 @@ export const ResultCardItem = {
 					<BIcon :name="Outline.WINDOW_FLAG"/>
 					<TextMd accent>{{ resultTitle }}</TextMd>
 				</div>
-				<div class="tasks-field-results-title-actions">
+				<div class="tasks-field-results-title-actions print-ignore">
 					<BIcon
 						v-if="hasMenuItems"
 						class="tasks-field-results-title-icon"
@@ -301,7 +301,7 @@ export const ResultCardItem = {
 				</div>
 			</div>
 			<div class="tasks-field-results-result-content" ref="content">
-				<div class="tasks-field-results-result-author-border">
+				<div class="tasks-field-results-result-author-border print-no-after">
 					<div
 						class="tasks-field-results-result-author-border-clickable"
 						@click="handleAuthorClick"
@@ -330,7 +330,7 @@ export const ResultCardItem = {
 					:showFilesIndicator="false"
 					v-model:opened="opened"
 				/>
-				<div v-if="filesCount > 0" class="tasks-field-results-result-files" :key="resultId">
+				<div v-if="filesCount > 0" class="tasks-field-results-result-files print-ignore" :key="resultId">
 					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
 				</div>
 			</div>

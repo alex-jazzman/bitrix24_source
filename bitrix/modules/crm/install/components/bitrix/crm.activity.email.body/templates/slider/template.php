@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\Activity\Mail\Message;
 use Bitrix\Main\Engine\UrlManager;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Viewer;
 use Bitrix\Crm\Activity\Provider\Email;
@@ -17,6 +18,12 @@ global $APPLICATION;
 if (IsModuleInstalled('disk'))
 {
 	\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/disk/css/legacy_uf_common.css');
+}
+
+if(!Loader::includeModule("mail"))
+{
+	echo getMessage('CRM_ACT_EMAIL_NO_MAIL');
+	die();
 }
 
 $activity = $arParams['ACTIVITY'];
@@ -286,7 +293,15 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 		</div>
 	<?php endif; ?>
 
-	<div id="<?= htmlspecialcharsbx($bodyElementId) ?>" class="crm-task-list-mail-item-inner-body crm-task-list-mail-item-inner-body-slider crm-mail-message-wrapper"></div>
+	<div
+		id="<?= htmlspecialcharsbx($bodyElementId) ?>"
+		class="crm-task-list-mail-item-inner-body crm-task-list-mail-item-inner-body-slider crm-mail-message-wrapper"
+		data-activity-id="<?= (int)$activity['ID'] ?>"
+		data-use-ajax="<?= $isAjaxBody ? '1' : '0' ?>"
+		<?php if (!$isAjaxBody): ?>
+			data-message-html="<?= htmlspecialcharsbx($arParams['~ACTIVITY']['DESCRIPTION_HTML'] ?? '') ?>"
+		<?php endif; ?>
+	></div>
 </div>
 <? if (!empty($activity['__files'])):
 
@@ -552,7 +567,6 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 
 <script>
 
-document.getElementById('<?=\CUtil::jsEscape($bodyElementId)?>').innerHTML = '<?=CUtil::jsEscape($arParams['~ACTIVITY']['DESCRIPTION_HTML']) ?>';
 
 try
 {

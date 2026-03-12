@@ -104,12 +104,20 @@ export const KnowledgeBaseComponent = {
 		<div class="bizproc-rag-selector__base" :class="{'--view': !isEditing}">
 			<BIcon
 				:name="OutlineIcons.CROSS_L"
-				:hoverable="true"
 				:size="20"
 				color="#a8adb4"
-				@click="showConfirmPopup()"
+				@click="showConfirmPopup"
 				data-test-id="bizproc-rag-selector__knowledge-delete-btn"
 				class="bizproc-rag-selector__base-remove-icon"
+			/>
+			<BIcon
+				v-if="!isEditing"
+				:name="OutlineIcons.EDIT_L"
+				:size="20"
+				@click="switchToEditMode"
+				color="#a8adb4"
+				data-test-id="bizproc-rag-selector__knowledge-edit-btn"
+				class="bizproc-rag-selector__base-edit-icon"
 			/>
 			<template v-if="isEditing">
 				<div v-if="error" class="bizproc-rag-selector__base-error">
@@ -185,7 +193,7 @@ export const KnowledgeBaseComponent = {
 				<div class="ui-ctl-label-text">
 					{{ $Bitrix.Loc.getMessage('BIZPROC_JS_RAG_SELECTOR_BASE_NAME_VIEW') }}
 				</div>
-				<div class="bizproc-rag-selector__base-view-title" @click="switchToEditMode">{{ base.name }}</div>
+				<span class="bizproc-rag-selector__base-view-title" @click="switchToEditMode">{{ base.name }}</span>
 				<div class="bizproc-rag-selector__base-view-desc">{{ base.description }}</div>
 			</template>
 		</div>

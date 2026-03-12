@@ -291,6 +291,7 @@ class Permission
 			Action::ChangeRight->value => Chat::ROLE_GUEST,
 			Action::ChangeOwner->value => Chat::ROLE_GUEST,
 			Action::ChangeManagers->value => Chat::ROLE_GUEST,
+			Action::ManageSharingLinks->value => Chat::ROLE_NONE,
 		];
 	}
 
@@ -330,6 +331,8 @@ class Permission
 				GlobalAction::CreateCollab->value => true,
 				GlobalAction::LeaveCollab->value => true,
 				GlobalAction::ChangeMessagesAutoDeleteDelay->value => true,
+				GlobalAction::CreateStickerPack->value => true,
+				GlobalAction::ChangeStickerPack->value => true,
 			],
 			UserType::EXTRANET->value => [
 				GlobalAction::GetChannels->value => false,
@@ -342,6 +345,8 @@ class Permission
 				GlobalAction::CreateCollab->value => false,
 				GlobalAction::LeaveCollab->value => false,
 				GlobalAction::ChangeMessagesAutoDeleteDelay->value => false,
+				GlobalAction::CreateStickerPack->value => false,
+				GlobalAction::ChangeStickerPack->value => false,
 			],
 			UserType::COLLABER->value => [
 				GlobalAction::GetChannels->value => false,
@@ -354,6 +359,8 @@ class Permission
 				GlobalAction::CreateCollab->value => false,
 				GlobalAction::LeaveCollab->value => false,
 				GlobalAction::ChangeMessagesAutoDeleteDelay->value => false,
+				GlobalAction::CreateStickerPack->value => false,
+				GlobalAction::ChangeStickerPack->value => false,
 			],
 		];
 

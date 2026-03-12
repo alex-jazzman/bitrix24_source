@@ -116,7 +116,7 @@ class TaskAccessService
 
 		if ($task->group !== null)
 		{
-			$withAccess = $this->getGroupAccess($task, $withAccess);
+			$withAccess = $this->getGroupAccess($task, $withAccess, $userIds);
 			$checkAccess = array_diff($userIds, $withAccess);
 
 			if (empty($checkAccess))
@@ -159,17 +159,19 @@ class TaskAccessService
 		return array_merge($withAccess, $accessViaAdminRights);
 	}
 
-	private function getGroupAccess($task, array $withAccess): array
+	private function getGroupAccess(Entity\Task $task, array $withAccess, array $userIds): array
 	{
-		$members = $this->groupRepository->getMembers($task->group->id);
-		$members = array_map(
-			static fn (Entity\User $user): array => [$user->id => $user->role],
-			iterator_to_array($members)
-		);
+		$members = $this->groupRepository->getMemberRoles($userIds, $task->group->id);
+
+		$memberRoleMaps = [];
+		foreach ($members as $user)
+		{
+			$memberRoleMaps[] = [$user->id => $user->role];
+		}
 
 		$accessViaGroup = $this->operationService->filterUsersWithAccess(
 			$task->group->id,
-			$members,
+			$memberRoleMaps,
 			SONET_ENTITY_GROUP,
 			'tasks',
 			'view_all'

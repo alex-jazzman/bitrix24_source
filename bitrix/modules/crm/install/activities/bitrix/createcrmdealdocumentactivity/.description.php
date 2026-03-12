@@ -22,9 +22,6 @@ $arActivityDescription = [
 		"OWN_ID" => 'crm',
 		"OWN_NAME" => 'CRM',
 	],
-	'NODE_ACTION_SETTINGS' => [
-		'INCLUDE' => ['crmdealcomplexactivity'],
-	],
 	'RETURN' => [
 		'DealId' => [
 			'NAME' => GetMessage('CRM_ACTIVITY_CREATE_DEAL_ID'),

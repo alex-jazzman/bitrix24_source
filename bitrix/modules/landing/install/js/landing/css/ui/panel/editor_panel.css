@@ -164,12 +164,17 @@
 }
 
 .landing-ui-panel-editor .landing-ui-button-editor-action[data-id="foreColor"],
-.landing-ui-panel-editor .landing-ui-button-editor-action[data-id="hiliteColor"] {
+.landing-ui-panel-editor .landing-ui-button-editor-action[data-id="hiliteColor"],
+.landing-ui-panel-editor .landing-ui-button-editor-action[data-id="tableTextColor"],
+.landing-ui-panel-editor .landing-ui-button-editor-action[data-id="tableBgColor"] {
 	position: relative;
 }
 
 .landing-ui-panel-editor .landing-ui-button-editor-action.--wait[data-id="foreColor"] .landing-ui-button-text,
-.landing-ui-panel-editor .landing-ui-button-editor-action.--wait[data-id="hiliteColor"] .landing-ui-button-text {
+.landing-ui-panel-editor .landing-ui-button-editor-action.--wait[data-id="hiliteColor"] .landing-ui-button-text,
+.landing-ui-panel-editor .landing-ui-button-editor-action.--wait[data-id="tableTextColor"]::before,
+.landing-ui-panel-editor .landing-ui-button-editor-action.--wait[data-id="tableTextColor"] .landing-ui-button-text,
+.landing-ui-panel-editor .landing-ui-button-editor-action.--wait[data-id="tableBgColor"] .landing-ui-button-text {
 	opacity: .5;
 }
 

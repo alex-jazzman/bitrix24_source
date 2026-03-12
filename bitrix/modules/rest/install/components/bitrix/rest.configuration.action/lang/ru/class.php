@@ -9,3 +9,5 @@ $MESS["REST_CONFIGURATION_ACTION_IMPORT_CRM_ACTION"] = "Импортироват
 $MESS["REST_CONFIGURATION_ACTION_EXPORT_CRM_TITLE_MSGVER_1"] = "Делитесь готовым решением";
 $MESS["REST_CONFIGURATION_ACTION_EXPORT_CRM_DESCRIPTION_MSGVER_1"] = "Экспортируйте CRM со всеми настройками <br/> в другой Битрикс24";
 $MESS["REST_CONFIGURATION_ACTION_EXPORT_CRM_ACTION"] = "Экспортировать";
+$MESS["REST_CONFIGURATION_ACTION_IMPORT_CRM_SMART_ROBOTS_DESCRIPTION"] = "Перенесите сценарии из другого <br/> Битрикс24";
+$MESS["REST_CONFIGURATION_ACTION_EXPORT_CRM_SMART_ROBOTS_DESCRIPTION"] = "Экспортируйте свои сценарии <br/> в другой Битрикс24";

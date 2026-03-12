@@ -2,17 +2,13 @@
  * @module im/messenger/lib/element/recent/item/chat/channel
  */
 jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports, module) => {
-	const { Type } = require('type');
 	const { Theme } = require('im/lib/theme');
 	const {
-		ComponentCode,
 		AnchorType,
 	} = require('im/messenger/const');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatItem } = require('im/messenger/lib/element/recent/item/chat');
 	const { RecentItemSectionCode } = require('im/messenger/lib/element/recent/item/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
 
@@ -46,39 +42,12 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 
 			this.dialog = this.params.model.dialog;
 			const store = serviceLocator.get('core').getStore();
-			let postsCountWithCounters = 0;
-			if (Feature.isMessengerV2Enabled)
-			{
-				postsCountWithCounters = store.getters['counterModel/getNumberChildCounters'](this.dialog?.chatId);
-			}
-			else
-			{
-				postsCountWithCounters = store
-					.getters['commentModel/getPostsCountWithCounters'](this.dialog?.chatId)
-				;
-			}
+			const channelCounters = store.getters['counterModel/getNumberChildCounters'](this.dialog?.chatId);
 
 			this.params.model = {
 				...this.params.model,
-				commentsCounter: postsCountWithCounters,
+				commentsCounter: channelCounters,
 			};
-
-			return this;
-		}
-
-		/**
-		 * @return RecentItem
-		 */
-		createUnread()
-		{
-			if (MessengerParams.getComponentCode() === ComponentCode.imChannelMessenger)
-			{
-				this.unread = false;
-
-				return this;
-			}
-
-			this.unread = this.getModelItem().unread;
 
 			return this;
 		}

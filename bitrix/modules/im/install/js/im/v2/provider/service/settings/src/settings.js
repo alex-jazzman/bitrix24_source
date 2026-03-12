@@ -71,7 +71,12 @@ export class SettingsService
 		});
 	}
 
-	changeExpertOption(payload: { moduleId: string, optionName: string, type: string, value: boolean }): void
+	async changeExpertOption(payload: {
+		moduleId: string,
+		optionName: string,
+		type: string,
+		value: boolean
+	}): Promise<void>
 	{
 		const { moduleId, optionName, type, value } = payload;
 		void Core.getStore().dispatch('application/settings/setNotificationOption', {
@@ -81,17 +86,22 @@ export class SettingsService
 			value,
 		});
 
-		runAction(RestMethod.imV2SettingsNotifyUpdate, {
-			data: {
-				userId: Core.getUserId(),
-				moduleId,
-				name: optionName,
-				type,
-				value,
-			},
-		}).catch(([error]) => {
+		try
+		{
+			await runAction(RestMethod.imV2SettingsNotifyUpdate, {
+				data: {
+					userId: Core.getUserId(),
+					moduleId,
+					name: optionName,
+					type,
+					value,
+				},
+			});
+		}
+		catch ([error])
+		{
 			console.error('SettingsService: changeExpertOption error', error);
-		});
+		}
 	}
 
 	async toggleSubscription(notificationSubscriptionOptions: NotificationSubscriptionOptions): Promise<void>

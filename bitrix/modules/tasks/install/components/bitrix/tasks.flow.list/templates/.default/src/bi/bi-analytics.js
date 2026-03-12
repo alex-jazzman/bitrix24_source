@@ -1,5 +1,4 @@
 import { MenuManager } from 'main.popup';
-import { SidePanel } from 'main.sidepanel';
 import type { MenuItemOptions } from 'main.popup';
 
 export type Data = {
@@ -12,6 +11,7 @@ export type Dashboard = {
 	id: string,
 	title: string,
 	url: string,
+	isLocked: boolean,
 }
 
 export class BIAnalytics
@@ -53,7 +53,7 @@ export class BIAnalytics
 
 		if (dashboard)
 		{
-			window.open(dashboard.url, '_blank');
+			this.#openDashboard(dashboard);
 		}
 	}
 
@@ -66,11 +66,31 @@ export class BIAnalytics
 				tabId: dashboard.id,
 				text: dashboard.title,
 				onclick: () => {
-					window.open(dashboard.url, '_blank');
+					this.#openDashboard(dashboard);
 				},
 			});
 		});
 
 		return menuItems;
+	}
+
+	#openDashboard(dashboard: Dashboard): void
+	{
+		if (dashboard.isLocked)
+		{
+			this.#showTariffSlider();
+		}
+		else
+		{
+			window.open(dashboard.url, '_blank');
+		}
+	}
+
+	#showTariffSlider(): void
+	{
+		if (top.BX && top.BX.UI && top.BX.UI.InfoHelper)
+		{
+			top.BX.UI.InfoHelper.show('limit_crm_BI_constructor');
+		}
 	}
 }

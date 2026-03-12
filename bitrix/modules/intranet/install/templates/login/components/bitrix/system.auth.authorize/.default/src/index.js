@@ -59,6 +59,7 @@ export class SystemAuthAuthorize
 					qrConfig: this.getApplication().#qrConfig,
 					isFormBlockVisible: true,
 					isCaptchaBlockVisible: false,
+					inputPasswordType: 'password',
 				};
 			},
 			beforeCreate(): void
@@ -95,6 +96,16 @@ export class SystemAuthAuthorize
 				{
 					this.isFormBlockVisible = false;
 					this.isCaptchaBlockVisible = true;
+				},
+
+				onEyeMouseDown(): void
+				{
+					this.inputPasswordType = 'text';
+				},
+
+				onEyeMouseUp(): void
+				{
+					this.inputPasswordType = 'password';
 				},
 
 				initQrCode(): void

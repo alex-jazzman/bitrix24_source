@@ -1,7 +1,9 @@
 <?php
 $MESS["MARKET_LIST_APPS_JS_LINK_MAIN"] = "Главная";
 $MESS["MARKET_LIST_APPS_JS_SORT"] = "Сортировать:";
-$MESS["MARKET_LIST_APPS_JS_NO_APPS_MATCHING_YOUR_REQUEST"] = "Нет приложений по вашему запросу";
+$MESS["MARKET_LIST_APPS_JS_NO_APPS_MATCHING_YOUR_REQUEST_TITLE"] = "Приложение не найдено";
+$MESS["MARKET_LIST_APPS_JS_NO_APPS_MATCHING_YOUR_REQUEST_DESCRIPTION"] = "Попробуйте найти подходящее в каталоге";
+$MESS["MARKET_LIST_APPS_JS_NO_APPS_MATCHING_YOUR_REQUEST_CATALOG_BUTTON"] = "Перейти в каталог";
 $MESS["MARKET_LIST_APPS_JS_THERE_IS_NOTHING_IN_FAVORETES"] = "В избранном ничего нет";
 $MESS["MARKET_LIST_APPS_JS_MARK_THE_APPS_YOU_LIKE"] = "Отмечайте понравившиеся приложения значком и устанавливайте в любое удобное время.";
 $MESS["MARKET_LIST_APPS_JS_SEARCH_APPS_ON_CATEGORIES"] = "Ищите приложения в более чем 20 категориях";

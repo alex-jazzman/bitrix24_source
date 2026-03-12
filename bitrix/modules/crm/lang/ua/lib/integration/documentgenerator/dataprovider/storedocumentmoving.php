@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_DOCGEN_DATAPROVIDER_SD_MOVING_TITLE"] = "Переміщення";

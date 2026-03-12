@@ -1,0 +1,45 @@
+.editor-chart-toast-layout {
+	display: flex;
+	align-items: center;
+	height: 28px;
+	color: var(--ui-color-base-8);
+	width: 700px;
+	--ui-icon-set__icon-color: var(--ui-color-base-8);
+}
+.editor-chart-toast-layout__divider {
+	width: 9px;
+	height: 20px;
+	margin: 0 9px;
+}
+
+.editor-chart-toast-layout__left {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	margin-right: 12px;
+}
+
+.editor-chart-toast-layout__right {
+	margin-left: auto;
+}
+
+.editor-chart-toast-layout__icon {
+	display: flex;
+}
+
+.editor-chart-toast-layout__content {
+	height: 19px;
+	display: flex;
+	align-items: center;
+	width: 100%;
+}
+
+.editor-chart-toast-layout__content__message {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-reset)
+}
+
+.editor-chart-toast-layout__content__end {
+	margin-left: auto;
+}

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["USER_PROPERTY_NAME"] = "Name of the additional properties Tab";
 $MESS["ONE_BLOG_BLOG_URL"] = "Symbolic blog name";
 $MESS["BC_NAME_TEMPLATE"] = "Name Format";
@@ -14,4 +14,3 @@ $MESS["BC_SHARE_TEMPLATE"] = "Social Network Bookmarks Template";
 $MESS["BC_SHARE_SYSTEM"] = "Use Social Networks And Bookmarks";
 $MESS["BC_SHARE_SHORTEN_URL_LOGIN"] = "bit.ly Login";
 $MESS["BC_SHARE_SHORTEN_URL_KEY"] = "bit.ly Key";
-?>

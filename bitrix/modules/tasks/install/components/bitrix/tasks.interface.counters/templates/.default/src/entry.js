@@ -133,6 +133,7 @@ export class Counters extends CounterPanel
 		this.#filterId = options.filterId;
 
 		this.tasksChatUri = options.tasksChatUri;
+		this.viewState = options.viewState || 'list';
 		this.chatButton = null;
 
 		this.setData(this.counters);
@@ -736,6 +737,16 @@ export class Counters extends CounterPanel
 		}
 
 		BX.SidePanel.Instance.emulateAnchorClick(this.tasksChatUri);
+
+		sendData({
+			tool: 'tasks',
+			category: 'chat_operations',
+			type: 'task',
+			event: 'click_chat_tasks',
+			c_section: 'task',
+			c_sub_section: this.viewState,
+			c_element: 'chat_tasks_button',
+		});
 	}
 
 	initChatButtonCounter(): void
@@ -834,6 +845,7 @@ export class Counters extends CounterPanel
 			type: 'task',
 			event: this.#getAnalyticsEvent(item),
 			c_section: this.#getAnalyticsSection(item),
+			c_sub_section: this.viewState,
 			c_element: this.#getAnalyticsElement(item),
 		});
 	}

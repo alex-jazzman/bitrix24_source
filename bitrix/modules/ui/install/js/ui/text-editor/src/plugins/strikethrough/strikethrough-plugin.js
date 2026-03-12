@@ -1,4 +1,5 @@
 import { Browser, Loc } from 'main.core';
+import { Outline } from 'ui.icon-set.api.core';
 
 import {
 	convertTextFormatElement,
@@ -90,7 +91,7 @@ export class StrikethroughPlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('strikethrough', () => {
 			const button = new Button();
-			button.setContent('<span class="ui-icon-set --strikethrough"></span>');
+			button.setIcon(Outline.STRIKETHROUGH);
 			button.setFormat('strikethrough');
 			button.disableInsideUnformatted();
 			button.setTooltip(

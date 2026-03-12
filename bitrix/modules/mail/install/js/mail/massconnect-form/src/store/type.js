@@ -1,3 +1,5 @@
+import { YES_VALUE, NO_VALUE } from './const';
+
 export type BaseUser = {
 	id: number,
 	entityId: string,
@@ -86,14 +88,14 @@ export type MailboxPayload = {
 	senderName: string,
 	server: string,
 	port: string,
-	ssl: boolean,
-	useSmtp: boolean,
+	ssl: YES_VALUE | NO_VALUE,
+	useSmtp: YES_VALUE | NO_VALUE,
 	serverSmtp: string,
 	portSmtp: string,
-	sslSmtp: boolean,
-	iCalAccess: 'Y' | 'N',
+	sslSmtp: YES_VALUE | NO_VALUE,
+	iCalAccess: YES_VALUE | NO_VALUE,
 	serviceId: number,
-	syncAfterConnection: 'Y' | 'N',
+	syncAfterConnection: YES_VALUE | NO_VALUE,
 	messageMaxAge: number,
 	crmOptions: CrmOptionsPayload,
 };
@@ -108,4 +110,9 @@ export type MassConnectDataType = {
 	crmSettings: CrmSettingsState,
 	calendarSettings: CalendarSettingsState,
 	employees: Employee[],
-}
+};
+
+export type MassconnectPermissions = {
+	allowedLevels: ?number,
+	canEditCrmIntegration: ?boolean,
+};

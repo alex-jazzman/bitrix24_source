@@ -62,6 +62,7 @@
 		BX.Calendar.Util.setGoogleConnectionStatus(config.isGoogleConnected);
 		BX.Calendar.Util.setIsSharingFeatureEnabled(config.isSharingFeatureEnabled);
 		BX.Calendar.Util.setSharingConfig(config.sharing);
+		BX.Calendar.Util.setBitrix24Enabled(config.isBitrix24Enabled);
 		this.payAttentionToNewSharingFeature = config.payAttentionToNewSharingFeature;
 		this.sharingFeatureLimitEnable = config.sharingFeatureLimitEnable;
 		this.sharingSettingsCollapsed = config.sharingOptions?.sharingSettingsCollapsed;

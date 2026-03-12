@@ -4,14 +4,22 @@ import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
 import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
-import { EntityTextArea, EntityTextTypes, entityTextEditor, type EntityTextEditor } from 'tasks.v2.component.entity-text';
+import {
+	EntityTextArea,
+	EntityTextTypes,
+	entityTextEditor,
+	CopilotButton,
+	AttachButton,
+	MentionButton,
+	MoreButton,
+	NumberListButton,
+	BulletListButton,
+	type EntityTextEditor,
+} from 'tasks.v2.component.entity-text';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
-import { DescriptionMixin } from './description-mixin';
+import { DescriptionCheckListMixin } from './description-check-list-mixin';
 import { CheckList } from './actions/check-list';
-import { Copilot } from './actions/copilot';
-import { Attach } from './actions/attach';
-import { Mention } from './actions/mention';
 import { FullDescription } from './actions/full-description';
 
 import './description.css';
@@ -21,18 +29,28 @@ export const MiniForm = {
 	name: 'TaskDescriptionMiniForm',
 	components: {
 		CheckList,
-		Copilot,
-		Attach,
-		Mention,
+		CopilotButton,
+		AttachButton,
+		MentionButton,
+		MoreButton,
 		FullDescription,
 		EntityTextArea,
+		NumberListButton,
+		BulletListButton,
 	},
 	mixins: [
-		DescriptionMixin,
+		DescriptionCheckListMixin,
 	],
 	inject: {
 		task: {},
 		isEdit: {},
+	},
+	provide(): { fileService: FileService, entityTextEditor: EntityTextEditor }
+	{
+		return {
+			editor: () => this.editor,
+			fileService: () => this.fileService,
+		};
 	},
 	props: {
 		taskId: {
@@ -44,7 +62,7 @@ export const MiniForm = {
 			required: true,
 		},
 	},
-	emits: ['expand', 'change', 'filesChange', 'close'],
+	emits: ['expand', 'change', 'filesChange', 'addCheckList'],
 	setup(props): { task: TaskModel, fileService: FileService, entityTextEditor: EntityTextEditor }
 	{
 		return {
@@ -89,40 +107,6 @@ export const MiniForm = {
 		{
 			this.$emit('expand');
 		},
-		handleCopilotButtonClick(): void
-		{
-			if (!this.isCopilotEnabled)
-			{
-				return;
-			}
-
-			this.editor.focus(
-				() => {
-					this.editor.dispatchCommand(
-						BX.UI.TextEditor.Plugins.Copilot.INSERT_COPILOT_DIALOG_COMMAND,
-					);
-				},
-				{ defaultSelection: 'rootEnd' },
-			);
-		},
-		handleMentionButtonClick(): void
-		{
-			this.editor.focus(
-				() => {
-					this.editor.dispatchCommand(
-						BX.UI.TextEditor.Plugins.Mention.INSERT_MENTION_DIALOG_COMMAND,
-					);
-				},
-				{ defaultSelection: 'rootEnd' },
-			);
-		},
-		handleAttachButtonClick(): void
-		{
-			this.fileService.browse({
-				bindElement: this.$refs.attach.$el,
-				onHideCallback: this.onFileBrowserClose,
-			});
-		},
 		handleTeleport(isSheetShown): void
 		{
 			if (isSheetShown === true)
@@ -142,10 +126,6 @@ export const MiniForm = {
 				this.editor.setMaxHeight(null);
 				this.editor.setVisualOptions({ blockSpaceInline: 'var(--ui-space-stack-md2)' });
 			}
-		},
-		onFileBrowserClose(): void
-		{
-			this.fileService.setFileBrowserClosed(false);
 		},
 	},
 	template: `
@@ -169,13 +149,12 @@ export const MiniForm = {
 				<div class="tasks-card-description-footer-container">
 					<div class="tasks-card-description-footer">
 						<div class="tasks-card-description-action-list">
-							<Copilot v-if="isCopilotEnabled" @click="handleCopilotButtonClick"/>
-							<Attach
-								v-if="isDiskModuleInstalled"
-								ref="attach"
-								@click="handleAttachButtonClick"
-							/>
-							<Mention @click="handleMentionButtonClick"/>
+							<AttachButton v-if="isDiskModuleInstalled" :fileService/>
+							<MentionButton :editor/>
+							<BulletListButton :editor/>
+							<NumberListButton :editor/>
+							<MoreButton :editor/>
+							<CopilotButton v-if="isCopilotEnabled" :editor/>
 							<CheckList
 								v-if="isCopilotEnabled"
 								:loading="isAiCommandProcessing"

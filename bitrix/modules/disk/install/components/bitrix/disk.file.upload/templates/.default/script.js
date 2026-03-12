@@ -827,8 +827,14 @@
 			label.appendChild(form);
 			hiddenDiv.appendChild(label);
 
-			BX.addCustomEvent(window, "onDiskUploadPopupShow", function(node){ node.appendChild(label); });
-			BX.addCustomEvent(window, "onDiskUploadPopupClose", function(node){ hiddenDiv.appendChild(label); });
+			BX.addCustomEvent(window, "onDiskUploadPopupShow", function(node)
+			{
+				if (!label.parentNode.classList.contains('disk-documents-control-panel-card'))
+				{
+					node.appendChild(label);
+				}
+			});
+			BX.addCustomEvent(window, "onDiskUploadPopupClose", function(node){ hiddenDiv.appendChild(label) });
 		}
 		params['input'] = input;
 

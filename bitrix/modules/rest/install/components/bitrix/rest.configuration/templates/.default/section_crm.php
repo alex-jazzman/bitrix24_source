@@ -32,18 +32,20 @@ if (!empty($arResult['ERROR']))
 $APPLICATION->IncludeComponent(
 	'bitrix:rest.configuration.action',
 	'crm',
-	array(
+	[
 		'PATH_TO_IMPORT' => $arResult['PATH_TO_IMPORT'],
 		'PATH_TO_IMPORT_MANIFEST' => $arResult['PATH_TO_IMPORT_MANIFEST'],
 		'PATH_TO_EXPORT' => $arResult['PATH_TO_EXPORT'],
 		'MANIFEST_CODE' => $arResult['MANIFEST_CODE'],
 		'MP_LOAD_PATH' => '',
 		'FROM' => $arResult['FROM'],
-	)
+	]
 );
 
 $APPLICATION->IncludeComponent(
 	'bitrix:rest.marketplace.solution',
 	'',
-	[]
+	[
+		'MANIFEST_CODE' => $arResult['MANIFEST_CODE'],
+	],
 );

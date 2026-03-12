@@ -1,25 +1,18 @@
-.bx-im-stickers-tab__container {
+.bx-im-emote-selector-tab-stickers__container {
+	background-color: var(--ui-color-bg-vibrant-less);
 	flex-grow: 1;
 }
 
-.bx-im-stickers-pack-list__container {
+.bx-im-emote-selector-tab-stickers__packs-container {
 	border-radius: 16px 16px 0 0;
 	box-sizing: border-box;
-	height: 320px;
+	height: 394px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	padding: 0 4px 4px 4px;
-	background-color: var(--im-emote-selector__background-tab-color);
+	padding-bottom: 46px;
+	background-color: var(--ui-color-bg-vibrant-less);
 }
 
-.bx-im-stickers-header__container {
-	display: flex;
-	align-items: center;
-	height: 50px;
-	box-sizing: border-box;
-	padding: 0 8px;
-	overflow-x: auto;
-	overflow-y: hidden;
-	gap: 8px;
-	scrollbar-gutter: stable;
+.bx-im-emote-selector-tab-stickers__loader {
+	padding-bottom: 15px;
 }

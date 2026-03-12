@@ -8,6 +8,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Control\Exception\TaskAddException;
 use Bitrix\Tasks\V2\Internal\Entity;
 use Bitrix\Tasks\V2\Internal\Integration\Disk\Service\Task\CopyFileService;
+use Bitrix\Tasks\V2\Internal\Repository\RelatedTaskRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\SubTaskRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\TaskRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Service\CheckList\CopyCheckListService;
@@ -26,11 +27,11 @@ class CopyTaskService
 	public function __construct(
 		private readonly TaskRepositoryInterface $taskRepository,
 		private readonly SubTaskRepositoryInterface $subTaskRepository,
+		private readonly RelatedTaskRepositoryInterface $relatedTaskRepository,
 		private readonly AddTaskService $addTaskService,
 		private readonly CopyCheckListService $copyCheckListService,
 		private readonly CopyReminderService $copyReminderService,
 		private readonly CopyGanttDependenceService $copyGanttDependenceService,
-		private readonly CopyRelatedTaskService $copyRelatedTaskService,
 		private readonly TaskAccessService $taskAccessService,
 		private readonly CopyFileService $copyFileService,
 	)
@@ -202,15 +203,6 @@ class CopyTaskService
 				userId: $config->userId,
 			);
 		}
-
-		if ($config->withRelatedTasks)
-		{
-			$this->copyRelatedTaskService->copy(
-				fromTaskId: $originalTask->getId(),
-				toTaskId: $copiedTask->getId(),
-				userId: $config->userId,
-			);
-		}
 	}
 
 	private function prepareTask(
@@ -221,7 +213,7 @@ class CopyTaskService
 	{
 		$task = new Entity\Task(
 			title: $sourceTask->title,
-			creator: new Entity\User(id: $config->userId),
+			creator: $sourceTask->creator,
 			responsible: $sourceTask->responsible,
 			deadlineTs: $sourceTask->deadlineTs,
 			needsControl: $sourceTask->needsControl,
@@ -229,6 +221,8 @@ class CopyTaskService
 			endPlanTs: $sourceTask->endPlanTs,
 			checklist: $sourceTask->checklist,
 			group: $sourceTask->group,
+			epicId: $sourceTask->epicId,
+			storyPoints: $sourceTask->storyPoints,
 			flow: $sourceTask->flow,
 			priority: $sourceTask->priority,
 			accomplices: $sourceTask->accomplices,
@@ -243,9 +237,8 @@ class CopyTaskService
 			siteId: $sourceTask->siteId,
 			tags: $sourceTask->tags,
 			userFields: $sourceTask->userFields,
-			crmItems: $sourceTask->crmItems,
+			crmItemIds: $sourceTask->crmItemIds,
 			requireResult: $sourceTask->requireResult,
-			dependsOn: $sourceTask->dependsOn,
 		);
 
 		if ($config->withAttachments)
@@ -259,6 +252,18 @@ class CopyTaskService
 			$task = $task->cloneWith([
 				'fileIds' => $fileIds,
 				'description' => $description,
+			]);
+		}
+
+		if ($config->withRelatedTasks)
+		{
+			$relatedTaskIds =
+				$sourceTask->dependsOn
+				?? $this->relatedTaskRepository->getRelatedTaskIds((int)$sourceTask->getId())
+			;
+
+			$task = $task->cloneWith([
+				'dependsOn' => $relatedTaskIds,
 			]);
 		}
 

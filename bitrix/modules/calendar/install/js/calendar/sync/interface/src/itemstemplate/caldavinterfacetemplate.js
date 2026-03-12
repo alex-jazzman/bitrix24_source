@@ -121,7 +121,7 @@ export class CaldavInterfaceTemplate extends InterfaceTemplate
 		messageBox.show();
 	}
 
-	handleConnectButton(): void
+	async handleConnectButton(): void
 	{
 		this.provider.openInfoConnectionSlider(this.provider.getFirstFailedConnection());
 	}

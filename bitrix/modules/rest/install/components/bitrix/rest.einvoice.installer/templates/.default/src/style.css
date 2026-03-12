@@ -24,7 +24,8 @@
 	font-weight: 400;
 	color: var(--ui-color-palette-gray-80, #6A737F);
 	text-align: center;
-	width: 339px;
+	width: 400px;
+	margin: 0 auto;
 }
 
 .bitrix-einvoice-installer-button-select {

@@ -5,6 +5,9 @@
 	{
 		render()
 		{
+			return View(
+				{},
+			);
 		}
 	}
 

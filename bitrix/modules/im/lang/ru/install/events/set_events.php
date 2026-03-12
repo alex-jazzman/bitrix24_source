@@ -94,4 +94,3 @@ $MESS["IM_NEW_MESSAGE_GROUP_MESSAGE"] = "Здравствуйте, #USER_NAME#!
 Вы можете изменить настройки уведомлений: http://#SERVER_NAME#/?IM_SETTINGS=NOTIFY
 
 Это письмо сформировано автоматически.";
-?>

@@ -380,16 +380,6 @@ jn.define('crm/product-grid', (require, exports, module) => {
 		onAfterSummaryUpdate(responseData)
 		{}
 
-		renderAddItemButton()
-		{
-			if (this.canReadCatalog())
-			{
-				return super.renderAddItemButton();
-			}
-
-			return null;
-		}
-
 		onAddItemButtonClick()
 		{
 			return this.showProductAddMenu();

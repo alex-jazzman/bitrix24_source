@@ -27,6 +27,7 @@ jn.define('calendar/onboarding', (require, exports, module) => {
 							return !hasSync;
 						},
 						Condition.hasCalendarEventsAtLeast(3),
+						Condition.isNotCollaber(),
 					],
 					action: (context, onComplete) => ActionBase.showHint({
 						title: Loc.getMessage('M_CALENDAR_ONBOARDING_MORE_THAN_THREE_EVENTS_TITLE_MSGVER_1'),
@@ -41,7 +42,7 @@ jn.define('calendar/onboarding', (require, exports, module) => {
 					id: CaseName.ON_CALENDAR_NEW_MENU,
 					presets: [Preset.ANY],
 					activeTab: BadgeCode.ANY,
-					conditions: [Condition.shouldShowNewMenuHint()],
+					conditions: [Condition.isNotCollaber()],
 					shouldSkipLimitCheck: true,
 					action: (context, onComplete) => ActionBase.showHint({
 						fadeInDuration: 300,

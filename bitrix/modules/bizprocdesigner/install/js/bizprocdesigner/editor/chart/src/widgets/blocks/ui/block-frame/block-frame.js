@@ -1,20 +1,34 @@
 import { ResizableBlock } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
+import type { MenuItemOptions } from 'ui.vue3.components.menu';
 import { isBlockActivated } from '../../../../entities/blocks/utils';
 import { IconDivider, IconButton } from '../../../../shared/ui';
-// eslint-disable-next-line no-unused-vars
-import type { Block, BlockId } from '../../../../shared/types';
 import {
 	BlockContainer,
 	BlockLayout,
 	BlockTopTitle,
+	ColorMenuTopBtn,
+	FRAME_BG_COLORS,
+	FRAME_BORDER_COLORS,
 } from '../../../../entities/blocks';
 import {
 	DeleteBlockIconBtn,
 	UpdatePublishedStatusLabel,
+	ChangeFrameColorTopBtn,
 } from '../../../../features/blocks';
 
+import type { Block } from '../../../../shared/types';
+
 import { BlockMediator } from '../../lib';
+
+type Props = {
+	block: Block,
+};
+
+type Setup = {
+	iconSet: { [string]: string },
+	blockMediator: BlockMediator,
+};
 
 export const BlockFrame = {
 	name: 'BlockFrame',
@@ -27,6 +41,8 @@ export const BlockFrame = {
 		UpdatePublishedStatusLabel,
 		IconDivider,
 		IconButton,
+		ColorMenuTopBtn,
+		ChangeFrameColorTopBtn,
 	},
 	props: {
 		/** @type Block */
@@ -35,39 +51,55 @@ export const BlockFrame = {
 			required: true,
 		},
 	},
-	setup(props): {...}
+	setup(props: Props): Setup
 	{
 		return {
 			iconSet: Outline,
 			blockMediator: new BlockMediator(),
+			frameBgColors: FRAME_BG_COLORS,
+			frameBorderColors: FRAME_BORDER_COLORS,
+		};
+	},
+	data(): { isOpenedTopMenu: boolean }
+	{
+		return {
+			isOpenedTopMenu: false,
 		};
 	},
 	computed: {
 		isBlockActivated(): boolean
 		{
 			return isBlockActivated(this.block);
-		}
+		},
+		contextMenuItems(): Array<MenuItemOptions>
+		{
+			return [
+				this.blockMediator.getCtxMenuItemCopyBlock(this.block),
+				this.blockMediator.getCtxMenuItemDeleteBlock(this.block),
+			];
+		},
 	},
 	template: `
 		<ResizableBlock :block="block">
-			<template #default="{ isHighlighted, isResize, isDragged, isDisabled }">
+			<template #default="{ isHighlighted, isResize, isDragged, isDisabled, isMakeNewConnection }">
 				<BlockContainer
-					:highlighted="isHighlighted"
+					:highlighted="isHighlighted && !isDragged && !isResize"
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
-					:contextMenuItems="[
-						blockMediator.getCtxMenuItemDeleteBlock(block)
-					]"
-					colorName="orange"
+					:hoverable="!isMakeNewConnection"
+					:contextMenuItems="contextMenuItems"
+					:backgroundColor="frameBgColors[block.node.frameColorName]"
+					:borderColor="frameBorderColors[block.node.frameColorName]"
 				>
 					<BlockLayout
 						:block="block"
-						:moreMenuItems="[
-							blockMediator.getCtxMenuItemDeleteBlock(block)
-						]"
+						:moreMenuItems="contextMenuItems"
 						:dragged="isDragged"
 						:resized="isResize"
 						:disabled="isDisabled"
+						:isActivationVisible="false"
+						:hoverable="!isMakeNewConnection"
+						:topMenuOpened="isOpenedTopMenu"
 					>
 						<template #top-menu-title>
 							<BlockTopTitle :title="block.node.title"/>
@@ -80,8 +112,10 @@ export const BlockFrame = {
 								@deletedBlock="blockMediator.hideCurrentBlockSettings($event)"
 							/>
 							<IconDivider/>
-							<IconButton :icon-name="iconSet.PAUSE_L"/>
-							<IconButton :icon-name="iconSet.QUESTION"/>
+							<ChangeFrameColorTopBtn
+								:block="block"
+								@update:open="isOpenedTopMenu = $event"
+							/>
 						</template>
 
 						<template #default>

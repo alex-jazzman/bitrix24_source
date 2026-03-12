@@ -8,6 +8,9 @@ use Bitrix\Im\V2\Integration\AI\RoleManager;
 use Bitrix\Im\V2\Message\Delete\DeletionMode;
 use Bitrix\Im\V2\Message\MessageError;
 use Bitrix\Im\V2\Message\Reaction\ReactionMessage;
+use Bitrix\Im\V2\Message\Send\ImportantUsers;
+use Bitrix\Im\V2\Message\Sticker\PackType;
+use Bitrix\Im\V2\Message\Sticker\StickerItem;
 use Bitrix\Im\V2\Message\Sticker\StickerService;
 use Bitrix\Im\V2\TariffLimit\DateFilterable;
 use Bitrix\Im\V2\TariffLimit\FilterResult;
@@ -41,11 +44,12 @@ use Bitrix\Im\V2\Message\MessageParameter;
 use Bitrix\Im\V2\Rest\PopupData;
 use Bitrix\Im\V2\Rest\RestEntity;
 use Bitrix\Im\V2\Rest\PopupDataAggregatable;
+use Bitrix\Im\V2\Permission\ChatActionAccessCheckable;
 
 /**
  * Chat version #2
  */
-class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, PopupDataAggregatable, DateFilterable
+class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, PopupDataAggregatable, DateFilterable, AccessCheckable, ChatActionAccessCheckable
 {
 	use FieldAccessImplementation;
 	use ActiveRecordImplementation
@@ -66,7 +70,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 
 	/** Created by Id */
 	protected int $authorId = 0;
-	protected array $mentionedUserIds;
+	protected ?array $mentionedUserIds = null;
 
 	/** Message to send */
 	protected ?string $message = null;
@@ -149,7 +153,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 	/** Display message as a system notification. */
 	protected bool $isSystem = false;
 
-	protected ?UrlItem $url;
+	protected ?UrlItem $url = null;
 
 	protected int $botId = 0;
 
@@ -171,7 +175,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 
 	protected ?bool $isImportant = false;
 
-	protected ?array $importantFor = null;
+	protected ?ImportantUsers $importantFor = null;
 	protected ?string $dialogId = null;
 	protected ?int $prevId = null;
 
@@ -257,7 +261,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 
 	public function isImportant(): ?bool
 	{
-		return $this->isImportant;
+		return $this->isImportant || $this->hasMentionAll();
 	}
 
 	public function hasMentionAll(): bool
@@ -289,26 +293,17 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 
 	public function getImportantFor(): array
 	{
-		if ($this->importantFor !== null)
+		if ($this->importantFor === null)
 		{
-			return $this->importantFor;
+			$this->importantFor = ImportantUsers::createByMessage($this);
 		}
 
-		if ($this->hasMentionAll())
-		{
-			$this->setImportantFor([]);
-		}
-		else
-		{
-			$this->setImportantFor(array_values($this->getMentionedUserIds()));
-		}
-
-		return $this->importantFor;
+		return $this->importantFor->userIds;
 	}
 
 	public function setImportantFor(array $importantFor): self
 	{
-		$this->importantFor = $importantFor;
+		$this->importantFor = new ImportantUsers($importantFor);
 
 		return $this;
 	}
@@ -708,6 +703,26 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		return $this->files;
 	}
 
+	public function getSticker(): ?StickerItem
+	{
+		$stickerParam = $this->getParams()->get(Params::STICKER_PARAMS)->getValue();
+		if (empty($stickerParam))
+		{
+			return null;
+		}
+
+		$stickerId = (int)$stickerParam['ID'];
+		$packId = (int)$stickerParam['PACK_ID'];
+		$packType = PackType::tryFrom((string)$stickerParam['PACK_TYPE']);
+
+		if ($packType === null)
+		{
+			return null;
+		}
+
+		return (new StickerService())->getStickerById($stickerId, $packId, $packType);
+	}
+
 	public function getPrevId(): int
 	{
 		if ($this->prevId !== null)
@@ -787,25 +802,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		return $files;
 	}
 
-	/**
-	 * @return array
-	 */
-	public function getFilesDiskData(): array
-	{
-		if ($this->hasFiles())
-		{
-			return $this->getFiles()->getFileDiskAttributes($this->getChatId());
-		}
-
-		return  [];
-	}
-
 	//endregion
-
-	public function getReminder(): ?Link\Reminder\ReminderItem
-	{
-		return Link\Reminder\ReminderItem::getByMessageAndUserId($this, $this->getContext()->getUserId());
-	}
 
 	public function getAdditionalMessageIds(): array
 	{
@@ -826,6 +823,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 			new Im\V2\Entity\File\FilePopupItem(),
 			new Im\V2\Link\Reminder\ReminderPopupItem(),
 			new Im\V2\Message\Reaction\ReactionPopupItem($this->getReactions()),
+			Im\V2\Message\Sticker\StickerCollection::createByStickers([$this->getSticker()]),
 		], $excludedList);
 
 		if (!in_array(Im\V2\Entity\File\FilePopupItem::class, $excludedList, true))
@@ -947,7 +945,17 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		}
 
 		$this->message = $value ?? '';
-		unset($this->parsedMessage, $this->formattedMessage, $this->url);
+		$this->parsedMessage = null;
+		$this->formattedMessage = null;
+		$this->url = null;
+		$this->mentionedUserIds = null;
+		$this->hasMentionAll = null;
+
+		if (!$this->importantFor?->immutable)
+		{
+			$this->importantFor = null;
+		}
+
 		return $this;
 	}
 
@@ -1523,6 +1531,10 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 			'TO_CHAT_ID' => [
 				'alias' => 'CHAT_ID',
 			],
+			'IMPORTANT_FOR' => [
+				'set' => 'setImportantFor', /** @see Message::setImportantFor() */
+				'get' => 'getImportantFor', /** @see Message::getImportantFor() */
+			],
 		];
 	}
 
@@ -1634,7 +1646,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 			foreach ($files as $file)
 			{
 				$hasFiles = true;
-				$previewMessage .= " [{$file->getDiskFile()->getName()}]";
+				$previewMessage .= " [{$file->getDiskFile()->getName()}] ";
 			}
 		}
 
@@ -1671,32 +1683,6 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		return $previewMessage;
 	}
 
-	public function getForPush(?int $messageSize = 200): string
-	{
-		if ($this->getRegistry() instanceof MessageCollection)
-		{
-			$this->getRegistry()->fillFiles();
-		}
-
-		$files = [];
-
-		foreach ($this->getFiles() as $file)
-		{
-			$files[] = ['name' => $file->getDiskFile()->getName()];
-		}
-
-		$message = ['MESSAGE' => $this->getMessage(), 'FILES' => $files];
-		$text = \CIMMessenger::PrepareParamsForPush($message);
-
-		if ($messageSize !== null)
-		{
-			$dots = mb_strlen($text) >= $messageSize ? '...' : '';
-			$text = mb_substr($text, 0, $messageSize - 1) . $dots;
-		}
-
-		return $text;
-	}
-
 	public function checkAccess(?int $userId = null): Result
 	{
 		$userId ??= $this->getContext()->getUserId();
@@ -1725,6 +1711,11 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		}
 
 		return $result;
+	}
+
+	public function canDo(Im\V2\Permission\Action $action, mixed $target = null): bool
+	{
+		return $this->getChat()->canDo($action, $target);
 	}
 
 	public static function getRestEntityName(): string
@@ -1785,11 +1776,10 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 			$mentionedUserIds[(int)$userId] = (int)$userId;
 		}
 
-		if ($isMentionAllFound && Features::isMentionAllAvailable())
+		if ($isMentionAllFound)
 		{
 			$mentionedUserIds += $this->getChat()->getAllUserIdsForMention();
 			$this->setHasMentionAll(true);
-			$this->markAsImportant();
 		}
 
 		return $mentionedUserIds;
@@ -1806,13 +1796,6 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		}
 
 		return $chat->filterUsersToMention($mentionedUsers);
-	}
-
-	public function getUserIdsToSendMentionAnchors(): array
-	{
-		$mentionedUsers = $this->getMentionedUserIds();
-
-		return $this->getChat()->filterUsersToMentionAnchor($mentionedUsers);
 	}
 
 	public function getEnrichedParams(bool $withUrl = true): Params
@@ -1849,17 +1832,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 
 	public function getContextId(): string
 	{
-		$chat = $this->getChat();
-
-		if ($chat instanceof Im\V2\Chat\PrivateChat)
-		{
-			$userIds = $chat->getRelations()->getUserIds();
-			$implodeUserIds = implode(':', $userIds);
-
-			return "{$implodeUserIds}/{$this->getMessageId()}";
-		}
-
-		return "{$chat->getDialogId()}/{$this->getMessageId()}";
+		return "{$this->getChat()->getDialogContextId()}/{$this->getMessageId()}";
 	}
 
 	protected function getContextTag(): string
@@ -1964,42 +1937,6 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 				}
 			}
 		}
-	}
-
-	/**
-	 * Parse dates from message.
-	 * @return self
-	 */
-	public function parseDates(): self
-	{
-		if ($this->getMessage())
-		{
-			$dateConvertResult = Text::getDateConverterParams($this->getMessage());
-			foreach ($dateConvertResult as $row)
-			{
-				$this->getParams()->get(Params::DATE_TEXT)->addValue($row->getText());
-				$this->getParams()->get(Params::DATE_TS)->addValue($row->getDate()->getTimestamp());
-			}
-		}
-
-		return $this;
-	}
-
-	/**
-	 * Parse dates from message.
-	 * @return self
-	 */
-	public function checkEmoji(): self
-	{
-		if ($this->getMessage())
-		{
-			if (Text::isOnlyEmoji($this->getMessage()))
-			{
-				$this->getParams()->get(Params::LARGE_FONT)->setValue(true);
-			}
-		}
-
-		return $this;
 	}
 
 	public function autocompleteParams(Im\V2\Message\Send\SendingConfig $config): self
@@ -2132,18 +2069,6 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		$messageWithoutUrl = str_replace($url->getUrl(), '', $this->getMessage() ?? '');
 
 		return trim($messageWithoutUrl) === '';
-	}
-
-	/**
-	 * Update search index record.
-	 * @return void
-	 */
-	public function updateSearchIndex(): void
-	{
-		if ($this->getMessageId())
-		{
-			MessageTable::indexRecord($this->getMessageId());
-		}
 	}
 
 	/**

@@ -1,5 +1,5 @@
 import type { BitrixVueComponentProps } from 'ui.vue3';
-import { BIcon, Set } from 'ui.icon-set.api.vue';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { hint } from 'ui.vue3.directives.hint';
 
 export const TitleEditor: BitrixVueComponentProps = {
@@ -19,6 +19,26 @@ export const TitleEditor: BitrixVueComponentProps = {
 		hint,
 	},
 	computed: {
+		namePlaceholder(): string
+		{
+			return this.isNewGroup
+				? this.$Bitrix.Loc.getMessage('BI_GROUP_NAME_NEW')
+				: ''
+			;
+		},
+		displayedGroupName(): string
+		{
+			if (this.isNewGroup && !this.groupName)
+			{
+				return this.namePlaceholder;
+			}
+
+			return this.groupName;
+		},
+		isNewGroup(): boolean
+		{
+			return this.$store.getters.isNewGroup;
+		},
 		groupName: {
 			get(): string
 			{
@@ -29,9 +49,9 @@ export const TitleEditor: BitrixVueComponentProps = {
 				this.$store.commit('setGroupName', value);
 			},
 		},
-		set(): Set
+		set(): Outline
 		{
-			return Set;
+			return Outline;
 		},
 		nameHintOptions(): Object
 		{
@@ -62,10 +82,6 @@ export const TitleEditor: BitrixVueComponentProps = {
 		setViewMode()
 		{
 			this.editMode = false;
-			if (!this.groupName)
-			{
-				this.$store.commit('setGroupName', this.$Bitrix.Loc.getMessage('BI_GROUP_NAME_NEW'));
-			}
 			this.$emit('onNameUpdate');
 		},
 	},
@@ -78,20 +94,28 @@ export const TitleEditor: BitrixVueComponentProps = {
 	template: `
 		<div class="group-header-title" :style="{ width: editMode ? '80%' : 'auto' }">
 			<template v-if="canEdit">
-				<input v-if="editMode" class="group-name-input" @blur="setViewMode" v-model="groupName" ref="nameInput">
+				<input
+					v-if="editMode"
+					class="group-name-input"
+					@blur="setViewMode"
+					@keyup.enter="setViewMode"
+					v-model="groupName"
+					ref="nameInput"
+					:placeholder="namePlaceholder"
+				>
 				<template v-else>
-					<div class="group-name">{{groupName}}</div>
+					<div class="group-name">{{displayedGroupName}}</div>
 					<BIcon
-						:name="set.PENCIL_40"
+						:name="set.EDIT_L"
 						:size="20"
-						color="#BDC1C6"
+						color="var(--ui-color-base-4)"
 						:class="'group-name-edit-icon'"
 						@click="setEditMode"
 					></BIcon>
 				</template>
 			</template>
 			<template v-else>
-				<div class="group-name" v-hint="nameHintOptions">{{groupName}}</div>
+				<div class="group-name" v-hint="nameHintOptions">{{displayedGroupName}}</div>
 			</template>
 		</div>
 	`,

@@ -134,7 +134,7 @@ this.BX = this.BX || {};
 	    });
 	  }
 	  viewDesktopUser() {
-	    if (this.currentUser === null) {
+	    if (main_core.Type.isNil(this.currentUser)) {
 	      return;
 	    }
 	    const block = document.getElementsByClassName('intranet__desktop-menu_user')[0];
@@ -177,7 +177,7 @@ this.BX = this.BX || {};
 	    return `url('${BX.util.htmlspecialchars(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesktop : BX.util.htmlspecialchars(avatarUrl))}')`;
 	  }
 	  viewPopupAccounts() {
-	    if (this.currentUser === null) {
+	    if (main_core.Type.isNil(this.currentUser)) {
 	      return;
 	    }
 	    const menuPopup = document.getElementsByClassName('intranet__desktop-menu_popup')[0];
@@ -186,6 +186,7 @@ this.BX = this.BX || {};
 	      position = `<span class="intranet__desktop-menu_popup-post">${this.currentUser.work_position}</span>`;
 	    }
 	    this.removeElements('intranet__desktop-menu_popup-header');
+	    const profileUrl = this.currentUser.profile || '';
 	    const item = main_core.Tag.render(_t3 || (_t3 = _`
 			<div class="intranet__desktop-menu_popup-header">
 				<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-popup">
@@ -194,7 +195,6 @@ this.BX = this.BX || {};
 				<span class="intranet__desktop-menu_popup-label">${0}</span>
 				<div
 					class="intranet__desktop-menu_popup-header-user ${0}"
-					onclick="if (this.currentUser.profile) { BX.SidePanel.Instance.open('${0}'); }"
 					>
 					<span class="intranet__desktop-menu_popup-name">
 						${0}
@@ -202,7 +202,13 @@ this.BX = this.BX || {};
 					${0}
 				</div>
 			</div>
-		`), this.currentUser.portal, this.currentUser.profile ? 'intranet__desktop-menu_popup-header-user--chevron' : '', this.currentUser.profile, `${this.currentUser.first_name} ${this.currentUser.last_name}`, position);
+		`), this.currentUser.portal, profileUrl ? 'intranet__desktop-menu_popup-header-user--chevron' : '', `${this.currentUser.first_name} ${this.currentUser.last_name}`, position);
+	    if (profileUrl) {
+	      const headerUser = item.querySelector('.intranet__desktop-menu_popup-header-user');
+	      main_core.Event.bind(headerUser, 'click', () => {
+	        BX.SidePanel.Instance.open(profileUrl);
+	      });
+	    }
 	    main_core.Dom.insertBefore(item, menuPopup.firstElementChild);
 	    const avatar = document.getElementsByClassName('ui-icon-common-user-popup')[0];
 	    const previewImage = this.getAvatarUrl(this.currentUser);

@@ -1,4 +1,0 @@
-<?php
-$MESS["OL_COMPONENT_LIST_ACTIONS_EDIT"] = "Редакциялау";
-$MESS["OL_COMPONENT_LIST_ACTIONS_REMOVE"] = "Желіні жою";
-$MESS["OL_COMPONENT_LIST_ACTIONS_VIEW"] = "Қарау";

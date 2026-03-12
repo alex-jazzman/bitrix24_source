@@ -1,5 +1,5 @@
 <?php
-$MESS["TASKS_V2_TASK_SETTINGS_POPUP_AUTO_COMPLETE_SUBTASKS_LABEL"] = "Auto complete task when all subtasks are completed and vice versa";
+$MESS["TASKS_V2_TASK_SETTINGS_POPUP_AUTO_COMPLETE_SUBTASKS_LABEL"] = "Auto complete task when all subtasks are completed, and vice versa";
 $MESS["TASKS_V2_TASK_SETTINGS_POPUP_BTN_CANCEL"] = "Cancel";
 $MESS["TASKS_V2_TASK_SETTINGS_POPUP_BTN_SAVE"] = "OK";
 $MESS["TASKS_V2_TASK_SETTINGS_POPUP_CONTROL_HINT"] = "As soon as the assignee marks the task as completed, it will be submitted to you for review. You can approve the task (which will close it), or return the task for revision.";

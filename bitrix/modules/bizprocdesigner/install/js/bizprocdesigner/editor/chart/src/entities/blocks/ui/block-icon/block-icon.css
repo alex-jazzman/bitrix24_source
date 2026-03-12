@@ -13,33 +13,33 @@
 }
 
 .editor-chart-block-icon.--background-color-1 {
-	background-color: var(--ui-color-design-outline-copilot-stroke);
+	background-color: var(--designer-bp-ai-bg);
 }
 
 .editor-chart-block-icon.--background-color-2 {
-	background-color: var(--ui-color-palette-blue-25);
+	background-color: var(--designer-bp-entities-bg);
 }
 
 .editor-chart-block-icon.--background-color-3 {
-	background-color: #FFEECC;
+	background-color: var(--designer-bp-employe-bg);
 }
 
 .editor-chart-block-icon.--background-color-4 {
-	background-color: #EBEEF3;
+	background-color: var(--designer-bp-technical-bg);
 }
 
 .editor-chart-block-icon.--background-color-5 {
-	background-color: #D8FFCB;
+	background-color: var(--designer-bp-communication-bg);
 }
 
 .editor-chart-block-icon.--background-color-6 {
-	background-color: #E3F5ED;
+	background-color: var(--designer-bp-storage-bg);
 }
 
 .editor-chart-block-icon.--background-color-7 {
-	background-color: #F2F8D8;
+	background-color: var(--designer-bp-afiliate-bg);
 }
 
 .editor-chart-block-icon.--background-color-8 {
-	background-color: rgba(31, 134, 255, 1);
+	background-color: rgba(31, 134, 255, 1); /* token will be provided later */
 }

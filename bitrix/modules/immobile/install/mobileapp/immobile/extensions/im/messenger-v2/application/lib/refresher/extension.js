@@ -249,6 +249,7 @@ jn.define('im/messenger-v2/application/lib/refresher', (require, exports, module
 			await this.core.setAppStatus(AppStatus.connection, true);
 			this.smileManager = SmileManager.getInstance();
 			void SmileManager.init();
+			void serviceLocator.get('core').getStore().dispatch('stickerPackModel/markForClear');
 
 			await MessageQueueRequestManager.getInstance().callBatch();
 

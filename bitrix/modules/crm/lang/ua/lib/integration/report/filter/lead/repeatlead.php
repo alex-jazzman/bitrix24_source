@@ -1,5 +1,0 @@
-<?
-$MESS["CRM_REPORT_FILTER_REPEATED_LEAD_CURRENT_MONTH_PRESET_TITLE"] = "Повторні за поточний місяць";
-$MESS["CRM_REPORT_FILTER_REPEATED_LEAD_LAST_30_DAYS_PRESET_TITLE"] = "Повторні за останні 30 днів";
-$MESS["CRM_REPORT_FILTER_REPEATED_LEAD_LAST_MONTH_PRESET_TITLE"] = "Повторні за попередній місяць";
-?>

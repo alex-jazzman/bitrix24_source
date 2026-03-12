@@ -26,6 +26,7 @@ $APPLICATION->includeComponent(
 			'USER_ID' => $arResult['USER_ID'],
 			'USERNAME' => $arResult['USER_NAME'],
 			'AVATAR_URL' => $arResult['USER_AVATAR'],
+			'ORIGINAL_FILE' => $arResult['ORIGINAL_FILE'],
 			'CAN_EDIT_BOARD' => true,
 			'SHOW_TEMPLATES_MODAL' => false,
 			'EXTERNAL_LINK_MODE' => true,
@@ -34,5 +35,5 @@ $APPLICATION->includeComponent(
 		'IFRAME_MODE' => true,
 		'PREVENT_LOADING_WITHOUT_IFRAME' => false,
 		'USE_PADDING' => false,
-	]
+	],
 );

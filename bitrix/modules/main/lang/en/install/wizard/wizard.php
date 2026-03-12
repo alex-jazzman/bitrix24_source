@@ -74,7 +74,7 @@ $MESS["INST_ORACLE_CHARSET_ERROR"] = "Error detecting database encoding";
 $MESS["INST_ORACLE_NLS_LANG_ERROR"] = "NLS_LANG environment variable should be set to UTF-8 (e.g. NLS_LANG=english.utf8).";
 $MESS["INST_ORACLE_UTF_ERROR"] = "To install the system with UTF-8 encoding, you need to have the following database settings: NLS_CHARACTERSET=AL32UTF8, NLS_NCHAR_CHARACTERSET=UTF8";
 $MESS["INST_PRODUCT_INSTALL"] = "System Installation";
-$MESS["INST_PRODUCT_UPDATE"] = "System update";
+$MESS["INST_PRODUCT_UPDATE"] = "System Update";
 $MESS["INST_REMOVE_HELP"] = "Deleting help files";
 $MESS["INST_REMOVE_TEMP_FILES"] = "Deleting temporary files";
 $MESS["INST_RETRY_BUTTON"] = "Retry this step";

@@ -1,6 +1,7 @@
 import { Runtime, Type } from 'main.core';
 
 import { DatePicker, DatePickerEvent } from 'ui.date-picker';
+import { Notifier } from 'ui.notification-manager';
 import { Button as UiButton, ButtonColor, ButtonSize } from 'ui.vue3.components.button';
 import { HeadlineMd, TextSm } from 'ui.system.typography.vue';
 import { BInput, InputDesign } from 'ui.system.input.vue';
@@ -9,6 +10,7 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
+import { Endpoint } from 'tasks.v2.const';
 import { BottomSheet } from 'tasks.v2.component.elements.bottom-sheet';
 import { Duration } from 'tasks.v2.component.elements.duration';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
@@ -148,10 +150,22 @@ export const DatePlanSheet = {
 		allowsChangeDatePlan: {
 			get(): boolean
 			{
+				if (this.isTemplate)
+				{
+					return this.task.allowsChangeDeadline ?? false;
+				}
+
 				return this.task.allowsChangeDatePlan ?? false;
 			},
 			set(allowsChangeDatePlan: boolean): void
 			{
+				if (this.isTemplate)
+				{
+					void taskService.update(this.taskId, { allowsChangeDeadline: allowsChangeDatePlan });
+
+					return;
+				}
+
 				void taskService.update(this.taskId, { allowsChangeDatePlan });
 			},
 		},
@@ -205,6 +219,7 @@ export const DatePlanSheet = {
 		this.updateDuration(this.task.startPlanTs, this.task.endPlanTs);
 		this.startDatePlanAfter = this.task.startDatePlanAfter;
 		this.templateDuration = this.task.endDatePlanAfter - this.task.startDatePlanAfter;
+		this.showErrorDebounced = Runtime.debounce(this.showError, 300, this);
 	},
 	methods: {
 		clearStart(): void
@@ -382,20 +397,11 @@ export const DatePlanSheet = {
 		{
 			if (this.isTemplate)
 			{
-				void taskService.update(this.taskId, {
-					startDatePlanAfter: this.startDatePlanAfter,
-					endDatePlanAfter: this.startDatePlanAfter + this.templateDuration,
-					matchesWorkTime: this.matchesWorkTime,
-				});
+				this.handleTemplateUpdate();
 			}
 			else if (!this.maxDurationReached)
 			{
-				void taskService.update(this.taskId, Object.fromEntries(Object.entries({
-					startPlanTs: this.matchesSubTasksTime ? undefined : this.startTs,
-					endPlanTs: this.matchesSubTasksTime ? undefined : this.endTs,
-					matchesWorkTime: this.matchesWorkTime,
-					matchesSubTasksTime: this.matchesSubTasksTime,
-				}).filter(([, value]) => !Type.isUndefined(value))));
+				void this.handleTaskUpdate();
 			}
 
 			if (this.wasEmpty && this.wasFilled)
@@ -404,6 +410,41 @@ export const DatePlanSheet = {
 			}
 
 			this.$emit('close');
+		},
+		handleTemplateUpdate(): void
+		{
+			void taskService.update(this.taskId, {
+				startDatePlanAfter: Number(this.startDatePlanAfter),
+				endDatePlanAfter: Number(this.startDatePlanAfter + this.templateDuration),
+				matchesWorkTime: this.matchesWorkTime,
+			});
+		},
+		async handleTaskUpdate(): void
+		{
+			taskService.setSilentErrorMode(true);
+
+			const result = await taskService.update(this.taskId, Object.fromEntries(Object.entries({
+				startPlanTs: this.matchesSubTasksTime ? undefined : Number(this.startTs),
+				endPlanTs: this.matchesSubTasksTime ? undefined : Number(this.endTs),
+				matchesWorkTime: this.matchesWorkTime,
+				matchesSubTasksTime: this.matchesSubTasksTime,
+			}).filter(([, value]) => !Type.isUndefined(value))));
+
+			taskService.setSilentErrorMode(false);
+
+			if (result[Endpoint.TaskPlanUpdate]?.length)
+			{
+				const error = result[Endpoint.TaskPlanUpdate][0];
+
+				this.showErrorDebounced(error);
+			}
+		},
+		showError(error): void
+		{
+			Notifier.notifyViaBrowserProvider({
+				id: 'tasks-date-plan-update-error',
+				text: error?.message,
+			});
 		},
 	},
 	template: `

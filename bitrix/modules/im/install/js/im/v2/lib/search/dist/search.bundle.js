@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,im_v2_lib_user,ui_vue3_vuex,im_v2_application_core,im_v2_const,im_v2_lib_utils) {
+(function (exports,im_v2_lib_user,ui_vue3_vuex,im_v2_lib_search,im_v2_application_core,im_v2_const,im_v2_lib_utils) {
 	'use strict';
 
 	const EntityId = 'im-recent-v2';
@@ -13,7 +13,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    id: EntityId,
 	    dynamicLoad: true,
 	    dynamicSearch: true,
-	    options: prepareConfigOptions(searchConfig)
+	    options: searchConfig
 	  };
 	  return {
 	    dialog: {
@@ -23,28 +23,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      context: ContextId,
 	      id: SearchDialogId
 	    }
-	  };
-	};
-	const prepareConfigOptions = searchConfig => {
-	  const options = {
-	    withChatByUsers: false
-	  };
-	  if (!searchConfig) {
-	    return {
-	      ...options,
-	      exclude: []
-	    };
-	  }
-	  const exclude = [];
-	  if (main_core.Type.isBoolean(searchConfig.chats) && !searchConfig.chats) {
-	    exclude.push('chats');
-	  }
-	  if (main_core.Type.isBoolean(searchConfig.users) && !searchConfig.users) {
-	    exclude.push('users');
-	  }
-	  return {
-	    ...options,
-	    exclude
 	  };
 	};
 
@@ -106,10 +84,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return message.date.toISOString();
 	}
 
+	const GetterNameByRecentSection = {
+	  [im_v2_const.RecentType.taskComments]: 'recent/getTaskCollection',
+	  [im_v2_const.RecentType.default]: 'recent/getSortedCollection'
+	};
 	function getRecentListItems({
-	  withFakeUsers
+	  withFakeUsers,
+	  searchConfig = {}
 	}) {
-	  let recent = im_v2_application_core.Core.getStore().getters['recent/getSortedCollection'];
+	  const getterName = getRecentGetterName(searchConfig == null ? void 0 : searchConfig.searchRecentSection);
+	  let recent = im_v2_application_core.Core.getStore().getters[getterName];
 	  recent = recent.filter(item => {
 	    if (withFakeUsers && item.isFakeElement) {
 	      return true;
@@ -124,6 +108,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      dateMessage: getRecentItemDate(dialogId)
 	    };
 	  });
+	}
+	function getRecentGetterName(searchRecentSection) {
+	  var _GetterNameByRecentSe;
+	  return (_GetterNameByRecentSe = GetterNameByRecentSection[searchRecentSection]) != null ? _GetterNameByRecentSe : GetterNameByRecentSection[im_v2_const.RecentType.default];
 	}
 
 	const collator = new Intl.Collator(undefined, {
@@ -141,11 +129,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _getLocalItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLocalItems");
 	var _getLocalItemsFromDialogIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLocalItemsFromDialogIds");
 	var _mergeItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mergeItems");
-	var _filterByConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filterByConfig");
+	var _excludeByConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("excludeByConfig");
+	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
+	var _isUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUser");
 	class LocalSearch {
 	  constructor(searchConfig) {
-	    Object.defineProperty(this, _filterByConfig, {
-	      value: _filterByConfig2
+	    Object.defineProperty(this, _isUser, {
+	      value: _isUser2
+	    });
+	    Object.defineProperty(this, _getDialog, {
+	      value: _getDialog2
+	    });
+	    Object.defineProperty(this, _excludeByConfig, {
+	      value: _excludeByConfig2
 	    });
 	    Object.defineProperty(this, _mergeItems, {
 	      value: _mergeItems2
@@ -191,7 +187,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  search(query, localCollection) {
 	    const localItems = babelHelpers.classPrivateFieldLooseBase(this, _getLocalItems)[_getLocalItems](localCollection);
 	    const result = babelHelpers.classPrivateFieldLooseBase(this, _search)[_search](query, localItems);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _filterByConfig)[_filterByConfig](result);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _excludeByConfig)[_excludeByConfig](result);
 	  }
 	}
 	function _search2(query, localItems) {
@@ -208,20 +204,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return [...foundItems.values()];
 	}
 	function _getRecentListItems2() {
-	  return getRecentListItems({
-	    withFakeUsers: true
-	  }).map(item => {
+	  const recentListItems = getRecentListItems({
+	    withFakeUsers: true,
+	    searchConfig: babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig]
+	  });
+	  return recentListItems.map(item => {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _prepareRecentItem)[_prepareRecentItem](item.dialogId, item.dateMessage);
 	  });
 	}
 	function _prepareRecentItem2(dialogId, dateMessage) {
-	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['chats/get'](dialogId, true);
-	  const isUser = dialog.type === im_v2_const.ChatType.user;
 	  const recentItem = {
 	    dialogId,
-	    dialog,
-	    dateMessage
+	    dateMessage,
+	    dialog: babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId)
 	  };
+	  const isUser = babelHelpers.classPrivateFieldLooseBase(this, _isUser)[_isUser](dialogId);
 	  if (isUser) {
 	    recentItem.user = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['users/get'](dialogId, true);
 	  }
@@ -289,16 +286,32 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  return [...itemsMap.values()];
 	}
-	function _filterByConfig2(items) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig]) {
+	function _excludeByConfig2(items) {
+	  var _babelHelpers$classPr;
+	  const exclude = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig]) == null ? void 0 : _babelHelpers$classPr.exclude;
+	  if (!exclude || exclude.length === 0) {
 	    return items;
 	  }
 	  return items.filter(item => {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig].chats && item.dialogId.startsWith('chat')) {
-	      return true;
+	    const isUser = babelHelpers.classPrivateFieldLooseBase(this, _isUser)[_isUser](item.dialogId);
+	    const isChat = !isUser;
+	    if (isChat && exclude.includes(im_v2_lib_search.EntitySearch.chats)) {
+	      return false;
 	    }
-	    return !item.dialogId.startsWith('chat') && babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig].users;
+	    if (isUser && exclude.includes(im_v2_lib_search.EntitySearch.users)) {
+	      return false;
+	    }
+	    return true;
 	  });
+	}
+	function _getDialog2(dialogId) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['chats/get'](dialogId, true);
+	}
+	function _isUser2(dialogId) {
+	  const {
+	    type
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId);
+	  return type === im_v2_const.ChatType.user;
 	}
 
 	const MAX_USERS_IN_RECENT_SEARCH_LIST = 50;
@@ -349,6 +362,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return dialog.extranet;
 	};
 
+	const EntitySearch = {
+	  chats: 'chats',
+	  users: 'users'
+	};
+
 	exports.getSearchConfig = getSearchConfig;
 	exports.EntityId = EntityId;
 	exports.StoreUpdater = StoreUpdater;
@@ -356,6 +374,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.getUsersFromRecentItems = getUsersFromRecentItems;
 	exports.getRecentListItems = getRecentListItems;
 	exports.sortByDate = sortByDate;
+	exports.EntitySearch = EntitySearch;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=search.bundle.js.map

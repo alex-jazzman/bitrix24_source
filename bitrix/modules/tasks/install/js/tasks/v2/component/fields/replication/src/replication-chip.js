@@ -1,17 +1,17 @@
+import { hint, type HintParams } from 'ui.vue3.directives.hint';
 import { Chip, ChipDesign } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
-import type { TaskId } from 'tasks.v2.lib.id-utils';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { tooltip } from 'tasks.v2.component.elements.hint';
+import { idUtils } from 'tasks.v2.lib.id-utils';
 import { showLimit } from 'tasks.v2.lib.show-limit';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { ReplicationSheet } from './replication-sheet';
 import { replicationMeta } from './replication-meta';
-
-type Inject = { task: TaskModel, taskId: TaskId };
 
 // @vue/component
 export const ReplicationChip = {
@@ -20,9 +20,11 @@ export const ReplicationChip = {
 		Chip,
 		ReplicationSheet,
 	},
+	directives: { hint },
 	inject: {
 		task: {},
 		taskId: {},
+		isTemplate: {},
 	},
 	props: {
 		isSheetShown: {
@@ -35,7 +37,7 @@ export const ReplicationChip = {
 		},
 	},
 	emits: ['update:isSheetShown'],
-	setup(): { Outline: typeof Outline, replicationMeta: typeof replicationMeta } & Inject
+	setup(): { task: TaskModel }
 	{
 		return {
 			replicationMeta,
@@ -45,6 +47,11 @@ export const ReplicationChip = {
 	computed: {
 		design(): string
 		{
+			if (this.disabled)
+			{
+				return ChipDesign.ShadowDisabled;
+			}
+
 			return this.isSelected ? ChipDesign.ShadowAccent : ChipDesign.ShadowNoAccent;
 		},
 		isSelected(): boolean
@@ -54,6 +61,27 @@ export const ReplicationChip = {
 		isLocked(): boolean
 		{
 			return !Core.getParams().restrictions.recurrentTask.available;
+		},
+		disabled(): boolean
+		{
+			return this.isTemplate && (this.task.isForNewUser || idUtils.isTemplate(this.task.parentId));
+		},
+		tooltip(): ?Function
+		{
+			if (!this.disabled)
+			{
+				return null;
+			}
+
+			return (): HintParams => tooltip({
+				text: this.loc('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_NO_REPLICATION_TEMPLATE_NOTICE', {
+					'#TPARAM_FOR_NEW_USER#': this.loc('TASKS_V2_RESPONSIBLE_FOR_NEW_USER'),
+				}),
+				popupOptions: {
+					offsetLeft: this.$refs.chip.$el.offsetWidth / 2,
+				},
+				timeout: 200,
+			});
 		},
 	},
 	methods: {
@@ -66,6 +94,11 @@ export const ReplicationChip = {
 					bindElement: this.$el,
 				});
 
+				return;
+			}
+
+			if (this.disabled)
+			{
 				return;
 			}
 
@@ -89,12 +122,14 @@ export const ReplicationChip = {
 	},
 	template: `
 		<Chip
+			v-hint="tooltip"
 			:design
 			:icon="Outline.REPEAT"
 			:text="loc('TASKS_V2_REPLICATION_TITLE_CHIP')"
 			:lock="isLocked"
 			:data-task-id="taskId"
 			:data-task-chip-id="replicationMeta.id"
+			ref="chip"
 			@click="handleClick"
 		/>
 		<ReplicationSheet

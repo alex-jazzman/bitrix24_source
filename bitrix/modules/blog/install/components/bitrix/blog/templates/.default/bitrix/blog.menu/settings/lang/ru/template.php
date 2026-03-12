@@ -12,4 +12,3 @@ $MESS ['BLOG_MENU_SETTINGS'] = "Настройки";
 $MESS ['BLOG_MENU_SETTINGS_TITLE'] = "Перейти в настройки блога";
 $MESS ['BLOG_MENU_MODERATION_MESSAGES'] = "Модерация";
 $MESS ['BLOG_MENU_MODERATION_MESSAGES_TITLE'] = "Просмотреть сообщения, требующие модерации";
-?>

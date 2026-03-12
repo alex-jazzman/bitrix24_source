@@ -63,7 +63,7 @@ export const RestMethod = Object.freeze({
 	imRecentUnread: 'im.recent.unread',
 	imRecentHide: 'im.recent.hide',
 
-	imCallGetCallLimits: 'im.call.getCallLimits',
+	imCallGetCallLimits: 'call.CallManager.getCallLimits',
 
 	imNotifyGet: 'im.notify.get',
 	imNotifyRead: 'im.notify.read',
@@ -96,7 +96,7 @@ export const RestMethodHandler = Object.freeze({
 	imRecentGet: 'im.recent.get',
 	imRecentList: 'im.recent.list',
 
-	imCallGetCallLimits: 'im.call.getCallLimits',
+	imCallGetCallLimits: 'call.CallManager.getCallLimits',
 
 	imNotifyGet: 'im.notify.get',
 	imNotifySchemaGet: 'im.notify.schema.get',

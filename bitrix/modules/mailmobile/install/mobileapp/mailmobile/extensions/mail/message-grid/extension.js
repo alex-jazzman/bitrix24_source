@@ -3,12 +3,12 @@
  */
 jn.define('mail/message-grid', (require, exports, module) => {
 	const { mailsAddedFromServer, mailsUpsertedFromServer, setMultiSelectMode, setTaskId } = require('mail/statemanager/redux/slices/messages');
+	const { selectCurrentFolder, selectByType, selectCurrentFolderCounter } = require('mail/statemanager/redux/slices/folders/selector');
+	const { selectStartEmailSender, selectCurrentMailbox } = require('mail/statemanager/redux/slices/mailboxes/selector');
 	const { selectEntities, selectIsMultiSelectMode } = require('mail/statemanager/redux/slices/messages/selector');
 	const { observeMailboxesChange } = require('mail/statemanager/redux/slices/mailboxes/observers/stateful-list');
 	const { observeFoldersChange } = require('mail/statemanager/redux/slices/folders/observers/stateful-list');
 	const { observeListChange } = require('mail/statemanager/redux/slices/messages/observers/stateful-list');
-	const { selectCurrentFolder, selectByType, selectCurrentFolderCounter } = require('mail/statemanager/redux/slices/folders/selector');
-	const { selectStartEmailSender, selectCurrentMailbox } = require('mail/statemanager/redux/slices/mailboxes/selector');
 	const { MessageModel } = require('mail/statemanager/redux/slices/messages/model/message');
 	const { setCurrentMailbox } = require('mail/statemanager/redux/slices/mailboxes');
 	const { Selector: FolderSelector } = require('mail/folder/selector');
@@ -19,9 +19,7 @@ jn.define('mail/message-grid', (require, exports, module) => {
 		clearFolders,
 		setCurrentFolder,
 	} = require('mail/statemanager/redux/slices/folders');
-	const {
-		syncMailbox,
-	} = require('mail/statemanager/redux/slices/mailboxes/thunk');
+	const { syncMailbox } = require('mail/statemanager/redux/slices/mailboxes/thunk');
 
 	const { batchActions } = require('statemanager/redux/batched-actions');
 	const store = require('statemanager/redux/store');
@@ -40,11 +38,12 @@ jn.define('mail/message-grid', (require, exports, module) => {
 	const { AjaxMethod } = require('mail/const');
 
 	const { StatusBlock, makeLibraryImagePath } = require('ui-system/blocks/status-block');
+	const { MobileFeature } = require('im/messenger/lib/feature');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { SearchLayout } = require('layout/ui/search-bar');
-	const { Box } = require('ui-system/layout/box');
-	const { MobileFeature } = require('im/messenger/lib/feature');
 	const { BottomPanel } = require('native/bottom-panel');
+	const { Box } = require('ui-system/layout/box');
+	const { AnalyticsEvent } = require('analytics');
 	const { Color } = require('tokens');
 	const { Type } = require('type');
 	const { Loc } = require('loc');
@@ -182,6 +181,7 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			this.parentWidget.on('removed', this.#onViewHidden);
 			this.parentWidget.on('hidden', this.#onViewHidden);
 			this.parentWidget.on('titleClick', this.openFolderMenu);
+			BX.addCustomEvent('onTabsSelected', (tabId) => this.#onTabsSelected(tabId));
 
 			this.unsubscribeMailboxesObserver = observeMailboxesChange(
 				store,
@@ -299,6 +299,8 @@ jn.define('mail/message-grid', (require, exports, module) => {
 				componentParams: {
 					threadId,
 					isCrmMessage: 0,
+					folder: selectCurrentFolder(store.getState()).type,
+					element: 'compose_button',
 					startEmailSender,
 				},
 			});
@@ -404,15 +406,9 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			});
 		};
 
-		onVisibleMailboxesChange = ({ selected, removed }) => {
-			// if (removed.length > 0)
-			// {
-			// 	this.stateFulListRef.reload({ skipUseCache: true });
-			// }
-
+		onVisibleMailboxesChange = ({ selected }) => {
 			if (selected !== null && selected !== undefined)
 			{
-				console.log('onVisibleMailboxesChange', selected);
 				this.tabViewRef.setActiveItem(FILTER_PRESET_ALL_INCOME);
 				this.filter.folderPath = null;
 				this.filter.mailboxId = Number(selected.id);
@@ -684,6 +680,18 @@ jn.define('mail/message-grid', (require, exports, module) => {
 				dispatch(setCurrentMailbox({ mailboxId: id }));
 			});
 		}
+
+		#onTabsSelected = (tabId) => {
+			if (tabId === 'mail_list')
+			{
+				new AnalyticsEvent({
+					tool: 'mail',
+					category: 'mail_general_ops',
+					event: 'mail_inbox_open',
+					c_section: 'bottom_menu',
+				}).send();
+			}
+		};
 
 		#onViewHidden = () => {
 			dispatch(setMultiSelectMode({ isMultiSelectMode: false }));

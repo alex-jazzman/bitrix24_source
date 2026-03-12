@@ -1,3 +1,4 @@
+import { Type } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 
 import { TextSm } from 'ui.system.typography.vue';
@@ -52,6 +53,10 @@ export const TimeTrackingListItemView = {
 		elapsedTime(): ElapsedTimeModel
 		{
 			return this.$store.getters[`${Model.ElapsedTimes}/getById`](this.elapsedId);
+		},
+		isEdit(): boolean
+		{
+			return Type.isNumber(this.elapsedTime?.id);
 		},
 		elapsedTimeDate(): string
 		{
@@ -113,13 +118,13 @@ export const TimeTrackingListItemView = {
 						class="tasks-time-tracking-list-column --action"
 					>
 						<div
-							v-if="isItemHovered && elapsedTime.rights.edit"
+							v-if="isItemHovered && elapsedTime.rights.edit && isEdit"
 							ref="edit" @click="$emit('edit')"
 						>
 							<BIcon v-hint="editTooltip" :name="Outline.EDIT_L" hoverable/>
 						</div>
 						<div
-							v-if="isItemHovered && elapsedTime.rights.remove"
+							v-if="isItemHovered && elapsedTime.rights.remove && isEdit"
 							ref="remove" @click="$emit('remove')"
 						>
 							<BIcon v-hint="removeTooltip" :name="Outline.TRASHCAN" hoverable/>

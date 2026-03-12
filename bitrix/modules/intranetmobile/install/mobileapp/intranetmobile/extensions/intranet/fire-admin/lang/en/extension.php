@@ -1,0 +1,20 @@
+<?php
+$MESS["M_INTRANET_FIRE_ADMIN_AND_TRANSFER_RIGHTS_HINT"] = "You will be dismissed and won't be able to log in to this Bitrix24 if you confirm your dismissal.\n\n[USER=#USER_ID#]#USER_NAME#[/USER] will be made the primary administrator.";
+$MESS["M_INTRANET_FIRE_ADMIN_AND_TRANSFER_RIGHTS_TITLE"] = "Confirm transferring privileges and your dismissal";
+$MESS["M_INTRANET_FIRE_ADMIN_REQUEST_ERROR"] = "Cannot complete action.";
+$MESS["M_INTRANET_REQUEST_ADMIN_FIRE_CONFIRM_BUTTON"] = "Send request";
+$MESS["M_INTRANET_REQUEST_ADMIN_FIRE_CONSENT_INSTRUCTION"] = "Do you want to send a request to transfer their privileges and allow dismissal?";
+$MESS["M_INTRANET_REQUEST_ADMIN_FIRE_DESCRIPTION"] = "This user cannot be dismissed without their consent.";
+$MESS["M_INTRANET_REQUEST_ADMIN_FIRE_ERROR_TOAST"] = "Unable to send request for dismissal. Please try again.";
+$MESS["M_INTRANET_REQUEST_ADMIN_FIRE_HINT"] = "[USER=#USER_ID#]#USER_NAME#[/USER] is your Bitrix24's primary administrator. They have full access to all settings and parameters.";
+$MESS["M_INTRANET_REQUEST_ADMIN_FIRE_REJECT_BUTTON"] = "Cancel";
+$MESS["M_INTRANET_REQUEST_ADMIN_FIRE_TITLE"] = "Dismiss primary administrator";
+$MESS["M_INTRANET_REQUEST_ADMIN_FIRE_TOAST"] = "Request sent. You will be notified when administrator responds to your request.";
+$MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_CONFIRM_BUTTON"] = "Confirm";
+$MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_CONFIRM_WORD"] = "Transfer";
+$MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_CONSENT_INSTRUCTION"] = "Type the word \"#CONFIRM_WORD#\" below to confirm your decision:";
+$MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_DESCRIPTION"] = "To confirm this action, an additional step is necessary to prevent accidental transfer of privileges.";
+$MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_ERROR_INPUT_TEXT"] = "Type the word \"#CONFIRM_WORD#\"";
+$MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_HINT"] = "You will lose your privileges to access Bitrix24 settings and parameters if you confirm the transfer.\n\nURL=#LINK#]#INITIATOR_NAME#[/URL] will be made the primary administrator.";
+$MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_REJECT_BUTTON"] = "Decline";
+$MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_TITLE"] = "Confirm transferring privileges";

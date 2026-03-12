@@ -12,4 +12,3 @@ $MESS["IM_CL_GROUP_SG"] = "Экстранет: ";
 $MESS["IM_CL_SEARCH_EMPTY"] = "Не задана поисковая строка";
 $MESS["IM_QUOTE"] = "Цитата";
 $MESS["IM_FILE"] = "Файл";
-?>

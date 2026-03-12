@@ -105,6 +105,7 @@ jn.define('tab-presets', (require, exports, module) => {
 
 			return Box(
 				{
+					testId: this.testId,
 					style: {
 						flex: 1,
 					},

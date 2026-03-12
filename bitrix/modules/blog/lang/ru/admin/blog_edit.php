@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLBE_SAVE_ERROR'] = "Ошибка сохранения параметров блога";
 $MESS ['BLBE_UPDATING'] = "Изменение параметров блога";
 $MESS ['BLBE_ADDING'] = "Добавление нового блога";
@@ -39,4 +39,3 @@ $MESS ['BLBE_EDITOR_USE_FORMAT_HINT'] = "Вставка таблиц, настр
 $MESS ['BLBE_EDITOR_USE_IMAGE_AND_FILES'] = "Разрешить загрузку изображений и файлов";
 $MESS ['BLBE_EDITOR_USE_VIDEO'] = "Разрешить вставку видео";
 $MESS ['BLBE_EDITOR_USE_VIDEO_HINT'] = "Должна быть включена аналогичная опция в настройках модуля \"Блог\"";
-?>

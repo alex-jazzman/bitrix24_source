@@ -80,6 +80,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatAddUsers: 'im.v2.Chat.addUsers',
 		imV2ChatDeleteUser: 'im.v2.Chat.deleteUser',
 		imV2ChatUserList: 'im.v2.Chat.User.list',
+		imV2ChatMentionList: 'im.v2.Chat.Mention.list',
 		imV2ChatAddManagers: 'im.v2.Chat.addManagers',
 		imV2ChatDeleteManagers: 'im.v2.Chat.deleteManagers',
 
@@ -110,9 +111,17 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2AnchorRead: 'im.v2.Anchor.read',
 		imV2AnchorReadChat: 'im.v2.Chat.Anchor.read',
 
+		imV2StickerAdd: 'im.v2.Sticker.add',
+		imV2StickerDelete: 'im.v2.Sticker.delete',
+
 		imV2StickerPackLoad: 'im.v2.Sticker.Pack.load',
 		imV2StickerPackTail: 'im.v2.Sticker.Pack.tail',
 		imV2StickerPackGet: 'im.v2.Sticker.Pack.get',
+		imV2StickerPackAdd: 'im.v2.Sticker.Pack.add',
+		imV2StickerPackDelete: 'im.v2.Sticker.Pack.delete',
+		imV2StickerPackLink: 'im.v2.Sticker.Pack.link',
+		imV2StickerPackUnlink: 'im.v2.Sticker.Pack.unlink',
+		imV2StickerPackRename: 'im.v2.Sticker.Pack.rename',
 
 		imV2StickerRecentDelete: 'im.v2.Sticker.Recent.delete',
 		imV2StickerRecentDeleteAll: 'im.v2.Sticker.Recent.deleteAll',
@@ -147,7 +156,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imRecentHide: 'im.recent.hide',
 		imRecentUnread: 'im.recent.unread',
 
-		imCallGetCallLimits: 'im.call.getCallLimits',
+		imCallGetCallLimits: 'call.CallManager.getCallLimits',
 
 		imNotifyGet: 'im.notify.get',
 		imNotifySchemaGet: 'im.notify.schema.get',
@@ -176,7 +185,6 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		openlinesDialogGet: 'imopenlines.dialog.get',
 
 		immobileSettingsGet: 'immobile.api.Settings.get',
-		immobileSettingsToggleMessengerV2: 'immobile.api.Settings.toggleMessengerV2',
 
 		immobileMessengerLoad: 'immobile.Messenger.load',
 

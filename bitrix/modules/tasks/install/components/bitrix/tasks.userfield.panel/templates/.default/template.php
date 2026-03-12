@@ -5,8 +5,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
-\Bitrix\Main\UI\Extension::load(['uf']);
+\Bitrix\Main\UI\Extension::load(['uf', 'intranet.old-interface.intranet-common']);
 ?>
 
 <?$arResult['HELPER']->displayFatals();?>

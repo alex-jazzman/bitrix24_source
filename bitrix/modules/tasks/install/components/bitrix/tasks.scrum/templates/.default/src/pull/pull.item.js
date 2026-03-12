@@ -207,10 +207,7 @@ export class PullItem
 						item.hideSubTasks();
 					}
 					item.setSort(itemInfoToSort.sort);
-					if (newItems.has(item.getId()))
-					{
-						item.setPreviousSort(0);
-					}
+
 					const sourceEntity = this.entityStorage.findEntityByEntityId(item.getEntityId());
 					if (sourceEntity)
 					{
@@ -225,7 +222,6 @@ export class PullItem
 							targetEntity = sourceEntity;
 						}
 						this.itemMover.moveToPosition(sourceEntity, targetEntity, item);
-						this.entityStorage.recalculateItemsSort();
 					}
 				});
 			})
@@ -296,7 +292,6 @@ export class PullItem
 			}
 
 			this.itemMover.moveToPosition(entity, entity, item);
-			this.entityStorage.recalculateItemsSort();
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
@@ -334,7 +329,6 @@ export class PullItem
 				if (targetEntity && sourceEntity)
 				{
 					this.itemMover.moveToPosition(sourceEntity, targetEntity, item);
-					this.entityStorage.recalculateItemsSort();
 				}
 			}
 			else

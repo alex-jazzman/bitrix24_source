@@ -4,6 +4,7 @@ use Bitrix\Main\HttpContext;
 use Bitrix\Main\Loader;
 use Bitrix\Landing\Mainpage\Manager;
 use Bitrix\Landing\Site\Type;
+use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\MainPage;
 use Bitrix\Main\UI\Extension;
 
@@ -67,6 +68,11 @@ if ($canCreateVibe)
 }
 else
 {
+	$sliderCode = 'limit_office_vibe';
+	if (!CurrentUser::get()->isAdmin())
+	{
+		$sliderCode = 'limit_no_vibe';
+	}
 	if ($request->get('IFRAME') === 'Y')
 	{
 		$APPLICATION->ShowHead();
@@ -79,7 +85,7 @@ else
 	<script>
 		if (typeof BX.SidePanel !== 'undefined')
 		{
-			BX.UI.InfoHelper.show("limit_office_vibe");
+			BX.UI.InfoHelper.show("<?php echo $sliderCode; ?>");
 		}
 	</script>
 	<?php

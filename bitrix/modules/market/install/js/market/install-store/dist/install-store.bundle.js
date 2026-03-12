@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_vue3_pinia,ui_vue3) {
 	'use strict';
@@ -103,7 +104,7 @@ this.BX = this.BX || {};
 	      const license = this.popupNodes[this.appInfo.CODE].querySelector('[data-role="market-install-license"]');
 	      const confidentiality = this.popupNodes[this.appInfo.CODE].querySelector('[data-role="market-install-confidentiality"]');
 	      if (tosLicense && !tosLicense.checked) {
-	        this.licenseError = BX.message('MARKET_INSTALL_TOS_ERROR');
+	        this.licenseError = BX.message('MARKET_INSTALL_TOS_ERROR_MSGVER_2');
 	        return false;
 	      }
 	      if (license && !license.checked || confidentiality && !confidentiality.checked) {

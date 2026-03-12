@@ -1,4 +1,0 @@
-<?php
-$MESS["INTRANET_USER_WIDGET_CONTENT_QR_AUTH_BUTTON_TITLE"] = "Показати QR-код";
-$MESS["INTRANET_USER_WIDGET_CONTENT_QR_AUTH_POPUP_TITLE"] = "Вхід у мобільний застосунок Бітрікс24";
-$MESS["INTRANET_USER_WIDGET_CONTENT_QR_AUTH_TITLE"] = "Увійти з телефона";

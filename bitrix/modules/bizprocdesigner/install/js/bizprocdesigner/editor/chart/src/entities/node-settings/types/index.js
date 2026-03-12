@@ -58,6 +58,7 @@ export type TRuleCard = {
 export type Rule = {
 	portId: PortId;
 	ruleCards: Array<TRuleCard>;
+	isFilled: boolean;
 };
 
 export type Field = {
@@ -69,6 +70,7 @@ export type ActionDictEntry = {
 	id: string,
 	title: string,
 	handlesDocument: boolean,
+	properties: Array<string> | null,
 }
 
 export type NodeSettings = {
@@ -85,7 +87,7 @@ export type GeneralConstructionTypes = {
 	+[key: $Keys<typeof GENERAL_CONSTRUCTION_TYPES>]: $Values<typeof GENERAL_CONSTRUCTION_TYPES>,
 };
 
-export type СonstructionOperators = {
+export type ConstructionOperators = {
 	+[key: $Keys<typeof CONSTRUCTION_OPERATORS>]: $Values<typeof CONSTRUCTION_OPERATORS>
 };
 

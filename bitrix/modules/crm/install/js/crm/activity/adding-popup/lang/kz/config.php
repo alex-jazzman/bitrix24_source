@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_ACTIVITY_ADDING_POPUP_TITLE"] = "CRM ісі";

@@ -268,7 +268,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 
 		renderBadgeHeader()
 		{
-			const { badgeHeader } = this.props;
+			const { badgeHeader, badgeDesign } = this.props;
 
 			if (!badgeHeader)
 			{
@@ -278,7 +278,7 @@ jn.define('ui-system/blocks/entity-cell', (require, exports, module) => {
 			return ChipStatus({
 				testId: this.getTestId('badge-header'),
 				text: badgeHeader,
-				design: ChipStatusDesign.SUCCESS,
+				design: badgeDesign || ChipStatusDesign.SUCCESS,
 				mode: ChipStatusMode.SOLID,
 			});
 		}

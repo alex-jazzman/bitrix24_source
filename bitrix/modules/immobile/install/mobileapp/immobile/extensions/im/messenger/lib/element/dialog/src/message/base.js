@@ -616,15 +616,22 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				return this;
 			}
 
-			if (Type.isNull(modelMessage))
+			if (Type.isNil(modelMessage))
 			{
+				return this;
+			}
+
+			const messageHelper = MessageHelper.createById(modelMessage?.id);
+			if (messageHelper?.isTemplateId)
+			{
+				this.showReaction = false;
+
 				return this;
 			}
 
 			const dialogHelper = DialogHelper.createByChatId(modelMessage.chatId);
 			if (dialogHelper?.isBot)
 			{
-				const messageHelper = MessageHelper.createById(modelMessage.id);
 				const userModel = serviceLocator.get('core')
 					.getStore()
 					.getters['usersModel/getById'](modelMessage.authorId);

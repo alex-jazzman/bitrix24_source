@@ -95,7 +95,7 @@ export const ConstantProject = {
 					multiple: this.item.multiple,
 					dropdownMode: true,
 					compactView: true,
-					height: 250,
+					height: 280,
 					preselectedItems: this.getPreselectedItems(),
 				},
 				events: {

@@ -19,3 +19,7 @@ export * from './animation-queue';
 export * from './canvas-transform';
 export * from './drag-n-drop';
 export * from './resizable-block';
+export * from './canvas-selection';
+export * from './group-drag-logic';
+export * from './group-selection-logic';
+export * from './keybord-shortcuts';

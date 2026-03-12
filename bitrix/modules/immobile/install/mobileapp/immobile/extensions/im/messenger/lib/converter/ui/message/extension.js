@@ -189,7 +189,7 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 				return new VideoNoteTextMessage(modelMessage, options, file);
 			}
 
-			if (messageHelper.isVideoNote && Feature.isVideoNoteAvailable)
+			if (messageHelper.isVideoNote && Feature.isVideoNoteSupported)
 			{
 				return new VideoNoteMessage(modelMessage, options, file);
 			}

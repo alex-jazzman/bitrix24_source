@@ -10,6 +10,7 @@ export const RelatedTasksChip = {
 	},
 	inject: {
 		taskId: {},
+		analytics: {},
 	},
 	setup(): Object
 	{
@@ -24,6 +25,7 @@ export const RelatedTasksChip = {
 				targetNode,
 				taskId: this.taskId,
 				onClose: this.highlightField,
+				analytics: this.analytics,
 			});
 		},
 		highlightField(): void

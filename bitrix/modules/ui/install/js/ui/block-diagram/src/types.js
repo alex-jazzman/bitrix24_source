@@ -6,6 +6,7 @@ export type Point = {
 }
 
 export type DiagramNewConnection = {
+	id: string,
 	sourceBlockId: DiagramBlockId,
 	sourcePortId: DiagramPortId,
 	sourcePortPosition: DiagramPortPosition;
@@ -152,6 +153,8 @@ export type State = {
 	revertHandler: RevertHandler;
 
 	highlitedBlockIds: Array<DiagramBlockId>;
+	isSelectionActive: boolean;
+	selectionWorldRect: { x: number, y: number, width: number, height: number } | null;
 
 	animationQueue: Generator<AnimationItem | undefined> | null;
 	currentAnimationItem: AnimationItem | null;

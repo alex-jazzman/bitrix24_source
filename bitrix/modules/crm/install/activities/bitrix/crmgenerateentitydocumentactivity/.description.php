@@ -19,7 +19,11 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $arActivityDescription = (new ActivityDescription(
 	name: Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_NAME_1'),
 	description: Loc::getMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_DESC_1_MSGVER_1'),
-	type: [ ActivityType::ACTIVITY->value, ActivityType::ROBOT->value ],
+	type: [
+		ActivityType::ACTIVITY->value,
+		ActivityType::ROBOT->value,
+		ActivityType::NODE_ACTION->value,
+	],
 ))
 	->setCategory([
 		'ID' => 'document',
@@ -75,6 +79,9 @@ $arActivityDescription = (new ActivityDescription(
 		Loader::includeModule('crm')
 		&& !DocumentGeneratorManager::getInstance()->isEnabled()
 	)
+	->setNodeActionSettings([
+		'HANDLES_DOCUMENT' => true,
+	])
 	->toArray()
 ;
 

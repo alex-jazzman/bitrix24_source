@@ -345,19 +345,14 @@ this.BX.Mail = this.BX.Mail || {};
 	  }
 	  getActionConfig() {
 	    return {
-	      type: 'component',
-	      component: 'bitrix:mail.client',
-	      name: 'syncMailbox',
-	      options: {
-	        mode: 'ajax'
-	      }
+	      type: 'controller',
+	      name: 'mail.mailboxconnecting.syncMailbox'
 	    };
 	  }
 	  getActionData() {
 	    return {
 	      id: this.mailboxId,
-	      dir: 'INBOX',
-	      onlySyncCurrent: true
+	      onlySyncCurrent: 1
 	    };
 	  }
 	  setActionParams(params) {
@@ -387,14 +382,17 @@ this.BX.Mail = this.BX.Mail || {};
 	    this.mailboxId = params.mailboxId;
 	  }
 	  async execute() {
+	    this.sendAnalytics();
+	    const url = `/mail/config/edit?id=${this.mailboxId}`;
+	    BX.SidePanel.Instance.open(url);
+	  }
+	  sendAnalytics() {
 	    BX.UI.Analytics.sendData({
 	      tool: 'mail',
 	      event: 'mailbox_grid_edit',
 	      category: 'mail_mass_ops',
 	      c_element: 'context_menu'
 	    });
-	    const url = `/mail/config/edit?id=${this.mailboxId}`;
-	    BX.SidePanel.Instance.open(url);
 	  }
 	}
 
@@ -565,7 +563,8 @@ this.BX.Mail = this.BX.Mail || {};
 	  _t2$4,
 	  _t3$3,
 	  _t4$2,
-	  _t5$1;
+	  _t5$1,
+	  _t6;
 	var _entities = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entities");
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _targetNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetNode");
@@ -665,7 +664,20 @@ this.BX.Mail = this.BX.Mail || {};
 	  }
 	  if (entity.type === EntityTypes.DEPARTMENT) {
 	    const iconNode = main_core.Tag.render(_t3$3 || (_t3$3 = _$5`<div class="ui-icon ui-icon-common-company"><i></i></div>`));
-	    return main_core.Tag.render(_t4$2 || (_t4$2 = _$5`
+	    if (main_core.Type.isStringFilled(entity.pathToStructure)) {
+	      return main_core.Tag.render(_t4$2 || (_t4$2 = _$5`
+					<a
+						href="${0}"
+						target="_blank"
+						title="${0}"
+						class="mailbox-grid_user-list-popup-popup-img --icon"
+					>
+						<span class="mailbox-grid_user-list-popup-popup-avatar-new --icon">${0}</span>
+						<span class="mailbox-grid_user-list-popup-popup-name-link">${0}</span>
+					</a>
+				`), entity.pathToStructure, main_core.Text.encode(entity.name), iconNode, main_core.Text.encode(entity.name));
+	    }
+	    return main_core.Tag.render(_t5$1 || (_t5$1 = _$5`
 				<div
 					class="mailbox-grid_user-list-popup-popup-img --icon"
 					title="${0}"
@@ -685,7 +697,7 @@ this.BX.Mail = this.BX.Mail || {};
 	      main_core.Dom.append(entityNode, entityNodes);
 	    }
 	  });
-	  return main_core.Tag.render(_t5$1 || (_t5$1 = _$5`
+	  return main_core.Tag.render(_t6 || (_t6 = _$5`
 			<div class="mailbox-grid_user-list-popup-wrap-block">
 				<div class="mailbox-grid_user-list-popup-popup-outer">
 					<div class="mailbox-grid_user-list-popup-popup">
@@ -702,8 +714,9 @@ this.BX.Mail = this.BX.Mail || {};
 	  _t3$4,
 	  _t4$3,
 	  _t5$2,
-	  _t6,
-	  _t7;
+	  _t6$1,
+	  _t7,
+	  _t8;
 	var _entities$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entities");
 	var _popup$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _renderEmpty$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderEmpty");
@@ -792,10 +805,15 @@ this.BX.Mail = this.BX.Mail || {};
 	    main_core.Dom.append(nameNode, container);
 	    return container;
 	  }
-	  const container = main_core.Tag.render(_t4$3 || (_t4$3 = _$6`
+	  const icon = babelHelpers.classPrivateFieldLooseBase(this, _renderDepartmentIcon)[_renderDepartmentIcon]();
+	  let container = main_core.Tag.render(_t4$3 || (_t4$3 = _$6`
 			<div class="mailbox-grid_list-members --single-member"></div>
 		`));
-	  const icon = babelHelpers.classPrivateFieldLooseBase(this, _renderDepartmentIcon)[_renderDepartmentIcon]();
+	  if (main_core.Type.isStringFilled(entity.pathToStructure)) {
+	    container = main_core.Tag.render(_t5$2 || (_t5$2 = _$6`
+				<a href="${0}" class="mailbox-grid_list-members --single-member --link"></a>
+			`), entity.pathToStructure);
+	  }
 	  main_core.Dom.append(icon, container);
 	  main_core.Dom.append(nameNode, container);
 	  return container;
@@ -804,7 +822,7 @@ this.BX.Mail = this.BX.Mail || {};
 	  const maxVisibleIcons = 3;
 	  const visibleEntities = babelHelpers.classPrivateFieldLooseBase(this, _entities$1)[_entities$1].slice(0, maxVisibleIcons);
 	  const remainingCount = babelHelpers.classPrivateFieldLooseBase(this, _entities$1)[_entities$1].length - visibleEntities.length;
-	  const iconsContainer = main_core.Tag.render(_t5$2 || (_t5$2 = _$6`<div class="mailbox-grid_list-members"></div>`));
+	  const iconsContainer = main_core.Tag.render(_t6$1 || (_t6$1 = _$6`<div class="mailbox-grid_list-members"></div>`));
 	  visibleEntities.forEach(entity => {
 	    const icon = babelHelpers.classPrivateFieldLooseBase(this, _renderEntityIcon)[_renderEntityIcon](entity);
 	    if (icon) {
@@ -857,14 +875,14 @@ this.BX.Mail = this.BX.Mail || {};
 	  return avatarNode;
 	}
 	function _renderDepartmentIcon2() {
-	  return main_core.Tag.render(_t6 || (_t6 = _$6`
+	  return main_core.Tag.render(_t7 || (_t7 = _$6`
 			<div class="mailbox-grid_list-members-icon_element">
 				<div class="ui-icon ui-icon-common-company"><i></i></div> 
 			</div>
 		`));
 	}
 	function _renderCounter2(count) {
-	  return main_core.Tag.render(_t7 || (_t7 = _$6`
+	  return main_core.Tag.render(_t8 || (_t8 = _$6`
 			<div class="mailbox-grid_list-members-icon_element --count">
 				<span class="mailbox-grid_warning-icon_element-plus">+</span>
 				<span class="mailbox-grid_warning-icon_element-number">${0}</span>
@@ -1155,3 +1173,4 @@ this.BX.Mail = this.BX.Mail || {};
 	exports.GridManager = GridManager;
 
 }((this.BX.Mail.MailboxList = this.BX.Mail.MailboxList || {}),BX.UI,BX.Main,BX,BX.UI.System.Chip,BX.Main,BX.UI,BX,BX,BX.UI,BX.UI.Analytics,BX));
+//# sourceMappingURL=grid.bundle.js.map

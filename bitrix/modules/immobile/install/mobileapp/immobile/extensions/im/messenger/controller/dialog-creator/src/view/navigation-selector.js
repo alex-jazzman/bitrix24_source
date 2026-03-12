@@ -174,7 +174,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 
 			return InviteBanner({
 				onClick: this.props.onClickInviteButton,
-				totalEmployees: this.props.totalEmployees,
+				accent: !this.props.userList || this.props.userList?.length < 5,
 			});
 		}
 	}

@@ -1,10 +1,13 @@
 import { Type } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
+import { Core } from 'tasks.v2.core';
 import { Model } from 'tasks.v2.const';
+import { analytics } from 'tasks.v2.lib.analytics';
 import { highlighter } from 'tasks.v2.lib.highlighter';
-import type { ElapsedTimeModel } from 'tasks.v2.model.elapsed-times';
 import { timeTrackingService } from 'tasks.v2.provider.service.time-tracking-service';
+import type { ElapsedTimeModel } from 'tasks.v2.model.elapsed-times';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { TimeTrackingListItemEdit } from './item/time-tracking-list-item-edit';
 import { TimeTrackingListItemView } from './item/time-tracking-list-item-view';
@@ -17,7 +20,9 @@ export const TimeTrackingListItem = {
 		TimeTrackingListItemView,
 	},
 	inject: {
+		task: {},
 		taskId: {},
+		analytics: {},
 	},
 	props: {
 		elapsedId: {
@@ -30,6 +35,7 @@ export const TimeTrackingListItem = {
 		},
 	},
 	emits: ['save', 'edit', 'cancel'],
+	setup(): { task: TaskModel } {},
 	data(): Object
 	{
 		return {
@@ -45,6 +51,10 @@ export const TimeTrackingListItem = {
 		isEdit(): boolean
 		{
 			return Type.isNumber(this.elapsedTime?.id);
+		},
+		isTimeTrackingLocked(): boolean
+		{
+			return !Core.getParams().restrictions.timeTracking.available;
 		},
 	},
 	watch: {
@@ -78,6 +88,10 @@ export const TimeTrackingListItem = {
 				this.localElapsedId = await timeTrackingService.add(this.taskId, {
 					id: this.elapsedId,
 					...localElapsedTime,
+				});
+
+				analytics.sendManualTimeTracking(this.analytics, {
+					taskId: this.taskId,
 				});
 			}
 		},

@@ -11,6 +11,7 @@ use Bitrix\Bizproc\Activity\ActivityDescription;
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Bizproc\FieldType;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
@@ -37,6 +38,14 @@ $arActivityDescription = (new ActivityDescription(
 		'ActualBotId' => [
 			'NAME' => Loc::getMessage('BPCDT_DESCR_MESSAGE_ACTUAL_BOT_ID'),
 			'TYPE' => 'int',
+		],
+		'chatId' => [
+			'NAME' => Loc::getMessage('BPCDT_DESCR_MESSAGE_CHAT_ID'),
+			'TYPE' => FieldType::INT,
+		],
+		'isGroupChat' => [
+			'NAME' => Loc::getMessage('BPCDT_DESCR_MESSAGE_IS_GROUP_CHAT'),
+			'TYPE' => FieldType::BOOL,
 		],
 	])
 	->setAiDescription('The trigger fires when a new message is received from a bot')

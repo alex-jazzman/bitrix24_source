@@ -642,11 +642,14 @@ if(
 				{
 					if (!isset($arProps[$arPropV["ID"]]))
 					{
-						$arElement["PROPERTY_VALUES"][$arPropV["ID"]] = [
-							$arPropV["PROPERTY_VALUE_ID"] => [
-								"VALUE" => $arPropV["VALUE"],
-								"DESCRIPTION" => $arPropV["DESCRIPTION"],
-							],
+						if (!array_key_exists($arPropV["ID"], $arElement["PROPERTY_VALUES"]))
+						{
+							$arElement["PROPERTY_VALUES"][$arPropV["ID"]] = [];
+						}
+
+						$arElement["PROPERTY_VALUES"][$arPropV["ID"]][$arPropV["PROPERTY_VALUE_ID"]] = [
+							"VALUE" => $arPropV["VALUE"],
+							"DESCRIPTION" => $arPropV["DESCRIPTION"],
 						];
 					}
 				}

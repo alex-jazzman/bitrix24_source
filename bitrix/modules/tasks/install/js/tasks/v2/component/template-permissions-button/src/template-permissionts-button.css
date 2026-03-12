@@ -1,11 +1,17 @@
 .tasks--template-permissions-button--wrapper {
 	display: flex;
-	gap: 10px;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.tasks--template-permissions-button--text {
+	color: var(--ui-color-base-3);
 }
 
 .tasks--template-permissions-button--counter {
 	display: flex;
 	gap: 2px;
+	margin-left: var(--ui-space-inline-2xs2);
 	padding: 2px 8px 2px 4px;
 	align-items: center;
 	border-radius: 30px;

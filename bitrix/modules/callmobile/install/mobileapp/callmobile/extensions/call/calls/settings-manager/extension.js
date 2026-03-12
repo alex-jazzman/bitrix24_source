@@ -11,6 +11,8 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			this.plainCallFollowUpEnabled = BX.componentParameters.get('plainCallFollowUpEnabled');
 			this.plainCallCloudRecordingEnabled = BX.componentParameters.get('plainCallCloudRecordingEnabled');
 			this.callBalancerUrl = BX.componentParameters.get('callBalancerUrl');
+			this.optionsForTestingEnabled = BX.componentParameters.get('optionsForTestingEnabled');
+			this.mobileCallUIVisibilityTimer = BX.componentParameters.get('mobileCallUIVisibilityTimer');
 		}
 
 		/**
@@ -41,6 +43,16 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			if (settings.callBalancerUrl !== undefined)
 			{
 				this.callBalancerUrl = settings.callBalancerUrl;
+			}
+
+			if (settings.optionsForTestingEnabled !== undefined)
+			{
+				this.optionsForTestingEnabled = settings.optionsForTestingEnabled;
+			}
+
+			if (settings.mobileCallUIVisibilityTimer !== undefined)
+			{
+				this.mobileCallUIVisibilityTimer = settings.mobileCallUIVisibilityTimer;
 			}
 		}
 
@@ -106,6 +118,26 @@ jn.define('call/settings-manager', (require, exports, module) => {
 		set plainCallCloudRecordingEnabled(flag)
 		{
 			this._plainCallCloudRecordingEnabled = flag;
+		}
+
+		get mobileCallUIVisibilityTimer()
+		{
+			return this._mobileCallUIVisibilityTimer;
+		}
+
+		set mobileCallUIVisibilityTimer(flag)
+		{
+			this._mobileCallUIVisibilityTimer = flag;
+		}
+
+		get optionsForTestingEnabled()
+		{
+			return this._optionsForTestingEnabled;
+		}
+
+		set optionsForTestingEnabled(flag)
+		{
+			this._optionsForTestingEnabled = flag;
 		}
 
 		/**

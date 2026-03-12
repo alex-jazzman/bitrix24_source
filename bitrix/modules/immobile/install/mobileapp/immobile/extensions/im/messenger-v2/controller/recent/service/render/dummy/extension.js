@@ -73,6 +73,13 @@ jn.define('im/messenger-v2/controller/recent/service/render/dummy', (require, ex
 		{
 			this.logger.log('executeAfterRender', callback);
 		}
+
+		getItemCollectionSize()
+		{
+			this.logger.log('getItemCollectionSize');
+
+			return 0;
+		}
 	}
 
 	module.exports = DummyRenderService;

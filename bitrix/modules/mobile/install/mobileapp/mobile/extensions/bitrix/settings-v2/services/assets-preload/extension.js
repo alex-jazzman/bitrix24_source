@@ -6,7 +6,6 @@ jn.define('settings-v2/services/assets-preload', (require, exports, module) => {
 		ASSET_PATH,
 		BannerImageName,
 		ImageName,
-		StyleType,
 		ThemeType,
 		VideoQualityType,
 	} = require('settings-v2/const');
@@ -27,14 +26,15 @@ jn.define('settings-v2/services/assets-preload', (require, exports, module) => {
 			`${BANNER_ASSET_PATH}/${BannerImageName.MAIL}.png`,
 			`${BANNER_ASSET_PATH}/${BannerImageName.SOCIALNETWORK}.png`,
 			`${BANNER_ASSET_PATH}/${BannerImageName.VOXIMPLANT}.png`,
+			`${BANNER_ASSET_PATH}/${BannerImageName.HIGHT_PUSH_OTP}.png`,
 		],
 		IMAGES: [
 			`${IMAGE_ASSET_PATH}/${ImageName.NOTIFICATIONS_PUSH}.png`,
 			`${IMAGE_ASSET_PATH}/${ImageName.NOTIFICATIONS_COUNTER}.png`,
 		],
 		STYLES: [
-			`${STYLE_ASSET_PATH}/${StyleType.ZEFIR}.png`,
-			`${STYLE_ASSET_PATH}/${StyleType.DEFAULT}.png`,
+			`${STYLE_ASSET_PATH}/device-header.svg`,
+			`${STYLE_ASSET_PATH}/device-header.png`,
 		],
 		THEMES: [
 			`${THEME_ASSET_PATH}/${ThemeType.DARK}.svg`,

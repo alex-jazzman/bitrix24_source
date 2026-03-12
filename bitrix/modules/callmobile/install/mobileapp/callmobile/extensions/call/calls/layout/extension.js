@@ -66,6 +66,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		record: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><g opacity="0.7"><path d="M12.6497 7.00033C12.6497 3.88042 10.1202 1.35091 7.00033 1.35091C3.88042 1.35091 1.35091 3.88042 1.35091 7.00033C1.35091 10.1202 3.88042 12.6497 7.00033 12.6497C10.1202 12.6497 12.6497 10.1202 12.6497 7.00033ZM13.6491 7.00033C13.6491 10.6725 10.6725 13.6491 7.00033 13.6491C3.32814 13.6491 0.351563 10.6725 0.351562 7.00033C0.351562 3.32814 3.32814 0.351562 7.00033 0.351562C10.6725 0.351563 13.6491 3.32814 13.6491 7.00033Z" fill="white"/><path d="M8.87411 7.00073C8.87411 5.96601 8.03543 5.12666 7.00073 5.12655C5.96594 5.12655 5.12655 5.96594 5.12655 7.00073C5.12666 8.03543 5.96601 8.87411 7.00073 8.87411C8.03536 8.874 8.874 8.03536 8.87411 7.00073ZM9.87427 7.00073C9.87416 8.58765 8.58765 9.87416 7.00073 9.87427C5.41372 9.87427 4.12731 8.58772 4.1272 7.00073C4.1272 5.41366 5.41366 4.1272 7.00073 4.1272C8.58772 4.12731 9.87427 5.41372 9.87427 7.00073Z" fill="#F0F0F0"/></g></svg>',
 		fullScreen: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M0 6C0 2.68629 2.68629 0 6 0H18C21.3137 0 24 2.68629 24 6V18C24 21.3137 21.3137 24 18 24H6C2.68629 24 0 21.3137 0 18V6Z" fill="black" fill-opacity="0.5"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M17.22 11.3335V7.48585C17.2139 7.49261 17.2076 7.49924 17.2011 7.50573L13.3331 11.3738C13.1378 11.569 12.8212 11.569 12.626 11.3738C12.4307 11.1785 12.4307 10.8619 12.626 10.6667L16.494 6.79863C16.5087 6.78391 16.5241 6.77031 16.5401 6.75781L12.724 6.75781C12.4479 6.75781 12.224 6.53395 12.224 6.25781C12.224 5.98167 12.4479 5.75781 12.724 5.75781L16.72 5.75781C17.5484 5.75781 18.22 6.42939 18.22 7.25781V11.3335C18.22 11.6096 17.9961 11.8335 17.72 11.8335C17.4438 11.8335 17.22 11.6096 17.22 11.3335ZM7.45328 17.2332H11.2694C11.5455 17.2332 11.7694 17.4571 11.7694 17.7332C11.7694 18.0094 11.5455 18.2332 11.2694 18.2332H7.27344C6.44501 18.2332 5.77344 17.5617 5.77344 16.7332L5.77344 12.6576C5.77344 12.3814 5.9973 12.1576 6.27344 12.1576C6.54958 12.1576 6.77344 12.3814 6.77344 12.6576L6.77344 16.5052C6.7795 16.4984 6.78578 16.4918 6.79228 16.4853L10.6603 12.6173C10.8556 12.422 11.1722 12.422 11.3674 12.6173C11.5627 12.8125 11.5627 13.1291 11.3674 13.3244L7.49939 17.1924C7.48467 17.2071 7.46927 17.2207 7.45328 17.2332Z" fill="white"/> <rect width="24" height="24" rx="8" fill="white" fill-opacity="0.01"/> </svg>',
 		collapseFullScreen: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M0 6C0 2.68629 2.68629 0 6 0H18C21.3137 0 24 2.68629 24 6V18C24 21.3137 21.3137 24 18 24H6C2.68629 24 0 21.3137 0 18V6Z" fill="black" fill-opacity="0.5"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M14.1634 10.5271C14.1487 10.5418 14.1333 10.5554 14.1173 10.5679L17.9334 10.5679C18.2095 10.5679 18.4334 10.7917 18.4334 11.0679C18.4334 11.344 18.2095 11.5679 17.9334 11.5679L13.9374 11.5679C13.109 11.5679 12.4374 10.8963 12.4374 10.0679L12.4374 5.99219C12.4374 5.71605 12.6613 5.49219 12.9374 5.49219C13.2136 5.49219 13.4374 5.71605 13.4374 5.99219L13.4374 9.83983C13.4435 9.83308 13.4498 9.82645 13.4563 9.81995L17.3243 5.95191C17.5196 5.75665 17.8362 5.75665 18.0314 5.95191C18.2267 6.14718 18.2267 6.46376 18.0314 6.65902L14.1634 10.5271ZM10.5318 14.1737C10.5383 14.1672 10.5446 14.1606 10.5506 14.1538V18.0015C10.5506 18.2776 10.7745 18.5015 11.0506 18.5015C11.3268 18.5015 11.5506 18.2776 11.5506 18.0015V13.9258C11.5506 13.0973 10.879 12.4258 10.0506 12.4258H6.05469C5.77855 12.4258 5.55469 12.6496 5.55469 12.9258C5.55469 13.2019 5.77855 13.4258 6.05469 13.4258H9.87077C9.85479 13.4383 9.83938 13.4519 9.82467 13.4666L5.95663 17.3346C5.76137 17.5299 5.76137 17.8465 5.95663 18.0417C6.1519 18.237 6.46848 18.237 6.66374 18.0417L10.5318 14.1737Z" fill="white"/> <rect width="24" height="24" rx="8" fill="white" fill-opacity="0.01"/> </svg>',
+		buttonCameraBlocked: '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 24C0 10.7452 10.7452 0 24 0C37.2548 0 48 10.7452 48 24C48 37.2548 37.2548 48 24 48C10.7452 48 0 37.2548 0 24Z" fill="grey"/><path fill-rule="evenodd" clip-rule="evenodd" d="M32.6004 18.5333L29.6671 20.5867V18.6667C29.6671 17.2 28.4671 16 27.0004 16H15.9338C14.4671 16.0133 13.2671 17.2133 13.2671 18.68V29.3067C13.2671 30.7733 14.4671 31.9733 15.9338 31.9733H27.0004C28.4671 31.9733 29.6671 30.7733 29.6671 29.3067V27.3733L32.5871 29.44C34.0938 30.5067 36.1604 29.44 36.1604 27.5867V20.3867C36.1604 18.5467 34.0938 17.48 32.5871 18.5333H32.6004ZM28.0671 29.3067C28.0671 29.8933 27.5871 30.3733 27.0004 30.3733H15.9338C15.3471 30.3733 14.8671 29.8933 14.8671 29.3067V18.68C14.8671 18.0933 15.3471 17.6133 15.9338 17.6133H27.0004C27.5871 17.6133 28.0671 18.0933 28.0671 18.68V29.3067ZM34.5738 27.5867C34.5738 28.1333 33.9604 28.44 33.5204 28.1333L29.6804 25.4267V22.5467L33.5204 19.8533C33.9604 19.5467 34.5738 19.8533 34.5738 20.4V27.6V27.5867Z" fill="white"/></svg>',
 	};
 
 	const Gradients = {
@@ -408,14 +409,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		},
 		deviceOffHint: {
 			flexDirection: 'row',
-			height: 32,
+			minHeight: 32,
 			backgroundColor: Color.baseBlackFixed.toHex(0.5),
 			paddingLeft: Indent.S.toNumber(),
 			paddingRight: Indent.XL.toNumber(),
 			borderRadius: Corner.M.toNumber(),
 			alignContent: 'center',
 			alignItems: 'center',
-			justifyItems: 'center',
 		},
 		deviceOffHintText: {
 			marginLeft: 2,
@@ -544,6 +544,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		ToggleCopilot: 'toggleCopilot',
 		TestSwitchConnectionType: 'testSwitchConnectionType',
 		SwitchCallType: 'switchCallType',
+		CallLayoutMounted: 'callLayoutMounted',
 	};
 
 	const GridUserCount = {
@@ -561,6 +562,17 @@ jn.define('call/calls/layout', (require, exports, module) => {
 	const INACTIVITY_TIMEOUT = 5000;
 	const PREV_PAGE_TEASER_ANDROID = -25;
 
+	const DEVICE_OFF_PHRASES = {
+		camera: {
+			M: 'MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_CAMERA_M',
+			F: 'MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_CAMERA_F',
+		},
+		microphone: {
+			M: 'MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_MICROPHONE_M',
+			F: 'MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_MICROPHONE_F',
+		},
+	};
+
 	class CallLayout extends LayoutComponent
 	{
 		constructor(props = {})
@@ -575,7 +587,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.presenterId = env.userId;
 			this.userData = {};
 			this.videoStreams = {};
-			this.screenshareStreams = {};
+			this.screenshareStreams = new Map();
 
 			this.switchPresenterTimeout = null;
 
@@ -588,6 +600,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.beginDragUserScrollPosition = 0;
 			this.activeIds = [];
 			this.debouncedSubscribe = MobileUtils.debounce(this.subscribeOnNewPage, 3000);
+			this.inactivityTimeout = CallSettingsManager.optionsForTestingEnabled
+				? CallSettingsManager.mobileCallUIVisibilityTimer
+				: INACTIVITY_TIMEOUT;
 
 			this.state = {
 				screenWidth: 0,
@@ -610,7 +625,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				pinnedUserId: 0,
 				presenterUserId: 0,
 				users: [],
-				connectedUsers: [],
+				displayedUsers: [],
 				floorRequestUsers: [],
 				floorRequestSelf: false,
 				totalUsersCount: [],
@@ -621,6 +636,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				chatCounter: props.chatCounter || 0,
 				soundOutputDevice: props.soundOutputDevice || CallUtil.getSdkAudioManager().currentDevice,
 				copilotAvailable: Boolean(props.copilotAvailable),
+				isNativeSwitchingTypeSupported: false,
 				copilotEnabled: Boolean(props.copilotEnabled),
 				associatedEntityAvatarColor: props.associatedEntityAvatarColor,
 				activeScreenId: null,
@@ -639,6 +655,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				isAppActive: true,
 				inactivityTimer: null,
 				connectionType: 1,
+				isReconnecting: false,
+				cameraBlocked: false,
 			};
 
 			this.localUserModel = new UserModel({
@@ -657,7 +675,12 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			};
 		}
 
-		appendUsers(userStates)
+		componentDidMount()
+		{
+			this.emit(EventName.CallLayoutMounted);
+		}
+
+		setUserStates(userStates)
 		{
 			if (!BX.type.isPlainObject(userStates))
 			{
@@ -667,31 +690,26 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const userIds = Object.keys(userStates);
 			for (const userId of userIds)
 			{
-				this.addUser(userId, userStates[userId] ? userStates[userId] : BX.Call.UserState.Idle);
-			}
-		}
+				const userState = userStates[userId]
 
-		addUser(userId, state)
-		{
-			this.setState({})
-			if (this.userRegistry.get(userId))
-			{
-				return;
-			}
+				if (this.userRegistry.get(userId))
+				{
+					return;
+				}
 
-			this.userRegistry.push(new UserModel({
-				id: userId,
-				name: this.userData[userId] ? this.userData[userId].name : '',
-				avatar: this.userData[userId] ? this.userData[userId].avatar_hr : '',
-				state: state || BX.Call.UserState.Idle,
-				order: this.getNextPosition(),
-			}));
+				this.userRegistry.push(new UserModel({
+					id: userId,
+					name: this.userData[userId] ? this.userData[userId].name : '',
+					avatar: this.userData[userId] ? this.userData[userId].avatar_hr : '',
+					state: userState || BX.Call.UserState.Idle,
+					order: this.getNextPosition(),
+				}));
+			}
 
 			this.userRegistry.users = [...this.rankUsers()];
 
 			this.setState({
-				users: this.getUsers(),
-				connectedUsers: this.getConnectedUsers(),
+				displayedUsers: this.getDisplayedUsers(),
 			});
 
 			this.toggleSubscriptionRemoteVideo();
@@ -742,9 +760,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.setState({});
 		}
 
-		updateUserData(userData)
+		setUserData(userData)
 		{
-			this.setState({})
 			for (const userId in userData)
 			{
 				if (!Object.hasOwn(userData, userId) || !userData[userId])
@@ -824,6 +841,107 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.setState({});
 		}
 
+		addAllUsers(users)
+		{
+			users.forEach((userData) => {
+				const userId = userData.id;
+				// if (!Object.hasOwn(userData, userId) || !userData[userId])
+				// {
+				// 	continue;
+				// }
+
+				if (!this.userData[userId])
+				{
+					this.userData[userId] = {
+						first_name: '',
+						last_name: '',
+						name: '',
+						workPosition: '',
+						extranet: false,
+						invited: false,
+						lastActivityDate: '',
+						avatar_hr: '',
+						gender: 'M',
+					};
+				}
+
+				if (userData.first_name)
+				{
+					this.userData[userId].first_name = userData.first_name;
+				}
+				if (userData.last_name)
+				{
+					this.userData[userId].last_name = userData.last_name;
+				}
+				if (userData.name)
+				{
+					this.userData[userId].name = userData.name;
+				}
+
+				if (userData.work_position)
+				{
+					this.userData[userId].workPosition = userData.work_position;
+				}
+
+				if (userData.extranet)
+				{
+					this.userData[userId].extranet = userData.extranet;
+				}
+
+				if (userData.invited)
+				{
+					this.userData[userId].invited = userData.invited;
+				}
+
+				if (userData.last_activity_date)
+				{
+					this.userData[userId].lastActivityDate = userData.lastActivityDate;
+				}
+
+				if (userData.avatar_hr)
+				{
+					this.userData[userId].avatar_hr = isAvatarBlank(userData.avatar_hr) ? '' : userData.avatar_hr;
+				}
+
+				if (userData.gender)
+				{
+					this.userData[userId].gender = userData.gender === 'F' ? 'F' : 'M';
+				}
+
+				const userModel = this.userRegistry.get(userId);
+				if (userModel)
+				{
+					userModel.firstName = this.userData[userId].first_name;
+					userModel.lastName = this.userData[userId].last_name;
+					userModel.name = this.userData[userId].name;
+					userModel.workPosition = this.userData[userId].workPosition;
+					userModel.avatar = this.userData[userId].avatar_hr;
+					userModel.gender = this.userData[userId].gender;
+				}
+
+				if (this.userRegistry.get(userId))
+				{
+					return;
+				}
+
+				this.userRegistry.push(new UserModel({
+					id: userId,
+					name: this.userData[userId] ? this.userData[userId].name : '',
+					avatar: this.userData[userId] ? this.userData[userId].avatar_hr : '',
+					state: BX.Call.UserState.Idle,
+					order: this.getNextPosition(),
+				}));
+			});
+
+			this.userRegistry.users = [...this.rankUsers()];
+
+
+			this.setState({
+				displayedUsers: this.getDisplayedUsers(),
+			});
+
+		}
+
 		redraw()
 		{
 			this.setState({});
@@ -831,6 +949,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		hideUIAfterInactivity()
 		{
+			if (!this.inactivityTimeout)
+			{
+				return;
+			}
+
 			if (this.state.inactivityTimer)
 			{
 				clearTimeout(this.state.inactivityTimer);
@@ -838,9 +961,14 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			const timer = setTimeout(() => {
 				this.setState({ panelVisible: false });
-			}, INACTIVITY_TIMEOUT);
+			}, this.inactivityTimeout);
 
 			this.setState({ inactivityTimer: timer });
+		}
+
+		setIsNativeSwitchingTypeSupported(value)
+		{
+			this.setState({ isNativeSwitchingTypeSupported: value });
 		}
 
 		toggleUI()
@@ -970,19 +1098,14 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			return this.presenterId;
 		}
 
-		getUsers()
-		{
-			return this.userRegistry.users.filter((userModel) => !userModel.localUser);
-		}
-
-		getConnectedUserCount()
-		{
-			return this.getConnectedUsers().length;
-		}
-
-		getConnectedUsers()
+		getDisplayedUsers()
 		{
 			return this.userRegistry.users.filter((userModel) => userModel.state === BX.Call.UserState.Connected || userModel.state === BX.Call.UserState.Connecting)
+		}
+
+		getDisplayedUserCount()
+		{
+			return this.getDisplayedUsers().length;
 		}
 
 		getParticipants()
@@ -1053,9 +1176,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			return candidateUserId;
 		}
 
-		switchPresenter()
+		switchPresenter(presenterId)
 		{
-			const newPresenterId = this.getPresenterUserId();
+			const newPresenterId = presenterId || this.getPresenterUserId();
 			if (!newPresenterId || newPresenterId === this.presenterId)
 			{
 				return;
@@ -1105,7 +1228,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			this.userRegistry.users = [...this.rankUsers()];
 			this.setState({
-				connectedUsers: this.getConnectedUsers(),
+				displayedUsers: this.getDisplayedUsers(),
 			});
 			cameraState = Boolean(cameraState);
 			this.localUserModel.cameraState = cameraState;
@@ -1152,27 +1275,32 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			});
 		}
 
-		setUserState(userId, newState)
+		setUserState(userId, newState, shouldChangeUI = true)
 		{
-			this.setState({});
 			/** @type {UserModel} */
 			const user = this.userRegistry.get(userId);
-			let newCallStatus = this.state.status;
+			let newStatus = this.state.status;
 			if (!user || user.state == newState)
 			{
 				return;
+			}
+
+			if (newState !== BX.Call.UserState.Connected && this.talkingUsersDelays.has(userId))
+			{
+				clearTimeout(this.talkingUsersDelays.get(userId));
+				this.talkingUsersDelays.delete(userId);
 			}
 
 			user.state = newState;
 
 			if (newState == BX.Call.UserState.Connected)
 			{
-				newCallStatus = 'call';
+				newStatus = 'call';
 			}
 
-			if (newState == BX.Call.UserState.Connecting && this.getConnectedUserCount() === 0)
+			if (newState == BX.Call.UserState.Connecting && this.getDisplayedUserCount() === 0)
 			{
-				newCallStatus = this.state.status == 'call' ? 'call' : 'connecting';
+				newStatus = this.state.status == 'call' ? 'call' : 'connecting';
 			}
 
 			// maybe switch central user
@@ -1203,11 +1331,15 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.userRegistry.users = [...this.rankUsers()];
 
 			this.setState({
-				connectedUsers: this.getConnectedUsers(),
 				floorRequestUsers: this.getFloorRequestUsers(3),
 				floorRequestSelf: this.userRegistry.get(env.userId).floorRequestState,
-				status: newCallStatus,
+				status: newStatus,
 			});
+
+			if (shouldChangeUI)
+			{
+				this.updateDisplayedUsers();
+			}
 
 			const currentPage = this.state.currentGridPage
 			if (currentPage !== 1)
@@ -1223,6 +1355,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			}
 
 			this.toggleSubscriptionRemoteVideo();
+		}
+
+		updateDisplayedUsers()
+		{
+			this.setState({
+				displayedUsers: this.getDisplayedUsers(),
+			});
 		}
 
 		getUserTalking(userId)
@@ -1251,8 +1390,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					if (user.talking === talking) return;
 
 					const startTimer = setTimeout(() => {
-						user.talking = true;
-						this.updateUserTalkingState();
+						if (user.state === BX.Call.UserState.Connected && user.microphoneState)
+						{
+							user.talking = true;
+							this.updateUserTalkingState();
+						}
 					}, STARTTALKING_DELAY);
 
 					this.talkingUsersDelays.set(userId, startTimer);
@@ -1260,8 +1402,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				if (!talking)
 				{
 					const stopTimer = setTimeout(() => {
-						user.talking = false;
-						this.updateUserTalkingState();
+						if (user.state === BX.Call.UserState.Connected)
+						{
+							user.talking = false;
+							this.updateUserTalkingState();
+						}
 					}, STOPTALKING_DELAY);
 
 					this.talkingUsersDelays.set(userId, stopTimer);
@@ -1282,7 +1427,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.setState({
 				floorRequestUsers: this.getFloorRequestUsers(3),
 				floorRequestSelf: this.userRegistry.get(env.userId).floorRequestState,
-				connectedUsers: this.getConnectedUsers(),
+				displayedUsers: this.getDisplayedUsers(),
 			});
 
 			if (this.presenterId == userId && !user.talking)
@@ -1303,6 +1448,12 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const user = this.userRegistry.get(userId);
 			if (user)
 			{
+				if (!isMicrophoneOn && this.talkingUsersDelays.has(userId))
+				{
+					clearTimeout(this.talkingUsersDelays.get(userId));
+					this.talkingUsersDelays.delete(userId);
+				}
+
 				user.microphoneState = isMicrophoneOn;
 				this.setState({});
 			}
@@ -1378,13 +1529,15 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			user.screenState = screenState;
 			if (userId != this.userId)
 			{
-				this.switchPresenter();
+				const newPresenterId = screenState ? userId : null;
+
+				this.switchPresenter(newPresenterId);
 			}
 
 			this.userRegistry.users = [...this.rankUsers()];
 
 			this.setState({
-				connectedUsers: this.getConnectedUsers(),
+				displayedUsers: this.getDisplayedUsers(),
 			});
 
 			this.toggleSubscriptionRemoteVideo();
@@ -1392,7 +1545,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		toggleSubscriptionRemoteVideoGrid()
 		{
-			const ids = this.state.connectedUsers.map(user => user.id)
+			const ids = this.state.displayedUsers.map(user => user.id)
 
 			if (ids.length === 0)
 			{
@@ -1402,8 +1555,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const toggleList = [];
 
 			const isPinMode = this.state.pinnedUserId !== 0;
-			const hasScreenshare = (this.getConnectedUsers().some((item) => item.data.screenState) && Object.keys(this.screenshareStreams).length !== 0)
-				|| (Object.keys(this.screenshareStreams).length !== 0 && this.state.screenshareOnEnter === null);
+			const hasScreenshare = (this.getDisplayedUsers().some((item) => item.data.screenState) && this.screenshareStreams.size !== 0)
+				|| (this.screenshareStreams.size !== 0 && this.state.screenshareOnEnter === null);
 
 			const checkNecessityAddUser = (newState) => {
 				const currentUser = this.state.toggleListPrev.find((user) => user.id === newState.id);
@@ -1442,7 +1595,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 				if (!hasScreenshare && !isPinMode)
 				{
-					if (renderedUser || this.getConnectedUserCount() <= GridUserCount.fullFirstPageCount)
+					if (renderedUser || this.getDisplayedUserCount() <= GridUserCount.fullFirstPageCount)
 					{
 						toggleList.push({
 							id,
@@ -1460,7 +1613,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						});
 					}
 
-					if (!renderedUser && this.getConnectedUserCount() > GridUserCount.fullFirstPageCount && !isActiveUser)
+					if (!renderedUser && this.getDisplayedUserCount() > GridUserCount.fullFirstPageCount && !isActiveUser)
 					{
 						toggleList.push({
 							id,
@@ -1472,7 +1625,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 				if (hasScreenshare || isPinMode)
 				{
-					if (this.screenshareStreams.hasOwnProperty(id))
+					if (this.screenshareStreams.has(id))
 					{
 						toggleList.push({
 							id,
@@ -1537,22 +1690,23 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			if (stream)
 			{
-				if (this.videoStreams.hasOwnProperty(userId) && this.screenshareStreams.hasOwnProperty(userId))
-				{
-					delete this.videoStreams[userId];
-					delete this.screenshareStreams[userId];
-					userModel.cameraState = false;
-				}
+				const checkedStream = this.getProperStream(stream);
 
-				if (Array.isArray(stream))
+				let hasVideoInUpdate = false;
+				let hasSharingInUpdate = false;
+
+				if (Array.isArray(checkedStream))
 				{
-					stream.forEach((item) => {
+					checkedStream.forEach((item) => {
 						if (item.kind === 'sharing')
 						{
-							this.screenshareStreams[userId] = item;
+							hasSharingInUpdate = true;
+							this.screenshareStreams.set(userId, item);
+							userModel.screenState = true;
 						}
 						else
 						{
+							hasVideoInUpdate = true;
 							this.videoStreams[userId] = item;
 							userModel.cameraState = true;
 						}
@@ -1562,26 +1716,43 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				{
 					if (stream.kind === 'sharing')
 					{
-						this.screenshareStreams[userId] = stream;
+						hasSharingInUpdate = true;
+						this.screenshareStreams.set(userId, stream);
+						userModel.screenState = true;
 					}
 					else
 					{
+						hasVideoInUpdate = true;
 						this.videoStreams[userId] = stream;
 						userModel.cameraState = true;
 					}
+				}
+
+				if (!hasVideoInUpdate && this.videoStreams.hasOwnProperty(userId))
+				{
+					delete this.videoStreams[userId];
+					userModel.cameraState = false;
+				}
+
+				if (!hasSharingInUpdate && this.screenshareStreams.has(userId))
+				{
+					this.screenshareStreams.delete(userId);
+					userModel.screenState = false;
 				}
 			}
 			else
 			{
 				delete this.videoStreams[userId];
-				delete this.screenshareStreams[userId];
+				this.screenshareStreams.delete(userId);
 				userModel.cameraState = false;
+				userModel.screenState = false;
 			}
+
 
 			if (userId == this.centralUserId && userId != env.userId)
 			{
 				this.setState({
-					remoteStream: Array.isArray(stream) ? stream[0] : stream,
+					remoteStream: Array.isArray(stream) ? stream[0] : this.getProperStream(stream),
 				});
 			}
 			else if (userId == this.userId)
@@ -1596,10 +1767,102 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.userRegistry.users = [...this.rankUsers()];
 
 			this.setState({
-				connectedUsers: this.getConnectedUsers(),
+				displayedUsers: this.getDisplayedUsers(),
 			});
 
 			this.toggleSubscriptionRemoteVideo();
+		}
+
+		setVideoStreams(userStreams)
+		{
+			userStreams.forEach((userStream) =>
+			{
+				const userId = userStream.id;
+				const stream = userStream.stream;
+				const mirrorLocalVideo = userStream.mirrorLocalVideo ?? false;
+
+				const userModel = this.userRegistry.get(userId);
+				if (!userModel)
+				{
+					console.error(`User ${userId} is not known`);
+
+					return;
+				}
+
+				if (stream)
+				{
+					if (this.videoStreams.hasOwnProperty(userId) && this.screenshareStreams.hasOwnProperty(userId))
+					{
+						delete this.videoStreams[userId];
+						delete this.screenshareStreams[userId];
+						userModel.cameraState = false;
+					}
+
+					const checkedStream = this.getProperStream(stream);
+
+					if (Array.isArray(checkedStream))
+					{
+						checkedStream.forEach((item) => {
+							if (item.kind === 'sharing')
+							{
+								this.screenshareStreams[userId] = item;
+							}
+							else
+							{
+								this.videoStreams[userId] = item;
+								userModel.cameraState = true;
+							}
+						});
+					}
+					else
+					{
+						if (stream.kind === 'sharing')
+						{
+							this.screenshareStreams[userId] = stream;
+						}
+						else
+						{
+							this.videoStreams[userId] = stream;
+							userModel.cameraState = true;
+						}
+					}
+				}
+				else
+				{
+					delete this.videoStreams[userId];
+					delete this.screenshareStreams[userId];
+					userModel.cameraState = false;
+				}
+
+				if (userId == this.centralUserId && userId != env.userId)
+				{
+					this.setState({
+						remoteStream: Array.isArray(stream) ? stream[0] : this.getProperStream(stream),
+					});
+				}
+				else if (userId == this.userId)
+				{
+					this.setState({
+						localStream: Array.isArray(stream) ? stream[0] : stream,
+						cameraState: Boolean(stream),
+						mirrorLocalVideo,
+					});
+				}
+			})
+
+
+			this.userRegistry.users = [...this.rankUsers()];
+
+			this.setState({
+				displayedUsers: this.getDisplayedUsers(),
+			});
+
+			this.toggleSubscriptionRemoteVideo();
+		}
+
+		getProperStream(stream)
+		{
+			return stream?.stream ?? stream;
 		}
 
 		setSoundOutputDevice(device)
@@ -1656,9 +1919,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				return null;
 			}
 			const rendererParams = {};
-			if (Object.keys(this.screenshareStreams).length !== 0)
+			if (this.screenshareStreams.size !== 0)
 			{
-				rendererParams.source = Object.values(this.screenshareStreams)[0];
+				rendererParams.source = this.screenshareStreams.values().next().value;
 			}
 			else
 			{
@@ -1756,11 +2019,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		{
 			const userModel = this.userRegistry.get(this.state.centralUserId);
 
-			let height = 32 * (userModel.cameraState ? 0 : 1) + 32 * (userModel.microphoneState ? 0 : 1);
-			if (height === 64)
-			{
-				height += 6;
-			}
+			const hasBoth = !userModel.cameraState && !userModel.microphoneState;
 
 			return View(
 				{
@@ -1768,11 +2027,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						position: 'absolute',
 						bottom: 0,
 						left: 16 + getSafeArea().left,
-						width: '100%',
-						height,
+						right: 16 + getSafeArea().right,
 						marginBottom: bottomMargin,
+						flexDirection: 'column',
 						alignItems: 'flex-start',
-						justifyItems: 'space-between',
 						justifyContent: 'space-between',
 					},
 				},
@@ -1780,22 +2038,31 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					userModel.firstName.length === 0 ? userModel.name : userModel.firstName,
 					userModel.gender,
 					'microphone',
+					hasBoth,
 				),
 				!userModel.cameraState && this.renderDeviceOffHint(
 					userModel.firstName.length === 0 ? userModel.name : userModel.firstName,
 					userModel.gender,
-					'camera'),
+					'camera',
+					false
+				),
 
 			);
 		}
 
-		renderDeviceOffHint(firstName, gender, device)
+		renderDeviceOffHint(firstName, gender, device, addBottomMargin = false)
 		{
-			const phrase = `MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_${device === 'camera' ? 'CAMERA' : 'MICROPHONE'}_${gender === 'F' ? 'F' : 'M'}`;
+			const normalizedGender = gender === 'F' ? 'F' : 'M';
+			const normalizedDevice = device === 'camera' ? 'camera' : 'microphone';
+
+			const phrase = DEVICE_OFF_PHRASES[normalizedDevice]?.[normalizedGender] || DEVICE_OFF_PHRASES.microphone.M;
 
 			return View(
 				{
-					style: styles.deviceOffHint,
+					style: {
+						...styles.deviceOffHint,
+						...(addBottomMargin ? { marginBottom: 6 } : {}),
+					},
 				},
 				IconView({
 					size: 20,
@@ -1872,7 +2139,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				uri: isAvatarBlank(uri) ? '' : uri,
 				name: text,
 				entityType: AvatarEntityType.OTHER,
-				size: 180,
+				size: this.getIsLandscapeOrientation() ? 130 : 180,
 				useLetterImage: true,
 				backgroundColor: Utils.convertHexToColorEnum(color),
 				shape: AvatarShape.NONE,
@@ -1919,8 +2186,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		renderCenterGrid()
 		{
-			const hasScreenshare = (this.getConnectedUsers().some((item) => item.data.screenState) && Object.keys(this.screenshareStreams).length !== 0)
-				|| (Object.keys(this.screenshareStreams).length !== 0 && this.state.screenshareOnEnter === null);
+			const hasScreenshare = (this.getDisplayedUsers().some((item) => item.data.screenState) && this.screenshareStreams.size !== 0)
+				|| (this.screenshareStreams.size !== 0 && this.state.screenshareOnEnter === null);
 
 			const paddingVertical = {
 				paddingTop: 5,
@@ -1958,7 +2225,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				&& !this.state.remoteStream
 				&& !this.state.centralUserVideoPaused
 			;
-			const showArrows = this.state.connectedUsers.length > 1;
+			const showArrows = this.state.displayedUsers.length > 1;
 
 			return View(
 				{
@@ -2010,7 +2277,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		}
 
 		getItemWidth(index) {
-			const countConnectedUsers = this.getConnectedUserCount();
+			const countConnectedUsers = this.getDisplayedUserCount();
 
 			if (!this.state.gridContainerWidth)
 			{
@@ -2062,10 +2329,20 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		{
 			let users = this.userRegistry.users;
 			users = users.filter(user => user);
+
 			if (index !== null)
 			{
-				[users[index], users[0]] = [users[0], users[index]];
+				const userId = this.userRegistry.users[index]?.id;
+				if (userId)
+				{
+					const actualIndex = users.findIndex(u => u.id === userId);
+					if (actualIndex !== -1 && actualIndex !== 0)
+					{
+						[users[actualIndex], users[0]] = [users[0], users[actualIndex]];
+					}
+				}
 			}
+
 			return users;
 		}
 
@@ -2170,7 +2447,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const startCount = this.state.currentGridPage <= 1 ? 0 : ((this.state.currentGridPage - 2) * itemsPerPage);
 			const endCount = this.state.currentGridPage * itemsPerPage + 4;
 
-			const renderedUsers = this.state.connectedUsers.slice(0, endCount);
+			const renderedUsers = this.state.displayedUsers.slice(0, endCount);
 
 			for (let i = 0; i < renderedUsers.length; i += itemsPerPage)
 			{
@@ -2263,7 +2540,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			}
 			const rendererParams = {};
 
-			rendererParams.source = this.screenshareStreams[id];
+			rendererParams.source = this.screenshareStreams.get(id);
 
 			return VideoRenderer({
 				testId: `callsRemoteVideo_${this.state.centralUserId}`,
@@ -2366,13 +2643,18 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				this.state.panelVisible && this.renderNameBadge(item.data.name, item.data.microphoneState),
 				item.data.state === 'Connecting' && connectingBadge,
 				item.data.floorRequestState && this.renderFloorRequestBadge(),
-				isCameraOff ? avatar : video,
+				(isCameraOff || (this.state.isReconnecting && !isThisUser)) ? avatar : video,
 				isThisUser && !isCameraOff && switchCamera,
 			);
 		}
 
 		pinUserInGrid(id)
 		{
+			if (this.state.isReconnecting)
+			{
+				return;
+			}
+
 			this.setState({
 				pinnedUserId: id,
 			});
@@ -2395,7 +2677,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					uri: this.userRegistry.get(item.data.id).avatar,
 					name: BX.utils.html.htmlDecode(item.data.name),
 					size: 90,
-					backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id].color),
+					backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id]?.color),
 				}),
 			);
 			return View(
@@ -2414,8 +2696,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		{
 			const startCount = this.state.currentGridPage <= 1 ? 0 : ((this.state.currentGridPage - 1) * GridUserCount.fullFirstPageCount);
 			const endCount = this.state.currentGridPage * GridUserCount.fullFirstPageCount - 1;
-			const isOnlyOnePage = this.getConnectedUserCount() <= GridUserCount.fullFirstPageCount;
-			const alignItemsStyles = this.getConnectedUserCount() <= GridUserCount.bottomSplittedRow && this.getIsLandscapeOrientation() ? 'center' : 'flex-start';
+			const isOnlyOnePage = this.getDisplayedUserCount() <= GridUserCount.fullFirstPageCount;
+			const alignItemsStyles = this.getDisplayedUserCount() <= GridUserCount.bottomSplittedRow && this.getIsLandscapeOrientation() ? 'center' : 'flex-start';
 
 			const userGrid = this.getSortedUsers().map((chunk, userPageIndex) => (
 				View(
@@ -2428,15 +2710,15 @@ jn.define('call/calls/layout', (require, exports, module) => {
 							marginRight: -5,
 							alignContent: alignItemsStyles,
 							justifyContent: this.getIsLandscapeOrientation()
-								? (this.getConnectedUserCount() < GridUserCount.fullFirstPageCount
+								? (this.getDisplayedUserCount() < GridUserCount.fullFirstPageCount
 									? 'center'
-									: this.getConnectedUserCount() > GridUserCount.fullFirstPageCount
+									: this.getDisplayedUserCount() > GridUserCount.fullFirstPageCount
 										? 'flex-start'
 										: 'space-between')
 								: 'space-between',
 						},
 						onLayout: () => {
-							this.debouncedSubscribe();
+							//this.debouncedSubscribe();
 							if (this.state.isScreenshareFullScreen)
 							{
 								this.setState({
@@ -2566,8 +2848,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			}
 			else
 			{
-				newPage = Math.ceil(this.getConnectedUserCount() / GridUserCount.fullFirstPageCount);
-				if (this.getConnectedUserCount() === GridUserCount.fullFirstPageCount)
+				newPage = Math.ceil(this.getDisplayedUserCount() / GridUserCount.fullFirstPageCount);
+				if (this.getDisplayedUserCount() === GridUserCount.fullFirstPageCount)
 				{
 					this.scrollView.scrollTo({ x: 0, y: 0, animated: false });
 				}
@@ -2591,7 +2873,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		getMaxAmountOfPagesInScrollView()
 		{
-			const userCount = this.state.connectedUsers.length;
+			const userCount = this.state.displayedUsers.length;
 			if (userCount > GridUserCount.fullFirstPageCount)
 			{
 				return Math.ceil(userCount / GridUserCount.fullFirstPageCount);
@@ -2635,7 +2917,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						uri: this.userRegistry.get(item.data.id).avatar,
 						name: BX.utils.html.htmlDecode(item.data.name),
 						size: 90,
-						backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id].color),
+						backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id]?.color),
 					}),
 				)
 				: View(
@@ -2651,10 +2933,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		renderPinLayout()
 		{
-			const pinnedUser = this.state.connectedUsers.filter((item) => item.id === this.state.pinnedUserId)
+			const pinnedUser = this.state.displayedUsers.filter((item) => item.id === this.state.pinnedUserId)
 			const isThisUser = this.state.pinnedUserId === Number(this.userId);
 			const size = this.getIsLandscapeOrientation() ? (this.state.gridContainerWidth * 0.2 - 5) : this.state.gridContainerHeight * 0.22;
-			const users = this.state.connectedUsers.filter((item) => item.id !== this.state.pinnedUserId)
+			const users = this.state.displayedUsers.filter((item) => item.id !== this.state.pinnedUserId)
 			const scrollList = this.renderUserScrollList(
 				this.getIsLandscapeOrientation() ? '100%' : size,
 				this.getIsLandscapeOrientation() ? size : '100%',
@@ -2753,8 +3035,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		{
 			if(this.state.screenshareOnEnter === null)
 			{
-				for (const [key] of Object.entries(this.screenshareStreams)) {
-					this.userRegistry.get(Number(key)).screenState = true;
+				for (const [userId] of this.screenshareStreams) {
+					this.userRegistry.get(Number(userId)).screenState = true;
 				}
 				this.state.screenshareOnEnter = false;
 			}
@@ -2762,8 +3044,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		checkScreenshareAfterReconnect()
 		{
-			for (const [key] of Object.entries(this.screenshareStreams)) {
-				this.userRegistry.get(Number(key)).screenState = true;
+			for (const [userId] of this.screenshareStreams) {
+				this.userRegistry.get(Number(userId)).screenState = true;
 			}
 		}
 
@@ -2802,9 +3084,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const size = this.state.gridContainerHeight * 0.22;
 
 			this.checkIsScreenshareOnEnter();
-			const screenshareList = Object.keys(this.screenshareStreams)
-				.filter((id) => this.userRegistry.get(id).screenState)
-				.map(id => ({ id: Number(id) }));
+			const screenshareList = this.getScreenshareList();
 			const scrollList = this.renderUserScrollList(size, '100%');
 			const dots = this.renderDots(screenshareList);
 			const screenShareViews = this.renderScreenShareViews(screenshareList);
@@ -2838,13 +3118,15 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			);
 		}
 
-		getScreenshareList() {
-			return Object.keys(this.screenshareStreams)
-				.filter((id) => this.userRegistry.get(id).screenState)
-				.map(id => ({ id: Number(id) }));
+		getScreenshareList()
+		{
+			return Array.from(this.screenshareStreams.keys())
+				.filter(id => this.userRegistry.get(id)?.screenState)
+				.map(id => ({ id: id }))
+				.reverse();
 		}
 
-		renderUserScrollList(width, height, marginBottom = 0, users = this.state.connectedUsers) {
+		renderUserScrollList(width, height, marginBottom = 0, users = this.state.displayedUsers) {
 			return users.map((item, index) => (
 				View(
 					{
@@ -2853,7 +3135,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 							height,
 							marginBottom,
 							borderColor: item.talking && '#1BCE7B',
-							marginRight: index !== this.state.connectedUsers.length - 1 ? 5 : 0,
+							marginRight: index !== this.state.displayedUsers.length - 1 ? 5 : 0,
 							...styles.scrollListItem,
 						},
 						onClick: () => {
@@ -2946,7 +3228,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 							},
 							clickable: false,
 						},
-						this.screenshareStreams.hasOwnProperty(item.id) && this.getScreenStream(item.id)
+						this.screenshareStreams.has(item.id) && this.getScreenStream(item.id)
 					)
 				)
 			));
@@ -2960,13 +3242,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 							currentPage: page,
 						});
 						const activeScreenId = screenshareList[page].id;
-						const activeScreenIndex = this.state.connectedUsers.findIndex((user) => user.data.id === activeScreenId);
+						const activeScreenIndex = this.state.displayedUsers.findIndex((user) => user.data.id === activeScreenId);
 						if (activeScreenIndex) {
 							this.userRegistry.users = [...this.changeActiveScreenShareUser(activeScreenIndex)];
 						}
 						this.setState({
 							activeScreenId: activeScreenId,
-							connectedUsers: this.getConnectedUsers(),
+							displayedUsers: this.getDisplayedUsers(),
 						});
 						this.screenshareScrollView.scrollTo({ x: 0, y: 0, animated: true });
 					},
@@ -2976,13 +3258,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 								currentPage: 0,
 							});
 							const activeScreenId = screenshareList[0].id;
-							const activeScreenIndex = this.state.connectedUsers.findIndex((user) => user.data.id === activeScreenId)
+							const activeScreenIndex = this.state.displayedUsers.findIndex((user) => user.data.id === activeScreenId)
 							if (activeScreenIndex !== -1) {
 								this.userRegistry.users = [...this.changeActiveScreenShareUser(activeScreenIndex)];
 							}
 							this.state.activeScreenId = activeScreenId;
 							this.setState({
-								connectedUsers: this.getConnectedUsers(),
+								displayedUsers: this.getDisplayedUsers(),
 							});
 							this.screenshareScrollView.scrollTo({ x: 0, y: 0, animated: true });
 						}
@@ -3095,9 +3377,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		resubscribeForUserScroll()
 		{
-			if (this.getConnectedUserCount() === this.state.userScrollUserPerPage)
+			if (this.getDisplayedUserCount() === this.state.userScrollUserPerPage)
 			{
-				this.activeIds = this.state.connectedUsers.map(user => user.id);
+				this.activeIds = this.state.displayedUsers.map(user => user.id);
 			}
 			else
 			{
@@ -3105,12 +3387,12 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				const startIndex = this.userScrollPage * (this.state.userScrollUserPerPage - 1);
 				const endIndex = startIndex + usersPerPage;
 
-				const pageUsers = this.state.connectedUsers.slice(startIndex, endIndex);
+				const pageUsers = this.state.displayedUsers.slice(startIndex, endIndex);
 
 				if (pageUsers.length < usersPerPage && this.userScrollPage > 0)
 				{
 					const needed = usersPerPage - pageUsers.length;
-					const prevPageUsers = this.state.connectedUsers.slice(
+					const prevPageUsers = this.state.displayedUsers.slice(
 						Math.max(0, startIndex - needed),
 						startIndex
 					);
@@ -3332,8 +3614,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		getBackground()
 		{
-			const isLandscape = this.state.screenWidth > this.state.screenHeight;
-			const suffix = isLandscape ? '_landscape' : '';
+			const suffix = this.getIsLandscapeOrientation() ? '_landscape' : '';
 
 			return this.state.copilotEnabled
 				? `${pathToExtension}img/back_highlighted${suffix}.png`
@@ -3355,6 +3636,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						backgroundImage: this.getBackground(),
 						backgroundResizeMode: 'cover',
 						alignItems: 'center',
+					},
+					onLayout: () => {
+						this.redraw();
 					},
 				},
 				this.state.localStream
@@ -3414,7 +3698,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				|| (this.state.status === 'call' && Boolean(this.state.remoteStream))
 			;
 
-			const showCopilot = this.state.copilotAvailable && this.state.status === 'call' && this.state.isGroupCall;
+			const showCopilot = this.state.copilotAvailable
+				&& this.state.status === 'call'
+				&& (this.state.isGroupCall || this.state.isNativeSwitchingTypeSupported);
 
 			return isVisible && View(
 				{
@@ -3565,7 +3851,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			const showCopilot = this.state.copilotAvailable
 				&& this.state.status === 'call'
-				&& (this.state.isGroupCall || CallSettingsManager.plainCallFollowUpEnabled);
+				&& (this.state.isGroupCall || this.state.isNativeSwitchingTypeSupported);
 
 			return isVisible && View(
 				{
@@ -3671,6 +3957,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						backgroundResizeMode: 'cover',
 						alignItems: 'center',
 					},
+					onLayout: () => {
+						this.redraw();
+					},
 				},
 				this.state.localStream
 					? this.renderLocalStream(false, this.getBottomMargin())
@@ -3696,28 +3985,35 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			);
 		}
 
+		isReconnecting()
+		{
+			return this.userRegistry.get(this.centralUserId).state === BX.Call.UserState.Connecting;
+		}
+
 		renderGrid()
 		{
 			const showLocalVideoInFrame = this.state.centralUserId !== this.userId;
 			let topParams = null;
+			const reconnect = {
+				svgContent: Icons.calling,
+				text: BX.message('MOBILE_CALL_LAYOUT_RESTORING_CONNECTION'),
+			};
+
 			if (this.state.isGroupCall)
 			{
-				topParams = {
+				topParams = this.state.isReconnecting ? reconnect : {
 					svgContent: Icons.participants,
 					onClick: () => this.openParticipantsMenu(),
 					text: BX.message('MOBILE_CALL_USER_NUM_FROM_TOTAL')
-						.replace('#USER_NUM#', this.getParticipants().length)
-						.replace('#TOTAL_COUNT#', this.state.totalUsersCount),
+							.replace('#USER_NUM#', this.getParticipants().length)
+							.replace('#TOTAL_COUNT#', this.state.totalUsersCount)
 				};
 			}
 			else
 			{
 				if (this.userRegistry.get(this.centralUserId).state === BX.Call.UserState.Connecting)
 				{
-					topParams = {
-						svgContent: Icons.calling,
-						text: BX.message('MOBILE_CALL_LAYOUT_RESTORING_CONNECTION'),
-					};
+					topParams = { ...reconnect };
 				}
 				else
 				{
@@ -3738,10 +4034,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const floorRequestOffset = this.getIsLandscapeOrientation() ? panelBottomOffset : 0;
 			const bottomMargin = this.getBottomMargin() + ((this.getIsLandscapeOrientation() && this.state.activeScreenId === null) ? 0 : floorRequestOffset);
 			const remoteUser = (this.userRegistry?.users || []).find(
-				(userModel) => userModel.id !== Number(this.userId) && userModel.state === BX.Call.UserState.Connected
+				(userModel) => userModel.id !== Number(this.userId)
+					&& (userModel.state === BX.Call.UserState.Connected || userModel.state === BX.Call.UserState.Connecting)
 			);
 			const remoteUserId = remoteUser ? remoteUser.id : null;
-			const areTwoUsers = this.getConnectedUserCount() === 2;
+			const areTwoUsers = this.getDisplayedUserCount() === 2;
 			const renderRemoteUserAvatar = remoteUserId
 				? this.renderCenterAvatar(
 					this.userRegistry.get(remoteUserId).avatar,
@@ -3749,6 +4046,9 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					this.state.isGroupCall ? CallUtil.userData[remoteUserId].color : this.state.associatedEntityAvatarColor
 				)
 				: null;
+
+			const shouldShowStream = Boolean(this.state.remoteStream) && !this.isReconnecting();
+			const shouldShowAvatar = !Boolean(this.state.remoteStream) || this.isReconnecting();
 
 			return View(
 				{
@@ -3759,7 +4059,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					},
 					clickable: true,
 					onClick: () => {
-						if (this.getConnectedUserCount() === 2)
+						if (this.getDisplayedUserCount() === 2)
 						{
 							this.toggleUI();
 						}
@@ -3780,8 +4080,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				},
 				this.state.centralUserVideoPaused && this.renderVideoPaused(),
 
-				areTwoUsers && Boolean(this.state.remoteStream) && this.renderRemoteStreamByPriority(),
-				areTwoUsers && !Boolean(this.state.remoteStream) && renderRemoteUserAvatar,
+				areTwoUsers && shouldShowStream && this.renderRemoteStreamByPriority(),
+				areTwoUsers && shouldShowAvatar && renderRemoteUserAvatar,
 				!areTwoUsers && this.renderCenterGrid(),
 				areTwoUsers && Boolean(this.state.localStream) && this.renderLocalStream(showLocalVideoInFrame, bottomMargin),
 				this.renderOverlay(this.renderGridTop(topParams)),
@@ -3930,8 +4230,19 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				this.button(
 					BX.message('MOBILE_CALL_LAYOUT_BUTTON_CAMERA_LOW_MSGVER_1'),
 					(this.state.cameraState ? Icons.buttonCamera : Icons.buttonCameraOff),
-					() => buttonCallback(EventName.CameraButtonClick),
+					() => {
+						if (this.state.cameraBlocked)
+						{
+							return;
+						}
+
+						buttonCallback(EventName.CameraButtonClick)
+					},
 					`callsButtonCamera_${this.state.cameraState ? 'on' : 'off'}`,
+					{
+						icon: Icons.buttonCameraBlocked,
+						value: this.state.cameraBlocked
+					}
 				),
 				this.renderSoundButton(),
 				this.isFloorRequestButtonVisible() && this.button(
@@ -4008,7 +4319,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			return this.state.connectionType;
 		}
 
-		button(text, svgContent, click, testId)
+		button(text, svgContent, click, testId, block = {})
 		{
 			const isLandscape = this.state.screenWidth > this.state.screenHeight;
 			const style = {
@@ -4027,7 +4338,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					Image({
 						onClick: click,
 						style: styles.bottomButtonImage,
-						svg: { content: svgContent },
+						svg: { content: block.value ? block.icon : svgContent },
 						resizeMode: 'center',
 					}),
 				),
@@ -4597,7 +4908,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 	const blankAvatar = '/bitrix/js/im/images/blank.gif';
 	const isAvatarBlank = (url) => {
-		return typeof (url) !== 'string' || url == '' || url.endsWith(blankAvatar);
+		return typeof (url) !== 'string' || url === '' || url.endsWith(blankAvatar);
 	};
 
 	function getSafeArea()

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLG_GB_EMPTY_NAME"] = "Не указано название блога";
 $MESS["BLG_GB_DUBLICATE_NAME"] = "Блог с таким названием уже существует";
 $MESS["BLG_GB_EMPTY_URL"] = "Не указано название блога латиницей";
@@ -18,4 +18,3 @@ $MESS["BLG_GB_RSS_DETAIL"] = "Подробнее...";
 $MESS["BLG_RSS_NAME_SONET"] = "#AUTHOR_NAME#: Сообщения";
 $MESS["BLG_RSS_NAME_SONET_GROUP"] = "Группа \"#GROUP_NAME#\": Сообщения";
 $MESS["BLG_TRY_AGAIN"] = "Произошла ошибка при добавлени блога, попробуйте еще раз";
-?>

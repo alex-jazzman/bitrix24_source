@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLB_DELETE_ERROR"] = "Ошибка удаления блога";
 $MESS["BLB_GROUP_NAV"] = "Блоги";
 $MESS["BLB_NAME"] = "Название";
@@ -28,4 +28,3 @@ $MESS["BLB_USE_SOCNET"] = "Соц. сеть";
 $MESS["MAIN_ADMIN_LIST_SELECTED"] = "Выбрано:";
 $MESS["MAIN_ADMIN_LIST_CHECKED"] = "Отмечено:";
 $MESS["MAIN_ADMIN_LIST_DELETE"] = "удалить";
-?>

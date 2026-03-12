@@ -1,9 +1,9 @@
-import { CounterType, RecentType } from 'im.v2.const';
+import { CounterType } from 'im.v2.const';
 
 import type { RawChat, RawFile, RawUser, RawMessage, RawMultidialog, RawLines, MultipleRawMessage } from './common';
+import type { RecentTypeItem } from './recent';
 
 type CounterTypeItem = $Values<typeof CounterType>;
-type RecentTypeItem = $Values<typeof RecentType>;
 
 export type MessageAddParams = {
 	chat?: {[chatId: string]: RawChat} | [],
@@ -23,6 +23,7 @@ export type MessageAddParams = {
 		chatId: number,
 		sections: RecentTypeItem[],
 	},
+	stickers: RawSticker[]
 };
 
 export type MessageUpdateParams = {
@@ -243,4 +244,17 @@ type ReactionUser = {
 	id: number,
 	name: string,
 	avatar: string
+};
+
+type RawStickerPackType = 'vendor' | 'custom';
+
+type RawSticker = {
+	id: number,
+	packId: number,
+	packType: RawStickerPackType,
+	type: 'image',
+	uri: string,
+	width: number,
+	height: number,
+	sort: number,
 };

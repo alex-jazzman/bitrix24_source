@@ -95,6 +95,14 @@ export const UserBaseInfo = {
 		{
 			return ChatService.isMessengerAvailable() && this.canChat;
 		},
+		currentUserId(): number
+		{
+			return Number(this.loc('USER_ID'));
+		},
+		isOwnProfile(): boolean
+		{
+			return this.userId === this.currentUserId;
+		},
 		avatarType(): string
 		{
 			return UserAvatarTypeByRole[this.info.role] ?? 'round';
@@ -104,6 +112,10 @@ export const UserBaseInfo = {
 		openChat(): void
 		{
 			ChatService.openMessenger(this.userId);
+		},
+		openNotes(): void
+		{
+			ChatService.openMessenger(this.currentUserId);
 		},
 		call(withVideo: boolean = true): void
 		{
@@ -173,41 +185,56 @@ export const UserBaseInfo = {
 			<div v-if="shouldShowMessengerActionButtons"
 				class="intranet-user-mini-profile__base-info__actions"
 			>
-				<div class="intranet-user-mini-profile__base-info__action">
-					<button
-						class="ui-btn ui-btn-sm ui-btn-no-caps --air --wide --style-outline-accent-2"
-						data-test-id="usermp_chat-button"
-						@click="openChat"
-					>
-					<span class="ui-btn-text">
-						{{ loc('INTRANET_USER_MINI_PROFILE_ACTION_CHAT') }}
-					</span>
-					</button>
-				</div>
-				<div class="intranet-user-mini-profile__base-info__action">
-					<div class="ui-btn-split --air ui-btn-sm --style-filled ui-btn-no-caps">
+				<template v-if="isOwnProfile">
+					<div class="intranet-user-mini-profile__base-info__action">
 						<button
-							class="ui-btn-main --air"
-							data-test-id="usermp_call-video-button"
-							@click="call()"
+							class="ui-btn ui-btn-sm ui-btn-no-caps --air --wide --style-outline-accent-2"
+							data-test-id="usermp_notes-button"
+							@click="openNotes"
 						>
 							<span class="ui-btn-text">
-								{{ loc('INTRANET_USER_MINI_PROFILE_ACTION_CALL_WITH_VIDEO') }}
+								{{ loc('INTRANET_USER_MINI_PROFILE_ACTION_NOTES') }}
 							</span>
 						</button>
+					</div>
+				</template>
+				<template v-else>
+					<div class="intranet-user-mini-profile__base-info__action">
 						<button
-							ref="callActionMenu"
-							class="ui-btn-menu"
-							data-test-id="usermp_call-menu-button"
-							@click="isShowCallMenu = !isShowCallMenu"
+							class="ui-btn ui-btn-sm ui-btn-no-caps --air --wide --style-outline-accent-2"
+							data-test-id="usermp_chat-button"
+							@click="openChat"
 						>
-							<BMenu v-if="isShowCallMenu"
-								:options="callMenuPopupOptions"
-								@close="isShowCallMenu = false"
-							/>
+							<span class="ui-btn-text">
+								{{ loc('INTRANET_USER_MINI_PROFILE_ACTION_CHAT') }}
+							</span>
 						</button>
 					</div>
-				</div>
+					<div class="intranet-user-mini-profile__base-info__action">
+						<div class="ui-btn-split --air ui-btn-sm --style-filled ui-btn-no-caps">
+							<button
+								class="ui-btn-main --air"
+								data-test-id="usermp_call-video-button"
+								@click="call()"
+							>
+								<span class="ui-btn-text">
+									{{ loc('INTRANET_USER_MINI_PROFILE_ACTION_CALL_WITH_VIDEO') }}
+								</span>
+							</button>
+							<button
+								ref="callActionMenu"
+								class="ui-btn-menu"
+								data-test-id="usermp_call-menu-button"
+								@click="isShowCallMenu = !isShowCallMenu"
+							>
+								<BMenu v-if="isShowCallMenu"
+									:options="callMenuPopupOptions"
+									@close="isShowCallMenu = false"
+								/>
+							</button>
+						</div>
+					</div>
+				</template>
 			</div>
 			<div v-if="isShowExpand"
 				class="intranet-user-mini-profile__expand"

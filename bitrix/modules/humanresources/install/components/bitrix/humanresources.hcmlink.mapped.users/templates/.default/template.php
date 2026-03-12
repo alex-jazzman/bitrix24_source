@@ -139,6 +139,12 @@ $APPLICATION->IncludeComponent(
 		'ALLOW_SORT' => true,
 		'ALLOW_COLUMNS_RESIZE' => true,
 		'STUB' => $stub,
+		'AJAX_MODE' => 'Y',
+		'AJAX_OPTION_JUMP' => 'N',
+		'AJAX_OPTION_STYLE' => 'N',
+		'AJAX_OPTION_HISTORY' => 'N',
+		'HANDLE_RESPONSE_ERRORS' => true,
+		'SHOW_GRID_SETTINGS_MENU' => true,
 	]
 );
 ?>

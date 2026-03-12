@@ -468,7 +468,7 @@
 	margin-bottom: 5px;
 }
 
-.chart-wizard__settings__item-options.--soon .chart-wizard__settings__item-description-text {
+.chart-wizard__settings__item-description-text.--soon {
 	color: var(--ui-color-palette-gray-60);
 }
 
@@ -597,7 +597,8 @@
 	margin-top: 12px;
 }
 
-.chart-wizard__bind-chat__item-options:first-child {
+.chart-wizard__bind-chat__item-options:first-child,
+.chart-wizard__settings__item-options:first-child {
 	margin-top: 0;
 }
 

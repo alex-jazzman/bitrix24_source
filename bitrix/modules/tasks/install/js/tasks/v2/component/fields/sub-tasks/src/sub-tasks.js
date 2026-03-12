@@ -12,6 +12,7 @@ export const SubTasks = {
 	inject: {
 		taskId: {},
 		isTemplate: {},
+		analytics: {},
 	},
 	setup(): Object
 	{
@@ -35,6 +36,7 @@ export const SubTasks = {
 			subTasksDialog.show({
 				targetNode,
 				taskId: this.taskId,
+				analytics: this.analytics,
 			});
 		},
 	},

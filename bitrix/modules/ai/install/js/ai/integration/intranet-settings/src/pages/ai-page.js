@@ -1,10 +1,11 @@
-import { Loc, Runtime, Tag, Type } from 'main.core';
+import { Loc, Runtime, Tag, Type, type AjaxResponse, ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Alert, AlertColor, AlertSize } from 'ui.alerts';
 import { BaseField, Checker } from 'ui.form-elements.view';
 import { Row } from 'ui.section';
 import { SelectorField } from 'ai.ui.field.selectorfield';
 import { SettingsSection, SettingsRow, SettingsField, BaseSettingsPage } from 'ui.form-elements.field';
+import { type BitrixGptAgreementPopupOptions } from 'ai.bitrixgpt-agreement-popup';
 import { AiSettingsItem, AiSettingsGroup, AiSettingsItemRelations, AiSettingsItemField } from '../types';
 
 import '../css/ai_page.css';
@@ -234,6 +235,27 @@ export class AiPage extends BaseSettingsPage
 		};
 	}
 
+	#showBitrixGptAgreementPopup(): void
+	{
+		Runtime.loadExtension('ai.bitrixgpt-agreement-popup')
+			.then(({ showBitrixGptAgreementPopup }) => ajax.runAction('ai.bitrixgptagreement.getPopupData')
+				.then((response: AjaxResponse<BitrixGptAgreementPopupOptions>) => {
+					const data = response?.data;
+					if (
+						!Type.isPlainObject(data)
+						|| !Type.isNumber(data.attempt)
+					)
+					{
+						return;
+					}
+
+					showBitrixGptAgreementPopup(data);
+				}))
+			.catch((error) => {
+				console.error(error);
+			});
+	}
+
 	#bindEvents()
 	{
 		if (this.#onSaveCheckers.length > 0)
@@ -242,6 +264,7 @@ export class AiPage extends BaseSettingsPage
 				this.#onSaveCheckers.forEach((field) => {
 					field.switcher?.check(false, false);
 				});
+				this.#showBitrixGptAgreementPopup();
 			});
 		}
 
@@ -255,7 +278,10 @@ export class AiPage extends BaseSettingsPage
 					{
 						relation.children.forEach((child) => {
 							const node = this.#itemFields[child]?.row?.getRowView();
+							if (node)
+							{
 							node.hide();
+							}
 						});
 					}
 

@@ -1,4 +1,0 @@
-<?php
-$MESS["IMBOT_CREATE_BOT_ACTIVITY_DESCRIPTION_DESCRIPTION"] = "Чат-ботты орнатуға мүмкіндік береді";
-$MESS["IMBOT_CREATE_BOT_ACTIVITY_DESCRIPTION_NAME"] = "Чат-бот баптаулары";
-$MESS["IMBOT_CREATE_BOT_ACTIVITY_DESCRIPTION_RESULT_NAME"] = "Чат-бот идентификаторы";

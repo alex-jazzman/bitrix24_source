@@ -4,8 +4,24 @@ this.BX.Call = this.BX.Call || {};
 (function (exports,main_core) {
 	'use strict';
 
+	const defaultNoiseSuppressionEnabled = false;
+	var _accidentLogSendIntervalSecs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("accidentLogSendIntervalSecs");
+	var _accidentLogGroupMaxAgeSecs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("accidentLogGroupMaxAgeSecs");
+	var _noiseSuppressionEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("noiseSuppressionEnabled");
 	class CallSettings {
 	  constructor() {
+	    Object.defineProperty(this, _accidentLogSendIntervalSecs, {
+	      writable: true,
+	      value: 0
+	    });
+	    Object.defineProperty(this, _accidentLogGroupMaxAgeSecs, {
+	      writable: true,
+	      value: 0
+	    });
+	    Object.defineProperty(this, _noiseSuppressionEnabled, {
+	      writable: true,
+	      value: defaultNoiseSuppressionEnabled
+	    });
 	    this.jwtCallsEnabled = false;
 	    this.plainCallsUseJwt = false;
 	    this.plainCallFollowUpEnabled = false;
@@ -19,6 +35,9 @@ this.BX.Call = this.BX.Call || {};
 	    if (settings.jwtCallsEnabled !== undefined) {
 	      this.jwtCallsEnabled = settings.jwtCallsEnabled;
 	    }
+	    if (settings.noiseSuppressionEnabled !== undefined) {
+	      this.noiseSuppressionEnabled = settings.noiseSuppressionEnabled;
+	    }
 	    if (settings.plainCallsUseJwt !== undefined) {
 	      this.plainCallsUseJwt = settings.plainCallsUseJwt;
 	    }
@@ -30,6 +49,12 @@ this.BX.Call = this.BX.Call || {};
 	    }
 	    if (settings.callBalancerUrl !== undefined) {
 	      this.callBalancerUrl = settings.callBalancerUrl;
+	    }
+	    if (main_core.Type.isNumber(settings.accidentLogSendIntervalSecs) && settings.accidentLogSendIntervalSecs > 0) {
+	      this.accidentLogSendIntervalSecs = settings.accidentLogSendIntervalSecs;
+	    }
+	    if (main_core.Type.isNumber(settings.accidentLogGroupMaxAgeSecs) && settings.accidentLogGroupMaxAgeSecs > 0) {
+	      this.accidentLogGroupMaxAgeSecs = settings.accidentLogGroupMaxAgeSecs;
 	    }
 	  }
 	  get jwtCallsEnabled() {
@@ -64,6 +89,25 @@ this.BX.Call = this.BX.Call || {};
 	  }
 	  isJwtInPlainCallsEnabled() {
 	    return this.jwtCallsEnabled && this.plainCallsUseJwt;
+	  }
+	  get noiseSuppressionEnabled() {
+	    var _babelHelpers$classPr;
+	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _noiseSuppressionEnabled)[_noiseSuppressionEnabled]) != null ? _babelHelpers$classPr : defaultNoiseSuppressionEnabled;
+	  }
+	  set noiseSuppressionEnabled(value) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _noiseSuppressionEnabled)[_noiseSuppressionEnabled] = value;
+	  }
+	  get accidentLogSendIntervalSecs() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _accidentLogSendIntervalSecs)[_accidentLogSendIntervalSecs] || 0;
+	  }
+	  set accidentLogSendIntervalSecs(value) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _accidentLogSendIntervalSecs)[_accidentLogSendIntervalSecs] = value || 0;
+	  }
+	  get accidentLogGroupMaxAgeSecs() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _accidentLogGroupMaxAgeSecs)[_accidentLogGroupMaxAgeSecs] || 0;
+	  }
+	  set accidentLogGroupMaxAgeSecs(value) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _accidentLogGroupMaxAgeSecs)[_accidentLogGroupMaxAgeSecs] = value || 0;
 	  }
 	}
 	const CallSettingsManager = new CallSettings();

@@ -11,7 +11,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\AI\Engine;
 use Bitrix\AI\Context;
 use Bitrix\AI\Payload\IPayload;
-use Bitrix\Im\Call\Registry;
+use Bitrix\Call\Call\Registry;
 use Bitrix\Call\Track;
 use Bitrix\Call\Logger\Logger;
 use Bitrix\Call\NotifyService;
@@ -110,10 +110,12 @@ final class CallAIService
 
 		$taskToLaunch = $this->getTaskToLaunchByOutcome($outcome);
 
+		$existingTasks = AITask::getTasksForCall($outcome->getCallId());
+
 		$tasks = [];
 		foreach ($taskToLaunch as $taskSenseType)
 		{
-			$task = AITask::getTaskForCall($outcome->getCallId(), $taskSenseType);
+			$task = $existingTasks[$taskSenseType->value] ?? null;
 			if ($task && $task->isFinished())
 			{
 				continue; // skip finished task
@@ -209,17 +211,21 @@ final class CallAIService
 		if ($payload instanceof \Bitrix\AI\Payload\IPayload)
 		{
 			$payload->setCost($task->getCost());
-
-			// b24 only
 			if (
-				Loader::includeModule('bitrix24')
-				&& CallAISettings::isCopilotAutostartFeatureEnable()
+				CallAISettings::isPaidTariff()
+				&& CallAISettings::checkMarketSubscription()
+				&& CallAISettings::isMarketSubscriptionEnabled()
 			)
 			{
-				if ($call->autoStartRecording())
-				{
-					$payload->setCost(0);
-				}
+				$payload->setCost(0);
+			}
+			elseif (
+				Loader::includeModule('bitrix24')
+				&& CallAISettings::isCopilotAutostartFeatureEnable()
+				&& $call->autoStartRecording()
+			)
+			{
+				$payload->setCost(0);
 			}
 		}
 
@@ -819,6 +825,16 @@ final class CallAIService
 		if (!$result->isSuccess())
 		{
 			$notifyService->sendTaskFailedMessage($result->getError(), $call);
+
+			(new FollowUpAnalytics($call))
+				->sendTelemetry(
+					source: null,
+					status: 'error',
+					errorCode: $result->getError()?->getCode(),
+					event: 'follow_up_error',
+					error: $result->getError()
+				)
+			;
 		}
 		/*
 		elseif ($result->getData()['wait_more'] === true)

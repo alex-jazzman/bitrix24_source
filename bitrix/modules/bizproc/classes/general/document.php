@@ -5,7 +5,7 @@ use Bitrix\Main;
 use Bitrix\Bizproc;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
-use Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTable;
+use Bitrix\Bizproc\Workflow\Template\Collection\Usages;
 use Bitrix\Bizproc\Workflow\Template\SourceType;
 
 /**
@@ -344,23 +344,25 @@ class CBPDocument
 	public static function startWorkflow($workflowTemplateId, $documentId, $parameters, &$errors, $parentWorkflow = null)
 	{
 		$errors = [];
-		$parameters = static::prepareWorkflowParameters($workflowTemplateId, $parameters);
+		$parameters = static::prepareWorkflowParameters($parameters);
 		$startDelay = $parameters[static::PARAM_START_WORKFLOW_DELAY] ?? null;
 		unset($parameters[static::PARAM_START_WORKFLOW_DELAY]);
+
+		static $useDelays;
+		$useDelays ??= (Main\Config\Option::get('bizproc', 'disable_start_workflow_delay') !== 'Y');
 
 		try
 		{
 			$wi = CBPRuntime::GetRuntime()->createWorkflow($workflowTemplateId, $documentId, $parameters, $parentWorkflow);
-
-			if ($startDelay !== null)
+			self::setUsedDocumentFields($wi, $workflowTemplateId);
+			if ($useDelays && $startDelay !== null)
 			{
-				$wi->save();
-				$wi->getSchedulerService()->subscribeStartWorkflow($wi->getInstanceId(), $startDelay);
-
-				return $wi->getInstanceId();
+				$wi->startLater($startDelay);
 			}
-
-			$wi->start();
+			else
+			{
+				$wi->start();
+			}
 
 			return $wi->getInstanceId();
 		}
@@ -379,14 +381,12 @@ class CBPDocument
 	public static function startDebugWorkflow($workflowTemplateId, $documentId, $parameters, &$errors): ?string
 	{
 		$errors = [];
-		$runtime = CBPRuntime::GetRuntime(true);
-
-		$parameters = static::prepareWorkflowParameters($workflowTemplateId, $parameters);
+		$parameters = static::prepareWorkflowParameters($parameters);
 
 		try
 		{
-			$workflow = $runtime->createDebugWorkflow($workflowTemplateId, $documentId, $parameters);
-			$workflow->Start();
+			$workflow = CBPRuntime::getRuntime()->createDebugWorkflow($workflowTemplateId, $documentId, $parameters);
+			$workflow->start();
 
 			return $workflow->getInstanceId();
 		}
@@ -402,10 +402,8 @@ class CBPDocument
 		return null;
 	}
 
-	private static function prepareWorkflowParameters($workflowTemplateId, $parameters): array
+	private static function prepareWorkflowParameters($parameters): array
 	{
-		static $usagesCache = [];
-
 		if (!is_array($parameters))
 		{
 			$parameters = [$parameters];
@@ -437,27 +435,6 @@ class CBPDocument
 			$parameters[static::PARAM_TRIGGER_EVENT_DATA] = [];
 		}
 
-		if (!isset($usagesCache[$workflowTemplateId]))
-		{
-			$tpl = WorkflowTemplateTable::getById($workflowTemplateId)->fetchObject();
-			if ($tpl)
-			{
-				try
-				{
-					$usages = $tpl->collectUsages();
-					$usagesCache[$workflowTemplateId] = $usages->getValuesBySourceType(
-						SourceType::DocumentField
-					);
-				}
-				catch (\Throwable $e)
-				{
-					$usagesCache[$workflowTemplateId] = [];
-				}
-			}
-		}
-
-		$parameters[static::PARAM_USED_DOCUMENT_FIELDS] = $usagesCache[$workflowTemplateId] ?? [];
-
 		return $parameters;
 	}
 
@@ -472,7 +449,6 @@ class CBPDocument
 	*/
 	public static function autoStartWorkflows($documentType, $autoExecute, $documentId, $arParameters, &$arErrors)
 	{
-		static $usagesCache = [];
 		$arErrors = array();
 
 		$runtime = CBPRuntime::GetRuntime();
@@ -493,21 +469,8 @@ class CBPDocument
 		{
 			try
 			{
-				if (!isset($usagesCache[$template['ID']]))
-				{
-					$tpl = WorkflowTemplateTable::getById($template['ID'])->fetchObject();
-					if ($tpl)
-					{
-						$usages = $tpl->collectUsages();
-						$usagesCache[$template['ID']] = $usages->getValuesBySourceType(
-							SourceType::DocumentField
-						);
-					}
-				}
-
-				$arParameters[static::PARAM_USED_DOCUMENT_FIELDS] = $usagesCache[$template['ID']] ?? [];
-
 				$wi = $runtime->CreateWorkflow($template['ID'], $documentId, $arParameters);
+				self::setUsedDocumentFields($wi, $template['ID']);
 				$wi->Start();
 			}
 			catch (Exception $e)
@@ -519,6 +482,28 @@ class CBPDocument
 				);
 			}
 		}
+	}
+
+	public static function setUsedDocumentFields(CBPWorkflow $workflow, int $tplId): void
+	{
+		static $usagesCache = [];
+
+		if (!isset($usagesCache[$tplId]))
+		{
+			$usages = new Usages();
+
+			foreach ($workflow->getRootActivity()->walkRecursive() as $child)
+			{
+				$sources = $child->collectUsages();
+				$usages->addOwnerSources($child->getName(), $sources);
+			}
+
+			$usagesCache[$tplId] = $usages->getValuesBySourceType(
+				SourceType::DocumentField
+			);
+		}
+
+		$workflow->getRootActivity()->setProperties([static::PARAM_USED_DOCUMENT_FIELDS => $usagesCache[$tplId]]);
 	}
 
 	/**

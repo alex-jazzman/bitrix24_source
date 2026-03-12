@@ -3,6 +3,7 @@ import { Runtime } from 'main.core';
 import { Logger } from 'im.v2.lib.logger';
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
 import { Loader } from 'im.v2.component.elements.loader';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import { MessageSearch } from '../../../classes/panels/search/message-search';
 import { SearchItem } from './search-item';
@@ -40,6 +41,7 @@ export const MessageSearchPanel = {
 			isLoading: false,
 			searchResult: [],
 			currentServerQueries: 0,
+			wasSearchStarted: false,
 		};
 	},
 	computed:
@@ -113,6 +115,7 @@ export const MessageSearchPanel = {
 				}
 
 				this.searchResult = this.mergeResult(messageIds);
+				Analytics.getInstance().messageSearch.onGetSearchResult(this.dialogId, this.searchResult);
 			}).catch((error) => {
 				console.error(error);
 			}).finally(() => {
@@ -122,6 +125,12 @@ export const MessageSearchPanel = {
 		},
 		startSearch(query: string)
 		{
+			if (!this.wasSearchStarted)
+			{
+				Analytics.getInstance().messageSearch.onStartSearch(this.dialogId);
+				this.wasSearchStarted = true;
+			}
+
 			if (query.length < 3)
 			{
 				return;
@@ -151,13 +160,13 @@ export const MessageSearchPanel = {
 		{
 			this.searchResult = [];
 		},
-		needToLoadNextPage(event)
+		needToLoadNextPage(event: Event): boolean
 		{
 			const target = event.target;
 
 			return target.scrollTop + target.clientHeight >= target.scrollHeight - target.clientHeight;
 		},
-		onScroll(event)
+		onScroll(event: Event)
 		{
 			if (this.isLoading || this.preparedQuery.length === 0)
 			{

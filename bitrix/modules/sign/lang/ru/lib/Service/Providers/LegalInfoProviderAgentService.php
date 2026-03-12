@@ -1,4 +1,5 @@
 <?php
+
 $MESS['UF_LEGAL_ADDRESS']='Адрес';
 $MESS['UF_LEGAL_POSITION']='Должность';
 $MESS['UF_LEGAL_INN']='ИНН';

@@ -1,5 +1,0 @@
-<?php
-$MESS["REPORT_JS_SHARING_RIGHT_EDIT"] = "Редакциялау";
-$MESS["REPORT_JS_SHARING_RIGHT_READ"] = "Оқу";
-$MESS["REPORT_JS_STATUS_ACTION_ERROR"] = "Қате орын алды";
-$MESS["REPORT_JS_STATUS_ACTION_SUCCESS"] = "Сәтті";

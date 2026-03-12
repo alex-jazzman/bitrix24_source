@@ -61,7 +61,8 @@
 			attachedObjectId: params.attachedObjectId,
 			name: params.name,
 			serviceCode: BX.Disk.getDocumentService(),
-			modalWindow: additionalParams.modalWindow
+			modalWindow: additionalParams.modalWindow,
+			checkPromoBoost: additionalParams.checkPromoBoost || false,
 		};
 
 		BX.Disk.Viewer.Actions.runActionEdit(paramsToEdit);
@@ -121,6 +122,7 @@
 				attachedObjectId: params.attachedObjectId,
 				serviceCode: params.serviceCode,
 				modalWindow: params.modalWindow,
+				checkPromoBoost: params.checkPromoBoost,
 				onAfterSave: function(response) {
 					if (response.status === 'success' && BX.getClass('BX.UI.Viewer.Instance'))
 					{

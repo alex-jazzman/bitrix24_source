@@ -45,6 +45,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    this.sectionManager = options.sectionManager;
 	    this.closeCallback = options.closeCallback;
 	    this.BX = calendar_util.Util.getBX();
+	    this.calendarContext = options.calendarContext;
 	    this.keyHandlerBinded = this.keyHandler.bind(this);
 	  }
 	  show(params = {}) {
@@ -406,7 +407,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	          'all-users': true
 	        }
 	      }];
-	      if (BX.Calendar.Util.isProjectFeatureEnabled()) {
+	      const calendarContext = this.calendarContext || calendar_util.Util.getCalendarContext();
+	      if (calendarContext.util.config.projectFeatureEnabled) {
 	        entities.push({
 	          id: 'project'
 	        });

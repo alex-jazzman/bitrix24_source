@@ -21,6 +21,7 @@ jn.define('im/messenger/controller/dialog/lib/onboarding', (require, exports, mo
 					presets: [Preset.MESSENGER],
 					activeTab: BadgeCode.ANY,
 					conditions: [
+						Condition.isAttachmentButtonEnabled(),
 						Condition.isOnboardingInChatSupported(),
 						Condition.isDirectChat(),
 						Condition.not(Condition.isChatWithBot()),
@@ -42,6 +43,7 @@ jn.define('im/messenger/controller/dialog/lib/onboarding', (require, exports, mo
 					presets: [Preset.MESSENGER],
 					activeTab: BadgeCode.ANY,
 					conditions: [
+						Condition.isAttachmentButtonEnabled(),
 						Condition.isOnboardingInChatSupported(),
 						Condition.isGroupChat(),
 						Condition.canCreateVote(),

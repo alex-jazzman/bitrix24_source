@@ -461,11 +461,6 @@ if ($bShowStat || $bShowCacheStat) //2
 								{
 									echo "</nobr>(".htmlspecialcharsbx(print_r($tr["args"], true)).")";
 								}
-
-								if ($n > $sqlTracker->getDepthBackTrace())
-								{
-									break;
-								}
 							} //$back_trace
 						}
 						else //is_array($back_trace)

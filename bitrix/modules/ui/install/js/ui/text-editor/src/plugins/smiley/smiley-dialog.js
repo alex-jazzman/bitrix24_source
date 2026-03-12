@@ -61,17 +61,18 @@ export class SmileyDialog extends EventEmitter
 	{
 		if (this.#popup === null)
 		{
-			const popupWidth = 360;
+			const popupWidth = 332;
 			const targetNode = this.getTargetNode();
 			const rect = targetNode.getBoundingClientRect();
 			const targetNodeWidth = rect.width;
 
 			this.#popup = new Popup({
+				background: '#F7F9FA',
 				autoHide: true,
 				padding: 0,
 				closeByEsc: true,
 				width: popupWidth,
-				height: 250,
+				height: 360,
 				bindElement: this.getTargetNode(),
 				events: {
 					onClose: () => {

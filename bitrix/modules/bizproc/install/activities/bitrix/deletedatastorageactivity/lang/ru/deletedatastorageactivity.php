@@ -12,3 +12,5 @@ $MESS['BIZPROC_SDA_DELETE_MODE_MULTIPLE'] = 'Удалить строки в хр
 $MESS['BIZPROC_SDA_DELETE_MODE_ALL'] = 'Удалить все строки';
 $MESS['BIZPROC_SDA_STORAGE_NOT_FOUND'] = 'Не удалось найти хранилище';
 $MESS['BIZPROC_SDA_STORAGE_CODE_DESCRIPTION'] = 'Или заполните символьный код хранилища';
+$MESS['BIZPROC_SDA_EMPTY_STORAGE_ID_OR_CODE'] = 'Не заполнено обязательное поле "Хранилище" или его символьный код';
+$MESS['BIZPROC_SDA_CREATE_NEW_STORAGE'] = 'Создать новое';

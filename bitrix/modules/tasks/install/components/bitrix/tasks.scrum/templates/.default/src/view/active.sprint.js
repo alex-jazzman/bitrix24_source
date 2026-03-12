@@ -157,12 +157,18 @@ export class ActiveSprint extends View
 		const sprintSidePanel = new SprintSidePanel({
 			groupId: this.groupId,
 			sidePanel: this.sidePanel,
-			views: this.views
+			views: this.views,
 		});
 		sprintSidePanel.showCompletionForm();
 
 		sprintSidePanel.subscribe('showTask', (innerBaseEvent: BaseEvent) => {
-			this.sidePanel.openSidePanelByUrl(this.getPathToTask().replace('#task_id#', innerBaseEvent.getData()));
+			const path = BX.Uri.addParam(this.getPathToTask().replace('#task_id#', innerBaseEvent.getData()), {
+				ta_sec: 'scrum',
+				ta_sub: 'kanban',
+				ta_el: 'title_click',
+			});
+
+			this.sidePanel.openSidePanelByUrl(path);
 		});
 	}
 

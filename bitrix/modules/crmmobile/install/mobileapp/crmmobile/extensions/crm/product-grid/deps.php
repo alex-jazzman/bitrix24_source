@@ -7,7 +7,6 @@ return [
 		'alert',
 		'analytics-label',
 		'layout/ui/context-menu',
-		'layout/ui/floating-button',
 		'utils/object',
 		'utils/error-notifier',
 		'catalog:barcode-scanner',

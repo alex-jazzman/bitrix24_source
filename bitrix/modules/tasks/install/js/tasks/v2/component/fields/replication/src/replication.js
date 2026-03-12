@@ -73,6 +73,10 @@ export const Replication = {
 		{
 			return !this.isTemplate || !this.task.rights.edit;
 		},
+		disabled(): boolean
+		{
+			return this.isTemplate && (this.task.isForNewUser || idUtils.isTemplate(this.task.parentId));
+		},
 	},
 	created(): void
 	{
@@ -103,7 +107,7 @@ export const Replication = {
 		},
 		handleClick(): void
 		{
-			if (!this.readonly)
+			if (!this.readonly && !this.disabled)
 			{
 				this.setSheetShown(true);
 			}
@@ -127,7 +131,7 @@ export const Replication = {
 		>
 			<ReplicationContent/>
 		</div>
-		<template v-if="isEdit && isTemplate">
+		<template v-if="isEdit && isTemplate && task.replicate">
 			<div v-if="isLoading" class="tasks-field-replication-history">
 				<BLine :width="120"/>
 			</div>

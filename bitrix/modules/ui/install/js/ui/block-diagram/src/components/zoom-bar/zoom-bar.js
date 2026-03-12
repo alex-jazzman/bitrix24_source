@@ -18,7 +18,7 @@ const VERTICAL_MAP_POSITION: { [string]: string } = {
 	right: 'right',
 };
 
-const GORIZONTAL_MAP_POSITION: { [string]: string } = {
+const HORIZONTAL_MAP_POSITION: { [string]: string } = {
 	top: 'top',
 	bottom: 'bottom',
 };
@@ -52,6 +52,10 @@ export const ZoomBar = {
 			type: String,
 			default: POSITION_MAP_DEFAULT_VALUES,
 		},
+		blockColors: {
+			type: Object,
+			default: () => {},
+		},
 		disabled: {
 			type: Boolean,
 			default: false,
@@ -65,7 +69,7 @@ export const ZoomBar = {
 		const mapPositionClasses = computed((): { [string]: boolean } => {
 			const isTop = props.positionMap
 				.toLowerCase()
-				.includes(GORIZONTAL_MAP_POSITION.top);
+				.includes(HORIZONTAL_MAP_POSITION.top);
 			const isLeft = props.positionMap
 				.toLowerCase()
 				.includes(VERTICAL_MAP_POSITION.left);
@@ -102,6 +106,7 @@ export const ZoomBar = {
 		<div class="ui-block-diagram-canvas-zoom-bar">
 			<div class="ui-block-diagram-canvas-zoom-bar__locate">
 				<CanvasMapBtn
+					:isActive="isShowMap"
 					:data-test-id="$blockDiagramTestId('zoomOpenMapBtn')"
 					@click="onToggleMap"
 				/>
@@ -124,6 +129,7 @@ export const ZoomBar = {
 						<CanvasMap
 							:mapSize="310"
 							:data-test-id="$blockDiagramTestId('zoomCanvasMap')"
+							:blockColors="blockColors"
 						/>
 					</div>
 				</transition>

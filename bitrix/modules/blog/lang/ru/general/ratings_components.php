@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_RATING_USER_VOTE_POST_NAME"] = "Голосование за сообщения пользователя в блогах";
 $MESS["BLOG_RATING_USER_VOTE_POST_DESC"] = "Оценка основывается на итогах голосования за ограниченное количество дней.<br> Если в ограничении указать \"0\", подсчет будет производиться за всё время.";
 $MESS["BLOG_RATING_USER_VOTE_POST_LIMIT_NAME"] = "Ограничивать по времени (дней):";
@@ -20,4 +20,3 @@ $MESS["BLOG_RATING_USER_RATING_ACTIVITY_FIELDS_WEEK_COMMENT_COEF"] = "Коэф. 
 $MESS["BLOG_RATING_USER_RATING_ACTIVITY_FIELDS_MONTH_COMMENT_COEF"] = "Коэф. для комментариев за последние 30 дней:";
 $MESS["BLOG_RATING_USER_RATING_ACTIVITY_FIELDS_ALL_COMMENT_COEF"] = "Коэф. для комментариев старше 30 дней:";
 $MESS["BLOG_MODULE_NAME"] = "Блог";
-?>

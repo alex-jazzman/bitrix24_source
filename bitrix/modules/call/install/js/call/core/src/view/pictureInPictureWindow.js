@@ -12,6 +12,10 @@ import '../css/picture-in-picture-window.css'
 import { UnsupportedBrowserFeatures } from '../engine/unsupported_features_in_browsers';
 
 export class PictureInPictureWindow {
+
+	#isClosing: boolean = false;
+	#isProgrammaticClose: boolean = false;
+
 	constructor(config)
 	{
 		this.pictureWindow = null;
@@ -844,6 +848,9 @@ export class PictureInPictureWindow {
 			return this.pictureWindow;
 		}
 
+		this.#isClosing = false;
+		this.#isProgrammaticClose = false;
+
 		if (window.documentPictureInPicture?.requestWindow)
 		{
 			this.render();
@@ -881,14 +888,6 @@ export class PictureInPictureWindow {
 			}
 			catch (error)
 			{
-				if (error.name === "NotAllowedError")
-				{
-					console.warn(
-						'It seems you closed the Picture-in-Picture window while selecting a screen to share. ' +
-						'We cannot reopen it without your permission. ' +
-						'If you need PiP again, please reopen it manually.'
-					);
-				}
 				this.onClose();
 			}
 
@@ -899,9 +898,16 @@ export class PictureInPictureWindow {
 
 	onClose()
 	{
+		if (this.#isClosing)
+		{
+			return;
+		}
+
+		this.#isClosing = true;
+
 		if (typeof this.callbacks?.onClose === 'function')
 		{
-			this.callbacks.onClose();
+			this.callbacks.onClose(this.#isProgrammaticClose);
 		}
 
 		if (this.template)
@@ -910,18 +916,20 @@ export class PictureInPictureWindow {
 		}
 
 		this.destroyCurrentUser();
-
+		this.toggleEvents(false);
 		this.close();
 		this.pictureWindow = null;
-
 		this.template = null;
-		this.toggleEvents(false);
+
+		this.#isClosing = false;
+		this.#isProgrammaticClose = false;
 	}
 
 	close()
 	{
 		if (this.pictureWindow)
 		{
+			this.#isProgrammaticClose = true;
 			this.pictureWindow.close();
 		}
 	}

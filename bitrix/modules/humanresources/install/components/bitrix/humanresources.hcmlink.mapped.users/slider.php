@@ -20,13 +20,6 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.ph
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 $company = Container::getHcmLinkCompanyRepository()->getById((int)$request->get('entity_id'));
 
-if ($company === null)
-{
-	ShowError('No company found');
-	require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_after.php');
-	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog.php");
-}
-
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_after.php');
 
 

@@ -53,7 +53,7 @@
 .tasks-field-results-result-author-name {
 	color: var(--ui-color-base-3);
 	padding-right: var(--ui-space-inline-sm);
-	padding-left: var(--ui-space-inline-xs);
+	padding-left: var(--ui-space-inline-2xs2);
 	transition: .2s all;
 }
 

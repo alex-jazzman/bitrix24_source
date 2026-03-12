@@ -3,7 +3,7 @@ import { EventEmitter, type BaseEvent } from 'main.core.events';
 
 import { TaskCard } from 'tasks.v2.application.task-card';
 import { Core } from 'tasks.v2.core';
-import { Model, EntitySelectorEntity, EventName } from 'tasks.v2.const';
+import { Model, EntitySelectorEntity, EventName, Analytics } from 'tasks.v2.const';
 import { EntitySelectorDialog, type Item, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
 import { relationError } from 'tasks.v2.lib.relation-error';
 import { idUtils, type TaskId } from 'tasks.v2.lib.id-utils';
@@ -19,6 +19,7 @@ type Params = {
 	ids: number[],
 	onClose: Function,
 	onUpdate: Function,
+	analytics: Object,
 };
 
 export class RelationTasksDialog
@@ -30,6 +31,7 @@ export class RelationTasksDialog
 	#ids: number[];
 	#onClose: Function | null;
 	#onUpdate: Function | null;
+	#analytics: Object | null;
 
 	constructor(meta: RelationDialogMeta)
 	{
@@ -54,6 +56,7 @@ export class RelationTasksDialog
 		this.#taskId = params.taskId;
 		this.#onClose = params.onClose;
 		this.#onUpdate = params.onUpdate;
+		this.#analytics = params.analytics;
 
 		if (!this.#ids && !this.#meta.service.areIdsLoaded(this.#taskId))
 		{
@@ -125,31 +128,40 @@ export class RelationTasksDialog
 			<span class="ui-selector-footer-link ui-selector-footer-link-add">${this.#meta.footerText}</span>
 		`;
 
-		Event.bind(footer, 'click', () => {
-			TaskCard.showCompactCard({
-				title: this.dialog.getTagSelector()?.getTextBoxValue(),
-				groupId: this.#task.groupId,
-				[this.#meta.relationToField]: this.#taskId,
-			});
-			this.dialog.clearSearch();
-			this.dialog.freeze();
-
-			const unfreeze = () => {
-				this.dialog.unfreeze();
-				EventEmitter.unsubscribe(EventName.CardClosed, unfreeze);
-				EventEmitter.unsubscribe(EventName.FullCardClosed, unfreeze);
-
-				if (this.#ids)
-				{
-					this.dialog.hide();
-				}
-			};
-
-			EventEmitter.subscribe(EventName.CardClosed, unfreeze);
-			EventEmitter.subscribe(EventName.FullCardClosed, unfreeze);
-		});
+		Event.bind(footer, 'click', this.#clickCreate.bind(this));
 
 		return footer;
+	}
+
+	#clickCreate(): void
+	{
+		TaskCard.showCompactCard({
+			title: this.dialog.getTagSelector()?.getTextBoxValue(),
+			groupId: this.#task.groupId,
+			[this.#meta.relationToField]: this.#taskId,
+			analytics: {
+				context: this.#analytics?.context ?? Analytics.Section.Tasks,
+				additionalContext: Analytics.SubSection.TaskCard,
+				element: Analytics.Element.CreateButton,
+			},
+		});
+
+		this.dialog.clearSearch();
+		this.dialog.freeze();
+
+		const unfreeze = () => {
+			this.dialog.unfreeze();
+			EventEmitter.unsubscribe(EventName.CardClosed, unfreeze);
+			EventEmitter.unsubscribe(EventName.FullCardClosed, unfreeze);
+
+			if (this.#ids)
+			{
+				this.dialog.hide();
+			}
+		};
+
+		EventEmitter.subscribe(EventName.CardClosed, unfreeze);
+		EventEmitter.subscribe(EventName.FullCardClosed, unfreeze);
 	}
 
 	#addTaskItems(ids: number[]): void

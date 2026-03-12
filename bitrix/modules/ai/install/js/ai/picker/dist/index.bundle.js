@@ -1820,7 +1820,7 @@ this.BX = this.BX || {};
 	        var firstError = (_err$errors = err.errors) === null || _err$errors === void 0 ? void 0 : _err$errors[0];
 	        if (_classPrivateMethodGet$8(_this3, _isAgreementError, _isAgreementError2).call(_this3, firstError)) {
 	          _classPrivateMethodGet$8(_this3, _handleAgreementError, _handleAgreementError2).call(_this3, firstError, prompt);
-	        } else if ((firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'LIMIT_IS_EXCEEDED_MONTHLY' || (firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'LIMIT_IS_EXCEEDED_DAILY' || (firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'LIMIT_IS_EXCEEDED_BAAS' || (firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF') {
+	        } else if ((firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'LIMIT_IS_EXCEEDED_MONTHLY' || (firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'LIMIT_IS_EXCEEDED_DAILY' || (firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'LIMIT_IS_EXCEEDED_BAAS' || (firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF' || (firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'ERROR_CODE_FORCE') {
 	          var _firstError$customDat, _firstError$customDat2, _firstError$customDat3, _firstError$customDat4;
 	          ai_ajaxErrorHandler.AjaxErrorHandler.handleImageGenerateError({
 	            errorCode: firstError === null || firstError === void 0 ? void 0 : firstError.code,
@@ -1830,7 +1830,10 @@ this.BX = this.BX || {};
 	              bindElement: _this3.context.querySelector('.ai__picker_submit-btn'),
 	              useSlider: (_firstError$customDat3 = firstError === null || firstError === void 0 ? void 0 : (_firstError$customDat4 = firstError.customData) === null || _firstError$customDat4 === void 0 ? void 0 : _firstError$customDat4.showSliderWithMsg) !== null && _firstError$customDat3 !== void 0 ? _firstError$customDat3 : true,
 	              context: 'notSet'
-	            }
+	            },
+	            forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
+	            forceOption: firstError === null || firstError === void 0 ? void 0 : firstError.customData,
+	            bindElement: _this3.context.querySelector('.ai__picker_submit-btn')
 	          });
 	          _this3.textMessage.finishLoading();
 	        } else {

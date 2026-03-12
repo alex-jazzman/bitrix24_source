@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BPC_BLOG_URL"] = "Адрес блога";
 $MESS["BPC_PATH_TO_BLOG"] = "Шаблон пути к странице блога";
 $MESS["BPC_PATH_TO_USER"] = "Шаблон пути к странице пользователя блога";
@@ -42,4 +42,3 @@ $MESS["BPC_ALLOW_IMAGE_UPLOAD_A"] = "Всем";
 $MESS["BPC_ALLOW_IMAGE_UPLOAD_R"] = "Зарегистрированным пользователям";
 $MESS["BPC_ALLOW_IMAGE_UPLOAD_N"] = "Никому";
 $MESS["BPC_AJAX_POST"] = "Использовать AJAX для комментариев";
-?>

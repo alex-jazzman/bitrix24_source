@@ -38,6 +38,10 @@ export const HoverPill = {
 			type: Boolean,
 			default: false,
 		},
+		alert: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['clear', 'settings'],
 	setup(): { Outline: typeof Outline }
@@ -55,6 +59,7 @@ export const HoverPill = {
 				'--readonly': this.readonly,
 				'--active': this.active,
 				'--compact': this.compact,
+				'--alert': this.alert,
 			};
 		},
 	},

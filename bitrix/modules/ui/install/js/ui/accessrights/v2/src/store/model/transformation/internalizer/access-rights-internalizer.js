@@ -66,6 +66,7 @@ export type ExternalVariable = {
 	requires?: any[],
 	secondary: ?any,
 	hint: ?any,
+	isUseGroupHeadValuesInHint: ?any,
 }
 
 export class AccessRightsInternalizer implements Transformer<ExternalAccessRightSection[], AccessRightsCollection>
@@ -276,6 +277,7 @@ export class AccessRightsInternalizer implements Transformer<ExternalAccessRight
 				: null,
 			secondary: Type.isBoolean(externalVariable.secondary) ? externalVariable.secondary : null,
 			hint: Type.isStringFilled(externalVariable.hint) ? externalVariable.hint : null,
+			isUseGroupHeadValuesInHint: Type.isBoolean(externalVariable.isUseGroupHeadValuesInHint) ? externalVariable.isUseGroupHeadValuesInHint : false,
 		};
 	}
 }

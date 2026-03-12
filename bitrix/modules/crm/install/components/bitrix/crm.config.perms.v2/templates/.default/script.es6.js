@@ -1,7 +1,7 @@
-import { ajax as Ajax, Loc, Reflection } from 'main.core';
-import { MessageBox } from 'ui.dialogs.messagebox';
-import { ButtonSize, ButtonColor, CancelButton, SaveButton, Button, AirButtonStyle } from 'ui.buttons';
+import { ajax as Ajax, type AjaxResponse, Loc, Reflection } from 'main.core';
 import { App } from 'ui.accessrights.v2';
+import { ButtonSize, CancelButton, SaveButton, Button, AirButtonStyle } from 'ui.buttons';
+import { MessageBox } from 'ui.dialogs.messagebox';
 
 const namespace = Reflection.namespace('BX.Crm');
 
@@ -105,21 +105,9 @@ class ConfigPermsComponent
 		loader.show();
 
 		this.#runGetDataAjaxRequest(controllerData)
-			.then(({
-				accessRightsData,
-				maxVisibleUserGroups,
-				additionalSaveParams,
-				userSortConfig,
-				userSortConfigName,
-			}) => {
+			.then((options) => {
 				this.AccessRightsOption = {
-					...this.AccessRightsOption,
-					userGroups: accessRightsData.userGroups,
-					accessRights: accessRightsData.accessRights,
-					maxVisibleUserGroups,
-					additionalSaveParams,
-					userSortConfig,
-					userSortConfigName,
+					...options,
 					selectedMember,
 				};
 
@@ -147,12 +135,12 @@ class ConfigPermsComponent
 				'getData',
 				{
 					mode: 'class',
-					data: {
+					json: {
 						controllerData,
 					},
 				},
 			)
-				.then((response: SaveAjaxResponse) => {
+				.then((response: AjaxResponse) => {
 					resolve(response.data);
 				})
 				.catch(reject)
@@ -178,7 +166,7 @@ class ConfigPermsComponent
 							.then(() => {
 								document.querySelector(`[data-menu-id="${controllerData.menuId}"]`).click();
 							})
-							.catch()
+							.catch(() => {})
 							.finally(() => {
 								box.close();
 							});

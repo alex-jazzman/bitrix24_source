@@ -9,6 +9,7 @@ jn.define('crm/communication/button', (require, exports, module) => {
 	const { CommunicationMenu } = require('communication/menu');
 	const { Loc } = require('loc');
 	const { get, isObjectLike, mergeImmutable } = require('utils/object');
+	const { Icon } = require('assets/icons');
 
 	const connections = [PhoneType, EmailType, ImType];
 
@@ -221,8 +222,8 @@ jn.define('crm/communication/button', (require, exports, module) => {
 				subtitle: Loc.getMessage('MCRM_COMMUNICATION_BUTTON_TELEGRAM_CONNECT_SUBTITLE'),
 				isSelected: false,
 				showSelectedImage: false,
+				icon: Icon.TELEGRAM,
 				data: {
-					svgIcon: `<svg width="28" height="29" viewBox="0 0 28 29" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.8008 10.412L11.3633 16.3686C11.137 16.5781 10.9912 16.859 10.9498 17.1634L10.7305 18.7811C10.7015 18.9971 10.3968 19.0185 10.3366 18.8095L9.49325 15.8597C9.39689 15.5232 9.53759 15.1637 9.83666 14.9801L17.637 10.1979C17.7769 10.1124 17.9213 10.3011 17.8008 10.412ZM20.9254 7.12059L4.54554 13.4107C4.14117 13.5657 4.14468 14.1355 4.55008 14.2865L8.54132 15.7693L10.0862 20.7148C10.1851 21.0312 10.5741 21.1486 10.8324 20.9382L13.0571 19.1331C13.2902 18.9439 13.6226 18.9346 13.8661 19.1104L17.8788 22.0105C18.1551 22.2101 18.5465 22.0596 18.6158 21.7275L21.5553 7.6527C21.631 7.28973 21.2726 6.9869 20.9254 7.12059Z" fill="${AppTheme.colors.base2}"/></svg>`,
 					style: {
 						container: {
 							backgroundColor: AppTheme.colors.accentSoftBlue1,

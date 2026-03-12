@@ -1,4 +1,0 @@
-<?
-$MESS["INTR_ISIA_NAME_TEMPLATE_DEFAULT"] = "#NOBR##LAST_NAME# #NAME##/NOBR#";
-$MESS["INTR_ISIA_ICON_ADD"] = "Додати запис графіка";
-?>

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BMNP_MESSAGE_COUNT'] = "Количество результатов, выводимых на страницу";
 $MESS ['BMNP_MESSAGE_LENGTH'] = "Длина выводимого текста сообщения";
 $MESS ['BMNP_PATH_TO_BLOG'] = "Шаблон пути к странице блога";
@@ -23,4 +23,3 @@ $MESS ['BMNP_SORT_BY_VIEWS'] = "количество просмотров";
 $MESS ['BMNP_SORT_BY_RATING_TOTAL_VALUE'] = "рейтинг сообщения";
 $MESS ['BMNP_SORT_BY_RATING_TOTAL_VOTES'] = "количество голосов";
 $MESS ['BMNP_USE_SOCNET'] = "Используется в рамках социальной сети";
-?>

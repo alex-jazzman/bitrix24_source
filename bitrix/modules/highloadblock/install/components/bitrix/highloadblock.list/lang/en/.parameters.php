@@ -1,4 +1,5 @@
 <?php
+
 $MESS["HLLIST_COMPONENT_BLOCK_ID_PARAM"] = "Highload block ID";
 $MESS["HLLIST_COMPONENT_CHECK_PERMISSIONS_PARAM"] = "Check access permissions";
 $MESS["HLLIST_COMPONENT_DETAIL_URL_PARAM"] = "Record view page path";

@@ -372,7 +372,7 @@ export class InterfaceTemplate extends EventEmitter
 		Dom.replace(document.getElementById('status-info-block'), this.statusBlock?.getContent());
 	}
 
-	reconnect()
+	async reconnect()
 	{
 		if (!this.provider.doSupportReconnectionScenario())
 		{
@@ -380,11 +380,11 @@ export class InterfaceTemplate extends EventEmitter
 		}
 
 		this.provider.startReconnecting();
-		this.handleConnectButton();
+		await this.handleConnectButton();
 		this.provider.closeSlider();
 	}
 
-	handleConnectButton()
+	async handleConnectButton()
 	{
 	}
 

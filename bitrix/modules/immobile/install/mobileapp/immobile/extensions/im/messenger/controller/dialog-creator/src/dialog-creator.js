@@ -22,8 +22,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 		BotCode,
 		Analytics,
 		OpenDialogContextType,
-		NavigationTab,
-		NavigationTabByComponent,
+		CopilotRoleType,
 	} = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { AnalyticsEvent } = require('analytics');
@@ -57,7 +56,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 		{
 			const userList = this.prepareItems(this.getUserList());
 
-			void NavigationSelector.open(
+			NavigationSelector.open(
 				{
 					userList,
 				},
@@ -69,14 +68,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			try
 			{
 				const { openCollabCreate } = await requireLazy('collab/create');
-
-				const openCollabCreateOptions = {};
-				if (!Feature.isMessengerV2Enabled)
-				{
-					openCollabCreateOptions.navigationTab = NavigationTab.imCollabMessenger;
-				}
-
-				await openCollabCreate(openCollabCreateOptions);
+				await openCollabCreate();
 			}
 			catch (error)
 			{
@@ -114,6 +106,20 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				.catch((error) => Logger.error(error));
 		}
 
+		createCopilotDialogWithoutSelector()
+		{
+			this.sendAnalyticsStartCreateCopilotDialog();
+
+			const fields = {
+				type: DialogType.copilot.toUpperCase(),
+				copilotMainRole: CopilotRoleType.copilotUniversalRole,
+			};
+
+			Logger.log(`${this.constructor.name}.createCopilotDialogWithoutSelector.fields:`, fields);
+
+			this.callRestCreateCopilotDialog(fields);
+		}
+
 		sendAnalyticsStartCreateCopilotDialog()
 		{
 			AnalyticsService.getInstance()
@@ -125,6 +131,11 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			;
 		}
 
+		/**
+		 * @param {object} fields
+		 * @param {string} fields.type
+		 * @param {string?} fields.copilotMainRole
+		 */
 		callRestCreateCopilotDialog(fields)
 		{
 			BX.rest.callMethod(
@@ -141,22 +152,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 								context: OpenDialogContextType.chatCreation,
 							};
 
-							if (Feature.isMessengerV2Enabled)
-							{
-								void serviceLocator.get('dialog-manager').openDialog(openDialogParams);
-							}
-							else
-							{
-								MessengerEmitter.emit(
-									EventType.navigation.broadCastEventCheckTabPreload,
-									{
-										broadCastEvent: EventType.messenger.openDialog,
-										toTab: NavigationTabByComponent[ComponentCode.imCopilotMessenger],
-										data: openDialogParams,
-									},
-									ComponentCode.imNavigation,
-								);
-							}
+							void serviceLocator.get('dialog-manager').openDialog(openDialogParams);
 
 							const analytics = new AnalyticsEvent()
 								.setTool(Analytics.Tool.ai)

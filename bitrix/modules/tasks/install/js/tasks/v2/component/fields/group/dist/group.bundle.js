@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,ui_vue3_components_popup,ui_vue3_components_button,tasks_v2_provider_service_userService,ui_system_menu_vue,ui_iconSet_api_core,ui_iconSet_crm,tasks_v2_lib_scrumManager,tasks_v2_lib_entitySelectorDialog,tasks_v2_lib_color,ui_system_typography_vue,ui_system_skeleton_vue,main_core,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_hint,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_showLimit,tasks_v2_lib_analytics,tasks_v2_provider_service_groupService,tasks_v2_provider_service_taskService) {
+(function (exports,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,ui_vue3_components_popup,ui_vue3_components_button,tasks_v2_provider_service_userService,ui_notificationManager,ui_system_menu_vue,ui_iconSet_api_core,ui_iconSet_crm,tasks_v2_lib_scrumManager,tasks_v2_lib_color,tasks_v2_core,tasks_v2_lib_entitySelectorDialog,ui_system_typography_vue,ui_system_skeleton_vue,main_core,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_hint,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_showLimit,tasks_v2_lib_analytics,tasks_v2_provider_service_groupService,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	const groupMeta = Object.freeze({
@@ -182,9 +182,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	`
 	};
 
-	var _dialog, _taskId, _onClose, _createDialog, _fillStore, _items;
-	const groupDialog = new (_dialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog"), _taskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId"), _onClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClose"), _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog"), _fillStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillStore"), _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items"), class {
+	var _dialog, _taskId, _onClose, _createDialog, _handleGroupSelect, _fillStore, _items, _groupId;
+	const groupDialog = new (_dialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog"), _taskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId"), _onClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClose"), _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog"), _handleGroupSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleGroupSelect"), _fillStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillStore"), _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items"), _groupId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("groupId"), class {
 	  constructor() {
+	    Object.defineProperty(this, _groupId, {
+	      get: _get_groupId,
+	      set: void 0
+	    });
 	    Object.defineProperty(this, _items, {
 	      get: _get_items,
 	      set: void 0
@@ -203,6 +207,34 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    Object.defineProperty(this, _onClose, {
 	      writable: true,
 	      value: void 0
+	    });
+	    Object.defineProperty(this, _handleGroupSelect, {
+	      writable: true,
+	      value: async () => {
+	        var _babelHelpers$classPr, _babelHelpers$classPr2, _result$Endpoint$Task;
+	        if (!babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].isLoaded()) {
+	          return;
+	        }
+	        const groupId = await babelHelpers.classPrivateFieldLooseBase(this, _fillStore)[_fillStore]();
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _groupId)[_groupId] === groupId) {
+	          return;
+	        }
+	        tasks_v2_provider_service_groupService.groupService.setHasScrumInfo(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
+	        (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _onClose))[_onClose]) == null ? void 0 : _babelHelpers$classPr.call(_babelHelpers$classPr2, groupId);
+	        tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(true);
+	        const result = await tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId], {
+	          groupId,
+	          stageId: 0
+	        });
+	        tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(false);
+	        if ((_result$Endpoint$Task = result[tasks_v2_const.Endpoint.TaskUpdate]) != null && _result$Endpoint$Task.length) {
+	          const error = result[tasks_v2_const.Endpoint.TaskUpdate][0];
+	          ui_notificationManager.Notifier.notifyViaBrowserProvider({
+	            id: 'task-notify-update-group-error',
+	            text: error == null ? void 0 : error.message
+	          });
+	        }
+	      }
 	    });
 	    Object.defineProperty(this, _fillStore, {
 	      writable: true,
@@ -223,10 +255,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    });
 	  }
 	  show(params) {
-	    var _babelHelpers$classPr, _babelHelpers$classPr2;
+	    var _babelHelpers$classPr3, _babelHelpers$classPr4;
 	    babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId] = params.taskId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _onClose)[_onClose] = params.onClose;
-	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _dialog))[_dialog]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_dialog] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
+	    (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _dialog))[_dialog]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[_dialog] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].selectItemsByIds(babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].showTo(params.targetNode);
 	  }
@@ -246,36 +278,29 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    popupOptions: {
 	      events: {
-	        onClose: async () => {
-	          var _babelHelpers$classPr3, _babelHelpers$classPr4;
-	          const groupId = await babelHelpers.classPrivateFieldLooseBase(this, _fillStore)[_fillStore]();
-	          tasks_v2_provider_service_groupService.groupService.setHasScrumInfo(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
-	          void tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId], {
-	            groupId,
-	            stageId: 0
-	          });
-	          (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _onClose))[_onClose]) == null ? void 0 : _babelHelpers$classPr3.call(_babelHelpers$classPr4, groupId);
-	        }
+	        onClose: babelHelpers.classPrivateFieldLooseBase(this, _handleGroupSelect)[_handleGroupSelect]
 	      }
 	    }
 	  });
 	}
 	function _get_items() {
-	  const groupId = tasks_v2_provider_service_taskService.taskService.getStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]).groupId;
-	  return groupId ? [[tasks_v2_const.EntitySelectorEntity.Project, groupId]] : [];
+	  return babelHelpers.classPrivateFieldLooseBase(this, _groupId)[_groupId] ? [[tasks_v2_const.EntitySelectorEntity.Project, babelHelpers.classPrivateFieldLooseBase(this, _groupId)[_groupId]]] : [];
+	}
+	function _get_groupId() {
+	  return tasks_v2_provider_service_taskService.taskService.getStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]).groupId;
 	}
 
 	// @vue/component
 	const Group = {
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
-	    BMenu: ui_system_menu_vue.BMenu,
 	    Hint: tasks_v2_component_elements_hint.Hint,
 	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
 	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd,
 	    GroupPopup
 	  },
 	  inject: {
+	    settings: {},
 	    task: {},
 	    taskId: {},
 	    isEdit: {}
@@ -288,35 +313,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  data() {
 	    return {
-	      isMenuShown: false,
 	      isHintShown: false
 	    };
 	  },
 	  computed: {
 	    group() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Groups}/getById`](this.task.groupId);
-	    },
-	    menuOptions() {
-	      return {
-	        id: 'tasks-field-group-menu',
-	        bindElement: this.$refs.group,
-	        offsetTop: 8,
-	        items: [{
-	          title: this.getAboutItemTitle(),
-	          icon: ui_iconSet_api_vue.Outline.FOLDER,
-	          onClick: this.openGroup
-	        }, {
-	          title: this.loc('TASKS_V2_GROUP_CHANGE'),
-	          icon: ui_iconSet_api_vue.Outline.EDIT_L,
-	          onClick: this.isLocked ? this.showLimitDialog : this.showDialog
-	        }, {
-	          design: ui_system_menu_vue.MenuItemDesign.Alert,
-	          title: this.loc('TASKS_V2_GROUP_CLEAR'),
-	          icon: ui_iconSet_api_vue.Outline.CROSS_L,
-	          onClick: this.clearField
-	        }],
-	        targetContainer: document.body
-	      };
 	    },
 	    groupName() {
 	      var _this$group$name, _this$group;
@@ -336,17 +338,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return !this.task.rights.edit || this.hasFlow;
 	    },
 	    isLocked() {
-	      return !tasks_v2_core.Core.getParams().restrictions.project.available;
+	      return !this.settings.restrictions.project.available;
+	    },
+	    withClear() {
+	      var _this$task$flowId;
+	      return !this.readonly && ((_this$task$flowId = this.task.flowId) != null ? _this$task$flowId : 0) <= 0;
 	    }
 	  },
 	  methods: {
-	    getAboutItemTitle() {
-	      var _GroupType$Collab$Gro, _this$group3;
-	      return (_GroupType$Collab$Gro = {
-	        [tasks_v2_const.GroupType.Collab]: this.loc('TASKS_V2_GROUP_ABOUT_COLLAB'),
-	        [tasks_v2_const.GroupType.Scrum]: this.loc('TASKS_V2_GROUP_ABOUT_SCRUM')
-	      }[(_this$group3 = this.group) == null ? void 0 : _this$group3.type]) != null ? _GroupType$Collab$Gro : this.loc('TASKS_V2_GROUP_ABOUT');
-	    },
 	    handleClick() {
 	      if (!this.isEdit && this.hasFlow) {
 	        this.isHintShown = true;
@@ -358,9 +357,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        }
 	        return;
 	      }
-	      if (this.isEdit && this.group) {
-	        this.isMenuShown = true;
-	      } else if (this.isLocked) {
+	      if (this.isLocked) {
 	        this.showLimitDialog();
 	      } else {
 	        this.showDialog();
@@ -376,7 +373,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        taskId: this.taskId
 	      });
 	    },
-	    clearField() {
+	    clear() {
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        groupId: 0,
 	        stageId: 0
@@ -384,7 +381,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    showLimitDialog() {
 	      void tasks_v2_lib_showLimit.showLimit({
-	        featureId: tasks_v2_core.Core.getParams().restrictions.project.featureId
+	        featureId: this.settings.restrictions.project.featureId
 	      });
 	    }
 	  },
@@ -398,9 +395,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<div class="tasks-field-group-group" :class="{ '--secret': isSecret }" @click="handleClick">
 				<HoverPill
 					v-if="task.groupId"
-					:withClear="!readonly && !isEdit && (task.flowId ?? 0) <= 0"
-					:active="isMenuShown"
-					@clear="clearField"
+					:withClear
+					@clear="clear"
 				>
 					<img v-if="groupImage" class="tasks-field-group-image" :src="groupImage" :alt="groupName"/>
 					<BIcon v-else class="tasks-field-group-icon" :name="Outline.FOLDER"/>
@@ -412,7 +408,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		<Hint v-if="isHintShown" :bindElement="$refs.group" @close="isHintShown = false">
 			{{ loc('TASKS_V2_GROUP_CANT_CHANGE_FLOW') }}
 		</Hint>
-		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 		<GroupPopup :getBindElement="() => $refs.group"/>
 	`
 	};
@@ -450,8 +445,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.task.stageId;
 	    },
 	    stage() {
-	      var _this$$store$getters;
-	      return (_this$$store$getters = this.$store.getters[`${tasks_v2_const.Model.Stages}/getById`](this.stageId)) != null ? _this$$store$getters : null;
+	      return this.$store.getters[`${tasks_v2_const.Model.Stages}/getById`](this.stageId);
 	    },
 	    menuOptions() {
 	      return () => ({
@@ -507,7 +501,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (this.readonly) {
 	        return;
 	      }
-	      if (!this.group.stagesIds) {
+	      if (!this.group.stagesIds || this.group.stagesIds.length === 0) {
 	        await tasks_v2_provider_service_groupService.groupService.getStages(this.groupId);
 	      }
 	      this.isMenuShown = true;
@@ -559,11 +553,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			ref="stage"
 			@click="handleClick"
 		>
-			<div class="tasks-field-group-stage-text-container">
-				<div class="tasks-field-group-stage-text">{{ stage.title }}</div>
+			<div class="tasks-field-group-stage-text-container print-background-white print-font-weight-normal print-no-padding-left print-font-size-lg">
+				<div class="tasks-field-group-stage-text print-font-color-base-1">{{ stage.title }}</div>
 			</div>
-			<div class="tasks-field-group-stage-arrow"/>
-			<BIcon v-if="!readonly" :name="Outline.CHEVRON_DOWN_S"/>
+			<div class="tasks-field-group-stage-arrow print-ignore"/>
+			<BIcon v-if="!readonly" :name="Outline.CHEVRON_DOWN_S" class="print-ignore"/>
 		</div>
 		<div v-else class="tasks-field-group-stage-loader">
 			<BLine :width="80" :height="10"/>
@@ -571,6 +565,96 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		<BMenu v-if="isMenuShown" :options="menuOptions()" @close="isMenuShown = false"/>
 	`
 	};
+
+	var _taskId$1, _dialog$1, _createDialog$1, _handleEpicSelect, _fillStore$1, _items$1;
+	const dialogs = {};
+	const epicDialog = new (_taskId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId"), _dialog$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog"), _createDialog$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog"), _handleEpicSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEpicSelect"), _fillStore$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillStore"), _items$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items"), class {
+	  constructor() {
+	    Object.defineProperty(this, _items$1, {
+	      get: _get_items$1,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _createDialog$1, {
+	      value: _createDialog2$1
+	    });
+	    Object.defineProperty(this, _dialog$1, {
+	      get: _get_dialog,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _taskId$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _handleEpicSelect, {
+	      writable: true,
+	      value: async () => {
+	        if (!babelHelpers.classPrivateFieldLooseBase(this, _dialog$1)[_dialog$1].isLoaded()) {
+	          return;
+	        }
+	        const epicId = await babelHelpers.classPrivateFieldLooseBase(this, _fillStore$1)[_fillStore$1]();
+	        await tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _taskId$1)[_taskId$1], {
+	          epicId
+	        });
+	      }
+	    });
+	    Object.defineProperty(this, _fillStore$1, {
+	      writable: true,
+	      value: async () => {
+	        const item = babelHelpers.classPrivateFieldLooseBase(this, _dialog$1)[_dialog$1].getSelectedItems()[0];
+	        if (!item) {
+	          return 0;
+	        }
+	        const epic = {
+	          id: item.getId(),
+	          title: item.getTitle(),
+	          color: item.getAvatarOption('bgColor')
+	        };
+	        await tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.Epics}/insert`, epic);
+	        return epic.id;
+	      }
+	    });
+	  }
+	  show(params) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _taskId$1)[_taskId$1] = params.taskId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialog$1)[_dialog$1].selectItemsByIds(babelHelpers.classPrivateFieldLooseBase(this, _items$1)[_items$1]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialog$1)[_dialog$1].showTo(params.targetNode);
+	  }
+	})();
+	function _get_dialog() {
+	  var _dialogs$groupId;
+	  const groupId = tasks_v2_provider_service_taskService.taskService.getStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _taskId$1)[_taskId$1]).groupId;
+	  (_dialogs$groupId = dialogs[groupId]) != null ? _dialogs$groupId : dialogs[groupId] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog$1)[_createDialog$1](groupId);
+	  return dialogs[groupId];
+	}
+	function _createDialog2$1(groupId) {
+	  return new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
+	    context: 'tasks-card',
+	    multiple: false,
+	    hideOnDeselect: true,
+	    enableSearch: true,
+	    entities: [{
+	      id: tasks_v2_const.EntitySelectorEntity.Epic,
+	      options: {
+	        groupId
+	      },
+	      dynamicLoad: true,
+	      dynamicSearch: true
+	    }],
+	    preselectedItems: babelHelpers.classPrivateFieldLooseBase(this, _items$1)[_items$1],
+	    events: {
+	      onLoad: babelHelpers.classPrivateFieldLooseBase(this, _fillStore$1)[_fillStore$1]
+	    },
+	    popupOptions: {
+	      events: {
+	        onClose: babelHelpers.classPrivateFieldLooseBase(this, _handleEpicSelect)[_handleEpicSelect]
+	      }
+	    }
+	  });
+	}
+	function _get_items$1() {
+	  const epicId = tasks_v2_provider_service_taskService.taskService.getStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _taskId$1)[_taskId$1]).epicId;
+	  return epicId ? [[tasks_v2_const.EntitySelectorEntity.Epic, epicId]] : [];
+	}
 
 	// @vue/component
 	const Epic = {
@@ -597,9 +681,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    epic() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Epics}/getById`](this.task.epicId);
 	    },
-	    preselectedEpic() {
-	      return this.epic ? [['epic-selector', this.epic.id]] : [];
-	    },
 	    epicColor() {
 	      if (!this.epic) {
 	        return '';
@@ -625,50 +706,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  methods: {
 	    showDialog() {
-	      var _this$handleEpicSelec, _this$dialog;
-	      (_this$handleEpicSelec = this.handleEpicSelectedDebounced) != null ? _this$handleEpicSelec : this.handleEpicSelectedDebounced = main_core.Runtime.debounce(this.handleEpicSelected, 10, this);
-	      (_this$dialog = this.dialog) != null ? _this$dialog : this.dialog = new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
-	        multiple: false,
-	        dropdownMode: true,
-	        enableSearch: true,
-	        compactView: true,
-	        hideOnDeselect: true,
-	        entities: [{
-	          id: tasks_v2_const.EntitySelectorEntity.Epic,
-	          options: {
-	            groupId: this.task.groupId
-	          },
-	          dynamicLoad: true,
-	          dynamicSearch: true
-	        }],
-	        preselectedItems: this.preselectedEpic,
-	        events: {
-	          'Item:onSelect': this.handleEpicSelectedDebounced,
-	          'Item:onDeselect': this.handleEpicSelectedDebounced
-	        }
-	      });
-	      this.dialog.selectItemsByIds(this.preselectedEpic);
-	      this.dialog.showTo(this.$el);
-	    },
-	    handleEpicSelected() {
-	      var _item$getId;
-	      const item = this.dialog.getSelectedItems()[0];
-	      if (item) {
-	        void this.$store.dispatch(`${tasks_v2_const.Model.Epics}/insert`, {
-	          id: item.getId(),
-	          title: item.getTitle(),
-	          color: item.getAvatarOption('bgColor')
-	        });
-	      }
-	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-	        epicId: (_item$getId = item == null ? void 0 : item.getId()) != null ? _item$getId : 0
+	      epicDialog.show({
+	        targetNode: this.$el,
+	        taskId: this.taskId
 	      });
 	    }
 	  },
 	  template: `
 		<div
 			v-if="hasScrumInfo"
-			class="tasks-field-epic"
+			class="tasks-field-epic print-background-white"
 			:class="{ '--dark': isDarkColor, '--filled': epic }"
 			:style="{
 				'--epic-color': epicColor,
@@ -680,7 +727,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<TextXs className="tasks-field-epic-title">
 				{{ epic?.title || loc('TASKS_V2_GROUP_CHOOSE_EPIC') }}
 			</TextXs>
-			<BIcon :name="Outline.CHEVRON_DOWN_S"/>
+			<BIcon :name="Outline.CHEVRON_DOWN_S" class="print-ignore"/>
 		</div>
 		<div v-else class="tasks-field-epic-loader">
 			<BLine :width="80" :height="10"/>
@@ -739,7 +786,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			/>
 			<TextXs
 				v-else
-				className="tasks-field-story-points-text"
+				className="tasks-field-story-points-text print-background-white print-font-color-base-1"
 				@click="handleClick"
 			>
 				{{ storyPoints || '-' }}
@@ -759,6 +806,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    GroupPopup
 	  },
 	  inject: {
+	    settings: {},
 	    analytics: {},
 	    cardType: {},
 	    task: {},
@@ -822,8 +870,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (!this.isFilled) {
 	        return null;
 	      }
+	      if (!((_this$group2 = this.group) != null && _this$group2.image)) {
+	        return null;
+	      }
 	      return {
-	        src: encodeURI((_this$group2 = this.group) == null ? void 0 : _this$group2.image),
+	        src: encodeURI(this.group.image),
 	        alt: (_this$group3 = this.group) == null ? void 0 : _this$group3.name
 	      };
 	    },
@@ -832,7 +883,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return ((_this$task$flowId = this.task.flowId) != null ? _this$task$flowId : 0) <= 0;
 	    },
 	    isLocked() {
-	      return !tasks_v2_core.Core.getParams().restrictions.project.available;
+	      return !this.settings.restrictions.project.available;
 	    }
 	  },
 	  created() {
@@ -848,7 +899,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	      if (this.isLocked) {
 	        void tasks_v2_lib_showLimit.showLimit({
-	          featureId: tasks_v2_core.Core.getParams().restrictions.project.featureId
+	          featureId: this.settings.restrictions.project.featureId
 	        });
 	        return;
 	      }
@@ -870,9 +921,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (!this.isAutonomous && this.isSelected) {
 	        this.highlightField();
 	      }
-	      if (groupId && groupId !== this.task.groupId) {
+	      if (groupId) {
 	        tasks_v2_lib_analytics.analytics.sendAddProject(this.analytics, {
 	          cardType: this.cardType,
+	          taskId: main_core.Type.isNumber(this.taskId) ? this.taskId : 0,
 	          viewersCount: this.task.auditorsIds.length,
 	          coexecutorsCount: this.task.accomplicesIds.length
 	        });
@@ -922,5 +974,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.GroupChip = GroupChip;
 	exports.groupMeta = groupMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.Vue3.Components,BX.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.UI.System.Menu,BX.UI.IconSet,BX,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.UI.System.Typography.Vue,BX.UI.System.Skeleton.Vue,BX,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.Vue3.Components,BX.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.UI.NotificationManager,BX.UI.System.Menu,BX.UI.IconSet,BX,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.UI.System.Typography.Vue,BX.UI.System.Skeleton.Vue,BX,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=group.bundle.js.map

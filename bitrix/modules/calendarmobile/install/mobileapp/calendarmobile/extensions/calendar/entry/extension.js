@@ -113,6 +113,7 @@ jn.define('calendar/entry', (require, exports, module) => {
 			description = '',
 			participantsEntityList = [],
 			createChatId = null,
+			createMailId = null,
 			uuid = null,
 		})
 		{
@@ -132,6 +133,7 @@ jn.define('calendar/entry', (require, exports, module) => {
 					participantsEntityList,
 					description,
 					createChatId,
+					createMailId,
 					uuid,
 					showLoading: true,
 				});
@@ -172,6 +174,7 @@ jn.define('calendar/entry', (require, exports, module) => {
 						DESCRIPTION: description,
 						PARTICIPANTS_ENTITY_LIST: participantsEntityList,
 						CREATE_CHAT_ID: createChatId,
+						CREATE_MAIL_ID: createMailId,
 						UUID: uuid,
 					},
 				});

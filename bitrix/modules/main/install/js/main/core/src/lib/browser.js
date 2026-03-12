@@ -245,7 +245,11 @@ export default class Browser
 		globalClass += (Browser.isMobile() ? ' bx-touch' : ' bx-no-touch');
 		globalClass += (Browser.isRetina() ? ' bx-retina' : ' bx-no-retina');
 
-		if (/AppleWebKit/.test(navigator.userAgent))
+		if (Browser.isSafari())
+		{
+			globalClass += ' bx-safari';
+		}
+		else if (/AppleWebKit/.test(navigator.userAgent))
 		{
 			globalClass += ' bx-chrome';
 		}

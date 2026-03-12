@@ -16,12 +16,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { Loc } = require('loc');
 	const { showOfflineToast, showErrorToast } = require('toast');
-	const {
-		FloatingActionButton,
-		FloatingActionButtonSupportNative,
-	} = require(
-		'ui-system/form/buttons/floating-action-button',
-	);
+	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button',);
 	const { Type } = require('type');
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
 	const { Logger, LogType } = require('utils/logger');
@@ -1263,7 +1258,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 		initFloatingButton()
 		{
-			if (!FloatingActionButtonSupportNative(this.layout) || !this.isShowFloatingButton())
+			if (!this.isShowFloatingButton())
 			{
 				return;
 			}
@@ -1275,16 +1270,18 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			const { onFloatingButtonClick, onFloatingButtonLongClick } = this.props;
 
-			this.floatingButton = FloatingActionButton({
+			this.floatingButton = new FloatingActionButton({
 				testId: `${this.getTestId()}_ADD_BTN`,
 				accentByDefault: this.isFloatingButtonAccent(),
-				parentLayout: this.layout,
+				layout: this.layout,
 				onClick: onFloatingButtonClick,
 				onLongClick: onFloatingButtonLongClick,
 				...this.fabSpotlightId
 					? { spotlightIds: { fab: this.fabSpotlightId } }
 					: {},
 			});
+
+			this.floatingButton.show();
 		}
 
 		getFabSpotlightId()
@@ -1435,9 +1432,13 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		 */
 		updateFloatingButton(params)
 		{
+			if (!this.isShowFloatingButton())
+			{
+				this.floatingButton?.hide();
+			}
+
 			const floatingButtonParams = params || {
 				accentByDefault: this.isFloatingButtonAccent(),
-				hide: !this.isShowFloatingButton(),
 			};
 
 			if (!this.floatingButton && !floatingButtonParams.hide)
@@ -1447,7 +1448,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				return;
 			}
 
-			this.floatingButton?.setFloatingButton(floatingButtonParams);
+			this.floatingButton?.updateOption('accentByDefault', floatingButtonParams.accentByDefault, true);
 		}
 
 		// search

@@ -33,6 +33,9 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    },
 	    containerClassname() {
 	      return ['ai__copilot-chat_status', `--${this.status}`];
+	    },
+	    copilotName() {
+	      return main_core.Extension.getSettings('landing.copilot.chat').copilotName;
 	    }
 	  },
 	  template: `
@@ -44,7 +47,14 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 							v-bind="writingStatusIcon"
 						/>
 					</span>
-					<span>{{ $Bitrix.Loc.getMessage('AI_COPILOT_CHAT_STATUS_COPILOT_WRITING') }}</span>
+					<span>
+						{{
+							$Bitrix.Loc.getMessage(
+								'AI_COPILOT_CHAT_STATUS_COPILOT_WRITING_MSGVER_1',
+								{ '#COPILOT_NAME#': copilotName }
+							)
+						}}
+					</span>
 				</template>
 			</div>
 		</div>
@@ -1462,12 +1472,16 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      const Helper = main_core.Reflection.getClass('top.BX.Helper');
 	      const articleCode = this.articleCode;
 	      Helper == null ? void 0 : Helper.show(`redirect=detail&code=${articleCode}`);
+	    },
+	    getCopilotName() {
+	      return main_core.Extension.getSettings('landing.copilot.chat').copilotName;
 	    }
 	  },
 	  mounted() {
-	    const warningMessage = main_core.Tag.render(_t$1 || (_t$1 = _$1`<span>${0}</span>`), this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_ANSWER_WARNING_1', {
+	    const warningMessage = main_core.Tag.render(_t$1 || (_t$1 = _$1`<span>${0}</span>`), this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_ANSWER_WARNING_MSGVER_1', {
 	      '#LINK_START#': '<a ref="link" href="#">',
-	      '#LINK_END#': '</a>'
+	      '#LINK_END#': '</a>',
+	      '#COPILOT_NAME#': this.getCopilotName()
 	    }));
 	    main_core.Event.bind(warningMessage.link, 'click', this.showArticle);
 	    main_core.Dom.append(warningMessage.root, this.$refs.container);
@@ -2052,11 +2066,12 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value.unshift(...messagesWithStatus);
 	  }
 	  addUserMessage(message, emitEvent = true) {
+	    var _message$status;
 	    const newUserMessage = {
 	      type: 'Default',
 	      ...message,
 	      authorId: 1,
-	      status: CopilotChatMessageStatus.DEPART
+	      status: (_message$status = message.status) != null ? _message$status : CopilotChatMessageStatus.DEPART
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _addNewMessage)[_addNewMessage](newUserMessage, emitEvent);
 	  }

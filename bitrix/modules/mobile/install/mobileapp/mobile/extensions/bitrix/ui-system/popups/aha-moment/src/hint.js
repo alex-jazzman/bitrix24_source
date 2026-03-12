@@ -37,9 +37,6 @@ jn.define('ui-system/popups/aha-moment/src/hint', (require, exports, module) => 
 
 			this.direction = this.getDirection();
 			this.svgSize = this.direction.getSvgSize();
-			this.state = {
-				popupRect: {},
-			};
 
 			this.ref = null;
 			this.earRef = null;

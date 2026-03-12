@@ -1,6 +1,6 @@
 <?php
-$MESS["CALL_NOTIFY_AUDIO_RECORD_WITHOUT_MESSAGE_LINK"] = "Phone call recording ##CALL_ID#";
-$MESS["CALL_NOTIFY_AUDIO_RECORD_WITH_MESSAGE_LINK"] = "Phone call recording [url=#CALL_LINK#]##CALL_ID#[/url]";
+$MESS["CALL_NOTIFY_AUDIO_RECORD_WITHOUT_MESSAGE_LINK"] = "Сall recording, call ##CALL_ID#";
+$MESS["CALL_NOTIFY_AUDIO_RECORD_WITH_MESSAGE_LINK"] = "Сall recording, call [url=#CALL_LINK#]##CALL_ID#[/url]";
 $MESS["CALL_NOTIFY_COPILOT"] = "CoPilot";
 $MESS["CALL_NOTIFY_COPILOT_AGENDA"] = "Agenda";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS"] = "Meeting summary";
@@ -25,10 +25,10 @@ $MESS["CALL_NOTIFY_COPILOT_INSIGHTS"] = "Recommendations";
 $MESS["CALL_NOTIFY_FEEDBACK"] = "[url=#FEEDBACK_URL#]Report an issue[/url]";
 $MESS["CALL_NOTIFY_TASK_BOOST"] = "You don't have sufficient CoPilot credits. [url=#CALL_START#]Call ##CALL_ID#[/url] has been saved. Please [url=#BUY_URL#]top up[/url] your CoPilot credits and [SEND=#CALL_COMMAND#]run analysis[/SEND] again.";
 $MESS["CALL_NOTIFY_TASK_COMPLETE"] = "CoPilot finished processing [url=#CALL_START#]call ##CALL_ID#[/url].";
-$MESS["CALL_NOTIFY_TASK_DESTROY_F"] = "#USER# canceled phone call analysis [url=#CALL_START#]##CALL_ID#[/url].";
-$MESS["CALL_NOTIFY_TASK_DESTROY_M"] = "#USER# canceled phone call analysis [url=#CALL_START#]##CALL_ID#[/url].";
-$MESS["CALL_NOTIFY_TASK_DROPPED_F"] = "#USER# deleted phone call analysis [url=#CALL_START#]##CALL_ID#[/url].";
-$MESS["CALL_NOTIFY_TASK_DROPPED_M"] = "#USER# deleted phone call analysis [url=#CALL_START#]##CALL_ID#[/url].";
+$MESS["CALL_NOTIFY_TASK_DESTROY_F"] = "#USER# canceled call analysis [url=#CALL_START#]##CALL_ID#[/url].";
+$MESS["CALL_NOTIFY_TASK_DESTROY_M"] = "#USER# canceled call analysis [url=#CALL_START#]##CALL_ID#[/url].";
+$MESS["CALL_NOTIFY_TASK_DROPPED_F"] = "#USER# deleted call analysis [url=#CALL_START#]##CALL_ID#[/url].";
+$MESS["CALL_NOTIFY_TASK_DROPPED_M"] = "#USER# deleted call analysis [url=#CALL_START#]##CALL_ID#[/url].";
 $MESS["CALL_NOTIFY_TASK_FAILED"] = "CoPilot failed to analyze [url=#CALL_START#]call ##CALL_ID#[/url].";
 $MESS["CALL_NOTIFY_TASK_START"] = "CoPilot is processing [url=#CALL_START#]call ##CALL_ID#[/url].";
 $MESS["CALL_NOTIFY_TASK_START_V2"] = "CoPilot is analyzing the call [url=#CALL_START#]##CALL_ID#[/url]. The analysis will be posted to the chat as soon as it's completed.";

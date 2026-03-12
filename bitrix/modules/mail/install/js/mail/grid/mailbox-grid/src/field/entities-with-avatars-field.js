@@ -73,11 +73,18 @@ export class EntitiesWithAvatarsField extends BaseField
 			return container;
 		}
 
-		const container = Tag.render`
+		const icon = this.#renderDepartmentIcon();
+		let container = Tag.render`
 			<div class="mailbox-grid_list-members --single-member"></div>
 		`;
 
-		const icon = this.#renderDepartmentIcon();
+		if (Type.isStringFilled(entity.pathToStructure))
+		{
+			container = Tag.render`
+				<a href="${entity.pathToStructure}" class="mailbox-grid_list-members --single-member --link"></a>
+			`;
+		}
+
 		Dom.append(icon, container);
 		Dom.append(nameNode, container);
 

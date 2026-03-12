@@ -9,8 +9,14 @@ import type { CrmItemDto } from './types';
 
 export const crmService = new class
 {
-	async list(id: number | string, ids: string[]): Promise<void>
+	async list(id: number | string, crmItemIds: string[]): Promise<void>
 	{
+		const ids = crmItemIds.filter((it) => !Core.getStore().getters[`${Model.CrmItems}/getById`](it));
+		if (ids.length === 0)
+		{
+			return;
+		}
+
 		const data = await (idUtils.isTemplate(id) ? this.#listTemplate(id, ids) : this.#listTask(id, ids));
 
 		const crmItems = data.map((dto: CrmItemDto): CrmItemModel => mapDtoToModel(dto));

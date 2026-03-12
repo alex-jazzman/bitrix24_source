@@ -26,4 +26,7 @@ return [
 		'ui.design-tokens',
 	],
 	'skip_core' => false,
+	'settings' => [
+		'isRenamedIntegrator' => \Bitrix\Intranet\Public\Service\IntegratorService::createByDefault()->isRenamedIntegrator() ? 'Y' : 'N',
+	],
 ];

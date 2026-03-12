@@ -17,9 +17,7 @@ use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
-UI\Extension::load("ui.tooltip");
-
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+UI\Extension::load("ui.tooltip", 'intranet.old-interface.intranet-common');
 
 $bShowInPopup = false;
 if (COption::GetOptionString('tasks', 'use_task_view_popup_in_list') === 'Y')

@@ -1,10 +1,13 @@
-import { Dom } from 'main.core';
+import { Dom, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
+import { VideoQualityRange } from 'call.component.video-quality-range';
 import { Hardware } from '../call_hardware';
 import { BackgroundDialog } from '../dialogs/background_dialog';
 import 'ui.switcher';
 import Util from '../util';
+import { STREAM_QUALITY } from '../stream_quality';
+import { Provider } from '../engine/engine';
 
 const DeviceSelectorEvents = {
 	onMicrophoneSelect: 'onMicrophoneSelect',
@@ -13,13 +16,13 @@ const DeviceSelectorEvents = {
 	onCameraSwitch: 'onCameraSwitch',
 	onSpeakerSelect: 'onSpeakerSelect',
 	onSpeakerSwitch: 'onSpeakerSwitch',
-	onChangeHdVideo: 'onChangeHdVideo',
 	onChangeMicAutoParams: 'onChangeMicAutoParams',
 	onChangeFaceImprove: 'onChangeFaceImprove',
 	onChangeVideoQuality: 'onChangeVideoQuality',
 	onAdvancedSettingsClick: 'onOpenAdvancedSettingsClick',
 	onShow: 'onShow',
 	onDestroy: 'onDestroy',
+	onChangeNoiseSuppression: 'onChangeNoiseSuppression',
 };
 
 /**
@@ -28,7 +31,6 @@ const DeviceSelectorEvents = {
  * @param {boolean} config.cameraEnabled
  * @param {boolean} config.microphoneEnabled
  * @param {boolean} config.speakerEnabled
- * @param {boolean} config.allowHdVideo
  * @param {boolean} config.faceImproveEnabled
  * @param {object} config.events
 
@@ -42,7 +44,8 @@ const DeviceSelectorEvents = {
  * @param {boolean} config.cameraEnabled
  * @param {boolean} config.microphoneEnabled
  * @param {boolean} config.speakerEnabled
- * @param {boolean} config.allowHdVideo
+ * @param {boolean} config.allowNoiseSuppression
+ * @param {boolean} config.noiseSuppressionVisible
  * @param {boolean} config.faceImproveEnabled
  * @constructor
  */
@@ -62,7 +65,8 @@ export class DeviceSelector
 		this.microphoneId = BX.prop.getString(config, 'microphoneId', false);
 		this.speakerEnabled = BX.prop.getBoolean(config, 'speakerEnabled', false);
 		this.speakerId = BX.prop.getString(config, 'speakerId', false);
-		this.allowHdVideo = BX.prop.getBoolean(config, 'allowHdVideo', false);
+		this.allowNoiseSuppression = BX.prop.getBoolean(config, 'allowNoiseSuppression', false);
+		this.noiseSuppressionVisible = BX.prop.getBoolean(config, 'noiseSuppressionVisible', false);
 		this.faceImproveEnabled = BX.prop.getBoolean(config, 'faceImproveEnabled', false);
 		this.allowFaceImprove = BX.prop.getBoolean(config, 'allowFaceImprove', false);
 		this.allowBackground = BX.prop.getBoolean(config, 'allowBackground', true);
@@ -71,6 +75,7 @@ export class DeviceSelector
 		this.switchCameraBlocked = config.switchCameraBlocked || false;
 		this.switchMicrophoneBlocked = config.switchMicrophoneBlocked || false;
 		this.isDestroying = false;
+		this.isCameraWasEnabledBeforeQualityChanged = false;
 
 		this.popup = null;
 		this.eventEmitter = new BX.Event.EventEmitter(this, "DeviceSelector");
@@ -98,6 +103,8 @@ export class DeviceSelector
 
 	show()
 	{
+		this.isCameraWasEnabledBeforeQualityChanged = Hardware.isCameraOn;
+
 		if (this.popup)
 		{
 			this.popup.show();
@@ -167,6 +174,7 @@ export class DeviceSelector
 							events: {
 								onSwitch: this.onCameraSwitch.bind(this),
 								onSelect: this.onCameraSelect.bind(this),
+								onChangeVideoQuality: this.onVideoQualityChanged.bind(this),
 							}
 						})).render(),
 						Hardware.canSelectSpeaker() ?
@@ -188,32 +196,34 @@ export class DeviceSelector
 				Dom.create("div", {
 					props: {className: "bx-call-view-device-selector-bottom"},
 					children: [
-						Dom.create("div", {
-							props: {className: "bx-call-view-device-selector-bottom-item"},
-							children: [
-								Dom.create("input", {
-									props: {
-										id: "device-selector-hd-video",
-										className: "bx-call-view-device-selector-bottom-item-checkbox"
-									},
-									attrs: {
-										type: "checkbox",
-										checked: this.allowHdVideo
-									},
-									events: {
-										change: this.onAllowHdVideoChange.bind(this)
-									}
-								}),
-								Dom.create("div", {
-									props: { className: 'bx-call-view-device-selector-bottom-item-checkbox-checked' },
-								}),
-								Dom.create("label", {
-									props: {className: "bx-call-view-device-selector-bottom-item-label"},
-									attrs: {for: "device-selector-hd-video"},
-									text: BX.message("IM_M_CALL_HD_VIDEO")
-								}),
-							]
-						}),
+						this.noiseSuppressionVisible
+							? Dom.create('div', {
+								props: { className: 'bx-call-view-device-selector-bottom-item' },
+								children: [
+									Dom.create('input', {
+										props: {
+											id: 'device-selector-noise-suppression',
+											className: 'bx-call-view-device-selector-bottom-item-checkbox'
+										},
+										attrs: {
+											type: 'checkbox',
+											checked: this.allowNoiseSuppression,
+										},
+										events: {
+											change: this.onAllowNoiseSuppression.bind(this)
+										},
+									}),
+									Dom.create('div', {
+										props: { className: 'bx-call-view-device-selector-bottom-item-checkbox-checked' },
+									}),
+									Dom.create('label', {
+										props: { className: 'bx-call-view-device-selector-bottom-item-label' },
+										attrs: { for: 'device-selector-noise-suppression' },
+										text: BX.message('CALL_NOISE_SUPPRESSION'),
+									}),
+								],
+							})
+							: null,
 						this.allowFaceImprove ?
 							Dom.create("div", {
 								props: {className: "bx-call-view-device-selector-bottom-item"},
@@ -351,6 +361,14 @@ export class DeviceSelector
 		});
 	};
 
+	onVideoQualityChanged(e)
+	{
+		this.eventEmitter.emit(DeviceSelectorEvents.onChangeVideoQuality, {
+			videoQuality: e.data.videoQuality,
+			isCameraWasEnabledBeforeQualityChanged: this.isCameraWasEnabledBeforeQualityChanged,
+		});
+	};
+
 	onSpeakerSwitch()
 	{
 		this.speakerEnabled = !this.speakerEnabled;
@@ -366,13 +384,13 @@ export class DeviceSelector
 		});
 	};
 
-	onAllowHdVideoChange(e)
+	onAllowNoiseSuppression(e)
 	{
-		this.allowHdVideo = e.currentTarget.checked;
-		this.eventEmitter.emit(DeviceSelectorEvents.onChangeHdVideo, {
-			allowHdVideo: this.allowHdVideo
-		})
-	};
+		this.allowNoiseSuppression = e.currentTarget.checked;
+		this.eventEmitter.emit(DeviceSelectorEvents.onChangeNoiseSuppression, {
+			allowNoiseSuppression: this.allowNoiseSuppression,
+		});
+	}
 
 	onAllowMirroringVideoChange(e)
 	{
@@ -408,6 +426,7 @@ export class DeviceSelector
 const DeviceMenuEvents = {
 	onSelect: 'onSelect',
 	onSwitch: 'onSwitch',
+	onChangeVideoQuality: 'onChangeVideoQuality',
 };
 
 class DeviceMenu
@@ -417,18 +436,27 @@ class DeviceMenu
 		config = BX.type.isObject(config) ? config : {};
 
 		this.menuBlocked = config.blocked || false;
-		this.deviceList = BX.prop.getArray(config, "deviceList", []);
-		this.selectedDevice = BX.prop.getString(config, "selectedDevice", "");
-		this.deviceEnabled = BX.prop.getBoolean(config, "deviceEnabled", false);
-		this.deviceLabel = BX.prop.getString(config, "deviceLabel", "");
-		this.icons = BX.prop.getArray(config, "icons", []);
+		this.deviceList = BX.prop.getArray(config, 'deviceList', []);
+		this.selectedDevice = BX.prop.getString(config, 'selectedDevice', '');
+		this.deviceEnabled = BX.prop.getBoolean(config, 'deviceEnabled', false);
+		this.deviceLabel = BX.prop.getString(config, 'deviceLabel', '');
+		this.icons = BX.prop.getArray(config, 'icons', []);
 		this.eventEmitter = new EventEmitter(this, 'DeviceMenu');
 		this.elements = {
 			root: null,
 			switchIcon: null,
 			menuInner: null,
-			menuItems: {}  // deviceId => {root: element, icon: element}
+			menuItems: {}, // deviceId => {root: element, icon: element}
 		};
+
+		this.currentBitrixCall = Util.getCurrentBitrixCall();
+
+		this.isShowVideoQuality = Util.isStreamQualityFeatureEnabled()
+			&& this.icons[0] === 'camera'
+			&& this.currentBitrixCall
+			&& this.currentBitrixCall.provider !== Provider.Plain;
+
+		this.videoQualityController = this.#createVideoQualityController();
 
 		var events = BX.prop.getObject(config, "events", {});
 		for (var eventName in events)
@@ -440,12 +468,12 @@ class DeviceMenu
 
 			this.eventEmitter.subscribe(eventName, events[eventName]);
 		}
-	};
+	}
 
 	static create(config)
 	{
 		return new DeviceMenu(config);
-	};
+	}
 
 	render()
 	{
@@ -455,21 +483,21 @@ class DeviceMenu
 		}
 
 		this.elements.root = Dom.create("div", {
-			props: {className: "bx-call-view-device-selector-menu-container"},
+			props: { className: "bx-call-view-device-selector-menu-container" },
 			children: [
 				Dom.create("div", {
-					props: {className: "bx-call-view-device-selector-switch-wrapper"},
+					props: { className: "bx-call-view-device-selector-switch-wrapper" },
 					children: [
 						this.elements.switchIcon = Dom.create("div", {
-							props: {className: "bx-call-view-device-selector-device-icon " + this.getDeviceIconClass()}
+							props: { className: "bx-call-view-device-selector-device-icon " + this.getDeviceIconClass() }
 						}),
 						Dom.create("span", {
-							props: {className: "bx-call-view-device-selector-device-text"},
+							props: { className: "bx-call-view-device-selector-device-text" },
 							text: this.deviceLabel
 
 						}),
 						Dom.create("div", {
-							props: {className: "bx-call-view-device-selector-device-switch"},
+							props: { className: "bx-call-view-device-selector-device-switch" },
 							children: [
 								(new BX.UI.Switcher({
 									size: 'small',
@@ -484,29 +512,31 @@ class DeviceMenu
 					]
 				}),
 				this.elements.menuInner = Dom.create("div", {
-					props: {className: "bx-call-view-device-selector-menu-inner" + (this.menuBlocked ? ' inactive' : '')},
+					props: { className: "bx-call-view-device-selector-menu-inner" + (this.menuBlocked ? ' inactive' : '') },
 					children: this.deviceList.map(this.renderDevice.bind(this))
 				}),
-			]
+				this.videoQualityController.render(),
+			],
 		});
+
 		return this.elements.root;
-	};
+	}
 
 	renderDevice(deviceInfo)
 	{
 		var iconClass = this.selectedDevice === deviceInfo.deviceId ? "selected" : "";
 		var deviceElements = {};
 		deviceElements.root = Dom.create("div", {
-			props: {className: "bx-call-view-device-selector-menu-item"},
+			props: { className: "bx-call-view-device-selector-menu-item" },
 			dataset: {
 				deviceId: deviceInfo.deviceId
 			},
 			children: [
 				deviceElements.icon = Dom.create("div", {
-					props: {className: "bx-call-view-device-selector-menu-item-icon " + iconClass},
+					props: { className: "bx-call-view-device-selector-menu-item-icon " + iconClass },
 				}),
 				Dom.create("div", {
-					props: {className: "bx-call-view-device-selector-menu-item-text"},
+					props: { className: "bx-call-view-device-selector-menu-item-text" },
 					text: deviceInfo.label || "(" + BX.message("IM_M_CALL_DEVICE_NO_NAME") + ")",
 				}),
 			],
@@ -522,13 +552,15 @@ class DeviceMenu
 	{
 		this.menuBlocked = true;
 		this.elements.root.classList.add("bx-call-view-device-selector-menu-container-blocked");
-	};
+		this.videoQualityController.setDisabled(true);
+	}
 
 	unblock()
 	{
 		this.menuBlocked = false;
 		this.elements.root.classList.remove("bx-call-view-device-selector-menu-container-blocked");
-	};
+		this.videoQualityController.setDisabled(false);
+	}
 
 	getDeviceIconClass()
 	{
@@ -575,7 +607,63 @@ class DeviceMenu
 		}
 
 		this.eventEmitter.emit(DeviceMenuEvents.onSelect, {
-			deviceId: this.selectedDevice
-		})
-	};
-};
+			deviceId: this.selectedDevice,
+		});
+	}
+
+	// eslint-disable-next-line flowtype/require-return-type
+	#createVideoQualityController()
+	{
+		let instance = null;
+		let container = null;
+
+		return {
+			render: () => {
+				if (!this.isShowVideoQuality)
+				{
+					return null;
+				}
+
+				if (container)
+				{
+					return container;
+				}
+
+				container = Dom.create('div');
+				instance = new VideoQualityRange({
+					container,
+					title: Loc.getMessage('CALL_VIDEO_QUALITY_TITLE'),
+					videoQualityList: [
+						{
+							label: Loc.getMessage('CALL_VIDEO_QUALITY_WITHOUT_VIDEO'),
+							height: 0,
+							value: STREAM_QUALITY.NO_VIDEO,
+						},
+						{ label: '180p', height: 180, value: STREAM_QUALITY.LOW },
+						{ label: '360p', height: 360, value: STREAM_QUALITY.MEDIUM },
+						{ label: '720p', height: 720, value: STREAM_QUALITY.HIGH },
+					],
+					disabled: this.menuBlocked,
+					defaultHeight: Hardware.maxLocalStreamQualityHeight,
+					onVideoQualityChanged: (videoQuality) => {
+						this.eventEmitter.emit(DeviceMenuEvents.onChangeVideoQuality, { videoQuality });
+					},
+				});
+
+				instance.init();
+
+				return container;
+			},
+
+			setDisabled: (value) => {
+				instance?.setDisabled(value);
+			},
+
+			destroy: () => {
+				instance?.destroy();
+				instance = null;
+				container = null;
+			},
+		};
+	}
+}

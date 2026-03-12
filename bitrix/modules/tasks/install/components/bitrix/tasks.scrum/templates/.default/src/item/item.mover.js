@@ -19,7 +19,9 @@ import {Scroller} from "../utility/scroller";
 
 export type ItemsSortInfo = {
 	[id: number]: {
-		sort: number,
+		previousItemId?: number | null,
+		nextItemId?: number | null,
+		currentSort?: number,
 		entityId?: number,
 		tmpId?: string,
 		updatedItemId?: number
@@ -436,10 +438,7 @@ export class ItemMover extends EventEmitter
 		this.requestSender.updateItemSort({
 			entityId: entityTo.getId(),
 			itemIds: [item.getId()],
-			sortInfo: {
-				...this.calculateSort(entityTo.getListItemsNode(), new Set([item.getId()]), true),
-				...this.calculateSort(entityFrom.getListItemsNode(), new Set(), true)
-			}
+			sortInfo: this.calculateSort(entityTo.getListItemsNode(), new Set([item.getId()]), true),
 		})
 			.then(() => {
 				this.updateEntityCounters(entityFrom, entityTo);
@@ -574,7 +573,7 @@ export class ItemMover extends EventEmitter
 					this.scroller.scrollToItem(sortedItems.values().next().value);
 
 					this.requestSender.updateItemSort({
-						sortInfo: this.calculateSort(entity.getListItemsNode(), sortedItemsIds)
+						sortInfo: this.calculateSort(entity.getListItemsNode(), sortedItemsIds),
 					}).catch((response) => {
 						this.requestSender.showErrorAlert(response);
 					});
@@ -622,7 +621,7 @@ export class ItemMover extends EventEmitter
 							window.scrollTo({ top: containerPosition.top, behavior: 'smooth' });
 
 							this.requestSender.updateItemSort({
-								sortInfo: this.calculateSort(entity.getListItemsNode(), sortedItemsIds)
+								sortInfo: this.calculateSort(entity.getListItemsNode(), sortedItemsIds),
 							}).catch((response) => {
 								this.requestSender.showErrorAlert(response);
 							});
@@ -661,9 +660,7 @@ export class ItemMover extends EventEmitter
 	{
 		this.requestSender.updateItemSort({
 			itemIds: [item.getId()],
-			sortInfo: {
-				...this.calculateSort(listItemsNode, new Set([item.getId()]))
-			}
+			sortInfo: this.calculateSort(listItemsNode, new Set([item.getId()])),
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
@@ -672,7 +669,7 @@ export class ItemMover extends EventEmitter
 	moveInCurrentContainer(itemIds: Set<Item>, entity: Entity)
 	{
 		return this.requestSender.updateItemSort({
-			sortInfo: this.calculateSort(entity.getListItemsNode(), itemIds)
+			sortInfo: this.calculateSort(entity.getListItemsNode(), itemIds),
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
@@ -682,8 +679,8 @@ export class ItemMover extends EventEmitter
 	{
 		this.requestSender.updateItemSort({
 			entityId: endEntity.getId(),
-			itemIds: Array.from(itemIds),
-			sortInfo: this.calculateSort(endEntity.getListItemsNode(), itemIds, true)
+			itemIds: [...itemIds],
+			sortInfo: this.calculateSort(endEntity.getListItemsNode(), itemIds, true),
 		})
 			.then(() => this.updateEntityCounters(sourceEntity, endEntity))
 			.catch((response) => this.requestSender.showErrorAlert(response))
@@ -706,55 +703,96 @@ export class ItemMover extends EventEmitter
 	calculateSort(container, updatedItemsIds?: Set, moveToAnotherEntity = false): ItemsSortInfo
 	{
 		const listSortInfo = {};
-
 		const items = [...container.querySelectorAll('[data-sort]')];
-		let sort = 1;
+
+		const currentValues = new Map();
 		items.forEach((itemNode) => {
 			const itemId = parseInt(itemNode.dataset.id, 10);
-			const item = this.entityStorage.findItemByItemId(itemId);
-			if (item && !item.isSubTask())
-			{
+			const sortValue = parseFloat(itemNode.dataset.sort) || 0;
+			currentValues.set(itemId, sortValue);
+		});
+
+		if (updatedItemsIds && updatedItemsIds.size > 0)
+		{
+			const itemIdToIndexMap = new Map();
+			items.forEach((itemNode, index) => {
+				const itemId = parseInt(itemNode.dataset.id, 10);
+				itemIdToIndexMap.set(itemId, index);
+			});
+
+			const newSortValues = new Map();
+
+			updatedItemsIds.forEach((itemId) => {
+				const currentIndex = itemIdToIndexMap.get(itemId);
+				if (Type.isUndefined(currentIndex))
+				{
+					return;
+				}
+
+				let previousItemId = null;
+				let nextItemId = null;
+				let newSort = 1024;
+
+				if (currentIndex > 0)
+				{
+					previousItemId = parseInt(items[currentIndex - 1].dataset.id, 10);
+				}
+
+				if (currentIndex < items.length - 1)
+				{
+					nextItemId = parseInt(items[currentIndex + 1].dataset.id, 10);
+				}
+
+				if (previousItemId === null && nextItemId !== null)
+				{
+					const nextSort = currentValues.get(nextItemId) || 0;
+					newSort = nextSort / 2;
+				}
+				else if (previousItemId !== null && nextItemId === null)
+				{
+					const previousSort = currentValues.get(previousItemId) || 0;
+					newSort = previousSort + 1024;
+				}
+				else if (previousItemId !== null && nextItemId !== null)
+				{
+					const previousSort = currentValues.get(previousItemId) || 0;
+					const nextSort = currentValues.get(nextItemId) || 0;
+					newSort = (previousSort + nextSort) / 2;
+				}
+
+				newSortValues.set(itemId, newSort);
+
 				const tmpId = Text.getRandom();
-				let isSortUpdated = (sort !== item.getSort());
-				item.setSort(sort);
 				listSortInfo[itemId] = {
-					sort: sort
+					previousItemId,
+					nextItemId,
 				};
+
 				if (moveToAnotherEntity)
 				{
-					listSortInfo[itemId].entityId = container.dataset.entityId;
-					isSortUpdated = true;
+					listSortInfo[itemId].entityId = parseInt(container.dataset.entityId, 10);
 				}
-				if (isSortUpdated && updatedItemsIds && updatedItemsIds.has(itemId))
-				{
-					listSortInfo[itemId].tmpId = tmpId;
-					listSortInfo[itemId].updatedItemId = itemId;
-				}
-				itemNode.dataset.sort = sort;
 
-				sort++;
-			}
-		});
+				listSortInfo[itemId].tmpId = tmpId;
+				listSortInfo[itemId].updatedItemId = itemId;
+			});
+
+			updatedItemsIds.forEach((itemId) => {
+				const newSort = newSortValues.get(itemId);
+				if (newSort)
+				{
+					const item = this.entityStorage.findItemByItemId(itemId);
+					if (item)
+					{
+						item.setSort(newSort);
+					}
+				}
+			});
+		}
 
 		this.emit('calculateSort', listSortInfo);
 
 		return listSortInfo;
-	}
-
-	resortItems(entity: Entity)
-	{
-		let sort = 1;
-		[...entity.getListItemsNode().querySelectorAll('[data-sort]')]
-			.forEach((itemNode: HTMLElement) => {
-				const itemId = parseInt(itemNode.dataset.id, 10);
-				const item = this.entityStorage.findItemByItemId(itemId);
-				if (item && !item.isSubTask())
-				{
-					item.setSort(sort);
-					sort++;
-				}
-			})
-		;
 	}
 
 	moveToAnotherEntity(entityFrom: Entity, item: Item, targetEntity: ?Entity, bindButton?: HTMLElement)
@@ -848,11 +886,8 @@ export class ItemMover extends EventEmitter
 
 					this.requestSender.updateItemSort({
 						entityId: entityTo.getId(),
-						itemIds: Array.from(sortedItemsIds),
-						sortInfo: {
-							...this.calculateSort(entityTo.getListItemsNode(), sortedItemsIds, true),
-							...this.calculateSort(entityFrom.getListItemsNode(), new Set(), true)
-						}
+						itemIds: [...sortedItemsIds],
+						sortInfo: this.calculateSort(entityTo.getListItemsNode(), sortedItemsIds, true),
 					})
 						.then(() => {
 							this.updateEntityCounters(entityFrom, entityTo);
@@ -898,69 +933,62 @@ export class ItemMover extends EventEmitter
 
 	moveToPosition(entityFrom: Entity, entityTo: Entity, item: Item)
 	{
-		const isMoveFromAnotherEntity = (entityFrom.getId() !== entityTo.getId());
-
-		const itemNode = item.getNode() ? item.getNode() : item.render();
+		const itemNode = item.getNode() ?? item.render();
 		const itemSort = item.getSort();
-		const itemPreviousSortSort = item.getPreviousSort();
 
 		const entityListNode = entityTo.getListItemsNode();
-		const bindItemNode = entityListNode.children[itemSort - 1];
+
+		const bindItemNode = this.#findInsertionPosition(entityListNode, itemSort);
 
 		if (Dom.hasClass(bindItemNode, 'tasks-scrum__item'))
 		{
-			const bindItemSort = parseInt(bindItemNode.dataset.sort, 10);
-
 			const bindItem = this.entityStorage.findItemByItemId(parseInt(bindItemNode.dataset.id, 10));
 			if (bindItem.isParentTask() && bindItem.isShownSubTasks())
 			{
 				bindItem.hideSubTasks();
 			}
 
-			if (itemPreviousSortSort > 0 && bindItemSort >= itemPreviousSortSort)
-			{
-				if (isMoveFromAnotherEntity)
-				{
-					Dom.insertBefore(itemNode, bindItemNode);
-				}
-				else
-				{
-					this.planBuilder.appendItemAfterItem(itemNode, bindItemNode);
-				}
-			}
-			else
-			{
-				Dom.insertBefore(itemNode, bindItemNode);
-			}
+			Dom.insertBefore(itemNode, bindItemNode);
 		}
 		else
 		{
-			if (entityTo.isEmpty())
-			{
-				Dom.insertBefore(itemNode, entityTo.getLoaderNode());
-			}
-			else
-			{
-				if (entityTo.isBacklog())
-				{
-					Dom.insertBefore(itemNode, entityTo.getFirstItemNode());
-				}
-				else
-				{
-					Dom.insertBefore(itemNode, entityTo.getLoaderNode());
-				}
-			}
+			Dom.append(itemNode, entityListNode);
 		}
 
 		this.moveItemFromEntityToEntity(item, entityFrom, entityTo);
 
 		this.updateEntityCounters(entityFrom, entityTo);
+	}
 
-		if (isMoveFromAnotherEntity)
+	#findInsertionPosition(container: HTMLElement, targetSort: number): ?HTMLElement
+	{
+		const items = [...container.querySelectorAll('.tasks-scrum__item[data-sort]')];
+		if (items.length === 0)
 		{
-			this.resortItems(entityFrom);
+			return null;
 		}
-		this.resortItems(entityTo);
+
+		let left = 0;
+		let right = items.length - 1;
+		let result = null;
+
+		while (left <= right)
+		{
+			const mid = Math.floor((left + right) / 2);
+			const midSort = parseFloat(items[mid].dataset.sort) || 0;
+
+			if (midSort >= targetSort)
+			{
+				result = items[mid];
+				right = mid - 1;
+			}
+			else
+			{
+				left = mid + 1;
+			}
+		}
+
+		return result;
 	}
 
 	moveItemFromEntityToEntity(item: Item, entityFrom: Entity, entityTo: Entity)

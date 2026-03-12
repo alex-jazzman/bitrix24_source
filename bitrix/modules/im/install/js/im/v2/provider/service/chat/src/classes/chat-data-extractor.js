@@ -14,7 +14,9 @@ import type {
 	RawReaction,
 	RawCopilot,
 	RawMessagesAutoDeleteConfig,
+	RawStickerMessage,
 } from 'im.v2.provider.service.types';
+import { RawSticker } from '../types/chat';
 
 import type { ChatLoadRestResult } from '../types/chat';
 
@@ -100,6 +102,35 @@ export class ChatDataExtractor
 	getCommentInfo(): RawCommentInfo[]
 	{
 		return this.#restResult.commentInfo ?? [];
+	}
+
+	getStickerMessages(): RawStickerMessage[]
+	{
+		const stickerMessages = [];
+		if (!this.#restResult.messages)
+		{
+			return stickerMessages;
+		}
+
+		this.#restResult.messages.forEach((message) => {
+			const isSticker = Boolean(message.params.STICKER_PARAMS);
+			if (!isSticker)
+			{
+				return;
+			}
+
+			stickerMessages.push({
+				messageId: message.id,
+				...message.params.STICKER_PARAMS,
+			});
+		});
+
+		return stickerMessages;
+	}
+
+	getStickers(): RawSticker[]
+	{
+		return this.#restResult.stickers ?? [];
 	}
 
 	getCollabInfo(): ?RawCollabInfo

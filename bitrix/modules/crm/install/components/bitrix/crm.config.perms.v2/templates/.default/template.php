@@ -25,27 +25,20 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? "{$bodyClass} " : '') .
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background');
 
-$searchContainerId = 'crm-config-perms-v2-search-container';
+/** @var \Bitrix\UI\AccessRights\V2\Options $options */
+$options = $arResult['options'];
+
+$searchContainerId = str_replace('#', '', $options->getSearchContainerSelector());
 echo (\Bitrix\Crm\Tour\ConfigPermsUserSelector::getInstance())->build();
 
 ?>
-<div class="crm-config-perms-v2-header"">
+<div class="crm-config-perms-v2-header">
 	<?php if (!$arResult['shouldDisplayLeftMenu']):?>
 		<div class="crm-config-perms-v2-header-title"><?=Loc::getMessage('CRM_COMMON_PERMISSIONS_SETTINGS_ITEM')?></div>
 	<?php endif;?>
-	<div id="<?=$searchContainerId?>"></div>
+	<div id="<?= htmlspecialcharsbx($searchContainerId) ?>"></div>
 </div>
 <?php
-
-/** @var \Bitrix\Crm\Security\Role\UIAdapters\AccessRights\AccessRightsDTO $rolesData */
-$rolesData = $arResult['accessRightsData'];
-$controllerData = $arResult['controllerData'];
-/** @var int|null $maxVisibleUserGroups */
-$maxVisibleUserGroups = $arResult['maxVisibleUserGroups'];
-/** @var array|null $analytics */
-$analytics = $arResult['analytics'];
-$userSortConfig = $arResult['userSortConfig'];
-$userSortConfigName = $arResult['userSortConfigName'];
 
 if ($arResult['isSharedCrmPermissionsSlider'])
 {
@@ -68,30 +61,12 @@ if ($arResult['shouldDisplayLeftMenu'])
 $messages = Loc::loadLanguageFile(__FILE__);
 ?>
 
-<div id='bx-crm-perms-config-permissions'></div>
+<div id="<?= htmlspecialcharsbx($options->getContainerId()) ?>"></div>
 
 <script>
 	BX.message(<?=Json::encode($messages)?>);
-	const userGroups = <?= Json::encode($rolesData->userGroups) ?>;
-	const accessRights = <?= Json::encode($rolesData->accessRights) ?>;
-	const additionalSaveParams = <?= Json::encode($controllerData) ?>;
-	const AccessRightsOption = {
-		moduleId: 'crm',
-		component: 'bitrix:crm.config.perms.v2',
-		actionSave: 'save',
-		bodyType: 'json',
-		renderTo: document.getElementById('bx-crm-perms-config-permissions'),
-		userGroups,
-		accessRights,
-		additionalSaveParams,
-		isSaveOnlyChangedRights: true,
-		maxVisibleUserGroups: <?= is_int($maxVisibleUserGroups) ? $maxVisibleUserGroups : 'null' ?>,
-		searchContainerSelector: '#<?= $searchContainerId ?>',
-		analytics: <?= Json::encode($analytics) ?>,
-		sortConfigForAllUserGroups: <?= Json::encode($userSortConfig) ?>,
-		userSortConfigName: '<?= CUtil::JSEscape($userSortConfigName) ?>',
-	}
-	const AccessRights = new BX.UI.AccessRights.V2.App(AccessRightsOption)
+	const AccessRightsOption = <?= Json::encode($options) ?>;
+	const AccessRights = new BX.UI.AccessRights.V2.App(AccessRightsOption);
 	const ConfigPerms = new BX.Crm.ConfigPermsComponent({
 		menuId: '<?=$arResult['menuId']?>',
 		AccessRightsOption,
@@ -117,7 +92,7 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 			'TYPE' => 'custom',
 			'LAYOUT' => (new \Bitrix\UI\Buttons\Button())
 				->setColor(\Bitrix\UI\Buttons\Color::LINK)
-				->setText(\Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_CANCEL'))
+				->setText(Loc::getMessage('CRM_COMMON_CANCEL'))
 				->bindEvent('click', new \Bitrix\UI\Buttons\JsCode('ConfigPerms.AccessRights.fireEventReset()'))
 				->render()
 			,

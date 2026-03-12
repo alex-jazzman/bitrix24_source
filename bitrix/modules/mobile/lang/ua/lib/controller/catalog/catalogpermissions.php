@@ -1,2 +1,0 @@
-<?php
-$MESS["MOBILE_CONTROLLER_CATALOG_PERMISSIONS_ACCESS_DENIED"] = "Доступ заборонено";

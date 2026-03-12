@@ -1,9 +1,9 @@
-import { Runtime } from 'main.core';
+import { Type } from 'main.core';
+
 import { Chip, ChipDesign, type ChipImage } from 'ui.system.chip.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Core } from 'tasks.v2.core';
 import { Model } from 'tasks.v2.const';
 import { Hint } from 'tasks.v2.component.elements.hint';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
@@ -26,6 +26,7 @@ export const GroupChip = {
 		GroupPopup,
 	},
 	inject: {
+		settings: {},
 		analytics: {},
 		cardType: {},
 		task: {},
@@ -105,8 +106,13 @@ export const GroupChip = {
 				return null;
 			}
 
+			if (!this.group?.image)
+			{
+				return null;
+			}
+
 			return {
-				src: encodeURI(this.group?.image),
+				src: encodeURI(this.group.image),
 				alt: this.group?.name,
 			};
 		},
@@ -116,7 +122,7 @@ export const GroupChip = {
 		},
 		isLocked(): boolean
 		{
-			return !Core.getParams().restrictions.project.available;
+			return !this.settings.restrictions.project.available;
 		},
 	},
 	created(): void
@@ -139,7 +145,7 @@ export const GroupChip = {
 			if (this.isLocked)
 			{
 				void showLimit({
-					featureId: Core.getParams().restrictions.project.featureId,
+					featureId: this.settings.restrictions.project.featureId,
 				});
 
 				return;
@@ -170,10 +176,11 @@ export const GroupChip = {
 				this.highlightField();
 			}
 
-			if (groupId && groupId !== this.task.groupId)
+			if (groupId)
 			{
 				analytics.sendAddProject(this.analytics, {
 					cardType: this.cardType,
+					taskId: Type.isNumber(this.taskId) ? this.taskId : 0,
 					viewersCount: this.task.auditorsIds.length,
 					coexecutorsCount: this.task.accomplicesIds.length,
 				});

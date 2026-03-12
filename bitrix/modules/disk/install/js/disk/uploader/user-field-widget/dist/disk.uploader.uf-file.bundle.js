@@ -1581,6 +1581,7 @@ this.BX.Disk = this.BX.Disk || {};
 	          preload: true
 	        });
 	        onAddFile == null ? void 0 : onAddFile();
+	        options.onSuccess == null ? void 0 : options.onSuccess(response);
 	        if (newTab !== null && response.openUrl) {
 	          newTab.location.href = response.openUrl;
 	        }
@@ -1601,14 +1602,20 @@ this.BX.Disk = this.BX.Disk || {};
 	          preload: true
 	        });
 	        onAddFile == null ? void 0 : onAddFile();
+	        options.onSuccess == null ? void 0 : options.onSuccess(response);
 	      }
 	    };
 	    const createProcess = new BX.Disk.Document.CreateProcess({
 	      typeFile: documentType,
 	      serviceCode: documentService,
 	      byUnifiedLink,
+	      triggerNode: options.node,
 	      onAfterSave: saveCallback,
-	      onAfterCreateFile: saveCallback
+	      onAfterCreateFile: saveCallback,
+	      analytics: {
+	        c_sub_section: 'new_element',
+	        c_element: 'docs_attach'
+	      }
 	    });
 	    createProcess.start();
 	  }
@@ -1808,7 +1815,8 @@ this.BX.Disk = this.BX.Disk || {};
 	  data() {
 	    var _this$userFieldContro;
 	    return {
-	      currentServiceName: (_this$userFieldContro = this.userFieldControl.getCurrentDocumentService()) == null ? void 0 : _this$userFieldContro.name
+	      currentServiceName: (_this$userFieldContro = this.userFieldControl.getCurrentDocumentService()) == null ? void 0 : _this$userFieldContro.name,
+	      cardButtonSuffix: '-card-button'
 	    };
 	  },
 	  computed: {
@@ -1834,7 +1842,8 @@ this.BX.Disk = this.BX.Disk || {};
 	        uploader: this.uploader,
 	        documentType,
 	        documentHandlers: Object.values(userFieldSettings.getDocumentServices()),
-	        onAddFile: () => this.userFieldControl.showUploaderPanel()
+	        onAddFile: () => this.userFieldControl.showUploaderPanel(),
+	        node: this.$refs[`${documentType}${this.cardButtonSuffix}`]
 	      });
 	    },
 	    openMenu() {
@@ -1868,28 +1877,28 @@ this.BX.Disk = this.BX.Disk || {};
 				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Docx)">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--doc">
 						<div class="disk-user-field-panel-card-icon" v-html="renderSvg(DocumentType.Docx)"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
+						<div class="disk-user-field-panel-card-btn" :ref="DocumentType.Docx + cardButtonSuffix"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_DOCX') }}</div>
 					</div>
 				</div>
 				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Xlsx)">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--xls">
 						<div class="disk-user-field-panel-card-icon" v-html="renderSvg(DocumentType.Xlsx)"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
+						<div class="disk-user-field-panel-card-btn" :ref="DocumentType.Xlsx + cardButtonSuffix"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_XLSX') }}</div>
 					</div>
 				</div>
 				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Pptx)">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--ppt">
 						<div class="disk-user-field-panel-card-icon" v-html="renderSvg(DocumentType.Pptx)"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
+						<div class="disk-user-field-panel-card-btn" :ref="DocumentType.Pptx + cardButtonSuffix"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_PPTX') }}</div>
 					</div>
 				</div>
 				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Board)" v-if="isBoardsEnabled">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--board">
 						<div class="disk-user-field-panel-card-icon"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
+						<div class="disk-user-field-panel-card-btn" :ref="DocumentType.Board + cardButtonSuffix"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_BOARD') }}</div>
 					</div>
 				</div>
@@ -2158,6 +2167,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      minWidth: 250,
 	      sections: babelHelpers.classPrivateFieldLooseBase(this, _getSections)[_getSections](),
 	      items: babelHelpers.classPrivateFieldLooseBase(this, _getItems$1)[_getItems$1](),
+	      closeOnItemClick: false,
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].menuOptions
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _menu$2)[_menu$2].show(bindElement);
@@ -2175,14 +2185,20 @@ this.BX.Disk = this.BX.Disk || {};
 	  const items = [{
 	    title: main_core.Loc.getMessage('DISK_UF_WIDGET_UPLOAD_FILES'),
 	    icon: ui_iconSet_api_core.Outline.DOWNLOAD,
-	    onClick: () => babelHelpers.classPrivateFieldLooseBase(this, _browse)[_browse]()
+	    onClick: () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _browse)[_browse]();
+	      this.getMenu().close();
+	    }
 	  }, {
 	    title: main_core.Loc.getMessage('DISK_UF_WIDGET_MY_DRIVE'),
 	    icon: ui_iconSet_api_core.Outline.UPLOAD,
-	    onClick: () => openDiskFileDialog({
-	      dialogId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].dialogId,
-	      uploader: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader
-	    })
+	    onClick: () => {
+	      openDiskFileDialog({
+	        dialogId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].dialogId,
+	        uploader: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader
+	      });
+	      this.getMenu().close();
+	    }
 	  }];
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].compact === true) {
 	    return items;
@@ -2215,11 +2231,14 @@ this.BX.Disk = this.BX.Disk || {};
 	  }
 	  return {
 	    title: importServices[documentService].name,
-	    onClick: () => openCloudFileDialog({
-	      dialogId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].dialogId,
-	      uploader: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader,
-	      serviceId: documentService
-	    })
+	    onClick: () => {
+	      openCloudFileDialog({
+	        dialogId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].dialogId,
+	        uploader: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader,
+	        serviceId: documentService
+	      });
+	      this.getMenu().close();
+	    }
 	  };
 	}
 	function _getCreateDocumentItem2(documentType) {
@@ -2232,11 +2251,25 @@ this.BX.Disk = this.BX.Disk || {};
 	    sectionCode: sectionCreateDocument,
 	    title: babelHelpers.classPrivateFieldLooseBase(this, _getCreateDocumentTitle)[_getCreateDocumentTitle](documentType),
 	    svg: babelHelpers.classPrivateFieldLooseBase(this, _getDocumentSvg)[_getDocumentSvg](documentType),
-	    onClick: () => createDocumentDialog({
-	      uploader: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader,
-	      documentType,
-	      documentHandlers: Object.values(userFieldSettings.getDocumentServices())
-	    })
+	    onClick: () => {
+	      var _node$closest;
+	      const titleNodes = this.getMenu().getPopupContainer().querySelectorAll('.ui-popup-menu-item-title-text');
+	      const titleToFind = babelHelpers.classPrivateFieldLooseBase(this, _getCreateDocumentTitle)[_getCreateDocumentTitle](documentType);
+	      const node = [...titleNodes].find(node => node.textContent === titleToFind);
+	      const targetNode = (_node$closest = node == null ? void 0 : node.closest('.ui-popup-menu-item')) != null ? _node$closest : null;
+	      createDocumentDialog({
+	        uploader: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader,
+	        documentType,
+	        documentHandlers: Object.values(userFieldSettings.getDocumentServices()),
+	        node: targetNode,
+	        onSuccess: () => {
+	          this.getMenu().close();
+	        }
+	      });
+	      if (documentType === DocumentType.Board) {
+	        this.getMenu().close();
+	      }
+	    }
 	  };
 	}
 	function _getCreateDocumentTitle2(documentType) {

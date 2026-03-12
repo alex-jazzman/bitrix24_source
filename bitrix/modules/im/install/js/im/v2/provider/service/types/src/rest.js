@@ -254,6 +254,11 @@ export type RawLegacyRecentItem = {
 		status: $Keys<typeof MessageStatus>,
 		text: string,
 		uuid: string,
+		sticker: {
+			id: number,
+			pack_id: number,
+			pack_type: string,
+		}
 	},
 	type: 'user' | 'chat',
 	title: string,
@@ -288,21 +293,37 @@ export type RawRecentItem = {
 	unread: boolean,
 };
 
-type RawStickerType = 'image';
-
-type RawPackType = 'vendor' | 'custom' | 'market';
+type RawPackType = 'vendor' | 'custom';
 
 export type RawSticker = {
 	id: number,
+	packId: number,
+	packType: RawPackType,
+	type: 'image',
 	uri: string,
-	type: RawStickerType,
-	packId?: number,
-	packType?: string,
+	width: number,
+	height: number,
+	sort: number,
 };
 
 export type RawStickerPack = {
 	id: number,
+	key: string, // format: `${id}:${type}`
 	type: RawPackType,
 	name: string,
-	stickers: Array<RawSticker>,
+	authorId: number | null,
+	isAdded: boolean,
+};
+
+export type RawStickerParams = {
+	id: number,
+	packId: number,
+	packType: RawPackType,
+};
+
+export type RawStickerMessage = {
+	messageId: number,
+	id: number,
+	packId: number,
+	packType: RawPackType,
 };

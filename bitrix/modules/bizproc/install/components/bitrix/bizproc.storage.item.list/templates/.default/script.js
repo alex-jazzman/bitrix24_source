@@ -29,7 +29,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	            slider.close();
 	          }
 	          top.BX.Event.EventEmitter.emit('BX.Bizproc.Component.StorageItemList:onStorageRemove', {
-	            storageId: storageId
+	            storageId
 	          });
 	        }
 	      }).catch(error => {

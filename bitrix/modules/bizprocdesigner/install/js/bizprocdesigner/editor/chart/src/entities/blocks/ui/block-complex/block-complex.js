@@ -1,10 +1,14 @@
 import { useBlockDiagram, Port } from 'ui.block-diagram';
 import { FeatureCode } from 'bizprocdesigner.feature';
-// eslint-disable-next-line no-unused-vars
 import { validationInputOutputRule, normalyzeInputOutputConnection } from '../../utils';
 import { useLoc, useFeature } from '../../../../shared/composables';
+import { PORT_TYPES } from '../../../../shared/constants';
+
 import './style.css';
+
 import type { Port as TPort } from '../../../../shared/types';
+
+const NOT_REALLY_COMPLEX_BLOCK = new Set(['ForEachActivity', 'IfElseBranchActivity']);
 
 type BlockComplexSetup = {
 	updatePortPosition: () => void;
@@ -13,7 +17,7 @@ type BlockComplexSetup = {
 
 // @vue/component
 export const BlockComplexContent = {
-	name: 'block-complex',
+	name: 'BlockComplexContent',
 	components: { Port },
 	props:
 	{
@@ -23,6 +27,17 @@ export const BlockComplexContent = {
 			type: Object,
 			required: true,
 		},
+		/** @type Array<TPort> */
+		ports:
+		{
+			type: Array,
+			required: true,
+		},
+		title:
+		{
+			type: String,
+			required: true,
+		},
 		disabled: {
 			type: Boolean,
 			default: false,
@@ -30,12 +45,13 @@ export const BlockComplexContent = {
 	},
 	setup(): BlockComplexSetup
 	{
-		const { updatePortPosition } = useBlockDiagram();
+		const { updatePortPosition, newConnection } = useBlockDiagram();
 		const { getMessage } = useLoc();
 		const { isFeatureAvailable } = useFeature();
 
 		return {
 			updatePortPosition,
+			newConnection,
 			getMessage,
 			isFeatureAvailable,
 			normalyzeInputOutputConnection,
@@ -44,26 +60,40 @@ export const BlockComplexContent = {
 	},
 	computed:
 	{
+		inputPorts(): Array<TPort>
+		{
+			return this.ports
+				.filter((port) => port.type === PORT_TYPES.input);
+		},
+		outputPorts(): Array<TPort>
+		{
+			return this.ports
+				.filter((port) => port.type === PORT_TYPES.output);
+		},
 		rulePorts(): Array<TPort>
 		{
-			return this.block.ports.input.filter((port) => !port.isConnectionPort);
+			return this.inputPorts.filter((port) => !port.isConnectionPort);
 		},
 		connectionPorts(): Array<TPort>
 		{
-			return this.block.ports.input.filter((port) => port.isConnectionPort);
+			return this.inputPorts.filter((port) => port.isConnectionPort);
 		},
 		inputPortsLength(): number
 		{
-			return this.block.ports.input.length;
+			return this.inputPorts.length;
 		},
 		outputPortsLength(): number
 		{
-			return this.block.ports.output.length;
+			return this.outputPorts.length;
 		},
 		areConnectionsAvailable(): boolean
 		{
 			return this.isFeatureAvailable(FeatureCode.complexNodeConnections)
 				&& this.connectionPorts.length > 0;
+		},
+		isReallyComplexBlock(): boolean
+		{
+			return !NOT_REALLY_COMPLEX_BLOCK.has(this.block.activity.Type);
 		},
 	},
 	watch:
@@ -71,7 +101,7 @@ export const BlockComplexContent = {
 		inputPortsLength(): void
 		{
 			this.$nextTick(() => {
-				this.block.ports.input.forEach((port) => {
+				this.inputPorts.forEach((port) => {
 					this.updatePortPosition(this.block.id, port.id);
 				});
 			});
@@ -79,7 +109,7 @@ export const BlockComplexContent = {
 		outputPortsLength(): void
 		{
 			this.$nextTick(() => {
-				this.block.ports.output.forEach((port) => {
+				this.outputPorts.forEach((port) => {
 					this.updatePortPosition(this.block.id, port.id);
 				});
 			});
@@ -87,7 +117,10 @@ export const BlockComplexContent = {
 	},
 	template: `
 		<div class="block-complex">
-			<slot name="header" />
+			<slot
+				name="header"
+				:title="title"
+			/>
 			<div class="block-complex__content">
 				<div class="block-complex__content_row block-complex__content_rules">
 					<div class="block-complex__content_col">
@@ -109,14 +142,20 @@ export const BlockComplexContent = {
 							/>
 							<span class="block-complex__content_col-value-text">{{ port.title }}</span>
 						</div>
-						<slot name="addPortPoint" position="left" />
+						<div class="block-complex__content_col-value">
+							<slot
+								v-if="isReallyComplexBlock"
+								name="portPlaceholder"
+								:ports="rulePorts"
+							/>
+						</div>
 					</div>
 					<div class="block-complex__content_col --right">
 						<span class="block-complex__content_label">
 							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_BLOCK_RULES_OUTPUT_TITLE') }}
 						</span>
 						<div
-							v-for="port in block.ports.output"
+							v-for="port in outputPorts"
 							:key="port.id"
 							class="block-complex__content_col-value"
 						>
@@ -130,7 +169,6 @@ export const BlockComplexContent = {
 								position="right"
 							/>
 						</div>
-						<slot name="addPortPoint" position="right" />
 					</div>
 				</div>
 				<div
@@ -155,10 +193,6 @@ export const BlockComplexContent = {
 								/>
 								<span class="block-complex__content_col-value-text">{{ port.title }}</span>
 							</div>
-							<slot name="addPortPoint" position="left" />
-						</div>
-						<div class="block-complex__content_col --right">
-							<slot name="addPortPoint" position="right" />
 						</div>
 					</div>
 				</div>

@@ -2,31 +2,56 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,main_core,tasks_v2_lib_idUtils,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient,tasks_v2_provider_service_taskService,tasks_v2_provider_service_templateService,tasks_v2_component_fields_userFields) {
+(function (exports,main_core,ui_notificationManager,tasks_v2_lib_idUtils,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient,tasks_v2_provider_service_taskService,tasks_v2_provider_service_templateService,tasks_v2_component_fields_userFields) {
 	'use strict';
 
 	var _cacheContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cacheContent");
 	var _cacheRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cacheRequest");
-	var _currentTaskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTaskId");
-	var _currentIsTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentIsTemplate");
-	var _currentTemplateId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTemplateId");
+	var _currentParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentParams");
 	var _getContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
 	var _getTasksContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTasksContent");
 	var _getTemplateContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTemplateContent");
 	var _getTaskFromTemplateContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTaskFromTemplateContent");
 	var _openSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openSlider");
 	var _handleSliderClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderClose");
+	var _handleSliderCloseComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderCloseComplete");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _renderContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderContent");
 	var _renderTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTitle");
 	var _renderFooter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderFooter");
+	var _renderConfirmButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderConfirmButton");
+	var _renderCancelButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCancelButton");
 	var _convertToArray = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("convertToArray");
 	var _collectUserFieldsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collectUserFieldsData");
 	var _buildSchemeEntry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildSchemeEntry");
 	var _getEntityId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEntityId");
 	var _prepareValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareValue");
+	var _showError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showError");
+	var _currentTaskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTaskId");
+	var _currentIsTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentIsTemplate");
+	var _currentTemplateId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTemplateId");
+	var _currentCopiedFromId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentCopiedFromId");
 	class UserFieldsSlider {
 	  constructor() {
+	    Object.defineProperty(this, _currentCopiedFromId, {
+	      get: _get_currentCopiedFromId,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _currentTemplateId, {
+	      get: _get_currentTemplateId,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _currentIsTemplate, {
+	      get: _get_currentIsTemplate,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _currentTaskId, {
+	      get: _get_currentTaskId,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _showError, {
+	      value: _showError2
+	    });
 	    Object.defineProperty(this, _prepareValue, {
 	      value: _prepareValue2
 	    });
@@ -42,6 +67,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _convertToArray, {
 	      value: _convertToArray2
 	    });
+	    Object.defineProperty(this, _renderCancelButton, {
+	      value: _renderCancelButton2
+	    });
+	    Object.defineProperty(this, _renderConfirmButton, {
+	      value: _renderConfirmButton2
+	    });
 	    Object.defineProperty(this, _renderFooter, {
 	      value: _renderFooter2
 	    });
@@ -54,8 +85,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _render, {
 	      value: _render2
 	    });
-	    Object.defineProperty(this, _handleSliderClose, {
-	      value: _handleSliderClose2
+	    Object.defineProperty(this, _handleSliderCloseComplete, {
+	      value: _handleSliderCloseComplete2
 	    });
 	    Object.defineProperty(this, _openSlider, {
 	      value: _openSlider2
@@ -80,29 +111,45 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _currentTaskId, {
+	    Object.defineProperty(this, _currentParams, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _currentIsTemplate, {
+	    Object.defineProperty(this, _handleSliderClose, {
 	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _currentTemplateId, {
-	      writable: true,
-	      value: void 0
+	      value: () => {
+	        const container = document.getElementById('user-fields-slider-content');
+	        if (!container) {
+	          return;
+	        }
+	        const {
+	          scheme
+	        } = babelHelpers.classPrivateFieldLooseBase(this, _collectUserFieldsData)[_collectUserFieldsData](container);
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _currentIsTemplate)[_currentIsTemplate]) {
+	          void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateUserFieldScheme`, scheme);
+	          const taskScheme = [...this.$store.getters[`${tasks_v2_const.Model.Interface}/taskUserFieldScheme`]];
+	          taskScheme.push(...scheme.filter(it => !taskScheme.some(({
+	            id
+	          }) => id === it.id)));
+	          void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTaskUserFieldScheme`, taskScheme);
+	        } else {
+	          void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTaskUserFieldScheme`, scheme);
+	          const templateScheme = [...this.$store.getters[`${tasks_v2_const.Model.Interface}/templateUserFieldScheme`]];
+	          templateScheme.push(...scheme.filter(it => !templateScheme.some(({
+	            id
+	          }) => id === it.id)));
+	          void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateUserFieldScheme`, templateScheme);
+	        }
+	      }
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _cacheContent)[_cacheContent] = new Map();
 	    babelHelpers.classPrivateFieldLooseBase(this, _cacheRequest)[_cacheRequest] = new Map();
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId] = 0;
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentIsTemplate)[_currentIsTemplate] = false;
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentParams)[_currentParams] = {};
 	  }
-	  async open(taskId, isTemplate, templateId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId] = taskId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentIsTemplate)[_currentIsTemplate] = isTemplate;
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentTemplateId)[_currentTemplateId] = templateId;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _cacheContent)[_cacheContent].has(taskId)) {
-	      const userFieldsElement = babelHelpers.classPrivateFieldLooseBase(this, _cacheContent)[_cacheContent].get(taskId);
+	  async open(params) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentParams)[_currentParams] = params;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _cacheContent)[_cacheContent].has(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId])) {
+	      const userFieldsElement = babelHelpers.classPrivateFieldLooseBase(this, _cacheContent)[_cacheContent].get(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId]);
 	      if (userFieldsElement) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _openSlider)[_openSlider](userFieldsElement);
 	      }
@@ -113,7 +160,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    BX.Runtime.html(userFieldsElement, content, {
 	      useAdjacentHTML: true
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _cacheContent)[_cacheContent].set(taskId, userFieldsElement);
+	    babelHelpers.classPrivateFieldLooseBase(this, _cacheContent)[_cacheContent].set(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId], userFieldsElement);
 	    babelHelpers.classPrivateFieldLooseBase(this, _openSlider)[_openSlider](userFieldsElement);
 	  }
 	  async handleConfirm() {
@@ -122,27 +169,34 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return;
 	    }
 	    const {
-	      userFields,
-	      scheme
+	      userFields
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _collectUserFieldsData)[_collectUserFieldsData](container);
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _currentIsTemplate)[_currentIsTemplate]) {
-	      await this.updateTemplateUserFields(userFields, scheme);
+	      void this.updateTemplateUserFields(userFields);
 	    } else {
-	      await this.updateTaskUserFields(userFields, scheme);
+	      void this.updateTaskUserFields(userFields);
 	    }
 	    BX.SidePanel.Instance.close();
 	  }
-	  async updateTaskUserFields(userFields, scheme) {
-	    await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTaskUserFieldScheme`, scheme);
-	    void tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId], {
+	  async updateTaskUserFields(userFields) {
+	    var _result$Endpoint$Task;
+	    const result = await tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId], {
 	      userFields
 	    });
+	    if ((_result$Endpoint$Task = result[tasks_v2_const.Endpoint.TaskUpdate]) != null && _result$Endpoint$Task.length) {
+	      const error = result[tasks_v2_const.Endpoint.TaskUpdate][0];
+	      babelHelpers.classPrivateFieldLooseBase(this, _showError)[_showError](error);
+	    }
 	  }
-	  async updateTemplateUserFields(userFields, scheme) {
-	    await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateUserFieldScheme`, scheme);
-	    void tasks_v2_provider_service_templateService.templateService.update(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId], {
+	  async updateTemplateUserFields(userFields) {
+	    var _result$Endpoint$Temp;
+	    const result = await tasks_v2_provider_service_templateService.templateService.update(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId], {
 	      userFields
 	    });
+	    if ((_result$Endpoint$Temp = result[tasks_v2_const.Endpoint.TemplateUpdate]) != null && _result$Endpoint$Temp.length) {
+	      const error = result[tasks_v2_const.Endpoint.TemplateUpdate][0];
+	      babelHelpers.classPrivateFieldLooseBase(this, _showError)[_showError](error);
+	    }
 	  }
 	  get $store() {
 	    return tasks_v2_core.Core.getStore();
@@ -154,12 +208,24 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  }
 	  try {
 	    let html = '';
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _currentIsTemplate)[_currentIsTemplate]) {
-	      html = await babelHelpers.classPrivateFieldLooseBase(this, _getTemplateContent)[_getTemplateContent]();
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _currentCopiedFromId)[_currentCopiedFromId]) {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _currentIsTemplate)[_currentIsTemplate]) {
+	        const id = tasks_v2_lib_idUtils.idUtils.unbox(babelHelpers.classPrivateFieldLooseBase(this, _currentCopiedFromId)[_currentCopiedFromId]);
+	        html = await babelHelpers.classPrivateFieldLooseBase(this, _getTemplateContent)[_getTemplateContent](id);
+	      } else {
+	        const id = main_core.Type.isNumber(babelHelpers.classPrivateFieldLooseBase(this, _currentCopiedFromId)[_currentCopiedFromId]) ? babelHelpers.classPrivateFieldLooseBase(this, _currentCopiedFromId)[_currentCopiedFromId] : 0;
+	        html = await babelHelpers.classPrivateFieldLooseBase(this, _getTasksContent)[_getTasksContent](id);
+	      }
+	    } else if (babelHelpers.classPrivateFieldLooseBase(this, _currentIsTemplate)[_currentIsTemplate]) {
+	      const id = tasks_v2_lib_idUtils.idUtils.unbox(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId]);
+	      html = await babelHelpers.classPrivateFieldLooseBase(this, _getTemplateContent)[_getTemplateContent](id);
 	    } else if (babelHelpers.classPrivateFieldLooseBase(this, _currentTemplateId)[_currentTemplateId]) {
-	      html = await babelHelpers.classPrivateFieldLooseBase(this, _getTaskFromTemplateContent)[_getTaskFromTemplateContent]();
+	      var _babelHelpers$classPr;
+	      const id = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _currentTemplateId)[_currentTemplateId]) != null ? _babelHelpers$classPr : 0;
+	      html = await babelHelpers.classPrivateFieldLooseBase(this, _getTaskFromTemplateContent)[_getTaskFromTemplateContent](id);
 	    } else {
-	      html = await babelHelpers.classPrivateFieldLooseBase(this, _getTasksContent)[_getTasksContent]();
+	      const id = main_core.Type.isNumber(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId]) ? babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId] : 0;
+	      html = await babelHelpers.classPrivateFieldLooseBase(this, _getTasksContent)[_getTasksContent](id);
 	    }
 	    const content = babelHelpers.classPrivateFieldLooseBase(this, _render)[_render](html);
 	    babelHelpers.classPrivateFieldLooseBase(this, _cacheRequest)[_cacheRequest].set(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId], content);
@@ -169,9 +235,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    return '';
 	  }
 	}
-	async function _getTasksContent2() {
+	async function _getTasksContent2(id) {
 	  var _data$html;
-	  const id = main_core.Type.isNumber(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId]) ? babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId] : 0;
 	  const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.LegacyUserFieldGetTask, {
 	    task: {
 	      id
@@ -179,9 +244,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  });
 	  return (_data$html = data == null ? void 0 : data.html) != null ? _data$html : '';
 	}
-	async function _getTemplateContent2() {
+	async function _getTemplateContent2(id) {
 	  var _data$html2;
-	  const id = tasks_v2_lib_idUtils.idUtils.unbox(babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId]);
 	  const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.LegacyUserFieldGetTemplate, {
 	    template: {
 	      id
@@ -189,15 +253,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  });
 	  return (_data$html2 = data == null ? void 0 : data.html) != null ? _data$html2 : '';
 	}
-	async function _getTaskFromTemplateContent2() {
-	  var _babelHelpers$classPr, _data$html3;
-	  const id = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _currentTemplateId)[_currentTemplateId]) != null ? _babelHelpers$classPr : 0;
-	  const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.LegacyUserFieldGetTemplate, {
+	async function _getTaskFromTemplateContent2(id) {
+	  var _data$html3;
+	  const data = await tasks_v2_lib_apiClient.apiClient.post('LegacyUserField.getTaskFromTemplate', {
 	    template: {
-	      id,
-	      task: {
-	        id: babelHelpers.classPrivateFieldLooseBase(this, _currentTaskId)[_currentTaskId]
-	      }
+	      id
 	    }
 	  });
 	  return (_data$html3 = data == null ? void 0 : data.html) != null ? _data$html3 : '';
@@ -212,11 +272,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    customRightBoundary: 0,
 	    contentCallback: () => content,
 	    events: {
-	      onCloseComplete: () => babelHelpers.classPrivateFieldLooseBase(this, _handleSliderClose)[_handleSliderClose]()
+	      onClose: babelHelpers.classPrivateFieldLooseBase(this, _handleSliderClose)[_handleSliderClose],
+	      onCloseComplete: () => babelHelpers.classPrivateFieldLooseBase(this, _handleSliderCloseComplete)[_handleSliderCloseComplete]()
 	    }
 	  });
 	}
-	function _handleSliderClose2() {
+	function _handleSliderCloseComplete2() {
 	  var _BX$calendar;
 	  // Hacks for BX.calendar
 	  const calendar = (_BX$calendar = BX.calendar) == null ? void 0 : _BX$calendar.get();
@@ -266,21 +327,31 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	function _renderFooter2() {
 	  return `
 			<div class="tasks-task-full-card-user-fields-footer">
-				<button class="ui-btn --air ui-btn-lg --style-filled ui-btn-no-caps" onclick="top.BX.Tasks.V2.Component.userFieldsSlider.handleConfirm();">
-					<span class="ui-btn-text">
-						<span class="ui-btn-text-inner">
-							${main_core.Loc.getMessage('TASKS_V2_USER_FIELDS_SLIDER_CONFIRM')}
-						</span>
-					</span>
-				</button>
-				<button class="ui-btn --air ui-btn-lg --style-plain ui-btn-no-caps" onclick="top.BX.SidePanel.Instance.close();">
-					<span class="ui-btn-text">
-						<span class="ui-btn-text-inner">
-							${main_core.Loc.getMessage('TASKS_V2_USER_FIELDS_SLIDER_CANCEL')}
-						</span>
-					</span>
-				</button>
+				${babelHelpers.classPrivateFieldLooseBase(this, _renderConfirmButton)[_renderConfirmButton]()}
+				${babelHelpers.classPrivateFieldLooseBase(this, _renderCancelButton)[_renderCancelButton]()}
 			</div>
+		`;
+	}
+	function _renderConfirmButton2() {
+	  return `
+			<button class="ui-btn --air ui-btn-lg --style-filled ui-btn-no-caps" onclick="top.BX.Tasks.V2.Component.userFieldsSlider.handleConfirm();">
+				<span class="ui-btn-text">
+					<span class="ui-btn-text-inner">
+						${main_core.Loc.getMessage('TASKS_V2_USER_FIELDS_SLIDER_CONFIRM')}
+					</span>
+				</span>
+			</button>
+		`;
+	}
+	function _renderCancelButton2() {
+	  return `
+			<button class="ui-btn --air ui-btn-lg --style-plain ui-btn-no-caps" onclick="top.BX.SidePanel.Instance.close();">
+				<span class="ui-btn-text">
+					<span class="ui-btn-text-inner">
+						${main_core.Loc.getMessage('TASKS_V2_USER_FIELDS_SLIDER_CANCEL')}
+					</span>
+				</span>
+			</button>
 		`;
 	}
 	function _convertToArray2(userFields) {
@@ -362,9 +433,27 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  }
 	  return value;
 	}
+	function _showError2(error) {
+	  ui_notificationManager.Notifier.notifyViaBrowserProvider({
+	    id: 'tasks-user-fields-update-error',
+	    text: error == null ? void 0 : error.message
+	  });
+	}
+	function _get_currentTaskId() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _currentParams)[_currentParams].taskId;
+	}
+	function _get_currentIsTemplate() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _currentParams)[_currentParams].isTemplate;
+	}
+	function _get_currentTemplateId() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _currentParams)[_currentParams].templateId;
+	}
+	function _get_currentCopiedFromId() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _currentParams)[_currentParams].copiedFromId;
+	}
 	const userFieldsSlider = new UserFieldsSlider();
 
 	exports.userFieldsSlider = userFieldsSlider;
 
-}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX,BX.Tasks.V2.Lib,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Fields));
+}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX,BX.UI.NotificationManager,BX.Tasks.V2.Lib,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Fields));
 //# sourceMappingURL=user-fields-slider.bundle.js.map

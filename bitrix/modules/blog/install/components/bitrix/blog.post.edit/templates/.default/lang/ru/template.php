@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_IMAGE"] = "Изображение";
 $MESS["BLOG_DELETE"] = "удалить";
 $MESS["BLOG_CATEGORY"] = "Теги";
@@ -79,4 +79,3 @@ $MESS["BLOG_SHOW_SEO"] = "SEO описание";
 $MESS["BLOG_SHOW_SEO_TITLE"] = "Заголовок страницы";
 $MESS["BLOG_SHOW_SEO_TAGS"] = "Ключевые слова";
 $MESS["BLOG_SHOW_SEO_DESCRIPTION"] = "Описание";
-?>

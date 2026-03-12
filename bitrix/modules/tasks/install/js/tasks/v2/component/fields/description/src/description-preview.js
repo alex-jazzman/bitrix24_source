@@ -83,7 +83,7 @@ export const DescriptionPreview = {
 		},
 	},
 	template: `
-		<div class="tasks-full-card-field-container">
+		<div class="tasks-full-card-field-container print-no-box-shadow">
 			<EntityCollapsibleText
 				ref="collapsible"
 				:content="taskDescription"
@@ -97,7 +97,7 @@ export const DescriptionPreview = {
 			>
 				<div
 					v-if="opened && filesCount"
-					class="tasks-card-description-editor-files --read-only"
+					class="tasks-card-description-editor-files --read-only print-ignore"
 					:class="{ '--with-description': taskDescription.length > 0 }"
 					ref="filesWrapper"
 				>

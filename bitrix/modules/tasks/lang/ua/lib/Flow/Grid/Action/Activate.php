@@ -1,3 +1,0 @@
-<?php
-$MESS["TASKS_FLOW_LIST_ACTION_ACTIVATE_OFF"] = "Вимкнути";
-$MESS["TASKS_FLOW_LIST_ACTION_ACTIVATE_ON"] = "Увімкнути";

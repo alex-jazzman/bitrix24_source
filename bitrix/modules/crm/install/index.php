@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Crm\Security\Role\RolePreset;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -517,28 +516,9 @@ class crm extends CModule
 
 			\Bitrix\Crm\Honorific::installDefault();
 
-			$CCrmRole = new CCrmRole();
-			$roles = RolePreset::GetDefaultRolesPreset();
-
-			$rolesRelations = [];
-			foreach ($roles as $role)
+			if (!$this->isDistrInstallation())
 			{
-				$roleId = $CCrmRole->Add($role);
-				if ($roleId && $role['RELATIONS'] ?? false)
-				{
-					foreach ($role['RELATIONS'] as $relation)
-					{
-						if (!isset($rolesRelations[$relation]))
-						{
-							$rolesRelations[$relation] = [];
-						}
-						$rolesRelations[$relation][] = $roleId;
-					}
-				}
-			}
-			if (!empty($rolesRelations))
-			{
-				$CCrmRole->SetRelation($rolesRelations);
+				\Bitrix\Crm\Security\Role\RolePreset::installDefaultRoles();
 			}
 
 			(new \Bitrix\Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments())->execute();
@@ -1644,13 +1624,7 @@ class crm extends CModule
 			'onBIConnectorDataSources'
 		);
 
-		$eventManager->registerEventHandler(
-			'bizproc',
-			'onAfterWorkflowKill',
-			'crm',
-			'\Bitrix\Crm\Integration\BizProc\EventHandler',
-			'onAfterWorkflowKill'
-		);
+		$this->registerBizprocEvents();
 
 		$eventManager->registerEventHandler(
 			'rest',
@@ -1733,10 +1707,34 @@ class crm extends CModule
 		);
 	}
 
+	private function registerBizprocEvents(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->registerEventHandler(
+			'bizproc',
+			'onAfterWorkflowKill',
+			'crm',
+			\Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			'onAfterWorkflowKill'
+		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onGetDocumentType',
+			toModuleId: 'crm',
+			toClass: \Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			toMethod: 'onGetDocumentType',
+		);
+	}
+
 	private function installAgents()
 	{
 		//region Search Content
-		$startTime = ConvertTimeStamp(time() + CTimeZone::GetOffset() + 60, 'FULL');
+		$startTime = ConvertTimeStamp(
+			time() + CTimeZone::GetOffset() + ($this->isDistrInstallation() ? 600 : 60),
+			'FULL'
+		);
 		if (COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_SEARCH_CONTENT', 'N') === 'Y')
 		{
 			CAgent::AddAgent('\Bitrix\Crm\Agent\Search\LeadSearchContentRebuildAgent::run();', 'crm', 'Y', 2, '', 'Y', $startTime, 100, false, false);
@@ -1787,19 +1785,19 @@ class crm extends CModule
 			);
 		}
 
-		CAgent::AddAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm', 'N', 3600);
+		CAgent::AddAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm', 'N', 3600, '', 'Y', $startTime, 100, false, false);
 
 		CAgent::AddAgent(
 			'Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\LeadDuplicateIndexRebuildAgent::run();',
-			'crm', 'N', 3600
+			'crm', 'N', 3600, '', 'Y', $startTime, 100, false, false
 		);
 		CAgent::AddAgent(
 			'Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\ContactDuplicateIndexRebuildAgent::run();',
-			'crm', 'N', 3600
+			'crm', 'N', 3600, '', 'Y', $startTime, 100, false, false
 		);
 		CAgent::AddAgent(
 			'Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\CompanyDuplicateIndexRebuildAgent::run();',
-			'crm', 'N', 3600
+			'crm', 'N', 3600, '', 'Y', $startTime, 100, false, false
 		);
 
 		CAgent::AddAgent(
@@ -1870,7 +1868,7 @@ class crm extends CModule
 			\Bitrix\Crm\Agent\Activity\ProcessEntityCountableActivitiesAgent::bind();
 		}
 
-		CAgent::AddAgent('\Bitrix\Crm\Reservation\Agent\ReservedProductCleaner::runAgent();', 'crm', 'N', 86400);
+		CAgent::AddAgent('\Bitrix\Crm\Reservation\Agent\ReservedProductCleaner::runAgent();', 'crm', 'N', 86400, '', 'Y', $startTime, 100, false, false);
 
 		if (\Bitrix\Main\Config\Option::get('crm', 'CRM_MOVE_OBSERVERS_TO_ACCESS_ATTR_IN_WORK', 'N')  === 'Y') {
 			CAgent::AddAgent(
@@ -1880,7 +1878,7 @@ class crm extends CModule
 				60,
 				'',
 				'Y',
-				ConvertTimeStamp(time()+CTimeZone::GetOffset()+600)
+				$startTime
 			);
 		}
 
@@ -1891,7 +1889,7 @@ class crm extends CModule
 			86400,
 			'',
 			'Y',
-			ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL')
+			$startTime
 		);
 
 		CAgent::AddAgent(
@@ -1899,6 +1897,9 @@ class crm extends CModule
 			'crm',
 			'N',
 			60,
+			'',
+			'Y',
+			$startTime
 		);
 
 		\Bitrix\Crm\Update\RemoveDuplicatingMultifieldsStepper::bindOnCrmModuleInstall();
@@ -1910,12 +1911,17 @@ class crm extends CModule
 			60,
 			'',
 			'Y',
-			ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL')
+			$startTime
 		);
 
 		CAgent::AddAgent(
 			'Bitrix\Crm\Agent\Badge\RemoveOldEntityBadgesAgent::run();',
-			'crm'
+			'crm',
+			"N",
+			60,
+			'',
+			'Y',
+			$startTime
 		);
 
 		CAgent::AddAgent(
@@ -1925,7 +1931,7 @@ class crm extends CModule
 			3600 * 24,
 			'',
 			'Y',
-			time() + CTimeZone::GetOffset() + 600,
+			$startTime,
 			100,
 			false,
 			false
@@ -1941,7 +1947,7 @@ class crm extends CModule
 			3600,
 			'',
 			'Y',
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+			$startTime,
 		);
 
 		/**
@@ -1954,7 +1960,7 @@ class crm extends CModule
 			60,
 			'',
 			'Y',
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 800, 'FULL'),
+			$startTime,
 		);
 
 		/**
@@ -1967,7 +1973,7 @@ class crm extends CModule
 			60 * 10,
 			'',
 			'Y',
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL')
+			$startTime,
 		);
 	}
 
@@ -2597,13 +2603,7 @@ class crm extends CModule
 			'clearMyCompanyCache'
 		);
 
-		$eventManager->unRegisterEventHandler(
-			'bizproc',
-			'onAfterWorkflowKill',
-			'crm',
-			'\Bitrix\Crm\Integration\BizProc\EventHandler',
-			'onAfterWorkflowKill'
-		);
+		$this->unRegisterBizprocEvents();
 
 		$eventManager->unRegisterEventHandler(
 			'booking',
@@ -2675,6 +2675,27 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\RepeatSale\AgentsManager',
 			'onLicenseHasChanged'
+		);
+	}
+
+	private function unRegisterBizprocEvents(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->unRegisterEventHandler(
+			'bizproc',
+			'onAfterWorkflowKill',
+			'crm',
+			\Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			'onAfterWorkflowKill'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onGetDocumentType',
+			toModuleId: 'crm',
+			toClass: \Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			toMethod: 'onGetDocumentType',
 		);
 	}
 
@@ -2790,5 +2811,10 @@ class crm extends CModule
 		}
 
 		return $arResult;
+	}
+
+	private function isDistrInstallation(): bool
+	{
+		return defined('BX_PRODUCT_INSTALLATION') && BX_PRODUCT_INSTALLATION;
 	}
 }

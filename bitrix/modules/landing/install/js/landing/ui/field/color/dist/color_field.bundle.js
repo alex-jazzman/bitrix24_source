@@ -1962,15 +1962,24 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    let offsetLeft = 0;
 	    let offsetTop = 3;
 	    const popupWidth = 287;
+	    const bindElementRectX = this.bindElement.getBoundingClientRect().x;
 	    const editorPanelCurrentElement = BX.Landing.UI.Panel.EditorPanel.getInstance().currentElement;
 	    if (editorPanelCurrentElement !== null && editorPanelCurrentElement.ownerDocument !== BX.Landing.PageObject.getRootWindow().document && !this.hexPreview) {
 	      offsetTop -= 66;
+	      const rootBodyWidth = BX.Landing.PageObject.getRootWindow().document.body.clientWidth;
+	      const editorBodyWidth = editorPanelCurrentElement.ownerDocument.body.clientWidth;
+	      const semiDiff = (rootBodyWidth - editorBodyWidth) / 2;
+	      const padding = 10;
+	      const maxAllowPopupRectX = editorBodyWidth + semiDiff - (popupWidth + padding);
+	      offsetLeft -= semiDiff;
+	      if (bindElementRectX > maxAllowPopupRectX) {
+	        offsetLeft -= bindElementRectX - maxAllowPopupRectX;
+	      }
 	    }
 	    if (this.bindElement && this.isNeedCalcPopupOffset !== false) {
-	      const layoutClientRect = this.bindElement.getBoundingClientRect();
 	      const panelWidth = 320;
 	      const panelPaddingRight = 12;
-	      offsetLeft = panelWidth - popupWidth - panelPaddingRight - layoutClientRect.x;
+	      offsetLeft = panelWidth - popupWidth - panelPaddingRight - bindElementRectX;
 	    }
 	    return this.cache.remember('popup', () => {
 	      var _this$popupTargetCont;
@@ -1980,6 +1989,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        autoHide: true,
 	        autoHideHandler: event => {
 	          const target = event.target;
+	          if (target && target.closest('.popup-window-content') && !target.closest('.landing-ui-field-color-popup-picker-input')) {
+	            this.emit('onPopupClick');
+	          }
 	          if (!this.hexPreview) {
 	            return !(target && target.closest('.popup-window-content'));
 	          }
@@ -1991,7 +2003,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          forceLeft: true
 	        },
 	        padding: 0,
-	        contentPadding: 16,
+	        contentPadding: 0,
 	        width: popupWidth,
 	        offsetTop,
 	        offsetLeft,
@@ -2216,7 +2228,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        this.recent.buildItemsLayout();
 	        this.setValue(color);
 	        this.onChangeColor(hex);
-	        input.focus();
 	      }
 	    }, 333);
 	  }
@@ -3291,14 +3302,21 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    this.ROTATE_STEP = 45;
 	    this.setEventNamespace('BX.Landing.UI.Field.Color.Gradient');
 	    this.options = options;
-	    this.options.hexPreviewMode = true;
 	    this.popupId = `gradient_popup_${main_core.Text.getRandom()}`;
 	    this.popupTargetContainer = options.contentRoot;
-	    this.colorpickerFrom = new Colorpicker(this.options);
+	    const colorPickerOptions = {
+	      ...this.options,
+	      hexPreviewMode: true
+	    };
+	    this.colorpickerFrom = new Colorpicker({
+	      ...colorPickerOptions
+	    });
 	    this.colorpickerFrom.subscribe('onChange', event => {
 	      this.onColorChange(event.getData().color, null);
 	    });
-	    this.colorpickerTo = new Colorpicker(this.options);
+	    this.colorpickerTo = new Colorpicker({
+	      ...colorPickerOptions
+	    });
 	    this.colorpickerTo.subscribe('onChange', event => {
 	      this.onColorChange(null, event.getData().color);
 	    });

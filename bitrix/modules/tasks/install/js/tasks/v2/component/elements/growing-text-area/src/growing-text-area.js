@@ -1,5 +1,32 @@
-import { Dom } from 'main.core';
+import { Dom, Text, Type } from 'main.core';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
+
+const URL_REGEXP = /((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@[\]~-]*)(?<![%()+.:\]-])/;
+const EMAIL_REGEXP = /(([^\s"(),.:;<>@[\\\]]+(\.[^\s"(),.:;<>@[\\\]]+)*)|(".+"))@((\[(?:\d{1,3}\.){3}\d{1,3}])|(([\dA-Za-z-]+\.)+[A-Za-z]{2,}))/;
+const PUNCTUATION_OR_SPACE = /[\s(),.;[\]]/;
+
+function createLinkMatcherWithRegExp(regExp, urlTransformer = (text) => text): Function
+{
+	return (text) => {
+		const match = regExp.exec(text);
+		if (match === null)
+		{
+			return null;
+		}
+
+		return {
+			index: match.index,
+			length: match[0].length,
+			text: match[0],
+			url: urlTransformer(match[0]),
+		};
+	};
+}
+
+const LINK_MATCHERS = [
+	createLinkMatcherWithRegExp(URL_REGEXP, (text) => (text.startsWith('http') ? text : `https://${text}`)),
+	createLinkMatcherWithRegExp(EMAIL_REGEXP, (text) => `mailto:${text}`),
+];
 
 import './growing-text-area.css';
 
@@ -18,7 +45,11 @@ export const GrowingTextArea = {
 		},
 		fontColor: {
 			type: String,
-			default: 'var(--ui-color-base-1)',
+			default: 'var(--ui-color-base-0)',
+		},
+		linkColor: {
+			type: String,
+			default: 'var(--ui-color-accent-main-link)',
 		},
 		fontSize: {
 			type: Number,
@@ -45,12 +76,13 @@ export const GrowingTextArea = {
 		'emptyFocus',
 		'emptyBlur',
 		'enterBlur',
+		'linkClick',
 	],
 	data(): Object
 	{
 		return {
 			focus: false,
-			isOverflowing: false,
+			overflowing: false,
 		};
 	},
 	computed: {
@@ -60,12 +92,29 @@ export const GrowingTextArea = {
 		},
 		isDisplay(): boolean
 		{
-			return this.isOverflowing && !this.isEmpty && !this.focus;
+			return !this.isEmpty && !this.focus && (this.overflowing || this.hasLinks);
 		},
-		tooltip(): Function
+		linkMatches(): Array<Object>
 		{
+			return this.findLinkMatches(this.modelValue);
+		},
+		hasLinks(): boolean
+		{
+			return this.linkMatches.length > 0;
+		},
+		displayHtml(): string
+		{
+			return this.getLinkifiedHtml(this.modelValue, this.linkMatches);
+		},
+		tooltip(): ?Function
+		{
+			if (!this.overflowing)
+			{
+				return null;
+			}
+
 			return (): HintParams => ({
-				text: this.modelValue,
+				html: this.displayHtml,
 				interactivity: true,
 				popupOptions: {
 					className: 'b24-growing-text-area-popup',
@@ -90,10 +139,138 @@ export const GrowingTextArea = {
 				this.focusToEnd();
 			}
 
+			this.overflowing = this.isOverflowing();
+
 			void this.adjustTextareaHeight();
 		});
 	},
 	methods: {
+		getLinkifiedHtml(value: string, matches: Array<Object>): string
+		{
+			if (!Type.isStringFilled(value))
+			{
+				return '';
+			}
+
+			if (!Array.isArray(matches) || matches.length === 0)
+			{
+				return Text.encode(value);
+			}
+
+			let result = '';
+			let lastIndex = 0;
+
+			matches.forEach((match) => {
+				result += Text.encode(value.slice(lastIndex, match.start));
+
+				const safeHref = Text.encode(match.href);
+				const safeText = Text.encode(match.text);
+
+				result += `
+					<a
+						class="b24-growing-text-area-link"
+						href="${safeHref}"
+						target="_blank"
+						rel="noopener noreferrer"
+						style="color: ${this.linkColor};"
+					>${safeText}</a>
+				`.trim();
+
+				lastIndex = match.end;
+			});
+
+			result += Text.encode(value.slice(lastIndex));
+
+			return result;
+		},
+		findLinkMatches(value: string): Array<Object>
+		{
+			if (!Type.isStringFilled(value))
+			{
+				return [];
+			}
+
+			const matches = [];
+			let text = value;
+			let offset = 0;
+			let match = this.getFirstLinkMatch(text);
+
+			while (match)
+			{
+				const start = offset + match.index;
+				const end = start + match.length;
+
+				if (this.isMatchBoundariesValid(value, start, end))
+				{
+					matches.push({
+						start,
+						end,
+						text: match.text,
+						href: match.url,
+					});
+				}
+
+				const sliceIndex = match.index + match.length;
+				offset += sliceIndex;
+				text = text.slice(sliceIndex);
+				match = this.getFirstLinkMatch(text);
+			}
+
+			return matches;
+		},
+		getFirstLinkMatch(text: string): ?Object
+		{
+			if (!Type.isStringFilled(text))
+			{
+				return null;
+			}
+
+			for (const matcher of LINK_MATCHERS)
+			{
+				const match = matcher(text);
+				if (match)
+				{
+					return match;
+				}
+			}
+
+			return null;
+		},
+		isMatchBoundariesValid(text: string, start: number, end: number): boolean
+		{
+			const beforeChar = start > 0 ? text[start - 1] : '';
+			const afterChar = end < text.length ? text[end] : '';
+
+			return this.isSeparator(beforeChar) && this.isSeparator(afterChar);
+		},
+		isSeparator(char: string): boolean
+		{
+			if (!Type.isStringFilled(char))
+			{
+				return true;
+			}
+
+			return PUNCTUATION_OR_SPACE.test(char);
+		},
+		isOverflowing(): boolean
+		{
+			const textarea = this.$refs.textarea;
+			const display = this.$refs.display;
+
+			if (textarea)
+			{
+				const maxHeight = this.lineHeight * 3;
+
+				return textarea.scrollHeight > maxHeight;
+			}
+
+			if (display)
+			{
+				return display.offsetHeight >= 60;
+			}
+
+			return false;
+		},
 		async adjustTextareaHeight(): Promise<void>
 		{
 			const textarea = this.$refs.textarea;
@@ -107,7 +284,7 @@ export const GrowingTextArea = {
 			const maxHeight = this.lineHeight * 3;
 			const height = Math.min(textarea.scrollHeight, maxHeight);
 
-			this.isOverflowing = textarea.scrollHeight > maxHeight;
+			this.overflowing = this.isOverflowing();
 
 			Dom.style(textarea, 'height', `${height}px`);
 			Dom.style(textarea, 'maxHeight', `${maxHeight}px`);
@@ -165,6 +342,22 @@ export const GrowingTextArea = {
 				behavior: 'smooth',
 			});
 		},
+		handleDisplayClick(event: PointerEvent): void
+		{
+			if (
+				event
+				&& event.target
+				&& event.target.closest
+				&& event.target.closest('.b24-growing-text-area-link')
+			)
+			{
+				this.$emit('linkClick', event);
+			}
+			else
+			{
+				this.focusTextarea();
+			}
+		},
 		handleInput(event): void
 		{
 			this.$emit('input', event.target.value);
@@ -210,13 +403,12 @@ export const GrowingTextArea = {
 		},
 		async handleBlur(event: FocusEvent): Promise<void>
 		{
-			this.focus = false;
 			if (!this.$refs.textarea)
 			{
 				return;
 			}
 
-			if (!this.isOverflowing)
+			if (!this.overflowing)
 			{
 				await this.adjustTextareaHeight();
 				this.scrollToBeginning();
@@ -236,23 +428,26 @@ export const GrowingTextArea = {
 			}
 
 			this.$emit('blur', event);
+
+			this.focus = false;
 		},
 	},
 	template: `
 		<div class="b24-growing-text-area" :class="{ '--readonly': readonly }">
 			<div
+				ref="display"
 				v-if="isDisplay"
 				v-hint="tooltip"
-				class="b24-growing-text-area-display"
+				class="b24-growing-text-area-display print-display-block"
 				:style="{
 					lineHeight: lineHeight + 'px',
 					color: fontColor,
 					fontSize: fontSize + 'px',
 					fontWeight: fontWeight,
 				}"
-				@click="focusTextarea"
+				@click="handleDisplayClick"
 			>
-				{{ modelValue }}
+				<span v-html="displayHtml"/>
 			</div>
 			<textarea
 				v-else
@@ -272,7 +467,7 @@ export const GrowingTextArea = {
 				@keydown="handleKeyDown"
 				@focus="handleFocus"
 				@blur="handleBlur"
-			/>
+			>{{ modelValue }}</textarea>
 		</div>
 	`,
 };

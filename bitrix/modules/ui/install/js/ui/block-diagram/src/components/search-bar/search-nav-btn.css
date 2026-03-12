@@ -1,11 +1,11 @@
 .ui-block-diagram-search-nav-btn {
 	display: block;
-	height: 25px;
-	width: 25px;
+	height: 18px;
+	width: 18px;
 	padding: 0;
 	border: none;
 	color: var(--ui-color-link-primary-base);
-	line-height: 25px;
+	line-height: 18px;
 	text-align: center;
 	background-color: transparent;
 	cursor: pointer;

@@ -1,0 +1,18 @@
+.bx-im-sticker-pack-form__section {
+	--im-sticker-pack-form__background-color_section: var(--ui-color-base-white-fixed);
+
+	border-radius: 18px;
+	padding: 18px 24px 24px 24px;
+	background-color: var(--im-sticker-pack-form__background-color_section);
+	margin-bottom: 20px;
+}
+
+.bx-im-sticker-pack-form__pack-title {
+	font: 17px/23px var(--ui-font-family-system);
+	margin-bottom: 16px;
+}
+
+.bx-im-sticker-pack-form__buttons {
+	display: flex;
+	gap: 12px;
+}

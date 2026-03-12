@@ -1,4 +1,4 @@
-import { Loc, Type, Tag, Reflection, Dom, Text, Event, Runtime } from 'main.core';
+import { Loc, Type, Tag, Reflection, Dom, Text, Event, Runtime, clone } from 'main.core';
 import { Menu, MenuManager } from 'main.popup';
 import { DateTimeFormat } from 'main.date';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
@@ -53,10 +53,29 @@ class SupersetDashboardGridManager
 
 		this.#colorPinnedRows();
 		this.#initHints();
+
+		this.#replaceHistoryState();
 	}
 
 	#subscribeToEvents()
 	{
+		Event.bind(
+			window,
+			'popstate',
+			(event) => {
+				const filterState = event.state?.filter;
+
+				if (!filterState || !Type.isPlainObject(filterState))
+				{
+					return;
+				}
+
+				const filterApi = this.getFilter().getApi();
+				filterApi.extendFilter(filterState);
+				filterApi.apply();
+			},
+		);
+
 		EventEmitter.subscribe('SidePanel.Slider:onMessage', (event) => {
 			const [sliderEvent] = event.getCompatData();
 
@@ -143,6 +162,8 @@ class SupersetDashboardGridManager
 		EventEmitter.subscribe('Grid::updated', () => {
 			this.#initHints();
 			this.#colorPinnedRows();
+
+			this.#replaceHistoryState();
 		});
 
 		EventEmitter.subscribe('BIConnector.ExportMaster:onDashboardDataLoaded', () => {
@@ -456,7 +477,7 @@ class SupersetDashboardGridManager
 			{
 				text: Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_CREATE_DASHBOARD'),
 				onclick: () => {
-					ApacheSupersetMarketManager.openMarket(this.#properties.isMarketExists, this.#properties.marketUrl, 'menu');
+					this.showMarketSlider(this.#properties.isMarketExists, this.#properties.marketUrl);
 					creationMenu.close();
 				},
 			},
@@ -750,6 +771,7 @@ class SupersetDashboardGridManager
 			subtitle: message,
 			width: 400,
 			hasCloseButton: true,
+			hasOverlay: true,
 			closeByEsc: true,
 			disableScrolling: true,
 			centerButtons: [
@@ -794,6 +816,7 @@ class SupersetDashboardGridManager
 			subtitle: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_DESC'),
 			hasCloseButton: true,
 			closeByEsc: true,
+			hasOverlay: true,
 			disableScrolling: true,
 			centerButtons: [
 				new Button({
@@ -844,6 +867,11 @@ class SupersetDashboardGridManager
 		BX.UI.Notification.Center.notify({
 			content: Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_ERROR_OPEN_CREATE_DASHBOARD'),
 		});
+	}
+
+	showMarketSlider(isMarketExists: boolean, marketUrl: string): void
+	{
+		ApacheSupersetMarketManager.openMarket(isMarketExists, marketUrl, 'menu');
 	}
 
 	showCreationGroupPopup(): void
@@ -1129,6 +1157,8 @@ class SupersetDashboardGridManager
 			});
 		}
 
+		this.#pushHistoryState();
+
 		this.handleFilterChange({
 			fieldId: 'GROUPS.ID',
 			...groupJson,
@@ -1287,14 +1317,6 @@ class SupersetDashboardGridManager
 		this.#tagSelectorDialog.show();
 	}
 
-	handleOwnerClick(ownerData: Object)
-	{
-		this.handleFilterChange({
-			fieldId: 'OWNER_ID',
-			...ownerData,
-		});
-	}
-
 	handleCreatedByClick(ownerData: Object)
 	{
 		this.handleFilterChange({
@@ -1436,6 +1458,44 @@ class SupersetDashboardGridManager
 			})
 			.catch(() => {})
 		;
+	}
+
+	#isWindowHistoryReady(): boolean
+	{
+		return (
+			window
+			&& window.history
+			&& Type.isFunction(window.history.pushState)
+			&& Type.isFunction(window.history.replaceState)
+		);
+	}
+
+	#replaceHistoryState(): void
+	{
+		if (!this.#isWindowHistoryReady())
+		{
+			return;
+		}
+
+		const state = history.state ?? {};
+
+		const filter = this.getFilter();
+		const filterState = clone(filter.getFilterFieldsValues());
+		history.replaceState({ ...state, filter: filterState }, '', window.location.href);
+	}
+
+	#pushHistoryState(): void
+	{
+		if (!this.#isWindowHistoryReady())
+		{
+			return;
+		}
+
+		const state = history.state ?? {};
+
+		const filter = this.getFilter();
+		const filterState = clone(filter.getFilterFieldsValues());
+		history.pushState({ ...state, filter: filterState }, '', window.location.href);
 	}
 }
 

@@ -122,7 +122,7 @@ export class CardsForm extends BaseForm
 		}
 		else
 		{
-			this.addEmptyCard();
+			this.addCardFromFirst();
 		}
 	}
 
@@ -276,7 +276,7 @@ export class CardsForm extends BaseForm
 		}
 	}
 
-	addEmptyCard()
+	addCardFromFirst()
 	{
 		const newData = Runtime.clone(this.childForms[0].data);
 		const newSelector = `${newData.selector.split('@')[0]}@${this.childForms.length}`;
@@ -284,9 +284,23 @@ export class CardsForm extends BaseForm
 		const newForm = this.childForms[0].clone(newData);
 		newForm.oldIndex = this.childForms.length;
 		newForm.selector = newSelector;
-		newForm.fields.forEach((field) => field.reset());
 		this.addChildForm(newForm);
 		this.adjustLastFormState();
+	}
+
+	resetCardFields(form)
+	{
+		if (!Type.isObject(form))
+		{
+			return;
+		}
+
+		form.fields.forEach((field) => {
+			if (Type.isFunction(field.reset))
+			{
+				field.reset();
+			}
+		});
 	}
 
 	getVisibleForms()

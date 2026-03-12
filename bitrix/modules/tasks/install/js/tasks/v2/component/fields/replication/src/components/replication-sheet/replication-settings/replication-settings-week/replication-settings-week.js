@@ -68,24 +68,20 @@ export const ReplicationSettingsWeek = {
 		},
 	},
 	template: `
-		<div class="tasks-replication-sheet-replication-settings-week">
-			<div>
-				<ReplicationSettingsWeekDaysList v-model:selectedDays="weekDays"/>
-			</div>
-			<div>
-				<ReplicationInterval
-					v-model:useInterval="useInterval"
-					v-model:interval="interval"
-					:period
-				>
-					<template #hint>
-						<QuestionMark
-							:hintText
-							:hintMaxWidth="260"
-						/>
-					</template>
-				</ReplicationInterval>
-			</div>
+		<div class="tasks-replication-sheet-replication-settings-week tasks-field-replication-sheet__stack">
+			<ReplicationSettingsWeekDaysList v-model:selectedDays="weekDays"/>
+			<ReplicationInterval
+				v-model:useInterval="useInterval"
+				v-model:interval="interval"
+				:period
+			>
+				<template #hint>
+					<QuestionMark
+						:hintText
+						:hintMaxWidth="260"
+					/>
+				</template>
+			</ReplicationInterval>
 		</div>
 	`,
 };

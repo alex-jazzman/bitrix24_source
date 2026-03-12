@@ -34,7 +34,6 @@ this.BX.UI.IconSet.Api = this.BX.UI.IconSet.Api || {};
 	  folderCollab: 'folderCollab',
 	  folder24: 'folder24',
 	  folderPerson: 'folderPerson',
-	  // Добавляем видео типы
 	  mp4: 'mp4',
 	  avi: 'avi',
 	  mov: 'mov',
@@ -42,10 +41,12 @@ this.BX.UI.IconSet.Api = this.BX.UI.IconSet.Api || {};
 	  webm: 'webm',
 	  mkv: 'mkv',
 	  video: 'video',
-	  file: 'file'
+	  file: 'file',
+	  board: 'board'
 	});
 	const TypeIcon = Object.freeze({
 	  [DiskIconType.file]: ui_iconSet_api_core.Disk.EMPTY,
+	  [DiskIconType.board]: ui_iconSet_api_core.Disk.BOARD,
 	  [DiskIconType.png]: ui_iconSet_api_core.Disk.IMAGE,
 	  [DiskIconType.jpg]: ui_iconSet_api_core.Disk.IMAGE,
 	  [DiskIconType.jpeg]: ui_iconSet_api_core.Disk.IMAGE,
@@ -83,6 +84,7 @@ this.BX.UI.IconSet.Api = this.BX.UI.IconSet.Api || {};
 	});
 	const CompactTypeIcon = Object.freeze({
 	  [DiskIconType.file]: ui_iconSet_api_core.Disk.EMPTY,
+	  [DiskIconType.board]: ui_iconSet_api_core.DiskCompact.BOARD,
 	  [DiskIconType.png]: ui_iconSet_api_core.DiskCompact.IMAGE,
 	  [DiskIconType.jpg]: ui_iconSet_api_core.DiskCompact.IMAGE,
 	  [DiskIconType.jpeg]: ui_iconSet_api_core.DiskCompact.IMAGE,

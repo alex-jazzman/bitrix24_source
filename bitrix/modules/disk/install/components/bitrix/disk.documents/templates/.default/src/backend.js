@@ -94,17 +94,24 @@ export default class Backend
 		});
 	}
 
-	static getMenuActions(id)
+	static getMenuActions(id, analytics = null)
 	{
+		const data = {
+			trackedObjectId: id,
+		};
+
+		if (analytics !== null)
+		{
+			data.analytics = analytics;
+		}
+
 		return ajax
 			.runComponentAction(
 				Backend.component,
 				'getMenuActions',
 				{
 					mode: 'ajax',
-					data: {
-						trackedObjectId: id
-					},
+					data,
 					analyticsLabel: Backend.component + '.gridMenuActions',
 				}
 			);

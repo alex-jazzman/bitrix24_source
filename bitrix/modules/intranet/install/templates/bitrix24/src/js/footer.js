@@ -12,12 +12,12 @@ export class Footer
 
 	show(): void
 	{
-		Dom.removeClass(this.getContainer(), 'hidden');
+		Dom.removeClass(this.getContainer(), '--hidden');
 	}
 
 	hide(): void
 	{
-		Dom.addClass(this.getContainer(), 'hidden');
+		Dom.addClass(this.getContainer(), '--hidden');
 	}
 
 	getContainer(): HTMLElement

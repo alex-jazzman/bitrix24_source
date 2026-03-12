@@ -1,11 +1,11 @@
 import { CopilotChat, CopilotChatMessageType } from 'ai.copilot-chat.ui';
 import type { CopilotChatMessage, CopilotChatOptions } from 'ai.copilot-chat.ui';
-import { Loc, ajax, Tag, Runtime } from 'main.core';
+import { Loc, ajax, Tag, Runtime, Extension } from 'main.core';
 import { EditForm } from 'tasks.flow.edit-form';
 import { getDefaultChatOptions } from './default-chat-options';
 import { Main as IconSetMain } from 'ui.icon-set.api.core';
 import 'ui.icon-set.main';
-import type { FlowData } from './copilot-advice';
+import { CopilotAdvice, type FlowData } from './copilot-advice';
 
 import './style.css';
 
@@ -154,9 +154,11 @@ export class Chat
 			dateCreated: dateCreated.toString(),
 			viewed: true,
 			params: {
-				title: Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_TITLE'),
 				subtitle,
 				content,
+				title: Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_TITLE_MSGVER_1', {
+					'#COPILOT_NAME#': CopilotAdvice.getCopilotName(),
+				}),
 			},
 		};
 	}

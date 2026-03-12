@@ -13,12 +13,8 @@ export class SyncAction extends BaseAction
 	getActionConfig(): ActionConfig
 	{
 		return {
-			type: 'component',
-			component: 'bitrix:mail.client',
-			name: 'syncMailbox',
-			options: {
-				mode: 'ajax',
-			},
+			type: 'controller',
+			name: 'mail.mailboxconnecting.syncMailbox',
 		};
 	}
 
@@ -26,8 +22,7 @@ export class SyncAction extends BaseAction
 	{
 		return {
 			id: this.mailboxId,
-			dir: 'INBOX',
-			onlySyncCurrent: true,
+			onlySyncCurrent: 1,
 		};
 	}
 

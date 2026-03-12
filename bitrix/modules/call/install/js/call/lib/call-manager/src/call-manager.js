@@ -1,7 +1,7 @@
 import { EventEmitter, BaseEvent } from 'main.core.events';
-import { Store } from 'ui.vue3.vuex';
 import { Controller, State as CallState, EngineLegacy, Engine as CallEngine } from 'call.core';
 import { Messenger } from 'im.public';
+import { ChatService } from 'im.v2.provider.service.chat';
 import { Core } from 'im.v2.application.core';
 import { MessengerSlider } from 'im.v2.lib.slider';
 import { ChatType, RecentCallStatus, Layout, EventType, UserType } from 'im.v2.const';
@@ -26,7 +26,6 @@ export class CallManager
 	static viewContainerClass: string = 'bx-im-messenger__call_container';
 
 	#controller: Controller;
-	#store: Store;
 	#restClient: RestClient;
 
 	#openChatActionByChatType = {
@@ -269,11 +268,33 @@ export class CallManager
 				isSliderFocused: () => MessengerSlider.getInstance().isFocused(),
 				isThemeDark: () => false,
 				openMessenger: (dialogId: string, force: boolean = false) => {
-					const dialog: ImModelChat = this.#getDialog(dialogId);
-					if (!force && dialog && dialog.type in this.#openChatActionByChatType)
+					if (!force)
 					{
-						return this.#openChatActionByChatType[dialog.type](dialogId);
+						const dialog = this.#getDialog(dialogId);
+
+						if (dialog && dialog.type in this.#openChatActionByChatType)
+						{
+							return this.#openChatActionByChatType[dialog.type](dialogId);
+						}
 					}
+
+					const sidePanel = BX?.SidePanel?.Instance;
+					const hasChatUnderSlider = sidePanel?.getOpenSlidersCount?.() > 0 && sidePanel?.getPageUrl?.()?.includes('/online/');
+
+					if (hasChatUnderSlider)
+					{
+						const topSlider = sidePanel?.getTopSlider?.();
+
+						if (topSlider?.close)
+						{
+							return new Promise((resolve) => {
+								topSlider.close(false, resolve);
+							}).then(() => Messenger.openChat(dialogId));
+						}
+
+						return Messenger.openChat(dialogId);
+					}
+
 					return Messenger.openChat(dialogId);
 				},
 				openHistory: (dialogId) => {
@@ -309,6 +330,16 @@ export class CallManager
 				},
 			},
 		});
+	}
+
+	#getChatService(): ChatService
+	{
+		if (!this.chatService)
+		{
+			this.chatService = new ChatService();
+		}
+
+		return this.chatService;
 	}
 
 	// region call events
@@ -504,7 +535,7 @@ export class CallManager
 
 		if (chatInfo.chatId === 0)
 		{
-			return Messenger.openChat(dialogId).then(() => {
+			return this.#getChatService().loadChat(dialogId).then(() => {
 				const updatedChatInfo = Core.getStore().getters['chats/get'](dialogId, true);
 
 				return this.#prepareChatInfo(updatedChatInfo);

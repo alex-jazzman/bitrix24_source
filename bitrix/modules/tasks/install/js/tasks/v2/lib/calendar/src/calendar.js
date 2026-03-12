@@ -29,17 +29,17 @@ export const calendar = new class
 		return settings.HOURS.START;
 	}
 
-	get dayStartTime(): void
+	get dayStartTime(): string
 	{
 		return `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`;
 	}
 
-	get dayEndTime(): void
+	get dayEndTime(): string
 	{
 		return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
 	}
 
-	formatDateTime(timestamp: number, { forceYear }: { forceYear: boolean } = {}): string
+	formatDateTime(timestamp: number, { forceYear, removeOffset }: { forceYear: boolean } = {}): string
 	{
 		if (!timestamp)
 		{
@@ -51,7 +51,7 @@ export const calendar = new class
 			'#DATE#': DateTimeFormat.getFormat(showYear ? 'LONG_DATE_FORMAT' : 'DAY_MONTH_FORMAT'),
 			'#TIME#': DateTimeFormat.getFormat('SHORT_TIME_FORMAT'),
 		});
-		const offset = timezone.getOffset(timestamp);
+		const offset = removeOffset ? 0 : timezone.getOffset(timestamp);
 
 		return DateTimeFormat.format(format, (timestamp + offset) / 1000);
 	}

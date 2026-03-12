@@ -26,7 +26,8 @@ Extension::load([
 	"ui.buttons.icons",
 	"ui.notification",
 	"sender.toloka",
-	"ui.sidepanel-content"
+	"ui.sidepanel-content",
+	"intranet.old-interface.intranet-common"
 ]);
 
 if(

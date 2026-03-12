@@ -1,9 +1,0 @@
-<?php
-$MESS["STORE_DOCUMENT_ARRIVAL_STATUS_CHANGE"] = "Змінено статус прибуття";
-$MESS["STORE_DOCUMENT_DEDUCT_STATUS_CHANGE"] = "Змінено статус списання";
-$MESS["STORE_DOCUMENT_MOVING_STATUS_CHANGE"] = "Змінено статус переміщення";
-$MESS["STORE_DOCUMENT_STATUS_CANCELLED"] = "Скасовано";
-$MESS["STORE_DOCUMENT_STATUS_CONDUCTED"] = "Проведено";
-$MESS["STORE_DOCUMENT_STATUS_DRAFT"] = "Чернетка";
-$MESS["STORE_DOCUMENT_STORE_ADJUSTMENT_STATUS_CHANGE"] = "Змінено статус оприбуткування";
-$MESS["STORE_DOCUMENT_TITLE"] = "#TITLE# від #DATE# на суму #PRICE_WITH_CURRENCY#";

@@ -85,27 +85,26 @@ $this->SetViewTarget('left-panel');
 ?>
 <div class="invitation-department__menu-divider"></div>
 <ul id="invitation-department__sub-menu" class="ui-sidepanel-menu --menu-light-gray">
-	<?php foreach ($arResult["SUB_MENU_ITEMS"] as $item): ?>
-		<li class="ui-sidepanel-menu-item
-	<? if (isset($item['SHOW_LOCKED']) && $item['SHOW_LOCKED'] === true): ?>--lock<? endif; ?>">
-			<a
-			<?php foreach ($item["ATTRIBUTES"] as $attrName => $attrValue): ?>
-				<?= $attrName ?>="<?= $attrValue ?>"
-			<?php endforeach; ?>
-			bx-operative="Y"
-			class="ui-sidepanel-menu-link">
-			<div class="ui-sidepanel-menu-link-text">
-				<?= $item['NAME'] ?>
-				<?php if (isset($item['SHOW_LOCKED']) && $item['SHOW_LOCKED'] === true): ?>
-					<span class="ui-icon-set --lock"></span>
-				<?php endif; ?>
-			</div>
-			</a>
-		</li>
-
-	<?php
-	endforeach;
-	?>
+	<?php if (isset($arResult['SUB_MENU_ITEMS'])): ?>
+		<?php foreach ($arResult["SUB_MENU_ITEMS"] as $item): ?>
+			<li class="ui-sidepanel-menu-item
+				<?php if (isset($item['SHOW_LOCKED']) && $item['SHOW_LOCKED'] === true): ?>--lock<?php endif; ?>">
+				<a
+				<?php foreach ($item["ATTRIBUTES"] as $attrName => $attrValue): ?>
+					<?= $attrName ?>="<?= $attrValue ?>"
+				<?php endforeach; ?>
+				bx-operative="Y"
+				class="ui-sidepanel-menu-link">
+				<div class="ui-sidepanel-menu-link-text">
+					<?= $item['NAME'] ?>
+					<?php if (isset($item['SHOW_LOCKED']) && $item['SHOW_LOCKED'] === true): ?>
+						<span class="ui-icon-set --lock"></span>
+					<?php endif; ?>
+				</div>
+				</a>
+			</li>
+		<?php endforeach; ?>
+	<?php endif; ?>
 </ul>
 <?php
 $this->EndViewTarget();
@@ -198,6 +197,10 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 		INTRANET_INVITE_DIALOG_EMAIL_INPUT: '<?=GetMessageJS('INTRANET_INVITE_DIALOG_INPUT_EMAIL')?>',
 		INTRANET_INVITE_DIALOG_PHONE_INPUT: '<?=GetMessageJS('INTRANET_INVITE_DIALOG_INPUT_PHONE')?>',
 		INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT: '<?=GetMessageJS('INTRANET_INVITE_DIALOG_INPUT_EMAIL_AND_PHONE')?>',
+
+		INTRANET_INVITE_DIALOG_INTEGRATOR_SECTION: '<?= Loc::getMessage(($arResult['IS_RENAMED_INTEGRATOR'] ?? false) ? 'BX24_INVITE_DIALOG_TAB_INTEGRATOR_TITLE_RENAMED' : 'BX24_INVITE_DIALOG_TAB_INTEGRATOR_TITLE') ?>',
+		INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER: '<?= Loc::getMessage(($arResult['IS_RENAMED_INTEGRATOR'] ?? false) ? 'INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_RENAMED' : 'INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL') ?>',
+		INTRANET_INVITE_DIALOG_INTEGRATOR_POPUP_TITLE: '<?= Loc::getMessage(($arResult['IS_RENAMED_INTEGRATOR'] ?? false) ? 'INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE_RENAMED' : 'INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE') ?>',
 	});
 
 	BX.ready(function () {
@@ -226,6 +229,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 			isCollabEnabled: '<?= $arResult['IS_COLLAB_ENABLED'] ? 'Y' : 'N' ?>',
 			canCurrentUserInvite: <?= $arResult['canCurrentUserInvite'] ? 'true' : 'false' ?>,
 			useLocalEmailProgram: <?= $arResult['USE_INVITE_LOCAL_EMAIL_PROGRAM'] ? 'true' : 'false' ?>,
+			leftMenuItems: <?= Json::encode(array_merge($arResult['MENU_ITEMS'], $arResult['SUB_MENU_ITEMS'] ?? [])); ?>,
 		});
 
 		var imageMail = document.getElementById('invite-wrap-decal');

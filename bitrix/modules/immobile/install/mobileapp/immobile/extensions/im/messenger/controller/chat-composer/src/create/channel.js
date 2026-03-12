@@ -15,15 +15,12 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 		WidgetTitleParamsType,
 		EntitySelectorElementType,
 		OpenDialogContextType,
-		ComponentCode,
-		NavigationTabByComponent,
 	} = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper');
 	const { Notification } = require('im/messenger/lib/ui/notification');
-	const { Feature } = require('im/messenger/lib/feature');
 
 	const { ChatService } = require('im/messenger/provider/services/chat');
 
@@ -31,7 +28,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 	const { DialogTypeView } = require('im/messenger/controller/chat-composer/lib/view/dialog-type');
 	const { showClosingSelectorAlert } = require('im/messenger/controller/chat-composer/lib/confirm');
 
-	const logger = LoggerManager.getInstance().getLogger('chat-composer--channel');
+	const logger = getLoggerWithContext('chat-composer--channel', 'CreateChannel');
 
 	/**
 	 * @class CreateChannel
@@ -344,22 +341,11 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 
 			if (this.dialogInfo.type === DialogType.channel)
 			{
-				if (Feature.isMessengerV2Enabled)
-				{
-					void serviceLocator.get('dialog-manager').openDialog(openDialogParams);
-				}
-				else
-				{
-					MessengerEmitter.emit(
-						EventType.navigation.broadCastEventWithTabChange,
-						{
-							broadCastEvent: EventType.messenger.openDialog,
-							toTab: NavigationTabByComponent[ComponentCode.imMessenger],
-							data: openDialogParams,
-						},
-						ComponentCode.imNavigation,
-					);
-				}
+				serviceLocator.get('dialog-manager').openDialog(openDialogParams)
+					.catch((error) => {
+						logger.error('openDialog error', error);
+					})
+				;
 			}
 			else
 			{

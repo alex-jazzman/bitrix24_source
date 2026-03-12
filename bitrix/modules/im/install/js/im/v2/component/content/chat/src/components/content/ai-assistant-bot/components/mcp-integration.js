@@ -5,11 +5,14 @@ import { McpSelector } from 'aiassistant.mcp-selector';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
+import { McpHintService } from '../classes/mcp-hint-service';
+
 import './css/mcp-integration.css';
 
 import type { JsonObject } from 'main.core';
 
 const MAX_INTEGRATION_NAME_LENGTH = 20;
+const MARTA_ANALYTICS_CONTEXT = 'marta_chat';
 
 // @vue/component
 export const McpIntegration = {
@@ -111,6 +114,7 @@ export const McpIntegration = {
 			}
 
 			this.selector = new McpSelector({
+				context: MARTA_ANALYTICS_CONTEXT,
 				targetNode: this.$refs.selector,
 				dialogOptions: {
 					popupOptions: {
@@ -151,6 +155,7 @@ export const McpIntegration = {
 		{
 			this.mcpAuth = mcpAuth;
 			this.$store.dispatch('aiAssistant/setMcpAuthId', this.mcpAuth.id);
+			(new McpHintService()).sendSelectionHintOnce(this.mcpAuth.id);
 		},
 		clear()
 		{

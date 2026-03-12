@@ -1,4 +1,0 @@
-<?php
-$MESS["TELEPHONY_REPORT_AVG_CALL_TIME"] = "Середній час дзвінка";
-$MESS["TELEPHONY_REPORT_AVG_CALL_TIME_DYNAMICS"] = "Динаміка дзвінків";
-$MESS["TELEPHONY_REPORT_AVG_CALL_TIME_EMPLOYEE"] = "Співробітник";

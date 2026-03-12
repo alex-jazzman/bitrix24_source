@@ -1,4 +1,4 @@
-import { Loc } from 'main.core';
+import { Loc, Extension } from 'main.core';
 import { Spot } from './spot';
 
 export class FlowCopilotAdvice extends Spot
@@ -15,7 +15,9 @@ export class FlowCopilotAdvice extends Spot
 
 	getTitle(): string
 	{
-		return Loc.getMessage('TASKS_CLUE_FLASH_COPILOT_ADVICE_TITLE');
+		return Loc.getMessage('TASKS_CLUE_FLASH_COPILOT_ADVICE_TITLE_MSGVER_1', {
+			'#COPILOT_NAME#': Extension.getSettings('tasks.clue').copilotName,
+		});
 	}
 
 	getText(): string

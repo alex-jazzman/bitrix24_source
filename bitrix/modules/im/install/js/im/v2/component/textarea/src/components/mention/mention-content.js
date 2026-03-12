@@ -1,8 +1,9 @@
 import { Extension, Runtime, type JsonObject } from 'main.core';
 
 import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradient';
-import { getUsersFromRecentItems } from 'im.v2.lib.search';
+import { EntitySearch, getUsersFromRecentItems } from 'im.v2.lib.search';
 import { FeatureManager, Feature } from 'im.v2.lib.feature';
+import { CopilotManager } from 'im.v2.lib.copilot';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { ChatType, SpecialMentionDialogId } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
@@ -49,10 +50,6 @@ export const MentionPopupContent = {
 			type: Boolean,
 			default: true,
 		},
-		exclude: {
-			type: Array,
-			default: () => [],
-		},
 	},
 	emits: ['close', 'adjustPosition'],
 	data(): JsonObject
@@ -89,7 +86,7 @@ export const MentionPopupContent = {
 					id: this.copilotBotDialogId,
 					title: (new MentionItemFormatter(this.copilotBotDialogId).getTitle()),
 					subtitle: this.loc('IM_TEXTAREA_MENTION_COPILOT_SUBTITLE'),
-					showCondition: this.needToShowCopilot,
+					showCondition: this.needToShowFixedCopilot,
 				},
 				{
 					id: SpecialMentionDialogId.allParticipants,
@@ -105,9 +102,7 @@ export const MentionPopupContent = {
 		},
 		dynamicItemsToShow(): MentionItemType[]
 		{
-			const dialogIdsToExclude = this.dynamicItems.filter((dialogId) => !this.exclude.includes(dialogId));
-
-			return this.formattedDynamicItems(dialogIdsToExclude);
+			return this.formattedDynamicItems(this.dynamicItems);
 		},
 		dynamicItems(): string[]
 		{
@@ -143,22 +138,27 @@ export const MentionPopupContent = {
 
 			return this.items.length === 0;
 		},
-		searchConfig(): JsonObject
+		searchConfig(): { exclude: $Values<typeof EntitySearch>[] }
 		{
-			return {
-				chats: this.searchChats,
-				users: true,
-			};
+			const exclude = [];
+
+			if (!this.searchChats)
+			{
+				exclude.push(EntitySearch.chats);
+			}
+
+			return { exclude };
 		},
 		copilotBotDialogId(): ?string
 		{
 			return this.$store.getters['users/bots/getCopilotBotDialogId'];
 		},
-		needToShowCopilot(): boolean
+		needToShowFixedCopilot(): boolean
 		{
 			const isChannel = ChannelManager.isChannel(this.dialogId);
+			const isCopilotChat = (new CopilotManager()).isCopilotChat(this.dialogId);
 
-			if (isChannel)
+			if (isChannel || isCopilotChat)
 			{
 				return false;
 			}
@@ -167,14 +167,7 @@ export const MentionPopupContent = {
 		},
 		needToShowAllParticipants(): boolean
 		{
-			const { type } = this.dialog;
-
-			if (type === ChatType.user)
-			{
-				return false;
-			}
-
-			return FeatureManager.isFeatureAvailable(Feature.mentionAllAvailable);
+			return this.dialog.type !== ChatType.user;
 		},
 	},
 	watch:
@@ -224,17 +217,21 @@ export const MentionPopupContent = {
 		{
 			this.currentServerQueries++;
 
-			const dialogIds = await this.searchService.search(query);
-			if (query !== this.preparedQuery)
+			try
 			{
-				this.isLoading = false;
+				const dialogIds = await this.searchService.search(query);
+				if (query !== this.preparedQuery)
+				{
+					return;
+				}
 
-				return;
+				this.searchResult = [...new Set([...this.searchResult, ...dialogIds])];
 			}
-
-			this.searchResult = [...new Set([...this.searchResult, ...dialogIds])];
-			this.currentServerQueries--;
-			this.stopLoader();
+			finally
+			{
+				this.currentServerQueries--;
+				this.stopLoader();
+			}
 		},
 		async startSearch(query: string)
 		{

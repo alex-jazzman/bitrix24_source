@@ -1,4 +1,0 @@
-<?php
-$MESS["BOOKING_COMPONENT_DRUM_BTN_CANCEL"] = "Болдырмау";
-$MESS["BOOKING_COMPONENT_DRUM_BTN_SAVE"] = "Сақтау";
-$MESS["BOOKING_COMPONENT_DRUM_HEADER"] = "Уақытты таңдаңыз";

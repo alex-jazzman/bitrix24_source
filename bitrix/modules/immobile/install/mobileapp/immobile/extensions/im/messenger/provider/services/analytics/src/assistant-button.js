@@ -2,6 +2,7 @@
  * @module im/messenger/provider/services/analytics/src/assistant-button
  */
 jn.define('im/messenger/provider/services/analytics/src/assistant-button', (require, exports, module) => {
+	const { Type } = require('type');
 	const { AnalyticsEvent } = require('analytics');
 	const { Analytics } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -46,15 +47,18 @@ jn.define('im/messenger/provider/services/analytics/src/assistant-button', (requ
 			const copilotModel = this.store.getters['dialoguesModel/copilotModel/getByDialogId'](dialogId);
 			if (copilotModel)
 			{
-				const engineCode = copilotModel.chats?.[0].engine;
+				const engineCode = copilotModel.engine.code;
 				const engine = MessengerParams.getCopilotAvailableEngines().find((item) => item.code === engineCode);
-				analytics.setP2(`provider_${engine.name}`);
+				if (Type.isStringFilled(engine?.name))
+				{
+					analytics.setP2(`provider_${engine.name}`);
+				}
 			}
 
 			if (dialogModel?.chatId)
 			{
 				analytics
-					.setP1(AnalyticsHelper.getP1ByChatType(dialogModel.type))
+					.setP1(AnalyticsHelper.getP1ByDialog(dialogModel))
 					.setP5(AnalyticsHelper.getFormattedChatId(dialogModel.chatId))
 				;
 			}
@@ -62,14 +66,20 @@ jn.define('im/messenger/provider/services/analytics/src/assistant-button', (requ
 			analytics.send();
 		}
 
-		sendClickMCPIntegrations()
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendClickMCPIntegrations(dialogId)
 		{
+			/** @type {DialoguesModelState} */
+			const dialogModel = DialogHelper.createByDialogId(dialogId)?.dialogModel;
+
 			new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
 				.setCategory(Analytics.Category.chat)
 				.setEvent(Analytics.Event.clickMCPIntegrations)
 				.setSection(Analytics.Section.chatTextarea)
-				.setP1(AnalyticsHelper.getP1ByChatType(Analytics.Type.aiAssistant))
+				.setP1(AnalyticsHelper.getP1ByDialog(dialogModel))
 				.send()
 			;
 		}

@@ -35,3 +35,5 @@ $MESS["BIZPROC_API_ENUM_ERRORS_UNKNOWN_ERROR"] = "Unknown error.";
 $MESS["BIZPROC_API_ENUM_ERRORS_USER_NOT_FOUND"] = "User ##USER_ID# was not found.";
 $MESS["BIZPROC_API_ENUM_ERRORS_VIEW_RIGHTS_ERROR"] = "Insufficient permission to view workflow. Please contact your Bitrix24 administrator.";
 $MESS["BIZPROC_API_ENUM_ERRORS_WRONG_TEMPLATE"] = "Incorrect workflow template.";
+$MESS['BIZPROC_API_ENUM_ERRORS_DELETE_TEMPLATE_UNAUTHORIZED'] = 'Insufficient permission to delete workflow template.';
+

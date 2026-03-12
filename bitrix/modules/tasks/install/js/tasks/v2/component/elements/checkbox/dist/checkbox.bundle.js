@@ -54,7 +54,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:disabled="disabled"
 				@click="handleClick"
 			>
-			<span></span>
+			<span
+				class="print-after-border-color-base-1 print-border-color-base-1 print-background-white"
+			></span>
 		</component>
 	`
 	};

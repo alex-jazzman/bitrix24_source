@@ -15,6 +15,16 @@ jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 	 */
 	class CrmEntity extends Extended
 	{
+		get telegramConnection()
+		{
+			return get(this.params, 'connectors.telegram', true);
+		}
+
+		get openLinesAccess()
+		{
+			return get(this.params, 'entityPermissions.openLinesAccess', false);
+		}
+
 		/**
 		 * @param {Number} itemId
 		 * @param {String} columnId
@@ -37,6 +47,50 @@ jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 			this.communicationButtonRef = null;
 			this.showCommunicationButton = this.showCommunicationButton.bind(this);
 			this.onChangeStageHandler = this.onChangeStage.bind(this);
+			this.communicationBlockRef = null;
+		}
+
+		componentDidMount()
+		{
+			BX.addCustomEvent('DetailCard::onClose_Global', () => {
+				this.tryToShowOnboarding();
+			});
+
+			this.tryToShowOnboarding();
+		}
+
+		tryToShowOnboarding()
+		{
+			setTimeout(() => {
+				if (this.communicationBlockRef)
+				{
+					void requireLazy('crm:onboarding').then(({ Onboarding, CaseName }) => {
+						if (Onboarding)
+						{
+							void Onboarding.tryToShow(
+								CaseName.ON_DEAL_CONTACT_FILLED,
+								{
+									entityType: this.params?.entityTypeName,
+									targetRef: this.communicationBlockRef,
+									methods: {
+										anotherTypes: Boolean(this.props.item.data[ClientType]),
+										telegram: this.telegramConnection,
+										openLines: this.openLinesAccess,
+									},
+								},
+							);
+						}
+					});
+				}
+			}, 300);
+		}
+
+		componentWillUnmount()
+		{
+			if (this.communicationBlockRef)
+			{
+				this.communicationBlockRef = null;
+			}
 		}
 
 		componentWillReceiveProps(props)
@@ -262,8 +316,8 @@ jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 				return null;
 			}
 
-			const hasTelegramConnection = get(this.params, 'connectors.telegram', true);
-			const openLinesAccess = get(this.params, 'entityPermissions.openLinesAccess', false);
+			const hasTelegramConnection = this.telegramConnection;
+			const openLinesAccess = this.openLinesAccess;
 
 			return View(
 				{
@@ -272,6 +326,12 @@ jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 						alignItems: 'center',
 						justifyContent: 'center',
 						width: 76,
+					},
+					ref: (ref) => {
+						if (ref)
+						{
+							this.communicationBlockRef = ref;
+						}
 					},
 					testId: 'CrmListItemCommunicationButton',
 					onClick: this.showCommunicationButton,

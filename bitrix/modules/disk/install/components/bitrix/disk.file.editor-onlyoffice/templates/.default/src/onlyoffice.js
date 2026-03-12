@@ -1,16 +1,18 @@
-import {ajax as Ajax, Runtime, Type} from "main.core";
-import {BaseEvent, EventEmitter} from "main.core.events";
-import { MenuItem } from "main.popup";
-import {PULL, PullClient} from "pull.client";
-import type {EditorOptions, DocumentSession, Context} from "./types";
-import {ButtonManager, Button, SplitButton} from "ui.buttons";
-import ClientCommandHandler from "./client-command-handler";
-import ServerCommandHandler from "./server-command-handler";
-import UserManager from "./user-manager";
-import {LegacyPopup, SharingControlType} from "disk.sharing-legacy-popup";
-import { ExternalLink, ExternalLinkForUnifiedLink } from "disk.external-link";
-import {PromoPopup} from "disk.onlyoffice-promo-popup";
-import CustomErrorControl from "./custom-error-controls";
+import { ajax as Ajax, Runtime, Type, userOptions } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { MenuItem } from 'main.popup';
+import { PULL, PullClient } from 'pull.client';
+import type { EditorOptions, DocumentSession, Context, SessionBoostOptions } from './types';
+import { ButtonManager, Button, SplitButton } from 'ui.buttons';
+import ClientCommandHandler from './client-command-handler';
+import ServerCommandHandler from './server-command-handler';
+import UserManager from './user-manager';
+import { LegacyPopup, SharingControlType } from 'disk.sharing-legacy-popup';
+import { ExternalLink, ExternalLinkForUnifiedLink } from 'disk.external-link';
+import CustomErrorControl from './custom-error-controls';
+import { Factory as PromoBoostFactory, Checker as PromoBoostChecker } from 'disk.promo-boost';
+import { OnlyOfficePromoActions } from 'disk.onlyoffice-promo-actions';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 const SECONDS_TO_MARK_AS_STILL_WORKING = 60;
 
@@ -29,7 +31,9 @@ export default class OnlyOffice
 	linkToEdit: string = null;
 	linkToView: string = null;
 	linkToDownload: string = null;
+	downloadSizeValue: string = null;
 	pullConfig: any = null;
+	pullUserConfig: any = null;
 	editButton: SplitButton = null;
 	setupSharingButton: Button = null;
 	documentWasChanged: boolean = false;
@@ -38,17 +42,27 @@ export default class OnlyOffice
 	usersInDocument: UserManager = null;
 	sharingControlType: ?SharingControlType = null;
 	brokenDocumentOpened: boolean = false;
+	sessionBoostOptions: ?SessionBoostOptions = null;
 	unifiedLinkAccessOnly: boolean = false;
+	promoShowImmediately: boolean = false;
+	onlyOfficePromoActions: ?OnlyOfficePromoActions = null;
+	realtimeForceReloadTag: ?string = null;
+	realtimeForceReloadCommand: ?string = null;
+	autoForceReloadAfter: int = null;
+	texts: any = null;
+	userPullClient: any = null;
 
 	constructor(editorOptions: EditorOptions)
 	{
 		const options = Type.isPlainObject(editorOptions) ? editorOptions : {};
 
 		this.pullConfig = options.pullConfig;
+		this.pullUserConfig = options.pullUserConfig;
 		this.documentSession = options.documentSession;
 		this.linkToEdit = options.linkToEdit;
 		this.linkToView = options.linkToView;
 		this.linkToDownload = options.linkToDownload;
+		this.downloadSizeValue = options.downloadSizeValue;
 		this.targetNode = options.targetNode;
 		this.userBoxNode = options.userBoxNode;
 		this.editorNode = options.editorNode;
@@ -67,7 +81,15 @@ export default class OnlyOffice
 			context: this.context,
 			userBoxNode: this.userBoxNode,
 		});
+		this.sessionBoostButton = PromoBoostFactory.getSessionBoostButton(editorOptions.sessionBoostButtonContainerId);
+		this.sessionBoostOptions = options.sessionBoostOptions;
 		this.unifiedLinkAccessOnly = options.unifiedLinkAccessOnly;
+		this.promoShowImmediately = options.promoShowImmediately;
+		this.onlyOfficePromoActions = new OnlyOfficePromoActions();
+		this.realtimeForceReloadTag = options.realtimeForceReloadTag;
+		this.realtimeForceReloadCommand = options.realtimeForceReloadCommand;
+		this.autoForceReloadAfter = options.autoForceReloadAfter || 300_000; // default is 5 minutes in ms
+		this.texts = options.texts || {};
 
 		this.initializeEditor(options.editorJson);
 
@@ -86,26 +108,38 @@ export default class OnlyOffice
 			this.registerTimerToTrackWork();
 		}
 
-		if (PromoPopup.shouldShowViewPromo())
+		if (this.promoShowImmediately && this.onlyOfficePromoActions.shouldShow())
 		{
-			PromoPopup.showViewPromo();
+			this.onlyOfficePromoActions.show(this.editButton.getMainButton().button, true);
+		}
+
+		if (PromoBoostChecker.isSessionBoostAvailable())
+		{
+			this.sessionBoostButton.init();
+			this.sessionBoostButton.setOverlayToWidget();
+
+			if (this.isEditMode() && this.sessionBoostOptions?.shouldShowButtonWidgetInstantly)
+			{
+				this.showSessionBoostWidgetOnBoostButton();
+				this.saveWidgetOnBoostButtonView();
+			}
 		}
 	}
 
 	registerTimerToTrackWork(): void
 	{
-		setInterval(this.#trackWork.bind(this), SECONDS_TO_MARK_AS_STILL_WORKING*1000);
+		setInterval(this.#trackWork.bind(this), SECONDS_TO_MARK_AS_STILL_WORKING * 1000);
 	}
 
 	#trackWork(): void
 	{
-			Ajax.runComponentAction('bitrix:disk.file.editor-onlyoffice', 'markAsStillWorkingSession', {
-				mode: 'ajax',
-				json: {
-					documentSessionId: this.context.documentSession.id,
-					documentSessionHash: this.context.documentSession.hash,
-				}
-			});
+		Ajax.runComponentAction('bitrix:disk.file.editor-onlyoffice', 'markAsStillWorkingSession', {
+			mode: 'ajax',
+			json: {
+				documentSessionId: this.context.documentSession.id,
+				documentSessionHash: this.context.documentSession.hash,
+			},
+		}).then(responce => {});
 	}
 
 	initPull(): void
@@ -113,20 +147,27 @@ export default class OnlyOffice
 		if (this.pullConfig)
 		{
 			BX.PULL = new PullClient({
-				skipStorageInit: true
+				skipStorageInit: true,
 			});
 			BX.PULL.start(this.pullConfig);
+		}
+
+		if (this.pullUserConfig)
+		{
+			this.userPullClient = new PullClient();
+
+			this.userPullClient.start(this.pullUserConfig);
 		}
 	}
 
 	bindEvents(): void
 	{
-		EventEmitter.subscribe("SidePanel.Slider:onClose", this.handleSliderClose.bind(this));
-		window.addEventListener("beforeunload", this.handleClose.bind(this));
+		EventEmitter.subscribe('SidePanel.Slider:onClose', this.handleSliderClose.bind(this));
+		EventEmitter.subscribe(window, 'beforeunload', this.handleClose.bind(this));
 
 		if (window.top !== window)
 		{
-			window.addEventListener("message", (event: MessageEvent) => {
+			EventEmitter.subscribe(window, 'message', (event: MessageEvent) => {
 				if (event.data === 'closeIframe')
 				{
 					this.handleClose();
@@ -136,38 +177,37 @@ export default class OnlyOffice
 
 		if (this.editorJson.document.permissions.edit === true && this.editButton)
 		{
-			if (this.editButton.hasOwnProperty('mainButton'))
+			if (Object.prototype.hasOwnProperty.call(this.editButton, 'mainButton'))
 			{
 				this.editButton.getMainButton().bindEvent('click', this.handleClickEditButton.bind(this));
 
-				let menuWindow = this.editButton.getMenuWindow();
-				let menuItems = Runtime.clone(menuWindow.getMenuItems());
+				const menuWindow = this.editButton.getMenuWindow();
+				const menuItems = Runtime.clone(menuWindow.getMenuItems());
 
-				for (let i = 0; i < menuItems.length; i++)
-				{
-					let menuItem = menuItems[i];
-					let menuItemOptions = Runtime.clone(menuItem.options);
+				menuItems.forEach((menuItem) => {
+					const menuItemOptions = Runtime.clone(menuItem.options);
 					menuItemOptions.onclick = this.handleClickEditSubItems.bind(this);
 
 					menuWindow.removeMenuItem(menuItem.getId());
 					menuWindow.addMenuItem(menuItemOptions);
-				}
+				});
 			}
 			else
 			{
 				this.editButton.bindEvent('click', this.handleClickEditButton.bind(this));
 			}
 		}
+
 		if (this.setupSharingButton)
 		{
-			let menuWindow = this.setupSharingButton.getMenuWindow();
-			let extLinkOptions = menuWindow.getMenuItem('ext-link').options;
+			const menuWindow = this.setupSharingButton.getMenuWindow();
+			const extLinkOptions = menuWindow.getMenuItem('ext-link').options;
 			extLinkOptions.onclick = this.handleClickSharingByExternalLink.bind(this);
 
 			menuWindow.removeMenuItem('ext-link');
 			menuWindow.addMenuItem(extLinkOptions);
 
-			let sharingOptions = menuWindow.getMenuItem('sharing').options;
+			const sharingOptions = menuWindow.getMenuItem('sharing').options;
 			sharingOptions.onclick = this.handleClickSharing.bind(this);
 
 			menuWindow.removeMenuItem('sharing');
@@ -184,11 +224,48 @@ export default class OnlyOffice
 			context: this.context,
 			userManager: this.usersInDocument,
 		}));
+
+		if (this.userPullClient && this.realtimeForceReloadTag)
+		{
+			this.userPullClient.extendWatch(this.realtimeForceReloadTag);
+
+			this.userPullClient.subscribe({
+				type: BX.PullClient.SubscriptionType.Server,
+				moduleId: 'disk',
+				command: this.realtimeForceReloadCommand,
+				callback: data => {
+					const message = {
+						regular: this.texts.forceReloadRegularServer,
+						booster: this.texts.forceReloadBoosterServer,
+					}[data.newServersType] || this.texts.forceReloadUndefinedServer;
+
+					const mb = new MessageBox({
+						message,
+						modal: true,
+						onOk: () => location.reload(),
+						okCaption: this.texts.forceReloadPopupOkButton,
+						buttons: MessageBoxButtons.OK,
+					});
+
+					mb.show();
+
+					setTimeout(() => {
+						location.reload();
+					}, this.autoForceReloadAfter);
+				},
+			});
+		}
 	}
 
-	initializeEditor(options): void
+	initializeEditor(options: any): void
 	{
+		if (!options)
+		{
+			return;
+		}
+
 		options.events = {
+			...options.events,
 			onDocumentStateChange: this.handleDocumentStateChange.bind(this),
 			onDocumentReady: this.handleDocumentReady.bind(this),
 			onMetaChange: this.handleMetaChange.bind(this),
@@ -196,9 +273,9 @@ export default class OnlyOffice
 			onWarning: this.handleWarning.bind(this),
 			onError: this.handleError.bind(this),
 			onRequestClose: this.handleRequestClose.bind(this),
-		}
+		};
 
-		if (options.document.permissions.rename)
+		if (options.document?.permissions?.rename)
 		{
 			options.events.onRequestRename = this.handleRequestRename.bind(this);
 		}
@@ -256,14 +333,39 @@ export default class OnlyOffice
 
 	handleClickEditButton(): void
 	{
-		if (PromoPopup.shouldShowEditPromo())
+		if (this.onlyOfficePromoActions.shouldShow())
 		{
-			PromoPopup.showEditPromo();
+			this.onlyOfficePromoActions.show(this.editButton.getMainButton().button, true);
+
+			BX.UI.Analytics.sendData({
+				tool: 'docs',
+				category: 'docs',
+				event: 'oo_limit_edit',
+				c_sub_section: 'old_element',
+				c_element: 'view_mode',
+				p3: this.context.object.docType,
+			 	p4: `fileId_${this.context.object.id}`,
+			});
 
 			return;
 		}
 
 		this.handleRequestEditRights();
+	}
+
+	showSessionBoostWidgetOnBoostButton(): void
+	{
+		this.sessionBoostButton.showWidget();
+	}
+
+	saveWidgetOnBoostButtonView(): void
+	{
+		if (this.sessionBoostOptions !== null)
+		{
+			const { category, name } = this.sessionBoostOptions.optionParamsToControlButtonWidgetDisplay;
+			userOptions.save(category, name, null, Math.floor(Date.now() / 1000));
+			userOptions.send(null);
+		}
 	}
 
 	handleClickSharing(): void
@@ -272,22 +374,24 @@ export default class OnlyOffice
 		{
 			case SharingControlType.WITH_CHANGE_RIGHTS:
 				(new LegacyPopup()).showSharingDetailWithChangeRights({
-					object: this.context.object
+					object: this.context.object,
 				});
 				break;
 			case SharingControlType.WITH_SHARING:
 				(new LegacyPopup()).showSharingDetailWithChangeRights({
-					object: this.context.object
+					object: this.context.object,
 				});
 				break;
 			case SharingControlType.WITHOUT_EDIT:
 				(new LegacyPopup()).showSharingDetailWithoutEdit({
-					object: this.context.object
+					object: this.context.object,
 				});
 				break;
 			case SharingControlType.BLOCKED_BY_FEATURE:
 				BX.UI.InfoHelper.show('limit_office_files_access_permissions');
 				break;
+			default:
+				console.warn('Unknown sharingControlType', this.sharingControlType);
 		}
 	}
 
@@ -312,7 +416,8 @@ export default class OnlyOffice
 
 	handleClickEditSubItems(event, menuItem: MenuItem): void
 	{
-		let serviceCode = menuItem.getId();
+		const serviceCode = menuItem.getId();
+
 		if(serviceCode === 'onlyoffice')
 		{
 			this.handleClickEditButton();
@@ -341,13 +446,12 @@ export default class OnlyOffice
 					window.BX.Disk.showModalWithStatusAction();
 					BX.SidePanel.Instance.close();
 				}
-			}
+			},
 		});
 	}
 
 	handleRequestClose(): void
 	{
-		console.log('handleRequestClose');
 		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
 		if (!currentSlider)
 		{
@@ -376,8 +480,6 @@ export default class OnlyOffice
 
 	handleSliderClose(event: BaseEvent): void
 	{
-		console.log('handleSliderClose');
-
 		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
 		if (!currentSlider)
 		{
@@ -419,8 +521,6 @@ export default class OnlyOffice
 
 	handleClose(): void
 	{
-		console.log('handleClose');
-
 		PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'exitDocument', {
 			fromUserId: this.context.currentUser.id,
 		});
@@ -504,8 +604,8 @@ export default class OnlyOffice
 					this.getEditorWrapperNode(),
 					this.getContainer(),
 					this.linkToDownload,
+					this.downloadSizeValue,
 				);
-
 			}, 100);
 		}
 	}
@@ -550,13 +650,12 @@ export default class OnlyOffice
 				documentSessionId: this.context.documentSession.id,
 				documentSessionHash: this.context.documentSession.hash,
 				newName: newName,
-			}
+			},
 		});
 	}
 
 	handleMetaChange(event): void
-	{
-	}
+	{}
 
 	handleDocumentReady(): void
 	{
@@ -574,7 +673,7 @@ export default class OnlyOffice
 				serviceCode: 'onlyoffice',
 				documentSessionId: this.documentSession.id,
 				documentSessionHash: this.documentSession.hash,
-			}
+			},
 		);
 
 		if (this.linkToEdit)
@@ -595,14 +694,14 @@ export default class OnlyOffice
 
 		BX.SidePanel.Instance.open(
 			linkToEdit, {
-			width: '100%',
-			customLeftBoundary: customLeftBoundary,
-			cacheable: false,
-			allowChangeHistory: false,
-			data: {
-				documentEditor: true
-			}
-		});
+				width: '100%',
+				customLeftBoundary: customLeftBoundary,
+				cacheable: false,
+				allowChangeHistory: false,
+				data: {
+					documentEditor: true,
+				},
+			});
 	}
 
 	getEditor()

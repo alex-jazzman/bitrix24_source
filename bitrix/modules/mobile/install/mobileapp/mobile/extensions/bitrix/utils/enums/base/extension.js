@@ -201,6 +201,11 @@ jn.define('utils/enums/base', (require, exports, module) => {
 		 */
 		equal(enumType)
 		{
+			if (!this.constructor.has(enumType))
+			{
+				return false;
+			}
+
 			return isEqual(this.getValue(), enumType.getValue()) && this.constructor.name === enumType.constructor.name;
 		}
 

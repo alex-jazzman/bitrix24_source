@@ -27,7 +27,6 @@ declare type ImFeatures = {
 	mentionAllAvailable: boolean,
 	isCopilotMentionAvailable: boolean,
 	isCopilotReasoningAvailable: boolean,
-	videoNoteAvailable: boolean,
 	videoNoteTranscriptionAvailable: boolean,
 	stickersAvailable: boolean,
 	aiAssistantMcpSelectorAvailable: boolean,
@@ -38,9 +37,24 @@ declare type UserInfo = {
 	type: UserType,
 }
 
-declare type Permissions = {
+declare type MessengerPermissions = {
 	byChatType: object,
-	byUserType: object,
+	byUserType: Record<Exclude<UserType, 'bot'>, PermissionsByUserType>,
 	actionGroups: object,
 	actionGroupsDefaults: object,
+}
+
+declare type PermissionsByUserType = {
+	changeMessagesAutoDeleteDelay: boolean,
+	changeStickerPack: boolean,
+	createChannel: boolean,
+	createChat: boolean,
+	createCollab: boolean,
+	createConference: boolean,
+	createCopilot: boolean,
+	createStickerPack: boolean,
+	getChannels: boolean,
+	getMarket: boolean,
+	getOpenlines: boolean,
+	leaveCollab: boolean,
 }

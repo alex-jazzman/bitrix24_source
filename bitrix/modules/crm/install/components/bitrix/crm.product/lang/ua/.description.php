@@ -1,6 +1,0 @@
-<?
-$MESS["CRM_PRODUCT_COMPLEX_NAME"] = "Товари";
-$MESS["CRM_PRODUCT_COMPLEX_DESCRIPTION"] = "Товари";
-$MESS["CRM_NAME"] = "CRM";
-$MESS["CRM_PRODUCT_NAME"] = "Товари";
-?>

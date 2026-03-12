@@ -1,3 +1,0 @@
-<?php
-$MESS["INTRANET_CONTROLLER_SEARCHENTITY_GETALL_ENTITY_EMPTY"] = "Мәндер түрі берілмеген.";
-$MESS["INTRANET_CONTROLLER_SEARCHENTITY_GETALL_ENTITY_INCORRECT"] = "Дұрыс емес мәндер түрі берілген.";

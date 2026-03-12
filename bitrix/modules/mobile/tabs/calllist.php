@@ -3,6 +3,7 @@ namespace Bitrix\Mobile\AppTabs;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Mobile\Menu\Analytics;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Call\Settings;
@@ -55,7 +56,6 @@ final class CallList implements Tabable
 					'COMPONENT_CODE' => 'call:callList',
 					'USER_ID' => $this->context->userId,
 					'SITE_ID' => $this->context->siteId,
-					'IS_CREATE_CALL_BUTTON_ENABLED' => Settings::isCreateCallButtonEnabled(),
 				],
 			],
 		];
@@ -73,6 +73,7 @@ final class CallList implements Tabable
 			'params' => [
 				'onclick' => \Bitrix\Mobile\Tab\Utils::getComponentJSCode($this->getData()['component']),
 				'counter' => 'call_list',
+				'analytics' => Analytics::callList(),
 			],
 		];
 

@@ -1,7 +1,0 @@
-<?php
-$MESS["MOBILE_UI_EDITOR_EMAIL_BUTTON"] = "Поштаны қосу";
-$MESS["MOBILE_UI_EDITOR_IM_BUTTON"] = "Мессенджерді қосу";
-$MESS["MOBILE_UI_EDITOR_OPPORTUNITY_TITLE"] = "Сомасы";
-$MESS["MOBILE_UI_EDITOR_PHONE_BUTTON"] = "Телефонды қосу";
-$MESS["MOBILE_UI_EDITOR_PROVIDER_TYPE"] = "Түрі";
-$MESS["MOBILE_UI_EDITOR_WEB_BUTTON"] = "Сайтты қосу";

@@ -35,7 +35,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		);
 	}
 
-	public function getMenuActionsAction(Disk\Document\TrackedObject $trackedObject)
+	public function getMenuActionsAction(Disk\Document\TrackedObject $trackedObject, array $analytics = [])
 	{
 		$urlManager = Driver::getInstance()->getUrlManager();
 		if (!$trackedObject->canRead($this->getCurrentUser()->getId()))
@@ -59,7 +59,15 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 
 		if (!$isBoard && $supportsUnifiedLink)
 		{
-			$viewUnifiedLink = $urlManager->getUnifiedLink($file);
+			$viewUnifiedLinkOptions = [];
+
+			if (!empty($analytics))
+			{
+				$viewUnifiedLinkOptions['additionalQueryParams']['analytics'] = $analytics;
+			}
+
+			$viewUnifiedLink = $urlManager->getUnifiedLink($file, $viewUnifiedLinkOptions);
+
 			$actions[] = [
 				'id' => 'view',
 				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_OPEN'),

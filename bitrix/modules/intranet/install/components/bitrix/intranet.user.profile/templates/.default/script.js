@@ -17,6 +17,8 @@
 			this.signedParameters = params.signedParameters;
 			this.componentName = params.componentName;
 			this.canEditProfile = params.canEditProfile === 'Y';
+			this.currentUserId = params.currentUserId || '';
+			this.currentUserName = params.currentUserName || '';
 			this.userId = params.userId || '';
 			this.userStatus = params.userStatus || '';
 			this.isCollaber = params.isCollaber === 'Y';
@@ -43,8 +45,10 @@
 			this.userpicUploadAttribute = params.userpicUploadAttribute ?? '';
 			this.actionsAvailability = params.actionsAvailability;
 			this.rootDepartment = params.rootDepartment;
+			this.isUserFirstAdmin = params.isUserFirstAdmin;
 			this.workPosition = params.workPosition;
 			this.otp = params.otp ?? null;
+			this.isFirstAdminConfirmationEnabled = params.isFirstAdminConfirmationEnabled ?? false;
 
 			this.entityEditorInstance = new namespace.EntityEditor({
 				managerInstance: this,
@@ -56,11 +60,6 @@
 					managerInstance: this,
 					inputNode: document.getElementById('intranet-user-profile-tags-input'),
 					tagsNode: document.getElementById('intranet-user-profile-tags'),
-				});
-
-				this.stressLevelManagerInstance = new namespace.StressLevel({
-					managerInstance: this,
-					options: params,
 				});
 
 				this.gratsManagerInstance = new namespace.Grats({
@@ -76,6 +75,11 @@
 				this.initAvatar();
 				this.initAvailableActions();
 				this.initAvatarLoader();
+
+				if (this.isUserFirstAdmin)
+				{
+					this.showPortalCreatorPopup();
+				}
 
 				if (this.isCloud)
 				{
@@ -226,14 +230,11 @@
 						return editor;
 					}.bind(this);
 
-					BX.bind(BX('intranet-user-profile-photo-camera'), 'click', () =>
-					{ getEditor().show('camera');
+					BX.bind(BX('intranet-user-profile-photo-camera'), 'click', () => { getEditor().show('camera');
 					});
-					BX.bind(BX('intranet-user-profile-photo-file'), 'click', () =>
-                                                                      { getEditor().show('file');
+					BX.bind(BX('intranet-user-profile-photo-file'), 'click', () => { getEditor().show('file');
 					});
-					BX.bind(BX('intranet-user-profile-photo-mask'), 'click', () =>
-                                                                      { getEditor().show('mask');
+					BX.bind(BX('intranet-user-profile-photo-mask'), 'click', () => { getEditor().show('mask');
 					});
 				}
 				else
@@ -275,7 +276,7 @@
 					className: 'menu-popup-no-icon',
 					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
-						this.removeAdminRights();
+						this.prepareRemoveAdminRights();
 					}, this),
 				});
 			}
@@ -304,7 +305,9 @@
 						}
 						else if (this.isCloud)
 						{
-							this.getAdminConfirmPopup().show();
+							this.getAdminConfirmPopup().then((popup) => {
+								popup.show();
+							});
 						}
 						else
 						{
@@ -336,7 +339,14 @@
 						}
 						else
 						{
-							this.showConfirmPopup(BX.message('INTRANET_USER_PROFILE_FIRE_CONFIRM'), this.fireUser.bind(this));
+							this.showConfirmPopup(
+								BX.message('INTRANET_USER_PROFILE_FIRE_CONFIRM'),
+								this.prepareFire.bind(this),
+								BX.message('INTRANET_USER_PROFILE_YES_FIRE'),
+								BX.message('INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1'),
+								'fire',
+								BX.message('INTRANET_USER_PROFILE_FIRE_POPUP_TITLE'),
+							);
 						}
 					}, this),
 				});
@@ -459,28 +469,30 @@
 				menuItems.push(menuItem.getProfileItem());
 			}
 
-			BX.PopupMenu.show(
-				'user-profile-action-popup',
-				bindElement,
-				menuItems,
-				{
-					offsetTop: 0,
-					offsetLeft: 10,
-					angle: true,
-					events: {
-						onPopupClose()
-						{
-							BX.PopupMenu.destroy();
+			if (menuItems.length > 0)
+			{
+				BX.PopupMenu.show(
+					'user-profile-action-popup',
+					bindElement,
+					menuItems,
+					{
+						offsetTop: 0,
+						offsetLeft: 10,
+						angle: true,
+						events: {
+							onPopupClose()
+							{
+								BX.PopupMenu.destroy();
+							},
 						},
 					},
-				},
-			);
+				);
+			}
 		},
 
-		showConfirmPopup(text, confirmCallback)
+		showConfirmPopup(text, confirmCallback, confirmText = null, declineText = null, action = null, title = null)
 		{
-			BX.PopupWindowManager.create({
-				id: 'intranet-user-profile-confirm-popup',
+			const popupOptions = {
 				content:
 					BX.create('div', {
 						props: {
@@ -493,89 +505,134 @@
 				offsetLeft: 100,
 				overlay: true,
 				contentPadding: 10,
-				buttons: [
-					new BX.UI.CreateButton({
-						text: BX.message('INTRANET_USER_PROFILE_YES'),
-						events: {
-							click(button, event) {
-								confirmCallback();
-								event.stopPropagation();
-								this.context.close();
-							},
-						},
-					}),
-					new BX.UI.CancelButton({
-						text: BX.message('INTRANET_USER_PROFILE_NO'),
-						events: {
-							click() {
-								this.context.close();
-							},
-						},
-					}),
-				],
 				events: {
 					onPopupClose()
 					{
 						this.destroy();
 					},
 				},
-			}).show();
-		},
+			};
 
-		getAdminConfirmPopup()
-		{
-			const popup = BX.PopupWindowManager.create({
-				id: 'intranet-user-profile-admin-confirm-popup',
-				content:
-					BX.create('div', {
-						props: {
-							style: 'max-width: 450px',
-						},
-						html: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION_MSGVER_1'),
-					}),
-				closeIcon: false,
-				lightShadow: true,
-				offsetLeft: 100,
-				overlay: true,
-				titleBar: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE'),
-				contentPadding: 10,
-				buttons: [
-					new BX.UI.CreateButton({
-						text: BX.message('INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1'),
-						events: {
-							click: (button, event) => {
-								this.setAdminRights();
-								event.stopPropagation();
-								popup.close();
-							},
-						},
-					}),
-					new BX.UI.CreateButton({
-						text: BX.message('INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR'),
-						events: {
-							click: () => {
-								this.setIntegratorRights();
-								popup.close();
-							},
-						},
-					}),
-					new BX.UI.CancelButton({
-						text: BX.message('INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1'),
-						events: {
-							click: () => {
-								popup.close();
-							},
-						},
-					}),
-				],
+			if (title)
+			{
+				popupOptions.titleBar = title;
+			}
+
+			if (action)
+			{
+				popupOptions.className = `intranet-user-profile-confirm-popup-${action}`;
+			}
+			else
+			{
+				popupOptions.className = 'intranet-user-profile-confirm-popup';
+			}
+
+			const popup = new BX.Main.Popup('intranet-user-profile-confirm-popup', null, popupOptions);
+
+			const confirmButton = new BX.UI.Button({
+				useAirDesign: true,
+				style: BX.UI.AirButtonStyle.FILLED,
+				className: 'intranet-user-profile-confirm-popup-confirm-button',
+				text: confirmText ?? BX.message('INTRANET_USER_PROFILE_YES'),
+				context: popup,
 				events: {
-					onPopupClose: () => {
-						popup.destroy();
+					click(button, event) {
+						confirmCallback();
+						event.stopPropagation();
+						button.context.close();
+					},
+				},
+			});
+			const declineButton = new BX.UI.Button({
+				useAirDesign: true,
+				style: BX.UI.AirButtonStyle.OUTLINE,
+				className: 'intranet-user-profile-confirm-popup-decline-button',
+				text: declineText ?? BX.message('INTRANET_USER_PROFILE_NO'),
+				context: popup,
+				events: {
+					click(button) {
+						button.context.close();
 					},
 				},
 			});
 
-			return popup;
+			popup.setButtons([confirmButton, declineButton]);
+
+			popup.show();
+		},
+
+		getAdminConfirmPopup()
+		{
+			return BX.Runtime.loadExtension('main.core').then(({ Tag, Loc }) => {
+				const popup = new BX.Main.Popup(
+					'intranet-user-profile-admin-confirm-popup',
+					null,
+					{
+						className: 'intranet-user-profile-admin-confirm-popup',
+						content:
+							Tag.render`
+								<div class="intranet-user-profile-admin-confirm-popup-content">
+									<div class="intranet-user-profile-admin-confirm-popup-content-blue-card">
+										<div>${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_HINT')}</div>
+										<div>${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_NOTE')}</div>
+									</div>
+									<div class="intranet-user-profile-admin-confirm-popup-content-warning">
+										${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_WARNING')}
+									</div>
+									<a href="javascript:top.BX.Helper.show('redirect=detail&code=20682986')"
+									class="intranet-user-profile-admin-confirm-popup-content-more-link">
+										${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_LINK')}
+									</a>
+								</div>
+							`,
+						closeIcon: true,
+						lightShadow: true,
+						offsetLeft: 100,
+						overlay: true,
+						closeByEsc: true,
+						titleBar: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE'),
+						buttons: [
+							new BX.UI.Button({
+								className: 'intranet-user-profile-admin-confirm-popup-decline-button',
+								useAirDesign: true,
+								text: Loc.getMessage('INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1'),
+								style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+								onclick: () => {
+									popup.close();
+								},
+							}),
+							new BX.UI.Button({
+								className: 'intranet-user-profile-admin-confirm-popup-set-integrator-button',
+								useAirDesign: true,
+								text: Loc.getMessage('INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR'),
+								style: BX.UI.AirButtonStyle.OUTLINE,
+								onclick: () => {
+									this.setIntegratorRights();
+									popup.close();
+								},
+							}),
+							new BX.UI.Button({
+								className: 'intranet-user-profile-admin-confirm-popup-set-admin-button',
+								useAirDesign: true,
+								text: Loc.getMessage('INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1'),
+								style: BX.UI.AirButtonStyle.FILLED,
+								onclick: (button, event) => {
+									this.setAdminRights();
+									event.stopPropagation();
+									popup.close();
+								},
+							}),
+						],
+						events: {
+							onPopupClose: () => {
+								popup.destroy();
+							},
+						},
+					},
+				);
+
+				return popup;
+			});
 		},
 
 		showFireInvitedUserPopup(callback)
@@ -816,10 +873,110 @@
 			});
 		},
 
-		removeAdminRights()
+		checkIfFirstAdmin()
+		{
+			return BX.ajax.runAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.isPortalCreator', {
+				data: {
+					userId: Number(this.userId),
+				},
+			}).then((response) => {
+				return response.data.isPortalCreator === true;
+			}).catch(() => {
+				this.showErrorPopup('An error occurred while checking the first admin');
+			});
+		},
+
+		handleFirstAdminAction(action, successMessageKey, sendRequestDataCallback, fallbackAction)
 		{
 			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
+			if (!this.isCloud || !this.isFirstAdminConfirmationEnabled)
+			{
+				fallbackAction();
+				this.hideLoader({ loader });
+
+				return;
+			}
+
+			this.checkIfFirstAdmin().then((isFirstAdmin) => {
+				if (isFirstAdmin)
+				{
+					BX.Runtime.loadExtension('bitrix24.first-admin-guard').then(() => {
+						const guard = new BX.Bitrix24.FirstAdminGuard(
+							this.userFullName,
+							this.currentUserId,
+							this.userId,
+						);
+
+						guard.confirmAction(
+							action,
+							() => {
+								BX.ajax.runAction(action, {
+									data: sendRequestDataCallback(),
+								}).then((response) => {
+									if (response.status === 'success')
+									{
+										BX.UI.Notification.Center.notify({
+											content: BX.Loc.getMessage(successMessageKey, {
+												'[b]': '<strong>',
+												'[/b]': '</strong>',
+												'[br]': '<br>',
+											}),
+											autoHide: true,
+											autoHideDelay: 3000,
+											useAirDesign: true,
+										});
+									}
+									else
+									{
+										this.showErrorPopup(`Action response is not success: ${action}`);
+									}
+									this.hideLoader({ loader });
+								}).catch((error) => {
+									top.console.error(error);
+									this.showErrorPopup(`An error occurred while executing the ${action}`);
+								});
+							},
+							() => {},
+						);
+					});
+				}
+				else
+				{
+					fallbackAction();
+				}
+				this.hideLoader({ loader });
+			}).catch(() => {
+				const errorMessage = 'Error in FirstAdminGuard';
+				this.showErrorPopup(errorMessage);
+			});
+		},
+
+		prepareRemoveAdminRights() {
+			return this.handleFirstAdminAction(
+				'bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendTransferRequest',
+				'INTRANET_USER_PROFILE_FIRST_ADMIN_REQUEST_SENT',
+				() => ({
+					fromUserId: Number(this.currentUserId),
+					toUserId: Number(this.userId),
+				}),
+				() => this.removeAdminRights(),
+			);
+		},
+
+		prepareFire() {
+			return this.handleFirstAdminAction(
+				'bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest',
+				'INTRANET_USER_PROFILE_FIRST_ADMIN_REQUEST_SENT',
+				() => ({
+					userId: Number(this.currentUserId),
+					toUser: Number(this.userId),
+				}),
+				() => this.fireUser(),
+			);
+		},
+
+		removeAdminRights() {
 			BX.ajax.runComponentAction(this.componentName, 'removeAdminRights', {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
@@ -1079,6 +1236,102 @@
 				element.classList.add('intranet-user-profile-column-block-title-dropdown--open');
 				sliderTarget.style.height = `${sliderTarget.firstElementChild.offsetHeight}px`;
 			}
+		},
+
+		showPortalCreatorPopup()
+		{
+			const crown = BX('intranet-user-profile-portal-creator');
+			if (!BX.type.isDomNode(crown))
+			{
+				return;
+			}
+
+			this.portalCreatorPopup = null;
+			let hideTimeout = null;
+
+			const showPopup = () => {
+				if (this.portalCreatorPopup && this.portalCreatorPopup.isShown())
+				{
+					return;
+				}
+
+				this.portalCreatorPopup = new BX.Main.Popup(
+					'intranet-user-profile-portal-creator-popup',
+					crown,
+					{
+						className: 'intranet-user-profile-portal-creator-popup',
+						content: `<div class="intranet-user-profile-portal-creator-popup-content">${BX.Loc.getMessage('INTRANET_USER_PROFILE_PORTAL_CREATOR_POPUP')}</div>`,
+						closeIcon: false,
+						lightShadow: true,
+						autoHide: false,
+						angle: true,
+						padding: 10,
+						maxWidth: 350,
+						background: 'var(--ui-color-bg-content-inapp)',
+						events: {
+							onPopupClose: () => {
+								if (this.portalCreatorPopup)
+								{
+									this.portalCreatorPopup.destroy();
+								}
+							},
+						},
+					},
+				);
+
+				this.portalCreatorPopup.show();
+
+				const popupContainer = this.portalCreatorPopup.popupContainer;
+
+				const link = popupContainer.querySelector('.intranet-user-profile-portal-creator-popup-link');
+				if (link)
+				{
+					BX.Event.bind(link, 'click', () => {
+						top.BX.Helper.show('redirect=detail&code=26764700');
+					});
+				}
+
+				const mouseEnterHandler = () => {
+					if (hideTimeout)
+					{
+						clearTimeout(hideTimeout);
+						hideTimeout = null;
+					}
+				};
+
+				const mouseLeaveHandler = () => {
+					this.portalCreatorPopup.close();
+				};
+
+				BX.Event.bind(popupContainer, 'mouseenter', mouseEnterHandler);
+				BX.Event.bind(popupContainer, 'mouseleave', mouseLeaveHandler);
+
+				const cleanupHandlers = () => {
+					BX.Event.unbind(popupContainer, 'mouseenter', mouseEnterHandler);
+					BX.Event.unbind(popupContainer, 'mouseleave', mouseLeaveHandler);
+				};
+
+				this.portalCreatorPopup.subscribe('onClose', cleanupHandlers);
+				this.portalCreatorPopup.subscribe('onDestroy', cleanupHandlers);
+			};
+
+			BX.Event.bind(crown, 'mouseenter', () => {
+				if (hideTimeout)
+				{
+					clearTimeout(hideTimeout);
+					hideTimeout = null;
+				}
+				showPopup();
+			});
+
+			BX.Event.bind(crown, 'mouseleave', () => {
+				hideTimeout = setTimeout(() => {
+					if (this.portalCreatorPopup)
+					{
+						this.portalCreatorPopup.close();
+					}
+				}, 200);
+			});
 		},
 	};
 })();

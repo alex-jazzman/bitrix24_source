@@ -110,7 +110,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	              '!userId': this.mappedUserIds,
 	              inviteEmployeeLink: false,
 	              intranetUsersOnly: true,
-	              nameTemplate: '#LAST_NAME# #NAME# #SECOND_NAME#'
+	              nameTemplate: '#LAST_NAME# #NAME# #SECOND_NAME#',
+	              activeUsers: null
 	            }
 	          }],
 	          preselectedItems: [preselectedItem],

@@ -8,7 +8,6 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 	const { withCurrentDomain } = require('utils/url');
 
 	const { BaseSelectorProvider } = require('selector/providers/base');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RecentProvider: SearchProvider } = require('im/messenger/controller/search/experimental');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
@@ -161,12 +160,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 
 		#getRecentDialogs()
 		{
-			const getSortedCollectionGetterName = Feature.isMessengerV2Enabled
-				? 'recentModel/getChatCollection'
-				: 'recentModel/getSortedCollection'
-			;
-
-			const recentDialogIds = this.store.getters[getSortedCollectionGetterName]()
+			const recentDialogIds = this.store.getters['recentModel/getChatCollection']()
 				.map(({ id }) => id)
 			;
 

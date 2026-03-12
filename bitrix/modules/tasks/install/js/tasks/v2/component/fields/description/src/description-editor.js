@@ -7,14 +7,20 @@ import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
 import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
-import { entityTextEditor, type EntityTextEditor } from 'tasks.v2.component.entity-text';
+import {
+	entityTextEditor,
+	CopilotButton,
+	AttachButton,
+	MentionButton,
+	MoreButton,
+	NumberListButton,
+	BulletListButton,
+	type EntityTextEditor,
+} from 'tasks.v2.component.entity-text';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
-import { DescriptionMixin } from './description-mixin';
+import { DescriptionCheckListMixin } from './description-check-list-mixin';
 import { CheckList } from './actions/check-list';
-import { Copilot } from './actions/copilot';
-import { Attach } from './actions/attach';
-import { Mention } from './actions/mention';
 
 import './description.css';
 
@@ -25,12 +31,15 @@ export const DescriptionEditor = {
 		BIcon,
 		UiButton,
 		CheckList,
-		Copilot,
-		Attach,
-		Mention,
+		CopilotButton,
+		AttachButton,
+		MentionButton,
+		MoreButton,
+		NumberListButton,
+		BulletListButton,
 	},
 	mixins: [
-		DescriptionMixin,
+		DescriptionCheckListMixin,
 	],
 	inject: {
 		task: {},
@@ -45,7 +54,7 @@ export const DescriptionEditor = {
 			default: false,
 		},
 	},
-	emits: ['close', 'show'],
+	emits: ['close', 'show', 'addCheckList'],
 	setup(props): { task: TaskModel, fileService: FileService, entityTextEditor: EntityTextEditor }
 	{
 		return {
@@ -88,43 +97,9 @@ export const DescriptionEditor = {
 		{
 			this.editor.focus(null, { defaultSelection: 'rootEnd' });
 		},
-		handleCopilotButtonClick(): void
+		handleClose(): void
 		{
-			if (!this.isCopilotEnabled)
-			{
-				return;
-			}
-
-			this.editor.focus(
-				() => {
-					this.editor.dispatchCommand(
-						BX.UI.TextEditor.Plugins.Copilot.INSERT_COPILOT_DIALOG_COMMAND,
-					);
-				},
-				{ defaultSelection: 'rootEnd' },
-			);
-		},
-		handleMentionButtonClick(): void
-		{
-			this.editor.focus(
-				() => {
-					this.editor.dispatchCommand(
-						BX.UI.TextEditor.Plugins.Mention.INSERT_MENTION_DIALOG_COMMAND,
-					);
-				},
-				{ defaultSelection: 'rootEnd' },
-			);
-		},
-		handleAttachButtonClick(): void
-		{
-			this.fileService.browse({
-				bindElement: this.$refs.attach.$el,
-				onHideCallback: this.onFileBrowserClose,
-			});
-		},
-		onFileBrowserClose(): void
-		{
-			this.fileService.setFileBrowserClosed(false);
+			this.$emit('close');
 		},
 	},
 	template: `
@@ -143,16 +118,12 @@ export const DescriptionEditor = {
 			<div class="tasks-card-description-editor-wrapper" id="descriptionTextAreaDestination"/>
 			<div v-if="!readonly" class="tasks-card-description-editor-footer" ref="descriptionActions">
 				<div class="tasks-card-description-action-list">
-					<Copilot
-						v-if="isCopilotEnabled"
-						@click="handleCopilotButtonClick"
-					/>
-					<Attach
-						v-if="isDiskModuleInstalled"
-						ref="attach"
-						@click="handleAttachButtonClick"
-					/>
-					<Mention @click="handleMentionButtonClick"/>
+					<AttachButton v-if="isDiskModuleInstalled" :fileService/>
+					<MentionButton :editor/>
+					<BulletListButton :editor/>
+					<NumberListButton :editor/>
+					<MoreButton :editor/>
+					<CopilotButton v-if="isCopilotEnabled" :editor/>
 					<CheckList
 						v-if="isCopilotEnabled"
 						:loading="isAiCommandProcessing"

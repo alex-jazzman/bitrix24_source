@@ -1,3 +1,0 @@
-<?php
-$MESS["INTRANET_USER_WIDGET_CONTENT_SIGN_DOCUMENTS_DESCRIPTION"] = "Демалысқа, іссапарға және т.б. өтініш";
-$MESS["INTRANET_USER_WIDGET_CONTENT_SIGN_DOCUMENTS_TITLE"] = "Менің құжаттарым";

@@ -1,2 +1,0 @@
-<?php
-$MESS["GROUP_MARKETPLACE_TITLE_MSGVER_1"] = "Маркет";

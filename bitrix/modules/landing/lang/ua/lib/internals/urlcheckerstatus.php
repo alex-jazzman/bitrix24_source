@@ -1,4 +1,0 @@
-<?php
-$MESS["LANDING_TABLE_UCS_FIELD_HASH"] = "Хеш посилання";
-$MESS["LANDING_TABLE_UCS_FIELD_STATUS"] = "Статус";
-$MESS["LANDING_TABLE_UCS_FIELD_URL"] = "Посилання";

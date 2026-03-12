@@ -32,6 +32,10 @@ import { ConfirmModal } from './confirm-modal';
 import { Analytics } from 'call.lib.analytics';
 import { CallCommonRecordState, CallCommonRecordType, CallCloudRecord } from '../call_common_record';
 
+import { TalkingService } from './talking-service';
+
+import { CallSettingsManager } from 'call.lib.settings-manager';
+
 const Layouts = {
 	Grid: 1,
 	Centered: 2,
@@ -79,9 +83,10 @@ const EventName = {
 	onReplaceSpeaker: 'onReplaceSpeaker',
 	onSetCentralUser: 'onSetCentralUser',
 	onLayoutChange: 'onLayoutChange',
-	onChangeHdVideo: 'onChangeHdVideo',
+	onChangeNoiseSuppression: 'onChangeNoiseSuppression',
 	onChangeMicAutoParams: 'onChangeMicAutoParams',
 	onChangeFaceImprove: 'onChangeFaceImprove',
+	onChangeVideoQuality: 'onChangeVideoQuality',
 	onUserClick: 'onUserClick',
 	onUserRename: 'onUserRename',
 	onUserPinned: 'onUserPinned',
@@ -97,6 +102,8 @@ const EventName = {
 	onUnfold: 'onUnfold',
 	onPiPClose: 'onPiPClose',
 	onCommonRecordMenu: 'onCommonRecordMenu',
+	onPiPBodyClick: 'onPiPBodyClick',
+	onFullScreenChange: 'onFullScreenChange',
 };
 
 const beginingPosition = -1;
@@ -220,6 +227,9 @@ export class View
 		this.users = {}; // Call participants. The key is the user id.
 		this.screenUsers = {}; // Screen sharing participants. The key is the user id.
 		this.userRegistry = new UserRegistry();
+		this.talkingService = new TalkingService();
+
+		this.userRegistry.subscribe('changed', this.talkingService.refreshQueue);
 
 		let localUserModel = new UserModel({
 			id: this.userId,
@@ -428,14 +438,50 @@ export class View
 		this._videoRerenderDelay = 0;
 
 		this.isWindowFocus = config.isWindowFocus || false;
-		this.isDocumentHidden = false;
 		this._isActivePiPFromController = false;
 
+		this.enableAutoPip = false;
+
 		const pictureInPictureUpdateButtonHandler = () => {
-			this.pictureInPictureCallWindow && this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+			if (this.pictureInPictureCallWindow)
+			{
+				this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+			}
 		};
 
-		this.viewVisibility = this.#getViewVisibilityChange([pictureInPictureUpdateButtonHandler]);
+		const openPiPHandler = (event, visibility) => {
+			if (visibility === DocumentVisibilityState.hidden)
+			{
+				if (this.isVideoconf && (this.uiState !== UiState.Connected || !this.visible))
+				{
+					return null;
+				}
+
+				this.toggleStatePictureInPictureCallWindow(true);
+
+				this.enableAutoPip = true;
+			}
+
+			const isFolded = this.size === View.Size.Folded;
+			const isUserScreenSharing = this.hasCurrentUserScreenSharing();
+			if (visibility === DocumentVisibilityState.visible)
+			{
+				this.enableAutoPip = false;
+				if (isUserScreenSharing)
+				{
+					return null;
+				}
+
+				if (isFolded)
+				{
+					return null;
+				}
+
+				this.toggleStatePictureInPictureCallWindow(false);
+			}
+		};
+
+		this.viewVisibility = this.#getViewVisibilityChange([pictureInPictureUpdateButtonHandler, openPiPHandler]);
 
 		this.init();
 		this.subscribeEvents(config);
@@ -760,6 +806,13 @@ export class View
 			}
 
 			this.updateUserList();
+
+			if (previousCentralUser.id != this.centralUser.id)
+			{
+				this.eventEmitter.emit(EventName.onHasMainStream, {
+					userId: this.centralUser.id,
+				});
+			}
 		}
 
 		if (this.layout === Layouts.Mobile)
@@ -785,6 +838,8 @@ export class View
 			userId: userId,
 			stream: userId == this.userId ? this.localUser.stream : this.users[userId].stream
 		})
+
+		this.talkingService.refreshQueue();
 	};
 
 	getLeftUser(userId): ?number
@@ -1038,10 +1093,10 @@ export class View
 		return minTalkingAgoUserId || this.centralUser.id;
 	}
 
-	switchPresenter()
+	switchPresenter(presenterId)
 	{
 		const currentPresenterId = this.presenterId || 0;
-		const newPresenterId = this.getPresenterUserId();
+		const newPresenterId = presenterId || this.getPresenterUserId();
 
 		if (!newPresenterId)
 		{
@@ -1160,6 +1215,9 @@ export class View
 		this.updateUserList(useShelvedRerenderQueue);
 		this.toggleEars();
 		this.updateButtons();
+
+		this.talkingService.refreshQueue();
+
 		this.eventEmitter.emit(EventName.onLayoutChange, {
 			layout: this.layout
 		});
@@ -1213,6 +1271,7 @@ export class View
 
 		this.renderUserList(true);
 		this.toggleEars();
+		this.talkingService.refreshQueue();
 	};
 
 	calculateUsersPerPage()
@@ -1516,6 +1575,7 @@ export class View
 			onTurnOffParticipantCam: this._onTurnOffParticipantCam.bind(this),
 			onTurnOffParticipantScreenshare: this._onTurnOffParticipantScreenshare.bind(this),
 		});
+		userModel.subscribe('changed', this.talkingService.watchTalking);
 
 		this.screenUsers[userId] = new CallUser({
 			parentContainer: this.container,
@@ -1569,11 +1629,24 @@ export class View
 			return;
 		}
 
+		if (
+			(user.state === UserState.Connected || user.state === UserState.Connecting)
+			&& newState === UserState.Declined
+		)
+		{
+			return;
+		}
+
 		if ((user.state === UserState.Connected || newState === UserState.Connected))
 		{
 			this.cache.set('previousConnectedUserCount', this.cache.get('currentConnectedUser')?.length || 0);
 			this.cache.delete('currentConnectedUser');
 			this.cache.delete('activeUsers');
+		}
+
+		if (newState == UserState.Idle && user.screenState)
+		{
+			user.prevScreenState = user.screenState;
 		}
 
 		user.state = newState;
@@ -1625,9 +1698,20 @@ export class View
 				this.waitingForUserMediaTimeouts.delete(userId);
 			}, WAITING_VIDEO_DELAY);
 			this.waitingForUserMediaTimeouts.set(userId, timer);
+
+			if (user.prevScreenState && String(userId) !== String(this.userId))
+			{
+				this.setUserScreenState(userId, user.prevScreenState);
+				user.prevScreenState = false;
+			}
 		}
 		else if (newState === UserState.Idle)
 		{
+			if (this.isVideoconf && this.pictureInPictureCallWindow && Number(this.currentPiPUserId) === Number(userId))
+			{
+				this.currentPiPUserId = null;
+				this.pictureInPictureCallWindow.setCurrentUser(this.getPictureInPictureCallWindowUser(this.centralUser.id));
+			}
 			this.setUserFloorRequestState(userId, false);
 			this.setUserPermissionToSpeakState(userId, false);
 			clearTimeout(this.waitingForUserMediaTimeouts.get(userId));
@@ -1979,7 +2063,10 @@ export class View
 				this.returnToGridAfterScreenStopped = false;
 				this.setLayout(Layouts.Grid);
 			}
-			this.switchPresenter();
+			
+			const newPresenterId = screenState ? userId : null;
+			
+			this.switchPresenter(newPresenterId);
 		}
 	};
 
@@ -2484,7 +2571,8 @@ export class View
 			cameraId: this.cameraId,
 			speakerEnabled: !this.speakerMuted,
 			speakerId: this.speakerId,
-			allowHdVideo: Hardware.preferHdQuality,
+			noiseSuppressionVisible: CallSettingsManager.noiseSuppressionEnabled ?? false,
+			allowNoiseSuppression: Hardware.enableNoiseSuppression,
 			faceImproveEnabled: Util.isDesktop() && DesktopApi.isDesktop() && DesktopApi.getCameraSmoothingStatus(),
 			allowFaceImprove: false,
 			allowBackground: BackgroundDialog.isAvailable() && this.isIntranetOrExtranet,
@@ -2499,13 +2587,14 @@ export class View
 				[DeviceSelector.Events.onCameraSwitch]: this._onCameraButtonClick.bind(this),
 				[DeviceSelector.Events.onSpeakerSelect]: this._onSpeakerSelected.bind(this),
 				[DeviceSelector.Events.onSpeakerSwitch]: this._onSpeakerButtonClick.bind(this),
-				[DeviceSelector.Events.onChangeHdVideo]: this._onChangeHdVideo.bind(this),
+				[DeviceSelector.Events.onChangeNoiseSuppression]: this._onChangeNoiseSuppression.bind(this),
 				[DeviceSelector.Events.onChangeMicAutoParams]: this._onChangeMicAutoParams.bind(this),
 				[DeviceSelector.Events.onChangeFaceImprove]: this._onChangeFaceImprove.bind(this),
+				[DeviceSelector.Events.onChangeVideoQuality]: this._onChangeVideoQuality.bind(this),
 				[DeviceSelector.Events.onAdvancedSettingsClick]: () => this.eventEmitter.emit(EventName.onOpenAdvancedSettings),
 				[DeviceSelector.Events.onDestroy]: () => {
-					this.buttons.microphone.elements.arrow?.classList.remove('rotate');
-					this.buttons.camera.elements.arrow?.classList.remove('rotate');
+					this.buttons?.microphone.elements.arrow?.classList.remove('rotate');
+					this.buttons?.camera.elements.arrow?.classList.remove('rotate');
 					this.deviceSelector = null;
 				},
 				[DeviceSelector.Events.onShow]: () => this.eventEmitter.emit(EventName.onDeviceSelectorShow, {}),
@@ -3487,6 +3576,11 @@ export class View
 			}
 		});
 
+		this.talkingService.init({
+			root: this.elements.root,
+		});
+		this.talkingService.refreshQueue();
+
 		if (this.showButtonPanel)
 		{
 			this.elements.panel = Dom.create("div", {
@@ -3621,14 +3715,11 @@ export class View
 		return this.elements.root;
 	};
 
-	toggleSubscribingVideoInRenderUserList(participantIds, showVideo)
+	toggleSubscribingVideoInRenderUserList(participants, showVideo)
 	{
-		if (!!participantIds.length)
+		if (participants.length > 0)
 		{
-			this.eventEmitter.emit(EventName.onToggleSubscribe, {
-				participantIds: participantIds,
-				showVideo: showVideo
-			});
+			this.eventEmitter.emit(EventName.onToggleSubscribe, { participants, showVideo });
 		}
 	}
 
@@ -4236,8 +4327,15 @@ export class View
 			currentInactiveUsers.splice(currentPiPUserIndexInInactiveUsers, 1);
 		}
 
-		this.toggleSubscribingVideoInRenderUserList(currentActiveUsers, true)
-		this.toggleSubscribingVideoInRenderUserList(currentInactiveUsers, false)
+		const activeUsers = currentActiveUsers.map((userId) => {
+			return { userId };
+		});
+
+		this.toggleSubscribingVideoInRenderUserList(activeUsers, true)
+		const inactiveUsers = currentInactiveUsers.map((userId) => {
+			return { userId };
+		});
+		this.toggleSubscribingVideoInRenderUserList(inactiveUsers, false)
 	};
 
 	shouldShowLocalUser()
@@ -5006,6 +5104,7 @@ export class View
 		return new CopilotNotify({
 			type: notifyType,
 			bindElement: this.buttons.copilot.elements.root,
+			targetContainer: this.elements.root,
 			onClose: () => {
 				this.copilotNotify = null;
 			},
@@ -5043,6 +5142,7 @@ export class View
 			notifyText: BX.message("CALL_CALLCONTROL_AXA_MOMENT_TEXT"),
 			bindElement: this.buttons.callcontrol.elements.root,
 			promoId: CALLCONTROL_PROMO_ID,
+			targetContainer: this.elements.root,
 			onClose: () => {
 				this.needToShowCallcontrolPromo = false;
 				this.ahaMomentNotifyCallcontrol = null;
@@ -5103,7 +5203,7 @@ export class View
 
 		const isViewHidden = this.viewVisibility.getCurrentVisibility() === DocumentVisibilityState.hidden;
 
-		if (this.size === View.Size.Folded || this.isDocumentHidden || isViewHidden)
+		if (this.size === View.Size.Folded || isViewHidden)
 		{
 			buttonsList.push("returnToCall");
 		}
@@ -5116,14 +5216,20 @@ export class View
 		return buttonsList;
 	}
 
-	getPictureInPictureCallWindowUser()
+	getPictureInPictureCallWindowUser(targetUserId = null)
 	{
-		const currentUserId = this.presenterId || this.centralUser?.userModel.id || this.userId;
+		const isNotMe = (id) => id != null && +id !== +this.userId;
+
+		const currentUserId =
+			targetUserId
+			?? (isNotMe(this.presenterId) ? this.presenterId : null)
+			?? (isNotMe(this.centralUser?.userModel.id) ? this.centralUser?.userModel.id : null)
+			?? this.getAnyOtherUserId();
+
 		const isLocalUser = +this.userId === +currentUserId;
 		const currentUser = isLocalUser ? this.localUser : this.users[currentUserId];
 
 		const isCurrentPiPUser = !!this.currentPiPUserId && currentUserId === this.currentPiPUserId;
-
 		if (isCurrentPiPUser)
 		{
 			return;
@@ -5131,12 +5237,12 @@ export class View
 
 		if (!this.activeUsers.includes(currentUserId) && !isLocalUser)
 		{
-			this.toggleSubscribingVideoInRenderUserList([currentUserId], true);
+			this.toggleSubscribingVideoInRenderUserList([{ userId: currentUserId }], true);
 		}
 
 		if (this.currentPiPUserId && +this.userId !== +this.currentPiPUserId && !this.activeUsers.includes(this.currentPiPUserId))
 		{
-			this.toggleSubscribingVideoInRenderUserList([this.currentPiPUserId], false);
+			this.toggleSubscribingVideoInRenderUserList([{ userId: this.currentPiPUserId }], false);
 		}
 
 		this.currentPiPUserId = currentUserId;
@@ -5173,6 +5279,27 @@ export class View
 		}
 
 		return modifiedCurrentUser;
+	}
+
+	getAnyOtherUserId()
+	{
+		const myId = String(this.userId);
+
+		const anyActiveUser = (this.activeUsers || []).find(id => String(id) !== myId);
+		if (anyActiveUser)
+		{
+			return anyActiveUser;
+		}
+
+		const users = this.users || {};
+
+		const anyOtherUser = Object.keys(users).find(id => String(id) !== myId);
+		if (anyOtherUser)
+		{
+			return anyOtherUser;
+		}
+
+		return this.userId;
 	}
 
 	getBlockedButtonsListPictureInPictureCallWindow()
@@ -5218,7 +5345,7 @@ export class View
 				allowMaskItem: BackgroundDialog.isMaskAvailable() && this.isIntranetOrExtranet,
 				preferInitialWindowPlacement: this.preferInitialWindowPlacementPictureInPicture,
 				floorRequestNotifications: this.floorRequestNotifications,
-				onClose: () =>
+				onClose: (isProgrammaticClose) =>
 				{
 					this.pictureInPictureCallWindow = null;
 					this.currentPiPUserId = null;
@@ -5235,7 +5362,7 @@ export class View
 							this._onCameraButtonClick(event);
 							break;
 						case "returnToCall":
-							this._onBodyClick(event);
+							this.eventEmitter.emit(EventName.onPiPBodyClick);
 							break;
 						case "stop-screen":
 							this._onScreenButtonClick(event);
@@ -5253,6 +5380,7 @@ export class View
 
 		if (!isActive && this.pictureInPictureCallWindow)
 		{
+			this.enableAutoPip = false;
 			this.pictureInPictureCallWindow.close();
 		}
 	}
@@ -5377,8 +5505,8 @@ export class View
 
 		this.overflownButtonsPopup = new Popup({
 			id: 'bx-call-buttons-popup',
-			bindElement: bindElement,
-			targetContainer: this.container,
+			bindElement,
+			targetContainer: this.elements.root,
 			content: this.renderButtons(Object.keys(this.overflownButtons), true),
 			cacheable: false,
 			closeIcon: false,
@@ -5708,6 +5836,7 @@ export class View
 			state: this.commonRecordState.state,
 			popupType,
 			isDesktopRecord,
+			targetContainer: this.elements.root,
 			onStart: (kind) => {
 				this.eventEmitter.emit(EventName.onCommonRecordMenu, {
 					state: CallCommonRecordState.Started,
@@ -5770,6 +5899,7 @@ export class View
 		this.#commonRecord.infoPopup = new CloudRecordInfoPopup({
 			isCloudRecordFeaturesEnabled,
 			callId,
+			targetContainer: this.elements.root,
 			onClose: () => {
 				this.#commonRecord.infoPopup = null;
 			},
@@ -5885,6 +6015,7 @@ export class View
 
 			this.#confirmModal = new ConfirmModal({
 				...params,
+				targetContainer: this.elements.root,
 				onClose: () => {
 					this.#confirmModal = null;
 					resolveOnce('close');
@@ -5953,13 +6084,13 @@ export class View
 
 	_onFullScreenChange()
 	{
-		if ("webkitFullscreenElement" in document)
+		if ('webkitFullscreenElement' in document)
 		{
-			this.isFullScreen = (!!document.webkitFullscreenElement);
+			this.isFullScreen = (Boolean(document.webkitFullscreenElement));
 		}
-		else if ("fullscreenElement" in document)
+		else if ('fullscreenElement' in document)
 		{
-			this.isFullScreen = (!!document.fullscreenElement);
+			this.isFullScreen = (Boolean(document.fullscreenElement));
 		}
 		else
 		{
@@ -5967,26 +6098,30 @@ export class View
 		}
 
 		// safari workaround
-		setTimeout(function ()
-		{
+		setTimeout(() => {
 			if (!this.elements.root)
 			{
 				return;
 			}
+
+			this.eventEmitter.emit(EventName.onFullScreenChange, {
+				isFullScreen: this.isFullScreen,
+			});
+
 			if (this.isFullScreen)
 			{
-				this.elements.root.classList.add("bx-messenger-videocall-fullscreen");
+				Dom.addClass(this.elements.root, 'bx-messenger-videocall-fullscreen');
 			}
 			else
 			{
-				this.elements.root.classList.remove("bx-messenger-videocall-fullscreen");
+				Dom.removeClass(this.elements.root, 'bx-messenger-videocall-fullscreen');
 			}
+
 			this.updateUserList();
 			this.updateButtons();
 			this.setUserBlockFolded(this.isFullScreen);
-
-		}.bind(this), 0);
-	};
+		}, 0);
+	}
 
 	_onIntersectionChange(entries)
 	{
@@ -6246,16 +6381,15 @@ export class View
 		}
 	};
 
-	_onUserClick(e)
+	_onUserClick(event)
 	{
-		const userId = e.userId;
+		const userId = event.userId;
 
-		if (userId == this.centralUser.id && this.layout != Layouts.Grid)
+		if (userId == this.centralUser.id && this.layout !== Layouts.Grid && this.isFullScreen)
 		{
-			this.elements.root.classList.toggle("bx-messenger-videocall-hidden-panels");
+			Dom.toggleClass(this.elements.root, 'bx-messenger-videocall-hidden-panels');
 		}
-
-		if (this.layout == Layouts.Centered && userId != this.centralUser.id)
+		else if (this.layout === Layouts.Centered && userId != this.centralUser.id)
 		{
 			this.pinUser(userId);
 		}
@@ -6265,11 +6399,11 @@ export class View
 		}
 
 		this.eventEmitter.emit(EventName.onUserClick, {
-			userId: userId,
+			userId,
 			stream: userId == this.userId ? this.localUser.stream : this.users[userId].stream,
 			layout: this.layout,
 		});
-	};
+	}
 
 	_onUserRename(newName)
 	{
@@ -6472,9 +6606,9 @@ export class View
 		});
 	};
 
-	_onChangeHdVideo(e)
+	_onChangeNoiseSuppression(e)
 	{
-		this.eventEmitter.emit(EventName.onChangeHdVideo, e.data);
+		this.eventEmitter.emit(EventName.onChangeNoiseSuppression, e.data);
 	};
 
 	_onChangeMicAutoParams(e)
@@ -6486,6 +6620,11 @@ export class View
 	{
 		this.eventEmitter.emit(EventName.onChangeFaceImprove, e.data);
 	}
+
+	_onChangeVideoQuality(e)
+	{
+		this.eventEmitter.emit(EventName.onChangeVideoQuality, e.data);
+	};
 
 	disableFaceImprove()
 	{
@@ -6987,10 +7126,14 @@ export class View
 		{
 			if (this.users.hasOwnProperty(userId))
 			{
+				this.users[userId].userModel.unsubscribe('changed', this.talkingService.watchTalking);
 				this.users[userId].destroy();
 			}
 		}
 		this.userData = null;
+		this.centralUser.userModel.unsubscribe('changed', this.talkingService.watchTalking);
+		this.userRegistry.unsubscribe('changed', this.talkingService.refreshQueue);
+		this.talkingService.destroy();
 		this.centralUser.destroy();
 		this.hintManager.hide();
 		this.hintManager = null;
@@ -7013,6 +7156,11 @@ export class View
 		this.clearCallcontrolPromo();
 
 		this.viewVisibility.stopViewVisibilityChange();
+
+		if (this.deviceSelector)
+		{
+			this.deviceSelector.destroy();
+		}
 	};
 
 	static Layout = Layouts;

@@ -29,5 +29,6 @@ return [
 		'./src/vuex/comment',
 		'./src/vuex/vote',
 		'./src/vuex/transcript',
+		'./src/vuex/sticker',
 	],
 ];

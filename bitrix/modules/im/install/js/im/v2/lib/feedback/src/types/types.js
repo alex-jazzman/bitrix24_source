@@ -17,3 +17,8 @@ export type CopilotFormParams = {
 	userCounter: number,
 	text: string,
 };
+
+export type AiAssistantFormParams = {
+	contextId: string,
+	message: string,
+};

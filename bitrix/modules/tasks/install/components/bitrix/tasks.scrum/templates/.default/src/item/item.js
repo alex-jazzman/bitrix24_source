@@ -11,7 +11,6 @@ import {Tags} from './task/tags';
 import {Responsible, ResponsibleType} from './task/responsible';
 import {StoryPoints} from './task/story.points';
 import {SubTasks} from './task/sub.tasks';
-import { sendData } from 'ui.analytics';
 
 import 'main.polyfill.intersectionobserver';
 
@@ -172,7 +171,7 @@ export class Item extends EventEmitter
 			isCompleted: this.isCompleted(),
 			isImportant: this.isImportant(),
 			pathToTask: this.pathToTask,
-			sourceId: this.getSourceId()
+			sourceId: this.getSourceId(),
 		});
 
 		if (this.name)
@@ -184,11 +183,9 @@ export class Item extends EventEmitter
 
 		this.name.subscribe('click', () => {
 			this.emit('showTask');
-			this.sendAnalytics('task_view', 'title_click');
 		});
 		this.name.subscribe('urlClick', () => {
 			this.emit('destroyActionPanel');
-			this.sendAnalytics('task_view', 'title_click');
 		});
 	}
 
@@ -414,9 +411,7 @@ export class Item extends EventEmitter
 
 	setSort(sort: number)
 	{
-		this.setPreviousSort(this.sort);
-
-		this.sort = (Type.isInteger(sort) ? parseInt(sort, 10) : 0);
+		this.sort = parseFloat(sort);
 
 		if (this.getNode())
 		{
@@ -427,16 +422,6 @@ export class Item extends EventEmitter
 	getSort(): number
 	{
 		return this.sort;
-	}
-
-	setPreviousSort(sort: number)
-	{
-		this.previousSort = (Type.isInteger(sort) ? parseInt(sort, 10) : 0);
-	}
-
-	getPreviousSort(): number
-	{
-		return this.previousSort;
 	}
 
 	setEntityId(entityId: number)
@@ -1264,19 +1249,5 @@ export class Item extends EventEmitter
 		setTimeout(() => {
 			Dom.removeClass(this.getNode(), '--blink');
 		}, 300);
-	}
-
-	sendAnalytics(event, element)
-	{
-		const analyticsData = {
-			tool: 'tasks',
-			category: 'task_operations',
-			event: event,
-			type: 'task',
-			c_section: 'scrum',
-			c_element: element,
-		};
-
-		sendData(analyticsData);
 	}
 }

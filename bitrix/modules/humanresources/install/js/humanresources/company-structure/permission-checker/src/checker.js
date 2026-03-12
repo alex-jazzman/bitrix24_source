@@ -16,6 +16,11 @@ export class PermissionCheckerClass
 			this.isTeamsAvailable = false;
 			this.isCollabsAvailable = false;
 			this.isDeputyApprovesBPAvailable = false;
+			this.departmentBPSettingsAvailable = false;
+			this.areTeamReportSettingsAvailable = false;
+			this.isDeputyGetReportsAvailable = false;
+			this.areDepartmentReportsSettingsAvailable = false;
+			this.areMultipleUsersSettingsAvailable = false;
 			this.isInitialized = false;
 			this.departmentChecker = new DepartmentPermissionChecker();
 			this.teamChecker = new TeamPermissionChecker(this.departmentChecker, this.currentUserPermissions);
@@ -42,14 +47,22 @@ export class PermissionCheckerClass
 			teamsAvailable,
 			collabsAvailable,
 			deputyApprovesBP,
-			departmentSettingsAvailable,
+			departmentBPSettingsAvailable,
+			areTeamReportSettingsAvailable,
+			isDeputyGetReportsAvailable,
+			areDepartmentReportsSettingsAvailable,
+			multipleUsersSettingsAvailable,
 		} = await chartAPI.getDictionary();
 
 		this.currentUserPermissions = currentUserPermissions;
 		this.isTeamsAvailable = teamsAvailable;
 		this.isCollabsAvailable = collabsAvailable;
 		this.isDeputyApprovesBPAvailable = deputyApprovesBP;
-		this.isDepartmentSettingsAvailable = departmentSettingsAvailable;
+		this.departmentBPSettingsAvailable = departmentBPSettingsAvailable;
+		this.areTeamReportSettingsAvailable = areTeamReportSettingsAvailable;
+		this.isDeputyGetReportsAvailable = isDeputyGetReportsAvailable;
+		this.areDepartmentReportsSettingsAvailable = areDepartmentReportsSettingsAvailable;
+		this.areMultipleUsersSettingsAvailable = multipleUsersSettingsAvailable;
 
 		this.isInitialized = true;
 	}
@@ -94,9 +107,29 @@ export class PermissionCheckerClass
 		return this.isDeputyApprovesBPAvailable;
 	}
 
-	checkDepartmentSettingsAvailable(): boolean
+	checkDepartmentBPSettingsAvailable(): boolean
 	{
-		return this.isDepartmentSettingsAvailable;
+		return this.departmentBPSettingsAvailable;
+	}
+
+	checkTeamReportSettingsAvailable(): boolean
+	{
+		return this.areTeamReportSettingsAvailable;
+	}
+
+	checkDeputyGetReportsAvailable(): boolean
+	{
+		return this.isDeputyGetReportsAvailable;
+	}
+
+	checkDepartmentReportsSettingsAvailable(): boolean
+	{
+		return this.areDepartmentReportsSettingsAvailable;
+	}
+
+	checkMultipleUsersSettingsAvailable(): boolean
+	{
+		return this.areMultipleUsersSettingsAvailable;
 	}
 
 	hasPermissionOfAction(action: string): boolean

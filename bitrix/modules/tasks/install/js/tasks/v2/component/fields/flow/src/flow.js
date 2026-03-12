@@ -1,5 +1,4 @@
 import { SidePanel } from 'main.sidepanel';
-import { BMenu, MenuItemDesign, type MenuOptions } from 'ui.system.menu.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
@@ -21,7 +20,6 @@ export const Flow = {
 	name: 'TaskFlow',
 	components: {
 		BIcon,
-		BMenu,
 		HoverPill,
 		FieldAdd,
 	},
@@ -48,36 +46,13 @@ export const Flow = {
 		{
 			return this.$store.getters[`${Model.Flows}/getById`](this.task.flowId);
 		},
-		menuOptions(): MenuOptions
-		{
-			return {
-				id: 'tasks-field-flow-menu',
-				bindElement: this.$refs.container,
-				offsetTop: 8,
-				items: [
-					{
-						title: this.loc('TASKS_V2_FLOW_ABOUT'),
-						icon: Outline.BOTTLENECK,
-						onClick: this.openFlow,
-					},
-					{
-						title: this.loc('TASKS_V2_FLOW_CHANGE'),
-						icon: Outline.EDIT_L,
-						onClick: this.showDialog,
-					},
-					{
-						design: MenuItemDesign.Alert,
-						title: this.loc('TASKS_V2_FLOW_DETACH'),
-						icon: Outline.CROSS_L,
-						onClick: this.clearField,
-					},
-				],
-				targetContainer: document.body,
-			};
-		},
 		readonly(): boolean
 		{
 			return !this.task.rights.edit;
+		},
+		withClear(): boolean
+		{
+			return !this.readonly && this.flow;
 		},
 	},
 	methods: {
@@ -90,14 +65,7 @@ export const Flow = {
 				return;
 			}
 
-			if (this.isEdit && this.flow)
-			{
-				this.isMenuShown = true;
-			}
-			else
-			{
-				this.showDialog();
-			}
+			this.showDialog();
 		},
 		openFlow(): void
 		{
@@ -126,13 +94,12 @@ export const Flow = {
 			:data-task-id="taskId"
 			:data-task-field-id="flowMeta.id"
 			:data-task-field-value="task.flowId"
+			@click="handleClick"
 			ref="container"
 		>
 			<HoverPill
 				v-if="flow"
-				:withClear="!readonly && !isEdit"
-				:active="isMenuShown"
-				@click="handleClick"
+				:withClear
 				@clear="clearField"
 			>
 				<div class="tasks-field-flow">
@@ -140,8 +107,7 @@ export const Flow = {
 					<div class="tasks-field-flow-title">{{ flow.name }}</div>
 				</div>
 			</HoverPill>
-			<FieldAdd v-else :icon="Outline.BOTTLENECK" @click="handleClick"/>
+			<FieldAdd v-else :icon="Outline.BOTTLENECK"/>
 		</div>
-		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 	`,
 };

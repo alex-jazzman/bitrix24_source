@@ -98,7 +98,7 @@ export class RequestSender
 				tool: 'tasks',
 				category: 'task_operations',
 				event: 'task_create',
-				type: 'task',
+				type: 'quick_task',
 				c_section: 'scrum',
 				c_element: 'quick_button',
 			},

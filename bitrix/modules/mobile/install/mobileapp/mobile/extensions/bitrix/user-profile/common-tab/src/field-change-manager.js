@@ -48,7 +48,13 @@ jn.define('user-profile/common-tab/src/field-change-manager', (require, exports,
 
 		getChangedCommonFieldsIds()
 		{
-			return Object.values(this.getFields()?.commonFields)?.map((field) => field.id) || [];
+			const commonFields = this.getFields()?.commonFields;
+			if (!commonFields)
+			{
+				return [];
+			}
+
+			return Object.values(commonFields)?.map((field) => field.id) || [];
 		}
 
 		saveChanges(ownerId)

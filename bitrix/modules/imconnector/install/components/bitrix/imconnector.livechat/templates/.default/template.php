@@ -279,7 +279,7 @@ else
 											<?endif;?>
 										</div>
 										<div class="imconnector-livechat-public-link-inner-copy-button">
-											<span class="webform-small-button imconnector-public-link-inner-copy-button-item" id="imconnector-copy-public-link"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_COPY')?></span>
+											<span class="ui-btn ui-btn-link" id="imconnector-copy-public-link"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_COPY')?></span>
 										</div>
 									</div><!--imconnector-livechat-public-link-inner-copy-inner-->
 									<div class="imconnector-livechat-public-link-inner-copy-description">
@@ -572,7 +572,7 @@ else
 				</div>
 				<div class="imconnector-border imconnctor-outer-border" style="display: none"></div><!--imconnector-border-->
 				<input type="submit"
-					   class="webform-small-button webform-small-button-accept"
+					   class="ui-btn ui-btn-success"
 					   id="livechat-small-button-save"
 					   name="<?=$arResult['CONNECTOR']?>_save"
 					   value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_SAVE')?>">

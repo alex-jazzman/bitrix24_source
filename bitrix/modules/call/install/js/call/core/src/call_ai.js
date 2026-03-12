@@ -1,6 +1,4 @@
-import { Extension } from 'main.core';
-import { CopilotNotifyType } from './view/copilot-notify';
-
+import { Extension, Type } from 'main.core';
 
 export type CallAiOptions = {
 	serviceEnabled?: boolean;
@@ -51,50 +49,66 @@ class CallAi
 
 	setup(options: CallAiOptions)
 	{
+		if (!Type.isObject(options))
+		{
+			return;
+		}
+
 		if (options.serviceEnabled !== undefined)
 		{
 			this.serviceEnabled = options.serviceEnabled;
 		}
+
 		if (options.settingsEnabled !== undefined)
 		{
 			this.settingsEnabled = options.settingsEnabled;
 		}
+
 		if (options.recordingMinUsers)
 		{
 			this.recordingMinUsers = options.recordingMinUsers;
 		}
+
 		if (options.agreementAccepted !== undefined)
 		{
 			this.agreementAccepted = options.agreementAccepted;
 		}
+
 		if (options.tariffAvailable !== undefined)
 		{
 			this.tariffAvailable = options.tariffAvailable;
 		}
+
 		if (options.baasAvailable !== undefined)
 		{
 			this.baasAvailable = options.baasAvailable;
 		}
+
 		if (options.feedBackLink)
 		{
 			this.feedBackLink = options.feedBackLink;
 		}
+
 		if (options.baasPromoSlider)
 		{
 			this.baasPromoSlider = options.baasPromoSlider;
 		}
+
 		if (options.helpSlider)
 		{
 			this.helpSlider = options.helpSlider;
 		}
+
 		if (options.disclaimerArticleCode)
 		{
 			this.disclaimerArticleCode = options.disclaimerArticleCode;
 		}
+
 		if (options.marketSubscriptionEnabled)
 		{
 			this.marketSubscriptionEnabled = options.marketSubscriptionEnabled;
 		}
+
 		if (options.marketSubscriptionSlider)
 		{
 			this.marketSubscriptionSlider = options.marketSubscriptionSlider;

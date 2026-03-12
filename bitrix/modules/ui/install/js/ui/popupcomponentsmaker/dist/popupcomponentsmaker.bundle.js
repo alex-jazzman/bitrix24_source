@@ -25,6 +25,7 @@ this.BX = this.BX || {};
 	    this.sizeLoader = 45;
 	    this.asyncSecondary = null;
 	    this.margin = null;
+	    this.borderColor = null;
 	    this.setParams(options);
 	    this.layout = {
 	      container: null
@@ -49,6 +50,7 @@ this.BX = this.BX || {};
 	    this.attrs = main_core.Type.isPlainObject(options == null ? void 0 : options.attrs) ? options.attrs : this.attrs;
 	    this.minHeight = main_core.Type.isString(options == null ? void 0 : options.minHeight) ? options.minHeight : this.minHeight;
 	    this.margin = main_core.Type.isString(options.margin) ? options.margin : this.margin;
+	    this.borderColor = main_core.Type.isString(options.borderColor) ? options.borderColor : this.borderColor;
 	    this.sizeLoader = main_core.Type.isNumber(options == null ? void 0 : options.sizeLoader) ? options.sizeLoader : this.sizeLoader;
 	    this.asyncSecondary = (options == null ? void 0 : options.asyncSecondary) instanceof Promise ? options.asyncSecondary : this.asyncSecondary;
 	  }
@@ -138,6 +140,9 @@ this.BX = this.BX || {};
 	    }
 	    if (this.margin) {
 	      main_core.Dom.style(this.layout.container, 'margin', this.margin);
+	    }
+	    if (this.borderColor) {
+	      main_core.Dom.style(this.layout.container, 'border', `1px solid ${this.borderColor}`);
 	    }
 	    if (this.asyncSecondary) {
 	      this.asyncSecondary.then(secondary => {

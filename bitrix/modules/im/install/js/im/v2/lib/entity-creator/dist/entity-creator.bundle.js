@@ -58,7 +58,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId] = chatId;
 	  }
 	  openTaskCreationForm() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _openTaskV2Card)[_openTaskV2Card]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _openTaskV2Card)[_openTaskV2Card]({
+	      analytics: {
+	        context: 'chat',
+	        element: 'create_button'
+	      }
+	    });
 	  }
 	  createTaskForChat() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _createTask)[_createTask]();

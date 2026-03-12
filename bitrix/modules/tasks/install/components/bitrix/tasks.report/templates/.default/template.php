@@ -3,12 +3,11 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\UI;
 
-UI\Extension::load(["ui.design-tokens", "ui.fonts.opensans", "ui.tooltip"]);
+UI\Extension::load(["ui.design-tokens", "ui.fonts.opensans", "ui.tooltip", 'intranet.old-interface.intranet-common']);
 CUtil::InitJSCore(array('popup'));
 
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/tasks.report/templates/.default/script.js");
 
-$GLOBALS['APPLICATION']->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 $GLOBALS['APPLICATION']->SetAdditionalCSS("/bitrix/js/main/core/css/core_popup.css");
 $GLOBALS['APPLICATION']->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 

@@ -5,12 +5,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('BPVICA_DESCR_NAME_1'),
 	'DESCRIPTION' => Loc::getMessage('BPVICA_DESCR_DESCR_1'),
-	'TYPE' => ['activity', 'robot_activity'],
+	'TYPE' => ['activity', 'robot_activity', 'node'],
 	'CLASS' => 'VoximplantCallActivity',
 	'JSCLASS' => 'BizProcActivity',
 	'CATEGORY' => [
@@ -45,7 +46,18 @@ $arActivityDescription = [
 			'CALL' => -2,
 			'MISSED_CALL' => -1,
 		],
-		'SORT' => 1100
+		'SORT' => 1100,
 	],
 	'EXCLUDED' => !\Bitrix\Main\Loader::includeModule('voximplant'),
 ];
+
+if (class_exists(ActivityColorIndex::class))
+{
+	$arActivityDescription += [
+		'COLOR_INDEX' => ActivityColorIndex::GREEN->value,
+		'GROUPS' => [
+			'client_communication',
+		],
+		'NODE_ICON' => 'PHONE_OUT',
+	];
+}

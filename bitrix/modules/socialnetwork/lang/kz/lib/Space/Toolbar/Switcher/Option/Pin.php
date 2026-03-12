@@ -1,3 +1,0 @@
-<?php
-$MESS["SOCIALNETWORK_SPACES_SPACE_PIN"] = "Бекіту";
-$MESS["SOCIALNETWORK_SPACES_SPACE_UNPIN"] = "Бекітуден шығару";

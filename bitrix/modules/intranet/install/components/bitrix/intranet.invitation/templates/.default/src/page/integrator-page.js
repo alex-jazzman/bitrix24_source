@@ -28,7 +28,7 @@ export class IntegratorPage extends Page
 						<div class="invite-title-icon invite-title-icon-mass">
 							<div class="ui-icon-set --persons-3"></div>
 						</div>
-					<div class="invite-title-text">${Loc.getMessage('BX24_INVITE_DIALOG_TAB_INTEGRATOR_TITLE')}</div>
+					<div class="invite-title-text">${Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_SECTION')}</div>
 					<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=7725333');"></div>
 					</div>
 					<div class="invite-content-container">
@@ -36,7 +36,7 @@ export class IntegratorPage extends Page
 							<div data-role="rows-container">
 								<div class="invite-form-row">
 									<div class="invite-form-col">
-										<div class="invite-content__field-lable">${Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL')}</div>
+										<div class="invite-content__field-lable">${Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER')}</div>
 										<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
 											<input 
 												type="text" 
@@ -45,7 +45,7 @@ export class IntegratorPage extends Page
 												maxlength="50"
 												name="integrator_email" 
 												id="integrator_email" 
-												placeholder="${Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL')}"
+												placeholder="${Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER')}"
 											/>
 											<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
 										</div>
@@ -110,7 +110,7 @@ export class IntegratorPage extends Page
 			closeIcon: false,
 			overlay: true,
 			contentPadding: 10,
-			titleBar: Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE'),
+			titleBar: Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_POPUP_TITLE'),
 			content: message,
 			offsetLeft: 100,
 			buttons: [

@@ -1077,6 +1077,9 @@ export class CopilotTextController extends EventEmitter
 			errorCode: firstErrorCode,
 			showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
 			sliderCode: firstError?.customData?.sliderCode,
+			forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
+			forceOption: firstError?.customData,
+			bindElement: this.#inputField,
 		});
 	}
 

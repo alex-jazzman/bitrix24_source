@@ -193,11 +193,6 @@ $arResult['PATH_TO_USER_PROFILE_TEMPLATE'] = CIMContactList::GetUserPath();
 $arResult['PATH_TO_USER_PROFILE'] = CIMContactList::GetUserPath($USER->GetId());
 $arResult['PATH_TO_LF'] = IsModuleInstalled('intranet') && \Bitrix\Main\IO\File::isFileExists(\Bitrix\Main\Application::getDocumentRoot().'/stream/index.php')? '/stream/': '/';
 
-$arResult['TURN_SERVER'] = COption::GetOptionString('call', 'turn_server');
-$arResult['TURN_SERVER_FIREFOX'] = COption::GetOptionString('call', 'turn_server');
-$arResult['TURN_SERVER_LOGIN'] = COption::GetOptionString('call', 'turn_server_login');
-$arResult['TURN_SERVER_PASSWORD'] = COption::GetOptionString('call', 'turn_server_password');
-
 $initJs = 'im_web';
 $promoType = \Bitrix\Im\Promotion::DEVICE_TYPE_BROWSER;
 if ($arResult["CONTEXT"] == 'DESKTOP' || (isset($arParams['WITH_DESKTOP']) && $arParams['WITH_DESKTOP']))
@@ -211,7 +206,16 @@ else if ($arResult["DESIGN"] == 'DESKTOP')
 }
 
 $arResult['PROMO'] = \Bitrix\Im\Promotion::getActive($promoType);
-$arResult['LIMIT'] = \Bitrix\Im\Limit::getTypesForJs();
+
+if (CModule::IncludeModule('call'))
+{
+	$arResult['TURN_SERVER'] = COption::GetOptionString('call', 'turn_server');
+	$arResult['TURN_SERVER_FIREFOX'] = COption::GetOptionString('call', 'turn_server');
+	$arResult['TURN_SERVER_LOGIN'] = COption::GetOptionString('call', 'turn_server_login');
+	$arResult['TURN_SERVER_PASSWORD'] = COption::GetOptionString('call', 'turn_server_password');
+
+	$arResult['LIMIT'] = \Bitrix\Call\Limit::getTypesForJs();
+}
 
 CJSCore::Init($initJs);
 \Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.buttons.icons']);

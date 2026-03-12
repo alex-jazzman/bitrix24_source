@@ -1,3 +1,0 @@
-<?php
-$MESS["BASE_TREE_SELECTOR_EMPTY_ITEM"] = "Немає елементів";
-$MESS["BASE_TREE_SELECTOR_LOADING_ITEM"] = "Пошук";

@@ -1,4 +1,0 @@
-<?
-$MESS["LANDING_SOURCE_ACTION_TITLE_DETAIL"] = "Детальна сторінка";
-$MESS["LANDING_SOURCE_ACTION_TITLE_LINK"] = "Посилання";
-?>

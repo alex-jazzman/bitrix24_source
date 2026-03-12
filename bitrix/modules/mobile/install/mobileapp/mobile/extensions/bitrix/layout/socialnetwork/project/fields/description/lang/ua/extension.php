@@ -1,2 +1,0 @@
-<?php
-$MESS["MOBILE_LAYOUT_PROJECT_FIELDS_DESCRIPTION_TITLE"] = "ОПИС ПРОЄКТУ";

@@ -17,7 +17,7 @@ use Bitrix\Main\Page\Asset;
 	"ui.notifications",
 	"ui.entity-selector",
 	"im.lib.clipboard",
-	"im.component.conference.conference-edit",
+	"call.component.conference.conference-edit",
 	"calendar.planner",
 	"calendar.util",
 	"loader",

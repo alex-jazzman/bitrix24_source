@@ -41,7 +41,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatMessageCommentInfoList: 'im.v2.Chat.Message.CommentInfo.list',
 	  imV2ChatAnchorRead: 'im.v2.Chat.Anchor.read',
 	  imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
-	  imV2ChatUserList: 'im.v2.Chat.User.list',
+	  imV2ChatMentionList: 'im.v2.Chat.Mention.list',
 	  imV2ChatListShared: 'im.v2.Chat.listShared',
 	  imV2ChatCommentSubscribe: 'im.v2.Chat.Comment.subscribe',
 	  imV2ChatCommentUnsubscribe: 'im.v2.Chat.Comment.unsubscribe',
@@ -70,6 +70,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatBotSendContext: 'im.v2.Chat.Bot.sendContext',
 	  imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
 	  imV2DiskFileTranscribe: 'im.v2.Disk.File.transcribe',
+	  imV2ChatSharedLinkGetIndividual: 'im.v2.Chat.SharingLink.getIndividual',
+	  imV2ChatJoinByCode: 'im.v2.Chat.joinByCode',
+	  imV2ChatSharedLinkRevoke: 'im.v2.Chat.SharingLink.revoke',
+	  imV2ChatSharedLinkRegenerateIndividual: 'im.v2.Chat.SharingLink.regenerateIndividual',
 	  imV2RecentPin: 'im.v2.Chat.pin',
 	  imV2RecentUnpin: 'im.v2.Chat.unpin',
 	  imV2StickerPackLoad: 'im.v2.Sticker.Pack.load',
@@ -77,6 +81,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2StickerPackGet: 'im.v2.Sticker.Pack.get',
 	  imV2StickerPackAdd: 'im.v2.Sticker.Pack.add',
 	  imV2StickerPackDelete: 'im.v2.Sticker.Pack.delete',
+	  imV2StickerPackLink: 'im.v2.Sticker.Pack.link',
+	  imV2StickerPackUnlink: 'im.v2.Sticker.Pack.unlink',
+	  imV2StickerPackRename: 'im.v2.Sticker.Pack.rename',
 	  imV2StickerRecentDelete: 'im.v2.Sticker.Recent.delete',
 	  imV2StickerRecentDeleteAll: 'im.v2.Sticker.Recent.deleteAll',
 	  imV2StickerAdd: 'im.v2.Sticker.add',
@@ -131,13 +138,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imNotifyRead: 'im.notify.read',
 	  imNotifyReadAll: 'im.notify.read.all',
 	  imV2NotifyRead: 'im.v2.Notify.read',
+	  imV2NotifyReadAll: 'im.v2.Notify.readAll',
 	  imNotifySchemaGet: 'im.notify.schema.get',
 	  imNotifyHistorySearch: 'im.notify.history.search',
 	  imNotifyAnswer: 'im.notify.answer',
-	  imCallBackgroundGet: 'im.v2.Call.Background.get',
-	  imCallBackgroundCommit: 'im.v2.Call.Background.commit',
-	  imCallBackgroundDelete: 'im.v2.Call.Background.delete',
-	  imCallMaskGet: 'im.v2.Call.Mask.get',
+	  imCallBackgroundGet: 'call.Desktop.Background.get',
+	  imCallBackgroundCommit: 'call.Desktop.Background.commit',
+	  imCallBackgroundDelete: 'call.Desktop.Background.delete',
+	  imCallMaskGet: 'call.Desktop.Mask.get',
 	  imSmilesGet: 'smile.get',
 	  imPromotionRead: 'im.promotion.read',
 	  imBotGiphyListPopular: 'imbot.Giphy.listPopular',
@@ -154,7 +162,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  socialnetworkMemberDelete: 'socialnetwork.collab.Member.delete',
 	  socialnetworkMemberLeave: 'socialnetwork.collab.Member.leave',
 	  intranetInviteGetLinkByCollabId: 'intranet.invite.getLinkByCollabId',
-	  intranetInviteRegenerateLinkByCollabId: 'intranet.invite.regenerateLinkByCollabId'
+	  intranetInviteRegenerateLinkByCollabId: 'intranet.invite.regenerateLinkByCollabId',
+	  imV2McpSendSelectionHintOnce: 'aiassistant.api.McpHint.sendSelectionHintOnce'
 	});
 
 	const EventType = {
@@ -226,6 +235,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  notifier: {
 	    onBeforeShowMessage: 'IM:Notifier:onBeforeShowMessage'
+	  },
+	  notification: {
+	    onFilterAuthorPopupStateChange: 'IM:Notification:Filter:onAuthorPopupStateChange',
+	    onFilterAuthorTagAdd: 'IM:Notification:Filter:onAuthorTagAdd',
+	    onFilterAuthorTagRemove: 'IM:Notification:Filter:onAuthorTagRemove'
 	  },
 	  // external
 	  layout: {
@@ -373,6 +387,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  supervisorUpdateFeature: 'SupervisorUpdateFeatureMessage',
 	  supervisorEnableFeature: 'SupervisorEnableFeatureMessage',
 	  sign: 'SignMessage',
+	  admin: 'AdminMessage',
 	  checkIn: 'CheckInMessage',
 	  supportVote: 'SupportVoteMessage',
 	  supportSessionNumber: 'SupportSessionNumberMessage',
@@ -505,6 +520,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  messageSearch: 'messageSearch',
 	  chatsWithUser: 'chatsWithUser',
 	  multidialog: 'multidialog',
+	  sharedLink: 'sharedLink',
 	  none: ''
 	});
 	const SidebarFileGroups = Object.freeze({
@@ -650,7 +666,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  lastCallType: 'lastCallType',
 	  lastNotificationId: 'lastNotificationId',
 	  layoutConfig: 'layoutConfig',
-	  audioPlaybackRate: 'audioPlaybackRate'
+	  audioPlaybackRate: 'audioPlaybackRate',
+	  emotePopupTab: 'emotePopupTab'
 	});
 
 	const PlacementType = Object.freeze({
@@ -679,7 +696,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  messageBaseFileMenu: 'im-message-base-file-context-menu',
 	  desktopItemMenu: 'im-navigation-desktop-item-context-menu',
 	  messageHistoryLimit: 'im-message-history-limit-popup',
-	  emoteSelector: 'im-emote-selector-popup'
+	  emoteSelector: 'im-emote-selector-popup',
+	  stickerPack: 'im-sticker-pack-popup',
+	  stickerContextMenu: 'im-sticker-context-menu',
+	  stickerPackContextMenu: 'im-sticker-pack-context-menu',
+	  sharedLinkContextMenu: 'im-shared-link-context-menu'
 	});
 
 	const Settings = Object.freeze({
@@ -756,7 +777,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  membersNotInvitedFourDayToCollab: 'socialnetwork:MembersNotInvitedFourDays-collab',
 	  collaberNotAcceptInvitationOneDay: 'socialnetwork:CollaberNotAcceptInvitationOneDay-collab',
 	  recentCreateChatInviteUsers: 'im:recent-create-chat-invite-users:22052025:all',
-	  desktopModeSelection: 'im:desktop-mode-selection:13082025:all'
+	  desktopModeSelection: 'im:desktop-mode-selection:13082025:all',
+	  stickersAvailable: 'im:stickers-available:27112025:all'
 	});
 
 	const ActionByRole = Object.freeze({
@@ -809,7 +831,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  createChat: 'createChat',
 	  createConference: 'createConference',
 	  leaveCollab: 'leaveCollab',
-	  changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay'
+	  changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
+	  changeStickerPack: 'changeStickerPack',
+	  createStickerPack: 'createStickerPack'
 	});
 
 	const RawBotType = Object.freeze({
@@ -850,6 +874,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openCopilotChat: 'IM_COPILOT',
 	  openChannel: 'IM_CHANNEL',
 	  openCollab: 'IM_COLLAB',
+	  openSharedLink: 'IM_CODE',
 	  openTaskComments: 'IM_TASK',
 	  botContext: 'BOT_CONTEXT',
 	  desktopChatTabMode: 'IM_TAB',
@@ -921,6 +946,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  file: {
 	    maxFileSize: 'MAX_FILE_SIZE_EXCEEDED'
+	  },
+	  sticker: {
+	    maxPacks: 'MAX_PACKS_ERROR',
+	    maxStickers: 'MAX_STICKERS_ERROR'
 	  }
 	});
 
@@ -957,6 +986,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const DataAttribute = {
 	  useNativeContextMenu: 'data-use-native-context-menu'
+	};
+
+	const StickerPackType = {
+	  vendor: 'vendor',
+	  custom: 'custom'
+	};
+	const StickerType = {
+	  image: 'image'
 	};
 
 	exports.RestMethod = RestMethod;
@@ -1034,6 +1071,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.TranscriptionStatus = TranscriptionStatus;
 	exports.SpecialMentionDialogId = SpecialMentionDialogId;
 	exports.DataAttribute = DataAttribute;
+	exports.StickerPackType = StickerPackType;
+	exports.StickerType = StickerType;
 
 }((this.BX.Messenger.v2.Const = this.BX.Messenger.v2.Const || {}),BX?.OpenLines?.v2?.Const??{},BX?.Messenger?.v2?.Const??{}));
 //# sourceMappingURL=registry.bundle.js.map

@@ -67,13 +67,11 @@
 				chatBetaEnable: false,
 				chatDevModeEnable: false,
 				localStorageEnable: true,
-				messengerV2Enabled: false,
 			});
 
 			const settings = await this.loadSettingsPromise;
 
 			const isBetaAvailable = settings.IS_BETA_AVAILABLE === true;
-			const isMessengerV2Enabled = settings.IS_MESSENGER_V2_ENABLED === true;
 
 			let chatBetaOption = null;
 			if (isBetaAvailable)
@@ -102,18 +100,6 @@
 				}
 
 				items.push(chatDevModeEnableSwitch);
-
-				const messengerV2EnabledSwitch = FormItem
-					.create('messengerV2Enabled', FormItemType.SWITCH, 'MessengerV2')
-					.setValue(isMessengerV2Enabled)
-				;
-
-				if (typeof messengerV2EnabledSwitch.setTestId === 'function')
-				{
-					messengerV2EnabledSwitch.setTestId('CHAT_SETTINGS_MESSENGER_V2_ENABLED');
-				}
-
-				items.push(messengerV2EnabledSwitch);
 
 				// // TODO this setting may need to be reverted
 				// const bitrixCallDevEnableSwitch = FormItem.create(
@@ -230,23 +216,9 @@
 				value: item.value,
 			});
 
-			if (item && item.id === 'messengerV2Enabled')
-			{
-				try
-				{
-					const result = await runAction(RestMethod.immobileSettingsToggleMessengerV2);
-					console.log(RestMethod.immobileSettingsToggleMessengerV2, result);
-				}
-				catch (error)
-				{
-					console.error(RestMethod.immobileSettingsToggleMessengerV2, error);
-				}
-			}
-
 			const restartRequiringItems = [
 				'localStorageEnable',
 				'chatDevModeEnable',
-				'messengerV2Enabled',
 			];
 			if (item && restartRequiringItems.includes(item.id))
 			{

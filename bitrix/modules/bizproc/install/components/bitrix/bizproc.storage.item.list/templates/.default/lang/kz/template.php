@@ -1,4 +1,0 @@
-<?php
-$MESS["BIZPROC_STORAGE_ITEM_CONFIRM_MESSAGE_OK"] = "Иә, жою";
-$MESS["BIZPROC_STORAGE_ITEM_DELETE_MESSAGE"] = "Қойма жойылды";
-$MESS["BIZPROC_STORAGE_ITEM_LIST_CONFIRM_MESSAGE"] = "Осы қойманы жою керек пе?";

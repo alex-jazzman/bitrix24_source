@@ -4,6 +4,26 @@
 jn.define('more-menu/analytics', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
 
+	const AHA_EVENT_KEY = Object.freeze({
+		CALL_LIST_POPUP_SHOW: 'call_list_popup_show',
+		CALL_LIST_CLICK_SET_MENU: 'call_list_click_set_menu',
+	});
+
+	const AHA_ANALYTICS_EVENTS = Object.freeze({
+		[AHA_EVENT_KEY.CALL_LIST_POPUP_SHOW]: {
+			tool: 'im',
+			category: 'popup',
+			event: 'view_popup',
+			type: 'add_call_list_to_menu',
+		},
+		[AHA_EVENT_KEY.CALL_LIST_CLICK_SET_MENU]: {
+			tool: 'im',
+			category: 'popup',
+			event: 'click_set_menu',
+			type: 'add_call_list_to_menu',
+		},
+	});
+
 	class MoreMenuAnalytics extends AnalyticsEvent
 	{
 		getDefaults()
@@ -44,9 +64,21 @@ jn.define('more-menu/analytics', (require, exports, module) => {
 				c_section: 'ava_menu',
 			}).send();
 		}
+
+		static sendAhaMomentEvent(eventKey)
+		{
+			const eventConfig = AHA_ANALYTICS_EVENTS[eventKey];
+			if (!eventConfig)
+			{
+				return;
+			}
+
+			new AnalyticsEvent(eventConfig).send();
+		}
 	}
 
 	module.exports = {
 		MoreMenuAnalytics,
+		AHA_EVENT_KEY,
 	};
 });

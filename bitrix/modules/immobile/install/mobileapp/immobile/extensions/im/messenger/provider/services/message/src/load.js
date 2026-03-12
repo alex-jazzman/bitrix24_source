@@ -5,17 +5,17 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 	const { Type } = require('type');
 	const { uniqBy } = require('utils/array');
 
-	const { DialogType } = require('im/messenger/const');
+	const { RestMethod } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { RestManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod } = require('im/messenger/const/rest');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { MessageContextCreator } = require('im/messenger/provider/services/lib/message-context-creator');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { DialogHelper, DateHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { StickerDataProvider } = require('im/messenger/provider/data');
 	const logger = getLogger('message-service--load');
 
 	const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
@@ -569,6 +569,10 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 			return localStorageContext;
 		}
 
+		/**
+		 * @param {MessageRepositoryContext} result
+		 * @return {Promise<void>}
+		 */
 		async updateModelByLocalStorageContextResult(result)
 		{
 			logger.log(`${this.className}.updateModelByLocalStorageContextResult: `, result);
@@ -587,6 +591,13 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 			{
 				await this.store.dispatch('messagesModel/reactionsModel/setFromLocalDatabase', {
 					reactions: result.reactionList,
+				});
+			}
+
+			if (Type.isArrayFilled(result.stickerList))
+			{
+				await this.store.dispatch('stickerPackModel/addStickers', {
+					stickers: result.stickerList,
 				});
 			}
 
@@ -774,6 +785,8 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 				additionalMessages,
 				commentInfo,
 				copilot,
+				stickers,
+				messages, // for removing deleted stickers
 			} = rawData;
 
 			const dialogPromise = this.updatePageNavigationFields({
@@ -794,6 +807,18 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 				commentPromise = this.store.dispatch('commentModel/setComments', commentInfo);
 			}
 
+			let addStickersPromise = Promise.resolve();
+			if (Type.isArrayFilled(stickers))
+			{
+				addStickersPromise = this.store.dispatch('stickerPackModel/addStickers', { stickers });
+			}
+
+			const stickerDataProvider = new StickerDataProvider();
+			const removeDeletedStickersPromise = stickerDataProvider.removeDeletedStickers(
+				[...messages, ...additionalMessages],
+				stickers,
+			);
+
 			let copilotPromise = Promise.resolve();
 			if (copilot)
 			{
@@ -810,6 +835,8 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 				additionalMessagesPromise,
 				commentPromise,
 				copilotPromise,
+				addStickersPromise,
+				removeDeletedStickersPromise,
 			]);
 		}
 

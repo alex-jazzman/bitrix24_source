@@ -1,4 +1,5 @@
 import { BIcon, Set } from 'ui.icon-set.api.vue';
+import { Extension } from 'main.core';
 
 import '../css/copilot-chat-status.css';
 
@@ -35,6 +36,10 @@ export const CopilotChatStatus = {
 				`--${this.status}`,
 			];
 		},
+		copilotName(): string
+		{
+			return Extension.getSettings('landing.copilot.chat').copilotName;
+		},
 	},
 	template: `
 		<div class="ai__copilot-chat_status-wrapper">
@@ -45,7 +50,14 @@ export const CopilotChatStatus = {
 							v-bind="writingStatusIcon"
 						/>
 					</span>
-					<span>{{ $Bitrix.Loc.getMessage('AI_COPILOT_CHAT_STATUS_COPILOT_WRITING') }}</span>
+					<span>
+						{{
+							$Bitrix.Loc.getMessage(
+								'AI_COPILOT_CHAT_STATUS_COPILOT_WRITING_MSGVER_1',
+								{ '#COPILOT_NAME#': copilotName }
+							)
+						}}
+					</span>
 				</template>
 			</div>
 		</div>

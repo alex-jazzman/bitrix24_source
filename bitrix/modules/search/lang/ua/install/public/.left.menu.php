@@ -1,4 +1,0 @@
-<?
-$MESS["SEARCH_INSTALL_PUBLIC_MENU_MAP"] = "Карта сайту";
-$MESS["SEARCH_INSTALL_PUBLIC_MENU_SEARCH"] = "Пошук";
-?>

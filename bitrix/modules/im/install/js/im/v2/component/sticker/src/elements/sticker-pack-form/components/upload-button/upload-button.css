@@ -1,0 +1,23 @@
+.bx-im-sticker-pack-form-upload-button__container {
+	--im-sticker-pack-form-upload-button__text-decoration-color_link: #b8cff0;
+	--im-sticker-pack-form-upload-button__color_link: var(--ui-color-accent-main-link);
+	--im-sticker-pack-form-upload-button__color_description: var(--ui-color-base-4);
+
+	margin-top: 16px;
+}
+
+.bx-im-sticker-pack-form-upload-button__description {
+	margin-top: 16px;
+	max-width: 492px;
+	color: var(--im-sticker-pack-form-upload-button__color_description);
+	font: 12px/15px var(--ui-font-family-system);
+}
+
+.bx-im-sticker-pack-form-upload-button__description-link {
+	color: var(--im-sticker-pack-form-upload-button__color_link);
+	font: 13px/17px var(--ui-font-family-system);
+	cursor: pointer;
+	text-decoration: underline;
+	text-decoration-style: dashed;
+	text-decoration-color: var(--im-sticker-pack-form-upload-button__text-decoration-color_link);
+}

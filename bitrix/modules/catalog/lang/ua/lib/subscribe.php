@@ -1,4 +1,0 @@
-<?
-$MESS["CONTACT_TYPE_EMAIL_NAME"] = "Email";
-$MESS["EMAIL_TEMPLATE_USER_NAME"] = "Клієнт";
-?>

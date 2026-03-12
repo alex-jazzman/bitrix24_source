@@ -5,13 +5,13 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 	const { UserCardClass } = require('layout/ui/user/card');
 	const { Avatar } = require('ui-system/blocks/avatar');
 	const { Color, Indent } = require('tokens');
-	const { IconView } = require('ui-system/blocks/icon');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { H3 } = require('ui-system/typography/heading');
 	const { Text5, Text6 } = require('ui-system/typography/text');
 	const { BBCodeText } = require('ui-system/typography/bbcodetext');
 	const { Type } = require('type');
 	const { Loc } = require('loc');
-	const { UserStatus } = require('user-profile/common-tab/enum/user-status');
+	const { UserStatus } = require('user-profile/common-tab/src/block/header/const');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
 	const { FormatterTypes } = require('layout/ui/friendly-date/formatter-factory');
 	const { Moment } = require('utils/date');
@@ -27,7 +27,7 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 	{
 		renderAvatar()
 		{
-			const { user, status, onAvatarClick } = this.props;
+			const { user, status, isBirthday, onAvatarClick } = this.props;
 			if (!user)
 			{
 				return View(
@@ -60,13 +60,19 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 					entityType: this.getEntityType(user),
 					backBorderWidth: 0,
 				}),
-				status && this.renderStatusIcon(status),
+				this.renderStatusIcon(status, isBirthday),
 			);
 		}
 
-		renderStatusIcon(status)
+		renderStatusIcon(status, isBirthday)
 		{
-			const size = 26;
+			const statusIconData = this.#getStatusIconData(status, isBirthday);
+			if (!statusIconData)
+			{
+				return null;
+			}
+
+			const iconContainerSize = 26;
 
 			return View(
 				{
@@ -75,20 +81,47 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 						position: 'absolute',
 						bottom: 0,
 						right: 0,
-						height: size,
-						width: size,
+						height: iconContainerSize,
+						width: iconContainerSize,
+						borderRadius: iconContainerSize / 2,
+						alignItems: 'center',
+						justifyContent: 'center',
 						zIndex: 1,
 						backgroundColor: Color.bgContentPrimary.toHex(),
-						borderRadius: size / 2,
 					},
 				},
 				IconView({
 					testId: this.getTestId('status-icon'),
-					icon: status.getIcon(),
-					color: status.getIconColor(),
-					size,
+					icon: statusIconData.name,
+					color: statusIconData.color,
+					size: 20,
 				}),
 			);
+		}
+
+		#getStatusIconData(status, isBirthday)
+		{
+			switch (status)
+			{
+				case UserStatus.ON_VACATION:
+					return {
+						name: Icon.SMALL_VACATION,
+						color: Color.accentExtraAqua,
+					};
+
+				case UserStatus.ONLINE:
+				case UserStatus.OFFLINE:
+				case UserStatus.DND:
+				case UserStatus.INVITED:
+				case UserStatus.REINVITED:
+					return isBirthday && {
+						name: Icon.SMALL_GIFT,
+						color: Color.accentMainPrimaryalt,
+					};
+
+				default:
+					return null;
+			}
 		}
 
 		renderDetails()
@@ -241,22 +274,33 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 			{
 				case UserStatus.FIRED:
 					return Loc.getMessage('M_PROFILE_USER_STATUS_FIRED');
+
 				case UserStatus.ON_VACATION:
 					return Loc.getMessage('M_PROFILE_USER_STATUS_ON_VACATION', {
 						'#DATE_TO#': onVacationDateTo,
 					});
+
 				case UserStatus.DND:
 					return Loc.getMessage('M_PROFILE_USER_STATUS_DND', {
 						'#COLOR#': textColor,
 						'#GMT#': GMTString,
 					});
+
 				case UserStatus.ONLINE:
 					return Loc.getMessage('M_PROFILE_USER_STATUS_ONLINE', {
 						'#COLOR#': textColor,
 						'#GMT#': GMTString,
 					});
+
 				case UserStatus.OFFLINE:
 					return Loc.getMessage('M_PROFILE_USER_STATUS_OFFLINE');
+
+				case UserStatus.INVITED:
+					return Loc.getMessage('M_PROFILE_USER_STATUS_INVITED');
+
+				case UserStatus.REINVITED:
+					return Loc.getMessage('M_PROFILE_USER_STATUS_REINVITED');
+
 				default:
 					return '';
 			}
@@ -289,6 +333,37 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 				});
 			}
 
+			if (user.isRootAdmin)
+			{
+				return View(
+					{
+						style: {
+							flexDirection: 'row',
+							alignItems: 'center',
+							justifyContent: 'flex-start',
+						},
+					},
+					IconView({
+						testId: this.getTestId('role-icon'),
+						icon: Icon.CROWN_1,
+						color: Color.baseWhiteFixed,
+						size: 20,
+						solid: true,
+						style: {
+							marginRight: Indent.XS2.toNumber(),
+						},
+					}),
+					Text5({
+						testId: this.getTestId('role'),
+						text: Loc.getMessage('M_PROFILE_USER_ROLE_ROOT_ADMIN'),
+						color: textColor,
+						style: {
+							marginTop: Indent.XS2.toNumber(),
+						},
+					}),
+				);
+			}
+
 			return null;
 		}
 	}
@@ -302,6 +377,7 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 		lastSeenDate: PropTypes.number,
 		onVacationDateTo: PropTypes.string,
 		personalGender: PropTypes.string,
+		isBirthday: PropTypes.bool,
 		onAvatarClick: PropTypes.func,
 		clickable: PropTypes.bool,
 	};

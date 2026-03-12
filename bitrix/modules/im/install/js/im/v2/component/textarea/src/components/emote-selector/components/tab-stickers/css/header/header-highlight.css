@@ -1,0 +1,16 @@
+.bx-im-sticker-header-highlight__container {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	width: 36px;
+	padding: 0 4px;
+	transition: .3s cubic-bezier(.25,.8,.5,1);
+}
+
+.bx-im-sticker-header-highlight__marker {
+	height: 3px;
+	width: 28px;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+	background-color: var(--ui-color-accent-main-primary-alt);
+}

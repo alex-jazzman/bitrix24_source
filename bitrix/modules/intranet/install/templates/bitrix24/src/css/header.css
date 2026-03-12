@@ -31,8 +31,8 @@
 	box-sizing: border-box;
 	position: relative;
 	width: 100%;
-	height: var(--topbar-height);
-	padding-left: var(--content-area-left-shift);
+	height: var(--air-topbar-height);
+	padding-left: var(--air-content-area-left-shift);
 	padding-right: 140px;
 	display: flex;
 	flex-direction: row;
@@ -68,7 +68,7 @@ body:has(.air-user-profile-avatar__time-meridiem):not(:is(.im-bar-mode-off)) .ai
 }
 
 .air-header__menu {
-	height: var(--topbar-height);
+	height: var(--air-topbar-height);
 	flex: 1;
 }
 
@@ -84,6 +84,8 @@ body:has(.air-user-profile-avatar__time-meridiem):not(:is(.im-bar-mode-off)) .ai
 }
 
 .air-header__buttons {
+	position: relative;
+	top: 2px;
 	display: flex;
 	flex-direction: row;
 	align-items: center;

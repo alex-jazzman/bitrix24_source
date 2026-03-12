@@ -1,3 +1,0 @@
-<?php
-$MESS["CRM_LOG_MESSAGE_BIZPROC_TASK_COMPLETED"] = "Завдання бізнес-процесу";
-$MESS["CRM_LOG_MESSAGE_BIZPROC_TASK_COMPLETED_STATUS"] = "Виконано";

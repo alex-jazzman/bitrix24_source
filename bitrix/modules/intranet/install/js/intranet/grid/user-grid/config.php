@@ -13,13 +13,17 @@ return [
 	'rel' => [
 		'ui.avatar',
 		'ui.label',
-		'ui.form-elements.field',
 		'ui.cnt',
 		'intranet.reinvite',
 		'ui.icon-set.main',
+		'bitrix24.first-admin-guard',
+		'ui.form-elements.field',
 		'ui.dialogs.messagebox',
 		'im.public',
 		'ui.entity-selector',
 		'main.core',
+	],
+	'settings' => [
+		'isRenamedIntegrator' => \Bitrix\Intranet\Public\Service\IntegratorService::createByDefault()->isRenamedIntegrator() ? 'Y' : 'N',
 	],
 ];

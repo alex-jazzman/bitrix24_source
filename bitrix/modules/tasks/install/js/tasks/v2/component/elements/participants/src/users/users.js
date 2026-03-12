@@ -38,18 +38,42 @@ export const Users = {
 			type: Boolean,
 			default: false,
 		},
+		showMenu: {
+			type: Boolean,
+			default: true,
+		},
+		forceEdit: {
+			type: Boolean,
+			default: false,
+		},
+		fromPopup: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['edit', 'remove'],
+	computed: {
+		isSafari(): boolean
+		{
+			return BX.browser.IsSafari();
+		},
+	},
 	template: `
-		<div class="tasks-field-users">
+		<div
+			class="tasks-field-users"
+			:class="{
+				'--safari': isSafari,
+				'--overflow': fromPopup,
+			}"
+		>
 			<template v-for="userId in userIds">
 				<User
 					:taskId
 					:userId
-					:canAdd
-					:inline
+					:forceEdit
+					:canAdd="canAdd && single"
 					:withClear="!single && !inline && (canRemove || userId === removableUserId)"
-					:withMenu="isEdit && (canRemove || removableUserId === userId)"
+					:withMenu="showMenu && isEdit && (canRemove || removableUserId === userId)"
 					@edit="$emit('edit')"
 					@remove="$emit('remove', userId)"
 				/>

@@ -35,6 +35,7 @@ export const ContextMenuLayout = {
 				:ref="instance.targetContainerRef"
 				:style="targetContainerStyle"
 				class="ui-block-diagram-context-menu__target-container"
+				@mousedown.stop
 			/>
 		</div>
 	`,

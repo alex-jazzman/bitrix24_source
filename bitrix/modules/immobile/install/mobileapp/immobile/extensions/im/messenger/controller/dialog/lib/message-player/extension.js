@@ -9,7 +9,7 @@ jn.define('im/messenger/controller/dialog/lib/message-player', (require, exports
 	 */
 	class MessagePlayer
 	{
-		constructor(store)
+		constructor(store, dialogId)
 		{
 			/**
 			 * @type {MessengerCoreStore}
@@ -19,6 +19,7 @@ jn.define('im/messenger/controller/dialog/lib/message-player', (require, exports
 			 * @type {number|null}
 			 */
 			this.playingMessageId = null;
+			this.dialogId = dialogId;
 		}
 
 		/**
@@ -60,17 +61,14 @@ jn.define('im/messenger/controller/dialog/lib/message-player', (require, exports
 			this.play(nextMessageToPlay.id);
 		}
 
-		/**
-		 * @param {?number} playingTime
-		 */
-		stop(playingTime = 0)
+		stop()
 		{
 			if (!this.playingMessageId)
 			{
 				return;
 			}
 
-			this.#setMessageIsPlaying(false, playingTime);
+			this.#stopMessageIsPlaying();
 			this.playingMessageId = null;
 		}
 
@@ -99,10 +97,25 @@ jn.define('im/messenger/controller/dialog/lib/message-player', (require, exports
 				return;
 			}
 
-			this.store.dispatch('messagesModel/setPlayingState', {
-				id: this.playingMessageId,
+			this.store.dispatch('messagesModel/playbackModel/set', {
+				dialogId: this.dialogId,
+				messageId: this.playingMessageId,
 				isPlaying,
 				playingTime,
+			});
+		}
+
+		#stopMessageIsPlaying()
+		{
+			const message = this.store.getters['messagesModel/getById'](this.playingMessageId);
+			if (!message)
+			{
+				return;
+			}
+
+			this.store.dispatch('messagesModel/playbackModel/delete', {
+				dialogId: this.dialogId,
+				messageId: this.playingMessageId,
 			});
 		}
 	}

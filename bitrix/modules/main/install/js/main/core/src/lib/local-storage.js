@@ -164,7 +164,7 @@ export class LocalStorage
 
 	#encode(value: JsonValue): string
 	{
-		if (Type.isPlainObject(value))
+		if (Type.isJsonValue(value))
 		{
 			return JSON.stringify(value);
 		}

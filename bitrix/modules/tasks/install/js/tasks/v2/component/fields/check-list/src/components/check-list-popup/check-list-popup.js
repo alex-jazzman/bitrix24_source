@@ -41,6 +41,9 @@ export const CheckListPopup = {
 				padding: 0,
 				autoHide: true,
 				closeByEsc: true,
+				overlay: {
+					backgroundColor: 'transparent',
+				},
 				animation: {
 					showClassName: 'tasks-check-list-popup-show',
 					closeClassName: 'tasks-check-list-popup-close',
@@ -83,14 +86,10 @@ export const CheckListPopup = {
 	mounted(): void
 	{
 		Event.bind(window, 'resize', this.resize);
-
-		Event.bind(document, 'keydown', this.handleKeyDown, { capture: true });
 	},
 	beforeUnmount(): void
 	{
 		Event.unbind(window, 'resize', this.resize);
-
-		Event.unbind(document, 'keydown', this.handleKeyDown, { capture: true });
 	},
 	methods: {
 		resize(): void
@@ -116,15 +115,6 @@ export const CheckListPopup = {
 			this.$bitrix.eventEmitter.emit(EventName.CloseCheckList);
 
 			this.$emit('close');
-		},
-		handleKeyDown(event: KeyboardEvent): void
-		{
-			if (event.key === 'Escape')
-			{
-				this.$emit('close');
-
-				event.stopPropagation();
-			}
 		},
 	},
 	template: `

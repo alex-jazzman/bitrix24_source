@@ -30,7 +30,9 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { AudioAnalytics } = require('im/messenger/provider/services/analytics/src/audio');
 	const { AssistantButtonAnalytics } = require('im/messenger/provider/services/analytics/src/assistant-button');
 	const { VideoNoteAnalytics } = require('im/messenger/provider/services/analytics/video-note');
+	const { NotificationAnalytics } = require('im/messenger/provider/services/analytics/src/notification');
 	const { Reactions } = require('im/messenger/provider/services/analytics/src/reaction');
+	const { StickerAnalytics } = require('im/messenger/provider/services/analytics/src/sticker');
 
 	/** @type {AnalyticsService} */
 	let instance = null;
@@ -84,8 +86,12 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		#navigation;
 		/** @type {AssistantButtonAnalytics} */
 		#assistantButtonAnalytics;
+		/** @type {NotificationAnalytics} */
+		#notificationAnalytics;
 		/** @type {Reactions} */
 		#reactions;
+		/** @type {StickerAnalytics} */
+		#sticker;
 
 		static getInstance()
 		{
@@ -253,6 +259,13 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			return this.#audio;
 		}
 
+		get notificationAnalytics()
+		{
+			this.#notificationAnalytics = this.#notificationAnalytics ?? new NotificationAnalytics();
+
+			return this.#notificationAnalytics;
+		}
+
 		/** @protected */
 		get assistantButtonAnalytics()
 		{
@@ -266,6 +279,16 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			this.#reactions = this.#reactions ?? new Reactions();
 
 			return this.#reactions;
+		}
+
+		/**
+		 * @return {StickerAnalytics}
+		 */
+		get stickerAnalytics()
+		{
+			this.#sticker = this.#sticker ?? new StickerAnalytics();
+
+			return this.#sticker;
 		}
 
 		/**
@@ -683,6 +706,11 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			this.navigation.sendChangeTab(currentTab, analyticsOptions);
 		}
 
+		sendOpenNotifications()
+		{
+			this.notificationAnalytics.sendOpenNotifications();
+		}
+
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {boolean} isActive
@@ -692,9 +720,12 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			this.assistantButtonAnalytics.sendToggleReasoning({ dialogId, isActive });
 		}
 
-		sendClickMCPIntegrations()
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendClickMCPIntegrations(dialogId)
 		{
-			this.assistantButtonAnalytics.sendClickMCPIntegrations();
+			this.assistantButtonAnalytics.sendClickMCPIntegrations(dialogId);
 		}
 
 		/**
@@ -703,6 +734,24 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendAnalyticsExpandReactionList(dialogId)
 		{
 			this.reactions.sendExpandReactionList(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendOpenStickerSelector(dialogId)
+		{
+			this.stickerAnalytics.sendOpenStickerSelector(dialogId);
+		}
+
+		sendCreateStickerPack()
+		{
+			this.stickerAnalytics.sendCreateStickerPack();
+		}
+
+		sendAddStickerPack()
+		{
+			this.stickerAnalytics.sendAddStickerPack();
 		}
 	}
 

@@ -1,2 +1,0 @@
-<?php
-$MESS["BI_UNUSED_ELEMENTS_GRID_BULK_DELETE_BUTTON"] = "Видалити";

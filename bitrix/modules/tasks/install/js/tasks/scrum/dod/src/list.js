@@ -46,6 +46,7 @@ export class List extends EventEmitter
 		this.empty = true;
 
 		this.node = null;
+		this.sliderClosedExplicitly = false;
 	}
 
 	show()
@@ -80,16 +81,27 @@ export class List extends EventEmitter
 								}),
 								new CancelButton({
 									onclick: () => {
-										this.emit('reject')
-										this.sidePanelManager.close(false);
-									}
+										this.emit('reject');
+										this.closeSidePanel();
+									},
 								}),
 							];
 						}
 					});
 				},
 				events: {
-					onLoad: this.onLoadList.bind(this)
+					onLoad: this.onLoadList.bind(this),
+					onClose: () => {
+						const wasClosedExplicitly = this.sliderClosedExplicitly;
+						this.sliderClosedExplicitly = false;
+
+						if (wasClosedExplicitly)
+						{
+							return;
+						}
+
+						this.emit('reject');
+					},
 				}
 			}
 		);
@@ -117,15 +129,21 @@ export class List extends EventEmitter
 				if (decision === 'resolve')
 				{
 					this.emit('resolve');
-					this.sidePanelManager.close(false);
+					this.closeSidePanel();
 				}
 				else if (decision === 'reject')
 				{
 					this.emit('reject');
-					this.sidePanelManager.close(false);
+					this.closeSidePanel();
 				}
 			})
 		;
+	}
+
+	closeSidePanel(): void
+	{
+		this.sliderClosedExplicitly = true;
+		this.sidePanelManager.close(false);
 	}
 
 	getListButtonText(): string

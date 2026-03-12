@@ -21,6 +21,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			titleClick: 'titleClick',
 			barButtonTap: 'barButtonTap',
 			barButtonLongTap: 'barButtonLongTap',
+			preventDismiss: 'preventDismiss',
+			removed: 'removed',
 		},
 		/** Messenger component events */
 		messenger: {
@@ -119,8 +121,10 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			urlTap: 'urlTap',
 			imageTap: 'imageTap',
 			audioTap: 'audioTap',
+			audioRecordLongTap: 'audioRecordLongTap',
 			audioRateTap: 'audioRateTap',
 			videoTap: 'videoTap',
+			videoRecordLongTap: 'videoRecordLongTap',
 			fileTap: 'fileTap',
 			fileDownloadTap: 'fileDownloadTap',
 			forwardTap: 'forwardTap',
@@ -150,6 +154,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			videoNoteWasHide: 'videoNoteWasHide',
 			videoNoteSubmit: 'videoNoteSubmit',
 			videoNoteTap: 'videoNoteTap',
+			clipboardMediaSend: 'clipboardMediaSend',
 			external: {
 				goToMessageContext: 'ImMobile.Messenger.Dialog:goToMessageContext',
 				scrollToBottom: 'ImMobile.Messenger.Dialog:scrollToBottom',
@@ -250,8 +255,6 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		},
 		navigation: {
 			tabChanged: 'ImMobile.Navigation:tabChanged',
-			broadCastEventWithTabChange: 'ImMobile.Navigation:broadCastEventWithChangeTab',
-			broadCastEventCheckTabPreload: 'ImMobile.Navigation:broadCastEventCheckTabPreload',
 			changeTab: 'ImMobile.Navigation:changeTab',
 			changeTabResult: 'ImMobile.Navigation:changeTabResult',
 			onRootTabsSelected: 'onTabsSelected',
@@ -273,6 +276,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		},
 		counters: {
 			clearAll: 'ImMobile.Counters:clearAll',
+			updateUi: 'ImMobile.Counters:updateUi',
 		},
 		audio: {
 			audioPanelReturnClick: 'audioPanelReturnClick',

@@ -526,11 +526,6 @@ elseif($action === 'SAVE')
 
 	if(!empty($fields) || $enableProductRows || !empty($updateEntityInfos))
 	{
-		if(isset($fields['ASSIGNED_BY_ID']) && $fields['ASSIGNED_BY_ID'] > 0)
-		{
-			\Bitrix\Crm\Entity\EntityEditor::registerSelectedUser($fields['ASSIGNED_BY_ID']);
-		}
-
 		if(!empty($fields))
 		{
 			if($isCopyMode)

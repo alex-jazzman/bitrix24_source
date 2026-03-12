@@ -391,9 +391,56 @@ abstract class Mailbox
 		}
 	}
 
+	public function renewOauthTokens(): bool
+	{
+		if (empty($this->mailbox['PASSWORD']))
+		{
+			return false;
+		}
+
+		$oauth = OAuth::getInstanceByMeta($this->mailbox['PASSWORD']);
+
+		if (empty($oauth))
+		{
+			return false;
+		}
+
+		return $oauth->renewTokens();
+	}
+
 	public function getMailbox()
 	{
 		return $this->mailbox;
+	}
+
+	public function getServiceId(): int
+	{
+		return (int)($this->mailbox['SERVICE_ID'] ?? 0);
+	}
+
+	public function getProviderCode(): string
+	{
+		$serviceId = $this->getServiceId();
+
+		if ($serviceId <= 0)
+		{
+			return '';
+		}
+
+		$service = MailServicesTable::getByPrimary(
+			$serviceId,
+			[
+				'select' => ['NAME'],
+				'cache' => ['ttl' => 86400],
+			],
+		)->fetch();
+
+		if ($service && !empty($service['NAME']))
+		{
+			return mb_strtolower($service['NAME']);
+		}
+
+		return '';
 	}
 
 	public function getMailboxId(): int
@@ -553,6 +600,8 @@ abstract class Mailbox
 			$this->syncIncompleteMessages($this->getLostMessages(static::NUMBER_OF_BROKEN_MESSAGES_TO_RESYNCHRONIZE, $messageInFolderFilter));
 		}
 
+
+
 		\Bitrix\Mail\Helper\Message::reSyncBody($this->mailbox['ID'], $this->findMessagesWithAnEmptyBody(static::NUMBER_OF_BROKEN_MESSAGES_TO_RESYNCHRONIZE, $this->mailbox['ID']));
 	}
 
@@ -618,7 +667,7 @@ abstract class Mailbox
 
 		$mailbox = null;
 
-		if (MailboxAccess::hasCurrentUserAccessOrCanEditMailbox($id))
+		if (MailboxAccess::hasCurrentUserAnyAccessToMailbox($id))
 		{
 			$mailbox = MailboxTable::getById($id)->fetch();
 		}
@@ -2157,7 +2206,7 @@ abstract class Mailbox
 		$this->lastSyncResult = array_merge($this->lastSyncResult, $data);
 	}
 
-	public function getDirsHelper()
+	public function getDirsHelper(): Mail\Helper\MailboxDirectoryHelper
 	{
 		if (!$this->dirsHelper)
 		{
@@ -2369,5 +2418,18 @@ abstract class Mailbox
 		}
 
 		return 0;
+	}
+
+	public static function findActiveMailbox($userId, $email, $lid)
+	{
+		return Mail\MailboxTable::getList([
+			'filter' => [
+				'=EMAIL' => $email,
+				'=USER_ID' => $userId,
+				'=ACTIVE' => 'Y',
+				'=LID' => $lid,
+			],
+			'limit' => 1,
+		])->fetch();
 	}
 }

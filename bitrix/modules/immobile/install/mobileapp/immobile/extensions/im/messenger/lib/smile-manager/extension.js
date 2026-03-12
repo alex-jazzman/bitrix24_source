@@ -2,6 +2,7 @@
  * @module im/messenger/lib/smile-manager
  */
 jn.define('im/messenger/lib/smile-manager', (require, exports, module) => {
+	const { withCurrentDomain } = require('utils/url');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { backgroundCache } = require('im/messenger/lib/background-cache');
@@ -149,7 +150,7 @@ jn.define('im/messenger/lib/smile-manager', (require, exports, module) => {
 					setId: smile.setId,
 					width: smile.width,
 					height: smile.height,
-					imageUrl: smile.image.replace(currentDomain, ''),
+					imageUrl: smile.image,
 					typing: smile.typing,
 					name: smile.name,
 				};
@@ -225,7 +226,7 @@ jn.define('im/messenger/lib/smile-manager', (require, exports, module) => {
 				return;
 			}
 
-			const smileUrls = [...this.smilesUrl.values()].map(url => currentDomain + url);
+			const smileUrls = [...this.smilesUrl.values()].map(url => withCurrentDomain(url));
 			// eslint-disable-next-line consistent-return
 			await backgroundCache.downloadImages(smileUrls);
 		}

@@ -12,7 +12,10 @@ return [
 		'im:messenger/lib/di/service-locator',
 	],
 	'bundle' => [
-		'./src/video-note',
-		'./src/copilot',
+		'./src/promotion',
+		'./src/trigger-manager',
+		'./src/entities/video-note',
+		'./src/entities/copilot',
+		'./src/entities/tasks',
 	],
 ];

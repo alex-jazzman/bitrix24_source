@@ -112,5 +112,3 @@ $MESS["SEO_DETAIL_CRAWL_ISSUES_COUNT"] = "Количество";
 $MESS["SEO_ERROR_CODE"] = "код ошибки";
 $MESS["SEO_ERROR_HOST_NOT_VERIFIED"] = "Для просмотра информации нужно подтвердить доступ к сайту";
 $MESS["SEO_ERROR_HOST_NOT_INDEXED"] = "Сайт еще не проиндексирован. Пожалуйста, повторите запрос позже.";
-
-?>

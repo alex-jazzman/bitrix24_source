@@ -6,7 +6,6 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 	const { AnalyticsEvent } = require('analytics');
 
 	const { Theme } = require('im/lib/theme');
-	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
 
 	const {
 		EventType,
@@ -14,6 +13,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 		DialogType,
 		OpenDialogContextType,
 		ComponentCode,
+		CopilotRoleType,
 	} = require('im/messenger/const');
 	const { NavigationSelectorView } = require('im/messenger/controller/dialog-creator/navigation-selector/view');
 	const { CreateChannel, CreateGroupChat } = require('im/messenger/controller/chat-composer');
@@ -29,22 +29,19 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 		 * @param {Array} userList
 		 * @param parentLayout
 		 */
-		static async open({ userList, parentLayout = null })
+		static open({ userList, parentLayout = null })
 		{
-			const totalEmployees = userList?.length;
-
-			const widget = new NavigationSelector({ userList, totalEmployees, parentLayout });
+			const widget = new NavigationSelector({ userList, parentLayout });
 			widget.show();
 		}
 
-		constructor({ userList, totalEmployees, parentLayout })
+		constructor({ userList, parentLayout })
 		{
 			this.userList = userList || [];
 			this.layout = parentLayout || null;
 
 			this.view = new NavigationSelectorView({
 				userList,
-				totalEmployees,
 				onClose: () => {
 					this.layout.close();
 				},
@@ -90,14 +87,9 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 							Analytics.Section.chatTab,
 						);
 
-						const selectedRole = await CopilotRoleSelector.open({
-							parentLayout: this.layout,
-							showOpenFeedbackItem: true,
-						});
-
 						const fields = {
 							type: DialogType.copilot.toUpperCase(),
-							copilotMainRole: selectedRole?.role?.code,
+							copilotMainRole: CopilotRoleType.copilotUniversalRole,
 						};
 
 						const chatService = new ChatService();

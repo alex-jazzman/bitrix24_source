@@ -259,6 +259,11 @@ export class LoadService
 			collabInfo: extractor.getCollabInfo(),
 		});
 
+		const stickersPromise = Promise.all([
+			this.#store.dispatch('stickers/messages/set', extractor.getStickerMessages()),
+			this.#store.dispatch('stickers/set', extractor.getStickers()),
+		]);
+
 		await Promise.all([
 			chatsPromise,
 			filesPromise,
@@ -268,6 +273,7 @@ export class LoadService
 			openLinesPromise,
 			collabPromise,
 			autoDeletePromise,
+			stickersPromise,
 		]);
 
 		return { dialogId: extractor.getDialogId(), chatId: extractor.getChatId() };

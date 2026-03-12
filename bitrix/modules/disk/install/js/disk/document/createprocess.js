@@ -17,12 +17,12 @@
 	{
 		BX.Disk.Document.EditProcess.apply(this, arguments);
 
-		this.typeFile = parameters.typeFile;
 		this.targetFolderId = parameters.targetFolderId;
 		this.serviceCode = parameters.serviceCode;
 		this.additionalQueryParameters = parameters.additionalQueryParameters || {};
 		this.service = null;
 		this.popupConfirm = null;
+		this.isCreate = true;
 
 		if (BX.type.isFunction(parameters.onAfterCreateFile))
 		{
@@ -41,7 +41,8 @@
 				action: 'disk.api.documentService.goToCreate',
 				serviceCode: this.serviceCode,
 				typeFile: this.typeFile,
-				targetFolderId: this.targetFolderId
+				targetFolderId: this.targetFolderId,
+				analytics: this.analytics,
 			}, this.additionalQueryParameters)
 		},
 
@@ -49,13 +50,16 @@
 		{
 			const newTab = window.open('', '_blank');
 
+			const data = {
+				serviceCode: this.serviceCode,
+				typeFile: this.typeFile,
+				targetFolderId: this.targetFolderId,
+				createByUnifiedLink: true,
+				analytics: this.analytics,
+			};
+
 			BX.ajax.runAction('disk.api.documentService.goToCreate', {
-				data: {
-					serviceCode: this.serviceCode,
-					typeFile: this.typeFile,
-					targetFolderId: this.targetFolderId,
-					createByUnifiedLink: true,
-				},
+				data,
 			}).then((response) => {
 				newTab.location.href = response.data.openUrl;
 

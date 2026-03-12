@@ -1,4 +1,0 @@
-<?php
-$MESS["RPA_AUTOMATION_EDITROBOT_SCENARIO"] = "Сценарий";
-$MESS["RPA_AUTOMATION_EDITROBOT_TITLE"] = "Тапсырманы қосу";
-$MESS["RPA_AUTOMATION_EDITROBOT_TITLE_EDIT"] = "Тапсырманы баптау";

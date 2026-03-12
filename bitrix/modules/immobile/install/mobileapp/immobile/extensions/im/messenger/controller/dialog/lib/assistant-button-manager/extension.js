@@ -97,6 +97,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 				case MCPButton.id:
 					void this.#mcpButtonTapHandler();
 					break;
+				default:
 			}
 		};
 
@@ -194,7 +195,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 
 			await this.#mcpSelector.open();
 
-			AnalyticsService.getInstance().sendClickMCPIntegrations();
+			AnalyticsService.getInstance().sendClickMCPIntegrations(this.dialogId);
 		};
 
 		/**

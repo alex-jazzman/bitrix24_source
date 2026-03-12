@@ -40,7 +40,7 @@ export const DashboardSelector: BitrixVueComponentProps = {
 				id: 'group-dashboard-selector',
 				targetNode: this.$refs.addDashboardButton,
 				width: 400,
-				height: 300,
+				height: 370,
 				dropdownMode: true,
 				enableSearch: true,
 				preload: true,
@@ -86,7 +86,6 @@ export const DashboardSelector: BitrixVueComponentProps = {
 							name: item.getTitle(),
 							type: item.getCustomData().get('type') ?? DashboardType.system,
 							createdById: item.getCustomData().get('createdById'),
-							ownerId: item.getCustomData().get('ownerId'),
 							scopes: item.getCustomData().get('scopes') ?? [],
 						};
 						this.$store.commit('addDashboard', dashboard);
@@ -160,11 +159,13 @@ export const DashboardSelector: BitrixVueComponentProps = {
 		},
 	},
 	template: `
-		<div class="ui-btn ui-btn-primary ui-btn-sm ui-btn-round ui-btn-icon-add ui-btn-no-caps group-add-dashboards-button"
+		<div class="ui-btn --air ui-btn-md ui-btn-icon-add ui-icon-set__scope --with-left-icon --style-tinted ui-btn-no-caps"
 			@click="onAddDashboardClick"
 			ref="addDashboardButton"
 		>
-			{{ $Bitrix.Loc.getMessage('BI_GROUP_ADD_DASHBOARD') }}
+			<span class="ui-btn-text">
+				{{ $Bitrix.Loc.getMessage('BI_GROUP_ADD_DASHBOARD') }}
+			</span>
 		</div>
 	`,
 };

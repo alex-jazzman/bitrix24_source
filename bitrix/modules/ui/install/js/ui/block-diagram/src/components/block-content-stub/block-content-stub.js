@@ -2,6 +2,7 @@ import './block-content-stub.css';
 import { computed } from 'ui.vue3';
 import { Port } from '../port/port';
 import { useBlockDiagram, useContextMenu, useLoc } from '../../composables';
+// eslint-disable-next-line no-unused-vars
 import type { DiagramBlock } from '../../type';
 
 type BlockContentStubSetup = {
@@ -42,15 +43,7 @@ export const BlockContentStub = {
 	{
 		const { deleteBlockById } = useBlockDiagram();
 		const loc = useLoc();
-		const { showContextMenu } = useContextMenu([
-			{
-				id: 'deleteConnection',
-				text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_BLOCK_CONTEXT_MENU_ITEM'),
-				onclick: () => {
-					deleteBlockById(props.block.id);
-				},
-			},
-		]);
+		const { showMenu } = useContextMenu();
 
 		const blockContentClassNames = computed((): { [string]: boolean } => ({
 			[BLOCK_CONTENT_STUB_CLASS_NAMES.base]: true,
@@ -68,10 +61,20 @@ export const BlockContentStub = {
 
 			const { clientX, clientY } = event;
 
-			showContextMenu({
-				clientX,
-				clientY,
-			});
+			showMenu(
+				{ clientX, clientY },
+				{
+					items: [
+						{
+							id: 'deleteConnection',
+							text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_BLOCK_CONTEXT_MENU_ITEM'),
+							onclick: () => {
+								deleteBlockById(props.block.id);
+							},
+						},
+					],
+				},
+			);
 		}
 
 		return {

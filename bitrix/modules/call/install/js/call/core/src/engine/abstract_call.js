@@ -53,7 +53,6 @@ export class AbstractCall
 
 		// media constraints
 		this.videoEnabled = Hardware.isCameraOn;
-		this.videoHd = params.videoHd === true;
 		this.cameraId = params.cameraId || '';
 		this.microphoneId = params.microphoneId || '';
 
@@ -62,14 +61,11 @@ export class AbstractCall
 		this.wasConnected = false;
 
 		this.logToken = params.logToken || '';
-		if (CallEngine.getLogService() && this.logToken)
-		{
-			this.logger = new Logger(CallEngine.getLogService(), this.logToken);
-		}
+		this.addLogToken(this.logToken);
 
 		this.localStreams = {
 			main: null,
-			screen: null
+			screen: null,
 		};
 
 		this.eventListeners = {};
@@ -118,6 +114,20 @@ export class AbstractCall
 	addDialogInfo(dialogInfo)
 	{
 		this.associatedEntity = Type.isPlainObject(dialogInfo) ? dialogInfo : {};
+	}
+
+	addLogToken(logToken: string): void
+	{
+		if (this.logger || !logToken)
+		{
+			return;
+		}
+
+		this.logToken = logToken;
+		if (CallEngine.getLogService() && this.logToken)
+		{
+			this.logger = new Logger(CallEngine.getLogService(), this.logToken);
+		}
 	}
 
 	initEventListeners(eventListeners)
@@ -237,10 +247,10 @@ export class AbstractCall
 		{
 			DesktopApi.writeToLogFile(BX.message('USER_ID') + '.video.log', text.substr(3));
 		}
-		if (CallEngine.debugFlag && console)
+		if ((CallEngine.debugFlag || Util.isConsoleLogsEnabled()) && console)
 		{
 			let a = ['Call log [' + Util.getTimeForLog() + ']: '];
-			console.log.apply(this, a.concat(Array.prototype.slice.call(arguments)));
+			console.warn.apply(this, a.concat(Array.prototype.slice.call(arguments)));
 		}
 		if (this.logger)
 		{

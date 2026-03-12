@@ -29,8 +29,7 @@ class Catalog extends JsonController
 		$documentType = Workflow::getComplexType();
 
 		$activities =
-			$searcher->searchByType(ActivityType::NODE->value, $documentType)
-				->addCollection($searcher->searchByType(ActivityType::TRIGGER->value, $documentType))
+			$searcher->searchByType([ActivityType::NODE->value, ActivityType::TRIGGER->value], $documentType)
 				//->computeDescriptionFilter($documentType)
 				->filter(static fn(ActivityDescription $description) => !$description->getExcluded())
 				->sort()

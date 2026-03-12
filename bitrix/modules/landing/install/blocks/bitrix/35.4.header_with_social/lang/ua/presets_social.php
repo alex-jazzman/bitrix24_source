@@ -1,4 +1,0 @@
-<?
-$MESS['LANDING_BLOCK_HEADER_35_4__SOCIALS__PRESET_OK'] = "Однокласники";
-$MESS['LANDING_BLOCK_HEADER_35_4__SOCIALS__PRESET_VK'] = "Вконтакті";
-?>

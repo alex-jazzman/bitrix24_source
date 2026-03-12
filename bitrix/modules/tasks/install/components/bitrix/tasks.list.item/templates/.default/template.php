@@ -5,9 +5,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\UI;
 use Bitrix\Tasks\Internals\Task\Status;
 
-UI\Extension::load("ui.tooltip");
-
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+UI\Extension::load("ui.tooltip", 'intranet.old-interface.intranet-common');
 
 $task = isset($arParams["~TASK"]) ? $arParams["~TASK"] : null;
 if ($task === null)

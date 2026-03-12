@@ -2,12 +2,13 @@
 
 return [
 	'extensions' => [
-		'tokens',
-		'utils/object',
 		'asset-manager',
-		'utils/validation',
-		'utils/enums/style',
+		'feature',
+		'tokens',
 		'ui-system/layout/area',
 		'ui-system/typography/bbcodetext',
+		'utils/enums/style',
+		'utils/object',
+		'utils/validation',
 	],
 ];

@@ -29,6 +29,11 @@ export const DropdownMenuButton = {
 			type: Boolean,
 			default: false,
 		},
+		style:
+		{
+			type: String,
+			default: null,
+		},
 	},
 	emits: ['change'],
 	data(): DropdownMenuButtonData
@@ -67,6 +72,7 @@ export const DropdownMenuButton = {
 				:text="text"
 				:icon="icon"
 				:loading="loading"
+				:style="style"
 				@mainClick="$emit('change')"
 				@menuClick="onToggleDropdown"
 			/>

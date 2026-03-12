@@ -2,7 +2,7 @@ import bind from './bind';
 import unbind from './unbind';
 
 export default function bindOnce(
-	target: Element,
+	target: EventTarget,
 	eventName: string,
 	handler: (event: Event) => void,
 	options?: {

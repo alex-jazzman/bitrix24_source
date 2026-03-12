@@ -13,6 +13,7 @@ use Bitrix\Tasks\V2\Internal\Repository\TaskRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Service\Consistency\ConsistencyResolverInterface;
 use Bitrix\Tasks\V2\Internal\Service\Esg\EgressController;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Config\UpdateConfig;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\RunBizProc;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\RunCrm;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\RunUpdateEvent;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\UpdateUserFields;
@@ -28,7 +29,6 @@ class UpdateTaskService
 		private readonly EgressController $egressController,
 	)
 	{
-
 	}
 
 	/**
@@ -55,12 +55,7 @@ class UpdateTaskService
 			[$task, $fields, $taskBefore, $taskObjectBefore, $sourceTaskData] = $this->updateService->update($task, $config);
 		}
 
-		if ((new UpdateUserFields($config))($fields, $task->id))
-		{
-			$this->taskRepository->invalidate($task->id);
-
-			$task = $this->taskRepository->getById($task->id);
-		}
+		(new UpdateUserFields($config))($fields, $task->id);
 
 		(new RunUpdateEvent($config))(
 			$fields,
@@ -68,7 +63,18 @@ class UpdateTaskService
 			static fn (mixed $event): bool => is_array($event) && ($event['TO_MODULE_ID'] ?? null) === 'crm',
 		);
 
+		(new RunBizProc($config))($fields, $taskObjectBefore);
+
 		(new RunCrm($config))($fields, $taskObjectBefore);
+
+		$this->taskRepository->invalidate($task->id);
+
+		$task = $this->taskRepository->getById($task->id);
+
+		if ($task === null)
+		{
+			throw new TaskNotExistsException();
+		}
 
 		$this->egressController->processUserFields(new UpdateTaskCommand(
 			task: $task,
@@ -76,6 +82,6 @@ class UpdateTaskService
 			taskBeforeUpdate: $taskBefore,
 		));
 
-		return $this->taskRepository->getById($task->id);
+		return $task;
 	}
 }

@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_TIMELINE_CONFIGURABLE_APP_MENU_ITEM_ABOUT"] = "Про застосунок";

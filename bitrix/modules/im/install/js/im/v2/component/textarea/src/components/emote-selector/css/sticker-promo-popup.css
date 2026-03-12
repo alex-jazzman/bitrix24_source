@@ -1,0 +1,43 @@
+.bx-im-sticker-promo-popup__container {
+	background-color: var(--ui-color-bg-content-inapp);
+}
+
+.bx-im-sticker-promo-popup__container .popup-window-angly--arrow {
+	background-color: var(--ui-color-bg-content-inapp);
+}
+
+.bx-im-sticker-promo-popup__container .popup-window-content {
+	display: flex;
+	gap: 10px;
+}
+
+.bx-im-sticker-promo-popup__cover {
+	background-image: url('./images/promo.png');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	flex-shrink: 0;
+	width: 78px;
+	height: 78px;
+	margin-left: 10px;
+	align-self: center;
+}
+
+.bx-im-sticker-promo-popup__info {
+	padding-left: 12px;
+	padding-bottom: 4px;
+}
+
+.bx-im-sticker-promo-popup__title {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-palette-white-base);
+	margin-bottom: 6px;
+}
+
+.bx-im-sticker-promo-popup__description {
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-palette-white-base);
+}

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SEO_MENU_MAIN"] = "Поисковая оптимизация";
 $MESS["SEO_MENU_MAIN_TITLE"] = "Инструменты поисковой оптимизации сайта";
 $MESS["SEO_MENU_SEARCH_ENGINES"] = "Поисковые системы";
@@ -14,4 +14,3 @@ $MESS["SEO_MENU_SITEMAP_ALT"] = "Настройка sitemap.xml";
 $MESS["SEO_MENU_YANDEX"] = "Яндекс";
 $MESS["SEO_MENU_GOOGLE"] = "Google";
 $MESS["SEO_MENU_YANDEX_DIRECT"] = "Яндекс.Директ";
-?>

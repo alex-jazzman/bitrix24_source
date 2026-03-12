@@ -4,6 +4,7 @@ use Bitrix\Catalog;
 use Bitrix\Crm\Agent\Security\DynamicTypes\ReFillDynamicTypeAttr;
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\ContactAddress;
+use Bitrix\Crm\Controller\RepeatSale\Flow;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Invoice\Compatible;
@@ -3004,6 +3005,46 @@ class CAllCrmInvoice
 
 		$errMsg = [];
 		$bError = false;
+
+		$repeatSaleAiSegmentCalcAgent = '~CRM_REPEAT_SALE_AI_SEGMENT_CALC_AGENT';
+		if ((string)COption::GetOptionString('crm', $repeatSaleAiSegmentCalcAgent, 'N') === 'N')
+		{
+			COption::SetOptionString('crm', $repeatSaleAiSegmentCalcAgent, 'Y');
+
+			/**
+			 * @see Bitrix\Crm\Agent\RepeatSale\Hypothesis\AiSegmentAgent
+			 */
+			\CAgent::AddAgent(
+				'Bitrix\Crm\Agent\RepeatSale\Hypothesis\AiSegmentAgent::run();',
+				'crm',
+				'N',
+				60,
+				'',
+				'Y',
+				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+			);
+		}
+
+		$repeatSaleTryHiddenEnabled = '~CRM_REPEAT_SALE_TRY_HIDDEN_ENABLED';
+		if ((string)COption::GetOptionString('crm', $repeatSaleTryHiddenEnabled, 'N') === 'N')
+		{
+			COption::SetOptionString('crm', $repeatSaleTryHiddenEnabled, 'Y');
+
+			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+			$minSuccessDealsForBannerShow = 2;
+
+			$hasMoreSuccessDeals = $factory->checkIfTotalItemsCountExceeded(
+				$minSuccessDealsForBannerShow,
+				[
+					'=STAGE_SEMANTIC_ID' => Bitrix\Crm\PhaseSemantics::SUCCESS,
+				],
+			);
+
+			if (!$hasMoreSuccessDeals)
+			{
+				(new Flow())->enableAction();
+			}
+		}
 
 		$recurringColumnAppendAgent = '~CRM_RECURRING_COLUMN_APPEND_AGENT';
 		if ((string)COption::GetOptionString('crm', $recurringColumnAppendAgent, 'N') === 'N')

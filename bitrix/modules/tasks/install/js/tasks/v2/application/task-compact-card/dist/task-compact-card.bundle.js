@@ -199,6 +199,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  mixins: [ui_uploader_tileWidget.DragOverMixin],
 	  provide() {
 	    return {
+	      settings: tasks_v2_core.Core.getParams(),
 	      analytics: this.analytics,
 	      cardType: tasks_v2_const.CardType.Compact,
 	      /** @type { TaskModel } */
@@ -242,8 +243,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      openingFullCard: false,
 	      isCheckListPopupShown: false,
 	      creationError: false,
-	      popupCount: 0,
-	      isHovered: false
+	      popupCount: 0
 	    };
 	  },
 	  computed: {
@@ -262,6 +262,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    group() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Groups}/getById`](this.task.groupId);
 	    },
+	    checklist() {
+	      if (!this.task.checklist) {
+	        return [];
+	      }
+	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
+	    },
 	    fields() {
 	      return [{
 	        title: tasks_v2_component_fields_responsible.responsibleMeta.getTitle(false),
@@ -277,7 +283,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          taskId: this.taskId,
 	          isTemplate: this.isTemplate,
 	          isAutonomous: true,
-	          isHovered: this.isHovered
+	          isHovered: false
 	        }
 	      }, tasks_v2_core.Core.getParams().features.disk && {
 	        chip: {
@@ -314,7 +320,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    }
 	  },
 	  created() {
-	    var _this$initialTask$dea, _this$stateFlags$need, _this$stateFlags$matc, _this$stateFlags$defa, _this$task$fileIds, _this$group;
+	    var _this$initialTask$dea, _this$stateFlags$need, _this$stateFlags$matc, _this$stateFlags$allo, _this$stateFlags$defa, _this$group, _this$initialTask$aud, _this$initialTask, _this$initialTask$aud2, _this$initialTask$acc, _this$initialTask2, _this$initialTask2$ac;
 	    this.insert({
 	      ...this.initialTask,
 	      id: this.taskId,
@@ -323,13 +329,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      deadlineTs: (_this$initialTask$dea = this.initialTask.deadlineTs) != null ? _this$initialTask$dea : this.defaultDeadlineTs,
 	      needsControl: (_this$stateFlags$need = this.stateFlags.needsControl) != null ? _this$stateFlags$need : null,
 	      matchesWorkTime: (_this$stateFlags$matc = this.stateFlags.matchesWorkTime) != null ? _this$stateFlags$matc : null,
+	      allowsTimeTracking: (_this$stateFlags$allo = this.stateFlags.allowsTimeTracking) != null ? _this$stateFlags$allo : null,
 	      requireResult: (_this$stateFlags$defa = this.stateFlags.defaultRequireResult) != null ? _this$stateFlags$defa : false
 	    });
-	    if (((_this$task$fileIds = this.task.fileIds) == null ? void 0 : _this$task$fileIds.length) > 0) {
-	      void tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
-	    }
-	    tasks_v2_lib_analytics.analytics.sendOpenCard(this.analytics, {
-	      collabId: ((_this$group = this.group) == null ? void 0 : _this$group.type) === tasks_v2_const.GroupType.Collab ? this.group.id : null
+	    void tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
+	    tasks_v2_lib_analytics.analytics.sendClickCreate(this.analytics, {
+	      collabId: ((_this$group = this.group) == null ? void 0 : _this$group.type) === tasks_v2_const.GroupType.Collab ? this.group.id : null,
+	      cardType: tasks_v2_const.CardType.Compact,
+	      viewersCount: (_this$initialTask$aud = (_this$initialTask = this.initialTask) == null ? void 0 : (_this$initialTask$aud2 = _this$initialTask.auditorsIds) == null ? void 0 : _this$initialTask$aud2.length) != null ? _this$initialTask$aud : 0,
+	      coexecutorsCount: (_this$initialTask$acc = (_this$initialTask2 = this.initialTask) == null ? void 0 : (_this$initialTask2$ac = _this$initialTask2.accomplicesIds) == null ? void 0 : _this$initialTask2$ac.length) != null ? _this$initialTask$acc : 0
 	    });
 	  },
 	  mounted() {
@@ -367,6 +375,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    async addTask() {
 	      var _this$task, _this$$refs, _this$$refs$descripti;
+	      const checklists = this.checklist;
 	      const [id, error] = await tasks_v2_provider_service_taskService.taskService.add(this.task);
 	      if (!id) {
 	        this.creationError = true;
@@ -374,34 +383,61 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          id: 'task-notify-add-error',
 	          text: error.message
 	        });
-	        this.sendAddTaskAnalytics(false);
+	        this.sendAddTaskAnalytics(false, checklists);
 	        return;
 	      }
 	      this.taskId = id;
-	      this.sendAddTaskAnalytics(true);
+	      this.sendAddTaskAnalytics(true, checklists);
 	      tasks_v2_lib_analytics.analytics.sendDescription(this.analytics, {
 	        hasDescription: main_core.Type.isStringFilled((_this$task = this.task) == null ? void 0 : _this$task.description),
-	        hasScroll: (_this$$refs = this.$refs) == null ? void 0 : (_this$$refs$descripti = _this$$refs.description) == null ? void 0 : _this$$refs$descripti.hasScroll()
+	        hasScroll: (_this$$refs = this.$refs) == null ? void 0 : (_this$$refs$descripti = _this$$refs.description) == null ? void 0 : _this$$refs$descripti.hasScroll(),
+	        cardType: tasks_v2_const.CardType.Compact
 	      });
 	      tasks_v2_provider_service_fileService.fileService.replace(this.id, id);
-	      main_core_events.EventEmitter.emit(tasks_v2_const.EventName.NotifyGrid, new main_core_events.BaseEvent({
+	      main_core_events.EventEmitter.emit(tasks_v2_const.EventName.LegacyTasksTaskEvent, new main_core_events.BaseEvent({
 	        data: id,
 	        compatData: ['ADD', {
-	          task: this.task,
+	          task: {
+	            ID: id
+	          },
+	          taskUgly: {
+	            id
+	          },
 	          options: {}
 	        }]
 	      }));
 	      this.close();
 	    },
-	    sendAddTaskAnalytics(isSuccess) {
+	    sendAddTaskAnalytics(isSuccess, checklists) {
 	      var _this$group2;
 	      const collabId = ((_this$group2 = this.group) == null ? void 0 : _this$group2.type) === tasks_v2_const.GroupType.Collab ? this.group.id : null;
-	      const checkLists = this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
-	      if (checkLists.length > 0) {
-	        const checklistCount = checkLists.filter(({
+	      const viewersCount = this.task.auditorsIds.length;
+	      const coexecutorsCount = this.task.accomplicesIds.length;
+	      if (this.task.templateId) {
+	        tasks_v2_lib_analytics.analytics.sendAddTask(this.analytics, {
+	          isSuccess,
+	          collabId,
+	          viewersCount,
+	          coexecutorsCount,
+	          event: tasks_v2_const.Analytics.Event.PatternTaskCreate,
+	          cardType: tasks_v2_const.CardType.Compact,
+	          taskId: this.taskId
+	        });
+	      } else if (this.task.parentId) {
+	        tasks_v2_lib_analytics.analytics.sendAddTask(this.analytics, {
+	          isSuccess,
+	          collabId,
+	          viewersCount,
+	          coexecutorsCount,
+	          event: tasks_v2_const.Analytics.Event.SubTaskAdd,
+	          cardType: tasks_v2_const.CardType.Compact,
+	          taskId: this.taskId
+	        });
+	      } else if (checklists.length > 0) {
+	        const checklistCount = checklists.filter(({
 	          parentId
 	        }) => parentId === 0).length;
-	        const checklistItemsCount = checkLists.filter(({
+	        const checklistItemsCount = checklists.filter(({
 	          parentId
 	        }) => parentId !== 0).length;
 	        tasks_v2_lib_analytics.analytics.sendAddTaskWithCheckList(this.analytics, {
@@ -409,14 +445,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          collabId,
 	          viewersCount: this.task.auditorsIds.length,
 	          checklistCount,
-	          checklistItemsCount
+	          checklistItemsCount,
+	          cardType: tasks_v2_const.CardType.Compact,
+	          taskId: this.taskId
 	        });
 	      } else {
 	        tasks_v2_lib_analytics.analytics.sendAddTask(this.analytics, {
 	          isSuccess,
 	          collabId,
-	          viewersCount: this.task.auditorsIds.length,
-	          coexecutorsCount: this.task.accomplicesIds.length
+	          viewersCount,
+	          coexecutorsCount,
+	          event: tasks_v2_const.Analytics.Event.TaskCreate,
+	          cardType: tasks_v2_const.CardType.Compact,
+	          taskId: this.taskId
 	        });
 	      }
 	    },
@@ -480,8 +521,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
 	        this.$refs.addTaskButton.handleClick();
-	      } else if (event.key === 'Escape') {
-	        setTimeout(() => this.close());
 	      }
 	    },
 	    destroy() {
@@ -508,11 +547,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						/>
 					</div>
 					<DescriptionInline ref="description"/>
-					<div
-						class="tasks-compact-card-fields-list"
-						@mouseover="isHovered = true"
-						@mouseleave="isHovered = false"
-					>
+					<div class="tasks-compact-card-fields-list">
 						<FieldList :fields="primaryFields"/>
 					</div>
 					<CheckList
@@ -649,7 +684,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          ta_sec: (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics) == null ? void 0 : _babelHelpers$classPr.context,
 	          ta_sub: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics) == null ? void 0 : _babelHelpers$classPr2.additionalContext,
 	          ta_el: (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics) == null ? void 0 : _babelHelpers$classPr3.element,
-	          p1: tasks_v2_lib_analytics.settings.isDemo ? 'isDemo_Y' : 'isDemo_N',
+	          p1: tasks_v2_const.Analytics.Params.IsDemo(tasks_v2_lib_analytics.settings.isDemo),
 	          p2: tasks_v2_lib_analytics.settings.userType
 	        });
 	        BX.SidePanel.Instance.open(path, {
@@ -736,6 +771,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].groupId = babelHelpers.classPrivateFieldLooseBase(this, _getInitialGroupId)[_getInitialGroupId]();
 	  }
 	  async mount(popup) {
+	    if (popup.isDestroyed()) {
+	      return;
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = popup;
 	    await babelHelpers.classPrivateFieldLooseBase(this, _mountApplication)[_mountApplication](popup.getContentContainer());
 	    babelHelpers.classPrivateFieldLooseBase(this, _adjustPosition)[_adjustPosition]();

@@ -1,7 +1,0 @@
-<?
-$MESS["WITHOUT_DATA"] = "Без даних";
-$MESS["SELECT_REPORT_HANDLER_CATEGORY"] = "Категорія:";
-$MESS["SELECT_DATA_PROVIDER"] = "Джерело:";
-$MESS["BASE_REPORT_HANDLER_GROUPING"] = "Групування по:";
-$MESS["BASE_REPORT_HANDLER_WHAT_WILL_CALCULATE"] = "Що рахуємо:";
-?>

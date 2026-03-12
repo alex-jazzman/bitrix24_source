@@ -12,14 +12,18 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('model--dialogues');
+
 	/**
-	 *
-	 * @param fields
-	 * @return {{}}
+	 * @param {object} fields
+	 * @param {{fromLocalDatabase: boolean}} options
+	 * @returns {object}
 	 */
-	function validate(fields)
+	function validate(fields, options = {})
 	{
 		const result = {};
+		const {
+			fromLocalDatabase = false,
+		} = options;
 
 		if (!Type.isUndefined(fields.dialog_id))
 		{
@@ -162,9 +166,10 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 			result.owner = Number.parseInt(fields.ownerId, 10);
 		}
 
-		if (Type.isString(fields.avatar))
+		if (Type.isStringFilled(fields.avatar))
 		{
-			result.avatar = prepareAvatar(fields.avatar);
+			const urlHelper = new Url(fields.avatar);
+			result.avatar = fromLocalDatabase ? fields.avatar : urlHelper.getPreparedAvatarUrl();
 		}
 
 		if (Type.isStringFilled(fields.color))
@@ -510,39 +515,6 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 					result.push(userId);
 				}
 			});
-		}
-
-		return result;
-	}
-
-	/**
-	 * @param {string} avatar
-	 * @return {string}
-	 */
-	function prepareAvatar(avatar)
-	{
-		let result = '';
-
-		if (!avatar || avatar.endsWith('/js/im/images/blank.gif'))
-		{
-			result = '';
-		}
-		else if (avatar.startsWith('http'))
-		{
-			result = avatar;
-		}
-		else
-		{
-			result = currentDomain + avatar;
-		}
-
-		if (result)
-		{
-			const urlHelper = Url.createFromPath(result);
-			if (!urlHelper.isEncoded)
-			{
-				result = encodeURI(result);
-			}
 		}
 
 		return result;

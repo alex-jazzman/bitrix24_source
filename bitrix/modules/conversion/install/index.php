@@ -104,30 +104,24 @@ Class conversion extends CModule
 
 	function InstallFiles($arParams = array())
 	{
-		if ($_ENV['COMPUTERNAME'] != 'BX')
-		{
-			$root = $_SERVER['DOCUMENT_ROOT'];
-			CopyDirFiles($root.'/bitrix/modules/conversion/install/admin' , $root.'/bitrix/admin' , true, true);
-			CopyDirFiles($root.'/bitrix/modules/conversion/install/tools' , $root.'/bitrix/tools' , true, true);
-			CopyDirFiles($root.'/bitrix/modules/conversion/install/js'    , $root.'/bitrix/js'    , true, true);
-			CopyDirFiles($root.'/bitrix/modules/conversion/install/themes', $root.'/bitrix/themes', true, true);
-			CopyDirFiles($root.'/bitrix/modules/conversion/install/images', $root.'/bitrix/images', true, true);
-		}
+		$root = $_SERVER['DOCUMENT_ROOT'];
+		CopyDirFiles($root.'/bitrix/modules/conversion/install/admin' , $root.'/bitrix/admin' , true, true);
+		CopyDirFiles($root.'/bitrix/modules/conversion/install/tools' , $root.'/bitrix/tools' , true, true);
+		CopyDirFiles($root.'/bitrix/modules/conversion/install/js'    , $root.'/bitrix/js'    , true, true);
+		CopyDirFiles($root.'/bitrix/modules/conversion/install/themes', $root.'/bitrix/themes', true, true);
+		CopyDirFiles($root.'/bitrix/modules/conversion/install/images', $root.'/bitrix/images', true, true);
 
 		return true;
 	}
 
 	function UnInstallFiles()
 	{
-		if ($_ENV['COMPUTERNAME'] != 'BX')
-		{
-			$root = $_SERVER['DOCUMENT_ROOT'];
-			DeleteDirFiles($root.'/bitrix/modules/conversion/install/admin' , $root.'/bitrix/admin' );
-			DeleteDirFiles($root.'/bitrix/modules/conversion/install/tools' , $root.'/bitrix/tools' );
-			DeleteDirFiles($root.'/bitrix/modules/conversion/install/js'    , $root.'/bitrix/js'    );
-			DeleteDirFiles($root.'/bitrix/modules/conversion/install/themes', $root.'/bitrix/themes');
-			DeleteDirFiles($root.'/bitrix/modules/conversion/install/images', $root.'/bitrix/images');
-		}
+		$root = $_SERVER['DOCUMENT_ROOT'];
+		DeleteDirFiles($root.'/bitrix/modules/conversion/install/admin' , $root.'/bitrix/admin' );
+		DeleteDirFiles($root.'/bitrix/modules/conversion/install/tools' , $root.'/bitrix/tools' );
+		DeleteDirFiles($root.'/bitrix/modules/conversion/install/js'    , $root.'/bitrix/js'    );
+		DeleteDirFiles($root.'/bitrix/modules/conversion/install/themes', $root.'/bitrix/themes');
+		DeleteDirFiles($root.'/bitrix/modules/conversion/install/images', $root.'/bitrix/images');
 
 		return true;
 	}

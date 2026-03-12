@@ -1,4 +1,0 @@
-<?
-$MESS["MAIN_UI_SELECTOR_TAB_CRMORDERS"] = "Замовлення";
-$MESS["MAIN_UI_SELECTOR_TITLE_CRMORDERS"] = "Замовлення:";
-?>

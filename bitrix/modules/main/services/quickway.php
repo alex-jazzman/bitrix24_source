@@ -23,6 +23,11 @@ if (str_starts_with($_SERVER['SCRIPT_NAME'], '/mobile/ajax.php'))
 
 function readConfig(): ?array
 {
+	return readJsonConfig() ?? readPhpConfig();
+}
+
+function readPhpConfig(): ?array
+{
 	/** @see \Bitrix\Main\Config\Configuration::CONFIGURATION_FILE_PATH */
 	/** @see \Bitrix\Main\Config\Configuration::CONFIGURATION_FILE_EXTRA */
 	$settingsPath = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/.settings.php';
@@ -46,8 +51,8 @@ function readConfig(): ?array
 		}
 	}
 
-	/** @see \Bitrix\Disk\QuickAccess\Configuration::CONFIG_SECTION */
-	/** @see \Bitrix\Disk\QuickAccess\Configuration::CONFIG_STORAGE */
+	/** @see \Bitrix\Disk\QuickAccess\Config\ConfigInterface::CONFIG_KEY*/
+	/** @see \Bitrix\Disk\QuickAccess\Config\ConfigInterface::CONFIG_STORAGE */
 	if (empty($settings['main.token_service']['value']['storage']))
 	{
 		return null;
@@ -64,6 +69,52 @@ function readConfig(): ?array
 	}
 
 	return $settings['main.token_service']['value'];
+}
+
+function readJsonConfig(): ?array
+{
+	/** @see \Bitrix\Disk\QuickAccess\Config\JsonConfig::PATH_TO_CONFIG */
+	$filePath = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/quick-access-config.php';
+
+	if (!file_exists($filePath))
+	{
+		return null;
+	}
+
+	$fileContent = file_get_contents($filePath);
+
+	if ($fileContent === false)
+	{
+		return null;
+	}
+
+	try
+	{
+		$config = json_decode($fileContent, true, 3, JSON_THROW_ON_ERROR);
+	}
+	catch (\JsonException)
+	{
+		return null;
+	}
+
+	/** @see \Bitrix\Disk\QuickAccess\Config\ConfigInterface::CONFIG_KEY*/
+	/** @see \Bitrix\Disk\QuickAccess\Config\ConfigInterface::CONFIG_STORAGE */
+	if (empty($config['storage']))
+	{
+		return null;
+	}
+
+	if (!is_array($config['storage']))
+	{
+		return null;
+	}
+
+	if (empty($config['key']))
+	{
+		return null;
+	}
+
+	return $config;
 }
 
 $config = readConfig();

@@ -24,32 +24,38 @@ $map = $dialog->getMap();
 $fieldValues = array_column($dialog->getCurrentValues()['Fields'] ?? [], 'Value', 'FieldName');
 $runtime = $dialog->getRuntimeData();
 
-//$mode = $dialog->getCurrentValue('RewriteMode');
-//$map['ItemId']['Hidden'] = $mode === 'newItem' || !$mode;
+$mode = $dialog->getCurrentValue('RewriteMode');
 
-foreach ($map as $id => $field): ?>
-<tr <?= $field['Hidden'] ?? null ? 'hidden' : '' ?> data-cid="<?=htmlspecialcharsbx($field['FieldName'])?>">
-	<?php if ($field['FieldName'] === 'StorageCode'): ?>
-		<td></td>
-	<?php else: ?>
-		<td align="right" width="40%" valign="top">
-			<span class="adm-required-field"><?= htmlspecialcharsbx($field['Name'])?>:</span>
-		</td>
-	<?php endif; ?>
-	<td width="60%">
-		<?php if ($field['FieldName'] === 'StorageId'): ?>
-			<div data-role="start-storage-selector"></div>
-		<?php endif; ?>
-			<?= $dialog->renderFieldControl(
-				$field,
-				null,
-				$field['AllowSelection'] ?? true,
-				FieldType::RENDER_MODE_DESIGNER,
-			) ?>
-		<?//php endif; ?>
+foreach ($map as $id => $field):
+	if (isset($field['Name'], $field['Type'])):	?>
+		<tr <?= $field['Hidden'] ?? null ? 'hidden' : '' ?> data-cid="<?=htmlspecialcharsbx($field['FieldName'])?>">
+			<?php if ($field['FieldName'] === 'StorageCode'): ?>
+				<td></td>
+			<?php else: ?>
+				<td align="right" width="40%" valign="top">
+					<span class="adm-required-field"><?= htmlspecialcharsbx($field['Name'])?>:</span>
+				</td>
+			<?php endif; ?>
+			<td width="60%">
+				<?php if ($field['FieldName'] === 'StorageId'): ?>
+					<div data-role="start-storage-selector"></div>
+				<?php endif; ?>
+				<?= $dialog->renderFieldControl(
+					$field,
+					null,
+					$field['AllowSelection'] ?? true,
+					FieldType::RENDER_MODE_DESIGNER,
+				) ?>
+			</td>
+		</tr>
+	<?php
+	endif;
+endforeach; ?>
+<tr data-role="bpa-sra-storage-id-dependent">
+	<td width="100%">
+		<div data-role="bpa-sra-filter-fields-container"></div>
 	</td>
 </tr>
-<?php endforeach; ?>
 <tr>
 	<td><a href="#" id="add_field"><?= Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_ADD_FIELD')?></a></td>
 </tr>
@@ -83,6 +89,12 @@ foreach ($map as $id => $field): ?>
 				fields: <?= Json::encode($runtime['fields'] ?? []) ?>,
 				systemFields: <?= Json::encode($runtime['systemFields'] ?? []) ?>,
 				storageItems: <?= Json::encode($map['StorageId']['Options'] ?? []) ?>,
+				formName: '<?= CUtil::JSEscape($dialog->getFormName()) ?>',
+				headCaption: '<?= GetMessageJS('BIZPROC_WRITE_DATA_ACTIVITY_FILTER_NAME') ?>',
+				collapsedCaption: '<?= GetMessageJS('BIZPROC_WRITE_DATA_ACTIVITY_FILTER_FILLED') ?>',
+				filteringFieldsPrefix: '<?= CUtil::JSEscape($map['DynamicFilterFields']['FieldName']) ?>_',
+				filterFieldsMap: <?= Json::encode($map['DynamicFilterFields']['Map'], JSON_FORCE_OBJECT) ?>,
+				conditions: <?= Json::encode($dialog->getCurrentValue('DynamicFilterFields')) ?>,
 			});
 		}
 	});

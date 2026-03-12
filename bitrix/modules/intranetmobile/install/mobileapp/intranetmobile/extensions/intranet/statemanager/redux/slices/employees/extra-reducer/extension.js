@@ -29,7 +29,7 @@ jn.define('intranet/statemanager/redux/slices/employees/extra-reducer', (require
 		});
 
 		setTimeout(() => {
-			Actions.list[EmployeeActions.FIRE.getValue()]({ userId }, Loc.getMessage('MOBILE_USERS_USER_ACTIONS_DELETE_INVITATION_REJECTED'));
+			Actions.list[EmployeeActions.FIRE.getValue()]({ userId, isRootAdmin: false }, Loc.getMessage('MOBILE_USERS_USER_ACTIONS_DELETE_INVITATION_REJECTED'));
 		}, 300);
 	};
 
@@ -127,7 +127,7 @@ jn.define('intranet/statemanager/redux/slices/employees/extra-reducer', (require
 		}
 
 		setTimeout(() => {
-			Actions.list[EmployeeActions.FIRE.getValue()]({ userId });
+			Actions.list[EmployeeActions.FIRE.getValue()]({ userId, isRootAdmin: false });
 		}, 300);
 	};
 

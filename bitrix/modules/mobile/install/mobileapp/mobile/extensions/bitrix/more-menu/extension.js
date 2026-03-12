@@ -6,6 +6,7 @@ jn.define('more-menu', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Color, Indent } = require('tokens');
 	const { Haptics } = require('haptics');
+	const AppTheme = require('apptheme');
 
 	const { MoreMenuHeader } = require('more-menu/block/header');
 	const { ToolsList } = require('more-menu/block/tools-list');
@@ -67,7 +68,7 @@ jn.define('more-menu', (require, exports, module) => {
 
 			this.handleUserCountersUpdate = this.handleUserCountersUpdate.bind(this);
 			this.handleWhatsNewCounterUpdate = this.handleWhatsNewCounterUpdate.bind(this);
-			this.processUsersDebaunced = debounce(this.processUsers.bind(this), 300);
+			this.processUsersDebaunced = debounce(this.processUsers.bind(this), 500);
 		}
 
 		/**
@@ -84,7 +85,8 @@ jn.define('more-menu', (require, exports, module) => {
 		 * @param {array} serverList
 		 * @return {array}
 		 */
-		static prepareMenuList(defaultList, serverList) {
+		static prepareMenuList(defaultList, serverList)
+		{
 			if (!Type.isArrayFilled(serverList))
 			{
 				return defaultList;
@@ -111,7 +113,8 @@ jn.define('more-menu', (require, exports, module) => {
 		 * @param {object|null} serverSection
 		 * @return {object}
 		 */
-		static mergeSection(defaultSection, serverSection) {
+		static mergeSection(defaultSection, serverSection)
+		{
 			const defaultItems = Array.isArray(defaultSection.items) ? defaultSection.items : [];
 			const serverItems = Array.isArray(serverSection?.items) ? serverSection?.items : [];
 
@@ -130,7 +133,8 @@ jn.define('more-menu', (require, exports, module) => {
 		 * @param {array} items
 		 * @return {array}
 		 */
-		static removeDuplicateItems(items) {
+		static removeDuplicateItems(items)
+		{
 			const seenIds = new Set();
 
 			return items.reduce((acc, item) => {
@@ -187,6 +191,7 @@ jn.define('more-menu', (require, exports, module) => {
 					{
 						componentName: MORE_MENU_TEST_ID,
 						priority: 500,
+						debounceMs: 0,
 					},
 				],
 			);
@@ -275,6 +280,7 @@ jn.define('more-menu', (require, exports, module) => {
 							justifyContent: 'center',
 							alignItems: 'center',
 						},
+						testId: `AppTheme:${AppTheme.id}`,
 					},
 					new LoadingScreenComponent({
 						backgroundColor: Color.bgContentPrimary.toHex(),
@@ -287,6 +293,7 @@ jn.define('more-menu', (require, exports, module) => {
 					style: {
 						backgroundColor: Color.bgContentSecondary.toHex(),
 					},
+					testId: `AppTheme:${AppTheme.id}`,
 				},
 				this.renderSubstrateTop(),
 				this.renderSubstrateBottom(),

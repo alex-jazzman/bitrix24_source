@@ -96,19 +96,6 @@
 	margin-left: auto;
 }
 
-.tasks-field-results-action-button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	height: 32px;
-	border-radius: var(--ui-border-radius-3xs);
-	padding: 0;
-	margin: 0;
-	background: none;
-	border: none;
-	cursor: pointer;
-}
-
 .tasks-field-results-result-list {
 	height: 100%;
 	width: 100%;
@@ -260,7 +247,7 @@
 .tasks-field-results-result-author-name {
 	color: var(--ui-color-base-3);
 	padding-right: var(--ui-space-inline-sm);
-	padding-left: var(--ui-space-inline-xs);
+	padding-left: var(--ui-space-inline-2xs2);
 	transition: .2s all;
 }
 

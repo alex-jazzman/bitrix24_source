@@ -180,6 +180,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 		}
 
 		/**
+		 * @deprecated
 		 * @public
 		 * @return {BottomSheet}
 		 */
@@ -191,6 +192,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 		}
 
 		/**
+		 * @deprecated
 		 * @public
 		 * @return {BottomSheet}
 		 */

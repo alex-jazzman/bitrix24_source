@@ -1,6 +1,8 @@
-import { EntityTypes } from 'humanresources.company-structure.utils';
 import { Loc } from 'main.core';
 import type { TabOptions } from 'ui.entity-selector';
+import { EntityTypes } from 'humanresources.company-structure.utils';
+import CommunicationsStub from './communications-stub';
+import './style.css';
 
 export const getChatDialogEntity = function(): Object {
 	return {
@@ -137,7 +139,7 @@ export const getCommunicationsRecentTabOptions = function(
 
 	return {
 		visible: false,
-		stub: true,
+		stub: CommunicationsStub.prototype.constructor,
 		stubOptions: {
 			title,
 			subtitle,

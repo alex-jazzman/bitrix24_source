@@ -79,6 +79,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 						useColor: true,
 					},
 					additionalImage: {},
+					showBBCode: true,
 				},
 				subtitle: {},
 				avatar: {},
@@ -99,6 +100,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				.createId()
 				.createTitle()
 				.createSubtitle()
+				.truncateSubtitle()
 				.createImageUrl()
 				.createColor()
 				.createBackgroundColor()
@@ -171,16 +173,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		initParams(modelItem, options)
 		{
 			const dialog = this.getDialogById(modelItem.id);
-
-			let counter = 0;
-			if (Feature.isMessengerV2Enabled)
-			{
-				counter = serviceLocator.get('core').getStore().getters['counterModel/getCounterByChatId'](dialog?.chatId);
-			}
-			else
-			{
-				counter = dialog?.counter ?? 0;
-			}
+			const counter = serviceLocator.get('core').getStore().getters['counterModel/getCounterByChatId'](dialog?.chatId);
 
 			this.params = {
 				model: {
@@ -233,6 +226,19 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			return this;
 		}
 
+		/**
+		 * @return RecentItem
+		 */
+		truncateSubtitle()
+		{
+			if (Type.isStringFilled(this.subtitle) && this.subtitle.length > 150)
+			{
+				this.subtitle = this.subtitle.slice(0, 150);
+			}
+
+			return this;
+		}
+
 		createDraftRecent()
 		{
 			const showDraft = this.getRenderProperty('showDraft', true);
@@ -261,6 +267,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				cornerRadius: null,
 				backgroundColor: null,
 				padding: null,
+				showBBCode: false,
 			};
 
 			return this;
@@ -486,6 +493,8 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createSubtitleStyle()
 		{
+			this.styles.subtitle = { showBBCode: true };
+
 			const message = this.getItemMessage();
 			const dialog = this.getDialogItem();
 			let subtitleStyle = {};
@@ -500,7 +509,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					},
 				};
 
-				this.styles.subtitle = subtitleStyle;
+				this.styles.subtitle = merge(this.styles.subtitle, subtitleStyle);
 
 				return this;
 			}
@@ -519,7 +528,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					subtitleStyle = { image: { name: message.subTitleIcon, sizeMultiplier: 0.7 } };
 				}
 
-				this.styles.subtitle = subtitleStyle;
+				this.styles.subtitle = merge(this.styles.subtitle, subtitleStyle);
 
 				return this;
 			}
@@ -843,7 +852,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					attach: modelMessage?.params?.ATTACH ?? false,
 					files: messageFiles,
 					showFilePrefix: false,
-					sticker: MessageHelper.createByModel(modelMessage, messageFiles)?.isSticker ?? false,
+					sticker: Type.isPlainObject(modelMessage?.stickerParams),
 				});
 			}
 			else
@@ -853,7 +862,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					attach: message?.params?.withAttach ?? false,
 					files: message?.params?.withFile ?? false,
 					showFilePrefix: false,
-					sticker: item.message.sticker ?? false,
+					sticker: Type.isPlainObject(message?.sticker),
 				});
 			}
 

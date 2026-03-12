@@ -1,12 +1,14 @@
 import { EntitySelectorEntity } from 'tasks.v2.const';
 import type { TextEditorOptions } from 'ui.text-editor';
 
+import { CHECK_LIST_BUTTON } from './editor-plugins/check-list-plugin';
+
 export const DefaultEditorOptions: TextEditorOptions = Object.freeze({
 	toolbar: [],
 	floatingToolbar: [
 		'bold', 'italic', 'underline', 'strikethrough', '|',
 		'numbered-list', 'bulleted-list', '|',
-		'link', 'spoiler', 'quote', 'code', 'copilot',
+		CHECK_LIST_BUTTON, 'link', 'spoiler', 'quote', 'code', 'copilot',
 	],
 	removePlugins: ['BlockToolbar'],
 	visualOptions: {

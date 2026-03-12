@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_system_skeleton_vue,tasks_v2_component_elements_fieldAdd,tasks_v2_component_elements_uiTabs,tasks_v2_component_elements_checkbox,ui_vue3,tasks_v2_component_elements_questionMark,tasks_v2_component_elements_select,ui_vue3_components_popup,ui_system_input_vue,tasks_v2_component_elements_radio,ui_datePicker,tasks_v2_lib_calendar,tasks_v2_component_fields_deadline,ui_vue3_components_richLoc,ui_system_menu_vue,tasks_v2_component_elements_hoverPill,ui_vue3_components_button,tasks_v2_provider_service_taskService,tasks_v2_component_elements_bottomSheet,ui_system_typography_vue,main_core,main_core_events,main_popup,tasks_v2_const,tasks_v2_lib_apiClient,tasks_v2_lib_idUtils,main_date,tasks_v2_lib_timezone,tasks_v2_component_elements_hint,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_showLimit) {
+(function (exports,ui_system_skeleton_vue,tasks_v2_component_elements_fieldAdd,tasks_v2_component_elements_uiTabs,tasks_v2_component_elements_checkbox,ui_vue3,tasks_v2_component_elements_questionMark,tasks_v2_component_elements_select,tasks_v2_component_fields_replication,ui_vue3_components_popup,ui_system_input_vue,tasks_v2_component_elements_radio,ui_datePicker,tasks_v2_lib_calendar,tasks_v2_component_fields_deadline,ui_vue3_components_richLoc,ui_system_menu_vue,tasks_v2_component_elements_hoverPill,ui_vue3_components_button,tasks_v2_provider_service_taskService,tasks_v2_component_elements_bottomSheet,ui_system_typography_vue,main_core,main_core_events,main_popup,tasks_v2_const,tasks_v2_lib_apiClient,main_date,tasks_v2_lib_timezone,ui_vue3_directives_hint,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_lib_fieldHighlighter,tasks_v2_component_elements_hint,tasks_v2_lib_idUtils,tasks_v2_lib_showLimit) {
 	'use strict';
 
 	const replicationMeta = Object.freeze({
@@ -30,9 +30,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _replicateParams)[_replicateParams] = replicateParams;
 	  }
 	  generate() {
-	    const dailyMonthInterval = babelHelpers.classPrivateFieldLooseBase(this, _replicateParams)[_replicateParams].dailyMonthInterval || 1;
-	    return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_DAILY', dailyMonthInterval, {
-	      '#NUMBER#': dailyMonthInterval > 1 ? ` ${dailyMonthInterval}` : ''
+	    const dailyMonthInterval = babelHelpers.classPrivateFieldLooseBase(this, _replicateParams)[_replicateParams].dailyMonthInterval;
+	    const everyDay = babelHelpers.classPrivateFieldLooseBase(this, _replicateParams)[_replicateParams].everyDay || 1;
+	    if (dailyMonthInterval > 0) {
+	      return main_core.Loc.getMessage('TASKS_V2_REPLICATION_MONTHLY_2', {
+	        '#DAY_NUMBER#': main_date.DateTimeFormat.format('ddiff', 0, everyDay * 60 * 60 * 24, true),
+	        '#WEEKDAY_NAME#': '',
+	        '#NUMBER#': ` ${dailyMonthInterval + 1}`
+	      });
+	    }
+	    return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_DAILY', everyDay, {
+	      '#NUMBER#': everyDay > 1 ? ` ${everyDay}` : ''
 	    });
 	  }
 	}
@@ -158,39 +166,39 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  const yearlyWeekDayNum = babelHelpers.classPrivateFieldLooseBase(this, _replicateParams$3)[_replicateParams$3].yearlyWeekDayNum || 0;
 	  const yearlyWeekDay = babelHelpers.classPrivateFieldLooseBase(this, _replicateParams$3)[_replicateParams$3].yearlyWeekDay || 0;
 	  const yearlyMonth = babelHelpers.classPrivateFieldLooseBase(this, _replicateParams$3)[_replicateParams$3].yearlyMonth2 || 1;
-	  const dayNumberLabel = main_core.Loc.getMessage(`TASKS_V2_REPLICATION_NUMBER_${yearlyWeekDayNum}${getWeekDayGender(yearlyWeekDay)}`);
+	  const dayNumberLabel = main_core.Loc.getMessage(`TASKS_V2_REPLICATION_NUMBER_${yearlyWeekDayNum}${getWeekDayGender(yearlyWeekDay - 1)}`);
 	  return main_core.Loc.getMessage(`TASKS_V2_REPLICATION_YEARLY_2${babelHelpers.classPrivateFieldLooseBase(this, _getLocaleType2Alt)[_getLocaleType2Alt]()}`, {
 	    '#DAY_NUMBER#': dayNumberLabel,
-	    '#WEEK_DAY#': main_core.Loc.getMessage(`TASKS_V2_REPLICATION_WD_${yearlyWeekDay}`),
+	    '#WEEK_DAY#': main_core.Loc.getMessage(`TASKS_V2_REPLICATION_WD_ALT_${yearlyWeekDay}`),
 	    '#MONTH#': main_date.DateTimeFormat.format('F', new Date().setMonth(yearlyMonth - 1) / 1000)
 	  });
 	}
 	function _getLocaleType2Alt2() {
 	  const weekDay = babelHelpers.classPrivateFieldLooseBase(this, _replicateParams$3)[_replicateParams$3].yearlyWeekDay;
-	  if (weekDay === tasks_v2_const.ReplicationWeekDayIndex.Sunday) {
+	  if (weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Sunday) {
 	    return '_ALT_1';
 	  }
-	  if (weekDay === tasks_v2_const.ReplicationWeekDayIndex.Tuesday || weekDay === tasks_v2_const.ReplicationWeekDayIndex.Saturday || weekDay === tasks_v2_const.ReplicationWeekDayIndex.Friday) {
+	  if (weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Wednesday || weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Saturday || weekDay === tasks_v2_const.ReplicationYearlyWeekDayIndex.Friday) {
 	    return '_ALT_0';
 	  }
 	  return '';
 	}
 
 	class TimeStringConverter {
-	  static toTimestamp(timeString = null) {
-	    if (!timeString) {
-	      return 0;
-	    }
-	    const [hour = '0', minutes = '0'] = timeString.split(':');
-	    const date = new Date();
-	    date.setHours(parseInt(hour, 10));
-	    date.setMinutes(parseInt(minutes, 10));
-	    date.setSeconds(0);
-	    date.setMilliseconds(0);
-	    return date.getTime();
+	  static format(timestamp) {
+	    return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), (timestamp + tasks_v2_lib_timezone.timezone.getOffset(timestamp)) / 1000);
 	  }
-	  static toTimeString(timestamp, offset = 0) {
-	    return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), new Date(timestamp + offset));
+	  static parseServerTime(serverTimeString) {
+	    return main_core.Type.isStringFilled(serverTimeString) ? serverTimeString : tasks_v2_lib_calendar.calendar.dayStartTime;
+	  }
+	  static applyTimeToDate(date, timeString) {
+	    const [hours, minutes] = timeString.split(':');
+	    date.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+	    return date;
+	  }
+	  static convertTsToServerTimeString(browserTs) {
+	    const serverTs = main_date.Timezone.BrowserTime.toServer(browserTs / 1000);
+	    return main_date.DateTimeFormat.format('H:i', serverTs);
 	  }
 	}
 
@@ -249,14 +257,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  }
 	}
 	function _getStartTimeRule2() {
-	  const time = babelHelpers.classPrivateFieldLooseBase(this, _replicateParams$4)[_replicateParams$4].time;
-	  if (!time) {
-	    return '';
-	  }
-	  const timeTs = TimeStringConverter.toTimestamp(time);
-	  const timeLocale = TimeStringConverter.toTimeString(timeTs, tasks_v2_lib_timezone.timezone.getOffset(timeTs));
+	  const timeTs = babelHelpers.classPrivateFieldLooseBase(this, _replicateParams$4)[_replicateParams$4].startTs;
 	  return main_core.Loc.getMessage('TASKS_V2_REPLICATION_START_TIME', {
-	    '#TIME#': timeLocale
+	    '#TIME#': TimeStringConverter.format(timeTs)
 	  });
 	}
 	function _getEndRule2() {
@@ -267,13 +270,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      '#COUNT#': times
 	    });
 	  }
-	  if (repeatTill === tasks_v2_const.ReplicationRepeatTill.Date && babelHelpers.classPrivateFieldLooseBase(this, _replicateParams$4)[_replicateParams$4].endDate) {
-	    const endDate = main_date.DateTimeFormat.parse(babelHelpers.classPrivateFieldLooseBase(this, _replicateParams$4)[_replicateParams$4].endDate, false, 'MM-DD-YYYY');
-	    if (!endDate) {
-	      return '';
-	    }
+	  if (repeatTill === tasks_v2_const.ReplicationRepeatTill.Date && babelHelpers.classPrivateFieldLooseBase(this, _replicateParams$4)[_replicateParams$4].endTs) {
 	    return main_core.Loc.getMessage('TASKS_V2_REPLICATION_END_DATE', {
-	      '#DATE#': main_date.DateTimeFormat.format('d.m.Y', endDate)
+	      '#DATE#': main_date.DateTimeFormat.format('d.m.Y', new Date(babelHelpers.classPrivateFieldLooseBase(this, _replicateParams$4)[_replicateParams$4].endTs))
 	    });
 	  }
 	  return '';
@@ -304,7 +303,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    dontReplicate() {
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        replicate: false,
-	        replicateParams: null
+	        replicateParams: this.task.replicateParams
 	      });
 	    }
 	  },
@@ -323,13 +322,36 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    TextSm: ui_system_typography_vue.TextSm,
 	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd
 	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
 	  inject: {
-	    task: {}
+	    task: {},
+	    isTemplate: {}
 	  },
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_vue.Outline
 	    };
+	  },
+	  computed: {
+	    disabled() {
+	      return this.isTemplate && (this.task.isForNewUser || tasks_v2_lib_idUtils.idUtils.isTemplate(this.task.parentId));
+	    },
+	    tooltip() {
+	      if (!this.disabled) {
+	        return null;
+	      }
+	      return () => tasks_v2_component_elements_hint.tooltip({
+	        text: this.loc('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_NO_REPLICATION_TEMPLATE_NOTICE', {
+	          '#TPARAM_FOR_NEW_USER#': this.loc('TASKS_V2_RESPONSIBLE_FOR_NEW_USER')
+	        }),
+	        popupOptions: {
+	          offsetLeft: this.$refs.add.$el.offsetWidth / 2
+	        },
+	        timeout: 200
+	      });
+	    }
 	  },
 	  template: `
 		<div class="tasks-field-replication-wrapper">
@@ -337,8 +359,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<TextSm style="color: var(--ui-color-base-3)">{{ loc('TASKS_V2_REPLICATION_TITLE') }}</TextSm>
 			</div>
 			<div class="tasks-field-replication-content">
-				<ReplicationContentState v-if="task.replicateParams"/>
-				<FieldAdd v-else :icon="Outline.REPEAT"/>
+				<ReplicationContentState v-if="task.replicate"/>
+				<FieldAdd v-else v-hint="tooltip" :icon="Outline.REPEAT" :disabled ref="add"/>
 			</div>
 		</div>
 	`
@@ -465,6 +487,34 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    useInterval: {
 	      get() {
+	        return this.replicateParams.everyDay > 0;
+	      },
+	      set(useInterval) {
+	        this.$emit('update', {
+	          everyDay: useInterval ? 1 : null
+	        });
+	      }
+	    },
+	    interval: {
+	      get() {
+	        return this.replicateParams.everyDay || 1;
+	      },
+	      set(value) {
+	        this.$emit('update', {
+	          everyDay: value
+	        });
+	      }
+	    },
+	    hintText() {
+	      return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_SETTINGS_DAY_HINT', this.interval, {
+	        '#COUNT#': this.interval
+	      });
+	    },
+	    monthPeriod() {
+	      return ui_vue3.markRaw(tasks_v2_const.ReplicationPeriod.Monthly);
+	    },
+	    useMonthInterval: {
+	      get() {
 	        return this.replicateParams.dailyMonthInterval > 0;
 	      },
 	      set(useInterval) {
@@ -473,7 +523,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        });
 	      }
 	    },
-	    interval: {
+	    monthInterval: {
 	      get() {
 	        return this.replicateParams.dailyMonthInterval || 1;
 	      },
@@ -483,14 +533,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        });
 	      }
 	    },
-	    hintText() {
-	      return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_SETTINGS_DAY_HINT', this.interval, {
-	        '#COUNT#': this.interval
+	    monthHintText() {
+	      return main_core.Loc.getMessagePlural('TASKS_V2_REPLICATION_SETTINGS_MONTH_HINT', this.monthInterval, {
+	        '#COUNT#': this.monthInterval
 	      });
 	    }
 	  },
 	  template: `
-		<div class="tasks-replication-sheet-replication-settings-day">
+		<div class="tasks-replication-sheet-replication-settings-day tasks-field-replication-sheet__stack">
 			<ReplicationInterval
 				v-model:useInterval="useInterval"
 				v-model:interval="interval"
@@ -500,6 +550,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					<QuestionMark
 						class="tasks-replication-sheet-action-row__hint"
 						:hintText
+						:hintMaxWidth="260"
+					/>
+				</template>
+			</ReplicationInterval>
+			<ReplicationInterval
+				v-model:useInterval="useMonthInterval"
+				v-model:interval="monthInterval"
+				:period="monthPeriod"
+			>
+				<template #hint>
+					<QuestionMark
+						class="tasks-replication-sheet-action-row__hint"
+						:hintText="monthHintText"
 						:hintMaxWidth="260"
 					/>
 				</template>
@@ -643,24 +706,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<div class="tasks-replication-sheet-replication-settings-week">
-			<div>
-				<ReplicationSettingsWeekDaysList v-model:selectedDays="weekDays"/>
-			</div>
-			<div>
-				<ReplicationInterval
-					v-model:useInterval="useInterval"
-					v-model:interval="interval"
-					:period
-				>
-					<template #hint>
-						<QuestionMark
-							:hintText
-							:hintMaxWidth="260"
-						/>
-					</template>
-				</ReplicationInterval>
-			</div>
+		<div class="tasks-replication-sheet-replication-settings-week tasks-field-replication-sheet__stack">
+			<ReplicationSettingsWeekDaysList v-model:selectedDays="weekDays"/>
+			<ReplicationInterval
+				v-model:useInterval="useInterval"
+				v-model:interval="interval"
+				:period
+			>
+				<template #hint>
+					<QuestionMark
+						:hintText
+						:hintMaxWidth="260"
+					/>
+				</template>
+			</ReplicationInterval>
 		</div>
 	`
 	};
@@ -1073,33 +1132,29 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<div>
-			<div class="tasks-field-replication-sheet__stack">
-				<ReplicationSettingsMonthlyByDayOfMonth
-					v-model:monthlyType="monthlyType"
-					v-model:dayNumber="monthlyDayNum"
-				/>
-				<ReplicationSettingsMonthlyByDayOfWeek
-					v-model:monthlyType="monthlyType"
-					v-model:weekDay="monthlyWeekDay"
-					v-model:weekDayNumber="monthlyWeekDayNum"
-				/>
-			</div>
-			<div class="tasks-field-replication-sheet__stack">
-				<ReplicationInterval
-					v-model:useInterval="useInterval"
-					v-model:interval="interval"
-					:period
-				>
-					<template #hint>
-						<QuestionMark
-							class="tasks-replication-sheet-action-row__hint"
-							:hintText
-							:hintMaxWidth="260"
-						/>
-					</template>
-				</ReplicationInterval>
-			</div>
+		<div class="tasks-field-replication-sheet__stack">
+			<ReplicationSettingsMonthlyByDayOfMonth
+				v-model:monthlyType="monthlyType"
+				v-model:dayNumber="monthlyDayNum"
+			/>
+			<ReplicationSettingsMonthlyByDayOfWeek
+				v-model:monthlyType="monthlyType"
+				v-model:weekDay="monthlyWeekDay"
+				v-model:weekDayNumber="monthlyWeekDayNum"
+			/>
+			<ReplicationInterval
+				v-model:useInterval="useInterval"
+				v-model:interval="interval"
+				:period
+			>
+				<template #hint>
+					<QuestionMark
+						class="tasks-replication-sheet-action-row__hint"
+						:hintText
+						:hintMaxWidth="260"
+					/>
+				</template>
+			</ReplicationInterval>
 		</div>
 	`
 	};
@@ -1124,11 +1179,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  emits: ['update:modelValue'],
 	  computed: {
 	    items() {
+	      const firstDay = new Date().setDate(1);
 	      return Array.from({
 	        length: 12
 	      }, (_, i) => ({
 	        id: i + 1,
-	        title: main_core.Text.capitalize(main_date.DateTimeFormat.format('F', new Date().setMonth(i) / 1000))
+	        title: main_core.Text.capitalize(main_date.DateTimeFormat.format('F', new Date(firstDay).setMonth(i) / 1000))
 	      }));
 	    },
 	    item() {
@@ -1519,6 +1575,39 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	`
 	};
 
+	class DateStringConverter {
+	  static format(timestamp) {
+	    const offset = tasks_v2_lib_timezone.timezone.getOffset(timestamp);
+	    const today = new Date(Date.now() + offset);
+	    const day = new Date(timestamp + offset);
+	    const isToday = today.getFullYear() === day.getFullYear() && today.getMonth() === day.getMonth() && today.getDate() === day.getDate();
+	    if (isToday) {
+	      return main_core.Text.capitalize(main_date.DateTimeFormat.format('today'));
+	    }
+	    return tasks_v2_lib_calendar.calendar.formatDate(timestamp);
+	  }
+	  static parseServerDate(serverDateString) {
+	    if (main_core.Type.isStringFilled(serverDateString)) {
+	      return main_date.DateTimeFormat.parse(serverDateString);
+	    }
+	    const date = new Date();
+	    date.setHours(0, 0, 0, 0);
+	    return date;
+	  }
+	  static convertServerDateToTs(serverDate, serverTime = null) {
+	    if (main_core.Type.isStringFilled(serverTime)) {
+	      tasks_v2_component_fields_replication.TimeStringConverter.applyTimeToDate(serverDate, serverTime);
+	    }
+	    return main_date.Timezone.ServerTime.toBrowser(serverDate) * 1000;
+	  }
+	  static convertTsToServerDateString(browserTs) {
+	    const browserDate = new Date(browserTs);
+	    const serverDate = main_date.Timezone.BrowserTime.toServerDate(browserDate);
+	    const serverTsAsMidnight = serverDate.setHours(0, 0, 0, 0) / 1000;
+	    return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('FORMAT_DATETIME'), serverTsAsMidnight);
+	  }
+	}
+
 	// @vue/component
 	const ReplicationDatepicker = {
 	  name: 'ReplicationDatepicker',
@@ -1626,32 +1715,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  computed: {
 	    startTs: {
 	      get() {
-	        return main_date.DateTimeFormat.parse(this.replicateParams.startDate).getTime();
+	        return this.replicateParams.startTs;
 	      },
-	      set(value) {
-	        const startDate = main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('FORMAT_DATETIME'), new Date(value));
+	      set(startTs) {
 	        this.$emit('update', {
-	          startDate
+	          startTs
 	        });
 	      }
 	    },
 	    startLabel() {
-	      if (this.isToday(this.startTs)) {
-	        return main_core.Text.capitalize(main_date.DateTimeFormat.format('today'));
-	      }
-	      return tasks_v2_lib_calendar.calendar.formatDate(this.startTs);
+	      return DateStringConverter.format(this.startTs);
 	    }
 	  },
 	  beforeMount() {
-	    if (!this.replicateParams.startDate) {
-	      this.startTs = Date.now();
-	    }
-	  },
-	  methods: {
-	    isToday(dateTs) {
-	      const today = new Date();
-	      const day = new Date(dateTs + tasks_v2_lib_timezone.timezone.getOffset(dateTs));
-	      return today.getFullYear() === day.getFullYear() && today.getMonth() === day.getMonth() && today.getDate() === day.getDate();
+	    if (!this.replicateParams.startTs) {
+	      const workdayStart = tasks_v2_lib_calendar.calendar.workdayStart;
+	      const serverTs = new Date().setHours(workdayStart.H, workdayStart.M, 0, 0);
+	      this.startTs = serverTs - tasks_v2_lib_timezone.timezone.getOffset(serverTs);
 	    }
 	  },
 	  template: `
@@ -1728,7 +1808,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	    },
 	    endDateTs() {
-	      return main_core.Type.isNil(this.replicateParams.endDate) ? Date.now() + 5 * 24 * 60 * 60 * 1000 : new Date(this.replicateParams.endDate).getTime();
+	      return main_core.Type.isNil(this.replicateParams.endTs) ? Date.now() + 5 * 24 * 60 * 60 * 1000 : this.replicateParams.endTs;
 	    },
 	    endDateLabel() {
 	      return this.endDateTs ? tasks_v2_lib_calendar.calendar.formatDate(this.endDateTs) : this.loc('TASKS_V2_REPLICATION_FINISH_DATE_UNSET');
@@ -1749,10 +1829,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        times
 	      });
 	    },
-	    updateEndDate(endDateTs) {
-	      const endDate = main_date.DateTimeFormat.format('m-d-Y', endDateTs / 1000);
+	    updateEndDate(endTs) {
 	      this.update({
-	        endDate
+	        endTs
 	      });
 	    },
 	    updateFieldsByRepeatTill(repeatTill) {
@@ -1778,11 +1857,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    togglePopup() {
 	      this.isDatepickerOpened = !this.isDatepickerOpened;
-	    },
-	    isToday(dateTs) {
-	      const today = new Date();
-	      const day = new Date(dateTs + tasks_v2_lib_timezone.timezone.getOffset(dateTs));
-	      return today.getFullYear() === day.getFullYear() && today.getMonth() === day.getMonth() && today.getDate() === day.getDate();
 	    },
 	    isRowActive(repeatTill) {
 	      return repeatTill === this.repeatTill;
@@ -1840,12 +1914,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						>
 							<template #count>
 								<BInput
-									:modelValue="(replicateParams.times || 1).toString()"
+									:modelValue="String(replicateParams.times ?? '')"
 									:size="InputSize.Sm"
 									:design="isRowActive(ReplicationRepeatTill.Times) ? InputDesign.Grey : InputDesign.Disabled"
 									:disabled="!isRowActive(ReplicationRepeatTill.Times)"
 									style="max-width: 4em; padding-bottom: 0;"
-									@update:modelValue="updateTimes"
+									@blur="updateTimes($event.target.value)"
 								/>
 							</template>
 						</RichLoc>
@@ -1900,33 +1974,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  emits: ['update'],
 	  computed: {
-	    createTime: {
+	    startTs: {
 	      get() {
-	        return this.replicateParams.time;
+	        return this.replicateParams.startTs;
 	      },
-	      set(value) {
+	      set(startTs) {
 	        this.$emit('update', {
-	          time: value
+	          startTs
 	        });
 	      }
 	    },
-	    startTimeTs() {
-	      return TimeStringConverter.toTimestamp(this.createTime);
-	    },
-	    starTimeLocale() {
-	      return TimeStringConverter.toTimeString(this.startTimeTs, tasks_v2_lib_timezone.timezone.getOffset(this.startTimeTs));
-	    }
-	  },
-	  beforeMount() {
-	    if (!this.replicateParams.time) {
-	      this.createTime = tasks_v2_lib_calendar.calendar.dayStartTime;
+	    startTimeFormatted() {
+	      return TimeStringConverter.format(this.startTs);
 	    }
 	  },
 	  methods: {
 	    showPicker() {
 	      var _this$datePicker;
 	      (_this$datePicker = this.datePicker) != null ? _this$datePicker : this.datePicker = new ui_datePicker.DatePicker({
-	        selectedDates: [this.startTimeTs + tasks_v2_lib_timezone.timezone.getOffset(this.startTimeTs)],
+	        selectedDates: [this.startTs + tasks_v2_lib_timezone.timezone.getOffset(this.startTs)],
 	        type: 'time',
 	        events: {
 	          [ui_datePicker.DatePickerEvent.SELECT]: event => {
@@ -1934,7 +2000,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	              date
 	            } = event.getData();
 	            const dateTs = tasks_v2_lib_calendar.calendar.createDateFromUtc(date).getTime();
-	            this.updateTime(dateTs - tasks_v2_lib_timezone.timezone.getOffset(dateTs));
+	            this.startTs = dateTs - tasks_v2_lib_timezone.timezone.getOffset(dateTs);
 	          }
 	        },
 	        popupOptions: {
@@ -1943,9 +2009,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      });
 	      this.datePicker.setTargetNode(this.$refs.time.$el);
 	      this.datePicker.show();
-	    },
-	    updateTime(dateTs) {
-	      this.createTime = main_date.DateTimeFormat.format('H:i', new Date(dateTs));
 	    }
 	  },
 	  template: `
@@ -1957,7 +2020,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			>
 				<template #time>
 					<HoverPill textOnly noOffset ref="time" @click="showPicker">
-						<span class="tasks-field-replication-link">{{ starTimeLocale }}</span>
+						<span class="tasks-field-replication-link">{{ startTimeFormatted }}</span>
 					</HoverPill>
 				</template>
 			</RichLoc>
@@ -2774,6 +2837,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    readonly() {
 	      return !this.isTemplate || !this.task.rights.edit;
+	    },
+	    disabled() {
+	      return this.isTemplate && (this.task.isForNewUser || tasks_v2_lib_idUtils.idUtils.isTemplate(this.task.parentId));
 	    }
 	  },
 	  created() {
@@ -2799,7 +2865,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.isLoading = false;
 	    },
 	    handleClick() {
-	      if (!this.readonly) {
+	      if (!this.readonly && !this.disabled) {
 	        this.setSheetShown(true);
 	      }
 	    },
@@ -2820,7 +2886,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		>
 			<ReplicationContent/>
 		</div>
-		<template v-if="isEdit && isTemplate">
+		<template v-if="isEdit && isTemplate && task.replicate">
 			<div v-if="isLoading" class="tasks-field-replication-history">
 				<BLine :width="120"/>
 			</div>
@@ -2845,9 +2911,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    Chip: ui_system_chip_vue.Chip,
 	    ReplicationSheet
 	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
 	  inject: {
 	    task: {},
-	    taskId: {}
+	    taskId: {},
+	    isTemplate: {}
 	  },
 	  props: {
 	    isSheetShown: {
@@ -2868,6 +2938,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  computed: {
 	    design() {
+	      if (this.disabled) {
+	        return ui_system_chip_vue.ChipDesign.ShadowDisabled;
+	      }
 	      return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
 	    },
 	    isSelected() {
@@ -2875,6 +2948,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    isLocked() {
 	      return !tasks_v2_core.Core.getParams().restrictions.recurrentTask.available;
+	    },
+	    disabled() {
+	      return this.isTemplate && (this.task.isForNewUser || tasks_v2_lib_idUtils.idUtils.isTemplate(this.task.parentId));
+	    },
+	    tooltip() {
+	      if (!this.disabled) {
+	        return null;
+	      }
+	      return () => tasks_v2_component_elements_hint.tooltip({
+	        text: this.loc('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_NO_REPLICATION_TEMPLATE_NOTICE', {
+	          '#TPARAM_FOR_NEW_USER#': this.loc('TASKS_V2_RESPONSIBLE_FOR_NEW_USER')
+	        }),
+	        popupOptions: {
+	          offsetLeft: this.$refs.chip.$el.offsetWidth / 2
+	        },
+	        timeout: 200
+	      });
 	    }
 	  },
 	  methods: {
@@ -2884,6 +2974,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          featureId: tasks_v2_core.Core.getParams().restrictions.recurrentTask.featureId,
 	          bindElement: this.$el
 	        });
+	        return;
+	      }
+	      if (this.disabled) {
 	        return;
 	      }
 	      if (this.isSelected) {
@@ -2901,12 +2994,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<Chip
+			v-hint="tooltip"
 			:design
 			:icon="Outline.REPEAT"
 			:text="loc('TASKS_V2_REPLICATION_TITLE_CHIP')"
 			:lock="isLocked"
 			:data-task-id="taskId"
 			:data-task-chip-id="replicationMeta.id"
+			ref="chip"
 			@click="handleClick"
 		/>
 		<ReplicationSheet
@@ -2921,6 +3016,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.ReplicationChip = ReplicationChip;
 	exports.ReplicationSheet = ReplicationSheet;
 	exports.replicationMeta = replicationMeta;
+	exports.DateStringConverter = DateStringConverter;
+	exports.TimeStringConverter = TimeStringConverter;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.System.Skeleton.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Vue3,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.Vue3.Components,BX.UI.System.Input.Vue,BX.Tasks.V2.Component.Elements,BX.UI.DatePicker,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Fields,BX.UI.Vue3.Components,BX.UI.System.Menu,BX.Tasks.V2.Component.Elements,BX.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.UI.System.Typography.Vue,BX,BX.Event,BX.Main,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Main,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.System.Skeleton.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Vue3,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Fields,BX.UI.Vue3.Components,BX.UI.System.Input.Vue,BX.Tasks.V2.Component.Elements,BX.UI.DatePicker,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Fields,BX.UI.Vue3.Components,BX.UI.System.Menu,BX.Tasks.V2.Component.Elements,BX.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.UI.System.Typography.Vue,BX,BX.Event,BX.Main,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Main,BX.Tasks.V2.Lib,BX.Vue3.Directives,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib));
 //# sourceMappingURL=replication.bundle.js.map

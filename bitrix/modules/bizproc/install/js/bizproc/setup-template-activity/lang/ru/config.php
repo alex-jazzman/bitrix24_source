@@ -47,3 +47,4 @@ $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PREVIEW_CANCEL_BTN'] = 'Отмена';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_LABEL_REQUIRED'] = 'Обязательное заполнение';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_FORMAT'] = 'В ID могут быть латинские буквы, цифры и символ подчёркивания. В начале должна быть буква';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_UNIQUE'] = 'Константа с таким идентификатором уже есть';
+$MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE'] = 'Такая опция уже есть';

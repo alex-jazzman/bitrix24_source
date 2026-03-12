@@ -90,4 +90,9 @@ export const ChatNotifier = {
 			'#MAX_PINS#': pinLimit,
 		}));
 	},
+
+	onCopyIdComplete()
+	{
+		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_COPY_ID_COMPLETE'));
+	},
 };

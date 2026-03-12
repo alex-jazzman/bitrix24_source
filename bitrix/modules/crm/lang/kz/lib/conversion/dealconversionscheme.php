@@ -1,3 +1,0 @@
-<?php
-$MESS["CRM_DEAL_CONV_INVOICE"] = "Шот";
-$MESS["CRM_DEAL_CONV_QUOTE_MSGVER_1"] = "Ұсыныс";

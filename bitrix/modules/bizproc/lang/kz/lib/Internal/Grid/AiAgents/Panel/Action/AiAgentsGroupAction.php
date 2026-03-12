@@ -1,2 +1,0 @@
-<?php
-$MESS["BIZPROC_AI_AGENTS_GRID_PANEL_GROUP_CHOOSE_ACTION"] = "Әрекетті таңдаңыз";

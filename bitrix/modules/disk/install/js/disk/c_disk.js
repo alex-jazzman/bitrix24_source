@@ -494,7 +494,6 @@ if (!BX.Disk.pathToUser)
 				}
 				else
 				{
-					console.log('params', params);
 					modalWindow = BX.PopupWindowManager.create(params.modalId, params.bindElement, {
 						titleBar: params.title,
 						className: params.className,

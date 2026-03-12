@@ -5,7 +5,6 @@ return [
 		'analytics',
 		'apptheme',
 		'require-lazy',
-		'assets/communication/menu',
 		'communication/connection',
 		'communication/events',
 		'event-emitter',
@@ -18,5 +17,6 @@ return [
 		'utils/string',
 		'crm:assets/entity',
 		'crm:type',
+		'assets/icons',
 	],
 ];

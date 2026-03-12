@@ -189,7 +189,7 @@
 .b24network-account-popup-inner {
 	color: #535c69;
 	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	padding-bottom: 29px;
+	padding: 29px 0;
 	border-bottom: 1px solid #edeef0;
 }
 

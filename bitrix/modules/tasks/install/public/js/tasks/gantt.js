@@ -6,7 +6,7 @@ if (BX.GanttChart)
 }
 
 
-	
+
 /*==================================GanttChart==================================*/
 BX.GanttChart = function(domNode, currentDatetime, settings)
 {
@@ -472,7 +472,7 @@ BX.GanttChart.prototype.addTaskFromJSON = function(taskJson, redraw)
 	{
 		return null;
 	}
-	
+
 
 	if (taskJson.id && this.tasks[taskJson.id])
 	{
@@ -1002,7 +1002,7 @@ BX.GanttChart.prototype.getPreviousTask = function(sourceTaskId)
 	{
 		return null;
 	}
-	
+
 	var prevTask = sourceTask.getPreviousTask();
 	if (prevTask)
 	{
@@ -1012,7 +1012,7 @@ BX.GanttChart.prototype.getPreviousTask = function(sourceTaskId)
 	{
 		return null;
 	}
-	
+
 	var prevProjects = [this.getDefaultProject()];
 	var projects = this.getSortedProjects();
 	for (var i = 0; i < projects.length; i++)
@@ -1212,7 +1212,7 @@ BX.GanttChart.prototype.onWindowResize = function(event)
 	this.adjustChartContainer();
 };
 
-BX.GanttChart.prototype.onPrintClick = function(event) 
+BX.GanttChart.prototype.onPrintClick = function(event)
 {
 	if (this.printSettings === null)
 	{
@@ -1945,8 +1945,8 @@ GanttTask.prototype.setTaskFromJSON = function(json)
 	this.setMenuItems(json.menuItems);
 	this.setName(json.name);
 	this.setUrl(json.url);
-	this.setDetails(json.details || function(){
-		if(BX.type.isNotEmptyString(this.url))
+	this.setDetails(json.details || function() {
+		if (BX.type.isNotEmptyString(this.url))
 		{
 			window.top.location = this.url;
 		}
@@ -2241,7 +2241,9 @@ GanttTask.prototype.setFiles = function(files)
 GanttTask.prototype.setDetails = function(callback)
 {
 	if (BX.type.isFunction(callback))
+	{
 		this.details = callback;
+	}
 };
 
 GanttTask.prototype.getTimeline = function(params)
@@ -2390,7 +2392,12 @@ GanttTask.prototype.updateItem = function()
 	}
 
 	this.layout.name.innerHTML = this.name;
-	this.layout.name.href = this.url;
+
+	this.layout.name.href = BX.Uri.addParam(this.url, {
+		ta_sec: this.getAnalyticsSection(),
+		ta_sub: 'gantt',
+		ta_el: 'title_click',
+	});
 
 	var itemClass = "task-gantt-item"; // task-gantt-item-depth-" + (this.projectId == 0 ? this.depthLevel-1 : this.depthLevel);
 
@@ -2971,11 +2978,9 @@ GanttTask.prototype.onItemNameClick = function(event)
 
 	if (!this.chart.settings.disableItemNameClickHandler && BX.type.isFunction(this.details))
 	{
-		this.details({ event : event });
+		this.details({ event });
 		BX.PreventDefault(event);
 	}
-
-	this.analytics('task_view', 'title_click');
 };
 
 GanttTask.prototype.onItemMenuClick = function(event)
@@ -3112,7 +3117,9 @@ GanttTask.prototype.onRowDoubleClick = function(event)
 {
 	event = event || window.event;
 	if (BX.type.isFunction(this.details))
+	{
 		return this.details({ event : event });
+	}
 };
 
 GanttTask.prototype.onRowContextMenu = function(event)
@@ -3168,7 +3175,9 @@ GanttTask.prototype.onQuickInfoDetails = function(event, popupWindow, quickInfo)
 {
 	popupWindow.close();
 	if (BX.type.isFunction(this.details))
+	{
 		return this.details({ event : event, popupWindow : popupWindow, quickInfo : quickInfo});
+	}
 };
 
 GanttTask.prototype.isShowQuickInfo = function(event)
@@ -3991,7 +4000,22 @@ GanttTask.prototype.analytics = function (event, element)
 			BX.UI.Analytics.sendData(analyticsData);
 		});
 	}
-}
+};
+
+GanttTask.prototype.getAnalyticsSection = function()
+{
+	if (this.isCollabMode())
+	{
+		return 'collab';
+	}
+
+	if (this.isGroupMode())
+	{
+		return 'project';
+	}
+
+	return 'tasks';
+};
 
 /**
  *
@@ -4082,7 +4106,7 @@ Timeline.prototype.setTimelineWidth = function()
 	this.chart.layout.timelineInner.style.width = this.getTimelineWidth() + "px";
 };
 
-Timeline.prototype.getColumnWidth = function() 
+Timeline.prototype.getColumnWidth = function()
 {
 	return this.chart.gutterOffset;
 };
@@ -4978,7 +5002,7 @@ GanttDependency.prototype.getEdges = function()
 		};
 	}
 };
-	
+
 GanttDependency.prototype.getMinDate = function()
 {
 	var startDate = null;
@@ -5052,7 +5076,7 @@ GanttDependency.prototype.onMenuClick = function(event)
 			events: { onPopupClose: BX.proxy(this.onMenuClose, this) }
 		}
 	);
-	
+
 	//console.log("Lag", this.lag / 1000 / 3600);
 
 	BX.addClass(this.layout, "task-gantt-link-selected");
@@ -5840,7 +5864,7 @@ DragDrop.prototype.onDragOver = function(destination, x, y)
 	{
 		this.error = true;
 	}
-	
+
 	if (this.draggableTask.parentTaskId !== newParentId && !this.draggableTask.canEdit)
 	{
 		this.error = true;

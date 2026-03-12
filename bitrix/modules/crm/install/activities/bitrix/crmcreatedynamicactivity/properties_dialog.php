@@ -39,13 +39,15 @@ foreach ($dialog->getMap()['DynamicEntitiesFields']['Map'] as $entityTypeId => $
 	</td>
 </tr>
 
-<tr>
+<tr style="margin: 0">
 	<td colspan="2">
-		<div id="fields-map-container"></div>
+		<table class="adm-detail-content-table edit-table bizprocdesigner-properties-dialog-table">
+			<tbody id="fields-map-container"></tbody>
+		</table>
 	</td>
 </tr>
 
-<tr hidden>
+<tr style="display: none !important;" hidden>
 	<td width="60%">
 		<?= $dialog->renderFieldControl(
 			$dialog->getMap()['OnlyDynamicEntities'],

@@ -10,6 +10,7 @@ export type CoreParams = InterfaceModelParams & {
 	externalExtensions: string[],
 	defaultCollab: GroupDto,
 	mainDepartmentUfId: number,
+	copilotName: string,
 };
 
 type RestrictionsParams = {

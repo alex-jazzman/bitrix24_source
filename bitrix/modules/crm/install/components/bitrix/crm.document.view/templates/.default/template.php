@@ -179,7 +179,7 @@ $shouldDisplayTransformationError =
 					$messages = array_merge(
 						Loc::loadLanguageFile(__FILE__),
 						[
-							'CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR'),
+							'CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR_MSGVER_1' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR_MSGVER_1'),
 						],
 						\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages(),
 					);

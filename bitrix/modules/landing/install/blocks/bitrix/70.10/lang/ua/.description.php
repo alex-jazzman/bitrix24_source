@@ -1,8 +1,0 @@
-<?php
-$MESS["LANDING_BLOCK_WIDGET_70_10_NAME"] = "Картки з невеликим зображенням і заголовком";
-$MESS["LANDING_BLOCK_WIDGET_70_10_NODE_CARD"] = "Картка";
-$MESS["LANDING_BLOCK_WIDGET_70_10_NODE_CARD_TITLE"] = "Заголовок картки";
-$MESS["LANDING_BLOCK_WIDGET_70_10_NODE_CONTAINER"] = "Контейнер";
-$MESS["LANDING_BLOCK_WIDGET_70_10_NODE_IMG"] = "Картинка";
-$MESS["LANDING_BLOCK_WIDGET_70_10_NODE_LINK"] = "Посилання";
-$MESS["LANDING_BLOCK_WIDGET_70_10_NODE_TITLE"] = "Заголовок";

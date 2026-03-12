@@ -406,3 +406,13 @@ CREATE TABLE IF NOT EXISTS b_ai_chatbot_message_unread
 	PRIMARY KEY (ID),
 	INDEX IX_B_CHATBOT_CHAT_ID_MESSAGE_ID (CHAT_ID, MESSAGE_ID)
 );
+
+CREATE TABLE IF NOT EXISTS b_ai_bitrix_engine
+(
+	ID int not null auto_increment,
+	CLASS varchar(255) not null,
+	CATEGORY varchar(255) not null,
+	IS_ACTIVE TINYINT default 1,
+	PRIMARY KEY (ID),
+	INDEX IX_B_AI_BITRIX_ENGINE_CLASS (CLASS)
+);

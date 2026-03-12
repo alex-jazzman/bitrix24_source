@@ -32,7 +32,16 @@ $arResult['ERRORS'] = [];
 
 if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimit())
 {
-		$arResult['ERRORS']['BASE'][] = Loc::getMessage('CC_BBDE_ERROR_LIMIT_EXCEEDED');
+	$arResult['ERRORS']['BASE'][] = [
+		'MESSAGE' => Loc::getMessage(
+			'CC_BBDE_ERROR_LIMIT_EXCEEDED_MSGVER_1',
+			[
+				'[helpdesk_link]' => '<a class="biconnector-dashboard-edit_link" href="https://helpdesk.bitrix24.ru/open/26703738/" target="_blank">',
+				'[/helpdesk_link]' => '</a>',
+			]
+		),
+		'IS_HTML' => true,
+	];
 }
 
 if (

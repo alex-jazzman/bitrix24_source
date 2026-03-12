@@ -797,7 +797,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			},
 			(response) => {
 				const error = response.errors.pop().message;
-				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+				BX.Kanban.Utils.showErrorDialog(error, true);
 				promise.reject("Error: " + error);
 			},
 		);
@@ -835,7 +835,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			},
 			(response) => {
 				const error = response.errors.pop().message;
-				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+				BX.Kanban.Utils.showErrorDialog(error, true);
 				promise.reject("Error: " + error);
 			},
 		);
@@ -877,7 +877,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			},
 			(response) => {
 				const error = response.errors.pop().message;
-				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+				BX.Kanban.Utils.showErrorDialog(error, true);
 				promise.reject("Error: " + error);
 			},
 		);
@@ -1042,7 +1042,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			(response) => {
 				const error = response.errors.pop().message;
 
-				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+				BX.Kanban.Utils.showErrorDialog(error, true);
 				this.analytics('task_create', 'quick_button', 'error');
 				promise.reject("Error: " + error);
 			},
@@ -1172,7 +1172,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 					}, 300);
 				},
 				(response) => {
-					BX.Kanban.Utils.showErrorDialog("Error: " + response.errors[0].message, true);
+					BX.Kanban.Utils.showErrorDialog(response.errors[0].message, true);
 				},
 			);
 		}
@@ -1206,7 +1206,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 					}
 				},
 				(response) => {
-					BX.Kanban.Utils.showErrorDialog("Error: " + response.errors[0].message, true);
+					BX.Kanban.Utils.showErrorDialog(response.errors[0].message, true);
 				},
 			);
 		}
@@ -1274,7 +1274,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				}
 			},
 			(response) => {
-				BX.Kanban.Utils.showErrorDialog("Error: " + response.errors[0].message, true);
+				BX.Kanban.Utils.showErrorDialog(response.errors[0].message, true);
 			},
 		);
 	},
@@ -1306,7 +1306,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				}
 			},
 			(response) => {
-				BX.Kanban.Utils.showErrorDialog("Error: " + response.errors[0].message, true);
+				BX.Kanban.Utils.showErrorDialog(response.errors[0].message, true);
 			},
 		);
 	},
@@ -1580,7 +1580,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			},
 			(response) => {
 				const error = response.errors[0].message;
-				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+				BX.Kanban.Utils.showErrorDialog(error, true);
 			}
 		);
 	},
@@ -2193,10 +2193,10 @@ BX.Tasks.Kanban.Grid.prototype = {
 	analytics: function (event, element, status = null)
 	{
 		const analyticsData = {
+			event,
 			tool: 'tasks',
 			category: 'task_operations',
-			event: event,
-			type: 'task',
+			type: 'quick_task',
 			c_section: this.getSectionTypeForAnalytics(),
 			c_element: element,
 			c_sub_section: this.getKanbanTypeForAnalytics(),

@@ -23,7 +23,48 @@ jn.define('im/messenger/lib/utils/promise', (require, exports, module) => {
 		};
 	}
 
+	/**
+	 * Returns a promise that resolves after the specified delay in ms.
+	 * @param {number} ms
+	 * @return {Promise<void>}
+	 */
+	function delay(ms)
+	{
+		return new Promise((resolve) => {
+			setTimeout(resolve, ms);
+		});
+	}
+
+	/**
+	 * Returns an object with a promise that resolves after ms, and a cancel() method to prevent resolution.
+	 * @param {number} ms
+	 * @return {{promise: Promise<void>, cancel: function}}
+	 */
+	function delayWithCancel(ms)
+	{
+		let timeoutId = null;
+		let canceled = false;
+
+		const promise = new Promise((resolve) => {
+			timeoutId = setTimeout(() => {
+				if (!canceled)
+				{
+					resolve();
+				}
+			}, ms);
+		});
+
+		const cancel = () => {
+			canceled = true;
+			clearTimeout(timeoutId);
+		};
+
+		return { promise, cancel };
+	}
+
 	module.exports = {
 		createPromiseWithResolvers,
+		delay,
+		delayWithCancel,
 	};
 });

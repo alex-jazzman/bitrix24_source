@@ -1,4 +1,5 @@
 <?php
+
 $MESS["TASK_COLUMN_ALLOW_CHANGE_DEADLINE_MSGVER_1"] = "Assignee can change deadline";
 $MESS["TASK_COLUMN_ALLOW_TIME_TRACKING"] = "Track time spent";
 $MESS["TASK_COLUMN_CHANGED_DATE"] = "Modified on";

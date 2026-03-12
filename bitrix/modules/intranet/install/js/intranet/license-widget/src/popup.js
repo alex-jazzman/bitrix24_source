@@ -67,20 +67,12 @@ export class Popup extends EventEmitter
 				content.push(this.#getLicenseContent().getConfig());
 			}
 
-			if (this.getOptions().content.baas.isAvailable && this.getOptions().content.market.isAvailable)
-			{
-				content.push({
-					html: [
-						this.#getMarketContent(true).getConfig(),
-						this.#getBaasContent(true).getConfig(),
-					],
-				});
-			}
-			else if (this.getOptions().content.market.isAvailable)
+			if (this.getOptions().content.market.isAvailable)
 			{
 				content.push(this.#getMarketContent(false).getConfig());
 			}
-			else if (this.getOptions().content.baas.isAvailable)
+
+			if (this.getOptions().content.baas.isAvailable)
 			{
 				content.push(this.#getBaasContent(false).getConfig());
 			}

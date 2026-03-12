@@ -3,6 +3,7 @@
 namespace Bitrix\BizprocDesigner\Infrastructure\Controller;
 
 use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Dto\NodePorts;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Bizproc\Api;
 use Bitrix\Bizproc\Api\Enum\ErrorMessage;
@@ -64,7 +65,6 @@ class Diagram extends JsonController
 			$diagramData['templateId'],
 			$diagramData['fields'],
 			$diagramData['user'],
-			$diagramData['draftId'],
 		);
 	}
 
@@ -166,6 +166,12 @@ class Diagram extends JsonController
 			$root[NodesToTemplate::ELEMENT_PROPERTIES][NodesToTemplate::PROPERTY_LINKS]
 		);
 
+		$publishedRoot = $tpl['TEMPLATE'][0];
+		$publishedBlocks = $this->createBlocks($publishedRoot[NodesToTemplate::ELEMENT_CHILDREN], $documentType);
+		$publishedConnection = $this->createConnections(
+			$publishedRoot[NodesToTemplate::ELEMENT_PROPERTIES][NodesToTemplate::PROPERTY_LINKS]
+		);
+
 		return [
 			'template' => array_merge($tpl, ['TRACK_ON' => $trackOn]),
 			'templateId' => $tpl['ID'],
@@ -174,6 +180,8 @@ class Diagram extends JsonController
 			'documentTypeSigned' => \CBPDocument::signDocumentType($documentType),
 			'blocks' => $blocks,
 			'connections' => $connections,
+			'publishedBlocks' => $publishedBlocks,
+			'publishedConnection' => $publishedConnection,
 		];
 	}
 
@@ -265,6 +273,9 @@ class Diagram extends JsonController
 		];
 	}
 
+	/**
+	 * @return array{templateId: int, fields: array, user: \CBPWorkflowTemplateUser, draftId: int}|null
+	 */
 	private function prepareDiagramData(): ?array
 	{
 		$user = new \CBPWorkflowTemplateUser(\CBPWorkflowTemplateUser::CurrentUser);
@@ -308,7 +319,6 @@ class Diagram extends JsonController
 		int $templateId,
 		array $fields,
 		\CBPWorkflowTemplateUser $user,
-		int $draftId
 	): ?array
 	{
 		$templateService = new Api\Service\WorkflowTemplateService();
@@ -430,12 +440,13 @@ class Diagram extends JsonController
 					'type' => $nodeType,
 					'position' => $node['position'],
 					'dimensions' => $node['dimensions'],
-					'ports' => $node['ports'],
+					'ports' => NodePorts::fromArray($node['ports'])->toArray(), // normalize ports structure
 					'activity' => $child,
 					'node' => [
 						'type' => $nodeType,
 						'title' => $node['node']['title'],
 						'colorIndex' => $color,
+						'frameColorName' => $node['node']['frameColorName'] ?? null,
 						'icon' => $icon,
 						'updated' => $node['node']['updated'] ?? null,
 						'published' => $node['node']['published'] ?? null,
@@ -454,7 +465,7 @@ class Diagram extends JsonController
 	{
 		return array_map(
 			static function (array $link) {
-				[$sourceBlockId, $targetBlockId] = $link;
+				[$sourceBlockId, $targetBlockId, $createdAt] = array_pad($link, 3, null);
 
 				$sourcePortId = 'o0';
 				$targetPortId = 'i0';
@@ -476,12 +487,13 @@ class Diagram extends JsonController
 				}
 
 				return [
-					'id' => "{$sourceBlockId}_{$targetBlockId}",
+					'id' => "{$sourceBlockId}_{$targetBlockId}_{$sourcePortId}_{$targetPortId}",
 					'sourceBlockId' => $sourceBlockId,
 					'sourcePortId' => $sourcePortId,
 					'targetBlockId' => $targetBlockId,
 					'targetPortId' => $targetPortId,
 					'type' => $type,
+					'createdAt' => $createdAt,
 				];
 			},
 			$links,

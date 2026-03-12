@@ -1,4 +1,8 @@
 .ui-block-diagram-canvas-map-btn {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+
 	padding: 0;
 	border: none;
 	background-color: transparent;
@@ -6,13 +10,9 @@
 }
 
 .ui-block-diagram-canvas-map-btn__icon {
-	fill: var(--ui-color-palette-gray-40);
-	color: var(--ui-color-palette-gray-40);
 	stroke: none;
 }
 
-.ui-block-diagram-canvas-map-btn__rect {
-	fill: var(--ui-color-palette-gray-40);
-	color: var(--ui-color-palette-gray-40);
-	stroke: none;
+.ui-block-diagram-canvas-map-btn__icon:hover {
+	fill: var(--ui-color-accent-main-primary);
 }

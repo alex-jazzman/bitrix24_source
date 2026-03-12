@@ -26,7 +26,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return;
 	    }
 	    const content = main_core.Tag.render(_t || (_t = _`<div/>`));
-	    void ui_system_skeleton.renderSkeleton('/bitrix/js/tasks/v2/application/task-card/src/skeleton.html?v=1', content);
+	    void ui_system_skeleton.renderSkeleton('/bitrix/js/tasks/v2/application/task-card/src/skeleton.html?v=2', content);
 	    let card = null;
 	    const popup = new main_popup.Popup({
 	      id,
@@ -37,8 +37,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      noAllPaddings: true,
 	      content,
 	      cacheable: false,
+	      closeByEsc: true,
 	      events: {
-	        onAfterClose: () => card.unmount()
+	        onAfterClose: () => {
+	          var _card;
+	          return (_card = card) == null ? void 0 : _card.unmount();
+	        }
 	      },
 	      overlay: {
 	        opacity: 100,
@@ -63,8 +67,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      },
 	      events: {
 	        onClose: event => {
-	          var _card;
-	          return (_card = card) == null ? void 0 : _card.onClose(event);
+	          var _card2;
+	          return (_card2 = card) == null ? void 0 : _card2.onClose(event);
 	        },
 	        onCloseComplete: () => {
 	          if (card) {

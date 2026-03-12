@@ -2,6 +2,7 @@
 import { Type, Text, Loc } from 'main.core';
 import type { BaseEvent } from 'main.core.events';
 import type { BBCodeElementNode } from 'ui.bbcode.model';
+import { Outline } from 'ui.icon-set.api.core';
 import {
 	$normalizeTextNodes,
 	shouldWrapInParagraph,
@@ -196,7 +197,7 @@ export class TablePlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('table', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --table-editor"></span>');
+			button.setIcon(Outline.TABLE);
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_TABLE'));
 			button.subscribe('onClick', (): void => {
 				this.getEditor().dispatchCommand(INSERT_TABLE_DIALOG_COMMAND, {

@@ -1,2 +1,0 @@
-<?php
-$MESS["BI_CONNECTOR_DASHBOARD_SCOPE_MAP_GLOBAL_PARAMETER_TITLE"] = "Глобальний параметр";

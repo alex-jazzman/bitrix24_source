@@ -193,7 +193,7 @@ test.describe.parallel('TextFormatting', () => {
 
 		await toggleUnderline(page);
 
-		await click(page, '.ui-text-editor-toolbar-button:has(> .--strikethrough)');
+		await click(page, '.ui-text-editor-toolbar-button:has(> .--o-strikethrough)');
 
 		await assertHTML(
 			page,
@@ -206,7 +206,7 @@ test.describe.parallel('TextFormatting', () => {
 			focusPath: [0, 1, 0],
 		});
 
-		await click(page, '.ui-text-editor-toolbar-button:has(> .--strikethrough)');
+		await click(page, '.ui-text-editor-toolbar-button:has(> .--o-strikethrough)');
 
 		await assertHTML(
 			page,
@@ -430,10 +430,10 @@ test.describe.parallel('TextFormatting', () => {
 
 		const isButtonActiveStatusDisplayedCorrectly = await page.evaluate(() => {
 			const isToolbarBoldButtonActive = Boolean(document.querySelector(
-				'.ui-text-editor-toolbar .ui-text-editor-toolbar-button.--active:has(> .--bold)',
+				'.ui-text-editor-toolbar .ui-text-editor-toolbar-button.--active:has(> .--o-bold)',
 			));
 			const isToolbarItalicButtonActive = Boolean(document.querySelector(
-				'.ui-text-editor-toolbar .ui-text-editor-toolbar-button.--active:has(> .--italic)',
+				'.ui-text-editor-toolbar .ui-text-editor-toolbar-button.--active:has(> .--o-italic)',
 			));
 
 			return isToolbarBoldButtonActive && isToolbarItalicButtonActive;
@@ -486,6 +486,6 @@ test.describe.parallel('TextFormatting', () => {
 		await selectCharacters(page, 'right', 'Second'.length + 1);
 		await page.pause();
 
-		await expect(page.locator('.ui-text-editor-toolbar-button:has(> .--underline)')).toHaveClass(/--active/);
+		await expect(page.locator('.ui-text-editor-toolbar-button:has(> .--o-underline)')).toHaveClass(/--active/);
 	});
 });

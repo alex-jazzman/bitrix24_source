@@ -6,8 +6,12 @@ import getMenuItem from "../gridmenu/index";
 
 export default class List
 {
-	constructor()
+	#analytics;
+
+	constructor(analytics: any = null)
 	{
+		this.#analytics = analytics;
+
 		this.addReloadGrid();
 		this.addMenuActionLoader();
 
@@ -75,7 +79,7 @@ export default class List
 				popup.getContentContainer().style.height = 80 + 'px';
 
 				Backend
-					.getMenuActions(objectId)
+					.getMenuActions(objectId, this.#analytics)
 					.then(function({data}) {
 						const row =  BX.Main.gridManager
 							.getInstanceById(GridOptions.getGridId())

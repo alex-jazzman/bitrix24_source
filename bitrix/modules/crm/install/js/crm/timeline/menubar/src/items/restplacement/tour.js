@@ -87,6 +87,21 @@ export class Tour implements TourInterface
 					rounded: true,
 					link: '##',
 					events: {
+						onShow: (event) => {
+							const { data } = event;
+							let airClassList = 'crm-whats-new-slide-air';
+							if (Type.isArrayFilled(data.guide.steps[0].buttons))
+							{
+								airClassList += ' --with-buttons';
+							}
+
+							if (Type.isStringFilled(data.guide.steps[0].iconSrc))
+							{
+								airClassList += ' --with-icon';
+							}
+
+							Dom.addClass(data.guide.getPopup().getPopupContainer(), airClassList);
+						},
 						onClose: () => {
 							BX.userOptions.save(MODULE_ID, USER_SEEN_OPTION, this.#id, true);
 							this.#getSpotlight().close();
@@ -202,7 +217,7 @@ export class Tour implements TourInterface
 	{
 		let target = document.querySelector(`[data-id="${this.#id}"]`);
 
-		if (target?.offsetTop)
+		if (!this.#isVisible(target))
 		{
 			target = target.parentElement.nextElementSibling;
 		}

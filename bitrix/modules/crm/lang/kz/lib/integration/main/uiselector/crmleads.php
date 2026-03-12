@@ -1,3 +1,0 @@
-<?php
-$MESS["MAIN_UI_SELECTOR_TAB_CRMLEADS"] = "Лидтер";
-$MESS["MAIN_UI_SELECTOR_TITLE_CRMLEADS"] = "Лидтер:";

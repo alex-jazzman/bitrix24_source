@@ -1,6 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 import { Loc, Type } from 'main.core';
 import { type BaseEvent } from 'main.core.events';
+import { Outline } from 'ui.icon-set.api.core';
 
 import {
 	TextNode,
@@ -271,7 +272,7 @@ export class SmileyPlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('smileys', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --insert-emoji"></span>');
+			button.setIcon(Outline.SMILE);
 			button.disableInsideUnformatted();
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_SMILEYS'));
 			button.subscribe('onClick', (): void => {

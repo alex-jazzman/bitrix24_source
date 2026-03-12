@@ -1,3 +1,0 @@
-<?php
-$MESS["MORE_MENU_COMPANY_USERS_INVITE"] = "Шақыру";
-$MESS["MORE_MENU_COMPANY_USERS_TITLE"] = "Қызметкерлер";

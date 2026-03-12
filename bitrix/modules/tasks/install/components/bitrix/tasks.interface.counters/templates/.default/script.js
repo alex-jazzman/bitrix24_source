@@ -143,6 +143,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.signedParameters = options.signedParameters;
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _filterId, options.filterId);
 	    _this.tasksChatUri = options.tasksChatUri;
+	    _this.viewState = options.viewState || 'list';
 	    _this.chatButton = null;
 	    _this.setData(_this.counters);
 	    _this.initPull();
@@ -555,7 +556,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              return _context.abrupt("return");
 	            case 7:
 	              BX.SidePanel.Instance.emulateAnchorClick(this.tasksChatUri);
-	            case 8:
+	              ui_analytics.sendData({
+	                tool: 'tasks',
+	                category: 'chat_operations',
+	                type: 'task',
+	                event: 'click_chat_tasks',
+	                c_section: 'task',
+	                c_sub_section: this.viewState,
+	                c_element: 'chat_tasks_button'
+	              });
+	            case 9:
 	            case "end":
 	              return _context.stop();
 	          }
@@ -727,6 +737,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    type: 'task',
 	    event: _classPrivateMethodGet(this, _getAnalyticsEvent, _getAnalyticsEvent2).call(this, item),
 	    c_section: _classPrivateMethodGet(this, _getAnalyticsSection, _getAnalyticsSection2).call(this, item),
+	    c_sub_section: this.viewState,
 	    c_element: _classPrivateMethodGet(this, _getAnalyticsElement, _getAnalyticsElement2).call(this, item)
 	  });
 	}

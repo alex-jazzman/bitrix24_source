@@ -1,7 +1,9 @@
 import { computed } from 'ui.vue3';
+import { Type } from 'main.core';
 import type { Block } from '../../../../shared/types';
 import {
 	BlockStatusNotPublished,
+	BlockStatusPublishError,
 	diagramStore as useDiagramStore,
 } from '../../../../entities/blocks';
 
@@ -10,6 +12,7 @@ export const UpdatePublishedStatusLabel = {
 	name: 'UpdatePublishedStatusLabel',
 	components: {
 		BlockStatusNotPublished,
+		BlockStatusPublishError,
 	},
 	props: {
 		/** @type Block */
@@ -29,11 +32,17 @@ export const UpdatePublishedStatusLabel = {
 			return updated === published;
 		});
 
+		const hasPublishError = computed((): boolean => {
+			return Type.isObject(diagramStore.blockCurrentPublishErrors[props.block.id]);
+		});
+
 		return {
 			isPublished,
+			hasPublishError,
 		};
 	},
 	template: `
-		<BlockStatusNotPublished v-if="!isPublished"/>
+		<BlockStatusPublishError v-if="hasPublishError"/>
+		<BlockStatusNotPublished v-else-if="!isPublished"/>
 	`,
 };

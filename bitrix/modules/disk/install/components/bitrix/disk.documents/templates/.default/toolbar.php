@@ -38,7 +38,10 @@ Toolbar::addFilter([
 ]);
 
 $defaultHandler = end($arResult['DOCUMENT_HANDLERS']);
-$items = array_map(function ($item) use ($defaultHandler) {
+$analytics = $arResult['ANALYTICS'] ?? [];
+$analytics['p2'] = 'context_menu';
+$analytics = CUtil::JSEscape(Json::encode($analytics));
+$items = array_map(function ($item) use ($defaultHandler, $analytics) {
 	if ($item['code'] === OnlyOfficeHandler::getCode())
 	{
 		$defaultHandler = $item;
@@ -51,19 +54,19 @@ $items = array_map(function ($item) use ($defaultHandler) {
 			[
 				'text' => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_DOC'),
 				'onclick' =>  new UI\Buttons\JsCode(
-					'BX.Disk.Documents.Toolbar.createDocx("'.$item['code'].'");'
+					'BX.Disk.Documents.Toolbar.createDocx("'.$item['code'].'", this, "'.Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_DOC') .'", "' . $analytics . '");'
 				)
 			],
 			[
 				'text' => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_XLS'),
 				'onclick' => new UI\Buttons\JsCode(
-					'BX.Disk.Documents.Toolbar.createXlsx("'.$item['code'].'");'
+					'BX.Disk.Documents.Toolbar.createXlsx("'.$item['code'].'", this, "'.Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_XLS') .'", "' . $analytics . '");'
 				)
 			],
 			[
 				'text' => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_PPT'),
 				'onclick' => new UI\Buttons\JsCode(
-					'BX.Disk.Documents.Toolbar.createPptx("'.$item['code'].'");'
+					'BX.Disk.Documents.Toolbar.createPptx("'.$item['code'].'", this, "'.Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_PPT') .'", "' . $analytics . '");'
 				)
 			],
 		]

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['B_B_USER_ALIAS'] = "Псевдоним:";
 $MESS ['B_B_USER_ABOUT'] = "О себе:";
 $MESS ['B_B_USER_SITE'] = "Сайт:";
@@ -18,4 +18,3 @@ $MESS ['B_B_FR_NO'] = "нет";
 $MESS ['B_B_FR_FR'] = "Друзья:";
 $MESS ['B_B_USER_BLOG'] = "Блог:";
 $MESS ['BU_DELETE_FILE'] = "Удалить файл";
-?>

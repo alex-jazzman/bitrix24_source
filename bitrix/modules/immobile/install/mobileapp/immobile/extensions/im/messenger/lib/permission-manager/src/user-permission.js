@@ -174,7 +174,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 		}
 
 		/**
-		 * @return {Permissions}
+		 * @return {MessengerPermissions}
 		 */
 		getChatPermissions()
 		{

@@ -454,6 +454,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        panel: im_v2_const.SidebarDetailBlock.messageSearch,
 	        dialogId: this.dialogId
 	      });
+	      im_v2_lib_analytics.Analytics.getInstance().messageSearch.onOpenSearchPanel(this.dialogId);
 	    },
 	    getEmitter() {
 	      return this.$Bitrix.eventEmitter;

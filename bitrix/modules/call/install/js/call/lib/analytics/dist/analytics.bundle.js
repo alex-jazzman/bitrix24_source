@@ -10,6 +10,8 @@ this.BX.Call = this.BX.Call || {};
 	  finishScreenshare: 'finish_screenshare',
 	  connect: 'connect',
 	  startCall: 'start_call',
+	  startCallCollab: 'start_call_collab',
+	  connectCallCollab: 'connect_call_collab',
 	  reconnect: 'reconnect',
 	  addUser: 'add_user',
 	  disconnect: 'disconnect',
@@ -75,7 +77,8 @@ this.BX.Call = this.BX.Call || {};
 	  messenger: 'messenger',
 	  callsOperations: 'calls_operations',
 	  callFollowup: 'call_followup',
-	  callRecord: 'call_record'
+	  callRecord: 'call_record',
+	  collabCall: 'collab_call'
 	});
 	const AnalyticsType = Object.freeze({
 	  private: 'private',
@@ -141,6 +144,10 @@ this.BX.Call = this.BX.Call || {};
 	const AnalyticsAIStatus = Object.freeze({
 	  aiOn: 'ai_on',
 	  aiOff: 'ai_off'
+	});
+	const AnalyticsVpnStatus = Object.freeze({
+	  vpnOn: 'vpn_on',
+	  vpnOff: 'vpn_off'
 	});
 
 	var _callAutoStartRecordSent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("callAutoStartRecordSent");
@@ -391,6 +398,7 @@ this.BX.Call = this.BX.Call || {};
 	      p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
 	      p2: `chatUserCount_${params.userCounter}`,
 	      p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
+	      p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 	      p5: `callId_${params.callId}`
 	    });
 	  }
@@ -404,6 +412,7 @@ this.BX.Call = this.BX.Call || {};
 	      status: params.status,
 	      p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
 	      p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+	      p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 	      p5: `callId_${params.callId}`
 	    });
 	  }
@@ -418,10 +427,22 @@ this.BX.Call = this.BX.Call || {};
 	      p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
 	      p2: `chatUserCount_${(_params$associatedEnt = params.associatedEntity) == null ? void 0 : _params$associatedEnt.userCounter}`,
 	      p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
+	      p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 	      p5: `callId_${params.callId}`
 	    };
-	    if (params.associatedEntity.advanced.chatType === im_v2_const.ChatType.collab) {
-	      resultData.p4 = im_v2_lib_analytics.getCollabId(this.normalizeChatId(params.associatedEntity.id));
+	    if (params.associatedEntity.advanced.chatType === im_v2_const.ChatType.collab && params.status === AnalyticsStatus.success) {
+	      const resultDataCollab = {
+	        tool: AnalyticsTool.im,
+	        category: AnalyticsCategory.collabCall,
+	        event: AnalyticsEvent.startCallCollab,
+	        type: params.callType,
+	        status: params.status,
+	        p4: im_v2_lib_analytics.getCollabId(this.normalizeChatId(params.associatedEntity.id)),
+	        p5: `callId_${params.callId}`
+	      };
+	      ui_analytics.sendData(resultDataCollab);
+	    } else if (params.associatedEntity.advanced.chatType === im_v2_const.ChatType.collab && params.status !== AnalyticsStatus.success) {
+	      return;
 	    }
 	    ui_analytics.sendData(resultData);
 	  }
@@ -433,6 +454,7 @@ this.BX.Call = this.BX.Call || {};
 	      type: params.callType,
 	      status: `error_${params.errorCode}`,
 	      p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
+	      p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 	      p5: 'callId_0'
 	    };
 	    ui_analytics.sendData(resultData);
@@ -445,6 +467,7 @@ this.BX.Call = this.BX.Call || {};
 	      type: params.callType,
 	      status: params.status,
 	      p3: im_v2_lib_analytics.getUserType(),
+	      p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 	      p5: `callId_${params.callId}`
 	    };
 	    if (params.section) {
@@ -457,9 +480,20 @@ this.BX.Call = this.BX.Call || {};
 	      sendParams.p1 = params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff;
 	      sendParams.p2 = params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff;
 	    }
-	    if (params.associatedEntity.advanced.chatType === im_v2_const.ChatType.collab) {
+	    if (params.associatedEntity.advanced.chatType === im_v2_const.ChatType.collab && params.status === AnalyticsStatus.success) {
 	      const collabId = params.associatedEntity.advanced.entityId;
-	      sendParams.p4 = `collabId_${collabId}`;
+	      const resultDataCollab = {
+	        tool: AnalyticsTool.im,
+	        category: AnalyticsCategory.collabCall,
+	        event: AnalyticsEvent.connectCallCollab,
+	        type: params.callType,
+	        status: params.status,
+	        p4: `collabId_${collabId}`,
+	        p5: `callId_${params.callId}`
+	      };
+	      ui_analytics.sendData(resultDataCollab);
+	    } else if (params.associatedEntity.advanced.chatType === im_v2_const.ChatType.collab && params.status !== AnalyticsStatus.success) {
+	      return;
 	    }
 	    ui_analytics.sendData(sendParams);
 	  }
@@ -471,6 +505,7 @@ this.BX.Call = this.BX.Call || {};
 	      type: params.callType,
 	      status: `error_${params.errorCode}`,
 	      p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
+	      p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 	      p5: `callId_${params.callId}`
 	    };
 	    ui_analytics.sendData(resultData);
@@ -485,6 +520,7 @@ this.BX.Call = this.BX.Call || {};
 	      type: params.callType,
 	      c_section: AnalyticsSection.callWindow,
 	      status: params.reconnectionReason || '',
+	      p2: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 	      p3: `msg_${reconnectionReasonInfo}`,
 	      p4: `attemptNumber_${params.reconnectionEventCount}`,
 	      p5: `callId_${params.callId}`
@@ -498,6 +534,7 @@ this.BX.Call = this.BX.Call || {};
 	      type: params.callType,
 	      status: `error_${params.errorCode}`,
 	      p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
+	      p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 	      p5: `callId_${params.callId}`
 	    });
 	  }

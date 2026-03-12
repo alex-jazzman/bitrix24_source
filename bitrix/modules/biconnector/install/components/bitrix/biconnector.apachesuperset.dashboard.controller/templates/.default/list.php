@@ -31,22 +31,6 @@ if (!empty($arResult['ERROR_MESSAGES']))
 
 	if ($arResult['FEATURE_AVAILABLE'] === false)
 	{
-		Extension::load([
-			'biconnector.apache-superset-cleaner',
-		]);
-		$helperCode = \CUtil::JSEscape($arResult['HELPER_CODE']);
-
-		echo <<<HTML
-			<script>top.BX.UI.InfoHelper.show("{$helperCode}")
-			BX.ready(() => {
-				BX.BIConnector.ApacheSupersetTariffCleaner.Instance = new BX.BIConnector.ApacheSupersetTariffCleaner();
-			})
-			</script>
-		HTML;
-	}
-
-	if ($arResult['TOOLS_AVAILABLE'] === false)
-	{
 		echo '<script>top.BX.UI.InfoHelper.show("' . \CUtil::JSEscape($arResult['HELPER_CODE']) . '")</script>';
 	}
 

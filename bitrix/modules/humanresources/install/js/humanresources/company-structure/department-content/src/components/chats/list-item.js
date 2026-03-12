@@ -12,7 +12,7 @@ import { ItemDictionary, ItemDictionaryType } from './dictionaries/item-dictiona
 export const CommunicationListItem = {
 	name: 'communicationListItem',
 
-	components: { ChatListItemActionButton: CommunicationListItemActionButton, ResponsiveHint },
+	components: { CommunicationListItemActionButton, ResponsiveHint },
 
 	directives: { hint: Hint },
 
@@ -218,7 +218,7 @@ export const CommunicationListItem = {
 					{{ communication.subtitle }}
 				</div>
 			</div>
-			<ChatListItemActionButton
+			<CommunicationListItemActionButton
 				:communication="communication"
 				:nodeId="nodeId"
 			/>

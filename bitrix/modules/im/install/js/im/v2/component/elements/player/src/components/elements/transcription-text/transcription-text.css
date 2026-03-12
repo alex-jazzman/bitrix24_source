@@ -2,6 +2,8 @@
 	--im-transcription-text__color_default-text: var(--im-color-palette-gray-90);
 	--im-transcription-text__color_error-text: var(--im-color-palette-gray-50);
 	--im-transcription-text__color_error-link: var(--im-color-accent-blue);
+	--im-transcription-text__color_disclaimer-text: #91A0C2;
+	--im-transcription-text__color_disclaimer-divider: #D4DDF1;
 	--im-message-audio__divider-color: rgba(var(--im-color-palette-black-solid-rgb), 0.08);
 
 	color: var(--im-transcription-text__color_default-text);
@@ -28,4 +30,18 @@
 	text-decoration: none;
 	cursor: pointer;
 	color: var(--im-transcription-text__color_error-link);
+}
+
+.bx-im-transcription-text__disclaimer {
+	font-style: italic;
+	font-size: var(--im-font-size-md);
+	color: var(--im-transcription-text__color_disclaimer-text);
+}
+
+.bx-im-transcription-text__disclaimer-divider {
+	height: 1px;
+	width: 85px;
+	margin-top: 25px;
+	margin-bottom: 15px;
+	background-color: var(--im-transcription-text__color_disclaimer-divider);
 }

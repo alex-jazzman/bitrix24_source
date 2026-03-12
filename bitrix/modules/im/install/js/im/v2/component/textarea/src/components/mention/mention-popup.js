@@ -2,13 +2,12 @@ import { MessengerPopup } from 'im.v2.component.elements.popup';
 import { ChatType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 
-import type { ImModelChat } from 'im.v2.model';
-
 import { MentionPopupContent } from './mention-content';
 
 import './css/mention-popup.css';
 
 import type { PopupOptions } from 'main.popup';
+import type { ImModelChat } from 'im.v2.model';
 
 const POPUP_ID = 'im-mention-popup';
 
@@ -56,21 +55,6 @@ export const MentionPopup = {
 
 			return true;
 		},
-		excludedChatsFromMentions(): string[]
-		{
-			if (!this.isCopilotType)
-			{
-				return [];
-			}
-
-			const copilotBotDialogId = this.$store.getters['users/bots/getCopilotBotDialogId'];
-			if (copilotBotDialogId && this.isGroupCopilotChat)
-			{
-				return [copilotBotDialogId];
-			}
-
-			return [];
-		},
 		searchChats(): boolean
 		{
 			return !this.isCopilotType;
@@ -103,7 +87,6 @@ export const MentionPopup = {
 			<MentionPopupContent 
 				:dialogId="dialogId"
 				:query="query"
-				:exclude="excludedChatsFromMentions"
 				:searchChats="searchChats"
 				@close="$emit('close');"
 				@adjustPosition="adjustPosition()"

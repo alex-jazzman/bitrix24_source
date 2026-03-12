@@ -29,4 +29,9 @@ export class Page
 	{
 		return SubmitButton.ENABLED_STATE;
 	}
+
+	hasShownButtonPanel(): boolean
+	{
+		return true;
+	}
 }

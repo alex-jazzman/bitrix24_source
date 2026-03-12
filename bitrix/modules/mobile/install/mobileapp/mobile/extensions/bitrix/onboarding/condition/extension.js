@@ -5,6 +5,7 @@ jn.define('onboarding/condition', (require, exports, module) => {
 	const { getProfileFields } = require('onboarding/utils');
 	const { isLonelyUser } = require('onboarding/utils');
 	const { VisitCounter } = require('onboarding/visit-counter');
+	const { Type } = require('type');
 
 	class ConditionBase
 	{
@@ -47,6 +48,58 @@ jn.define('onboarding/condition', (require, exports, module) => {
 
 				return filledCount >= count;
 			};
+		}
+
+		static isClientRelatedEntity()
+		{
+			return async (context) => {
+				if (!context || !context.entityTypeId)
+				{
+					return false;
+				}
+
+				const { TypeId } = await requireLazy('crm:type', false);
+				if (!TypeId)
+				{
+					return false;
+				}
+
+				return context.entityTypeId === TypeId.Contact
+					|| context.entityTypeId === TypeId.Company
+					|| context.isClientEnabled;
+			};
+		}
+
+		static hasTelegramConnection()
+		{
+			return async () => {
+				const hasTelegramConnection = ConditionBase.#hasTelegramConnection();
+
+				return Boolean(hasTelegramConnection);
+			};
+		}
+
+		static hasOpenLineAccess()
+		{
+			return async (context) => {
+				return Boolean(context && context.hasOpenLinesAccess);
+			};
+		}
+
+		static #hasTelegramConnection()
+		{
+			try
+			{
+				const { TelegramConnectorManager } = require('imconnector/connectors/telegram');
+
+				return new TelegramConnectorManager();
+			}
+			catch (e)
+			{
+				console.warn(e, 'TelegramConnectorManager not found');
+
+				return null;
+			}
 		}
 
 		static #extractAllFields(groups)
@@ -106,6 +159,18 @@ jn.define('onboarding/condition', (require, exports, module) => {
 			};
 		}
 
+		static hasTimelineTab()
+		{
+			return async (context) => {
+				if (!context || !Type.isArrayFilled(context?.tabs))
+				{
+					return false;
+				}
+
+				return context.tabs.some((tab) => tab && tab.id === 'timeline');
+			};
+		}
+
 		static any(conditions = [])
 		{
 			return async (ctx) => {
@@ -137,7 +202,6 @@ jn.define('onboarding/condition', (require, exports, module) => {
 					return false;
 				}
 
-				// eslint-disable-next-line no-await-in-loop
 				const result = await condition(ctx);
 
 				return result === false;

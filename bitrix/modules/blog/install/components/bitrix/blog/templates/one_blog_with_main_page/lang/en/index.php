@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BC_NEW_POSTS'] = "New blog posts";
 $MESS ['BC_NEW_COMMENTS'] = "New comments";
 $MESS ['BC_NEW_BLOGS'] = "New blogs";
@@ -11,4 +11,3 @@ $MESS ['BC_POPULAR_POSTS'] = "Popular";
 $MESS ['BC_MESSAGES'] = "Messages";
 $MESS ['BC_SEARCH_TAG'] = "Tag cloud";
 $MESS ['BLOG_BLOG_FAVORITE'] = "Favorite messages";
-?>

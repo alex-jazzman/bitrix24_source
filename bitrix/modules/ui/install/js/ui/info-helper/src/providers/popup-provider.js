@@ -50,7 +50,10 @@ export class PopupProvider extends BaseProvider
 			this.#dataSource = (new ProviderRequestFactory(providerRequestFactoryConfiguration)).getRequest();
 		}
 
-		this.#analytics = new Analytics(this.#code, ProvidersType.POPUP);
+		this.#analytics = new Analytics(
+			config.analytics?.type ?? this.#code,
+			ProvidersType.POPUP,
+		);
 	}
 
 	show(code, params): void
@@ -69,19 +72,26 @@ export class PopupProvider extends BaseProvider
 	{
 		if (!this.#popup)
 		{
+			const analyticsCallbackFunction = (event, additionalParameter) => {
+				if (this.#analytics)
+				{
+					this.#analytics.sendByEventName(event, additionalParameter);
+				}
+			};
+
 			this.#popup = new PopupWithHeader({
 				target: this.#bindElement,
 				id: `demo-popup-components-maker-${Math.random(8)}`,
-				width: 344,
+				width: 370,
+				skeletonWidth: 370,
 				content: [],
 				asyncData: this.#dataSource,
-				template: new SaleTemplate(),
-				analyticsCallback: (event, additionalParameter) => {
-					if (this.#analytics)
+				template: new SaleTemplate(
 					{
-						this.#analytics.sendByEventName(event, additionalParameter);
-					}
-				},
+						analyticsCallback: analyticsCallbackFunction,
+					},
+				),
+				analyticsCallback: analyticsCallbackFunction,
 			});
 		}
 

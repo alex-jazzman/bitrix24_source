@@ -1,3 +1,4 @@
+import { EventEmitter } from 'main.core.events';
 import { BMenu } from 'ui.system.menu.vue';
 import {
 	makeEmptyTitle,
@@ -70,6 +71,16 @@ export const AddElementBtn = {
 			};
 		},
 	},
+	mounted(): void
+	{
+		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+		EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+	},
+	unmounted(): void
+	{
+		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+		EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+	},
 	methods: {
 		onShowMenu(event: MouseEvent): void
 		{
@@ -92,6 +103,11 @@ export const AddElementBtn = {
 			}
 
 			return potentialId;
+		},
+		closeMenu(): void
+		{
+			this.$refs.addElementButton.blur();
+			this.isMenuShown = false;
 		},
 	},
 	template: `

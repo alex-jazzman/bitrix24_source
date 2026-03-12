@@ -1,4 +1,4 @@
-import { Dom, Loc } from 'main.core';
+import { Dom, Extension, Loc } from 'main.core';
 import { CopilotChat as CopilotChatInstance, CopilotChatEvents as cce } from 'ai.copilot-chat.core';
 import { CopilotChatMessageType as ccmt } from 'ai.copilot-chat.ui';
 
@@ -25,6 +25,13 @@ export class Chat
 		const entityId = options.entityId;
 		const chatId = options.chatId ?? null;
 		const scenario = options.scenario ?? 'site_with_ai';
+
+		const chatTitle = Loc.getMessage('LANDING_COPILOT_CHAT_TITLE_MSGVER_2', {
+			'#COPILOT_NAME#': this.getCopilotName(),
+		});
+		const chatBotTitle = Loc.getMessage('LANDING_COPILOT_CHAT_BOT_TITLE_MSGVER_2', {
+			'#COPILOT_NAME#': this.getCopilotName(),
+		});
 
 		return new BX.AI.CopilotChat.Core.CopilotChat({
 			entityId,
@@ -56,12 +63,12 @@ export class Chat
 					},
 				},
 				header: {
-					title: Loc.getMessage('LANDING_COPILOT_CHAT_TITLE'),
+					title: chatTitle,
 					subtitle: Loc.getMessage('LANDING_COPILOT_CHAT_SUBTITLE'),
 					avatar: '/bitrix/js/landing/copilot/chat/images/avatar.png?v2',
 				},
 				botOptions: {
-					messageTitle: Loc.getMessage('LANDING_COPILOT_CHAT_BOT_TITLE'),
+					messageTitle: chatBotTitle,
 					avatar: '/bitrix/js/landing/copilot/chat/images/avatar.png?v2',
 				},
 				slots: {
@@ -108,5 +115,10 @@ export class Chat
 	static getTopPanelHeight(): number
 	{
 		return 66;
+	}
+
+	static getCopilotName(): string
+	{
+		return Extension.getSettings('landing.copilot.chat').copilotName;
 	}
 }

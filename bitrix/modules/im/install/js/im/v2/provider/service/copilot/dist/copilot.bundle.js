@@ -16,19 +16,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    roleCode
 	  }) {
 	    const chatService = new im_v2_provider_service_chat.ChatService();
-	    const {
-	      newDialogId,
-	      newChatId
-	    } = await chatService.createChat({
-	      type: im_v2_const.ChatType.copilot,
-	      copilotMainRole: roleCode
+	    try {
+	      const {
+	        newDialogId,
+	        newChatId
+	      } = await chatService.createChat({
+	        type: im_v2_const.ChatType.copilot,
+	        copilotMainRole: roleCode
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics]({
+	        chatId: newChatId,
+	        dialogId: newDialogId
+	      });
+	      await chatService.loadChatWithMessages(newDialogId);
+	      return newDialogId;
+	    } catch (error) {
+	      console.error('CopilotService: create chat error', error);
+	      throw error;
+	    }
+	  }
+	  createDefaultChat() {
+	    const COPILOT_UNIVERSAL_ROLE = 'copilot_assistant';
+	    return this.createChat({
+	      roleCode: COPILOT_UNIVERSAL_ROLE
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics]({
-	      chatId: newChatId,
-	      dialogId: newDialogId
-	    });
-	    await chatService.loadChatWithMessages(newDialogId);
-	    return newDialogId;
 	  }
 	}
 	function _sendAnalytics2({

@@ -1,4 +1,0 @@
-<?php
-$MESS["IBLOCK_INSTALL_PUBLIC_DETAIL_PAGER"] = "Парақша";
-$MESS["IBLOCK_INSTALL_PUBLIC_PAGER"] = "Жаңалықтар";
-$MESS["IBLOCK_INSTALL_PUBLIC_TITLE"] = "Компания жаңалықтары";

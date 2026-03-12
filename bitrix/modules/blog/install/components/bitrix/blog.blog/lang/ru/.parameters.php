@@ -32,4 +32,3 @@ $MESS["RATING_TYPE_STANDART_TEXT"] = "Нравится / Не нравится (
 $MESS["RATING_TYPE_STANDART_GRAPHIC"] = "Нравится / Не нравится (графический)";
 $MESS["RATING_TYPE_LIKE_TEXT"] = "Мне нравится (текстовый)";
 $MESS["RATING_TYPE_LIKE_GRAPHIC"] = "Мне нравится (графический)";
-?>

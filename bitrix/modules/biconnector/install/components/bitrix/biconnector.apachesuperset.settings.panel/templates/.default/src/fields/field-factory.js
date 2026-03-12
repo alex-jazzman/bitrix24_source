@@ -5,9 +5,7 @@ import {
 	DateFilterField,
 	DashboardDateFilterField,
 	KeyInfoField,
-	DashboardOwnerField,
 	DashboardGroupsField,
-	DeleteSupersetField,
 	ClearCacheField,
 	DashboardLanguageField,
 } from './entities/index';
@@ -32,12 +30,8 @@ export class FieldFactory
 				return DashboardDateFilterField.create(controlId, settings);
 			case 'keyInfo':
 				return KeyInfoField.create(controlId, settings);
-			case 'ownerSelector':
-				return DashboardOwnerField.create(controlId, settings);
 			case 'dashboardGroupsSelector':
 				return DashboardGroupsField.create(controlId, settings);
-			case 'deleteSuperset':
-				return DeleteSupersetField.create(controlId, settings);
 			case 'clearCache':
 				return ClearCacheField.create(controlId, settings);
 			case 'dashboardLanguage':

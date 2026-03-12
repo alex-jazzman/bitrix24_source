@@ -1,6 +1,3 @@
-// @flow
-'use strict';
-
 import { Loc, Event, Runtime } from "main.core";
 import {InterfaceTemplate} from "./interfacetemplate";
 import Office365SyncWizard from '../syncwizard/office365syncwizard';
@@ -36,9 +33,9 @@ export default class Office365template extends InterfaceTemplate
 		this.handleSuccessConnectionDebounce = Runtime.debounce(this.handleSuccessConnection, this.HANDLE_CONNECTION_DELAY, this)
 	}
 
-	createConnection()
+	async createConnection()
 	{
-		const syncLink = this.provider.getSyncLink();
+		const syncLink = await this.provider.getSyncLink();
 		BX.util.popup(syncLink, 500, 600);
 
 		Event.bind(window, 'hashchange', this.handleSuccessConnectionDebounce);
@@ -73,11 +70,11 @@ export default class Office365template extends InterfaceTemplate
 		this.showUpdateSectionListNotification();
 	}
 
-	handleConnectButton()
+	async handleConnectButton()
 	{
 		if (this.provider.hasSetSyncOffice365Settings())
 		{
-			this.createConnection();
+			await this.createConnection();
 		}
 		else
 		{

@@ -17,6 +17,7 @@ export type ApplicationModelState = {
 	},
 	settings: {
 		audioRate: AudioRate,
+		recordMediaType: RecordMediaType,
 	},
 }
 
@@ -29,11 +30,14 @@ export type AppStatusType =
 
 export type AudioRate = 1.0 | 1.5 | 2.0;
 
+export type RecordMediaType = 'audio' | 'video';
+
 export type ApplicationModelActions =
 	'applicationModel/openDialogId'
 	| 'applicationModel/closeDialogId'
-	| 'applicationModel/setAudioRateSetting'
 	| 'applicationModel/setStatus'
+	| 'applicationModel/setAudioRateSetting'
+	| 'applicationModel/setRecordMediaType'
 
 export type ApplicationModelMutation =
 	'applicationModel/openDialogId'
@@ -55,7 +59,8 @@ export type ApplicationSetSettingsActions = 'setSettings';
 
 export interface ApplicationSetSettingsData extends PayloadData
 {
-	audioRate: string,
+	audioRate: AudioRate,
+	recordMediaType: RecordMediaType,
 }
 
 export type ApplicationOpenDialogIdActions = 'openDialogId';

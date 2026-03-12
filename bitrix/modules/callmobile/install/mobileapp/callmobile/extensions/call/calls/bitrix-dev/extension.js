@@ -7,12 +7,12 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 	BX.DoNothing = function() {};
 
 	const ajaxActions = {
-		invite: 'im.call.invite',
-		cancel: 'im.call.cancel',
-		answer: 'im.call.answer',
-		decline: 'im.call.decline',
-		hangup: 'im.call.hangup',
-		ping: 'im.call.ping',
+		invite: 'call.CallManager.invite',
+		cancel: 'call.CallManager.cancel',
+		answer: 'call.CallManager.answer',
+		decline: 'call.CallManager.decline',
+		hangup: 'call.CallManager.hangup',
+		ping: 'call.CallManager.ping',
 	};
 
 	const pullEvents = {
@@ -78,7 +78,6 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 
 			// media constraints
 			this.videoEnabled = params.videoEnabled === true;
-			this.videoHd = params.videoHd === true;
 			this.cameraId = params.cameraId || '';
 			this.microphoneId = params.microphoneId || '';
 
@@ -271,7 +270,7 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 			});
 		}
 
-		getUsers()
+		getUsersStates()
 		{
 			const result = {};
 			for (const userId in this.peers)

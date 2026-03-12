@@ -149,12 +149,6 @@ export class EntityStorage
 		return !Type.isUndefined(filledSprint);
 	}
 
-	recalculateItemsSort()
-	{
-		this.backlog.recalculateItemsSort();
-		this.sprints.forEach((sprint) => sprint.recalculateItemsSort());
-	}
-
 	findEntityByEntityId(entityId: number): ?Entity
 	{
 		entityId = parseInt(entityId, 10);

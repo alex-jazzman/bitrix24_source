@@ -132,11 +132,6 @@ Class fileman extends CModule
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/fileman/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/fileman/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
 
-		if(\Bitrix\Main\Loader::includeModule('fileman'))
-		{
-			CFileMan::decodePdfViewerLangFiles();
-		}
-
 		return true;
 	}
 

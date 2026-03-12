@@ -20,28 +20,6 @@ class CBPManualStartTrigger extends \Bitrix\Bizproc\Activity\BaseTrigger
 		return [];
 	}
 
-	public static function getPropertiesDialogValues(
-		$documentType,
-		$activityName,
-		&$workflowTemplate,
-		&$workflowParameters,
-		&$workflowVariables,
-		$currentValues,
-		&$errors
-	): bool
-	{
-		$properties = [];
-		foreach (static::getPropertiesMap($documentType) as $id => $property)
-		{
-			$properties[$id] = $currentValues[$id] ?? null;
-		}
-
-		$currentActivity = &CBPWorkflowTemplateLoader::findActivityByName($workflowTemplate, $activityName);
-		$currentActivity['Properties'] = $properties;
-
-		return true;
-	}
-
 	public function createApplyRules(): array
 	{
 		return []; // TODO

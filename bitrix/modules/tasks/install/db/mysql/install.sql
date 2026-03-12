@@ -462,7 +462,8 @@ CREATE TABLE IF NOT EXISTS b_tasks_effective(
   INDEX ix_tasks_effective_user_id_datetime (USER_ID, DATETIME),
   INDEX ix_tasks_effective_task_id_is_violation_datetime (TASK_ID, IS_VIOLATION, DATETIME),
   INDEX ix_tasks_effective_user_id_is_violation_datetime (USER_ID, IS_VIOLATION, DATETIME),
-  INDEX ix_tasks_effective_group_id_is_violation_datetime (GROUP_ID, IS_VIOLATION, DATETIME)
+  INDEX ix_tasks_effective_group_id_is_violation_datetime (GROUP_ID, IS_VIOLATION, DATETIME),
+	INDEX ix_tasks_effective_datetime (DATETIME)
 );
 
 CREATE TABLE b_tasks_search_index (
@@ -557,6 +558,7 @@ CREATE TABLE IF NOT EXISTS b_tasks_scrum_item (
 	NAME VARCHAR(255) NULL DEFAULT NULL,
 	DESCRIPTION TEXT NULL DEFAULT NULL,
 	SORT TINYINT(4) NULL DEFAULT NULL,
+	SORT_FLOAT FLOAT NULL DEFAULT NULL,
 	CREATED_BY INT(18) NOT NULL,
 	MODIFIED_BY INT(18) NOT NULL,
 	STORY_POINTS VARCHAR(255) NULL DEFAULT NULL,

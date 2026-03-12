@@ -8,7 +8,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $arActivityDescription = [
 	'NAME' => GetMessage('CRM_ACTIVITY_CREATE_LEAD_NAME'),
 	'DESCRIPTION' => GetMessage('CRM_ACTIVITY_CREATE_LEAD_DESC'),
-	'TYPE' => 'activity',
+	'TYPE' => [
+		\Bitrix\Bizproc\Activity\Enum\ActivityType::ACTIVITY->value,
+		\Bitrix\Bizproc\Activity\Enum\ActivityType::NODE_ACTION->value,
+	],
 	'CLASS' => 'CreateCrmLeadDocumentActivity',
 	'JSCLASS' => 'BizProcActivity',
 	'CATEGORY' => [

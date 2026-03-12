@@ -183,7 +183,7 @@ export const CheckListList = {
 					<slot/>
 					<div
 						v-if="canCheckListAdd"
-						class="tasks-check-list-list-content-row --footer"
+						class="tasks-check-list-list-content-row --footer print-ignore"
 						@click="$emit('addFastCheckList')"
 					>
 						<div

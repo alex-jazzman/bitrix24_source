@@ -1,0 +1,15 @@
+.complex-block-port-placeholder {
+	position: relative;
+	left: -9px;
+}
+
+.complex-block-port-placeholder__title {
+	font-size: 12px;
+	line-height: 15px;
+	margin-left: 5px;
+	color: #a4abb2;
+}
+
+.complex-block-port-placeholder svg:hover {
+	stroke: var(--ui-color-blue-57);
+}

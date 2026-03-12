@@ -9,21 +9,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const Quote = {
 	  sendQuoteEvent(payload) {
 	    const {
-	      message,
 	      text,
 	      dialogId,
 	      context: {
 	        emitter
-	      }
+	      },
+	      additionalParams = {}
 	    } = payload;
 	    emitter.emit(im_v2_const.EventType.textarea.insertText, {
-	      text: this.prepareQuoteText(message, text),
+	      text,
 	      dialogId,
 	      withNewLine: true,
-	      replace: false
+	      ...additionalParams
 	    });
 	  },
-	  prepareQuoteText(message, text) {
+	  prepareInlineQuote(textBefore, textAfter, quoteText) {
+	    const needNewLineBefore = textBefore && !textBefore.endsWith('\n');
+	    const formattedTextBefore = needNewLineBefore ? `${textBefore}\n` : textBefore;
+	    const needNewLineAfter = textAfter && !textAfter.startsWith('\n');
+	    const formattedTextAfter = needNewLineAfter ? `\n${textAfter}` : textAfter;
+	    return `${formattedTextBefore}${QUOTE_DELIMITER}\n${quoteText}\n${QUOTE_DELIMITER}${formattedTextAfter}`;
+	  },
+	  prepareInlineMessageQuote(message, text) {
 	    const dialog = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](message.chatId);
 	    let quoteTitle = main_core.Loc.getMessage('IM_DIALOG_CHAT_QUOTE_DEFAULT_TITLE');
 	    if (message.authorId) {

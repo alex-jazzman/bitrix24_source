@@ -15,6 +15,7 @@ return [
 		'ui-system/blocks/badges/counter',
 		'layout/ui/loaders/spinner',
 		'layout/ui/context-menu/section',
+		'utils/skeleton',
 	],
 	'bundle' => [
 		'./src/item-type-enum',

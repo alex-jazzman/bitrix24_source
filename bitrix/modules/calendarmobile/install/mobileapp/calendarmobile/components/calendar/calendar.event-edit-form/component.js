@@ -9,6 +9,7 @@
 		const participantsEntityList = BX.componentParameters.get('PARTICIPANTS_ENTITY_LIST', []);
 		const description = BX.componentParameters.get('DESCRIPTION', '');
 		const createChatId = BX.componentParameters.get('CREATE_CHAT_ID', null);
+		const createMailId = BX.componentParameters.get('CREATE_MAIL_ID', null);
 		const uuid = BX.componentParameters.get('UUID', null);
 
 		await EventEditForm.initEditForm({
@@ -17,6 +18,7 @@
 			participantsEntityList,
 			description,
 			createChatId,
+			createMailId,
 			uuid,
 		});
 

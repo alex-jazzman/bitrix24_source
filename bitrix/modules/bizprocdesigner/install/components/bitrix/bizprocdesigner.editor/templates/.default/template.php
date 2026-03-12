@@ -83,21 +83,17 @@ if ($isLegacyPropertiesDialog)
 	Asset::getInstance()->addJs('/bitrix/js/bizproc/bizproc.js');
 
 	/** @var ActivityDescription $description */
-	foreach ($arResult['ACTIVITIES'] as $activityId => $description)
+	foreach ($arResult['ALL_NODES'] as $activityId => $description)
 	{
 		$loadActivityJs($description, $activityId);
 	}
 }
 
-/** @var ActivityDescription $description */
-foreach ($arResult['ACTIVITIES'] as $description)
-{
-	$loadActivityJs($description, 'renderer');
-	$loadActivityCss($description, 'renderer');
-}
+/** @var \Bitrix\Bizproc\Runtime\ActivitySearcher\Activities $allActivities */
+$allActivities = $arResult['ALL_NODES'];
 
 /** @var ActivityDescription $description */
-foreach ($arResult['TRIGGERS'] as $description)
+foreach ($allActivities as $description)
 {
 	$loadActivityJs($description, 'renderer');
 	$loadActivityCss($description, 'renderer');
@@ -115,7 +111,7 @@ foreach ($arResult['TRIGGERS'] as $description)
 	if (!!<?=$isLegacyPropertiesDialog?>)
 	{
 		BPDesignerUseJson = true;
-		arAllActivities = <?= Json::encode($arResult['ACTIVITIES']) ?>;
+		arAllActivities = <?= Json::encode($allActivities) ?>;
 		arWorkflowTemplate = {};
 		arAllId = {};
 		rootActivity = CreateActivity('NodeWorkflowActivity');

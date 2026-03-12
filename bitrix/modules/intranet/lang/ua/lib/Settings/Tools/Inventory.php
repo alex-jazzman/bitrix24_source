@@ -1,2 +1,0 @@
-<?php
-$MESS["INTRANET_SETTINGS_TOOLS_INVENTORY_MANAGEMENT_MAIN"] = "Складський облік";

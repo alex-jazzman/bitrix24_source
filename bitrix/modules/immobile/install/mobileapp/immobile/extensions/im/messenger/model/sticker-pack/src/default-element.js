@@ -12,29 +12,29 @@ jn.define('im/messenger/model/sticker-pack/default-element', (require, exports, 
 		width: 0,
 		height: 0,
 		type: 'image',
+		packId: 0,
+		packType: 'vendor',
+		sort: 0,
 	};
 
 	/**
-	 * @type {StickerPackModelState}
+	 * @type {StickerPackState}
 	 */
 	const packDefaultElement = {
 		id: 0,
-		stickers: [],
-		type: 'vendor',
 		name: '',
+		type: 'vendor',
+		authorId: null,
+		isAdded: false,
 	};
 
 	/**
-	 * @type {FullStickerData}
+	 * @type {RecentStickerState}
 	 */
 	const recentStickerDefaultElement = {
 		id: 0,
 		packId: 0,
 		packType: 'vendor',
-		width: 0,
-		height: 0,
-		type: 'image',
-		uri: null,
 	};
 
 	module.exports = {

@@ -1,4 +1,5 @@
 import { Text, Event, Type } from 'main.core';
+import { BaseEvent } from 'main.core.events';
 
 import { mapGetters } from 'ui.vue3.vuex';
 import { BMenu, type MenuOptions, type MenuItemOptions } from 'ui.vue3.components.menu';
@@ -7,7 +8,8 @@ import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
-import { Model, EventName } from 'tasks.v2.const';
+import { Model, EventName, Analytics } from 'tasks.v2.const';
+import { analytics } from 'tasks.v2.lib.analytics';
 import { showLimit } from 'tasks.v2.lib.show-limit';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { resultService } from 'tasks.v2.provider.service.result-service';
@@ -31,6 +33,8 @@ export const ResultsChip = {
 		task: {},
 		taskId: {},
 		isEdit: {},
+		analytics: {},
+		cardType: {},
 	},
 	props: {
 		isSheetShown: {
@@ -68,7 +72,7 @@ export const ResultsChip = {
 		},
 		isSelected(): boolean
 		{
-			return !this.isLocked && (this.task.filledFields[resultsMeta.id] || this.task.requireResult);
+			return this.task.filledFields[resultsMeta.id] || this.task.requireResult;
 		},
 		menuOptions(): MenuOptions
 		{
@@ -102,6 +106,7 @@ export const ResultsChip = {
 					title: this.loc('TASKS_V2_RESULT_REQUIRE'),
 					icon: Outline.WINDOW_FLAG,
 					onClick: this.requireResult,
+					isLocked: this.isLocked,
 					dataset: {
 						id: `MenuResultRequire-${this.taskId}`,
 					},
@@ -112,29 +117,26 @@ export const ResultsChip = {
 		{
 			return !Core.getParams().restrictions.requiredResult.available;
 		},
+		featureId(): string
+		{
+			return Core.getParams().restrictions.requiredResult.featureId;
+		},
 	},
 	mounted(): void
 	{
 		Event.EventEmitter.subscribe(EventName.AddResultFromChat, this.handleAddResultFromChat);
 		Event.EventEmitter.subscribe(EventName.DeleteResultFromChat, this.handleDeleteResultFromChat);
+		Event.EventEmitter.subscribe(EventName.OpenPrefilledResultForm, this.handleOpenPrefilledResultForm);
 	},
 	beforeUnmount(): void
 	{
 		Event.EventEmitter.unsubscribe(EventName.AddResultFromChat, this.handleAddResultFromChat);
 		Event.EventEmitter.unsubscribe(EventName.DeleteResultFromChat, this.handleDeleteResultFromChat);
+		Event.EventEmitter.unsubscribe(EventName.OpenPrefilledResultForm, this.handleOpenPrefilledResultForm);
 	},
 	methods: {
 		handleClick(): void
 		{
-			if (this.isLocked)
-			{
-				void showLimit({
-					featureId: Core.getParams().restrictions.requiredResult.featureId,
-				});
-
-				return;
-			}
-
 			if (this.isSelected)
 			{
 				this.highlightField();
@@ -142,7 +144,7 @@ export const ResultsChip = {
 				return;
 			}
 
-			if (!this.isEdit)
+			if (!this.isEdit && !this.isLocked)
 			{
 				this.requireResult();
 
@@ -180,9 +182,24 @@ export const ResultsChip = {
 				},
 			};
 
-			await resultService.addResultFromMessage(taskId, messageId, payload);
+			const isSuccess = await resultService.addResultFromMessage(taskId, messageId, payload);
 
-			Event.EventEmitter.emit(EventName.ResultFromMessageAdded, { taskId });
+			this.sendAnalyticsResultFromMessageAdd(isSuccess);
+
+			if (isSuccess)
+			{
+				Event.EventEmitter.emit(EventName.ResultFromMessageAdded, { taskId });
+			}
+		},
+		sendAnalyticsResultFromMessageAdd(isSuccess: boolean): void
+		{
+			analytics.sendStatusSummaryAdd(this.analytics, {
+				isSuccess,
+				cardType: this.cardType,
+				taskId: Type.isNumber(this.taskId) ? this.taskId : 0,
+				element: Analytics.Element.ChatContextMenu,
+				subSection: Analytics.SubSection.Chat,
+			});
 		},
 		handleDeleteResultFromChat(event): void
 		{
@@ -195,12 +212,13 @@ export const ResultsChip = {
 
 			void resultService.delete(resultId);
 		},
-		openAddResultSheet(): void
+		openAddResultSheet(text = null): void
 		{
 			const id = Text.getRandom();
 
 			const payload = {
 				id,
+				text,
 				taskId: this.taskId,
 				author: this.getUser(this.currentUserId),
 			};
@@ -212,6 +230,19 @@ export const ResultsChip = {
 		},
 		async requireResult(): void
 		{
+			if (this.isLocked)
+			{
+				void showLimit({
+					code: `limit_${this.featureId}`,
+					bindElement: this.$refs.chip.$el,
+					analytics: {
+						type: 'limit_tasks_status_summary',
+					},
+				});
+
+				return;
+			}
+
 			void taskService.update(this.taskId, { requireResult: true });
 
 			if (!this.isEdit)
@@ -237,6 +268,17 @@ export const ResultsChip = {
 		{
 			this.$emit('update:isSheetShown', isShown);
 		},
+		handleOpenPrefilledResultForm(event: BaseEvent): void
+		{
+			const { taskId, text } = event.getData();
+
+			if (this.taskId !== taskId)
+			{
+				return;
+			}
+
+			this.openAddResultSheet(text);
+		},
 	},
 	template: `
 		<Chip
@@ -245,7 +287,6 @@ export const ResultsChip = {
 			:icon="Outline.WINDOW_FLAG"
 			:data-task-id="taskId"
 			:data-task-chip-id="resultsMeta.id"
-			:lock="isLocked"
 			ref="chip"
 			@click="handleClick"
 		/>

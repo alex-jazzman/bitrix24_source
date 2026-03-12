@@ -1,2 +1,0 @@
-<?php
-$MESS["COPILOT_CALL_SCRIPT_TAB_TITLE"] = "Скрипти";

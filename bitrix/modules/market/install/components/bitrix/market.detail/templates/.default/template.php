@@ -51,7 +51,6 @@ Extension::load([
 ]);
 Content::showAdditional($arResult);
 ?>
-
 <div id="market-wrapper-vue"></div>
 
 <script>

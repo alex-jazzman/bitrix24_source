@@ -16,7 +16,7 @@
 	--ui-text-editor-border-width: 1px;
 	--ui-text-editor-border-style: solid;
 	--ui-text-editor-border-color-base: #ccc;
-	--ui-text-editor-border-color-focus: #2fc6f6;
+	--ui-text-editor-border-color-focus: var(--ui-color-accent-main-link);
 
 	--ui-text-editor-color-text: var(--ui-color-text-primary);
 	--ui-text-editor-color-link: var(--ui-color-link-primary-base);

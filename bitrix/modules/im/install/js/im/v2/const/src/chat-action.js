@@ -51,4 +51,6 @@ export const ActionByUserType = Object.freeze({
 	createConference: 'createConference',
 	leaveCollab: 'leaveCollab',
 	changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
+	changeStickerPack: 'changeStickerPack',
+	createStickerPack: 'createStickerPack',
 });

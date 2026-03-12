@@ -1,0 +1,15 @@
+.tasks-full-card-templates-button-container .ui-icon-set {
+	width: 20px;
+	height: 20px;
+}
+
+.tasks-full-card-templates-button-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	white-space: nowrap;
+	color: var(--ui-color-design-plain-na-content);
+	font-weight: var(--ui-font-weight-medium);
+	gap: 4px;
+	padding-left: 6px;
+}

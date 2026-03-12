@@ -2,18 +2,12 @@
 import { Dom, Event, Loc, Tag, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Item, TagSelector } from 'ui.entity-selector';
-import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
-import { Dialog } from 'ui.system.dialog';
 import type { Parameter, ParameterSelectorParams } from './types';
 import './css/main.css';
 
 export class DashboardParametersSelector
 {
-	#scopePopupTextMap: { string: string } = {
-		workflow_template_id: Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_SCOPE_CONFIRMATION_POPUP_WORKFLOW_TEMPLATE'),
-		tasks_flows_flow_id: Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_SCOPE_CONFIRMATION_POPUP_TASKS_FLOWS_FLOW'),
-	};
-
+	#isAllowedClearGroups: boolean;
 	#groups: Set<number>;
 	#initialGroups: Set<number>;
 	#scopes: Set<string>;
@@ -38,6 +32,10 @@ export class DashboardParametersSelector
 		this.#initialParams = new Set(params.params);
 
 		this.#paramList = params.paramList;
+
+		this.activeUrlParamsSelector = params.activeUrlParamsSelector ?? true;
+		this.isNewDashboard = params.isNewDashboard ?? false;
+		this.#isAllowedClearGroups = params.isAllowedClearGroups ?? false;
 	}
 
 	getValues(): { groups: Set<number>, scopes: Set<string>, params: Set<string> }
@@ -56,7 +54,8 @@ export class DashboardParametersSelector
 				<div class="dashboard-params-title-container">
 					<div class="dashboard-params-title">
 						${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_GROUPS')}
-						<span data-hint="${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_GROUPS_HINT')}"></span>
+						${this.#isAllowedClearGroups ? '' : `<span class="ui-require-sign">*</span>`}
+						<span data-hint="${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_GROUPS_HINT_MSGVER_1')}"></span>
 					</div>
 				</div>
 				<div class="dashboard-params-groups-selector"></div>
@@ -65,6 +64,9 @@ export class DashboardParametersSelector
 					<div>
 						<div class="dashboard-params-title">
 							${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_PARAMS')}
+							${this.isNewDashboard && this.activeUrlParamsSelector ? `
+								<span data-hint='${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT')}'></span>
+							` : ''}
 						</div>
 					</div>
 					<div class="dashboard-params-list-link">
@@ -131,7 +133,9 @@ export class DashboardParametersSelector
 					{
 						id: 'biconnector-superset-group',
 						dynamicLoad: true,
-						options: {},
+						options: {
+							checkAccessEditRights: true,
+						},
 					},
 				],
 				preselectedItems,
@@ -198,6 +202,7 @@ export class DashboardParametersSelector
 		const paramSelector: TagSelector = new TagSelector({
 			id: 'biconnector-superset-params',
 			multiple: true,
+			locked: !this.activeUrlParamsSelector,
 			items: tagItems,
 			dialogOptions: {
 				id: 'biconnector-superset-params',
@@ -222,17 +227,6 @@ export class DashboardParametersSelector
 						title: 'params',
 					},
 				],
-				events: {
-					'Item:onSelect': (event: BaseEvent) => {
-						const item: Item = event.getData().item;
-						this.#onParamSelect(item);
-					},
-					'Item:onDeselect': (event: BaseEvent) => {
-						const item: Item = event.getData().item;
-						const parameter: Parameter = this.#paramList[item.getId()] ?? {};
-						this.#releaseScope(parameter.scope, this.#getOwnerCode('param', parameter.code));
-					},
-				},
 			},
 			events: {
 				onBeforeTagAdd: (event: BaseEvent) => {
@@ -254,32 +248,18 @@ export class DashboardParametersSelector
 
 		this.#paramsSelector = paramSelector;
 
+		if (!this.activeUrlParamsSelector)
+		{
+			const listLink = document.querySelector('.dashboard-params-list-link');
+			if (listLink)
+			{
+				Dom.style(listLink, 'display', 'none');
+			}
+		}
+
 		this.#buildInitialScopeOwners();
 
 		EventEmitter.emit('BIConnector.DashboardParamsSelector:initCompleted');
-	}
-
-	#onParamSelect(paramItem: Item): void
-	{
-		const parameter: Parameter = this.#paramList[paramItem.getId()] ?? {};
-
-		if (!this.#scopePopupTextMap[parameter.code])
-		{
-			return;
-		}
-
-		if (this.#scopes.has(parameter.scope))
-		{
-			this.#acquireScope(
-				this.#paramList[parameter.code].scope,
-				this.#getOwnerCode('param', parameter.code),
-			);
-
-			return;
-		}
-
-		this.#paramsSelector.getDialog().setAutoHide(false);
-		this.#openScopeConfirmationPopup(parameter.code);
 	}
 
 	#getParamTitle(paramCode: string): { title: string, supertitle: string }
@@ -319,7 +299,9 @@ export class DashboardParametersSelector
 
 		const isChanged: boolean = isScopeChanged || isParamsChanged || isGroupsChanged;
 
-		EventEmitter.emit('BIConnector.DashboardParamsSelector:onChange', { isChanged });
+		const isLocked: boolean = !this.#isAllowedClearGroups && this.#groups.size === 0;
+
+		EventEmitter.emit('BIConnector.DashboardParamsSelector:onChange', { isChanged, isLocked });
 	}
 
 	#openParamListSlider(): void
@@ -415,50 +397,5 @@ export class DashboardParametersSelector
 	#getOwnerCode(type: 'group' | 'param', code: string | number): string
 	{
 		return `${type}_${code}`;
-	}
-
-	#openScopeConfirmationPopup(paramCode: string): void
-	{
-		const popupInstance = new Dialog({
-			content: this.#getScopeConfirmationPopupContent(paramCode),
-			centerButtons: [
-				new Button({
-					text: Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_SCOPE_CONFIRMATION_POPUP_YES_CAPTION'),
-					size: ButtonSize.LARGE,
-					style: AirButtonStyle.FILLED,
-					useAirDesign: true,
-					onclick: () => {
-						popupInstance.hide();
-						this.#acquireScope(
-							this.#paramList[paramCode].scope,
-							this.#getOwnerCode('param', paramCode),
-						);
-					},
-				}),
-				new Button({
-					text: Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_SCOPE_CONFIRMATION_POPUP_NO_CAPTION'),
-					size: ButtonSize.LARGE,
-					style: AirButtonStyle.PLAIN,
-					useAirDesign: true,
-					onclick: () => popupInstance.hide(),
-				}),
-			],
-			events: {
-				onHide: () => this.#paramsSelector.getDialog().setAutoHide(true),
-			},
-			hasOverlay: true,
-			width: 300,
-		});
-
-		popupInstance.show();
-	}
-
-	#getScopeConfirmationPopupContent(paramCode: string): HTMLElement
-	{
-		return Tag.render`
-			<div class="biconnector-scope-confirmation-popup-content">
-				${this.#scopePopupTextMap[paramCode]}
-			</div>
-		`;
 	}
 }

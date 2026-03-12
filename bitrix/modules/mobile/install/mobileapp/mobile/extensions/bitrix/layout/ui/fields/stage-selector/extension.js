@@ -154,6 +154,13 @@ jn.define('layout/ui/fields/stage-selector', (require, exports, module) => {
 			return stages.includes(this.state.activeStageId);
 		}
 
+		isActiveStage(stageId)
+		{
+			const { activeStageId } = this.state;
+
+			return activeStageId === stageId;
+		}
+
 		renderStageSlider()
 		{
 			const { activeStageId, nextStageId } = this.state;
@@ -255,7 +262,6 @@ jn.define('layout/ui/fields/stage-selector', (require, exports, module) => {
 		onStageClick(stage)
 		{
 			const { id } = stage;
-			const { activeStageId } = this.state;
 
 			if (this.isAnimationInProgress)
 			{
@@ -266,7 +272,7 @@ jn.define('layout/ui/fields/stage-selector', (require, exports, module) => {
 			{
 				this.notifyAboutReadOnlyStatus();
 			}
-			else if (this.getConfig().useStageChangeMenu && activeStageId !== id)
+			else if (this.getConfig().useStageChangeMenu && !this.isActiveStage(id))
 			{
 				this.openStageChangeMenu(stage);
 			}
@@ -278,7 +284,6 @@ jn.define('layout/ui/fields/stage-selector', (require, exports, module) => {
 
 		onStageLongClick(stage)
 		{
-			const { activeStageId } = this.state;
 			const { id } = stage;
 
 			if (this.isAnimationInProgress)
@@ -290,7 +295,7 @@ jn.define('layout/ui/fields/stage-selector', (require, exports, module) => {
 			{
 				this.notifyAboutReadOnlyStatus();
 			}
-			else if (this.getConfig().useStageChangeMenu && activeStageId !== id)
+			else if (this.getConfig().useStageChangeMenu && !this.isActiveStage(id))
 			{
 				this.openStageChangeMenu(stage);
 			}

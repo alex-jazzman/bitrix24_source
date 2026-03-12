@@ -1,4 +1,0 @@
-<?php
-$MESS["DISK_UF_IM_CALL_CONNECTOR_CALL_DOCUMENT_UPDATED"] = "Құжат өзгертілді";
-$MESS["DISK_UF_IM_CALL_CONNECTOR_CALL_RESUME_UPDATED"] = "Кездесу түйіндемесі өзгертілді";
-$MESS["DISK_UF_IM_CALL_CONNECTOR_TITLE"] = "\"#NAME#\" чаты";

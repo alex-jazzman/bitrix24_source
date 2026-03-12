@@ -6,7 +6,8 @@ import '../css/aha-moment-notify.css';
 
 const SPOTLIGHT_ID_PREFIX = 'bx-call-aha-moment-notify_spotlight';
 
-export class AhaMomentNotify {
+export class AhaMomentNotify
+{
 	constructor(config)
 	{
 		this.popup = null;
@@ -18,10 +19,11 @@ export class AhaMomentNotify {
 		this.bindElement = config.bindElement;
 		this.notifyColor = '#22272B';
 		this.spotlight = null;
+		this.targetContainer = config.bindElement || document.body;
 
 		this.callbacks = {
 			onClose: BX.type.isFunction(config.onClose) ? config.onClose : BX.DoNothing,
-		}
+		};
 	}
 
 	getPopupTemplate()
@@ -29,8 +31,8 @@ export class AhaMomentNotify {
 		if (this.popupTemplate)
 		{
 			return;
-		}			
-		
+		}
+
 		this.popupTemplate = Dom.create('div', {
 			props: {className: 'bx-call-aha-moment-notify__content'},
 			children: [
@@ -60,20 +62,20 @@ export class AhaMomentNotify {
 			]
 		});
 	}
-	
+
 	getSpotlight()
 	{
 		if (!this.bindElement)
 		{
 			return;
 		}
-		
+
 		if (this.spotlight)
 		{
 			this.spotlight.close();
 			this.spotlight = null;
-		}		
-		
+		}
+
 		const id = `${SPOTLIGHT_ID_PREFIX}_${this.id}`;
 
 		this.spotlight = new BX.SpotLight({
@@ -82,7 +84,7 @@ export class AhaMomentNotify {
 			targetVertex: 'middle-center',
 			lightMode: true,
 			zIndex: 1500,
-		});		
+		});
 
 		return this.spotlight;
 	}
@@ -101,7 +103,7 @@ export class AhaMomentNotify {
 		this.popup = new Popup({
 			className : 'bx-call-aha-moment-notify',
 			bindElement: this.bindElement,
-			targetContainer: document.body,
+			targetContainer: this.targetContainer,
 			content: this.popupTemplate,
 			bindOptions: {
 				position: 'bottom',
@@ -160,12 +162,12 @@ export class AhaMomentNotify {
 		{
 			return;
 		}
-		
+
 		if(!this.spotlight)
 		{
 			this.getSpotlight();
 		}
-		
+
 		this.spotlight.show();
 		this.spotlight.getTargetContainer().hidden = false;
 
@@ -181,7 +183,7 @@ export class AhaMomentNotify {
 		{
 			this.popup.close();
 		}
-		
+
 		if (this.spotlight)
 		{
 			this.spotlight.close();

@@ -16,5 +16,6 @@ return [
 		'./src/disk',
 		'./src/reaction',
 		'./src/gratitude',
+		'./src/social',
 	],
 ];

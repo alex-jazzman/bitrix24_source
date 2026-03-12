@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_sidepanel,ui_vue3,main_core_events,main_core,ui_iconSet_api_vue,ui_iconSet_api_core,ui_system_menu_vue,ui_vue3_components_button,bizproc_setupTemplate) {
+(function (exports,main_sidepanel,ui_vue3,main_polyfill_intersectionobserver,main_core,main_core_events,ui_iconSet_api_vue,ui_iconSet_api_core,ui_system_menu_vue,ui_vue3_components_button,bizproc_setupTemplate) {
 	'use strict';
 
 	// @vue/component
@@ -29,7 +29,9 @@ this.BX = this.BX || {};
 	        offsetX: 0,
 	        offsetY: 0,
 	        lastTargetBlockIndex: null,
-	        lastTargetItemIndex: null
+	        lastTargetItemIndex: null,
+	        mouseX: 0,
+	        mouseY: 0
 	      }
 	    };
 	  },
@@ -41,6 +43,7 @@ this.BX = this.BX || {};
 	  created() {
 	    this.boundHandleDragMove = this.handleDragMove.bind(this);
 	    this.boundHandleDragEnd = this.handleDragEnd.bind(this);
+	    main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.onScrollContainer);
 	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.onGlobalDragStart);
 	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:dragover', this.onGlobalDragOver);
 	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:end', this.onGlobalDragEnd);
@@ -49,6 +52,7 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.onGlobalDragStart);
 	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:dragover', this.onGlobalDragOver);
 	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:end', this.onGlobalDragEnd);
+	    main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.onScrollContainer);
 	  },
 	  methods: {
 	    onGlobalDragStart(e) {
@@ -67,6 +71,8 @@ this.BX = this.BX || {};
 	      this.dragState.sourceBlockIndex = this.blockIndex;
 	      this.dragState.draggedItemIndex = sourceItemIndex;
 	      this.dragState.draggedElement = element;
+	      this.dragState.mouseX = event.clientX;
+	      this.dragState.mouseY = event.clientY;
 	      this.createGhost(event);
 	      main_core.Dom.addClass(this.dragState.draggedElement, '--dragging');
 	      main_core.Dom.addClass(document.body, '--user-dragging');
@@ -89,7 +95,12 @@ this.BX = this.BX || {};
 	      if (!this.isDragging) {
 	        return;
 	      }
+	      this.dragState.mouseX = event.clientX;
+	      this.dragState.mouseY = event.clientY;
 	      this.updateGhostPosition(event);
+	      main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:move', {
+	        clientY: event.clientY
+	      });
 	      const result = {
 	        targetBlockIndex: null,
 	        targetItemIndex: null
@@ -150,7 +161,9 @@ this.BX = this.BX || {};
 	        offsetX: 0,
 	        offsetY: 0,
 	        lastTargetBlockIndex: null,
-	        lastTargetItemIndex: null
+	        lastTargetItemIndex: null,
+	        mouseX: 0,
+	        mouseY: 0
 	      };
 	    },
 	    updateGhostPosition(event) {
@@ -170,6 +183,14 @@ this.BX = this.BX || {};
 	      main_core.Dom.append(ghost, document.body);
 	      this.dragState.ghostElement = ghost;
 	      this.updateGhostPosition(event);
+	    },
+	    onScrollContainer() {
+	      if (this.isDragging) {
+	        this.handleDragMove({
+	          clientX: this.dragState.mouseX,
+	          clientY: this.dragState.mouseY
+	        });
+	      }
 	    }
 	  },
 	  template: `
@@ -383,7 +404,7 @@ this.BX = this.BX || {};
 	    Type: constant.constantType,
 	    Required: 0,
 	    Multiple: constant.multiple ? 1 : 0,
-	    Options: constant.options && constant.options.length > 0 ? constant.options : null,
+	    Options: main_core.Type.isObject(constant.options) ? constant.options : null,
 	    Default: constant.default
 	  };
 	}
@@ -398,6 +419,19 @@ this.BX = this.BX || {};
 	}
 	function generateConstantId() {
 	  return CONSTANT_ID_PREFIX + generateRandomString(10);
+	}
+	function getScrollParent(node) {
+	  let parent = node == null ? void 0 : node.parentElement;
+	  while (parent && parent !== document.body) {
+	    const style = window.getComputedStyle(parent);
+	    const overflowY = style.overflowY;
+	    const isScrollable = overflowY === 'auto' || overflowY === 'scroll';
+	    if (isScrollable && parent.tagName !== 'FORM') {
+	      return parent;
+	    }
+	    parent = parent.parentElement;
+	  }
+	  return null;
 	}
 
 	// @vue/component
@@ -448,6 +482,14 @@ this.BX = this.BX || {};
 	      };
 	    }
 	  },
+	  mounted() {
+	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+	    main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+	  },
+	  unmounted() {
+	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+	    main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+	  },
 	  methods: {
 	    onShowMenu(event) {
 	      var _this$$refs$addElemen, _this$$refs$addElemen2;
@@ -466,6 +508,10 @@ this.BX = this.BX || {};
 	        potentialId = `${BASE_NAME}${counter}`;
 	      }
 	      return potentialId;
+	    },
+	    closeMenu() {
+	      this.$refs.addElementButton.blur();
+	      this.isMenuShown = false;
 	    }
 	  },
 	  template: `
@@ -521,6 +567,13 @@ this.BX = this.BX || {};
 	      default: false
 	    }
 	  },
+	  data() {
+	    return {
+	      isFixed: false,
+	      containerWidth: 'auto',
+	      containerTop: '0px'
+	    };
+	  },
 	  computed: {
 	    icon() {
 	      return this.showPreview ? ui_iconSet_api_core.Outline.CROSSED_EYE : ui_iconSet_api_core.Outline.OBSERVER;
@@ -529,20 +582,62 @@ this.BX = this.BX || {};
 	      return this.showPreview ? this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_HIDE_PREVIEW_BTN_TEXT') : this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_SHOW_PREVIEW_BTN_TEXT');
 	    }
 	  },
+	  mounted() {
+	    this.initObserver();
+	  },
+	  beforeUnmount() {
+	    var _this$observer;
+	    (_this$observer = this.observer) == null ? void 0 : _this$observer.disconnect();
+	  },
+	  methods: {
+	    updatePosition(scrollContainer) {
+	      if (this.$el && scrollContainer) {
+	        const rect = scrollContainer.getBoundingClientRect();
+	        this.containerTop = `${rect.top}px`;
+	        this.containerWidth = `${scrollContainer.offsetWidth}px`;
+	      }
+	    },
+	    initObserver() {
+	      const scrollContainer = getScrollParent(this.$el);
+	      if (!scrollContainer) {
+	        return;
+	      }
+	      this.observer = new IntersectionObserver(([entry]) => {
+	        const rootTop = entry.rootBounds ? entry.rootBounds.top : 0;
+	        this.isFixed = entry.boundingClientRect.top <= rootTop;
+	        if (this.isFixed) {
+	          this.updatePosition(scrollContainer);
+	        }
+	      }, {
+	        root: scrollContainer,
+	        threshold: [1],
+	        rootMargin: '0px'
+	      });
+	      this.observer.observe(this.$el);
+	    }
+	  },
 	  template: `
-		<button
-			class="bizproc-setuptemplateactivity-preview-btn"
-			type="button"
-		>
-			<BIcon
-				:name="icon"
-				:size="24"
-				class="bizproc-setuptemplateactivity-preview-btn__icon"
-			/>
-			<span class="bizproc-setuptemplateactivity-preview-btn__label">
-				{{ label }}
-			</span>
-		</button
+		<div class="bizproc-setuptemplateactivity-preview-btn-container">
+			<div
+				class="bizproc-setuptemplateactivity-preview-btn-wrapper"
+				:class="{ '--fixed': isFixed }"
+				:style="isFixed ? { width: containerWidth, top: containerTop } : {}"
+			>
+				<button
+					class="bizproc-setuptemplateactivity-preview-btn"
+					type="button"
+				>
+					<BIcon
+						:name="icon"
+						:size="24"
+						class="bizproc-setuptemplateactivity-preview-btn__icon"
+					/>
+					<span class="bizproc-setuptemplateactivity-preview-btn__label">
+						{{ label }}
+					</span>
+				</button>
+			</div>
+		</div>
 	`
 	};
 
@@ -815,12 +910,12 @@ this.BX = this.BX || {};
 	      multiple: this.item.multiple,
 	      description: this.item.description,
 	      defaultValue: this.item.default,
-	      options: [...this.item.options],
+	      options: this.convertMapToOptionsModelArray(this.item.options),
 	      required: this.item.required,
 	      errors: {
 	        id: '',
 	        name: '',
-	        options: this.item.options.map(() => '')
+	        options: this.convertMapToOptionsModelArray(this.item.options).map(() => '')
 	      }
 	    };
 	  },
@@ -832,7 +927,8 @@ this.BX = this.BX || {};
 	      return {
 	        required: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_LABEL_REQUIRED'),
 	        idFormat: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_FORMAT'),
-	        idUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_UNIQUE')
+	        idUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_UNIQUE'),
+	        optionUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE')
 	      };
 	    }
 	  },
@@ -880,6 +976,12 @@ this.BX = this.BX || {};
 	        this.errors.options[index] = this.errorMessages.required;
 	        return false;
 	      }
+	      for (const [optionKey, option] of this.options.entries()) {
+	        if (optionKey !== index && option.name.trim() === name) {
+	          this.errors.options[index] = this.errorMessages.optionUnique;
+	          return false;
+	        }
+	      }
 	      return true;
 	    },
 	    validateOptions() {
@@ -889,11 +991,10 @@ this.BX = this.BX || {};
 	      let errorsCount = 0;
 	      this.errors.options = [];
 	      this.options.forEach((option, index) => {
-	        if (main_core.Type.isStringFilled(option.name.trim())) {
+	        if (this.validateOption(index)) {
 	          this.errors.options[index] = '';
 	        } else {
 	          errorsCount += 1;
-	          this.errors.options[index] = this.errorMessages.required;
 	        }
 	      });
 	      return errorsCount === 0;
@@ -921,7 +1022,7 @@ this.BX = this.BX || {};
 	          description: this.description,
 	          constantType: this.constantType,
 	          multiple: this.multiple,
-	          options: [...this.options],
+	          options: this.convertOptionModelsToMap(this.options),
 	          default: this.defaultValue,
 	          required: this.required
 	        },
@@ -932,6 +1033,26 @@ this.BX = this.BX || {};
 	      var _this$editSlider;
 	      (_this$editSlider = this.editSlider) == null ? void 0 : _this$editSlider.close();
 	      this.$emit('cancel');
+	    },
+	    convertMapToOptionsModelArray(options) {
+	      const models = [];
+	      Object.values(options).forEach(value => {
+	        if (main_core.Type.isStringFilled(value)) {
+	          models.push({
+	            name: value
+	          });
+	        }
+	      });
+	      return models;
+	    },
+	    convertOptionModelsToMap(models) {
+	      const options = {};
+	      for (const model of models) {
+	        if (main_core.Type.isStringFilled(model.name)) {
+	          options[model.name] = model.name;
+	        }
+	      }
+	      return options;
 	    }
 	  },
 	  template: `
@@ -1352,6 +1473,14 @@ this.BX = this.BX || {};
 	      };
 	    }
 	  },
+	  mounted() {
+	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+	    main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+	  },
+	  unmounted() {
+	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+	    main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+	  },
 	  methods: {
 	    onInput(event) {
 	      const payload = {
@@ -1374,6 +1503,9 @@ this.BX = this.BX || {};
 	        event,
 	        element: this.$el
 	      });
+	    },
+	    closeMenu() {
+	      this.isMenuShown = false;
 	    }
 	  },
 	  template: `
@@ -1970,5 +2102,5 @@ this.BX = this.BX || {};
 
 	exports.SetupTemplateActivity = SetupTemplateActivity;
 
-}((this.BX.Bizproc = this.BX.Bizproc || {}),BX.SidePanel,BX.Vue3,BX.Event,BX,BX.UI.IconSet,BX.UI.IconSet,BX.UI.System.Menu,BX.Vue3.Components,BX.Bizproc));
+}((this.BX.Bizproc = this.BX.Bizproc || {}),BX.SidePanel,BX.Vue3,BX,BX,BX.Event,BX.UI.IconSet,BX.UI.IconSet,BX.UI.System.Menu,BX.Vue3.Components,BX.Bizproc));
 //# sourceMappingURL=setup-template-activity.bundle.js.map

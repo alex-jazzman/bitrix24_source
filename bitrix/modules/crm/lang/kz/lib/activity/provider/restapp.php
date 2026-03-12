@@ -1,3 +1,0 @@
-<?php
-$MESS["CRM_ACTIVITY_PROVIDER_REST_APP_NAME_MSGVER_1"] = "Қосымша ісі (ескі нұсқа)";
-$MESS["CRM_ACTIVITY_PROVIDER_REST_APP_OPEN_BUTTON"] = "Қосымшаны ашу";

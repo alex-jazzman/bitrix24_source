@@ -123,6 +123,7 @@ export const CallEvent = {
 	onUserVoiceStarted: 'onUserVoiceStarted',
 	onUserVoiceStopped: 'onUserVoiceStopped',
 	onUserFloorRequest: 'onUserFloorRequest', // request for a permission to speak
+	onTurnOnCamera: 'onTurnOnCamera',
 	onAllParticipantsAudioMuted: 'onAllParticipantsAudioMuted',
 	onAllParticipantsVideoMuted: 'onAllParticipantsVideoMuted',
 	onAllParticipantsScreenshareMuted: 'onAllParticipantsScreenshareMuted',
@@ -161,6 +162,7 @@ export const CallEvent = {
 	onTransferRoomSpeaker: 'onTransferRoomSpeaker',
 	onDestroy: 'onDestroy',
 	onGetUserMediaEnded: 'onGetUserMediaEnded',
+	onGetUserMediaFailed: 'onGetUserMediaFailed',
 	onUpdateLastUsedCameraId: 'onUpdateLastUsedCameraId',
 	onToggleRemoteParticipantVideo: 'onToggleRemoteParticipantVideo',
 	onSwitchTrackRecordStatus: 'onSwitchTrackRecordStatus',
@@ -169,10 +171,10 @@ export const CallEvent = {
 };
 
 const ajaxActions = {
-	createCall: 'im.call.create',
+	createCall: 'call.CallManager.create',
 	createChatForChildCall: 'call.Call.createChatForChildCall',
 	getPublicChannels: 'pull.channel.public.list',
-	getCall: 'im.call.get'
+	getCall: 'call.CallManager.get'
 };
 
 export const CallScheme = {
@@ -187,7 +189,8 @@ class Engine
 	};
 
 	jwtPullHandlers = {
-		'chatUserAdd': this.#onCallTokenUpdate.bind(this),
+		chatUserAdd: this.#onCallTokenUpdate.bind(this),
+		'Call::logTokenUpdate': this.#onLogTokenUpdate.bind(this),
 		'Call::callTokenUpdate': this.#onCallTokenUpdate.bind(this),
 		'Call::clearCallTokens': this.#onCallTokenClear.bind(this),
 		'Call::callV2AvailabilityChanged': this.#onCallV2AvailabilityChanged.bind(this),
@@ -322,8 +325,20 @@ class Engine
 				{
 					return reject(error);
 				}
+				if (Type.isObject(error) && (error?.reason || error?.data))
+				{
+					return reject({
+						name: 'MEDIA_SERVER_UNREACHABLE',
+						code: 'MEDIA_SERVER_UNREACHABLE',
+						message: `Reason:${
+							error?.reason ? ` ${error?.reason}` : ''
+						}${
+							error?.data ? ` ${error?.data}` : ''
+						}`,
+					});
+				}
 
-				return reject({name: 'MEDIA_SERVER_UNREACHABLE', message: `Reason: ${error?.reason} ${error?.data}`});
+				return reject(error);
 			}
 
 			if (!data?.result?.mediaServerUrl || !data?.result?.roomData)
@@ -372,6 +387,11 @@ class Engine
 					mediaServerUrl: data.result.mediaServerUrl,
 					roomData: data.result.roomData,
 					roomType: data.result.roomType,
+					monitoringServerUrl: data.result.monitoring?.metricsServerUrl,
+					monitoringLogsServerUrl: data.result.monitoring?.logsServerUrl,
+					monitoringJwtToken: data.result.monitoring?.token,
+					monitoringEnvironment: data.result.monitoring?.env,
+					monitoringRegion: data.result.monitoring?.region,
 				},
 				scheme: data.result.scheme,
 			});
@@ -420,8 +440,8 @@ class Engine
 							}
 
 							const call = callFactory.createCall({
+								instanceId,
 								uuid: data.result.roomId,
-								instanceId: instanceId,
 								initiatorId: this.userId,
 								parentUuid: parentCall.uuid,
 								direction: Direction.Outgoing,
@@ -429,13 +449,17 @@ class Engine
 								type: callType,
 								startDate: data.result.startDate,
 								events: {
-									onDestroy: this.#onCallDestroy.bind(this)
+									onDestroy: this.#onCallDestroy.bind(this),
 								},
-								logToken: createCallResponse.logToken,
 								connectionData: {
 									mediaServerUrl: data.result.mediaServerUrl,
 									roomData: data.result.roomData,
 									roomType: data.result.roomType,
+									monitoringServerUrl: data.result.monitoring?.metricsServerUrl,
+									monitoringLogsServerUrl: data.result.monitoring?.logsServerUrl,
+									monitoringJwtToken: data.result.monitoring?.token,
+									monitoringEnvironment: data.result.monitoring?.env,
+									monitoringRegion: data.result.monitoring?.region,
 								},
 								debug: config.debug,
 								scheme: data.result.scheme,
@@ -462,40 +486,40 @@ class Engine
 
 	instantiateCall(callFields, callToken, logToken, userData): AbstractCall
 	{
-		const callUuid = callFields.UUID;
+		const uuid = callFields.UUID;
 
-		if (this.calls[callUuid])
+		if (this.calls[uuid])
 		{
-			console.warn(`Call ${callUuid} already exists, returning it instead of creating a new one`);
+			console.warn(`Call ${uuid} already exists, returning it instead of creating a new one`);
 
-			return this.calls[callUuid];
+			return this.calls[uuid];
 		}
 
-		const associatedEntity = callFields['ASSOCIATED_ENTITY'];
+		const associatedEntity = callFields.ASSOCIATED_ENTITY;
 		if (callToken)
 		{
 			CallTokenManager.setToken(associatedEntity.chatId, callToken);
 		}
 
-		const callFactory = this.#getCallFactory(callFields['PROVIDER']);
+		const callFactory = this.#getCallFactory(callFields.PROVIDER);
 		const call = callFactory.createCall({
-			uuid: callUuid,
+			uuid,
+			logToken,
 			instanceId: Util.getUuidv4(),
-			initiatorId: parseInt(callFields['INITIATOR_ID']),
-			parentUuid: callFields['PARENT_UUID'],
-			direction: callFields['INITIATOR_ID'] == this.userId ? Direction.Outgoing : Direction.Incoming,
+			initiatorId: parseInt(callFields.INITIATOR_ID, 10),
+			parentUuid: callFields.PARENT_UUID,
+			direction: callFields.INITIATOR_ID == this.userId ? Direction.Outgoing : Direction.Incoming,
 			associatedEntity: {
 				userCounter: Object.keys(userData).length,
-				...associatedEntity
+				...associatedEntity,
 			},
-			type: callFields['TYPE'],
-			startDate: callFields['START_DATE'],
-			logToken: logToken,
-			scheme: callFields['SCHEME'],
+			type: callFields.TYPE,
+			startDate: callFields.START_DATE,
+			scheme: callFields.SCHEME,
 
 			events: {
-				onDestroy: this.#onCallDestroy.bind(this)
-			}
+				onDestroy: this.#onCallDestroy.bind(this),
+			},
 		});
 
 		this.calls[call.uuid] = call;
@@ -503,7 +527,7 @@ class Engine
 		this.onCallCreated(call);
 
 		return call;
-	};
+	}
 
 	getCallWithId(uuid, config): Promise<{ call: AbstractCall, isNew: boolean }>
 	{
@@ -601,34 +625,37 @@ class Engine
 
 	async #onPullIncomingCall(params, extra)
 	{
-		console.log('#onPullIncomingCall', location.href);
 		if (extra.server_time_ago > 30)
 		{
-			console.error("Call was started too long time ago");
+			console.error('Call was started too long time ago');
+
 			return;
 		}
 
+		const logToken = params.logToken;
 		const callFields = params.call;
-		const callUuid = callFields.uuid;
-		let call;
+		const uuid = callFields.uuid;
+		let call = null;
 
 		CallAI.setup(params.aiSettings);
 
-		if (this.finishedCalls.has(callUuid))
+		if (this.finishedCalls.has(uuid))
 		{
-			this.log(callUuid, 'Got "Call::incoming" after "Call::finish"');
+			this.log(uuid, 'Got "Call::incoming" after "Call::finish"');
+
 			return;
 		}
 
 		CallTokenManager.setToken(callFields.associatedEntity.chatId, params.callToken);
 
-		if (this.calls[callUuid] instanceof CallStub) {
+		if (this.calls[uuid] instanceof CallStub)
+		{
 			return;
 		}
 
-		if (this.calls[callUuid])
+		if (this.calls[uuid])
 		{
-			call = this.calls[callUuid];
+			call = this.calls[uuid];
 
 			if (!this.#callHasAssociatedEntity(call))
 			{
@@ -642,8 +669,9 @@ class Engine
 			const callFactory = this.#getCallFactory(callFields.provider);
 			const instanceId = Util.getUuidv4();
 			call = callFactory.createCall({
-				uuid: callUuid,
-				instanceId: instanceId,
+				uuid,
+				instanceId,
+				logToken,
 				parentId: callFields.parentId || null,
 				parentUuid: callFields.parentUuid || null,
 				callFromMobile: params.isLegacyMobile === true,
@@ -652,31 +680,36 @@ class Engine
 				associatedEntity: callFields.associatedEntity,
 				type: callFields.type,
 				startDate: callFields.startDate,
-				logToken: callFields.logToken,
 				events: {
-					onDestroy: this.#onCallDestroy.bind(this)
+					onDestroy: this.#onCallDestroy.bind(this),
 				},
 				scheme: callFields.scheme,
 			});
 
-			this.calls[callUuid] = call;
+			this.calls[uuid] = call;
 
 			this.onCallCreated(call);
 		}
 
-		const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(callUuid, { timeout: 100 });
-		const hasActiveCalls = broadcastResponse.some(res => res);
+		const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(uuid, { timeout: 100 });
+		const hasActiveCalls = broadcastResponse.some((res) => res);
 
 		if (call && !hasActiveCalls)
 		{
-			BX.onCustomEvent(window, "CallEvents::incomingCall", [{
-				call: call,
+			BX.onCustomEvent(window, 'CallEvents::incomingCall', [{
+				call,
 				video: params.video === true,
-				isLegacyMobile: params.isLegacyMobile === true
+				isLegacyMobile: params.isLegacyMobile === true,
 			}]);
 		}
-		this.log(call.uuid, "Incoming call " + call.uuid);
-	};
+		this.log(call.uuid, `Incoming call ${call.uuid}`);
+	}
+
+	#onLogTokenUpdate(params): void
+	{
+		const call = this.calls[params.uuid];
+		call?.addLogToken(params.logToken);
+	}
 
 	#onCallTokenUpdate(params, extra)
 	{
@@ -777,13 +810,11 @@ class Engine
 		{
 			DesktopApi.writeToLogFile(BX.message('USER_ID') + '.video.log', text);
 		}
-		if (this.debugFlag)
-		{
-			if (console)
-			{
-				const a = ['Call log [' + Util.getTimeForLog() + ']: '];
-				console.log.apply(this, a.concat(Array.prototype.slice.call(arguments)));
-			}
+		
+		if ((CallEngine.debugFlag || Util.isConsoleLogsEnabled()) && console)
+		{			
+			const a = ['Call log [' + Util.getTimeForLog() + ']: '];
+			console.warn.apply(this, a.concat(Array.prototype.slice.call(arguments)));			
 		}
 	};
 

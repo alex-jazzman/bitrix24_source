@@ -19,10 +19,12 @@ this.BX = this.BX || {};
 	}
 
 	const ErrorCode = {
+	  ERROR_CODE_FORCE: 'ERROR_CODE_FORCE',
 	  MONTHLY_LIMIT: 'LIMIT_IS_EXCEEDED_MONTHLY',
 	  DAILY_LIMIT: 'LIMIT_IS_EXCEEDED_DAILY',
 	  TARIFF_LIMIT: 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF',
 	  BAAS_LIMIT: 'LIMIT_IS_EXCEEDED_BAAS',
+	  BAAS_RATE_LIMIT: 'LIMIT_IS_EXCEEDED_BAAS_RATE_LIMIT',
 	  OTHER: 'AI_ENGINE_ERROR_OTHER',
 	  PROVIDER: 'AI_ENGINE_ERROR_PROVIDER'
 	};
@@ -31,6 +33,9 @@ this.BX = this.BX || {};
 	var _validateHandleGenerateErrorParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("validateHandleGenerateErrorParams");
 	var _handleDailyLimitError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDailyLimitError");
 	var _handleMonthlyLimitError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleMonthlyLimitError");
+	var _handleForceError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleForceError");
+	var _sendMsg = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendMsg");
+	var _getError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getError");
 	var _handleTariffLimitError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTariffLimitError");
 	var _handleOtherError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleOtherError");
 	var _handleProviderError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleProviderError");
@@ -44,6 +49,17 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _validateHandleGenerateErrorParams)[_validateHandleGenerateErrorParams](handleGenerateErrorParams);
 	    const code = handleGenerateErrorParams.errorCode;
 	    switch (code) {
+	      case ErrorCode.ERROR_CODE_FORCE:
+	        {
+	          var _handleGenerateErrorP;
+	          if (handleGenerateErrorParams != null && (_handleGenerateErrorP = handleGenerateErrorParams.forceCodeRules) != null && _handleGenerateErrorP.length && handleGenerateErrorParams.forceOption) {
+	            const result = babelHelpers.classPrivateFieldLooseBase(this, _handleForceError)[_handleForceError](handleGenerateErrorParams.forceCodeRules, handleGenerateErrorParams.forceOption, handleGenerateErrorParams.copilotInput);
+	            if (result) {
+	              return;
+	            }
+	          }
+	          return babelHelpers.classPrivateFieldLooseBase(this, _handleProviderError)[_handleProviderError]();
+	        }
 	      case ErrorCode.MONTHLY_LIMIT:
 	        {
 	          return babelHelpers.classPrivateFieldLooseBase(this, _handleMonthlyLimitError)[_handleMonthlyLimitError](handleGenerateErrorParams == null ? void 0 : handleGenerateErrorParams.sliderCode);
@@ -61,7 +77,7 @@ this.BX = this.BX || {};
 	          if (handleGenerateErrorParams != null && handleGenerateErrorParams.showSliderWithMsg && handleGenerateErrorParams != null && handleGenerateErrorParams.sliderCode) {
 	            return babelHelpers.classPrivateFieldLooseBase(this, _handleMonthlyLimitError)[_handleMonthlyLimitError](handleGenerateErrorParams.sliderCode);
 	          }
-	          return babelHelpers.classPrivateFieldLooseBase(this, _handleBaasLimitError)[_handleBaasLimitError](handleGenerateErrorParams.baasOptions);
+	          return babelHelpers.classPrivateFieldLooseBase(this, _handleBaasLimitError)[_handleBaasLimitError](handleGenerateErrorParams.baasOptions, handleGenerateErrorParams.sliderCode);
 	        }
 	      case ErrorCode.OTHER:
 	        {
@@ -81,6 +97,16 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _validateHandleGenerateErrorParams)[_validateHandleGenerateErrorParams](handleGenerateErrorParams);
 	    const code = handleGenerateErrorParams.errorCode;
 	    switch (code) {
+	      case ErrorCode.ERROR_CODE_FORCE:
+	        {
+	          if (handleGenerateErrorParams.forceCodeRules && handleGenerateErrorParams.forceOption) {
+	            const result = babelHelpers.classPrivateFieldLooseBase(this, _handleForceError)[_handleForceError](handleGenerateErrorParams.forceCodeRules, handleGenerateErrorParams.forceOption, handleGenerateErrorParams.copilotInput);
+	            if (result) {
+	              return;
+	            }
+	          }
+	          return babelHelpers.classPrivateFieldLooseBase(this, _handleProviderError)[_handleProviderError]();
+	        }
 	      case ErrorCode.MONTHLY_LIMIT:
 	        {
 	          return babelHelpers.classPrivateFieldLooseBase(this, _handleMonthlyLimitError)[_handleMonthlyLimitError](handleGenerateErrorParams == null ? void 0 : handleGenerateErrorParams.sliderCode);
@@ -142,6 +168,54 @@ this.BX = this.BX || {};
 	}
 	function _handleMonthlyLimitError2(sliderCode) {
 	  babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _showInfoHelper)[_showInfoHelper](sliderCode != null ? sliderCode : 'limit_copilot_requests');
+	}
+	function _handleForceError2(forceCodeRules, forceOption, bindElement) {
+	  if (!(forceCodeRules != null && forceCodeRules.length)) {
+	    return false;
+	  }
+	  if (forceCodeRules.includes('slider') && forceOption != null && forceOption.sliderCode) {
+	    var _forceOption$sliderCo, _BX, _BX$UI;
+	    (_forceOption$sliderCo = forceOption.sliderCode) != null && _forceOption$sliderCo.includes('redirect=detail&code') ? top.BX.Helper.show(forceOption.sliderCode) : (_BX = BX) == null ? void 0 : (_BX$UI = _BX.UI) == null ? void 0 : _BX$UI.InfoHelper.show(forceOption.sliderCode);
+	  }
+	  if (forceCodeRules.includes('msgWithHtmlLink')) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _sendMsg)[_sendMsg]('msgWithHtmlLink', forceOption, bindElement);
+	  }
+	  if (forceCodeRules.includes('code')) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _sendMsg)[_sendMsg]('code', forceOption, bindElement);
+	  }
+	  if (forceCodeRules.includes('msgPlainText')) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _sendMsg)[_sendMsg]('msgPlainText', forceOption, bindElement);
+	  }
+	  return false;
+	}
+	function _sendMsg2(forceCodeRule, forceOption, bindElement) {
+	  const msg = babelHelpers.classPrivateFieldLooseBase(this, _getError)[_getError](forceCodeRule, forceOption);
+	  if (!msg) {
+	    return false;
+	  }
+	  bindElement.setErrors([{
+	    code: 'ERROR_CODE_FORCE',
+	    message: msg,
+	    customData: {
+	      clickHandler: () => command.execute()
+	    }
+	  }]);
+	  return true;
+	}
+	function _getError2(forceCodeRule, forceOption) {
+	  if (forceCodeRule === 'code' && forceOption != null && forceOption.code) {
+	    return forceOption == null ? void 0 : forceOption.code;
+	  }
+	  if (forceCodeRule === 'msgPlainText' && forceOption != null && forceOption.msgPlainText) {
+	    return forceOption == null ? void 0 : forceOption.msgPlainText;
+	  }
+	  if (forceCodeRule === 'msgHtml' && forceOption != null && forceOption.msgHtml) {
+	    return forceOption == null ? void 0 : forceOption.msgHtml;
+	  }
+	  if (forceCodeRule === 'msgBBCode' && forceOption != null && forceOption.msgBBCode) {
+	    return forceOption == null ? void 0 : forceOption.msgBBCode;
+	  }
+	  return '';
 	}
 	async function _handleTariffLimitError2() {
 	  babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _showInfoHelper)[_showInfoHelper](babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _replaceSliderCodeWithBoxLimitCodeIfBox)[_replaceSliderCodeWithBoxLimitCodeIfBox]('limit_copilot_requests'));
@@ -229,6 +303,15 @@ this.BX = this.BX || {};
 	});
 	Object.defineProperty(AjaxErrorHandler, _handleTariffLimitError, {
 	  value: _handleTariffLimitError2
+	});
+	Object.defineProperty(AjaxErrorHandler, _getError, {
+	  value: _getError2
+	});
+	Object.defineProperty(AjaxErrorHandler, _sendMsg, {
+	  value: _sendMsg2
+	});
+	Object.defineProperty(AjaxErrorHandler, _handleForceError, {
+	  value: _handleForceError2
 	});
 	Object.defineProperty(AjaxErrorHandler, _handleMonthlyLimitError, {
 	  value: _handleMonthlyLimitError2

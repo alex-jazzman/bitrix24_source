@@ -8,7 +8,8 @@ export class GoTopButton extends EventEmitter
 	#isReversed = false;
 	#button: Button;
 
-	constructor() {
+	constructor()
+	{
 		super();
 
 		this.setEventNamespace('GoTopButton');

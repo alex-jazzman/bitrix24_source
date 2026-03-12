@@ -14,19 +14,59 @@ export type AnalyticsSettings = {
 
 export class AnalyticsSender
 {
-	sendOpenCard(params: AnalyticsParams, options: {
+	sendClickCreate(params: AnalyticsParams, options: {
 		collabId: number,
+		cardType: string,
+		viewersCount: number,
+		coexecutorsCount: number,
 	}): void
 	{
 		this.#sendData({
 			event: Analytics.Event.ClickCreate,
-			type: Analytics.Type.TaskMini,
-			c_section: params.context,
-			c_sub_section: params.additionalContext,
-			c_element: params.element,
+			type: this.#getTypeFromCardType(options.cardType),
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.additionalContext ? { c_sub_section: params.additionalContext } : {}),
+			...(params.element ? { c_element: params.element } : {}),
 			status: Analytics.Status.Success,
+			p1: Analytics.Params.IsDemo(settings.isDemo),
 			p2: settings.userType,
+			p3: Analytics.Params.ViewersCount(options.viewersCount),
 			...(options.collabId ? { p4: Analytics.Params.CollabId(options.collabId) } : {}),
+			p5: Analytics.Params.CoexecutorsCount(options.coexecutorsCount),
+		});
+	}
+
+	sendTaskView(params: AnalyticsParams, options: {
+		taskId: number,
+		viewersCount: number,
+		coexecutorsCount: number,
+	}): void
+	{
+		this.#sendData({
+			event: Analytics.Event.TaskView,
+			type: Analytics.Type.Task,
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.additionalContext ? { c_sub_section: params.additionalContext } : {}),
+			...(params.element ? { c_element: params.element } : {}),
+			status: Analytics.Status.Success,
+			p1: Analytics.Params.TaskId(options.taskId),
+			p3: Analytics.Params.ViewersCount(options.viewersCount),
+			p5: Analytics.Params.CoexecutorsCount(options.coexecutorsCount),
+		});
+	}
+
+	sendTaskComplete(params: AnalyticsParams, options: {
+		taskId: number,
+	}): void
+	{
+		this.#sendData({
+			event: Analytics.Event.TaskComplete,
+			type: Analytics.Type.Task,
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.additionalContext ? { c_sub_section: params.additionalContext } : {}),
+			...(params.element ? { c_element: params.element } : {}),
+			status: Analytics.Status.Success,
+			p1: Analytics.Params.TaskId(options.taskId),
 		});
 	}
 
@@ -35,27 +75,32 @@ export class AnalyticsSender
 		this.#sendData({
 			event: Analytics.Event.FillTaskFormView,
 			type: Analytics.Type.TaskMini,
-			c_section: params.context,
-			c_sub_section: Analytics.SubSection.Full,
+			...(params.context ? { c_section: params.context } : {}),
+			c_sub_section: Analytics.SubSection.FullTaskForm,
 			c_element: Analytics.Element.FullFormButton,
 			status: Analytics.Status.Success,
+			p1: Analytics.Params.IsDemo(settings.isDemo),
 		});
 	}
 
 	sendAddTask(params: AnalyticsParams, options: {
+		event: string,
 		isSuccess: boolean,
 		collabId: number,
 		viewersCount: number,
 		coexecutorsCount: number,
+		cardType: string,
+		taskId: number,
 	}): void
 	{
 		this.#sendData({
-			event: Analytics.Event.TaskCreate,
-			type: Analytics.Type.TaskMini,
-			c_section: params.context,
-			c_sub_section: params.additionalContext,
-			c_element: params.element,
+			event: options.event ?? Analytics.Event.TaskCreate,
+			type: this.#getTypeFromCardType(options.cardType),
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.additionalContext ? { c_sub_section: params.additionalContext } : {}),
+			...(params.element ? { c_element: params.element } : {}),
 			status: options.isSuccess ? Analytics.Status.Success : Analytics.Status.Error,
+			p1: Analytics.Params.TaskId(options.taskId),
 			p2: settings.userType,
 			p3: Analytics.Params.ViewersCount(options.viewersCount),
 			...(options.collabId ? { p4: Analytics.Params.CollabId(options.collabId) } : {}),
@@ -69,15 +114,18 @@ export class AnalyticsSender
 		viewersCount: number,
 		checklistCount: number,
 		checklistItemsCount: number,
+		taskId: number,
+		cardType: string,
 	}): void
 	{
 		this.#sendData({
 			event: Analytics.Event.TaskCreateWithChecklist,
-			type: Analytics.Type.TaskMini,
-			c_section: params.context,
-			c_sub_section: params.additionalContext,
-			c_element: params.element,
+			type: this.#getTypeFromCardType(options.cardType),
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.additionalContext ? { c_sub_section: params.additionalContext } : {}),
+			...(params.element ? { c_element: params.element } : {}),
 			status: Analytics.Status.Success,
+			p1: Analytics.Params.TaskId(options.taskId),
 			p2: settings.userType,
 			p3: Analytics.Params.ViewersCount(options.viewersCount),
 			...(options.collabId ? { p4: Analytics.Params.CollabId(options.collabId) } : {}),
@@ -88,12 +136,13 @@ export class AnalyticsSender
 	sendDescription(params: AnalyticsParams, options: {
 		hasDescription: boolean,
 		hasScroll: boolean,
+		cardType: string,
 	}): void
 	{
 		this.#sendData({
 			event: Analytics.Event.DescriptionTask,
-			type: Analytics.Type.TaskMini,
-			c_section: params.context,
+			type: this.#getTypeFromCardType(options.cardType),
+			...(params.context ? { c_section: params.context } : {}),
 			c_sub_section: Analytics.SubSection.TaskCard,
 			status: Analytics.Status.Success,
 			p2: Analytics.Params.HasDescription(options.hasDescription),
@@ -102,6 +151,7 @@ export class AnalyticsSender
 	}
 
 	sendAddProject(params: AnalyticsParams, options: {
+		taskId: number,
 		cardType: string,
 		viewersCount: number,
 		coexecutorsCount: number,
@@ -110,9 +160,11 @@ export class AnalyticsSender
 		this.#sendData({
 			event: Analytics.Event.AddProject,
 			type: this.#getTypeFromCardType(options.cardType),
-			c_section: params.context,
+			...(params.context ? { c_section: params.context } : {}),
+			c_sub_section: Analytics.SubSection.TaskCard,
 			c_element: Analytics.Element.ProjectButton,
 			status: Analytics.Status.Success,
+			...(options.taskId ? { p1: Analytics.Params.TaskId(options.taskId) } : {}),
 			p3: Analytics.Params.ViewersCount(options.viewersCount),
 			p5: Analytics.Params.CoexecutorsCount(options.coexecutorsCount),
 		});
@@ -121,29 +173,85 @@ export class AnalyticsSender
 	sendDeadlineSet(params: AnalyticsParams, options: {
 		cardType: string,
 		element: string,
+		taskId: number,
+		viewersCount: number,
+		coexecutorsCount: number,
 	}): void
 	{
 		this.#sendData({
 			event: Analytics.Event.DeadlineSet,
 			type: this.#getTypeFromCardType(options.cardType),
-			c_section: params.context,
+			...(params.context ? { c_section: params.context } : {}),
 			c_sub_section: Analytics.SubSection.TaskCard,
 			c_element: options.element,
 			status: Analytics.Status.Success,
+			...(options.taskId ? { p1: Analytics.Params.TaskId(options.taskId) } : {}),
+			p3: Analytics.Params.ViewersCount(options.viewersCount),
+			p5: Analytics.Params.CoexecutorsCount(options.coexecutorsCount),
+		});
+	}
+
+	#sendRoleChange(params: AnalyticsParams, options: {
+		cardType: string,
+		taskId: number,
+		viewersCount: number,
+		coexecutorsCount: number,
+		event: string,
+		element: string,
+	})
+	{
+		this.#sendData({
+			event: options.event,
+			type: this.#getTypeFromCardType(options.cardType),
+			...(params.context ? { c_section: params.context } : {}),
+			c_sub_section: Analytics.SubSection.TaskCard,
+			c_element: options.element,
+			status: Analytics.Status.Success,
+			...(options.taskId ? { p1: Analytics.Params.TaskId(options.taskId) } : {}),
+			p3: Analytics.Params.ViewersCount(options.viewersCount),
+			p5: Analytics.Params.CoexecutorsCount(options.coexecutorsCount),
 		});
 	}
 
 	sendAssigneeChange(params: AnalyticsParams, options: {
 		cardType: string,
+		taskId: number,
+		viewersCount: number,
+		coexecutorsCount: number,
 	}): void
 	{
-		this.#sendData({
+		this.#sendRoleChange(params, {
+			...options,
 			event: Analytics.Event.AssigneeChange,
-			type: this.#getTypeFromCardType(options.cardType),
-			c_section: params.context,
-			c_sub_section: Analytics.SubSection.TaskCard,
-			c_element: Analytics.Element.ChangeButton,
-			status: Analytics.Status.Success,
+			element: Analytics.Element.ChangeButton,
+		});
+	}
+
+	sendAddCoexecutor(params: AnalyticsParams, options: {
+		cardType: string,
+		taskId: number,
+		viewersCount: number,
+		coexecutorsCount: number,
+	}): void
+	{
+		this.#sendRoleChange(params, {
+			...options,
+			event: Analytics.Event.AddCoexecutor,
+			element: Analytics.Element.CoexecutorButton,
+		});
+	}
+
+	sendAddViewer(params: AnalyticsParams, options: {
+		cardType: string,
+		taskId: number,
+		viewersCount: number,
+		coexecutorsCount: number,
+	}): void
+	{
+		this.#sendRoleChange(params, {
+			...options,
+			event: Analytics.Event.AddViewer,
+			element: Analytics.Element.ViewerButton,
 		});
 	}
 
@@ -163,7 +271,7 @@ export class AnalyticsSender
 		this.#sendData({
 			event: Analytics.Event.AttachFile,
 			type: this.#getTypeFromCardType(options.cardType),
-			c_section: params.context,
+			...(params.context ? { c_section: params.context } : {}),
 			c_sub_section: subSection,
 			c_element: Analytics.Element.UploadButton,
 			status: Analytics.Status.Success,
@@ -175,24 +283,22 @@ export class AnalyticsSender
 		});
 	}
 
-	sendAddChecklist(params: AnalyticsParams, options: {
+	sendStatusSummaryAdd(params: AnalyticsParams, options: {
 		cardType: string,
-		isNewTask: boolean,
-		viewersCount: number,
-		checklistPointsCount: number,
-		coexecutorsCount: number,
-	}): void
+		taskId: number,
+		element: string,
+		subSection: string,
+		isSuccess?: boolean,
+	})
 	{
 		this.#sendData({
-			event: Analytics.Event.AddChecklist,
+			event: Analytics.Event.StatusSummaryAdd,
 			type: this.#getTypeFromCardType(options.cardType),
-			c_section: params.context,
-			c_sub_section: options.isNewTask ? Analytics.TaskState.New : Analytics.TaskState.Existing,
-			c_element: Analytics.Element.CheckListButton,
-			status: Analytics.Status.Success,
-			p3: Analytics.Params.ViewersCount(options.viewersCount),
-			p4: Analytics.Params.ChecklistPointsCount(options.checklistPointsCount),
-			p5: Analytics.Params.CoexecutorsCount(options.coexecutorsCount),
+			...(params.context ? { c_section: params.context } : {}),
+			c_sub_section: options?.subSection ?? Analytics.SubSection.TaskCard,
+			c_element: options?.element ?? Analytics.Element.AddResult,
+			status: options.isSuccess ? Analytics.Status.Success : Analytics.Status.Error,
+			...(options.taskId ? { p1: Analytics.Params.TaskId(options.taskId) } : {}),
 		});
 	}
 
@@ -201,9 +307,10 @@ export class AnalyticsSender
 		this.#sendData({
 			event: Analytics.Event.RoleClick,
 			type: Analytics.Type.Task,
-			c_section: params.context,
-			c_sub_section: params.additionalContext,
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.additionalContext ? { c_sub_section: params.additionalContext } : {}),
 			c_element: Analytics.Element.RoleButton,
+			status: Analytics.Status.Success,
 			p1: Analytics.Params.IsDemo(settings.isDemo),
 		});
 	}
@@ -224,11 +331,37 @@ export class AnalyticsSender
 		this.#sendData({
 			event: Analytics.Event.RoleClickType,
 			type: Analytics.Type.Task,
-			c_section: params.context,
-			c_sub_section: params.additionalContext,
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.additionalContext ? { c_sub_section: params.additionalContext } : {}),
 			c_element: element,
 			p1: Analytics.Params.IsDemo(settings.isDemo),
 			p2: Analytics.Params.FilterEnabled(options.isFilterEnabled),
+		});
+	}
+
+	sendManualTimeTracking(params: AnalyticsParams, options: { taskId: number }): void
+	{
+		this.#sendData({
+			category: Analytics.Category.TimeTracking,
+			event: Analytics.Event.TimeEntryCreate,
+			type: Analytics.Type.Manual,
+			...(params.context ? { c_section: params.context } : {}),
+			c_sub_section: Analytics.SubSection.TaskCard,
+			status: Analytics.Status.Success,
+			p1: Analytics.Params.TaskId(options.taskId),
+		});
+	}
+
+	sendAutoTimeTracking(params: AnalyticsParams, options: { taskId: number }): void
+	{
+		this.#sendData({
+			category: Analytics.Category.TimeTracking,
+			event: Analytics.Event.TimeEntryCreate,
+			type: Analytics.Type.Auto,
+			...(params.context ? { c_section: params.context } : {}),
+			c_sub_section: Analytics.SubSection.TaskCard,
+			status: Analytics.Status.Success,
+			p1: Analytics.Params.TaskId(options.taskId),
 		});
 	}
 

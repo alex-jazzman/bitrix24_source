@@ -7,6 +7,9 @@ type MousePosition = {
 
 class Mouse
 {
+	#needTo: WeakSet = new WeakSet();
+	#needCount: number = 0;
+
 	#delta: MousePosition = {
 		top: 0,
 		left: 0,
@@ -17,9 +20,33 @@ class Mouse
 		left: 0,
 	};
 
-	constructor()
+	need(needTo: Object): void
 	{
+		if (this.#needTo.has(needTo))
+		{
+			return;
+		}
+
+		this.#needTo.add(needTo);
+		this.#needCount++;
+
 		Event.bind(window, 'mousemove', this.#update);
+	}
+
+	notNeed(needTo: Object): void
+	{
+		if (!this.#needTo.has(needTo))
+		{
+			return;
+		}
+
+		this.#needTo.delete(needTo);
+		this.#needCount--;
+
+		if (this.#needCount === 0)
+		{
+			Event.unbind(window, 'mousemove', this.#update);
+		}
 	}
 
 	getPosition(): MousePosition

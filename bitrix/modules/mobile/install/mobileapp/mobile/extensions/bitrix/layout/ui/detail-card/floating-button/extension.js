@@ -3,11 +3,8 @@
  */
 jn.define('layout/ui/detail-card/floating-button', (require, exports, module) => {
 	const { AnalyticsLabel } = require('analytics-label');
-	const { FloatingButtonComponent } = require('layout/ui/floating-button');
 	const { FloatingButtonMenu } = require('layout/ui/detail-card/floating-button/menu');
-	const { FloatingActionButton, FloatingActionButtonSupportNative } = require(
-		'ui-system/form/buttons/floating-action-button',
-	);
+	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 
 	const isIOS = Application.getPlatform() === 'ios';
 
@@ -26,11 +23,9 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 			super(props);
 
 			this.menu = null;
+			this.tabId = null;
 
-			/** @type {FloatingButtonComponent} */
-			this.floatingButtonRef = null;
-
-			this.floatinNativeButtonRef = null;
+			this.floatingButton = null;
 
 			this.handleOnClick = this.handleOnClick.bind(this);
 			this.handleOnLongClick = this.handleOnLongClick.bind(this);
@@ -65,23 +60,18 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 
 		componentDidMount()
 		{
-			if (!this.isFloatingActionButtonSupportNative())
-			{
-				this.initRecentListeners();
-			}
-
 			if (isIOS)
 			{
 				Keyboard.on(Keyboard.Event.WillShow, () => {
-					if (this.floatingButtonRef)
+					if (this.floatingButton)
 					{
-						this.floatingButtonRef.hide();
+						this.floatingButton.hide();
 					}
 				});
 				Keyboard.on(Keyboard.Event.WillHide, () => {
-					if (this.floatingButtonRef)
+					if (this.floatingButton)
 					{
-						this.floatingButtonRef.show();
+						this.floatingButton.show();
 					}
 				});
 			}
@@ -92,21 +82,18 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 			this.removeRecentListeners();
 		}
 
-		initNativeButton(layout)
+		initNativeButton()
 		{
-			if (this.isFloatingActionButtonSupportNative())
-			{
-				this.initRecentListeners();
-			}
+			this.initRecentListeners();
 
-			this.floatinNativeButtonRef = FloatingActionButton({
-				parentLayout: layout,
+			this.floatingButton = new FloatingActionButton({
+				layout: this.getLayout(),
 				testId: this.getTestId(),
 				onClick: this.handleOnClick,
 				onLongClick: this.handleOnLongClick,
 			});
 
-			return this.floatinNativeButtonRef;
+			return this.floatingButton;
 		}
 
 		initRecentListeners()
@@ -158,52 +145,51 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 			this.getMenu().onAddToRecent(actionId, tabId);
 		}
 
-		animateOnScroll(scrollParams, scrollViewHeight)
+		getTabById(id)
 		{
-			if (!this.isVisible())
+			return this.detailCard.tabRefMap.get(id);
+		}
+
+		actualize(tabId)
+		{
+			this.tabId = tabId;
+			const tab = this.getTabById(tabId);
+
+			if (!this.floatingButton)
 			{
 				return;
 			}
 
-			if (this.floatingButtonRef)
+			if (tab?.needShowFloatingButton && tab.needShowFloatingButton?.())
 			{
-				this.floatingButtonRef.animateOnScroll(scrollParams, scrollViewHeight);
-			}
-		}
+				this.floatingButton.show();
 
-		actualize()
-		{
-			if (!this.floatingButtonRef && !this.floatinNativeButtonRef)
-			{
 				return;
 			}
 
 			if (this.isVisible())
 			{
-				this.floatinNativeButtonRef?.show();
-				this.floatingButtonRef?.show();
+				this.floatingButton.show();
 			}
 			else
 			{
-				this.floatinNativeButtonRef?.hide();
-				this.floatingButtonRef?.hide();
+				this.floatingButton.hide();
 			}
 		}
 
 		render()
 		{
 			this.menu = null;
-
-			return new FloatingButtonComponent({
-				ref: (ref) => {
-					this.floatingButtonRef = ref;
-				},
-				parentLayout: this.getLayout(),
+			this.floatingButton = new FloatingButton({
 				testId: this.getTestId(),
-				position: this.getPosition(),
+				layout: this.getLayout(),
 				onClick: this.handleOnClick,
 				onLongClick: this.handleOnLongClick,
 			});
+
+			this.floatingButton.show();
+
+			return null;
 		}
 
 		isVisible()
@@ -223,6 +209,17 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 
 		handleOnClick()
 		{
+			if (this.tabId)
+			{
+				const tab = this.getTabById(this.tabId);
+				if (tab?.floatingButtonHandler)
+				{
+					tab?.floatingButtonHandler();
+
+					return;
+				}
+			}
+
 			const activeTabMenuItem = this.getMenu().getActiveTabMenuItem();
 			if (activeTabMenuItem)
 			{
@@ -354,12 +351,7 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 		{
 			return this.detailCard.layout;
 		}
-
-		isFloatingActionButtonSupportNative(layout)
-		{
-			return FloatingActionButtonSupportNative(layout || this.getLayout());
-		}
 	}
 
-	module.exports = { FloatingButton, FloatingActionButtonSupportNative };
+	module.exports = { FloatingButton };
 });

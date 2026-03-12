@@ -111,11 +111,14 @@ else
 	]);
 }
 
-echo BeginNote();
-?><?=Loc::getMessage('BAAS_DATA_DATE', ['#DATETIME#' => Main\Type\DateTime::createFromTimestamp($client->getLastSyncTime())->toString()]) ?>
+if ($client->getLastSyncTime() > 0)
+{
+	echo BeginNote();
+	?><?=Loc::getMessage('BAAS_DATA_DATE', ['#DATETIME#' => Main\Type\DateTime::createFromTimestamp($client->getLastSyncTime())->toString()]) ?>
 	<input type="button" name="refresh-portal" value="<?=Loc::getMessage('BAAS_SYNC')?>" />
-<?php
-echo EndNote();
+	<?php
+	echo EndNote();
+}
 
 $exceptionHandling = Main\Config\Configuration::getInstance()->get('exception_handling');
 ?><script>

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_css_tokens,im_v2_lib_utils,im_v2_provider_service_recent,im_v2_lib_menu,ui_designTokens_air,main_core,ui_iconSet_api_vue,im_public,im_v2_application_core,im_v2_const,im_v2_component_elements_avatar,call_component_compactActiveCallList) {
+(function (exports,im_v2_css_tokens,im_v2_lib_utils,im_v2_provider_service_recent,im_v2_lib_menu,ui_designTokens_air,main_core,ui_iconSet_api_vue,im_public,im_v2_lib_analytics,im_v2_application_core,im_v2_const,im_v2_component_elements_avatar,call_component_compactActiveCallList) {
 	'use strict';
 
 	const NavigationItemToIcon = Object.freeze({
@@ -61,6 +61,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      void im_public.Messenger.openNavigationItem({
 	        id: this.id
 	      });
+	      if (this.id === im_v2_const.NavigationMenuItem.notification) {
+	        im_v2_lib_analytics.Analytics.getInstance().notification.onOpenFromQuickAccessPanel();
+	      }
 	    }
 	  },
 	  template: `
@@ -373,5 +376,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentList = RecentList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Call.Component));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Call.Component));
 //# sourceMappingURL=recent-compact.bundle.js.map

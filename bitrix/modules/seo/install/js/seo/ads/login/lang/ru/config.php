@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SEO_ADS_FACEBOOK_BUSINESS_LOGIN_NAME"] = "Название компании:";
 $MESS["SEO_ADS_FACEBOOK_BUSINESS_LOGIN_TYPE"] = "Тип бизнеса:";
 $MESS["SEO_ADS_FACEBOOK_BUSINESS_LOGIN_ECOMMERCE"] = "Ecommerce";

@@ -80,21 +80,9 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 
 				if (options.navigationTab)
 				{
-					EntityReady.wait('chat').then(() => {
-						BX.postComponentEvent(
-							EventType.navigation.broadCastEventWithTabChange,
-							[{
-								broadCastEvent: EventType.messenger.openDialog,
-								toTab: options.navigationTab,
-								data: {
-									...options,
-								},
-							}],
-							ComponentCode.imNavigation,
-						);
-					});
-
-					return;
+					// TODO: add support switching navigation tab
+					// eslint-disable-next-line no-console
+					console.warn('DialogOpener.open: navigationTab is deprecated');
 				}
 
 				if (BX.componentParameters.get('COMPONENT_CODE') === ComponentCode.imMessenger)

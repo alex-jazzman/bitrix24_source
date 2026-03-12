@@ -35,6 +35,14 @@ jn.define('call/callList/tabs', (require, exports, module) => {
 
 			return UIScrollView(
 				{
+					ref: (ref) => {
+						const { onScrollRef } = this.props;
+
+						if (onScrollRef)
+						{
+							onScrollRef(ref);
+						}
+					},
 					horizontal: true,
 					showsHorizontalScrollIndicator: false,
 					style: {

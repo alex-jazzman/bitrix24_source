@@ -1,2 +1,0 @@
-<?php
-$MESS["REPORT_GROUPED_DATA_GRID_VIEW_LABEL"] = "Тізім";

@@ -16,7 +16,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  const titleBar = options.titleBar;
 	  const sendButtonText = options.sendButtonText;
 	  const partnerName = options.partnerName;
-	  const partnerUrl = options.partnerUrl;
+	  const partnerLogo = options.partnerLogo;
+	  const partnerCardUrl = `${options.publicDomain}partners/partner/${options.partnerId}/`;
+	  const hasCustomLogo = partnerLogo && partnerLogo !== '';
+	  const logoClass = hasCustomLogo ? 'bitrix24-partner__popup-content_name--custom-logo' : '';
+	  const logoStyle = hasCustomLogo ? `style="background-image: url('${encodeURI(partnerLogo)}')"` : '';
 	  const [{
 	    Popup
 	  }, {
@@ -43,8 +47,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 			<div class="bitrix24-partner__popup-content">
 				<div class="bitrix24-partner__popup-content_title">${main_core.Loc.getMessage('PARTNER_TITLE_FOR_NAME')}</div>
 				<div class="bitrix24-partner__popup-content_main">
-					<div class="bitrix24-partner__popup-content_name">${partnerName}</div>
-					<a class="bitrix24-partner__popup-content_link" href="${encodeURI(partnerUrl)}" target="_blank">${main_core.Loc.getMessage('PARTNER_LINK_NAME_MORE')}</a>
+					<div class="bitrix24-partner__popup-content_name ${logoClass}" ${logoStyle}>${partnerName}</div>
+					<a class="bitrix24-partner__popup-content_link" href="${encodeURI(partnerCardUrl)}" target="_blank">${main_core.Loc.getMessage('PARTNER_LINK_NAME_MORE')}</a>
 				</div>
 				<div class="bitrix24-partner__popup-content_desc">${main_core.Loc.getMessage('PARTNER_POPUP_DESCRIPTION_BOTTOM')}</div>
 			</div>
@@ -968,6 +972,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
+	class LeftMenu {
+	  getContainer() {
+	    return document.querySelector('.js-app__left-menu');
+	  }
+	  show() {
+	    main_core.Dom.removeClass(this.getContainer(), '--hidden');
+	  }
+	  hide() {
+	    main_core.Dom.addClass(this.getContainer(), '--hidden');
+	  }
+	  isVisible() {
+	    return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
+	  }
+	}
+
 	var _isTransparentMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTransparentMode");
 	var _isScrollMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isScrollMode");
 	var _scrollModeThreshold = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollModeThreshold");
@@ -1036,11 +1055,29 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  getContainer() {
 	    return document.getElementById('right-bar');
 	  }
+	  show() {
+	    main_core.Dom.removeClass(this.getContainer(), '--hidden');
+	  }
+	  hide() {
+	    main_core.Dom.addClass(this.getContainer(), '--hidden');
+	  }
+	  isVisible() {
+	    return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
+	  }
 	}
 
 	class Header {
 	  getContainer() {
-	    return document.getElementById('header');
+	    return document.getElementById('app-header');
+	  }
+	  show() {
+	    main_core.Dom.removeClass(this.getContainer(), '--hidden');
+	  }
+	  hide() {
+	    main_core.Dom.addClass(this.getContainer(), '--hidden');
+	  }
+	  isVisible() {
+	    return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
 	  }
 	}
 
@@ -1051,10 +1088,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	  }
 	  show() {
-	    main_core.Dom.removeClass(this.getContainer(), 'hidden');
+	    main_core.Dom.removeClass(this.getContainer(), '--hidden');
 	  }
 	  hide() {
-	    main_core.Dom.addClass(this.getContainer(), 'hidden');
+	    main_core.Dom.addClass(this.getContainer(), '--hidden');
 	  }
 	  getContainer() {
 	    return document.getElementById('air-footer');
@@ -1226,6 +1263,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
+	var _leftMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("leftMenu");
 	var _rightBar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
 	var _header = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("header");
 	var _footer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("footer");
@@ -1233,6 +1271,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _chatMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatMenu");
 	var _goTopButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("goTopButton");
 	var _collaborationMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collaborationMenu");
+	var _supportViewTransition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("supportViewTransition");
+	var _enterFullscreen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enterFullscreen");
+	var _exitFullscreen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("exitFullscreen");
+	var _dispatchResizeEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dispatchResizeEvent");
 	var _patchPopupMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("patchPopupMenu");
 	var _patchJSClock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("patchJSClock");
 	var _preventFromIframe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preventFromIframe");
@@ -1254,6 +1296,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	    Object.defineProperty(this, _patchPopupMenu, {
 	      value: _patchPopupMenu2
+	    });
+	    Object.defineProperty(this, _dispatchResizeEvent, {
+	      value: _dispatchResizeEvent2
+	    });
+	    Object.defineProperty(this, _exitFullscreen, {
+	      value: _exitFullscreen2
+	    });
+	    Object.defineProperty(this, _enterFullscreen, {
+	      value: _enterFullscreen2
+	    });
+	    Object.defineProperty(this, _supportViewTransition, {
+	      value: _supportViewTransition2
+	    });
+	    Object.defineProperty(this, _leftMenu, {
+	      writable: true,
+	      value: null
 	    });
 	    Object.defineProperty(this, _rightBar, {
 	      writable: true,
@@ -1288,6 +1346,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _patchRestAPI)[_patchRestAPI]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _patchJSClock)[_patchJSClock]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _goTopButton$1)[_goTopButton$1] = new GoTopButton();
+	    babelHelpers.classPrivateFieldLooseBase(this, _leftMenu)[_leftMenu] = new LeftMenu();
 	    babelHelpers.classPrivateFieldLooseBase(this, _rightBar)[_rightBar] = new RightBar({
 	      goTopButton: babelHelpers.classPrivateFieldLooseBase(this, _goTopButton$1)[_goTopButton$1]
 	    });
@@ -1297,6 +1356,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatMenu)[_chatMenu] = new ChatMenu();
 	    babelHelpers.classPrivateFieldLooseBase(this, _collaborationMenu)[_collaborationMenu] = new CollaborationMenu();
 	    babelHelpers.classPrivateFieldLooseBase(this, _applyUserAgentRules)[_applyUserAgentRules]();
+	  }
+	  getLeftMenu() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _leftMenu)[_leftMenu];
 	  }
 	  getRightBar() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _rightBar)[_rightBar];
@@ -1316,6 +1378,72 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  getCollaborationMenu() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _collaborationMenu)[_collaborationMenu];
 	  }
+	  enterFullscreen() {
+	    if (this.isFullscreen()) {
+	      return;
+	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _supportViewTransition)[_supportViewTransition]()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _enterFullscreen)[_enterFullscreen]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _dispatchResizeEvent)[_dispatchResizeEvent]();
+	      return;
+	    }
+	    const transition = document.startViewTransition(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _enterFullscreen)[_enterFullscreen]();
+	    });
+	    transition.finished.then(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _dispatchResizeEvent)[_dispatchResizeEvent]();
+	    }).catch(() => {
+	      // fail silently
+	    });
+	  }
+	  exitFullscreen() {
+	    if (!this.isFullscreen()) {
+	      return;
+	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _supportViewTransition)[_supportViewTransition]()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _exitFullscreen)[_exitFullscreen]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _dispatchResizeEvent)[_dispatchResizeEvent]();
+	      return;
+	    }
+	    const transition = document.startViewTransition(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _exitFullscreen)[_exitFullscreen]();
+	    });
+	    transition.finished.then(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _dispatchResizeEvent)[_dispatchResizeEvent]();
+	    }).catch(() => {
+	      // fail silently
+	    });
+	  }
+	  toggleFullscreen() {
+	    if (this.isFullscreen()) {
+	      this.exitFullscreen();
+	    } else {
+	      this.enterFullscreen();
+	    }
+	  }
+	  isFullscreen() {
+	    return main_core.Dom.hasClass(document.body, 'air-fullscreen-mode');
+	  }
+	}
+	function _supportViewTransition2() {
+	  return main_core.Type.isFunction(document.startViewTransition) && !main_core.Browser.isSafari();
+	}
+	function _enterFullscreen2() {
+	  main_core.Dom.addClass(document.body, 'air-fullscreen-mode');
+	  this.getLeftMenu().hide();
+	  this.getHeader().hide();
+	  this.getFooter().hide();
+	  this.getRightBar().hide();
+	}
+	function _exitFullscreen2() {
+	  main_core.Dom.removeClass(document.body, 'air-fullscreen-mode');
+	  this.getLeftMenu().show();
+	  this.getHeader().show();
+	  this.getFooter().show();
+	  this.getRightBar().show();
+	}
+	function _dispatchResizeEvent2() {
+	  window.dispatchEvent(new Event('resize'));
 	}
 	function _patchPopupMenu2() {
 	  main_core_events.EventEmitter.subscribe('BX.Main.Menu:onInit', event => {

@@ -14,8 +14,6 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
-		'im:messenger/lib/counters/counter-manager/messenger/sender',
-		'im:messenger/lib/counters/counter-manager/messenger/actions',
 		'im:messenger/lib/parser',
 		'im:messenger/lib/notifier',
 		'im:messenger/lib/emitter',
@@ -33,13 +31,8 @@ return [
 		'im:messenger/lib/feature',
 	],
 	'bundle' => [
-		'./src/dialog',
-		'./src/message',
 		'./src/file',
-		'./src/user',
 		'./src/notification',
 		'./src/online',
-		'./src/recent',
-		'./src/application',
 	],
 ];

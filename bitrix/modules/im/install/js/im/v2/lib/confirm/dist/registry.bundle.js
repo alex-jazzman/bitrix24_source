@@ -6910,11 +6910,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	};
 
-	const showReadMessagesConfirm = text => {
+	const showStickerPackDeleteConfirm = () => {
 	  return showTwoButtonConfirm({
-	    title: main_core.Loc.getMessage('IM_LIB_CONFIRM_READ_MESSAGES_TITLE_MSGVER_1'),
-	    text,
-	    firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_READ_MESSAGES_TEXT_CONFIRM')
+	    title: main_core.Loc.getMessage('IM_LIB_CONFIRM_DELETE_STICKER_PACK_CONFIRM_TITLE'),
+	    text: main_core.Loc.getMessage('IM_LIB_CONFIRM_DELETE_STICKER_PACK_CONFIRM_TEXT'),
+	    firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_DELETE_STICKER_PACK_CONFIRM_CONFIRM')
+	  });
+	};
+	const showStickerPackUnlinkConfirm = () => {
+	  return showTwoButtonConfirm({
+	    title: main_core.Loc.getMessage('IM_LIB_CONFIRM_UNLINK_STICKER_PACK_CONFIRM_TITLE'),
+	    text: main_core.Loc.getMessage('IM_LIB_CONFIRM_UNLINK_STICKER_PACK_CONFIRM_TEXT'),
+	    firstButtonCaption: main_core.Loc.getMessage('IM_LIB_CONFIRM_UNLINK_STICKER_PACK_CONFIRM_CONFIRM')
 	  });
 	};
 
@@ -6930,7 +6937,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.showNotificationsModeSwitchConfirm = showNotificationsModeSwitchConfirm;
 	exports.showKickUserConfirm = showKickUserConfirm;
 	exports.showCloseWithActiveCallConfirm = showCloseWithActiveCallConfirm;
-	exports.showReadMessagesConfirm = showReadMessagesConfirm;
+	exports.showStickerPackDeleteConfirm = showStickerPackDeleteConfirm;
+	exports.showStickerPackUnlinkConfirm = showStickerPackUnlinkConfirm;
 
 }((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Main,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX));
 //# sourceMappingURL=registry.bundle.js.map

@@ -15,6 +15,7 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 	const { VuexManagerPlayground } = require('im/messenger/lib/dev/menu/vuex-manager');
 	const { Playground } = require('im/messenger/lib/dev/menu/playground');
 	const { DialogSnippets } = require('im/messenger/lib/dev/menu/dialog-snippets');
+	const { RecentSnippets } = require('im/messenger/lib/dev/menu/src/recent-snippets');
 
 	class DeveloperMenu extends LayoutComponent
 	{
@@ -179,6 +180,23 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 				},
 			});
 
+			const recentSnippets = BannerButton({
+				title: 'Recent Snippets',
+				description: 'Test folders/chats add/remove',
+				backgroundColor: AppTheme.colors.accentSoftBlue1,
+				onClick: () => {
+					PageManager.openWidget(
+						'layout',
+						{
+							title: 'Recent Snippets',
+							onReady: (layoutWidget) => {
+								layoutWidget.showComponent(new RecentSnippets());
+							},
+						},
+					);
+				},
+			});
+
 			return [
 				developerSettingsButton,
 				this.renderButtonSection([logSettingsSearchButton, logSettingsButton], 'Logging'),
@@ -188,6 +206,7 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 				vuexPlaygroundButton,
 				playground,
 				dialog,
+				recentSnippets,
 				unitTestDashboard,
 			].map((button) => this.renderMenuItem(button));
 		}

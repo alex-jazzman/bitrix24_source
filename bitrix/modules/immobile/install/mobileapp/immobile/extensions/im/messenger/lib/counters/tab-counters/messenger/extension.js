@@ -176,6 +176,9 @@ jn.define('im/messenger/lib/counters/tab-counters/messenger', (require, exports,
 
 		updateUi(counters)
 		{
+			let isUpdated = false;
+			const oldCounters = { ...this.lastCounters };
+
 			Object.entries(counters).forEach(([tabId, counter]) => {
 				if (Type.isNumber(this.lastCounters[tabId]) && this.lastCounters[tabId] === counter)
 				{
@@ -188,7 +191,15 @@ jn.define('im/messenger/lib/counters/tab-counters/messenger', (require, exports,
 					counter,
 					label: counter ? counter.toString() : '',
 				});
+
+				isUpdated = true;
 			});
+
+			if (isUpdated)
+			{
+				const newCounters = { ...this.lastCounters };
+				this.updateUiEventEmit({ oldCounters, newCounters });
+			}
 		}
 
 		setNotificationCounters(counter)
@@ -255,6 +266,14 @@ jn.define('im/messenger/lib/counters/tab-counters/messenger', (require, exports,
 			MessengerEmitter.emit(EventType.notification.reload);
 		}
 
+		/**
+		 * @param {object} event
+		 */
+		updateUiEventEmit(event)
+		{
+			serviceLocator.get('emitter')?.emit(EventType.counters.updateUi, [event]);
+		}
+
 		async fillCounterStore(counters)
 		{
 			const counterStateList = this.#prepareInitialCounters(counters);
@@ -301,7 +320,7 @@ jn.define('im/messenger/lib/counters/tab-counters/messenger', (require, exports,
 		};
 
 		/**
-		 * @param {MutationPayload<RecentV2UpdateData, RecentV2UpdateActions>} payload
+		 * @param {MutationPayload<RecentUpdateData, RecentUpdateActions>} payload
 		 */
 		#updateRecentHandler = ({ payload }) => {
 			if (payload.actionName !== 'update')

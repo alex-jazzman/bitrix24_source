@@ -436,6 +436,7 @@ this.BX.Landing = this.BX.Landing || {};
 	var _templateObject$3, _templateObject2$3, _templateObject3$3, _templateObject4$3, _templateObject5$2, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1, _templateObject10$1, _templateObject11$1, _templateObject12$1, _templateObject13$1, _templateObject14$1, _templateObject15$1, _templateObject16$1, _templateObject17$1, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24;
 	var Item = /*#__PURE__*/function () {
 	  function Item(options) {
+	    var _options$createByCopi, _options$copilotGener;
 	    babelHelpers.classCallCheck(this, Item);
 	    this.id = options.id;
 	    this.grid = options.grid;
@@ -470,6 +471,8 @@ this.BX.Landing = this.BX.Landing || {};
 	    this.popupConfig = null;
 	    this.loader = null;
 	    this.copilotProcess = main_core.Type.isBoolean(options.copilotProcess) ? options.copilotProcess : null;
+	    this.createByCopilotText = (_options$createByCopi = options.createByCopilotText) !== null && _options$createByCopi !== void 0 ? _options$createByCopi : '';
+	    this.copilotGeneratedText = (_options$copilotGener = options.copilotGeneratedText) !== null && _options$copilotGener !== void 0 ? _options$copilotGener : '';
 	    this.$container = null;
 	    this.$containerWrapper = null;
 	    this.$containerPreviewImage = null;
@@ -909,8 +912,7 @@ this.BX.Landing = this.BX.Landing || {};
 	          this.lazyLoadCloudPreview();
 	        }
 	        if (this.copilotProcess === false) {
-	          var copilotLabelText = main_core.Loc.getMessage('LANDING_SITE_TILE_COPILOT_LABEL');
-	          var copilotLabel = main_core.Tag.render(_templateObject16$1 || (_templateObject16$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"landing-sites__preview-copilot-label\">\n\t\t\t\t\t\t<i class=\"ui-icon-set --copilot-ai\"></i>\n\t\t\t\t\t\t<div class=\"\">", "</div>\n\t\t\t\t\t</i>\n\t\t\t\t"])), copilotLabelText);
+	          var copilotLabel = main_core.Tag.render(_templateObject16$1 || (_templateObject16$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"landing-sites__preview-copilot-label\">\n\t\t\t\t\t\t<i class=\"ui-icon-set --copilot-ai\"></i>\n\t\t\t\t\t\t<div class=\"\">", "</div>\n\t\t\t\t\t</i>\n\t\t\t\t"])), this.createByCopilotText);
 	          this.$containerPreviewImage.appendChild(copilotLabel);
 	        }
 	      }
@@ -1084,7 +1086,7 @@ this.BX.Landing = this.BX.Landing || {};
 	    value: function getContainer() {
 	      if (!this.$container) {
 	        var containerClasses = ['landing-sites__grid-item', this.deleted ? '--deleted' : '', this.copilotProcess === true ? '--generating' : ''].join(' ').trim();
-	        var copilotLabel = this.copilotProcess === true ? main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"landing-sites__preview-show copilot-label\">\n\t\t\t\t\t    <i class=\"ui-icon-set --copilot-ai\"></i>\n\t\t\t\t\t    ", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('LANDING_SITE_TILE_COPILOT_GENERATED_TEXT')) : '';
+	        var copilotLabel = this.copilotProcess === true ? main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"landing-sites__preview-show copilot-label\">\n\t\t\t\t\t    <i class=\"ui-icon-set --copilot-ai\"></i>\n\t\t\t\t\t    ", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), this.copilotGeneratedText) : '';
 	        this.$container = main_core.Tag.render(_templateObject24 || (_templateObject24 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"", "\">\n\t\t\t\t    <div class=\"landing-sites__item\" id=\"landing-sites__grid-item--", "\">\n\t\t\t\t        ", "\n\t\t\t\t        ", "\n\t\t\t\t        ", "\n\t\t\t\t    </div>\n\t\t\t\t    ", "\n\t\t\t\t</div>\n\t\t\t"])), containerClasses, this.id, this.getLeadership().getContainer(), this.getContainerWrapper(), this.getPopupHelper().getContainer(), copilotLabel);
 	      }
 	      return this.$container;
@@ -1212,11 +1214,7 @@ this.BX.Landing = this.BX.Landing || {};
 	    key: "getContent",
 	    value: function getContent() {
 	      if (!this.content) {
-	        var popupDescriptionMessageCode = 'LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION';
-	        if (this.zone === 'ru') {
-	          popupDescriptionMessageCode = 'LANDING_SITE_TILE_POPUP_COPILOT_DESCRIPTION_2';
-	        }
-	        this.content = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-site_title-popup-content\">\n\t\t\t\t\t<div class=\"landing-site_title-popup-main\">\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-list\">\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --about\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --ai\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --rocket\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-desc\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_TITLE'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_1'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_2'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_3'), main_core.Loc.getMessage(popupDescriptionMessageCode), this.renderVideo());
+	        this.content = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-site_title-popup-content\">\n\t\t\t\t\t<div class=\"landing-site_title-popup-main\">\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"landing-site_title-popup-list\">\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --about\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --ai\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-item --rocket\">\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-icon\"></div>\n\t\t\t\t\t\t\t\t<div class=\"landing-site_title-popup-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_TITLE'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_1'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_2'), main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_LIST_TEXT_3'), this.renderVideo());
 	      }
 	      return this.content;
 	    }
@@ -1272,39 +1270,7 @@ this.BX.Landing = this.BX.Landing || {};
 	            style: ui_buttons.Button.AirStyle.FILLED_SUCCESS,
 	            onclick: function onclick(button) {
 	              button.setWaiting();
-	              if (_this.zone === 'ru') {
-	                BX.ajax.runAction('bitrix24.license.demolicense.activate').then(function () {
-	                  return new Promise(function (resolve, reject) {
-	                    BX.ajax({
-	                      dataType: 'json',
-	                      method: 'POST',
-	                      url: '/bitrix/tools/rest.php',
-	                      data: {
-	                        action: 'activate_demo',
-	                        sessid: BX.bitrix_sessid()
-	                      },
-	                      onsuccess: function onsuccess(response) {
-	                        resolve(response);
-	                      },
-	                      onfailure: function onfailure(response) {
-	                        reject(response);
-	                      }
-	                    });
-	                  });
-	                }).then(function () {
-	                  window.location.href = '/sites/ai/';
-	                })["catch"](function (err) {
-	                  console.error(err);
-	                  window.location.href = '/sites/ai/';
-	                });
-	              } else {
-	                BX.ajax.runAction('bitrix24.license.demolicense.activate').then(function () {
-	                  window.location.href = '/sites/ai/';
-	                })["catch"](function (err) {
-	                  console.error(err);
-	                  window.location.href = '/sites/ai/';
-	                });
-	              }
+	              window.location.href = '/sites/ai/';
 	            }
 	          })]
 	        });
@@ -1349,6 +1315,8 @@ this.BX.Landing = this.BX.Landing || {};
 	    this.siteTileItems = [];
 	    this.$container = null;
 	    this.scroller = null;
+	    this.createByCopilotText = options.createByCopilotText || null;
+	    this.copilotGeneratedText = options.copilotGeneratedText || null;
 	    var videoSrc = '/bitrix/components/bitrix/landing.site_tile/templates/.default/video/en/siteWithCopilot.webm';
 	    this.zone = options.zone || null;
 	    if (options.lang === 'ru') {
@@ -1357,7 +1325,7 @@ this.BX.Landing = this.BX.Landing || {};
 	    if (options.isNeedCreateCopilotPopup) {
 	      main_core.Runtime.loadExtension(['ui.banner-dispatcher']).then(function (exports) {
 	        var BannerDispatcher = exports.BannerDispatcher;
-	        BannerDispatcher.critical.toQueue(function (onDone) {
+	        BannerDispatcher.high.toQueue(function (onDone) {
 	          var metrika = new landing_metrika.Metrika(true);
 	          metrika.sendData({
 	            category: 'site',
@@ -1424,7 +1392,9 @@ this.BX.Landing = this.BX.Landing || {};
 	          error: item.error || {},
 	          articles: item.articles || null,
 	          grid: _this2,
-	          copilotProcess: item.copilotProcess
+	          copilotProcess: item.copilotProcess,
+	          createByCopilotText: _this2.createByCopilotText,
+	          copilotGeneratedText: _this2.copilotGeneratedText
 	        });
 	      });
 	      return this.siteTileItems;

@@ -77,10 +77,10 @@ if ($arResult['VIOLATION_LIST'] ?? null)
 	$arParams['~USER_NAMES'] = User::getUserName($users);
 	$arParams['~USER_DATA'] = User::getData($users);
 
+	$userId = User::getId();
+
 	foreach ($arResult['VIOLATION_LIST'] as $item)
 	{
-		$userId = User::getId();
-
 		$groupLink = CComponentEngine::MakePathFromTemplate(
 			$arParams['PATH_TO_GROUP_LIST'],
 			[
@@ -96,6 +96,18 @@ if ($arResult['VIOLATION_LIST'] ?? null)
 				'action' => 'view',
 			]
 		);
+
+		$analytics = \Bitrix\Tasks\Helper\Analytics::getInstance($userId);
+		$taskLink = (new Uri($taskLink))
+			->addParams(
+				[
+					'ta_sec' => $analytics::SECTION['tasks'],
+					'ta_sub' => $analytics::SUB_SECTION['efficiency'],
+					'ta_el' => $analytics::ELEMENT['title_click'],
+				],
+			)
+			->getUri()
+		;
 
 		$item['USER_TYPE'] = (
 			in_array($item['USER_TYPE'], ['R', 'A'])

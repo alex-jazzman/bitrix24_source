@@ -4,7 +4,7 @@
 jn.define('settings-v2/ui/items/src/banner', (require, exports, module) => {
 	const { createTestIdGenerator } = require('utils/test');
 	const { CardBanner } = require('ui-system/blocks/banners/card-banner');
-	const { Text4 } = require('ui-system/typography/text');
+	const { BBCodeText } = require('ui-system/typography/bbcodetext');
 	const { SafeImage } = require('layout/ui/safe-image');
 	const { ASSET_PATH } = require('settings-v2/const');
 	const AppTheme = require('apptheme');
@@ -25,13 +25,16 @@ jn.define('settings-v2/ui/items/src/banner', (require, exports, module) => {
 
 		render()
 		{
-			const { id, text } = this.props;
+			const { id, text, onLinkClick } = this.props;
 
 			return CardBanner({
 				image: this.getImage(),
 				testId: this.getTestId(id),
-				description: text,
-				descriptionTypography: Text4,
+				description: BBCodeText({
+					value: text,
+					onLinkClick,
+					linksUnderline: false,
+				}),
 				hideCross: true,
 			});
 		}

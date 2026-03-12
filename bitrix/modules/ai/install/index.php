@@ -172,6 +172,8 @@ class AI extends \CModule
 		// install event handlers
 		$eventManager = EventManager::getInstance();
 		/** @see \Bitrix\AI\Handler\Main */
+		$eventManager->registerEventHandler('main', 'onProlog', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onProlog');
+		/** @see \Bitrix\AI\Handler\Main */
 		$eventManager->registerEventHandler('main', 'onAfterUserDelete', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onAfterUserDelete');
 		/** @see \Bitrix\AI\Rest */
 		$eventManager->registerEventHandler('rest', 'onRestServiceBuildDescription', 'ai', '\\Bitrix\\AI\\Rest', 'onRestServiceBuildDescription');
@@ -201,6 +203,7 @@ class AI extends \CModule
 			else
 			{
 				$this->configureBoxBitrixGptFeatures();
+				$this->addDefaultBitrixEngines();
 			}
 		}
 
@@ -208,6 +211,54 @@ class AI extends \CModule
 		//$this->InstallTasks();
 
 		return true;
+	}
+
+	protected function addDefaultBitrixEngines(): void
+	{
+		$engineClasses = [
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\Bitrix24', 'CATEGORY' => 'text'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\GigaChat', 'CATEGORY' => 'text'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\YandexGPT', 'CATEGORY' => 'text'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\BitrixAudio', 'CATEGORY' => 'audio'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\Whisper', 'CATEGORY' => 'audio'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\SaluteSpeech', 'CATEGORY' => 'audio'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\YandexART', 'CATEGORY' => 'image'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\Kandinsky', 'CATEGORY' => 'image'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\Dalle', 'CATEGORY' => 'image'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\AudioCall', 'CATEGORY' => 'call'],
+			['CLASS' => 'Bitrix\AI\Engine\Cloud\BitrixAudioCall', 'CATEGORY' => 'call'],
+		];
+
+		if (!in_array(Facade\Portal::getRegion(), ['ru', 'by'], true))
+		{
+			$engineClasses = array_merge(
+				$engineClasses,
+				[
+					['CLASS' => 'Bitrix\AI\Engine\Cloud\ItSolution', 'CATEGORY' => 'text'],
+					['CLASS' => 'Bitrix\AI\Engine\Cloud\ItSolutionAudio', 'CATEGORY' => 'audio'],
+					['CLASS' => 'Bitrix\AI\Engine\Cloud\ChatGPT', 'CATEGORY' => 'text'],
+				]
+			);
+		}
+
+		$existingClasses = array_column(
+			\Bitrix\AI\Engine\Model\BitrixEngineTable::query()
+				->setSelect(['CLASS'])
+				->fetchAll(),
+			'CLASS'
+		);
+
+		$existingClassesMap = array_flip($existingClasses);
+
+		$dataToInsert = array_filter(
+			$engineClasses,
+			fn($engine) => !isset($existingClassesMap[$engine['CLASS']])
+		);
+
+		if (!empty($dataToInsert))
+		{
+			\Bitrix\AI\Engine\Model\BitrixEngineTable::addMulti($dataToInsert, true);
+		}
 	}
 
 	/**
@@ -269,6 +320,8 @@ class AI extends \CModule
 		$eventManager = EventManager::getInstance();
 		/** @see \Bitrix\AI\Handler\Main */
 		$eventManager->unRegisterEventHandler('main', 'onAfterUserDelete', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onAfterUserDelete');
+		/** @see \Bitrix\AI\Handler\PublicAgreement */
+		$eventManager->unRegisterEventHandler('main', 'OnPageStart', 'ai', '\\Bitrix\\AI\\Handler\\PublicAgreement', 'onPageStart');
 		/** @see \Bitrix\AI\Rest */
 		$eventManager->unRegisterEventHandler('rest', 'onRestServiceBuildDescription', 'ai', '\\Bitrix\\AI\\Rest', 'onRestServiceBuildDescription');
 		/** @see \Bitrix\AI\Rest */

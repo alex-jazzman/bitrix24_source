@@ -9,6 +9,7 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 		UserRole,
 		DialogType,
 		EventType,
+		AiTasksStatusType,
 	} = require('im/messenger/const');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
@@ -17,6 +18,7 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { parser } = require('im/messenger/lib/parser');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { delay } = require('im/messenger/lib/utils');
 	const { MessageDataConverter } = require('im/messenger/lib/converter/data/message');
 	const { FileUtils } = require('im/messenger/provider/pull/lib/file');
 	const { ChatDataProvider, ReactionDataProvider } = require('im/messenger/provider/data');
@@ -25,6 +27,8 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { NewMessageManager } = require('im/messenger-v2/provider/pull/lib/new-message-manager');
 	const { InputActionListener } = require('im/messenger-v2/provider/pull/lib/input-action-listener');
+
+	const AUTO_TASK_STATUS_NOT_FOUND_CLEAR_DELAY = 3000;
 
 	/**
 	 * @class MessagePullHandler
@@ -53,10 +57,11 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 			await this.#updateDialog(params);
 			await this.#setUsers(params);
 			await this.#setFiles(params);
-			await this.#setRecentSticker(params);
+			await this.#setSticker(params);
 			this.#checkTimerInputAction(params.dialogId, params.message.senderId);
 			this.#showMessageNotify(params, extra, true);
 			await this.#processMessage(params);
+			await this.#checkMessageParams(params.message);
 		}
 
 		/**
@@ -80,12 +85,13 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 			await this.#updateDialog(params);
 			await this.#setUsers(params);
 			await this.#setFiles(params);
-			await this.#setRecentSticker(params);
+			await this.#setSticker(params);
 			this.#checkTimerInputAction(params.dialogId, params.message.senderId);
 			this.#showMessageNotify(params, extra, false);
 			await this.#setCommentInfo(params);
 			await this.#processMessage(params);
 			await this.#updateCopilot(params);
+			await this.#checkMessageParams(params.message);
 		}
 
 		/**
@@ -497,6 +503,63 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 		}
 
 		/**
+		 * @param {MessagePullHandleAutoTaskStatus} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleAutoTaskStatus(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleAutoTaskStatus:', params);
+
+			const dialogHelper = DialogHelper.createByChatId(params.chatId);
+			if (dialogHelper?.isChannel)
+			{
+				this.logger.warn('handleAutoTaskStatus skipped by message from channel:', params);
+
+				return;
+			}
+
+			try
+			{
+				const payloadParams = {
+					id: params.messageId,
+					fields: {
+						visualState: { aiTaskStatus: params.status, type: params.type },
+					},
+				};
+
+				await this.store.dispatch('messagesModel/updateVisualState', payloadParams);
+			}
+			catch (error)
+			{
+				this.logger.error(
+					'#handleAutoTaskStatus.messagesModel/updateVisualState.catch:',
+					error,
+				);
+			}
+
+			if (params.status === AiTasksStatusType.notFound)
+			{
+				// Wait before clearing the "not found" visual state,
+				// because no more pull events will arrive and otherwise this state would remain indefinitely.
+				await delay(AUTO_TASK_STATUS_NOT_FOUND_CLEAR_DELAY);
+
+				const payloadParams = {
+					id: params.messageId,
+					fields: {
+						visualState: { aiTaskStatus: null },
+					},
+				};
+
+				await this.store.dispatch('messagesModel/updateVisualState', payloadParams);
+			}
+		}
+
+		/**
 		 * @param {MessageAddParams} params
 		 * @param {PullExtraParams} extra
 		 * @return {NewMessageManager}
@@ -589,6 +652,7 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 					message: {
 						status: params.chatMessageStatus,
 					},
+					lastActivityDate: recentItem.lastActivityDate,
 				}]);
 			}
 
@@ -1044,14 +1108,21 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 		 * @param {MessageAddParams} params
 		 * @return {Promise<any>}
 		 */
-		async #setRecentSticker(params)
+		async #setSticker(params)
 		{
-			if (params.message.senderId !== MessengerParams.getUserId())
+			if (Type.isArrayFilled(params.stickers))
+			{
+				await this.store.dispatch('stickerPackModel/addStickers', {
+					stickers: params.stickers,
+				});
+			}
+
+			if (!Type.isPlainObject(params.message.params?.STICKER_PARAMS))
 			{
 				return false;
 			}
 
-			if (!Type.isPlainObject(params.message.params?.STICKER_PARAMS))
+			if (params.message.senderId !== MessengerParams.getUserId())
 			{
 				return false;
 			}
@@ -1492,6 +1563,36 @@ jn.define('im/messenger-v2/provider/pull/message/handler', (require, exports, mo
 			}
 
 			return currentCounter === pullCounter;
+		}
+
+		/**
+		 * @param {RawMessage} message
+		 */
+		async #checkMessageParams(message)
+		{
+			if (Type.isArray(message.params) && message.params.length === 0)
+			{
+				return;
+			}
+
+			const autoTaskTriggerMessageId = Number(message.params.AI_TASK_TRIGGER_MESSAGE_ID);
+			if (
+				message.system === 'Y'
+				&& Type.isNumber(autoTaskTriggerMessageId)
+				&& !Number.isNaN(autoTaskTriggerMessageId)
+			)
+			{
+				this.logger.log('#checkMessageParams: this message is trigger ai task final');
+
+				const payloadParams = {
+					id: autoTaskTriggerMessageId,
+					fields: {
+						visualState: { aiTaskStatus: null },
+					},
+				};
+
+				await this.store.dispatch('messagesModel/updateVisualState', payloadParams);
+			}
 		}
 	}
 

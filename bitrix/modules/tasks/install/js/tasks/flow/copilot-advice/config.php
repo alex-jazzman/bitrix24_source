@@ -15,4 +15,7 @@ return [
 		'main.core',
 	],
 	'skip_core' => false,
+	'settings' => [
+		'copilotName' => \Bitrix\Tasks\Integration\AI\Settings::getCopilotName(),
+	],
 ];

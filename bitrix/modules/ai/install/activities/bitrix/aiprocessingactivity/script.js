@@ -84,8 +84,9 @@
 	      if (!jsonTextarea) {
 	        return;
 	      }
+	      var minHeight = Math.max(jsonTextarea.scrollHeight, this.constructor.TEXTAREA_MIN_HEIGHT);
 	      Dom.style(jsonTextarea, 'height', 'auto');
-	      Dom.style(jsonTextarea, 'height', "".concat(Math.min(jsonTextarea.scrollHeight, this.constructor.TEXTAREA_MAX_HEIGHT), "px"));
+	      Dom.style(jsonTextarea, 'height', "".concat(Math.min(minHeight, this.constructor.TEXTAREA_MAX_HEIGHT), "px"));
 	    }
 	  }, {
 	    key: "buildTemplate",
@@ -283,6 +284,7 @@
 	  jsonSchemaStatus: 'ai-node-bp-json-schema-status'
 	}));
 	babelHelpers.defineProperty(AiNodeBpJsonEditor, "TEXTAREA_MAX_HEIGHT", 500);
+	babelHelpers.defineProperty(AiNodeBpJsonEditor, "TEXTAREA_MIN_HEIGHT", 50);
 	babelHelpers.defineProperty(AiNodeBpJsonEditor, "VALIDATE_DEBOUNCE", 250);
 	BX.AiNodeBpJsonEditor = AiNodeBpJsonEditor;
 

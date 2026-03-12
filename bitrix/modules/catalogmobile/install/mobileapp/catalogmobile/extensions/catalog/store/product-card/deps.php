@@ -11,7 +11,6 @@ return [
 		'catalog:store/product-list/menu/product-context-menu',
 		'catalog:store/document-type',
 		'haptics',
-		'money',
 		'apptheme',
 		'utils/object',
 	]

@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_PRODUCT_SECTION_ROOT_CRUMB_NAME"] = "Бөлімдер";

@@ -1,9 +1,6 @@
 <?php
 $MESS["DASHBOARD_PARAMS_SELECTOR_GROUPS"] = "Groups:";
-$MESS["DASHBOARD_PARAMS_SELECTOR_GROUPS_HINT"] = "Adding the dashboard to a group will override dashboard access permissions.";
+$MESS["DASHBOARD_PARAMS_SELECTOR_GROUPS_HINT_MSGVER_1"] = "Adding the dashboard to a group makes it available on the pages specified in the group.";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS"] = "Parameters:";
+$MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT"] = "The dashboard will include filters for all parameters except the current user ID.";
 $MESS["DASHBOARD_PARAMS_SELECTOR_PARAMS_LIST"] = "Parameter IDs";
-$MESS["DASHBOARD_PARAMS_SELECTOR_SCOPE_CONFIRMATION_POPUP_NO_CAPTION"] = "No";
-$MESS["DASHBOARD_PARAMS_SELECTOR_SCOPE_CONFIRMATION_POPUP_TASKS_FLOWS_FLOW"] = "Do you want to include this dashboard on the Flows pages?";
-$MESS["DASHBOARD_PARAMS_SELECTOR_SCOPE_CONFIRMATION_POPUP_WORKFLOW_TEMPLATE"] = "Do you want to include this dashboard on the Automation pages?";
-$MESS["DASHBOARD_PARAMS_SELECTOR_SCOPE_CONFIRMATION_POPUP_YES_CAPTION"] = "Yes";

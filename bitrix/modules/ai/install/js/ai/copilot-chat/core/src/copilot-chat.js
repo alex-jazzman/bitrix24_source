@@ -240,7 +240,7 @@ export class CopilotChat extends EventEmitter
 			authorId: message.authorId,
 			content: message.content,
 			type: message.type,
-			status: CopilotChatMessageStatus.DEPART,
+			status: message.status ?? CopilotChatMessageStatus.DELIVERED,
 			id: message.id,
 			params: message.params ?? [],
 		};

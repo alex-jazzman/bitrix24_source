@@ -19,3 +19,5 @@ $MESS["VI_DOCS_UPLOAD_BTN"] = "Upload documents";
 $MESS["VI_DOCS_UPLOAD_NOTICE"] = "Please note that the paperwork you are about to submit will be uploaded directly to Voximplant, Inc, and will be treated according to the legislation of the corresponding country. Bitrix24 will not collect, store, or process any data associated with these documents.";
 $MESS["VI_DOCS_UPLOAD_WHILE_RENT"] = "If your documentation needs to be verified to rent a phone number, the number rent user interface will show the documentation upload form";
 $MESS["VI_DOCS_WAIT"] = "Uploading... Please wait";
+$MESS["VOX_LINES_INTERNOD_WARNING"] = "Extend your subscription<br />Your Russian phone numbers will be deactivated soon. Please sign the <a href='#BILLING_URL#' target='_blank'>Additional agreement</a> to continue using them beyond this date.";
+$MESS["VOX_LINES_INTERNOD_WARNING_WITH_DATE"] = "Extend your subscription<br />Your Russian phone numbers will remain active till #DATE#. Please sign the <a href='#BILLING_URL#' target='_blank'>Additional agreement</a> to continue using them beyond this date.";

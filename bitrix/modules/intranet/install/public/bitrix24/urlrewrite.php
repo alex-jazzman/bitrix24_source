@@ -98,12 +98,12 @@ $arUrlRewrite = array(
 	array(
 		"CONDITION" => "#^/video/([\\.\\-0-9a-zA-Z]+)(/?)([^/]*)#",
 		"RULE" => "alias=\$1&videoconf",
-		"PATH" => "/desktop_app/router.php",
+		"PATH" => "/conference/videoconf.php",
 	),
 	array(
 		"CONDITION" => "#^/extranet/video/([\\.\\-0-9a-zA-Z]+)(/?)([^/]*)#",
 		"RULE" => "alias=\$1&videoconf",
-		"PATH" => "/desktop_app/router.php",
+		"PATH" => "/conference/videoconf.php",
 	),
 	array(
 		"CONDITION" => "#^/online/([\\.\\-0-9a-zA-Z]+)(/?)([^/]*)#",
@@ -1043,4 +1043,10 @@ $arUrlRewrite = array(
 		'RULE' => 'taskId=$1',
 		'PATH' => '/extranet/tasks/comments.php',
 	],
+	[
+		'CONDITION' => '#^/gotobot/(.*)$#',
+		'RULE' => "bot=$1",
+		'ID' => 'gotobot',
+		'PATH' => '/gotobot/index.php',
+	]
 );

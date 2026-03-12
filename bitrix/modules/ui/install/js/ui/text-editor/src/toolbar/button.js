@@ -26,6 +26,11 @@ export default class Button extends ToolbarItem
 		}
 	}
 
+	setIcon(icon: string): void
+	{
+		this.setContent(`<span class="ui-icon-set --${Text.encode(icon)}"></span>`);
+	}
+
 	setFormat(format: string)
 	{
 		this.#format = format;

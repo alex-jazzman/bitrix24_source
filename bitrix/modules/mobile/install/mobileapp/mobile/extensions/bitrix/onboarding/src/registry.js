@@ -33,6 +33,23 @@ jn.define('onboarding/src/registry', (require, exports, module) => {
 						},
 					}),
 				}),
+				new Case({
+					id: CaseName.ON_DETAIL_CARD_TELEGRAM_BOT,
+					presets: [Preset.CRM],
+					activeTab: BadgeCode.CRM,
+					conditions: [
+						ConditionBase.hasOpenLineAccess(),
+						ConditionBase.isClientRelatedEntity(),
+						ConditionBase.hasTelegramConnection(),
+					],
+					action: (ctx, onComplete) => ActionBase.showHint({
+						title: Loc.getMessage('M_ONBOARDING_ON_DETAIL_CARD_TELEGRAM_BOT_TITLE'),
+						description: Loc.getMessage('M_ONBOARDING_ON_DETAIL_CARD_TELEGRAM_BOT_DESCRIPTION'),
+						targetRef: 'detail_more_menu',
+						delay: 800,
+						onComplete,
+					}),
+				}),
 			];
 		}
 	}

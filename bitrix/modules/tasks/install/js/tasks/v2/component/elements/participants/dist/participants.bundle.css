@@ -5,14 +5,21 @@
 
 .tasks-field-users {
 	--scrollbar-width: 5px;
-	display: inline-flex;
+	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	overflow-y: scroll;
-	overflow-x: hidden;
 	margin-right: calc(-1 * var(--scrollbar-width));
 	padding-right: calc(3 * var(--scrollbar-width));
 	font-size: var(--ui-font-size-lg);
+}
+
+.tasks-field-users.--overflow {
+	overflow-y: auto;
+}
+
+.tasks-field-users.--safari {
+	box-sizing: border-box;
+	max-width: calc(100% - 26px);
 }
 
 @supports not selector(::-webkit-scrollbar) {

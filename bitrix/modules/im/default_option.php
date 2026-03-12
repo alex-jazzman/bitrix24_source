@@ -6,9 +6,9 @@ $im_default_option = array(
 	'general_chat_message_leave' => false,
 	'allow_send_to_general_chat_all' => 'Y',
 	'allow_send_to_general_chat_rights' => 'AU',
-	'call_server' => 'N',
 	'call_server_enabled' => true,
 	'call_server_max_users' => 100,
+	'call_server_url' => '',
 	'open_chat_enable' => IsModuleInstalled('intranet')? true: false,
 	'color_enable' => true,
 	'correct_text' => false,
@@ -33,9 +33,6 @@ $im_default_option = array(
 	'contact_list_show_all_bus' => false,
 	'path_to_user_profile' => (!IsModuleInstalled("intranet") ? '/club/user/#user_id#/' : ''),
 	'message_history_index' => false,
-	'call_log_service' => '',
-	'call_log_secret' => '',
-	'call_server_url' => '',
 );
 
 if (file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/im_options.php"))

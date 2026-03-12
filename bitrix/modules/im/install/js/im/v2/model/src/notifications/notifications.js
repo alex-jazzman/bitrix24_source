@@ -1,11 +1,13 @@
-import {BuilderModel} from 'ui.vue3.vuex';
-import {Type, Text} from 'main.core';
+import { BuilderModel } from 'ui.vue3.vuex';
+import { Type, Text } from 'main.core';
 
-import {Core} from 'im.v2.application.core';
-import {Utils} from 'im.v2.lib.utils';
-import {NotificationTypesCodes} from 'im.v2.const';
+import { Core } from 'im.v2.application.core';
+import { Utils } from 'im.v2.lib.utils';
+import { NotificationTypesCodes } from 'im.v2.const';
 
 import { convertObjectKeysToCamelCase } from '../utils/format';
+
+import type { ImModelNotification } from '../registry';
 
 export class NotificationsModel extends BuilderModel
 {
@@ -72,6 +74,19 @@ export class NotificationsModel extends BuilderModel
 				}
 
 				return existingItem;
+			},
+			getSearchItemById: (state) => (notificationId: number | string): ?ImModelNotification => {
+				if (Type.isString(notificationId))
+				{
+					const id = Number.parseInt(notificationId, 10);
+					const existingItem = state.searchCollection.get(id);
+
+					return existingItem ?? null;
+				}
+
+				const existingItem = state.searchCollection.get(notificationId);
+
+				return existingItem ?? null;
 			},
 			getCounter: (state): number =>
 			{
@@ -216,11 +231,14 @@ export class NotificationsModel extends BuilderModel
 					});
 				});
 			},
-			readAllSimple: (store) =>
+			readAllSimple: (store, payload = {}) =>
 			{
+				const excludeIds = payload.excludeIds || [];
+				const excludeIdsSet = new Set(excludeIds);
+
 				const idsToMarkAsRead = [];
 				store.state.collection.forEach((item) => {
-					if (!item.read && item.sectionCode === NotificationTypesCodes.simple)
+					if (!item.read && item.sectionCode === NotificationTypesCodes.simple && !excludeIdsSet.has(item.id))
 					{
 						idsToMarkAsRead.push(item.id);
 					}

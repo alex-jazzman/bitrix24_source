@@ -5,12 +5,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('CRM_CDA_NAME_1'),
 	'DESCRIPTION' => Loc::getMessage('CRM_CDA_DESC_2'),
-	'TYPE' => ['activity', 'robot_activity'],
+	'TYPE' => [
+		ActivityType::ACTIVITY->value,
+		ActivityType::ROBOT->value,
+		ActivityType::NODE_ACTION->value,
+	],
 	'CLASS' => 'CrmCreateDynamicActivity',
 	'JSCLASS' => 'BizProcActivity',
 	'CATEGORY' => [

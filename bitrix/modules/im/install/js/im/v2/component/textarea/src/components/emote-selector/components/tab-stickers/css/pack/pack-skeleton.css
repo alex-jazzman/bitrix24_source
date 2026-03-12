@@ -1,0 +1,14 @@
+.bx-im-sticker-pack-skeleton__container {
+	padding-bottom: 19px;
+}
+
+.bx-im-sticker-pack-skeleton__header {
+	padding: 17px 0 23px 18px;
+}
+
+.bx-im-sticker-pack-skeleton__stickers {
+	display: flex;
+	flex-wrap: wrap;
+	padding-left: 18px;
+	gap: 24px;
+}

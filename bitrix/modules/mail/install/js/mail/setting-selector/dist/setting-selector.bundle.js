@@ -18,6 +18,7 @@ this.BX = this.BX || {};
 	var _settingsMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("settingsMap");
 	var _selectedOptionKey = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedOptionKey");
 	var _dialogOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogOptions");
+	var _disabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disabled");
 	var _forbidOptionDeselect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("forbidOptionDeselect");
 	var _createSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createSelector");
 	var _renderContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderContainer");
@@ -63,6 +64,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _disabled, {
+	      writable: true,
+	      value: false
+	    });
 	    Object.defineProperty(this, _forbidOptionDeselect, {
 	      writable: true,
 	      value: true
@@ -71,7 +76,8 @@ this.BX = this.BX || {};
 	      settingsMap = {},
 	      selectedOptionKey,
 	      inputName,
-	      dialogOptions = {}
+	      dialogOptions = {},
+	      disabled = false
 	    } = options;
 	    Object.entries(settingsMap).forEach(([key, value]) => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _settingsMap)[_settingsMap].set(key, value);
@@ -79,6 +85,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _dialogOptions)[_dialogOptions] = dialogOptions;
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputName)[_inputName] = inputName;
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedOptionKey)[_selectedOptionKey] = selectedOptionKey;
+	    babelHelpers.classPrivateFieldLooseBase(this, _disabled)[_disabled] = disabled;
 	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = babelHelpers.classPrivateFieldLooseBase(this, _renderContainer)[_renderContainer]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _createSelector)[_createSelector]();
 	  }
@@ -141,7 +148,9 @@ this.BX = this.BX || {};
 	    ...babelHelpers.classPrivateFieldLooseBase(this, _dialogOptions)[_dialogOptions]
 	  });
 	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _settingButton)[_settingButton], 'click', () => {
-	    this.settingDialog.show();
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _disabled)[_disabled]) {
+	      this.settingDialog.show();
+	    }
 	  });
 	}
 	function _renderContainer2() {
@@ -159,11 +168,11 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _settingButtonTextNode)[_settingButtonTextNode].setAttribute('title', selectedOptionText);
 	  babelHelpers.classPrivateFieldLooseBase(this, _settingButtonTextNode)[_settingButtonTextNode].textContent = selectedOptionText;
 	  babelHelpers.classPrivateFieldLooseBase(this, _settingButton)[_settingButton] = main_core.Tag.render(_t2 || (_t2 = _`
-			<div class="setting-selector-button">
+			<div class="setting-selector-button ${0}">
 				${0}
 				${0}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _settingButtonTextNode)[_settingButtonTextNode], this.icon);
+		`), babelHelpers.classPrivateFieldLooseBase(this, _disabled)[_disabled] ? 'setting-selector-button--disabled' : '', babelHelpers.classPrivateFieldLooseBase(this, _settingButtonTextNode)[_settingButtonTextNode], this.icon);
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _inputName)[_inputName] === undefined) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _hiddenInput)[_hiddenInput] = main_core.Tag.render(_t3 || (_t3 = _``));
 	  } else {

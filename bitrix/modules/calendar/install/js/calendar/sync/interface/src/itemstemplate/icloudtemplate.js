@@ -47,7 +47,7 @@ export default class IcloudTemplate extends InterfaceTemplate
 		}).then(
 			(response) => {
 				const result = response.data;
-				
+
 				if (result.status === 'success' && result.connectionId)
 				{
 					this.openSyncWizard(data.appleId);
@@ -63,7 +63,7 @@ export default class IcloudTemplate extends InterfaceTemplate
 	syncCalendarsWithIcloud(connectionId)
 	{
 		this.authDialog.close();
-		
+
 		return new Promise((resolve) => {
 			BX.ajax.runAction('calendar.api.syncajax.syncIcloudConnection', {
 				data: {
@@ -80,7 +80,7 @@ export default class IcloudTemplate extends InterfaceTemplate
 						this.provider.getConnection().setConnected(true);
 						this.provider.getConnection().setSyncDate(new Date());
 					}
-					
+
 					resolve(response.data);
 				},
 				(response) => {
@@ -123,7 +123,7 @@ export default class IcloudTemplate extends InterfaceTemplate
 		this.showUpdateSectionListNotification();
 	}
 
-	handleConnectButton()
+	async handleConnectButton()
 	{
 		this.initPopup();
 		if (Util.isIphoneConnected() || Util.isMacConnected())
@@ -135,19 +135,19 @@ export default class IcloudTemplate extends InterfaceTemplate
 			this.authDialog.show();
 		}
 	}
-	
+
 	initPopup()
 	{
 		if (!this.authDialog)
 		{
 			this.authDialog = new IcloudAuthDialog();
-			
+
 			EventEmitter.unsubscribeAll('BX.Calendar.Sync.Icloud:onSubmit');
 			EventEmitter.subscribe('BX.Calendar.Sync.Icloud:onSubmit', (e) => {
 				this.createConnection(e.data);
 			})
 		}
-		
+
 		if (!this.alertSyncPopup)
 		{
 			this.alertSyncPopup = new WarnSyncIcloudDialog({
@@ -172,7 +172,7 @@ export default class IcloudTemplate extends InterfaceTemplate
 			})
 		})
 	}
-	
+
 	sendRequestRemoveConnection(id)
 	{
 		this.deactivateConnection(id);

@@ -5873,6 +5873,20 @@ window._main_polyfill_core = true;
 	      return Type.isDomNode(value) && value.nodeType === Node.ELEMENT_NODE;
 	    }
 	    /**
+	     * Checks that value is EventTarget like object
+	     * @param value
+	     * @return {boolean}
+	     */
+	  }, {
+	    key: "isEventTargetLike",
+	    value: function isEventTargetLike(value) {
+	      return Type.isObject(value)
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+	      && Type.isFunction(value.addEventListener)
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+	      && Type.isFunction(value.removeEventListener) && Type.isFunction(value.dispatchEvent);
+	    }
+	    /**
 	     * Checks that value is text node
 	     * @param value
 	     * @return {boolean}
@@ -6012,6 +6026,11 @@ window._main_polyfill_core = true;
 	    key: "isFormData",
 	    value: function isFormData(value) {
 	      return value instanceof FormData;
+	    }
+	  }, {
+	    key: "isJsonValue",
+	    value: function isJsonValue(value) {
+	      return Type.isPlainObject(value) || Type.isString(value) || Type.isNumber(value) || Type.isBoolean(value) || Type.isNull(value) || Type.isArray(value);
 	    }
 	  }]);
 	  return Type;
@@ -6222,6 +6241,9 @@ window._main_polyfill_core = true;
 	  babelHelpers.createClass(Registry, [{
 	    key: "set",
 	    value: function set(target, event, listener) {
+	      if (!Type.isEventTargetLike(target)) {
+	        return;
+	      }
 	      const events = this.get(target);
 	      if (!Type.isSet(events[event])) {
 	        events[event] = new Set();
@@ -6245,7 +6267,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "delete",
 	    value: function _delete(target, event, listener) {
-	      if (!Type.isDomNode(target)) {
+	      if (!Type.isEventTargetLike(target)) {
 	        return;
 	      }
 	      if (Type.isString(event) && Type.isFunction(listener)) {
@@ -6297,33 +6319,39 @@ window._main_polyfill_core = true;
 	}
 
 	function bind(target, eventName, handler, options) {
-	  if (!Type.isObject(target) || !Type.isFunction(target.addEventListener)) {
+	  if (!Type.isEventTargetLike(target)) {
 	    return;
 	  }
 	  const listenerOptions = fetchSupportedListenerOptions(options);
 	  if (eventName in aliases) {
 	    aliases[eventName].forEach(key => {
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
 	      target.addEventListener(key, handler, listenerOptions);
 	      registry.set(target, eventName, handler);
 	    });
 	    return;
 	  }
+
+	  // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
 	  target.addEventListener(eventName, handler, listenerOptions);
 	  registry.set(target, eventName, handler);
 	}
 
 	function unbind(target, eventName, handler, options) {
-	  if (!Type.isObject(target) || !Type.isFunction(target.removeEventListener)) {
+	  if (!Type.isEventTargetLike(target)) {
 	    return;
 	  }
 	  const listenerOptions = fetchSupportedListenerOptions(options);
 	  if (eventName in aliases) {
 	    aliases[eventName].forEach(key => {
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
 	      target.removeEventListener(key, handler, listenerOptions);
 	      registry.delete(target, key, handler);
 	    });
 	    return;
 	  }
+
+	  // eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
 	  target.removeEventListener(eventName, handler, listenerOptions);
 	  registry.delete(target, eventName, handler);
 	}
@@ -6438,9 +6466,9 @@ window._main_polyfill_core = true;
 	  if (!itemsList.length) {
 	    return Promise.resolve();
 	  }
-	  return new Promise(resolve => {
+	  return new Promise((resolve, reject) => {
 	    // eslint-disable-next-line
-	    BX.load(itemsList, resolve);
+	    BX.load(itemsList, resolve, document, reject);
 	  });
 	}
 
@@ -6470,11 +6498,52 @@ window._main_polyfill_core = true;
 	  };
 	}
 
-	async function processExtensions(map) {
-	  const loadableExtensions = [...map.keys()];
-	  const rawAssets = await loadAssets({
-	    extension: loadableExtensions
+	function waitOnline() {
+	  return new Promise(resolve => {
+	    Event.bindOnce(window, 'online', () => resolve());
 	  });
+	}
+
+	const TIMEOUTS = [1000, 3000, 5000];
+	async function tryLoad(extensions, callback) {
+	  for (let i = 0; i <= TIMEOUTS.length; i++) {
+	    try {
+	      // eslint-disable-next-line no-await-in-loop
+	      return await callback();
+	    } catch {
+	      if (navigator.onLine === false) {
+	        // eslint-disable-next-line no-console
+	        console.warn(`Wait online for load ${extensions.join(', ')}`);
+
+	        // eslint-disable-next-line no-await-in-loop
+	        await waitOnline();
+	        i--;
+	        continue;
+	      }
+	      if (i === TIMEOUTS.length) {
+	        throw new Error(`${extensions.join(', ')} loading failed...`);
+	      }
+	      const delay = TIMEOUTS[i];
+	      const displayRetryCount = i + 1;
+
+	      // eslint-disable-next-line no-console
+	      console.warn(`Retry load #${displayRetryCount}: ${extensions.join(', ')}`);
+
+	      // eslint-disable-next-line no-await-in-loop
+	      await new Promise(resolve => {
+	        setTimeout(resolve, delay);
+	      });
+	    }
+	  }
+	  throw new Error('Unexpected end of retry loop');
+	}
+
+	async function processExtensions(map) {
+	  var _await$tryLoad;
+	  const loadableExtensions = [...map.keys()];
+	  const rawAssets = (_await$tryLoad = await tryLoad(loadableExtensions, () => loadAssets({
+	    extension: loadableExtensions
+	  }))) !== null && _await$tryLoad !== void 0 ? _await$tryLoad : [];
 	  rawAssets.forEach(rawAsset => {
 	    var _rawAsset$html;
 	    const preparedHtml = (_rawAsset$html = rawAsset.html) !== null && _rawAsset$html !== void 0 ? _rawAsset$html : '';
@@ -6488,7 +6557,7 @@ window._main_polyfill_core = true;
 	      window.BX.evalGlobal(script);
 	    });
 	    const loadableExtensionEntry = map.get(rawAsset.extension);
-	    void Promise.all([loadAll(extensionAssets.externalScripts), loadAll(extensionAssets.externalStyles)]).then(() => {
+	    void Promise.all([tryLoad(loadableExtensions, () => loadAll(extensionAssets.externalScripts)), tryLoad(loadableExtensions, () => loadAll(extensionAssets.externalStyles))]).then(() => {
 	      var _rawAsset$config$name, _rawAsset$config;
 	      extensionAssets.inlineAfterScripts.forEach(script => {
 	        window.BX.evalGlobal(script);
@@ -8848,7 +8917,9 @@ window._main_polyfill_core = true;
 	      }
 	      globalClass += Browser.isMobile() ? ' bx-touch' : ' bx-no-touch';
 	      globalClass += Browser.isRetina() ? ' bx-retina' : ' bx-no-retina';
-	      if (/AppleWebKit/.test(navigator.userAgent)) {
+	      if (Browser.isSafari()) {
+	        globalClass += ' bx-safari';
+	      } else if (/AppleWebKit/.test(navigator.userAgent)) {
 	        globalClass += ' bx-chrome';
 	      } else if (/Opera/.test(navigator.userAgent)) {
 	        globalClass += ' bx-opera';
@@ -11509,7 +11580,7 @@ window._main_polyfill_core = true;
 	  }
 	}
 	function _encode2(value) {
-	  if (Type.isPlainObject(value)) {
+	  if (Type.isJsonValue(value)) {
 	    return JSON.stringify(value);
 	  }
 	  return value.toString();
@@ -11545,6 +11616,103 @@ window._main_polyfill_core = true;
 	}
 	const localStorage$1 = new LocalStorage();
 
+	function _classStaticPrivateMethodGet$2(receiver, classConstructor, method) { _classCheckPrivateStaticAccess$2(receiver, classConstructor); return method; }
+	function _classCheckPrivateStaticAccess$2(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+	let Page = /*#__PURE__*/function () {
+	  function Page() {
+	    babelHelpers.classCallCheck(this, Page);
+	  }
+	  babelHelpers.createClass(Page, null, [{
+	    key: "getRootWindow",
+	    value: function getRootWindow() {
+	      return this.getTopWindowOfCurrentHost(window);
+	    }
+	  }, {
+	    key: "isCrossOriginObject",
+	    value: function isCrossOriginObject(currentWindow) {
+	      try {
+	        void currentWindow.location.host;
+	      } catch {
+	        // cross-origin object
+	        return true;
+	      }
+	      return false;
+	    }
+	  }, {
+	    key: "getTopWindowOfCurrentHost",
+	    value: function getTopWindowOfCurrentHost(currentWindow) {
+	      if (!this.isCrossOriginObject(currentWindow.parent) && currentWindow.parent !== currentWindow && currentWindow.parent.location.host === currentWindow.location.host) {
+	        return this.getTopWindowOfCurrentHost(currentWindow.parent);
+	      }
+	      return currentWindow;
+	    }
+	  }, {
+	    key: "getParentWindowOfCurrentHost",
+	    value: function getParentWindowOfCurrentHost(currentWindow) {
+	      if (this.isCrossOriginObject(currentWindow.parent)) {
+	        return currentWindow;
+	      }
+	      return currentWindow.parent;
+	    }
+	  }, {
+	    key: "redirect",
+	    value: function redirect(redirectUrl, redirectOptions = {}) {
+	      if (!Type.isStringFilled(redirectUrl)) {
+	        throw new Error('Redirect: "url" must be a non-empty string.');
+	      }
+	      const rootWindow = this.getRootWindow();
+	      let url = null;
+	      try {
+	        url = new URL(redirectUrl, rootWindow.location.origin);
+	      } catch {
+	        throw new Error(`Redirect: invalid URL: ${redirectUrl}`);
+	      }
+	      const options = Type.isPlainObject(redirectOptions) ? redirectOptions : {};
+	      if (!_classStaticPrivateMethodGet$2(this, Page, _isSafeUrl).call(this, url, options.allowedOrigins)) {
+	        console.error(`Redirect: blocked potentially unsafe URL: ${url}`);
+	        return;
+	      }
+	      const wholeUrl = url.toString();
+	      if (options.newTab === true) {
+	        const win = rootWindow.open(wholeUrl, '_blank', 'noopener,noreferrer');
+	        if (win) {
+	          win.opener = null;
+	        }
+	        return;
+	      }
+	      if (options.replaceHistory === true) {
+	        rootWindow.location.replace(wholeUrl);
+	      } else {
+	        rootWindow.location.assign(wholeUrl);
+	      }
+	    }
+	  }, {
+	    key: "reload",
+	    value: function reload() {
+	      const rootWindow = this.getRootWindow();
+	      rootWindow.location.reload();
+	    }
+	  }]);
+	  return Page;
+	}();
+	function _isSafeUrl(url, allowedOrigins = []) {
+	  if (!(url instanceof URL)) {
+	    return false;
+	  }
+	  const allowedProtocols = ['http:', 'https:'];
+	  if (!allowedProtocols.includes(url.protocol)) {
+	    return false;
+	  }
+	  const rootWindow = this.getRootWindow();
+	  if (url.origin === rootWindow.location.origin) {
+	    return true;
+	  }
+	  if (Type.isArray(allowedOrigins) && allowedOrigins.length > 0) {
+	    return allowedOrigins.includes(url.origin);
+	  }
+	  return false;
+	}
+
 	function getElement(element) {
 	  if (Type.isString(element)) {
 	    return document.getElementById(element);
@@ -11572,6 +11740,7 @@ window._main_polyfill_core = true;
 	const message$1 = message;
 	const easing = Easing;
 	const fx = FX;
+	const PageObject = Page;
 
 	/**
 	 * @memberOf BX
@@ -11881,11 +12050,13 @@ window._main_polyfill_core = true;
 	exports.Easing = Easing;
 	exports.LocalStorage = LocalStorage;
 	exports.localStorage = localStorage$1;
+	exports.Page = Page;
 	exports.getClass = getClass;
 	exports.namespace = namespace;
 	exports.message = message$1;
 	exports.easing = easing;
 	exports.fx = fx;
+	exports.PageObject = PageObject;
 	exports.replace = replace;
 	exports.remove = remove;
 	exports.clean = clean;
@@ -12003,7 +12174,7 @@ window._main_polyfill_core = true;
 		space: /\s+/,
 		ltrim: /^[\s\r\n]+/g,
 		rtrim: /[\s\r\n]+$/g,
-		style: /<link.*?(rel="stylesheet"|type="text\/css")[^>]*>/i,
+		style: /<link[^>]*?(rel="stylesheet"|type="text\/css")[^>]*>/i,
 		style_href: /href=["\']([^"\']+)["\']/i
 	};
 
@@ -14326,7 +14497,7 @@ window._main_polyfill_core = true;
 	const assets = {};
 	const loadingAssetCallbacks = {};
 
-	BX.load = function(items, callback, doc)
+	BX.load = function(items, callback, doc, reject)
 	{
 		if (!BX.isReady)
 		{
@@ -14342,10 +14513,10 @@ window._main_polyfill_core = true;
 
 		callback = BX.Type.isFunction(callback) ? callback : () => {};
 
-		return loadAsync(items, callback, doc);
+		return loadAsync(items, callback, doc, reject);
 	};
 
-	function loadAsync(items, callback, doc)
+	function loadAsync(items, callback, doc, reject)
 	{
 		if (!BX.type.isArray(items))
 		{
@@ -14359,7 +14530,7 @@ window._main_polyfill_core = true;
 			const nextAsset = queue.shift();
 			if (nextAsset)
 			{
-				load(nextAsset, onLoad, doc);
+				load(nextAsset, onLoad, doc, reject);
 			}
 			else if (allLoaded())
 			{
@@ -14397,7 +14568,7 @@ window._main_polyfill_core = true;
 			const parallelLoads = Math.min(queue.length, maxParallelLoads);
 			const firstPackage = queue.splice(0, parallelLoads);
 			firstPackage.forEach(asset => {
-				load(asset, onLoad, doc);
+				load(asset, onLoad, doc, reject);
 			});
 		}
 		else
@@ -14406,7 +14577,7 @@ window._main_polyfill_core = true;
 		}
 	}
 
-	function load(asset, callback, doc)
+	function load(asset, callback, doc, reject)
 	{
 		callback = callback || BX.DoNothing;
 
@@ -14430,6 +14601,12 @@ window._main_polyfill_core = true;
 
 		asset.state = LOADING;
 
+		const onReject = () => {
+			delete assets[asset.name];
+			delete loadingAssetCallbacks[asset.name];
+			reject();
+		};
+
 		loadAsset(
 			asset,
 			function () {
@@ -14445,11 +14622,12 @@ window._main_polyfill_core = true;
 
 				delete loadingAssetCallbacks[asset.name];
 			},
-			doc
+			doc,
+			BX.Type.isFunction(reject) ? onReject : null,
 		);
 	}
 
-	function loadAsset(asset, callback, doc)
+	function loadAsset(asset, callback, doc, reject)
 	{
 		callback = callback || BX.DoNothing;
 
@@ -14458,11 +14636,27 @@ window._main_polyfill_core = true;
 			window.clearTimeout(asset.errorTimeout);
 			window.clearTimeout(asset.cssTimeout);
 			ele.onload = ele.onreadystatechange = ele.onerror = null;
-			callback();
+			if (BX.Type.isFunction(reject))
+			{
+				reject();
+			}
+			else
+			{
+				callback();
+			}
 		}
 
 		function process(event)
 		{
+			if (ext === "css")
+			{
+				cssList.push(normalizeMinUrl(normalizeUrl(asset.url)));
+			}
+			else
+			{
+				jsList.push(normalizeMinUrl(normalizeUrl(asset.url)));
+			}
+
 			event = event || window.event;
 			if (event.type === "load" || (/loaded|complete/.test(ele.readyState) && (!doc.documentMode || doc.documentMode < 9)))
 			{
@@ -14520,15 +14714,6 @@ window._main_polyfill_core = true;
 		asset.errorTimeout = window.setTimeout(function () {
 			error({type: "timeout"});
 		}, 7000);
-
-		if (ext === "css")
-		{
-			cssList.push(normalizeMinUrl(normalizeUrl(asset.url)));
-		}
-		else
-		{
-			jsList.push(normalizeMinUrl(normalizeUrl(asset.url)));
-		}
 
 		let templateLink = null;
 		const head = doc.head || doc.getElementsByTagName("head")[0];
@@ -14731,18 +14916,7 @@ window._main_polyfill_core = true;
 
 	BX.reload = function(back_url, bAddClearCache)
 	{
-		if (window !== window.top)
-		{
-			BX.Runtime
-				.loadExtension('main.pageobject')
-				.then(function() {
-					reloadInternal(back_url, bAddClearCache);
-				});
-		}
-		else
-		{
-			reloadInternal(back_url, bAddClearCache);
-		}
+		reloadInternal(back_url, bAddClearCache);
 	};
 
 	BX.clearCache = function()

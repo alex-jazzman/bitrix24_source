@@ -1,8 +1,5 @@
 <?php
 
-use Bitrix\Bizproc\Result\RenderedResult;
-use Bitrix\Bizproc\Result\ResultDto;
-
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -13,6 +10,8 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\Activity\Mixins\ErrorHandling;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Bizproc\Result\RenderedResult;
+use Bitrix\Bizproc\Result\ResultDto;
 
 class CBPReviewActivity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener
 {
@@ -134,17 +133,27 @@ class CBPReviewActivity extends CBPActivity implements IBPEventActivity, IBPActi
 			$arParameters = array($arParameters);
 		$arParameters["DOCUMENT_ID"] = $documentId;
 		$arParameters["DOCUMENT_URL"] = $documentService->GetDocumentAdminPage($documentId);
-		$arParameters["TaskButtonMessage"] = $this->IsPropertyExists("TaskButtonMessage") ? $this->TaskButtonMessage : GetMessage("BPAR_ACT_BUTTON2");
-		if ($arParameters["TaskButtonMessage"] == '')
-			$arParameters["TaskButtonMessage"] = GetMessage("BPAR_ACT_BUTTON2");
+
+		$arParameters['TaskButtonMessage'] =
+			$this->IsPropertyExists('TaskButtonMessage')
+				? CBPHelper::stringify($this->TaskButtonMessage)
+				: Loc::getMessage('BPAR_ACT_BUTTON2')
+		;
+		if (CBPHelper::isEmptyValue($arParameters['TaskButtonMessage']))
+		{
+			$arParameters['TaskButtonMessage'] = Loc::getMessage('BPAR_ACT_BUTTON2');
+		}
+
 		$arParameters['CommentLabelMessage'] =
 			$this->IsPropertyExists('CommentLabelMessage')
-				? $this->CommentLabelMessage
-				: Loc::getMessage('BPAR_ACT_COMMENT_1');
-		if ($arParameters['CommentLabelMessage'] === '')
+				? CBPHelper::stringify($this->CommentLabelMessage)
+				: Loc::getMessage('BPAR_ACT_COMMENT_1')
+		;
+		if (CBPHelper::isEmptyValue($arParameters['CommentLabelMessage']))
 		{
 			$arParameters['CommentLabelMessage'] = Loc::getMessage('BPAR_ACT_COMMENT_1');
 		}
+
 		$arParameters['ShowComment'] = $this->IsPropertyExists('ShowComment') ? $this->ShowComment : 'Y';
 		if ($arParameters['ShowComment'] !== 'Y' && $arParameters['ShowComment'] !== 'N')
 		{

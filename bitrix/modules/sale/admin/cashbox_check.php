@@ -372,13 +372,15 @@ while ($check = $dbResultList->Fetch())
 
 	$row->AddField(
 		'ID',
-		'<a
-			href="#"
-			onclick="BX.SidePanel.Instance.open(
-				\'/shop/orders/check/details/' . $check['ID'] . '/?IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER\',
-				{width: 500, cacheable: false}
-			);"
-		>' . $check['ID'] . '</a>'
+		Loader::includeModule('crm')
+			? '<a
+				href="#"
+				onclick="BX.SidePanel.Instance.open(
+					\'/shop/orders/check/details/' . $check['ID'] . '/?IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER\',
+					{width: 500, cacheable: false}
+				);"
+			>' . $check['ID'] . '</a>'
+			: $check['ID']
 	);
 
 	$checkClass = $checkTypeMap[$check['TYPE']];

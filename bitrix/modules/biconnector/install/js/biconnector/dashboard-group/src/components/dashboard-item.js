@@ -3,7 +3,7 @@ import type { BitrixVueComponentProps } from 'ui.vue3';
 // eslint-disable-next-line no-unused-vars
 import { DashboardType, type Dashboard } from '../type';
 import { DashboardScopeSelector } from './dashboard-scope-selector';
-import { BIcon, Set } from 'ui.icon-set.api.vue';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
 export const DashboardItem: BitrixVueComponentProps = {
 	props: {
@@ -28,9 +28,9 @@ export const DashboardItem: BitrixVueComponentProps = {
 
 			return '/bitrix/images/biconnector/superset-dashboard-selector/icon-type-custom.png';
 		},
-		set(): Set
+		set(): Outline
 		{
-			return Set;
+			return Outline;
 		},
 	},
 	methods: {
@@ -68,9 +68,9 @@ export const DashboardItem: BitrixVueComponentProps = {
 			<div class="group-dashboard-name" :title="dashboard.name">{{dashboard.name}}</div>
 			<DashboardScopeSelector :dashboard="dashboard" ref="scopeSelector" @on-scope-change="emitDashboardChange"/>
 			<BIcon
-				:name="set.CROSS_20"
+				:name="set.CROSS_L"
 				:size="20"
-				color="#BDC1C6"
+				color="var(--ui-color-base-4)"
 				:class="'group-dashboard-remove-icon'"
 				@click="onRemoveClick"
 			></BIcon>

@@ -572,9 +572,13 @@ this.BX = this.BX || {};
 	var _getDraggable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDraggable");
 	var _getToolsWrapperRow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getToolsWrapperRow");
 	var _getWarningMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWarningMessage");
+	var _showDisableConfirmation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showDisableConfirmation");
 	class ToolsPage extends ui_formElements_field.BaseSettingsPage {
 	  constructor() {
 	    super();
+	    Object.defineProperty(this, _showDisableConfirmation, {
+	      value: _showDisableConfirmation2
+	    });
 	    Object.defineProperty(this, _getWarningMessage, {
 	      value: _getWarningMessage2
 	    });
@@ -685,6 +689,16 @@ this.BX = this.BX || {};
 	        '#TOOL#': tool.name
 	      })
 	    });
+	    if (tool.disableConfirmation.isNeeded) {
+	      const switcher = ui_switcher.Switcher.getById(tool.code);
+	      if (switcher) {
+	        main_core_events.EventEmitter.subscribe(switcher, 'toggled', () => {
+	          if (!switcher.isChecked()) {
+	            babelHelpers.classPrivateFieldLooseBase(this, _showDisableConfirmation)[_showDisableConfirmation](tool, switcher);
+	          }
+	        });
+	      }
+	    }
 	    const toolSelectorSection = new ui_formElements_field.SettingsSection({
 	      section: toolSelector
 	    });
@@ -811,6 +825,19 @@ this.BX = this.BX || {};
 	      position: 'bottom'
 	    },
 	    closeByEsc: true
+	  });
+	}
+	function _showDisableConfirmation2(tool) {
+	  ui_dialogs_messagebox.MessageBox.show({
+	    title: tool.disableConfirmation.title,
+	    message: tool.disableConfirmation.text,
+	    useAirDesign: true,
+	    okCaption: tool.disableConfirmation.confirmCaption,
+	    buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
+	    maxWidth: 360,
+	    popupOptions: {
+	      id: 'disable-tool-confirmation-' + tool.code
+	    }
 	  });
 	}
 
@@ -3878,11 +3905,6 @@ this.BX = this.BX || {};
 	      (_this$getAnalytic2 = this.getAnalytic()) == null ? void 0 : _this$getAnalytic2.addEventConfigConfiguration(AnalyticSettingsEvent.CHANGE_PAY_TARIFF, allCanBuyTariff.isChecked());
 	    });
 	    ConfigurationPage.addToSectionHelper(allCanBuyTariff, settingsSection, allCanBuyTariffRow);
-	  }
-	  if (this.hasValue('allowMeasureStressLevel')) {
-	    let allowMeasureStressLevel = new ui_formElements_view.Checker(this.getValue('allowMeasureStressLevel'));
-	    let allowMeasureStressLevelRow = new ui_section.Row({});
-	    ConfigurationPage.addToSectionHelper(allowMeasureStressLevel, settingsSection, allowMeasureStressLevelRow);
 	  }
 	  if (this.hasValue('collectGeoData')) {
 	    let collectGeoData = new ui_formElements_view.Checker(this.getValue('collectGeoData'));

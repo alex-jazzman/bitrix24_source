@@ -1,2 +1,0 @@
-<?php
-$MESS["REST_V3_DTO_VALIDATION_FIELD_REQUIRED_VALIDATOR_ERROR"] = "\"#FIELD#\" міндетті өріс толтырылмаған";

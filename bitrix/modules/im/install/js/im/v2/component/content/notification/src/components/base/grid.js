@@ -1,8 +1,11 @@
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+import { Parser } from 'im.v2.lib.parser';
+import { Utils } from 'im.v2.lib.utils';
+
 import { NotificationType } from '../../const/const';
 import { DetailedAdditionalText } from './additional-text';
 
-import type { ImModelNotificationParams } from 'im.v2.model';
+import type { ImModelNotificationParams, ImModelUser } from 'im.v2.model';
 
 const gridIconClassesMap = {
 	date: OutlineIcons.CALENDAR_WITH_SLOTS,
@@ -87,11 +90,28 @@ export const DetailedGrid = {
 				return item.user.name;
 			}
 
-			return item.value;
+			return Parser.decodeNotificationParam(item.value);
+		},
+		getItemTitle(item: NotificationGridItemType): string
+		{
+			if (item.type === 'user' && item.user)
+			{
+				return item.user.name;
+			}
+
+			return Parser.purify({ text: item.value });
+		},
+		isUserItem(item: NotificationGridItemType): boolean
+		{
+			return item.type === 'user' && item.user;
 		},
 		isUserHasAvatar(item: NotificationGridItemType): boolean
 		{
 			return item.type === 'user' && item.user.avatar;
+		},
+		getUserLink(user: ImModelUser): string
+		{
+			return Utils.user.getProfileLink(user.id);
 		},
 	},
 	template: `
@@ -113,7 +133,22 @@ export const DetailedGrid = {
 							:size="16"
 						/>
 					</template>
-					<span class="bx-im-content-notification-item-content__details-text">{{ getItemValue(item) }}</span>
+					<template v-if="isUserItem(item)">
+						<a
+							:href="getUserLink(item.user)"
+							class="bx-im-content-notification-item-content__details-text"
+						>
+							{{ getItemValue(item) }}
+						</a>
+					</template>
+					<template v-else>
+						<span
+							class="bx-im-content-notification-item-content__details-text"
+							:title="getItemTitle(item)"
+							v-html="getItemValue(item)"
+						>
+						</span>
+					</template>
 				</div>
 			</template>
 		</div>

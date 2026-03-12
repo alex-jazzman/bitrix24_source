@@ -7,7 +7,7 @@ import 'ui.icon-set.outline';
 
 import { Core, type RightsParams } from 'tasks.v2.core';
 import { TaskCard } from 'tasks.v2.application.task-card';
-import { Model } from 'tasks.v2.const';
+import { Analytics, Model } from 'tasks.v2.const';
 import { showLimit } from 'tasks.v2.lib.show-limit';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -29,6 +29,7 @@ export const BurgerMenu = {
 	inject: {
 		task: {},
 		taskId: {},
+		analytics: {},
 	},
 	setup(): { task: TaskModel, userRights: RightsParams }
 	{
@@ -213,7 +214,10 @@ export const BurgerMenu = {
 				sectionCode: sectionTasks,
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_STANDALONE_TASK'),
 				icon: Outline.TASK,
-				onClick: (): void => TaskCard.showCompactCard({ groupId: this.task.groupId }),
+				onClick: (): void => TaskCard.showCompactCard({
+					groupId: this.task.groupId,
+					analytics: this.getAnalytics(),
+				}),
 			};
 		},
 		getCreateSubtaskItem(): MenuItemOptions
@@ -222,7 +226,11 @@ export const BurgerMenu = {
 				sectionCode: sectionTasks,
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_SUBTASK'),
 				icon: Outline.RELATED_TASKS,
-				onClick: (): void => TaskCard.showCompactCard({ groupId: this.task.groupId, parentId: this.taskId }),
+				onClick: (): void => TaskCard.showCompactCard({
+					groupId: this.task.groupId,
+					parentId: this.taskId,
+					analytics: this.getAnalytics(Analytics.Element.ContextMenuSubtask),
+				}),
 			};
 		},
 		getCreateTaskCopyItem(): MenuItemOptions
@@ -231,7 +239,10 @@ export const BurgerMenu = {
 				sectionCode: sectionTasks,
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_TASK_COPY'),
 				icon: Outline.DUPLICATE,
-				onClick: (): void => TaskCard.showFullCard({ copiedFromId: this.taskId }),
+				onClick: (): void => TaskCard.showFullCard({
+					copiedFromId: this.taskId,
+					analytics: this.getAnalytics(),
+				}),
 			};
 		},
 		getCreateNewTaskWithTemplateItem(): MenuItemOptions
@@ -255,7 +266,10 @@ export const BurgerMenu = {
 				sectionCode: sectionTasks,
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_TEMPLATE_FROM_TASK'),
 				icon: Outline.TEMPLATE_TASK,
-				onClick: (): void => TaskCard.showCompactCard({ groupId: this.task.groupId }),
+				onClick: (): void => TaskCard.showCompactCard({
+					groupId: this.task.groupId,
+					analytics: this.getAnalytics(),
+				}),
 			};
 		},
 		getCopyTaskIdItem(): MenuItemOptions
@@ -327,10 +341,18 @@ export const BurgerMenu = {
 				},
 			};
 		},
+		getAnalytics(element = Analytics.Element.ContextMenu): Object
+		{
+			return {
+				element,
+				context: this.analytics?.context ?? Analytics.Section.Tasks,
+				additionalContext: Analytics.SubSection.TaskCard,
+			};
+		},
 	},
 	template: `
 		<div
-			class="tasks-full-card-header-burger"
+			class="tasks-full-card-header-burger print-ignore"
 			ref="container"
 			@click="isMenuShown = true"
 		>

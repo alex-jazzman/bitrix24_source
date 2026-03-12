@@ -142,6 +142,9 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 			const filesIds = this.getFilesIdsFromRecentItems(restoredRows.items);
 			restoredRows.files = await this.getFilesByIdList(filesIds);
 
+			const stickerRelationList = this.getStickerRelationListFromRecentItems(restoredRows.items);
+			restoredRows.stickers = await this.getStickersByRelationList(stickerRelationList);
+
 			const draftIds = this.getDraftIdsFromRecentItems(restoredRows.items);
 			restoredRows.draft = await this.getDraftByIdList(draftIds);
 
@@ -392,6 +395,24 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 
 		/**
 		 * @param {Array<object>} recentItems
+		 * @return {Array<>}
+		 */
+		getStickerRelationListFromRecentItems(recentItems)
+		{
+			const result = [];
+
+			recentItems.forEach((item) => {
+				if (Type.isPlainObject(item.message?.sticker))
+				{
+					result.push(item.message.sticker);
+				}
+			})
+
+			return result;
+		}
+
+		/**
+		 * @param {Array<object>} recentItems
 		 * @return {Array<number | string>}
 		 */
 		getDraftIdsFromRecentItems(recentItems)
@@ -428,6 +449,13 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 		async getFilesByIdList(ids)
 		{
 			const result = await serviceLocator.get('core').getRepository().message.fileTable.getListByIds(ids);
+
+			return result.items;
+		}
+
+		async getStickersByRelationList(stickerRelation)
+		{
+			const result = await serviceLocator.get('core').getRepository().sticker.stickerTable.getStickerList(stickerRelation);
 
 			return result.items;
 		}

@@ -4,6 +4,7 @@ import { PopupComponentsMakerItem } from 'ui.popupcomponentsmaker';
 import { Button, ButtonColor, ButtonSize } from 'ui.buttons';
 import { Icon, Actions } from 'ui.icon-set.api.core';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
+import { Text, Headline } from 'ui.system.typography';
 
 export type TitleHeaderOptions = {
 	title: string | HTMLElement | null,
@@ -52,9 +53,9 @@ export class HeaderBuilder
 			scale: playerOptions.scale,
 			posterUrl: playerOptions.posterUrl,
 			videos: playerOptions.videos,
-			loop:  playerOptions.loop,
+			loop: playerOptions.loop,
 			autoplay: playerOptions.autoplay,
-			muted:  playerOptions.muted,
+			muted: playerOptions.muted,
 			analyticsCallback: this.#options.analyticsCallback,
 		});
 	}
@@ -63,11 +64,11 @@ export class HeaderBuilder
 	{
 		if (this.#player)
 		{
-			return this.#player
+			return this.#player;
 		}
 
 		const wrapper = Tag.render`<div class="ui-popupcomponentsmaker__round-player-box"/>`;
-		this.#player = this.buildPlayer({ ...playerOptions, wrapper: wrapper });
+		this.#player = this.buildPlayer({ ...playerOptions, wrapper });
 
 		if (this.#player)
 		{
@@ -85,13 +86,28 @@ export class HeaderBuilder
 	renderTitle(titleOptions: TitleHeaderOptions): HTMLElement
 	{
 		const title = Tag.render`
-			<div class="ui-popupcomponentsmaker-header-tariff__header-content">
-				<div class="ui-popupcomponentsmaker-header-tariff__title">${titleOptions.title}</div>
-			</div>
+			<div class="ui-popupcomponentsmaker-header-tariff__header-content"></div>
 		`;
+
+		if (!Type.isNil(titleOptions.title))
+		{
+			Dom.append(Tag.render`<div class="ui-popupcomponentsmaker-header-tariff__title">${titleOptions.title}</div>`, title);
+		}
+
 		if (!Type.isNil(titleOptions.subtitle))
 		{
 			Dom.append(Tag.render`<div class="ui-popupcomponentsmaker-header-tariff__subtitle">${titleOptions.subtitle}</div>`, title);
+		}
+
+		if (!Type.isNil(titleOptions.headTitle))
+		{
+			const headTitle = Text.render(titleOptions.headTitle, {
+				size: '4xs',
+				transform: 'uppercase',
+				accent: true,
+				className: 'ui-popupcomponentsmaker-header-tariff__uppertitle',
+			});
+			Dom.append(headTitle, title);
 		}
 
 		return title;
@@ -100,9 +116,40 @@ export class HeaderBuilder
 	renderDescription(descriptionOptions: DescriptionHeaderOptions): HTMLElement
 	{
 		const descriptionText = Tag.render`
-		<div class="ui-popupcomponentsmaker-header-tariff__box">
-			<div class="ui-popupcomponentsmaker-header-tariff__title">${descriptionOptions.title}</div>
-		</div>`;
+			<div class="ui-popupcomponentsmaker-header-tariff__box"></div>
+		`;
+
+		if (!Type.isNil(descriptionOptions.headTitle))
+		{
+			const headTitle = Headline.render(descriptionOptions.headTitle, {
+				size: 'sm',
+				accent: true,
+				className: 'ui-popupcomponentsmaker-header-tariff__headtitle',
+			});
+
+			Dom.append(headTitle, descriptionText);
+		}
+
+		let moreLink = Tag.render``;
+		if (!Type.isNil(descriptionOptions.code))
+		{
+			const onclick = (e) => {
+				e.stopPropagation();
+				FeaturePromotersRegistry.getPromoter({ code: descriptionOptions.code }).show();
+			};
+			moreLink = Tag.render`<a onclick="${onclick}" target="_blank" class="ui-popupcomponentsmaker-header-tariff__more">${descriptionOptions.moreLabel}</a>`;
+		}
+
+		if (!Type.isNil(descriptionOptions.title))
+		{
+			const descTitle = Tag.render`<div class="ui-popupcomponentsmaker-header-tariff__title">
+				${`${descriptionOptions.title} `}
+				${moreLink}
+			</div>`;
+
+			Dom.append(descTitle, descriptionText);
+		}
+
 		if (!Type.isNil(descriptionOptions.subtitle))
 		{
 			Dom.append(Tag.render`<div class="ui-popupcomponentsmaker-header-tariff__subtitle">${descriptionOptions.subtitle}</div>`, descriptionText);
@@ -113,15 +160,6 @@ export class HeaderBuilder
 			Dom.append(Tag.render`<div class="ui-popupcomponentsmaker-header-tariff__text">${descriptionOptions.subtitleDescription}</div>`, descriptionText);
 		}
 
-		if (!Type.isNil(descriptionOptions.code))
-		{
-			const onclick = (e) => {
-				e.stopPropagation();
-				FeaturePromotersRegistry.getPromoter({ code: descriptionOptions.code }).show();
-			};
-			Dom.append(Tag.render`<a onclick="${onclick}" target="_blank" class="ui-popupcomponentsmaker-header-tariff__more">${descriptionOptions.moreLabel}<div class="ui-icon-set --chevron-right ui-popupcomponentsmaker-header-tariff__more-icon"></div></a>`, descriptionText);
-		}
-
 		let roundContent = '';
 		if (Type.isPlainObject(descriptionOptions.roundContent))
 		{
@@ -129,11 +167,15 @@ export class HeaderBuilder
 		}
 		else if (Type.isStringFilled(descriptionOptions.roundContent))
 		{
-			roundContent = this.renderIcon(descriptionOptions.roundContent);
+			roundContent = this.renderIcon(descriptionOptions.roundContent, '--with-bg');
 		}
 		else if (Type.isDomNode(descriptionOptions.roundContent))
 		{
-			roundContent = this.embedIcon(descriptionOptions.roundContent);
+			roundContent = this.embedIcon(descriptionOptions.roundContent, '--with-bg');
+		}
+		else if (descriptionOptions?.avatarUrl)
+		{
+			roundContent = this.renderAvatar(descriptionOptions.avatarUrl);
 		}
 
 		const descriptionBlock = Tag.render`
@@ -149,7 +191,12 @@ export class HeaderBuilder
 		});
 
 		Dom.addClass(description.getContainer(), 'ui-popupcomponentsmaker-header-tariff__section-message-wrapper');
-		description.getContainer().style.marginTop = '14px';
+
+		if (!Type.isNil(descriptionOptions.subtitleDescription))
+		{
+			description.getContainer().style.marginTop = '14px';
+		}
+
 		description.getContainer().classList.add('--transparent');
 
 		return description.getContainer();
@@ -179,12 +226,12 @@ export class HeaderBuilder
 		return btn.render();
 	}
 
-	renderIcon(iconClass: string): HTMLElement
+	renderIcon(iconClass: string, wrapperClass: string = ''): HTMLElement
 	{
 		if (Type.isStringFilled(iconClass))
 		{
 			return Tag.render`
-				<div class="ui-popupcomponentsmaker-header-tariff__icon">
+				<div class="ui-popupcomponentsmaker-header-tariff__icon ${wrapperClass}">
 					<div class="ui-icon-set ${iconClass}"></div>
 				</div>
 			`;
@@ -193,13 +240,30 @@ export class HeaderBuilder
 		return Tag.render``;
 	}
 
-	embedIcon(icon: HTMLElement): HTMLElement
+	embedIcon(icon: HTMLElement, wrapperClass: string = ''): HTMLElement
 	{
 		if (Type.isDomNode(icon))
 		{
 			return Tag.render`
-				<div class="ui-popupcomponentsmaker-header-tariff__icon">
+				<div class="ui-popupcomponentsmaker-header-tariff__icon ${wrapperClass}">
 					${icon}
+				</div>
+			`;
+		}
+
+		return Tag.render``;
+	}
+
+	renderAvatar(avatarUrl: string): HTMLElement
+	{
+		if (Type.isStringFilled(avatarUrl))
+		{
+			const avatar = Tag.render`<div class="ui-popupcomponentsmaker-header-tariff__avatar"</div>`;
+			Dom.style(avatar, 'background-image', `url("${avatarUrl}")`);
+
+			return Tag.render`
+				<div style="align-self: flex-start;">
+					${avatar}
 				</div>
 			`;
 		}
@@ -219,18 +283,23 @@ export class HeaderBuilder
 			btnContent = Tag.render`
 				<div class="ui-popupcomponentsmaker-header-tariff__button-bar">
 					${this.renderBtn(this.#options.button)}
-				</div>`;
+				</div>
+			`;
 		}
 		this.#content = Tag.render`
 			<div class="ui-popupcomponentsmaker-header-tariff__wrapper">
 				<div class="ui-popupcomponentsmaker-header-tariff__title-section">
-					${this.#options.icon instanceof HTMLElement ? this.embedIcon(this.#options.icon) : this.renderIcon(this.#options.iconClass)}
+					${
+						this.#options.icon instanceof HTMLElement
+						? this.embedIcon(this.#options.icon)
+						: this.renderIcon(this.#options.iconClass, this.#options.top?.headTitle ? '--icon-small' : '')
+					}
 					${this.renderTitle(this.#options.top)}
 				</div>
-				
+	
 				${this.renderDescription(this.#options.info)}
 				${btnContent}
-				
+	
 			</div>
 		`;
 

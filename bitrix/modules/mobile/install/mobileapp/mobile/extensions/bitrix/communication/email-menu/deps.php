@@ -2,12 +2,14 @@
 
 return [
 	'extensions' => [
-		'apptheme',
-		'mail:mailbox/connector',
-		'assets/communication/menu',
-		'layout/ui/context-menu',
 		'loc',
 		'utils/copy',
 		'utils/string',
+		'mail:opener',
+		'mail:dialog',
+		'layout/ui/context-menu',
+		'module',
+		'type',
+		'assets/icons',
 	],
 ];

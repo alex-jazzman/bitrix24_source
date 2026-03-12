@@ -1,2 +1,2 @@
 <?
-$MESS['REST_V3_EXCEPTIONS_INVALIDPAGINATIONEXCEPTION'] = 'Не удается распознать параметр пагинации `#PAGE#`';
+$MESS['REST_V3_EXCEPTION_INVALIDPAGINATIONEXCEPTION'] = 'Не удается распознать параметр пагинации `#PAGE#`';

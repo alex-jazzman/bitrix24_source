@@ -262,7 +262,17 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 			<span class="ui-alert-close-btn"></span>
 		</div>
 	<?php endif; ?>
-	<div id="mail_msg_<?=$message['ID'] ?>_body" class="mail-msg-view-body"></div>
+
+	<div
+		id="mail_msg_<?=$message['ID'] ?>_body"
+		class="mail-msg-view-body"
+		data-message-id="<?= (int)$message['ID'] ?>"
+		data-use-ajax="<?= $isAjaxBody ? '1' : '0' ?>"
+		<?php if (!$isAjaxBody): ?>
+			data-message-html="<?= htmlspecialcharsbx($message['MESSAGE_HTML'] ?? '') ?>"
+		<?php endif; ?>
+	></div>
+
 </div>
 
 <?php
@@ -466,9 +476,7 @@ for (var i in emailLinks)
 		}
 	}
 }
-<?php if ($message['MESSAGE_HTML']): ?>
-document.getElementById('<?= CUtil::JSescape($bodyElementId) ?>').innerHTML = '<div id="mail-message-wrapper">' + '<?= CUtil::jsEscape($message['MESSAGE_HTML']) ?>' + '</div>';
-<?php endif; ?>
+
 try
 {
 	top.BX.SidePanel.Instance.getSliderByWindow(window).closeLoader();

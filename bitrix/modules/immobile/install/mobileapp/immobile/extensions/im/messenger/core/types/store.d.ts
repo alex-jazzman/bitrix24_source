@@ -3,7 +3,6 @@ import {ApplicationModelActions, ApplicationModelMutation} from "../../model/app
 import {FilesModelActions, FilesModelMutation} from "../../model/files/src/types";
 import {MessagesMessengerModel, MessagesModelActions, MessagesModelMutation} from "../../model/messages/src/types/messages";
 import {RecentMessengerModel, RecentModelActions, RecentModelMutation} from "../../model/recent/src/types";
-import {RecentMessengerModelV2, RecentModelV2Actions, RecentModelV2Mutation} from "../../../messenger-v2/model/recent/src/types";
 import {UsersModel, UsersModelActions, UsersModelMutation} from "../../model/users/src/types";
 import {DraftModelActions, DraftModelMutation} from "../../model/draft/src/types";
 import {ReactionsModelActions, ReactionsModelMutation} from "../../model/messages/src/reactions/types";
@@ -29,6 +28,7 @@ import {
 	AnchorModelActionParams,
 } from "../../model/anchor/src/types";
 import { TranscriptModelMutation, TranscriptModelActions } from "../../model/files/src/transcript/types";
+import { PlaybackModelActions, PlaybackModelMutation } from "../../model/messages/src/playback/types";
 import {StickerPackActionParams, StickerPackActions, StickerPackMutation} from "../../model/sticker-pack/src/types";
 
 export type MessengerStoreActions =
@@ -37,10 +37,10 @@ export type MessengerStoreActions =
 	| DialoguesModelActions
 	| MessagesModelActions
 	| RecentModelActions
-	| RecentModelV2Actions
 	| UsersModelActions
 	| DraftModelActions
 	| ReactionsModelActions
+	| PlaybackModelActions
 	| SidebarModelActions
 	| RecentSearchModelActions
 	| QueueModelActions
@@ -62,9 +62,9 @@ export type MessengerStoreMutation =
 	| FilesModelMutation
 	| MessagesModelMutation
 	| RecentModelMutation
-	| RecentModelV2Mutation
 	| UsersModelMutation
 	| DraftModelMutation
+	| PlaybackModelMutation
 	| ReactionsModelMutation
 	| SidebarModelMutation
 	| RecentSearchModelMutation
@@ -98,7 +98,7 @@ type MessengerCoreStore = {
 		messagesModel: ReturnType<MessagesMessengerModel['state']>,
 		commentModel: ReturnType<CommentMessengerModel['state']>,
 		dialoguesModel: ReturnType<DialoguesMessengerModel['state']>,
-		recentModel: ReturnType<RecentMessengerModel['state']|RecentMessengerModelV2['state']>
+		recentModel: ReturnType<RecentMessengerModel['state']>
 			& { searchModel: ReturnType<RecentSearchModel['state']> }
 		,
 		usersModel: ReturnType<UsersModel['state']>,

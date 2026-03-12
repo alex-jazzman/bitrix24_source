@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_vue3_directives_hint,tasks_v2_component_elements_hint,main_core,tasks_v2_component_elements_bottomSheet,tasks_v2_component_dropZone,main_sidepanel,tasks_v2_component_fields_group,ui_uploader_core,ui_system_chip_vue,ui_iconSet_animated,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,ui_vue3_components_popup,ui_vue3_components_button,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_provider_service_fileService,tasks_v2_component_elements_userFieldWidgetComponent) {
+(function (exports,ui_vue3_directives_hint,tasks_v2_component_elements_hint,main_core,tasks_v2_component_elements_bottomSheet,tasks_v2_component_dropZone,main_sidepanel,ui_uploader_core,ui_system_chip_vue,ui_iconSet_animated,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,ui_vue3_components_popup,ui_vue3_components_button,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_provider_service_fileService,tasks_v2_component_elements_userFieldWidgetComponent) {
 	'use strict';
 
 	const filesMeta = Object.freeze({
@@ -651,11 +651,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  mounted() {
 	    this.fileService.subscribe('onFileAdd', this.handleFileAdd);
-	    this.fileService.subscribe('onFileComplete', this.handleFileComplete);
+	    this.fileService.subscribe('onFileAttach', this.handleFileAttach);
 	  },
 	  beforeUnmount() {
 	    this.fileService.unsubscribe('onFileAdd', this.handleFileAdd);
-	    this.fileService.unsubscribe('onFileComplete', this.handleFileComplete);
+	    this.fileService.unsubscribe('onFileAttach', this.handleFileAttach);
 	  },
 	  methods: {
 	    handleFileAdd() {
@@ -663,7 +663,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.showPopup();
 	      }
 	    },
-	    handleFileComplete(event) {
+	    handleFileAttach(event) {
 	      this.sendAnalytics(event.getData());
 	    },
 	    sendAnalytics(file) {
@@ -740,5 +740,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.FilesChip = FilesChip;
 	exports.filesMeta = filesMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.SidePanel,BX.Tasks.V2.Component.Fields,BX.UI.Uploader,BX.UI.System.Chip.Vue,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.Vue3.Components,BX.UI.IconSet,BX,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.SidePanel,BX.UI.Uploader,BX.UI.System.Chip.Vue,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.Vue3.Components,BX.UI.IconSet,BX,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements));
 //# sourceMappingURL=files.bundle.js.map

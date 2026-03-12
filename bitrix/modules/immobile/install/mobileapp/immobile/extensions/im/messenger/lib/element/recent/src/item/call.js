@@ -118,6 +118,7 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 						bottom: 3.5,
 						left: 12,
 					},
+					showBBCode: true,
 				},
 			};
 

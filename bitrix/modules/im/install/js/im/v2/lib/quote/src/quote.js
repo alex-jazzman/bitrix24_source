@@ -21,16 +21,26 @@ const QUOTE_DELIMITER = '-'.repeat(54);
 export const Quote = {
 	sendQuoteEvent(payload: SendQuoteEventPayload)
 	{
-		const { message, text, dialogId, context: { emitter } } = payload;
+		const { text, dialogId, context: { emitter }, additionalParams = {} } = payload;
 
 		emitter.emit(EventType.textarea.insertText, {
-			text: this.prepareQuoteText(message, text),
+			text,
 			dialogId,
 			withNewLine: true,
-			replace: false,
+			...additionalParams,
 		});
 	},
-	prepareQuoteText(message: ImModelMessage, text: string): string
+	prepareInlineQuote(textBefore: string, textAfter: string, quoteText: string): string
+	{
+		const needNewLineBefore = textBefore && !textBefore.endsWith('\n');
+		const formattedTextBefore = needNewLineBefore ? `${textBefore}\n` : textBefore;
+
+		const needNewLineAfter = textAfter && !textAfter.startsWith('\n');
+		const formattedTextAfter = needNewLineAfter ? `\n${textAfter}` : textAfter;
+
+		return `${formattedTextBefore}${QUOTE_DELIMITER}\n${quoteText}\n${QUOTE_DELIMITER}${formattedTextAfter}`;
+	},
+	prepareInlineMessageQuote(message: ImModelMessage, text: string): string
 	{
 		const dialog: ImModelChat = Core.getStore().getters['chats/getByChatId'](message.chatId);
 

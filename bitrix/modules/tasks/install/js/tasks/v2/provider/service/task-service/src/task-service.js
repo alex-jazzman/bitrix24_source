@@ -1,5 +1,5 @@
-import { Event, Runtime } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { Event, Runtime, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import type { Store } from 'ui.vue3.vuex';
 
 import { Core } from 'tasks.v2.core';
@@ -12,11 +12,13 @@ import { subTasksService, relatedTasksService, ganttService } from 'tasks.v2.pro
 import { checkListService } from 'tasks.v2.provider.service.check-list-service';
 import { remindersService } from 'tasks.v2.provider.service.reminders-service';
 import { resultService } from 'tasks.v2.provider.service.result-service';
+import { userFieldsManager } from 'tasks.v2.component.fields.user-fields';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { auditorService } from './auditor-service';
 import { creatorService } from './creator-service';
 import { descriptionService } from './description-service';
+import { crmService } from './crm-service';
 import { TaskGetExtractor } from './task-get-extractor';
 import { mapModelToDto } from './mappers';
 import type { TaskDto, SeparateFieldsMeta, TaskSelect, UpdateResult } from './types';
@@ -43,8 +45,8 @@ const separateFields: SeparateFieldsMeta[] = [
 		endpoint: Endpoint.TaskStakeholderResponsibleDelegate,
 	},
 	{
-		fields: new Set(['crmItemIds']),
-		endpoint: Endpoint.TaskCrmItemSet,
+		fields: new Set(['accomplicesIds']),
+		endpoint: 'Task.Stakeholder.Accomplice.set',
 	},
 	{
 		fields: new Set(['creatorId']),
@@ -57,6 +59,10 @@ const separateFields: SeparateFieldsMeta[] = [
 	{
 		fields: new Set(['description', 'forceUpdateDescription']),
 		service: descriptionService,
+	},
+	{
+		fields: new Set(['crmItemIds']),
+		service: crmService,
 	},
 ];
 
@@ -115,7 +121,7 @@ export const taskService = new class
 			await checkListService.load(id, tmpId);
 		}
 
-		this.updateStoreTask(tmpId, {
+		const fields = {
 			title: task.title,
 			description: task.description,
 			creatorId: Core.getParams().currentUser.id,
@@ -143,7 +149,20 @@ export const taskService = new class
 			numberOfReminders: task.numberOfReminders,
 			allowsTimeTracking: task.allowsTimeTracking,
 			estimatedTime: task.estimatedTime,
-		});
+			userFields: task.userFields,
+			epicId: task.epicId,
+			storyPoints: task.storyPoints,
+		};
+
+		if (Type.isArrayFilled(fields.userFields))
+		{
+			fields.userFields = userFieldsManager.prepareUserFieldsForTaskFromTemplate(
+				fields.userFields,
+				Core.getParams().taskUserFieldScheme,
+			);
+		}
+
+		this.updateStoreTask(tmpId, fields);
 	}
 
 	async getRights(id: number): Promise<void>
@@ -171,14 +190,7 @@ export const taskService = new class
 		{
 			const data = await apiClient.post(Endpoint.TaskAdd, { task: mapModelToDto(task) });
 
-			if (task.responsibleIds.length > 1)
-			{
-				const userIds = await this.addMultiTask(data.id, task.responsibleIds);
-
-				subTasksService.addStore(task.id, userIds.map((id) => `userTask${id}`));
-			}
-
-			this.onAfterTaskAdded(task, data);
+			await this.onAfterTaskAdded(task, data);
 
 			return [data.id, null];
 		}
@@ -190,8 +202,60 @@ export const taskService = new class
 		}
 	}
 
-	onAfterTaskAdded(initialTask: TaskModel, data: TaskDto): void
+	async onAfterTaskAdded(initialTask: TaskModel, data: TaskDto): void
 	{
+		this.insertStoreTask({ ...initialTask, id: data.id });
+
+		this.extractTask(data);
+
+		if (initialTask.checklist?.length > 0)
+		{
+			await checkListService.save(
+				data.id,
+				this.$store.getters[`${Model.CheckList}/getByIds`](initialTask.checklist),
+				true,
+			);
+		}
+
+		const remindersIds = this.$store.getters[`${Model.Reminders}/getIds`](
+			initialTask.id,
+			Core.getParams().currentUser.id,
+		);
+		if (remindersIds.length > 0)
+		{
+			await remindersService.set(
+				data.id,
+				remindersIds.map((id) => this.$store.getters[`${Model.Reminders}/getById`](id)),
+			);
+		}
+
+		if (initialTask.responsibleIds.length > 1)
+		{
+			const userIds = await this.addMultiTask(data.id, initialTask.responsibleIds);
+
+			subTasksService.addStore(initialTask.id, userIds.map((id) => `userTask${id}`));
+		}
+
+		if (initialTask.results?.length > 0)
+		{
+			await resultService.save(
+				data.id,
+				this.$store.getters[`${Model.Results}/getByIds`](initialTask.results),
+				true,
+			);
+		}
+
+		if (initialTask.relatedToTaskId)
+		{
+			void relatedTasksService.add(initialTask.relatedToTaskId, [data.id]);
+		}
+
+		EventEmitter.emit(EventName.TaskAdded, {
+			task: this.getStoreTask(data.id),
+			initialTask,
+		});
+
+		initialTask = this.getStoreTask(initialTask.id);
 		const subTaskIds = initialTask.subTaskIds;
 		const relatedTaskIds = initialTask.relatedTaskIds;
 		const ganttTaskIds = initialTask.ganttTaskIds;
@@ -201,15 +265,6 @@ export const taskService = new class
 			{
 				this.deleteStore(id);
 			}
-		});
-
-		this.updateStoreTask(initialTask.id, { id: data.id });
-
-		this.extractTask(data);
-
-		EventEmitter.emit(EventName.TaskAdded, {
-			task: this.getStoreTask(data.id),
-			initialTask,
 		});
 
 		if (initialTask.containsSubTasks)
@@ -230,45 +285,12 @@ export const taskService = new class
 			void ganttService.list(data.id, true);
 		}
 
-		if (initialTask.relatedToTaskId)
-		{
-			void relatedTasksService.add(initialTask.relatedToTaskId, [data.id]);
-		}
-
 		if (initialTask.parentId)
 		{
 			subTasksService.addStore(initialTask.parentId, [data.id]);
 		}
 
-		if (initialTask.checklist?.length > 0)
-		{
-			void checkListService.save(
-				data.id,
-				this.$store.getters[`${Model.CheckList}/getByIds`](initialTask.checklist),
-				true,
-			);
-		}
-
-		if (initialTask.results?.length > 0)
-		{
-			void resultService.save(
-				data.id,
-				this.$store.getters[`${Model.Results}/getByIds`](initialTask.results),
-				true,
-			);
-		}
-
-		const remindersIds = this.$store.getters[`${Model.Reminders}/getIds`](
-			initialTask.id,
-			Core.getParams().currentUser.id,
-		);
-		if (remindersIds.length > 0)
-		{
-			void remindersService.set(
-				data.id,
-				remindersIds.map((id) => this.$store.getters[`${Model.Reminders}/getById`](id)),
-			);
-		}
+		this.deleteStore(initialTask.id);
 	}
 
 	async copy(task: TaskModel, withSubTasks: boolean): Promise<[number, ?Error]>
@@ -463,6 +485,18 @@ export const taskService = new class
 			await apiClient.post(Endpoint.TaskDelete, { task: { id } });
 
 			EventEmitter.emit(EventName.TaskDeleted, { id });
+
+			EventEmitter.emit(EventName.LegacyTasksTaskEvent, new BaseEvent({
+				data: id,
+				compatData: [
+					'DELETE',
+					{
+						task: { ID: id },
+						taskUgly: { id },
+						options: {},
+					},
+				],
+			}));
 		}
 		catch (error)
 		{
@@ -508,7 +542,7 @@ export const taskService = new class
 			this.$store.dispatch(`${Model.Users}/upsertMany`, extractor.getUsers()),
 		]);
 
-		void fileService.get(data.id).sync(data.fileIds);
+		void fileService.get(data.id).list(data.fileIds);
 	}
 
 	deleteStore(id: number): void
@@ -519,6 +553,7 @@ export const taskService = new class
 		void this.$store.dispatch(`${Model.Tasks}/delete`, id);
 	}
 
+	#silentErrorMode: boolean = false;
 	#updateFields: { [taskId: number]: TaskModel } = {};
 	#updateTaskBefore: { [taskId: number]: TaskModel } = {};
 	#updatePromises: { [taskId: number]: Resolvable } = {};
@@ -606,7 +641,10 @@ export const taskService = new class
 		{
 			this.updateStoreTask(id, taskBefore);
 
-			console.error(endpoint, error);
+			if (!this.#silentErrorMode)
+			{
+				console.error(endpoint, error);
+			}
 
 			return {
 				[endpoint]: error.errors,
@@ -663,6 +701,11 @@ export const taskService = new class
 		const task = this.$store.getters[`${Model.Tasks}/getById`](id);
 
 		return task ? { ...task } : null;
+	}
+
+	setSilentErrorMode(silentErrorMode: boolean): void
+	{
+		this.#silentErrorMode = silentErrorMode;
 	}
 
 	get $store(): Store

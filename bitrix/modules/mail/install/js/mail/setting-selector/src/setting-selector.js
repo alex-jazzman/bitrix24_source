@@ -16,6 +16,7 @@ export class SettingSelector
 	#settingsMap = new Map();
 	#selectedOptionKey: '';
 	#dialogOptions: {};
+	#disabled: boolean = false;
 
 	// At least one item from the list must be selected.
 	#forbidOptionDeselect = true;
@@ -27,6 +28,7 @@ export class SettingSelector
 			selectedOptionKey,
 			inputName,
 			dialogOptions = {},
+			disabled = false,
 		} = options;
 
 		Object.entries(settingsMap).forEach(([key, value]) => {
@@ -36,6 +38,7 @@ export class SettingSelector
 		this.#dialogOptions = dialogOptions;
 		this.#inputName = inputName;
 		this.#selectedOptionKey = selectedOptionKey;
+		this.#disabled = disabled;
 		this.#container = this.#renderContainer();
 		this.#createSelector();
 	}
@@ -91,7 +94,10 @@ export class SettingSelector
 		});
 
 		Event.bind(this.#settingButton, 'click', () => {
-			this.settingDialog.show();
+			if (!this.#disabled)
+			{
+				this.settingDialog.show();
+			}
 		});
 	}
 
@@ -128,7 +134,7 @@ export class SettingSelector
 		this.#settingButtonTextNode.textContent = selectedOptionText;
 
 		this.#settingButton = Tag.render`
-			<div class="setting-selector-button">
+			<div class="setting-selector-button ${this.#disabled ? 'setting-selector-button--disabled' : ''}">
 				${this.#settingButtonTextNode}
 				${this.icon}
 			</div>

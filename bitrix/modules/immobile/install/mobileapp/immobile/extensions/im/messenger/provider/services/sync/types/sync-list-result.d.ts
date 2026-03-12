@@ -6,6 +6,7 @@ import {
 	CopilotRoleData,
 	MessageCopilotDataItem,
 } from '../../../../model/dialogues/src/copilot/types';
+import {StickerState} from "../../../../model/sticker-pack/src/types";
 
 declare type SyncListResult = {
 	chatSync: {
@@ -41,6 +42,7 @@ declare type SyncListResult = {
 	recentItems: Array<SyncRawRecentItem>,
 	users: Array<SyncRawUser>,
 	usersShort: Array<SyncRawShortUser>,
+	stickers: Array<StickerState>,
 }
 
 export type SyncRequestResultReceivedEvent = {

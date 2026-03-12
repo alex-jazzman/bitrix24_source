@@ -13,8 +13,6 @@ use Bitrix\Main\Page\AssetMode;
 use Bitrix\Main\Web\Json;
 use Bitrix\Intranet\Public\Provider\Portal\LanguageProvider;
 
-\Bitrix\Main\UI\Extension::load(['pull.client']);
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -140,8 +138,14 @@ if (!$imEnabled || !$imEmbedded)
 		'',
 		[
 			'CONTEXT' => SITE_ID . '_' . SITE_TEMPLATE_ID,
-			'POSITION' => ['right' => '70px', 'bottom' => '15px'],
-			'SHIFTED_POSITION' => ['right' => '10px', 'bottom' => '15px'],
+			'POSITION' => [
+				'right' => 'var(--air-sidepanel-toolbar-right)',
+				'bottom' => 'var(--air-sidepanel-toolbar-bottom)'
+			],
+			'SHIFTED_POSITION' => [
+				'right' => 'var(--air-sidepanel-toolbar-right-shifted)',
+				'bottom' => 'var(--air-sidepanel-toolbar-bottom-shifted)',
+			],
 		]
 	);
 }

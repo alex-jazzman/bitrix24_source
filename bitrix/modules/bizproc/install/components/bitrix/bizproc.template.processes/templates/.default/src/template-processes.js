@@ -1,4 +1,4 @@
-import { Loc } from 'main.core';
+import { Loc, Type } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import 'ui.design-tokens';
@@ -21,6 +21,53 @@ export class TemplateProcesses
 		this.#signedParameters = options.signedParameters;
 		this.#componentName = options.componentName;
 		this.#gridId = options.gridId;
+	}
+
+	#getSelectedTemplateIds(): string[]
+	{
+		const grid = this.#getGrid();
+
+		if (Type.isNull(grid))
+		{
+			return [];
+		}
+
+		const $templateIds = grid.getRows().getSelectedIds();
+
+		if ($templateIds.length === 0)
+		{
+			return [];
+		}
+
+		return $templateIds;
+	}
+
+	deleteBulkTemplateAction(): void
+	{
+		const templateIds = this.#getSelectedTemplateIds();
+
+		if (templateIds.length === 0)
+		{
+			return;
+		}
+
+		BX.ajax.runComponentAction(this.#componentName, 'deleteBulkTemplate', {
+			mode: 'class',
+			data: {
+				ids: templateIds,
+			},
+		}).then(() => {
+			this.#reloadGrid();
+		}).catch((response) => {
+			MessageBox.alert(response.errors[0].message);
+		});
+	}
+
+	editTemplateAction(id: number): void
+	{
+		const url = `/bizprocdesigner/editor/?ID=${encodeURIComponent(id)}`;
+
+		window.open(url, '_blank');
 	}
 
 	deleteTemplateAction(id: number): void
@@ -65,11 +112,12 @@ export class TemplateProcesses
 	#reloadGrid()
 	{
 		const grid = this.#getGrid();
+
 		if (grid)
 		{
 			grid.reload();
 		}
-	};
+	}
 
 	#getGrid(): BX.Main.grid | null
 	{
@@ -80,4 +128,27 @@ export class TemplateProcesses
 
 		return null;
 	}
-} 
+
+	applyActionPanelValues(): void
+	{
+		const grid = this.#getGrid();
+		const actionsPanel = grid?.getActionsPanel();
+
+		if (!Type.isObject(grid) || !Type.isObject(actionsPanel))
+		{
+			return;
+		}
+
+		const action: object = actionsPanel.getValues();
+
+		if (!action.hasOwnProperty('groupAction'))
+		{
+			return;
+		}
+
+		if (action['groupAction'] === 'delete')
+		{
+			this.deleteBulkTemplateAction();
+		}
+	}
+}

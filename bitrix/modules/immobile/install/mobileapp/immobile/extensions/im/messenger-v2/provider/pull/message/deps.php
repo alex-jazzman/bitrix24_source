@@ -14,6 +14,7 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/parser',
 		'im:messenger/lib/emitter',
+		'im:messenger/lib/utils',
 		'im:messenger/lib/converter/data/message',
 		'im:messenger/provider/pull/base',
 		'im:messenger/provider/pull/lib/file',

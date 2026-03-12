@@ -49,10 +49,6 @@ $arActivityDescription = (
 		],
 		'SORT' => 2100,
 	])
-	->setNodeActionSettings([
-		'INCLUDE' => ['taskscomplexactivity'],
-		'HANDLES_DOCUMENT' => true,
-	])
 	->setExcluded(!Loader::includeModule('tasks'))
 ;
 

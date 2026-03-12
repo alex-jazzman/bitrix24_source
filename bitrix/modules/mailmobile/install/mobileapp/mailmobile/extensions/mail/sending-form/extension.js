@@ -24,6 +24,7 @@ jn.define('mail/sending-form', (require, exports, module) => {
 	const allMarginsWidthInField = 155;
 	const { MailDialog } = require('mail/dialog');
 	const { AjaxMethod } = require('mail/const');
+	const { AnalyticsEvent } = require('analytics');
 
 	class SendingForm extends LayoutComponent
 	{
@@ -340,6 +341,8 @@ jn.define('mail/sending-form', (require, exports, module) => {
 				widget,
 				ownerEntity,
 				isCrmMessage,
+				source,
+				element = 'compose_button',
 			} = props;
 
 			this.isForward = isForward;
@@ -381,6 +384,8 @@ jn.define('mail/sending-form', (require, exports, module) => {
 			this.layout = widget;
 			this.replyMessageBody = replyMessageBody;
 			this.isCrmMessage = isCrmMessage;
+			this.source = source;
+			this.element = element;
 
 			if (this.isEmptyFieldValue(to) && clients && clients.length > 0)
 			{
@@ -827,6 +832,16 @@ jn.define('mail/sending-form', (require, exports, module) => {
 		{
 			if (key === 'from' && data === 'add-new-mailbox')
 			{
+				if (this.from?.length === 1)
+				{
+					new AnalyticsEvent({
+						tool: 'mail',
+						category: 'mail_general_ops',
+						event: 'mailbox_types_view',
+						c_section: 'crm',
+					}).send();
+				}
+
 				MailDialog.show({
 					type: MailDialog.CONNECTING_MAIL_CRM_TYPE,
 					parentWidget: this.layout,
@@ -954,12 +969,28 @@ jn.define('mail/sending-form', (require, exports, module) => {
 					...this.state.compositeFields,
 				}))
 				.then(() => {
+					new AnalyticsEvent({
+						tool: 'mail',
+						category: 'mail_general_ops',
+						event: 'mail_send',
+						c_section: this.isCrmMessage ? 'crm' : this.source,
+						status: 'success',
+						c_element: this.element,
+					}).send();
 					NotifyManager.hideLoadingIndicator(true);
 
 					setTimeout(() => this.close(), 300);
 				})
 				.catch((failure) => {
 					console.error(failure);
+					new AnalyticsEvent({
+						tool: 'mail',
+						category: 'mail_general_ops',
+						event: 'mail_send',
+						c_section: this.isCrmMessage ? 'crm' : this.source,
+						status: 'error',
+						c_element: this.element,
+					}).send();
 
 					// some file occurred error during uploading
 					if (failure && failure.hasError)

@@ -63,6 +63,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			this.getMenuButtonsHandler = this.getMenuButtons.bind(this);
 
 			this.toolbarFactory = new ToolbarFactory();
+			this.toolbarRef = null;
 			this.categoryPermissionsProbablyRevoked = false;
 
 			this.props.layout.on('onViewShown', () => {
@@ -142,6 +143,29 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			}));
 
 			super.componentDidMount();
+		}
+
+		componentDidUpdate(prevProps, prevState)
+		{
+			this.tryToShowOnboarding();
+		}
+
+		tryToShowOnboarding()
+		{
+			if (this.toolbarFactory)
+			{
+				void requireLazy('crm:onboarding').then(({ Onboarding, CaseName }) => {
+					if (Onboarding)
+					{
+						void Onboarding.tryToShow(CaseName.ON_DEALS_AT_DIFFERENT_STAGES, {
+							targetRef: this.toolbarRef,
+							entityTypeId: this.props.entityTypeId,
+							entityType: this.getCurrentEntityType()?.typeName,
+							categoryId: this.getCurrentCategoryId(),
+						});
+					}
+				});
+			}
 		}
 
 		componentWillUnmount()
@@ -225,6 +249,12 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 						entityTypeId: this.props.entityTypeId,
 						filterParams: this.getFilterParams(),
 						showSum: entityType ? entityType.isLinkWithProductsEnabled : false,
+						onToolbarRef: (ref) => {
+							if (ref)
+							{
+								this.toolbarRef = ref;
+							}
+						},
 					},
 				},
 				forcedShowSkeleton: false,
@@ -579,6 +609,11 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			this.modifyCountersByColumnId(MINUS_ONE_ACTION, oldColumnId, amount);
 
 			this.blinkItemListView(params.item.id);
+
+			// delay onboarding to let the kanban render completely
+			setTimeout(() => {
+				this.tryToShowOnboarding();
+			}, 300);
 		}
 
 		handleOnItemChangedCategory(params)

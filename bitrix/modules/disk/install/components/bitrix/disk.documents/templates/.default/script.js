@@ -103,11 +103,16 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "getMenuActions",
 	    value: function getMenuActions(id) {
+	      var analytics = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	      var data = {
+	        trackedObjectId: id
+	      };
+	      if (analytics !== null) {
+	        data.analytics = analytics;
+	      }
 	      return main_core.ajax.runComponentAction(Backend.component, 'getMenuActions', {
 	        mode: 'ajax',
-	        data: {
-	          trackedObjectId: id
-	        },
+	        data: data,
 	        analyticsLabel: Backend.component + '.gridMenuActions'
 	      });
 	    }
@@ -517,6 +522,8 @@ this.BX.Disk = this.BX.Disk || {};
 	babelHelpers.defineProperty(Options, "filterId", 'diskDocumentsFilter');
 	babelHelpers.defineProperty(Options, "editableExt", ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'xodt']);
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Toolbar = /*#__PURE__*/function () {
 	  function Toolbar() {
 	    babelHelpers.classCallCheck(this, Toolbar);
@@ -529,10 +536,13 @@ this.BX.Disk = this.BX.Disk || {};
 	    }
 	  }, {
 	    key: "runCreating",
-	    value: function runCreating(documentType, service) {
-	      var _this = this;
+	    value: function runCreating(documentType, service, nodeToBind, nodeName) {
+	      var _this = this,
+	        _targetNode;
+	      var analytics = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : '';
+	      analytics = JSON.parse(analytics);
 	      if (BX.message('disk_restriction')) {
-	        //this.blockFeatures();
+	        // this.blockFeatures();
 	        return;
 	      }
 	      if (service === 'l' && BX.Disk.Document.Local.Instance.isEnabled()) {
@@ -543,13 +553,23 @@ this.BX.Disk = this.BX.Disk || {};
 	        });
 	        return;
 	      }
+	      var targetNode = null;
+	      if (service === 'onlyoffice' && nodeToBind !== null) {
+	        targetNode = babelHelpers.toConsumableArray(nodeToBind.children).find(function (el) {
+	          return el.textContent.trim() === nodeName;
+	        });
+	      }
 	      var byUnifiedLink = this.documentHandlers.some(function (handler) {
 	        return handler.supportsUnifiedLink && handler.code === service;
+	      });
+	      var localAnalytics = _objectSpread(_objectSpread({}, analytics || {}), {}, {
+	        c_sub_section: 'new_element'
 	      });
 	      var createProcess = new BX.Disk.Document.CreateProcess({
 	        typeFile: documentType,
 	        serviceCode: service,
 	        byUnifiedLink: byUnifiedLink,
+	        triggerNode: (_targetNode = targetNode) !== null && _targetNode !== void 0 ? _targetNode : nodeToBind,
 	        onAfterSave: function onAfterSave(response) {
 	          if (response.status === 'success') {
 	            _this.reloadGridAndFocus(response.object.id);
@@ -559,7 +579,8 @@ this.BX.Disk = this.BX.Disk || {};
 	          if (response.status === 'success') {
 	            _this.reloadGridAndFocus(response.data.id);
 	          }
-	        }
+	        },
+	        analytics: localAnalytics
 	      });
 	      createProcess.start();
 	    }
@@ -608,33 +629,57 @@ this.BX.Disk = this.BX.Disk || {};
 	    }
 	  }, {
 	    key: "createDocx",
-	    value: function createDocx(service) {
+	    value: function createDocx(service, element, nodeName, analytics) {
 	      var code = this.resolveServiceCode(service);
 	      if (code) {
-	        this.runCreating('docx', code);
+	        var nodeToBind = this.resolveNodeToBind(element);
+	        this.runCreating('docx', code, nodeToBind, nodeName, analytics);
 	      }
 	    }
 	  }, {
 	    key: "createXlsx",
-	    value: function createXlsx(service) {
+	    value: function createXlsx(service, element, nodeName, analytics) {
 	      var code = this.resolveServiceCode(service);
 	      if (code) {
-	        this.runCreating('xlsx', code);
+	        var nodeToBind = this.resolveNodeToBind(element);
+	        this.runCreating('xlsx', code, nodeToBind, nodeName, analytics);
 	      }
 	    }
 	  }, {
 	    key: "createPptx",
-	    value: function createPptx(service) {
+	    value: function createPptx(service, element, nodeName, analytics) {
 	      var code = this.resolveServiceCode(service);
 	      if (code) {
-	        this.runCreating('pptx', code);
+	        var nodeToBind = this.resolveNodeToBind(element);
+	        this.runCreating('pptx', code, nodeToBind, nodeName, analytics);
 	      }
 	    }
 	  }, {
 	    key: "createByDefault",
 	    value: function createByDefault(service) {
-	      console.log('createByDefault: ', service);
+	      console.log('createByDefault:', service);
 	      console.log('try to upload just for the test');
+	    }
+	    /**
+	     * Returns a DOM element to bind boost widget
+	     * @param element
+	     * @returns {*|null}
+	     */
+	  }, {
+	    key: "resolveNodeToBind",
+	    value: function resolveNodeToBind(element) {
+	      if (main_core.Type.isElementNode(element))
+	        // clicked on card button
+	        {
+	          var _element$querySelecto;
+	          return (_element$querySelecto = element.querySelector('.disk-documents-control-panel-card-btn')) !== null && _element$querySelecto !== void 0 ? _element$querySelecto : null;
+	        }
+	      if (main_core.Type.isElementNode(element === null || element === void 0 ? void 0 : element.itemsContainer))
+	        // clicked on menu item
+	        {
+	          return element.itemsContainer;
+	        }
+	      return null;
 	    }
 	  }]);
 	  return Toolbar;
@@ -1056,9 +1101,18 @@ this.BX.Disk = this.BX.Disk || {};
 	  return new itemClassName(trackedObjectId, itemData);
 	}
 
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _analytics = /*#__PURE__*/new WeakMap();
 	var List = /*#__PURE__*/function () {
 	  function List() {
+	    var analytics = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	    babelHelpers.classCallCheck(this, List);
+	    _classPrivateFieldInitSpec(this, _analytics, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _analytics, analytics);
 	    this.addReloadGrid();
 	    this.addMenuActionLoader();
 	    this.bindEvents();
@@ -1115,7 +1169,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        var objectId = popup.uniquePopupId.replace(/^menu-popup-main-grid-actions-menu-/, '');
 	        popup.getContentContainer().classList.add('disk-documents-animate');
 	        popup.getContentContainer().style.height = 80 + 'px';
-	        Backend.getMenuActions(objectId).then(function (_ref2) {
+	        Backend.getMenuActions(objectId, babelHelpers.classPrivateFieldGet(this, _analytics)).then(function (_ref2) {
 	          var data = _ref2.data;
 	          var row = BX.Main.gridManager.getInstanceById(Options.getGridId()).getRows().getById(objectId);
 	          var menu = row.getActionsMenu();
@@ -1158,9 +1212,18 @@ this.BX.Disk = this.BX.Disk || {};
 	}();
 
 	var _templateObject;
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _analytics$1 = /*#__PURE__*/new WeakMap();
 	var Tile = /*#__PURE__*/function () {
 	  function Tile() {
+	    var analytics = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	    babelHelpers.classCallCheck(this, Tile);
+	    _classPrivateFieldInitSpec$1(this, _analytics$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _analytics$1, analytics);
 	    this.addReloadGrid();
 	    this.addMenuActionLoader();
 	    this.addFilterSequence();
@@ -1197,7 +1260,7 @@ this.BX.Disk = this.BX.Disk || {};
 	          row = _ref2$compatData[0],
 	          objectId = _ref2$compatData[1],
 	          menuPopup = _ref2$compatData[2];
-	        Backend.getMenuActions(objectId).then(function (_ref3) {
+	        Backend.getMenuActions(objectId, babelHelpers.classPrivateFieldGet(this, _analytics$1)).then(function (_ref3) {
 	          var data = _ref3.data;
 	          var menu = menuPopup;
 	          row.actions = [];
@@ -1239,8 +1302,8 @@ this.BX.Disk = this.BX.Disk || {};
 	  return Tile;
 	}();
 
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _checkParams = /*#__PURE__*/new WeakSet();
 	var _createGuide = /*#__PURE__*/new WeakSet();
@@ -1378,6 +1441,9 @@ this.BX.Disk = this.BX.Disk || {};
 	  return Switcher;
 	}();
 
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function showShared(objectId, node) {
 	  new Sharing(objectId, node);
 	}
@@ -1388,23 +1454,24 @@ this.BX.Disk = this.BX.Disk || {};
 
 	//Template things
 	BX.ready(function () {
+	  var analytics = window.BX_ANALYTICS || null;
 	  if (BX.Main.gridManager && BX.Main.gridManager.getInstanceById(Options.getGridId())) {
-	    new List();
+	    new List(analytics);
 	  } else if (BX.Main.tileGridManager && BX.Main.tileGridManager.getInstanceById(Options.getGridId())) {
-	    new Tile();
+	    new Tile(analytics);
 	  } else {
 	    main_core_events.EventEmitter.subscribeOnce(main_core_events.EventEmitter.GLOBAL_TARGET, 'Grid::ready', function (_ref) {
 	      var _ref$compatData = babelHelpers.slicedToArray(_ref.compatData, 1),
 	        instance = _ref$compatData[0];
 	      if (instance && instance.getId() === Options.getGridId()) {
-	        new List();
+	        new List(analytics);
 	      }
 	    });
 	    main_core_events.EventEmitter.subscribeOnce(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.TileGrid.Grid:initialized', function (_ref2) {
 	      var _ref2$compatData = babelHelpers.slicedToArray(_ref2.compatData, 1),
 	        instance = _ref2$compatData[0];
 	      if (instance && instance.getId() === Options.getGridId()) {
-	        new Tile();
+	        new Tile(analytics);
 	      }
 	    });
 	  }
@@ -1439,10 +1506,24 @@ this.BX.Disk = this.BX.Disk || {};
 	  }
 	  if (window.location.search) {
 	    var searchParams = new URLSearchParams(window.location.search);
+	    var newSearchParams = new URLSearchParams();
 	    searchParams["delete"]('c_section');
+	    var _iterator = _createForOfIteratorHelper(searchParams),
+	      _step;
+	    try {
+	      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	        var param = _step.value;
+	        if (param[0].startsWith('st[')) continue;
+	        newSearchParams.append(param[0], param[1]);
+	      }
+	    } catch (err) {
+	      _iterator.e(err);
+	    } finally {
+	      _iterator.f();
+	    }
 	    var newState = null;
-	    if (searchParams.size > 0) {
-	      newState = "?".concat(searchParams.toString());
+	    if (newSearchParams.size > 0) {
+	      newState = "?".concat(newSearchParams.toString());
 	    } else {
 	      newState = window.location.pathname;
 	    }

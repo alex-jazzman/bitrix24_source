@@ -38,12 +38,14 @@ class MailMessage
 	public int $crmBindId = 0;
 	public int $chatBindId = 0;
 	public int $taskBindId = 0;
+	public int $eventBindId = 0;
 	public int $crmBindTypeId = 0;
 	public string $ownerType;
 	public int $direction;
-	public string $body;
+	public ?string $body = '';
 	public int $withAttachments = 0;
 	public array $attachments = [];
 	public string $abbreviatedText;
 	public string $replyFromEmail = '';
+	public ?string $mailboxId = null;
 }

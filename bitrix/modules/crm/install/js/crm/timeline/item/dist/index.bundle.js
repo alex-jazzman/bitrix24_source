@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,ui_imageStackSteps,crm_timeline_item,calendar_util,calendar_sharing_interface,ai_engine,ui_feedback_form,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_lottie,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_types,ui_hint,ui_designTokens,pull_client,crm_entityEditor_field_paymentDocuments,crm_ai_call,main_popup,ui_buttons,ui_infoHelper,im_public,crm_router,main_date,crm_timeline_tools,crm_activity_fileUploaderPopup,main_core_events,ui_entitySelector,ui_sidepanel,crm_integration_analytics,ui_dialogs_messagebox,main_core,ui_notification) {
+(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,ui_imageStackSteps,crm_timeline_item,calendar_util,calendar_sharing_interface,ui_feedback_form,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_lottie,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_types,ui_hint,ui_designTokens,pull_client,crm_entityEditor_field_paymentDocuments,crm_ai_call,main_popup,ui_buttons,ui_infoHelper,im_public,crm_router,main_date,crm_timeline_tools,crm_activity_fileUploaderPopup,main_core_events,ui_entitySelector,ui_sidepanel,crm_integration_analytics,ui_dialogs_messagebox,main_core,ui_notification) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -4578,13 +4578,13 @@ this.BX.Crm = this.BX.Crm || {};
 	var _handleCopilotError = /*#__PURE__*/new WeakSet();
 	var _showGenericError = /*#__PURE__*/new WeakSet();
 	var _showAdditionalInfo = /*#__PURE__*/new WeakSet();
-	var _shouldShowCopilotBanner = /*#__PURE__*/new WeakSet();
 	var _handleSliderCode = /*#__PURE__*/new WeakSet();
 	var _showBoostLimitSlider = /*#__PURE__*/new WeakSet();
 	var _showFallbackBoostLimit = /*#__PURE__*/new WeakSet();
 	var _showInfoSlider = /*#__PURE__*/new WeakSet();
 	var _showFeedbackMessageBox = /*#__PURE__*/new WeakSet();
 	var _openFeedbackForm = /*#__PURE__*/new WeakSet();
+	var _showMarketMessageBox = /*#__PURE__*/new WeakSet();
 	var _isSliderCodeExist = /*#__PURE__*/new WeakSet();
 	var _isAiMarketplaceAppsExist = /*#__PURE__*/new WeakSet();
 	let CopilotBase = /*#__PURE__*/function (_Base) {
@@ -4595,13 +4595,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CopilotBase).call(this));
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _isAiMarketplaceAppsExist);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _isSliderCodeExist);
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showMarketMessageBox);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _openFeedbackForm);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showFeedbackMessageBox);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showInfoSlider);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showFallbackBoostLimit);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showBoostLimitSlider);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _handleSliderCode);
-	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _shouldShowCopilotBanner);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showAdditionalInfo);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showGenericError);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _handleCopilotError);
@@ -4622,11 +4622,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(CopilotBase, [{
 	    key: "getCopilotConfig",
 	    value: function getCopilotConfig() {
-	      console.error('Method "getCopilotConfig" must be overridden');
+	      throw new Error('Method "getCopilotConfig" must be overridden');
 	    }
-	  }, {
-	    key: "showCopilotBanner",
-	    value: function showCopilotBanner(item, actionData) {}
 	  }, {
 	    key: "getAdditionalRequestData",
 	    value: function getAdditionalRequestData(actionData) {
@@ -4635,11 +4632,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "useInfoHelper",
 	    value: function useInfoHelper() {
-	      return false;
-	    }
-	  }, {
-	    key: "supportsCopilotBanner",
-	    value: function supportsCopilotBanner() {
 	      return false;
 	    } // endregion
 	  }, {
@@ -4651,22 +4643,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      } else {
 	        _classPrivateMethodGet$a(this, _launchCopilot, _launchCopilot2).call(this, item, actionData);
 	      }
-	    }
-	  }, {
-	    key: "showMarketMessageBox",
-	    value: function showMarketMessageBox() {
-	      ui_dialogs_messagebox.MessageBox.show({
-	        title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
-	        message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
-	          '[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
-	          '[/helpdesklink]': '</a>'
-	        }),
-	        modal: true,
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-	        okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
-	        onOk: () => crm_router.Router.openSlider(main_core.Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK')),
-	        onCancel: messageBox => messageBox.close()
-	      });
 	    }
 	  }]);
 	  return CopilotBase;
@@ -4735,7 +4711,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  var _babelHelpers$classPr5, _babelHelpers$classPr6;
 	  const customData = response.errors[0].customData;
 	  if (customData) {
-	    _classPrivateMethodGet$a(this, _showAdditionalInfo, _showAdditionalInfo2).call(this, customData, item, actionData);
+	    _classPrivateMethodGet$a(this, _showAdditionalInfo, _showAdditionalInfo2).call(this, customData, item);
 	    btnUI.setState(prevState || ui_buttons.ButtonState.ACTIVE);
 	  } else {
 	    _classPrivateMethodGet$a(this, _showGenericError, _showGenericError2).call(this, response, btnUI);
@@ -4753,15 +4729,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    btnUI.setState(ui_buttons.ButtonState.ACTIVE);
 	  }, COPILOT_BUTTON_DISABLE_DELAY);
 	}
-	function _showAdditionalInfo2(data, item, actionData) {
+	function _showAdditionalInfo2(data, item) {
 	  if (_classPrivateMethodGet$a(this, _isSliderCodeExist, _isSliderCodeExist2).call(this, data)) {
 	    _classPrivateMethodGet$a(this, _handleSliderCode, _handleSliderCode2).call(this, data, item);
 	  } else if (_classPrivateMethodGet$a(this, _isAiMarketplaceAppsExist, _isAiMarketplaceAppsExist2).call(this, data)) {
-	    if (_classPrivateMethodGet$a(this, _shouldShowCopilotBanner, _shouldShowCopilotBanner2).call(this, data)) {
-	      this.showCopilotBanner(item, actionData);
-	    } else {
-	      this.showMarketMessageBox();
-	    }
+	    _classPrivateMethodGet$a(this, _showMarketMessageBox, _showMarketMessageBox2).call(this);
 	  } else if (data.code === 'blocked_provider') {
 	    if (main_core.Type.isStringFilled(data.sliderCode)) {
 	      _classPrivateMethodGet$a(this, _showInfoSlider, _showInfoSlider2).call(this, data.sliderCode);
@@ -4781,9 +4753,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  } else {
 	    _classPrivateMethodGet$a(this, _showFeedbackMessageBox, _showFeedbackMessageBox2).call(this);
 	  }
-	}
-	function _shouldShowCopilotBanner2(data) {
-	  return data.isCopilotBannerNeedShow && this.supportsCopilotBanner();
 	}
 	function _handleSliderCode2(data, item) {
 	  if (data.sliderCode === 'limit_boost_copilot') {
@@ -4872,6 +4841,20 @@ this.BX.Crm = this.BX.Crm || {};
 	    }]
 	  });
 	}
+	function _showMarketMessageBox2() {
+	  ui_dialogs_messagebox.MessageBox.show({
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
+	    message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
+	      '[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
+	      '[/helpdesklink]': '</a>'
+	    }),
+	    modal: true,
+	    buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	    okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
+	    onOk: () => crm_router.Router.openSlider(main_core.Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK')),
+	    onCancel: messageBox => messageBox.close()
+	  });
+	}
 	function _isSliderCodeExist2(data) {
 	  return Object.hasOwn(data, 'sliderCode') && main_core.Type.isStringFilled(data.sliderCode);
 	}
@@ -4889,7 +4872,6 @@ this.BX.Crm = this.BX.Crm || {};
 	const FILL_FIELDS_SCENARIO = 'fill_fields';
 	const CALL_SCORING_SCENARIO = 'call_scoring';
 	var _isCopilotWelcomeTourShown = /*#__PURE__*/new WeakMap();
-	var _isCopilotBannerShown = /*#__PURE__*/new WeakMap();
 	var _makeCall = /*#__PURE__*/new WeakSet();
 	var _openTranscript = /*#__PURE__*/new WeakSet();
 	var _changePlayerState = /*#__PURE__*/new WeakSet();
@@ -4915,10 +4897,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$b(babelHelpers.assertThisInitialized(_this), _openTranscript);
 	    _classPrivateMethodInitSpec$b(babelHelpers.assertThisInitialized(_this), _makeCall);
 	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _isCopilotWelcomeTourShown, {
-	      writable: true,
-	      value: false
-	    });
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _isCopilotBannerShown, {
 	      writable: true,
 	      value: false
 	    });
@@ -4999,44 +4977,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 	    }
 	  }, {
-	    key: "supportsCopilotBanner",
-	    value: function supportsCopilotBanner() {
-	      return babelHelpers.classPrivateFieldGet(this, _isCopilotBannerShown);
-	    }
-	  }, {
 	    key: "useInfoHelper",
 	    value: function useInfoHelper() {
 	      return true;
-	    }
-	  }, {
-	    key: "showCopilotBanner",
-	    value: async function showCopilotBanner(item, actionData) {
-	      const {
-	        AppsInstallerBanner,
-	        AppsInstallerBannerEvents
-	      } = await main_core.Runtime.loadExtension('ai.copilot-banner');
-	      const portalZone = main_core.Loc.getMessage('PORTAL_ZONE');
-	      const copilotBannerOptions = {
-	        isWestZone: portalZone !== 'ru' && portalZone !== 'by' && portalZone !== 'kz'
-	      };
-	      const copilotBanner = new AppsInstallerBanner(copilotBannerOptions);
-	      copilotBanner.show();
-	      copilotBanner.subscribe(AppsInstallerBannerEvents.actionStart, () => {
-	        // eslint-disable-next-line no-console
-	        console.info('Install app started');
-	      });
-	      copilotBanner.subscribe(AppsInstallerBannerEvents.actionFinishSuccess, () => {
-	        setTimeout(() => {
-	          new ai_engine.Engine().setBannerLaunched();
-	          babelHelpers.classPrivateFieldSet(this, _isCopilotBannerShown, true);
-	        }, 500);
-	      });
-	      copilotBanner.subscribe(AppsInstallerBannerEvents.actionFinishFailed, () => {
-	        console.error('Install app failed. Try installing the application manually.');
-	        setTimeout(() => {
-	          this.showMarketMessageBox();
-	        }, 500);
-	      });
 	    } // endregion
 	    // region jsEvent action handlers
 	  }], [{
@@ -11602,5 +11545,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.UI,BX.Crm.Timeline,BX.Calendar,BX.Calendar.Sharing,BX.AI,BX.UI.Feedback,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.UI,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc,BX,BX,BX,BX.Crm,BX.Crm.AI,BX.Main,BX.UI,BX.UI,BX.Messenger.v2.Lib,BX.Crm,BX.Main,BX.Crm.Timeline,BX.Crm.Activity,BX.Event,BX.UI.EntitySelector,BX,BX.Crm.Integration.Analytics,BX.UI.Dialogs,BX,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.UI,BX.Crm.Timeline,BX.Calendar,BX.Calendar.Sharing,BX.UI.Feedback,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.UI,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc,BX,BX,BX,BX.Crm,BX.Crm.AI,BX.Main,BX.UI,BX.UI,BX.Messenger.v2.Lib,BX.Crm,BX.Main,BX.Crm.Timeline,BX.Crm.Activity,BX.Event,BX.UI.EntitySelector,BX,BX.Crm.Integration.Analytics,BX.UI.Dialogs,BX,BX));
 //# sourceMappingURL=index.bundle.js.map

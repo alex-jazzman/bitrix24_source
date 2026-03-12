@@ -1,8 +1,0 @@
-<?php
-$MESS["SELECTOR_COMPONENT_INVITE_BANNER_DESCRIPTION"] = "Бірге Битрикс24 артықшылықтарын тезірек бағалайсыздар";
-$MESS["SELECTOR_COMPONENT_INVITE_BANNER_TITLE"] = "Әріптестеріңізді шақырыңыз";
-$MESS["SELECTOR_COMPONENT_INVITE_SEARCH_WITH_CREATION"] = "Табу немесе шақыру";
-$MESS["SELECTOR_COMPONENT_INVITE_USER_TAG"] = "Шақыру";
-$MESS["SELECTOR_COMPONENT_INVITING_USER_TAG"] = "Шақыру";
-$MESS["SELECTOR_COMPONENT_PICK_USER_2"] = "Пайдаланушы";
-$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_USER"] = "Пайдаланушыны таңдау үшін теруді бастаңыз";

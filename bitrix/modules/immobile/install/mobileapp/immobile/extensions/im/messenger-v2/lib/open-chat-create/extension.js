@@ -13,7 +13,7 @@ jn.define('im/messenger-v2/lib/open-chat-create', (require, exports, module) => 
 		const tabId = RecentManager.getInstance().getActiveRecent().id;
 		const openChatCreateCollection = {
 			[NavigationTabId.chats]: openChatCreate,
-			[NavigationTabId.copilot]: openCopilotCreate,
+			[NavigationTabId.copilot]: directCopilotChatCreate,
 			[NavigationTabId.channel]: openChannelCreate,
 			[NavigationTabId.collab]: openCollabCreate,
 		};
@@ -36,6 +36,11 @@ jn.define('im/messenger-v2/lib/open-chat-create', (require, exports, module) => 
 	function openCopilotCreate()
 	{
 		serviceLocator.get('dialog-creator').createCopilotDialog();
+	}
+
+	function directCopilotChatCreate()
+	{
+		serviceLocator.get('dialog-creator').createCopilotDialogWithoutSelector();
 	}
 
 	function openChannelCreate()

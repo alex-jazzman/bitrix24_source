@@ -1,4 +1,0 @@
-<?php
-$MESS["CRM_NAME"] = "CRM";
-$MESS["CRM_REPORT_COMPLEX_DESCRIPTION"] = "Есептер";
-$MESS["CRM_REPORT_COMPLEX_NAME"] = "Есептер";

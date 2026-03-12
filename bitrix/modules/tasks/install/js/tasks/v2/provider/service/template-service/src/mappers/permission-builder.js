@@ -12,7 +12,7 @@ export const permissionBuilder = new class
 	getPermissions(task: TaskModel): TemplatePermission[]
 	{
 		const currentUserId = Core.getParams().currentUser.id;
-		const permissions = task.permissions ?? [];
+		const permissions = (task.permissions ?? []).map((p) => ({ ...p }));
 
 		this.#grantUser(currentUserId, permissions);
 

@@ -3,15 +3,17 @@ import { MailSyncPeriod } from '../utils/options/mail-integration-options/enum/p
 import { CrmSyncPeriod } from '../utils/options/crm-integration-options/enum/period';
 import { CrmCreateAction } from '../utils/options/crm-integration-options/enum/create-action';
 import { CrmSource } from '../utils/options/crm-integration-options/enum/source';
-import {
+import type {
 	BackendPayload,
 	CrmOptionsPayload,
 	CrmSettingsState,
 	CalendarSettingsState,
 	MassConnectDataType,
+	MassconnectPermissions,
+	Employee,
+	MailSettingsState,
 } from './type';
 import { YES_VALUE, NO_VALUE, SERVICE_CONFIG } from './const';
-import type { Employee, MailSettingsState } from './type';
 
 export const useWizardStore = defineStore('wizard', {
 	state: () => ({
@@ -63,6 +65,10 @@ export const useWizardStore = defineStore('wizard', {
 		},
 		isLoginColumnShown: false,
 		analyticsSource: '',
+		permissions: {
+			allowedLevels: null,
+			canEditCrmIntegration: false,
+		},
 	}),
 	actions: {
 		addEmployee(employeeItem: Employee): void
@@ -231,6 +237,11 @@ export const useWizardStore = defineStore('wizard', {
 					return { ...employee, password: '' };
 				}),
 			};
+		},
+		setPermissions(permissions: MassconnectPermissions): void
+		{
+			this.permissions.allowedLevels = [permissions?.allowedLevels];
+			this.permissions.canEditCrmIntegration = permissions?.canEditCrmIntegration;
 		},
 	},
 });

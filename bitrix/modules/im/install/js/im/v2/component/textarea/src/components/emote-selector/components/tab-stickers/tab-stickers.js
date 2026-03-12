@@ -1,22 +1,41 @@
-import { StickerService } from 'im.v2.provider.service.sticker';
+import { PopupManager } from 'main.popup';
 
-import { PackItem } from './pack/pack-item';
-import { PackShimmer } from './pack/pack-shimmer';
-import { HeaderItem } from './header/header-item';
-import { HeaderShimmer } from './header/header-shimmer';
+import { StickerManager } from 'im.v2.lib.sticker';
+import { StickerPackForm } from 'im.v2.component.sticker';
+import { StickerService } from 'im.v2.provider.service.sticker';
+import { PopupType } from 'im.v2.const';
+import { Spinner, SpinnerColor, SpinnerSize } from 'im.v2.component.elements.loader';
+
+import { ObserverManager } from './classes/observer-manager';
+import { Pack } from './pack/pack';
+import { PackSkeleton } from './pack/pack-skeleton';
+import { HeaderTabs } from './header/header-tabs';
 
 import './css/tab-stickers.css';
 
 import type { JsonObject } from 'main.core';
+import type { BaseEvent } from 'main.core.events';
+import type { ImModelStickerPack, ImModelStickerPackIdentifier } from 'im.v2.model';
 
-export const RECENT_PACK_KEY = '0:recent';
-const SCROLL_LOAD_HEADER_OFFSET = 200;
 const SCROLL_LOAD_BODY_OFFSET = 500;
 
 // @vue/component
 export const TabStickers = {
 	name: 'TabStickers',
-	components: { PackItem, PackShimmer, HeaderItem, HeaderShimmer },
+	components: { Pack, PackSkeleton, HeaderTabs, Spinner, StickerPackForm },
+	directives: {
+		'pack-observer': {
+			mounted(element, binding)
+			{
+				binding.instance.observer.observe(element);
+			},
+			beforeUnmount(element, binding)
+			{
+				binding.instance.observer.unobserve(element);
+			},
+		},
+	},
+	inject: ['disableAutoHide', 'enableAutoHide'],
 	props: {
 		dialogId: {
 			type: String,
@@ -27,42 +46,70 @@ export const TabStickers = {
 	data(): JsonObject
 	{
 		return {
-			activePackKey: RECENT_PACK_KEY,
-			isLoading: false,
+			activePack: {
+				id: null,
+				type: null,
+			},
+			isLoadingFirstPage: true,
+			isLoadingNextPage: false,
+			showSlider: false,
 		};
 	},
 	computed: {
-		packKeys(): string[]
+		SpinnerColor: () => SpinnerColor,
+		SpinnerSize: () => SpinnerSize,
+		isLoading(): boolean
 		{
-			const packs = this.$store.getters['messages/stickers/getPackKeys'];
+			return this.isLoadingFirstPage || this.isLoadingNextPage;
+		},
+		recentPack(): ImModelStickerPack
+		{
+			return StickerManager.getRecentPack();
+		},
+		packs(): ImModelStickerPack[]
+		{
+			const packs = this.$store.getters['stickers/packs/get'];
+			if (this.hasRecentStickers)
+			{
+				return [this.recentPack, ...packs];
+			}
 
-			return [RECENT_PACK_KEY, ...packs];
+			return packs;
+		},
+		hasRecentStickers(): boolean
+		{
+			return this.$store.getters['stickers/recent/get'].length > 0;
 		},
 	},
 	async created()
 	{
+		this.initObserverManager();
 		this.stickerService = StickerService.getInstance();
-		this.isLoading = true;
 		await this.stickerService.initFirstPage();
-		this.isLoading = false;
+		this.isLoadingFirstPage = false;
 	},
 	methods: {
-		onHeaderPick(packKey: string): void
+		initObserverManager()
 		{
-			this.activePackKey = packKey;
-			this.scrollToPack(packKey);
+			this.observer = new ObserverManager();
+
+			this.observer.subscribe(
+				ObserverManager.events.onChangeActivePack,
+				(event: BaseEvent<ImModelStickerPackIdentifier>) => {
+					const { id, type } = event.getData();
+					this.activePack = { id, type };
+				},
+			);
 		},
-		scrollToPack(packKey: string): void
+		scrollToPack({ id, type }: ImModelStickerPackIdentifier)
 		{
-			const packElem = this.$refs.packListContainer.querySelector(`[data-pack-key="${packKey}"]`);
-			if (packElem && packElem.scrollIntoView)
+			const packElement = this.$refs.packListContainer.querySelector(
+				`[data-pack-type="${type}"][data-pack-id="${id}"]`,
+			);
+			if (packElement && packElement.scrollIntoView)
 			{
-				packElem.scrollIntoView({ block: 'start', behavior: 'smooth' });
+				packElement.scrollIntoView({ block: 'start', behavior: 'smooth' });
 			}
-		},
-		onActivePackChange(packKey: string): void
-		{
-			this.activePackKey = packKey;
 		},
 		needToLoad(container: HTMLElement, offset: number): boolean
 		{
@@ -70,23 +117,20 @@ export const TabStickers = {
 
 			return remaining <= offset;
 		},
+		closeContextMenus()
+		{
+			PopupManager.getPopupById(PopupType.stickerContextMenu)?.close();
+			PopupManager.getPopupById(PopupType.stickerPackContextMenu)?.close();
+		},
 		async loadNextPage(): void
 		{
-			this.isLoading = true;
+			this.isLoadingNextPage = true;
 			await this.stickerService.loadNextPage();
-			this.isLoading = false;
-		},
-		async onScrollHeader(event: Event): void
-		{
-			const container = event.target;
-			if (this.isLoading || !this.needToLoad(container, SCROLL_LOAD_HEADER_OFFSET))
-			{
-				return;
-			}
-			void this.loadNextPage();
+			this.isLoadingNextPage = false;
 		},
 		async onScrollBody(event: Event): void
 		{
+			this.closeContextMenus();
 			const container = event.target;
 			if (this.isLoading || !this.needToLoad(container, SCROLL_LOAD_BODY_OFFSET))
 			{
@@ -94,46 +138,46 @@ export const TabStickers = {
 			}
 			void this.loadNextPage();
 		},
-		onClose(): void
-		{
-			this.$emit('close');
-		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `
-		<div class="bx-im-stickers-tab__container">
+		<div class="bx-im-emote-selector-tab-stickers__container">
+			<HeaderTabs
+				:dialogId="dialogId"
+				:isLoadingFirstPage="isLoadingFirstPage"
+				:isLoadingNextPage="isLoadingNextPage"
+				:packs="packs"
+				:activePack="activePack"
+				@changeActivePack="scrollToPack"
+				@scrollNextPage="loadNextPage"
+			/>
 			<div
-				class="bx-im-stickers-header__container"
-				ref="headerListContainer"
-				@scroll="onScrollHeader"
-			>
-				<HeaderItem
-					v-for="key in packKeys"
-					:key="key"
-					:packKey="key"
-					:active="key === activePackKey"
-					@click="onHeaderPick(key)"
-				/>
-				<HeaderShimmer v-if="isLoading" />
-			</div>
-			<div
-				class="bx-im-stickers-pack-list__container"
+				class="bx-im-emote-selector-tab-stickers__packs-container"
 				ref="packListContainer"
 				@scroll="onScrollBody"
 			>
-				<PackItem
-					v-for="key in packKeys"
-					:dialogId="dialogId"
-					:key="key"
-					:packKey="key"
-					:data-pack-key="key"
-					@activePackChange="onActivePackChange"
-					@close="onClose"
+				<PackSkeleton v-if="isLoadingFirstPage" />
+				<template v-else>
+					<Pack
+						v-for="pack in packs"
+						v-pack-observer
+						:dialogId="dialogId"
+						:key="pack.key"
+						:pack="pack"
+						:data-pack-id="pack.id"
+						:data-pack-type="pack.type"
+						@close="$emit('close')"
+					/>
+				</template>
+				<Spinner
+					v-if="isLoadingNextPage"
+					:size="SpinnerSize.XS"
+					:color="SpinnerColor.mainPrimary"
+					class="bx-im-emote-selector-tab-stickers__loader"
 				/>
-				<PackShimmer v-if="isLoading" />
 			</div>
 		</div>
 	`,

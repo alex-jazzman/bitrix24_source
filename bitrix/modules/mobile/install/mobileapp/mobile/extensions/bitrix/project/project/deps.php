@@ -7,6 +7,5 @@ return [
 	],
 	'components' => [
 		'tasks:tasks.dashboard',
-		'user.disk',
 	],
 ];

@@ -17,4 +17,3 @@ $MESS["COMMAND_DEF_CATEGORY_DEBUG"] = "Отладка";
 $MESS["COMMAND_DEF_CATEGORY_DIALOG"] = "Диалог";
 $MESS["COMMAND_BOT_ANSWER"] = "Чат-бот #BOT_NAME#";
 $MESS["COMMAND_SYSTEM_ANSWER"] = "Ответ на команду #COMMAND#";
-?>

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["VI_CONFIG_ADDRESS_VERIFICATION_REQUIRED_2"] = "Please note that a valid postal address is required for the location you are about to rent a phone number for. Failing to provide a valid address may potentially result in phone number disconnection.";
 $MESS["VI_CONFIG_CANCEL_BTN"] = "Cancel";
 $MESS["VI_CONFIG_RENT_ADD"] = "Rent another number";
@@ -17,6 +17,8 @@ $MESS["VI_CONFIG_RENT_BUY_SUCCESS_1"] = "Congratulations!";
 $MESS["VI_CONFIG_RENT_BUY_SUCCESS_2"] = "A phone number has been connected to your intranet.";
 $MESS["VI_CONFIG_RENT_BUY_SUCCESS_3"] = "Now all incoming calls to this number will be received in your intranet.";
 $MESS["VI_CONFIG_RENT_CATEGORY"] = "Category";
+$MESS["VI_CONFIG_RENT_CONFIRMATION_TYPE_BUSINESS_ACCOUNT"] = "This number requires that you register it on GU.";
+$MESS["VI_CONFIG_RENT_CONFIRMATION_TYPE_BUSINESS_ACCOUNT_WARNING"] = "<b>Remember to register your phone numbers on GU.</b><br />The marked phone numbers will not be activated until you register them. Learn More";
 $MESS["VI_CONFIG_RENT_COUNTRY"] = "Country";
 $MESS["VI_CONFIG_RENT_COUNT_PHONES"] = "Quantity of incoming numbers";
 $MESS["VI_CONFIG_RENT_ERROR_TITLE"] = "Error";
@@ -28,6 +30,8 @@ $MESS["VI_CONFIG_RENT_FORWARD"] = "Forward";
 $MESS["VI_CONFIG_RENT_INCLUDE_2"] = "You will get:<br>- unlimited incoming phone lines<br>- unlimited incoming calls for each line<br>- internal extensions for your employees<br>- custom rules for incoming calls<br>- missed call notifications<br>- phone call recording<br>- incoming, outgoing, missed call statistics<br>- detailed statistics for each call<br>- CRM integration<br>- ability to connect physical phones";
 $MESS["VI_CONFIG_RENT_INSTALLATION_PAYMENT_HINT"] = "You will be charged only once when connecting the number";
 $MESS["VI_CONFIG_RENT_INSTALLATION_PRICE"] = "Connection cost";
+$MESS["VI_CONFIG_RENT_INTERNOD_WARNING"] = "Extend your subscription<br />Your Russian phone numbers will be deactivated soon. Please sign the <a href='#BILLING_URL#' target='_blank'>Additional agreement</a> to continue using them beyond this date.";
+$MESS["VI_CONFIG_RENT_INTERNOD_WARNING_WITH_DATE"] = "Extend your subscription<br />Your Russian phone numbers will remain active till #DATE#. Please sign the <a href='#BILLING_URL#' target='_blank'>Additional agreement</a> to continue using them beyond this date.";
 $MESS["VI_CONFIG_RENT_LIST_PHONES"] = "List of numbers";
 $MESS["VI_CONFIG_RENT_MONEY_LOW"] = "You do not have enough money in your account to complete this operation. Please add to your balance and repeat the operation.";
 $MESS["VI_CONFIG_RENT_MONTHLY_PAYMENT_HINT"] = "You will be charged automatically";

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
 this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
-(function (exports,main_popup,im_public,humanresources_companyStructure_public,ui_avatar,main_date,ui_buttons,ui_system_typography,main_core_events,ui_dialogs_messagebox,main_core) {
+(function (exports,bizproc_aiAgents_grid,main_popup,im_public,humanresources_companyStructure_public,ui_avatar,main_date,ui_buttons,ui_infoHelper,ui_system_typography,main_core_events,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	var _fieldId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fieldId");
@@ -35,13 +35,11 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  getFieldId() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _fieldId)[_fieldId];
 	  }
-	  getGrid() {
-	    var _grid;
-	    let grid = null;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _gridId)[_gridId]) {
-	      grid = BX.Main.gridManager.getById(babelHelpers.classPrivateFieldLooseBase(this, _gridId)[_gridId]);
+	  getGridManager() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _gridId)[_gridId]) {
+	      return null;
 	    }
-	    return (_grid = grid) == null ? void 0 : _grid.instance;
+	    return bizproc_aiAgents_grid.GridManager.getInstance(babelHelpers.classPrivateFieldLooseBase(this, _gridId)[_gridId]);
 	  }
 	  getFieldNode() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _fieldNode)[_fieldNode]) {
@@ -162,10 +160,17 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	const USER_MINI_PROFILE_CONTEXT = {
 	  B24: 'b24'
 	};
+	const GRID_API_ACTION = {
+	  START_TEMPLATE: 'Integration.AiAgent.Template.start',
+	  COPY_AND_START_TEMPLATE: 'Integration.AiAgent.Template.copyAndStart',
+	  FETCH_ROW: 'Integration.AiAgent.Template.fetchRow',
+	  DELETE: 'Integration.AiAgent.Template.delete',
+	  RESTART: 'Integration.AiAgent.Template.start'
+	};
 
 	class PhotoField extends BaseField {
 	  render(params) {
-	    var _params$user;
+	    var _params$user, _params$user2;
 	    const avatarOptions = {
 	      size: 24,
 	      userpicPath: params == null ? void 0 : (_params$user = params.user) == null ? void 0 : _params$user.photoUrl
@@ -174,10 +179,13 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    this.addMiniProfile(params);
 	    avatar == null ? void 0 : avatar.renderTo(this.getFieldNode());
 	    main_core.Dom.addClass(this.getFieldNode(), 'agent-grid_user-photo');
+	    if (!(params != null && (_params$user2 = params.user) != null && _params$user2.id)) {
+	      main_core.Dom.addClass(this.getFieldNode(), 'agent-grid_user-photo-stub');
+	    }
 	  }
 	  addMiniProfile(params) {
-	    var _params$user2;
-	    main_core.Dom.attr(this.getFieldNode(), 'bx-tooltip-user-id', params == null ? void 0 : (_params$user2 = params.user) == null ? void 0 : _params$user2.id);
+	    var _params$user3;
+	    main_core.Dom.attr(this.getFieldNode(), 'bx-tooltip-user-id', params == null ? void 0 : (_params$user3 = params.user) == null ? void 0 : _params$user3.id);
 	    main_core.Dom.attr(this.getFieldNode(), 'bx-tooltip-context', 'b24');
 	  }
 	}
@@ -193,8 +201,12 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  _t8,
 	  _t9,
 	  _t10,
-	  _t11;
+	  _t11,
+	  _t12,
+	  _t13,
+	  _t14;
 	var _combinedPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("combinedPopup");
+	var _chatsPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatsPopup");
 	var _renderCombinedView = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCombinedView");
 	var _renderUsersOnlyView = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderUsersOnlyView");
 	var _renderDepartmentsOnlyView = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDepartmentsOnlyView");
@@ -205,6 +217,11 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	var _createCounterNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createCounterNode");
 	var _toggleCombinedPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleCombinedPopup");
 	var _createChatNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createChatNode");
+	var _getChatNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatNode");
+	var _getChatsCounterNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatsCounterNode");
+	var _toggleChatsListPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleChatsListPopup");
+	var _openChatsListPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openChatsListPopup");
+	var _fillChatsListContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillChatsListContent");
 	var _openCombinedPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openCombinedPopup");
 	var _fillDepartmentsListContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillDepartmentsListContent");
 	var _getDepartmentNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDepartmentNode");
@@ -231,6 +248,21 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    });
 	    Object.defineProperty(this, _openCombinedPopup, {
 	      value: _openCombinedPopup2
+	    });
+	    Object.defineProperty(this, _fillChatsListContent, {
+	      value: _fillChatsListContent2
+	    });
+	    Object.defineProperty(this, _openChatsListPopup, {
+	      value: _openChatsListPopup2
+	    });
+	    Object.defineProperty(this, _toggleChatsListPopup, {
+	      value: _toggleChatsListPopup2
+	    });
+	    Object.defineProperty(this, _getChatsCounterNode, {
+	      value: _getChatsCounterNode2
+	    });
+	    Object.defineProperty(this, _getChatNode, {
+	      value: _getChatNode2
 	    });
 	    Object.defineProperty(this, _createChatNode, {
 	      value: _createChatNode2
@@ -266,12 +298,15 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _chatsPopup, {
+	      writable: true,
+	      value: void 0
+	    });
 	  }
 	  render(params) {
 	    const {
 	      users = [],
-	      chatId,
-	      chatName,
+	      chats = [],
 	      departments = {}
 	    } = params;
 	    const container = main_core.Tag.render(_t || (_t = _`
@@ -286,7 +321,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    } else {
 	      babelHelpers.classPrivateFieldLooseBase(this, _renderUsersOnlyView)[_renderUsersOnlyView](container, departments, users);
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _createChatNode)[_createChatNode](container, chatId, chatName);
+	    babelHelpers.classPrivateFieldLooseBase(this, _createChatNode)[_createChatNode](container, chats);
 	    this.appendToFieldNode(container);
 	  }
 	  openChat(chatId) {
@@ -297,9 +332,12 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  }
 	}
 	function _renderCombinedView2(container, departments, users) {
-	  main_core.Dom.addClass(container, 'agent-grid-used-by-container-with-users-and-departments');
-	  babelHelpers.classPrivateFieldLooseBase(this, _createDepartmentsCounter)[_createDepartmentsCounter](container, departments, users, UsedByField.MAX_VISIBLE_AVATARS_COMBINED);
-	  babelHelpers.classPrivateFieldLooseBase(this, _createAvatarsContainer)[_createAvatarsContainer](container, departments, users, UsedByField.MAX_VISIBLE_AVATARS_COMBINED);
+	  const combinedViewWrapper = main_core.Tag.render(_t2 || (_t2 = _`
+			<div class="agent-grid-used-by-container-with-users-and-departments"></div>
+		`));
+	  main_core.Dom.append(combinedViewWrapper, container);
+	  babelHelpers.classPrivateFieldLooseBase(this, _createDepartmentsCounter)[_createDepartmentsCounter](combinedViewWrapper, departments, users, UsedByField.MAX_VISIBLE_AVATARS_COMBINED);
+	  babelHelpers.classPrivateFieldLooseBase(this, _createAvatarsContainer)[_createAvatarsContainer](combinedViewWrapper, departments, users, UsedByField.MAX_VISIBLE_AVATARS_COMBINED);
 	}
 	function _renderUsersOnlyView2(container, departments, users) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _createAvatarsContainer)[_createAvatarsContainer](container, departments, users, UsedByField.MAX_VISIBLE_AVATARS_USERS_ONLY);
@@ -309,10 +347,10 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	}
 	function _createAvatarsContainer2(container, departments, users, maxVisibleAvatars) {
 	  const placeholderAvatarsCount = 3;
-	  const avatarsContainer = main_core.Tag.render(_t2 || (_t2 = _`<div data-test-id="bizproc-ai-agents-grid-used-by-avatars-container" class="agent-grid-user-avatars"></div>`));
+	  const avatarsContainer = main_core.Tag.render(_t3 || (_t3 = _`<div data-test-id="bizproc-ai-agents-grid-used-by-avatars-container" class="agent-grid-user-avatars"></div>`));
 	  if (!users || users.length === 0) {
 	    for (let i = 0; i < placeholderAvatarsCount; i++) {
-	      const avatarContainer = main_core.Tag.render(_t3 || (_t3 = _`<span></span>`));
+	      const avatarContainer = main_core.Tag.render(_t4 || (_t4 = _`<span></span>`));
 	      main_core.Dom.append(avatarContainer, avatarsContainer);
 	      new PhotoField({
 	        fieldNode: avatarContainer
@@ -322,7 +360,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    return;
 	  }
 	  users.slice(0, maxVisibleAvatars).forEach(user => {
-	    const avatarContainer = main_core.Tag.render(_t4 || (_t4 = _`<span></span>`));
+	    const avatarContainer = main_core.Tag.render(_t5 || (_t5 = _`<span></span>`));
 	    main_core.Dom.append(avatarContainer, avatarsContainer);
 	    new PhotoField({
 	      fieldNode: avatarContainer
@@ -387,7 +425,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  if (count <= 0) {
 	    return null;
 	  }
-	  const counterWrapper = main_core.Tag.render(_t5 || (_t5 = _`<div class="${0}"></div>`), counterWrapperClassName);
+	  const counterWrapper = main_core.Tag.render(_t6 || (_t6 = _`<div class="${0}"></div>`), counterWrapperClassName);
 	  const displayedNumber = babelHelpers.classPrivateFieldLooseBase(this, _getDisplayedNumber)[_getDisplayedNumber](count);
 	  let counterText = String(displayedNumber);
 	  if (withPlusPrefix) {
@@ -417,40 +455,109 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _openCombinedPopup)[_openCombinedPopup](departments, users, bindElement);
 	  }
 	}
-	function _createChatNode2(container, chatId, chatName) {
-	  if (!chatId) {
+	function _createChatNode2(container, chats) {
+	  var _chats$length, _chats$;
+	  const chatsCount = (_chats$length = chats == null ? void 0 : chats.length) != null ? _chats$length : 0;
+	  if (chatsCount === 0) {
 	    return;
 	  }
-	  const chatNameNode = ui_system_typography.Text.render(chatName || '', {
+	  const firstChat = (_chats$ = chats[0]) != null ? _chats$ : '';
+	  const chatNode = babelHelpers.classPrivateFieldLooseBase(this, _getChatNode)[_getChatNode](firstChat);
+	  if (chatsCount > 1) {
+	    const remainingCount = chatsCount - 1;
+	    const counterNode = babelHelpers.classPrivateFieldLooseBase(this, _getChatsCounterNode)[_getChatsCounterNode](remainingCount, chats);
+	    main_core.Dom.append(counterNode, chatNode);
+	  }
+	  main_core.Dom.append(chatNode, container);
+	}
+	function _getChatNode2(chat, shouldAddHover = false) {
+	  var _chat$chatName;
+	  const chatName = (_chat$chatName = chat.chatName) != null ? _chat$chatName : '';
+	  const chatNameNode = ui_system_typography.Text.render(chatName, {
 	    size: '2xs',
 	    accent: false,
 	    tag: 'span',
 	    className: 'agent-grid-chat-name'
 	  });
-	  const encodedChatName = main_core.Text.encode(chatName || '');
-	  const chatContainer = main_core.Tag.render(_t6 || (_t6 = _`
-			<div class="agent-grid-chat-container" title="${0}">
+	  const encodedChatName = main_core.Text.encode(chatName);
+	  const containerClass = shouldAddHover ? 'agent-grid-chats-in-list' : 'agent-grid-chat-container';
+	  const chatContainer = main_core.Tag.render(_t7 || (_t7 = _`
+			<div class="${0}" title="${0}">
 				${0}
 				<a href="#" class="agent-grid-chat-link">
 					${0}
 				</a>
 			</div>
-		`), encodedChatName, GridIcons.AGENT_CHAT, chatNameNode);
+		`), containerClass, encodedChatName, GridIcons.AGENT_CHAT, chatNameNode);
 	  main_core.Event.bind(chatContainer, 'click', event => {
 	    event.preventDefault();
-	    this.openChat(chatId);
+	    this.openChat(chat.chatId);
 	  });
-	  main_core.Dom.append(chatContainer, container);
+	  return chatContainer;
+	}
+	function _getChatsCounterNode2(remainingCount, chats) {
+	  const counterWrapper = main_core.Tag.render(_t8 || (_t8 = _`<div class="ai-agents-chats-counter-wrapper"></div>`));
+	  const counterClassName = 'ai-agents-chats-counter';
+	  const displayedNumber = babelHelpers.classPrivateFieldLooseBase(this, _getDisplayedNumber)[_getDisplayedNumber](remainingCount);
+	  const counterText = `+${displayedNumber}`;
+	  const numberNode = ui_system_typography.Text.render(counterText, {
+	    size: '3xs',
+	    accent: true,
+	    tag: 'span',
+	    className: counterClassName
+	  });
+	  main_core.Dom.append(numberNode, counterWrapper);
+	  main_core.Event.bind(counterWrapper, 'click', event => {
+	    event.stopPropagation();
+	    babelHelpers.classPrivateFieldLooseBase(this, _toggleChatsListPopup)[_toggleChatsListPopup](chats, counterWrapper);
+	  });
+	  return counterWrapper;
+	}
+	function _toggleChatsListPopup2(chats, counterNode) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _chatsPopup)[_chatsPopup] && babelHelpers.classPrivateFieldLooseBase(this, _chatsPopup)[_chatsPopup].isShown()) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _chatsPopup)[_chatsPopup].close();
+	  } else {
+	    babelHelpers.classPrivateFieldLooseBase(this, _openChatsListPopup)[_openChatsListPopup](chats, counterNode);
+	  }
+	}
+	function _openChatsListPopup2(chats, bindElement) {
+	  const contentNode = main_core.Tag.render(_t9 || (_t9 = _`<div class="agent-grid-chats-list-wrapper"></div>`));
+	  babelHelpers.classPrivateFieldLooseBase(this, _fillChatsListContent)[_fillChatsListContent](chats, contentNode);
+	  babelHelpers.classPrivateFieldLooseBase(this, _chatsPopup)[_chatsPopup] = new main_popup.Popup({
+	    content: contentNode,
+	    bindElement,
+	    cacheable: false,
+	    minHeight: 50,
+	    maxWidth: 400,
+	    maxHeight: 200,
+	    padding: 0,
+	    autoHide: true,
+	    className: 'agents-grid-popup'
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _chatsPopup)[_chatsPopup].show();
+	  babelHelpers.classPrivateFieldLooseBase(this, _chatsPopup)[_chatsPopup].subscribe('onClose', () => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _chatsPopup)[_chatsPopup] = null;
+	  });
+	}
+	function _fillChatsListContent2(chats, contentNode) {
+	  if (!chats || chats.length === 0) {
+	    return contentNode;
+	  }
+	  chats.forEach(chat => {
+	    const shouldAddHover = true;
+	    const chatNode = babelHelpers.classPrivateFieldLooseBase(this, _getChatNode)[_getChatNode](chat, shouldAddHover);
+	    main_core.Dom.append(chatNode, contentNode);
+	  });
+	  return contentNode;
 	}
 	function _openCombinedPopup2(departments, users, bindElement) {
-	  const contentNode = main_core.Tag.render(_t7 || (_t7 = _`<div class="agent-grid-departments-list-wrapper"></div>`));
+	  const contentNode = main_core.Tag.render(_t10 || (_t10 = _`<div class="agent-grid-departments-list-wrapper"></div>`));
 	  babelHelpers.classPrivateFieldLooseBase(this, _fillDepartmentsListContent)[_fillDepartmentsListContent](departments, contentNode);
 	  babelHelpers.classPrivateFieldLooseBase(this, _fillUsersListContent)[_fillUsersListContent](users, contentNode);
 	  babelHelpers.classPrivateFieldLooseBase(this, _combinedPopup)[_combinedPopup] = new main_popup.Popup({
 	    content: contentNode,
 	    bindElement,
 	    cacheable: false,
-	    minWidth: 300,
 	    minHeight: 50,
 	    maxWidth: 400,
 	    maxHeight: 200,
@@ -475,10 +582,10 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  return contentNode;
 	}
 	function _getDepartmentNode2(department, nodeId, shouldAddHover = false) {
-	  const departmentWrapper = main_core.Tag.render(_t8 || (_t8 = _`
+	  const departmentWrapper = main_core.Tag.render(_t11 || (_t11 = _`
 			<div class="${0}"></div>
 		`), shouldAddHover ? 'agent-grid-department-in-list' : 'agent-grid-department');
-	  const circle = main_core.Tag.render(_t9 || (_t9 = _`<div class="agent-grid-department-circle">${0}</div>`), GridIcons.DEPARTMENT);
+	  const circle = main_core.Tag.render(_t12 || (_t12 = _`<div class="agent-grid-department-circle">${0}</div>`), GridIcons.DEPARTMENT);
 	  const label = ui_system_typography.Text.render(department, {
 	    size: 'xs',
 	    accent: false,
@@ -508,8 +615,8 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	}
 	function _getUserWithNameNode2(user) {
 	  const userFullName = (user == null ? void 0 : user.fullName) || '';
-	  const userWrapper = main_core.Tag.render(_t10 || (_t10 = _`<div title="${0}" class="agent-grid-user-in-list"></div>`), userFullName);
-	  const imageWrapper = main_core.Tag.render(_t11 || (_t11 = _`<div class="agent-grid-user-img-container"></div>`));
+	  const userWrapper = main_core.Tag.render(_t13 || (_t13 = _`<div title="${0}" class="agent-grid-user-in-list"></div>`), userFullName);
+	  const imageWrapper = main_core.Tag.render(_t14 || (_t14 = _`<div class="agent-grid-user-img-container"></div>`));
 	  new PhotoField({
 	    fieldNode: imageWrapper
 	  }).render({
@@ -600,29 +707,105 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  }
 	}
 
+	const ErrorCode = {
+	  TARIFF_LIMIT: 'AI_AGENTS_UNAVAILABLE_BY_TARIFF'
+	};
+
+	class TariffLimit {
+	  handle(error) {
+	    var _error$customData;
+	    const tariffSliderCode = error == null ? void 0 : (_error$customData = error.customData) == null ? void 0 : _error$customData.tariffSliderCode;
+	    TariffLimit.showFeatureSlider(tariffSliderCode);
+	  }
+	  static showFeatureSlider(tariffSliderCode) {
+	    if (!tariffSliderCode) {
+	      return;
+	    }
+	    ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	      code: tariffSliderCode
+	    }).show();
+	  }
+	}
+
+	class Base {
+	  handle(error) {
+	    this.notifyUser(error);
+	  }
+	  notifyUser(error) {
+	    BX.UI.Notification.Center.notify({
+	      content: this.getErrorMessageFromResult(error)
+	    });
+	  }
+	  getErrorMessageFromResult(error) {
+	    var _error$message;
+	    return main_core.Text.encode((_error$message = error.message) != null ? _error$message : main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_DEFAULT_AJAX_ERROR'));
+	  }
+	}
+
+	class UndefinedError extends Base {}
+
+	class AjaxErrorHandler {
+	  /**
+	  * Tries to handle by code, if code empty, tries handle by message
+	  */
+	  handle(action, response) {
+	    const errors = response.errors;
+	    if (!(errors != null && errors.length) || (errors == null ? void 0 : errors.length) === 0) {
+	      return;
+	    }
+	    errors.forEach(error => {
+	      const errorCode = error == null ? void 0 : error.code;
+	      const errorMessage = error == null ? void 0 : error.message;
+	      if (errorCode) {
+	        this.getHandlerByCode(errorCode).handle(error);
+	        return;
+	      }
+	      this.getHandlerByMessage(errorMessage).handle(error);
+	    });
+	  }
+	  getHandlerByCode(errorCode) {
+	    switch (errorCode) {
+	      case ErrorCode.TARIFF_LIMIT:
+	        {
+	          return new TariffLimit();
+	        }
+	      default:
+	        {
+	          return new UndefinedError();
+	        }
+	    }
+	  }
+	  getHandlerByMessage(errorMessage) {
+	    return new Base();
+	  }
+	}
+
 	const post = async (action, data) => {
-	  const response = await main_core.ajax.runAction(`bizproc.v2.${action}`, {
-	    method: 'POST',
-	    json: data || {}
-	  });
-	  if (response.status === 'success') {
+	  try {
+	    const response = await main_core.ajax.runAction(`bizproc.v2.${action}`, {
+	      method: 'POST',
+	      json: data || {}
+	    });
 	    return response.data;
+	  } catch (error) {
+	    const ajaxErrorHandler = new AjaxErrorHandler();
+	    ajaxErrorHandler.handle(action, error);
 	  }
 	  return null;
 	};
 	const gridApi = {
 	  startTemplate: templateId => {
-	    return post('Integration.AiAgent.Template.start', {
+	    return post(GRID_API_ACTION.START_TEMPLATE, {
 	      templateId
 	    });
 	  },
 	  copyAndStartTemplate: templateId => {
-	    return post('Integration.AiAgent.Template.copyAndStart', {
+	    return post(GRID_API_ACTION.COPY_AND_START_TEMPLATE, {
 	      templateId
 	    });
 	  },
 	  fetchRow: templateId => {
-	    return post('Integration.AiAgent.Template.fetchRow', {
+	    return post(GRID_API_ACTION.FETCH_ROW, {
 	      templateId
 	    });
 	  }
@@ -687,20 +870,33 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  }
 	}
 
+	let _$3 = t => t,
+	  _t$3,
+	  _t2$3;
 	var _renderLaunchButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLaunchButton");
+	var _handleLaunchButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleLaunchButtonClick");
 	var _renderLaunchedDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLaunchedDate");
+	var _renderLaunchedRagFilesStatuses = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLaunchedRagFilesStatuses");
 	class LaunchControlField extends BaseField {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _renderLaunchedRagFilesStatuses, {
+	      value: _renderLaunchedRagFilesStatuses2
+	    });
 	    Object.defineProperty(this, _renderLaunchedDate, {
 	      value: _renderLaunchedDate2
+	    });
+	    Object.defineProperty(this, _handleLaunchButtonClick, {
+	      value: _handleLaunchButtonClick2
 	    });
 	    Object.defineProperty(this, _renderLaunchButton, {
 	      value: _renderLaunchButton2
 	    });
 	  }
 	  render(params) {
-	    if (main_core.Type.isNumber(params.launchedAt) && params.launchedAt > 0) {
+	    if (params.ragFilesStatuses && params.ragFilesStatuses.status) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _renderLaunchedRagFilesStatuses)[_renderLaunchedRagFilesStatuses](params.ragFilesStatuses);
+	    } else if (main_core.Type.isNumber(params.launchedAt) && params.launchedAt > 0) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _renderLaunchedDate)[_renderLaunchedDate](params.launchedAt);
 	    } else if (main_core.Type.isNumber(params.agentId)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _renderLaunchButton)[_renderLaunchButton](params);
@@ -714,34 +910,47 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    tag: ui_buttons.Button.Tag.DIV,
 	    useAirDesign: true,
 	    onclick: async (buttonInstance, event) => {
-	      const grid = this.getGrid();
-	      event.stopPropagation();
-	      buttonInstance.setWaiting(true);
-	      grid == null ? void 0 : grid.tableFade();
-	      try {
-	        const result = await gridApi.copyAndStartTemplate(params.agentId);
-	        buttonInstance.setWaiting(false);
-	        const columns = result == null ? void 0 : result.columns;
-	        const actions = result == null ? void 0 : result.actions;
-	        const newRowFields = RowHelper.prepareNewRowParams(columns, actions);
-	        grid == null ? void 0 : grid.tableUnfade();
-	        new RowHelper(grid).addToGrid(newRowFields);
-	      } catch (error) {
-	        var _error$errors, _error$errors$;
-	        buttonInstance.setWaiting(false);
-	        let message = error == null ? void 0 : (_error$errors = error.errors) == null ? void 0 : (_error$errors$ = _error$errors[0]) == null ? void 0 : _error$errors$.message;
-	        if (!message) {
-	          message = main_core.Loc.getMessage('BIZPROC_AI_AGENTS_BUTTON_LAUNCH_ERROR');
-	        }
-	        grid == null ? void 0 : grid.tableUnfade();
-	        BX.UI.Notification.Center.notify({
-	          content: message
-	        });
-	      }
+	      await babelHelpers.classPrivateFieldLooseBase(this, _handleLaunchButtonClick)[_handleLaunchButtonClick](params.agentId, buttonInstance, event);
 	    }
 	  });
 	  main_core.Dom.attr(button.getContainer(), 'data-test-id', 'bizproc-ai-agents-grid-action-start-button');
 	  this.appendToFieldNode(button.render());
+	}
+	async function _handleLaunchButtonClick2(agentId, buttonInstance, event) {
+	  event.stopPropagation();
+	  buttonInstance.setWaiting(true);
+	  const gridManager = this.getGridManager();
+	  if (!(gridManager != null && gridManager.validateAiAgentsAvailableByTariff())) {
+	    buttonInstance.setWaiting(false);
+	    return;
+	  }
+	  const grid = gridManager.getGrid();
+	  grid == null ? void 0 : grid.tableFade();
+	  try {
+	    const result = await gridApi.copyAndStartTemplate(agentId);
+	    if (!result) {
+	      buttonInstance.setWaiting(false);
+	      grid == null ? void 0 : grid.tableUnfade();
+	      return;
+	    }
+	    buttonInstance.setWaiting(false);
+	    const columns = result == null ? void 0 : result.columns;
+	    const actions = result == null ? void 0 : result.actions;
+	    const newRowFields = RowHelper.prepareNewRowParams(columns, actions);
+	    grid == null ? void 0 : grid.tableUnfade();
+	    new RowHelper(grid).addToGrid(newRowFields);
+	  } catch (error) {
+	    var _error$errors, _error$errors$;
+	    buttonInstance.setWaiting(false);
+	    let message = error == null ? void 0 : (_error$errors = error.errors) == null ? void 0 : (_error$errors$ = _error$errors[0]) == null ? void 0 : _error$errors$.message;
+	    if (!message) {
+	      message = main_core.Loc.getMessage('BIZPROC_AI_AGENTS_BUTTON_LAUNCH_ERROR');
+	    }
+	    grid == null ? void 0 : grid.tableUnfade();
+	    BX.UI.Notification.Center.notify({
+	      content: message
+	    });
+	  }
 	}
 	function _renderLaunchedDate2(timestamp) {
 	  const formattedDate = main_date.DateTimeFormat.format('j F, G:i', timestamp);
@@ -753,10 +962,36 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  main_core.Dom.attr(dateNode, 'data-test-id', 'bizproc-ai-agents-grid-started-at');
 	  this.appendToFieldNode(dateNode);
 	}
+	function _renderLaunchedRagFilesStatuses2(ragFilesStatuses) {
+	  if (!ragFilesStatuses || !ragFilesStatuses.status) {
+	    return;
+	  }
+	  const statusNode = ui_system_typography.Text.render(main_core.Text.encode(ragFilesStatuses.statusMessage), {
+	    size: 'xs',
+	    tag: 'span',
+	    className: 'launch-control-field-rag-files-status'
+	  });
+	  const container = main_core.Tag.render(_t$3 || (_t$3 = _$3`<div class="ui-icon-set__scope launch-control-field-rag-files-statuses ${0}"></div>`), main_core.Text.encode(ragFilesStatuses.iconClass));
+	  main_core.Dom.append(main_core.Tag.render(_t2$3 || (_t2$3 = _$3`<span class="main-grid-rag-status-icon"></span>`)), container);
+	  main_core.Dom.append(statusNode, container);
+	  if (ragFilesStatuses.descriptionMessage) {
+	    const fileDesc = ragFilesStatuses.files.map(function (file) {
+	      return `<div style="display: flex; align-items: center; justify-content: space-between;">` + `<div style="text-overflow: ellipsis;overflow: hidden;white-space: nowrap;" title="${main_core.Text.encode(file.fileName)}">` + main_core.Text.encode(file.fileName) + `</div>` + `<i class="ui-icon-set ${main_core.Text.encode(file.iconClass)}" title="${main_core.Text.encode(file.statusMessage)}" style="fill:white; background-color:white"></i>` + `</div>`;
+	    }).join('');
+	    const statusHintNode = document.createElement('span');
+	    main_core.Dom.attr(statusHintNode, 'class', 'launch-control-field-rag-files-hint');
+	    statusHintNode.dataset.hintHtml = true;
+	    statusHintNode.dataset.hintInteractivity = true;
+	    statusHintNode.dataset.hint = `<div class=" --ui-context-content-light">` + `<h4>${main_core.Text.encode(ragFilesStatuses.statusMessage)}</h4>` + `<div>${fileDesc}</div>` + `<br><hr><br>` + `<div>${main_core.Text.encode(ragFilesStatuses.descriptionMessage)}</div>` + `</div>`;
+	    main_core.Dom.append(statusHintNode, container);
+	  }
+	  this.appendToFieldNode(container);
+	  BX.UI.Hint.init(this.getFieldNode());
+	}
 
-	let _$3 = t => t,
-	  _t$3,
-	  _t2$3;
+	let _$4 = t => t,
+	  _t$4,
+	  _t2$4;
 	class LoadIndicatorField extends BaseField {
 	  render(params) {
 	    var _percentageNode;
@@ -765,7 +1000,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    let percentageNode = null;
 	    const percentPerBar = 20;
 	    const activeBarsCount = Math.ceil(percentage / percentPerBar);
-	    const svgNode = main_core.Tag.render(_t$3 || (_t$3 = _$3`<div>${0}</div>`), GridIcons.LOAD);
+	    const svgNode = main_core.Tag.render(_t$4 || (_t$4 = _$4`<div>${0}</div>`), GridIcons.LOAD);
 	    const bars = svgNode.querySelectorAll('.agent-grid-load-bar');
 	    bars.forEach((bar, index) => {
 	      const currentBarIndex = index + 1;
@@ -783,7 +1018,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	        className: 'agent-grid-load-percentage'
 	      });
 	    }
-	    const container = main_core.Tag.render(_t2$3 || (_t2$3 = _$3`
+	    const container = main_core.Tag.render(_t2$4 || (_t2$4 = _$4`
 			<div class="agent-grid-load-indicator">
 			  ${0}
 			  <div
@@ -800,7 +1035,16 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	/**
 	 * @abstract
 	 */
+	var _ajaxErrorHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ajaxErrorHandler");
 	class BaseAction {
+	  constructor() {
+	    Object.defineProperty(this, _ajaxErrorHandler, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _ajaxErrorHandler)[_ajaxErrorHandler] = new AjaxErrorHandler();
+	  }
+
 	  /**
 	   * @abstract
 	   */
@@ -814,13 +1058,14 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  getActionConfig() {
 	    throw new Error('not implemented');
 	  }
-	  constructor(params) {
+	  setActionParams(params) {
 	    var _params$showPopups;
-	    this.grid = params.grid;
-	    this.filter = params.filter;
-	    this.showPopups = (_params$showPopups = params.showPopups) != null ? _params$showPopups : true;
+	    this.filter = params == null ? void 0 : params.filter;
+	    this.showPopups = (_params$showPopups = params == null ? void 0 : params.showPopups) != null ? _params$showPopups : true;
 	  }
-	  setActionParams(params) {}
+	  setGrid(grid) {
+	    this.grid = grid;
+	  }
 	  getActionData() {
 	    return {};
 	  }
@@ -845,9 +1090,9 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    });
 	  }
 	  async sendActionRequest() {
+	    const actionConfig = this.getActionConfig();
 	    try {
 	      this.grid.tableFade();
-	      const actionConfig = this.getActionConfig();
 	      const actionData = this.getActionData();
 	      const ajaxOptions = {
 	        ...actionConfig.options,
@@ -865,35 +1110,37 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	        default:
 	          {
 	            const errorMessage = `Unknown action type: ${actionConfig.type}`;
-	            this.handleError(errorMessage);
+	            this.handleErrorByMessage(actionConfig.name, {
+	              errors: [{
+	                message: errorMessage
+	              }]
+	            });
 	          }
 	      }
 	      this.handleSuccess(result);
 	    } catch (result) {
-	      this.handleError(result);
+	      this.handleError(actionConfig.name, result);
 	    } finally {
 	      await this.onAfterActionRequest();
 	    }
 	  }
 	  handleSuccess(result) {}
-	  handleError(result) {
-	    BX.UI.Notification.Center.notify({
-	      content: this.getErrorMessageFromResult(result)
+	  handleError(action, response) {
+	    if (!(response != null && response.errors) || response.errors.length === 0) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _ajaxErrorHandler)[_ajaxErrorHandler].handle(action, response);
+	  }
+	  handleErrorByMessage(action, message) {
+	    const errorMessage = message != null ? message : main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_DEFAULT_ACTION_ERROR');
+	    this.handleError(action, {
+	      errors: [{
+	        message: errorMessage
+	      }]
 	    });
 	  }
 	  getConfirmationPopup() {
 	    return null;
-	  }
-	  getErrorMessageFromResult(result) {
-	    var _result$errors, _result$errors$;
-	    if (main_core.Type.isStringFilled(result)) {
-	      return result;
-	    }
-	    if (main_core.Type.isStringFilled(result == null ? void 0 : (_result$errors = result.errors) == null ? void 0 : (_result$errors$ = _result$errors[0]) == null ? void 0 : _result$errors$.message)) {
-	      return result.errors[0].message;
-	    }
-	    console.error(result);
-	    return main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_DEFAULT_ACTION_ERROR');
 	  }
 	}
 
@@ -913,6 +1160,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _openDesigner)[_openDesigner]();
 	  }
 	  setActionParams(params) {
+	    super.setActionParams(params);
 	    this.editUri = params.editUri;
 	  }
 	}
@@ -931,12 +1179,13 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    await this.sendActionRequest();
 	  }
 	  setActionParams(params) {
+	    super.setActionParams(params);
 	    this.templateId = Number.parseInt(params.templateId, 10);
 	  }
 	  getActionConfig() {
 	    return {
 	      type: AJAX_REQUEST_TYPE.CONTROLLER,
-	      name: 'Integration.AiAgent.Template.delete'
+	      name: GRID_API_ACTION.DELETE
 	    };
 	  }
 	  getActionData() {
@@ -976,12 +1225,13 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    await this.sendActionRequest();
 	  }
 	  setActionParams(params) {
+	    super.setActionParams(params);
 	    this.templateId = Number.parseInt(params.templateId, 10);
 	  }
 	  getActionConfig() {
 	    return {
 	      type: AJAX_REQUEST_TYPE.CONTROLLER,
-	      name: 'Integration.AiAgent.Template.start'
+	      name: GRID_API_ACTION.RESTART
 	    };
 	  }
 	  getActionData() {
@@ -1045,25 +1295,21 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	const groupActionMap = new Map([[GroupDeleteAction.getActionId(), GroupDeleteAction]]);
 
 	class ActionFactory {
-	  static createFromMap(actionMapping, actionId, options) {
+	  static createFromMap(actionMapping, actionId) {
 	    const ActionClass = actionMapping.get(actionId);
-	    return ActionClass ? new ActionClass(options) : null;
+	    return ActionClass ? new ActionClass() : null;
 	  }
-	  static create(actionId, options) {
-	    return this.createFromMap(actionMap, actionId, options);
+	  static create(actionId) {
+	    return this.createFromMap(actionMap, actionId);
 	  }
-	  static createGroupAction(actionId, options) {
-	    return this.createFromMap(groupActionMap, actionId, options);
+	  static createGroupAction(actionId) {
+	    return this.createFromMap(groupActionMap, actionId);
 	  }
 	}
 
 	var _grid$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("grid");
-	var _notifyUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("notifyUser");
 	class TemplateSetupHandler {
 	  constructor(grid) {
-	    Object.defineProperty(this, _notifyUser, {
-	      value: _notifyUser2
-	    });
 	    Object.defineProperty(this, _grid$1, {
 	      writable: true,
 	      value: void 0
@@ -1081,28 +1327,20 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    if (!row) {
 	      return;
 	    }
-	    try {
-	      rowHelper.markAsLoading(row);
-	      const updatedTemplateRow = await gridApi.fetchRow(templateId);
-	      if (!updatedTemplateRow) {
-	        throw new Error(main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_DEFAULT_ACTION_ERROR'));
-	      }
-	      rowHelper.update(row, updatedTemplateRow.columns);
+	    rowHelper.markAsLoading(row);
+	    const updatedTemplateRow = await gridApi.fetchRow(templateId);
+	    if (!updatedTemplateRow) {
 	      rowHelper.markAsLoaded(row);
-	      rowHelper.highlight(row);
-	    } catch (error) {
-	      rowHelper.markAsLoaded(row);
-	      babelHelpers.classPrivateFieldLooseBase(this, _notifyUser)[_notifyUser](error.message || main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_DEFAULT_ACTION_ERROR'));
 	      babelHelpers.classPrivateFieldLooseBase(this, _grid$1)[_grid$1].reload();
+	      return;
 	    }
+	    rowHelper.update(row, updatedTemplateRow.columns);
+	    rowHelper.markAsLoaded(row);
+	    rowHelper.highlight(row);
 	  }
 	}
-	function _notifyUser2(text) {
-	  BX.UI.Notification.Center.notify({
-	    content: text
-	  });
-	}
 
+	var _settings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("settings");
 	var _grid$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("grid");
 	var _subscribeToEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToEvents");
 	class GridManager {
@@ -1111,11 +1349,16 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    Object.defineProperty(this, _subscribeToEvents, {
 	      value: _subscribeToEvents2
 	    });
+	    Object.defineProperty(this, _settings, {
+	      writable: true,
+	      value: null
+	    });
 	    Object.defineProperty(this, _grid$2, {
 	      writable: true,
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _grid$2)[_grid$2] = (_BX$Main$gridManager$ = BX.Main.gridManager.getById(gridId)) == null ? void 0 : _BX$Main$gridManager$.instance;
+	    babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings] = main_core.Extension.getSettings('bizproc.ai-agents.grid');
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeToEvents)[_subscribeToEvents]();
 	  }
 	  static getInstance(gridId) {
@@ -1145,15 +1388,15 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  getGrid() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _grid$2)[_grid$2];
 	  }
-	  runAction(config) {
-	    const actionId = config.actionId;
-	    const options = config.options;
-	    options.grid = babelHelpers.classPrivateFieldLooseBase(this, _grid$2)[_grid$2];
-	    const action = ActionFactory.create(actionId, options);
+	  runAction(actionConfig) {
+	    var _actionConfig$isGroup;
+	    if (!this.validateAiAgentsAvailableByTariff()) {
+	      return;
+	    }
+	    const action = ((_actionConfig$isGroup = actionConfig.isGroupAction) != null ? _actionConfig$isGroup : false) ? ActionFactory.createGroupAction(actionConfig.actionId) : ActionFactory.create(actionConfig.actionId);
 	    if (action) {
-	      action.setActionParams({
-	        ...config.params
-	      });
+	      action.setGrid(babelHelpers.classPrivateFieldLooseBase(this, _grid$2)[_grid$2]);
+	      action.setActionParams(actionConfig.params);
 	      action.execute();
 	    }
 	  }
@@ -1161,26 +1404,20 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    var _babelHelpers$classPr;
 	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _grid$2)[_grid$2]) == null ? void 0 : _babelHelpers$classPr.reload();
 	  }
+	  validateAiAgentsAvailableByTariff() {
+	    var _babelHelpers$classPr2;
+	    const tariffInfo = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings]) == null ? void 0 : _babelHelpers$classPr2.tariffInfo;
+	    if (!(tariffInfo != null && tariffInfo.isAiAgentsAvailable)) {
+	      TariffLimit.showFeatureSlider(tariffInfo == null ? void 0 : tariffInfo.aiAgentsTariffSliderCode);
+	      return false;
+	    }
+	    return true;
+	  }
 	}
 	function _subscribeToEvents2() {
 	  main_core_events.EventEmitter.subscribe(TEMPLATE_SETUP_EVENT_NAME.SUCCESS, event => new TemplateSetupHandler(babelHelpers.classPrivateFieldLooseBase(this, _grid$2)[_grid$2]).handle(event));
 	}
 	GridManager.instances = [];
-
-	class Panel {
-	  static executeAction(params) {
-	    try {
-	      var _BX$Main$gridManager$;
-	      const action = ActionFactory.createGroupAction(params.actionId, {
-	        grid: (_BX$Main$gridManager$ = BX.Main.gridManager.getById(params.gridId)) == null ? void 0 : _BX$Main$gridManager$.instance,
-	        filter: params.filter
-	      });
-	      action.execute();
-	    } catch (error) {
-	      console.error('Error executing action:', error);
-	    }
-	  }
-	}
 
 	exports.BaseField = BaseField;
 	exports.AgentInfoField = AgentInfoField;
@@ -1189,7 +1426,6 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	exports.LaunchControlField = LaunchControlField;
 	exports.LoadIndicatorField = LoadIndicatorField;
 	exports.GridManager = GridManager;
-	exports.Panel = Panel;
 
-}((this.BX.Bizproc.Ai.Agents = this.BX.Bizproc.Ai.Agents || {}),BX.Main,BX.Messenger.v2.Lib,BX.Humanresources.CompanyStructure,BX.UI,BX.Main,BX.UI,BX.UI.System.Typography,BX.Event,BX.UI.Dialogs,BX));
+}((this.BX.Bizproc.Ai.Agents = this.BX.Bizproc.Ai.Agents || {}),BX.Bizproc.Ai.Agents,BX.Main,BX.Messenger.v2.Lib,BX.Humanresources.CompanyStructure,BX.UI,BX.Main,BX.UI,BX.UI,BX.UI.System.Typography,BX.Event,BX,BX.UI.Dialogs));
 //# sourceMappingURL=grid.bundle.js.map

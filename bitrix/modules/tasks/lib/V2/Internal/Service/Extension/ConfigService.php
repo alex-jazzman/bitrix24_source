@@ -68,7 +68,7 @@ class ConfigService
 			],
 			'rights' => [
 				'user' => [
-					'admin' => \Bitrix\Tasks\Util\User::isAdmin($userId),
+					'admin' => \Bitrix\Tasks\Util\User::isSuper($userId),
 				],
 				'flow' => $this->flowRightService->getUserRights($userId),
 				'tasks' => $this->taskRightService->getUserRights($userId),
@@ -99,6 +99,7 @@ class ConfigService
 			'restrictions' => Container::getInstance()->getTariffProvider()->getRestrictions(),
 			'taskUserFieldScheme' => $this->userFieldSchemeRepository->getCollection($userId, Task::getEntityCode())->toArray(),
 			'templateUserFieldScheme' => $this->userFieldSchemeRepository->getCollection($userId, Template::getEntityCode())->toArray(),
+			'copilotName' => AI\Settings::getCopilotName(),
 		];
 	}
 

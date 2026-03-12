@@ -62,8 +62,8 @@ export function loadAll(items: Array<string>): Promise<void>
 		return Promise.resolve();
 	}
 
-	return new Promise((resolve) => {
+	return new Promise((resolve, reject) => {
 		// eslint-disable-next-line
-		BX.load(itemsList, resolve);
+		BX.load(itemsList, resolve, document, reject);
 	});
 }

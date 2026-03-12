@@ -1,2 +1,0 @@
-<?php
-$MESS["INTRANET_DAY_LIST_PROVIDER_NO_DAYS"] = "мәңгілік";

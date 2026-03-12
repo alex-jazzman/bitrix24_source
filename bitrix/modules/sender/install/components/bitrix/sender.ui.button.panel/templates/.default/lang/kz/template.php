@@ -1,4 +1,0 @@
-<?php
-$MESS["SENDER_UI_BUTTON_PANEL_CANCEL"] = "Болдырмау";
-$MESS["SENDER_UI_BUTTON_PANEL_CLOSE"] = "Жабу";
-$MESS["SENDER_UI_BUTTON_PANEL_SAVE"] = "Сақтау";

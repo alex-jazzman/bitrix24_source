@@ -371,8 +371,7 @@ this.BX = this.BX || {};
 	  _t11,
 	  _t12,
 	  _t13,
-	  _t14,
-	  _t15;
+	  _t14;
 	var _widgetPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("widgetPopup");
 	var _target = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("target");
 	var _otp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("otp");
@@ -707,8 +706,8 @@ this.BX = this.BX || {};
 	function _applyTheme2(container, theme) {
 	  const previewImage = `url('${main_core.Text.encode(theme.previewImage)}')`;
 	  main_core.Dom.style(container, 'backgroundImage', previewImage);
-	  main_core.Dom.removeClass(container, 'bitrix24-theme-dark bitrix24-theme-light');
-	  const themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-theme-dark' : 'bitrix24-theme-light';
+	  main_core.Dom.removeClass(container, 'bitrix24-dark-theme bitrix24-light-theme');
+	  const themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-dark-theme' : 'bitrix24-light-theme';
 	  main_core.Dom.addClass(container, themeClass);
 	}
 	function _getFooter2() {
@@ -768,18 +767,7 @@ this.BX = this.BX || {};
 	      c_sub_section: 'from_widget_vibe_point'
 	    });
 	  };
-	  const label = new ui_label.Label({
-	    text: main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_LABEL_NEW'),
-	    customClass: 'ui-label-new',
-	    size: ui_label.LabelSize.SM,
-	    fill: true
-	  });
-	  const labelWrapper = main_core.Tag.render(_t6 || (_t6 = _$1`
-			<div class="intranet-settings-widget__label-new">
-				${0}
-			</div>
-		`), label.render());
-	  const element = main_core.Tag.render(_t7 || (_t7 = _$1`
+	  const element = main_core.Tag.render(_t6 || (_t6 = _$1`
 			<div onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-main-page">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --green">
@@ -790,9 +778,8 @@ this.BX = this.BX || {};
 					</div>
 				</div>
 				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-				${0}
 			</div>
-		`), onclick, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_PAGE_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _mainPage)[_mainPage].isNew ? labelWrapper : null);
+		`), onclick, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_PAGE_TITLE'));
 	  return babelHelpers.classPrivateFieldLooseBase(this, _prepareElement)[_prepareElement](element);
 	}
 	function _getRequisitesElement2() {
@@ -810,7 +797,7 @@ this.BX = this.BX || {};
 	    this.getWidget().close();
 	    babelHelpers.classPrivateFieldLooseBase(this, _getHoldingWidget)[_getHoldingWidget]().show(babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]);
 	  };
-	  const element = main_core.Tag.render(_t8 || (_t8 = _$1`
+	  const element = main_core.Tag.render(_t7 || (_t7 = _$1`
 		<div class="intranet-settings-widget__branch" onclick="${0}">
 			<div class="intranet-settings-widget__branch-icon_box">
 				<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
@@ -839,7 +826,7 @@ this.BX = this.BX || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _holdingWidget)[_holdingWidget].getWidget().close();
 	      this.show();
 	    };
-	    const holdingWidgetCloseBtn = main_core.Tag.render(_t9 || (_t9 = _$1`
+	    const holdingWidgetCloseBtn = main_core.Tag.render(_t8 || (_t8 = _$1`
 				<div class="intranet-settings-widget__close-btn">
 					<div onclick="${0}" class="ui-icon-set --arrow-left intranet-settings-widget__close-btn_icon"></div>
 					<div class="intranet-settings-widget__close-btn_name">${0}</div>
@@ -863,12 +850,12 @@ this.BX = this.BX || {};
 	      BX.UI.InfoHelper.show('limit_office_multiple_branches');
 	    }
 	  };
-	  const lockIcon = main_core.Tag.render(_t10 || (_t10 = _$1`
+	  const lockIcon = main_core.Tag.render(_t9 || (_t9 = _$1`
 			<div class="intranet-settings-widget__branch-lock-icon_box">
 				<div class="ui-icon-set intranet-settings-widget__branch-lock-icon --lock"></div>
 			</div>
 		`));
-	  const element = main_core.Tag.render(_t11 || (_t11 = _$1`
+	  const element = main_core.Tag.render(_t10 || (_t10 = _$1`
 			<div class="intranet-settings-widget__branch" onclick="${0}" data-testid="settings-widget-block-filial-network">
 				<div class="intranet-settings-widget__branch-icon_box">
 					<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
@@ -885,7 +872,7 @@ this.BX = this.BX || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _prepareElement)[_prepareElement](element);
 	}
 	function _getSecurityAndSettingsElement2() {
-	  return main_core.Tag.render(_t12 || (_t12 = _$1`
+	  return main_core.Tag.render(_t11 || (_t11 = _$1`
 			<div class="intranet-settings-widget_inline-box">
 				${0}
 				${0}
@@ -897,7 +884,7 @@ this.BX = this.BX || {};
 	    this.getWidget().close();
 	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _settingsUrl)[_settingsUrl] + '?page=security&analyticContext=widget_settings_settings');
 	  };
-	  const element = main_core.Tag.render(_t13 || (_t13 = _$1`
+	  const element = main_core.Tag.render(_t12 || (_t12 = _$1`
 			<span onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-security">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box ${0}">
@@ -917,7 +904,7 @@ this.BX = this.BX || {};
 	    this.getWidget().close();
 	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _settingsUrl)[_settingsUrl] + '?analyticContext=widget_settings_settings');
 	  };
-	  const element = main_core.Tag.render(_t14 || (_t14 = _$1`
+	  const element = main_core.Tag.render(_t13 || (_t13 = _$1`
 			<span onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-general-settings">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --gray">
@@ -937,7 +924,7 @@ this.BX = this.BX || {};
 	    this.getWidget().close();
 	    BX.SidePanel.Instance.open(`${babelHelpers.classPrivateFieldLooseBase(this, _marketUrl)[_marketUrl]}category/migration/`);
 	  };
-	  const element = main_core.Tag.render(_t15 || (_t15 = _$1`
+	  const element = main_core.Tag.render(_t14 || (_t14 = _$1`
 			<div onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-migrate">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --gray">

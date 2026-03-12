@@ -22,3 +22,5 @@ $MESS["IM_CHAT_OVERFLOW_DELETE_MESSAGE"] = "This chat now has over #USER_COUNT# 
 $MESS["IM_CHAT_SELF_JOIN"] = "#USERS_NAME# have joined the chat.";
 $MESS["IM_CHAT_SELF_JOIN_F"] = "#USER_NAME# has joined the chat.";
 $MESS["IM_CHAT_SELF_JOIN_M"] = "#USER_NAME# has joined the chat.";
+$MESS["IM_CHAT_SELF_JOIN_VIA_SHARING_LINK_F"] = "#INVITED_USER_NAME# was invited by #LINK_AUTHOR_NAME# and has now joined the chat.";
+$MESS["IM_CHAT_SELF_JOIN_VIA_SHARING_LINK_M"] = "#INVITED_USER_NAME# was invited by #LINK_AUTHOR_NAME# and has now joined the chat.";

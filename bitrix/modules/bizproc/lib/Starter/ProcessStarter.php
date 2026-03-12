@@ -64,6 +64,12 @@ final class ProcessStarter extends BaseTypeStarter
 	protected function runEventScenario(): bool
 	{
 		$result = true;
+
+		if (!$this->checkConstraints())
+		{
+			return false;
+		}
+
 		foreach ($this->events as $event)
 		{
 			$startParameters = [
@@ -81,6 +87,25 @@ final class ProcessStarter extends BaseTypeStarter
 		}
 
 		return $result;
+	}
+
+	private function checkConstraints(): bool
+	{
+		foreach ($this->config->constraints as $constraint)
+		{
+			if (!$constraint->isSatisfied())
+			{
+				$error = $constraint->getError();
+				if ($error)
+				{
+					$this->errorCollection->add([$error]);
+				}
+
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	private function runEvent(Event $event, array $startParameters): bool
@@ -101,7 +126,7 @@ final class ProcessStarter extends BaseTypeStarter
 
 		$query =
 			WorkflowTemplateTriggerTable::query()
-				->setSelect(['TEMPLATE_ID', 'APPLY_RULES', 'TRIGGER_NAME'])
+				->setSelect(['TEMPLATE_ID', 'APPLY_RULES', 'TRIGGER_NAME', 'PARAMETERS' => 'TEMPLATE.PARAMETERS'])
 				->where('TRIGGER_TYPE', $code)
 				->setGroup(['TEMPLATE_ID', 'TEMPLATE.PARAMETERS'])
 				->where('MODULE_ID', $moduleId)
@@ -153,11 +178,16 @@ final class ProcessStarter extends BaseTypeStarter
 				$startParameters[\CBPDocument::PARAM_IGNORE_SIMULTANEOUS_PROCESSES_LIMIT] = true;
 			}
 
-			// no parameters, no check constants
-			$workflowId = $this->startWorkflow($templateId, $complexId, $startParameters);
+			$parameters = $this->validateParameters($templateId, $trigger['PARAMETERS'], $document->complexType);
+			if ($parameters === null)
+			{
+				continue;
+			}
+
+			// no check constants
+			$workflowId = $this->startWorkflow($templateId, $complexId, array_merge($parameters, $startParameters));
 
 			// no meta data
-
 			if (!$workflowId)
 			{
 				$result = false;

@@ -87,10 +87,17 @@ class Insights extends AISenseContent
 					$this->{$field} = [];
 					foreach ($values as $row)
 					{
-						$obj = $this->convertObjectStructure($row);
-						if (!empty($obj))
+						if (is_array($row))
 						{
-							$this->{$field}[] = $obj;
+							$obj = $this->convertObjectStructure($row);
+							if (!empty($obj))
+							{
+								$this->{$field}[] = $obj;
+							}
+						}
+						else
+						{
+							$this->{$field}[] = $row;
 						}
 					}
 				}
@@ -122,6 +129,10 @@ class Insights extends AISenseContent
 				$originalSpeakerAnalysis = $outcome->getProperty('speaker_analysis')?->getStructure() ?? [];
 				foreach ($this->speakerAnalysis as $pos => &$analysis)
 				{
+					if (!is_object($analysis))
+					{
+						continue;
+					}
 					$originalAnalysis = $originalSpeakerAnalysis[$pos] ?? [];
 					$analysis->efficiencyValue = null;
 					$analysis->userId = $this->getMentionService()->detectUserIdByBBMentions($analysis->speaker);

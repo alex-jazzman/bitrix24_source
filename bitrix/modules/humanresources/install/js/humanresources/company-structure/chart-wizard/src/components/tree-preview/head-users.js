@@ -104,7 +104,7 @@ export const HeadUsers = {
 			v-for="(user, index) in users.slice(0, headItemsCount)"
 		>
 			<img
-				:src="user.avatar || defaultAvatar"
+				:src="user.avatar ? encodeURI(user.avatar) : defaultAvatar"
 				class="chart-wizard-tree-preview__node_head-avatar --placeholder"
 				:class="{ '--deputy': isDeputy, '--old': isExistingDepartment }"
 			/>

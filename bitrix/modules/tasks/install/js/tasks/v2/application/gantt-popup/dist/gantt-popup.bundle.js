@@ -93,6 +93,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    TextXs: ui_system_typography_vue.TextXs,
 	    GanttMenu
 	  },
+	  inject: {
+	    analytics: {}
+	  },
 	  props: {
 	    taskId: {
 	      type: [Number, String],
@@ -149,6 +152,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        targetContainer: this.$refs.task.$el.closest('body'),
 	        taskId: this.taskId,
 	        ids: this.task ? [this.task.id] : [],
+	        analytics: this.analytics,
 	        onClose: items => {
 	          var _this$handleClose;
 	          return (_this$handleClose = this.handleClose) == null ? void 0 : _this$handleClose.call(this, items[0]);

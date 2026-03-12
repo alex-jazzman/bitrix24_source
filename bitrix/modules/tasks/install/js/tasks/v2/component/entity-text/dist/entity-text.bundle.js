@@ -2,12 +2,48 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,main_core,main_core_events,ui_vue3,ui_uploader_core,ui_lexical_core,tasks_v2_core,tasks_v2_const,ui_textEditor,tasks_v2_provider_service_fileService,tasks_v2_component_elements_userFieldWidgetComponent,ui_bbcode_formatter_htmlFormatter,ui_iconSet_api_vue,ui_iconSet_outline,ui_system_typography_vue) {
+(function (exports,ui_vue3,ui_uploader_core,tasks_v2_const,main_core,main_core_events,ui_lexical_core,tasks_v2_provider_service_fileService,tasks_v2_component_elements_userFieldWidgetComponent,ui_bbcode_formatter_htmlFormatter,ui_system_typography_vue,ui_vue3_directives_hint,tasks_v2_component_elements_hint,tasks_v2_core,ui_system_menu_vue,ui_iconSet_outline,ui_iconSet_editor,ui_textEditor,ui_iconSet_api_vue,ui_lexical_list) {
 	'use strict';
+
+	const CHECK_LIST_BUTTON = 'tasks-check-list-button';
+	var _eventEmitter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("eventEmitter");
+	class CheckListPlugin extends ui_textEditor.BasePlugin {
+	  constructor(editor) {
+	    super(editor);
+	    Object.defineProperty(this, _eventEmitter, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _eventEmitter)[_eventEmitter] = new main_core_events.EventEmitter();
+	    babelHelpers.classPrivateFieldLooseBase(this, _eventEmitter)[_eventEmitter].setEventNamespace('Tasks.V2.Component.EntityTextEditor.CheckListPlugin');
+	    this.getEditor().getComponentRegistry().register(CHECK_LIST_BUTTON, () => {
+	      const button = new ui_textEditor.Button();
+	      button.setContent('<div class="ui-icon-set --o-move-to-checklist"></div>');
+	      button.setTooltip(main_core.Loc.getMessage('TASKS_V2_ENTITY_TEXT_PLUGIN_TITLE_CHECK_LIST'));
+	      button.subscribe('onClick', () => {
+	        this.getEditor().update(() => {
+	          const selection = ui_lexical_core.$getSelection() || ui_lexical_core.$getPreviousSelection();
+	          if (ui_lexical_core.$isRangeSelection(selection)) {
+	            babelHelpers.classPrivateFieldLooseBase(this, _eventEmitter)[_eventEmitter].emit('checkListButtonClick', selection.getTextContent());
+	            this.getEditor().blur();
+	            this.getEditor().dispatchCommand(ui_textEditor.Commands.HIDE_DIALOG_COMMAND);
+	          }
+	        });
+	      });
+	      return button;
+	    });
+	  }
+	  static getName() {
+	    return 'TasksCheckList';
+	  }
+	  getEmitter() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _eventEmitter)[_eventEmitter];
+	  }
+	}
 
 	const DefaultEditorOptions = Object.freeze({
 	  toolbar: [],
-	  floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'numbered-list', 'bulleted-list', '|', 'link', 'spoiler', 'quote', 'code', 'copilot'],
+	  floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'numbered-list', 'bulleted-list', '|', CHECK_LIST_BUTTON, 'link', 'spoiler', 'quote', 'code', 'copilot'],
 	  removePlugins: ['BlockToolbar'],
 	  visualOptions: {
 	    borderWidth: 0,
@@ -108,6 +144,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	      this.emit('editorBlurred');
 	    };
+	    this.handleClickInCheckList = baseEvent => {
+	      const selectionText = baseEvent.getData();
+	      this.emit('addCheckList', selectionText);
+	    };
 	    this.onFileComplete = event => {
 	      const file = event.getData();
 	      babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].dispatchCommand(ui_textEditor.Plugins.File.ADD_FILE_COMMAND, file);
@@ -186,6 +226,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        }
 	      },
 	      removePlugins: [],
+	      extraPlugins: [CheckListPlugin],
 	      copilot: babelHelpers.classPrivateFieldLooseBase(this, _getCopilotParams)[_getCopilotParams]()
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor] = new ui_textEditor.TextEditor({
@@ -225,11 +266,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  }
 	}
 	function _subscribeToEvents2() {
+	  const checkListPlugin = babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].getPlugin(CheckListPlugin.getName());
+	  checkListPlugin.getEmitter().subscribe('checkListButtonClick', this.handleClickInCheckList);
 	  babelHelpers.classPrivateFieldLooseBase(this, _fileService)[_fileService].subscribe('onFileComplete', this.onFileComplete);
 	  babelHelpers.classPrivateFieldLooseBase(this, _fileService)[_fileService].subscribe('onFileRemove', this.onFileRemove);
 	  main_core.Event.bind(document, 'visibilitychange', this.onVisibilityChange);
 	}
 	function _unsubscribeToEvents2() {
+	  const checkListPlugin = babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].getPlugin(CheckListPlugin.getName());
+	  checkListPlugin.getEmitter().unsubscribe('checkListButtonClick', this.handleClickInCheckList);
 	  babelHelpers.classPrivateFieldLooseBase(this, _fileService)[_fileService].unsubscribe('onFileComplete', this.onFileComplete);
 	  babelHelpers.classPrivateFieldLooseBase(this, _fileService)[_fileService].unsubscribe('onFileRemove', this.onFileRemove);
 	  main_core.Event.unbind(document, 'visibilitychange', this.onVisibilityChange);
@@ -396,6 +441,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        insertIntoText: true,
 	        tileWidgetOptions: {
 	          compact: true,
+	          enableDropzone: false,
 	          hideDropArea: true,
 	          readonly: this.readonly,
 	          autoCollapse: false,
@@ -587,6 +633,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  data() {
 	    return {
 	      isOverflowing: false,
+	      isOverflowChecked: false,
 	      isMouseDown: false,
 	      selectionMade: false
 	    };
@@ -618,10 +665,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    showFooter() {
 	      return this.hidden || this.showEditButton || this.showCollapseButton;
+	    },
+	    maxHeightStyle() {
+	      if (this.isOverflowChecked && !this.isOverflowing) {
+	        return 'none';
+	      }
+	      return this.opened ? 'none' : `${this.maxHeight}px`;
 	    }
 	  },
 	  watch: {
 	    async content() {
+	      this.isOverflowChecked = false;
 	      await this.$nextTick();
 	      this.updateIsOverflowing();
 	    }
@@ -644,6 +698,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      const fitsWithinPreview = previewOffsetHeight - offsetParam <= htmlFormatterOffsetHeight;
 	      const exceedsMaxHeight = htmlFormatterOffsetHeight > this.maxHeight;
 	      this.isOverflowing = fitsWithinPreview && (!this.opened || exceedsMaxHeight);
+	      this.isOverflowChecked = true;
 	      if (!this.isOverflowing && this.showCollapseButton) {
 	        this.setPreviewShown(false);
 	      }
@@ -693,9 +748,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  template: `
 		<div
 			v-if="hasContent"
-			class="tasks-card-entity-collapsible-text"
+			class="tasks-card-entity-collapsible-text print-fit-height"
 			:class="{ '--disable-animation': openByDefault }"
-			:style="{ 'maxHeight': opened ? 'none' : maxHeight + 'px' }"
+			:style="{ 'maxHeight': maxHeightStyle }"
 			ref="preview"
 		>
 			<HtmlFormatterComponent
@@ -708,7 +763,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				@mouseup="onMouseUp"
 			/>
 			<template v-if="hidden && isOverflowing">
-				<div class="tasks-card-entity-collapsible-shadow">
+				<div class="tasks-card-entity-collapsible-shadow print-ignore">
 					<div class="tasks-card-entity-collapsible-shadow-white-bottom"/>
 				</div>
 			</template>
@@ -716,7 +771,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		<slot/>
 		<div
 			v-if="showFooter"
-			class="tasks-card-entity-collapsible-footer"
+			class="tasks-card-entity-collapsible-footer print-ignore"
 			:class="{
 				'--empty-content': !hasContent && hidden,
 				'--without-padding': !showFilesIndicator && hasFiles,
@@ -730,11 +785,352 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	`
 	};
 
+	// @vue/component
+	const ActionButton = {
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    TextSm: ui_system_typography_vue.TextSm
+	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  props: {
+	    title: {
+	      type: String,
+	      default: ''
+	    },
+	    copilotText: {
+	      type: String,
+	      default: ''
+	    },
+	    iconName: {
+	      type: String,
+	      required: true
+	    },
+	    iconColor: {
+	      type: String,
+	      default: ''
+	    },
+	    iconSize: {
+	      type: Number,
+	      default: null
+	    }
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  computed: {
+	    showTooltip() {
+	      return this.title.length > 0;
+	    },
+	    tooltip() {
+	      return () => tasks_v2_component_elements_hint.tooltip({
+	        text: this.title,
+	        popupOptions: {
+	          offsetLeft: this.$el.offsetWidth / 2
+	        }
+	      });
+	    }
+	  },
+	  template: `
+		<div
+			class="tasks-card-entity-text-action-button-container"
+			v-hint="showTooltip ? tooltip : null"
+		>
+			<button class="tasks-card-entity-text-action-button" type="button">
+				<BIcon
+					:name="iconName"
+					:color="iconColor"
+					:size="iconSize"
+					hoverable
+					class="tasks-card-entity-text-action-button-icon"
+				/>
+			</button>
+			<TextSm
+				v-if="copilotText"
+				class="tasks-card-entity-text-action-button-text-copilot"
+			>
+				{{ copilotText }}
+			</TextSm>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CopilotButton = {
+	  name: 'EditorActionCopilot',
+	  components: {
+	    ActionButton,
+	    Outline: ui_iconSet_api_vue.Outline
+	  },
+	  props: {
+	    editor: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  computed: {
+	    buttonColor() {
+	      return 'var(--ui-color-copilot-primary)';
+	    },
+	    copilotText() {
+	      return tasks_v2_core.Core.getParams().copilotName;
+	    }
+	  },
+	  methods: {
+	    handleClick() {
+	      this.editor.focus(() => {
+	        this.editor.dispatchCommand(ui_textEditor.Plugins.Copilot.INSERT_COPILOT_DIALOG_COMMAND);
+	      }, {
+	        defaultSelection: 'rootEnd'
+	      });
+	    }
+	  },
+	  template: `
+		<ActionButton
+			:iconName="Outline.COPILOT"
+			:iconColor="buttonColor"
+			:copilotText
+			@click="handleClick"
+		/>
+	`
+	};
+
+	// @vue/component
+	const MoreButton = {
+	  components: {
+	    ActionButton,
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    BMenu: ui_system_menu_vue.BMenu
+	  },
+	  props: {
+	    editor: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline,
+	      Editor: ui_iconSet_api_vue.Editor
+	    };
+	  },
+	  data() {
+	    return {
+	      isMenuShown: false
+	    };
+	  },
+	  computed: {
+	    menuOptions() {
+	      return {
+	        id: 'tasks-entity-text-more-actions-menu',
+	        bindElement: this.$refs.actionButton.$el,
+	        offsetTop: 8,
+	        items: this.menuItems,
+	        targetContainer: document.body
+	      };
+	    },
+	    menuItems() {
+	      return [{
+	        title: this.loc('TASKS_V2_ENTITY_TEXT_MORE_CODE'),
+	        icon: ui_iconSet_api_vue.Outline.DEVELOPER_RESOURCES,
+	        onClick: this.insertCodeBlock
+	      }, {
+	        title: this.loc('TASKS_V2_ENTITY_TEXT_MORE_QUOTE'),
+	        icon: ui_iconSet_api_vue.Outline.QUOTE,
+	        onClick: this.insertQuote
+	      }, {
+	        title: this.loc('TASKS_V2_ENTITY_TEXT_MORE_SPOILER'),
+	        icon: ui_iconSet_api_vue.Editor.INSERT_SPOILER,
+	        onClick: this.insertSpoiler
+	      }];
+	    }
+	  },
+	  methods: {
+	    insertQuote() {
+	      var _Plugins$Quote$TOGGLE;
+	      const command = (_Plugins$Quote$TOGGLE = ui_textEditor.Plugins.Quote.TOGGLE_QUOTE_COMMAND) != null ? _Plugins$Quote$TOGGLE : ui_textEditor.Plugins.Quote.INSERT_QUOTE_COMMAND;
+	      this.editor.dispatchCommand(command);
+	    },
+	    insertCodeBlock() {
+	      var _Plugins$Code$TOGGLE_;
+	      const command = (_Plugins$Code$TOGGLE_ = ui_textEditor.Plugins.Code.TOGGLE_CODE_COMMAND) != null ? _Plugins$Code$TOGGLE_ : ui_textEditor.Plugins.Code.INSERT_CODE_COMMAND;
+	      this.editor.dispatchCommand(command);
+	    },
+	    insertSpoiler() {
+	      var _Plugins$Spoiler$TOGG;
+	      const command = (_Plugins$Spoiler$TOGG = ui_textEditor.Plugins.Spoiler.TOGGLE_SPOILER_COMMAND) != null ? _Plugins$Spoiler$TOGG : ui_textEditor.Plugins.Spoiler.INSERT_SPOILER_COMMAND;
+	      this.editor.dispatchCommand(command);
+	    }
+	  },
+	  template: `
+		<ActionButton 
+			:iconName="Outline.MORE_L" 
+			:title="loc('TASKS_V2_ENTITY_TEXT_ACTION_MORE')" 
+			@click="isMenuShown = true"
+			ref="actionButton"
+		/>
+		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+	`
+	};
+
+	// @vue/component
+	const AttachButton = {
+	  name: 'EditorActionAttach',
+	  components: {
+	    ActionButton,
+	    Outline: ui_iconSet_api_vue.Outline
+	  },
+	  props: {
+	    fileService: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  methods: {
+	    handleClick() {
+	      this.fileService.browse({
+	        bindElement: this.$el,
+	        onHideCallback: this.onFileBrowserClose
+	      });
+	    },
+	    onFileBrowserClose() {
+	      this.fileService.setFileBrowserClosed(false);
+	    }
+	  },
+	  template: `
+		<ActionButton
+			:iconName="Outline.ATTACH"
+			:title="loc('TASKS_V2_ENTITY_TEXT_ACTION_ATTACH')"
+			@click="handleClick"
+		/>
+	`
+	};
+
+	// @vue/component
+	const MentionButton = {
+	  name: 'EditorActionMention',
+	  components: {
+	    ActionButton,
+	    Outline: ui_iconSet_api_vue.Outline
+	  },
+	  props: {
+	    editor: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  methods: {
+	    handleClick() {
+	      this.editor.focus(() => {
+	        this.editor.dispatchCommand(ui_textEditor.Plugins.Mention.INSERT_MENTION_DIALOG_COMMAND);
+	      }, {
+	        defaultSelection: 'rootEnd'
+	      });
+	    }
+	  },
+	  template: `
+		<ActionButton
+			:iconName="Outline.MENTION"
+			:title="loc('TASKS_V2_ENTITY_TEXT_ACTION_MENTION')"
+			@click="handleClick"
+		/>
+	`
+	};
+
+	// @vue/component
+	const NumberListButton = {
+	  name: 'EditorActionNumberList',
+	  components: {
+	    ActionButton,
+	    Outline: ui_iconSet_api_vue.Outline
+	  },
+	  props: {
+	    editor: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  methods: {
+	    handleClick() {
+	      this.editor.dispatchCommand(ui_lexical_list.INSERT_ORDERED_LIST_COMMAND);
+	    }
+	  },
+	  template: `
+		<ActionButton
+			:iconName="Outline.NUMBERED_LIST"
+			:title="loc('TASKS_V2_ENTITY_TEXT_MORE_NUMBER_LIST')"
+			@click="handleClick"
+		/>
+	`
+	};
+
+	// @vue/component
+	const BulletListButton = {
+	  name: 'EditorActionBulletList',
+	  components: {
+	    ActionButton,
+	    Outline: ui_iconSet_api_vue.Outline
+	  },
+	  props: {
+	    editor: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  methods: {
+	    handleClick() {
+	      this.editor.dispatchCommand(ui_lexical_list.INSERT_UNORDERED_LIST_COMMAND);
+	    }
+	  },
+	  template: `
+		<ActionButton
+			:iconName="Outline.BULLETED_LIST"
+			:title="loc('TASKS_V2_ENTITY_TEXT_MORE_BULLET_LIST')"
+			@click="handleClick"
+		/>
+	`
+	};
+
 	exports.entityTextEditor = entityTextEditor;
 	exports.EntityTextTypes = EntityTextTypes;
 	exports.EntityTextArea = EntityTextArea;
 	exports.EntityCollapsibleText = EntityCollapsibleText;
 	exports.DefaultEditorOptions = DefaultEditorOptions;
+	exports.ActionButton = ActionButton;
+	exports.CopilotButton = CopilotButton;
+	exports.MoreButton = MoreButton;
+	exports.AttachButton = AttachButton;
+	exports.MentionButton = MentionButton;
+	exports.NumberListButton = NumberListButton;
+	exports.BulletListButton = BulletListButton;
 
-}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX,BX.Event,BX.Vue3,BX.UI.Uploader,BX.UI.Lexical.Core,BX.Tasks.V2,BX.Tasks.V2.Const,BX.UI.TextEditor,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.UI.BBCode.Formatter,BX.UI.IconSet,BX,BX.UI.System.Typography.Vue));
+}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX.Vue3,BX.UI.Uploader,BX.Tasks.V2.Const,BX,BX.Event,BX.UI.Lexical.Core,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.UI.BBCode.Formatter,BX.UI.System.Typography.Vue,BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX.Tasks.V2,BX.UI.System.Menu,BX,BX,BX.UI.TextEditor,BX.UI.IconSet,BX.UI.Lexical.List));
 //# sourceMappingURL=entity-text.bundle.js.map

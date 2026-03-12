@@ -7,17 +7,28 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
-import { Model, EventName, ResultStatus } from 'tasks.v2.const';
+import { Model, EventName, ResultStatus, Analytics } from 'tasks.v2.const';
+import { analytics } from 'tasks.v2.lib.analytics';
 import { calendar } from 'tasks.v2.lib.calendar';
 import { resultService } from 'tasks.v2.provider.service.result-service';
 import { fileService, EntityTypes, type FileService } from 'tasks.v2.provider.service.file-service';
-import { EntityTextArea, EntityTextTypes, entityTextEditor, type EntityTextEditor } from 'tasks.v2.component.entity-text';
+import {
+	EntityTextArea,
+	EntityTextTypes,
+	entityTextEditor,
+	CopilotButton,
+	AttachButton,
+	MentionButton,
+	MoreButton,
+	NumberListButton,
+	BulletListButton,
+	type EntityTextEditor,
+} from 'tasks.v2.component.entity-text';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { ResultModel } from 'tasks.v2.model.results';
 import type { UserModel } from 'tasks.v2.model.users';
 
 import { resultsMeta } from '../../results-meta';
-import { ResultsActionButton } from '../../results-action-button';
 
 import './result-editor-sheet.css';
 
@@ -28,11 +39,25 @@ export const ResultEditor = {
 		BIcon,
 		UiButton,
 		EntityTextArea,
-		ResultsActionButton,
+		CopilotButton,
+		AttachButton,
+		MentionButton,
+		MoreButton,
+		NumberListButton,
+		BulletListButton,
 	},
 	inject: {
 		taskId: {},
 		task: {},
+		analytics: {},
+		cardType: {},
+	},
+	provide(): { fileService: FileService, entityTextEditor: EntityTextEditor }
+	{
+		return {
+			editor: () => this.editor,
+			fileService: () => this.fileService,
+		};
 	},
 	props: {
 		resultId: {
@@ -137,10 +162,6 @@ export const ResultEditor = {
 		{
 			return this.entityTextEditor.getEditor();
 		},
-		copilotIconColor(): String
-		{
-			return 'var(--ui-color-copilot-primary)';
-		},
 		hasEditorChanges(): boolean
 		{
 			return this.hasChanges || this.hasFilesChanges;
@@ -208,11 +229,32 @@ export const ResultEditor = {
 				updatedAtTs: Date.now(),
 			};
 
-			void resultService.add(this.taskId, result);
+			void this.addResult(result);
 
 			this.handleClose();
 
 			Event.EventEmitter.emit(EventName.ResultAdded, { taskId: this.taskId });
+		},
+		async addResult(result): void
+		{
+			const isSuccess = await resultService.add(this.taskId, result);
+
+			this.sendAnalyticsResultAdd(isSuccess);
+
+			if (isSuccess)
+			{
+				Event.EventEmitter.emit(EventName.ResultSuccessfulAdded, { taskId: this.taskId });
+			}
+		},
+		sendAnalyticsResultAdd(isSuccess: boolean): void
+		{
+			analytics.sendStatusSummaryAdd(this.analytics, {
+				isSuccess,
+				cardType: this.cardType,
+				taskId: Type.isNumber(this.taskId) ? this.taskId : 0,
+				element: Analytics.Element.AddResult,
+				subSection: Analytics.SubSection.TaskCard,
+			});
 		},
 		handleUpdateResult(): void
 		{
@@ -252,44 +294,6 @@ export const ResultEditor = {
 		focusToEnd(): void
 		{
 			this.editor?.focus(null, { defaultSelection: 'rootEnd' });
-		},
-		handleCopilotButtonClick(): void
-		{
-			if (!this.isCopilotEnabled)
-			{
-				return;
-			}
-
-			this.editor.focus(
-				() => {
-					this.editor.dispatchCommand(
-						BX.UI.TextEditor.Plugins.Copilot.INSERT_COPILOT_DIALOG_COMMAND,
-					);
-				},
-				{ defaultSelection: 'rootEnd' },
-			);
-		},
-		handleMentionButtonClick(): void
-		{
-			this.editor.focus(
-				() => {
-					this.editor.dispatchCommand(
-						BX.UI.TextEditor.Plugins.Mention.INSERT_MENTION_DIALOG_COMMAND,
-					);
-				},
-				{ defaultSelection: 'rootEnd' },
-			);
-		},
-		handleAttachButtonClick(): void
-		{
-			this.fileService.browse({
-				bindElement: this.$refs.attachBtn.$el,
-				onHideCallback: this.onFileBrowserClose,
-			});
-		},
-		onFileBrowserClose(): void
-		{
-			this.fileService.setFileBrowserClosed(false);
 		},
 		handleClose(): void
 		{
@@ -334,25 +338,12 @@ export const ResultEditor = {
 			</div>
 			<div v-if="!readonly" class="tasks-result-editor-footer" ref="resultActions">
 				<div class="tasks-result-editor-action-list">
-					<ResultsActionButton
-						v-if="isCopilotEnabled"
-						:iconName="Outline.COPILOT"
-						:title="loc('TASKS_V2_RESULT_ACTION_COPILOT_TITLE')"
-						:iconColor="copilotIconColor"
-						@click="handleCopilotButtonClick"
-					/>
-					<ResultsActionButton
-						v-if="isDiskModuleInstalled"
-						ref="attachBtn"
-						:iconName="Outline.ATTACH"
-						:title="loc('TASKS_V2_RESULT_ACTION_ATTACH_TITLE')"
-						@click="handleAttachButtonClick"
-					/>
-					<ResultsActionButton
-						:iconName="Outline.MENTION"
-						:title="loc('TASKS_V2_RESULT_ACTION_MENTION_TITLE')"
-						@click="handleMentionButtonClick"
-					/>
+					<AttachButton v-if="isDiskModuleInstalled" :fileService/>
+					<MentionButton :editor/>
+					<BulletListButton :editor/>
+					<NumberListButton :editor/>
+					<MoreButton :editor/>
+					<CopilotButton v-if="isCopilotEnabled" :editor/>
 				</div>
 				<div class="tasks-result-editor-footer-buttons">
 					<UiButton

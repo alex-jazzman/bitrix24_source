@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_DOCUMENT_VIEW_COMPONENT_SMS_TITLE"] = "SMS жіберу";

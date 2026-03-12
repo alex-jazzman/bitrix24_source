@@ -19,3 +19,9 @@
 	font-weight: var(--ui-font-weight-medium, 500);
 	color: #FFF;
 }
+
+.bx-messenger-videocall-top-participants.blocked {
+	cursor: default;
+	opacity: 0.4;
+	pointer-events: none;
+}

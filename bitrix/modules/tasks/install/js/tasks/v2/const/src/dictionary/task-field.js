@@ -2,6 +2,7 @@ export const TaskField = Object.freeze({
 	Accomplices: 'accomplicesIds',
 	Auditors: 'auditorsIds',
 	CheckList: 'checklist',
+	CreatedDate: 'createdTs',
 	Creator: 'creatorId',
 	Crm: 'crmItemIds',
 	DatePlan: 'datePlan',

@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_CMP_EDITOR_TPL_TITLE'] = 'Редактирование';
 $MESS['SIGN_CMP_EDITOR_TPL_LOAD'] = 'Загружаем документ';
 $MESS['SIGN_CMP_EDITOR_TPL_BUTTON_SAVE'] = 'Сохранить';

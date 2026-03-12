@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_popup,pull_vue3_status,im_v2_lib_analytics,im_v2_component_messageList,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_layout,im_v2_lib_access,im_v2_lib_feature,im_v2_provider_service_message,im_v2_provider_service_chat,main_core_events,im_v2_lib_logger,im_v2_lib_animation,im_v2_application_core,im_v2_lib_rest,im_v2_lib_channel,im_v2_lib_demo,im_v2_lib_permission,im_v2_component_elements_avatar,im_v2_lib_parser,main_core,im_v2_lib_quote,im_v2_lib_utils,im_v2_lib_slider,im_v2_const) {
+(function (exports,main_popup,pull_vue3_status,im_v2_lib_analytics,im_v2_component_messageList,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_layout,im_v2_lib_access,im_v2_lib_feature,im_v2_provider_service_message,im_v2_provider_service_chat,main_core_events,im_v2_lib_logger,im_v2_lib_animation,im_v2_application_core,im_v2_lib_rest,im_v2_lib_channel,im_v2_lib_demo,im_v2_lib_permission,im_v2_component_elements_avatar,im_v2_lib_parser,main_core,im_v2_lib_quote,im_v2_lib_utils,im_v2_component_elements_popup,im_v2_const) {
 	'use strict';
 
 	const DEBOUNCE_TIME = 50;
@@ -550,6 +550,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    totalPinCounter: {
 	      type: Number,
 	      required: true
+	    },
+	    contextDialogId: {
+	      type: String,
+	      required: true
 	    }
 	  },
 	  emits: ['toggleList', 'messageUnpin', 'messageClick'],
@@ -569,7 +573,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    text() {
 	      return im_v2_lib_parser.Parser.purifyMessage(this.typedMessage);
 	    },
+	    isCommentChatContext() {
+	      const dialog = this.$store.getters['chats/get'](this.contextDialogId, true);
+	      return dialog.type === im_v2_const.ChatType.comment;
+	    },
 	    title() {
+	      if (this.isCommentChatContext) {
+	        return this.loc('IM_DIALOG_CHAT_PINNED_TITLE_IN_CHANNEL');
+	      }
 	      return this.loc(this.isSinglePin ? 'IM_DIALOG_CHAT_PINNED_TITLE' : 'IM_DIALOG_CHAT_PINNED_TITLE_MULTIPLE');
 	    }
 	  },
@@ -641,6 +652,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isListOpened: {
 	      type: Boolean,
 	      required: true
+	    },
+	    contextDialogId: {
+	      type: String,
+	      required: true
 	    }
 	  },
 	  emits: ['toggleList', 'messageUnpin', 'messageClick'],
@@ -659,6 +674,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<HeaderPin
 				v-else
 				:message="typedMessage"
+				:contextDialogId="contextDialogId"
 				:messagePosition="messagePosition"
 				:totalPinCounter="totalPinCounter"
 				:showUnpinIcon="showUnpinIcon"
@@ -680,7 +696,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  props: {
 	    dialogId: {
 	      type: String,
-	      default: ''
+	      required: true
 	    },
 	    messages: {
 	      type: Array,
@@ -770,6 +786,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:showUnpinIcon="showUnpinIcon"
 				:totalPinCounter="totalPinCounter"
 				:isListOpened="isListOpened"
+				:contextDialogId="dialogId"
 				@toggleList="toggleList"
 				@messageUnpin="$emit('messageUnpin', upcomingMessage.id)"
 				@messageClick="clickOnHeaderMessage"
@@ -790,39 +807,59 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	var _sliderRect$top;
 	const CONTAINER_HEIGHT = 44;
 	const CONTAINER_WIDTH = 60;
-	const CONTAINER_OFFSET = 10;
-	const slider = im_v2_lib_slider.MessengerSlider.getInstance().getCurrent();
-	const sliderRect = slider == null ? void 0 : slider.layout.container.getBoundingClientRect();
-	const offsetY = (_sliderRect$top = sliderRect == null ? void 0 : sliderRect.top) != null ? _sliderRect$top : 0;
 	const MESSAGE_TEXT_NODE_CLASS = '.bx-im-message-default-content__text';
+	const POPUP_ID = 'im-quote-button-popup';
 
 	// @vue/component
 	const QuoteButton = {
 	  name: 'QuoteButton',
+	  components: {
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup
+	  },
 	  props: {
 	    dialogId: {
 	      type: String,
 	      default: ''
+	    },
+	    targetPosition: {
+	      type: Object,
+	      required: true,
+	      validator(value) {
+	        return main_core.Type.isNumber(value.left) && main_core.Type.isNumber(value.top);
+	      }
 	    }
 	  },
 	  data() {
 	    return {
 	      text: '',
-	      message: null,
-	      mouseX: 0,
-	      mouseY: 0
+	      message: null
 	    };
 	  },
 	  computed: {
-	    containerStyle() {
+	    POPUP_ID: () => POPUP_ID,
+	    config() {
+	      const {
+	        top,
+	        left
+	      } = this.targetPosition;
+	      const offsetLeftForCenteredPopup = left - CONTAINER_WIDTH / 2;
 	      return {
-	        top: `${this.mouseY - CONTAINER_HEIGHT - CONTAINER_OFFSET - offsetY}px`,
-	        left: `${this.mouseX - CONTAINER_WIDTH / 2}px`,
-	        width: `${CONTAINER_WIDTH}px`,
-	        height: `${CONTAINER_HEIGHT}px`
+	        bindElement: {
+	          top,
+	          left: offsetLeftForCenteredPopup
+	        },
+	        className: 'bx-im-dialog-chat__quote-button_scope',
+	        background: 'transparent',
+	        bindOptions: {
+	          position: 'top'
+	        },
+	        animation: 'fading-slide',
+	        width: CONTAINER_WIDTH,
+	        height: CONTAINER_HEIGHT,
+	        autoHide: true,
+	        padding: 0
 	      };
 	    }
 	  },
@@ -836,8 +873,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      this.prepareSelectedText();
 	      this.message = message;
-	      this.mouseX = event.clientX;
-	      this.mouseY = event.clientY;
 	    },
 	    onMouseDown(event) {
 	      const container = this.$refs.container;
@@ -882,9 +917,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return node.nodeName === '#text';
 	    },
 	    onQuoteClick() {
+	      const text = im_v2_lib_quote.Quote.prepareInlineMessageQuote(this.message, this.text);
 	      im_v2_lib_quote.Quote.sendQuoteEvent({
-	        message: this.message,
-	        text: this.text,
+	        text,
 	        dialogId: this.dialogId,
 	        context: {
 	          emitter: this.getEmitter()
@@ -897,10 +932,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<div ref="container" @click="onQuoteClick" :style="containerStyle" class="bx-im-dialog-chat__quote-button">
-			<div class="bx-im-dialog-chat__quote-icon"></div>
-			<div class="bx-im-dialog-chat__quote-icon --hover"></div>
-		</div>
+		<MessengerPopup
+			:id="POPUP_ID"
+			:config="config"
+			@close="$emit('close')"
+		>
+			<div ref="container" @click="onQuoteClick" class="bx-im-dialog-chat__quote-button">
+				<div class="bx-im-dialog-chat__quote-icon"></div>
+				<div class="bx-im-dialog-chat__quote-icon --hover"></div>
+			</div>
+		</MessengerPopup>
 	`
 	};
 
@@ -1203,7 +1244,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      showQuoteButton: false,
 	      isJumpingToAnchor: false,
 	      messagesToRead: new Set(),
-	      containerHeight: 0
+	      containerHeight: 0,
+	      quoteButtonPosition: {}
 	    };
 	  },
 	  computed: {
@@ -1679,6 +1721,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        return;
 	      }
 	      this.showQuoteButton = true;
+	      this.quoteButtonPosition = {
+	        left: $event.pageX,
+	        top: $event.pageY
+	      };
 	      await this.$nextTick();
 	      this.$refs.quoteButton.onMessageMouseUp(message, $event);
 	    },
@@ -1890,15 +1936,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:dialogId="dialogId"
 				@close="onCloseForwardPopup"
 			/>
-			<Transition name="fade-up">
-				<QuoteButton
-					v-if="showQuoteButton"
-					:dialogId="dialogId"
-					@close="showQuoteButton = false" 
-					class="bx-im-message-base__quote-button"
-					ref="quoteButton"
-				/>
-			</Transition>
+			<QuoteButton
+				v-if="showQuoteButton"
+				:targetPosition="quoteButtonPosition"
+				:dialogId="dialogId"
+				@close="showQuoteButton = false"
+				ref="quoteButton"
+			/>
 		</div>
 	`
 	};
@@ -1910,5 +1954,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.FloatButtonIcon = FloatButtonIcon;
 	exports.FloatButtonColor = FloatButtonColor;
 
-}((this.BX.Messenger.v2.Component.Dialog = this.BX.Messenger.v2.Component.Dialog || {}),BX.Main,window,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.Dialog = this.BX.Messenger.v2.Component.Dialog || {}),BX.Main,window,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const));
 //# sourceMappingURL=chat-dialog.bundle.js.map

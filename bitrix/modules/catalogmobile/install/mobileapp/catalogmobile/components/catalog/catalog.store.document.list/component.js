@@ -7,6 +7,8 @@
 	const { ListItemType, ListItemsFactory } = require('catalog/simple-list/items');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { Loc } = require('loc');
+	const { UIMenuType } = require('layout/ui/menu');
+	const { DetailCardNavigation } = require('layout/ui/detail-card/navigation');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { DocumentType } = require('catalog/store/document-type');
 	const { confirmDestructiveAction } = require('alert');
@@ -200,14 +202,14 @@
 		{
 			return [
 				{
-					type: UI.Menu.Types.DESKTOP,
+					type: UIMenuType.DESKTOP,
 					showHint: false,
 					data: {
 						qrUrl: '/shop/documents/receipt_adjustment/',
 					},
 				},
 				{
-					type: UI.Menu.Types.HELPDESK,
+					type: UIMenuType.HELPDESK,
 					data: {
 						articleCode: '14721730',
 					},

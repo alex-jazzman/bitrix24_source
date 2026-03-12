@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["BPWC_WLC_EMPTY_IBLOCK_TYPE"] = "The information block type is not specified.";
 $MESS["BPWC_WLC_EMPTY_IBLOCK"] = "The information block ID is not specified.";
 $MESS["BPWC_WLC_WRONG_IBLOCK_TYPE"] = "The information block type specified in the component settings was not found.";
@@ -42,4 +43,3 @@ $MESS["CBBWL_C_ADMIN_MODE"] = "All Records";
 $MESS["BPWC_WLCT_F_MODIFIED_BY"] = "Modified By";
 $MESS["CBBWL_C_TYPE"] = "Type";
 $MESS["BPWC_WLC_NOT_SET"] = "[not set]";
-?>

@@ -1,8 +1,18 @@
 import { BlockDiagram as UiBlockDiagram } from 'ui.block-diagram';
+import type { MenuItemOptions } from 'ui.vue3.components.menu';
+import type { Block, Connection } from '../../../../shared/types';
 import { BLOCK_SLOT_NAMES, CONNECTION_SLOT_NAMES } from '../../constants';
 
 type BlockDiagramSetup = {
 	blockSlotNames: { [string]: string };
+	connectionSlotNames: { [string]: string };
+};
+
+type Props = {
+	blocks: Array<Block>,
+	connections: Array<Connection>,
+	disabled: boolean,
+	contextMenuItems: Array<MenuItemOptions>,
 };
 
 // @vue/component
@@ -12,10 +22,12 @@ export const BlockDiagram = {
 		UiBlockDiagram,
 	},
 	props: {
+		/** @type Array<Block> */
 		blocks: {
 			type: Array,
 			default: () => ([]),
 		},
+		/** @type Array<Connection> */
 		connections: {
 			type: Array,
 			default: () => ([]),
@@ -24,13 +36,22 @@ export const BlockDiagram = {
 			type: Boolean,
 			default: false,
 		},
+		enableGrouping: {
+			type: Boolean,
+			default: false,
+		},
+		/** @type Array<MenuItemOptions> */
+		contextMenuItems: {
+			type: Array,
+			default: () => ([]),
+		},
 	},
 	emits: [
 		'update:blocks',
 		'update:connections',
 		'blockTransitionEnd',
 	],
-	setup(props): BlockDiagramSetup
+	setup(props: Props): BlockDiagramSetup
 	{
 		return {
 			blockSlotNames: BLOCK_SLOT_NAMES,
@@ -42,6 +63,8 @@ export const BlockDiagram = {
 			:blocks="blocks"
 			:connections="connections"
 			:disabled="disabled"
+			:enableGrouping="enableGrouping"
+			:contextMenuItems="contextMenuItems"
 			@update:blocks="$emit('update:blocks', $event)"
 			@update:connections="$emit('update:connections', $event)"
 			@blockTransitionEnd="$emit('blockTransitionEnd', $event)"
@@ -86,6 +109,9 @@ export const BlockDiagram = {
 					:name="connectionSlotNames.AUX"
 					:connection="connection"
 				/>
+			</template>
+			<template #group-selection-box>
+				<slot name="group-selection-box"/>
 			</template>
 		</UiBlockDiagram>
 	`,

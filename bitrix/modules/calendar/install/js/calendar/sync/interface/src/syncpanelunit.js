@@ -235,6 +235,7 @@ export default class SyncPanelUnit
 			default:
 				break;
 		}
+
 		return this.button;
 	}
 
@@ -252,15 +253,21 @@ export default class SyncPanelUnit
 		return this.moreButton;
 	}
 
-	handleItemClick(e)
+	async handleItemClick(e)
 	{
 		const status = this.connectionProvider.getStatus();
 
-		if ([this.connectionProvider.STATUS_SUCCESS, this.connectionProvider.STATUS_FAILED, this.connectionProvider.STATUS_REFUSED].includes(status))
+		if (
+			[
+				this.connectionProvider.STATUS_SUCCESS,
+				this.connectionProvider.STATUS_FAILED,
+				this.connectionProvider.STATUS_REFUSED,
+			].includes(status)
+		)
 		{
 			if (this.connectionProvider.hasMenu())
 			{
-				this.connectionProvider.showMenu(getComputedStyle(this.moreButton).display !== 'none' ? this.moreButton : this.button);
+				this.connectionProvider.showMenu(getComputedStyle(this.moreButton).display === 'none' ? this.button : this.moreButton);
 			}
 			else if (this.connectionProvider.getConnectStatus())
 			{
@@ -273,7 +280,11 @@ export default class SyncPanelUnit
 		}
 		else if (status === this.connectionProvider.STATUS_NOT_CONNECTED)
 		{
-			this.getConnectionTemplate().handleConnectButton();
+			Dom.addClass(this.button, 'ui-btn-wait');
+
+			await this.getConnectionTemplate().handleConnectButton();
+
+			Dom.removeClass(this.button, 'ui-btn-wait');
 		}
 	}
 

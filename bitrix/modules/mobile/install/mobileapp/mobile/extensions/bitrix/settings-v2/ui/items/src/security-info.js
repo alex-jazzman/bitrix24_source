@@ -54,7 +54,7 @@ jn.define('settings-v2/ui/items/src/security-info', (require, exports, module) =
 
 			return SettingSelector({
 				...this.props,
-				testId: this.getTestId(id),
+				testId: `${this.getTestId(id)}-${this.state.isOn ? 'enable' : 'disable'}`,
 				mode: SettingMode.PARAMETER,
 				modeParams: {
 					chevron: true,

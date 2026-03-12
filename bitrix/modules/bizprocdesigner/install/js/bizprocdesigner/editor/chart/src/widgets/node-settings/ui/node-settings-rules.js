@@ -1,10 +1,9 @@
 import { EventEmitter } from 'main.core.events';
 import { mapState, mapWritableState, mapActions } from 'ui.vue3.pinia';
-import { Type, Text } from 'main.core';
+import { Text } from 'main.core';
 import { MessageBox } from 'ui.dialogs.messagebox';
 
 import { useLoc } from '../../../shared/composables';
-import { PORT_TYPES } from '../../../shared/constants';
 
 import { EditOutputExpression } from '../../../features/node-settings/ui/edit-output-expression/edit-output-expression';
 
@@ -25,11 +24,8 @@ import {
 	SelectBooleanType,
 	SelectRule,
 	DeleteRuleCard,
-	EditExtandedAction,
+	EditExtendedAction,
 } from '../../../features/node-settings';
-
-// eslint-disable-next-line no-unused-vars
-import type { Block } from '../../../shared/types';
 
 // @vue/component
 export const NodeSettingsRules = {
@@ -48,7 +44,7 @@ export const NodeSettingsRules = {
 		SelectBooleanType,
 		SelectRule,
 		DeleteRuleCard,
-		EditExtandedAction,
+		EditExtendedAction,
 	},
 	setup(): { getMessage: () => string; }
 	{
@@ -69,15 +65,6 @@ export const NodeSettingsRules = {
 		...mapState(useNodeSettingsStore, ['nodeSettings', 'currentRuleId', 'block', 'isRuleSettingsShown']),
 		...mapWritableState(useNodeSettingsStore, ['isSaving']),
 		...mapState(useDiagramStore, ['documentTypeSigned', 'documentType', 'template']),
-		documentTypeForActionSettings(): Array
-		{
-			if (Type.isArrayFilled(this.nodeSettings.fixedDocumentType))
-			{
-				return this.nodeSettings.fixedDocumentType;
-			}
-
-			return this.documentType;
-		},
 	},
 	methods:
 	{
@@ -87,7 +74,6 @@ export const NodeSettingsRules = {
 			'saveRule',
 			'discardRuleSettings',
 		]),
-		...mapActions(useDiagramStore, ['addRulePort', 'deletePort']),
 		onRulesLayoutClose(): void
 		{
 			this.discardRuleSettings();
@@ -100,13 +86,7 @@ export const NodeSettingsRules = {
 				this.isSaving = true;
 
 				await EventEmitter.emitAsync(EVENT_NAMES.BEFORE_SUBMIT_EVENT);
-				const { outputPortsToAdd, outputPortsToDelete } = await this.saveRule(this.documentType);
-				outputPortsToAdd.values().forEach(({ portId, title }) => {
-					this.addRulePort(this.block.id, portId, PORT_TYPES.output, title);
-				});
-				outputPortsToDelete.keys().forEach((portId) => {
-					this.deletePort(this.block.id, portId, PORT_TYPES.output);
-				});
+				await this.saveRule(this.documentType);
 			}
 			catch (error)
 			{
@@ -175,14 +155,15 @@ export const NodeSettingsRules = {
 									:construction="construction"
 									:isExpertMode="isExpertMode"
 								>
-									<template #default="{ actionId, activityData }">
-										<EditExtandedAction
+									<template #default="{ actionId, activityData, selectedDocument }">
+										<EditExtendedAction
 											v-if="actionId"
 											:actionId="actionId"
 											:activityData="activityData"
 											:construction="construction"
-											:documentType="documentTypeForActionSettings"
+											:documentType="documentType"
 											:template="template"
+											:selectedDocument="selectedDocument"
 										/>
 									</template>
 								</EditActionExpression>

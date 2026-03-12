@@ -330,7 +330,7 @@ else
 			'canPerformCalls' => Helper::canCurrentUserPerformCalls(),
 			'lines' => CVoxImplantConfig::GetLines(true, true),
 			'defaultLineId' => CVoxImplantUser::getUserOutgoingLine($USER->getId()),
-			'callLogService' => Main\Config\Option::get("im", "call_log_service"),
+			'callLogService' => Main\Config\Option::get("call", "call_log_service"),
 		];
 	}
 

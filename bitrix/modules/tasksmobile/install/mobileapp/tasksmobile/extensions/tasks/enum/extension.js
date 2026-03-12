@@ -83,6 +83,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 		EDIT_CHECKLIST: 'editChecklist',
 		CAN_CREATE: 'canCreate',
 		UPDATE_DEADLINE_BY_MAX_DATE: 'updateDeadlineByMaxDate',
+		CAN_UPDATE_AUDITORS: 'canUpdateAuditors',
 	};
 
 	const TaskField = {
@@ -130,7 +131,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 		[TaskField.RESULT]: TaskActionAccess.UPDATE,
 		[TaskField.FILES]: TaskActionAccess.UPDATE,
 		[TaskField.CHECKLIST]: TaskActionAccess.EDIT_CHECKLIST,
-		[TaskField.AUDITORS]: TaskActionAccess.UPDATE,
+		[TaskField.AUDITORS]: TaskActionAccess.CAN_UPDATE_AUDITORS,
 		[TaskField.TAGS]: TaskActionAccess.UPDATE,
 		[TaskField.CRM]: TaskActionAccess.UPDATE,
 		[TaskField.RELATED_TASKS]: TaskActionAccess.UPDATE,

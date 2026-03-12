@@ -143,6 +143,7 @@
 	cursor: default;
 	transition: background-color 0.3s ease;
 	padding: 2px 6px 2px 3px;
+	max-width: 100%;
 }
 
 .mail_massconnect__employee-list_table_employee-info:hover {
@@ -162,6 +163,7 @@
 .mail_massconnect__employee-list_table_employee-name {
 	font-size: var(--ui-font-size-lg);
 	color: #333;
+	word-break: break-all;
 }
 
 .mail_massconnect__employee-list_table_input {

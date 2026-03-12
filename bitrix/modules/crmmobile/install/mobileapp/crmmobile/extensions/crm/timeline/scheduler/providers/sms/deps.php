@@ -13,7 +13,6 @@ return [
 		'crm:timeline/ui/senders-selector',
 		'crm:timeline/scheduler/providers/base',
 		'assets/common',
-		'assets/communication/menu',
 		'layout/polyfill',
 		'layout/ui/widget-header-button',
 		'layout/ui/context-menu',

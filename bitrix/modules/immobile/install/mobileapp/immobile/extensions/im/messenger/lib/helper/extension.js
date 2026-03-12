@@ -19,6 +19,7 @@ jn.define('im/messenger/lib/helper', (require, exports, module) => {
 		getFileTypeByExtension,
 		getFileIconTypeByExtension,
 		getAudioRecordFormat,
+		getUploadFileChunkSize,
 	} = require('im/messenger/lib/helper/file');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper/entity-selector');
 	const { CounterHelper } = require('im/messenger/lib/helper/counter');
@@ -39,6 +40,7 @@ jn.define('im/messenger/lib/helper', (require, exports, module) => {
 		getFileTypeByExtension,
 		getFileIconTypeByExtension,
 		getAudioRecordFormat,
+		getUploadFileChunkSize,
 		EntitySelectorHelper,
 		CounterHelper,
 		StickerHelper,

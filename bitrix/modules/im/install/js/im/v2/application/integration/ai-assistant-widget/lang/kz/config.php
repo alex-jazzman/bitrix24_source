@@ -1,2 +1,0 @@
-<?php
-$MESS["IM_AI_ASSISTANT_WIDGET_MINIMIZE"] = "Орау";

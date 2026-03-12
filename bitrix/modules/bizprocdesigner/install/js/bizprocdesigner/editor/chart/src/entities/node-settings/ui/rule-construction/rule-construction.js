@@ -7,11 +7,11 @@ import { useLoc } from '../../../../shared/composables';
 import { CONSTRUCTION_LABELS, GENERAL_CONSTRUCTION_TYPES, CONSTRUCTION_TYPES } from '../../constants/index';
 
 // eslint-disable-next-line no-unused-vars
-import type { СonstructionLabels, Construction, GeneralConstructionTypes, OrderParams } from '../types';
+import type { Construction, GeneralConstructionTypes } from '../../types';
 
 type RuleConstructionSetup = {
 	getMessage: () => string;
-	сonstructionModes: { standard: string; expert: string; };
+	constructionModes: { standard: string; expert: string; };
 };
 
 const RULE_CONSTRUCTION_MODES = {
@@ -51,14 +51,14 @@ export const RuleConstruction = {
 	setup(): RuleConstructionSetup
 	{
 		const { getMessage } = useLoc();
-		const сonstructionModes = Object.freeze({
+		const constructionModes = Object.freeze({
 			standard: getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_STANDARD_MODE'),
 			expert: getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_EXPERT_MODE'),
 		});
 
 		return {
 			getMessage,
-			сonstructionModes,
+			constructionModes,
 		};
 	},
 	data(): { selectedMode: string; }
@@ -69,7 +69,7 @@ export const RuleConstruction = {
 	},
 	computed:
 	{
-		constractionClassName(): { [key: string]: string; }
+		constructionClassName(): { [key: string]: string; }
 		{
 			return {
 				'--condition': GENERAL_CONSTRUCTION_TYPES[this.construction.type] === GENERAL_CONSTRUCTION_TYPES['condition:if'],
@@ -123,7 +123,7 @@ export const RuleConstruction = {
 		<div
 			data-name="rule-construction"
 			class="rule-construction"
-			:class="constractionClassName"
+			:class="constructionClassName"
 			:data-id="construction.id"
 			:data-rule-card-id="ruleCardId"
 		>
@@ -158,7 +158,7 @@ export const RuleConstruction = {
 						class="rule-construction__content_mode"
 					>
 						<span
-							v-for="(label, mode) in сonstructionModes"
+							v-for="(label, mode) in constructionModes"
 							class="rule-construction__content_mode-text"
 							:class="{ '--selected': selectedMode === mode }"
 							@click="selectedMode = mode"

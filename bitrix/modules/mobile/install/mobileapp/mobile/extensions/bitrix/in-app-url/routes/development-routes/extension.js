@@ -2,6 +2,10 @@
  * @module in-app-url/routes/development-routes
  */
 jn.define('in-app-url/routes/development-routes', (require, exports, module) => {
+	const { ComponentHelper } = require('helpers/component');
+	const { URL } = require('utils/url');
+	const { requireLazy } = require('require-lazy');
+
 	module.exports = function(inAppUrl) {
 		inAppUrl.register('/development/storybook', () => {
 			// eslint-disable-next-line no-undef
@@ -13,6 +17,19 @@ jn.define('in-app-url/routes/development-routes', (require, exports, module) => 
 				},
 			});
 		}).name('storybook');
+
+		inAppUrl
+			.addRoute('/dev/stories/')
+			.handler(async (routeParams, { url }) => {
+				const { pathname } = URL(url);
+				const { openStory } = await requireLazy('dev:storybook/opener').catch(console.error);
+
+				openStory({
+					path: pathname,
+					canOpenInDefault: true,
+				});
+			})
+			.name('dev:stories');
 
 		inAppUrl.register('/development/testing.tools', () => {
 			// eslint-disable-next-line no-undef

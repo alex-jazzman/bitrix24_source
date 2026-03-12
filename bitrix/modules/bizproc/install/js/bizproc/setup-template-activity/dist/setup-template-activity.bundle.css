@@ -161,25 +161,44 @@
 }
 
 #bizproc-setuptemplateactivity-app .bizproc-setuptemplateactivity-preview-btn {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 4px;
-    padding: 0;
-    border: none;
-    background-color: transparent;
-    cursor: pointer;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 4px;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	cursor: pointer;
 }
 
 #bizproc-setuptemplateactivity-app .bizproc-setuptemplateactivity-preview-btn__icon {
-    background-color: var(--ui-color-accent-main-primary);
+	background-color: var(--ui-color-accent-main-primary);
 }
 
 #bizproc-setuptemplateactivity-app .bizproc-setuptemplateactivity-preview-btn__label {
-    font-size: var(--ui-font-size-md);
-    letter-spacing: var(--ui-letter-spacing-l);
-    color: var(--ui-color-accent-main-primary) !important;
+	font-size: var(--ui-font-size-md);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-accent-main-primary) !important;
 }
+
+#bizproc-setuptemplateactivity-app .bizproc-setuptemplateactivity-preview-btn-wrapper.--fixed {
+	position: fixed;
+	right: 8px;
+	height: 36px;
+	z-index: 100;
+	background-color: var(--ui-color-bg-content-primary);
+	padding: 0 20px;
+	box-sizing: border-box;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13);
+}
+
+#bizproc-setuptemplateactivity-app .bizproc-setuptemplateactivity-preview-btn-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+}
+
 .bizproc-setuptemplateactivity-title-field {
 	position: relative;
 	display: flex;
@@ -694,7 +713,8 @@ body.--user-dragging .bizproc-setuptemplateactivity-draggable-wrapper:hover .ui-
 	background-color: transparent;
 }
 
-.bizproc-setuptemplateactivity-preview-header__line:before {
+.bizproc-setuptemplateactivity-preview-header__line:before,
+.bizproc-setuptemplateactivity-preview-header__line:after {
 	content: '';
 	position: absolute;
 	top: 0;
@@ -702,20 +722,14 @@ body.--user-dragging .bizproc-setuptemplateactivity-draggable-wrapper:hover .ui-
 	display: block;
 	width: calc(50% - 2px);
 	height: 3px;
-	border-radius: 10px;
+	border-radius: 2px;
 	background-color: var(--ui-color-base-5);
 }
 
 .bizproc-setuptemplateactivity-preview-header__line:after {
-	content: '';
-	position: absolute;
-	top: 0;
 	right: 0;
-	display: block;
-	width: calc(50% - 2px);
-	height: 3px;
-	border-radius: 10px;
-	background-color: var(--ui-color-base-5);
+	left: auto;
+	background-color: var(--ui-color-accent-main-primary);
 }
 
 .bizproc-setuptemplateactivity-preview-block {

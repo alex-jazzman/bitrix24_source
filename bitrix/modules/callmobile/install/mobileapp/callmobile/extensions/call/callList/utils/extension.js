@@ -43,22 +43,20 @@ jn.define('call/callList/utils', (require, exports, module) => {
 		const secs = seconds % 60;
 
 		const parts = [];
-		const HOURS_SHORT = BX.message('MOBILEAPP_CALL_LIST_TIME_HOURS_SHORT');
-		const MINUTES_SHORT = BX.message('MOBILEAPP_CALL_LIST_TIME_MINUTES_SHORT');
-		const SECONDS_SHORT = BX.message('MOBILEAPP_CALL_LIST_TIME_SECONDS_SHORT');
+
 		if (hours > 0)
 		{
-			parts.push(`${hours} ${HOURS_SHORT}`);
+			parts.push(BX.message('MOBILEAPP_CALL_LIST_TIME_HOURS_SHORT').replace('#VALUE#', String(hours)));
 		}
 
 		if (minutes > 0)
 		{
-			parts.push(`${minutes} ${MINUTES_SHORT}`);
+			parts.push(BX.message('MOBILEAPP_CALL_LIST_TIME_MINUTES_SHORT').replace('#VALUE#', String(minutes)));
 		}
 
 		if (secs > 0)
 		{
-			parts.push(`${secs} ${SECONDS_SHORT}`);
+			parts.push(BX.message('MOBILEAPP_CALL_LIST_TIME_SECONDS_SHORT').replace('#VALUE#', String(secs)));
 		}
 
 		return parts.join(' ');
@@ -126,11 +124,81 @@ jn.define('call/callList/utils', (require, exports, module) => {
 		return path.split(' ').join('%20');
 	}
 
+	async function searchUsers(query, options = {})
+	{
+		const {
+			limit = 10,
+			offset = 0,
+			excludeUserIds = null,
+			includeUserId = false,
+		} = options;
+
+		const userRes = await restCall('im.search.user', {
+			FIND: query,
+			LIMIT: limit,
+			OFFSET: offset,
+		});
+
+		let rawUsers = [];
+		if (userRes)
+		{
+			rawUsers = Array.isArray(userRes) ? userRes : Object.values(userRes);
+		}
+
+		rawUsers = rawUsers.filter((user) => !user.bot && !user.network && !user.connector);
+
+		if (excludeUserIds && excludeUserIds.size > 0)
+		{
+			rawUsers = rawUsers.filter((user) => !excludeUserIds.has(String(user.id)));
+		}
+
+		return Promise.all(
+			rawUsers.map(async (user) => {
+				let chatId = 0;
+
+				const dialogRes = await restCall('im.dialog.get', {
+					DIALOG_ID: user.id,
+				});
+
+				if (dialogRes)
+				{
+					chatId = dialogRes.id || 0;
+				}
+
+				const item = {
+					chatId,
+					id: `user-${user.id}`,
+					key: `user-${user.id}`,
+					ts: 0,
+					title: user.name || '',
+					phone: '',
+					phoneNumber: '',
+					sourceType: 'user',
+					dialogId: String(user.id),
+					chatType: 'private',
+					avatar: normalizeUserAvatarPath(user.avatar),
+					workPosition: (user.work_position || user.workPosition || ''),
+					userColor: (user.color || ''),
+					isUnseen: false,
+					duration: 0,
+				};
+
+				if (includeUserId)
+				{
+					item.userId = Number(user.id);
+				}
+
+				return item;
+			}),
+		);
+	}
+
 	module.exports = {
 		parseStatusTime,
 		formatDuration,
 		formatTime,
 		restCall,
 		normalizeUserAvatarPath,
+		searchUsers,
 	};
 });

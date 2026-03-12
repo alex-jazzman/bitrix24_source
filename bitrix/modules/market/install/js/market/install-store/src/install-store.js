@@ -113,8 +113,10 @@ export const marketInstallState = defineStore('market-install', {
 			const license = this.popupNodes[this.appInfo.CODE].querySelector('[data-role="market-install-license"]');
 			const confidentiality = this.popupNodes[this.appInfo.CODE].querySelector('[data-role="market-install-confidentiality"]');
 
-			if (tosLicense && !tosLicense.checked) {
-				this.licenseError = BX.message('MARKET_INSTALL_TOS_ERROR');
+			if (tosLicense && !tosLicense.checked)
+			{
+				this.licenseError = BX.message('MARKET_INSTALL_TOS_ERROR_MSGVER_2');
+
 				return false;
 			}
 

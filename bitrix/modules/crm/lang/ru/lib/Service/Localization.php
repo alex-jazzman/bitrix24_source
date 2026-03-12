@@ -227,7 +227,7 @@ $MESS["CRM_TYPE_SMART_INVOICE_FIELD_CLOSE_DATE"] = "Срок оплаты";
 $MESS["CRM_TYPE_ITEM_FIELD_NAME_LAST_COMMUNICATION_TIME"] = "Дата последней коммуникации";
 $MESS["CRM_TYPE_ITEM_FIELD_NAME_REPEAT_SALE_SEGMENT_ID"] = "Сценарий повторной продажи";
 
-$MESS["CRM_TYPE_CATEGORY_DEFAULT_NAME"] = "Общая";
+$MESS["CRM_TYPE_CATEGORY_DEFAULT_NAME"] = "Общая воронка";
 $MESS["CRM_TYPE_CATEGORY_NOT_FOUND_ERROR"] = "Воронка не найдена";
 $MESS["CRM_TYPE_CATEGORY_SETTINGS"] = "Воронки и туннели";
 $MESS["CRM_TYPE_CATEGORY_ACCESS_DENIED"] = "Доступ к воронке ограничен";
@@ -307,4 +307,3 @@ $MESS["CRM_RECURRING_LIST_TITLE_DEAL"] = "Регулярные сделки";
 $MESS["CRM_RECURRING_LIST_TITLE_INVOICE"] = "Регулярные счета";
 $MESS["CRM_RECURRING_LIST_TITLE_SMART_INVOICE"] = "Регулярные счета";
 $MESS["CRM_RECURRING_LIST_TITLE"] = "Регулярные элементы";
-

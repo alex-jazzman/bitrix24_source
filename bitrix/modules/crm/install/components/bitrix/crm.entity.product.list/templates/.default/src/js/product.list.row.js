@@ -1064,13 +1064,12 @@ export class Row
 		if (this.isDiscountPercentage())
 		{
 			preparedValue = this.parseFloat(value, this.getCommonPrecision());
-
 		}
 		else
 		{
 			preparedValue = this
-				.parseFloat(value, this.getPricePrecision())
-				.toFixed(this.getPricePrecision())
+				.parseFloat(value, this.getCalculationPricePrecision())
+				.toFixed(this.getCalculationPricePrecision())
 			;
 		}
 
@@ -1086,7 +1085,7 @@ export class Row
 
 	changeRowDiscount(value, mode = MODE_SET)
 	{
-		const preparedValue = this.parseFloat(value, this.getPricePrecision());
+		const preparedValue = this.parseFloat(value, this.getCalculationPricePrecision());
 
 		this.setRowDiscount(preparedValue, mode);
 	}
@@ -1132,7 +1131,7 @@ export class Row
 
 	changeRowSum(value, mode = MODE_SET)
 	{
-		const preparedValue = this.parseFloat(value, this.getPricePrecision());
+		const preparedValue = this.parseFloat(value, this.getCalculationPricePrecision());
 
 		this.setRowSum(preparedValue, mode);
 	}
@@ -1362,10 +1361,16 @@ export class Row
 
 	getCalculator(): ProductCalculator
 	{
+		const settings = {
+			pricePrecision: this.getCalculationPricePrecision(),
+			commonPrecision: this.getCommonPrecision(),
+			quantityPrecision: this.getQuantityPrecision(),
+		};
+
 		return this.getModel()
 			.getCalculator()
 			.setFields(this.getCalculateFields())
-			.setSettings(this.getEditor().getSettings())
+			.setSettings(settings)
 		;
 	}
 
@@ -2084,6 +2089,11 @@ export class Row
 	getPricePrecision(): number
 	{
 		return this.getEditor().getPricePrecision();
+	}
+
+	getCalculationPricePrecision(): number
+	{
+		return this.getEditor().getCalculationPricePrecision();
 	}
 
 	getQuantityPrecision(): number

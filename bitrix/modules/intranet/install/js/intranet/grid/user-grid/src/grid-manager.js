@@ -1,6 +1,7 @@
 import { Type, Loc, ajax } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { ErrorCollection } from 'ui.form-elements.field';
+import { FirstAdminGuard } from 'bitrix24.first-admin-guard';
 
 export type SetSortType = {
 	menuId: ?string,
@@ -18,17 +19,26 @@ export class GridManager
 {
 	static instances: Array<GridManager> = [];
 	#grid: BX.Main.grid;
+	#firstAdminId: ?number = undefined;
+	isCloud: boolean = false;
+	isFirstAdminConfirmationEnabled: boolean = false;
 
-	constructor(gridId: string)
+	constructor(gridId: string, isCloud: boolean = false, isFirstAdminConfirmationEnabled: boolean = false)
 	{
 		this.#grid = BX.Main.gridManager.getById(gridId)?.instance;
+		this.isCloud = isCloud;
+		this.isFirstAdminConfirmationEnabled = isFirstAdminConfirmationEnabled;
 	}
 
-	static getInstance(gridId: string): GridManager
+	static getInstance(
+		gridId: string,
+		isCloud: boolean = false,
+		isFirstAdminConfirmationEnabled: boolean = false,
+	): GridManager
 	{
 		if (!this.instances[gridId])
 		{
-			this.instances[gridId] = new GridManager(gridId);
+			this.instances[gridId] = new GridManager(gridId, isCloud, isFirstAdminConfirmationEnabled);
 		}
 
 		return this.instances[gridId];
@@ -162,31 +172,114 @@ export class GridManager
 	activityAction(params: {
 		userId: number,
 		action: string,
+		userFullName: ?string,
+		currentUserId: ?number,
 	}): void
 	{
 		const userId = params.userId ?? null;
 		const action = params.action ?? null;
 
-		if (userId)
+		if (!userId)
+		{
+			return;
+		}
+
+		if (action === 'fire' || action === 'deleteOrFire')
+		{
+			this.handleFirstAdminFireSingle(userId, params.userFullName, params.currentUserId, action);
+		}
+		else
 		{
 			this.confirmUser(action, () => {
-				const row = this.#grid.getRows().getById(params.userId);
-				row?.stateLoad();
+				this.executeUserAction(userId, action);
+			});
+		}
+	}
 
-				if (['fire', 'restore', 'deleteOrFire'].includes(action))
-				{
-					ajax.runAction(`intranet.v2.User.${action}`, {
-						data: {
-							userId,
-						},
-					}).then(() => {
-						row?.update();
-					}).catch((response) => {
-						row?.stateUnload();
-						const errors = response.errors.map((error) => error.message);
-						ErrorCollection.showSystemError(errors.join('<br>'));
-					});
-				}
+	handleFirstAdminFireSingle(userId: number, userFullName: ?string, currentUserId: ?number, action: string = 'fire'): void
+	{
+		const fallbackAction = () => {
+			this.confirmUser(action, () => {
+				this.executeUserAction(userId, action);
+			});
+		};
+
+		if (!this.isCloud || !this.isFirstAdminConfirmationEnabled)
+		{
+			fallbackAction();
+
+			return;
+		}
+
+		this.checkIfFirstAdmin(userId).then((isFirstAdmin) => {
+			if (isFirstAdmin)
+			{
+				const guard = new FirstAdminGuard(
+					userFullName || '',
+					currentUserId || 0,
+					userId,
+				);
+
+				guard.confirmAction(
+					'bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest',
+					() => {
+						ajax.runAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest', {
+							data: {
+								userId: Number(currentUserId),
+								toUser: Number(userId),
+							},
+						})
+							.then((response) => {
+								if (response.status === 'success')
+								{
+									BX.UI.Notification.Center.notify({
+										content: Loc.getMessage(
+											'INTRANET_USER_LIST_FIRST_GROUP_ACTION_FIRST_ADMIN_REQUEST_SENT',
+											{
+												'[b]': '<b>',
+												'[/b]': '</b>',
+												'[br]': '<br>',
+											},
+										),
+										autoHide: true,
+										autoHideDelay: 3000,
+										useAirDesign: true,
+									});
+								}
+							})
+							.catch(() => {
+								ErrorCollection.showSystemError('An error occurred while sending fire request');
+							});
+					},
+					() => {},
+				);
+			}
+			else
+			{
+				fallbackAction();
+			}
+		}).catch(() => {
+			fallbackAction();
+		});
+	}
+
+	executeUserAction(userId: number, action: string): void
+	{
+		const row = this.#grid.getRows().getById(userId);
+		row?.stateLoad();
+
+		if (['fire', 'restore', 'deleteOrFire'].includes(action))
+		{
+			ajax.runAction(`intranet.v2.User.${action}`, {
+				data: {
+					userId,
+				},
+			}).then(() => {
+				row?.update();
+			}).catch((response) => {
+				row?.stateUnload();
+				const errors = response.errors.map((error) => error.message);
+				ErrorCollection.showSystemError(errors.join('<br>'));
 			});
 		}
 	}
@@ -268,5 +361,30 @@ export class GridManager
 			default:
 				return null;
 		}
+	}
+
+	getFirstAdminId(): Promise
+	{
+		if (this.#firstAdminId !== undefined)
+		{
+			return Promise.resolve(this.#firstAdminId);
+		}
+
+		return ajax.runAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.getPortalCreator')
+			.then((response) => {
+				this.#firstAdminId = Number(response.data.id);
+				return this.#firstAdminId;
+			})
+			.catch(() => {
+				this.#firstAdminId = null;
+				return null;
+			});
+	}
+
+	checkIfFirstAdmin(userId: number): Promise
+	{
+		return this.getFirstAdminId().then((firstAdminId) => {
+			return firstAdminId && Number(userId) === Number(firstAdminId);
+		});
 	}
 }

@@ -1,10 +1,8 @@
-import { ReactionsSelect } from 'ui.reactions-select';
 import { ReactionPicker as ReactionsSelectV2 } from 'ui.reaction.picker';
 import { ReactionName } from 'ui.reaction.item';
 
 import { ActionByRole, UserType, EventType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { FeatureManager, Feature } from 'im.v2.lib.feature';
 
 import './selector.css';
 
@@ -111,18 +109,7 @@ export const ReactionSelector = {
 		},
 		showSelector()
 		{
-			if (FeatureManager.isFeatureAvailable(Feature.reactionsV2Available))
-			{
-				this.selector = new ReactionsSelectV2({ target: this.$refs.selector });
-			}
-			else
-			{
-				this.selector = new ReactionsSelect({
-					name: 'im-base-message-reaction-selector',
-					position: this.$refs.selector,
-				});
-			}
-
+			this.selector = new ReactionsSelectV2({ target: this.$refs.selector });
 			this.subscribeToSelectorEvents();
 			this.selector.show();
 		},

@@ -44,6 +44,7 @@ export { AnchorType } from './anchor';
 export { TranscriptionStatus } from './transcription';
 export { SpecialMentionDialogId } from './mention';
 export { DataAttribute } from './data-attributе';
+export { StickerPackType, StickerType } from './sticker';
 
 export type {
 	OnLayoutChangeEvent,

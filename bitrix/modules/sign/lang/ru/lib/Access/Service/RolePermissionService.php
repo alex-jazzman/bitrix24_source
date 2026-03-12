@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_ACCESS_ROLE_ALL'] = 'Все';
 $MESS['SIGN_ACCESS_ROLE_SELF'] = 'Свои';
 $MESS['SIGN_ACCESS_ROLE_SELF_DEPARTMENT'] = 'Свои + своего отдела';

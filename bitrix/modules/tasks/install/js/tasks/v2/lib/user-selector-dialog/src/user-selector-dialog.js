@@ -10,9 +10,12 @@ type Params = {
 	targetNode: HTMLElement,
 	ids: number[],
 	selectableIds: Set<number>,
+	onSelect?: Function,
+	onDeselect?: Function,
 	onClose: Function,
 	isMultiple: boolean,
 	withAngle: boolean,
+	enableSearch?: boolean,
 };
 
 let dialog: EntitySelectorDialog = null;
@@ -21,9 +24,12 @@ export const usersDialog = new class
 {
 	#ids: number[];
 	#selectableIds: ?Set<number>;
+	#onSelect: ?Function;
+	#onDeselect: ?Function;
 	#onClose: ?Function;
-	#withAngle: ?boolean;
 	#isMultiple: boolean = true;
+	#withAngle: ?boolean;
+	#enableSearch: boolean;
 
 	#hidePromise: Resolvable;
 
@@ -36,11 +42,20 @@ export const usersDialog = new class
 			await this.#hidePromise;
 		}
 
+		if (this.#shouldRecreateDialog(params))
+		{
+			dialog.destroy();
+			dialog = null;
+		}
+
 		this.#ids = params.ids;
 		this.#selectableIds = params.selectableIds;
 		this.#onClose = params.onClose;
-		this.#withAngle = params.withAngle;
+		this.#onSelect = params.onSelect;
+		this.#onDeselect = params.onDeselect;
+		this.#withAngle = params.withAngle ?? true;
 		this.#isMultiple = params.isMultiple ?? true;
+		this.#enableSearch = params.enableSearch ?? true;
 
 		dialog ??= this.#createDialog();
 		this.#fillDialog(this.#ids);
@@ -54,13 +69,26 @@ export const usersDialog = new class
 		return dialog;
 	}
 
+	#shouldRecreateDialog(params: Params): boolean
+	{
+		if (dialog === null)
+		{
+			return false;
+		}
+
+		return this.#isMultiple !== (params.isMultiple ?? true)
+			|| this.#enableSearch !== (params.enableSearch ?? true)
+			|| this.#withAngle !== (params.withAngle ?? true)
+		;
+	}
+
 	#createDialog(): EntitySelectorDialog
 	{
 		const restrictions = Core.getParams().restrictions;
 
 		return new EntitySelectorDialog({
 			context: 'tasks-card',
-			enableSearch: true,
+			enableSearch: this.#enableSearch,
 			entities: [
 				{
 					id: EntitySelectorEntity.User,
@@ -79,16 +107,28 @@ export const usersDialog = new class
 			preselectedItems: this.#items,
 			events: {
 				'Item:onSelect': (event: BaseEvent): void => {
+					const { item } = event.getData();
+
+					if (this.#onSelect)
+					{
+						this.#onSelect(item.getId());
+					}
+
 					if (this.#isMultiple)
 					{
 						return;
 					}
 
-					const { item } = event.getData();
-
 					dialog.selectItemsByIds(this.#mapIdsToItemIds([item.getId()]));
 
 					dialog.hide();
+				},
+				'Item:onDeselect': (event: BaseEvent): void => {
+					if (this.#onDeselect)
+					{
+						const { item } = event.getData();
+						this.#onDeselect(item.getId());
+					}
 				},
 				onLoad: (): void => {
 					this.#fillStore();

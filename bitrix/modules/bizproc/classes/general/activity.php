@@ -858,6 +858,23 @@ abstract class CBPActivity
 		return null;
 	}
 
+	public function walkRecursive(): iterable
+	{
+		yield $this;
+
+		$children = $this->collectNestedActivities();
+		if (is_array($children))
+		{
+			foreach ($children as $child)
+			{
+				foreach ($child->walkRecursive() as $descendant)
+				{
+					yield $descendant;
+				}
+			}
+		}
+	}
+
 	public function collectUsages()
 	{
 		$usages = [];
@@ -1323,20 +1340,24 @@ abstract class CBPActivity
 			return RenderedResult::makeNoRights();
 		}
 
-		$documentService = CBPRuntime::getRuntime()->getDocumentService();
-
-		if (isset($result['DOCUMENT_ID']))
+		try
 		{
-			$url = $documentService->getDocumentDetailUrl($result['DOCUMENT_ID']);
-			$name = $documentService->getDocumentName($result['DOCUMENT_ID']);
-			if (isset($result['DOCUMENT_TYPE']))
-			{
-				$type = (string)$documentService->getDocumentTypeCaption($result['DOCUMENT_TYPE']);
-				$name = $type . ': ' . $name;
-			}
+			$documentService = CBPRuntime::getRuntime()->getDocumentService();
 
-			return new RenderedResult('[URL=' . $url . ']' . $name . '[/URL]', RenderedResult::BB_CODE_RESULT);
+			if (isset($result['DOCUMENT_ID']))
+			{
+				$url = $documentService->getDocumentDetailUrl($result['DOCUMENT_ID']);
+				$name = $documentService->getDocumentName($result['DOCUMENT_ID']);
+				if (isset($result['DOCUMENT_TYPE']))
+				{
+					$type = (string)$documentService->getDocumentTypeCaption($result['DOCUMENT_TYPE']);
+					$name = $type . ': ' . $name;
+				}
+
+				return new RenderedResult('[URL=' . $url . ']' . $name . '[/URL]', RenderedResult::BB_CODE_RESULT);
+			}
 		}
+		catch (CBPArgumentNullException $e) {}
 
 		return RenderedResult::makeNoResult();
 	}

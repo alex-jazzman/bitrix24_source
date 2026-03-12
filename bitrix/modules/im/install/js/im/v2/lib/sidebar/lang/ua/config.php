@@ -1,5 +1,0 @@
-<?php
-$MESS["IM_SIDEBAR_CHANNEL_HEADER_TITLE"] = "Про канал";
-$MESS["IM_SIDEBAR_COLLAB_HEADER_TITLE"] = "Про колабу";
-$MESS["IM_SIDEBAR_COMMENTS_HEADER_TITLE"] = "Про публікацію";
-$MESS["IM_SIDEBAR_HEADER_TITLE"] = "Про чат";

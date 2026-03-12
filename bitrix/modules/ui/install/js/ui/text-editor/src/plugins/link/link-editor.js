@@ -4,6 +4,7 @@ import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { Popup, PopupTargetOptions, PopupTarget } from 'main.popup';
 
 import './link-editor.css';
+import { Outline } from 'ui.icon-set.api.core';
 
 import { sanitizeUrl } from '../../helpers/sanitize-url';
 
@@ -208,7 +209,7 @@ export class LinkEditor extends EventEmitter
 							onclick="${this.#handleSaveBtnClick.bind(this)}"
 							data-testid="save-link-btn"
 						>
-							<span class="ui-icon-set --check"></span>
+							<span class="ui-icon-set --${Outline.CHECK_L}"></span>
 						</button>
 						<button 
 							type="button" 
@@ -216,7 +217,7 @@ export class LinkEditor extends EventEmitter
 							onclick="${this.#handleCancelBtnClick.bind(this)}"
 							data-testid="cancel-link-btn"
 						>
-							<span class="ui-icon-set --cross-60"></span>
+							<span class="ui-icon-set --${Outline.CROSS_L}"></span>
 						</button>
 					</div>
 					<div class="ui-text-editor-link-preview">
@@ -227,7 +228,7 @@ export class LinkEditor extends EventEmitter
 							onclick="${this.#handleEditBtnClick.bind(this)}"
 							data-testid="edit-link-btn"
 						>
-							<span class="ui-icon-set --pencil-60"></span>
+							<span class="ui-icon-set --${Outline.EDIT_L}"></span>
 						</button>
 						<button 
 							type="button" 
@@ -235,7 +236,7 @@ export class LinkEditor extends EventEmitter
 							onclick="${this.#handleUnlinkBtnClick.bind(this)}"
 							data-testid="unlink-btn"
 						>
-							<span class="ui-icon-set --delete-hyperlink"></span>
+							<span class="ui-icon-set --${Outline.UNLINK}"></span>
 						</button>
 					</div>
 				</div>

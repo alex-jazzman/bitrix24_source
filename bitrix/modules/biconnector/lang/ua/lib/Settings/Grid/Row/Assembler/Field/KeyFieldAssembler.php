@@ -1,2 +1,0 @@
-<?php
-$MESS["BICONNECTOR_SETTINGS_GRID_RIW_ASSEMBLER_KEY_FIELD"] = "Копіювати ключ";

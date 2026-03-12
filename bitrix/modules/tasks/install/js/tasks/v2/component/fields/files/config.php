@@ -17,7 +17,6 @@ $config = [
 		'tasks.v2.component.elements.bottom-sheet',
 		'tasks.v2.component.drop-zone',
 		'main.sidepanel',
-		'tasks.v2.component.fields.group',
 		'ui.uploader.core',
 		'ui.system.chip.vue',
 		'ui.icon-set.animated',

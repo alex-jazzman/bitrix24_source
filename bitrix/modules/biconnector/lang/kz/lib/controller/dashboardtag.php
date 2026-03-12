@@ -1,3 +1,0 @@
-<?php
-$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_TAG_SAVE_ERROR_EMPTY_TAG"] = "Тег жоқ";
-$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_TAG_SAVE_ERROR_HAS_EXIST_TAG"] = "Мұндай тег қазірдің өзінде бар. Атауын өзгертіңіз";

@@ -1,0 +1,35 @@
+<?php
+
+return [
+	'extensions' => [
+		'bottom-sheet',
+		'loc',
+		'statemanager/redux/connect',
+		'statemanager/redux/slices/users/selector',
+		'statemanager/redux/slices/users/thunk',
+		'toast',
+		'tokens',
+		'type',
+		'ui-system/blocks/status-block',
+		'ui-system/form/buttons/button',
+		'ui-system/form/inputs/string',
+		'ui-system/layout/area',
+		'ui-system/layout/area-list',
+		'ui-system/layout/box',
+		'ui-system/layout/card',
+		'ui-system/layout/dialog-footer',
+		'ui-system/typography',
+		'user-profile',
+		'utils/skeleton',
+		'utils/test',
+		'utils/validation',
+	],
+	'bundle' => [
+		'./src/fire-admin-strategy',
+		'./src/request-admin-fire-strategy',
+		'./src/strategy',
+		'./src/transfer-admin-rights-strategy',
+		'./src/ui',
+		'./src/utils',
+	],
+];

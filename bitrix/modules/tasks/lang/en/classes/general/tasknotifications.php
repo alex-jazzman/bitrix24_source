@@ -1,14 +1,5 @@
 <?php
 $MESS["TASKS_IM_ANSWER_SUCCESS"] = "Comment has been published";
-$MESS["TASKS_IM_NOTIFY_REMOVE_FROM_TASK_MESSAGE_F"] = "removed you from the task \"#TASK_TITLE#\".";
-$MESS["TASKS_IM_NOTIFY_REMOVE_FROM_TASK_MESSAGE_F_PUSH"] = "#USER_NAME# removed you from the task \"#TASK_TITLE#\".";
-$MESS["TASKS_IM_NOTIFY_REMOVE_FROM_TASK_MESSAGE_M"] = "removed you from the task \"#TASK_TITLE#\".";
-$MESS["TASKS_IM_NOTIFY_REMOVE_FROM_TASK_MESSAGE_M_PUSH"] = "#USER_NAME# removed you from the task \"#TASK_TITLE#\".";
-$MESS["TASKS_IM_NOTIFY_REMOVE_FROM_TASK_MESSAGE_N"] = "removed you from the task \"#TASK_TITLE#\".";
-$MESS["TASKS_IM_NOTIFY_REMOVE_FROM_TASK_MESSAGE_PUSH_N"] = "#USER_NAME# removed you from the task \"#TASK_TITLE#\".";
-$MESS["TASKS_IM_NOTIFY_REMOVE_FROM_TASK_SUBJECT_F"] = "#AUTHOR# removed you from the task \"#TASK_TITLE#\".";
-$MESS["TASKS_IM_NOTIFY_REMOVE_FROM_TASK_SUBJECT_M"] = "#AUTHOR# removed you from the task \"#TASK_TITLE#\".";
-$MESS["TASKS_IM_NOTIFY_REMOVE_FROM_TASK_SUBJECT_N"] = "#AUTHOR# removed you from the task \"#TASK_TITLE#\".";
 $MESS["TASKS_MARK_N"] = "Negative";
 $MESS["TASKS_MARK_NONE"] = "None";
 $MESS["TASKS_MARK_P"] = "Positive";

@@ -1,0 +1,13 @@
+export const STREAM_QUALITY = {
+	HIGH: 2,
+	MEDIUM: 1,
+	LOW: 0,
+	NO_VIDEO: -1,
+}
+
+export const LOCAL_STREAM_QUALITY_HEIGHT = {
+	HIGH: 720,
+	MEDIUM: 360,
+	LOW: 180,
+	NO_VIDEO: 0,
+}

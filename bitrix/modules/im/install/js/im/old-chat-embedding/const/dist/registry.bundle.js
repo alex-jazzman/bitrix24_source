@@ -132,7 +132,7 @@ this.BX.Messenger.Embedding = this.BX.Messenger.Embedding || {};
 	  imRecentPin: 'im.recent.pin',
 	  imRecentUnread: 'im.recent.unread',
 	  imRecentHide: 'im.recent.hide',
-	  imCallGetCallLimits: 'im.call.getCallLimits',
+	  imCallGetCallLimits: 'call.CallManager.getCallLimits',
 	  imNotifyGet: 'im.notify.get',
 	  imNotifyRead: 'im.notify.read',
 	  imNotifySchemaGet: 'im.notify.schema.get',
@@ -155,7 +155,7 @@ this.BX.Messenger.Embedding = this.BX.Messenger.Embedding || {};
 	  mobileBrowserConstGet: 'mobile.browser.const.get',
 	  imRecentGet: 'im.recent.get',
 	  imRecentList: 'im.recent.list',
-	  imCallGetCallLimits: 'im.call.getCallLimits',
+	  imCallGetCallLimits: 'call.CallManager.getCallLimits',
 	  imNotifyGet: 'im.notify.get',
 	  imNotifySchemaGet: 'im.notify.schema.get'
 	});

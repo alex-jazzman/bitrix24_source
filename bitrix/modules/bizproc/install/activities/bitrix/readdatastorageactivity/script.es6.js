@@ -1,4 +1,4 @@
-import { Reflection, Type, Event, Dom, Loc } from 'main.core';
+import { Reflection, Type, Dom, Loc } from 'main.core';
 import {
 	Context,
 	ConditionGroup,
@@ -7,6 +7,9 @@ import {
 	getGlobalContext,
 	setGlobalContext,
 } from 'bizproc.automation';
+import { BaseEvent } from 'main.core.events';
+import { Dialog } from 'ui.entity-selector';
+import { StorageSelector } from 'bizproc.storage-selector';
 
 const namespace = Reflection.namespace('BX.Bizproc.Activity');
 
@@ -51,9 +54,12 @@ class ReadDataStorageActivity
 	conditionGroup: ConditionGroup | undefined;
 
 	currentStorageId: number;
+	#dialog: Dialog | null;
+	#storageUpdating: boolean = false;
 
 	constructor(options)
 	{
+		this.#dialog = Dialog.getById('entityselector_storage_id');
 		if (Type.isPlainObject(options))
 		{
 			this.documentType = options.documentType;
@@ -61,8 +67,8 @@ class ReadDataStorageActivity
 
 			if (!Type.isNil(form))
 			{
-				this.storageIdSelect = form.storage_id;
-				this.currentStorageId = Number(this.storageIdSelect?.value || 0);
+				const item = this.#dialog.selectedItems.values()?.next()?.value;
+				this.currentStorageId = item?.id || 0;
 				this.storageIdDependentElements = form.querySelectorAll(
 					'[data-role="bpa-sra-storage-id-dependent"]',
 				);
@@ -98,11 +104,6 @@ class ReadDataStorageActivity
 				.map(([storageId, fieldsMap]) => [Number(storageId), fieldsMap]),
 		);
 
-		if (!Type.isNil(options.documentType))
-		{
-			BX.Bizproc.Automation.API.documentType = options.documentType;
-		}
-
 		this.conditionGroup = new ConditionGroup(options.conditions);
 	}
 
@@ -135,43 +136,62 @@ class ReadDataStorageActivity
 
 	init(): void
 	{
-		if (this.storageIdSelect)
-		{
-			Event.bind(this.storageIdSelect, 'change', this.onStorageIdChange.bind(this));
-		}
+		this.#dialog = new StorageSelector({
+			dialogId: 'entityselector_storage_id',
+			storageCodeInput: this.#storageCodeData.element,
+			onStateChange: this.onStorageStateChange.bind(this),
+		});
+		this.#dialog.init();
 
 		if (this.#storageCodeData.element)
 		{
 			this.renderFilterFields();
-			Event.bind(this.#storageCodeData.element, 'input', this.#onStorageCodeChange.bind(this));
-			Event.bind(this.#storageCodeData.element, 'focus', this.#onStorageCodeChange.bind(this));
 		}
 	}
 
-	onStorageIdChange(): void
+	onStorageStateChange(newStorageId: number): void
 	{
-		this.currentStorageId = Number(this.storageIdSelect.value);
-		if (this.currentStorageId > 0)
-		{
-			this.#clearStorageCodeAndValue();
-		}
+		const isStorageRemoved = this.currentStorageId > 0 && newStorageId <= 0;
+		this.currentStorageId = newStorageId;
 
-		this.conditionGroup = new ConditionGroup();
-		this.returnFieldsIds = [];
-		this.render();
-	}
-
-	#onStorageCodeChange(): void
-	{
-		if (this.currentStorageId <= 0 && this.#storageCodeData.returnFieldsContainer)
+		if (isStorageRemoved && this.#storageCodeData.returnFieldsContainer)
 		{
 			if (!Type.isStringFilled(this.#storageCodeData.element.value))
 			{
 				this.#clearStorageCodeAndValue();
 			}
-
-			this.render();
 		}
+		else
+		{
+			this.conditionGroup = new ConditionGroup();
+			this.returnFieldsIds = [];
+		}
+
+		this.render();
+	}
+
+	onStorageIdChange(event: BaseEvent): void
+	{
+		if (this.#storageUpdating)
+		{
+			return;
+		}
+
+		const data = event.getData();
+		this.currentStorageId = 0;
+		if (event.type === 'bx.ui.entityselector.dialog:item:onselect')
+		{
+			this.currentStorageId = Number(data.item.id);
+		}
+
+		if (this.#storageCodeData.element)
+		{
+			this.#storageCodeData.element.value = '';
+		}
+
+		this.conditionGroup = new ConditionGroup();
+		this.returnFieldsIds = [];
+		this.render();
 	}
 
 	#clearStorageCodeAndValue()
@@ -226,7 +246,7 @@ class ReadDataStorageActivity
 
 	showFieldSelector(targetInputId)
 	{
-		BPAShowSelector(targetInputId, 'string', '');
+		window.BPAShowSelector(targetInputId, 'string', '');
 	}
 
 	renderFilterFields(): void
@@ -236,7 +256,7 @@ class ReadDataStorageActivity
 			const selector = new ConditionGroupSelector(this.conditionGroup, {
 				fields: Object.values(this.filterFieldsMap.get(this.currentStorageId) || {}),
 				fieldPrefix: this.filteringFieldsPrefix,
-				customSelector: Type.isFunction(BPAShowSelector) ? this.showFieldSelector : null,
+				customSelector: Type.isFunction(window.BPAShowSelector) ? this.showFieldSelector : null,
 				caption: {
 					head: Loc.getMessage('BIZPROC_SRA_FILTER_FIELDS_PROPERTY'),
 					collapsed: Loc.getMessage('BIZPROC_SRA_FILTER_FIELDS_COLLAPSED_TEXT'),
@@ -273,7 +293,7 @@ class ReadDataStorageActivity
 			this.returnFieldsProperty.Options = fieldOptions;
 
 			Dom.clean(this.returnFieldsMapContainer);
-			this.returnFieldsMapContainer.appendChild(
+			Dom.append(
 				BX.Bizproc.FieldType.renderControl(
 					this.documentType,
 					this.returnFieldsProperty,
@@ -281,6 +301,7 @@ class ReadDataStorageActivity
 					this.returnFieldsIds,
 					'designer',
 				),
+				this.returnFieldsMapContainer,
 			);
 		}
 	}

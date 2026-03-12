@@ -1,4 +1,4 @@
-export { ChatSearch } from './components/chat-search';
+export { RecentSectionSearch } from './components/mode/recent-section-search';
 export { ChatSearchInput } from './components/chat-search-input';
-export { AddToChat } from './components/add-to-chat';
-export { ForwardSearch } from './components/forward-search';
+export { AddToChatSearch } from './components/mode/add-to-chat-search';
+export { ForwardSearch } from './components/mode/forward-search';

@@ -6,7 +6,8 @@ import { idUtils } from 'tasks.v2.lib.id-utils';
 import { CheckListMappers } from 'tasks.v2.provider.service.check-list-service';
 import { RemindersMappers } from 'tasks.v2.provider.service.reminders-service';
 import { TemplateMappers } from 'tasks.v2.provider.service.template-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { DateStringConverter, TimeStringConverter } from 'tasks.v2.component.fields.replication';
+import type { TaskModel, TaskReplicateParams } from 'tasks.v2.model.tasks';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { UserDto } from 'tasks.v2.provider.service.user-service';
 
@@ -27,13 +28,14 @@ export function mapModelToDto(task: TaskModel): TaskDto
 		createdTs: mapValue(task.createdTs, Math.floor(task.createdTs / 1000)),
 		responsible: mapValue(responsibleIds, responsibleIds?.length < 2 ? { id: responsibleIds?.[0] ?? 0 } : user),
 		responsibleCollection: mapValue(responsibleIds, responsibleIds?.map((id: number): UserDto => ({ id }))),
+		isMultitask: responsibleIds?.length > 1,
 		deadlineTs: mapValue(task.deadlineTs, Math.floor(task.deadlineTs / 1000)),
 		deadlineAfter: mapValue(task.deadlineAfter, Math.floor(task.deadlineAfter / 1000)),
 		needsControl: Core.getParams().restrictions.control.available ? task.needsControl : false,
 		startPlanTs: mapValue(task.startPlanTs, Math.floor(task.startPlanTs / 1000)),
 		endPlanTs: mapValue(task.endPlanTs, Math.floor(task.endPlanTs / 1000)),
-		startDatePlanAfter: mapValue(task.startDatePlanAfter ?? undefined, Math.floor(task.startDatePlanAfter / 1000)),
-		endDatePlanAfter: mapValue(task.endDatePlanAfter ?? undefined, Math.floor(task.endDatePlanAfter / 1000)),
+		startDatePlanAfter: mapValue(task.startDatePlanAfter, Math.floor(task.startDatePlanAfter / 1000)),
+		endDatePlanAfter: mapValue(task.endDatePlanAfter, Math.floor(task.endDatePlanAfter / 1000)),
 		fileIds: task.fileIds,
 		checklist: task.checklist,
 		parent: mapValue(parentId, idUtils.isTemplate(parentId) ? null : { id: parentId }),
@@ -121,6 +123,7 @@ export function mapDtoToModel(taskDto: TaskDto): TaskModel
 		containsRelatedTasks: taskDto.containsRelatedTasks,
 		containsGanttLinks: taskDto.containsGanttLinks,
 		containsPlacements: taskDto.containsPlacements,
+		containsCommentFiles: taskDto.containsCommentFiles,
 		requireResult: taskDto.requireResult,
 		containsResults: taskDto.containsResults,
 		numberOfReminders: taskDto.numberOfReminders,
@@ -208,13 +211,19 @@ export function mapSliderDataToModel(data: TaskSliderData): TaskModel
 		description: Text.decode(data.DESCRIPTION),
 		fileIds: data.UF_TASK_WEBDAV_FILES,
 		parentId: Number(data.PARENT_ID) || mapValue(data.BASE_TEMPLATE, idUtils.boxTemplate(data.BASE_TEMPLATE)),
-		crmItemIds: data.UF_CRM_TASK ? [data.UF_CRM_TASK] : undefined,
+		crmItemIds: data.UF_CRM_TASK ? data.UF_CRM_TASK.split(';').filter((id) => id.trim()) : undefined,
 		email: data.UF_MAIL_MESSAGE ? mapEmail(data) : undefined,
 		tags: data.TAGS ? data.TAGS.split(',').map((tag) => tag.trim()) : undefined,
 		groupId: Number(data.GROUP_ID) || undefined,
 		flowId: Number(data.FLOW_ID) || undefined,
 		templateId: Number(data.TEMPLATE) || undefined,
 		copiedFromId: Number(data.COPY) || undefined,
+		source: mapValue(data.IM_MESSAGE_ID, {
+			type: 'chat',
+			entityId: Number(data.IM_CHAT_ID),
+			subEntityId: Number(data.IM_MESSAGE_ID),
+		}),
+		context: data.context || undefined,
 	};
 
 	return Object.fromEntries(Object.entries(task).filter(([, value]) => !Type.isNil(value)));
@@ -301,30 +310,55 @@ function mapTaskDtoToResponsibleIds(taskDto: TaskDto): number[] | undefined
 	return undefined;
 }
 
-function mapReplicateParamsToModel({ replicate, replicateParams }: TaskModel): ReplicateParamsDto | undefined
+function mapReplicateParamsToModel({ replicateParams }: TaskModel): ?TaskReplicateParams
 {
-	if (!Type.isObject(replicateParams) || !replicate)
+	if (!Type.isObject(replicateParams))
 	{
 		return null;
 	}
 
+	const startDate = DateStringConverter.parseServerDate(replicateParams.startDate);
+	const startTime = TimeStringConverter.parseServerTime(replicateParams.time);
+
+	const startTs = DateStringConverter.convertServerDateToTs(startDate, startTime);
+
+	let endTs = null;
+	if (!Type.isNil(replicateParams.endDate))
+	{
+		const endDate = DateStringConverter.parseServerDate(replicateParams.endDate);
+		endTs = DateStringConverter.convertServerDateToTs(endDate);
+	}
+
 	return {
 		...replicateParams,
+		startTs,
+		endTs,
 		yearlyMonth1: mapValue(replicateParams.yearlyMonth1, replicateParams.yearlyMonth1 + 1),
 		yearlyMonth2: mapValue(replicateParams.yearlyMonth2, replicateParams.yearlyMonth2 + 1),
 		yearlyWeekDay: mapValue(replicateParams.yearlyWeekDay, replicateParams.yearlyWeekDay + 1),
 	};
 }
 
-function mapReplicateParamsToDto({ replicate, replicateParams }: TaskModel): ReplicateParamsDto | undefined
+function mapReplicateParamsToDto({ replicateParams }: TaskModel): ReplicateParamsDto | undefined
 {
-	if (!Type.isObject(replicateParams) || !replicate)
+	if (!Type.isObject(replicateParams))
 	{
-		return null;
+		return undefined;
 	}
+
+	const startDate = DateStringConverter.convertTsToServerDateString(replicateParams.startTs);
+	const time = TimeStringConverter.convertTsToServerTimeString(replicateParams.startTs);
+
+	const endDate = Type.isNil(replicateParams.endTs)
+		? null
+		: DateStringConverter.convertTsToServerDateString(replicateParams.endTs)
+	;
 
 	return {
 		...replicateParams,
+		startDate,
+		time,
+		endDate,
 		yearlyMonth1: mapValue(replicateParams.yearlyMonth1, replicateParams.yearlyMonth1 - 1),
 		yearlyMonth2: mapValue(replicateParams.yearlyMonth2, replicateParams.yearlyMonth2 - 1),
 		yearlyWeekDay: mapValue(replicateParams.yearlyWeekDay, replicateParams.yearlyWeekDay - 1),

@@ -1,14 +1,18 @@
-import {StickerPackId} from "../../../../../../model/sticker-pack/src/types";
+import {StickerPackId, StickerPackType} from "../../../../../../model/sticker-pack/src/types";
 
 declare interface StickersEvents
 {
-	'grid:scroll-to': [packId: StickerPackId, packType: string];
+	'grid:scroll-to': [packId: StickerPackId, packType: StickerPackType];
+	'grid:scroll-t-smoothly': [packId: StickerPackId, packType: StickerPackType];
 	'grid:scroll-to-begin': [];
+	'grid:scroll-to-begin-smoothly': [];
 	'navigation:set-active-recent': [];
 	'navigation:set-active-pack': [packId: StickerPackId, packType: string];
-	'action:delete-recent-sticker': [stickerId: number, packId: StickerPackId, packType: string];
-	'action:send': [stickerId: number, packId: StickerPackId, packType: string, uri: string];
+	'action:delete-recent-sticker': [stickerId: number, packId: StickerPackId, packType: StickerPackType];
+	'action:send': [stickerId: number, packId: StickerPackId, packType: StickerPackType, uri: string];
 	'action:clear-history': [];
+	'action:create-pack': [],
+	'action:create-stickers': [packId: StickerPackId, packType: StickerPackType]
 }
 
 declare class StickerEventEmitter<T extends StickersEvents>

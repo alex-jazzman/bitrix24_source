@@ -693,10 +693,26 @@ return [
 				}
 				return new \Psr\Log\NullLogger();
 			},
-			'Permissions' => static fn() => (new \Bitrix\Crm\Service\Logger\DbLogger(
-				'Permissions',
-				(int)\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_ttl', 24*30))
-			)->setLevel(\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_level', \Psr\Log\LogLevel::INFO)),
+			'Permissions' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger(
+						'Permissions',
+						(int)\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_ttl', 24*30),
+					))
+						->setLevel(\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_level', \Psr\Log\LogLevel::INFO))
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('crm.Permissions', 9))
+							->setLevel(\Psr\Log\LogLevel::CRITICAL)
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
 			'Webform' => static function () {
 				$loggers = [
 					(new \Bitrix\Crm\Service\Logger\DbLogger('webform', 168))
@@ -778,6 +794,7 @@ return [
 				Bitrix\Crm\Integration\AiAssistant\Scenario\EmptyCrmSetupScenario::class,
 			],
 			'toolSets' => [
+				//Bitrix\Crm\Integration\AiAssistant\ToolSets\SearchToolSet::class,
 				Bitrix\Crm\Integration\AiAssistant\ToolSets\TuningToolSet::class,
 			],
 			'profileDataProviders' => [

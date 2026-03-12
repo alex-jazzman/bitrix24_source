@@ -39,6 +39,9 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 						badge: Indent.XS,
 					},
 				},
+				loader: {
+					size: 24,
+				},
 				badge: {
 					indent: Indent.XL4,
 				},
@@ -71,6 +74,9 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 						squared: Indent.M,
 						badge: Indent.XS,
 					},
+				},
+				loader: {
+					size: 24,
 				},
 				badge: {
 					indent: Indent.XL3,
@@ -106,6 +112,9 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 
 					},
 				},
+				loader: {
+					size: 24,
+				},
 				badge: {
 					indent: Indent.XL2,
 				},
@@ -139,6 +148,9 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 						badge: Indent.XS,
 					},
 				},
+				loader: {
+					size: 20,
+				},
 				badge: {
 					indent: Indent.L,
 				},
@@ -171,6 +183,9 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 						squared: Indent.XS2,
 						badge: Indent.XS,
 					},
+				},
+				loader: {
+					size: 16,
 				},
 				badge: {
 					indent: Indent.M,
@@ -239,9 +254,19 @@ jn.define('ui-system/form/buttons/button/src/size-enum', (require, exports, modu
 			return this.getValue().icon;
 		}
 
+		getLoader()
+		{
+			return this.getValue().loader;
+		}
+
 		getIconSize()
 		{
 			return this.getIcon().size;
+		}
+
+		getLoaderSize()
+		{
+			return this.getLoader().size;
 		}
 
 		getIconIndents({ badge, squared })

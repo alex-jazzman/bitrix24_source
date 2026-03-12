@@ -4,10 +4,8 @@
  * @module im/messenger/provider/pull/base/pull-handler
  */
 jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, module) => {
-	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { SyncService } = require('im/messenger/provider/services/sync/service');
-	const { SyncService: SyncServiceV2 } = require('im/messenger-v2/provider/services/sync');
+	const { SyncService } = require('im/messenger/provider/services/sync');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
@@ -47,15 +45,10 @@ jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, mod
 		}
 
 		/**
-		 * @return {SyncServiceV2|SyncService}
+		 * @return {SyncService}
 		 */
 		getSyncService()
 		{
-			if (Feature.isMessengerV2Enabled)
-			{
-				return SyncServiceV2.getInstance();
-			}
-
 			return SyncService.getInstance();
 		}
 

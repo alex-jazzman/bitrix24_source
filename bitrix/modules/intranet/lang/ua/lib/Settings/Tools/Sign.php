@@ -1,2 +1,0 @@
-<?php
-$MESS["INTRANET_SETTINGS_TOOLS_SIGN_MAIN_MSGVER_1"] = "Підпис";

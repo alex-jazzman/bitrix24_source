@@ -219,8 +219,11 @@ CJSCore::RegisterExt('disk_information_popups', [
 
 
 ServiceLocator::getInstance()->addInstanceLazy('disk.scopeTokenService', [
-	'constructor' => static function() {
-		$quickAccessConfiguration = new QuickAccess\Configuration();
+	'constructor' => static function () {
+		$quickAccessConfiguration = new QuickAccess\Configuration(
+			new QuickAccess\Config\JsonConfig(),
+			new QuickAccess\Config\SettingsConfig(),
+		);
 		$storageFactory = QuickAccess\Storage\StorageFactory::create($quickAccessConfiguration->getTokenStorage());
 		$fileInfoProviderFactory = new QuickAccess\FileInfo\ProviderFactory();
 		$fileInfoProviderFactory->register(QuickAccess\FileInfo\DiskProvider::class);

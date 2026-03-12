@@ -28,7 +28,6 @@ export const DiskIconType = Object.freeze({
 	folderCollab: 'folderCollab',
 	folder24: 'folder24',
 	folderPerson: 'folderPerson',
-	// Добавляем видео типы
 	mp4: 'mp4',
 	avi: 'avi',
 	mov: 'mov',
@@ -37,10 +36,12 @@ export const DiskIconType = Object.freeze({
 	mkv: 'mkv',
 	video: 'video',
 	file: 'file',
+	board: 'board',
 });
 
 export const TypeIcon = Object.freeze({
 	[DiskIconType.file]: Disk.EMPTY,
+	[DiskIconType.board]: Disk.BOARD,
 	[DiskIconType.png]: Disk.IMAGE,
 	[DiskIconType.jpg]: Disk.IMAGE,
 	[DiskIconType.jpeg]: Disk.IMAGE,
@@ -79,6 +80,7 @@ export const TypeIcon = Object.freeze({
 
 export const CompactTypeIcon = Object.freeze({
 	[DiskIconType.file]: Disk.EMPTY,
+	[DiskIconType.board]: DiskCompact.BOARD,
 	[DiskIconType.png]: DiskCompact.IMAGE,
 	[DiskIconType.jpg]: DiskCompact.IMAGE,
 	[DiskIconType.jpeg]: DiskCompact.IMAGE,

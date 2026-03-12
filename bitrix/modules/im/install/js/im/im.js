@@ -8058,7 +8058,7 @@ BX.MessengerChat.prototype.changeVideoconfCode = function(dialogId)
 {
 	dialogId = dialogId.toString();
 
-	BX.rest.callMethod('im.videoconf.share.change', {
+	BX.rest.callMethod('call.videoconf.share.change', {
 		DIALOG_ID: dialogId
 	}).then(function(result){
 		console.warn('rest-method result', result);

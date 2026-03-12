@@ -4,7 +4,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2024 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 use Bitrix\Main\Localization\CultureTable;
@@ -179,11 +179,11 @@ class main extends CModule
 		$eventManager->registerEventHandler('main', 'OnAfterUserTypeUpdate', 'main', '\Bitrix\Main\ORM\Entity', 'onUserTypeChange');
 		$eventManager->registerEventHandler('main', 'OnAfterUserTypeDelete', 'main', '\Bitrix\Main\ORM\Entity', 'onUserTypeChange');
 
-		if (LANGUAGE_ID == "ru")
+		if (LANGUAGE_ID == "ru" || LANGUAGE_ID == "kz")
 		{
 			COption::SetOptionString("main", "~new_license18_0_sign", "Y");
 			COption::SetOptionString("main", "vendor", "1c_bitrix");
-			COption::SetOptionString("main", "update_site", "www.1c-bitrix.ru");
+			COption::SetOptionString("main", "update_site", (LANGUAGE_ID == "ru" ? "www.1c-bitrix.ru" : "www.1c-bitrix.kz"));
 		}
 		else
 		{
@@ -970,6 +970,9 @@ class main extends CModule
 		{
 			case "ru":
 				$rss_url = "https://www.1c-bitrix.ru/about/life/news/rss/";
+				break;
+			case "kz":
+				$rss_url = "https://www.1c-bitrix.kz/about/life/news/rss/";
 				break;
 			case "de":
 				$rss_url = "https://www.bitrix.de/company/news/rss/";

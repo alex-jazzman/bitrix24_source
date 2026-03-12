@@ -1,4 +1,0 @@
-<?
-$MESS["LANDING_BLOCK_46.6.COVER_WITH_SLIDER_BGIMG--IMAGE"] = "Фонове зображення";
-$MESS["LANDING_BLOCK_46.6.COVER_WITH_SLIDER_BGIMG--VIDEO"] = "Фонове відео";
-?>

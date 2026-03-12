@@ -482,9 +482,11 @@ export const CustomMessageContent = {
 						v-if="isSmilesShown && !isProgress"
 						:options="{ 
 								bindElement: $refs['buttons-right'],
-								width: 300,
-								height: 300,
+								width: 332,
+								height: 360,
 								offsetLeft: -133,
+								padding: 0,
+								background: '#F7F9FA',
 							}"
 						@close="isSmilesShown = false"
 					>

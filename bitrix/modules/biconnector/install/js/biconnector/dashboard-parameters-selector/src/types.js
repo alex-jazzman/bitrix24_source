@@ -3,6 +3,9 @@ export type ParameterSelectorParams = {
 	scopes: string[],
 	params: string[],
 	paramList: { [paramCode: string]: Parameter },
+	activeUrlParamsSelector: boolean,
+	isNewDashboard: boolean,
+	isAllowedClearGroups: boolean,
 };
 
 export type Parameter = {

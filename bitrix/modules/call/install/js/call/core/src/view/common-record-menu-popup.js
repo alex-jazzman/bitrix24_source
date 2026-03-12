@@ -11,6 +11,7 @@ export class CommonRecordMenuPopup
 	constructor(config) {
 		this.popup = null;
 		this.popupTemplate = null;
+		this.targetContainer = config.targetContainer || document.body;
 		this.#popupType = config.popupType || 'kind'; // kind || control
 		this.#state = config.state;
 		this.#isDesktopRecord = config.isDesktopRecord;
@@ -163,7 +164,7 @@ export class CommonRecordMenuPopup
 		this.popup = new Popup({
 			className: 'call-common-record-menu-popup',
 			bindElement: copilotButton,
-			targetContainer: document.body,
+			targetContainer: this.targetContainer,
 			content: this.popupTemplate,
 			bindOptions: {
 				position: 'top',

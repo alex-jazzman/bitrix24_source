@@ -1,3 +1,0 @@
-<?php
-$MESS["CALENDAR_SHARING_MAIL_TITLE_CANCELLED"] = "Зустріч скасована";
-$MESS["CALENDAR_SHARING_MAIL_TITLE_CREATED"] = "Зустріч створена";

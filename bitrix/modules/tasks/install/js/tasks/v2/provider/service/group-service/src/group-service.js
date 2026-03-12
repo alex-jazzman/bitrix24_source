@@ -71,6 +71,26 @@ class GroupService
 		}
 	}
 
+	async getGroupByTaskId(id: number): Promise<?GroupModel>
+	{
+		try
+		{
+			const data = await apiClient.post(Endpoint.GroupGetByTaskId, { task: { id } });
+
+			const group = mapDtoToModel(data);
+
+			await Core.getStore().dispatch(`${Model.Groups}/insert`, group);
+
+			return group;
+		}
+		catch (error)
+		{
+			console.error('GroupService: getGroupByTaskId error', error);
+
+			return null;
+		}
+	}
+
 	#scrumInfoPromises: { [taskId: number | string]: Promise } = {};
 
 	async getScrumInfo(taskId: number): Promise<void>
@@ -106,6 +126,7 @@ class GroupService
 
 	setHasScrumInfo(taskId: number): boolean
 	{
+		taskService.updateStoreTask(taskId, { epicId: 0, storyPoints: '' });
 		this.#scrumInfoPromises[taskId] = new Resolvable();
 		this.#scrumInfoPromises[taskId].resolve();
 	}

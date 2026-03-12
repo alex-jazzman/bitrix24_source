@@ -14,7 +14,6 @@ import {
 	useBlockState,
 	useHighlightedBlocks,
 } from '../../composables';
-import type { DiagramBlock } from '../../types';
 
 // @vue/component
 export const ResizableBlock = {

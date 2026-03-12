@@ -9,6 +9,3 @@ $MESS["CRM_ADS_RTG_INTEREST"] = "Интересы";
 $MESS["CRM_ADS_RTG_INTEREST_RECOMMENDATION"] = "Рекомендуем добавить много интересов, чтобы охватить как можно большую аудиторию";
 $MESS["CRM_ADS_RTG_POTENTIAL_AUDIENCE"] = "Потенциальный охват";
 $MESS["CRM_ADS_RTG_NOT_AVAILABLE"] = "Не доступно";
-
-
-

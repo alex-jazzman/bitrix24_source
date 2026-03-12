@@ -1,4 +1,0 @@
-<?php
-$MESS["DISK_UNIFIED_LINK_ACCESS_LEVEL_DENIED"] = "Доступ заборонено";
-$MESS["DISK_UNIFIED_LINK_ACCESS_LEVEL_EDIT"] = "Редагування";
-$MESS["DISK_UNIFIED_LINK_ACCESS_LEVEL_READ"] = "Читання";

@@ -5,8 +5,6 @@
 }
 
 .ui-block-diagram-canvas-map__block {
-	fill: var(--ui-color-palette-gray-15);
-	color: var(--ui-color-palette-gray-15);
 	stroke: none;
 }
 

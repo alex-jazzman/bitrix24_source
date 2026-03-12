@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_CMP_MASTER_TPL_HEADER'] = 'Новый документ';
 $MESS['SIGN_CMP_MASTER_TPL_SUB_HEADER'] = 'Пройдите 3 простых шага, чтобы отправить документ на подпись';
 $MESS['SIGN_CMP_MASTER_TPL_STEP_LOAD_FILE_TITLE'] = 'Документ';

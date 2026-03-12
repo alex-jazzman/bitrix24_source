@@ -1,9 +1,6 @@
-import { Dom, Type } from 'main.core';
+import { Dom } from 'main.core';
 import { ButtonIcon } from 'ui.vue3.components.button';
 import { SplitButton as UiSplitButton } from 'ui.buttons';
-
-import { Set, Outline } from 'ui.icon-set.api.core';
-const allIcons = { ...ButtonIcon, ...Set, ...Outline };
 
 // @vue/component
 export const SplitButton = {
@@ -18,6 +15,10 @@ export const SplitButton = {
 			default: '',
 		},
 		icon: {
+			type: String,
+			default: null,
+		},
+		style: {
 			type: String,
 			default: null,
 		},
@@ -63,6 +64,10 @@ export const SplitButton = {
 			},
 			immediate: true,
 		},
+		style(style): void
+		{
+			this.button.setStyle(style);
+		},
 	},
 	created(): void
 	{
@@ -70,6 +75,7 @@ export const SplitButton = {
 			id: this.id,
 			text: this.text,
 			useAirDesign: true,
+			style: this.style,
 			onclick: () => {
 				this.$emit('click');
 			},

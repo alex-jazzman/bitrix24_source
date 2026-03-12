@@ -1,7 +1,7 @@
 import { Core } from 'im.v2.application.core';
 
 import type { ImModelRecentItem } from 'im.v2.model';
-import type { MessageAddParams } from 'im.v2.provider.pull';
+import type { MessageAddParams } from '../../types/message';
 
 export function buildRecentItem(params: MessageAddParams): ImModelRecentItem
 {

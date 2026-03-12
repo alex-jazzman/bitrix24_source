@@ -37,6 +37,7 @@ use Bitrix\Main\Localization\Loc;
 		counters: <?= CUtil::PhpToJSObject($arResult['COUNTERS']) ?>,
 		signedParameters: <?=CUtil::PhpToJSObject($this->getComponent()->getSignedParameters()) ?>,
 		tasksChatUri: '<?= CUtil::JSEscape($arParams['TASKS_CHAT_URI'] ?? '') ?>',
+		viewState: '<?= CUtil::JSEscape($arParams['VIEW_STATE'] ?? '') ?>',
 	});
 
 	counters.render();

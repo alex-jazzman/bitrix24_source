@@ -81,6 +81,7 @@ export const ParentTask = {
 			parentTaskDialog.show({
 				targetNode: this.$refs.add.$el,
 				taskId: this.taskId,
+				withTemplates: !this.task.replicate && !this.task.isForNewUser,
 			});
 		},
 		async handleRemoveParentTask(): void
@@ -89,13 +90,13 @@ export const ParentTask = {
 		},
 	},
 	template: `
-		<div class="tasks-field-parent-task" :data-task-id="taskId" :data-task-field-id="parentTaskMeta.id">
+		<div class="tasks-field-parent-task print-no-box-shadow" :data-task-id="taskId" :data-task-field-id="parentTaskMeta.id">
 			<div class="tasks-field-parent-task-title">
 				<div class="tasks-field-parent-task-main" :class="{ '--readonly': true }">
 					<BIcon :name="Outline.SUBTASK"/>
 					<TextMd accent>{{ title }}</TextMd>
 				</div>
-				<div v-if="task.rights.edit" v-hint="tooltip" class="tasks-field-parent-task-edit-container">
+				<div v-if="task.rights.edit" v-hint="tooltip" class="tasks-field-parent-task-edit-container print-ignore">
 					<BIcon
 						class="tasks-field-parent-task-icon"
 						:name="Outline.PLUS_L"

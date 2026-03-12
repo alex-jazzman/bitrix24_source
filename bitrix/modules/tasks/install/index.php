@@ -231,6 +231,9 @@ class tasks extends CModule
 		// onboarding
 		$this->registerOnboardingEvents();
 
+		// bizproc
+		$this->registerBizprocEvents();
+
 		$eventManager->registerEventHandler(
 			'baas',
 			'onPackagePurchased',
@@ -862,6 +865,9 @@ class tasks extends CModule
 		// onboarding
 		$this->unRegisterOnboardingEvents();
 
+		//bizproc
+		$this->unRegisterBizprocEvents();
+
 		$eventManager->unRegisterEventHandler(
 			'baas',
 			'onPackagePurchased',
@@ -1321,6 +1327,15 @@ class tasks extends CModule
 			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
 			toMethod: 'dispatch',
 		);
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\AfterUsersAddEvent */
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterUsersAddExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
 	}
 
 	private function unRegisterImIntegration(): void
@@ -1387,6 +1402,41 @@ class tasks extends CModule
 			eventType: 'OnAfterReadAllChatsByTypeTasksTask',
 			toModuleId: 'tasks',
 			toClass: 'Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher',
+			toMethod: 'dispatch',
+		);
+
+		/** @see Bitrix\Im\V2\Chat\ExternalChat\Event\BeforeUsersAddEvent */
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnAfterUsersAddExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: 'Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher',
+			toMethod: 'dispatch',
+		);
+	}
+
+	private function registerBizprocEvents(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onGetDocumentType',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
+			toMethod: 'dispatch',
+		);
+	}
+
+	private function unRegisterBizprocEvents(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onGetDocumentType',
+			toModuleId: 'tasks',
+			toClass: \Bitrix\Tasks\V2\Internal\EventDispatcher\EventDispatcher::class,
 			toMethod: 'dispatch',
 		);
 	}

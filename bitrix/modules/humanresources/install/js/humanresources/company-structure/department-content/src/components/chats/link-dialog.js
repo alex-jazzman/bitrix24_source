@@ -1,14 +1,13 @@
+import type { TabOptions } from 'ui.entity-selector';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import {
 	ManagementDialog,
 	CommunicationsTypeDict,
 	getCommunicationsRecentTabOptions,
 } from 'humanresources.company-structure.structure-components';
-import type { TabOptions } from 'ui.entity-selector';
 import { ChildrenModeSelector } from './children-mode-selector';
-import { DepartmentAPI } from '../../api';
-import { DepartmentContentActions } from '../../actions';
 import { DialogDictionary, DialogDictionaryItem } from './dictionaries/dialog-dictionary';
+import { DepartmentAPI } from '../../api';
 
 // @vue/component
 export const LinkDialog = {
@@ -65,7 +64,14 @@ export const LinkDialog = {
 		dialogEntities(): Object[]
 		{
 			const entity = this.dictionary.getDialogEntity();
-			entity.options.excludeIds = this.communications.map((item) => item.id);
+			if (this.communicationType === CommunicationsTypeDict.collab)
+			{
+				entity.options['!projectId'] = this.communications.map((item) => item.id);
+			}
+			else
+			{
+				entity.options.excludeIds = this.communications.map((item) => item.id);
+			}
 
 			return [entity];
 		},

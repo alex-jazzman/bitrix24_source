@@ -21,6 +21,7 @@ return [
 		'type',
 		'tokens',
 		'ui-system/popups/aha-moment',
+		'ui-system/form/buttons/floating-action-button',
 		'utils/logger',
 	],
 	'bundle' => [

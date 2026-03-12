@@ -1,0 +1,44 @@
+.bx-im-sticker-pack__container {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 8px;
+	width: 356px;
+}
+
+.bx-im-sticker-pack__header {
+	padding-top: 8px;
+	display: flex;
+	justify-content: space-between;
+}
+
+.bx-im-sticker-pack__header-title {
+	padding: 12px 0 6px 18px;
+	display: flex;
+	align-items: center;
+	font: var(--im-font-size-sm) var(--im-font-family-system);
+	line-height: 17px;
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-base-4);
+}
+
+.bx-im-sticker-pack__header-actions {
+	margin: 8px 12px 8px 0;
+	cursor: pointer;
+}
+
+.bx-im-sticker-pack__stickers {
+	margin-left: 4px;
+}
+
+.bx-im-sticker-pack__container .bx-im-sticker-pack__header-shimmer {
+	height: 12px;
+	width: 280px;
+	margin: 12px 0 6px 14px;
+	padding: 0;
+	border-radius: 4px;
+}
+
+.bx-im-sticker-item__shimmer {
+	width: 52px;
+	height: 52px;
+}

@@ -160,7 +160,14 @@ export class BaseTour implements TourInterface
 		if (!this.#guideBindElement || force)
 		{
 			this.#guideBindElement = document.querySelector(`[data-id="${this.#params.itemCode}"]`);
-			if (this.#guideBindElement.offsetTop)
+
+			const isVisible = Boolean(
+				this.#guideBindElement.offsetWidth
+				|| this.#guideBindElement.offsetHeight
+				|| this.#guideBindElement.getClientRects().length > 0,
+			);
+
+			if (!isVisible)
 			{
 				this.#guideBindElement = this.#guideBindElement.parentElement.nextElementSibling;
 			}

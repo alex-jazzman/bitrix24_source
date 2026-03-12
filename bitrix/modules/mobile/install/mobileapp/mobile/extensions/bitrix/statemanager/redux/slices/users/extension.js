@@ -14,6 +14,7 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		id,
 		login,
 		isAdmin,
+		isRootAdmin,
 		isCollaber,
 		isExtranet,
 		name,
@@ -31,6 +32,7 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		id: Number(id),
 		login,
 		isAdmin,
+		isRootAdmin,
 		isCollaber,
 		isExtranet,
 		name,
@@ -118,6 +120,13 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 					if (Type.isArrayFilled(users))
 					{
 						usersAdapter.upsertMany(state, users.map((user) => prepareUser(user)));
+					}
+				})
+				.addCase('intranet:employees/reinviteWithChangeContact/fulfilled', (state, action) => {
+					const { user = {} } = action.payload || {};
+					if (user?.id)
+					{
+						usersAdapter.upsertOne(state, prepareUser(user));
 					}
 				})
 				.addCase('tasks:tasks/updateRelatedTasks/fulfilled', (state, action) => {

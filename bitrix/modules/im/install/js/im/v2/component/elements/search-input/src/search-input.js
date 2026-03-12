@@ -40,7 +40,7 @@ export const SearchInput = {
 			default: null,
 		},
 	},
-	emits: ['queryChange', 'inputFocus', 'inputBlur', 'keyPressed', 'close', 'closeByEsc'],
+	emits: ['queryChange', 'inputFocus', 'keyPressed', 'close', 'closeByEsc'],
 	data(): JsonObject
 	{
 		return {

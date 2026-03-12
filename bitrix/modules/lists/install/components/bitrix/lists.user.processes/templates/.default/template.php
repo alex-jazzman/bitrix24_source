@@ -69,6 +69,10 @@ if(!IsModuleInstalled("intranet"))
 
 	$APPLICATION->SetAdditionalCSS("/bitrix/js/lists/css/intranet-common.css");
 }
+else
+{
+	\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
+}
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
 	"FILTER_ID" => $arResult["FILTER_ID"],

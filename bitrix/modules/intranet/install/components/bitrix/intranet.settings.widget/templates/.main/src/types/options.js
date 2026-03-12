@@ -9,7 +9,6 @@ export type SettingsWidgetHoldingOptions = {
 
 export type MainPageConfiguration = {
 	isAvailable?: boolean,
-	isNew?: boolean,
 	settingsPath?: string,
 }
 

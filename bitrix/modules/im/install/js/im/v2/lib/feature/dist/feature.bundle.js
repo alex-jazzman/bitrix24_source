@@ -82,7 +82,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  sidebarBriefs: 'sidebarBriefs',
 	  zoomActive: 'zoomActive',
 	  zoomAvailable: 'zoomAvailable',
-	  giphyAvailable: 'giphyAvailable',
 	  collabAvailable: 'collabAvailable',
 	  collabCreationAvailable: 'collabCreationAvailable',
 	  enabledCollabersInvitation: 'enabledCollabersInvitation',
@@ -92,9 +91,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  documentSignAvailable: 'documentSignAvailable',
 	  intranetInviteAvailable: 'intranetInviteAvailable',
 	  voteCreationAvailable: 'voteCreationAvailable',
-	  defaultTabCopilotAvailable: 'defaultTabCopilotAvailable',
 	  messagesAutoDeleteEnabled: 'messagesAutoDeleteEnabled',
-	  isNotificationsStandalone: 'isNotificationsStandalone',
 	  isAIModelChangeAllowed: 'isCopilotSelectModelAvailable',
 	  teamsInStructureAvailable: 'teamsInStructureAvailable',
 	  isDesktopRedirectAvailable: 'isDesktopRedirectAvailable',
@@ -105,11 +102,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  isTasksRecentListAvailable: 'isTasksRecentListAvailable',
 	  unreadRecentModeAvailable: 'unreadRecentModeAvailable',
 	  isCopilotReasoningAvailable: 'isCopilotReasoningAvailable',
-	  reactionsV2Available: 'isMultipleReactionsAvailable',
 	  aiAssistantMcpSelectorAvailable: 'aiAssistantMcpSelectorAvailable',
-	  mentionAllAvailable: 'mentionAllAvailable',
 	  videoNoteTranscriptionAvailable: 'videoNoteTranscriptionAvailable',
-	  stickersAvailable: 'stickersAvailable'
+	  chatSharedLinkAvailable: 'chatSharingLinkAvailable',
+	  isCopilotFileUploadAvailable: 'isCopilotFileUploadAvailable'
 	};
 	const FeatureManager = {
 	  chatHistory: ChatHistoryManager,

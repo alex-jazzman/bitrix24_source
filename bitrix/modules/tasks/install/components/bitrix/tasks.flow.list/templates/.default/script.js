@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,tasks_flow_editForm,ui_dialogs_messagebox,ui_infoHelper,pull_queuemanager,tasks_flow_teamPopup,tasks_flow_taskQueue,tasks_clue,ui_manual,ui_notification,main_core_events,main_sidepanel,main_core,main_popup,tasks_flow_copilotAdvice) {
+(function (exports,tasks_flow_editForm,ui_dialogs_messagebox,ui_infoHelper,pull_queuemanager,tasks_flow_teamPopup,tasks_flow_taskQueue,tasks_clue,ui_manual,ui_notification,main_core_events,main_core,main_popup,tasks_flow_copilotAdvice) {
 	'use strict';
 
 	let _ = t => t,
@@ -1810,8 +1810,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _dashboards = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dashboards");
 	var _target = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("target");
 	var _getMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMenuItems");
+	var _openDashboard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openDashboard");
+	var _showTariffSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showTariffSlider");
 	class BIAnalytics {
 	  constructor(data) {
+	    Object.defineProperty(this, _showTariffSlider, {
+	      value: _showTariffSlider2
+	    });
+	    Object.defineProperty(this, _openDashboard, {
+	      value: _openDashboard2
+	    });
 	    Object.defineProperty(this, _getMenuItems, {
 	      value: _getMenuItems2
 	    });
@@ -1851,7 +1859,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  openFirstDashboard() {
 	    const dashboard = babelHelpers.classPrivateFieldLooseBase(this, _dashboards)[_dashboards][0];
 	    if (dashboard) {
-	      window.open(dashboard.url, '_blank');
+	      babelHelpers.classPrivateFieldLooseBase(this, _openDashboard)[_openDashboard](dashboard);
 	    }
 	  }
 	}
@@ -1862,11 +1870,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      tabId: dashboard.id,
 	      text: dashboard.title,
 	      onclick: () => {
-	        window.open(dashboard.url, '_blank');
+	        babelHelpers.classPrivateFieldLooseBase(this, _openDashboard)[_openDashboard](dashboard);
 	      }
 	    });
 	  });
 	  return menuItems;
+	}
+	function _openDashboard2(dashboard) {
+	  if (dashboard.isLocked) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _showTariffSlider)[_showTariffSlider]();
+	  } else {
+	    window.open(dashboard.url, '_blank');
+	  }
+	}
+	function _showTariffSlider2() {
+	  if (top.BX && top.BX.UI && top.BX.UI.InfoHelper) {
+	    top.BX.UI.InfoHelper.show('limit_crm_BI_constructor');
+	  }
 	}
 
 	let _$1 = t => t,
@@ -1900,7 +1920,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 					</span>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage(messages.titleCode), main_core.Loc.getMessage(messages.descriptionCode), main_core.Loc.getMessage('TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_SHOW_EXAMPLE'));
+		`), main_core.Loc.getMessage(messages.titleCode, {
+	      '#COPILOT_NAME#': tasks_flow_copilotAdvice.CopilotAdvice.getCopilotName()
+	    }), main_core.Loc.getMessage(messages.descriptionCode, {
+	      '#COPILOT_NAME#': tasks_flow_copilotAdvice.CopilotAdvice.getCopilotName()
+	    }), main_core.Loc.getMessage('TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_SHOW_EXAMPLE'));
 	    const popup = new main_popup.Popup({
 	      bindElement,
 	      content: popupContent,
@@ -1927,26 +1951,26 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      case CopilotAdviceErrorTypes.UnexpectedError:
 	        {
 	          titleCode = 'TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_TITLE';
-	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_DESCRIPTION';
+	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_DESCRIPTION_MSGVER_1';
 	          break;
 	        }
 	      case CopilotAdviceErrorTypes.AdviceFetching:
 	        {
-	          titleCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_TITLE';
+	          titleCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_TITLE_MSGVER_1';
 	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_DESCRIPTION';
 	          break;
 	        }
 	      case CopilotAdviceErrorTypes.RateLimit:
 	        {
-	          titleCode = 'TASKS_FLOW_LIST_COPILOT_RATE_LIMIT_POPUP_TITLE';
+	          titleCode = 'TASKS_FLOW_LIST_COPILOT_RATE_LIMIT_POPUP_TITLE_MSGVER_1';
 	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_RATE_LIMIT_POPUP_DESCRIPTION';
 	          break;
 	        }
 	      case CopilotAdviceErrorTypes.NotEnoughTasks:
 	      default:
 	        {
-	          titleCode = 'TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE';
-	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_DESCRIPTION';
+	          titleCode = 'TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE_MSGVER_1';
+	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_DESCRIPTION_MSGVER_1';
 	          break;
 	        }
 	    }
@@ -1963,5 +1987,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 	exports.CopilotAdviceErrorPopup = CopilotAdviceErrorPopup;
 	exports.CopilotAdviceErrorTypes = CopilotAdviceErrorTypes;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Tasks.Flow,BX.UI.Dialogs,BX.UI,BX.Pull,BX.Tasks.Flow,BX.Tasks.Flow,BX.Tasks,BX.UI.Manual,BX,BX.Event,BX.SidePanel,BX,BX.Main,BX.Tasks.Flow));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Tasks.Flow,BX.UI.Dialogs,BX.UI,BX.Pull,BX.Tasks.Flow,BX.Tasks.Flow,BX.Tasks,BX.UI.Manual,BX,BX.Event,BX,BX.Main,BX.Tasks.Flow));
 //# sourceMappingURL=script.js.map

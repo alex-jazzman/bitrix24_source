@@ -37,26 +37,35 @@ export class ResultsPullHandler extends BasePullHandler
 	};
 
 	#handleResultUpdate = async (data): void => {
-		const result: ResultDto = data.result;
-		const { id, fileIds, author } = result;
+		const resultDto: ResultDto = data.result;
+
+		const { id, author } = resultDto;
 
 		if (!resultService.hasStoreResult(id) || author.id === this.#currentUserId)
 		{
 			return;
 		}
 
-		const updatedResult = ResultMappers.mapDtoToModel(result);
+		const result = ResultMappers.mapDtoToModel(resultDto);
+		const resultBefore = resultService.getStoreResult(id);
 
-		await resultService.updateStoreResult(id, updatedResult);
+		await resultService.updateStoreResult(id, result);
 
-		await fileService.get(id, EntityTypes.Result).sync(fileIds);
+		if (resultBefore.fileIds)
+		{
+			const removedFiles = resultBefore.fileIds.filter((it) => !result.fileIds || !result.fileIds.includes(it));
+
+			await fileService.get(id, EntityTypes.Result).list(result.fileIds);
+
+			fileService.get(id, EntityTypes.Result).remove(removedFiles);
+		}
 	};
 
 	#handleResultDelete = (data): void => {
 		const result: ResultDto = data.result;
 		const { id, taskId } = result;
 
-		if (!taskService.hasStoreTask(taskId) || !resultService.hasStoreResult(taskId))
+		if (!taskService.hasStoreTask(taskId) || !resultService.hasStoreResult(id))
 		{
 			return;
 		}

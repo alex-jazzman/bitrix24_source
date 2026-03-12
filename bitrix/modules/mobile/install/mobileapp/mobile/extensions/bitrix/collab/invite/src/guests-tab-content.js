@@ -522,7 +522,7 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 			}
 
 			const inviteByPhone = !isNil(usersToInvite[0]?.phone) || !isNil(alreadyInvitedUsers[0]?.phone);
-			const invitedUsersIds = inviteResponse.data;
+			const invitedUsersIds = (inviteResponse.data ?? []).map((user) => user.id);
 			this.props.analytics.sendInviteEvent(inviteByPhone, invitedUsersIds);
 			if (alreadyInvitedUsers.length === 0)
 			{

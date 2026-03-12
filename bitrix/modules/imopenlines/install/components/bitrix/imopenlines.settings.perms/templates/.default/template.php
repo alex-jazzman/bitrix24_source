@@ -14,6 +14,7 @@ use Bitrix\Imopenlines\Limit;
 	'ui.alerts',
 	'access',
 	'sidepanel',
+	'intranet.old-interface.intranet-common',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');

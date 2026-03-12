@@ -176,6 +176,7 @@ class voximplant extends \CModule
 		}
 		\CAgent::AddAgent("\\Bitrix\\Voximplant\\Agent\\CallCleaner::finishStaleCalls();", "voximplant", "N", 86400);
 		\CAgent::AddAgent("\\Bitrix\\Voximplant\\Agent\\CallCleaner::deleteOldCalls();", "voximplant", "N", 864000);
+		\CAgent::AddAgent('\\Bitrix\\Voximplant\\Agent\\VerificationChecker::checkInternodWarning();', 'voximplant', 'N', 86400);
 
 		$this->InstallDefaultData();
 		$this->InstallUserFields();
@@ -619,9 +620,7 @@ class voximplant extends \CModule
 		$eventManager->unRegisterEventHandler('disk', 'onAfterDeleteFile', 'voximplant', '\Bitrix\Voximplant\Integration\Disk\EventHandler', 'onAfterDeleteFile');
 		$eventManager->unRegisterEventHandler('main', 'OnFileDelete', 'voximplant', '\Bitrix\Voximplant\Integration\Main\EventHandler', 'onFileDelete');
 
-		\CAgent::RemoveAgent("CVoxImplantPhone::SynchronizeUserPhones();", "voximplant");
-		\CAgent::RemoveAgent("\\Bitrix\\Voximplant\\Agent\\CallCleaner::finishStaleCalls();", "voximplant");
-		\CAgent::RemoveAgent("\\Bitrix\\Voximplant\\Agent\\CallCleaner::deleteOldCalls();", "voximplant");
+		\CAgent::RemoveModuleAgents("voximplant");
 
 		$this->UnInstallUserFields($arParams);
 

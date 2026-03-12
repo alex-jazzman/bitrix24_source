@@ -1,0 +1,6 @@
+<?php
+$MESS["CRM_COMPLEX_ACTIVITY_LEAD_DESCRIPTION"] = "Creates and modifies leads, assigns responsible persons, changes stage, and other lead related actions.";
+$MESS["CRM_COMPLEX_ACTIVITY_LEAD_DESCRIPTION_NODE_ACTION_CHANGE"] = "Chenge lead";
+$MESS["CRM_COMPLEX_ACTIVITY_LEAD_DESCRIPTION_NODE_ACTION_CREATE"] = "Create lead";
+$MESS["CRM_COMPLEX_ACTIVITY_LEAD_DESCRIPTION_NODE_ACTION_DELETE"] = "Delete lead";
+$MESS["CRM_COMPLEX_ACTIVITY_LEAD_NAME"] = "Lead";

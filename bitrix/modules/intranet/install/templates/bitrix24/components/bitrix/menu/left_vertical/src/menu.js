@@ -1367,14 +1367,6 @@ export default class Menu
 		return this.isDefaultTheme() ? 0 : 9;
 	}
 
-	// region Public functions
-	initPagetitleStar(): boolean
-	{
-		return ItemUserFavorites.isCurrentPageStandard(
-			ItemUserFavorites.getActiveTopMenuItem()
-		);
-	}
-
 	getStructureForHelper()
 	{
 		const items = {menu: {}};

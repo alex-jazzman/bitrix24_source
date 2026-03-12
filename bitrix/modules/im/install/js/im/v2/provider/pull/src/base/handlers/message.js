@@ -1,3 +1,4 @@
+import { Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { CopilotManager } from 'im.v2.lib.copilot';
@@ -56,6 +57,7 @@ export class MessagePullHandler
 		this.#setCommentInfo(params);
 		this.#setCopilotData(params);
 		this.#setMessagesAutoDeleteConfig(params);
+		this.#setStickers(params);
 
 		const messageWithTemplateId = this.#store.getters['messages/isInChatCollection']({
 			messageId: params.message.templateId,
@@ -326,11 +328,13 @@ export class MessagePullHandler
 			messages,
 			files,
 			users,
+			stickers,
 		} = params.message.additionalEntities;
 		const newMessages = [...messages, ...additionalMessages];
-		this.#store.dispatch('messages/store', newMessages);
-		this.#store.dispatch('files/set', files);
-		this.#store.dispatch('users/set', users);
+		void this.#store.dispatch('messages/store', newMessages);
+		void this.#store.dispatch('files/set', files);
+		void this.#store.dispatch('users/set', users);
+		void this.#store.dispatch('stickers/set', stickers);
 	}
 
 	#setCommentInfo(params: MessageAddParams): void
@@ -507,6 +511,19 @@ export class MessagePullHandler
 	{
 		const { messagesAutoDeleteConfigs } = params;
 		void this.#store.dispatch('chats/autoDelete/set', messagesAutoDeleteConfigs);
+	}
+
+	#setStickers(params: MessageAddParams)
+	{
+		const hasMessageSticker = Type.isPlainObject(params.message.params.STICKER_PARAMS);
+		if (hasMessageSticker)
+		{
+			void this.#store.dispatch('stickers/messages/set', [{
+				messageId: params.message.id,
+				...params.message.params.STICKER_PARAMS,
+			}]);
+			void this.#store.dispatch('stickers/set', params.stickers);
+		}
 	}
 
 	#prepareDeleteMessageParams(

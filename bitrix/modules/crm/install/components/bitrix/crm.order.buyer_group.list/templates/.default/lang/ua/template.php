@@ -1,6 +1,0 @@
-<?
-$MESS["CRM_ORDER_BUYER_GROUP_LIST_DELETE_GROUP_TITLE"] = "Видалити групу";
-$MESS["CRM_ORDER_BUYER_GROUP_LIST_DELETE"] = "Видалити";
-$MESS["CRM_ORDER_BUYER_GROUP_LIST_DELETE_CONFIRM"] = "Ви впевнені, що хочете видалити?";
-$MESS["CRM_ORDER_BUYER_GROUP_LIST_BTN_ADD"] = "Додати групу";
-?>

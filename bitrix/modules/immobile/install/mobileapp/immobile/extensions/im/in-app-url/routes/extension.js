@@ -12,31 +12,21 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		ComponentCode,
 		FileType,
 		OpenDialogContextType,
-		NavigationTabByComponent,
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
-	const { getApiVersion } = require('im/messenger/api/api-version');
 
 	const openlinesPrefix = 'imol|';
 
-	const checkIsMessengerFamilyComponent = () => {
-		const componentCode = BX.componentParameters.get('COMPONENT_CODE', '');
-		const messengerComponentCodes = [
-			ComponentCode.imMessenger,
-			ComponentCode.imCopilotMessenger,
-			ComponentCode.imChannelMessenger,
-		];
-
-		return messengerComponentCodes.includes(componentCode);
+	const checkIsMessengerComponent = () => {
+		return BX.componentParameters.get('COMPONENT_CODE', '') === ComponentCode.imMessenger;
 	};
 
 	/**
-	 * @param componentCode
 	 * @param {string} dialogId
 	 * @param {string|null} messageId
 	 */
-	const openDialog = async (componentCode, dialogId, messageId = null) => {
+	const openDialog = async (dialogId, messageId = null) => {
 		const openDialogEvent = {
 			dialogId,
 			context: OpenDialogContextType.link,
@@ -48,33 +38,14 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			openDialogEvent.withMessageHighlight = true;
 		}
 
-		const apiVersion = await getApiVersion();
-		if (apiVersion === 1)
-		{
-			MessengerEmitter.emit(
-				EventType.navigation.broadCastEventCheckTabPreload,
-				{
-					broadCastEvent: EventType.messenger.openDialog,
-					toTab: NavigationTabByComponent[componentCode],
-					data: {
-						...openDialogEvent,
-					},
-				},
-				ComponentCode.imNavigation,
-			);
-
-			return;
-		}
-
 		MessengerEmitter.emit(EventType.messenger.openDialog, openDialogEvent);
 	};
 
 	/**
-	 * @param componentCode
 	 * @param {string} dialogId
 	 * @param {string} context
 	 */
-	const openDialogWithBotContext = async (componentCode, dialogId, context) => {
+	const openDialogWithBotContext = async (dialogId, context) => {
 		const openDialogEvent = {
 			dialogId,
 			context: OpenDialogContextType.link,
@@ -83,24 +54,6 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		if (Type.isStringFilled(context))
 		{
 			openDialogEvent.botContextData = context;
-		}
-
-		const apiVersion = await getApiVersion();
-		if (apiVersion === 1)
-		{
-			BX.postComponentEvent(
-				EventType.navigation.broadCastEventWithTabChange,
-				[{
-					broadCastEvent: EventType.messenger.openDialog,
-					toTab: NavigationTabByComponent[componentCode],
-					data: {
-						...openDialogEvent,
-					},
-				}],
-				ComponentCode.imNavigation,
-			);
-
-			return;
 		}
 
 		MessengerEmitter.emit(EventType.messenger.openDialog, openDialogEvent);
@@ -150,7 +103,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			openDialogEvent.withMessageHighlight = true;
 		}
 
-		MessengerEmitter.emit(EventType.messenger.openLine, openDialogEvent, ComponentCode.imMessenger);
+		MessengerEmitter.emit(EventType.messenger.openLine, openDialogEvent);
 	};
 
 	const openLineBySessionId = (sessionId, fallbackUrl) => {
@@ -220,7 +173,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 	};
 
 	const openMessageGallery = async (messageId) => {
-		if (!checkIsMessengerFamilyComponent())
+		if (!checkIsMessengerComponent())
 		{
 			return;
 		}
@@ -253,7 +206,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 	};
 
 	const openFile = async (fileId) => {
-		if (!checkIsMessengerFamilyComponent())
+		if (!checkIsMessengerComponent())
 		{
 			return;
 		}
@@ -308,18 +261,17 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		// chat and channel
 		inAppUrl.register(
 			'/online/\\?IM_DIALOG=:dialogId$',
-			({ dialogId }) => openDialog(ComponentCode.imMessenger, dialogId),
+			({ dialogId }) => openDialog(dialogId),
 		).name('im:dialog:openDialog');
 
 		inAppUrl.register(
 			'/online/\\?IM_DIALOG=:dialogId&IM_MESSAGE=:messageId$',
-			({ dialogId, messageId }) => openDialog(ComponentCode.imMessenger, dialogId, messageId),
+			({ dialogId, messageId }) => openDialog(dialogId, messageId),
 		).name('im:dialog:goToMessageContext');
 
 		inAppUrl.register(
 			'/online/\\?IM_DIALOG=:dialogId&BOT_CONTEXT=',
 			({ dialogId }, { queryParams }) => openDialogWithBotContext(
-				ComponentCode.imMessenger,
 				dialogId,
 				queryParams.BOT_CONTEXT,
 			),
@@ -328,17 +280,22 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		// CoPilot
 		inAppUrl.register(
 			'/online/\\?IM_COPILOT=:dialogId$',
-			({ dialogId }) => openDialog(ComponentCode.imCopilotMessenger, dialogId),
+			({ dialogId }) => openDialog(dialogId),
 		).name('im:copilot:openDialog');
 
 		inAppUrl.register(
 			'/online/\\?IM_TASK=:dialogId$',
-			({ dialogId }) => openDialog(ComponentCode.imMessenger, dialogId),
+			({ dialogId }) => openDialog(dialogId),
 		).name('im:task:openDialog');
 
 		inAppUrl.register(
+			'/online/\\?IM_TASK=:dialogId&IM_MESSAGE=:messageId$',
+			({ dialogId, messageId }) => openDialog(dialogId, messageId),
+		).name('im:task:goToMessageContext');
+
+		inAppUrl.register(
 			'/online/\\?IM_COPILOT=:dialogId&IM_MESSAGE=:messageId$',
-			({ dialogId, messageId }) => openDialog(ComponentCode.imCopilotMessenger, dialogId, messageId),
+			({ dialogId, messageId }) => openDialog(dialogId, messageId),
 		).name('im:copilot:goToMessageContext');
 
 		inAppUrl.register(
@@ -430,7 +387,6 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 				MessengerEmitter.emit(
 					EventType.messenger.openVoteResult,
 					{ signedAttachId: queryParams.signedAttachId },
-					ComponentCode.imMessenger,
 				);
 			},
 		).name('im:vote:result:open');
@@ -439,7 +395,6 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			MessengerEmitter.emit(
 				EventType.messenger.openVoteResult,
 				params,
-				ComponentCode.imMessenger,
 			);
 		}).name('im:vote:result:open');
 	};

@@ -1,6 +1,6 @@
 .tasks-field-deadline {
-	max-width: max-content;
-	white-space: nowrap;
+	display: flex;
+	flex-direction: column;
 }
 
 .tasks-field-deadline.--readonly {
@@ -23,6 +23,10 @@
 
 .tasks-field-deadline.--expired .tasks-field-deadline-text {
 	color: var(--ui-color-accent-main-alert);
+}
+
+.tasks-field-deadline-text.--display-none {
+	display: none;
 }
 
 .tasks-field-deadline-expired {

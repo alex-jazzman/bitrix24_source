@@ -15,10 +15,10 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 	const blankAvatar = '/bitrix/js/im/images/blank.gif';
 	const ajaxActions = {
-		createCall: 'im.call.create',
-		createChildCall: 'im.call.createChildCall',
+		createCall: 'call.CallManager.create',
+		createChildCall: 'call.CallManager.createChildCall',
 		getPublicChannels: 'pull.channel.public.list',
-		getCall: 'im.call.get',
+		getCall: 'call.CallManager.get',
 		startTrack: 'call.Track.start',
 		stopTrack: 'call.Track.stop',
 	};
@@ -93,6 +93,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 		MediaServerMissingParams: 'MEDIA_SERVER_MISSING_PARAMS',
 		MediaServerUnreachable: 'MEDIA_SERVER_UNREACHABLE',
 		CallNotFound: 'CALL_NOT_FOUND',
+		AlreadyFinished: 'ALREADY_FINISHED',
 	};
 
 	BX.Call.StreamTag = {
@@ -121,6 +122,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 	BX.Call.Event = {
 		onUserInvited: 'onUserInvited',
 		onUserJoined: 'onUserJoined',
+		onUsersJoined: 'onUsersJoined',
 		onUserStateChanged: 'onUserStateChanged',
 		onUserMicrophoneState: 'onUserMicrophoneState',
 		onUserCameraState: 'onUserCameraState',
@@ -145,6 +147,8 @@ jn.define('call/calls/engine', (require, exports, module) => {
 		onHangup: 'onHangup',
 		onPullEventUserInviteTimeout: 'onPullEventUserInviteTimeout',
 		onReconnected: 'onReconnected',
+		onReconnecting: 'onReconnecting',
+
 		onSwitchTrackRecordStatus: 'onSwitchTrackRecordStatus',
 		onRecorderStatusChanged: 'onRecorderStatusChanged',
 		onCallTokenRequest: 'onCallTokenRequest',
@@ -180,6 +184,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			this.legacyCalls = {};
 			this.jwtCalls = {};
 			this.unknownCalls = {};
+			this.callsInitializedFromPush = new Set();
 			this.callsToProcessAfterMessengerReady = {
 				legacy: new Map(),
 				jwt: new Map(),
@@ -192,16 +197,15 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 			this._onPullEventHandler = this._onPullEvent.bind(this);
 			this._onPullClientEventHandler = this._onPullClientEvent.bind(this);
+			this._onPullStatusEventHandler = this._onPullStatusEvent.bind(this);
+
 			BX.addCustomEvent('onPullEvent-im', this._onPullEventHandler);
 			BX.addCustomEvent('onPullClientEvent-im', this._onPullClientEventHandler);
 			BX.addCustomEvent('onPullEvent-call', this._onPullEventHandler);
 			BX.addCustomEvent('onAppActive', this.onAppActive.bind(this));
 			BX.addCustomEvent(EventType.imMobile.updateCallToken, this._onCallTokenUpdate.bind(this, true));
-
-			BX.addCustomEvent('onPullStatus', (e) => {
-				this.pullStatus = e.status;
-				console.log(`[${CallUtil.getTimeForLog()}]: pull status: ${this.pullStatus}`);
-			});
+			
+			BX.addCustomEvent('onPullStatus', this._onPullStatusEventHandler);
 
 			BX.addCustomEvent(EventType.imMobile.activeCallsReceived, this.onActiveCallsReceived.bind(this));
 
@@ -223,10 +227,11 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 			this.timeOfLastPushNotificationWithAutoAnswer;
 
-			this.startWithPush();
-
 			setTimeout(
-				() => BX.postComponentEvent('onPullGetStatus', [], 'communication'),
+				() => {
+					BX.postComponentEvent('onPullGetStatus', [], 'communication');
+					this.startWithPush();
+				},
 				100,
 			);
 
@@ -269,6 +274,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 		onActiveCallsReceived(activeCalls)
 		{
+			console.warn('onActiveCallsReceived', activeCalls);
 			const callsToInstantiate = { ...activeCalls };
 
 			const removeEventSubscription = (call) => {
@@ -293,6 +299,13 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				if (call.id in callsToInstantiate)
 				{
 					delete callsToInstantiate[call.id];
+
+					return;
+				}
+
+				if (this.callsInitializedFromPush.has(call.uuid))
+				{
+					this.callsInitializedFromPush.delete(call.uuid);
 
 					return;
 				}
@@ -345,6 +358,26 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					this.jwtCalls[call.UUID] = instantiatedCall;
 				}
 			});
+
+			Object.keys(this.legacyCalls)
+				.forEach((key) => {
+					const call = this.legacyCalls[key];
+
+					if (call)
+					{
+						this._onCallActive({ callId: call.id, callUuid: call.uuid });
+					}
+				});
+
+			Object.keys(this.jwtCalls)
+				.forEach((key) => {
+					const call = this.jwtCalls[key];
+
+					if (call)
+					{
+						this._onCallActive({ callUuid: call.uuid });
+					}
+				});
 		}
 
 		_onMessengerReady()
@@ -372,7 +405,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				return;
 			}
 
-			let pushParams;
+			let pushParams = null;
 			try
 			{
 				pushParams = JSON.parse(push.params);
@@ -390,16 +423,18 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			console.log('Starting with PUSH:', push);
 			const callFields = pushParams.PARAMS.call;
 			const isVideo = pushParams.PARAMS.video;
-			const callId = callFields.ID;
-			const callUuid = callFields.UUID;
+			const callId = callFields.ID || callFields.id;
+			const callUuid = callFields.UUID || callFields.uuid;
 			const timestamp = pushParams.PARAMS.ts;
 			const timeAgo = Date.now() / 1000 - timestamp;
-			const provider = callFields.PROVIDER;
+			const provider = callFields.PROVIDER || callFields.provider;
+			const scheme = callFields.SCHEME || callFields.scheme;
 
-			console.log('timeAgo:', timeAgo);
-			if (CallUtil.isLegacyCall(provider, callFields.SCHEME))
+			this.callsInitializedFromPush.add(callUuid);
+
+			if (CallUtil.isLegacyCall(provider, scheme))
 			{
-				this._onUnknownCallPing(callId, timeAgo, pingTTLPush).then((result) => {
+				this._onUnknownCallPing(callId, timeAgo, pingTTLPush, true).then((result) => {
 					if (result && this.legacyCalls[callId])
 					{
 						BX.postComponentEvent('CallEvents::incomingCall', [{
@@ -407,6 +442,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 							callUuid,
 							video: isVideo,
 							autoAnswer: true,
+							ignoreCallTimeout: true,
 							provider,
 						}], 'calls');
 					}
@@ -414,7 +450,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			}
 			else
 			{
-				const call = this._instantiateCall(pushParams.PARAMS.call);
+				const call = this._instantiateCall(pushParams.PARAMS.call, null, null, pushParams.PARAMS.logToken, null);
 				this.jwtCalls[callUuid] = call;
 
 				if (!tokenManager.getTokenCached(call.associatedEntity.chatId))
@@ -427,12 +463,13 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					callUuid,
 					video: isVideo,
 					autoAnswer: true,
+					ignoreCallTimeout: true,
 					provider,
 				}], 'calls');
 			}
 		}
 
-		shouldCallBeAutoAnswered(callId)
+		shouldCallBeAutoAnswered(callUuid)
 		{
 			if (Application.getPlatform() !== 'android')
 			{
@@ -458,9 +495,9 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				}
 
 				const callFields = pushParams.PARAMS.call;
-				const pushCallId = callFields.ID;
+				const pushCallUuid = callFields.UUID || callFields.uuid;
 
-				const shouldAnswer = callId == pushCallId;
+				const shouldAnswer = callUuid == pushCallUuid;
 				if (shouldAnswer)
 				{
 					this.timeOfLastPushNotificationWithAutoAnswer = push.extra.server_time_unix;
@@ -483,9 +520,10 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			}
 			const isVideo = nativeCall.params.video;
 			const callId = nativeCall.params.call.ID;
+			const callUuid = nativeCall.params.call.uuid;
 			const timestamp = nativeCall.params.ts;
 			const timeAgo = Date.now() / 1000 - timestamp;
-			const provider = nativeCall.params.call.PROVIDER
+			const provider = nativeCall.params.call.PROVIDER || nativeCall.params.call.provider
 
 			if (timeAgo > 15)
 			{
@@ -502,11 +540,13 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			}
 			 */
 
+			this.callsInitializedFromPush.add(callUuid);
 			this._instantiateCall(nativeCall.params.call, nativeCall.params.connectionData, nativeCall.params.users, nativeCall.params.logToken, nativeCall.params.userData);
 			BX.postComponentEvent('CallEvents::incomingCall', [{
 				callId,
+				callUuid,
 				video: isVideo,
-				isNative: true,
+				ignoreCallTimeout: true,
 				provider,
 			}], 'calls');
 		}
@@ -875,7 +915,12 @@ jn.define('call/calls/engine', (require, exports, module) => {
 		{
 			return new Promise((resolve, reject) =>
 			{
-				const chatId = call.associatedEntity.chatId;
+				const chatId = call.associatedEntity?.chatId;
+
+				if (!chatId)
+				{
+					return reject({ code: BX.Call.CallError.AlreadyFinished });
+				}
 
 				tokenManager.getToken(chatId).then((callToken) =>
 				{
@@ -1011,6 +1056,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				chatUserAdd: this.#onChatUserChange.bind(this),
 				chatUserLeave: this.#onChatUserChange.bind(this),
 				'Call::incoming': this._onPullIncomingCall.bind(this),
+				'Call::logTokenUpdate': this.#onLogTokenUpdate.bind(this),
 				'Call::callTokenUpdate': this._onCallTokenUpdate.bind(this, false),
 				'Call::clearCallTokens': this._onCallTokenClear.bind(this),
 				'Call::callV2AvailabilityChanged': this._onCallV2AvailabilityChanged.bind(this),
@@ -1051,9 +1097,50 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			}
 		}
 
+
+
+		clearRecentList()
+		{
+			Object.keys(this.legacyCalls)
+				.forEach((key) => {
+					const call = this.legacyCalls[key];
+					this._onCallInactive({ callId: call.id });
+				});
+
+			Object.keys(this.jwtCalls)
+				.forEach((key) => {
+					const call = this.jwtCalls[key];
+					this._onCallInactive({ callUuid: call.uuid });
+				});
+		}
+		_onPullStatusEvent(e)
+		{
+			if (this.pullStatus === e.status)
+			{
+				return;
+			}
+
+			this.pullStatus = e.status;
+
+			switch (this.pullStatus)
+			{
+				case 'online':
+
+					break;
+				case 'offline':
+					this.clearRecentList();
+					break;
+				case 'connect':
+
+					break;
+			}
+
+			console.log(`[${CallUtil.getTimeForLog()}]: pull status: ${this.pullStatus}`);
+		}
+
 		_onPullClientEvent(command, params, extra)
 		{
-			if (command.startsWith('Call::') && params.callId)
+			if (command && command.startsWith('Call::') && params.callId)
 			{
 				const callId = params.callId;
 				if (this.legacyCalls[callId])
@@ -1070,6 +1157,12 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					});
 				}
 			}
+		}
+
+		#onLogTokenUpdate(params)
+		{
+			const call = this.jwtCalls[params.uuid];
+			call?.addLogToken(params.logToken);
 		}
 
 		_onCallTokenUpdate(initial, params)
@@ -1116,7 +1209,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 			const callFields = params.call;
 			const callId = parseInt(callFields.ID, 10);
-			const callUuid = callFields.uuid;
+			const callUuid = callFields.UUID || callFields.uuid;
 			let call = this.legacyCalls[callId] || this.jwtCalls[callUuid];
 
 			if (params.userData)
@@ -1126,8 +1219,13 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			const provider = callFields.PROVIDER || callFields.provider;
 			const callScheme = callFields.SCHEME || callFields.scheme;
 			const isLegacyCall = CallUtil.isLegacyCall(provider, callScheme);
+			const isCallInitializedFromPush = this.callsInitializedFromPush.has(callUuid);
 
-			if (!call)
+			if (call)
+			{
+				this.callsInitializedFromPush.delete(callUuid);
+			}
+			else if (!isCallInitializedFromPush)
 			{
 				CallUtil.setUserData(params.userData);
 				const callFactory = this._getCallFactory(provider, callScheme);
@@ -1136,7 +1234,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				{
 					call = callFactory.createCall({
 						id: callId,
-						uuid: callFields.UUID,
+						uuid: callUuid,
 						instanceId: this.getUuidv4(),
 						parentId: callFields.PARENT_ID || null,
 						callFromMobile: params.isLegacyMobile === true,
@@ -1170,7 +1268,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				{
 					call = callFactory.createCall({
 						id: parseInt(params.callId, 10),
-						uuid: callFields.uuid,
+						uuid: callUuid,
 						instanceId: this.getUuidv4(),
 						parentUuid: callFields.parentUuid || null,
 						callFromMobile: params.isLegacyMobile === true,
@@ -1184,7 +1282,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 						},
 						type: callFields.type,
 						startDate: callFields.startDate,
-						logToken: callFields.logToken,
+						logToken: params.logToken,
 						events: {
 							[BX.Call.Event.onDestroy]: this._onCallDestroyHandler,
 							[BX.Call.Event.onJoin]: this._onCallJoinHandler,
@@ -1200,7 +1298,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				}
 			}
 
-			if (call && !(call instanceof CallStub))
+			if (call && !isCallInitializedFromPush && !(call instanceof CallStub))
 			{
 				if (isLegacyCall)
 				{
@@ -1220,6 +1318,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					isLegacyMobile: params.isLegacyMobile === true,
 					userData: params.userData || null,
 					autoAnswer: this.shouldCallBeAutoAnswered(call.uuid), // need to check data from push
+					ignoreCallTimeout: false,
 					provider: provider,
 				}], 'calls');
 				call.log(`Incoming call ${call.uuid}`);
@@ -1248,7 +1347,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 						BX.Call.Util.setUserData(params.userData);
 					} */
 
-				this.getLegacyCallWithId(callId).then((result) => {
+				this.getLegacyCallWithId(callId).then(() => {
 					this.unknownCalls[callId] = false;
 					resolve(true);
 				}).catch((error) => {
@@ -1261,36 +1360,44 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 		_instantiateCall(callFields, connectionData, users, logToken, userData)
 		{
-			const callId = callFields.ID;
-			const callUuid = callFields.UUID;
+			const callId = callFields.ID || callFields.id;
+			const callUuid = callFields.UUID || callFields.uuid;
+			const initiatorId = callFields.INITIATOR_ID || callFields.initiatorId;
 			let call = this.legacyCalls[callId] || this.jwtCalls[callUuid];
 			if (call)
 			{
 				console.warn(`Call ${callId} already exists`);
 
+				if (this.callsInitializedFromPush.has(callUuid))
+				{
+					this.callsInitializedFromPush.delete(callUuid);
+				}
+
 				return call;
 			}
 
 			CallUtil.setUserData(userData);
-			const callFactory = this._getCallFactory(callFields.PROVIDER, callFields.SCHEME);
-			const isLegacy = CallUtil.isLegacyCall(callFields.PROVIDER, callFields.SCHEME);
+			let provider = callFields.PROVIDER || callFields.provider;
+			let scheme = callFields.SCHEME || callFields.scheme;
+			const callFactory = this._getCallFactory(provider, scheme);
+			const isLegacy = CallUtil.isLegacyCall(provider, scheme);
 			call = callFactory.createCall({
-				id: parseInt(callFields.ID, 10),
-				uuid: callFields.UUID,
-				instanceId: this.getUuidv4(),
-				initiatorId: parseInt(callFields.INITIATOR_ID, 10),
-				parentId: callFields.PARENT_ID,
-				parentUuid: callFields.PARENT_UUID,
-				direction: callFields.INITIATOR_ID == env.userId ? BX.Call.Direction.Outgoing : BX.Call.Direction.Incoming,
 				users,
+				logToken,
+				id: callId ? parseInt(callId, 10) : null,
+				uuid: callUuid,
+				instanceId: this.getUuidv4(),
+				initiatorId: parseInt(initiatorId, 10),
+				parentId: callFields.PARENT_ID || callFields.parentId,
+				parentUuid: callFields.PARENT_UUID || callFields.parentUuid,
+				direction: initiatorId == env.userId ? BX.Call.Direction.Outgoing : BX.Call.Direction.Incoming,
 				userData: CallUtil.getCurrentUserName(),
 				associatedEntity: {
 					userCounter: users?.length || 0,
-					...callFields.ASSOCIATED_ENTITY
+					...callFields.ASSOCIATED_ENTITY || callFields.associatedEntity,
 				},
-				type: callFields.TYPE,
-				startDate: callFields.START_DATE,
-				logToken,
+				type: callFields.TYPE || callFields.type,
+				startDate: callFields.START_DATE || callFields.startDate,
 				events: {
 					[BX.Call.Event.onDestroy]: this._onCallDestroyHandler,
 					[BX.Call.Event.onJoin]: this._onCallJoinHandler,
@@ -1299,8 +1406,8 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					[BX.Call.Event.onActive]: this._onCallActiveHandler,
 				},
 				connectionData:this._getValidConnectionData(connectionData, isLegacy),
-				isCopilotActive: callFields.RECORD_AUDIO,
-				scheme: callFields.SCHEME,
+				isCopilotActive: callFields.RECORD_AUDIO || callFields.recordAudio,
+				scheme: callFields.SCHEME || callFields.scheme,
 			});
 
 			if (isLegacy)
@@ -1329,8 +1436,9 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 		_getValidConnectionData(connectionData, isLegacy)
 		{
-			const hasLegacyConnectionData = isLegacy && connectionData?.endpoint && connectionData.jwt;
-			const hasJwtConnectionData = !isLegacy && connectionData.mediaServerUrl && connectionData.roomData;
+			if (!connectionData || !isLegacy) return {};
+			const hasLegacyConnectionData = isLegacy && connectionData?.endpoint && connectionData?.jwt;
+			const hasJwtConnectionData = !isLegacy && connectionData?.mediaServerUrl && connectionData?.roomData;
 			if (hasLegacyConnectionData || hasJwtConnectionData)
 			{
 				return connectionData;
@@ -1378,6 +1486,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 		_onCallInactive(e)
 		{
 			console.warn('CallEngine.CallEvents::inactive', e);
+			this.callsInitializedFromPush.delete(e.callUuid);
 			const call = this.legacyCalls[e.callId] || this.jwtCalls[e.callUuid];
 			if (!call)
 			{
@@ -1404,6 +1513,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 		_onCallActive(e)
 		{
 			console.warn('CallEngine.CallEvents::active', e);
+			this.callsInitializedFromPush.delete(e.callUuid);
 			const call = this.legacyCalls[e.callId] || this.jwtCalls[e.callUuid];
 			if (call && !(call instanceof CallStub) && callEngine._isCallSupported(call))
 			{
@@ -1789,7 +1899,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					return resolve();
 				}
 
-				BX.rest.callMethod('im.call.getUsers', { callId, userIds: usersToUpdate }).then((response) => {
+				BX.rest.callMethod('call.CallManager.getUsers', { callId, userIds: usersToUpdate }).then((response) => {
 					const result = BX.type.isPlainObject(response.answer.result) ? response.answer.result : {};
 					users.forEach((userId) => {
 						if (result[userId])
@@ -2151,6 +2261,28 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			};
 		}
 
+		throttle(fn, timeout, ctx, { onStart, onEnd } = {})
+		{
+			let lastCall = 0;
+			let endTimer = null;
+
+			return function(...args)
+			{
+				const now = Date.now();
+				if (now - lastCall < timeout)
+				{
+					return;
+				}
+				lastCall = now;
+
+				onStart?.();
+				clearTimeout(endTimer);
+				endTimer = setTimeout(() => onEnd?.(), timeout);
+
+				return fn.apply(ctx || this, args);
+			};
+		}
+
 		array_flip(inputObject)
 		{
 			const result = {};
@@ -2297,6 +2429,173 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			});
 		}
 
+		customAjax(config)
+		{
+			return new Promise((resolve, reject) =>
+			{
+				config.onsuccess = (config.onsuccess ? config.onsuccess : () => {});
+				config.onfailure = (config.onfailure ? config.onfailure : () => {});
+				config.onprogress = (config.onprogress ? config.onprogress : () => {});
+				config.onerror = (config.onerror ? config.onerror : () => {});
+
+				let uploadBinary = (config["uploadBinary"] && config["uploadBinary"] === true);
+
+				let activityTimer = null;
+
+				const clearActivityTimer = () => {
+					if (activityTimer)
+					{
+						clearTimeout(activityTimer);
+						activityTimer = null;
+					}
+				};
+
+				activityTimer = setTimeout(() => {
+					const error = new Error('No activity detected within 30 seconds');
+					const argument = {
+						error: error,
+						xhr: config.xhr,
+					};
+
+					if (config.xhr)
+					{
+						config.xhr.abort();
+					}
+
+					config.onerror(error, config.xhr);
+					config.onfailure(error, config.xhr);
+					reject(argument);
+				}, 30000);
+
+				// eslint-disable-next-line
+				config.xhr = new XMLHTTPRequest(uploadBinary);
+				config.xhr.setRequestHeader("User-Agent", "Bitrix24/Janative");
+				if(!config["method"])
+					config["method"] = "GET";
+
+
+				if(config["onUploadProgress"])
+				{
+					config.xhr.upload = {};
+					config.xhr.upload.onprogress = config["onUploadProgress"];
+				}
+				if(config["onDownloadProgress"])
+				{
+					config.xhr.onprogress = config["onDownloadProgress"];
+				}
+
+				config.xhr.onerror = function() {
+					clearActivityTimer();
+					const error = new Error('Network error');
+					const argument = {
+						error: error,
+						xhr: config.xhr
+					};
+
+					config.onerror(error, config.xhr);
+					config.onfailure(error, config.xhr);
+					reject(argument);
+				};
+
+				config.xhr.ontimeout = function() {
+					clearActivityTimer();
+					const error = new Error('Request timeout');
+					const argument = {
+						error: error,
+						xhr: config.xhr
+					};
+
+					config.onerror(error, config.xhr);
+					config.onfailure(error, config.xhr);
+					reject(argument);
+				};
+
+				if (config["method"] === "POST")
+				{
+					config.xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+				}
+
+				if (config.headers)
+				{
+					Object.keys(config.headers).forEach(headerName => config.xhr.setRequestHeader(headerName, config.headers[headerName]))
+				}
+
+				if (config.timeout)
+				{
+					config.xhr.timeout = config.timeout;
+				}
+
+				config.xhr.open(config["method"], config["url"]);
+
+				config.xhr.onreadystatechange = function()
+				{
+					clearActivityTimer();
+
+					if (config.xhr.readyState === 4)
+					{
+						const isSuccess = BX.ajax.xhrSuccess(config.xhr);
+
+						if (isSuccess)
+						{
+							if (config.dataType && config.dataType === "json")
+							{
+								try {
+									var json = BX.parseJSON(config.xhr.responseText);
+
+									config.onsuccess(json);
+									resolve(json);
+
+								}
+								catch (e)
+								{
+									var argument = {
+										error: e,
+										xhr: config.xhr
+									};
+
+									config.onerror(e, config.xhr);
+									config.onfailure(argument.error, argument.xhr);
+
+									reject(argument)
+								}
+							}
+							else
+							{
+								config.onsuccess(config.xhr.responseText);
+								resolve(config.xhr.responseText);
+							}
+
+						}
+						else
+						{
+							var argument = {
+								error: new Error('XMLHTTPRequest error status', config.xhr.status),
+								xhr: config.xhr
+							};
+
+							config.onerror(argument.error, config.xhr);
+							config.onfailure(argument.error, argument.xhr);
+							reject(argument)
+						}
+					}
+
+				};
+
+				if (typeof config.prepareData !== 'undefined')
+				{
+					config.xhr.prepareData = config.prepareData;
+				}
+				else
+				{
+					config.xhr.prepareData = true;
+				}
+
+				let prepare = (!uploadBinary && config.xhr.prepareData);
+				config.xhr.send((prepare ? BX.ajax.prepareData(config['undefined']) : config['data']));
+
+			});
+		};
+
 		getCallConnectionData(callOptions, chatId, mustCreate = true)
 		{
 			if (!BX.type.isPlainObject(callOptions))
@@ -2306,6 +2605,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 			return new Promise(async (resolve, reject) => {
 				const roomType = BX.Call.RoomType.Small;
+				const isOneToOne = callOptions.provider === BX.Call.Provider.Plain;
 				const clientVersion = CallUtil.getApiVersion();
 				const clientPlatform = Application.getPlatform();
 				const url = `${CallSettingsManager.callBalancerUrl}/v2/join?mustCreate=${Boolean(mustCreate)}`;
@@ -2315,12 +2615,13 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				const data = JSON.stringify({
 					userToken,
 					roomType,
+					isOneToOne,
 					clientVersion,
 					clientPlatform,
 					...callOptions,
 				});
 
-				BX.ajax({
+				this.customAjax({
 					url,
 					data,
 					method: 'POST',

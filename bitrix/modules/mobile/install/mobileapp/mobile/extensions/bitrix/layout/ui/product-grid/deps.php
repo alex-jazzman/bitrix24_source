@@ -22,10 +22,10 @@ return [
 		'layout/ui/product-grid/services/product-selector',
 
 		'layout/ui/empty-screen',
-		'layout/ui/floating-button',
 		'loc',
 		'utils/prop',
 		'utils/random',
 		'animation/components/fade-view',
+		'ui-system/form/buttons/floating-action-button',
 	],
 ];

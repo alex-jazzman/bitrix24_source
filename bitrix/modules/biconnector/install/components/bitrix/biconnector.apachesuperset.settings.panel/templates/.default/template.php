@@ -26,7 +26,6 @@ Extension::load([
 	'ui.countdown',
 	'ui.notification',
 	'ui.entity-editor',
-	'biconnector.apache-superset-cleaner',
 	'biconnector.apache-superset-analytics',
 	'biconnector.dashboard-parameters-selector',
 ]);

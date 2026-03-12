@@ -125,7 +125,8 @@ $spam = isset($arResult['SPAM']) ? $arResult['SPAM'] : null;
 			"MAIL_CLIENT_CONFIG_DIRS_BTN_SELECT_ALL": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_CONFIG_DIRS_BTN_SELECT_ALL"))?>",
 			"MAIL_CLIENT_CONFIG_DIRS_BTN_CANCEL_ALL": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_CONFIG_DIRS_BTN_CANCEL_ALL"))?>",
 			"MAIL_CLIENT_AJAX_ERROR": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_AJAX_ERROR"))?>",
-			"MAIL_CLIENT_BUTTON_LOADING": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_BUTTON_LOADING"))?>"
+			"MAIL_CLIENT_BUTTON_LOADING": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_BUTTON_LOADING"))?>",
+			"MAIL_CLIENT_CONFIG_DIRS_NO_NESTED_FOLDERS": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_CONFIG_DIRS_NO_NESTED_FOLDERS"))?>",
 		});
 
 		new BX.Mail.Client.Config.Dirs.Form({

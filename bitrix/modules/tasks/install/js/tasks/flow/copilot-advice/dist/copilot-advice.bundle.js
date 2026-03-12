@@ -7,6 +7,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	const getDefaultChatOptions = () => {
 	  const popupWidth = 420;
 	  const avatarSrc = '/bitrix/js/tasks/flow/copilot-advice/images/copilot-advice-avatar.png';
+	  const copilotName = CopilotAdvice.getCopilotName();
 	  return {
 	    popupOptions: {
 	      fixed: true,
@@ -25,13 +26,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    },
 	    loaderText: main_core.Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_LOADER_TEXT'),
 	    header: {
-	      title: main_core.Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_TITLE'),
+	      title: main_core.Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_TITLE_MSGVER_1', {
+	        '#COPILOT_NAME#': copilotName
+	      }),
 	      avatar: avatarSrc,
 	      useCloseIcon: true
 	    },
 	    botOptions: {
 	      avatar: avatarSrc,
-	      messageTitle: main_core.Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_BOT_TITLE'),
+	      messageTitle: copilotName,
 	      messageMenuItems: []
 	    },
 	    useInput: false,
@@ -198,9 +201,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    dateCreated: dateCreated.toString(),
 	    viewed: true,
 	    params: {
-	      title: main_core.Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_TITLE'),
 	      subtitle,
-	      content
+	      content,
+	      title: main_core.Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_TITLE_MSGVER_1', {
+	        '#COPILOT_NAME#': CopilotAdvice.getCopilotName()
+	      })
 	    }
 	  };
 	}
@@ -232,6 +237,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}
 	function _createCopilotChat2() {
 	  const chat = new ai_copilotChat_ui.CopilotChat(getDefaultChatOptions());
+	  const copilotName = CopilotAdvice.getCopilotName();
 	  chat.addBotMessage({
 	    content: '',
 	    status: 'delivered',
@@ -239,7 +245,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    dateCreated: new Date().toString(),
 	    viewed: true,
 	    params: {
-	      title: main_core.Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_TITLE'),
+	      title: main_core.Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_TITLE_MSGVER_1', {
+	        '#COPILOT_NAME#': copilotName
+	      }),
 	      subtitle: main_core.Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_SUBTITLE_EXAMPLE'),
 	      content: main_core.Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_SYSTEM_MESSAGE_EXAMPLE')
 	    }
@@ -291,6 +299,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	    CopilotAdvice.currentChat = new Chat(flowData);
 	    CopilotAdvice.currentChat.show();
+	  }
+	  static getCopilotName() {
+	    return main_core.Extension.getSettings('tasks.flow.copilot-advice').copilotName;
 	  }
 	}
 	CopilotAdvice.currentChat = null;

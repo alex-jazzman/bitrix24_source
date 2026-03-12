@@ -2129,7 +2129,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 
 				if (this._analyticsData)
 				{
-					this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+					this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR_FILLING_FIELDS);
 				}
 			}
 			else if (this._analyticsData)

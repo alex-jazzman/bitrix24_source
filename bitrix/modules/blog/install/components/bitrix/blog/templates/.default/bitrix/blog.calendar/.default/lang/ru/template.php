@@ -21,4 +21,3 @@ $MESS ['BLOG_BLOG_CLNDR_M_10'] = "Октябрь";
 $MESS ['BLOG_BLOG_CLNDR_M_11'] = "Ноябрь";
 $MESS ['BLOG_BLOG_CLNDR_M_12'] = "Декабрь";
 $MESS ['BLOG_BLOG_CLNDR_TITLE'] = "Архив";
-?>

@@ -14,7 +14,9 @@ use Bitrix\Tasks\Flow\Integration\Socialnetwork\GroupService;
 use Bitrix\Tasks\Flow\Kanban\BizProcService;
 use Bitrix\Tasks\Flow\Migration\Access\Repository\RoleRepository;
 use Bitrix\Tasks\Flow\Migration\Access\Repository\RoleRepositoryInterface;
+use Bitrix\Tasks\Flow\Provider\DepartmentExistsProvider;
 use Bitrix\Tasks\Flow\Provider\FlowMemberFacade;
+use Bitrix\Tasks\Flow\Provider\UserStatusProvider;
 use Bitrix\Tasks\Flow\Template\Access\Permission\TemplatePermissionService;
 use Bitrix\Tasks\Internals\Counter\CounterService;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
@@ -41,6 +43,8 @@ use Bitrix\Tasks\V2\Internal\Integration\Rest\Repository\InMemoryPlacementReposi
 use Bitrix\Tasks\V2\Internal\Integration\Rest\Repository\PlacementRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Integration\Mail\Repository\EmailRepository;
 use Bitrix\Tasks\V2\Internal\Integration\Mail\Repository\EmailRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Logger;
+use Bitrix\Tasks\V2\Internal\LoggerInterface;
 use Bitrix\Tasks\V2\Internal\Repository\ChatRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\CheckListRepository;
 use Bitrix\Tasks\V2\Internal\Repository\CheckListRepositoryInterface;
@@ -383,6 +387,9 @@ return [
 		],
 		SystemHistoryRepositoryInterface::class => [
 			'className' => SystemHistoryRepository::class,
+		],
+		LoggerInterface::class => [
+			'className' => Logger::class,
 		],
 		// endregion
 

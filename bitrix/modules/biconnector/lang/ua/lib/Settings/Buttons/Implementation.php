@@ -1,2 +1,0 @@
-<?php
-$MESS["BICONNECTOR_SETTINGS_BUTTONS_IMPLEMENTATION_TITLE"] = "Замовити впровадження";

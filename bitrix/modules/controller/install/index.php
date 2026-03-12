@@ -108,15 +108,7 @@ class controller extends CModule
 		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/themes', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/themes', true, true);
 		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/components', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components', true, true);
 		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/activities', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/activities', true, true);
-		if (IsModuleInstalled('bizproc'))
-		{
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/bizproc/templates', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizproc/templates', true, true);
-			$langs = CLanguage::GetList();
-			while ($lang = $langs->Fetch())
-			{
-				CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/lang/' . $lang['LID'] . '/install/bizproc/templates', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizproc/lang/' . $lang['LID'] . '/templates', true, true);
-			}
-		}
+
 		return true;
 	}
 

@@ -1,12 +1,13 @@
 import { Type, Tag, Dom } from 'main.core';
 import { TagSelector } from 'ui.entity-selector';
+import Footer from './footer';
 
 export type EntitySelectorOptions = {
 	containerId: string,
 	config?: Record<string, any>,
 	inputName: string,
 	property: Record<string, any>,
-	initialValue?: string;
+	initialValue?: string | Array;
 };
 
 export class EntitySelector
@@ -56,6 +57,11 @@ export class EntitySelector
 
 	#createSelector(): void
 	{
+		if (this.#config.dialogOptions.footerOptions)
+		{
+			this.#config.dialogOptions.footer = Footer;
+		}
+		this.#config.dialogOptions.id = `entityselector_${this.#inputName}`;
 		this.#selector = new TagSelector(this.#config);
 		this.#selector.renderTo(this.#container);
 	}

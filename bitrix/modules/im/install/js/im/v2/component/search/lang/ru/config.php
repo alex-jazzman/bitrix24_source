@@ -13,3 +13,5 @@ $MESS['IM_SEARCH_RESULT_NOT_FOUND_DESCRIPTION'] = "Попробуйте изме
 $MESS['IM_SEARCH_ITEM_FOUND_BY_USER'] = "Найдено по участникам чата";
 $MESS['IM_SEARCH_MY_NOTES'] = "Заметки";
 $MESS['IM_SEARCH_INPUT_PLACEHOLDER_V2'] = "Найти сотрудника или чат";
+$MESS['IM_SEARCH_ITEM_JOIN_TO_CHAT'] = "Вступить";
+$MESS['IM_SEARCH_ITEM_JOIN_TO_CHANNEL'] = "Подписаться на канал";

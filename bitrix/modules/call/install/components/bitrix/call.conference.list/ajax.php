@@ -1,11 +1,11 @@
 <?
 
-use Bitrix\Im\Model\ConferenceTable;
+use Bitrix\Call\Model\ConferenceTable;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Im\Call\Conference;
+use Bitrix\Call\Conference;
 use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Controller;
 
@@ -15,7 +15,7 @@ class ImConferenceListController extends Controller
 {
 	protected function processBeforeAction(Action $action): bool
 	{
-		if (!Loader::includeModule('im'))
+		if (!Loader::includeModule('im') || !Loader::includeModule('call'))
 		{
 			$this->addError(new Error("Module IM is not installed"));
 

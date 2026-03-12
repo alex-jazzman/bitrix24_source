@@ -1,4 +1,0 @@
-<?php
-$MESS["LANDING_CMP_PAR_LANDING_ID"] = "ID лендінгу";
-$MESS["LANDING_CMP_PAR_LANDING_TYPE"] = "Тип сайту";
-$MESS["LANDING_CMP_PAR_SITE_ID"] = "ID сайту";

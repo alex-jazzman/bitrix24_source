@@ -66,9 +66,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 	        disabledSections.add(im_v2_const.SettingsSection.desktop);
 	      }
-	      if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isNotificationsStandalone)) {
-	        disabledSections.add(im_v2_const.SettingsSection.notification);
-	      }
 	      return disabledSections;
 	    },
 	    sections() {

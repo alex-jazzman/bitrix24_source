@@ -1,5 +1,0 @@
-<?php
-$MESS["CRM_CONFIG_PERMS_HELP"] = "КӨМЕК";
-$MESS["CRM_CONFIG_PERMS_HELP_MSGVER_1"] = "Көмек";
-$MESS["CRM_CONFIG_PERMS_SAVE_POPUP_CANCEL"] = "Болдырмау";
-$MESS["CRM_CONFIG_PERMS_SAVE_POPUP_TITLE"] = "Өзгерістерді сақтаңыз";

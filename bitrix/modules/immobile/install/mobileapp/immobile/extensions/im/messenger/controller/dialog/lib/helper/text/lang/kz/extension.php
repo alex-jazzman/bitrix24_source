@@ -1,2 +1,0 @@
-<?php
-$MESS["IMMOBILE_MESSENGER_DIALOG_HELPER_TEXT_MESSAGE_COPIED"] = "Хабарлама көшірілді";

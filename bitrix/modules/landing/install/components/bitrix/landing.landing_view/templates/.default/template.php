@@ -982,7 +982,7 @@ else
 						chatId: <?= $arResult['AI_CHAT_ID'] ?? 'null' ?>,
 						isSiteEditChat: true,
 						isCopilotFeatureAvailable: <?= Copilot\Manager::isAvailable() ? 'true' : 'false' ?>,
-						isCopilotFeatureEnabled: <?= Copilot\Manager::isFeatureEnabled() ? 'true' : 'false' ?>,
+						isCopilotFeatureEnabled: <?= Copilot\Manager::isFeatureEnabledByLicense() ? 'true' : 'false' ?>,
 						isCopilotActive: <?= Copilot\Manager::isActive() ? 'true' : 'false' ?>,
 						copilotFeatureEnabledSlider: '<?= Copilot\Manager::getLimitSliderCode() ?>',
 						copilotUnactiveSlider: '<?= Copilot\Manager::getUnactiveSliderCode() ?>',

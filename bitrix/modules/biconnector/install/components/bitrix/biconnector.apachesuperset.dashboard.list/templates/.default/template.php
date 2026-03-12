@@ -47,7 +47,6 @@ Extension::load([
 	'biconnector.apache-superset-dashboard-manager',
 	'biconnector.apache-superset-market-manager',
 	'biconnector.apache-superset-analytics',
-	'biconnector.apache-superset-cleaner',
 	'biconnector.dashboard-export-master',
 	'ui.dialogs.messagebox',
 	'ui.hint',
@@ -64,18 +63,24 @@ Extension::load([
 	'ui.system.dialog',
 ]);
 
-if ($arResult['SHOW_DELETE_INSTANCE_BUTTON']):
+if ($arResult['SHOW_DELETE_INSTANCE_WARNING']):
 ?>
-
-<div class='ui-alert ui-alert-danger'>
-	<span class='ui-alert-message'><?= Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCK_NOTIFICATION') ?></span>
+<div class="ui-alert ui-alert-danger">
+	<span class="ui-alert-message">
+		<?= Loc::getMessage(
+			'BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCK_NOTIFICATION_MSGVER_1',
+			[
+				'[link]' => "<a href=\"{$arResult['OPEN_SETTINGS_LINK']}\" target='_blank'>",
+				'[/link]' => '</a>',
+			],
+		) ?>
+	</span>
 </div>
-
 <?php endif; ?>
 
 <?php if ($arResult['SHOW_SECOND_DB_CONNECTION']): ?>
-	<div class='ui-alert ui-alert-warning'>
-		<span class='ui-alert-message'>
+	<div class="ui-alert ui-alert-warning">
+		<span class="ui-alert-message">
 			<?= Loc::getMessage(
 				'BICONNECTOR_SUPERSET_DASHBOARD_GRID_SECOND_DB_CONNECT_INFO',
 				[
@@ -86,8 +91,8 @@ if ($arResult['SHOW_DELETE_INSTANCE_BUTTON']):
 		</span>
 	</div>
 <?php elseif ($arResult['SHOW_SECOND_DB_KEY_UPDATE']): ?>
-	<div class='ui-alert ui-alert-warning'>
-		<span class='ui-alert-message'>
+	<div class="ui-alert ui-alert-warning">
+		<span class="ui-alert-message">
 			<?= Loc::getMessage(
 				'BICONNECTOR_SUPERSET_DASHBOARD_GRID_SECOND_DB_CONNECT_KEY_UPDATE',
 				[
@@ -138,7 +143,5 @@ if ($limitManager->isLimitByLicence() && !$limitManager->checkLimitWarning())
 			'marketUrl' => $arParams['MARKET_URL'] ?? '',
 			'supersetStatus' => $arResult['SUPERSET_STATUS'],
 		])?>);
-
-		BX.BIConnector.ApacheSupersetTariffCleaner.Instance = new BX.BIConnector.ApacheSupersetTariffCleaner();
 	});
 </script>

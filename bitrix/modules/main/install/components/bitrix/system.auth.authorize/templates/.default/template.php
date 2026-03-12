@@ -23,6 +23,7 @@ if (!empty($arResult['ERROR_MESSAGE']))
 
 		<input type="hidden" name="AUTH_FORM" value="Y" />
 		<input type="hidden" name="TYPE" value="AUTH" />
+		<?= bitrix_sessid_post(); ?>
 		<?if ($arResult["BACKURL"] <> ''):?>
 		<input type="hidden" name="backurl" value="<?=$arResult["BACKURL"]?>" />
 		<?endif?>

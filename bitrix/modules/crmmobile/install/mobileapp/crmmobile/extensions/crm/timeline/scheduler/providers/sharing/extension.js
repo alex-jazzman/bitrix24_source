@@ -12,8 +12,8 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 	const { get } = require('utils/object');
 	const { copyToClipboard } = require('utils/copy');
 	const { Random } = require('utils/random');
-	const { showEmailBanner } = require('communication/email-menu');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+	const { MailDialog } = require('mail/dialog');
 
 	const { TypeId } = require('crm/type');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
@@ -176,7 +176,7 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 
 		setSenders()
 		{
-			this.senders = this.config.communicationChannels.map((sender) => ({...sender, canUse: sender.fromList.length > 0}));
+			this.senders = this.config.communicationChannels.map((sender) => ({ ...sender, canUse: sender.fromList.length > 0 }));
 			this.sender = this.chooseChannel(this.config.selectedChannelId);
 
 			if (this.sender)
@@ -194,9 +194,7 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 				return activeChannels.find((channel) => channel.id === selectedId) ?? activeChannels[0];
 			}
 
-			const availableChannels = this.senders.filter((channel) => channel.contacts.length > 0);
-
-			return availableChannels?.[0];
+			return this.senders.find((channel) => channel.contacts.length > 0);
 		}
 
 		setCommunications()
@@ -648,10 +646,15 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 		connectMailbox(layoutWidget = null)
 		{
 			return new Promise((resolve) => {
-				showEmailBanner(layoutWidget ?? this.layout, async () => {
-					await this.fetchSettings();
 
-					resolve(this.senders);
+				MailDialog.show({
+					type: MailDialog.CONNECTING_MAIL_TYPE,
+					parentWidget: layoutWidget ?? this.layout,
+					successCallback: async () => {
+						await this.fetchSettings();
+
+						resolve(this.senders);
+					},
 				});
 			});
 		}

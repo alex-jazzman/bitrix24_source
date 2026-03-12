@@ -5,7 +5,6 @@ return [
 		'helpers/component',
 		'layout/ui/context-menu',
 		'layout/ui/empty-screen',
-		'layout/ui/floating-button',
 		'layout/ui/product-grid',
 		'layout/ui/product-grid/model',
 		'layout/ui/product-grid/services/barcode-scanner',

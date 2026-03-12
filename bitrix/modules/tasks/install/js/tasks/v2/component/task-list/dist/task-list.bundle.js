@@ -128,8 +128,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  template: `
 		<div class="tasks-task-line-cross-background" @mouseover="isHovered = true" @mouseleave="isHovered = false"/>
 		<div class="tasks-task-line-title-container" @mouseover="isHovered = true" @mouseleave="isHovered = false">
-			<TextMd class="tasks-task-line-title" :class="{ '--completed': completed }" :title="task.title">
-				<a :href>{{ task.title }}</a>
+			<TextMd 
+				class="tasks-task-line-title print-white-space-normal" 
+				:class="{ '--completed': completed }" 
+				:title="task.title"
+			>
+				<a :href class="print-font-color-base-1">{{ task.title }}</a>
 			</TextMd>
 		</div>
 		<div v-if="fields.has('responsible')" class="tasks-task-line-field">
@@ -220,27 +224,27 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  },
 	  template: `
 		<div>
-			<div class="tasks-task-list" :style="{ '--fields-count': fields.size }">
+			<div class="tasks-task-list print-no-box-shadow" :style="{ '--fields-count': fields.size }">
 				<template v-if="ids.length === 0">
-					<div class="tasks-task-line-separator"/>
+					<div class="tasks-task-line-separator print-background-white"/>
 					<TaskLineSkeleton :fields/>
 				</template>
 				<template v-for="taskId in limitedTasks" :key="taskId">
-					<div class="tasks-task-line-separator"/>
+					<div class="tasks-task-line-separator print-background-white"/>
 					<TaskLineSkeleton v-if="loadingIds.includes(taskId)" :fields/>
 					<TaskLine v-else :taskId :fields @remove="$emit('removeTask', taskId)"/>
 				</template>
 			</div>
 			<div
 				v-if="ids.length > limit"
-				class="tasks-task-list-more"
+				class="tasks-task-list-more print-background-white"
 				:class="{ '--readonly': !canOpenMore }"
 				@click="$emit('openMore')"
 			>
-				<div class="tasks-task-list-more-text">{{ moreText }}</div>
+				<div class="tasks-task-list-more-text print-font-color-base-1">{{ moreText }}</div>
 				<BIcon
 					v-if="canOpenMore"
-					class="tasks-task-list-icon"
+					class="tasks-task-list-icon print-ignore"
 					:name="Outline.CHEVRON_RIGHT_L"
 					hoverable
 				/>

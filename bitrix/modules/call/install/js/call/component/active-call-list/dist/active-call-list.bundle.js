@@ -19,7 +19,10 @@ this.BX.Call = this.BX.Call || {};
 	  emits: ['onCallClick'],
 	  computed: {
 	    activeCalls() {
-	      return this.$store.getters['recent/calls/get'];
+	      return this.$store.getters['recent/calls/get'].filter(activeCall => {
+	        const dialog = this.$store.getters['chats/get'](activeCall.dialogId, true);
+	        return Number(dialog.dialogId) !== 0;
+	      });
 	    }
 	  },
 	  methods: {

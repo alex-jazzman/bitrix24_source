@@ -8,7 +8,6 @@ import { TextMd, TextSm, TextXs } from 'ui.system.typography.vue';
 
 import { ReplicationRepeatTill } from 'tasks.v2.const';
 import { calendar } from 'tasks.v2.lib.calendar';
-import { timezone } from 'tasks.v2.lib.timezone';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { UiRadio } from 'tasks.v2.component.elements.radio';
 import type { TaskReplicateParams } from 'tasks.v2.model.tasks';
@@ -79,9 +78,9 @@ export const ReplicationFinish = {
 		},
 		endDateTs(): number
 		{
-			return Type.isNil(this.replicateParams.endDate)
+			return Type.isNil(this.replicateParams.endTs)
 				? (Date.now() + 5 * 24 * 60 * 60 * 1000)
-				: new Date(this.replicateParams.endDate).getTime();
+				: this.replicateParams.endTs;
 		},
 		endDateLabel(): string
 		{
@@ -107,10 +106,9 @@ export const ReplicationFinish = {
 			this.prevTimes = times;
 			this.update({ times });
 		},
-		updateEndDate(endDateTs: number): void
+		updateEndDate(endTs: number): void
 		{
-			const endDate = DateTimeFormat.format('m-d-Y', endDateTs / 1000);
-			this.update({ endDate });
+			this.update({ endTs });
 		},
 		updateFieldsByRepeatTill(repeatTill: RepeatTill): void
 		{
@@ -142,17 +140,6 @@ export const ReplicationFinish = {
 		togglePopup(): void
 		{
 			this.isDatepickerOpened = !this.isDatepickerOpened;
-		},
-		isToday(dateTs: number): boolean
-		{
-			const today = new Date();
-			const day = new Date(dateTs + timezone.getOffset(dateTs));
-
-			return (
-				today.getFullYear() === day.getFullYear()
-				&& today.getMonth() === day.getMonth()
-				&& today.getDate() === day.getDate()
-			);
 		},
 		isRowActive(repeatTill: RepeatTill): boolean
 		{
@@ -215,12 +202,12 @@ export const ReplicationFinish = {
 						>
 							<template #count>
 								<BInput
-									:modelValue="(replicateParams.times || 1).toString()"
+									:modelValue="String(replicateParams.times ?? '')"
 									:size="InputSize.Sm"
 									:design="isRowActive(ReplicationRepeatTill.Times) ? InputDesign.Grey : InputDesign.Disabled"
 									:disabled="!isRowActive(ReplicationRepeatTill.Times)"
 									style="max-width: 4em; padding-bottom: 0;"
-									@update:modelValue="updateTimes"
+									@blur="updateTimes($event.target.value)"
 								/>
 							</template>
 						</RichLoc>

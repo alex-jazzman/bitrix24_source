@@ -211,8 +211,8 @@ class CrmCreateDynamicActivity
 
 		return Tag.render`
 			<tr>
-				<td align="right" width="40%">${Text.encode(property.Name)}:</td>
-				<td width="60%">
+				<td class="adm-detail-content-cell-l" align="right" width="40%">${Text.encode(property.Name)}:</td>
+				<td class="adm-detail-content-cell-r" width="60%">
 					${Type.isDomNode(this.renderedProperties[fieldId]) ? this.renderedProperties[fieldId] : fallback()}
 				</td>
 			</tr>

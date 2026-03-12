@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["MB_TASKS_BASE_SETTINGS"] = "Базовые настройки задачи";
 $MESS["MB_TASKS_BASE_SETTINGS_TITLE"] = "название задачи";
 $MESS["MB_TASKS_BASE_SETTINGS_TITLE_PLACEHOLDER"] = "Название";
@@ -77,4 +78,3 @@ $MESS["TASKS_TT_CONTINUE"] = "Продолжить";
 $MESS["TASKS_TT_CANCEL"] = "Отменить";
 $MESS["TASKS_TT_ERROR1_TITLE"] = "По другой задаче уже ведется учет времени";
 $MESS["TASKS_TT_ERROR1_DESC"] = "Вами уже ведется учет времени по задаче \"#TITLE#\". Она будет поставлена на паузу, продолжить?";
-?>

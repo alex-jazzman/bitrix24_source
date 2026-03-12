@@ -27,6 +27,7 @@ export const DocumentPanel: BitrixVueComponentProps = {
 	{
 		return {
 			currentServiceName: this.userFieldControl.getCurrentDocumentService()?.name,
+			cardButtonSuffix: '-card-button',
 		};
 	},
 	computed: {
@@ -53,6 +54,7 @@ export const DocumentPanel: BitrixVueComponentProps = {
 				documentType,
 				documentHandlers: Object.values(userFieldSettings.getDocumentServices()),
 				onAddFile: () => this.userFieldControl.showUploaderPanel(),
+				node: this.$refs[`${documentType}${this.cardButtonSuffix}`],
 			});
 		},
 		openMenu(): void
@@ -88,28 +90,28 @@ export const DocumentPanel: BitrixVueComponentProps = {
 				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Docx)">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--doc">
 						<div class="disk-user-field-panel-card-icon" v-html="renderSvg(DocumentType.Docx)"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
+						<div class="disk-user-field-panel-card-btn" :ref="DocumentType.Docx + cardButtonSuffix"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_DOCX') }}</div>
 					</div>
 				</div>
 				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Xlsx)">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--xls">
 						<div class="disk-user-field-panel-card-icon" v-html="renderSvg(DocumentType.Xlsx)"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
+						<div class="disk-user-field-panel-card-btn" :ref="DocumentType.Xlsx + cardButtonSuffix"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_XLSX') }}</div>
 					</div>
 				</div>
 				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Pptx)">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--ppt">
 						<div class="disk-user-field-panel-card-icon" v-html="renderSvg(DocumentType.Pptx)"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
+						<div class="disk-user-field-panel-card-btn" :ref="DocumentType.Pptx + cardButtonSuffix"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_PPTX') }}</div>
 					</div>
 				</div>
 				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Board)" v-if="isBoardsEnabled">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--board">
 						<div class="disk-user-field-panel-card-icon"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
+						<div class="disk-user-field-panel-card-btn" :ref="DocumentType.Board + cardButtonSuffix"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_BOARD') }}</div>
 					</div>
 				</div>

@@ -10,6 +10,7 @@ return [
 		'loc',
 		'statemanager/redux/slices/users/thunk',
 		'statemanager/redux/store',
+		'utils/array',
 	],
 	'bundle' => [
 		'./src/provider',

@@ -1,4 +1,5 @@
 <?php
+
 $MESS["SIGN_BLANK_SELECTOR_UPLOAD_TITLE"] = "Загрузить документ";
 $MESS["SIGN_BLANK_SELECTOR_LAST_BLANKS_TITLE"] = "Последние использованные шаблоны";
 $MESS["SIGN_BLANK_SELECTOR_SLIDER_TITLE"] = "Шаблоны документов";

@@ -4,9 +4,9 @@ import { BMenu, type MenuItemOptions, type MenuOptions } from 'ui.system.menu.vu
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { TaskStatus } from 'tasks.v2.const';
+import { TaskStatus, Analytics } from 'tasks.v2.const';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
-import { Hint, tooltip } from 'tasks.v2.component.elements.hint';
+import { tooltip } from 'tasks.v2.component.elements.hint';
 import { timezone } from 'tasks.v2.lib.timezone';
 import { statusService } from 'tasks.v2.provider.service.status-service';
 import type { TaskModel, TaskRights } from 'tasks.v2.model.tasks';
@@ -19,13 +19,13 @@ export const Status = {
 	components: {
 		BIcon,
 		BMenu,
-		Hint,
 		HoverPill,
 	},
 	directives: { hint },
 	inject: {
 		task: {},
 		taskId: {},
+		analytics: {},
 	},
 	setup(): { task: TaskModel }
 	{
@@ -37,7 +37,6 @@ export const Status = {
 	data(): Object
 	{
 		return {
-			isHintShown: false,
 			isMenuShown: false,
 		};
 	},
@@ -72,24 +71,9 @@ export const Status = {
 		},
 		statusAtFormatted(): string
 		{
-			const statuses = {
-				[TaskStatus.Pending]: 'TASKS_V2_STATUS_PENDING_FROM',
-				[TaskStatus.InProgress]: 'TASKS_V2_STATUS_IN_PROGRESS_FROM',
-				[TaskStatus.SupposedlyCompleted]: 'TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_FROM_MSGVER_1',
-				[TaskStatus.Completed]: 'TASKS_V2_STATUS_COMPLETED_AT_MSGVER_1',
-				[TaskStatus.Deferred]: 'TASKS_V2_STATUS_DEFERRED_AT',
-			};
-
-			return this.loc(statuses[this.task.status], {
+			return this.loc('TASKS_V2_STATUS_FROM', {
 				'#DATE#': this.formatDate(this.statusChangedTs),
 				'#TIME#': this.formatTime(this.statusChangedTs),
-			});
-		},
-		createdAtFormatted(): string
-		{
-			return this.loc('TASKS_V2_STATUS_CREATED_AT', {
-				'#DATE#': this.formatDate(this.task.createdTs),
-				'#TIME#': this.formatTime(this.task.createdTs),
 			});
 		},
 		statusChangedTs(): number
@@ -137,6 +121,16 @@ export const Status = {
 		{
 			return this.menuItems.length > 0;
 		},
+		tooltip(): ?Function
+		{
+			return (): HintParams => tooltip({
+				text: this.statusAtFormatted,
+				popupOptions: {
+					offsetLeft: 40,
+				},
+				timeout: 200,
+			});
+		},
 		controlTooltip(): ?Function
 		{
 			return (): HintParams => tooltip({
@@ -168,38 +162,7 @@ export const Status = {
 				return;
 			}
 
-			this.clearTimeouts();
-
-			if (this.isHintShown)
-			{
-				this.closePopup();
-			}
-
 			this.isMenuShown = true;
-		},
-		handleMouseEnter(): void
-		{
-			this.clearTimeouts();
-			this.showTimeout = setTimeout(() => this.showPopup(), 1500);
-		},
-		handleMouseLeave(): void
-		{
-			this.clearTimeouts();
-			this.closePopup();
-		},
-		showPopup(): void
-		{
-			this.clearTimeouts();
-			this.isHintShown = true;
-		},
-		closePopup(): void
-		{
-			this.clearTimeouts();
-			this.isHintShown = false;
-		},
-		clearTimeouts(): void
-		{
-			clearTimeout(this.showTimeout);
 		},
 		getStartItem(): MenuItemOptions
 		{
@@ -231,7 +194,16 @@ export const Status = {
 				dataset: {
 					id: 'tasks-status-menu-complete',
 				},
-				onClick: (): void => statusService.complete(this.taskId),
+				onClick: (): void => {
+					void statusService.complete(
+						this.taskId,
+						{
+							context: this.analytics?.context ?? Analytics.Section.Tasks,
+							additionalContext: this.analytics?.additionalContext ?? Analytics.SubSection.TaskCard,
+							element: Analytics.Element.ContextMenu,
+						},
+					);
+				},
 			};
 		},
 		getDeferItem(): MenuItemOptions
@@ -281,14 +253,11 @@ export const Status = {
 			:data-task-field-value="task.status"
 			:data-task-created-ts="task.createdTs"
 			:data-task-status-changes-ts="statusChangedTs"
-			ref="container"
 		>
 			<HoverPill
-				class="tasks-field-status-info"
+				v-hint="tooltip"
 				:active="isMenuShown"
 				:readonly="!hasMenuItems"
-				@mouseenter="handleMouseEnter"
-				@mouseleave="handleMouseLeave"
 				@click="handleClick"
 				ref="clickable"
 			>
@@ -303,12 +272,6 @@ export const Status = {
 				/>
 			</div>
 		</div>
-		<Hint v-if="isHintShown" :bindElement="$refs.container" @close="closePopup">
-			<div class="tasks-field-status-hint">
-				<div>{{ statusAtFormatted }}</div>
-				<div>{{ createdAtFormatted }}</div>
-			</div>
-		</Hint>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 	`,
 };

@@ -22,18 +22,14 @@
 	max-width: 100%;
 }
 
-.bx-im-chat-title__container.--twoline .bx-im-chat-title__content {
+.bx-im-chat-title__container.--twoline .bx-im-chat-title__text {
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 	white-space: initial;
-}
-
-.bx-im-chat-title__container.--twoline .bx-im-chat-title__text {
+	word-break: break-word;
 	text-overflow: initial;
-	white-space: initial;
-	overflow: initial;
 }
 
 .bx-im-chat-title__text {

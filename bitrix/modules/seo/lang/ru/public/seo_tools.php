@@ -6,4 +6,3 @@ $MESS ['SEO_PAGE_STAT_TOTAL_WORDS_COUNT'] = "Количество слов";
 $MESS ['SEO_PAGE_STAT_UNIQUE_WORDS_COUNT'] = "Количество уникальных слов";
 $MESS ['SEO_PAGE_STAT_META_DESCRIPTION'] = "META-тег \"Описание\" (DESCRIPTION)";
 $MESS ['SEO_PAGE_STAT_META_KEYWORDS'] = "META-тег \"Ключевые слова\" (KEYWORDS)";
-?>

@@ -1,3 +1,0 @@
-<?php
-$MESS["BI_UNUSED_ELEMENTS_GRID_TYPE_CHART"] = "Күн тәртібі ";
-$MESS["BI_UNUSED_ELEMENTS_GRID_TYPE_DATASET"] = "Датасет";

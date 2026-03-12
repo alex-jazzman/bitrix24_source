@@ -1,5 +1,0 @@
-<?php
-$MESS["VOXIMPLANT_ROLE_ADMIN"] = "Әкімші";
-$MESS["VOXIMPLANT_ROLE_CHIEF"] = "Директор";
-$MESS["VOXIMPLANT_ROLE_DEPARTMENT_HEAD"] = "Бөлім бастығы";
-$MESS["VOXIMPLANT_ROLE_MANAGER"] = "Менеджер";

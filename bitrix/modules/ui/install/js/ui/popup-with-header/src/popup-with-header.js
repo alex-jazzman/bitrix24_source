@@ -19,7 +19,8 @@ export class PopupWithHeader extends PopupComponentsMaker
 		this.template = options.template instanceof BaseTemplate ? options.template : null;
 		this.asyncData = (options.asyncData instanceof BX.Promise || options.asyncData instanceof Promise) ? options.asyncData : null;
 		this.animationTemplate = options.animationTemplate ?? true;
-		this.skeletonSize = options.skeletonSize ?? 473;
+		this.skeletonHeight = options.skeletonHeight ?? 447;
+		this.skeletonWidth = options.skeletonWidth ?? 344;
 		this.analyticsCallback = Type.isFunction(options.analyticsCallback) ? options.analyticsCallback : null;
 		this.#popupOptions = Type.isPlainObject(options.popupOptions) ? options.popupOptions : {};
 	}
@@ -82,13 +83,13 @@ export class PopupWithHeader extends PopupComponentsMaker
 					Dom.clean(container);
 					response.data.header.analyticsCallback = this.analyticsCallback;
 					this.header = PopupHeader.createByJson(popupId, response.data.header);
+					let hasContent = response.data.items && this.template;
+
 					content = Tag.render`
-						<div>
+						<div ${hasContent ? 'class="ui-popupcomponentmaker-wrap --with-border-radius-content"' : ''}>
 							${this.getHeaderWrapper()}
 						<div>
 					`;
-
-					let hasContent = response.data.items && this.template;
 
 					if (hasContent)
 					{
@@ -112,9 +113,11 @@ export class PopupWithHeader extends PopupComponentsMaker
 							Dom.addClass(this.getHeaderWrapper(), '--without-video');
 						}
 
+						Dom.addClass(this.getHeaderWrapper(), '--with-border-radius-wrap');
+
 						if (this.content.length > 0)
 						{
-							content.append(Tag.render`<div class="ui-popupcomponentmaker__content-wrap">${this.getContentWrapper()}</div>`);
+							content.append(Tag.render`<div class="ui-popupcomponentmaker__content-wrap-round"><div class="ui-popupcomponentmaker__content-wrap">${this.getContentWrapper()}</div></div>`);
 						}
 						else
 						{
@@ -151,7 +154,6 @@ export class PopupWithHeader extends PopupComponentsMaker
 	#prepareItemsContent(content: HTMLElement): void
 	{
 		Dom.addClass(this.getContentWrapper(), 'ui-popup-with-header__content');
-		content.append(Tag.render`<div class="ui-popupcomponentmaker__content-wrap">${this.getContentWrapper()}</div>`);
 
 		if (this.popup.isBottomAngle() || !this.animationTemplate)
 		{
@@ -174,7 +176,7 @@ export class PopupWithHeader extends PopupComponentsMaker
 	{
 		if (!this.skeleton)
 		{
-			this.skeleton = (new Skeleton(this.skeletonSize)).get();
+			this.skeleton = (new Skeleton(this.skeletonHeight, this.skeletonWidth)).get();
 
 			const theme = this.#getThemePicker()?.getAppliedTheme();
 			if (!theme)
@@ -231,12 +233,18 @@ export class PopupWithHeader extends PopupComponentsMaker
 	{
 		const previewImage = `url('${Text.encode(theme.previewImage)}')`;
 		Dom.style(container, 'backgroundImage', previewImage);
-		Dom.removeClass(container, 'bitrix24-theme-default bitrix24-theme-dark bitrix24-theme-light');
-		let themeClass = 'bitrix24-theme-default';
+
+		if (theme.previewColor)
+		{
+			Dom.style(container, 'backgroundColor', theme.previewColor);
+		}
+
+		Dom.removeClass(container, 'bitrix24-dark-theme bitrix24-light-theme bitrix24-default-theme');
+		let themeClass = 'bitrix24-default-theme';
 
 		if (theme.id !== 'default')
 		{
-			themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-theme-dark' : 'bitrix24-theme-light';
+			themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-dark-theme' : 'bitrix24-light-theme';
 		}
 
 		Dom.addClass(container, themeClass);

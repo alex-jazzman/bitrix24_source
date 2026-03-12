@@ -1,4 +1,0 @@
-<?
-$MESS["SALE_INTEGRATIONB24_NEWORDER_GROUPNAME"] = "Integration mit Bitrix Site Manager";
-$MESS["SALE_INTEGRATIONB24_NEWORDER_TITLE"] = "Neue Bestellung";
-?>

@@ -1,3 +1,0 @@
-<?php
-$MESS["CRM_TIMELINE_BIZPROC_EXEC_TIME"] = "Бірден";
-$MESS["CRM_TIMELINE_BIZPROC_EXEC_TITLE"] = "Іске қосу уақыты";

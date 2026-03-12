@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_BLOG_BLOG_MORE'] = "Читать подробнее...";
 $MESS ['BLOG_BLOG_BLOG_CATEGORY'] = "Теги:";
 $MESS ['BLOG_BLOG_BLOG_COMMENTS'] = "Комментариев:";
@@ -10,4 +10,3 @@ $MESS ['BLOG_MES_DELETE'] = "Удалить";
 $MESS ['BLOG_MES_HIDE'] = "Скрыть";
 $MESS ['BLOG_MES_HIDE_POST_CONFIRM'] = "Вы уверены, что хотите скрыть это сообщение?";
 $MESS["BLOG_PHOTO"] = "Фото:";
-?>

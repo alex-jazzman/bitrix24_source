@@ -43,7 +43,6 @@ $arActivityDescription =
 			],
 		])
 		->setNodeActionSettings([
-			'INCLUDE' => ['crmdealcomplexactivity'],
 			'HANDLES_DOCUMENT' => true,
 		])
 		->setRobotSettings([

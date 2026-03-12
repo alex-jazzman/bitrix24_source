@@ -21,11 +21,11 @@ export const crmDialog = new class
 	#taskId: TaskId;
 	#onClose: Function | null;
 
-	init(taskId: TaskId): void
+	fillDialog(taskId: TaskId): void
 	{
 		this.#taskId = taskId;
-		// eslint-disable-next-line no-unused-expressions
-		this.#dialog;
+
+		this.#fillDialog(this.#ids);
 	}
 
 	show(params: Params): void
@@ -33,6 +33,7 @@ export const crmDialog = new class
 		this.#taskId = params.taskId;
 		this.#onClose = params.onClose;
 
+		this.#fillDialog(this.#ids);
 		this.#dialog.selectItemsByIds(this.#items);
 		this.#dialog.showTo(params.targetNode);
 	}
@@ -71,7 +72,9 @@ export const crmDialog = new class
 				options: {
 					dynamicTypeIds,
 					showTab: true,
+					allowAllCategories: true,
 				},
+				dynamicSearchMatchMode: 'all',
 			})),
 			preselectedItems: this.#items,
 			events: {
@@ -79,8 +82,13 @@ export const crmDialog = new class
 			},
 			popupOptions: {
 				events: {
-					onClose: (): void => {
-						const items = this.#fillStore();
+					onClose: async (): Promise<void> => {
+						if (!this.#dialog.isLoaded())
+						{
+							return;
+						}
+
+						const items = await this.#fillStore();
 
 						const crmItemIds = items.map(({ id }) => id);
 						void taskService.update(this.#taskId, { crmItemIds });
@@ -92,13 +100,49 @@ export const crmDialog = new class
 		});
 	}
 
-	#fillStore = (): CrmItemModel[] => {
+	#fillStore = async (): Promise<CrmItemModel[]> => {
 		const crmItems = this.#dialog.getSelectedItems().map((item: Item) => this.#mapItemToModel(item));
 
-		void Core.getStore().dispatch(`${Model.CrmItems}/upsertMany`, crmItems);
+		await Core.getStore().dispatch(`${Model.CrmItems}/upsertMany`, crmItems);
 
 		return crmItems;
 	};
+
+	#fillDialog(ids: string[]): void
+	{
+		if (!this.#dialog.isLoaded())
+		{
+			return;
+		}
+
+		const itemIds = new Set(this.#dialog.getItems().map((it) => CrmMappers.mapId(it.getEntityId(), it.getId())));
+		ids.forEach((crmItemId: number) => {
+			const [entityId, id] = CrmMappers.splitId(crmItemId);
+
+			if (itemIds.has(crmItemId))
+			{
+				this.#dialog.getItem([entityId, id]).select(true);
+
+				return;
+			}
+
+			const crmItem: CrmItemModel = Core.getStore().getters[`${Model.CrmItems}/getById`](crmItemId);
+
+			this.#dialog.addItem({
+				id,
+				entityId,
+				title: crmItem.title,
+				customData: {
+					entityInfo: {
+						typeNameTitle: crmItem.typeName,
+						url: crmItem.link,
+					},
+				},
+				selected: true,
+				tabs: ['recents', entityId, entityId.toUpperCase()],
+			});
+		});
+	}
 
 	#mapItemToModel(item: Item): CrmItemModel
 	{
@@ -106,7 +150,7 @@ export const crmDialog = new class
 		const id = item.getId();
 
 		return {
-			id: CrmMappers.mapId(entityInfo.type, item.getId()),
+			id: CrmMappers.mapId(item.getEntityId(), item.getId()),
 			entityId: Number.isInteger(id) ? id : Number(id.split(':')[1]),
 			type: item.getEntityId(),
 			typeName: entityInfo.typeNameTitle,
@@ -117,6 +161,11 @@ export const crmDialog = new class
 
 	get #items(): ItemId[]
 	{
-		return taskService.getStoreTask(this.#taskId).crmItemIds?.map((id) => CrmMappers.splitId(id)) ?? [];
+		return this.#ids.map((id) => CrmMappers.splitId(id));
+	}
+
+	get #ids(): string[]
+	{
+		return taskService.getStoreTask(this.#taskId).crmItemIds ?? [];
 	}
 }();

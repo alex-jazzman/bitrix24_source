@@ -780,8 +780,11 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	  doSupportReconnectionScenario() {
 	    return true;
 	  }
-	  getSyncLink() {
-	    return this.syncLink;
+	  async getSyncLink() {
+	    const {
+	      data
+	    } = await BX.ajax.runAction('calendar.api.syncajax.getSyncLinks');
+	    return data.google || this.syncLink;
 	  }
 	  hasSetSyncGoogleSettings() {
 	    return this.isSetSyncGoogleSettings;
@@ -857,8 +860,11 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	  doSupportReconnectionScenario() {
 	    return true;
 	  }
-	  getSyncLink() {
-	    return this.syncLink;
+	  async getSyncLink() {
+	    const {
+	      data
+	    } = await BX.ajax.runAction('calendar.api.syncajax.getSyncLinks');
+	    return data.office365 || this.syncLink;
 	  }
 	  hasSetSyncOffice365Settings() {
 	    return this.isSetSyncOffice365Settings;

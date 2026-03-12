@@ -1,3 +1,0 @@
-<?php
-$MESS["IBLOCK_SELECTOR_SECTION_ERR_IBLOCK_MODULE_NOT_INSTALLED"] = "\"Ақпараттық блоктар\" модулі орнатылмаған.";
-$MESS["IBLOCK_SELECTOR_SECTION_GRID_PAGENAVIGATION_TITLE"] = "Бөлімдер";

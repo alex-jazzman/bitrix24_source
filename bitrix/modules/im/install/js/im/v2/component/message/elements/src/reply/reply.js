@@ -24,6 +24,13 @@ export const Reply = {
 			default: false,
 		},
 	},
+	data(): Object
+	{
+		return {
+			isExpanded: false,
+			isExpandable: false,
+		};
+	},
 	computed:
 	{
 		dialog(): ImModelChat
@@ -75,21 +82,124 @@ export const Reply = {
 		{
 			return !Type.isNil(this.replyMessage);
 		},
+		isActiveQuote(): boolean
+		{
+			return this.replyContext !== NO_CONTEXT_TAG;
+		},
+		quoteClasses(): Record<string, boolean>
+		{
+			return {
+				'--expanded': this.isExpanded,
+				'--collapsed': !this.isExpanded,
+				'--clickable': this.isActiveQuote || this.isExpandable,
+			};
+		},
+		toggleLabel(): string
+		{
+			return this.isExpanded
+				? this.loc('IM_PARSER_QUOTE_COLLAPSE')
+				: this.loc('IM_PARSER_QUOTE_EXPAND');
+		},
+	},
+	watch:
+	{
+		replyText()
+		{
+			void this.updateToggleAvailability();
+		},
+	},
+	mounted()
+	{
+		void this.updateToggleAvailability();
 	},
 	methods:
 	{
+		toggleExpanded()
+		{
+			if (!this.isExpandable)
+			{
+				return;
+			}
+
+			this.isExpanded = !this.isExpanded;
+		},
+		async updateToggleAvailability()
+		{
+			await this.$nextTick();
+
+			const textNode = this.$refs.text;
+			if (!textNode)
+			{
+				return;
+			}
+
+			const isOverflowing = textNode.scrollHeight > textNode.clientHeight + 1;
+			this.isExpandable = isOverflowing;
+
+			if (!isOverflowing)
+			{
+				this.isExpanded = false;
+			}
+		},
+		hasSelectedText(): boolean
+		{
+			const selection = window.getSelection().toString().trim();
+
+			return Type.isStringFilled(selection);
+		},
+		onQuoteClick(event: MouseEvent)
+		{
+			const isInteractiveClick = (
+				event.target instanceof HTMLElement
+				&& event.target.closest('a')
+			);
+			if (isInteractiveClick)
+			{
+				event.stopPropagation();
+
+				return;
+			}
+
+			if (this.hasSelectedText())
+			{
+				event.stopPropagation();
+
+				return;
+			}
+
+			if (this.isActiveQuote || !this.isExpandable)
+			{
+				return;
+			}
+
+			this.toggleExpanded();
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `
-		<div v-if="canShowReply" class="bx-im-message-quote" :data-context="replyContext">
+		<div
+			v-if="canShowReply"
+			class="bx-im-message-quote --reply"
+			:class="quoteClasses"
+			:data-context="replyContext"
+			@click="onQuoteClick"
+		>
 			<div class="bx-im-message-quote__wrap">
 				<div class="bx-im-message-quote__name">
 					<div class="bx-im-message-quote__name-text">{{ replyTitle }}</div>
 				</div>
-				<div class="bx-im-message-quote__text" v-html="replyText"></div>
+				<div ref="text" class="bx-im-message-quote__text" v-html="replyText"></div>
+				<button
+					v-if="isExpandable"
+					type="button"
+					class="bx-im-message-quote__toggle"
+					@click.stop="toggleExpanded"
+				>
+					{{ toggleLabel }}
+				</button>
 			</div>
 		</div>
 	`,

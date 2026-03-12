@@ -1,12 +1,17 @@
 <?php
 $call_default_option = [
+	'call_server_enabled' => true,
+	'call_server_max_users' => 100,
 	'call_server_large_room' => 1000,
+	'call_server_url' => '',
 	'call_balancer_url' => '',
 	'turn_server_self' => 'N',
 	'turn_server' => (\Bitrix\Main\Application::getInstance()->getLicense()->isCis() ? 'turn.bitrix24.tech' : 'turn.calls.bitrix24.com'),
 	'turn_server_login' => 'bitrix',
 	'turn_server_password' => 'bitrix',
 	'turn_server_max_users' => 4,
+	'call_log_service' => '',
+	'call_log_secret' => '',
 	'call_ai_enabled' => true,
 ];
 

@@ -8,13 +8,14 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 	const { Uuid } = require('utils/uuid');
 	const { mergeImmutable, clone, isEqual, isEmpty } = require('utils/object');
 
-	const { MessageParams } = require('im/messenger/const');
+	const { MessageParams, AiTasksStatusType, FileType } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerMutationHandlersWaiter } = require('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter');
 	const { reactionsModel } = require('im/messenger/model/messages/reactions/model');
 	const { messageDefaultElement } = require('im/messenger/model/messages/default-element');
 	const { voteModel } = require('im/messenger/model/messages/vote/model');
 	const { pinModel } = require('im/messenger/model/messages/pin/model');
+	const { playbackModel } = require('im/messenger/model/messages/playback/model');
 	const { validate } = require('im/messenger/model/messages/validator');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -36,6 +37,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			reactionsModel,
 			pinModel,
 			voteModel,
+			playbackModel,
 		},
 		getters: {
 			/**
@@ -864,6 +866,41 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				});
 			},
 
+			/**
+			 * @function messagesModel/updateVisualState
+			 */
+			updateVisualState: (store, { id, fields }) => {
+				if (!store.state.collection[id])
+				{
+					return;
+				}
+
+				const updateMessageData = {
+					id,
+					fields: validate(fields),
+				};
+
+				const storedMessage = store.state.collection[id];
+
+				const currentStatus = storedMessage?.visualState?.aiTaskStatus;
+				if (currentStatus === AiTasksStatusType.animationInterrupted)
+				{
+					logger.log('messagesModel: updateVisualState skipped to animationInterrupted status', id);
+
+					return;
+				}
+
+				if (isEqual(storedMessage, mergeImmutable(storedMessage, updateMessageData.fields)))
+				{
+					return;
+				}
+
+				store.commit('update', {
+					actionName: 'updateVisualState',
+					data: updateMessageData,
+				});
+			},
+
 			/** @function messagesModel/updateList */
 			updateList: (store, { messageList, actionName = 'updateList' }) => {
 				if (!Type.isArrayFilled(messageList))
@@ -1366,6 +1403,46 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 						chatId,
 					},
 				});
+			},
+
+			/** @function messagesModel/interruptTaskAnimationMessage */
+			interruptTaskAnimationMessages: (store, { chatId }) => {
+				const userId = MessengerParams.getUserId();
+				const messages = store.getters.getByChatId(chatId);
+
+				// This ensures we only stop animation for messages
+				// that can be transcribed and have triggered AI task creation animation.
+				const toInterrupt = messages.filter((message) => {
+					if (
+						message.authorId !== userId
+						|| !Type.isArrayFilled(message.files)
+						|| message.files.length !== 1
+						|| !Type.isPlainObject(message.visualState)
+						|| message.visualState.aiTaskStatus === AiTasksStatusType.animationInterrupted
+					)
+					{
+						return false;
+					}
+
+					const fileId = message.files[0];
+					const file = store.rootGetters['filesModel/getById'](fileId);
+
+					return file
+						&& (file.type === FileType.audio || file.type === FileType.video)
+						&& file.isTranscribable === true;
+				});
+
+				if (toInterrupt.length === 0)
+				{
+					return;
+				}
+
+				const updateList = toInterrupt.map((message) => ({
+					id: message.id,
+					visualState: { aiTaskStatus: AiTasksStatusType.animationInterrupted },
+				}));
+
+				store.dispatch('updateList', { messageList: updateList, actionName: 'updateVisualState' });
 			},
 		},
 		mutations: {

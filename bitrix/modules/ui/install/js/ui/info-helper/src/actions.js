@@ -98,6 +98,14 @@ export class Actions
 		}
 	}
 
+	static openBaasCheckout(data): void
+	{
+		const url = Uri.addParam('/settings/order/make.php', {
+			product: `PACKAGE_${data.package}`,
+		});
+		Actions.openSlider({ url });
+	}
+
 	static openToolsSettings(): void
 	{
 		Actions.openSlider({ url: Extension.getSettings('ui.info-helper').settingsUrl + '?page=tools' });

@@ -6,6 +6,7 @@ import { BIcon } from 'ui.icon-set.api.vue';
 
 import { useNodeSettingsStore } from '../../../../entities/node-settings';
 import { useLoc } from '../../../../shared/composables';
+import { PORT_TYPES } from '../../../../shared/constants';
 
 import type { Port } from '../../../../shared/types';
 
@@ -45,10 +46,12 @@ export const EditOutputExpression = {
 		...mapState(useNodeSettingsStore, ['nodeSettings', 'block']),
 		savedOutputPorts(): Array
 		{
-			return this.block?.ports.output.map((port) => ({
-				portId: port.id,
-				title: port.title,
-			})) ?? [];
+			return this.block?.ports
+				.filter((port) => port.type === PORT_TYPES.output)
+				.map((port) => ({
+					portId: port.id,
+					title: port.title,
+				})) ?? [];
 		},
 		selectedPort:
 		{

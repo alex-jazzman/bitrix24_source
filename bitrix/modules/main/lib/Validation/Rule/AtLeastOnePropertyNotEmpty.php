@@ -14,15 +14,22 @@ use ReflectionClass;
 use ReflectionProperty;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-final class AtLeastOnePropertyNotEmpty extends AbstractClassValidationAttribute
+final class AtLeastOnePropertyNotEmpty extends AbstractClassValidationAttribute implements ValidateByGroupInterface
 {
 	public function __construct(
 		private readonly array $propertyNames,
 		private readonly bool $allowZero = false,
 		private readonly bool $allowEmptyString = false,
 		protected string|LocalizableMessageInterface|null $errorMessage = null,
+		private readonly bool $showPropertyNames = false,
+		protected array $groups = [],
 	)
 	{
+	}
+
+	public function getGroups(): array
+	{
+		return $this->groups;
 	}
 
 	public function validateObject(object $object): ValidationResult
@@ -33,16 +40,17 @@ final class AtLeastOnePropertyNotEmpty extends AbstractClassValidationAttribute
 
 		if (empty($properties))
 		{
-			$result->addError(new ValidationError(
-				new LocalizableMessage('MAIN_VALIDATION_AT_LEAST_ONE_PROPERTY_NOT_EMPTY_EMPTY')
-			));
-
-			return $this->replaceWithCustomError($result);
+			return $this->returnResultWithError($result);
 		}
 
 		$values = $this->getValues($object, ...$properties);
 
-		$result = (new AtLeastOneNotEmptyValidator($this->allowZero, $this->allowEmptyString))
+		if (empty($values))
+		{
+			return $this->returnResultWithError($result);
+		}
+
+		$result = (new AtLeastOneNotEmptyValidator($this->allowZero, $this->allowEmptyString, $this->propertyNames, $this->showPropertyNames))
 			->validate($values);
 
 		return $this->replaceWithCustomError($result);
@@ -71,5 +79,24 @@ final class AtLeastOnePropertyNotEmpty extends AbstractClassValidationAttribute
 		}
 
 		return $values;
+	}
+
+	private function returnResultWithError(ValidationResult $result): ValidationResult
+	{
+		if ($this->showPropertyNames)
+		{
+			$localizableMessage = new LocalizableMessage(
+				'MAIN_VALIDATION_AT_LEAST_ONE_PROPERTY_NOT_EMPTY_EMPTY_WITH_PROPERTY_NAMES',
+				['#PROPERTY_NAMES#' => implode(', ', $this->propertyNames)]
+			);
+		}
+		else
+		{
+			$localizableMessage = new LocalizableMessage('MAIN_VALIDATION_AT_LEAST_ONE_PROPERTY_NOT_EMPTY_EMPTY');
+		}
+
+		$result->addError(new ValidationError($localizableMessage));
+
+		return $this->replaceWithCustomError($result);
 	}
 }

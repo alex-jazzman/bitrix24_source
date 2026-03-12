@@ -17,8 +17,8 @@ return [
 	'rel' => [
 		'main.loader',
 		'ui.info-helper',
-		'ui.popup-with-header',
 		'ui.analytics',
+		'ui.popup-with-header',
 		'main.core',
 	],
 	'skip_core' => false,

@@ -334,7 +334,7 @@ if ($arResult["BX24_RU_ZONE"] && !User::isExtranet())
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_MSGVER_1"),
-		"URL" => \Bitrix\Tasks\Integration\Market\Router::getBasePath(),
+		"URL" => Container::getInstance()->getLinkService()->getMarket('?placement=task'),
 		"ID" => "view_apps",
 		'IS_DISABLED' => true,
 	);

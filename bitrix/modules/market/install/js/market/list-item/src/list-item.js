@@ -7,6 +7,7 @@ import { RatingStars } from "market.rating-stars";
 import { BIcon, Set } from 'ui.icon-set.api.vue';
 import { MenuManager } from "main.popup";
 import { MarketLinks } from "market.market-links";
+import { Extension } from 'main.core';
 
 import "./list-item.css";
 
@@ -75,6 +76,16 @@ export const ListItem = {
 		},
 		iconSet: function () {
 			return Set;
+		},
+		itemDisplayName() {
+			const copilotName =  Extension.getSettings('market.collection-item-ai')?.copilotName;
+			const name = this.item?.NAME ?? '';
+
+			if (!name || !copilotName) {
+				return name;
+			}
+
+			return name.replace(/CoPilot/g, copilotName);
 		},
 	},
 	mounted: function() {
@@ -280,18 +291,18 @@ export const ListItem = {
 		<template v-if="item.IS_AI_SITES === 'Y'">
 			<a class="market-catalog__elements-item_img-link"
 			   :style="{'background-image': 'url(\\'' + item.ICON + '\\')'}"
-			   :title="item.NAME"
-			   href="/sites/ai/"
+			   :title="itemDisplayName"
+			   href="/sites/ai/?st_section=market_collection"
 			   target="_parent"
 			></a>
 			<div class="market-catalog__elements-item_info">
 				<div class="market-catalog__elements-item_info-head">
 					<a class="market-catalog__elements-item_info-title"
-					   :title="item.NAME"
-					   href="/sites/ai/"
+					   :title="itemDisplayName"
+					   href="/sites/ai/?st_section=market_collection"
 					   target="_parent"
 					>
-						{{ item.NAME }}
+						{{ itemDisplayName }}
 					</a>
 				</div>
 			</div>
@@ -303,7 +314,7 @@ export const ListItem = {
 					 ref="listItemNoPublishedApp"
 				>
 					<span class="ui-hint-icon" 
-						  :data-hint="$Bitrix.Loc.getMessage('MARKET_LIST_ITEM_JS_HERE_UNAVAILABLE')"
+						  :data-hint="$Bitrix.Loc.getMessage('MARKET_LIST_ITEM_JS_HERE_UNAVAILABLE_MSGVER_1')"
 						  data-hint-no-icon=""
 					></span>
 				</div>

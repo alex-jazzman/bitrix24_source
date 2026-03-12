@@ -22,6 +22,7 @@ use Bitrix\Main\Localization\Loc;
 if (
 	!\Bitrix\Main\ModuleManager::isModuleInstalled("blog")
 	|| !\Bitrix\Main\Loader::includeModule('socialnetwork')
+	|| !\Bitrix\Main\Loader::includeModule('blog')
 )
 {
 	return;
@@ -178,10 +179,7 @@ $del_id = (int) ($_GET["del_id"] ?? 0);
 $hide_id = (int) ($_GET["hide_id"] ?? 0);
 
 //Message delete
-if (
-	($del_id > 0 || $hide_id > 0)
-	&& CModule::IncludeModule("blog")
-)
+if (($del_id > 0 || $hide_id > 0))
 {
 	if (($_GET["success"] ?? '') == "Y")
 	{
@@ -396,7 +394,6 @@ if(
 	&& is_array($_REQUEST["options"])
 	&& check_bitrix_sessid()
 	&& $USER->IsAuthorized()
-	&& CModule::IncludeModule("blog")
 )
 {
 	foreach($_REQUEST["options"] as $val)
@@ -440,26 +437,20 @@ elseif ($PAGEN == null && $arParams["CACHE_TIME"] > 0) // cache only the first p
 		$arResult["NAV_STRING"] = $arRes["NAV_STRING"];
 		$arResult["USER"] = $arRes["USER"];
 
-		if (CModule::IncludeModule("blog"))
-		{
-			$dbPost = CBlogPost::GetList(
-				$arParams["SORT"],
-				$arParams["FILTER"],
-				false,
-				$arParams["PAGE_SETTINGS"],
-				array("ID")
-			);
-			$arResult["NAV_RESULT"] = $dbPost;
-		}
+		$dbPost = CBlogPost::GetList(
+			$arParams["SORT"],
+			$arParams["FILTER"],
+			false,
+			$arParams["PAGE_SETTINGS"],
+			array("ID")
+		);
+		$arResult["NAV_RESULT"] = $dbPost;
 	}
 }
 if (
-	CModule::IncludeModule("blog")
-	&& (
-		$PAGEN
-		|| $arParams["CACHE_TIME"] <= 0
-		|| !($cache->InitCache($arParams["CACHE_TIME"], $cache_id, $cache_path))
-	)
+	$PAGEN
+	|| $arParams["CACHE_TIME"] <= 0
+	|| !($cache->InitCache($arParams["CACHE_TIME"], $cache_id, $cache_path))
 )
 {
 	$dbPost = CBlogPost::GetList(

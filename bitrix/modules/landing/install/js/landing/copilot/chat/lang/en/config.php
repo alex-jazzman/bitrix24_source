@@ -1,5 +1,5 @@
 <?php
-$MESS["LANDING_COPILOT_CHAT_BOT_TITLE"] = "CoPilot web designer";
+$MESS["LANDING_COPILOT_CHAT_BOT_TITLE_MSGVER_2"] = "#COPILOT_NAME# web designer";
 $MESS["LANDING_COPILOT_CHAT_INPUT_PLACEHOLDER"] = "Enter your suggestion";
-$MESS["LANDING_COPILOT_CHAT_SUBTITLE"] = "Web designer";
-$MESS["LANDING_COPILOT_CHAT_TITLE"] = "CoPilot web designer";
+$MESS["LANDING_COPILOT_CHAT_SUBTITLE"] = "Create your site in minutes";
+$MESS["LANDING_COPILOT_CHAT_TITLE_MSGVER_2"] = "#COPILOT_NAME# web designer";

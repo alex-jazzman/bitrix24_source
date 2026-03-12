@@ -12,6 +12,8 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 	IBPEventDrivenActivity,
 	IBPConfigurableActivity
 {
+	private const START_EVENT_SORT = 92;
+	private const CONTINUE_EVENT_SORT = 93;
 	private ?int $startEventId;
 	private ?int $continueEventId;
 
@@ -75,7 +77,8 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 			$this->getName(),
 			'timeman',
 			'OnAfterTMDayStart',
-			['USER_ID' => $userId]
+			['USER_ID' => $userId],
+			self::START_EVENT_SORT,
 		);
 
 		$this->continueEventId = $schedulerService->subscribeOnEvent(
@@ -83,7 +86,8 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 			$this->getName(),
 			'timeman',
 			'OnAfterTMDayContinue',
-			['USER_ID' => $userId]
+			['USER_ID' => $userId],
+			self::CONTINUE_EVENT_SORT
 		);
 
 		$this->writeToTrackingService(

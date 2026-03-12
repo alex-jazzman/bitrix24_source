@@ -1,5 +1,0 @@
-<?
-$MESS["INTRANET_USER_PROFILE_SECURITY_OTP_TITLE"] = "Налаштування додаткового захисту";
-$MESS["INTRANET_USER_PROFILE_SECURITY_PASSWORDS_TITLE"] = "Паролі застосунків";
-$MESS["INTRANET_USER_PROFILE_SYNCHRONIZE_TITLE"] = "Сихронізація";
-?>

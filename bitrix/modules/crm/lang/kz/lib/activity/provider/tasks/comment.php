@@ -1,3 +1,0 @@
-<?php
-$MESS["TASKS_TASK_INTEGRATION_TASK_COMMENT"] = "міндетке пікір";
-$MESS["TASKS_TASK_INTEGRATION_TASK_COMMENT_V2"] = "Міндетке пікір";

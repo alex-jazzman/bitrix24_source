@@ -236,7 +236,7 @@ jn.define('im/messenger/model/recent/validator', (require, exports, module) => {
 			message.sending = fields.message.sending;
 		}
 
-		if (Type.isBoolean(fields.message.sticker))
+		if (Type.isBoolean(fields.message.sticker) || Type.isPlainObject(fields.message.sticker))
 		{
 			message.sticker = fields.message.sticker;
 		}

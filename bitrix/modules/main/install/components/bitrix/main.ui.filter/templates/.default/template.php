@@ -121,7 +121,7 @@ $filterValue = $arResult["LIMITS_ENABLED"] ? '' : HtmlFilter::encode($arResult["
 	<div class="main-ui-filter-search <?=$filterSearchClass?>" id="<?=$arParams["FILTER_ID"]?>_search_container">
 		<input
 				type="text"
-				tabindex="1" <?php
+				<?php
 				if($arParams["CONFIG"]["AUTOFOCUS"]):?>autofocus="" <?php endif;
 				?>value="<?=$filterValue?>"
 				name="FIND"

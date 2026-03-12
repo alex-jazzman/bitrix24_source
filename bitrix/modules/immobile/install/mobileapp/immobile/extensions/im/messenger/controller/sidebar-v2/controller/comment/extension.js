@@ -43,7 +43,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/comment', (require, exp
 		 */
 		getPrimaryActionButtons()
 		{
-			const muted = this.dialogHelper.isMuted;
+			const isUserSubscribed = this.#isUserSubscribed();
 
 			return [
 				createSearchButton({
@@ -51,12 +51,12 @@ jn.define('im/messenger/controller/sidebar-v2/controller/comment', (require, exp
 				}),
 				{
 					id: 'mute',
-					testIdSuffix: muted ? 'muted' : 'unmuted',
+					testIdSuffix: isUserSubscribed ? 'unmuted' : 'muted',
 					icon: Icon.OBSERVER,
-					selected: !muted,
-					title: muted
-						? Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_WATCH_DISABLED')
-						: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_WATCH_ENABLED'),
+					selected: isUserSubscribed,
+					title: isUserSubscribed
+						? Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_WATCH_ENABLED')
+						: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_WATCH_DISABLED'),
 					onClick: () => this.handleToggleCommentsSubscriptionAction(),
 				},
 			];
@@ -71,13 +71,13 @@ jn.define('im/messenger/controller/sidebar-v2/controller/comment', (require, exp
 				return;
 			}
 
-			if (this.dialogHelper.isMuted)
+			if (this.#isUserSubscribed())
 			{
-				this.chatService.subscribeToComments(this.dialogId);
+				this.chatService.unsubscribeFromComments(this.dialogId);
 			}
 			else
 			{
-				this.chatService.unsubscribeFromComments(this.dialogId);
+				this.chatService.subscribeToComments(this.dialogId);
 			}
 		}
 
@@ -98,6 +98,13 @@ jn.define('im/messenger/controller/sidebar-v2/controller/comment', (require, exp
 		}
 
 		// endregion
+
+		#isUserSubscribed()
+		{
+			const commentInfo = this.store.getters['commentModel/getByDialogId'](this.dialogId);
+
+			return Boolean(commentInfo?.isUserSubscribed);
+		}
 	}
 
 	module.exports = {

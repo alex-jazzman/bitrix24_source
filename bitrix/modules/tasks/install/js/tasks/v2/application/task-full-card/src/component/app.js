@@ -2,14 +2,15 @@ import { Reflection, Runtime, Loc } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Notifier } from 'ui.notification-manager';
 import { renderSkeleton } from 'ui.system.skeleton';
-import { computed } from 'ui.vue3';
+import { BLine } from 'ui.system.skeleton.vue';
+import { BitrixVue, computed } from 'ui.vue3';
 import { mapActions, mapGetters } from 'ui.vue3.vuex';
 
 import { analytics } from 'tasks.v2.lib.analytics';
 import { Core } from 'tasks.v2.core';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { ahaMoments } from 'tasks.v2.lib.aha-moments';
-import { CardType, EventName, Model, TaskField, Option, GroupType } from 'tasks.v2.const';
+import { CardType, EventName, Model, TaskField, Option, GroupType, Analytics } from 'tasks.v2.const';
 import { FieldList } from 'tasks.v2.component.elements.field-list';
 import { ContentResizer } from 'tasks.v2.component.elements.content-resizer';
 import { DropZone } from 'tasks.v2.component.drop-zone';
@@ -41,6 +42,7 @@ import { Replication, ReplicationChip } from 'tasks.v2.component.fields.replicat
 import { Email, EmailFrom, EmailDate, EmailChip, emailMeta } from 'tasks.v2.component.fields.email';
 import { UserFields, UserFieldsChip, userFieldsManager } from 'tasks.v2.component.fields.user-fields';
 import { Placements, PlacementsChip } from 'tasks.v2.component.fields.placements';
+import { CreatedDate, createdDateMeta } from 'tasks.v2.component.fields.created-date';
 
 import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
@@ -48,6 +50,7 @@ import { templateService } from 'tasks.v2.provider.service.template-service';
 import { deadlineService } from 'tasks.v2.provider.service.deadline-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { GroupModel } from 'tasks.v2.model.groups';
+import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { SheetBindProps } from 'tasks.v2.component.elements.bottom-sheet';
 import type { AppField, AppChip } from 'tasks.v2.application.task-card';
 import type { UserFieldScheme } from 'tasks.v2.model.interface';
@@ -93,13 +96,14 @@ export const App = {
 		EmailFrom,
 		EmailDate,
 		UserFields,
+		CreatedDate,
 	},
 	provide(): Object
 	{
 		return {
+			settings: Core.getParams(),
 			analytics: this.analytics,
 			cardType: CardType.Full,
-			settings: Core.getParams(),
 			/** @type { TaskModel } */
 			task: computed((): TaskModel => taskService.getStoreTask(this.taskId)),
 			/** @type { number | string } */
@@ -142,6 +146,7 @@ export const App = {
 			isCheckListSheetShown: false,
 			isDatePlanSheetShown: false,
 			isTimeTrackingSheetShown: false,
+			isTimeTrackingChipSheetShown: false,
 			isResultListSheetShown: false,
 			isResultEditorSheetShown: false,
 			isResultChipSheetShown: false,
@@ -176,6 +181,15 @@ export const App = {
 		{
 			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
 		},
+		checklist(): CheckListModel[]
+		{
+			if (!this.task.checklist)
+			{
+				return [];
+			}
+
+			return this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
+		},
 		isEdit(): boolean
 		{
 			return idUtils.isReal(this.taskId);
@@ -195,6 +209,10 @@ export const App = {
 		isFlowFilledOnAdd(): boolean
 		{
 			return this.task.flowId > 0 && !this.isEdit;
+		},
+		hasManyResponsibleUsers(): boolean
+		{
+			return !this.task.isForNewUser && this.task.responsibleIds.length > 1;
 		},
 		canChangeDeadline(): boolean
 		{
@@ -241,7 +259,8 @@ export const App = {
 					component: Creator,
 				},
 				{
-					title: responsibleMeta.getTitle(!this.task.isForNewUser && this.task.responsibleIds.length > 1),
+					title: responsibleMeta.getTitle(this.hasManyResponsibleUsers),
+					hint: this.hasManyResponsibleUsers ? responsibleMeta.hint : null,
 					component: Responsible,
 					props: {
 						taskId: this.taskId,
@@ -253,7 +272,7 @@ export const App = {
 					props: {
 						taskId: this.taskId,
 						isTemplate: this.isTemplate,
-						isHovered: this.isPrimaryFieldsHovered || this.isTaskSettingsHintShown,
+						isHovered: this.isTaskSettingsHintShown,
 					},
 					events: {
 						isSettingsPopupShown: (value) => {
@@ -279,9 +298,14 @@ export const App = {
 					component: Status,
 					withSeparator: true,
 				},
+				!this.isTemplate && {
+					title: createdDateMeta.title,
+					component: CreatedDate,
+				},
 				{
 					title: emailMeta.title,
 					component: Email,
+					printIgnore: !this.task.email,
 					chip: {
 						component: EmailChip,
 						isEnabled: this.wasFilled(TaskField.Email),
@@ -291,10 +315,12 @@ export const App = {
 					title: emailMeta.fromTitle,
 					component: EmailFrom,
 					withSeparator: true,
+					printIgnore: !this.task.email,
 				},
 				{
 					title: emailMeta.dateTitle,
 					component: EmailDate,
+					printIgnore: !this.task.email,
 				},
 				!this.isTemplate && {
 					chip: {
@@ -325,6 +351,22 @@ export const App = {
 				},
 				{
 					chip: {
+						component: BitrixVue.defineAsyncComponent(
+							'tasks.v2.component.fields.comment-files',
+							'CommentFilesChip',
+							{
+								delay: 0,
+								loadingComponent: {
+									components: { BLine },
+									template: '<BLine :width="212" :height="32"/>',
+								},
+							},
+						),
+						isEnabled: this.task.containsCommentFiles === true,
+					},
+				},
+				{
+					chip: {
 						component: CheckListChip,
 						events: {
 							showCheckList: this.openCheckList,
@@ -339,6 +381,7 @@ export const App = {
 						component: GroupChip,
 						isEnabled: this.wasFilled(TaskField.Group) || this.task.rights.edit,
 					},
+					printIgnore: !this.task.groupId,
 				},
 				{
 					title: accomplicesMeta.title,
@@ -347,6 +390,7 @@ export const App = {
 						component: AccomplicesChip,
 						isEnabled: this.wasFilled(TaskField.Accomplices) || this.task.rights.changeAccomplices,
 					},
+					printIgnore: !this.task.accomplicesIds || this.task.accomplicesIds.length === 0,
 				},
 				{
 					title: auditorsMeta.title,
@@ -356,6 +400,7 @@ export const App = {
 						isEnabled: this.wasFilled(TaskField.Auditors) || this.task.rights.addAuditors,
 					},
 					withSeparator: this.wasFilled(TaskField.Accomplices),
+					printIgnore: !this.task.auditorsIds || this.task.auditorsIds.length === 0,
 				},
 				!this.isTemplate && {
 					chip: {
@@ -371,6 +416,7 @@ export const App = {
 						isEnabled: this.wasFilled(TaskField.Flow) || this.task.rights.edit,
 					},
 					withSeparator: true,
+					printIgnore: !this.task.flowId,
 				},
 				Core.getParams().features.isProjectsEnabled && {
 					title: groupMeta.stageTitle,
@@ -391,6 +437,7 @@ export const App = {
 						component: TagsChip,
 						isEnabled: this.wasFilled(TaskField.Tags) || this.task.rights.edit,
 					},
+					printIgnore: !this.task.tags || this.task.tags.length === 0,
 				},
 				!this.isTemplate && {
 					chip: {
@@ -416,6 +463,7 @@ export const App = {
 						isEnabled: this.wasFilled(TaskField.Crm) || this.task.rights.edit,
 					},
 					withSeparator: this.wasFilled(TaskField.Group) || this.wasFilled(TaskField.Flow),
+					printIgnore: !this.task.crmItemIds || this.task.crmItemIds.length === 0,
 				},
 				{
 					chip: {
@@ -423,6 +471,7 @@ export const App = {
 						collapsed: true,
 						isEnabled: this.wasFilled(TaskField.Parent) || this.task.rights.edit,
 					},
+					printIgnore: !this.task.parentId,
 				},
 				{
 					chip: {
@@ -430,6 +479,7 @@ export const App = {
 						collapsed: true,
 						isEnabled: this.wasFilled(TaskField.SubTasks) || this.task.rights.createSubtask || !this.isEdit,
 					},
+					printIgnore: !this.task.subTaskIds || this.task.subTaskIds.length === 0,
 				},
 				{
 					chip: {
@@ -437,6 +487,7 @@ export const App = {
 						collapsed: true,
 						isEnabled: this.wasFilled(TaskField.RelatedTasks) || this.task.rights.edit,
 					},
+					printIgnore: !this.task.relatedTaskIds || this.task.relatedTaskIds.length === 0,
 				},
 				!this.isTemplate && {
 					chip: {
@@ -444,6 +495,7 @@ export const App = {
 						collapsed: true,
 						isEnabled: this.wasFilled(TaskField.Gantt) || this.task.rights[ganttMeta.right],
 					},
+					printIgnore: !this.task.ganttTaskIds || this.task.ganttTaskIds.length === 0,
 				},
 				{
 					chip: {
@@ -468,6 +520,7 @@ export const App = {
 							isSheetShown: this.isReplicationSheetShown,
 							sheetBindProps: this.sheetBindProps,
 						},
+						isEnabled: this.wasFilled(TaskField.Replication) || this.task.rights.edit,
 						events: {
 							'update:isSheetShown': (isShown: boolean): void => {
 								this.isReplicationSheetShown = isShown;
@@ -479,7 +532,16 @@ export const App = {
 					chip: {
 						component: TimeTrackingChip,
 						collapsed: true,
-						isEnabled: this.task.rights.edit || this.task.allowsTimeTracking,
+						isEnabled: this.task.rights.edit || this.task.rights.elapsedTime,
+						props: {
+							isSheetShown: this.isTimeTrackingChipSheetShown,
+							sheetBindProps: this.sheetBindProps,
+						},
+						events: {
+							'update:isSheetShown': (isShown: boolean): void => {
+								this.isTimeTrackingChipSheetShown = isShown;
+							},
+						},
 					},
 				},
 				{
@@ -507,8 +569,15 @@ export const App = {
 				[Creator, true],
 				[Responsible, true],
 				[Deadline, true],
-				[TimeTracking, this.task.allowsTimeTracking],
+				[TimeTracking, (
+					this.task.allowsTimeTracking
+					|| (
+						this.task.rights.elapsedTime
+						&& this.task.numberOfElapsedTimes
+					)
+				)],
 				[Status, this.isEdit],
+				[CreatedDate, this.isEdit],
 			]));
 		},
 		projectFields(): AppField[]
@@ -518,7 +587,7 @@ export const App = {
 			return this.getFields(new WeakMap([
 				[Group, this.wasFilled(TaskField.Group)],
 				[Flow, this.wasFilled(TaskField.Flow)],
-				[Stage, !this.isTemplate && this.isEdit && this.group && (this.task.stageId !== 0 || !isScrum)],
+				[Stage, !this.isTemplate && this.isEdit && this.group?.id > 0 && (this.task.stageId !== 0 || !isScrum)],
 				[Epic, !this.isTemplate && isScrum],
 				[StoryPoints, !this.isTemplate && isScrum],
 				[Crm, this.wasFilled(TaskField.Crm)],
@@ -556,6 +625,7 @@ export const App = {
 				|| this.isCheckListSheetShown
 				|| this.isDatePlanSheetShown
 				|| this.isTimeTrackingSheetShown
+				|| this.isTimeTrackingChipSheetShown
 				|| this.isResultListSheetShown
 				|| this.isResultEditorSheetShown
 				|| this.isResultChipSheetShown
@@ -616,6 +686,50 @@ export const App = {
 
 			return (this.task.rights.edit && this.userFieldScheme.length > 0) || this.hasFilledUserFields;
 		},
+		shouldIgnoreResultPrint(): boolean
+		{
+			return this.task.results.length === 0;
+		},
+		shouldIgnoreCheckListPrint(): boolean
+		{
+			return this.checklist.length === 0;
+		},
+		shouldIgnoreSubTasksPrint(): boolean
+		{
+			return this.task.subTaskIds.length === 0;
+		},
+		shouldIgnoreParentTaskPrint(): boolean
+		{
+			return !this.task.parentId;
+		},
+		shouldIgnoreRelatedTasksPrint(): boolean
+		{
+			return this.task.relatedTaskIds.length === 0;
+		},
+		shouldIgnoreGanttPrint(): boolean
+		{
+			return this.task.ganttTaskIds.length === 0;
+		},
+		shouldIgnoreProjectFieldsPrint(): boolean
+		{
+			return this.projectFields.filter((field) => !field.printIgnore).length === 0;
+		},
+		shouldIgnoreEmailPrint(): boolean
+		{
+			return !this.task.email;
+		},
+		shouldIgnoreTagsPrint(): boolean
+		{
+			return this.task.tags.length === 0;
+		},
+		shouldIgnoreParticipantsPrint(): boolean
+		{
+			return this.participantsFields.filter((field) => !field.printIgnore).length === 0;
+		},
+		shouldIgnoreDatePlanPrint(): boolean
+		{
+			return !this.task.startPlanTs && !this.task.endPlanTs;
+		},
 	},
 	watch: {
 		async isLoading(): Promise<void>
@@ -651,6 +765,7 @@ export const App = {
 				deadlineTs: this.initialTask.deadlineTs ?? this.defaultDeadlineTs,
 				needsControl: this.stateFlags.needsControl ?? null,
 				matchesWorkTime: this.stateFlags.matchesWorkTime ?? null,
+				allowsTimeTracking: this.stateFlags.allowsTimeTracking ?? null,
 				requireResult: Core.getParams().restrictions.requiredResult.available && this.defaultRequireResult,
 			});
 
@@ -663,6 +778,13 @@ export const App = {
 			{
 				await templateService.getTask(this.initialTask.templateId, this.taskId);
 			}
+
+			analytics.sendClickCreate(this.analytics, {
+				collabId: this.group?.type === GroupType.Collab ? this.group.id : null,
+				cardType: CardType.Full,
+				viewersCount: this.initialTask?.auditorsIds?.length ?? 0,
+				coexecutorsCount: this.initialTask?.accomplicesIds?.length ?? 0,
+			});
 		}
 
 		await this.$store.dispatch(`${Model.Tasks}/clearFieldsFilled`, this.taskId);
@@ -672,17 +794,16 @@ export const App = {
 			await taskService.get(this.taskId);
 		}
 
-		if (this.task?.fileIds?.length > 0)
-		{
-			await fileService.get(this.taskId).list(this.task.fileIds);
-		}
-
-		this.isLoading = false;
-
 		if (!this.task)
 		{
+			this.isLoading = false;
+
 			return;
 		}
+
+		await fileService.get(this.taskId).list(this.task.fileIds);
+
+		this.isLoading = false;
 
 		if (!this.isTemplate && !this.canChangeDeadlineWithoutLimitation && this.task.maxDeadlineChanges)
 		{
@@ -696,6 +817,15 @@ export const App = {
 		);
 
 		this.taskInitial = this.task;
+
+		if (this.isEdit)
+		{
+			analytics.sendTaskView(this.analytics, {
+				taskId: this.task?.id,
+				viewersCount: this.task?.auditorsIds?.length ?? 0,
+				coexecutorsCount: this.task?.accomplicesIds?.length ?? 0,
+			});
+		}
 
 		await Runtime.loadExtension(Core.getParams().externalExtensions);
 
@@ -733,6 +863,8 @@ export const App = {
 		},
 		async addTask(): Promise<void>
 		{
+			const checklists = this.checklist;
+
 			const [id, error] = await taskService.add(this.task);
 
 			if (!id)
@@ -748,16 +880,11 @@ export const App = {
 
 			entityTextEditor.replace(this.id, id);
 
-			if (id)
-			{
-				this.sendAddTaskAnalytics(true);
-			}
-			else
-			{
-				this.sendAddTaskAnalytics(false);
-			}
+			const isSuccess = Boolean(id);
 
-			this.notifyGrid();
+			this.sendAddTaskAnalytics(isSuccess, checklists);
+
+			this.fireLegacyGlobalEvent();
 		},
 		async copyTask(event: Object): Promise<void>
 		{
@@ -775,11 +902,11 @@ export const App = {
 			this.taskId = id;
 
 			fileService.delete(this.id);
-			await fileService.get(this.taskId).sync(this.task.fileIds);
+			await fileService.get(this.taskId).list(this.task.fileIds);
 
 			entityTextEditor.replace(this.id, id);
 
-			this.notifyGrid();
+			this.fireLegacyGlobalEvent();
 		},
 		async createFromTemplate(event: Object): Promise<void>
 		{
@@ -795,17 +922,21 @@ export const App = {
 			{
 				this.handleCreationError(error);
 
+				this.sendAddTaskFromTemplateAnalytics(false);
+
 				return;
 			}
 
 			this.taskId = id;
 
+			this.sendAddTaskFromTemplateAnalytics(true);
+
 			fileService.delete(this.id);
-			await fileService.get(this.taskId).sync(this.task.fileIds);
+			await fileService.get(this.taskId).list(this.task.fileIds);
 
 			entityTextEditor.replace(this.id, id);
 
-			this.notifyGrid();
+			this.fireLegacyGlobalEvent();
 		},
 		handleCreationError(error: Error): void
 		{
@@ -816,14 +947,15 @@ export const App = {
 				text: error?.message,
 			});
 		},
-		notifyGrid(): void
+		fireLegacyGlobalEvent(): void
 		{
-			EventEmitter.emit(EventName.NotifyGrid, new BaseEvent({
+			EventEmitter.emit(EventName.LegacyTasksTaskEvent, new BaseEvent({
 				data: this.taskId,
 				compatData: [
 					'ADD',
 					{
-						task: this.task,
+						task: { ID: this.taskId },
+						taskUgly: { id: this.taskId },
 						options: {},
 					},
 				],
@@ -841,9 +973,12 @@ export const App = {
 		},
 		openUserFieldsHandler(): void
 		{
-			const templateId = this.isEdit ? null : this.task?.templateId;
-
-			void userFieldsSlider.open(this.taskId, this.isTemplate, templateId);
+			void userFieldsSlider.open({
+				taskId: this.taskId,
+				isTemplate: this.isTemplate,
+				templateId: this.isEdit ? null : this.task?.templateId,
+				copiedFromId: this.isEdit ? null : this.task?.copiedFromId,
+			});
 		},
 		handleCloseTaskSettingsHint(): void
 		{
@@ -904,10 +1039,7 @@ export const App = {
 
 			await templateService.getTask(templateId, this.taskId);
 
-			if (this.task?.fileIds?.length > 0)
-			{
-				await fileService.get(this.taskId).list(this.task?.fileIds);
-			}
+			await fileService.get(this.taskId).list(this.task?.fileIds);
 
 			await this.$store.dispatch(`${Model.Tasks}/clearFieldsFilled`, this.taskId);
 
@@ -923,20 +1055,41 @@ export const App = {
 				void renderSkeleton(this.isTemplate ? templateSkeletonPath : skeletonPath, this.$refs.skeleton);
 			}
 		},
-		sendAddTaskAnalytics(isSuccess: boolean): void
+		sendAddTaskAnalytics(isSuccess: boolean, checklists: CheckListModel[]): void
 		{
 			const collabId = this.group?.type === GroupType.Collab ? this.group.id : null;
-			const checkLists = this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
-			if (checkLists.length > 0)
+			const viewersCount = this.task.auditorsIds.length;
+			const coexecutorsCount = this.task.accomplicesIds.length;
+
+			if (this.task.templateId)
 			{
-				const checklistCount = checkLists.filter(({ parentId }) => parentId === 0).length;
-				const checklistItemsCount = checkLists.filter(({ parentId }) => parentId !== 0).length;
+				this.sendAddTaskFromTemplateAnalytics(isSuccess);
+			}
+			else if (this.task.parentId)
+			{
+				analytics.sendAddTask(this.analytics, {
+					isSuccess,
+					collabId,
+					viewersCount,
+					coexecutorsCount,
+					event: Analytics.Event.SubTaskAdd,
+					cardType: CardType.Full,
+					taskId: this.taskId,
+				});
+			}
+			else if (checklists.length > 0)
+			{
+				const checklistCount = checklists.filter(({ parentId }) => parentId === 0).length;
+				const checklistItemsCount = checklists.filter(({ parentId }) => parentId !== 0).length;
+
 				analytics.sendAddTaskWithCheckList(this.analytics, {
 					isSuccess,
 					collabId,
-					viewersCount: this.task.auditorsIds.length,
+					viewersCount,
 					checklistCount,
 					checklistItemsCount,
+					cardType: CardType.Full,
+					taskId: this.taskId,
 				});
 			}
 			else
@@ -944,18 +1097,42 @@ export const App = {
 				analytics.sendAddTask(this.analytics, {
 					isSuccess,
 					collabId,
-					viewersCount: this.task.auditorsIds.length,
-					coexecutorsCount: this.task.accomplicesIds.length,
+					viewersCount,
+					coexecutorsCount,
+					event: Analytics.Event.TaskCreate,
+					cardType: CardType.Full,
+					taskId: this.taskId,
 				});
 			}
 		},
+		sendAddTaskFromTemplateAnalytics(isSuccess: boolean): void
+		{
+			const collabId = this.group?.type === GroupType.Collab ? this.group.id : null;
+			const viewersCount = this.task.auditorsIds.length;
+			const coexecutorsCount = this.task.accomplicesIds.length;
+
+			analytics.sendAddTask(this.analytics, {
+				isSuccess,
+				collabId,
+				viewersCount,
+				coexecutorsCount,
+				event: Analytics.Event.PatternTaskCreate,
+				cardType: CardType.Full,
+				taskId: this.taskId,
+			});
+		},
 	},
 	template: `
-		<div class="tasks-full-card" :class="{ '--blur': isDescriptionSheetShown }" :data-task-id="taskId" data-task-full>
+		<div
+			class="tasks-full-card print-fit-height"
+			:class="{ '--blur': isDescriptionSheetShown }"
+			:data-task-id="taskId"
+			data-task-full
+		>
 			<template v-if="task && !isPartiallyLoaded && !isLoading">
 				<div
 					ref="main"
-					class="tasks-full-card-main"
+					class="tasks-full-card-main print-background-white"
 					:class="{ '--overlay': isBottomSheetShown }"
 					:style="{ width: (isTemplate ? '100%' : fullCardWidth + 'px') }"
 				>
@@ -977,7 +1154,7 @@ export const App = {
 						/>
 						<div class="tasks-full-card-fields">
 							<div
-								class="tasks-full-card-field-container"
+								class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
 								data-field-container
 								@mouseover="isPrimaryFieldsHovered = true"
 								@mouseleave="isPrimaryFieldsHovered = false"
@@ -987,14 +1164,19 @@ export const App = {
 							<div class="tasks-full-card-chips-fields">
 								<div
 									v-if="emailFields.length > 0"
-									class="tasks-full-card-field-container"
+									class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
+									:class="{ 'print-ignore': shouldIgnoreEmailPrint }"
 									data-field-container
 								>
 									<FieldList :fields="emailFields"/>
 								</div>
 								<div
 									v-if="!isTemplate && (task.requireResult || wasFilled(TaskField.Results))"
-									class="tasks-full-card-field-container --custom"
+									class="tasks-full-card-field-container  --custom"
+									:class="{ 
+										'print-ignore': shouldIgnoreResultPrint,
+										'print-before-divider-accent': !shouldIgnoreResultPrint,
+									}"
 								>
 									<Results
 										v-model:isSheetShown="isResultEditorSheetShown"
@@ -1004,14 +1186,15 @@ export const App = {
 								</div>
 								<div
 									v-if="isDiskModuleInstalled && (files.length > 0 || wasFilled(TaskField.Files))"
-									class="tasks-full-card-field-container --small-vertical-padding"
+									class="tasks-full-card-field-container --small-vertical-padding print-ignore"
 									data-field-container
 								>
 									<Files v-model:isSheetShown="isFilesSheetShown" :taskId :sheetBindProps/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.CheckList)"
-									class="tasks-full-card-field-container --custom"
+									class="tasks-full-card-field-container print-before-divider-accent print-padding-bottom-inset-md --custom"
+									:class="{ 'print-ignore': shouldIgnoreCheckListPrint }"
 								>
 									<CheckList
 										isPreview
@@ -1022,14 +1205,16 @@ export const App = {
 								</div>
 								<div
 									v-if="projectFields.length > 0"
-									class="tasks-full-card-field-container"
+									class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
+									:class="{ 'print-ignore': shouldIgnoreProjectFieldsPrint }"
 									data-field-container
 								>
 									<FieldList :fields="projectFields"/>
 								</div>
 								<div
 									v-if="participantsFields.length > 0"
-									class="tasks-full-card-field-container"
+									class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
+									:class="{ 'print-ignore': shouldIgnoreParticipantsPrint }"
 									data-field-container
 								>
 									<FieldList
@@ -1039,13 +1224,13 @@ export const App = {
 								</div>
 								<div
 									v-if="!isTemplate && isEdit && wasFilled(TaskField.Placements)"
-									class="tasks-full-card-field-container --custom"
+									class="tasks-full-card-field-container --custom print-ignore"
 								>
 									<Placements/>
 								</div>
 								<div
 									v-if="!isTemplate && wasFilled(TaskField.Reminders)"
-									class="tasks-full-card-field-container --custom"
+									class="tasks-full-card-field-container --custom print-ignore"
 									data-field-container
 								>
 									<Reminders
@@ -1056,49 +1241,55 @@ export const App = {
 								</div>
 								<div
 									v-if="tagsFields.length > 0"
-									class="tasks-full-card-field-container"
+									class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
+									:class="{ 'print-ignore': shouldIgnoreTagsPrint }"
 									data-field-container
 								>
 									<FieldList :fields="tagsFields"/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.Parent)"
-									class="tasks-full-card-field-container --custom"
+									class="tasks-full-card-field-container print-before-divider-accent --custom"
+									:class="{ 'print-ignore': shouldIgnoreParentTaskPrint }"
 									data-field-container
 								>
 									<ParentTask/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.SubTasks) && !isCopyMode"
-									class="tasks-full-card-field-container --custom --task-list"
+									class="tasks-full-card-field-container print-before-divider-accent --custom --task-list print-background-white"
+									:class="{ 'print-ignore': shouldIgnoreSubTasksPrint }"
 									data-field-container
 								>
 									<SubTasks/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.RelatedTasks)"
-									class="tasks-full-card-field-container --custom --task-list"
+									class="tasks-full-card-field-container print-before-divider-accent --custom --task-list print-background-white"
+									:class="{ 'print-ignore': shouldIgnoreRelatedTasksPrint }"
 									data-field-container
 								>
 									<RelatedTasks/>
 								</div>
 								<div
 									v-if="!isTemplate && wasFilled(TaskField.Gantt)"
-									class="tasks-full-card-field-container --custom --task-list"
+									class="tasks-full-card-field-container print-before-divider-accent --custom --task-list print-background-white"
+									:class="{ 'print-ignore': shouldIgnoreGanttPrint }"
 									data-field-container
 								>
 									<Gantt/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.DatePlan)"
-									class="tasks-full-card-field-container"
+									class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
+									:class="{ 'print-ignore': shouldIgnoreDatePlanPrint }"
 									data-field-container
 								>
 									<DatePlan v-model:isSheetShown="isDatePlanSheetShown" :sheetBindProps/>
 								</div>
 								<div
 									v-if="isTemplate && wasFilled(TaskField.Replication)"
-									class="tasks-full-card-field-container --custom tasks-full-card-field-container-replication"
+									class="tasks-full-card-field-container print-before-divider-accent --custom tasks-full-card-field-container-replication"
 									data-field-container
 								>
 									<Replication
@@ -1107,13 +1298,13 @@ export const App = {
 										:sheetBindProps
 									/>
 								</div>
-							<div
-								v-if="shouldShowUserFields"
-								class="tasks-full-card-field-container --custom"
-								data-field-container
-							>
-								<UserFields @open="openUserFieldsHandler"/>
-							</div>
+								<div
+									v-if="shouldShowUserFields"
+									class="tasks-full-card-field-container print-before-divider-accent --custom"
+									data-field-container
+								>
+									<UserFields @open="openUserFieldsHandler"/>
+								</div>
 								<Chips :chips/>
 							</div>
 							<TaskSettingsHint
@@ -1132,7 +1323,6 @@ export const App = {
 						@copyTask="copyTask"
 						@fromTemplate="createFromTemplate"
 						@close="tryClose"
-						@template="handleTemplate"
 					/>
 					<ContentResizer v-if="!isTemplate" @endResize="handleEndResize"/>
 					<DropZone

@@ -78,4 +78,19 @@ export class RightBar
 	{
 		return document.getElementById('right-bar');
 	}
+
+	show(): void
+	{
+		Dom.removeClass(this.getContainer(), '--hidden');
+	}
+
+	hide(): void
+	{
+		Dom.addClass(this.getContainer(), '--hidden');
+	}
+
+	isVisible(): boolean
+	{
+		return !Dom.hasClass(this.getContainer(), '--hidden');
+	}
 }

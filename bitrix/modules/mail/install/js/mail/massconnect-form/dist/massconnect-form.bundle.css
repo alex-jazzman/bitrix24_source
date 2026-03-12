@@ -392,6 +392,7 @@
 	-o-transition: background-color 0.3s ease;
 	transition: background-color 0.3s ease;
 	padding: 2px 6px 2px 3px;
+	max-width: 100%;
 }
 
 .mail_massconnect__employee-list_table_employee-info:hover {
@@ -412,6 +413,7 @@
 .mail_massconnect__employee-list_table_employee-name {
 	font-size: var(--ui-font-size-lg);
 	color: #333;
+	word-break: break-all;
 }
 
 .mail_massconnect__employee-list_table_input {
@@ -530,7 +532,6 @@
 .mail_massconnect__employee-list_added-employees_container .mail_massconnect__employee-list_table_header {
 	margin: 0;
 }
-
 .mail_massconnect__mailbox-settings_form {
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -979,3 +980,7 @@
 	white-space: nowrap;
 }
 
+.mail_massconnect-hint {
+	color: var(--ui-color-base-8);
+	font-size: var(--ui-font-size-lg);
+}

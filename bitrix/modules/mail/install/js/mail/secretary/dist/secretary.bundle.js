@@ -105,19 +105,6 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "onTaskAction",
-	    value: function onTaskAction(event, element) {
-	      var analyticsData = {
-	        tool: 'tasks',
-	        category: 'task_operations',
-	        event: event,
-	        type: 'task',
-	        c_section: 'mail',
-	        c_element: element
-	      };
-	      ui_analytics.sendData(analyticsData);
-	    }
-	  }, {
 	    key: "subscribe",
 	    value: function subscribe() {
 	      this.contextBx.Event.EventEmitter.subscribe('BX.Calendar:onEntrySave', this.onCalendarSave.bind(this));

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['GROUPS_COUNT_TIP'] = "Specifies the number of groups to be displayed in one page. Only non-empty groups will be displayed.";
 $MESS ['COLS_COUNT_TIP'] = "Specifies the number of columns in which groups will be rendered.";
 $MESS ['SORT_BY1_TIP'] = "Specifies the fields by which the blog groups will be sorted first.";
@@ -10,4 +10,3 @@ $MESS ['GROUP_VAR_TIP'] = "Specify here the name of a variable to which the blog
 $MESS ['PAGE_VAR_TIP'] = "Specify here the name of a variable to which the blog page will be passed.";
 $MESS ['CACHE_TYPE_TIP'] = "<i>Auto</i>: the cache is valid during the time predefined in the cache settings;<br /><i>Cache</i>: always cache for the period specified in the next field;<br /><i>Do not cahce</i>: no caching is performed.";
 $MESS ['CACHE_TIME_TIP'] = "Specify here the period of time during which the cache is valid.";
-?>

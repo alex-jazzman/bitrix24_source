@@ -1,6 +1,7 @@
 import { memberRoles, teamMemberRoles } from 'humanresources.company-structure.api';
 import { type DepartmentData } from 'humanresources.company-structure.chart-store';
-import { NodeSettingsTypes } from 'humanresources.company-structure.utils';
+import { PermissionCheckerClass } from 'humanresources.company-structure.permission-checker';
+import { NodeSettingsTypes, type UserData } from 'humanresources.company-structure.utils';
 
 type WizardData = {
 	stepIndex: number;
@@ -18,6 +19,7 @@ type WizardData = {
 	shouldErrorHighlight: boolean;
 	visibleSteps: Array<Step.id>;
 	saveMode: 'moveUsers' | 'addUsers';
+	permissionChecker: ?PermissionCheckerClass,
 };
 
 export type StepIdType = 'entities' | 'department' | 'employees' | 'bindChat' | 'settings';

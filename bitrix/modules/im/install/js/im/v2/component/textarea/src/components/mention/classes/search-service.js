@@ -1,6 +1,4 @@
-import { Core } from 'im.v2.application.core';
-
-import { LocalSearch, sortByDate, type SearchResultItem } from 'im.v2.lib.search';
+import { LocalSearch, sortByDate, type SearchResultItem, type EntitySearchConfigType } from 'im.v2.lib.search';
 
 import { BaseServerSearch } from './search/base-search';
 
@@ -10,7 +8,7 @@ export class MentionSearchService
 	#baseServerSearch: BaseServerSearch;
 	#localCollection: Map<string, Date> = new Map();
 
-	constructor(searchConfig)
+	constructor(searchConfig: EntitySearchConfigType)
 	{
 		this.#localSearch = new LocalSearch(searchConfig);
 		this.#baseServerSearch = new BaseServerSearch(searchConfig);
@@ -19,18 +17,12 @@ export class MentionSearchService
 	async loadChatParticipants(dialogId: string): Promise<string[]>
 	{
 		const items = await this.#baseServerSearch.loadChatParticipants(dialogId);
-		if (this.#isSelfDialogId(dialogId))
-		{
-			return this.#getDialogIds(items);
-		}
 
-		const filteredResult = items.filter((item) => !this.#isSelfDialogId(item.dialogId));
-
-		filteredResult.forEach((searchItem) => {
+		items.forEach((searchItem) => {
 			this.#localCollection.set(searchItem.dialogId, searchItem);
 		});
 
-		return this.#getDialogIds(filteredResult);
+		return this.#getDialogIds(items);
 	}
 
 	searchLocal(query: string): string[]
@@ -50,11 +42,6 @@ export class MentionSearchService
 		});
 
 		return this.#getDialogIds(searchResult);
-	}
-
-	#isSelfDialogId(dialogId: string): boolean
-	{
-		return Core.getStore().getters['chats/isNotes'](dialogId);
 	}
 
 	#getDialogIds(items: SearchResultItem[]): string[]

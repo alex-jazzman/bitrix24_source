@@ -55,6 +55,13 @@ return [
 					'dynamicSearch' => false,
 				],
 			],
+			[
+				'id' => 'bizproc-storage',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => false,
+				],
+			],
 		],
 	],
 ];

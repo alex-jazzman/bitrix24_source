@@ -35,7 +35,12 @@ export class EntityCreator
 
 	openTaskCreationForm(): void
 	{
-		this.#openTaskV2Card();
+		this.#openTaskV2Card({
+			analytics: {
+				context: 'chat',
+				element: 'create_button',
+			},
+		});
 	}
 
 	createTaskForChat(): Promise

@@ -176,7 +176,7 @@ this.BX.Call = this.BX.Call || {};
 	    };
 	    this.selected = this.defaultValue.id;
 	    this.limit = {};
-	    rest_client.rest.callMethod("im.v2.call.background.get").then(function (response) {
+	    rest_client.rest.callMethod("call.Desktop.Background.get").then(function (response) {
 	      _this.loading = false;
 	      _this.diskFolderId = response.data().upload.folderId;
 	      response.data().backgrounds["default"].forEach(function (element) {
@@ -320,7 +320,7 @@ this.BX.Call = this.BX.Call || {};
 	      element.isLoading = false;
 	      element.canRemove = true;
 	      _this2.select(element);
-	      rest_client.rest.callMethod('im.v2.call.background.commit', {
+	      rest_client.rest.callMethod('call.Desktop.Background.commit', {
 	        fileId: element.id
 	      });
 	    });

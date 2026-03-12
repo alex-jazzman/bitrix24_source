@@ -98,6 +98,18 @@ jn.define('layout/ui/jn-list', (require, exports, module) => {
 				this,
 			);
 			this.scopeBarRef = null;
+			this.initFloatingActionButton();
+		}
+
+		componentDidMount()
+		{
+			this.actualizeFloatingActionButton(this.props);
+		}
+
+		componentWillReceiveProps(props)
+		{
+			super.componentWillReceiveProps(props);
+			this.actualizeFloatingActionButton(props);
 		}
 
 		getTestId(suffix)
@@ -113,6 +125,42 @@ jn.define('layout/ui/jn-list', (require, exports, module) => {
 			onSearchStringChanged?.(text);
 		}
 
+		initFloatingActionButton()
+		{
+			const { layout, floatingButtonProps = {} } = this.props;
+			const {
+				icon = Icon.PLUS,
+				type = FloatingActionButtonType.COMMON,
+				accentByDefault = true,
+				onClick,
+				onLongClick,
+			} = floatingButtonProps;
+
+			this.floatingActionButton = new FloatingActionButton({
+				testId: this.getTestId('floating-button'),
+				icon,
+				type,
+				accentByDefault,
+				onClick,
+				onLongClick,
+				layout,
+			});
+		}
+
+		actualizeFloatingActionButton(props)
+		{
+			const { pending, displayFloatingButton } = props;
+
+			if (pending || !displayFloatingButton)
+			{
+				this.floatingActionButton.hide();
+
+				return;
+			}
+
+			this.floatingActionButton.show();
+		}
+
 		render()
 		{
 			const { pending, showSkeletonOnlyForList } = this.props;
@@ -126,34 +174,8 @@ jn.define('layout/ui/jn-list', (require, exports, module) => {
 				(!pending || showSkeletonOnlyForList) && this.renderScopes(),
 				!pending && this.renderList(),
 				pending && this.renderSkeleton(),
-				this.renderFloatingButton(),
 			);
 		}
-
-		/**
-		 * @public
-		 */
-		renderFloatingButton = () => {
-			const { layout, pending, displayFloatingButton, floatingButtonProps = {} } = this.props;
-			const {
-				icon = Icon.PLUS,
-				type = FloatingActionButtonType.COMMON,
-				accentByDefault = true,
-				onClick,
-				onLongClick,
-			} = floatingButtonProps;
-
-			return FloatingActionButton({
-				testId: this.getTestId('floating-button'),
-				icon,
-				type,
-				accentByDefault,
-				onClick,
-				onLongClick,
-				hide: (pending || !displayFloatingButton),
-				parentLayout: layout,
-			});
-		};
 
 		/**
 		 * @param {string[]} keys

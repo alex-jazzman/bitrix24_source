@@ -61,4 +61,3 @@ $MESS['IM_CHOOSE_FILE_TITLE'] = "Файлы";
 $MESS['IM_FUNCTION_FOR_BROWSER'] = "К сожалению, функция доступна только в версии для браузера.";
 $MESS["IM_LS_M_M"] = "Заходил #LAST_SEEN#";
 $MESS["IM_LS_M_F"] = "Заходила #LAST_SEEN#";
-?>

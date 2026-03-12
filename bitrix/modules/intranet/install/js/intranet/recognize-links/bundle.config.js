@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/recognize-links.bundle.js',
 	namespace: 'BX.Intranet',
 	browserslist: true,
-	browserslist: true,
 };

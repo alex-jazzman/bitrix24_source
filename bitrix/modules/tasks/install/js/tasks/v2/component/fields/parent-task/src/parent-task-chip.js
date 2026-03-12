@@ -58,6 +58,7 @@ export const ParentTaskChip = {
 				targetNode: this.$el,
 				taskId: this.taskId,
 				onUpdate: this.highlightField,
+				withTemplates: !this.task.replicate && !this.task.isForNewUser,
 			});
 		},
 		highlightField(): void

@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_ACTIVITY_CREATE_QUOTE_DESCRIPTION"] = "Creates estimate.";
+$MESS["CRM_ACTIVITY_CREATE_QUOTE_ERROR_MESSAGE"] = "Estimate creation error text";
+$MESS["CRM_ACTIVITY_CREATE_QUOTE_ITEM_ID"] = "Estimate ID";
+$MESS["CRM_ACTIVITY_CREATE_QUOTE_NAME"] = "Create estimate";

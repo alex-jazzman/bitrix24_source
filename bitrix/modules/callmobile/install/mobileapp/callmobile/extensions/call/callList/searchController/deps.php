@@ -2,7 +2,7 @@
 
 	return [
 		'extensions' => [
-			'call:const',
+			'call:callList/analyticsController',
 			'call:callList/searchView',
 			'call:callList/utils',
 		]

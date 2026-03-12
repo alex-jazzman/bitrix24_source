@@ -4,6 +4,8 @@ export const AnalyticsEvent = Object.freeze({
 	finishScreenshare: 'finish_screenshare',
 	connect: 'connect',
 	startCall: 'start_call',
+	startCallCollab: 'start_call_collab',
+	connectCallCollab: 'connect_call_collab',
 	reconnect: 'reconnect',
 	addUser: 'add_user',
 	disconnect: 'disconnect',
@@ -73,6 +75,7 @@ export const AnalyticsCategory = Object.freeze({
 	callsOperations: 'calls_operations',
 	callFollowup: 'call_followup',
 	callRecord: 'call_record',
+	collabCall: 'collab_call',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -145,4 +148,9 @@ export const AnalyticsDeviceStatus = Object.freeze({
 export const AnalyticsAIStatus = Object.freeze({
 	aiOn: 'ai_on',
 	aiOff: 'ai_off',
+});
+
+export const AnalyticsVpnStatus = Object.freeze({
+	vpnOn: 'vpn_on',
+	vpnOff: 'vpn_off',
 });

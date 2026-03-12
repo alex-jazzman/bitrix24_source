@@ -2,87 +2,27 @@ import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Outline } from 'ui.icon-set.api.vue';
 
-import { Core } from 'tasks.v2.core';
 import { EventName } from 'tasks.v2.const';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
+
+import type { MenuItemOptions } from 'ui.system.menu';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 // eslint-disable-next-line no-unused-vars
-import type { MessageMenu } from 'im.v2.lib.menu';
+import type { TaskCommentsMessageMenu } from 'im.v2.lib.menu';
 
-const MenuSectionCode = Object.freeze({
-	first: 'first',
-	second: 'second',
-	third: 'third',
-});
 /**
- * @param {typeof MessageMenu} baseMenu
- * @returns {typeof MessageMenu}
+ * @param {typeof TaskCommentsMessageMenu} baseMenu
+ * @returns {typeof TaskCommentsMessageMenu}
  */
 // eslint-disable-next-line max-lines-per-function
 export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 {
-	context: Object;
-	close: Function;
-
-	getMenuItems(): MenuItemOptions[] | null[]
-	{
-		const firstGroupItems = [
-			this.getReplyItem(),
-			this.getCopyItem(),
-			this.getEditItem(),
-			this.getDownloadFileItem(),
-			this.getAddResultItem(),
-			this.getRemoveResultItem(),
-			...this.getAdditionalItems(),
-		];
-
-		return [
-			...this.groupItems(firstGroupItems, MenuSectionCode.first),
-			...this.groupItems([this.getDeleteItem()], MenuSectionCode.second),
-		];
-	}
-
-	getNestedItems(): MenuItemOptions[]
-	{
-		const firstGroupItems = [
-			this.getPinItem(),
-			this.getCopyLinkItem(),
-			this.getCopyFileItem(),
-			this.getMarkItem(),
-			this.getFavoriteItem(),
-			this.getSaveToDiskItem(),
-			this.getCreateMeetingItem(),
-		];
-
-		return [
-			...this.groupItems(firstGroupItems, MenuSectionCode.first),
-			...this.groupItems(this.getMarketItems(), MenuSectionCode.second),
-		];
-	}
-
-	getMenuGroups(): MenuSectionOptions[]
-	{
-		return [
-			{ code: MenuSectionCode.first },
-			{ code: MenuSectionCode.second },
-		];
-	}
-
-	getNestedMenuGroups(): MenuSectionOptions[]
-	{
-		return [
-			{ code: MenuSectionCode.first },
-			{ code: MenuSectionCode.second },
-		];
-	}
-
 	getAddResultItem(): ?MenuItemOptions
 	{
 		if (
-			this.#isDeletedMessage()
-			|| !this.#isOwnMessage()
+			this.isDeletedMessage()
+			|| !this.isOwnMessage()
 			|| !this.#shouldShowAddResult()
 		)
 		{
@@ -108,8 +48,8 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 	getRemoveResultItem(): ?MenuItemOptions
 	{
 		if (
-			this.#isDeletedMessage()
-			|| !this.#isOwnMessage()
+			this.isDeletedMessage()
+			|| !this.isOwnMessage()
 			|| !this.#shouldShowRemoveResult()
 		)
 		{
@@ -128,16 +68,6 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 				this.close();
 			},
 		};
-	}
-
-	getCreateTaskItem(): null
-	{
-		return null;
-	}
-
-	getMarkItem(): null
-	{
-		return null;
 	}
 
 	getTaskId(): number
@@ -165,16 +95,6 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 		}
 
 		return this.#getMessageResultId() > 0;
-	}
-
-	#isDeletedMessage(): boolean
-	{
-		return this.context.isDeleted;
-	}
-
-	#isOwnMessage(): boolean
-	{
-		return this.context.authorId === Core.getParams().currentUser.id;
 	}
 
 	#getMessageResultId(): number

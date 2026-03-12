@@ -2,6 +2,13 @@
 	navigation: auto;
 }
 
+html.bx-safari::view-transition-old(root),
+html.bx-safari::view-transition-new(root),
+html.bx-safari::view-transition-group(root) {
+	animation-duration: 0s !important;
+	animation-name: none !important;
+}
+
 body {
 	--air-fixed-layout-top-shift: 0px;
 	--air-admin-panel-height: 0px;
@@ -9,8 +16,33 @@ body {
 	--air-right-bar-width: 70px;
 	--air-app-min-width: 1260px;
 
+	--air-sidepanel-toolbar-right: 70px;
+	--air-sidepanel-toolbar-bottom: 15px;
+	--air-sidepanel-toolbar-right-shifted: 10px;
+	--air-sidepanel-toolbar-bottom-shifted: 15px;
+
+	--air-content-area-left-shift: 22px;
+	--air-header-min-height: 58px;
+	--air-footer-min-height: 76px;
+	--air-topbar-height: 58px;
+
 	margin: 0;
 	overflow-y: scroll;
+}
+
+body.air-fullscreen-mode {
+	--air-topbar-height: 0px;
+	--air-sidepanel-toolbar-right: var(--air-content-area-left-shift, 22px);
+	--air-sidepanel-toolbar-right-shifted: var(--air-content-area-left-shift, 22px);
+}
+
+body.air-fullscreen-mode.side-panel-disable-scrollbar {
+	--air-sidepanel-toolbar-right: -9999px;
+	--air-sidepanel-toolbar-right-shifted: -9999px;
+}
+
+body.air-fullscreen-mode #panel {
+	display: none;
 }
 
 body:has(#bx-panel.bx-panel-fixed),

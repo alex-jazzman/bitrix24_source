@@ -3,7 +3,7 @@ import './style.css';
 import { BIcon } from 'ui.icon-set.api.vue';
 
 // eslint-disable-next-line no-unused-vars
-import type { TRuleCard } from '../types';
+import type { TRuleCard } from '../../types';
 
 // @vue/component
 export const RuleCard = {

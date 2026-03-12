@@ -14,11 +14,8 @@ export function floorDate(date, unit, firstWeekDay): Date
 			newDate.setUTCHours(0, 0, 0, 0);
 			if (day !== firstWeekDay)
 			{
-				newDate = addDate(
-					newDate,
-					'day',
-					-(day > firstWeekDay ? (day - firstWeekDay) : (7 - day - firstWeekDay)),
-				);
+				const diff: number = (day - firstWeekDay + 7) % 7;
+				newDate = addDate(newDate, 'day', -diff); // Move back to the first day of the week
 			}
 
 			break;

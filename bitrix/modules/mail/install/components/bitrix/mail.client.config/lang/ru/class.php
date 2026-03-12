@@ -96,7 +96,8 @@ $MESS["MAIL_CLIENT_CONFIG_PASS_EMPTY"] = "Введите пароль";
 
 $MESS["MAIL_CLIENT_CONFIG_EMAIL_BAD"] = "Укажите корректный e-mail";
 $MESS["MAIL_CLIENT_CONFIG_EMAIL_EMPTY"] = "Введите e-mail";
-$MESS["MAIL_CLIENT_CONFIG_EMAIL_EXISTS"] = "Вы уже подключили этот ящик";
+$MESS["MAIL_CLIENT_CONFIG_EMAIL_EXISTS"] = "Этот ящик уже подключён";
+$MESS["MAIL_CLIENT_CONFIG_EMAIL_EXISTS_NEW_OWNER"] = "Сотрудник уже пользуется этим ящиком. Попробуйте выбрать другого владельца или отключите ящик";
 
 $MESS["MAIL_CLIENT_CONFIG_IMAP_SERVER_BAD"] = "Недопустимый адрес IMAP-сервера";
 $MESS["MAIL_CLIENT_CONFIG_IMAP_PORT_BAD"] = "Недопустимый порт IMAP-сервера";

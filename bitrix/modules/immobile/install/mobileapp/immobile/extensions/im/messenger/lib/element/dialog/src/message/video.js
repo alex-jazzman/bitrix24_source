@@ -20,6 +20,8 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 		{
 			super(modelMessage, options);
 
+			this.setShowUsername(modelMessage, false);
+
 			if (modelMessage.text !== '')
 			{
 				this.setMessage(modelMessage.text, { dialogId: options.dialogId });

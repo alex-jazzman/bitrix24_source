@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_component_elements_addButton,tasks_v2_component_elements_fieldAdd,main_core,main_core_events,tasks_entitySelector,tasks_v2_core,tasks_v2_const,tasks_v2_lib_entitySelectorDialog,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_lib_fieldHighlighter) {
+(function (exports,ui_system_typography_vue,tasks_v2_component_elements_fieldHoverButton,tasks_v2_component_elements_fieldAdd,main_core,main_core_events,tasks_entitySelector,tasks_v2_core,tasks_v2_const,tasks_v2_lib_entitySelectorDialog,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_lib_fieldHighlighter) {
 	'use strict';
 
 	const tagsMeta = Object.freeze({
@@ -118,7 +118,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	}
 	function _getTagItem2(entityId, title) {
 	  return {
-	    id: title,
+	    id: title || 'empty',
 	    entityId,
 	    title,
 	    tabs: 'all',
@@ -133,8 +133,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	const Tags = {
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
-	    AddButton: tasks_v2_component_elements_addButton.AddButton,
-	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd
+	    FieldHoverButton: tasks_v2_component_elements_fieldHoverButton.FieldHoverButton,
+	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd,
+	    TextMd: ui_system_typography_vue.TextMd
 	  },
 	  inject: {
 	    task: {},
@@ -212,10 +213,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			@mouseenter="isHovered = true"
 			@mouseleave="isHovered = false"
 		>
-			<AddButton v-if="isAddActive" :isVisible="isAddVisible" @click="handleClick"/>
+			<FieldHoverButton 
+				v-if="isAddActive"
+				:icon="Outline.PLUS_L"
+				:isVisible="isAddVisible" 
+				@click="handleClick"
+			/>
 			<template v-for="tag in tags" :key="tag">
-				<div class="tasks-field-tag">
-					<span>{{ tag }}</span>
+				<div class="tasks-field-tag print-background-white">
+					<TextMd>{{ tag }}</TextMd>
 					<div v-if="!readonly" class="tasks-field-tag-cross" @click.capture.stop="handleCrossClick(tag)">
 						<BIcon :name="Outline.CROSS_L" hoverable/>
 					</div>
@@ -283,5 +289,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.TagsChip = TagsChip;
 	exports.tagsMeta = tagsMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Event,BX.Tasks.EntitySelector,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.System.Typography.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Event,BX.Tasks.EntitySelector,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Lib));
 //# sourceMappingURL=tags.bundle.js.map

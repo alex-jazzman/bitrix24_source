@@ -13,7 +13,6 @@ import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { CopilotService } from 'im.v2.provider.service.copilot';
 
 import { CreateChatHelp } from './components/create-chat-help';
-import { NewBadge } from './components/collab/new-badge';
 import { DescriptionBanner } from './components/collab/description-banner';
 import { CopilotRoleSelectionButton } from './components/copilot-role-selection-button';
 import { InvitePromo } from './components/invite-promo';
@@ -27,8 +26,6 @@ const PromoByChatType = {
 	[ChatType.channel]: PromoId.createChannel,
 };
 
-const COPILOT_UNIVERSAL_ROLE = 'copilot_assistant';
-
 // @vue/component
 export const CreateChatMenu = {
 	components: {
@@ -36,7 +33,6 @@ export const CreateChatMenu = {
 		MenuItem,
 		CreateChatHelp,
 		CreateChatPromo,
-		NewBadge,
 		DescriptionBanner,
 		CopilotRoleSelectionButton,
 		CopilotRolesDialog,
@@ -169,8 +165,21 @@ export const CreateChatMenu = {
 				return;
 			}
 
-			Analytics.getInstance().copilot.onCreateDefaultChatInRecent();
-			await this.createCopilotChat(COPILOT_UNIVERSAL_ROLE);
+			this.showMenu = false;
+			this.isLoading = true;
+			try
+			{
+				const newDialogId = await this.getCopilotService().createDefaultChat();
+
+				Analytics.getInstance().copilot.onCreateDefaultChatInRecent();
+
+				this.isLoading = false;
+				void Messenger.openChat(newDialogId);
+			}
+			catch
+			{
+				this.isLoading = false;
+			}
 		},
 		onCopilotRoleSelectClick()
 		{
@@ -186,16 +195,21 @@ export const CreateChatMenu = {
 		{
 			await this.createCopilotChat(role.code);
 		},
-		async createCopilotChat(roleCode: string): Promise<string>
+		async createCopilotChat(roleCode: string)
 		{
 			this.showMenu = false;
 			this.isLoading = true;
-			const newDialogId = await this.getCopilotService().createChat({ roleCode })
-				.catch(() => {
-					this.isLoading = false;
-				});
-			this.isLoading = false;
-			void Messenger.openChat(newDialogId);
+			try
+			{
+				const newDialogId = await this.getCopilotService().createChat({ roleCode });
+
+				this.isLoading = false;
+				void Messenger.openChat(newDialogId);
+			}
+			catch
+			{
+				this.isLoading = false;
+			}
 		},
 		onPromoContinueClick()
 		{
@@ -287,9 +301,6 @@ export const CreateChatMenu = {
 				:subtitle="loc('IM_RECENT_CREATE_COLLAB_SUBTITLE_MSGVER_1')"
 				@click="onChatCreateClick(ChatType.collab)"
 			>
-				<template #after-title>
-					<NewBadge />
-				</template>
 				<template #below-content>
 					<DescriptionBanner v-if="showCollabPromo" @close="onCollabDescriptionClose" />
 				</template>

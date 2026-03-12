@@ -405,7 +405,7 @@
 									props: {
 										className: 'intranet-user-profile-thanks-user-content-title'
 									},
-									html: postData.TITLE,
+									html: BX.Text.encode(postData.TITLE),
 									events: {
 										click: function(e) {
 											BX.SidePanel.Instance.open(e.currentTarget.getAttribute('bx-post-url'), {

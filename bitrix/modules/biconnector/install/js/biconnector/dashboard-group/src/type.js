@@ -47,7 +47,6 @@ export type Dashboard = {
 	type: DashboardType.system | DashboardType.market | DashboardType.custom,
 	scopes: Scope[],
 	createdById: number,
-	ownerId: number,
 };
 
 export type Scope = {

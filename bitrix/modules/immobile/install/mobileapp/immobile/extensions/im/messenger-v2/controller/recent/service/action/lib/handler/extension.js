@@ -410,7 +410,10 @@ jn.define('im/messenger-v2/controller/recent/service/action/lib/handler', (requi
 				const numId = Number(itemId);
 				ownerId = Number.isNaN(numId) ? itemId : numId;
 			}
-			void UserProfile.open({ ownerId });
+			void UserProfile.open({
+				ownerId,
+				analyticsSection: 'im_messenger_recent_service_action_profile',
+			});
 		},
 	};
 

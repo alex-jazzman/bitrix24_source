@@ -3,7 +3,7 @@
  */
 jn.define('selector/widget/entity/intranet/profile/tag', (require, exports, module) => {
 	const { BaseSelectorEntity } = require('selector/widget/entity');
-	const { ProfileTagSelectorProvider } = require('selector/widget/entity/intranet/profile/tag/provider');
+	const { ProfileTagSelectorProvider } = require('selector/widget/entity/intranet/profile/tag/src/provider');
 	const { Loc } = require('loc');
 	const { fetchUsersIfNotLoaded } = require('statemanager/redux/slices/users/thunk');
 	const store = require('statemanager/redux/store');

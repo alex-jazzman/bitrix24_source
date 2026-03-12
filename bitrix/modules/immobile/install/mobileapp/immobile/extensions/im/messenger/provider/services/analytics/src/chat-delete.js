@@ -4,9 +4,9 @@
 jn.define('im/messenger/provider/services/analytics/chat-delete', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
 
-	const { Analytics, ComponentCode, DialogType } = require('im/messenger/const');
+	const { Analytics, NavigationTabId } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { MessengerParams } = require('im/messenger/lib/params');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 
@@ -18,6 +18,20 @@ jn.define('im/messenger/provider/services/analytics/chat-delete', (require, expo
 		constructor()
 		{
 			this.store = serviceLocator.get('core').getStore();
+			this.logger = getLoggerWithContext('analytics-service', this);
+		}
+
+		get #recentManager()
+		{
+			const recentManager = serviceLocator.get('recent-manager');
+			if (recentManager)
+			{
+				return recentManager;
+			}
+
+			this.logger.error('recentManager is not initialized.');
+
+			return null;
 		}
 
 		sendChatDeletePopupShown({ dialogId })
@@ -98,22 +112,22 @@ jn.define('im/messenger/provider/services/analytics/chat-delete', (require, expo
 
 		#getChatCategory()
 		{
-			switch (MessengerParams.getComponentCode())
+			switch (this.#recentManager?.getActiveRecentId())
 			{
-				case ComponentCode.imMessenger: return Analytics.Category.chat;
-				case ComponentCode.imCopilotMessenger: return Analytics.Category.copilot;
-				case ComponentCode.imChannelMessenger: return Analytics.Category.channel;
+				case NavigationTabId.chats: return Analytics.Category.chat;
+				case NavigationTabId.copilot: return Analytics.Category.copilot;
+				case NavigationTabId.channel: return Analytics.Category.channel;
 				default: return Analytics.Category.chat;
 			}
 		}
 
 		#getDeletingChatCategory()
 		{
-			switch (MessengerParams.getComponentCode())
+			switch (this.#recentManager?.getActiveRecentId())
 			{
-				case ComponentCode.imMessenger: return 'deleted_chat';
-				case ComponentCode.imCopilotMessenger: return 'deleted_copilot';
-				case ComponentCode.imChannelMessenger: return 'deleted_channel';
+				case NavigationTabId.chats: return 'deleted_chat';
+				case NavigationTabId.copilot: return 'deleted_copilot';
+				case NavigationTabId.channel: return 'deleted_channel';
 				default: return 'deleted_chat';
 			}
 		}

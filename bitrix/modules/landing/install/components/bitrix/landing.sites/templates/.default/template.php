@@ -152,7 +152,7 @@ $featureCode = $request->getQuery('feature_promoter');
 
 					if (BannerDispatcher)
 					{
-						BannerDispatcher.critical.toQueue((onDone) => {
+						BannerDispatcher.high.toQueue((onDone) => {
 							BX.Event.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', () => {
 								onDone();
 							});

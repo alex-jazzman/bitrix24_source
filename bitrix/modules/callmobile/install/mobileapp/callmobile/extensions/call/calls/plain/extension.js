@@ -16,16 +16,16 @@ jn.define('call/calls/plain', (require, exports, module) => {
 	const reinvitePeriod = 5500;
 
 	const ajaxActions = Object.freeze({
-		invite: "im.call.invite",
-		cancel: "im.call.cancel",
-		answer: "im.call.answer",
-		decline: "im.call.decline",
-		hangup: "im.call.hangup",
-		ping: "im.call.ping",
-		negotiationNeeded: "im.call.negotiationNeeded",
-		connectionOffer: "im.call.connectionOffer",
-		connectionAnswer: "im.call.connectionAnswer",
-		iceCandidate: "im.call.iceCandidate",
+		invite: "call.CallManager.invite",
+		cancel: "call.CallManager.cancel",
+		answer: "call.CallManager.answer",
+		decline: "call.CallManager.decline",
+		hangup: "call.CallManager.hangup",
+		ping: "call.CallManager.ping",
+		negotiationNeeded: "call.CallManager.negotiationNeeded",
+		connectionOffer: "call.CallManager.connectionOffer",
+		connectionAnswer: "call.CallManager.connectionAnswer",
+		iceCandidate: "call.CallManager.iceCandidate",
 	});
 
 	const PullEvents = {
@@ -210,7 +210,7 @@ jn.define('call/calls/plain', (require, exports, module) => {
 			return this.peers.find(peer => peer.userId == userId);
 		}
 
-		getUsers()
+		getUsersStates()
 		{
 			let result = {};
 			this.peers.forEach(peer => result[peer.userId] = peer.calculatedState);

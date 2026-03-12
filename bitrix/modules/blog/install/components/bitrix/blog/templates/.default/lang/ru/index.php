@@ -16,4 +16,3 @@ $MESS ['BC_COMMENTED_POSTS_MES'] = "Обсуждаемые сообщения";
 $MESS ['BC_SEARCH_TAG'] = "Облако тегов";
 $MESS ['BC_ALL_POSTS'] = "Просмотреть все сообщения";
 $MESS ['BC_ALL_BLOGS'] = "Просмотреть все блоги";
-?>

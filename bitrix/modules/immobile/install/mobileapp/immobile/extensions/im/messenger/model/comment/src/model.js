@@ -35,6 +35,16 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 				return clone(state.commentCollection[messageId]);
 			},
 
+			/**
+			 * @function commentModel/getByDialogId
+			 * @return {CommentInfoModelState || undefined}
+			 */
+			getByDialogId: (state) => (dialogId) => {
+				return Object.values(state.commentCollection).find((comment) => {
+					return comment.dialogId === dialogId;
+				});
+			},
+
 			/** @function commentModel/getCommentCounter */
 			getCommentCounter: (state) => (payload) => {
 				const { channelId, commentChatId } = payload;
@@ -195,6 +205,26 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 			},
 		},
 		actions: {
+			/** @function commentModel/setFromLocalDatabase */
+			setFromLocalDatabase: (store, payload) => {
+				const { commentList } = payload;
+				if (!Type.isArrayFilled(commentList))
+				{
+					return;
+				}
+
+				const normalizedList = commentList.map((comment) => {
+					return validate(comment);
+				});
+
+				store.commit('setComments', {
+					actionName: 'setFromLocalDatabase',
+					data: {
+						commentList: normalizedList,
+					},
+				});
+			},
+
 			/** @function commentModel/setComments */
 			setComments: (store, payload) => {
 				if (!Type.isArray(payload))
@@ -440,7 +470,7 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 				};
 
 				store.commit('setComments', {
-					actionName: 'subscribe',
+					actionName: 'unsubscribe',
 					data: {
 						commentList: [commentInfo],
 					},

@@ -8,7 +8,7 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { TaskCard } from 'tasks.v2.application.task-card';
-import { GroupType, Model, Option, TaskStatus, Mark, EventName } from 'tasks.v2.const';
+import { GroupType, Model, Option, TaskStatus, Mark, EventName, Analytics } from 'tasks.v2.const';
 import { Hint } from 'tasks.v2.component.elements.hint';
 import { ahaMoments } from 'tasks.v2.lib.aha-moments';
 import { idUtils } from 'tasks.v2.lib.id-utils';
@@ -17,6 +17,7 @@ import { MarkTaskButton } from 'tasks.v2.component.mark-task-button';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { TaskModel, TimerModel } from 'tasks.v2.model.tasks';
 
+// eslint-disable-next-line import/namespace
 import { More } from './more/more';
 import { ButtonId } from './footer-edit-const';
 
@@ -58,6 +59,7 @@ export const FooterEdit = {
 		taskId: {},
 		isTemplate: {},
 		settings: {},
+		analytics: {},
 	},
 	setup(): { task: TaskModel, Outline: typeof Outline }
 	{
@@ -108,6 +110,7 @@ export const FooterEdit = {
 
 			const statuses = {
 				[TaskStatus.Pending]: [
+					this.getTakeButton(),
 					this.getStartTimerButton(),
 					this.getPauseButton(AirButtonStyle.OUTLINE),
 					this.getStartButton(),
@@ -189,6 +192,24 @@ export const FooterEdit = {
 				onClick: (): void => this.waitStatus(statusService.start(this.taskId)),
 			};
 		},
+		getTakeButton(): ?ButtonOptions
+		{
+			if (!this.task.rights.take || this.task.status !== TaskStatus.Pending)
+			{
+				return null;
+			}
+
+			return {
+				id: ButtonId.Take,
+				text: this.loc('TASKS_V2_TASK_FULL_CARD_TAKE'),
+				onClick: (): void => this.waitStatus(statusService.take(
+					this.taskId,
+					{
+						context: this.analytics?.context ?? Analytics.Section.Tasks,
+					},
+				)),
+			};
+		},
 		getStartTimerButton(): ?ButtonOptions
 		{
 			if (!this.task.rights.timeTracking || this.timer)
@@ -199,8 +220,13 @@ export const FooterEdit = {
 			return {
 				id: ButtonId.Start,
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_START'),
-				onClick: (): void => this.waitStatus(statusService.startTimer(this.taskId)),
 				icon: ButtonIcon.START,
+				onClick: (): void => this.waitStatus(statusService.startTimer(
+					this.taskId,
+					{
+						context: this.analytics?.context ?? Analytics.Section.Tasks,
+					},
+				)),
 			};
 		},
 		getCompleteButton(style: string): ?ButtonOptions
@@ -214,7 +240,14 @@ export const FooterEdit = {
 				id: ButtonId.Complete,
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
 				style,
-				onClick: (): void => this.handleTaskComplete(),
+				onClick: (): void => this.waitStatus(statusService.complete(
+					this.taskId,
+					{
+						context: this.analytics?.context ?? Analytics.Section.Tasks,
+						additionalContext: this.analytics?.additionalContext ?? Analytics.SubSection.TaskCard,
+						element: Analytics.Element.CompleteButton,
+					},
+				)),
 			};
 		},
 		getPauseButton(style: string): ?ButtonOptions
@@ -263,7 +296,7 @@ export const FooterEdit = {
 			return {
 				id: ButtonId.Approve,
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_APPROVE'),
-				onClick: (): void => this.handleTaskApprove(),
+				onClick: (): void => this.waitStatus(statusService.approve(this.taskId)),
 			};
 		},
 		updateSecondaryButton(): void
@@ -287,14 +320,6 @@ export const FooterEdit = {
 
 				this.computedSecondaryButton = secondary;
 			});
-		},
-		async handleTaskComplete(): void
-		{
-			await this.waitStatus(statusService.complete(this.taskId));
-		},
-		async handleTaskApprove(): void
-		{
-			await this.waitStatus(statusService.approve(this.taskId));
 		},
 		handleOverPrimaryButton(): void
 		{
@@ -344,17 +369,23 @@ export const FooterEdit = {
 		},
 		createTaskFromTemplate(): void
 		{
-			TaskCard.showFullCard({ templateId: idUtils.unbox(this.taskId) });
+			TaskCard.showFullCard({
+				templateId: idUtils.unbox(this.taskId),
+				analytics: {
+					context: Analytics.Section.Templates,
+					additionalContext: Analytics.SubSection.TemplatesCard,
+					element: Analytics.Element.CreateButton,
+				},
+			});
 		},
 	},
 	template: `
-		<div v-if="showFooter" class="tasks-full-card-footer">
+		<div v-if="showFooter" class="tasks-full-card-footer print-ignore">
 			<div class="tasks-full-card-footer-edit">
 				<UiButton
 					v-if="isTemplate && settings.rights.tasks.createFromTemplate"
 					:text="loc('TASKS_V2_TASK_TEMPLATE_CREATE_TASK')"
 					:size="ButtonSize.LARGE"
-					:loading
 					:dataset="{ taskButtonId: 'createFromTemplate' }"
 					:leftIcon="Outline.PLUS_L"
 					@click="createTaskFromTemplate"
@@ -363,7 +394,6 @@ export const FooterEdit = {
 					<div
 						v-if="primaryButton"
 						ref="primaryButton"
-						class="tasks-full-card-footer-edit-primaryButton"
 						@mouseover="handleOverPrimaryButton"
 					>
 						<UiButton

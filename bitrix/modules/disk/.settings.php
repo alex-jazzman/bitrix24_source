@@ -3,6 +3,10 @@
 use Bitrix\Disk\Bitrix24Disk\SubscriberManager;
 use Bitrix\Disk\Document\DocumentHandlersManager;
 use Bitrix\Disk\Document\OnlyOffice;
+use Bitrix\Disk\Internal\Repository\BitrixOrmDocumentRestrictionLogRepository;
+use Bitrix\Disk\Internal\Repository\BitrixOrmDocumentSessionRepository;
+use Bitrix\Disk\Internal\Repository\Interface\DocumentRestrictionLogRepositoryInterface;
+use Bitrix\Disk\Internal\Repository\Interface\DocumentSessionRepositoryInterface;
 use Bitrix\Disk\Internals\DeletedLogManager;
 use Bitrix\Disk\Internals\DeletionNotifyManager;
 use Bitrix\Disk\Internals\Runtime\StorageRuntimeCache;
@@ -74,6 +78,12 @@ return [
 			'disk.trackedObjectManager' => [
 				'className' => TrackedObjectManager::class,
 			],
+			DocumentRestrictionLogRepositoryInterface::class => [
+				'className' => BitrixOrmDocumentRestrictionLogRepository::class,
+			],
+			DocumentSessionRepositoryInterface::class => [
+				'className' => BitrixOrmDocumentSessionRepository::class,
+			],
 		],
 		'readonly' => true,
 	],
@@ -101,5 +111,51 @@ return [
 			'webhook_url' => '/bitrix/services/main/ajax.php?action=disk.integration.flipchart.webhook',
 		],
 		'readonly' => true,
-	]
+	],
+	'promo' => [
+		'value' => [
+			'cloud_tariff_groups' => [
+				'extendable' => [
+					'demo',
+					'nfr',
+					'std',
+					'pro100',
+					'ent250',
+					'ent500',
+				],
+				'large_enterprise' => [
+					'ent1000',
+					'ent2000',
+					'ent3000',
+					'ent4000',
+					'ent5000',
+					'ent6000',
+					'ent7000',
+					'ent8000',
+					'ent9000',
+					'ent10000',
+					'entholding1000',
+					'entholding2000',
+					'entholding3000',
+					'entholding4000',
+					'entholding5000',
+					'entholding6000',
+					'entholding7000',
+					'entholding8000',
+					'entholding9000',
+					'entholding10000',
+				],
+			],
+		],
+		'readonly' => true,
+	],
+	'extendableTariffs' => [
+		'value' => [
+			'std',
+			'pro100',
+			'ent250',
+			'ent500',
+		],
+		'readonly' => true,
+	],
 ];

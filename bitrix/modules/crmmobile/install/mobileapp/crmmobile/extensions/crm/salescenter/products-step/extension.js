@@ -136,6 +136,8 @@ jn.define('crm/salescenter/products-step', (require, exports, module) => {
 				new ProductGrid({
 					...grid,
 					showFloatingButton: editable,
+					isNeedRenderFloatingButton: editable,
+					layout: this.layoutWidget || this.props.layoutWidget,
 					uid: this.uid,
 					editable,
 					menuAnalyticsPrefix: analytics.menuPrefix || '',

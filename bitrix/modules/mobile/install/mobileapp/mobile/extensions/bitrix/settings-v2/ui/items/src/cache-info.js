@@ -50,33 +50,14 @@ jn.define('settings-v2/ui/items/src/cache-info', (require, exports, module) => {
 			BX.removeCustomEvent(EventType.changeCacheSize, this.changeInfoText);
 		}
 
-		changeInfoText = (text) => {
+		changeInfoText = () => {
 			const { controller } = this.props;
 
-			controller?.get()
-				.then((value) => {
-					// todo hack to exclude media size from file cache size
-					if (controller.settingId === NativeSettingsId.CACHE_FILES)
-					{
-						NativeCacheService.getSettingValueById(NativeSettingsId.CACHE_MEDIA).then(
-							(mediaSize) => {
-								value -= mediaSize;
-								this.setState({
-									value,
-								});
-							},
-						);
-
-						return;
-					}
-
-					this.setState({
-						value,
-					});
-				}).catch((e) => {
-					console.error(e);
-				})
-			;
+			controller?.get().then((value) => {
+				this.setState({
+					value,
+				});
+			}).catch(console.error);
 		};
 
 		render()

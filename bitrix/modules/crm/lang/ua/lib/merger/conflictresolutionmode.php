@@ -1,6 +1,0 @@
-<?
-$MESS["CRM_MERGE_CONFLICT_RESOLVE_ALWAYS_OVERWRITE"] = "Завжди переписувати";
-$MESS["CRM_MERGE_CONFLICT_RESOLVE_ASK_USER"] = "Визначається користувачем";
-$MESS["CRM_MERGE_CONFLICT_RESOLVE_MANUAL"] = "Вручну";
-$MESS["CRM_MERGE_CONFLICT_RESOLVE_NEVER_OVERWRITE"] = "Ніколи не переписувати";
-?>

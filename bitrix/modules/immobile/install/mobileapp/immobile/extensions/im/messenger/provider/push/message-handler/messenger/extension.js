@@ -12,15 +12,6 @@ jn.define('im/messenger/provider/push/message-handler/messenger', (require, expo
 	 */
 	class MessengerPushMessageHandler extends BasePushMessageHandler
 	{
-		/**
-		 * @deprecated
-		 * @return {string}
-		 */
-		getHandlerId()
-		{
-			return WaitingEntity.push.messageHandler.chat;
-		}
-
 		prepareData(componentEventList)
 		{
 			const modelData = super.prepareData(componentEventList);

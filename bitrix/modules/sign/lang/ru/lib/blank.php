@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_CORE_BLANK_ERROR_NOT_ALLOWED_EXTENSIONS'] = 'Данный тип файла не поддерживается.';
 $MESS['SIGN_CORE_BLANK_ERROR_NOT_FOUND'] = 'Бланк не найден.';
 $MESS['SIGN_CORE_BLANK_ERROR_ADD_ERROR_BLOCK'] = 'Ошибка добавления блока.';

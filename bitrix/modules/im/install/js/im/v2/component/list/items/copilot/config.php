@@ -22,6 +22,7 @@ return [
 		'im.v2.provider.service.recent',
 		'main.core',
 		'im.v2.lib.menu',
+		'im.v2.lib.analytics',
 	],
 	'skip_core' => false,
 ];

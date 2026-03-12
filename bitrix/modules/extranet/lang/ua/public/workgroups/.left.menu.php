@@ -1,3 +1,0 @@
-<?
-$MESS["EXTRANET_WORKGROUPS_LEFT_MENU_MY_GROUPS"] = "Мої групи";
-?>

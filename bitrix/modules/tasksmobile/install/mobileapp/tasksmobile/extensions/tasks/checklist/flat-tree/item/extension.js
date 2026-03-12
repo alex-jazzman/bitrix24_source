@@ -212,7 +212,10 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		setParentId(id)
 		{
-			this.fields.parentId = id;
+			if (id)
+			{
+				this.fields.parentId = id;
+			}
 		}
 
 		/**
@@ -651,7 +654,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			const oldParent = this.getParent();
 			const newParent = this.getParent().getParent();
 
-			this.setParentId(newParent.getId());
+			this.setParentId(newParent?.getId());
 			this.tabMoveUpdateCounter([oldParent, newParent]);
 			this.updateListViewType();
 
@@ -666,7 +669,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			const oldParent = this.getParent();
 			const newParent = this.checklist.getPrevSiblingById(this.getId());
 
-			this.setParentId(newParent.getId());
+			this.setParentId(newParent?.getId());
 			this.tabMoveUpdateCounter([oldParent, newParent]);
 			this.updateListViewType();
 

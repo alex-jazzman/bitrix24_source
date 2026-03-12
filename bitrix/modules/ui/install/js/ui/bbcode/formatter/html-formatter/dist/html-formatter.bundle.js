@@ -164,8 +164,10 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	    img.className = 'ui-typography-smiley';
 	    img.alt = smiley.getTyping();
 	    if (smiley.getWidth() > 0 && smiley.getHeight() > 0) {
-	      img.width = smiley.getWidth();
-	      img.height = smiley.getHeight();
+	      main_core.Dom.style(img, {
+	        width: `${smiley.getWidth()}px`,
+	        height: `${smiley.getHeight()}px`
+	      });
 	    }
 	    return img;
 	  }

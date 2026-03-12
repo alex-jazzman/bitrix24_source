@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_CMP_START_PAR_VAR_PAGE'] = 'Код переменной с идентификатором страницы';
 $MESS['SIGN_CMP_START_PAR_VAR_DOC_ID'] = 'Код переменной с идентификатором документа';
 $MESS['SIGN_CMP_START_PAR_URL_MAIN_PAGE'] = 'Шаблон URL главной страницы раздела';

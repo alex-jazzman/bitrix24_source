@@ -13,12 +13,15 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/email-field
 		InputMode,
 		EmailInput,
 	} = require('ui-system/form/inputs/email');
+	const { copyToClipboard } = require('utils/copy');
+	const { Loc } = require('loc');
+	const { openEmailMenu } = require('communication/email-menu');
 
 	class EmailField extends BaseField
 	{
 		renderViewModeFieldValue(value, idx)
 		{
-			const { id } = this.props;
+			const { id, parentWidget } = this.props;
 
 			if (isValidEmail(value))
 			{
@@ -26,8 +29,13 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/email-field
 					testId: this.getTestId(`email-${id.toLowerCase()}-${idx}`),
 					text: value,
 					onClick: () => {
-						const mailto = `mailto:${value}`;
-						Application.openUrl(mailto);
+						void openEmailMenu({
+							email: value,
+							layoutWidget: parentWidget,
+						});
+					},
+					onLongClick: () => {
+						void copyToClipboard(value, Loc.getMessage('EMAIL_MENU_COPY_DONE'));
 					},
 				});
 			}

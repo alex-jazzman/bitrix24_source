@@ -8,6 +8,7 @@ import type { Parameter } from 'biconnector.dashboard-parameters-selector';
 
 export class DashboardGroupsField extends BX.UI.EntityEditorCustom
 {
+	#isAllowedClearGroups: boolean = false;
 	#groups: Set;
 	#scopes: Set;
 	#params: Set;
@@ -24,6 +25,8 @@ export class DashboardGroupsField extends BX.UI.EntityEditorCustom
 	initialize(id, settings)
 	{
 		super.initialize(id, settings);
+		this.#isAllowedClearGroups = this._model.getField('IS_ALLOWED_CLEAR_GROUPS', false);
+
 		this.#scopes = new Set();
 		const scopes = this._model.getField('SCOPE', []);
 		scopes.forEach((scopeCode) => {
@@ -53,8 +56,13 @@ export class DashboardGroupsField extends BX.UI.EntityEditorCustom
 		this.adjustWrapper();
 		this._innerWrapper = Tag.render`<div class='ui-entity-editor-content-block ui-ctl-custom'></div>`;
 
+		const messageId = this.#isAllowedClearGroups
+			? 'BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT_CLEARABLE'
+			: 'BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT'
+		;
+
 		const message = Loc.getMessage(
-			'BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT',
+			messageId,
 			{
 				'#HINT_LINK#': '<link></link>',
 			},
@@ -85,6 +93,7 @@ export class DashboardGroupsField extends BX.UI.EntityEditorCustom
 			scopes: this.#scopes,
 			params: this.#params,
 			paramList: this.#paramList,
+			isAllowedClearGroups: this.#isAllowedClearGroups,
 		};
 
 		const selector = new DashboardParametersSelector(selectorParams);
@@ -127,14 +136,24 @@ export class DashboardGroupsField extends BX.UI.EntityEditorCustom
 
 	onChange(params): void
 	{
-		const { isChanged } = params.data;
+		const { isChanged, isLocked } = params.data;
+
 		if (isChanged)
 		{
 			this.markAsChanged();
+		}
+		else
+		{
+			this._isChanged = false;
+		}
+
+		if (isLocked)
+		{
+			this.getEditor()?._toolPanel.disableSaveButton();
 
 			return;
 		}
 
-		this._isChanged = false;
+		this.getEditor().enableSaveButton();
 	}
 }

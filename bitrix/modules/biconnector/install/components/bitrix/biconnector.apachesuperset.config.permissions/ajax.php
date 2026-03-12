@@ -102,6 +102,7 @@ class ApacheSupersetConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 		}
 
 		AnalyticsManager::sendSavePermissionsAnalytics(AnalyticsManager::GROUP_PERMISSION_SECTION);
+		PermissionDictionary::clearDashboardGroupPermissions();
 
 		return $this->loadData();
 	}

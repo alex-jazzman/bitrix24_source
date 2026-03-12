@@ -5,6 +5,18 @@
     line-height: 19px;
     letter-spacing: -0.05px;
     text-align: center;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1px solid var(--ui-color-gray-20);
+    padding: 4px 8px;
+}
+
+.ui-block-diagram-percent:hover {
+    background: var(--ui-color-bg-state-hover-default);
+}
+
+.ui-block-diagram-percent.--selected {
+    background: var(--ui-color-bg-state-click-default);
 }
 
 .ui-block-diagram-percent:after {
@@ -18,4 +30,8 @@
     letter-spacing: -0.05px;
     vertical-align: middle;
 	color: var(--ui-color-palette-gray-50);
+}
+
+.ui-block-diagram-percent-menu {
+    transform: translate(15px, calc(-100% - 10px));
 }

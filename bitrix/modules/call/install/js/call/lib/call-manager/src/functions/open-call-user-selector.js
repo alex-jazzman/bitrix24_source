@@ -44,6 +44,9 @@ export const openCallUserSelector = async (params) => {
 			],
 		}],
 		footer: getFooter(handleAddCLick, handleCancelCLick),
+		popupOptions: {
+			targetContainer: params.targetContainer,
+		},
 	});
 	dialog.show();
 

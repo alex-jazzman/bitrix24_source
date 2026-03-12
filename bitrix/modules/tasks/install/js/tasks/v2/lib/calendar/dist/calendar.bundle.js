@@ -53,7 +53,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
 	  }
 	  formatDateTime(timestamp, {
-	    forceYear
+	    forceYear,
+	    removeOffset
 	  } = {}) {
 	    if (!timestamp) {
 	      return '';
@@ -63,7 +64,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      '#DATE#': main_date.DateTimeFormat.getFormat(showYear ? 'LONG_DATE_FORMAT' : 'DAY_MONTH_FORMAT'),
 	      '#TIME#': main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT')
 	    });
-	    const offset = tasks_v2_lib_timezone.timezone.getOffset(timestamp);
+	    const offset = removeOffset ? 0 : tasks_v2_lib_timezone.timezone.getOffset(timestamp);
 	    return main_date.DateTimeFormat.format(format, (timestamp + offset) / 1000);
 	  }
 	  formatDate(timestamp, {

@@ -46,7 +46,8 @@ class ChatNotification implements ChatNotificationInterface, MessageSenderInterf
 				sender: $this,
 				triggeredBy: $args['triggeredBy'] ?? null,
 				oldResponsible: $args['oldResponsible'] ?? null,
-				newResponsible: $args['newResponsible'] ?? null
+				newResponsible: $args['newResponsible'] ?? null,
+				isNewMember: $args['isNewMember'] ?? false,
 			),
 			NotificationType::OwnerChanged => new Action\NotifyOwnerChanged(
 				task: $task,
@@ -259,10 +260,7 @@ class ChatNotification implements ChatNotificationInterface, MessageSenderInterf
 				triggeredBy: $args['triggeredBy'] ?? null,
 				messageId: $args['messageId'] ?? 0,
 				dateTs: $args['dateTs'] ?? 0,
-			),
-			NotificationType::ResultRequested => new Action\NotifyResultRequested(
-				task: $task,
-				triggeredBy: $args['triggeredBy'] ?? null,
+				type: $args['type'] ?? null,
 			),
 			NotificationType::TaskDescriptionChanged => new Action\NotifyTaskDescriptionChanged(
 				task: $task,
@@ -282,7 +280,7 @@ class ChatNotification implements ChatNotificationInterface, MessageSenderInterf
 			NotificationType::TaskAttachmentChanged => new Action\NotifyFilesChanged(
 				task: $task,
 				triggeredBy: $args['triggeredBy'] ?? null,
-				fileIds: $args['fileIds'] ?? [],
+				fileId: $args['fileId'] ?? null,
 			),
 			NotificationType::TaskAttachmentAdded => new Action\NotifyFilesAdded(
 				task: $task,
@@ -318,6 +316,11 @@ class ChatNotification implements ChatNotificationInterface, MessageSenderInterf
 				task: $task,
 				triggeredBy: $args['triggeredBy'] ?? null,
 				elapsedTime: $args['elapsedTime'] ?? null,
+			),
+			NotificationType::TaskMarkChanged => new Action\NotifyMarkChanged(
+				task: $task,
+				triggeredBy: $args['triggeredBy'] ?? null,
+				markBefore: $args['markBefore'] ?? null,
 			),
 			default => null,
 		};

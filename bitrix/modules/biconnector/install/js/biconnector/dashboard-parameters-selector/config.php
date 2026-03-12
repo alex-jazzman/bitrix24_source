@@ -12,8 +12,6 @@ return [
 		'main.core',
 		'main.core.events',
 		'ui.entity-selector',
-		'ui.buttons',
-		'ui.system.dialog',
 	],
 	'skip_core' => false,
 ];

@@ -2,7 +2,6 @@
 
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\DiskMobile\AirDiskFeature;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Config\Option;
@@ -49,8 +48,6 @@ if (CModule::IncludeModule("socialnetwork"))
 	}
 }
 
-$diskEnabled = Option::get('disk', 'successfully_converted', false) && CModule::includeModule('disk');
-$airDiskEnabled = Feature::isEnabled(AirDiskFeature::class);
 $userId = $USER->getId();
 $siteDir = SITE_DIR;
 $siteId = SITE_ID;
@@ -76,59 +73,10 @@ if ($isExtranetUser && $extranetSiteId)
 
 $imageDir = $this->getPath() . "/images/";
 
-$diskComponentVersion = Manager::getComponentVersion("user.disk");
 $workgroupsComponentVersion = Manager::getComponentVersion("workgroups");
 
 $menuStructure = [];
 $favoriteItems = [];
-
-$favoriteItems[] = [
-	"imageUrl" => $imageDir . "favorite/icon-disk.png",
-	"color" => "#3CD162",
-	"title" => Loc::getMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW"),
-	'imageName' => 'folder_24',
-	"attrs" => [
-		"onclick" => <<<JS
-
-		ComponentHelper.openList({
-			name:"user.disk",
-			object:"list",
-			version:"{$diskComponentVersion}",
-			componentParams:{userId: env.userId, ownerId: "shared_files_"+env.siteId, entityType:"common"},
-			widgetParams:{titleParams: { text:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}", type: "section"}, useSearch: true}
-		});
-
-JS
-		,
-		"id" => "doc_shared",
-	],
-	"hidden" => $airDiskEnabled || !$diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
-];
-
-$favoriteItems[] = [
-	"title" => Loc::getMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW"),
-	"imageUrl" => $imageDir . "favorite/icon-disk.png",
-	"color" => "#b9bdc3",
-	'imageName' => 'folder_24',
-	"attrs" => [
-		"onclick" => <<<JS
-
-		PageManager.openList(
-		{
-			url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_"+env.siteId,
-			table_settings:
-			{
-				useTagsInSearch:"NO",
-				type:"files"
-			}
-		});
-JS
-		,
-		"id" => "doc_shared",
-	],
-	"hidden" => $airDiskEnabled || $diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
-];
-
 
 $favorite = [
 	"title" => Loc::getMessage("MB_SEC_FAVORITE_MSGVER_2"),

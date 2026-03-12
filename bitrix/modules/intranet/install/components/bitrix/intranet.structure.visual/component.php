@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Main\Config\Option;
 
@@ -866,7 +866,7 @@ else
 
 	$template =& $this->GetTemplate();
 	$APPLICATION->AddHeadScript($template->GetFolder().'/structure.js');
-	$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+	\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
 
 	if (!defined('INTRANET_ISV_MUL_INCLUDED'))
 	{

@@ -8,6 +8,10 @@ use Bitrix\Im\V2\Message;
 use Bitrix\Im\V2\Message\Params;
 use Bitrix\Call\NotifyService;
 
+/**
+ * @internal
+ */
+
 class ChatEventLog
 {
 	protected const DEBUG_OPTION = 'call_debug_chats';
@@ -92,9 +96,13 @@ class ChatEventLog
 			{
 				\Bitrix\Main\Loader::includeModule('im');
 
-				$formatSize = \CFile::FormatSize($track->getFileSize());
+				if ($track->getFileSize())
+				{
+					$formatSize = \CFile::FormatSize($track->getFileSize());
+				}
 
 				$message = new Message();
+				$message->markAsSystem(true);
 				$url = \Bitrix\Call\Library::getCallSliderUrl($track->getCallId());
 				$message->setMessage(
 					"[b]Got track file[/b] for call #[url={$url}]{$track->getCallId()}[/url]"
@@ -104,17 +112,27 @@ class ChatEventLog
 					'CALL_ID' => $track->getCallId(),
 				]);
 
+				$mixerUrl = $track->getDownloadUrl() ?? '';
+				$viewUrl = $track->getDownloaded() ? $track->getUrl() : '';
+				$externalUrl = $track->getDownloaded() ? $track->getUrl(true, false, true) : '';
+
 				$attach = new \CIMMessageParamAttach();
 				$attach->AddMessage(
 					"Name: {$track->getFileName()}"
-					. "[br]Size: {$formatSize}"
+					. ($track->getFileSize() ? "[br]Size: {$formatSize}" : '')
 					. "[br]Type: {$track->getType()}"
-					. "[br]Url: [url={$track->getUrl()}]{$track->getUrl()}[/url]"
+					. "[br]Downloaded: ".($track->getDownloaded() ? "Yes" : "No")
+					. ($mixerUrl ? "[br]Mixer: [url={$mixerUrl}]{$mixerUrl}[/url]" : '')
+					. ($viewUrl ? "[br]View: [url={$viewUrl}]{$viewUrl}[/url]" : '')
+					. ($externalUrl ? "[br]External: [url={$externalUrl}]{$externalUrl}[/url]" : '')
 				);
 				$message->setAttach($attach);
 
 				$chat = Chat::getInstance($track->fillCall()->getChatId());
-				$chat->sendMessage($message);
+				$chat
+					->setContextUser($chat->getAuthorId())
+					->sendMessage($message)
+				;
 			}
 		}
 	}
@@ -136,6 +154,7 @@ class ChatEventLog
 				\Bitrix\Main\Loader::includeModule('im');
 
 				$message = new Message();
+				$message->markAsSystem(true);
 				$url = \Bitrix\Call\Library::getCallSliderUrl($track->getCallId());
 				$message->setMessage(
 					"[b]Got error with track[/b] for call #[url={$url}]{$track->getCallId()}[/url]"
@@ -157,7 +176,10 @@ class ChatEventLog
 				$message->setAttach($attach);
 
 				$chat = Chat::getInstance($track->fillCall()->getChatId());
-				$chat->sendMessage($message);
+				$chat
+					->setContextUser($chat->getAuthorId())
+					->sendMessage($message)
+				;
 			}
 		}
 	}
@@ -176,6 +198,7 @@ class ChatEventLog
 
 				$chat = Chat::getInstance($outcome->fillCall()->getChatId());
 				$message = new Message();
+				$message->markAsSystem(true);
 				$url = \Bitrix\Call\Library::getCallSliderUrl($outcome->getCallId());
 				$message->setMessage(
 					"[b]Got AI outcome[/b] for call #[url={$url}]{$outcome->getCallId()}[/url]"
@@ -200,7 +223,10 @@ class ChatEventLog
 				}
 				$message->setAttach($attach);
 
-				$chat->sendMessage($message);
+				$chat
+					->setContextUser($chat->getAuthorId())
+					->sendMessage($message)
+				;
 			}
 		}
 	}
@@ -223,6 +249,7 @@ class ChatEventLog
 
 				$chat = Chat::getInstance($task->fillCall()->getChatId());
 				$message = new Message();
+				$message->markAsSystem(true);
 				$url = \Bitrix\Call\Library::getCallSliderUrl($task->getCallId());
 				$message->setMessage(
 					"[b]Got error from AI[/b] for call #[url={$url}]{$task->getCallId()}[/url]"
@@ -241,7 +268,9 @@ class ChatEventLog
 				);
 				$message->setAttach($attach);
 
-				$chat->sendMessage($message);
+				$chat
+					->setContextUser($chat->getAuthorId())
+					->sendMessage($message);
 			}
 		}
 	}
@@ -268,6 +297,7 @@ class ChatEventLog
 
 				$chat = Chat::getInstance($task->fillCall()->getChatId());
 				$message = new Message();
+				$message->markAsSystem(true);
 				$url = \Bitrix\Call\Library::getCallSliderUrl($task->getCallId());
 				$message->setMessage(
 					"[b]Launch AI task[/b] for call #[url={$url}]{$task->getCallId()}[/url]"
@@ -289,7 +319,10 @@ class ChatEventLog
 				$attach->AddMessage("Payload:[br]" . $task->decodePayload($payload->pack()));
 				$message->setAttach($attach);
 
-				$chat->sendMessage($message);
+				$chat
+					->setContextUser($chat->getAuthorId())
+					->sendMessage($message)
+				;
 			}
 		}
 	}

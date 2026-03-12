@@ -12,6 +12,7 @@ jn.define('im/messenger/const/dialog-view', (require, exports, module) => {
 		vote: 'vote',
 		reactionAnimate: 'reaction_animate_',
 		withoutUi: 'without-ui',
+		aiAnimation: 'aiAnimation',
 	});
 
 	module.exports = {

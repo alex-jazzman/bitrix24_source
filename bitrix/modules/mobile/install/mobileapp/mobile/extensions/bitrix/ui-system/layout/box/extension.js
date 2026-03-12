@@ -3,15 +3,19 @@
  */
 jn.define('ui-system/layout/box', (require, exports, module) => {
 	const { animate } = require('animation');
+	const { hashCode } = require('utils/hash');
 	const { Component, Color } = require('tokens');
 	const { PropTypes } = require('utils/validation');
 	const { mergeImmutable, isEmpty } = require('utils/object');
 	const { ScrollView } = require('layout/ui/scroll-view');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 
+	const boxCache = {};
+
 	/**
 	 * @typedef {Object} BoxProps
 	 * @property {Color | Color.bgPrimary | Color.bgSecondary} [backgroundColor]
+	 * @property {string} testId
 	 * @property {boolean} [withScroll = false]
 	 * @property {boolean} [scrollProps = {}]
 	 * @property {boolean} [withPaddingLeft = false]
@@ -27,6 +31,7 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 		PropTypes.validate(Box.propTypes, props, 'Box');
 
 		const {
+			testId,
 			backgroundColor,
 			withScroll = false,
 			withPaddingLeft = false,
@@ -59,16 +64,15 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 
 		if (footer)
 		{
-			let stubRef = null;
-			let stubHeight = 0;
-
+			let boxCacheKey = null;
 			const footerParams = {
 				safeArea: bottomSafeArea,
 				onLayoutFooterHeight: ({ height }) => {
-					if (stubHeight !== height)
+					const store = boxCache[boxCacheKey];
+					if (store.stubHeight !== height)
 					{
-						stubHeight = height;
-						animate(stubRef, {
+						store.stubHeight = height;
+						void animate(store.stubRef, {
 							duration: 50,
 							height,
 						});
@@ -85,13 +89,16 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 
 			boxFooter = footer(footerParams);
 
+			boxCacheKey = Symbol.for(hashCode(JSON.stringify([testId, boxFooter])));
+			boxCache[boxCacheKey] = boxCache[boxCacheKey] ?? { stubHeight: 0, stubRef: null };
+
 			stubFooter = View({
 				ref: (ref) => {
-					stubRef = ref;
+					boxCache[boxCacheKey].stubRef = ref;
 				},
 				style: {
 					width: '100%',
-					height: stubHeight,
+					height: boxCache[boxCacheKey].stubHeight,
 				},
 			});
 		}
@@ -101,7 +108,7 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 		const render = View(
 			mergeImmutable(
 				restProps,
-				{ style },
+				{ style, testId },
 			),
 			...children,
 			withScroll ? null : stubFooter,
@@ -112,6 +119,7 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 		{
 			return View(
 				{
+					testId,
 					safeArea,
 					resizableByKeyboard,
 				},
@@ -139,6 +147,7 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 	};
 
 	Box.propTypes = {
+		testId: PropTypes.string.isRequired,
 		withScroll: PropTypes.bool,
 		scrollProps: PropTypes.object,
 		backgroundColor: PropTypes.object,

@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/field-list.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'tasks.v2.component.elements.question-mark',
 	],
 	'skip_core' => true,
 ];

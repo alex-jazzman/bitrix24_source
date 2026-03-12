@@ -100,6 +100,7 @@ function CloseTask(taskId, analyticsSection = 'tasks')
 		c_section: analyticsSection,
 		c_element: 'context_menu',
 		c_sub_section: 'gantt',
+		p1: `taskId_${taskId}`,
 	};
 
 	if (BX.UI.Analytics)

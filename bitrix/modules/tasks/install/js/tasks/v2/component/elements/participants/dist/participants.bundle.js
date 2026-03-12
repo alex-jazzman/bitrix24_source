@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_lib_showLimit,ui_vue3_components_popup,ui_vue3_components_richLoc,tasks_v2_core,tasks_v2_component_elements_fieldAdd,tasks_v2_component_elements_addButton,tasks_v2_component_elements_hint,tasks_v2_lib_idUtils,tasks_v2_lib_userSelectorDialog,main_core_events,ui_system_menu_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_userLabel,tasks_v2_provider_service_userService) {
+(function (exports,tasks_v2_lib_showLimit,ui_vue3_components_popup,ui_vue3_components_richLoc,tasks_v2_core,tasks_v2_component_elements_fieldHoverButton,tasks_v2_component_elements_fieldAdd,tasks_v2_component_elements_hint,tasks_v2_lib_idUtils,tasks_v2_lib_userSelectorDialog,main_core_events,ui_system_menu_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_userLabel,tasks_v2_provider_service_userService) {
 	'use strict';
 
 	// @vue/component
@@ -26,10 +26,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      type: Boolean,
 	      required: true
 	    },
-	    inline: {
-	      type: Boolean,
-	      required: true
-	    },
 	    withClear: {
 	      type: Boolean,
 	      required: true
@@ -37,6 +33,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    withMenu: {
 	      type: Boolean,
 	      required: true
+	    },
+	    forceEdit: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['edit', 'remove'],
@@ -50,7 +50,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](this.userId);
 	    },
 	    menuOptions() {
-	      const testId = `${this.taskId}-${this.userId}`;
 	      return {
 	        id: 'tasks-field-users-menu',
 	        bindElement: this.$refs.user.$el,
@@ -59,53 +58,35 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        items: [{
 	          title: this.loc('TASKS_V2_USERS_VIEW'),
 	          icon: ui_iconSet_api_vue.Outline.PERSON,
-	          dataset: {
-	            id: `UserMenuProfile-${testId}`
-	          },
 	          onClick: this.openProfile
-	        }, ...main_core_events.EventEmitter.emit(tasks_v2_const.EventName.UserMenuExternalItems, {
-	          taskId: this.taskId,
-	          userId: this.userId
-	        }).flat(), this.inline && {
-	          title: this.loc('TASKS_V2_USERS_EDIT'),
-	          icon: ui_iconSet_api_vue.Outline.EDIT_L,
-	          onClick: this.edit
-	        }, !this.inline && {
-	          design: ui_system_menu_vue.MenuItemDesign.Alert,
-	          title: this.loc('TASKS_V2_USERS_REMOVE'),
-	          icon: ui_iconSet_api_vue.Outline.TRASHCAN,
-	          dataset: {
-	            id: `UserMenuRemove-${testId}`
-	          },
-	          onClick: this.remove
-	        }]
+	        }, ...this.additionalItems]
 	      };
+	    },
+	    additionalItems() {
+	      return main_core_events.EventEmitter.emit(tasks_v2_const.EventName.UserMenuExternalItems, {
+	        taskId: this.taskId,
+	        userId: this.userId
+	      }).filter(value => Boolean(value)).flat();
 	    }
 	  },
 	  methods: {
 	    handleClick() {
-	      if (this.withMenu) {
+	      if (this.withMenu && this.additionalItems.length > 0) {
 	        this.isMenuShown = true;
 	        return;
 	      }
-	      if (this.canAdd) {
-	        this.edit();
+	      if (this.canAdd || this.forceEdit) {
+	        this.$emit('edit');
 	        return;
 	      }
 	      this.openProfile();
-	    },
-	    edit() {
-	      this.$emit('edit');
-	    },
-	    remove() {
-	      this.$emit('remove');
 	    },
 	    openProfile() {
 	      BX.SidePanel.Instance.emulateAnchorClick(tasks_v2_provider_service_userService.userService.getUrl(this.userId));
 	    }
 	  },
 	  template: `
-		<HoverPill ref="user" :withClear @clear="remove" @click="handleClick">
+		<HoverPill ref="user" :withClear @clear="$emit('remove')" @click="handleClick">
 			<UserLabel :user/>
 		</HoverPill>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
@@ -149,19 +130,42 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    inline: {
 	      type: Boolean,
 	      default: false
+	    },
+	    showMenu: {
+	      type: Boolean,
+	      default: true
+	    },
+	    forceEdit: {
+	      type: Boolean,
+	      default: false
+	    },
+	    fromPopup: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['edit', 'remove'],
+	  computed: {
+	    isSafari() {
+	      return BX.browser.IsSafari();
+	    }
+	  },
 	  template: `
-		<div class="tasks-field-users">
+		<div
+			class="tasks-field-users"
+			:class="{
+				'--safari': isSafari,
+				'--overflow': fromPopup,
+			}"
+		>
 			<template v-for="userId in userIds">
 				<User
 					:taskId
 					:userId
-					:canAdd
-					:inline
+					:forceEdit
+					:canAdd="canAdd && single"
 					:withClear="!single && !inline && (canRemove || userId === removableUserId)"
-					:withMenu="isEdit && (canRemove || removableUserId === userId)"
+					:withMenu="showMenu && isEdit && (canRemove || removableUserId === userId)"
 					@edit="$emit('edit')"
 					@remove="$emit('remove', userId)"
 				/>
@@ -215,7 +219,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    Popup: ui_vue3_components_popup.Popup,
 	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
 	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd,
-	    AddButton: tasks_v2_component_elements_addButton.AddButton,
+	    FieldHoverButton: tasks_v2_component_elements_fieldHoverButton.FieldHoverButton,
 	    Hint: tasks_v2_component_elements_hint.Hint,
 	    UserLabel: tasks_v2_component_elements_userLabel.UserLabel,
 	    Users,
@@ -281,6 +285,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    featureId: {
 	      type: String,
 	      default: ''
+	    },
+	    showMenu: {
+	      type: Boolean,
+	      default: true
+	    },
+	    forceEdit: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['update', 'hintClick'],
@@ -441,9 +453,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				/>
 			</div>
 			<div v-else>
-				<AddButton 
-					v-if="canAdd && !inline" 
-					:isVisible="isDialogShown || isHovered" 
+				<FieldHoverButton
+					v-if="canAdd && !inline"
+					:icon="Outline.PLUS_L"
+					:isVisible="isDialogShown || isHovered"
 					:isLocked
 					@click="showDialog(true)"
 				/>
@@ -456,6 +469,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:removableUserId
 					:single
 					:inline
+					:showMenu
+					:forceEdit
 					@edit="showDialog"
 					@remove="removeUser"
 				/>
@@ -477,6 +492,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:canRemove
 				:removableUserId
 				:single
+				:showMenu
+				:forceEdit
+				fromPopup
 				@edit="showDialog"
 				@remove="removeUser"
 			/>

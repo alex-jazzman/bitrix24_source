@@ -2,9 +2,8 @@
 
 namespace Bitrix\Mobile\AppTabs;
 
-use Bitrix\DiskMobile\AirDiskFeature;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Mobile\Config\Feature;
+use Bitrix\Main\Loader;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
@@ -20,7 +19,7 @@ final class Disk implements Tabable
 
 	public function isAvailable()
 	{
-		return Feature::isEnabled(AirDiskFeature::class);
+		return Loader::includeModule('diskmobile');
 	}
 
 	public function getData()

@@ -51,6 +51,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        return tasks_v2_provider_service_fileService.fileService.get(itemId, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem).isUploading();
 	      });
 	    },
+	    isGroupLoading() {
+	      if (!this.task.groupId) {
+	        return false;
+	      }
+	      return Boolean(this.$store.getters[`${tasks_v2_const.Model.Groups}/getById`](this.task.groupId)) === false;
+	    },
 	    userFieldScheme() {
 	      return this.isTemplate ? this.templateUserFieldScheme : this.taskUserFieldScheme;
 	    },
@@ -58,7 +64,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return tasks_v2_component_fields_userFields.userFieldsManager.hasUnfilledMandatoryFields(this.task.userFields, this.userFieldScheme);
 	    },
 	    isDisabled() {
-	      return this.task.title.trim() === '' || this.isUploading || this.isCheckListUploading || this.hasUnfilledMandatoryUserFields || this.isLoading;
+	      return this.task.title.trim() === '' || this.isUploading || this.isCheckListUploading || this.hasUnfilledMandatoryUserFields || this.isLoading || this.isGroupLoading;
 	    }
 	  },
 	  watch: {
@@ -139,6 +145,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        setTimeout(() => this.highlightChecklist());
 	      } else if (this.hasUnfilledMandatoryUserFields) {
 	        setTimeout(() => this.highlightUserFields());
+	      } else if (this.isGroupLoading) {
+	        setTimeout(() => this.highlightGroupFields());
 	      }
 	    },
 	    highlightTitle() {
@@ -160,6 +168,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    highlightUserFields() {
 	      this.errorReason = this.loc('TASKS_V2_NOT_FILLED_MANDATORY_USER_FIELDS');
 	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addHighlight(tasks_v2_const.TaskField.UserFields).scrollToField(tasks_v2_const.TaskField.UserFields).getFieldContainer(tasks_v2_const.TaskField.UserFields);
+	      this.showPopup();
+	    },
+	    highlightGroupFields() {
+	      this.errorReason = this.loc('TASKS_V2_DATA_IS_UPLOADING');
+	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_const.TaskField.Group).getChipContainer(tasks_v2_const.TaskField.Group);
 	      this.showPopup();
 	    },
 	    showPopup() {

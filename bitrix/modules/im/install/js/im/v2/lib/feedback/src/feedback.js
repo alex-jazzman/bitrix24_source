@@ -12,13 +12,14 @@ import {
 import type {
 	FormConfigType,
 	CopilotFormParams,
+	AiAssistantFormParams,
 } from './types/types';
 
 const FEEDBACK_EXTENSION = 'ui.feedback.form';
 
 export class FeedbackManager
 {
-	async openAiAssistantForm(): Promise<void>
+	async openAiAssistantForm(params: AiAssistantFormParams): Promise<void>
 	{
 		const { id, forms } = FormConfigAiAssistant;
 		const formattedId = `${id}-${this.#generateFormIdSuffix()}`;
@@ -27,6 +28,8 @@ export class FeedbackManager
 			forms,
 			presets: {
 				sender_page: FormContext.aiAssistantBot,
+				contextId: params.contextId ?? '',
+				message: params.message ?? '',
 			},
 		};
 

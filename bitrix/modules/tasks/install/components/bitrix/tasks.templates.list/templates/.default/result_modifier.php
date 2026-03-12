@@ -13,10 +13,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access\ActionDictionary;
-use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\SocialNetwork;
-use Bitrix\Tasks\Slider\Path\TemplatePathMaker;
-use Bitrix\Tasks\Slider\Path\PathMaker;
 use Bitrix\Tasks\UI\Component\TemplateHelper;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -135,8 +132,7 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 			&& $allowedActions[ActionDictionary::ACTION_TEMPLATE_CREATE]
 		;
 
-		// todo: Remove the second condition after creating template copy V2 API
-		if ($canCreate && !FormV2Feature::isOn())
+		if ($canCreate)
 		{
 			$actions[] = [
 				'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_COPY'),
@@ -144,16 +140,25 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 			];
 		}
 
+		$taskFromTemplatePath = new Uri(CComponentEngine::MakePathFromTemplate(
+			$urlTaskPath,
+			[
+				'user_id' => $userId,
+				'action' => 'edit',
+				'task_id' => 0,
+			]
+		));
+
+		$taskFromTemplatePath->addParams([
+			'ta_sec' => \Bitrix\Tasks\Helper\Analytics::SECTION['templates'],
+			'ta_sub' => \Bitrix\Tasks\Helper\Analytics::SUB_SECTION['list'],
+			'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['context_menu'],
+			'TEMPLATE' => $row['ID'],
+		]);
+
 		$actions[] = [
 			'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK_V2'),
-			'href' => CComponentEngine::MakePathFromTemplate(
-				$urlTaskPath,
-				[
-					'user_id' => $userId,
-					'action' => 'edit',
-					'task_id' => 0,
-				]
-			) . "?TEMPLATE={$row['ID']}{$strIframe2}",
+			'href' => $taskFromTemplatePath->getUri(),
 		];
 
 		if ($canCreate)

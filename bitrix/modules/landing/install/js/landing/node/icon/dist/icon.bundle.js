@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 (function (exports,main_core,landing_node_img) {
@@ -11,7 +12,6 @@ this.BX.Landing = this.BX.Landing || {};
 	  constructor(options) {
 	    super(options);
 	    this.type = 'icon';
-	    this.node.addEventListener('click', this.onClick.bind(this));
 	  }
 
 	  /**
@@ -79,6 +79,7 @@ this.BX.Landing = this.BX.Landing || {};
 	  }
 	  onClick(event) {
 	    BX.Event.EventEmitter.emit('BX.Landing.Node.Icon:onClick');
+	    super.onClick(event);
 	  }
 	}
 	BX.Landing.Node.Icon = Icon;

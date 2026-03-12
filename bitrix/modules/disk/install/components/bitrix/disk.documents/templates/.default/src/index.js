@@ -34,28 +34,30 @@ export {
 
 //Template things
 BX.ready(() => {
+	const analytics = window.BX_ANALYTICS || null;
+
 	if (BX.Main.gridManager && BX.Main.gridManager
 		.getInstanceById(GridOptions.getGridId()))
 	{
-		new GridList;
+		new GridList(analytics);
 	}
 	else if (BX.Main.tileGridManager && BX.Main.tileGridManager
 		.getInstanceById(GridOptions.getGridId()))
 	{
-		new GridTile;
+		new GridTile(analytics);
 	}
 	else
 	{
 		EventEmitter.subscribeOnce(EventEmitter.GLOBAL_TARGET, 'Grid::ready', ({compatData: [instance]}) => {
 			if (instance && instance.getId() === GridOptions.getGridId())
 			{
-				new GridList;
+				new GridList(analytics);
 			}
 		});
 		EventEmitter.subscribeOnce(EventEmitter.GLOBAL_TARGET, 'BX.TileGrid.Grid:initialized', ({compatData: [instance]}) => {
 			if (instance && instance.getId() === GridOptions.getGridId())
 			{
-				new GridTile;
+				new GridTile(analytics);
 			}
 		});
 	}
@@ -96,11 +98,21 @@ BX.ready(() => {
 	if (window.location.search)
 	{
 		const searchParams = new URLSearchParams(window.location.search);
+		const newSearchParams = new URLSearchParams();
+
 		searchParams.delete('c_section');
-		let newState = null;
-		if (searchParams.size > 0)
+
+		for (const param of searchParams)
 		{
-			newState = `?${searchParams.toString()}`;
+			if (param[0].startsWith('st[')) continue;
+
+			newSearchParams.append(param[0], param[1]);
+		}
+
+		let newState = null;
+		if (newSearchParams.size > 0)
+		{
+			newState = `?${newSearchParams.toString()}`;
 		}
 		else
 		{

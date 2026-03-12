@@ -24,6 +24,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		vote: 'vote',
 		videoNote: 'video-note',
 		videoNoteText: 'video-note-text',
+		sticker: 'sticker',
 	});
 
 	const MessageIdType = {
@@ -69,6 +70,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 			ConvertToCollabMessage: 'ConvertToCollabMessage',
 
 			AiAssistantMessage: 'AiAssistantMessage',
+			AdminMessage: 'AdminMessage',
 		},
 	});
 
@@ -100,6 +102,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		channelCreationMessage: 'ChannelCreationMessage',
 		vote: 'VoteMessage',
 		sticker: 'StickerMessage',
+		admin: 'AdminMessage',
 	});
 
 	module.exports = {

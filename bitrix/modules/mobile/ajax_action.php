@@ -52,10 +52,6 @@ $ajaxActions = [
 		"json" => true,
 		"file" => $pathToComponents."mobile.data/actions/users_groups.php"
 	],
-	'get_subordinated_user_list' => [
-		"json" => true,
-		"file" => $pathToComponents."mobile.data/actions/users_subordinates.php"
-	],
 	"get_likes" => [
 		"json" => true,
 		"file" => $pathToComponents."mobile.data/actions/get_likes.php"

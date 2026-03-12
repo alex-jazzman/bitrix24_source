@@ -135,6 +135,22 @@
 	transition: .3s;
 }
 
+.mail-set-textarea-show--disabled {
+	opacity: 0.8;
+	cursor: not-allowed;
+	pointer-events: none;
+	color: var(--ui-color-base-70);
+	border-bottom: 1px dashed var(--ui-color-base-40);
+}
+
+.mail-set-textarea-show--disabled:hover {
+	background-color: transparent;
+}
+
+.mail-set-textarea-show--disabled:after {
+	display: none;
+}
+
 .mail-set-textarea-show-open:after {
 	-webkit-transform: rotate(0);
 	-moz-transform: rotate(0);

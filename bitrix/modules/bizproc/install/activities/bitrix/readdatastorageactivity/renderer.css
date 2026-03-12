@@ -23,6 +23,10 @@ input[type="text"][data-role="inline-selector-target"] {
 	padding-right: 32px;
 }
 
+.bizproc-automation-popup-settings .bizproc-automation-popup-select {
+	position: relative;
+}
+
 .bizproc-automation-popup-settings input[type="button"][data-role="bp-selector-button"], .bizproc-automation-popup-settings .bizproc-automation-popup-select-dotted {
 	position: absolute;
 	right: 8px;

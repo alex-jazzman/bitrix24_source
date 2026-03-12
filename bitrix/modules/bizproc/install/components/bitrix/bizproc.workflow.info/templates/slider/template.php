@@ -120,7 +120,7 @@ use Bitrix\Main\Loader;
 						?>
 						<div class="ui-form-row" data-cid="<?= htmlspecialcharsbx($cid) ?>">
 							<div class="ui-form-label <?= $field['Required'] ? '--required' : '' ?>">
-								<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($field['Name']) ?></div>
+								<div class="ui-ctl-label-text"><?= htmlspecialcharsbx(CBPHelper::stringify($field['Name'])) ?></div>
 							</div>
 							<div class="ui-form-content">
 								<?= $documentService->getFieldInputControl(

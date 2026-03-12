@@ -1121,7 +1121,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      if (this.isDiscountPercentage()) {
 	        preparedValue = this.parseFloat(value, this.getCommonPrecision());
 	      } else {
-	        preparedValue = this.parseFloat(value, this.getPricePrecision()).toFixed(this.getPricePrecision());
+	        preparedValue = this.parseFloat(value, this.getCalculationPricePrecision()).toFixed(this.getCalculationPricePrecision());
 	      }
 	      this.setDiscount(preparedValue, mode);
 	    }
@@ -1135,7 +1135,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "changeRowDiscount",
 	    value: function changeRowDiscount(value) {
 	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
-	      var preparedValue = this.parseFloat(value, this.getPricePrecision());
+	      var preparedValue = this.parseFloat(value, this.getCalculationPricePrecision());
 	      this.setRowDiscount(preparedValue, mode);
 	    }
 	  }, {
@@ -1174,7 +1174,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "changeRowSum",
 	    value: function changeRowSum(value) {
 	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
-	      var preparedValue = this.parseFloat(value, this.getPricePrecision());
+	      var preparedValue = this.parseFloat(value, this.getCalculationPricePrecision());
 	      this.setRowSum(preparedValue, mode);
 	    }
 	  }, {
@@ -1335,7 +1335,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getCalculator",
 	    value: function getCalculator() {
-	      return this.getModel().getCalculator().setFields(this.getCalculateFields()).setSettings(this.getEditor().getSettings());
+	      var settings = {
+	        pricePrecision: this.getCalculationPricePrecision(),
+	        commonPrecision: this.getCommonPrecision(),
+	        quantityPrecision: this.getQuantityPrecision()
+	      };
+	      return this.getModel().getCalculator().setFields(this.getCalculateFields()).setSettings(settings);
 	    }
 	  }, {
 	    key: "setModel",
@@ -1849,6 +1854,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "getPricePrecision",
 	    value: function getPricePrecision() {
 	      return this.getEditor().getPricePrecision();
+	    }
+	  }, {
+	    key: "getCalculationPricePrecision",
+	    value: function getCalculationPricePrecision() {
+	      return this.getEditor().getCalculationPricePrecision();
 	    }
 	  }, {
 	    key: "getQuantityPrecision",
@@ -3381,6 +3391,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        _classPrivateMethodGet$5(_this11, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this11).forEach(function (name) {
 	          priceFields[name] = product.getField(name);
 	        });
+	        priceFields.CATALOG_PRICE = product.getField('CATALOG_PRICE');
 	        products.push({
 	          fields: priceFields,
 	          id: product.getId()
@@ -3411,6 +3422,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            product.updateField(name, main_core.Text.toNumber(products[product.getId()][name]));
 	          });
 	          product.setField('CURRENCY', products[product.getId()]['CURRENCY_ID']);
+	          product.setField('CATALOG_PRICE', products[product.getId()]['CATALOG_PRICE']);
 	        }
 	      });
 	      this.updateTotalUiCurrency();
@@ -3459,6 +3471,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "getPricePrecision",
 	    value: function getPricePrecision() {
 	      return this.getSettingValue('pricePrecision', DEFAULT_PRECISION);
+	    }
+	  }, {
+	    key: "getCalculationPricePrecision",
+	    value: function getCalculationPricePrecision() {
+	      return this.getSettingValue('calculationPricePrecision', DEFAULT_PRECISION);
 	    }
 	  }, {
 	    key: "getQuantityPrecision",
@@ -4082,6 +4099,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        (_product$getSelector = product.getSelector()) === null || _product$getSelector === void 0 ? void 0 : _product$getSelector.reloadFileInput();
 	        (_product$getSelector2 = product.getSelector()) === null || _product$getSelector2 === void 0 ? void 0 : _product$getSelector2.layout();
 	        product.updateUiMeasure(product.getField('MEASURE_CODE'), main_core.Text.encode(product.getField('MEASURE_NAME')));
+	        if (!this.canEditCatalogPrice() && product.getModel().isCatalogExisted() && main_core.Type.isNumber(fields.CATALOG_PRICE)) {
+	          product.changeBasePrice(fields.CATALOG_PRICE);
+	        }
 	      } else if (this.getSettingValue('newRowPosition') === 'bottom') {
 	        this.products.push(product);
 	      } else {

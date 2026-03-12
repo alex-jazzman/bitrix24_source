@@ -39,7 +39,7 @@ export const CheckListGroupCompletedList = {
 			<div class="check-list-widget-group-completed-list-title">
 				{{ completedParentsLabel }}
 			</div>
-			<div class="check-list-widget-group-completed-list-action">
+			<div class="check-list-widget-group-completed-list-action print-ignore">
 				<BIcon :name="Actions.CHEVRON_RIGHT"/>
 			</div>
 		</div>

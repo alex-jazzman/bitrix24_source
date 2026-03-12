@@ -249,7 +249,6 @@ $MESS["IM_M_CALL_CURRENT_PRESENTER"] = "Current presenter";
 $MESS["IM_M_CALL_DEVICE_NO_NAME"] = "No name";
 $MESS["IM_M_CALL_FULLSCREEN_MODE"] = "Fullscreen";
 $MESS["IM_M_CALL_GRID_MODE_MSGVER_1"] = "Grid";
-$MESS["IM_M_CALL_HD_VIDEO"] = "HD video";
 $MESS["IM_M_CALL_HELP"] = "Help";
 $MESS["IM_M_CALL_MENU_CREATE_FILE"] = "Create document";
 $MESS["IM_M_CALL_MENU_CREATE_FILE_DOC"] = "Document";

@@ -5,12 +5,7 @@
 jn.define('im/messenger/lib/params', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Loc } = require('im/messenger/loc');
-	const { MemoryStorage } = require('native/memorystore');
-	const { EntityReady } = require('entity-ready');
-	const { ComponentCode } = require('im/messenger/const');
 
-	const sharedParamsStorage = new MemoryStorage('immobileMessengerSharedParams');
-	const entityReadySharedParamsId = 'immobile:sharedParams::ready';
 	/**
 	 * @type {ImFeatures}
 	 */
@@ -34,7 +29,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		mentionAllAvailable: false,
 		isCopilotMentionAvailable: false,
 		isCopilotReasoningAvailable: false,
-		videoNoteAvailable: false,
 		videoNoteTranscriptionAvailable: false,
 		aiAssistantMcpSelectorAvailable: false,
 	};
@@ -46,15 +40,9 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 	{
 		/** @type {ImFeatures} */
 		#imFeatures;
-		#entityReadySharedParamsKey = 'immobile:sharedParams::ready';
-		#isReadySharedParams = false;
-		#wasSharedParamsSaved = false;
 
 		constructor()
 		{
-			this.sharedParamsStorage = sharedParamsStorage;
-
-			EntityReady.addCondition(this.#entityReadySharedParamsKey, () => this.#isReadySharedParams);
 			this.setAiAssistantStatusMessages();
 		}
 
@@ -67,36 +55,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 					Loc.setMessage(code, phase);
 				});
 			}
-		}
-
-		async initSharedParams()
-		{
-			const sharedParams = this.get('SHARED_PARAMS');
-
-			if (!sharedParams)
-			{
-				return;
-			}
-
-			await this.sharedParamsStorage.set('sharedParams', sharedParams);
-			this.setSharedParamsFromStorage();
-
-			this.#isReadySharedParams = true;
-			EntityReady.ready(this.#entityReadySharedParamsKey);
-		}
-
-		async waitSharedParamsInit()
-		{
-			if (this.#wasSharedParamsSaved)
-			{
-				return;
-			}
-
-			await EntityReady.wait(entityReadySharedParamsId);
-			this.#isReadySharedParams = true;
-
-			this.setSharedParamsFromStorage();
-			this.setAiAssistantStatusMessages();
 		}
 
 		/**
@@ -116,14 +74,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		set(key, value)
 		{
 			BX.componentParameters.set(key, value);
-		}
-
-		setSharedParamsFromStorage()
-		{
-			const sharedParamsFromStorage = this.sharedParamsStorage.getSync('sharedParams') ?? {};
-			const sharedParamsFromStorageKeys = Object.keys(sharedParamsFromStorage);
-			sharedParamsFromStorageKeys.forEach((key) => this.set(key, sharedParamsFromStorage[key]));
-			this.#wasSharedParamsSaved = true;
 		}
 
 		getSiteDir()
@@ -224,8 +174,9 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		isFullChatHistoryAvailable()
 		{
 			const limits = this.getPlanLimits();
-			const componentCode = this.getComponentCode();
-			if (componentCode !== ComponentCode.imChannelMessenger && limits?.fullChatHistory)
+			// TODO: MessengerV2 Channel history should always be available.
+
+			if (limits?.fullChatHistory)
 			{
 				return limits?.fullChatHistory?.isAvailable;
 			}
@@ -279,7 +230,7 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		}
 
 		/**
-		 * @return Permissions
+		 * @return {MessengerPermissions}
 		 */
 		getPermissions()
 		{
@@ -294,16 +245,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('MULTIPLE_ACTION_MESSAGE_LIMIT', 20);
 		}
 
-		getMessengerV2Enabled()
-		{
-			return this.get('IS_MESSENGER_V2_ENABLED', false);
-		}
-
-		getMultipleReactionsEnabled()
-		{
-			return this.get('IS_MULTIPLE_REACTIONS_ENABLED', true);
-		}
-
 		getCopilotSelectModelEnabled()
 		{
 			return this.get('IS_COPILOT_SELECT_MODEL_ENABLED', false);
@@ -314,35 +255,9 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('COPILOT_AVAILABLE_ENGINES', []);
 		}
 
-		/**
-		 * @param {ComponentCode} componentCode
-		 * @return {boolean}
-		 */
-		isComponentAvailable(componentCode)
+		getTasksRecentListAvailable()
 		{
-			const availableComponents = this.get('AVAILABLE_MESSENGER_COMPONENTS', {});
-
-			return Boolean(availableComponents[componentCode]);
-		}
-
-		/**
-		 * @param {ComponentCode} componentCode
-		 * @return {boolean}
-		 */
-		isComponentPreloaded(componentCode)
-		{
-			const preloadedComponents = this.get('PRELOADED_MESSENGER_COMPONENTS', {});
-
-			return Boolean(preloadedComponents[componentCode]);
-		}
-
-		/**
-		 * @param {ComponentCode} componentCode
-		 * @return {boolean}
-		 */
-		isComponentRequestBroadcasterAvailable(componentCode)
-		{
-			return this.isComponentAvailable(componentCode) && this.isComponentPreloaded(componentCode);
+			return this.get('IS_TASKS_RECENT_LIST_AVAILABLE', false);
 		}
 
 		canUseAudioPanel()
@@ -356,6 +271,22 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		getServiceHealthUrl()
 		{
 			return this.get('SERVICE_HEALTH_URL', '');
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		isAutoTasksEnabled()
+		{
+			return this.get('IS_AUTO_TASKS_ENABLED', false);
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		isAiTaskCreationUIAvailable()
+		{
+			return this.get('IS_AUTO_TASKS_UI_AVAILABLE', false);
 		}
 	}
 

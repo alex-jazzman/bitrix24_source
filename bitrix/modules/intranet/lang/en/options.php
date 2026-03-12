@@ -62,7 +62,6 @@ $MESS["INTR_OPTION_SEARCH_CONVERTER_EXTENSION"] = "Extension";
 $MESS["INTR_OPTION_SEARCH_CONVERTER_PROGRAM"] = "Command";
 $MESS["INTR_OPTION_SEARCH_USER_URL"] = "Employee Profile Path Template";
 $MESS["INTR_OPTION_SEARCH_ZIP_EXTENTION_WARNING"] = "Note! The function \"zip_open\" was not found (\"zip\" extension is not enabled?)";
-$MESS["INTR_OPTION_STRESSLEVEL_AVAILABLE"] = "Allow to measure and show stress level in user profile";
 $MESS["INTR_OPTION_TZ"] = "Time Zone Settings";
 $MESS["INTR_OPTION_TZ_HINT"] = "See <a href=\"http://msdn.microsoft.com/en-us/library/cc313169.aspx\" target=\"_blank\">[MS-OUTSPS] 2.2.4.8 TransitionDate</a>";
 $MESS["INTR_OPTION_TZ_SERVER"] = "Server time";

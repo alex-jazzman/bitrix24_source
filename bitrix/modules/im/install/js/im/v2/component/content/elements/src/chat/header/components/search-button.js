@@ -1,4 +1,5 @@
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import type { EventEmitter } from 'main.core.events';
 
@@ -35,6 +36,7 @@ export const SearchButton = {
 				panel: SidebarDetailBlock.messageSearch,
 				dialogId: this.dialogId,
 			});
+			Analytics.getInstance().messageSearch.onOpenSearchPanel(this.dialogId);
 		},
 		getEmitter(): EventEmitter
 		{

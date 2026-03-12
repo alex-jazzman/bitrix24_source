@@ -12,9 +12,7 @@ $config = [
 	'js' => 'dist/description.bundle.js',
 	'rel' => [
 		'ui.vue3.components.button',
-		'ui.system.typography.vue',
-		'ui.vue3.directives.hint',
-		'tasks.v2.component.elements.hint',
+		'main.core.events',
 		'ui.dialogs.messagebox',
 		'tasks.v2.const',
 		'ui.icon-set.api.vue',

@@ -1,5 +1,5 @@
 import { EventEmitter } from 'main.core.events';
-import { BMenu, MenuItemDesign, type MenuOptions } from 'ui.system.menu.vue';
+import { BMenu, type MenuOptions, type MenuItemOptions } from 'ui.system.menu.vue';
 import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
@@ -29,10 +29,6 @@ export const User = {
 			type: Boolean,
 			required: true,
 		},
-		inline: {
-			type: Boolean,
-			required: true,
-		},
 		withClear: {
 			type: Boolean,
 			required: true,
@@ -40,6 +36,10 @@ export const User = {
 		withMenu: {
 			type: Boolean,
 			required: true,
+		},
+		forceEdit: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	emits: ['edit', 'remove'],
@@ -56,8 +56,6 @@ export const User = {
 		},
 		menuOptions(): MenuOptions
 		{
-			const testId = `${this.taskId}-${this.userId}`;
-
 			return {
 				id: 'tasks-field-users-menu',
 				bindElement: this.$refs.user.$el,
@@ -67,59 +65,41 @@ export const User = {
 					{
 						title: this.loc('TASKS_V2_USERS_VIEW'),
 						icon: Outline.PERSON,
-						dataset: {
-							id: `UserMenuProfile-${testId}`,
-						},
 						onClick: this.openProfile,
 					},
-					...EventEmitter.emit(EventName.UserMenuExternalItems, {
-						taskId: this.taskId,
-						userId: this.userId,
-					}).flat(),
-					this.inline && {
-						title: this.loc('TASKS_V2_USERS_EDIT'),
-						icon: Outline.EDIT_L,
-						onClick: this.edit,
-					},
-					!this.inline && {
-						design: MenuItemDesign.Alert,
-						title: this.loc('TASKS_V2_USERS_REMOVE'),
-						icon: Outline.TRASHCAN,
-						dataset: {
-							id: `UserMenuRemove-${testId}`,
-						},
-						onClick: this.remove,
-					},
+					...this.additionalItems,
 				],
 			};
+		},
+		additionalItems(): MenuItemOptions[]
+		{
+			return EventEmitter.emit(EventName.UserMenuExternalItems, {
+				taskId: this.taskId,
+				userId: this.userId,
+			})
+				.filter((value) => Boolean(value))
+				.flat()
+			;
 		},
 	},
 	methods: {
 		handleClick(): void
 		{
-			if (this.withMenu)
+			if (this.withMenu && this.additionalItems.length > 0)
 			{
 				this.isMenuShown = true;
 
 				return;
 			}
 
-			if (this.canAdd)
+			if (this.canAdd || this.forceEdit)
 			{
-				this.edit();
+				this.$emit('edit');
 
 				return;
 			}
 
 			this.openProfile();
-		},
-		edit(): void
-		{
-			this.$emit('edit');
-		},
-		remove(): void
-		{
-			this.$emit('remove');
 		},
 		openProfile(): void
 		{
@@ -127,7 +107,7 @@ export const User = {
 		},
 	},
 	template: `
-		<HoverPill ref="user" :withClear @clear="remove" @click="handleClick">
+		<HoverPill ref="user" :withClear @clear="$emit('remove')" @click="handleClick">
 			<UserLabel :user/>
 		</HoverPill>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>

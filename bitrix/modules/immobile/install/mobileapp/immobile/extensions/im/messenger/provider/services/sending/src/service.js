@@ -9,6 +9,7 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 	const {
 		EventType,
 		SubTitleIconType,
+		ErrorCode,
 	} = require('im/messenger/const');
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -148,7 +149,15 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 
 			await Promise.all(cancelTasksPromiseList);
 
-			await this.#resendFileFromDevice(dialogId, temporaryMessageId, fileList);
+			const firstFile = fileList[0];
+			if (Type.isNumber(Number(firstFile.id)))
+			{
+				await this.#resendFileFromDisk(dialogId, temporaryMessageId, fileList);
+			}
+			else
+			{
+				await this.#resendFileFromDevice(dialogId, temporaryMessageId, fileList);
+			}
 		}
 
 		/**
@@ -219,7 +228,15 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 		 */
 		async #uploadFiles(dialogId, deviceFileList, text, params)
 		{
-			const diskFolderId = await this.filesUploadService.getDiskFolderId(dialogId);
+			let diskFolderId = 0;
+			try
+			{
+				diskFolderId = await this.filesUploadService.getDiskFolderId(dialogId);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.#uploadFiles.getDiskFolderId`, error);
+			}
 
 			const temporaryMessageId = Uuid.getV4();
 
@@ -237,9 +254,13 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 				temporaryMessageId,
 				fileIds: temporaryFileIds,
 				text,
+				diskFolderId,
 			});
 
-			await this.#prepareAndStartUploadTasks(temporaryMessageId, prepareFiles, params);
+			if (diskFolderId)
+			{
+				await this.#prepareAndStartUploadTasks(temporaryMessageId, prepareFiles, params);
+			}
 		}
 
 		/**
@@ -409,6 +430,12 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 			);
 		}
 
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {string} temporaryMessageId
+		 * @param {Array<DeviceFile>} deviceFileList
+		 * @return {Promise}
+		 */
 		async #resendFileFromDevice(dialogId, temporaryMessageId, deviceFileList)
 		{
 			this.#updateRecentStatusByResend({ dialogId, temporaryMessageId });
@@ -434,24 +461,41 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 			await this.filesUploadService.startUploadFiles(preparedUploadTasks);
 		}
 
-		async #resendFileFromDisk(dialogId, temporaryMessageId, file)
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {string} temporaryMessageId
+		 * @param {Array<{ id: string }>} fileList
+		 * @return {Promise}
+		 */
+		async #resendFileFromDisk(dialogId, temporaryMessageId, fileList)
 		{
-			const temporaryFileId = `${temporaryMessageId}|${file.id}`;
+			const filesIdsCollection = fileList.map((file) => {
+				return { realFileIdInt: file.id, temporaryFileId: temporaryMessageId };
+			});
 
 			const { chatId } = this.#getDialog(dialogId);
+			const temporaryFileIds = fileList.map((file) => file.id);
 
-			return this.fileUploadService.commitFile({
-				chatId,
-				temporaryFileId,
+			await this.#resendMessage({
+				dialogId,
 				temporaryMessageId,
-				realFileId: file.id,
-				fromDisk: true,
+				fileIds: temporaryFileIds,
 			});
+
+			this.filesUploadService.commitFromDisk(
+				chatId,
+				temporaryMessageId,
+				filesIdsCollection,
+			);
 		}
 
+		/**
+		 * @param {SendMessageParams} params
+		 * @return {Promise}
+		 */
 		#sendMessage(params)
 		{
-			const { text = '', fileIds = [], temporaryMessageId, dialogId } = params;
+			const { text = '', fileIds = [], temporaryMessageId, dialogId, diskFolderId } = params;
 			if (!Type.isStringFilled(text) && !Type.isArrayFilled(fileIds))
 			{
 				return Promise.resolve();
@@ -459,7 +503,7 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 
 			logger.warn(`${this.constructor.name}: sendMessage`, params);
 
-			const message = this.#prepareMessage({ text, fileIds, temporaryMessageId, dialogId });
+			const message = this.#prepareMessage({ text, fileIds, temporaryMessageId, dialogId, diskFolderId });
 
 			return this.#handlePagination(dialogId).then(() => {
 				return this.#addMessageToModels(message);
@@ -468,6 +512,10 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 			});
 		}
 
+		/**
+		 * @param {SendMessageParams} params
+		 * @return {Promise}
+		 */
 		#resendMessage(params)
 		{
 			const { text = '', fileIds = [], temporaryMessageId, dialogId } = params;
@@ -529,14 +577,28 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 			};
 		}
 
+		/**
+		 * @param {PreparedMessage} params
+		 * @return {MessagesModelState}
+		 */
 		#prepareMessage(params)
 		{
-			const {
+			let {
 				text,
+			} = params;
+
+			const {
 				fileIds,
 				temporaryMessageId,
 				dialogId,
+				diskFolderId,
 			} = params;
+
+			if (Type.isStringFilled(text))
+			{
+				// eslint-disable-next-line no-param-reassign
+				text = text.trim();
+			}
 
 			const previousId = params.previousId
 				?? this.store.getters['messagesModel/getLastId'](this.#getDialog(dialogId).chatId)
@@ -550,8 +612,7 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 
 			const temporaryId = temporaryMessageId || Uuid.getV4();
 			const chatId = this.#getDialog(dialogId).chatId;
-
-			return {
+			const fields = {
 				templateId: temporaryId,
 				chatId,
 				dialogId,
@@ -565,6 +626,13 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 				error: false,
 				previousId,
 			};
+
+			if (diskFolderId === 0)
+			{
+				Object.assign(fields, { error: true, errorReason: ErrorCode.NO_INTERNET_CONNECTION, loadText: '' });
+			}
+
+			return fields;
 		}
 
 		async #handlePagination(dialogId)

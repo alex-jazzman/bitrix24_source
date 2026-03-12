@@ -13,6 +13,8 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 	const { mergeImmutable } = require('utils/object');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { CrmMode } = require('crm/crm-mode');
+	const { CaseName } = require('crm/onboarding');
+	const { TypeId } = require('crm/type');
 
 	const CACHE_TTL = 60 * 60 * 4; // 4 hours
 	const CACHE_VERSION = 2;
@@ -72,6 +74,11 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 							componentParams: {
 								payload,
 								analytics: preparedAnalytics,
+								context: {
+									source: 'entity-detail-opener',
+									caseForMarkAsShown: CaseName.ON_NO_CRM_DEALS,
+									necessaryEntityTypeId: TypeId.Deal,
+								},
 							},
 							widgetParams: {
 								...this.getModalWidgetParams(),

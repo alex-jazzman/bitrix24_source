@@ -25,6 +25,9 @@ export const GanttPopupContent = {
 		TextXs,
 		GanttMenu,
 	},
+	inject: {
+		analytics: {},
+	},
 	props: {
 		taskId: {
 			type: [Number, String],
@@ -85,6 +88,7 @@ export const GanttPopupContent = {
 				targetContainer: this.$refs.task.$el.closest('body'),
 				taskId: this.taskId,
 				ids: this.task ? [this.task.id] : [],
+				analytics: this.analytics,
 				onClose: (items: Item[]) => this.handleClose?.(items[0]),
 			});
 		},

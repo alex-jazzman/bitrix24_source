@@ -7,7 +7,8 @@ define("NO_AGENT_STATISTIC","Y");
 define("DisableEventsCheck", true);
 define('BX_SECURITY_SESSION_READONLY', true);
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/services/quickway.php');
+require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/main/include/prolog_before.php');
 
 /**
  * @global CUser $USER

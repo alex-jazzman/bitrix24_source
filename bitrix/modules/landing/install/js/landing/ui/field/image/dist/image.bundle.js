@@ -1003,7 +1003,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    value: function createAiButton() {
 	      var compactMode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      return new landing_ui_button_aiimagebutton.AiImageButton("ai", {
-	        text: 'CoPilot',
+	        text: BX.Landing.Main.getInstance()["options"]["copilot_name"],
 	        className: "landing-ui-field-image-ai-button" + (compactMode ? ' --compact' : '')
 	      });
 	    }

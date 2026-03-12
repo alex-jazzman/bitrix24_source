@@ -415,7 +415,6 @@ elseif($action == 'GET_HISTORY_ITEMS')
 	$guid = isset($params['GUID']) ? $params['GUID'] : '';
 	$ownerTypeID = isset($params['OWNER_TYPE_ID']) ? (int)$params['OWNER_TYPE_ID'] : 0;
 	$ownerID = isset($params['OWNER_ID']) ? (int)$params['OWNER_ID'] : 0;
-	$categoryId = isset($params['CATEGORY_ID']) ? (int)$params['CATEGORY_ID'] : 0;
 
 	if(!\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission($ownerTypeID, $ownerID))
 	{
@@ -425,7 +424,11 @@ elseif($action == 'GET_HISTORY_ITEMS')
 	$component->setGuid($guid);
 	$component->setEntityTypeID($ownerTypeID);
 	$component->setEntityID($ownerID);
-	$component->setExtras(['CATEGORY_ID' => $categoryId]);
+	$itemIdentifier = ItemIdentifier::createByParams($ownerTypeID, $ownerID);
+	if ($itemIdentifier)
+	{
+		$component->setExtras(['CATEGORY_ID' => $itemIdentifier->getCategoryId()]);
+	}
 
 	$component->prepareHistoryFilter();
 

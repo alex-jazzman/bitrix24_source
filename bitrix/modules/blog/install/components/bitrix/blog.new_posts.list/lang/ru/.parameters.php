@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BMNP_MESSAGE_PER_PAGE"] = "Количество результатов, выводимых на страницу";
 $MESS["BMNP_PATH_TO_BLOG"] = "Шаблон пути к странице блога";
 $MESS["BMNP_PATH_TO_POST"] = "Шаблон пути к странице с сообщением блога";
@@ -29,4 +29,3 @@ $MESS["BMNP_NAME_TEMPLATE_DEFAULT"] = "#NOBR##LAST_NAME# #NAME##/NOBR#";
 $MESS["BMNP_SHOW_LOGIN"] = "Показывать логин, если не задано имя";
 $MESS["BPC_IMAGE_MAX_WIDTH"] = "Максимальная ширина изображения";
 $MESS["BPC_IMAGE_MAX_HEIGHT"] = "Максимальная высота изображения";
-?>

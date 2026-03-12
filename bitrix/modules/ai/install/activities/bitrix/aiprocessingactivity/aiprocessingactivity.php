@@ -3,6 +3,7 @@
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\Public\Event\ParameterBuilder\AI\Context\ChatHistoryEventParametersBuilder;
+use Bitrix\Bizproc\Public\Integration\AI\Service\ObfuscationService;
 use Bitrix\Main\Loader;
 use Bitrix\AI\Payload;
 use Bitrix\Main\Error;
@@ -23,6 +24,7 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 	private const RETURN_PARAM_ERROR_MESSAGE = 'errorMessage';
 	private const PARAM_RETURN_TYPE = 'returnType';
 	private const PARAM_JSON_SCHEMA = 'jsonSchema';
+	private const PARAM_USE_PSEUDONYMIZER = 'usePseudonymizer';
 	private const PARAM_JSON_PATH = 'jsonPath';
 	private const QUEUE_JOB_SUCCESS = 'onQueueJobExecute';
 	private const QUEUE_JOB_FAIL = 'onQueueJobFail';
@@ -39,6 +41,7 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 	];
 	private ?string $queueHash = null;
 	private int $timeoutSubscriptionId = 0;
+	private int $salt = 0;
 
 	public function __construct($name)
 	{
@@ -53,6 +56,7 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 			self::PARAM_RETURN_TYPE => null,
 			self::PARAM_JSON_SCHEMA => null,
 			self::PARAM_JSON_PATH => null,
+			self::PARAM_USE_PSEUDONYMIZER => null,
 			self::RETURN_PARAM_AI_RESULT => null,
 			self::RETURN_PARAM_ERROR_MESSAGE => null,
 		];
@@ -77,6 +81,7 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 		$this->{self::RETURN_PARAM_AI_RESULT} = null;
 		$this->{self::RETURN_PARAM_ERROR_MESSAGE} = null;
 		$this->timeoutSubscriptionId = 0;
+		$this->salt = 0;
 	}
 
 	public function cancel(): int
@@ -119,6 +124,11 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 			$this->logError(Loc::getMessage('AI_PROCESSING_ACTIVITY_ENGINE_NOT_FOUND'));
 
 			return CBPActivityExecutionStatus::Closed;
+		}
+
+		if ($this->salt === 0)
+		{
+			$this->generateSalt();
 		}
 
 		$engine
@@ -368,8 +378,10 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 
 		$properties[self::PARAM_JSON_PATH] = \Bitrix\Bizproc\Public\Helper\JsonHelper::buildJsonPath(
 			$properties[self::PARAM_JSON_SCHEMA],
-			$activityName
+			$activityName,
 		);
+
+		$properties[self::PARAM_USE_PSEUDONYMIZER] = 'Y';
 
 		$currentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
 		$currentActivity['Properties'] = $properties;
@@ -419,11 +431,15 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 	private function getUserPromptWithSystemPrePrompt(): string
 	{
 		$userPrompt = (string)$this->{self::PARAM_PROMPT};
-		if (class_exists('\Bitrix\Bizproc\Public\Integration\AI\Service\ObfuscationService'))
+		$usePseudonymizer = $this->{self::PARAM_USE_PSEUDONYMIZER} === 'Y';
+		if (
+			$usePseudonymizer
+			&& class_exists('\Bitrix\Bizproc\Public\Integration\AI\Service\ObfuscationService')
+		)
 		{
 			$userPrompt = ServiceLocator::getInstance()
 				->get(\Bitrix\Bizproc\Public\Integration\AI\Service\ObfuscationService::class)
-				->prepareTextForSending($userPrompt)
+				->prepareTextForSending($userPrompt, $this->salt)
 			;
 		}
 
@@ -465,6 +481,20 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 				$result->getPrettifiedData(),
 				$this->{self::PARAM_RETURN_TYPE} ?? '',
 			);
+
+			$isUsedPseudonymizer = $this->{self::PARAM_USE_PSEUDONYMIZER} === 'Y';
+			if (
+				$isUsedPseudonymizer
+				&& class_exists(ObfuscationService::class)
+				&& method_exists(ObfuscationService::class, 'restoreTextAfterReceiving')
+			)
+			{
+				$processed = ServiceLocator::getInstance()
+					->get(ObfuscationService::class)
+					->restoreTextAfterReceiving($processed, $this->salt)
+				;
+			}
+
 			$this->writeToTrackingService(
 				Loc::getMessage(
 					'AI_PROCESSING_ACTIVITY_QUEUE_RESULT',
@@ -640,9 +670,7 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 			{
 				$this->setPropertiesTypes(
 					[
-						$field['Id'] => [
-							'Type' => FieldType::JSON,
-						],
+						$field['Id'] => $field,
 					],
 				);
 			}
@@ -663,5 +691,10 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 	private function getExpiresIn(): int
 	{
 		return (int)\Bitrix\Main\Config\Option::get('ai', 'ai_processing_expires_in', self::DEFAULT_EXPIRES_IN);
+	}
+
+	private function generateSalt(): void
+	{
+		$this->salt = random_int(1, time());
 	}
 }

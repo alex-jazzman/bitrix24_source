@@ -12,6 +12,7 @@ import { showDeleteChatConfirm } from 'im.v2.lib.confirm';
 import { Notifier } from 'im.v2.lib.notifier';
 import { ChatManager } from 'im.v2.lib.chat';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
 import type { ApplicationContext } from 'im.v2.const';
@@ -51,14 +52,37 @@ export class MainMenu extends RecentMenu
 			this.getOpenUserCalendarItem(),
 			this.getChatsWithUserItem(),
 			this.getCopyInviteLinkItem(),
+			this.getCopyDialogIdItem(),
 			this.getHideItem(),
 			this.getLeaveItem(),
 			this.getDeleteItem(),
 		];
 	}
 
+	getCopyDialogIdItem(): ?MenuItemOptions
+	{
+		if (!FeatureManager.isFeatureAvailable(Feature.chatSharedLinkAvailable))
+		{
+			return null;
+		}
+
+		return {
+			title: Loc.getMessage('IM_SIDEBAR_MENU_COPY_DIALOG_ID'),
+			onClick: async () => {
+				await Utils.text.copyToClipboard(this.context.dialogId);
+
+				Notifier.chat.onCopyIdComplete();
+			},
+		};
+	}
+
 	getCopyInviteLinkItem(): ?MenuItemOptions
 	{
+		if (FeatureManager.isFeatureAvailable(Feature.chatSharedLinkAvailable))
+		{
+			return null;
+		}
+
 		if (!BX.clipboard.isCopySupported())
 		{
 			return null;

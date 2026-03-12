@@ -1,5 +1,4 @@
-import { Dom, Tag } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { Dom, Tag, Loc, Type } from 'main.core';
 
 import { ParserUtils } from '../utils/utils';
 import { getUtils, getConst } from '../utils/core-proxy';
@@ -11,6 +10,16 @@ const { EventType } = getConst();
 
 const QUOTE_SIGN = '&gt;&gt;';
 const NO_CONTEXT_TAG = 'none';
+const PREVIEW_LINE_LIMIT = 4;
+const PREVIEW_CHARS_PER_LINE = 80;
+const BR_HTML_TAG = '<br />';
+const CLASS_QUOTE_BASE = 'bx-im-message-quote';
+const CLASS_QUOTE_WRAP = 'bx-im-message-quote__wrap';
+const CLASS_QUOTE_TEXT = 'bx-im-message-quote__text';
+const CLASS_QUOTE_TOGGLE = 'bx-im-message-quote__toggle';
+const CLASS_EXPANDED = '--expanded';
+const CLASS_COLLAPSED = '--collapsed';
+const CLASS_CLICKABLE = '--clickable';
 
 export const ParserQuote = {
 
@@ -22,8 +31,10 @@ export const ParserQuote = {
 		}
 
 		let isProcessed = false;
+		const quoteStartIndexes = new Set();
+		const quoteEndIndexes = new Set();
 
-		const textLines = text.split('<br />');
+		const textLines = text.split(BR_HTML_TAG);
 		for (let i = 0; i < textLines.length; i++)
 		{
 			if (!textLines[i].startsWith(QUOTE_SIGN))
@@ -32,18 +43,24 @@ export const ParserQuote = {
 			}
 
 			const quoteStartIndex = i;
+			quoteStartIndexes.add(quoteStartIndex);
 
-			const outerContainerStart = `<div data-context="${NO_CONTEXT_TAG}" class="bx-im-message-quote --inline">`;
-			const innerContainerStart = '<div class="bx-im-message-quote__wrap">';
-			const containerEnd = '</div>';
-			textLines[quoteStartIndex] = textLines[quoteStartIndex].replace(QUOTE_SIGN, `${outerContainerStart}${innerContainerStart}`);
-			// remove >> from all next lines
+			textLines[quoteStartIndex] = textLines[quoteStartIndex].replace(QUOTE_SIGN, '');
 			while (++i < textLines.length && textLines[i].startsWith(QUOTE_SIGN))
 			{
 				textLines[i] = textLines[i].replace(QUOTE_SIGN, '');
 			}
 			const quoteEndIndex = i - 1;
-			textLines[quoteEndIndex] += `${containerEnd}${containerEnd}`;
+			quoteEndIndexes.add(quoteEndIndex);
+
+			const quoteTextLines = textLines.slice(quoteStartIndex, quoteEndIndex + 1);
+			const quoteText = quoteTextLines.join(BR_HTML_TAG);
+			const collapsedClass = isQuoteExpandableByText(quoteText) ? ` ${CLASS_COLLAPSED}` : '';
+			const containerEnd = '</div>';
+
+			textLines[quoteStartIndex] = `<div data-context="${NO_CONTEXT_TAG}" class="${CLASS_QUOTE_BASE}${collapsedClass}"><div class="${CLASS_QUOTE_WRAP}"><div class="${CLASS_QUOTE_TEXT}">${textLines[quoteStartIndex]}`;
+			textLines[quoteEndIndex] += `${containerEnd}${getToggleButton({ quoteText })}${containerEnd}${containerEnd}`;
+
 			isProcessed = true;
 		}
 
@@ -52,17 +69,15 @@ export const ParserQuote = {
 			return text;
 		}
 
-		return textLines.join('<br />');
+		return joinArrowQuoteLines(textLines, quoteStartIndexes, quoteEndIndexes);
 	},
 
 	purifyArrowQuote(text, spaceLetter = ' '): string
 	{
-		text = text.replace(
+		return text.replaceAll(
 			new RegExp(`^(${QUOTE_SIGN}(.*))`, 'gim'),
-			ParserIcon.getQuoteBlock() + spaceLetter
+			ParserIcon.getQuoteBlock() + spaceLetter,
 		);
-
-		return text;
 	},
 
 	decodeQuote(text, { contextDialogId = '' } = {}): string
@@ -74,11 +89,14 @@ export const ParserQuote = {
 				const userContainer = getUserBlock(userName, timeTag);
 				const finalContextTag = getFinalContextTag(contextTag, contextDialogId);
 
+				const clickableClass = finalContextTag === NO_CONTEXT_TAG ? '' : ` ${CLASS_CLICKABLE}`;
+				const collapsedClass = isQuoteExpandableByText(preparedQuoteText) ? ` ${CLASS_COLLAPSED}` : '';
 				const layout = Tag.render`
-					<div class='bx-im-message-quote' data-context='${finalContextTag}'>
-						<div class='bx-im-message-quote__wrap'>
+					<div class='${CLASS_QUOTE_BASE}${collapsedClass}${clickableClass}' data-context='${finalContextTag}'>
+						<div class='${CLASS_QUOTE_WRAP}'>
 							${userContainer}
-							<div class='bx-im-message-quote__text'>${preparedQuoteText}</div>
+							<div class='${CLASS_QUOTE_TEXT}'>${preparedQuoteText}</div>
+							${getToggleButton({ quoteText: preparedQuoteText })}
 						</div>
 					</div>
 				`;
@@ -90,41 +108,70 @@ export const ParserQuote = {
 
 	purifyQuote(text: string, spaceLetter: string = ' '): string
 	{
-		return text.replace(/-{54}(.*?)-{54}/gims, ParserIcon.getQuoteBlock() + spaceLetter);
+		return text.replaceAll(
+			/-{54}(.*?)-{54}/gims,
+			ParserIcon.getQuoteBlock() + spaceLetter,
+		);
 	},
 
 	decodeCode(text: string): string
 	{
-		return text.replace(/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code](<br \/>)?/gis, (whole, br, code) => {
+		return text.replaceAll(/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code](<br \/>)?/gis, (whole, br, code) => {
 			return Dom.create({
 				tag: 'div',
-				attrs: {className: 'bx-im-message-content-code'},
-				html: code
+				attrs: { className: 'bx-im-message-content-code' },
+				html: code,
 			}).outerHTML;
 		});
 	},
 
 	purifyCode(text: string, spaceLetter: string = ' '): string
 	{
-		return text.replace(/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code]/gis, ParserIcon.getCodeBlock() + spaceLetter);
+		return text.replaceAll(
+			/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code]/gis,
+			ParserIcon.getCodeBlock() + spaceLetter,
+		);
 	},
 
-	executeClickEvent(event: PointerEvent, context: ApplicationContext)
+	executeClickEvent(
+		event: PointerEvent,
+		context: ApplicationContext,
+	)
 	{
-		if (
-			!event.target.className.startsWith('bx-im-message-quote')
-			&& !(
-				event.target.parentNode
-				&& event.target.parentNode.className.startsWith('bx-im-message-quote')
-			)
-		)
+		const target = getUtils().dom.recursiveBackwardNodeSearch(event.target, CLASS_QUOTE_BASE);
+		if (!target)
 		{
 			return;
 		}
 
-		const target = getUtils().dom.recursiveBackwardNodeSearch(event.target, 'bx-im-message-quote');
-		if (!target || target.dataset.context === NO_CONTEXT_TAG)
+		if (shouldStopQuoteClick(event))
 		{
+			event.stopPropagation();
+
+			return;
+		}
+
+		const isExpandable = isQuoteExpandable(target);
+
+		updateToggleButtonVisibility(target, isExpandable);
+
+		if (target.dataset.context === NO_CONTEXT_TAG)
+		{
+			handleQuoteToggle(target, isExpandable);
+
+			return;
+		}
+
+		const isToggleClick = isToggleButtonClick(event.target);
+		if (isToggleClick)
+		{
+			if (!isExpandable)
+			{
+				return;
+			}
+
+			toggleQuoteState(target);
+
 			return;
 		}
 
@@ -145,8 +192,6 @@ const getQuoteText = (userName, timeTag, text): string => {
 		// the case, when inside the quote we have only some string in square brackets
 		return String(timeTag);
 	}
-
-	const BR_HTML_TAG = '<br />';
 
 	if (text.endsWith(BR_HTML_TAG))
 	{
@@ -187,8 +232,165 @@ const getFinalContextTag = (contextTag: string, contextDialogId: string): string
 	return finalContextTag;
 };
 
+const joinArrowQuoteLines = (
+	textLines: Array<string>,
+	quoteStartIndexes: Set<number>,
+	quoteEndIndexes: Set<number>,
+): string => {
+	let result = '';
+
+	for (let i = 0; i < textLines.length; i++)
+	{
+		const isCompactQuoteSeparator = (
+			textLines[i].trim() === ''
+			&& quoteEndIndexes.has(i - 1)
+			&& quoteStartIndexes.has(i + 1)
+		);
+		if (!isCompactQuoteSeparator)
+		{
+			result += textLines[i];
+		}
+
+		const isLastLine = i >= textLines.length - 1;
+		if (isLastLine || quoteEndIndexes.has(i) || isCompactQuoteSeparator)
+		{
+			continue;
+		}
+
+		result += BR_HTML_TAG;
+	}
+
+	return result;
+};
+
+const getToggleButton = ({ quoteText, isExpanded = false }: { quoteText: string, isExpanded?: boolean }): string => {
+	if (!Type.isStringFilled(quoteText))
+	{
+		return '';
+	}
+
+	if (!isQuoteExpandableByText(quoteText))
+	{
+		return '';
+	}
+
+	const label = getToggleLabel(isExpanded);
+
+	return `<button type="button" class="${CLASS_QUOTE_TOGGLE}">${label}</button>`;
+};
+
+const getToggleLabel = (isExpanded: boolean): string => {
+	const phraseCode = isExpanded ? 'IM_PARSER_QUOTE_COLLAPSE' : 'IM_PARSER_QUOTE_EXPAND';
+
+	return Loc.getMessage(phraseCode);
+};
+
 const isQuoteFromTheSameChat = (finalContextTag: string, dialogId: string): boolean => {
 	const contextDialogId = ParserUtils.getDialogIdFromFinalContextTag(finalContextTag);
 
 	return contextDialogId === dialogId;
+};
+
+const isQuoteExpandable = (target: HTMLElement): boolean => {
+	const textNode = target.querySelector(`.${CLASS_QUOTE_TEXT}`);
+	if (!textNode)
+	{
+		return false;
+	}
+
+	const isExpanded = Dom.hasClass(target, CLASS_EXPANDED);
+
+	return isExpanded || textNode.scrollHeight > textNode.clientHeight + 1;
+};
+
+const isQuoteExpandableByText = (quoteText: string): boolean => {
+	const lines = quoteText.split(BR_HTML_TAG);
+	let virtualLineCount = 0;
+
+	for (const line of lines)
+	{
+		const plainText = line.replaceAll(/<[^>]+>/g, '').trim();
+		virtualLineCount += Math.max(1, Math.ceil(plainText.length / PREVIEW_CHARS_PER_LINE));
+		if (virtualLineCount > PREVIEW_LINE_LIMIT)
+		{
+			return true;
+		}
+	}
+
+	return false;
+};
+
+const isToggleButtonClick = (target: EventTarget): boolean => {
+	const targetElement = target instanceof HTMLElement ? target : null;
+	if (!targetElement)
+	{
+		return false;
+	}
+
+	return Boolean(targetElement.closest(`.${CLASS_QUOTE_TOGGLE}`));
+};
+
+const shouldStopQuoteClick = (event: PointerEvent): boolean => {
+	const isInteractiveClick = (
+		event.target instanceof HTMLElement
+		&& event.target.closest('a')
+	);
+	if (isInteractiveClick)
+	{
+		return true;
+	}
+
+	const selection = window.getSelection().toString().trim();
+
+	return Type.isStringFilled(selection);
+};
+
+const handleQuoteToggle = (target: HTMLElement, isExpandable: boolean): boolean => {
+	if (isExpandable)
+	{
+		Dom.addClass(target, CLASS_CLICKABLE);
+	}
+	else
+	{
+		Dom.removeClass(target, CLASS_CLICKABLE);
+	}
+
+	if (!Dom.hasClass(target, CLASS_CLICKABLE) || !isExpandable)
+	{
+		return true;
+	}
+
+	toggleQuoteState(target);
+
+	return true;
+};
+
+const toggleQuoteState = (target: HTMLElement): void => {
+	const isExpanded = Dom.hasClass(target, CLASS_EXPANDED);
+	if (isExpanded)
+	{
+		Dom.removeClass(target, CLASS_EXPANDED);
+		Dom.addClass(target, CLASS_COLLAPSED);
+	}
+	else
+	{
+		Dom.addClass(target, CLASS_EXPANDED);
+		Dom.removeClass(target, CLASS_COLLAPSED);
+	}
+
+	const toggleButton = target.querySelector(`.${CLASS_QUOTE_TOGGLE}`);
+	if (toggleButton)
+	{
+		toggleButton.textContent = getToggleLabel(!isExpanded);
+	}
+};
+
+const updateToggleButtonVisibility = (target: HTMLElement, isExpandable: boolean): void => {
+	const toggleButton = target.querySelector(`.${CLASS_QUOTE_TOGGLE}`);
+	if (!toggleButton)
+	{
+		return;
+	}
+
+	Dom.style(toggleButton, 'display', isExpandable ? '' : 'none');
 };

@@ -1,3 +1,0 @@
-<?php
-$MESS["TASKS_SONET_LOG_DESCRIPTION"] = "сипаттама";
-$MESS["TASKS_SONET_LOG_RESPONSIBLE_ID"] = "Жауапты";

@@ -36,8 +36,8 @@ jn.define('mail/message-grid/navigation/src/more-menu', (require, exports, modul
 		{
 			return {
 				type: 'more',
-				id: 'message-grid-more',
-				testId: 'message-grid-more',
+				id: 'message-grid-more-menu-button',
+				testId: 'message-grid-more-menu-button',
 				callback: this.openMoreMenu,
 			};
 		}

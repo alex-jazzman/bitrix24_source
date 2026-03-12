@@ -1,6 +1,3 @@
-import { Text } from 'main.core';
-import { DateTimeFormat } from 'main.date';
-
 import { RichLoc } from 'ui.vue3.components.rich-loc';
 import { TextMd } from 'ui.system.typography.vue';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
@@ -9,6 +6,7 @@ import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { calendar } from 'tasks.v2.lib.calendar';
 import { timezone } from 'tasks.v2.lib.timezone';
 
+import { DateStringConverter } from '../../../lib/date-string-converter';
 import { ReplicationDatepicker } from '../replication-datepicker/replication-datepicker';
 import './replication-start.css';
 
@@ -43,43 +41,27 @@ export const ReplicationStart = {
 		startTs: {
 			get(): number
 			{
-				return DateTimeFormat.parse(this.replicateParams.startDate).getTime();
+				return this.replicateParams.startTs;
 			},
-			set(value: number): void
+			set(startTs: number): void
 			{
-				const startDate = DateTimeFormat.format(DateTimeFormat.getFormat('FORMAT_DATETIME'), new Date(value));
-				this.$emit('update', { startDate });
+				this.$emit('update', { startTs });
 			},
 		},
 		startLabel(): string
 		{
-			if (this.isToday(this.startTs))
-			{
-				return Text.capitalize(DateTimeFormat.format('today'));
-			}
-
-			return calendar.formatDate(this.startTs);
+			return DateStringConverter.format(this.startTs);
 		},
 	},
 	beforeMount(): void
 	{
-		if (!this.replicateParams.startDate)
+		if (!this.replicateParams.startTs)
 		{
-			this.startTs = Date.now();
-		}
-	},
-	methods: {
-		isToday(dateTs: number): boolean
-		{
-			const today = new Date();
-			const day = new Date(dateTs + timezone.getOffset(dateTs));
+			const workdayStart = calendar.workdayStart;
+			const serverTs = new Date().setHours(workdayStart.H, workdayStart.M, 0, 0);
 
-			return (
-				today.getFullYear() === day.getFullYear()
-				&& today.getMonth() === day.getMonth()
-				&& today.getDate() === day.getDate()
-			);
-		},
+			this.startTs = serverTs - timezone.getOffset(serverTs);
+		}
 	},
 	template: `
 		<TextMd tag="div" className="tasks-field-replication-section">

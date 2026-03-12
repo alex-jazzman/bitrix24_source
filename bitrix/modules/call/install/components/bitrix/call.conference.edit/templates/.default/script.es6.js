@@ -1,6 +1,6 @@
 import {Reflection, Type} from 'main.core';
 import {Vue} from "ui.vue";
-import 'im.component.conference.conference-edit';
+import 'call.component.conference.conference-edit';
 
 const namespace = Reflection.namespace('BX.Messenger.PhpComponent');
 

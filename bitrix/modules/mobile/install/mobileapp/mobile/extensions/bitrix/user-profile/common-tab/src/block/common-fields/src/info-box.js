@@ -11,6 +11,10 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/info-box', (requi
 	const { FieldFactory } = require('user-profile/common-tab/src/block/common-fields/src/field/factory');
 	const { isFieldVisible, isFieldValueEmpty } = require('user-profile/common-tab/src/block/common-fields/src/utils');
 	const { BottomSheet } = require('bottom-sheet');
+	const {
+		SocialSection,
+		SOCIAL_SECTION_ID,
+	} = require('user-profile/common-tab/src/block/common-fields/src/social-section');
 
 	/**
 	 * @typedef {Object} InfoBoxProps
@@ -55,7 +59,19 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/info-box', (requi
 
 		#renderSection(section, isFirst)
 		{
-			const { title, fields = [] } = section;
+			const { id, title, fields = [] } = section;
+
+			if (id === SOCIAL_SECTION_ID)
+			{
+				return new SocialSection({
+					title,
+					fields,
+					isFirst,
+					parentWidget: this.layout,
+					testId: this.getTestId('social-section'),
+				});
+			}
+
 			const renderedFields = fields
 				.filter((field) => isFieldVisible(field) && !isFieldValueEmpty(field))
 				.map((field, index) => FieldFactory.create(field.type, {

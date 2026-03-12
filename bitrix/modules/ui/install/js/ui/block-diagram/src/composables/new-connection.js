@@ -1,5 +1,5 @@
 import { toValue, ref, computed } from 'ui.vue3';
-import { Event, Type } from 'main.core';
+import { Event, Text, Type } from 'main.core';
 import { useBlockDiagram } from './block-diagram';
 import type {
 	DiagramBlock,
@@ -112,6 +112,7 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 		}
 
 		return {
+			id: newConnection.id,
 			sourceBlockId: newConnection.sourceBlockId,
 			sourcePortId: newConnection.sourcePortId,
 			targetBlockId: newConnection.targetBlockId,
@@ -136,6 +137,7 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 		};
 
 		newConnection.value = {
+			id: Text.getRandom(),
 			sourceBlockId: toValue(block).id,
 			sourcePortId: toValue(port).id,
 			sourcePort: { ...toValue(port) },

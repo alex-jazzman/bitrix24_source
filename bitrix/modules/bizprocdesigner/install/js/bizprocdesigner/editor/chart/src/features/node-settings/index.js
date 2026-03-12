@@ -9,4 +9,4 @@ export * from './ui/select-rule/select-rule';
 export * from './ui/save-settings-button';
 export * from './ui/cancel-settings-button';
 export * from './ui/delete-rule-card/delete-rule-card';
-export * from './ui/edit-extanded-action';
+export * from './ui/edit-extended-action';

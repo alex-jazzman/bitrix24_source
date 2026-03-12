@@ -30,7 +30,8 @@
 	background-color: transparent;
 }
 
-.bizproc-setuptemplateactivity-preview-header__line:before {
+.bizproc-setuptemplateactivity-preview-header__line:before,
+.bizproc-setuptemplateactivity-preview-header__line:after {
 	content: '';
 	position: absolute;
 	top: 0;
@@ -38,18 +39,12 @@
 	display: block;
 	width: calc(50% - 2px);
 	height: 3px;
-	border-radius: 10px;
+	border-radius: 2px;
 	background-color: var(--ui-color-base-5);
 }
 
 .bizproc-setuptemplateactivity-preview-header__line:after {
-	content: '';
-	position: absolute;
-	top: 0;
 	right: 0;
-	display: block;
-	width: calc(50% - 2px);
-	height: 3px;
-	border-radius: 10px;
-	background-color: var(--ui-color-base-5);
+	left: auto;
+	background-color: var(--ui-color-accent-main-primary);
 }

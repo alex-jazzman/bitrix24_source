@@ -26,7 +26,7 @@ class TaskDetachFileRule extends AbstractRule
 			return false;
 		}
 
-		if ($this->controller->check(ActionDictionary::ACTION_TASK_EDIT))
+		if ($this->controller->check(ActionDictionary::ACTION_TASK_EDIT, $item, $params))
 		{
 			return true;
 		}
@@ -50,11 +50,22 @@ class TaskDetachFileRule extends AbstractRule
 		$attachments = $params['attachments'];
 		foreach ($attachments as $attachment)
 		{
-			if (
-				!is_array($attachment)
-				|| !isset($attachment['owner']['id'])
-				|| (int)$attachment['owner']['id'] !== $this->user->getUserId()
-			)
+			$attachmentId = is_array($attachment) && isset($attachment['id'])
+				? $attachment['id']
+				: 0
+			;
+
+			$isAttachmentCreator = $attachmentId
+				&& isset($params['attachmentsCreatedByMap'][$attachmentId])
+				&& (int)$params['attachmentsCreatedByMap'][$attachmentId] === $this->user->getUserId()
+			;
+
+			$isFileOwner = is_array($attachment)
+				&& isset($attachment['owner']['id'])
+				&& (int)$attachment['owner']['id'] === $this->user->getUserId()
+			;
+
+			if (!$isAttachmentCreator && !$isFileOwner)
 			{
 				$this->controller->addError(static::class, 'Incorrect attachment data');
 

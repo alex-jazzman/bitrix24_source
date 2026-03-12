@@ -8,6 +8,7 @@ jn.define('call/callList/listView', (require, exports, module) => {
 	const { formatTime } = require('call/callList/utils');
 	const { Color } = require('tokens');
 	const { CallLogType } = require('call/const');
+	const { feature } = require('native/feature');
 
 	const isAndroid = Application.getPlatform() === 'android';
 
@@ -132,19 +133,21 @@ jn.define('call/callList/listView', (require, exports, module) => {
 				return { left: [], right: [] };
 			}
 
+			const isNewIconsEnabled = feature.isFeatureEnabled('listview_icons_v1');
+
 			return {
 				left: [],
 				right: [
 					{
 						color: Color.accentMainAlert.toHex(),
 						title: BX.message('MOBILEAPP_CALL_LIST_SWIPE_DELETE'),
-						icon: 'action_delete',
+						icon: isNewIconsEnabled ? 'trashcan' : 'action_delete',
 						key: 'delete',
 					},
 					{
 						color: Color.base4.toHex(),
 						title: BX.message('MOBILEAPP_CALL_LIST_SWIPE_CHAT'),
-						icon: 'action_unread',
+						icon: isNewIconsEnabled ? 'chats' : 'action_unread',
 						key: 'open_chat',
 					},
 				],

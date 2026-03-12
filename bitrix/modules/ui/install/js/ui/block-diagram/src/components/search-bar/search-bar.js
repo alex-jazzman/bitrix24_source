@@ -9,7 +9,7 @@ import {
 	onUnmounted,
 	useTemplateRef,
 } from 'ui.vue3';
-import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { Outline } from 'ui.icon-set.api.vue';
 import {
 	useBlockDiagram,
 	useSearchBlocks,
@@ -36,11 +36,15 @@ type SearchBarSetup = {
 	goToPrevBlock: () => void;
 }
 
+const SEARCH_BAR_CLASS_NAMES = {
+	base: 'ui-block-diagram-search-bar',
+	opened: '--opened',
+};
+
 // @vue/component
 export const SearchBar = {
 	name: 'SearchBar',
 	components: {
-		BIcon,
 		SearchResult,
 		SearchNavBtn,
 		SearchInput,
@@ -93,6 +97,8 @@ export const SearchBar = {
 		const searchInputRef = useTemplateRef('searchInput');
 		const currentBlockIndex = ref(0);
 
+		const isOpenedSearchBar = ref(false);
+
 		const isDisabled = computed((): boolean => {
 			return props.disabled || toValue(isDisabledBlockDiagram);
 		});
@@ -118,6 +124,11 @@ export const SearchBar = {
 
 			return loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_SEARCH_RESULT_TITLE');
 		});
+
+		const searchBarClassNames = computed((): { [string]: boolean } => ({
+			[SEARCH_BAR_CLASS_NAMES.base]: true,
+			[SEARCH_BAR_CLASS_NAMES.opened]: toValue(isOpenedSearchBar),
+		}));
 
 		watch(foundBlocks, (newBlocks) => {
 			currentBlockIndex.value = 0;
@@ -201,6 +212,8 @@ export const SearchBar = {
 
 		return {
 			iconSet: Outline,
+			searchBarClassNames,
+			isOpenedSearchBar,
 			isDisabled,
 			placeholderOrDefaultValue,
 			searchResultTitleOrDefaultValue,
@@ -216,10 +229,11 @@ export const SearchBar = {
 	},
 	template: `
 		<div
-			class="ui-block-diagram-search-bar"
+			:class="searchBarClassNames"
 			ref="searchPanel"
 		>
 			<SearchInput
+				v-model:open="isOpenedSearchBar"
 				:value="seachText"
 				:placeholder="placeholderOrDefaultValue"
 				:disabled="isDisabled"
@@ -236,17 +250,15 @@ export const SearchBar = {
 					:count="labelResult"
 				>
 					<SearchNavBtn
+						:iconName="iconSet.CHEVRON_LEFT_L"
 						:data-test-id="$blockDiagramTestId('searchResultPrevBtn')"
 						@click="onGoToPrevBlock"
-					>
-						&lt;
-					</SearchNavBtn>
+					/>
 					<SearchNavBtn
+						:iconName="iconSet.CHEVRON_RIGHT_L"
 						:data-test-id="$blockDiagramTestId('searchResultNextBtn')"
 						@click="onGoToNextBlock"
-					>
-						&gt;
-					</SearchNavBtn>
+					/>
 				</SearchResult>
 			</div>
 		</div>

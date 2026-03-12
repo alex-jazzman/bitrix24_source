@@ -6,7 +6,6 @@ jn.define('im/messenger/api/lib/component-request', (require, exports, module) =
 	const { Uuid } = require('utils/uuid');
 	const { EntityReady } = require('entity-ready');
 	const { createPromiseWithResolvers } = require('im/messenger/api/lib/utils/promise');
-	const { getApiVersion } = require('im/messenger/api/api-version');
 	const {
 		EventType,
 		ComponentCode,
@@ -24,12 +23,6 @@ jn.define('im/messenger/api/lib/component-request', (require, exports, module) =
 	 */
 	async function executeMethodInMessengerComponent(methodName, methodParams = {})
 	{
-		const apiVersion = await getApiVersion();
-		if (apiVersion === 1)
-		{
-			throw new Error(`Messenger API v${apiVersion}: unsupported method executeMethodInMessengerComponent`);
-		}
-
 		const start = Date.now();
 		const printExecutionTimeIfNeeded = () => {
 			if (debug.showExecutionTime)

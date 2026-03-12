@@ -90,8 +90,7 @@ export class WebScreenSharePopup
 							events: {
 								click: () =>
 								{
-									this.popup.close();
-									this.callbacks.onClose();
+									this.close();
 								}
 							},
 						})
@@ -106,6 +105,7 @@ export class WebScreenSharePopup
 		if (this.popup)
 		{
 			this.popup.close();
+			this.callbacks.onClose();
 		}
 	}
 

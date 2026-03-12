@@ -1,7 +1,8 @@
-import {Type, Loc, Dom, ajax as Ajax} from 'main.core';
+import { Type, Loc, Dom } from 'main.core';
 import {BaseEvent} from 'main.core.events';
 import {Loader} from 'main.loader';
 import {Menu} from 'main.popup';
+import { sendData } from 'ui.analytics';
 
 import {MessageBox} from 'ui.dialogs.messagebox';
 
@@ -50,7 +51,6 @@ import type {ResponsibleType} from '../../item/task/responsible';
 
 import type {ShowLinkedTasksResponse} from '../../response';
 import { PullTag } from '../../pull/pull.tag';
-import { sendData } from 'ui.analytics';
 
 type Params = {
 	pathToTask: string,
@@ -513,7 +513,13 @@ export class Plan extends View
 			}
 		});
 
-		this.sidePanel.openSidePanelByUrl(this.pathToTaskCreate.replace('#task_id#', 0));
+		const path = BX.Uri.addParam(this.pathToTaskCreate.replace('#task_id#', 0), {
+			ta_sec: 'scrum',
+			ta_sub: 'list',
+			ta_el: 'create_button',
+		});
+
+		this.sidePanel.openSidePanelByUrl(path);
 	}
 
 	onCreateSprint()
@@ -625,14 +631,19 @@ export class Plan extends View
 
 				newItem.setLinkedTask('Y');
 				newItem.setBorderColor(parentItem.getBorderColor());
-				newItem.setSort(parentItem.getSort() + this.decomposition.getNumberDecompositionsPerformed());
+
+				const increment = this.decomposition.getNumberDecompositionsPerformed() * 10;
+				newItem.setSort(parentItem.getSort() + increment);
 
 				Dom.insertBefore(newItem.render(), input.getNode());
 			}
 			else
 			{
 				newItem.setSubTask('Y');
-				newItem.setSort(parentItem.getSort() + (parentItem.getSubTasksCount() + 1));
+
+				const subtaskIncrement = (parentItem.getSubTasksCount() + 1) * 10;
+				newItem.setSort(parentItem.getSort() + subtaskIncrement);
+
 				newItem.setParentTaskId(parentItem.getSourceId());
 				newItem.setParentTask('N');
 			}
@@ -646,7 +657,11 @@ export class Plan extends View
 			input.setEpic(null);
 
 			newItem.setParentEntity(entity.getId(), entity.getEntityType());
-			newItem.setSort(1);
+
+			const firstItemNode = entity.getFirstItemNode(this.input);
+			const sortForNewItem = parseFloat(firstItemNode.dataset.sort) / 2;
+			newItem.setSort(sortForNewItem);
+
 			newItem.setResponsible(this.defaultResponsible);
 
 			if (entity.isEmpty())
@@ -655,7 +670,7 @@ export class Plan extends View
 			}
 			else
 			{
-				Dom.insertBefore(newItem.render(), entity.getFirstItemNode(this.input));
+				Dom.insertBefore(newItem.render(), firstItemNode);
 			}
 		}
 
@@ -804,13 +819,19 @@ export class Plan extends View
 		const sprintSidePanel = new SprintSidePanel({
 			sidePanel: this.sidePanel,
 			groupId: this.groupId,
-			views: this.views
+			views: this.views,
 		});
 
 		sprintSidePanel.showCompletionForm();
 
 		sprintSidePanel.subscribe('showTask', (innerBaseEvent: BaseEvent) => {
-			this.sidePanel.openSidePanelByUrl(this.getPathToTask().replace('#task_id#', innerBaseEvent.getData()));
+			const path = BX.Uri.addParam(this.getPathToTask().replace('#task_id#', innerBaseEvent.getData()), {
+				ta_sec: 'scrum',
+				ta_sub: 'list',
+				ta_el: 'title_click',
+			});
+
+			this.sidePanel.openSidePanelByUrl(path);
 		});
 	}
 
@@ -998,11 +1019,17 @@ export class Plan extends View
 		this.sprintAddMenu.show();
 	}
 
-	onShowTask(baseEvent: BaseEvent)
+	onShowTask(baseEvent: BaseEvent, element = 'title_click')
 	{
 		const item = baseEvent.getData();
 
-		this.sidePanel.openSidePanelByUrl(this.pathToTask.replace('#task_id#', item.getSourceId()));
+		const path = BX.Uri.addParam(this.getPathToTask().replace('#task_id#', item.getSourceId()), {
+			ta_sec: 'scrum',
+			ta_sub: 'list',
+			ta_el: element,
+		});
+
+		this.sidePanel.openSidePanelByUrl(path);
 	}
 
 	onDestroyActionPanel(baseEvent: BaseEvent)
@@ -1337,6 +1364,15 @@ export class Plan extends View
 		this.input.focus();
 
 		this.scrollToInput();
+
+		sendData({
+			tool: 'tasks',
+			category: 'task_operations',
+			type: 'quick_task',
+			event: 'click_create',
+			c_section: 'scrum',
+			c_element: 'quick_button',
+		});
 	}
 
 	scrollToInput()
@@ -1380,28 +1416,21 @@ export class Plan extends View
 
 		//todo maybe will cool move list actions to item scope
 		this.actionPanel = new ActionPanel({
-			entity: entity,
-			item: item,
+			entity,
+			item,
 			itemList: {
 				task: {
 					activity: true,
-					disable : isMultipleAction,
+					disable: isMultipleAction,
 					callback: () => {
 						this.onShowTask(
 							new BaseEvent({
-								data: item
-							})
+								data: item,
+							}),
+							'context_menu',
 						);
 						this.destroyActionPanel();
 						entity.deactivateGroupMode();
-						sendData({
-							tool: 'tasks',
-							category: 'task_operations',
-							event: 'task_view',
-							type: 'task',
-							c_section: 'scrum',
-							c_element: 'context_menu',
-						});
 					},
 				},
 				attachment: {
@@ -1640,7 +1669,6 @@ export class Plan extends View
 			'parentTaskId': item.getParentTaskId(),
 			'responsible': item.getResponsible().getValue(),
 			'info': item.getInfo(),
-			'sortInfo': this.itemMover.calculateSort(entity.getListItemsNode())
 		};
 		return this.requestSender.createTask(requestData);
 	}
@@ -1858,8 +1886,7 @@ export class Plan extends View
 		});
 
 		return this.requestSender.removeItems({
-			itemIds: itemIds,
-			sortInfo: this.itemMover.calculateSort(entity.getListItemsNode())
+			itemIds,
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});

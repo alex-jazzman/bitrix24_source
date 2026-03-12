@@ -34,7 +34,7 @@ export const IconButton = {
 		},
 		size: {
 			type: [Number, String],
-			default: 16,
+			default: 18,
 		},
 		color: {
 			type: String,

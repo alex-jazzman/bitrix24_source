@@ -1,4 +1,5 @@
 import { Core } from 'im.v2.application.core';
+import { RecentType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
 
@@ -6,6 +7,7 @@ import { NewMessageManager } from './classes/new-message-manager';
 import { RecentUpdateManager } from './classes/recent-update-manager';
 import { buildRecentItem } from './helpers/helpers';
 
+import type { ImModelRecentItem, ImModelMessage } from 'im.v2.model';
 import type { PullExtraParams, RawMessage } from '../types/common';
 import type {
 	MessageAddParams,
@@ -15,8 +17,20 @@ import type {
 } from '../types/message';
 import type { ChatUnreadParams } from '../types/chat';
 import type { UserInviteParams } from '../types/user';
-import type { RecentHideParams, RecentUpdateParams, UserShowInRecentParams } from '../types/recent';
-import type { ImModelRecentItem, ImModelMessage } from 'im.v2.model';
+import type {
+	RecentHideParams,
+	RecentUpdateParams,
+	UserShowInRecentParams,
+	RecentPinChatParams,
+} from '../types/recent';
+
+const ActionNameByRecentType = {
+	[RecentType.default]: 'recent/setRecent',
+	[RecentType.copilot]: 'recent/setCopilot',
+	[RecentType.openChannel]: 'recent/setChannel',
+	[RecentType.collab]: 'recent/setCollab',
+	[RecentType.taskComments]: 'recent/setTask',
+};
 
 // noinspection JSUnusedGlobalSymbols
 export class RecentPullHandler
@@ -38,9 +52,11 @@ export class RecentPullHandler
 
 	handleMessageAdd(params: MessageAddParams, extra: PullExtraParams)
 	{
+		const { recentConfig } = params;
+
 		const manager = new NewMessageManager(params, extra);
 
-		if (manager.needToSkipMessageEvent(params))
+		if (!manager.isUserInChat())
 		{
 			return;
 		}
@@ -49,14 +65,14 @@ export class RecentPullHandler
 
 		const newRecentItem = buildRecentItem(params);
 
-		const addActions = manager.getAddActions();
-		addActions.forEach((actionName) => {
+		recentConfig.sections.forEach((section) => {
+			const actionName = ActionNameByRecentType[section];
 			if (!actionName)
 			{
 				return;
 			}
 
-			Core.getStore().dispatch(actionName, newRecentItem);
+			void Core.getStore().dispatch(actionName, newRecentItem);
 		});
 	}
 
@@ -109,19 +125,14 @@ export class RecentPullHandler
 		});
 	}
 
-	handleChatPin(params)
+	handleChatPin(params: RecentPinChatParams)
 	{
 		Logger.warn('RecentPullHandler: handleChatPin', params);
-		const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](params.dialogId);
-		if (!recentItem)
-		{
-			return;
-		}
 
-		Core.getStore().dispatch('recent/pin', {
-			id: params.dialogId,
-			action: params.active,
-		});
+		const manager = new RecentUpdateManager(params);
+		manager.updateRecent();
+
+		Core.getStore().dispatch('recent/pin', { id: params.dialogId, action: params.active });
 	}
 
 	handleChatHide(params: RecentHideParams)
@@ -193,15 +204,7 @@ export class RecentPullHandler
 	{
 		Logger.warn('RecentPullHandler: handleRecentUpdate', params);
 		const manager = new RecentUpdateManager(params);
-		manager.setLastMessageInfo();
-
-		const newRecentItem = {
-			id: manager.getDialogId(),
-			messageId: manager.getLastMessageId(),
-			lastActivityDate: params.lastActivityDate,
-		};
-
-		Core.getStore().dispatch('recent/setRecent', newRecentItem);
+		manager.updateRecent();
 	}
 
 	#deleteLastMessage(dialogId: number, newLastMessage: RawMessage) {

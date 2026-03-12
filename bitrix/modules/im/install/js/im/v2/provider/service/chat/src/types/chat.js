@@ -27,14 +27,15 @@ export type ChatLoadRestResult = {
 	session?: RawSession,
 	hasNextPage: boolean,
 	hasPrevPage: boolean,
-	messages: RawMessage[],
+	messages?: RawMessage[],
 	pins: RawPin[],
 	reactions: RawReaction[],
 	users: RawUser[],
 	usersShort: RawShortUser[],
 	copilot: RawCopilot,
 	tariffRestrictions: RawTariffRestrictions,
-	messagesAutoDeleteConfigs: RawMessagesAutoDeleteConfig[]
+	messagesAutoDeleteConfigs: RawMessagesAutoDeleteConfig[],
+	stickers?: RawSticker[]
 };
 
 export type CommentInfoRestResult = {
@@ -149,3 +150,13 @@ export type GetMemberEntitiesConfig = {
 	userCount: number,
 	areUsersCollapsed: boolean,
 };
+
+export type RawSticker = {
+	id: number,
+	packId: number,
+	packType: string,
+	type: string,
+	uri: string,
+	width: number,
+	height: number,
+}

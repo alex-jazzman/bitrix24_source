@@ -202,7 +202,7 @@ jn.define('im/messenger-v2/model/recent/model', (require, exports, module) => {
 			 * @function recentModel/getChatCollection
 			 * @return {Array<RecentModelState>}
 			 */
-			getChatCollection: (state) => () => {
+			getChatCollection: (state, getters, rootState, rootGetters) => () => {
 				return [...state.chatIdCollection]
 					.filter((dialogId) => {
 						return Type.isStringFilled(dialogId);
@@ -210,7 +210,7 @@ jn.define('im/messenger-v2/model/recent/model', (require, exports, module) => {
 					.map((id) => {
 						return state.collection[id];
 					})
-					.sort(sortByAggregatedActivityDate);
+					.sort(sortByAggregatedActivityDate(rootGetters));
 			},
 
 			/**

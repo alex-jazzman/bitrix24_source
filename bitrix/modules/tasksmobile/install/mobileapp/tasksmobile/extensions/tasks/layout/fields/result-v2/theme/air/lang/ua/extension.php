@@ -1,8 +1,0 @@
-<?php
-$MESS["TASKS_FIELDS_RESULT_V2_AIR_ADD_RESULT"] = "Додати ще результат";
-$MESS["TASKS_FIELDS_RESULT_V2_AIR_REMOVE_CONFIRM_TITLE"] = "Прибрати результат?";
-$MESS["TASKS_FIELDS_RESULT_V2_AIR_REMOVE_CONFIRM_YES"] = "Прибрати";
-$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_0"] = "Показати ще #COUNT# результат";
-$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_1"] = "Показати ще #COUNT# результати";
-$MESS["TASKS_FIELDS_RESULT_V2_AIR_SHOW_MORE_PLURAL_2"] = "Показати ще #COUNT# результатів";
-$MESS["TASKS_FIELDS_RESULT_V2_AIR_TITLE"] = "Результат роботи";

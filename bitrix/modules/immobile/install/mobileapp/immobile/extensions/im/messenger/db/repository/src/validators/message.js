@@ -303,12 +303,8 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 
 				stickerParams = {
 					id: preparedValue.id,
-					type: preparedValue.type,
 					packId: preparedValue.packId,
 					packType: preparedValue.packType,
-					uri: withCurrentDomain(preparedValue.uri),
-					height: preparedValue.height,
-					width: preparedValue.width,
 				};
 			}
 			else

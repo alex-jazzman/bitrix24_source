@@ -1,3 +1,0 @@
-<?php
-$MESS["INTRANET_SETTINGS_AUTOMATION_TASKS_SUBGROUP_BIZPROC"] = "Бизнес-процестерді автоматтандыру";
-$MESS["INTRANET_SETTINGS_TOOLS_AUTOMATION_MAIN"] = "Автоматтандыру";

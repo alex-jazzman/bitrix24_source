@@ -3,14 +3,22 @@ import { Type } from 'main.core';
 
 import { Logger } from 'im.v2.lib.logger';
 
+import type { JsonObject } from 'main.core';
+
 const POPUP_CONTAINER_PREFIX = '#popup-window-content-';
 const POPUP_BORDER_RADIUS = '10px';
 
 // @vue/component
 export const MessengerPopup = {
 	name: 'MessengerPopup',
-	props:
+	provide(): JsonObject
 	{
+		return {
+			disableAutoHide: this.disableAutoHide,
+			enableAutoHide: this.enableAutoHide,
+		};
+	},
+	props: {
 		id: {
 			type: String,
 			required: true,
@@ -24,8 +32,7 @@ export const MessengerPopup = {
 		},
 	},
 	emits: ['close', 'popupDragStart'],
-	computed:
-	{
+	computed: {
 		popupContainer(): string
 		{
 			return `${POPUP_CONTAINER_PREFIX}${this.id}`;
@@ -53,8 +60,7 @@ export const MessengerPopup = {
 
 		this.closePopup();
 	},
-	methods:
-	{
+	methods: {
 		getPopupInstance(): Popup
 		{
 			if (!this.instance)
@@ -89,7 +95,7 @@ export const MessengerPopup = {
 				contentBorderRadius: POPUP_BORDER_RADIUS,
 			};
 		},
-		getPopupConfig(): Object
+		getPopupConfig(): PopupOptions
 		{
 			const defaultConfig = this.getDefaultConfig();
 			const modifiedOptions = {};

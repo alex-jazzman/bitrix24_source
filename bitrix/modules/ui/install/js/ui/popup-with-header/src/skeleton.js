@@ -2,17 +2,19 @@ import { Tag } from 'main.core';
 
 export class Skeleton
 {
-	#size: boolean;
+	#height: number;
+	#width: number;
 
-	constructor(size: number = 473)
+	constructor(height: number = 447, width: number = 344)
 	{
-		this.#size = size;
+		this.#height = height;
+		this.#width = width;
 	}
 
 	get(): HTMLElement
 	{
 		return Tag.render`
-			<div style="height: ${this.#size}px;" class="popup-with-header-skeleton__wrap">
+			<div style="height: ${this.#height}px; width: ${this.#width}px;" class="popup-with-header-skeleton__wrap">
 				<div class="popup-with-header-skeleton__header">
 					<div class="popup-with-header-skeleton__header-top">
 						<div class="popup-with-header-skeleton__header-circle">
@@ -26,7 +28,6 @@ export class Skeleton
 					<div class="popup-with-header-skeleton__header-bottom">
 						<div class="popup-with-header-skeleton__header-bottom-circle-box">
 							<div class="popup-with-header-skeleton__header-bottom-circle"></div>
-							<div class="popup-with-header-skeleton__header-bottom-circle-blue"></div>
 						</div>
 						<div style="width: 100%;">
 							<div style="margin-bottom: 9px; max-width: 193px; height: 5px;" class="popup-with-header-skeleton__line"></div>
@@ -38,28 +39,28 @@ export class Skeleton
 				</div>
 				<div class="popup-with-header-skeleton__bottom">
 					${this.#getInnerBlock()}
-					${this.#getInnerBlock()}
-					${this.#getInnerBlock()}
+					${this.#getInnerBlock('--green')}
 				</div>
 			</div>
 		`;
 	}
 
-	#getInnerBlock(): HTMLElement
+	#getInnerBlock(btnClass: string = ''): HTMLElement
 	{
 		return Tag.render`
 			<div class="popup-with-header-skeleton__bottom-inner">
-				<div class="popup-with-header-skeleton__bottom-left">
-					<div style="margin-bottom: 11px; max-width: 193px; height: 5px;" class="popup-with-header-skeleton__line"></div>
-					<div style="margin-bottom: 17px; max-width: 163px; height: 5px;" class="popup-with-header-skeleton__line"></div>
-					<div style="margin-bottom: 9px; max-width: 168px; height: 3px; background: rgba(149,156,164,.23);" class="popup-with-header-skeleton__line --dark-animation"></div>
-					<div style="margin-bottom: 9px; max-width: 131px; height: 3px; background: rgba(149,156,164,.23);" class="popup-with-header-skeleton__line --dark-animation"></div>
-					<div style="margin-bottom: 9px; max-width: 150px; height: 3px; background: rgba(149,156,164,.23);" class="popup-with-header-skeleton__line --dark-animation"></div>
-					<div style="margin-bottom: 9px; max-width: 56px; height: 5px; background: rgba(32,102,176,.23);" class="popup-with-header-skeleton__line"></div>
+				<div class="popup-with-header-skeleton__bottom-title">
+					<div class="popup-with-header-skeleton__bottom-left">
+						<div style="margin-top: 9px; max-width: 183px; height: 5px;" class="popup-with-header-skeleton__line"></div>
+					</div>
+					<div class="popup-with-header-skeleton__bottom-right">
+						<div class="popup-with-header-skeleton-btn ${btnClass}"></div>
+					</div>
 				</div>
-				<div class="popup-with-header-skeleton__bottom-right">
-					<div class="popup-with-header-skeleton-btn"></div>
-					<div style="margin: 0 auto; max-width: 36px; height: 3px; background: #d9d9d9;" class="popup-with-header-skeleton__line"></div>
+				<div class="popup-with-header-skeleton__bottom-desc">
+					<div style="margin-bottom: 9px; max-width: 238px; height: 3px; background: rgba(149,156,164,.23);" class="popup-with-header-skeleton__line --dark-animation"></div>
+					<div style="margin-bottom: 9px; max-width: 201px; height: 3px; background: rgba(149,156,164,.23);" class="popup-with-header-skeleton__line --dark-animation"></div>
+					<div style="margin-bottom: 9px; max-width: 220px; height: 3px; background: rgba(149,156,164,.23);" class="popup-with-header-skeleton__line --dark-animation"></div>
 				</div>
 			</div>
 		`;

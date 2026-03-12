@@ -227,6 +227,11 @@ jn.define('im/messenger/provider/services/lib/chat-data-extractor', (require, ex
 				parentChatId: chat.parentChatId ?? 0,
 			}];
 		}
+
+		getStickers()
+		{
+			return this.restResult.stickers;
+		}
 	}
 
 	module.exports = {

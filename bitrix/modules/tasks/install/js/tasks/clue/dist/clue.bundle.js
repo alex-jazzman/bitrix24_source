@@ -65,7 +65,9 @@ this.BX = this.BX || {};
 	    return null;
 	  }
 	  getTitle() {
-	    return main_core.Loc.getMessage('TASKS_CLUE_FLASH_COPILOT_ADVICE_TITLE');
+	    return main_core.Loc.getMessage('TASKS_CLUE_FLASH_COPILOT_ADVICE_TITLE_MSGVER_1', {
+	      '#COPILOT_NAME#': main_core.Extension.getSettings('tasks.clue').copilotName
+	    });
 	  }
 	  getText() {
 	    return main_core.Loc.getMessage('TASKS_CLUE_FLASH_COPILOT_ADVICE_TEXT');

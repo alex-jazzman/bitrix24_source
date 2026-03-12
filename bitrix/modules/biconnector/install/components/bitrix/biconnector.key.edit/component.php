@@ -39,7 +39,16 @@ if (empty($arResult['CONNECTIONS']))
 
 if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimit())
 {
-		$arResult['ERRORS'][] = Loc::getMessage('CC_BBKE_ERROR_LIMIT_EXCEEDED');
+		$arResult['ERRORS'][] = [
+			'MESSAGE' => Loc::getMessage(
+				'CC_BBKE_ERROR_LIMIT_EXCEEDED_MSGVER_1',
+				[
+					'[helpdesk_link]' => '<a class="biconnector-key-edit_link" href="https://helpdesk.bitrix24.ru/open/26703738/" target="_blank">',
+					'[/helpdesk_link]' => '</a>',
+				]
+			),
+			'IS_HTML' => true,
+		];
 }
 
 if (

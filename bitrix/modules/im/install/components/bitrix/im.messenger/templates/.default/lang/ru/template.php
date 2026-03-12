@@ -7,4 +7,3 @@ $MESS["IM_MESSENGER_OPEN_NOTIFY"] = "Открыть уведомления";
 $MESS["IM_MESSENGER_OPEN_COPILOT"] = "Открыть copilot";
 $MESS["IM_MESSENGER_OPEN_EMAIL"] = "Перейти к электронной почте";
 $MESS["IM_MESSENGER_OPEN_NETWORK_MSGVER_1"] = "Перейти в Битрикс24 Network";
-?>

@@ -193,8 +193,8 @@
 
 					if (link)
 					{
-						attr(link, "href", value.href);
-						attr(link, "target", value.target);
+						link.setAttribute("href", value.href);
+						link.setAttribute("target", value.target);
 
 						if (isString(value.text))
 						{

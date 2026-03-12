@@ -9,4 +9,3 @@ $MESS["BLOG_MES_EDIT"] = "Редактировать";
 $MESS["BLOG_MES_SHOW"] = "Опубликовать";
 $MESS["BLOG_MES_SHOW_POST_CONFIRM"] = "Вы уверены, что хотите опубликовать это сообщение?";
 $MESS["BLOG_PHOTO"] = "Фото:";
-?>

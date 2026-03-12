@@ -62,6 +62,7 @@ jn.define('mail/dialog/banners/connectingmail', (require, exports, module) => {
 						onClick: () => {
 							this.closeLayout(() => {
 								(new Connector({
+									connectFrom: 'crm',
 									parentWidget: this.parentWidget,
 									successCallback: this.successCallback,
 								})).show();

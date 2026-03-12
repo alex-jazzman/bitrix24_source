@@ -117,7 +117,7 @@ export const tagsDialog = new class
 	#getTagItem(entityId: string, title: string): Item
 	{
 		return {
-			id: title,
+			id: title || 'empty',
 			entityId,
 			title,
 			tabs: 'all',

@@ -1,9 +1,11 @@
-import { Loc, Type } from 'main.core';
+import { Loc } from 'main.core';
 import { MessageBox } from 'ui.dialogs.messagebox';
+import { AjaxErrorHandler } from '../handler/ajax-error-handler';
 
 import type {
 	ActionConfig,
-	BaseActionType,
+	BaseAjaxResponse,
+	GridApiAction,
 } from '../types';
 
 import { AJAX_REQUEST_TYPE } from '../constants';
@@ -16,6 +18,12 @@ export class BaseAction
 	grid: ?BX.Main.grid;
 	filter: ?Object;
 	showPopups: ?boolean;
+	#ajaxErrorHandler: AjaxErrorHandler;
+
+	constructor()
+	{
+		this.#ajaxErrorHandler = new AjaxErrorHandler();
+	}
 
 	/**
 	 * @abstract
@@ -33,15 +41,15 @@ export class BaseAction
 		throw new Error('not implemented');
 	}
 
-	constructor(params: BaseActionType)
-	{
-		this.grid = params.grid;
-		this.filter = params.filter;
-		this.showPopups = params.showPopups ?? true;
-	}
-
 	setActionParams(params: Object): void
 	{
+		this.filter = params?.filter;
+		this.showPopups = params?.showPopups ?? true;
+	}
+
+	setGrid(grid: ?BX.Main.grid): void
+	{
+		this.grid = grid;
 	}
 
 	getActionData(): Object
@@ -74,12 +82,10 @@ export class BaseAction
 	}
 
 	async run(): void
-	{
-	}
+	{}
 
 	async onBeforeActionRequest(): void
-	{
-	}
+	{}
 
 	onAfterActionRequest(): void
 	{
@@ -90,11 +96,12 @@ export class BaseAction
 
 	async sendActionRequest(): void
 	{
+		const actionConfig = this.getActionConfig();
+
 		try
 		{
 			this.grid.tableFade();
 
-			const actionConfig = this.getActionConfig();
 			const actionData = this.getActionData();
 			const ajaxOptions = {
 				...actionConfig.options,
@@ -124,7 +131,14 @@ export class BaseAction
 				default:
 				{
 					const errorMessage = `Unknown action type: ${actionConfig.type}`;
-					this.handleError(errorMessage);
+
+					this.handleErrorByMessage(actionConfig.name, {
+						errors: [
+							{
+								message: errorMessage,
+							},
+						],
+					});
 				}
 			}
 
@@ -132,7 +146,7 @@ export class BaseAction
 		}
 		catch (result)
 		{
-			this.handleError(result);
+			this.handleError(actionConfig.name, result);
 		}
 		finally
 		{
@@ -144,32 +158,34 @@ export class BaseAction
 	{
 	}
 
-	handleError(result: any): void
+	handleError(action: GridApiAction, response: BaseAjaxResponse): void
 	{
-		BX.UI.Notification.Center.notify({
-			content: this.getErrorMessageFromResult(result),
+		if (
+			!response?.errors
+			|| response.errors.length === 0
+		)
+		{
+			return;
+		}
+
+		this.#ajaxErrorHandler.handle(action, response);
+	}
+
+	handleErrorByMessage(action: GridApiAction, message: ?string): void
+	{
+		const errorMessage = message ?? Loc.getMessage('BIZPROC_AI_AGENTS_GRID_DEFAULT_ACTION_ERROR');
+
+		this.handleError(action, {
+			errors: [
+				{
+					message: errorMessage,
+				},
+			],
 		});
 	}
 
 	getConfirmationPopup(): MessageBox | null
 	{
 		return null;
-	}
-
-	getErrorMessageFromResult(result: any): ?string
-	{
-		if (Type.isStringFilled(result))
-		{
-			return result;
-		}
-
-		if (Type.isStringFilled(result?.errors?.[0]?.message))
-		{
-			return result.errors[0].message;
-		}
-
-		console.error(result);
-
-		return Loc.getMessage('BIZPROC_AI_AGENTS_GRID_DEFAULT_ACTION_ERROR');
 	}
 }

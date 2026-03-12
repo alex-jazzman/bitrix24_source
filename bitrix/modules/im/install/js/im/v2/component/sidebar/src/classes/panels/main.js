@@ -13,6 +13,7 @@ import { Task } from './task';
 import { Meeting } from './meeting';
 import { MembersService as Members } from './members';
 import { Multidialog } from './multidialog';
+import { SharedLink } from './shared-link';
 
 import { FileUnsorted } from './file-unsorted';
 
@@ -28,11 +29,12 @@ const MainPanelServiceClasses = {
 	Meeting,
 	FileUnsorted,
 	Multidialog,
+	SharedLink,
 };
 
 const BlockToServices = Object.freeze({
-	[SidebarMainPanelBlock.chat]: [SidebarDetailBlock.members],
-	[SidebarMainPanelBlock.copilot]: [SidebarDetailBlock.members],
+	[SidebarMainPanelBlock.chat]: [SidebarDetailBlock.members, SidebarDetailBlock.sharedLink],
+	[SidebarMainPanelBlock.copilot]: [SidebarDetailBlock.members, SidebarDetailBlock.sharedLink],
 	[SidebarMainPanelBlock.task]: [SidebarDetailBlock.members],
 	[SidebarMainPanelBlock.copilotInfo]: [SidebarDetailBlock.favorite],
 	[SidebarMainPanelBlock.info]: [SidebarDetailBlock.favorite, SidebarDetailBlock.link],
@@ -44,7 +46,7 @@ const BlockToServices = Object.freeze({
 });
 
 type BlockService = {
-	initialQuery: Object;
+	initialQuery: Object | null;
 	responseHandler: Function;
 };
 

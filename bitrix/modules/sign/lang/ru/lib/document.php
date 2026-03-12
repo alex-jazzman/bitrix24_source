@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_CORE_DOCUMENT_ERROR_INCORRECT_ENTITY_TYPE'] = 'Некорректный тип элемента';
 $MESS['SIGN_CORE_DOCUMENT_ERROR_NOT_FOUND'] = 'Документ не найден';
 $MESS['SIGN_CORE_DOCUMENT_ERROR_ACCESS_DENIED'] = 'Доступ запрещен';

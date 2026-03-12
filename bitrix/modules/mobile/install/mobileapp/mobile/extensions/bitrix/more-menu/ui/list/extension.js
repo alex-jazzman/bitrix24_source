@@ -5,7 +5,7 @@ jn.define('more-menu/ui/list', (require, exports, module) => {
 	const { Indent, Color } = require('tokens');
 	const { MenuList } = require('layout/ui/menu-list');
 	const { Text4 } = require('ui-system/typography/text');
-	const { ListItem } = require('more-menu/ui/list/item');
+	const { ListItem } = require('more-menu/ui/list/src/item');
 	const { withPressed } = require('utils/color');
 	const { PropTypes } = require('utils/validation');
 
@@ -23,6 +23,7 @@ jn.define('more-menu/ui/list', (require, exports, module) => {
 	 * @typedef {Object} MenuItem
 	 * @property {string} id
 	 * @property {string} imageName
+	 * @property {string} imageUrl
 	 * @property {string} path
 	 * @property {string} title
 	 * @property {number} sort
@@ -88,6 +89,7 @@ jn.define('more-menu/ui/list', (require, exports, module) => {
 			return new ListItem({
 				id: item.id,
 				icon: item.imageName,
+				imageUrl: item.imageUrl,
 				title: item.title,
 				badge: item.counterValue,
 				testId: this.getTestId(`item-${item?.id}`),
@@ -112,6 +114,7 @@ jn.define('more-menu/ui/list', (require, exports, module) => {
 			items: PropTypes.arrayOf(PropTypes.shape({
 				id: PropTypes.string,
 				imageName: PropTypes.string,
+				imageUrl: PropTypes.string,
 				path: PropTypes.string,
 				title: PropTypes.string,
 				sort: PropTypes.number,

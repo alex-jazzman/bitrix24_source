@@ -1,4 +1,0 @@
-<?php
-$MESS["MARKET_COLLECTIONS_ITEM_ADS_JS_ADVERTISING"] = "Реклама";
-$MESS["MARKET_COLLECTIONS_ITEM_ADS_JS_ADVERTISING_SPACE_PARTNERS"] = "Тут буде рекламне місце для партнерів.";
-$MESS["MARKET_COLLECTIONS_ITEM_ADS_JS_CLICK_TO_VIEW"] = "Натисніть для перегляду";

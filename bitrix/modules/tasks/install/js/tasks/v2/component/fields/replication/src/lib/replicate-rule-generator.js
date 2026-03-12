@@ -2,7 +2,6 @@ import { Loc } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 
 import { ReplicationPeriod, ReplicationRepeatTill } from 'tasks.v2.const';
-import { timezone } from 'tasks.v2.lib.timezone';
 import type { TaskReplicateParams } from 'tasks.v2.model.tasks';
 
 import { PeriodRuleDailyGenerator } from './period-rule-daily-generator';
@@ -66,20 +65,10 @@ export class ReplicateRuleGenerator
 
 	#getStartTimeRule(): string
 	{
-		const time = this.#replicateParams.time;
-		if (!time)
-		{
-			return '';
-		}
-
-		const timeTs = TimeStringConverter.toTimestamp(time);
-		const timeLocale = TimeStringConverter.toTimeString(
-			timeTs,
-			timezone.getOffset(timeTs),
-		);
+		const timeTs = this.#replicateParams.startTs;
 
 		return Loc.getMessage('TASKS_V2_REPLICATION_START_TIME', {
-			'#TIME#': timeLocale,
+			'#TIME#': TimeStringConverter.format(timeTs),
 		});
 	}
 
@@ -100,18 +89,12 @@ export class ReplicateRuleGenerator
 			);
 		}
 
-		if (repeatTill === ReplicationRepeatTill.Date && this.#replicateParams.endDate)
+		if (repeatTill === ReplicationRepeatTill.Date && this.#replicateParams.endTs)
 		{
-			const endDate = DateTimeFormat.parse(this.#replicateParams.endDate, false, 'MM-DD-YYYY');
-			if (!endDate)
-			{
-				return '';
-			}
-
 			return Loc.getMessage(
 				'TASKS_V2_REPLICATION_END_DATE',
 				{
-					'#DATE#': DateTimeFormat.format('d.m.Y', endDate),
+					'#DATE#': DateTimeFormat.format('d.m.Y', new Date(this.#replicateParams.endTs)),
 				},
 			);
 		}

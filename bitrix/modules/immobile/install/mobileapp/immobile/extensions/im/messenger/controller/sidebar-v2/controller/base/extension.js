@@ -49,6 +49,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 			this.dialogLocator = props.dialogLocator;
 			this.config = props.config;
 
+			/** @type {MessengerCoreStore} */
 			this.store = serviceLocator.get('core').getStore();
 			this.storeManager = serviceLocator.get('core').getStoreManager();
 			this.restManager = new RestManager();

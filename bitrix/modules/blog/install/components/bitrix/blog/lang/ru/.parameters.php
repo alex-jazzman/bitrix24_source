@@ -83,4 +83,3 @@ $MESS["BPC_ALLOW_IMAGE_UPLOAD_R"] = "Зарегистрированным пол
 $MESS["BPC_ALLOW_IMAGE_UPLOAD_N"] = "Никому";
 $MESS["BLOG_COMMENT_SETTINGS"] = "Настройки комментариев";
 $MESS["BPC_AJAX_POST"] = "Использовать AJAX для комментариев";
-?>

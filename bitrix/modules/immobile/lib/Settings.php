@@ -75,63 +75,7 @@ class Settings
 
 	public static function isTasksRecentListAvailable(): bool
 	{
-		if (!Loader::includeModule('tasks'))
-		{
-			return false;
-		}
-
-		return \Bitrix\Main\Config\Option::get('im', 'is_tasks_recent_list_available', 'N') === 'Y';
-	}
-
-	public static function isMessengerV2Enabled(): bool
-	{
-		if (\Bitrix\Main\Config\Option::get('immobile', 'messenger_v2_enabled', 'N') === 'Y')
-		{
-			return true;
-		}
-
-		if (self::isMessengerV2EnabledForCurrentUser())
-		{
-			return true;
-		}
-
-		return false;
-	}
-
-	public static function isMultipleReactionsEnabled(): bool
-	{
-		if (\Bitrix\Main\Config\Option::get('im', 'multiple_reactions_available', 'N') === 'Y')
-		{
-			return true;
-		}
-
-		return false;
-	}
-
-	public static function isMessengerV2EnabledForCurrentUser(): bool
-	{
-		return \CUserOptions::GetOption('immobile', 'messenger_v2_enabled', 'N') === 'Y';
-	}
-
-	public static function toggleMessengerV2ForCurrentUser(): array
-	{
-		$isSuccess = self::isMessengerV2EnabledForCurrentUser() ? self::disableMessengerV2ForCurrentUser() : self::enableMessengerV2ForCurrentUser();
-
-		return [
-			'isSuccess' => $isSuccess,
-			'isMessengerV2Enabled' => self::isMessengerV2Enabled(),
-			'isMessengerV2EnabledForCurrentUser' => self::isMessengerV2EnabledForCurrentUser(),
-		];
-	}
-
-	public static function enableMessengerV2ForCurrentUser(): bool
-	{
-		return \CUserOptions::SetOption('immobile', 'messenger_v2_enabled', 'Y');
-	}
-
-	public static function disableMessengerV2ForCurrentUser(): bool
-	{
-		return \CUserOptions::SetOption('immobile', 'messenger_v2_enabled', 'N');
+		return Loader::includeModule('tasks');
 	}
 
 	public static function isCopilotSelectModelEnabled(): bool
@@ -147,5 +91,20 @@ class Settings
 	public static function isAiAssistantMcpSelectorAvailable(): bool
 	{
 		return \Bitrix\Main\Config\Option::get('immobile', 'ai_assistant_mcp_selector_available', 'N') === 'Y';
+	}
+
+	public static function isAutoTaskEnabled(): bool
+	{
+		if (!Loader::includeModule('im'))
+		{
+			return false;
+		}
+
+		return (new \Bitrix\Im\V2\Integration\AI\Restriction())->isAutoTaskActive();
+	}
+
+	public static function isAutoTaskUIAvailable(): bool
+	{
+		return \Bitrix\Main\Config\Option::get('immobile', 'is_auto_task_ui_available', 'N') === 'Y';
 	}
 }

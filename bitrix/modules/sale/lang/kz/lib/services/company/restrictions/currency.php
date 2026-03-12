@@ -1,4 +1,0 @@
-<?php
-$MESS["SALE_COMPANY_RULES_BY_CURRENCY"] = "Валюта";
-$MESS["SALE_COMPANY_RULES_BY_CURRENCY_DESC"] = "валюта бойынша";
-$MESS["SALE_COMPANY_RULES_BY_CURRENCY_TITLE"] = "валюта бойынша";

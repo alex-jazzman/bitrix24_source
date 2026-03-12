@@ -60,3 +60,29 @@ $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5"] = "Send message as chat-bot";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_6"] = "Manual start";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_7"] = "Chat bot received a message";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_8"] = "RAG database";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_CHATNAME_1"] = "Extra information required for agent \"{=Constant:SetupTemplateActivity_62HyznTvdU}\"";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_DESCRIPTION_1"] = "Chat to receive requests for information for knowledge base.";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_MESSAGE_1"] = "Hello! I was asked this question:
+------------------------------------------------------
+{=A9700_4393_6634_9720:Message}
+------------------------------------------------------
+I don't possess any relevant information on the subject. I suggest we add it to the knowledge base.";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_1"] = "ID";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_2"] = "Symbolic code";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_3"] = "Element ID";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_4"] = "Workflow";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_5"] = "Template";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_6"] = "Created by";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_7"] = "Date created";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_8"] = "Agent started by";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_9"] = "Group chat";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_10"] = "Chat bot";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_11"] = "Agent started by";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_12"] = "Group chat";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_13"] = "Chat bot";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_STORAGETITLE_1"] = "Knowledge base search agent system data [{=Workflow:TemplateId}]";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_1"] = "Create storage";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2"] = "Write data";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_3"] = "Read data";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5"] = "Condition";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_6"] = "Create group chat";

@@ -26,7 +26,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    RelationTasks: tasks_v2_component_fields_relationTasks.RelationTasks
 	  },
 	  inject: {
-	    taskId: {}
+	    taskId: {},
+	    analytics: {}
 	  },
 	  setup() {
 	    return {
@@ -37,7 +38,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    handleAdd(targetNode) {
 	      tasks_v2_lib_relationTasksDialog.relatedTasksDialog.show({
 	        targetNode,
-	        taskId: this.taskId
+	        taskId: this.taskId,
+	        analytics: this.analytics
 	      });
 	    }
 	  },
@@ -52,7 +54,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    RelationTasksChip: tasks_v2_component_fields_relationTasks.RelationTasksChip
 	  },
 	  inject: {
-	    taskId: {}
+	    taskId: {},
+	    analytics: {}
 	  },
 	  setup() {
 	    return {
@@ -64,7 +67,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      tasks_v2_lib_relationTasksDialog.relatedTasksDialog.show({
 	        targetNode,
 	        taskId: this.taskId,
-	        onClose: this.highlightField
+	        onClose: this.highlightField,
+	        analytics: this.analytics
 	      });
 	    },
 	    highlightField() {

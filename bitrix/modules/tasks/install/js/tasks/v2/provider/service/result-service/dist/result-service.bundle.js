@@ -129,16 +129,18 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      await this.updateStoreResult(tempId, result);
 	      this.addResultToTask(taskId, tempId);
 	      if (!tasks_v2_lib_idUtils.idUtils.isReal(taskId)) {
-	        return;
+	        return true;
 	      }
 	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskResultAdd, {
 	        results: [mapModelToDto(result)]
 	      });
 	      await babelHelpers.classPrivateFieldLooseBase(this, _handleResultAfterAdd)[_handleResultAfterAdd](taskId, tempId, data[0]);
+	      return true;
 	    } catch (error) {
 	      console.error('ResultService.add error', error);
 	      this.deleteResultFromTask(taskId, tempId);
 	      await this.deleteStoreResult(tempId);
+	      return false;
 	    }
 	  }
 	  async update(id, fields) {
@@ -153,8 +155,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      return;
 	    }
 	    try {
-	      await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskResultUpdate, {
+	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskResultUpdate, {
 	        result: mapModelToDto(result)
+	      });
+	      void this.updateStoreResult(id, {
+	        fileIds: data.fileIds
 	      });
 	    } catch (error) {
 	      await this.updateStoreResult(id, resultBeforeUpdate);
@@ -192,10 +197,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	        }
 	      });
 	      await babelHelpers.classPrivateFieldLooseBase(this, _handleResultAfterAdd)[_handleResultAfterAdd](taskId, tempId, data);
+	      return true;
 	    } catch (error) {
 	      console.error('ResultService.addResultFromMessage error', error);
 	      this.deleteResultFromTask(taskId, tempId);
 	      await this.deleteStoreResult(tempId);
+	      return false;
 	    }
 	  }
 	  hasOpenedResults(taskId) {

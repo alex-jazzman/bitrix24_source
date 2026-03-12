@@ -2,8 +2,10 @@
 
 namespace Bitrix\Mobile\AppTabs;
 
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Mobile\Menu\Analytics;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
@@ -17,9 +19,20 @@ final class Mail implements Tabable
 	public function isAvailable()
 	{
 		return (
-			Loader::includeModule('mail')
+			$this->isToolAvailable('mail')
+			&& Loader::includeModule('mail')
 			&& Loader::includeModule('mailmobile')
 		);
+	}
+
+	private function isToolAvailable(string $toolId): bool
+	{
+		if (Loader::includeModule('intranet'))
+		{
+			return ToolsManager::getInstance()->checkAvailabilityByToolId($toolId);
+		}
+
+		return true;
 	}
 
 	public function getData()
@@ -48,6 +61,7 @@ final class Mail implements Tabable
 				'id' => 'mail_tabs',
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => 'mail_unseen',
+				'analytics' => Analytics::mail(),
 			],
 			'tag' => 'new',
 		];

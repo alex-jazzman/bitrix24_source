@@ -1,10 +1,10 @@
 <?php
-use Bitrix\DiskMobile\AirDiskFeature;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
 use Bitrix\Mobile\AppTabs\Calendar;
 use Bitrix\Mobile\AppTabs\CatalogStore;
 use Bitrix\Mobile\AppTabs\Chat;
+use Bitrix\Mobile\AppTabs\CheckIn;
 use Bitrix\Mobile\AppTabs\Crm;
 use Bitrix\Mobile\AppTabs\Mail;
 use Bitrix\Mobile\AppTabs\CrmCustomSectionFactory;
@@ -22,7 +22,7 @@ use Bitrix\Mobile\Feature\MenuFeature;
 
 Mobile::Init();
 
-$isDiskAvailable = (Loader::includeModule('diskmobile') && Feature::isEnabled(AirDiskFeature::class));
+$isDiskAvailable = Loader::includeModule('diskmobile');
 
 $config = [
 	'tabs' => [
@@ -39,6 +39,7 @@ $config = [
 		['code' => 'crmCustomSectionFactory', 'class' => CrmCustomSectionFactory::class],
 		['code' => 'disk', 'class' => Disk::class],
 		['code' => 'mail' , 'class' => Mail::class],
+		['code' => 'check_in', 'class' => CheckIn::class],
 	],
 	'required' => [
 		'chat' => 100,

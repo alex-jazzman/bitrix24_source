@@ -1172,6 +1172,13 @@
 	color: var(--call-view__button-color);
 }
 
+.bx-messenger-videocall-top-button.blocked {
+	cursor: default;
+	background-color: var(--call-view__button-background-color-blocked);
+	opacity: 0.4;
+	pointer-events: none;
+}
+
 .bx-messenger-videocall-top-button-frameless {
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -2324,6 +2331,16 @@
 
 .bx-messenger-videocall-panel-icon-background.bx-messenger-videocall-panel-icon-background-hangup {
 	background-color: var(--call-view__button-background-color-hangup);
+}
+
+@media (hover: none) {
+	html:has(.bx-messenger-call),
+	body:has(.bx-messenger-call),
+	html:has(.bx-im-application-call-mobile-state),
+	body.bx-im-application-call-mobile-state{
+		-ms-scroll-chaining: none;
+		    overscroll-behavior: none;
+	}
 }
 
 body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-icon-background.bx-messenger-videocall-panel-icon-background-hangup {
@@ -4457,9 +4474,9 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 }
 
 .bx-messenger-videocall-fullscreen.bx-messenger-videocall-centered.bx-messenger-videocall-hidden-panels .bx-messenger-videocall-bottom {
-	-webkit-transform: translateY(74px);
-	    -ms-transform: translateY(74px);
-	        transform: translateY(74px);
+	-webkit-transform: translateY(96px);
+	    -ms-transform: translateY(96px);
+	        transform: translateY(96px);
 }
 
 .bx-messenger-videocall-fullscreen.bx-messenger-videocall-centered .bx-messenger-videocall-panel {
@@ -5581,7 +5598,7 @@ body:not(.bx-im-application-call-mobile-state) .bx-messenger-videocall-panel-ico
 	font-size: var(--ui-font-size-md);
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: var(--ui-color-palette-white-base);
-	text-align: center;
+	text-align: left;
 	font-style: normal;
 	font-weight: var(--ui-font-weight-normal, 400);
 	line-height: var(--call-view__device-selector-device-item-line-height);
@@ -8187,7 +8204,6 @@ body:has(.bx-call-picture-in-picture-window) {
 .bx-call-picture-in-picture-window.bx-call-picture-in-picture-window_min .bx-call-picture-in-picture-window__actions .bx-messenger-videocall-panel-item .bx-messenger-videocall-panel-icon-background {
 	margin-bottom: 0;
 }
-
 .bx-call-aha-moment-notify {	
 	max-width: 400px;
 }
@@ -8488,6 +8504,7 @@ body:has(.bx-call-picture-in-picture-window) {
 	);
 	color: var(--ui-color-design-filled-success-content);
 }
+
 .call-common-record-menu-popup {
 }
 
@@ -8636,3 +8653,110 @@ body:has(.bx-call-picture-in-picture-window) {
 
 /* record kind */
 
+
+:root{
+	--call-talking-popup__shadow-color: rgba(0, 0, 0, 0.07);
+	--call-talking-popup__text-letter-spacing: 0;
+	--call-talking-popup__text-line-height: 14px;
+	--call-talking-popup__avatar-fallback-background-color: #10B769;
+	--call-talking-popup__avatar-text-letter-spacing: var(--call-view__letter-spacing);
+	--call-talking-popup__avatar-text-line-height: var(--call-view__line-height);
+}
+
+.bx-call-view-popup-talking {
+	top: 59px !important;
+	left: 50vw !important;
+	-webkit-transform: translate(-50%, 0);
+	    -ms-transform: translate(-50%, 0);
+	        transform: translate(-50%, 0);
+	-webkit-box-shadow: 0 8px 18.5px 0 var(--call-talking-popup__shadow-color);
+	        box-shadow: 0 8px 18.5px 0 var(--call-talking-popup__shadow-color);
+	-webkit-transition: left 200ms linear, opacity 200ms linear;
+	-o-transition: left 200ms linear, opacity 200ms linear;
+	transition: left 200ms linear, opacity 200ms linear;
+}
+
+body:has(.bx-im-component-call-error-wrap) .bx-call-view-popup-talking,
+body:has(.bx-messenger-call-overlay-folded) .bx-call-view-popup-talking {
+	display: none !important;
+}
+
+body:has(.bx-im-component-call-right-full) .bx-call-view-popup-talking,
+body:has(.bx-im-component-call-right-top) .bx-call-view-popup-talking,
+body:has(.bx-im-component-call-right-bottom) .bx-call-view-popup-talking {
+	left: calc(50vw - 200px) !important;
+}
+
+.bx-call-view-popup-talking.opening {
+	opacity: 0;
+}
+
+.bx-call-view-popup-talking.closing {
+	-webkit-transition: left 200ms linear, opacity 500ms linear;
+	-o-transition: left 200ms linear, opacity 500ms linear;
+	transition: left 200ms linear, opacity 500ms linear;
+	opacity: 0;
+}
+
+.bx-call-view-popup-talking-body {
+	height: 40px;
+	padding: 12px 18px 12px 14px;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+	display: -webkit-inline-box;
+	display: -ms-inline-flexbox;
+	display: inline-flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	gap: 10px;
+}
+
+.bx-call-view-popup-talking-avatar {
+	width: 22px;
+	height: 22px;
+	background-size: 22px 22px;
+	background-repeat: no-repeat;
+	background-position: center;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+	border-radius: 100px;
+}
+
+.bx-call-view-popup-talking-avatar.no-photo {
+	background-color: var(--call-talking-popup__avatar-fallback-background-color);
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
+}
+
+.bx-call-view-popup-talking-avatar.no-photo .bx-call-view-popup-talking-avatar-text {
+	font-weight: var(--ui-font-weight-medium, 500);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-size: var(--ui-font-size-4xs);
+	font-style: normal;
+	letter-spacing: var(--call-talking-popup__avatar-text-letter-spacing);
+	line-height: var(--call-talking-popup__avatar-text-line-height);
+}
+
+.bx-call-view-popup-talking-text {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	color: var(--ui-color-palette-white-base);
+	-o-text-overflow: ellipsis;
+	   text-overflow: ellipsis;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-size: var(--ui-font-size-xs);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal, 400);
+	letter-spacing: var(--call-talking-popup__text-letter-spacing);
+	line-height: var(--call-talking-popup__text-line-height);
+}

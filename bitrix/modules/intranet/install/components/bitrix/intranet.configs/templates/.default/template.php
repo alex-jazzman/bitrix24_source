@@ -14,9 +14,8 @@ use Bitrix\Location;
 	'ui.forms',
 	'ui.alerts',
 	'ui.design-tokens',
+	'intranet.old-interface.intranet-common',
 ]);
-
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 ?>
 
@@ -712,21 +711,6 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			</tr>
 		<?
 		}
-
-		if (
-			!$arResult["IS_BITRIX24"]
-			|| \Bitrix\Bitrix24\Release::isAvailable('stresslevel')
-		)
-		{
-			?>
-			<tr>
-				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="stresslevel_available"><?=GetMessage('CONFIG_STRESSLEVEL_AVAILABLE')?></label></td>
-				<td class="content-edit-form-field-input"><input type="checkbox" name="stresslevel_available" value="Y" id="stresslevel_available" <?if ($arResult["STRESSLEVEL_AVAILABLE"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
-				<td class="content-edit-form-field-error"></td>
-			</tr>
-			<?
-		}
-
 		if ($arResult["IS_BITRIX24"])
 		{
 			?>

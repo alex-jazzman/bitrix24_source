@@ -1,4 +1,0 @@
-<?php
-$MESS["IM_MESSAGE_COPILOT_CREATION_HEADER_DESC"] = "Поставте мені запитання або виберіть один із готових запитів.";
-$MESS["IM_MESSAGE_COPILOT_CREATION_HEADER_TITLE"] = "Привіт! Я — #COPILOT_ROLE_NAME#";
-$MESS["IM_MESSAGE_COPILOT_CREATION_HEADER_TITLE_AFTER_CHANGE"] = "Тепер я — #COPILOT_ROLE_NAME#";

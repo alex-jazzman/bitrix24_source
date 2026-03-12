@@ -6,6 +6,7 @@ use Bitrix\Bizproc\Integration\UI\EntitySelector\ScriptTemplateProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\AutomationTemplateProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\DocumentProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\SystemProvider;
+use Bitrix\Bizproc\Integration\UI\EntitySelector\StorageProvider;
 
 return [
 	'console' => [
@@ -73,6 +74,57 @@ return [
 				'constructorParams' => static function() {
 					return [
 						\Bitrix\Bizproc\Internal\Container::getWorkflowStatRepositoryMapper(),
+					];
+				},
+			],
+			'bizproc.task.user.repository.mapper' => [
+				'className' => '\Bitrix\Bizproc\Internal\Repository\Mapper\TaskUserMapper',
+			],
+			'bizproc.task.repository.mapper' => [
+				'className' => '\Bitrix\Bizproc\Internal\Repository\Mapper\TaskMapper',
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Bizproc\Internal\Container::getTaskUserRepositoryMapper(),
+					];
+				},
+			],
+			'bizproc.task.repository' => [
+				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\TaskRepository\\TaskRepository',
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Bizproc\Internal\Container::getTaskRepositoryMapper(),
+					];
+				},
+			],
+			'bizproc.task.archive.repository.mapper' => [
+				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\Mapper\\TaskArchiveMapper',
+			],
+			'bizproc.task.archive.repository' => [
+				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\TaskArchiveRepository\\TaskArchiveRepository',
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Bizproc\Internal\Container::getTaskArchiveRepositoryMapper(),
+					];
+				},
+			],
+			'bizproc.task.archive.tasks.repository.mapper' => [
+				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\Mapper\\TaskArchiveTasksMapper',
+			],
+			'bizproc.task.archive.tasks.repository' => [
+				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\TaskArchiveRepository\\TaskArchiveTasksRepository',
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Bizproc\Internal\Container::getTaskArchiveTasksRepositoryMapper(),
+					];
+				},
+			],
+			'bizproc.archive.task.service' => [
+				'className' => \Bitrix\Bizproc\Public\Service\Task\ArchiveTaskService::class,
+				'constructorParams' => static function() {
+					return [
+						'archiveRepository' => \Bitrix\Bizproc\Internal\Container::getTaskArchiveRepository(),
+						'archiveTasksRepository' => \Bitrix\Bizproc\Internal\Container::getTaskArchiveTasksRepository(),
+						'taskRepository' => \Bitrix\Bizproc\Internal\Container::getTaskRepository(),
 					];
 				},
 			],
@@ -177,6 +229,13 @@ return [
 					'provider' => [
 						'moduleId' => 'bizproc',
 						'className' => DocumentTypeProvider::class,
+					],
+				],
+				[
+					'entityId' => 'bizproc-storage',
+					'provider' => [
+						'moduleId' => 'bizproc',
+						'className' => StorageProvider::class,
 					],
 				],
 			],

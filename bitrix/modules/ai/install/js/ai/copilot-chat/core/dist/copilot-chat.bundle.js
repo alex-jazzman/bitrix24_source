@@ -348,12 +348,12 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  }
 	}
 	function _addChatMessage2(message) {
-	  var _message$params;
+	  var _message$status, _message$params;
 	  const chatMessage = {
 	    authorId: message.authorId,
 	    content: message.content,
 	    type: message.type,
-	    status: ai_copilotChat_ui.CopilotChatMessageStatus.DEPART,
+	    status: (_message$status = message.status) != null ? _message$status : ai_copilotChat_ui.CopilotChatMessageStatus.DELIVERED,
 	    id: message.id,
 	    params: (_message$params = message.params) != null ? _message$params : []
 	  };

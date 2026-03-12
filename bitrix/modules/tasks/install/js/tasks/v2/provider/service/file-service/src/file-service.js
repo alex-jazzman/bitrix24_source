@@ -92,6 +92,7 @@ export class FileService extends EventEmitter
 				if (!this.#getIdsByObjectId(file.customData.objectId).some((id: FileId) => fileIds.has(id)))
 				{
 					this.#attachFiles([...fileIds, file.serverFileId], file);
+					this.emit('onFileAttach', file);
 				}
 
 				this.emit('onFileComplete', file);
@@ -253,38 +254,13 @@ export class FileService extends EventEmitter
 		this.#unbindEvents();
 	}
 
-	async sync(ids: FileId[] | null): Promise<void>
+	async list(ids: FileId[]): Promise<UploaderFileInfo[]>
 	{
 		if (!Type.isArrayFilled(ids))
 		{
-			return;
+			return [];
 		}
 
-		if (ids.every((id: FileId) => this.#loadedIds.has(id)))
-		{
-			this.getFileItems().forEach((file) => {
-				const uploaderIds = [file.serverFileId];
-				if (this.#isObjectId(file.serverFileId))
-				{
-					const objectId = Number(file.serverFileId.slice(1));
-
-					uploaderIds.push(...this.#getIdsByObjectId(objectId));
-				}
-
-				if (uploaderIds.some((id: FileId) => ids.includes(id)))
-				{
-					return;
-				}
-
-				this.#adapter.getUploader().removeFile(file.id);
-			});
-		}
-
-		await this.list(ids);
-	}
-
-	async list(ids: FileId[]): Promise<UploaderFileInfo[]>
-	{
 		const unloadedIds = ids.filter((id) => !this.#loadedIds.has(id));
 		if (unloadedIds.length === 0)
 		{
@@ -317,6 +293,26 @@ export class FileService extends EventEmitter
 
 			return [];
 		}
+	}
+
+	remove(idsToRemove: FileId[]): void
+	{
+		const uploaderFiles = this.getFileItems().map(({ id, serverFileId }) => ({ id, serverFileId }));
+
+		uploaderFiles.forEach((file) => {
+			const fileIds = new Set([file.serverFileId]);
+			if (this.#isObjectId(file.serverFileId))
+			{
+				const objectId = Number(file.serverFileId.slice(1));
+
+				this.#getIdsByObjectId(objectId).forEach((id: FileId) => fileIds.add(id));
+			}
+
+			if ([...fileIds].some((id: FileId) => idsToRemove.includes(id)))
+			{
+				this.#adapter.getUploader().removeFile(file.id);
+			}
+		});
 	}
 
 	loadFilesFromData(data: FileDto[]): void
@@ -498,66 +494,70 @@ export class FileService extends EventEmitter
 
 	async #saveAttachedFiles(): void
 	{
-		if (Type.isArrayFilled(this.#filesToAttach))
+		if (!Type.isArrayFilled(this.#filesToAttach))
 		{
-			const id = idUtils.unbox(this.#entityId);
+			return;
+		}
 
-			try
+		const id = idUtils.unbox(this.#entityId);
+
+		try
+		{
+			const ids = this.#filesToAttach.map((file) => file.serverFileId);
+			this.#filesToAttach = [];
+
+			if (idUtils.isTemplate(this.#entityId))
 			{
-				const ids = this.#filesToAttach.map((file) => file.serverFileId);
-				this.#filesToAttach = [];
-
-				if (idUtils.isTemplate(this.#entityId))
-				{
-					await apiClient.post(Endpoint.TemplateUpdate, { template: { id, fileIds: this.#entityFileIds } });
-				}
-				else
-				{
-					await apiClient.post(Endpoint.FileAttach, { task: { id }, ids });
-				}
+				await apiClient.post(Endpoint.TemplateUpdate, { template: { id, fileIds: this.#entityFileIds } });
 			}
-			catch (error)
+			else
 			{
-				console.error('FileService: saveAttachedFiles error', error);
-
-				this.notifyError(Loc.getMessage('TASKS_V2_NOTIFY_FILE_ATTACH_ERROR'));
+				await apiClient.post(Endpoint.FileAttach, { task: { id }, ids });
 			}
+		}
+		catch (error)
+		{
+			console.error('FileService: saveAttachedFiles error', error);
+
+			this.notifyError(Loc.getMessage('TASKS_V2_NOTIFY_FILE_ATTACH_ERROR'));
 		}
 	}
 
 	async #saveDetachedFiles(): void
 	{
-		if (Type.isArrayFilled(this.#filesToDetach))
+		if (!Type.isArrayFilled(this.#filesToDetach))
 		{
-			const id = idUtils.unbox(this.#entityId);
-			const filesBeforeDetach = this.#filesToDetach;
+			return;
+		}
 
-			try
+		const id = idUtils.unbox(this.#entityId);
+		const filesBeforeDetach = this.#filesToDetach;
+
+		try
+		{
+			const ids = this.#filesToDetach.map((file) => file.serverFileId);
+			this.#filesToDetach = [];
+
+			if (idUtils.isTemplate(this.#entityId))
 			{
-				const ids = this.#filesToDetach.map((file) => file.serverFileId);
-				this.#filesToDetach = [];
-
-				if (idUtils.isTemplate(this.#entityId))
-				{
-					await apiClient.post(Endpoint.TemplateUpdate, { template: { id, fileIds: this.#entityFileIds } });
-				}
-				else
-				{
-					await apiClient.post(Endpoint.FileDetach, { task: { id }, ids });
-				}
+				await apiClient.post(Endpoint.TemplateUpdate, { template: { id, fileIds: this.#entityFileIds } });
 			}
-			catch (error)
+			else
 			{
-				console.error('FileService: saveDetachedFiles error', error);
-
-				this.#isDetachedErrorMode = true;
-
-				this.#adapter.getUploader().addFiles(filesBeforeDetach);
-
-				this.#isDetachedErrorMode = false;
-
-				this.notifyError(Loc.getMessage('TASKS_V2_NOTIFY_FILE_DETACH_ERROR'));
+				await apiClient.post(Endpoint.FileDetach, { task: { id }, ids });
 			}
+		}
+		catch (error)
+		{
+			console.error('FileService: saveDetachedFiles error', error);
+
+			this.#isDetachedErrorMode = true;
+
+			this.#adapter.getUploader().addFiles(filesBeforeDetach);
+
+			this.#isDetachedErrorMode = false;
+
+			this.notifyError(Loc.getMessage('TASKS_V2_NOTIFY_FILE_DETACH_ERROR'));
 		}
 	}
 

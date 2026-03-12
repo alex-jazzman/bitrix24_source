@@ -753,7 +753,7 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	          result = _context5.sent;
 	          Guide = result[0].Guide;
 	          BannerDispatcher = result[1].BannerDispatcher;
-	          BannerDispatcher.critical.toQueue(function (onDone) {
+	          BannerDispatcher.normal.toQueue(function (onDone) {
 	            var guide = new Guide({
 	              id: 'share-role-grid-create-prompt-hint',
 	              simpleMode: true,

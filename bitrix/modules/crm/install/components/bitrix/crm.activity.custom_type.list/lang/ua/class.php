@@ -1,8 +1,0 @@
-<?
-$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не встановлено.";
-$MESS["CRM_PERMISSION_DENIED"] = "Доступ заборонено";
-$MESS["CRM_COLUMN_ACT_CUST_TYPE_ID"] = "ID";
-$MESS["CRM_COLUMN_ACT_CUST_TYPE_NAME"] = "Назва";
-$MESS["CRM_COLUMN_ACT_CUST_TYPE_SORT"] = "Сорт.";
-$MESS["CRM_COLUMN_ACT_CUST_TYPE_CREATED_DATE"] = "Створено";
-?>

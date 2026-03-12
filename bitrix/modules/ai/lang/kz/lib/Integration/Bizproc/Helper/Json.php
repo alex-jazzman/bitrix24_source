@@ -1,3 +1,0 @@
-<?php
-$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_INVALID"] = "Дұрыс емес JSON-схемасы";
-$MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_REQUIRED"] = "JSON-схемасы көрсетілмеген";

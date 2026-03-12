@@ -1,31 +1,37 @@
-import { Event } from 'main.core';
+import { Event, Type } from 'main.core';
 
 import { Quote } from 'im.v2.lib.quote';
 import { Utils } from 'im.v2.lib.utils';
-import { MessengerSlider } from 'im.v2.lib.slider';
+import { MessengerPopup } from 'im.v2.component.elements.popup';
 
 import '../css/quote-button.css';
 
 import type { JsonObject } from 'main.core';
 import type { EventEmitter } from 'main.core.events';
 import type { ImModelMessage } from 'im.v2.model';
+import type { PopupOptions } from 'main.popup';
 
 const CONTAINER_HEIGHT = 44;
 const CONTAINER_WIDTH = 60;
-const CONTAINER_OFFSET = 10;
-const slider = MessengerSlider.getInstance().getCurrent();
-const sliderRect = slider?.layout.container.getBoundingClientRect();
-const offsetY = sliderRect?.top ?? 0;
 
 const MESSAGE_TEXT_NODE_CLASS = '.bx-im-message-default-content__text';
+const POPUP_ID = 'im-quote-button-popup';
 
 // @vue/component
 export const QuoteButton = {
 	name: 'QuoteButton',
+	components: { MessengerPopup },
 	props: {
 		dialogId: {
 			type: String,
 			default: '',
+		},
+		targetPosition: {
+			type: Object,
+			required: true,
+			validator(value: { left: number, top: number }): boolean {
+				return Type.isNumber(value.left) && Type.isNumber(value.top);
+			},
 		},
 	},
 	data(): JsonObject
@@ -33,19 +39,26 @@ export const QuoteButton = {
 		return {
 			text: '',
 			message: null,
-			mouseX: 0,
-			mouseY: 0,
 		};
 	},
 	computed:
 	{
-		containerStyle(): {top: string, left: string, width: string, height: string}
+		POPUP_ID: () => POPUP_ID,
+		config(): PopupOptions
 		{
+			const { top, left } = this.targetPosition;
+			const offsetLeftForCenteredPopup = left - CONTAINER_WIDTH / 2;
+
 			return {
-				top: `${this.mouseY - CONTAINER_HEIGHT - CONTAINER_OFFSET - offsetY}px`,
-				left: `${this.mouseX - CONTAINER_WIDTH / 2}px`,
-				width: `${CONTAINER_WIDTH}px`,
-				height: `${CONTAINER_HEIGHT}px`,
+				bindElement: { top, left: offsetLeftForCenteredPopup },
+				className: 'bx-im-dialog-chat__quote-button_scope',
+				background: 'transparent',
+				bindOptions: { position: 'top' },
+				animation: 'fading-slide',
+				width: CONTAINER_WIDTH,
+				height: CONTAINER_HEIGHT,
+				autoHide: true,
+				padding: 0,
 			};
 		},
 	},
@@ -64,8 +77,6 @@ export const QuoteButton = {
 
 			this.prepareSelectedText();
 			this.message = message;
-			this.mouseX = event.clientX;
-			this.mouseY = event.clientY;
 		},
 		onMouseDown(event: MouseEvent)
 		{
@@ -131,9 +142,10 @@ export const QuoteButton = {
 		},
 		onQuoteClick()
 		{
+			const text = Quote.prepareInlineMessageQuote(this.message, this.text);
+
 			Quote.sendQuoteEvent({
-				message: this.message,
-				text: this.text,
+				text,
 				dialogId: this.dialogId,
 				context: { emitter: this.getEmitter() },
 			});
@@ -146,9 +158,15 @@ export const QuoteButton = {
 		},
 	},
 	template: `
-		<div ref="container" @click="onQuoteClick" :style="containerStyle" class="bx-im-dialog-chat__quote-button">
-			<div class="bx-im-dialog-chat__quote-icon"></div>
-			<div class="bx-im-dialog-chat__quote-icon --hover"></div>
-		</div>
+		<MessengerPopup
+			:id="POPUP_ID"
+			:config="config"
+			@close="$emit('close')"
+		>
+			<div ref="container" @click="onQuoteClick" class="bx-im-dialog-chat__quote-button">
+				<div class="bx-im-dialog-chat__quote-icon"></div>
+				<div class="bx-im-dialog-chat__quote-icon --hover"></div>
+			</div>
+		</MessengerPopup>
 	`,
 };

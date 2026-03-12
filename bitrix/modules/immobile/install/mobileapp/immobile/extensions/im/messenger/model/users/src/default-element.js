@@ -1,8 +1,8 @@
 /**
- * @module im/messenger/model/users/default-element
+ * @module im/messenger/model/users/src/default-element
  */
 
-jn.define('im/messenger/model/users/default-element', (require, exports, module) => {
+jn.define('im/messenger/model/users/src/default-element', (require, exports, module) => {
 	const { UserType, UserColor } = require('im/messenger/const');
 
 	const userDefaultElement = Object.freeze({

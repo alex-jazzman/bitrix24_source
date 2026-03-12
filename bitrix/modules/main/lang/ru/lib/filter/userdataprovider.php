@@ -9,6 +9,7 @@ $MESS["MAIN_USER_FILTER_EXTRANET"] = "Экстранет";
 $MESS["MAIN_USER_FILTER_INVITED"] = "Приглашенный";
 $MESS['MAIN_USER_FILTER_VISITOR'] = 'Посетитель';
 $MESS["MAIN_USER_FILTER_INTEGRATOR"] = "Интегратор";
+$MESS["MAIN_USER_FILTER_INTEGRATOR_RENAMED"] = "Специалист по внедрению";
 $MESS["MAIN_USER_FILTER_ADMIN"] = "Администратор";
 $MESS["MAIN_USER_FILTER_IS_ONLINE"] = "В сети";
 $MESS["MAIN_USER_FILTER_PROFESSION"] = "Профессия";

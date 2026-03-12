@@ -16,6 +16,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php");
 CModule::IncludeModule("intranet");
 

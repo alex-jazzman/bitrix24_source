@@ -1,5 +1,5 @@
 import { Event, Type, Dom, Text, Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Switcher, SwitcherSize } from 'ui.switcher';
 import { Analytics } from './analytics';
 import DepartmentControl from 'intranet.department-control';
@@ -15,6 +15,9 @@ export class SelfRegister
 	#transport: Transport;
 	#departmentControl: DepartmentControl;
 	#page: LinkPage;
+	#previousSwitcherState: boolean = false;
+	#previousConfirmCheckboxState: boolean = false;
+	confirmationPopup = null;
 
 	constructor(options)
 	{
@@ -24,6 +27,10 @@ export class SelfRegister
 		this.#transport = options.transport;
 		this.#departmentControl = options.departmentControl;
 		this.#page = options.page;
+		this.#previousSwitcherState = this.#isEnabled;
+
+		const confirmCheckbox = this.#container?.querySelector("[data-role='allowRegisterConfirm']");
+		this.#previousConfirmCheckboxState = confirmCheckbox?.checked ?? false;
 
 		if (Type.isDomNode(this.#container))
 		{
@@ -60,6 +67,16 @@ export class SelfRegister
 			const data = event.getData();
 			this.showNotificationPopup(data);
 		});
+
+		EventEmitter.subscribe('BX.Intranet.Navigation:onBeforeChangePage', () => {
+			this.confirmationPopup?.close();
+			this.#restoreConfirmCheckboxState();
+		});
+
+		EventEmitter.subscribe('BX.Intranet.Invitation:onSendDataSuccess', () => {
+			const currentConfirmCheckbox = this.#container?.querySelector("[data-role='allowRegisterConfirm']");
+			this.#previousConfirmCheckboxState = currentConfirmCheckbox?.checked ?? false;
+		});
 	}
 
 	bindActions()
@@ -84,9 +101,12 @@ export class SelfRegister
 		if (Type.isDomNode(allowRegisterConfirm))
 		{
 			Event.bind(allowRegisterConfirm, 'change', () => {
-				EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
+				BX?.Intranet?.Invitation?.Form.submitButton.enable();
+
 				this.#page.setButtonState(SubmitButton.ENABLED_STATE);
 				this.toggleWhiteList(allowRegisterConfirm);
+
+				BX?.Intranet?.Invitation?.Form.changeStateOfButtonPanel('show');
 			});
 		}
 
@@ -95,7 +115,10 @@ export class SelfRegister
 		{
 			Event.bind(selfWhiteList, 'input', () => {
 				this.#page.setButtonState(SubmitButton.ENABLED_STATE);
-				EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
+
+				BX?.Intranet?.Invitation?.Form.submitButton.enable();
+
+				BX?.Intranet?.Invitation?.Form.changeStateOfButtonPanel('show');
 			});
 		}
 	}
@@ -109,11 +132,13 @@ export class SelfRegister
 			top.BX.UI.Notification.Center.notify({
 				content: Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'),
 				autoHideDelay: 2500,
+				useAirDesign: true,
 			});
 		}, (response) => {
 			top.BX.UI.Notification.Center.notify({
 				content: Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'),
 				autoHideDelay: 2500,
+				useAirDesign: true,
 			});
 		});
 	}
@@ -141,6 +166,7 @@ export class SelfRegister
 						top.BX.UI.Notification.Center.notify({
 							content: Loc.getMessage('BX24_INVITE_DIALOG_COPY_URL'),
 							autoHideDelay: 2500,
+							useAirDesign: true,
 						});
 					})
 					.catch((e) => {
@@ -199,7 +225,8 @@ export class SelfRegister
 			overlay: false,
 			maxWidth: 400,
 			events: {
-				onAfterPopupShow() {
+				onAfterPopupShow()
+				{
 					setTimeout(() => {
 						this.close();
 					}, 4000);
@@ -226,51 +253,55 @@ export class SelfRegister
 					text: Loc.getMessage('INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_OK'),
 					color: BX.UI.Button.Color.PRIMARY,
 					round: true,
-					events: {
-						click() {
-							popup.close();
-							EventEmitter.emit(data.page, 'BX.Intranet.Invitation:submit', {
-								context: data.context,
-								isConfirm: true,
-							});
-						},
+					onclick: () => {
+						this.#previousSwitcherState = this.switcher.checked;
+						EventEmitter.emit(data.page, 'BX.Intranet.Invitation:submit', {
+							context: data.context,
+							isConfirm: true,
+						});
+						popup.close();
 					},
 				}),
-				new BX.UI.ApplyButton({
+				new BX.UI.Button({
 					text: Loc.getMessage('INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_CANCEL'),
 					round: true,
-					events: {
-						click() {
-							popup.close();
-						},
+					color: BX.UI.Button.Color.LIGHT_BORDER,
+					onclick: () => {
+						popup.close();
 					},
 				}),
 			],
 			events: {
-				onClose: () => {
+				onClose: (restoreState = true) => {
+					if (restoreState)
+					{
+						this.#restoreSwitcherState();
+					}
 					EventEmitter.emit('BX.Intranet.Invitation:onSubmitReady');
+					this.confirmationPopup = null;
+					popup.destroy();
 				},
 			},
 		});
 
+		this.confirmationPopup = popup;
 		popup.show();
 	}
 
 	toggleSettings()
 	{
-		EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
-		this.#page.setButtonState(SubmitButton.ENABLED_STATE);
-		const controlBlock = this.#container.querySelector(".js-invite-dialog-fast-reg-control-container");
-		if (Type.isDomNode(controlBlock))
+		if (this.#previousSwitcherState === this.switcher.checked)
 		{
-			Dom.toggleClass(controlBlock, 'disallow-registration');
+			this.confirmationPopup?.close();
+
+			return;
 		}
 
-		const settingsBlock = this.#container.querySelector("[data-role='selfSettingsBlock']");
-		if (Type.isDomNode(settingsBlock))
+		if (this.switcher.checked === true)
 		{
-			Dom.style(settingsBlock, 'display', this.switcher.checked ? 'block' : 'none');
+			this.#previousSwitcherState = true;
 		}
+		this.#applySettings();
 	}
 
 	toggleWhiteList(inputElement)
@@ -279,6 +310,68 @@ export class SelfRegister
 		if (Type.isDomNode(selfWhiteList))
 		{
 			Dom.style(selfWhiteList, 'display', inputElement.checked ? 'block' : 'none');
+		}
+	}
+
+	#applySettings()
+	{
+		BX?.Intranet?.Invitation?.Form.submitButton.enable();
+
+		this.#page.setButtonState(SubmitButton.ENABLED_STATE);
+
+		const controlBlock = this.#container.querySelector('.js-invite-dialog-fast-reg-control-container');
+		if (Type.isDomNode(controlBlock))
+		{
+			Dom.toggleClass(controlBlock, 'disallow-registration');
+		}
+
+		const settingsBlock = this.#container.querySelector('[data-role=\'selfSettingsBlock\']');
+		if (Type.isDomNode(settingsBlock))
+		{
+			Dom.style(settingsBlock, 'display', this.switcher.checked ? 'block' : 'none');
+		}
+
+		BX?.Intranet?.Invitation?.Form.handleSubmitClick();
+
+		BX?.Intranet?.Invitation?.Form.changeStateOfButtonPanel('hide');
+	}
+
+	#restoreSwitcherState()
+	{
+		this.switcher.check(this.#previousSwitcherState, false);
+
+		const controlBlock = this.#container.querySelector(
+			'.js-invite-dialog-fast-reg-control-container',
+		);
+
+		if (Type.isDomNode(controlBlock))
+		{
+			if (this.#previousSwitcherState === true)
+			{
+				Dom.removeClass(controlBlock, 'disallow-registration');
+			}
+			else
+			{
+				Dom.addClass(controlBlock, 'disallow-registration');
+			}
+		}
+
+		const settingsBlock = this.#container.querySelector("[data-role='selfSettingsBlock']");
+		if (Type.isDomNode(settingsBlock))
+		{
+			Dom.style(settingsBlock, 'display', this.#previousSwitcherState ? 'block' : 'none');
+		}
+
+		this.#restoreConfirmCheckboxState();
+	}
+
+	#restoreConfirmCheckboxState()
+	{
+		const confirmCheckbox = this.#container?.querySelector("[data-role='allowRegisterConfirm']");
+		if (Type.isDomNode(confirmCheckbox))
+		{
+			confirmCheckbox.checked = this.#previousConfirmCheckboxState;
+			this.toggleWhiteList(confirmCheckbox);
 		}
 	}
 }

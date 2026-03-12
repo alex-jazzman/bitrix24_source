@@ -78,6 +78,7 @@ export const Creator = {
 			single
 			inline
 			:dataset
+			:showMenu="false"
 			@hintClick="handleHintClick"
 			@update="updateTask"
 		/>

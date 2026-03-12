@@ -17,7 +17,7 @@ export const SettingsLabel = {
 	},
 	template: `
 		<div class="b24-settings-label">
-			<BIcon :name="Outline.SETTINGS" hoverable/>
+			<BIcon :name="Outline.FILTER_2_LINES" hoverable/>
 		</div>
 	`,
 };

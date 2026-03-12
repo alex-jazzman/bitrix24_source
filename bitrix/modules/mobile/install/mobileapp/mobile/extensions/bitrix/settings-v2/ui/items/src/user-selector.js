@@ -36,7 +36,7 @@ jn.define('settings-v2/ui/items/src/user-selector', (require, exports, module) =
 			super(props);
 
 			this.getTestId = createTestIdGenerator({
-				prefix: 'user-selector',
+				prefix: props.id ?? 'user-selector',
 				context: this,
 			});
 

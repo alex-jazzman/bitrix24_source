@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
-(function (exports,pull_client,ui_loader,ui_vue3_components_menu,ui_vue3_directives_hint,window$1,ui_entitySelector,main_popup,main_core_events,ui_dialogs_messagebox,ui_vue3_components_popup,ui_feedback_form,bizprocdesigner_feature,ui_notification,ui_blockDiagram,ui_vue3_components_button,ui_iconSet_api_core,main_core,ui_buttons,ui_system_dialog,ui_iconSet_api_vue,ui_vue3,ui_vue3_pinia) {
+(function (exports,pull_client,ui_loader,ui_vue3_components_menu,ui_vue3_directives_hint,window$1,ui_entitySelector,main_popup,main_core_events,ui_vue3_components_popup,ui_feedback_form,bizprocdesigner_feature,ui_dialogs_messagebox,ui_notification,ui_vue3_components_button,main_core,ui_buttons,ui_system_dialog,ui_iconSet_api_core,ui_blockDiagram,ui_iconSet_api_vue,ui_vue3,ui_vue3_pinia) {
 	'use strict';
 
 	function initAiUpdatePull(callback) {
@@ -90,6 +90,209 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  }
 	  return animatedItems;
 	}
+
+	const BLOCK_TYPES = {
+	  SIMPLE: 'simple',
+	  TRIGGER: 'trigger',
+	  COMPLEX: 'complex',
+	  TOOL: 'tool',
+	  FRAME: 'frame'
+	};
+	const PORT_TYPES = Object.freeze({
+	  input: 'input',
+	  output: 'output',
+	  aux: 'aux',
+	  topAux: 'topAux'
+	});
+	const ACTIVATION_STATUS = Object.freeze({
+	  ACTIVE: 'Y',
+	  INACTIVE: 'N'
+	});
+	const PROPERTY_TYPES = Object.freeze({
+	  DOCUMENT: 'document'
+	});
+	const SHARED_TOAST_TYPES = Object.freeze({
+	  WARNING: 'warning'
+	});
+
+	const ToastColorScheme = {
+	  Warning: 'warning'
+	};
+
+	// @vue/component
+	const Toast = {
+	  // eslint-disable-next-line vue/multi-word-component-names
+	  name: 'Toast',
+	  props: {
+	    colorScheme: {
+	      type: String,
+	      default: ToastColorScheme.Warning,
+	      validator: value => Object.values(ToastColorScheme).includes(value),
+	      required: false
+	    }
+	  },
+	  computed: {
+	    colorClass() {
+	      return `--${this.colorScheme}`;
+	    }
+	  },
+	  template: `
+		<div class="bizprocdesigner-editor-toast" :class="colorClass">
+			<slot></slot>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const ToastLayout = {
+	  name: 'ToastLayout',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    icon: {
+	      type: [String, null],
+	      default: null,
+	      required: false
+	    },
+	    message: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  template: `
+		<div class="editor-chart-toast-layout">
+			<div class="editor-chart-toast-layout__left">
+				<template v-if="icon">
+					<div class="editor-chart-toast-layout__icon">
+						<BIcon :name="icon" :size="28"/>
+					</div>
+					<div class="editor-chart-toast-layout__divider">
+						<svg xmlns="http://www.w3.org/2000/svg" width="9" height="20" viewBox="0 0 9 20" fill="none">
+							<rect x="4" width="1" height="20" fill="#DFE0E3"/>
+						</svg>
+					</div>
+				</template>
+				<div class="editor-chart-toast-layout__content">
+					<div class="editor-chart-toast-layout__content__message">
+						{{ message }}
+					</div>
+					<div v-if="$slots.contentEnd"
+						class="editor-chart-toast-layout__content__end"
+					>
+						<slot name="contentEnd"></slot>
+					</div>
+				</div>
+			</div>
+			<div class="editor-chart-toast-layout__right">
+				<slot name="right"></slot>
+			</div>
+		</div>
+	`
+	};
+
+	const useToastStore = ui_vue3_pinia.defineStore('bizprocdesigner-toast-store', {
+	  state: () => ({
+	    toastQueue: []
+	  }),
+	  getters: {
+	    isEmpty: state => {
+	      return state.toastQueue.length === 0;
+	    },
+	    current: state => {
+	      return state.toastQueue.length > 0 ? state.toastQueue[0] : null;
+	    }
+	  },
+	  actions: {
+	    addToQueue(message) {
+	      this.toastQueue.push(message);
+	    },
+	    dequeue() {
+	      this.toastQueue.shift();
+	    },
+	    clearAllOfType(type) {
+	      this.toastQueue = this.toastQueue.filter(toast => toast.type !== type);
+	    },
+	    addWarning(message) {
+	      this.addToQueue({
+	        message,
+	        type: SHARED_TOAST_TYPES.WARNING
+	      });
+	    },
+	    addCustom(message, type) {
+	      this.addToQueue({
+	        message,
+	        type
+	      });
+	    }
+	  }
+	});
+
+	// @vue/component
+	const ToastCloseButton = {
+	  name: 'ToastCloseButton',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  computed: {
+	    Outline: () => ui_iconSet_api_vue.Outline
+	  },
+	  methods: {
+	    ...ui_vue3_pinia.mapActions(useToastStore, ['dequeue']),
+	    onClick() {
+	      this.dequeue();
+	    }
+	  },
+	  template: `
+		<button class="editor-chart-toast-close-button"
+			 @click="onClick"
+		>
+			<BIcon :name="Outline.CROSS_L" :size="20"></BIcon>
+		</button>
+	`
+	};
+
+	// @vue/component
+	const ToastWarning = {
+	  name: 'ToastWarning',
+	  components: {
+	    Toast,
+	    ToastLayout,
+	    ToastCloseButton
+	  },
+	  props: {
+	    message: {
+	      type: String,
+	      required: true
+	    },
+	    closeable: {
+	      type: Boolean,
+	      default: true
+	    }
+	  },
+	  computed: {
+	    ToastColorScheme: () => ToastColorScheme,
+	    Outline: () => ui_iconSet_api_core.Outline
+	  },
+	  template: `
+		<Toast :color-scheme="ToastColorScheme.Warning">
+			<ToastLayout
+				:icon="Outline.ALERT_ACCENT"
+				:message="message"
+			>
+
+				<template #contentEnd>
+					<slot name="contentEnd"></slot>
+				</template>
+
+				<template v-if="closeable" #right>
+					<ToastCloseButton/>
+				</template>
+
+			</ToastLayout>
+		</Toast>
+	`
+	};
 
 	function useFeature() {
 	  return {
@@ -184,48 +387,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  };
 	}
 
-	function useActivationMenu(store) {
-	  function showActivationMenu(event, block, onToggle) {
-	    var _Loc$getMessage, _Loc$getMessage2;
-	    const menuText = block.activity.Activated === 'Y' ? (_Loc$getMessage = main_core.Loc.getMessage('BIZPROCDESIGNER_STORES_DIAGRAM_ACTIVATE_OFF')) != null ? _Loc$getMessage : '' : (_Loc$getMessage2 = main_core.Loc.getMessage('BIZPROCDESIGNER_STORES_DIAGRAM_ACTIVATE_ON')) != null ? _Loc$getMessage2 : '';
-	    const menuItems = [{
-	      id: 'deactivate',
-	      text: menuText,
-	      onclick: () => {
-	        store.toggleBlockActivation(block.id, true);
-	        if (onToggle) {
-	          onToggle();
-	        }
-	        main_popup.MenuManager.destroy('node-settings-local-menu');
-	      }
-	    }];
-	    main_popup.MenuManager.show('node-settings-local-menu', event.target, menuItems, {
-	      autoHide: true,
-	      cacheable: false,
-	      angle: true,
-	      offsetLeft: 0,
-	      offsetTop: 0
-	    });
-	  }
-	  return {
-	    showActivationMenu
-	  };
-	}
-
-	const BLOCK_TYPES = {
-	  SIMPLE: 'simple',
-	  TRIGGER: 'trigger',
-	  COMPLEX: 'complex',
-	  TOOL: 'tool',
-	  FRAME: 'frame'
-	};
-	const PORT_TYPES = Object.freeze({
-	  input: 'input',
-	  output: 'output',
-	  aux: 'aux',
-	  topAux: 'topAux'
-	});
-
 	const BLOCK_TYPES$1 = {
 	  SIMPLE: 'simple',
 	  TRIGGER: 'trigger',
@@ -252,6 +413,48 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  WHITE: 'white',
 	  ORANGE: 'orange',
 	  BLUE: 'blue'
+	};
+	const FRAME_COLOR_NAMES = {
+	  GREY: 'grey',
+	  ORANGE: 'orange',
+	  GREEN: 'green',
+	  BLUE: 'blue',
+	  PURPLE: 'purple',
+	  PINK: 'pink'
+	};
+	const FRAME_BG_COLORS = {
+	  [FRAME_COLOR_NAMES.GREY]: 'var(--designer-bp-frame-grey-bg)',
+	  [FRAME_COLOR_NAMES.ORANGE]: 'var(--designer-bp-frame-orange-bg)',
+	  [FRAME_COLOR_NAMES.GREEN]: 'var(--designer-bp-frame-green-bg)',
+	  [FRAME_COLOR_NAMES.BLUE]: 'var(--designer-bp-frame-blue-bg)',
+	  [FRAME_COLOR_NAMES.PURPLE]: 'var(--designer-bp-frame-purple-bg)',
+	  [FRAME_COLOR_NAMES.PINK]: 'var(--designer-bp-frame-pink-bg)'
+	};
+	const FRAME_BORDER_COLORS = {
+	  [FRAME_COLOR_NAMES.GREY]: 'var(--designer-bp-frame-grey-br)',
+	  [FRAME_COLOR_NAMES.ORANGE]: 'var(--designer-bp-frame-orange-br)',
+	  [FRAME_COLOR_NAMES.GREEN]: 'var(--designer-bp-frame-green-br)',
+	  [FRAME_COLOR_NAMES.BLUE]: 'var(--designer-bp-frame-blue-br)',
+	  [FRAME_COLOR_NAMES.PURPLE]: 'var(--designer-bp-frame-purple-br)',
+	  [FRAME_COLOR_NAMES.PINK]: 'var(--designer-bp-frame-pink-br)'
+	};
+	const BLOCK_TOAST_TYPES = Object.freeze({
+	  ACTIVITY_PUBLIC_ERROR: 'activity-public-error'
+	});
+	const BUFFER_CONTENT_TYPES = {
+	  BLOCK: 'block',
+	  SELECTION: 'selection'
+	};
+	const ICON_BG_COLORS = {
+	  0: 'var(--designer-bp-ai-bg)',
+	  1: 'var(--designer-bp-entities-bg)',
+	  2: 'var(--designer-bp-employe-bg)',
+	  3: 'var(--designer-bp-technical-bg)',
+	  4: 'var(--designer-bp-communication-bg)',
+	  5: 'var(--designer-bp-storage-bg)',
+	  6: 'var(--designer-bp-afiliate-bg)',
+	  7: 'var(--designer-bp-ai-bg)',
+	  8: 'var(--designer-bp-ai-bg)'
 	};
 
 	const post = async (action, data) => {
@@ -288,11 +491,43 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  }
 	};
 
+	const createUniqueId = () => {
+	  const randomNumber = () => Math.floor(1000 + Math.random() * 9000);
+	  return `A${randomNumber()}_${randomNumber()}_${randomNumber()}_${randomNumber()}`;
+	};
+
+	function updateIdUrl(templateId) {
+	  const url = new URL(window.location.href);
+	  url.searchParams.set('ID', templateId);
+	  url.searchParams.delete('START_TRIGGER');
+	  history.replaceState(null, '', url.toString());
+	}
+
+	function handleResponseError(response) {
+	  var _response$errors;
+	  if (((_response$errors = response.errors) == null ? void 0 : _response$errors.length) > 0) {
+	    const [error] = response.errors;
+	    ui_notification.UI.Notification.Center.notify({
+	      content: main_core.Text.encode(error.message),
+	      autoHideDelay: 4000
+	    });
+	  } else {
+	    console.error(response);
+	  }
+	}
+
 	function deepEqual(a, b) {
 	  if (a === b) {
 	    return true;
 	  }
-	  if (!main_core.Type.isPlainObject(a) || !main_core.Type.isPlainObject(b)) {
+
+	  // eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+	  if (typeof a !== typeof b) {
+	    return false;
+	  }
+
+	  // eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+	  if (typeof a !== 'object' || a === null || b === null) {
 	    return false;
 	  }
 	  const keysA = Object.keys(a);
@@ -307,6 +542,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  }
 	  return true;
 	}
+
 	function isBlockPropertiesDifferent(currentBlock, newBlock) {
 	  if (currentBlock.node.title !== newBlock.node.title) {
 	    return true;
@@ -330,6 +566,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    return true;
 	  }
 	  return block.activity.Activated !== 'N';
+	}
+	function getBlockUserTitle(block) {
+	  var _block$activity2, _block$activity2$Prop, _block$node;
+	  const activityTitle = (_block$activity2 = block.activity) == null ? void 0 : (_block$activity2$Prop = _block$activity2.Properties) == null ? void 0 : _block$activity2$Prop.Title;
+	  const defaultNodeTitle = (_block$node = block.node) == null ? void 0 : _block$node.title;
+	  return activityTitle === defaultNodeTitle ? null : activityTitle;
 	}
 
 	function safeParse(input) {
@@ -377,6 +619,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	const AUX = 'aux';
 	function normalyzeInputOutputConnection(newConnection) {
 	  const {
+	    id,
 	    sourceBlockId,
 	    sourcePortId,
 	    sourcePort,
@@ -385,6 +628,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  } = newConnection;
 	  if (sourcePort.type === PORT_TYPES.output) {
 	    return {
+	      id,
 	      sourceBlockId,
 	      sourcePortId,
 	      targetBlockId,
@@ -392,6 +636,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    };
 	  }
 	  return {
+	    id,
 	    sourceBlockId: targetBlockId,
 	    sourcePortId: targetPortId,
 	    targetBlockId: sourceBlockId,
@@ -424,39 +669,50 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  };
 	}
 
-	const createUniqueId = () => {
-	  const randomNumber = () => Math.floor(1000 + Math.random() * 9000);
-	  return `A${randomNumber()}_${randomNumber()}_${randomNumber()}_${randomNumber()}`;
-	};
-
-	function updateIdUrl(templateId) {
-	  const url = new URL(window.location.href);
-	  url.searchParams.set('ID', templateId);
-	  url.searchParams.delete('START_TRIGGER');
-	  history.replaceState(null, '', url.toString());
-	}
-
-	function handleResponseError(response) {
-	  var _response$errors;
-	  if (((_response$errors = response.errors) == null ? void 0 : _response$errors.length) > 0) {
-	    const [error] = response.errors;
-	    ui_notification.UI.Notification.Center.notify({
-	      content: main_core.Text.encode(error.message),
-	      autoHideDelay: 4000
-	    });
-	  } else {
-	    console.error(response);
+	function addActivityIdsToSet(activity, activityIds) {
+	  if (!main_core.Type.isObject(activity)) {
+	    return;
+	  }
+	  if (main_core.Type.isStringFilled(activity == null ? void 0 : activity.Name)) {
+	    activityIds.add(activity.Name);
+	  }
+	  if (main_core.Type.isArrayFilled(activity == null ? void 0 : activity.Children)) {
+	    activity.Children.forEach(child => addActivityIdsToSet(child, activityIds));
 	  }
 	}
+	function cloneSingleBlockWithNewIds(block) {
+	  return cloneBlocksWithNewIds([block])[0];
+	}
+	function cloneBlocksWithNewIds(blocks) {
+	  const activityIds = findBlocksIds(blocks);
+	  const replaceMap = makeReplaceMap(activityIds);
+	  return cloneAndReplaceBlocksActivityIds(blocks, replaceMap);
+	}
+	function findBlocksIds(blocks) {
+	  const activityIds = new Set();
+	  blocks.forEach(block => {
+	    if (main_core.Type.isStringFilled(block == null ? void 0 : block.id)) {
+	      activityIds.add(block.id);
+	    }
+	    addActivityIdsToSet(block == null ? void 0 : block.activity, activityIds);
+	  });
+	  return activityIds;
+	}
+	function makeReplaceMap(activityIds) {
+	  const replaceMap = new Map();
+	  activityIds.forEach(id => {
+	    replaceMap.set(id, createUniqueId());
+	  });
+	  return replaceMap;
+	}
+	function cloneAndReplaceBlocksActivityIds(blocks, replaceMap) {
+	  let serialized = JSON.stringify(blocks);
+	  for (const [pattern, replacement] of replaceMap.entries()) {
+	    serialized = serialized.replaceAll(pattern, replacement);
+	  }
+	  return JSON.parse(serialized);
+	}
 
-	const PORT_LABELS = Object.freeze({
-	  input: 'G',
-	  output: 'E'
-	});
-	const PORT_POSITIONS = Object.freeze({
-	  left: 'left',
-	  right: 'right'
-	});
 	const BLOCK_TYPES$2 = {
 	  SetupTemplateActivity: 'SetupTemplateActivity'
 	};
@@ -473,6 +729,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    isOnline: true,
 	    blockCurrentTimestamps: {},
 	    blockSavedTimestamps: {},
+	    blockCurrentPublishErrors: {},
+	    connectionCurrentTimestamps: {},
+	    connectionSavedTimestamps: {},
 	    templatePublishStatus: TEMPLATE_PUBLISH_STATUSES.MAIN
 	  }),
 	  getters: {
@@ -487,7 +746,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      connections: state.connections,
 	      isOnline: state.isOnline,
 	      blockCurrentTimestamps: state.blockCurrentTimestamps,
-	      blockSavedTimestamps: state.blockSavedTimestamps
+	      blockSavedTimestamps: state.blockSavedTimestamps,
+	      connectionCurrentTimestamps: state.connectionCurrentTimestamps,
+	      connectionSavedTimestamps: state.connectionSavedTimestamps
 	    })
 	  },
 	  actions: {
@@ -533,30 +794,25 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      this.documentType = (_diagramData$document = diagramData == null ? void 0 : diagramData.documentType) != null ? _diagramData$document : [];
 	      this.documentTypeSigned = (_diagramData$document2 = diagramData == null ? void 0 : diagramData.documentTypeSigned) != null ? _diagramData$document2 : '';
 	      this.template = (_diagramData$template2 = diagramData == null ? void 0 : diagramData.template) != null ? _diagramData$template2 : {};
-	      this.blocks = this.normalyzeBlocks((_diagramData$blocks = diagramData == null ? void 0 : diagramData.blocks) != null ? _diagramData$blocks : []);
-	      this.setConnections((_diagramData$connecti = diagramData == null ? void 0 : diagramData.connections) != null ? _diagramData$connecti : []);
+	      this.blocks = (_diagramData$blocks = diagramData == null ? void 0 : diagramData.blocks) != null ? _diagramData$blocks : [];
+	      this.connections = (_diagramData$connecti = diagramData == null ? void 0 : diagramData.connections) != null ? _diagramData$connecti : [];
+	      const now = Date.now();
 	      for (const block of this.blocks) {
-	        var _block$node$updated, _block$node$published;
-	        const now = Date.now();
+	        var _block$node$updated;
 	        this.blockCurrentTimestamps[block.id] = (_block$node$updated = block.node.updated) != null ? _block$node$updated : now;
+	      }
+	      for (const block of diagramData.publishedBlocks) {
+	        var _block$node$published;
 	        this.blockSavedTimestamps[block.id] = (_block$node$published = block.node.published) != null ? _block$node$published : now;
 	      }
-	    },
-	    normalyzeBlocks(blocks) {
-	      return blocks.map(block => {
-	        const groupedPorts = Object.entries(block.ports).reduce((portsMap, [type, ports]) => {
-	          var _ports$map;
-	          portsMap[type] = (_ports$map = ports == null ? void 0 : ports.map(port => ({
-	            ...port,
-	            type
-	          }))) != null ? _ports$map : [];
-	          return portsMap;
-	        }, {});
-	        return {
-	          ...block,
-	          ports: groupedPorts
-	        };
-	      });
+	      for (const connection of this.connections) {
+	        var _connection$createdAt;
+	        this.connectionCurrentTimestamps[connection.id] = (_connection$createdAt = connection.createdAt) != null ? _connection$createdAt : now;
+	      }
+	      for (const connection of diagramData.publishedConnection) {
+	        var _connection$createdAt2;
+	        this.connectionSavedTimestamps[connection.id] = (_connection$createdAt2 = connection.createdAt) != null ? _connection$createdAt2 : now;
+	      }
 	    },
 	    getDeleteHandlerForBlockType(blockType) {
 	      if (blockType === BLOCK_TYPES$2.SetupTemplateActivity) {
@@ -609,9 +865,13 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        });
 	      });
 	      this.blocks.splice(blockIndex, 1);
+	      delete this.blockCurrentTimestamps[blockId];
 	    },
 	    setBlockCurrentTimestamp(block) {
 	      this.blockCurrentTimestamps[block.id] = Date.now();
+	    },
+	    setConnectionCurrentTimestamp(connectionId) {
+	      this.connectionCurrentTimestamps[connectionId] = Date.now();
 	    },
 	    updateBlockActivityField(id, activity) {
 	      const block = this.blocks.find(b => b.id === id);
@@ -619,6 +879,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        block.activity = activity;
 	      }
 	      this.updateBlockTimestamp(block);
+	      this.clearBlockErrorStatus(id);
 	    },
 	    updateBlockId(oldId, newId) {
 	      if (oldId === newId) {
@@ -647,15 +908,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        }
 	      });
 	    },
-	    updateTitle(newTitle) {
-	      this.template.NAME = newTitle;
-	    },
-	    updateDescription(newDescription) {
-	      this.template.DESCRIPTION = newDescription;
-	    },
-	    updateTemplateId(templateId) {
-	      this.templateId = templateId;
-	    },
 	    setBlocks(blocks) {
 	      this.blocks = blocks;
 	    },
@@ -669,10 +921,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      }
 	      this.blocks[blockIndex].node.publicationState = false;
 	    },
-	    setInputPorts(block, inputPorts) {
-	      Object.assign(block.ports, {
-	        input: inputPorts
-	      });
+	    setPorts(blockId, ports) {
+	      const block = this.blocks.find(b => b.id === blockId);
+	      if (!block) {
+	        return;
+	      }
+	      block.ports = ports;
 	    },
 	    async updateTemplateData(data) {
 	      await editorAPI.updateTemplateData({
@@ -687,9 +941,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	          ...block,
 	          node: {
 	            ...block.node,
-	            updated: this.blockCurrentTimestamps[block.id],
-	            published: this.blockSavedTimestamps[block.id]
+	            updated: this.blockCurrentTimestamps[block.id]
 	          }
+	        })),
+	        connections: this.connections.map(connection => ({
+	          ...connection,
+	          createdAt: this.connectionCurrentTimestamps[connection.id]
 	        }))
 	      };
 	      const {
@@ -700,27 +957,62 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      }
 	    },
 	    async publicTemplate() {
+	      const now = Date.now();
 	      const requestData = {
 	        ...this.diagramData,
 	        blocks: this.blocks.map(block => ({
 	          ...block,
 	          node: {
 	            ...block.node,
-	            updated: null,
-	            published: null
+	            updated: now,
+	            published: now
 	          }
+	        })),
+	        connections: this.connections.map(connection => ({
+	          ...connection,
+	          createdAt: this.connectionCurrentTimestamps[connection.id]
 	        }))
 	      };
-	      const {
-	        templateId
-	      } = await editorAPI.publicDiagramData(requestData);
-	      if (main_core.Type.isNumber(templateId)) {
-	        this.blockSavedTimestamps = {
-	          ...this.blockCurrentTimestamps
-	        };
-	        this.templateId = templateId;
-	        this.draftId = 0;
+	      try {
+	        const {
+	          templateId
+	        } = await editorAPI.publicDiagramData(requestData);
+	        this.blockCurrentPublishErrors = {};
+	        if (main_core.Type.isNumber(templateId)) {
+	          this.blockSavedTimestamps = {
+	            ...this.blockCurrentTimestamps
+	          };
+	          this.connectionSavedTimestamps = {
+	            ...this.connectionCurrentTimestamps
+	          };
+	          this.templateId = templateId;
+	          this.draftId = 0;
+	        }
+	      } catch (e) {
+	        var _e$data;
+	        if (main_core.Type.isArrayFilled((_e$data = e.data) == null ? void 0 : _e$data.activityErrors)) {
+	          this.setBlocksErrorStatus(e.data.activityErrors);
+	        }
+	        throw e;
 	      }
+	    },
+	    setBlocksErrorStatus(activityErrors) {
+	      this.blockCurrentPublishErrors = {};
+	      activityErrors.forEach(error => {
+	        const {
+	          activityName,
+	          code
+	        } = error;
+	        if (!main_core.Type.isStringFilled(activityName)) {
+	          return;
+	        }
+	        this.blockCurrentPublishErrors[activityName] = {
+	          code
+	        };
+	      });
+	    },
+	    clearBlockErrorStatus(blockId) {
+	      delete this.blockCurrentPublishErrors[blockId];
 	    },
 	    updateStatus(isOnline) {
 	      this.isOnline = isOnline;
@@ -729,7 +1021,20 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      this.blockCurrentTimestamps[block.id] = Date.now();
 	    },
 	    setBlockCurrentTimestamps(blockCurrentTimestamps) {
-	      Object.assign(this.blockCurrentTimestamps, blockCurrentTimestamps);
+	      Object.keys(this.blockCurrentTimestamps).forEach(key => delete this.blockCurrentTimestamps[key]);
+	      Object.assign(this.blockCurrentTimestamps, blockCurrentTimestamps != null ? blockCurrentTimestamps : {});
+	    },
+	    setConnectionCurrentTimestamps(connectionCurrentTimestamps) {
+	      Object.keys(this.connectionCurrentTimestamps).forEach(key => delete this.connectionCurrentTimestamps[key]);
+	      Object.assign(this.connectionCurrentTimestamps, connectionCurrentTimestamps != null ? connectionCurrentTimestamps : {});
+	    },
+	    setDiagramData(diagramData) {
+	      this.templateId = diagramData.templateId;
+	      this.documentType = diagramData.documentType;
+	      this.companyName = diagramData.companyName;
+	      this.template = diagramData.template;
+	      this.blocks = diagramData.blocks;
+	      this.connections = diagramData.connections;
 	    },
 	    updateExistedBlockProperties(newBlocks) {
 	      const currentBlockMap = getBlockMap(this.blocks);
@@ -743,82 +1048,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        }
 	      }
 	    },
-	    updateNodeTitle(block, title) {
-	      Object.assign(block.node, {
-	        title
-	      });
-	    },
-	    createPort(ports, {
-	      portId,
-	      type,
-	      label,
-	      portTitle
-	    }) {
-	      var _ports, _lastPort$title$split, _lastPort$title;
-	      const lastPort = (_ports = ports[ports.length - 1]) != null ? _ports : null;
-	      const [, count] = (_lastPort$title$split = lastPort == null ? void 0 : (_lastPort$title = lastPort.title) == null ? void 0 : _lastPort$title.split(label)) != null ? _lastPort$title$split : [];
-	      const title = portTitle != null ? portTitle : `${label}${Number(count != null ? count : 0) + 1}`;
-	      return {
-	        id: portId,
-	        title,
-	        type,
-	        position: type === PORT_TYPES.input ? PORT_POSITIONS.left : PORT_POSITIONS.right
-	      };
-	    },
-	    addRulePort(blockId, portId, type, portTitle) {
+	    updateNodeTitle(blockId, title) {
 	      const block = this.blocks.find(b => b.id === blockId);
 	      if (!block) {
 	        return;
 	      }
-	      const {
-	        ports
-	      } = block;
-	      let currentPorts = ports.input;
-	      let label = PORT_LABELS.input;
-	      if (type === PORT_TYPES.output) {
-	        currentPorts = ports.output;
-	        label = PORT_LABELS.output;
-	      }
-	      const rulePorts = currentPorts.filter(p => !p.isConnectionPort);
-	      const port = this.createPort(rulePorts, {
-	        portId,
-	        type,
-	        label,
-	        portTitle
-	      });
-	      currentPorts.push(port);
-	    },
-	    addConnectionPort(blockId, portId, type) {
-	      const block = this.blocks.find(b => b.id === blockId);
-	      if (!block) {
-	        return;
-	      }
-	      const {
-	        ports
-	      } = block;
-	      const currentPorts = type === PORT_TYPES.input ? ports.input : ports.output;
-	      const connectionPorts = currentPorts.filter(p => p.isConnectionPort);
-	      const port = this.createPort(connectionPorts, {
-	        portId,
-	        type,
-	        label: 'NG'
-	      });
-	      currentPorts.push({
-	        ...port,
-	        isConnectionPort: true
-	      });
-	    },
-	    deletePort(blockId, portId, type) {
-	      const block = this.blocks.find(b => b.id === blockId);
-	      if (!block) {
-	        return;
-	      }
-	      const {
-	        ports
-	      } = block;
-	      const currentPorts = type === PORT_TYPES.output ? ports.output : ports.input;
-	      const deletedPort = currentPorts.find(port => portId === port.id);
-	      currentPorts.splice(currentPorts.indexOf(deletedPort), 1);
+	      block.node.title = title;
 	    },
 	    updateTemplateConstants(event) {
 	      const {
@@ -857,25 +1092,75 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        return;
 	      }
 	      const newActivatedState = block.activity.Activated === 'Y' ? 'N' : 'Y';
+	      const actionLabel = newActivatedState === 'N' ? (_Loc$getMessage = main_core.Loc.getMessage('BIZPROCDESIGNER_STORES_DIAGRAM_ACTIVATE_OFF')) != null ? _Loc$getMessage : '' : (_Loc$getMessage2 = main_core.Loc.getMessage('BIZPROCDESIGNER_STORES_DIAGRAM_ACTIVATE_ON')) != null ? _Loc$getMessage2 : '';
 	      const applyChanges = () => {
 	        block.activity.Activated = newActivatedState;
 	        this.updateBlockActivityField(blockId, block.activity);
+	        ui_notification.UI.Notification.Center.notify({
+	          content: actionLabel,
+	          autoHideDelay: 4000
+	        });
 	      };
 	      if (skipDraft) {
 	        applyChanges();
 	        return;
 	      }
-	      const actionLabel = newActivatedState === 'N' ? (_Loc$getMessage = main_core.Loc.getMessage('BIZPROCDESIGNER_STORES_DIAGRAM_ACTIVATE_OFF')) != null ? _Loc$getMessage : '' : (_Loc$getMessage2 = main_core.Loc.getMessage('BIZPROCDESIGNER_STORES_DIAGRAM_ACTIVATE_ON')) != null ? _Loc$getMessage2 : '';
 	      try {
 	        applyChanges();
 	        await this.publicDraft();
-	        ui_notification.UI.Notification.Center.notify({
-	          content: actionLabel,
-	          autoHideDelay: 4000
-	        });
 	      } catch (error) {
 	        handleResponseError(error);
 	      }
+	    },
+	    updateBlockPublishStatus(block) {
+	      try {
+	        this.setBlockCurrentTimestamp(block);
+	        this.publicDraft();
+	        this.updateStatus(true);
+	      } catch {
+	        this.updateStatus(false);
+	      }
+	    },
+	    addBlock(block) {
+	      this.blocks.push(block);
+	    },
+	    updateFrameColorName(blockId, colorName) {
+	      const block = this.blocks.find(b => b.id === blockId);
+	      if (!block) {
+	        return;
+	      }
+	      block.node.frameColorName = colorName;
+	    }
+	  }
+	});
+
+	const useBufferStore = ui_vue3_pinia.defineStore('bizprocdesigner-editor-buffer', {
+	  state: () => ({
+	    copied: null
+	  }),
+	  getters: {
+	    isBufferEmpty() {
+	      return this.copied === null;
+	    }
+	  },
+	  actions: {
+	    copyBlock(block) {
+	      this.copied = {
+	        type: BUFFER_CONTENT_TYPES.BLOCK,
+	        content: JSON.parse(JSON.stringify(block))
+	      };
+	    },
+	    getBufferContent() {
+	      if (!this.copied) {
+	        return null;
+	      }
+	      if (this.copied.type === BUFFER_CONTENT_TYPES.BLOCK) {
+	        return {
+	          type: this.copied.type,
+	          content: cloneSingleBlockWithNewIds(this.copied.content)
+	        };
+	      }
+	      throw new Error('Unexpected copied content type');
 	    }
 	  }
 	});
@@ -887,10 +1172,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    UiBlockDiagram: ui_blockDiagram.BlockDiagram
 	  },
 	  props: {
+	    /** @type Array<Block> */
 	    blocks: {
 	      type: Array,
 	      default: () => []
 	    },
+	    /** @type Array<Connection> */
 	    connections: {
 	      type: Array,
 	      default: () => []
@@ -898,6 +1185,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    disabled: {
 	      type: Boolean,
 	      default: false
+	    },
+	    enableGrouping: {
+	      type: Boolean,
+	      default: false
+	    },
+	    /** @type Array<MenuItemOptions> */
+	    contextMenuItems: {
+	      type: Array,
+	      default: () => []
 	    }
 	  },
 	  emits: ['update:blocks', 'update:connections', 'blockTransitionEnd'],
@@ -912,6 +1208,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			:blocks="blocks"
 			:connections="connections"
 			:disabled="disabled"
+			:enableGrouping="enableGrouping"
+			:contextMenuItems="contextMenuItems"
 			@update:blocks="$emit('update:blocks', $event)"
 			@update:connections="$emit('update:connections', $event)"
 			@blockTransitionEnd="$emit('blockTransitionEnd', $event)"
@@ -957,6 +1255,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:connection="connection"
 				/>
 			</template>
+			<template #group-selection-box>
+				<slot name="group-selection-box"/>
+			</template>
 		</UiBlockDiagram>
 	`
 	};
@@ -967,6 +1268,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  base: 'editor-chart-block-container',
 	  highlighted: '--highlighted',
 	  deactivated: '--deactivated',
+	  hoverable: '--hoverable',
 	  [BLOCK_COLOR_NAMES.WHITE]: '--white',
 	  [BLOCK_COLOR_NAMES.ORANGE]: '--orange',
 	  [BLOCK_COLOR_NAMES.BLUE]: '--blue'
@@ -1001,24 +1303,32 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      type: Boolean,
 	      default: false
 	    },
-	    colorName: {
+	    hoverable: {
+	      type: Boolean,
+	      default: true
+	    },
+	    backgroundColor: {
 	      type: String,
-	      default: BLOCK_COLOR_NAMES.WHITE,
-	      validator(name) {
-	        return Object.values(BLOCK_COLOR_NAMES).includes(name);
-	      }
+	      default: null
+	    },
+	    borderColor: {
+	      type: String,
+	      default: null
 	    }
 	  },
 	  setup(props) {
 	    const {
 	      isOpen: isOpenContextMenu,
-	      showContextMenu
-	    } = ui_blockDiagram.useContextMenu(props.contextMenuItems);
+	      showMenu
+	    } = ui_blockDiagram.useContextMenu();
+	    const {
+	      isSelectionActive
+	    } = ui_blockDiagram.useBlockDiagram();
 	    const blockContainerClassNames = ui_vue3.computed(() => ({
 	      [BLOCK_CONTAINER_CLASS_NAMES.base]: true,
 	      [BLOCK_CONTAINER_CLASS_NAMES.highlighted]: props.highlighted,
 	      [BLOCK_CONTAINER_CLASS_NAMES.deactivated]: props.deactivated,
-	      [BLOCK_CONTAINER_CLASS_NAMES[props.colorName]]: true
+	      [BLOCK_CONTAINER_CLASS_NAMES.hoverable]: props.hoverable
 	    }));
 	    const blockContainerStyle = ui_vue3.computed(() => {
 	      const style = {};
@@ -1028,6 +1338,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      if (props.height !== null) {
 	        style.height = `${props.height}px`;
 	      }
+	      if (props.backgroundColor !== null) {
+	        style.backgroundColor = props.backgroundColor;
+	      }
+	      if (props.borderColor !== null) {
+	        style.borderColor = props.borderColor;
+	      }
 	      return style;
 	    });
 	    function onShowContextMenu(event) {
@@ -1035,7 +1351,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      if (props.disabled) {
 	        return;
 	      }
-	      showContextMenu(event);
+	      showMenu({
+	        clientX: event.clientX,
+	        clientY: event.clientY
+	      }, {
+	        items: props.contextMenuItems
+	      });
 	    }
 	    return {
 	      isOpenContextMenu,
@@ -1077,7 +1398,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    },
 	    size: {
 	      type: [Number, String],
-	      default: 16
+	      default: 18
 	    },
 	    color: {
 	      type: String,
@@ -1272,6 +1593,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      type: String,
 	      default: null
 	    },
+	    style: {
+	      type: String,
+	      default: null
+	    },
 	    loading: Boolean
 	  },
 	  emits: ['click', 'mainClick', 'menuClick'],
@@ -1305,6 +1630,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        }
 	      },
 	      immediate: true
+	    },
+	    style(style) {
+	      this.button.setStyle(style);
 	    }
 	  },
 	  created() {
@@ -1312,6 +1640,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      id: this.id,
 	      text: this.text,
 	      useAirDesign: true,
+	      style: this.style,
 	      onclick: () => {
 	        this.$emit('click');
 	      },
@@ -1346,6 +1675,11 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	`
 	};
 
+	const BLOCK_LAYOUT_CLASS_NAMES = {
+	  base: 'editor-chart-block-layout',
+	  hoverable: '--hoverable',
+	  openedMenu: '--opened-menu'
+	};
 	const TOP_MENU_CLASS_NAMES = {
 	  base: 'editor-chart-block-layout__top-menu',
 	  show: '--show',
@@ -1389,11 +1723,14 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    disabled: {
 	      type: Boolean,
 	      default: false
-	    }
-	  },
-	  computed: {
-	    activationIcon() {
-	      return this.block.activity.Activated === 'Y' ? this.iconSet.PAUSE_L : this.iconSet.PLAY_L;
+	    },
+	    isActivationVisible: {
+	      type: Boolean,
+	      default: true
+	    },
+	    hoverable: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  setup(props) {
@@ -1401,15 +1738,32 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    const slots = ui_vue3.useSlots();
 	    const {
 	      isOpen,
-	      showContextMenu,
+	      showMenu,
 	      closeContextMenu
-	    } = ui_blockDiagram.useContextMenu(props.moreMenuItems);
+	    } = ui_blockDiagram.useContextMenu();
+	    const {
+	      highlitedBlockIds,
+	      isSelectionActive
+	    } = ui_blockDiagram.useBlockDiagram();
 	    const isShowButtonMore = ui_vue3.computed(() => props.moreMenuItems.length > 0);
-	    const topMenuClassNames = ui_vue3.computed(() => ({
-	      [TOP_MENU_CLASS_NAMES.base]: true,
-	      [TOP_MENU_CLASS_NAMES.show]: ui_vue3.toValue(isOpen) || props.topMenuOpened,
-	      [TOP_MENU_CLASS_NAMES.hide]: props.dragged || props.resized
-	    }));
+	    const isGroupSelected = ui_vue3.computed(() => {
+	      return (ui_vue3.toValue(highlitedBlockIds) || []).length > 1;
+	    });
+	    const blockLayoutClassNames = ui_vue3.computed(() => {
+	      const isHoverEnabled = props.hoverable && !ui_vue3.toValue(isSelectionActive) && !isGroupSelected;
+	      return {
+	        [BLOCK_LAYOUT_CLASS_NAMES.base]: true,
+	        [BLOCK_LAYOUT_CLASS_NAMES.hoverable]: isHoverEnabled
+	      };
+	    });
+	    const topMenuClassNames = ui_vue3.computed(() => {
+	      const isMenuHidden = props.dragged || props.resized || ui_vue3.toValue(isSelectionActive) || ui_vue3.toValue(isGroupSelected);
+	      return {
+	        [TOP_MENU_CLASS_NAMES.base]: true,
+	        [TOP_MENU_CLASS_NAMES.show]: ui_vue3.toValue(isOpen) || props.topMenuOpened,
+	        [TOP_MENU_CLASS_NAMES.hide]: isMenuHidden
+	      };
+	    });
 	    const statusClassNames = ui_vue3.computed(() => ({
 	      [STATUS_CLASS_NAMES.base]: true,
 	      [STATUS_CLASS_NAMES.hide]: props.dragged || props.resized || !slots.status
@@ -1420,9 +1774,11 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        top = 0,
 	        right = 0
 	      } = (_toValue$$el$getBound = (_toValue = ui_vue3.toValue(buttonMore)) == null ? void 0 : (_toValue$$el = _toValue.$el) == null ? void 0 : _toValue$$el.getBoundingClientRect()) != null ? _toValue$$el$getBound : {};
-	      showContextMenu({
+	      showMenu({
 	        clientX: right + OFFSET_MORE_MENU_RIGHT,
 	        clientY: top - OFFSET_MORE_MENU_TOP
+	      }, {
+	        items: props.moreMenuItems
 	      });
 	    }
 	    const onToggleBlockActivation = ui_vue3.inject('onToggleBlockActivation');
@@ -1440,6 +1796,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      iconSet: ui_iconSet_api_vue.Outline,
 	      isOpen,
 	      isShowButtonMore,
+	      blockLayoutClassNames,
 	      topMenuClassNames,
 	      statusClassNames,
 	      onOpenMoreMenu,
@@ -1447,9 +1804,14 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      handleIconClick
 	    };
 	  },
+	  computed: {
+	    activationIcon() {
+	      return this.block.activity.Activated === ACTIVATION_STATUS.ACTIVE ? this.iconSet.PAUSE_L : this.iconSet.PLAY_L;
+	    }
+	  },
 	  template: `
 		<div
-			class="editor-chart-block-layout"
+			:class="blockLayoutClassNames"
 			ref="editorBlockMenu"
 			@mousedown="onCloseMoreMenu"
 		>
@@ -1470,6 +1832,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 						name="top-menu"
 					/>
 					<IconButton
+						v-if="isActivationVisible"
 						:icon-name="activationIcon"
 						@click="handleIconClick"
 					/>
@@ -1575,6 +1938,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    subIconExternal: {
 	      type: Boolean,
 	      default: false
+	    },
+	    title: {
+	      type: String,
+	      default: ''
 	    }
 	  },
 	  template: `
@@ -1593,7 +1960,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					<slot name="subIcon"/>
 				</div>
 			</template>
-			<div class="editor-chart-block-header__title">{{ block.node?.title }}</div>
+			<div class="editor-chart-block-header__title">{{ title || block.node?.title }}</div>
 		</div>
 	`
 	};
@@ -1610,14 +1977,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  bgColor_8: '--background-color-8'
 	};
 	const ICON_COLORS = {
-	  0: '#9C5CEF',
-	  1: '#188AE6',
-	  2: '#E08907',
-	  3: '#8E96A2',
-	  4: '#3CB811',
-	  5: '#52BCBC',
-	  6: '#B4B959',
-	  7: '#FFFFFF'
+	  0: 'var(--designer-bp-ai-icons)',
+	  1: 'var(--designer-bp-entities-icons)',
+	  2: 'var(--designer-bp-employe-icons)',
+	  3: 'var(--designer-bp-technical-icons)',
+	  4: 'var(--designer-bp-communication-icons)',
+	  5: 'var(--designer-bp-storage-icons)',
+	  6: 'var(--designer-bp-afiliate-icons)',
+	  7: 'var(--ui-color-palette-white-base)',
+	  8: 'var(--ui-color-palette-white-base)'
 	};
 	const DEFAULT_ICON_NAME = ui_iconSet_api_vue.Outline.FILE;
 
@@ -1709,36 +2077,44 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      default: false
 	    }
 	  },
-	  setup(props) {
-	    const inPort = ui_vue3.computed(() => {
-	      var _props$block$ports$in, _props$block$ports, _props$block$ports$in2;
-	      if (props.hideInputPorts) {
-	        return null;
-	      }
-	      return (_props$block$ports$in = (_props$block$ports = props.block.ports) == null ? void 0 : (_props$block$ports$in2 = _props$block$ports.input) == null ? void 0 : _props$block$ports$in2[0]) != null ? _props$block$ports$in : null;
-	    });
-	    const outPort = ui_vue3.computed(() => {
-	      var _props$block$ports$ou, _props$block$ports2, _props$block$ports2$o;
-	      return (_props$block$ports$ou = (_props$block$ports2 = props.block.ports) == null ? void 0 : (_props$block$ports2$o = _props$block$ports2.output) == null ? void 0 : _props$block$ports2$o[0]) != null ? _props$block$ports$ou : null;
-	    });
-	    const auxPort = ui_vue3.computed(() => {
-	      var _props$block$ports$au, _props$block$ports3, _props$block$ports3$a;
-	      return (_props$block$ports$au = (_props$block$ports3 = props.block.ports) == null ? void 0 : (_props$block$ports3$a = _props$block$ports3.aux) == null ? void 0 : _props$block$ports3$a[0]) != null ? _props$block$ports$au : null;
-	    });
-	    const topAuxPort = ui_vue3.computed(() => {
-	      var _props$block$ports$to, _props$block$ports4, _props$block$ports4$t;
-	      return (_props$block$ports$to = (_props$block$ports4 = props.block.ports) == null ? void 0 : (_props$block$ports4$t = _props$block$ports4.topAux) == null ? void 0 : _props$block$ports4$t[0]) != null ? _props$block$ports$to : null;
-	    });
+	  setup() {
 	    return {
-	      inPort,
-	      outPort,
-	      auxPort,
-	      topAuxPort,
 	      validationInputOutputRule,
-	      validationAuxRule,
 	      normalyzeInputOutputConnection,
+	      validationAuxRule,
 	      normalyzeAuxConnection
 	    };
+	  },
+	  computed: {
+	    portsMap() {
+	      return this.block.ports.reduce((portsMap, port) => {
+	        if (portsMap.has(port.type)) {
+	          portsMap.get(port.type).push(port);
+	        } else {
+	          portsMap.set(port.type, [port]);
+	        }
+	        return portsMap;
+	      }, new Map());
+	    },
+	    inPort() {
+	      var _this$portsMap$get$, _this$portsMap$get;
+	      if (this.hideInputPorts) {
+	        return null;
+	      }
+	      return (_this$portsMap$get$ = (_this$portsMap$get = this.portsMap.get(PORT_TYPES.input)) == null ? void 0 : _this$portsMap$get[0]) != null ? _this$portsMap$get$ : null;
+	    },
+	    outPort() {
+	      var _this$portsMap$get$2, _this$portsMap$get2;
+	      return (_this$portsMap$get$2 = (_this$portsMap$get2 = this.portsMap.get(PORT_TYPES.output)) == null ? void 0 : _this$portsMap$get2[0]) != null ? _this$portsMap$get$2 : null;
+	    },
+	    auxPort() {
+	      var _this$portsMap$get$3, _this$portsMap$get3;
+	      return (_this$portsMap$get$3 = (_this$portsMap$get3 = this.portsMap.get(PORT_TYPES.aux)) == null ? void 0 : _this$portsMap$get3[0]) != null ? _this$portsMap$get$3 : null;
+	    },
+	    topAuxPort() {
+	      var _this$portsMap$get$4, _this$portsMap$get4;
+	      return (_this$portsMap$get$4 = (_this$portsMap$get4 = this.portsMap.get(PORT_TYPES.topAux)) == null ? void 0 : _this$portsMap$get4[0]) != null ? _this$portsMap$get$4 : null;
+	    }
 	  },
 	  template: `
 		<div class="editor-chart-ports-inout-center">
@@ -1824,8 +2200,28 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	};
 
 	// @vue/component
+	const BlockStatusPublishError = {
+	  name: 'BlockStatusPublishError',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  computed: {
+	    Outline: () => ui_iconSet_api_vue.Outline
+	  },
+	  template: `
+		<div class="editor-chart-block-status-publish-error">
+			<div class="editor-chart-block-status-publish-error__icon">
+				<BIcon :name="Outline.ALERT_ACCENT" :size="16"/>
+			</div>
+			{{ $Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_PUBLISH_ERROR') }}
+		</div>
+	`
+	};
+
+	const NOT_REALLY_COMPLEX_BLOCK = new Set(['ForEachActivity', 'IfElseBranchActivity']);
+	// @vue/component
 	const BlockComplexContent = {
-	  name: 'block-complex',
+	  name: 'BlockComplexContent',
 	  components: {
 	    Port: ui_blockDiagram.Port
 	  },
@@ -1835,6 +2231,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      type: Object,
 	      required: true
 	    },
+	    /** @type Array<TPort> */
+	    ports: {
+	      type: Array,
+	      required: true
+	    },
+	    title: {
+	      type: String,
+	      required: true
+	    },
 	    disabled: {
 	      type: Boolean,
 	      default: false
@@ -1842,7 +2247,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  },
 	  setup() {
 	    const {
-	      updatePortPosition
+	      updatePortPosition,
+	      newConnection
 	    } = ui_blockDiagram.useBlockDiagram();
 	    const {
 	      getMessage
@@ -1852,6 +2258,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    } = useFeature();
 	    return {
 	      updatePortPosition,
+	      newConnection,
 	      getMessage,
 	      isFeatureAvailable,
 	      normalyzeInputOutputConnection,
@@ -1859,33 +2266,42 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    };
 	  },
 	  computed: {
+	    inputPorts() {
+	      return this.ports.filter(port => port.type === PORT_TYPES.input);
+	    },
+	    outputPorts() {
+	      return this.ports.filter(port => port.type === PORT_TYPES.output);
+	    },
 	    rulePorts() {
-	      return this.block.ports.input.filter(port => !port.isConnectionPort);
+	      return this.inputPorts.filter(port => !port.isConnectionPort);
 	    },
 	    connectionPorts() {
-	      return this.block.ports.input.filter(port => port.isConnectionPort);
+	      return this.inputPorts.filter(port => port.isConnectionPort);
 	    },
 	    inputPortsLength() {
-	      return this.block.ports.input.length;
+	      return this.inputPorts.length;
 	    },
 	    outputPortsLength() {
-	      return this.block.ports.output.length;
+	      return this.outputPorts.length;
 	    },
 	    areConnectionsAvailable() {
 	      return this.isFeatureAvailable(bizprocdesigner_feature.FeatureCode.complexNodeConnections) && this.connectionPorts.length > 0;
+	    },
+	    isReallyComplexBlock() {
+	      return !NOT_REALLY_COMPLEX_BLOCK.has(this.block.activity.Type);
 	    }
 	  },
 	  watch: {
 	    inputPortsLength() {
 	      this.$nextTick(() => {
-	        this.block.ports.input.forEach(port => {
+	        this.inputPorts.forEach(port => {
 	          this.updatePortPosition(this.block.id, port.id);
 	        });
 	      });
 	    },
 	    outputPortsLength() {
 	      this.$nextTick(() => {
-	        this.block.ports.output.forEach(port => {
+	        this.outputPorts.forEach(port => {
 	          this.updatePortPosition(this.block.id, port.id);
 	        });
 	      });
@@ -1893,7 +2309,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  },
 	  template: `
 		<div class="block-complex">
-			<slot name="header" />
+			<slot
+				name="header"
+				:title="title"
+			/>
 			<div class="block-complex__content">
 				<div class="block-complex__content_row block-complex__content_rules">
 					<div class="block-complex__content_col">
@@ -1915,14 +2334,20 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 							/>
 							<span class="block-complex__content_col-value-text">{{ port.title }}</span>
 						</div>
-						<slot name="addPortPoint" position="left" />
+						<div class="block-complex__content_col-value">
+							<slot
+								v-if="isReallyComplexBlock"
+								name="portPlaceholder"
+								:ports="rulePorts"
+							/>
+						</div>
 					</div>
 					<div class="block-complex__content_col --right">
 						<span class="block-complex__content_label">
 							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_BLOCK_RULES_OUTPUT_TITLE') }}
 						</span>
 						<div
-							v-for="port in block.ports.output"
+							v-for="port in outputPorts"
 							:key="port.id"
 							class="block-complex__content_col-value"
 						>
@@ -1936,7 +2361,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 								position="right"
 							/>
 						</div>
-						<slot name="addPortPoint" position="right" />
 					</div>
 				</div>
 				<div
@@ -1961,10 +2385,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 								/>
 								<span class="block-complex__content_col-value-text">{{ port.title }}</span>
 							</div>
-							<slot name="addPortPoint" position="left" />
-						</div>
-						<div class="block-complex__content_col --right">
-							<slot name="addPortPoint" position="right" />
 						</div>
 					</div>
 				</div>
@@ -1973,17 +2393,183 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	`
 	};
 
+	let _$1 = t => t,
+	  _t$1;
+
 	// @vue/component
 	const BlockTopTitle = {
-	  name: 'block-top-title',
+	  name: 'BlockTopTitle',
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
 	  props: {
 	    title: {
 	      type: String,
-	      required: true
+	      required: false,
+	      default: ''
+	    },
+	    description: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    }
+	  },
+	  setup() {
+	    const {
+	      zoom,
+	      transformX,
+	      transformY
+	    } = ui_blockDiagram.useBlockDiagram();
+	    return {
+	      zoom,
+	      transformX,
+	      transformY
+	    };
+	  },
+	  data() {
+	    return {
+	      popupInstance: null,
+	      isOverflowing: false,
+	      resizeObserver: null
+	    };
+	  },
+	  computed: {
+	    displayText() {
+	      if (this.title) {
+	        return this.title;
+	      }
+	      return this.description || '';
+	    },
+	    tooltipContent() {
+	      return main_core.Tag.render(_t$1 || (_t$1 = _$1`
+				<div class="editor-chart-tooltip">
+				   <h3 class="editor-chart-tooltip__title">${0}</h3>
+				   <p class="editor-chart-tooltip__description">${0}</p>
+				</div>
+			`), main_core.Text.encode(this.title), main_core.Text.encode(this.description));
+	    },
+	    shouldShowTooltip() {
+	      return this.isOverflowing || Boolean(this.title && this.description);
+	    },
+	    hintOptions() {
+	      if (!this.shouldShowTooltip) {
+	        return null;
+	      }
+	      return {
+	        text: this.tooltipContent,
+	        popupOptions: {
+	          offsetTop: -10,
+	          bindOptions: {
+	            position: 'top'
+	          },
+	          angle: {
+	            position: 'bottom',
+	            offset: 154
+	          },
+	          className: 'editor-chart-tooltip-content',
+	          width: 340,
+	          background: 'var(--ui-color-accent-soft-element-blue)',
+	          events: {
+	            onShow: event => {
+	              const popup = event.getTarget();
+	              if (popup) {
+	                this.popupInstance = ui_vue3.markRaw(popup);
+	                requestAnimationFrame(() => {
+	                  this.applyInitialScale(popup);
+	                });
+	              }
+	            },
+	            onClose: () => {
+	              this.popupInstance = null;
+	            }
+	          }
+	        }
+	      };
+	    }
+	  },
+	  watch: {
+	    zoom: 'closePopup',
+	    transformX: 'closePopup',
+	    transformY: 'closePopup',
+	    displayText() {
+	      this.$nextTick(() => {
+	        this.checkOverflow();
+	      });
+	    }
+	  },
+	  mounted() {
+	    this.checkOverflow();
+	    if (this.$refs.textContainer && main_core.Type.isFunction(ResizeObserver)) {
+	      this.resizeObserver = new ResizeObserver(() => {
+	        this.checkOverflow();
+	      });
+	      this.resizeObserver.observe(this.$refs.textContainer);
+	    }
+	  },
+	  beforeUnmount() {
+	    if (this.resizeObserver) {
+	      this.resizeObserver.disconnect();
+	      this.resizeObserver = null;
+	    }
+	  },
+	  methods: {
+	    checkOverflow() {
+	      const element = this.$refs.textContainer;
+	      if (element) {
+	        this.isOverflowing = element.scrollWidth > element.clientWidth;
+	      }
+	    },
+	    closePopup() {
+	      if (this.popupInstance) {
+	        this.popupInstance.close();
+	        this.popupInstance = null;
+	      }
+	    },
+	    applyInitialScale(popup) {
+	      if (!this.zoom || !popup) {
+	        return;
+	      }
+	      const container = popup.getPopupContainer();
+	      const bind = popup.bindElement;
+	      if (!container || !bind) {
+	        return;
+	      }
+	      if (this.zoom === 1) {
+	        this.applyDefaultScale(container, bind);
+	      } else {
+	        this.applyZoomedScale(container, bind, this.zoom);
+	      }
+	    },
+	    getOffsetAnchor(bind) {
+	      if (this.isOverflowing && this.$refs.textContainer) {
+	        return this.$refs.textContainer;
+	      }
+	      return bind;
+	    },
+	    getCenterOffset(container, bind) {
+	      const popupRect = container.getBoundingClientRect();
+	      const anchor = this.getOffsetAnchor(bind);
+	      const bindRect = anchor.getBoundingClientRect();
+	      const bindCenterX = bindRect.left + bindRect.width / 2;
+	      const popupCenterX = popupRect.left + popupRect.width / 2;
+	      return bindCenterX - popupCenterX;
+	    },
+	    applyDefaultScale(container, bind) {
+	      const dx = this.getCenterOffset(container, bind);
+	      main_core.Dom.style(container, 'transform', `translate(${dx}px, 0)`);
+	      main_core.Dom.style(container, 'transformOrigin', '0 0');
+	    },
+	    applyZoomedScale(container, bind, scale) {
+	      main_core.Dom.style(container, 'transformOrigin', 'center bottom');
+	      const dx = this.getCenterOffset(container, bind);
+	      const adjustedDx = dx / scale;
+	      main_core.Dom.style(container, 'transform', `scale(${scale}) translate(${adjustedDx}px, 0)`);
 	    }
 	  },
 	  template: `
-		<h3 class="editor-chart-block-top-title">{{ title }}</h3>
+		<h3 class="editor-chart-block-top-title" ref="textContainer">
+			<span v-if="displayText" v-hint="hintOptions">{{ displayText }}</span>
+		</h3>
 	`
 	};
 
@@ -2189,6 +2775,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    loading: {
 	      type: Boolean,
 	      default: false
+	    },
+	    style: {
+	      type: String,
+	      default: null
 	    }
 	  },
 	  emits: ['change'],
@@ -2220,6 +2810,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 				:text="text"
 				:icon="icon"
 				:loading="loading"
+				:style="style"
 				@mainClick="$emit('change')"
 				@menuClick="onToggleDropdown"
 			/>
@@ -2740,6 +3331,197 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	`
 	};
 
+	let _$2 = t => t,
+	  _t$2,
+	  _t2;
+	const OPTION_ITEM_CLASS_NAMES = {
+	  BASE: 'editor-chart-menu-top-btn__item',
+	  CHANGED: '--changed'
+	};
+	const OFFSET_LEFT_COLOR_MENU = 70;
+	const OFFSET_TOP_COLOR_MENU = 130;
+	const POPUP_MIN_WIDTH = 145;
+
+	// @vue/component
+	const ColorMenuTopBtn = {
+	  name: 'ColorMenuTopBtn',
+	  components: {
+	    IconButton
+	  },
+	  props: {
+	    colorName: {
+	      type: String,
+	      required: true
+	    },
+	    options: {
+	      type: Array,
+	      default: () => []
+	    }
+	  },
+	  emits: ['update:colorName', 'update:open'],
+	  setup() {
+	    const {
+	      isOpen,
+	      showPopup
+	    } = ui_blockDiagram.useContextMenu();
+	    return {
+	      iconSet: ui_iconSet_api_vue.Outline,
+	      isOpen,
+	      showPopup
+	    };
+	  },
+	  data() {
+	    return {
+	      optionElements: new Map()
+	    };
+	  },
+	  watch: {
+	    colorName(newColorName, oldColorName) {
+	      main_core.Dom.removeClass(this.optionElements.get(oldColorName), OPTION_ITEM_CLASS_NAMES.CHANGED);
+	      main_core.Dom.addClass(this.optionElements.get(newColorName), OPTION_ITEM_CLASS_NAMES.CHANGED);
+	    },
+	    options: {
+	      handler(newOptions, oldOptions = []) {
+	        oldOptions.forEach(option => this.optionElements.delete(option));
+	        newOptions.forEach(option => this.optionElements.set(option, this.getMenuItem(option)));
+	      },
+	      immediate: true
+	    },
+	    isOpen(isOpen) {
+	      this.$emit('update:open', isOpen);
+	    }
+	  },
+	  methods: {
+	    getMenuItemClassNames(colorName) {
+	      const classNames = [OPTION_ITEM_CLASS_NAMES.BASE, `--${colorName}`];
+	      if (this.colorName === colorName) {
+	        classNames.push(OPTION_ITEM_CLASS_NAMES.CHANGED);
+	      }
+	      return classNames.join(' ');
+	    },
+	    getMenuItem(colorName) {
+	      const menuItem = main_core.Tag.render(_t$2 || (_t$2 = _$2`
+				<button class="${0}">
+					<div class="editor-chart-menu-top-btn__icon-check-wrap">
+						<div
+							class="ui-icon-set --circle-check editor-chart-menu-top-btn__icon-check"
+							style="--ui-icon-set__icon-size: 14px;"
+						>
+						</div>
+					</div>
+				</button>
+			`), this.getMenuItemClassNames(colorName));
+	      main_core.Event.bind(menuItem, 'click', () => {
+	        this.$emit('update:colorName', colorName);
+	      });
+	      return menuItem;
+	    },
+	    getMenuContent() {
+	      const content = main_core.Tag.render(_t2 || (_t2 = _$2`
+				<div class="editor-chart-menu-top-btn__menu">
+				</div>
+			`));
+	      this.options.forEach(option => {
+	        main_core.Dom.append(this.optionElements.get(option), content);
+	      });
+	      return content;
+	    },
+	    onOpenColorMenu() {
+	      var _this$$refs$colorMenu, _this$$refs$colorMenu2, _this$$refs$colorMenu3;
+	      const {
+	        top = 0,
+	        left = 0
+	      } = (_this$$refs$colorMenu = (_this$$refs$colorMenu2 = this.$refs.colorMenuBtn) == null ? void 0 : (_this$$refs$colorMenu3 = _this$$refs$colorMenu2.$el) == null ? void 0 : _this$$refs$colorMenu3.getBoundingClientRect()) != null ? _this$$refs$colorMenu : {};
+	      this.showPopup({
+	        clientX: left - OFFSET_LEFT_COLOR_MENU,
+	        clientY: top - OFFSET_TOP_COLOR_MENU
+	      }, {
+	        content: this.getMenuContent(),
+	        minWidth: POPUP_MIN_WIDTH
+	      });
+	    }
+	  },
+	  template: `
+		<IconButton
+			ref="colorMenuBtn"
+			:active="isOpen"
+			:icon-name="iconSet.PALETTE"
+			:color="'var(--ui-color-palette-gray-40)'"
+			@click="onOpenColorMenu"
+		/>
+	`
+	};
+
+	// @vue/component
+	const BlockComplexPortPlaceholder = {
+	  name: 'block-complex-port-placeholder',
+	  props: {
+	    blockId: {
+	      type: String,
+	      required: true
+	    },
+	    /** @type Array<Port> */
+	    ports: {
+	      type: Array,
+	      required: true
+	    }
+	  },
+	  emits: ['addPort'],
+	  setup() {
+	    const {
+	      newConnection,
+	      addConnection
+	    } = ui_blockDiagram.useBlockDiagram();
+	    return {
+	      newConnection,
+	      addConnection
+	    };
+	  },
+	  computed: {
+	    title() {
+	      var _lastPort$title$split;
+	      if (!this.ports) {
+	        return '';
+	      }
+	      const lastPort = this.ports[this.ports.length - 1];
+	      const [label, num] = (_lastPort$title$split = lastPort == null ? void 0 : lastPort.title.split(/(\d+)/)) != null ? _lastPort$title$split : ['G', 0];
+	      return `${label}${Number(num) + 1}`;
+	    }
+	  },
+	  methods: {
+	    onMouseUp() {
+	      if (!this.newConnection) {
+	        return;
+	      }
+	      this.$emit('addPort', this.title);
+	      this.$nextTick(() => {
+	        const addedPort = this.ports[this.ports.length - 1];
+	        this.addConnection({
+	          ...this.newConnection,
+	          targetBlockId: this.blockId,
+	          targetPort: addedPort,
+	          targetPortId: addedPort.id
+	        });
+	      });
+	    }
+	  },
+	  template: `
+		<div
+			class="complex-block-port-placeholder"
+			@mouseup="onMouseUp"
+		>
+			<svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#B1BBC7" xmlns="http://www.w3.org/2000/svg">
+				<circle cx="4.5" cy="4.5" r="4" fill="white" />
+				<rect x="4.25" y="2.25" width="0.5" height="4.5" rx="0.25" stroke-width="0.5"/>
+				<rect x="2.25" y="4.75" width="0.5" height="4.5" rx="0.25" transform="rotate(-90 2.25 4.75)" stroke-width="0.5"/>
+			</svg>
+			<span class="complex-block-port-placeholder__title">
+				{{ title }}
+			</span>
+		</div>
+	`
+	};
+
 	const post$1 = async (action, data) => {
 	  const response = await main_core.ajax.runAction(`bizprocdesigner.v2.${action}`, {
 	    method: 'POST',
@@ -2838,46 +3620,32 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  return `i${nextPortNumber}`;
 	};
 	const evaluateConditionExpressionFieldTitle = (connectedBlocks, field) => {
-	  var _fieldId, _store$template$found;
+	  var _fieldIdParts$, _fieldId, _store$template$found;
 	  const store = diagramStore();
 	  const {
 	    object,
 	    fieldId
 	  } = field;
-	  const makeTitle = (o, f) => [o, f].join(' / ');
-	  const failoverTitle = makeTitle(object, fieldId);
+	  const fieldIdParts = fieldId.split('.');
+	  const fieldIdProperty = (_fieldIdParts$ = fieldIdParts[0]) != null ? _fieldIdParts$ : null;
+	  const makeTitle = parts => parts.filter(Boolean).join(' / ');
+	  const failoverTitle = makeTitle([object, fieldId]);
 
 	  /** @todo optimize this logic later */
 	  if (!Object.values(FIELD_OBJECT_TYPES).includes(object)) {
 	    var _foundActivity$Return, _foundActivity$Proper, _foundActivity$Proper2;
-	    const [foundBlock, foundActivity] = (() => {
-	      for (const block of connectedBlocks) {
-	        const {
-	          activity
-	        } = block;
-	        if ((activity == null ? void 0 : activity.Name) === object) {
-	          return [block, activity];
-	        }
-	        if (!main_core.Type.isArrayFilled(activity == null ? void 0 : activity.Children)) {
-	          continue;
-	        }
-	        const childrenActivity = activity.Children.find(child => {
-	          return child.Name === object;
-	        });
-	        if (childrenActivity) {
-	          return [block, childrenActivity];
-	        }
-	      }
-	      return [null, null];
-	    })();
+	    const {
+	      block: foundBlock,
+	      activity: foundActivity
+	    } = findBlockAndActivityByName(connectedBlocks, object);
 	    if (!foundBlock || !foundActivity) {
 	      return failoverTitle;
 	    }
-	    const foundProperty = ((_foundActivity$Return = foundActivity.ReturnProperties) != null ? _foundActivity$Return : []).find(prop => prop.Id === fieldId);
+	    const foundProperty = ((_foundActivity$Return = foundActivity.ReturnProperties) != null ? _foundActivity$Return : []).find(prop => prop.Id === fieldIdProperty);
 	    if (!foundProperty) {
 	      return failoverTitle;
 	    }
-	    return makeTitle((_foundActivity$Proper = (_foundActivity$Proper2 = foundActivity.Properties) == null ? void 0 : _foundActivity$Proper2.Title) != null ? _foundActivity$Proper : foundBlock.node.title, foundProperty.Name);
+	    return makeTitle([(_foundActivity$Proper = (_foundActivity$Proper2 = foundActivity.Properties) == null ? void 0 : _foundActivity$Proper2.Title) != null ? _foundActivity$Proper : foundBlock.node.title, foundProperty.Name, ...fieldIdParts.slice(1)]);
 	  }
 	  const map = [{
 	    key: 'PARAMETERS',
@@ -2898,50 +3666,122 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  }
 	  const fieldName = (_fieldId = ((_store$template$found = store.template[foundObject.key]) != null ? _store$template$found : {})[fieldId]) == null ? void 0 : _fieldId.Name;
 	  if (fieldName) {
-	    return makeTitle(foundObject.title, fieldName);
+	    return makeTitle([foundObject.title, fieldName]);
 	  }
 	  return failoverTitle;
 	};
-	const evaluateActionExpressionDocumentTitle = (connectedBlocks, document) => {
-	  var _foundActivity$Return2, _foundActivity$Proper3, _foundActivity$Proper4;
+	const isActionExpressionDocumentCorrect = (connectedBlocks, document) => {
 	  if (!document) {
-	    return main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_TEMPLATE_DOCUMENT');
+	    return false;
 	  }
-	  const [object, fieldId] = document.replaceAll(/^{=|}$/g, '').split(':');
-	  if (!main_core.Type.isStringFilled(object) || !main_core.Type.isStringFilled(fieldId)) {
-	    return main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_UNKNOWN_DOCUMENT');
+	  const {
+	    block,
+	    activity,
+	    field
+	  } = extractFieldFromDocumentExpression(connectedBlocks, document);
+	  return block && activity && field;
+	};
+	const evaluateActionExpressionDocumentTitle = (connectedBlocks, document) => {
+	  var _foundActivity$Proper3, _foundActivity$Proper4;
+	  if (!document) {
+	    return main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_ITEM_NOT_SELECTED');
 	  }
-	  const [foundBlock, foundActivity] = (() => {
-	    for (const block of connectedBlocks) {
-	      const {
-	        activity
-	      } = block;
-	      if ((activity == null ? void 0 : activity.Name) === object) {
-	        return [block, activity];
-	      }
-	      if (!main_core.Type.isArrayFilled(activity == null ? void 0 : activity.Children)) {
-	        continue;
-	      }
-	      const childrenActivity = activity.Children.find(child => {
-	        return child.Name === object;
-	      });
-	      if (childrenActivity) {
-	        return [block, childrenActivity];
-	      }
-	    }
-	    return [null, null];
-	  })();
-	  if (!foundActivity) {
-	    return main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_UNKNOWN_DOCUMENT');
-	  }
-	  const property = ((_foundActivity$Return2 = foundActivity.ReturnProperties) != null ? _foundActivity$Return2 : []).find(prop => prop.Id === fieldId);
+	  const {
+	    block: foundBlock,
+	    activity: foundActivity,
+	    field: property
+	  } = extractFieldFromDocumentExpression(connectedBlocks, document);
 	  if (!property) {
 	    return main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_UNKNOWN_DOCUMENT');
 	  }
 	  const objectTitle = (_foundActivity$Proper3 = (_foundActivity$Proper4 = foundActivity.Properties) == null ? void 0 : _foundActivity$Proper4.Title) != null ? _foundActivity$Proper3 : foundBlock.node.title;
 	  return `${property.Name} (${objectTitle})`;
 	};
+	function findBlockAndActivityByName(connectedBlocks, name) {
+	  for (const block of connectedBlocks) {
+	    const {
+	      activity
+	    } = block;
+	    if ((activity == null ? void 0 : activity.Name) === name) {
+	      return {
+	        block,
+	        activity
+	      };
+	    }
+	    if (!main_core.Type.isArrayFilled(activity == null ? void 0 : activity.Children)) {
+	      continue;
+	    }
+	    const childrenActivity = activity.Children.find(child => {
+	      return child.Name === name;
+	    });
+	    if (childrenActivity) {
+	      return {
+	        block,
+	        activity: childrenActivity
+	      };
+	    }
+	  }
+	  return {
+	    block: null,
+	    activity: null
+	  };
+	}
+	function getActivityNameAndFieldIdFromDocumentExpression(documentExpression) {
+	  if (!main_core.Type.isStringFilled(documentExpression)) {
+	    return [];
+	  }
+	  return documentExpression.replaceAll(/^{=|}$/g, '').split(':', 2);
+	}
+	function extractFieldFromDocumentExpression(connectedBlocks, documentExpression) {
+	  var _activity$ReturnPrope;
+	  const [activityName, fieldId] = getActivityNameAndFieldIdFromDocumentExpression(documentExpression);
+	  if (!main_core.Type.isStringFilled(activityName) || !main_core.Type.isStringFilled(fieldId)) {
+	    return {
+	      block: null,
+	      activity: null,
+	      field: null
+	    };
+	  }
+	  const {
+	    block,
+	    activity
+	  } = findBlockAndActivityByName(connectedBlocks, activityName);
+	  if (!activity || !block) {
+	    return {
+	      block: null,
+	      activity: null,
+	      field: null
+	    };
+	  }
+	  const field = ((_activity$ReturnPrope = activity.ReturnProperties) != null ? _activity$ReturnPrope : []).find(prop => prop.Id === fieldId);
+	  if (!field) {
+	    return {
+	      block: null,
+	      activity: null,
+	      field: null
+	    };
+	  }
+	  return {
+	    block,
+	    activity,
+	    field
+	  };
+	}
+	const evaluateActionExpressionDocumentType = (connectedBlocks, documentExpression) => {
+	  const {
+	    field
+	  } = extractFieldFromDocumentExpression(connectedBlocks, documentExpression);
+	  return (field == null ? void 0 : field.Type) === PROPERTY_TYPES.DOCUMENT && main_core.Type.isArrayFilled(field.Default) ? field.Default : [];
+	};
 
+	const PORT_LABELS = Object.freeze({
+	  input: 'G',
+	  output: 'E'
+	});
+	const PORT_POSITIONS = Object.freeze({
+	  left: 'left',
+	  right: 'right'
+	});
 	const useNodeSettingsStore = ui_vue3_pinia.defineStore('bizprocdesigner-editor-node-settings', {
 	  state: () => ({
 	    isLoading: false,
@@ -2950,7 +3790,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    isRuleSettingsShown: false,
 	    currentRuleId: '',
 	    prevSavedNodeSettings: null,
-	    savedBlockInputPorts: null,
+	    ports: null,
 	    nodeSettings: null,
 	    block: null
 	  }),
@@ -2989,10 +3829,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        description
 	      };
 	      this.prevSavedNodeSettings = main_core.Runtime.clone(this.nodeSettings);
-	      this.savedBlockInputPorts = block.ports.input.map(port => {
-	        return {
-	          ...port
-	        };
+	      this.ports = [...block.ports];
+	      const rulesIds = new Set(this.nodeSettings.rules.keys());
+	      this.ports.forEach(port => {
+	        if (port.type === PORT_TYPES.input && !rulesIds.has(port.id) && !port.isConnectionPort) {
+	          this.addRule(port.id);
+	        }
 	      });
 	      this.block = block;
 	      this.isLoading = false;
@@ -3005,6 +3847,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      this.currentRuleId = '';
 	      this.nodeSettings = null;
 	      this.block = null;
+	      this.ports = null;
 	    },
 	    toggleVisibility(isShown) {
 	      this.isShown = isShown;
@@ -3015,8 +3858,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    setCurrentRuleId(ruleId) {
 	      this.currentRuleId = ruleId;
 	    },
-	    addRule() {
-	      const nextPortId = generateNextInputPortId(this.block.ports.input);
+	    addRule(portId) {
+	      const nextPortId = portId != null ? portId : generateNextInputPortId(this.ports.filter(port => port.type === PORT_TYPES.input));
 	      this.nodeSettings.rules.set(nextPortId, {
 	        isFilled: false,
 	        portId: nextPortId,
@@ -3128,7 +3971,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	          return ruleCard.constructions.filter(construction => construction.type === CONSTRUCTION_TYPES.OUTPUT);
 	        });
 	      });
-	      const allExistingOutputPortIds = new Set(this.block.ports.output.map(port => port.id));
+	      const allExistingOutputPortIds = new Set(this.ports.filter(port => port.type === PORT_TYPES.output).map(port => port.id));
 	      const toDeletePortIds = new Set(allExistingOutputPortIds);
 	      const toAddPortsMap = new Map();
 	      outputConstructions.forEach(construction => {
@@ -3159,10 +4002,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        outputPortsToDelete
 	      } = await this.savePortRule(this.currentRuleId, documentType);
 	      this.toggleRuleSettingsVisibility(false);
-	      return {
-	        outputPortsToAdd,
-	        outputPortsToDelete
-	      };
+	      outputPortsToAdd.values().forEach(({
+	        portId,
+	        title
+	      }) => {
+	        this.addRulePort(portId, PORT_TYPES.output, title);
+	      });
+	      outputPortsToDelete.keys().forEach(portId => {
+	        this.deletePort(portId);
+	      });
 	    },
 	    async saveForm(documentType) {
 	      try {
@@ -3188,11 +4036,50 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      const copyRule = main_core.Runtime.clone(prevSavedRules.get(this.currentRuleId));
 	      this.nodeSettings.rules.set(this.currentRuleId, copyRule);
 	    },
-	    updateSettings(settings) {
-	      this.nodeSettings = {
-	        ...this.nodeSettings,
-	        ...settings
+	    createPort(ports, {
+	      portId,
+	      type,
+	      label,
+	      portTitle
+	    }) {
+	      var _ports, _lastPort$title$split, _lastPort$title;
+	      const lastPort = (_ports = ports[ports.length - 1]) != null ? _ports : null;
+	      const [, count] = (_lastPort$title$split = lastPort == null ? void 0 : (_lastPort$title = lastPort.title) == null ? void 0 : _lastPort$title.split(label)) != null ? _lastPort$title$split : [];
+	      const title = portTitle != null ? portTitle : `${label}${Number(count != null ? count : 0) + 1}`;
+	      return {
+	        id: portId,
+	        title,
+	        type,
+	        position: type === PORT_TYPES.input ? PORT_POSITIONS.left : PORT_POSITIONS.right
 	      };
+	    },
+	    addRulePort(portId, type, portTitle) {
+	      const currentPorts = this.ports.filter(port => port.type === type && !port.isConnectionPort);
+	      const label = type === PORT_TYPES.input ? PORT_LABELS.input : PORT_LABELS.output;
+	      const port = this.createPort(currentPorts, {
+	        portId,
+	        type,
+	        label,
+	        portTitle
+	      });
+	      this.ports.push(port);
+	    },
+	    addConnectionPort(portId, type) {
+	      const currentPorts = type === PORT_TYPES.input ? this.ports.filter(port => port.type === PORT_TYPES.input) : this.ports.filter(port => port.type === PORT_TYPES.output);
+	      const connectionPorts = currentPorts.filter(p => p.isConnectionPort);
+	      const port = this.createPort(connectionPorts, {
+	        portId,
+	        type,
+	        label: 'NG'
+	      });
+	      this.ports.push({
+	        ...port,
+	        isConnectionPort: true
+	      });
+	    },
+	    deletePort(portId) {
+	      const deletedPort = this.ports.find(port => port.id === portId);
+	      this.ports.splice(this.ports.indexOf(deletedPort), 1);
 	    }
 	  }
 	});
@@ -3328,11 +4215,11 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    constructionLabels() {
 	      return CONSTRUCTION_LABELS;
 	    },
-	    constructionOperators() {
-	      return CONSTRUCTION_OPERATORS;
-	    },
 	    generalConstructionTypes() {
 	      return GENERAL_CONSTRUCTION_TYPES;
+	    },
+	    ifLabel() {
+	      return this.getMessage(CONSTRUCTION_LABELS['condition:if']);
 	    }
 	  },
 	  methods: {
@@ -3381,7 +4268,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 		>
 			<BIcon
 				class="node-settings-rule__dnd-icon"
-				name="drag-s"
+				:size="20"
+				name="drag-m"
 				color="#828b95"
 			/>
 			<span class="node-settings-rule__title">
@@ -3401,6 +4289,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 						:key="construction.id"
 						class="node-settings-rule__construction"
 						:class="['--' + generalConstructionTypes[construction.type]]"
+						:data-if-indent="ifLabel"
 					>
 						<span class="node-settings-rule__construction_type">
 							{{ getMessage(constructionLabels[construction.type]) }}
@@ -3412,7 +4301,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 							v-if="construction.expression.operator"
 							class="node-settings-rule__expression-part"
 						>
-							{{ constructionOperators[construction.expression.operator] }}
+							{{ construction.expression.operator }}
 						</span>
 						<span
 							v-if="generalConstructionTypes[construction.type] !== generalConstructionTypes.action"
@@ -3433,7 +4322,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 				<BIcon
 					:size="20"
 					class="node-settings-rule__edit-icon"
-					name="pencil-40"
+					name="edit-m"
 					color="#c9ccd0"
 				/>
 				<BIcon
@@ -3738,13 +4627,13 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    const {
 	      getMessage
 	    } = useLoc();
-	    const сonstructionModes = Object.freeze({
+	    const constructionModes = Object.freeze({
 	      standard: getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_STANDARD_MODE'),
 	      expert: getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_EXPERT_MODE')
 	    });
 	    return {
 	      getMessage,
-	      сonstructionModes
+	      constructionModes
 	    };
 	  },
 	  data() {
@@ -3753,7 +4642,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    };
 	  },
 	  computed: {
-	    constractionClassName() {
+	    constructionClassName() {
 	      return {
 	        '--condition': GENERAL_CONSTRUCTION_TYPES[this.construction.type] === GENERAL_CONSTRUCTION_TYPES['condition:if'],
 	        '--action': GENERAL_CONSTRUCTION_TYPES[this.construction.type] === GENERAL_CONSTRUCTION_TYPES.action,
@@ -3790,7 +4679,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 		<div
 			data-name="rule-construction"
 			class="rule-construction"
-			:class="constractionClassName"
+			:class="constructionClassName"
 			:data-id="construction.id"
 			:data-rule-card-id="ruleCardId"
 		>
@@ -3825,7 +4714,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 						class="rule-construction__content_mode"
 					>
 						<span
-							v-for="(label, mode) in сonstructionModes"
+							v-for="(label, mode) in constructionModes"
 							class="rule-construction__content_mode-text"
 							:class="{ '--selected': selectedMode === mode }"
 							@click="selectedMode = mode"
@@ -3939,6 +4828,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 
 				<section :class="bottomRightClassNames">
 					<slot name="bottom-right-toolbar"/>
+				</section>
+				
+				<section class="editor-chart-app-layout__top-middle-anchor">
+					<slot name="top-middle-anchor"/>
 				</section>
 
 				<transition
@@ -4075,9 +4968,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    block: {
 	      type: Object,
 	      required: true
+	    },
+	    ports: {
+	      type: Object,
+	      required: true
 	    }
 	  },
-	  emits: ['updateTitle', 'updateDescription'],
 	  setup() {
 	    const store = diagramStore();
 	    const {
@@ -4093,11 +4989,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      store
 	    };
 	  },
-	  data() {
-	    return {
-	      activationMenuHelper: null
-	    };
-	  },
 	  computed: {
 	    ...ui_vue3_pinia.mapState(useNodeSettingsStore, ['nodeSettings']),
 	    iconName() {
@@ -4105,7 +4996,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      return (_Outline$this$block$n = ui_iconSet_api_vue.Outline[(_this$block = this.block) == null ? void 0 : (_this$block$node = _this$block.node) == null ? void 0 : _this$block$node.icon]) != null ? _Outline$this$block$n : ui_iconSet_api_vue.Outline.FILE;
 	    },
 	    rulePorts() {
-	      return this.block.ports.input.filter(port => !port.isConnectionPort);
+	      return this.ports.filter(port => port.type === PORT_TYPES.input && !port.isConnectionPort);
+	    },
+	    rulePortsLength() {
+	      return this.rulePorts.length;
 	    },
 	    areConnectionsAvailable() {
 	      return this.isFeatureAvailable(bizprocdesigner_feature.FeatureCode.complexNodeConnections);
@@ -4115,7 +5009,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      return ((_this$block$node2 = this.block.node) == null ? void 0 : _this$block$node2.type) === BLOCK_TYPES.TOOL && ((_this$block$node3 = this.block.node) == null ? void 0 : _this$block$node3.icon) && ui_iconSet_api_vue.Outline[this.block.node.icon] !== ui_iconSet_api_vue.Outline.DATABASE;
 	    },
 	    activationIcon() {
-	      return this.block.activity.Activated === 'Y' ? this.iconSet.PAUSE_L : this.iconSet.PLAY_L;
+	      return this.block.activity.Activated === ACTIVATION_STATUS.ACTIVE ? this.iconSet.PAUSE_L : this.iconSet.PLAY_L;
 	    },
 	    icon() {
 	      var _this$block$node4, _this$block$node5;
@@ -4130,8 +5024,18 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      return ((_this$block$node6 = this.block.node) == null ? void 0 : _this$block$node6.type) === BLOCK_TYPES.TOOL ? 0 : (_this$block$node7 = this.block.node) == null ? void 0 : _this$block$node7.colorIndex;
 	    }
 	  },
-	  created() {
-	    this.activationMenuHelper = useActivationMenu(this.store);
+	  watch: {
+	    rulePortsLength() {
+	      this.$nextTick(() => {
+	        const {
+	          scrollHeight,
+	          clientHeight
+	        } = this.$el;
+	        if (scrollHeight > clientHeight) {
+	          this.$el.scrollTop = scrollHeight - clientHeight;
+	        }
+	      });
+	    }
 	  },
 	  methods: {
 	    onChangeTitle({
@@ -4139,14 +5043,14 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        value: title
 	      }
 	    }) {
-	      this.$emit('updateTitle', title);
+	      this.nodeSettings.title = title;
 	    },
 	    onChangeDescription({
 	      target: {
 	        value: description
 	      }
 	    }) {
-	      this.$emit('updateDescription', description);
+	      this.nodeSettings.description = description;
 	    },
 	    isUrl(value) {
 	      if (!value || !main_core.Type.isString(value)) {
@@ -4159,14 +5063,18 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        return false;
 	      }
 	    },
-	    showActivationMenu(event) {
-	      this.activationMenuHelper.showActivationMenu(event, this.block);
+	    toggleActivation(event) {
+	      this.store.toggleBlockActivation(this.block.id, true);
 	    }
 	  },
 	  template: `
 		<div class="node-settings-form">
 			<div class="node-settings-form__node-brief">
-				<BlockHeader :block="block" :subIconExternal="isUrl(block.node?.icon)">
+				<BlockHeader
+					:block="block"
+					:subIconExternal="isUrl(block.node?.icon)"
+					:title="nodeSettings.title"
+				>
 					<template #icon>
 						<BlockIcon
 							:iconName="icon"
@@ -4190,7 +5098,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 				</BlockHeader>
 				<IconButton
 					:icon-name="activationIcon"
-					@click="showActivationMenu"
+					@click="toggleActivation"
 				/>
 			</div>
 			<div class="node-settings-form__section-delimeter"></div>
@@ -4203,7 +5111,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 						<input type="text"
 							class="ui-ctl-element"
 							:placeholder="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_PLACEHOLDER')"
-							:value="block.node.title"
+							:value="nodeSettings.title"
 							:data-test-id="$testId('complexNodeName')"
 							@input="onChangeTitle"
 						/>
@@ -4293,25 +5201,25 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    } = useLoc();
 	    const store = useNodeSettingsStore();
 	    const actions = {
-	      rule: () => store.addRule(),
-	      connection: () => generateNextInputPortId(store.block.ports.input)
+	      rule: () => {
+	        const ruleId = store.addRule();
+	        store.addRulePort(ruleId, PORT_TYPES.input);
+	      },
+	      connection: () => {
+	        const connectionId = generateNextInputPortId(store.ports.filter(port => port.type === PORT_TYPES.input));
+	        store.addConnectionPort(connectionId, PORT_TYPES.input);
+	      }
 	    };
 	    return {
 	      getMessage,
 	      actions
 	    };
 	  },
-	  methods: {
-	    onClick() {
-	      const itemId = this.actions[this.itemType]();
-	      this.$emit('addItem', itemId);
-	    }
-	  },
 	  template: `
 		<div
 			class="node-settings-add-item-button"
 			:data-test-id="$testId('complexNodeSettingsAdd', itemType)"
-			@click="onClick"
+			@click="actions[this.itemType]()"
 		>
 			<BIcon
 				class="node-settings-add-item-button__plus"
@@ -4327,14 +5235,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	`
 	};
 
-	const CurrentDocumentId = '@';
+	const DocumentsTabId = 'documents';
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _currentPortId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentPortId");
 	var _currentBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentBlock");
 	var _fixedDocumentType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fixedDocumentType");
 	var _getTabs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTabs");
-	var _getReturnValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getReturnValue");
-	var _getEntities = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEntities");
 	var _processChildrenProperties = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processChildrenProperties");
 	var _processReturnProperties = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processReturnProperties");
 	var _getDocuments = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocuments");
@@ -4348,12 +5254,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    });
 	    Object.defineProperty(this, _processChildrenProperties, {
 	      value: _processChildrenProperties2
-	    });
-	    Object.defineProperty(this, _getEntities, {
-	      value: _getEntities2
-	    });
-	    Object.defineProperty(this, _getReturnValue, {
-	      value: _getReturnValue2
 	    });
 	    Object.defineProperty(this, _getTabs, {
 	      value: _getTabs2
@@ -4380,17 +5280,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _fixedDocumentType)[_fixedDocumentType] = fixedDocumentType;
 	  }
 	  show(target) {
-	    const documentItems = [{
-	      id: CurrentDocumentId,
-	      entityId: 'bizproc-document',
-	      entityType: 'document',
-	      title: main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_TEMPLATE_DOCUMENT'),
-	      nodeOptions: {
-	        open: false,
-	        dynamic: false
-	      },
-	      tabs: 'documents'
-	    }, ...babelHelpers.classPrivateFieldLooseBase(this, _getDocuments)[_getDocuments]()];
 	    return new Promise(resolve => {
 	      const dialog = new ui_entitySelector.Dialog({
 	        targetNode: target,
@@ -4399,14 +5288,13 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        multiple: false,
 	        dropdownMode: true,
 	        enableSearch: true,
-	        items: documentItems,
+	        items: babelHelpers.classPrivateFieldLooseBase(this, _getDocuments)[_getDocuments](),
 	        tabs: babelHelpers.classPrivateFieldLooseBase(this, _getTabs)[_getTabs](),
-	        entities: babelHelpers.classPrivateFieldLooseBase(this, _getEntities)[_getEntities](),
 	        cacheable: false,
 	        showAvatars: false,
 	        events: {
 	          'Item:onSelect': event => {
-	            resolve(babelHelpers.classPrivateFieldLooseBase(this, _getReturnValue)[_getReturnValue](event.getData().item));
+	            resolve(event.getData().item.getId());
 	          }
 	        },
 	        compactView: true
@@ -4417,17 +5305,13 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	}
 	function _getTabs2() {
 	  return [{
-	    id: 'documents',
+	    id: DocumentsTabId,
 	    title: main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_DOCUMENT_MULTIPLE'),
-	    icon: 'elements'
-	  }];
-	}
-	function _getReturnValue2(item) {
-	  return item.getId() === CurrentDocumentId ? null : item.getId();
-	}
-	function _getEntities2() {
-	  return [{
-	    id: 'bizproc-document'
+	    icon: 'elements',
+	    stub: true,
+	    stubOptions: {
+	      title: main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_DOCUMENT_STUB_TITLE')
+	    }
 	  }];
 	}
 	function _processChildrenProperties2(block) {
@@ -4448,7 +5332,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    properties.push({
 	      id: block.id,
 	      entityId: 'block-node',
-	      tabs: 'documents',
+	      tabs: DocumentsTabId,
 	      title: block.activity.Properties.Title,
 	      children: childrenProperties,
 	      searchable: false
@@ -4459,7 +5343,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	function _processReturnProperties2(block) {
 	  const properties = [];
 	  block.activity.ReturnProperties.filter(property => {
-	    if (property.Type !== 'document') {
+	    if (property.Type !== PROPERTY_TYPES.DOCUMENT) {
 	      return false;
 	    }
 	    if (!main_core.Type.isArrayFilled(property.Default)) {
@@ -4468,11 +5352,16 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    if (!main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _fixedDocumentType)[_fixedDocumentType])) {
 	      return true;
 	    }
-	    return JSON.stringify(property.Default) === JSON.stringify(babelHelpers.classPrivateFieldLooseBase(this, _fixedDocumentType)[_fixedDocumentType]);
+	    for (const key of babelHelpers.classPrivateFieldLooseBase(this, _fixedDocumentType)[_fixedDocumentType].keys()) {
+	      var _property$Default;
+	      if (((_property$Default = property.Default) == null ? void 0 : _property$Default[key]) !== babelHelpers.classPrivateFieldLooseBase(this, _fixedDocumentType)[_fixedDocumentType][key]) {
+	        return false;
+	      }
+	    }
+	    return true;
 	  }).forEach(property => {
-	    const id = `{=${block.id}:${property.Id}}`;
-	    properties.push({
-	      id,
+	    const item = {
+	      id: `{=${block.id}:${property.Id}}`,
 	      entityId: 'bizproc-document',
 	      entityType: 'document',
 	      title: `${property.Name} (${block.activity.Properties.Title})`,
@@ -4480,8 +5369,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        open: false,
 	        dynamic: false
 	      },
-	      tabs: 'documents'
-	    });
+	      tabs: DocumentsTabId
+	    };
+	    properties.push(item);
 	  });
 	  return properties;
 	}
@@ -4569,7 +5459,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    },
 	    selectedDocument: {
 	      get() {
-	        return this.construction.expression.document;
+	        return isActionExpressionDocumentCorrect(this.connectedBlocks, this.construction.expression.document) ? this.construction.expression.document : '';
 	      },
 	      set(document) {
 	        this.changeRuleExpression(this.construction, {
@@ -4679,6 +5569,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					<slot
 						:actionId="selectedActionId"
 						:activityData="actionValue"
+						:selectedDocument="selectedDocument"
 					/>
 				</div>
 			</div>
@@ -4710,7 +5601,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  }
 	});
 
-	var _getEntities$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEntities");
+	var _getEntities = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEntities");
 	var _getTabs$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTabs");
 	var _getValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getValue");
 	var _getItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItems");
@@ -4737,8 +5628,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    Object.defineProperty(this, _getTabs$1, {
 	      value: _getTabs2$1
 	    });
-	    Object.defineProperty(this, _getEntities$1, {
-	      value: _getEntities2$1
+	    Object.defineProperty(this, _getEntities, {
+	      value: _getEntities2
 	    });
 	    this.currentPortId = null;
 	    this.store = store;
@@ -4756,7 +5647,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        enableSearch: true,
 	        items: babelHelpers.classPrivateFieldLooseBase(this, _getItems)[_getItems](),
 	        tabs: babelHelpers.classPrivateFieldLooseBase(this, _getTabs$1)[_getTabs$1](),
-	        entities: babelHelpers.classPrivateFieldLooseBase(this, _getEntities$1)[_getEntities$1](),
+	        entities: babelHelpers.classPrivateFieldLooseBase(this, _getEntities)[_getEntities](),
 	        cacheable: false,
 	        showAvatars: false,
 	        events: {
@@ -4825,7 +5716,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    }, []);
 	  }
 	}
-	function _getEntities2$1() {
+	function _getEntities2() {
 	  return [{
 	    id: 'bizproc-document'
 	  }, {
@@ -5003,11 +5894,13 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  return result;
 	}
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2,
+	let _$3 = t => t,
+	  _t$3,
+	  _t2$1,
 	  _t3,
 	  _t4;
+	const SCROLL_ZONE = 50;
+	const SCROLL_SPEED = 10;
 
 	// @vue/component
 	const CommonNodeSettingsForm = {
@@ -5048,7 +5941,11 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      nodeControls: null,
 	      inputListeners: [],
 	      shouldShowWithTransition: false,
-	      activationMenuHelper: null
+	      isDragging: false,
+	      dragMouseY: 0,
+	      autoScrollFrameId: null,
+	      scrollBoundaries: null,
+	      rendererInstance: null
 	    };
 	  },
 	  computed: {
@@ -5069,7 +5966,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      return ((_this$block$node5 = this.block.node) == null ? void 0 : _this$block$node5.type) === BLOCK_TYPES.TOOL && ((_this$block$node6 = this.block.node) == null ? void 0 : _this$block$node6.icon) && ui_iconSet_api_vue.Outline[this.block.node.icon] !== ui_iconSet_api_vue.Outline.DATABASE;
 	    },
 	    activationIcon() {
-	      return this.block.activity.Activated === 'Y' ? this.iconSet.PAUSE_L : this.iconSet.PLAY_L;
+	      return this.block.activity.Activated === ACTIVATION_STATUS.ACTIVE ? this.iconSet.PAUSE_L : this.iconSet.PLAY_L;
 	    }
 	  },
 	  async mounted() {
@@ -5078,11 +5975,16 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    await this.$nextTick();
 	    await this.renderControls();
 	    main_core.Event.bind(document, 'mousedown', this.multiSelectMouseHandler);
+	    main_core.Event.bind(this.$refs.scrollContainer, 'scroll', this.handleScroll);
 	    main_core_events.EventEmitter.subscribe('BX.Bizproc:setuptemplateactivity:preview', this.showPreview);
+	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.onDragStart);
+	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:move', this.onDragMove);
+	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:end', this.onDragEnd);
 	    window.BPAShowSelector = this.showSelector;
 	    window.HideShow = this.hideShow;
 	  },
 	  unmounted() {
+	    this.stopAutoScroll();
 	    if (this.inputListeners && this.handleFieldInput) {
 	      this.inputListeners.forEach(input => {
 	        main_core.Event.unbind(input, 'input', this.handleFieldInput);
@@ -5090,13 +5992,16 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      this.inputListeners = [];
 	    }
 	    main_core.Event.unbind(document, 'mousedown', this.multiSelectMouseHandler);
+	    main_core.Event.unbind(this.$refs.scrollContainer, 'scroll', this.handleScroll);
 	    main_core_events.EventEmitter.unsubscribe('BX.Bizproc:setuptemplateactivity:preview', this.showPreview);
+	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.onDragStart);
+	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:move', this.onDragMove);
+	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:end', this.onDragEnd);
 	    main_core_events.EventEmitter.emit('BX.Bizproc.Activity.unmount');
-	    // console.log('UNMOUNT');
-	  },
-
-	  created() {
-	    this.activationMenuHelper = useActivationMenu(this.store);
+	    if (this.rendererInstance && main_core.Type.isFunction(this.rendererInstance.destroy)) {
+	      this.rendererInstance.destroy();
+	    }
+	    this.rendererInstance = null;
 	  },
 	  methods: {
 	    loc(phraseCode, replacements = {}) {
@@ -5112,7 +6017,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        event.preventDefault();
 	        const scroll = select.scrollTop;
 	        opt.selected = !opt.selected;
-	        setTimeout(() => select.scrollTop = scroll, 0);
+	        setTimeout(() => {
+	          select.scrollTop = scroll;
+	        }, 0);
 	      }
 	    },
 	    showPreview(event) {
@@ -5124,8 +6031,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      this.shouldShowWithTransition = shouldShowWithTransition;
 	      await this.$nextTick();
 	      await this.renderControls();
-	      window.BPAShowSelector = this.showSelector;
-	      window.HideShow = this.hideShow;
 	    },
 	    extractFormData(form) {
 	      var _this$currentBlock$ac, _this$currentBlock$ac2, _this$currentBlock$ac3, _this$currentBlock$ac4;
@@ -5158,6 +6063,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        }];
 	        compatibleTemplate[0].Children.push(this.currentBlock.activity, ...this.store.getAllBlockAncestors(this.currentBlock).map(b => b.activity));
 	        preparedSettingsData.arWorkflowTemplate = JSON.stringify(compatibleTemplate);
+	        preparedSettingsData.activated = this.currentBlock.activity.Activated;
 	        const settingControls = await editorAPI.saveNodeSettings(preparedSettingsData);
 	        if (settingControls) {
 	          this.store.updateBlockActivityField(this.currentBlock.id, settingControls);
@@ -5250,7 +6156,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      if (!control) {
 	        return null;
 	      }
-	      const error = main_core.Tag.render(_t$1 || (_t$1 = _$1`
+	      const error = main_core.Tag.render(_t$3 || (_t$3 = _$3`
 				<div class="node-settings-alert-text">
 					${0}
 				</div>
@@ -5262,7 +6168,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      if (field.property.Hidden) {
 	        className += ' hidden';
 	      }
-	      return main_core.Tag.render(_t2 || (_t2 = _$1`
+	      return main_core.Tag.render(_t2$1 || (_t2$1 = _$3`
 				<div class="${0}" id="row_${0}">
 				    <div class="node-settings-edit-caption">${0}</div>
 				    <div class="field-row">
@@ -5281,6 +6187,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    },
 	    async renderControls() {
 	      var _this$currentBlock$ac7, _this$currentBlock$ac8, _this$currentBlock, _settingControls;
+	      window.BPAShowSelector = this.showSelector;
+	      window.HideShow = this.hideShow;
 	      this.isLoading = true;
 	      const id = (_this$currentBlock$ac7 = this.currentBlock.activity.Name) != null ? _this$currentBlock$ac7 : '';
 	      const activity = (_this$currentBlock$ac8 = this.currentBlock.activity.Type) != null ? _this$currentBlock$ac8 : '';
@@ -5324,86 +6232,116 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        var _this$currentBlock2;
 	        settingControls = await editorAPI.getNodeSettingsControls({
 	          documentType: this.documentType,
-	          activity: (_this$currentBlock2 = this.currentBlock) == null ? void 0 : _this$currentBlock2.activity
+	          activity: (_this$currentBlock2 = this.currentBlock) == null ? void 0 : _this$currentBlock2.activity,
+	          workflow: {
+	            workflowParameters: JSON.stringify(workflowParameters),
+	            workflowVariables: JSON.stringify(workflowVariables),
+	            workflowTemplate: JSON.stringify(compatibleTemplate),
+	            workflowConstants: JSON.stringify(workflowConstants)
+	          }
 	        });
 	      } catch (error) {
 	        handleResponseError(error);
 	      }
 	      this.useDocumentContext = Boolean((_settingControls = settingControls) == null ? void 0 : _settingControls.useDocumentContext);
 	      if (settingControls && main_core.Type.isArray(settingControls.controls)) {
-	        await this.renderNodeControls(settingControls.controls);
+	        await this.renderNodeControls(settingControls);
 	      } else {
 	        await this.renderPropertyDialog(formData);
 	      }
 	    },
 	    renderNodeControls(settingControls) {
-	      this.nodeControls = settingControls;
+	      this.nodeControls = main_core.Type.isArray(settingControls.controls) ? settingControls.controls : [];
+	      const brokenLinks = main_core.Type.isPlainObject(settingControls.brokenLinks) ? settingControls.brokenLinks : {};
 	      const eventName = 'BX.Bizproc.FieldType.onCollectionRenderControlFinished';
-	      this.nodeControls = this.nodeControls.map(property => ({
-	        ...property,
-	        controlId: property.fieldName.toLowerCase()
-	      }));
-	      const renderedControls = BX.Bizproc.FieldType.renderControlCollection(this.documentType, this.nodeControls.filter(field => field.property.Type !== 'Custom'), 'designer');
+	      this.nodeControls = this.nodeControls.map(property => {
+	        const fieldName = property.property.FieldName || null;
+	        return {
+	          ...property,
+	          fieldName,
+	          controlId: fieldName
+	        };
+	      });
+	      const renderedControls = BX.Bizproc.FieldType.renderControlCollection(this.documentType, this.nodeControls.filter(field => field.property.Type !== 'custom'), 'designer');
 	      return new Promise(resolve => {
-	        main_core.Event.EventEmitter.subscribeOnce(eventName, () => {
-	          var _this$currentBlock$ac9, _this$currentBlock$ac10;
-	          const form = main_core.Tag.render(_t3 || (_t3 = _$1`<form id="form-settings"></form>`));
-	          this.settingsForm = form;
-	          const activityTypeName = (_this$currentBlock$ac9 = (_this$currentBlock$ac10 = this.currentBlock.activity) == null ? void 0 : _this$currentBlock$ac10.Type) != null ? _this$currentBlock$ac9 : '';
-	          const rendererName = `${activityTypeName}Renderer`;
-	          const RendererClass = main_core.Type.isFunction(window[rendererName]) ? window[rendererName] : null;
-	          let customRenderers = null;
-	          let instance = null;
-	          if (RendererClass) {
-	            instance = RendererClass ? new RendererClass() : null;
-	            customRenderers = instance && main_core.Type.isFunction(instance.getControlRenderers) ? instance.getControlRenderers() : null;
-	          }
-	          this.nodeControls.forEach(field => {
-	            let control = renderedControls[field.controlId];
-	            if (field.property.Type === 'custom' && instance && customRenderers) {
-	              var _customRenderers, _field$property;
-	              const renderer = (_customRenderers = customRenderers) == null ? void 0 : _customRenderers[field == null ? void 0 : (_field$property = field.property) == null ? void 0 : _field$property.CustomType];
-	              if (main_core.Type.isFunction(renderer)) {
-	                control = renderer(field);
-	              }
+	        var _this$currentBlock$ac9, _this$currentBlock$ac10;
+	        const form = main_core.Tag.render(_t3 || (_t3 = _$3`<form id="form-settings"></form>`));
+	        this.settingsForm = form;
+	        if (main_core.Type.isObject(brokenLinks) && Object.keys(brokenLinks).length > 0) {
+	          const brokenLinksAlert = this.renderBrokenLinksAlert(brokenLinks);
+	          main_core.Dom.append(brokenLinksAlert, form);
+	        }
+	        const activityTypeName = (_this$currentBlock$ac9 = (_this$currentBlock$ac10 = this.currentBlock.activity) == null ? void 0 : _this$currentBlock$ac10.Type) != null ? _this$currentBlock$ac9 : '';
+	        const rendererName = `${activityTypeName}Renderer`;
+	        const RendererClass = main_core.Type.isFunction(window[rendererName]) ? window[rendererName] : null;
+	        let customRenderers = null;
+	        let instance = null;
+	        if (RendererClass) {
+	          instance = RendererClass ? new RendererClass() : null;
+	          this.rendererInstance = instance;
+	          customRenderers = instance && main_core.Type.isFunction(instance.getControlRenderers) ? instance.getControlRenderers() : null;
+	        }
+	        this.nodeControls.forEach(field => {
+	          let control = renderedControls[field.controlId];
+	          if (field.property.Type === 'custom' && instance && customRenderers) {
+	            var _customRenderers, _field$property;
+	            const renderer = (_customRenderers = customRenderers) == null ? void 0 : _customRenderers[field == null ? void 0 : (_field$property = field.property) == null ? void 0 : _field$property.CustomType];
+	            if (main_core.Type.isFunction(renderer)) {
+	              control = renderer(field);
 	            }
-	            if (control) {
-	              const row = this.renderField(control, field);
-	              const escapedFieldName = field.fieldName.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
-	              const input = row.querySelector(`[name^="${escapedFieldName}"]`);
+	          }
+	          if (control) {
+	            const row = this.renderField(control, field);
+	            const escapedFieldName = field.fieldName.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
+	            const input = row.querySelector(`[name^="${escapedFieldName}"]`);
+	            if (input) {
 	              main_core.Event.bind(input, 'input', this.handleFieldInput);
 	              this.inputListeners.push(input);
-	              if (field.property.Type !== 'custom' && (input == null ? void 0 : input.tagName) === 'SELECT') {
-	                main_core.Dom.addClass(input, 'ui-ctl-element');
-	                const wrapper = main_core.Tag.render(_t4 || (_t4 = _$1`
-									<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100${0}">
-										<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-										${0}
-									</div>
-								`), field.property.Multiple === true ? ' ui-ctl-multiple-select' : '', input);
-	                main_core.Dom.append(wrapper, row);
-	              }
-	              const selectorInput = row.querySelector('input[data-role="bp-selector-button"]');
-	              if (selectorInput) {
-	                const span = document.createElement('span');
-	                span.className = 'node-settings-select-dotted';
-	                for (const attr of selectorInput.attributes) {
-	                  const attrName = attr.name;
-	                  const attrValue = attr.value;
-	                  span.setAttribute(attrName, attrValue);
-	                }
-	                main_core.Dom.replace(selectorInput, span);
-	              }
-	              main_core.Dom.append(row, form);
 	            }
-	          });
-	          this.$refs.contentContainer.innerHTML = '';
-	          main_core.Dom.append(form, this.$refs.contentContainer);
+	            main_core.Dom.append(row, form);
+	          }
+	        });
+	        this.$refs.contentContainer.innerHTML = '';
+	        main_core.Dom.append(form, this.$refs.contentContainer);
+	        main_core.Event.EventEmitter.subscribeOnce(eventName, () => {
+	          if (instance && main_core.Type.isFunction(instance.afterFormRender)) {
+	            instance.afterFormRender(form);
+	          }
 	          this.hasSettings = true;
 	          this.isLoading = false;
 	          resolve();
 	        });
 	      });
+	    },
+	    renderBrokenLinksAlert(brokenLinks) {
+	      var _Loc$getMessage, _Loc$getMessage2;
+	      const linksArray = Object.values(brokenLinks);
+	      const detailContent = linksArray.map(link => main_core.Text.encode(link)).join('<br>');
+	      const alert = main_core.Tag.render(_t4 || (_t4 = _$3`
+				<div class="ui-alert ui-alert-warning ui-alert-icon-info">
+					<div class="ui-alert-message">
+						<div>
+							<span>
+								${0}
+							</span> <span ref="showMoreBtn" class="bizprocdesigner-activity-broken-link-show-more">
+								${0}
+							</span>
+						</div>
+						<div ref="detailBlock" class="bizprocdesigner-activity-broken-link-detail">
+							${0}
+						</div>
+					</div>
+					<span ref="closeBtn" class="ui-alert-close-btn"></span>
+				</div>
+			`), main_core.Text.encode((_Loc$getMessage = main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_BROKEN_LINK_ERROR')) != null ? _Loc$getMessage : ''), main_core.Text.encode((_Loc$getMessage2 = main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_MESSAGE_SHOW_LINKS')) != null ? _Loc$getMessage2 : ''), detailContent);
+	      main_core.Event.bind(alert.showMoreBtn, 'click', () => {
+	        main_core.Dom.style(alert.detailBlock, 'height', `${alert.detailBlock.scrollHeight}px`);
+	        main_core.Dom.remove(alert.showMoreBtn);
+	      });
+	      main_core.Event.bind(alert.closeBtn, 'click', () => {
+	        main_core.Dom.remove(alert.root);
+	      });
+	      return alert.root;
 	    },
 	    async renderPropertyDialog(formData) {
 	      const {
@@ -5491,14 +6429,66 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        'background-image': `url('${safeUrl}')`
 	      };
 	    },
-	    showActivationMenu(event) {
-	      this.activationMenuHelper.showActivationMenu(event, this.currentBlock, () => this.syncActivatedField());
+	    toggleActivation(event) {
+	      this.store.toggleBlockActivation(this.currentBlock.id, true);
 	    },
 	    syncActivatedField() {
 	      const activatedInput = document.getElementsByName('activated')[0];
 	      if (activatedInput) {
 	        activatedInput.value = activatedInput.value === 'Y' ? 'N' : 'Y';
 	      }
+	    },
+	    handleScroll() {
+	      main_core_events.EventEmitter.emit('Bizproc.NodeSettings:onScroll');
+	    },
+	    onDragStart() {
+	      this.isDragging = true;
+	      if (this.$refs.scrollContainer) {
+	        const rect = this.$refs.scrollContainer.getBoundingClientRect();
+	        this.scrollBoundaries = {
+	          top: rect.top + SCROLL_ZONE,
+	          bottom: rect.bottom - SCROLL_ZONE
+	        };
+	      }
+	      this.startAutoScroll();
+	    },
+	    onDragMove(event) {
+	      const {
+	        clientY
+	      } = event.getData();
+	      this.dragMouseY = clientY;
+	    },
+	    onDragEnd() {
+	      this.isDragging = false;
+	      this.scrollBoundaries = null;
+	      this.stopAutoScroll();
+	    },
+	    startAutoScroll() {
+	      this.autoScrollFrameId = requestAnimationFrame(this.processAutoScroll);
+	    },
+	    stopAutoScroll() {
+	      if (this.autoScrollFrameId) {
+	        cancelAnimationFrame(this.autoScrollFrameId);
+	        this.autoScrollFrameId = null;
+	      }
+	    },
+	    processAutoScroll() {
+	      if (!this.isDragging || !this.$refs.scrollContainer || !this.scrollBoundaries) {
+	        return;
+	      }
+	      const container = this.$refs.scrollContainer;
+	      const topScrollBoundary = this.scrollBoundaries.top;
+	      const bottomScrollBoundary = this.scrollBoundaries.bottom;
+	      let scrollDelta = 0;
+	      if (this.dragMouseY < topScrollBoundary) {
+	        scrollDelta = -SCROLL_SPEED;
+	      } else if (this.dragMouseY > bottomScrollBoundary) {
+	        scrollDelta = SCROLL_SPEED;
+	      }
+	      if (scrollDelta !== 0) {
+	        container.scrollTop += scrollDelta;
+	      }
+	      this.autoScrollFrameId = requestAnimationFrame(this.processAutoScroll);
 	    }
 	  },
 	  template: `
@@ -5533,7 +6523,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					</BlockHeader>
 					<IconButton
 						:icon-name="activationIcon"
-						@click="showActivationMenu"
+						@click="toggleActivation"
 					/>
 				</div>
 				<div class="node-settings-form__section-delimeter"></div>
@@ -5541,51 +6531,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:css="shouldShowWithTransition"
 					name="node-settings-transition"
 				>
-					<div v-show="!isLoading" class="node-settings-content">
+					<div v-show="!isLoading" class="node-settings-content" ref="scrollContainer">
 						<div class="temp-block" v-show="!hasSettings">
-							<svg width="330" height="162" viewBox="0 0 330 162" fill="none" xmlns="http://www.w3.org/2000/svg">
-								<g opacity="0.8">
-									<g opacity="0.8" filter="url(#filter0_d_348_93445)">
-										<path d="M87.0298 24.5516C87.0298 15.9188 93.507 9.42059 101.372 10.041L225.88 19.8304C231.526 20.272 236.027 26.4233 236.027 33.5839V117.788C236.027 124.938 231.516 131.079 225.88 131.499L101.372 140.752C93.507 141.341 87.0298 134.822 87.0298 126.179V24.5516Z" fill="#C4E6FF"/>
-									</g>
-								</g>
-								<path opacity="0.05" fill-rule="evenodd" clip-rule="evenodd" d="M107.155 46.8539C107.155 46.4964 106.893 46.1915 106.556 46.1809C106.22 46.1704 105.957 46.4543 105.957 46.8118V56.5592L96.9034 56.3384C96.5669 56.3384 96.2935 56.6223 96.2935 56.9798C96.2935 57.3373 96.5669 57.6422 96.9034 57.6528L105.957 57.8631V77.3683H96.9034C96.5669 77.3683 96.2935 77.6627 96.2935 78.0307C96.2935 78.3988 96.5669 78.6827 96.9034 78.6827H105.957V98.1669L96.9034 98.3877C96.5669 98.3877 96.2935 98.6926 96.2935 99.0606C96.2935 99.4287 96.5669 99.7126 96.9034 99.702L105.957 99.4602V118.965L96.9034 119.407C96.5669 119.428 96.2935 119.733 96.2935 120.091C96.2935 120.448 96.5669 120.732 96.9034 120.721L105.957 120.259V130.006C105.957 130.364 106.22 130.637 106.556 130.616C106.893 130.595 107.155 130.29 107.155 129.933V120.196L124.663 119.312V128.849C124.663 129.196 124.915 129.47 125.231 129.449C125.546 129.428 125.798 129.133 125.798 128.776V119.249L142.549 118.398V127.724C142.549 128.071 142.791 128.334 143.096 128.313C143.4 128.292 143.642 127.998 143.642 127.661V118.345L159.688 117.535V126.673C159.688 127.009 159.919 127.272 160.214 127.251C160.508 127.23 160.74 126.946 160.74 126.61V117.483L176.123 116.705V125.653C176.123 125.979 176.344 126.231 176.628 126.221C176.912 126.21 177.132 125.926 177.132 125.59V116.652L191.895 115.906V124.675C191.895 125.001 192.116 125.243 192.379 125.232C192.642 125.222 192.863 124.938 192.863 124.622V115.864L207.037 115.149V123.739C207.037 124.055 207.247 124.297 207.5 124.286C207.752 124.275 207.962 124.002 207.962 123.687V115.106L221.59 114.412V122.835C221.59 123.14 221.789 123.382 222.031 123.371C222.273 123.361 222.473 123.087 222.473 122.782V114.37L228.214 114.076C228.456 114.065 228.656 113.803 228.656 113.498C228.656 113.193 228.456 112.951 228.214 112.961L222.473 113.245V96.4214L228.214 96.2742C228.456 96.2742 228.656 96.0113 228.656 95.7064C228.656 95.4014 228.456 95.1596 228.214 95.1596L222.473 95.2963V78.4724H228.214C228.456 78.4724 228.656 78.2095 228.656 77.9045C228.656 77.5996 228.456 77.3473 228.214 77.3473H222.473V60.5233L228.214 60.6495C228.456 60.6495 228.656 60.4077 228.656 60.1027C228.656 59.7978 228.456 59.5454 228.214 59.5349L222.473 59.3982V50.9863C222.473 50.6813 222.273 50.4185 222.031 50.408C221.789 50.3974 221.59 50.6393 221.59 50.9547V59.3772L207.962 59.0407V50.4605C207.962 50.1451 207.752 49.8822 207.5 49.8717C207.247 49.8612 207.037 50.1135 207.037 50.429V59.0197L192.863 58.6727V49.9138C192.863 49.5878 192.642 49.3249 192.379 49.3144C192.116 49.3039 191.895 49.5562 191.895 49.8822V58.6517L177.132 58.2942V49.3565C177.132 49.0305 176.912 48.7571 176.628 48.7466C176.344 48.7361 176.123 48.999 176.123 49.3249V58.2731L160.74 57.8946V48.7676C160.74 48.4311 160.508 48.1472 160.214 48.1367C159.919 48.1262 159.688 48.3891 159.688 48.7256V57.8631L143.642 57.474V48.1578C143.642 47.8108 143.4 47.5269 143.096 47.5163C142.791 47.5058 142.549 47.7792 142.549 48.1157V57.4425L125.798 57.0324V47.5058C125.798 47.1588 125.546 46.8644 125.231 46.8539C124.915 46.8434 124.663 47.1168 124.663 47.4638V57.0008L107.155 56.5802V46.8434V46.8539ZM221.6 113.287V96.4424L207.973 96.7999V113.96L221.6 113.287ZM207.047 114.002V96.8209L192.873 97.189V114.696L207.047 114.002ZM191.906 114.738V97.21L177.143 97.5991V115.464L191.906 114.738ZM176.134 115.517V97.6201L160.75 98.0197V116.263L176.134 115.506V115.517ZM159.699 116.326V98.0617L143.653 98.4823V117.115L159.699 116.326ZM142.559 117.167V98.5033L125.809 98.945V117.988L142.559 117.167ZM124.663 118.04V98.966L107.155 99.4287V118.902L124.663 118.04ZM124.663 97.7042L107.155 98.1353V78.6616L124.663 78.6301V97.7042ZM142.559 97.2626L125.809 97.6727V78.6301L142.559 78.5985V97.2626ZM159.699 96.842L143.653 97.2416V78.6091L159.699 78.5775V96.842ZM176.134 96.4319L160.75 96.8104V78.567L176.134 78.546V96.4424V96.4319ZM191.906 96.0428L177.143 96.4109V78.546L191.906 78.5249V96.0534V96.0428ZM207.047 95.6748L192.873 96.0218V78.5144L207.047 78.4934V95.6748ZM221.6 95.3173L207.973 95.6538V78.4934L221.6 78.4724V95.3173ZM221.6 77.3367V60.4918L207.973 60.1763V77.3367H221.6ZM207.047 77.3473V60.1658L192.873 59.8399V77.3473H207.047ZM191.906 77.3473V59.8188L177.143 59.4824V77.3473H191.906ZM176.134 77.3473V59.4508L160.75 59.1038V77.3473H176.134ZM159.699 77.3473V59.0828L143.653 58.7148V77.3473H159.699ZM142.559 77.3578V58.6937L125.809 58.3152V77.3578H142.559ZM124.663 77.3578V58.2837L107.155 57.8841V77.3578H124.663Z" fill="#1F86FF"/>
-								<path fill-rule="evenodd" clip-rule="evenodd" d="M225.88 20.9239L101.372 11.3238C94.1694 10.7665 88.2495 16.718 88.2495 24.6252V126.116C88.2495 134.023 94.18 139.995 101.372 139.469L225.88 130.395C231.053 130.017 235.196 124.391 235.196 117.83V33.5314C235.196 26.97 231.053 21.3235 225.88 20.9239ZM101.372 10.041C93.507 9.42059 87.0298 15.9188 87.0298 24.5516V126.189C87.0298 134.822 93.507 141.341 101.372 140.763L225.88 131.51C231.526 131.089 236.027 124.959 236.027 117.798V33.5839C236.027 26.4338 231.516 20.272 225.88 19.8304L101.372 10.041Z" fill="#9BD4FF" fill-opacity="0.8"/>
-								<path opacity="0.1" d="M87.0298 24.867C87.0298 16.0555 93.507 9.43103 101.372 10.0409L225.88 19.8303C231.526 20.2719 236.027 26.5494 236.027 33.8467V42.6583L87.0298 35.4976V24.867Z" fill="#0075FF"/>
-								<path d="M96.9034 54.3721C96.9034 50.0189 100.174 46.6015 104.169 46.7487L147.459 48.2944C151.024 48.4206 153.894 51.8169 153.894 55.8862V119.68C153.894 123.75 151.024 127.22 147.459 127.44L104.169 130.132C100.174 130.385 96.9034 127.051 96.9034 122.698V54.3721Z" fill="white"/>
-								<path d="M122.949 61.1113C122.949 59.881 123.843 58.9031 124.957 58.9242L144.473 59.3553C145.525 59.3763 146.376 60.3647 146.376 61.5634C146.376 62.7621 145.525 63.719 144.473 63.6979L124.957 63.372C123.853 63.351 122.949 62.3415 122.949 61.1113Z" fill="#DFE0E3" fill-opacity="0.68"/>
-								<path opacity="0.8" d="M101.761 57.1054C101.761 54.2243 103.917 51.9425 106.567 52.0267L113.664 52.237C116.251 52.3106 118.333 54.6659 118.333 57.505V65.1914C118.333 68.0199 116.251 70.3017 113.664 70.2806L106.567 70.2175C103.928 70.1965 101.761 67.8412 101.761 64.9495V57.1054Z" fill="#59FBB0" fill-opacity="0.74"/>
-								<path opacity="0.3" d="M96.9037 75.3916L153.884 75.5178V119.681C153.884 123.75 151.014 127.22 147.449 127.441L104.159 130.132C100.163 130.385 96.8932 127.052 96.8932 122.698V75.3916H96.9037Z" fill="#D7EFFF" fill-opacity="0.8"/>
-								<path d="M134.274 90.5539C134.274 89.3342 135.146 88.3458 136.219 88.3247L144.473 88.2091C145.525 88.1986 146.376 89.1554 146.376 90.3541C146.376 91.5528 145.525 92.5412 144.473 92.5623L136.219 92.72C135.146 92.741 134.274 91.7736 134.274 90.5539Z" fill="#DFE0E3" fill-opacity="0.68"/>
-								<path d="M134.274 113.171C134.274 111.952 135.146 110.932 136.219 110.89L144.473 110.553C145.525 110.511 146.376 111.447 146.376 112.646C146.376 113.844 145.525 114.854 144.473 114.896L136.219 115.274C135.146 115.327 134.274 114.381 134.274 113.161V113.171Z" fill="#DFE0E3" fill-opacity="0.68"/>
-								<path fill-rule="evenodd" clip-rule="evenodd" d="M129.08 90.2276L123.612 85.9375C123.486 85.8323 123.317 85.8218 123.17 85.9164C123.033 86.0006 122.939 86.1688 122.949 86.3581V95.1275C122.949 95.3168 123.033 95.4745 123.17 95.5586C123.307 95.6428 123.475 95.6217 123.612 95.5166L129.08 91.0477C129.195 90.9531 129.258 90.8059 129.258 90.6376C129.258 90.4694 129.185 90.3222 129.08 90.2381V90.2276Z" fill="#0075FF" fill-opacity="0.78"/>
-								<path fill-rule="evenodd" clip-rule="evenodd" d="M110.583 90.5222L104.863 86.1374C104.727 86.0323 104.548 86.0218 104.401 86.1059C104.253 86.19 104.159 86.3688 104.169 86.558V95.5273C104.169 95.7165 104.253 95.8848 104.401 95.9689C104.548 96.053 104.727 96.032 104.863 95.9269L110.583 91.3528C110.699 91.2582 110.773 91.1005 110.773 90.9323C110.773 90.764 110.699 90.6168 110.583 90.5222Z" fill="#DFE0E3" fill-opacity="0.68"/>
-								<path fill-rule="evenodd" clip-rule="evenodd" d="M129.08 112.993L123.612 108.85C123.486 108.755 123.317 108.745 123.17 108.839C123.033 108.934 122.939 109.102 122.949 109.292V118.061C122.949 118.25 123.033 118.408 123.17 118.492C123.307 118.576 123.475 118.555 123.612 118.44L129.08 113.813C129.195 113.718 129.258 113.561 129.258 113.403C129.258 113.245 129.185 113.087 129.08 113.003V112.993Z" fill="#0075FF" fill-opacity="0.78"/>
-								<path fill-rule="evenodd" clip-rule="evenodd" d="M110.583 113.792L104.863 109.565C104.727 109.459 104.548 109.459 104.401 109.554C104.253 109.649 104.159 109.827 104.169 110.017V118.986C104.169 119.175 104.253 119.344 104.401 119.428C104.548 119.512 104.727 119.491 104.863 119.375L110.583 114.643C110.699 114.549 110.773 114.391 110.773 114.223C110.773 114.054 110.699 113.907 110.583 113.813V113.792Z" fill="#DFE0E3" fill-opacity="0.68"/>
-								<path d="M171.581 63.5515C171.581 60.2393 173.852 57.6105 176.638 57.6841L223.829 58.8723C226.269 58.9354 228.235 61.4695 228.235 64.5504V75.6857C228.235 78.7561 226.269 81.2586 223.829 81.2797L176.638 81.5425C173.852 81.5531 171.581 78.8823 171.581 75.5701V63.5725V63.5515Z" fill="white"/>
-								<path d="M193.347 69.7651C193.347 68.64 194.104 67.7357 195.029 67.7462L217.794 68.0301C218.667 68.0406 219.371 68.9344 219.371 70.0174C219.371 71.1005 218.667 71.9837 217.794 71.9732L195.029 71.8155C194.104 71.8155 193.347 70.8902 193.347 69.7651Z" fill="#DFE0E3" fill-opacity="0.68"/>
-								<path opacity="0.3" d="M175.629 66.0119C175.629 63.3727 177.427 61.2697 179.635 61.3223L185.566 61.4484C187.732 61.4905 189.477 63.625 189.477 66.2222V73.2567C189.477 75.8434 187.732 77.9464 185.566 77.9464H179.635C177.427 77.9464 175.629 75.8224 175.629 73.1831V66.0224V66.0119Z" fill="#44B0FF" fill-opacity="0.74"/>
-								<path d="M177.638 93.4241C177.638 90.1329 179.877 87.4411 182.611 87.4095L220.255 86.9153C222.715 86.8838 224.702 89.3653 224.702 92.4462V103.634C224.702 106.725 222.715 109.312 220.255 109.417L182.611 111.068C179.867 111.184 177.638 108.618 177.638 105.338V93.4346V93.4241Z" fill="white"/>
-								<path d="M199.077 98.7659C199.077 97.6513 199.824 96.726 200.728 96.6944L216.889 96.2738C217.762 96.2528 218.467 97.115 218.467 98.2086C218.467 99.3021 217.762 100.206 216.889 100.227L200.728 100.732C199.813 100.764 199.077 99.8804 199.077 98.7553V98.7659Z" fill="#DFE0E3" fill-opacity="0.68"/>
-								<path opacity="0.3" d="M181.633 95.706C181.633 93.0878 183.41 90.9322 185.576 90.9007L191.422 90.7956C193.557 90.7535 195.271 92.8144 195.271 95.3801V102.362C195.271 104.928 193.557 107.083 191.422 107.167L185.576 107.399C183.4 107.483 181.633 105.432 181.633 102.814V95.706Z" fill="#FAA72C" fill-opacity="0.78"/>
-								<path d="M213.03 113.14C213.03 107.493 216.689 102.783 221.158 102.635L243.524 101.857C247.677 101.71 251 105.948 251 111.3V139.154C251 144.516 247.667 149.196 243.524 149.616L221.158 151.887C216.689 152.34 213.03 148.134 213.03 142.487V113.129V113.14Z" fill="#1BCE7B" fill-opacity="0.78"/>
-								<path fill-rule="evenodd" clip-rule="evenodd" d="M243.524 102.94L221.158 103.75C217.194 103.897 213.945 108.072 213.945 113.087V142.403C213.945 147.419 217.194 151.162 221.158 150.762L243.524 148.523C247.214 148.155 250.18 143.991 250.18 139.217V111.331C250.18 106.557 247.214 102.804 243.524 102.94ZM221.158 102.625C216.689 102.783 213.03 107.483 213.03 113.129V142.487C213.03 148.134 216.689 152.34 221.158 151.887L243.524 149.616C247.677 149.196 251 144.506 251 139.154V111.3C251 105.937 247.667 101.71 243.524 101.857L221.158 102.635V102.625Z" fill="white" fill-opacity="0.18"/>
-								<path fill-rule="evenodd" clip-rule="evenodd" d="M224.082 136.314L222.368 136.451C221.558 136.514 220.896 135.736 220.896 134.716C220.896 133.696 221.558 132.813 222.368 132.75L224.082 132.624C224.681 130.426 226.301 128.765 228.204 128.628C230.107 128.491 231.684 129.911 232.273 132.003L241 131.341C241.768 131.278 242.399 132.045 242.399 133.034C242.399 134.022 241.779 134.884 241 134.948L232.273 135.652C231.684 137.829 230.086 139.5 228.204 139.658C226.322 139.816 224.692 138.417 224.082 136.314ZM231.327 122.908L222.357 123.476C221.548 123.528 220.885 122.74 220.885 121.709C220.885 120.679 221.548 119.817 222.357 119.764L231.327 119.249C231.916 117.083 233.503 115.474 235.364 115.369C237.226 115.264 238.782 116.704 239.36 118.776L241 118.681C241.768 118.639 242.399 119.406 242.399 120.405C242.399 121.404 241.779 122.245 241 122.298L239.36 122.403C238.782 124.548 237.215 126.168 235.364 126.294C233.514 126.42 231.916 125 231.327 122.908ZM235.364 122.645C236.143 122.592 236.784 121.741 236.784 120.742C236.784 119.743 236.153 118.965 235.364 119.007C234.576 119.049 233.945 119.911 233.945 120.91C233.945 121.909 234.586 122.698 235.364 122.645ZM228.193 135.978C228.992 135.915 229.634 135.042 229.634 134.022C229.634 133.002 228.992 132.235 228.193 132.298C227.394 132.361 226.742 133.234 226.742 134.254C226.742 135.273 227.394 136.041 228.193 135.978Z" fill="white" fill-opacity="0.9"/>
-								<path fill-rule="evenodd" clip-rule="evenodd" d="M165.945 70.1017C164.515 70.0912 163.358 71.4371 163.358 73.109V86.442C163.358 88.7868 161.728 90.7111 159.709 90.7426L153.895 90.8372V89.607L159.709 89.5123C161.15 89.4913 162.328 88.1139 162.328 86.442V73.088C162.328 70.7432 163.958 68.861 165.955 68.882L171.591 68.9451V70.1438L165.955 70.0912L165.945 70.1017Z" fill="#44B0FF" fill-opacity="0.74"/>
-								<path fill-rule="evenodd" clip-rule="evenodd" d="M168.784 100.227C167.364 100.269 166.218 101.657 166.218 103.319V108.156C166.218 110.49 164.599 112.456 162.59 112.54L153.905 112.929V111.699L162.59 111.321C164.02 111.258 165.188 109.859 165.188 108.187V103.35C165.188 101.016 166.807 99.0708 168.794 99.0182L177.658 98.7764V99.9646L168.794 100.227H168.784Z" fill="#44B0FF" fill-opacity="0.74"/>
-								<defs>
-									<filter id="filter0_d_348_93445" x="79.4698" y="4.6" width="164.117" height="145.909" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-										<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-										<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-										<feOffset dy="2.16"/>
-										<feGaussianBlur stdDeviation="3.78"/>
-										<feComposite in2="hardAlpha" operator="out"/>
-										<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.02 0"/>
-										<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_348_93445"/>
-										<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_348_93445" result="shape"/>
-									</filter>
-								</defs>
-							</svg>
+							<div class="node-settings-content_empty-block"></div>
 							<p>{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TEXT')}}</p>
 						</div>
 						<div ref="contentContainer"></div>
@@ -5643,7 +6591,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 
 	const CustomDataFieldKey = 'field';
 	var _getValue$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getValue");
-	var _getEntities$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEntities");
+	var _getEntities$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEntities");
 	var _getTabs$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTabs");
 	var _getItems$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItems");
 	var _processReturnProperties$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processReturnProperties");
@@ -5662,8 +6610,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    Object.defineProperty(this, _getTabs$2, {
 	      value: _getTabs2$2
 	    });
-	    Object.defineProperty(this, _getEntities$2, {
-	      value: _getEntities2$2
+	    Object.defineProperty(this, _getEntities$1, {
+	      value: _getEntities2$1
 	    });
 	    Object.defineProperty(this, _getValue$1, {
 	      value: _getValue2$1
@@ -5683,7 +6631,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        enableSearch: true,
 	        items: babelHelpers.classPrivateFieldLooseBase(this, _getItems$1)[_getItems$1](),
 	        tabs: babelHelpers.classPrivateFieldLooseBase(this, _getTabs$2)[_getTabs$2](),
-	        entities: babelHelpers.classPrivateFieldLooseBase(this, _getEntities$2)[_getEntities$2](),
+	        entities: babelHelpers.classPrivateFieldLooseBase(this, _getEntities$1)[_getEntities$1](),
 	        cacheable: false,
 	        showAvatars: false,
 	        events: {
@@ -5761,15 +6709,28 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  }
 	}
 	function _getValue2$1(item) {
-	  return item.getCustomData().get(CustomDataFieldKey);
+	  const field = {
+	    ...item.getCustomData().get(CustomDataFieldKey)
+	  };
+	  if (item.getEntityId() === 'bizproc-document') {
+	    return {
+	      ...field,
+	      fieldId: item.getId()
+	    };
+	  }
+	  return field;
 	}
-	function _getEntities2$2() {
+	function _getEntities2$1() {
 	  return [{
 	    id: 'bizproc-document'
 	  }];
 	}
 	function _getTabs2$2() {
 	  return [{
+	    id: 'documents',
+	    title: main_core.Loc.getMessage('BIZPROCDESIGNER_SELECTOR_TAB_DOCUMENTS'),
+	    icon: 'elements'
+	  }, {
 	    id: 'returns',
 	    title: main_core.Loc.getMessage('BIZPROCDESIGNER_SELECTOR_TAB_RETURNS'),
 	    icon: 'flag-1'
@@ -5787,10 +6748,32 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	function _processReturnProperties2$2(block) {
 	  const fullTitle = block.activity.Properties.Title;
 	  const {
+	    documents,
 	    properties
 	  } = block.activity.ReturnProperties.reduce((res, property) => {
+	    var _block$activity;
+	    const activityName = ((_block$activity = block.activity) == null ? void 0 : _block$activity.Name) || block.id;
 	    const id = `${block.id}:${property.Id}`;
 	    if (property.Type === 'document') {
+	      res.documents.push({
+	        id,
+	        entityId: 'bizproc-document',
+	        entityType: 'document',
+	        title: fullTitle,
+	        customData: {
+	          idTemplate: `${property.Id}.#FIELD#`,
+	          document: property.Default,
+	          [CustomDataFieldKey]: {
+	            object: activityName
+	          }
+	        },
+	        nodeOptions: {
+	          open: false,
+	          dynamic: true
+	        },
+	        searchable: false,
+	        tabs: 'documents'
+	      });
 	      return res;
 	    }
 	    res.properties.push({
@@ -5801,7 +6784,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      block,
 	      customData: {
 	        [CustomDataFieldKey]: {
-	          object: block.id,
+	          object: activityName,
 	          fieldId: property.Id,
 	          type: property.Type,
 	          multiple: property.Multiple
@@ -5810,9 +6793,13 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    });
 	    return res;
 	  }, {
+	    documents: [],
 	    properties: []
 	  });
 	  const result = [];
+	  if (main_core.Type.isArrayFilled(documents)) {
+	    result.push(...documents);
+	  }
 	  if (main_core.Type.isArrayFilled(properties)) {
 	    result.push({
 	      id: block.id,
@@ -5838,14 +6825,40 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      }
 	    }
 	  });
+	  const {
+	    documents,
+	    activities
+	  } = childrenProperties.reduce((res, child) => {
+	    if (child) {
+	      if (child.entityId === 'bizproc-document') {
+	        res.documents.push(child);
+	      } else {
+	        res.activities.push(child);
+	      }
+	    }
+	    return res;
+	  }, {
+	    documents: [],
+	    activities: []
+	  });
 	  const properties = [];
-	  if (main_core.Type.isArrayFilled(childrenProperties)) {
+	  if (main_core.Type.isArrayFilled(documents)) {
+	    properties.push({
+	      id: block.id,
+	      entityId: 'block-node',
+	      tabs: 'documents',
+	      title: block.activity.Properties.Title,
+	      children: documents,
+	      searchable: false
+	    });
+	  }
+	  if (main_core.Type.isArrayFilled(activities)) {
 	    properties.push({
 	      id: block.id,
 	      entityId: 'block-node',
 	      tabs: 'returns',
 	      title: block.activity.Properties.Title,
-	      children: childrenProperties,
+	      children: activities,
 	      searchable: false
 	    });
 	  }
@@ -5989,6 +7002,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					<div
 						ref="fieldChooseMenu"
 						class="ui-ctl-element"
+						:title="selectedFieldTitle"
 						@click="onShowFieldChooseMenu"
 					>
 						{{ selectedFieldTitle }}
@@ -6068,9 +7082,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      this.menu.show();
 	    },
 	    getMenuItems() {
-	      var _this$ruleCard$constr, _this$ruleCard;
-	      // temporary
-	      const isActionCardExists = ((_this$ruleCard$constr = (_this$ruleCard = this.ruleCard) == null ? void 0 : _this$ruleCard.constructions) != null ? _this$ruleCard$constr : []).some(construction => construction.type === CONSTRUCTION_TYPES.ACTION);
 	      return [{
 	        id: CONSTRUCTION_TYPES.AND_CONDITION,
 	        text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_BOOLEAN_MENU_ITEM'),
@@ -6092,8 +7103,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        dataset: {
 	          testId: 'complexNodeRuleSettingsMenuItemConstructionAction'
 	        },
-	        onclick: this.onClickMenuItem,
-	        disabled: isActionCardExists
+	        onclick: this.onClickMenuItem
 	      }, {
 	        id: CONSTRUCTION_TYPES.OUTPUT,
 	        text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_OUTPUT_MENU_ITEM'),
@@ -6104,9 +7114,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      }];
 	    },
 	    onClickMenuItem(...args) {
-	      var _this$ruleCard2;
+	      var _this$ruleCard;
 	      const [, menuItem] = args;
-	      const ruleCard = (_this$ruleCard2 = this.ruleCard) != null ? _this$ruleCard2 : this.addRuleCard();
+	      const ruleCard = (_this$ruleCard = this.ruleCard) != null ? _this$ruleCard : this.addRuleCard();
 	      this.addConstruction(ruleCard, menuItem.id, this.position);
 	      this.menu.close();
 	    },
@@ -6192,12 +7202,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      getMessage
 	    };
 	  },
-	  data() {
-	    return {
-	      selectedType: CONSTRUCTION_TYPES.AND_CONDITION
-	    };
-	  },
 	  computed: {
+	    selectedType: {
+	      get() {
+	        return this.construction.type;
+	      },
+	      set(value) {
+	        this.selectBooleanType(value);
+	      }
+	    },
 	    booleanTypes() {
 	      return [CONSTRUCTION_TYPES.AND_CONDITION, CONSTRUCTION_TYPES.OR_CONDITION];
 	    },
@@ -6241,19 +7254,18 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    }
 	  },
 	  computed: {
-	    ...ui_vue3_pinia.mapState(useNodeSettingsStore, ['currentRuleId']),
+	    ...ui_vue3_pinia.mapState(useNodeSettingsStore, ['currentRuleId', 'ports']),
 	    currentRuleTitle() {
-	      const ports = this.block.ports.input;
 	      const {
 	        title
-	      } = ports.find(port => port.id === this.currentRuleId);
+	      } = this.ports.find(port => port.type === PORT_TYPES.input && port.id === this.currentRuleId);
 	      return title;
 	    }
 	  },
 	  methods: {
 	    ...ui_vue3_pinia.mapActions(useNodeSettingsStore, ['setCurrentRuleId']),
 	    getMenuItems() {
-	      return this.block.ports.input.map(port => {
+	      return this.ports.filter(port => port.type === PORT_TYPES.input && !port.isConnectionPort).map(port => {
 	        return {
 	          id: port.id,
 	          text: port.title,
@@ -6375,10 +7387,11 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  Loaded: 'loaded',
 	  Error: 'error'
 	});
+	const CorrectDocumentTypeLength = 3;
 
 	// @vue/component
-	const EditExtandedAction = {
-	  name: 'action-settings-form',
+	const EditExtendedAction = {
+	  name: 'edit-extended-action',
 	  components: {
 	    Loader
 	  },
@@ -6405,6 +7418,11 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    activityData: {
 	      type: [Object, null],
 	      required: true
+	    },
+	    selectedDocument: {
+	      type: [String, null],
+	      required: false,
+	      default: null
 	    }
 	  },
 	  setup() {
@@ -6420,8 +7438,20 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    };
 	  },
 	  computed: {
-	    ...ui_vue3_pinia.mapState(useNodeSettingsStore, ['block', 'currentRuleId']),
-	    Status: () => Status
+	    ...ui_vue3_pinia.mapState(useNodeSettingsStore, ['block', 'currentRuleId', 'nodeSettings']),
+	    Status: () => Status,
+	    action() {
+	      return this.nodeSettings.actions.get(this.actionId);
+	    },
+	    propertiesDialogDocumentType() {
+	      return this.getPropertyDialogDocumentType(this.selectedDocument);
+	    },
+	    connectedBlocks() {
+	      return this.store.getAllBlockAncestors(this.block, this.currentRuleId);
+	    },
+	    isPropertiesDialogDocumentTypeReady() {
+	      return this.propertiesDialogDocumentType.length === CorrectDocumentTypeLength;
+	    }
 	  },
 	  watch: {
 	    actionId(newVal, oldVal) {
@@ -6429,6 +7459,16 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        return;
 	      }
 	      this.init();
+	    },
+	    selectedDocument(newVal, oldVal) {
+	      if (newVal === oldVal) {
+	        return;
+	      }
+	      const newPropertyDialogDocumentType = this.getPropertyDialogDocumentType(newVal);
+	      const oldPropertyDialogDocumentType = this.getPropertyDialogDocumentType(oldVal);
+	      if (!deepEqual(newPropertyDialogDocumentType, oldPropertyDialogDocumentType)) {
+	        this.init();
+	      }
 	    }
 	  },
 	  mounted() {
@@ -6440,9 +7480,14 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  methods: {
 	    ...ui_vue3_pinia.mapActions(useNodeSettingsStore, ['changeRuleExpression']),
 	    async init() {
+	      if (!this.isPropertiesDialogDocumentTypeReady) {
+	        this.clearForm();
+	        this.onChange();
+	        return;
+	      }
 	      try {
 	        await this.loadForm();
-	        window.BPAShowSelector = this.showSelector;
+	        window.BPAShowSelector = () => {};
 	        window.HideShow = this.hideShow;
 	        this.subscribeOnBeforeSubmit();
 	      } catch (error) {
@@ -6460,17 +7505,26 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        main_core_events.EventEmitter.unsubscribe(EVENT_NAMES.BEFORE_SUBMIT_EVENT, this.onChangeCallback);
 	      }
 	    },
-	    async showSelector(id) {
+	    async showSelector(targetElement) {
+	      var _JSON$parse$controlId, _JSON$parse;
+	      const props = targetElement.getAttribute('data-bp-selector-props');
+	      const controlId = (_JSON$parse$controlId = (_JSON$parse = JSON.parse(props)) == null ? void 0 : _JSON$parse.controlId) != null ? _JSON$parse$controlId : null;
+	      if (!controlId) {
+	        return;
+	      }
+	      const inputElement = this.settingsForm.querySelector(`#${CSS.escape(controlId)}`);
+	      if (!inputElement) {
+	        return;
+	      }
 	      const selector = new ValueSelector(this.store, this.block, this.currentRuleId);
-	      const targetElement = document.getElementById(id);
 	      try {
 	        const value = await selector.show(targetElement);
-	        const beforePart = targetElement.value.slice(0, targetElement.selectionEnd);
+	        const beforePart = inputElement.value.slice(0, inputElement.selectionEnd);
 	        const middlePart = value;
-	        const afterPart = targetElement.value.slice(targetElement.selectionEnd);
-	        targetElement.value = beforePart + middlePart + afterPart;
-	        targetElement.selectionEnd = beforePart.length + middlePart.length + 1;
-	        targetElement.focus();
+	        const afterPart = inputElement.value.slice(inputElement.selectionEnd);
+	        inputElement.value = beforePart + middlePart + afterPart;
+	        inputElement.selectionEnd = beforePart.length + middlePart.length + 1;
+	        inputElement.focus();
 	      } catch (error) {
 	        console.error(error);
 	      }
@@ -6484,15 +7538,20 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      });
 	    },
 	    extractFormData(form) {
+	      if (!form) {
+	        return null;
+	      }
 	      const formData = main_core.ajax.prepareForm(form).data;
-	      formData.documentType = this.documentType;
-	      formData.activityType = this.actionId;
-	      formData.id = main_core.Type.isStringFilled(formData.activity_id) ? formData.activity_id : createUniqueId();
-	      return formData;
+	      return {
+	        ...formData,
+	        activityType: this.actionId,
+	        documentType: this.propertiesDialogDocumentType,
+	        id: main_core.Type.isStringFilled(formData.activity_id) ? formData.activity_id : createUniqueId()
+	      };
 	    },
 	    async loadForm() {
 	      var _this$template$PARAME, _this$template, _this$template$VARIAB, _this$template2, _this$template$CONSTA, _this$template3;
-	      this.$refs.contentContainer.innerHTML = '';
+	      this.clearForm();
 	      this.status = Status.Loading;
 	      let activity = this.activityData;
 	      if (!activity) {
@@ -6500,7 +7559,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	          Name: createUniqueId(),
 	          Type: this.actionId,
 	          Activated: 'Y',
-	          Properties: {}
+	          Properties: {
+	            Title: this.action.title,
+	            ...this.action.properties
+	          }
 	        };
 	      }
 	      const compatibleTemplate = [{
@@ -6519,7 +7581,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      } = usePropertyDialog();
 	      const formData = createFormData({
 	        id: activity.Name,
-	        documentType: this.documentType,
+	        documentType: this.propertiesDialogDocumentType,
 	        activity: this.actionId,
 	        workflow: {
 	          parameters: (_this$template$PARAME = (_this$template = this.template) == null ? void 0 : _this$template.PARAMETERS) != null ? _this$template$PARAME : [],
@@ -6542,11 +7604,48 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      }
 	      this.settingsForm = form;
 	      this.hasSettings = true;
+	    },
+	    clearForm() {
+	      this.$refs.contentContainer.innerHTML = '';
+	      this.settingsForm = null;
+	    },
+	    getPropertyDialogDocumentType(selectedDocument) {
+	      if (!this.action) {
+	        return [];
+	      }
+	      if (!main_core.Type.isArrayFilled(this.nodeSettings.fixedDocumentType)) {
+	        return this.documentType;
+	      }
+	      if (!this.action.handlesDocument) {
+	        return this.nodeSettings.fixedDocumentType.length < CorrectDocumentTypeLength ? this.documentType : this.nodeSettings.fixedDocumentType;
+	      }
+	      if (!selectedDocument) {
+	        return [];
+	      }
+	      if (this.nodeSettings.fixedDocumentType.length === CorrectDocumentTypeLength) {
+	        return this.nodeSettings.fixedDocumentType;
+	      }
+	      return evaluateActionExpressionDocumentType(this.connectedBlocks, selectedDocument);
+	    },
+	    onFormClick(event) {
+	      const {
+	        target
+	      } = event;
+	      if (!target || !(target instanceof HTMLElement)) {
+	        return;
+	      }
+	      if (this.isSelectorButton(target)) {
+	        void this.showSelector(target);
+	      }
+	    },
+	    isSelectorButton(element) {
+	      return element.getAttribute('data-role') === 'bp-selector-button';
 	    }
 	  },
 	  template: `
 		<Loader v-if="status === Status.Loading" />
 		<div
+			@click="onFormClick"
 			ref="contentContainer"
 		></div>
 	`
@@ -6574,22 +7673,19 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  },
 	  computed: {
 	    ...ui_vue3_pinia.mapState(diagramStore, ['documentType']),
-	    ...ui_vue3_pinia.mapState(useNodeSettingsStore, ['block', 'isShown', 'isRuleSettingsShown', 'nodeSettings', 'isLoading', 'isSaving', 'savedBlockInputPorts']),
+	    ...ui_vue3_pinia.mapState(useNodeSettingsStore, ['block', 'isShown', 'isRuleSettingsShown', 'nodeSettings', 'isLoading', 'isSaving', 'ports']),
 	    ...ui_vue3_pinia.mapWritableState(useNodeSettingsStore, ['isSaving'])
 	  },
 	  methods: {
-	    ...ui_vue3_pinia.mapActions(useNodeSettingsStore, ['toggleVisibility', 'toggleRuleSettingsVisibility', 'reset', 'setCurrentRuleId', 'deleteRuleSettings', 'saveForm', 'discardFormSettings', 'updateSettings']),
-	    ...ui_vue3_pinia.mapActions(diagramStore, ['updateNodeTitle', 'addRulePort', 'addConnectionPort', 'deletePort', 'publicDraft', 'updateBlockActivityField', 'setInputPorts', 'getBlockAncestorsByInputPortId']),
+	    ...ui_vue3_pinia.mapActions(useNodeSettingsStore, ['toggleVisibility', 'toggleRuleSettingsVisibility', 'reset', 'setCurrentRuleId', 'deleteRuleSettings', 'saveForm', 'discardFormSettings', 'addRulePort', 'deletePort']),
+	    ...ui_vue3_pinia.mapActions(diagramStore, ['updateNodeTitle', 'publicDraft', 'updateBlockActivityField', 'setPorts', 'getBlockAncestorsByInputPortId']),
 	    ...ui_vue3_pinia.mapActions(useAppStore, ['hideRightPanel']),
 	    onShowRuleConstructions(ruleId) {
 	      this.toggleRuleSettingsVisibility(true);
 	      this.setCurrentRuleId(ruleId);
 	    },
-	    onAddRule(ruleId) {
-	      this.addRulePort(this.block.id, ruleId, PORT_TYPES.input);
-	    },
 	    onDeleteRule(ruleId) {
-	      this.deletePort(this.block.id, ruleId);
+	      this.deletePort(ruleId);
 	      const {
 	        outputPortsToAdd,
 	        outputPortsToDelete
@@ -6598,20 +7694,19 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        portId,
 	        title
 	      }) => {
-	        this.addRulePort(this.block, portId, PORT_TYPES.output, title);
+	        this.addRulePort(portId, PORT_TYPES.output, title);
 	      });
 	      outputPortsToDelete.keys().forEach(portId => {
-	        this.deletePort(this.block.id, portId, PORT_TYPES.output);
+	        this.deletePort(portId);
 	      });
-	    },
-	    onAddConnection(connectionId) {
-	      this.addConnectionPort(this.block.id, connectionId, PORT_TYPES.input);
 	    },
 	    async onSaveForm() {
 	      try {
 	        this.isSaving = true;
 	        const activityData = await this.saveForm(this.documentType);
 	        this.updateBlockActivityField(this.block.id, activityData);
+	        this.setPorts(this.block.id, this.ports);
+	        this.updateNodeTitle(this.block.id, this.nodeSettings.title);
 	        await this.publicDraft();
 	        this.hideSettings();
 	      } catch (e) {
@@ -6627,23 +7722,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    },
 	    onClose() {
 	      this.discardFormSettings();
-	      const {
-	        title
-	      } = this.nodeSettings;
-	      this.updateNodeTitle(this.block, title);
-	      this.setInputPorts(this.block, this.savedBlockInputPorts);
 	      this.hideSettings();
-	    },
-	    onUpdateTitle(block, title) {
-	      this.updateNodeTitle(block, title);
-	      this.updateSettings({
-	        title
-	      });
-	    },
-	    onUpdateDescription(description) {
-	      this.updateSettings({
-	        description
-	      });
 	    }
 	  },
 	  template: `
@@ -6656,23 +7735,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			<template #default>
 				<EditNodeSettingsForm
 					:block="block"
-					@updateTitle="onUpdateTitle(block, $event)"
-					@updateDescription="onUpdateDescription($event)"
+					:ports="ports"
 				>
-					<!--
-					<template #variable="{ variableName, variableValue }">
-						<NodeSettingsVariable
-							:variableName="variableName"
-							:variableValue="variableValue"
-						/>
-					</template>
-					<template #addElement="{ itemType }">
-						<AddSettingsItem :itemType="itemType">
-							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_ELEMENT') }}
-						</AddSettingsItem>
-					</template>
-					-->
-
 					<template #rule="{ port }">
 						<NodeSettingsRule
 							:port="port"
@@ -6685,7 +7749,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					<template #addRule="{ itemType }">
 						<AddSettingsItem
 							:itemType="itemType"
-							@addItem="onAddRule"
 						>
 							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_RULE') }}
 						</AddSettingsItem>
@@ -6693,7 +7756,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					<template #addConnection="{ itemType }">
 						<AddSettingsItem
 							:itemType="itemType"
-							@addItem="onAddConnection"
 						>
 							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_CONNECTION') }}
 						</AddSettingsItem>
@@ -6752,11 +7814,11 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  computed: {
 	    ...ui_vue3_pinia.mapState(useNodeSettingsStore, ['nodeSettings', 'block']),
 	    savedOutputPorts() {
-	      var _this$block$ports$out, _this$block;
-	      return (_this$block$ports$out = (_this$block = this.block) == null ? void 0 : _this$block.ports.output.map(port => ({
+	      var _this$block$ports$fil, _this$block;
+	      return (_this$block$ports$fil = (_this$block = this.block) == null ? void 0 : _this$block.ports.filter(port => port.type === PORT_TYPES.output).map(port => ({
 	        portId: port.id,
 	        title: port.title
-	      }))) != null ? _this$block$ports$out : [];
+	      }))) != null ? _this$block$ports$fil : [];
 	    },
 	    selectedPort: {
 	      get() {
@@ -6926,8 +7988,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	`
 	};
 
-	// eslint-disable-next-line no-unused-vars
-
 	// @vue/component
 	const NodeSettingsRules = {
 	  name: 'node-settings-rules',
@@ -6945,7 +8005,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    SelectBooleanType,
 	    SelectRule,
 	    DeleteRuleCard,
-	    EditExtandedAction
+	    EditExtendedAction
 	  },
 	  setup() {
 	    const {
@@ -6963,17 +8023,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  computed: {
 	    ...ui_vue3_pinia.mapState(useNodeSettingsStore, ['nodeSettings', 'currentRuleId', 'block', 'isRuleSettingsShown']),
 	    ...ui_vue3_pinia.mapWritableState(useNodeSettingsStore, ['isSaving']),
-	    ...ui_vue3_pinia.mapState(diagramStore, ['documentTypeSigned', 'documentType', 'template']),
-	    documentTypeForActionSettings() {
-	      if (main_core.Type.isArrayFilled(this.nodeSettings.fixedDocumentType)) {
-	        return this.nodeSettings.fixedDocumentType;
-	      }
-	      return this.documentType;
-	    }
+	    ...ui_vue3_pinia.mapState(diagramStore, ['documentTypeSigned', 'documentType', 'template'])
 	  },
 	  methods: {
 	    ...ui_vue3_pinia.mapActions(useNodeSettingsStore, ['toggleRuleSettingsVisibility', 'reorder', 'saveRule', 'discardRuleSettings']),
-	    ...ui_vue3_pinia.mapActions(diagramStore, ['addRulePort', 'deletePort']),
 	    onRulesLayoutClose() {
 	      this.discardRuleSettings();
 	      this.toggleRuleSettingsVisibility(false);
@@ -6982,19 +8035,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      try {
 	        this.isSaving = true;
 	        await main_core_events.EventEmitter.emitAsync(EVENT_NAMES.BEFORE_SUBMIT_EVENT);
-	        const {
-	          outputPortsToAdd,
-	          outputPortsToDelete
-	        } = await this.saveRule(this.documentType);
-	        outputPortsToAdd.values().forEach(({
-	          portId,
-	          title
-	        }) => {
-	          this.addRulePort(this.block.id, portId, PORT_TYPES.output, title);
-	        });
-	        outputPortsToDelete.keys().forEach(portId => {
-	          this.deletePort(this.block.id, portId, PORT_TYPES.output);
-	        });
+	        await this.saveRule(this.documentType);
 	      } catch (error) {
 	        if (error.errors && error.errors[0] && error.errors[0].message) {
 	          ui_dialogs_messagebox.MessageBox.alert(main_core.Text.encode(error.errors[0].message));
@@ -7057,14 +8098,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 									:construction="construction"
 									:isExpertMode="isExpertMode"
 								>
-									<template #default="{ actionId, activityData }">
-										<EditExtandedAction
+									<template #default="{ actionId, activityData, selectedDocument }">
+										<EditExtendedAction
 											v-if="actionId"
 											:actionId="actionId"
 											:activityData="activityData"
 											:construction="construction"
-											:documentType="documentTypeForActionSettings"
+											:documentType="documentType"
 											:template="template"
+											:selectedDocument="selectedDocument"
 										/>
 									</template>
 								</EditActionExpression>
@@ -7144,10 +8186,13 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      const foundedGroups = state.groups.filter(group => {
 	        return group.title.toLowerCase().includes(preSearchText);
 	      });
-	      const foundedItems = [...new Map(state.groups.flatMap(group => group.items.filter(item => item.title.toLowerCase().includes(preSearchText)).map(item => [item.id, {
-	        ...item,
-	        parentGroup: group
-	      }]))).values()];
+	      const foundedItems = [...new Map(state.groups.flatMap(group => group.items.filter(item => item.title.toLowerCase().includes(preSearchText)).map(item => {
+	        const key = item.presetId ? `${item.id}_${item.presetId}` : item.id;
+	        return [key, {
+	          ...item,
+	          parentGroup: group
+	        }];
+	      }))).values()];
 	      return {
 	        groups: foundedGroups,
 	        items: foundedItems
@@ -7171,14 +8216,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      } = await editorAPI.getCatalogData();
 	      groups.forEach((group, groupIdx) => {
 	        group.items.forEach((item, itemIdx) => {
-	          item.defaultSettings.ports = Object.entries(item.defaultSettings.ports).reduce((portsMap, [type, ports]) => {
-	            var _ports$map;
-	            portsMap[type] = (_ports$map = ports == null ? void 0 : ports.map(port => ({
-	              ...port,
-	              type
-	            }))) != null ? _ports$map : [];
-	            return portsMap;
-	          }, {});
 	          if (item.type === 'simple' || item.type === 'trigger') {
 	            groups[groupIdx].items[itemIdx].defaultSettings.width = 200;
 	            groups[groupIdx].items[itemIdx].defaultSettings.height = 48;
@@ -7249,10 +8286,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        defaultSettings: {
 	          width: 200,
 	          height: 200,
-	          ports: {
-	            input: [],
-	            output: []
-	          }
+	          ports: [],
+	          frameColorName: 'grey'
 	        }
 	      };
 	    }
@@ -7612,15 +8647,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  bg_8: '--bg-8'
 	};
 	const ICON_COLORS$2 = {
-	  0: '#9C5CEF',
-	  1: '#188AE6',
-	  2: '#E08907',
-	  3: '#8E96A2',
-	  4: '#3CB811',
-	  5: '#52BCBC',
-	  6: '#B4B959',
-	  7: '#FFFFFF',
-	  8: '#FFFFFF'
+	  0: 'var(--designer-bp-ai-icons)',
+	  1: 'var(--designer-bp-entities-icons)',
+	  2: 'var(--designer-bp-employe-icons)',
+	  3: 'var(--designer-bp-technical-icons)',
+	  4: 'var(--designer-bp-communication-icons)',
+	  5: 'var(--designer-bp-storage-icons)',
+	  6: 'var(--designer-bp-afiliate-icons)',
+	  7: 'var(--ui-color-palette-white-base)',
+	  8: 'var(--ui-color-palette-white-base)'
 	};
 	const DEFAULT_ICON_NAME$2 = ui_iconSet_api_vue.Outline.FOLDER;
 
@@ -7681,6 +8716,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      dragData: preparedBlock,
 	      dragImage: draggedItem
 	    }));
+	    const {
+	      closeContextMenu
+	    } = ui_blockDiagram.useContextMenu();
 	    function getIconName(name) {
 	      if (name && Object.prototype.hasOwnProperty.call(iconSet, name)) {
 	        return iconSet[name];
@@ -7716,12 +8754,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        defaultSettings: {
 	          width,
 	          height,
-	          ports = {
-	            input: [],
-	            output: [],
-	            aux: [],
-	            topAux: []
-	          }
+	          ports = [],
+	          frameColorName = null
 	        }
 	      } = ui_vue3.toValue(item);
 	      return {
@@ -7751,7 +8785,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	          colorIndex,
 	          icon,
 	          title,
-	          type
+	          type,
+	          ...(frameColorName !== null ? {
+	            frameColorName
+	          } : {})
 	        }
 	      };
 	    }
@@ -7779,6 +8816,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      }
 	      return trimmedUrl;
 	    }
+	    function onDragStart() {
+	      closeContextMenu();
+	    }
 	    return {
 	      dragPayload,
 	      preparedBlock,
@@ -7789,7 +8829,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      getIconName,
 	      getIconColor,
 	      isUrl,
-	      getBackgroundImage
+	      getBackgroundImage,
+	      onDragStart
 	    };
 	  },
 	  template: `
@@ -7797,6 +8838,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			v-drag-block="getDragPayload"
 			:class="catalogItemClassNames"
 			:data-test-id="$testId('catalogItem', item.id)"
+			@dragstart="onDragStart"
 		>
 			<div
 				ref="draggedItem"
@@ -7807,19 +8849,21 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:item="preparedBlock"
 				/>
 			</div>
-			<div :class="iconWrapperClassNames">
-				<div
-					v-if="isUrl(item.icon)"
-					:style="getBackgroundImage(item.icon)"
-					class="ui-selector-item-avatar"
-				/>
-				<BIcon
-					v-else
-					:name="getIconName(item.icon)"
-					:color="getIconColor(item.colorIndex)"
-					:size="28"
-					class="editor-chart-catalog-item__icon"
-				/>
+			<div class="editor-chart-catalog-item__icon-container">
+				<div :class="iconWrapperClassNames">
+					<div
+						v-if="isUrl(item.icon)"
+						:style="getBackgroundImage(item.icon)"
+						class="ui-selector-item-avatar"
+					/>
+					<BIcon
+						v-else
+						:name="getIconName(item.icon)"
+						:color="getIconColor(item.colorIndex)"
+						:size="28"
+						class="editor-chart-catalog-item__icon"
+					/>
+				</div>
 			</div>
 			<div class="editor-chart-catalog-item__content">
 				<div class="editor-chart-catalog-item__title">
@@ -8209,14 +9253,317 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	RequestQueue.processingRequest = null;
 	RequestQueue.nextRequest = null;
 
+	const HIDE_SETTINGS_DELAY = 300;
+	var _loc = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loc");
+	var _history = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("history");
+	var _appStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appStore");
+	var _commonNodeSettingsStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("commonNodeSettingsStore");
+	var _complexNodeSettingsStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("complexNodeSettingsStore");
+	var _diagramStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("diagramStore");
+	var _bufferStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bufferStore");
+	var _areComplexNodeSettingsDirty = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("areComplexNodeSettingsDirty");
+	var _showConfirm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showConfirm");
+	var _shouldSwitchToBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldSwitchToBlock");
+	class BlockMediator {
+	  constructor() {
+	    Object.defineProperty(this, _shouldSwitchToBlock, {
+	      value: _shouldSwitchToBlock2
+	    });
+	    Object.defineProperty(this, _showConfirm, {
+	      value: _showConfirm2
+	    });
+	    Object.defineProperty(this, _areComplexNodeSettingsDirty, {
+	      value: _areComplexNodeSettingsDirty2
+	    });
+	    Object.defineProperty(this, _loc, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _history, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _appStore, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _commonNodeSettingsStore, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _complexNodeSettingsStore, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _diagramStore, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _bufferStore, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc] = useLoc();
+	    babelHelpers.classPrivateFieldLooseBase(this, _history)[_history] = ui_blockDiagram.useHistory();
+	    babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore] = useAppStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore] = useCommonNodeSettingsStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore] = useNodeSettingsStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore] = diagramStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _bufferStore)[_bufferStore] = useBufferStore();
+	  }
+	  isCurrentBlock(blockId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].isCurrentBlock(blockId) || babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(blockId);
+	  }
+	  isCurrentComplexBlock(blockId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(blockId);
+	  }
+	  hideAllSettings() {
+	    return new Promise(resolve => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore].hideRightPanel();
+	      babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].hideSettings();
+	      setTimeout(() => resolve(), HIDE_SETTINGS_DELAY);
+	    });
+	  }
+	  hideCurrentBlockSettings(blockId) {
+	    if (this.isCurrentBlock(blockId)) {
+	      this.hideAllSettings();
+	    }
+	  }
+	  async showNodeSettings(block) {
+	    const notReallyComplexBlock = ['ForEachActivity', 'IfElseBranchActivity'];
+	    if (block.type === BLOCK_TYPES$1.COMPLEX && !notReallyComplexBlock.includes(block.activity.Type)) {
+	      this.showComplexNodeSettings(block);
+	      return;
+	    }
+	    this.showCommonNodeSettings(block);
+	  }
+	  async showCommonNodeSettings(block) {
+	    const shouldSwitch = await babelHelpers.classPrivateFieldLooseBase(this, _shouldSwitchToBlock)[_shouldSwitchToBlock]();
+	    if (shouldSwitch) {
+	      await this.hideAllSettings();
+	      babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore].showRightPanel();
+	      babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].showSettings(block);
+	    }
+	  }
+	  async showComplexNodeSettings(block) {
+	    const shouldSwitch = await babelHelpers.classPrivateFieldLooseBase(this, _shouldSwitchToBlock)[_shouldSwitchToBlock]();
+	    if (shouldSwitch) {
+	      await this.hideAllSettings();
+	      babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore].showRightPanel();
+	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].toggleVisibility(true);
+	      await babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].fetchNodeSettings(block);
+	    }
+	  }
+	  getCtxMenuItemShowSettings(block) {
+	    return {
+	      id: 'showSettings',
+	      text: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_OPEN'),
+	      onclick: () => this.showNodeSettings(block)
+	    };
+	  }
+	  getCtxMenuItemDeleteBlock(block) {
+	    return {
+	      id: 'deleteBlock',
+	      text: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
+	      onclick: () => {
+	        const isCurrentComplexBlock = this.isCurrentComplexBlock(block.id);
+	        this.hideCurrentBlockSettings(block.id);
+	        if (isCurrentComplexBlock) {
+	          this.resetComplexBlockSettings();
+	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore].deleteBlockById(block.id);
+	        babelHelpers.classPrivateFieldLooseBase(this, _history)[_history].makeSnapshot();
+	      }
+	    };
+	  }
+	  getCommonBlockMenuOptions(block) {
+	    return [this.getCtxMenuItemShowSettings(block), this.getCtxMenuItemCopyBlock(block), this.getCtxMenuItemDeleteBlock(block)];
+	  }
+	  getCtxMenuItemCopyBlock(block) {
+	    return {
+	      id: 'copyBlock',
+	      text: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
+	      onclick: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _bufferStore)[_bufferStore].copyBlock(block);
+	      }
+	    };
+	  }
+	  addComplexBlockPort(block, title) {
+	    let portId = '';
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(block.id)) {
+	      portId = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].addRule();
+	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].addRulePort(portId, PORT_TYPES.input);
+	    } else {
+	      portId = generateNextInputPortId(block.ports.filter(port => port.type === PORT_TYPES.input));
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore].setPorts(block.id, [...block.ports, {
+	      id: portId,
+	      title,
+	      type: PORT_TYPES.input,
+	      position: 'left'
+	    }]);
+	  }
+	  getComplexBlockPorts(block) {
+	    var _babelHelpers$classPr;
+	    const {
+	      id,
+	      ports
+	    } = block;
+	    return this.isCurrentComplexBlock(id) ? (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].ports) != null ? _babelHelpers$classPr : ports : ports;
+	  }
+	  getComplexBlockTitle(block) {
+	    var _babelHelpers$classPr2;
+	    const {
+	      id,
+	      node: {
+	        title
+	      }
+	    } = block;
+	    return this.isCurrentComplexBlock(id) ? (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].nodeSettings) == null ? void 0 : _babelHelpers$classPr2.title : title;
+	  }
+	  resetComplexBlockSettings() {
+	    const {
+	      block: complexBlock,
+	      nodeSettings
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore];
+	    babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].discardFormSettings();
+	    babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore].updateNodeTitle(complexBlock, nodeSettings.title);
+	    babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].toggleVisibility(false);
+	    babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].reset();
+	  }
+	  syncSettingsWithDiagram() {
+	    var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	    const complexBlockId = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].block) == null ? void 0 : _babelHelpers$classPr3.id;
+	    const currentId = complexBlockId || ((_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].block) == null ? void 0 : _babelHelpers$classPr4.id);
+	    if (!currentId) {
+	      return;
+	    }
+	    const blockExists = babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore].blocks.some(block => block.id === currentId);
+	    if (!blockExists) {
+	      this.hideAllSettings();
+	      if (complexBlockId) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].toggleVisibility(false);
+	        babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].reset();
+	      }
+	    }
+	  }
+	}
+	function _areComplexNodeSettingsDirty2(block) {
+	  var _block$activity$Prope;
+	  const {
+	    ports,
+	    nodeSettings
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore];
+	  const {
+	    title,
+	    description
+	  } = nodeSettings;
+	  const blockDescription = (_block$activity$Prope = block.activity.Properties.EditorComment) != null ? _block$activity$Prope : '';
+	  return ports.length !== block.ports.length || title.trim() !== block.node.title.trim() || description.trim() !== blockDescription.trim();
+	}
+	function _showConfirm2() {
+	  return new Promise(resolve => {
+	    const messageBox = new ui_dialogs_messagebox.MessageBox({
+	      message: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_UNSAVE_CONFIRM'),
+	      buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	      okCaption: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_UNSAVE_CONFIRM_OK'),
+	      cancelCaption: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_UNSAVE_CONFIRM_CANCEL'),
+	      onOk: () => {
+	        resolve(true);
+	        messageBox.close();
+	      },
+	      onCancel: () => {
+	        resolve(false);
+	        messageBox.close();
+	      }
+	    });
+	    messageBox.show();
+	  });
+	}
+	async function _shouldSwitchToBlock2() {
+	  const {
+	    block: complexBlock
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore];
+	  if (!complexBlock) {
+	    return true;
+	  }
+	  const areComplexNodeSettingsDirty = babelHelpers.classPrivateFieldLooseBase(this, _areComplexNodeSettingsDirty)[_areComplexNodeSettingsDirty](complexBlock);
+	  if (!areComplexNodeSettingsDirty) {
+	    this.resetComplexBlockSettings();
+	    return true;
+	  }
+	  const shouldStay = await babelHelpers.classPrivateFieldLooseBase(this, _showConfirm)[_showConfirm]();
+	  if (!shouldStay) {
+	    this.resetComplexBlockSettings();
+	  }
+	  return !shouldStay;
+	}
+
+	var _diagramStore$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("diagramStore");
+	var _bufferStore$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bufferStore");
+	var _pasteBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pasteBlock");
+	class CopyPaste {
+	  constructor() {
+	    Object.defineProperty(this, _pasteBlock, {
+	      value: _pasteBlock2
+	    });
+	    Object.defineProperty(this, _diagramStore$1, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _bufferStore$1, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _diagramStore$1)[_diagramStore$1] = diagramStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _bufferStore$1)[_bufferStore$1] = useBufferStore();
+	  }
+	  paste(point) {
+	    const bufferContent = babelHelpers.classPrivateFieldLooseBase(this, _bufferStore$1)[_bufferStore$1].getBufferContent();
+	    if (!bufferContent) {
+	      return;
+	    }
+	    if (bufferContent.type === BUFFER_CONTENT_TYPES.BLOCK) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _pasteBlock)[_pasteBlock](bufferContent.content, point);
+	      return;
+	    }
+	    throw new Error('Unsupported buffer content type');
+	  }
+	}
+	function _pasteBlock2(block, point) {
+	  const positionedBlock = {
+	    ...block,
+	    position: point
+	  };
+	  babelHelpers.classPrivateFieldLooseBase(this, _diagramStore$1)[_diagramStore$1].addBlock(positionedBlock);
+	  babelHelpers.classPrivateFieldLooseBase(this, _diagramStore$1)[_diagramStore$1].updateBlockPublishStatus(positionedBlock);
+	}
+
+	const DEFAULT_SELECTION_PADDING = {
+	  top: 27,
+	  bottom: 25,
+	  left: 17,
+	  right: 17
+	};
+	const DEFAULT_BLOCK_SIZE = {
+	  width: 150,
+	  height: 100
+	};
+	const SWITCHER_WIDTH = 17;
+
 	// @vue/component
 	const BlockDiagram$1 = {
 	  name: 'BlockDiagramWidget',
 	  components: {
-	    BlockDiagramEntity: BlockDiagram
+	    BlockDiagramEntity: BlockDiagram,
+	    GroupSelectionBox: ui_blockDiagram.GroupSelectionBox
 	  },
 	  props: {
 	    disabled: {
+	      type: Boolean,
+	      default: false
+	    },
+	    enableGrouping: {
 	      type: Boolean,
 	      default: false
 	    }
@@ -8225,6 +9572,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    const showBlockSettings = ui_vue3.inject('showBlockSettings');
 	    const animationQueue = ui_blockDiagram.useAnimationQueue();
 	    const diagramStore$$1 = diagramStore();
+	    const bufferStore = useBufferStore();
 	    const {
 	      blocks: blocksInStore,
 	      connections: connectionsInStore
@@ -8234,9 +9582,39 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    } = useLoc();
 	    const highlightedBlocks = ui_blockDiagram.useHighlightedBlocks();
 	    const highlitedBlockIds = highlightedBlocks.highlitedBlockIds;
+	    const history = ui_blockDiagram.useHistory();
 	    const {
 	      isFeatureAvailable
 	    } = useFeature();
+	    const {
+	      transformEventToPoint,
+	      transformX,
+	      transformY
+	    } = ui_blockDiagram.useBlockDiagram();
+	    const copyPaste = new CopyPaste();
+	    const isMac = main_core.Browser.isMac();
+	    const mediator = new BlockMediator();
+	    const selectionBoxConfig = ui_vue3.computed(() => {
+	      const selectedIds = ui_vue3.toValue(highlitedBlockIds);
+	      const selectedBlocks = selectedIds != null && selectedIds.length ? ui_vue3.toValue(blocks).filter(b => selectedIds.includes(b.id)) : [];
+	      let {
+	        left
+	      } = DEFAULT_SELECTION_PADDING;
+	      if (selectedBlocks.length > 0) {
+	        const minX = Math.min(...selectedBlocks.map(b => b.position.x));
+	        const hasTriggerOnLeft = selectedBlocks.some(b => b.type === BLOCK_TYPES$1.TRIGGER && Math.abs(b.position.x - minX) < 1);
+	        if (hasTriggerOnLeft) {
+	          left += SWITCHER_WIDTH;
+	        }
+	      }
+	      return {
+	        padding: {
+	          ...DEFAULT_SELECTION_PADDING,
+	          left
+	        },
+	        defaultBlockSize: DEFAULT_BLOCK_SIZE
+	      };
+	    });
 	    const blocks = ui_vue3.computed({
 	      get() {
 	        return ui_vue3.toValue(blocksInStore);
@@ -8255,7 +9633,85 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        fetchUpdateDiagram();
 	      }
 	    });
+	    const performPaste = point => {
+	      try {
+	        copyPaste.paste(point);
+	        history.makeSnapshot();
+	      } catch (e) {
+	        console.error('Paste error:', e);
+	      }
+	    };
+	    const handleCopy = () => {
+	      const ids = ui_vue3.toValue(highlitedBlockIds);
+	      if (ids.length > 0) {
+	        const blockToCopy = ui_vue3.toValue(blocksInStore).find(b => b.id === ids[0]);
+	        if (blockToCopy) {
+	          bufferStore.copyBlock(blockToCopy);
+	        }
+	      }
+	    };
+	    const handlePasteShortcut = (event, mousePos) => {
+	      const rawPoint = transformEventToPoint({
+	        clientX: mousePos.x,
+	        clientY: mousePos.y
+	      });
+	      const correctedPoint = {
+	        x: rawPoint.x + (ui_vue3.toValue(transformX) || 0),
+	        y: rawPoint.y + (ui_vue3.toValue(transformY) || 0)
+	      };
+	      performPaste(correctedPoint);
+	    };
+	    const handleUndo = () => {
+	      if (history.hasPrev) {
+	        history.prev();
+	        mediator.syncSettingsWithDiagram();
+	      }
+	    };
+	    const handleRedo = () => {
+	      if (history.hasNext) {
+	        history.next();
+	        mediator.syncSettingsWithDiagram();
+	      }
+	    };
+	    const handleDelete = () => {
+	      const ids = ui_vue3.toValue(highlitedBlockIds);
+	      if (ids.length === 0) {
+	        return;
+	      }
+	      ids.forEach(id => {
+	        diagramStore$$1.deleteBlockById(id);
+	        mediator.hideCurrentBlockSettings(id);
+	      });
+	      history.makeSnapshot();
+	      highlightedBlocks.clear();
+	      fetchUpdateDiagram();
+	    };
+	    ui_blockDiagram.useKeyboardShortcuts([{
+	      keys: ['Mod', 'c'],
+	      handler: handleCopy
+	    }, {
+	      keys: ['Mod', 'v'],
+	      handler: handlePasteShortcut
+	    }, {
+	      keys: ['Mod', 'z'],
+	      handler: handleUndo
+	    }, {
+	      keys: isMac ? ['Mod', 'Shift', 'z'] : ['Mod', 'y'],
+	      handler: handleRedo
+	    }, {
+	      keys: ['Delete'],
+	      handler: handleDelete
+	    }, {
+	      keys: ['Backspace'],
+	      handler: handleDelete
+	    }]);
 	    const fetchUpdateDiagram = main_core.Runtime.debounce(updateDiagramData, 700);
+	    const groupMenuItems = ui_vue3.computed(() => [{
+	      id: 'delete-group',
+	      text: getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
+	      onclick: handleDelete
+	    }]);
+	    const isBufferEmpty = ui_vue3.computed(() => bufferStore.isBufferEmpty);
 	    async function updateDiagramData() {
 	      const maxAttempts = 3;
 	      let attempt = 0;
@@ -8278,13 +9734,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      }
 	    }
 	    function onDropNewBlock(block) {
-	      try {
-	        diagramStore$$1.setBlockCurrentTimestamp(block);
-	        diagramStore$$1.publicDraft();
-	        diagramStore$$1.updateStatus(true);
-	      } catch {
-	        diagramStore$$1.updateStatus(false);
-	      }
+	      diagramStore$$1.updateBlockPublishStatus(block);
 	    }
 	    async function onBlockTransitionEnd(block) {
 	      if (!block || !block.position) {
@@ -8299,6 +9749,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        animationQueue.play();
 	      }
 	    }
+	    function onDeleteConnection(connectionId) {
+	      diagramStore$$1.setConnectionCurrentTimestamp(connectionId);
+	    }
+	    function onCreateConnection(connection) {
+	      diagramStore$$1.setConnectionCurrentTimestamp(connection.id);
+	    }
 	    return {
 	      blocks,
 	      connections,
@@ -8307,8 +9763,29 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      onBlockTransitionEnd,
 	      onDropNewBlock,
 	      highlitedBlockIds,
-	      isFeatureAvailable
+	      isFeatureAvailable,
+	      groupMenuItems,
+	      selectionBoxConfig,
+	      performPaste,
+	      isBufferEmpty,
+	      onDeleteConnection,
+	      onCreateConnection
 	    };
+	  },
+	  computed: {
+	    contextMenuItems() {
+	      return [this.pasteMenuItem];
+	    },
+	    pasteMenuItem() {
+	      return {
+	        id: 'paste',
+	        disabled: this.isBufferEmpty,
+	        text: this.$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_PASTE'),
+	        onclick: point => {
+	          this.performPaste(point);
+	        }
+	      };
+	    }
 	  },
 	  // @todo to widget
 	  watch: {
@@ -8336,8 +9813,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			v-model:blocks="blocks"
 			v-model:connections="connections"
 			:disabled="disabled"
+			:enableGrouping="enableGrouping"
+			:contextMenuItems="contextMenuItems"
 			@blockTransitionEnd="onBlockTransitionEnd"
 			@dropNewBlock="onDropNewBlock"
+			@createConnection="onCreateConnection"
+			@deleteConnection="onDeleteConnection"
 		>
 			<template #[blockSlotNames.SIMPLE]="{ block }">
 				<slot
@@ -8385,6 +9866,14 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 				<slot
 					:name="connectionSlotNames.AUX"
 					:connection="connection"
+				/>
+			</template>
+			<template #group-selection-box>
+				<GroupSelectionBox
+					v-if="enableGrouping"
+					:menuItems="groupMenuItems"
+					:padding="selectionBoxConfig.padding"
+					:defaultBlockSize="selectionBoxConfig.defaultBlockSize"
 				/>
 			</template>
 		</BlockDiagramEntity>
@@ -8454,7 +9943,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	const UpdatePublishedStatusLabel = {
 	  name: 'UpdatePublishedStatusLabel',
 	  components: {
-	    BlockStatusNotPublished
+	    BlockStatusNotPublished,
+	    BlockStatusPublishError
 	  },
 	  props: {
 	    /** @type Block */
@@ -8470,52 +9960,17 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      const published = diagramStore$$1.blockSavedTimestamps[props.block.id];
 	      return updated === published;
 	    });
+	    const hasPublishError = ui_vue3.computed(() => {
+	      return main_core.Type.isObject(diagramStore$$1.blockCurrentPublishErrors[props.block.id]);
+	    });
 	    return {
-	      isPublished
+	      isPublished,
+	      hasPublishError
 	    };
 	  },
 	  template: `
-		<BlockStatusNotPublished v-if="!isPublished"/>
-	`
-	};
-
-	const PORT_POSITIONS$1 = {
-	  right: 'right'
-	};
-	const AddComplexBlockPort = {
-	  name: 'add-complex-block-port',
-	  props: {
-	    position: {
-	      type: String,
-	      required: true
-	    },
-	    highlighted: {
-	      type: Boolean,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    pointClasses() {
-	      return {
-	        '--right': this.position === PORT_POSITIONS$1.right,
-	        '--highlighted': this.highlighted
-	      };
-	    }
-	  },
-	  template: `
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="9"
-			height="9"
-			viewBox="0 0 9 9"
-			fill="none"
-			class="complex-block-port-add-point"
-			:class="pointClasses"
-		>
-			<circle cx="4.5" cy="4.5" r="4" fill="white" stroke="#DFE0E3"/>
-			<rect x="4" y="2" width="1" height="5" rx="0.5" fill="#DFE0E3"/>
-			<rect x="2" y="5" width="1" height="5" rx="0.5" transform="rotate(-90 2 5)" fill="#DFE0E3"/>
-		</svg>
+		<BlockStatusPublishError v-if="hasPublishError"/>
+		<BlockStatusNotPublished v-else-if="!isPublished"/>
 	`
 	};
 
@@ -8573,7 +10028,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    };
 	  },
 	  computed: {
-	    ...ui_vue3_pinia.mapState(diagramStore, ['templatePublishStatus']),
+	    ...ui_vue3_pinia.mapState(diagramStore, ['templatePublishStatus', 'blockCurrentTimestamps', 'blockSavedTimestamps', 'connectionCurrentTimestamps', 'connectionSavedTimestamps', 'connections']),
 	    icon() {
 	      const icons = {
 	        [TEMPLATE_PUBLISH_STATUSES.MAIN]: 'ui-btn-icon-workflow',
@@ -8581,10 +10036,18 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        [TEMPLATE_PUBLISH_STATUSES.FULL]: 'ui-btn-icon-workflow-stop'
 	      };
 	      return icons[this.templatePublishStatus];
+	    },
+	    style() {
+	      const isChanged = this.isChanged(this.blockCurrentTimestamps, this.blockSavedTimestamps) || this.isChanged(this.connectionCurrentTimestamps, this.connectionSavedTimestamps);
+	      return isChanged ? ui_vue3_components_button.AirButtonStyle.FILLED : ui_vue3_components_button.AirButtonStyle.OUTLINE_ACCENT_2;
 	    }
 	  },
 	  methods: {
 	    ...ui_vue3_pinia.mapActions(diagramStore, ['publicTemplate']),
+	    ...ui_vue3_pinia.mapActions(useToastStore, {
+	      addCustomToast: 'addCustom',
+	      clearAllToastOfType: 'clearAllOfType'
+	    }),
 	    publishTemplate() {
 	      ({
 	        [TEMPLATE_PUBLISH_STATUSES.MAIN]: this.fetchPublishMainTemplate,
@@ -8594,6 +10057,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    },
 	    async fetchPublishMainTemplate() {
 	      this.isLoading = true;
+	      this.clearAllToastOfType(BLOCK_TOAST_TYPES.ACTIVITY_PUBLIC_ERROR);
 	      try {
 	        var _this$$Bitrix$Loc$get;
 	        await this.publicTemplate();
@@ -8602,6 +10066,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	          autoHideDelay: 5000
 	        });
 	      } catch (error) {
+	        var _error$data;
+	        if (main_core.Type.isArrayFilled((_error$data = error.data) == null ? void 0 : _error$data.activityErrors)) {
+	          this.addCustomToast(main_core.Loc.getMessage('BIZPROCDESIGNER_EDITOR_PUBLISH_ERROR_TOAST'), BLOCK_TOAST_TYPES.ACTIVITY_PUBLIC_ERROR);
+	        }
 	        handleResponseError(error);
 	      } finally {
 	        this.isLoading = false;
@@ -8614,6 +10082,19 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    fetchPublishFullTemplate() {
 	      alert('doFullPublication');
 	      this.loading = false;
+	    },
+	    isChanged(current, published) {
+	      const keysCurrent = Object.keys(current);
+	      const keysPublished = Object.keys(published);
+	      if (keysCurrent.length !== keysPublished.length) {
+	        return true;
+	      }
+	      for (const key of keysCurrent) {
+	        if (current[key] !== published[key]) {
+	          return true;
+	        }
+	      }
+	      return false;
 	    }
 	  },
 	  template: `
@@ -8621,6 +10102,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			:text="$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_PUBLISH')"
 			:icon="icon"
 			:loading="isLoading"
+			:style="style"
 			@change="publishTemplate"
 		>
 			<template #default>
@@ -8815,107 +10297,49 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	`
 	};
 
-	const HIDE_SETTINGS_DELAY = 300;
-	var _loc = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loc");
-	var _history = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("history");
-	var _appStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appStore");
-	var _commonNodeSettingsStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("commonNodeSettingsStore");
-	var _complexNodeSettingsStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("complexNodeSettingsStore");
-	var _diagramStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("diagramStore");
-	class BlockMediator {
-	  constructor() {
-	    Object.defineProperty(this, _loc, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _history, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _appStore, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _commonNodeSettingsStore, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _complexNodeSettingsStore, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _diagramStore, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc] = useLoc();
-	    babelHelpers.classPrivateFieldLooseBase(this, _history)[_history] = ui_blockDiagram.useHistory();
-	    babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore] = useAppStore();
-	    babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore] = useCommonNodeSettingsStore();
-	    babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore] = useNodeSettingsStore();
-	    babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore] = diagramStore();
-	  }
-	  isCurrentBlock(blockId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].isCurrentBlock(blockId) || babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(blockId);
-	  }
-	  hideAllSettings() {
-	    return new Promise(resolve => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore].hideRightPanel();
-	      babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].hideSettings();
-	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].toggleVisibility(false);
-	      setTimeout(() => resolve(), HIDE_SETTINGS_DELAY);
-	    });
-	  }
-	  hideCurrentBlockSettings(blockId) {
-	    if (this.isCurrentBlock(blockId)) {
-	      this.hideAllSettings();
+	// @vue/component
+	const ChangeFrameColorTopBtn = {
+	  name: 'ChangeFrameColorTopBtn',
+	  components: {
+	    ColorMenuTopBtn
+	  },
+	  props: {
+	    /** @type Block */
+	    block: {
+	      type: Object,
+	      required: true
 	    }
-	  }
-	  async showNodeSettings(block) {
-	    const notReallyComplexBlock = ['ForEachActivity', 'IfElseBranchActivity'];
-	    if (block.type === BLOCK_TYPES$1.COMPLEX && !notReallyComplexBlock.includes(block.activity.Type)) {
-	      this.showComplexNodeSettings(block);
-	      return;
+	  },
+	  emits: ['update:open'],
+	  computed: {
+	    colorName() {
+	      return this.block.node.frameColorName;
+	    },
+	    colorOptions() {
+	      return Object.values(FRAME_COLOR_NAMES);
 	    }
-	    this.showCommonNodeSettings(block);
-	  }
-	  async showCommonNodeSettings(block) {
-	    await this.hideAllSettings();
-	    babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore].showRightPanel();
-	    babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].showSettings(block);
-	  }
-	  async showComplexNodeSettings(block) {
-	    await this.hideAllSettings();
-	    babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore].showRightPanel();
-	    babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].toggleVisibility(true);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].fetchNodeSettings(block);
-	  }
-	  getCtxMenuItemShowSimpleSettings(block) {
-	    return {
-	      id: 'showSimpleSettings',
-	      text: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_OPEN'),
-	      onclick: () => this.showNodeSettings(block)
-	    };
-	  }
-	  getCtxMenuItemShowComplexSettings(block) {
-	    return {
-	      id: 'showComplexSettings',
-	      text: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_OPEN'),
-	      onclick: () => this.showNodeSettings(block)
-	    };
-	  }
-	  getCtxMenuItemDeleteBlock(block) {
-	    return {
-	      id: 'deleteBlock',
-	      text: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
-	      onclick: () => {
-	        this.hideCurrentBlockSettings(block.id);
-	        babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore].deleteBlockById(block.id);
-	        babelHelpers.classPrivateFieldLooseBase(this, _history)[_history].makeSnapshot();
+	  },
+	  methods: {
+	    ...ui_vue3_pinia.mapActions(diagramStore, ['updateFrameColorName', 'publicDraft', 'updateStatus']),
+	    async onUpdateFrameColor(colorName) {
+	      try {
+	        this.updateFrameColorName(this.block.id, colorName);
+	        await this.publicDraft();
+	        this.updateStatus(true);
+	      } catch {
+	        this.updateStatus(false);
 	      }
-	    };
-	  }
-	}
+	    }
+	  },
+	  template: `
+		<ColorMenuTopBtn
+			:colorName="colorName"
+			:options="colorOptions"
+			@update:colorName="onUpdateFrameColor"
+			@update:open="$emit('update:open', $event)"
+		/>
+	`
+	};
 
 	// @vue/component
 	const BlockSimple = {
@@ -8930,7 +10354,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    UpdatePublishedStatusLabel,
 	    IconDivider,
 	    IconButton,
-	    PortsInOutCenter
+	    PortsInOutCenter,
+	    BlockTopTitle
 	  },
 	  props: {
 	    /** @type Block */
@@ -8943,43 +10368,51 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      default: false
 	    }
 	  },
-	  computed: {
-	    isBlockActivated() {
-	      return isBlockActivated(this.block);
-	    }
-	  },
 	  setup(props) {
 	    return {
 	      iconSet: ui_iconSet_api_vue.Outline,
 	      blockMediator: new BlockMediator()
 	    };
 	  },
+	  computed: {
+	    isBlockActivated() {
+	      return isBlockActivated(this.block);
+	    },
+	    userTitle() {
+	      return getBlockUserTitle(this.block);
+	    },
+	    contextMenuItems() {
+	      return this.blockMediator.getCommonBlockMenuOptions(this.block);
+	    }
+	  },
 	  template: `
 		<MoveableBlock :block="block">
-			<template #default="{ isHighlighted, isDragged, isDisabled, isActivated }">
+			<template #default="{ isHighlighted, isDragged, isDisabled, isActivated, isMakeNewConnection }">
 				<AutosizeBlockContainer
 					:blockId="block.id"
 					:autosize="autosize"
 					:width="block.dimensions.width"
 					:height="block.dimensions.height"
-					:highlighted="isHighlighted"
+					:highlighted="isHighlighted && !isDragged"
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
-					:contextMenuItems="[
-						blockMediator.getCtxMenuItemShowSimpleSettings(block),
-						blockMediator.getCtxMenuItemDeleteBlock(block),
-					]"
+					:hoverable="!isMakeNewConnection"
+					:contextMenuItems="contextMenuItems"
 					@dblclick.stop="blockMediator.showNodeSettings(block)"
 				>
 					<BlockLayout
 						:block="block"
-						:moreMenuItems="[
-							blockMediator.getCtxMenuItemShowSimpleSettings(block),
-							blockMediator.getCtxMenuItemDeleteBlock(block),
-						]"
+						:moreMenuItems="contextMenuItems"
 						:dragged="isDragged"
 						:disabled="isDisabled"
+						:hoverable="!isMakeNewConnection"
 					>
+						<template #top-menu-title>
+							<BlockTopTitle
+								:title="userTitle"
+								:description="block.activity.Properties.EditorComment"
+							/>
+						</template>
 						<template #top-menu>
 							<DeleteBlockIconBtn
 								:blockId="block.id"
@@ -9029,7 +10462,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    IconDivider,
 	    IconButton,
 	    PortsInOutCenter,
-	    BlockSwitcher
+	    BlockSwitcher,
+	    BlockTopTitle
 	  },
 	  props: {
 	    /** @type Block */
@@ -9040,11 +10474,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    autosize: {
 	      type: Boolean,
 	      default: false
-	    }
-	  },
-	  computed: {
-	    isBlockActivated() {
-	      return isBlockActivated(this.block);
 	    }
 	  },
 	  setup(props) {
@@ -9062,32 +10491,45 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      toggleBlock
 	    };
 	  },
+	  computed: {
+	    isBlockActivated() {
+	      return isBlockActivated(this.block);
+	    },
+	    userTitle() {
+	      return getBlockUserTitle(this.block);
+	    },
+	    contextMenuItems() {
+	      return this.blockMediator.getCommonBlockMenuOptions(this.block);
+	    }
+	  },
 	  template: `
 		<MoveableBlock :block="block">
-			<template #default="{ isHighlighted, isDragged, isDisabled }">
+			<template #default="{ isHighlighted, isDragged, isDisabled, isMakeNewConnection }">
 				<AutosizeBlockContainer
 					:blockId="block.id"
 					:autosize="autosize"
 					:width="block.dimensions.width"
 					:height="block.dimensions.height"
-					:highlighted="isHighlighted"
+					:highlighted="isHighlighted && !isDragged"
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
-					:contextMenuItems="[
-						blockMediator.getCtxMenuItemShowSimpleSettings(block),
-						blockMediator.getCtxMenuItemDeleteBlock(block),
-					]"
+					:hoverable="!isMakeNewConnection"
+					:contextMenuItems="contextMenuItems"
 					@dblclick.stop="blockMediator.showNodeSettings(block)"
 				>
 					<BlockLayout
 						:block="block"
-						:moreMenuItems="[
-							blockMediator.getCtxMenuItemShowSimpleSettings(block),
-							blockMediator.getCtxMenuItemDeleteBlock(block),
-						]"
+						:moreMenuItems="contextMenuItems"
 						:dragged="isDragged"
 						:disabled="isDisabled"
+						:hoverable="!isMakeNewConnection"
 					>
+						<template #top-menu-title>
+							<BlockTopTitle 
+								:title="userTitle"
+								:description="block.activity.Properties.EditorComment"
+							/>
+						</template>
 						<template #top-menu>
 							<DeleteBlockIconBtn
 								:blockId="block.id"
@@ -9125,11 +10567,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 							<UpdatePublishedStatusLabel :block="block"/>
 						</template>
 					</BlockLayout>
-				</AutosizeBlockContainer
-					:blockId="block.id"
-					:autosize="block.node.autosize"
-					:width="block.dimensions.width"
-					:height="block.dimensions.height">
+				</AutosizeBlockContainer>
 			</template>
 		</MoveableBlock>
 	`
@@ -9149,8 +10587,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    IconButton,
 	    PortsInOutCenter,
 	    BlockComplexContent,
-	    AddComplexBlockPort,
-	    UpdatePublishedStatusLabel
+	    BlockComplexPortPlaceholder,
+	    UpdatePublishedStatusLabel,
+	    BlockTopTitle
 	  },
 	  props: {
 	    /** @type Block */
@@ -9165,46 +10604,58 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      blockMediator: new BlockMediator()
 	    };
 	  },
-	  methods: {
-	    ...ui_vue3_pinia.mapActions(useNodeSettingsStore, ['fetchNodeSettings', 'toggleVisibility']),
-	    onBlockDblClick() {
-	      this.toggleVisibility(true);
-	      this.fetchNodeSettings(this.block);
-	    }
-	  },
 	  computed: {
 	    isBlockActivated() {
 	      return isBlockActivated(this.block);
+	    },
+	    userTitle() {
+	      return getBlockUserTitle(this.block);
+	    },
+	    contextMenuItems() {
+	      return this.blockMediator.getCommonBlockMenuOptions(this.block);
+	    }
+	  },
+	  methods: {
+	    onAddRulePort(title) {
+	      this.blockMediator.addComplexBlockPort(this.block, title);
+	    },
+	    onDeletedBlock(blockId) {
+	      this.blockMediator.hideCurrentBlockSettings(blockId);
+	      if (this.blockMediator.isCurrentComplexBlock(blockId)) {
+	        this.blockMediator.resetComplexBlockSettings();
+	      }
 	    }
 	  },
 	  template: `
 		<MoveableBlock :block="block">
-			<template #default="{ isHighlighted, isDragged, isDisabled }">
+			<template #default="{ isHighlighted, isDragged, isDisabled, isMakeNewConnection }">
 				<BlockContainer
 					:width="200"
-					:contextMenuItems="[
-						blockMediator.getCtxMenuItemShowComplexSettings(block),
-						blockMediator.getCtxMenuItemDeleteBlock(block),
-					]"
-					:highlighted="isHighlighted"
+					:contextMenuItems="contextMenuItems"
+					:highlighted="isHighlighted && !isDragged"
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
+					:hoverable="!isMakeNewConnection"
 					@dblclick.stop="blockMediator.showNodeSettings(block)"
 				>
 					<BlockLayout
 						:block="block"
-						:moreMenuItems="[
-							blockMediator.getCtxMenuItemShowComplexSettings(block),
-							blockMediator.getCtxMenuItemDeleteBlock(block),
-						]"
+						:moreMenuItems="contextMenuItems"
 						:dragged="isDragged"
 						:disabled="isDisabled"
+						:hoverable="!isMakeNewConnection"
 					>
+						<template #top-menu-title>
+							<BlockTopTitle
+								:title="userTitle"
+								:description="block.activity.Properties.EditorComment"
+							/>
+						</template>
 						<template #top-menu>
 							<DeleteBlockIconBtn
 								:blockId="block.id"
 								:disabled="isDisabled"
-								@deletedBlock="blockMediator.hideCurrentBlockSettings($event)"
+								@deletedBlock="onDeletedBlock($event)"
 							/>
 							<IconDivider/>
 						</template>
@@ -9212,10 +10663,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 						<template #default>
 							<BlockComplexContent
 								:block="block"
+								:ports="blockMediator.getComplexBlockPorts(block)"
+								:title="blockMediator.getComplexBlockTitle(block)"
 								:disabled="isDisabled"
 							>
-								<template #header>
-									<BlockHeader :block="block">
+								<template #header="{ title }">
+									<BlockHeader
+										:block="block"
+										:title="title"
+									>
 										<template #icon>
 											<BlockIcon
 												:iconName="block.node.icon"
@@ -9224,14 +10680,13 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 										</template>
 									</BlockHeader>
 								</template>
-								<!--
-								<template #addPortPoint="{ position }">
-									<AddComplexBlockPort
-										:position="position"
-										:highlighted="isHighlighted"
+								<template #portPlaceholder="{ ports }">
+									<BlockComplexPortPlaceholder
+										:blockId="block.id"
+										:ports="ports"
+										@addPort="onAddRulePort($event)"
 									/>
 								</template>
-								-->
 							</BlockComplexContent>
 						</template>
 
@@ -9258,7 +10713,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    UpdatePublishedStatusLabel,
 	    IconDivider,
 	    IconButton,
-	    PortsInOutCenter
+	    PortsInOutCenter,
+	    BlockTopTitle
 	  },
 	  props: {
 	    /** @type Block */
@@ -9272,6 +10728,17 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      iconSet: ui_iconSet_api_vue.Outline,
 	      blockMediator: new BlockMediator()
 	    };
+	  },
+	  computed: {
+	    isBlockActivated() {
+	      return isBlockActivated(this.block);
+	    },
+	    userTitle() {
+	      return getBlockUserTitle(this.block);
+	    },
+	    contextMenuItems() {
+	      return this.blockMediator.getCommonBlockMenuOptions(this.block);
+	    }
 	  },
 	  methods: {
 	    isUrl(value) {
@@ -9309,34 +10776,31 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      };
 	    }
 	  },
-	  computed: {
-	    isBlockActivated() {
-	      return isBlockActivated(this.block);
-	    }
-	  },
 	  template: `
 		<MoveableBlock :block="block">
-			<template #default="{ isHighlighted, isDragged, isDisabled }">
+			<template #default="{ isHighlighted, isDragged, isDisabled, isMakeNewConnection }">
 				<BlockContainer
 					:width="200"
-					:highlighted="isHighlighted"
+					:highlighted="isHighlighted && !isDragged"
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
-					:contextMenuItems="[
-						blockMediator.getCtxMenuItemShowSimpleSettings(block),
-						blockMediator.getCtxMenuItemDeleteBlock(block),
-					]"
+					:hoverable="!isMakeNewConnection"
+					:contextMenuItems="contextMenuItems"
 					@dblclick.stop="blockMediator.showCommonNodeSettings(block)"
 				>
 					<BlockLayout
 						:block="block"
-						:moreMenuItems="[
-							blockMediator.getCtxMenuItemShowSimpleSettings(block),
-							blockMediator.getCtxMenuItemDeleteBlock(block),
-						]"
+						:moreMenuItems="contextMenuItems"
 						:dragged="isDragged"
 						:disabled="isDisabled"
+						:hoverable="!isMakeNewConnection"
 					>
+						<template #top-menu-title>
+							<BlockTopTitle
+								:title="userTitle"
+								:description="block.activity.Properties.EditorComment"
+							/>
+						</template>
 						<template #top-menu>
 							<DeleteBlockIconBtn
 								:blockId="block.id"
@@ -9395,7 +10859,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    DeleteBlockIconBtn,
 	    UpdatePublishedStatusLabel,
 	    IconDivider,
-	    IconButton
+	    IconButton,
+	    ColorMenuTopBtn,
+	    ChangeFrameColorTopBtn
 	  },
 	  props: {
 	    /** @type Block */
@@ -9407,34 +10873,45 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  setup(props) {
 	    return {
 	      iconSet: ui_iconSet_api_vue.Outline,
-	      blockMediator: new BlockMediator()
+	      blockMediator: new BlockMediator(),
+	      frameBgColors: FRAME_BG_COLORS,
+	      frameBorderColors: FRAME_BORDER_COLORS
+	    };
+	  },
+	  data() {
+	    return {
+	      isOpenedTopMenu: false
 	    };
 	  },
 	  computed: {
 	    isBlockActivated() {
 	      return isBlockActivated(this.block);
+	    },
+	    contextMenuItems() {
+	      return [this.blockMediator.getCtxMenuItemCopyBlock(this.block), this.blockMediator.getCtxMenuItemDeleteBlock(this.block)];
 	    }
 	  },
 	  template: `
 		<ResizableBlock :block="block">
-			<template #default="{ isHighlighted, isResize, isDragged, isDisabled }">
+			<template #default="{ isHighlighted, isResize, isDragged, isDisabled, isMakeNewConnection }">
 				<BlockContainer
-					:highlighted="isHighlighted"
+					:highlighted="isHighlighted && !isDragged && !isResize"
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
-					:contextMenuItems="[
-						blockMediator.getCtxMenuItemDeleteBlock(block)
-					]"
-					colorName="orange"
+					:hoverable="!isMakeNewConnection"
+					:contextMenuItems="contextMenuItems"
+					:backgroundColor="frameBgColors[block.node.frameColorName]"
+					:borderColor="frameBorderColors[block.node.frameColorName]"
 				>
 					<BlockLayout
 						:block="block"
-						:moreMenuItems="[
-							blockMediator.getCtxMenuItemDeleteBlock(block)
-						]"
+						:moreMenuItems="contextMenuItems"
 						:dragged="isDragged"
 						:resized="isResize"
 						:disabled="isDisabled"
+						:isActivationVisible="false"
+						:hoverable="!isMakeNewConnection"
+						:topMenuOpened="isOpenedTopMenu"
 					>
 						<template #top-menu-title>
 							<BlockTopTitle :title="block.node.title"/>
@@ -9447,8 +10924,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 								@deletedBlock="blockMediator.hideCurrentBlockSettings($event)"
 							/>
 							<IconDivider/>
-							<IconButton :icon-name="iconSet.PAUSE_L"/>
-							<IconButton :icon-name="iconSet.QUESTION"/>
+							<ChangeFrameColorTopBtn
+								:block="block"
+								@update:open="isOpenedTopMenu = $event"
+							/>
 						</template>
 
 						<template #default>
@@ -9699,6 +11178,122 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	`
 	};
 
+	// @vue/component
+	const ToastErrorBlockNavigationButton = {
+	  name: 'ToastErrorBlockNavigationButton',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  setup() {
+	    const highlightedBlocks = ui_blockDiagram.useHighlightedBlocks();
+	    const {
+	      goToBlockById
+	    } = ui_blockDiagram.useCanvas();
+	    const {
+	      getMessage
+	    } = useLoc();
+	    return {
+	      goToBlockById,
+	      highlightedBlocks,
+	      getMessage
+	    };
+	  },
+	  data() {
+	    return {
+	      currentIdx: 0
+	    };
+	  },
+	  computed: {
+	    ...ui_vue3_pinia.mapState(diagramStore, ['blockCurrentPublishErrors']),
+	    blockId() {
+	      var _Object$keys$this$cur;
+	      return (_Object$keys$this$cur = Object.keys(this.blockCurrentPublishErrors)[this.currentIdx]) != null ? _Object$keys$this$cur : null;
+	    },
+	    hasPublishErrors() {
+	      return this.errorBlocksCount > 0;
+	    },
+	    errorBlocksCount() {
+	      return Object.keys(this.blockCurrentPublishErrors).length;
+	    },
+	    currentStateTitle() {
+	      return `${this.currentIdx + 1} / ${this.errorBlocksCount}`;
+	    },
+	    isPrevAvailable() {
+	      return this.currentIdx > 0;
+	    },
+	    isNextAvailable() {
+	      return this.currentIdx + 1 < this.errorBlocksCount;
+	    },
+	    Outline: () => ui_iconSet_api_core.Outline
+	  },
+	  watch: {
+	    currentIdx(newIdx) {
+	      if (!this.blockId) {
+	        return;
+	      }
+	      this.tryGoToBlockById(this.blockId);
+	    },
+	    errorBlocksCount(count) {
+	      this.currentIdx = Math.min(count - 1, this.currentIdx);
+	    }
+	  },
+	  methods: {
+	    onPrev() {
+	      this.currentIdx = Math.max(this.currentIdx - 1, 0);
+	    },
+	    onNext() {
+	      this.currentIdx = Math.min(this.currentIdx + 1, Math.max(this.errorBlocksCount - 1, 0));
+	    },
+	    onCurrent() {
+	      this.tryGoToBlockById(this.blockId);
+	    },
+	    tryGoToBlockById(blockId) {
+	      if (!blockId) {
+	        return;
+	      }
+	      this.highlightedBlocks.clear();
+	      this.highlightedBlocks.add(blockId);
+	      this.goToBlockById(blockId);
+	    }
+	  },
+	  template: `
+		<div v-if="hasPublishErrors"
+			 class="editor-chart-toast-block-navigation-button"
+			 @click="onCurrent"
+		>
+			<div class="editor-chart-toast-block-navigation-button__title">
+				{{ $Bitrix.Loc.getMessage('BIZPROC_DESIGNER_TOAST_ERROR_BLOCK_NAVIGATION_BUTTON_TEXT') }}
+			</div>
+
+			<div class="editor-chart-toast-block-navigation-button__controls">
+				<button 
+					class="editor-chart-toast-block-navigation-button__controls__button"
+					:class="{ '--disabled': !isPrevAvailable }"
+				>
+					<BIcon
+						:name="Outline.CHEVRON_LEFT_L"
+						:size="18"
+						@click.stop="onPrev"
+					/>
+				</button>
+				<div class="editor-chart-toast-block-navigation-button__controls__state-title">
+					{{ currentStateTitle }}
+				</div>
+				<button 
+					class="editor-chart-toast-block-navigation-button__controls__button"
+					:class="{ '--disabled': !isNextAvailable }"
+				>
+					<BIcon
+					   :name="Outline.CHEVRON_RIGHT_L"
+					   :size="18"
+					   @click.stop="onNext"
+					/>
+				</button>
+			</div>
+		</div>
+	`
+	};
+
 	// @vue/components
 	const CommonNodeSettings = {
 	  name: 'CommonNodeSettings',
@@ -9772,7 +11367,13 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      isExpandedCatalog,
 	      isShowSearchResults
 	    } = ui_vue3_pinia.storeToRefs(catalogStore);
+	    const {
+	      isSelectionActive
+	    } = ui_blockDiagram.useBlockDiagram();
 	    function onMouseOver() {
+	      if (ui_vue3.toValue(isSelectionActive)) {
+	        return;
+	      }
 	      catalogStore.expandCatalog();
 	    }
 	    function onMouseLeave() {
@@ -10210,6 +11811,20 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	};
 
 	// @vue/component
+	const ToastWidget = {
+	  name: 'ToastWidget',
+	  computed: {
+	    ...ui_vue3_pinia.mapState(useToastStore, ['current'])
+	  },
+	  template: `
+		<template v-if="current">
+			<slot :name="current.type" :message="current.message">
+			</slot>
+		</template>
+	`
+	};
+
+	// @vue/component
 	const AppLayout$1 = {
 	  name: 'AppLayoutWidget',
 	  components: {
@@ -10241,6 +11856,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 
 			<template #bottom-right-toolbar>
 				<slot name="bottom-right-toolbar"/>
+			</template>
+			
+			<template #top-middle-anchor>
+				<slot name="top-middle-anchor"/>
 			</template>
 
 			<template #settings>
@@ -10317,7 +11936,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    SearchBar,
 	    Catalog,
 	    CommonNodeSettings,
-	    ConnectionAux
+	    ConnectionAux,
+	    ToastWidget,
+	    ToastWarning,
+	    ToastErrorBlockNavigationButton
 	  },
 	  provide() {
 	    return {
@@ -10354,12 +11976,14 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    const snapshotHandler = newState => {
 	      return {
 	        ...commonSnapshotHandler(newState),
-	        blockCurrentTimestamps: ui_vue3.markRaw(JSON.parse(JSON.stringify(diagramStore().blockCurrentTimestamps)))
+	        blockCurrentTimestamps: ui_vue3.markRaw(JSON.parse(JSON.stringify(diagramStore().blockCurrentTimestamps))),
+	        connectionCurrentTimestamps: ui_vue3.markRaw(JSON.parse(JSON.stringify(diagramStore().connectionCurrentTimestamps)))
 	      };
 	    };
 	    const revertHandler = snapshot => {
 	      commonRevertHandler(snapshot);
 	      diagramStore().setBlockCurrentTimestamps(snapshot.blockCurrentTimestamps);
+	      diagramStore().setConnectionCurrentTimestamps(snapshot.connectionCurrentTimestamps);
 	    };
 	    setHandlers({
 	      snapshotHandler,
@@ -10405,7 +12029,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      FeatureCode: bizprocdesigner_feature.FeatureCode,
 	      blockDiagramSlotNames: BLOCK_SLOT_NAMES,
 	      connectionSlotNames: CONNECTION_SLOT_NAMES,
-	      dragItemSlotNames: DRAG_ITEM_SLOT_NAMES
+	      dragItemSlotNames: DRAG_ITEM_SLOT_NAMES,
+	      toast: {
+	        blockToastTypes: BLOCK_TOAST_TYPES,
+	        sharedTypes: SHARED_TOAST_TYPES
+	      },
+	      blockColors: ICON_BG_COLORS
 	    };
 	  },
 	  computed: {
@@ -10446,7 +12075,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			</template>
 
 			<template #diagram>
-				<BlockDiagram :disabled="isDiagramDisabled">
+				<BlockDiagram :disabled="isDiagramDisabled" :enableGrouping="true">
 					<template #[blockDiagramSlotNames.SIMPLE]="{ block }">
 						<BlockSimple :block="block"/>
 					</template>
@@ -10509,7 +12138,34 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			</template>
 
 			<template #bottom-right-toolbar>
-				<ZoomBar :stepZoom="0.2"/>
+				<ZoomBar 
+					:stepZoom="0.2"
+					:blockColors="blockColors"
+				/>
+			</template>
+
+			<template #top-middle-anchor>
+				<ToastWidget>
+
+					<template #[toast.sharedTypes.WARNING]="{ message }">
+						<ToastWarning
+							:message="message"
+							:closeable="true"
+						/>
+					</template>
+
+					<template #[toast.blockToastTypes.ACTIVITY_PUBLIC_ERROR]="{ message }">
+						<ToastWarning 
+							:message="message" 
+							:closeable="true"
+						>
+							<template #contentEnd>
+								<ToastErrorBlockNavigationButton/>
+							</template>
+						</ToastWarning>
+					</template>
+
+				</ToastWidget>
 			</template>
 
 			<template #settings>
@@ -10551,5 +12207,5 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 
 	exports.App = App;
 
-}((this.BX.Bizprocdesigner.Editor = this.BX.Bizprocdesigner.Editor || {}),BX,BX.UI,BX.UI.Vue3.Components,BX.Vue3.Directives,BX,BX.UI.EntitySelector,BX.Main,BX.Event,BX.UI.Dialogs,BX.UI.Vue3.Components,BX.UI.Feedback,BX.Bizprocdesigner,BX,BX.UI,BX.Vue3.Components,BX.UI.IconSet,BX,BX.UI,BX.UI.System,BX.UI.IconSet,BX.Vue3,BX.Vue3.Pinia));
+}((this.BX.Bizprocdesigner.Editor = this.BX.Bizprocdesigner.Editor || {}),BX,BX.UI,BX.UI.Vue3.Components,BX.Vue3.Directives,BX,BX.UI.EntitySelector,BX.Main,BX.Event,BX.UI.Vue3.Components,BX.UI.Feedback,BX.Bizprocdesigner,BX.UI.Dialogs,BX,BX.Vue3.Components,BX,BX.UI,BX.UI.System,BX.UI.IconSet,BX.UI,BX.UI.IconSet,BX.Vue3,BX.Vue3.Pinia));
 //# sourceMappingURL=chart.bundle.js.map

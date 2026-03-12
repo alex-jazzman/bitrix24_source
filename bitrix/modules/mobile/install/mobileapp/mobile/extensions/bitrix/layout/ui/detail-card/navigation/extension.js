@@ -1,5 +1,7 @@
-(() => {
-	const require = (ext) => jn.require(ext);
+/**
+ * @module layout/ui/detail-card/navigation
+ */
+jn.define('layout/ui/detail-card/navigation', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 
 	const defaultParams = {
@@ -58,6 +60,13 @@
 			return { ...defaultParams };
 		}
 	}
+
+	module.exports = { DetailCardNavigation };
+});
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { DetailCardNavigation } = require('layout/ui/detail-card/navigation');
 
 	this.DetailCardNavigation = DetailCardNavigation;
 })();

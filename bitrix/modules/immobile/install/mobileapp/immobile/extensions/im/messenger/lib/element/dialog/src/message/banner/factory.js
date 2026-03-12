@@ -18,6 +18,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 	const { CreateChatConferenceBanner } = require('im/messenger/lib/element/dialog/message/banner/banners/create-conference');
 	const { PlanLimitsBanner } = require('im/messenger/lib/element/dialog/message/banner/banners/plan-limits');
 	const { SignMessage } = require('im/messenger/lib/element/dialog/message/banner/banners/sign/banner');
+	const { AdminMessage } = require('im/messenger/lib/element/dialog/src/message/banner/banners/admin/banner');
 
 	/**
 	 * @class CreateBannerFactory
@@ -65,6 +66,8 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 						return new PlanLimitsBanner(modelMessage, optionsBanner);
 					case MessageParams.ComponentId.SignMessage:
 						return new SignMessage(modelMessage, optionsBanner);
+					case MessageParams.ComponentId.AdminMessage:
+						return new AdminMessage(modelMessage, optionsBanner);
 					default: return new TextMessage(modelMessage, optionsBanner);
 				}
 			}
@@ -89,6 +92,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 				MessageParams.ComponentId.ChatCopilotAddedUsersMessage,
 				MessageParams.ComponentId.PlanLimitsMessage,
 				MessageParams.ComponentId.SignMessage,
+				MessageParams.ComponentId.AdminMessage,
 			];
 
 			return creationParams.includes(modelMessage.params?.componentId);

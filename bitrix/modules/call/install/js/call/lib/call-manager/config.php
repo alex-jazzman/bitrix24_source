@@ -11,9 +11,9 @@ return [
 	],
 	'rel' => [
 		'main.core.events',
-		'ui.vue3.vuex',
 		'call.core',
 		'im.public',
+		'im.v2.provider.service.chat',
 		'im.v2.lib.slider',
 		'im.v2.const',
 		'im.v2.lib.logger',

@@ -459,7 +459,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				attach: modelMessage?.params?.ATTACH ?? false,
 				files: messageFiles,
 				showFilePrefix: false,
-				sticker: Boolean(helper?.isSticker),
+				sticker: Type.isPlainObject(modelMessage.stickerParams),
 			});
 
 			messegeData.message = [

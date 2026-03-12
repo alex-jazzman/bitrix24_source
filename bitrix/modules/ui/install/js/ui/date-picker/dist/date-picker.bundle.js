@@ -168,8 +168,10 @@ this.BX.UI = this.BX.UI || {};
 	        const day = newDate.getUTCDay();
 	        newDate.setUTCHours(0, 0, 0, 0);
 	        if (day !== firstWeekDay) {
-	          newDate = addDate(newDate, 'day', -(day > firstWeekDay ? day - firstWeekDay : 7 - day - firstWeekDay));
+	          const diff = (day - firstWeekDay + 7) % 7;
+	          newDate = addDate(newDate, 'day', -diff); // Move back to the first day of the week
 	        }
+
 	        break;
 	      }
 	    case 'month':

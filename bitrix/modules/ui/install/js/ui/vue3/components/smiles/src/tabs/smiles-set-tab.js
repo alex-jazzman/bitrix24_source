@@ -20,22 +20,34 @@ export const SmilesSetTab = {
 			this.$emit('selectSmile', { text });
 		},
 	},
+	computed:
+	{
+		maxWidthSmile(): number {
+			return (Math.max(...this.smiles.map((item) => item.originalWidth)) ?? 0 ) * 0.5;
+		},
+	},
 	// language=Vue
 	template: `
-		<template v-for="smile in smiles">
-			<div class="bx-ui-smiles-smile">
-				<img v-lazyload :key="smile.id" 
-					 class="bx-ui-smiles-smile-icon"
-					 :data-lazyload-src="smile.image"
-					 data-lazyload-error-class="bx-ui-smiles-smile-icon-error"
-					 :title="smile.name"
-					 :style="{
+		<div
+			class="bx-ui-smiles-set-grid" 
+			:style="{
+				'--ui-smiles-smile-max-weight': maxWidthSmile + 'px'
+			}">
+			<template v-for="smile in smiles">
+				<div class="bx-ui-smiles-smile">
+					<img v-lazyload :key="smile.id"
+						 class="bx-ui-smiles-smile-icon"
+						 :data-lazyload-src="smile.image"
+						 data-lazyload-error-class="bx-ui-smiles-smile-icon-error"
+						 :title="smile.name"
+						 :style="{
 						height: (smile.originalHeight*0.5)+'px',
 						width: (smile.originalWidth*0.5)+'px',
 					}"
-					 @click="selectSmile(smile.typing)"
-				/>
-			</div>
-		</template>
+						 @click="selectSmile(smile.typing)"
+					/>
+				</div>
+			</template>
+		</div>
 	`,
 };

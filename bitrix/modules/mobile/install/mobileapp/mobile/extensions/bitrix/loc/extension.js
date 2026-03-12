@@ -21,12 +21,14 @@ jn.define('loc', (require, exports, module) => {
 
 			if (Type.isString(mess) && Type.isPlainObject(replacements))
 			{
+				const escape = (str) => String(str).replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&');
 				Object.keys(replacements).forEach((replacement) => {
-					const globalRegexp = new RegExp(replacement, 'gi');
-
+					const globalRegexp = new RegExp(escape(replacement), 'gi');
 					mess = mess.replace(
 						globalRegexp,
-						() => (Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement])),
+						() => {
+							return Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]);
+						},
 					);
 				});
 			}

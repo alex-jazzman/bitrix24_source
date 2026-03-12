@@ -1,4 +1,7 @@
+import { Outline } from 'ui.icon-set.api.core';
+
 import { FieldList } from 'tasks.v2.component.elements.field-list';
+import { FieldHoverButton } from 'tasks.v2.component.elements.field-hover-button';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { datePlanMeta } from './date-plan-meta';
@@ -12,6 +15,7 @@ import './date-plan.css';
 export const DatePlan = {
 	components: {
 		FieldList,
+		FieldHoverButton,
 		DatePlanSheet,
 	},
 	inject: {
@@ -33,7 +37,14 @@ export const DatePlan = {
 	setup(): { task: TaskModel }
 	{
 		return {
+			Outline,
 			datePlanMeta,
+		};
+	},
+	data(): Object
+	{
+		return {
+			isHovered: false,
 		};
 	},
 	computed: {
@@ -87,7 +98,6 @@ export const DatePlan = {
 					component: DatePlanDate,
 					props: {
 						dateTs: this.task.startPlanTs,
-						readonly: this.readonly,
 					},
 				},
 				{
@@ -95,7 +105,6 @@ export const DatePlan = {
 					component: DatePlanDate,
 					props: {
 						dateTs: this.task.endPlanTs,
-						readonly: this.readonly,
 					},
 				},
 			].filter(({ props: { dateTs } }) => dateTs);
@@ -120,15 +129,26 @@ export const DatePlan = {
 	},
 	template: `
 		<div
-			class="tasks-field-date-plan"
-			:class="{ '--readonly': readonly }"
-			:data-task-id="taskId"
-			:data-task-field-id="datePlanMeta.id"
-			:data-task-plan-start="task.startPlanTs"
-			:data-task-plan-end="task.endPlanTs"
-			@click="handleClick"
+			@mouseenter="isHovered = true"
+			@mouseleave="isHovered = false"
 		>
-			<FieldList :fields/>
+			<FieldHoverButton
+				v-if="!readonly"
+				:icon="Outline.EDIT_L"
+				:isVisible="isHovered"
+				@click="handleClick"
+			/>
+			<div
+				class="tasks-field-date-plan"
+				:class="{ '--readonly': readonly }"
+				:data-task-id="taskId"
+				:data-task-field-id="datePlanMeta.id"
+				:data-task-plan-start="task.startPlanTs"
+				:data-task-plan-end="task.endPlanTs"
+				@click="handleClick"
+			>
+				<FieldList :fields/>
+			</div>
 		</div>
 		<DatePlanSheet v-if="isSheetShown" :sheetBindProps @close="setSheetShown(false)"/>
 	`,

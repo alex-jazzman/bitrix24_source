@@ -1,9 +1,10 @@
 import { Dictionary } from 'crm.integration.analytics';
 import { Router } from 'crm.router';
 import { type BaseEvent } from 'main.core.events';
+import { sendData as sendAnalyticsData } from 'ui.analytics';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { TagSelector } from 'ui.entity-selector';
-import { createSaveAnalyticsBuilder, wrapPromiseInAnalytics } from '../../helpers/analytics';
+import { createSaveAnalyticsBuilder } from '../../helpers/analytics';
 import { Card } from '../card';
 
 export const TypesTab = {
@@ -57,10 +58,18 @@ export const TypesTab = {
 
 		// these selectors contain types only if there were added here in the app lifetime by user interaction
 		// selector states are not synced reactively in the app lifetime
-		this.crmTypesTagSelector = this.initFilteredTagSelector(true, false, !this.$store.state.permissions.canMoveSmartProcessFromCrm);
+		this.crmTypesTagSelector = this.initFilteredTagSelector(
+			true,
+			false,
+			!this.$store.state.permissions.canMoveSmartProcessFromCrm,
+		);
 		this.crmTypesTagSelector.renderTo(this.$refs.crmTypesTagSelectorContainer);
 
-		this.externalTypesTagSelector = this.initFilteredTagSelector(false, true, !this.$store.state.permissions.canMoveSmartProcessFromAnotherAutomatedSolution);
+		this.externalTypesTagSelector = this.initFilteredTagSelector(
+			false,
+			true,
+			!this.$store.state.permissions.canMoveSmartProcessFromAnotherAutomatedSolution,
+		);
 		this.externalTypesTagSelector.renderTo(this.$refs.externalTypesTagSelectorContainer);
 	},
 
@@ -177,7 +186,27 @@ export const TypesTab = {
 				.setElement(Dictionary.ELEMENT_SAVE_IS_REQUIRED_TO_PROCEED_POPUP)
 			;
 
-			return wrapPromiseInAnalytics(this.$store.dispatch('save'), builder);
+			return this.$store.dispatch('save')
+				.then(() => {
+					sendAnalyticsData(
+						builder
+							.setStatus(Dictionary.STATUS_SUCCESS)
+							.setId(this.$store.state.automatedSolution.id)
+							.buildData()
+						,
+					);
+				})
+				.catch((error) => {
+					sendAnalyticsData(
+						builder
+							.setStatus(Dictionary.STATUS_ERROR)
+							.setId(this.$store.state.automatedSolution.id)
+							.buildData()
+						,
+					);
+
+					throw error;
+				});
 		},
 	},
 	template: `

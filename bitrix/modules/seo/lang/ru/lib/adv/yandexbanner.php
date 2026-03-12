@@ -12,3 +12,4 @@ $MESS["SEO_BANNER_ERROR_NO_GEO"] = "Не выбран ни один регион
 $MESS["SEO_BANNER_ERROR_NO_PHRASES"] = "Не указаны ключевые фразы объявления";
 $MESS["SEO_CAMPAIGN_ERROR_BANNER_NOT_FOUND"] = "Объявление №#ID# не найдено в Яндекс.Директ!";
 $MESS["SEO_BANNER_ERROR_CAMPAIGN_NOT_FOUND"] = "Рекламная кампания не найдена";
+

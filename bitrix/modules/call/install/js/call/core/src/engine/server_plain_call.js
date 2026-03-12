@@ -88,6 +88,8 @@ export class ServerPlainCall extends AbstractCall
 
 	#connectionType: boolean;
 
+	#screenShared: boolean;
+
 	#onUnloadHandler: Function;
 	#onOnlineHandler: Function;
 
@@ -145,6 +147,8 @@ export class ServerPlainCall extends AbstractCall
 
 		this.#recorderStateHasChange = false;
 		this._isCopilotFeaturesEnabled = CallSettingsManager.plainCallFollowUpEnabled;
+
+		this.#screenShared = false;
 
 		Event.bind(window, 'unload', this.#onUnloadHandler);
 		Event.bind(window, 'online', this.#onOnlineHandler);
@@ -389,7 +393,7 @@ export class ServerPlainCall extends AbstractCall
 		}
 
 		this.microphoneId = microphoneId;
-		void this.CallApi?.switchActiveAudioDevice(this.call.microphoneId);
+		void this.CallApi?.switchActiveAudioDevice(this.microphoneId);
 
 		if (this.ready)
 		{
@@ -445,11 +449,6 @@ export class ServerPlainCall extends AbstractCall
 		{
 			return this.microphoneId;
 		}
-	};
-
-	useHdVideo(flag)
-	{
-		this.videoHd = (flag === true);
 	};
 
 	/**
@@ -604,6 +603,8 @@ export class ServerPlainCall extends AbstractCall
 	{
 		this.CallApi.on('ParticipantJoined', this.#onParticipantJoined);
 		this.CallApi.on('ParticipantLeaved', this.#onParticipantLeaved);
+		this.CallApi.on('ParticipantReconnecting', this.#onParticipantReconnecting);
+		this.CallApi.on('ParticipantReconnected', this.#onParticipantReconnected);
 		this.CallApi.on('MessageReceived', this.#onCallMessageReceived);
 		this.CallApi.on('PublishSucceed', this.#onLocalMediaRendererAdded);
 		this.CallApi.on('PublishPaused', this.#onLocalMediaRendererMuteToggled);
@@ -633,6 +634,8 @@ export class ServerPlainCall extends AbstractCall
 		{
 			this.CallApi.on('ParticipantJoined', BX.DoNothing);
 			this.CallApi.on('ParticipantLeaved', BX.DoNothing);
+			this.CallApi.on('ParticipantReconnecting', BX.DoNothing);
+			this.CallApi.on('ParticipantReconnected', BX.DoNothing);
 			this.CallApi.on('MessageReceived', BX.DoNothing);
 			this.CallApi.on('PublishSucceed', BX.DoNothing);
 			this.CallApi.on('PublishPaused', BX.DoNothing);
@@ -935,11 +938,7 @@ export class ServerPlainCall extends AbstractCall
 			this.setUseMediaServer(true);
 		}
 
-		const ignoreState = [RecorderStatus.DESTROYED, RecorderStatus.UNAVAILABLE].includes(this.#recorderState);
-		if (!ignoreState)
-		{
-			this.CallApi.setRecorderState(state);
-		}
+		this.CallApi.setRecorderState(state);
 	}
 
 	/**
@@ -976,22 +975,22 @@ export class ServerPlainCall extends AbstractCall
 		}
 	}
 
-	setMainStream(userId)
+	setMainStream(users)
 	{
 		if (!this.CallApi)
 		{
 			return;
 		}
 
-		if (userId && userId !== this.userId)
+		if (users.userId && users.userId !== this.userId)
 		{
-			const participant = this.peers[userId]?.participant;
+			const participant = this.peers[users.userId]?.participant;
 			const kind = participant?.screenSharingEnabled ? MediaStreamsKinds.Screen : MediaStreamsKinds.Camera;
-			this.CallApi.setMainStream(userId, kind);
+			this.CallApi.setMainStream(users, kind);
 		}
 		else
 		{
-			this.CallApi.resetMainStream(userId);
+			this.CallApi.resetMainStream(users);
 		}
 	}
 
@@ -1040,21 +1039,20 @@ export class ServerPlainCall extends AbstractCall
 		});
 	}
 
-	startScreenSharing(changeSource)
+	startScreenSharing(changeSource: boolean): void
 	{
-		changeSource = Boolean(changeSource);
-		if (this.localStreams['screen'] && !changeSource)
+		if (this.localStreams.screen && !changeSource)
 		{
 			return;
 		}
 
 		this.getDisplayMedia().then((mediaStream) => {
+			this.#screenShared = true;
 			const stream = mediaStream.clone();
 			this.localStreams.screen = stream;
 
-			stream.getVideoTracks().forEach((track) =>
-			{
-				track.addEventListener('ended', () => this.stopScreenSharing())
+			stream.getVideoTracks().forEach((track) => {
+				Event.bind(track, 'ended', () => this.stopScreenSharing());
 			});
 
 			this.runCallback(CallEvent.onUserScreenState, {
@@ -1064,20 +1062,18 @@ export class ServerPlainCall extends AbstractCall
 
 			if (this.ready)
 			{
-				for (let userId in this.peers)
-				{
-					if (this.peers[userId].calculatedState === UserState.Connected)
+				const peers = Object.values(this.peers);
+				peers.forEach((peer) => {
+					if (peer.calculatedState === UserState.Connected)
 					{
-						this.peers[userId].sendMedia();
+						peer.sendMedia();
 					}
-				}
+				});
 			}
-
-		}).catch((e) =>
-		{
-			this.log(e);
+		}).catch((error) => {
+			this.log(error);
 		});
-	};
+	}
 
 	onLocalVideoTrackEnded()
 	{
@@ -1087,6 +1083,7 @@ export class ServerPlainCall extends AbstractCall
 			return;
 		}
 
+		this.#screenShared = false;
 		Util.stopMediaStreamVideoTracks(this.localStreams[tag]);
 
 		const kind = Util.MediaKind[MediaStreamsKinds.Camera];
@@ -1197,6 +1194,7 @@ export class ServerPlainCall extends AbstractCall
 			return;
 		}
 
+		this.#screenShared = false;
 		Util.stopMediaStream(stream);
 		CallStreamManager.stopStream(MediaStreamsKinds.Screen);
 		CallStreamManager.stopStream(MediaStreamsKinds.ScreenAudio);
@@ -1215,10 +1213,10 @@ export class ServerPlainCall extends AbstractCall
 		});
 	}
 
-	isScreenSharingStarted()
+	isScreenSharingStarted(): boolean
 	{
-		return this.localStreams["screen"] instanceof MediaStream;
-	};
+		return this.#screenShared;
+	}
 
 	onLocalVoiceStarted()
 	{
@@ -1360,35 +1358,36 @@ export class ServerPlainCall extends AbstractCall
 		});
 	};
 
-	hangup(force = false)
+	hangup(force: boolean = false): Promise<void>
 	{
 		if (!this.ready && !force)
 		{
-			const error = new Error("Hangup in wrong state");
+			const error = new Error('Hangup in wrong state');
 			this.log(error);
+
 			return Promise.reject(error);
 		}
 
 		const tempError = new Error();
-		tempError.name = "Call stack:";
-		this.log("Hangup received \n" + tempError.stack);
+		tempError.name = 'Call stack:';
+		this.log(`Hangup received \n${tempError.stack}`);
 
 		this.ready = false;
 		this.state = CallState.Proceeding;
 		this.connectionData = {};
+		this.#screenShared = false;
 
-		return new Promise((resolve, reject) =>
-		{
-			for (let userId in this.peers)
-			{
-				this.peers[userId].disconnect();
-			}
+		return new Promise((resolve, reject) => {
+			const peers = Object.values(this.peers);
+			peers.forEach((peer) => {
+				peer.disconnect();
+			});
 
 			this.#beforeLeaveCall();
 
-			this.runCallback(CallEvent.onLeave, {local: true});
+			this.runCallback(CallEvent.onLeave, { local: true });
 		});
-	};
+	}
 
 	getState()
 	{
@@ -1798,7 +1797,9 @@ export class ServerPlainCall extends AbstractCall
 			for (let i = 0; i < candidates.length; i++)
 			{
 				peer.addIceCandidate(params.connectionId, candidates[i]);
-			}
+				this.log("User: " + params.senderId + "; Added remote ICE candidate: ", JSON.stringify(candidates[i]));
+			}		
+			
 		} catch (e)
 		{
 			this.log('Error parsing serialized candidate: ', e);
@@ -2026,7 +2027,32 @@ export class ServerPlainCall extends AbstractCall
 
 	#onParticipantLeaved = (participant) => {
 		const peer = this.peers[participant.userId];
-		peer?.setReady(false);
+
+		if (peer)
+		{
+			peer.setReady(false);
+		}
+	};
+
+	#onParticipantReconnecting = (participant) => {
+		const peer = this.peers[participant.userId];
+
+		if (peer)
+		{
+			peer.reconnecting = true;
+			peer.updateCalculatedState();
+		}
+	};
+
+	#onParticipantReconnected = (participant) => {
+		const peer = this.peers[participant.userId];
+
+		if (peer && peer.reconnecting)
+		{
+			peer.reconnecting = false;
+			peer.participant = participant;
+			peer.updateCalculatedState();
+		}
 	};
 
 	#onCallMessageReceived = (event) => {
@@ -2362,10 +2388,12 @@ export class ServerPlainCall extends AbstractCall
 
 	#onCallReconnecting = (event) => {
 		this._reconnectionEventCount++;
+		const data = Type.isObject(event) ? event : {};
+
 		this.runCallback(CallEvent.onReconnecting, {
 			reconnectionEventCount: this._reconnectionEventCount,
-			reconnectionReason: event.reconnectionReason,
-			reconnectionReasonInfo: event.reconnectionReasonInfo,
+			reconnectionReason: data.reconnectionReason,
+			reconnectionReasonInfo: data.reconnectionReasonInfo,
 		});
 	};
 
@@ -2475,7 +2503,7 @@ export class ServerPlainCall extends AbstractCall
 
 		this.#updateOutgoingTracks();
 
-		if (!this.useMediaServer)
+		if (this.#recorderState === RecorderStatus.ENABLED && !this.useMediaServer)
 		{
 			this.setRecorderState(RecorderStatus.PAUSED);
 		}
@@ -2712,6 +2740,7 @@ class Peer
 		this.inviteTimeout = false;
 		this.declined = false;
 		this.busy = false;
+		this.reconnecting = false;
 		this.signalingConnected = params.signalingConnected === true;
 		this.failureReason = '';
 
@@ -2760,8 +2789,6 @@ class Peer
 		this.reconnectAfterDisconnectTimeout = null;
 
 		this.connectionAttempt = 0;
-		this.hasStun = false;
-		this.hasTurn = false;
 
 		this._outgoingVideoTrack = null;
 		Object.defineProperty(this, 'outgoingVideoTrack', {
@@ -2830,9 +2857,11 @@ class Peer
 		this._onPeerConnectionConnectionStateChangeHandler = this.#onPeerConnectionConnectionStateChange.bind(this);
 		this._onPeerConnectionIceGatheringStateChangeHandler = this.#onPeerConnectionIceGatheringStateChange.bind(this);
 		this._onPeerConnectionSignalingStateChangeHandler = this.#onPeerConnectionSignalingStateChange.bind(this);
-		//this._onPeerConnectionNegotiationNeededHandler = this._onPeerConnectionNegotiationNeeded.bind(this);
+		this._onPeerConnectionNegotiationNeededHandler = this.#onPeerConnectionNegotiationNeeded.bind(this);
 		this._onPeerConnectionTrackHandler = this.#onPeerConnectionTrack.bind(this);
 		this._onPeerConnectionRemoveStreamHandler = this.#onPeerConnectionRemoveStream.bind(this);
+		this._onPeerConnectionIceCandidateErrorHandler = this.#onPeerConnectionIceCandidateError.bind(this);
+		this._onPeerConnectionIceConnectionStateChangeHandler = this.#onPeerConnectionIceConnectionStateChange.bind(this);
 
 		this._updateTracksDebounced = Runtime.debounce(this.#updateTracks.bind(this), 50);
 
@@ -3029,31 +3058,31 @@ class Peer
 		}
 	}
 
-	#updateMediaServerTracks()
+	#updateMediaServerTracks(): void
 	{
-		if (this.videoSender && !this.call.CallApi.isVideoPublished())
+		if (Hardware.isCameraOn && !this.call.CallApi.isVideoPublished())
 		{
 			void this.call.CallApi.enableVideo({ calledFrom: 'updateOutgoingTracks' });
 		}
-		else if ((!this.call.useMediaServer || !this.call.videoEnabled) && this.call.CallApi.isVideoPublished())
+		else if ((!this.call.useMediaServer || !Hardware.isCameraOn))
 		{
 			void this.call.CallApi.disableVideo({ calledFrom: 'updateOutgoingTracks' });
 		}
 
-		if (this.audioSender && !this.call.CallApi.isAudioPublished())
+		if (!Hardware.isMicrophoneMuted && !this.call.CallApi.isAudioPublished())
 		{
 			void this.call.CallApi.enableAudio({ calledFrom: 'updateOutgoingTracks' });
 		}
-		else if ((!this.call.useMediaServer || Hardware.isMicrophoneMuted) && this.call.CallApi.isAudioPublished())
+		else if ((!this.call.useMediaServer || Hardware.isMicrophoneMuted))
 		{
 			void this.call.CallApi.disableAudio({ calledFrom: 'updateOutgoingTracks' });
 		}
 
-		if (this.screenSender && this.call.useMediaServer && !this.call.CallApi.isScreenPublished())
+		if (this.call.isScreenSharingStarted() && this.call.useMediaServer && !this.call.CallApi.isScreenPublished())
 		{
 			void this.call.CallApi.startScreenShare();
 		}
-		else if (!this.call.useMediaServer && this.call.CallApi.isScreenPublished())
+		else if ((!this.call.useMediaServer || !this.call.isScreenSharingStarted()))
 		{
 			void this.call.CallApi.stopScreenShare();
 		}
@@ -3290,7 +3319,6 @@ class Peer
 				state: calculatedState,
 				previousState: this.calculatedState,
 				isLegacyMobile: this.isLegacyMobile,
-				networkProblem: !this.hasStun || !this.hasTurn
 			});
 			this.calculatedState = calculatedState;
 		}
@@ -3298,6 +3326,11 @@ class Peer
 
 	calculateState()
 	{
+		if (this.reconnecting)
+		{
+			return UserState.Connecting;
+		}
+
 		if (this.peerConnection)
 		{
 			if (this.failureReason !== '')
@@ -3567,9 +3600,11 @@ class Peer
 
 	#createPeerConnection(id)
 	{
-		this.log(`User ${this.userId}: Creating peer connection`);
+
 		const iceServers = this.call.CallApi?.iceServers || this.call.iceServers;
 		const connectionConfig = { iceServers };
+
+		this.log(`User ${this.userId}: Creating peer connection with config ${JSON.stringify(connectionConfig, null, 2)}`);
 
 		this.localIceCandidates = [];
 		this.peerConnection = new RTCPeerConnection(connectionConfig);
@@ -3579,13 +3614,13 @@ class Peer
 		this.peerConnection.addEventListener("connectionstatechange", this._onPeerConnectionConnectionStateChangeHandler);
 		this.peerConnection.addEventListener("icegatheringstatechange", this._onPeerConnectionIceGatheringStateChangeHandler);
 		this.peerConnection.addEventListener("signalingstatechange", this._onPeerConnectionSignalingStateChangeHandler);
-		// this.peerConnection.addEventListener("negotiationneeded", this._onPeerConnectionNegotiationNeededHandler);
+		this.peerConnection.addEventListener("negotiationneeded", this._onPeerConnectionNegotiationNeededHandler);
 		this.peerConnection.addEventListener("track", this._onPeerConnectionTrackHandler);
 		this.peerConnection.addEventListener("removestream", this._onPeerConnectionRemoveStreamHandler);
+		this.peerConnection.addEventListener("icecandidateerror", this._onPeerConnectionIceCandidateErrorHandler);
+		this.peerConnection.addEventListener("iceconnectionstatechange", this._onPeerConnectionIceConnectionStateChangeHandler);
 
 		this.failureReason = '';
-		this.hasStun = false;
-		this.hasTurn = false;
 		this.updateCalculatedState();
 
 		this.startStatisticsGathering();
@@ -3607,9 +3642,11 @@ class Peer
 		this.peerConnection.removeEventListener("connectionstatechange", this._onPeerConnectionConnectionStateChangeHandler);
 		this.peerConnection.removeEventListener("icegatheringstatechange", this._onPeerConnectionIceGatheringStateChangeHandler);
 		this.peerConnection.removeEventListener("signalingstatechange", this._onPeerConnectionSignalingStateChangeHandler);
-		// this.peerConnection.removeEventListener("negotiationneeded", this._onPeerConnectionNegotiationNeededHandler);
+		this.peerConnection.removeEventListener("negotiationneeded", this._onPeerConnectionNegotiationNeededHandler);
 		this.peerConnection.removeEventListener("track", this._onPeerConnectionTrackHandler);
 		this.peerConnection.removeEventListener("removestream", this._onPeerConnectionRemoveStreamHandler);
+		this.peerConnection.removeEventListener("icecandidateerror", this._onPeerConnectionIceCandidateErrorHandler);
+		this.peerConnection.removeEventListener("iceconnectionstatechange", this._onPeerConnectionIceConnectionStateChangeHandler);
 
 		this.localIceCandidates = [];
 		if (this.pendingIceCandidates[this.peerConnectionId])
@@ -3633,7 +3670,7 @@ class Peer
 	_onPeerConnectionIceCandidate(e)
 	{
 		const candidate = e.candidate;
-		this.log("User " + this.userId + ": ICE candidate discovered. Candidate: " + (candidate ? candidate.candidate : candidate));
+		this.log("User " + this.userId + ": ICE candidate discovered (local). Candidate: " + (candidate ? candidate.candidate : candidate));
 
 		if (candidate)
 		{
@@ -3649,20 +3686,6 @@ class Peer
 			{
 				this.localIceCandidates.push(candidate.toJSON());
 				this.updateCandidatesTimeout();
-			}
-
-			const match = candidate.candidate.match(/typ\s(\w+)?/);
-			if (match)
-			{
-				const type = match[1];
-				if (type == "srflx")
-				{
-					this.hasStun = true;
-				}
-				else if (type == "relay")
-				{
-					this.hasTurn = true;
-				}
 			}
 		}
 	};
@@ -3708,26 +3731,6 @@ class Peer
 		if (connection.iceGatheringState === 'complete')
 		{
 			this.log("User " + this.userId + ": ICE gathering complete");
-			if (!this.hasStun || !this.hasTurn)
-			{
-				const s = [];
-				if (!this.hasTurn)
-				{
-					s.push("TURN");
-				}
-				if (!this.hasStun)
-				{
-					s.push("STUN");
-				}
-				this.log("Connectivity problem detected: no ICE candidates from " + s.join(" and ") + " servers");
-				console.error("Connectivity problem detected: no ICE candidates from " + s.join(" and ") + " servers");
-				this.callbacks.onNetworkProblem();
-			}
-
-			if (!this.hasTurn && !this.hasStun)
-			{
-
-			}
 
 			if (!this.getSignaling().isIceTricklingAllowed())
 			{
@@ -3762,9 +3765,9 @@ class Peer
 	#onPeerConnectionNegotiationNeeded(e)
 	{
 		this.log("User " + this.userId + ": needed negotiation for peer connection");
-		this.log("signaling state: ", e.target.signalingState);
-		this.log("ice connection state: ", e.target.iceConnectionState);
-		this.log("pendingRemoteDescription: ", e.target.pendingRemoteDescription);
+		this.log("User " + this.userId + ": signaling state: ", e.target.signalingState);
+		this.log("User " + this.userId + ": ice connection state: ", e.target.iceConnectionState);
+		this.log("User " + this.userId + ": pendingRemoteDescription: ", e.target.pendingRemoteDescription);
 
 		if (e.target.iceConnectionState !== "new" && e.target.iceConnectionState !== "connected" && e.target.iceConnectionState !== "completed")
 		{
@@ -3772,14 +3775,14 @@ class Peer
 			return;
 		}
 
-		if (this.isInitiator())
+		/*if (this.isInitiator())
 		{
 			this.createAndSendOffer();
 		}
 		else
 		{
 			this.sendNegotiationNeeded(this.peerConnection._forceReconnect === true);
-		}
+		}*/
 	};
 
 	addMediaRenderer(trackData)
@@ -3802,10 +3805,8 @@ class Peer
 				break;
 
 			case MediaStreamsKinds.Screen:
-				this.incomingScreenTrack = null;
-				break;
-
 			case MediaStreamsKinds.ScreenAudio:
+				this.incomingScreenTrack = null;
 				this.incomingScreenAudioTrack = null;
 				break;
 
@@ -3829,10 +3830,15 @@ class Peer
 
 		if (event.track.kind === 'video')
 		{
-			event.track.addEventListener('mute', this.#onVideoTrackMuted.bind(this));
-			event.track.addEventListener('unmute', this.#onVideoTrackUnMuted.bind(this));
-			event.track.addEventListener('ended', this.#onVideoTrackEnded.bind(this));
-			if (this.trackList[event.track.id] === 'screen')
+			Event.bind(event.track, 'mute', this.#onVideoTrackMuted.bind(this));
+			Event.bind(event.track, 'unmute', this.#onVideoTrackUnMuted.bind(this));
+			Event.bind(event.track, 'ended', this.#onVideoTrackEnded.bind(this));
+
+			const isScreenVideo = this.call.useMediaServer
+				? event.track.source === MediaStreamsKinds.Screen
+				: this.trackList[event.transceiver?.mid] === 'screen';
+
+			if (isScreenVideo)
 			{
 				this.incomingScreenTrack = event.track;
 			}
@@ -3843,7 +3849,11 @@ class Peer
 		}
 		else if (event.track.kind === 'audio')
 		{
-			if (this.trackList[event.track.id] === 'screenAudio')
+			const isScreenAudio = this.call.useMediaServer
+				? event.track.source === MediaStreamsKinds.ScreenAudio
+				: this.trackList[event.transceiver?.mid] === 'screenAudio';
+
+			if (isScreenAudio)
 			{
 				this.incomingScreenAudioTrack = event.track;
 			}
@@ -3857,6 +3867,22 @@ class Peer
 	#onPeerConnectionRemoveStream(e)
 	{
 		this.log("User: " + this.userId + "_onPeerConnectionRemoveStream: ", e);
+	};
+
+	#onPeerConnectionIceCandidateError(e)
+	{
+		this.log("User: " + this.userId + "_onPeerConnectionIceCandidateError: ", JSON.stringify(e));
+	};
+
+	#onPeerConnectionIceConnectionStateChange(e)
+	{
+		if (!this.peerConnection)
+		{
+			return;
+		}
+
+		const state = this.peerConnection.iceConnectionState;
+		this.log(`User ${this.userId} #onPeerConnectionIceConnectionStateChange [ICE State]: ${state}`);
 	};
 
 	#onVideoTrackMuted()
@@ -4074,6 +4100,7 @@ class Peer
 		}
 
 		this.log(`User: ${this.userId}; Applying remote offer`);
+		this.log(JSON.stringify(sessionDescription));
 		this.log(`User: ${this.userId}; Peer ice connection state ${this.peerConnection.iceConnectionState}`);
 
 		const haveLocalOffer = this.peerConnection.signalingState === 'have-local-offer';
@@ -4129,9 +4156,10 @@ class Peer
 			})
 			.catch((error) => {
 				this.failureReason = error.toString();
-				this.updateCalculatedState();
-				this.log('Could not apply remote offer', error);
-				console.error('Could not apply remote offer', error);
+				const logMessage = `Could not apply remote offer: ${this.failureReason}`;
+				this.log(logMessage);
+				Util.sendLog(`[call] ${logMessage}`);
+				this.reconnect({ reconnectionReasonInfo: logMessage });
 			})
 			.finally(() => {
 				this.pendingRemoteSdpDelay = false;
@@ -4192,17 +4220,19 @@ class Peer
 		clearTimeout(this.connectionOfferReplyTimeout);
 
 		this.log("User: " + this.userId + "; Applying remote answer");
+		this.log(JSON.stringify(sessionDescription));
 		this.peerConnection
 			.setRemoteDescription(sessionDescription)
 			.then(() =>
 			{
 				this.applyPendingIceCandidates();
 			})
-			.catch((e) =>
-			{
-				this.failureReason = e.toString();
-				this.updateCalculatedState();
-				this.log(e);
+			.catch((error) => {
+				this.failureReason = error.toString();
+				const logMessage = `Could not apply remote answer: ${this.failureReason}`;
+				this.log(logMessage);
+				Util.sendLog(`[call] ${logMessage}`);
+				this.reconnect({ reconnectionReasonInfo: logMessage });
 			})
 			.finally(() =>
 			{
@@ -4299,7 +4329,7 @@ class Peer
 		if (connectionAttempt > maxConnectionAttempt)
 		{
 			this.log('Error: Too many reconnection attempts, giving up');
-			this.failureReason = 'Could not connect to user in time';
+			this.failureReason = this.failureReason || 'Could not connect to user in time';
 			this.updateCalculatedState();
 
 			return;
@@ -4335,7 +4365,7 @@ class Peer
 
 	log()
 	{
-		this.call.log.apply(this.call, arguments);
+		this.call.log.apply(this.call, ['SPC: ', ...arguments]);
 	};
 
 	destroy()

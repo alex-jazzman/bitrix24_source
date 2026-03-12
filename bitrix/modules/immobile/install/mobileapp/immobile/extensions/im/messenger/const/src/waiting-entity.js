@@ -19,15 +19,12 @@ jn.define('im/messenger/const/waiting-entity', (require, exports, module) => {
 			messageHandler: {
 				database: 'immobile::database-push-handler',
 				chat: 'immobile::chat-push-handler',
-				copilot: 'immobile::copilot-push-handler',
-				counter: 'immobile::counter-push-handler',
 			},
 		},
 		core: {
 			navigation: 'immobile::navigation-core',
 			chat: 'immobile::chat-core',
 		},
-		externalApi: 'immobile::external-api',
 	};
 
 	module.exports = { WaitingEntity };

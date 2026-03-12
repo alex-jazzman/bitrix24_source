@@ -71,3 +71,29 @@ $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_SYSTEMPROMPT_1"] = "## Роль и Главн
 
 ### Контекст и ограничения:
 {=Constant:SetupTemplateActivity_T76SEQ8ol9}";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_CHATNAME_1"] = "Нужна информация для «{=Constant:SetupTemplateActivity_62HyznTvdU}»";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_DESCRIPTION_1"] = "Чат для сообщений об отсутствии данных в базе знаний";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_MESSAGE_1"] = "Привет! Мне пришёл вопрос:
+------------------------------------------------------
+{=A9700_4393_6634_9720:Message}
+------------------------------------------------------
+У меня нет такой информации. Предлагаю добавить это в базу знаний.";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_1"] = "ID";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_10"] = "Чат-бот";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_11"] = "Сотрудник, запустивший агента";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_12"] = "Групповой чат";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_13"] = "Чат-бот";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_2"] = "Символьный код";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_3"] = "ID документа";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_4"] = "Процесс";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_5"] = "Шаблон";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_6"] = "Кем создано";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_7"] = "Когда создано";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_8"] = "Сотрудник, запустивший агента";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_9"] = "Групповой чат";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_STORAGETITLE_1"] = "Системная информация для агента поиска по базе знаний [{=Workflow:TemplateId}]";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_1"] = "Создание хранилища";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2"] = "Запись данных";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_3"] = "Чтение данных";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5"] = "Условие";
+$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_6"] = "Создать групповой чат";

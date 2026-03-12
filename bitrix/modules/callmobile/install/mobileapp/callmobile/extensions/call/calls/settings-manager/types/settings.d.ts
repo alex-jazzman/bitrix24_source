@@ -3,5 +3,7 @@ export type CallSettingsType = {
 	plainCallsUseJwt?: boolean,
 	plainCallFollowUpEnabled?: boolean,
 	plainCallCloudRecordingEnabled?: boolean,
+	optionsForTestingEnabled?: boolean,
+	mobileCallUIVisibilityTimer?: number,
 	callBalancerUrl?: string,
 };

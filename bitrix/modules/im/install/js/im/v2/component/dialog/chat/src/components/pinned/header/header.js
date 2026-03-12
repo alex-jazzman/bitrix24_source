@@ -35,6 +35,10 @@ export const PinnedHeader = {
 			type: Boolean,
 			required: true,
 		},
+		contextDialogId: {
+			type: String,
+			required: true,
+		},
 	},
 	emits: ['toggleList', 'messageUnpin', 'messageClick'],
 	computed:
@@ -54,6 +58,7 @@ export const PinnedHeader = {
 			<HeaderPin
 				v-else
 				:message="typedMessage"
+				:contextDialogId="contextDialogId"
 				:messagePosition="messagePosition"
 				:totalPinCounter="totalPinCounter"
 				:showUnpinIcon="showUnpinIcon"

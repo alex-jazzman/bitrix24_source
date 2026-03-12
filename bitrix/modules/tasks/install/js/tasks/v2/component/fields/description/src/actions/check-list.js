@@ -1,11 +1,8 @@
 import { Outline } from 'ui.icon-set.api.vue';
-import { TextSm } from 'ui.system.typography.vue';
-import type { HintParams } from 'ui.vue3.directives.hint';
-import { hint } from 'ui.vue3.directives.hint';
 
-import { tooltip } from 'tasks.v2.component.elements.hint';
+import { Core } from 'tasks.v2.core';
 
-import { ActionButton } from './action-button';
+import { ActionButton } from 'tasks.v2.component.entity-text';
 
 // @vue/component
 export const CheckList = {
@@ -13,9 +10,7 @@ export const CheckList = {
 	components: {
 		ActionButton,
 		Outline,
-		TextSm,
 	},
-	directives: { hint },
 	props: {
 		loading: {
 			type: Boolean,
@@ -33,7 +28,17 @@ export const CheckList = {
 		{
 			return 'var(--ui-color-copilot-primary)';
 		},
+		iconName(): string
+		{
+			return this.loading ? Outline.AI_STARS : Outline.LIST_AI;
+		},
 		title(): string
+		{
+			return this.loc('TASKS_V2_DESCRIPTION_ACTION_CHECK_LIST_HINT_MSGVER_1', {
+				'#COPILOT_NAME#': Core.getParams().copilotName,
+			});
+		},
+		copilotText(): string
 		{
 			return (
 				this.loading
@@ -41,28 +46,14 @@ export const CheckList = {
 					: this.loc('TASKS_V2_DESCRIPTION_ACTION_CHECK_LIST_TITLE')
 			);
 		},
-		tooltip(): Function
-		{
-			return (): HintParams => tooltip({
-				text: this.loc('TASKS_V2_DESCRIPTION_ACTION_CHECK_LIST_HINT'),
-				popupOptions: {
-					offsetLeft: this.$el.offsetWidth / 2,
-				},
-			});
-		},
 	},
 	template: `
-		<div class="tasks-card-description-action-check-list" v-hint="tooltip">
-			<div :class="{ 'tasks-card-description-action-check-list-spinner': loading }">
-				<ActionButton
-					:iconName="loading ? Outline.AI_STARS : Outline.LIST_AI"
-					:iconColor="buttonColor"
-					:iconSize="loading ? 20 : null"
-				/>
-			</div>
-			<TextSm class="tasks-card-description-action-check-list-label">
-				{{ title }}
-			</TextSm>
-		</div>
+		<ActionButton
+			:iconColor="buttonColor"
+			:iconSize="loading ? 20 : null"
+			:iconName
+			:title
+			:copilotText
+		/>
 	`,
 };

@@ -15,6 +15,8 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
 	const { IconAfterType } = require('layout/ui/context-menu/item/src/icon-after-type-enum');
 	const { ItemType } = require('layout/ui/context-menu/item/src/item-type-enum');
+	const { Circle, Line } = require('utils/skeleton');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @typedef {Object} ContextMenuItemProps
@@ -187,6 +189,11 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			return this.props.rightIcon;
 		}
 
+		get isShimmerEnabled()
+		{
+			return this.props.isShimmerEnabled ?? false;
+		}
+
 		getParentWidget()
 		{
 			const { getParentWidget } = this.props;
@@ -245,6 +252,36 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 						backgroundColor: this.isDimmed() ? this.getDimmedColor() : null,
 					}, containerStyle),
 					onClick: this.handleSelectItem,
+				},
+				View(
+					{
+						style: this.getContainerStyle(),
+					},
+					this.renderIconContainer(this.isShimmerEnabled ? this.renderIconShimmer() : this.renderIcon()),
+					this.renderContentContainer(),
+				),
+				this.renderDivider(),
+			);
+		}
+
+		renderShimmer()
+		{
+			if (!this.isActive())
+			{
+				return null;
+			}
+
+			const { container: containerStyle = {} } = this.getCustomStyles();
+
+			return View(
+				{
+					testId: this.testId,
+					style: mergeImmutable({
+						height: 58,
+						width: '100%',
+						position: 'relative',
+						backgroundColor: this.isDimmed() ? this.getDimmedColor() : null,
+					}, containerStyle),
 				},
 				View(
 					{
@@ -411,7 +448,7 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 							justifyContent: 'center',
 						},
 					},
-					this.renderTitle(),
+					this.isShimmerEnabled ? this.renderTitleShimmer() : this.renderTitle(),
 					this.renderSubTitle(),
 				),
 				View(
@@ -445,6 +482,13 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 				},
 				view,
 			);
+		}
+
+		renderIconShimmer()
+		{
+			const iconSize = this.getIconSize();
+
+			return Circle(iconSize);
 		}
 
 		renderIcon()
@@ -557,6 +601,11 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 				),
 				this.renderAfterContainer(),
 			);
+		}
+
+		renderTitleShimmer()
+		{
+			return Line(Random.getInt(120, 180), 20, 0, 0);
 		}
 
 		renderSubTitle()

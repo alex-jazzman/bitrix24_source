@@ -4,10 +4,30 @@
 	height: 16px;
 	margin: 0;
 	font-weight: 400;
-	font-size: 10px;
+	font-size: 12px;
 	letter-spacing: 0;
 	color: var(--ui-color-base-3);
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+	width: 100%;
+}
+
+.editor-chart-tooltip__title {
+	font-weight: 500;
+	font-size: 17px;
+	margin-bottom: 6px;
+	margin-top: 14px;
+}
+
+.editor-chart-tooltip__description {
+	font-weight: 400;
+	font-size: 15px;
+	line-height: 20px;
+	opacity: 0.8;
+	margin-top: 0;
+}
+
+.editor-chart-tooltip-content {
+	padding: 0px 13px 0px 12px;
 }

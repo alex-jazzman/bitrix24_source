@@ -9,6 +9,8 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		finishScreenshare: 'finish_screenshare',
 		connect: 'connect',
 		startCall: 'start_call',
+		startCallCollab: 'start_call_collab',
+		connectCallCollab: 'connect_call_collab',
 		reconnect: 'reconnect',
 		addUser: 'add_user',
 		disconnect: 'disconnect',
@@ -28,6 +30,13 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		aiRecordStart: 'ai_record_start',
 		openTab: 'open_tab',
 		openSlider: 'open_slider',
+		openCallTab: 'open_call_tab',
+		startSearch: 'start_search',
+		clickCallButton: 'click_call_button',
+		removeFromList: 'remove_from_list',
+		openChat: 'open_chat',
+		clickCreate: 'click_create',
+		submitCreate: 'submit_create',
 	});
 
 	const AnalyticsTool = Object.freeze({
@@ -39,6 +48,10 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		call: 'call',
 		callsOperations: 'calls_operations',
 		callFollowup: 'call_followup',
+		callList: 'call_list',
+		messenger: 'messenger',
+		videoconf: 'videoconf',
+		collabCall: 'collab_call',
 	});
 
 	const AnalyticsType = Object.freeze({
@@ -51,6 +64,9 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		insights: 'ai_call_quality',
 		summary: 'followup',
 		transcribation: 'transcript',
+		outgoing: 'outgoing',
+		incoming: 'incoming',
+		missed: 'missed',
 	});
 
 	const AnalyticsSection = Object.freeze({
@@ -59,12 +75,20 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		chatList: 'chat_list',
 		chatWindow: 'chat_window',
 		callFollowup: 'call_followup',
+		callTab: 'call_tab',
 	});
 
 	const AnalyticsSubSection = Object.freeze({
 		finishButton: 'finish_button',
 		contextMenu: 'context_menu',
 		window: 'window',
+		outgoing: 'outgoing',
+		incoming: 'incoming',
+		missed: 'missed',
+		search: 'search',
+		creationBox: 'creation_box',
+		all: 'all',
+		menu: 'menu',
 	});
 
 	const AnalyticsElement = Object.freeze({
@@ -104,6 +128,11 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		aiOff: 'ai_off',
 	});
 
+	const AnalyticsVpnStatus = Object.freeze({
+		vpnOn: 'vpn_on',
+		vpnOff: 'vpn_off',
+	});
+
 	const Analytics = Object.freeze({
 		AnalyticsEvent,
 		AnalyticsTool,
@@ -115,6 +144,7 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		AnalyticsStatus,
 		AnalyticsDeviceStatus,
 		AnalyticsAIStatus,
+		AnalyticsVpnStatus,
 	});
 
 	module.exports = { Analytics };

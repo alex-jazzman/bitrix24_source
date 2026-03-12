@@ -11,4 +11,13 @@ export type MessageAudio = {
 	playingTime: number | null,
 	rate: AudioRate,
 	speech2text: Speech2Text,
+	aiAnimation: Speech2Text,
+}
+
+export type AiAnimationMessageData = {
+	text: string,
+	iconName?: string,
+	textColors?: string[],
+	iconColors?: string[],
+	animate: boolean,
 }

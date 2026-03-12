@@ -3,8 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."page-one-column");
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'intranet.old-interface.intranet-common']);
 
 if ($arParams['bAdmin']):
 	$arAbsenceParams["MESS"] = array(

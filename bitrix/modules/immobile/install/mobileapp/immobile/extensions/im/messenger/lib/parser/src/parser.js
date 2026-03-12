@@ -8,10 +8,6 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
-	const {
-		MessageHelper,
-		StickerHelper,
-	} = require('im/messenger/lib/helper');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
 	const { parserQuote } = require('im/messenger/lib/parser/functions/quote');
 	const { parserCall } = require('im/messenger/lib/parser/functions/call');
@@ -84,6 +80,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			}
 
 			let blockText = text;
+			blockText = parserCommon.collapseDuplicateBreaks(blockText);
 			blockText = parserCommon.decodeNewLine(blockText);
 			blockText = parserMention.decode(blockText);
 			blockText = parserAction.decodePut(blockText);
@@ -94,6 +91,11 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			return blockText;
 		},
 
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {Array<FilesModelState> | null} [messageFiles]
+		 * @return {string|*}
+		 */
 		simplifyMessage(modelMessage, messageFiles = null)
 		{
 			if (!messageFiles)
@@ -101,13 +103,11 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
 			}
 
-			const helper = MessageHelper.createByModel(modelMessage, messageFiles);
-
 			return this.simplify({
 				text: modelMessage.text,
 				attach: modelMessage.params && modelMessage.params.ATTACH ? modelMessage.params.ATTACH : false,
 				files: messageFiles,
-				sticker: Boolean(helper?.isSticker),
+				sticker: Type.isPlainObject(modelMessage.stickerParams),
 			});
 		},
 
@@ -218,18 +218,6 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 
 			const attach = params.ATTACH || false;
 			const files = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
-			const helper = MessageHelper.createByModel(modelMessage, files);
-
-			if (helper?.isSticker)
-			{
-				text = StickerHelper.createImgBBCode(stickerParams);
-			}
-
-			if (helper?.isDeletedSticker)
-			{
-				text = Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_DELETED_STICKER');
-			}
-
 			text = text.trim();
 
 			text = parserMention.simplify(text);
@@ -246,6 +234,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				attach,
 				files,
 				showFilePrefix: false,
+				sticker: Type.isPlainObject(stickerParams),
 			});
 			text = parserQuote.truncateDoubleLineBreak(text);
 

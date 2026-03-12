@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS['BC_NEW_POSTS'] = "Последние";
 $MESS['BC_NEW_COMMENTS'] = "Последние комментарии";
 $MESS['BC_NEW_BLOGS'] = "Новые блоги";
@@ -11,4 +11,3 @@ $MESS['BC_POPULAR_POSTS'] = "Популярные";
 $MESS['BC_MESSAGES'] = "Сообщения";
 $MESS['BC_SEARCH_TAG'] = "Облако тегов";
 $MESS ['BLOG_BLOG_FAVORITE'] = "Лучшие сообщения";
-?>

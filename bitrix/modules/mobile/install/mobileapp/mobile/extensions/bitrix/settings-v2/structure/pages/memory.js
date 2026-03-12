@@ -33,13 +33,13 @@ jn.define('settings-v2/structure/pages/memory', (require, exports, module) => {
 				id: 'info-section',
 				items: [
 					createCacheInfo({
-						id: 'file-cache-size',
+						id: 'other-cache-size',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_MEMORY_CACHE_INFO_FILES'),
 						subtitle: Loc.getMessage('SETTINGS_V2_STRUCTURE_MEMORY_CACHE_INFO_FILES_SUBTITLE'),
 						icon: Icon.FILE,
 						iconColor: Color.accentMainPrimary,
 						controller: new CacheSettingController({
-							settingId: NativeSettingsId.CACHE_FILES,
+							settingId: NativeSettingsId.CACHE_OTHER,
 							fallbackValue: 0,
 						}),
 					}),

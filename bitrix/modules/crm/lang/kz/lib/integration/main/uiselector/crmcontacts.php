@@ -1,3 +1,0 @@
-<?php
-$MESS["MAIN_UI_SELECTOR_TAB_CRMCONTACTS"] = "Байланыс";
-$MESS["MAIN_UI_SELECTOR_TITLE_CRMCONTACTS"] = "Байланыстар:";

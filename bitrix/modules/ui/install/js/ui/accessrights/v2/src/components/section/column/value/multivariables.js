@@ -1,9 +1,11 @@
 import { Type } from 'main.core';
 import type { VariableCollection } from '../../../../store/model/access-rights-model';
+import type { AccessRightValue } from '../../../../store/model/user-groups-model';
 import {
 	getMultipleSelectedVariablesHintHtml,
 	getMultipleSelectedVariablesTitle,
 	getSelectedVariables,
+	isUseGroupHeadValuesInHintByVariables,
 } from '../../../../utils';
 import { Selector } from '../../value/multivariables/selector';
 import { SelectedHint } from './../../../util/selected-hint';
@@ -57,6 +59,11 @@ export const Multivariables = {
 			return getMultipleSelectedVariablesTitle(this.selectedVariables);
 		},
 		hintHtml(): string {
+			if (this.right.group && this.isUseGroupHeadValuesInHint)
+			{
+				return getMultipleSelectedVariablesHintHtml(this.parentSelectedVariables, this.title, this.parentRight.variables, true);
+			}
+
 			return getMultipleSelectedVariablesHintHtml(this.selectedVariables, this.hintTitle, this.right.variables);
 		},
 		hintTitle(): string {
@@ -66,6 +73,24 @@ export const Multivariables = {
 			}
 
 			return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SELECTED_ITEMS_TITLE');
+		},
+		parentRight() {
+			if (!this.right.group)
+			{
+				return null;
+			}
+
+			return this.$store.getters['accessRights/getAccessRightItemById'](this.section.sectionCode, this.right.group);
+		},
+		parentValue(): AccessRightValue
+		{
+			return this.$store.getters['userGroups/getAccessRightValue'](this.userGroup, this.section.sectionCode, this.parentRight.id);
+		},
+		parentSelectedVariables(): VariableCollection {
+			return getSelectedVariables(this.parentRight.variables, this.parentValue.values, false);
+		},
+		isUseGroupHeadValuesInHint(): boolean {
+			return isUseGroupHeadValuesInHintByVariables(this.selectedVariables)
 		},
 	},
 	methods: {

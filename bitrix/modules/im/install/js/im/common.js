@@ -15210,7 +15210,7 @@
 		return BX.Loc.getMessagePlural(messageId, parseInt(number));
 	}
 
-	MessengerCommon.prototype.openStore = function(additionalParams)
+	MessengerCommon.prototype.openStore = function()
 	{
 		if (!BX.MessengerCommon.isSliderSupport())
 		{
@@ -15228,7 +15228,7 @@
 		{
 			var dialogId = this.getDialogId();
 			var session = this.linesGetSession(this.BXIM.messenger.chat[dialogId.substr(4)]);
-			var params = {
+			var salescenterUrl = BX.util.add_url_param('/saleshub/app/', {
 				dialogId: dialogId,
 				sessionId: session.id,
 				ownerId: session.crmDeal,
@@ -15241,24 +15241,9 @@
 					c_sub_section: 'web',
 					type: 'delivery_payment',
 				}
-			};
-			Object.assign(params, additionalParams);
-			var salescenterUrl = BX.util.add_url_param('/saleshub/app/', params);
-			if (params['compilationId'])
-			{
-				BX.SidePanel.Instance.destroy(salescenterUrl);
-			}
+			});
 			BX.SidePanel.Instance.open(salescenterUrl, {allowChangeHistory: false, width: 1140});
 		}
-	}
-
-	MessengerCommon.prototype.sendCompilationByChat = function(compilationId)
-	{
-		BX.ajax.runAction('salescenter.compilation.sendCompilationByChat', {
-			data: {
-				compilationId
-			},
-		})
 	}
 
 	MessengerCommon.prototype.openRenamePortal = function(button)

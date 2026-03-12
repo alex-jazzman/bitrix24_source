@@ -57,6 +57,7 @@ return [
 		'im.v2.component.message.supervisor.update-feature',
 		'im.v2.component.message.supervisor.enable-feature',
 		'im.v2.component.message.sign',
+		'im.v2.component.message.admin',
 		'im.v2.component.message.check-in',
 		'im.v2.component.message.creation.own-chat',
 		'im.v2.component.message.zoom-invite',

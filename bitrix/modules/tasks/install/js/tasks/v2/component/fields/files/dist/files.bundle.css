@@ -6,6 +6,7 @@
 
 .tasks-field-files-title {
 	display: flex;
+	align-items: center;
 }
 
 .tasks-field-files-main {

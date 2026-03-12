@@ -211,8 +211,10 @@ if ($isMobile)
 				spinner: 'circular',
 				userKickable: true,
 				confirmUserKick: false,
-				disable: false,
 				scrollToElement: boardElementId,
+				features: {
+					elementLink: true,
+				},
 			},
 			permissions: {
 				accessLevel: '<?= $arResult['ACCESS_LEVEL'] ?>',

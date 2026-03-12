@@ -2,9 +2,7 @@
  * @module im/messenger/lib/counters/tab-counters/base
  */
 jn.define('im/messenger/lib/counters/tab-counters/base', (require, exports, module) => {
-	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
 
 	const { Logger } = require('im/messenger/lib/logger');
 
@@ -59,11 +57,6 @@ jn.define('im/messenger/lib/counters/tab-counters/base', (require, exports, modu
 		subscribeInitMessengerEvent()
 		{
 			this.messengerInitService.onInit(this.handleCountersGet);
-		}
-
-		sendCountersToCounterService(counters)
-		{
-			MessengerCounterSender.getInstance().sendInitialCounters(counters);
 		}
 
 		handleCountersGet()

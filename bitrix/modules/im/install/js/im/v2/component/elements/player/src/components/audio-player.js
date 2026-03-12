@@ -111,7 +111,7 @@ export const AudioPlayer = {
 		},
 		currentRateLabel(): string
 		{
-			return this.isPlaying ? `${this.currentRate}x` : '';
+			return `${this.currentRate}x`;
 		},
 		metaInfo(): string
 		{
@@ -522,12 +522,10 @@ export const AudioPlayer = {
 						class="bx-im-audio-player__rate-button-container"
 					>
 						<button
-							:class="{'--active': isPlaying}"
+							:class="{'--hidden': !isPlaying}"
 							@click="changeRate"
 						>
-						<span :class="{'bx-im-audio-player__rate-icon': !isPlaying}">
 							{{ currentRateLabel }}
-						</span>
 						</button>
 					</div>
 					<button

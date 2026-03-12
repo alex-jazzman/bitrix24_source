@@ -1,8 +1,10 @@
+import { toValue } from 'ui.vue3';
 import { storeToRefs } from 'ui.vue3.pinia';
 import {
 	CatalogLayout,
 	useCatalogStore,
 } from '../../../../entities/catalog';
+import { useBlockDiagram } from 'ui.block-diagram';
 
 type HoverCatalogLayoutSetup = {
 	isExpandedCatalog: boolean,
@@ -21,9 +23,13 @@ export const HoverCatalogLayout = {
 	{
 		const catalogStore = useCatalogStore();
 		const { isExpandedCatalog, isShowSearchResults } = storeToRefs(catalogStore);
-
+		const { isSelectionActive } = useBlockDiagram();
 		function onMouseOver(): void
 		{
+			if (toValue(isSelectionActive))
+			{
+				return;
+			}
 			catalogStore.expandCatalog();
 		}
 

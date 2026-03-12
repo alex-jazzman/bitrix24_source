@@ -13,6 +13,10 @@ const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
 
 export class BaseMenu extends EventEmitter
 {
+	static events = {
+		close: 'close',
+	};
+
 	menuInstance: Menu;
 	context: Object;
 	target: HTMLElement;
@@ -55,6 +59,10 @@ export class BaseMenu extends EventEmitter
 			className: this.getMenuClassName(),
 			items: this.#prepareItems(),
 			sections: this.getMenuGroups(),
+			events: {
+				onClose: () => this.close(),
+				onDestroy: () => this.destroy(),
+			},
 		};
 	}
 
@@ -83,13 +91,9 @@ export class BaseMenu extends EventEmitter
 		return '';
 	}
 
-	onClosePopup()
-	{
-		this.close();
-	}
-
 	close()
 	{
+		this.emit(BaseMenu.events.close);
 		if (!this.menuInstance)
 		{
 			return;

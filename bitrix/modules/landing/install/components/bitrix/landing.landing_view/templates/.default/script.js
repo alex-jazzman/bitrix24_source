@@ -95,6 +95,7 @@
 		 */
 		init: function(options)
 		{
+			this.patchSidePanelBindAnchors();
 			var viewInstance = BX.Landing.Component.View.getInstance();
 
 			// for open app pages in slider
@@ -187,6 +188,54 @@
 				this.initSliders();
 				this.loadEditor();
 				this.hideEditorsPanelHandlers();
+			}
+		},
+
+		patchSidePanelBindAnchors: function()
+		{
+			try
+			{
+				const topWindow = (window.top && window.top !== window) ? window.top : window;
+				if (
+					!topWindow
+					|| !topWindow.BX
+					|| !topWindow.BX.SidePanel
+					|| !topWindow.BX.SidePanel.Instance
+				)
+				{
+					return;
+				}
+
+				const manager = topWindow.BX.SidePanel.Instance;
+				if (manager.__landingBindAnchorsPatched)
+				{
+					return;
+				}
+
+				const orig = manager.bindAnchors.bind(manager);
+				manager.bindAnchors = function(params)
+				{
+					let preparedParams = params;
+					if (
+						params
+						&& params.rules
+						&& topWindow.BX.Runtime
+						&& typeof topWindow.BX.Runtime.clone === 'function'
+					)
+					{
+						preparedParams = topWindow.BX.Runtime.clone(params);
+					}
+					else if (params && params.rules && typeof topWindow.BX.clone === 'function')
+					{
+						preparedParams = topWindow.BX.clone(params);
+					}
+
+					return orig(preparedParams);
+				};
+				manager.__landingBindAnchorsPatched = true;
+			}
+			catch (error)
+			{
 			}
 		},
 

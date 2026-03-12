@@ -46,5 +46,6 @@ $headerText = Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_MODE_VIEW');
 		document.querySelector('[data-id="<?= $containerId ?>"]'),
 		document.querySelector('[data-id="<?= $containerId ?>-base"]'),
 		'<?= $arResult['LINK_TO_DOWNLOAD'] ?>',
+		'<?= \CUtil::JSEscape((string)$arResult['OBJECT']['SIZE_READABLE']) ?>',
 	);
 </script>

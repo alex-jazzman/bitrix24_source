@@ -404,7 +404,8 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					</script><?
 					if($file['EDITABLE'] && $file['CAN_UPDATE'] && (!$file['IS_LOCKED'] || $file['IS_LOCKED_BY_SELF']) && !$arParams['DISABLE_LOCAL_EDIT']) {
 						?><a class="feed-con-file-changes-link" href="#" onclick="top.BX.UI.Viewer.Instance.runActionByNode(BX('disk-attach-<?=$file['ID']?>'), 'edit', {
-							modalWindow: BX.Disk.openBlankDocumentPopup()
+							modalWindow: BX.Disk.openBlankDocumentPopup(),
+							checkPromoBoost: true,
 						}); return false;"><?= GetMessage('WDUF_FILE_EDIT') ?></a><?
 					}
 					?><span class="feed-con-file-changes-link feed-con-file-changes-link-more" onclick="return DiskActionFileMenu('<?= $file['ID'] ?>', this, BX.Disk.Files['<?= $file['ID'] ?>']); return false;"><?= GetMessage('WDUF_MORE_ACTIONS') ?></span>

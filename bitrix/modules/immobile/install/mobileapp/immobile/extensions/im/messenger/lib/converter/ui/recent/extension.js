@@ -3,9 +3,7 @@
  */
 jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		RecentItem,
 		ChatItem,
@@ -30,7 +28,6 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 	} = require('im/messenger/lib/element/recent');
 	const {
 		BotType,
-		ComponentCode,
 		UserType,
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -64,12 +61,6 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 		toItem(item, options = {})
 		{
 			const modelItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](item.id);
-			// eslint-disable-next-line no-param-reassign
-			options = {
-				...options,
-				...this.#createOldMessengerOptions(),
-			};
-
 			if (DialogHelper.isChatId(modelItem.id))
 			{
 				return this.#toUserItem(modelItem, options);
@@ -204,19 +195,6 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 		toCallItem(callStatus, call)
 		{
 			return new CallItem(callStatus, call);
-		}
-
-		#createOldMessengerOptions()
-		{
-			if (Feature.isMessengerV2Enabled)
-			{
-				return {};
-			}
-
-			return {
-				showActions: MessengerParams.getComponentCode() !== ComponentCode.imChannelMessenger,
-				showCounter: MessengerParams.getComponentCode() !== ComponentCode.imChannelMessenger,
-			};
 		}
 	}
 

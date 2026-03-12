@@ -32,7 +32,7 @@ export const DescriptionSheet = {
 			default: false,
 		},
 	},
-	emits: ['close'],
+	emits: ['close', 'addCheckList'],
 	setup(): { task: TaskModel }
 	{
 		return {
@@ -68,6 +68,7 @@ export const DescriptionSheet = {
 				:taskId
 				:enableSaveButton
 				@close="$emit('close')"
+				@addCheckList="(checklistString) => $emit('addCheckList', checklistString)"
 			/>
 			<DropZone
 				v-if="isDiskModuleInstalled && task.rights.edit"

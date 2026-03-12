@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_polyfill_intersectionobserver,im_v2_provider_service_notification,im_v2_component_elements_userListPopup,im_v2_component_elements_loader,im_v2_lib_theme,im_v2_lib_rest,ui_system_menu,im_v2_provider_service_settings,im_v2_lib_notifier,ui_iconSet_api_vue,im_v2_lib_utils,main_core_events,im_v2_component_elements_attach,im_v2_lib_dateFormatter,ui_vue3_components_button,im_v2_component_elements_avatar,ui_reactionsSelect,im_v2_lib_parser,im_public,im_v2_component_elements_chatTitle,ui_forms,im_v2_lib_escManager,ui_vue3_vuex,main_core,im_v2_application_core,im_v2_lib_user,im_v2_lib_logger,im_v2_const) {
+(function (exports,main_polyfill_intersectionobserver,im_v2_provider_service_notification,im_v2_component_elements_userListPopup,im_v2_component_elements_loader,im_v2_lib_theme,im_v2_lib_rest,im_v2_provider_service_settings,im_v2_lib_notifier,im_v2_lib_analytics,im_v2_lib_utils,im_v2_component_elements_attach,im_v2_lib_dateFormatter,im_v2_component_elements_avatar,ui_reactionsSelect,im_v2_lib_parser,im_public,im_v2_component_elements_chatTitle,ui_vue3_vuex,ui_system_chip_vue,im_v2_component_elements_popup,ui_vue3_components_button,ui_iconSet_api_core,ui_entitySelector,main_core_events,main_popup,ui_system_menu,ui_datePicker,ui_system_input_vue,ui_iconSet_api_vue,im_v2_css_classes,main_core,im_v2_application_core,im_v2_lib_user,im_v2_lib_logger,im_v2_const) {
 	'use strict';
 
 	class NotificationReadService {
@@ -69,27 +69,49 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      read: true
 	    });
 	  }
-	  readAll() {
-	    this.store.dispatch('notifications/readAllSimple');
-	    this.restClient.callMethod(im_v2_const.RestMethod.imNotifyReadAll, {
-	      id: 0
+	  readAll(excludeIds = []) {
+	    this.store.dispatch('notifications/readAllSimple', {
+	      excludeIds
+	    });
+	    const params = {
+	      ids: excludeIds
+	    };
+	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2NotifyReadAll, {
+	      data: params
 	    }).then(response => {
 	      const currentCounter = this.store.getters['notifications/getCounter'];
-	      const newCounter = response.answer.result.newCounter;
+	      const newCounter = response.counter;
 	      if (newCounter < currentCounter) {
 	        void this.store.dispatch('notifications/setCounter', newCounter);
 	      }
-	      im_v2_lib_logger.Logger.warn('I have read ALL the notifications', response);
+	      im_v2_lib_logger.Logger.warn(`I have read ALL the notifications, excluded: ${excludeIds.length}`, response);
 	    }).catch(result => {
-	      console.error('NotificationReadService: readAll error', result.error());
+	      console.error('NotificationReadService: readAll error', result);
 	    });
 	  }
 	  changeReadStatus(notificationId) {
-	    const notification = this.store.getters['notifications/getById'](notificationId);
-	    this.store.dispatch('notifications/read', {
-	      ids: [notification.id],
-	      read: !notification.read
-	    });
+	    let notification = this.store.getters['notifications/getById'](notificationId);
+	    let fromSearchCollection = false;
+	    if (!notification) {
+	      notification = this.store.getters['notifications/getSearchItemById'](notificationId);
+	      fromSearchCollection = true;
+	    }
+	    if (!notification) {
+	      return;
+	    }
+	    if (fromSearchCollection) {
+	      this.store.commit('notifications/updateSearchResult', [{
+	        id: notification.id,
+	        fields: {
+	          read: !notification.read
+	        }
+	      }]);
+	    } else {
+	      this.store.dispatch('notifications/read', {
+	        ids: [notification.id],
+	        read: !notification.read
+	      });
+	    }
 	    clearTimeout(this.changeReadStatusBlockTimeout[notification.id]);
 	    this.changeReadStatusBlockTimeout[notification.id] = setTimeout(() => {
 	      this.restClient.callMethod(im_v2_const.RestMethod.imNotifyRead, {
@@ -112,6 +134,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	class NotificationHeaderMenu {
 	  constructor() {
 	    this.notificationReadService = new NotificationReadService();
+	    this.store = im_v2_application_core.Core.getStore();
 	  }
 	  openMenu(isReadAllAvailable, bindElement) {
 	    if (this.menu) {
@@ -127,7 +150,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    this.menu.show(bindElement);
 	  }
 	  getHeaderMenuItems(isReadAllAvailable) {
-	    return [this.getReadAllItem(isReadAllAvailable)];
+	    return [this.getOptionsItem(), this.getReadAllItem(isReadAllAvailable)];
 	  }
 	  getReadAllItem(isReadAllAvailable) {
 	    return {
@@ -135,6 +158,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      design: isReadAllAvailable ? ui_system_menu.MenuItemDesign.Default : ui_system_menu.MenuItemDesign.Disabled,
 	      onClick: () => {
 	        this.notificationReadService.readAll();
+	        this.menu.close();
+	      }
+	    };
+	  }
+	  getOptionsItem() {
+	    return {
+	      title: main_core.Loc.getMessage('IM_NOTIFICATIONS_OPTIONS_BUTTON'),
+	      onClick: () => {
+	        void im_public.Messenger.openSettings({
+	          onlyPanel: im_v2_const.SettingsSection.notification
+	        });
 	        this.menu.close();
 	      }
 	    };
@@ -163,7 +197,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	var _getNotificationSettingsTypeValues = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNotificationSettingsTypeValues");
 	var _shouldShowItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowItem");
 	var _getLastSubscribedTypes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLastSubscribedTypes");
-	var _isEnabledAutoRead = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEnabledAutoRead");
 	class NotificationMenu {
 	  static closeMenuOnScroll() {
 	    try {
@@ -179,9 +212,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  constructor({
 	    store
 	  }) {
-	    Object.defineProperty(this, _isEnabledAutoRead, {
-	      value: _isEnabledAutoRead2
-	    });
 	    Object.defineProperty(this, _getLastSubscribedTypes, {
 	      value: _getLastSubscribedTypes2
 	    });
@@ -279,6 +309,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        void new im_v2_provider_service_settings.SettingsService().toggleSubscription(settingsToResubscribe);
 	        balloon.close();
 	      });
+	      im_v2_lib_analytics.Analytics.getInstance().notification.onUnsubscribeFromNotification({
+	        moduleId: settingsToUnsubscribe.notifyModule,
+	        optionName: settingsToUnsubscribe.notifyEvent
+	      });
 	    } else {
 	      const settingsToSubscribe = {
 	        ...babelHelpers.classPrivateFieldLooseBase(this, _getParsedSettingName)[_getParsedSettingName](),
@@ -305,10 +339,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  return [babelHelpers.classPrivateFieldLooseBase(this, _getUnSubscribeItem)[_getUnSubscribeItem](), babelHelpers.classPrivateFieldLooseBase(this, _getMarkAsUnreadItem)[_getMarkAsUnreadItem]()].filter(Boolean);
 	}
 	function _getMarkAsUnreadItem2() {
-	  const isAutoReadEnabled = babelHelpers.classPrivateFieldLooseBase(this, _isEnabledAutoRead)[_isEnabledAutoRead]();
-	  if (isAutoReadEnabled) {
-	    return null;
-	  }
 	  return {
 	    title: this.notificationItem.read ? main_core.Loc.getMessage('IM_NOTIFICATIONS_ITEM_MENU_MARK_UNREAD') : main_core.Loc.getMessage('IM_NOTIFICATIONS_ITEM_MENU_MARK_READ'),
 	    onClick: () => {
@@ -375,9 +405,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    return [im_v2_const.NotificationSettingsType.web];
 	  }
 	  return [];
-	}
-	function _isEnabledAutoRead2() {
-	  return this.store.getters['application/settings/get'](im_v2_const.Settings.notification.enableAutoRead);
 	}
 	NotificationMenu.events = {
 	  markAsUnreadClick: 'markAsUnreadClick'
@@ -519,10 +546,24 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (item.type === 'user' && item.user) {
 	        return item.user.name;
 	      }
-	      return item.value;
+	      return im_v2_lib_parser.Parser.decodeNotificationParam(item.value);
+	    },
+	    getItemTitle(item) {
+	      if (item.type === 'user' && item.user) {
+	        return item.user.name;
+	      }
+	      return im_v2_lib_parser.Parser.purify({
+	        text: item.value
+	      });
+	    },
+	    isUserItem(item) {
+	      return item.type === 'user' && item.user;
 	    },
 	    isUserHasAvatar(item) {
 	      return item.type === 'user' && item.user.avatar;
+	    },
+	    getUserLink(user) {
+	      return im_v2_lib_utils.Utils.user.getProfileLink(user.id);
 	    }
 	  },
 	  template: `
@@ -544,7 +585,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							:size="16"
 						/>
 					</template>
-					<span class="bx-im-content-notification-item-content__details-text">{{ getItemValue(item) }}</span>
+					<template v-if="isUserItem(item)">
+						<a
+							:href="getUserLink(item.user)"
+							class="bx-im-content-notification-item-content__details-text"
+						>
+							{{ getItemValue(item) }}
+						</a>
+					</template>
+					<template v-else>
+						<span
+							class="bx-im-content-notification-item-content__details-text"
+							:title="getItemTitle(item)"
+							v-html="getItemValue(item)"
+						>
+						</span>
+					</template>
 				</div>
 			</template>
 		</div>
@@ -672,7 +728,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<div v-if="isChangedType" class="bx-im-content-notification-item-content__details-item">
+		<div v-if="isChangedType" class="bx-im-content-notification-item-content__details-item --changed">
 			<div class="bx-im-content-notification-item-content__details-content --prev">
 				<span>
 					{{ prevValue }}
@@ -1336,10 +1392,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    notification: {
 	      type: Object,
 	      required: true
-	    },
-	    searchMode: {
-	      type: Boolean,
-	      default: false
 	    }
 	  },
 	  emits: ['buttonsClick', 'confirmButtonsClick', 'deleteClick', 'sendQuickAnswer', 'moreUsersClick'],
@@ -1363,7 +1415,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.notification.sectionCode;
 	    },
 	    isUnread() {
-	      return !this.notificationItem.read && !this.searchMode;
+	      return !this.notificationItem.read;
 	    },
 	    userData() {
 	      return this.$store.getters['users/get'](this.notificationItem.authorId, true);
@@ -1939,178 +1991,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	// @vue/component
-	const SearchPanel = {
-	  name: 'SearchPanel',
-	  props: {
-	    schema: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['search', 'close'],
-	  data() {
-	    return {
-	      searchQuery: '',
-	      searchType: '',
-	      searchDate: ''
-	    };
-	  },
-	  computed: {
-	    filterTypes() {
-	      const originalSchema = {
-	        ...this.schema
-	      };
-
-	      // get rid of some subcategories
-	      const modulesToRemove = ['timeman', 'mail', 'disk', 'bizproc', 'voximplant', 'sender', 'blog', 'vote', 'socialnetwork', 'imopenlines', 'photogallery', 'intranet', 'forum'];
-	      modulesToRemove.forEach(moduleId => {
-	        if (originalSchema[moduleId]) {
-	          delete originalSchema[moduleId].LIST;
-	        }
-	      });
-
-	      // rename some groups
-	      if (originalSchema.calendar) {
-	        originalSchema.calendar.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_CALENDAR');
-	      }
-	      if (originalSchema.sender) {
-	        originalSchema.sender.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_SENDER');
-	      }
-	      if (originalSchema.blog) {
-	        originalSchema.blog.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_BLOG');
-	      }
-	      if (originalSchema.socialnetwork) {
-	        originalSchema.socialnetwork.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_SOCIALNETWORK');
-	      }
-	      if (originalSchema.intranet) {
-	        originalSchema.intranet.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_INTRANET');
-	      }
-
-	      // we need only these modules in this order!
-	      const modulesToShowInFilter = ['tasks', 'calendar', 'crm', 'timeman', 'mail', 'disk', 'bizproc', 'voximplant', 'sender', 'blog', 'vote', 'socialnetwork', 'imopenlines', 'photogallery', 'intranet', 'forum'];
-	      const notificationFilterTypes = [];
-	      modulesToShowInFilter.forEach(moduleId => {
-	        if (originalSchema[moduleId]) {
-	          notificationFilterTypes.push(originalSchema[moduleId]);
-	        }
-	      });
-	      return notificationFilterTypes;
-	    },
-	    isEmptyQuery() {
-	      return this.searchQuery.trim() === '';
-	    },
-	    hasFocus() {
-	      return document.activeElement === this.$refs.searchInput;
-	    }
-	  },
-	  watch: {
-	    searchQuery() {
-	      this.search();
-	    },
-	    searchType() {
-	      this.search();
-	    },
-	    searchDate() {
-	      this.search();
-	    }
-	  },
-	  created() {
-	    this.getEmitter().subscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
-	  },
-	  beforeUnmount() {
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
-	  },
-	  methods: {
-	    search() {
-	      this.$emit('search', {
-	        searchQuery: this.searchQuery,
-	        searchType: this.searchType,
-	        searchDate: this.searchDate
-	      });
-	    },
-	    onDateFilterClick(event) {
-	      if (BX && BX.calendar && BX.calendar.get().popup) {
-	        BX.calendar.get().popup.close();
-	      }
-
-	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
-	      BX.calendar({
-	        node: event.target,
-	        field: event.target,
-	        bTime: false,
-	        callback_after: () => {
-	          this.searchDate = event.target.value;
-	        }
-	      });
-	    },
-	    onBeforeEscape() {
-	      if (!this.hasFocus) {
-	        return im_v2_lib_escManager.EscEventAction.ignored;
-	      }
-	      if (this.isEmptyQuery) {
-	        this.$emit('close');
-	      } else {
-	        this.searchQuery = '';
-	      }
-	      return im_v2_lib_escManager.EscEventAction.handled;
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    }
-	  },
-	  template: `
-		<div class="bx-im-notifications-header-filter-box">
-			<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-sm ui-ctl-w25">
-				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-				<select class="ui-ctl-element" v-model="searchType">
-					<option value="">
-						{{ $Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_PLACEHOLDER') }}
-					</option>
-					<template v-for="group in filterTypes">
-						<template v-if="group.LIST">
-							<optgroup :label="group.NAME">
-								<option v-for="option in group.LIST" :value="option.ID">
-									{{ option.NAME }}
-								</option>
-							</optgroup>
-						</template>
-						<template v-else>
-							<option :value="group.MODULE_ID">
-								{{ group.NAME }}
-							</option>
-						</template>
-					</template>
-				</select>
-			</div>
-			<div class="ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-sm ui-ctl-w50">
-				<button class="ui-ctl-after ui-ctl-icon-clear" @click.prevent="searchQuery=''"></button>
-				<input
-					autofocus
-					ref="searchInput"
-					type="text"
-					class="ui-ctl-element"
-					v-model="searchQuery"
-					:placeholder="$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TEXT_PLACEHOLDER')"
-				>
-			</div>
-			<div class="ui-ctl ui-ctl-after-icon ui-ctl-before-icon ui-ctl-sm ui-ctl-w25">
-				<div class="ui-ctl-before ui-ctl-icon-calendar"></div>
-				<input
-					type="text"
-					class="ui-ctl-element ui-ctl-textbox"
-					v-model="searchDate"
-					@focus.prevent.stop="onDateFilterClick"
-					@click.prevent.stop="onDateFilterClick"
-					:placeholder="$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_DATE_PLACEHOLDER')"
-					readonly
-				>
-				<button class="ui-ctl-after ui-ctl-icon-clear" @click.prevent="searchDate=''"></button>
-			</div>
-		</div>
-	`
-	};
-
 	const ScrollButton = {
 	  name: 'ScrollButton',
 	  props: {
@@ -2231,12 +2111,1303 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	// @vue/component
+	const NotificationFilterValueChip = {
+	  name: 'NotificationFilterValueChip',
+	  components: {
+	    Chip: ui_system_chip_vue.Chip
+	  },
+	  props: {
+	    text: {
+	      type: String,
+	      required: true
+	    },
+	    title: {
+	      type: String,
+	      default: ''
+	    }
+	  },
+	  emits: ['clear'],
+	  computed: {
+	    ChipDesign: () => ui_system_chip_vue.ChipDesign,
+	    ChipSize: () => ui_system_chip_vue.ChipSize
+	  },
+	  template: `
+		<Chip
+			class="bx-im-notification-filter_search-value__chip-container"
+			:size="ChipSize.Xs"
+			:design="ChipDesign.Tinted"
+			:text="text"
+			:withClear="true"
+			:title="title"
+			:compact="false"
+			@clear="$emit('clear')"
+		/>
+	`
+	};
+
+	const ANOTHER_TYPE = 'anotherValues';
+
+	// @vue/component
+	const NotificationFilterValuesContainer = {
+	  name: 'NotificationFilterValuesContainer',
+	  components: {
+	    NotificationFilterValueChip
+	  },
+	  props: {
+	    nonEmptyEntries: {
+	      type: Array,
+	      required: true
+	    }
+	  },
+	  emits: ['remove'],
+	  computed: {
+	    ANOTHER_TYPE: () => ANOTHER_TYPE,
+	    firstNonEmptyField() {
+	      const list = this.nonEmptyEntries;
+	      return list.length > 0 ? list[0] : null;
+	    },
+	    secondNonEmptyField() {
+	      const list = this.nonEmptyEntries;
+	      return list.length > 1 ? list[1] : null;
+	    },
+	    remainingNonEmptyEntries() {
+	      const list = this.nonEmptyEntries;
+	      return list.length > 1 ? list.slice(1) : [];
+	    },
+	    firstTagTitle() {
+	      if (!this.firstNonEmptyField) {
+	        return '';
+	      }
+	      return this.formatEntry(this.firstNonEmptyField);
+	    },
+	    secondTagTitle() {
+	      if (!this.secondNonEmptyField) {
+	        return '';
+	      }
+	      return this.formatEntry(this.secondNonEmptyField);
+	    },
+	    remainingTagTitle() {
+	      if (this.remainingNonEmptyEntries.length === 0) {
+	        return '';
+	      }
+	      return this.remainingNonEmptyEntries.map(e => this.formatEntry(e)).join('\n');
+	    },
+	    hasNonEmptyEntries() {
+	      return this.nonEmptyEntries.length > 0;
+	    },
+	    hasSingleRemainingEntry() {
+	      return this.remainingNonEmptyEntries.length === 1;
+	    },
+	    hasMultipleRemainingEntries() {
+	      return this.remainingNonEmptyEntries.length > 1;
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    getTitle(key, values) {
+	      if (!values && key === this.ANOTHER_TYPE && this.remainingNonEmptyEntries.length > 0) {
+	        return this.loc('IM_NOTIFICATIONS_FILTER_ANOTHER_VALUES_TAG', {
+	          '#COUNT#': String(this.remainingNonEmptyEntries.length)
+	        });
+	      }
+	      return this.formatEntry({
+	        key,
+	        value: values
+	      });
+	    },
+	    getTagTitle(fieldKey) {
+	      if (fieldKey === NotificationFilterFieldTypes.searchTypes) {
+	        return 'IM_NOTIFICATIONS_FILTER_TYPE_FIELD_TAG_TEXT';
+	      }
+	      if (fieldKey === NotificationFilterFieldTypes.searchDate) {
+	        return 'IM_NOTIFICATIONS_FILTER_DATE_FIELD_TAG_TEXT';
+	      }
+	      if (fieldKey === NotificationFilterFieldTypes.searchAuthors) {
+	        return 'IM_NOTIFICATIONS_FILTER_AUTHOR_FIELD_TAG_TEXT';
+	      }
+	      return '';
+	    },
+	    formatValue(fieldKey, value) {
+	      if (main_core.Type.isArray(value)) {
+	        return value.join(', ');
+	      }
+	      return String(value);
+	    },
+	    formatEntry(entry) {
+	      const phraseCode = this.getTagTitle(entry.key);
+	      if (phraseCode === '') {
+	        return '';
+	      }
+	      return this.loc(phraseCode, {
+	        '#VALUE#': this.formatValue(entry.key, entry.value)
+	      });
+	    },
+	    onRemoveSimpleTag(key) {
+	      if (this.firstNonEmptyField) {
+	        this.$emit('remove', [key]);
+	      }
+	    },
+	    onRemoveRemainingTags() {
+	      const keys = this.remainingNonEmptyEntries.map(e => e.key);
+	      if (keys.length > 0) {
+	        this.$emit('remove', keys);
+	      }
+	    }
+	  },
+	  template: `
+		<div
+			v-if="hasNonEmptyEntries"
+			class="bx-im-notification-filter-value_tags-container"
+		>
+			<NotificationFilterValueChip
+				v-if="firstNonEmptyField"
+				:text="getTitle(firstNonEmptyField.key, firstNonEmptyField.value)"
+				:title="firstTagTitle"
+				data-test-id="im_notifications-filter__chip-first"
+				@clear="onRemoveSimpleTag(firstNonEmptyField.key)"
+			/>
+			<NotificationFilterValueChip
+				v-if="hasSingleRemainingEntry"
+				:text="getTitle(secondNonEmptyField.key, secondNonEmptyField.value)"
+				:title="secondTagTitle"
+				data-test-id="im_notifications-filter__chip-second"
+				@clear="onRemoveSimpleTag(secondNonEmptyField.key)"
+			/>
+			<NotificationFilterValueChip
+				v-if="hasMultipleRemainingEntries"
+				:text="getTitle(ANOTHER_TYPE)"
+				:title="remainingTagTitle"
+				data-test-id="im_notifications-filter__chip-third"
+				@clear="onRemoveRemainingTags()"
+			/>
+			<span class="bx-im-notification-filter-plus">+</span>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const NotificationFilterSearchInput = {
+	  name: 'NotificationFilterSearchInput',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    NotificationFilterValuesContainer
+	  },
+	  props: {
+	    displayData: {
+	      type: Object,
+	      required: true
+	    },
+	    modelValue: {
+	      type: String,
+	      default: ''
+	    }
+	  },
+	  emits: ['update:modelValue', 'focus', 'remove', 'clear'],
+	  data() {
+	    return {
+	      isFocused: false
+	    };
+	  },
+	  computed: {
+	    Color: () => im_v2_const.Color,
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    isSearchEmpty() {
+	      return this.modelValue === '';
+	    },
+	    withTags() {
+	      return this.nonEmptyEntries.length > 0;
+	    },
+	    nonEmptyEntries() {
+	      const result = [];
+	      for (const [key, value] of Object.entries(this.displayData)) {
+	        if (main_core.Type.isArrayFilled(value)) {
+	          result.push({
+	            key,
+	            value
+	          });
+	          continue;
+	        }
+	        if (main_core.Type.isStringFilled(value)) {
+	          result.push({
+	            key,
+	            value
+	          });
+	        }
+	        if (key === NotificationFilterFieldTypes.searchDate) {
+	          var _value$date, _value$dateFrom, _value$dateTo;
+	          if (((_value$date = value.date) == null ? void 0 : _value$date.length) > 0) {
+	            result.push({
+	              key,
+	              value: value.date
+	            });
+	            continue;
+	          }
+	          if (((_value$dateFrom = value.dateFrom) == null ? void 0 : _value$dateFrom.length) > 0 && ((_value$dateTo = value.dateTo) == null ? void 0 : _value$dateTo.length) > 0) {
+	            result.push({
+	              key,
+	              value: `${value.dateFrom} - ${value.dateTo}`
+	            });
+	          }
+	        }
+	      }
+	      return result;
+	    },
+	    placeholderText() {
+	      if (this.nonEmptyEntries.length > 0) {
+	        return this.loc('IM_NOTIFICATIONS_FILTER_SEARCH_INPUT_PLACEHOLDER_WITH_TAGS');
+	      }
+	      return this.loc('IM_NOTIFICATIONS_FILTER_SEARCH_INPUT_PLACEHOLDER');
+	    }
+	  },
+	  watch: {
+	    searchValue() {
+	      this.$emit('updateSearch', this.searchValue);
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    onFocus(event) {
+	      this.isFocused = true;
+	      this.$emit('focus', event);
+	    },
+	    onRemove(keys) {
+	      this.$emit('remove', keys);
+	    },
+	    onInput(event) {
+	      this.$emit('update:modelValue', event.target.value);
+	    }
+	  },
+	  template: `
+		<div
+			class="bx-im-content-notification-filter-search"
+			:class="{ '--focused': isFocused }"
+			ref="container"
+			data-test-id="im_content-notification-filter__search-container"
+		>
+			<NotificationFilterValuesContainer
+				:nonEmptyEntries="nonEmptyEntries"
+				@remove="onRemove"
+			/>
+			<input
+				class="bx-im-content-notification-filter-search__input"
+				type="text"
+				:value="modelValue"
+				:class="{ '--with-tags': this.withTags }"
+				:placeholder="placeholderText"
+				data-test-id="im_notifications-filter__search-input"
+				@focus="onFocus"
+				@input="onInput"
+				@blur="this.isFocused = false"
+			/>
+			<div class="bx-im-content-notification-filter-search__icons-block">
+				<BIcon
+					:name="OutlineIcons.SEARCH"
+					:size="20"
+					:color="Color.base5"
+					:hoverable="true"
+					class="bx-im-content-notification-filter-search__icon-search"
+					:class="{ '--without-delete-icon': isSearchEmpty }"
+				/>
+				<BIcon
+					:name="OutlineIcons.CROSS_L"
+					:size="20"
+					:color="Color.base5"
+					:hoverable="true"
+					class="bx-im-content-notification-filter-search__icon-delete"
+					:class="{ '--hidden': isSearchEmpty }"
+					data-test-id="im_notifications-filter__search-reset"
+					@click.stop="$emit('clear')"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const NotificationFilterActionButtons = {
+	  name: 'NotificationFilterPopupActionButtons',
+	  components: {
+	    UiButton: ui_vue3_components_button.Button
+	  },
+	  emits: ['search', 'reset'],
+	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_core.Outline,
+	    ButtonSize: () => ui_vue3_components_button.ButtonSize,
+	    AirButtonStyle: () => ui_vue3_components_button.AirButtonStyle
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-content-notification-filter-popup__actions-container">
+			<UiButton
+				:text="loc('IM_NOTIFICATIONS_FILTER_SEARCH_BUTTON')"
+				class="--air"
+				:style="AirButtonStyle.FILLED"
+				:size="ButtonSize.LARGE"
+				:leftIcon="OutlineIcons.SEARCH"
+				:dataset="{ testId: 'im_content-notification-filter__popup-search-button' }"
+				@click="$emit('search')"
+			/>
+			<UiButton
+				:text="loc('IM_NOTIFICATIONS_FILTER_RESET_BUTTON')"
+				class="--air"
+				:style="AirButtonStyle.PLAIN"
+				:size="ButtonSize.LARGE"
+				:dataset="{ testId: 'im_content-notification-filter__popup-reset-button' }"
+				@click="$emit('reset')"
+			/>
+		</div>
+	`
+	};
+
+	const AUTHOR_SELECTOR_KEY = 'notification_filter_author_selector';
+	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
+	class NotificationFilterCacheService {
+	  constructor() {
+	    this.cache = new main_core.Cache.MemoryCache();
+	  }
+	  static getInstance() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(NotificationFilterCacheService, _instance)[_instance]) {
+	      babelHelpers.classPrivateFieldLooseBase(NotificationFilterCacheService, _instance)[_instance] = new NotificationFilterCacheService();
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(NotificationFilterCacheService, _instance)[_instance];
+	  }
+	  setAuthorSelector(selector) {
+	    this.cache.set(AUTHOR_SELECTOR_KEY, selector);
+	  }
+	  getAuthorSelector() {
+	    return this.cache.get(AUTHOR_SELECTOR_KEY, null);
+	  }
+	  clearCache() {
+	    this.cache.delete(AUTHOR_SELECTOR_KEY);
+	  }
+	}
+	Object.defineProperty(NotificationFilterCacheService, _instance, {
+	  writable: true,
+	  value: null
+	});
+
+	// @vue/component
+	const NotificationFilterAuthorField = {
+	  name: 'AuthorFilterField',
+	  props: {
+	    modelValue: {
+	      type: Array,
+	      default: () => []
+	    }
+	  },
+	  emits: ['update:modelValue', 'popupStateChange'],
+	  computed: {
+	    labelText() {
+	      return this.loc('IM_NOTIFICATIONS_FILTER_AUTHOR_FIELD_TITLE');
+	    }
+	  },
+	  created() {
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.notification.onFilterAuthorTagAdd, this.onAuthorTagAdd);
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.notification.onFilterAuthorTagRemove, this.onAuthorTagRemove);
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.notification.onFilterAuthorPopupStateChange, this.onAuthorPopupState);
+	    this.notificationFilterCacheService = NotificationFilterCacheService.getInstance();
+	  },
+	  mounted() {
+	    this.selector = this.getSelector();
+	    this.selector.renderTo(this.$refs['author-selector']);
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.notification.onFilterAuthorTagAdd, this.onAuthorTagAdd);
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.notification.onFilterAuthorTagRemove, this.onAuthorTagRemove);
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.notification.onFilterAuthorPopupStateChange, this.onAuthorPopupState);
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    getSelector() {
+	      let selector = this.notificationFilterCacheService.getAuthorSelector();
+	      if (!selector) {
+	        var _selector$getDialog;
+	        const preselectedItems = this.modelValue.map(author => ['user', author.id]);
+	        selector = new ui_entitySelector.TagSelector({
+	          events: {
+	            onTagAdd: event => {
+	              const {
+	                tag
+	              } = event.getData();
+	              main_core_events.EventEmitter.emit(im_v2_const.EventType.notification.onFilterAuthorTagAdd, {
+	                tag
+	              });
+	            },
+	            onTagRemove: event => {
+	              const {
+	                tag
+	              } = event.getData();
+	              main_core_events.EventEmitter.emit(im_v2_const.EventType.notification.onFilterAuthorTagRemove, {
+	                tag
+	              });
+	            }
+	          },
+	          multiple: true,
+	          dialogOptions: {
+	            items: [{
+	              id: 0,
+	              entityId: 'user',
+	              title: this.loc('IM_NOTIFICATIONS_FILTER_AUTHOR_FIELD_SYSTEM_USER'),
+	              tabs: 'recents',
+	              link: ''
+	            }],
+	            height: 250,
+	            width: 380,
+	            preselectedItems,
+	            entities: [{
+	              id: 'user',
+	              options: {
+	                intranetUsersOnly: true,
+	                inviteEmployeeLink: false
+	              }
+	            }],
+	            dropdownMode: true,
+	            hideOnDeselect: false,
+	            events: {
+	              onShow: () => {
+	                main_core_events.EventEmitter.emit(im_v2_const.EventType.notification.onFilterAuthorPopupStateChange, {
+	                  active: true
+	                });
+	              },
+	              onHide: () => {
+	                main_core_events.EventEmitter.emit(im_v2_const.EventType.notification.onFilterAuthorPopupStateChange, {
+	                  active: false
+	                });
+	              }
+	            }
+	          }
+	        });
+	        const container = (_selector$getDialog = selector.getDialog()) == null ? void 0 : _selector$getDialog.getContainer();
+	        if (container) {
+	          main_core.Dom.attr(container, 'data-test-id', 'im_notifications-filter__author-field-selector');
+	        }
+	        this.notificationFilterCacheService.setAuthorSelector(selector);
+	      }
+	      return selector;
+	    },
+	    onAuthorTagAdd(event) {
+	      const {
+	        tag
+	      } = event.getData();
+	      const isNewAuthor = !this.modelValue.some(author => author.id === tag.id);
+	      if (!isNewAuthor) {
+	        return;
+	      }
+	      const searchAuthors = [...this.modelValue, {
+	        id: tag.id,
+	        name: tag.title.text
+	      }];
+	      this.$emit('update:modelValue', searchAuthors);
+	    },
+	    onAuthorTagRemove(event) {
+	      const {
+	        tag
+	      } = event.getData();
+	      const searchAuthors = this.modelValue.filter(author => author.id !== tag.id);
+	      this.$emit('update:modelValue', searchAuthors);
+	    },
+	    onAuthorPopupState(event) {
+	      const {
+	        active
+	      } = event.getData();
+	      this.$emit('popupStateChange', {
+	        popup: 'author',
+	        active
+	      });
+	    }
+	  },
+	  template: `
+		<div class="bx-im-notifications-filter_field__container">
+			<div class="bx-im-notifications-filter_field__label">{{ labelText }}</div>
+			<div
+				ref="author-selector"
+				class="bx-im-notifications-filter_field__selector-container"
+				data-test-id="im_notifications-filter__author-field-container"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const NotificationFilterTypeField = {
+	  name: 'TypeFilterField',
+	  props: {
+	    modelValue: {
+	      type: Array,
+	      default: () => []
+	    },
+	    schema: {
+	      type: Object,
+	      required: false,
+	      default: null
+	    }
+	  },
+	  emits: ['update:modelValue', 'popupStateChange'],
+	  computed: {
+	    labelText() {
+	      return this.loc('IM_NOTIFICATIONS_FILTER_TYPE_FIELD_TITLE');
+	    }
+	  },
+	  mounted() {
+	    this.selector = this.getSelector();
+	    this.selector.renderTo(this.$refs['type-selector']);
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    getSelector() {
+	      var _selector$getDialog;
+	      const entityId = 'im-notification-filter-type';
+	      const targetNode = this.getTargetNode();
+	      const items = this.filterTypes().map(group => ({
+	        id: String(group.MODULE_ID),
+	        entityId,
+	        tabs: 'recents',
+	        title: group.NAME,
+	        selected: this.modelValue.some(item => item.id === String(group.MODULE_ID))
+	      }));
+	      const selector = new ui_entitySelector.TagSelector({
+	        events: {
+	          onTagAdd: event => {
+	            const {
+	              tag
+	            } = event.getData();
+	            if (!this.modelValue.some(type => type.id === tag.id)) {
+	              var _tag$title$text, _tag$title;
+	              const searchTypes = [...this.modelValue, {
+	                id: tag.id,
+	                name: (_tag$title$text = (_tag$title = tag.title) == null ? void 0 : _tag$title.text) != null ? _tag$title$text : String(tag.id)
+	              }];
+	              this.$emit('update:modelValue', searchTypes);
+	            }
+	          },
+	          onTagRemove: event => {
+	            const {
+	              tag
+	            } = event.getData();
+	            const searchTypes = this.modelValue.filter(type => type.id !== tag.id);
+	            this.$emit('update:modelValue', searchTypes);
+	          }
+	        },
+	        multiple: true,
+	        dialogOptions: {
+	          height: 250,
+	          width: 300,
+	          multiple: true,
+	          dropdownMode: true,
+	          compactView: true,
+	          showAvatars: false,
+	          hideOnDeselect: false,
+	          enableSearch: false,
+	          targetNode,
+	          items,
+	          events: {
+	            'Item:onSelect': event => {
+	              const {
+	                item
+	              } = event.getData();
+	              if (!this.modelValue.some(type => type.id === item.id)) {
+	                var _item$title$text, _item$title;
+	                const searchTypes = [...this.modelValue, {
+	                  id: item.id,
+	                  name: (_item$title$text = (_item$title = item.title) == null ? void 0 : _item$title.text) != null ? _item$title$text : String(item.id)
+	                }];
+	                this.$emit('update:modelValue', searchTypes);
+	              }
+	            },
+	            onShow: () => {
+	              this.$emit('popupStateChange', {
+	                popup: 'type',
+	                active: true
+	              });
+	            },
+	            onHide: () => {
+	              this.$emit('popupStateChange', {
+	                popup: 'type',
+	                active: false
+	              });
+	            }
+	          }
+	        }
+	      });
+	      const container = (_selector$getDialog = selector.getDialog()) == null ? void 0 : _selector$getDialog.getContainer();
+	      if (container) {
+	        main_core.Dom.attr(container, 'data-test-id', 'im_notifications-filter__types-field-selector');
+	      }
+	      return selector;
+	    },
+	    getTargetNode() {
+	      var _this$$refs$typeSele, _this$$refs$typeSele2, _this$$refs$typeSele3;
+	      return (_this$$refs$typeSele = (_this$$refs$typeSele2 = this.$refs['type-selector']) == null ? void 0 : (_this$$refs$typeSele3 = _this$$refs$typeSele2.$refs) == null ? void 0 : _this$$refs$typeSele3.inputContainer) != null ? _this$$refs$typeSele : this.$el;
+	    },
+	    filterTypes() {
+	      const originalSchema = {
+	        ...this.schema
+	      };
+
+	      // rename some groups
+	      if (originalSchema.calendar) {
+	        originalSchema.calendar.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_CALENDAR');
+	      }
+	      if (originalSchema.sender) {
+	        originalSchema.sender.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_SENDER');
+	      }
+	      if (originalSchema.blog) {
+	        originalSchema.blog.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_BLOG');
+	      }
+	      if (originalSchema.socialnetwork) {
+	        originalSchema.socialnetwork.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_SOCIALNETWORK');
+	      }
+	      if (originalSchema.intranet) {
+	        originalSchema.intranet.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_INTRANET');
+	      }
+
+	      // we need only these modules in this order!
+	      const modulesToShowInFilter = ['tasks', 'calendar', 'crm', 'timeman', 'mail', 'disk', 'bizproc', 'voximplant', 'sender', 'blog', 'vote', 'socialnetwork', 'imopenlines', 'photogallery', 'intranet', 'forum'];
+	      const notificationFilterTypes = [];
+	      modulesToShowInFilter.forEach(moduleId => {
+	        if (originalSchema[moduleId]) {
+	          notificationFilterTypes.push(originalSchema[moduleId]);
+	        }
+	      });
+	      return notificationFilterTypes;
+	    }
+	  },
+	  template: `
+		<div class="bx-im-notifications-filter_field__container">
+			<div class="bx-im-notifications-filter_field__label">{{ labelText }}</div>
+			<div
+				ref="type-selector"
+				class="bx-im-notifications-filter_field__selector-container"
+				data-test-id="im_notifications-filter__type-field-container"
+			/>
+		</div>
+	`
+	};
+
+	const DateFieldOption = {
+	  NONE: 'none',
+	  SINGLE: 'single',
+	  RANGE: 'range'
+	};
+	const NotificationFilterDateField = {
+	  name: 'DateFilterField',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    BInput: ui_system_input_vue.BInput
+	  },
+	  props: {
+	    modelValue: {
+	      type: Object,
+	      default: () => ({})
+	    }
+	  },
+	  emits: ['update:modelValue', 'popupStateChange'],
+	  data() {
+	    return {
+	      searchType: this.getCurrentSearchType()
+	    };
+	  },
+	  beforeUnmount() {
+	    var _this$menu;
+	    (_this$menu = this.menu) == null ? void 0 : _this$menu.destroy();
+	  },
+	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    InputSize: () => ui_system_input_vue.InputSize,
+	    isFirstDateNotEmpty() {
+	      var _this$modelValue$date, _this$modelValue$date2;
+	      return ((_this$modelValue$date = this.modelValue.date) == null ? void 0 : _this$modelValue$date.length) > 0 || ((_this$modelValue$date2 = this.modelValue.dateFrom) == null ? void 0 : _this$modelValue$date2.length) > 0;
+	    },
+	    isSecondDateNotEmpty() {
+	      var _this$modelValue$date3;
+	      return ((_this$modelValue$date3 = this.modelValue.dateTo) == null ? void 0 : _this$modelValue$date3.length) > 0;
+	    },
+	    labelText() {
+	      return this.loc('IM_NOTIFICATIONS_FILTER_DATE_FIELD_TITLE');
+	    },
+	    dateOptionText() {
+	      const currentOption = this.getDateOptions().find(option => option.id === this.searchType);
+	      return currentOption ? currentOption.text : '';
+	    },
+	    showFirstDateInput() {
+	      return this.searchType === DateFieldOption.SINGLE || this.searchType === DateFieldOption.RANGE;
+	    },
+	    showSecondDateInput() {
+	      return this.searchType === DateFieldOption.RANGE;
+	    },
+	    firstDateValue() {
+	      if (this.searchType === DateFieldOption.SINGLE) {
+	        return this.modelValue.date || '';
+	      }
+	      if (this.searchType === DateFieldOption.RANGE) {
+	        return this.modelValue.dateFrom || '';
+	      }
+	      return '';
+	    },
+	    secondDateValue() {
+	      if (this.searchType === DateFieldOption.RANGE) {
+	        return this.modelValue.dateTo || '';
+	      }
+	      return '';
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    getCurrentSearchType() {
+	      if (this.modelValue.date) {
+	        return DateFieldOption.SINGLE;
+	      }
+	      if (this.modelValue.dateFrom && this.modelValue.dateTo) {
+	        return DateFieldOption.RANGE;
+	      }
+	      return DateFieldOption.NONE;
+	    },
+	    getDateOptions() {
+	      return [{
+	        id: DateFieldOption.NONE,
+	        text: this.loc('IM_NOTIFICATIONS_FILTER_DATE_OPTION_NONE')
+	      }, {
+	        id: DateFieldOption.SINGLE,
+	        text: this.loc('IM_NOTIFICATIONS_FILTER_DATE_OPTION_SINGLE')
+	      }, {
+	        id: DateFieldOption.RANGE,
+	        text: this.loc('IM_NOTIFICATIONS_FILTER_DATE_OPTION_RANGE')
+	      }];
+	    },
+	    getOptionsMenuItems() {
+	      return this.getDateOptions().map(option => ({
+	        title: option.text,
+	        isSelected: option.id === this.searchType,
+	        onClick: () => {
+	          this.searchType = option.id;
+	          this.$emit('update:modelValue', {});
+	          this.menu.updateItems(this.getOptionsMenuItems());
+	        }
+	      }));
+	    },
+	    onDateOptionClick() {
+	      this.$emit('popupStateChange', {
+	        popup: 'dateOptions',
+	        active: true
+	      });
+	      if (!this.menu) {
+	        var _PopupManager$getPopu;
+	        (_PopupManager$getPopu = main_popup.PopupManager.getPopupById('im-notification-filter-date-option')) == null ? void 0 : _PopupManager$getPopu.destroy();
+	        this.menu = new ui_system_menu.Menu({
+	          id: 'im-notification-filter-date-option',
+	          maxHeight: 400,
+	          animation: 'fading-slide',
+	          items: this.getOptionsMenuItems(),
+	          events: {
+	            onPopupAfterClose: () => {
+	              this.$emit('popupStateChange', {
+	                popup: 'dateOptions',
+	                active: false
+	              });
+	            }
+	          }
+	        });
+	      }
+	      this.menu.show(this.$refs.dateOption.$el);
+	      const popupContainer = this.menu.getPopupContainer();
+	      if (popupContainer) {
+	        main_core.Dom.attr(popupContainer, 'data-test-id', 'im_notifications-filter__type-field-menu');
+	      }
+	    },
+	    onDateFilterClick(event, toDate = false) {
+	      this.$emit('popupStateChange', {
+	        popup: 'datePicker',
+	        active: true
+	      });
+	      if (this.ignoreNextClick) {
+	        this.ignoreNextClick = false;
+	        return;
+	      }
+	      this.datePickerInstance = new ui_datePicker.DatePicker({
+	        targetNode: event.target,
+	        animation: 'fading-slide',
+	        events: {
+	          [ui_datePicker.DatePickerEvent.SELECT]: pickerEvent => this.handleDatePickerSelect(pickerEvent, toDate),
+	          onHide: () => {
+	            this.datePickerInstance.destroy();
+	          }
+	        },
+	        popupOptions: {
+	          animation: 'fading-slide',
+	          events: {
+	            onPopupAfterClose: () => {
+	              this.$emit('popupStateChange', {
+	                popup: 'datePicker',
+	                active: false
+	              });
+	            }
+	          }
+	        }
+	      });
+	      const value = toDate ? this.secondDateValue : this.firstDateValue;
+	      if (value) {
+	        const dateFormat = this.datePickerInstance.getDateFormat();
+	        this.datePickerInstance.selectDates([ui_datePicker.createDate(value, dateFormat)]);
+	      }
+	      this.datePickerInstance.show();
+	    },
+	    onSecondDateFilterClick(event) {
+	      this.onDateFilterClick(event, true);
+	    },
+	    handleDatePickerSelect(datePickerEvent, toDate = false) {
+	      const {
+	        date
+	      } = datePickerEvent.getData();
+	      const value = this.datePickerInstance.formatDate(date);
+	      if (toDate) {
+	        this.$emit('update:modelValue', {
+	          date: this.modelValue.date || '',
+	          dateFrom: this.modelValue.dateFrom || '',
+	          dateTo: value
+	        });
+	        return;
+	      }
+	      if (this.searchType === DateFieldOption.SINGLE) {
+	        this.$emit('update:modelValue', {
+	          date: value,
+	          dateFrom: '',
+	          dateTo: ''
+	        });
+	        return;
+	      }
+	      this.$emit('update:modelValue', {
+	        date: this.modelValue.date || '',
+	        dateFrom: value,
+	        dateTo: this.modelValue.dateTo || ''
+	      });
+	    },
+	    onFirstDateClear() {
+	      this.$emit('update:modelValue', {
+	        date: '',
+	        dateFrom: '',
+	        dateTo: this.modelValue.dateTo || ''
+	      });
+	    },
+	    onSecondDateClear() {
+	      this.$emit('update:modelValue', {
+	        date: this.modelValue.date || '',
+	        dateFrom: this.modelValue.dateFrom || '',
+	        dateTo: ''
+	      });
+	    }
+	  },
+	  template: `
+		<div class="bx-im-notifications-filter_field__container">
+			<div class="bx-im-notifications-filter_field__label">{{ labelText }}</div>
+			<div class="bx-im-notifications-filter_field__selector-container bx-im-content-notification-date-field-container">
+				<BInput
+					v-model="dateOptionText"
+					class="bx-im-content-notification-date-field"
+					:class="[{ '--with-margin': showFirstDateInput }, { '--range-option': showSecondDateInput }]"
+					ref="dateOption"
+					:clickable="true"
+					:dropdown="true"
+					:size="InputSize.Lg"
+					data-test-id="im_notifications-filter__date-options-container"
+					@click="onDateOptionClick"
+				/>
+				<BInput
+					v-if="showFirstDateInput"
+					v-model="firstDateValue"
+					class="bx-im-content-notification-date-field"
+					:class="{'--with-margin': showSecondDateInput}"
+					:icon="OutlineIcons.CALENDAR_WITH_SLOTS"
+					:clickable="true"
+					:withClear="isFirstDateNotEmpty"
+					:size="InputSize.Lg"
+					data-test-id="im_notifications-filter__date-from-date-container"
+					@clear="onFirstDateClear"
+					@click="onDateFilterClick"
+				/>
+				<div
+					v-if="showSecondDateInput"
+					class="bx-im-content-notification-date-field-line"
+				>
+					<span class="bx-im-content-notification-date-field-line-item"/>
+				</div>
+				<BInput
+					v-if="showSecondDateInput"
+					v-model="secondDateValue"
+					class="bx-im-content-notification-date-field"
+					:icon="OutlineIcons.CALENDAR_WITH_SLOTS"
+					:clickable="true"
+					:withClear="isSecondDateNotEmpty"
+					:size="InputSize.Lg"
+					data-test-id="im_notifications-filter__date-to-date-container"
+					@clear="onSecondDateClear"
+					@click="onSecondDateFilterClick"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	const POPUP_ID = 'im-content-notification-filter-popup';
+
+	// @vue/component
+	const NotificationFilterPopup = {
+	  name: 'NotificationFilterPopup',
+	  components: {
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+	    NotificationFilterActionButtons,
+	    NotificationFilterAuthorField,
+	    NotificationFilterTypeField,
+	    NotificationFilterDateField
+	  },
+	  props: {
+	    bindElement: {
+	      type: Object,
+	      required: true
+	    },
+	    schema: {
+	      type: Object,
+	      required: false,
+	      default: null
+	    },
+	    filterData: {
+	      type: Object,
+	      default: () => ({
+	        searchTypes: [],
+	        searchDate: {},
+	        searchAuthors: []
+	      })
+	    }
+	  },
+	  emits: ['close', 'search', 'reset', 'mounted', 'popupStateChange'],
+	  data() {
+	    return {
+	      searchTypes: this.filterData.searchTypes,
+	      searchDate: this.filterData.searchDate,
+	      searchAuthors: this.filterData.searchAuthors
+	    };
+	  },
+	  computed: {
+	    popupId: () => POPUP_ID,
+	    config() {
+	      return {
+	        width: 560,
+	        height: 350,
+	        bindElement: this.bindElement,
+	        offsetTop: 10,
+	        autoHide: false,
+	        padding: 0,
+	        contentPadding: 0,
+	        bindOptions: {
+	          position: 'bottom'
+	        },
+	        className: 'bx-im-content-notification-filter-popup',
+	        animation: 'fading-slide'
+	      };
+	    }
+	  },
+	  mounted() {
+	    this.$emit('mounted', this.$refs.wrapper);
+	  },
+	  methods: {
+	    buildData() {
+	      return {
+	        searchTypes: this.searchTypes,
+	        searchDate: this.searchDate,
+	        searchAuthors: this.searchAuthors
+	      };
+	    },
+	    onSearchClick() {
+	      this.$emit('search', this.buildData());
+	    },
+	    getContentElement() {
+	      return this.$refs.wrapper;
+	    }
+	  },
+	  template: `
+		<MessengerPopup
+			:config="config"
+			:id="popupId"
+		>
+			<div
+				class="bx-im-content-notification-filter-popup__wrapper"
+				ref="wrapper"
+			>
+				<div class="bx-im-content-notification-filter-popup__fields-list bx-im-messenger__scope">
+					<NotificationFilterAuthorField
+						v-model="searchAuthors"
+						@popupStateChange="$emit('popupStateChange', $event)"
+					/>
+					<NotificationFilterTypeField
+						v-model="searchTypes"
+						:schema="schema"
+						@popupStateChange="$emit('popupStateChange', $event)"
+					/>
+					<NotificationFilterDateField
+						v-model="searchDate"
+						@popupStateChange="$emit('popupStateChange', $event)"
+					/>
+				</div>
+				<NotificationFilterActionButtons
+					@search="onSearchClick"
+					@reset="this.$emit('reset')"
+				/>
+			</div>
+		</MessengerPopup>
+	`
+	};
+
+	const NotificationFilterFieldTypes = Object.freeze({
+	  searchAuthors: 'searchAuthors',
+	  searchTypes: 'searchTypes',
+	  searchDate: 'searchDate'
+	});
+
+	// @vue/component
+	const NotificationFilter = {
+	  name: 'NotificationFilter',
+	  components: {
+	    NotificationFilterSearchInput,
+	    NotificationFilterPopup
+	  },
+	  props: {
+	    schema: {
+	      type: Object,
+	      required: false,
+	      default: null
+	    }
+	  },
+	  emits: ['search'],
+	  data() {
+	    return {
+	      isInputFocused: false,
+	      activePopups: {
+	        author: false,
+	        type: false,
+	        dateOptions: false,
+	        datePicker: false
+	      },
+	      filterData: {
+	        searchQuery: '',
+	        searchAuthors: [],
+	        searchTypes: [],
+	        searchDate: {}
+	      },
+	      popupElement: null
+	    };
+	  },
+	  computed: {
+	    displayData() {
+	      var _this$filterData$sear, _this$filterData$sear2;
+	      const searchTypeTitles = [];
+	      (_this$filterData$sear = this.filterData.searchTypes) == null ? void 0 : _this$filterData$sear.forEach(type => {
+	        searchTypeTitles.push(type.name);
+	      });
+	      const searchAuthorNames = [];
+	      (_this$filterData$sear2 = this.filterData.searchAuthors) == null ? void 0 : _this$filterData$sear2.forEach(type => {
+	        searchAuthorNames.push(type.name);
+	      });
+	      return {
+	        searchTypes: searchTypeTitles,
+	        searchDate: this.filterData.searchDate,
+	        searchAuthors: searchAuthorNames
+	      };
+	    }
+	  },
+	  watch: {
+	    'filterData.searchQuery': function (value) {
+	      this.onSearchUpdate(value);
+	    }
+	  },
+	  created() {
+	    this.notificationFilterCacheService = NotificationFilterCacheService.getInstance();
+	  },
+	  mounted() {
+	    main_core.Event.bind(document, 'click', this.handleClickOutside);
+	  },
+	  beforeUnmount() {
+	    main_core.Event.unbind(document, 'click', this.handleClickOutside);
+	    this.notificationFilterCacheService.clearCache();
+	  },
+	  methods: {
+	    onInputFocus() {
+	      this.isInputFocused = !this.isInputFocused;
+	      this.clearActivePopups();
+	    },
+	    onPopupClose() {
+	      this.isInputFocused = false;
+	      this.clearActivePopups();
+	    },
+	    clearActivePopups() {
+	      this.activePopups = {
+	        author: false,
+	        type: false,
+	        dateOptions: false,
+	        datePicker: false
+	      };
+	    },
+	    applyData(data = {}, reset = false) {
+	      var _data$searchTypes, _data$searchDate, _data$searchAuthors, _data$searchDate2, _this$filterData$sear3;
+	      this.filterData = {
+	        searchQuery: reset ? '' : this.filterData.searchQuery,
+	        searchTypes: (_data$searchTypes = data.searchTypes) != null ? _data$searchTypes : [],
+	        searchDate: (_data$searchDate = data.searchDate) != null ? _data$searchDate : {},
+	        searchAuthors: (_data$searchAuthors = data.searchAuthors) != null ? _data$searchAuthors : []
+	      };
+	      const searchTypeIds = [];
+	      if (main_core.Type.isArray(data.searchTypes)) {
+	        data.searchTypes.forEach(type => {
+	          searchTypeIds.push(type.id);
+	        });
+	      }
+	      const searchAuthorIds = [];
+	      if (main_core.Type.isArray(data.searchAuthors)) {
+	        data.searchAuthors.forEach(author => {
+	          searchAuthorIds.push(author.id);
+	        });
+	      }
+	      let {
+	        dateFrom,
+	        dateTo
+	      } = (_data$searchDate2 = data.searchDate) != null ? _data$searchDate2 : {};
+	      if (dateFrom && dateTo) {
+	        const dateFromTimestamp = new Date(dateFrom).getTime();
+	        const dateToTimestamp = new Date(dateTo).getTime();
+	        if (dateToTimestamp < dateFromTimestamp) {
+	          [dateFrom, dateTo] = [dateTo, dateFrom];
+	        }
+	      } else {
+	        dateFrom = '';
+	        dateTo = '';
+	      }
+	      const valueData = {
+	        searchQuery: this.filterData.searchQuery,
+	        searchTypes: searchTypeIds,
+	        searchDate: (_this$filterData$sear3 = this.filterData.searchDate.date) != null ? _this$filterData$sear3 : '',
+	        searchDateFrom: dateFrom,
+	        searchDateTo: dateTo,
+	        searchAuthors: searchAuthorIds
+	      };
+	      this.$emit('search', valueData);
+	    },
+	    onPopupUpdate(data) {
+	      this.applyData(data);
+	      this.isInputFocused = false;
+	    },
+	    onFilterReset() {
+	      this.applyData({}, true);
+	      this.notificationFilterCacheService.clearCache();
+	      this.isInputFocused = false;
+	    },
+	    onSearchUpdate() {
+	      this.isInputFocused = false;
+	      this.applyData(this.filterData);
+	    },
+	    onTagsRemove(keys) {
+	      keys.forEach(key => {
+	        switch (key) {
+	          case NotificationFilterFieldTypes.searchTypes:
+	            {
+	              this.filterData.searchTypes = [];
+	              break;
+	            }
+	          case NotificationFilterFieldTypes.searchDate:
+	            {
+	              this.filterData.searchDate = {};
+	              break;
+	            }
+	          case NotificationFilterFieldTypes.searchAuthors:
+	            {
+	              this.filterData.searchAuthors = [];
+	              this.notificationFilterCacheService.clearCache();
+	              break;
+	            }
+	          default:
+	            {
+	              break;
+	            }
+	        }
+	      });
+	      this.isInputFocused = false;
+	      this.applyData(this.filterData);
+	    },
+	    onPopupStateChange({
+	      popup,
+	      active
+	    }) {
+	      this.activePopups[popup] = active;
+	    },
+	    handleClickOutside(event) {
+	      var _this$popupElement;
+	      if (!this.isInputFocused) {
+	        return;
+	      }
+	      const isAnyDialogActive = Object.values(this.activePopups).some(active => active);
+	      if (isAnyDialogActive) {
+	        return;
+	      }
+	      const inputElement = this.getInputElement();
+	      const clickedInsideInput = inputElement == null ? void 0 : inputElement.contains(event.target);
+	      const clickedInsidePopup = (_this$popupElement = this.popupElement) == null ? void 0 : _this$popupElement.contains(event.target);
+	      if (!clickedInsideInput && !clickedInsidePopup) {
+	        this.isInputFocused = false;
+	      }
+	    },
+	    getInputElement() {
+	      return this.$refs.searchInput;
+	    },
+	    onPopupMounted(element) {
+	      this.popupElement = element;
+	    }
+	  },
+	  template: `
+		<div ref="searchInput">
+			<NotificationFilterSearchInput
+				:displayData="displayData"
+				v-model="filterData.searchQuery"
+				@clear="onFilterReset"
+				@remove="onTagsRemove"
+				@click="onInputFocus"
+			/>
+		</div>
+		<NotificationFilterPopup
+			v-if="isInputFocused"
+			:schema="schema"
+			:bindElement="getInputElement()"
+			:filterData="filterData"
+			@search="onPopupUpdate"
+			@reset="onFilterReset"
+			@close="onPopupClose"
+			@mounted="onPopupMounted"
+			@popupStateChange="onPopupStateChange"
+			ref="filterPopup"
+		/>
+	`
+	};
+
 	const LIMIT_PER_PAGE = 50;
 	class NotificationSearchService {
 	  constructor() {
 	    this.searchQuery = '';
-	    this.searchType = '';
+	    this.searchTypes = [];
 	    this.searchDate = null;
+	    this.searchDateFrom = null;
+	    this.searchDateTo = null;
+	    this.searchAuthors = [];
 	    this.store = null;
 	    this.restClient = null;
 	    this.userManager = null;
@@ -2249,13 +3420,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  }
 	  loadFirstPage({
 	    searchQuery,
-	    searchType,
-	    searchDate
+	    searchAuthors,
+	    searchTypes,
+	    searchDate,
+	    searchDateFrom,
+	    searchDateTo
 	  }) {
 	    this.isLoading = true;
 	    this.searchQuery = searchQuery;
-	    this.searchType = searchType;
+	    this.searchAuthors = searchAuthors;
+	    this.searchTypes = searchTypes;
 	    this.searchDate = searchDate;
+	    this.searchDateFrom = searchDateFrom;
+	    this.searchDateTo = searchDateTo;
 	    return this.requestItems({
 	      firstPage: true
 	    });
@@ -2269,33 +3446,61 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  }
 	  searchInModel({
 	    searchQuery,
-	    searchType,
-	    searchDate
+	    searchAuthors,
+	    searchTypes,
+	    searchDate,
+	    searchDateFrom,
+	    searchDateTo
 	  }) {
 	    this.searchQuery = searchQuery;
-	    this.searchType = searchType;
+	    this.searchAuthors = searchAuthors;
+	    this.searchTypes = searchTypes;
 	    this.searchDate = searchDate;
+	    this.searchDateFrom = searchDateFrom;
+	    this.searchDateTo = searchDateTo;
 	    return this.store.getters['notifications/getSortedCollection'].filter(item => {
+	      var _this$searchQuery, _this$searchTypes, _this$searchAuthors;
 	      let result = false;
-	      if (this.searchQuery.length >= 3) {
+	      if (((_this$searchQuery = this.searchQuery) == null ? void 0 : _this$searchQuery.length) >= 3) {
 	        result = item.text.toLowerCase().includes(this.searchQuery.toLowerCase());
 	        if (!result) {
 	          return result;
 	        }
 	      }
-	      if (this.searchType !== '') {
-	        result = item.settingName === this.searchType; // todo: ???
+	      if (((_this$searchTypes = this.searchTypes) == null ? void 0 : _this$searchTypes.length) > 0) {
+	        const settingPrefix = item.settingName.split('|')[0];
+	        result = this.searchTypes.includes(settingPrefix);
 	        if (!result) {
 	          return result;
 	        }
 	      }
-	      if (this.searchDate !== '') {
+	      if (this.searchDateFrom !== '' && this.searchDateTo !== '') {
+	        const fromDate = BX.parseDate(this.searchDateFrom);
+	        const toDate = BX.parseDate(this.searchDateTo);
+	        if (fromDate instanceof Date && toDate instanceof Date) {
+	          const itemDateForCompare = new Date(item.date.getTime()).setHours(0, 0, 0, 0);
+	          const fromDateForCompare = fromDate.setHours(0, 0, 0, 0);
+	          const toDateForCompare = toDate.setHours(0, 0, 0, 0);
+	          result = itemDateForCompare >= fromDateForCompare && itemDateForCompare <= toDateForCompare;
+	          if (!result) {
+	            return result;
+	          }
+	        }
+	      } else if (this.searchDate !== '') {
 	        const date = BX.parseDate(this.searchDate);
 	        if (date instanceof Date) {
-	          // compare dates excluding time.
 	          const itemDateForCompare = new Date(item.date.getTime()).setHours(0, 0, 0, 0);
 	          const dateFromInput = date.setHours(0, 0, 0, 0);
 	          result = itemDateForCompare === dateFromInput;
+	          if (!result) {
+	            return result;
+	          }
+	        }
+	      }
+	      if (((_this$searchAuthors = this.searchAuthors) == null ? void 0 : _this$searchAuthors.length) > 0) {
+	        result = this.searchAuthors.includes(item.authorId);
+	        if (!result) {
+	          return result;
 	        }
 	      }
 	      return result;
@@ -2324,11 +3529,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  getSearchRequestParams(firstPage) {
 	    const requestParams = {
 	      SEARCH_TEXT: this.searchQuery,
-	      SEARCH_TYPE: this.searchType,
+	      SEARCH_TYPES: this.searchTypes,
+	      SEARCH_AUTHORS: this.searchAuthors,
 	      LIMIT: LIMIT_PER_PAGE,
 	      CONVERT_TEXT: 'Y'
 	    };
-	    if (BX.parseDate(this.searchDate) instanceof Date) {
+	    if (BX.parseDate(this.searchDateFrom) instanceof Date && BX.parseDate(this.searchDateTo) instanceof Date) {
+	      requestParams.SEARCH_DATE_FROM = BX.parseDate(this.searchDateFrom).toISOString();
+	      requestParams.SEARCH_DATE_TO = BX.parseDate(this.searchDateTo).toISOString();
+	    } else if (BX.parseDate(this.searchDate) instanceof Date) {
 	      requestParams.SEARCH_DATE = BX.parseDate(this.searchDate).toISOString();
 	    }
 	    if (!firstPage) {
@@ -2351,9 +3560,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const NotificationContent = {
 	  name: 'NotificationContent',
 	  components: {
-	    SearchPanel,
 	    ItemPlaceholder,
 	    ScrollButton,
+	    NotificationFilter,
 	    UserListPopup: im_v2_component_elements_userListPopup.UserListPopup,
 	    Loader: im_v2_component_elements_loader.Loader
 	  },
@@ -2374,8 +3583,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      readQueue: new Set(),
 	      isNextPageLoading: false,
 	      notificationsOnScreen: new Set(),
+	      markedAsUnreadIds: new Set(),
 	      windowFocused: false,
-	      showSearchPanel: false,
 	      showSearchResult: false,
 	      popupBindElement: null,
 	      showUserListPopup: false,
@@ -2392,6 +3601,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.notifications.filter(notification => {
 	        return notification.sectionCode === im_v2_const.NotificationTypesCodes.confirm;
 	      });
+	    },
+	    hasNotifications() {
+	      return this.notificationCollection.length > 0;
 	    },
 	    hasConfirmNotifications() {
 	      return this.confirmNotifications.length > 0;
@@ -2438,14 +3650,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      unreadCounter: state => state.notifications.unreadCounter
 	    })
 	  },
-	  watch: {
-	    showSearchPanel(newValue, oldValue) {
-	      if (newValue === false && oldValue === true) {
-	        this.showSearchResult = false;
-	        this.$store.dispatch('notifications/clearSearchResult');
-	      }
-	    }
-	  },
 	  created() {
 	    this.notificationService = new im_v2_provider_service_notification.NotificationService();
 	    this.notificationSearchService = new NotificationSearchService();
@@ -2455,6 +3659,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    main_core.Event.bind(window, 'focus', this.onWindowFocus);
 	    main_core.Event.bind(window, 'blur', this.onWindowBlur);
 	    this.initObserver();
+	    main_core_events.EventEmitter.subscribe(NotificationMenu.events.markAsUnreadClick, this.onMarkAsUnreadClick);
 	  },
 	  async mounted() {
 	    this.isInitialLoading = true;
@@ -2466,7 +3671,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  beforeUnmount() {
 	    if (this.initialLoadComplete && this.enableAutoRead) {
-	      this.notificationReadService.readAll();
+	      this.notificationReadService.readAll([...this.markedAsUnreadIds]);
 	    }
 	    this.notificationService.destroy();
 	    this.notificationSearchService.destroy();
@@ -2476,6 +3681,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	    main_core.Event.unbind(window, 'focus', this.onWindowFocus);
 	    main_core.Event.unbind(window, 'blur', this.onWindowBlur);
+	    main_core_events.EventEmitter.unsubscribe(NotificationMenu.events.markAsUnreadClick, this.onMarkAsUnreadClick);
 	  },
 	  methods: {
 	    initObserver() {
@@ -2607,7 +3813,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.showUserListPopup = true;
 	    },
 	    onSearch(event) {
-	      if (event.searchQuery.length < 3 && event.searchType === '' && event.searchDate === '') {
+	      var _event$searchQuery, _event$searchTypes, _event$searchAuthors;
+	      if (((_event$searchQuery = event.searchQuery) == null ? void 0 : _event$searchQuery.length) < 3 && ((_event$searchTypes = event.searchTypes) == null ? void 0 : _event$searchTypes.length) === 0 && event.searchDate === '' && (event.searchDateFrom === '' || event.searchDateTo === '') && ((_event$searchAuthors = event.searchAuthors) == null ? void 0 : _event$searchAuthors.length) === 0) {
 	        this.showSearchResult = false;
 	        return;
 	      }
@@ -2644,14 +3851,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      setTimeout(done, ANIMATION_DURATION_MS);
 	    },
 	    onDoubleClick(notificationId) {
-	      if (this.enableAutoRead) {
-	        return;
-	      }
-	      const notification = this.$store.getters['notifications/getById'](notificationId);
+	      const notification = this.$store.getters['notifications/getById'](notificationId) || this.$store.getters['notifications/getSearchItemById'](notificationId);
 	      if (!notification) {
 	        return;
 	      }
 	      main_core.Event.EventEmitter.emit(NotificationMenu.events.markAsUnreadClick, notification);
+	    },
+	    onMarkAsUnreadClick(event) {
+	      const notification = event.getData();
+	      if (!notification) {
+	        return;
+	      }
+	      const notificationId = notification.id;
+	      if (notification.read) {
+	        this.markedAsUnreadIds.add(notificationId);
+	      } else {
+	        this.markedAsUnreadIds.delete(notificationId);
+	      }
 	    },
 	    getNotificationsBackgroundStyle() {
 	      return im_v2_lib_theme.ThemeManager.getBackgroundStyleById(im_v2_lib_theme.SpecialBackground.notifications);
@@ -2661,32 +3877,26 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-content-notification__container --ui-context-content-light">
 			<div class="bx-im-content-notification__header-container">
 				<div class="bx-im-content-notification__header">
-					<div class="bx-im-content-notification__header-panel-container">
-						<div class="bx-im-content-notification__panel-title_icon"></div>
-						<div class="bx-im-content-notification__panel_text">
-							{{ $Bitrix.Loc.getMessage('IM_NOTIFICATIONS_HEADER') }}
+					<div class="bx-im-content-notification__header-left-container">
+						<div class="bx-im-content-notification__header-panel-container">
+							<div class="bx-im-content-notification__panel-title_icon"></div>
+							<div class="bx-im-content-notification__panel_text">
+								{{ $Bitrix.Loc.getMessage('IM_NOTIFICATIONS_HEADER') }}
+							</div>
 						</div>
+						<NotificationFilter
+							v-if="hasNotifications"
+							:schema="schema"
+							@search="onSearch"
+						/>
 					</div>
-					<div v-if="notificationCollection.length > 0" class="bx-im-content-notification__header-buttons-container">
+					<div v-if="hasNotifications" class="bx-im-content-notification__header-buttons-container">
 						<div
-							class="bx-im-content-notification__header_button bx-im-content-notification__header_filter-button"
-							:class="[showSearchPanel ? '--active' : '']"
-							@click="showSearchPanel = !showSearchPanel"
-							:title="$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_OPEN_BUTTON')"
-						></div>
-						<div
-							v-if="!enableAutoRead"
 							class="bx-im-content-notification__header-menu"
 							@click="onClickHeaderMenu"
 						></div>
 					</div>
 				</div>
-				<SearchPanel 
-					v-if="showSearchPanel" 
-					:schema="schema" 
-					@search="onSearch" 
-					@close="showSearchPanel = false" 
-				/>
 			</div>
 			<div class="bx-im-content-notification__elements-container">
 				<div
@@ -2773,5 +3983,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.NotificationContent = NotificationContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.System,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Vue3.Components,BX.Messenger.v2.Component.Elements,BX.Ui,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Ui,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Vue3.Vuex,BX.UI.System.Chip.Vue,BX.Messenger.v2.Component.Elements,BX.Vue3.Components,BX.UI.IconSet,BX.UI.EntitySelector,BX.Event,BX.Main,BX.UI.System,BX.UI.DatePicker,BX.UI.System.Input.Vue,BX.UI.IconSet,BX.Messenger.v2.Css,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
 //# sourceMappingURL=notification-content.bundle.js.map

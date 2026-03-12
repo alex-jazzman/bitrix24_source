@@ -4,7 +4,7 @@
 jn.define('im/messenger-v2/application/messenger', (require, exports, module) => {
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
-	const { RestMethod } = require('im/messenger/const');
+	const { RestMethod, Promo } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerInitService } = require('im/messenger/provider/services/messenger-init');
 	const { ChatAssets } = require('im/messenger/controller/dialog/lib/assets');
@@ -16,10 +16,11 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 	const { ReadMessageService } = require('im/messenger/provider/services/read');
 	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
-	const { Promotion } = require('im/messenger/lib/promotion');
+	const { Promotion, PromotionTriggerManager } = require('im/messenger/lib/promotion');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { Anchors } = require('im/messenger/lib/anchors');
 	const { CopilotManager } = require('im/messenger/lib/copilot');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const { MessengerCore } = require('im/messenger-v2/core/messenger');
 	const { MessengerHeaderController } = require('im/messenger-v2/controller/messenger-header');
@@ -64,6 +65,7 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 			this.unsubscribeEvents();
 			this.pushManager?.destructor();
 			this.promotion?.destruct();
+			this.promotionTriggerManager?.unsubscribeAll();
 			this.connectionService?.destructor();
 			BX.listeners = {};
 
@@ -124,6 +126,7 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 				this.initManagers();
 				this.preloadAssets();
 				showUpdateAppScreenIfNeeded();
+				this.showPromo();
 			}
 			catch (error)
 			{
@@ -258,6 +261,7 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 			this.callManager.subscribeMessengerInitEvent();
 
 			this.promotion = Promotion.getInstance();
+			this.promotionTriggerManager = PromotionTriggerManager.getInstance();
 			this.communication = new Communication();
 			this.anchors = new Anchors();
 
@@ -318,6 +322,14 @@ jn.define('im/messenger-v2/application/messenger', (require, exports, module) =>
 		get dialog()
 		{
 			return serviceLocator.get('dialog-manager')?.getLastOpenDialog() ?? null;
+		}
+
+		showPromo()
+		{
+			if (Feature.isTasksRecentListAvailable)
+			{
+				this.promotionTriggerManager.setTabTasksTrigger();
+			}
 		}
 	}
 

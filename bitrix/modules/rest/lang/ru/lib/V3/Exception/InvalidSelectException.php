@@ -1,2 +1,2 @@
 <?
-$MESS['REST_V3_EXCEPTIONS_INVALIDSELECTEXCEPTION'] = 'Не удается распознать выражение select `#SELECT#`';
+$MESS['REST_V3_EXCEPTION_INVALIDSELECTEXCEPTION'] = 'Не удается распознать выражение select `#SELECT#`';

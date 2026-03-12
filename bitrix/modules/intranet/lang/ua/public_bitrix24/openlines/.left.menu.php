@@ -1,4 +1,0 @@
-<?
-$MESS["SERVICES_MENU_OPENLINES_LINES"] = "Управління";
-$MESS["SERVICES_MENU_OPENLINES_STATS"] = "Статистика";
-?>

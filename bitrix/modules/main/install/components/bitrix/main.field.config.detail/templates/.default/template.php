@@ -189,7 +189,7 @@ if(!$hasErrors) {
 						rows="3"
 						name="HELP_MESSAGE[<?= htmlspecialcharsbx($tooltip['language']['id']) ?>]"
 						data-role="main-user-field-editFormTooltip"
-					><?= htmlspecialcharsbx($arResult['field']['HELP_MESSAGE'][$tooltip['language']['id']])
+					><?= htmlspecialcharsbx($arResult['field']['HELP_MESSAGE'][$tooltip['language']['id']] ?? '')
 					?></textarea>
 				</div>
 			</div>

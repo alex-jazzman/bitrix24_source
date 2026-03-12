@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,main_core_events,im_v2_lib_utils,im_v2_lib_logger,im_v2_lib_rest,im_v2_application_core,im_v2_const,im_v2_lib_stickerManager,im_v2_provider_service_message) {
+(function (exports,main_core,main_core_events,im_v2_lib_utils,im_v2_lib_logger,im_v2_lib_rest,im_v2_application_core,im_v2_const,im_v2_provider_service_message) {
 	'use strict';
 
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
@@ -347,7 +347,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  return {
 	    ...babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage](params),
-	    componentId: im_v2_const.MessageComponent.sticker,
 	    stickerParams
 	  };
 	}
@@ -379,6 +378,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _addMessageToModels2(message) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _addMessageToRecent)[_addMessageToRecent](message);
+	  const hasMessageSticker = main_core.Type.isPlainObject(message.stickerParams);
+	  if (hasMessageSticker) {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('stickers/recent/update', message.stickerParams);
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('stickers/messages/set', [{
+	      messageId: message.temporaryId,
+	      ...message.stickerParams
+	    }]);
+	  }
 	  void babelHelpers.classPrivateFieldLooseBase(this, _clearLastMessageViews)[_clearLastMessageViews](message.dialogId);
 	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/add', message);
 	}
@@ -394,9 +401,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        messageId: message.temporaryId
 	      }
 	    });
-	  }
-	  if (hasMessageSticker) {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/stickers/setStickersFromMessages', [message]);
 	  }
 	}
 	function _sendMessageToServer2(message) {
@@ -418,11 +422,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    fields.aiAssistant = message.aiAssistant;
 	  }
 	  if (message.stickerParams) {
-	    fields.stickerParams = {
-	      stickerId: message.stickerParams.id,
-	      packId: message.stickerParams.packId,
-	      packType: message.stickerParams.packType
-	    };
+	    // todo: this is temp fix. We need to figure it out, why templateId is set only for text messages (see above)
+	    fields.templateId = message.temporaryId;
+	    fields.stickerParams = message.stickerParams;
 	  }
 	  const queryData = {
 	    dialogId: message.dialogId.toString(),
@@ -457,6 +459,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      messageId: newId
 	    }
 	  });
+	  const isSticker = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['stickers/messages/isSticker'](oldId);
+	  if (isSticker) {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('stickers/messages/updateWithId', {
+	      oldId,
+	      newId
+	    });
+	  }
 	}
 	function _updateMessageError2(messageId) {
 	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/update', {
@@ -566,21 +575,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      isDeleted: message.isDeleted,
 	      files: message.files
 	    };
-	    const isSticker = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/stickers/isStickerMessage'](messageId);
+	    const isSticker = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['stickers/messages/isSticker'](messageId);
 	    if (isSticker) {
-	      const stickerKey = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/stickers/getStickerKeyByMessageId'](messageId) || '';
-	      const {
-	        id,
-	        packId,
-	        packType
-	      } = new im_v2_lib_stickerManager.StickerManager().parseStickerKey(stickerKey);
-	      const stickerData = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/stickers/getStickerByMessageId'](messageId);
-	      prepared.stickerParams = {
-	        id,
-	        packId,
-	        packType,
-	        ...stickerData
-	      };
+	      prepared.stickerParams = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['stickers/messages/getStickerByMessageId'](messageId);
 	    }
 	    preparedMessages.push(prepared);
 	  });
@@ -708,5 +705,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.SendingService = SendingService;
 
-}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Service));
+}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Service));
 //# sourceMappingURL=sending.bundle.js.map

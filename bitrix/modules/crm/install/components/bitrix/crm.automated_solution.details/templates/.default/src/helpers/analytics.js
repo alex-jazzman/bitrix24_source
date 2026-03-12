@@ -1,5 +1,4 @@
-import { Builder, Dictionary } from 'crm.integration.analytics';
-import { sendData as sendAnalyticsData } from 'ui.analytics';
+import { Builder } from 'crm.integration.analytics';
 
 export function createSaveAnalyticsBuilder(store): Builder.Automation.AutomatedSolution.CreateEvent
 	| Builder.Automation.AutomatedSolution.EditEvent
@@ -12,38 +11,5 @@ export function createSaveAnalyticsBuilder(store): Builder.Automation.AutomatedS
 	return builder
 		.setId(store.state.automatedSolution.id)
 		.setTypeIds(store.state.automatedSolution.typeIds)
-	;
-}
-
-export function wrapPromiseInAnalytics(promise: Promise, builder): Promise
-{
-	sendAnalyticsData(
-		builder
-			.setStatus(Dictionary.STATUS_ATTEMPT)
-			.buildData()
-		,
-	);
-
-	return promise
-		.then((thenResult) => {
-			sendAnalyticsData(
-				builder
-					.setStatus(Dictionary.STATUS_SUCCESS)
-					.buildData()
-				,
-			);
-
-			return thenResult;
-		})
-		.catch((error) => {
-			sendAnalyticsData(
-				builder
-					.setStatus(Dictionary.STATUS_ERROR)
-					.buildData()
-				,
-			);
-
-			throw error;
-		})
 	;
 }

@@ -12,7 +12,6 @@
 .bx-im-collab-header__add-people-icon {
 	width: 22px;
 	height: 22px;
-	margin-right: 12px;
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='22' height='23' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.583 14.99l.273 1.521a.957.957 0 01-.624 1.086c-1.612.543-3.423.864-5.341.903h-.794c-1.922-.04-3.737-.361-5.352-.906a.97.97 0 01-.637-1.059c.06-.434.124-.875.19-1.12.237-.872 1.567-1.52 2.79-2.018.32-.13.514-.234.709-.34.19-.102.384-.206.698-.336.036-.16.05-.324.043-.488l.542-.061s.071.123-.043-.598c0 0-.609-.149-.637-1.296 0 0-.458.144-.486-.55-.005-.139-.043-.272-.08-.4-.086-.305-.164-.58.232-.818l-.286-.72s-.3-2.785 1.017-2.56c-.534-.8 3.974-1.467 4.274.987.117.74.117 1.49 0 2.23 0 0 .673-.073.223 1.139 0 0-.247.872-.627.676 0 0 .061 1.102-.537 1.288 0 0 .043.587.043.627l.5.07s-.015.49.085.543c.456.28.956.49 1.483.627 1.553.373 2.342 1.013 2.342 1.573zM17.064 6.1h1.952v2.4h2.5v1.967h-2.5v2.52h-1.952v-2.52h-2.38V8.499h2.38V6.1z' fill='%2319CC45'/%3E%3C/svg%3E");
 	background-position: center;
 	background-repeat: no-repeat;
@@ -25,6 +24,12 @@
 
 .bx-im-collab-header__add-people-icon.--active {
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='22' height='22' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.583 14.49l.273 1.521a.957.957 0 01-.624 1.086c-1.612.543-3.423.864-5.341.903h-.794c-1.922-.04-3.737-.361-5.352-.906a.97.97 0 01-.637-1.059c.06-.434.124-.875.19-1.12.237-.872 1.567-1.52 2.79-2.018.32-.13.514-.234.709-.34.19-.102.384-.206.698-.336.036-.16.05-.324.043-.488l.542-.061s.071.123-.043-.598c0 0-.609-.149-.637-1.296 0 0-.458.144-.486-.55-.005-.139-.043-.272-.08-.4-.086-.305-.164-.58.232-.818l-.286-.72s-.3-2.785 1.017-2.56c-.534-.8 3.974-1.467 4.274.987.117.74.117 1.49 0 2.23 0 0 .673-.073.223 1.139 0 0-.247.872-.627.676 0 0 .061 1.102-.537 1.288 0 0 .043.587.043.627l.5.07s-.015.49.085.543c.456.28.956.49 1.483.627 1.553.373 2.342 1.013 2.342 1.573zM17.063 5.6h1.952V8h2.5v1.967h-2.5v2.52h-1.952v-2.52h-2.38V7.999h2.38V5.6z' fill='%231E8D36'/%3E%3C/svg%3E");
+}
+
+.bx-im-collab-header__add-to-chat {
+	--im-pulse-animation__border-color_ring: var(--im-color-collab-40);
+
+	margin-right: 12px;
 }
 
 .bx-im-content-chat-start__container {
@@ -753,51 +758,6 @@
 	-webkit-mask-composite: xor;
 	        mask-composite: exclude;
 	pointer-events: none;
-}
-
-.bx-im-pulse-animation__container {
-	--im-pulse-animation__border-color_ring: var(--im-color-collab-40);
-
-	position: relative;
-}
-
-.bx-im-pulse-animation__ring {
-	position: absolute;
-	top: 50%;
-	left: 12px;
-	border: 3px solid var(--im-pulse-animation__border-color_ring);
-	width: 48px;
-	height: 48px;
-	border-radius: 50%;
-	transform: translate(-50%, -50%);
-	animation: im-pulse-ring 2.1s infinite;
-	opacity: 0;
-}
-
-.bx-im-pulse-animation__ring:nth-child(2) {
-	animation-delay: 0.7s;
-}
-
-.bx-im-pulse-animation__ring:nth-child(3) {
-	animation-delay: 1.4s;
-}
-
-@keyframes im-pulse-ring {
-	0% {
-		width: 28px;
-		height: 28px;
-		opacity: 0;
-	}
-
-	50% {
-		opacity: 1;
-	}
-
-	100% {
-		width: 62px;
-		height: 62px;
-		opacity: 0;
-	}
 }
 
 .bx-im-comments-header-follow__container {

@@ -8,8 +8,7 @@
 
 		bindEvents()
 		{
-			BX.addCustomEvent('mailbackground::router', (threadId = 0, mailboxId = 0) => {
-
+			BX.addCustomEvent('mailbackground::router', (threadId = 0, mailboxId = 0, source = 'mail') => {
 				const numMailboxId = Number(mailboxId);
 
 				if (numMailboxId === 0)
@@ -24,6 +23,7 @@
 						componentParams: {
 							isCrmMessage: 0,
 							threadId,
+							source,
 						},
 					});
 				}

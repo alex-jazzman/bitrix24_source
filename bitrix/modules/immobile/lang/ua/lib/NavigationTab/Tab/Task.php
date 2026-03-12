@@ -1,2 +1,0 @@
-<?php
-$MESS["IMMOBILE_NAVIGATION_TAB_TASK_TAB_TITLE"] = "Чати завдань";

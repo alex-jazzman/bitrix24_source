@@ -36,10 +36,7 @@ export const TaskChatHeader = {
 		},
 	},
 	template: `
-		<ChatHeader
-			:dialogId="dialogId"
-			:withAddToChatButton="false"
-		>
+		<ChatHeader :dialogId="dialogId" >
 			<template #left>
 				<div class="bx-im-task-chat-header__left_container">
 					<div class="bx-im-task-chat-header__avatar"></div>

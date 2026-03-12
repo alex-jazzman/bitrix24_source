@@ -1,6 +1,0 @@
-<?php
-$MESS["TASKSMOBILE_SETTINGS_TASK_BETA_ACTIVE_TITLE"] = "Бета режимін қосу";
-$MESS["TASKSMOBILE_SETTINGS_TASK_BETA_NEW_CHECKLIST"] = "Жаңа чек-парақтары";
-$MESS["TASKSMOBILE_SETTINGS_TASK_BETA_NOTIFICATION"] = "Өтініш, қосымшаны қайта іске қосыңыз";
-$MESS["TASKSMOBILE_SETTINGS_TASK_BETA_TITLE"] = "Жаңа міндеттер (бета) ";
-$MESS["TASKSMOBILE_SETTINGS_TASK_TITLE"] = "Міндеттер";

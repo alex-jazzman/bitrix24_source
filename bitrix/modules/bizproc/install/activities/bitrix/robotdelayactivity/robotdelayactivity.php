@@ -10,6 +10,8 @@ $runtime->includeActivityFile('DelayActivity');
 
 class CBPRobotDelayActivity extends CBPDelayActivity
 {
+	private const START_EVENT_SORT = 90;
+	private const CONTINUE_EVENT_SORT = 91;
 	private ?int $startEventId;
 	private ?int $continueEventId;
 
@@ -99,7 +101,8 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 				$this->getName(),
 				'timeman',
 				'OnAfterTMDayStart',
-				['USER_ID' => $userId]
+				['USER_ID' => $userId],
+				sort: self::START_EVENT_SORT,
 			);
 
 			$this->continueEventId = $schedulerService->subscribeOnEvent(
@@ -107,7 +110,8 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 				$this->getName(),
 				'timeman',
 				'OnAfterTMDayContinue',
-				['USER_ID' => $userId]
+				['USER_ID' => $userId],
+				sort: self::CONTINUE_EVENT_SORT,
 			);
 
 			$this->logMessage(

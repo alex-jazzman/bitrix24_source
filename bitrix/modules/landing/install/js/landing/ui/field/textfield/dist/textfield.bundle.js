@@ -40,9 +40,13 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    main_core.Event.bind(_this.input, 'mousedown', _this.onInputMousedown);
 	    main_core.Event.bind(_this.input, 'input', _this.onInputInput);
 	    main_core.Event.bind(_this.input, 'keydown', _this.onInputKeydown);
-	    main_core.Event.bind(document, 'click', _this.onDocumentClick);
-	    main_core.Event.bind(document, 'keydown', _this.onDocumentKeydown);
-	    main_core.Event.bind(document, 'mouseup', _this.onDocumentMouseup);
+	    var editorPanel = BX.Landing.UI.Panel.EditorPanel.getInstance();
+	    var editorPanelDocument = editorPanel && editorPanel.layout ? editorPanel.layout.ownerDocument : null;
+	    if (editorPanelDocument) {
+	      main_core.Event.bind(editorPanelDocument, 'click', _this.onDocumentClick);
+	      main_core.Event.bind(editorPanelDocument, 'keydown', _this.onDocumentKeydown);
+	      main_core.Event.bind(editorPanelDocument, 'mouseup', _this.onDocumentMouseup);
+	    }
 	    return _this;
 	  }
 	  babelHelpers.createClass(TextField, [{
@@ -102,7 +106,11 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    }
 	  }, {
 	    key: "onDocumentClick",
-	    value: function onDocumentClick() {
+	    value: function onDocumentClick(event) {
+	      if (this.isClickInsideField(event) || this.isClickInsideEditorPanel(event) || this.isClickInsidePopup(event)) {
+	        this.fromInput = false;
+	        return;
+	      }
 	      if (this.isEditable() && !this.fromInput) {
 	        if (this === BX.Landing.UI.Field.BaseField.currentField) {
 	          BX.Landing.UI.Panel.EditorPanel.getInstance().hide();
@@ -110,6 +118,28 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        this.disableEdit();
 	      }
 	      this.fromInput = false;
+	    }
+	  }, {
+	    key: "isClickInsideField",
+	    value: function isClickInsideField(event) {
+	      if (!event || !event.target) {
+	        return false;
+	      }
+	      return Boolean(this.input && this.input.contains(event.target));
+	    }
+	  }, {
+	    key: "isClickInsideEditorPanel",
+	    value: function isClickInsideEditorPanel(event) {
+	      if (!event || !event.target) {
+	        return false;
+	      }
+	      var editorPanel = BX.Landing.UI.Panel.EditorPanel.getInstance();
+	      return Boolean(editorPanel && editorPanel.layout && editorPanel.layout.contains(event.target));
+	    }
+	  }, {
+	    key: "isClickInsidePopup",
+	    value: function isClickInsidePopup(event) {
+	      return Boolean(event && event.target && event.target.closest && event.target.closest('.popup-window'));
 	    }
 	  }, {
 	    key: "onDocumentMouseup",

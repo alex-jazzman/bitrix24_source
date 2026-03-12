@@ -55,7 +55,7 @@ export const Stage = {
 		},
 		stage(): StageModel
 		{
-			return this.$store.getters[`${Model.Stages}/getById`](this.stageId) ?? null;
+			return this.$store.getters[`${Model.Stages}/getById`](this.stageId);
 		},
 		menuOptions(): Function
 		{
@@ -117,7 +117,7 @@ export const Stage = {
 				return;
 			}
 
-			if (!this.group.stagesIds)
+			if (!this.group.stagesIds || this.group.stagesIds.length === 0)
 			{
 				await groupService.getStages(this.groupId);
 			}
@@ -181,11 +181,11 @@ export const Stage = {
 			ref="stage"
 			@click="handleClick"
 		>
-			<div class="tasks-field-group-stage-text-container">
-				<div class="tasks-field-group-stage-text">{{ stage.title }}</div>
+			<div class="tasks-field-group-stage-text-container print-background-white print-font-weight-normal print-no-padding-left print-font-size-lg">
+				<div class="tasks-field-group-stage-text print-font-color-base-1">{{ stage.title }}</div>
 			</div>
-			<div class="tasks-field-group-stage-arrow"/>
-			<BIcon v-if="!readonly" :name="Outline.CHEVRON_DOWN_S"/>
+			<div class="tasks-field-group-stage-arrow print-ignore"/>
+			<BIcon v-if="!readonly" :name="Outline.CHEVRON_DOWN_S" class="print-ignore"/>
 		</div>
 		<div v-else class="tasks-field-group-stage-loader">
 			<BLine :width="80" :height="10"/>

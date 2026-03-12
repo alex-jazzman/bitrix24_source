@@ -1,7 +1,7 @@
 import { Loc, Type } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
-import { ACTION_TYPE, AJAX_REQUEST_TYPE } from '../constants';
+import { ACTION_TYPE, AJAX_REQUEST_TYPE, GRID_API_ACTION } from '../constants';
 
 import type {
 	DeleteActionParams,
@@ -27,6 +27,8 @@ export class DeleteAction extends BaseAction
 
 	setActionParams(params: DeleteActionParams): void
 	{
+		super.setActionParams(params);
+
 		this.templateId = Number.parseInt(params.templateId, 10);
 	}
 
@@ -34,7 +36,7 @@ export class DeleteAction extends BaseAction
 	{
 		return {
 			type: AJAX_REQUEST_TYPE.CONTROLLER,
-			name: 'Integration.AiAgent.Template.delete',
+			name: GRID_API_ACTION.DELETE,
 		};
 	}
 

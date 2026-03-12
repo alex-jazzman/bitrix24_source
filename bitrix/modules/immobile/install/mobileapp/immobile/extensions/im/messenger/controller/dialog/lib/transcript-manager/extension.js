@@ -11,10 +11,12 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 		TranscriptResponseStatus,
 		EventType,
 		Analytics,
+		AiTasksStatusType,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 	const { parser } = require('im/messenger/lib/parser');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
@@ -193,6 +195,12 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 		 * @param {FileId} fileId
 		 */
 		#transcriptionTapHandler = async (messageId, fileId) => {
+			const messageHelper = MessageHelper.createById(messageId);
+			if (messageHelper?.isTemplateId)
+			{
+				return;
+			}
+
 			this.#audioMessagePlayer.stopPlayingMessage?.();
 			await this.#loadTranscriptModelFromDatabase(fileId);
 
@@ -202,6 +210,8 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 
 				return;
 			}
+
+			this.#interruptMessageAnimation(Number(messageId));
 
 			await this.#transcribe({ messageId, fileId });
 		};
@@ -404,6 +414,21 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 			}
 
 			return Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_ERROR');
+		}
+
+		/**
+		 * @param {number} messageId
+		 */
+		#interruptMessageAnimation(messageId)
+		{
+			const payloadParams = {
+				id: messageId,
+				fields: {
+					visualState: { aiTaskStatus: AiTasksStatusType.animationInterrupted },
+				},
+			};
+
+			this.#store.dispatch('messagesModel/updateVisualState', payloadParams);
 		}
 	}
 

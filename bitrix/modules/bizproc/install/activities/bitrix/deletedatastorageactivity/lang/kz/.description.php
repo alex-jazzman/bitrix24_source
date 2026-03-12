@@ -1,4 +1,0 @@
-<?php
-$MESS["BIZPROC_DELETE_DATA_ACTIVITY_DESCRIPTION"] = "Деректерді қоймадан жояды";
-$MESS["BIZPROC_DELETE_DATA_ACTIVITY_NAME"] = "Деректерді жою";
-$MESS["BIZPROC_DELETE_DATA_STORAGE_CATEGORY"] = "Қойма";

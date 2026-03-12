@@ -1,2 +1,0 @@
-<?php
-$MESS["SIGN_ENTITY_SELECTOR_FIREDUSER_TAB_TITLE"] = "Звільнені";

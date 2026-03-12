@@ -6,9 +6,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\AI\Facade\Bitrix24;
 use Bitrix\AI\Facade\Intranet;
+use Bitrix\AI\Services\CopilotNameService;
 use Bitrix\Main\Loader;
 
 $isWestZone = false;
+$copilotName = '';
 
 if (Loader::includeModule('ai'))
 {
@@ -20,6 +22,8 @@ if (Loader::includeModule('ai'))
 	{
 		$isWestZone = Intranet::isWestZone();
 	}
+
+	$copilotName = (new CopilotNameService())->getCopilotName();
 }
 
 return [
@@ -35,5 +39,6 @@ return [
 	'skip_core' => false,
 	'settings' => [
 		'isWestZone' => $isWestZone,
+		'copilotName' => $copilotName,
 	]
 ];

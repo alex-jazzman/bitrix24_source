@@ -2,6 +2,7 @@ import { ajax, Event, Reflection, Dom, Tag, Loc, Type, Runtime, Text } from 'mai
 import { EventEmitter } from 'main.core.events';
 import { PopupMenu, Menu } from 'main.popup';
 import StorageSelector, { StorageItem } from './storage-selector';
+import StorageFilter from './storage-filter';
 
 const namespace = Reflection.namespace('BX.Bizproc.Activity');
 
@@ -19,19 +20,17 @@ class WriteDataStorageActivity
 	#storageSelectorContainer: HTMLElement;
 	#storageIdField: HTMLElement;
 	#storageCodeField: HTMLElement;
-	#modeField: HTMLElement;
 	#addFieldButton: HTMLElement;
 	#documentType: {};
 	#storageFields: Field[];
 	#currentValues: {};
-	#fieldsMap: {};
 	#systemFields: {};
 	#storageItems: ?StorageItem[] = null;
 	#fieldMenu: Menu;
 	#dynamicStorage: boolean;
 	#fieldIndex: number;
 	#storageSelectorInstance: TagSelector;
-	#fieldsCache: Map<any,any> = new Map();
+	#fieldsCache: Map<any, any> = new Map();
 	#onAfterFieldRendererHandler: Function | null;
 	#onStorageRemoveHandler: Function | null;
 
@@ -41,7 +40,8 @@ class WriteDataStorageActivity
 	};
 
 	static Action = {
-		GET_FIELDS: 'bizproc.storage.getFieldsByStorageId',
+		GET_FIELDS: 'bizproc.v2.StorageField.getFieldsByStorageId',
+		DELETE_FIELD: 'bizproc.v2.StorageField.delete',
 	};
 
 	constructor(
@@ -64,7 +64,6 @@ class WriteDataStorageActivity
 		this.#storageSelectorContainer = options.storageSelectorContainer;
 		this.#storageIdField = options.storageIdField;
 		this.#storageCodeField = options.storageCodeField;
-		this.#modeField = options.modeField;
 		this.#addFieldButton = options.addFieldButton;
 		this.#documentType = options.documentType;
 		this.#storageFields = [];
@@ -79,13 +78,27 @@ class WriteDataStorageActivity
 		this.#configureStorageCodeField();
 		this.#initializeFields(options);
 		this.#renderStorageSelector();
+
+		const form = document.forms[options.formName];
+		if (form)
+		{
+			const container = form.querySelector('[data-role="bpa-sra-filter-fields-container"]');
+			new StorageFilter({
+				documentType: options.documentType,
+				headCaption: options.headCaption,
+				collapsedCaption: options.collapsedCaption,
+				filterFieldsMap: options.filterFieldsMap,
+				conditions: options.conditions,
+				filteringFieldsPrefix: options.filteringFieldsPrefix,
+				formName: options.formName,
+			}).renderTo(container);
+		}
 	}
 
 	#bindEvents(): void
 	{
 		Event.bind(this.#storageIdField, 'change', this.#onChangeStorageId.bind(this));
 		Event.bind(this.#storageCodeField, 'change', this.#onChangeStorageCode.bind(this));
-		Event.bind(this.#modeField, 'change', this.#onChangeMode.bind(this));
 		Event.bind(this.#addFieldButton, 'click', this.#onAddButtonClick.bind(this));
 
 		EventEmitter.subscribe(
@@ -117,23 +130,29 @@ class WriteDataStorageActivity
 	{
 		const node = event.data.node;
 		const textarea = node.querySelector('textarea[name="field_values[]"], textarea[name="field_keys[]"]');
-		if (!textarea) return;
+		if (!textarea)
+		{
+			return;
+		}
 
 		const isFieldValues = textarea.name === 'field_values[]';
-		const randString = Math.random().toString(36).substr(2, 9);
-		const uniqueId = 'field_' + (isFieldValues ? 'values' : 'keys') + '_' + randString;
+		const randString = Math.random().toString(36).slice(2, 11);
+		const uniqueId = `field_${isFieldValues ? 'values' : 'keys'}_${randString}`;
 
 		textarea.id = uniqueId;
 
 		const button = node.querySelector('[data-role="bp-selector-button"]');
-		if (!button) return;
+		if (!button)
+		{
+			return;
+		}
 
 		const oldOnclick = button.getAttribute('onclick');
 		if (oldOnclick)
 		{
 			const newOnclick = oldOnclick.replace(
 				/BPAShowSelector\('([^']+)'(\s*,\s*[^)]+)\)/,
-				"BPAShowSelector('" + uniqueId + "'$2)"
+				`BPAShowSelector('${uniqueId}'$2)`,
 			);
 			button.setAttribute('onclick', newOnclick);
 		}
@@ -141,7 +160,7 @@ class WriteDataStorageActivity
 
 	#configureStorageCodeField(): void
 	{
-		const storageCodeRow = this.#storageCodeField.closest('[data-cid="StorageCode"]');
+		this.#storageCodeField.closest('[data-cid="StorageCode"]');
 	}
 
 	#initializeFields(options: Object): void
@@ -277,25 +296,6 @@ class WriteDataStorageActivity
 		Dom.show(this.#addFieldButton);
 	}
 
-	#onChangeMode(event: Event): void
-	{
-		const value = event.currentTarget.value;
-		const row = document.querySelector('[data-cid="ItemId"]');
-		if (!row)
-		{
-			return;
-		}
-
-		if (value === WriteDataStorageActivity.Mode.MERGE || value === WriteDataStorageActivity.Mode.REWRITE)
-		{
-			Dom.show(row);
-		}
-		else
-		{
-			Dom.hide(row);
-		}
-	}
-
 	#openStorageEdit(): Promise
 	{
 		return new Promise((resolve) => {
@@ -330,9 +330,9 @@ class WriteDataStorageActivity
 
 	#selectNewStorage(storageId: number, title: string): void
 	{
-		const item = this.#storageSelectorInstance.addTag({
+		this.#storageSelectorInstance.addTag({
 			id: storageId,
-			title: title,
+			title,
 			entityId: 'bizproc-storage',
 			link: `/bitrix/components/bitrix/bizproc.storage.item.list/?storageId=${storageId}`,
 		});
@@ -374,13 +374,13 @@ class WriteDataStorageActivity
 	{
 		event.preventDefault();
 
-		if (!this.#dynamicStorage)
+		if (this.#dynamicStorage)
 		{
-			this.#showFieldSelectionMenu();
+			this.#showDynamicFieldSelectionMenu();
 		}
 		else
 		{
-			this.#showDynamicFieldSelectionMenu();
+			this.#showFieldSelectionMenu();
 		}
 	}
 
@@ -396,7 +396,6 @@ class WriteDataStorageActivity
 
 	#buildDynamicMenuItems(addedFieldIds: Set<string>): MenuItem[]
 	{
-		const writeDataActivity = this;
 		const menuItems = [];
 
 		for (const field of this.#systemFields)
@@ -405,10 +404,9 @@ class WriteDataStorageActivity
 			{
 				menuItems.push({
 					text: Text.encode(field.Name),
-					onclick()
-					{
-						this.popupWindow.close();
-						writeDataActivity.#addDynamicStorageField(Text.encode(field.FieldName));
+					onclick: (event, menuItem) => {
+						menuItem.getMenuWindow().close();
+						this.#addDynamicStorageField(Text.encode(field.FieldName));
 					},
 				});
 			}
@@ -416,10 +414,9 @@ class WriteDataStorageActivity
 
 		menuItems.push({
 			text: Loc.getMessage('BIZPROC_WRITE_DATA_ACTIVITY_ANOTHER_FIELD') ?? '',
-			async onclick()
-			{
-				this.popupWindow.close();
-				writeDataActivity.#addDynamicStorageField();
+			onclick: async (event, menuItem) => {
+				menuItem.getMenuWindow().close();
+				this.#addDynamicStorageField();
 			},
 		});
 
@@ -438,25 +435,23 @@ class WriteDataStorageActivity
 
 	#getAddedFieldIds(): Set<string>
 	{
-		const fieldRows = Array.from(this.#fieldsContainer.querySelectorAll('tr[data-id]'));
+		const fieldRows = [...this.#fieldsContainer.querySelectorAll('tr[data-id]')];
 
 		return new Set(fieldRows.map(row => row.dataset.id));
 	}
 
 	#buildMenuItems(addedFieldIds: Set<string>): MenuItem[]
 	{
-		const writeDataActivity = this;
 		const menuItems = [{
 			text: Loc.getMessage('BIZPROC_WRITE_DATA_ACTIVITY_CREATE_NEW_FIELD') ?? '',
-			async onclick()
-			{
-				this.popupWindow.close();
-				const field = await writeDataActivity.#openFieldEdit();
+			onclick: async (event, menuItem) => {
+				menuItem.getMenuWindow().close();
+				const field = await this.#openFieldEdit();
 
 				if (field)
 				{
-					writeDataActivity.#addStorageField(field);
-					writeDataActivity.#addField(field);
+					this.#addStorageField(field);
+					this.#addField(field);
 				}
 			},
 		}];
@@ -468,10 +463,9 @@ class WriteDataStorageActivity
 			{
 				menuItems.push({
 					text: Text.encode(field.Name),
-					onclick()
-					{
-						this.popupWindow.close();
-						writeDataActivity.#addField(field);
+					onclick: async (event, menuItem) => {
+						menuItem.getMenuWindow().close();
+						this.#addField(field);
 					},
 				});
 			}
@@ -483,7 +477,7 @@ class WriteDataStorageActivity
 	#createFieldMenu(menuItems: MenuItem[]): Menu
 	{
 		return PopupMenu.create({
-			id: `bp_wsa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+			id: `bp_wsa_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
 			bindElement: this.#addFieldButton,
 			autoHide: true,
 			items: menuItems,
@@ -501,13 +495,13 @@ class WriteDataStorageActivity
 		this.#fieldIndex++;
 
 		return {
-			Id: customValue ? customValue : `dynamic_${fieldIndex}`,
+			Id: customValue || `dynamic_${fieldIndex}`,
 			Name: '',
-			FieldName: `field_keys[]`,
+			FieldName: 'field_keys[]',
 			Type: 'string',
 			Required: false,
 			AllowSelection: true,
-			Value: customValue
+			Value: customValue,
 		};
 	}
 
@@ -517,13 +511,13 @@ class WriteDataStorageActivity
 		this.#fieldIndex++;
 
 		return {
-			Id: customValue ? customValue : `dynamic_${fieldIndex}`,
+			Id: customValue || `dynamic_${fieldIndex}`,
 			Name: '',
-			FieldName: `field_values[]`,
+			FieldName: 'field_values[]',
 			Type: 'string',
 			Required: false,
 			AllowSelection: true,
-			Value: customValue
+			Value: customValue,
 		};
 	}
 
@@ -565,17 +559,17 @@ class WriteDataStorageActivity
 		row.dataset.id = keyField.Id;
 
 		const index = this.#systemFields.findIndex(f => f.Id === key);
-		if (index !== -1)
-		{
-			this.#renderSystemFieldRow(row, keyField, valueField);
-		}
-		else
+		if (index === -1)
 		{
 			this.#renderDynamicFieldRow(row, keyField, valueField);
 		}
+		else
+		{
+			this.#renderSystemFieldRow(row, keyField, valueField);
+		}
 	}
 
-	#openFieldEdit(fieldId: ?int = null): Promise
+	#openFieldEdit(fieldId: ?number = null): Promise
 	{
 		return new Promise((resolve) => {
 			Runtime
@@ -596,7 +590,7 @@ class WriteDataStorageActivity
 							},
 						},
 						requestMethod: 'get',
-						requestParams: { storageId: this.#storageIdField.value, fieldId},
+						requestParams: { storageId: this.#storageIdField.value, fieldId },
 					});
 				})
 				.catch((e) => {
@@ -720,7 +714,7 @@ class WriteDataStorageActivity
 					return;
 				}
 
-				const isDeleteAction = field.action === 'bizproc.storage.deleteField' && field.id;
+				const isDeleteAction = field.action === WriteDataStorageActivity.Action.DELETE_FIELD && field.id;
 				if (isDeleteAction)
 				{
 					this.#deleteFieldRow(Number(field.id));
@@ -765,7 +759,6 @@ class WriteDataStorageActivity
 	{
 		Event.unbindAll(this.#storageIdField);
 		Event.unbindAll(this.#storageCodeField);
-		Event.unbindAll(this.#modeField);
 		Event.unbindAll(this.#addFieldButton);
 
 		this.#fieldsCache.clear();

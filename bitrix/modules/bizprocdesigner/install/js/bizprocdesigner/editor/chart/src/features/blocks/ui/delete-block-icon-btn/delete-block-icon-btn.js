@@ -1,5 +1,6 @@
 import { Outline } from 'ui.icon-set.api.vue';
 import { useHistory } from 'ui.block-diagram';
+
 import { IconButton } from '../../../../shared/ui';
 // eslint-disable-next-line no-unused-vars
 import type { BlockId } from '../../../../shared/types';
@@ -45,7 +46,7 @@ export const DeleteBlockIconBtn = {
 			}
 		}
 
-		function onDeleteBlock(): void
+		function onDeleteBlock(): Promise<void>
 		{
 			if (props.disabled)
 			{

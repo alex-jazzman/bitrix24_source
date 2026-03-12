@@ -236,6 +236,15 @@ export class AccessRightsModel extends BuilderModel
 
 				return false;
 			},
+			getAccessRightItemById: (state) => (sectionCode: string, rightId: string): ?AccessRightItem => {
+				const item = state.collection.get(sectionCode)?.rights.get(rightId);
+				if (!item)
+				{
+					return null;
+				}
+
+				return item;
+			},
 		};
 	}
 

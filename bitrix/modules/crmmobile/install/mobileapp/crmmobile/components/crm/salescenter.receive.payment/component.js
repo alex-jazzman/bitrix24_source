@@ -145,6 +145,7 @@
 
 						this.dataForSending.products = products;
 					};
+					props.layoutWidget = layout;
 					props.analytics = {
 						menuPrefix: 'receive_payment',
 						onProductRemoved: () => {

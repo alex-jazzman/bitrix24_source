@@ -30,14 +30,13 @@ Extension::load([
 	'ui.design-tokens',
 	'spotlight',
 	'ui.system.menu',
+	'intranet.old-interface.intranet-common',
 ]);
 
 if ($isV2Form)
 {
 	Extension::load(['tasks.v2.application.task-card']);
 }
-
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 if ($isBitrix24Template)
 {

@@ -70,6 +70,7 @@ export const EntityTextArea = {
 				insertIntoText: true,
 				tileWidgetOptions: {
 					compact: true,
+					enableDropzone: false,
 					hideDropArea: true,
 					readonly: this.readonly,
 					autoCollapse: false,

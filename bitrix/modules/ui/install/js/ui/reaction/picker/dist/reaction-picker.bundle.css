@@ -4,6 +4,8 @@
 	box-sizing: border-box;
 	position: absolute;
 	min-height: 56px;
+	top: 0;
+	left: 0;
 	background-color: var(--ui-color-bg-content-primary);
 	-webkit-background-clip: padding-box;
 	background-clip: padding-box;

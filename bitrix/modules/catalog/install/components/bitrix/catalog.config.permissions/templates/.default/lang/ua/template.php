@@ -1,2 +1,0 @@
-<?php
-$MESS["CATALOG_CONFIG_CANCEL_BUTTON_ACCESS_RIGHTS"] = "Скасування";

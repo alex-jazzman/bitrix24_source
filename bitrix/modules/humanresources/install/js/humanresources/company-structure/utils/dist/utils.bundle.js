@@ -109,6 +109,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  businessProcAuthority: 'BUSINESS_PROC_AUTHORITY',
 	  reportsAuthority: 'REPORTS_AUTHORITY'
 	};
+	var UserSettingsTypes = {
+	  businessProcExcludeNodes: 'BUSINESS_PROC_EXCLUDE_NODES',
+	  reportsExcludeNodes: 'REPORTS_AUTHORITY_EXCLUDE_NODES'
+	};
 	var ChatTypes = Object.freeze({
 	  channel: 'CHANNEL',
 	  chat: 'CHAT',
@@ -214,6 +218,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	exports.NodeColorsSettingsDict = NodeColorsSettingsDict;
 	exports.getNodeColorSettings = getNodeColorSettings;
 	exports.NodeSettingsTypes = NodeSettingsTypes;
+	exports.UserSettingsTypes = UserSettingsTypes;
 	exports.WizardApiEntityChangedDict = WizardApiEntityChangedDict;
 	exports.ChatTypes = ChatTypes;
 

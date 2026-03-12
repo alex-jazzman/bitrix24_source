@@ -5,33 +5,38 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
+use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main;
-use Bitrix\Rest;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Rest;
+use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('BPWHA_DESCR_NAME_1'),
-	'DESCRIPTION' => Loc::getMessage('BPWHA_DESCR_DESCR_1'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'WebHookActivity',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
-		'ID' => 'other',
+$arActivityDescription = (new ActivityDescription(
+	name: Loc::getMessage('BPWHA_DESCR_NAME_1'),
+	description: Loc::getMessage('BPWHA_DESCR_DESCR_1'),
+	type: [
+		ActivityType::ACTIVITY->value,
+		ActivityType::ROBOT->value,
+		ActivityType::NODE->value,
 	],
-	'ROBOT_SETTINGS' => [
+))
+	->setClass('WebHookActivity')
+	->setJsClass('BizProcActivity')
+	->setCategory(['ID' => 'other'])
+	->setRobotSettings([
 		'CATEGORY' => 'other',
 		'GROUP' => ['other'],
 		'ASSOCIATED_TRIGGERS' => [
 			'WEBHOOK' => 1,
 		],
 		'SORT' => 4000,
-	],
-];
-
-if (
-	!Main\Loader::includeModule('rest')
-	|| !Rest\Engine\Access::isAvailable()
-)
-{
-	$arActivityDescription['EXCLUDED'] = true;
-}
+	])
+	->setExcluded(!Main\Loader::includeModule('rest') || !Rest\Engine\Access::isAvailable())
+	->setColorIndex(ActivityColorIndex::GREY->value)
+	->setGroups([ActivityGroup::OTHER_OPERATIONS->value])
+	->setIcon(Outline::WEBHOOK->name)
+	->toArray()
+;

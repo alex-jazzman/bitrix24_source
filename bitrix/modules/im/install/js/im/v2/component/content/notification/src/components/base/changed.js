@@ -38,7 +38,7 @@ export const DetailedChangedValue = {
 		},
 	},
 	template: `
-		<div v-if="isChangedType" class="bx-im-content-notification-item-content__details-item">
+		<div v-if="isChangedType" class="bx-im-content-notification-item-content__details-item --changed">
 			<div class="bx-im-content-notification-item-content__details-content --prev">
 				<span>
 					{{ prevValue }}

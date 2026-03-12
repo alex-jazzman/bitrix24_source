@@ -145,6 +145,9 @@ if (!class_exists('imconnector'))
 			/** @see \Bitrix\ImConnector\Agent::notifyUndelivered */
 			\CAgent::AddAgent('Bitrix\ImConnector\Agent::notifyUndelivered();', 'imconnector', 'N', 60);
 
+			/** @see \Bitrix\ImConnector\Agent::notifyUndelivered */
+			\CAgent::AddAgent('Bitrix\ImConnector\InfoConnectors::refreshAbandonedLinesAgent();', 'imconnector', 'N', 86400);
+
 			return true;
 		}
 

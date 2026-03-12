@@ -46,7 +46,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/message-menu', (requ
 						MessageMenuActionType.delete,
 						MessageMenuActionType.copy,
 						MessageMenuActionType.multiselect,
-						Feature.isMessengerV2Enabled && MessageMenuActionType.forward,
+						MessageMenuActionType.forward,
 					].includes(action));
 				})
 			;
@@ -83,7 +83,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/message-menu', (requ
 		{
 			return [
 				MessageMenuActionType.reaction,
-				Feature.isMessengerV2Enabled && MessageMenuActionType.forward,
+				MessageMenuActionType.forward,
 				MessageMenuActionType.feedback,
 				MessageMenuActionType.delete,
 				MessageMenuActionType.multiselect,

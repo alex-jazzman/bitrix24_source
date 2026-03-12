@@ -56,7 +56,6 @@
 		return BX.Landing.UI.Panel.EditorPanel.instance;
 	};
 
-
 	var scrollHandler = null;
 	var target = null;
 
@@ -66,52 +65,42 @@
 	 */
 	function makeDraggable(editor)
 	{
-		var dragButton = new BX.Landing.UI.Button.EditorAction("drag", {
-			html: "<strong class=\"landing-ui-drag\">&nbsp;</strong>",
-			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_DRAG")}
+		const dragModule = BX.Landing.UI.Panel.EditorPanelDrag;
+		if (!dragModule)
+		{
+			return;
+		}
+
+		const dragButton = new BX.Landing.UI.Button.EditorAction('drag', {
+			html: '<strong class="landing-ui-drag">&nbsp;</strong>',
+			attrs: { title: BX.Landing.Loc.getMessage('LANDING_TITLE_OF_EDITOR_ACTION_DRAG') },
 		});
 
-		dragButton.layout.onbxdrag = onDrag.bind(this);
-		dragButton.layout.onbxdragstop = onDragEnd.bind(this);
+		if (!dragModule.supportsPointerEvents(dragButton.layout))
+		{
+			return;
+		}
 
-		jsDD.registerObject(dragButton.layout);
 		editor.prependButton(dragButton);
 
-		var offsetCalculates;
-		var offsetLeft;
-		var offsetTop;
-		var topValue;
+		BX.Dom.style(dragButton.layout, { touchAction: 'none' });
+		dragModule.attachPointerDrag(editor, dragButton);
+	}
 
-		function onDrag(x, y)
+	function clickOnButton(adjustButtonsState, editor, buttonId)
+	{
+		const handler = proxy(adjustButtonsState, editor);
+
+		return function(event)
 		{
-			if (!offsetCalculates)
+			const editorPanelInstance = BX.Landing.UI.Panel.EditorPanel.getInstance();
+			if (editorPanelInstance)
 			{
-				var pos = BX.pos(jsDD.current_node);
-				offsetLeft = Math.max(Math.abs(x - pos.left), 0);
-				offsetTop = Math.max(Math.abs(y - pos.top), 0);
-				offsetCalculates = true;
+				editorPanelInstance.emit('onButtonClick');
 			}
 
-			BX.DOM.write(function() {
-				editor.layout.classList.remove("landing-ui-transition");
-				if (BX.Landing.PageObject.getEditorWindow().scrollY > 0)
-				{
-					topValue = y - offsetTop;
-				}
-				else
-				{
-					topValue = y + offsetTop;
-				}
-				editor.layout.style.top = topValue + "px";
-				editor.layout.style.left = (x - offsetLeft) + "px";
-			}.bind(this));
-		}
-
-		function onDragEnd()
-		{
-			offsetCalculates = false;
-			editor.layout.classList.add("landing-ui-transition");
-		}
+			return handler(event);
+		};
 	}
 
 
@@ -124,55 +113,55 @@
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("bold", {
 			html: "<span class=\"landing-ui-icon-editor-bold\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_BOLD")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "bold")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("italic", {
 			html: "<span class=\"landing-ui-icon-editor-italic\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_ITALIC")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "italic")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("underline", {
 			html: "<span class=\"landing-ui-icon-editor-underline\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_UNDERLINE")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "underline")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("strikeThrough", {
 			html: "<span class=\"landing-ui-icon-editor-strike\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_STRIKE")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "strikeThrough")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("justifyLeft", {
 			html: "<span class=\"landing-ui-icon-editor-left\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_LEFT")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "justifyLeft")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("justifyCenter", {
 			html: "<span class=\"landing-ui-icon-editor-center\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_CENTER")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "justifyCenter")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("justifyRight", {
 			html: "<span class=\"landing-ui-icon-editor-right\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_RIGHT")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "justifyRight")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("justifyFull", {
 			html: "<span class=\"landing-ui-icon-editor-justify\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_JUSTIFY")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "justifyFull")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.CreateLink("createLink", {
 			html: "<span class=\"landing-ui-icon-editor-link\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_CREATE_LINK")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "createLink")
 		}));
 
 		var rights = BX.Landing.Env.getInstance().getOptions().rights;
@@ -185,62 +174,62 @@
 			editor.addButton(new BX.Landing.UI.Button.CreatePage("createPage", {
 				html: "<span class=\"landing-ui-icon-editor-new-page\"></span>",
 				attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_CREATE_PAGE")},
-				onClick: proxy(editor.adjustButtonsState, editor)
+				onClick: clickOnButton(editor.adjustButtonsState, editor, "createPage")
 			}));
 		}
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("unlink", {
 			html: "<span class=\"landing-ui-icon-editor-unlink\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_UNLINK")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "unlink")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("insertUnorderedList", {
 			html: "<span class=\"fa fa-list-ul\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_UL")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "insertUnorderedList")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("insertOrderedList", {
 			html: "<span class=\"fa fa-list-ol\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_OL")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "insertOrderedList")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("removeFormat", {
 			html: "<span class=\"landing-ui-icon-editor-eraser\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_CLEAR")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "removeFormat")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.ColorAction("foreColor", {
 			text: BX.Landing.Loc.getMessage("EDITOR_ACTION_SET_FORE_COLOR"),
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_COLOR")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "foreColor")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.TextBackgroundAction("hiliteColor", {
 			html: "<span class=\"landing-ui-icon-editor-text-background\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_TEXT_BACKGROUND")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "hiliteColor")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.CreateTable("createTable", {
 			html: "<span class=\"landing-ui-icon-editor-table\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_CREATE_TABLE")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "createTable")
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.PasteTable("pasteTable", {
 			html: "<span class=\"landing-ui-icon-editor-copy\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_PASTE_TABLE")},
-			onClick: proxy(editor.adjustButtonsState, editor)
+			onClick: clickOnButton(editor.adjustButtonsState, editor, "pasteTable")
 		}));
 
 		if (BX.Landing.Main.getInstance()["options"]["copilot_available"])
 		{
 			editor.addButton(new BX.Landing.UI.Button.AiCopilot.getInstance("ai_copilot", {
-				html: 'CoPilot',
+				html: BX.Landing.Main.getInstance()["options"]["copilot_name"],
 				editor,
 				onReplace(value) {
 					const fieldInput = editor.currentElement.querySelector('.landing-ui-field-input');
@@ -270,6 +259,7 @@
 						editor.currentElement.innerHTML = `${editor.currentElement.innerHTML}<div>${value}</div>`;
 					}
 				},
+				onClick: clickOnButton(editor.adjustButtonsState, editor, "ai_copilot"),
 			}));
 		}
 	}

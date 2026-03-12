@@ -12,6 +12,7 @@
 	const { ProjectMemberList } = require('project/member-list');
 	const { RequestExecutor } = require('rest');
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 
 	const platform = Application.getPlatform();
 
@@ -1016,6 +1017,7 @@
 		{
 			return new Promise((resolve) => {
 				this.list.removeItem(String(data.ID));
+				this.list.actualizeFloatingButton();
 				resolve();
 			});
 		}
@@ -1310,6 +1312,7 @@
 				this.list.setSections(Section.get());
 
 				this.setTopButtons();
+				this.initFloatingButton();
 				this.setFloatingButton();
 				this.setListListeners();
 				this.bindEvents();
@@ -1414,6 +1417,15 @@
 			this.list.search.show(this.searchLayout, 46);
 		}
 
+		initFloatingButton()
+		{
+			this.floatingActionButton = new FloatingActionButton({
+				testId: 'tasks-project-list-floating-action-button',
+				layout: this.list,
+				onClick: () => this.addProject(),
+			});
+		}
+
 		setFloatingButton()
 		{
 			(new RequestExecutor('socialnetwork.api.workgroup.getCanCreate'))
@@ -1427,17 +1439,20 @@
 
 		renderFloatingButton(isExist = false)
 		{
+			this.floatingActionButton.setAccentByDefault(this.projectList.size === 0);
 			if (isExist)
 			{
-				this.list.setFloatingButton({
-					icon: 'plus',
-					callback: () => this.addProject(),
-				});
+				this.floatingActionButton.show();
 			}
 			else
 			{
-				this.list.setFloatingButton({});
+				this.floatingActionButton.hide();
 			}
+		}
+
+		actualizeFloatingButton()
+		{
+			this.floatingActionButton.setAccentByDefault(this.projectList.size === 0).update();
 		}
 
 		setListListeners()
@@ -1880,6 +1895,8 @@
 					this.removeItem(projectId);
 				}
 			});
+
+			this.actualizeFloatingButton();
 		}
 
 		pseudoReadProjects(projectIds)

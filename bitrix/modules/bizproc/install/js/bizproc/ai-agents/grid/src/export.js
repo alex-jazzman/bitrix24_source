@@ -5,7 +5,6 @@ import { EmployeeField } from './field/employee-field';
 import { LaunchControlField } from './field/launch-control-field';
 import { LoadIndicatorField } from './field/load-indicator-field';
 import { GridManager } from './grid-manager';
-import { Panel } from './panel';
 import './style.css';
 
 export {
@@ -16,5 +15,4 @@ export {
 	LaunchControlField,
 	LoadIndicatorField,
 	GridManager,
-	Panel,
 };

@@ -144,7 +144,7 @@ export default class PopupComponentsMaker
 			}
 
 			this.content.map((item)=> {
-				let sectionNode = this.getSection()
+				let sectionNode = this.getSection();
 
 				if (item?.marginBottom)
 				{

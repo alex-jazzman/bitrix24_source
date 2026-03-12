@@ -4,6 +4,7 @@ $MESS['TASKS_V2_ADD_TASK'] = 'Создать';
 $MESS['TASKS_V2_TITLE_IS_EMPTY'] = 'Укажите название задачи';
 $MESS['TASKS_V2_TEMPLATE_TITLE_IS_EMPTY'] = 'Укажите название шаблона';
 $MESS['TASKS_V2_FILE_IS_UPLOADING'] = 'Вы сможете создать задачу, когда все файлы загрузятся';
+$MESS['TASKS_V2_DATA_IS_UPLOADING'] = 'Вы сможете создать задачу, когда загрузятся все данные';
 $MESS['TASKS_V2_COPY_POPUP_TITLE'] = 'Скопировать подзадачи?';
 $MESS['TASKS_V2_COPY_POPUP_MESSAGE'] = 'У задачи, которую вы копируете, есть подзадачи. Выберите, копировать их или нет';
 $MESS['TASKS_V2_COPY_POPUP_YES'] = 'Копировать';

@@ -44,7 +44,7 @@ describe('Registry', () => {
 			assert(result[event].has(listener));
 		});
 	});
-	
+
 	describe('delete', () => {
 		it('Should delete specified listener', () => {
 			const registry = new Registry();
@@ -85,5 +85,61 @@ describe('Registry', () => {
 
 			assert(result[event].size === 0);
 		});
+	});
+
+	it('Should work with EventTarget like object #1', () => {
+		const registry = new Registry();
+		const element = window;
+		const event = 'test:event';
+		const listener = () => {};
+
+		registry.set(element, event, listener);
+
+		assert.ok(registry.get(element)[event].size === 1);
+
+		registry.delete(element, event, listener);
+
+		assert.ok(registry.get(element)[event].size === 0);
+	});
+
+	it('Should work with EventTarget like object #2', () => {
+		const registry = new Registry();
+		const element = document;
+		const event = 'test:event';
+		const listener = () => {};
+
+		registry.set(element, event, listener);
+
+		assert.ok(registry.get(element)[event].size === 1);
+
+		registry.delete(element, event, listener);
+
+		assert.ok(registry.get(element)[event].size === 0);
+	});
+
+	it('Should work with EventTarget like object #3', () => {
+		const registry = new Registry();
+		const element = { addEventListener: () => null, removeEventListener: () => null, dispatchEvent: () => null };
+		const event = 'test:event';
+		const listener = () => {};
+
+		registry.set(element, event, listener);
+
+		assert.ok(registry.get(element)[event].size === 1);
+
+		registry.delete(element, event, listener);
+
+		assert.ok(registry.get(element)[event].size === 0);
+	});
+
+	it('Should does not work with not EventTarget like object', () => {
+		const registry = new Registry();
+		const element = {};
+		const event = 'test:event';
+		const listener = () => {};
+
+		registry.set(element, event, listener);
+
+		assert.ok(registry.get(element)[event] === undefined);
 	});
 });

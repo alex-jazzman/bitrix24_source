@@ -1,3 +1,0 @@
-<?php
-$MESS["LANDING_SMALL_SWITCHER_OFF"] = "ВИКЛ";
-$MESS["LANDING_SMALL_SWITCHER_ON"] = "ВКЛ";

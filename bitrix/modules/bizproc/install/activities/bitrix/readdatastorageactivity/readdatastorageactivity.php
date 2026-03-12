@@ -23,16 +23,17 @@ use Bitrix\Bizproc\Internal\Repository\Mapper\StorageItemMapper;
 use Bitrix\Bizproc\BaseType\Value\DateTime;
 
 /**
- * @property-read int|null StorageId
- * @property-read string|null StorageCode
- * @property-read array DynamicFilterFields
- * @property-read array ReturnFields
- * @property-read array ReturnFieldsByStorageCode
- * @property-read int ItemId
- * @property-read string ReturnMode
- * @property-read ?array OutputFields
+ * @property-write ?int StorageId
+ * @property-write ?string StorageCode
+ * @property-write array DynamicFilterFields
+ * @property-write array ReturnFields
+ * @property-write array ReturnFieldsByStorageCode
+ * @property-write int ItemId
+ * @property-write string ReturnMode
+ * @property-write ?array OutputFields
+ * @property-write string IsExpanded
  */
-class CBPReadDataStorageActivity extends BaseActivity
+class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurableActivity
 {
 	use \Bitrix\Bizproc\Activity\Mixins\EntityFilter;
 
@@ -52,6 +53,7 @@ class CBPReadDataStorageActivity extends BaseActivity
 			'ReturnFieldsByStorageCode' => [],
 			'ItemId' => 0,
 			'ReturnMode' => self::RETURN_MODE_SINGLE,
+			'IsExpanded' => 'Y',
 
 			// return
 			'OutputFields' => null,
@@ -105,7 +107,8 @@ class CBPReadDataStorageActivity extends BaseActivity
 		$item = $provider->getItems([
 			'filter' => $filter,
 			'select' => ['ID'],
-			'order' => ['CREATED_TIME' => 'DESC'],
+			'order' => ['ID' => 'DESC'],
+			'limit' => 1,
 		])?->getFirstCollectionItem();
 
 		return $item ? $item->getId() : 0;
@@ -552,8 +555,17 @@ class CBPReadDataStorageActivity extends BaseActivity
 		return $systemFields;
 	}
 
-	public static function getPropertiesDialogMap(?\Bitrix\Bizproc\Activity\PropertiesDialog $dialog = null): array
+	public static function getPropertiesDialogMap(?PropertiesDialog $dialog = null): array
 	{
+		return static::getPropertiesMap([]);
+	}
+
+	public static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		$dynamicFilterFields = $context['Properties']['DynamicFilterFields'] ?? null;
+		$returnFields = $context['Properties']['ReturnFields'] ?? null;
+		$returnFieldsByStorageCode = $context['Properties']['return_fields_by_storage_code'] ?? null;
+
 		$filteringFieldsMap = [
 			0 => array_values(static::getFilteringFieldsMap(0))
 		];
@@ -570,8 +582,14 @@ class CBPReadDataStorageActivity extends BaseActivity
 			'StorageId' => [
 				'Name' => Loc::getMessage('BIZPROC_SRA_STORAGE_ID_PROPERTY'),
 				'FieldName' => 'storage_id',
-				'Type' => FieldType::SELECT,
-				'Options' => $storages,
+				'Type' => FieldType::ENTITYSELECTOR,
+				'Settings' => [
+					'entity' => ['id' => 'bizproc-storage'],
+					'dialogOptions' => [
+						'width' => 445,
+						'height' => 300,
+					],
+				],
 				'Required' => false,
 				'AllowSelection' => false,
 			],
@@ -595,6 +613,32 @@ class CBPReadDataStorageActivity extends BaseActivity
 				'AllowSelection' => false,
 				'Default' => self::RETURN_MODE_SINGLE,
 			],
+			'DynamicFilterFields' => [
+				'Name' => Loc::getMessage('BIZPROC_SRA_FILTER_FIELDS_PROPERTY'),
+				'FieldName' => 'filter_fields',
+				'Type' => \Bitrix\Bizproc\FieldType::CUSTOM,
+				'Required' => false,
+				'AllowSelection' => true,
+				'CustomType' => 'filterFields',
+				'Options' => [
+					'documentType' => \Bitrix\Bizproc\Public\Entity\Document\Workflow::getComplexType(),
+					'filteringFieldsPrefix' => 'filter_fields_',
+					'filterFieldsMap' => $filteringFieldsMap,
+					'conditions' => $dynamicFilterFields,
+					'collapsedCaption' => Loc::getMessage('BIZPROC_SRA_FILTER_FIELDS_COLLAPSED_TEXT'),
+					'returnFieldsIds' => $returnFields,
+					'returnFieldsMap' => $returnFieldsMap,
+				]
+			],
+			'IsExpanded' => [
+				'Name' => '',
+				'FieldName' => 'is_expanded',
+				'Type' => FieldType::STRING,
+				'Required' => false,
+				'AllowSelection' => false,
+				'Hidden' => true,
+				'Default' => 'Y',
+			],
 			'ReturnFields' => [
 				'Name' => Loc::getMessage('BIZPROC_SRA_RETURN_FIELDS_SELECTION'),
 				'FieldName' => 'return_fields',
@@ -603,9 +647,6 @@ class CBPReadDataStorageActivity extends BaseActivity
 				'Multiple' => true,
 				'Required' => false,
 				'Map' => $returnFieldsMap,
-				'Getter' => function($dialog, $property, $currentActivity, $compatible) {
-					return $currentActivity['Properties']['ReturnFields'];
-				},
 				'AllowSelection' => false,
 			],
 			'ReturnFieldsByStorageCode' => [
@@ -615,14 +656,6 @@ class CBPReadDataStorageActivity extends BaseActivity
 				'Multiple' => true,
 				'Required' => false,
 				'AllowSelection' => true,
-			],
-			'DynamicFilterFields' => [
-				'Name' => Loc::getMessage('BIZPROC_SRA_FILTER_FIELDS_PROPERTY'),
-				'FieldName' => 'filter_fields',
-				'Map' => $filteringFieldsMap,
-				'Getter' => function($dialog, $property, $currentActivity, $compatible) {
-					return $currentActivity['Properties']['DynamicFilterFields'];
-				},
 			],
 		];
 	}

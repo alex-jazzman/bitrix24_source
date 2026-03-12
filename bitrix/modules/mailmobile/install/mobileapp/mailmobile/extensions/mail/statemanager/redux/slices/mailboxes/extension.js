@@ -2,8 +2,8 @@
  * @module mail/statemanager/redux/slices/mailboxes
  */
 jn.define('mail/statemanager/redux/slices/mailboxes', (require, exports, module) => {
-
 	const { createSlice } = require('statemanager/redux/toolkit');
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const { sliceName, mailboxesListAdapter } = require('mail/statemanager/redux/slices/mailboxes/meta');
 	const { MailboxModel } = require('mail/statemanager/redux/slices/mailboxes/model/mailbox');
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
@@ -14,13 +14,16 @@ jn.define('mail/statemanager/redux/slices/mailboxes', (require, exports, module)
 		return mailboxes.map((mailbox) => MailboxModel.prepareReduxMailboxFromServer(mailbox));
 	};
 
+	const defaultState = {
+		...mailboxesListAdapter.getInitialState(),
+		currentMailboxId: null,
+		startEmailSender: null,
+	};
+	const initialState = StateCache.getReducerState(sliceName, defaultState);
+
 	const mailboxesSlice = createSlice({
 		name: sliceName,
-		initialState: {
-			...mailboxesListAdapter.getInitialState(),
-			currentMailboxId: null,
-			startEmailSender: null,
-		},
+		initialState,
 		reducers: {
 			mailboxesAdded: {
 				reducer: mailboxesListAdapter.addMany,

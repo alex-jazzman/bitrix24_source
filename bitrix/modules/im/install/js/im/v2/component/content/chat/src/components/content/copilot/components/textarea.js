@@ -11,6 +11,10 @@ export const CopilotTextarea = {
 			type: String,
 			required: true,
 		},
+		isFileUploadEnabled: {
+			type: Boolean,
+			required: true,
+		},
 	},
 	methods: {
 		loc(phraseCode: string): string
@@ -24,7 +28,7 @@ export const CopilotTextarea = {
 			:placeholder="loc('IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER')"
 			:withMarket="false"
 			:withEdit="false"
-			:withUploadMenu="false"
+			:withUploadMenu="isFileUploadEnabled"
 			:withSmileSelector="false"
 		>
 			<template #bottom-panel-buttons>

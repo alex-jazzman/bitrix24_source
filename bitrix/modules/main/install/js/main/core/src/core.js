@@ -19,6 +19,7 @@ import ZIndexManager from './lib/z-index/z-index-manager';
 import Collections from './lib/collections';
 import { Easing } from './lib/animation/easing';
 import { LocalStorage, localStorage } from './lib/local-storage';
+import { Page } from './lib/page';
 
 export {
 	Type,
@@ -41,6 +42,7 @@ export {
 	Easing,
 	LocalStorage,
 	localStorage,
+	Page,
 };
 
 export * from './core-compatibility';

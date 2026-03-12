@@ -11,6 +11,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Emoji;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -25,6 +26,7 @@ class CBPTasksExpiredTrigger extends Activity\BaseTrigger
 	private const RETURN_PARAM_TASK_TITLE = 'TASK_TITLE';
 	private const RETURN_PARAM_TASK_CREATED_DATE = 'TASK_CREATED_DATE';
 	private const RETURN_PARAM_TASK_RESPONSIBLE = 'TASK_RESPONSIBLE';
+	private const RETURN_PARAM_TASK_URL = 'TASK_URL';
 	private const FIELD_TASK_ID = 'ID';
 	private const FIELD_TASK_TITLE = 'TITLE';
 	private const FIELD_TASK_CREATED_DATE = 'CREATED_DATE';
@@ -59,6 +61,8 @@ class CBPTasksExpiredTrigger extends Activity\BaseTrigger
 			$this->{self::RETURN_PARAM_TASK_RESPONSIBLE} = 'user_'.$taskResponsibleId;
 		}
 
+		$this->{self::RETURN_PARAM_TASK_URL} = $this->makeTaskUrl($taskId);
+
 		return CBPActivityExecutionStatus::Closed;
 	}
 
@@ -71,6 +75,7 @@ class CBPTasksExpiredTrigger extends Activity\BaseTrigger
 			self::RETURN_PARAM_TASK_TITLE => null,
 			self::RETURN_PARAM_TASK_CREATED_DATE => null,
 			self::RETURN_PARAM_TASK_RESPONSIBLE => null,
+			self::RETURN_PARAM_TASK_URL => null,
 		];
 
 		$this->setPropertiesTypes([
@@ -85,6 +90,9 @@ class CBPTasksExpiredTrigger extends Activity\BaseTrigger
 			],
 			self::RETURN_PARAM_TASK_RESPONSIBLE => [
 				'Type' => FieldType::USER
+			],
+			self::RETURN_PARAM_TASK_URL => [
+				'Type' => FieldType::STRING,
 			],
 		]);
 	}
@@ -253,5 +261,25 @@ class CBPTasksExpiredTrigger extends Activity\BaseTrigger
 	protected static function getModuleId(): ?string
 	{
 		return 'tasks';
+	}
+
+	private function makeTaskUrl(int $taskId): ?string
+	{
+		if ($taskId <= 0 || !Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$path = TaskPathMaker::getPath([
+			'group_id' => (int)$this->{self::PARAM_PROJECT_ID},
+			'task_id' => $taskId,
+		]);
+
+		if (empty($path))
+		{
+			return null;
+		}
+
+		return '/' . ltrim($path, '/');
 	}
 }

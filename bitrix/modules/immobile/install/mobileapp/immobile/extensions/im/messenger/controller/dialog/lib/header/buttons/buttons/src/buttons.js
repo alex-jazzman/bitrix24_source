@@ -4,6 +4,8 @@
 jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (require, exports, module) => {
 	const { isOnline } = require('device/connection');
 
+	const { Type } = require('type');
+
 	const {
 		Analytics,
 		UserRole,
@@ -231,30 +233,26 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (
 				return [];
 			}
 
-			let isUserSubscribed = false;
+			const commentInfo = this.store.getters['commentModel/getByDialogId'](this.dialogId);
+			if (Type.isPlainObject(commentInfo))
+			{
+				return commentInfo.isUserSubscribed
+					? [SubscribedToCommentsButton]
+					: [UnsubscribedFromCommentsButton]
+				;
+			}
 
+			let isUserSubscribed = false;
 			const messageModel = this.store.getters['messagesModel/getById'](dialog.parentMessageId);
 			if ('id' in messageModel)
 			{
-				const commentInfo = this.store.getters['commentModel/getByMessageId'](dialog.parentMessageId);
-
-				if (commentInfo)
-				{
-					isUserSubscribed = commentInfo.isUserSubscribed;
-				}
-
-				if (!commentInfo && messageModel.authorId === serviceLocator.get('core').getUserId())
-				{
-					isUserSubscribed = true;
-				}
+				isUserSubscribed = messageModel.authorId === serviceLocator.get('core').getUserId();
 			}
 
-			if (!isUserSubscribed)
-			{
-				return [UnsubscribedFromCommentsButton];
-			}
-
-			return [SubscribedToCommentsButton];
+			return isUserSubscribed
+				? [SubscribedToCommentsButton]
+				: [UnsubscribedFromCommentsButton]
+			;
 		}
 
 		/**

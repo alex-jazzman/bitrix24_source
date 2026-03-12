@@ -124,7 +124,7 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 						return counterState.parentChatId === parentChatId;
 					})
 					.reduce((counter, counterState) => {
-						return counter + (counterState.counter > 0 ? 1 : 0);
+						return counter + (counterState.counter || 0);
 					}, 0)
 				;
 			},

@@ -12,6 +12,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 	const {
 		FileStatus,
 		FileType,
+		FileImageType,
 		RestMethod,
 		ErrorCode,
 		SubTitleIconType,
@@ -263,7 +264,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		async #addFileToModelByTask(taskWithFile)
 		{
 			const { taskId, file } = taskWithFile.fileData;
-			const { params } = taskWithFile.task;
+			const { params, controllerOptions } = taskWithFile.task;
 
 			const fileType = getFileTypeByExtension(file.extension.toLowerCase());
 			const previewData = {};
@@ -274,7 +275,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 					width: file.width,
 					height: file.height,
 				};
-				urlShow = file.previewUrl;
+				urlShow = file.extension.toLowerCase() === FileImageType.gif ? file.url : file.previewUrl;
 			}
 
 			if (fileType === FileType.video)
@@ -287,6 +288,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 			}
 
 			const dialog = this.getDialog(params.dialogId);
+			const status = controllerOptions.folderId === 0 ? FileStatus.error : FileStatus.upload;
 			const fields = {
 				id: taskId,
 				templateId: taskId,
@@ -297,7 +299,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 				type: fileType,
 				extension: file.extension,
 				size: file.size,
-				status: FileStatus.upload,
+				status,
 				progress: 0,
 				authorName: this.getCurrentUser()?.name,
 				urlPreview: file.previewUrl,
@@ -850,7 +852,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 
 			const filesModel = this.store.getters['filesModel/getById'](temporaryFileId);
 
-			return  Boolean(filesModel.isTranscribable);
+			return Boolean(filesModel?.isTranscribable);
 		}
 
 		/**
@@ -866,7 +868,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 
 			const filesModel = this.store.getters['filesModel/getById'](temporaryFileId);
 
-			return  Boolean(filesModel.isVoiceNote);
+			return Boolean(filesModel?.isVoiceNote);
 		}
 
 		/**

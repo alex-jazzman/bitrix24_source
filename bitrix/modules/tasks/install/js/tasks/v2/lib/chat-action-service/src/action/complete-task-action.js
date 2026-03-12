@@ -1,6 +1,6 @@
 import { Loc } from 'main.core';
 
-import { ChatAction, Model } from 'tasks.v2.const';
+import { ChatAction } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { statusService } from 'tasks.v2.provider.service.status-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
@@ -41,25 +41,9 @@ class CompleteTaskAction extends BaseAction
 		return task && task.rights?.complete === true;
 	}
 
-	isRequiredResult(payload: ActionPayload): boolean
-	{
-		const task = taskService.getStoreTask(payload.taskId);
-
-		return task
-			&& task.requireResult === true
-			&& this.#currentUserId !== task.creatorId
-			&& !resultService.hasOpenedResults(payload.taskId)
-		;
-	}
-
 	#showAccessDeniedHint(payload: ActionPayload): void
 	{
 		void chatHint.show(Loc.getMessage('TASKS_V2_CHAT_ACTION_COMPLETE_TASK_NO_PERMISSION'), payload);
-	}
-
-	get #currentUserId(): number
-	{
-		return this.$store.getters[`${Model.Interface}/currentUserId`];
 	}
 
 	get $store(): Store

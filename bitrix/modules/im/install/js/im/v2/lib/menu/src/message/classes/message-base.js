@@ -115,7 +115,7 @@ export class MessageMenu extends BaseMenu
 
 	getSelectItem(): ?MenuItemOptions
 	{
-		if (this.#isDeletedMessage() || !this.#isRealMessage())
+		if (this.isDeletedMessage() || !this.isRealMessage())
 		{
 			return null;
 		}
@@ -153,7 +153,7 @@ export class MessageMenu extends BaseMenu
 
 	getForwardItem(): ?MenuItemOptions
 	{
-		if (this.#isDeletedMessage() || !this.#isRealMessage())
+		if (this.isDeletedMessage() || !this.isRealMessage())
 		{
 			return null;
 		}
@@ -173,7 +173,7 @@ export class MessageMenu extends BaseMenu
 
 	getCopyItem(): ?MenuItemOptions
 	{
-		if (this.#isDeletedMessage() || this.context.text.trim().length === 0)
+		if (this.isDeletedMessage() || this.context.text.trim().length === 0)
 		{
 			return null;
 		}
@@ -249,7 +249,7 @@ export class MessageMenu extends BaseMenu
 			this.context.dialogId,
 		);
 
-		if (this.#isDeletedMessage() || !canPin)
+		if (this.isDeletedMessage() || !canPin)
 		{
 			return null;
 		}
@@ -290,7 +290,7 @@ export class MessageMenu extends BaseMenu
 
 	getFavoriteItem(): MenuItemOptions
 	{
-		if (this.#isDeletedMessage())
+		if (this.isDeletedMessage())
 		{
 			return null;
 		}
@@ -328,7 +328,7 @@ export class MessageMenu extends BaseMenu
 
 	getMarkItem(): ?MenuItemOptions
 	{
-		const canUnread = this.context.viewed && !this.#isOwnMessage();
+		const canUnread = this.context.viewed && !this.isOwnMessage();
 
 		const dialog: ImModelChat = this.store.getters['chats/getByChatId'](this.context.chatId);
 		const isMarked = this.context.id === dialog.markedId;
@@ -352,7 +352,7 @@ export class MessageMenu extends BaseMenu
 
 	getCreateTaskItem(): ?MenuItemOptions
 	{
-		if (this.#isDeletedMessage())
+		if (this.isDeletedMessage() || this.#isStickerMessage())
 		{
 			return null;
 		}
@@ -372,7 +372,7 @@ export class MessageMenu extends BaseMenu
 
 	getCreateMeetingItem(): ?MenuItemOptions
 	{
-		if (this.#isDeletedMessage())
+		if (this.isDeletedMessage() || this.#isStickerMessage())
 		{
 			return null;
 		}
@@ -419,7 +419,7 @@ export class MessageMenu extends BaseMenu
 			return null;
 		}
 
-		if (!this.#canSendMessage())
+		if (!this.canSendMessage() || this.isDeletedMessage())
 		{
 			return null;
 		}
@@ -455,7 +455,7 @@ export class MessageMenu extends BaseMenu
 
 	getDeleteItem(): ?MenuItemOptions
 	{
-		if (this.#isDeletedMessage())
+		if (this.isDeletedMessage())
 		{
 			return null;
 		}
@@ -465,7 +465,8 @@ export class MessageMenu extends BaseMenu
 			ActionByRole.deleteOthersMessage,
 			this.context.dialogId,
 		);
-		if (!this.#isOwnMessage() && !canDeleteOthersMessage)
+
+		if (!this.isOwnMessage() && !canDeleteOthersMessage)
 		{
 			return null;
 		}
@@ -579,22 +580,44 @@ export class MessageMenu extends BaseMenu
 		];
 	}
 
+	isOwnMessage(): boolean
+	{
+		return this.context.authorId === Core.getUserId();
+	}
+
+	isDeletedMessage(): boolean
+	{
+		return this.context.isDeleted;
+	}
+
+	isRealMessage(): boolean
+	{
+		return this.store.getters['messages/isRealMessage'](this.context.id);
+	}
+
+	canSendMessage(): boolean
+	{
+		const dialog = Core.getStore().getters['chats/get'](this.context.dialogId, true);
+
+		if (!dialog.isTextareaEnabled)
+		{
+			return false;
+		}
+
+		return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.send, this.context.dialogId);
+	}
+
+	#isStickerMessage(): boolean
+	{
+		return this.store.getters['stickers/messages/isSticker'](this.context.id);
+	}
+
 	#needNestedMenu(additionalItems: MenuItemOptions[]): boolean
 	{
 		const NESTED_MENU_MIN_ITEMS = 3;
 		const menuItems = additionalItems.filter((item) => item !== null);
 
 		return menuItems.length >= NESTED_MENU_MIN_ITEMS;
-	}
-
-	#isOwnMessage(): boolean
-	{
-		return this.context.authorId === Core.getUserId();
-	}
-
-	#isDeletedMessage(): boolean
-	{
-		return this.context.isDeleted;
 	}
 
 	#getFirstFile(): ?ImModelFile
@@ -605,11 +628,6 @@ export class MessageMenu extends BaseMenu
 	#isSingleFile(): boolean
 	{
 		return this.context.files.length === 1;
-	}
-
-	#isRealMessage(): boolean
-	{
-		return this.store.getters['messages/isRealMessage'](this.context.id);
 	}
 
 	async #onDelete()
@@ -698,17 +716,5 @@ export class MessageMenu extends BaseMenu
 		const pins = this.store.getters['messages/pin/getPinned'](this.context.chatId);
 
 		return pins.length >= this.maxPins;
-	}
-
-	#canSendMessage(): boolean
-	{
-		const dialog = Core.getStore().getters['chats/get'](this.context.dialogId, true);
-
-		if (!dialog.isTextareaEnabled)
-		{
-			return false;
-		}
-
-		return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.send, this.context.dialogId);
 	}
 }

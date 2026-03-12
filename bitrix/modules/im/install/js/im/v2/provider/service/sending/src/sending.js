@@ -5,8 +5,7 @@ import { Utils } from 'im.v2.lib.utils';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction, type RunActionError } from 'im.v2.lib.rest';
 import { Core } from 'im.v2.application.core';
-import { EventType, RestMethod, DialogScrollThreshold, ChatType, MessageComponent } from 'im.v2.const';
-import { StickerManager } from 'im.v2.lib.sticker-manager';
+import { EventType, RestMethod, DialogScrollThreshold, ChatType } from 'im.v2.const';
 import { MessageService } from 'im.v2.provider.service.message';
 
 import type { Store } from 'ui.vue3.vuex';
@@ -261,7 +260,6 @@ export class SendingService
 
 		return {
 			...this.#prepareMessage(params),
-			componentId: MessageComponent.sticker,
 			stickerParams,
 		};
 	}
@@ -299,6 +297,15 @@ export class SendingService
 	#addMessageToModels(message: PreparedMessage): Promise
 	{
 		this.#addMessageToRecent(message);
+		const hasMessageSticker: boolean = Type.isPlainObject(message.stickerParams);
+		if (hasMessageSticker)
+		{
+			void this.#store.dispatch('stickers/recent/update', message.stickerParams);
+			void this.#store.dispatch('stickers/messages/set', [{
+				messageId: message.temporaryId,
+				...message.stickerParams,
+			}]);
+		}
 
 		void this.#clearLastMessageViews(message.dialogId);
 
@@ -317,11 +324,6 @@ export class SendingService
 				id: message.dialogId,
 				fields: { messageId: message.temporaryId },
 			});
-		}
-
-		if (hasMessageSticker)
-		{
-			void this.#store.dispatch('messages/stickers/setStickersFromMessages', [message]);
 		}
 	}
 
@@ -357,11 +359,9 @@ export class SendingService
 
 		if (message.stickerParams)
 		{
-			fields.stickerParams = {
-				stickerId: message.stickerParams.id,
-				packId: message.stickerParams.packId,
-				packType: message.stickerParams.packType,
-			};
+			// todo: this is temp fix. We need to figure it out, why templateId is set only for text messages (see above)
+			fields.templateId = message.temporaryId;
+			fields.stickerParams = message.stickerParams;
 		}
 
 		const queryData = {
@@ -390,6 +390,12 @@ export class SendingService
 			id: dialogId,
 			fields: { messageId: newId },
 		});
+
+		const isSticker: boolean = this.#store.getters['stickers/messages/isSticker'](oldId);
+		if (isSticker)
+		{
+			void this.#store.dispatch('stickers/messages/updateWithId', { oldId, newId });
+		}
 	}
 
 	#updateMessageError(messageId: string)
@@ -499,13 +505,10 @@ export class SendingService
 				files: message.files,
 			};
 
-			const isSticker = this.#store.getters['messages/stickers/isStickerMessage'](messageId);
+			const isSticker = this.#store.getters['stickers/messages/isSticker'](messageId);
 			if (isSticker)
 			{
-				const stickerKey = this.#store.getters['messages/stickers/getStickerKeyByMessageId'](messageId) || '';
-				const { id, packId, packType } = new StickerManager().parseStickerKey(stickerKey);
-				const stickerData = this.#store.getters['messages/stickers/getStickerByMessageId'](messageId);
-				prepared.stickerParams = { id, packId, packType, ...stickerData };
+				prepared.stickerParams = this.#store.getters['stickers/messages/getStickerByMessageId'](messageId);
 			}
 
 			preparedMessages.push(prepared);

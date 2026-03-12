@@ -1,3 +1,0 @@
-<?php
-$MESS["REST_CONFIGURATION_SECTION_LABEL"] = "Бағыттарды таңдаңыз";
-$MESS["REST_CONFIGURATION_SECTION_LINK_NAME"] = "ӨТУ";

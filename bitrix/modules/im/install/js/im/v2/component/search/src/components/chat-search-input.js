@@ -1,3 +1,5 @@
+import { Loc } from 'main.core';
+
 import { EventType } from 'im.v2.const';
 import { SearchInput } from 'im.v2.component.elements.search-input';
 
@@ -24,6 +26,10 @@ export const ChatSearchInput = {
 			type: Boolean,
 			default: true,
 		},
+		placeholder: {
+			type: String,
+			default: Loc.getMessage('IM_SEARCH_INPUT_PLACEHOLDER_V2'),
+		},
 	},
 	emits: ['closeSearch', 'openSearch', 'updateSearch'],
 	methods: {
@@ -47,21 +53,16 @@ export const ChatSearchInput = {
 		{
 			return this.$Bitrix.eventEmitter;
 		},
-		loc(key: string): string
-		{
-			return this.$Bitrix.Loc.getMessage(key);
-		},
 	},
 	template: `
 		<SearchInput
-			:placeholder="loc('IM_SEARCH_INPUT_PLACEHOLDER_V2')"
+			:placeholder="placeholder"
 			:searchMode="searchMode"
 			:isLoading="isLoading"
 			:withLoader="true"
 			:delayForFocusOnStart="delayForFocusOnStart"
 			:withIcon="withIcon"
 			@inputFocus="onInputFocus"
-			@inputBlur="onClose"
 			@queryChange="onInputUpdate"
 			@keyPressed="onKeyPressed"
 			@close="onClose"

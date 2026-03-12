@@ -15,7 +15,6 @@ export const Feature = {
 	sidebarBriefs: 'sidebarBriefs',
 	zoomActive: 'zoomActive',
 	zoomAvailable: 'zoomAvailable',
-	giphyAvailable: 'giphyAvailable',
 	collabAvailable: 'collabAvailable',
 	collabCreationAvailable: 'collabCreationAvailable',
 	enabledCollabersInvitation: 'enabledCollabersInvitation',
@@ -25,9 +24,7 @@ export const Feature = {
 	documentSignAvailable: 'documentSignAvailable',
 	intranetInviteAvailable: 'intranetInviteAvailable',
 	voteCreationAvailable: 'voteCreationAvailable',
-	defaultTabCopilotAvailable: 'defaultTabCopilotAvailable',
 	messagesAutoDeleteEnabled: 'messagesAutoDeleteEnabled',
-	isNotificationsStandalone: 'isNotificationsStandalone',
 	isAIModelChangeAllowed: 'isCopilotSelectModelAvailable',
 	teamsInStructureAvailable: 'teamsInStructureAvailable',
 	isDesktopRedirectAvailable: 'isDesktopRedirectAvailable',
@@ -38,11 +35,10 @@ export const Feature = {
 	isTasksRecentListAvailable: 'isTasksRecentListAvailable',
 	unreadRecentModeAvailable: 'unreadRecentModeAvailable',
 	isCopilotReasoningAvailable: 'isCopilotReasoningAvailable',
-	reactionsV2Available: 'isMultipleReactionsAvailable',
 	aiAssistantMcpSelectorAvailable: 'aiAssistantMcpSelectorAvailable',
-	mentionAllAvailable: 'mentionAllAvailable',
 	videoNoteTranscriptionAvailable: 'videoNoteTranscriptionAvailable',
-	stickersAvailable: 'stickersAvailable',
+	chatSharedLinkAvailable: 'chatSharingLinkAvailable',
+	isCopilotFileUploadAvailable: 'isCopilotFileUploadAvailable',
 };
 
 export const FeatureManager = {

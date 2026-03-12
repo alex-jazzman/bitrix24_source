@@ -2,7 +2,7 @@ import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
 import type { TextEditor } from 'ui.text-editor';
 
-import { Endpoint } from 'tasks.v2.const';
+import { Endpoint, EventName } from 'tasks.v2.const';
 import { fileService } from 'tasks.v2.provider.service.file-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { entityTextEditor, type EntityTextEditor } from 'tasks.v2.component.entity-text';
@@ -163,14 +163,20 @@ export const DescriptionField = {
 
 			this.setSheetShown(true);
 		},
-		closeEditMode(): void
+		async closeEditMode(): void
 		{
-			void this.handleSave();
-
 			this.setSheetShown(false);
 
 			this.hasFilesChanges = false;
 			this.enableSaveButton = false;
+
+			await this.handleSave();
+		},
+		async addCheckListFromSheet(checklistString: string): void
+		{
+			await this.closeEditMode();
+
+			this.addCheckList(checklistString);
 		},
 		handleMiniFormButtonClick(): void
 		{
@@ -183,19 +189,33 @@ export const DescriptionField = {
 				this.isMiniFormShown = true;
 			}
 		},
-		handleTextChanges(): void
+		async handleTextChanges(): void
 		{
-			if (!this.isEdit)
+			if (this.isEdit)
 			{
-				void this.save();
-			}
+				if (this.hasFilesChanges)
+				{
+					return;
+				}
 
-			if (this.hasFilesChanges)
+				this.enableSaveButton = this.hasChanges();
+			}
+			else
 			{
-				return;
-			}
+				this.enableSaveButton = true;
 
-			this.enableSaveButton = this.hasChanges();
+				await this.save();
+			}
+		},
+		async addCheckListFromMiniForm(checklistString: string): void
+		{
+			await this.handleTextChanges();
+
+			this.addCheckList(checklistString);
+		},
+		addCheckList(checklistString: string): void
+		{
+			this.$bitrix.eventEmitter.emit(EventName.AddCheckListFromText, checklistString);
 		},
 		handleFilesChanges(): void
 		{
@@ -216,7 +236,11 @@ export const DescriptionField = {
 
 			this.isSaving = true;
 
+			taskService.setSilentErrorMode(true);
+
 			const result = await this.save();
+
+			taskService.setSilentErrorMode(false);
 
 			if (result?.[Endpoint.TaskDescriptionUpdate]?.length > 0)
 			{
@@ -227,6 +251,10 @@ export const DescriptionField = {
 				if (customData && customData.changed && customData.changedBy)
 				{
 					this.showDescriptionChangedAlert(customData.changedBy);
+				}
+				else
+				{
+					console.error('Error saving description:', errorData);
 				}
 			}
 
@@ -313,6 +341,7 @@ export const DescriptionField = {
 				@expand="expandDescription"
 				@change="handleTextChanges"
 				@filesChange="handleFilesChanges"
+				@addCheckList="addCheckListFromMiniForm"
 			/>
 			<DescriptionPreview
 				v-if="shouldShowDescriptionPreview"
@@ -327,6 +356,7 @@ export const DescriptionField = {
 			:sheetBindProps
 			:enableSaveButton
 			@close="closeEditMode"
+			@addCheckList="addCheckListFromSheet"
 		/>
 	`,
 };

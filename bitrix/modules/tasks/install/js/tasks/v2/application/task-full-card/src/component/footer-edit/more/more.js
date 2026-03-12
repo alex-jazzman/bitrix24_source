@@ -6,7 +6,7 @@ import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { TaskCard } from 'tasks.v2.application.task-card';
-import { EventName, GroupType, Model, TaskStatus } from 'tasks.v2.const';
+import { EventName, GroupType, Model, TaskStatus, Analytics } from 'tasks.v2.const';
 import { usersDialog } from 'tasks.v2.lib.user-selector-dialog';
 import { showLimit } from 'tasks.v2.lib.show-limit';
 import { idUtils } from 'tasks.v2.lib.id-utils';
@@ -34,6 +34,7 @@ export const More = {
 		taskId: {},
 		isTemplate: {},
 		settings: {},
+		analytics: {},
 	},
 	props: {
 		selectedButtons: {
@@ -99,10 +100,9 @@ export const More = {
 			{
 				return [
 					this.getCreateSubtaskForTemplate(),
-					// todo: Uncomment after creating template copy V2 API
-					// this.getCopyTemplate(),
+					this.getCopyTemplate(),
 					this.getDeleteTemplate(),
-				];
+				].filter((item) => item !== null);
 			}
 
 			const statuses = {
@@ -127,7 +127,6 @@ export const More = {
 				[TaskStatus.SupposedlyCompleted]: [
 					this.getFixItem(),
 					this.getDelegateItem(),
-					this.getDisapproveItem(),
 					this.getDeleteItem(),
 				],
 				[TaskStatus.Completed]: [
@@ -161,7 +160,7 @@ export const More = {
 				return null;
 			}
 
-			if (this.selectedButtonIds.has(ButtonId.Start))
+			if (this.selectedButtonIds.has(ButtonId.Start) || this.selectedButtonIds.has(ButtonId.Take))
 			{
 				return null;
 			}
@@ -223,28 +222,25 @@ export const More = {
 		},
 		getFixItem(): MenuItemOptions
 		{
-			if (!this.task.rights.renew)
+			if (!this.task.rights.renew && !this.task.rights.disapprove)
 			{
 				return null;
 			}
 
-			return {
-				title: this.loc('TASKS_V2_TASK_FULL_CARD_FIX'),
-				icon: Outline.UNDO,
-				onClick: (): void => this.waitStatus(statusService.renew(this.taskId)),
-			};
-		},
-		getDisapproveItem(): MenuItemOptions
-		{
-			if (!this.task.rights.disapprove)
-			{
-				return null;
-			}
+			const title = this.isCreator && !this.isResponsible
+				? this.loc('TASKS_V2_TASK_FULL_CARD_DISAPPROVE')
+				: this.loc('TASKS_V2_TASK_FULL_CARD_FIX')
+			;
+
+			const onClick = this.task.rights.renew
+				? (): void => this.waitStatus(statusService.renew(this.taskId))
+				: (): void => this.waitStatus(statusService.disapprove(this.taskId))
+			;
 
 			return {
-				title: this.loc('TASKS_V2_TASK_FULL_CARD_DISAPPROVE'),
+				title,
+				onClick,
 				icon: Outline.UNDO,
-				onClick: (): void => this.waitStatus(statusService.disapprove(this.taskId)),
 			};
 		},
 		getCompleteItem(): MenuItemOptions
@@ -262,7 +258,14 @@ export const More = {
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
 				icon: Outline.SENDED,
-				onClick: (): void => this.handleCompleteSelect(),
+				onClick: (): void => this.waitStatus(statusService.complete(
+					this.taskId,
+					{
+						context: this.analytics?.context ?? Analytics.Section.Tasks,
+						additionalContext: this.analytics?.additionalContext ?? Analytics.SubSection.TaskCard,
+						element: Analytics.Element.ContextMenu,
+					},
+				)),
 			};
 		},
 		getDelegateItem(): MenuItemOptions
@@ -279,13 +282,12 @@ export const More = {
 				onClick: (): void => this.handleDelegateSelect(),
 			};
 		},
-		handleClose(usersIds: number[]): void
+		handleClose(responsibleIds: number[]): void
 		{
-			void taskService.update(this.taskId, { responsibleIds: [usersIds[0] ?? 0] });
-		},
-		async handleCompleteSelect(): void
-		{
-			await this.waitStatus(statusService.complete(this.taskId));
+			if (responsibleIds.length === 1)
+			{
+				void taskService.update(this.taskId, { responsibleIds });
+			}
 		},
 		async handleDelegateSelect(): void
 		{

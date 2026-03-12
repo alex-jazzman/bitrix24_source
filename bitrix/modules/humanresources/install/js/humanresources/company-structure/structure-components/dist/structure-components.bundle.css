@@ -221,6 +221,46 @@
 	width: 100%;
 }
 
+.communication-dialog-stub-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	padding: 0 20px 30px;
+}
+
+.communication-dialog-stub-icon {
+	width: 112px;
+	min-height: 112px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='112' height='112' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle opacity='.12' cx='56' cy='56' r='56' fill='%23BDC1C6'/%3E%3Cg filter='url(%23filter0_d_12708_193331)'%3E%3Cpath d='M29.268 28.636a2.502 2.502 0 012.502-2.502h57.032a3.335 3.335 0 013.334 3.335v9.516a3.335 3.335 0 01-3.334 3.335H31.769a2.502 2.502 0 01-2.501-2.502V28.636z' fill='%23fff'/%3E%3C/g%3E%3Crect opacity='.5' x='33.695' y='30.395' width='18.595' height='2.556' rx='1.278' fill='%23BDC1C6'/%3E%3Crect x='33.695' y='35.504' width='35.419' height='2.556' rx='1.278' fill='%23525C69' fill-opacity='.1'/%3E%3Ccircle cx='18.823' cy='34.059' r='6.378' fill='%23C9CCD0'/%3E%3Cg filter='url(%23filter1_d_12708_193331)'%3E%3Cpath d='M41.664 49.164a2.502 2.502 0 012.502-2.502h57.032a3.335 3.335 0 013.335 3.335v9.517a3.335 3.335 0 01-3.335 3.335H44.166a2.502 2.502 0 01-2.502-2.502V49.164z' fill='%23fff'/%3E%3C/g%3E%3Crect opacity='.5' x='46.091' y='50.924' width='16.824' height='2.556' rx='1.278' fill='%23BDC1C6'/%3E%3Crect x='46.091' y='56.032' width='38.076' height='2.556' rx='1.278' fill='%23525C69' fill-opacity='.1'/%3E%3Ccircle cx='31.218' cy='54.586' r='6.375' fill='%23C9CCD0'/%3E%3Cg filter='url(%23filter2_d_12708_193331)'%3E%3Cpath d='M29.269 69.694a2.501 2.501 0 012.501-2.502h57.918a3.335 3.335 0 013.335 3.335v9.517a3.335 3.335 0 01-3.335 3.335H31.771a2.502 2.502 0 01-2.502-2.502V69.694z' fill='%23fff'/%3E%3C/g%3E%3Crect opacity='.5' x='33.696' y='71.452' width='15.053' height='2.556' rx='1.278' fill='%23BDC1C6'/%3E%3Crect x='33.696' y='76.563' width='38.076' height='2.556' rx='1.278' fill='%23525C69' fill-opacity='.1'/%3E%3Ccircle cx='18.822' cy='75.118' r='6.378' fill='%23C9CCD0'/%3E%3Cdefs%3E%3Cfilter id='filter0_d_12708_193331' x='26.577' y='24.452' width='68.249' height='21.567' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='1.009'/%3E%3CfeGaussianBlur stdDeviation='1.345'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0.423529 0 0 0 0 0.423529 0 0 0 0 0.423529 0 0 0 0.1 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_12708_193331'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_12708_193331' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_d_12708_193331' x='38.974' y='44.981' width='68.249' height='21.567' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='1.009'/%3E%3CfeGaussianBlur stdDeviation='1.345'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0.423529 0 0 0 0 0.423529 0 0 0 0 0.423529 0 0 0 0.1 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_12708_193331'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_12708_193331' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter2_d_12708_193331' x='26.579' y='65.511' width='69.135' height='21.567' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='1.009'/%3E%3CfeGaussianBlur stdDeviation='1.345'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0.423529 0 0 0 0 0.423529 0 0 0 0 0.423529 0 0 0 0.1 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_12708_193331'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_12708_193331' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+}
+
+.communication-dialog-stub-titles {
+	text-align: center;
+	margin-top: 12px;
+}
+
+.communication-dialog-stub-title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium, 500);
+	text-align: center;
+}
+
+.communication-dialog-stub-subtitle {
+	margin-top: 8px;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-g-content-grey-1);
+}
+
 .hr-department-detail-content__user-action-text-container {
 	display: flex;
 	flex-direction: column;

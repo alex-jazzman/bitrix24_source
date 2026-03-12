@@ -18,6 +18,7 @@ jn.define('tokens/src/corner', (require, exports, module) => {
 	class Corner extends BaseEnum
 	{}
 
+	Corner.XL2 = new Corner('XL2', AppTheme.styles.cornerXL2);
 	Corner.XL = new Corner('XL', AppTheme.styles.cornerXL);
 	Corner.L = new Corner('L', AppTheme.styles.cornerL);
 	Corner.M = new Corner('M', AppTheme.styles.cornerM);

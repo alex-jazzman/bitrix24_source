@@ -1,9 +1,9 @@
 import './block-layout.css';
 import { computed, toValue, useTemplateRef, useSlots, inject } from 'ui.vue3';
-import { useContextMenu } from 'ui.block-diagram';
+import { useContextMenu, useBlockDiagram } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
 import { IconButton } from '../../../../shared/ui';
-import type { Block } from '../../../../shared/types';
+import { ACTIVATION_STATUS } from '../../../../shared/constants';
 
 type BlockLayoutSetup = {
 	iconSet: { [string]: string };
@@ -12,6 +12,12 @@ type BlockLayoutSetup = {
 	topMenuClass: { [string]: boolean };
 	onOpenMoreMenu: (event: MouseEvent) => void;
 	onCloseMoreMenu: () => void;
+};
+
+const BLOCK_LAYOUT_CLASS_NAMES = {
+	base: 'editor-chart-block-layout',
+	hoverable: '--hoverable',
+	openedMenu: '--opened-menu',
 };
 
 const TOP_MENU_CLASS_NAMES = {
@@ -60,14 +66,14 @@ export const BlockLayout = {
 			type: Boolean,
 			default: false,
 		},
-	},
-	computed: {
-		activationIcon(): string
-		{
-			return this.block.activity.Activated === 'Y'
-				? this.iconSet.PAUSE_L
-				: this.iconSet.PLAY_L;
-		}
+		isActivationVisible: {
+			type: Boolean,
+			default: true,
+		},
+		hoverable: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	setup(props): BlockLayoutSetup
 	{
@@ -75,17 +81,33 @@ export const BlockLayout = {
 		const slots = useSlots();
 		const {
 			isOpen,
-			showContextMenu,
+			showMenu,
 			closeContextMenu,
-		} = useContextMenu(props.moreMenuItems);
+		} = useContextMenu();
+		const { highlitedBlockIds, isSelectionActive } = useBlockDiagram();
 
 		const isShowButtonMore = computed(() => props.moreMenuItems.length > 0);
+		const isGroupSelected = computed(() => {
+			return (toValue(highlitedBlockIds) || []).length > 1;
+		});
+		const blockLayoutClassNames = computed((): { [string]: boolean } => {
+			const isHoverEnabled = props.hoverable && !toValue(isSelectionActive) && !isGroupSelected;
 
-		const topMenuClassNames = computed(() => ({
-			[TOP_MENU_CLASS_NAMES.base]: true,
-			[TOP_MENU_CLASS_NAMES.show]: toValue(isOpen) || props.topMenuOpened,
-			[TOP_MENU_CLASS_NAMES.hide]: props.dragged || props.resized,
-		}));
+			return {
+				[BLOCK_LAYOUT_CLASS_NAMES.base]: true,
+				[BLOCK_LAYOUT_CLASS_NAMES.hoverable]: isHoverEnabled,
+			};
+		});
+
+		const topMenuClassNames = computed((): { [string]: boolean } => {
+			const isMenuHidden = props.dragged || props.resized || toValue(isSelectionActive) || toValue(isGroupSelected);
+
+			return {
+				[TOP_MENU_CLASS_NAMES.base]: true,
+				[TOP_MENU_CLASS_NAMES.show]: toValue(isOpen) || props.topMenuOpened,
+				[TOP_MENU_CLASS_NAMES.hide]: isMenuHidden,
+			};
+		});
 
 		const statusClassNames = computed((): { [string]: boolean } => ({
 			[STATUS_CLASS_NAMES.base]: true,
@@ -97,10 +119,13 @@ export const BlockLayout = {
 			const { top = 0, right = 0 } = toValue(buttonMore)
 				?.$el?.getBoundingClientRect() ?? {};
 
-			showContextMenu({
-				clientX: right + OFFSET_MORE_MENU_RIGHT,
-				clientY: top - OFFSET_MORE_MENU_TOP,
-			});
+			showMenu(
+				{
+					clientX: right + OFFSET_MORE_MENU_RIGHT,
+					clientY: top - OFFSET_MORE_MENU_TOP,
+				},
+				{ items: props.moreMenuItems },
+			);
 		}
 
 		const onToggleBlockActivation = inject('onToggleBlockActivation');
@@ -125,6 +150,7 @@ export const BlockLayout = {
 			iconSet: Outline,
 			isOpen,
 			isShowButtonMore,
+			blockLayoutClassNames,
 			topMenuClassNames,
 			statusClassNames,
 			onOpenMoreMenu,
@@ -132,9 +158,17 @@ export const BlockLayout = {
 			handleIconClick,
 		};
 	},
+	computed: {
+		activationIcon(): string
+		{
+			return this.block.activity.Activated === ACTIVATION_STATUS.ACTIVE
+				? this.iconSet.PAUSE_L
+				: this.iconSet.PLAY_L;
+		},
+	},
 	template: `
 		<div
-			class="editor-chart-block-layout"
+			:class="blockLayoutClassNames"
 			ref="editorBlockMenu"
 			@mousedown="onCloseMoreMenu"
 		>
@@ -155,6 +189,7 @@ export const BlockLayout = {
 						name="top-menu"
 					/>
 					<IconButton
+						v-if="isActivationVisible"
 						:icon-name="activationIcon"
 						@click="handleIconClick"
 					/>

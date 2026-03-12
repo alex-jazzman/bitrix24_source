@@ -73,11 +73,6 @@ class Complex extends \Bitrix\Main\Engine\JsonController
 		$nodeActionCollection = $complexActivityService
 			->getCorrespondingNodeActionActivityByName($complexActivityName)
 		;
-		if ($nodeActionCollection->isEmpty())
-		{
-			$this->addError(ErrorMessage::UNKNOWN_ERROR->getError());
-			return null;
-		}
 
 		$portRuleDtoDictionary = $this->extractRulePropertyValue($configurator, $activity);
 		if (!$portRuleDtoDictionary)
@@ -89,10 +84,12 @@ class Complex extends \Bitrix\Main\Engine\JsonController
 		$actionDictionary = [];
 		foreach ($nodeActionCollection as $nodeAction)
 		{
+			$properties = $nodeAction->get('PROPERTIES');
 			$actionDictionary[$nodeAction->getClass()] = new ActionDictionaryEntryDto(
 				id: $nodeAction->getClass(),
 				title: $nodeAction->getName(),
 				handlesDocument: $nodeAction->getNodeActionSettings()['HANDLES_DOCUMENT'] ?? false,
+				properties: is_array($properties) ? $properties : null,
 			);
 		}
 

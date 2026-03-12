@@ -402,6 +402,7 @@
 	font-size: var(--ui-font-size-sm);
 	color: var(--ui-color-link-primary-base);
 	cursor: pointer;
+	width: fit-content;
 }
 
 .tasks-flow__analytics-text {

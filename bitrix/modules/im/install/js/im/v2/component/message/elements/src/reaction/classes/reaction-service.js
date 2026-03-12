@@ -1,6 +1,5 @@
 import { Core } from 'im.v2.application.core';
 import { RestMethod } from 'im.v2.const';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction } from 'im.v2.lib.rest';
 
@@ -16,13 +15,10 @@ export class ReactionService
 			},
 		};
 
-		const canSetMultipleReactions = FeatureManager.isFeatureAvailable(Feature.reactionsV2Available);
-
 		void Core.getStore().dispatch('messages/reactions/setReaction', {
 			messageId,
 			reaction,
 			userId: Core.getUserId(),
-			withReplace: !canSetMultipleReactions,
 		});
 
 		runAction(RestMethod.imV2ChatMessageReactionAdd, payload)

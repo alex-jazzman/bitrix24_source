@@ -98,7 +98,7 @@ class ResultService
 		}
 	}
 
-	async add(taskId: number | string, result: ResultModel): Promise<void>
+	async add(taskId: number | string, result: ResultModel): Promise<boolean>
 	{
 		const tempId = result.id;
 
@@ -110,12 +110,14 @@ class ResultService
 
 			if (!idUtils.isReal(taskId))
 			{
-				return;
+				return true;
 			}
 
 			const data = await apiClient.post(Endpoint.TaskResultAdd, { results: [mapModelToDto(result)] });
 
 			await this.#handleResultAfterAdd(taskId, tempId, data[0]);
+
+			return true;
 		}
 		catch (error)
 		{
@@ -124,6 +126,8 @@ class ResultService
 			this.deleteResultFromTask(taskId, tempId);
 
 			await this.deleteStoreResult(tempId);
+
+			return false;
 		}
 	}
 
@@ -143,7 +147,9 @@ class ResultService
 
 		try
 		{
-			await apiClient.post(Endpoint.TaskResultUpdate, { result: mapModelToDto(result) });
+			const data = await apiClient.post(Endpoint.TaskResultUpdate, { result: mapModelToDto(result) });
+
+			void this.updateStoreResult(id, { fileIds: data.fileIds });
 		}
 		catch (error)
 		{
@@ -181,7 +187,7 @@ class ResultService
 		}
 	}
 
-	async addResultFromMessage(taskId: number, messageId: number, result: ResultModel): Promise<void>
+	async addResultFromMessage(taskId: number, messageId: number, result: ResultModel): Promise<boolean>
 	{
 		const tempId = result.id;
 
@@ -194,6 +200,8 @@ class ResultService
 			const data = await apiClient.post(Endpoint.TaskResultMessageAdd, { message: { id: messageId } });
 
 			await this.#handleResultAfterAdd(taskId, tempId, data);
+
+			return true;
 		}
 		catch (error)
 		{
@@ -202,6 +210,8 @@ class ResultService
 			this.deleteResultFromTask(taskId, tempId);
 
 			await this.deleteStoreResult(tempId);
+
+			return false;
 		}
 	}
 

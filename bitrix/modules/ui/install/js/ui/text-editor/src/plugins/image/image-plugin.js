@@ -1,5 +1,6 @@
 import { Event, Loc, Type } from 'main.core';
 import type { BBCodeElementNode } from 'ui.bbcode.model';
+import { Outline } from 'ui.icon-set.api.core';
 
 import {
 	type BBCodeConversion,
@@ -296,7 +297,7 @@ export class ImagePlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('image', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --incert-image"></span>');
+			button.setIcon(Outline.IMAGE);
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_IMAGE'));
 			button.disableInsideUnformatted();
 			button.subscribe('onClick', (): void => {

@@ -4,6 +4,7 @@ import { HeadlineSm } from 'ui.system.typography.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
+import { Core } from 'tasks.v2.core';
 import { BottomSheet } from 'tasks.v2.component.elements.bottom-sheet';
 import { UserAvatarList } from 'tasks.v2.component.elements.user-avatar-list';
 import { timeTrackingService } from 'tasks.v2.provider.service.time-tracking-service';
@@ -75,6 +76,12 @@ export const TimeTrackingSheet = {
 			contribution: [],
 		};
 	},
+	computed: {
+		isTimeTrackingLocked(): boolean
+		{
+			return !Core.getParams().restrictions.timeTracking.available;
+		},
+	},
 	async mounted(): Promise<void>
 	{
 		if (this.task.numberOfElapsedTimes > 0)
@@ -129,7 +136,7 @@ export const TimeTrackingSheet = {
 					<div class="tasks-task-time-tracking-sheet-header-icons">
 						<BIcon
 							ref="filterIcon"
-							v-if="task.rights.edit"
+							v-if="task.rights.edit && !isTimeTrackingLocked"
 							class="tasks-task-time-tracking-sheet-filter"
 							:name="Outline.FILTER_2_LINES"
 							hoverable

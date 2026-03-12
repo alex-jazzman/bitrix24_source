@@ -68,27 +68,6 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 					type = Analytics.Type.Dialog.aiAssistant;
 				}
 
-				let section = Analytics.Section.chatTab;
-				switch (MessengerParams.getComponentCode())
-				{
-					case ComponentCode.imChannelMessenger:
-					{
-						section = Analytics.Section.channelTab;
-						break;
-					}
-
-					case ComponentCode.imCopilotMessenger:
-					{
-						section = Analytics.Section.copilotTab;
-						break;
-					}
-
-					default:
-					{
-						section = Analytics.Section.chatTab;
-					}
-				}
-
 				const element = context === OpenDialogContextType.push ? Analytics.Element.push : null;
 
 				const analytics = new AnalyticsEvent()
@@ -96,7 +75,7 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 					.setCategory(category)
 					.setEvent(Analytics.Event.openExisting)
 					.setType(type)
-					.setSection(section)
+					.setSection(AnalyticsHelper.getSectionCode())
 					.setElement(element)
 					.setP2(AnalyticsHelper.getP2ByUserType())
 				;

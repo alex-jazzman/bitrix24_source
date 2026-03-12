@@ -216,6 +216,10 @@
 	color: #828B95;
 }
 
+.market-catalog__elements_no-updates-button {
+	margin-top: var(--ui-space-inline-xl);
+}
+
 @media (max-width: 1520px) {
 	.market-catalog__content {
 		--market-catalog__section-column: 4;

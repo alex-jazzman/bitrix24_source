@@ -1,2 +1,0 @@
-<?php
-$MESS["MARKET_COLLECTIONS_TOP_JS_SHOW_AS_A_LIST"] = "Усе";

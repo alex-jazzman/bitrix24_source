@@ -127,9 +127,20 @@ jn.define('user-profile/common-tab/src/block/about-me/view', (require, exports, 
 							readOnly: false,
 							allowFiles: true,
 							fileField: {
+								config: {
+									controller: {
+										endpoint: 'disk.uf.integration.diskUploaderController',
+									},
+									disk: {
+										isDiskModuleInstalled: true,
+										isWebDavModuleInstalled: true,
+										fileAttachPath: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${env.userId}`,
+									},
+									parentWidget: this.props.parentWidget,
+								},
 								value: files,
 							},
-							autoFocus: isEmpty,
+							autoFocus: true,
 							closeOnSave: true,
 							parentWidget: this.props.parentWidget,
 						},

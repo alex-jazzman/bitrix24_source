@@ -18,6 +18,7 @@
     padding-left: 4px;
     font: var(--ui-font-weight-medium) 12px/14px var(--ui-font-family-system);
 	color: var(--ui-color-palette-gray-70);
+	position: relative;
 }
 
 

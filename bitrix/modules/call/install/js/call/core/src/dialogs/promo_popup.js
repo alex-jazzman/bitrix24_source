@@ -17,6 +17,7 @@ export class PromoPopup
 		options = Type.isPlainObject(options) ? options : {};
 		this.promoCode = Type.isStringFilled(options.promoCode) ? options.promoCode : '';
 		this.bindElement = options.bindElement;
+		this.targetContainer = options.targetContainer || document.body;
 
 		this.elements = {
 			root: null
@@ -142,7 +143,7 @@ export class PromoPopup
 		this.popup = new Popup({
 			id: 'bx-call-promo-popup',
 			bindElement: this.bindElement,
-			targetContainer: document.body,
+			targetContainer: this.targetContainer,
 			content: this.elements.root,
 			cacheable: false,
 			closeIcon: true,
@@ -196,6 +197,7 @@ export class PromoPopup3D
 
 		this.callView = options.callView;
 		this.bindElement = options.bindElement;
+		this.targetContainer = options.targetContainer || document.body;
 
 		this.popup = null;
 
@@ -240,9 +242,9 @@ export class PromoPopup3D
 
 		this.popup = new Popup({
 			id: 'bx-call-promo-learning-popup',
-			bindElement: bindElement,
-			targetContainer: document.body,
-			content: content,
+			bindElement,
+			content,
+			targetContainer: this.targetContainer,
 			cacheable: false,
 			closeIcon: true,
 			autoHide: true,
@@ -303,10 +305,10 @@ export class PromoPopup3D
 		`;
 
 		this.popup = new Popup({
+			content,
 			id: 'bx-call-promo-popup-3d',
 			bindElement: this.bindElement,
-			targetContainer: document.body,
-			content: content,
+			targetContainer: this.targetContainer,
 			cacheable: false,
 			closeIcon: true,
 			overlay: {

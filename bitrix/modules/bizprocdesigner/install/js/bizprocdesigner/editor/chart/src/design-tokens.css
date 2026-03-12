@@ -1,3 +1,42 @@
 :root {
 	--designer-bp-grey-bg: #EBEEF3;
+
+	--designer-bp-ai-icons: #9C5CEF;
+	--designer-bp-ai-bg: #ECDFFF;
+
+	--designer-bp-storage-icons: #52BCBC;
+	--designer-bp-storage-bg: #E3F5ED;
+
+	--designer-bp-entities-icons: #47A1EB;
+	--designer-bp-entities-bg: #E5F1FF;
+
+	--designer-bp-employe-icons: #E08908;
+	--designer-bp-employe-bg: #FFEECC;
+
+	--designer-bp-communication-icons: #3BB911;
+	--designer-bp-communication-bg: #D8FFCB;
+
+	--designer-bp-technical-icons: #8D96A2;
+	--designer-bp-technical-bg: #EAEEF4;
+
+	--designer-bp-afiliate-icons: #B4B959;
+	--designer-bp-afiliate-bg: #F2F8D8;
+
+	--designer-bp-frame-grey-bg: rgba(242, 246, 247, 1);
+	--designer-bp-frame-grey-br: rgba(197, 207, 210, 1);
+
+	--designer-bp-frame-orange-bg: rgba(252, 248, 232, 1);
+	--designer-bp-frame-orange-br: rgba(232, 211, 123, 1);
+
+	--designer-bp-frame-blue-bg: rgba(231, 244, 255, 1);
+	--designer-bp-frame-blue-br: rgba(150, 205, 252, 1);
+
+	--designer-bp-frame-green-bg: rgba(221, 255, 239, 1);
+	--designer-bp-frame-green-br: rgba(92, 235, 167, 1);
+
+	--designer-bp-frame-purple-bg: rgba(246, 236, 255, 1);
+	--designer-bp-frame-purple-br: rgba(211, 177, 242, 1);
+
+	--designer-bp-frame-pink-bg: rgba(255, 232, 232, 1);
+	--designer-bp-frame-pink-br: rgba(250, 174, 174, 1);
 }

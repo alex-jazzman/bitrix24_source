@@ -58,6 +58,10 @@ this.BX.Call = this.BX.Call || {};
 	    microphonePermission.onchange = status => {
 	      this.getCurrentDeviceList();
 	    };
+	    return {
+	      cameraPermission,
+	      microphonePermission
+	    };
 	  }
 	  async getUserMedia(constraints) {
 	    return new Promise((resolve, reject) => {
@@ -69,6 +73,7 @@ this.BX.Call = this.BX.Call || {};
 	      navigator.mediaDevices.getUserMedia(constraints).then(stream => {
 	        resolve(stream);
 	      }).catch(err => {
+	        console.error(err);
 	        reject(err);
 	      });
 	    });

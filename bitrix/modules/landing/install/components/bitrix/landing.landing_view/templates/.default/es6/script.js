@@ -22,82 +22,168 @@ this.BX.Landing = this.BX.Landing || {};
 	  return Loc;
 	}();
 
+	/**
+	 * IMPORTANT:
+	 * For non-Apple devices, width and height values are calculated relatively:
+	 *  - mobile devices are calculated relative to Apple iPhone (6.3")
+	 *  - tablet devices are calculated relative to Apple iPad Pro (13")
+	 *
+	 * This is required to preserve correct visual proportions in preview mode.
+	 * A physically smaller device must never be rendered larger than a physically bigger one,
+	 * even if its native screen resolution is higher.
+	 *
+	 * Apple devices are used as reference points because their physical dimensions
+	 * are well-known and stable.
+	 */
 	var Devices = {
 	  defaultDevice: {
-	    tablet: 'iphone14pro',
-	    mobile: 'iphone14pro'
+	    tablet: 'iPad11',
+	    mobile: 'iPhone'
 	  },
 	  devices: {
 	    delimiter1: {
 	      code: 'delimiter',
 	      langCode: 'LANDING_PREVIEW_DEVICE_MOBILES'
 	    },
-	    iphone14pro: {
-	      name: 'iPhone 14 Pro',
-	      code: 'iphone14pro',
-	      className: '--iphone-14-pro',
-	      width: 393,
-	      height: 852
+	    // Apple iPhone 17 / Apple iPhone 17 Pro
+	    iPhone: {
+	      name: 'Apple iPhone (6.3")',
+	      code: 'iPhone',
+	      className: '--iphone',
+	      width: 1206 / 3,
+	      // 402
+	      height: 2622 / 3,
+	      // 874
+	      type: 'mobile'
 	    },
-	    iPhoneXR: {
-	      name: 'iPhone XR',
-	      code: 'iPhoneXR',
-	      className: '--iphone-xr',
-	      width: 414,
-	      height: 896
+	    // Apple iPhone 17 Air
+	    iPhoneAir: {
+	      name: 'Apple iPhone Air (6.5")',
+	      code: 'iPhoneAir',
+	      className: '--iphone-air',
+	      width: 1260 / 3,
+	      // 420
+	      height: 2736 / 3,
+	      // 912
+	      type: 'mobile'
 	    },
+	    // Apple iPhone 17 Pro Max
+	    iPhoneProMax: {
+	      name: 'Apple iPhone Pro Max (6.9")',
+	      code: 'iPhoneProMax',
+	      className: '--iphone-pro-max',
+	      width: 1320 / 3,
+	      // 440
+	      height: 2868 / 3,
+	      // 956
+	      type: 'mobile'
+	    },
+	    // Apple iPhone SE 4
 	    iPhoneSE: {
-	      name: 'iPhone SE',
+	      name: 'Apple iPhone SE (4.7")',
 	      code: 'iPhoneSE',
 	      className: '--iphone-se',
-	      width: 375,
-	      height: 667
+	      width: 1179 / 3,
+	      // 393
+	      height: 2532 / 3,
+	      // 844
+	      type: 'mobile'
 	    },
-	    SamsungGalaxyNote10: {
-	      name: 'Samsung Galaxy Note10',
-	      code: 'SamsungGalaxyNote10',
-	      className: '--samsung-galaxy-note10',
-	      width: 412,
-	      height: 896
+	    // Samsung Galaxy S26
+	    // Dimensions are calculated relatively to Apple iPhone (6.3")
+	    // to preserve correct visual proportions in preview
+	    samsungGalaxy: {
+	      name: 'Samsung Galaxy (6.3")',
+	      code: 'samsungGalaxy',
+	      className: '--samsung-galaxy',
+	      // width: 1080 / 3, // 360
+	      // height: 2340 / 3, // 780
+	      width: 1212 / 3,
+	      // 404
+	      height: 2616 / 3,
+	      // 872
+	      type: 'mobile'
 	    },
-	    SamsungGalaxyS8: {
-	      name: 'Samsung Galaxy S8+',
-	      code: 'SamsungGalaxyS8',
-	      className: '--samsung-galaxy-s8-plus',
-	      width: 360,
-	      height: 740
+	    // Samsung Galaxy S26 +
+	    // Dimensions are calculated relatively to Apple iPhone (6.3")
+	    // to preserve correct visual proportions in preview
+	    samsungGalaxyPlus: {
+	      name: 'Samsung Galaxy + (6.7")',
+	      code: 'samsungGalaxyPlus',
+	      className: '--samsung-galaxy-plus',
+	      // width: 1440 / 3, // 480
+	      // height: 3120 / 3, // 1040
+	      width: 1287 / 3,
+	      // 429
+	      height: 2781 / 3,
+	      // 927
+	      type: 'mobile'
 	    },
-	    GooglePixel4: {
-	      name: 'Google Pixel 4',
-	      code: 'GooglePixel4',
-	      className: '--google-pixel-4',
-	      width: 353,
-	      height: 745
+	    // Xiaomi Redmi Note 15 Pro
+	    // Dimensions are calculated relatively to Apple iPhone (6.3")
+	    // to preserve correct visual proportions in preview
+	    xiaomiRedmiNotePro: {
+	      name: 'Xiaomi Redmi Note Pro (6.8")',
+	      code: 'xiaomiRedmiNotePro',
+	      className: '--xiaomi-redmi-note-pro',
+	      // width: 1280 / 3, // 427
+	      // height: 2772 / 3, // 924
+	      width: 1308 / 3,
+	      // 436
+	      height: 2826 / 3,
+	      // 942
+	      type: 'mobile'
 	    },
 	    delimiter2: {
 	      code: 'delimiter',
 	      langCode: 'LANDING_PREVIEW_DEVICE_TABLETS'
 	    },
-	    iPad: {
-	      name: 'iPad',
-	      code: 'iPad',
-	      className: '--ipad',
-	      width: 810,
-	      height: 1080
-	    },
 	    iPadMini: {
-	      name: 'iPad Mini',
+	      name: 'Apple iPad Mini (8.3")',
 	      code: 'iPadMini',
 	      className: '--ipad-mini',
-	      width: 744,
-	      height: 1133
+	      width: 1488 / 2,
+	      // 744
+	      height: 2266 / 2,
+	      // 1133
+	      type: 'tablet'
 	    },
-	    SamsungGalaxyTabS8: {
-	      name: 'Samsung Galaxy Tab S8',
-	      code: 'SamsungGalaxyTabS8',
-	      className: '--samsung-galaxy-tab-s8',
-	      width: 800,
-	      height: 1280
+	    // Apple iPad 11‑inch
+	    iPad11: {
+	      name: 'Apple iPad (11")',
+	      code: 'iPad11',
+	      className: '--ipad-11',
+	      width: 1640 / 2,
+	      // 820
+	      height: 2360 / 2,
+	      // 1180
+	      type: 'tablet'
+	    },
+	    // Apple iPad Pro 13‑inch
+	    iPad13: {
+	      name: 'Apple iPad Pro (13")',
+	      code: 'iPad13',
+	      className: '--ipad-13',
+	      width: 2048 / 2,
+	      // 1024
+	      height: 2732 / 2,
+	      // 1366
+	      type: 'tablet'
+	    },
+	    // Galaxy Tab S11 Ultra
+	    // Dimensions are calculated relatively to Apple iPad Pro (13")
+	    // to preserve correct visual proportions in preview
+	    samsungGalaxyTabUltra: {
+	      name: 'Samsung Galaxy Tab Ultra (14.6")',
+	      code: 'samsungGalaxyTabUltra',
+	      className: '--samsung-galaxy-tab-ultra',
+	      // width: 1848 / 2.5, // 739
+	      // height: 2960 / 2.5, // 1184
+	      width: 2064 / 2,
+	      // 1032,
+	      height: 3304 / 2,
+	      // 1652
+	      type: 'tablet'
 	    }
 	  }
 	};
@@ -223,6 +309,7 @@ this.BX.Landing = this.BX.Landing || {};
 	var _setPreview = /*#__PURE__*/new WeakSet();
 	var _removePreview = /*#__PURE__*/new WeakSet();
 	var _setDevice = /*#__PURE__*/new WeakSet();
+	var _maxDeviceHeight = /*#__PURE__*/new WeakSet();
 	var _adjustPreviewScroll = /*#__PURE__*/new WeakSet();
 	var _buildPreview = /*#__PURE__*/new WeakSet();
 	var _onClickDeviceSelector = /*#__PURE__*/new WeakSet();
@@ -243,6 +330,7 @@ this.BX.Landing = this.BX.Landing || {};
 	  _classPrivateMethodInitSpec(this, _onClickDeviceSelector);
 	  _classPrivateMethodInitSpec(this, _buildPreview);
 	  _classPrivateMethodInitSpec(this, _adjustPreviewScroll);
+	  _classPrivateMethodInitSpec(this, _maxDeviceHeight);
 	  _classPrivateMethodInitSpec(this, _setDevice);
 	  _classPrivateMethodInitSpec(this, _removePreview);
 	  _classPrivateMethodInitSpec(this, _setPreview);
@@ -409,7 +497,7 @@ this.BX.Landing = this.BX.Landing || {};
 	  // remove old class within preview
 	  if (babelHelpers.classPrivateFieldGet(this, _currentDevice)) {
 	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldGet(this, _previewElement), babelHelpers.classPrivateFieldGet(this, _currentDevice).className);
-	    babelHelpers.classPrivateFieldGet(this, _previewElement).style.removeProperty("top");
+	    babelHelpers.classPrivateFieldGet(this, _previewElement).style.removeProperty('top');
 	  }
 	  babelHelpers.classPrivateFieldSet(this, _currentDevice, newDevice);
 	  babelHelpers.classPrivateFieldGet(this, _previewElement).querySelector('[data-role="device-name"]').innerHTML = newDevice.name;
@@ -422,7 +510,8 @@ this.BX.Landing = this.BX.Landing || {};
 
 	  // scale for device
 	  if (frame && frameWrapper && babelHelpers.classPrivateFieldGet(this, _currentDevice).width && babelHelpers.classPrivateFieldGet(this, _currentDevice).height) {
-	    var scale = window.innerHeight / (babelHelpers.classPrivateFieldGet(this, _currentDevice).height + 300);
+	    var maxDeviceHeight = _classPrivateMethodGet(this, _maxDeviceHeight, _maxDeviceHeight2).call(this, babelHelpers.classPrivateFieldGet(this, _currentDevice).type);
+	    var scale = window.innerHeight / (maxDeviceHeight + 300);
 	    var padding = parseInt(window.getComputedStyle(frameWrapper).padding);
 	    var param1 = babelHelpers.classPrivateFieldGet(this, _currentDevice).width;
 	    var param2 = babelHelpers.classPrivateFieldGet(this, _currentDevice).height;
@@ -430,13 +519,22 @@ this.BX.Landing = this.BX.Landing || {};
 	      param1 = babelHelpers.classPrivateFieldGet(this, _currentDevice).height;
 	      param2 = babelHelpers.classPrivateFieldGet(this, _currentDevice).width;
 	    }
-	    frame.style.setProperty("width", "".concat(param1, "px"));
-	    frame.style.setProperty("height", "".concat(param2, "px"));
-	    frameWrapper.style.setProperty("transform", "scale(".concat(scale, ")"));
-	    babelHelpers.classPrivateFieldGet(this, _previewElement).style.setProperty("width", "".concat((param1 + padding * 2) * scale, "px"));
-	    babelHelpers.classPrivateFieldGet(this, _previewElement).style.setProperty("height", "".concat((param2 + padding * 2) * scale, "px"));
+	    frame.style.setProperty('width', "".concat(param1, "px"));
+	    frame.style.setProperty('height', "".concat(param2, "px"));
+	    frameWrapper.style.setProperty('transform', "scale(".concat(scale, ")"));
+	    babelHelpers.classPrivateFieldGet(this, _previewElement).style.setProperty('width', "".concat((param1 + padding * 2) * scale, "px"));
+	    babelHelpers.classPrivateFieldGet(this, _previewElement).style.setProperty('height', "".concat((param2 + padding * 2) * scale, "px"));
 	  }
 	  main_core.Dom.addClass(babelHelpers.classPrivateFieldGet(this, _previewElement), babelHelpers.classPrivateFieldGet(this, _currentDevice).className);
+	}
+	function _maxDeviceHeight2(type) {
+	  var maxHeight = 0;
+	  Object.values(Devices.devices).forEach(function (device) {
+	    if (device.type === type && device.height) {
+	      maxHeight = Math.max(maxHeight, device.height);
+	    }
+	  });
+	  return maxHeight;
 	}
 	function _adjustPreviewScroll2() {
 	  var documentEditorFrame = babelHelpers.classPrivateFieldGet(this, _editorFrameWrapper).querySelector('iframe').contentWindow.document;

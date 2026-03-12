@@ -8,6 +8,8 @@ import { mapState, mapActions } from 'ui.vue3.pinia';
 
 import { useNodeSettingsStore } from '../../../../entities/node-settings';
 
+import { PORT_TYPES } from '../../../../shared/constants';
+
 // eslint-disable-next-line no-unused-vars
 import type { Block } from '../../../../shared/types';
 
@@ -25,11 +27,11 @@ export const SelectRule = {
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['currentRuleId']),
+		...mapState(useNodeSettingsStore, ['currentRuleId', 'ports']),
 		currentRuleTitle(): string
 		{
-			const ports = this.block.ports.input;
-			const { title } = ports.find((port) => port.id === this.currentRuleId);
+			const { title } = this.ports
+				.find((port) => port.type === PORT_TYPES.input && port.id === this.currentRuleId);
 
 			return title;
 		},
@@ -39,17 +41,19 @@ export const SelectRule = {
 		...mapActions(useNodeSettingsStore, ['setCurrentRuleId']),
 		getMenuItems(): Array<MenuItem>
 		{
-			return this.block.ports.input.map((port) => {
-				return {
-					id: port.id,
-					text: port.title,
-					dataset: { testId: `menuItemRule-${port.id}` },
-					onclick: () => {
-						this.setCurrentRuleId(port.id);
-						this.menu.close();
-					},
-				};
-			});
+			return this.ports
+				.filter((port) => port.type === PORT_TYPES.input && !port.isConnectionPort)
+				.map((port) => {
+					return {
+						id: port.id,
+						text: port.title,
+						dataset: { testId: `menuItemRule-${port.id}` },
+						onclick: () => {
+							this.setCurrentRuleId(port.id);
+							this.menu.close();
+						},
+					};
+				});
 		},
 		onShowMenu(): void
 		{

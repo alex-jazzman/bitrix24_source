@@ -1,5 +1,6 @@
 import { Loc } from 'main.core';
 import type { BBCodeElementNode } from 'ui.bbcode.model';
+import { Outline } from 'ui.icon-set.api.core';
 import { $findMatchingParent } from 'ui.lexical.utils';
 
 import Button from '../../toolbar/button';
@@ -219,7 +220,7 @@ export class ListPlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('bulleted-list', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --bulleted-list"></span>');
+			button.setIcon(Outline.BULLETED_LIST);
 			button.setBlockType('bullet');
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_BULLETED_LIST'));
 			button.subscribe('onClick', (): void => {
@@ -241,7 +242,7 @@ export class ListPlugin extends BasePlugin
 
 		this.getEditor().getComponentRegistry().register('numbered-list', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --numbered-list"></span>');
+			button.setIcon(Outline.NUMBERED_LIST);
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_NUMBERED_LIST'));
 			button.setBlockType('number');
 			button.subscribe('onClick', (): void => {

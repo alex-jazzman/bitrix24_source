@@ -93,7 +93,7 @@ if(!$USER->IsAuthorized())
 	{
 		$arResult["FORM_TYPE"] = "login";
 
-		$arVarExcl = array("USER_LOGIN"=>1, "USER_PASSWORD"=>1, "backurl"=>1, "auth_service_id"=>1, "TYPE"=>1, "AUTH_FORM"=>1);
+		$arVarExcl = array("USER_LOGIN"=>1, "USER_PASSWORD"=>1, "backurl"=>1, "auth_service_id"=>1, "TYPE"=>1, "AUTH_FORM"=>1, 'sessid' => 1);
 		$arResult["GET"] = array();
 		$arResult["POST"] = array();
 		foreach($_POST as $vname=>$vvalue)

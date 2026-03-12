@@ -14,9 +14,11 @@ BX.MailClientConfig.Edit = {
 	crm: {
 		integrationAvailable: false,
 		switcherChecked: false,
+		switcherDisabled: false,
 	},
 	isCrmIntegrationAvailable: false,
 	isCrmSwitcherChecked: false,
+	canEditCrmOptions: false,
 
 	init: function(params)
 	{
@@ -26,7 +28,9 @@ BX.MailClientConfig.Edit = {
 			this.smtp.switcherChecked = params.isSmtpSwitcherChecked || false;
 			this.smtp.switcherDisabled = params.isSmtpSwitcherDisabled || false;
 			this.crm.switcherChecked = params.isCrmSwitcherChecked || false;
+			this.crm.switcherDisabled = params.canEditCrmOptions || false;
 			this.crm.integrationAvailable = params.isCrmIntegrationAvailable || false;
+			this.canEditCrmOptions = params.canEditCrmOptions || false;
 			this.oauthUserIsEmpty = params.oauthUserIsEmpty || false;
 			this.isSuccessSyncStatus = null;
 			this.isOauthMode = params.isOauthMode || false;
@@ -36,6 +40,10 @@ BX.MailClientConfig.Edit = {
 			this.shareAccessValueContainerId = params.shareAccessValueContainerId || '';
 			this.shareAccessSelectorPreselectedIds = params.shareAccessSelectorPreselectedIds || [];
 			this.isShareAccessLocked = params.isShareAccessLocked || false;
+
+			this.crmQueueSelectorId = params.crmQueueSelectorId || '';
+			this.crmQueueValueContainerId = params.crmQueueValueContainerId || '';
+			this.crmQueueSelectorPreselectedIds = params.crmQueueSelectorPreselectedIds || [];
 
 			this.serviceName = params.serviceName || 'other';
 			this.isNewMailbox = (params.isNewMailbox === true);
@@ -65,6 +73,7 @@ BX.MailClientConfig.Edit = {
 					settingsMap: crmEntityList,
 					selectedOptionKey: defaultNewEntityInKey,
 					inputName: 'fields[crm_entity_in]',
+					disabled: this.canEditCrmOptions,
 				});
 				connectCrmAllowEntityInSelector.renderTo(connectCrmAllowEntityInSelectorWrapper);
 			}
@@ -77,6 +86,7 @@ BX.MailClientConfig.Edit = {
 					settingsMap: crmEntityList,
 					selectedOptionKey: defaultNewEntityOutKey,
 					inputName: 'fields[crm_entity_out]',
+					disabled: this.canEditCrmOptions,
 				});
 				connectCrmAllowEntityOutSelector.renderTo(connectCrmAllowEntityOutSelectorWrapper);
 			}
@@ -94,6 +104,7 @@ BX.MailClientConfig.Edit = {
 						height: 300,
 						enableSearch: true,
 					},
+					disabled: this.canEditCrmOptions,
 				});
 				connectCrmLeadSourceSelector.renderTo(connectCrmLeadSourceSelectorWrapper);
 			}
@@ -118,6 +129,7 @@ BX.MailClientConfig.Edit = {
 					settingsMap: crmSyncIntervals,
 					selectedOptionKey: defaultMaxCrmSyncKey,
 					inputName: 'fields[crm_max_age]',
+					disabled: this.canEditCrmOptions,
 				});
 				mailCrmMaxAgeSelector.renderTo(mailCrmMaxAgeSelectorWrapper);
 			}
@@ -167,6 +179,7 @@ BX.MailClientConfig.Edit = {
 		this.setSmtpSwitcher();
 		this.setCrmSwitcher();
 		this.initShareAccessSelector();
+		this.initCrmQueueSelector();
 	},
 
 	singleselect: function(input)
@@ -382,13 +395,16 @@ BX.MailClientConfig.Edit = {
 
 	setSmtpSwitcher()
 	{
-		this.setBlockSwitcher(
-			'mail-connect-smtp-settings-title',
-			'mail_connect_mb_server_smtp_switch',
-			'mail-connect-section-smtp-block',
-			this.smtp.switcherChecked,
-			this.smtp.switcherDisabled,
-		);
+		if (!this.smtp.switcherDisabled)
+		{
+			this.setBlockSwitcher(
+				'mail-connect-smtp-settings-title',
+				'mail_connect_mb_server_smtp_switch',
+				'mail-connect-section-smtp-block',
+				this.smtp.switcherChecked,
+				this.smtp.switcherDisabled,
+			);
+		}
 	},
 
 	setCrmSwitcher() {
@@ -402,6 +418,7 @@ BX.MailClientConfig.Edit = {
 			'mail_connect_mb_crm_switch',
 			'mail-connect-section-crm-block',
 			this.crm.switcherChecked,
+			this.crm.switcherDisabled,
 		);
 	},
 
@@ -475,6 +492,63 @@ BX.MailClientConfig.Edit = {
 		});
 
 		tagSelector.renderTo(ownerContainerNode);
+	},
+
+	initCrmQueueSelector()
+	{
+		const queueContainerNode = document.getElementById(this.crmQueueSelectorId);
+		if (!queueContainerNode)
+		{
+			return;
+		}
+
+		queueContainerNode.innerHTML = '';
+		const selectItem = () => {
+			const selectedItems = tagSelector.getDialog().getSelectedItems();
+			if (BX.type.isArray(selectedItems))
+			{
+				const result = selectedItems
+					.map((item) => {
+						return item.entityId === 'user' ? `U${item.id}` : null;
+					})
+					.filter((code) => code !== null);
+
+				const queueValueContainer = document.getElementById(this.crmQueueValueContainerId);
+				if (queueValueContainer)
+				{
+					queueValueContainer.value = JSON.stringify(result);
+				}
+			}
+		};
+
+		const tagSelector = new BX.UI.EntitySelector.TagSelector({
+			multiple: true,
+			dialogOptions: {
+				context: 'MAIL_CLIENT_CONFIG_CRM_QUEUE',
+				preselectedItems: this.crmQueueSelectorPreselectedIds,
+				entities: [
+					{
+						id: 'user',
+						options: {
+							inviteEmployeeLink: false,
+							intranetUsersOnly: true,
+						},
+					},
+				],
+				events: {
+					'Item:onSelect': selectItem,
+					'Item:onDeselect': selectItem,
+					onLoad: () => {
+						if (this.canEditCrmOptions)
+						{
+							tagSelector.lock();
+						}
+					},
+				},
+			},
+		});
+
+		tagSelector.renderTo(queueContainerNode);
 	},
 
 	/**

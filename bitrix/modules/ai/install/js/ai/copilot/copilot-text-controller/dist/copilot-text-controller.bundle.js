@@ -2312,7 +2312,10 @@ this.BX = this.BX || {};
 	    },
 	    errorCode: firstErrorCode,
 	    showSliderWithMsg: firstError == null ? void 0 : (_firstError$customDat = firstError.customData) == null ? void 0 : _firstError$customDat.showSliderWithMsg,
-	    sliderCode: firstError == null ? void 0 : (_firstError$customDat2 = firstError.customData) == null ? void 0 : _firstError$customDat2.sliderCode
+	    sliderCode: firstError == null ? void 0 : (_firstError$customDat2 = firstError.customData) == null ? void 0 : _firstError$customDat2.sliderCode,
+	    forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
+	    forceOption: firstError == null ? void 0 : firstError.customData,
+	    bindElement: babelHelpers.classPrivateFieldLooseBase(this, _inputField$2)[_inputField$2]
 	  });
 	}
 	function _initErrorMenu2() {

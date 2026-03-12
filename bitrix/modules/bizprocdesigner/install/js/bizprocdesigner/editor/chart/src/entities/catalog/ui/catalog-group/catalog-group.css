@@ -125,6 +125,9 @@
 }
 
 .editor-chart-catalog-group__items {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
 	width: 100%;
 	height: calc(100% - 50px);
 	overflow-y: scroll;

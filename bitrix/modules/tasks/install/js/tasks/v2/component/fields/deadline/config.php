@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/deadline.bundle.js',
 	'rel' => [
 		'main.core.events',
+		'ui.notification-manager',
 		'ui.vue3.directives.hint',
 		'tasks.v2.component.task-settings-popup',
 		'tasks.v2.component.elements.settings-label',

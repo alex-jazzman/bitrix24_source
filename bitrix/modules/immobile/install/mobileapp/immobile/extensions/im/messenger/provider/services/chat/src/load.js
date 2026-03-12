@@ -15,8 +15,8 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { runAction } = require('im/messenger/lib/rest');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { MessageContextCreator } = require('im/messenger/provider/services/lib/message-context-creator');
+	const { StickerDataProvider } = require('im/messenger/provider/data');
 	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 
 	const logger = getLogger('dialog--chat-service');
@@ -141,12 +141,13 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 						return response.memberEntities;
 					},
 				)
-				.catch((error) => logger.error(`${this.constructor.name}.restMemberEntitiesList.error:`, error))
+				.catch((error) => logger.error(`${this.constructor.name}.restMemberEntitiesList.error:`, error));
 		}
 
 		async requestChat(actionName, params)
 		{
-			const { dialogId } = params;
+			let { dialogId } = params;
+
 			logger.log('ChatLoadService.requestChat: request', actionName, params);
 
 			const actionResult = await runAction(actionName, { data: params })
@@ -159,10 +160,15 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 
 			logger.log('ChatLoadService.requestChat: response', actionName, params, actionResult);
 
-			await this.updateModels(actionResult);
+			const chatId = await this.updateModels(actionResult);
 
 			const { callInfo } = actionResult;
 			this.updateCallToken(callInfo.chatId, callInfo.token);
+
+			if (Type.isNil(dialogId))
+			{
+				dialogId = this.store.getters['dialoguesModel/getByChatId'](chatId).dialogId;
+			}
 
 			if (this.isDialogLoadedMarkNeeded(actionName))
 			{
@@ -214,6 +220,7 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 
 		/**
 		 * @private
+		 * @return {number}
 		 */
 		async updateModels(response)
 		{
@@ -231,12 +238,9 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 
 			void await this.store.dispatch('dialoguesModel/set', dialogList);
 
-			if (Feature.isMessengerV2Enabled)
-			{
-				void await this.store.dispatch('counterModel/setList', {
-					counterList: extractor.getCounterState(),
-				});
-			}
+			void await this.store.dispatch('counterModel/setList', {
+				counterList: extractor.getCounterState(),
+			});
 
 			const collabPromise = this.store.dispatch('dialoguesModel/collabModel/set', extractor.getCollabInfo());
 
@@ -244,6 +248,15 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
 				reactions: extractor.getReactions(),
 			});
+			const stickersPromise = this.store.dispatch('stickerPackModel/addStickers', {
+				stickers: extractor.getStickers(),
+			});
+
+			const stickerDataProvider = new StickerDataProvider();
+			const removeDeletedStickersPromise = stickerDataProvider.removeDeletedStickers([
+				...extractor.getMessages(),
+				...extractor.getMessagesToStore(),
+			], extractor.getStickers());
 
 			const commentPromise = this.updateCommentModel(extractor);
 
@@ -271,14 +284,11 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 				reactionPromise,
 				commentPromise,
 				collabPromise,
+				stickersPromise,
+				removeDeletedStickersPromise,
 			]);
 
 			await Promise.all(messagesPromise);
-
-			if (!Feature.isMessengerV2Enabled)
-			{
-				await this.updateCounters(dialogList);
-			}
 
 			return extractor.getChatId();
 		}

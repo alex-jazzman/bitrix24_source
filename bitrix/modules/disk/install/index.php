@@ -173,6 +173,12 @@ Class disk extends CModule
 
 		self::tryToEnableZipNginx();
 
+		CAgent::AddAgent(
+			name: 'Bitrix\Disk\Infrastructure\Agent\SwitchOnlyOfficeServersTypeAgent::run();',
+			module: 'disk',
+			interval: 300,
+		);
+
 		return true;
 	}
 
@@ -237,6 +243,11 @@ Class disk extends CModule
 		$eventManager->registerEventHandler('disk', 'OnRetrievingUserRights', 'disk', "\\Bitrix\\Disk\\Integration\\Collab\\CollabHandlers", 'onRetrievingUserRights');
 		$eventManager->registerEventHandler('disk', 'OnPreloadUserRights', 'disk', "\\Bitrix\\Disk\\Integration\\Collab\\CollabHandlers", 'onPreloadUserRights');
 		$eventManager->registerEventHandler('main', 'onPreviewRendererBuildList', 'disk', DocumentHandlersManager::class, 'additionalPreviewManagersList');
+		/** @see \Bitrix\Disk\Document\OnlyOffice\RestrictionManager::SAVE_SESSION_EVENT */
+		$eventManager->registerEventHandler('disk', 'OnSaveSessionInRestrictionLog', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleSessionCountChanges');
+		/** @see \Bitrix\Disk\Document\OnlyOffice\RestrictionManager::DELETE_SESSION_EVENT */
+		$eventManager->registerEventHandler('disk', 'OnDeleteSessionsFromRestrictionLog', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleSessionCountChanges');
+		$eventManager->registerEventHandler('baas', 'onServiceBalanceChanged', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleBalanceChanges');
 	}
 
 	function UnInstallDB($arParams = Array())
@@ -311,6 +322,9 @@ Class disk extends CModule
 		$eventManager->unRegisterEventHandler('disk', 'OnRetrievingUserRights', 'disk', "\\Bitrix\\Disk\\Integration\\Collab\\CollabHandlers", 'onRetrievingUserRights');
 		$eventManager->unRegisterEventHandler('disk', 'OnPreloadUserRights', 'disk', "\\Bitrix\\Disk\\Integration\\Collab\\CollabHandlers", 'onPreloadUserRights');
 		$eventManager->unRegisterEventHandler('main', 'onPreviewRendererBuildList', 'disk', DocumentHandlersManager::class, 'additionalPreviewManagersList');
+		$eventManager->unRegisterEventHandler('disk', 'OnSaveSessionInRestrictionLog', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleSessionCountChanges');
+		$eventManager->unRegisterEventHandler('disk', 'OnDeleteSessionsFromRestrictionLog', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleSessionCountChanges');
+		$eventManager->unRegisterEventHandler('baas', 'onServiceBalanceChanged', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleBalanceChanges');
 
 		UnRegisterModule("disk");
 

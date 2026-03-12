@@ -1,9 +1,0 @@
-<?php
-$MESS["DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK"] = "Публічний доступ";
-$MESS["DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK_MSGVER_1"] = "Для зовнішніх користувачів";
-$MESS["DISK_BOARDS_HEADER_BTN_SHARING_SHARE"] = "Запросити до редагування";
-$MESS["DISK_BOARDS_HEADER_BTN_SHARING_SHARE_MSGVER_1"] = "Лише для співробітників";
-$MESS["DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS"] = "Права доступу";
-$MESS["DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS_MSGVER_1"] = "Доступ за посиланням";
-$MESS["DISK_FLIPCHART_EDITOR_AUTOSAVE"] = "Автозбереження";
-$MESS["DISK_FLIPCHART_EDITOR_HEADER_BOARDS"] = "Дошки";

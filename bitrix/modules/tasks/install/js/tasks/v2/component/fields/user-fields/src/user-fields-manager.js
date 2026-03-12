@@ -159,6 +159,21 @@ class UserFieldsManager
 		return result;
 	}
 
+	correctDatetimeStringWithT(dateString: string, date: Date): Date
+	{
+		const offsetMatch = dateString.match(/([+-]\d{2}):(\d{2})$/);
+		const originalOffsetMinutes = offsetMatch
+			? parseInt(offsetMatch[1], 10) * 60
+				+ (parseInt(offsetMatch[1], 10) < 0 ? -1 : 1) * parseInt(offsetMatch[2], 10)
+			: 0
+		;
+		const timezoneOffset = originalOffsetMinutes + date.getTimezoneOffset();
+
+		date.setTime(date.getTime() + timezoneOffset * 60000);
+
+		return date;
+	}
+
 	#convertDatetimeValue(value: any): any
 	{
 		if (value === null || value === '')
@@ -193,10 +208,10 @@ class UserFieldsManager
 			return dateString;
 		}
 
-		date.setTime(date.getTime() + date.getTimezoneOffset() * 60000);
+		const newDate = this.correctDatetimeStringWithT(dateString, date);
 
 		const format = DateTimeFormat.getFormat('FORMAT_DATETIME');
-		const timestamp = date.getTime() / 1000;
+		const timestamp = newDate.getTime() / 1000;
 
 		return DateTimeFormat.format(format, timestamp);
 	}

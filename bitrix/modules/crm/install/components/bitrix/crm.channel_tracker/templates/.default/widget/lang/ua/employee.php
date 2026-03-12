@@ -1,4 +1,0 @@
-<?
-$MESS["CRM_CH_WGT_DATA_EMPLOYEE_M_4"] = "Станіслав";
-$MESS["CRM_CH_WGT_DATA_EMPLOYEE_WORK_POSITION"] = "менеджер";
-?>

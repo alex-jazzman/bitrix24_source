@@ -263,6 +263,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.isTeamsAvailable = false;
 	      this.isCollabsAvailable = false;
 	      this.isDeputyApprovesBPAvailable = false;
+	      this.departmentBPSettingsAvailable = false;
+	      this.areTeamReportSettingsAvailable = false;
+	      this.isDeputyGetReportsAvailable = false;
+	      this.areDepartmentReportsSettingsAvailable = false;
+	      this.areMultipleUsersSettingsAvailable = false;
 	      this.isInitialized = false;
 	      this.departmentChecker = new DepartmentPermissionChecker();
 	      this.teamChecker = new TeamPermissionChecker(this.departmentChecker, this.currentUserPermissions);
@@ -282,13 +287,21 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      teamsAvailable,
 	      collabsAvailable,
 	      deputyApprovesBP,
-	      departmentSettingsAvailable
+	      departmentBPSettingsAvailable,
+	      areTeamReportSettingsAvailable,
+	      isDeputyGetReportsAvailable,
+	      areDepartmentReportsSettingsAvailable,
+	      multipleUsersSettingsAvailable
 	    } = await chartAPI.getDictionary();
 	    this.currentUserPermissions = currentUserPermissions;
 	    this.isTeamsAvailable = teamsAvailable;
 	    this.isCollabsAvailable = collabsAvailable;
 	    this.isDeputyApprovesBPAvailable = deputyApprovesBP;
-	    this.isDepartmentSettingsAvailable = departmentSettingsAvailable;
+	    this.departmentBPSettingsAvailable = departmentBPSettingsAvailable;
+	    this.areTeamReportSettingsAvailable = areTeamReportSettingsAvailable;
+	    this.isDeputyGetReportsAvailable = isDeputyGetReportsAvailable;
+	    this.areDepartmentReportsSettingsAvailable = areDepartmentReportsSettingsAvailable;
+	    this.areMultipleUsersSettingsAvailable = multipleUsersSettingsAvailable;
 	    this.isInitialized = true;
 	  }
 	  hasPermission(action, entityId, minLevel = null) {
@@ -307,8 +320,20 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  checkDeputyApprovalBPAvailable() {
 	    return this.isDeputyApprovesBPAvailable;
 	  }
-	  checkDepartmentSettingsAvailable() {
-	    return this.isDepartmentSettingsAvailable;
+	  checkDepartmentBPSettingsAvailable() {
+	    return this.departmentBPSettingsAvailable;
+	  }
+	  checkTeamReportSettingsAvailable() {
+	    return this.areTeamReportSettingsAvailable;
+	  }
+	  checkDeputyGetReportsAvailable() {
+	    return this.isDeputyGetReportsAvailable;
+	  }
+	  checkDepartmentReportsSettingsAvailable() {
+	    return this.areDepartmentReportsSettingsAvailable;
+	  }
+	  checkMultipleUsersSettingsAvailable() {
+	    return this.areMultipleUsersSettingsAvailable;
 	  }
 	  hasPermissionOfAction(action) {
 	    const permissionLevel = this.currentUserPermissions[action];

@@ -1,0 +1,32 @@
+.editor-chart-toast-block-navigation-button {
+	display: flex;
+	height: 24px;
+	padding: 0 8px;
+	align-items: center;
+	border-radius: 123px;
+	border: 1px solid rgb(from var(--ui-color-base-8) r g b / 0.6);
+	cursor: pointer;
+	user-select: none;
+}
+
+.editor-chart-toast-block-navigation-button__title {
+	margin: 0 4px;
+}
+
+.editor-chart-toast-block-navigation-button__controls {
+	display: flex;
+	align-items: center;
+	justify-self: right;
+	gap: 2px;
+	margin-left: 6px;
+}
+
+.editor-chart-toast-block-navigation-button__controls__button {
+	all: unset;
+	display: flex;
+}
+
+.editor-chart-toast-block-navigation-button__controls__button.--disabled {
+	opacity: 0.5;
+	cursor: default;
+}

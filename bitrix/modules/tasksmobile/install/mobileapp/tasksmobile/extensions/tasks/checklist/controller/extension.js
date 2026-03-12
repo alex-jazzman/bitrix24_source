@@ -301,20 +301,27 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		}
 
 		/**
-		 * @private
 		 * @param {string | number} checklistId
 		 */
-		deleteChecklist(checklistId)
+		#deleteChecklist(checklistId)
+		{
+			this.#removeChecklistById(checklistId);
+			this.#removeFromWidgetMap(checklistId);
+		}
+
+		/**
+		 * @param checklistId
+		 */
+		#removeChecklistById(checklistId)
 		{
 			this.checklistsMap.delete(checklistId);
-			this.removeFromWidgetMap(checklistId);
 		}
 
 		/**
 		 * @private
 		 * @param {string | number} checklistId
 		 */
-		removeFromWidgetMap(checklistId)
+		#removeFromWidgetMap(checklistId)
 		{
 			this.currentOpenChecklistId = null;
 			this.widgetMap.delete(checklistId);
@@ -496,14 +503,26 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		 */
 		getChecklistRequestData()
 		{
+			let shouldAbort = false;
 			const requestData = [];
 
 			this.checklistsMap.forEach((checklist) => {
-				if (checklist?.getRootItem()?.hasDescendants())
+				const rootItem = checklist.getRootItem();
+				if (!rootItem.hasItemTitle() && rootItem?.hasDescendants())
+				{
+					shouldAbort = true;
+				}
+
+				if (rootItem?.hasDescendants())
 				{
 					requestData.push(checklist.getRequestData());
 				}
 			});
+
+			if (shouldAbort)
+			{
+				return null;
+			}
 
 			return requestData.flat();
 		}
@@ -511,12 +530,18 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		#filterEmptyChecklists()
 		{
 			this.checklistsMap.forEach((checklist, id) => {
-				const isCurrentChecklist = this.currentOpenChecklistId === id;
-				const isEmptyChecklist = !checklist?.getRootItem()?.hasDescendants();
-
-				if (isEmptyChecklist && !isCurrentChecklist)
+				const rootItem = checklist.getRootItem();
+				if (!rootItem)
 				{
-					this.checklistsMap.delete(id);
+					this.#removeChecklistById(id);
+
+					return;
+				}
+
+				const isEmptyChecklist = !rootItem.hasDescendants();
+				if (isEmptyChecklist && !rootItem.isFocused())
+				{
+					this.#removeChecklistById(id);
 				}
 			});
 		}
@@ -538,6 +563,11 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			this.#filterEmptyChecklists();
 			this.#handleOnChange();
 			const items = this.getChecklistRequestData();
+
+			if (!Array.isArray(items))
+			{
+				return false;
+			}
 
 			try
 			{
@@ -567,13 +597,13 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 				return;
 			}
 
-			this.removeFromWidgetMap(checklistId);
+			this.#removeFromWidgetMap(checklistId);
 			this.props.onClose?.();
 		};
 
 		handleOnRemove = (checklistId) => () => {
 			this.closeChecklistWidget(checklistId);
-			this.deleteChecklist(checklistId);
+			this.#deleteChecklist(checklistId);
 			void this.handleOnSave();
 		};
 

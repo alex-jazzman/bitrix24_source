@@ -366,6 +366,9 @@ export class CopilotImageController extends EventEmitter
 			errorCode: firstError?.code,
 			showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
 			sliderCode: firstError?.customData?.sliderCode,
+			forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
+			forceOption: firstError?.customData,
+			bindElement: this.#inputField,
 		});
 	}
 

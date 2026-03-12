@@ -1,15 +1,20 @@
 import {DialogId} from "../../../../../../types/common";
-import {StickerPackId, StickerPackModelState} from "../../../../../../model/sticker-pack/src/types";
+import {
+	PackWithStickers,
+	StickerPackId,
+	StickerPackType
+} from "../../../../../../model/sticker-pack/src/types";
 
 declare type StickerPackViewerProps = {
 	dialogId: DialogId,
 	packId: StickerPackId,
-	packType: string,
+	packType: StickerPackType,
 	close: () => void,
+	canEditPack: boolean,
 };
 
 declare type StickerPackViewerState = {
-	pack: null | StickerPackModelState,
+	pack: null | PackWithStickers,
 	isPackLoaded: boolean,
 	packAdded: boolean,
 };

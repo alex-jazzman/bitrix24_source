@@ -97,10 +97,15 @@ export const AddToCollab = {
 		{
 			return FeatureManager.isFeatureAvailable(Feature.inviteByLinkAvailable);
 		},
+		isChangeInviteLanguageAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.changeInviteLanguageAvailable);
+		},
 		finalHeight(): number
 		{
-			const inviteLinkBlockHeight = 58 + 12;
 			const tabsBlockHeight = 38;
+			const inviteLinkBlockHeight = 58 + 12;
+			const inviteLanguageBlockHeight = 44;
 
 			let finalHeight = TAB_CONTENT_HEIGHT;
 			if (this.isCollaber)
@@ -111,6 +116,11 @@ export const AddToCollab = {
 			if (!this.isInviteLinkAvailable)
 			{
 				finalHeight -= inviteLinkBlockHeight;
+			}
+
+			if (!this.isChangeInviteLanguageAvailable)
+			{
+				finalHeight -= inviteLanguageBlockHeight;
 			}
 
 			return finalHeight;

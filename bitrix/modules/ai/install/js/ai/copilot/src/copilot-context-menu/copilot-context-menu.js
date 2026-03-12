@@ -1,4 +1,3 @@
-import { type CopilotBanner } from 'ai.copilot-banner';
 import { type Prompt } from 'ai.engine';
 import { BaseError, Dom, Extension, Loc, Runtime, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
@@ -50,8 +49,6 @@ export class CopilotContextMenu extends EventEmitter
 	#angle: boolean;
 	#initEngineOptions: InitEngineOptions;
 
-	static #copilotBanner: CopilotBanner;
-
 	constructor(options: CopilotContextMenuOptions)
 	{
 		super(options);
@@ -85,24 +82,12 @@ export class CopilotContextMenu extends EventEmitter
 			await this.#initEngine(this.#initEngineOptions);
 
 			this.#initGeneralMenu();
-
-			if (this.#isNeedToShowCopilotBanner())
-			{
-				const { AppsInstallerBanner } = await Runtime.loadExtension('ai.copilot-banner');
-
-				CopilotContextMenu.#copilotBanner = new AppsInstallerBanner({});
-			}
 		}
 		catch (e)
 		{
 			console.error('Init error', e);
 			throw e;
 		}
-	}
-
-	#isNeedToShowCopilotBanner(): boolean
-	{
-		return this.#copilotTextControllerEngine.isCopilotFirstLaunch() && CopilotContextMenu.#copilotBanner === undefined;
 	}
 
 	#isShowCopilotAgreementPopup(): boolean
@@ -121,13 +106,6 @@ export class CopilotContextMenu extends EventEmitter
 		if (isRestrictedByEula)
 		{
 			this.#getAnalytics().sendEventOpen('error_agreement');
-
-			return;
-		}
-
-		if (CopilotContextMenu.#copilotBanner)
-		{
-			this.#showAfterCopilotBanner();
 
 			return;
 		}
@@ -161,18 +139,6 @@ export class CopilotContextMenu extends EventEmitter
 
 		this.#showGeneralMenu();
 		this.#getAnalytics().sendEventOpen('success');
-	}
-
-	#showAfterCopilotBanner(): void
-	{
-		CopilotContextMenu.#copilotBanner.show();
-		CopilotContextMenu.#copilotBanner.subscribe('action-finish-success', () => {
-			CopilotContextMenu.#copilotBanner = null;
-			this.#copilotTextControllerEngine.setCopilotBannerLaunchedFlag();
-			setTimeout(() => {
-				this.show();
-			}, 300);
-		});
 	}
 
 	hide(): void
@@ -308,6 +274,9 @@ export class CopilotContextMenu extends EventEmitter
 				errorCode: error.getCode(),
 				showSliderWithMsg: error?.customData?.showSliderWithMsg,
 				sliderCode: error?.customData?.sliderCode,
+				forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
+				forceOption: error?.customData,
+				bindElement: this.#bindElement,
 			});
 		});
 	}

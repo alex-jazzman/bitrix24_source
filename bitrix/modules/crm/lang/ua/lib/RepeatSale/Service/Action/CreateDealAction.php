@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_REPEAT_SALE_ACTION_CREATE_DEAL_TITLE"] = "Повторний продаж";

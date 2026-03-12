@@ -2,7 +2,7 @@ import { Dom, Event, Text, UI } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Dialog, Item } from 'ui.entity-selector';
 import type { BitrixVueComponentProps } from 'ui.vue3';
-import { BIcon, Set as IconSet } from 'ui.icon-set.api.vue';
+import { BIcon, Outline as IconSet } from 'ui.icon-set.api.vue';
 import { hint } from 'ui.vue3.directives.hint';
 import type { Scope } from '../type';
 import { Store } from '../store';
@@ -19,7 +19,6 @@ export const GroupScopeSelector: BitrixVueComponentProps = {
 	},
 	data(): Object {
 		return {
-			scopeNameLengthLimit: 30,
 			initialScopedIds: [],
 		};
 	},
@@ -31,7 +30,7 @@ export const GroupScopeSelector: BitrixVueComponentProps = {
 		hintOptions(): Object
 		{
 			return {
-				html: this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPE_HINT')
+				html: this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPE_HINT_MSGVER_1')
 					.replace('[link]', '<a class="scope-hint-link" onclick="top.BX.Helper.show(`redirect=detail&code=25556500`)">')
 					.replace('[/link]', '</a>'),
 				interactivity: true,
@@ -54,22 +53,22 @@ export const GroupScopeSelector: BitrixVueComponentProps = {
 			const element: string = `
 				<span
 					class="scope-name ${this.canEdit ? '' : 'scope-list-system'}"
-					title="${this.scopes[0].name.length > this.scopeNameLengthLimit ? Text.encode(this.scopes[0].name) : ''}"
+					title="${Text.encode(this.scopes[0].name)}"
 				>
-					${Text.encode(this.formatScopeName(this.scopes[0].name))}
+					${Text.encode(this.scopes[0].name)}
 				</span>
 			`;
 
 			if (this.scopes.length <= 1)
 			{
-				return this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPES_GROUP')
+				return this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPES_GROUP_MSGVER_1')
 					.replace('[title]', '<span class="group-scope-title">')
 					.replace('[/title]', '</span>')
 					.replace('#SCOPE#', element)
 				;
 			}
 
-			return this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPES_GROUP_MANY')
+			return this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPES_GROUP_MANY_MSGVER_1')
 				.replace('[title]', '<span class="group-scope-title">')
 				.replace('[/title]', '</span>')
 				.replace('#FIRST_SCOPES#', element)
@@ -80,7 +79,7 @@ export const GroupScopeSelector: BitrixVueComponentProps = {
 		},
 		emptyScopesText(): string
 		{
-			return this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPES_GROUP_EMPTY')
+			return this.$Bitrix.Loc.getMessage('BI_GROUP_SCOPES_GROUP_EMPTY_MSGVER_1')
 				.replace('[title]', '<span class="group-scope-title">')
 				.replace('[/title]', '</span>')
 			;
@@ -118,7 +117,7 @@ export const GroupScopeSelector: BitrixVueComponentProps = {
 				id: 'group-scope-selector',
 				targetNode: this.$refs.groupScopes,
 				width: 350,
-				height: 300,
+				height: 370,
 				dropdownMode: true,
 				compactView: true,
 				showAvatars: false,
@@ -187,15 +186,6 @@ export const GroupScopeSelector: BitrixVueComponentProps = {
 		{
 			this.systemScopeHintManager.hide();
 			this.systemScopeHintManager.popup = null;
-		},
-		formatScopeName(scopeName: string): string
-		{
-			if (scopeName.length < this.scopeNameLengthLimit)
-			{
-				return scopeName;
-			}
-
-			return `${scopeName.slice(0, this.scopeNameLengthLimit)}...`;
 		},
 		attachHintHandlers(): void
 		{
@@ -300,9 +290,9 @@ export const GroupScopeSelector: BitrixVueComponentProps = {
 			></span>
 			<div class="group-scope-list-hint" ref="groupScopes" v-hint="hintOptions">
 				<BIcon
-					:name="set.HELP"
+					:name="set.QUESTION"
 					:size="20"
-					color="#D5D7DB"
+					color="var(--ui-color-base-4)"
 				></BIcon>
 			</div>
 		</div>

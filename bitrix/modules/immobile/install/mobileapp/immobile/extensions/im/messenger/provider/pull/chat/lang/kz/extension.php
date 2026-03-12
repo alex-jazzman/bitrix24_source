@@ -1,3 +1,0 @@
-<?php
-$MESS["IMMOBILE_PULL_HANDLER_MESSAGE_DELETED"] = "Бұл хабарлама жойылды.";
-$MESS["IMMOBILE_PULL_HANDLER_NOTIFICATION_TITLE"] = "Мәлімдемелер";

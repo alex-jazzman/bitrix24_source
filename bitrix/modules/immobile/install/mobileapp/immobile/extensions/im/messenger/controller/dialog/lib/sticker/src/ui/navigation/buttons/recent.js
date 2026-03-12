@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/navigation/buttons/recent', (require, exports, module) => {
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { StickerEventType } = require('im/messenger/controller/dialog/lib/sticker/src/const');
+	const { StickerEventType, NAVIGATION_BUTTON_WIDTH } = require('im/messenger/controller/dialog/lib/sticker/src/const');
 	const { emitter } = require('im/messenger/controller/dialog/lib/sticker/src/utils/emitter');
 	const { ActiveIndicator } = require('im/messenger/controller/dialog/lib/sticker/src/ui/navigation/buttons/active-indicator');
 
@@ -16,6 +16,9 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/navigation/buttons/
 	 */
 	class RecentStickersNavigationButton extends LayoutComponent
 	{
+		/**
+		 * @param {RecentStickersNavigationButtonProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -39,17 +42,11 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/navigation/buttons/
 		}
 
 		setActivePackHandler = () => {
-			if (this.state.isActive)
-			{
-				this.setState({ isActive: false });
-			}
+			this.setState({ isActive: false });
 		};
 
 		setActiveRecentHandler = () => {
-			if (!this.state.isActive)
-			{
-				this.setState({ isActive: true });
-			}
+			this.setState({ isActive: true });
 		};
 
 		render()
@@ -57,11 +54,12 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/navigation/buttons/
 			return View(
 				{
 					style: {
-						flex: 1,
 						paddingHorizontal: 8,
+						width: NAVIGATION_BUTTON_WIDTH,
 					},
 					onClick: () => {
-						emitter.emit(StickerEventType.grid.scrollToBegin, []);
+						this.props.onClick();
+						this.setState({ isActive: true });
 					},
 				},
 				View(

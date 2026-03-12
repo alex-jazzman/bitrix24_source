@@ -40,11 +40,19 @@
 .market-item-ai-title:before {
 	content: '';
 	display: inline-block;
+	margin: 0 13px -1px 0;
+	background-size: contain;
+}
+
+.market-item-ai-title.--copilot:before {
+	background: url(../image/copilot-text.svg) center no-repeat;
 	width: 155px;
 	height: 34px;
-	margin: 0 13px -1px 0;
-	background: url(../image/copilot-text.svg) center no-repeat;
-	background-size: contain;
+}
+.market-item-ai-title.--bitrix-gpt:before {
+	background: url(../image/bitrix-gpt-text.svg) center no-repeat;
+	width: 154px;
+	height: 26px;
 }
 
 @media (max-width: 1440px) {

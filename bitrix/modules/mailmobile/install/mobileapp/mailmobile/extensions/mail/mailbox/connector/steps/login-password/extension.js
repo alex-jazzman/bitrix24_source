@@ -107,7 +107,7 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 				{
 					style: {
 						flex: 1,
-					}
+					},
 				},
 				EmailInput({
 					label: Loc.getMessage('MAILBOX_CONNECTOR_LOGIN_PASSWORD_LOGIN_TITLE_1'),
@@ -228,11 +228,13 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 				await this.props.parent.connectMailbox({
 					login: login.value,
 					password: password.value,
+					loginWithoutDomain: login.value,
 				}).then(
 					({ data }) => {
 						this.props.parent.onConnectMailbox(data.id, data.email);
 					},
 				).catch(({ errors }) => {
+					this.props.parent.sendErrorAnalytics();
 					NotifyManager.showErrors(errors);
 				});
 			}

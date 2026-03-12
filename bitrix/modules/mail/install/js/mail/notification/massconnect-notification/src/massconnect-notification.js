@@ -64,7 +64,7 @@ export class MassConnectNotification
 
 	show(): void
 	{
-		BannerDispatcher.critical.toQueue((onDone) => {
+		BannerDispatcher.normal.toQueue((onDone) => {
 			this.#popup = this.createPopup(onDone);
 			this.#popup.show();
 			this.#popup.zIndexComponent.setZIndex(400);

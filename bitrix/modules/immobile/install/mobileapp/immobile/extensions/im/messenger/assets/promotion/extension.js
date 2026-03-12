@@ -13,6 +13,11 @@ jn.define('im/messenger/assets/promotion', (require, exports, module) => {
 		{
 			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/promotion/png/video-note.png`;
 		}
+
+		static get recentTasksUrl()
+		{
+			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/promotion/png/tasks-recent-tab.png`;
+		}
 	}
 
 	module.exports = { PromotionAsset };

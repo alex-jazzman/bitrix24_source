@@ -15,6 +15,7 @@ jn.define('im/messenger-v2/application/lib/pull-handler-launcher', (require, exp
 	const { MessagePullHandler } = require('im/messenger-v2/provider/pull/message');
 	const { UserPullHandler } = require('im/messenger-v2/provider/pull/user');
 	const { DialogPullHandler } = require('im/messenger-v2/provider/pull/dialog');
+	const { StickerPackPullHandler } = require('im/messenger/provider/pull/sticker-pack');
 
 	/**
 	 * @class PullHandlerLauncher
@@ -39,6 +40,7 @@ jn.define('im/messenger-v2/application/lib/pull-handler-launcher', (require, exp
 			ChatFilePullHandler,
 			CollabInfoPullHandler,
 			SidebarPullHandler,
+			StickerPackPullHandler,
 		];
 
 		#unsubscribeCallbackList = [];

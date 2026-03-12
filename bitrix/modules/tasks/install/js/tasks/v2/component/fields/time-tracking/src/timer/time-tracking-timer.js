@@ -124,11 +124,11 @@ export const TimeTrackingTimer = {
 	},
 	template: `
 		<div class="tasks-task-time-tracking-timer">
-			<div class="tasks-task-time-tracking-timer-current" :class="currentTimeClass">
+			<div class="tasks-task-time-tracking-timer-current print-font-color-base-1" :class="currentTimeClass">
 				{{ formattedCurrentTime }}
 			</div>
-			<div v-if="hasTotalTime" class="tasks-task-time-tracking-timer-separator"> / </div>
-			<div v-if="hasTotalTime" class="tasks-task-time-tracking-timer-total" :class="totalTimeClass">
+			<div v-if="hasTotalTime" class="tasks-task-time-tracking-timer-separator print-font-color-base-1"> / </div>
+			<div v-if="hasTotalTime" class="tasks-task-time-tracking-timer-total print-font-color-base-1" :class="totalTimeClass">
 				{{ formattedTotalTime }}
 			</div>
 		</div>

@@ -9,7 +9,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 
 $APPLICATION->SetTitle(Loc::getMessage('INTRANET_AUTH_TITLE'));
 
-$extensions = ['ui.forms', 'ui.hint', 'ui.vue3'];
+$extensions = ['ui.forms', 'ui.icon-set.outline', 'ui.hint', 'ui.vue3'];
 
 if ($arResult['ALLOW_QRCODE_AUTH'])
 {
@@ -53,13 +53,18 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
 									<div class="intranet-text-input intranet-login-enter-form__login">
 										<input
 											class="ui-ctl-element intranet-text-input__field"
-											type="password"
+											:type="inputPasswordType"
 											name="USER_PASSWORD"
 											placeholder="<?= Loc::getMessage('INTRANET_AUTH_PASSWORD')?>"
 											maxlength="255"
 											autocomplete="current-password"
 											data-testid="user-password"
 										/>
+										<i
+											class="ui-icon-set --opened-eye intranet-text-input__eye-icon"
+											@mousedown="onEyeMouseDown"
+											@mouseup="onEyeMouseUp"
+										></i>
 									</div>
 								</div>
 

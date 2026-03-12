@@ -1,4 +1,4 @@
-import { Tag, Dom, Runtime, Type, bind } from 'main.core';
+import { Tag, Dom, Runtime, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { ReactionName } from './enums/reaction-name';
 import { ReactionTitle } from './enums/reaction-title';
@@ -149,17 +149,20 @@ export class Reaction extends EventEmitter
 							},
 						});
 
-						bind(this.#lottieAnimation, 'DOMLoaded', () => {
+						// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+						this.#lottieAnimation.addEventListener('DOMLoaded', () => {
 							this.#animatedReaction = wrapper;
 
 							resolve();
 						});
 
-						bind(this.#lottieAnimation, 'data_failed', () => {
+						// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+						this.#lottieAnimation.addEventListener('data_failed', () => {
 							reject(new Error('UI.ReactionsSelect: V2: Lottie animation data failed to load:'));
 						});
 
-						bind(this.#lottieAnimation, 'loopComplete', () => {
+						// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
+						this.#lottieAnimation.addEventListener('loopComplete', () => {
 							if (this.#infiniteAnimate === false || this.#isAnimationPaused)
 							{
 								this.#lottieAnimation.pause();

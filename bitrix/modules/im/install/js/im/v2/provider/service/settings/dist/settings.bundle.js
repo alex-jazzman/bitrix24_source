@@ -56,7 +56,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      notifications: newNotificationsSettings
 	    });
 	  }
-	  changeExpertOption(payload) {
+	  async changeExpertOption(payload) {
 	    const {
 	      moduleId,
 	      optionName,
@@ -69,17 +69,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type,
 	      value
 	    });
-	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2SettingsNotifyUpdate, {
-	      data: {
-	        userId: im_v2_application_core.Core.getUserId(),
-	        moduleId,
-	        name: optionName,
-	        type,
-	        value
-	      }
-	    }).catch(([error]) => {
+	    try {
+	      await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2SettingsNotifyUpdate, {
+	        data: {
+	          userId: im_v2_application_core.Core.getUserId(),
+	          moduleId,
+	          name: optionName,
+	          type,
+	          value
+	        }
+	      });
+	    } catch ([error]) {
 	      console.error('SettingsService: changeExpertOption error', error);
-	    });
+	    }
 	  }
 	  async toggleSubscription(notificationSubscriptionOptions) {
 	    const {

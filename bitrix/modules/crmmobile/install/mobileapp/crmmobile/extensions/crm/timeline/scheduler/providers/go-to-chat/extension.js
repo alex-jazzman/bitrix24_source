@@ -583,7 +583,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 		{
 			const { toName, toPhoneId, currentChannelId } = this.state;
 
-			return (Type.isStringFilled(toName) && toPhoneId <= 0 && currentChannelId);
+			return (Type.isStringFilled(toName) && toPhoneId > 0 && currentChannelId);
 		}
 
 		send(lineId)

@@ -5,27 +5,39 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Localization\Loc;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_CTA_NAME'),
-	'DESCRIPTION' => Loc::getMessage('CRM_CTA_DESC'),
-	'TYPE' => ['activity', 'robot_activity'],
-	'CLASS' => 'CrmChangeRelationsActivity',
-	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => [
-		'ID' => 'document',
-		'OWN_ID' => 'crm',
-		'OWN_NAME' => 'CRM',
-	],
-	'FILTER' => [
-		'INCLUDE' => [
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
-			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
+$arActivityDescription =
+	(new ActivityDescription(
+		name: Loc::getMessage('CRM_CTA_NAME') ?? '',
+		description: Loc::getMessage('CRM_CTA_DESC') ?? '',
+		type: [
+			ActivityType::ACTIVITY->value,
+			ActivityType::ROBOT->value,
+			ActivityType::NODE_ACTION->value,
 		],
-	],
-	'ROBOT_SETTINGS' => [
-		'CATEGORY' => 'employee',
-		'GROUP' => ['digitalWorkplace'],
-	],
-];
+	))
+		->setClass('CrmChangeRelationsActivity')
+		->setJsClass(ActivityDescription::DEFAULT_ACTIVITY_JS_CLASS)
+		->setCategory([
+			'ID' => 'document',
+			'OWN_ID' => 'crm',
+			'OWN_NAME' => 'CRM',
+		])
+		->setFilter([
+			'INCLUDE' => [
+				['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
+				['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
+			],
+		])
+		->setRobotSettings([
+			'CATEGORY' => 'employee',
+			'GROUP' => ['digitalWorkplace'],
+		])
+		->setNodeActionSettings([
+			'HANDLES_DOCUMENT' => true,
+		])
+		->toArray()
+;

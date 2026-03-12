@@ -2,22 +2,21 @@
 
 return [
 	'extensions' => [
-		'tokens',
+		'layout/pure-component',
 		'layout/ui/menu-list',
 		'loc',
+		'more-menu/ref-registry',
+		'tokens',
+		'ui-system/blocks/badges/counter',
+		'ui-system/blocks/icon',
 		'ui-system/typography/text',
 		'utils/color',
-		'utils/validation',
-
-		'layout/pure-component',
-		'ui-system/blocks/icon',
 		'utils/enums/style',
-		'ui-system/blocks/badges/counter',
 		'utils/test',
-
-		'more-menu/ref-registry',
+		'utils/url',
+		'utils/validation',
 	],
 	'bundle' => [
-		'./item',
+		'./src/item',
 	],
 ];

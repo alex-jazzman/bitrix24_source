@@ -1,6 +1,7 @@
 <?php
 
-use Bitrix\Mail\Helper\Message;
+use Bitrix\Mail\Helper\MailboxAccess;
+use Bitrix\Mail\Helper\AnalyticsHelper;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Theme;
@@ -214,7 +215,7 @@ $configPath = \CHTTP::urlAddParams(
 	['id' => $arResult['MAILBOX']['ID']],
 );
 
-$disabledMailSettings = $USER->getId() != $arResult['MAILBOX']['USER_ID'] && !$USER->isAdmin() && !$USER->canDoOperation('bitrix24_config');
+$disabledMailSettings = !MailboxAccess::hasCurrentUserAccessToEditMailbox($arResult['MAILBOX']['ID']);
 
 $settingsMenu = [
 	[
@@ -842,7 +843,7 @@ $APPLICATION->includeComponent(
 				category: 'mail_general_ops',
 			}
 
-			<?php if ($arResult['ANALYTICS']['SOURCE'] === Message::SOURCE_TYPE_NOTIFICATION): ?>
+			<?php if ($arResult['ANALYTICS']['SOURCE'] === AnalyticsHelper::SOURCE_TYPE_NOTIFICATION): ?>
 				analyticsParams.c_section = '<?= \CUtil::JSEscape($arResult['ANALYTICS']['SOURCE']) ?>'
 			<?php else: ?>
 				analyticsParams.c_element = '<?= \CUtil::JSEscape($arResult['ANALYTICS']['SOURCE']) ?>'
@@ -1104,7 +1105,7 @@ $APPLICATION->includeComponent(
 		{
 			(new BX.Mail.MailGuide({
 				id: 'push-mailbox-grid',
-				description: '<?= Loc::getMessage("MAIL_MESSAGE_MAILBOX_GRID_HINT_DESCRIPTION") ?>',
+				description: '<?= GetMessageJS("MAIL_MESSAGE_MAILBOX_GRID_HINT_DESCRIPTION") ?>',
 				bindElement: button,
 				addHighlighter: true,
 				userOptionName: '<?= \CUtil::jsEscape($arParams['MAILBOX_GRID_GUIDE_NAME'] ?? null) ?>',

@@ -9,6 +9,10 @@ import './edit-constant-popup-form.css';
 // eslint-disable-next-line no-unused-vars
 import type { ConstantItem } from '../../types';
 
+type OptionModel = {
+	name: string,
+};
+
 type EditConstantPopupFormData = {
 	id: string;
 	errors: {
@@ -21,7 +25,7 @@ type EditConstantPopupFormData = {
 	multiple: boolean;
 	description: string;
 	defaultValue: string;
-	options: Array<Record<string, string>>;
+	options: Array<OptionModel>;
 	required: boolean;
 };
 
@@ -65,12 +69,12 @@ export const EditConstantPopupForm = {
 			multiple: this.item.multiple,
 			description: this.item.description,
 			defaultValue: this.item.default,
-			options: [...this.item.options],
+			options: this.convertMapToOptionsModelArray(this.item.options),
 			required: this.item.required,
 			errors: {
 				id: '',
 				name: '',
-				options: this.item.options.map(() => ''),
+				options: this.convertMapToOptionsModelArray(this.item.options).map(() => ''),
 			},
 		};
 	},
@@ -85,6 +89,7 @@ export const EditConstantPopupForm = {
 				required: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_LABEL_REQUIRED'),
 				idFormat: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_FORMAT'),
 				idUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_UNIQUE'),
+				optionUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE'),
 			};
 		},
 	},
@@ -153,6 +158,16 @@ export const EditConstantPopupForm = {
 				return false;
 			}
 
+			for (const [optionKey: number, option: OptionModel] of this.options.entries())
+			{
+				if (optionKey !== index && option.name.trim() === name)
+				{
+					this.errors.options[index] = this.errorMessages.optionUnique;
+
+					return false;
+				}
+			}
+
 			return true;
 		},
 		validateOptions(): boolean
@@ -166,14 +181,13 @@ export const EditConstantPopupForm = {
 			this.errors.options = [];
 
 			this.options.forEach((option, index) => {
-				if (Type.isStringFilled(option.name.trim()))
+				if (this.validateOption(index))
 				{
 					this.errors.options[index] = '';
 				}
 				else
 				{
 					errorsCount += 1;
-					this.errors.options[index] = this.errorMessages.required;
 				}
 			});
 
@@ -213,7 +227,7 @@ export const EditConstantPopupForm = {
 					description: this.description,
 					constantType: this.constantType,
 					multiple: this.multiple,
-					options: [...this.options],
+					options: this.convertOptionModelsToMap(this.options),
 					default: this.defaultValue,
 					required: this.required,
 				},
@@ -224,6 +238,31 @@ export const EditConstantPopupForm = {
 		{
 			this.editSlider?.close();
 			this.$emit('cancel');
+		},
+		convertMapToOptionsModelArray(options: Record<string, string>): Array<OptionModel>
+		{
+			const models = [];
+			Object.values(options).forEach((value: string) => {
+				if (Type.isStringFilled(value))
+				{
+					models.push({ name: value });
+				}
+			});
+
+			return models;
+		},
+		convertOptionModelsToMap(models: Array<OptionModel>): Record<string, string>
+		{
+			const options: Record<string, string> = {};
+			for (const model of models)
+			{
+				if (Type.isStringFilled(model.name))
+				{
+					options[model.name] = model.name;
+				}
+			}
+
+			return options;
 		},
 	},
 	template: `

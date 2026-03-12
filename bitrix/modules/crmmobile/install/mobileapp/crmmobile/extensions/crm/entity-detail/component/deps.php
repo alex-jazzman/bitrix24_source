@@ -17,6 +17,7 @@ return [
 		'native/contacts',
 		'notify',
 		'notify-manager',
+		'require-lazy',
 		'ui-system/blocks/icon',
 		'utils/prop',
 		'utils/object',

@@ -2,7 +2,8 @@
  * @module im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers
  */
 jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers', (require, exports, module) => {
-	const { SafeImage } = require('layout/ui/safe-image');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+
 	const {
 		StickerEventType,
 		GridSection,
@@ -10,18 +11,24 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 	const { emitter } = require('im/messenger/controller/dialog/lib/sticker/src/utils/emitter');
 	const { StickerMenu, ActionType } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker');
 
+	const { StickerCreateView } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/element/create');
+	const { StickerView } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/element/sticker');
+
 	/**
 	 * @class StickersRow
 	 * @typedef {LayoutComponent<StickersRowProps, StickersRowState>} StickersRow
 	 */
 	class StickersRow extends LayoutComponent
 	{
-		constructor(props)
-		{
-			super(props);
+		static #currentUserId;
 
-			this.refCollection = {};
+		static get currentUserId()
+		{
+			this.#currentUserId = this.#currentUserId ?? serviceLocator.get('core').getUserId();
+
+			return this.#currentUserId;
 		}
+
 		render()
 		{
 			return View(
@@ -29,10 +36,11 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 					style: {
 						paddingLeft: 18,
 						paddingRight: 18,
-						marginTop: 4,
+						paddingTop: this.props.isFirstPackRow ? 0 : 4,
 						flexDirection: 'row',
 						justifyContent: 'space-between',
 						alignItems: 'center',
+						height: this.props.isFirstPackRow ? 82 : 86,
 					},
 				},
 				...this.#renderStickers(),
@@ -43,41 +51,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 		#renderStickers()
 		{
 			return this.props.stickers.map((sticker, index) => {
-				return View(
-					{
-						style: {
-							width: 82,
-							height: 82,
-							paddingLeft: 5,
-							paddingRight: 5,
-							paddingTop: 5,
-							paddingBottom: 5,
-							justifyContent: 'center',
-							alignItems: 'center',
-						},
-						onClick: () => this.clickHandler(index),
-						onLongClick: () => this.longClickHandler(index),
-						ref: (ref) => {
-							this.refCollection[index] = ref;
-						},
-					},
-					SafeImage({
-						withShimmer: true,
-						uri: sticker.uri,
-						wrapperStyle: {
-							width: 72,
-							height: 72,
-							borderRadius: 6,
-						},
-						style: {
-							width: 72,
-							height: 72,
-							borderRadius: 4,
-						},
-						resizeMode: 'contain',
-						clickable: false,
-					}),
-				);
+				return this.#createStickerElement(sticker, index);
 			});
 		}
 
@@ -98,6 +72,25 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 				});
 		}
 
+		#createStickerElement(sticker, index)
+		{
+			if (sticker.id === 'create')
+			{
+				return StickerCreateView({
+					packId: sticker.packId,
+					packType: sticker.packType,
+				});
+			}
+
+			return new StickerView({
+				uri: sticker.uri,
+				isUploading: sticker.uploading,
+				id: sticker.id,
+				onClick: this.#clickStickerHandler,
+				onLongClick: this.#longClickStickerHandler,
+			});
+		}
+
 		/**
 		 * @return {Array<string>}
 		 */
@@ -108,31 +101,32 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 			if (this.props.sectionType === GridSection.recent)
 			{
 				result.push(ActionType.deleteFromRecent);
+
+				return result;
 			}
 
 			return result;
 		}
 
-		clickHandler = (stickerIndex) => {
+		#clickStickerHandler = (stickerId, ref) => {
 			const {
 				id,
 				packId,
 				packType,
-				uri,
-			} = this.props.stickers[stickerIndex];
+			} = this.props.stickers.find((sticker) => sticker.id === stickerId);
 
-			emitter.emit(StickerEventType.action.send, [id, packId, packType, uri]);
+			emitter.emit(StickerEventType.sticker.click, [id, packId, packType, ref]);
 		};
 
-		longClickHandler = (stickerIndex) => {
+		#longClickStickerHandler = (id, ref) => {
 			const menu = new StickerMenu({
-				ui: this.refCollection[stickerIndex],
+				ui: ref,
 				actions: this.#getMenuActions(),
-				stickerData: this.props.stickers[stickerIndex],
+				stickerData: this.props.stickers.find((sticker) => sticker.id === id),
 			});
 
 			menu.show();
-		};
+		}
 	}
 
 	module.exports = { StickersRow };

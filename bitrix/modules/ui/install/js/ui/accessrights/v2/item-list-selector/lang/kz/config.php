@@ -1,2 +1,0 @@
-<?php
-$MESS["JS_UI_ITEM_SELECTOR_SEARCH_PLACEHOLDER"] = "Табу";

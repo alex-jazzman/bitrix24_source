@@ -345,8 +345,7 @@
 }
 
 .tasks-card-description-field .tasks-full-card-field-container {
-	padding-top: 0;
-	padding-bottom: 0;
+	padding: 0 var(--ui-space-inset-sm2);
 }
 
 .tasks-card-description-field .tasks-full-card-field-container.--no-padding-bottom {

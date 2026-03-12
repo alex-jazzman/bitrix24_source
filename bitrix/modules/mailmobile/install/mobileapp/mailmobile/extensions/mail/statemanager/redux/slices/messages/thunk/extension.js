@@ -92,11 +92,35 @@ jn.define('mail/statemanager/redux/slices/messages/thunk', (require, exports, mo
 		{ condition },
 	);
 
+	const addToEvent = createAsyncThunk(
+		`${sliceName}/addToEvent`,
+		({ messageId, calendarEventId }) => runActionPromise({
+			action: AjaxMethod.addToEvent,
+			options: {
+				messageId,
+				calendarEventId,
+			},
+		}),
+		{ condition },
+	);
+
 	const addToChat = createAsyncThunk(
 		`${sliceName}/addToChat`,
 		({ objectId }) => runActionPromise({
 			action: AjaxMethod.mailCreateChat,
 			options: { messageId: objectId },
+		}),
+		{ condition },
+	);
+
+	const discussInChat = createAsyncThunk(
+		`${sliceName}/discussInChat`,
+		({ messageId, dialogId }) => runActionPromise({
+			action: AjaxMethod.mailDiscussInChat,
+			options: {
+				messageId,
+				dialogId,
+			},
 		}),
 		{ condition },
 	);
@@ -139,7 +163,9 @@ jn.define('mail/statemanager/redux/slices/messages/thunk', (require, exports, mo
 		changeReadStatus,
 		addToCrm,
 		addToChat,
+		discussInChat,
 		sendBindingEvent,
 		addToTask,
+		addToEvent,
 	};
 });

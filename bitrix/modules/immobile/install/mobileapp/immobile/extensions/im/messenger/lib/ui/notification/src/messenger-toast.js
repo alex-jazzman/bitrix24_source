@@ -29,6 +29,8 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		errorConvertRoundVideo: 'errorConvertRoundVideo',
 		reasoningDisabled: 'reasoningDisabled',
 		copilotEngineChanged: 'copilotEngineChanged',
+		forwardMessage: 'forwardMessage',
+		forwardMessages: 'forwardMessages',
 	};
 
 	const ToastIconName = {
@@ -103,6 +105,25 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		{
 			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_COPILOT_MODEL_CHANGED');
 		},
+		get forwardMessage()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_FORWARD_MESSAGE');
+		},
+		get forwardMessages()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_FORWARD_MESSAGES');
+		},
+	};
+
+	const ToastButtonText = {
+		get forwardMessage()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_BUTTON_GOTO');
+		},
+		get forwardMessages()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_BUTTON_GOTO');
+		},
 	};
 
 	const DEFAULT_MESSENGER_TOAST_OFFSET = 75;
@@ -173,6 +194,11 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 			if (ToastIconName[toastType])
 			{
 				toastParams.iconName = ToastIconName[toastType];
+			}
+
+			if (ToastButtonText[toastType])
+			{
+				toastParams.buttonText = ToastButtonText[toastType];
 			}
 
 			toastParams = { ...toastParams, ...params };

@@ -1,9 +1,9 @@
 import { Type } from 'main.core';
 
 import { Utils } from 'im.v2.lib.utils';
-import { convertToNumber, convertToString, isNumberOrString } from 'im.v2.model';
 
 import { prepareComponentId, prepareAuthorId, prepareKeyboard } from './format-functions';
+import { convertToNumber, convertToString, isNumberOrString } from '../../utils/format';
 
 import type { FieldsConfig } from 'im.v2.model';
 

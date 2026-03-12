@@ -62,7 +62,7 @@ export class AiAssistantMessageMenu extends MessageMenu
 			title: Loc.getMessage('IM_LIB_MENU_AI_ASSISTANT_FEEDBACK'),
 			icon: OutlineIcons.FEEDBACK,
 			onClick: () => {
-				void (new FeedbackManager()).openAiAssistantForm();
+				void (new FeedbackManager()).openAiAssistantForm({});
 				this.menuInstance.close();
 			},
 		};

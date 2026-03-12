@@ -174,11 +174,11 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	    },
 	    leftCounterColor(color) {
 	      var _this$button$getLeftC;
-	      (_this$button$getLeftC = this.button.getLeftCounter()) == null ? void 0 : _this$button$getLeftC.setColor(color);
+	      (_this$button$getLeftC = this.button.getLeftCounter()) == null ? void 0 : _this$button$getLeftC.setStyle(color);
 	    },
 	    rightCounterColor(color) {
 	      var _this$button$getRight;
-	      (_this$button$getRight = this.button.getRightCounter()) == null ? void 0 : _this$button$getRight.setColor(color);
+	      (_this$button$getRight = this.button.getRightCounter()) == null ? void 0 : _this$button$getRight.setStyle(color);
 	    },
 	    leftCounterValue(value) {
 	      if (value === 0) {
@@ -188,7 +188,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      } else if (value > 0) {
 	        this.button.setLeftCounter({
 	          value,
-	          color: this.leftCounterColor
+	          style: this.leftCounterColor
 	        });
 	      }
 	    },
@@ -200,7 +200,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      } else if (value > 0) {
 	        this.button.setRightCounter({
 	          value,
-	          color: this.leftCounterColor
+	          style: this.rightCounterColor
 	        });
 	      }
 	    },
@@ -264,7 +264,8 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      style: this.style,
 	      wide: this.wide,
 	      removeLeftCorners: this.removeLeftCorners,
-	      removeRightCorners: this.removeRightCorners
+	      removeRightCorners: this.removeRightCorners,
+	      state: this.state
 	    });
 	    if (this.collapsed) {
 	      button.setCollapsed(true);

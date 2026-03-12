@@ -2,14 +2,15 @@
 /* global dateFormatter */
 
 /**
- * @module im/messenger/model/users/model
+ * @module im/messenger/model/users/src/model
  */
-jn.define('im/messenger/model/users/model', (require, exports, module) => {
+jn.define('im/messenger/model/users/src/model', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { BotCode } = require('im/messenger/const');
-	const { validate } = require('im/messenger/model/users/validator');
-	const { userDefaultElement } = require('im/messenger/model/users/default-element');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { validate } = require('im/messenger/model/users/src/validator');
+	const { userDefaultElement } = require('im/messenger/model/users/src/default-element');
 
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('model--users');
@@ -21,6 +22,15 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 			collection: {},
 		}),
 		getters: {
+			/**
+			 * @function usersModel/getCurrent
+			 * @return {?UsersModelState}
+			 */
+			getCurrent: (_, getters) => () => {
+				const userId = serviceLocator.get('core').getUserId();
+
+				return getters.getById(userId);
+			},
 			/**
 			 * @function usersModel/getById
 			 * @return {?UsersModelState}
@@ -47,7 +57,7 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 			 * @function usersModel/getByIdList
 			 * @return {Array<UsersModelState>}
 			 */
-			getByIdList: (state, getters) => (idList) => {
+			getByIdList: (_, getters) => (idList) => {
 				if (!Type.isArrayFilled(idList))
 				{
 					return [];
@@ -65,8 +75,11 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 				return userList;
 			},
 
-			/** @function usersModel/getCollectionByIdList */
-			getCollectionByIdList: (state, getters) => (idList) => {
+			/**
+			 * @function usersModel/getCollectionByIdList
+			 * @return {Record<number, UsersModelState>}
+			 */
+			getCollectionByIdList: (_, getters) => (idList) => {
 				if (!Type.isArrayFilled(idList))
 				{
 					return [];

@@ -3,12 +3,11 @@ import { TaskField } from 'tasks.v2.const';
 
 export const responsibleMeta = Object.freeze({
 	id: TaskField.Responsible,
+	hint: Loc.getMessage('TASKS_V2_RESPONSIBLE_MANY_AHA'),
 	getTitle: (isMany: boolean): string => {
-		if (isMany)
-		{
-			return Loc.getMessage('TASKS_V2_RESPONSIBLE_TITLE_MANY');
-		}
-
-		return Loc.getMessage('TASKS_V2_RESPONSIBLE_TITLE');
+		return isMany
+			? Loc.getMessage('TASKS_V2_RESPONSIBLE_TITLE_MANY')
+			: Loc.getMessage('TASKS_V2_RESPONSIBLE_TITLE')
+		;
 	},
 });

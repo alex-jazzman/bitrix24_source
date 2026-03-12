@@ -1,3 +1,0 @@
-<?php
-$MESS["PRODUCT_FIELD_STATUS_NO"] = "жоқ";
-$MESS["PRODUCT_FIELD_STATUS_YES"] = "иә";

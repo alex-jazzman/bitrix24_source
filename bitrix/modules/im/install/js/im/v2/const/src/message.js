@@ -25,6 +25,7 @@ export const MessageComponent = Object.freeze({
 	supervisorUpdateFeature: 'SupervisorUpdateFeatureMessage',
 	supervisorEnableFeature: 'SupervisorEnableFeatureMessage',
 	sign: 'SignMessage',
+	admin: 'AdminMessage',
 	checkIn: 'CheckInMessage',
 	supportVote: 'SupportVoteMessage',
 	supportSessionNumber: 'SupportSessionNumberMessage',

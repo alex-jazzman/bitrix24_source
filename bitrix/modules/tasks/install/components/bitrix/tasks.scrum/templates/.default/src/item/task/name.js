@@ -48,9 +48,15 @@ export class Name extends EventEmitter
 
 		if (this.pathToTask)
 		{
+			const uri = BX.Uri.addParam(this.pathToTask, {
+				ta_sec: 'scrum',
+				ta_sub: 'list',
+				ta_el: 'title_click',
+			});
+
 			this.node = Tag.render`
 				<a
-					href="${Text.encode(this.pathToTask)}"
+					href="${Text.encode(uri)}"
 					class="tasks-scrum__item--title ${visualClasses}"
 				>
 					${value}

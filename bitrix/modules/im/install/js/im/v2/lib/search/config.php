@@ -10,12 +10,13 @@ return [
 		'./dist/search.bundle.js',
 	],
 	'rel' => [
-		'main.core',
+		'main.polyfill.core',
 		'im.v2.lib.user',
 		'ui.vue3.vuex',
+		'im.v2.lib.search',
 		'im.v2.application.core',
 		'im.v2.const',
 		'im.v2.lib.utils',
 	],
-	'skip_core' => false,
+	'skip_core' => true,
 ];

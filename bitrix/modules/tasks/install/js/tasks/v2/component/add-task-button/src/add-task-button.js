@@ -67,6 +67,15 @@ export const AddTaskButton = {
 				return fileService.get(itemId, EntityTypes.CheckListItem).isUploading();
 			});
 		},
+		isGroupLoading(): boolean
+		{
+			if (!this.task.groupId)
+			{
+				return false;
+			}
+
+			return Boolean(this.$store.getters[`${Model.Groups}/getById`](this.task.groupId)) === false;
+		},
 		userFieldScheme(): UserFieldScheme[]
 		{
 			return this.isTemplate
@@ -86,6 +95,7 @@ export const AddTaskButton = {
 				|| this.isCheckListUploading
 				|| this.hasUnfilledMandatoryUserFields
 				|| this.isLoading
+				|| this.isGroupLoading
 			);
 		},
 	},
@@ -205,6 +215,10 @@ export const AddTaskButton = {
 			{
 				setTimeout(() => this.highlightUserFields());
 			}
+			else if (this.isGroupLoading)
+			{
+				setTimeout(() => this.highlightGroupFields());
+			}
 		},
 		highlightTitle(): void
 		{
@@ -253,6 +267,18 @@ export const AddTaskButton = {
 				.addHighlight(TaskField.UserFields)
 				.scrollToField(TaskField.UserFields)
 				.getFieldContainer(TaskField.UserFields)
+			;
+
+			this.showPopup();
+		},
+		highlightGroupFields(): void
+		{
+			this.errorReason = this.loc('TASKS_V2_DATA_IS_UPLOADING');
+
+			this.fieldContainer = fieldHighlighter
+				.setContainer(this.$root.$el)
+				.addChipHighlight(TaskField.Group)
+				.getChipContainer(TaskField.Group)
 			;
 
 			this.showPopup();

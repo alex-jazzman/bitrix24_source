@@ -44,6 +44,6 @@ $arActivityDescription = (new ActivityDescription(
 	])
 	->setGroups([ ActivityGroup::PAYMENT->value ])
 	->setColorIndex(ActivityColorIndex::GREY->value)
-	->setIcon(Outline::PAYMENT_TERMINAL->name)
+	->setIcon(Outline::LINK->name)
 	->toArray()
 ;

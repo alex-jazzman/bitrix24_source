@@ -81,15 +81,18 @@ export class NewThemeDialog extends EventEmitter
 					this.#hideError();
 					const file: UploaderFile = event.getData().file;
 					const preview = file.getClientPreview();
-
-					// console.time('blur');
 					const { file: bgImageBlurred, color } = await blur(preview, 7);
-					// console.timeEnd('blur');
 
-					const bgImageBlurredUrl = URL.createObjectURL(bgImageBlurred);
-
-					file.setCustomData('bgImageBlurred', bgImageBlurred);
-					file.setCustomData('bgImageBlurredUrl', bgImageBlurredUrl);
+					if (file.isAnimated())
+					{
+						file.setCustomData('bgImageAnimated', true);
+					}
+					else
+					{
+						const bgImageBlurredUrl = URL.createObjectURL(bgImageBlurred);
+						file.setCustomData('bgImageBlurred', bgImageBlurred);
+						file.setCustomData('bgImageBlurredUrl', bgImageBlurredUrl);
+					}
 
 					this.#previewLoader?.destroy();
 					this.#previewLoader = null;
@@ -133,6 +136,11 @@ export class NewThemeDialog extends EventEmitter
 	#getBgImageUrl(): string | null
 	{
 		return this.#getBgImage()?.getPreviewUrl() || null;
+	}
+
+	#isBgImageAnimated(): boolean
+	{
+		return this.#getBgImage()?.getCustomData('bgImageAnimated') || false;
 	}
 
 	#getBgImageBlurred(): File | null
@@ -258,6 +266,7 @@ export class NewThemeDialog extends EventEmitter
 		const data = new FormData();
 		data.append('bgImage', this.#getBgImage() ? this.#getBgImage().getClientPreview() : '');
 		data.append('bgImageBlurred', this.#getBgImageBlurred() || '');
+		data.append('bgImageAnimated', this.#isBgImageAnimated());
 		data.append('bgColor', this.#getBgColor() || '');
 		data.append('textColor', this.#getTextColor() || '');
 		data.append('action', 'create');

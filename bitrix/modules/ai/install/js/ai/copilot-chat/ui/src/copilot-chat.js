@@ -179,7 +179,7 @@ export class CopilotChat extends EventEmitter
 			type: 'Default',
 			...message,
 			authorId: 1,
-			status: CopilotChatMessageStatus.DEPART,
+			status: message.status ?? CopilotChatMessageStatus.DEPART,
 		};
 
 		this.#addNewMessage(newUserMessage, emitEvent);

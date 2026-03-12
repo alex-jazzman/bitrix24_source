@@ -1,4 +1,0 @@
-<?php
-$MESS["CRM_SETTINGS_WEBFORM_EDITOR_CONFIRM"] = "Нысанды ашқан кезде сұрау";
-$MESS["CRM_SETTINGS_WEBFORM_EDITOR_NEW"] = "Жаңа";
-$MESS["CRM_SETTINGS_WEBFORM_EDITOR_OLD"] = "Классикалық";

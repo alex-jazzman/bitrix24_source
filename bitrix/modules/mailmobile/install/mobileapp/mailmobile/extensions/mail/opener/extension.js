@@ -3,11 +3,11 @@
  */
 jn.define('mail/opener', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { showEmailBanner } = require('communication/email-menu');
 	const { Loc } = require('loc');
 	const { NotifyManager } = require('notify-manager');
 	const { mergeImmutable } = require('utils/object');
 	const { getContactsPromise } = require('mail/message/tools/connector');
+	const { MailDialog } = require('mail/dialog');
 
 	const CACHE_TTL = 60 * 60 * 4; // 4 hours
 	const NOT_ACTIVE_ERROR = 'mail_not_active';
@@ -58,7 +58,11 @@ jn.define('mail/opener', (require, exports, module) => {
 				.catch((error) => {
 					if (error === NOT_ACTIVE_ERROR)
 					{
-						showEmailBanner(parentWidget, this.openSend.bind(this, componentParams, widgetParams, parentWidget, true));
+						MailDialog.show({
+							type: MailDialog.CONNECTING_MAIL_TYPE,
+							parentWidget,
+							successCallback: this.openSend.bind(this, componentParams, widgetParams, parentWidget, true),
+						});
 					}
 					else
 					{
@@ -166,7 +170,7 @@ jn.define('mail/opener', (require, exports, module) => {
 		}
 
 		/**
-		 * @private
+		 * @public
 		 * @param {Object} componentParams
 		 * @return {Promise|*}
 		 */
@@ -179,11 +183,21 @@ jn.define('mail/opener', (require, exports, module) => {
 				} = {},
 				uploadSenders = true,
 				isCrmMessage = true,
+				preloadedInfo = null,
+				showLoadingIndicator = true,
 			} = componentParams;
+
+			if (preloadedInfo)
+			{
+				return Promise.resolve(preloadedInfo);
+			}
 
 			if ((ownerId && ownerType) || !isCrmMessage)
 			{
-				NotifyManager.showLoadingIndicator();
+				if (showLoadingIndicator)
+				{
+					NotifyManager.showLoadingIndicator();
+				}
 
 				return getContactsPromise(ownerId, ownerType, true, uploadSenders, isCrmMessage)
 					.then(({ data }) => {
@@ -218,7 +232,12 @@ jn.define('mail/opener', (require, exports, module) => {
 						return preloadInfo;
 					})
 					.catch(console.error)
-					.finally(() => NotifyManager.hideLoadingIndicatorWithoutFallback());
+					.finally(() => {
+						if (showLoadingIndicator)
+						{
+							NotifyManager.hideLoadingIndicatorWithoutFallback();
+						}
+					});
 			}
 
 			return Promise.resolve();

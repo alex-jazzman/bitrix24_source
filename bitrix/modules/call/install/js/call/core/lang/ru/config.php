@@ -153,5 +153,21 @@ $MESS["CALL_CONTROL_MODERATOR_TURNED_OFF_USER_SCREENSHARE_F"] = "#INITIATOR_NAME
 $MESS["CALL_CALLCONTROL_BUTTON_LABEL"] = "Управление";
 $MESS["CALL_CALLCONTROL_AXA_MOMENT_TITLE"] = "Можно отключать микрофоны и камеры всех участников";
 $MESS["CALL_CALLCONTROL_AXA_MOMENT_TEXT"] = "Это поможет управлять обсуждением и сделать встречу более продуктивной и комфортной";
+$MESS["CALL_TALKING_POPUP_TEXT"] = "#NAME# говорит...";
 $MESS["CALL_ERROR_MICROPHONE_STREAM_STOPPED"] = "Не удалось получить доступ к микрофону. Проверьте настройки браузера и подключение устройства";
 $MESS["CALL_MESSAGE_VPN_IS_ACTIVE"] = "Отключите VPN. С ним качество звонка может быть хуже";
+
+$MESS["CALL_VIDEO_QUALITY_TITLE"] = "Качество видео";
+$MESS["CALL_VIDEO_QUALITY_WITHOUT_VIDEO"] = "Без видео";
+$MESS["CALL_NOISE_SUPPRESSION"] = "Шумоподавление";
+$MESS["CALL_YOU_HAVE_BEEN_APPOINTED_AS_USER"] = "Вам больше недоступны права администратора в звонке";
+
+$MESS["CALL_DEVICE_ACCESS_DENIED_MIC_IN_USE"] = "Не удалось получить доступ к микрофону, он уже используется в другом приложении";
+$MESS["CALL_DEVICE_ACCESS_DENIED_CAM_IN_USE"] = "Не удалось получить доступ к камере, она уже используется в другом приложении";
+
+$MESS["CALL_DEVICE_ACCESS_DENIED_ALLOW_MIC"] = "Нет доступа к микрофону. Разрешите использовать его в настройках браузера";
+$MESS["CALL_DEVICE_ACCESS_DENIED_ALLOW_CAM"] = "Нет доступа к камере. Разрешите использовать её в настройках браузера";
+$MESS["CALL_DEVICE_ACCESS_DENIED_ALLOW_MIC_AND_CAM"] = "Нет доступа к микрофону и камере. Разрешите использовать их в настройках браузера";
+
+$MESS["CALL_DEVICE_ACCESS_DENIED_USING_DEFAULT_MIC"] = "Не удалось получить данные от выбранного микрофона. Пробуем получить их от системного микрофона";
+$MESS["CALL_DEVICE_ACCESS_DENIED_USING_DEFAULT_CAM"] = "Не удалось получить данные от выбранной камеры. Пробуем получить их от системной камеры";

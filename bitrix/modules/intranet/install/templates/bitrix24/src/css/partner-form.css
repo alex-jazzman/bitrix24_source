@@ -46,6 +46,16 @@
 	transform: translateY(-50%);
 }
 
+.bitrix24-partner__popup-content_name--custom-logo:before {
+	display: none;
+}
+
+.bitrix24-partner__popup-content_name--custom-logo {
+	background-position: 0 center;
+	background-size: 38px 38px;
+	background-repeat: no-repeat;
+}
+
 .bitrix24-partner__popup-content_link {
 	display: inline-block;
 	font-size: 14px;

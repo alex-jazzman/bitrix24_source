@@ -6,7 +6,7 @@
 jn.define('im/messenger/model/application/model', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { AppStatus } = require('im/messenger/const');
+	const { AppStatus, RecordMediaType } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('model--application');
@@ -33,6 +33,7 @@ jn.define('im/messenger/model/application/model', (require, exports, module) => 
 			},
 			settings: {
 				audioRate: 1,
+				recordMediaType: RecordMediaType.audio,
 			},
 		}),
 		getters: {
@@ -163,6 +164,21 @@ jn.define('im/messenger/model/application/model', (require, exports, module) => 
 					actionName: 'setAudioRateSetting',
 					data: {
 						audioRate: payload,
+					},
+				});
+			},
+
+			/** @function applicationModel/setRecordMediaType */
+			setRecordMediaType: (store, payload) => {
+				if (!Type.isStringFilled(payload))
+				{
+					return;
+				}
+
+				store.commit('setSettings', {
+					actionName: 'setRecordMediaType',
+					data: {
+						recordMediaType: payload,
 					},
 				});
 			},

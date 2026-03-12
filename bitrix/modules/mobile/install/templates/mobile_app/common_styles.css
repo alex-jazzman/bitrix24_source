@@ -1,7 +1,5 @@
 html, body {
     margin: 0;
-    padding: constant(safe-area-inset-top) constant(safe-area-inset-right) constant(safe-area-inset-bottom) constant(safe-area-inset-left);
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     font-family: -apple-system, BlinkMacSystemFont, Helvetica, sans-serif !important;
     min-height: 100%;
     height: 100%;
@@ -12,6 +10,12 @@ html, body {
     outline: none;
     -webkit-user-select: none;
     background-color: var(--bg-primary);
+}
+
+@supports (-webkit-touch-callout: none) {
+	html, body {
+		padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+	}
 }
 
 a:focus, textarea:focus, input:focus {

@@ -4,6 +4,7 @@ import { FilesModelState } from '../../../model/files/src/types';
 import { ReactionsModelState } from '../../../model/messages/src/reactions/types';
 import { TariffRestrictions } from '../../../model/dialogues/src/types';
 import { VoteModelState } from '../../../model/messages/src/vote/types';
+import {StickerState} from "../../../model/sticker-pack/src/types";
 
 export interface MessageRepositoryPage {
 	messageList: Array<MessagesModelState>,
@@ -13,6 +14,7 @@ export interface MessageRepositoryPage {
 	reactionList: Array<ReactionsModelState>,
 	dialogFields?: TariffRestrictions,
 	voteList?: Array<VoteModelState>,
+	stickerList?: Array<StickerState>,
 }
 
 export interface MessageRepositoryContext extends MessageRepositoryPage {

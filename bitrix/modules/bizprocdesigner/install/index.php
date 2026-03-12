@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\BizProcDesigner\Internal\Integration\AiAssistant\Install\TriggerRegisterAgent;
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
@@ -31,7 +30,6 @@ Class bizprocdesigner extends CModule
 	function InstallDB($install_wizard = true)
 	{
 		RegisterModule("bizprocdesigner");
-		$this->installAgents();
 
 		return true;
 	}
@@ -149,23 +147,5 @@ Class bizprocdesigner extends CModule
 		}
 	}
 
-	private function installAgents(): void
-	{
-		\CAgent::AddAgent(
-			name: 'Bitrix\BizProcDesigner\Internal\Integration\AiAssistant\Install\TriggerRegisterAgent::execute();',
-			module: $this->MODULE_ID,
-			interval: 60,
-			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 60, 'FULL'),
-			existError: false,
-		);
-
-		\CAgent::AddAgent(
-			name: 'Bitrix\BizprocDesigner\Internal\Integration\AiAssistant\Service\SemanticSearch\Indexer\DocumentFieldsAgent::run();',
-			module: $this->MODULE_ID,
-			period: 'Y',
-			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
-			existError: false,
-		);
-	}
 }
 ?>

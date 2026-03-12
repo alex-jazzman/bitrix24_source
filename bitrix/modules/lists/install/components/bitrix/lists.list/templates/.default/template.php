@@ -162,7 +162,10 @@ if(!IsModuleInstalled("intranet"))
 
 	$APPLICATION->SetAdditionalCSS("/bitrix/js/lists/css/intranet-common.css");
 }
-
+else
+{
+	\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
+}
 
 if ($arResult["CAN_ADD_ELEMENT"] || $arResult["CAN_EDIT_SECTIONS"])
 {

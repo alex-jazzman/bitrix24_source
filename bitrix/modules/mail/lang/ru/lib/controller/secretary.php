@@ -12,3 +12,4 @@ $MESS["MAIL_SECRETARY_CALENDAR_EVENT_DESC"] = "
 ";
 $MESS["MAIL_SECRETARY_ACCESS_DENIED"] = "Это действие может совершить только владелец почтового ящика";
 $MESS["MAIL_SECRETARY_ACCESS_DENIED_CALENDAR"] = "Это действие может совершить только создатель события календаря";
+$MESS["MAIL_SECRETARY_MODULE_NOT_INSTALLED"] = "Не установлены необходимые модули.";

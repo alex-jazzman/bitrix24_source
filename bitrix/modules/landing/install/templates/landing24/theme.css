@@ -29860,6 +29860,24 @@ img.u-block-hover__main--mover-down {
   opacity: 1;
 }
 
+/*------------------------------------
+  Default Typo
+------------------------------------*/
+html {
+  font-size: 14px;
+}
+
+body {
+  font-size: 1rem;
+  font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+  font-weight: var(--ui-font-weight-regular, 400);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -moz-font-feature-settings: "liga", "kern";
+  text-rendering: optimizelegibility;
+}
+
 /* Add here all your css styles (customizations) */
 .g-pointer-events-none,
 .g-pointer-events-before-after-none::before,
@@ -30192,24 +30210,12 @@ img[data-bx-image] {
 }
 
 /* Styles for separator blocks */
-main:not(.landing-edit-mode) .block-26-2-separator,
-main:not(.landing-edit-mode) .block-26-3-separator,
-main:not(.landing-edit-mode) .block-26-4-separator,
-main:not(.landing-edit-mode) .block-26-5-separator,
-main:not(.landing-edit-mode) .block-26-6-separator-waves,
-main:not(.landing-edit-mode) .block-26-7-separator,
-main:not(.landing-edit-mode) .block-26-8-separator {
-  overflow: hidden;
+.landing-edit-mode .landing-block-separator {
+  margin: 0;
 }
 
-.landing-edit-mode .block-26-2-separator .landing-block,
-.landing-edit-mode .block-26-3-separator .landing-block,
-.landing-edit-mode .block-26-4-separator .landing-block,
-.landing-edit-mode .block-26-5-separator .landing-block,
-.landing-edit-mode .block-26-6-separator-waves .landing-block,
-.landing-edit-mode .block-26-7-separator .landing-block,
-.landing-edit-mode .block-26-8-separator .landing-block {
-  margin: 0;
+main:not(.landing-edit-mode) .block-wrapper:has(> .landing-block-separator) {
+  overflow: hidden;
 }
 
 /* Styles for menu in store v3 */
@@ -30305,22 +30311,4 @@ main:not(.landing-edit-mode) .block-store-menu-sidebar .landing-block {
 
 .block-70-2 .landing-block-node-card-link {
   width: 100%;
-}
-
-/*------------------------------------
-  Default Typo
-------------------------------------*/
-html {
-  font-size: 14px;
-}
-
-body {
-  font-size: 1rem;
-  font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-  font-weight: var(--ui-font-weight-regular, 400);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -moz-font-feature-settings: "liga", "kern";
-  text-rendering: optimizelegibility;
 }

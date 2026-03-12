@@ -1,0 +1,12 @@
+.bx-im-notification-filter-value_tags-container {
+	display: flex;
+	margin: 2px;
+}
+
+.bx-im-notification-filter-plus {
+	margin-top: 6px;
+	margin-left: 3px;
+	font: var(--ui-font-size-sm) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--im-color-palette-gray-50);
+}

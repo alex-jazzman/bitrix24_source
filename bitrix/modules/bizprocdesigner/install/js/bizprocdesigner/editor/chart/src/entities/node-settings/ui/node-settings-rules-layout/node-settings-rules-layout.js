@@ -7,7 +7,7 @@ import { useLoc } from '../../../../shared/composables';
 import { DragRuleEntity } from '../../directives/drag-rule-entity';
 
 // eslint-disable-next-line no-unused-vars
-import type { TRuleCard, NodeSettings } from '../types';
+import type { TRuleCard, NodeSettings, OrderPayload } from '../../types';
 
 // @vue/component
 export const NodeSettingsRulesLayout = {

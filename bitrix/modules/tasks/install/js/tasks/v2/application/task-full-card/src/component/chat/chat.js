@@ -128,11 +128,11 @@ export const Chat = {
 				return;
 			}
 
-			const { MessageMenu, MessageMenuManager } = await Runtime.loadExtension('im.v2.lib.menu');
+			const { TaskCommentsMessageMenu, MessageMenuManager } = await Runtime.loadExtension('im.v2.lib.menu');
 			this.messageMenuManager = MessageMenuManager;
 
 			const taskId = this.taskId;
-			const taskFullCardMessageMenu = class extends TaskFullCardMessageMenu(MessageMenu)
+			const taskFullCardMessageMenu = class extends TaskFullCardMessageMenu(TaskCommentsMessageMenu)
 			{
 				getTaskId(): number
 				{
@@ -197,7 +197,7 @@ export const Chat = {
 		},
 	},
 	template: `
-		<div class="tasks-full-card-chat" ref="chat">
+		<div class="tasks-full-card-chat print-ignore" ref="chat">
 			<div style="color: #f00">module 'im' is not installed</div>
 		</div>
 		<ChatAha

@@ -3,6 +3,7 @@ import { ActionByRole, ChatType, EventType, SidebarDetailBlock } from 'im.v2.con
 import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
 import { Loader } from 'im.v2.component.elements.loader';
 import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Notifier } from 'im.v2.lib.notifier';
 import { ChatManager } from 'im.v2.lib.chat';
@@ -95,6 +96,11 @@ export const MembersPanel = {
 		},
 		needCopyLinkButton(): boolean
 		{
+			if (FeatureManager.isFeatureAvailable(Feature.chatSharedLinkAvailable))
+			{
+				return false;
+			}
+
 			if (!BX.clipboard.isCopySupported())
 			{
 				return false;

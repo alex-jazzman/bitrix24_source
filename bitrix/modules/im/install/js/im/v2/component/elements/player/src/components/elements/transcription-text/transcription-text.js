@@ -41,15 +41,15 @@ export const TranscriptionText = {
 		},
 		text(): string
 		{
-			return Parser.decode({ text: this.transcription.transcriptText });
+			return Parser.decode({ text: this.transcription?.transcriptText ?? '' });
 		},
 		isError(): boolean
 		{
-			return this.transcription && this.transcription.status === TranscriptionStatus.ERROR;
+			return Boolean(this.transcription && this.transcription.status === TranscriptionStatus.ERROR);
 		},
 		isLimitError(): boolean
 		{
-			return this.transcription && this.transcription.errorCode === LIMIT_ERROR_CODE;
+			return Boolean(this.transcription && this.transcription.errorCode === LIMIT_ERROR_CODE);
 		},
 		errorText(): string
 		{
@@ -62,9 +62,13 @@ export const TranscriptionText = {
 
 			return this.loc(code);
 		},
-		showDivider(): boolean
+		needToShowDivider(): boolean
 		{
 			return this.isOpened && Boolean(this.message.text);
+		},
+		needToShowDisclaimer(): boolean
+		{
+			return !this.isError && Boolean(this.transcription?.transcriptText);
 		},
 		message(): ImModelMessage
 		{
@@ -102,9 +106,15 @@ export const TranscriptionText = {
 							</span>
 						</template>
 					</RichLoc>
+					<template v-if="needToShowDisclaimer">
+						<div class="bx-im-transcription-text__disclaimer-divider"></div>
+						<div class="bx-im-transcription-text__disclaimer">
+							{{ loc('IM_MESSAGE_FILE_TRANSCRIPTION_DISCLAIMER') }}
+						</div>
+					</template>
 				</div>
 			</ExpandAnimation>
-			<div v-if="showDivider" class="bx-im-transcription-text__divider"></div>
+			<div v-if="needToShowDivider" class="bx-im-transcription-text__divider"></div>
 		</div>
 	`,
 };

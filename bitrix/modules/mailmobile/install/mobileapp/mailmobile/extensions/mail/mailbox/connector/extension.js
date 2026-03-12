@@ -10,6 +10,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 	const { OAuth } = require('mail/mailbox/connector/steps/oauth');
 	const { NotifyManager } = require('notify-manager');
 	const { MailDialog } = require('mail/dialog');
+	const { AnalyticsEvent } = require('analytics');
 
 	class Connector extends LayoutComponent
 	{
@@ -19,6 +20,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 			const {
 				parentWidget,
 				successCallback = () => {},
+				connectFrom = 'mail',
 			} = props;
 			this.parentWidget = parentWidget;
 			this.successCallback = successCallback;
@@ -26,6 +28,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 			this.stepProps = {};
 			this.getStepForId = this.getStepForId.bind(this);
 			this.oauthMode = true;
+			this.connectFrom = connectFrom;
 		}
 
 		validateFields(fieldRefs)
@@ -62,6 +65,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 				sslSmtp = true,
 				loginSmtp = '',
 				passwordSMTP = '',
+				loginWithoutDomain = '',
 			} = props;
 
 			return BX.ajax.runAction('mail.mailboxconnecting.connectMailbox', {
@@ -79,6 +83,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 					sslSmtp: sslSmtp ? 1 : 0,
 					loginSmtp,
 					passwordSMTP,
+					loginWithoutDomain,
 				},
 			});
 		}
@@ -187,6 +192,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 
 		onErrorEnter(errors, showErrors = true)
 		{
+			this.sendErrorAnalytics();
 			this.goToStartStep();
 
 			if (showErrors)
@@ -197,10 +203,33 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 
 		onConnectMailbox(id, email)
 		{
+			this.sendSuccessAnalytics();
 			this.saveConnectedEmail(email);
 			this.saveConnectedMailboxId(id);
 			NotifyManager.hideLoadingIndicatorWithoutFallback();
 			this.goToFinalStep();
+		}
+
+		sendErrorAnalytics()
+		{
+			new AnalyticsEvent({
+				tool: 'mail',
+				category: 'mail_general_ops',
+				event: 'mailbox_connect',
+				c_section: this.connectFrom,
+				status: 'success',
+			}).send();
+		}
+
+		sendSuccessAnalytics()
+		{
+			new AnalyticsEvent({
+				tool: 'mail',
+				category: 'mail_general_ops',
+				event: 'mailbox_connect',
+				c_section: this.connectFrom,
+				status: 'error',
+			}).send();
 		}
 
 		getStepForId(stepId)

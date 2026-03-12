@@ -77,3 +77,7 @@ $MESS["VI_CONFIG_RENT_UPLOAD_DOCUMENTS"] = "Загрузить новые док
 $MESS["VI_CONFIG_RENT_MONTHLY_PAYMENT_HINT"] = "Денежные средства будут автоматически списываться с вашего баланса";
 $MESS["VI_CONFIG_RENT_INSTALLATION_PAYMENT_HINT"] = "Платеж будет списан однократно, при подключении номера";
 $MESS["VI_CONFIG_RENT_PACKET_DETAILS"] = "Подробнее о пакетах";
+$MESS["VI_CONFIG_RENT_INTERNOD_WARNING"] = "Продлите аренду номеров<br />Подключенные российские номера скоро станут неактивны. Чтобы продолжить использовать их и дальше, подпишите <a href='#BILLING_URL#' target='_blank'>дополнительное соглашение</a> с провайдером";
+$MESS["VI_CONFIG_RENT_INTERNOD_WARNING_WITH_DATE"] = "Продлите аренду номеров<br />Подключенные российские номера активны до #DATE#. Чтобы продолжить использовать их и после, подпишите <a href='#BILLING_URL#' target='_blank'>дополнительное соглашение</a> с провайдером";
+$MESS["VI_CONFIG_RENT_CONFIRMATION_TYPE_BUSINESS_ACCOUNT"] = "После покупки этого номера нужно будет зарегистрировать корпоративный номер на Госуслугах";
+$MESS["VI_CONFIG_RENT_CONFIRMATION_TYPE_BUSINESS_ACCOUNT_WARNING"] = "<b>После покупки номера необходимо зарегистрировать корпоративный номер на Госуслугах.</b><br />Для номеров, отмеченных в таблице иконкой, связь будет недоступна без регистрации. Подробнее";

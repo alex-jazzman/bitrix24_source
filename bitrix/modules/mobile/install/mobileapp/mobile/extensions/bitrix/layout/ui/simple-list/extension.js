@@ -17,7 +17,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 	const { StatusBlock, makeLibraryImagePath } = require('ui-system/blocks/status-block');
 	const { OptimizedListView } = require('layout/ui/optimized-list-view');
 	const { isNil } = require('utils/type');
-	const { FloatingButtonComponent } = require('layout/ui/floating-button');
+	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 	const { MenuEngine } = require('layout/ui/simple-list/menu-engine');
 
 	const MIN_ROWS_COUNT_FOR_LOAD_MORE = 10;
@@ -856,13 +856,17 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				return renderFloatingButton();
 			}
 
-			return new FloatingButtonComponent({
+			this.floatingButton = new FloatingActionButton({
 				testId: `${this.testId}_ADD_BTN`,
 				onClick: onFloatingButtonClick,
 				onLongClick: onFloatingButtonLongClick,
 				accent: this.isEmptyList(),
-				parentLayout: layout,
+				layout,
 			});
+
+			this.floatingButton.show();
+
+			return null;
 		}
 
 		loadItems(blockPage, append)

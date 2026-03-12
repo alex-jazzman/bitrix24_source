@@ -1,14 +1,14 @@
 import { MoveableBlock } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
-import { isBlockActivated } from '../../../../entities/blocks/utils';
+import type { MenuItemOptions } from 'ui.vue3.components.menu';
+import { isBlockActivated, getBlockUserTitle } from '../../../../entities/blocks/utils';
 import { IconDivider, IconButton } from '../../../../shared/ui';
-// eslint-disable-next-line no-unused-vars
-import type { Block, BlockId } from '../../../../shared/types';
 import {
 	BlockLayout,
 	BlockHeader,
 	BlockIcon,
 	PortsInOutCenter,
+	BlockTopTitle,
 } from '../../../../entities/blocks';
 import {
 	AutosizeBlockContainer,
@@ -16,11 +16,18 @@ import {
 	UpdatePublishedStatusLabel,
 } from '../../../../features/blocks';
 
+import type { Block } from '../../../../shared/types';
+
 import { BlockMediator } from '../../lib';
 
 type BlockSimpleSetup = {
 	iconSet: { [string]: string };
-	onOpenBlockSettings: (event: MouseEvent) => void;
+	blockMediator: BlockMediator;
+};
+
+type Props = {
+	block: Block,
+	autosize: boolean,
 };
 
 // @vue/component
@@ -37,6 +44,7 @@ export const BlockSimple = {
 		IconDivider,
 		IconButton,
 		PortsInOutCenter,
+		BlockTopTitle,
 	},
 	props: {
 		/** @type Block */
@@ -49,45 +57,55 @@ export const BlockSimple = {
 			default: false,
 		},
 	},
-	computed: {
-		isBlockActivated(): boolean
-		{
-			return isBlockActivated(this.block);
-		}
-	},
-	setup(props): BlockSimpleSetup
+	setup(props: Props): BlockSimpleSetup
 	{
 		return {
 			iconSet: Outline,
 			blockMediator: new BlockMediator(),
 		};
 	},
+	computed: {
+		isBlockActivated(): boolean
+		{
+			return isBlockActivated(this.block);
+		},
+		userTitle(): ?string
+		{
+			return getBlockUserTitle(this.block);
+		},
+		contextMenuItems(): Array<MenuItemOptions>
+		{
+			return this.blockMediator.getCommonBlockMenuOptions(this.block);
+		},
+	},
 	template: `
 		<MoveableBlock :block="block">
-			<template #default="{ isHighlighted, isDragged, isDisabled, isActivated }">
+			<template #default="{ isHighlighted, isDragged, isDisabled, isActivated, isMakeNewConnection }">
 				<AutosizeBlockContainer
 					:blockId="block.id"
 					:autosize="autosize"
 					:width="block.dimensions.width"
 					:height="block.dimensions.height"
-					:highlighted="isHighlighted"
+					:highlighted="isHighlighted && !isDragged"
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
-					:contextMenuItems="[
-						blockMediator.getCtxMenuItemShowSimpleSettings(block),
-						blockMediator.getCtxMenuItemDeleteBlock(block),
-					]"
+					:hoverable="!isMakeNewConnection"
+					:contextMenuItems="contextMenuItems"
 					@dblclick.stop="blockMediator.showNodeSettings(block)"
 				>
 					<BlockLayout
 						:block="block"
-						:moreMenuItems="[
-							blockMediator.getCtxMenuItemShowSimpleSettings(block),
-							blockMediator.getCtxMenuItemDeleteBlock(block),
-						]"
+						:moreMenuItems="contextMenuItems"
 						:dragged="isDragged"
 						:disabled="isDisabled"
+						:hoverable="!isMakeNewConnection"
 					>
+						<template #top-menu-title>
+							<BlockTopTitle
+								:title="userTitle"
+								:description="block.activity.Properties.EditorComment"
+							/>
+						</template>
 						<template #top-menu>
 							<DeleteBlockIconBtn
 								:blockId="block.id"

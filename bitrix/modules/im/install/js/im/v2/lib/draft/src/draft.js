@@ -47,7 +47,7 @@ export class DraftManager
 
 	constructor()
 	{
-		EventEmitter.subscribe(EventType.layout.onLayoutChange, this.onLayoutChange.bind(this));
+		EventEmitter.subscribe(EventType.layout.onLayoutChange, this.#onLayoutChange.bind(this));
 	}
 
 	async initDraftHistory()
@@ -64,43 +64,36 @@ export class DraftManager
 
 			return;
 		}
-		this.fillDraftsFromStorage(draftHistory);
+		this.#fillDraftsFromStorage(draftHistory);
 
 		Logger.warn('DraftManager: initDrafts:', this.drafts);
-		this.setRecentListDraftText();
+		this.#setRecentListDraftText();
 		this.inited = true;
 	}
 
-	fillDraftsFromStorage(draftHistory: { [dialogId: string]: Draft }): void
+	setDraftText(dialogId: string, text: string): void
 	{
-		if (!Type.isPlainObject(draftHistory))
+		if (!this.#isValidDialogId(dialogId))
 		{
 			return;
 		}
 
-		Object.entries(draftHistory).forEach(([dialogId, draft]) => {
-			if (!Type.isPlainObject(draft))
-			{
-				return;
-			}
-
-			this.drafts[dialogId] = draft;
-		});
-	}
-
-	setDraftText(dialogId: number, text: string): void
-	{
 		if (!this.drafts[dialogId])
 		{
 			this.drafts[dialogId] = {};
 		}
 		this.drafts[dialogId].text = text.trim();
 
-		this.refreshSaveTimeout();
+		this.#refreshSaveTimeout();
 	}
 
-	setDraftPanel(dialogId: number, panelType: TextareaPanelTypeItem, panelContext: PanelContext): void
+	setDraftPanel(dialogId: string, panelType: TextareaPanelTypeItem, panelContext: PanelContext): void
 	{
+		if (!this.#isValidDialogId(dialogId))
+		{
+			return;
+		}
+
 		if (!this.drafts[dialogId])
 		{
 			this.drafts[dialogId] = {};
@@ -108,22 +101,32 @@ export class DraftManager
 		this.drafts[dialogId].panelType = panelType;
 		this.drafts[dialogId].panelContext = panelContext;
 
-		this.refreshSaveTimeout();
+		this.#refreshSaveTimeout();
 	}
 
-	setDraftMentions(dialogId: number, mentions: JsonObject): void
+	setDraftMentions(dialogId: string, mentions: JsonObject): void
 	{
+		if (!this.#isValidDialogId(dialogId))
+		{
+			return;
+		}
+
 		if (!this.drafts[dialogId])
 		{
 			this.drafts[dialogId] = {};
 		}
 		this.drafts[dialogId].mentions = mentions;
 
-		this.refreshSaveTimeout();
+		this.#refreshSaveTimeout();
 	}
 
-	async getDraft(dialogId: number): Promise<Draft>
+	async getDraft(dialogId: string): Promise<Draft>
 	{
+		if (!this.#isValidDialogId(dialogId))
+		{
+			return {};
+		}
+
 		if (!this.inited)
 		{
 			await this.initDraftHistory();
@@ -134,20 +137,42 @@ export class DraftManager
 
 	clearDraft(dialogId: string)
 	{
+		if (!this.#isValidDialogId(dialogId))
+		{
+			return;
+		}
+
 		delete this.drafts[dialogId];
-		this.setRecentItemDraftText(dialogId, '');
+		this.#setRecentItemDraftText(dialogId, '');
 	}
 
-	setRecentListDraftText()
+	#fillDraftsFromStorage(draftHistory: { [dialogId: string]: Draft }): void
 	{
-		Object.entries(this.drafts).forEach(([dialogId, draft]) => {
-			this.setRecentItemDraftText(dialogId, draft.text ?? '');
+		if (!Type.isPlainObject(draftHistory))
+		{
+			return;
+		}
+
+		Object.entries(draftHistory).forEach(([dialogId, draft]) => {
+			if (!Type.isPlainObject(draft) || !this.#isValidDialogId(dialogId))
+			{
+				return;
+			}
+
+			this.drafts[dialogId] = draft;
 		});
 	}
 
-	setRecentItemDraftText(dialogId: number, text: string)
+	#setRecentListDraftText()
 	{
-		if (!this.canSetRecentItemDraftText(dialogId))
+		Object.entries(this.drafts).forEach(([dialogId, draft]) => {
+			this.#setRecentItemDraftText(dialogId, draft.text ?? '');
+		});
+	}
+
+	#setRecentItemDraftText(dialogId: string, text: string)
+	{
+		if (!this.#canSetRecentItemDraftText(dialogId))
 		{
 			return;
 		}
@@ -161,35 +186,35 @@ export class DraftManager
 		});
 	}
 
-	onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
+	#onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 	{
 		const { from } = event.getData();
 		const dialogId = from.entityId;
-		if (dialogId === '')
+		if (!this.#isValidDialogId(dialogId))
 		{
 			return;
 		}
 
 		setTimeout(async () => {
 			const { text = '' } = await this.getDraft(dialogId);
-			this.setRecentItemDraftText(dialogId, text);
+			this.#setRecentItemDraftText(dialogId, text);
 		}, SHOW_DRAFT_IN_RECENT_TIMEOUT);
 	}
 
-	refreshSaveTimeout()
+	#refreshSaveTimeout()
 	{
 		clearTimeout(this.writeToStorageTimeout);
 		this.writeToStorageTimeout = setTimeout(() => {
-			this.saveToIndexedDb();
+			this.#saveToIndexedDb();
 		}, WRITE_TO_STORAGE_TIMEOUT);
 	}
 
-	saveToIndexedDb()
+	#saveToIndexedDb()
 	{
-		IndexedDbManager.getInstance().set(STORAGE_KEY, this.prepareDrafts());
+		IndexedDbManager.getInstance().set(STORAGE_KEY, this.#prepareDrafts());
 	}
 
-	prepareDrafts(): { [dialogId: string]: Draft }
+	#prepareDrafts(): { [dialogId: string]: Draft }
 	{
 		const result = {};
 		Object.entries(this.drafts).forEach(([dialogId, draft]) => {
@@ -212,7 +237,7 @@ export class DraftManager
 		return result;
 	}
 
-	canSetRecentItemDraftText(dialogId: string): boolean
+	#canSetRecentItemDraftText(dialogId: string): boolean
 	{
 		const chat = this.#getChat(dialogId);
 		if (!chat)
@@ -226,5 +251,10 @@ export class DraftManager
 	#getChat(dialogId: string): ?ImModelChat
 	{
 		return Core.getStore().getters['chats/get'](dialogId);
+	}
+
+	#isValidDialogId(dialogId: string): boolean
+	{
+		return Type.isStringFilled(dialogId) && dialogId !== '0';
 	}
 }

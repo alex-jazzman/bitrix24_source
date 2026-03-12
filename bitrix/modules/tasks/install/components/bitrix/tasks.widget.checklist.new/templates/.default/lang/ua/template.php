@@ -1,3 +1,0 @@
-<?
-$MESS["TASKS_CHECKLIST_TEMPLATE_ADD_CHECKLIST"] = "додати чек-лист";
-?>

@@ -644,28 +644,6 @@ jn.define('assets/icons/src/reaction', (require, exports, module) => {
 		}
 
 		/**
-		 * Returns a mapping of reaction IDs to their corresponding Lottie animation URLs
-		 * @public
-		 * @returns {Object}
-		 */
-		static getLottieAnimationList()
-		{
-			return Object.entries(ReactionIcon)
-				.filter(([key]) => {
-					const up = String(key).toUpperCase();
-
-					return !up.startsWith('WHATS_NEW_') && !up.startsWith('LEGACY_');
-				})
-				.map(([, value]) => value.getValue())
-				.reduce((animations, reaction) => {
-					return {
-						...animations,
-						[reaction.name]: withCurrentDomain(reaction.lottieUrl),
-					};
-				}, {});
-		}
-
-		/**
 		 * Returns the animation URL for chosen reactionId
 		 * @public
 		 * @param {string} reactionId

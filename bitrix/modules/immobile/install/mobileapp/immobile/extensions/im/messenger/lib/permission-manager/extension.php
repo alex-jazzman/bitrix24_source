@@ -10,7 +10,12 @@ if (!\Bitrix\Main\Loader::includeModule('im'))
 	return;
 }
 
-return [
-	'call_server_max_users' => \Bitrix\Main\Config\Option::get('im', 'call_server_max_users'),
+$result = [
 	'userChatOptions' => CIMChat::GetChatOptions(),
 ];
+if (\Bitrix\Main\Loader::includeModule('call'))
+{
+	$result['call_server_max_users'] = \Bitrix\Call\Call::getMaxCallServerParticipants();
+}
+
+return $result;

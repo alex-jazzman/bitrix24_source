@@ -6,7 +6,7 @@ return [
 		'im:chat/uploader', // chat uploader
 		'im:chat/background', // chat background processes (message, reaction, read, .etc)
 		'project/background', // project background processes (view, .etc)
-		'disk/background', // task background processes (view, .etc)
+		'disk:background', // task background processes (view, .etc)
 		'rest',
 		'livefeed',
 		'livefeed/publicationqueue',

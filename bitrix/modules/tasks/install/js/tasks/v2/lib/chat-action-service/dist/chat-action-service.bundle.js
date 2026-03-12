@@ -317,14 +317,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	const changeDeadlineAction = new ChangeDeadlineAction();
 
 	var _showAccessDeniedHint$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showAccessDeniedHint");
-	var _currentUserId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentUserId");
 	class CompleteTaskAction extends BaseAction {
 	  constructor(...args) {
 	    super(...args);
-	    Object.defineProperty(this, _currentUserId, {
-	      get: _get_currentUserId,
-	      set: void 0
-	    });
 	    Object.defineProperty(this, _showAccessDeniedHint$1, {
 	      value: _showAccessDeniedHint2$1
 	    });
@@ -347,19 +342,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(payload.taskId);
 	    return task && ((_task$rights = task.rights) == null ? void 0 : _task$rights.complete) === true;
 	  }
-	  isRequiredResult(payload) {
-	    const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(payload.taskId);
-	    return task && task.requireResult === true && babelHelpers.classPrivateFieldLooseBase(this, _currentUserId)[_currentUserId] !== task.creatorId && !resultService.hasOpenedResults(payload.taskId);
-	  }
 	  get $store() {
 	    return tasks_v2_core.Core.getStore();
 	  }
 	}
 	function _showAccessDeniedHint2$1(payload) {
 	  void chatHint.show(main_core.Loc.getMessage('TASKS_V2_CHAT_ACTION_COMPLETE_TASK_NO_PERMISSION'), payload);
-	}
-	function _get_currentUserId() {
-	  return this.$store.getters[`${tasks_v2_const.Model.Interface}/currentUserId`];
 	}
 	const completeTaskAction = new CompleteTaskAction();
 

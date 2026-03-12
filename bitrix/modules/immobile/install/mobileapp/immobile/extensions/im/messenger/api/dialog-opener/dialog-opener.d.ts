@@ -12,6 +12,7 @@ declare type DialogOpenOptions = {
 	fallbackUrl?: string, // for openlines dialog only
 	parentWidget?: object,
 	botContextData?: object,
+	/** @deprecated */
 	navigationTab?: string,
 	changeMessengerTab?: boolean,
 	/**

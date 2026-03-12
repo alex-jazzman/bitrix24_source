@@ -57,6 +57,13 @@ class CBPAiDelayActivity implements IBPActivityAiDescription
 					type: FieldType::BOOL,
 				)
 			)
+			->add(
+				new Setting(
+					name: 'Sort',
+					description: 'Delay unit sort order',
+					type: FieldType::INT,
+				)
+			)
 		;
 	}
 }

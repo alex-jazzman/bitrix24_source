@@ -8,7 +8,8 @@ return [
 	'css' => 'dist/tags.bundle.css',
 	'js' => 'dist/tags.bundle.js',
 	'rel' => [
-		'tasks.v2.component.elements.add-button',
+		'ui.system.typography.vue',
+		'tasks.v2.component.elements.field-hover-button',
 		'tasks.v2.component.elements.field-add',
 		'main.core',
 		'main.core.events',

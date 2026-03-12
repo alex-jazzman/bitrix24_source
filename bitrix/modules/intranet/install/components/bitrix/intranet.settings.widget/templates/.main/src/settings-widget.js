@@ -284,8 +284,8 @@ export class SettingsWidget extends EventEmitter
 		const previewImage = `url('${Text.encode(theme.previewImage)}')`;
 		Dom.style(container, 'backgroundImage', previewImage);
 
-		Dom.removeClass(container, 'bitrix24-theme-dark bitrix24-theme-light');
-		const themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-theme-dark' : 'bitrix24-theme-light';
+		Dom.removeClass(container, 'bitrix24-dark-theme bitrix24-light-theme');
+		const themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-dark-theme' : 'bitrix24-light-theme';
 		Dom.addClass(container, themeClass);
 	}
 
@@ -359,17 +359,6 @@ export class SettingsWidget extends EventEmitter
 				c_sub_section: 'from_widget_vibe_point',
 			});
 		};
-		const label = new Label({
-			text: Loc.getMessage('INTRANET_SETTINGS_WIDGET_LABEL_NEW'),
-			customClass: 'ui-label-new',
-			size: LabelSize.SM,
-			fill: true,
-		})
-		const labelWrapper = Tag.render`
-			<div class="intranet-settings-widget__label-new">
-				${label.render()}
-			</div>
-		`;
 
 		const element = Tag.render`
 			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-main-page">
@@ -382,7 +371,6 @@ export class SettingsWidget extends EventEmitter
 					</div>
 				</div>
 				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-				${this.#mainPage.isNew ? labelWrapper : null}
 			</div>
 		`;
 

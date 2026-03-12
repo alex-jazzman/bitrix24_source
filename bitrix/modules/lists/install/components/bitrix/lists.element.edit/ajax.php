@@ -300,14 +300,14 @@ class ListsElementEditAjaxController extends Controller
 		));
 	}
 
-	protected function processActionNotifyAdmin()
+	protected function processActionNotifyAdmin(): void
 	{
-		$this->checkRequiredPostParams(
-			array('userId', 'iblockId', 'iblockTypeId', 'socnetGroupId', 'sectionId', 'elementUrl')
-		);
+		$this->checkRequiredPostParams([
+			'userId', 'iblockId', 'iblockTypeId', 'socnetGroupId', 'sectionId', 'elementUrl'
+		]);
 		if(!Loader::includeModule('im'))
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('LISTS_SEAC_CONNECTION_MODULE_IM'))));
+			$this->errorCollection->add([new Error(Loc::getMessage('LISTS_SEAC_CONNECTION_MODULE_IM'))]);
 		}
 		if($this->errorCollection->hasErrors())
 		{
@@ -321,30 +321,36 @@ class ListsElementEditAjaxController extends Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		$userIdFrom = intval($this->getUser()->getID());
-		$userIdTo = intval($this->request->getPost('userId'));
+		$userIdFrom = (int)$this->getUser()->getID();
+		$userIdTo = (int)$this->request->getPost('userId');
 
-		$messageFields = array(
+		$messageId = CIMNotify::Add([
 			'TO_USER_ID' => $userIdTo,
 			'FROM_USER_ID' => $userIdFrom,
 			'NOTIFY_TYPE' => IM_NOTIFY_FROM,
 			'NOTIFY_MODULE' => 'lists',
 			'NOTIFY_EVENT' => 'admin_notification',
-			'NOTIFY_TAG' => 'LISTS|NOTIFY_ADMIN|'.$userIdTo.'|'.$userIdFrom,
-			'NOTIFY_MESSAGE' => Loc::getMessage(
-				'LISTS_NOTIFY_MESSAGE', array('#URL#' => $this->request->getPost('elementUrl')))
-		);
-		$messageId = CIMNotify::Add($messageFields);
+			'NOTIFY_TAG' => "LISTS|NOTIFY_ADMIN|{$userIdTo}|{$userIdFrom}",
+			'NOTIFY_MESSAGE' => Loc::getMessage('LISTS_NOTIFY_MESSAGE_SIMPLE'),
+			'PARAMS' => [
+				'COMPONENT_ID' => 'BizprocEntity',
+				'COMPONENT_PARAMS' => ['SUBJECT' => Loc::getMessage('LISTS_NOTIFY_MESSAGE_DEFAULT'),
+					'ENTITY' => [
+						'TITLE' => Loc::getMessage('LISTS_NOTIFY_MESSAGE_INFO'),
+						'HREF' => $this->request->getPost('elementUrl'),
+						'CONTENT_TYPE' => 'title',
+					],
+				],
+			],
+		]);
 
 		if($messageId)
 		{
-			$this->sendJsonSuccessResponse(
-				array('message' => Loc::getMessage('LISTS_NOTIFY_SUCCESS'))
-			);
+			$this->sendJsonSuccessResponse(['message' => Loc::getMessage('LISTS_NOTIFY_SUCCESS')]);
 		}
 		else
 		{
-			$this->errorCollection->add(array(new Error(Loc::getMessage('LISTS_NOTIFY_ERROR'))));
+			$this->errorCollection->add([new Error(Loc::getMessage('LISTS_NOTIFY_ERROR'))]);
 			$this->sendJsonErrorResponse();
 		}
 	}

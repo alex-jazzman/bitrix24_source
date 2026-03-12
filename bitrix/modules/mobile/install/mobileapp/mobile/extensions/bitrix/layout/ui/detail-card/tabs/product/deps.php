@@ -11,5 +11,6 @@ return [
 
 		'catalog:barcode-scanner',
 		'catalog:store/product-list',
+		'layout/ui/detail-card/tabs/factory/type',
 	],
 ];

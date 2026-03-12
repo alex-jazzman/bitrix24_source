@@ -46,7 +46,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  getElementState() {
 	    const stateFlags = this.getVariable('stateFlags', {
 	      needsControl: false,
-	      matchesWorkTime: false
+	      matchesWorkTime: false,
+	      allowsTimeTracking: false
 	    });
 	    const deadlineUserOption = this.getVariable('deadlineUserOption', {
 	      canChangeDeadline: false,
@@ -56,6 +57,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    });
 	    return {
 	      id: 0,
+	      groupId: 0,
 	      title: '',
 	      isImportant: false,
 	      description: '',
@@ -81,6 +83,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      statusChangedTs: Date.now(),
 	      needsControl: stateFlags.needsControl,
 	      matchesWorkTime: stateFlags.matchesWorkTime,
+	      allowsTimeTracking: stateFlags.allowsTimeTracking,
 	      filledFields: {},
 	      parentId: 0,
 	      subTaskIds: [],

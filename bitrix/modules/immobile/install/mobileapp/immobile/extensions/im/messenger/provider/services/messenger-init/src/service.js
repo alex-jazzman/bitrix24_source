@@ -7,11 +7,8 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 	const {
 		EventType,
 		MessengerInitRestMethod,
-		ComponentCode,
 	} = require('im/messenger/const');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { runAction } = require('im/messenger/lib/rest');
-	const { MessengerParams } = require('im/messenger/lib/params');
 
 	/**
 	 * @class MessengerInitService
@@ -49,15 +46,6 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 		 */
 		async runAction(methodList)
 		{
-			if (!Feature.isMessengerV2Enabled)
-			{
-				const isNeedWait = !this.#isMessengerComponent() && !this.#hasCommonActionResultStore();
-				if (isNeedWait)
-				{
-					await this.#waitChatCommonActionResult();
-				}
-			}
-
 			const data = this.#prepareActionData(methodList);
 			let result = await runAction(this.actionName, { data });
 
@@ -90,11 +78,6 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 			this.#on(EventType.messenger.init, eventHandler);
 		}
 
-		async clearCommonActionResultStore()
-		{
-			await this.#clearCommonActionResultStore();
-		}
-
 		/**
 		 * @param {Function} eventHandler
 		 * @param {string} eventName
@@ -111,13 +94,6 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 		#once(eventName, eventHandler)
 		{
 			this.eventEmitter.once(eventName, eventHandler);
-		}
-
-		#isMessengerComponent()
-		{
-			const componentCode = MessengerParams.getComponentCode();
-
-			return componentCode === ComponentCode.imMessenger;
 		}
 
 		/**
@@ -157,11 +133,6 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 			return preparedData;
 		}
 
-		async #waitChatCommonActionResult()
-		{
-			return EntityReady.wait(this.commonActionResultEntityId);
-		}
-
 		/**
 		 * @param {immobileTabChatLoadResult | immobileTabChannelLoadResult | immobileTabCopilotLoadResult} actionResult
 		 */
@@ -181,13 +152,6 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 
 			this.isReadyCommonActionResult = true;
 			EntityReady.ready(this.commonActionResultEntityId);
-		}
-
-		async #clearCommonActionResultStore()
-		{
-			await this.commonActionResultStore.set('commonActionResult', null);
-			this.isReadyCommonActionResult = false;
-			EntityReady.unready(this.commonActionResultEntityId);
 		}
 
 		/**

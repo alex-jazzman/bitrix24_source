@@ -16,6 +16,7 @@ jn.define('mail/message/elements/contact/list', (require, exports, module) => {
 				title,
 				format,
 				list,
+				testId = 'contact-list',
 			} = this.props;
 
 			if (!Array.isArray(list) || list.length === 0)
@@ -38,6 +39,7 @@ jn.define('mail/message/elements/contact/list', (require, exports, module) => {
 
 			return View(
 				{
+					testId,
 					style: {
 						flexDirection: 'row',
 						width: '100%',

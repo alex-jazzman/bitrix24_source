@@ -9,7 +9,9 @@ use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Version;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Type\DateTime;
 
@@ -59,6 +61,7 @@ final class DocumentSession extends Model
 	protected $context;
 	/** @var string|null */
 	protected $service;
+	protected bool $isNew = false;
 
 	/**
 	 * Gets the fully qualified name of table class which belongs to current model.
@@ -73,7 +76,11 @@ final class DocumentSession extends Model
 	{
 		self::trackFirstEditForLimitedEdit($data);
 
-		return parent::add($data, $errorCollection);
+		$model = parent::add($data, $errorCollection);
+
+		$model->markAsNew();
+
+		return $model;
 	}
 
 	protected function update(array $data)
@@ -367,6 +374,20 @@ final class DocumentSession extends Model
 		], $this->errorCollection);
 	}
 
+	/**
+	 * Set and store `view` type.
+	 *
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 */
+	public function transformToView(): bool
+	{
+		return $this->update([
+			'TYPE' => self::TYPE_VIEW,
+		]);
+	}
+
 	public function transformToEdit(): bool
 	{
 		return $this->update([
@@ -532,6 +553,11 @@ final class DocumentSession extends Model
 		]) <= 1;
 	}
 
+	protected function markAsNew(bool $isNew = true): void
+	{
+		$this->isNew = $isNew;
+	}
+
 	public function delete(): bool
 	{
 		return $this->deleteInternal();
@@ -545,6 +571,11 @@ final class DocumentSession extends Model
 		]);
 
 		return $countActiveSessions;
+	}
+
+	public function isNew(): bool
+	{
+		return $this->isNew;
 	}
 
 	public static function getMapAttributes()

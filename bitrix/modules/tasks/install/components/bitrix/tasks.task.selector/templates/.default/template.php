@@ -5,6 +5,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\UI;
+
+UI\Extension::load(["intranet.old-interface.intranet-common"]);
 
 $taskJs = $this->__component->GetPath().'/templates/.default/tasks.js';
 $APPLICATION->AddHeadScript($taskJs);

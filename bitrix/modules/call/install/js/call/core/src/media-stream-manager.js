@@ -1,3 +1,4 @@
+import { CallSettingsManager } from 'call.lib.settings-manager';
 import { MediaStreamsKinds } from './call_api';
 import { Hardware } from './call_hardware';
 
@@ -47,6 +48,10 @@ class StreamManager
 
 		if (this.#tracks[mediaStreamKind])
 		{
+			if (mediaStreamKind === MediaStreamsKinds.Microphone)
+			{
+				Hardware.stopNoiseSuppression();
+			}
 			this.#tracks[mediaStreamKind].track.stop();
 			delete this.#tracks[mediaStreamKind];
 		}
@@ -61,7 +66,7 @@ class StreamManager
 				results.forEach((result) => {
 					if (result.reason)
 					{
-						throw new Error(result.reason);
+						throw result.reason;
 					}
 
 					result.value.forEach((track) => {
@@ -74,7 +79,7 @@ class StreamManager
 					return new MediaStream([...tracks.values()]);
 				}
 
-				throw new Error('Could not get any media stream');
+				throw {name: 'StreamManagerError_getUserMedia', message: 'Could not get any media stream'};
 			});
 	}
 
@@ -126,11 +131,14 @@ class StreamManager
 
 					if (audioTrack)
 					{
-						this.#tracks[MediaStreamsKinds.Microphone]?.track?.stop();
-						this.#tracks[MediaStreamsKinds.Microphone] = {
-							track: audioTrack,
-							constraints: constraints.audio,
-						};
+						if (audioTrack.id !== this.#tracks[MediaStreamsKinds.Microphone]?.track.id)
+						{
+							this.#tracks[MediaStreamsKinds.Microphone]?.track?.stop();
+							this.#tracks[MediaStreamsKinds.Microphone] = {
+								track: audioTrack,
+								constraints: constraints.audio,
+							};
+						}
 						delete this.#trackRequests[MediaStreamsKinds.Microphone];
 					}
 
@@ -172,15 +180,17 @@ class StreamManager
 	{
 		const promises = [];
 		let streamRequest = null;
+		const videoPromise = this.#getMediaPromise(undefined, MediaStreamsKinds.Screen);
+		const audioPromise = this.#getMediaPromise(undefined, MediaStreamsKinds.ScreenAudio);
 
-		if (this.#trackRequests[MediaStreamsKinds.Screen])
+		if (videoPromise)
 		{
-			promises.push(this.#trackRequests[MediaStreamsKinds.Screen]);
+			promises.push(videoPromise);
 		}
 
-		if (this.#trackRequests[MediaStreamsKinds.ScreenAudio])
+		if (audioPromise)
 		{
-			promises.push(this.#trackRequests[MediaStreamsKinds.ScreenAudio]);
+			promises.push(audioPromise);
 		}
 
 		if (promises.length > 0)
@@ -254,6 +264,11 @@ class StreamManager
 
 	#isSameConstraints(constraintsA, constraintsB): boolean
 	{
+		if (!constraintsA && !constraintsB)
+		{
+			return true;
+		}
+
 		if (!constraintsA || !constraintsB)
 		{
 			return false;
@@ -289,8 +304,16 @@ class StreamManager
 
 		const localTrack = this.#tracks[kind];
 		const isSameConstraints = this.#isSameConstraints(constraints, localTrack?.constraints);
-
-		if (constraints && localTrack?.track?.readyState === 'live' && isSameConstraints)
+		const isInputTrackLived = !CallSettingsManager.noiseSuppressionEnabled
+			|| kind !== MediaStreamsKinds.Microphone
+			|| (Hardware.noiseSuppressionInputStream
+				&& Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0
+				&& Hardware.noiseSuppressionInputStream.getAudioTracks()[0].readyState === 'live');
+		if (
+			localTrack?.track?.readyState === 'live'
+			&& isInputTrackLived
+			&& isSameConstraints
+		)
 		{
 			return Promise.resolve([localTrack.track]);
 		}

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_desktopApi,main_core_events,im_public,main_core) {
+(function (exports,im_v2_lib_desktopApi,im_public,main_core) {
 	'use strict';
 
 	const ParserSlashCommand = {
@@ -265,38 +265,54 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	} = getConst();
 	const QUOTE_SIGN = '&gt;&gt;';
 	const NO_CONTEXT_TAG = 'none';
+	const PREVIEW_LINE_LIMIT = 4;
+	const PREVIEW_CHARS_PER_LINE = 80;
+	const BR_HTML_TAG = '<br />';
+	const CLASS_QUOTE_BASE = 'bx-im-message-quote';
+	const CLASS_QUOTE_WRAP = 'bx-im-message-quote__wrap';
+	const CLASS_QUOTE_TEXT = 'bx-im-message-quote__text';
+	const CLASS_QUOTE_TOGGLE = 'bx-im-message-quote__toggle';
+	const CLASS_EXPANDED = '--expanded';
+	const CLASS_COLLAPSED = '--collapsed';
+	const CLASS_CLICKABLE = '--clickable';
 	const ParserQuote = {
 	  decodeArrowQuote(text) {
 	    if (!text.includes(QUOTE_SIGN)) {
 	      return text;
 	    }
 	    let isProcessed = false;
-	    const textLines = text.split('<br />');
+	    const quoteStartIndexes = new Set();
+	    const quoteEndIndexes = new Set();
+	    const textLines = text.split(BR_HTML_TAG);
 	    for (let i = 0; i < textLines.length; i++) {
 	      if (!textLines[i].startsWith(QUOTE_SIGN)) {
 	        continue;
 	      }
 	      const quoteStartIndex = i;
-	      const outerContainerStart = `<div data-context="${NO_CONTEXT_TAG}" class="bx-im-message-quote --inline">`;
-	      const innerContainerStart = '<div class="bx-im-message-quote__wrap">';
-	      const containerEnd = '</div>';
-	      textLines[quoteStartIndex] = textLines[quoteStartIndex].replace(QUOTE_SIGN, `${outerContainerStart}${innerContainerStart}`);
-	      // remove >> from all next lines
+	      quoteStartIndexes.add(quoteStartIndex);
+	      textLines[quoteStartIndex] = textLines[quoteStartIndex].replace(QUOTE_SIGN, '');
 	      while (++i < textLines.length && textLines[i].startsWith(QUOTE_SIGN)) {
 	        textLines[i] = textLines[i].replace(QUOTE_SIGN, '');
 	      }
 	      const quoteEndIndex = i - 1;
-	      textLines[quoteEndIndex] += `${containerEnd}${containerEnd}`;
+	      quoteEndIndexes.add(quoteEndIndex);
+	      const quoteTextLines = textLines.slice(quoteStartIndex, quoteEndIndex + 1);
+	      const quoteText = quoteTextLines.join(BR_HTML_TAG);
+	      const collapsedClass = isQuoteExpandableByText(quoteText) ? ` ${CLASS_COLLAPSED}` : '';
+	      const containerEnd = '</div>';
+	      textLines[quoteStartIndex] = `<div data-context="${NO_CONTEXT_TAG}" class="${CLASS_QUOTE_BASE}${collapsedClass}"><div class="${CLASS_QUOTE_WRAP}"><div class="${CLASS_QUOTE_TEXT}">${textLines[quoteStartIndex]}`;
+	      textLines[quoteEndIndex] += `${containerEnd}${getToggleButton({
+        quoteText
+      })}${containerEnd}${containerEnd}`;
 	      isProcessed = true;
 	    }
 	    if (!isProcessed) {
 	      return text;
 	    }
-	    return textLines.join('<br />');
+	    return joinArrowQuoteLines(textLines, quoteStartIndexes, quoteEndIndexes);
 	  },
 	  purifyArrowQuote(text, spaceLetter = ' ') {
-	    text = text.replace(new RegExp(`^(${QUOTE_SIGN}(.*))`, 'gim'), ParserIcon.getQuoteBlock() + spaceLetter);
-	    return text;
+	    return text.replaceAll(new RegExp(`^(${QUOTE_SIGN}(.*))`, 'gim'), ParserIcon.getQuoteBlock() + spaceLetter);
 	  },
 	  decodeQuote(text, {
 	    contextDialogId = ''
@@ -305,22 +321,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const preparedQuoteText = getQuoteText(userName, timeTag, quoteText);
 	      const userContainer = getUserBlock(userName, timeTag);
 	      const finalContextTag = getFinalContextTag(contextTag, contextDialogId);
+	      const clickableClass = finalContextTag === NO_CONTEXT_TAG ? '' : ` ${CLASS_CLICKABLE}`;
+	      const collapsedClass = isQuoteExpandableByText(preparedQuoteText) ? ` ${CLASS_COLLAPSED}` : '';
 	      const layout = main_core.Tag.render(_t || (_t = _`
-					<div class='bx-im-message-quote' data-context='${0}'>
-						<div class='bx-im-message-quote__wrap'>
+					<div class='${0}${0}${0}' data-context='${0}'>
+						<div class='${0}'>
 							${0}
-							<div class='bx-im-message-quote__text'>${0}</div>
+							<div class='${0}'>${0}</div>
+							${0}
 						</div>
 					</div>
-				`), finalContextTag, userContainer, preparedQuoteText);
+				`), CLASS_QUOTE_BASE, collapsedClass, clickableClass, finalContextTag, CLASS_QUOTE_WRAP, userContainer, CLASS_QUOTE_TEXT, preparedQuoteText, getToggleButton({
+	        quoteText: preparedQuoteText
+	      }));
 	      return layout.outerHTML;
 	    });
 	  },
 	  purifyQuote(text, spaceLetter = ' ') {
-	    return text.replace(/-{54}(.*?)-{54}/gims, ParserIcon.getQuoteBlock() + spaceLetter);
+	    return text.replaceAll(/-{54}(.*?)-{54}/gims, ParserIcon.getQuoteBlock() + spaceLetter);
 	  },
 	  decodeCode(text) {
-	    return text.replace(/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code](<br \/>)?/gis, (whole, br, code) => {
+	    return text.replaceAll(/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code](<br \/>)?/gis, (whole, br, code) => {
 	      return main_core.Dom.create({
 	        tag: 'div',
 	        attrs: {
@@ -331,14 +352,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	  },
 	  purifyCode(text, spaceLetter = ' ') {
-	    return text.replace(/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code]/gis, ParserIcon.getCodeBlock() + spaceLetter);
+	    return text.replaceAll(/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code]/gis, ParserIcon.getCodeBlock() + spaceLetter);
 	  },
 	  executeClickEvent(event, context) {
-	    if (!event.target.className.startsWith('bx-im-message-quote') && !(event.target.parentNode && event.target.parentNode.className.startsWith('bx-im-message-quote'))) {
+	    const target = getUtils().dom.recursiveBackwardNodeSearch(event.target, CLASS_QUOTE_BASE);
+	    if (!target) {
 	      return;
 	    }
-	    const target = getUtils().dom.recursiveBackwardNodeSearch(event.target, 'bx-im-message-quote');
-	    if (!target || target.dataset.context === NO_CONTEXT_TAG) {
+	    if (shouldStopQuoteClick(event)) {
+	      event.stopPropagation();
+	      return;
+	    }
+	    const isExpandable = isQuoteExpandable(target);
+	    updateToggleButtonVisibility(target, isExpandable);
+	    if (target.dataset.context === NO_CONTEXT_TAG) {
+	      handleQuoteToggle(target, isExpandable);
+	      return;
+	    }
+	    const isToggleClick = isToggleButtonClick(event.target);
+	    if (isToggleClick) {
+	      if (!isExpandable) {
+	        return;
+	      }
+	      toggleQuoteState(target);
 	      return;
 	    }
 	    const [dialogId, messageId] = target.dataset.context.split('/');
@@ -357,7 +393,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    // the case, when inside the quote we have only some string in square brackets
 	    return String(timeTag);
 	  }
-	  const BR_HTML_TAG = '<br />';
 	  if (text.endsWith(BR_HTML_TAG)) {
 	    return text.slice(0, -BR_HTML_TAG.length);
 	  }
@@ -386,9 +421,109 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  return finalContextTag;
 	};
+	const joinArrowQuoteLines = (textLines, quoteStartIndexes, quoteEndIndexes) => {
+	  let result = '';
+	  for (let i = 0; i < textLines.length; i++) {
+	    const isCompactQuoteSeparator = textLines[i].trim() === '' && quoteEndIndexes.has(i - 1) && quoteStartIndexes.has(i + 1);
+	    if (!isCompactQuoteSeparator) {
+	      result += textLines[i];
+	    }
+	    const isLastLine = i >= textLines.length - 1;
+	    if (isLastLine || quoteEndIndexes.has(i) || isCompactQuoteSeparator) {
+	      continue;
+	    }
+	    result += BR_HTML_TAG;
+	  }
+	  return result;
+	};
+	const getToggleButton = ({
+	  quoteText,
+	  isExpanded = false
+	}) => {
+	  if (!main_core.Type.isStringFilled(quoteText)) {
+	    return '';
+	  }
+	  if (!isQuoteExpandableByText(quoteText)) {
+	    return '';
+	  }
+	  const label = getToggleLabel(isExpanded);
+	  return `<button type="button" class="${CLASS_QUOTE_TOGGLE}">${label}</button>`;
+	};
+	const getToggleLabel = isExpanded => {
+	  const phraseCode = isExpanded ? 'IM_PARSER_QUOTE_COLLAPSE' : 'IM_PARSER_QUOTE_EXPAND';
+	  return main_core.Loc.getMessage(phraseCode);
+	};
 	const isQuoteFromTheSameChat = (finalContextTag, dialogId) => {
 	  const contextDialogId = ParserUtils.getDialogIdFromFinalContextTag(finalContextTag);
 	  return contextDialogId === dialogId;
+	};
+	const isQuoteExpandable = target => {
+	  const textNode = target.querySelector(`.${CLASS_QUOTE_TEXT}`);
+	  if (!textNode) {
+	    return false;
+	  }
+	  const isExpanded = main_core.Dom.hasClass(target, CLASS_EXPANDED);
+	  return isExpanded || textNode.scrollHeight > textNode.clientHeight + 1;
+	};
+	const isQuoteExpandableByText = quoteText => {
+	  const lines = quoteText.split(BR_HTML_TAG);
+	  let virtualLineCount = 0;
+	  for (const line of lines) {
+	    const plainText = line.replaceAll(/<[^>]+>/g, '').trim();
+	    virtualLineCount += Math.max(1, Math.ceil(plainText.length / PREVIEW_CHARS_PER_LINE));
+	    if (virtualLineCount > PREVIEW_LINE_LIMIT) {
+	      return true;
+	    }
+	  }
+	  return false;
+	};
+	const isToggleButtonClick = target => {
+	  const targetElement = target instanceof HTMLElement ? target : null;
+	  if (!targetElement) {
+	    return false;
+	  }
+	  return Boolean(targetElement.closest(`.${CLASS_QUOTE_TOGGLE}`));
+	};
+	const shouldStopQuoteClick = event => {
+	  const isInteractiveClick = event.target instanceof HTMLElement && event.target.closest('a');
+	  if (isInteractiveClick) {
+	    return true;
+	  }
+	  const selection = window.getSelection().toString().trim();
+	  return main_core.Type.isStringFilled(selection);
+	};
+	const handleQuoteToggle = (target, isExpandable) => {
+	  if (isExpandable) {
+	    main_core.Dom.addClass(target, CLASS_CLICKABLE);
+	  } else {
+	    main_core.Dom.removeClass(target, CLASS_CLICKABLE);
+	  }
+	  if (!main_core.Dom.hasClass(target, CLASS_CLICKABLE) || !isExpandable) {
+	    return true;
+	  }
+	  toggleQuoteState(target);
+	  return true;
+	};
+	const toggleQuoteState = target => {
+	  const isExpanded = main_core.Dom.hasClass(target, CLASS_EXPANDED);
+	  if (isExpanded) {
+	    main_core.Dom.removeClass(target, CLASS_EXPANDED);
+	    main_core.Dom.addClass(target, CLASS_COLLAPSED);
+	  } else {
+	    main_core.Dom.addClass(target, CLASS_EXPANDED);
+	    main_core.Dom.removeClass(target, CLASS_COLLAPSED);
+	  }
+	  const toggleButton = target.querySelector(`.${CLASS_QUOTE_TOGGLE}`);
+	  if (toggleButton) {
+	    toggleButton.textContent = getToggleLabel(!isExpanded);
+	  }
+	};
+	const updateToggleButtonVisibility = (target, isExpandable) => {
+	  const toggleButton = target.querySelector(`.${CLASS_QUOTE_TOGGLE}`);
+	  if (!toggleButton) {
+	    return;
+	  }
+	  main_core.Dom.style(toggleButton, 'display', isExpandable ? '' : 'none');
 	};
 
 	let _$1 = t => t,
@@ -1173,6 +1308,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const SpecialMentionHandlers = {
 	  [SpecialMentionDialogId$1.allParticipants]: userName => ParserMention.renderAllParticipantsMention(userName)
 	};
+	const MENTION_BASE_CLASS = 'bx-im-mention';
+	const MentionModifier = {
+	  highlight: '--highlight',
+	  extranet: '--extranet'
+	};
 	const ParserMention = {
 	  decode(text) {
 	    text = text.replace(/\[USER=(all|[0-9]+)( REPLACE)?](.*?)\[\/USER]/gi, (whole, userId, replace, userName) => {
@@ -1194,12 +1334,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!userName) {
 	        userName = `User ${userId}`;
 	      }
-	      let className = 'bx-im-mention';
+	      let className = MENTION_BASE_CLASS;
 	      if (getCore().getUserId() === userId) {
-	        className += ' --highlight';
+	        className += ` ${MentionModifier.highlight}`;
 	      }
 	      if (user && user.type === UserType.extranet) {
-	        className += ' --extranet';
+	        className += ` ${MentionModifier.extranet}`;
 	      }
 	      return main_core.Dom.create({
 	        tag: 'span',
@@ -1225,7 +1365,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return main_core.Dom.create({
 	        tag: 'span',
 	        attrs: {
-	          className: 'bx-im-mention',
+	          className: MENTION_BASE_CLASS,
 	          'data-type': isLines ? MessageMentionType$2.lines : MessageMentionType$2.chat,
 	          'data-value': isLines ? `imol|${chatId}` : `chat${chatId}`
 	        },
@@ -1260,7 +1400,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return main_core.Dom.create({
 	        tag: 'span',
 	        attrs: {
-	          className: 'bx-im-mention',
+	          className: MENTION_BASE_CLASS,
 	          'data-type': MessageMentionType$2.context,
 	          'data-dialog-id': dialogId,
 	          'data-message-id': messageId,
@@ -1312,7 +1452,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    mentionHandler.handleClick(event);
 	  },
 	  renderAllParticipantsMention(userName) {
-	    const className = 'bx-im-mention';
+	    const className = `${MENTION_BASE_CLASS} ${MentionModifier.highlight}`;
 	    return main_core.Dom.create({
 	      tag: 'span',
 	      attrs: {
@@ -1612,7 +1752,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  purifyMessage(message) {
 	    const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](message.id);
-	    const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](message.id);
+	    const isSticker = getCore().getStore().getters['stickers/messages/isSticker'](message.id);
 	    return this.purify({
 	      text: message.text,
 	      attach: message.attach,
@@ -1728,7 +1868,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    } = message;
 	    let text = quoteText === '' ? message.text : quoteText;
 	    const files = getCore().getStore().getters['messages/getMessageFiles'](id);
-	    const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](id);
+	    const isSticker = getCore().getStore().getters['stickers/messages/isSticker'](id);
 	    text = main_core.Text.encode(text.trim());
 	    text = ParserMention.purify(text);
 	    text = ParserCall.purify(text);
@@ -1790,7 +1930,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    } else if (main_core.Type.isPlainObject(message == null ? void 0 : message.attach)) {
 	      attach = [message.attach];
 	    }
-	    const isSticker = getCore().getStore().getters['messages/stickers/isStickerMessage'](recentMessage.messageId);
+	    const isSticker = getCore().getStore().getters['stickers/messages/isSticker'](recentMessage.messageId);
 	    return {
 	      files,
 	      attach,
@@ -1831,5 +1971,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Parser = Parser;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Lib,BX));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX));
 //# sourceMappingURL=parser.bundle.js.map

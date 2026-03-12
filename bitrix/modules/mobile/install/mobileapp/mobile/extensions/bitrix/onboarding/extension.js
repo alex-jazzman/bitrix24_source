@@ -38,20 +38,36 @@ jn.define('onboarding', (require, exports, module) => {
 
 		/**
 		 * @param {Array<{id: string, context?: Object}>} casesWithContext
+		 * @param {Object} [sharedContext] - optional shared context for array of ids
 		 * @returns {void}
 		 */
-		static async tryToShowCasesBatch(casesWithContext = [])
+		static async tryToShowCasesBatch(casesWithContext = [], sharedContext = null)
 		{
-			const normalizesCases = (casesWithContext || []).map(({ id, context }) => ({
-				id,
-				context: context ?? {},
-			}));
+			const normalizesCases = OnboardingBase.#normalizeCasesInput(casesWithContext, sharedContext);
 
 			this.queue = (this.queue || Promise.resolve())
 				.then(() => this.handleShow(normalizesCases))
 				.catch((error) => console.error('Onboarding.show error:', error));
 
 			return this.queue;
+		}
+
+		static #normalizeCasesInput(casesWithContext, sharedContext)
+		{
+			return (casesWithContext || []).map((item) => {
+				if (item && typeof item === 'object' && Object.prototype.hasOwnProperty.call(item, 'id'))
+				{
+					return {
+						id: item.id,
+						context: item.context ?? {},
+					};
+				}
+
+				return {
+					id: String(item),
+					context: sharedContext ?? {},
+				};
+			});
 		}
 
 		/**
@@ -192,8 +208,8 @@ jn.define('onboarding', (require, exports, module) => {
 	}
 
 	module.exports = {
-		CaseHistory, // export for tests only
 		CaseName,
+		CaseHistory, // export for tests only
 		OnboardingBase,
 	};
 });

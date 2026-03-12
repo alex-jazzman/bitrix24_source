@@ -1,11 +1,11 @@
 import { Loc, Type } from 'main.core';
-import { MenuManager } from 'main.popup';
-import type { MenuItem } from 'main.popup';
-import { Dialog, EntityOptions, Item, ItemOptions, TabOptions } from 'ui.entity-selector';
+import { BaseEvent } from 'main.core.events';
+import { Dialog, ItemOptions, TabOptions } from 'ui.entity-selector';
 import { diagramStore } from '../../../../entities/blocks';
-import type { Block, PortId } from '../../../../shared/types';
+import type { ActivityProperty, Block, PortId } from '../../../../shared/types';
+import { PROPERTY_TYPES } from '../../../../shared/constants';
 
-const CurrentDocumentId = '@';
+const DocumentsTabId = 'documents';
 
 export class DocumentSelector
 {
@@ -28,21 +28,6 @@ export class DocumentSelector
 
 	show(target: HTMLElement): Promise<string | null>
 	{
-		const documentItems: ItemOptions[] = [
-			{
-				id: CurrentDocumentId,
-				entityId: 'bizproc-document',
-				entityType: 'document',
-				title: Loc.getMessage('BIZPROCDESIGNER_EDITOR_TEMPLATE_DOCUMENT'),
-				nodeOptions: {
-					open: false,
-					dynamic: false,
-				},
-				tabs: 'documents',
-			},
-			...this.#getDocuments(),
-		];
-
 		return new Promise((resolve) => {
 			const dialog = new Dialog({
 				targetNode: target,
@@ -51,14 +36,13 @@ export class DocumentSelector
 				multiple: false,
 				dropdownMode: true,
 				enableSearch: true,
-				items: documentItems,
+				items: this.#getDocuments(),
 				tabs: this.#getTabs(),
-				entities: this.#getEntities(),
 				cacheable: false,
 				showAvatars: false,
 				events: {
-					'Item:onSelect': (event) => {
-						resolve(this.#getReturnValue(event.getData().item));
+					'Item:onSelect': (event: BaseEvent): void => {
+						resolve(event.getData().item.getId());
 					},
 				},
 				compactView: true,
@@ -72,23 +56,13 @@ export class DocumentSelector
 	{
 		return [
 			{
-				id: 'documents',
+				id: DocumentsTabId,
 				title: Loc.getMessage('BIZPROCDESIGNER_EDITOR_DOCUMENT_MULTIPLE'),
 				icon: 'elements',
-			},
-		];
-	}
-
-	#getReturnValue(item: Item): string | null
-	{
-		return item.getId() === CurrentDocumentId ? null : item.getId();
-	}
-
-	#getEntities(): EntityOptions[]
-	{
-		return [
-			{
-				id: 'bizproc-document',
+				stub: true,
+				stubOptions: {
+					title: Loc.getMessage('BIZPROCDESIGNER_EDITOR_DOCUMENT_STUB_TITLE'),
+				},
 			},
 		];
 	}
@@ -113,7 +87,7 @@ export class DocumentSelector
 			properties.push({
 				id: block.id,
 				entityId: 'block-node',
-				tabs: 'documents',
+				tabs: DocumentsTabId,
 				title: block.activity.Properties.Title,
 				children: childrenProperties,
 				searchable: false,
@@ -125,11 +99,11 @@ export class DocumentSelector
 
 	#processReturnProperties(block: Block): ItemOptions[]
 	{
-		const properties = [];
+		const properties: ItemOptions[] = [];
 
 		block.activity.ReturnProperties
-			.filter((property) => {
-				if (property.Type !== 'document')
+			.filter((property: ActivityProperty): boolean => {
+				if (property.Type !== PROPERTY_TYPES.DOCUMENT)
 				{
 					return false;
 				}
@@ -144,13 +118,19 @@ export class DocumentSelector
 					return true;
 				}
 
-				return JSON.stringify(property.Default) === JSON.stringify(this.#fixedDocumentType);
-			})
-			.forEach((property) => {
-				const id = `{=${block.id}:${property.Id}}`;
+				for (const key: number of this.#fixedDocumentType.keys())
+				{
+					if (property.Default?.[key] !== this.#fixedDocumentType[key])
+					{
+						return false;
+					}
+				}
 
-				properties.push({
-					id,
+				return true;
+			})
+			.forEach((property: ActivityProperty): void => {
+				const item: ItemOptions = {
+					id: `{=${block.id}:${property.Id}}`,
 					entityId: 'bizproc-document',
 					entityType: 'document',
 					title: `${property.Name} (${block.activity.Properties.Title})`,
@@ -158,8 +138,9 @@ export class DocumentSelector
 						open: false,
 						dynamic: false,
 					},
-					tabs: 'documents',
-				});
+					tabs: DocumentsTabId,
+				};
+				properties.push(item);
 			})
 		;
 

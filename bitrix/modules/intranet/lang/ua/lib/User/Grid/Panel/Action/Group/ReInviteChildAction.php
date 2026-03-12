@@ -1,2 +1,0 @@
-<?php
-$MESS["INTRANET_USER_LIST_GROUP_ACTION_REINVITE_TITLE"] = "Запросити ще раз";

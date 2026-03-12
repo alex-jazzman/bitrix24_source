@@ -1,2 +1,0 @@
-<?php
-$MESS["BP_LIB_RUNTIME_MIXINS_ACTIVITY_DESCRIPTION_BUILDER_IS_TIMEOUT"] = "Процесті қанша уақытқа тоқтату қажет";

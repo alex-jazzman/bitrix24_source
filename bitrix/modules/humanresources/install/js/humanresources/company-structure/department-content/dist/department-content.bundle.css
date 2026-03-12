@@ -458,6 +458,15 @@ body.--user-dragging .hr-department-detail-content__user-container:hover {
 	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iOCIgY3k9IjgiIHI9IjgiIGZpbGw9IiNmZmYiLz48cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTQuODggMTEuMTQyYS41MjguNTI4IDAgMDAuNDg3LjMyN0gxMC41ODZhLjUyOC41MjggMCAwMC40ODYtLjMyNmwxLjc3NC00LjI4MWEuMzc3LjM3NyAwIDAwLS41MTgtLjQ4MWwtMS44NDkuOTI4YS4zNzcuMzc3IDAgMDEtLjUwMy0uMTYybC0xLjY2Ni0zLjJhLjM3Ny4zNzcgMCAwMC0uNjY4IDBsLTEuNjYgMy4xOTlhLjM3Ny4zNzcgMCAwMS0uNTA0LjE2M0wzLjYzNSA2LjM4YS4zNzcuMzc3IDAgMDAtLjUxOC40OGwxLjc2MiA0LjI4eiIgZmlsbD0iI0ZGQTkwMCIvPjwvc3ZnPg==');
 }
 
+.hr-department-detail-content__user-avatar-overlay-is-multiple {
+	position: absolute;
+	bottom: -4px;
+	right: 0;
+	width: 16px;
+	height: 16px;
+	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iOCIgY3k9IjgiIHI9IjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAuMzcxIDguNjY3YzAtLjE4Mi4yMi0uMjczLjM0OS0uMTQ1bDEuODEzIDEuODEzYy4wOC4wOC4wOC4yMDkgMCAuMjg4bC0xLjgxMyAxLjgxM2EuMjA0LjIwNCAwIDAxLS4zNDktLjE0NHYtMS4xMTNoLS42NzNjLS43MjQgMC0xLjQ5NC0uMzI3LTEuOTM3LS45OTdsLS4wOTUtLjEzMi45MDctMS4xNDEuMzMuNDYyLjAxOC4wMy4wNi4wNzhjLjE1NC4xNzguNDE4LjMuNzE3LjNoLjY3M1Y4LjY2N3oiIGZpbGw9IiMxMUE5RDkiLz48cGF0aCBkPSJNMTAuMzcxIDMuNzA3YzAtLjE4Mi4yMi0uMjczLjM0OS0uMTQ0bDEuODEzIDEuODEyYy4wOC4wOC4wOC4yMSAwIC4yODlMMTAuNzIgNy40NzdhLjIwNC4yMDQgMCAwMS0uMzQ5LS4xNDVWNi4yMjFoLS42NzNjLS4zIDAtLjU2My4xMjItLjcxNy4zbC0uMDYuMDc5LS4wMTkuMDI5LTIuNTI2IDMuNTUzLS4wMDUuMDA3Yy0uNDYzLjYzNC0xLjE3Ljk5LTEuOTMzLjk5SDMuMjc1YS4xMTcuMTE3IDAgMDEtLjExNy0uMTE2VjkuODk2YzAtLjA2NS4wNTItLjExNy4xMTctLjExN2gxLjE2M2EuOTYyLjk2MiAwIDAwLjcyMi0uMzE4bC4wOC0uMDk3TDcuNzYgNS44MThjLjQ0My0uNjcgMS4yMTMtLjk5NyAxLjkzNy0uOTk3aC42NzNWMy43MDd6TTQuNDM4IDQuODJjLjc2MyAwIDEuNDcuMzU3IDEuOTMzLjk5bC4wMDUuMDA4LjAxNy4wMjQtLjkwNyAxLjE0Mi0uMjQ3LS4zNDgtLjA3OS0uMDk3YS45NjIuOTYyIDAgMDAtLjcyMi0uMzE4SDMuMjc1YS4xMTcuMTE3IDAgMDEtLjExNy0uMTE3VjQuOTM3YzAtLjA2NC4wNTItLjExNi4xMTctLjExNmgxLjE2M3oiIGZpbGw9IiMxMUE5RDkiLz48L3N2Zz4=');
+}
+
 .hr-department-detail-content-user__text-container {
 	width: calc(100% - 72px);
 	display: flex;
@@ -943,4 +952,69 @@ body.--user-dragging .hr-department-detail-content__user-container:hover {
 
 .hr-department-detail-content__tab-list_header-button.--focused::before {
 	transform: rotate(180deg);
+}
+
+.hr-company-structure__multi-role-user-settings_container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	min-height: 493px;
+}
+
+.hr-company-structure__multi-role-user-settings_hint-panel {
+	padding: 16px;
+	border-radius: 12px;
+	background-color: var(--ui-color-palette-blue-15);
+	color: var(--ui-color-black-base);
+	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-system));
+}
+
+.hr-company-structure__multi-role-user-settings_option-title {
+	display: flex;
+	align-items: center;
+	font: 14px/22px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-color-black-base);
+}
+
+.hr-company-structure__multi-role-user-settings_option {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.hr-company-structure__multi-role-user-settings_option-title.--soon:after {
+	content: attr(data-title);
+	display: inline-block;
+	background: var(--ui-color-palette-blue-50);
+	font: var(--ui-font-weight-bold) 8px/10px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-color-palette-white-base);
+	text-transform: uppercase;
+	padding: 3px 10px 3px 8px;
+	border-radius: 17px;
+	vertical-align: bottom;
+}
+
+.hr-company-structure__multi-role-user-settings_ui-hint-disabled {
+	 display: inline-block;
+	 width: 26px;
+	 height: 26px;
+	 transition: opacity .3s;
+	 opacity: .45;
+	 text-align: center;
+	 line-height: 26px;
+}
+
+.hr-company-structure__multi-role-user-settings_item-options-error {
+	display: flex;
+	align-items: center;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-field-color-warning);
+	margin-top: 3px;
+}
+
+.hr-company-structure__multi-role-user-settings_item-options-error .ui-icon-set.--warning {
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-field-color-warning);
+	margin-bottom: -2px;
+	margin-right: 2px;
 }

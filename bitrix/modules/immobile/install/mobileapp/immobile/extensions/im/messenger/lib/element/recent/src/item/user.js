@@ -80,6 +80,7 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 
 		createSubtitleStyle()
 		{
+			this.styles.subtitle = { showBBCode: true };
 			const dialog = this.getDialogItem();
 			let subtitleStyle = {};
 
@@ -94,14 +95,14 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 					},
 				};
 
-				this.styles.subtitle = subtitleStyle;
+				this.styles.subtitle = merge(this.styles.subtitle, subtitleStyle);
 
 				return this;
 			}
 
 			if (this.checkNeedsBirthdayPlaceholder())
 			{
-				this.styles.subtitle = {
+				subtitleStyle = {
 					font: {
 						size: '14',
 						color: Theme.colors.accentExtraGrass,
@@ -119,20 +120,20 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 					},
 				};
 
+				this.styles.subtitle = merge(this.styles.subtitle, subtitleStyle);
+
 				return this;
 			}
 
 			const message = this.getItemMessage();
 			if (message.senderId === serviceLocator.get('core').getUserId())
 			{
-				let subtitleStyle = {};
-
 				if ([SubTitleIconType.wait, SubTitleIconType.error].includes(message?.subTitleIcon))
 				{
 					subtitleStyle = { image: { name: message.subTitleIcon, sizeMultiplier: 0.7 } };
 				}
 
-				this.styles.subtitle = subtitleStyle;
+				this.styles.subtitle = merge(this.styles.subtitle, subtitleStyle);
 
 				return this;
 			}

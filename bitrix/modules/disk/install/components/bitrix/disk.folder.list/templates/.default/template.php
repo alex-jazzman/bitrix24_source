@@ -605,6 +605,7 @@ BX(function () {
 		collaberTourOnAddButtonId: '<?= CUtil::JSEscape($arResult['COLLABER_TOUR_ON_ADD_BUTTON_ID']) ?>',
 		isCollaberTourOnAddButtonViewed: <?= $arResult['IS_COLLABER_TOUR_ON_ADD_BUTTON_VIEWED']? 'true' : 'false' ?>,
 		readonlyCollabFolderStateCookieName: '<?= CUtil::JSEscape($arResult['READONLY_COLLAB_FOLDER_STATE_COOKIE_NAME']) ?>',
+		analytics: <?= Bitrix\Main\Web\Json::encode($arResult['ANALYTICS'] ?? null) ?>,
 	});
 
 	var btnSettings = document.querySelector('.js-disk-settings-button');
@@ -671,23 +672,20 @@ BX(function () {
 					{
 						text: "<?=CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_MW_CREATE_TYPE_DOC')) ?>",
 						onclick: function(event, popupItem){
-							popupItem.getMenuWindow().getParentMenuWindow().close();
-							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('docx', '<?=$handler['code']?>', null, <?=Json::encode($handler['supportsUnifiedLink'])?>);
+							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('docx', '<?=$handler['code']?>', popupItem, null, <?=Json::encode($handler['supportsUnifiedLink'])?>);
 						}
 					},
 					{
 						text: "<?=CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_MW_CREATE_TYPE_XLS')) ?>",
 						onclick: function(event, popupItem){
-							popupItem.getMenuWindow().getParentMenuWindow().close();
-							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('xlsx', '<?=$handler['code']?>', null, <?=Json::encode($handler['supportsUnifiedLink'])?>);
+							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('xlsx', '<?=$handler['code']?>', popupItem, null, <?=Json::encode($handler['supportsUnifiedLink'])?>);
 						}
 
 					},
 					{
 						text: "<?=CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_MW_CREATE_TYPE_PPT')) ?>",
 						onclick: function(event, popupItem){
-							popupItem.getMenuWindow().getParentMenuWindow().close();
-							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('pptx', '<?=$handler['code']?>', null, <?=Json::encode($handler['supportsUnifiedLink'])?>);
+							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('pptx', '<?=$handler['code']?>', popupItem, null, <?=Json::encode($handler['supportsUnifiedLink'])?>);
 						}
 					}
 				]
@@ -707,7 +705,7 @@ BX(function () {
 		onclick: function(event, popupItem){
 			popupItem.getMenuWindow().close();
 			var newTab = window.open('', '_blank');
-			BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('board', 'l', response => {
+			BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('board', 'l', null, response => {
 				BX.UI.Analytics.sendData({
 					event: 'create',
 					tool: 'boards',

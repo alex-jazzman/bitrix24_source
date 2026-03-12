@@ -1,9 +1,11 @@
 import { Type } from 'main.core';
 import type { VariableCollection } from '../../../../store/model/access-rights-model';
+import type { AccessRightValue } from '../../../../store/model/user-groups-model';
 import {
 	getMultipleSelectedVariablesHintHtml,
 	getMultipleSelectedVariablesTitle,
 	getSelectedVariables,
+	isUseGroupHeadValuesInHintByVariables,
 } from '../../../../utils';
 import { PopupContent } from '../../value/dependent-variables/popup-content';
 import { SingleRoleTitle } from '../../value/popup-header/master-switcher/single-role-title';
@@ -28,8 +30,23 @@ export const DependentVariables = {
 	},
 	inject: ['section', 'userGroup', 'right'],
 	computed: {
+		parentRight() {
+			if (!this.right.group)
+			{
+				return null;
+			}
+
+			return this.$store.getters['accessRights/getAccessRightItemById'](this.section.sectionCode, this.right.group);
+		},
+		parentValue(): AccessRightValue
+		{
+			return this.$store.getters['userGroups/getAccessRightValue'](this.userGroup, this.section.sectionCode, this.parentRight.id);
+		},
 		selectedVariables(): VariableCollection {
 			return getSelectedVariables(this.right.variables, this.value.values, false);
+		},
+		parentSelectedVariables(): VariableCollection {
+			return getSelectedVariables(this.parentRight.variables, this.parentValue.values, false);
 		},
 		currentAlias(): ?string {
 			return this.$store.getters['accessRights/getSelectedVariablesAlias'](this.section.sectionCode, this.value.id, this.value.values);
@@ -47,7 +64,15 @@ export const DependentVariables = {
 
 			return getMultipleSelectedVariablesTitle(this.selectedVariables);
 		},
+		isUseGroupHeadValuesInHint(): boolean {
+			return isUseGroupHeadValuesInHintByVariables(this.selectedVariables)
+		},
 		hintHtml(): string {
+			if (this.right.group && this.isUseGroupHeadValuesInHint)
+			{
+				return getMultipleSelectedVariablesHintHtml(this.parentSelectedVariables, this.title, this.parentRight.variables, true);
+			}
+
 			return getMultipleSelectedVariablesHintHtml(this.selectedVariables, this.hintTitle, this.right.variables);
 		},
 		hintTitle(): string {

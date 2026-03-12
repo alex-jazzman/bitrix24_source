@@ -118,7 +118,7 @@
 	      var fallback = function fallback() {
 	        return BX.Bizproc.FieldType.renderControlDesigner(documentType, property, property.FieldName, _this3.currentValues[fieldId]);
 	      };
-	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<tr>\n\t\t\t\t<td align=\"right\" width=\"40%\">", ":</td>\n\t\t\t\t<td width=\"60%\">\n\t\t\t\t\t", "\n\t\t\t\t</td>\n\t\t\t</tr>\n\t\t"])), main_core.Text.encode(property.Name), main_core.Type.isDomNode(this.renderedProperties[fieldId]) ? this.renderedProperties[fieldId] : fallback());
+	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<tr>\n\t\t\t\t<td class=\"adm-detail-content-cell-l\" align=\"right\" width=\"40%\">", ":</td>\n\t\t\t\t<td class=\"adm-detail-content-cell-r\" width=\"60%\">\n\t\t\t\t\t", "\n\t\t\t\t</td>\n\t\t\t</tr>\n\t\t"])), main_core.Text.encode(property.Name), main_core.Type.isDomNode(this.renderedProperties[fieldId]) ? this.renderedProperties[fieldId] : fallback());
 	    }
 	  }, {
 	    key: "currentEntityTypeId",

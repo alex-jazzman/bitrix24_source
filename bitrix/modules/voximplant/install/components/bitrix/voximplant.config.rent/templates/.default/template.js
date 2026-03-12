@@ -21,6 +21,10 @@
 
 		this.maximumNumbersToRent = params.maximumNumbersToRent || 0;
 
+		this.showInternodWarning = params.showInternodWarning || false;
+		this.internodDeadline = params.internodDeadline || '';
+		this.billingUrl = params.billingUrl || '';
+
 		this._data = {};
 		this._countryId = '';
 		this._categoryId = '';
@@ -137,6 +141,8 @@
 			messageContainer: null,
 			numbersContainer: null,
 
+			internodWarning: null,
+
 			title: null,
 			counterTitle: null,
 			selectedCount: null,
@@ -176,7 +182,7 @@
 
 	BX.Voximplant.Rent.prototype.render = function()
 	{
-		return BX.createFragment([
+		var elements = [
 			this.elements.loaderOverlay = BX.create("div", {
 				props: {className: "voximplant-config-rent-overlay"}
 			}),
@@ -199,8 +205,14 @@
 					})
 				]
 			}),*/
+		];
 
-			BX.create("div", {
+		if (this.showInternodWarning)
+		{
+			elements.push(this.renderInternodWarning());
+		}
+
+		elements.push(BX.create("div", {
 				props: {className: "tel-set-select-block"},
 				children: [
 					this.elements.countryBox = BX.create("div", {
@@ -284,8 +296,10 @@
 						]
 					}),
 				]
-			}),
-		])
+			})
+		);
+
+		return BX.createFragment(elements);
 	};
 
 	BX.Voximplant.Rent.prototype.showLoader = function()
@@ -1137,6 +1151,8 @@
 
 		BX.cleanNode(this.elements.numbersContainer);
 
+		let hasBusinessAccount = false;
+
 		for (var phoneId in numbers)
 		{
 			if (this._countryId === 'RU' && (this._categoryId === 'TOLLFREE' || this._categoryId === 'TOLLFREE804'))
@@ -1147,6 +1163,9 @@
 			{
 				phoneName = numbers[phoneId]['PHONE_NUMBER_INTERNATIONAL'];
 			}
+
+			let isBusinessAccount = numbers[phoneId]?.CONFIRMATION_TYPE === 'BUSINESS_ACCOUNT';
+			hasBusinessAccount |= isBusinessAccount;
 
 			phoneList.push(
 				BX.create("span", {
@@ -1160,7 +1179,6 @@
 								type: "checkbox",
 								value: phoneId,
 								checked: this.selectedNumbers[phoneId] === true
-
 							},
 							dataset: {
 								countryCode: numbers[phoneId].COUNTRY_CODE,
@@ -1171,12 +1189,25 @@
 								bxchange: this.onNumberSelected.bind(this)
 							}
 						}),
-						BX.create("label", {
-							props: {className: "tel-set-list-item-num"},
-							attrs: {'for': 'phone' + phoneId},
-							text: phoneName
-						})
-					]
+						BX.create('label', {
+							props: { className: 'tel-set-list-item-num' },
+							attrs: { 'for': 'phone' + phoneId },
+							children: [
+								BX.create("span", {
+									text: phoneName
+								}),
+								isBusinessAccount
+									? BX.create('span', {
+										props: { },
+										attrs: {
+											title:  BX.message('VI_CONFIG_RENT_CONFIRMATION_TYPE_BUSINESS_ACCOUNT')
+										},
+										text: '⚠️'
+									})
+									: null
+							].filter(Boolean)
+						}),
+					].filter(Boolean)
 				})
 			);
 		}
@@ -1221,6 +1252,24 @@
 		if(this.rentPacketSize > 1 || Object.keys(this.selectedNumbers).length > 0)
 		{
 			this.elements.title.appendChild(this.elements.counterTitle);
+		}
+
+		if (hasBusinessAccount) {
+			const warningBlock = BX.create('div', {
+				props: { className: 'tel-set-global-warning' },
+				children: [
+					BX.create('span', {
+						props: { className: 'tel-set-warning-icon' },
+						text: '⚠️'
+					}),
+					BX.create('span', {
+						props: { className: 'tel-set-warning-text' },
+						html: BX.message('VI_CONFIG_RENT_CONFIRMATION_TYPE_BUSINESS_ACCOUNT_WARNING')
+					})
+				]
+			});
+
+			this.elements.numbersContainer.appendChild(warningBlock);
 		}
 
 		this.elements.numbersContainer.appendChild(this.elements.title);
@@ -1409,6 +1458,23 @@
 				})
 			]
 		})
+	};
+
+	BX.Voximplant.Rent.prototype.renderInternodWarning = function()
+	{
+		var message = this.internodDeadline
+			? BX.message('VI_CONFIG_RENT_INTERNOD_WARNING_WITH_DATE').replace('#DATE#', this.internodDeadline).replace('#BILLING_URL#', this.billingUrl)
+			: BX.message('VI_CONFIG_RENT_INTERNOD_WARNING').replace('#BILLING_URL#', this.billingUrl);
+
+		return this.elements.internodWarning = BX.create("div", {
+			props: {className: "voximplant-internod-warning ui-alert ui-alert-warning"},
+			children: [
+				BX.create("span", {
+					props: {className: "ui-alert-message"},
+					html: message
+				})
+			]
+		});
 	};
 
 	BX.Voximplant.Rent.prototype.renderButtons = function(e)

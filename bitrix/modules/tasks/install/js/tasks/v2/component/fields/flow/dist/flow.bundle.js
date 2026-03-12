@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_sidepanel,ui_system_menu_vue,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,main_core,tasks_v2_core,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_groupService,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_flowService,tasks_v2_provider_service_taskService) {
+(function (exports,main_sidepanel,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,main_core,tasks_v2_core,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_groupService,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_flowService,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	const flowMeta = Object.freeze({
@@ -15,10 +15,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	var _taskId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskId");
 	var _onClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClose");
 	var _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog");
+	var _handleFlowSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFlowSelect");
 	var _fillStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillStore");
 	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
+	var _flowId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flowId");
 	class FlowDialog {
 	  constructor() {
+	    Object.defineProperty(this, _flowId, {
+	      get: _get_flowId,
+	      set: void 0
+	    });
 	    Object.defineProperty(this, _items, {
 	      get: _get_items,
 	      set: void 0
@@ -37,6 +43,34 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    Object.defineProperty(this, _onClose, {
 	      writable: true,
 	      value: void 0
+	    });
+	    Object.defineProperty(this, _handleFlowSelect, {
+	      writable: true,
+	      value: async () => {
+	        var _babelHelpers$classPr, _babelHelpers$classPr2;
+	        if (!babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].isLoaded()) {
+	          return;
+	        }
+	        const flow = await babelHelpers.classPrivateFieldLooseBase(this, _fillStore)[_fillStore]();
+	        if ((flow == null ? void 0 : flow.id) === babelHelpers.classPrivateFieldLooseBase(this, _flowId)[_flowId]) {
+	          return;
+	        }
+	        if (flow) {
+	          const {
+	            id: flowId,
+	            templateId,
+	            groupId
+	          } = flow;
+	          tasks_v2_provider_service_groupService.groupService.setHasScrumInfo(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
+	          void tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId], {
+	            flowId,
+	            templateId,
+	            groupId,
+	            stageId: 0
+	          });
+	        }
+	        (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _onClose))[_onClose]) == null ? void 0 : _babelHelpers$classPr.call(_babelHelpers$classPr2);
+	      }
 	    });
 	    Object.defineProperty(this, _fillStore, {
 	      writable: true,
@@ -60,10 +94,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    });
 	  }
 	  show(params) {
-	    var _babelHelpers$classPr, _babelHelpers$classPr2;
+	    var _babelHelpers$classPr3, _babelHelpers$classPr4;
 	    babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId] = params.taskId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _onClose)[_onClose] = params.onClose;
-	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _dialog))[_dialog]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_dialog] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
+	    (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _dialog))[_dialog]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[_dialog] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].selectItemsByIds(babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].showTo(params.targetNode);
 	  }
@@ -88,25 +122,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    popupOptions: {
 	      events: {
-	        onClose: async () => {
-	          var _babelHelpers$classPr3, _babelHelpers$classPr4;
-	          const flow = await babelHelpers.classPrivateFieldLooseBase(this, _fillStore)[_fillStore]();
-	          if (flow) {
-	            const {
-	              id: flowId,
-	              templateId,
-	              groupId
-	            } = flow;
-	            tasks_v2_provider_service_groupService.groupService.setHasScrumInfo(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
-	            void tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId], {
-	              flowId,
-	              templateId,
-	              groupId,
-	              stageId: 0
-	            });
-	          }
-	          (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _onClose))[_onClose]) == null ? void 0 : _babelHelpers$classPr3.call(_babelHelpers$classPr4);
-	        }
+	        onClose: babelHelpers.classPrivateFieldLooseBase(this, _handleFlowSelect)[_handleFlowSelect]
 	      }
 	    }
 	  });
@@ -129,7 +145,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  return dialog;
 	}
 	function _get_items() {
-	  return [[tasks_v2_const.EntitySelectorEntity.Flow, tasks_v2_provider_service_taskService.taskService.getStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]).flowId]];
+	  return [[tasks_v2_const.EntitySelectorEntity.Flow, babelHelpers.classPrivateFieldLooseBase(this, _flowId)[_flowId]]];
+	}
+	function _get_flowId() {
+	  return tasks_v2_provider_service_taskService.taskService.getStoreTask(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]).flowId;
 	}
 	const flowDialog = new FlowDialog();
 
@@ -138,7 +157,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  name: 'TaskFlow',
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
-	    BMenu: ui_system_menu_vue.BMenu,
 	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
 	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd
 	  },
@@ -162,30 +180,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    flow() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Flows}/getById`](this.task.flowId);
 	    },
-	    menuOptions() {
-	      return {
-	        id: 'tasks-field-flow-menu',
-	        bindElement: this.$refs.container,
-	        offsetTop: 8,
-	        items: [{
-	          title: this.loc('TASKS_V2_FLOW_ABOUT'),
-	          icon: ui_iconSet_api_vue.Outline.BOTTLENECK,
-	          onClick: this.openFlow
-	        }, {
-	          title: this.loc('TASKS_V2_FLOW_CHANGE'),
-	          icon: ui_iconSet_api_vue.Outline.EDIT_L,
-	          onClick: this.showDialog
-	        }, {
-	          design: ui_system_menu_vue.MenuItemDesign.Alert,
-	          title: this.loc('TASKS_V2_FLOW_DETACH'),
-	          icon: ui_iconSet_api_vue.Outline.CROSS_L,
-	          onClick: this.clearField
-	        }],
-	        targetContainer: document.body
-	      };
-	    },
 	    readonly() {
 	      return !this.task.rights.edit;
+	    },
+	    withClear() {
+	      return !this.readonly && this.flow;
 	    }
 	  },
 	  methods: {
@@ -194,11 +193,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.openFlow();
 	        return;
 	      }
-	      if (this.isEdit && this.flow) {
-	        this.isMenuShown = true;
-	      } else {
-	        this.showDialog();
-	      }
+	      this.showDialog();
 	    },
 	    openFlow() {
 	      const href = tasks_v2_provider_service_flowService.flowService.getUrl(this.flow.id, tasks_v2_core.Core.getParams().currentUser.id);
@@ -223,13 +218,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-id="taskId"
 			:data-task-field-id="flowMeta.id"
 			:data-task-field-value="task.flowId"
+			@click="handleClick"
 			ref="container"
 		>
 			<HoverPill
 				v-if="flow"
-				:withClear="!readonly && !isEdit"
-				:active="isMenuShown"
-				@click="handleClick"
+				:withClear
 				@clear="clearField"
 			>
 				<div class="tasks-field-flow">
@@ -237,9 +231,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					<div class="tasks-field-flow-title">{{ flow.name }}</div>
 				</div>
 			</HoverPill>
-			<FieldAdd v-else :icon="Outline.BOTTLENECK" @click="handleClick"/>
+			<FieldAdd v-else :icon="Outline.BOTTLENECK"/>
 		</div>
-		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 	`
 	};
 
@@ -341,5 +334,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.FlowChip = FlowChip;
 	exports.flowMeta = flowMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.SidePanel,BX.UI.System.Menu,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.SidePanel,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=flow.bundle.js.map

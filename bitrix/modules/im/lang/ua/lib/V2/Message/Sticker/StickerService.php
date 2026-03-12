@@ -1,2 +1,0 @@
-<?php
-$MESS["IM_MESSAGE_STICKER_PLACEHOLDER"] = "[Стікер]";

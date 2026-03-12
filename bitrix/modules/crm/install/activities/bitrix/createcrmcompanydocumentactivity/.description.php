@@ -5,10 +5,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
+
 $arActivityDescription = [
 	'NAME' => GetMessage('CRM_ACTIVITY_CREATE_COMPANY_NAME'),
 	'DESCRIPTION' => GetMessage('CRM_ACTIVITY_CREATE_COMPANY_DESC'),
-	'TYPE' => 'activity',
+	'TYPE' => [
+		ActivityType::ACTIVITY->value,
+		ActivityType::NODE_ACTION->value,
+	],
 	'CLASS' => 'CreateCrmCompanyDocumentActivity',
 	'JSCLASS' => 'BizProcActivity',
 	'CATEGORY' => [

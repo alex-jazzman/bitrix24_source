@@ -1,7 +1,8 @@
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { TextMd } from 'ui.system.typography.vue';
 import 'ui.icon-set.outline';
 
-import { AddButton } from 'tasks.v2.component.elements.add-button';
+import { FieldHoverButton } from 'tasks.v2.component.elements.field-hover-button';
 import { FieldAdd } from 'tasks.v2.component.elements.field-add';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -14,8 +15,9 @@ import './tags.css';
 export const Tags = {
 	components: {
 		BIcon,
-		AddButton,
+		FieldHoverButton,
 		FieldAdd,
+		TextMd,
 	},
 	inject: {
 		task: {},
@@ -107,10 +109,15 @@ export const Tags = {
 			@mouseenter="isHovered = true"
 			@mouseleave="isHovered = false"
 		>
-			<AddButton v-if="isAddActive" :isVisible="isAddVisible" @click="handleClick"/>
+			<FieldHoverButton 
+				v-if="isAddActive"
+				:icon="Outline.PLUS_L"
+				:isVisible="isAddVisible" 
+				@click="handleClick"
+			/>
 			<template v-for="tag in tags" :key="tag">
-				<div class="tasks-field-tag">
-					<span>{{ tag }}</span>
+				<div class="tasks-field-tag print-background-white">
+					<TextMd>{{ tag }}</TextMd>
 					<div v-if="!readonly" class="tasks-field-tag-cross" @click.capture.stop="handleCrossClick(tag)">
 						<BIcon :name="Outline.CROSS_L" hoverable/>
 					</div>

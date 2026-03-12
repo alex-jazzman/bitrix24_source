@@ -121,7 +121,7 @@ else
 			'=DISCONNECTED' => 'N',
 		];
 
-		if (preg_match('/^\d+$/', $site_url))
+		if (!is_array($site_url) && preg_match('/^\d+$/', $site_url))
 		{
 			$arFilter['=ID'] = $site_url;
 		}

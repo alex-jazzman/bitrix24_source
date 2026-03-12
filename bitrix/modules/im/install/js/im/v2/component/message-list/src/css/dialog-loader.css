@@ -1,6 +1,6 @@
 .bx-im-dialog-loader__container {
-	--im-dialog-loader__background-color_spinner: var(--im-color-palette-white-base);
-	--im-dialog-loader__font-color: rgba(var(--im-color-palette-white-base-rgb), 0.94);
+	--im-dialog-loader__background-color_spinner: var(--ui-color-palette-white-base);
+	--im-dialog-loader__font-color: rgba(var(--ui-color-palette-white-base-rgb), 0.94);
 
 	width: 100%;
 	display: flex;
@@ -10,8 +10,8 @@
 }
 
 .bx-im-messenger__container.--light-theme .bx-im-dialog-loader__container {
-	--im-dialog-loader__background-color_spinner: rgba(var(--im-color-palette-gray-90-rgb), 0.3);
-	--im-dialog-loader__font-color: rgba(var(--im-color-palette-gray-90-rgb), 0.3);
+	--im-dialog-loader__background-color_spinner: rgba(var(--ui-color-palette-gray-90-rgb), 0.3);
+	--im-dialog-loader__font-color: rgba(var(--ui-color-palette-gray-90-rgb), 0.3);
 }
 
 .bx-im-dialog-loader__container.--full-height {
@@ -24,6 +24,7 @@
 	width: 120px;
 	height: 120px;
 	margin-bottom: 32px;
+	flex-shrink: 0;
 
 	opacity: 0.5;
 	border-radius:50%;

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Baas = this.BX.Baas || {};
 (function (exports,ui_icons_b24,ui_progressbar,main_date,ui_label,bitrix24_license,ui_notification,ui_analytics,ui_buttons,main_popup,ui_iconSet_api_core,ui_popupWithHeader,ui_infoHelper,main_core,main_core_events) {
@@ -1590,7 +1591,8 @@ this.BX.Baas = this.BX.Baas || {};
 	    return this;
 	  }
 	  toggle(node) {
-	    this.presenter.toggle(node);
+	    const targetElement = node != null ? node : this.cache.get('boundLastElement');
+	    this.presenter.toggle(targetElement);
 	    return this;
 	  }
 	  hide() {

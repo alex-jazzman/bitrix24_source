@@ -51,8 +51,6 @@
 
 			const isTasksMobileInstalled = BX.prop.getBoolean(jnExtensionData.get('project/utils'), 'isTasksMobileInstalled', false);
 
-			const isAirDiskFeatureEnable = BX.prop.getBoolean(jnExtensionData.get('project/utils'), 'isAirDiskFeatureEnable', false);
-
 			if (availableFeatures.includes('tasks') && isTasksMobileInstalled)
 			{
 				result.push(
@@ -79,14 +77,7 @@
 
 			if (availableFeatures.includes('files'))
 			{
-				if (isAirDiskFeatureEnable)
-				{
-					result.push(WorkgroupUtil.getAirDiskTab({ item }));
-				}
-				else
-				{
-					result.push(WorkgroupUtil.getDiskTab({ item }));
-				}
+				result.push(WorkgroupUtil.getDiskTab({ item }));
 			}
 
 			if (availableFeatures.includes('calendar'))
@@ -174,35 +165,6 @@
 		}
 
 		static getDiskTab(params)
-		{
-			const item = params.item;
-
-			return {
-				id: WorkgroupUtil.tabNames.disk,
-				title: BX.message('MOBILE_PROJECT_TAB_DRIVE_MSGVER_1'),
-				component: {
-					name: 'JSStackComponent',
-					scriptPath: availableComponents['user.disk'].publicUrl,
-					componentCode: 'user.disk',
-					canOpenInDefault: false,
-					rootWidget: {
-						settings: {
-							objectName: 'list',
-							useSearch: true,
-							doNotHideSearchResult: true,
-						},
-						name: 'list',
-					},
-					params: {
-						ownerId: item.id,
-						title: item.title,
-						entityType: 'group',
-					},
-				},
-			};
-		}
-
-		static getAirDiskTab(params)
 		{
 			const item = params.item;
 

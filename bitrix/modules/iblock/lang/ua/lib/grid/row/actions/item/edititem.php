@@ -1,2 +1,0 @@
-<?php
-$MESS["IBLOCK_GRID_ROW_ACTIONS_EDIT_ITEM_NAME"] = "Змінити";

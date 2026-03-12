@@ -36,7 +36,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker', (req
 		/**
 		 * @return {Record<string, Partial<UIMenuActionProps>>}
 		 */
-		get actionCollection()
+		get #actionCollection()
 		{
 			return {
 				[ActionType.send]: {
@@ -57,6 +57,16 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker', (req
 						this.#sendStickerEvent(StickerEventType.action.deleteRecentSticker);
 					},
 				},
+				[ActionType.delete]: {
+					id: 'delete',
+					testId: 'delete',
+					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_STICKER_MENU_STICKER_DELETE_ACTION'),
+					icon: Icon.TRASHCAN,
+					isDestructive: true,
+					onItemSelected: () => {
+						this.#sendStickerEvent(StickerEventType.action.deleteSticker);
+					},
+				},
 			};
 		}
 
@@ -74,7 +84,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker', (req
 		#getActions()
 		{
 			return this.actions.map((actionId, index) => {
-				return this.actionCollection[actionId];
+				return this.#actionCollection[actionId];
 			});
 		}
 
@@ -83,9 +93,9 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker', (req
 		 */
 		#sendStickerEvent(event)
 		{
-			const { id, packId, packType, uri } = this.stickerData;
+			const { id, packId, packType } = this.stickerData;
 
-			emitter.emit(event, [id, packId, packType, uri]);
+			emitter.emit(event, [id, packId, packType]);
 		}
 	}
 

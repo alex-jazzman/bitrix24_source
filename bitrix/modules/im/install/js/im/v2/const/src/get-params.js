@@ -8,6 +8,7 @@ export const GetParameter = {
 	openCopilotChat: 'IM_COPILOT',
 	openChannel: 'IM_CHANNEL',
 	openCollab: 'IM_COLLAB',
+	openSharedLink: 'IM_CODE',
 	openTaskComments: 'IM_TASK',
 
 	botContext: 'BOT_CONTEXT',

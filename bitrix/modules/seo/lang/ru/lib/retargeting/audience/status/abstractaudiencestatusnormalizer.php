@@ -5,3 +5,4 @@ $MESS["SEO_RETARGETING_SERVICE_AUDIENCE_STATUS_DEFAULT_PROCESSING"] = "Обра�
 
 $MESS["SEO_RETARGETING_SERVICE_AUDIENCE_STATUS_YANDEX_FEW_DATA"] = "Мало данных";
 $MESS["SEO_RETARGETING_SERVICE_AUDIENCE_STATUS_YANDEX_PROCESSING_FAILED"] = "Обработка аудитории завершилась с ошибкой";
+

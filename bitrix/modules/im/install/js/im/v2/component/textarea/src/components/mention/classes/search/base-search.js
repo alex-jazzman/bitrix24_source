@@ -1,14 +1,12 @@
 import { ajax as Ajax } from 'main.core';
 
-import { Core } from 'im.v2.application.core';
 import { RestMethod } from 'im.v2.const';
 import { UserManager } from 'im.v2.lib.user';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
 import { getSearchConfig, StoreUpdater } from 'im.v2.lib.search';
+import { runAction } from 'im.v2.lib.rest';
 
-import type { JsonObject } from 'main.core';
-import type { RestClient } from 'rest.client';
 import type { ImRecentProviderItem, SearchConfig, SearchResultItem } from 'im.v2.lib.search';
 
 const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
@@ -16,14 +14,12 @@ const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
 export class BaseServerSearch
 {
 	#storeUpdater: StoreUpdater;
-	#restClient: RestClient;
 	#searchConfig: SearchConfig;
 
 	constructor(searchConfig)
 	{
 		this.#searchConfig = searchConfig;
 		this.#storeUpdater = new StoreUpdater();
-		this.#restClient = Core.getRestClient();
 	}
 
 	async search(query: string): Promise<SearchResultItem[]>
@@ -42,20 +38,23 @@ export class BaseServerSearch
 			limit: 50,
 		};
 
-		let users: JsonObject[] = [];
 		try
 		{
-			const response = await this.#restClient.callMethod(RestMethod.imV2ChatUserList, queryParams);
-			users = response.data();
+			const response = await runAction(RestMethod.imV2ChatMentionList, {
+				data: queryParams,
+			});
+
+			const { users } = response;
+
+			void (new UserManager()).setUsersToModel(users);
+
+			return this.#getDialogIdAndDate(users);
 		}
 		catch (error)
 		{
 			console.error('Mention search service: load chat participants error', error);
+			throw error;
 		}
-
-		void (new UserManager()).setUsersToModel(users);
-
-		return this.#getDialogIdAndDate(users);
 	}
 
 	async #searchRequest(query: string): Promise<ImRecentProviderItem[]>

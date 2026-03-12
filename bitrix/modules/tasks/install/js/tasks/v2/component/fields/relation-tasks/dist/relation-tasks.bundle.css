@@ -9,7 +9,7 @@
 .tasks-field-relation-tasks-title {
 	display: flex;
 	align-items: center;
-	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm2);
 	background: var(--ui-color-base-8);
 }
 

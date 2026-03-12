@@ -17,7 +17,6 @@ return [
 		'layout/ui/form',
 		'layout/ui/friendly-date',
 		'layout/ui/loading-screen',
-		'layout/ui/reaction-list',
 		'layout/ui/viewer-list',
 		'layout/ui/friendly-date/formatter-factory',
 		'layout/ui/reaction/chip',
@@ -60,7 +59,6 @@ return [
 		'ui-system/blocks/badges/counter',
 		'ui-system/blocks/chips/chip-button',
 		'ui-system/blocks/chips/chip-inner-tab',
-		'ui-system/blocks/chips/chip-reaction',
 		'ui-system/blocks/chips/chip-status',
 		'ui-system/blocks/reaction/icon',
 		'ui-system/form/buttons/button',
@@ -128,7 +126,6 @@ return [
 		'tasks:layout/task/view-new/services/access-toast',
 	],
 	'bundle' => [
-		'./services/access-toast',
 		'./services/comments-opener',
 		'./services/data-provider',
 		'./services/deadline-format',

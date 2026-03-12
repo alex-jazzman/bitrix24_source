@@ -35,6 +35,27 @@ Bitrix\Main\UI\Extension::load([
 
 foreach ($arResult['ERRORS'] as $error)
 {
+	if (is_array($error))
+	{
+		$message = (string)($error['MESSAGE'] ?? '');
+
+		if (empty($message))
+		{
+			continue;
+		}
+
+		if (!empty($error['IS_HTML']))
+		{
+			?>
+			<div class="ui-alert ui-alert-danger">
+				<span class="ui-alert-message"><?= $message ?></span>
+			</div>
+			<?php
+
+			continue;
+		}
+	}
+
 	ShowError($error);
 }
 

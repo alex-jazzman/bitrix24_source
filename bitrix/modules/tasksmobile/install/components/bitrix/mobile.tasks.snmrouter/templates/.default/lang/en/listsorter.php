@@ -1,4 +1,5 @@
 <?php
+
 $MESS["TASK_COLUMN_ALLOW_TIME_TRACKING"] = "Track time spent";
 $MESS["TASK_COLUMN_CHANGED_DATE"] = "Modified on";
 $MESS["TASK_COLUMN_CLOSED_DATE"] = "Completed on";

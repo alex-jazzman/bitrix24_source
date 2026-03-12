@@ -10,12 +10,12 @@ jn.define('call/calls/voximplant', (require, exports, module) => {
 	};
 
 	var ajaxActions = {
-		invite: "im.call.invite",
-		cancel: "im.call.cancel",
-		answer: "im.call.answer",
-		decline: "im.call.decline",
-		hangup: "im.call.hangup",
-		ping: "im.call.ping",
+		invite: "call.CallManager.invite",
+		cancel: "call.CallManager.cancel",
+		answer: "call.CallManager.answer",
+		decline: "call.CallManager.decline",
+		hangup: "call.CallManager.hangup",
+		ping: "call.CallManager.ping",
 	};
 
 	var pullEvents = {
@@ -252,7 +252,7 @@ jn.define('call/calls/voximplant', (require, exports, module) => {
 			});
 		}
 
-		getUsers()
+		getUsersStates()
 		{
 			let result = {};
 			for (let userId in this.peers)

@@ -23,6 +23,7 @@ type SearchInputSetup = {
 const SEARCH_INPUT_CLASS_NAMES = {
 	base: 'ui-block-diagram-search-input',
 	open: '--open',
+	focus: '--focus',
 };
 
 // @vue/component
@@ -37,6 +38,10 @@ export const SearchInput = {
 			type: String,
 			default: '',
 		},
+		open: {
+			type: Boolean,
+			default: false,
+		},
 		placeholder: {
 			type: String,
 			default: '',
@@ -46,13 +51,14 @@ export const SearchInput = {
 			default: false,
 		},
 	},
-	emits: ['update:value', 'clear'],
+	emits: ['update:value', 'clear', 'update:open'],
 	setup(props, { emit }): SearchInputSetup
 	{
 		const loc = useLoc();
 		const searchInput = useTemplateRef('searchInput');
 		const showSearchBtn = ref(true);
 		const showSearchBar = ref(false);
+		const isFocus = ref(false);
 
 		const placeholderOrDefaultValue = computed((): string => {
 			if (props.placeholder)
@@ -66,6 +72,7 @@ export const SearchInput = {
 		const searchInputClassNames = computed((): { [string]: boolean } => ({
 			[SEARCH_INPUT_CLASS_NAMES.base]: true,
 			[SEARCH_INPUT_CLASS_NAMES.open]: toValue(showSearchBar),
+			[SEARCH_INPUT_CLASS_NAMES.focus]: toValue(isFocus),
 		}));
 
 		function onInput(event: InputEvent): void
@@ -78,8 +85,10 @@ export const SearchInput = {
 			emit('update:value', event.target.value);
 		}
 
-		function onClear(): void
+		function onClear(event: MouseEvent): void
 		{
+			event.stopPropagation();
+
 			if (props.disabled)
 			{
 				return;
@@ -91,18 +100,35 @@ export const SearchInput = {
 
 		function onAfterEnterTransition(): void
 		{
-			nextTick(() => toValue(searchInput)?.focus());
+			nextTick(() => {
+				isFocus.value = true;
+				toValue(searchInput)?.focus();
+			});
 		}
 
 		function onLeaveTransition(): void
 		{
 			showSearchBtn.value = true;
+			emit('update:open', false);
 		}
 
 		function onOpenSearchBar(): void
 		{
 			showSearchBar.value = true;
 			showSearchBtn.value = false;
+
+			emit('update:open', true);
+		}
+
+		function onClickSearchInput(): void
+		{
+			isFocus.value = true;
+			toValue(searchInput)?.focus();
+		}
+
+		function onBlurSearchInput(): void
+		{
+			isFocus.value = false;
 		}
 
 		function collapseSearchBar(): void
@@ -121,6 +147,8 @@ export const SearchInput = {
 			onAfterEnterTransition,
 			onLeaveTransition,
 			onOpenSearchBar,
+			onClickSearchInput,
+			onBlurSearchInput,
 			collapseSearchBar,
 		};
 	},
@@ -141,10 +169,11 @@ export const SearchInput = {
 				v-show="showSearchBar"
 				:class="searchInputClassNames"
 				ref="searchBar"
+				@click="onClickSearchInput"
 			>
 				<BIcon
 					:name="iconSet.SEARCH"
-					:size="24"
+					:size="20"
 					class="ui-block-diagram-search-input__icon"
 				/>
 				<input
@@ -155,6 +184,7 @@ export const SearchInput = {
 					type="text"
 					class="ui-block-diagram-search-input__input"
 					@input="onInput"
+					@blur="onBlurSearchInput"
 				/>
 				<button
 					class="ui-block-diagram-search-input__clear-btn"
@@ -163,7 +193,7 @@ export const SearchInput = {
 				>
 					<BIcon
 						:name="iconSet.CROSS_L"
-						:size="24"
+						:size="20"
 						class="ui-block-diagram-search-input__clear-btn-icon"
 					/>
 				</button>

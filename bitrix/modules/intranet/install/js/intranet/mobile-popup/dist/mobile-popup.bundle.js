@@ -168,7 +168,7 @@ this.BX = this.BX || {};
 					${0}
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('INTRANET_RECOGNIZE_LINKS_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _renderImage)[_renderImage](), main_core.Loc.getMessage('INTRANET_RECOGNIZE_LINKS_DESCRIPTION'), babelHelpers.classPrivateFieldLooseBase(this, _renderContinueButton)[_renderContinueButton](), babelHelpers.classPrivateFieldLooseBase(this, _renderFooter)[_renderFooter]());
+		`), main_core.Loc.getMessage('INTRANET_MOBILE_POPUP_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _renderImage)[_renderImage](), main_core.Loc.getMessage('INTRANET_MOBILE_POPUP_DESCRIPTION'), babelHelpers.classPrivateFieldLooseBase(this, _renderContinueButton)[_renderContinueButton](), babelHelpers.classPrivateFieldLooseBase(this, _renderFooter)[_renderFooter]());
 	}
 	function _renderImage2() {
 	  return main_core.Tag.render(_t2 || (_t2 = _`
@@ -186,9 +186,9 @@ this.BX = this.BX || {};
 	  return null;
 	}
 	function _renderContinueButton2() {
-	  let text = main_core.Loc.getMessage('INTRANET_RECOGNIZE_LINKS_CONTINUE');
+	  let text = main_core.Loc.getMessage('INTRANET_MOBILE_POPUP_CONTINUE');
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isTablet)[_isTablet] && babelHelpers.classPrivateFieldLooseBase(this, _isTabletContinueButton)[_isTabletContinueButton] || !babelHelpers.classPrivateFieldLooseBase(this, _isTablet)[_isTablet] && babelHelpers.classPrivateFieldLooseBase(this, _isMobileContinueButton)[_isMobileContinueButton]) {
-	    text = main_core.Loc.getMessage('INTRANET_RECOGNIZE_LINKS_OPEN_APP');
+	    text = main_core.Loc.getMessage('INTRANET_MOBILE_POPUP_OPEN_APP');
 	  }
 	  return new ui_buttons.Button({
 	    text,
@@ -208,7 +208,7 @@ this.BX = this.BX || {};
 	}
 	function _renderHideButton2() {
 	  return new ui_buttons.CloseButton({
-	    text: main_core.Loc.getMessage('INTRANET_RECOGNIZE_LINKS_CONTINUE_IN_BROWSER'),
+	    text: main_core.Loc.getMessage('INTRANET_MOBILE_POPUP_CONTINUE_IN_BROWSER'),
 	    className: 'intranet-mobile-popup__button intranet-mobile-popup__button--hide',
 	    size: ui_buttons.Button.Size.SMALL,
 	    onclick: () => {

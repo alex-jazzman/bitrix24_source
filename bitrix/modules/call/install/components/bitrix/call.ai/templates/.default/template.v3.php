@@ -465,6 +465,10 @@ if(count($jsMessagesCodes) >0 )
 												$middle = ceil(count($speakerEvaluation) / 2);
 												foreach ($speakerEvaluation as $criteria => $value)
 												{
+													if (!is_array($value) || !isset($value['value']) || !isset($value['title']))
+													{
+														continue;
+													}
 													?>
 													<div class="bx-call-component-call-ai__insights__full-report__info__metrics-container">
 														<div class="bx-call-component-call-ai__insights__full-report__info__metrics-icon <?= $value['value'] ? '--success' : '--failure' ?>"></div>
@@ -638,9 +642,7 @@ if(count($jsMessagesCodes) >0 )
 									?>
 									<div class="bx-call-component-call-ai-resume-block">
 										<div class="bx-call-component-call-ai-resume-block__title">
-										<span class="bx-call-component-call-ai-resume-block__time bx-call-component-call-ai__time-code"
-											  data-audio-id="TabSummary"
-										>
+										<span class="bx-call-component-call-ai-resume-block__time bx-call-component-call-ai__time-code" data-audio-id="TabSummary">
 											<?= $row['start'] ?>—<?= $row['end'] ?>
 										</span>
 											<span class="bx-call-component-call-ai-resume-block__name"><?= $row['title'] ?></span>

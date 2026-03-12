@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_component_elements_participants,main_core,tasks_v2_const,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_showLimit,tasks_v2_lib_userSelectorDialog,tasks_v2_provider_service_taskService) {
+(function (exports,tasks_v2_component_elements_participants,tasks_v2_lib_idUtils,tasks_v2_const,main_core,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_showLimit,tasks_v2_lib_analytics,tasks_v2_lib_userSelectorDialog,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	const auditorsMeta = Object.freeze({
@@ -19,7 +19,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  inject: {
 	    task: {},
-	    taskId: {}
+	    taskId: {},
+	    analytics: {},
+	    cardType: {}
 	  },
 	  setup() {
 	    return {
@@ -34,18 +36,37 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        'data-task-field-value': this.task.auditorsIds.join(',')
 	      };
 	    },
+	    isEdit() {
+	      return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
+	    },
 	    isLocked() {
 	      return !tasks_v2_core.Core.getParams().restrictions.stakeholder.available;
 	    },
 	    featureId() {
 	      return tasks_v2_core.Core.getParams().restrictions.stakeholder.featureId;
+	    },
+	    auditorsCount() {
+	      var _this$task$auditorsId, _this$task$auditorsId2;
+	      return (_this$task$auditorsId = (_this$task$auditorsId2 = this.task.auditorsIds) == null ? void 0 : _this$task$auditorsId2.length) != null ? _this$task$auditorsId : 0;
 	    }
 	  },
 	  methods: {
 	    update(auditorsIds) {
+	      const hasChanges = tasks_v2_provider_service_taskService.taskService.hasChanges(this.task, {
+	        auditorsIds
+	      }) && auditorsIds.length > 0 && auditorsIds.length >= this.auditorsCount;
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        auditorsIds
 	      });
+	      if (hasChanges) {
+	        var _this$task$accomplice, _this$task$accomplice2;
+	        tasks_v2_lib_analytics.analytics.sendAddViewer(this.analytics, {
+	          cardType: this.cardType,
+	          taskId: main_core.Type.isNumber(this.taskId) ? this.taskId : 0,
+	          viewersCount: auditorsIds.length,
+	          coexecutorsCount: (_this$task$accomplice = (_this$task$accomplice2 = this.task.accomplicesIds) == null ? void 0 : _this$task$accomplice2.length) != null ? _this$task$accomplice : 0
+	        });
+	      }
 	    }
 	  },
 	  template: `
@@ -55,6 +76,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:userIds="task.auditorsIds"
 			:canAdd="task.rights.addAuditors"
 			:canRemove="task.rights.edit"
+			:forceEdit="!isEdit"
 			:dataset
 			:isLocked
 			:featureId
@@ -71,7 +93,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  inject: {
 	    task: {},
-	    taskId: {}
+	    taskId: {},
+	    analytics: {},
+	    cardType: {}
 	  },
 	  setup() {
 	    return {
@@ -111,7 +135,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    handleClose(auditorsIds) {
 	      if (!this.isSelected && auditorsIds.length > 0) {
+	        var _this$task$accomplice, _this$task$accomplice2;
 	        this.highlightField();
+	        tasks_v2_lib_analytics.analytics.sendAddViewer(this.analytics, {
+	          cardType: this.cardType,
+	          taskId: main_core.Type.isNumber(this.taskId) ? this.taskId : 0,
+	          viewersCount: auditorsIds.length,
+	          coexecutorsCount: (_this$task$accomplice = (_this$task$accomplice2 = this.task.accomplicesIds) == null ? void 0 : _this$task$accomplice2.length) != null ? _this$task$accomplice : 0
+	        });
 	      }
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        auditorsIds
@@ -140,5 +171,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.AuditorsChip = AuditorsChip;
 	exports.auditorsMeta = auditorsMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2.Const,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Const,BX,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=auditors.bundle.js.map

@@ -139,9 +139,6 @@ export class Item
 				case 'chat':
 					BX.Mail.Secretary.getInstance(this.getMessageId(true)).openChat();
 					break;
-				case 'task':
-					BX.Mail.Secretary.getInstance(this.getMessageId(true)).onTaskAction('task_view', 'view_button');
-					break;
 			}
 		}
 		else if (!this.#wait)
@@ -294,4 +291,3 @@ export class Item
 		}[this.getType()] || '';
 	}
 }
-

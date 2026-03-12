@@ -73,7 +73,7 @@ foreach ($dialog->getMap() as $fieldId => $field):
 					</div>
 				</div>
 			<?php else: ?>
-				<div class="ai-node-bp-json-field-control"><?= $dialog->renderFieldControl($field, null, true, \Bitrix\Bizproc\FieldType::RENDER_MODE_DESIGNER) ?></div>
+				<?= $dialog->renderFieldControl($field, null, true, \Bitrix\Bizproc\FieldType::RENDER_MODE_DESIGNER) ?>
 			<?php endif; ?>
 		</td>
 	</tr>

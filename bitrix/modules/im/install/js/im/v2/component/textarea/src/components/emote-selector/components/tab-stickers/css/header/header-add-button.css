@@ -1,0 +1,14 @@
+.bx-im-stickers-header-add-button__container {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary-alt);
+	--ui-icon-set__icon-size: 32px;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 32px;
+	height: 32px;
+	border-radius: 100px;
+	background-color: var(--ui-color-bg-vibrant-less-more);
+	cursor: pointer;
+}

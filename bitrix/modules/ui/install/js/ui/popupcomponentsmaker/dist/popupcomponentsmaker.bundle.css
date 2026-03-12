@@ -103,8 +103,8 @@
 	border: 1px solid rgba(var(--ui-color-background-primary-rgb), var(--ui-opacity-20));
 }
 
-.bitrix24-theme-dark .intranet-settings-widget__header-name,
-.bitrix24-theme-default .intranet-settings-widget__header-name {
+.bitrix24-dark-theme .intranet-settings-widget__header-name,
+.bitrix24-default-theme .intranet-settings-widget__header-name {
 	color: var(--ui-color-base-90);
 }
 /* end header style*/
@@ -119,6 +119,10 @@
 }
 
 .ui-popupcomponentmaker__content--section:last-child {
+	margin-bottom: 1px;
+}
+
+.ui-popupcomponentmaker__header-content.--empty-content .ui-popupcomponentmaker__content--section:last-child {
 	margin-bottom: 0;
 }
 

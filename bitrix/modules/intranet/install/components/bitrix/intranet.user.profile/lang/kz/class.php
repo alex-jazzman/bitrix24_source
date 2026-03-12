@@ -1,6 +1,0 @@
-<?php
-$MESS["INTRANET_USER_PROFILE_NO_USER_ERROR"] = "Пайдаланушы табылмады.";
-$MESS["INTRANET_USER_PROFILE_OTP_DEACTIVATED_MSGVER_1"] = "Аккаунтты қорғау өшірулі";
-$MESS["INTRANET_USER_PROFILE_OTP_DEACTIVATE_STATUS"] = "#REMAINDER# кейін автоматты түрде қосылу";
-$MESS["INTRANET_USER_PROFILE_OTP_DEACTIVATE_STATUS_UNINITIALIZED"] = "Қолжетімділік #REMAINDER# кейін жабылады";
-$MESS["INTRANET_USER_PROFILE_OTP_UNINITIALIZED"] = "Аккаунтты қорғау бапталмаған";

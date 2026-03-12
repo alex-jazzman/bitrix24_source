@@ -11,16 +11,11 @@ jn.define('im/messenger/provider/services/sending/upload-manager', (require, exp
 	const {
 		FileType,
 		ComponentCode,
+		UploaderClientEvent,
 	} = require('im/messenger/const');
 	const { UploadTask } = require('im/messenger/provider/services/sending/upload-task');
 
 	const UploaderManagerEvent = Object.freeze({
-		done: 'done',
-		progress: 'progress',
-		error: 'error',
-	});
-
-	const UploaderClientEvent = Object.freeze({
 		done: 'done',
 		progress: 'progress',
 		error: 'error',
@@ -214,9 +209,7 @@ jn.define('im/messenger/provider/services/sending/upload-manager', (require, exp
 				};
 			}
 
-			if (
-				fileType === FileType.video
-			)
+			if (fileType === FileType.video && !deviceFile.isVideoNote)
 			{
 				taskOptions.resize = {
 					height: 1080,

@@ -29,17 +29,21 @@ export default class Gradient extends BaseControl
 		this.setEventNamespace('BX.Landing.UI.Field.Color.Gradient');
 
 		this.options = options;
-		this.options.hexPreviewMode = true;
 
 		this.popupId = `gradient_popup_${Text.getRandom()}`;
 		this.popupTargetContainer = options.contentRoot;
 
-		this.colorpickerFrom = new Colorpicker(this.options);
+		const colorPickerOptions = {
+			...this.options,
+			hexPreviewMode: true,
+		};
+
+		this.colorpickerFrom = new Colorpicker({ ...colorPickerOptions });
 		this.colorpickerFrom.subscribe('onChange', (event) => {
 			this.onColorChange(event.getData().color, null);
 		});
 
-		this.colorpickerTo = new Colorpicker(this.options);
+		this.colorpickerTo = new Colorpicker({ ...colorPickerOptions });
 		this.colorpickerTo.subscribe('onChange', (event) => {
 			this.onColorChange(null, event.getData().color);
 		});

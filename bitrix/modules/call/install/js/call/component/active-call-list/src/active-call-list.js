@@ -19,7 +19,11 @@ export const ActiveCallList = {
 		{
 			activeCalls(): ImModelCallItem[]
 			{
-				return this.$store.getters['recent/calls/get'];
+				return this.$store.getters['recent/calls/get'].filter((activeCall) => {
+					const dialog = this.$store.getters['chats/get'](activeCall.dialogId, true);
+
+					return Number(dialog.dialogId) !== 0;
+				});
 			},
 		},
 	methods:

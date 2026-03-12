@@ -98,6 +98,7 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 					"bgColor" => $request->getPost("bgColor"),
 					"bgImage" => $request->getFile("bgImage"),
 					"bgImageBlurred" => $request->getFile("bgImageBlurred"),
+					"bgImageAnimated" => (bool)$request->getPost("bgImageAnimated"),
 					"textColor" => $request->getPost("textColor"),
 				)
 			);

@@ -9,6 +9,7 @@ use \Bitrix\Imopenlines\Limit;
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'clipboard',
+	'intranet.old-interface.intranet-common',
 ]);
 
 /** @var CBitrixComponentTemplate $this */

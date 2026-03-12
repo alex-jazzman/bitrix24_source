@@ -1,0 +1,655 @@
+{
+    "NAME": "###BIZPROC_NODES_SAMPLE_NAME_1###",
+    "DESCRIPTION": "###BIZPROC_NODES_SAMPLE_DESCRIPTION_1###",
+    "PARAMETERS": [],
+    "VARIABLES": [],
+    "CONSTANTS": {
+        "SetupTemplateActivity_62HyznTvdU": {
+            "Name": "###BIZPROC_NODES_SAMPLE_NAME_2###",
+            "Description": "",
+            "Type": "string",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": [],
+            "Default": "###BIZPROC_NODES_SAMPLE_DEFAULT_1###"
+        },
+        "SetupTemplateActivity_BTXo5PtF6w": {
+            "Name": "###BIZPROC_NODES_SAMPLE_NAME_3###",
+            "Description": "",
+            "Type": "user",
+            "Required": 0,
+            "Multiple": 1,
+            "Options": [],
+            "Default": [
+                "group_hrr1"
+            ]
+        },
+        "SetupTemplateActivity_T76SEQ8ol9": {
+            "Name": "###BIZPROC_NODES_SAMPLE_NAME_5###",
+            "Description": "",
+            "Type": "text",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": [],
+            "Default": "###BIZPROC_NODES_SAMPLE_DEFAULT_2###"
+        },
+        "SetupTemplateActivity_YxMBdDhXHd": {
+            "Name": "###BIZPROC_NODES_SAMPLE_NAME_6###",
+            "Description": "",
+            "Type": "text",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": [],
+            "Default": "###BIZPROC_NODES_SAMPLE_DEFAULT_3###"
+        },
+        "SetupTemplateActivity_rgrHChbMKt": {
+            "Name": "###BIZPROC_NODES_SAMPLE_NAME_7###",
+            "Description": "",
+            "Type": "file",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": [],
+            "Default": null
+        }
+    },
+    "TEMPLATE": [
+        {
+            "Type": "NodeWorkflowActivity",
+            "Name": "Template",
+            "Properties": {
+                "Title": "###BIZPROC_NODES_SAMPLE_TITLE_1###",
+                "Links": [
+                    [
+                        "A7649_2965_8496_3775:o0",
+                        "A7426_4464_6102_9845:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6799_3346_2347_2123:o0",
+                        "A5172_6770_9062_4959:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4791_5036_6881_3286:o0",
+                        "A7649_2965_8496_3775:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A9700_4393_6634_9720:o0",
+                        "A6799_3346_2347_2123:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6799_3346_2347_2123:a0",
+                        "A9610_6597_9992_4868:t0",
+                        1769690123661
+                    ],
+                    [
+                        "A5172_6770_9062_4959:o0",
+                        "A8106_3093_8889_3355:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4889_7438_8206_9038:o0",
+                        "A4632_2501_2036_1473:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A3922_7992_6256_9512:o0",
+                        "A8939_8471_4950_3897:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A3922_7992_6256_9512:o0",
+                        "A4460_4773_5285_8053:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o1",
+                        "A6818_8593_1799_2521:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6799_3346_2347_2123:o0",
+                        "A6833_3320_3842_9837:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6833_3320_3842_9837:o0",
+                        "A3922_7992_6256_9512:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o1",
+                        "A7868_4961_2315_7261:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7426_4464_6102_9845:o0",
+                        "A4889_7438_8206_9038:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A2532_3871_3620_3427:o0",
+                        "A9737_6776_3554_8777:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A9737_6776_3554_8777:o1",
+                        "A9988_4968_1175_9417:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7868_4961_2315_7261:o0",
+                        "A7443_4094_7448_4833:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7443_4094_7448_4833:o0",
+                        "A2637_1165_8843_2682:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A2637_1165_8843_2682:o0",
+                        "A7930_3492_4440_1410:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o0",
+                        "A7930_3492_4440_1410:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6833_3320_3842_9837:o1",
+                        "A3712_2922_5544_6850:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6833_3320_3842_9837:o0",
+                        "A1908_2854_9166_1869:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o1",
+                        "A2577_2609_9029_7391:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o0",
+                        "A7645_2085_3700_8707:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7868_4961_2315_7261:o0",
+                        "A8483_2519_9624_3890:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A3922_7992_6256_9512:o0",
+                        "A8681_6811_9133_2178:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4889_7438_8206_9038:o0",
+                        "A7445_3035_2369_4564:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4632_2501_2036_1473:o0",
+                        "A2479_5231_1058_7910:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4632_2501_2036_1473:o0",
+                        "A2532_3871_3620_3427:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7868_4961_2315_7261:o0",
+                        "A2637_1165_8843_2682:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7426_4464_6102_9845:o0",
+                        "A9988_4968_1175_9417:i0",
+                        1769692982614
+                    ]
+                ]
+            },
+            "Children": [
+                {
+                    "Name": "A6799_3346_2347_2123",
+                    "Type": "AiAssistantAgentActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "mcpUser": "{=A9700_4393_6634_9720:SenderId}",
+                        "query": "{=A9700_4393_6634_9720:Message}",
+                        "systemPrompt": "###BIZPROC_NODES_SAMPLE_SYSTEMPROMPT_1###",
+                        "returnType": "json",
+                        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"chatAnswer\": {\n      \"type\": \"string\",\n      \"description\": \"Human readeable answer\"\n    }\n  },\n  \"required\": [\n    \"chatAnswer\"\n  ]\n}",
+                        "jsonPath": {
+                            "chatAnswer": {
+                                "Id": "chatAnswer",
+                                "Type": "json",
+                                "BaseType": "string",
+                                "Name": "JSON:chatAnswer",
+                                "Description": null,
+                                "Multiple": false,
+                                "Required": false,
+                                "Options": null,
+                                "Settings": null,
+                                "Default": null
+                            }
+                        },
+                        "Title": "###BIZPROC_NODES_SAMPLE_TITLE_2###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6799_3346_2347_2123",
+                        "type": "simple",
+                        "position": {
+                            "x": 597,
+                            "y": 470
+                        },
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            },
+                            {
+                                "id": "a0",
+                                "title": "",
+                                "type": "aux"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_SAMPLE_TITLE_2###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "icon": "AI_ROBOT",
+                            "updated": 1769693215167,
+                            "published": 1769693215167
+                        }
+                    }
+                },
+                {
+                    "Name": "A7649_2965_8496_3775",
+                    "Type": "SetupTemplateActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "user": "{=A4791_5036_6881_3286:startedBy}",
+                        "blocks": [
+                            {
+                                "items": [
+                                    {
+                                        "itemType": "title",
+                                        "text": "###BIZPROC_NODES_SAMPLE_TEXT_1###"
+                                    },
+                                    {
+                                        "itemType": "description",
+                                        "text": "###BIZPROC_NODES_SAMPLE_TEXT_2###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_62HyznTvdU",
+                                        "name": "###BIZPROC_NODES_SAMPLE_NAME_2###",
+                                        "constantType": "string",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": true,
+                                        "options": [],
+                                        "default": ""
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_rgrHChbMKt",
+                                        "name": "###BIZPROC_NODES_SAMPLE_NAME_7###",
+                                        "constantType": "file",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": ""
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_BTXo5PtF6w",
+                                        "name": "###BIZPROC_NODES_SAMPLE_NAME_3###",
+                                        "constantType": "user",
+                                        "description": "",
+                                        "multiple": true,
+                                        "required": true,
+                                        "options": [],
+                                        "default": ""
+                                    }
+                                ]
+                            },
+                            {
+                                "items": [
+                                    {
+                                        "itemType": "title",
+                                        "text": "###BIZPROC_NODES_SAMPLE_TEXT_3###"
+                                    },
+                                    {
+                                        "itemType": "description",
+                                        "text": "###BIZPROC_NODES_SAMPLE_TEXT_4###"
+                                    },
+                                    {
+                                        "itemType": "delimiter",
+                                        "delimiterType": "line"
+                                    },
+                                    {
+                                        "itemType": "title",
+                                        "text": "###BIZPROC_NODES_SAMPLE_TEXT_5###"
+                                    },
+                                    {
+                                        "itemType": "description",
+                                        "text": "###BIZPROC_NODES_SAMPLE_TEXT_6###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_T76SEQ8ol9",
+                                        "name": "###BIZPROC_NODES_SAMPLE_NAME_5###",
+                                        "constantType": "text",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": "###BIZPROC_NODES_SAMPLE_DEFAULT_2###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_YxMBdDhXHd",
+                                        "name": "###BIZPROC_NODES_SAMPLE_NAME_6###",
+                                        "constantType": "text",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": "###BIZPROC_NODES_SAMPLE_DEFAULT_3###"
+                                    }
+                                ]
+                            }
+                        ],
+                        "Title": "###BIZPROC_NODES_SAMPLE_TITLE_3###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A7649_2965_8496_3775",
+                        "type": "simple",
+                        "position": {
+                            "x": 587,
+                            "y": 233
+                        },
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_SAMPLE_TITLE_3###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "icon": "SETTINGS",
+                            "updated": 1769693215167,
+                            "published": 1769693215167
+                        }
+                    }
+                },
+                {
+                    "Name": "A7426_4464_6102_9845",
+                    "Type": "ImBotCreateBotActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botName": "{=Constant:SetupTemplateActivity_62HyznTvdU}",
+                        "workPosition": "",
+                        "avatar": "{=Constant:SetupTemplateActivity_rgrHChbMKt}",
+                        "botCode": "{=Workflow:TemplateId}",
+                        "Title": "###BIZPROC_NODES_SAMPLE_TITLE_4###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A7426_4464_6102_9845",
+                        "type": "simple",
+                        "position": {
+                            "x": 936,
+                            "y": 233
+                        },
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_SAMPLE_TITLE_4###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "icon": "MESSENGER",
+                            "updated": 1769693215167,
+                            "published": 1769693215167
+                        }
+                    }
+                },
+                {
+                    "Name": "A9988_4968_1175_9417",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A7426_4464_6102_9845:botId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=Constant:SetupTemplateActivity_BTXo5PtF6w}"
+                        ],
+                        "chatId": null,
+                        "message": "###BIZPROC_NODES_SAMPLE_MESSAGE_1###",
+                        "asError": "N",
+                        "Title": "###BIZPROC_NODES_SAMPLE_TITLE_5###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9988_4968_1175_9417",
+                        "type": "simple",
+                        "position": {
+                            "x": 1284,
+                            "y": 233
+                        },
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_SAMPLE_TITLE_5###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": 1769693215167,
+                            "published": 1769693215167
+                        }
+                    }
+                },
+                {
+                    "Name": "A5172_6770_9062_4959",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A9700_4393_6634_9720:ActualBotId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=A9700_4393_6634_9720:SenderId}"
+                        ],
+                        "chatId": "{=A9700_4393_6634_9720:chatId}",
+                        "message": "{{=if(strlen({=A6799_3346_2347_2123:chatAnswer}) > 0, {=A6799_3346_2347_2123:chatAnswer}, {=A6799_3346_2347_2123:errorMessage})}}",
+                        "asError": "{{=if(strlen({=A6799_3346_2347_2123:aiResult}) > 0, 'N', 'Y')}}",
+                        "Title": "###BIZPROC_NODES_SAMPLE_TITLE_5###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5172_6770_9062_4959",
+                        "type": "simple",
+                        "position": {
+                            "x": 949,
+                            "y": 470
+                        },
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_SAMPLE_TITLE_5###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": 1769693215167,
+                            "published": 1769693215167
+                        }
+                    }
+                },
+                {
+                    "Name": "A4791_5036_6881_3286",
+                    "Type": "AiAgentStartTrigger",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_SAMPLE_TITLE_6###"
+                    },
+                    "Activated": "Y",
+                    "Node": {
+                        "id": "A4791_5036_6881_3286",
+                        "type": "trigger",
+                        "position": {
+                            "x": 178,
+                            "y": 233
+                        },
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_NODES_SAMPLE_TITLE_6###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "icon": "AI_ROBOT",
+                            "updated": 1769693215167,
+                            "published": 1769693215167
+                        }
+                    }
+                },
+                {
+                    "Name": "A9700_4393_6634_9720",
+                    "Type": "ImBotNewMessageTrigger",
+                    "Activated": "Y",
+                    "Properties": {
+                        "BotId": null,
+                        "BotCode": "{=Workflow:TemplateId}",
+                        "SenderIds": [
+                            "{=Constant:SetupTemplateActivity_BTXo5PtF6w}"
+                        ],
+                        "Title": "###BIZPROC_NODES_SAMPLE_TITLE_7###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9700_4393_6634_9720",
+                        "type": "trigger",
+                        "position": {
+                            "x": 193,
+                            "y": 470
+                        },
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_NODES_SAMPLE_TITLE_7###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "icon": "MESSAGE",
+                            "updated": 1769693215167,
+                            "published": 1769693215167
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

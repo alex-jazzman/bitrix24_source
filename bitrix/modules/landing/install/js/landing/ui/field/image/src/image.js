@@ -406,7 +406,7 @@ export class Image extends TextField
 	static createAiButton(compactMode: boolean = false)
 	{
 		return new AiImageButton("ai", {
-			text: 'CoPilot',
+			text: BX.Landing.Main.getInstance()["options"]["copilot_name"],
 			className: "landing-ui-field-image-ai-button" + (compactMode ? ' --compact' : ''),
 		});
 	}

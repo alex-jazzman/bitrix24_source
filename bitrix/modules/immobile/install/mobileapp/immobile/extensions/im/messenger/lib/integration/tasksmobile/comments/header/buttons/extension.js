@@ -19,7 +19,7 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/header/buttons', (r
 	const OpenTaskButton = {
 		id: 'open_task',
 		testId: 'dialog-header-button-open-task',
-		type: Icon.CIRCLE_CHECK.getIconName(),
+		type: Icon.CIRCLE_CHECK_FORWARD.getIconName(),
 		color: null,
 	};
 

@@ -68,24 +68,16 @@ foreach ($arParams['ACCESS_LIST'] as $type => $list)
 	}
 }
 
-$crmQueueList = array();
-$crmQueueLast = array();
-$crmQueueSelected = array();
+$crmQueueSelectedCodes = [];
+$crmQueueSelected = [];
 if ($arParams['CRM_AVAILABLE'])
 {
 	foreach ($arParams['CRM_QUEUE'] as $item)
 	{
-		$id = sprintf('U%u', $item['ID']);
+		$userCode = sprintf('U%u', $item['ID']);
 
-		$crmQueueList[$id] = array(
-			'id'       => $id,
-			'entityId' => $item['ID'],
-			'name'     => \CUser::formatName(\CSite::getNameFormat(), $item, true),
-			'avatar'   => '',
-			'desc'     => $item['WORK_POSITION'] ?: $item['PERSONAL_PROFESSION'] ?: '&nbsp;'
-		);
-		$crmQueueLast[$id] = $id;
-		$crmQueueSelected[$id] = 'users';
+		$crmQueueSelectedCodes[] = $userCode;
+		$crmQueueSelected[] = ['user', $item['ID']];
 	}
 }
 
@@ -93,6 +85,11 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 
 $shareAccessSelectorContainerId = 'mail-share-access-selector-container';
 $shareAccessValueContainerId = 'mail-share-access-value-container';
+
+$crmQueueSelectorContainerId = 'mail-crm-queue-selector-container';
+$crmQueueValueContainerId = 'mail-crm-queue-value-container';
+
+$isCrmSwitcherChecked = !empty($mailbox['__crm']);
 
 ?>
 
@@ -465,14 +462,28 @@ $shareAccessValueContainerId = 'mail-share-access-value-container';
 							<a name="configcrm" id="configcrm"></a>
 							<?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM') ?>
 						</div>
-						<div id="mail-connect-crm-settings-title"></div>
+						<div
+							id="mail-connect-crm-settings-title"
+							<?php if (!$isCrmSwitcherChecked && $arParams['HAS_ACCESS_TO_EDIT_CRM'] === false): ?>
+							data-hint="<?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_NO_ACCESS') ?>"
+							<?php endif ?>
+						>
+						</div>
 					</div>
 					<div class="mail-connect-form-hidden-block mail-connect-form-items">
+						<?php if ($arParams['HAS_ACCESS_TO_EDIT_CRM'] === false): ?>
+							<div class="ui-alert ui-alert-warning">
+								<span class="ui-alert-message">
+									<?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_NO_ACCESS') ?>
+								</span>
+							</div>
+						<?php endif ?>
 						<div class="mail-connect-option-email" hidden>
 							<input class="mail-connect-form-input mail-connect-form-input-check" type="checkbox"
 								   name="fields[use_crm]" value="Y" id="mail_connect_mb_crm_switch"
 								   onchange="BX('mail_connect_mb_crm_form').style.display = this.checked ? '' : 'none'; "
-								<? if (empty($mailbox) || !empty($mailbox['__crm'])): ?> checked <? endif ?>>
+								<?php if ($isCrmSwitcherChecked): ?> checked <?php endif ?>
+								<?php if ($arParams['HAS_ACCESS_TO_EDIT_CRM'] === false): ?> readonly <?php endif ?>>
 							<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_crm_switch"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_ACTIVE') ?></label>
 						</div>
 						<div class="mail-connect-form-inner" id="mail_connect_mb_crm_form"
@@ -482,7 +493,8 @@ $shareAccessValueContainerId = 'mail-share-access-value-container';
 									<? [$label1, $label2] = explode('#AGE#', Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_AGE_INFO_CRM'), 2); ?>
 									<input class="mail-connect-form-input mail-connect-form-input-check" type="checkbox"
 										   name="fields[crm_sync_old]" value="Y" id="mail_connect_mb_crm_sync_old"
-										<? if (empty($mailbox)): ?> checked <? endif ?>>
+										<? if (empty($mailbox)): ?> checked <? endif ?>
+										<? if ($arParams['HAS_ACCESS_TO_EDIT_CRM'] === false): ?> disabled <? endif ?>>
 									<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_crm_sync_old">
 										<?=$label1 ?>
 									</label>
@@ -500,7 +512,8 @@ $shareAccessValueContainerId = 'mail-share-access-value-container';
 							<div class="mail-connect-option-email mail-connect-form-check-hidden">
 								<input class="mail-connect-form-input mail-connect-form-input-check" type="checkbox"
 									   name="fields[crm_public]" value="Y" id="mail_connect_mb_crm_public"
-									<? if (!empty($mailbox) && in_array('crm_public_bind', $mailbox['OPTIONS']['flags'])): ?> checked <? endif ?>>
+									<?php if (!empty($mailbox) && in_array('crm_public_bind', $mailbox['OPTIONS']['flags'])): ?> checked <?php endif ?>
+									<?php if ($arParams['HAS_ACCESS_TO_EDIT_CRM'] === false): ?> disabled <?php endif ?>>
 								<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_crm_public">
 									<?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_PUBLIC') ?>
 								</label>
@@ -509,7 +522,8 @@ $shareAccessValueContainerId = 'mail-share-access-value-container';
 								<? [$label1, $label2] = explode('#ENTITY#', Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_NEW_ENTITY_IN'), 2); ?>
 								<input class="mail-connect-form-input mail-connect-form-input-check" type="checkbox"
 									   name="fields[crm_allow_entity_in]" value="Y" id="mail_connect_mb_crm_allow_entity_in"
-									<? if (empty($mailbox) || !array_intersect(array('crm_deny_new_lead', 'crm_deny_entity_in'), $mailbox['OPTIONS']['flags'])): ?> checked <? endif ?>>
+									<?php if (empty($mailbox) || !array_intersect(array('crm_deny_new_lead', 'crm_deny_entity_in'), $mailbox['OPTIONS']['flags'])): ?> checked <?php endif ?>
+									<?php if ($arParams['HAS_ACCESS_TO_EDIT_CRM'] === false): ?> disabled <?php endif ?>>
 								<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_crm_allow_entity_in">
 									<?=$label1 ?>
 								</label>
@@ -527,7 +541,8 @@ $shareAccessValueContainerId = 'mail-share-access-value-container';
 								<? [$label1, $label2] = explode('#ENTITY#', Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_NEW_ENTITY_OUT'), 2); ?>
 								<input class="mail-connect-form-input mail-connect-form-input-check" type="checkbox"
 									   name="fields[crm_allow_entity_out]" value="Y" id="mail_connect_mb_crm_allow_entity_out"
-									<? if (empty($mailbox) || !array_intersect(array('crm_deny_new_lead', 'crm_deny_entity_out'), $mailbox['OPTIONS']['flags'])): ?> checked <? endif ?>>
+									<?php if (empty($mailbox) || !array_intersect(array('crm_deny_new_lead', 'crm_deny_entity_out'), $mailbox['OPTIONS']['flags'])): ?> checked <?php endif ?>
+									<?php if ($arParams['HAS_ACCESS_TO_EDIT_CRM'] === false): ?> disabled <?php endif ?>>
 								<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_crm_allow_entity_out">
 									<?=$label1 ?>
 								</label>
@@ -544,7 +559,8 @@ $shareAccessValueContainerId = 'mail-share-access-value-container';
 							<div class="mail-connect-option-email mail-connect-form-check-hidden">
 								<input class="mail-connect-form-input mail-connect-form-input-check" type="checkbox"
 									   name="fields[crm_vcf]" value="Y" id="mail_connect_mb_crm_vcf"
-									<? if (empty($mailbox) || !in_array('crm_deny_new_contact', $mailbox['OPTIONS']['flags'])): ?> checked <? endif ?>>
+									<?php if (empty($mailbox) || !in_array('crm_deny_new_contact', $mailbox['OPTIONS']['flags'])): ?> checked <?php endif ?>
+									<?php if ($arParams['HAS_ACCESS_TO_EDIT_CRM'] === false): ?> disabled <?php endif ?>>
 								<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_crm_vcf">
 									<?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_VCF') ?>
 								</label>
@@ -564,8 +580,12 @@ $shareAccessValueContainerId = 'mail-share-access-value-container';
 								<label class="mail-connect-form-label mail-connect-form-label-check">
 									<?=$label1 ?>
 								</label>
-								<span class="mail-set-textarea-show <? if (!empty($arParams['NEW_LEAD_FOR'])): ?> mail-set-textarea-show-open<? endif ?>"
-									  id="mail_connect_mb_crm_new_lead_for_link"
+								<span class="
+										mail-set-textarea-show
+										<?php if ($arParams['HAS_ACCESS_TO_EDIT_CRM'] === false): ?> mail-set-textarea-show--disabled<?php endif ?>
+										<?php if (!empty($arParams['NEW_LEAD_FOR'])): ?> mail-set-textarea-show-open<?php endif ?>
+									"
+										id="mail_connect_mb_crm_new_lead_for_link"
 								><?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_NEW_LEAD_ALLWAYS_LIST') ?></span>
 								<label class="mail-connect-form-label mail-connect-form-label-check">
 									<?=$label2 ?>
@@ -582,25 +602,11 @@ $shareAccessValueContainerId = 'mail-share-access-value-container';
 								<label class="mail-connect-form-label mail-connect-form-label-check">
 									<?=Loc::getMessage('MAIL_CLIENT_CONFIG_CRM_QUEUE') ?>
 								</label>
-								<?
-								$APPLICATION->IncludeComponent('bitrix:main.user.selector', '', [
-									"ID" => "mail_client_config_queue",
-									"API_VERSION" => 3,
-									"LIST" => array_keys($crmQueueSelected),
-									"INPUT_NAME" => "fields[crm_queue][]",
-									"USE_SYMBOLIC_ID" => true,
-									"BUTTON_SELECT_CAPTION" => Loc::getMessage("MAIL_CLIENT_CONFIG_CRM_QUEUE_ADD"),
-									"SELECTOR_OPTIONS" => [
-										'apiVersion' => 3,
-										"departmentSelectDisable" => "Y",
-										'context' => 'MAIL_CLIENT_CONFIG_QUEUE',
-										'multiple' => 'Y',
-										'contextCode' => 'U',
-										'enableAll' => 'N',
-										'userSearchArea' => 'I'
-									]
-								]);
-								?>
+								<div id="<?= $crmQueueSelectorContainerId ?>"></div>
+								<input type="hidden"
+								id="<?=$crmQueueValueContainerId ?>"
+								name="fields[crm_queue]"
+								value="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($crmQueueSelectedCodes))?>">
 							</div>
 						</div>
 					</div>
@@ -785,7 +791,8 @@ $arJsParams = [
 	'isSmtpSwitcherChecked' => $settings['IS_SMTP_SWITCHER_CHECKED'],
 	'isSmtpSwitcherDisabled' => $arResult['LOCK_SMTP'] && $settings['IS_SMTP_SWITCHER_CHECKED'],
 	'isCrmIntegrationAvailable' => !empty($arParams['CRM_AVAILABLE']),
-	'isCrmSwitcherChecked' => empty($mailbox) || !empty($mailbox['__crm']),
+	'isCrmSwitcherChecked' => $isCrmSwitcherChecked,
+	'canEditCrmOptions' => !$arParams['HAS_ACCESS_TO_EDIT_CRM'],
 	'isSuccessSyncStatus' => $arResult['LAST_MAIL_CHECK_STATUS'],
 	'oauthUserIsEmpty' => empty($settings['oauth_user']),
 	'isOauthMode' => !empty($settings['oauth']),
@@ -796,6 +803,9 @@ $arJsParams = [
 	'shareAccessSelectorPreselectedIds' => $accessSelected,
 	'shareAccessValueContainerId' => $shareAccessValueContainerId,
 	'isShareAccessLocked' => $arParams["HAS_NO_ACCESS_TO_SHARE_MAILBOX"] ?? false,
+	'crmQueueSelectorId' => $crmQueueSelectorContainerId,
+	'crmQueueSelectorPreselectedIds' => $crmQueueSelected,
+	'crmQueueValueContainerId' => $crmQueueValueContainerId,
 	'serviceName' => $settings['name'],
 	'isNewMailbox' => empty($mailbox),
 ];

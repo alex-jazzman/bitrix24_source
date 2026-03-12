@@ -24,6 +24,8 @@ $createMenu = array(
 				)
 			),
 			array(
+				'ta_sec' => 'mail',
+				'ta_el' => 'quick_button',
 				'TITLE' => rawurlencode(Loc::getMessage(
 					'MAIL_MESSAGE_ACTIONS_TASK_TITLE',
 					array(

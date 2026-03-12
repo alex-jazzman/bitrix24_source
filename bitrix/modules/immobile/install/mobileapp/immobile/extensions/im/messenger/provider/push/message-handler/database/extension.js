@@ -37,11 +37,6 @@ jn.define('im/messenger/provider/push/message-handler/database', (require, expor
 			this.recentRepository = serviceLocator.get('core').getRepository().recent;
 		}
 
-		getHandlerId()
-		{
-			return WaitingEntity.push.messageHandler.database;
-		}
-
 		/**
 		 * @param {Array<MessengerPushEvent>} eventList
 		 * @return {Array<MessengerPushEvent>}

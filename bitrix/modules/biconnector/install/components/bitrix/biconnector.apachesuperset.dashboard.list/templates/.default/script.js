@@ -29,6 +29,9 @@
 	var _getTitlePreview = /*#__PURE__*/new WeakSet();
 	var _setDateModifyNow = /*#__PURE__*/new WeakSet();
 	var _switchTopMenuAction = /*#__PURE__*/new WeakSet();
+	var _isWindowHistoryReady = /*#__PURE__*/new WeakSet();
+	var _replaceHistoryState = /*#__PURE__*/new WeakSet();
+	var _pushHistoryState = /*#__PURE__*/new WeakSet();
 	/**
 	 * @namespace BX.BIConnector
 	 */
@@ -36,6 +39,9 @@
 	  function SupersetDashboardGridManager(props) {
 	    var _BX$Main$gridManager$;
 	    babelHelpers.classCallCheck(this, SupersetDashboardGridManager);
+	    _classPrivateMethodInitSpec(this, _pushHistoryState);
+	    _classPrivateMethodInitSpec(this, _replaceHistoryState);
+	    _classPrivateMethodInitSpec(this, _isWindowHistoryReady);
 	    _classPrivateMethodInitSpec(this, _switchTopMenuAction);
 	    _classPrivateMethodInitSpec(this, _setDateModifyNow);
 	    _classPrivateMethodInitSpec(this, _getTitlePreview);
@@ -78,6 +84,7 @@
 	    _classPrivateMethodGet(this, _subscribeToEvents, _subscribeToEvents2).call(this);
 	    _classPrivateMethodGet(this, _colorPinnedRows, _colorPinnedRows2).call(this);
 	    _classPrivateMethodGet(this, _initHints, _initHints2).call(this);
+	    _classPrivateMethodGet(this, _replaceHistoryState, _replaceHistoryState2).call(this);
 	  }
 	  babelHelpers.createClass(SupersetDashboardGridManager, [{
 	    key: "onUpdatedDashboardBatchStatus",
@@ -183,7 +190,7 @@
 	      items.push({
 	        text: main_core.Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_CREATE_DASHBOARD'),
 	        onclick: function onclick() {
-	          biconnector_apacheSupersetMarketManager.ApacheSupersetMarketManager.openMarket(babelHelpers.classPrivateFieldGet(_this, _properties).isMarketExists, babelHelpers.classPrivateFieldGet(_this, _properties).marketUrl, 'menu');
+	          _this.showMarketSlider(babelHelpers.classPrivateFieldGet(_this, _properties).isMarketExists, babelHelpers.classPrivateFieldGet(_this, _properties).marketUrl);
 	          creationMenu.close();
 	        }
 	      }, {
@@ -414,6 +421,7 @@
 	        subtitle: message,
 	        width: 400,
 	        hasCloseButton: true,
+	        hasOverlay: true,
 	        closeByEsc: true,
 	        disableScrolling: true,
 	        centerButtons: [new ui_buttons.Button({
@@ -454,6 +462,7 @@
 	        subtitle: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_DESC'),
 	        hasCloseButton: true,
 	        closeByEsc: true,
+	        hasOverlay: true,
 	        disableScrolling: true,
 	        centerButtons: [new ui_buttons.Button({
 	          text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_CAPTION_YES'),
@@ -499,6 +508,11 @@
 	      BX.UI.Notification.Center.notify({
 	        content: main_core.Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_ERROR_OPEN_CREATE_DASHBOARD')
 	      });
+	    }
+	  }, {
+	    key: "showMarketSlider",
+	    value: function showMarketSlider(isMarketExists, marketUrl) {
+	      biconnector_apacheSupersetMarketManager.ApacheSupersetMarketManager.openMarket(isMarketExists, marketUrl, 'menu');
 	    }
 	  }, {
 	    key: "showCreationGroupPopup",
@@ -615,6 +629,7 @@
 	          'GROUPS.ID_label': []
 	        });
 	      }
+	      _classPrivateMethodGet(this, _pushHistoryState, _pushHistoryState2).call(this);
 	      this.handleFilterChange(_objectSpread({
 	        fieldId: 'GROUPS.ID'
 	      }, groupJson));
@@ -738,13 +753,6 @@
 	      babelHelpers.classPrivateFieldGet(this, _tagSelectorDialog).show();
 	    }
 	  }, {
-	    key: "handleOwnerClick",
-	    value: function handleOwnerClick(ownerData) {
-	      this.handleFilterChange(_objectSpread({
-	        fieldId: 'OWNER_ID'
-	      }, ownerData));
-	    }
-	  }, {
 	    key: "handleCreatedByClick",
 	    value: function handleCreatedByClick(ownerData) {
 	      this.handleFilterChange(_objectSpread({
@@ -827,6 +835,16 @@
 	}();
 	function _subscribeToEvents2() {
 	  var _this16 = this;
+	  main_core.Event.bind(window, 'popstate', function (event) {
+	    var _event$state;
+	    var filterState = (_event$state = event.state) === null || _event$state === void 0 ? void 0 : _event$state.filter;
+	    if (!filterState || !main_core.Type.isPlainObject(filterState)) {
+	      return;
+	    }
+	    var filterApi = _this16.getFilter().getApi();
+	    filterApi.extendFilter(filterState);
+	    filterApi.apply();
+	  });
 	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', function (event) {
 	    var _event$getCompatData = event.getCompatData(),
 	      _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 1),
@@ -895,6 +913,7 @@
 	  main_core_events.EventEmitter.subscribe('Grid::updated', function () {
 	    _classPrivateMethodGet(_this16, _initHints, _initHints2).call(_this16);
 	    _classPrivateMethodGet(_this16, _colorPinnedRows, _colorPinnedRows2).call(_this16);
+	    _classPrivateMethodGet(_this16, _replaceHistoryState, _replaceHistoryState2).call(_this16);
 	  });
 	  main_core_events.EventEmitter.subscribe('BIConnector.ExportMaster:onDashboardDataLoaded', function () {
 	    babelHelpers.classPrivateFieldGet(_this16, _grid).tableUnfade();
@@ -1160,6 +1179,33 @@
 	    var _menuItem = menu.getItemById("biconnector_superset_menu_dashboard_".concat(dashboardId));
 	    menu.deleteMenuItem(_menuItem);
 	  }
+	}
+	function _isWindowHistoryReady2() {
+	  return window && window.history && main_core.Type.isFunction(window.history.pushState) && main_core.Type.isFunction(window.history.replaceState);
+	}
+	function _replaceHistoryState2() {
+	  var _history$state;
+	  if (!_classPrivateMethodGet(this, _isWindowHistoryReady, _isWindowHistoryReady2).call(this)) {
+	    return;
+	  }
+	  var state = (_history$state = history.state) !== null && _history$state !== void 0 ? _history$state : {};
+	  var filter = this.getFilter();
+	  var filterState = main_core.clone(filter.getFilterFieldsValues());
+	  history.replaceState(_objectSpread(_objectSpread({}, state), {}, {
+	    filter: filterState
+	  }), '', window.location.href);
+	}
+	function _pushHistoryState2() {
+	  var _history$state2;
+	  if (!_classPrivateMethodGet(this, _isWindowHistoryReady, _isWindowHistoryReady2).call(this)) {
+	    return;
+	  }
+	  var state = (_history$state2 = history.state) !== null && _history$state2 !== void 0 ? _history$state2 : {};
+	  var filter = this.getFilter();
+	  var filterState = main_core.clone(filter.getFilterFieldsValues());
+	  history.pushState(_objectSpread(_objectSpread({}, state), {}, {
+	    filter: filterState
+	  }), '', window.location.href);
 	}
 	main_core.Reflection.namespace('BX.BIConnector').SupersetDashboardGridManager = SupersetDashboardGridManager;
 

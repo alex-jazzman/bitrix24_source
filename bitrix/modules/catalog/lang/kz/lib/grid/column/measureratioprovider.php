@@ -1,3 +1,0 @@
-<?php
-$MESS["MEASURE_RATIO_COLUMN_PROVIDER_FIELD_RATIO"] = "Коэф.";
-$MESS["MEASURE_RATIO_COLUMN_PROVIDER_FIELD_TITLE_RATIO"] = "Өлшем бірлігінің коэффициенті";

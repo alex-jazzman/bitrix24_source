@@ -1,3 +1,0 @@
-<?php
-$MESS["IM_UI_ENTITY_SELECTOR_BOT_TAB"] = "Чат-боти";
-$MESS["IM_UI_ENTITY_SELECTOR_CHAT_TAB"] = "Чаты";

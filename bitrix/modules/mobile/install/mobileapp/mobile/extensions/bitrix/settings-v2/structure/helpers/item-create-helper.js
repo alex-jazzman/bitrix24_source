@@ -300,6 +300,7 @@ jn.define('settings-v2/structure/helpers/item-create-helper', (require, exports,
 			id,
 			bannerImageName,
 			text,
+			onLinkClick,
 			divider,
 		} = props;
 
@@ -309,6 +310,7 @@ jn.define('settings-v2/structure/helpers/item-create-helper', (require, exports,
 			id,
 			bannerImageName,
 			text,
+			onLinkClick,
 			divider,
 			type: SettingItemType.BANNER,
 		};

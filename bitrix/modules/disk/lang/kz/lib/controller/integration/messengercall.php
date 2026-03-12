@@ -1,3 +1,0 @@
-<?php
-$MESS["DISK_INTEGRATION_IM_CALL_CALL_DOCUMENT_CREATED"] = "Құжат жасалды";
-$MESS["DISK_INTEGRATION_IM_CALL_CALL_RESUME_CREATED_MSGVER_1"] = "Кездесу хаттамасы жасалды";

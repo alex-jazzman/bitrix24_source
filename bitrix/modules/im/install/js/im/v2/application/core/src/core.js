@@ -20,6 +20,7 @@ import {
 	CountersModel,
 	CopilotModel,
 	AiAssistantModel,
+	StickersModel,
 } from 'im.v2.model';
 import {
 	BasePullHandler,
@@ -31,6 +32,7 @@ import {
 	CounterPullHandler,
 	AnchorPullHandler,
 	SidebarPullHandler,
+	StickersPullHandler,
 } from 'im.v2.provider.pull';
 import { OpenLinesLaunchResources } from 'imopenlines.v2.lib.launch-resources';
 
@@ -231,6 +233,7 @@ class CoreApplication
 			.addModel(SidebarModel.create())
 			.addModel(MarketModel.create())
 			.addModel(CopilotModel.create())
+			.addModel(StickersModel.create())
 			.addModel(AiAssistantModel.create())
 		;
 
@@ -262,6 +265,7 @@ class CoreApplication
 		this.#pullClient.subscribe(new CounterPullHandler());
 		this.#pullClient.subscribe(new AnchorPullHandler());
 		this.#pullClient.subscribe(new SidebarPullHandler());
+		this.#pullClient.subscribe(new StickersPullHandler());
 
 		if (OpenLinesLaunchResources)
 		{

@@ -185,8 +185,21 @@ describe('ui.bbcode.parser/Parser', () => {
 		const parser = new BBCodeParser();
 		const ast = parser.parse(bbcode);
 
-		assert.ok(ast.getChildren().at(-1).getType() === BBCodeNode.TEXT_NODE);
-		assert.ok(ast.getChildren().at(-1).getContent() === 'D');
+		assert.equal(ast.getChildren().at(0).getContent(), 'A');
+		assert.equal(ast.getChildren().at(1).getName(), '#linebreak');
+		assert.equal(ast.getChildren().at(2).getContent(), 'B');
+		assert.equal(ast.getChildren().at(3).getName(), '#linebreak');
+		assert.equal(ast.getChildren().at(4).getName(), '#linebreak');
+
+		// Auto-closed code tag
+		const codeTag = ast.getChildren().at(5);
+		assert.equal(codeTag.getType(), BBCodeNode.ELEMENT_NODE);
+		assert.equal(codeTag.getName(), 'code');
+
+		assert.equal(codeTag.getChildren().at(0).getName(), '#linebreak');
+		assert.equal(codeTag.getChildren().at(1).getContent(), 'C');
+		assert.equal(codeTag.getChildren().at(2).getName(), '#linebreak');
+		assert.equal(codeTag.getChildren().at(3).getContent(), 'D');
 	});
 
 	it('should have node types', () => {
@@ -702,9 +715,14 @@ describe('ui.bbcode.parser/Parser', () => {
 		const parser = new BBCodeParser();
 		const ast = parser.parse(bbcode);
 
-		assert.ok(ast.getChildren().at(0).getChildren().at(0).getContent() === '[b]');
-		assert.ok(ast.getChildren().at(0).getChildren().at(1).getContent() === 'test');
-		assert.ok(ast.getChildren().at(0).getChildren().at(2).getContent() === '[b]');
+		assert.deepEqual(
+			ast.toString(),
+			stripIndent(`
+				[p]
+				[b]test[b][/b][/b]
+				[/p]
+			`),
+		);
 	});
 
 	it('should work with invalid bbcode #2', () => {
@@ -729,9 +747,9 @@ describe('ui.bbcode.parser/Parser', () => {
 		const parser = new BBCodeParser();
 		const ast = parser.parse(bbcode);
 
-		assert.ok(ast.getChildren().at(0).toString({ encode: false }) === '[code]');
-		assert.ok(ast.getChildren().at(1).toString({ encode: false }) === 'test');
-		assert.ok(ast.getChildren().at(2).toString({ encode: false }) === '[/quote]');
+		assert.ok(ast.getChildren().at(0).getName() === 'code');
+		assert.ok(ast.getChildren().at(0).getChildren().at(0).getContent() === 'test');
+		assert.ok(ast.getChildren().at(0).getChildren().at(1).getContent() === '[/quote]');
 	});
 
 	it('should work with invalid bbcode #4', () => {
@@ -740,8 +758,8 @@ describe('ui.bbcode.parser/Parser', () => {
 		const parser = new BBCodeParser();
 		const ast = parser.parse(bbcode);
 
-		assert.ok(ast.getChildren().at(0).toString({ encode: false }) === '[p]');
-		assert.ok(ast.getChildren().at(1).toString({ encode: false }) === '[b]');
+		assert.equal(ast.getChildren().at(0).getName(), 'p');
+		assert.equal(ast.getChildren().at(0).getChildren().at(0).getName(), 'b');
 	});
 
 	it('should works with code in code', () => {
@@ -909,6 +927,101 @@ describe('ui.bbcode.parser/Parser', () => {
 			assert.deepEqual(
 				ast.toString(),
 				bbcode,
+			);
+		});
+
+		it('Bug with [*] outside list', () => {
+			const bbcode = stripIndent(`
+				text
+				[*]list item
+				other text
+				[table]
+					[tr][td]aaa[/td][/tr]
+					[tr][td]bbb[/td][/tr]
+				[/table]
+			`);
+
+			const parser = new BBCodeParser();
+			const ast = parser.parse(bbcode);
+
+			assert.deepEqual(
+				ast.toString(),
+				stripIndent(`
+					text
+					&#91;*&#93;list item
+					other text
+					[table]
+					[tr][td]aaa[/td][/tr][tr][td]bbb[/td][/tr]
+					[/table]
+				`),
+			);
+		});
+
+		it('Bug with [*] outside list #2', () => {
+			const bbcode = stripIndent(`
+				text
+				other text
+				[table]
+					[tr][td]aaa[*]list item[/td][/tr]
+					[tr][td]bbb[/td][/tr]
+				[/table]
+			`);
+
+			const parser = new BBCodeParser();
+			const ast = parser.parse(bbcode);
+
+			assert.deepEqual(
+				ast.toString(),
+				stripIndent(`
+					text
+					other text
+					[table]
+					[tr][td]aaa&#91;*&#93;list item[/td][/tr][tr][td]bbb[/td][/tr]
+					[/table]
+				`),
+			);
+		});
+
+		it('Bug with unclosed and unopened tags', () => {
+			const bbcode = stripIndent(`
+				[p]text1[b][i]bold_italic[/p]
+				[p]aaa[b]bold[/b]bbb[/p]
+				[p]before_bold[/b]text2[/p]
+			`);
+
+			const parser = new BBCodeParser();
+			const ast = parser.parse(bbcode);
+
+			assert.deepEqual(
+				ast.toString(),
+				stripIndent(`
+					[p]
+					text1[b][i]bold_italic[/i][/b]
+					[/p]
+					[p]
+					aaa[b]bold[/b]bbb
+					[/p]
+					[p]
+					before_bold&#91;/b&#93;text2
+					[/p]
+				`),
+			);
+		});
+
+		it('should autoclose unclosed tag', () => {
+			const bbcode = 'aaa[b]vvvvv[p]pppppp[/p]rrrr';
+			const parser = new BBCodeParser();
+			const ast = parser.parse(bbcode);
+
+			assert.deepEqual(
+				ast.toString(),
+				stripIndent(`
+					aaa[b]vvvvv[/b]
+					[p]
+					pppppp
+					[/p]
+					rrrr
+				`),
 			);
 		});
 	});

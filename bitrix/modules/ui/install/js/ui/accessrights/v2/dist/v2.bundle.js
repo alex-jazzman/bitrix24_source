@@ -1086,6 +1086,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	          isModified: state.collection.get(userGroupId).isNew
 	        };
 	      },
+	      getAccessRightValue: (state, getters) => (userGroup, sectionCode, valueId) => {
+	        const value = userGroup.accessRights.get(valueId);
+	        return value != null ? value : getters.getEmptyAccessRightValue(userGroup.id, sectionCode, valueId);
+	      },
 	      defaultAccessRightValues: (state, getters, rootState) => {
 	        const result = new Map();
 	        for (const section of rootState.accessRights.collection.values()) {
@@ -1816,6 +1820,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	  return selectedVariables;
 	}
+	function isUseGroupHeadValuesInHintByVariables(selectedVariables) {
+	  return [...selectedVariables].some(([, value]) => value.isUseGroupHeadValuesInHint === true);
+	}
 	function getMultipleSelectedVariablesTitle(selectedVariables) {
 	  const lastVariable = [...selectedVariables.values()].pop();
 	  if (selectedVariables.size === 1) {
@@ -1833,8 +1840,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	  return title;
 	}
-	function getMultipleSelectedVariablesHintHtml(selectedVariables, hintTitle, allVariables) {
-	  if (selectedVariables.size < 2) {
+	function getMultipleSelectedVariablesHintHtml(selectedVariables, hintTitle, allVariables, isInherit = false) {
+	  if (!isInherit && selectedVariables.size < 2) {
 	    return '';
 	  }
 	  let listItems = '';
@@ -2697,7 +2704,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    conflictsWith: main_core.Type.isArray(externalVariable.conflictsWith) ? new Set(externalVariable.conflictsWith.map(x => String(x))) : null,
 	    requires: main_core.Type.isArray(externalVariable.requires) ? new Set(externalVariable.requires.map(x => String(x))) : null,
 	    secondary: main_core.Type.isBoolean(externalVariable.secondary) ? externalVariable.secondary : null,
-	    hint: main_core.Type.isStringFilled(externalVariable.hint) ? externalVariable.hint : null
+	    hint: main_core.Type.isStringFilled(externalVariable.hint) ? externalVariable.hint : null,
+	    isUseGroupHeadValuesInHint: main_core.Type.isBoolean(externalVariable.isUseGroupHeadValuesInHint) ? externalVariable.isUseGroupHeadValuesInHint : false
 	  };
 	}
 
@@ -2824,6 +2832,14 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	          }
 	        }
 	        return false;
+	      },
+	      getAccessRightItemById: state => (sectionCode, rightId) => {
+	        var _state$collection$get6;
+	        const item = (_state$collection$get6 = state.collection.get(sectionCode)) == null ? void 0 : _state$collection$get6.rights.get(rightId);
+	        if (!item) {
+	          return null;
+	        }
+	        return item;
 	      }
 	    };
 	  }
@@ -4220,8 +4236,20 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  },
 	  inject: ['section', 'userGroup', 'right'],
 	  computed: {
+	    parentRight() {
+	      if (!this.right.group) {
+	        return null;
+	      }
+	      return this.$store.getters['accessRights/getAccessRightItemById'](this.section.sectionCode, this.right.group);
+	    },
+	    parentValue() {
+	      return this.$store.getters['userGroups/getAccessRightValue'](this.userGroup, this.section.sectionCode, this.parentRight.id);
+	    },
 	    selectedVariables() {
 	      return getSelectedVariables(this.right.variables, this.value.values, false);
+	    },
+	    parentSelectedVariables() {
+	      return getSelectedVariables(this.parentRight.variables, this.parentValue.values, false);
 	    },
 	    currentAlias() {
 	      return this.$store.getters['accessRights/getSelectedVariablesAlias'](this.section.sectionCode, this.value.id, this.value.values);
@@ -4235,7 +4263,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      }
 	      return getMultipleSelectedVariablesTitle(this.selectedVariables);
 	    },
+	    isUseGroupHeadValuesInHint() {
+	      return isUseGroupHeadValuesInHintByVariables(this.selectedVariables);
+	    },
 	    hintHtml() {
+	      if (this.right.group && this.isUseGroupHeadValuesInHint) {
+	        return getMultipleSelectedVariablesHintHtml(this.parentSelectedVariables, this.title, this.parentRight.variables, true);
+	      }
 	      return getMultipleSelectedVariablesHintHtml(this.selectedVariables, this.hintTitle, this.right.variables);
 	    },
 	    hintTitle() {
@@ -4320,6 +4354,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      return getMultipleSelectedVariablesTitle(this.selectedVariables);
 	    },
 	    hintHtml() {
+	      if (this.right.group && this.isUseGroupHeadValuesInHint) {
+	        return getMultipleSelectedVariablesHintHtml(this.parentSelectedVariables, this.title, this.parentRight.variables, true);
+	      }
 	      return getMultipleSelectedVariablesHintHtml(this.selectedVariables, this.hintTitle, this.right.variables);
 	    },
 	    hintTitle() {
@@ -4327,6 +4364,21 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        return this.right.hintTitle;
 	      }
 	      return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SELECTED_ITEMS_TITLE');
+	    },
+	    parentRight() {
+	      if (!this.right.group) {
+	        return null;
+	      }
+	      return this.$store.getters['accessRights/getAccessRightItemById'](this.section.sectionCode, this.right.group);
+	    },
+	    parentValue() {
+	      return this.$store.getters['userGroups/getAccessRightValue'](this.userGroup, this.section.sectionCode, this.parentRight.id);
+	    },
+	    parentSelectedVariables() {
+	      return getSelectedVariables(this.parentRight.variables, this.parentValue.values, false);
+	    },
+	    isUseGroupHeadValuesInHint() {
+	      return isUseGroupHeadValuesInHintByVariables(this.selectedVariables);
 	    }
 	  },
 	  methods: {
@@ -4417,6 +4469,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	const POPUP_ID$1 = 'ui-access-rights-v2-column-item-popup-variables';
 	const Variables$2 = {
 	  name: 'Variables',
+	  components: {
+	    SelectedHint
+	  },
 	  props: {
 	    // value for selector is id of a selected variable
 	    value: {
@@ -4441,15 +4496,44 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    currentAlias() {
 	      return this.$store.getters['accessRights/getSelectedVariablesAlias'](this.section.sectionCode, this.value.id, this.value.values);
 	    },
-	    currentVariableTitle() {
+	    currentVariable() {
 	      if (main_core.Type.isString(this.currentAlias)) {
 	        return this.currentAlias;
 	      }
-	      const variable = this.right.variables.get(this.currentVariableId);
+	      return this.right.variables.get(this.currentVariableId);
+	    },
+	    currentVariableTitle() {
+	      const variable = this.currentVariable;
 	      if (!variable) {
 	        return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ADD');
 	      }
 	      return variable.title;
+	    },
+	    hintHtml() {
+	      if (this.right.group && this.isUseGroupHeadValuesInHint) {
+	        return getMultipleSelectedVariablesHintHtml(this.parentSelectedVariables, this.currentVariableTitle, this.parentRight.variables, true);
+	      }
+	      return '';
+	    },
+	    parentRight() {
+	      if (!this.right.group) {
+	        return null;
+	      }
+	      return this.$store.getters['accessRights/getAccessRightItemById'](this.section.sectionCode, this.right.group);
+	    },
+	    parentValue() {
+	      return this.$store.getters['userGroups/getAccessRightValue'](this.userGroup, this.section.sectionCode, this.parentRight.id);
+	    },
+	    parentSelectedVariables() {
+	      return getSelectedVariables(this.parentRight.variables, this.parentValue.values, false);
+	    },
+	    isUseGroupHeadValuesInHint() {
+	      const currentVariable = this.currentVariable;
+	      if (!currentVariable) {
+	        return false;
+	      }
+	      const variablesCollection = new Map([[currentVariable.id, currentVariable]]);
+	      return isUseGroupHeadValuesInHintByVariables(variablesCollection);
 	    }
 	  },
 	  methods: {
@@ -4486,10 +4570,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  template: `
 		<div
 			class='ui-access-rights-v2-column-item-text-link ui-access-rights-v2-text-ellipsis'
-			:title="currentVariableTitle"
+			:title="hintHtml ? '' : currentVariableTitle"
 			@click="showSelector"
 		>
-			{{ currentVariableTitle }}
+			<SelectedHint v-if="hintHtml" :html="hintHtml">{{currentVariableTitle}}</SelectedHint>
+			<template v-else>{{ currentVariableTitle }}</template>
 		</div>
 	`
 	};

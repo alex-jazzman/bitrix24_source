@@ -437,6 +437,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 		{
 			void UserProfile.open({
 				ownerId: itemId,
+				analyticsSection: 'im_messenger_recent_item_action',
 			});
 		}
 

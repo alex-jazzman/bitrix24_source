@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\Public\Entity\Document\Workflow;
+use Bitrix\Main\Localization\Loc;
 
 /**
  * @var PropertiesDialog $dialog
@@ -96,6 +97,13 @@ use Bitrix\Bizproc\Public\Entity\Document\Workflow;
 	</td>
 </tr>
 <?php endif ?>
+
+<tr>
+	<td align="right" width="40%"><?= htmlspecialcharsbx(Loc::getMessage("CPAD_DP_SORT")) ?></td>
+	<td width="60%">
+		<?= CBPDocument::ShowParameterField('int', 'Sort', $arCurrentValues["Sort"], ['maxlength' => CBPDelayActivity::DEFAULT_SORT]) ?>
+	</td>
+</tr>
 <script>
 	SetDelayMode(<?= (empty($arCurrentValues['delay_date'])) ? 'true' : 'false' ?>);
 </script>

@@ -1,9 +1,0 @@
-<?
-$MESS["TASKS_GRID_ROW_CONTENT_STATUS_1"] = "Нове";
-$MESS["TASKS_GRID_ROW_CONTENT_STATUS_2"] = "Чекає виконання";
-$MESS["TASKS_GRID_ROW_CONTENT_STATUS_3"] = "Виконується";
-$MESS["TASKS_GRID_ROW_CONTENT_STATUS_4"] = "Чекає контролю";
-$MESS["TASKS_GRID_ROW_CONTENT_STATUS_5"] = "Завершене";
-$MESS["TASKS_GRID_ROW_CONTENT_STATUS_6"] = "Відкладене";
-$MESS["TASKS_GRID_ROW_CONTENT_STATUS_7"] = "Відхилене";
-?>

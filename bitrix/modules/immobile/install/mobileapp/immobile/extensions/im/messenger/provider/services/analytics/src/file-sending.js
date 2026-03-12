@@ -3,10 +3,10 @@
  */
 jn.define('im/messenger/provider/services/analytics/file-sending', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
-	const { Analytics, ComponentCode, FileType } = require('im/messenger/const');
+	const { Analytics, NavigationTabId } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	/**
 	 * @class FileSending
@@ -16,6 +16,20 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 		constructor()
 		{
 			this.store = serviceLocator.get('core').getStore();
+			this.logger = getLoggerWithContext('analytics-service', this);
+		}
+
+		get #recentManager()
+		{
+			const recentManager = serviceLocator.get('recent-manager');
+			if (recentManager)
+			{
+				return recentManager;
+			}
+
+			this.logger.error('recentManager is not initialized.');
+
+			return null;
 		}
 
 		/**
@@ -58,7 +72,7 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 			}
 			catch (error)
 			{
-				console.error(`${this.constructor.name}.sendToastShownGalleryLimitExceeded.catch:`, error);
+				this.logger.error(`${this.constructor.name}.sendToastShownGalleryLimitExceeded.catch:`, error);
 			}
 		}
 
@@ -103,7 +117,7 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 			}
 			catch (error)
 			{
-				console.error(`${this.constructor.name}.sendToastShownFilesMoreThenHundred.catch:`, error);
+				this.logger.error(`${this.constructor.name}.sendToastShownFilesMoreThenHundred.catch:`, error);
 			}
 		}
 
@@ -131,10 +145,10 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 		 */
 		#getChatSection()
 		{
-			switch (MessengerParams.getComponentCode())
+			switch (this.#recentManager?.getActiveRecentId())
 			{
-				case ComponentCode.imChannelMessenger: return Analytics.Section.channelTab;
-				case ComponentCode.imCollabMessenger: return Analytics.Section.collabTab;
+				case NavigationTabId.channel: return Analytics.Section.channelTab;
+				case NavigationTabId.collab: return Analytics.Section.collabTab;
 				default: return Analytics.Section.chatTab;
 			}
 		}

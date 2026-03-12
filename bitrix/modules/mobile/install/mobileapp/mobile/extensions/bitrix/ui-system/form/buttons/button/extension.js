@@ -81,9 +81,21 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 			return this.design.getStyle();
 		}
 
+		get testId()
+		{
+			const { testId } = this.props;
+
+			if (this.#isDisabled())
+			{
+				return `${testId}-disabled`;
+			}
+
+			return testId;
+		}
+
 		render()
 		{
-			const { testId, forwardRef, style = {}, onLayout } = this.props;
+			const { forwardRef, style = {}, onLayout } = this.props;
 
 			if (!this.shouldRenderButton())
 			{
@@ -102,7 +114,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 				mainProps,
 				View(
 					{
-						testId,
+						testId: this.testId,
 						ref: forwardRef,
 						style: this.getButtonStyle(),
 						onClick: this.#handleOnClick,
@@ -253,7 +265,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 			}
 
 			return SpinnerLoader({
-				size: this.size.getIconSize(),
+				size: this.size.getLoaderSize(),
 				design: this.#getLoaderDesign(),
 				style: {
 					position: 'absolute',

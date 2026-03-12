@@ -87,12 +87,7 @@ export class RestoreNetworkPassword
 	{
 		return Tag.render`
 			<div class="b24network-account-popup-inner">
-				<div class="b24network-account-popup-title">
-					${Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_TITLE_SUCCESS')}
-				</div>
-				<div class="b24network-account-popup-text">${Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_EMAIL_1')}</div>
-				<div class="b24network-account-popup-text">${Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_EMAIL_2')}</div>
-				<div class="b24network-account-popup-text">${Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_EMAIL_3')}</div>
+				<div class="b24network-account-popup-text">${Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_EMAIL_MSGVER_1')}</div>
 			</div>
 		`;
 	}
@@ -101,12 +96,7 @@ export class RestoreNetworkPassword
 	{
 		return Tag.render`
 			<div class="b24network-account-popup-inner">
-				<div class="b24network-account-popup-title">
-					${Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_TITLE_SUCCESS')}
-				</div>
-				<div class="b24network-account-popup-text">${Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_PHONE_1')}</div>
-				<div class="b24network-account-popup-text">${Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_PHONE_2')}</div>
-				<div class="b24network-account-popup-text">${Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_PHONE_3')}</div>
+				<div class="b24network-account-popup-text">${Loc.getMessage('INTRANET_USER_SECURITY_RESTORE_PASSWORD_POPUP_DESCRIPTION_BY_PHONE_MSGVER_1')}</div>
 			</div>
 		`;
 	}

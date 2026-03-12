@@ -1,0 +1,86 @@
+:root{
+	--call-talking-popup__shadow-color: rgba(0, 0, 0, 0.07);
+	--call-talking-popup__text-letter-spacing: 0;
+	--call-talking-popup__text-line-height: 14px;
+	--call-talking-popup__avatar-fallback-background-color: #10B769;
+	--call-talking-popup__avatar-text-letter-spacing: var(--call-view__letter-spacing);
+	--call-talking-popup__avatar-text-line-height: var(--call-view__line-height);
+}
+
+.bx-call-view-popup-talking {
+	top: 59px !important;
+	left: 50vw !important;
+	transform: translate(-50%, 0);
+	box-shadow: 0 8px 18.5px 0 var(--call-talking-popup__shadow-color);
+	transition: left 200ms linear, opacity 200ms linear;
+}
+
+body:has(.bx-im-component-call-error-wrap) .bx-call-view-popup-talking,
+body:has(.bx-messenger-call-overlay-folded) .bx-call-view-popup-talking {
+	display: none !important;
+}
+
+body:has(.bx-im-component-call-right-full) .bx-call-view-popup-talking,
+body:has(.bx-im-component-call-right-top) .bx-call-view-popup-talking,
+body:has(.bx-im-component-call-right-bottom) .bx-call-view-popup-talking {
+	left: calc(50vw - 200px) !important;
+}
+
+.bx-call-view-popup-talking.opening {
+	opacity: 0;
+}
+
+.bx-call-view-popup-talking.closing {
+	transition: left 200ms linear, opacity 500ms linear;
+	opacity: 0;
+}
+
+.bx-call-view-popup-talking-body {
+	height: 40px;
+	padding: 12px 18px 12px 14px;
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.bx-call-view-popup-talking-avatar {
+	width: 22px;
+	height: 22px;
+	background-size: 22px 22px;
+	background-repeat: no-repeat;
+	background-position: center;
+	box-sizing: border-box;
+	border-radius: 100px;
+}
+
+.bx-call-view-popup-talking-avatar.no-photo {
+	background-color: var(--call-talking-popup__avatar-fallback-background-color);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bx-call-view-popup-talking-avatar.no-photo .bx-call-view-popup-talking-avatar-text {
+	font-weight: var(--ui-font-weight-medium, 500);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-size: var(--ui-font-size-4xs);
+	font-style: normal;
+	letter-spacing: var(--call-talking-popup__avatar-text-letter-spacing);
+	line-height: var(--call-talking-popup__avatar-text-line-height);
+}
+
+.bx-call-view-popup-talking-text {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	color: var(--ui-color-palette-white-base);
+	text-overflow: ellipsis;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-size: var(--ui-font-size-xs);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal, 400);
+	letter-spacing: var(--call-talking-popup__text-letter-spacing);
+	line-height: var(--call-talking-popup__text-line-height);
+}

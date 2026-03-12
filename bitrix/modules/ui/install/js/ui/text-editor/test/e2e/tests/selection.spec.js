@@ -54,7 +54,7 @@ test.describe.parallel('Selection', () => {
 		await moveToLineBeginning(page);
 		await page.keyboard.up('Shift');
 
-		await clickToolbarButton(page, 'enclose-text-in-code-tag');
+		await clickToolbarButton(page, 'o-developer-resources');
 		await assertHTML(
 			page,
 			paragraph('Line1') + code(word('Line2')) + paragraph(),

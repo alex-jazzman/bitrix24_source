@@ -30,6 +30,7 @@ return [
 		'ui-system/blocks/link',
 		'elements-stack',
 		'ui-system/blocks/avatar',
+		'ui-system/typography/bbcodetext',
 	],
 	'bundle' => [
 		'./src/button',

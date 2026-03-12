@@ -149,6 +149,10 @@
 
 
 /* Chips */
+.ui-system-input-chips {
+	display: contents;
+}
+
 .ui-system-input-chip {
 	align-self: flex-start;
 	margin-top: var(--padding-vertical);
@@ -157,7 +161,6 @@
 .ui-system-input-chip:last-of-type {
 	margin: var(--padding-vertical) var(--padding-vertical) var(--padding-vertical) 0;
 }
-
 
 /* Label */
 .ui-system-input-label {
@@ -202,6 +205,7 @@
 	line-height: var(--ui-font-line-height-sm);
 	text-align: var(--align);
 	cursor: text;
+	background: var(--background);
 }
 
 .ui-system-input-value::placeholder {

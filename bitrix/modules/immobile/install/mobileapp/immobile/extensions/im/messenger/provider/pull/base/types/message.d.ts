@@ -148,7 +148,7 @@ type MessagePullHandlerUpdateDialogParams = {
 	messagesAutoDeleteConfigs: Array<messagesAutoDeleteConfigs>
 }
 
-type messagesAutoDeleteConfigs = {
+export type messagesAutoDeleteConfigs = {
 	chatId: number,
 	delay: number,
 }
@@ -195,6 +195,13 @@ declare type MessagePullHandlerAdditionalEntities = {
 	messages: Array<RawMessage>,
 	users: Array<RawUser>,
 	reactions: any,
+}
+
+declare type MessagePullHandleAutoTaskStatus = {
+	status: string,
+	messageId: number,
+	chatId: number,
+	type: string,
 }
 
 declare type MessageAddParams = {

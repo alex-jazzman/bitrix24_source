@@ -23,4 +23,3 @@ $MESS["RATING_TYPE_LIKE_TEXT"] = "Мне нравится (текстовый)";
 $MESS["RATING_TYPE_LIKE_GRAPHIC"] = "Мне нравится (графический)";
 $MESS["BPC_IMAGE_MAX_WIDTH"] = "Максимальная ширина изображения";
 $MESS["BPC_IMAGE_MAX_HEIGHT"] = "Максимальная высота изображения";
-?>

@@ -1,8 +1,7 @@
 .bx-im-search-input__scope {
-	--im-search-input__font_primary: var(--im-font-size-md)/var(--im-font-line-height-reset) var(--im-font-family-system);
-	--im-search-input__font-color_primary: var(--im-color-palette-gray-90);
-	--im-search-input__font_placeholder: var(--im-font-size-md)/var(--im-font-line-height-reset) var(--im-messenger__font_helvetica);
-	--im-search-input__font-color_placeholder: var(--im-color-palette-gray-40);
+	--im-search-input__font_size: var(--ui-font-size-md);
+	--im-search-input__font_placeholder: var(--ui-font-size-md)/var(--ui-font-line-height-reset) var(--im-messenger__font_helvetica);
+	--im-search-input__font-color_placeholder: var(--ui-color-palette-gray-40);
 	--im-search-input__border-color_active-input: #00ace3;
 	--im-search-input__background-color_input: rgb(82 92 105 / 5%);
 	--im-search-input__background-color_input-active: #fff;
@@ -41,6 +40,7 @@
 	border: none;
 	outline-color: transparent;
 	background-color: transparent;
+	font-size: var(--im-search-input__font_size);
 }
 
 .bx-im-search-input__element::placeholder {

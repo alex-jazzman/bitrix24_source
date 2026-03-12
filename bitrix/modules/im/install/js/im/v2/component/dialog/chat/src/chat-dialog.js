@@ -92,6 +92,7 @@ export const ChatDialog = {
 			isJumpingToAnchor: false,
 			messagesToRead: new Set(),
 			containerHeight: 0,
+			quoteButtonPosition: {},
 		};
 	},
 	computed:
@@ -682,8 +683,16 @@ export const ChatDialog = {
 			{
 				return;
 			}
+
 			this.showQuoteButton = true;
+
+			this.quoteButtonPosition = {
+				left: $event.pageX,
+				top: $event.pageY,
+			};
+
 			await this.$nextTick();
+
 			this.$refs.quoteButton.onMessageMouseUp(message, $event);
 		},
 		async handleSecondScrollButtonClick()
@@ -938,15 +947,13 @@ export const ChatDialog = {
 				:dialogId="dialogId"
 				@close="onCloseForwardPopup"
 			/>
-			<Transition name="fade-up">
-				<QuoteButton
-					v-if="showQuoteButton"
-					:dialogId="dialogId"
-					@close="showQuoteButton = false" 
-					class="bx-im-message-base__quote-button"
-					ref="quoteButton"
-				/>
-			</Transition>
+			<QuoteButton
+				v-if="showQuoteButton"
+				:targetPosition="quoteButtonPosition"
+				:dialogId="dialogId"
+				@close="showQuoteButton = false"
+				ref="quoteButton"
+			/>
 		</div>
 	`,
 };

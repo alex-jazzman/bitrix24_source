@@ -8,6 +8,7 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 	const { Type } = require('type');
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
 	const { RefRegistry } = require('more-menu/ref-registry');
+	const { MoreMenuAnalytics, AHA_EVENT_KEY } = require('more-menu/analytics');
 
 	const TYPE = {
 		INVITATION: 'invitation',
@@ -40,6 +41,10 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 			buttonText: Loc.getMessage('MOBILE_MENU_AHA_MOMENT_MENU_SETTINGS_BUTTON'),
 			imageName: 'invite.png',
 			testId: 'more-menu-aha-moment-call-list',
+			analyticsEvents: {
+				popup_show: AHA_EVENT_KEY.CALL_LIST_POPUP_SHOW,
+				click_set_menu: AHA_EVENT_KEY.CALL_LIST_CLICK_SET_MENU,
+			},
 		},
 		[TYPE.MAIL_LIST]: {
 			refKey: 'mail_list_menu_settings_button',
@@ -228,7 +233,7 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 				return null;
 			}
 			const def = TYPE_CONFIG[type];
-			const { refKey, buttonText, imageName, testId } = def;
+			const { refKey, buttonText, imageName, testId, analyticsEvents } = def;
 
 			return {
 				refKey,
@@ -242,12 +247,23 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 				}),
 				buttonText,
 				onClick: () => {
+					if (analyticsEvents && analyticsEvents.click_set_menu)
+					{
+						MoreMenuAnalytics.sendAhaMomentEvent(analyticsEvents.click_set_menu);
+					}
+
 					if (Type.isStringFilled(eventName))
 					{
 						Tourist.remember(eventName);
 					}
 					const { inAppUrl } = require('in-app-url');
 					inAppUrl.open('/settings/tab.presets');
+				},
+				onShow: () => {
+					if (analyticsEvents && analyticsEvents.popup_show)
+					{
+						MoreMenuAnalytics.sendAhaMomentEvent(analyticsEvents.popup_show);
+					}
 				},
 				onHide: () => {
 					if (Type.isStringFilled(eventName))

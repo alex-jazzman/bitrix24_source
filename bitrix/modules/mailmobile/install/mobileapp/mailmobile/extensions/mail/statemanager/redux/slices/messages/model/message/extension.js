@@ -23,6 +23,7 @@ jn.define('mail/statemanager/redux/slices/messages/model/message', (require, exp
 				isSelected: sourceServerMessage.isSelected,
 				crmBindId: sourceServerMessage.crmBindId,
 				taskBindId: sourceServerMessage.taskBindId,
+				eventBindId: sourceServerMessage.eventBindId,
 				crmBindTypeId: sourceServerMessage.crmBindTypeId,
 				chatBindId: sourceServerMessage.chatBindId,
 				subject: sourceServerMessage.subject,

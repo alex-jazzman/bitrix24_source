@@ -6,4 +6,5 @@ export type State = {
 	matchesWorkTime: boolean,
 	defaultRequireResult: boolean,
 	defaultDeadline: DeadlineUserOption,
+	allowsTimeTracking: boolean,
 };

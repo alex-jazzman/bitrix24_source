@@ -10,7 +10,6 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ColorUtils } = require('im/messenger/lib/utils');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
-	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class CommentInfo
@@ -60,22 +59,32 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 				};
 			}
 
+			const unreadCounter = this.#getUnreadCounter();
+
 			return {
-				title: this.#getTitle(),
+				title: this.#getTitle(unreadCounter),
 				totalCounter: this.#getTotalCounter(),
-				unreadCounter: this.#getUnreadCounter(),
+				unreadCounter,
 				users: this.#getUsers(),
 				showLoader: this.#commentInfo.showLoader,
 			};
 		}
 
-		#getTitle()
+		/**
+		 * @param {null | {color: string, value: string}} unreadCounter
+		 */
+		#getTitle(unreadCounter)
 		{
 			const totalCounter = this.#getTotalCounter();
 
-			if (totalCounter === 0)
+			if (totalCounter === 0 && Type.isNil(unreadCounter))
 			{
 				return this.#getDefaultTitle();
+			}
+
+			if (totalCounter === 0 && unreadCounter)
+			{
+				return this.#getEmptyWithCounterTitle();
 			}
 
 			return Loc.getMessagePlural('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT_COUNT', totalCounter, {
@@ -83,9 +92,20 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 			});
 		}
 
+		/**
+		 * @return {string}
+		 */
 		#getDefaultTitle()
 		{
 			return Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT');
+		}
+
+		/**
+		 * @return {string}
+		 */
+		#getEmptyWithCounterTitle()
+		{
+			return Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT_HAS_COMMENTS');
 		}
 
 		/**
@@ -94,21 +114,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 		#getUnreadCounter()
 		{
 			const store = serviceLocator.get('core').getStore();
-			let unreadCounter = 0;
-
-			if (Feature.isMessengerV2Enabled)
-			{
-				unreadCounter = store.getters['counterModel/getCounterByChatId'](this.#commentInfo.chatId);
-			}
-			else
-			{
-				unreadCounter = store
-					.getters['commentModel/getCommentCounter']?.({
-						channelId: this.#channelId,
-						commentChatId: this.#commentInfo.chatId,
-					});
-			}
-
+			const unreadCounter = store.getters['counterModel/getCounterByChatId'](this.#commentInfo.chatId);
 			if (unreadCounter === 0)
 			{
 				return null;

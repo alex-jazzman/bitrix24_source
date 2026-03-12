@@ -51,7 +51,7 @@ jn.define('im/messenger/provider/rest/message', (require, exports, module) => {
 			if (Type.isPlainObject(options.stickerParams))
 			{
 				messageAddParams.fields.stickerParams = {
-					stickerId: options.stickerParams.id ?? options.stickerParams.stickerId,
+					id: options.stickerParams.id ?? options.stickerParams.stickerId,
 					packId: options.stickerParams.packId,
 					packType: options.stickerParams.packType,
 				};

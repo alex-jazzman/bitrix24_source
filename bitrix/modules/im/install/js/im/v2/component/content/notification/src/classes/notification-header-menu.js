@@ -1,14 +1,19 @@
 import { Loc } from 'main.core';
 import { Menu, MenuItemDesign, type MenuItemOptions } from 'ui.system.menu';
+import { Messenger } from 'im.public';
+import { SettingsSection } from 'im.v2.const';
+import { Core } from 'im.v2.application.core';
 import { NotificationReadService } from './notification-read-service';
 
 export class NotificationHeaderMenu
 {
 	menu: Menu;
+	store: Object;
 
 	constructor()
 	{
 		this.notificationReadService = new NotificationReadService();
+		this.store = Core.getStore();
 	}
 
 	openMenu(isReadAllAvailable, bindElement): void
@@ -29,20 +34,32 @@ export class NotificationHeaderMenu
 		this.menu.show(bindElement);
 	}
 
-	getHeaderMenuItems(isReadAllAvailable): MenuItemOptions[]
+	getHeaderMenuItems(isReadAllAvailable: boolean): MenuItemOptions[]
 	{
 		return [
+			this.getOptionsItem(),
 			this.getReadAllItem(isReadAllAvailable),
 		];
 	}
 
-	getReadAllItem(isReadAllAvailable): MenuItemOptions
+	getReadAllItem(isReadAllAvailable): ?MenuItemOptions
 	{
 		return {
 			title: Loc.getMessage('IM_NOTIFICATIONS_READ_ALL_BUTTON'),
 			design: isReadAllAvailable ? MenuItemDesign.Default : MenuItemDesign.Disabled,
 			onClick: () => {
 				this.notificationReadService.readAll();
+				this.menu.close();
+			},
+		};
+	}
+
+	getOptionsItem(): MenuItemOptions
+	{
+		return {
+			title: Loc.getMessage('IM_NOTIFICATIONS_OPTIONS_BUTTON'),
+			onClick: () => {
+				void Messenger.openSettings({ onlyPanel: SettingsSection.notification });
 				this.menu.close();
 			},
 		};

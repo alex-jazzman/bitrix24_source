@@ -92,6 +92,7 @@ new BX.PhoneAuth({
 <form method="post" action="<?=$arResult["AUTH_URL"]?>" name="bform" enctype="multipart/form-data">
 	<input type="hidden" name="AUTH_FORM" value="Y" />
 	<input type="hidden" name="TYPE" value="REGISTRATION" />
+	<?= bitrix_sessid_post(); ?>
 
 <table class="data-table bx-registration-table">
 	<thead>

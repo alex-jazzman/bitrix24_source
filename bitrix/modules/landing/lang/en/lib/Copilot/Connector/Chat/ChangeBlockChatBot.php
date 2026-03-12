@@ -1,6 +1,6 @@
 <?php
 $MESS["LANDING_CHATBOT_BLOCKS_ERROR_B24"] = "Something's gone wrong. Please try again later.";
-$MESS["LANDING_CHATBOT_BLOCKS_ERROR_RESTRICTED_REQUEST"] = "CoPilot cannot process this request. Try a different topic.";
+$MESS["LANDING_CHATBOT_BLOCKS_ERROR_RESTRICTED_REQUEST_MSGVER_1"] = "#COPILOT_NAME# cannot process this request. Try a different topic.";
 $MESS["LANDING_CHATBOT_BLOCKS_ERROR_VENDOR"] = "Something's gone wrong. Please try again later.";
 $MESS["LANDING_CHATBOT_BLOCKS_GENERATION_FINISH"] = "Ready! Is everything as you intended?";
 $MESS["LANDING_CHATBOT_BLOCKS_GENERATION_RESTART"] = "Working on it.";

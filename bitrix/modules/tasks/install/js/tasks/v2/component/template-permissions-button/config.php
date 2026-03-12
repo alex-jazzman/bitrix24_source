@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'tasks.v2.lib.show-limit',
+		'tasks.v2.component.elements.hover-pill',
 		'ui.vue3.components.popup',
 		'ui.system.typography.vue',
 		'tasks.v2.provider.service.task-service',

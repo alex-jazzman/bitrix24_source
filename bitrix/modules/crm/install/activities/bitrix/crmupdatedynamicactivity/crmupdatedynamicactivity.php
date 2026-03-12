@@ -217,24 +217,29 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				$currentValues['DynamicFilterFields'] = $extractingFilterResult->getData();
 			}
 
-			$extractingFieldsResult = parent::extractPropertiesValues(
-				$dialog,
-				array_intersect_ukey(
-					$fieldsMap['DynamicEntitiesFields']['Map'][$entityTypeId] ?? [],
-					$dialog->getCurrentValues(),
-					function ($lhsKey, $rhsKey) {
-						if (mb_substr($lhsKey, -mb_strlen('_text')) === '_text')
-						{
-							$lhsKey = mb_substr($lhsKey, 0, mb_strlen($lhsKey) - mb_strlen('_text'));
-						}
-						if (mb_substr($rhsKey, -mb_strlen('_text')) === '_text')
-						{
-							$rhsKey = mb_substr($rhsKey, 0, mb_strlen($rhsKey) - mb_strlen('_text'));
-						}
+			$dynamicFieldsMap = array_intersect_ukey(
+				$fieldsMap['DynamicEntitiesFields']['Map'][$entityTypeId] ?? [],
+				$dialog->getCurrentValues(),
+				function ($lhsKey, $rhsKey) {
+					if (mb_substr($lhsKey, -mb_strlen('_text')) === '_text')
+					{
+						$lhsKey = mb_substr($lhsKey, 0, mb_strlen($lhsKey) - mb_strlen('_text'));
+					}
+					if (mb_substr($rhsKey, -mb_strlen('_text')) === '_text')
+					{
+						$rhsKey = mb_substr($rhsKey, 0, mb_strlen($rhsKey) - mb_strlen('_text'));
+					}
 
-						return strcmp($lhsKey, $rhsKey);
-					},
-				)
+					return strcmp($lhsKey, $rhsKey);
+				},
+			);
+
+			$dynamicFieldsDialog = clone $dialog;
+			$dynamicFieldsDialog->setDocumentType(\CCrmBizProcHelper::ResolveDocumentType($entityTypeId));
+
+			$extractingFieldsResult = parent::extractPropertiesValues(
+				$dynamicFieldsDialog,
+				$dynamicFieldsMap
 			);
 
 			if ($extractingFieldsResult->isSuccess())

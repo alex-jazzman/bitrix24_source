@@ -1,0 +1,28 @@
+.bx-im-sticker-pack-form-header__container {
+	--im-sticker-pack-form-header__border-color_divider: var(--ui-color-divider-vibrant-default);
+	--im-sticker-pack-form-header__color_description: var(--ui-color-base-4);
+
+	display: flex;
+	border-bottom: 1px solid var(--im-sticker-pack-form-header__border-color_divider);
+	padding-bottom: 12px;
+	margin-bottom: 12px;
+}
+
+.bx-im-sticker-pack-form-header__image {
+	background: url("./images/creation-form-image.png") no-repeat center center;
+	background-size: contain;
+	width: 66px;
+	flex-shrink: 0;
+	margin-right: 16px;
+}
+
+.bx-im-sticker-pack-form-header__title {
+	font: 17px/23px var(--ui-font-family-system);
+	margin-bottom: 4px;
+}
+
+.bx-im-sticker-pack-form-header__description {
+	font: 13px/17px var(--ui-font-family-system);
+	color: var(--im-sticker-pack-form-header__color_description);
+}
+

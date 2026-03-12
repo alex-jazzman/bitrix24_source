@@ -6,8 +6,10 @@ jn.define('mail/const/src/ajax', (require, exports, module) => {
 		mailChangeReadStatus: 'mail.message.changeReadStatus',
 		mailCreateCrm: 'mail.message.createCrmActivities',
 		mailCreateChat: 'mail.secretary.createChatFromMessage',
+		mailDiscussInChat: 'mail.secretary.discussMessageInChat',
 		mailMoveToFolder: 'mail.message.moveToFolder',
 		mailDelete: 'mail.message.delete',
+		addToEvent: 'mail.secretary.onCalendarSave',
 		mailGetList: 'mail.message.getMessageList',
 		mailGetAvailableMailboxes: 'mail.mailboxconnecting.getAvailableMailboxes',
 		crmFileUploader: 'crm.FileUploader.MailUploaderController',
@@ -16,6 +18,7 @@ jn.define('mail/const/src/ajax', (require, exports, module) => {
 		deleteMailbox: 'mail.mailboxconnecting.deleteMailbox',
 		saveContactInAddressBook: 'mail.addressbook.saveContact',
 		isMailboxConnectingAvailable: 'mail.mailboxconnecting.isMailboxConnectingAvailable',
+		getMessageChain: 'mailmobile.api.Message.getChain',
 	});
 
 	module.exports = {

@@ -19,6 +19,7 @@ declare type RelationCommentInfo = {
 
 declare type CommentModelActions = 'commentModel/setComments'
 	| 'commentModel/setComment'
+	| 'commentModel/setFromLocalDatabase'
 	| 'commentModel/updateComment'
 	| 'commentModel/setCounters'
 	| 'commentModel/setCommentWithCounter'
@@ -38,7 +39,7 @@ declare type CommentModelMutation = 'commentModel/setComments'
 	| 'commentModel/deleteChannelCounters'
 	;
 
-declare type CommentsSetCommentsActions = 'setComments' | 'updateComment' | 'setComment';
+declare type CommentsSetCommentsActions = 'setComments' | 'updateComment' | 'setComment' | 'setFromLocalDatabase';
 declare type CommentsSetCommentsData = {
 	commentList: Array<CommentInfoModelState>
 }

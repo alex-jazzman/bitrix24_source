@@ -1,7 +1,7 @@
 import { Loc } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 
-import { ReplicationWeekDayIndex, ReplicationYearlyType } from 'tasks.v2.const';
+import { ReplicationYearlyWeekDayIndex, ReplicationYearlyType } from 'tasks.v2.const';
 import type { TaskReplicateParams } from 'tasks.v2.model.tasks';
 
 import { getWeekDayGender } from './get-locale-postfix';
@@ -44,14 +44,14 @@ export class PeriodRuleYearlyGenerator implements PeriodRuleGenerator
 		const yearlyMonth = this.#replicateParams.yearlyMonth2 || 1;
 
 		const dayNumberLabel = Loc.getMessage(`TASKS_V2_REPLICATION_NUMBER_${yearlyWeekDayNum}${getWeekDayGender(
-			yearlyWeekDay,
+			yearlyWeekDay - 1,
 		)}`);
 
 		return Loc.getMessage(
 			`TASKS_V2_REPLICATION_YEARLY_2${this.#getLocaleType2Alt()}`,
 			{
 				'#DAY_NUMBER#': dayNumberLabel,
-				'#WEEK_DAY#': Loc.getMessage(`TASKS_V2_REPLICATION_WD_${yearlyWeekDay}`),
+				'#WEEK_DAY#': Loc.getMessage(`TASKS_V2_REPLICATION_WD_ALT_${yearlyWeekDay}`),
 				'#MONTH#': DateTimeFormat.format('F', new Date().setMonth(yearlyMonth - 1) / 1000),
 			},
 		);
@@ -61,14 +61,14 @@ export class PeriodRuleYearlyGenerator implements PeriodRuleGenerator
 	{
 		const weekDay = this.#replicateParams.yearlyWeekDay;
 
-		if (weekDay === ReplicationWeekDayIndex.Sunday)
+		if (weekDay === ReplicationYearlyWeekDayIndex.Sunday)
 		{
 			return '_ALT_1';
 		}
 
-		if (weekDay === ReplicationWeekDayIndex.Tuesday
-			|| weekDay === ReplicationWeekDayIndex.Saturday
-			|| weekDay === ReplicationWeekDayIndex.Friday)
+		if (weekDay === ReplicationYearlyWeekDayIndex.Wednesday
+			|| weekDay === ReplicationYearlyWeekDayIndex.Saturday
+			|| weekDay === ReplicationYearlyWeekDayIndex.Friday)
 		{
 			return '_ALT_0';
 		}

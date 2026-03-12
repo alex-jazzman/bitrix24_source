@@ -64,6 +64,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.ready = false;
 			this.userId = env.userId;
 			this.userData = params.userData;
+			this.usersAfterReconnect = null;
 
 			this.initiatorId = params.initiatorId || '';
 
@@ -73,16 +74,13 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			// media constraints
 
 			this.videoEnabled = params.videoEnabled === true;
-			this.videoHd = params.videoHd === true;
 			this.cameraId = params.cameraId || '';
 			this.microphoneId = params.microphoneId || '';
 
 			this.muted = params.muted === true;
 
-			if (callEngine.getLogService() && this.logToken)
-			{
-				this.logger = new CallLogger(callEngine.getLogService(), this.logToken);
-			}
+			this.logToken = params.logToken || '';
+			this.addLogToken(this.logToken);
 
 			this.connectionData = params.connectionData || {};
 
@@ -130,6 +128,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.__onCallDisconnectedHandler = this.__onCallDisconnected.bind(this);
 			this.__onCallMessageReceivedHandler = this.__onCallMessageReceived.bind(this);
 			this.__onCallEndpointAddedHandler = this.__onCallEndpointAdded.bind(this);
+			this.__onCallEndpointsAddedHandler = this.__onCallEndpointsAdded.bind(this);
 			this.__onCallRecorderStatusChangedHandler = this.__onCallRecorderStatusChanged.bind(this);
 			this.__onCallReconnectingHandler = this.__onCallReconnecting.bind(this);
 			this.__onCallReconnectedHandler = this.__onCallReconnected.bind(this);
@@ -156,12 +155,26 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 		get hasConnectionData()
 		{
-			return !!(this.connectionData.mediaServerUrl && this.connectionData.roomData);
+			return Boolean(this.connectionData?.mediaServerUrl && this.connectionData?.roomData);
 		}
 
 		setConnectionData(connectionData)
 		{
 			this.connectionData = connectionData
+		}
+
+		addLogToken(logToken)
+		{
+			if (this.logger || !logToken)
+			{
+				return;
+			}
+
+			this.logToken = logToken || '';
+			if (callEngine.getLogService() && this.logToken)
+			{
+				this.logger = new CallLogger(callEngine.getLogService(), this.logToken);
+			}
 		}
 
 		log()
@@ -223,7 +236,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.signaling.sendRepeatAnswer({ userId: this.userId });
 		}
 
-		createPeer(userId)
+		createPeer(userId, canChangeUI = true)
 		{
 			let incomingVideoAllowed;
 			if (this.videoAllowedFrom === BX.Call.UserMnemonic.all)
@@ -250,21 +263,23 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				userId,
 				ready: userId == this.initiatorId,
 				isIncomingVideoAllowed: incomingVideoAllowed,
+				canChangeUI: canChangeUI,
 
-				onStreamReceived: (e) => this.eventEmitter.emit(BX.Call.Event.onStreamReceived, [e.userId, e.stream]),
+				// вот это прок нуть в UI
+				onStreamReceived: (e) => this.eventEmitter.emit(BX.Call.Event.onStreamReceived, [e.userId, e.stream, e.canChangeUI]),
 				onUserVoiceStarted: (e) => this.eventEmitter.emit(BX.Call.Event.onUserVoiceStarted, [e.userId]),
 				onUserVoiceStopped: (e) => this.eventEmitter.emit(BX.Call.Event.onUserVoiceStopped, [e.userId]),
 				onStateChanged: this.__onPeerStateChanged.bind(this),
 				onInviteTimeout: this.__onPeerInviteTimeout.bind(this),
 				onInitialState: (e) => {
-					this.eventEmitter.emit(BX.Call.Event.onUserFloorRequest, [e.userId, e.floorRequest]);
-					this.eventEmitter.emit(BX.Call.Event.onUserMicrophoneState, [e.userId, e.microphoneState]);
+					this.eventEmitter.emit(BX.Call.Event.onUserFloorRequest, [e.userId, e.floorRequest, e.canChangeUI]);
+					this.eventEmitter.emit(BX.Call.Event.onUserMicrophoneState, [e.userId, e.microphoneState, e.canChangeUI]);
 				},
-				onHandRaised: (e) => this.eventEmitter.emit(BX.Call.Event.onUserFloorRequest, [e.userId, e.isHandRaised]),
+				onHandRaised: (e) => this.eventEmitter.emit(BX.Call.Event.onUserFloorRequest, [e.userId, e.isHandRaised, e.canChangeUI]),
 			});
 		}
 
-		getUsers()
+		getUsersStates()
 		{
 			const result = {};
 			for (const userId in this.peers)
@@ -361,6 +376,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 		setMuted(muted)
 		{
 			this.muted = muted;
+			console.log('setMuted')
 			if (this.bitrixCallDev)
 			{
 				this.bitrixCallDev.sendAudio = !this.muted;
@@ -370,6 +386,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 		sendAudio(value)
 		{
+			console.log('sendAudio', this.bitrixCallDev)
 			if (this.bitrixCallDev)
 			{
 				this.bitrixCallDev.sendAudio = value;
@@ -461,8 +478,6 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 		{
 			this.bitrixCallDev.setSendVideo(this.videoEnabled && !this.videoPaused);
 		}
-
-
 
 		setVideoPaused(videoPaused)
 		{
@@ -716,6 +731,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 							enableSimulcast: true,
 							userName: this.userData,
 							callBetaIosEnabled: callEngine.isCallBetaIosEnabled(),
+							isAddingMultipleUsersSupported: true,
 						};
 
 						this.bitrixCallDev = client.startCall(callOptions);
@@ -740,6 +756,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 					const onCallConnected = () => {
 						this.log('Call connected');
+						this._reconnectionEventCount = 0;
 
 						this.bitrixCallDev.off(JNBXCall.Events.Connected, onCallConnected);
 						this.bitrixCallDev.off(JNBXCall.Events.Failed, onCallFailed);
@@ -803,6 +820,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.bitrixCallDev.on(JNBXCall.Events.Disconnected, this.__onCallDisconnectedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.ReceiveMessage, this.__onCallMessageReceivedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.EndpointAdded, this.__onCallEndpointAddedHandler);
+			this.bitrixCallDev.on(JNBXCall.Events.EndpointsAdded, this.__onCallEndpointsAddedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.LocalVideoStreamAdded, this.__onLocalVideoStreamReceivedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.LocalVideoStreamRemoved, this.__onLocalVideoStreamRemovedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.RecorderStatusChanged, this.__onCallRecorderStatusChangedHandler);
@@ -823,6 +841,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				this.bitrixCallDev.off(JNBXCall.Events.Disconnected, this.__onCallDisconnectedHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.ReceiveMessage, this.__onCallMessageReceivedHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.EndpointAdded, this.__onCallEndpointAddedHandler);
+				this.bitrixCallDev.off(JNBXCall.Events.EndpointsAdded, this.__onCallEndpointsAddedHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.LocalVideoStreamAdded, this.__onLocalVideoStreamReceivedHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.LocalVideoStreamRemoved, this.__onLocalVideoStreamRemovedHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.RecorderStatusChanged, this.__onCallRecorderStatusChangedHandler);
@@ -937,6 +956,8 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				e.userId,
 				e.state,
 				e.previousState,
+				false,
+				e.canChangeUI,
 			]);
 
 			if (!this.ready)
@@ -1180,7 +1201,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 		__onCallReconnected()
 		{
 			this._reconnectionEventCount = 0;
-			this.eventEmitter.emit(BX.Call.Event.onReconnected);
+			this.eventEmitter.emit(BX.Call.Event.onReconnected, [{ reconnectedUsers: this.usersAfterReconnect }]);
 		}
 
 		getMediaServerInfo(finalUrl)
@@ -1344,6 +1365,72 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			}
 		}
 
+		__onCallEndpointsAdded(endpoints)
+		{
+			clearTimeout(this.waitForAnswerTimeout);
+			const eventData = [];
+			endpoints.endpoints.forEach(endpoint =>
+			{
+				if (!this.users.includes(endpoint.endpointId))
+				{
+					this.users.push(endpoint.endpointId);
+				}
+				if (!this.peers[endpoint.endpointId])
+				{
+					this.peers[endpoint.endpointId] = this.createPeer(endpoint.endpointId, true);
+				}
+
+				eventData.push({
+					id: endpoint.endpointId,
+					name: endpoint.userName,
+					avatar_hr: endpoint.avatarImage,
+					avatar: endpoint.avatarImage,
+				});
+			})
+
+			this.eventEmitter.emit(BX.Call.Event.onUsersJoined, [eventData]);
+
+			endpoints.endpoints.forEach(endpoint =>
+			{
+				const userName = typeof (endpoint.userDisplayName) === 'string' ? endpoint.userDisplayName : '';
+				this.log(`__onCallEndpointAdded (${userName})`);
+
+				if (BX.type.isNotEmptyString(userName) && userName.slice(0, 4) == 'user')
+				{
+					// user connected to conference
+					const userId = parseInt(userName.slice(4));
+					if (this.peers[userId])
+					{
+						this.peers[userId].setEndpoint(endpoint);
+					}
+				}
+				else
+				{
+					endpoint.on(JNBXEndpoint.Events.InfoUpdated, () => {
+						const userName = typeof (endpoint.userDisplayName) === 'string' ? endpoint.userDisplayName : '';
+						this.log(`BitrixDev.EndpointEvents.InfoUpdated (${userName})`, endpoint);
+
+						if (userName.slice(0, 4) == 'user')
+						{
+							// user connected to conference
+							const userId = parseInt(userName.slice(4));
+							if (this.peers[userId])
+							{
+								this.peers[userId].setEndpoint(endpoint);
+							}
+						}
+					});
+
+					this.log(`Unknown endpoint ${userName}`);
+				}
+			})
+
+			endpoints.endpoints.forEach(endpoint =>
+			{
+				endpoint.canChangeUI = true;
+			})
+		}
+
 		__onCallRecorderStatusChanged(status)
 		{
 			if (!status.errMsg)
@@ -1421,16 +1508,6 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				case clientEvents.voiceStopped:
 				{
 					this.eventEmitter.emit(BX.Call.Event.onUserVoiceStopped, [message.senderId]);
-
-					break;
-				}
-
-				case clientEvents.microphoneState:
-				{
-					this.eventEmitter.emit(BX.Call.Event.onUserMicrophoneState, [
-						message.senderId,
-						message.microphoneState === 'Y',
-					]);
 
 					break;
 				}
@@ -1539,6 +1616,11 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 
 				if (data?.joinResponse)
 				{
+					if (data.joinResponse.otherParticipants)
+					{
+						this.usersAfterReconnect = [Object.values(data.joinResponse.otherParticipants)];
+					}
+
 					if (data.joinResponse.role)
 					{
 						CallUtil.setCurrentUserRole(data.joinResponse.role);
@@ -1559,6 +1641,14 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				if (data?.trackCreated)
 				{
 					this.eventEmitter.emit(BX.Call.Event.onRemoteTrackAdded);
+				}
+
+				if (data?.trackMuted)
+				{
+					this.eventEmitter.emit(BX.Call.Event.onUserMicrophoneState, [
+						Number(data.trackMuted.track?.publisher),
+						!data.trackMuted.muted,
+					]);
 				}
 
 				if (data?.videoRecorderStatus)
@@ -2110,6 +2200,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.endpoint = null;
 
 			this.isIncomingVideoAllowed = params.isIncomingVideoAllowed !== false;
+			this.canChangeUI = params.canChangeUI;
 
 			this.callingTimeout = 0;
 			this.connectionRestoreTimeout = 0;
@@ -2223,6 +2314,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				this.callbacks.onStreamReceived({
 					userId: this.userId,
 					stream: this.getStreams(),
+					canChangeUI: this.canChangeUI
 				});
 			}
 
@@ -2241,6 +2333,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 					userId: this.userId,
 					microphoneState: endpoint.initialState.microphoneState,
 					floorRequest: endpoint.initialState.floorRequest,
+					canChangeUI: this.canChangeUI
 				});
 			}
 		}
@@ -2320,6 +2413,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 					userId: this.userId,
 					state: calculatedState,
 					previousState: this.calculatedState,
+					canChangeUI: this.canChangeUI
 				});
 				this.calculatedState = calculatedState;
 			}
@@ -2400,6 +2494,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.callbacks.onStreamReceived({
 				userId: this.userId,
 				stream: this.getStreams(),
+				canChangeUI: this.canChangeUI
 			});
 
 			this.updateCalculatedState();
@@ -2411,6 +2506,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.callbacks.onStreamReceived({
 				userId: this.userId,
 				stream: this.getStreams(),
+				canChangeUI: this.canChangeUI
 			});
 
 			this.updateCalculatedState();
@@ -2457,25 +2553,8 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.callbacks.onHandRaised({
 				userId: this.userId,
 				isHandRaised: e.isHandRaised,
+				canChangeUI: this.canChangeUI
 			});
-		}
-
-		getPriorityStream()
-		{
-			let streams = this.endpoint.remoteVideoStreams;
-			if (streams.length == 0)
-			{
-				return null;
-			}
-			let sharingStream = streams.findLast((stream) => stream.kind === 'sharing');
-			if (sharingStream === undefined)
-			{
-				return streams[streams.length - 1];
-			}
-			else
-			{
-				return sharingStream;
-			}
 		}
 
 		getStreams()

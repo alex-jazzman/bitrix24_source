@@ -1,4 +1,0 @@
-<?
-$MESS["IMOL_HELPER_TEMPLATE_TRANSPARENT"] = "Прозорий";
-$MESS["IMOL_HELPER_TEMPLATE_COLORED"] = "Кольоровий";
-?>

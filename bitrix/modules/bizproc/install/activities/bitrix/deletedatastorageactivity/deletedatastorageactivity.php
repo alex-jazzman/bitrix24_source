@@ -26,14 +26,14 @@ use Bitrix\Bizproc\Internal\Service\StorageField\FieldService;
  * @property-write int ItemId
  * @property-write string DeleteMode
  * @property-write string StorageCode
+ * @property-write string IsExpanded
  */
-class CBPDeleteDataStorageActivity extends BaseActivity
+class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurableActivity, IBPEventActivity, IBPActivityExternalEventListener
 {
 	use \Bitrix\Bizproc\Activity\Mixins\EntityFilter;
 
 	private const DELETE_MODE_MULTIPLE = 'multiple';
 	private const DELETE_MODE_ALL = 'all';
-	private const DELETE_LIMIT = 500;
 
 	private ?array $filterCache = null;
 
@@ -47,6 +47,7 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 			'ItemId' => 0,
 			'DeleteMode' => static::DELETE_MODE_MULTIPLE,
 			'StorageCode' => '',
+			'IsExpanded' => 'Y',
 		];
 
 		$this->setPropertiesTypes([
@@ -74,7 +75,7 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 
 	protected function findStorageItemId(): int
 	{
-		$storageId = $this->findStorageId();
+		$storageId = $this->preparedProperties['StorageId'];
 		if (!$storageId)
 		{
 			return 0;
@@ -85,7 +86,8 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 		$item = $provider->getItems([
 			'filter' => $filter,
 			'select' => ['ID'],
-			'order' => ['CREATED_TIME' => 'DESC']
+			'order' => ['ID' => 'DESC'],
+			'limit' => 1,
 		])?->getFirstCollectionItem();
 
 		return $item ? $item->getId() : 0;
@@ -94,12 +96,22 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 	protected function deleteStorageItemIds(int $storageId): void
 	{
 		$filter = $this->getPreparedFilter($storageId);
- 		\Bitrix\Bizproc\Infrastructure\Stepper\StorageItemDeleteStepper::bindStorage($storageId, $filter);
+ 		\Bitrix\Bizproc\Infrastructure\Stepper\StorageItemDeleteStepper::bindStorage(
+			 $storageId,
+			 $filter,
+			 $this->getWorkflowInstanceId(),
+			 $this->name,
+		);
 	}
 
 	protected function deleteAllStorageItemIds(int $storageId): void
 	{
-		\Bitrix\Bizproc\Infrastructure\Stepper\StorageItemDeleteStepper::bindStorage($storageId);
+		\Bitrix\Bizproc\Infrastructure\Stepper\StorageItemDeleteStepper::bindStorage(
+			$storageId,
+			[],
+			$this->getWorkflowInstanceId(),
+			$this->name
+		);
 	}
 
 	private function findStorageId(): int
@@ -146,18 +158,33 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 		return $errors;
 	}
 
-	protected function internalExecute(): \Bitrix\Main\ErrorCollection
+	public function execute(): int
 	{
-		$errors = parent::internalExecute();
-
 		$storageId = $this->findStorageId();
 		if ($storageId <= 0)
 		{
-			$errors->setError(new Error(Loc::getMessage('BIZPROC_SDA_STORAGE_NOT_FOUND')));
+			$this->trackError(Loc::getMessage('BIZPROC_SDA_STORAGE_NOT_FOUND') ?? '');
+
+			return CBPActivityExecutionStatus::Closed;
 		}
 
 		$this->arProperties['StorageId'] = $storageId;
 		$this->preparedProperties['StorageId'] = $storageId;
+		$this->prepareProperties();
+
+		$errors = $this->checkProperties();
+
+		if (!$errors->isEmpty())
+		{
+			foreach ($errors as $error)
+			{
+				$this->trackError($error->getMessage());
+			}
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$this->subscribe($this);
 
 		try
 		{
@@ -166,13 +193,32 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 				self::DELETE_MODE_MULTIPLE => $this->deleteStorageItemIds($storageId),
 				self::DELETE_MODE_ALL => $this->deleteAllStorageItemIds($storageId),
 			};
+
+			return CBPActivityExecutionStatus::Executing;
 		}
 		catch (\Throwable $exception)
 		{
-			$errors->setError(new Error($exception->getMessage()));
-		}
+			$this->unsubscribe($this);
+			$this->trackError($exception->getMessage());
 
-		return $errors;
+			return CBPActivityExecutionStatus::Closed;
+		}
+	}
+
+	public function subscribe(IBPActivityExternalEventListener $eventHandler)
+	{
+		$this->workflow->addEventHandler($this->name, $eventHandler);
+	}
+
+	public function unsubscribe(IBPActivityExternalEventListener $eventHandler)
+	{
+		$this->workflow->removeEventHandler($this->name, $eventHandler);
+	}
+
+	public function onExternalEvent($arEventParameters = [])
+	{
+		$this->unsubscribe($this);
+		$this->workflow->closeActivity($this);
 	}
 
 	protected function reInitialize()
@@ -228,8 +274,10 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 		return $result;
 	}
 
-	public static function getPropertiesDialogMap(?\Bitrix\Bizproc\Activity\PropertiesDialog $dialog = null): array
+	public static function getPropertiesMap(array $documentType, array $context = []): array
 	{
+		$dynamicFilterFields = $context['Properties']['DynamicFilterFields'] ?? null;
+
 		$filteringFieldsMap = [
 			0 => array_values(static::getFilteringFieldsMap(0))
 		];
@@ -244,8 +292,14 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 			'StorageId' => [
 				'Name' => Loc::getMessage('BIZPROC_SDA_STORAGE_ID_PROPERTY'),
 				'FieldName' => 'storage_id',
-				'Type' => FieldType::SELECT,
-				'Options' => $storages,
+				'Type' => FieldType::ENTITYSELECTOR,
+				'Settings' => [
+					'entity' => ['id' => 'bizproc-storage'],
+					'dialogOptions' => [
+						'width' => 445,
+						'height' => 300,
+					],
+				],
 				'Required' => false,
 				'AllowSelection' => false,
 			],
@@ -257,14 +311,6 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 				'Required' => false,
 				'AllowSelection' => true,
 			],
-			'DynamicFilterFields' => [
-				'Name' => Loc::getMessage('BIZPROC_SDA_FILTER_FIELDS_PROPERTY'),
-				'FieldName' => 'filter_fields',
-				'Map' => $filteringFieldsMap,
-				'Getter' => function($dialog, $property, $currentActivity, $compatible) {
-					return $currentActivity['Properties']['DynamicFilterFields'];
-				},
-			],
 			'DeleteMode' => [
 				'Name' => Loc::getMessage('BIZPROC_SDA_DELETE_MODE'),
 				'FieldName' => 'delete_mode',
@@ -275,6 +321,30 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 				],
 				'Required' => true,
 				'AllowSelection' => false,
+			],
+			'DynamicFilterFields' => [
+				'Name' => Loc::getMessage('BIZPROC_SDA_FILTER_FIELDS_PROPERTY'),
+				'FieldName' => 'filter_fields',
+				'Type' => \Bitrix\Bizproc\FieldType::CUSTOM,
+				'Required' => false,
+				'AllowSelection' => true,
+				'CustomType' => 'filterFields',
+				'Options' => [
+					'documentType' => \Bitrix\Bizproc\Public\Entity\Document\Workflow::getComplexType(),
+					'filteringFieldsPrefix' => 'filter_fields_',
+					'filterFieldsMap' => $filteringFieldsMap,
+					'conditions' => $dynamicFilterFields,
+					'collapsedCaption' => Loc::getMessage('BIZPROC_SDA_FILTER_FIELDS_COLLAPSED_TEXT'),
+				]
+			],
+			'IsExpanded' => [
+				'Name' => '',
+				'FieldName' => 'is_expanded',
+				'Type' => FieldType::STRING,
+				'Required' => false,
+				'AllowSelection' => false,
+				'Hidden' => true,
+				'Default' => 'Y',
 			],
 		];
 	}
@@ -347,5 +417,29 @@ class CBPDeleteDataStorageActivity extends BaseActivity
 		}
 
 		return $this->filterCache[$storageId];
+	}
+
+	public static function getPropertiesDialogMap(?PropertiesDialog $dialog = null): array
+	{
+		return static::getPropertiesMap([]);
+	}
+
+	public static function validateProperties($testProperties = [], \CBPWorkflowTemplateUser $user = null): array
+	{
+		$errors = [];
+
+		if (
+			(int)($testProperties['StorageId'] ?? 0) <= 0
+			&& CBPHelper::isEmptyValue($testProperties['StorageCode'] ?? null)
+		)
+		{
+			$errors[] = [
+				'code' => 'NotExist',
+				'parameter' => 'FieldValue',
+				'message' => Loc::getMessage('BIZPROC_SDA_EMPTY_STORAGE_ID_OR_CODE'),
+			];
+		}
+
+		return array_merge($errors, parent::validateProperties($testProperties, $user));
 	}
 }

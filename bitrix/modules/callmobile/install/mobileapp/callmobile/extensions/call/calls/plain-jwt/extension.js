@@ -48,6 +48,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			this.connectionData = params.connectionData;
 			this.scheme = params.scheme;
 			this._recorderState = BX.Call.RecorderStatus.None;
+			this.connectionType = 0;
 
 			this.userId = parseInt(env.userId, 10);
 
@@ -79,11 +80,8 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				call: this,
 			});
 
-			this.logToken = params.logToken || "";
-			if (callEngine.getLogService() && this.logToken)
-			{
-				this.logger = new CallLogger(callEngine.getLogService(), this.logToken);
-			}
+			this.logToken = params.logToken || '';
+			this.addLogToken(this.logToken);
 
 			this.eventEmitter = new JNEventEmitter();
 			params.events = params.events || {};
@@ -110,6 +108,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			this.__onCallDisconnectedHandler = this.__onCallDisconnected.bind(this);
 			this.__onCallMessageReceivedHandler = this.__onCallMessageReceived.bind(this);
 			this.__onCallEndpointAddedHandler = this.__onCallEndpointAdded.bind(this);
+			this.__onCallEndpointsAddedHandler = this.__onCallEndpointsAdded.bind(this);
 			this.__onCallReconnectingHandler = this.__onCallReconnecting.bind(this);
 			this.__onCallReconnectedHandler = this.__onCallReconnected.bind(this);
 			this.__onSwitchCallTypeHandler = this.__onSwitchCallType.bind(this);
@@ -118,10 +117,15 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			this.__onSDKLogMessageHandler = this.__onSDKLogMessage.bind(this);
 
+			this.__onLocalVideoStreamReceivedHandler = this.__onLocalVideoStreamReceived.bind(this);
+			this.__onLocalVideoStreamRemovedHandler = this.__onLocalVideoStreamRemoved.bind(this);
+
 			this.activeCallNotification = new ActiveCallNotification({
 				onSwitchMicrophonesStatus: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationSwitchMicrophoneStatusPress),
 				onHangup: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationHangupButtonPress)
 			});
+
+			this._videoEnablePending = false;
 		}
 
 		get provider()
@@ -131,12 +135,35 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 		get hasConnectionData()
 		{
-			return !!(this.connectionData.mediaServerUrl && this.connectionData.roomData);
+			return Boolean(this.connectionData?.mediaServerUrl && this.connectionData?.roomData);
 		}
 
 		setConnectionData(connectionData)
 		{
 			this.connectionData = connectionData
+		}
+
+		setReceiveMedia(value)
+		{
+			if (this.plainCallJwt)
+			{
+				this.plainCallJwt.receiveVideo = value;
+				this.plainCallJwt.receiveAudio = value;
+			}
+		}
+
+		addLogToken(logToken)
+		{
+			if (this.logger || !logToken)
+			{
+				return;
+			}
+
+			this.logToken = logToken || '';
+			if (callEngine.getLogService() && this.logToken)
+			{
+				this.logger = new CallLogger(callEngine.getLogService(), this.logToken);
+			}
 		}
 
 		reinitPeers()
@@ -248,8 +275,8 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 						return;
 					}
 					const client = BXClient.getInstance();
-					// client.printLogs = true;
 					client.on(BXClient.Events.LogMessage, this.__onSDKLogMessageHandler);
+
 					try
 					{
 						if (typeof (JNBXCameraManager.setResolutionConstraints) === 'function')
@@ -287,7 +314,6 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 					catch (e)
 					{
 						CallUtil.error(e);
-
 						return reject(e);
 					}
 
@@ -297,8 +323,6 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 						return reject({ code: 'BITRIX_DEV_NO_CALL' });
 					}
-
-					// this.eventEmitter.emit(BitrixCallDevEvent.onCallConference, [{ call: this }]);
 
 					this.bindCallEvents();
 
@@ -356,14 +380,16 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 		bindCallEvents()
 		{
 			this.plainCallJwt.on(JNBXCall.Events.EndpointAdded, this.__onCallEndpointAddedHandler);
+			this.plainCallJwt.on(JNBXCall.Events.EndpointsAdded, this.__onCallEndpointsAddedHandler);
 			this.plainCallJwt.on(JNBXCall.Events.ReceiveMessage, this.__onCallMessageReceivedHandler);
 			this.plainCallJwt.on(JNBXCall.Events.Reconnecting, this.__onCallReconnectingHandler);
 			this.plainCallJwt.on(JNBXCall.Events.Reconnected, this.__onCallReconnectedHandler);
 			this.plainCallJwt.on(JNBXCall.Events.Disconnected, this.__onCallDisconnectedHandler);
-			this.plainCallJwt.on(JNBXCall.Events.SwitchCallType, this.__onSwitchCallTypeHandler);
+			// this.plainCallJwt.on(JNBXCall.Events.SwitchCallType, this.__onSwitchCallTypeHandler);
 			this.plainCallJwt.on(JNBXCall.Events.SignalingResponseReceived, this.__onSignalingResponseReceivedHandler);
 			this.plainCallJwt.on(JNBXCall.Events.RecorderStatusChanged, this.__onCallRecorderStatusChangedHandler);
-
+			this.plainCallJwt.on(JNBXCall.Events.LocalVideoStreamAdded, this.__onLocalVideoStreamReceivedHandler);
+			this.plainCallJwt.on(JNBXCall.Events.LocalVideoStreamRemoved, this.__onLocalVideoStreamRemovedHandler);
 		}
 
 		removeCallEvents()
@@ -371,13 +397,16 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			if (this.plainCallJwt)
 			{
 				this.plainCallJwt.off(JNBXCall.Events.EndpointAdded, this.__onCallEndpointAddedHandler);
+				this.plainCallJwt.off(JNBXCall.Events.EndpointsAdded, this.__onCallEndpointsAddedHandler);
 				this.plainCallJwt.off(JNBXCall.Events.ReceiveMessage, this.__onCallMessageReceivedHandler);
 				this.plainCallJwt.off(JNBXCall.Events.Reconnecting, this.__onCallReconnectingHandler);
 				this.plainCallJwt.off(JNBXCall.Events.Reconnected, this.__onCallReconnectedHandler);
 				this.plainCallJwt.off(JNBXCall.Events.Disconnected, this.__onCallDisconnectedHandler);
-				this.plainCallJwt.off(JNBXCall.Events.SwitchCallType, this.__onSwitchCallTypeHandler);
+				// this.plainCallJwt.off(JNBXCall.Events.SwitchCallType, this.__onSwitchCallTypeHandler);
 				this.plainCallJwt.off(JNBXCall.Events.SignalingResponseReceived, this.__onSignalingResponseReceivedHandler);
 				this.plainCallJwt.off(JNBXCall.Events.RecorderStatusChanged, this.__onCallRecorderStatusChangedHandler);
+				this.plainCallJwt.off(JNBXCall.Events.LocalVideoStreamAdded, this.__onLocalVideoStreamReceivedHandler);
+				this.plainCallJwt.off(JNBXCall.Events.LocalVideoStreamRemoved, this.__onLocalVideoStreamRemovedHandler);
 			}
 		}
 
@@ -423,7 +452,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			return this.peers[userId];
 		}
 
-		getUsers()
+		getUsersStates()
 		{
 			let result = {};
 			for (let id in this.peers)
@@ -505,40 +534,66 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			return this.videoEnabled;
 		}
 
-		setVideoEnabled(videoEnabled)
+		async setVideoEnabled(videoEnabled, isSwitchingCallType)
 		{
 			videoEnabled = (videoEnabled === true);
-			if (this.videoEnabled == videoEnabled)
+			if (this.videoEnabled == videoEnabled && !isSwitchingCallType)
 			{
 				return;
 			}
 
-			this.videoEnabled = videoEnabled;
-			if (this.videoEnabled)
+			if (this._videoEnablePending)
 			{
-				if (this.localStream?.getVideoTracks().length > 0)
-				{
-					MediaDevices.startCapture();
-					this.eventEmitter.emit(BX.Call.Event.onLocalMediaReceived, [this.localStream]);
+				return;
+			}
 
-					this.replaceAllMedia();
-				}
-				else
+			this._videoEnablePending = true;
+
+			try
+			{
+				this.videoEnabled = videoEnabled;
+
+				if (this.connectionType === 0)
 				{
-					this.getLocalMedia().then(() =>
+					if (this.videoEnabled)
 					{
+						if (this.localStream?.getVideoTracks().length > 0)
+						{
+							MediaDevices.startCapture();
+							this.eventEmitter.emit(BX.Call.Event.onLocalMediaReceived, [this.localStream]);
+							this.replaceAllMedia();
+						}
+						else
+						{
+							await this.getLocalMedia();
+							this.replaceAllMedia();
+						}
+					}
+					else
+					{
+						MediaDevices.stopCapture();
+						this.eventEmitter.emit(BX.Call.Event.onLocalMediaStopped);
 						this.replaceAllMedia();
-					});
+					}
+
+					this.signaling.sendCameraState(this.users, this.videoEnabled);
+				}
+
+				if (this.connectionType === 1)
+				{
+					this.plainCallJwt.setSendVideo(this.videoEnabled);
+					this.signaling.sendCameraState(this.users, this.videoEnabled);
 				}
 			}
-			else
+			finally
 			{
-				MediaDevices.stopCapture();
-				this.eventEmitter.emit(BX.Call.Event.onLocalMediaStopped);
-				this.replaceAllMedia();
+				this._videoEnablePending = false;
 			}
+		}
 
-			this.signaling.sendCameraState(this.users, this.videoEnabled);
+		setSendVideo(value)
+		{
+			this.plainCallJwt.setSendVideo(value);
 		}
 
 		replaceAllMedia()
@@ -583,16 +638,35 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			return MediaDevices.cameraDirection === "front";
 		}
 
-		setMuted(muted)
+		setMuted(muted, isSwitchingCallType)
 		{
 			muted = !!muted;
-			if (this.muted == muted)
+			if (this.muted == muted && !isSwitchingCallType)
 			{
 				return;
 			}
 
 			this.muted = muted;
-			if (this.localStream)
+			if (isSwitchingCallType)
+			{
+				if (this.localStream)
+				{
+					var audioTracks = this.localStream.getAudioTracks();
+					if (audioTracks[0])
+					{
+						audioTracks[0].enabled = false;
+					}
+				}
+
+				this.plainCallJwt.sendAudio = !muted;
+				return;
+			}
+
+			if (this.connectionType === 1)
+			{
+				this.plainCallJwt.sendAudio = !muted;
+			}
+			if (this.localStream && this.connectionType === 0)
 			{
 				var audioTracks = this.localStream.getAudioTracks();
 				if (audioTracks[0])
@@ -856,6 +930,8 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 				this.plainCallJwt = null;
 			}
+
+			this.eventEmitter.emit(BX.Call.Event.onLeave, [{ callId: this.id, callUuid: this.uuid }]);
 		};
 
 		showActiveCallNotification(notificationParams)
@@ -1195,6 +1271,17 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			// todo: delete it?
 		}
 
+		__onLocalVideoStreamReceived(stream)
+		{
+			this.log('__onLocalVideoStreamReceived');
+			this.eventEmitter.emit(BX.Call.Event.onLocalMediaReceived, [stream]);
+		}
+
+		__onLocalVideoStreamRemoved()
+		{
+			this.eventEmitter.emit(BX.Call.Event.onLocalMediaStopped);
+		}
+
 		__onSDKLogMessage(message)
 		{
 			if (this.logger)
@@ -1244,6 +1331,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			if (headers.leaveInformation?.reason === BX.Call.CallError.SecurityKeyChanged)
 			{
+				console.error('SecurityKeyChanged fatal error');
 				this.onFatalError(headers.leaveInformation.reason);
 			}
 		}
@@ -1272,6 +1360,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 					if (errorPreventingReconnection.includes(error.errorCode))
 					{
+						console.error('errorPreventingReconnection fatal error');
 						this.onFatalError(error.code);
 					}
 					else if (this._reconnectionEventCount < this._maxReconnectionAttempts)
@@ -1295,7 +1384,6 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 		__onSwitchCallType()
 		{
-			console.log('__onSwitchCallType')
 			this.eventEmitter.emit(BX.Call.Event.onSwitchConnectionType);
 		}
 
@@ -1316,7 +1404,19 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 					this.log(`Could not parse a socket message: ${response.response}`);
 					return;
 				}
-
+				if (data?.joinResponse)
+				{
+					if (data?.joinResponse?.oneToOneType === 1)
+					{
+						if (this.connectionType === 0)
+						{
+							setTimeout(() => {
+								this.connectionType = 1;
+								this.eventEmitter.emit(BX.Call.Event.onSwitchConnectionType);
+							}, 1000)
+						}
+					}
+				}
 
 				if (data?.videoRecorderStatus)
 				{
@@ -1331,8 +1431,9 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				if (data?.newMessage)
 				{
 					const message = CallUtil.deepParseJSON(data?.newMessage.message);
-					if (message?.onActionSent?.switchConnectionType)
+					if (message?.onActionSent?.switchConnectionType && this.connectionType === 0)
 					{
+						this.connectionType = 1;
 						this.eventEmitter.emit(BX.Call.Event.onSwitchConnectionType);
 					}
 				}
@@ -1423,6 +1524,9 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				{
 					this.peers[userId].sendNegotiationNeeded(false);
 				}
+
+
+
 			};
 
 			if (userName.slice(0, 4) == 'user')
@@ -1445,6 +1549,59 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 				this.log(`Unknown endpoint ${userName}`);
 			}
+		}
+
+		__onCallEndpointsAdded(endpoints)
+		{
+			clearTimeout(this.waitForAnswerTimeout);
+
+			this.eventEmitter.emit(BX.Call.Event.onUserJoined, [{
+				userId: endpoints.endpoints[0].endpointId,
+				userData: {
+					[userId]: {
+						name:  endpoints.endpoints[0].userName,
+						avatar_hr:  endpoints.endpoints[0].avatarImage,
+						avatar:  endpoints.endpoints[0].avatarImage,
+					},
+				}
+			}]);
+
+			endpoints.endpoints.forEach(endpoint =>
+			{
+				const userName = typeof (endpoint.userDisplayName) === 'string' ? endpoint.userDisplayName : '';
+				this.log(`__onCallEndpointAdded (${userName})`);
+
+				if (BX.type.isNotEmptyString(userName) && userName.slice(0, 4) == 'user')
+				{
+					// user connected to conference
+					const userId = parseInt(userName.slice(4));
+					if (this.peers[userId])
+					{
+						this.peers[userId].setEndpoint(endpoint);
+					}
+				}
+				else
+				{
+					endpoint.on(JNBXEndpoint.Events.InfoUpdated, () => {
+						const userName = typeof (endpoint.userDisplayName) === 'string' ? endpoint.userDisplayName : '';
+						this.log(`BitrixDev.EndpointEvents.InfoUpdated (${userName})`, endpoint);
+
+						if (userName.slice(0, 4) == 'user')
+						{
+							// user connected to conference
+							const userId = parseInt(userName.slice(4));
+							if (this.peers[userId])
+							{
+								this.peers[userId].setEndpoint(endpoint);
+							}
+						}
+					});
+
+					this.log(`Unknown endpoint ${userName}`);
+				}
+			})
+
+			endpoints.endpoints[0].canChangeUI = true;
 		}
 
 		__onCallRecorderStatusChanged(status)
@@ -1796,6 +1953,8 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			// event handlers
 			this.__onEndpointRemovedHandler = this.__onEndpointRemoved.bind(this);
+			this.__onEndpointRemoteMediaAddedHandler = this.__onEndpointRemoteMediaAdded.bind(this);
+			this.__onEndpointRemoteMediaRemovedHandler = this.__onEndpointRemoteMediaRemoved.bind(this);
 
 			this.connectionAttempt = 0;
 		}
@@ -1859,7 +2018,21 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			}
 			this.updateCalculatedState();
 		}
-
+		notifyStreamsChanged()
+		{
+			const streams = this.endpoint.remoteVideoStreams || [];
+			if (streams.length)
+			{
+				this.callbacks.onStreamReceived({
+					userId : this.userId,
+					stream : streams.length === 1 ? streams[0] : streams
+				});
+			}
+			else
+			{
+				this.callbacks.onStreamRemoved({ userId : this.userId });
+			}
+		}
 		setEndpoint(endpoint)
 		{
 			this.log(`Adding endpoint with ${endpoint.remoteVideoStreams.length} remote video streams`);
@@ -1877,14 +2050,11 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			}
 
 			this.endpoint = endpoint;
-
-			if (this.endpoint.remoteVideoStreams.length > 0)
-			{
-				this.callbacks.onStreamReceived({
-					userId: this.userId,
-					stream: this.getPriorityStream(),
-				});
-			}
+			this.notifyStreamsChanged();
+			// this.callbacks.onStreamReceived({
+			// 	userId: this.userId,
+			// 	stream: endpoint.remoteVideoStreams[0],
+			// });
 
 			this.updateCalculatedState();
 			this.bindEndpointEventHandlers();
@@ -1892,11 +2062,15 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 		bindEndpointEventHandlers()
 		{
 			this.endpoint.on(JNBXEndpoint.Events.Removed, this.__onEndpointRemovedHandler);
+			this.endpoint.on(JNBXEndpoint.Events.VideoStreamAdded, this.__onEndpointRemoteMediaAddedHandler);
+			this.endpoint.on(JNBXEndpoint.Events.VideoStreamRemoved, this.__onEndpointRemoteMediaRemovedHandler);
 		}
 
 		removeEndpointEventHandlers()
 		{
 			this.endpoint.off(JNBXEndpoint.Events.Removed, this.__onEndpointRemovedHandler);
+			this.endpoint.off(JNBXEndpoint.Events.VideoStreamAdded, this.__onEndpointRemoteMediaAddedHandler);
+			this.endpoint.off(JNBXEndpoint.Events.VideoStreamRemoved, this.__onEndpointRemoteMediaRemovedHandler);
 		}
 
 		setSignalingConnected(signalingConnected)
@@ -2227,7 +2401,16 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			this.offersStack--;
 			this.isWaitAnswer = true;
 
-			const connectionConfig = Object.assign({}, defaultConnectionOptions, config);
+			const connectionConfig = {};
+
+			const safeFields = {
+				"offerToReceiveAudio": "true",
+				"offerToReceiveVideo": "true",
+			};
+
+			for (const key in safeFields) {
+				connectionConfig[key] = safeFields[key];
+			}
 
 			this.peerConnection.createOffer(connectionConfig).then((offer) =>
 			{
@@ -2501,7 +2684,10 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 				return;
 			}
 
-			this.callbacks.onReconnecting();
+			if (!this.wasIceConnectionStateDisconnected)
+			{
+				this.callbacks.onReconnecting();
+			}
 
 			console.trace("Trying to restore ICE connection. Attempt " + this.connectionAttempt);
 			this.log("Trying to restore ICE connection. Attempt " + this.connectionAttempt);
@@ -2635,8 +2821,14 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			{
 				this.connectionAttempt = 0;
 				this.failureReason = "";
-				this.callbacks.onReconnected();
+
+				if (this._reconnectionEventCount > 0)
+				{
+					this.callbacks.onReconnected();
+				}
+
 				clearTimeout(this.reconnectAfterDisconnectTimeout);
+				this.wasIceConnectionStateDisconnected = false;
 			}
 			else if (this.peerConnection.iceConnectionState === "failed")
 			{
@@ -2645,9 +2837,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			}
 			else if (this.peerConnection.iceConnectionState === "disconnected")
 			{
-				this.log("ICE connection lost. Waiting 5 seconds before trying to restore it");
-				clearTimeout(this.reconnectAfterDisconnectTimeout);
-				this.reconnectAfterDisconnectTimeout = setTimeout(() => this.reconnect(), 5000);
+				this.wasIceConnectionStateDisconnected = true;
 			}
 
 			this.updateCalculatedState();
@@ -2809,6 +2999,20 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			this.updateCalculatedState();
 		}
 
+		 __onEndpointRemoteMediaAdded(e)
+		{
+			this.log('RemoteMediaAdded', e);
+			this.notifyStreamsChanged();
+			this.updateCalculatedState();
+		}
+
+		__onEndpointRemoteMediaRemoved(e)
+		{
+			this.log('RemoteMediaRemoved', e);
+			this.notifyStreamsChanged();
+			this.updateCalculatedState();
+		}
+
 		disconnect()
 		{
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
@@ -2967,7 +3171,6 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 		}
 
 		__sendMessage(eventName, data) {
-			console.log('__sendMessage', eventName);
 
 			if (!this.call.plainCallJwt)
 			{
@@ -2985,8 +3188,6 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			const formattedData = CallUtil.stringifyObjectValues(data);
 			const dataToSend = CallUtil.isIos() ? formattedData : data;
-
-			console.log('__sendMessage', eventName, this.call.plainCallJwt, dataToSend);
 
 			try
 			{

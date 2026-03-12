@@ -1,7 +1,7 @@
 <?php
 $MESS["OL_COMPONENT_ACCESS_DENIED"] = "You do not have permission to view statistics.";
 $MESS["OL_COMPONENT_COUNT_ROW_ALL"] = "Total:";
-$MESS["OL_COMPONENT_COUNT_ROW_SHOW"] = "Show quantity";
+$MESS["OL_COMPONENT_COUNT_ROW_SHOW"] = "Show";
 $MESS["OL_COMPONENT_MODULE_NOT_INSTALLED"] = "The Open Channels module is not installed.";
 $MESS["OL_COMPONENT_SESSION_CONFIGURATION_UF_TITLE"] = "Open Channel conversation custom fields";
 $MESS["OL_COMPONENT_SESSION_CONFIRM_GROUP_ACTION"] = "Are you sure you want to proceed?";
@@ -24,6 +24,8 @@ $MESS["OL_COMPONENT_TABLE_ACTION_CLOSE_ON_OPERATOR"] = "End conversation with cu
 $MESS["OL_COMPONENT_TABLE_ACTION_HISTORY"] = "History";
 $MESS["OL_COMPONENT_TABLE_ACTION_SPAN"] = "Force end conversation";
 $MESS["OL_COMPONENT_TABLE_ACTION_START"] = "Start conversation";
+$MESS["OL_COMPONENT_TABLE_DEVICE_TYPE_MOBILE"] = "Mobile";
+$MESS["OL_COMPONENT_TABLE_DEVICE_TYPE_WEB"] = "Web";
 $MESS["OL_COMPONENT_TABLE_INPUT"] = "Inbound";
 $MESS["OL_COMPONENT_TABLE_NO"] = "No";
 $MESS["OL_COMPONENT_TABLE_OUTPUT"] = "Outbound";
@@ -61,6 +63,7 @@ $MESS["OL_STATS_HEADER_DATE_MODIFY"] = "Modified on";
 $MESS["OL_STATS_HEADER_DATE_OPERATOR_ANSWER_NEW_1"] = "Agent accepted conversation on";
 $MESS["OL_STATS_HEADER_DATE_OPERATOR_CLOSE_NEW"] = "Agent closed on";
 $MESS["OL_STATS_HEADER_DATE_OPERATOR_NEW_1"] = "Request forwarded to agent on";
+$MESS["OL_STATS_HEADER_EXTRA_DEVICE_TYPE"] = "Source device";
 $MESS["OL_STATS_HEADER_EXTRA_DOMAIN"] = "Source domain";
 $MESS["OL_STATS_HEADER_EXTRA_PORTAL_TYPE"] = "Portal type";
 $MESS["OL_STATS_HEADER_EXTRA_REGISTER"] = "Registered on";

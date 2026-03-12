@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SIGN_PROXY_OPT_PUBLIC_URL'] = 'Публичный домен портала';
 $MESS['SIGN_PROXY_OPT_USE_PROXY_LOCAL'] = 'Использовать локальный адрес прокси';
 $MESS['SIGN_PROXY_OPT_PROXY_LOCAL'] = 'Локальный адрес прокси';

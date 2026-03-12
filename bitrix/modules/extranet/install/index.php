@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\SiteTable;
+
 IncludeModuleLangFile(__FILE__);
 
 class extranet extends CModule
@@ -138,6 +140,101 @@ class extranet extends CModule
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/gadgets", $_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets", True, True);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/wizards", $_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards", True, True);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/services", $_SERVER["DOCUMENT_ROOT"]."/bitrix/services", true, true);
+		$extranetSiteId = COption::GetOptionString('extranet', 'extranet_site', false);
+
+		if ($extranetSiteId && !\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			$siteResult = CSite::GetByID($extranetSiteId);
+			$site = $siteResult->Fetch();
+			if ($site)
+			{
+				$tmpSiteDir = $site['DIR'];
+				$tmpDocRoot = SiteTable::getDocumentRoot($extranetSiteId);
+
+				$extranetDocRoot = (strlen($tmpDocRoot) > 0 ? $tmpDocRoot : $_SERVER['DOCUMENT_ROOT']);
+				$extranetSiteDir = (strlen($tmpSiteDir) > 0 ? $tmpSiteDir : '/');
+
+				CopyDirFiles(
+					$_SERVER['DOCUMENT_ROOT'] . '/bitrix/wizards/bitrix/extranet/site/public',
+					$extranetDocRoot . $extranetSiteDir,
+					true,
+					true,
+					false,
+				);
+				CopyDirFiles(
+					$_SERVER['DOCUMENT_ROOT'] . '/bitrix/wizards/bitrix/extranet/site/public/index_b24.php',
+					$extranetDocRoot . $extranetSiteDir . 'index.php',
+					true,
+				);
+
+				\Bitrix\Main\UrlRewriter::add(
+					$extranetSiteId,
+					[
+						'CONDITION' => '#^' . $extranetSiteDir . 'workgroups/#',
+						'ID' => 'bitrix:socialnetwork_group',
+						'PATH' => $extranetSiteDir . 'workgroups/index.php',
+					],
+				);
+				\Bitrix\Main\UrlRewriter::add(
+					$extranetSiteId,
+					[
+						'CONDITION' => '#^' . $extranetSiteDir . 'workgroups/create/#',
+						'ID' => 'bitrix:extranet.group_create',
+						'PATH' => $extranetSiteDir . 'workgroups/create/index.php',
+					],
+				);
+				\Bitrix\Main\UrlRewriter::add(
+					$extranetSiteId,
+					[
+						'CONDITION' => '#^' . $extranetSiteDir . 'contacts/personal/#',
+						'ID' => 'bitrix:socialnetwork_user',
+						'PATH' => $extranetSiteDir . 'contacts/personal.php',
+					],
+				);
+				\Bitrix\Main\UrlRewriter::add(
+					$extranetSiteId,
+					[
+						'CONDITION' => '#^' . $extranetSiteDir . 'marketplace/#',
+						'ID' => 'bitrix:rest.marketplace',
+						'PATH' => $extranetSiteDir . 'marketplace/index.php',
+					],
+				);
+				\Bitrix\Main\UrlRewriter::add(
+					$extranetSiteId,
+					[
+						'CONDITION' => '#^' . $extranetSiteDir . 'marketplace/app/#',
+						'ID' => 'bitrix:app.layout',
+						'PATH' => $extranetSiteDir . 'marketplace/app/index.php',
+					],
+				);
+				\Bitrix\Main\UrlRewriter::add(
+					$extranetSiteId,
+					[
+						'CONDITION' => '#^' . $extranetSiteDir . 'call/detail/([0-9]+)#',
+						'RULE' => 'callId=$1',
+						'ID' => 'bitrix:call',
+						'PATH' => $extranetSiteDir . 'call/index.php',
+					],
+				);
+				\Bitrix\Main\UrlRewriter::add(
+					$extranetSiteId,
+					[
+						'CONDITION' => '#^' . $extranetSiteDir . 'vote-result/([0-9a-z\.]+)#',
+						'RULE' => 'signedAttachId=$1',
+						'ID' => 'bitrix:voting.attached.result',
+						'PATH' => $extranetSiteDir . 'vote-result/index.php',
+					],
+				);
+				\Bitrix\Main\UrlRewriter::add(
+					$extranetSiteId,
+					[
+						'CONDITION' => '#^' . $extranetSiteDir . 'task/comments/([0-9]+)#',
+						'RULE' => 'taskId=$1',
+						'PATH' => $extranetSiteDir . 'tasks/comments.php',
+					],
+				);
+			}
+		}
 
 		CUrlRewriter::Add(array(
 			"CONDITION" => "#^/stssync/contacts_extranet/#",

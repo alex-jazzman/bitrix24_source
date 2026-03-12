@@ -1,9 +1,0 @@
-<?php
-$MESS["KANBAN_ACTIVITY_STAGE_COMPLETED"] = "Завершені";
-$MESS["KANBAN_ACTIVITY_STAGE_IDLE"] = "Без справ";
-$MESS["KANBAN_ACTIVITY_STAGE_LATER"] = "Понад два тижні";
-$MESS["KANBAN_ACTIVITY_STAGE_NEXT_WEEK"] = "На наступному тижні";
-$MESS["KANBAN_ACTIVITY_STAGE_NO_DEADLINE"] = "Без терміну";
-$MESS["KANBAN_ACTIVITY_STAGE_OVERDUE"] = "Протерміновані";
-$MESS["KANBAN_ACTIVITY_STAGE_PENDING"] = "На сьогодні";
-$MESS["KANBAN_ACTIVITY_STAGE_THIS_WEEK"] = "На цьому тижні";

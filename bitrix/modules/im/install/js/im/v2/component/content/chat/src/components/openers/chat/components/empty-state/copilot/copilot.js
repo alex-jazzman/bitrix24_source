@@ -1,5 +1,4 @@
 import { Messenger } from 'im.public';
-import { CopilotRolesDialog } from 'im.v2.component.elements.copilot-roles-dialog';
 import { ChatButton, ButtonSize, type CustomColorScheme } from 'im.v2.component.elements.button';
 import { Color } from 'im.v2.const';
 import { SpecialBackground, ThemeManager } from 'im.v2.lib.theme';
@@ -17,12 +16,11 @@ const BUTTON_TEXT_COLOR = 'rgba(82, 92, 105, 0.9)';
 // @vue/component
 export const CopilotEmptyState = {
 	name: 'CopilotEmptyState',
-	components: { ChatButton, CopilotRolesDialog },
+	components: { ChatButton },
 	data(): JsonObject
 	{
 		return {
 			isCreatingChat: false,
-			showRolesDialog: false,
 		};
 	},
 	computed:
@@ -51,23 +49,21 @@ export const CopilotEmptyState = {
 	},
 	methods:
 	{
-		onCreateChatClick()
+		async createDefaultChat(): Promise<void>
 		{
-			this.showRolesDialog = true;
-		},
-		async createChat(role): Promise<void>
-		{
-			const roleCode = role.code;
 			this.isCreatingChat = true;
-			this.showRolesDialog = false;
 
-			const newDialogId = await this.getCopilotService().createChat({ roleCode })
-				.catch(() => {
-					this.isCreatingChat = false;
-				});
+			try
+			{
+				const newDialogId = await this.getCopilotService().createDefaultChat();
 
-			this.isCreatingChat = false;
-			void Messenger.openCopilot(newDialogId);
+				this.isCreatingChat = false;
+				void Messenger.openCopilot(newDialogId);
+			}
+			catch
+			{
+				this.isCreatingChat = false;
+			}
 		},
 		getCopilotService(): CopilotService
 		{
@@ -95,14 +91,9 @@ export const CopilotEmptyState = {
 					:text="loc('IM_CONTENT_COPILOT_EMPTY_STATE_ASK_QUESTION')"
 					:isRounded="true"
 					:isLoading="isCreatingChat"
-					@click="onCreateChatClick"
+					@click="createDefaultChat"
 				/>
 			</div>
-			<CopilotRolesDialog 
-				v-if="showRolesDialog"
-				@selectRole="createChat"
-				@close="showRolesDialog = false"
-			/>
 		</div>
 	`,
 };

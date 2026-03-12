@@ -136,6 +136,8 @@ class Baas extends CModule
 				{
 					throw new Main\SystemException('Error while auto registering the host');
 				}
+
+				\Bitrix\Baas\Baas::getInstance()->sync();
 			}
 			catch (\Exception)
 			{

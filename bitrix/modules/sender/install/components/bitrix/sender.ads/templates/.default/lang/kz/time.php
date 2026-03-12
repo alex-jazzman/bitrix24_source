@@ -1,6 +1,0 @@
-<?php
-$MESS["SENDER_ADS_LETTER_TIME_TMPL_ACT_SEND"] = "Іске қосу";
-$MESS["SENDER_ADS_LETTER_TIME_TMPL_ACT_SENT"] = "Іске қосылды";
-$MESS["SENDER_ADS_LETTER_TIME_TMPL_DATE_SEND"] = "Іске қосу күні";
-$MESS["SENDER_ADS_LETTER_TIME_TMPL_TITLE_EXISTS"] = "%name%";
-$MESS["SENDER_ADS_LETTER_TIME_TMPL_TITLE_NEW"] = "%name% іске қосуға дайын!";

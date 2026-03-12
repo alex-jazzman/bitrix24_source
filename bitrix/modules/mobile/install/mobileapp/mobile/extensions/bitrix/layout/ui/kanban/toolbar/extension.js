@@ -24,6 +24,17 @@ jn.define('layout/ui/kanban/toolbar', (require, exports, module) => {
 			};
 
 			this.onToolbarClick = this.onToolbarClick.bind(this);
+			this.ref = null;
+		}
+
+		provideRef(ref)
+		{
+			const callback = this.props.onToolbarRef;
+
+			if (callback)
+			{
+				callback(ref, this);
+			}
 		}
 
 		get layout()
@@ -149,6 +160,12 @@ jn.define('layout/ui/kanban/toolbar', (require, exports, module) => {
 					View(
 						{
 							style: styles.mainWrapper,
+							ref: (ref) => {
+								if (ref)
+								{
+									this.provideRef(ref);
+								}
+							},
 						},
 						...children,
 					),

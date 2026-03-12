@@ -1,4 +1,5 @@
 import { Browser, Loc } from 'main.core';
+import { Outline } from 'ui.icon-set.api.core';
 import Button from '../../toolbar/button';
 import BasePlugin from '../base-plugin';
 
@@ -38,7 +39,7 @@ export class HistoryPlugin extends BasePlugin
 		let canUndo = false;
 		this.getEditor().getComponentRegistry().register('undo', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --undo"></span>');
+			button.setIcon(Outline.UNDO);
 			button.setDisabled(!canUndo);
 			button.setTooltip(
 				Loc.getMessage('TEXT_EDITOR_BTN_UNDO', { '#keystroke#': Browser.isMac() ? '⌘Z' : 'Ctrl+Z' }),
@@ -68,7 +69,7 @@ export class HistoryPlugin extends BasePlugin
 		let canRedo = false;
 		this.getEditor().getComponentRegistry().register('redo', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --redo"></span>');
+			button.setIcon(Outline.REDO);
 			button.setDisabled(!canRedo);
 			button.setTooltip(
 				Loc.getMessage('TEXT_EDITOR_BTN_REDO', { '#keystroke#': Browser.isMac() ? '⌘⇧Z' : 'Ctrl+Y' }),

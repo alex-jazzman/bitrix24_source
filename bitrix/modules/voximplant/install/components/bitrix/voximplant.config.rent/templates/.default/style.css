@@ -29,3 +29,47 @@
 .voximplant-config-rent-overlay.active {
 	display: initial;
 }
+
+.tel-set-global-warning {
+	background-color: #fff3cd;
+	color: #856404;
+	border: 1px solid #ffeeba;
+	padding: 10px 12px;
+	border-radius: 4px;
+	margin-bottom: 15px;
+	display: flex;
+	align-items: center;
+	font-size: 14px;
+}
+
+.tel-set-warning-icon {
+	margin-right: 8px;
+	font-size: 18px;
+	color: orange;
+}
+
+.tel-set-warning-text {
+	flex: 1;
+}
+
+/* INTERNOD Agreement Warning */
+.voximplant-internod-warning {
+	margin-bottom: 20px;
+	background-color: #fff3cd;
+	border-color: #ffc107;
+	padding: 15px;
+}
+
+.voximplant-internod-warning .ui-alert-message {
+	display: block;
+	margin-bottom: 10px;
+	color: #856404;
+}
+
+.voximplant-internod-warning-actions {
+	margin-top: 10px;
+}
+
+.voximplant-internod-warning-actions .ui-btn {
+	margin-right: 10px;
+}

@@ -533,11 +533,21 @@ BX.Tasks.Kanban.Item.prototype = {
 	 */
 	getTaskUrl: function(id)
 	{
+		let link = '';
 		if (parseInt(this.getGridData().groupId, 10) > 0)
 		{
-			return this.getGridData().pathToGroupTask.replace("#task_id#", id);
+			link = this.getGridData().pathToGroupTask.replace("#task_id#", id);
 		}
-		return this.getGridData().pathToTask.replace("#task_id#", id);
+		else
+		{
+			link = this.getGridData().pathToTask.replace("#task_id#", id);
+		}
+
+		return BX.Uri.addParam(link, {
+			ta_sec: this.getGrid().getSectionTypeForAnalytics(),
+			ta_sub: this.getGrid().getKanbanTypeForAnalytics(),
+			ta_el: 'title_click',
+		});
 	},
 
 	isCompleted: function()
@@ -1204,9 +1214,6 @@ BX.Tasks.Kanban.Item.prototype = {
 			props: {
 				className: data.counter.value > 0 ? "tasks-kanban-item-title" : "tasks-kanban-item-title tasks-kanban-item-title--with-counter"
 			}
-		});
-		BX.Event.bind(this.link, 'click', () => {
-			this.getGrid().analytics('task_view', 'title_click');
 		});
 		this.container.appendChild(this.link);
 		this.container.appendChild(BX.Tag.render`<div class="tasks-kanban-item-line"></div>`);

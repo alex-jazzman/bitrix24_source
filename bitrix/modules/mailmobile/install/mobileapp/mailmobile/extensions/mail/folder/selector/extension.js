@@ -337,8 +337,8 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 		{
 			return {
 				type: 'folder',
-				id: 'message-grid-more',
-				testId: 'message-grid-more',
+				id: 'message-grid-folder-selector-button',
+				testId: 'message-grid-folder-selector-button',
 				callback,
 			};
 		}

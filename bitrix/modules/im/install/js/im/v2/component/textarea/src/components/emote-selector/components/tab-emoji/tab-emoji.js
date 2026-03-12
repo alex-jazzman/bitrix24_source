@@ -3,12 +3,12 @@ import { Loc } from 'main.core';
 import { EventType } from 'im.v2.const';
 import { SmileManager } from 'im.v2.lib.smile-manager';
 
-import { emoji } from '../../../smile-selector/emoji';
+import { emoji } from './const/emoji';
 
 import './css/tab-emoji.css';
 
+import type { JsonObject } from 'main.core';
 import type { EventEmitter } from 'main.core.events';
-import type { Set } from 'im.v2.lib.smile-manager';
 
 // @vue/component
 export const TabEmoji = {
@@ -19,7 +19,7 @@ export const TabEmoji = {
 			required: true,
 		},
 	},
-	data(): { recentEmoji: Set }
+	data(): JsonObject
 	{
 		return {
 			recentEmoji: new Set(),

@@ -9,6 +9,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/promotion',
 		'im:messenger/lib/visibility-manager',
+		'im:messenger/lib/feature',
 		'im:messenger/controller/sidebar-v2/factory',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/provider/pull/anchor',

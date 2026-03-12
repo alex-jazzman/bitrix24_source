@@ -18,6 +18,7 @@ return [
 		'call:callList/listView',
 		'call:callList/searchView',
 		'call:callList/searchController',
+		'call:callList/analyticsController',
 		'call:callList/emptyView',
 		'call:callList/fastCallView',
 		'call:const',

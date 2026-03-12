@@ -26,6 +26,7 @@ return [
 	'rel' => [
 		'im.lib.utils',
 		'call.core',
+		'call.component.video-quality-range',
 		'im.v2.lib.promo',
 		'ui.dialogs.messagebox',
 		'ui.buttons',
@@ -33,6 +34,7 @@ return [
 		'im.v2.lib.desktop',
 		'im.v2.const',
 		'intranet.desktop-download',
+		'call.lib.accident-logger',
 		'im.v2.lib.utils',
 		'call.lib.call-token-manager',
 		'call.lib.analytics',
@@ -53,7 +55,7 @@ return [
 	'oninit' => function ()
 	{
 		$features = [];
-		$limits = \Bitrix\Im\Limit::getTypesForJs();
+		$limits = \Bitrix\Call\Limit::getTypesForJs();
 		foreach ($limits as $limit)
 		{
 			$features[$limit['id']] = [
@@ -64,17 +66,17 @@ return [
 
 		return [
 			'lang_additional' => [
-				'turn_server' => \Bitrix\Im\Call\Call::getTurnServer(),
-				'turn_server_firefox' => \Bitrix\Im\Call\Call::getTurnServer(),
+				'turn_server' => \Bitrix\Call\Call::getTurnServer(),
+				'turn_server_firefox' => \Bitrix\Call\Call::getTurnServer(),
 				'turn_server_login' => Option::get('call', 'turn_server_login'),
 				'turn_server_password' => Option::get('call', 'turn_server_password'),
 				'turn_server_max_users' => Option::get('call', 'turn_server_max_users'),
-				'call_server_enabled' => \Bitrix\Im\Call\Call::isCallServerEnabled() ? 'Y' : 'N',
-				'call_beta_ios_enabled' => \Bitrix\Im\Call\Call::isIosBetaEnabled() ? 'Y' : 'N',
-				'call_server_max_users' => \Bitrix\Im\Call\Call::getMaxCallServerParticipants(),
-				'call_log_service' => \Bitrix\Im\Call\Call::getLogService(),
+				'call_server_enabled' => \Bitrix\Call\Call::isCallServerEnabled() ? 'Y' : 'N',
+				'call_beta_ios_enabled' => \Bitrix\Call\Call::isIosBetaEnabled() ? 'Y' : 'N',
+				'call_server_max_users' => \Bitrix\Call\Call::getMaxCallServerParticipants(),
+				'call_log_service' => \Bitrix\Call\Call::getLogService(),
 				'call_client_selftest_url' => \Bitrix\Call\Library::getClientSelfTestUrl(),
-				'call_collect_stats' => Option::get('im', 'collect_call_stats', 'N'),
+				'call_collect_stats' => Option::get('call', 'collect_call_stats', 'N'),
 				'call_docs_status' => \Bitrix\Im\Integration\Disk\Documents::getDocumentsInCallStatus(),
 				'call_resumes_status' => \Bitrix\Im\Integration\Disk\Documents::getResumesOfCallStatus(),
 				'call_features' => $features,
@@ -109,14 +111,19 @@ return [
 					'plainCallFollowUpEnabled' => Settings::isPlainCallFollowUpEnabled(),
 					'plainCallCloudRecordingEnabled' => Settings::isPlainCallCloudRecordingEnabled(),
 					'callBalancerUrl' => Settings::getBalancerUrl(),
-					'isCreateCallButtonEnabled' => Settings::isCreateCallButtonEnabled(),
+					'noiseSuppressionEnabled' => Settings::isNoiseSuppressionEnabled(),
+					'accidentLogSendIntervalSecs' => Settings::getAccidentLogSendIntervalSecs(),
+					'accidentLogGroupMaxAgeSecs' => Settings::getAccidentLogGroupMaxAgeSecs(),
 				],
 				'isUserControlFeatureEnabled' => Settings::isNewCallsEnabled(),
 				'isPictureInPictureFeatureEnabled' => Settings::isNewCallsEnabled(),
+				'isStreamQualityFeatureEnabled' => Settings::isStreamQualityFeatureEnabled(),
 				'isDisableCameraNewJoinedUsersFeatureEnabled' => Settings::isDisableCameraNewJoinedUsersFeatureEnabled(),
 				'isKibanaLogsEnabled' => Settings::isKibanaLogsEnabled(),
+				'isConsoleLogsEnabled' => Settings::isConsoleLogsEnabled(),
 				'countDisableCameraNewJoinedUsersFeature' => Settings::countDisableCameraNewJoinedUsersFeature(),
-				'isNewQOSEnabled' => Settings::isNewQOSEnabled(),
+				'isMetricsEnabled' => Settings::isMetricsEnabled(),
+				'isMetricsLogsEnabled' => Settings::isMetricsLogsEnabled(),
 				'isAirDesignEnabled' => \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->isAirDesignEnabled(),
 				'shouldHideQuickAccess' => \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->shouldHideQuickAccess(),
 				'isCloudRecordEnabled' => Settings::isCloudRecordEnabled(),

@@ -1,5 +1,0 @@
-<?php
-$MESS["TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_ACCESS_TO_TASK_DENIED"] = "Недостатньо прав для перегляду завдання.";
-$MESS["TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_CHAT_NOT_FOUND"] = "Чат завдання не знайдено.";
-$MESS["TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_CHAT_NOT_TASK_CHAT"] = "Чат не є чатом завдання.";
-$MESS["TASKS_RESULT_CREATE_FROM_MESSAGE_RULE_TASK_ID_NOT_FOUND"] = "Завдання не знайдено.";

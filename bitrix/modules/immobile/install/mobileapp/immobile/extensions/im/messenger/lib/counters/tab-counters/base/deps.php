@@ -7,6 +7,5 @@ return [
 		'im:messenger/lib/feature',
 		'im:messenger/lib/logger',
 		'im:messenger/const',
-		'im:messenger/lib/counters/counter-manager/messenger/sender',
 	],
 ];

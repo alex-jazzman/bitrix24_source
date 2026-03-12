@@ -12,6 +12,8 @@ type DragState = {
 	offsetY: number,
 	lastTargetBlockIndex: number | null,
 	lastTargetItemIndex: number | null,
+	mouseX: number,
+	mouseY: number,
 };
 
 // @vue/component
@@ -46,6 +48,8 @@ export const DraggableContainer = {
 				offsetY: 0,
 				lastTargetBlockIndex: null,
 				lastTargetItemIndex: null,
+				mouseX: 0,
+				mouseY: 0,
 			},
 		};
 	},
@@ -61,6 +65,7 @@ export const DraggableContainer = {
 		this.boundHandleDragMove = this.handleDragMove.bind(this);
 		this.boundHandleDragEnd = this.handleDragEnd.bind(this);
 
+		EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.onScrollContainer);
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.onGlobalDragStart);
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:dragover', this.onGlobalDragOver);
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:end', this.onGlobalDragEnd);
@@ -70,6 +75,7 @@ export const DraggableContainer = {
 		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.onGlobalDragStart);
 		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:dragover', this.onGlobalDragOver);
 		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:end', this.onGlobalDragEnd);
+		EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.onScrollContainer);
 	},
 	methods:
 		{
@@ -89,6 +95,8 @@ export const DraggableContainer = {
 				this.dragState.sourceBlockIndex = this.blockIndex;
 				this.dragState.draggedItemIndex = sourceItemIndex;
 				this.dragState.draggedElement = element;
+				this.dragState.mouseX = event.clientX;
+				this.dragState.mouseY = event.clientY;
 
 				this.createGhost(event);
 				Dom.addClass(this.dragState.draggedElement, '--dragging');
@@ -121,7 +129,12 @@ export const DraggableContainer = {
 					return;
 				}
 
+				this.dragState.mouseX = event.clientX;
+				this.dragState.mouseY = event.clientY;
+
 				this.updateGhostPosition(event);
+
+				EventEmitter.emit('Bizproc.SetupTemplate:Draggable:move', { clientY: event.clientY });
 
 				const result = { targetBlockIndex: null, targetItemIndex: null };
 				const elementUnderCursor = document.elementFromPoint(event.clientX, event.clientY);
@@ -200,6 +213,8 @@ export const DraggableContainer = {
 					offsetY: 0,
 					lastTargetBlockIndex: null,
 					lastTargetItemIndex: null,
+					mouseX: 0,
+					mouseY: 0,
 				};
 			},
 			updateGhostPosition(event: MouseEvent): void
@@ -224,6 +239,13 @@ export const DraggableContainer = {
 				this.dragState.ghostElement = ghost;
 
 				this.updateGhostPosition(event);
+			},
+			onScrollContainer(): void
+			{
+				if (this.isDragging)
+				{
+					this.handleDragMove({ clientX: this.dragState.mouseX, clientY: this.dragState.mouseY });
+				}
 			},
 		},
 	template: `

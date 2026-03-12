@@ -9,7 +9,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { NotifyManager } = require('notify-manager');
 	const { ActionsPanel } = require('layout/ui/detail-card/toolbar/actions-panel');
-	const { FloatingButton, FloatingActionButtonSupportNative } = require('layout/ui/detail-card/floating-button');
+	const { FloatingButton } = require('layout/ui/detail-card/floating-button');
 	const { ToolbarPadding } = require('layout/ui/detail-card/toolbar/toolbar-padding');
 	const { TabFactory } = require('layout/ui/detail-card/tabs/factory');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
@@ -206,6 +206,25 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			this.customEvents.forEach(([event, handler]) => {
 				this.customEventEmitter.on(event, (...args) => handler(this, ...args));
 			});
+
+			this.showOnboarding();
+		}
+
+		showOnboarding()
+		{
+			void requireLazy('onboarding', false).then(({ OnboardingBase, CaseName }) => {
+				if (OnboardingBase)
+				{
+					const { isClientEnabled = false, permissions = {} } = this.getComponentParams();
+					const entityTypeId = this.getEntityTypeId();
+
+					void OnboardingBase.tryToShow(CaseName.ON_DETAIL_CARD_TELEGRAM_BOT, {
+						isClientEnabled,
+						entityTypeId,
+						hasOpenLinesAccess: permissions.openLinesAccess,
+					});
+				}
+			});
 		}
 
 		/**
@@ -312,6 +331,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 					buttons.push({
 						id: 'more-menu',
 						type: 'more',
+						badgeCode: 'detail_more_menu',
 						callback: this.showMenu,
 					});
 				}
@@ -608,6 +628,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				selectable: tab.selectable,
 				active: tab.id === this.activeTab,
 				label: tab.label || '',
+				spotlightId: tab.id,
 			};
 
 			if (!this.mounted)
@@ -817,16 +838,6 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			});
 		}
 
-		renderFloatingButton()
-		{
-			if (this.isFloatingButtonEnabled && !FloatingActionButtonSupportNative(this.layout))
-			{
-				return this.createFloatingButton();
-			}
-
-			return null;
-		}
-
 		renderAhaMoments()
 		{
 			if (this.ahaMomentsManager && this.state.ahaMoment)
@@ -925,9 +936,6 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 		createFloatingButton()
 		{
 			return new FloatingButton({
-				ref: (ref) => {
-					this.floatingButtonRef = ref;
-				},
 				detailCard: this,
 				provider: this.floatingButtonProvider,
 			});
@@ -1041,7 +1049,6 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 						onErrorHandler: this.ajaxErrorHandler,
 						onContentLoaded: this.handleTabContentLoaded.bind(this, tabId),
 						onScroll: (scrollParams) => this.handleTabScroll(scrollParams, tabId),
-						externalFloatingButton: this.isFloatingButtonEnabled,
 					});
 				});
 		}
@@ -1088,9 +1095,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				// ToDo rethink this
 				this.customEventEmitter.emit('DetailCard::onSliderPageChange', [selectedTab.id]);
 
-				if (this.floatingButtonRef)
+				if (this.floatingButton)
 				{
-					this.floatingButtonRef.actualize();
+					this.floatingButton.actualize(selectedTab.id);
 				}
 
 				if (this.state.ahaMoment && !this.state.ahaMoment.state.isVisible)
@@ -1369,9 +1376,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				this.onTabContentLoadedHandler(tabId, response, this);
 			}
 
-			if (this.floatingButtonRef)
+			if (this.floatingButton)
 			{
-				this.floatingButtonRef.actualize();
+				this.floatingButton.actualize(tabId);
 			}
 
 			if (this.ahaMomentsManager && !this.state.ahaMoment)
@@ -1796,6 +1803,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			}
 
 			this.setLoading(false);
+			this.markOnboardingCaseAsShown();
 
 			const { closeOnSave } = this.getComponentParams();
 			if (closeOnSave)
@@ -1806,6 +1814,26 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			}
 
 			return this.reloadWithData(load);
+		}
+
+		markOnboardingCaseAsShown()
+		{
+			const context = BX.componentParameters.get('context', {});
+			if (!context?.caseForMarkAsShown || context?.necessaryEntityTypeId !== this.getEntityTypeId())
+			{
+				return;
+			}
+
+			void requireLazy('onboarding', false)
+				.then(({ CaseHistory }) => {
+					if (CaseHistory)
+					{
+						void new CaseHistory().markAsShown(context.caseForMarkAsShown);
+					}
+				})
+				.catch((error) => {
+					console.error(error);
+				});
 		}
 
 		setHeaderProcessor(headerProcessor)
@@ -1873,7 +1901,6 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				this.renderBottomPadding(),
 				this.renderActionsPanel(),
 				...this.getAdditionalElements(),
-				this.renderFloatingButton(),
 				this.renderTopContent(),
 				this.renderAhaMoments(),
 			);
@@ -1943,11 +1970,8 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 				this.layout.showComponent(this);
 
-				if (this.isFloatingButtonEnabled)
-				{
-					this.floatingButtonRef = this.createFloatingButton();
-					this.floatingButtonRef.initNativeButton(this.layout);
-				}
+				this.floatingButton = this.createFloatingButton();
+				this.floatingButton.initNativeButton();
 			});
 
 			return this;

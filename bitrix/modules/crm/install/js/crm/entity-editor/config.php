@@ -41,7 +41,7 @@ return [
 		"/bitrix/js/crm/entity-editor/js/product-list.js",
 		"/bitrix/js/crm/entity-editor/js/store-document-product-list.js",
 		'/bitrix/js/crm/entity-editor/js/entity-selector.js',
-		'/bitrix/js/crm/entity-editor/js/recurring/recurring-v2.js',
+		'/bitrix/js/crm/entity-editor/js/recurring-v2.js',
 	],
 	'rel' => [
 		'ui.design-tokens',

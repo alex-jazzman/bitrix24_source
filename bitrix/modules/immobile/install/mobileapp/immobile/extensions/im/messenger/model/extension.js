@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/model', (require, exports, module) => {
 	const { applicationModel } = require('im/messenger/model/application');
-	const { recentModel, recentDefaultElement } = require('im/messenger/model/recent');
+	const { recentDefaultElement, recentModel } = require('im/messenger/model/recent');
 	const { counterModel } = require('im/messenger/model/counter');
 	const { messagesModel, messageDefaultElement } = require('im/messenger/model/messages');
 	const { usersModel, userDefaultElement } = require('im/messenger/model/users');
@@ -18,8 +18,8 @@ jn.define('im/messenger/model', (require, exports, module) => {
 
 	module.exports = {
 		applicationModel,
-		recentModel,
 		counterModel,
+		recentModel,
 		messagesModel,
 		usersModel,
 		dialoguesModel,

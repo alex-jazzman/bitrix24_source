@@ -1,8 +1,6 @@
 <?php
 
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT'] = 'Интервал будет применяться для всех отчётов, кроме тех, где указан свой период. #HINT_LINK#';
-$MESS['BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_HINT'] = 'После отключения все пользовательские отчёты, датасеты и настройки будут безвозвратно удалены. Восстановить информацию не получится, всё надо будет настроить заново. #HINT_LINK#';
-$MESS['BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_DELETE_BUTTON'] = 'Отключить';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT_LINK'] = 'Подробнее';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_HINT_LINK'] = 'С помощью ключа данные для отчётов передаются из Битрикс24 в BI Конструктор. Обновите ключ, если он попал к посторонним лицам. Так вы снизите риски несанкционированного доступа к важной информации. #HINT_LINK#';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON_MSGVER_1'] = 'Обновить ключ';
@@ -11,7 +9,6 @@ $MESS['BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS'] = 'Ключ успеш
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED'] = 'При обновлении ключа произошла ошибка';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_RANGE_FIELD_HINT'] = 'Изменение периода повлияет только на этот отчёт';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK'] = 'Подробнее';
-$MESS['BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK'] = 'Владелец имеет полный доступ к отчёту. Если вы смените владельца, то можете потерять доступ к этому отчёту. #HINT_LINK#';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_HINT_LINK'] = 'Данные обновятся во всех отчётах. Повторное обновление будет доступно через определённый период времени. #HINT_LINK#';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON'] = 'Обновить данные';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_SUCCESS'] = 'Данные отчётов обновлены';
@@ -22,6 +19,7 @@ $MESS['BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_2'
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FROM_TITLE'] = 'Начало периода';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_TO_TITLE'] = 'Конец периода';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT'] = 'Вы можете потерять доступ к отчёту, если удалите его из групп, к которым у вас есть доступ. #HINT_LINK#';
+$MESS['BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT_CLEARABLE'] = 'Если удалить отчёт из всех групп, его не увидят сотрудники вашего Битрикс24';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_GROUP_HINT'] = 'При добавлении в группу отчёты появляются в верхнем меню соответствующего раздела Битрикс24 #HINT_LINK#';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_CURRENT_DASHBOARD_LANGUAGE'] = '[div]Текущий язык[/div] #LANGUAGE#';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_CHANGE_DASHBOARD_LANGUAGE'] = 'Сменить';

@@ -1,0 +1,6 @@
+<?php
+$MESS["CRM_COMPLEX_ACTIVITY_CONTACT_DESCRIPTION"] = "Creates and modifies contacts, adds observers, and performs other contact related actions.";
+$MESS["CRM_COMPLEX_ACTIVITY_CONTACT_DESCRIPTION_NODE_ACTION_CHANGE"] = "Modify contact";
+$MESS["CRM_COMPLEX_ACTIVITY_CONTACT_DESCRIPTION_NODE_ACTION_DELETE"] = "Delete contact";
+$MESS["CRM_COMPLEX_ACTIVITY_CONTACT_DESCRIPTION_NODE_ACTION_SET_COMPANY"] = "Change associated company";
+$MESS["CRM_COMPLEX_ACTIVITY_CONTACT_NAME"] = "Contact";

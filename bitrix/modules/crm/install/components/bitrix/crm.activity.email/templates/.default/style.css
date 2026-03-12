@@ -53,3 +53,8 @@
 	width: 100%;
 	margin-top: 0.5em;
 }
+
+.crm-mail-msg-iframe {
+	border: none;
+	display: block;
+}

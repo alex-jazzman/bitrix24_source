@@ -8,8 +8,8 @@ import 'ui.icon-set.outline';
 import { Core } from 'tasks.v2.core';
 import { Model } from 'tasks.v2.const';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
+import { FieldHoverButton } from 'tasks.v2.component.elements.field-hover-button';
 import { FieldAdd } from 'tasks.v2.component.elements.field-add';
-import { AddButton } from 'tasks.v2.component.elements.add-button';
 import { Hint } from 'tasks.v2.component.elements.hint';
 import { UserLabel } from 'tasks.v2.component.elements.user-label';
 import { idUtils } from 'tasks.v2.lib.id-utils';
@@ -30,7 +30,7 @@ export const Participants = {
 		Popup,
 		HoverPill,
 		FieldAdd,
-		AddButton,
+		FieldHoverButton,
 		Hint,
 		UserLabel,
 		Users,
@@ -96,6 +96,14 @@ export const Participants = {
 		featureId: {
 			type: String,
 			default: '',
+		},
+		showMenu: {
+			type: Boolean,
+			default: true,
+		},
+		forceEdit: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	emits: ['update', 'hintClick'],
@@ -304,9 +312,10 @@ export const Participants = {
 				/>
 			</div>
 			<div v-else>
-				<AddButton 
-					v-if="canAdd && !inline" 
-					:isVisible="isDialogShown || isHovered" 
+				<FieldHoverButton
+					v-if="canAdd && !inline"
+					:icon="Outline.PLUS_L"
+					:isVisible="isDialogShown || isHovered"
 					:isLocked
 					@click="showDialog(true)"
 				/>
@@ -319,6 +328,8 @@ export const Participants = {
 					:removableUserId
 					:single
 					:inline
+					:showMenu
+					:forceEdit
 					@edit="showDialog"
 					@remove="removeUser"
 				/>
@@ -340,6 +351,9 @@ export const Participants = {
 				:canRemove
 				:removableUserId
 				:single
+				:showMenu
+				:forceEdit
+				fromPopup
 				@edit="showDialog"
 				@remove="removeUser"
 			/>

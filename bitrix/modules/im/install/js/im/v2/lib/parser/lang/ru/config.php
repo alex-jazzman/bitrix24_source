@@ -15,3 +15,5 @@ $MESS["IM_PARSER_LINES_RATING"] = "Рейтинг";
 $MESS["IM_PARSER_LINES_RATING_LIKE"] = "Нравится";
 $MESS["IM_PARSER_LINES_RATING_DISLIKE"] = "Не нравится";
 $MESS["IM_PARSER_MENTION_DIALOG"] = "Кликните для перехода в контекст диалога";
+$MESS["IM_PARSER_QUOTE_EXPAND"] = "Развернуть";
+$MESS["IM_PARSER_QUOTE_COLLAPSE"] = "Свернуть";

@@ -4,5 +4,6 @@ export { LocalSearch } from './local-search';
 export { getUsersFromRecentItems } from './helpers/get-users-from-recent-items';
 export { getRecentListItems } from './helpers/get-recent-items';
 export { sortByDate } from './helpers/sort-items-by-date';
+export { EntitySearch } from './const/const';
 
-export type { ImRecentProviderItem, SearchResultItem, SearchConfig } from './types/types';
+export type { ImRecentProviderItem, SearchResultItem, SearchConfig, EntitySearchConfigType } from './types/types';

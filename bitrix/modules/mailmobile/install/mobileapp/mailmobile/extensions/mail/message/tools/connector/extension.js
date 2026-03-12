@@ -2,6 +2,8 @@
  * @module mail/message/tools/connector
  */
 jn.define('mail/message/tools/connector', (require, exports, module) => {
+	const { AjaxMethod } = require('mail/const');
+
 	function buildSender(email, senders)
 	{
 		let name = email;
@@ -270,7 +272,7 @@ jn.define('mail/message/tools/connector', (require, exports, module) => {
 	 */
 	function getChainPromise(id, isCrmMessage = 1)
 	{
-		return BX.ajax.runAction('mailmobile.api.Message.getChain', {
+		return BX.ajax.runAction(AjaxMethod.getMessageChain, {
 			data: {
 				id,
 				messageType: isCrmMessage,

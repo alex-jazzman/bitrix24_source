@@ -3,26 +3,20 @@
  */
 jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 	const { Type } = require('type');
-	const {
-		CounterType,
-		DialogType,
-	} = require('im/messenger/const');
+	const { CounterType } = require('im/messenger/const');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
-	const { CounterStorageWriter } = require('im/messenger/lib/counters/counter-manager/storage/writer');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
-	const { UserHelper } = require('im/messenger/lib/helper');
+	const { UserHelper, CounterHelper } = require('im/messenger/lib/helper');
 
-	const { getLogger } = require('im/messenger/lib/logger');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
-	const logger = getLogger('pull-handler--counters');
+	const logger = getLoggerWithContext('pull-handler--counters', 'CounterPullHandler');
 
 	/**
 	 * @class CounterPullHandler
 	 */
 	class CounterPullHandler extends BasePullHandler
 	{
-		/** @type {CounterStorageWriter} */
-		#storageWriter;
 		/** @type {UuidManager} */
 		#uuidManager;
 
@@ -33,7 +27,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			super({});
 
-			this.#storageWriter = storageWriter ?? CounterStorageWriter.getInstance();
 			this.#uuidManager = UuidManager.getInstance();
 		}
 
@@ -47,7 +40,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			{
 				return;
 			}
-			logger.log(`${this.getClassName()}.handleMessage`, params, extra, command);
+			logger.log('handleMessage', params, extra, command);
 
 			const {
 				chatId,
@@ -64,12 +57,15 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				return;
 			}
 
-			this.setCounter({
+			this.#setCounter({
 				chatId,
 				counter,
 				type,
 				parentChatId,
-			});
+			})
+				.catch((error) => {
+					logger.error('handleMessage error', error);
+				});
 		}
 
 		/**
@@ -82,7 +78,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			{
 				return;
 			}
-			logger.log(`${this.getClassName()}.handleMessageChat`, params, extra, command);
+			logger.log('handleMessageChat', params, extra, command);
 
 			if (this.#isSharedEvent(extra))
 			{
@@ -91,40 +87,33 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				return;
 			}
 
-			const {
-				chatId,
-				counter,
-				counterType,
-			} = params;
+			const chat = params.chat[params.chatId];
 
-			const chat = params.chat[chatId];
-
-			if (chat.type === DialogType.tasksTask || counterType === CounterType.tasksTask)
-			{
-				return;
-			}
-
-			/** @type {CounterState} */
+			/** @type {CounterModelState} */
 			const counterState = {
-				chatId,
-				counter,
-				type: counterType,
+				chatId: params.chatId,
+				counter: params.counter,
+				type: params.counterType,
 				parentChatId: chat.parent_chat_id,
+				disabled: CounterHelper.getDisabledByMuteList(chat.mute_list),
 			};
 
-			this.setCounter(counterState);
+			this.#setCounter(counterState)
+				.catch((error) => {
+					logger.error('handleMessageChat error', error);
+				});
 		}
 
 		/**
 		 * @param {MessagePullHandlerMessageDeleteV2Params} params
 		 */
-		async handleMessageDeleteV2(params, extra, command)
+		handleMessageDeleteV2(params, extra, command)
 		{
 			if (this.interceptEvent(extra))
 			{
 				return;
 			}
-			logger.log(`${this.getClassName()}.handleMessageDeleteV2`, params, extra, command);
+			logger.log('handleMessageDeleteV2', params, extra, command);
 
 			if (this.#isSharedEvent(extra))
 			{
@@ -137,28 +126,26 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				counterType,
 			} = params;
 
-			if (counterType === CounterType.tasksTask)
-			{
-				return;
-			}
-
 			let {
 				parentChatId = 0,
 			} = params;
 
 			if (counterType === CounterType.comment) // in this event for comment chat property "type" is equal 'chat'
 			{
-				const commentCounterState = await this.#getStoredState(chatId);
+				const commentCounterState = this.#getStoredState(chatId);
 
 				parentChatId = commentCounterState?.parentChatId ?? 0;
 			}
 
-			this.setCounter({
+			this.#setCounter({
 				chatId,
 				counter,
 				type: counterType,
 				parentChatId,
-			});
+			})
+				.catch((error) => {
+					logger.error('handleMessageDeleteV2 error', error);
+				});
 		}
 
 		async handleReadMessage(params, extra, command)
@@ -172,11 +159,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			{
 				return;
 			}
-			logger.log(`${this.getClassName()}.handleReadMessage`, params, extra, command);
+			logger.log('handleReadMessage', params, extra, command);
 
 			if (this.#isLocalActionUuid(extra))
 			{
-				logger.log(`${this.getClassName()}.handleReadMessage. This event sent by current device. Skip event`);
+				logger.log('handleReadMessage. This event sent by current device. Skip event');
 
 				return;
 			}
@@ -194,7 +181,45 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				parentChatId: 0,
 			};
 
-			this.setCounter(counterState);
+			this.#setCounter(counterState)
+				.catch((error) => {
+					logger.error('handleReadMessage error', error);
+				});
+		}
+
+		handleReadAllChats(params, extra, command)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			logger.info('handleReadAllChats', params);
+			this.#clearCounters()
+				.catch((error) => {
+					logger.error('handleReadAllChats error', error);
+				});
+		}
+
+		/**
+		 * @param {ReadAllChatsByTypeParams} params
+		 * @param {PullExtraParams} extra
+		 * @param {string} command
+		 */
+		handleReadAllChatsByType(params, extra, command)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			const { type } = params;
+
+			logger.info('handleReadAllChatsByType', params);
+			this.#clearCountersByDialogType(type)
+				.catch((error) => {
+					logger.error('handleReadAllChatsByType error', error);
+				});
 		}
 
 		handleReadMessageChat(params, extra, command)
@@ -210,11 +235,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			{
 				return;
 			}
-			logger.log(`${this.getClassName()}.handleReadMessageChat`, params, extra, command);
+			logger.log('handleReadMessageChat', params, extra, command);
 
 			if (this.#isLocalActionUuid(extra))
 			{
-				logger.log(`${this.getClassName()}.handleReadMessageChat. This event sent by current device. Skip event`);
+				logger.log('handleReadMessageChat. This event sent by current device. Skip event');
 
 				return;
 			}
@@ -226,11 +251,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				parentChatId,
 			} = params;
 
-			if (counterType === CounterType.tasksTask)
-			{
-				return;
-			}
-
 			/** @type {CounterState} */
 			const counterState = {
 				chatId,
@@ -239,7 +259,10 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				type: counterType,
 			};
 
-			this.setCounter(counterState);
+			this.#setCounter(counterState)
+				.catch((error) => {
+					logger.error('handleReadMessageChat error', error);
+				});
 		}
 
 		handleReadAllChannelComments(params, extra, command)
@@ -257,8 +280,10 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			logger.log(`${this.constructor.name}.handleReadAllChannelComments`, params, extra, command);
 
 			const { chatId } = params;
-
-			this.#storageWriter.clearChannelCommentsCounter(chatId);
+			this.store.dispatch('counterModel/readChildChatsCounters', { parentChatId: chatId })
+				.catch((error) => {
+					logger.error('handleReadAllChannelComments error', error);
+				});
 		}
 
 		handleUnreadMessage(params, extra, command)
@@ -271,7 +296,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 			if (this.#isLocalActionUuid(extra))
 			{
-				logger.log(`${this.getClassName()}.handleUnreadMessage. This event sent by current device. Skip event`);
+				logger.log('handleUnreadMessage. This event sent by current device. Skip event');
 
 				return;
 			}
@@ -283,15 +308,18 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				parentChatId = 0,
 			} = params;
 
-			this.setCounter({
+			this.#setCounter({
 				chatId,
 				counter,
 				type,
 				parentChatId,
-			});
+			})
+				.catch((error) => {
+					logger.error('handleUnreadMessage error', error);
+				});
 		}
 
-		async handleUnreadMessageChat(params, extra, command)
+		handleUnreadMessageChat(params, extra, command)
 		{
 			if (this.interceptEvent(extra))
 			{
@@ -301,7 +329,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 			if (this.#isLocalActionUuid(extra))
 			{
-				logger.log(`${this.getClassName()}.handleUnreadMessageChat. This event sent by current device. Skip event`);
+				logger.log('handleUnreadMessageChat. This event sent by current device. Skip event');
 
 				return;
 			}
@@ -312,26 +340,24 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				counterType,
 			} = params;
 
-			if (counterType === CounterType.tasksTask)
-			{
-				return;
-			}
+			const storedEvent = this.#getStoredState(chatId);
 
-			const storedEvent = await this.#getStoredState(chatId);
-
-			this.setCounter({
+			this.#setCounter({
 				chatId,
 				counter,
 				type: counterType,
 				parentChatId: storedEvent?.parentChatId ?? 0,
-			});
+			})
+				.catch((error) => {
+					logger.error('handleUnreadMessageChat error', error);
+				});
 		}
 
 		/**
 		 * @param {ChatUnreadPullHandlerParams} params
 		 * @param {PullExtraData} extra
 		 */
-		async handleChatUnread(params, extra)
+		handleChatUnread(params, extra)
 		{
 			if (this.interceptEvent(extra))
 			{
@@ -350,14 +376,17 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				counterType,
 			} = params;
 
-			const storedEvent = await this.#getStoredState(chatId);
+			const storedEvent = this.#getStoredState(chatId);
 
-			this.setCounter({
+			this.#setCounter({
 				chatId,
 				counter,
 				type: counterType,
 				parentChatId: storedEvent?.parentChatId ?? 0,
-			});
+			})
+				.catch((error) => {
+					logger.error('handleChatUnread error', error);
+				});
 		}
 
 		handleChatDelete(params, extra, command)
@@ -375,7 +404,10 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 			const { chatId } = params;
 
-			this.deleteCounter(chatId);
+			this.#deleteCounter(chatId)
+				.catch((error) => {
+					logger.error('handleChatDelete error', error);
+				});
 		}
 
 		handleChatHide(params, extra, command)
@@ -393,7 +425,10 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 			const { chatId } = params;
 
-			this.deleteCounter(chatId);
+			this.#deleteCounter(chatId)
+				.catch((error) => {
+					logger.error('handleChatHide error', error);
+				});
 		}
 
 		handleChatUserLeave(params, extra, command)
@@ -419,7 +454,10 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				return;
 			}
 
-			this.deleteCounter(chatId);
+			this.#deleteCounter(chatId)
+				.catch((error) => {
+					logger.error('handleChatUserLeave error', error);
+				});
 		}
 
 		handleChatMuteNotify(params, extra, command)
@@ -434,30 +472,93 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				chatId,
 				counter,
 				counterType,
+				muted: disabled,
 				parentChatId = 0,
 			} = params;
 
-			if (counterType === CounterType.tasksTask)
-			{
-				return;
-			}
-
-			this.setCounter({
+			this.#setCounter({
 				chatId,
 				counter,
 				parentChatId,
+				disabled,
+				type: counterType,
+			})
+				.catch((error) => {
+					logger.error('handleChatMuteNotify error', error);
+				});
+		}
+
+		/**
+		 * @param {RecentUpdateParams} params
+		 * @param {PullExtraParams} extra
+		 */
+		handleRecentUpdate(params, extra, command)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+			logger.log(`${this.constructor.name}.handleRecentUpdate`, params, extra, command);
+
+			const {
+				counter,
+				counterType,
+				chat,
+			} = params;
+
+			const {
+				id: chatId,
+				parent_chat_Id: parentChatId = 0,
+				mute_list: muteList,
+			} = chat;
+
+			const disabled = CounterHelper.getDisabledByMuteList(muteList);
+
+			this.#setCounter({
+				chatId,
+				counter,
+				parentChatId,
+				disabled,
 				type: counterType,
 			});
 		}
 
 		/**
-		 * @param {CounterState} counterState
+		 * @param chatId
+		 * @return {?CounterModelState}
 		 */
-		setCounter(counterState)
+		#getStoredState(chatId)
+		{
+			return this.store.getters['counterModel/getByChatId'](chatId);
+		}
+
+		/**
+		 * @param {CounterModelState} counterState
+		 */
+		async #setCounter(counterState)
 		{
 			logger.log(`${this.constructor.name}.setCounter`, counterState);
 
-			void this.#storageWriter.set(counterState);
+			return this.store.dispatch('counterModel/setList', { counterList: [counterState] });
+		}
+
+		async #deleteCounter(chatId)
+		{
+			return this.store.dispatch('counterModel/delete', { chatIdList: [chatId] });
+		}
+
+		async #clearCounters()
+		{
+			return this.store.dispatch('counterModel/clear');
+		}
+
+		async #clearCountersByDialogType(dialogType)
+		{
+			const counterType = CounterHelper.getCounterTypeByDialogType(dialogType);
+
+			return this.store.dispatch('counterModel/clearByType', {
+				type: counterType,
+			});
 		}
 
 		/**
@@ -481,20 +582,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			}
 
 			return this.#uuidManager.hasActionUuid(extra.action_uuid);
-		}
-
-		/**
-		 * @param chatId
-		 * @return {Promise<CounterState | undefined>}
-		 */
-		async #getStoredState(chatId)
-		{
-			return (await this.#storageWriter.getCollection()).findById(chatId);
-		}
-
-		deleteCounter(chatId)
-		{
-			void this.#storageWriter.deleteFromCollection([chatId]);
 		}
 	}
 

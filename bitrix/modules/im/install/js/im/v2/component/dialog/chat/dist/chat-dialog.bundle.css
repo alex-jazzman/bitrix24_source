@@ -331,11 +331,13 @@
 	background-color: var(--im-dialog-chat__pin_scrollbar_thumb) !important;
 }
 
+.bx-im-dialog-chat__quote-button_scope {
+	box-shadow: none;
+}
+
 .bx-im-dialog-chat__quote-button {
-	position: fixed;
 	cursor: pointer;
 	opacity: 0.95;
-	z-index: 100;
 	transition: opacity .1s ease-out, transform .1s ease-out;
 }
 
@@ -370,11 +372,6 @@
 }
 .bx-im-dialog-chat__quote-button:hover .bx-im-dialog-chat__quote-icon.--hover {
 	opacity: 1;
-}
-
-.bx-im-dialog-chat__quote-button.fade-up-enter-active, .bx-im-dialog-chat__quote-button.fade-up-leave-to {
-	opacity: 0;
-	transform: translateY(10px);
 }
 .bx-im-dialog-chat__pinned_header {
 	--im-dialog-chat__header_pin_height: 52px;

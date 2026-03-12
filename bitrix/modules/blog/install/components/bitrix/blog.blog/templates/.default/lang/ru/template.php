@@ -10,4 +10,3 @@ $MESS ['BLOG_MES_DELETE'] = "Удалить";
 $MESS ['BLOG_MES_HIDE'] = "Скрыть";
 $MESS ['BLOG_MES_HIDE_POST_CONFIRM'] = "Вы уверены, что хотите скрыть это сообщение?";
 $MESS["BLOG_PHOTO"] = "Фото:";
-?>

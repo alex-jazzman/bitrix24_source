@@ -8,10 +8,12 @@ return [
 	'css' => 'dist/input.bundle.css',
 	'js' => 'dist/input.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
 		'ui.system.chip.vue',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
+		'main.core',
+		'ui.icon-set.api.core',
+		'ui.system.chip',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

@@ -11,9 +11,11 @@ use Bitrix\Main\Security\Cipher;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Security\SecurityException;
 use Bitrix\Main\Web\JWT;
-use Bitrix\Im\Call\Call;
 use Bitrix\Main\Service\MicroService\Client;
 
+/**
+ * @internal
+ */
 class JwtCall
 {
 	/** @var array<int, string> */
@@ -128,6 +130,48 @@ class JwtCall
 	}
 
 	/**
+	 * Checks portal registration validity.
+	 * @return string
+	 */
+	public static function checkPortalRegistrationAgent(): string
+	{
+		$fail = false;
+		$portalId = Settings::getPortalId();
+		if (!empty($portalId))
+		{
+			$registrationDataResult = (new ControllerClient())->getRegistrationData();
+			if (!$registrationDataResult->isSuccess())
+			{
+				$fail = true;
+			}
+			else
+			{
+				$data = $registrationDataResult->getData();
+				if (!isset($data['PORTAL_ID']) || (int)$data['PORTAL_ID'] != $portalId)
+				{
+					$fail = true;
+				}
+			}
+		}
+
+		$checkPublicUrlResult = self::checkPublicUrl();
+		if (!$checkPublicUrlResult->isSuccess())
+		{
+			$fail = true;
+		}
+
+		NotifyService::getInstance()->clearAdminNotify();
+		if ($fail)
+		{
+			NotifyService::getInstance()->addAdminNotifyError(
+				Loc::getMessage('CALL_REGISTRATION_ADMIN_NOTIFY_ERROR', ['#LINK#' => '/bitrix/admin/settings.php?mid=call&mid_menu=1&lang='.LANGUAGE_ID])
+			);
+		}
+
+		return '';
+	}
+
+	/**
 	 * Unregister portal JWT key
 	 */
 	public static function unregisterPortal(): Result
@@ -163,7 +207,7 @@ class JwtCall
 
 		if ($callServerUrl)
 		{
-			Option::set('im', 'call_server_url', $callServerUrl);
+			Option::set('call', 'call_server_url', $callServerUrl);
 		}
 
 		Signaling::sendChangedCallV2Enable($isJwtEnabled, $isPlainUseJwt, $callBalancerUrl);

@@ -5,7 +5,6 @@ import type {
 	BlockGroupNames,
 	GroupedConnections,
 	ConnectionGroupNames,
-	DiagramConnectionId,
 	Transform,
 } from '../types';
 
@@ -18,6 +17,7 @@ export type UseGetters = {
 	connectionGroupNames: ConnectionGroupNames;
 	isAnimate: boolean;
 	isDisabledBlockDiagram: boolean;
+	isMakeNewConnection: boolean;
 };
 
 export function useGetters(state): UseGetters
@@ -32,6 +32,10 @@ export function useGetters(state): UseGetters
 
 	const canvasId = computed((): string | null => {
 		return state.canvasRef?.canvasId ?? null;
+	});
+
+	const isMakeNewConnection = computed((): boolean => {
+		return state.newConnection !== null;
 	});
 
 	const groupedBlocks = computed((): GroupedBlocks => {
@@ -95,5 +99,6 @@ export function useGetters(state): UseGetters
 		connectionGroupNames,
 		isAnimate,
 		isDisabledBlockDiagram,
+		isMakeNewConnection,
 	};
 }

@@ -1,4 +1,0 @@
-<?
-$MESS["TIMEMAN_EXPORT_POPUP_CLOSE"] = "Закрити";
-$MESS["TIMEMAN_EXPORT_POPUP_TITLE_EXCEL"] = "Експорт у Excel";
-?>

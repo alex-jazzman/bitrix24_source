@@ -1,2 +1,3 @@
 <?php
+
 $MESS['SIGN_CONTROLLER_INTEGRATION_TITLE_EMPTY'] = 'Без имени';

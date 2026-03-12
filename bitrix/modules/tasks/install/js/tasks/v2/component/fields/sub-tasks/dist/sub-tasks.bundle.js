@@ -47,7 +47,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  inject: {
 	    taskId: {},
-	    isTemplate: {}
+	    isTemplate: {},
+	    analytics: {}
 	  },
 	  setup() {
 	    return {
@@ -66,7 +67,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    handleAdd(targetNode) {
 	      tasks_v2_lib_relationTasksDialog.subTasksDialog.show({
 	        targetNode,
-	        taskId: this.taskId
+	        taskId: this.taskId,
+	        analytics: this.analytics
 	      });
 	    }
 	  },
@@ -92,7 +94,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    task: {},
 	    taskId: {},
 	    isEdit: {},
-	    isTemplate: {}
+	    isTemplate: {},
+	    analytics: {}
 	  },
 	  setup() {
 	    return {
@@ -128,7 +131,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      tasks_v2_lib_relationTasksDialog.subTasksDialog.show({
 	        targetNode,
 	        taskId: this.taskId,
-	        onClose: this.highlightField
+	        onClose: this.highlightField,
+	        analytics: this.analytics
 	      });
 	    },
 	    highlightField() {

@@ -1,7 +1,6 @@
 .bx-im-collab-header__add-people-icon {
 	width: 22px;
 	height: 22px;
-	margin-right: 12px;
 	background-image: url('./images/add-people.svg');
 	background-position: center;
 	background-repeat: no-repeat;
@@ -14,4 +13,10 @@
 
 .bx-im-collab-header__add-people-icon.--active {
 	background-image: url('./images/add-people-active.svg');
+}
+
+.bx-im-collab-header__add-to-chat {
+	--im-pulse-animation__border-color_ring: var(--im-color-collab-40);
+
+	margin-right: 12px;
 }

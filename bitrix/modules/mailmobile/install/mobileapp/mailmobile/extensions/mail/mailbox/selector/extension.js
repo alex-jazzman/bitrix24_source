@@ -155,32 +155,14 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 
 		openMailboxConnector()
 		{
-			BX.ajax.runAction(
-				AjaxMethod.isMailboxConnectingAvailable,
-				{
-					data: {},
+			MailDialog.show({
+				type: MailDialog.CONNECTING_MAIL_TYPE,
+				parentWidget: this.parentWidget,
+				successCallback: (id) => {
+					this.parentWidget.close(() => {
+						BX.postComponentEvent('Mail.Mailbox::significantChangesInStructure', [id]);
+					});
 				},
-			).then(({ data }) => {
-				if (data === true)
-				{
-					MailDialog.show({
-						type: MailDialog.CONNECTING_MAIL_TYPE,
-						parentWidget: this.parentWidget,
-						successCallback: (id) => {
-							this.parentWidget.close(() => {
-								BX.postComponentEvent('Mail.Mailbox::significantChangesInStructure', [id]);
-							});
-						},
-					});
-				}
-				else
-				{
-					MailDialog.show({
-						type: MailDialog.CONNECTION_MAIL_TYPE_FORBIDDEN,
-						needsToCloseLayout: true,
-						parentWidget: this.parentWidget,
-					});
-				}
 			});
 		}
 
@@ -417,6 +399,7 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 			(button === null && isSelected && !isLastMailbox)
 			&& View(
 				{
+					testId: 'mailmobile_mailbox_selector_more_menu_button',
 					ref: (ref) => {
 						editIconRef = ref;
 					},

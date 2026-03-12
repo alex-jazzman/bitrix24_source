@@ -3,20 +3,24 @@
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\Integration\ImBot\BizprocBot;
+use Bitrix\Disk\AttachedObject;
+use Bitrix\Disk\Uf\FileUserType;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Disk\File;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-class CBPImBotCreateBotActivity extends CBPActivity
+class CBPImBotCreateBotActivity extends CBPActivity implements IBPConfigurableActivity
 {
 	private const PARAM_BOT_NAME = 'botName';
 	private const PARAM_WORK_POSITION = 'workPosition';
 	private const PARAM_AVATAR = 'avatar';
 	private const PARAM_BOT_CODE = 'botCode';
+	private const PARAM_AVATAR_DISK_FILE = 'avatarDiskFile';
 	private const RETURN_PARAM_BOT_ID = 'botId';
 
 	public function __construct($name)
@@ -28,6 +32,7 @@ class CBPImBotCreateBotActivity extends CBPActivity
 			self::PARAM_WORK_POSITION => '',
 			self::PARAM_AVATAR => null,
 			self::PARAM_BOT_CODE => '',
+			self::PARAM_AVATAR_DISK_FILE => null,
 			//return
 			self::RETURN_PARAM_BOT_ID => null,
 		];
@@ -115,6 +120,13 @@ class CBPImBotCreateBotActivity extends CBPActivity
 			$properties[$id] = $value;
 		}
 
+		$properties[self::PARAM_AVATAR_DISK_FILE] = null;
+		$diskObjectId = (string)($arCurrentValues[self::PARAM_AVATAR_DISK_FILE] ?? '');
+		if (self::isCurrentUserCanReadDiskFile($diskObjectId))
+		{
+			$properties[self::PARAM_AVATAR_DISK_FILE] = $diskObjectId;
+		}
+
 		$errors = self::validateProperties(
 			$properties,
 			new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser)
@@ -145,16 +157,23 @@ class CBPImBotCreateBotActivity extends CBPActivity
 				'FieldName' => self::PARAM_WORK_POSITION,
 				'Type' => FieldType::STRING,
 			],
-			self::PARAM_AVATAR => [
-				'Name' => Loc::getMessage('IMBOT_CREATE_BOT_ACTIVITY_PROPERTY_AVATAR'),
-				'FieldName' => self::PARAM_AVATAR,
-				'Type' => FieldType::FILE,
-			],
 			self::PARAM_BOT_CODE => [
 				'Name' => Loc::getMessage('IMBOT_CREATE_BOT_ACTIVITY_PROPERTY_BOT_CODE'),
 				'Description' => Loc::getMessage('IMBOT_CREATE_BOT_ACTIVITY_PROPERTY_BOT_CODE_DESCRIPTION'),
 				'FieldName' => self::PARAM_BOT_CODE,
 				'Type' => FieldType::STRING,
+			],
+			self::PARAM_AVATAR => [
+				'Name' => Loc::getMessage('IMBOT_CREATE_BOT_ACTIVITY_PROPERTY_AVATAR'),
+				'FieldName' => self::PARAM_AVATAR,
+				'Type' => FieldType::FILE,
+			],
+			self::PARAM_AVATAR_DISK_FILE => [
+				'Name' => Loc::getMessage('IMBOT_CREATE_BOT_ACTIVITY_PROPERTY_AVATAR_UPLOAD'),
+				'FieldName' => self::PARAM_AVATAR_DISK_FILE,
+				'Type' => FieldType::CUSTOM,
+				'AllowSelection' => false,
+				'CustomType' => 'diskFile',
 			],
 		];
 	}
@@ -178,7 +197,7 @@ class CBPImBotCreateBotActivity extends CBPActivity
 		$botId = BizprocBot::registerOrUpdateByCode([
 			BizprocBot::REGISTER_PARAM_NAME => $this->{self::PARAM_BOT_NAME},
 			BizprocBot::REGISTER_PARAM_POSITION => $this->{self::PARAM_WORK_POSITION},
-			BizprocBot::REGISTER_PARAM_AVATAR => $this->{self::PARAM_AVATAR},
+			BizprocBot::REGISTER_PARAM_AVATAR => $this->getAvatarFileId(),
 			BizprocBot::REGISTER_PARAM_CODE => (string)$this->{self::PARAM_BOT_CODE},
 		]);
 
@@ -192,5 +211,80 @@ class CBPImBotCreateBotActivity extends CBPActivity
 		$this->{self::RETURN_PARAM_BOT_ID} = $botId;
 
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	private function getAvatarFileId(): ?int
+	{
+		return $this->getAvatarFileIdFromSelection() ?? $this->getAvatarFileFromDisk();
+	}
+
+	private function getAvatarFileIdFromSelection(): ?int
+	{
+		$avatarId = $this->{self::PARAM_AVATAR};
+
+		return is_numeric($avatarId) ? (int)$avatarId : null;
+	}
+
+	private function getAvatarFileFromDisk(): ?int
+	{
+		$diskObjectId = $this->{self::PARAM_AVATAR_DISK_FILE};
+		if (empty($diskObjectId))
+		{
+			return null;
+		}
+
+		if (!Loader::includeModule('disk'))
+		{
+			return null;
+		}
+
+		[$type, $realValue] = FileUserType::detectType($diskObjectId);
+		if ($type === FileUserType::TYPE_NEW_OBJECT)
+		{
+			$fileModel = File::loadById($realValue, ['STORAGE']);
+
+			return $fileModel?->getFileId();
+		}
+
+		$attachedModel = AttachedObject::loadById($realValue, ['OBJECT', 'VERSION']);
+
+		return $attachedModel?->getFileId();
+	}
+
+	private static function isCurrentUserCanReadDiskFile(string $diskObjectId): bool
+	{
+		$user = new \CBPWorkflowTemplateUser(\CBPWorkflowTemplateUser::CurrentUser);
+		$userId = $user->getId();
+		if ($userId <= 0)
+		{
+			return false;
+		}
+
+		if (!Loader::includeModule('disk'))
+		{
+			return false;
+		}
+
+		[$type, $realValue] = FileUserType::detectType($diskObjectId);
+		if ($type === FileUserType::TYPE_NEW_OBJECT)
+		{
+			$fileModel = File::loadById($realValue, ['STORAGE']);
+
+			return $fileModel && $fileModel->canRead($fileModel->getStorage()->getCurrentUserSecurityContext());
+		}
+
+		$attachedModel = AttachedObject::loadById($realValue, ['OBJECT', 'VERSION']);
+
+		return $attachedModel && $attachedModel->canRead($userId);
+	}
+
+	public static function getPropertiesDialogMap(?PropertiesDialog $dialog = null): array
+	{
+		return static::getPropertiesMap([]);
+	}
+
+	protected static function getFileName(): string
+	{
+		return __FILE__;
 	}
 }

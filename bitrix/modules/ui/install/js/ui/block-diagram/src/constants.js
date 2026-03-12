@@ -66,3 +66,9 @@ export const BLOCK_INDEXES = {
 	STANDING: 2,
 	RESIZABLE: 1,
 };
+
+export const INPUT_TAGS = Object.freeze({
+	INPUT: true,
+	TEXTAREA: true,
+	SELECT: true,
+});

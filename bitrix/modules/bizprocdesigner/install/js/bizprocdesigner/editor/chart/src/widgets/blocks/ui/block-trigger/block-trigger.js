@@ -1,16 +1,17 @@
 import { MoveableBlock } from 'ui.block-diagram';
+import type { MenuItemOptions } from 'ui.system.menu';
 import { inject } from 'ui.vue3';
 import { Outline } from 'ui.icon-set.api.vue';
-import { isBlockActivated } from '../../../../entities/blocks/utils';
+import { isBlockActivated, getBlockUserTitle } from '../../../../entities/blocks/utils';
 import { IconDivider, IconButton } from '../../../../shared/ui';
-// eslint-disable-next-line no-unused-vars
-import type { Block, BlockId } from '../../../../shared/types';
+import type { Block } from '../../../../shared/types';
 import {
 	BlockLayout,
 	BlockHeader,
 	BlockIcon,
 	PortsInOutCenter,
 	BlockSwitcher,
+	BlockTopTitle,
 } from '../../../../entities/blocks';
 import {
 	AutosizeBlockContainer,
@@ -22,7 +23,13 @@ import { BlockMediator } from '../../lib';
 
 type BlockTriggerSetup = {
 	iconSet: { [string]: string };
-	onOpenBlockSettings: (event: MouseEvent) => void;
+	blockMediator: BlockMediator,
+	toggleBlock: () => void;
+};
+
+type Props = {
+	block: Block,
+	autosize: boolean,
 };
 
 // @vue/component
@@ -40,6 +47,7 @@ export const BlockTrigger = {
 		IconButton,
 		PortsInOutCenter,
 		BlockSwitcher,
+		BlockTopTitle,
 	},
 	props: {
 		/** @type Block */
@@ -52,13 +60,7 @@ export const BlockTrigger = {
 			default: false,
 		},
 	},
-	computed: {
-		isBlockActivated(): boolean
-		{
-			return isBlockActivated(this.block);
-		}
-	},
-	setup(props): BlockTriggerSetup
+	setup(props: Props): BlockTriggerSetup
 	{
 		const onToggleBlockActivation = inject('onToggleBlockActivation');
 		function toggleBlock(): void
@@ -79,32 +81,48 @@ export const BlockTrigger = {
 			toggleBlock,
 		};
 	},
+	computed: {
+		isBlockActivated(): boolean
+		{
+			return isBlockActivated(this.block);
+		},
+		userTitle(): ?string
+		{
+			return getBlockUserTitle(this.block);
+		},
+		contextMenuItems(): Array<MenuItemOptions>
+		{
+			return this.blockMediator.getCommonBlockMenuOptions(this.block);
+		},
+	},
 	template: `
 		<MoveableBlock :block="block">
-			<template #default="{ isHighlighted, isDragged, isDisabled }">
+			<template #default="{ isHighlighted, isDragged, isDisabled, isMakeNewConnection }">
 				<AutosizeBlockContainer
 					:blockId="block.id"
 					:autosize="autosize"
 					:width="block.dimensions.width"
 					:height="block.dimensions.height"
-					:highlighted="isHighlighted"
+					:highlighted="isHighlighted && !isDragged"
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
-					:contextMenuItems="[
-						blockMediator.getCtxMenuItemShowSimpleSettings(block),
-						blockMediator.getCtxMenuItemDeleteBlock(block),
-					]"
+					:hoverable="!isMakeNewConnection"
+					:contextMenuItems="contextMenuItems"
 					@dblclick.stop="blockMediator.showNodeSettings(block)"
 				>
 					<BlockLayout
 						:block="block"
-						:moreMenuItems="[
-							blockMediator.getCtxMenuItemShowSimpleSettings(block),
-							blockMediator.getCtxMenuItemDeleteBlock(block),
-						]"
+						:moreMenuItems="contextMenuItems"
 						:dragged="isDragged"
 						:disabled="isDisabled"
+						:hoverable="!isMakeNewConnection"
 					>
+						<template #top-menu-title>
+							<BlockTopTitle 
+								:title="userTitle"
+								:description="block.activity.Properties.EditorComment"
+							/>
+						</template>
 						<template #top-menu>
 							<DeleteBlockIconBtn
 								:blockId="block.id"
@@ -142,11 +160,7 @@ export const BlockTrigger = {
 							<UpdatePublishedStatusLabel :block="block"/>
 						</template>
 					</BlockLayout>
-				</AutosizeBlockContainer
-					:blockId="block.id"
-					:autosize="block.node.autosize"
-					:width="block.dimensions.width"
-					:height="block.dimensions.height">
+				</AutosizeBlockContainer>
 			</template>
 		</MoveableBlock>
 	`,

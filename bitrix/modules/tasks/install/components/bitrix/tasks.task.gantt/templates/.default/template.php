@@ -33,7 +33,8 @@ Extension::load([
 	'CJSTask',
 	'ui.counter',
 	'ui.stepprocessing',
-	'ui.design-tokens'
+	'ui.design-tokens',
+	'intranet.old-interface.intranet-common',
 ]);
 
 /** intranet-settings-support */
@@ -55,7 +56,6 @@ $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.def
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/gantt-view.js");
 $APPLICATION->AddHeadScript("/bitrix/js/tasks/task-iframe-popup.js");
 
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
@@ -620,20 +620,6 @@ else
 			if (cbAction === 'DELETE' && !isNaN(taskId) && taskId)
 			{
                 onPopupTaskDeleted(params.task.ID);
-            }
-            else if (cbAction === 'ADD')
-			{
-                if (params.taskUgly)
-				{
-                    onPopupTaskAdded(params.taskUgly);
-                }
-            }
-            else if (cbAction === 'UPDATE')
-			{
-                if (params.taskUgly)
-				{
-                    onPopupTaskChanged(params.taskUgly);
-                }
             }
         }
     });

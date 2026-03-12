@@ -1,6 +1,7 @@
 /* eslint-disable @bitrix24/bitrix24-rules/no-native-dom-methods */
 import { Loc, Type } from 'main.core';
 import type { BBCodeElementNode } from 'ui.bbcode.model';
+import { Outline } from 'ui.icon-set.api.core';
 import {
 	$normalizeTextNodes,
 	shouldWrapInParagraph,
@@ -176,7 +177,7 @@ export class SpoilerPlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('spoiler', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --insert-spoiler"></span>');
+			button.setIcon(Outline.SPOILER);
 			button.setBlockType('spoiler');
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_SPOILER'));
 			button.subscribe('onClick', (): void => {

@@ -22,3 +22,11 @@ export const USER_MINI_PROFILE_ATTRIBUTES = {
 export const USER_MINI_PROFILE_CONTEXT = {
 	B24: 'b24',
 };
+
+export const GRID_API_ACTION = {
+	START_TEMPLATE: 'Integration.AiAgent.Template.start',
+	COPY_AND_START_TEMPLATE: 'Integration.AiAgent.Template.copyAndStart',
+	FETCH_ROW: 'Integration.AiAgent.Template.fetchRow',
+	DELETE: 'Integration.AiAgent.Template.delete',
+	RESTART: 'Integration.AiAgent.Template.start',
+};

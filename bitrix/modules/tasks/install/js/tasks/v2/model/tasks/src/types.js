@@ -51,6 +51,7 @@ export type TaskModel = {
 	containsGanttLinks: boolean,
 	placementIds: ?number[],
 	containsPlacements: boolean,
+	containsCommentFiles: boolean,
 	results: number[],
 	resultsMessageMap: { [resultId: number]: number },
 	requireResult: boolean,
@@ -87,6 +88,7 @@ export type TaskModel = {
 	archiveLink: ?string,
 	source?: Source,
 	copiedFromId?: number,
+	context: string,
 	templateId: number,
 	maxDeadlineChangeDate: string,
 	maxDeadlineChanges: number,
@@ -183,9 +185,11 @@ export type TimerModel = {
 
 export type TaskReplicateParams = {
 	period: $Values<typeof ReplicationPeriod>;
-	time: string;
-	startDate: string;
 	repeatTill: string;
+	startTs: number;
+	startDate: string;
+	time: string,
+	endTs: ?number,
 	endDate: ?string;
 	times: ?number;
 	nextExecutionTime: string;

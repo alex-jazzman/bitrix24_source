@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_component_elements_checkbox,ui_system_typography_vue,tasks_v2_lib_calendar,main_core,main_date,ui_vue3_vuex,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_fieldHighlighter) {
+(function (exports,tasks_v2_component_elements_checkbox,ui_system_typography_vue,tasks_v2_lib_calendar,main_date,main_core,ui_vue3_vuex,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_fieldHighlighter) {
 	'use strict';
 
 	// @vue/component
@@ -40,7 +40,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div
-			class="tasks-user-field --string"
+			class="tasks-user-field print-no-border --string"
 			:class="{ '--last': isLast }"
 		>
 			<TextXs
@@ -99,7 +99,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div
-			class="tasks-user-field --double"
+			class="tasks-user-field print-no-border --double"
 			:class="{ '--last': isLast }"
 		>
 			<TextXs
@@ -153,7 +153,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div
-			class="tasks-user-field --boolean"
+			class="tasks-user-field print-no-border --boolean"
 			:class="{ '--last': isLast }"
 		>
 			<div class="tasks-user-field-boolean-row">
@@ -165,98 +165,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		</div>
 	`
 	};
-
-	// @vue/component
-	const UserFieldDate = {
-	  components: {
-	    TextMd: ui_system_typography_vue.TextMd,
-	    TextXs: ui_system_typography_vue.TextXs,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    title: {
-	      type: String,
-	      required: true
-	    },
-	    value: {
-	      type: [String, Array],
-	      default: ''
-	    },
-	    mandatory: {
-	      type: Boolean,
-	      default: false
-	    },
-	    isLast: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  session: undefined,
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  computed: {
-	    values() {
-	      if (main_core.Type.isArrayFilled(this.value)) {
-	        return this.value.map(v => this.formatDate(v));
-	      }
-	      return [this.formatDate(this.value)];
-	    }
-	  },
-	  methods: {
-	    formatDate(dateString) {
-	      const date = this.tryParseDate(dateString);
-	      if (!date) {
-	        return dateString;
-	      }
-	      return tasks_v2_lib_calendar.calendar.formatDateTime(date.getTime());
-	    },
-	    tryParseDate(dateString) {
-	      if (dateString.includes('T')) {
-	        const date = new Date(dateString);
-	        if (!this.isDate(date)) {
-	          return null;
-	        }
-	        date.setTime(date.getTime() + date.getTimezoneOffset() * 60000);
-	        return date;
-	      }
-	      const parsedDate = main_date.DateTimeFormat.parse(dateString);
-	      if (this.isDate(parsedDate)) {
-	        return parsedDate;
-	      }
-	      return null;
-	    },
-	    isDate(value) {
-	      return main_core.Type.isDate(value) && !Number.isNaN(value.getTime());
-	    }
-	  },
-	  template: `
-		<div
-			class="tasks-user-field --date"
-			:class="{ '--last': isLast }"
-		>
-			<TextXs
-				class="tasks-user-field-title"
-				:class="{ '--mandatory': mandatory }"
-			>
-				{{ title }}
-			</TextXs>
-			<template v-for="(item, index) in values" :key="index">
-				<div class="tasks-user-field-date-row">
-					<BIcon :name="Outline.CALENDAR_WITH_SLOTS"/>
-					<TextMd>{{ item }}</TextMd>
-				</div>
-			</template>
-		</div>
-	`
-	};
-
-	const userFieldsMeta = Object.freeze({
-	  id: tasks_v2_const.TaskField.UserFields,
-	  title: main_core.Loc.getMessage('TASKS_V2_USER_FIELDS_TITLE')
-	});
 
 	var _convertDatetimeValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("convertDatetimeValue");
 	var _formatDatetime = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatDatetime");
@@ -362,6 +270,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	    return result;
 	  }
+	  correctDatetimeStringWithT(dateString, date) {
+	    const offsetMatch = dateString.match(/([+-]\d{2}):(\d{2})$/);
+	    const originalOffsetMinutes = offsetMatch ? parseInt(offsetMatch[1], 10) * 60 + (parseInt(offsetMatch[1], 10) < 0 ? -1 : 1) * parseInt(offsetMatch[2], 10) : 0;
+	    const timezoneOffset = originalOffsetMinutes + date.getTimezoneOffset();
+	    date.setTime(date.getTime() + timezoneOffset * 60000);
+	    return date;
+	  }
 	}
 	function _convertDatetimeValue2(value) {
 	  if (value === null || value === '') {
@@ -383,15 +298,108 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isValidDate)[_isValidDate](date)) {
 	    return dateString;
 	  }
-	  date.setTime(date.getTime() + date.getTimezoneOffset() * 60000);
+	  const newDate = this.correctDatetimeStringWithT(dateString, date);
 	  const format = main_date.DateTimeFormat.getFormat('FORMAT_DATETIME');
-	  const timestamp = date.getTime() / 1000;
+	  const timestamp = newDate.getTime() / 1000;
 	  return main_date.DateTimeFormat.format(format, timestamp);
 	}
 	function _isValidDate2(date) {
 	  return main_core.Type.isDate(date) && !Number.isNaN(date.getTime());
 	}
 	const userFieldsManager = new UserFieldsManager();
+
+	// @vue/component
+	const UserFieldDate = {
+	  components: {
+	    TextMd: ui_system_typography_vue.TextMd,
+	    TextXs: ui_system_typography_vue.TextXs,
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    title: {
+	      type: String,
+	      required: true
+	    },
+	    value: {
+	      type: [String, Array],
+	      default: ''
+	    },
+	    mandatory: {
+	      type: Boolean,
+	      default: false
+	    },
+	    isLast: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  session: undefined,
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  computed: {
+	    values() {
+	      if (main_core.Type.isArrayFilled(this.value)) {
+	        return this.value.map(v => this.formatDate(v));
+	      }
+	      return [this.formatDate(this.value)];
+	    }
+	  },
+	  methods: {
+	    formatDate(dateString) {
+	      const date = this.tryParseDate(dateString);
+	      if (!date) {
+	        return dateString;
+	      }
+	      return tasks_v2_lib_calendar.calendar.formatDateTime(date.getTime(), {
+	        removeOffset: true
+	      });
+	    },
+	    tryParseDate(dateString) {
+	      if (dateString.includes('T')) {
+	        const date = new Date(dateString);
+	        if (!this.isDate(date)) {
+	          return null;
+	        }
+	        return userFieldsManager.correctDatetimeStringWithT(dateString, date);
+	      }
+	      const parsedDate = main_date.DateTimeFormat.parse(dateString);
+	      if (this.isDate(parsedDate)) {
+	        return parsedDate;
+	      }
+	      return null;
+	    },
+	    isDate(value) {
+	      return main_core.Type.isDate(value) && !Number.isNaN(value.getTime());
+	    }
+	  },
+	  template: `
+		<div
+			class="tasks-user-field print-no-border --date"
+			:class="{ '--last': isLast }"
+		>
+			<TextXs
+				class="tasks-user-field-title"
+				:class="{ '--mandatory': mandatory }"
+			>
+				{{ title }}
+			</TextXs>
+			<template v-for="(item, index) in values" :key="index">
+				<div class="tasks-user-field-date-row">
+					<BIcon :name="Outline.CALENDAR_WITH_SLOTS"/>
+					<TextMd>{{ item }}</TextMd>
+				</div>
+			</template>
+		</div>
+	`
+	};
+
+	const userFieldsMeta = Object.freeze({
+	  id: tasks_v2_const.TaskField.UserFields,
+	  title: main_core.Loc.getMessage('TASKS_V2_USER_FIELDS_TITLE')
+	});
 
 	// @vue/component
 	const UserFields = {
@@ -493,7 +501,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div
-			class="tasks-field-user-fields"
+			class="tasks-field-user-fields print-no-box-shadow"
 			:data-task-id="taskId"
 			:data-task-field-id="userFieldsMeta.id"
 			@mousedown="onMouseDown"
@@ -527,7 +535,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			</template>
 			<div
 				v-if="!readonly && hasUnfilledFields"
-				class="tasks-field-user-fields-footer"
+				class="tasks-field-user-fields-footer print-ignore"
 			>
 				<TextXs className="tasks-field-user-fields-footer-text">
 					{{ footerText }}
@@ -621,5 +629,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.userFieldsMeta = userFieldsMeta;
 	exports.userFieldsManager = userFieldsManager;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.UI.System.Typography.Vue,BX.Tasks.V2.Lib,BX,BX.Main,BX.Vue3.Vuex,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.UI.System.Typography.Vue,BX.Tasks.V2.Lib,BX.Main,BX,BX.Vue3.Vuex,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib));
 //# sourceMappingURL=user-fields.bundle.js.map

@@ -84,13 +84,6 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			);
 		}
 
-		[$currentEntityTypeId, $currentEntityId] = CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
-		if ($currentEntityTypeId === $this->EntityTypeId && $currentEntityId === $this->EntityId)
-		{
-			$this->workflow->Terminate();
-			throw new Exception('TerminateActivity');
-		}
-
 		return $errorCollection;
 	}
 

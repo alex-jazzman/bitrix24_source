@@ -74,6 +74,3 @@ $MESS["SEO_SITEMAP_NO_FORUM_FOUND"] = "Нет привязанных к сайт
 $MESS["SITEMAP_RUN_FORUM_EMPTY"] = "Нет форумов для обработки";
 $MESS["SITEMAP_RUN_FORUM"] = "Обработка форумов";
 $MESS["SITEMAP_RUN_FORUM_NAME"] = "Обработка форума: #FORUM_NAME#";
-
-
-?>

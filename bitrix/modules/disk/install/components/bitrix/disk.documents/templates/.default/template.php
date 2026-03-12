@@ -60,6 +60,7 @@ $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, $bo
 ?>
 <script>
 	BX.Disk.Documents.Toolbar.documentHandlers = <?= Main\Web\Json::encode($arResult['DOCUMENT_HANDLERS'])?>;
+	window.BX_ANALYTICS = <?= Main\Web\Json::encode($arResult['ANALYTICS'] ?? null) ?>;
 </script>
 <?php
 include(__DIR__ . '/toolbar.php');

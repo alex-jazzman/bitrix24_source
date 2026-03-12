@@ -1,26 +1,38 @@
-import {FullStickerData, StickerPackId, StickerPackModelState} from "../../../../../../model/sticker-pack/src/types";
+import {
+	PackWithStickers,
+	StickerPackId, StickerPackState,
+	StickerPackType,
+	StickerState
+} from "../../../../../../model/sticker-pack/src/types";
+import {BaseMethods} from "../../../../../../../../../../../../../mobile/dev/janative/types/elements/base-view";
 
 declare type GridStickerState = {
 	id: number
 	packId: StickerPackId
 	packType: string
 	uri: string
+	isUploading: boolean,
+	uploadProgress: number,
 }
 
 declare type StickerGridProps = {
 	isLoaded: boolean,
-	packs: Array<StickerPackModelState>,
-	recentStickers: Array<FullStickerData>,
-	isLoadMode: boolean,
-	renderHeaders: boolean,
-	renderTopStroke: boolean,
+	packs: Array<PackWithStickers>,
+	recentStickers: Array<StickerState>,
+	hasNextPage: boolean,
+	shouldRenderHeaders: boolean,
+	shouldRenderTopStroke: boolean,
+	canEditPack: boolean,
+	ref: (ref: StickerGrid) => void,
+	onLoadNextPage: (pack: StickerPackState) => void,
 }
 
 declare type StickerGridState = {
 	isLoaded: boolean,
-	packs: Array<StickerPackModelState>,
-	recentStickers: Array<FullStickerData>,
-	isLoadMode: boolean,
+	packs: Array<PackWithStickers>,
+	recentStickers: Array<StickerState>,
+	hasNextPage: boolean,
+	rows: Array<StickersRowProps>
 }
 
 declare type StickersRowProps = {
@@ -30,7 +42,12 @@ declare type StickersRowProps = {
 	sectionData: {
 		packId?: StickerPackId,
 		packType?: string,
+		authorId?: number
 	},
+	isFirstPackRow: boolean,
+	onStickerClick: (stickerId, pack?: {packId: StickerPackId, packType: StickerPackType}) => void
+	onStickerLongClick: () => void;
+	onCreateStickersClick: (pack?: { packId: StickerPackId, packType: StickerPackType }) => void
 
 	type: string, // for ListView
 	key: string, // for ListView
@@ -40,9 +57,11 @@ declare type StickersRowState = {};
 
 declare type StickerPackHeaderProps = {
 	configurable: boolean,
+	canEditPack: boolean,
 	sectionData: {
 		packId?: StickerPackId,
 		packType?: string,
+		authorId?: number,
 	},
 	sectionType: string,
 	title: string,
@@ -52,4 +71,35 @@ declare type StickerPackHeaderProps = {
 
 declare type StickerPackHeaderState = {
 
+};
+
+declare type StickerViewProps = {
+	id: number | string,
+	onClick: () => void,
+	onLongClick: () => void,
+	uri: string,
+	ref(ref: object): BaseMethods;
+	isUploading: boolean,
+};
+
+declare type StickerViewState = {};
+
+declare type UploadStatus = 'progress' | 'complete' | 'error';
+
+
+declare type UploadingStickerViewProps = {
+	id: number | string,
+	onClick: (id, ref) => void,
+	onUploadCancelClick: (id) => void,
+	onRetryUpload: (id) => void,
+	onLongClick: (id, ref) => void,
+	getUploadProgress: (id) => { uploadStatus, progress}
+	uploadStatus: UploadStatus,
+	progress: number,
+	uri: string,
+};
+
+declare type UploadingStickerViewState = {
+	uploadStatus: UploadStatus,
+	progress: number
 };

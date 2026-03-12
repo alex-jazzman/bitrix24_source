@@ -154,7 +154,7 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 			return;
 		}
 
-		if (event.buttons !== 1)
+		if (event.buttons !== 1 && event.buttons !== 4)
 		{
 			dragOn.value = false;
 			isDragging.value = false;

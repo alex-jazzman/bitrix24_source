@@ -1,3 +1,0 @@
-<?php
-$MESS["SELECTOR_COMPONENT_IBLOCK_ELEMENT_START_TYPING_TEXT"] = "Список елементів порожній.";
-$MESS["SELECTOR_COMPONENT_IBLOCK_ELEMENT_TITLE"] = "Елемент інфоблоку";

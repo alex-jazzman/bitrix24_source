@@ -2,10 +2,11 @@
 
 return [
 	'extensions' => [
-		'utils/object',
+		'layout/pure-component',
 		'more-menu/block/tools-list/utils',
 		'more-menu/ui/list',
+		'more-menu/utils',
+		'utils/object',
 		'utils/validation',
-		'layout/pure-component',
 	],
 ];

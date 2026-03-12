@@ -148,6 +148,29 @@ jn.define('mail/statemanager/redux/slices/messages/extra-reducer', (require, exp
 			...object,
 			chatBindId: chatId,
 		});
+
+		void requireLazy('im:messenger/api/dialog-opener').then(({ DialogOpener }) => {
+			DialogOpener.open({ dialogId: `chat${chatId}` });
+		});
+	};
+
+	const addToEventFulfilled = (state, action) => {
+		const eventBindId = action.meta.arg.calendarEventId;
+		const objectId = action.meta.arg.messageId;
+		const object = state.entities[objectId];
+		const { errors } = action.payload;
+
+		if (errors && errors.length > 0)
+		{
+			showErrorToast(errors[0]);
+		}
+		else
+		{
+			messagesListAdapter.upsertOne(state, {
+				...object,
+				eventBindId,
+			});
+		}
 	};
 
 	module.exports = {
@@ -156,5 +179,6 @@ jn.define('mail/statemanager/redux/slices/messages/extra-reducer', (require, exp
 		changeReadStatusPending,
 		changeReadStatusFulfilled,
 		addToChatFulfilled,
+		addToEventFulfilled,
 	};
 });

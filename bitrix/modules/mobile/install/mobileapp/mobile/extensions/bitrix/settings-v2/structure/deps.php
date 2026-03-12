@@ -32,6 +32,7 @@ return [
 		'settings-v2/services/security-load',
 		'settings-v2/services/security-settings',
 		'settings-v2/services/assets-preload',
+		'im:messenger/api/dialog-opener',
 	],
 	'bundle' => [
 		'./pages/debug',

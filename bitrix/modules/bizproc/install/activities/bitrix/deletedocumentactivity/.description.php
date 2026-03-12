@@ -36,7 +36,6 @@ $arActivityDescription =
 			'SORT' => 2900,
 		])
 		->setNodeActionSettings([
-			'INCLUDE' => ['crmdealcomplexactivity'],
 			'HANDLES_DOCUMENT' => true,
 		])
 		->toArray()

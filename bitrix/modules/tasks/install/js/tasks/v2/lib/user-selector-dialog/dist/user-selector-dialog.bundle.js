@@ -5,9 +5,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 (function (exports,main_popup,tasks_v2_core,tasks_v2_const,tasks_v2_lib_entitySelectorDialog) {
 	'use strict';
 
-	var _ids, _selectableIds, _onClose, _withAngle, _isMultiple, _hidePromise, _createDialog, _fillDialog, _fillStore, _setSelectableByIds, _items, _mapIdsToItemIds;
+	var _ids, _selectableIds, _onSelect, _onDeselect, _onClose, _isMultiple, _withAngle, _enableSearch, _hidePromise, _shouldRecreateDialog, _createDialog, _fillDialog, _fillStore, _setSelectableByIds, _items, _mapIdsToItemIds;
 	let dialog = null;
-	const usersDialog = new (_ids = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ids"), _selectableIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectableIds"), _onClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClose"), _withAngle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("withAngle"), _isMultiple = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMultiple"), _hidePromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hidePromise"), _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog"), _fillDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillDialog"), _fillStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillStore"), _setSelectableByIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setSelectableByIds"), _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items"), _mapIdsToItemIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mapIdsToItemIds"), class {
+	const usersDialog = new (_ids = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ids"), _selectableIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectableIds"), _onSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelect"), _onDeselect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDeselect"), _onClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClose"), _isMultiple = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMultiple"), _withAngle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("withAngle"), _enableSearch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableSearch"), _hidePromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hidePromise"), _shouldRecreateDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldRecreateDialog"), _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog"), _fillDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillDialog"), _fillStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillStore"), _setSelectableByIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setSelectableByIds"), _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items"), _mapIdsToItemIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mapIdsToItemIds"), class {
 	  constructor() {
 	    Object.defineProperty(this, _mapIdsToItemIds, {
 	      value: _mapIdsToItemIds2
@@ -28,6 +28,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _createDialog, {
 	      value: _createDialog2
 	    });
+	    Object.defineProperty(this, _shouldRecreateDialog, {
+	      value: _shouldRecreateDialog2
+	    });
 	    Object.defineProperty(this, _ids, {
 	      writable: true,
 	      value: void 0
@@ -36,11 +39,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _onClose, {
+	    Object.defineProperty(this, _onSelect, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _withAngle, {
+	    Object.defineProperty(this, _onDeselect, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _onClose, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -48,22 +55,37 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      writable: true,
 	      value: true
 	    });
+	    Object.defineProperty(this, _withAngle, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _enableSearch, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _hidePromise, {
 	      writable: true,
 	      value: void 0
 	    });
 	  }
 	  async show(params) {
-	    var _dialog, _params$isMultiple, _dialog2;
+	    var _dialog, _params$withAngle, _params$isMultiple, _params$enableSearch, _dialog2;
 	    if ((_dialog = dialog) != null && _dialog.isOpen() && dialog.getTargetNode() !== params.targetNode) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _hidePromise)[_hidePromise] = new Resolvable();
 	      await babelHelpers.classPrivateFieldLooseBase(this, _hidePromise)[_hidePromise];
 	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _shouldRecreateDialog)[_shouldRecreateDialog](params)) {
+	      dialog.destroy();
+	      dialog = null;
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _ids)[_ids] = params.ids;
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectableIds)[_selectableIds] = params.selectableIds;
 	    babelHelpers.classPrivateFieldLooseBase(this, _onClose)[_onClose] = params.onClose;
-	    babelHelpers.classPrivateFieldLooseBase(this, _withAngle)[_withAngle] = params.withAngle;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onSelect)[_onSelect] = params.onSelect;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onDeselect)[_onDeselect] = params.onDeselect;
+	    babelHelpers.classPrivateFieldLooseBase(this, _withAngle)[_withAngle] = (_params$withAngle = params.withAngle) != null ? _params$withAngle : true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isMultiple)[_isMultiple] = (_params$isMultiple = params.isMultiple) != null ? _params$isMultiple : true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _enableSearch)[_enableSearch] = (_params$enableSearch = params.enableSearch) != null ? _params$enableSearch : true;
 	    (_dialog2 = dialog) != null ? _dialog2 : dialog = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _fillDialog)[_fillDialog](babelHelpers.classPrivateFieldLooseBase(this, _ids)[_ids]);
 	    dialog.selectItemsByIds(babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]);
@@ -74,11 +96,18 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    return dialog;
 	  }
 	})();
+	function _shouldRecreateDialog2(params) {
+	  var _params$isMultiple2, _params$enableSearch2, _params$withAngle2;
+	  if (dialog === null) {
+	    return false;
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _isMultiple)[_isMultiple] !== ((_params$isMultiple2 = params.isMultiple) != null ? _params$isMultiple2 : true) || babelHelpers.classPrivateFieldLooseBase(this, _enableSearch)[_enableSearch] !== ((_params$enableSearch2 = params.enableSearch) != null ? _params$enableSearch2 : true) || babelHelpers.classPrivateFieldLooseBase(this, _withAngle)[_withAngle] !== ((_params$withAngle2 = params.withAngle) != null ? _params$withAngle2 : true);
+	}
 	function _createDialog2() {
 	  const restrictions = tasks_v2_core.Core.getParams().restrictions;
 	  return new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
 	    context: 'tasks-card',
-	    enableSearch: true,
+	    enableSearch: babelHelpers.classPrivateFieldLooseBase(this, _enableSearch)[_enableSearch],
 	    entities: [{
 	      id: tasks_v2_const.EntitySelectorEntity.User,
 	      options: {
@@ -94,14 +123,25 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    preselectedItems: babelHelpers.classPrivateFieldLooseBase(this, _items)[_items],
 	    events: {
 	      'Item:onSelect': event => {
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _isMultiple)[_isMultiple]) {
-	          return;
-	        }
 	        const {
 	          item
 	        } = event.getData();
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _onSelect)[_onSelect]) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _onSelect)[_onSelect](item.getId());
+	        }
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _isMultiple)[_isMultiple]) {
+	          return;
+	        }
 	        dialog.selectItemsByIds(babelHelpers.classPrivateFieldLooseBase(this, _mapIdsToItemIds)[_mapIdsToItemIds]([item.getId()]));
 	        dialog.hide();
+	      },
+	      'Item:onDeselect': event => {
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _onDeselect)[_onDeselect]) {
+	          const {
+	            item
+	          } = event.getData();
+	          babelHelpers.classPrivateFieldLooseBase(this, _onDeselect)[_onDeselect](item.getId());
+	        }
 	      },
 	      onLoad: () => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _fillStore)[_fillStore]();

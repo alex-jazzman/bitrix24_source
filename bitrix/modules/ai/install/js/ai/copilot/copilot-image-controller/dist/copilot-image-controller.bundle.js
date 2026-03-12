@@ -1290,7 +1290,10 @@ this.BX = this.BX || {};
 	    },
 	    errorCode: firstError == null ? void 0 : firstError.code,
 	    showSliderWithMsg: firstError == null ? void 0 : (_firstError$customDat = firstError.customData) == null ? void 0 : _firstError$customDat.showSliderWithMsg,
-	    sliderCode: firstError == null ? void 0 : (_firstError$customDat2 = firstError.customData) == null ? void 0 : _firstError$customDat2.sliderCode
+	    sliderCode: firstError == null ? void 0 : (_firstError$customDat2 = firstError.customData) == null ? void 0 : _firstError$customDat2.sliderCode,
+	    forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
+	    forceOption: firstError == null ? void 0 : firstError.customData,
+	    bindElement: babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1]
 	  });
 	}
 	function _setPayload2(options) {

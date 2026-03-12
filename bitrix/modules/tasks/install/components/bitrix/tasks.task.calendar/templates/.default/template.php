@@ -76,7 +76,7 @@ $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.def
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/gantt-view.js");
 $APPLICATION->AddHeadScript("/bitrix/js/tasks/task-iframe-popup.js");
 
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
 $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");

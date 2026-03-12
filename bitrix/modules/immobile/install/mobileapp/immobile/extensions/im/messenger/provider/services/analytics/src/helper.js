@@ -2,11 +2,12 @@
  * @module im/messenger/provider/services/analytics/helper
  */
 jn.define('im/messenger/provider/services/analytics/helper', (require, exports, module) => {
-	const { Analytics, DialogType, ComponentCode } = require('im/messenger/const');
+	const { Analytics, DialogType, NavigationTabId } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
 	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	const CUSTOM_CHAT_TYPE = 'custom';
 
@@ -15,6 +16,24 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 	 */
 	class AnalyticsHelper
 	{
+		constructor()
+		{
+			this.logger = getLoggerWithContext('analytics-service', this);
+		}
+
+		get #recentManager()
+		{
+			const recentManager = serviceLocator.get('recent-manager');
+			if (recentManager)
+			{
+				return recentManager;
+			}
+
+			this.logger.error('recentManager is not initialized.');
+
+			return null;
+		}
+
 		/**
 		 * @param {DialogId} dialogId
 		 */
@@ -90,14 +109,16 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 
 		getSectionCode()
 		{
-			switch (MessengerParams.getComponentCode())
+			switch (this.#recentManager?.getActiveRecentId())
 			{
-				case ComponentCode.imChannelMessenger:
+				case NavigationTabId.channel:
 					return Analytics.Section.channelTab;
-				case ComponentCode.imCopilotMessenger:
+				case NavigationTabId.copilot:
 					return Analytics.Section.copilotTab;
-				case ComponentCode.imCollabMessenger:
+				case NavigationTabId.collab:
 					return Analytics.Section.collabTab;
+				case NavigationTabId.task:
+					return Analytics.Section.taskTab;
 				default:
 					return Analytics.Section.chatTab;
 			}

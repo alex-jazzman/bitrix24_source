@@ -1,4 +1,5 @@
 import { Loc } from 'main.core';
+import { Outline } from 'ui.icon-set.api.core';
 
 import {
 	$getSelection,
@@ -115,7 +116,7 @@ export class ClearFormatPlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('clear-format', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --remove-formatting"></span>');
+			button.setIcon(Outline.TEXT_FORMAT_RESET);
 			button.disableInsideUnformatted();
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_CLEAR_FORMATTING'));
 			button.subscribe('onClick', (): void => {

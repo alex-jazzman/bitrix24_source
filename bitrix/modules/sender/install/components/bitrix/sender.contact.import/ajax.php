@@ -47,7 +47,7 @@ $actions[] = Controller\Action::create('importList')->setHandler(
 		}
 		else
 		{
-			if (!Security\Access::getInstance()->canModifySegments())
+			if (!Security\Access::getInstance()->canModifyClientPersonalList())
 			{
 				Security\AccessChecker::addError($content->getErrorCollection(), Security\AccessChecker::ERR_CODE_EDIT);
 				return;

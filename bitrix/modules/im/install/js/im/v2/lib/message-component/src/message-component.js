@@ -25,6 +25,7 @@ const serverComponentList = new Set([
 	MessageComponent.supervisorUpdateFeature,
 	MessageComponent.supervisorEnableFeature,
 	MessageComponent.sign,
+	MessageComponent.admin,
 	MessageComponent.checkIn,
 	MessageComponent.generalChatCreationMessage,
 	MessageComponent.generalChannelCreationMessage,
@@ -84,17 +85,12 @@ export class MessageComponentManager
 			return MessageComponent.smile;
 		}
 
-		if (this.#isForwardedSticker())
+		if (this.#hasSticker())
 		{
 			return MessageComponent.sticker;
 		}
 
 		return MessageComponent.default;
-	}
-
-	#isForwardedSticker(): boolean
-	{
-		return this.#hasSticker() && this.#isForward();
 	}
 
 	#isServerComponent(): boolean
@@ -124,7 +120,7 @@ export class MessageComponentManager
 
 	#hasSticker(): boolean
 	{
-		return this.#store.getters['messages/stickers/isStickerMessage'](this.#message.id);
+		return this.#store.getters['stickers/messages/isSticker'](this.#message.id);
 	}
 
 	#isEmptyMessage(): boolean

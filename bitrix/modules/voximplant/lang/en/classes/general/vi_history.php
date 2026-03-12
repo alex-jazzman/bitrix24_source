@@ -1,4 +1,5 @@
 <?php
+
 $MESS["IM_PHONE_NUMBER_HIDDEN"] = "Number is hidden";
 $MESS["VI_CALLBACK"] = "callback";
 $MESS["VI_CALLBACK_BUSY"] = "Return call to #NUMBER#: the line is busy.";
@@ -44,8 +45,8 @@ $MESS["VI_OUT_CALL_NO_ANSWER"] = "#NUMBER# is not answering.";
 $MESS["VI_OUT_CALL_NO_MONEY"] = "Insufficient balance. You cannot make calls.";
 $MESS["VI_OUT_CALL_UNAVAILABLE"] = "#NUMBER# is temporary unavailable.";
 $MESS["VI_SEC"] = "s";
-$MESS["VI_STATUS_200"] = "The call was successful";
-$MESS["VI_STATUS_304"] = "The call was skipped";
+$MESS["VI_STATUS_200"] = "Success";
+$MESS["VI_STATUS_304"] = "Missed";
 $MESS["VI_STATUS_402"] = "Insufficient balance";
 $MESS["VI_STATUS_402-B24"] = "Unavailable on free plan";
 $MESS["VI_STATUS_403"] = "Denied";
@@ -57,5 +58,5 @@ $MESS["VI_STATUS_486"] = "Busy";
 $MESS["VI_STATUS_500"] = "Internal server error";
 $MESS["VI_STATUS_503"] = "This route is unavailable";
 $MESS["VI_STATUS_603"] = "Declined";
-$MESS["VI_STATUS_603-S"] = "The call was canceled";
+$MESS["VI_STATUS_603-S"] = "Canceled";
 $MESS["VI_STATUS_OTHER"] = "Undefined";

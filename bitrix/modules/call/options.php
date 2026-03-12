@@ -77,7 +77,7 @@ if (
 		Option::delete('call', ['name' => 'turn_server']);
 		Option::delete('call', ['name' => 'turn_server_login']);
 		Option::delete('call', ['name' => 'turn_server_password']);
-		Option::delete('im', ['name' => 'call_server_enabled']);
+		Option::delete('call', ['name' => 'call_server_enabled']);
 		Option::delete('call', ['name' => 'public_url']);
 		Option::delete('call', ['name' => 'call_v2_enabled']);
 	}
@@ -100,7 +100,7 @@ if (
 		}
 
 		$enableCallServer = isset($request['CALL_SERVER_ENABLED']);
-		Option::set('im', 'call_server_enabled', $enableCallServer);
+		Option::set('call', 'call_server_enabled', $enableCallServer);
 
 		$prevPublicUrl = Option::get('call', 'public_url', '');
 		$publicUrl = trim($request['PUBLIC_URL'] ?? '');
@@ -234,7 +234,7 @@ $portalHasRegistered  = ((int)Option::get('call', 'call_portal_id', 0) > 0);
 ?>
 	<tr>
 		<td class="adm-detail-content-cell-l" width="40%"><?=Loc::getMessage("CALL_OPTIONS_CALL_SERVER_ENABLED_MSGVER_1")?>:</td>
-		<td class="adm-detail-content-cell-r" width="60%"><input type="checkbox" name="CALL_SERVER_ENABLED" <?=( (bool)Option::get('im', 'call_server_enabled') ? 'checked="checked"' : '')?>></td>
+		<td class="adm-detail-content-cell-r" width="60%"><input type="checkbox" name="CALL_SERVER_ENABLED" <?=( (bool)Option::get('call', 'call_server_enabled') ? 'checked="checked"' : '')?>></td>
 	</tr>
 	<tr>
 		<td class="adm-detail-content-cell-l"><?=Loc::getMessage("CALL_OPTIONS_TURN_SERVER_SELF_2")?>:</td>

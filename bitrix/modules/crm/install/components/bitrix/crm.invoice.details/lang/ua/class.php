@@ -1,4 +1,0 @@
-<?php
-$MESS["CRM_INVOICE_DETAILS_COMPONENT_TIMELINE_HISTORY_STUB"] = "Прямо зараз ви створюєте рахунок";
-$MESS["CRM_INVOICE_DETAILS_COMPONENT_TITLE_COPY"] = "Копіювання рахунку";
-$MESS["CRM_INVOICE_DETAILS_COMPONENT_TITLE_NEW"] = "Створення рахунку";

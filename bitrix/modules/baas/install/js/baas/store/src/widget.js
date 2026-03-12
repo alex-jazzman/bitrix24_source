@@ -86,7 +86,9 @@ export class Widget extends EventEmitter
 
 	toggle(node: ?HTMLElement): this
 	{
-		this.presenter.toggle(node);
+		const targetElement = node ?? this.cache.get('boundLastElement');
+
+		this.presenter.toggle(targetElement);
 
 		return this;
 	}

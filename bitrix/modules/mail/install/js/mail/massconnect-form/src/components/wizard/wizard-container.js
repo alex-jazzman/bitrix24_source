@@ -28,13 +28,6 @@ export default {
 
 	mixins: [LocalizationMixin],
 
-	props: {
-		allowedLevels: {
-			type: Array,
-			default: null,
-		},
-	},
-
 	data(): Object
 	{
 		return {
@@ -197,7 +190,6 @@ export default {
 							ref="activeComponent"
 							:is="activeStepComponent"
 							:validationAttempted="validationAttempted"
-							:allowed-levels="allowedLevels"
 							@update:validity="isCurrentStepValid = $event"
 						/>
 					</div>

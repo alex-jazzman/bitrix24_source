@@ -4,8 +4,13 @@ export class Registry
 {
 	registry: WeakMap = new WeakMap();
 
-	set(target: Element, event: string, listener: Function)
+	set(target: EventTarget, event: string, listener: Function)
 	{
+		if (!Type.isEventTargetLike(target))
+		{
+			return;
+		}
+
 		const events = this.get(target);
 
 		if (!Type.isSet(events[event]))
@@ -18,12 +23,12 @@ export class Registry
 		this.registry.set(target, events);
 	}
 
-	get(target: Element): {[event: string]: Set<Function>}
+	get(target: EventTarget): {[event: string]: Set<Function>}
 	{
 		return this.registry.get(target) || {};
 	}
 
-	has(target: Element, event?: string, listener?: Function): boolean
+	has(target: EventTarget, event?: string, listener?: Function): boolean
 	{
 		if (event && listener)
 		{
@@ -36,9 +41,9 @@ export class Registry
 		return this.registry.has(target);
 	}
 
-	delete(target: Element, event?: string, listener?: Function)
+	delete(target: EventTarget, event?: string, listener?: Function)
 	{
-		if (!Type.isDomNode(target))
+		if (!Type.isEventTargetLike(target))
 		{
 			return;
 		}

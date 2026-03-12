@@ -11,7 +11,7 @@ type Props = {
 	defaultValues: Object,
 	paramList: Object,
 	groupIds: number[],
-	canManageGroups: boolean,
+	activeUrlParamsSelector: boolean,
 };
 
 /**
@@ -30,11 +30,10 @@ class SupersetDashboardCreateManager
 		this.#node = document.querySelector(`#${this.#props.nodeId}`);
 		this.#render();
 		this.#saveButton = ButtonManager.createFromNode(document.querySelector('#dashboard-button-save'));
-		if (this.#props.canManageGroups)
-		{
-			this.#saveButton.setDisabled(true);
-		}
+		this.#saveButton.setDisabled(true);
+
 		EventEmitter.subscribe('BIConnector.DashboardParamsSelector:initCompleted', this.#onParamSelectorInit.bind(this));
+		EventEmitter.subscribe('BIConnector.DashboardParamsSelector:onChange', this.#onSelectorChange.bind(this));
 	}
 
 	#render(): void
@@ -42,16 +41,15 @@ class SupersetDashboardCreateManager
 		Dom.append(this.#getTopBlock(), this.#node);
 		Dom.append(this.#getMainContent(), this.#node);
 
-		if (this.#props.canManageGroups)
-		{
-			this.#paramsSelector = new DashboardParametersSelector({
-				groups: new Set(),
-				scopes: new Set(),
-				params: new Set(),
-				paramList: this.#props.paramList,
-			});
-			Dom.append(this.#paramsSelector.getLayout(), this.#node);
-		}
+		this.#paramsSelector = new DashboardParametersSelector({
+			groups: new Set(),
+			scopes: new Set(),
+			params: new Set(),
+			paramList: this.#props.paramList,
+				activeUrlParamsSelector: this.#props.activeUrlParamsSelector,
+				isNewDashboard: true,
+		});
+		Dom.append(this.#paramsSelector.getLayout(), this.#node);
 	}
 
 	#getMainContent(): HTMLElement
@@ -85,7 +83,17 @@ class SupersetDashboardCreateManager
 	#onParamSelectorInit(): void
 	{
 		this.#paramsSelector.selectGroups(this.#props.groupIds);
-		this.#saveButton.setDisabled(false);
+		const isDisabled = this.#props.groupIds.length <= 0;
+
+		this.#saveButton.setDisabled(isDisabled);
+	}
+
+	#onSelectorChange(): void
+	{
+		const selectorData = this.#paramsSelector.getValues();
+		const isDisabled = (selectorData?.groups?.size ?? 0) <= 0;
+
+		this.#saveButton.setDisabled(isDisabled);
 	}
 
 	// noinspection JSUnusedGlobalSymbols
@@ -96,13 +104,10 @@ class SupersetDashboardCreateManager
 			title: titleField.value,
 		};
 
-		if (this.#props.canManageGroups)
-		{
-			const selectorData = this.#paramsSelector.getValues();
-			saveData.groups = [...selectorData.groups];
-			saveData.scopes = [...selectorData.scopes];
-			saveData.params = [...selectorData.params];
-		}
+		const selectorData = this.#paramsSelector.getValues();
+		saveData.groups = [...selectorData.groups];
+		saveData.scopes = [...selectorData.scopes];
+		saveData.params = [...selectorData.params];
 
 		this.#saveButton.setWaiting(true);
 

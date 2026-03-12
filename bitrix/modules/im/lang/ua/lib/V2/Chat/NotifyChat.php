@@ -1,3 +1,0 @@
-<?php
-$MESS["IM_NOTIFY_CONFIRM_BUTTON_ACCEPT"] = "Прийняти";
-$MESS["IM_NOTIFY_CONFIRM_BUTTON_CANCEL"] = "Відмовитися";

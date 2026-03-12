@@ -27,6 +27,8 @@ export type AppField = {
 	component: BitrixVueComponentProps,
 	props: { [prop: string]: any },
 	chip: AppChip,
+	withSeparator: boolean,
+	printIgnore?: boolean,
 };
 
 export type AppChip = {
@@ -82,7 +84,7 @@ export class TaskCard
 
 		const content = Tag.render`<div/>`;
 		void renderSkeleton(
-			'/bitrix/js/tasks/v2/application/task-card/src/skeleton.html?v=1',
+			'/bitrix/js/tasks/v2/application/task-card/src/skeleton.html?v=2',
 			content,
 		);
 
@@ -96,8 +98,9 @@ export class TaskCard
 			noAllPaddings: true,
 			content,
 			cacheable: false,
+			closeByEsc: true,
 			events: {
-				onAfterClose: (): void => card.unmount(),
+				onAfterClose: (): void => card?.unmount(),
 			},
 			overlay: {
 				opacity: 100,

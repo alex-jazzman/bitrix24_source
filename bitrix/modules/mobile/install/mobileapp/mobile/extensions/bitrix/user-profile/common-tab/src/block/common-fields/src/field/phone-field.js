@@ -15,6 +15,8 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/phone-field
 		InputMode,
 		PhoneInput,
 	} = require('ui-system/form/inputs/phone');
+	const { openPhoneMenu } = require('communication/phone-menu');
+	const { copyToClipboard } = require('utils/copy');
 
 	class PhoneField extends BaseField
 	{
@@ -26,7 +28,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/phone-field
 
 		renderViewModeFieldValue(value, idx)
 		{
-			const { id } = this.props;
+			const { id, canUseTelephony, parentWidget } = this.props;
 			const { isValid } = this.state;
 
 			if (isValid)
@@ -36,8 +38,15 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/phone-field
 					text: getFormattedNumber(value),
 					numberOfLines: 1,
 					onClick: () => {
-						const callTo = `tel:${value}`;
-						Application.openUrl(callTo);
+						openPhoneMenu({
+							number: value,
+							canUseTelephony,
+							layoutWidget: parentWidget,
+							extraParams: this.getPhoneMenuParams(),
+						});
+					},
+					onLongClick: () => {
+						void copyToClipboard(value, Loc.getMessage('PHONE_COPY_DONE'));
 					},
 				});
 			}
@@ -46,6 +55,18 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/phone-field
 				text: value,
 				color: Color.base1,
 			});
+		}
+
+		getPhoneMenuParams()
+		{
+			return {
+				featureItems: [
+					Loc.getMessage('PHONE_CALL_B24_BANNER_FEATURE_1_COMMON'),
+					Loc.getMessage('PHONE_CALL_B24_BANNER_FEATURE_2_COMMON'),
+					Loc.getMessage('PHONE_CALL_B24_BANNER_FEATURE_3_COMMON'),
+				],
+				title: Loc.getMessage('PHONE_CALL_B24_BANNER_TITLE_COMMON'),
+			};
 		}
 
 		initState(props)

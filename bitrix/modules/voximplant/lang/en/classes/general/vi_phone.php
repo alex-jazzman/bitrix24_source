@@ -1,4 +1,22 @@
 <?php
+$MESS["VI_ACTIVATION_STATUS_DESC_ACTIVATING"] = "Pending activation.";
+$MESS["VI_ACTIVATION_STATUS_DESC_ACTIVE"] = "Your number is active.";
+$MESS["VI_ACTIVATION_STATUS_DESC_AWAITING_BUSINESS_PHONE_NUMBER_CONFIGURATION"] = "You have to register your phone number on GU. Learn more";
+$MESS["VI_ACTIVATION_STATUS_DESC_AWAITING_GOSUSLUGI_VERIFICATION"] = "Your phone number was deactivated. Please confirm it on GU.";
+$MESS["VI_ACTIVATION_STATUS_DESC_DEACTIVATED"] = "Phone number is not active.";
+$MESS["VI_ACTIVATION_STATUS_DESC_GOSUSLUGI_DECLINED"] = "Phone number is not active.";
+$MESS["VI_ACTIVATION_STATUS_DESC_LEGAL_OWNERSHIP_LIMIT_REACHED"] = "Cannot activate phone number because you have reached the limit of 20 numbers.";
+$MESS["VI_ACTIVATION_STATUS_DESC_PROVISIONING"] = "Pending activation.";
+$MESS["VI_ACTIVATION_STATUS_DESC_SELF_BAN_ENABLED"] = "Could not activate phone number because you have a self-imposed ban on the provision of mobile radiotelephone services.";
+$MESS["VI_ACTIVATION_STATUS_NAME_ACTIVATING"] = "Activation in progress";
+$MESS["VI_ACTIVATION_STATUS_NAME_ACTIVE"] = "Active";
+$MESS["VI_ACTIVATION_STATUS_NAME_AWAITING_BUSINESS_PHONE_NUMBER_CONFIGURATION"] = "Register on GU";
+$MESS["VI_ACTIVATION_STATUS_NAME_AWAITING_GOSUSLUGI_VERIFICATION"] = "Phone number deactivated.";
+$MESS["VI_ACTIVATION_STATUS_NAME_DEACTIVATED"] = "Not active";
+$MESS["VI_ACTIVATION_STATUS_NAME_GOSUSLUGI_DECLINED"] = "Not active";
+$MESS["VI_ACTIVATION_STATUS_NAME_LEGAL_OWNERSHIP_LIMIT_REACHED"] = "Activation paused";
+$MESS["VI_ACTIVATION_STATUS_NAME_PROVISIONING"] = "Activation in progress";
+$MESS["VI_ACTIVATION_STATUS_NAME_SELF_BAN_ENABLED"] = "Not active (self-ban on GU)";
 $MESS["VI_PHONE_ATTACH_ERROR_20"] = "Provider error while purchasing phone number. Please try again later.";
 $MESS["VI_PHONE_ATTACH_ERROR_25"] = "Phone number purchase service is temporarily unavailable. Please try again later.";
 $MESS["VI_PHONE_ATTACH_ERROR_115"] = "Error sending request to provider. Please contact the Helpdesk (115)";

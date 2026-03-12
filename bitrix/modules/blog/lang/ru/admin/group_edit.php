@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLGE_ERROR_SAVING'] = "Ошибка сохранения группы";
 $MESS ['BLGE_UPDATING'] = "Изменение параметров группы";
 $MESS ['BLGE_ADDING'] = "Создание новой группы";
@@ -11,4 +11,3 @@ $MESS ['BLGE_TAB_GROUP'] = "Группа блогов";
 $MESS ['BLGE_TAB_GROUP_DESCR'] = "Параметры группы блогов";
 $MESS ['BLGE_NAME'] = "Название группы";
 $MESS ['BLGE_SITE'] = "Сайт группы";
-?>

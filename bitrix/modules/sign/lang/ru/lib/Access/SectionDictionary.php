@@ -1,4 +1,5 @@
 <?php
+
 $MESS["SIGN_CONFIG_SECTIONS_B2B"] = "Подписание с клиентами";
 $MESS["SIGN_CONFIG_SECTIONS_B2E"] = "Подписание с сотрудниками";
 $MESS["SIGN_CONFIG_SECTIONS_ACCESS"] = "Права доступа";

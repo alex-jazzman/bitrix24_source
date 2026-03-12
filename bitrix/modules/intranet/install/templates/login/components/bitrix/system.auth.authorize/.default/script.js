@@ -77,7 +77,8 @@ this.BX = this.BX || {};
 	        qrText: babelHelpers.classPrivateFieldLooseBase(this.getApplication(), _qrText)[_qrText],
 	        qrConfig: babelHelpers.classPrivateFieldLooseBase(this.getApplication(), _qrConfig)[_qrConfig],
 	        isFormBlockVisible: true,
-	        isCaptchaBlockVisible: false
+	        isCaptchaBlockVisible: false,
+	        inputPasswordType: 'password'
 	      };
 	    },
 	    beforeCreate() {
@@ -103,6 +104,12 @@ this.BX = this.BX || {};
 	      showCaptchaBlock() {
 	        this.isFormBlockVisible = false;
 	        this.isCaptchaBlockVisible = true;
+	      },
+	      onEyeMouseDown() {
+	        this.inputPasswordType = 'text';
+	      },
+	      onEyeMouseUp() {
+	        this.inputPasswordType = 'password';
 	      },
 	      initQrCode() {
 	        new QRCode('bx_auth_qr_code', {

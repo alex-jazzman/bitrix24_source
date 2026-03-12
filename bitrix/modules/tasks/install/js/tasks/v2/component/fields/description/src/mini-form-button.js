@@ -21,7 +21,7 @@ export const MiniFormButton = {
 		};
 	},
 	template: `
-		<div class="tasks-card-change-description-mini-btn">
+		<div class="tasks-card-change-description-mini-btn print-ignore">
 			<div class="tasks-full-card-field-container --small-vertical-padding">
 				<div class="tasks-card-change-description" :class="{ '--no-hover': filesCount }">
 					<template v-if="filesCount">

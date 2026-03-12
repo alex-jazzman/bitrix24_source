@@ -2,12 +2,17 @@
 
 namespace Bitrix\Call\Cache;
 
-use Bitrix\Call\JwtCall;
-use Bitrix\Im\Call\Util;
-use Bitrix\Im\V2\Call\CallFactory;
-use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\Application;
+use Bitrix\Call\JwtCall;
+use Bitrix\Call\Util;
+use Bitrix\Call\CallFactory;
+use Bitrix\Call\Model\CallUserTable;
 
+
+/**
+ * @internal
+ */
 class ActiveCallsCache
 {
 	private const CACHE_TTL = 86400;
@@ -49,8 +54,8 @@ class ActiveCallsCache
 	/**
 	 * Retrieves active calls for a specific user from cache or rebuilds if not cached.
 	 *
-	 * @param int $userId User ID
-	 * @return array Array of active calls data for the user
+	 * @param int $userId User ID.
+	 * @return array Array of active calls data for the user.
 	 */
 	public static function getActiveCallsForUser(int $userId): array
 	{
@@ -66,8 +71,8 @@ class ActiveCallsCache
 	/**
 	 * Updates and rebuilds the active calls cache for a specific user.
 	 *
-	 * @param int $userId User ID
-	 * @return array Updated active calls data for the user
+	 * @param int $userId User ID.
+	 * @return array Updated active calls data for the user.
 	 */
 	public static function updateUserActiveCallsCache(int $userId): array
 	{
@@ -96,20 +101,16 @@ class ActiveCallsCache
 	/**
 	 * Updates cache for all users participating in a specific call.
 	 *
-	 * @param int $callId Call ID
+	 * @param int $callId Call ID.
 	 * @return void
 	 */
 	public static function updateCallCache(int $callId): void
 	{
-		if (!\Bitrix\Main\Loader::includeModule('im'))
-		{
-			return;
-		}
-
-		$userRows = \Bitrix\Im\Model\CallUserTable::query()
+		$userRows = CallUserTable::query()
 			->addSelect('USER_ID')
 			->where('CALL_ID', $callId)
-			->fetchAll();
+			->fetchAll()
+		;
 
 		if (!$userRows)
 		{
@@ -126,8 +127,8 @@ class ActiveCallsCache
 	/**
 	 * Builds array of active calls data for a specific user.
 	 *
-	 * @param int $userId User ID
-	 * @return array Array of active calls with full data including tokens and user info
+	 * @param int $userId User ID.
+	 * @return array Array of active calls with full data including tokens and user info.
 	 */
 	private static function buildActiveCallsArray(int $userId): array
 	{
@@ -164,7 +165,7 @@ class ActiveCallsCache
 	/**
 	 * Clears active calls cache for a specific user.
 	 *
-	 * @param int $userId User ID
+	 * @param int $userId User ID.
 	 * @return void
 	 */
 	public static function clearUserActiveCallsCache(int $userId): void
@@ -176,7 +177,7 @@ class ActiveCallsCache
 	/**
 	 * Clears cache for a specific call across all users.
 	 *
-	 * @param int $callId Call ID
+	 * @param int $callId Call ID.
 	 * @return void
 	 */
 	public static function clearCallCache(int $callId): void

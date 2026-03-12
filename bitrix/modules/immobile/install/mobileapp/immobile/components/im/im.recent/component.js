@@ -340,7 +340,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams)
 			PageManager.getNavigator().getAll().forEach((page) => {
 				if (pageIsOpened)
 
-
+				
       { return true;
 				}
 
@@ -588,6 +588,7 @@ RecentList.openUserProfile = function(userId, userData = {})
 	void UserProfile.open({
 		ownerId: params.userId,
 		widgetParams: params,
+		analyticsSection: 'im_recent',
 	});
 };
 
@@ -2030,7 +2031,7 @@ RecentList.push.updateList = function()
 RecentList.push.actionExecute = function()
 {
 	if (Application.isBackground())
-
+	
 	{ return false;
 	}
 
@@ -3143,7 +3144,7 @@ RecentList.notify.read = function(id)
 {
 	id = parseInt(id);
 	if (id <= 0)
-
+	
 	{ return false;
 	}
 

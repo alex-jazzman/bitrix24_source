@@ -1,0 +1,12 @@
+.bizprocdesigner-editor-toast {
+	display: flex;
+	align-items: center;
+	max-width: 740px;
+	max-height: 58px;
+	padding: var(--ui-space-inline-sm) var(--ui-space-inset-md);
+	border-radius: 0 0 var(--ui-border-radius-2xl) var(--ui-border-radius-2xl);
+}
+
+.bizprocdesigner-editor-toast.--warning {
+	background-color: #FAAA08;
+}

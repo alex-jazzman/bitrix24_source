@@ -1,3 +1,0 @@
-<?php
-$MESS["REST_MARKETPLACE_BOOKLET_BTN_SHOW_ALL"] = "барлығын қарау";
-$MESS["REST_MARKETPLACE_BOOKLET_TITLE_NEW_APP"] = "Жаңа қосымшалар";

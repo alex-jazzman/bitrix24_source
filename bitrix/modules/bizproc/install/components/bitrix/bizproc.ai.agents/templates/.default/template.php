@@ -27,6 +27,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.system.typography',
 	'ui.icon-set.api.core',
 	'ui.tooltip',
+	'ui.info-helper',
 ]);
 
 $APPLICATION->clearViewContent('above_pagetitle');
@@ -43,7 +44,7 @@ $APPLICATION->includeComponent(
 		'ID' => 'ai-agents-menu',
 		'ITEMS' => $menuItems,
 		'THEME' => 'air',
-	]
+	],
 );
 
 $this->endViewTarget();
@@ -62,25 +63,30 @@ Toolbar\Facade\Toolbar::setTitle(htmlspecialcharsbx(Loc::getMessage('BIZPROC_AI_
 
 $user = new CBPWorkflowTemplateUser(\CBPWorkflowTemplateUser::CurrentUser);
 $isUserAdmin = $user->isAdmin();
-if($isUserAdmin)
+if ($isUserAdmin)
 {
 	Toolbar\Facade\Toolbar::addButton($addButton, Toolbar\ButtonLocation::AFTER_TITLE);
 }
 
 Toolbar\Facade\Toolbar::addFavoriteStar();
 
-if ($arResult['SHOW_FACADE_FILTER'])
-{
-	Toolbar\Facade\Toolbar::addFilter([
-		'FILTER_ID' => $arResult['FILTER_ID'],
-		'FILTER' => [],
-		'FILTER_PRESETS' => [],
-		'DISABLE_SEARCH' => false,
-		'ENABLE_LIVE_SEARCH' => false,
-		'ENABLE_LABEL' => false,
-		'RESET_TO_DEFAULT_MODE' => false,
-	]);
-}
+$filterOptions = \Bitrix\Main\Filter\Component\ComponentParams::get(
+	$arResult['GRID_FILTER'],
+	[
+		'GRID_ID' => $arResult['GRID_ID'],
+	],
+);
+
+Toolbar\Facade\Toolbar::addFilter([
+	'FILTER_ID' => $filterOptions['FILTER_ID'],
+	'GRID_ID' => $filterOptions['GRID_ID'],
+	'FILTER' => $filterOptions['FILTER'],
+	'FILTER_PRESETS' => $filterOptions['FILTER_PRESETS'] ?? [],
+	'DISABLE_SEARCH' => true,
+	'ENABLE_LIVE_SEARCH' => false,
+	'ENABLE_LABEL' => true,
+	'RESET_TO_DEFAULT_MODE' => true,
+]);
 
 $gridContainerId = $arResult['GRID_ID'] . '-container';
 $availableAiAgentsCount = $arResult['AVAILABLE_AI_AGENTS_COUNT'] ?? 0;
@@ -148,11 +154,13 @@ $availableAiAgentsCount = $arResult['AVAILABLE_AI_AGENTS_COUNT'] ?? 0;
 		(new BX.Main.Pagination.Lazyloadtotalcount()).register();
 		BX.Bizproc.SetupTemplate.subscribeOnPull();
 
-		new BX.Bizproc.Automation.AiAgentsPage({
+		new BX.Bizproc.Ai.Agents.AiAgentsPage({
 			agentsGridId: '<?= CUtil::JSEscape($arResult['GRID_ID']) ?>',
 			headerAddButtonUniqId: '<?= CUtil::JSEscape($arResult['AI_AGENTS_HEADER_ADD_BUTTON_UNIQUE_ID']) ?>',
 			baseDesignerUri: '<?= CUtil::JSEscape($arResult['BASE_BIZPROC_DESIGNER_URI']) ?>',
 			startTrigger: '<?= CUtil::JSEscape(StartTrigger::AiAgent->value) ?>',
+			isAiAgentsAvailableByTariff: '<?= CUtil::JSEscape($arResult['IS_AI_AGENTS_AVAILABLE_BY_TARIFF']) ?>',
+			aiAgentsTariffSliderCode: '<?= CUtil::JSEscape($arResult['AI_AGENTS_TARIFF_SLIDER_CODE']) ?>',
 		});
 	});
 </script>

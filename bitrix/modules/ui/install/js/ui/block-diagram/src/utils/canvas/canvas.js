@@ -169,6 +169,19 @@ export class Canvas
 		this.#setCameraZoom(zoomStep * -1);
 	}
 
+	setZoom(zoom: number): void
+	{
+		this.#camera.applyLandmark(
+			this.#camera.createLandmark({
+				x: this.#camera.x,
+				y: this.#camera.y,
+				viewportX: this.#camera.width / 2,
+				viewportY: this.#camera.height / 2,
+				zoom,
+			}),
+		);
+	}
+
 	setCameraZoomByWheel(event: MouseEvent, zoomChange: number = 0): void
 	{
 		const newZoom = Math.max(

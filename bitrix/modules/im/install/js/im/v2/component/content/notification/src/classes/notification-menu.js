@@ -3,6 +3,7 @@ import { Menu, type MenuItemOptions } from 'ui.system.menu';
 import { SettingsService } from 'im.v2.provider.service.settings';
 import { Settings, type NotificationSettingsItem, NotificationSettingsType } from 'im.v2.const';
 import { Notifier } from 'im.v2.lib.notifier';
+import { Analytics } from 'im.v2.lib.analytics';
 
 export class NotificationMenu
 {
@@ -121,6 +122,11 @@ export class NotificationMenu
 				void (new SettingsService()).toggleSubscription(settingsToResubscribe);
 				balloon.close();
 			});
+
+			Analytics.getInstance().notification.onUnsubscribeFromNotification({
+				moduleId: settingsToUnsubscribe.notifyModule,
+				optionName: settingsToUnsubscribe.notifyEvent,
+			});
 		}
 		else
 		{
@@ -145,12 +151,6 @@ export class NotificationMenu
 
 	#getMarkAsUnreadItem(): ?MenuItemOptions
 	{
-		const isAutoReadEnabled = this.#isEnabledAutoRead();
-		if (isAutoReadEnabled)
-		{
-			return null;
-		}
-
 		return {
 			title: this.notificationItem.read
 				? Loc.getMessage('IM_NOTIFICATIONS_ITEM_MENU_MARK_UNREAD')
@@ -244,11 +244,6 @@ export class NotificationMenu
 		}
 
 		return [];
-	}
-
-	#isEnabledAutoRead(): boolean
-	{
-		return this.store.getters['application/settings/get'](Settings.notification.enableAutoRead);
 	}
 
 	isEmpty(notificationItem): boolean

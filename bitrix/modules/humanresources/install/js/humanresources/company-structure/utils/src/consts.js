@@ -18,6 +18,11 @@ export const NodeSettingsTypes: Record<string> = {
 	reportsAuthority: 'REPORTS_AUTHORITY',
 };
 
+export const UserSettingsTypes: Record<string> = {
+	businessProcExcludeNodes: 'BUSINESS_PROC_EXCLUDE_NODES',
+	reportsExcludeNodes: 'REPORTS_AUTHORITY_EXCLUDE_NODES',
+};
+
 export const ChatTypes: Record<string> = Object.freeze({
 	channel: 'CHANNEL',
 	chat: 'CHAT',

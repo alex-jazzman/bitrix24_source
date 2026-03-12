@@ -3,8 +3,8 @@
  */
 jn.define('settings-v2/controller/cache', (require, exports, module) => {
 	const { BaseSettingController } = require('settings-v2/controller/base');
-	const { appConfig } = require('native/config');
 	const { NativeCacheService } = require('settings-v2/services/native');
+	const { NativeSettingsId } = require('settings-v2/const');
 
 	/**
 	 * @class CacheSettingController
@@ -18,6 +18,11 @@ jn.define('settings-v2/controller/cache', (require, exports, module) => {
 		{
 			try
 			{
+				if (this.settingId === NativeSettingsId.CACHE_OTHER)
+				{
+					return NativeCacheService.getOtherCacheSize();
+				}
+
 				const currentSetting = await NativeCacheService.getSettingById(this.settingId);
 
 				return currentSetting.value ?? this.fallbackValue;

@@ -65,6 +65,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(Form, _list)[_list].push(this);
 	  }
 	  init(options) {
+	    this.showTitle = main_core.Type.isBoolean(options.showTitle) ? options.showTitle : true;
 	    this.cached = false;
 	    if (options.map !== undefined) {
 	      this.map = options.map;
@@ -75,7 +76,6 @@ this.BX.UI = this.BX.UI || {};
 	    this.presets = options.presets || {};
 	    this.form = options.form || {};
 	    this.title = options.title || '';
-	    this.showTitle = main_core.Type.isBoolean(options.showTitle) ? options.showTitle : true;
 	    if (options.button) {
 	      this.button = BX(options.button);
 	      main_core.Event.bind(this.button, 'click', this.openPanel.bind(this));

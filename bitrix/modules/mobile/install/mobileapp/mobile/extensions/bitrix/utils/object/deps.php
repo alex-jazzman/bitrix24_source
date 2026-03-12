@@ -2,7 +2,8 @@
 
 return [
 	'extensions' => [
-		'utils/hash',
 		'utils/function',
+		'utils/hash',
+		'utils/type',
 	]
 ];

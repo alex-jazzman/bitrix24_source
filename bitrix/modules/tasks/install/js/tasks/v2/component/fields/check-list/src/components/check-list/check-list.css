@@ -73,7 +73,8 @@
 }
 
 .tasks-check-list-close-icon.--sheet {
-	top: 15px;
+	top: 17px;
+	right: 20px;
 }
 
 .tasks-check-list-close-icon .ui-icon-set {

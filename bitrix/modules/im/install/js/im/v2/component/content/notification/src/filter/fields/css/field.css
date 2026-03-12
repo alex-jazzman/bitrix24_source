@@ -1,0 +1,41 @@
+.bx-im-notifications-filter_field__container {
+	padding-bottom: 6px;
+}
+
+.bx-im-notifications-filter_field__label {
+	max-width: max-content;
+	margin-bottom: 6px;
+	color: var(--im-color-palette-gray-70);
+	font-size: var(--im-font-size-sm);
+	line-height: var(--im-font-line-height-2xs);
+}
+
+.bx-im-notifications-filter_field__selector-container {
+	width: 100%;
+}
+
+.bx-im-content-notification-date-field-container {
+	display: flex;
+	align-items: center;
+}
+
+.bx-im-content-notification-date-field-line,
+.bx-im-content-notification-date-field.--with-margin {
+	margin-right: 10px;
+}
+
+.bx-im-content-notification-date-field {
+	width: 100%;
+}
+
+.bx-im-content-notification-date-field.--range-option {
+	width: 80%;
+}
+
+.bx-im-content-notification-date-field-line-item {
+	display: block;
+	margin-bottom: 6px;
+	width: 10px;
+	height: 2px;
+	background: #7d7d7d;
+}

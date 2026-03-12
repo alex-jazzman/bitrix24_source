@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,main_core,bizproc_automation) {
+(function (exports,main_core,bizproc_automation,main_core_events,ui_entitySelector,bizproc_storageSelector) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -8,7 +8,8 @@
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var namespace = main_core.Reflection.namespace('BX.Bizproc.Activity');
 	var _storageCodeData = /*#__PURE__*/new WeakMap();
-	var _onStorageCodeChange = /*#__PURE__*/new WeakSet();
+	var _dialog = /*#__PURE__*/new WeakMap();
+	var _storageUpdating = /*#__PURE__*/new WeakMap();
 	var _clearStorageCodeAndValue = /*#__PURE__*/new WeakSet();
 	var _renderStorageCodeFields = /*#__PURE__*/new WeakSet();
 	var ReadDataStorageActivity = /*#__PURE__*/function () {
@@ -16,7 +17,6 @@
 	    babelHelpers.classCallCheck(this, ReadDataStorageActivity);
 	    _classPrivateMethodInitSpec(this, _renderStorageCodeFields);
 	    _classPrivateMethodInitSpec(this, _clearStorageCodeAndValue);
-	    _classPrivateMethodInitSpec(this, _onStorageCodeChange);
 	    _classPrivateFieldInitSpec(this, _storageCodeData, {
 	      writable: true,
 	      value: {
@@ -25,16 +25,25 @@
 	      }
 	    });
 	    babelHelpers.defineProperty(this, "returnFieldsProperty", {});
+	    _classPrivateFieldInitSpec(this, _dialog, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _storageUpdating, {
+	      writable: true,
+	      value: false
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _dialog, ui_entitySelector.Dialog.getById('entityselector_storage_id'));
 	    if (main_core.Type.isPlainObject(options)) {
 	      this.documentType = options.documentType;
 	      var form = document.forms[options.formName];
 	      if (!main_core.Type.isNil(form)) {
-	        var _this$storageIdSelect, _babelHelpers$classPr;
-	        this.storageIdSelect = form.storage_id;
-	        this.currentStorageId = Number(((_this$storageIdSelect = this.storageIdSelect) === null || _this$storageIdSelect === void 0 ? void 0 : _this$storageIdSelect.value) || 0);
+	        var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
+	        var item = (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _dialog).selectedItems.values()) === null || _babelHelpers$classPr === void 0 ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.next()) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.value;
+	        this.currentStorageId = (item === null || item === void 0 ? void 0 : item.id) || 0;
 	        this.storageIdDependentElements = form.querySelectorAll('[data-role="bpa-sra-storage-id-dependent"]');
 	        babelHelpers.classPrivateFieldGet(this, _storageCodeData).element = form.storage_code;
-	        (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _storageCodeData).dependentElements).push.apply(_babelHelpers$classPr, babelHelpers.toConsumableArray(form.querySelectorAll('[data-role="bpa-sra-storage-code-dependent"]').values()).concat([form.querySelector('[data-role="bpa-sra-filter-fields-container"]').closest('tr')]));
+	        (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _storageCodeData).dependentElements).push.apply(_babelHelpers$classPr3, babelHelpers.toConsumableArray(form.querySelectorAll('[data-role="bpa-sra-storage-code-dependent"]').values()).concat([form.querySelector('[data-role="bpa-sra-filter-fields-container"]').closest('tr')]));
 	      }
 	      this.document = new bizproc_automation.Document({
 	        rawDocumentType: this.documentType,
@@ -59,9 +68,6 @@
 	          fieldsMap = _ref2[1];
 	        return [Number(storageId), fieldsMap];
 	      }));
-	      if (!main_core.Type.isNil(options.documentType)) {
-	        BX.Bizproc.Automation.API.documentType = options.documentType;
-	      }
 	      this.conditionGroup = new bizproc_automation.ConditionGroup(options.conditions);
 	    }
 	  }, {
@@ -95,21 +101,44 @@
 	  }, {
 	    key: "init",
 	    value: function init() {
-	      if (this.storageIdSelect) {
-	        main_core.Event.bind(this.storageIdSelect, 'change', this.onStorageIdChange.bind(this));
-	      }
+	      babelHelpers.classPrivateFieldSet(this, _dialog, new bizproc_storageSelector.StorageSelector({
+	        dialogId: 'entityselector_storage_id',
+	        storageCodeInput: babelHelpers.classPrivateFieldGet(this, _storageCodeData).element,
+	        onStateChange: this.onStorageStateChange.bind(this)
+	      }));
+	      babelHelpers.classPrivateFieldGet(this, _dialog).init();
 	      if (babelHelpers.classPrivateFieldGet(this, _storageCodeData).element) {
 	        this.renderFilterFields();
-	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _storageCodeData).element, 'input', _classPrivateMethodGet(this, _onStorageCodeChange, _onStorageCodeChange2).bind(this));
-	        main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _storageCodeData).element, 'focus', _classPrivateMethodGet(this, _onStorageCodeChange, _onStorageCodeChange2).bind(this));
 	      }
 	    }
 	  }, {
+	    key: "onStorageStateChange",
+	    value: function onStorageStateChange(newStorageId) {
+	      var isStorageRemoved = this.currentStorageId > 0 && newStorageId <= 0;
+	      this.currentStorageId = newStorageId;
+	      if (isStorageRemoved && babelHelpers.classPrivateFieldGet(this, _storageCodeData).returnFieldsContainer) {
+	        if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _storageCodeData).element.value)) {
+	          _classPrivateMethodGet(this, _clearStorageCodeAndValue, _clearStorageCodeAndValue2).call(this);
+	        }
+	      } else {
+	        this.conditionGroup = new bizproc_automation.ConditionGroup();
+	        this.returnFieldsIds = [];
+	      }
+	      this.render();
+	    }
+	  }, {
 	    key: "onStorageIdChange",
-	    value: function onStorageIdChange() {
-	      this.currentStorageId = Number(this.storageIdSelect.value);
-	      if (this.currentStorageId > 0) {
-	        _classPrivateMethodGet(this, _clearStorageCodeAndValue, _clearStorageCodeAndValue2).call(this);
+	    value: function onStorageIdChange(event) {
+	      if (babelHelpers.classPrivateFieldGet(this, _storageUpdating)) {
+	        return;
+	      }
+	      var data = event.getData();
+	      this.currentStorageId = 0;
+	      if (event.type === 'bx.ui.entityselector.dialog:item:onselect') {
+	        this.currentStorageId = Number(data.item.id);
+	      }
+	      if (babelHelpers.classPrivateFieldGet(this, _storageCodeData).element) {
+	        babelHelpers.classPrivateFieldGet(this, _storageCodeData).element.value = '';
 	      }
 	      this.conditionGroup = new bizproc_automation.ConditionGroup();
 	      this.returnFieldsIds = [];
@@ -137,7 +166,7 @@
 	  }, {
 	    key: "showFieldSelector",
 	    value: function showFieldSelector(targetInputId) {
-	      BPAShowSelector(targetInputId, 'string', '');
+	      window.BPAShowSelector(targetInputId, 'string', '');
 	    }
 	  }, {
 	    key: "renderFilterFields",
@@ -146,7 +175,7 @@
 	        var selector = new bizproc_automation.ConditionGroupSelector(this.conditionGroup, {
 	          fields: Object.values(this.filterFieldsMap.get(this.currentStorageId) || {}),
 	          fieldPrefix: this.filteringFieldsPrefix,
-	          customSelector: main_core.Type.isFunction(BPAShowSelector) ? this.showFieldSelector : null,
+	          customSelector: main_core.Type.isFunction(window.BPAShowSelector) ? this.showFieldSelector : null,
 	          caption: {
 	            head: main_core.Loc.getMessage('BIZPROC_SRA_FILTER_FIELDS_PROPERTY'),
 	            collapsed: main_core.Loc.getMessage('BIZPROC_SRA_FILTER_FIELDS_COLLAPSED_TEXT')
@@ -172,20 +201,12 @@
 	        });
 	        this.returnFieldsProperty.Options = fieldOptions;
 	        main_core.Dom.clean(this.returnFieldsMapContainer);
-	        this.returnFieldsMapContainer.appendChild(BX.Bizproc.FieldType.renderControl(this.documentType, this.returnFieldsProperty, this.returnFieldsProperty.FieldName, this.returnFieldsIds, 'designer'));
+	        main_core.Dom.append(BX.Bizproc.FieldType.renderControl(this.documentType, this.returnFieldsProperty, this.returnFieldsProperty.FieldName, this.returnFieldsIds, 'designer'), this.returnFieldsMapContainer);
 	      }
 	    }
 	  }]);
 	  return ReadDataStorageActivity;
 	}();
-	function _onStorageCodeChange2() {
-	  if (this.currentStorageId <= 0 && babelHelpers.classPrivateFieldGet(this, _storageCodeData).returnFieldsContainer) {
-	    if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _storageCodeData).element.value)) {
-	      _classPrivateMethodGet(this, _clearStorageCodeAndValue, _clearStorageCodeAndValue2).call(this);
-	    }
-	    this.render();
-	  }
-	}
 	function _clearStorageCodeAndValue2() {
 	  babelHelpers.classPrivateFieldGet(this, _storageCodeData).dependentElements.forEach(function (element) {
 	    return main_core.Dom.hide(element);
@@ -210,5 +231,5 @@
 	}
 	namespace.ReadDataStorageActivity = ReadDataStorageActivity;
 
-}((this.window = this.window || {}),BX,BX.Bizproc.Automation));
+}((this.window = this.window || {}),BX,BX.Bizproc.Automation,BX.Event,BX.UI.EntitySelector,BX.Bizproc.StorageSelector));
 //# sourceMappingURL=script.js.map

@@ -6,13 +6,10 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 	const { Type } = require('type');
 	const {
 		DialogType,
-		EventType,
 		MessageStatus,
 	} = require('im/messenger/const');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ComponentRequestBroadcaster } = require('im/messenger/lib/component-request-broadcaster');
-	const { Feature } = require('im/messenger/lib/feature');
 
 	const { PushHelper } = require('im/messenger/provider/push/message-handler/lib/helper');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -24,32 +21,12 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 	 */
 	class BasePushMessageHandler
 	{
-		constructor()
-		{
-			this.bindMethods();
-
-			if (!Feature.isMessengerV2Enabled)
-			{
-				this.subscribeEvents();
-			}
-		}
-
 		/**
 		 * @return {MessengerCoreStore}
 		 */
 		get store()
 		{
 			return serviceLocator.get('core').getStore();
-		}
-
-		/**
-		 * @deprecated
-		 * @abstract
-		 * @return {string}
-		 */
-		getHandlerId()
-		{
-			throw new Error('should implements this method');
 		}
 
 		/**
@@ -60,42 +37,6 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 		filterMessageEvents(eventList)
 		{
 			throw new Error('should implements this method');
-		}
-
-		destructor()
-		{
-			this.unsubscribeEvents();
-		}
-
-		/**
-		 * @deprecated
-		 */
-		bindMethods()
-		{
-			this.handleMessageBatch = this.handleMessageBatch.bind(this);
-		}
-
-		/**
-		 * @deprecated
-		 */
-		subscribeEvents()
-		{
-			ComponentRequestBroadcaster.getInstance().registerHandler(
-				EventType.push.messageBatch,
-				this.getHandlerId(),
-				this.handleMessageBatch,
-			);
-		}
-
-		/**
-		 * @deprecated
-		 */
-		unsubscribeEvents()
-		{
-			ComponentRequestBroadcaster.getInstance().unregisterHandler(
-				EventType.push.messageBatch,
-				this.getHandlerId(),
-			);
 		}
 
 		async handleMessageBatch(eventList)

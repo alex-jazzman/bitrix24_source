@@ -20,5 +20,7 @@ return [
 		'tasks:project',
 		'utils/function',
 		'utils/logger',
+		'project/member-list',
+		'ui-system/form/buttons/floating-action-button',
 	],
 ];

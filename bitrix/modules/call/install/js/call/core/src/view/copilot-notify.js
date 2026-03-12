@@ -31,6 +31,7 @@ export class CopilotNotify
 		this.popupTemplate = null;
 		this.bindElement = config.bindElement;
 		this.notifyColor = '';
+		this.targetContainer = config.bindElement || document.body;
 
 		this.callbacks = {
 			onClose: BX.type.isFunction(config.onClose) ? config.onClose : BX.DoNothing,
@@ -135,7 +136,7 @@ export class CopilotNotify
 		this.popup = new Popup({
 			className: 'bx-call-copilot-notify',
 			bindElement: this.bindElement,
-			targetContainer: document.body,
+			targetContainer: this.targetContainer,
 			content: this.popupTemplate,
 			bindOptions: {
 				position: 'top',

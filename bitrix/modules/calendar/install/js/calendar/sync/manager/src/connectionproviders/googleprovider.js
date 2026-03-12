@@ -35,9 +35,11 @@ export class GoogleProvider extends ConnectionProvider
 		return true;
 	}
 
-	getSyncLink()
+	async getSyncLink()
 	{
-		return this.syncLink;
+		const { data } = await BX.ajax.runAction('calendar.api.syncajax.getSyncLinks');
+
+		return data.google || this.syncLink;
 	}
 
 	hasSetSyncGoogleSettings()

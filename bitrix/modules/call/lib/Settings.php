@@ -9,7 +9,6 @@ use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Security\Cipher;
 use Bitrix\Main\Security\SecurityException;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Im;
 use Bitrix\Call\Integration\AI\CallAISettings;
 use Bitrix\Call\Integration\AI\CallAIBaasService;
 
@@ -20,14 +19,14 @@ class Settings
 	public static function getMobileOptions(): array
 	{
 		return array_merge([
-			'useCustomTurnServer' => Option::get('call', 'turn_server_self') === 'Y',
-			'turnServer' => \Bitrix\Im\Call\Call::getTurnServer(),
+			'useCustomTurnServer' => self::isSelfTurnServerEnabled(),
+			'turnServer' => Call::getTurnServer(),
 			'turnServerLogin' => Option::get('call', 'turn_server_login', ''),
 			'turnServerPassword' => Option::get('call', 'turn_server_password', ''),
-			'callLogService' => Option::get('call', 'call_log_service', ''),
-			'sfuServerEnabled' => Im\Call\Call::isCallServerEnabled(),
-			'bitrixCallsEnabled' => Im\Call\Call::isBitrixCallEnabled(),
-			'callBetaIosEnabled' => Im\Call\Call::isIosBetaEnabled(),
+			'callLogService' => Call::getLogService(),
+			'sfuServerEnabled' => Call::isCallServerEnabled(),
+			'bitrixCallsEnabled' => Call::isBitrixCallEnabled(),
+			'callBetaIosEnabled' => Call::isIosBetaEnabled(),
 			'isAIServiceEnabled' => static::isAIServiceEnabled(),//todo: Deprecated, should be removed after mobile app update
 			'userJwt' => JwtCall::getUserJwt((int)CurrentUser::get()->getId()),
 			'callBalancerUrl' => static::getBalancerUrl(),
@@ -35,6 +34,8 @@ class Settings
 			'jwtInPlainCallsEnabled' => static::isPlainCallsUseNewScheme(),
 			'plainCallFollowUpEnabled' => static::isPlainCallFollowUpEnabled(),
 			'plainCallCloudRecordingEnabled' => static::isPlainCallCloudRecordingEnabled(),
+			'optionsForTestingEnabled' => static::isOptionsForTestingEnabled(),
+			'mobileCallUIVisibilityTimer' => static::getMobileCallInterfaceVisibilityTimer(),
 
 			'ai' => [
 				'serviceEnabled' => static::isAIServiceEnabled(),
@@ -54,7 +55,6 @@ class Settings
 			'isCloudRecordTariffEnabled' => static::isCloudRecordingAvailable(),
 			'isCloudRecordCisRegion' => static::isCisRegion(),
 			'isCloudRecordLogEnabled' => static::isCloudRecordLogEnabled(),
-			'isCreateCallButtonEnabled' => static::isCreateCallButtonEnabled(),
 		], self::getAdditionalMobileOptions());
 	}
 
@@ -86,11 +86,16 @@ class Settings
 		Loader::includeModule('im');
 
 		$userId = (int)CurrentUser::get()->getId();
-		$usersData = Im\Call\Util::getUsers([$userId]);
+		$usersData = Util::getUsers([$userId]);
 
 		return [
 			'currentUserData' => $usersData[$userId],
 		];
+	}
+
+	public static function isSelfTurnServerEnabled(): bool
+	{
+		return Option::get('call', 'turn_server_self') === 'Y';
 	}
 
 	public static function isConferenceChatEnabled(): bool
@@ -214,6 +219,31 @@ class Settings
 		return (bool)\CUserOptions::GetOption('call', 'plain_call_cloud_recording_enabled', false);
 	}
 
+	public static function isNoiseSuppressionEnabled(): bool
+	{
+		if ((bool)Option::get('call', 'noise_suppression_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'noise_suppression_enabled', false);
+	}
+
+	public static function isOptionsForTestingEnabled(): bool
+	{
+		if ((bool)Option::get('call', 'options_for_testing_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'options_for_testing_enabled', false);
+	}
+
+	public static function getMobileCallInterfaceVisibilityTimer(): int
+	{
+		return (int)Option::get('call', 'mobile_call_ui_visibility_timer', 0);
+	}
+
 	/**
 	 * @deprecated
 	 */
@@ -251,6 +281,20 @@ class Settings
 	}
 
 	/**
+	 * Enable/disable logs to console.
+	 * @return bool
+	 */
+	public static function isConsoleLogsEnabled(): bool
+	{
+		if (Option::get('call', 'call_console_logs_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'call_console_logs_enabled', false);
+	}
+
+	/**
 	 * Disable camera of new joined users feature is enabled.
 	 * @return int
 	 */
@@ -260,17 +304,45 @@ class Settings
 	}
 
 	/**
-	 * New QOS is enabled.
+	 * Stream quality control is enabled.
 	 * @return bool
 	 */
-	public static function isNewQOSEnabled(): bool
+	public static function isStreamQualityFeatureEnabled(): bool
 	{
-		if (Option::get('call', 'call_new_qos_enabled', false))
+		if (Option::get('call', 'call_stream_quality_enabled', false))
 		{
 			return true;
 		}
 
-		return (bool)\CUserOptions::GetOption('call', 'call_new_qos_enabled', false);
+		return (bool)\CUserOptions::GetOption('call', 'call_stream_quality_enabled', false);
+	}
+
+	/**
+	 * Metrics is enabled.
+	 * @return bool
+	 */
+	public static function isMetricsEnabled(): bool
+	{
+		if (Option::get('call', 'call_metrics_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'call_metrics_enabled', false);
+	}
+
+	/**
+	 * Metrics logs is enabled.
+	 * @return bool
+	 */
+	public static function isMetricsLogsEnabled(): bool
+	{
+		if (Option::get('call', 'call_metrics_logs_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'call_metrics_logs_enabled', false);
 	}
 
 	/**
@@ -319,16 +391,30 @@ class Settings
 	}
 
 	/**
-	 * Create Call Button is enabled.
-	 * @return bool
+	 * Send interval of accident logs in seconds.
+	 * @return int
 	 */
-	public static function isCreateCallButtonEnabled(): bool
+	public static function getAccidentLogSendIntervalSecs(): int
 	{
-		if (Option::get('call', 'create_call_button_enabled', false))
+		$commonAccidentLogSendIntervalSecs = (int)Option::get('call', 'accident_log_send_interval_secs', 0);
+
+		if ($commonAccidentLogSendIntervalSecs > 0)
 		{
-			return true;
+			return $commonAccidentLogSendIntervalSecs;
 		}
 
-		return (bool)\CUserOptions::GetOption('call', 'create_call_button_enabled', false);
+		return (int)\CUserOptions::GetOption('call', 'accident_log_send_interval_secs', 0);
+	}
+
+	public static function getAccidentLogGroupMaxAgeSecs(): int
+	{
+		$commonAccidentLogGroupMaxAgeSecs = (int)Option::get('call', 'accident_log_group_max_age_secs', 0);
+
+		if ($commonAccidentLogGroupMaxAgeSecs > 0)
+		{
+			return $commonAccidentLogGroupMaxAgeSecs;
+		}
+
+		return (int)\CUserOptions::GetOption('call', 'accident_log_group_max_age_secs', 0);
 	}
 }

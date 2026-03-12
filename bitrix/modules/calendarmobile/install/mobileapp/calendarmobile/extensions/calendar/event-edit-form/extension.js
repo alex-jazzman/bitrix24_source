@@ -108,6 +108,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 		 * @param {?number} [params.eventId = null]
 		 * @param {?number} [params.dateFromTs = null]
 		 * @param {?number} [params.createChatId = null]
+		 * @param {?number} [params.createMailId = null]
 		 * @param {number} [params.ownerId]
 		 * @param {string} [params.calType]
 		 * @param {number} [params.selectedDayTs]
@@ -126,6 +127,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 			selectedDayTs = null,
 			recursionMode = null,
 			createChatId = null,
+			createMailId = null,
 			editAttendeesMode = false,
 			participantsEntityList = [],
 		})
@@ -138,6 +140,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 				ownerId,
 				calType,
 				createChatId,
+				createMailId,
 				sectionId,
 				firstWeekday,
 				recursionMode,
@@ -188,7 +191,8 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 		 * @param calType {string}
 		 * @param participantsEntityList {array}
 		 * @param description {string}
-		 * @param createChatId {number}
+		 * @param {?number} [createChatId = null]
+		 * @param {?number} [createMailId = null]
 		 * @param uuid {string}
 		 * @param showLoading {boolean}
 		 * @returns {Promise<void>}
@@ -199,6 +203,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 			participantsEntityList = [],
 			description = '',
 			createChatId = null,
+			createMailId = null,
 			uuid = null,
 			showLoading = false,
 		})
@@ -249,6 +254,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 					ownerId,
 					calType,
 					createChatId,
+					createMailId,
 					sectionId,
 					firstWeekday,
 					description,

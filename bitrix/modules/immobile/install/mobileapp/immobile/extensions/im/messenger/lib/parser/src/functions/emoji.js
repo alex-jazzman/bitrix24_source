@@ -47,7 +47,7 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 			{
 				text = this.getTextForAttach(text, attach);
 			}
-			else if (sticker === true)
+			else if (sticker)
 			{
 				text = this.getTextForSticker();
 			}

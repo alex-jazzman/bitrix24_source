@@ -17,6 +17,8 @@ export class EditAction extends BaseAction
 
 	setActionParams(params: EditActionParams): void
 	{
+		super.setActionParams(params);
+
 		this.editUri = params.editUri;
 	}
 

@@ -4071,7 +4071,6 @@ this.BX = this.BX || {};
 	var _autoHide$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("autoHide");
 	var _container$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _warningField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("warningField");
-	var _copilotBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copilotBanner");
 	var _copilotAgreementWasApplied = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copilotAgreementWasApplied");
 	var _copilotImageController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copilotImageController");
 	var _copilotTextController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copilotTextController");
@@ -4088,7 +4087,6 @@ this.BX = this.BX || {};
 	var _staticEulaRestrictCallback = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("staticEulaRestrictCallback");
 	var _getBaasPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBaasPopup");
 	var _initCopilotPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCopilotPopup");
-	var _showCopilotAfterCopilotBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCopilotAfterCopilotBanner");
 	var _initEngine = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initEngine");
 	var _initCopilotImageController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCopilotImageController");
 	var _initCopilotTextController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCopilotTextController");
@@ -4177,9 +4175,6 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _initEngine, {
 	      value: _initEngine2
 	    });
-	    Object.defineProperty(this, _showCopilotAfterCopilotBanner, {
-	      value: _showCopilotAfterCopilotBanner2
-	    });
 	    Object.defineProperty(this, _initCopilotPopup, {
 	      value: _initCopilotPopup2
 	    });
@@ -4217,10 +4212,6 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _warningField, {
 	      writable: true,
 	      value: null
-	    });
-	    Object.defineProperty(this, _copilotBanner, {
-	      writable: true,
-	      value: void 0
 	    });
 	    Object.defineProperty(this, _copilotAgreementWasApplied, {
 	      writable: true,
@@ -4323,12 +4314,6 @@ this.BX = this.BX || {};
 	          addImageMenuItem: babelHelpers.classPrivateFieldLooseBase(this, _useImage)[_useImage]
 	        });
 	        await babelHelpers.classPrivateFieldLooseBase(this, _initCopilotTextControllerMenu)[_initCopilotTextControllerMenu]();
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _copilotTextController)[_copilotTextController].isFirstLaunch()) {
-	          const {
-	            AppsInstallerBanner
-	          } = await main_core.Runtime.loadExtension('ai.copilot-banner');
-	          babelHelpers.classPrivateFieldLooseBase(this, _copilotBanner)[_copilotBanner] = new AppsInstallerBanner({});
-	        }
 	      } else {
 	        await babelHelpers.classPrivateFieldLooseBase(this, _initCopilotImageController)[_initCopilotImageController]();
 	      }
@@ -4346,10 +4331,6 @@ this.BX = this.BX || {};
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _copilotTextController)[_copilotTextController] && babelHelpers.classPrivateFieldLooseBase(this, _copilotTextController)[_copilotTextController].isPromptsLoaded() === false) {
 	      console.error('AI.Copilot: Prompts were not loaded!');
-	      return;
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _copilotBanner)[_copilotBanner]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showCopilotAfterCopilotBanner)[_showCopilotAfterCopilotBanner](options);
 	      return;
 	    }
 	    if (main_core.Extension.getSettings('ai.copilot').get('isShowAgreementPopup') && !babelHelpers.classPrivateFieldLooseBase(this, _copilotAgreementWasApplied)[_copilotAgreementWasApplied]) {
@@ -4510,17 +4491,6 @@ this.BX = this.BX || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _inputField)[_inputField].clearErrors();
 	      }
 	    }
-	  });
-	}
-	function _showCopilotAfterCopilotBanner2(showCopilotOptions) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _copilotBanner)[_copilotBanner].show();
-	  babelHelpers.classPrivateFieldLooseBase(this, _copilotBanner)[_copilotBanner].subscribe('action-finish-success', () => {
-	    Copilot.showBanner = false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _copilotBanner)[_copilotBanner] = null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _engine)[_engine].setBannerLaunched();
-	    setTimeout(() => {
-	      this.show(showCopilotOptions);
-	    }, 300);
 	  });
 	}
 	function _initEngine2(initEngineOptions) {
@@ -5404,10 +5374,7 @@ this.BX = this.BX || {};
 	var _extraResultMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extraResultMenuItems");
 	var _angle$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("angle");
 	var _initEngineOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initEngineOptions");
-	var _copilotBanner$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copilotBanner");
-	var _isNeedToShowCopilotBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isNeedToShowCopilotBanner");
 	var _isShowCopilotAgreementPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isShowCopilotAgreementPopup");
-	var _showAfterCopilotBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showAfterCopilotBanner");
 	var _completions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("completions");
 	var _handleCompletionsError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCompletionsError");
 	var _getAnalyticParametersForCompletions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAnalyticParametersForCompletions");
@@ -5508,14 +5475,8 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _completions, {
 	      value: _completions2
 	    });
-	    Object.defineProperty(this, _showAfterCopilotBanner, {
-	      value: _showAfterCopilotBanner2
-	    });
 	    Object.defineProperty(this, _isShowCopilotAgreementPopup, {
 	      value: _isShowCopilotAgreementPopup2
-	    });
-	    Object.defineProperty(this, _isNeedToShowCopilotBanner, {
-	      value: _isNeedToShowCopilotBanner2
 	    });
 	    Object.defineProperty(this, _bindElement$3, {
 	      writable: true,
@@ -5582,12 +5543,6 @@ this.BX = this.BX || {};
 	    try {
 	      await babelHelpers.classPrivateFieldLooseBase(this, _initEngine$1)[_initEngine$1](babelHelpers.classPrivateFieldLooseBase(this, _initEngineOptions)[_initEngineOptions]);
 	      babelHelpers.classPrivateFieldLooseBase(this, _initGeneralMenu)[_initGeneralMenu]();
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _isNeedToShowCopilotBanner)[_isNeedToShowCopilotBanner]()) {
-	        const {
-	          AppsInstallerBanner
-	        } = await main_core.Runtime.loadExtension('ai.copilot-banner');
-	        babelHelpers.classPrivateFieldLooseBase(CopilotContextMenu, _copilotBanner$1)[_copilotBanner$1] = new AppsInstallerBanner({});
-	      }
 	    } catch (e) {
 	      console.error('Init error', e);
 	      throw e;
@@ -5601,10 +5556,6 @@ this.BX = this.BX || {};
 	    const isRestrictedByEula = CopilotEula.checkRestricted();
 	    if (isRestrictedByEula) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _getAnalytics$1)[_getAnalytics$1]().sendEventOpen('error_agreement');
-	      return;
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(CopilotContextMenu, _copilotBanner$1)[_copilotBanner$1]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showAfterCopilotBanner)[_showAfterCopilotBanner]();
 	      return;
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isShowCopilotAgreementPopup)[_isShowCopilotAgreementPopup]()) {
@@ -5670,22 +5621,9 @@ this.BX = this.BX || {};
 	    (_babelHelpers$classPr16 = babelHelpers.classPrivateFieldLooseBase(this, _loaderPopup)[_loaderPopup]) == null ? void 0 : _babelHelpers$classPr16.setBindElement(bindElement);
 	  }
 	}
-	function _isNeedToShowCopilotBanner2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _copilotTextControllerEngine)[_copilotTextControllerEngine].isCopilotFirstLaunch() && babelHelpers.classPrivateFieldLooseBase(CopilotContextMenu, _copilotBanner$1)[_copilotBanner$1] === undefined;
-	}
 	function _isShowCopilotAgreementPopup2() {
 	  var _Extension$getSetting;
 	  return (_Extension$getSetting = main_core.Extension.getSettings('ai.copilot').isShowAgreementPopup) != null ? _Extension$getSetting : false;
-	}
-	function _showAfterCopilotBanner2() {
-	  babelHelpers.classPrivateFieldLooseBase(CopilotContextMenu, _copilotBanner$1)[_copilotBanner$1].show();
-	  babelHelpers.classPrivateFieldLooseBase(CopilotContextMenu, _copilotBanner$1)[_copilotBanner$1].subscribe('action-finish-success', () => {
-	    babelHelpers.classPrivateFieldLooseBase(CopilotContextMenu, _copilotBanner$1)[_copilotBanner$1] = null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _copilotTextControllerEngine)[_copilotTextControllerEngine].setCopilotBannerLaunchedFlag();
-	    setTimeout(() => {
-	      this.show();
-	    }, 300);
-	  });
 	}
 	async function _completions2() {
 	  try {
@@ -5751,7 +5689,10 @@ this.BX = this.BX || {};
 	      },
 	      errorCode: error.getCode(),
 	      showSliderWithMsg: error == null ? void 0 : (_error$customData = error.customData) == null ? void 0 : _error$customData.showSliderWithMsg,
-	      sliderCode: error == null ? void 0 : (_error$customData2 = error.customData) == null ? void 0 : _error$customData2.sliderCode
+	      sliderCode: error == null ? void 0 : (_error$customData2 = error.customData) == null ? void 0 : _error$customData2.sliderCode,
+	      forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
+	      forceOption: error == null ? void 0 : error.customData,
+	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _bindElement$3)[_bindElement$3]
 	    });
 	  });
 	}
@@ -6000,10 +5941,6 @@ this.BX = this.BX || {};
 	  }
 	  return analytics;
 	}
-	Object.defineProperty(CopilotContextMenu, _copilotBanner$1, {
-	  writable: true,
-	  value: void 0
-	});
 
 	exports.Copilot = Copilot;
 	exports.CopilotMode = CopilotMode;

@@ -97,6 +97,7 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 		{
 			return Box(
 				{
+					testId: this.testId,
 					safeArea: {
 						bottom: true,
 					},
@@ -121,6 +122,7 @@ jn.define('tab-presets/src/preset-manual/manual-menu', (require, exports, module
 		{
 			return BoxFooter(
 				{
+					testId: `${this.testId}-box-footer`,
 					style: {
 						width: '100%',
 					},

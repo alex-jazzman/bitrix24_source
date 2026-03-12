@@ -17,6 +17,7 @@ import {
 	AnalyticsDeviceStatus,
 	AnalyticsSubSection,
 	AnalyticsAIStatus,
+	AnalyticsVpnStatus,
 } from './const';
 
 export class Analytics
@@ -130,6 +131,7 @@ export class Analytics
 			p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
 			p2: `chatUserCount_${params.userCounter}`,
 			p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
+			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -145,6 +147,7 @@ export class Analytics
 			status: params.status,
 			p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
 			p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -160,12 +163,27 @@ export class Analytics
 			p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
 			p2: `chatUserCount_${params.associatedEntity?.userCounter}`,
 			p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
+			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 			p5: `callId_${params.callId}`,
 		};
 
-		if (params.associatedEntity.advanced.chatType === ChatType.collab)
+		if (params.associatedEntity.advanced.chatType === ChatType.collab && params.status === AnalyticsStatus.success)
 		{
-			resultData.p4 = getCollabId(this.normalizeChatId(params.associatedEntity.id));
+			const resultDataCollab = {
+				tool: AnalyticsTool.im,
+				category: AnalyticsCategory.collabCall,
+				event: AnalyticsEvent.startCallCollab,
+				type: params.callType,
+				status: params.status,
+				p4: getCollabId(this.normalizeChatId(params.associatedEntity.id)),
+				p5: `callId_${params.callId}`,
+			};
+			
+			sendData(resultDataCollab);
+		} 
+		else if (params.associatedEntity.advanced.chatType === ChatType.collab && params.status !== AnalyticsStatus.success)
+		{
+			return;
 		}
 
 		sendData(resultData);
@@ -180,6 +198,7 @@ export class Analytics
 			type: params.callType,
 			status: `error_${params.errorCode}`,
 			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
+			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 			p5: 'callId_0',
 		};
 
@@ -195,6 +214,7 @@ export class Analytics
 			type: params.callType,
 			status: params.status,
 			p3: getUserType(),
+			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 			p5: `callId_${params.callId}`,
 		};
 
@@ -213,11 +233,26 @@ export class Analytics
 			sendParams.p1 = params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff;
 			sendParams.p2 = params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff;
 		}
-
-		if (params.associatedEntity.advanced.chatType === ChatType.collab)
+		
+		if (params.associatedEntity.advanced.chatType === ChatType.collab && params.status === AnalyticsStatus.success)
 		{
 			const collabId = params.associatedEntity.advanced.entityId;
-			sendParams.p4 = `collabId_${collabId}`;
+			
+			const resultDataCollab = {
+				tool: AnalyticsTool.im,
+				category: AnalyticsCategory.collabCall,
+				event: AnalyticsEvent.connectCallCollab,
+				type: params.callType,
+				status: params.status,
+				p4: `collabId_${collabId}`,
+				p5: `callId_${params.callId}`,
+			};
+			
+			sendData(resultDataCollab);
+		} 
+		else if (params.associatedEntity.advanced.chatType === ChatType.collab && params.status !== AnalyticsStatus.success)
+		{
+			return;
 		}
 
 		sendData(sendParams);
@@ -232,6 +267,7 @@ export class Analytics
 			type: params.callType,
 			status: `error_${params.errorCode}`,
 			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
+			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 			p5: `callId_${params.callId}`,
 		};
 
@@ -252,6 +288,7 @@ export class Analytics
 			type: params.callType,
 			c_section: AnalyticsSection.callWindow,
 			status: params.reconnectionReason || '',
+			p2: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 			p3: `msg_${reconnectionReasonInfo}`,
 			p4: `attemptNumber_${params.reconnectionEventCount}`,
 			p5: `callId_${params.callId}`,
@@ -267,6 +304,7 @@ export class Analytics
 			type: params.callType,
 			status: `error_${params.errorCode}`,
 			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
+			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 			p5: `callId_${params.callId}`,
 		});
 	}

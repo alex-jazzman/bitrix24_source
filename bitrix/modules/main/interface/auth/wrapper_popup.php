@@ -76,6 +76,7 @@ switch($_REQUEST['bxsender']):
 <form name="form_auth" method="post" action="" novalidate>
 	<input type="hidden" name="AUTH_FORM" value="Y">
 	<input type="hidden" name="TYPE" value="AUTH">
+	<?= bitrix_sessid_post(); ?>
 
 	<div class="bx-core-popup-auth-field">
 		<div class="bx-core-popup-auth-field-caption"><?=GetMessage("AUTH_LOGIN")?></div>

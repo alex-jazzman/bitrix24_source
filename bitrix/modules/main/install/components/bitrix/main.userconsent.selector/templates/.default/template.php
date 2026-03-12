@@ -22,7 +22,7 @@ if ($arParams['AGREEMENTS'])
 	?>
 	<div class="main-user-consent-selector-block" data-bx-user-consent-selector-block>
 		<div class="main-user-consent-selector-block-name">
-			<?=Loc::getMessage('MAIN_USER_CONSENT_SELECTOR_CHOOSE')?>:
+			<?=Loc::getMessage('MAIN_USER_CONSENT_SELECTOR_CHOOSE_MSGVER_1')?>
 		</div>
 		<div class="main-user-consent-selector-block-input">
 			<select class="main-user-consent-selector-block-input-item" data-bx-selector="">
@@ -113,7 +113,7 @@ if ($arParams['AGREEMENTS'])
 			<?php for ($index = 0, $cnt = count($arParams['AGREEMENTS']); $index < $cnt; $index++): ?>
 				<div class="main-user-consent-selector-block" data-bx-user-consent-selector-block="">
 					<div class="main-user-consent-selector-block-name">
-						<?=Loc::getMessage('MAIN_USER_CONSENT_SELECTOR_CHOOSE')?>:
+						<?=Loc::getMessage('MAIN_USER_CONSENT_SELECTOR_CHOOSE_MSGVER_1')?>
 					</div>
 					<div class="main-user-consent-selector-block-input">
 						<select class="main-user-consent-selector-block-input-item" data-bx-selector="" name="<?= htmlspecialcharsbx($arParams['INPUT_NAME']) . "[$index][ID]" ?>">
@@ -186,7 +186,7 @@ if ($arParams['AGREEMENTS'])
 		<?php else: ?>
 			<div class="main-user-consent-selector-block" data-bx-user-consent-selector-block="">
 				<div class="main-user-consent-selector-block-name">
-					<?=Loc::getMessage('MAIN_USER_CONSENT_SELECTOR_CHOOSE')?>:
+					<?=Loc::getMessage('MAIN_USER_CONSENT_SELECTOR_CHOOSE_MSGVER_1')?>
 				</div>
 				<div class="main-user-consent-selector-block-input">
 					<select class="main-user-consent-selector-block-input-item" data-bx-selector="" name="<?= htmlspecialcharsbx($arParams['INPUT_NAME']) ?>">

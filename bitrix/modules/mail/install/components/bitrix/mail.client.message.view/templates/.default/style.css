@@ -33,6 +33,7 @@
 .mail-msg-view-body {
 	position: relative;
 	padding: 10px 20px 33px 20px;
+	font-size: var(--ui-font-size-md, 14px);
 	color: #535c69;
 	overflow-x: auto;
 	word-wrap: break-word;
@@ -70,6 +71,14 @@
 	cursor: pointer;
 }
 /* endregion */
+
+.mail-msg-iframe {
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	border: 0;
+	outline: none;
+}
 
 .mail-msg-view-wrapper {
 	position: relative;

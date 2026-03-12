@@ -21,6 +21,9 @@ $buttonAdd->addAttribute('id', 'vox-blacklist-add');
 \Bitrix\UI\Toolbar\Facade\Toolbar::addButton($buttonAdd);
 
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
+
+$documents = new CVoxImplantDocuments();
+$billingUrl = $documents->GetUploadUrl('RU');
 ?>
 
 <div id="voximplant-rent" class="voximplant-container"></div>
@@ -36,7 +39,10 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 			canRent: <?= $arResult['CAN_RENT_NUMBER'] ? 'true' : 'false' ?>,
 			iframe: <?=CUtil::PhpToJSObject($arResult['IFRAME'])?>,
 			currentBalance: <?= (float)$arResult['CURRENT_BALANCE']?>,
-			rentPacketSize: <?= (int)$arResult['RENT_PACKET_SIZE']?>
+			rentPacketSize: <?= (int)$arResult['RENT_PACKET_SIZE']?>,
+			showInternodWarning: <?= $arResult['SHOW_INTERNOD_WARNING'] ? 'true' : 'false' ?>,
+			internodDeadline: '<?= CUtil::JSEscape($arResult['INTERNOD_DEADLINE'] ?? '') ?>',
+			billingUrl: '<?= $billingUrl ?>'
 		})
 	})
 </script>

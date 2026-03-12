@@ -4164,11 +4164,6 @@ this.BX = this.BX || {};
 	  getTopPadding() {
 	    return this.isDefaultTheme() ? 0 : 9;
 	  }
-
-	  // region Public functions
-	  initPagetitleStar() {
-	    return ItemUserFavorites.isCurrentPageStandard(ItemUserFavorites.getActiveTopMenuItem());
-	  }
 	  getStructureForHelper() {
 	    const items = {
 	      menu: {}

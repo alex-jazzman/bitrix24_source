@@ -1,3 +1,4 @@
+import { EventEmitter } from 'main.core.events';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { Outline, Main } from 'ui.icon-set.api.core';
 import { BMenu } from 'ui.system.menu.vue';
@@ -64,6 +65,16 @@ export const TitleIconField = {
 			};
 		},
 	},
+	mounted(): void
+	{
+		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+		EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+	},
+	unmounted(): void
+	{
+		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+		EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+	},
 	methods: {
 		onInput(event: Event): void
 		{
@@ -89,6 +100,10 @@ export const TitleIconField = {
 				event,
 				element: this.$el,
 			});
+		},
+		closeMenu(): void
+		{
+			this.isMenuShown = false;
 		},
 	},
 	template: `

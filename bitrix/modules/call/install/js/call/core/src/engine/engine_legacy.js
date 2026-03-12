@@ -135,10 +135,10 @@ export const CallEvent = {
 };
 
 const ajaxActions = {
-	createCall: 'im.call.create',
-	createChildCall: 'im.call.createChildCall',
+	createCall: 'call.CallManager.create',
+	createChildCall: 'call.CallManager.createChildCall',
 	getPublicChannels: 'pull.channel.public.list',
-	getCall: 'im.call.get'
+	getCall: 'call.CallManager.get'
 };
 
 export const CallScheme = {

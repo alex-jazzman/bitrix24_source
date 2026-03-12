@@ -25,6 +25,5 @@ return [
 		'layout/ui/fields/file',
 		'layout/ui/fields/multiple-field',
 		'layout/ui/fields/textarea',
-		'ui-system/form/inputs/string',
-	],
+		'ui-system/form/inputs/string', 'analytics',],
 ];

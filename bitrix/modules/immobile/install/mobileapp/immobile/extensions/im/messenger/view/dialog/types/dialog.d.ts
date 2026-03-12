@@ -16,4 +16,5 @@ export enum UpdatingBlocksEnum {
 	vote ='vote',
 	reactionAnimate ='reaction_animate_',
 	withoutUi ='without-ui',
+	aiAnimation ='aiAnimation',
 }

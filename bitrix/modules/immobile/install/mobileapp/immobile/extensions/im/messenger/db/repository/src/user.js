@@ -135,7 +135,8 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 
 			if (Type.isStringFilled(user.avatar))
 			{
-				result.avatar = this.prepareAvatar(user.avatar);
+				const urlHelper = new Url(user.avatar);
+				result.avatar = urlHelper.getPreparedAvatarUrl();
 			}
 
 			if (Type.isStringFilled(user.color))
@@ -275,35 +276,6 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 			}
 
 			result.isCompleteInfo = true; // for data from the server, trust the full complete info
-
-			return result;
-		}
-
-		prepareAvatar(avatar)
-		{
-			let result = '';
-
-			if (!avatar || avatar.endsWith('/js/im/images/blank.gif'))
-			{
-				result = '';
-			}
-			else if (avatar.startsWith('http'))
-			{
-				result = avatar;
-			}
-			else
-			{
-				result = currentDomain + avatar;
-			}
-
-			if (result)
-			{
-				const urlHelper = Url.createFromPath(result);
-				if (!urlHelper.isEncoded)
-				{
-					result = encodeURI(result);
-				}
-			}
 
 			return result;
 		}

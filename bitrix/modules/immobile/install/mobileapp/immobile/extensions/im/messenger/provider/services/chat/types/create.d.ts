@@ -12,6 +12,6 @@ declare type CreateChatParams = {
 }
 
 declare type CreateCopilotParams = {
-	type: 'COPILOT',
+	type: 'COPILOT' | string,
 	copilotMainRole: string,
 }

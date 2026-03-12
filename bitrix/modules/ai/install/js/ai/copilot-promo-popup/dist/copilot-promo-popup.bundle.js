@@ -27,15 +27,19 @@ this.BX = this.BX || {};
 	      ru: '/bitrix/js/ai/copilot-promo-popup/videos/ru/siteWithCopilot.webm'
 	    },
 	    videoContainerMinHeight: 226,
-	    title: 'CoPilot',
-	    text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_SITE_WITH_COPILOT_TEXT')
+	    title: getCopilotName(),
+	    text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_SITE_WITH_COPILOT_TEXT_MSGVER_1')
 	  }
 	});
 	function getTextWithReplaceAccent(messageCode) {
 	  return main_core.Loc.getMessage(messageCode, {
+	    '#COPILOT_NAME#': getCopilotName(),
 	    '#ACCENT#': '<span style="color: var(--ui-color-copilot-primary);">',
 	    '#/ACCENT#': '</span>'
 	  });
+	}
+	function getCopilotName() {
+	  return main_core.Extension.getSettings('ai.copilot-promo-popup').copilotName;
 	}
 
 	var _checkPreset = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkPreset");

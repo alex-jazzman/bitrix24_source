@@ -1,13 +1,13 @@
+import { UI } from 'ui.notification';
+import { mapState } from 'ui.vue3.pinia';
+import { Messenger } from 'im.public.iframe';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { ChatListActionMenu, MenuActions } from 'humanresources.company-structure.org-chart';
 import { ConfirmationPopup, RouteActionMenu } from 'humanresources.company-structure.structure-components';
 import { ChatTypes, EntityTypes } from 'humanresources.company-structure.utils';
-import { UI } from 'ui.notification';
-import { mapState } from 'ui.vue3.pinia';
+import { ActionButtonDictionary, ActionButtonDictionaryItem } from './dictionaries/action-button-dictionary';
 import { DepartmentContentActions } from '../../actions';
 import { DepartmentAPI } from '../../api';
-import { Messenger } from 'im.public.iframe';
-import { ActionButtonDictionary, ActionButtonDictionaryItem } from './dictionaries/action-button-dictionary';
 
 type DataType = {
 	isMenuVisible: boolean,

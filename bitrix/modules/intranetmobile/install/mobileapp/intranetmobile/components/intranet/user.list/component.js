@@ -339,7 +339,7 @@
 				testId: 'empty-state',
 				title,
 				description,
-				emptyScreen: false,
+				emptyScreen: true,
 				onRefresh: () => {},
 				image: Image({
 					resizeMode: 'contain',

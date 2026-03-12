@@ -21,6 +21,13 @@
 	navigation: auto;
 }
 
+html.bx-safari::view-transition-old(root),
+html.bx-safari::view-transition-new(root),
+html.bx-safari::view-transition-group(root) {
+	animation-duration: 0s !important;
+	animation-name: none !important;
+}
+
 body {
 	--air-fixed-layout-top-shift: 0px;
 	--air-admin-panel-height: 0px;
@@ -28,8 +35,33 @@ body {
 	--air-right-bar-width: 70px;
 	--air-app-min-width: 1260px;
 
+	--air-sidepanel-toolbar-right: 70px;
+	--air-sidepanel-toolbar-bottom: 15px;
+	--air-sidepanel-toolbar-right-shifted: 10px;
+	--air-sidepanel-toolbar-bottom-shifted: 15px;
+
+	--air-content-area-left-shift: 22px;
+	--air-header-min-height: 58px;
+	--air-footer-min-height: 76px;
+	--air-topbar-height: 58px;
+
 	margin: 0;
 	overflow-y: scroll;
+}
+
+body.air-fullscreen-mode {
+	--air-topbar-height: 0px;
+	--air-sidepanel-toolbar-right: var(--air-content-area-left-shift, 22px);
+	--air-sidepanel-toolbar-right-shifted: var(--air-content-area-left-shift, 22px);
+}
+
+body.air-fullscreen-mode.side-panel-disable-scrollbar {
+	--air-sidepanel-toolbar-right: -9999px;
+	--air-sidepanel-toolbar-right-shifted: -9999px;
+}
+
+body.air-fullscreen-mode #panel {
+	display: none;
 }
 
 body:has(#bx-panel.bx-panel-fixed),
@@ -62,13 +94,6 @@ body:has(#bx-panel.bx-panel-fixed.bx-panel-folded) {
 }
 
 .app {
-	--content-area-left-shift: 22px;
-	--air-header-min-height: 58px;
-	--air-footer-min-height: 76px;
-	--topbar-height: 58px;
-}
-
-.app {
 	box-sizing: border-box;
 	min-height: calc(100vh - var(--air-fixed-layout-top-shift));
 	display: flex;
@@ -91,6 +116,10 @@ body:has(#bx-panel.bx-panel-fixed.bx-panel-folded) {
 	background: var(--air-theme-background-blurred, none);
 }
 
+.app__left-menu.--hidden {
+	display: none;
+}
+
 .app__right-bar {
 	box-sizing: border-box;
 	position: -webkit-sticky;
@@ -110,7 +139,8 @@ body:has(#bx-panel.bx-panel-fixed.bx-panel-folded) {
 	padding-bottom: calc(80px * var(--side-panel-toolbar-shifted, 0));
 }
 
-.im-bar-mode-off .app__right-bar {
+.im-bar-mode-off .app__right-bar,
+.app__right-bar.--hidden {
 	display: none;
 }
 
@@ -123,7 +153,11 @@ body:not(.side-panel-disable-scrollbar) .app__right-bar.--show-scroll-btn {
 }
 
 .im-bar-mode-off .app__header {
-	margin-right: calc(var(--content-area-left-shift) * -1);
+	margin-right: calc(var(--air-content-area-left-shift) * -1);
+}
+
+.app__header.--hidden {
+	display: none;
 }
 
 .app__main {
@@ -135,16 +169,17 @@ body:not(.side-panel-disable-scrollbar) .app__right-bar.--show-scroll-btn {
 	position: relative;
 }
 
-.im-bar-mode-off .app__main {
-	padding-right: var(--content-area-left-shift);
+.im-bar-mode-off .app__main,
+.air-fullscreen-mode .app__main {
+	padding-right: var(--air-content-area-left-shift);
 	margin-right: 0;
 }
 
 .app__page {
-	padding-left: var(--content-area-left-shift);
+	padding-left: var(--air-content-area-left-shift);
 	display: flex;
 	flex-direction: column;
-	min-height: calc(100vh - var(--topbar-height) - var(--air-footer-min-height));
+	min-height: calc(100vh - var(--air-topbar-height) - var(--air-footer-min-height));
 }
 
 .app:has(.no-footer) .app__page {
@@ -153,15 +188,16 @@ body:not(.side-panel-disable-scrollbar) .app__right-bar.--show-scroll-btn {
 
 .app__footer {
 	min-height: var(--air-footer-min-height);
-	padding-left: var(--content-area-left-shift);
+	padding-left: var(--air-content-area-left-shift);
 }
 
-.app:has(.no-footer) {
+.app:has(.no-footer),
+.app:has(.app__footer.--hidden) {
 	--air-footer-min-height: 22px;
 }
 
 .app:has(.no-footer-endless) {
-	--air-footer-min-height: 0px;
+	--air-footer-min-height: 0px !important;
 }
 
 .app:has(.no-footer) .app__footer,
@@ -169,7 +205,7 @@ body:not(.side-panel-disable-scrollbar) .app__right-bar.--show-scroll-btn {
 	display: none;
 }
 
-.app__footer.hidden {
+.app__footer.--hidden .air-footer {
 	display: none;
 }
 
@@ -186,7 +222,8 @@ body:not(.side-panel-disable-scrollbar) .app__right-bar.--show-scroll-btn {
 	z-index: 990;
 }
 
-.side-panel-disable-scrollbar .app__go-top-button {
+.side-panel-disable-scrollbar .app__go-top-button,
+.air-fullscreen-mode .app__go-top-button {
 	display: none;
 }
 
@@ -268,8 +305,8 @@ textarea {
 	box-sizing: border-box;
 	position: relative;
 	width: 100%;
-	height: var(--topbar-height);
-	padding-left: var(--content-area-left-shift);
+	height: var(--air-topbar-height);
+	padding-left: var(--air-content-area-left-shift);
 	padding-right: 140px;
 	display: flex;
 	flex-direction: row;
@@ -305,7 +342,7 @@ body:has(.air-user-profile-avatar__time-meridiem):not(:is(.im-bar-mode-off)) .ai
 }
 
 .air-header__menu {
-	height: var(--topbar-height);
+	height: var(--air-topbar-height);
 	flex: 1;
 }
 
@@ -321,6 +358,8 @@ body:has(.air-user-profile-avatar__time-meridiem):not(:is(.im-bar-mode-off)) .ai
 }
 
 .air-header__buttons {
+	position: relative;
+	top: 2px;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -2361,7 +2400,7 @@ body.im-chat-embedded {
 }
 
 .im-chat-embedded .app__main {
-	--content-area-left-shift: 18px;
+	--air-content-area-left-shift: 18px;
 }
 
 .im-chat-embedded .air-header {

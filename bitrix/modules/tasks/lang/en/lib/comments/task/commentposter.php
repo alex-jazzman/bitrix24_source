@@ -1,5 +1,6 @@
 <?php
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_AI_FAILED_TO_RESOLVE_RESPONSIBLE"] = "#RESPONSIBLE#, CoPilot could not select an assignee for the task, and assigned you instead.";
+$MESS["COMMENT_POSTER_COMMENT_TASK_ADD_AI_FAILED_TO_RESOLVE_RESPONSIBLE_MSGVER_1"] = "#RESPONSIBLE#, #COPILOT_NAME# could not select an assignee for the task, and assigned you instead.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_MYSELF"] = "A task was created.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE"] = "A task was created and assigned to #RESPONSIBLE#.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE_CONTROL"] = "A task was created and assigned to #RESPONSIBLE#.

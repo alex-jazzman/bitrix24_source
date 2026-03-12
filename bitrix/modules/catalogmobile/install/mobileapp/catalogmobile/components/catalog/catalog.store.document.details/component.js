@@ -3,6 +3,7 @@
 
 	const { EventEmitter } = require('event-emitter');
 	const { DocumentCardComponent } = require('catalog/store/document-card/component');
+	const { Random } = require('utils/random');
 
 	let desktopUrl = '';
 	const payload = BX.componentParameters.get('payload', {});

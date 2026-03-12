@@ -1,7 +1,7 @@
 import { ajax as Ajax, Runtime } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
-import { BIcon, Set } from 'ui.icon-set.api.vue';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import { DashboardItem } from './components/dashboard-item';
 import { DashboardSelector } from './components/dashboard-selector';
@@ -58,9 +58,9 @@ export const App: BitrixVueComponentProps = {
 
 			return this.dashboards.length > 7;
 		},
-		set(): Set
+		set(): Outline
 		{
-			return Set;
+			return Outline;
 		},
 	},
 	methods: {
@@ -127,6 +127,7 @@ export const App: BitrixVueComponentProps = {
 		},
 		saveGroup(): void
 		{
+			this.ensureNewGroupName();
 			this.$store.commit('setIsLoading', true);
 			Ajax.runAction('biconnector.group.save', {
 				data: {
@@ -152,6 +153,13 @@ export const App: BitrixVueComponentProps = {
 					this.$store.commit('setIsLoading', false);
 				})
 			;
+		},
+		ensureNewGroupName(): void
+		{
+			if (this.$store.getters.isNewGroup && !this.$store.getters.groupName)
+			{
+				this.$store.commit('setEmptyGroupName', this.$Bitrix.Loc.getMessage('BI_GROUP_NAME_NEW'));
+			}
 		},
 		closePopup(): void
 		{
@@ -181,9 +189,9 @@ export const App: BitrixVueComponentProps = {
 			<TitleEditor @on-name-update="updateRight" :can-edit="!isSystemGroup"/>
 			<div class="group-header-controls">
 				<BIcon
-					:name="set.CROSS_25"
-					:size="25"
-					color="#BDC1C6"
+					:name="set.CROSS_L"
+					:size="20"
+					color="var(--ui-color-base-4)"
 					:class="'group-close'"
 					@click="closePopup"
 				></BIcon>
@@ -201,7 +209,7 @@ export const App: BitrixVueComponentProps = {
 			<GroupScopeSelector @on-group-scope-add="onGroupScopeAdd" @on-group-scope-remove="onGroupScopeRemove" :can-edit="!isSystemGroup"/>
 		</div>
 		<div class="group-dashboard-empty" v-if="isNoDashboards">
-			<img class="group-dashboard-empty-image" src="/bitrix/images/biconnector/dashboard-groups/empty-state.svg" alt="No dashboards">
+			<div class="group-dashboard-empty-image"></div>
 			<div class="group-dashboard-empty-title">{{ $Bitrix.Loc.getMessage('BI_GROUP_EMPTY_TITLE') }}</div>
 			<div class="group-dashboard-empty-subtitle">{{ $Bitrix.Loc.getMessage('BI_GROUP_EMPTY_SUBTITLE') }}</div>
 		</div>
@@ -217,13 +225,13 @@ export const App: BitrixVueComponentProps = {
 		</div>
 		<div class="group-footer" v-if="isSaveEnabled">
 			<div
-				:class="['ui-btn ui-btn-primary ui-btn-md ui-btn-round ui-btn-no-caps group-footer-button', {'ui-btn-disabled ui-btn-clock': isLoading}]" 
+				:class="['ui-btn --air ui-btn-lg --style-filled ui-btn-no-caps', {'ui-btn-disabled ui-btn-wait': isLoading}]" 
 				@click="saveGroup"
 			>
 				{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE') }}
 			</div>
 			<div
-				class="ui-btn ui-btn-light-border ui-btn-md ui-btn-round ui-btn-no-caps group-footer-button"
+				class="ui-btn --air ui-btn-lg --style-plain ui-btn-no-caps"
 				@click="closePopup"
 			>
 				{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE_CANCEL_MSGVER_1') }}

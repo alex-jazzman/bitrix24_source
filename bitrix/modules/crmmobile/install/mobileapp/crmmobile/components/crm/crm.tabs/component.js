@@ -169,6 +169,7 @@
 			if (Object.keys(preparedCounters).length > 0)
 			{
 				ActivityCountersStoreManager.setCounters(preparedCounters);
+				this.tryToShowOnboardingCases();
 			}
 		}
 
@@ -812,9 +813,45 @@
 			}
 
 			const filterText = config?.data?.extra?.filter?.search;
-			const hasResult = Array.isArray(data?.items) && data?.items.length > 0;
+			const hasResult = Array.isArray(data?.items);
+			if (hasResult)
+			{
+				this.tryToShowOnboardingCases(data);
+			}
 
 			this.searchRef?.updateLastSearchResultStatus?.(hasResult, filterText);
+		}
+
+		tryToShowOnboardingCases(data = {})
+		{
+			void requireLazy('crm:onboarding', false)
+				.then(({ Onboarding, CaseName }) => {
+					if (Onboarding)
+					{
+						const activeTab = this.getActiveTab();
+						const tabs = this.getTabItems();
+						const hasCustomPresets = data?.hasCustomPresets || false;
+						const canImport = data?.permissions?.import || false;
+
+						Onboarding.tryToShowCasesBatch([
+							CaseName.ON_NO_CRM_DEALS,
+							CaseName.ON_ACTIVE_TAB_COUNTER,
+							CaseName.ON_MORE_THAN_TWO_TUNNELS,
+							CaseName.ON_CUSTOM_PRESET_APPEARED,
+						], {
+							items: data?.items,
+							entityTypeId: activeTab?.id,
+							entityType: activeTab?.typeName,
+							parentWidget: layout,
+							tabs,
+							hasCustomPresets,
+							canImport,
+						});
+					}
+				})
+				.catch((error) => {
+					console.error(error);
+				});
 		}
 
 		getPermissions()

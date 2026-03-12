@@ -21,6 +21,8 @@ class CBPImBotNewMessageTrigger extends \Bitrix\Bizproc\Activity\BaseTrigger
 	private const RETURN_PARAM_MESSAGE = 'Message';
 	private const RETURN_PARAM_SENDER = 'SenderId';
 	private const RETURN_PARAM_ACTUAL_BOT_ID = 'ActualBotId';
+	private const RETURN_PARAM_CHAT_ID = 'chatId';
+	private const RETURN_PARAM_IS_GROUP_CHAT = 'isGroupChat';
 	private const FIELD_DOCUMENT_ID = 'DOCUMENT_ID';
 
 	public function execute(): int
@@ -46,6 +48,8 @@ class CBPImBotNewMessageTrigger extends \Bitrix\Bizproc\Activity\BaseTrigger
 		$this->{self::RETURN_PARAM_MESSAGE} = (string)($context[BizprocBot::FIELD_MESSAGE] ?? '');
 		$this->{self::RETURN_PARAM_SENDER} = 'user_' . $senderId;
 		$this->{self::RETURN_PARAM_ACTUAL_BOT_ID} = $botId;
+		$this->{self::RETURN_PARAM_CHAT_ID} = (int)($context['TO_CHAT_ID'] ?? $context['CHAT_ID'] ?? 0);
+		$this->{self::RETURN_PARAM_IS_GROUP_CHAT} = ($context['MESSAGE_TYPE'] ?? null) === IM_MESSAGE_CHAT;
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -60,12 +64,16 @@ class CBPImBotNewMessageTrigger extends \Bitrix\Bizproc\Activity\BaseTrigger
 			self::RETURN_PARAM_MESSAGE => null,
 			self::RETURN_PARAM_SENDER => null,
 			self::RETURN_PARAM_ACTUAL_BOT_ID => null,
+			self::RETURN_PARAM_CHAT_ID => null,
+			self::RETURN_PARAM_IS_GROUP_CHAT => null,
 		];
 
 		$this->SetPropertiesTypes([
 			self::RETURN_PARAM_MESSAGE => ['Type' => FieldType::STRING],
 			self::RETURN_PARAM_SENDER => ['Type' => FieldType::USER],
 			self::RETURN_PARAM_ACTUAL_BOT_ID => ['Type' => FieldType::INT],
+			self::RETURN_PARAM_CHAT_ID => ['Type' => FieldType::INT],
+			self::RETURN_PARAM_IS_GROUP_CHAT => ['Type' => FieldType::BOOL],
 		]);
 	}
 

@@ -1,17 +1,15 @@
-import { BMenu, MenuItemDesign, type MenuOptions } from 'ui.system.menu.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
-import { Core } from 'tasks.v2.core';
-import { GroupType, Model } from 'tasks.v2.const';
+import { Model } from 'tasks.v2.const';
 import { Hint } from 'tasks.v2.component.elements.hint';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { FieldAdd } from 'tasks.v2.component.elements.field-add';
+import { showLimit } from 'tasks.v2.lib.show-limit';
 import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { TaskModel } from 'tasks.v2.model.tasks';
-import { showLimit } from 'tasks.v2.lib.show-limit';
 
 import { groupMeta } from './group-meta';
 import { GroupPopup } from './group-popup/group-popup';
@@ -22,13 +20,13 @@ import './group.css';
 export const Group = {
 	components: {
 		BIcon,
-		BMenu,
 		Hint,
 		HoverPill,
 		FieldAdd,
 		GroupPopup,
 	},
 	inject: {
+		settings: {},
 		task: {},
 		taskId: {},
 		isEdit: {},
@@ -43,7 +41,6 @@ export const Group = {
 	data(): Object
 	{
 		return {
-			isMenuShown: false,
 			isHintShown: false,
 		};
 	},
@@ -51,33 +48,6 @@ export const Group = {
 		group(): GroupModel
 		{
 			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
-		},
-		menuOptions(): MenuOptions
-		{
-			return {
-				id: 'tasks-field-group-menu',
-				bindElement: this.$refs.group,
-				offsetTop: 8,
-				items: [
-					{
-						title: this.getAboutItemTitle(),
-						icon: Outline.FOLDER,
-						onClick: this.openGroup,
-					},
-					{
-						title: this.loc('TASKS_V2_GROUP_CHANGE'),
-						icon: Outline.EDIT_L,
-						onClick: this.isLocked ? this.showLimitDialog : this.showDialog,
-					},
-					{
-						design: MenuItemDesign.Alert,
-						title: this.loc('TASKS_V2_GROUP_CLEAR'),
-						icon: Outline.CROSS_L,
-						onClick: this.clearField,
-					},
-				],
-				targetContainer: document.body,
-			};
 		},
 		groupName(): string
 		{
@@ -101,17 +71,14 @@ export const Group = {
 		},
 		isLocked(): boolean
 		{
-			return !Core.getParams().restrictions.project.available;
+			return !this.settings.restrictions.project.available;
+		},
+		withClear(): boolean
+		{
+			return !this.readonly && (this.task.flowId ?? 0) <= 0;
 		},
 	},
 	methods: {
-		getAboutItemTitle(): string
-		{
-			return {
-				[GroupType.Collab]: this.loc('TASKS_V2_GROUP_ABOUT_COLLAB'),
-				[GroupType.Scrum]: this.loc('TASKS_V2_GROUP_ABOUT_SCRUM'),
-			}[this.group?.type] ?? this.loc('TASKS_V2_GROUP_ABOUT');
-		},
 		handleClick(): void
 		{
 			if (!this.isEdit && this.hasFlow)
@@ -131,11 +98,7 @@ export const Group = {
 				return;
 			}
 
-			if (this.isEdit && this.group)
-			{
-				this.isMenuShown = true;
-			}
-			else if (this.isLocked)
+			if (this.isLocked)
 			{
 				this.showLimitDialog();
 			}
@@ -157,7 +120,7 @@ export const Group = {
 				taskId: this.taskId,
 			});
 		},
-		clearField(): void
+		clear(): void
 		{
 			void taskService.update(this.taskId, {
 				groupId: 0,
@@ -167,7 +130,7 @@ export const Group = {
 		showLimitDialog(): void
 		{
 			void showLimit({
-				featureId: Core.getParams().restrictions.project.featureId,
+				featureId: this.settings.restrictions.project.featureId,
 			});
 		},
 	},
@@ -181,9 +144,8 @@ export const Group = {
 			<div class="tasks-field-group-group" :class="{ '--secret': isSecret }" @click="handleClick">
 				<HoverPill
 					v-if="task.groupId"
-					:withClear="!readonly && !isEdit && (task.flowId ?? 0) <= 0"
-					:active="isMenuShown"
-					@clear="clearField"
+					:withClear
+					@clear="clear"
 				>
 					<img v-if="groupImage" class="tasks-field-group-image" :src="groupImage" :alt="groupName"/>
 					<BIcon v-else class="tasks-field-group-icon" :name="Outline.FOLDER"/>
@@ -195,7 +157,6 @@ export const Group = {
 		<Hint v-if="isHintShown" :bindElement="$refs.group" @close="isHintShown = false">
 			{{ loc('TASKS_V2_GROUP_CANT_CHANGE_FLOW') }}
 		</Hint>
-		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 		<GroupPopup :getBindElement="() => $refs.group"/>
 	`,
 };

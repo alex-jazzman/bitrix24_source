@@ -1,0 +1,39 @@
+.communication-dialog-stub-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	padding: 0 20px 30px;
+}
+
+.communication-dialog-stub-icon {
+	width: 112px;
+	min-height: 112px;
+	background-image: url('../images/selectors/bind-chat-stub.svg');
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+}
+
+.communication-dialog-stub-titles {
+	text-align: center;
+	margin-top: 12px;
+}
+
+.communication-dialog-stub-title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium, 500);
+	text-align: center;
+}
+
+.communication-dialog-stub-subtitle {
+	margin-top: 8px;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-g-content-grey-1);
+}

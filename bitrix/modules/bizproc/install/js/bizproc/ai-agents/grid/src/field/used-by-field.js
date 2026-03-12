@@ -7,7 +7,7 @@ import { Messenger } from 'im.public';
 
 import { Structure } from 'humanresources.company-structure.public';
 
-import type { UsedByFieldFieldType, UserFieldType, DepartmentFieldType } from '../types';
+import type { UsedByFieldFieldType, UserFieldType, DepartmentFieldType, ChatInfo } from '../types';
 import GridIcons from '../grid-icons';
 import { BaseField } from './base-field';
 import { PhotoField } from './photo-field';
@@ -19,10 +19,11 @@ export class UsedByField extends BaseField
 	static MAX_COUNTER_VALUE = 99;
 
 	#combinedPopup: Popup | null;
+	#chatsPopup: Popup | null;
 
 	render(params: UsedByFieldFieldType): void
 	{
-		const { users = [], chatId, chatName, departments = {} } = params;
+		const { users = [], chats = [], departments = {} } = params;
 
 		const container = Tag.render`
 			<div class="agent-grid-used-by-container"></div>
@@ -44,7 +45,7 @@ export class UsedByField extends BaseField
 			this.#renderUsersOnlyView(container, departments, users);
 		}
 
-		this.#createChatNode(container, chatId, chatName);
+		this.#createChatNode(container, chats);
 
 		this.appendToFieldNode(container);
 	}
@@ -55,10 +56,13 @@ export class UsedByField extends BaseField
 		users: UserFieldType[],
 	): void
 	{
-		Dom.addClass(container, 'agent-grid-used-by-container-with-users-and-departments');
+		const combinedViewWrapper = Tag.render`
+			<div class="agent-grid-used-by-container-with-users-and-departments"></div>
+		`;
+		Dom.append(combinedViewWrapper, container);
 
-		this.#createDepartmentsCounter(container, departments, users, UsedByField.MAX_VISIBLE_AVATARS_COMBINED);
-		this.#createAvatarsContainer(container, departments, users, UsedByField.MAX_VISIBLE_AVATARS_COMBINED);
+		this.#createDepartmentsCounter(combinedViewWrapper, departments, users, UsedByField.MAX_VISIBLE_AVATARS_COMBINED);
+		this.#createAvatarsContainer(combinedViewWrapper, departments, users, UsedByField.MAX_VISIBLE_AVATARS_COMBINED);
 	}
 
 	#renderUsersOnlyView(
@@ -295,17 +299,42 @@ export class UsedByField extends BaseField
 
 	#createChatNode(
 		container: HTMLElement,
-		chatId: ?string,
-		chatName: ?string,
+		chats: ChatInfo[],
 	): void
 	{
-		if (!chatId)
+		const chatsCount = chats?.length ?? 0;
+
+		if (chatsCount === 0)
 		{
 			return;
 		}
 
+		const firstChat = chats[0] ?? '';
+		const chatNode = this.#getChatNode(firstChat);
+
+		if (chatsCount > 1)
+		{
+			const remainingCount = chatsCount - 1;
+
+			const counterNode = this.#getChatsCounterNode(
+				remainingCount,
+				chats,
+			);
+
+			Dom.append(counterNode, chatNode);
+		}
+
+		Dom.append(chatNode, container);
+	}
+
+	#getChatNode(
+		chat: ChatInfo,
+		shouldAddHover: boolean = false,
+	): HTMLElement
+	{
+		const chatName = chat.chatName ?? '';
 		const chatNameNode = TypographyText.render(
-			chatName || '',
+			chatName,
 			{
 				size: '2xs',
 				accent: false,
@@ -314,9 +343,10 @@ export class UsedByField extends BaseField
 			},
 		);
 
-		const encodedChatName = Text.encode(chatName || '');
+		const encodedChatName = Text.encode(chatName);
+		const containerClass = shouldAddHover ? 'agent-grid-chats-in-list' : 'agent-grid-chat-container';
 		const chatContainer = Tag.render`
-			<div class="agent-grid-chat-container" title="${encodedChatName}">
+			<div class="${containerClass}" title="${encodedChatName}">
 				${GridIcons.AGENT_CHAT}
 				<a href="#" class="agent-grid-chat-link">
 					${chatNameNode}
@@ -326,10 +356,93 @@ export class UsedByField extends BaseField
 
 		Event.bind(chatContainer, 'click', (event) => {
 			event.preventDefault();
-			this.openChat(chatId);
+			this.openChat(chat.chatId);
 		});
 
-		Dom.append(chatContainer, container);
+		return chatContainer;
+	}
+
+	#getChatsCounterNode(
+		remainingCount: number,
+		chats: ChatInfo[],
+	): HTMLElement
+	{
+		const counterWrapper = Tag.render`<div class="ai-agents-chats-counter-wrapper"></div>`;
+		const counterClassName = 'ai-agents-chats-counter';
+
+		const displayedNumber = this.#getDisplayedNumber(remainingCount);
+		const counterText = `+${displayedNumber}`;
+
+		const numberNode = TypographyText.render(
+			counterText,
+			{
+				size: '3xs',
+				accent: true,
+				tag: 'span',
+				className: counterClassName,
+			},
+		);
+
+		Dom.append(numberNode, counterWrapper);
+
+		Event.bind(counterWrapper, 'click', (event) => {
+			event.stopPropagation();
+			this.#toggleChatsListPopup(chats, counterWrapper);
+		});
+
+		return counterWrapper;
+	}
+
+	#toggleChatsListPopup(chats: ChatInfo[], counterNode: HTMLElement): void
+	{
+		if (this.#chatsPopup && this.#chatsPopup.isShown())
+		{
+			this.#chatsPopup.close();
+		}
+		else
+		{
+			this.#openChatsListPopup(chats, counterNode);
+		}
+	}
+
+	#openChatsListPopup(chats: ChatInfo[], bindElement: HTMLElement): void
+	{
+		const contentNode = Tag.render`<div class="agent-grid-chats-list-wrapper"></div>`;
+
+		this.#fillChatsListContent(chats, contentNode);
+
+		this.#chatsPopup = new Popup({
+			content: contentNode,
+			bindElement,
+			cacheable: false,
+			minHeight: 50,
+			maxWidth: 400,
+			maxHeight: 200,
+			padding: 0,
+			autoHide: true,
+			className: 'agents-grid-popup',
+		});
+
+		this.#chatsPopup.show();
+		this.#chatsPopup.subscribe('onClose', () => {
+			this.#chatsPopup = null;
+		});
+	}
+
+	#fillChatsListContent(chats: ChatInfo[], contentNode: HTMLElement): HTMLElement
+	{
+		if (!chats || chats.length === 0)
+		{
+			return contentNode;
+		}
+
+		chats.forEach((chat) => {
+			const shouldAddHover = true;
+			const chatNode = this.#getChatNode(chat, shouldAddHover);
+			Dom.append(chatNode, contentNode);
+		});
+
+		return contentNode;
 	}
 
 	openChat(chatId: string): void
@@ -356,7 +469,6 @@ export class UsedByField extends BaseField
 			content: contentNode,
 			bindElement,
 			cacheable: false,
-			minWidth: 300,
 			minHeight: 50,
 			maxWidth: 400,
 			maxHeight: 200,

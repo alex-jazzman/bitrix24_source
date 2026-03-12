@@ -6,12 +6,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	'use strict';
 
 	const showLimit = limitParams => {
-	  if (!main_core.Type.isStringFilled(limitParams.featureId)) {
-	    throw new Error('featureId is required');
+	  if (!main_core.Type.isStringFilled(limitParams.featureId) && !main_core.Type.isStringFilled(limitParams.code)) {
+	    throw new Error("Either the 'code' parameter or the 'featureId' parameter is required");
 	  }
 	  const featureId = limitParams.featureId;
 	  const code = main_core.Type.isStringFilled(limitParams.code) ? limitParams.code : `limit_${featureId}`;
 	  const bindElement = main_core.Type.isElementNode(limitParams.bindElement) ? limitParams.bindElement : null;
+	  const analytics = limitParams.analytics || {};
 	  let limitAnalyticsLabels = {};
 	  if (main_core.Type.isPlainObject(limitParams.limitAnalyticsLabels)) {
 	    limitAnalyticsLabels = {
@@ -27,7 +28,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        FeaturePromotersRegistry.getPromoter({
 	          featureId,
 	          code,
-	          bindElement
+	          bindElement,
+	          analytics
 	        }).show();
 	      } else {
 	        BX.UI.InfoHelper.show(code, {

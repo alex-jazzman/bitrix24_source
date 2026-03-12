@@ -75,7 +75,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      value: _listTask2
 	    });
 	  }
-	  async list(id, ids) {
+	  async list(id, crmItemIds) {
+	    const ids = crmItemIds.filter(it => !tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.CrmItems}/getById`](it));
+	    if (ids.length === 0) {
+	      return;
+	    }
 	    const data = await (tasks_v2_lib_idUtils.idUtils.isTemplate(id) ? babelHelpers.classPrivateFieldLooseBase(this, _listTemplate)[_listTemplate](id, ids) : babelHelpers.classPrivateFieldLooseBase(this, _listTask)[_listTask](id, ids));
 	    const crmItems = data.map(dto => mapDtoToModel(dto));
 	    await tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.CrmItems}/upsertMany`, crmItems);

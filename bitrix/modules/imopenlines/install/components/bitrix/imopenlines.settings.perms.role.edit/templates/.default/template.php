@@ -10,7 +10,7 @@ use Bitrix\Imopenlines\Limit;
  * @var CMain $APPLICATION
  */
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'intranet.old-interface.intranet-common']);
 $this->addExternalCss('/bitrix/css/main/table/style.css');
 
 if($arResult['ERRORS'] && $arResult['ERRORS'] instanceof \Bitrix\Main\ErrorCollection)

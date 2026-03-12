@@ -19,9 +19,10 @@ jn.define('user-profile/common-tab/src/block/department/block', (require, export
 				ownerId,
 				isEditMode,
 				departments: departmentsData,
+				inviteSettings,
 				parentWidget,
 			} = commonTabData ?? {};
-			const { departmentHierarchies, canInviteUsers, canUseTelephony } = departmentsData;
+			const { departmentHierarchies, canUseTelephony } = departmentsData;
 
 			const {
 				users,
@@ -44,7 +45,7 @@ jn.define('user-profile/common-tab/src/block/department/block', (require, export
 				isEditMode,
 				hierarchies,
 				departments: departmentHierarchies,
-				canInviteUsers,
+				canInviteUsers: inviteSettings.canCurrentUserInvite,
 				canUseTelephony,
 				parentWidget,
 				...this.getWrapperOptions(),

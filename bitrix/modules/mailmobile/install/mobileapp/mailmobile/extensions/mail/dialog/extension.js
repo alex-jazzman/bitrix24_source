@@ -2,6 +2,8 @@
  * @module mail/dialog
  */
 jn.define('mail/dialog', (require, exports, module) => {
+	const { AjaxMethod } = require('mail/const');
+
 	const CONNECTING_MAIL_TYPE = 'CONNECTING_MAIL';
 	const CONNECTING_MAIL_TYPE_FINAL = 'CONNECTING_MAIL_FINAL';
 	const CONNECTING_MAIL_CRM_TYPE = 'CONNECTING_MAIL_CRM';
@@ -71,12 +73,54 @@ jn.define('mail/dialog', (require, exports, module) => {
 			};
 		}
 
+		static checkMailboxConnectingAvailable()
+		{
+			return BX.ajax.runAction(
+				AjaxMethod.isMailboxConnectingAvailable,
+				{
+					data: {},
+				},
+			).then(({ data }) => {
+				if (data === true)
+				{
+					return;
+				}
+
+				throw new Error('Mailbox connecting not available');
+			});
+		}
+
+		static executeBeforeOpening(type)
+		{
+			const actionsBeforeOpening = {
+				[MailDialog.CONNECTING_MAIL_TYPE]: async () => {
+					try
+					{
+						await this.checkMailboxConnectingAvailable();
+
+						return type;
+					}
+					catch
+					{
+						return MailDialog.CONNECTION_MAIL_TYPE_FORBIDDEN;
+					}
+				},
+			};
+
+			if (actionsBeforeOpening[type] === undefined)
+			{
+				return Promise.resolve(type);
+			}
+
+			return actionsBeforeOpening[type]();
+		}
+
 		/**
 		 * @function show
 		 *
 		 * @param props
 		 */
-		static show(props) {
+		static async show(props) {
 			const {
 				type,
 				parentWidget,
@@ -108,7 +152,9 @@ jn.define('mail/dialog', (require, exports, module) => {
 				},
 			};
 
-			const config = bannerConfig[type];
+			const redefinedType = await this.executeBeforeOpening(type);
+
+			const config = bannerConfig[redefinedType];
 
 			if (config)
 			{

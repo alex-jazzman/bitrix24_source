@@ -216,5 +216,6 @@ export const Dictionary = Object.freeze({
 	STATUS_ERROR_PROVIDER: 'error_provider',
 	STATUS_ERROR_B24: 'error_b24',
 	STATUS_ERROR_PERMISSIONS: 'error_permissions',
+	STATUS_ERROR_FILLING_FIELDS: 'error_fillingFields',
 	// endregion
 });

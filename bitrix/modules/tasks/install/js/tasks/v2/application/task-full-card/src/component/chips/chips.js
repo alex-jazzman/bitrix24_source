@@ -47,7 +47,7 @@ export const Chips = {
 		},
 	},
 	template: `
-		<div class="tasks-full-card-chips">
+		<div class="tasks-full-card-chips print-ignore">
 			<template v-for="(chip, key) of preparedChips" :key>
 				<component
 					v-if="!chip.collapsed || !chipsCollapsed"

@@ -117,7 +117,7 @@ export default class PromoPopup {
 		}
 		else if (Reflection.getClass('BX.UI.InfoHelper'))
 		{
-			BX.UI.InfoHelper.show('limit_office_small_documents', {featureId: 'disk_onlyoffice_edit'} );
+			BX.UI.InfoHelper.show('limit_office_no_document');
 		}
 	}
 

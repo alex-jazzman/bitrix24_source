@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,main_sidepanel,ui_vue3_mixins_locMixin,ui_system_skeleton,tasks_v2_lib_analytics,tasks_v2_component_elements_fieldList,tasks_v2_component_elements_contentResizer,tasks_v2_component_dropZone,tasks_v2_component_entityText,tasks_v2_component_userFieldsSlider,tasks_v2_component_fields_description,tasks_v2_component_fields_creator,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_status,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_component_fields_group,tasks_v2_component_fields_flow,tasks_v2_component_fields_accomplices,tasks_v2_component_fields_auditors,tasks_v2_component_fields_tags,tasks_v2_component_fields_crm,tasks_v2_component_fields_datePlan,tasks_v2_component_fields_timeTracking,tasks_v2_component_fields_subTasks,tasks_v2_component_fields_parentTask,tasks_v2_component_fields_relatedTasks,tasks_v2_component_fields_gantt,tasks_v2_component_fields_results,tasks_v2_component_fields_reminders,tasks_v2_component_fields_replication,tasks_v2_component_fields_email,tasks_v2_component_fields_userFields,tasks_v2_component_fields_placements,tasks_v2_provider_service_fileService,tasks_v2_provider_service_deadlineService,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,ui_notificationManager,tasks_v2_lib_highlighter,ui_system_chip_vue,tasks_v2_core,tasks_v2_component_addTaskButton,ui_vue3,ui_system_skeleton_vue,ui_system_typography_vue,tasks_v2_component_elements_hint,tasks_v2_lib_ahaMoments,tasks_v2_component_markTaskButton,main_core_events,ui_vue3_vuex,ui_system_menu_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_application_taskCard,tasks_v2_const,tasks_v2_lib_userSelectorDialog,tasks_v2_lib_showLimit,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,tasks_v2_provider_service_templateService,tasks_v2_provider_service_statusService,ui_vue3_components_button,main_core,ui_dialogs_messagebox) {
+(function (exports,main_sidepanel,ui_vue3_mixins_locMixin,ui_system_skeleton,tasks_v2_lib_analytics,tasks_v2_component_elements_fieldList,tasks_v2_component_elements_contentResizer,tasks_v2_component_dropZone,tasks_v2_component_entityText,tasks_v2_component_userFieldsSlider,tasks_v2_component_fields_description,tasks_v2_component_fields_creator,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_status,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_component_fields_group,tasks_v2_component_fields_flow,tasks_v2_component_fields_accomplices,tasks_v2_component_fields_auditors,tasks_v2_component_fields_tags,tasks_v2_component_fields_crm,tasks_v2_component_fields_datePlan,tasks_v2_component_fields_timeTracking,tasks_v2_component_fields_subTasks,tasks_v2_component_fields_parentTask,tasks_v2_component_fields_relatedTasks,tasks_v2_component_fields_gantt,tasks_v2_component_fields_results,tasks_v2_component_fields_reminders,tasks_v2_component_fields_replication,tasks_v2_component_fields_email,tasks_v2_component_fields_userFields,tasks_v2_component_fields_placements,tasks_v2_component_fields_createdDate,tasks_v2_provider_service_fileService,tasks_v2_provider_service_deadlineService,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,ui_notificationManager,tasks_v2_lib_highlighter,ui_system_chip_vue,tasks_v2_core,tasks_v2_component_addTaskButton,ui_vue3,ui_system_skeleton_vue,ui_system_typography_vue,tasks_v2_component_elements_hint,tasks_v2_lib_ahaMoments,tasks_v2_component_markTaskButton,main_core_events,ui_vue3_vuex,ui_system_menu_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_application_taskCard,tasks_v2_const,tasks_v2_lib_userSelectorDialog,tasks_v2_lib_showLimit,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,tasks_v2_provider_service_templateService,tasks_v2_provider_service_statusService,ui_vue3_components_button,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	const sectionPersonal = 'sectionPersonal';
@@ -19,7 +19,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  },
 	  inject: {
 	    task: {},
-	    taskId: {}
+	    taskId: {},
+	    analytics: {}
 	  },
 	  setup() {
 	    return {
@@ -168,7 +169,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_STANDALONE_TASK'),
 	        icon: ui_iconSet_api_vue.Outline.TASK,
 	        onClick: () => tasks_v2_application_taskCard.TaskCard.showCompactCard({
-	          groupId: this.task.groupId
+	          groupId: this.task.groupId,
+	          analytics: this.getAnalytics()
 	        })
 	      };
 	    },
@@ -179,7 +181,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        icon: ui_iconSet_api_vue.Outline.RELATED_TASKS,
 	        onClick: () => tasks_v2_application_taskCard.TaskCard.showCompactCard({
 	          groupId: this.task.groupId,
-	          parentId: this.taskId
+	          parentId: this.taskId,
+	          analytics: this.getAnalytics(tasks_v2_const.Analytics.Element.ContextMenuSubtask)
 	        })
 	      };
 	    },
@@ -189,7 +192,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_TASK_COPY'),
 	        icon: ui_iconSet_api_vue.Outline.DUPLICATE,
 	        onClick: () => tasks_v2_application_taskCard.TaskCard.showFullCard({
-	          copiedFromId: this.taskId
+	          copiedFromId: this.taskId,
+	          analytics: this.getAnalytics()
 	        })
 	      };
 	    },
@@ -213,7 +217,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_TEMPLATE_FROM_TASK'),
 	        icon: ui_iconSet_api_vue.Outline.TEMPLATE_TASK,
 	        onClick: () => tasks_v2_application_taskCard.TaskCard.showCompactCard({
-	          groupId: this.task.groupId
+	          groupId: this.task.groupId,
+	          analytics: this.getAnalytics()
 	        })
 	      };
 	    },
@@ -279,11 +284,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          }
 	        }
 	      };
+	    },
+	    getAnalytics(element = tasks_v2_const.Analytics.Element.ContextMenu) {
+	      var _this$analytics$conte, _this$analytics;
+	      return {
+	        element,
+	        context: (_this$analytics$conte = (_this$analytics = this.analytics) == null ? void 0 : _this$analytics.context) != null ? _this$analytics$conte : tasks_v2_const.Analytics.Section.Tasks,
+	        additionalContext: tasks_v2_const.Analytics.SubSection.TaskCard
+	      };
 	    }
 	  },
 	  template: `
 		<div
-			class="tasks-full-card-header-burger"
+			class="tasks-full-card-header-burger print-ignore"
 			ref="container"
 			@click="isMenuShown = true"
 		>
@@ -362,19 +375,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	`
 	};
 
-	const MenuSectionCode = Object.freeze({
-	  first: 'first',
-	  second: 'second',
-	  third: 'third'
-	});
 	/**
-	 * @param {typeof MessageMenu} baseMenu
-	 * @returns {typeof MessageMenu}
+	 * @param {typeof TaskCommentsMessageMenu} baseMenu
+	 * @returns {typeof TaskCommentsMessageMenu}
 	 */
 	// eslint-disable-next-line max-lines-per-function
 	const TaskFullCardMessageMenu = baseMenu => {
-	  var _shouldShowAddResult, _shouldShowRemoveResult, _isDeletedMessage, _isOwnMessage, _getMessageResultId, _getTask;
-	  return _shouldShowAddResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowAddResult"), _shouldShowRemoveResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowRemoveResult"), _isDeletedMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDeletedMessage"), _isOwnMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isOwnMessage"), _getMessageResultId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessageResultId"), _getTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTask"), class extends baseMenu {
+	  var _shouldShowAddResult, _shouldShowRemoveResult, _getMessageResultId, _getTask;
+	  return _shouldShowAddResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowAddResult"), _shouldShowRemoveResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowRemoveResult"), _getMessageResultId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessageResultId"), _getTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTask"), class extends baseMenu {
 	    constructor(...args) {
 	      super(...args);
 	      Object.defineProperty(this, _getTask, {
@@ -383,12 +391,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      Object.defineProperty(this, _getMessageResultId, {
 	        value: _getMessageResultId2
 	      });
-	      Object.defineProperty(this, _isOwnMessage, {
-	        value: _isOwnMessage2
-	      });
-	      Object.defineProperty(this, _isDeletedMessage, {
-	        value: _isDeletedMessage2
-	      });
 	      Object.defineProperty(this, _shouldShowRemoveResult, {
 	        value: _shouldShowRemoveResult2
 	      });
@@ -396,30 +398,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        value: _shouldShowAddResult2
 	      });
 	    }
-	    getMenuItems() {
-	      const firstGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getEditItem(), this.getDownloadFileItem(), this.getAddResultItem(), this.getRemoveResultItem(), ...this.getAdditionalItems()];
-	      return [...this.groupItems(firstGroupItems, MenuSectionCode.first), ...this.groupItems([this.getDeleteItem()], MenuSectionCode.second)];
-	    }
-	    getNestedItems() {
-	      const firstGroupItems = [this.getPinItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem(), this.getCreateMeetingItem()];
-	      return [...this.groupItems(firstGroupItems, MenuSectionCode.first), ...this.groupItems(this.getMarketItems(), MenuSectionCode.second)];
-	    }
-	    getMenuGroups() {
-	      return [{
-	        code: MenuSectionCode.first
-	      }, {
-	        code: MenuSectionCode.second
-	      }];
-	    }
-	    getNestedMenuGroups() {
-	      return [{
-	        code: MenuSectionCode.first
-	      }, {
-	        code: MenuSectionCode.second
-	      }];
-	    }
 	    getAddResultItem() {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]() || !babelHelpers.classPrivateFieldLooseBase(this, _isOwnMessage)[_isOwnMessage]() || !babelHelpers.classPrivateFieldLooseBase(this, _shouldShowAddResult)[_shouldShowAddResult]()) {
+	      if (this.isDeletedMessage() || !this.isOwnMessage() || !babelHelpers.classPrivateFieldLooseBase(this, _shouldShowAddResult)[_shouldShowAddResult]()) {
 	        return null;
 	      }
 	      return {
@@ -437,7 +417,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      };
 	    }
 	    getRemoveResultItem() {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _isDeletedMessage)[_isDeletedMessage]() || !babelHelpers.classPrivateFieldLooseBase(this, _isOwnMessage)[_isOwnMessage]() || !babelHelpers.classPrivateFieldLooseBase(this, _shouldShowRemoveResult)[_shouldShowRemoveResult]()) {
+	      if (this.isDeletedMessage() || !this.isOwnMessage() || !babelHelpers.classPrivateFieldLooseBase(this, _shouldShowRemoveResult)[_shouldShowRemoveResult]()) {
 	        return null;
 	      }
 	      return {
@@ -451,12 +431,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          this.close();
 	        }
 	      };
-	    }
-	    getCreateTaskItem() {
-	      return null;
-	    }
-	    getMarkItem() {
-	      return null;
 	    }
 	    getTaskId() {
 	      return 0; // reinitialize in the calling class
@@ -475,12 +449,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return false;
 	    }
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getMessageResultId)[_getMessageResultId]() > 0;
-	  }
-	  function _isDeletedMessage2() {
-	    return this.context.isDeleted;
-	  }
-	  function _isOwnMessage2() {
-	    return this.context.authorId === tasks_v2_core.Core.getParams().currentUser.id;
 	  }
 	  function _getMessageResultId2() {
 	    const task = babelHelpers.classPrivateFieldLooseBase(this, _getTask)[_getTask]();
@@ -711,12 +679,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        return;
 	      }
 	      const {
-	        MessageMenu,
+	        TaskCommentsMessageMenu,
 	        MessageMenuManager
 	      } = await main_core.Runtime.loadExtension('im.v2.lib.menu');
 	      this.messageMenuManager = MessageMenuManager;
 	      const taskId = this.taskId;
-	      const taskFullCardMessageMenu = class extends TaskFullCardMessageMenu(MessageMenu) {
+	      const taskFullCardMessageMenu = class extends TaskFullCardMessageMenu(TaskCommentsMessageMenu) {
 	        getTaskId() {
 	          return taskId;
 	        }
@@ -762,7 +730,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    }
 	  },
 	  template: `
-		<div class="tasks-full-card-chat" ref="chat">
+		<div class="tasks-full-card-chat print-ignore" ref="chat">
 			<div style="color: #f00">module 'im' is not installed</div>
 		</div>
 		<ChatAha
@@ -821,7 +789,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    }
 	  },
 	  template: `
-		<div class="tasks-full-card-chips">
+		<div class="tasks-full-card-chips print-ignore">
 			<template v-for="(chip, key) of preparedChips" :key>
 				<component
 					v-if="!chip.collapsed || !chipsCollapsed"
@@ -875,7 +843,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      required: true
 	    }
 	  },
-	  emits: ['addTask', 'copyTask', 'fromTemplate', 'template', 'update:creationError', 'close'],
+	  emits: ['addTask', 'copyTask', 'fromTemplate', 'update:creationError', 'close'],
 	  setup() {
 	    return {
 	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
@@ -896,7 +864,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    }
 	  },
 	  template: `
-		<div class="tasks-full-card-footer">
+		<div class="tasks-full-card-footer print-ignore">
 			<div class="tasks-full-card-footer-create">
 				<div class="tasks-full-card-footer-main-buttons">
 					<AddTaskButton
@@ -913,7 +881,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						@click="$emit('close')"
 					/>
 				</div>
-				<TemplatesButton v-if="!isTemplate && isTemplateEnabled" @template="$emit('template', $event)"/>
+				<TemplatesButton v-if="!isTemplate && isTemplateEnabled"/>
 				<TemplatePermissionsButton v-if="isTemplate"/>
 			</div>
 		</div>
@@ -922,6 +890,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	const ButtonId = Object.freeze({
 	  Start: 'start',
+	  Take: 'take',
 	  Pause: 'pause',
 	  Complete: 'complete',
 	  Renew: 'renew',
@@ -940,7 +909,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    task: {},
 	    taskId: {},
 	    isTemplate: {},
-	    settings: {}
+	    settings: {},
+	    analytics: {}
 	  },
 	  props: {
 	    selectedButtons: {
@@ -988,16 +958,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    menuItems() {
 	      if (this.isTemplate) {
-	        return [this.getCreateSubtaskForTemplate(),
-	        // todo: Uncomment after creating template copy V2 API
-	        // this.getCopyTemplate(),
-	        this.getDeleteTemplate()];
+	        return [this.getCreateSubtaskForTemplate(), this.getCopyTemplate(), this.getDeleteTemplate()].filter(item => item !== null);
 	      }
 	      const statuses = {
 	        [tasks_v2_const.TaskStatus.Pending]: [this.getCompleteItem(), this.getDefferItem(), this.getDelegateItem(), this.getDeleteItem(), this.getStartItem()],
 	        [tasks_v2_const.TaskStatus.InProgress]: [this.getPauseItem(), this.getDefferItem(), this.getDelegateItem(), this.getDeleteItem()],
 	        [tasks_v2_const.TaskStatus.Deferred]: [this.getDelegateItem(), this.getDeleteItem(), this.getCompleteItem()],
-	        [tasks_v2_const.TaskStatus.SupposedlyCompleted]: [this.getFixItem(), this.getDelegateItem(), this.getDisapproveItem(), this.getDeleteItem()],
+	        [tasks_v2_const.TaskStatus.SupposedlyCompleted]: [this.getFixItem(), this.getDelegateItem(), this.getDeleteItem()],
 	        [tasks_v2_const.TaskStatus.Completed]: [this.getRenewItem(), this.getDeleteItem()]
 	      };
 	      const items = statuses[this.task.status] || [];
@@ -1018,7 +985,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      if (!this.task.rights.start) {
 	        return null;
 	      }
-	      if (this.selectedButtonIds.has(ButtonId.Start)) {
+	      if (this.selectedButtonIds.has(ButtonId.Start) || this.selectedButtonIds.has(ButtonId.Take)) {
 	        return null;
 	      }
 	      return {
@@ -1064,23 +1031,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      };
 	    },
 	    getFixItem() {
-	      if (!this.task.rights.renew) {
+	      if (!this.task.rights.renew && !this.task.rights.disapprove) {
 	        return null;
 	      }
+	      const title = this.isCreator && !this.isResponsible ? this.loc('TASKS_V2_TASK_FULL_CARD_DISAPPROVE') : this.loc('TASKS_V2_TASK_FULL_CARD_FIX');
+	      const onClick = this.task.rights.renew ? () => this.waitStatus(tasks_v2_provider_service_statusService.statusService.renew(this.taskId)) : () => this.waitStatus(tasks_v2_provider_service_statusService.statusService.disapprove(this.taskId));
 	      return {
-	        title: this.loc('TASKS_V2_TASK_FULL_CARD_FIX'),
-	        icon: ui_iconSet_api_vue.Outline.UNDO,
-	        onClick: () => this.waitStatus(tasks_v2_provider_service_statusService.statusService.renew(this.taskId))
-	      };
-	    },
-	    getDisapproveItem() {
-	      if (!this.task.rights.disapprove) {
-	        return null;
-	      }
-	      return {
-	        title: this.loc('TASKS_V2_TASK_FULL_CARD_DISAPPROVE'),
-	        icon: ui_iconSet_api_vue.Outline.UNDO,
-	        onClick: () => this.waitStatus(tasks_v2_provider_service_statusService.statusService.disapprove(this.taskId))
+	        title,
+	        onClick,
+	        icon: ui_iconSet_api_vue.Outline.UNDO
 	      };
 	    },
 	    getCompleteItem() {
@@ -1093,7 +1052,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return {
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
 	        icon: ui_iconSet_api_vue.Outline.SENDED,
-	        onClick: () => this.handleCompleteSelect()
+	        onClick: () => {
+	          var _this$analytics$conte, _this$analytics, _this$analytics$addit, _this$analytics2;
+	          return this.waitStatus(tasks_v2_provider_service_statusService.statusService.complete(this.taskId, {
+	            context: (_this$analytics$conte = (_this$analytics = this.analytics) == null ? void 0 : _this$analytics.context) != null ? _this$analytics$conte : tasks_v2_const.Analytics.Section.Tasks,
+	            additionalContext: (_this$analytics$addit = (_this$analytics2 = this.analytics) == null ? void 0 : _this$analytics2.additionalContext) != null ? _this$analytics$addit : tasks_v2_const.Analytics.SubSection.TaskCard,
+	            element: tasks_v2_const.Analytics.Element.ContextMenu
+	          }));
+	        }
 	      };
 	    },
 	    getDelegateItem() {
@@ -1107,14 +1073,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        onClick: () => this.handleDelegateSelect()
 	      };
 	    },
-	    handleClose(usersIds) {
-	      var _usersIds$;
-	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-	        responsibleIds: [(_usersIds$ = usersIds[0]) != null ? _usersIds$ : 0]
-	      });
-	    },
-	    async handleCompleteSelect() {
-	      await this.waitStatus(tasks_v2_provider_service_statusService.statusService.complete(this.taskId));
+	    handleClose(responsibleIds) {
+	      if (responsibleIds.length === 1) {
+	        void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+	          responsibleIds
+	        });
+	      }
 	    },
 	    async handleDelegateSelect() {
 	      if (this.isDelegateLocked) {
@@ -1246,7 +1210,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    task: {},
 	    taskId: {},
 	    isTemplate: {},
-	    settings: {}
+	    settings: {},
+	    analytics: {}
 	  },
 	  setup() {
 	    return {
@@ -1285,7 +1250,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    primaryButton() {
 	      const inProgress = this.task.rights.timeTracking ? [this.getStartTimerButton(), this.getPauseButton(ui_vue3_components_button.AirButtonStyle.OUTLINE)] : [this.getCompleteButton()];
 	      const statuses = {
-	        [tasks_v2_const.TaskStatus.Pending]: [this.getStartTimerButton(), this.getPauseButton(ui_vue3_components_button.AirButtonStyle.OUTLINE), this.getStartButton(), this.getCompleteButton()],
+	        [tasks_v2_const.TaskStatus.Pending]: [this.getTakeButton(), this.getStartTimerButton(), this.getPauseButton(ui_vue3_components_button.AirButtonStyle.OUTLINE), this.getStartButton(), this.getCompleteButton()],
 	        [tasks_v2_const.TaskStatus.InProgress]: inProgress,
 	        [tasks_v2_const.TaskStatus.Deferred]: this.getRenewButton(),
 	        [tasks_v2_const.TaskStatus.SupposedlyCompleted]: [this.getApproveButton(), this.getReviewButton()],
@@ -1339,6 +1304,21 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        onClick: () => this.waitStatus(tasks_v2_provider_service_statusService.statusService.start(this.taskId))
 	      };
 	    },
+	    getTakeButton() {
+	      if (!this.task.rights.take || this.task.status !== tasks_v2_const.TaskStatus.Pending) {
+	        return null;
+	      }
+	      return {
+	        id: ButtonId.Take,
+	        text: this.loc('TASKS_V2_TASK_FULL_CARD_TAKE'),
+	        onClick: () => {
+	          var _this$analytics$conte, _this$analytics;
+	          return this.waitStatus(tasks_v2_provider_service_statusService.statusService.take(this.taskId, {
+	            context: (_this$analytics$conte = (_this$analytics = this.analytics) == null ? void 0 : _this$analytics.context) != null ? _this$analytics$conte : tasks_v2_const.Analytics.Section.Tasks
+	          }));
+	        }
+	      };
+	    },
 	    getStartTimerButton() {
 	      if (!this.task.rights.timeTracking || this.timer) {
 	        return null;
@@ -1346,8 +1326,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return {
 	        id: ButtonId.Start,
 	        text: this.loc('TASKS_V2_TASK_FULL_CARD_START'),
-	        onClick: () => this.waitStatus(tasks_v2_provider_service_statusService.statusService.startTimer(this.taskId)),
-	        icon: ui_vue3_components_button.ButtonIcon.START
+	        icon: ui_vue3_components_button.ButtonIcon.START,
+	        onClick: () => {
+	          var _this$analytics$conte2, _this$analytics2;
+	          return this.waitStatus(tasks_v2_provider_service_statusService.statusService.startTimer(this.taskId, {
+	            context: (_this$analytics$conte2 = (_this$analytics2 = this.analytics) == null ? void 0 : _this$analytics2.context) != null ? _this$analytics$conte2 : tasks_v2_const.Analytics.Section.Tasks
+	          }));
+	        }
 	      };
 	    },
 	    getCompleteButton(style) {
@@ -1358,7 +1343,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        id: ButtonId.Complete,
 	        text: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
 	        style,
-	        onClick: () => this.handleTaskComplete()
+	        onClick: () => {
+	          var _this$analytics$conte3, _this$analytics3, _this$analytics$addit, _this$analytics4;
+	          return this.waitStatus(tasks_v2_provider_service_statusService.statusService.complete(this.taskId, {
+	            context: (_this$analytics$conte3 = (_this$analytics3 = this.analytics) == null ? void 0 : _this$analytics3.context) != null ? _this$analytics$conte3 : tasks_v2_const.Analytics.Section.Tasks,
+	            additionalContext: (_this$analytics$addit = (_this$analytics4 = this.analytics) == null ? void 0 : _this$analytics4.additionalContext) != null ? _this$analytics$addit : tasks_v2_const.Analytics.SubSection.TaskCard,
+	            element: tasks_v2_const.Analytics.Element.CompleteButton
+	          }));
+	        }
 	      };
 	    },
 	    getPauseButton(style) {
@@ -1397,7 +1389,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return {
 	        id: ButtonId.Approve,
 	        text: this.loc('TASKS_V2_TASK_FULL_CARD_APPROVE'),
-	        onClick: () => this.handleTaskApprove()
+	        onClick: () => this.waitStatus(tasks_v2_provider_service_statusService.statusService.approve(this.taskId))
 	      };
 	    },
 	    updateSecondaryButton() {
@@ -1413,12 +1405,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        }
 	        this.computedSecondaryButton = secondary;
 	      });
-	    },
-	    async handleTaskComplete() {
-	      await this.waitStatus(tasks_v2_provider_service_statusService.statusService.complete(this.taskId));
-	    },
-	    async handleTaskApprove() {
-	      await this.waitStatus(tasks_v2_provider_service_statusService.statusService.approve(this.taskId));
 	    },
 	    handleOverPrimaryButton() {
 	      var _this$primaryButton2;
@@ -1456,18 +1442,22 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    createTaskFromTemplate() {
 	      tasks_v2_application_taskCard.TaskCard.showFullCard({
-	        templateId: tasks_v2_lib_idUtils.idUtils.unbox(this.taskId)
+	        templateId: tasks_v2_lib_idUtils.idUtils.unbox(this.taskId),
+	        analytics: {
+	          context: tasks_v2_const.Analytics.Section.Templates,
+	          additionalContext: tasks_v2_const.Analytics.SubSection.TemplatesCard,
+	          element: tasks_v2_const.Analytics.Element.CreateButton
+	        }
 	      });
 	    }
 	  },
 	  template: `
-		<div v-if="showFooter" class="tasks-full-card-footer">
+		<div v-if="showFooter" class="tasks-full-card-footer print-ignore">
 			<div class="tasks-full-card-footer-edit">
 				<UiButton
 					v-if="isTemplate && settings.rights.tasks.createFromTemplate"
 					:text="loc('TASKS_V2_TASK_TEMPLATE_CREATE_TASK')"
 					:size="ButtonSize.LARGE"
-					:loading
 					:dataset="{ taskButtonId: 'createFromTemplate' }"
 					:leftIcon="Outline.PLUS_L"
 					@click="createTaskFromTemplate"
@@ -1476,7 +1466,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					<div
 						v-if="primaryButton"
 						ref="primaryButton"
-						class="tasks-full-card-footer-edit-primaryButton"
 						@mouseover="handleOverPrimaryButton"
 					>
 						<UiButton
@@ -1622,13 +1611,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Email: tasks_v2_component_fields_email.Email,
 	    EmailFrom: tasks_v2_component_fields_email.EmailFrom,
 	    EmailDate: tasks_v2_component_fields_email.EmailDate,
-	    UserFields: tasks_v2_component_fields_userFields.UserFields
+	    UserFields: tasks_v2_component_fields_userFields.UserFields,
+	    CreatedDate: tasks_v2_component_fields_createdDate.CreatedDate
 	  },
 	  provide() {
 	    return {
+	      settings: tasks_v2_core.Core.getParams(),
 	      analytics: this.analytics,
 	      cardType: tasks_v2_const.CardType.Full,
-	      settings: tasks_v2_core.Core.getParams(),
 	      /** @type { TaskModel } */
 	      task: ui_vue3.computed(() => tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId)),
 	      /** @type { number | string } */
@@ -1669,6 +1659,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      isCheckListSheetShown: false,
 	      isDatePlanSheetShown: false,
 	      isTimeTrackingSheetShown: false,
+	      isTimeTrackingChipSheetShown: false,
 	      isResultListSheetShown: false,
 	      isResultEditorSheetShown: false,
 	      isResultChipSheetShown: false,
@@ -1701,6 +1692,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    group() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Groups}/getById`](this.task.groupId);
 	    },
+	    checklist() {
+	      if (!this.task.checklist) {
+	        return [];
+	      }
+	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
+	    },
 	    isEdit() {
 	      return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
 	    },
@@ -1715,6 +1712,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    isFlowFilledOnAdd() {
 	      return this.task.flowId > 0 && !this.isEdit;
+	    },
+	    hasManyResponsibleUsers() {
+	      return !this.task.isForNewUser && this.task.responsibleIds.length > 1;
 	    },
 	    canChangeDeadline() {
 	      if (!this.isEdit) {
@@ -1741,7 +1741,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: tasks_v2_component_fields_creator.creatorMeta.title,
 	        component: tasks_v2_component_fields_creator.Creator
 	      }, {
-	        title: tasks_v2_component_fields_responsible.responsibleMeta.getTitle(!this.task.isForNewUser && this.task.responsibleIds.length > 1),
+	        title: tasks_v2_component_fields_responsible.responsibleMeta.getTitle(this.hasManyResponsibleUsers),
+	        hint: this.hasManyResponsibleUsers ? tasks_v2_component_fields_responsible.responsibleMeta.hint : null,
 	        component: tasks_v2_component_fields_responsible.Responsible,
 	        props: {
 	          taskId: this.taskId
@@ -1752,7 +1753,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        props: {
 	          taskId: this.taskId,
 	          isTemplate: this.isTemplate,
-	          isHovered: this.isPrimaryFieldsHovered || this.isTaskSettingsHintShown
+	          isHovered: this.isTaskSettingsHintShown
 	        },
 	        events: {
 	          isSettingsPopupShown: value => {
@@ -1775,9 +1776,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: tasks_v2_component_fields_status.statusMeta.title,
 	        component: tasks_v2_component_fields_status.Status,
 	        withSeparator: true
+	      }, !this.isTemplate && {
+	        title: tasks_v2_component_fields_createdDate.createdDateMeta.title,
+	        component: tasks_v2_component_fields_createdDate.CreatedDate
 	      }, {
 	        title: tasks_v2_component_fields_email.emailMeta.title,
 	        component: tasks_v2_component_fields_email.Email,
+	        printIgnore: !this.task.email,
 	        chip: {
 	          component: tasks_v2_component_fields_email.EmailChip,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.Email)
@@ -1785,10 +1790,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }, {
 	        title: tasks_v2_component_fields_email.emailMeta.fromTitle,
 	        component: tasks_v2_component_fields_email.EmailFrom,
-	        withSeparator: true
+	        withSeparator: true,
+	        printIgnore: !this.task.email
 	      }, {
 	        title: tasks_v2_component_fields_email.emailMeta.dateTitle,
-	        component: tasks_v2_component_fields_email.EmailDate
+	        component: tasks_v2_component_fields_email.EmailDate,
+	        printIgnore: !this.task.email
 	      }, !this.isTemplate && {
 	        chip: {
 	          component: tasks_v2_component_fields_results.ResultsChip,
@@ -1812,6 +1819,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        }
 	      }, {
 	        chip: {
+	          component: ui_vue3.BitrixVue.defineAsyncComponent('tasks.v2.component.fields.comment-files', 'CommentFilesChip', {
+	            delay: 0,
+	            loadingComponent: {
+	              components: {
+	                BLine: ui_system_skeleton_vue.BLine
+	              },
+	              template: '<BLine :width="212" :height="32"/>'
+	            }
+	          }),
+	          isEnabled: this.task.containsCommentFiles === true
+	        }
+	      }, {
+	        chip: {
 	          component: tasks_v2_component_fields_checkList.CheckListChip,
 	          events: {
 	            showCheckList: this.openCheckList
@@ -1824,14 +1844,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        chip: {
 	          component: tasks_v2_component_fields_group.GroupChip,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.Group) || this.task.rights.edit
-	        }
+	        },
+	        printIgnore: !this.task.groupId
 	      }, {
 	        title: tasks_v2_component_fields_accomplices.accomplicesMeta.title,
 	        component: tasks_v2_component_fields_accomplices.Accomplices,
 	        chip: {
 	          component: tasks_v2_component_fields_accomplices.AccomplicesChip,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.Accomplices) || this.task.rights.changeAccomplices
-	        }
+	        },
+	        printIgnore: !this.task.accomplicesIds || this.task.accomplicesIds.length === 0
 	      }, {
 	        title: tasks_v2_component_fields_auditors.auditorsMeta.title,
 	        component: tasks_v2_component_fields_auditors.Auditors,
@@ -1839,7 +1861,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          component: tasks_v2_component_fields_auditors.AuditorsChip,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.Auditors) || this.task.rights.addAuditors
 	        },
-	        withSeparator: this.wasFilled(tasks_v2_const.TaskField.Accomplices)
+	        withSeparator: this.wasFilled(tasks_v2_const.TaskField.Accomplices),
+	        printIgnore: !this.task.auditorsIds || this.task.auditorsIds.length === 0
 	      }, !this.isTemplate && {
 	        chip: {
 	          component: tasks_v2_component_fields_placements.PlacementsChip,
@@ -1852,7 +1875,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          component: tasks_v2_component_fields_flow.FlowChip,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.Flow) || this.task.rights.edit
 	        },
-	        withSeparator: true
+	        withSeparator: true,
+	        printIgnore: !this.task.flowId
 	      }, tasks_v2_core.Core.getParams().features.isProjectsEnabled && {
 	        title: tasks_v2_component_fields_group.groupMeta.stageTitle,
 	        component: tasks_v2_component_fields_group.Stage
@@ -1868,7 +1892,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        chip: {
 	          component: tasks_v2_component_fields_tags.TagsChip,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.Tags) || this.task.rights.edit
-	        }
+	        },
+	        printIgnore: !this.task.tags || this.task.tags.length === 0
 	      }, !this.isTemplate && {
 	        chip: {
 	          component: tasks_v2_component_fields_reminders.RemindersChip,
@@ -1891,31 +1916,36 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          collapsed: true,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.Crm) || this.task.rights.edit
 	        },
-	        withSeparator: this.wasFilled(tasks_v2_const.TaskField.Group) || this.wasFilled(tasks_v2_const.TaskField.Flow)
+	        withSeparator: this.wasFilled(tasks_v2_const.TaskField.Group) || this.wasFilled(tasks_v2_const.TaskField.Flow),
+	        printIgnore: !this.task.crmItemIds || this.task.crmItemIds.length === 0
 	      }, {
 	        chip: {
 	          component: tasks_v2_component_fields_parentTask.ParentTaskChip,
 	          collapsed: true,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.Parent) || this.task.rights.edit
-	        }
+	        },
+	        printIgnore: !this.task.parentId
 	      }, {
 	        chip: {
 	          component: tasks_v2_component_fields_subTasks.SubTasksChip,
 	          collapsed: true,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.SubTasks) || this.task.rights.createSubtask || !this.isEdit
-	        }
+	        },
+	        printIgnore: !this.task.subTaskIds || this.task.subTaskIds.length === 0
 	      }, {
 	        chip: {
 	          component: tasks_v2_component_fields_relatedTasks.RelatedTasksChip,
 	          collapsed: true,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.RelatedTasks) || this.task.rights.edit
-	        }
+	        },
+	        printIgnore: !this.task.relatedTaskIds || this.task.relatedTaskIds.length === 0
 	      }, !this.isTemplate && {
 	        chip: {
 	          component: tasks_v2_component_fields_gantt.GanttChip,
 	          collapsed: true,
 	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.Gantt) || this.task.rights[tasks_v2_component_fields_gantt.ganttMeta.right]
-	        }
+	        },
+	        printIgnore: !this.task.ganttTaskIds || this.task.ganttTaskIds.length === 0
 	      }, {
 	        chip: {
 	          component: tasks_v2_component_fields_datePlan.DatePlanChip,
@@ -1938,6 +1968,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	            isSheetShown: this.isReplicationSheetShown,
 	            sheetBindProps: this.sheetBindProps
 	          },
+	          isEnabled: this.wasFilled(tasks_v2_const.TaskField.Replication) || this.task.rights.edit,
 	          events: {
 	            'update:isSheetShown': isShown => {
 	              this.isReplicationSheetShown = isShown;
@@ -1948,7 +1979,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        chip: {
 	          component: tasks_v2_component_fields_timeTracking.TimeTrackingChip,
 	          collapsed: true,
-	          isEnabled: this.task.rights.edit || this.task.allowsTimeTracking
+	          isEnabled: this.task.rights.edit || this.task.rights.elapsedTime,
+	          props: {
+	            isSheetShown: this.isTimeTrackingChipSheetShown,
+	            sheetBindProps: this.sheetBindProps
+	          },
+	          events: {
+	            'update:isSheetShown': isShown => {
+	              this.isTimeTrackingChipSheetShown = isShown;
+	            }
+	          }
 	        }
 	      }, {
 	        chip: {
@@ -1968,12 +2008,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      };
 	    },
 	    primaryFields() {
-	      return this.getFields(new WeakMap([[tasks_v2_component_fields_creator.Creator, true], [tasks_v2_component_fields_responsible.Responsible, true], [tasks_v2_component_fields_deadline.Deadline, true], [tasks_v2_component_fields_timeTracking.TimeTracking, this.task.allowsTimeTracking], [tasks_v2_component_fields_status.Status, this.isEdit]]));
+	      return this.getFields(new WeakMap([[tasks_v2_component_fields_creator.Creator, true], [tasks_v2_component_fields_responsible.Responsible, true], [tasks_v2_component_fields_deadline.Deadline, true], [tasks_v2_component_fields_timeTracking.TimeTracking, this.task.allowsTimeTracking || this.task.rights.elapsedTime && this.task.numberOfElapsedTimes], [tasks_v2_component_fields_status.Status, this.isEdit], [tasks_v2_component_fields_createdDate.CreatedDate, this.isEdit]]));
 	    },
 	    projectFields() {
-	      var _this$group;
+	      var _this$group, _this$group2;
 	      const isScrum = ((_this$group = this.group) == null ? void 0 : _this$group.type) === tasks_v2_const.GroupType.Scrum;
-	      return this.getFields(new WeakMap([[tasks_v2_component_fields_group.Group, this.wasFilled(tasks_v2_const.TaskField.Group)], [tasks_v2_component_fields_flow.Flow, this.wasFilled(tasks_v2_const.TaskField.Flow)], [tasks_v2_component_fields_group.Stage, !this.isTemplate && this.isEdit && this.group && (this.task.stageId !== 0 || !isScrum)], [tasks_v2_component_fields_group.Epic, !this.isTemplate && isScrum], [tasks_v2_component_fields_group.StoryPoints, !this.isTemplate && isScrum], [tasks_v2_component_fields_crm.Crm, this.wasFilled(tasks_v2_const.TaskField.Crm)]]));
+	      return this.getFields(new WeakMap([[tasks_v2_component_fields_group.Group, this.wasFilled(tasks_v2_const.TaskField.Group)], [tasks_v2_component_fields_flow.Flow, this.wasFilled(tasks_v2_const.TaskField.Flow)], [tasks_v2_component_fields_group.Stage, !this.isTemplate && this.isEdit && ((_this$group2 = this.group) == null ? void 0 : _this$group2.id) > 0 && (this.task.stageId !== 0 || !isScrum)], [tasks_v2_component_fields_group.Epic, !this.isTemplate && isScrum], [tasks_v2_component_fields_group.StoryPoints, !this.isTemplate && isScrum], [tasks_v2_component_fields_crm.Crm, this.wasFilled(tasks_v2_const.TaskField.Crm)]]));
 	    },
 	    participantsFields() {
 	      return this.getFields(new WeakMap([[tasks_v2_component_fields_accomplices.Accomplices, this.wasFilled(tasks_v2_const.TaskField.Accomplices)], [tasks_v2_component_fields_auditors.Auditors, this.wasFilled(tasks_v2_const.TaskField.Auditors)]]));
@@ -1992,7 +2032,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }) => chip);
 	    },
 	    isBottomSheetShown() {
-	      return this.isDescriptionSheetShown || this.isFilesSheetShown || this.isCheckListSheetShown || this.isDatePlanSheetShown || this.isTimeTrackingSheetShown || this.isResultListSheetShown || this.isResultEditorSheetShown || this.isResultChipSheetShown || this.isReminderSheetShown || this.isRemindersSheetShown || this.isReplicationSheetShown || this.isReplicationHistorySheetShown;
+	      return this.isDescriptionSheetShown || this.isFilesSheetShown || this.isCheckListSheetShown || this.isDatePlanSheetShown || this.isTimeTrackingSheetShown || this.isTimeTrackingChipSheetShown || this.isResultListSheetShown || this.isResultEditorSheetShown || this.isResultChipSheetShown || this.isReminderSheetShown || this.isRemindersSheetShown || this.isReplicationSheetShown || this.isReplicationHistorySheetShown;
 	    },
 	    isDiskModuleInstalled() {
 	      return tasks_v2_core.Core.getParams().features.disk;
@@ -2032,6 +2072,39 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        return true;
 	      }
 	      return this.task.rights.edit && this.userFieldScheme.length > 0 || this.hasFilledUserFields;
+	    },
+	    shouldIgnoreResultPrint() {
+	      return this.task.results.length === 0;
+	    },
+	    shouldIgnoreCheckListPrint() {
+	      return this.checklist.length === 0;
+	    },
+	    shouldIgnoreSubTasksPrint() {
+	      return this.task.subTaskIds.length === 0;
+	    },
+	    shouldIgnoreParentTaskPrint() {
+	      return !this.task.parentId;
+	    },
+	    shouldIgnoreRelatedTasksPrint() {
+	      return this.task.relatedTaskIds.length === 0;
+	    },
+	    shouldIgnoreGanttPrint() {
+	      return this.task.ganttTaskIds.length === 0;
+	    },
+	    shouldIgnoreProjectFieldsPrint() {
+	      return this.projectFields.filter(field => !field.printIgnore).length === 0;
+	    },
+	    shouldIgnoreEmailPrint() {
+	      return !this.task.email;
+	    },
+	    shouldIgnoreTagsPrint() {
+	      return this.task.tags.length === 0;
+	    },
+	    shouldIgnoreParticipantsPrint() {
+	      return this.participantsFields.filter(field => !field.printIgnore).length === 0;
+	    },
+	    shouldIgnoreDatePlanPrint() {
+	      return !this.task.startPlanTs && !this.task.endPlanTs;
 	    }
 	  },
 	  watch: {
@@ -2051,9 +2124,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    }
 	  },
 	  async created() {
-	    var _this$task4, _this$task4$fileIds, _this$task5;
+	    var _this$task4;
 	    if (!this.isEdit && !this.task) {
-	      var _this$initialTask$dea, _this$stateFlags$need, _this$stateFlags$matc;
+	      var _this$initialTask$dea, _this$stateFlags$need, _this$stateFlags$matc, _this$stateFlags$allo, _this$group3, _this$initialTask$aud, _this$initialTask2, _this$initialTask2$au, _this$initialTask$acc, _this$initialTask3, _this$initialTask3$ac;
 	      await tasks_v2_provider_service_taskService.taskService.insertStoreTask({
 	        ...this.initialTask,
 	        id: this.taskId,
@@ -2062,6 +2135,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        deadlineTs: (_this$initialTask$dea = this.initialTask.deadlineTs) != null ? _this$initialTask$dea : this.defaultDeadlineTs,
 	        needsControl: (_this$stateFlags$need = this.stateFlags.needsControl) != null ? _this$stateFlags$need : null,
 	        matchesWorkTime: (_this$stateFlags$matc = this.stateFlags.matchesWorkTime) != null ? _this$stateFlags$matc : null,
+	        allowsTimeTracking: (_this$stateFlags$allo = this.stateFlags.allowsTimeTracking) != null ? _this$stateFlags$allo : null,
 	        requireResult: tasks_v2_core.Core.getParams().restrictions.requiredResult.available && this.defaultRequireResult
 	      });
 	      if (this.initialTask.copiedFromId) {
@@ -2070,25 +2144,38 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      if (this.initialTask.templateId) {
 	        await tasks_v2_provider_service_templateService.templateService.getTask(this.initialTask.templateId, this.taskId);
 	      }
+	      tasks_v2_lib_analytics.analytics.sendClickCreate(this.analytics, {
+	        collabId: ((_this$group3 = this.group) == null ? void 0 : _this$group3.type) === tasks_v2_const.GroupType.Collab ? this.group.id : null,
+	        cardType: tasks_v2_const.CardType.Full,
+	        viewersCount: (_this$initialTask$aud = (_this$initialTask2 = this.initialTask) == null ? void 0 : (_this$initialTask2$au = _this$initialTask2.auditorsIds) == null ? void 0 : _this$initialTask2$au.length) != null ? _this$initialTask$aud : 0,
+	        coexecutorsCount: (_this$initialTask$acc = (_this$initialTask3 = this.initialTask) == null ? void 0 : (_this$initialTask3$ac = _this$initialTask3.accomplicesIds) == null ? void 0 : _this$initialTask3$ac.length) != null ? _this$initialTask$acc : 0
+	      });
 	    }
 	    await this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/clearFieldsFilled`, this.taskId);
 	    if (this.isEdit && (!this.task || this.isPartiallyLoaded)) {
 	      await tasks_v2_provider_service_taskService.taskService.get(this.taskId);
 	    }
-	    if (((_this$task4 = this.task) == null ? void 0 : (_this$task4$fileIds = _this$task4.fileIds) == null ? void 0 : _this$task4$fileIds.length) > 0) {
-	      await tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
-	    }
-	    this.isLoading = false;
 	    if (!this.task) {
+	      this.isLoading = false;
 	      return;
 	    }
+	    await tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
+	    this.isLoading = false;
 	    if (!this.isTemplate && !this.canChangeDeadlineWithoutLimitation && this.task.maxDeadlineChanges) {
 	      void tasks_v2_provider_service_deadlineService.deadlineService.updateDeadlineChangeCount(this.task.id);
 	    }
 	    tasks_v2_component_entityText.entityTextEditor.get(this.taskId, tasks_v2_component_entityText.EntityTextTypes.Task, {
-	      content: (_this$task5 = this.task) == null ? void 0 : _this$task5.description
+	      content: (_this$task4 = this.task) == null ? void 0 : _this$task4.description
 	    });
 	    this.taskInitial = this.task;
+	    if (this.isEdit) {
+	      var _this$task5, _this$task$auditorsId, _this$task6, _this$task6$auditorsI, _this$task$accomplice, _this$task7, _this$task7$accomplic;
+	      tasks_v2_lib_analytics.analytics.sendTaskView(this.analytics, {
+	        taskId: (_this$task5 = this.task) == null ? void 0 : _this$task5.id,
+	        viewersCount: (_this$task$auditorsId = (_this$task6 = this.task) == null ? void 0 : (_this$task6$auditorsI = _this$task6.auditorsIds) == null ? void 0 : _this$task6$auditorsI.length) != null ? _this$task$auditorsId : 0,
+	        coexecutorsCount: (_this$task$accomplice = (_this$task7 = this.task) == null ? void 0 : (_this$task7$accomplic = _this$task7.accomplicesIds) == null ? void 0 : _this$task7$accomplic.length) != null ? _this$task$accomplice : 0
+	      });
+	    }
 	    await main_core.Runtime.loadExtension(tasks_v2_core.Core.getParams().externalExtensions);
 	    main_core_events.EventEmitter.emit(tasks_v2_const.EventName.FullCardInit, {
 	      task: this.task
@@ -2118,6 +2205,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return Boolean(this.task.filledFields[fieldId]);
 	    },
 	    async addTask() {
+	      const checklists = this.checklist;
 	      const [id, error] = await tasks_v2_provider_service_taskService.taskService.add(this.task);
 	      if (!id) {
 	        this.handleCreationError(error);
@@ -2126,12 +2214,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      this.taskId = id;
 	      tasks_v2_provider_service_fileService.fileService.replace(this.id, id);
 	      tasks_v2_component_entityText.entityTextEditor.replace(this.id, id);
-	      if (id) {
-	        this.sendAddTaskAnalytics(true);
-	      } else {
-	        this.sendAddTaskAnalytics(false);
-	      }
-	      this.notifyGrid();
+	      const isSuccess = Boolean(id);
+	      this.sendAddTaskAnalytics(isSuccess, checklists);
+	      this.fireLegacyGlobalEvent();
 	    },
 	    async copyTask(event) {
 	      const {
@@ -2144,9 +2229,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	      this.taskId = id;
 	      tasks_v2_provider_service_fileService.fileService.delete(this.id);
-	      await tasks_v2_provider_service_fileService.fileService.get(this.taskId).sync(this.task.fileIds);
+	      await tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
 	      tasks_v2_component_entityText.entityTextEditor.replace(this.id, id);
-	      this.notifyGrid();
+	      this.fireLegacyGlobalEvent();
 	    },
 	    async createFromTemplate(event) {
 	      const {
@@ -2155,13 +2240,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      const [id, error] = await tasks_v2_provider_service_templateService.templateService.addTask(this.task.templateId, this.task, withSubTasks);
 	      if (!id) {
 	        this.handleCreationError(error);
+	        this.sendAddTaskFromTemplateAnalytics(false);
 	        return;
 	      }
 	      this.taskId = id;
+	      this.sendAddTaskFromTemplateAnalytics(true);
 	      tasks_v2_provider_service_fileService.fileService.delete(this.id);
-	      await tasks_v2_provider_service_fileService.fileService.get(this.taskId).sync(this.task.fileIds);
+	      await tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
 	      tasks_v2_component_entityText.entityTextEditor.replace(this.id, id);
-	      this.notifyGrid();
+	      this.fireLegacyGlobalEvent();
 	    },
 	    handleCreationError(error) {
 	      this.creationError = true;
@@ -2170,11 +2257,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        text: error == null ? void 0 : error.message
 	      });
 	    },
-	    notifyGrid() {
-	      main_core_events.EventEmitter.emit(tasks_v2_const.EventName.NotifyGrid, new main_core_events.BaseEvent({
+	    fireLegacyGlobalEvent() {
+	      main_core_events.EventEmitter.emit(tasks_v2_const.EventName.LegacyTasksTaskEvent, new main_core_events.BaseEvent({
 	        data: this.taskId,
 	        compatData: ['ADD', {
-	          task: this.task,
+	          task: {
+	            ID: this.taskId
+	          },
+	          taskUgly: {
+	            id: this.taskId
+	          },
 	          options: {}
 	        }]
 	      }));
@@ -2188,9 +2280,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      this.isCheckListSheetShown = false;
 	    },
 	    openUserFieldsHandler() {
-	      var _this$task6;
-	      const templateId = this.isEdit ? null : (_this$task6 = this.task) == null ? void 0 : _this$task6.templateId;
-	      void tasks_v2_component_userFieldsSlider.userFieldsSlider.open(this.taskId, this.isTemplate, templateId);
+	      var _this$task8, _this$task9;
+	      void tasks_v2_component_userFieldsSlider.userFieldsSlider.open({
+	        taskId: this.taskId,
+	        isTemplate: this.isTemplate,
+	        templateId: this.isEdit ? null : (_this$task8 = this.task) == null ? void 0 : _this$task8.templateId,
+	        copiedFromId: this.isEdit ? null : (_this$task9 = this.task) == null ? void 0 : _this$task9.copiedFromId
+	      });
 	    },
 	    handleCloseTaskSettingsHint() {
 	      this.isTaskSettingsHintShown = false;
@@ -2231,13 +2327,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	    },
 	    async handleTemplate(templateId) {
-	      var _this$task7, _this$task7$fileIds;
+	      var _this$task10;
 	      this.isLoading = true;
 	      await tasks_v2_provider_service_templateService.templateService.getTask(templateId, this.taskId);
-	      if (((_this$task7 = this.task) == null ? void 0 : (_this$task7$fileIds = _this$task7.fileIds) == null ? void 0 : _this$task7$fileIds.length) > 0) {
-	        var _this$task8;
-	        await tasks_v2_provider_service_fileService.fileService.get(this.taskId).list((_this$task8 = this.task) == null ? void 0 : _this$task8.fileIds);
-	      }
+	      await tasks_v2_provider_service_fileService.fileService.get(this.taskId).list((_this$task10 = this.task) == null ? void 0 : _this$task10.fileIds);
 	      await this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/clearFieldsFilled`, this.taskId);
 	      this.isLoading = false;
 	    },
@@ -2248,40 +2341,78 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        void ui_system_skeleton.renderSkeleton(this.isTemplate ? templateSkeletonPath : skeletonPath, this.$refs.skeleton);
 	      }
 	    },
-	    sendAddTaskAnalytics(isSuccess) {
-	      var _this$group2;
-	      const collabId = ((_this$group2 = this.group) == null ? void 0 : _this$group2.type) === tasks_v2_const.GroupType.Collab ? this.group.id : null;
-	      const checkLists = this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
-	      if (checkLists.length > 0) {
-	        const checklistCount = checkLists.filter(({
+	    sendAddTaskAnalytics(isSuccess, checklists) {
+	      var _this$group4;
+	      const collabId = ((_this$group4 = this.group) == null ? void 0 : _this$group4.type) === tasks_v2_const.GroupType.Collab ? this.group.id : null;
+	      const viewersCount = this.task.auditorsIds.length;
+	      const coexecutorsCount = this.task.accomplicesIds.length;
+	      if (this.task.templateId) {
+	        this.sendAddTaskFromTemplateAnalytics(isSuccess);
+	      } else if (this.task.parentId) {
+	        tasks_v2_lib_analytics.analytics.sendAddTask(this.analytics, {
+	          isSuccess,
+	          collabId,
+	          viewersCount,
+	          coexecutorsCount,
+	          event: tasks_v2_const.Analytics.Event.SubTaskAdd,
+	          cardType: tasks_v2_const.CardType.Full,
+	          taskId: this.taskId
+	        });
+	      } else if (checklists.length > 0) {
+	        const checklistCount = checklists.filter(({
 	          parentId
 	        }) => parentId === 0).length;
-	        const checklistItemsCount = checkLists.filter(({
+	        const checklistItemsCount = checklists.filter(({
 	          parentId
 	        }) => parentId !== 0).length;
 	        tasks_v2_lib_analytics.analytics.sendAddTaskWithCheckList(this.analytics, {
 	          isSuccess,
 	          collabId,
-	          viewersCount: this.task.auditorsIds.length,
+	          viewersCount,
 	          checklistCount,
-	          checklistItemsCount
+	          checklistItemsCount,
+	          cardType: tasks_v2_const.CardType.Full,
+	          taskId: this.taskId
 	        });
 	      } else {
 	        tasks_v2_lib_analytics.analytics.sendAddTask(this.analytics, {
 	          isSuccess,
 	          collabId,
-	          viewersCount: this.task.auditorsIds.length,
-	          coexecutorsCount: this.task.accomplicesIds.length
+	          viewersCount,
+	          coexecutorsCount,
+	          event: tasks_v2_const.Analytics.Event.TaskCreate,
+	          cardType: tasks_v2_const.CardType.Full,
+	          taskId: this.taskId
 	        });
 	      }
+	    },
+	    sendAddTaskFromTemplateAnalytics(isSuccess) {
+	      var _this$group5;
+	      const collabId = ((_this$group5 = this.group) == null ? void 0 : _this$group5.type) === tasks_v2_const.GroupType.Collab ? this.group.id : null;
+	      const viewersCount = this.task.auditorsIds.length;
+	      const coexecutorsCount = this.task.accomplicesIds.length;
+	      tasks_v2_lib_analytics.analytics.sendAddTask(this.analytics, {
+	        isSuccess,
+	        collabId,
+	        viewersCount,
+	        coexecutorsCount,
+	        event: tasks_v2_const.Analytics.Event.PatternTaskCreate,
+	        cardType: tasks_v2_const.CardType.Full,
+	        taskId: this.taskId
+	      });
 	    }
 	  },
 	  template: `
-		<div class="tasks-full-card" :class="{ '--blur': isDescriptionSheetShown }" :data-task-id="taskId" data-task-full>
+		<div
+			class="tasks-full-card print-fit-height"
+			:class="{ '--blur': isDescriptionSheetShown }"
+			:data-task-id="taskId"
+			data-task-full
+		>
 			<template v-if="task && !isPartiallyLoaded && !isLoading">
 				<div
 					ref="main"
-					class="tasks-full-card-main"
+					class="tasks-full-card-main print-background-white"
 					:class="{ '--overlay': isBottomSheetShown }"
 					:style="{ width: (isTemplate ? '100%' : fullCardWidth + 'px') }"
 				>
@@ -2303,7 +2434,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						/>
 						<div class="tasks-full-card-fields">
 							<div
-								class="tasks-full-card-field-container"
+								class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
 								data-field-container
 								@mouseover="isPrimaryFieldsHovered = true"
 								@mouseleave="isPrimaryFieldsHovered = false"
@@ -2313,14 +2444,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 							<div class="tasks-full-card-chips-fields">
 								<div
 									v-if="emailFields.length > 0"
-									class="tasks-full-card-field-container"
+									class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
+									:class="{ 'print-ignore': shouldIgnoreEmailPrint }"
 									data-field-container
 								>
 									<FieldList :fields="emailFields"/>
 								</div>
 								<div
 									v-if="!isTemplate && (task.requireResult || wasFilled(TaskField.Results))"
-									class="tasks-full-card-field-container --custom"
+									class="tasks-full-card-field-container  --custom"
+									:class="{ 
+										'print-ignore': shouldIgnoreResultPrint,
+										'print-before-divider-accent': !shouldIgnoreResultPrint,
+									}"
 								>
 									<Results
 										v-model:isSheetShown="isResultEditorSheetShown"
@@ -2330,14 +2466,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 								</div>
 								<div
 									v-if="isDiskModuleInstalled && (files.length > 0 || wasFilled(TaskField.Files))"
-									class="tasks-full-card-field-container --small-vertical-padding"
+									class="tasks-full-card-field-container --small-vertical-padding print-ignore"
 									data-field-container
 								>
 									<Files v-model:isSheetShown="isFilesSheetShown" :taskId :sheetBindProps/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.CheckList)"
-									class="tasks-full-card-field-container --custom"
+									class="tasks-full-card-field-container print-before-divider-accent print-padding-bottom-inset-md --custom"
+									:class="{ 'print-ignore': shouldIgnoreCheckListPrint }"
 								>
 									<CheckList
 										isPreview
@@ -2348,14 +2485,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 								</div>
 								<div
 									v-if="projectFields.length > 0"
-									class="tasks-full-card-field-container"
+									class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
+									:class="{ 'print-ignore': shouldIgnoreProjectFieldsPrint }"
 									data-field-container
 								>
 									<FieldList :fields="projectFields"/>
 								</div>
 								<div
 									v-if="participantsFields.length > 0"
-									class="tasks-full-card-field-container"
+									class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
+									:class="{ 'print-ignore': shouldIgnoreParticipantsPrint }"
 									data-field-container
 								>
 									<FieldList
@@ -2365,13 +2504,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 								</div>
 								<div
 									v-if="!isTemplate && isEdit && wasFilled(TaskField.Placements)"
-									class="tasks-full-card-field-container --custom"
+									class="tasks-full-card-field-container --custom print-ignore"
 								>
 									<Placements/>
 								</div>
 								<div
 									v-if="!isTemplate && wasFilled(TaskField.Reminders)"
-									class="tasks-full-card-field-container --custom"
+									class="tasks-full-card-field-container --custom print-ignore"
 									data-field-container
 								>
 									<Reminders
@@ -2382,49 +2521,55 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 								</div>
 								<div
 									v-if="tagsFields.length > 0"
-									class="tasks-full-card-field-container"
+									class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
+									:class="{ 'print-ignore': shouldIgnoreTagsPrint }"
 									data-field-container
 								>
 									<FieldList :fields="tagsFields"/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.Parent)"
-									class="tasks-full-card-field-container --custom"
+									class="tasks-full-card-field-container print-before-divider-accent --custom"
+									:class="{ 'print-ignore': shouldIgnoreParentTaskPrint }"
 									data-field-container
 								>
 									<ParentTask/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.SubTasks) && !isCopyMode"
-									class="tasks-full-card-field-container --custom --task-list"
+									class="tasks-full-card-field-container print-before-divider-accent --custom --task-list print-background-white"
+									:class="{ 'print-ignore': shouldIgnoreSubTasksPrint }"
 									data-field-container
 								>
 									<SubTasks/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.RelatedTasks)"
-									class="tasks-full-card-field-container --custom --task-list"
+									class="tasks-full-card-field-container print-before-divider-accent --custom --task-list print-background-white"
+									:class="{ 'print-ignore': shouldIgnoreRelatedTasksPrint }"
 									data-field-container
 								>
 									<RelatedTasks/>
 								</div>
 								<div
 									v-if="!isTemplate && wasFilled(TaskField.Gantt)"
-									class="tasks-full-card-field-container --custom --task-list"
+									class="tasks-full-card-field-container print-before-divider-accent --custom --task-list print-background-white"
+									:class="{ 'print-ignore': shouldIgnoreGanttPrint }"
 									data-field-container
 								>
 									<Gantt/>
 								</div>
 								<div
 									v-if="wasFilled(TaskField.DatePlan)"
-									class="tasks-full-card-field-container"
+									class="tasks-full-card-field-container print-before-divider-accent print-no-box-shadow"
+									:class="{ 'print-ignore': shouldIgnoreDatePlanPrint }"
 									data-field-container
 								>
 									<DatePlan v-model:isSheetShown="isDatePlanSheetShown" :sheetBindProps/>
 								</div>
 								<div
 									v-if="isTemplate && wasFilled(TaskField.Replication)"
-									class="tasks-full-card-field-container --custom tasks-full-card-field-container-replication"
+									class="tasks-full-card-field-container print-before-divider-accent --custom tasks-full-card-field-container-replication"
 									data-field-container
 								>
 									<Replication
@@ -2433,13 +2578,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 										:sheetBindProps
 									/>
 								</div>
-							<div
-								v-if="shouldShowUserFields"
-								class="tasks-full-card-field-container --custom"
-								data-field-container
-							>
-								<UserFields @open="openUserFieldsHandler"/>
-							</div>
+								<div
+									v-if="shouldShowUserFields"
+									class="tasks-full-card-field-container print-before-divider-accent --custom"
+									data-field-container
+								>
+									<UserFields @open="openUserFieldsHandler"/>
+								</div>
 								<Chips :chips/>
 							</div>
 							<TaskSettingsHint
@@ -2458,7 +2603,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						@copyTask="copyTask"
 						@fromTemplate="createFromTemplate"
 						@close="tryClose"
-						@template="handleTemplate"
 					/>
 					<ContentResizer v-if="!isTemplate" @endResize="handleEndResize"/>
 					<DropZone
@@ -2521,7 +2665,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	var _updateSliderTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateSliderTitle");
 	var _onTryClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onTryClose");
 	var _onClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClose");
-	var _openViewSliderCard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openViewSliderCard");
 	var _openHistory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openHistory");
 	var _openCompactCard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openCompactCard");
 	var _openGrid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openGrid");
@@ -2596,7 +2739,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      writable: true,
 	      value: event => {
 	        const task = event.getData().task;
-	        babelHelpers.classPrivateFieldLooseBase(this, _updateSliderTitle)[_updateSliderTitle](task.title);
+	        if (task.id === babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _updateSliderTitle)[_updateSliderTitle](task.title);
+	        }
 	      }
 	    });
 	    Object.defineProperty(this, _handleTaskAdd, {
@@ -2651,27 +2796,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          babelHelpers.classPrivateFieldLooseBase(this, _isCloseConfirmed)[_isCloseConfirmed] = true;
 	          babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].close();
 	        }
-	      }
-	    });
-	    Object.defineProperty(this, _openViewSliderCard, {
-	      writable: true,
-	      value: baseEvent => {
-	        const {
-	          taskId
-	        } = baseEvent.getData();
-	        babelHelpers.classPrivateFieldLooseBase(this, _shouldCloseComplete)[_shouldCloseComplete] = false;
-	        main_sidepanel.SidePanel.Instance.open(new main_core.Uri(tasks_v2_application_taskCard.TaskCard.getUrl(taskId)).setQueryParam('OLD_FORM', 'Y').toString(), {
-	          cacheable: false,
-	          requestMethod: 'post',
-	          events: {
-	            onCloseComplete: () => {
-	              if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].closeCompleteUrl) {
-	                location.href = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].closeCompleteUrl;
-	              }
-	            }
-	          }
-	        });
-	        babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].close(true);
 	      }
 	    });
 	    Object.defineProperty(this, _openHistory, {
@@ -2758,10 +2882,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId = tasks_v2_lib_idUtils.idUtils.boxTemplate(main_core.Text.getRandom());
 	    }
 	  }
-	  static isCardOpened(taskId) {
-	    var _Core$getStore;
-	    const task = (_Core$getStore = tasks_v2_core.Core.getStore()) == null ? void 0 : _Core$getStore.getters[`${tasks_v2_const.Model.Tasks}/getById`](taskId);
-	    return openedCards.has(task == null ? void 0 : task.id);
+	  static isOpened(taskId) {
+	    return openedCards.has(taskId);
 	  }
 	  async mount(slider) {
 	    var _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _Core$getParams$defau;
@@ -2863,7 +2985,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    [tasks_v2_const.EventName.TemplateBeforeUpdate]: babelHelpers.classPrivateFieldLooseBase(this, _handleTemplateUpdate)[_handleTemplateUpdate],
 	    [tasks_v2_const.EventName.CloseFullCard]: babelHelpers.classPrivateFieldLooseBase(this, _onClose)[_onClose],
 	    [tasks_v2_const.EventName.TryCloseFullCard]: babelHelpers.classPrivateFieldLooseBase(this, _onTryClose)[_onTryClose],
-	    [tasks_v2_const.EventName.OpenViewSliderCard]: babelHelpers.classPrivateFieldLooseBase(this, _openViewSliderCard)[_openViewSliderCard],
 	    [tasks_v2_const.EventName.OpenCompactCard]: babelHelpers.classPrivateFieldLooseBase(this, _openCompactCard)[_openCompactCard],
 	    [tasks_v2_const.EventName.OpenGrid]: babelHelpers.classPrivateFieldLooseBase(this, _openGrid)[_openGrid],
 	    [tasks_v2_const.EventName.OpenTemplateHistory]: babelHelpers.classPrivateFieldLooseBase(this, _openTemplateHistory)[_openTemplateHistory],
@@ -2904,5 +3025,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.TaskFullCard = TaskFullCard;
 
-}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.SidePanel,BX.Vue3.Mixins,BX.UI.System,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.UI.NotificationManager,BX.Tasks.V2.Lib,BX.UI.System.Chip.Vue,BX.Tasks.V2,BX.Tasks.V2.Component,BX.Vue3,BX.UI.System.Skeleton.Vue,BX.UI.System.Typography.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Component,BX.Event,BX.Vue3.Vuex,BX.UI.System.Menu,BX.UI.IconSet,BX,BX.Tasks.V2.Application,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Vue3.Components,BX,BX.UI.Dialogs));
+}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.SidePanel,BX.Vue3.Mixins,BX.UI.System,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.UI.NotificationManager,BX.Tasks.V2.Lib,BX.UI.System.Chip.Vue,BX.Tasks.V2,BX.Tasks.V2.Component,BX.Vue3,BX.UI.System.Skeleton.Vue,BX.UI.System.Typography.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Component,BX.Event,BX.Vue3.Vuex,BX.UI.System.Menu,BX.UI.IconSet,BX,BX.Tasks.V2.Application,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Vue3.Components,BX,BX.UI.Dialogs));
 //# sourceMappingURL=task-full-card.bundle.js.map

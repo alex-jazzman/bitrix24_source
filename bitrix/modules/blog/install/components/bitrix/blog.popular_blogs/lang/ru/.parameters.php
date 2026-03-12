@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_DESCR_SORT_1'] = "Первое поле для сортировки";
 $MESS ['BLOG_DESCR_SORT_2'] = "Второе поле для сортировки";
 $MESS ['BLOG_DESCR_SORT_ORDER'] = "Направление сортировки";
@@ -21,4 +21,3 @@ $MESS ['BMNP_PERIOD_DAYS'] = "Количество дней для выбора 
 $MESS ['BLG_GROUP_ID'] = "Группа блогов для отображения";
 $MESS ['BMN_PATH_TO_GROUP'] = "Шаблон пути к странице с информацией о группе";
 $MESS ['BMN_PATH_TO_GROUP_BLOG'] = "Шаблон пути к странице блога группы";
-?>

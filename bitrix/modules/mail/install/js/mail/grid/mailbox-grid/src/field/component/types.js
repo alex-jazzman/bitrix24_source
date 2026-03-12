@@ -27,6 +27,7 @@ export type User = BaseEntity & {
 
 export type Department = BaseEntity & {
 	type: EntityTypes.DEPARTMENT,
+	pathToStructure?: string,
 }
 
 export type Entity = User | Department;

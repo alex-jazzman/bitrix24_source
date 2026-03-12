@@ -1,20 +1,13 @@
-import { computed } from 'ui.vue3';
 import { Port } from 'ui.block-diagram';
+import { PORT_TYPES } from '../../../../shared/constants';
 import {
 	validationInputOutputRule,
-	validationAuxRule,
 	normalyzeInputOutputConnection,
+	validationAuxRule,
 	normalyzeAuxConnection,
 } from '../../utils';
 import './ports-inout-center.css';
-import type { Port as TPort } from '../../../shared/types';
-
-type PortsInOutCenterSetup = {
-	inPort: TPort | null;
-	outPort: TPort | null;
-	auxPort: TPort | null;
-	topAuxPort: TPort | null;
-};
+import type { Port as TPort } from '.../../../../shared/types';
 
 // @vue/component
 export const PortsInOutCenter = {
@@ -37,36 +30,53 @@ export const PortsInOutCenter = {
 			default: false,
 		},
 	},
-	setup(props): PortsInOutCenterSetup
+	setup(): {...}
 	{
-		const inPort = computed((): TPort | null => {
-			if (props.hideInputPorts)
+		return {
+			validationInputOutputRule,
+			normalyzeInputOutputConnection,
+			validationAuxRule,
+			normalyzeAuxConnection,
+		};
+	},
+	computed: {
+		portsMap(): Map<PORT_TYPES, TPort>
+		{
+			return this.block.ports
+				.reduce((portsMap, port) => {
+					if (portsMap.has(port.type))
+					{
+						portsMap.get(port.type).push(port);
+					}
+					else
+					{
+						portsMap.set(port.type, [port]);
+					}
+
+					return portsMap;
+				}, new Map());
+		},
+		inPort(): TPort | null
+		{
+			if (this.hideInputPorts)
 			{
 				return null;
 			}
 
-			return props.block.ports?.input?.[0] ?? null;
-		});
-		const outPort = computed((): TPort | null => {
-			return props.block.ports?.output?.[0] ?? null;
-		});
-		const auxPort = computed((): TPort | null => {
-			return props.block.ports?.aux?.[0] ?? null;
-		});
-		const topAuxPort = computed((): TPort | null => {
-			return props.block.ports?.topAux?.[0] ?? null;
-		});
-
-		return {
-			inPort,
-			outPort,
-			auxPort,
-			topAuxPort,
-			validationInputOutputRule,
-			validationAuxRule,
-			normalyzeInputOutputConnection,
-			normalyzeAuxConnection,
-		};
+			return this.portsMap.get(PORT_TYPES.input)?.[0] ?? null;
+		},
+		outPort(): TPort | null
+		{
+			return this.portsMap.get(PORT_TYPES.output)?.[0] ?? null;
+		},
+		auxPort(): TPort | null
+		{
+			return this.portsMap.get(PORT_TYPES.aux)?.[0] ?? null;
+		},
+		topAuxPort(): TPort | null
+		{
+			return this.portsMap.get(PORT_TYPES.topAux)?.[0] ?? null;
+		},
 	},
 	template: `
 		<div class="editor-chart-ports-inout-center">

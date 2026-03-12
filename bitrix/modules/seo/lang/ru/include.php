@@ -18,4 +18,3 @@ $MESS["YANDEX_ERROR__TEXT_LENGTH_CONSTRAINTS_VIOLATION"] = "Переданный
 $MESS["YANDEX_ERROR__ORIGINALS_TEXT_ALREADY_ADDED"] = "Переданный текст уже был добавлен ранее";
 $MESS["YANDEX_ERROR__ORIGINAL_TEXT_ALREADY_ADDED"] = "Переданный текст уже был добавлен ранее";
 $MESS["YANDEX_ERROR__QUOTA_EXCEEDED"] = "Превышена квота добавления оригинальных текстов";
-?>

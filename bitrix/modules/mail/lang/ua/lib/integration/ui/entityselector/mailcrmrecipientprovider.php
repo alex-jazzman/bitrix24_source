@@ -1,3 +1,0 @@
-<?php
-$MESS["MAIL_CRM_RECIPIENT_PROVIDER_TAB_HEADER"] = "Контакти, компанії, ліди з CRM";
-$MESS["MAIL_CRM_RECIPIENT_PROVIDER_TAB_TITLE"] = "Із CRM";

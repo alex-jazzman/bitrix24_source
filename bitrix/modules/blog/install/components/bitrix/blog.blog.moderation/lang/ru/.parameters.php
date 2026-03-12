@@ -11,4 +11,3 @@ $MESS["B_VARIABLE_ALIASES"] = "Имена переменных";
 $MESS["BC_DATE_TIME_FORMAT"] = "Формат показа даты и времени";
 $MESS["BPC_IMAGE_MAX_WIDTH"] = "Максимальная ширина изображения";
 $MESS["BPC_IMAGE_MAX_HEIGHT"] = "Максимальная высота изображения";
-?>

@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["TASKS_DEPENDENCY_START"] = "Старт";
 $MESS["TASKS_DEPENDENCY_END"] = "Финиш";
 $MESS["TASKS_STATUS_METASTATE_EXPIRED"] = "Просрочена";
@@ -87,4 +88,3 @@ $MESS["TASKS_TT_ERROR1_DESC"] = "Вами уже ведется учет вре�
 $MESS["MB_TASKS_TASK_SETTINGS_ACCOMPLICES"] = "соисполнители";
 $MESS["MB_TASKS_TASK_DETAIL_NO_COMMENTS_STUB_TEXT"] = "Добавьте первый комментарий";
 $MESS["MB_TASKS_TASK_DETAIL_UP_BUTTON_TEXT"] = "К описанию";
-?>

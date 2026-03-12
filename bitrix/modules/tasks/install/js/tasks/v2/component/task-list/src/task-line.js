@@ -87,8 +87,12 @@ export const TaskLine = {
 	template: `
 		<div class="tasks-task-line-cross-background" @mouseover="isHovered = true" @mouseleave="isHovered = false"/>
 		<div class="tasks-task-line-title-container" @mouseover="isHovered = true" @mouseleave="isHovered = false">
-			<TextMd class="tasks-task-line-title" :class="{ '--completed': completed }" :title="task.title">
-				<a :href>{{ task.title }}</a>
+			<TextMd 
+				class="tasks-task-line-title print-white-space-normal" 
+				:class="{ '--completed': completed }" 
+				:title="task.title"
+			>
+				<a :href class="print-font-color-base-1">{{ task.title }}</a>
 			</TextMd>
 		</div>
 		<div v-if="fields.has('responsible')" class="tasks-task-line-field">

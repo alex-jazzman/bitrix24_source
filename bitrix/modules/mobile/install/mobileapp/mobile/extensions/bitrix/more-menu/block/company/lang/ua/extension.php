@@ -1,8 +1,0 @@
-<?php
-$MESS["MORE_MENU_COMPANY_DEMO_BUTTON"] = "Увімкнути";
-$MESS["MORE_MENU_COMPANY_DEMO_DESCRIPTION"] = "Увімкніть безплатно";
-$MESS["MORE_MENU_COMPANY_DEMO_TILL_DATE"] = "до #TIME#";
-$MESS["MORE_MENU_COMPANY_DEMO_TITLE"] = "Демо на 15 днів";
-$MESS["MORE_MENU_COMPANY_SUPPORT"] = "Підтримка";
-$MESS["MORE_MENU_COMPANY_TITLE"] = "Ваш Бітрікс24";
-$MESS["MORE_MENU_COMPANY_WHATS_NEW"] = "Що нового";

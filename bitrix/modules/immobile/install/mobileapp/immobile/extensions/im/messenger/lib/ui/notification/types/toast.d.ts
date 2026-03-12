@@ -6,6 +6,9 @@ export type ShowToastParams = {
 	backgroundOpacity?: number,
 	svg?: string,
 	icon?: object,
+	buttonText?: string,
+	buttonTextColor?: string,
+	buttonTap?: () => {},
 }
 
 export type ShowNotifierParams = {

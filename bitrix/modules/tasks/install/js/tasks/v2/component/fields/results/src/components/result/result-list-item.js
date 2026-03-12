@@ -261,7 +261,7 @@ export const ResultListItem = {
 					<BIcon :name="Outline.WINDOW_FLAG"/>
 					<HeadlineSm>{{ resultTitle }}</HeadlineSm>
 				</div>
-				<div class="tasks-field-results-title-actions">
+				<div class="tasks-field-results-title-actions print-ignore">
 					<BIcon
 						v-if="hasMenuItems"
 						class="tasks-field-results-title-icon --big"

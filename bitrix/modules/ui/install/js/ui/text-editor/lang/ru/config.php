@@ -28,3 +28,5 @@ $MESS["TEXT_EDITOR_IMAGE_URL"] = "Адрес картинки";
 $MESS["TEXT_EDITOR_PLACEHOLDER_COPILOT"] = "Нажмите пробел для запуска CoPilot";
 $MESS["TEXT_EDITOR_PLACEHOLDER_MENTION"] = "Нажмите @, чтобы упомянуть человека";
 $MESS["TEXT_EDITOR_PLACEHOLDER_MENTION_COPILOT"] = "Нажмите @, чтобы упомянуть человека, или пробел для запуска CoPilot";
+$MESS["TEXT_EDITOR_PLACEHOLDER_BITRIX_GPT"] = "Нажмите пробел для запуска #COPILOT_NAME#";
+$MESS["TEXT_EDITOR_PLACEHOLDER_MENTION_BITRIX_GPT"] = "Нажмите @, чтобы упомянуть человека, или пробел для запуска #COPILOT_NAME#";

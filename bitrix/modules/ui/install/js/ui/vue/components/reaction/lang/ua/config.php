@@ -1,8 +1,0 @@
-<?
-$MESS["UI_VUE_REACTION_ICON_LIKE"] = "Подобається";
-$MESS["UI_VUE_REACTION_ICON_KISS"] = "Захоплююсь";
-$MESS["UI_VUE_REACTION_ICON_LAUGH"] = "Сміюсь";
-$MESS["UI_VUE_REACTION_ICON_WONDER"] = "Дивуюсь";
-$MESS["UI_VUE_REACTION_ICON_CRY"] = "Засмучуюсь";
-$MESS["UI_VUE_REACTION_ICON_ANGRY"] = "Злюсь";
-?>

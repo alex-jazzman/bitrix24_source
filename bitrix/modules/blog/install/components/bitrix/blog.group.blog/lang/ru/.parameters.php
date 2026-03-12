@@ -12,4 +12,3 @@ $MESS ['BGB_SHOW_BLOG_WITHOUT_POSTS'] = "Показывать блоги без 
 $MESS ['B_VARIABLE_ALIASES'] = "Имена переменных";
 $MESS ['BC_DATE_TIME_FORMAT'] = "Формат показа даты и времени";
 $MESS ['BB_NAV_TEMPLATE'] = "Имя шаблона для постраничной навигации";
-?>

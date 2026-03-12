@@ -1,2 +1,0 @@
-<?php
-$MESS["TM_INTEGRATION_STAFFTRACK_NEW"] = "нове";

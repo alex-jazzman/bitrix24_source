@@ -1,5 +1,8 @@
-import { Type, Dom, Event, Loc } from 'main.core';
 import DepartmentControl from 'intranet.department-control';
+import { Dom, Event, Loc, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { ActiveDirectory } from './active-directory';
+import { Analytics } from './analytics';
 import { InputRowFactory, InputRowType } from './input-row-factory';
 import { MessageBar } from './message-bar';
 import { Navigation } from './navigation';
@@ -7,10 +10,8 @@ import { PageProvider } from './page-provider';
 import { LinkPage } from './page/link-page';
 import { LocalEmailPage } from './page/local-email-page';
 import { SubmitButton } from './submit-button';
-import { EventEmitter, BaseEvent } from 'main.core.events';
-import { ActiveDirectory } from './active-directory';
-import { Analytics } from './analytics';
 import { Transport } from './transport';
+import { UI } from 'ui.notification';
 
 export default class Form extends EventEmitter
 {
@@ -19,6 +20,22 @@ export default class Form extends EventEmitter
 		super();
 		this.setEventNamespace('BX.Intranet.Invitation');
 		const params = Type.isPlainObject(formParams) ? formParams : {};
+
+		this.initParams(params);
+		this.initUI();
+		this.initSubmitButton();
+		this.initAnalytics();
+		this.initNavigation();
+		this.initArrow();
+		this.subscribeEvents();
+
+		this.hideButtonPanelForLinkPage();
+
+		BX.Intranet.Invitation.Form = this;
+	}
+
+	initParams(params)
+	{
 		this.menuContainer = params.menuContainerNode;
 		this.subMenuContainer = params.subMenuContainerNode;
 		this.contentContainer = params.contentContainerNode;
@@ -43,7 +60,10 @@ export default class Form extends EventEmitter
 			componentName: params.componentName,
 			signedParameters: params.signedParameters,
 		});
+	}
 
+	initUI()
+	{
 		if (Type.isDomNode(this.contentContainer))
 		{
 			this.messageBar = new MessageBar({
@@ -58,40 +78,22 @@ export default class Form extends EventEmitter
 		{
 			this.#initMenu();
 		}
+	}
 
+	initSubmitButton()
+	{
 		this.submitButton = new SubmitButton({
 			node: document.querySelector('#intranet-invitation-btn'),
 			events: {
 				click: (event) => {
-					if (
-						!this.isCreatorEmailConfirmed
-						&& !(this.navigation.current() instanceof LinkPage)
-						&& !(this.navigation.current() instanceof LocalEmailPage)
-					)
-					{
-						this.messageBar.showError(Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
-
-						return;
-					}
-
-					if (!this.submitButton.isWaiting() && this.submitButton.isEnabled())
-					{
-						this.submitButton.wait();
-						EventEmitter.emit(this.navigation.current(), 'BX.Intranet.Invitation:submit', {
-							context: this,
-						});
-						if (this.isCloud)
-						{
-							BX.userOptions.del('intranet.invitation', 'open_invitation_form_ts');
-						}
-					}
+					this.handleSubmitClick();
 				},
 			},
 		});
+	}
 
-		this.analytics = new Analytics(this.analyticsLabel, this.isAdmin);
-		this.analytics.sendOpenSliderData(this.analyticsLabel.source);
-
+	initArrow()
+	{
 		this.arrowBox = document.querySelector('.invite-wrap-decal-arrow');
 		if (Type.isDomNode(this.arrowBox))
 		{
@@ -99,11 +101,16 @@ export default class Form extends EventEmitter
 			this.arrowHeight = this.arrowRect.height;
 			this.setSetupArrow();
 		}
+	}
 
-		EventEmitter.subscribe('BX.Intranet.Invitation:onChangeForm', () => {
-			this.submitButton.enable();
-		});
+	initAnalytics()
+	{
+		this.analytics = new Analytics(this.analyticsLabel, this.isAdmin);
+		this.analytics.sendOpenSliderData(this.analyticsLabel.source);
+	}
 
+	initNavigation()
+	{
 		this.navigation = this.createNavigation();
 		this.navigation?.subscribe('onBeforeChangePage', () => {
 			this.messageBar.hideAll();
@@ -111,6 +118,13 @@ export default class Form extends EventEmitter
 		this.navigation?.subscribe('onAfterChangePage', this.onAfterChangePage.bind(this));
 
 		this.navigation.showFirst();
+	}
+
+	subscribeEvents()
+	{
+		EventEmitter.subscribe('BX.Intranet.Invitation:onChangeForm', () => {
+			this.submitButton.enable();
+		});
 
 		this.subscribe('BX.Intranet.Invitation:onSendData', this.onSendRequest.bind(this));
 
@@ -125,12 +139,66 @@ export default class Form extends EventEmitter
 		EventEmitter.subscribe('BX.Intranet.Invitation:onSubmitWait', () => {
 			this.submitButton.wait();
 		});
+
+		EventEmitter.subscribe('BX.Intranet.Invitation:changeButtonPanelState', (event) => {
+			const state = event.getData()?.state || 'show';
+			this.changeStateOfButtonPanel(state);
+		});
+
+		EventEmitter.subscribe('BX.Intranet.Invitation:toggleSelfRegister', (event) => {
+			this.onSendRequest(event);
+		});
+	}
+
+	handleSubmitClick()
+	{
+		if (
+			!this.isCreatorEmailConfirmed
+			&& !(this.navigation.current() instanceof LinkPage)
+			&& !(this.navigation.current() instanceof LocalEmailPage)
+		)
+		{
+			this.messageBar.showError(Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
+
+			return;
+		}
+
+		if (!this.submitButton.isWaiting() && this.submitButton.isEnabled())
+		{
+			this.submitButton.wait();
+			EventEmitter.emit(this.navigation.current(), 'BX.Intranet.Invitation:submit', {
+				context: this,
+			});
+			if (this.isCloud)
+			{
+				BX.userOptions.del('intranet.invitation', 'open_invitation_form_ts');
+			}
+		}
+	}
+
+	hideButtonPanelForLinkPage()
+	{
+		const currentPage = this.navigation.current();
+		if (currentPage.hasShownButtonPanel() === false)
+		{
+			EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', { state: 'hide' });
+		}
 	}
 
 	onAfterChangePage(event: BaseEvent)
 	{
 		const section = this.getSubSection();
 		const page = event.getData().current;
+
+		if (page.hasShownButtonPanel())
+		{
+			EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', { state: 'show' });
+		}
+		else
+		{
+			EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', { state: 'hide' });
+		}
+
 		let subSection = null;
 		if (page)
 		{
@@ -242,77 +310,125 @@ export default class Form extends EventEmitter
 	{
 		this.submitButton.disable();
 		const request = event.getData();
+		const currentPage = this.navigation.current();
 		this.messageBar.hideAll();
+
 		if (Type.isArray(request.errors) && request.errors.length > 0)
 		{
-			this.submitButton.enable();
-			this.submitButton.ready();
-			this.messageBar.showError(request.errors[0]);
+			this.#handleRequestError(request.errors, currentPage, false);
 
 			return;
 		}
 
+		this.#enrichRequest(request);
+
+		this.transport.send(request).then(
+			(response) => this.#handleRequestSuccess(response, request, currentPage),
+			(response) => this.#handleRequestError(response.errors, currentPage, true, response, request)
+		).catch(() => {});
+	}
+
+	#enrichRequest(request)
+	{
 		request.userOptions = this.userOptions;
 		request.analyticsData = this.analyticsLabel;
-		request.data.analyticsData = this.analyticsLabel;
-		// eslint-disable-next-line promise/catch-or-return
-		this.transport.send(request).then((response) => {
-			this.submitButton.ready();
+		if (request.data)
+		{
+			request.data.analyticsData = this.analyticsLabel;
+		}
+	}
 
-			if (response.data)
-			{
-				if (request?.action === 'self')
-				{
-					this.messageBar.showSuccess(response.data);
-					this.isSelfRegisterEnabled = request.data.allow_register === 'Y';
-					EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
-						selfEnabled: this.isSelfRegisterEnabled,
-					});
-				}
-				else if (this.useLocalEmailProgram && request?.action === 'invite' && request?.type === 'invite-email')
-				{
-					EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:InviteSuccess');
-				}
-				else
-				{
-					this.changeContent('success');
-					this.submitButton.sendSuccessEvent(response.data);
-				}
-				EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:onInviteRequestSuccess', {
-					response,
-				});
-			}
+	#handleRequestError(errors, currentPage, isPromise = false, response = {}, request = {})
+	{
+		this.submitButton.enable();
+		this.submitButton.ready();
 
-			EventEmitter.subscribe(
-				EventEmitter.GLOBAL_TARGET,
-				'SidePanel.Slider:onClose',
-				() => {
-					BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
-				},
+		const errorMsg = errors?.[0]?.message || errors?.[0] || Loc.getMessage('INTRANET_INVITE_DIALOG_UNKNOWN_ERROR');
+		const hasButtonPanel = currentPage?.hasShownButtonPanel?.() === false;
+
+		if (isPromise && response?.data === 'user_limit')
+		{
+			// eslint-disable-next-line no-undef
+			B24.licenseInfoPopup.show(
+				'featureID',
+				Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TITLE'),
+				Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TEXT'),
 			);
-		}, (response) => {
-			this.submitButton.enable();
-			this.submitButton.ready();
 
-			if (response.data === 'user_limit')
+			return;
+		}
+
+		if (hasButtonPanel)
+		{
+			this.#showNotification(errorMsg);
+		}
+		else
+		{
+			this.messageBar.showError(errorMsg);
+		}
+
+		if (
+			isPromise
+			&& request?.action === 'invite'
+			&& this.useLocalEmailProgram
+			&& request?.type === 'invite-email'
+		)
+		{
+			EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:InviteFailed');
+		}
+	}
+
+	#handleRequestSuccess(response, request, currentPage)
+	{
+		this.submitButton.ready();
+
+		if (!response.data)
+		{
+			return;
+		}
+
+		const hasButtonPanel = currentPage?.hasShownButtonPanel?.() === false;
+		const emitGlobal = (event, data = {}) => {
+			EventEmitter.emit(EventEmitter.GLOBAL_TARGET, event, data);
+		};
+
+		if (request?.action === 'self')
+		{
+			if (hasButtonPanel)
 			{
-				// eslint-disable-next-line no-undef
-				B24.licenseInfoPopup.show(
-					'featureID',
-					Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TITLE'),
-					Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TEXT'),
-				);
+				this.#showNotification(response.data);
+				EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', { state: 'hide' });
 			}
 			else
 			{
-				this.messageBar.showError(response.errors[0].message);
+				this.messageBar.showSuccess(response.data);
 			}
 
-			if (request?.action === 'invite' && this.useLocalEmailProgram && request?.type === 'invite-email')
-			{
-				EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:InviteFailed');
-			}
-		});
+			this.isSelfRegisterEnabled = request.data.allow_register === 'Y';
+			emitGlobal('BX.Intranet.Invitation:selfChange', {
+				selfEnabled: this.isSelfRegisterEnabled,
+			});
+			emitGlobal('BX.Intranet.Invitation:onSendDataSuccess');
+		}
+		else if (this.useLocalEmailProgram && request?.action === 'invite' && request?.type === 'invite-email')
+		{
+			emitGlobal('BX.Intranet.Invitation:InviteSuccess');
+		}
+		else
+		{
+			this.changeContent('success');
+			this.submitButton.sendSuccessEvent(response.data);
+		}
+
+		emitGlobal('BX.Intranet.Invitation:onInviteRequestSuccess', { response });
+
+		EventEmitter.subscribe(
+			EventEmitter.GLOBAL_TARGET,
+			'SidePanel.Slider:onClose',
+			() => {
+				BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
+			},
+		);
 	}
 
 	createDepartmentControl(): DepartmentControl
@@ -400,6 +516,29 @@ export default class Form extends EventEmitter
 			}
 			this.getSetupArrow();
 			this.updateArrow();
+		});
+	}
+
+	changeStateOfButtonPanel(state: string = 'show')
+	{
+		const buttonPanel = document.getElementById('ui-button-panel');
+
+		const elements = [this.arrowBox, buttonPanel];
+		elements.forEach((element) => {
+			if (Type.isDomNode(element))
+			{
+				Dom.style(element, { display: state === 'show' ? '' : 'none' });
+			}
+		});
+	}
+
+	#showNotification(message: string)
+	{
+		UI.Notification.Center.notify({
+			content: message,
+			autoHideDelay: 3500,
+			useAirDesign: true,
+			position: 'top-right',
 		});
 	}
 }

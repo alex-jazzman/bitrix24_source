@@ -1,3 +1,0 @@
-<?php
-$MESS["CRM_BADGE_CALL_STATUS_FIELD_NAME"] = "Статус дзвінка";
-$MESS["CRM_BADGE_CALL_STATUS_MISSED_CALL_VALUE"] = "Пропущений";

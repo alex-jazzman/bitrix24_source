@@ -1,2 +1,2 @@
 <?php
-$MESS['REST_V3_EXCEPTIONS_INVALIDCLASSPROVIDEDEXCEPTION'] = "Передан неверный класс объекта. Передан \"#PROVIDED#\", требуется \"#REQUIRED#\".";
+$MESS['REST_V3_EXCEPTION_INVALIDCLASSPROVIDEDEXCEPTION'] = "Передан неверный класс объекта. Передан \"#PROVIDED#\", требуется \"#REQUIRED#\".";

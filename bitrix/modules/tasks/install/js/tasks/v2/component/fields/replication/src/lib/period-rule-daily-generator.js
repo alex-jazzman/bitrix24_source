@@ -1,4 +1,5 @@
 import { Loc } from 'main.core';
+import { DateTimeFormat } from 'main.date';
 
 import type { TaskReplicateParams } from 'tasks.v2.model.tasks';
 
@@ -15,13 +16,23 @@ export class PeriodRuleDailyGenerator implements PeriodRuleGenerator
 
 	generate(): string
 	{
-		const dailyMonthInterval = this.#replicateParams.dailyMonthInterval || 1;
+		const dailyMonthInterval = this.#replicateParams.dailyMonthInterval;
+		const everyDay = this.#replicateParams.everyDay || 1;
+
+		if (dailyMonthInterval > 0)
+		{
+			return Loc.getMessage('TASKS_V2_REPLICATION_MONTHLY_2', {
+				'#DAY_NUMBER#': DateTimeFormat.format('ddiff', 0, everyDay * 60 * 60 * 24, true),
+				'#WEEKDAY_NAME#': '',
+				'#NUMBER#': ` ${dailyMonthInterval + 1}`,
+			});
+		}
 
 		return Loc.getMessagePlural(
 			'TASKS_V2_REPLICATION_DAILY',
-			dailyMonthInterval,
+			everyDay,
 			{
-				'#NUMBER#': dailyMonthInterval > 1 ? ` ${dailyMonthInterval}` : '',
+				'#NUMBER#': everyDay > 1 ? ` ${everyDay}` : '',
 			},
 		);
 	}

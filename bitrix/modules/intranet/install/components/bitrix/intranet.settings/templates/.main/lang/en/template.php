@@ -59,7 +59,6 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON"
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_CONNECT_DISK_ON_MSGVER_1"] = "The workgroup's Drive will be connected to the employee's Drive after they have joined the workgroup. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_BLOCK_DOC_ON_MSGVER_1"] = "If the document is locked, other employees cannot edit it. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_EDIT_DOC_ON"] = "Users with enough permissions can edit attached documents. You can disable editing for individual message manually.";
-$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_MEASURE_STRESS_LEVEL_CLICK_ON_MSGVER_1"] = "Stress level gauge is visible in everyone's profile. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_POST_GEN_CHAT_ON_MSGVER_1"] = "Selected users can post messages to the General chat. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_PUBLIC_LINK_ON_MSGVER_1"] = "Employees can copy public links and share them with people outside your company. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_SEARCH_DOC_ON_MSGVER_1"] = "Documents on Drive will be scanned while searching with respect to user access permissions. #MORE_DETAILS#";
@@ -96,7 +95,6 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_CONNECT_DISK"] = "Auto connect w
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC"] = "Lock document while editing";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_EDIT_DOC"] = "Allow editing documents in Feed, tasks, chats and comments";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_LEAVE_MESSAGE"] = "Post employee dismissal notification to the General chat";
-$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL"] = "Allow to measure user stress level and show it in user profile";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT"] = "Allow to post messages to the General chat";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT_LIST"] = "Select users who can post messages to the General chat:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_PUBLIC_LINK"] = "Allow public file links";
@@ -233,7 +231,7 @@ Two-factor authentication is enabled for all accounts, and is mandatory. Attacke
 [BR]
 The users have received notifications requiring to enable the TFA, and a set of instructions.
 [BR]
-Please [HELP_LINK]contact the Helpdesk[/HELP_LINK] if you encounter issues using two-factor authentication.
+Please [HELP_LINK]contact Support[/HELP_LINK] if you encounter issues using two-factor authentication.
 ";
 $MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_PUSH_OTP_WARNING"] = "Users who fail to enable the TFA within the specified time period, [SPAN]won't be able to log in to Bitrix24[/SPAN].";
 $MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_SECOND"] = "Employees who have failed to enable two-factor authentication within the time allotted, will not be able to log in to their accounts.";

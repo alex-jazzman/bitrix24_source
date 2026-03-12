@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_COPILOT_CALL_ASSESSMENT_DETAILS_SUBTITLE"] = "Скрипт продажів";

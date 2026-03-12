@@ -33,209 +33,275 @@ this.BX = this.BX || {};
 
 	let _ = t => t,
 	  _t;
+	var _text = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("text");
+	var _color = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("color");
+	var _size = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("size");
+	var _icon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("icon");
+	var _closeBtn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeBtn");
+	var _animated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("animated");
+	var _customClass = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("customClass");
+	var _beforeMessageHtml = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("beforeMessageHtml");
+	var _afterMessageHtml = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("afterMessageHtml");
+	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _textContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textContainer");
+	var _classList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("classList");
+	var _closeNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeNode");
+	var _handleCloseBtnClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCloseBtnClick");
+	var _setClassList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setClassList");
+	var _getClassList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getClassList");
 	class Alert {
 	  constructor(options) {
-	    this.text = options.text;
-	    this.color = options.color;
-	    this.size = options.size;
-	    this.icon = options.icon;
-	    this.closeBtn = !!options.closeBtn ? true : options.closeBtn;
-	    this.animated = !!options.animated ? true : options.animated;
-	    this.customClass = options.customClass;
-	    this.beforeMessageHtml = main_core.Type.isElementNode(options.beforeMessageHtml) ? options.beforeMessageHtml : false;
-	    this.afterMessageHtml = main_core.Type.isElementNode(options.afterMessageHtml) ? options.afterMessageHtml : false;
-	    this.setText(this.text);
-	    this.setSize(this.size);
-	    this.setIcon(this.icon);
-	    this.setColor(this.color);
-	    this.setCloseBtn(this.closeBtn);
-	    this.setCustomClass(this.customClass);
+	    Object.defineProperty(this, _getClassList, {
+	      value: _getClassList2
+	    });
+	    Object.defineProperty(this, _setClassList, {
+	      value: _setClassList2
+	    });
+	    Object.defineProperty(this, _handleCloseBtnClick, {
+	      value: _handleCloseBtnClick2
+	    });
+	    Object.defineProperty(this, _text, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _color, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _size, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _icon, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _closeBtn, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _animated, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _customClass, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _beforeMessageHtml, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _afterMessageHtml, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _container, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _textContainer, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _classList, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _closeNode, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _text)[_text] = options.text;
+	    babelHelpers.classPrivateFieldLooseBase(this, _color)[_color] = options.color;
+	    babelHelpers.classPrivateFieldLooseBase(this, _size)[_size] = options.size;
+	    babelHelpers.classPrivateFieldLooseBase(this, _icon)[_icon] = options.icon;
+	    babelHelpers.classPrivateFieldLooseBase(this, _closeBtn)[_closeBtn] = options.closeBtn === true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _animated)[_animated] = options.animated === true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _customClass)[_customClass] = options.customClass;
+	    babelHelpers.classPrivateFieldLooseBase(this, _beforeMessageHtml)[_beforeMessageHtml] = main_core.Type.isElementNode(options.beforeMessageHtml) ? options.beforeMessageHtml : undefined;
+	    babelHelpers.classPrivateFieldLooseBase(this, _afterMessageHtml)[_afterMessageHtml] = main_core.Type.isElementNode(options.afterMessageHtml) ? options.afterMessageHtml : undefined;
+	    this.setText(babelHelpers.classPrivateFieldLooseBase(this, _text)[_text]);
+	    this.setSize(babelHelpers.classPrivateFieldLooseBase(this, _size)[_size]);
+	    this.setIcon(babelHelpers.classPrivateFieldLooseBase(this, _icon)[_icon]);
+	    this.setColor(babelHelpers.classPrivateFieldLooseBase(this, _color)[_color]);
+	    this.setCloseBtn(babelHelpers.classPrivateFieldLooseBase(this, _closeBtn)[_closeBtn]);
+	    this.setCustomClass(babelHelpers.classPrivateFieldLooseBase(this, _customClass)[_customClass]);
 	  }
 
-	  //region COLOR
+	  // region COLOR
 	  setColor(color) {
-	    this.color = color;
-	    this.setClassList();
+	    babelHelpers.classPrivateFieldLooseBase(this, _color)[_color] = color;
+	    babelHelpers.classPrivateFieldLooseBase(this, _setClassList)[_setClassList]();
 	  }
 	  getColor() {
-	    return this.color;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _color)[_color];
 	  }
 
 	  // endregion
 
-	  //region SIZE
+	  // region SIZE
 	  setSize(size) {
-	    this.size = size;
-	    this.setClassList();
+	    babelHelpers.classPrivateFieldLooseBase(this, _size)[_size] = size;
+	    babelHelpers.classPrivateFieldLooseBase(this, _setClassList)[_setClassList]();
 	  }
 	  getSize() {
-	    return this.size;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _size)[_size];
 	  }
 
 	  // endregion
 
-	  //region ICON
+	  // region ICON
 	  setIcon(icon) {
-	    this.icon = icon;
-	    this.setClassList();
+	    babelHelpers.classPrivateFieldLooseBase(this, _icon)[_icon] = icon;
+	    babelHelpers.classPrivateFieldLooseBase(this, _setClassList)[_setClassList]();
 	  }
 	  getIcon() {
-	    return this.icon;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _icon)[_icon];
 	  }
 
 	  // endregion
 
-	  //region TEXT
+	  // region TEXT
 	  setText(text) {
 	    if (main_core.Type.isStringFilled(text)) {
-	      this.text = text;
+	      babelHelpers.classPrivateFieldLooseBase(this, _text)[_text] = text;
 	      this.getTextContainer().innerHTML = text;
 	    }
 	  }
 	  getText() {
-	    return this.text;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _text)[_text];
 	  }
 	  getTextContainer() {
-	    if (!this.textContainer) {
-	      this.textContainer = main_core.Dom.create('span', {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _textContainer)[_textContainer]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _textContainer)[_textContainer] = main_core.Dom.create('span', {
 	        props: {
 	          className: 'ui-alert-message'
 	        },
-	        html: this.text
+	        html: babelHelpers.classPrivateFieldLooseBase(this, _text)[_text]
 	      });
 	    }
-	    return this.textContainer;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _textContainer)[_textContainer];
 	  }
 
 	  // endregion
 
 	  // region CLOSE BTN
 	  setCloseBtn(closeBtn) {
-	    this.closeBtn = closeBtn;
+	    babelHelpers.classPrivateFieldLooseBase(this, _closeBtn)[_closeBtn] = closeBtn;
 	  }
 	  getCloseBtn() {
-	    if (this.closeBtn != true) {
-	      return;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _closeBtn)[_closeBtn] !== true) {
+	      return undefined;
 	    }
-	    if (!this.closeNode && this.closeBtn === true) {
-	      this.closeNode = main_core.Dom.create("span", {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _closeNode)[_closeNode] && babelHelpers.classPrivateFieldLooseBase(this, _closeBtn)[_closeBtn] === true) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _closeNode)[_closeNode] = main_core.Dom.create('span', {
 	        props: {
-	          className: "ui-alert-close-btn"
+	          className: 'ui-alert-close-btn'
 	        },
 	        events: {
-	          click: this.handleCloseBtnClick.bind(this)
+	          click: babelHelpers.classPrivateFieldLooseBase(this, _handleCloseBtnClick)[_handleCloseBtnClick].bind(this)
 	        }
 	      });
 	    }
-	    return this.closeNode;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _closeNode)[_closeNode];
 	  }
-	  handleCloseBtnClick() {
-	    if (this.animated === true) {
-	      this.animateClosing();
-	    } else {
-	      main_core.Dom.remove(this.container);
-	    }
-	  }
-
 	  // endregion
 
 	  // region Custom HTML
 	  setBeforeMessageHtml(element) {
 	    if (main_core.Type.isElementNode(element) && element !== false) {
-	      this.beforeMessageHtml = element;
+	      babelHelpers.classPrivateFieldLooseBase(this, _beforeMessageHtml)[_beforeMessageHtml] = element;
 	    }
 	  }
 	  getBeforeMessageHtml() {
-	    return this.beforeMessageHtml;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _beforeMessageHtml)[_beforeMessageHtml];
 	  }
 	  setAfterMessageHtml(element) {
 	    if (main_core.Type.isElementNode(element) && element !== false) {
-	      this.afterMessageHtml = element;
+	      babelHelpers.classPrivateFieldLooseBase(this, _afterMessageHtml)[_afterMessageHtml] = element;
 	    }
 	  }
 	  getAfterMessageHtml() {
-	    return this.afterMessageHtml;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _afterMessageHtml)[_afterMessageHtml];
 	  }
 
-	  //endregion
+	  // endregion
 
-	  //region CUSTOM CLASS
+	  // region CUSTOM CLASS
 	  setCustomClass(customClass) {
-	    this.customClass = customClass;
+	    babelHelpers.classPrivateFieldLooseBase(this, _customClass)[_customClass] = customClass;
 	    this.updateClassList();
 	  }
 	  getCustomClass() {
-	    return this.customClass;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _customClass)[_customClass];
 	  }
 
 	  // endregion
 
-	  //region CLASS LIST
-	  setClassList() {
-	    this.classList = "ui-alert";
-	    if (typeof this.getColor() != "undefined") {
-	      this.classList = this.classList + " " + this.color;
-	    }
-	    if (typeof this.getSize() != "undefined") {
-	      this.classList = this.classList + " " + this.size;
-	    }
-	    if (typeof this.getIcon() != "undefined") {
-	      this.classList = this.classList + " " + this.icon;
-	    }
-	    if (typeof this.getCustomClass() != "undefined") {
-	      this.classList = this.classList + " " + this.customClass;
-	    }
-	    this.updateClassList();
-	  }
-	  getClassList() {
-	    return this.classList;
-	  }
+	  // region CLASS LIST
+
 	  updateClassList() {
-	    if (!this.container) {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]) {
 	      this.getContainer();
 	    }
-	    this.container.setAttribute("class", this.classList);
+	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].setAttribute('class', babelHelpers.classPrivateFieldLooseBase(this, _classList)[_classList]);
 	  }
 
 	  // endregion
 
-	  //region ANIMATION
+	  // region ANIMATION
 	  animateOpening() {
-	    this.container.style.overflow = "hidden";
-	    this.container.style.height = 0;
-	    this.container.style.paddingTop = 0;
-	    this.container.style.paddingBottom = 0;
-	    this.container.style.marginBottom = 0;
-	    this.container.style.opacity = 0;
-	    setTimeout(function () {
-	      this.container.style.height = this.container.scrollHeight + "px";
-	      this.container.style.height = "";
-	      this.container.style.paddingTop = "";
-	      this.container.style.paddingBottom = "";
-	      this.container.style.marginBottom = "";
-	      this.container.style.opacity = "";
-	    }.bind(this), 10);
-	    setTimeout(function () {
-	      this.container.style.height = "";
-	    }.bind(this), 200);
+	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], {
+	      overflow: 'hidden',
+	      height: 0,
+	      paddingTop: 0,
+	      paddingBottom: 0,
+	      marginBottom: 0,
+	      opacity: 0
+	    });
+	    setTimeout(() => {
+	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], {
+	        overflow: 'hidden',
+	        height: `${babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].scrollHeight}px`,
+	        paddingTop: null,
+	        paddingBottom: null,
+	        marginBottom: null,
+	        opacity: null
+	      });
+	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], {
+	        height: null
+	      });
+	    }, 10);
+	    setTimeout(() => {
+	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], {
+	        height: null
+	      });
+	    }, 200);
 	  }
 	  animateClosing() {
-	    this.container.style.overflow = "hidden";
-	    var alertWrapPos = main_core.Dom.getPosition(this.container);
-	    this.container.style.height = alertWrapPos.height + "px";
-	    setTimeout(function () {
-	      this.container.style.height = 0;
-	      this.container.style.paddingTop = 0;
-	      this.container.style.paddingBottom = 0;
-	      this.container.style.marginBottom = 0;
-	      this.container.style.opacity = 0;
-	    }.bind(this), 10);
-	    setTimeout(function () {
-	      main_core.Dom.remove(this.container);
-	    }.bind(this), 260);
+	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], {
+	      overflow: 'hidden'
+	    });
+	    const alertWrapPos = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], {
+	      height: `${alertWrapPos.height}px`
+	    });
+	    setTimeout(() => {
+	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], {
+	        height: 0,
+	        paddingTop: 0,
+	        paddingBottom: 0,
+	        marginBottom: 0,
+	        opacity: 0
+	      });
+	    }, 10);
+	    setTimeout(() => {
+	      main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	    }, 260);
 	  }
 
-	  //endregion
+	  // endregion
 
 	  show() {
 	    this.animateOpening();
@@ -244,44 +310,59 @@ this.BX = this.BX || {};
 	    this.animateClosing();
 	  }
 	  getContainer() {
-	    this.container = main_core.Tag.render(_t || (_t = _`<div class="${0}">${0}</div>`), this.getClassList(), this.getTextContainer());
-	    if (this.animated === true) {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = main_core.Tag.render(_t || (_t = _`<div class="${0}">${0}</div>`), babelHelpers.classPrivateFieldLooseBase(this, _getClassList)[_getClassList](), this.getTextContainer());
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _animated)[_animated] === true) {
 	      this.animateOpening();
 	    }
-	    if (this.closeBtn === true) {
-	      main_core.Dom.append(this.getCloseBtn(), this.container);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _closeBtn)[_closeBtn] === true) {
+	      main_core.Dom.append(this.getCloseBtn(), babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
 	    }
-	    if (main_core.Type.isElementNode(this.beforeMessageHtml)) {
+	    if (main_core.Type.isElementNode(babelHelpers.classPrivateFieldLooseBase(this, _beforeMessageHtml)[_beforeMessageHtml])) {
 	      main_core.Dom.prepend(this.getBeforeMessageHtml(), this.getTextContainer());
 	    }
-	    if (main_core.Type.isElementNode(this.afterMessageHtml)) {
+	    if (main_core.Type.isElementNode(babelHelpers.classPrivateFieldLooseBase(this, _afterMessageHtml)[_afterMessageHtml])) {
 	      main_core.Dom.append(this.getAfterMessageHtml(), this.getTextContainer());
 	    }
-	    return this.container;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
 	  }
 	  render() {
 	    return this.getContainer();
 	  }
 	  renderTo(node) {
 	    if (main_core.Type.isDomNode(node)) {
-	      return node.appendChild(this.getContainer());
+	      main_core.Dom.append(this.getContainer(), node);
+	      return this.getContainer();
 	    }
 	    return null;
 	  }
 	  destroy() {
-	    main_core.Dom.remove(this.container);
-	    this.container = null;
-	    this.finished = false;
-	    this.textAfterContainer = null;
-	    this.textBeforeContainer = null;
-	    this.bar = null;
-	    for (const property in this) {
-	      if (this.hasOwnProperty(property)) {
-	        delete this[property];
-	      }
-	    }
-	    Object.setPrototypeOf(this, null);
+	    main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _textContainer)[_textContainer] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _closeNode)[_closeNode] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _beforeMessageHtml)[_beforeMessageHtml] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _afterMessageHtml)[_afterMessageHtml] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _classList)[_classList] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _text)[_text] = null;
 	  }
+	}
+	function _handleCloseBtnClick2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _animated)[_animated] === true) {
+	    this.animateClosing();
+	  } else {
+	    main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	  }
+	}
+	function _setClassList2() {
+	  const classList = ['ui-alert'];
+	  classList.push(this.getColor(), this.getSize(), this.getIcon(), this.getCustomClass());
+	  babelHelpers.classPrivateFieldLooseBase(this, _classList)[_classList] = classList.filter(val => val).join(' ').trim();
+	  this.updateClassList();
+	}
+	function _getClassList2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _classList)[_classList];
 	}
 	Alert.Color = AlertColor;
 	Alert.Size = AlertSize;

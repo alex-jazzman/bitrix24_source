@@ -21,6 +21,7 @@ describe('ParserQuote', () => {
 				date: QUOTE_DATE,
 				text: QUOTE_TEXT,
 				dataContext: QUOTE_DATA_CONTEXT,
+				isClickable: true,
 			};
 
 			const expectedResult = getMessageHTML(quoteParams);
@@ -112,7 +113,43 @@ describe('ParserQuote', () => {
 	describe('decodeArrowQuote', () => {
 		it('should return message without chat context in data attribute', () => {
 			const quoteText = '&gt;&gt;test';
-			const expectedResult = '<div data-context="none" class="bx-im-message-quote --inline"><div class="bx-im-message-quote__wrap">test</div></div>';
+			const expectedResult = getArrowQuoteHTML('test');
+
+			const result = ParserQuote.decodeArrowQuote(quoteText);
+
+			assert.equal(result, expectedResult);
+		});
+
+		it('should not add an extra line break between arrow quote and the next line', () => {
+			const quoteText = '&gt;&gt;test<br />next line';
+			const expectedResult = `${getArrowQuoteHTML('test')}next line`;
+
+			const result = ParserQuote.decodeArrowQuote(quoteText);
+
+			assert.equal(result, expectedResult);
+		});
+
+		it('should preserve a blank line between arrow quote and the next line', () => {
+			const quoteText = '&gt;&gt;test<br /><br />next line';
+			const expectedResult = `${getArrowQuoteHTML('test')}<br />next line`;
+
+			const result = ParserQuote.decodeArrowQuote(quoteText);
+
+			assert.equal(result, expectedResult);
+		});
+
+		it('should collapse a blank line between two arrow quotes without text', () => {
+			const quoteText = '&gt;&gt;first<br /><br />&gt;&gt;second';
+			const expectedResult = `${getArrowQuoteHTML('first')}${getArrowQuoteHTML('second')}`;
+
+			const result = ParserQuote.decodeArrowQuote(quoteText);
+
+			assert.equal(result, expectedResult);
+		});
+
+		it('should collapse a whitespace-only line between two arrow quotes', () => {
+			const quoteText = '&gt;&gt;first<br /> <br />&gt;&gt;second';
+			const expectedResult = `${getArrowQuoteHTML('first')}${getArrowQuoteHTML('second')}`;
 
 			const result = ParserQuote.decodeArrowQuote(quoteText);
 
@@ -133,11 +170,13 @@ type MessageParams = {
 	date?: string,
 	text: string,
 	dataContext: string,
+	isClickable?: boolean,
 	hasUserBlock?: boolean,
 };
 
 const getMessageHTML = (messageParams: MessageParams) => {
-	const { name = '', date = '', dataContext, text } = messageParams;
+	const { name = '', date = '', dataContext, text, isClickable = false } = messageParams;
+	const clickableClass = isClickable ? ' --clickable' : '';
 
 	let userBlock = '';
 	if (name && date)
@@ -151,7 +190,7 @@ const getMessageHTML = (messageParams: MessageParams) => {
 	}
 
 	const messageNode = Tag.render`
-		<div class="bx-im-message-quote" data-context="${dataContext}">
+		<div class="bx-im-message-quote${clickableClass}" data-context="${dataContext}">
 			<div class="bx-im-message-quote__wrap">
 				${userBlock}
 				<div class="bx-im-message-quote__text">${text}</div>
@@ -160,4 +199,8 @@ const getMessageHTML = (messageParams: MessageParams) => {
 	`;
 
 	return messageNode.outerHTML;
+};
+
+const getArrowQuoteHTML = (text: string): string => {
+	return `<div data-context="none" class="bx-im-message-quote"><div class="bx-im-message-quote__wrap"><div class="bx-im-message-quote__text">${text}</div></div></div>`;
 };

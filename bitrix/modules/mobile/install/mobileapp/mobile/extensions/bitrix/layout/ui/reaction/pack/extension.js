@@ -64,10 +64,15 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 
 			if (result instanceof Promise)
 			{
-				return result.then((reactions) => ReactionPack.#putLikeFirst(reactions));
+				return result.then(ReactionPack.#ensureLikeFirst);
 			}
 
-			return ReactionPack.#putLikeFirst(result);
+			if (order !== OrderType.PRESERVE)
+			{
+				return ReactionPack.#ensureLikeFirst(result);
+			}
+
+			return result;
 		}
 
 		/**
@@ -81,7 +86,7 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 		{
 			const stats = await ReactionStorageManager.get?.() ?? {};
 
-			return ReactionPack.#getUserFavoritePack(quantity, forceIncludeLike, stats, setPngPadding);
+			return ReactionPack.#prepareUserFavorites(quantity, forceIncludeLike, stats, setPngPadding);
 		}
 
 		static getCurrentUserFavoritePackFromCache(quantity, forceIncludeLike = true, setPngPadding = false)
@@ -95,10 +100,10 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 				return [];
 			}
 
-			return ReactionPack.#getUserFavoritePack(quantity, forceIncludeLike, cachedStats, setPngPadding);
+			return ReactionPack.#prepareUserFavorites(quantity, forceIncludeLike, cachedStats, setPngPadding);
 		}
 
-		static #getUserFavoritePack(quantity, forceIncludeLike, stats, setPngPadding)
+		static #prepareUserFavorites(quantity, forceIncludeLike, stats, setPngPadding)
 		{
 			if (!quantity || quantity <= 0)
 			{
@@ -113,61 +118,43 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 			}
 
 			const limit = Math.min(quantity, allReactions.length);
-			const byUser = ReactionPack.#computeTopReactions(allReactions, stats, limit);
-			const missing = limit - byUser.length;
-			let result = (missing > 0)
-				? [...byUser, ...ReactionPack.#getFillReactions(allReactions, byUser, missing)]
-				: byUser;
 
-			const hasLike = result.some((reaction) => reaction.id === DEFAULT_REACTION);
+			let topReactions = ReactionPack.#computeTopReactions(allReactions, stats, limit);
 
-			if (hasLike)
+			const missing = limit - topReactions.length;
+			if (missing > 0)
 			{
-				return ReactionPack.#putLikeFirst(result);
+				topReactions = [
+					...topReactions,
+					...ReactionPack.#getFillReactions(allReactions, topReactions, missing),
+				];
 			}
 
-			if (forceIncludeLike)
-			{
-				const likeReaction = allReactions.find((reaction) => reaction.id === DEFAULT_REACTION);
-				if (likeReaction)
-				{
-					result.unshift(likeReaction);
-					if (result.length > limit)
-					{
-						result = result.slice(0, limit);
-					}
-				}
-
-				return ReactionPack.#putLikeFirst(result);
-			}
-
-			return result;
+			return ReactionPack.#ensureLikeFirst(topReactions, allReactions, forceIncludeLike, limit);
 		}
 
 		static #computeTopReactions(allReactions, stats, limit)
 		{
-			const indexMap = new Map(allReactions.map((reaction, i) => [reaction.id, i]));
+			const indexMap = new Map(allReactions.map((r, i) => [r.id, i]));
 
 			return allReactions
-				.map((reaction) => {
-					const base = ((indexMap.get(reaction.id) ?? 0) < TOP_COUNT) ? TOP_WEIGHT : 0;
-					const score = base + (stats[reaction.id] ?? 0);
-
-					return { reaction, score };
-				})
+				.map((reaction) => ({
+					reaction,
+					score: ReactionPack.#getReactionScore(reaction.id, stats, indexMap),
+				}))
 				.filter(({ score }) => score > 0)
 				.sort((a, b) => b.score - a.score)
 				.map(({ reaction }) => reaction)
 				.slice(0, limit);
 		}
 
-		/**
-		 * @param {String} order
-		 * @param {Boolean} setPngPadding
-		 * @param {Array<Object>} [reactions=[]]
-		 * @param {Array<string>} [ids=[]]
-		 * @returns {Array<Object>|Promise<Array<Object>>}
-		 */
+		static #getReactionScore(id, stats, indexMap)
+		{
+			const base = ((indexMap.get(id) ?? 0) < TOP_COUNT) ? TOP_WEIGHT : 0;
+
+			return base + (stats?.[id] ?? 0);
+		}
+
 		static #sortByOrder(order, setPngPadding, reactions = [], ids = [])
 		{
 			if (order === OrderType.PRESERVE && ids.length > 0)
@@ -199,13 +186,11 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 		static #sortByCurrentUserFavorites(stats, setPngPadding, reactions)
 		{
 			const allReactions = ReactionIcon.getPackForReactionPicker(setPngPadding) ?? [];
+			const indexMap = new Map(allReactions.map((r, i) => [r.id, i]));
 
-			const indexMap = new Map(allReactions.map((reaction, i) => [reaction.id, i]));
 			reactions.sort((a, b) => {
-				const baseA = ((indexMap.get(a.id) ?? 0) < TOP_COUNT) ? TOP_WEIGHT : 0;
-				const baseB = ((indexMap.get(b.id) ?? 0) < TOP_COUNT) ? TOP_WEIGHT : 0;
-				const scoreA = baseA + (stats?.[a.id] ?? 0);
-				const scoreB = baseB + (stats?.[b.id] ?? 0);
+				const scoreA = ReactionPack.#getReactionScore(a.id, stats, indexMap);
+				const scoreB = ReactionPack.#getReactionScore(b.id, stats, indexMap);
 
 				return scoreB - scoreA;
 			});
@@ -224,9 +209,24 @@ jn.define('layout/ui/reaction/pack', (require, exports, module) => {
 				.slice(0, count);
 		}
 
-		static #putLikeFirst(reactions)
+		static #ensureLikeFirst(reactions, allReactions = null, forceIncludeLike = true, limit = null)
 		{
-			const likeIndex = reactions.findIndex((reaction) => reaction.id === DEFAULT_REACTION);
+			const hasLike = reactions.some((r) => r.id === DEFAULT_REACTION);
+
+			if (!hasLike && forceIncludeLike && allReactions)
+			{
+				const likeReaction = allReactions.find((r) => r.id === DEFAULT_REACTION);
+				if (likeReaction)
+				{
+					reactions.unshift(likeReaction);
+					if (limit)
+					{
+						reactions.splice(limit);
+					}
+				}
+			}
+
+			const likeIndex = reactions.findIndex((r) => r.id === DEFAULT_REACTION);
 			if (likeIndex > 0)
 			{
 				const [like] = reactions.splice(likeIndex, 1);

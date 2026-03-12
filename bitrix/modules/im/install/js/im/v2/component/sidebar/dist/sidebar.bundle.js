@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,ui_system_menu,im_v2_lib_layout,ui_vue3_directives_lazyload,ui_label,main_date,im_v2_lib_sidebar,im_v2_lib_channel,im_v2_component_elements_toggle,im_v2_component_elements_autoDelete,im_v2_lib_autoDelete,ui_vue3_directives_hint,im_v2_component_elements_copilotRolesDialog,ui_promoVideoPopup,im_v2_component_elements_popup,im_v2_lib_helpdesk,im_v2_lib_rest,ui_manual,im_v2_lib_promo,im_v2_lib_feature,ui_viewer,im_v2_provider_service_disk,im_v2_model,im_v2_component_elements_player,ui_icons,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_component_entitySelector,im_v2_lib_notifier,im_v2_lib_chat,im_v2_lib_copilot,im_v2_lib_menu,im_v2_lib_call,im_v2_provider_service_chat,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service_message,im_v2_lib_logger,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_component_elements_searchInput,main_core,im_v2_lib_utils,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_application_core,im_public,im_v2_const,im_v2_component_elements_loader,im_v2_component_elements_button,im_v2_lib_dateFormatter) {
+(function (exports,im_v2_lib_localStorage,im_v2_lib_layout,ui_vue3_directives_lazyload,ui_label,main_date,im_v2_lib_sidebar,im_v2_lib_channel,im_v2_component_elements_toggle,im_v2_component_elements_autoDelete,im_v2_lib_autoDelete,ui_iconSet_api_vue,ui_iconSet_api_core,ui_system_menu,ui_vue3_directives_hint,im_v2_component_elements_copilotRolesDialog,ui_promoVideoPopup,im_v2_component_elements_popup,im_v2_lib_helpdesk,im_v2_lib_rest,ui_manual,im_v2_lib_promo,ui_viewer,im_v2_provider_service_disk,im_v2_model,im_v2_component_elements_player,ui_icons,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_component_entitySelector,im_v2_lib_feature,im_v2_lib_notifier,im_v2_lib_chat,im_v2_lib_copilot,im_v2_lib_menu,im_v2_lib_call,im_v2_provider_service_chat,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service_message,im_v2_lib_logger,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_lib_analytics,im_v2_component_elements_searchInput,main_core,im_v2_lib_utils,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_application_core,im_public,im_v2_const,im_v2_component_elements_loader,im_v2_component_elements_button,im_v2_lib_dateFormatter) {
 	'use strict';
 
 	function getChatId(dialogId) {
@@ -687,6 +687,59 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	function isSharedLinkCopyAllowed(dialogId) {
+	  if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.chatSharedLinkAvailable)) {
+	    return false;
+	  }
+	  const {
+	    type
+	  } = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	  if (type === im_v2_const.ChatType.collab || type === im_v2_const.ChatType.lines) {
+	    return false;
+	  }
+	  const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+	  return permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.extend, dialogId);
+	}
+
+	class SharedLink {
+	  constructor({
+	    dialogId
+	  }) {
+	    this.store = im_v2_application_core.Core.getStore();
+	    this.dialogId = dialogId;
+	  }
+	  getInitialQuery() {
+	    if (!isSharedLinkCopyAllowed(this.dialogId)) {
+	      return null;
+	    }
+	    return {
+	      [im_v2_const.RestMethod.imV2ChatSharedLinkGetIndividual]: {
+	        dialogId: this.dialogId
+	      }
+	    };
+	  }
+	  getResponseHandler() {
+	    return response => {
+	      if (!this.getInitialQuery()) {
+	        return Promise.resolve();
+	      }
+	      if (!response[im_v2_const.RestMethod.imV2ChatSharedLinkGetIndividual]) {
+	        return Promise.reject(new Error('SidebarChat service error: no response'));
+	      }
+	      return this.updateModels(response[im_v2_const.RestMethod.imV2ChatSharedLinkGetIndividual]);
+	    };
+	  }
+	  updateModels(resultData) {
+	    const {
+	      sharingLink
+	    } = resultData;
+	    if (!sharingLink) {
+	      return Promise.resolve();
+	    }
+	    return this.store.dispatch('sidebar/sharedLink/set', sharingLink);
+	  }
+	}
+
 	const REQUEST_ITEMS_LIMIT$7 = 50;
 	class FileUnsorted {
 	  constructor({
@@ -808,11 +861,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  File,
 	  Meeting,
 	  FileUnsorted,
-	  Multidialog
+	  Multidialog,
+	  SharedLink
 	};
 	const BlockToServices = Object.freeze({
-	  [im_v2_const.SidebarMainPanelBlock.chat]: [im_v2_const.SidebarDetailBlock.members],
-	  [im_v2_const.SidebarMainPanelBlock.copilot]: [im_v2_const.SidebarDetailBlock.members],
+	  [im_v2_const.SidebarMainPanelBlock.chat]: [im_v2_const.SidebarDetailBlock.members, im_v2_const.SidebarDetailBlock.sharedLink],
+	  [im_v2_const.SidebarMainPanelBlock.copilot]: [im_v2_const.SidebarDetailBlock.members, im_v2_const.SidebarDetailBlock.sharedLink],
 	  [im_v2_const.SidebarMainPanelBlock.task]: [im_v2_const.SidebarDetailBlock.members],
 	  [im_v2_const.SidebarMainPanelBlock.copilotInfo]: [im_v2_const.SidebarDetailBlock.favorite],
 	  [im_v2_const.SidebarMainPanelBlock.info]: [im_v2_const.SidebarDetailBlock.favorite, im_v2_const.SidebarDetailBlock.link],
@@ -914,9 +968,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getMenuItems() {
-	    return [this.getPinMessageItem(), this.getEditItem(), this.getAddMembersToChatItem(), this.getOpenProfileItem(), this.getOpenUserCalendarItem(), this.getChatsWithUserItem(), this.getCopyInviteLinkItem(), this.getHideItem(), this.getLeaveItem(), this.getDeleteItem()];
+	    return [this.getPinMessageItem(), this.getEditItem(), this.getAddMembersToChatItem(), this.getOpenProfileItem(), this.getOpenUserCalendarItem(), this.getChatsWithUserItem(), this.getCopyInviteLinkItem(), this.getCopyDialogIdItem(), this.getHideItem(), this.getLeaveItem(), this.getDeleteItem()];
+	  }
+	  getCopyDialogIdItem() {
+	    if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.chatSharedLinkAvailable)) {
+	      return null;
+	    }
+	    return {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_COPY_DIALOG_ID'),
+	      onClick: async () => {
+	        await im_v2_lib_utils.Utils.text.copyToClipboard(this.context.dialogId);
+	        im_v2_lib_notifier.Notifier.chat.onCopyIdComplete();
+	      }
+	    };
 	  }
 	  getCopyInviteLinkItem() {
+	    if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.chatSharedLinkAvailable)) {
+	      return null;
+	    }
 	    if (!BX.clipboard.isCopySupported()) {
 	      return null;
 	    }
@@ -2692,6 +2761,188 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	async function copySharedLink(url) {
+	  try {
+	    await im_v2_lib_utils.Utils.text.copyToClipboard(url);
+	    im_v2_lib_notifier.Notifier.sharedLink.onCopyIndividualLinkComplete();
+	  } catch {
+	    im_v2_lib_notifier.Notifier.onCopyLinkError();
+	  }
+	}
+
+	var _getCopyItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCopyItem");
+	var _getChangeItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChangeItem");
+	class SharedLinkMenu extends im_v2_lib_menu.BaseMenu {
+	  constructor() {
+	    super();
+	    Object.defineProperty(this, _getChangeItem, {
+	      value: _getChangeItem2
+	    });
+	    Object.defineProperty(this, _getCopyItem, {
+	      value: _getCopyItem2
+	    });
+	    this.id = im_v2_const.PopupType.sharedLinkContextMenu;
+	  }
+	  getMenuOptions() {
+	    return {
+	      ...super.getMenuOptions(),
+	      angle: false
+	    };
+	  }
+	  getMenuItems() {
+	    return [babelHelpers.classPrivateFieldLooseBase(this, _getCopyItem)[_getCopyItem](), babelHelpers.classPrivateFieldLooseBase(this, _getChangeItem)[_getChangeItem]()];
+	  }
+	}
+	function _getCopyItem2() {
+	  return {
+	    title: main_core.Loc.getMessage('IM_SIDEBAR_SHARED_LINK_COPY_MENU'),
+	    icon: ui_iconSet_api_core.Outline.COPY,
+	    onClick: () => {
+	      void copySharedLink(this.context.url);
+	    }
+	  };
+	}
+	function _getChangeItem2() {
+	  return {
+	    title: main_core.Loc.getMessage('IM_SIDEBAR_SHARED_LINK_CHANGE_MENU'),
+	    icon: ui_iconSet_api_core.Outline.REFRESH,
+	    design: ui_system_menu.MenuItemDesign.Alert,
+	    onClick: () => {
+	      this.emit(SharedLinkMenu.events.onChangeSharedLink, {
+	        code: this.context.code
+	      });
+	    }
+	  };
+	}
+	SharedLinkMenu.events = {
+	  onChangeSharedLink: 'onChangeSharedLink'
+	};
+
+	class SharedLinkService {
+	  async regenerate(code) {
+	    try {
+	      const {
+	        sharingLink
+	      } = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatSharedLinkRegenerateIndividual, {
+	        data: {
+	          code
+	        }
+	      });
+	      void im_v2_application_core.Core.getStore().dispatch('sidebar/sharedLink/regenerate', {
+	        newLink: sharingLink
+	      });
+	    } catch (error) {
+	      console.error('SharedLinkService: regenerate error', error);
+	      throw error;
+	    }
+	  }
+	}
+
+	const ICON_SIZE = 20;
+
+	// @vue/component
+	const SharedLink$1 = {
+	  name: 'SharedLink',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  data() {
+	    return {
+	      isLoading: false
+	    };
+	  },
+	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    ICON_SIZE: () => ICON_SIZE,
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    link() {
+	      return this.$store.getters['sidebar/sharedLink/getChatInviteLink'](this.dialog.chatId);
+	    },
+	    url() {
+	      return this.link.url;
+	    }
+	  },
+	  created() {
+	    this.contextMenuManager = new SharedLinkMenu();
+	    this.contextMenuManager.subscribe(SharedLinkMenu.events.onChangeSharedLink, this.onChangeLink);
+	  },
+	  beforeUnmount() {
+	    this.contextMenuManager.destroy();
+	    this.contextMenuManager.unsubscribe(SharedLinkMenu.events.onChangeSharedLink, this.onChangeLink);
+	  },
+	  methods: {
+	    async onChangeLink(event) {
+	      this.isLoading = true;
+	      try {
+	        const {
+	          code
+	        } = event.getData();
+	        await new SharedLinkService().regenerate(code);
+	        im_v2_lib_notifier.Notifier.sharedLink.onChangeLinkComplete();
+	      } catch {
+	        im_v2_lib_notifier.Notifier.sharedLink.onChangeLinkError();
+	      } finally {
+	        this.isLoading = false;
+	      }
+	    },
+	    copyLink() {
+	      void copySharedLink(this.url);
+	    },
+	    showMenuPopup() {
+	      const context = {
+	        url: this.url,
+	        code: this.link.code
+	      };
+	      this.contextMenuManager.openMenu(context, this.$refs['icon-menu']);
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div @click="copyLink" class="bx-im-sidebar-shared-link__container --ui-context-content-dark">
+			<BIcon
+				class="bx-im-sidebar-shared-link__icon"
+				:name="OutlineIcons.COPY"
+				:size="ICON_SIZE"
+			/>
+			<div class="bx-im-sidebar-shared-link__content">
+				<div class="bx-im-sidebar-shared-link__content_title">
+					<div class="bx-im-sidebar-shared-link__title">{{ loc('IM_SIDEBAR_SHARED_LINK_DESCRIPTION_MSGVER_1') }}</div>
+					<div class="bx-im-sidebar-shared-link__container_icon-menu" ref="icon-menu">
+						<BIcon
+							class="bx-im-sidebar-shared-link__icon_menu"
+							:class="{ '--disabled': isLoading }"
+							:name="OutlineIcons.MORE_L"
+							:size="ICON_SIZE"
+							:hoverable="true"
+							@click.stop="showMenuPopup"
+						/>
+					</div>
+				</div>
+				<div v-if="isLoading" class="bx-im-sidebar-shared-link-skeleton__container"></div>
+				<div v-else class="bx-im-sidebar-shared-link-url__content --ellipsis">{{ url }}</div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const SettingsSeparator = {
+	  name: 'SettingsSeparator',
+	  template: `
+		<div class="bx-im-sidebar-settings-separator__container"></div>
+	`
+	};
+
 	// @vue/component
 	const ChatPreview = {
 	  name: 'ChatPreview',
@@ -2700,7 +2951,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    ChatTitle: im_v2_component_elements_chatTitle.ChatTitle,
 	    MuteChat,
 	    ChatMembersAvatars,
-	    AutoDelete
+	    AutoDelete,
+	    SharedLink: SharedLink$1,
+	    SettingsSeparator
 	  },
 	  props: {
 	    dialogId: {
@@ -2718,6 +2971,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    isAutoDeleteEnabled() {
 	      return this.sidebarConfig.isAutoDeleteEnabled();
+	    },
+	    isSharedLinkCopyAllowed() {
+	      return isSharedLinkCopyAllowed(this.dialogId);
 	    }
 	  },
 	  template: `
@@ -2735,6 +2991,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<ChatMembersAvatars :showMembers="areChatMembersEnabled" :dialogId="dialogId" />
 			</div>
 			<div class="bx-im-sidebar-main-preview-group-chat__settings">
+				<SharedLink v-if="isSharedLinkCopyAllowed" :dialogId="dialogId" />
+				<SettingsSeparator />
 				<MuteChat :dialogId="dialogId" />
 				<AutoDelete v-if="isAutoDeleteEnabled" :dialogId="dialogId" />
 			</div>
@@ -3375,7 +3633,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    MuteChat,
 	    ChatMembersAvatars,
 	    CopilotRole,
-	    AIModel
+	    AIModel,
+	    SharedLink: SharedLink$1,
+	    SettingsSeparator
 	  },
 	  props: {
 	    dialogId: {
@@ -3396,6 +3656,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    isAIModelChangeAllowed() {
 	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAIModelChangeAllowed);
+	    },
+	    isSharedLinkCopyAllowed() {
+	      return isSharedLinkCopyAllowed(this.dialogId);
 	    }
 	  },
 	  template: `
@@ -3413,6 +3676,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<ChatMembersAvatars :showMembers="showMembers" :dialogId="dialogId" />
 			</div>
 			<div class="bx-im-sidebar-copilot-preview-group-chat__settings">
+				<SharedLink v-if="isSharedLinkCopyAllowed" :dialogId="dialogId" />
+				<SettingsSeparator />
 				<CopilotRole :dialogId="dialogId" />
 				<AIModel v-if="isAIModelChangeAllowed" :dialogId="dialogId" />
 				<MuteChat :dialogId="dialogId" />
@@ -6134,7 +6399,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      } = this.linkItem.richData;
 	      const descriptionToShow = description || name || this.source;
 	      if (this.searchQuery.length === 0) {
-	        return im_v2_lib_utils.Utils.text.convertHtmlEntities(descriptionToShow);
+	        const decodedDescription = im_v2_lib_utils.Utils.text.convertHtmlEntities(descriptionToShow);
+	        return main_core.Text.encode(decodedDescription);
 	      }
 	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(descriptionToShow), this.searchQuery);
 	    },
@@ -7248,6 +7514,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
 	    },
 	    needCopyLinkButton() {
+	      if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.chatSharedLinkAvailable)) {
+	        return false;
+	      }
 	      if (!BX.clipboard.isCopySupported()) {
 	        return false;
 	      }
@@ -7981,6 +8250,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        messageId: this.messageId,
 	        dialogId: this.dialogId
 	      });
+	      im_v2_lib_analytics.Analytics.getInstance().messageSearch.onSearchResultClick(this.dialogId);
 	    },
 	    onMessageBodyClick(event) {
 	      if (event.target.tagName === 'A') {
@@ -8082,7 +8352,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      searchQuery: '',
 	      isLoading: false,
 	      searchResult: [],
-	      currentServerQueries: 0
+	      currentServerQueries: 0,
+	      wasSearchStarted: false
 	    };
 	  },
 	  computed: {
@@ -8138,6 +8409,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return;
 	        }
 	        this.searchResult = this.mergeResult(messageIds);
+	        im_v2_lib_analytics.Analytics.getInstance().messageSearch.onGetSearchResult(this.dialogId, this.searchResult);
 	      }).catch(error => {
 	        console.error(error);
 	      }).finally(() => {
@@ -8146,6 +8418,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      });
 	    },
 	    startSearch(query) {
+	      if (!this.wasSearchStarted) {
+	        im_v2_lib_analytics.Analytics.getInstance().messageSearch.onStartSearch(this.dialogId);
+	        this.wasSearchStarted = true;
+	      }
 	      if (query.length < 3) {
 	        return;
 	      }
@@ -9006,5 +9282,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatSidebar = ChatSidebar;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.UI.System,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Manual,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Viewer,BX.Messenger.v2.Service,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.UI.IconSet,BX.UI.IconSet,BX.UI.System,BX.Vue3.Directives,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Manual,BX.Messenger.v2.Lib,BX.UI.Viewer,BX.Messenger.v2.Service,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
 //# sourceMappingURL=sidebar.bundle.js.map

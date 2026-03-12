@@ -496,7 +496,7 @@ export class Link extends BaseField
 	{
 		if (Type.isPlainObject(value))
 		{
-			this.input.setValue(BX.Landing.Utils.escapeText(value.text));
+			this.input.setValue(Text.decode(value.text));
 			this.hrefInput.setValue(value.href);
 			this.targetInput.setValue(BX.Landing.Utils.escapeText(value.target));
 		}

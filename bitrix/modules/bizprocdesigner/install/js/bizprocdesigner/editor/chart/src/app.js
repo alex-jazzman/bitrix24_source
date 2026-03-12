@@ -10,8 +10,17 @@ import { mapWritableState } from 'ui.vue3.pinia';
 import { FeatureCode } from 'bizprocdesigner.feature';
 import { initAiUpdatePull } from './entities/ai-assistant/api/pull';
 import { makeAnimationQueue } from './entities/ai-assistant/util/animation';
+import { SHARED_TOAST_TYPES } from './shared/constants';
+import { ToastWarning } from './entities/toast';
 import { NodeSettings as ComplexNodeSettings, NodeSettingsRules } from './widgets/node-settings';
-import { diagramStore, BLOCK_SLOT_NAMES, CONNECTION_SLOT_NAMES, ConnectionAux } from './entities/blocks';
+import {
+	diagramStore,
+	BLOCK_SLOT_NAMES,
+	BLOCK_TOAST_TYPES,
+	CONNECTION_SLOT_NAMES,
+	ConnectionAux,
+	ICON_BG_COLORS,
+} from './entities/blocks';
 import { useCatalogStore, DRAG_ITEM_SLOT_NAMES } from './entities/catalog';
 import { SearchBar } from './shared/ui/search-bar/search-bar';
 
@@ -28,11 +37,13 @@ import {
 	AutosaveStatus,
 	TemplateName,
 	PublishDropdownButton,
+	ToastErrorBlockNavigationButton,
 } from './widgets/blocks';
 import {
 	CommonNodeSettings,
 } from './widgets/common-node-settings';
 import { Catalog } from './widgets/catalog';
+import { ToastWidget } from './widgets/toast';
 import { AppLayout, AppHeader } from './widgets/app';
 
 import 'ui.icon-set.outline';
@@ -63,6 +74,9 @@ export const Chart = {
 		Catalog,
 		CommonNodeSettings,
 		ConnectionAux,
+		ToastWidget,
+		ToastWarning,
+		ToastErrorBlockNavigationButton,
 	},
 	provide(): {onBlockClick: (event: Event) => void}
 	{
@@ -96,12 +110,14 @@ export const Chart = {
 			return {
 				...commonSnapshotHandler(newState),
 				blockCurrentTimestamps: markRaw(JSON.parse(JSON.stringify(diagramStore().blockCurrentTimestamps))),
+				connectionCurrentTimestamps: markRaw(JSON.parse(JSON.stringify(diagramStore().connectionCurrentTimestamps))),
 			};
 		};
 
 		const revertHandler = (snapshot) => {
 			commonRevertHandler(snapshot);
 			diagramStore().setBlockCurrentTimestamps(snapshot.blockCurrentTimestamps);
+			diagramStore().setConnectionCurrentTimestamps(snapshot.connectionCurrentTimestamps);
 		};
 		setHandlers({ snapshotHandler, revertHandler });
 
@@ -165,6 +181,11 @@ export const Chart = {
 			blockDiagramSlotNames: BLOCK_SLOT_NAMES,
 			connectionSlotNames: CONNECTION_SLOT_NAMES,
 			dragItemSlotNames: DRAG_ITEM_SLOT_NAMES,
+			toast: {
+				blockToastTypes: BLOCK_TOAST_TYPES,
+				sharedTypes: SHARED_TOAST_TYPES,
+			},
+			blockColors: ICON_BG_COLORS,
 		};
 	},
 	computed:
@@ -215,7 +236,7 @@ export const Chart = {
 			</template>
 
 			<template #diagram>
-				<BlockDiagram :disabled="isDiagramDisabled">
+				<BlockDiagram :disabled="isDiagramDisabled" :enableGrouping="true">
 					<template #[blockDiagramSlotNames.SIMPLE]="{ block }">
 						<BlockSimple :block="block"/>
 					</template>
@@ -278,7 +299,34 @@ export const Chart = {
 			</template>
 
 			<template #bottom-right-toolbar>
-				<ZoomBar :stepZoom="0.2"/>
+				<ZoomBar 
+					:stepZoom="0.2"
+					:blockColors="blockColors"
+				/>
+			</template>
+
+			<template #top-middle-anchor>
+				<ToastWidget>
+
+					<template #[toast.sharedTypes.WARNING]="{ message }">
+						<ToastWarning
+							:message="message"
+							:closeable="true"
+						/>
+					</template>
+
+					<template #[toast.blockToastTypes.ACTIVITY_PUBLIC_ERROR]="{ message }">
+						<ToastWarning 
+							:message="message" 
+							:closeable="true"
+						>
+							<template #contentEnd>
+								<ToastErrorBlockNavigationButton/>
+							</template>
+						</ToastWarning>
+					</template>
+
+				</ToastWidget>
 			</template>
 
 			<template #settings>

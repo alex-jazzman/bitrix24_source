@@ -31,6 +31,11 @@ export function useCanvas(): UseCanvas
 		toValue(canvasInstance)?.zoomOut(zoomStep);
 	}
 
+	function setZoom(zoomValue: number): void
+	{
+		toValue(canvasInstance)?.setZoom(zoomValue);
+	}
+
 	function setCamera(params: { x: number, y: number, zoom: number}): void
 	{
 		toValue(canvasInstance)?.setCamera(params);
@@ -59,6 +64,7 @@ export function useCanvas(): UseCanvas
 	return {
 		zoomIn,
 		zoomOut,
+		setZoom,
 		setCamera,
 		goToBlockById,
 	};

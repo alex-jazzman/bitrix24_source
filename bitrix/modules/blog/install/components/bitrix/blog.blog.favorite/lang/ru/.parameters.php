@@ -11,4 +11,3 @@ $MESS ['BMNP_MESSAGE_LENGTH'] = "Длина выводимого текста с
 $MESS ['BMNP_PREVIEW_WIDTH'] = "Ширина картинки предпросмотра";
 $MESS ['BMNP_PREVIEW_HEIGHT'] = "Высота картинки предпросмотра";
 $MESS ['BC_DATE_TIME_FORMAT'] = "Формат показа даты и времени";
-?>

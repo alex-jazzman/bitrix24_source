@@ -50,6 +50,7 @@ export class UserFieldMenu
 			minWidth: 250,
 			sections: this.#getSections(),
 			items: this.#getItems(),
+			closeOnItemClick: false,
 			...this.#params.menuOptions,
 		});
 
@@ -75,15 +76,21 @@ export class UserFieldMenu
 			{
 				title: Loc.getMessage('DISK_UF_WIDGET_UPLOAD_FILES'),
 				icon: Outline.DOWNLOAD,
-				onClick: () => this.#browse(),
+				onClick: () => {
+					this.#browse();
+					this.getMenu().close();
+				},
 			},
 			{
 				title: Loc.getMessage('DISK_UF_WIDGET_MY_DRIVE'),
 				icon: Outline.UPLOAD,
-				onClick: () => openDiskFileDialog({
-					dialogId: this.#params.dialogId,
-					uploader: this.#params.uploader,
-				}),
+				onClick: () => {
+					openDiskFileDialog({
+						dialogId: this.#params.dialogId,
+						uploader: this.#params.uploader,
+					});
+					this.getMenu().close();
+				},
 			},
 		];
 
@@ -142,11 +149,14 @@ export class UserFieldMenu
 
 		return {
 			title: importServices[documentService].name,
-			onClick: () => openCloudFileDialog({
-				dialogId: this.#params.dialogId,
-				uploader: this.#params.uploader,
-				serviceId: documentService,
-			}),
+			onClick: () => {
+				openCloudFileDialog({
+					dialogId: this.#params.dialogId,
+					uploader: this.#params.uploader,
+					serviceId: documentService,
+				});
+				this.getMenu().close();
+			},
 		};
 	}
 
@@ -163,11 +173,27 @@ export class UserFieldMenu
 			sectionCode: sectionCreateDocument,
 			title: this.#getCreateDocumentTitle(documentType),
 			svg: this.#getDocumentSvg(documentType),
-			onClick: () => createDocumentDialog({
-				uploader: this.#params.uploader,
-				documentType,
-				documentHandlers: Object.values(userFieldSettings.getDocumentServices()),
-			}),
+			onClick: () => {
+				const titleNodes = this.getMenu().getPopupContainer().querySelectorAll('.ui-popup-menu-item-title-text');
+				const titleToFind = this.#getCreateDocumentTitle(documentType);
+				const node = [...titleNodes].find((node) => node.textContent === titleToFind);
+				const targetNode = node?.closest('.ui-popup-menu-item') ?? null;
+
+				createDocumentDialog({
+					uploader: this.#params.uploader,
+					documentType,
+					documentHandlers: Object.values(userFieldSettings.getDocumentServices()),
+					node: targetNode,
+					onSuccess: () => {
+						this.getMenu().close();
+					},
+				});
+
+				if (documentType === DocumentType.Board)
+				{
+					this.getMenu().close();
+				}
+			},
 		};
 	}
 

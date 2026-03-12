@@ -339,7 +339,13 @@ echo $z;
 ?>
 </table>
 <script>
-setTimeout("document.getElementById('bpastitle').focus();", 100);
+setTimeout(() => {
+	const table = BX("<?= $tableID ?>");
+	if (table)
+	{
+		table.querySelector('#bpastitle')?.focus();
+	}
+}, 100);
 
 (function() {
 	var table = BX("<?= $tableID ?>");

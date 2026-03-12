@@ -9,6 +9,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/factory', (
 	const { PhoneField } = require('user-profile/common-tab/src/block/common-fields/src/field/phone-field');
 	const { UserField } = require('user-profile/common-tab/src/block/common-fields/src/field/user-field');
 	const { LinkField } = require('user-profile/common-tab/src/block/common-fields/src/field/link-field');
+	const { SocialField } = require('user-profile/common-tab/src/block/common-fields/src/field/social-field');
 
 	const FieldType = {
 		STRING: 'string',
@@ -18,6 +19,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/factory', (
 		PHONE: 'phone',
 		USER: 'user',
 		LINK: 'link',
+		SOCIAL: 'social',
 	};
 
 	class FieldFactory
@@ -40,6 +42,8 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/factory', (
 					return new UserField(props);
 				case FieldType.LINK:
 					return new LinkField(props);
+				case FieldType.SOCIAL:
+					return new SocialField(props);
 				default:
 					return null;
 			}

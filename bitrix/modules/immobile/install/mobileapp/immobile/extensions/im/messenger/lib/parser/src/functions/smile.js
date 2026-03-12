@@ -2,6 +2,7 @@
  * @module im/messenger/lib/parser/functions/smile
  */
 jn.define('im/messenger/lib/parser/functions/smile', (require, exports, module) => {
+	const { withCurrentDomain } = require('utils/url');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { Type } = require('type');
 
@@ -133,7 +134,7 @@ jn.define('im/messenger/lib/parser/functions/smile', (require, exports, module) 
 				}
 			}
 
-			return `[img width=${codeWidth} height=${codeHeight}]${currentDomain + imageUrl}[/img]`;
+			return `[img width=${codeWidth} height=${codeHeight}]${withCurrentDomain(imageUrl)}[/img]`;
 		},
 	};
 

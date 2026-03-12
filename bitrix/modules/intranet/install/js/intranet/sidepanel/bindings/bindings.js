@@ -566,104 +566,6 @@
 			},
 			{
 				condition: [
-					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_CHANNEL|IM_COLLAB|IM_TASK)=([^&]+)(&IM_MESSAGE=([^&]+))?(?:&BOT_CONTEXT=([^&]+))?/i
-				],
-				handler: function(event, link)
-				{
-					if (!window.BXIM)
-					{
-						return;
-					}
-
-					var type = link.matches[1];
-					var dialogId = decodeURI(link.matches[2]);
-					const messageId = link.matches[4] ? Number(link.matches[4]) : 0;
-					const botContext = link.matches[5] ?? '';
-
-					if (type === "IM_HISTORY")
-					{
-						BXIM.openHistory(dialogId);
-					}
-					else if (type === "IM_LINES")
-					{
-						BX.Messenger.Public.openLines(dialogId);
-					}
-					else if (type === 'IM_COPILOT')
-					{
-						BX.Messenger.Public.openCopilot(dialogId);
-					}
-					else if (type === 'IM_CHANNEL')
-					{
-						BX.Messenger.Public?.openChannel(dialogId);
-					}
-					else if (type === 'IM_COLLAB')
-					{
-						BX.Messenger.Public.openCollab(dialogId);
-					}
-					else if (type === 'IM_TASK')
-					{
-						BX.Messenger.Public.openTaskComments(dialogId, messageId);
-					}
-					else if (botContext.length !== 0)
-					{
-						let decodedContext = {};
-						try
-						{
-							decodedContext = JSON.parse(decodeURIComponent(botContext));
-						}
-						catch (error)
-						{
-							console.error('Intranet bindings: incorrect bot context', error);
-						}
-
-						BX.Messenger.Public.openChatWithBotContext(dialogId, decodedContext);
-					}
-					else
-					{
-						BX.Messenger.Public.openChat(dialogId, messageId);
-					}
-
-					event.preventDefault();
-				}
-			},
-			{
-				condition: [
-					new RegExp(location.origin+'/online\/$'),
-					/^\/online\/$/,
-					/^\/extranet\/online\/$/,
-					/\/online\/\?(IM_COLLAB|IM_COPILOT|IM_CHANNEL)(?=&|$)/i
-				],
-				handler: function(event, link)
-				{
-					const Messenger = BX.Reflection.getClass('BX.Messenger.Public')
-					if (!Messenger)
-					{
-						return;
-					}
-
-					const type = link.matches[1];
-					if (type === 'IM_COPILOT')
-					{
-						Messenger.openNavigationItem({ id: 'copilot', asLink: true });
-					}
-					else if (type === 'IM_CHANNEL')
-					{
-						Messenger.openNavigationItem({ id: 'channel', asLink: true });
-					}
-					else if (type === 'IM_COLLAB')
-					{
-						Messenger.openNavigationItem({ id: 'collab', asLink: true });
-					}
-					else
-					{
-						Messenger.openNavigationItem({ id: 'chat', asLink: true });
-					}
-
-					event.preventDefault();
-				}
-			},
-			{
-				condition: [
 					/^(https|http):\/\/(.*)\/online\/call\/([.\-0-9a-zA-Z]+)/i,
 					/^(https|http):\/\/(.*)\/video\/([.\-0-9a-zA-Z]+)/i
 				],
@@ -1373,6 +1275,24 @@
 					cacheable: false,
 					allowChangeHistory: false,
 					width: 1250,
+					customRightBoundary: 0,
+				},
+			},
+			{
+				condition: ['/settings/license.php'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 765,
+					customRightBoundary: 0,
+				},
+			},
+			{
+				condition: ['/settings/license_limit.php'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 765,
 					customRightBoundary: 0,
 				},
 			},

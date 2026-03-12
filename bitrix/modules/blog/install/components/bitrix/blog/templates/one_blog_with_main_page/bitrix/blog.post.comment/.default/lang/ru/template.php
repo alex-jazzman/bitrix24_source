@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['B_B_MS_FROM'] = "от";
 $MESS ['B_B_MS_REPLY'] = "Ответить";
 $MESS ['B_B_MS_PARENT'] = "Родитель";
@@ -33,4 +33,4 @@ $MESS ['BPC_PAGE_OF'] = " из";
 $MESS ['BPC_MES_DELETE_POST_CONFIRM'] = "Вы уверены, что хотите удалить комментарий?";
 $MESS ['B_B_MS_PREVIEW'] = "Просмотр";
 $MESS ['B_B_MS_PREVIEW_TITLE'] = "Предпросмотр комментария";
-?>
+

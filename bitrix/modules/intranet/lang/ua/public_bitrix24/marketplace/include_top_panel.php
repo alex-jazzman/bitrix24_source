@@ -1,6 +1,0 @@
-<?
-$MESS["MARKETPLACE_CATEGORY_ALL"] = "Усі застосунки";
-$MESS["MARKETPLACE_APP_TIME_LIMIT_3"] = "3 місяці";
-$MESS["MARKETPLACE_APP_TIME_LIMIT_6"] = "6 місяців";
-$MESS["MARKETPLACE_APP_TIME_LIMIT_12"] = "12 місяців";
-?>

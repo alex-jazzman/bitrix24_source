@@ -1,7 +1,7 @@
 <?php
 
 use Bitrix\BIConnector;
-use Bitrix\Bitrix24;
+use Bitrix\BIConnector\Configuration\Feature;
 use Bitrix\Main;
 use Bitrix\Main\Web\Json;
 
@@ -114,10 +114,7 @@ elseif (!$limitManager->isSuperset())
 {
 	echo Json::encode(['error' => 'NOT_SUPERSET']);
 }
-elseif (
-	Main\Loader::includeModule('bitrix24')
-	&& !Bitrix24\Feature::isFeatureEnabled('bi_constructor')
-)
+elseif (!Feature::isBuilderEnabled())
 {
 	echo Json::encode(['error' => 'DISABLED']);
 }

@@ -2,9 +2,7 @@
  * @module layout/ui/optimized-grid-view
  *
  * Should be kept in sync with Android project.
- * Send message to user 1084627 if you want to change this file
  */
-
 jn.define('layout/ui/optimized-grid-view', (require, exports, module) => {
 	function OptimizedGridView(props)
 	{

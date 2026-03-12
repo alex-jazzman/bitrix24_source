@@ -55,6 +55,10 @@ $arActivityDescription =
 				'Name' => (string)Loc::getMessage('TASKS_EXPIRED_RETURN_FIELD_TASK_RESPONSIBLE'),
 				'Type' => FieldType::USER
 			],
+			'TASK_URL' => [
+				'Name' => Loc::getMessage('TASKS_EXPIRED_RETURN_FIELD_TASK_URL'),
+				'Type' => FieldType::STRING,
+			],
 		])
 		->setIcon(Outline::IMPORTANT_TASK->name)
 		->setColorIndex(ActivityColorIndex::BLUE->value)

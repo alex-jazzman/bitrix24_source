@@ -99,29 +99,56 @@ export class NotificationReadService
 		this.store.dispatch('notifications/read', { ids: [...this.itemsToRead], read: true });
 	}
 
-	readAll(): void
+	readAll(excludeIds: number[] = []): void
 	{
-		this.store.dispatch('notifications/readAllSimple');
+		this.store.dispatch('notifications/readAllSimple', { excludeIds });
 
-		this.restClient.callMethod(RestMethod.imNotifyReadAll, { id: 0 })
+		const params = {
+			ids: excludeIds,
+		};
+
+		runAction(RestMethod.imV2NotifyReadAll, { data: params })
 			.then((response) => {
 				const currentCounter = this.store.getters['notifications/getCounter'];
-				const newCounter = response.answer.result.newCounter;
+				const newCounter = response.counter;
 				if (newCounter < currentCounter)
 				{
 					void this.store.dispatch('notifications/setCounter', newCounter);
 				}
 
-				Logger.warn('I have read ALL the notifications', response);
-			}).catch((result: RestResult) => {
-				console.error('NotificationReadService: readAll error', result.error());
+				Logger.warn(`I have read ALL the notifications, excluded: ${excludeIds.length}`, response);
+			})
+			.catch((result: RestResult) => {
+				console.error('NotificationReadService: readAll error', result);
 			});
 	}
 
 	changeReadStatus(notificationId: number): void
 	{
-		const notification = this.store.getters['notifications/getById'](notificationId);
-		this.store.dispatch('notifications/read', { ids: [notification.id], read: !notification.read });
+		let notification = this.store.getters['notifications/getById'](notificationId);
+		let fromSearchCollection = false;
+
+		if (!notification)
+		{
+			notification = this.store.getters['notifications/getSearchItemById'](notificationId);
+			fromSearchCollection = true;
+		}
+
+		if (!notification)
+		{
+			return;
+		}
+
+		if (fromSearchCollection)
+		{
+			this.store.commit('notifications/updateSearchResult', [
+				{ id: notification.id, fields: { read: !notification.read } },
+			]);
+		}
+		else
+		{
+			this.store.dispatch('notifications/read', { ids: [notification.id], read: !notification.read });
+		}
 
 		clearTimeout(this.changeReadStatusBlockTimeout[notification.id]);
 		this.changeReadStatusBlockTimeout[notification.id] = setTimeout(() => {

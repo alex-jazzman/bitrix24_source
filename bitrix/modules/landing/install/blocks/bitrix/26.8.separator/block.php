@@ -1,5 +1,5 @@
 <div
-	class="landing-block g-pt-0 g-pb-0 g-height-50--md g-height-40 g-fill-first g-fill-second g-my-minus-2"
+	class="landing-block landing-block-separator g-pt-0 g-pb-0 g-height-50--md g-height-40 g-fill-first g-fill-second g-my-minus-2"
 	style="--fill-first:#ffffff; --fill-second: hsla(0, 0%, 86%, 1);"
 >
 	<svg class="g-width-100x g-height-100x" viewBox="0 0 3600 100" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">

@@ -102,7 +102,6 @@
 				this.popup.show();
 				var position = BX.Landing.UI.Panel.EditorPanel.getInstance().isFixed() ? "fixed" : "relative";
 				this.adjustPosition(position);
-				BX.Landing.UI.Button.ColorAction.hideAll();
 
 				var selection = this.contextDocument.defaultView.getSelection();
 				var range = selection.getRangeAt(0);

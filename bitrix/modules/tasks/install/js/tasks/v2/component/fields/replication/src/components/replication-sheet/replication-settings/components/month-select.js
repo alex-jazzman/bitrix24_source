@@ -25,9 +25,11 @@ export const MonthSelect = {
 	computed: {
 		items(): SelectItem[]
 		{
+			const firstDay = new Date().setDate(1);
+
 			return Array.from({ length: 12 }, (_, i) => ({
 				id: i + 1,
-				title: Text.capitalize(DateTimeFormat.format('F', new Date().setMonth(i) / 1000)),
+				title: Text.capitalize(DateTimeFormat.format('F', new Date(firstDay).setMonth(i) / 1000)),
 			}));
 		},
 		item(): SelectItem

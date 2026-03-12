@@ -145,6 +145,7 @@ export default class ColorPopup extends BaseControl
 		let offsetLeft = 0;
 		let offsetTop = 3;
 		const popupWidth = 287;
+		const bindElementRectX = this.bindElement.getBoundingClientRect().x;
 
 		const editorPanelCurrentElement = BX.Landing.UI.Panel.EditorPanel.getInstance().currentElement;
 		if (
@@ -154,14 +155,23 @@ export default class ColorPopup extends BaseControl
 		)
 		{
 			offsetTop -= 66;
+			const rootBodyWidth = BX.Landing.PageObject.getRootWindow().document.body.clientWidth;
+			const editorBodyWidth = editorPanelCurrentElement.ownerDocument.body.clientWidth;
+			const semiDiff = (rootBodyWidth - editorBodyWidth) / 2;
+			const padding = 10;
+			const maxAllowPopupRectX = editorBodyWidth + semiDiff - (popupWidth + padding);
+			offsetLeft -= semiDiff;
+			if (bindElementRectX > maxAllowPopupRectX)
+			{
+				offsetLeft -= (bindElementRectX - maxAllowPopupRectX);
+			}
 		}
 
 		if (this.bindElement && this.isNeedCalcPopupOffset !== false)
 		{
-			const layoutClientRect = this.bindElement.getBoundingClientRect();
 			const panelWidth = 320;
 			const panelPaddingRight = 12;
-			offsetLeft = ((panelWidth - popupWidth) - panelPaddingRight) - layoutClientRect.x;
+			offsetLeft = ((panelWidth - popupWidth) - panelPaddingRight) - bindElementRectX;
 		}
 
 		return this.cache.remember('popup', () => {
@@ -171,6 +181,16 @@ export default class ColorPopup extends BaseControl
 				autoHide: true,
 				autoHideHandler: (event: PointerEvent) => {
 					const target = event.target;
+
+					if (
+						target
+						&& target.closest('.popup-window-content')
+						&& !target.closest('.landing-ui-field-color-popup-picker-input')
+					)
+					{
+						this.emit('onPopupClick');
+					}
+
 					if (!this.hexPreview)
 					{
 						return !(target && target.closest('.popup-window-content'));
@@ -185,7 +205,7 @@ export default class ColorPopup extends BaseControl
 					forceLeft: true,
 				},
 				padding: 0,
-				contentPadding: 16,
+				contentPadding: 0,
 				width: popupWidth,
 				offsetTop,
 				offsetLeft,
@@ -479,7 +499,6 @@ export default class ColorPopup extends BaseControl
 				this.recent.buildItemsLayout();
 				this.setValue(color);
 				this.onChangeColor(hex);
-				input.focus();
 			}
 		}, 333);
 	}

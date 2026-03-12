@@ -1,0 +1,27 @@
+.b24-field-hover-button {
+	--background: var(--ui-color-accent-soft-blue-3);
+	--icon-color: var(--ui-color-accent-main-primary);
+}
+
+.b24-field-hover-button.--locked {
+	--icon-color: var(--ui-color-accent-main-primary);
+}
+
+.b24-field-hover-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	float: right;
+	width: 28px;
+	height: 28px;
+	padding-inline: 3px;
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--background);
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--icon-color);
+	--ui-icon-set__icon-size: 22px;
+}
+
+.b24-field-hover-button:not(.--visible) {
+	opacity: 0;
+}

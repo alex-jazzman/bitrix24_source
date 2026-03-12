@@ -26,7 +26,7 @@ if (! (Loader::includeModule('currency') && ($currencies = CurrencyManager::getC
 
 if ($MOD_RIGHT >= 'W' && check_bitrix_sessid())
 {
-	if ($REQUEST_METHOD == 'POST' && $Update.$Apply.$RestoreDefaults <> '')
+	if ($_SERVER['REQUEST_METHOD'] == 'POST' && $Update.$Apply.$RestoreDefaults <> '')
 	{
 		if ($RestoreDefaults <> '')
 		{

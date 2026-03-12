@@ -3,6 +3,7 @@
  */
 jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const { createSlice } = require('statemanager/redux/toolkit');
 	const { FolderModel } = require('mail/statemanager/redux/slices/folders/model/folder');
 	const { sliceName, foldersListAdapter } = require('mail/statemanager/redux/slices/folders/meta');
@@ -13,12 +14,15 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 		return folders.map((folder) => FolderModel.prepareReduxFolderFromServer(folder));
 	};
 
+	const defaultState = {
+		...foldersListAdapter.getInitialState(),
+		currentFolderPath: null,
+	};
+	const initialState = StateCache.getReducerState(sliceName, defaultState);
+
 	const foldersSlice = createSlice({
 		name: sliceName,
-		initialState: {
-			...foldersListAdapter.getInitialState(),
-			currentFolderPath: null,
-		},
+		initialState,
 		reducers: {
 			foldersUpserted: {
 				reducer: foldersListAdapter.upsertMany,

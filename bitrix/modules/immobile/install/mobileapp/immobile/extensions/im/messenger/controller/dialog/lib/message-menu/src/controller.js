@@ -12,6 +12,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		OwnMessageStatus,
 		MessageParams,
 		MessageMenuActionType,
+		AiTasksStatusType,
 	} = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -194,7 +195,25 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 			this.dialogLocator.get('view')
 				.showMenuForMessage(message, menu)
 			;
+
+			this.#interruptMessageAnimation(messageId);
+
 			Haptics.impactMedium();
+		}
+
+		/**
+		 * @param {number} messageId
+		 */
+		#interruptMessageAnimation(messageId)
+		{
+			const payloadParams = {
+				id: messageId,
+				fields: {
+					visualState: { aiTaskStatus: AiTasksStatusType.animationInterrupted },
+				},
+			};
+
+			this.store.dispatch('messagesModel/updateVisualState', payloadParams);
 		}
 
 		/**
@@ -393,6 +412,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 			const componentIdsNotAvailableMenu = [
 				MessageParams.ComponentId.SignMessage,
 				MessageParams.ComponentId.CallMessage,
+				MessageParams.ComponentId.AdminMessage,
 			];
 			if (componentIdsNotAvailableMenu.includes(componentId))
 			{

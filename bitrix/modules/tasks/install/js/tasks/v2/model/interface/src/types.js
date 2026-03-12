@@ -48,6 +48,7 @@ export type CheckListCompletionCallback = () => void;
 export type StateFlags = {
 	needsControl: boolean,
 	matchesWorkTime: boolean,
+	allowsTimeTracking: boolean,
 };
 
 export type UserFieldScheme = {

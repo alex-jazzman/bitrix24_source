@@ -1,8 +1,8 @@
-import {RecentItemData} from '../../../../controller/recent/copilot/types/recent';
+import {RecentItemData} from '../../../../controller/recent/service/server-load/chat/type';
 import {UsersModelState} from '../../../../model/users/src/types';
 import {DialoguesModelState} from '../../../../model/dialogues/src/types';
 import {RawMessage, RawFile} from '../../sync/types/sync-list-result';
-import {ChannelRecentItemData} from '../../../../controller/recent/channel/types/recent';
+import {ChannelRecentItemData} from '../../../../controller/recent/service/server-load/channel/types';
 import {channelChatId, commentChatId} from '../../../../model/comment/src/types';
 import {
 	ChatsCopilotDataItem,
@@ -47,6 +47,7 @@ declare type immobileTabsLoadCommonResult = {
 	},
 	serverTime: string,
 	userData: UsersModelState,
+	promotion: string[],
 }
 
 declare type immobileTabChatLoadResult = Partial<immobileTabsLoadCommonResult> & {

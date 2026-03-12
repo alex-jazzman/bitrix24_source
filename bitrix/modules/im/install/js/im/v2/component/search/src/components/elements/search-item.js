@@ -1,4 +1,3 @@
-import { Core } from 'im.v2.application.core';
 import { Text, Loc } from 'main.core';
 
 import { ChatType } from 'im.v2.const';
@@ -48,6 +47,10 @@ export const SearchItem = {
 		replaceWithNotes: {
 			type: Boolean,
 			default: true,
+		},
+		titleTwoLine: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	emits: ['clickItem', 'openContextMenu'],
@@ -197,6 +200,7 @@ export const SearchItem = {
 						:textToHighlight="query"
 						:customType="titleType"
 						:showItsYou="!replaceWithNotes"
+						:twoLine="titleTwoLine"
 					/>
 					<div v-if="withDate && formattedDate" class="bx-im-search-item__date">
 						<span>{{ formattedDate }}</span>

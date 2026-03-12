@@ -22,11 +22,9 @@
 	border-bottom: 1px solid var(--im-list-container-task__background-color_separator);
 }
 
-.bx-im-list-container-task__header_title {
-	flex: 1;
-	font: var(--im-font-size-2xl) var(--im-font-family-system);
-	font-weight: var(--im-font-weight-medium);
-	color: var(--im-list-container-task__font-color_header-title);
+.bx-im-list-container-task__search-input_container {
+	flex-grow: 1;
+	margin-right: 16px;
 }
 
 .bx-im-list-container-task__header_create-task {

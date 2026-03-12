@@ -39,7 +39,7 @@ export const UserFieldString = {
 	},
 	template: `
 		<div
-			class="tasks-user-field --string"
+			class="tasks-user-field print-no-border --string"
 			:class="{ '--last': isLast }"
 		>
 			<TextXs

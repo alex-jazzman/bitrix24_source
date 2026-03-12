@@ -17,7 +17,6 @@ import {
 	CancelSettingsButton,
 	SaveSettingsButton,
 } from '../../../features/node-settings';
-import type { Block } from '../../../shared/types';
 
 // @vue/component
 export const NodeSettings = {
@@ -49,7 +48,7 @@ export const NodeSettings = {
 			'nodeSettings',
 			'isLoading',
 			'isSaving',
-			'savedBlockInputPorts',
+			'ports',
 		]),
 		...mapWritableState(useNodeSettingsStore, ['isSaving']),
 	},
@@ -63,16 +62,14 @@ export const NodeSettings = {
 			'deleteRuleSettings',
 			'saveForm',
 			'discardFormSettings',
-			'updateSettings',
+			'addRulePort',
+			'deletePort',
 		]),
 		...mapActions(useDiagramStore, [
 			'updateNodeTitle',
-			'addRulePort',
-			'addConnectionPort',
-			'deletePort',
 			'publicDraft',
 			'updateBlockActivityField',
-			'setInputPorts',
+			'setPorts',
 			'getBlockAncestorsByInputPortId',
 		]),
 		...mapActions(useAppStore, [
@@ -83,24 +80,16 @@ export const NodeSettings = {
 			this.toggleRuleSettingsVisibility(true);
 			this.setCurrentRuleId(ruleId);
 		},
-		onAddRule(ruleId: string): void
-		{
-			this.addRulePort(this.block.id, ruleId, PORT_TYPES.input);
-		},
 		onDeleteRule(ruleId: string): void
 		{
-			this.deletePort(this.block.id, ruleId);
+			this.deletePort(ruleId);
 			const { outputPortsToAdd, outputPortsToDelete } = this.deleteRuleSettings(ruleId);
 			outputPortsToAdd.values().forEach(({ portId, title }) => {
-				this.addRulePort(this.block, portId, PORT_TYPES.output, title);
+				this.addRulePort(portId, PORT_TYPES.output, title);
 			});
 			outputPortsToDelete.keys().forEach((portId) => {
-				this.deletePort(this.block.id, portId, PORT_TYPES.output);
+				this.deletePort(portId);
 			});
-		},
-		onAddConnection(connectionId: string): void
-		{
-			this.addConnectionPort(this.block.id, connectionId, PORT_TYPES.input);
 		},
 		async onSaveForm(): Promise<void>
 		{
@@ -109,6 +98,8 @@ export const NodeSettings = {
 				this.isSaving = true;
 				const activityData = await this.saveForm(this.documentType);
 				this.updateBlockActivityField(this.block.id, activityData);
+				this.setPorts(this.block.id, this.ports);
+				this.updateNodeTitle(this.block.id, this.nodeSettings.title);
 				await this.publicDraft();
 				this.hideSettings();
 			}
@@ -130,19 +121,7 @@ export const NodeSettings = {
 		onClose(): void
 		{
 			this.discardFormSettings();
-			const { title } = this.nodeSettings;
-			this.updateNodeTitle(this.block, title);
-			this.setInputPorts(this.block, this.savedBlockInputPorts);
 			this.hideSettings();
-		},
-		onUpdateTitle(block: Block, title: string): void
-		{
-			this.updateNodeTitle(block, title);
-			this.updateSettings({ title });
-		},
-		onUpdateDescription(description: string): void
-		{
-			this.updateSettings({ description });
 		},
 	},
 	template: `
@@ -155,23 +134,8 @@ export const NodeSettings = {
 			<template #default>
 				<EditNodeSettingsForm
 					:block="block"
-					@updateTitle="onUpdateTitle(block, $event)"
-					@updateDescription="onUpdateDescription($event)"
+					:ports="ports"
 				>
-					<!--
-					<template #variable="{ variableName, variableValue }">
-						<NodeSettingsVariable
-							:variableName="variableName"
-							:variableValue="variableValue"
-						/>
-					</template>
-					<template #addElement="{ itemType }">
-						<AddSettingsItem :itemType="itemType">
-							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_ELEMENT') }}
-						</AddSettingsItem>
-					</template>
-					-->
-
 					<template #rule="{ port }">
 						<NodeSettingsRule
 							:port="port"
@@ -184,7 +148,6 @@ export const NodeSettings = {
 					<template #addRule="{ itemType }">
 						<AddSettingsItem
 							:itemType="itemType"
-							@addItem="onAddRule"
 						>
 							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_RULE') }}
 						</AddSettingsItem>
@@ -192,7 +155,6 @@ export const NodeSettings = {
 					<template #addConnection="{ itemType }">
 						<AddSettingsItem
 							:itemType="itemType"
-							@addItem="onAddConnection"
 						>
 							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_CONNECTION') }}
 						</AddSettingsItem>

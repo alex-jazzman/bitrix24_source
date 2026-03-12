@@ -67,14 +67,16 @@ if(CModule::IncludeModule("security"))
 			$arParams["~AUTH_RESULT"] = array("MESSAGE" => GetMessage("system_auth_otp_required"), "TYPE" => "ERROR");
 		}
 	}
+
+	$otpParams = Otp::getDeferredParams();
+	$arResult["USER_ID"] = $otpParams['USER_ID'];
+
 	if (Otp::isPushPossible())
 	{
-		$otpParams = Otp::getDeferredParams();
 		if (!empty($otpParams['OTP_TYPE']) && $otpParams['OTP_TYPE'] === OtpType::Push->value)
 		{
 			$arResult["USE_PUSH_OTP"] = true;
 			$arResult["PUSH_OTP"] = PushOtp::getPullConfig();
-			$arResult["USER_ID"] = $otpParams['USER_ID'];
 
 			$controller = new PushOtp();
 			if ($controller->sendMobilePushAction($arResult["PUSH_OTP"]['channelTag']) === null)

@@ -506,6 +506,9 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						config: makeAuditorsFieldConfig({
 							items: auditors.filter(Boolean),
 							readOnly: !actions[TaskFieldActionAccess[Field.AUDITORS]],
+							undeselectableIds: actions.update
+								? []
+								: task.auditors.filter((id) => id !== userId),
 						}),
 						restrictionPolicy: getFieldRestrictionPolicy(Field.AUDITORS),
 						showRestrictionCallback: getFieldShowRestrictionCallback(Field.AUDITORS, parentWidget),

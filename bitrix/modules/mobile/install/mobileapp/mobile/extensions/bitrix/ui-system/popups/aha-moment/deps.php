@@ -2,20 +2,20 @@
 
 return [
 	'extensions' => [
-		'tokens',
+		'analytics',
 		'animation',
-		'utils/object',
-		'utils/validation',
-		'utils/enums/base',
+		'tokens',
 		'ui-system/blocks/icon',
+		'ui-system/form/buttons/button',
 		'ui-system/typography/heading',
 		'ui-system/typography/text',
-		'ui-system/form/buttons/button',
-		'analytics',
-		'type',
+		'utils/enums/base',
+		'utils/object',
+		'utils/validation',
 	],
 	'bundle' => [
 		'./src/direction-enum',
 		'./src/hint',
+		'./src/spotlight',
 	],
 ];

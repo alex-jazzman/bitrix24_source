@@ -15,6 +15,12 @@ jn.define('layout/ui/entity-editor/control/opportunity/opportunity-button', (req
 
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
+			this.opportunityButtonRef = null;
+		}
+
+		componentDidMount()
+		{
+			BX.postComponentEvent('OpportunityButton::DidMount', [this.opportunityButtonRef]);
 		}
 
 		render()
@@ -24,6 +30,12 @@ jn.define('layout/ui/entity-editor/control/opportunity/opportunity-button', (req
 					style: {
 						flexShrink: 0,
 						justifyContent: 'center',
+					},
+					ref: (ref) => {
+						if (ref)
+						{
+							this.opportunityButtonRef = ref;
+						}
 					},
 					onClick: () => this.customEventEmitter.emit('OpportunityButton::Click'),
 				},

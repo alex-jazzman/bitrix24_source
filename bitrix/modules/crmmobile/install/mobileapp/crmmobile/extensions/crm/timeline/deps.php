@@ -5,7 +5,6 @@ return [
 		'statemanager/redux/store',
 		'statemanager/redux/slices/users',
 
-		'layout/ui/floating-button',
 		'layout/ui/context-menu',
 		'layout/ui/widget-header-button',
 		'layout/ui/snackbar-text',

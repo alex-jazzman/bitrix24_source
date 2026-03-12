@@ -37,6 +37,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    } else if (urlParams.has(im_v2_const.GetParameter.openCollab)) {
 	      const dialogId = urlParams.get(im_v2_const.GetParameter.openCollab);
 	      void im_public.Messenger.openCollab(dialogId != null ? dialogId : '');
+	    } else if (urlParams.has(im_v2_const.GetParameter.openSharedLink)) {
+	      const code = urlParams.get(im_v2_const.GetParameter.openSharedLink);
+	      void im_public.Messenger.joinChatByCode(code);
 	    } else if (urlParams.has(im_v2_const.GetParameter.openTaskComments)) {
 	      const dialogId = urlParams.get(im_v2_const.GetParameter.openTaskComments);
 	      void im_public.Messenger.openTaskComments(dialogId != null ? dialogId : '', extractMessageId(urlParams));

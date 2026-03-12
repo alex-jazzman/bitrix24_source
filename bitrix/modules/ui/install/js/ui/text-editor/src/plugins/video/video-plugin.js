@@ -1,5 +1,6 @@
 import { Type, Loc, Event } from 'main.core';
 import type { BBCodeElementNode } from 'ui.bbcode.model';
+import { Outline } from 'ui.icon-set.api.core';
 
 import {
 	type BBCodeConversion,
@@ -304,7 +305,7 @@ export class VideoPlugin extends BasePlugin
 	{
 		this.getEditor().getComponentRegistry().register('video', (): Button => {
 			const button: Button = new Button();
-			button.setContent('<span class="ui-icon-set --insert-video"></span>');
+			button.setIcon(Outline.RECORD_VIDEO);
 			button.disableInsideUnformatted();
 			button.setTooltip(Loc.getMessage('TEXT_EDITOR_BTN_VIDEO'));
 			button.subscribe('onClick', (): void => {

@@ -120,10 +120,7 @@ export class LegacyRecentService
 		Logger.warn(`Im.RecentList: ${firstPage ? 'First' : this.pagesLoaded} page request result`, result.data());
 		const { items, hasMore } = result.data();
 		this.lastMessageDate = this.getLastMessageDate(items);
-		if (!hasMore)
-		{
-			this.hasMoreItemsToLoad = false;
-		}
+		this.hasMoreItemsToLoad = hasMore;
 
 		this.isLoading = false;
 
@@ -158,6 +155,7 @@ export class LegacyRecentService
 			recentItems,
 			copilot,
 			messagesAutoDeleteConfigs,
+			stickerMessages,
 		} = extractedItems;
 		Logger.warn('LegacyRecentService: prepared data for models', extractedItems);
 
@@ -167,7 +165,7 @@ export class LegacyRecentService
 		const messagesPromise = Core.getStore().dispatch('messages/store', messages);
 		const filesPromise = Core.getStore().dispatch('files/set', files);
 		const recentPromise = Core.getStore().dispatch(this.getModelSaveMethod(), recentItems);
-
+		const stickersPromise = Core.getStore().dispatch('stickers/messages/set', stickerMessages);
 		const copilotManager = new CopilotManager();
 		const copilotPromise = copilotManager.handleRecentListResponse(copilot);
 
@@ -179,6 +177,7 @@ export class LegacyRecentService
 			recentPromise,
 			copilotPromise,
 			autoDeletePromise,
+			stickersPromise,
 		]);
 	}
 

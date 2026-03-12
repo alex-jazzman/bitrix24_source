@@ -280,7 +280,9 @@ if($arResult['PERM_CONFIG'])
 
 	if($arResult['BITRIX24'])
 	{
-		$items['tab_content_apps']['CRM_APPLICATION']['URL'] = \Bitrix\Crm\Integration\Market\Router::getBasePath();
+		$items['tab_content_apps']['CRM_APPLICATION']['URL'] =
+			\Bitrix\Crm\Integration\Market\Router::getPlacementPath()
+		;
 		$items['tab_content_apps']['CRM_APPLICATION']['ICON_CLASS'] = 'img-app';
 		$items['tab_content_apps']['CRM_APPLICATION']['NAME'] = GetMessage("CRM_CONFIGS_CRM_APPLICATION");
 		$items['tab_content_apps']['MIGRATION_OTHER_CRM']['URL'] = Loader::includeModule('market')

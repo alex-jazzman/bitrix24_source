@@ -1,6 +1,6 @@
 import './moveable-block.css';
 import { toRefs, useTemplateRef, watch, onUnmounted, computed, toValue } from 'ui.vue3';
-import { useMoveableBlock, useBlockState, useHighlightedBlocks } from '../../composables';
+import { useMoveableBlock, useBlockState, useHighlightedBlocks, useBlockDiagram } from '../../composables';
 // eslint-disable-next-line no-unused-vars
 import type { DiagramBlock } from '../../types';
 
@@ -29,6 +29,7 @@ export const MoveableBlock = {
 	setup(props): MoveableBlockSetup
 	{
 		const { block } = toRefs(props);
+		const { isMakeNewConnection } = useBlockDiagram();
 		const {
 			blockZindex,
 			isHiglitedBlock,
@@ -70,6 +71,7 @@ export const MoveableBlock = {
 			isHiglitedBlock,
 			isDisabled,
 			isDragged,
+			isMakeNewConnection,
 			blockStyle,
 			blockZindex,
 			blockPositionStyle,
@@ -82,6 +84,7 @@ export const MoveableBlock = {
 			:style="blockStyle"
 			ref="blockEl"
 			:data-test-id="$blockDiagramTestId('block', block.id)"
+			:data-id="block.id"
 			@mousedown="onMouseDownSelectBlock"
 		>
 			<slot
@@ -89,6 +92,7 @@ export const MoveableBlock = {
 				:isHighlighted="isHiglitedBlock"
 				:isDragged="isDragged"
 				:isDisabled="isDisabled"
+				:isMakeNewConnection="isMakeNewConnection"
 			/>
 		</div>
 	`,

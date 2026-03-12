@@ -1,5 +1,0 @@
-<?php
-$MESS["MAIL_ACCESS_RIGHTS_DEPARTMENT_WITH_SUBDEPARTMENTS"] = "Өз бөлімі мен бөлімшелерінің";
-$MESS["MAIL_ACCESS_RIGHTS_SELF_DEPARTMENT"] = "Өз бөлімінің";
-$MESS["MAIL_ACCESS_RIGHTS_VARIABLES_ALL"] = "Барлық қызметкерлер";
-$MESS["MAIL_ACCESS_RIGHTS_VARIABLES_NONE"] = "Қолжетімсіз";

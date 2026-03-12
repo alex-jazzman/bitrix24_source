@@ -1,2 +1,0 @@
-<?php
-$MESS["INTRANET_USER_WIDGET_CONTENT_TOOL_PULSE_TITLE"] = "Пульс компанії";

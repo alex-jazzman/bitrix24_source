@@ -5,6 +5,7 @@ $MESS['INTRANET_USER_WIDGET_CONTENT_MAIN_visitor'] = 'Посетитель';
 $MESS['INTRANET_USER_WIDGET_CONTENT_MAIN_fired'] = 'Уволен';
 $MESS['INTRANET_USER_WIDGET_CONTENT_MAIN_invited'] = 'Приглашен';
 $MESS['INTRANET_USER_WIDGET_CONTENT_MAIN_integrator'] = 'Интегратор';
+$MESS['INTRANET_USER_WIDGET_CONTENT_MAIN_integrator_RENAMED'] = 'Специалист по внедрению';
 $MESS['INTRANET_USER_WIDGET_CONTENT_MAIN_admin'] = 'Администратор';
 $MESS['INTRANET_USER_WIDGET_CONTENT_MAIN_email'] = 'Почтовый пользователь';
 $MESS['INTRANET_USER_WIDGET_CONTENT_MAIN_shop'] = 'Пользователь магазина';

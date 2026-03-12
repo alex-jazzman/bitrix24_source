@@ -86,15 +86,9 @@ $analytics = \Bitrix\Tasks\Helper\Analytics::getInstance($arParams['USER_ID']);
 
 $addTaskPath = new \Bitrix\Main\Web\Uri($arParams['PATH_TO_TASK_ADD']);
 $addTaskPath->addParams([
-	'st[tool]' => $analytics::TOOL,
-	'st[category]' => $analytics::TASK_CATEGORY,
-	'st[event]' => $analytics::EVENT['click_create'],
-	'st[type]' => $analytics::TASK_TYPE,
-	'st[c_section]' => $analytics::SECTION['tasks'],
-	'st[c_sub_section]' => $analytics::SUB_SECTION['efficiency'],
-	'st[c_element]' => $analytics::ELEMENT['create_button'],
-	'st[p1]' => $analytics->getIsDemoParameter(),
-	'st[p2]' => $analytics->getUserTypeParameter(),
+	'ta_sec' => $analytics::SECTION['tasks'],
+	'ta_sub' => $analytics::SUB_SECTION['efficiency'],
+	'ta_el' => $analytics::ELEMENT['create_button'],
 ]);
 
 if ($isV2Form)

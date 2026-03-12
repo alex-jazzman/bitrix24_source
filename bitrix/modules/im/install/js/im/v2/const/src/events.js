@@ -84,6 +84,12 @@ export const EventType = {
 	{
 		onBeforeShowMessage: 'IM:Notifier:onBeforeShowMessage',
 	},
+	notification:
+	{
+		onFilterAuthorPopupStateChange: 'IM:Notification:Filter:onAuthorPopupStateChange',
+		onFilterAuthorTagAdd: 'IM:Notification:Filter:onAuthorTagAdd',
+		onFilterAuthorTagRemove: 'IM:Notification:Filter:onAuthorTagRemove',
+	},
 
 	// external
 	layout:

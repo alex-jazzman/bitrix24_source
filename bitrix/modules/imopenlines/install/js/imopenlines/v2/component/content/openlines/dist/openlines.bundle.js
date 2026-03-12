@@ -11,7 +11,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  name: 'ChatTransferContent',
 	  components: {
 	    ChatButton: im_v2_component_elements_button.ChatButton,
-	    ChatSearch: im_v2_component_search.AddToChat
+	    ChatSearch: im_v2_component_search.AddToChatSearch
 	  },
 	  props: {
 	    dialogId: {

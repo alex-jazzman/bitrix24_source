@@ -1,3 +1,0 @@
-<?php
-$MESS["TELEPHONY_REPORT_AVG_CALL_TIME"] = "Середній час дзвінка";
-$MESS["TELEPHONY_REPORT_AVG_CALL_TIME_MIN"] = "хв";

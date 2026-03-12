@@ -1,4 +1,0 @@
-<?
-$MESS["CRM_DEAL_LIST_SWITCHER_LIST"] = "Створені";
-$MESS["CRM_DEAL_LIST_SWITCHER_RECUR"] = "Постійні";
-?>

@@ -129,7 +129,6 @@ $this->setFrameMode(true);
 							'APP_LINUX_INSTALLED' => $arResult['APP_LINUX_INSTALLED'] ? 'Y' : 'N',
 						],
 						'loginHistory' => $arResult['LOGIN_HISTORY'],
-						'stressLevel' => $arResult['IS_STRESSLEVEL_AVAILABLE'] ? 'Y' : 'N',
 						'otp' => $arResult['OTP'],
 						'bindings' => $arResult['BINDINGS'],
 						'im' => ModuleManager::isModuleInstalled('im') ? 'Y' : 'N',

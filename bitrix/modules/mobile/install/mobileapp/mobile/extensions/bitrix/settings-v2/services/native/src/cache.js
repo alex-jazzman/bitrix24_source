@@ -55,6 +55,35 @@ jn.define('settings-v2/services/native/src/cache', (require, exports, module) =>
 		}
 
 		/**
+		 * @return {Promise<Number>}
+		 */
+		static async getTotalCacheSize()
+		{
+			return NativeCacheService.getSettingValueById(NativeSettingsId.CACHE_FILES);
+		}
+
+		/**
+		 * @return {Promise<Number>}
+		 */
+		static async getMediaCacheSize()
+		{
+			return NativeCacheService.getSettingValueById(NativeSettingsId.CACHE_MEDIA);
+		}
+
+		/**
+		 * @return {Promise<Number>}
+		 */
+		static async getOtherCacheSize()
+		{
+			const totalSize = await NativeCacheService.getTotalCacheSize();
+			const mediaSize = await NativeCacheService.getMediaCacheSize();
+
+			const otherSize = totalSize - mediaSize;
+
+			return otherSize >= 0 ? otherSize : 0;
+		}
+
+		/**
 		 * @return {Promise<String>}
 		 */
 		static async clearFiles()

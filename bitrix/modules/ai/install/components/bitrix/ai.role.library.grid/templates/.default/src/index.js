@@ -467,7 +467,7 @@ export class Controller
 		const Guide = result[0].Guide;
 		const BannerDispatcher: BannerDispatcherType = result[1].BannerDispatcher;
 
-		BannerDispatcher.critical.toQueue((onDone) => {
+		BannerDispatcher.normal.toQueue((onDone) => {
 			const guide: GuideType = new Guide({
 				id: 'share-role-grid-create-prompt-hint',
 				simpleMode: true,

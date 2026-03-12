@@ -33,6 +33,10 @@ jn.define('user-profile/common-tab/enum/user-status', (require, exports, module)
 			iconColor: Color.accentMainWarning,
 		});
 
+		static INVITED = new UserStatus('INVITED', {});
+
+		static REINVITED = new UserStatus('REINVITED', {});
+
 		getIcon()
 		{
 			return this.getValue().icon;

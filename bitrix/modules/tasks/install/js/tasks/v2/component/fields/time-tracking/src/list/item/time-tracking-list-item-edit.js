@@ -165,6 +165,11 @@ export const TimeTrackingListItemEdit = {
 					id: `tasks-time-tracking-list-popup-${Text.getRandom()}`,
 					bindElement: this.$refs.calendarInput.$el,
 					bindOptions: { forceBindPosition: true },
+					events: {
+						onClose: (): void => {
+							this.isCalendarShown = false;
+						},
+					},
 				},
 				selectedDates: [selectedDateTs],
 				enableTime: true,
@@ -172,7 +177,6 @@ export const TimeTrackingListItemEdit = {
 					[DatePickerEvent.SELECT]: (event: BaseEvent) => {
 						const { date } = event.getData();
 						this.localCreatedAt = calendar.createDateFromUtc(date);
-						this.isCalendarShown = false;
 					},
 				},
 			});
@@ -207,11 +211,14 @@ export const TimeTrackingListItemEdit = {
 
 			this.$emit('save', {
 				taskId: this.taskId,
-				userId: this.currentUserId,
 				createdAtTs: Math.floor(localCreatedAt.getTime() / 1000),
 				seconds: this.localSeconds,
 				text: this.localText,
 				source: 'manual',
+				rights: {
+					edit: true,
+					remove: true,
+				},
 			});
 		},
 	},

@@ -13,6 +13,7 @@ return [
 		'ui.progressround',
 		'ui.popupcomponentsmaker',
 		'ui.icon-set.api.core',
+		'ui.system.typography',
 		'main.popup',
 		'ui.popup-with-header',
 		'main.core',

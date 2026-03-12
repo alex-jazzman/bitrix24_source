@@ -2,8 +2,12 @@
 
 return [
 	'extensions' => [
-		'mail:chain',
+		'mail:statemanager/redux/slices/messages',
+		'mail:statemanager/redux/slices/folders',
 		'mail:message/tools/connector',
-        'mail:dialog',
-    ],
+		'mail:dialog',
+		'mail:chain',
+		'statemanager/redux/store',
+		'analytics',
+	],
 ];

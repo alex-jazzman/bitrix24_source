@@ -19,7 +19,7 @@ export class HardwareManager extends EventEmitter
 	constructor()
 	{
 		super();
-		
+
 		this.setEventNamespace('BX.Call.HardwareManager');
 
 		this.initialized = false;
@@ -38,7 +38,7 @@ export class HardwareManager extends EventEmitter
 		{
 			return this.initPromise;
 		}
-		
+
 		this._checkPermissions();
 
 		this.initPromise = new Promise((resolve, reject) =>
@@ -63,7 +63,7 @@ export class HardwareManager extends EventEmitter
 
 		return this.initPromise;
 	}
-	
+
 	async _checkPermissions()
 	{
 		const cameraPermission = await navigator.permissions.query({ name: 'camera' });
@@ -76,10 +76,12 @@ export class HardwareManager extends EventEmitter
 		microphonePermission.onchange = (status) => {
 			this.getCurrentDeviceList();
 		};
+
+		return { cameraPermission, microphonePermission }
 	}
-	
+
 	async getUserMedia(constraints)
-	{	
+	{
 		return new Promise((resolve, reject) =>
 		{
 			if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
@@ -94,6 +96,7 @@ export class HardwareManager extends EventEmitter
 				resolve(stream);
 			})
 			.catch(err => {
+				console.error(err);
 				reject(err);
 			});
 		});

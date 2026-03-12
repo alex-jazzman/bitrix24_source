@@ -11,8 +11,8 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Message;
 use Bitrix\Im\V2\Message\Params;
-use Bitrix\Im\Call\Call;
-use Bitrix\Im\Call\Registry;
+use Bitrix\Call\Call;
+use Bitrix\Call\Call\Registry;
 use Bitrix\Call\Error;
 use Bitrix\Call\NotifyService;
 use Bitrix\Call\Track\TrackCollection;
@@ -25,6 +25,9 @@ use Bitrix\Call\Model\CallTrackTable;
 use Bitrix\Call\Model\CallAITaskTable;
 use Bitrix\Call\Model\CallOutcomePropertyTable;
 
+/**
+ * @internal
+ */
 class FollowUp extends Engine\Controller
 {
 	protected function init(): void
@@ -162,6 +165,7 @@ class FollowUp extends Engine\Controller
 			'END_DATE' => $call->getEndDate(),
 			'UUID' => $call->getUuid(),
 			'RECORD_AUDIO' => $call->isAudioRecordEnabled(),
+			'AI_ANALYZED' => $call->isAiAnalyzeEnabled(),
 		];
 
 		$trackList = CallTrackTable::query()
@@ -183,7 +187,13 @@ class FollowUp extends Engine\Controller
 		$result['TRACKS'] = [];
 		while ($track = $trackList->fetchObject())
 		{
-			$result['TRACKS'][] = $track->toArray();
+			$result['TRACKS'][] = array_merge(
+				$track->toArray(),
+				[
+					'DOWNLOAD_URL' => $track->getDownloadUrl(),
+					'EXTERNAL_URL' => $track->getUrl(true, false, true),
+				]
+			);
 		}
 
 		$taskList = CallAITaskTable::query()
@@ -424,7 +434,7 @@ class FollowUp extends Engine\Controller
 	 * @param int $callId
 	 * @return Call|null
 	 */
-	protected function getCall(int $callId): ?\Bitrix\Im\Call\Call
+	protected function getCall(int $callId): ?\Bitrix\Call\Call
 	{
 		$call = Registry::getCallWithId($callId);
 		if (!$call)
@@ -445,7 +455,7 @@ class FollowUp extends Engine\Controller
 
 	/**
 	 * @param int $userId
-	 * @param Call $call
+	 * @param \Bitrix\Call\Call $call
 	 * @return bool
 	 */
 	protected function checkCallAccess(Call $call, ?int $userId = null): bool
@@ -508,7 +518,7 @@ class FollowUp extends Engine\Controller
 
 	private function formatInterval(int $hours = 0, int $minutes = 0, int $seconds = 0): string
 	{
-		Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/im/lib/call/integration/chat.php');
+		Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/call/lib/Integration/Chat.php');
 
 		$result = [];
 		if ($hours > 0)

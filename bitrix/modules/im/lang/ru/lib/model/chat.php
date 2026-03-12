@@ -13,4 +13,3 @@ $MESS["CHAT_ENTITY_ENTITY_DATA_1_FIELD"] = "Данные сущности 1";
 $MESS["CHAT_ENTITY_ENTITY_DATA_2_FIELD"] = "Данные сущности 2";
 $MESS["CHAT_ENTITY_ENTITY_DATA_3_FIELD"] = "Данные сущности 3";
 $MESS["CHAT_ENTITY_COLOR_FIELD"] = "Цвет чата";
-?>

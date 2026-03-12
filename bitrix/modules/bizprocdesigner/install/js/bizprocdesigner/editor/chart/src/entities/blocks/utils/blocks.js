@@ -1,35 +1,5 @@
-import { Type } from 'main.core';
 import type { Block, BlockId } from '../../../shared/types';
-
-function deepEqual(a: any, b: any): boolean
-{
-	if (a === b)
-	{
-		return true;
-	}
-
-	if (!Type.isPlainObject(a) || !Type.isPlainObject(b))
-	{
-		return false;
-	}
-
-	const keysA = Object.keys(a);
-	const keysB = Object.keys(b);
-	if (keysA.length !== keysB.length)
-	{
-		return false;
-	}
-
-	for (const key of keysA)
-	{
-		if (!deepEqual(a[key], b[key]))
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
+import { deepEqual } from '../../../shared/utils';
 
 export function isBlockPropertiesDifferent(currentBlock: Block, newBlock: Block): boolean
 {
@@ -81,4 +51,12 @@ export function isBlockActivated(block: Block): boolean
 	}
 
 	return block.activity.Activated !== 'N';
+}
+
+export function getBlockUserTitle(block: Block): ?string
+{
+	const activityTitle = block.activity?.Properties?.Title;
+	const defaultNodeTitle = block.node?.title;
+
+	return activityTitle === defaultNodeTitle ? null : activityTitle;
 }

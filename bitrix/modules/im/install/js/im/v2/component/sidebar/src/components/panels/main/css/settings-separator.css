@@ -1,0 +1,7 @@
+.bx-im-sidebar-settings-separator__container {
+	margin-top: 4px;
+	margin-bottom: 4px;
+	width: 100%;
+	height: 1px;
+	background-color: var(--ui-color-divider-default);
+}

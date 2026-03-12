@@ -40,6 +40,7 @@ if(!empty($arParams["~AUTH_RESULT"]["MESSAGE"])):
 <? endif ?>
 		<input type="hidden" name="AUTH_FORM" value="Y">
 		<input type="hidden" name="TYPE" value="CHANGE_PWD">
+		<?= bitrix_sessid_post(); ?>
 
 <?if($arResult["PHONE_REGISTRATION"]):?>
 		<div class="bx-authform-formgroup-container">

@@ -50,7 +50,7 @@ export type TimelineData = {
 type BiMenuItem = {
 	ID: string,
 	TEXT: string,
-	URL: string,
+	ON_CLICK: string,
 }
 
 export class DurationFormatter
@@ -856,7 +856,7 @@ export class Timeline
 		if (menu.length === 1)
 		{
 			const linkBtn = Tag.render`
-				<a class="ui-btn ui-btn-light-border ui-btn-themes" href="${Text.encode(menu[0].URL)}" target="_blank">
+				<a class="ui-btn ui-btn-light-border ui-btn-themes" onclick="${Text.encode(menu[0].ON_CLICK)}" target="_blank">
 					${Text.encode(Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_BUTTON'))}
 				</a>
 			`;
@@ -914,8 +914,7 @@ export class Timeline
 			items: menu.map((item: BiMenuItem) => {
 				return {
 					text: item.TEXT,
-					href: item.URL,
-					target: '_blank',
+					onclick: item.ON_CLICK,
 				};
 			}),
 		})).show();
@@ -927,7 +926,7 @@ export class Timeline
 		if (menu.length === 1)
 		{
 			btn = Tag.render`
-				<a class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs" href="${Text.encode(menu[0].URL)}" target="_blank">
+				<a class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs" onclick="${Text.encode(menu[0].ON_CLICK)}" target="_blank">
 					<span class="ui-btn-text">${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_LINK')}</span>
 				</a>
 			`;

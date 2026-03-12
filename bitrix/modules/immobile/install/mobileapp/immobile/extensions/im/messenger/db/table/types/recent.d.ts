@@ -3,6 +3,7 @@ import {DialogId} from "../../../types/common";
 import {MessageStatus} from "../../../model/types/recent";
 import {MessagesStoreData} from "../../../model/messages/src/types/messages";
 import {DraftStoredData} from "./draft";
+import {StickerState} from "../../../model/sticker-pack/src/types";
 
 declare type ListByDialogTypeFilter = {
 	dialogTypes?: Array<DialogType>,
@@ -49,4 +50,5 @@ declare type RecentListResult = {
 	files: Array,
 	draft: Array<DraftStoredData>,
 	hasMore: boolean,
+	stickers: Array<StickerState>
 };
