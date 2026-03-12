@@ -1,7 +1,6 @@
-/**
-
+/*
 !.gitignore
 !/bitrix/
+/bitrix/*
 !/bitrix/modules/
-!/bitrix/modules/**
-/bitrix/modules/mywebstor**
+/bitrix/modules/mywebstor*
