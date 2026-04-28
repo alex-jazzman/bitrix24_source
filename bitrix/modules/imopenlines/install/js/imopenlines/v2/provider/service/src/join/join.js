@@ -1,4 +1,7 @@
+import { Notifier } from 'im.v2.lib.notifier';
 import { runAction } from 'im.v2.lib.rest';
+import { Logger } from 'im.v2.lib.logger';
+
 import { RestMethod } from 'imopenlines.v2.const';
 
 export class JoinService
@@ -13,7 +16,8 @@ export class JoinService
 
 		return runAction(RestMethod.linesV2SessionJoin, queryParams)
 			.catch((error) => {
-				console.error('Imol.join: request error', error);
+				Notifier.onDefaultError();
+				Logger.error('Imol.join: request error', error);
 			});
 	}
 }

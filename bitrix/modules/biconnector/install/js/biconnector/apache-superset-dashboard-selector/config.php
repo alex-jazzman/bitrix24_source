@@ -13,6 +13,7 @@ return [
 		'main.core',
 		'main.core.events',
 		'ui.entity-selector',
+		'ui.info-helper',
 	],
 	'skip_core' => false,
 ];

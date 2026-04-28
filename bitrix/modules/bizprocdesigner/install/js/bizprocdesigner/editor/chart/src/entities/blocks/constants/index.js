@@ -1,5 +1,3 @@
-import type { BufferContentType } from '../../../shared/types';
-
 export const BLOCK_TYPES: { [string]: string } = {
 	SIMPLE: 'simple',
 	TRIGGER: 'trigger',
@@ -62,11 +60,6 @@ export const FRAME_BORDER_COLORS = {
 export const BLOCK_TOAST_TYPES: { [string]: string } = Object.freeze({
 	ACTIVITY_PUBLIC_ERROR: 'activity-public-error',
 });
-
-export const BUFFER_CONTENT_TYPES: { [string]: BufferContentType } = {
-	BLOCK: 'block',
-	SELECTION: 'selection',
-};
 
 export const ICON_BG_COLORS: { [number]: string } = {
 	0: 'var(--designer-bp-ai-bg)',

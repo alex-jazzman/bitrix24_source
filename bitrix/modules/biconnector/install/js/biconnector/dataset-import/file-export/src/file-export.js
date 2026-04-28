@@ -91,7 +91,7 @@ export class FileExport
 	{
 		const anchorElement = document.createElement('a');
 		anchorElement.href = link;
-		anchorElement.download = `${dataset.title ?? 'csv_dataset'}.csv`;
+		anchorElement.download = `${dataset.title ?? 'csv_table'}.csv`;
 		Dom.append(anchorElement, document.body);
 		anchorElement.click();
 		Dom.remove(anchorElement);

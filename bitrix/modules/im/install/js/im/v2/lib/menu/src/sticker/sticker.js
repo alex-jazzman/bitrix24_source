@@ -1,16 +1,14 @@
 import { Loc } from 'main.core';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
-import { MenuItemDesign } from 'ui.system.menu';
+import { MenuItemDesign, type MenuItemOptions, type MenuOptions } from 'ui.system.menu';
 
 import { Core } from 'im.v2.application.core';
+import { PopupType } from 'im.v2.const';
+import { type ImModelSticker, type ImModelStickerPack } from 'im.v2.model';
 import { SendingService } from 'im.v2.provider.service.sending';
 import { StickerService } from 'im.v2.provider.service.sticker';
-import { PopupType } from 'im.v2.const';
 
 import { BaseMenu } from '../base/base';
-
-import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
-import type { ImModelSticker, ImModelStickerPack } from 'im.v2.model';
 
 export class StickerMenu extends BaseMenu
 {
@@ -59,7 +57,6 @@ export class StickerMenu extends BaseMenu
 						packType: this.context.sticker.packType,
 					},
 				});
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -87,7 +84,6 @@ export class StickerMenu extends BaseMenu
 					packId: this.context.sticker.packId,
 					packType: this.context.sticker.packType,
 				});
-				this.menuInstance.close();
 			},
 		};
 	}

@@ -12,6 +12,7 @@ return [
 		'layout/ui/simple-list/items/base',
 		'layout/ui/simple-list/items/empty-space',
 		'layout/ui/simple-list/items/extended',
+		'layout/ui/simple-list/items/section-header',
 		'layout/ui/simple-list/skeleton',
 		'layout/ui/simple-list/view-mode',
 		'layout/ui/simple-list/menu-engine',

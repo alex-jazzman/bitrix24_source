@@ -6,7 +6,6 @@ import { DeletedMessage } from 'im.v2.component.message.deleted';
 import { UnsupportedMessage } from 'im.v2.component.message.unsupported';
 import { SmileMessage } from 'im.v2.component.message.smile';
 import { StickerMessage } from 'im.v2.component.message.sticker';
-import { SystemMessage } from 'im.v2.component.message.system';
 import { ChatCreationMessage } from 'im.v2.component.message.creation.chat';
 import { ChatCopilotCreationMessage } from 'im.v2.component.message.copilot.creation';
 import { CopilotMessage } from 'im.v2.component.message.copilot.answer';
@@ -33,6 +32,7 @@ import { VoteMessage } from 'im.v2.component.message.vote';
 import { TaskChatCreationMessage } from 'im.v2.component.message.creation.task-chat';
 import { ConvertToCollabMessage } from 'im.v2.component.message.collab.convert';
 import { AiAssistantMessage } from 'im.v2.component.message.ai-assistant.answer';
+import { AiBizprocMessage } from 'im.v2.component.message.ai-bizproc';
 
 export const MessageComponents = {
 	DefaultMessage,
@@ -42,7 +42,6 @@ export const MessageComponents = {
 	ErrorMessage,
 	CallInviteMessage,
 	DeletedMessage,
-	SystemMessage,
 	UnsupportedMessage,
 	ChatCreationMessage,
 	OwnChatCreationMessage,
@@ -70,4 +69,5 @@ export const MessageComponents = {
 	VoteMessage,
 	TaskChatCreationMessage,
 	ConvertToCollabMessage,
+	AiBizprocMessage,
 };

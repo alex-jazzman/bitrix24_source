@@ -17,7 +17,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  }
 	  getState() {
 	    return {
-	      collection: {}
+	      collection: {},
+	      resourcesSkuRelations: []
 	    };
 	  }
 	  getElementState() {
@@ -71,7 +72,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function resources/getBySkuIds */
 	      getBySkuIds: state => ids => {
 	        return Object.values(state.collection).filter(resource => resource.skus.some(sku => ids.includes(sku.id)));
-	      }
+	      },
+	      /** @function resources/resourcesSkuRelations */
+	      resourcesSkuRelations: state => state.resourcesSkuRelations
 	    };
 	  }
 	  getActions() {
@@ -91,6 +94,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function resources/delete */
 	      delete: (store, resourceId) => {
 	        store.commit('delete', resourceId);
+	      },
+	      /** @function resources/setResourcesSkuRelations */
+	      setResourcesSkuRelations: (store, resourcesSkuRelations) => {
+	        store.commit('setResourcesSkuRelations', resourcesSkuRelations);
 	      }
 	    };
 	  }
@@ -109,6 +116,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      delete: (state, resourceId) => {
 	        delete state.collection[resourceId];
+	      },
+	      setResourcesSkuRelations: (state, resourcesSkuRelations) => {
+	        state.resourcesSkuRelations = resourcesSkuRelations;
 	      }
 	    };
 	  }

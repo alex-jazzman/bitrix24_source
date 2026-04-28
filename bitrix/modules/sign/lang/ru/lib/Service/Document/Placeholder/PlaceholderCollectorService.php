@@ -1,0 +1,4 @@
+<?php
+
+$MESS["SIGN_PLACEHOLDER_FACTORY_EXTERNAL_ID_NAME"] = "Регистрационный номер";
+$MESS["SIGN_PLACEHOLDER_FACTORY_EXTERNAL_DATE_NAME"] = "Дата создания";

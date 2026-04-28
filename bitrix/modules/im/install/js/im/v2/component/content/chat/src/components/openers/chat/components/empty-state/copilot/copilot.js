@@ -3,6 +3,7 @@ import { ChatButton, ButtonSize, type CustomColorScheme } from 'im.v2.component.
 import { Color } from 'im.v2.const';
 import { SpecialBackground, ThemeManager } from 'im.v2.lib.theme';
 import { CopilotService } from 'im.v2.provider.service.copilot';
+import { CopilotManager } from 'im.v2.lib.copilot';
 
 import './css/empty-state.css';
 
@@ -32,8 +33,9 @@ export const CopilotEmptyState = {
 		},
 		preparedText(): string
 		{
-			return this.loc('IM_CONTENT_COPILOT_EMPTY_STATE_MESSAGE_MSGVER_1', {
+			return this.loc('IM_CONTENT_COPILOT_EMPTY_STATE_MESSAGE_MSGVER_2', {
 				'#BR#': '\n',
+				'#COPILOT_NAME#': this.copilotManager.getName(),
 			});
 		},
 		buttonColorScheme(): CustomColorScheme
@@ -46,6 +48,10 @@ export const CopilotEmptyState = {
 				hoverColor: BUTTON_HOVER_COLOR,
 			};
 		},
+	},
+	created()
+	{
+		this.copilotManager = new CopilotManager();
 	},
 	methods:
 	{

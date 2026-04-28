@@ -204,7 +204,6 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 					this.store.dispatch('messagesModel/store', modelData.messages),
 					this.store.dispatch('filesModel/set', modelData.files),
 					this.store.dispatch('dialoguesModel/set', modelData.dialogues),
-					this.store.dispatch('counterModel/setList', { counterList: modelData.counterState }),
 					this.store.dispatch(
 						recentAction,
 						{
@@ -224,18 +223,16 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 
 		/**
 		 * @param {immobileTabTaskLoadResultTaskList|imV2TaskTailResult} recentData
-		 * @return {{users,dialogues,recent,files,messages,counterState}}
+		 * @return {{users,dialogues,recent,files,messages}}
 		 */
 		prepareDataForModels(recentData)
 		{
-			const dialogCounters = {};
 			const result = {
 				users: [],
 				dialogues: [],
 				files: [],
 				recent: [],
 				messages: [],
-				counterState: [],
 			};
 
 			if (Type.isArray(recentData.users))
@@ -283,7 +280,6 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 					);
 
 					result.recent.push(item);
-					dialogCounters[recentItem.dialogId] = recentItem.counter;
 				});
 			}
 
@@ -295,11 +291,6 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 			{
 				recentData.chats.forEach((chatItem) => {
 					const chat = { ...chatItem };
-					const counter = dialogCounters[chatItem.dialogId];
-					if (Type.isNumber(counter))
-					{
-						chat.counter = counter;
-					}
 
 					if (messagesAutoDeleteConfigs[chatItem.id])
 					{
@@ -307,9 +298,6 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 					}
 
 					result.dialogues.push(chat);
-
-					const counterData = ServerLoadUtils.buildCounterState(chat);
-					result.counterState.push(counterData);
 				});
 			}
 

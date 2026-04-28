@@ -1,20 +1,30 @@
 /**
- * @module intranet/background
+ * @module intranet/intranet-background
  */
-jn.define('intranet/background', (require, exports, module) => {
+jn.define('intranet/intranet-background', (require, exports, module) => {
 	const { isModuleInstalled } = require('module');
+	const { Qualification } = require('intranet/qualification');
+	const { UserMiniProfile } = require('intranet/user-mini-profile');
 
 	class IntranetBackground
 	{
-		static init()
+		static async init()
 		{
-			const { UserMiniProfile } = require('intranet/user-mini-profile');
-			UserMiniProfile.init();
-
 			if (env.isAdmin && isModuleInstalled('bitrix24'))
 			{
-				const { Qualification } = require('intranet/qualification');
-				void Qualification.init();
+				const qualificationInstance = await Qualification.init().catch(console.error);
+				if (qualificationInstance?.shouldShowQualification())
+				{
+					qualificationInstance.tryShowComponent();
+				}
+				else
+				{
+					void UserMiniProfile.tryShowComponent();
+				}
+			}
+			else
+			{
+				void UserMiniProfile.tryShowComponent();
 			}
 
 			const { Onboarding, CaseName } = require('intranet/onboarding');

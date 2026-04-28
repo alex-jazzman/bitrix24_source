@@ -251,14 +251,16 @@ if (
 			?>
 			<div class="<?= implode(' ', $classList) ?>" id="intranet-user-profile-userpic-avatar"></div>
 
-			<?php if (!$arResult["IsOwnProfile"] && isset($arResult['OTP']['dateDeactivate'], $arResult['OTP']['deactivateStatus'], $arResult['OTP']['deactivateTitle']) && $arResult['OTP']['dateDeactivate'] && $arResult['OTP']['deactivateStatus']): ?>
+			<?php if (!$arResult["IsOwnProfile"] && !empty($arResult['OTP']['deactivateTitle'])): ?>
 			<div class="intranet-user-profile-otp-deactivate-status__wrapper">
 				<div class="intranet-user-profile-otp-deactivate__status">
 					<i class="ui-icon-set --shield-2-attention intranet-user-profile-otp-deactivate-status__icon"></i>
 					<span class="intranet-user-profile-otp-deactivate-status__title"><?= $arResult['OTP']['deactivateTitle'] ?></span>
 				</div>
 			</div>
+			<?php if (!empty($arResult['OTP']['deactivateStatus'])): ?>
 			<div class="intranet-user-profile-otp-deactivate-status__description"><?= $arResult['OTP']['deactivateStatus'] ?></div>
+			<?php endif; ?>
 			<?php endif; ?>
 
 			<?php
@@ -877,12 +879,18 @@ if ($arResult["adminRightsRestricted"])
 		"INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS")) ?>",
 		"INTRANET_USER_PROFILE_REMOVE_ADMIN_RIGHTS" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_REMOVE_ADMIN_RIGHTS")) ?>",
 		"INTRANET_USER_PROFILE_SYNCHRONIZE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SYNCHRONIZE")) ?>",
-		"INTRANET_USER_PROFILE_FIRE_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE_CONFIRM")) ?>",
+		"INTRANET_USER_PROFILE_FIRE_CONFIRM" : "<?= CUtil::JSEscape(
+			Loc::getMessage($arResult['User']['IS_EXTRANET'] ? 'INTRANET_USER_PROFILE_FIRE_CONFIRM_EXTRANET' : 'INTRANET_USER_PROFILE_FIRE_CONFIRM')
+		) ?>",
 		"INTRANET_USER_PROFILE_DELETE_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_DELETE_CONFIRM")) ?>",
-		"INTRANET_USER_PROFILE_HIRE_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_HIRE_CONFIRM")) ?>",
+		"INTRANET_USER_PROFILE_HIRE_CONFIRM" : "<?= CUtil::JSEscape(
+			Loc::getMessage($arResult['User']['IS_EXTRANET'] ? 'INTRANET_USER_PROFILE_HIRE_CONFIRM_EXTRANET' : 'INTRANET_USER_PROFILE_HIRE_CONFIRM')
+		) ?>",
 		"INTRANET_USER_PROFILE_YES" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_YES")) ?>",
 		"INTRANET_USER_PROFILE_YES_FIRE":"<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_YES_FIRE")) ?>",
-		"INTRANET_USER_PROFILE_FIRE_POPUP_TITLE": "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE_POPUP_TITLE")) ?>",
+		"INTRANET_USER_PROFILE_FIRE_POPUP_TITLE": "<?= CUtil::JSEscape(
+			Loc::getMessage($arResult['User']['IS_EXTRANET'] ? 'INTRANET_USER_PROFILE_FIRE_POPUP_TITLE_EXTRANET' : 'INTRANET_USER_PROFILE_FIRE_POPUP_TITLE')
+		) ?>",
 		"INTRANET_USER_PROFILE_NO" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_NO")) ?>",
 		"INTRANET_USER_PROFILE_MOVE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE")) ?>",
 		"INTRANET_USER_PROFILE_CLOSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CLOSE")) ?>",
@@ -917,7 +925,7 @@ if ($arResult["adminRightsRestricted"])
 		"INTRANET_USER_PROFILE_FIRE_INVITED_USER" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE_INVITED_USER")) ?>",
 		"INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM" : "<?= CUtil::JSEscape(
 			Loc::getMessage($isRenamedIntegrator ? 'INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM_RENAMED' : 'INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM', [
-				"#NAME#" => "<b>".$arResult["User"]["FULL_NAME"]."</b>",
+				"#NAME#" => "<b>".htmlspecialcharsbx($arResult["User"]["FULL_NAME"])."</b>",
 				"#LINK_START#" => "<a href=\"javascript:void(0)\" onclick='top.BX.Helper.show(\"redirect=detail&code=7725333\");'>",
 				"#LINK_END#" => "</a>"
 			])
@@ -938,7 +946,7 @@ if ($arResult["adminRightsRestricted"])
 				'INTRANET_USER_PROFILE_FIRST_ADMIN_REQUEST_SENT',
 				[
 					'[br]' => '<br>',
-					'#NAME#' => $arResult['User']['FULL_NAME'],
+					'#NAME#' => htmlspecialcharsbx($arResult['User']['FULL_NAME']),
 				]
 			)
 		) ?>',
@@ -950,7 +958,9 @@ if ($arResult["adminRightsRestricted"])
 				],
 			),
 		) ?>",
-	});
+		'INTRANET_USER_PROFILE_LEGACY_OTP_ALLOW' : '<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_LEGACY_OTP_ALLOW")) ?>',
+		'INTRANET_USER_PROFILE_LEGACY_OTP_DISALLOW' : '<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_LEGACY_OTP_DISALLOW")) ?>'
+	})
 
 	new BX.Intranet.UserProfile.Manager({
 		signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',

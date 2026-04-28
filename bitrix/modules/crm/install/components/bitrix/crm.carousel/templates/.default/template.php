@@ -9,6 +9,7 @@ use Bitrix\Main\Localization\Loc;
 	'ui.design-tokens',
 	'popup',
 	'ajax',
+	'intranet.old-interface.intranet-common',
 ]);
 
 $guid = $component->getGuid();

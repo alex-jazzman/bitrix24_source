@@ -1,5 +1,5 @@
 import { EventEmitter, BaseEvent } from 'main.core.events';
-import { Runtime } from 'main.core';
+import { Extension, Runtime } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
 import { DesktopManager } from 'im.v2.lib.desktop';
@@ -8,39 +8,10 @@ import { EventType, NavigationMenuItem } from 'im.v2.const';
 
 import { updateBrowserTitleCounter } from './helpers/update-browser-title-counter';
 
+import type { SettingsCollection } from 'main.core.collections';
 import type { Store } from 'ui.vue3.vuex';
 
-export { CounterClearActionsByChatType, CounterClearActionsDefault } from './const/const';
-
-type CounterMap = {[chatId: string]: number};
-
-type InitialCounters = {
-	CHAT: CounterMap,
-	LINES: CounterMap,
-	COLLAB: CounterMap,
-	COPILOT: CounterMap,
-	TASKS_TASK: CounterMap,
-	CHANNEL_COMMENT: {
-		[channelChatId: string]: {
-			[commentChatId: string]: number,
-		}
-	},
-	CHAT_MUTED: number[],
-	CHAT_UNREAD: number[],
-	COLLAB_UNREAD: number[],
-	COPILOT_UNREAD: number[],
-	TASKS_TASK_UNREAD: number[],
-	TYPE: {
-		'ALL': number,
-		'CHAT': number,
-		'NOTIFY': number,
-		'LINES': number,
-		'COLLAB': number,
-		'TASK': number,
-		'COPILOT': number,
-		'TASKS_TASK': number,
-	}
-};
+export { CounterClearHandlersByChatType, CounterClearActions } from './const/const';
 
 type NavigationCountersPayload = {
 	chat: number;
@@ -73,14 +44,30 @@ export class CounterManager
 	{
 		this.#store = Core.getStore();
 		this.#emitCountersUpdateWithDebounce = Runtime.debounce(this.#emitCountersUpdate, 0, this);
-		const { counters } = Core.getApplicationData();
-		Logger.warn('CounterManager: counters', counters);
-		this.#init(counters);
+
+		void this.#init();
 	}
 
 	static init()
 	{
 		CounterManager.getInstance();
+	}
+
+	static getCounterDisplayLimit(): number
+	{
+		const settings: SettingsCollection = Extension.getSettings('im.v2.lib.counter');
+
+		return settings.get('counterDisplayLimit');
+	}
+
+	static formatCounter(counter: number): string
+	{
+		if (counter >= CounterManager.getCounterDisplayLimit())
+		{
+			return '99+';
+		}
+
+		return String(counter);
 	}
 
 	emitCounters()
@@ -101,41 +88,22 @@ export class CounterManager
 		document.title = document.title.slice(counterPrefixLength);
 	}
 
-	#init(counters: InitialCounters)
+	async #init()
 	{
-		const preparedChatCounters = this.#prepareChatCounters(counters.CHAT, counters.CHAT_UNREAD);
-		this.#store.dispatch('counters/setUnloadedChatCounters', preparedChatCounters);
-		this.#store.dispatch('counters/setUnloadedLinesCounters', counters.LINES);
-		const preparedCollabCounters = this.#prepareChatCounters(counters.COLLAB, counters.COLLAB_UNREAD);
-		this.#store.dispatch('counters/setUnloadedCollabCounters', preparedCollabCounters);
-		const preparedCopilotCounters = this.#prepareChatCounters(counters.COPILOT, counters.COPILOT_UNREAD);
-		this.#store.dispatch('counters/setUnloadedCopilotCounters', preparedCopilotCounters);
-		const preparedTaskCounters = this.#prepareChatCounters(counters.TASKS_TASK, counters.TASKS_TASK_UNREAD);
-		this.#store.dispatch('counters/setUnloadedTaskCounters', preparedTaskCounters);
-		this.#store.dispatch('counters/setCommentCounters', counters.CHANNEL_COMMENT);
-		this.#store.dispatch('notifications/setCounter', counters.TYPE.NOTIFY);
+		const { counters, notificationCounter } = Core.getApplicationData();
+		Logger.warn('CounterManager: counters', counters);
+
+		await this.#store.dispatch('counters/setCounters', counters);
+		void this.#store.dispatch('notifications/setCounter', notificationCounter);
+
+		const initialChatCounter = this.#store.getters['counters/getTotalChatCounter'];
+		const initialNotificationCounter = notificationCounter;
 
 		this.#emitCountersUpdate();
 		this.#subscribeToCountersChange();
-		this.#emitLegacyChatCounterUpdate(counters.TYPE.CHAT);
-		this.#emitLegacyNotificationCounterUpdate(counters.TYPE.NOTIFY);
+		this.#emitLegacyChatCounterUpdate(initialChatCounter);
+		this.#emitLegacyNotificationCounterUpdate(initialNotificationCounter);
 		this.#onTotalCounterChange();
-	}
-
-	#prepareChatCounters(counters: CounterMap, unreadCounters: number[]): CounterMap
-	{
-		const resultCounters = { ...counters };
-		unreadCounters.forEach((markedChatId) => {
-			const unreadChatHasCounter = Boolean(counters[markedChatId]);
-			if (unreadChatHasCounter)
-			{
-				return;
-			}
-
-			resultCounters[markedChatId] = 1;
-		});
-
-		return resultCounters;
 	}
 
 	#subscribeToCountersChange()

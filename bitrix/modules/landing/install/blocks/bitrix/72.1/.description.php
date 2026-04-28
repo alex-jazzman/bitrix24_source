@@ -9,7 +9,7 @@ use Bitrix\Main\Localization\Loc;
 $return = [
 	'block' => [
 		'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_72_1_NAME'),
-		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'mainpage'],
+		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'vibe'],
 		'section' => ['text_image', 'widgets_text_image'],
 	],
 	'cards' => [],

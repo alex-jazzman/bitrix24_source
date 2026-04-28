@@ -24,7 +24,6 @@ if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
 }
 
 return [
-	'css' => 'dist/html-formatter.bundle.css',
 	'js' => 'dist/html-formatter.bundle.js',
 	'rel' => [
 		'ui.smiley',

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLG_GB_EMPTY_NAME"] = "The name of the blog is not specified";
 $MESS["BLG_GB_DUBLICATE_NAME"] = "Blog with this name already exists";
 $MESS["BLG_GB_EMPTY_URL"] = "The pseudo name of the blog (in Latin letters) is not specified";
@@ -18,4 +18,3 @@ $MESS["BLG_GB_RSS_DETAIL"] = "More...";
 $MESS["BLG_RSS_NAME_SONET"] = "#AUTHOR_NAME#: Conversations";
 $MESS["BLG_RSS_NAME_SONET_GROUP"] = "Workgroup \"#GROUP_NAME#\": Conversations";
 $MESS["BLG_TRY_AGAIN"] = "Error creating the blog. Please try again.";
-?>

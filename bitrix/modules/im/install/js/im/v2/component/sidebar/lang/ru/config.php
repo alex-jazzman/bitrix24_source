@@ -109,5 +109,5 @@ $MESS['IM_SIDEBAR_AI_MODEL_POPUP_HELP'] = "Что выбрать?";
 
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_LIMIT'] = "Превышено число вопросов в поддержку, которые ждут решения.";
 $MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_DIALOG_TITLE'] = "Изменить роль";
-$MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TEXT'] = "Выберите роль [copilot_color]BitrixGPT[/copilot_color] для более точных ответов в нужной области";
-$MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TITLE'] = "BitrixGPT";
+$MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TEXT_MSGVER_1'] = "Выберите роль [copilot_color]#COPILOT_NAME#[/copilot_color] для более точных ответов в нужной области";
+$MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TITLE_MSGVER_1'] = "#COPILOT_NAME#";

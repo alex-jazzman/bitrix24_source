@@ -6,7 +6,7 @@
 		&& typeof this.BX.Vue3.version !== 'undefined'
 	)
 	{
-		var currentVersion = '3.5.4';
+		var currentVersion = '3.5.28';
 
 		if (this.BX.Vue3.version !== currentVersion)
 		{

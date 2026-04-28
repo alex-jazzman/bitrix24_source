@@ -1,6 +1,8 @@
-import { Type, Tag, Dom, Event } from 'main.core';
-import { Outline } from 'ui.icon-set.api.core';
+import { Type, Tag, Dom, Event, Loc } from 'main.core';
+import { Icon, Outline } from 'ui.icon-set.api.core';
 import { ChipDesign, ChipSize, Chip } from 'ui.system.chip';
+import 'ui.hint';
+
 import { InputSize, InputDesign } from './const';
 
 import './input.css';
@@ -14,6 +16,7 @@ export type InputOptions = {
 	label?: string,
 	labelInline?: boolean,
 	placeholder?: string,
+	type?: string,
 	error?: string,
 	size?: InputSize,
 	design?: InputDesign,
@@ -26,11 +29,14 @@ export type InputOptions = {
 	clickable?: boolean,
 	stretched?: boolean,
 	active?: boolean,
+	dataTestId?: string,
+	copyable?: boolean,
 	onClick?: Function,
 	onFocus?: Function,
 	onBlur?: Function,
 	onInput?: Function,
 	onClear?: Function,
+	onCopy?: Function,
 	onChipClick?: Function,
 	onChipClear?: Function,
 };
@@ -43,6 +49,7 @@ export class Input
 	#label: string = '';
 	#labelInline: boolean = false;
 	#placeholder: string = '';
+	#type: string = 'text';
 	#error: string = '';
 	#size: InputSize = InputSize.Lg;
 	#design: InputDesign = InputDesign.Grey;
@@ -55,12 +62,16 @@ export class Input
 	#clickable: boolean = false;
 	#stretched: boolean = false;
 	#active: boolean = false;
+	#copyable: boolean = false;
+	#passwordVisible: boolean = false;
+	#dataTestId: string = '';
 
 	#onClick: ?Function = null;
 	#onFocus: ?Function = null;
 	#onBlur: ?Function = null;
 	#onInput: ?Function = null;
 	#onClear: ?Function = null;
+	#onCopy: ?Function = null;
 	#onChipClick: ?Function = null;
 	#onChipClear: ?Function = null;
 
@@ -73,6 +84,8 @@ export class Input
 	#clearElement: ?HTMLElement = null;
 	#searchElement: ?HTMLElement = null;
 	#dropdownElement: ?HTMLElement = null;
+	#passwordToggleElement: ?HTMLElement = null;
+	#copyElement: ?HTMLElement = null;
 	#chipsInstances: Chip[] = [];
 	#chipElements: HTMLElement[] = [];
 	#chipsContainer: ?HTMLElement = null;
@@ -91,6 +104,7 @@ export class Input
 		this.#label = options.label ?? '';
 		this.#labelInline = options.labelInline === true;
 		this.#placeholder = options.placeholder ?? '';
+		this.#type = options.type ?? 'text';
 		this.#error = options.error ?? '';
 		this.#size = options.size ?? InputSize.Lg;
 		this.#design = options.design ?? InputDesign.Grey;
@@ -103,12 +117,15 @@ export class Input
 		this.#clickable = options.clickable === true;
 		this.#stretched = options.stretched === true;
 		this.#active = options.active === true;
+		this.#copyable = options.copyable === true;
+		this.#dataTestId = options.dataTestId ?? '';
 
 		this.#onClick = options.onClick ?? null;
 		this.#onFocus = options.onFocus ?? null;
 		this.#onBlur = options.onBlur ?? null;
 		this.#onInput = options.onInput ?? null;
 		this.#onClear = options.onClear ?? null;
+		this.#onCopy = options.onCopy ?? null;
 		this.#onChipClick = options.onChipClick ?? null;
 		this.#onChipClear = options.onChipClear ?? null;
 	}
@@ -125,6 +142,8 @@ export class Input
 				${this.#renderChips()}
 				${this.#renderIcon()}
 				${this.#renderInput()}
+				${this.#renderPasswordToggle()}
+				${this.#renderCopyButton()}
 				${this.#renderSearchIcon()}
 				${this.#renderClearIcon()}
 				${this.#renderDropdownIcon()}
@@ -192,6 +211,21 @@ export class Input
 	getPlaceholder(): string
 	{
 		return this.#placeholder;
+	}
+
+	setType(value: string): void
+	{
+		this.#type = value;
+
+		if (this.#inputElement)
+		{
+			this.#inputElement.type = value;
+		}
+	}
+
+	getType(): string
+	{
+		return this.#type;
 	}
 
 	setError(value: string): void
@@ -294,6 +328,28 @@ export class Input
 	{
 		this.#dropdown = value === true;
 		this.#updateRightIconElement(this.#dropdownElement, this.#dropdown);
+	}
+
+	isCopyable(): boolean
+	{
+		return this.#copyable;
+	}
+
+	setCopyable(value: boolean = true): void
+	{
+		this.#copyable = value === true;
+
+		if (this.#copyElement)
+		{
+			if (this.#copyable)
+			{
+				this.#copyElement.removeAttribute('hidden');
+			}
+			else
+			{
+				Dom.attr(this.#copyElement, { hidden: '' });
+			}
+		}
 	}
 
 	isFocused(): boolean
@@ -435,6 +491,45 @@ export class Input
 		}
 	}
 
+	#renderPasswordToggle(): HTMLElement
+	{
+		const isPassword = this.#type === 'password';
+		const icon = new Icon({ icon: Outline.OBSERVER });
+
+		this.#passwordToggleElement = Tag.render`
+			<button
+				type="button"
+				tabindex="0"
+				class="ui-system-input-action-btn"
+				aria-label="${Loc.getMessage('UI_SYSTEM_INPUT_SHOW_PASSWORD_ARIA')}"
+				${isPassword ? '' : 'hidden'}
+			>
+				${icon.render()}
+			</button>
+		`;
+
+		return this.#passwordToggleElement;
+	}
+
+	#renderCopyButton(): HTMLElement
+	{
+		const icon = new Icon({ icon: Outline.COPY });
+
+		this.#copyElement = Tag.render`
+			<button
+				type="button"
+				tabindex="0"
+				class="ui-system-input-action-btn"
+				aria-label="${Loc.getMessage('UI_SYSTEM_INPUT_COPY_TO_CLIPBOARD_ARIA')}"
+				${this.#copyable ? '' : 'hidden'}
+			>
+				${icon.render()}
+			</button>
+		`;
+
+		return this.#copyElement;
+	}
+
 	#renderSearchIcon(): HTMLElement
 	{
 		this.#searchElement = Tag.render`<div class="ui-system-input-cross --${Outline.SEARCH}"></div>`;
@@ -445,7 +540,8 @@ export class Input
 
 	#renderClearIcon(): HTMLElement
 	{
-		this.#clearElement = Tag.render`<div class="ui-system-input-cross --clear --${Outline.CROSS_L}"></div>`;
+		const icon = new Icon({ icon: Outline.CROSS_L });
+		this.#clearElement = Tag.render`<div class="ui-system-input-cross --clear">${icon.render()}</div>`;
 		this.#updateRightIconElement(this.#clearElement, this.#withClear);
 
 		return this.#clearElement;
@@ -481,7 +577,9 @@ export class Input
 			className: 'ui-system-input-value',
 			placeholder: this.#placeholder,
 			disabled: this.#isDisabled(),
+			type: this.#type,
 			value: this.#value,
+			dataTestId: this.#dataTestId,
 		};
 
 		if (this.#rows > 1)
@@ -504,7 +602,9 @@ export class Input
 					style="--placeholder-length: ${this.#placeholder.length}ch;"
 					placeholder="${commonAttrs.placeholder}"
 					${commonAttrs.disabled ? 'disabled' : ''}
+					type="${commonAttrs.type}"
 					value="${commonAttrs.value}"
+					${commonAttrs.dataTestId ? `data-test-id="${commonAttrs.dataTestId}"` : ''}
 				/>
 			`;
 		}
@@ -542,6 +642,16 @@ export class Input
 		if (this.#clearElement)
 		{
 			Event.bind(this.#clearElement, 'click', this.#handleClear.bind(this));
+		}
+
+		if (this.#passwordToggleElement)
+		{
+			Event.bind(this.#passwordToggleElement, 'click', this.#handlePasswordToggle.bind(this));
+		}
+
+		if (this.#copyElement)
+		{
+			Event.bind(this.#copyElement, 'click', this.#handleCopy.bind(this));
 		}
 	}
 
@@ -597,6 +707,51 @@ export class Input
 		event.stopPropagation();
 		this.setValue('');
 		this.#onClear?.(event);
+	}
+
+	#handlePasswordToggle(event: MouseEvent): void
+	{
+		event.stopPropagation();
+		this.#passwordVisible = !this.#passwordVisible;
+
+		if (this.#inputElement)
+		{
+			this.#inputElement.type = this.#passwordVisible ? 'text' : 'password';
+		}
+
+		if (this.#passwordToggleElement)
+		{
+			Dom.attr(this.#passwordToggleElement, {
+				'aria-label': this.#passwordVisible
+					? Loc.getMessage('UI_SYSTEM_INPUT_HIDE_PASSWORD_ARIA')
+					: Loc.getMessage('UI_SYSTEM_INPUT_SHOW_PASSWORD_ARIA'),
+			});
+
+			const nextIcon = this.#passwordVisible ? Outline.CROSSED_EYE : Outline.OBSERVER;
+			Dom.clean(this.#passwordToggleElement);
+			new Icon({ icon: nextIcon }).renderTo(this.#passwordToggleElement);
+		}
+	}
+
+	#handleCopy(event: MouseEvent): void
+	{
+		event.stopPropagation();
+
+		if (this.#value && navigator.clipboard && window.isSecureContext)
+		{
+			navigator.clipboard.writeText(this.#value);
+		}
+
+		if (this.#copyElement)
+		{
+			BX.UI.Hint.show(this.#copyElement, Loc.getMessage('UI_SYSTEM_INPUT_COPIED'));
+
+			setTimeout(() => {
+				BX.UI.Hint.hide(this.#copyElement);
+			}, 1500);
+		}
+
+		this.#onCopy?.(event);
 	}
 
 	#getWrapperClasses(): string
@@ -667,6 +822,16 @@ export class Input
 			Event.unbindAll(this.#clearElement);
 		}
 
+		if (this.#passwordToggleElement)
+		{
+			Event.unbindAll(this.#passwordToggleElement);
+		}
+
+		if (this.#copyElement)
+		{
+			Event.unbindAll(this.#copyElement);
+		}
+
 		this.#chipsInstances.forEach((chip) => chip.destroy());
 		this.#chipsInstances = [];
 		this.#chipElements = [];
@@ -682,5 +847,7 @@ export class Input
 		this.#clearElement = null;
 		this.#searchElement = null;
 		this.#dropdownElement = null;
+		this.#passwordToggleElement = null;
+		this.#copyElement = null;
 	}
 }

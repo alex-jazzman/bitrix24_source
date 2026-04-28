@@ -19,6 +19,7 @@ return [
 		'ui.notification',
 		'crm.timeline.tools',
 		'ui.feedback.form',
+		'crm.ai.name-service',
 		'crm.integration.analytics',
 		'main.core',
 		'main.popup',

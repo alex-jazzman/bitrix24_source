@@ -1,5 +1,7 @@
+import { NameService } from 'crm.ai.name-service';
+
+import { EditableDescriptionAiStatus } from '../../../enums/editable-description-ai-status';
 import { Loader } from './loader';
-import { EditableDescriptionAiStatus } from '../../../../components/enums/editable-description-ai-status'
 
 import '../../../../css/content-blocks/internal/copilot/header-text.css';
 
@@ -26,12 +28,12 @@ export default {
 		{
 			if (this.status === EditableDescriptionAiStatus.IN_PROGRESS)
 			{
-				return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER_PENDING');
+				return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER_PENDING', NameService.copilotNameReplacement());
 			}
 
 			if (this.status === EditableDescriptionAiStatus.SUCCESS)
 			{
-				return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER');
+				return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER', NameService.copilotNameReplacement());
 			}
 
 			return '';

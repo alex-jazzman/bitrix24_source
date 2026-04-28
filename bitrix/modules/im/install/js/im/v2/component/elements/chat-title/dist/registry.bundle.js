@@ -18,7 +18,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  birthday: 'birthday'
 	};
 	const ChatTitleType = {
-	  notes: 'notes'
+	  selfChat: 'selfChat'
 	};
 
 	const ICON_SIZE = 18;
@@ -107,7 +107,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return classes;
 	    },
 	    dialogName() {
-	      if (this.customType === ChatTitleType.notes) {
+	      if (this.customType === ChatTitleType.selfChat) {
 	        return this.loc('IM_CHAT_TITLE_MY_NOTES');
 	      }
 	      if (this.text) {
@@ -212,12 +212,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      return false;
 	    },
-	    isChatMuted() {
-	      const isMuted = this.dialog.muteList.find(element => {
-	        return element === im_v2_application_core.Core.getUserId();
-	      });
-	      return Boolean(isMuted);
-	    },
 	    isAutoDeleteEnabled() {
 	      if (!this.withAutoDelete) {
 	        return false;
@@ -225,7 +219,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.$store.getters['chats/autoDelete/isEnabled'](this.chatId);
 	    },
 	    tooltipText() {
-	      if (this.customType === ChatTitleType.notes) {
+	      if (this.customType === ChatTitleType.selfChat) {
 	        return this.loc('IM_CHAT_TITLE_MY_NOTES');
 	      }
 	      if (this.isSelfChat && this.showItsYou) {
@@ -256,7 +250,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<strong v-if="isSelfChat && showItsYou">
 					<span class="bx-im-chat-title__text --self">({{ loc('IM_CHAT_TITLE_SELF') }})</span>
 				</strong>
-				<span v-if="withMute && isChatMuted" class="bx-im-chat-title__muted-icon"></span>
+				<span v-if="withMute && dialog.isMuted" class="bx-im-chat-title__muted-icon"></span>
 				<BIcon
 					v-if="isAutoDeleteEnabled"
 					:name="OutlineIcons.TIMER_DOT"
@@ -344,10 +338,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (!copilotManager.isCopilotBot(this.dialogId)) {
 	        return '';
 	      }
-	      return copilotManager.getName({
-	        dialogId: this.dialogId,
-	        messageId: this.messageId
-	      });
+	      return copilotManager.getNameWithRole(this.messageId);
 	    }
 	  },
 	  template: `

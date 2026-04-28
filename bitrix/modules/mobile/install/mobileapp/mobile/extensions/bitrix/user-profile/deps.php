@@ -3,20 +3,20 @@
 return [
 	'components' => [
 		'user-profile-tabs',
-		'user.profile',
 		'intranet:user.list',
 	],
 	'extensions' => [
 		'apptheme',
+		'assets/icons',
 		'error',
+		'feature',
 		'loc',
 		'notify-manager',
 		'require-lazy',
+		'toast',
+		'user-profile/analytics',
 		'user-profile/api',
 		'user-profile/const',
-		'assets/icons',
-		'toast',
-		'user/profile',
-		'user-profile/analytics',
+		'user-profile/tabs-preparer',
 	],
 ];

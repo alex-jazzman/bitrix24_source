@@ -1,23 +1,23 @@
 import { ChatType } from 'im.v2.const';
 
 import { isAiAssistant } from './is-ai-assistant';
-import { isNotes } from './is-notes';
-import { PSEUDO_CHAT_TYPE_FOR_NOTES } from '../const';
+import { isSelfChat } from './is-self-chat';
+import { PSEUDO_SELF_CHAT_TYPE } from '../const';
 
 import type { ImModelChat } from 'im.v2.model';
 
 export type ExtendedChatType = $Values<typeof ChatType>
 	| typeof CUSTOM_CHAT_TYPE
-	| typeof PSEUDO_CHAT_TYPE_FOR_NOTES;
+	| typeof PSEUDO_SELF_CHAT_TYPE;
 
 const CUSTOM_CHAT_TYPE = 'custom';
 const AI_ASSISTANT_CHAT_TYPE = 'aiAssistant';
 
 export function getChatType(chat: ImModelChat): ExtendedChatType
 {
-	if (isNotes(chat.dialogId))
+	if (isSelfChat(chat.dialogId))
 	{
-		return PSEUDO_CHAT_TYPE_FOR_NOTES;
+		return PSEUDO_SELF_CHAT_TYPE;
 	}
 
 	if (isAiAssistant(chat.dialogId))

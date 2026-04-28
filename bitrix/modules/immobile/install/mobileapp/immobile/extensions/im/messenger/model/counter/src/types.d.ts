@@ -1,12 +1,13 @@
 import { MessengerModel, PayloadData } from '../../base';
+import { SectionRecentValue} from "../../../provider/pull/base/types/recent";
 
 declare type CounterModelState = {
 	chatId: number,
 	parentChatId: number,
-	type: string,
 	counter: number,
-	locked: boolean,
-	disabled: boolean,
+	isMarkedAsUnread: boolean,
+	isMuted: boolean,
+	recentSections: Array<SectionRecentValue>
 }
 
 declare type CounterModelCollection = {
@@ -17,23 +18,17 @@ export type CounterMessengerModel = MessengerModel<CounterModelCollection>;
 
 export type CounterModelActions = 'counterModel/setList'
 	| 'counterModel/readChildChatsCounters'
-	| 'counterModel/lockChatCounter'
-	| 'counterModel/unlockChatCounter'
-	| 'counterModel/disableChatCounter'
-	| 'counterModel/enableChatCounter'
-	| 'counterModel/setDisableChatCounter'
+	| 'counterModel/readAllChats'
+	| 'counterModel/readByRecentSection'
+	| 'counterModel/setMuted '
 	| 'counterModel/delete'
-	| 'counterModel/clear'
-	| 'counterModel/clearByType'
 ;
 
 export type CounterModelMutation = 'counterModel/set'
-	| 'counterModel/setLock'
-	| 'counterModel/setDisable'
 	| 'counterModel/delete'
 ;
 
-declare type CounterDeleteActions = 'delete' | 'clear';
+declare type CounterDeleteActions = 'delete';
 export interface CounterDeleteData extends PayloadData
 {
 	chatIdList: Array<number>;
@@ -41,25 +36,11 @@ export interface CounterDeleteData extends PayloadData
 }
 declare type CounterSetActions = 'setList'
 	| 'readChildChatsCounters'
+	| 'readAllChats'
+	| 'readByRecentSection'
+	| 'setMuted'
 ;
 export interface CounterSetData extends PayloadData
 {
 	counterList: Array<CounterModelState>
-}
-
-export type CounterSetLockActions = 'lockChatCounter' | 'unlockChatCounter';
-export interface CounterSetLockData extends PayloadData
-{
-	chatId: number,
-	locked: boolean,
-}
-
-export type CounterSetDisableActions = 'disableChatCounter'
-	| 'enableChatCounter'
-	| 'setDisableChatCounter'
-;
-export interface CounterSetDisableData extends PayloadData
-{
-	chatId: number,
-	disabled: boolean,
 }

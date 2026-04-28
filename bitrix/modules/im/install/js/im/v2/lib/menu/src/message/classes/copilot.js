@@ -1,14 +1,13 @@
 import { Loc } from 'main.core';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
+import { type MenuItemOptions } from 'ui.system.menu';
 
 import { Analytics } from 'im.v2.lib.analytics';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { FeedbackManager } from 'im.v2.lib.feedback';
+import { type ImModelChat } from 'im.v2.model';
 
 import { MessageMenu, MenuSectionCode } from './message-base';
-
-import type { ImModelChat } from 'im.v2.model';
-import type { MenuItemOptions } from 'ui.system.menu';
 
 export class CopilotMessageMenu extends MessageMenu
 {
@@ -48,7 +47,6 @@ export class CopilotMessageMenu extends MessageMenu
 				Analytics.getInstance().messageContextMenu.onSendFeedback(this.context.dialogId);
 
 				void this.#openForm();
-				this.menuInstance.close();
 			},
 		};
 	}

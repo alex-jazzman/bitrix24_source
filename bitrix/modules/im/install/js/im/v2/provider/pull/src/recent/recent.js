@@ -1,13 +1,14 @@
 import { Core } from 'im.v2.application.core';
-import { RecentType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
+import { RecentType } from 'im.v2.const';
 
-import { NewMessageManager } from './classes/new-message-manager';
+import { NewMessageManager } from '../classes/new-message-manager';
 import { RecentUpdateManager } from './classes/recent-update-manager';
 import { buildRecentItem } from './helpers/helpers';
 
 import type { ImModelRecentItem, ImModelMessage } from 'im.v2.model';
+import type { RecentTypeItem } from 'im.v2.const';
 import type { PullExtraParams, RawMessage } from '../types/common';
 import type {
 	MessageAddParams,
@@ -15,22 +16,14 @@ import type {
 	MessageDeleteCompleteParams,
 	MultipleMessageDeleteParams,
 } from '../types/message';
-import type { ChatUnreadParams } from '../types/chat';
 import type { UserInviteParams } from '../types/user';
+import type { ChatUserLeaveParams } from '../types/chat';
 import type {
 	RecentHideParams,
 	RecentUpdateParams,
 	UserShowInRecentParams,
 	RecentPinChatParams,
 } from '../types/recent';
-
-const ActionNameByRecentType = {
-	[RecentType.default]: 'recent/setRecent',
-	[RecentType.copilot]: 'recent/setCopilot',
-	[RecentType.openChannel]: 'recent/setChannel',
-	[RecentType.collab]: 'recent/setCollab',
-	[RecentType.taskComments]: 'recent/setTask',
-};
 
 // noinspection JSUnusedGlobalSymbols
 export class RecentPullHandler
@@ -65,14 +58,11 @@ export class RecentPullHandler
 
 		const newRecentItem = buildRecentItem(params);
 
-		recentConfig.sections.forEach((section) => {
-			const actionName = ActionNameByRecentType[section];
-			if (!actionName)
-			{
-				return;
-			}
-
-			void Core.getStore().dispatch(actionName, newRecentItem);
+		recentConfig.sections.forEach((section: RecentTypeItem) => {
+			void Core.getStore().dispatch('recent/setCollection', {
+				type: section,
+				items: [newRecentItem],
+			});
 		});
 	}
 
@@ -86,32 +76,24 @@ export class RecentPullHandler
 		this.#deleteLastMessage(params.dialogId, params.newLastMessage);
 	}
 
-	handleChatUnread(params: ChatUnreadParams)
-	{
-		Logger.warn('RecentPullHandler: handleChatUnread', params);
-		Core.getStore().dispatch('recent/unread', {
-			id: params.dialogId,
-			action: params.active,
-		});
-	}
-
 	handleAddReaction(params: AddReactionParams)
 	{
+		const { dialogId, userId, actualReactions } = params;
 		Logger.warn('RecentPullHandler: handleAddReaction', params);
-		const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](params.dialogId);
+		const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](dialogId);
 		if (!recentItem)
 		{
 			return;
 		}
 
-		const chatIsOpened = Core.getStore().getters['application/isChatOpen'](params.dialogId);
+		const chatIsOpened = Core.getStore().getters['application/isChatOpen'](dialogId);
 		if (chatIsOpened)
 		{
 			return;
 		}
 
-		const message: ?ImModelMessage = Core.getStore().getters['recent/getMessage'](params.dialogId);
-		const isOwnLike = Core.getUserId() === params.userId;
+		const message: ?ImModelMessage = Core.getStore().getters['recent/getMessage'](dialogId);
+		const isOwnLike = Core.getUserId() === userId;
 		const isOwnLastMessage = Core.getUserId() === message.authorId;
 		if (isOwnLike || !isOwnLastMessage)
 		{
@@ -119,48 +101,47 @@ export class RecentPullHandler
 		}
 
 		Core.getStore().dispatch('recent/like', {
-			id: params.dialogId,
-			messageId: params.actualReactions.reaction.messageId,
+			dialogId,
+			messageId: actualReactions.reaction.messageId,
 			liked: true,
 		});
 	}
 
 	handleChatPin(params: RecentPinChatParams)
 	{
+		const { dialogId, active } = params;
 		Logger.warn('RecentPullHandler: handleChatPin', params);
 
 		const manager = new RecentUpdateManager(params);
 		manager.updateRecent();
 
-		Core.getStore().dispatch('recent/pin', { id: params.dialogId, action: params.active });
+		Core.getStore().dispatch('recent/pin', { dialogId, action: active });
 	}
 
 	handleChatHide(params: RecentHideParams)
 	{
+		const { dialogId } = params;
 		Logger.warn('RecentPullHandler: handleChatHide', params);
-		const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](params.dialogId);
+		const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](dialogId);
 		if (!recentItem)
 		{
 			return;
 		}
 
-		void Core.getStore().dispatch('recent/hide', {
-			id: params.dialogId,
-		});
+		void Core.getStore().dispatch('recent/hide', { dialogId });
 	}
 
-	handleChatUserLeave(params)
+	handleChatUserLeave(params: ChatUserLeaveParams)
 	{
+		const { dialogId, userId } = params;
 		Logger.warn('RecentPullHandler: handleChatUserLeave', params);
-		const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](params.dialogId);
-		if (!recentItem || params.userId !== Core.getUserId())
+		const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](dialogId);
+		if (!recentItem || userId !== Core.getUserId())
 		{
 			return;
 		}
 
-		Core.getStore().dispatch('recent/hide', {
-			id: params.dialogId,
-		});
+		void Core.getStore().dispatch('recent/hide', { dialogId });
 	}
 
 	handleUserInvite(params: UserInviteParams)
@@ -168,16 +149,20 @@ export class RecentPullHandler
 		Logger.warn('RecentPullHandler: handleUserInvite', params);
 
 		const messageId = Utils.text.getUuidV4();
-		Core.getStore().dispatch('messages/store', {
+		void Core.getStore().dispatch('messages/store', {
 			id: messageId,
 			date: params.date,
 		});
 
-		Core.getStore().dispatch('recent/setRecent', {
+		const recentItem = {
 			id: params.user.id,
 			invited: params.invited ?? false,
 			isFakeElement: true,
 			messageId,
+		};
+		void Core.getStore().dispatch('recent/setCollection', {
+			type: RecentType.default,
+			items: [recentItem],
 		});
 	}
 
@@ -188,14 +173,15 @@ export class RecentPullHandler
 
 		items.forEach((item) => {
 			const messageId = Utils.text.getUuidV4();
-			Core.getStore().dispatch('messages/store', {
+			void Core.getStore().dispatch('messages/store', {
 				id: messageId,
 				date: item.date,
 			});
 
-			Core.getStore().dispatch('recent/setRecent', {
-				id: item.user.id,
-				messageId,
+			const recentItem = { id: item.user.id, messageId };
+			void Core.getStore().dispatch('recent/setCollection', {
+				type: RecentType.default,
+				items: [recentItem],
 			});
 		});
 	}
@@ -220,13 +206,13 @@ export class RecentPullHandler
 	{
 		if (!newLastMessageId)
 		{
-			Core.getStore().dispatch('recent/hide', { id: dialogId });
+			void Core.getStore().dispatch('recent/hide', { dialogId });
 
 			return;
 		}
 
-		Core.getStore().dispatch('recent/update', {
-			id: dialogId,
+		void Core.getStore().dispatch('recent/update', {
+			dialogId,
 			fields: { messageId: newLastMessageId },
 		});
 	}

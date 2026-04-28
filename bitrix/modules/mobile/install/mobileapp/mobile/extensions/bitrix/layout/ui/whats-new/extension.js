@@ -78,6 +78,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 
 			this.listReadNewsIds = [];
 			this.listMarkReadNewsIds = [];
+			this.pendingReadNewsIds = [];
 			this.onItemsViewable = this.onItemsViewable.bind(this);
 			this.sendReadNewsDebounced = debounce(this.sendReadNews, 500, this);
 
@@ -456,7 +457,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 
 		markNewsAsRead()
 		{
-			const correctList = [];
+			let hasNewItems = false;
 
 			this.listReadNewsIds.forEach((itemId) => {
 				if (!this.listMarkReadNewsIds.includes(itemId))
@@ -465,14 +466,15 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 						this.animateItem(itemId);
 					}, ANIMATE_ITEM_DELAY);
 
-					correctList.push(itemId);
+					this.pendingReadNewsIds.push(itemId);
 					this.listMarkReadNewsIds.push(itemId);
+					hasNewItems = true;
 				}
 			});
 
-			if (correctList.length > 0)
+			if (hasNewItems)
 			{
-				this.sendReadNewsDebounced(correctList);
+				this.sendReadNewsDebounced();
 			}
 
 			setTimeout(() => this.retryPendingAnimations(), RETRY_ANIMATION_DELAY);
@@ -545,8 +547,16 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 				});
 		}
 
-		sendReadNews(newsIds)
+		sendReadNews()
 		{
+			const newsIds = [...this.pendingReadNewsIds];
+			this.pendingReadNewsIds = [];
+
+			if (newsIds.length === 0)
+			{
+				return;
+			}
+
 			this.props.updateReadNewsThunk({
 				newsIds,
 				eventService: this.props.eventService,

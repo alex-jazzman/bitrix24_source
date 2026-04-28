@@ -188,6 +188,7 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 					showIcon: true,
 					title: Loc.getMessage('MAILMOBILE_ACTIONS_DISCUSS_IN_CHAT'),
 					sectionCode: Sections.CREATE,
+					icon: Icon.THREAD_SINGLE,
 				},
 			));
 
@@ -440,8 +441,6 @@ jn.define('mail/simple-list/items/message-redux/src/action-menu', (require, expo
 			void requireLazy('im:messenger/api/dialog-selector').then(async ({ DialogSelector }) => {
 				const selector = new DialogSelector();
 				const { dialogId } = await selector.show({ title: Loc.getMessage('MAILMOBILE_ACTIONS_SELECT_CHAT') });
-
-				console.log(objectId, dialogId);
 
 				Alert.confirm(
 					Loc.getMessage('MAILMOBILE_ACTIONS_DISCUSS_IN_CHAT_CONFIRM_TITLE'),

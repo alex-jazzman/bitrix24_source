@@ -207,7 +207,6 @@ export const ForwardSearch = {
 						v-for="(item, index) in recentSearchItems"
 						:key="item.dialogId"
 						:dialogId="item.dialogId"
-						:replaceWithNotes="true"
 						@clickItem="onClickRecentItem($event, index)"
 					/>
 				</template>
@@ -219,7 +218,6 @@ export const ForwardSearch = {
 						:dateMessage="item.dateMessage"
 						:withDate="true"
 						:query="query"
-						:replaceWithNotes="true"
 						@clickItem="onClickItem($event, index)"
 					/>
 					<EmptyState v-if="isEmptyState" />

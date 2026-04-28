@@ -6,6 +6,7 @@
 jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
@@ -24,6 +25,41 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { parserSmile } = require('im/messenger/lib/parser/functions/smile');
 	const { parserContext } = require('im/messenger/lib/parser/functions/context');
 	const { parserDate } = require('im/messenger/lib/parser/functions/date');
+	const { QuoteActive } = require('im/messenger/lib/parser/elements/dialog/message/quote-active');
+	const { QuoteInactive } = require('im/messenger/lib/parser/elements/dialog/message/quote-inactive');
+	const { MessageText } = require('im/messenger/lib/parser/elements/dialog/message/text');
+	const { NEW_LINE } = require('im/messenger/lib/parser/const');
+
+	function removeExtraNewLinesAfterQuotes(elements)
+	{
+		const quoteTypes = new Set([QuoteActive.getType(), QuoteInactive.getType()]);
+
+		return elements.filter((element, index) => {
+			if (index === 0)
+			{
+				return true;
+			}
+
+			const prevElement = elements[index - 1];
+			const isAfterQuote = quoteTypes.has(prevElement.type);
+			if (!isAfterQuote || element.type !== MessageText.getType())
+			{
+				return true;
+			}
+
+			if (element.text === NEW_LINE)
+			{
+				return false;
+			}
+
+			if (element.text.startsWith(NEW_LINE))
+			{
+				element.text = element.text.slice(1);
+			}
+
+			return true;
+		});
+	}
 
 	const parser = {
 		decodeMessageFromText(text, options = {})
@@ -36,13 +72,13 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserDate.decode(text);
 
 			// TODO: support bb code [context]
-			text = text.replace(
+			text = text.replaceAll(
 				/\[context=(chat\d+|\d+:\d+)\/(\d+)](.*?)\[\/context]/gi,
 				(whole, dialogId, messageId, message) => message,
 			);
 
 			// TODO: support bb code [chat]
-			text = text.replace(/\[chat=(imol\|)?(\d+)](.*?)\[\/chat]/gi, (whole, imol, chatId, text) => {
+			text = text.replaceAll(/\[chat=(imol\|)?(\d+)](.*?)\[\/chat]/gi, (whole, imol, chatId, text) => {
 				if (imol)
 				{
 					return text;
@@ -60,14 +96,19 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserAction.decodeSend(text);
 			text = parserCall.simplifyPch(text);
 			text = parserCall.decode(text);
+			text = parserQuote.decodeCode(text);
 			text = parserQuote.decodeArrowQuote(text);
 			text = parserQuote.decodeQuote(text, options);
-			text = parserQuote.decodeCode(text);
 			text = parserImage.decodeIcon(text);
 			text = parserQuote.decodeTextAroundQuotes(text);
 
 			const elementList = parsedElements.getOrderedList(text);
 			parsedElements.clean();
+
+			if (Feature.isChatDialogCompactQuoteSupported)
+			{
+				return removeExtraNewLinesAfterQuotes(elementList);
+			}
 
 			return elementList;
 		},

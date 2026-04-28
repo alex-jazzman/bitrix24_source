@@ -28,6 +28,7 @@ $APPLICATION->IncludeComponent(
 			'sourceId' => (string)($request->get('sourceId') ?? 0),
 			'datasetId' => (int)($request->get('datasetId') ?? 0),
 			'connection' => is_array($request->get('connection')) ? $request->get('connection') : [],
+			'sectionsConfig' => is_array($request->get('sectionsConfig')) ? $request->get('sectionsConfig') : [],
 		],
 
 		'CLOSE_AFTER_SAVE' => false,

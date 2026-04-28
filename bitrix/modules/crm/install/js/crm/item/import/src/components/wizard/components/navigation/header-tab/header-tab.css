@@ -1,0 +1,9 @@
+.crm-item-import__wizard-header-tab {
+	color: var(--ui-color-palette-gray-50);
+	font-weight: var(--ui-font-weight-medium);
+	cursor: default;
+}
+
+.crm-item-import__wizard-header-tab.--active {
+	color: var(--ui-color-palette-gray-90);
+}

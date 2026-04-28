@@ -26,4 +26,5 @@
 	\Bitrix\Sign\Controllers\V1\B2e\Document\TemplateFolder::class => 'lib/Controllers/V1/B2e/Document/TemplateFolder.php',
 	\Bitrix\Sign\Controllers\V1\B2e\Signers::class => 'lib/Controllers/V1/B2e/Signers.php',
 	\Bitrix\Sign\Controllers\V1\B2e\Onboarding::class => 'lib/Controllers/V1/B2e/Onboarding.php',
+	\Bitrix\Sign\Controllers\V1\B2e\Document\Placeholder::class => 'lib/Controllers/V1/B2e/Document/Placeholder.php',
 ]);

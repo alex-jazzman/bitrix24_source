@@ -206,6 +206,13 @@ elseif($action === 'SAVE')
 	if(isset($_POST['OBSERVER_IDS']))
 	{
 		$fields['OBSERVER_IDS'] = is_array($_POST['OBSERVER_IDS']) ? $_POST['OBSERVER_IDS'] : array();
+		if ($ID > 0 && $previousFields && !array_key_exists('OBSERVER_IDS', $previousFields))
+		{
+			$previousFields['OBSERVER_IDS'] = Crm\Observer\ObserverManager::getEntityObserverIDs(
+				CCrmOwnerType::Lead,
+				$ID
+			);
+		}
 	}
 
 	//region Check params
@@ -779,25 +786,27 @@ elseif($action === 'SAVE')
 			}
 		}
 
-		$arErrors = array();
-		\CCrmBizProcHelper::AutoStartWorkflows(
-			\CCrmOwnerType::Lead,
-			$ID,
-			$isNew ? \CCrmBizProcEventType::Create : \CCrmBizProcEventType::Edit,
-			$arErrors,
-			isset($_POST['bizproc_parameters']) ? $_POST['bizproc_parameters'] : null
+		$starter = new Crm\Integration\BizProc\Starter\CrmStarter(
+			new Crm\Integration\BizProc\Starter\Dto\DocumentDto(
+				\CCrmOwnerType::Lead,
+				(int)$ID
+			)
 		);
-
-		if($isNew)
+		$bpParameters = $_POST['bizproc_parameters'] ?? null;
+		$starterData = new Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+			actualFields: $fields,
+			previousFields: $previousFields,
+			userId: \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId(),
+			parameters: is_array($bpParameters) || is_string($bpParameters) ? $bpParameters : null,
+			isManual: true,
+		);
+		if ($isNew)
 		{
-			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-			$starter->setUserIdFromCurrent()->runOnAdd();
+			$starter->runOnDocumentAdd($starterData);
 		}
-		else if(is_array($previousFields))
+		elseif (is_array($previousFields))
 		{
-			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-			$starter->setUserIdFromCurrent();
-			$starter->runOnUpdate($fields, $previousFields);
+			$starter->runOnDocumentUpdate($starterData);
 		}
 	}
 
@@ -882,7 +891,13 @@ elseif($action === 'DELETE')
 	}
 
 	$entity = new \CCrmLead(false);
-	if (!$entity->Delete($ID, array('PROCESS_BIZPROC' => false)))
+	if (!$entity->Delete($ID, [
+		'PROCESS_BIZPROC' => false,
+		'ANALYTICS' => [
+			'c_section' => Crm\Integration\Analytics\Dictionary::SECTION_LEAD,
+			'c_sub_section' => Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+		],
+	]))
 	{
 		/** @var CApplicationException $ex */
 		$ex = $APPLICATION->GetException();
@@ -1106,4 +1121,49 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	}
 	require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
 	die();
+}
+elseif ($action === 'DETACH_OPEN_LINE')
+{
+	$entityId = (int)($_POST['ACTION_ENTITY_ID'] ?? 0);
+
+	if ($entityId <= 0)
+	{
+		__CrmLeadDetailsEndJsonResponse(['ERROR' => GetMessage('CRM_LEAD_NOT_FOUND')]);
+	}
+
+	$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::Lead);
+	$item = $factory->getItem($entityId, [\Bitrix\Crm\Item::FIELD_NAME_FM]);
+
+	if (!$item)
+	{
+		__CrmCompanyDetailsEndJsonResonse(['ERROR' => GetMessage('CRM_LEAD_NOT_FOUND')]);
+	}
+
+	$multiField = $item->getFm();
+	foreach ($multiField as $field)
+	{
+		if (
+			$field->getTypeId() === \Bitrix\Crm\Multifield\Type\Link::ID
+			&& $field->getValueType() === \Bitrix\Crm\Multifield\Type\Link::VALUE_TYPE_USER
+			&& $field->getId()
+		)
+		{
+			$multiField->removeById($field->getId());
+		}
+	}
+
+	$item->setFm($multiField);
+
+	$updateOperation = $factory
+		->getUpdateOperation($item)
+		->disableAllChecks()
+		->disableAutomation()
+		->disableBizProc()
+		->enableCheckAccess();
+	$result = $updateOperation->launch();
+
+	__CrmLeadDetailsEndJsonResponse([
+		'IS_SUCCESS' => $result->isSuccess(),
+		'ERROR' => implode(', ', $result->getErrorMessages())
+	]);
 }

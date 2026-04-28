@@ -10,7 +10,6 @@ return [
 	'rel' => [
 		'main.sidepanel',
 		'ui.vue3',
-		'main.polyfill.intersectionobserver',
 		'main.core',
 		'main.core.events',
 		'ui.icon-set.api.vue',

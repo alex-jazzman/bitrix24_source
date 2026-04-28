@@ -50,6 +50,10 @@
 	max-width: 230px;
 }
 
+.dashboard-params-container .ui-tag-selector-tag.ui-tag-selector-tag-readonly {
+	cursor: default;
+}
+
 .biconnector-scope-confirmation-popup-content {
 	margin-top: 12px;
 	font-weight: var(--ui-font-weight-normal);

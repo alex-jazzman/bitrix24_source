@@ -12,3 +12,5 @@ $MESS["CRM_OLD_CARD_LAYOUT_DISABLE_ALERT_TITLE_LESS_THAN_DAY"] = "A new layout o
 $MESS["CRM_OLD_CARD_LAYOUT_DISABLE_ALERT_TITLE_PLURAL_0"] = "A new layout of this view will be applied in #DAYS_UNTIL_DISABLE# day.";
 $MESS["CRM_OLD_CARD_LAYOUT_DISABLE_ALERT_TITLE_PLURAL_1"] = "A new layout of this view will be applied in #DAYS_UNTIL_DISABLE# days.";
 $MESS["CRM_OLD_CARD_LAYOUT_DISABLE_ALERT_TITLE_PLURAL_2"] = "A new layout of this view will be applied in #DAYS_UNTIL_DISABLE# days.";
+$MESS["CRM_OLD_CARD_LAYOUT_INVOICE_READONLY_ALERT_TEXT"] = "Legacy invoice forms will be disabled soon. After a short grace period only the new forms will be available. Export your invoices now, and then import them back using the new forms to make sure you don't lose them. [helpdeskLink]Learn more[/helpdeskLink]";
+$MESS["CRM_OLD_CARD_LAYOUT_INVOICE_READONLY_ALERT_TITLE"] = "Migration to the new invoice forms is almost over.";

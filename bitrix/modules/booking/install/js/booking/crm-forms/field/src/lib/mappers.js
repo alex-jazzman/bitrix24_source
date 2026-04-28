@@ -1,5 +1,5 @@
 import { DayIndexDict } from '../const/const';
-import type { Resource } from '../types';
+import type { Resource, ResourceSkuRelation } from '../types';
 
 export function mapDtoToResource(resourcesDto: ResourceDto[]): Resource[]
 {
@@ -14,6 +14,22 @@ export function mapDtoToResource(resourcesDto: ResourceDto[]): Resource[]
 			}),
 		};
 	});
+}
+
+export function mapResourcesToFormData(resources: ResourceSkuRelation[]): FormData
+{
+	const fd = new FormData();
+
+	resources.forEach((resource, index) => {
+		fd.append(`resources[${index}][id]`, resource.id);
+
+		for (const sku of resource.skus)
+		{
+			fd.append(`resources[${index}][skus][]`, sku);
+		}
+	});
+
+	return fd;
 }
 
 type ResourceDto = {

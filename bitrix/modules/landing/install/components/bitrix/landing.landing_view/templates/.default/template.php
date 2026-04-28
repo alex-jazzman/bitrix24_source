@@ -14,8 +14,8 @@ use Bitrix\Landing\Config;
 use Bitrix\Landing\Copilot;
 use Bitrix\Landing\Manager;
 use Bitrix\Landing\Site;
-use Bitrix\Landing\Mainpage;
 use Bitrix\Landing\Metrika;
+use Bitrix\Landing\Vibe\Vibe;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
@@ -26,17 +26,22 @@ Loc::loadMessages(Manager::getDocRoot() . '/bitrix/modules/landing/lib/mutator.p
 
 $isKnowledge = $arParams['TYPE'] === 'KNOWLEDGE' || $arParams['TYPE'] === 'GROUP';
 $isFormEditor = $arResult['SPECIAL_TYPE'] === Site\Type::PSEUDO_SCOPE_CODE_FORMS;
-$isMainpageEditor = $arParams['TYPE'] === Site\Type::SCOPE_CODE_MAINPAGE;
-$isMainpageFeatureAvailable = Mainpage\Manager::isFeatureEnable();
 $context = Application::getInstance()->getContext();
 $request = $context->getRequest();
 $generationId = $request->get('site_generated') ? (int)$request->get('site_generated') : null;
 $isNewLanding = $request->get('newLanding') === 'Y';
 
-if (
-	$isMainpageEditor
-	&& !Mainpage\Manager::isAvailable()
-)
+$isVibeEditor = $arParams['TYPE'] === Site\Type::SCOPE_CODE_VIBE;
+if ($isVibeEditor)
+{
+	/** @var Vibe $vibe */
+	$vibe = $arResult['VIBE'];
+	$isVibePublic = isset($vibe) && $vibe->isPublished();
+	$isVibeAvailable = isset($vibe) && $vibe->isAvailable();
+	$isVibeFeatureAvailable = Vibe::isFeatureEnable();
+}
+
+if ($isVibeEditor && !$isVibeAvailable)
 {
 	?>
 	<div class="landing-error-page">
@@ -93,7 +98,7 @@ $assets->addAsset(
 	Assets\Location::LOCATION_KERNEL
 );
 
-if ($isMainpageEditor)
+if ($isVibeEditor)
 {
 	Asset::getInstance()->addCSS('/bitrix/components/bitrix/landing.landing_view/templates/.default/mainpage-style.css');
 }
@@ -141,7 +146,7 @@ if ($request->get('landing_mode') === 'edit')
 			->setSubSection('from_template_previewer')
 		;
 	}
-	elseif ($isMainpageEditor)
+	elseif ($isVibeEditor)
 	{
 		// todo: do nothing
 	}
@@ -363,7 +368,7 @@ if (!$request->offsetExists('landing_mode')):
 		<?
 	}
 	?>
-	<div class="landing-ui-panel landing-ui-panel-top<?= $panelModifier;?>">
+	<div class="landing-ui-panel landing-ui-panel-top<?= $panelModifier ?>">
 		<!-- region Logotype -->
 		<div class="landing-ui-panel-top-logo">
 			<?php
@@ -371,11 +376,6 @@ if (!$request->offsetExists('landing_mode')):
 			if ($arParams['TYPE'] === 'GROUP')
 			{
 				$href = '#';
-			}
-			else if ($isMainpageEditor)
-			{
-				$href = parse_url($curUrl)['path'];
-				$uiPanelTopClassList .= ' --mainpage-link';
 			}
 			else
 			{
@@ -396,12 +396,12 @@ if (!$request->offsetExists('landing_mode')):
 						.'<span class="landing-ui-panel-top-logo-icon fa fa-clock-three"></span>'
 						.'<span class="landing-ui-panel-top-logo-text left-spaced">'.Loc::getMessage('LANDING_TPL_START_PAGE_FORM_LOGO_SMN').'</span>';
 				}
-				else if (Manager::isB24() && $isMainpageEditor)
+				else if (Manager::isB24() && $isVibeEditor)
 				{
 					echo '<span class="landing-ui-panel-top-logo-text">'.Loc::getMessage("LANDING_TPL_START_PAGE_LOGO").'</span>'
 						.'<span class="landing-ui-panel-top-logo-color">'.Loc::getMessage('LANDING_TPL_START_PAGE_LOGO_24').'</span>'
 						.'<span class="landing-ui-panel-top-logo-icon fa fa-clock-three"></span>'
-						.'<span class="landing-ui-panel-top-logo-text left-spaced">'.Loc::getMessage('LANDING_TPL_START_PAGE_MAINPAGE').'</span>';
+						.'<span class="landing-ui-panel-top-logo-text left-spaced">'.Loc::getMessage('LANDING_TPL_VIEW_LOGO_WELCOME_PAGE').'</span>';
 				}
 				else if (!Manager::isB24() && $isFormEditor)
 				{
@@ -441,20 +441,20 @@ if (!$request->offsetExists('landing_mode')):
 		<!-- endregion -->
 
 		<!-- region landing.selector -->
-		<?php if (!$isMainpageEditor): ?>
-		<div class="landing-ui-panel-top-selector">
-			<?$APPLICATION->includeComponent('bitrix:landing.selector', '', [
-				'TYPE' => $arParams['TYPE'],
-				'SITE_ID' => $siteId,
-				'FOLDER_ID' => $folderId,
-				'LANDING_ID' => $arResult['LANDING']->getId(),
-				'INPUT_VALUE' => $arResult['LANDING']->getTitle(),
-				'PAGE_URL_LANDING_VIEW' => $arParams['~PARAMS']['sef_url']['landing_view'] ?? '',
-				'PAGE_URL_LANDING_ADD' => !$isFormEditor ? $urlLandingAdd : '',
-				'PAGE_URL_FOLDER_ADD' => !$isFormEditor ? $urlFolderAdd : '',
-				'PAGE_URL_FORM_ADD' => $isFormEditor ? $urlFormAdd : '',
-			]);?>
-		</div>
+		<?php if (!$isVibeEditor): ?>
+			<div class="landing-ui-panel-top-selector">
+				<?php $APPLICATION->includeComponent('bitrix:landing.selector', '', [
+					'TYPE' => $arParams['TYPE'],
+					'SITE_ID' => $siteId,
+					'FOLDER_ID' => $folderId,
+					'LANDING_ID' => $arResult['LANDING']->getId(),
+					'INPUT_VALUE' => $arResult['LANDING']->getTitle(),
+					'PAGE_URL_LANDING_VIEW' => $arParams['~PARAMS']['sef_url']['landing_view'] ?? '',
+					'PAGE_URL_LANDING_ADD' => !$isFormEditor ? $urlLandingAdd : '',
+					'PAGE_URL_FOLDER_ADD' => !$isFormEditor ? $urlFolderAdd : '',
+					'PAGE_URL_FORM_ADD' => $isFormEditor ? $urlFormAdd : '',
+				]); ?>
+			</div>
 		<?php endif; ?>
 		<!--  endregion -->
 
@@ -536,24 +536,24 @@ if (!$request->offsetExists('landing_mode')):
 		<!-- endregion -->
 
 		<div class="landing-ui-panel-top-menu" id="landing-panel-settings">
-			<?if ($arParams['DRAFT_MODE'] != 'Y'):?>
-				<?if (
+			<?php if ($arParams['DRAFT_MODE'] != 'Y'):?>
+				<?php if (
 					$arResult['IS_AREA'] === false
-					&& !$isMainpageEditor
+					&& !$isVibeEditor
 				):?>
-					<div <?
-					?>id="landing-popup-preview-btn" <?
-					   ?>data-domain="<?= $site['DOMAIN_NAME']?>" <?
-					   ?>data-form-verification-required="<?=(($isFormEditor && $arResult['FORM_VERIFICATION_REQUIRED']) ? '1' : '0')?>" <?
-					   ?>data-form-verification-entity="<?=(int)$arResult['VERIFY_FORM_ID']?>" <?
-					   ?>class="ui-btn ui-btn-light-border landing-ui-panel-top-menu-link landing-btn-menu">
+					<div
+						id="landing-popup-preview-btn"
+						data-domain="<?= $site['DOMAIN_NAME']?>"
+						data-form-verification-required="<?=(($isFormEditor && $arResult['FORM_VERIFICATION_REQUIRED']) ? '1' : '0')?>"
+						data-form-verification-entity="<?=(int)$arResult['VERIFY_FORM_ID']?>"
+						class="ui-btn ui-btn-light-border landing-ui-panel-top-menu-link landing-btn-menu">
 						<?= $isFormEditor ? Loc::getMessage('LANDING_TPL_PREVIEW_URL_OPEN_FORM') : Loc::getMessage('LANDING_TPL_PREVIEW_URL_OPEN');?>
 					</div>
 				<?endif;?>
 
 				<?php if (!$isFormEditor): ?>
 					<?php
-						$featuresText = $isMainpageEditor
+						$featuresText = $isVibeEditor
 							? Loc::getMessage('LANDING_MAINPAGE_FEATURES')
 							: $component->getMessageType('LANDING_TPL_FEATURES');
 					?>
@@ -572,22 +572,22 @@ if (!$request->offsetExists('landing_mode')):
 			<?endif;?>
 		</div>
 
-		<?php if ($isMainpageEditor && isset($arResult['MAINPAGE_IS_PUBLIC'])): ?>
-			<?php if ($isMainpageFeatureAvailable): ?>
+		<?php if ($isVibeEditor): ?>
+			<?php if ($isVibeFeatureAvailable ?? false): ?>
 				<div class="landing-ui-panel-top-mainpage-public">
 					<?php $hide = ' style="display: none;"'; ?>
 
 					<div
-						id="landing-mainpage-unpublication"
+						id="landing-vibe-unpublication"
 						class="ui-btn ui-btn-light-border"
-						<?= $arResult['MAINPAGE_IS_PUBLIC'] ? '' : $hide ?>
+						<?= ($isVibePublic ?? false) ? '' : $hide ?>
 					>
 						<?= Loc::getMessage('LANDING_MAINPAGE_UNPUBLIC') ?>
 					</div>
 					<div
-						id="landing-mainpage-publication"
+						id="landing-vibe-publication"
 						class="ui-btn ui-btn-primary"
-						<?= $arResult['MAINPAGE_IS_PUBLIC'] ? $hide : '' ?>
+						<?= ($isVibePublic ?? false) ? $hide : '' ?>
 					>
 						<?= Loc::getMessage('LANDING_MAINPAGE_PUBLIC') ?>
 					</div>
@@ -595,9 +595,11 @@ if (!$request->offsetExists('landing_mode')):
 					<script>
 						BX.ready(() => {
 							new BX.Landing.Component.View.MainpagePublication({
-								buttonPublic: BX('landing-mainpage-publication'),
-								buttonUnpublic: BX('landing-mainpage-unpublication'),
-								isPublic: <?= $arParams['MAINPAGE_IS_PUBLIC'] ? 'true' : 'false' ?>,
+								buttonPublic: BX('landing-vibe-publication'),
+								buttonUnpublic: BX('landing-vibe-unpublication'),
+								vibeModuleId: '<?= isset($vibe) ? CUtil::JSEscape($vibe->getModuleId()) : null ?>',
+								vibeEmbedId: '<?= isset($vibe) ? CUtil::JSEscape($vibe->getEmbedId()) : null ?>',
+								isPublic: <?= ($isVibePublic ?? false) ? 'true' : 'false' ?>,
 							});
 						});
 					</script>
@@ -605,7 +607,7 @@ if (!$request->offsetExists('landing_mode')):
 			<?php else: ?>
 				<div class="landing-ui-panel-top-mainpage-public" onclick="BX.UI.InfoHelper.show('limit_office_vibe');">
 					<div
-						id="landing-mainpage-publication-disabled"
+						id="landing-vibe-publication-disabled"
 						class="ui-btn ui-btn-primary landing-ui-disabled"
 					>
 						<?= Loc::getMessage('LANDING_MAINPAGE_PUBLIC') ?>
@@ -870,7 +872,7 @@ if ($request->offsetExists('landing_mode'))
 
 	<?php
 	if (
-		$isMainpageEditor
+		$isVibeEditor
 		&& \Bitrix\Main\Loader::includeModule('intranet')
 	)
 	{
@@ -966,7 +968,7 @@ else
 				<?= \CUtil::phpToJSObject($arResult['TOP_PANEL_CONFIG']);?>,
 				true
 			);
-			<?php if (!$isKnowledge && !$isMainpageEditor):?>
+			<?php if (!$isKnowledge && !$isVibeEditor):?>
 				<?php
 					$siteGenerationId = null;
 					$generation = new Copilot\Generation();
@@ -1077,7 +1079,7 @@ else
 				</div>
 			</div>
 			<div class="landing-ui-view-iframe-wrapper">
-				<iframe src="<?= $urls['landingFrame']->getUri();?>" class="landing-ui-view" id="landing-view-frame" allowfullscreen></iframe>
+				<iframe src="<?= $urls['landingFrame']->getUri() ?>" class="landing-ui-view" id="landing-view-frame" allowfullscreen></iframe>
 			</div>
 		</div>
 	</div>

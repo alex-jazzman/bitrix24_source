@@ -12,6 +12,7 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { ChatDataProvider } = require('im/messenger/provider/data');
 
 	/**
 	 * @class CallManager
@@ -36,6 +37,7 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 			this.core = serviceLocator.get('core');
 			this.store = this.core.getStore();
 			this.messengerInitService = serviceLocator.get('messenger-init-service');
+			this.chatDataProvider = new ChatDataProvider();
 
 			this.bindMethods();
 		}
@@ -73,17 +75,24 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 			}
 		}
 
-		createAudioCall(dialogId)
+		async createAudioCall(dialogId)
 		{
 			Logger.info('CallManager.createAudioCall', dialogId);
 			const currentUser = this.core.getUserId();
+
+			const chatData = await this.#prepareCallChatData(dialogId);
+
+			if (!chatData)
+			{
+				Logger.error('CallManager.createAudioCall: failed to get chat data', dialogId);
+			}
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
 				const eventData = {
 					dialogId,
 					video: false,
-					chatData: this.store.getters['dialoguesModel/getById'](dialogId),
+					chatData,
 					userData: {
 						[currentUser]: this.store.getters['usersModel/getById'](currentUser),
 					},
@@ -97,7 +106,7 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 			const eventData = {
 				userId: dialogId,
 				video: false,
-				chatData: this.store.getters['dialoguesModel/getById'](dialogId),
+				chatData,
 				userData: {
 					[dialogId]: this.store.getters['usersModel/getById'](dialogId),
 					[currentUser]: this.store.getters['usersModel/getById'](currentUser),
@@ -107,17 +116,24 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 			BX.postComponentEvent(EventType.callManager.createCall, [eventData], 'calls');
 		}
 
-		createVideoCall(dialogId)
+		async createVideoCall(dialogId)
 		{
 			Logger.info('CallManager.createVideoCall', dialogId);
 			const currentUser = this.core.getUserId();
+
+			const chatData = await this.#prepareCallChatData(dialogId);
+
+			if (!chatData)
+			{
+				Logger.error('CallManager.createVideoCall: failed to get chat data', dialogId);
+			}
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
 				const eventData = {
 					dialogId,
 					video: true,
-					chatData: this.store.getters['dialoguesModel/getById'](dialogId),
+					chatData,
 					userData: {
 						[currentUser]: this.store.getters['usersModel/getById'](currentUser),
 					},
@@ -132,7 +148,7 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 			const eventData = {
 				userId: dialogId,
 				video: true,
-				chatData: this.store.getters['dialoguesModel/getById'](dialogId),
+				chatData,
 				userData: {
 					[dialogId]: userData,
 					[currentUser]: this.store.getters['usersModel/getById'](currentUser),
@@ -146,13 +162,18 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 		{
 			Logger.info('CallManager.joinCall', callId);
 
-			BX.postComponentEvent(EventType.call.join, [{callId, callUuid, associatedEntity}], 'calls');
+			BX.postComponentEvent(EventType.call.join, [{ callId, callUuid, associatedEntity }], 'calls');
 		}
 
-		leaveCall(dialogId)
+		async leaveCall(dialogId)
 		{
 			Logger.info('CallManager.leaveCall', dialogId);
-			const chatData = this.store.getters['dialoguesModel/getById'](dialogId);
+			const chatData = await this.#prepareCallChatData(dialogId);
+
+			if (!chatData)
+			{
+				Logger.warn('CallManager.leaveCall: failed to prepare chat data', dialogId);
+			}
 
 			const eventData = {
 				dialogId,
@@ -180,7 +201,7 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 		sendAnalyticsEvent(dialogId, callElement, analyticSection)
 		{
 			const dialogData = this.store.getters['dialoguesModel/getById'](dialogId);
-			const callType = dialogData.type === DialogType.videoconf
+			const callType = dialogData?.type === DialogType.videoconf
 				? Analytics.Type.videoconf
 				: (
 					DialogHelper.isDialogId(dialogId)
@@ -189,18 +210,98 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 				)
 			;
 
+			const section = this.isTaskDialog(dialogData)
+				? Analytics.Section.taskChat
+				: analyticSection
+			;
+
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
 				.setCategory(Analytics.Category.messenger)
 				.setEvent(Analytics.Event.clickCallButton)
 				.setType(callType)
-				.setSection(analyticSection)
+				.setSection(section)
 				.setSubSection(Analytics.SubSection.window)
 				.setElement(callElement)
 				.setP5(`chatId_${dialogData.chatId}`)
 			;
 
 			analytics.send();
+			this.sendTaskCallAnalytics(dialogData, callElement);
+		}
+
+		sendTaskCallAnalytics(dialogData, callElement)
+		{
+			if (!this.isTaskDialog(dialogData))
+			{
+				return;
+			}
+
+			const taskIdParam = this.getTaskIdParam(dialogData);
+			const analyticsType = callElement === Analytics.Element.audiocall
+				? Analytics.Type.audio
+				: Analytics.Type.video;
+
+			const taskAnalytics = new AnalyticsEvent()
+				.setTool(Analytics.Tool.task)
+				.setCategory(Analytics.Category.chatOperations)
+				.setEvent(Analytics.Event.clickCallButton)
+				.setType(analyticsType)
+				.setSection(Analytics.Section.chatTasks)
+				.setP1(taskIdParam)
+			;
+
+			taskAnalytics.send();
+		}
+
+		async #prepareCallChatData(dialogId)
+		{
+			const result = await this.chatDataProvider.get({ dialogId });
+			const dialog = result.getData();
+
+			if (!dialog)
+			{
+				Logger.warn('CallManager.#prepareCallChatData: dialog not found', dialogId);
+
+				return null;
+			}
+
+			return {
+				dialogId: dialog.dialogId,
+				chatId: dialog.chatId,
+				name: dialog.name,
+				avatar: dialog.avatar || '',
+				color: dialog.color,
+				type: dialog.type,
+				userCounter: dialog.userCounter,
+				entityType: dialog.entityType,
+				entityId: dialog.entityId,
+				entityData1: dialog.entityData1,
+				entityData2: dialog.entityData2,
+				entityData3: dialog.entityData3,
+			};
+		}
+
+		getTaskIdParam(dialogData)
+		{
+			if (!this.isTaskDialog(dialogData))
+			{
+				return '';
+			}
+
+			const rawTaskId = dialogData?.entityLink?.id ?? dialogData?.entityId;
+			const taskId = Number.parseInt(rawTaskId, 10);
+			if (!Number.isInteger(taskId))
+			{
+				return 'taskId_0';
+			}
+
+			return `taskId_${taskId}`;
+		}
+
+		isTaskDialog(dialogData)
+		{
+			return dialogData?.type === DialogType.tasksTask;
 		}
 	}
 

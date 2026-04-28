@@ -40,10 +40,4 @@ $logo24 = Intranet\Util::getLogo24()
 			?></span><?php
 		endif;?>
 	</a>
-	<?php
-	$APPLICATION->IncludeComponent(
-		'bitrix:intranet.settings.widget',
-		'.default'
-	);
-	?>
 </div>

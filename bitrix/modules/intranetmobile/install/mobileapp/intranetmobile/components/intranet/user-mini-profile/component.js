@@ -1,7 +1,7 @@
-/**
- * @module intranet/user-mini-profile
- */
-jn.define('intranet/user-mini-profile', (require, exports, module) => {
+(() => {
+	const require = (ext) => jn.require(ext);
+
+	const { BackgroundUIManager } = require('background/ui-manager');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons/button');
 	const { Color, Indent } = require('tokens');
 	const { Box } = require('ui-system/layout/box');
@@ -14,7 +14,7 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { Haptics } = require('haptics');
 
-	class UserMiniProfile extends PureComponent
+	class UserMiniProfileComponent extends PureComponent
 	{
 		constructor(props)
 		{
@@ -97,7 +97,8 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 				});
 		};
 
-		renderButtons() {
+		renderButtons()
+		{
 			return BoxFooter(
 				{
 					safeArea: true,
@@ -164,21 +165,12 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {
-		UserMiniProfile,
-	};
-});
-
-(() => {
-	const { UserMiniProfile } = jn.require('intranet/user-mini-profile');
-	const { BackgroundUIManager } = jn.require('background/ui-manager');
-
 	BX.onViewLoaded(() => {
 		const profileData = BX.componentParameters.get('profileDataParams', null);
 		const portalLogoData = BX.componentParameters.get('portalLogoParams', null);
 
 		layout.showComponent(
-			new UserMiniProfile({
+			new UserMiniProfileComponent({
 				profileData,
 				portalLogoData,
 			}),

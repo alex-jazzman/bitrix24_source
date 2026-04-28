@@ -5,6 +5,8 @@ export type ResourceTypeDto = {
 	code: string | null,
 	resourcesCnt: number | null,
 
+	senderCode: string,
+
 	// info
 	isInfoNotificationOn: boolean,
 	templateTypeInfo: string,

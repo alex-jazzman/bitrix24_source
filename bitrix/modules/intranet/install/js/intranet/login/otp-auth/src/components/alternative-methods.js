@@ -38,6 +38,12 @@ export const AlternativeMethods = {
 		showRecoverAccess()
 		{
 			this.$emit('show-recover-access');
+			this.sendAnalytics('choose_auth_type', 'restore_access');
+		},
+		showApplicationOfflineCode()
+		{
+			this.$emit('application-offline-code');
+			this.sendAnalytics('choose_auth_type', 'offline_code');
 		},
 		sendAnalytics(event, type = null)
 		{
@@ -65,15 +71,19 @@ export const AlternativeMethods = {
 			</Headline>
 
 			<div class="intranet-island-otp-push-alternative-items__wrapper">
-				<div v-if="canLoginBySms" class="intranet-island-otp-push-alternative__item" @click="showSms">
+				<div data-testid="bx-intranet-2fa-alternative-methods-sms" v-if="canLoginBySms" class="intranet-island-otp-push-alternative__item" @click="showSms">
 					<i class="ui-icon-set --o-sms intranet-island-otp-push-alternative-item__icon"></i>
 					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS') }}</span>
 				</div>
-				<div v-if="isRecoveryCodesEnabled" class="intranet-island-otp-push-alternative__item" @click="showRecoveryCodes">
-					<i class="ui-icon-set --key intranet-island-otp-push-alternative-item__icon"></i>
+				<div data-testid="bx-intranet-2fa-alternative-methods-recovery-codes" v-if="isRecoveryCodesEnabled" class="intranet-island-otp-push-alternative__item" @click="showRecoveryCodes">
+					<i class="ui-icon-set --o-key intranet-island-otp-push-alternative-item__icon"></i>
 					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_RECOVERY_CODES') }}</span>
 				</div>
-				<span class="intranet-island-otp-push__link --gray --underline" @click="showRecoverAccess">
+				<div data-testid="bx-intranet-2fa-alternative-methods-offline-code" class="intranet-island-otp-push-alternative__item" @click="showApplicationOfflineCode">
+					<i class="ui-icon-set --o-shield-checked intranet-island-otp-push-alternative-item__icon"></i>
+					<span>{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE') }}</span>
+				</div>
+				<span data-testid="bx-intranet-2fa-alternative-methods-recover-access" class="intranet-island-otp-push__link --gray --underline" @click="showRecoverAccess">
 					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_RECOVER_ACCESS_TITLE') }}
 				</span>
 			</div>

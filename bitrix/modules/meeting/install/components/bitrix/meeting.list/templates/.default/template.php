@@ -1,13 +1,17 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-$APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
+\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
+
+$addButton = new \Bitrix\UI\Buttons\AddButton([
+	'link' => $arParams['MEETING_ADD_URL'],
+	'text' => GetMessage('ME_ADD')
+]);
+
+$addButton->addAttribute('data-test-id', 'meetingAddBtn');
 
 if ($USER->IsAuthorized()):
 	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
-		new \Bitrix\UI\Buttons\AddButton([
-			'link' => $arParams['MEETING_ADD_URL'],
-			'text' => GetMessage('ME_ADD')
-		]),
+		$addButton,
 		\Bitrix\UI\Toolbar\ButtonLocation::AFTER_TITLE
 	);
 endif;

@@ -22,6 +22,7 @@ final class Dictionary
 	public const CATEGORY_BANNERS = 'banners';
 	public const CATEGORY_SYSTEM_INFORM = 'system_inform';
 	public const CATEGORY_FUNNELS = 'funnels';
+	public const CATEGORY_IMPORT_OPERATIONS = 'import_operations';
 
 	// region Event const
 	public const EVENT_ENTITY_ADD_OPEN = 'entity_add_open';
@@ -50,6 +51,7 @@ final class Dictionary
 	public const EVENT_CALL_SCORING = 'call_scoring';
 	public const EVENT_EXTRACT_SCORING_CRITERIA = 'extract_scoring_criteria';
 	public const EVENT_FILL_REPEAT_SALE_TIPS = 'fill_repeat_sale_tips';
+	public const EVENT_SCREENING_REPEAT_SALE_ITEM = 'screening_repeat_sale_item';
 
 	public const EVENT_AUTOMATION_CREATE = 'automation_create';
 	public const EVENT_AUTOMATION_EDIT = 'automation_edit';
@@ -63,6 +65,11 @@ final class Dictionary
 	public const EVENT_WA_CONNECT = 'wa_connect';
 	public const EVENT_WA_TIMELINE = 'wa_timeline';
 	public const EVENT_WA_DELETE = 'wa_delete';
+
+	public const EVENT_IMPORT_VIEW = 'view';
+	public const EVENT_IMPORT_EDIT = 'edit';
+	public const EVENT_IMPORT_CREATE = 'create';
+	public const EVENT_IMPORT_CANCEL = 'cancel';
 	// endregion
 
 	// region Type const
@@ -81,6 +88,7 @@ final class Dictionary
 	public const TYPE_WA_CONNECT = 'wa_connect';
 	public const TYPE_WA_ACTIVITY_CREATE = 'wa_activity_create';
 	public const TYPE_WA_ACTIVITY_DELETE = 'wa_activity_delete';
+	public const TYPE_USERFIELD = 'field';
 
 	// endregion
 
@@ -138,6 +146,9 @@ final class Dictionary
 	public const SUB_SECTION_GRID_ROW_MENU = 'grid_row_menu';
 	public const SUB_SECTION_REPEAT_SALE_SYSTEM = 'repeat_sale_sys';
 	public const SUB_SECTION_FUNNEL = 'funnel';
+
+	public const SUB_SECTION_USERFIELD_DEFAULT = 'unknown';
+	public const SUB_SECTION_USERFIELD_MCP_TOOL = 'ai';
 	// endregion
 
 	// region Element const
@@ -174,6 +185,7 @@ final class Dictionary
 	public const ELEMENT_WA_NOTE = 'wa_note';
 	public const ELEMENT_WA_NOTE_DELETE = 'wa_note_delete';
 	public const ELEMENT_WA_MESSAGE_DELETE = 'wa_message_delete';
+	public const ELEMENT_MIGRATION_BUTTON = 'migration_button';
 	// endregion
 
 	// region Status const

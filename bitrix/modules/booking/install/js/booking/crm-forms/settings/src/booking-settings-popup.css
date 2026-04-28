@@ -1,0 +1,18 @@
+.booking-crm-forms-settings-field-divider {
+	position: relative;
+	height: 36px;
+}
+
+.booking-crm-forms-settings-field-divider::before {
+	position: absolute;
+	display: block;
+	top: 50%;
+	width: 100%;
+	content: "";
+	border-top: 1px solid rgba(226, 226, 226, 1);
+}
+
+.crm-form--booking-skus-and-resources-count {
+	display: flex;
+	gap: .5rem;
+}

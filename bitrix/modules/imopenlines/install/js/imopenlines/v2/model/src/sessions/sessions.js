@@ -45,7 +45,7 @@ export class SessionsModel extends BuilderModel
 	getGetters(): GetterTree
 	{
 		return {
-			/** @function sessions/getById */
+			/** @function openlines/sessions/getById */
 			getById: (state: SessionsState) => (id: number, getBlank: boolean = false): ?ImolModelSession => {
 				if (!state.collection[id] && getBlank)
 				{
@@ -59,7 +59,7 @@ export class SessionsModel extends BuilderModel
 
 				return state.collection[id];
 			},
-			/** @function sessions/getByChatId */
+			/** @function openlines/sessions/getByChatId */
 			getByChatId: (state: SessionsState) => (chatId: number, getBlank: boolean = false): ?ImolModelSession => {
 				const session = Object.values(state.collection).find((item: ImolModelSession) => item.chatId === chatId);
 
@@ -81,9 +81,14 @@ export class SessionsModel extends BuilderModel
 	getActions(): ActionTree
 	{
 		return {
-			/** @function sessions/set */
+			/** @function openlines/sessions/set */
 			set: (store, payload: RawSession | RawSession[]) => {
 				let sessions = payload;
+
+				if (Type.isNil(sessions))
+				{
+					return;
+				}
 
 				if (!Array.isArray(sessions) && Type.isPlainObject(sessions))
 				{
@@ -112,7 +117,7 @@ export class SessionsModel extends BuilderModel
 					store.commit('add', itemsToAdd);
 				}
 			},
-			/** @function sessions/pin */
+			/** @function openlines/sessions/pin */
 			pin: (store, payload: { id: string | number, action: boolean }) => {
 				const existingItem = store.state.collection[payload.id];
 

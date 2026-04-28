@@ -387,7 +387,7 @@ if (
 
 if (($message && !$bUnregisterError) || ($ID == 0 && $_REQUEST['reconnect_id'] == 0))
 {
-	$URL = $PROTOCOL . $URL;
+	$URL = $_REQUEST['PROTOCOL'] . $_REQUEST['URL'];
 	$DB->InitTableVarsForEdit('b_controller_member', '', 'str_');
 }
 

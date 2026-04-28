@@ -100,6 +100,13 @@
 	border-top: var(--leftmenu-group-stroke-weight) solid transparent;
 }
 
+.menu-item-block.menu-expand:focus-visible,
+.menu-item-block.menu-settings:focus-visible {
+	outline: revert;
+	outline-offset: 2px;
+	border-radius: var(--menu-item-border-radius, 4px);
+}
+
 .menu-item-group.menu-item-block[data-collapse-mode="expanded"],
 .menu-item-group.menu-item-block.menu-item-group-expanding,
 .menu-item-active.menu-item-group.menu-item-block.menu-item-group-expanding {

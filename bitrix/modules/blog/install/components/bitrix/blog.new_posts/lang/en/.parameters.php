@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BMNP_MESSAGE_COUNT'] = "Messages per page";
 $MESS ['BMNP_MESSAGE_LENGTH'] = "Maximum message display length";
 $MESS ['BMNP_PATH_TO_BLOG'] = "Blog page path template";
@@ -17,4 +17,3 @@ $MESS ['BLG_GROUP_ID'] = "Blogs group";
 $MESS ['BLG_BLOG_URL'] = "Blog url";
 $MESS ['BMNP_PATH_TO_GROUP_BLOG_POST'] = "Group Blog Post Page URL Template";
 $MESS ['BMNP_USE_SOCNET'] = "Used in Social Network";
-?>

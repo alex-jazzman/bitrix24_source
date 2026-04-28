@@ -1,4 +1,4 @@
-import {AvatarDetail} from "../../../element/types/chat-avatar";
+import {AvatarDetail} from "../../../element/chat-avatar/chat-avatar";
 
 export interface RecentCarouselItem
 {
@@ -20,7 +20,8 @@ export interface RecentCarouselItem
 			}
 		}
 	}
-	avatar: AvatarDetail
+	avatar: AvatarDetail,
+	sectionCode?: string,
 }
 
 

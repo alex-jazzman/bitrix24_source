@@ -100,4 +100,5 @@
 .crm-old-layout-helpdesk-link {
 	color: inherit !important;
 	text-decoration: underline;
+	cursor: pointer;
 }

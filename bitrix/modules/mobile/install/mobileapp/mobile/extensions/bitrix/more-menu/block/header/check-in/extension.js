@@ -302,7 +302,7 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 				return Button({
 					testId: 'MORE_MENU_HEADER_CHECK_IN_BUTTON',
 					text: Loc.getMessage('MORE_MENU_HEADER_CHECK_IN_BUTTON_DEFAULT'),
-					size: ButtonSize.S,
+					size: ButtonSize.M,
 					design: ButtonDesign.OUTLINE_ACCENT_2,
 					onClick: () => {
 						inAppUrl.open('/check-in', {});
@@ -314,7 +314,7 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 				testId: 'MORE_MENU_HEADER_CHECK_IN_BUTTON_START',
 				text: Loc.getMessage('MORE_MENU_HEADER_CHECK_IN_BUTTON_START'),
 				leftIcon: Icon.LOCATION,
-				size: ButtonSize.S,
+				size: ButtonSize.M,
 				design: ButtonDesign.OUTLINE_ACCENT_2,
 				onClick: () => {
 					inAppUrl.open('/check-in', {});

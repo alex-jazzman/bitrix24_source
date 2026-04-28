@@ -27,8 +27,7 @@ export const ResourcesGroup = {
 		},
 	},
 	emits: ['selectGroup'],
-	// eslint-disable-next-line flowtype/require-return-type
-	setup()
+	setup(): { Outline: typeof Outline }
 	{
 		return {
 			Outline,
@@ -93,7 +92,7 @@ export const ResourcesGroup = {
 						<span class="booking-sre-app__resources_group-header--collapse-label">{{ collapseLabel }}</span>
 						<BIcon
 							class="booking-sre-app__resources_group-header--collapse-icon"
-							:class="{ '--expand': collapsed }"
+							:class="{ '--expanded': collapsed }"
 							:name="Outline.CHEVRON_TOP_L"
 							:size="18"
 							color="var(--ui-color-base-70)"

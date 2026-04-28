@@ -22,6 +22,7 @@ export type DescriptionHeaderOptions = {
 	subtitleDescription: ?string,
 	moreLabel: ?string,
 	code: ?string,
+	moreHelperCode: ?string,
 	roundContent: PlayerOptions | string
 }
 
@@ -131,11 +132,18 @@ export class HeaderBuilder
 		}
 
 		let moreLink = Tag.render``;
-		if (!Type.isNil(descriptionOptions.code))
+		if (!Type.isNil(descriptionOptions.code) || !Type.isNil(descriptionOptions.moreHelperCode))
 		{
 			const onclick = (e) => {
 				e.stopPropagation();
-				FeaturePromotersRegistry.getPromoter({ code: descriptionOptions.code }).show();
+				if (descriptionOptions.code)
+				{
+					FeaturePromotersRegistry.getPromoter({ code: descriptionOptions.code }).show();
+				}
+				else if (descriptionOptions.moreHelperCode)
+				{
+					BX.UI.InfoHelper.show(descriptionOptions.moreHelperCode);
+				}
 			};
 			moreLink = Tag.render`<a onclick="${onclick}" target="_blank" class="ui-popupcomponentsmaker-header-tariff__more">${descriptionOptions.moreLabel}</a>`;
 		}

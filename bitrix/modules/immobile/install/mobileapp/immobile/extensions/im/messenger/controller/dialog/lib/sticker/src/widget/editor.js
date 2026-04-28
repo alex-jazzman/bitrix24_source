@@ -305,6 +305,8 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/editor', (requi
 				type: EditableElementType.sticker,
 				uri: sticker.uri,
 				id: sticker.id,
+				packId: sticker.packId,
+				packType: sticker.packType,
 				isUploading: true,
 			}));
 		}
@@ -397,12 +399,17 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/editor', (requi
 			menu.show();
 		};
 
-		showStickerMenu = (id, ref) => {
+		/**
+		 * @param {StickerViewClickData} stickerData
+		 * @param ref
+		 */
+		showStickerMenu = (stickerData, ref) => {
+			logger.log('showStickerMenu', stickerData);
 			const menu = new UploadMenu({
 				ui: ref,
 				actions: [{
 					name: ActionType.delete,
-					onItemSelected: () => this.deleteSticker(id),
+					onItemSelected: () => this.deleteSticker(stickerData.id),
 				}],
 			});
 

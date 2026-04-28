@@ -4,6 +4,10 @@
 	gap: 16px;
 }
 
+.intranet-push-otp-connect-popup__view-button-container.--center {
+	justify-content: center;
+}
+
 .intranet-push-otp-connect-popup__view-container {
 	display: flex;
 	flex-direction: column;

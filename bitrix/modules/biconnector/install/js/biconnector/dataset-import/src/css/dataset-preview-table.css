@@ -42,7 +42,33 @@
 	box-sizing: border-box;
 	max-width: 160px;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dataset-preview-table__cell {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
+}
+
+.dataset-preview-table__header-content {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	width: 100%;
+	min-width: 0;
+}
+
+.dataset-preview-table__header-title {
+	display: block;
+	flex: 1 1 auto;
+	min-width: 0;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.dataset-preview-table__header-hint {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
 }

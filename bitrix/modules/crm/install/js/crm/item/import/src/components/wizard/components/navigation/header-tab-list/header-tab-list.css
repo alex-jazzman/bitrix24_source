@@ -1,0 +1,12 @@
+.crm-item-import__wizard-header-tab-list {
+	display: flex;
+}
+
+.crm-item-import__wizard-header-tab-item {
+	display: flex;
+	align-items: center;
+}
+
+.crm-item-import__wizard-header-tab-delimiter {
+	margin: 0 10px;
+}

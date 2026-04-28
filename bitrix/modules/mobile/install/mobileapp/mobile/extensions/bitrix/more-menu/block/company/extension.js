@@ -109,7 +109,6 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 							supportBotId,
 						}),
 					),
-					this.#renderResultYearButton(),
 				),
 			);
 		}
@@ -137,29 +136,6 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 				testId: this.getTestId('users'),
 				counters,
 			});
-		}
-
-		#renderResultYearButton()
-		{
-			let ResultYearButton = null;
-
-			try
-			{
-				const { MoreMenuResultYearButton } = require('intranet/results-year/more-menu-button');
-
-				ResultYearButton = MoreMenuResultYearButton;
-			}
-			catch (e)
-			{
-				console.warn('Not installed intranet module', e);
-			}
-
-			if (!this.#isIntranetInstalled() || !ResultYearButton)
-			{
-				return null;
-			}
-
-			return new ResultYearButton();
 		}
 
 		#isIntranetInstalled()

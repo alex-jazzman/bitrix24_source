@@ -3,6 +3,7 @@ export const DatePickerEvent = {
 	BEFORE_SELECT: 'onBeforeSelect',
 	SELECT: 'onSelect',
 	BEFORE_DESELECT: 'onBeforeDeselect',
+	BEFORE_DAY_SELECT: 'onBeforeDaySelect',
 	DESELECT: 'onDeselect',
 	DESTROY: 'onDestroy',
 };

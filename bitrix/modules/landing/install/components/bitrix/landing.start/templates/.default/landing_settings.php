@@ -21,11 +21,6 @@ if ($arResult['VARS']['landing_edit'] > 0)
 		'PAGE_URL_SITE_DESIGN' => $arParams['PAGE_URL_SITE_DESIGN'],
 	];
 
-	if ($arParams['TYPE'] === Type::SCOPE_CODE_MAINPAGE)
-	{
-		unset($pages['PAGE_URL_SITE_EDIT'], $pages['PAGE_URL_SITE_DESIGN']);
-	}
-
 	$APPLICATION->includeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',

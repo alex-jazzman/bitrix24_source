@@ -107,6 +107,11 @@ jn.define('feature', (require, exports, module) => {
 		{
 			return Application.getPlatform() !== 'android' || Boolean(feature?.isFeatureEnabled('refresh_view_fixed'));
 		}
+
+		static isDynamicTabsEditSupported()
+		{
+			return Boolean(feature?.isFeatureEnabled('tabswidget_api_v1'));
+		}
 	}
 
 	/**

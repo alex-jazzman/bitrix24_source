@@ -14,13 +14,13 @@
 }
 
 .bx-im-sidebar-auto-delete__title {
+	position: relative;
 	display: flex;
 	justify-content: space-between;
 	height: 20px;
 }
 
 .bx-im-sidebar-auto-delete__title-text {
-	position: relative;
 	font: var(--im-font-size-md)/var(--im-font-line-height-2xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-semi-bold);
 	color: var(--im-sidebar-auto-delete-settings__color_title);

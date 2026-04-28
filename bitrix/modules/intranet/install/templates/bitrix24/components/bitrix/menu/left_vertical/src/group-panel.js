@@ -1,6 +1,7 @@
 import { Loc, Text, Dom, ajax as Ajax, Tag, Event, Runtime, Type } from 'main.core';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { SidePanel } from 'main.sidepanel';
+import Utils from './utils';
 
 export class GroupPanel
 {
@@ -39,7 +40,10 @@ export class GroupPanel
 	{
 		return this.#refs.remember('items-container', () => {
 			return Tag.render`
-				<div class="group-panel-items" onclick="${this.#handleItemsClick.bind(this)}"></div>
+				<div class="group-panel-items"
+					role="tabpanel"
+					onclick="${this.#handleItemsClick.bind(this)}"
+				></div>
 			`;
 		});
 	}
@@ -47,36 +51,39 @@ export class GroupPanel
 	getFilterContainer(): HTMLElement
 	{
 		return this.#refs.remember('filter-container', () => {
-			return Tag.render`
-				<span class="group-panel-header-filters">${[
-					Tag.render`
-						<span
-							class="group-panel-header-filter group-panel-header-filter-all"
-							data-filter="all"
-							onclick="${this.#handleFilterClick.bind(this)}"
-						>${Loc.getMessage('MENU_MY_WORKGROUPS')}</span>
-					`,
-					(
-						this.#isExtranetInstalled
-							? Tag.render`
-								<span
-									class="group-panel-header-filter group-panel-header-filter-extranet"
-									data-filter="extranet"
-									onclick="${this.#handleFilterClick.bind(this)}"
-								>${Loc.getMessage('MENU_MY_WORKGROUPS_EXTRANET')}</span>
-							`
-							: null
-					),
-					Tag.render`
-						<span
-							class="group-panel-header-filter group-panel-header-filter-favorites"
-							data-filter="favorites"
-							onclick="${this.#handleFilterClick.bind(this)}"
-						>${Loc.getMessage('MENU_MY_WORKGROUPS_FAVORITES')}${this.getCounterContainer()}</span>
-					`,
-				]}
-				</span>
+			const container = Tag.render`
+				<span class="group-panel-header-filters" role="tablist"
+					aria-label="${Loc.getMessagePlural('MENU_MY_WORKGROUPS')}"
+				></span>
 			`;
+
+			const filters = [
+				{ filter: 'all', label: Loc.getMessage('MENU_MY_WORKGROUPS'), selected: true },
+				...(this.#isExtranetInstalled
+					? [{ filter: 'extranet', label: Loc.getMessage('MENU_MY_WORKGROUPS_EXTRANET') }]
+					: []
+				),
+				{ filter: 'favorites', label: Loc.getMessage('MENU_MY_WORKGROUPS_FAVORITES'), hasCounter: true },
+			];
+
+			filters.forEach((f) => {
+				const tab = Tag.render`
+					<button type="button"
+						class="group-panel-header-filter group-panel-header-filter-${f.filter}"
+						role="tab"
+						tabindex="${f.selected ? '0' : '-1'}"
+						aria-selected="${f.selected ? 'true' : 'false'}"
+						data-filter="${f.filter}"
+					>${f.label}${f.hasCounter ? this.getCounterContainer() : ''}</button>
+				`;
+
+				Event.bind(tab, 'click', this.#handleFilterClick.bind(this));
+				Event.bind(tab, 'keydown', this.#handleFilterKeydown.bind(this));
+
+				Dom.append(tab, container);
+			});
+
+			return container;
 		});
 	}
 
@@ -152,7 +159,11 @@ export class GroupPanel
 					data-slider-ignore-autobinding="true"
 				>
 					<span class="group-panel-item-text" title="${Text.encode(group.title)}">${Text.encode(group.title)}</span>
-					<span class="group-panel-item-star"></span>
+					<button type="button"
+						class="group-panel-item-star"
+						aria-label="${Loc.getMessage('MENU_TOGGLE_FAVORITE_ARIA')}"
+						aria-pressed="${group.favorite ? 'true' : 'false'}"
+					></button>
 				</a>
 			`;
 
@@ -169,7 +180,7 @@ export class GroupPanel
 
 	#handleFilterClick(event): void
 	{
-		const filterElement = event.target;
+		const filterElement = event.target.closest('[role="tab"]') || event.target;
 
 		const currentFilter = this.getContainer().dataset.filter || 'all';
 		const newFilter = filterElement.dataset.filter || 'all';
@@ -179,37 +190,102 @@ export class GroupPanel
 			this.getContainer().dataset.filter = newFilter;
 			this.saveFilter(newFilter);
 
-			new BX.easing({
-				duration: 50,
-				start: { opacity: 1 },
-				finish: { opacity: 0 },
-				transition: BX.easing.transitions.linear,
+			const tabs = this.getFilterContainer().querySelectorAll('[role="tab"]');
+			tabs.forEach((tab) => {
+				const isSelected = tab.dataset.filter === newFilter;
+				Dom.attr(tab, 'aria-selected', String(isSelected));
+				Dom.attr(tab, 'tabindex', isSelected ? '0' : '-1');
+			});
 
-				step: (state) => {
-					Dom.style(this.getItemsContainer(), 'opacity', state.opacity / 100);
-				},
+			if (Utils.prefersReducedMotion())
+			{
+				Dom.removeClass(this.getContainer(), `group-panel-content-${currentFilter}`);
+				Dom.addClass(this.getContainer(), `group-panel-content-${newFilter}`);
+			}
+			else
+			{
+				new BX.easing({
+					duration: 50,
+					start: { opacity: 1 },
+					finish: { opacity: 0 },
+					transition: BX.easing.transitions.linear,
 
-				complete: () => {
-					Dom.removeClass(this.getContainer(), `group-panel-content-${currentFilter}`);
-					Dom.addClass(this.getContainer(), `group-panel-content-${newFilter}`);
+					step: (state) => {
+						Dom.style(this.getItemsContainer(), 'opacity', state.opacity / 100);
+					},
 
-					new BX.easing({
-						duration: 50,
-						start: { opacity: 0 },
-						finish: { opacity: 1 },
-						transition: BX.easing.transitions.linear,
-						step: (state) => {
-							Dom.style(this.getItemsContainer(), 'opacity', state.opacity / 100);
-						},
-						complete: () => {
-							Dom.style(this.getItemsContainer(), 'opacity', null);
-						},
-					}).animate();
-				},
-			}).animate();
+					complete: () => {
+						Dom.removeClass(this.getContainer(), `group-panel-content-${currentFilter}`);
+						Dom.addClass(this.getContainer(), `group-panel-content-${newFilter}`);
+
+						new BX.easing({
+							duration: 50,
+							start: { opacity: 0 },
+							finish: { opacity: 1 },
+							transition: BX.easing.transitions.linear,
+							step: (state) => {
+								Dom.style(this.getItemsContainer(), 'opacity', state.opacity / 100);
+							},
+							complete: () => {
+								Dom.style(this.getItemsContainer(), 'opacity', null);
+							},
+						}).animate();
+					},
+				}).animate();
+			}
 		}
 
 		event.stopPropagation();
+	}
+
+	#handleFilterKeydown(event): void
+	{
+		const tabs = [...this.getFilterContainer().querySelectorAll('[role="tab"]')];
+		const currentIndex = tabs.indexOf(event.target);
+		let newIndex = currentIndex;
+
+		switch (event.key)
+		{
+			case 'ArrowRight':
+			case 'ArrowDown': {
+				event.preventDefault();
+				newIndex = (currentIndex + 1) % tabs.length;
+
+				break;
+			}
+			case 'ArrowLeft':
+			case 'ArrowUp': {
+				event.preventDefault();
+				newIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+
+				break;
+			}
+
+			case 'Home': {
+				event.preventDefault();
+				newIndex = 0;
+
+				break;
+			}
+
+			case 'End': {
+				event.preventDefault();
+				newIndex = tabs.length - 1;
+
+				break;
+			}
+
+			default: {
+				return;
+			}
+		}
+
+		tabs.forEach((tab, i) => {
+			Dom.attr(tab, 'tabindex', i === newIndex ? '0' : '-1');
+			Dom.attr(tab, 'aria-selected', i === newIndex ? 'true' : 'false');
+		});
+		tabs[newIndex].focus();
+		tabs[newIndex].click();
 	}
 
 	#handleItemsClick(event): void
@@ -226,6 +302,9 @@ export class GroupPanel
 		const action = Dom.hasClass(item, 'group-panel-item-favorite') ? 'removeFromFavorites' : 'addToFavorites';
 		Dom.toggleClass(item, 'group-panel-item-favorite');
 
+		const isFav = Dom.hasClass(item, 'group-panel-item-favorite');
+		Dom.attr(star, 'aria-pressed', String(isFav));
+
 		this.#animateStart(star);
 		this.#animateCounter(action === 'addToFavorites');
 
@@ -240,6 +319,11 @@ export class GroupPanel
 
 	#animateStart(star): void
 	{
+		if (Utils.prefersReducedMotion())
+		{
+			return;
+		}
+
 		const flyingStar = star.cloneNode();
 		Dom.style(flyingStar, 'margin-left', `-${star.offsetWidth}px`);
 		Dom.append(flyingStar, star.parentNode);
@@ -260,6 +344,11 @@ export class GroupPanel
 
 	#animateCounter(positive): void
 	{
+		if (Utils.prefersReducedMotion())
+		{
+			return;
+		}
+
 		this.getCounterContainer().innerHTML = positive === false ? '-1' : '+1';
 
 		new BX.easing({

@@ -1,5 +1,4 @@
 import { EventEmitter, BaseEvent } from 'main.core.events';
-import { SubmitButton } from '../submit-button';
 
 export class Page
 {
@@ -19,16 +18,6 @@ export class Page
 
 	onInviteSuccess(event: BaseEvent)
 	{}
-
-	getSubmitButtonText(): ?string
-	{
-		return null;
-	}
-
-	getButtonState(): ?string
-	{
-		return SubmitButton.ENABLED_STATE;
-	}
 
 	hasShownButtonPanel(): boolean
 	{

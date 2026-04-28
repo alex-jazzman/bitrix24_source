@@ -10,3 +10,5 @@ $MESS['LANDING_CMP_PAR_PAGE_URL_SITES'] = 'Ссылка на список сай
 $MESS['LANDING_CMP_PAR_PAGE_URL_SITE_SHOW'] = 'Ссылка на список страниц сайта';
 $MESS['LANDING_CMP_PAR_DRAFT_MODE'] = 'Всегда работать в режиме черновика';
 $MESS['LANDING_CMP_PAR_PAGE_URL_ROLES'] = 'Ссылка на управление доступом';
+$MESS['LANDING_CMP_LMP_MODULE_ID'] = 'Идентификатор модуля для встройки';
+$MESS['LANDING_CMP_LMP_EMBED_ID'] = 'Идентификатор точки встройки';

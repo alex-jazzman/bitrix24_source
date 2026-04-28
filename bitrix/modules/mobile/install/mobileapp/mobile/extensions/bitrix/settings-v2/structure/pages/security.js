@@ -7,6 +7,7 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 		createSection,
 		createUserSelector,
 		createBanner,
+		createLinkButton,
 	} = require('settings-v2/structure/helpers/item-create-helper');
 	const {
 		createSecurityInfo,
@@ -24,6 +25,8 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 	const { FeedbackForm } = require('layout/ui/feedback-form-opener');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
+	const { LoginHistoryList } = require('intranet/login-history-list');
+	const { Icon } = require('ui-system/blocks/icon');
 
 	const userSelectorSafeScreenshotsId = 'security-safe-users-screenshots';
 	const userSelectorSafeCopyTextId = 'security-safe-users-copy-text';
@@ -61,6 +64,7 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 			isOtpMandatory: Boolean(securityData.isOtpMandatory),
 			isBiometricAuthEnabled,
 			isHighPushOtpPromote: Boolean(securityData.isHighPushOtpPromote),
+			isLoginHistoryAvailable: Boolean(securityData.isLoginHistoryAvailable),
 		};
 	};
 
@@ -247,11 +251,32 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 							? Loc.getMessage('SETTINGS_V2_STRUCTURE_SECURITY_FACE_ID')
 							: Loc.getMessage('SETTINGS_V2_STRUCTURE_SECURITY_BIOMETRY'),
 						controller: createFaceIdController(),
+						prefilter: (settingsData) => {
+							return !Type.isNil(settingsData.isBiometricAuthEnabled);
+						},
+						divider: false,
+					}),
+					createLinkButton({
+						id: 'security-login-history-link',
+						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_SECURITY_LOGIN_HISTORY'),
+						icon: Icon.CHEVRON_TO_THE_RIGHT,
+						onClick: () => {
+							PageManager.openWidget(
+								'layout',
+								{
+									title: Loc.getMessage('SETTINGS_V2_STRUCTURE_SECURITY_LOGIN_HISTORY'),
+									onReady: (layoutWidget) => {
+										const loginHistoryList = new LoginHistoryList({});
+										layoutWidget.showComponent(loginHistoryList);
+									},
+								},
+							);
+						},
+						prefilter: (settingsData) => {
+							return settingsData.isLoginHistoryAvailable;
+						},
 					}),
 				],
-				prefilter: (settingsData) => {
-					return !Type.isNil(settingsData.isBiometricAuthEnabled);
-				},
 			}),
 			createSection({
 				id: 'security-safe-information-section',

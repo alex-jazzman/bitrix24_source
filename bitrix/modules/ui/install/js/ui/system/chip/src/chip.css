@@ -61,26 +61,31 @@
 .ui-chip.--filled {
 	--text-color: var(--ui-color-base-white-fixed);
 	--background: var(--ui-color-accent-main-primary);
+	--border-color: var(--ui-color-design-filled-stroke);
 }
 
 .ui-chip.--filled-success {
 	--text-color: var(--ui-color-design-filled-success-content);
 	--background: var(--ui-color-design-filled-success-bg);
+	--border-color: var(--ui-color-design-filled-success-stroke);
 }
 
 .ui-chip.--filled-alert {
 	--text-color: var(--ui-color-design-filled-alert-content);
 	--background: var(--ui-color-design-filled-alert-bg);
+	--border-color: var(--ui-color-design-filled-alert-stroke);
 }
 
 .ui-chip.--filled-warning {
 	--text-color: var(--ui-color-design-filled-warning-content);
 	--background: var(--ui-color-design-filled-warning-bg);
+	--border-color: var(--ui-color-design-filled-warning-stroke);
 }
 
 .ui-chip.--filled-no-accent {
 	--text-color: var(--ui-color-design-filled-na-content);
 	--background: var(--ui-color-design-filled-na-bg);
+	--border-color: var(--ui-color-design-filled-na-stroke);
 }
 
 .ui-chip.--filled-inverted {
@@ -111,26 +116,31 @@
 .ui-chip.--tinted {
 	--text-color: var(--ui-color-accent-main-link);
 	--background: var(--ui-color-accent-soft-blue-2);
+	--border-color: var(--ui-color-design-tinted-stroke);
 }
 
 .ui-chip.--tinted-success {
 	--text-color: var(--ui-color-design-tinted-success-content);
 	--background: var(--ui-color-design-tinted-success-bg);
+	--border-color: var(--ui-color-design-tinted-success-stroke);
 }
 
 .ui-chip.--tinted-alert {
 	--text-color: var(--ui-color-design-tinted-alert-content);
 	--background: var(--ui-color-design-tinted-alert-bg);
+	--border-color: var(--ui-color-design-tinted-alert-stroke);
 }
 
 .ui-chip.--tinted-warning {
 	--text-color: var(--ui-color-design-tinted-warning-content);
 	--background: var(--ui-color-design-tinted-warning-bg);
+	--border-color: var(--ui-color-design-tinted-warning-stroke);
 }
 
 .ui-chip.--tinted-no-accent {
 	--text-color: var(--ui-color-design-tinted-na-content);
 	--background: var(--ui-color-design-tinted-na-bg);
+	--border-color: var(--ui-color-design-tinted-na-stroke);
 }
 
 .ui-chip.--outline-accent {

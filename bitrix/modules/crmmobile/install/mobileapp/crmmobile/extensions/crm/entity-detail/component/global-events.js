@@ -40,9 +40,11 @@ jn.define('crm/entity-detail/component/global-events', (require, exports, module
 					return;
 				}
 
-				requireLazy('crm:onboarding', false)
-					.then(({ Onboarding, CaseName }) => {
-						if (Onboarding)
+				void requireLazy('crm:onboarding', false)
+					.then((ext) => {
+						const { Onboarding, CaseName } = ext;
+
+						if (Onboarding && CaseName)
 						{
 							void Onboarding.tryToShow(CaseName.ON_PAYMENT_ON_DEAL, {
 								targetRef: ref,

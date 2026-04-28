@@ -6,6 +6,7 @@ jn.define('crm/entity-tab/type/entities/lead', (require, exports, module) => {
 	const { excludeItem } = require('crm/entity-tab/type/traits/exclude-item');
 	const { TypeId, TypeName } = require('crm/type');
 	const { Loc } = require('loc');
+	const { UIMenuType } = require('layout/ui/menu');
 	const { Icon } = require('ui-system/blocks/icon');
 
 	/**
@@ -54,7 +55,7 @@ jn.define('crm/entity-tab/type/entities/lead', (require, exports, module) => {
 		{
 			return [
 				{
-					type: UI.Menu.Types.HELPDESK,
+					type: UIMenuType.HELPDESK,
 					data: {
 						articleCode: '19787578',
 					},

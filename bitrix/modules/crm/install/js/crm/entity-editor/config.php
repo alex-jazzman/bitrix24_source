@@ -80,5 +80,6 @@ return [
 		'crm.entity-editor.duplicate.summary-list',
 		'crm.entity-editor.field.recurring',
 		'main.popup',
+		'intranet.old-interface.intranet-common',
 	],
 ];

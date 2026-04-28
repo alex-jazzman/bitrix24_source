@@ -33,6 +33,7 @@ return [
 		'im.v2.lib.quote',
 		'im.v2.lib.utils',
 		'im.v2.component.elements.popup',
+		'im.v2.lib.counter',
 		'im.v2.const',
 	],
 	'skip_core' => false,

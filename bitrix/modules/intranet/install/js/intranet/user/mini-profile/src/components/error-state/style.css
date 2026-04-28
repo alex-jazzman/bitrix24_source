@@ -19,14 +19,17 @@
 .intranet-user-mini-profile__error-state__icon {
 	width: 109px;
 	height: 109px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 200%;
 }
 
 .intranet-user-mini-profile__error-state.--default .intranet-user-mini-profile__error-state__icon {
-	background: url('./images/error.svg');
+	background-image: url('./images/error.webp');
 }
 
 .intranet-user-mini-profile__error-state.--access-denied .intranet-user-mini-profile__error-state__icon {
-	background: url('./images/access-denied.svg');
+	background-image: url('./images/error.webp');
 }
 
 .intranet-user-mini-profile__error-state__title {

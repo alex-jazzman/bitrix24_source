@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_MODULE_NOT_INSTALL"] = "Модуль блогов не установлен.";
 $MESS["BLOG_BLOG_BLOG_TITLE"] = "Сообщения блога";
 $MESS["BLOG_BLOG_BLOG_REQUEST_ALREADY"] = "Ваша заявка уже находится на рассмотрении у автора блога";

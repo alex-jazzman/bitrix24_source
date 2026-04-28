@@ -15,6 +15,7 @@ jn.define('im/messenger/application/lib/pull-handler-launcher', (require, export
 	const { MessagePullHandler } = require('im/messenger/provider/pull/message');
 	const { UserPullHandler } = require('im/messenger/provider/pull/user');
 	const { DialogPullHandler } = require('im/messenger/provider/pull/dialog');
+	const { OpenlinesPullHandler } = require('im/messenger/provider/pull/openlines');
 	const { StickerPackPullHandler } = require('im/messenger/provider/pull/sticker-pack');
 
 	/**
@@ -32,6 +33,7 @@ jn.define('im/messenger/application/lib/pull-handler-launcher', (require, export
 			CounterPullHandler,
 			MessagePullHandler,
 			DialogPullHandler,
+			OpenlinesPullHandler,
 			OnlinePullHandler,
 			AnchorPullHandler,
 			UserPullHandler,

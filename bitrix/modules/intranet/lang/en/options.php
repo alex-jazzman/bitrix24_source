@@ -2,7 +2,7 @@
 $MESS["HRXML_DESC_PERSONAL_ID_SCHEME_NAME"] = "HRXML, SchemeName value for private person ID";
 $MESS["HRXML_PERSONAL_ID_SCHEME_NAME"] = "PrivatePerson";
 $MESS["INTR_CHOOSE_IBTYPE"] = "--- choose inf. block type ---";
-$MESS["INTR_OPTION_BLOCK_NEW_USER_LF"] = "Don't post new hire notifications to Activity Stream";
+$MESS["INTR_OPTION_BLOCK_NEW_USER_LF"] = "Don't post new hire notifications to Feed";
 $MESS["INTR_OPTION_FIRSTDAY"] = "First day of the week";
 $MESS["INTR_OPTION_FIRSTDAY_fr"] = "Friday";
 $MESS["INTR_OPTION_FIRSTDAY_mo"] = "Monday";

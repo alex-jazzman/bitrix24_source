@@ -17,4 +17,5 @@ export type EntityOptions = {
 	dynamicSearch?: boolean,
 	dynamicSearchMatchMode?: 'all' | 'exact',
 	substituteEntityId?: string,
+	fillRecentItems?: boolean,
 };

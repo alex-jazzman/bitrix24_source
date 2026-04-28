@@ -1,9 +1,8 @@
 .air-footer {
-	padding-top: 24px;
-	padding-bottom: 24px;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	flex-wrap: wrap;
 	color: var(--ui-color-base-4);
 	font-size: var(--ui-font-size-sm);
 	line-height: var(--ui-font-line-height-2xs);

@@ -179,9 +179,11 @@ if(typeof BX.Crm.DealModel === "undefined")
 			return;
 		}
 
-		var stepId = BX.prop.getString(eventArgs, "currentStepId", "");
-		if(stepId !== this.getField("STAGE_ID", ""))
+		const stepId = BX.prop.getString(eventArgs, "currentStepId", "");
+		const previousStepId = this.getField("STAGE_ID", "");
+		if(stepId !== previousStepId)
 		{
+			this.setField("PREVIOUS_STAGE_ID", previousStepId);
 			this.setField("STAGE_ID", stepId);
 		}
 	};

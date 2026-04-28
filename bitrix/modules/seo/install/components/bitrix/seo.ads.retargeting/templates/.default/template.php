@@ -6,6 +6,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Ui\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
 
 /** @var array $arParams */
 
@@ -15,7 +17,7 @@ Extension::load([
 	'ui.hint',
 	'seo.ads.client_selector',
 	'seo.ads.login',
-	'ui.forms'
+	'ui.forms',
 ]);
 
 $containerNodeId = $arParams['CONTAINER_NODE_ID'];
@@ -65,12 +67,15 @@ $multiClients = array_key_exists('CLIENTS', $arParams['PROVIDER']);
 				</div>
 			<?php
 			else: ?>
-				<span
-					id="seo-ads-login-btn"
-					class="webform-small-button webform-small-button-transparent"
-				>
-					<?= Loc::getMessage('CRM_ADS_RTG_LOGIN') ?>
-				</span>
+				<?=
+					(new Button([
+						'text' => Loc::getMessage('CRM_ADS_RTG_LOGIN'),
+						'color' => Color::LIGHT_BORDER,
+					]))
+						->addAttribute("id", "seo-ads-login-btn")
+						->render(false)
+					;
+				?>
 			<?php
 			endif; ?>
 		</div>
@@ -111,9 +116,15 @@ $multiClients = array_key_exists('CLIENTS', $arParams['PROVIDER']);
 			<?endif;?>
 			<br>
 			<br>
-			<span data-bx-ads-refresh-btn="" class="webform-small-button webform-small-button-transparent">
-				<?= Loc::getMessage('CRM_ADS_RTG_REFRESH') ?>
-			</span>
+			<?=
+				(new Button([
+					'text' => Loc::getMessage('CRM_ADS_RTG_REFRESH'),
+					'color' => Color::LIGHT_BORDER,
+				]))
+					->addAttribute("data-bx-ads-refresh-btn", "")
+					->render(false)
+				;
+			?>
 		</div>
 	</div>
 

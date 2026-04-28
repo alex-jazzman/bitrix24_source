@@ -5,6 +5,7 @@ jn.define('crm/entity-tab/type/entities/quote', (require, exports, module) => {
 	const { Base: BaseEntityType } = require('crm/entity-tab/type/entities/base');
 	const { TypeId, TypeName } = require('crm/type');
 	const { Loc } = require('loc');
+	const { UIMenuType } = require('layout/ui/menu');
 
 	/**
 	 * @class Quote
@@ -38,7 +39,7 @@ jn.define('crm/entity-tab/type/entities/quote', (require, exports, module) => {
 		{
 			return [
 				{
-					type: UI.Menu.Types.HELPDESK,
+					type: UIMenuType.HELPDESK,
 					data: {
 						articleCode: '17603632',
 					},

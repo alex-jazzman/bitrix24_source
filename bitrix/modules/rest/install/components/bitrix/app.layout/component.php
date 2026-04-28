@@ -53,7 +53,7 @@ if(isset($arParams["APP_VIEW"]) && $arParams["APP_VIEW"])
 	}
 }
 
-if ($arParams["IFRAME"] === true && ($componentParams = $this->request->getPost('PARAMS')) && isset($componentParams['params']))
+if (($arParams["IFRAME"] ?? false) === true && ($componentParams = $this->request->getPost('PARAMS')) && isset($componentParams['params']))
 {
 	$arParams = array_merge($arParams, $componentParams['params']);
 	if(isset($arParams['PLACEMENT_OPTIONS']) && !isset($arParams['~PLACEMENT_OPTIONS']))
@@ -316,7 +316,7 @@ if(
 		$arResult['APP_VERSION'] = $arApp['VERSION'];
 		$arResult['APP_INSTALLED'] = $arApp['INSTALLED'] == \Bitrix\Rest\AppTable::INSTALLED;
 		$arResult['APP_CODE'] = $arApp['CODE'];
-
+		$arResult['APP_TOKEN'] = \CRestUtil::getApplicationToken($arApp);
 		// common application options set via setAppOption
 		$arResult['APP_OPTIONS'] = COption::GetOptionString("rest", "options_".$arResult['APP_ID'], "");
 		if($arResult['APP_OPTIONS'] <> '')

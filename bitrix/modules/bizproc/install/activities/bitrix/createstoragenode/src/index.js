@@ -1,5 +1,4 @@
 import { Tag, Event, Runtime, Dom, Text, Type } from 'main.core';
-import { Menu, PopupMenu } from 'main.popup';
 
 type StorageField = {
 	id: number;
@@ -14,9 +13,15 @@ type StorageField = {
 	settings: Object | null;
 };
 
+type Options = {
+	codeCaption: string;
+	copyNotification: string;
+};
+
 export class CreateStorageNodeRenderer
 {
 	#storageFieldsWrapper: HTMLElement;
+	#options: Options;
 
 	getControlRenderers(): Object
 	{
@@ -28,6 +33,7 @@ export class CreateStorageNodeRenderer
 					</div>
 				`;
 				this.#storageFieldsWrapper = element.root;
+				this.#options = field?.property?.Options || {};
 
 				Event.bind(element.addField, 'click', this.handleAddFieldClick.bind(this));
 				if (Type.isArrayFilled(field.value))
@@ -62,7 +68,7 @@ export class CreateStorageNodeRenderer
 						},
 					},
 					requestMethod: 'get',
-					requestParams: { storageId: 0, fieldId: null, skipSave: true},
+					requestParams: { storageId: 0, fieldId: null, skipSave: true },
 				});
 			})
 			.catch((e) => {
@@ -75,17 +81,32 @@ export class CreateStorageNodeRenderer
 		const jsonValue = JSON.stringify(field);
 		const fieldItem = Tag.render`
 			<div class="storage-fields__item">
-				<input type="hidden" name="SelectedFields[]" value="${Text.encode(jsonValue)}">
-				<div class="storage-fields__item-content">
-					<span class="storage-fields__item-name">
-						${Text.encode(field.name)}:${Text.encode(field.code)}
-					</span>
-					<a ref="deleteField" class="storage-fields__delete-button" href="#">
-						<div class="ui-icon-set --cross-m"></div>
-					</a>
-				</div>
+			   <input type="hidden" name="SelectedFields[]" value="${Text.encode(jsonValue)}">
+			   <div class="storage-fields__item-content">
+			      <span class="storage-fields__item-name">
+			         ${Text.encode(field.name)}
+			      </span>
+			      <a ref="copyCode" class="storage-fields__code-button" href="#" title="${Text.encode(field.code)}">
+			         ${Text.encode(this.#options.codeCaption ?? '')}
+			      </a>
+			      <a ref="deleteField" class="storage-fields__delete-button" href="#">
+			         <div class="ui-icon-set --cross-m"></div>
+			      </a>
+			   </div>
 			</div>
 		`;
+
+		Event.bind(
+			fieldItem.copyCode,
+			'click',
+			(event) => {
+				event.preventDefault();
+				BX.clipboard.copy(field.code);
+				BX.UI.Notification.Center.notify({
+					content: this.#options.copyNotification ?? '',
+				});
+			},
+		);
 
 		Event.bind(
 			fieldItem.deleteField,

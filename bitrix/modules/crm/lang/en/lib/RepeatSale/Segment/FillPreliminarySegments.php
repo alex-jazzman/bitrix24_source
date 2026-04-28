@@ -2,6 +2,12 @@
 $MESS["CRM_FPS_12MONTH_ENTITY_TITLE_PATTERN"] = "Repeat sale script: Lost customer";
 $MESS["CRM_FPS_12MONTH_PROMPT"] = "The customer is no longer doing business with your company for some reason. Contact them to suggest your products or services.";
 $MESS["CRM_FPS_12MONTH_TITLE"] = "Lost customer";
+$MESS["CRM_FPS_AI_APPROVE_ENTITY_TITLE_PATTERN"] = "\"Holiday shopping\" repeat sale";
+$MESS["CRM_FPS_AI_APPROVE_PROMPT"] = "This customer made a holiday purchase a year ago. Check if the time for their next purchase is approaching, and contact the customer to suggest your products or services.";
+$MESS["CRM_FPS_AI_APPROVE_TITLE"] = "Holiday shopping (built-in)";
+$MESS["CRM_FPS_AI_SCREENING_ENTITY_TITLE_PATTERN"] = "\"Holiday shopping\" repeat sale";
+$MESS["CRM_FPS_AI_SCREENING_PROMPT"] = "This customer made a holiday purchase a year ago. Check if the time for their next purchase is approaching, and contact the customer to suggest your products or services.";
+$MESS["CRM_FPS_AI_SCREENING_TITLE"] = "Holiday shopping";
 $MESS["CRM_FPS_EVERY_HALF_YEAR_ENTITY_TITLE_PATTERN"] = "Repeat sale script: Semi-annual customer";
 $MESS["CRM_FPS_EVERY_HALF_YEAR_PROMPT"] = "This customer makes a purchase twice a year, and the time for their next purchase is near. Contact the customer to suggest your products or services.";
 $MESS["CRM_FPS_EVERY_HALF_YEAR_TITLE"] = "Semi-annual customer";

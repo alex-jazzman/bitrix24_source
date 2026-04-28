@@ -3,20 +3,24 @@
  */
 jn.define('im/messenger/application/lib/dialog-manager/manager', (require, exports, module) => {
 	const { Type } = require('type');
-
 	const {
 		DialogType,
 		ErrorType,
 	} = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
-	const { openTaskComments } = require('im/messenger/lib/integration/tasksmobile/comments/opener');
+	const { createOpenTaskCommentsOptions } = require('im/messenger/lib/integration/tasksmobile/comments/opener');
 	const {
 		Notification,
 		ToastType,
 	} = require('im/messenger/lib/ui/notification');
 	const { DialogManagerService } = require('im/messenger/application/lib/dialog-manager/service');
 	const { normalizeOpenDialogOptions } = require('im/messenger/application/lib/dialog-manager/normalizer');
-	const { createDialog } = require('im/messenger/application/lib/dialog-manager/resolver');
+	const {
+		createDialogByChatType,
+		createDialogByModel,
+	} = require('im/messenger/application/lib/dialog-manager/resolver');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	/**
 	 * @class DialogManager
@@ -38,6 +42,11 @@ jn.define('im/messenger/application/lib/dialog-manager/manager', (require, expor
 			}
 
 			return this.#instance;
+		}
+
+		constructor()
+		{
+			this.logger = getLoggerWithContext('messenger--dialog-manager', this);
 		}
 
 		/**
@@ -71,7 +80,7 @@ jn.define('im/messenger/application/lib/dialog-manager/manager', (require, expor
 		 */
 		async openDialog(options, parentWidget = PageManager)
 		{
-			const normalizedOptions = normalizeOpenDialogOptions(options);
+			let normalizedOptions = normalizeOpenDialogOptions(options);
 			const dialogId = normalizedOptions.dialogId;
 			if (!Type.isStringFilled(dialogId))
 			{
@@ -93,28 +102,50 @@ jn.define('im/messenger/application/lib/dialog-manager/manager', (require, expor
 				PageManager.getNavigator().makeTabActive();
 			}
 
-			const dialogManagerService = DialogManagerService.getInstance();
-			const dialogModel = await dialogManagerService.getDialogByDialogId(dialogId)
-				.catch(DialogManager.showToastByOpenDialogError)
-			;
-			if (!Type.isPlainObject(dialogModel))
+			let dialog = await createDialogByChatType(normalizedOptions.chatType);
+			this.logger.log('openDialog: dialog by chatType', dialog);
+			if (!dialog)
 			{
-				return false;
+				const dialogManagerService = DialogManagerService.getInstance();
+				let dialogModel;
+				try
+				{
+					dialogModel = await dialogManagerService.getDialogByDialogId(dialogId);
+				}
+				catch (error)
+				{
+					DialogManager.showToastByOpenDialogError(error);
+
+					return false;
+				}
+
+				if (!Type.isPlainObject(dialogModel))
+				{
+					return false;
+				}
+
+				dialog = await createDialogByModel(dialogModel);
+
+				// TODO: MessengerV2 generalize the processing of chat integrations
+				if (
+					!Type.isPlainObject(options.integrationSettings)
+					&& dialogModel.type === DialogType.tasksTask
+					&& Type.isStringFilled(dialogModel.entityId)
+				)
+				{
+					normalizedOptions = {
+						...normalizedOptions,
+						...createOpenTaskCommentsOptions(
+							dialogModel.chatId,
+							Number(dialogModel.entityId),
+							normalizedOptions.messageId,
+						),
+					};
+				}
+
+				this.logger.log('openDialog: dialog by model', dialog);
 			}
 
-			// TODO: MessengerV2 generalize the processing of chat integrations
-			if (
-				!Type.isPlainObject(normalizedOptions.integrationSettings)
-				&& dialogModel.type === DialogType.tasksTask
-				&& Type.isStringFilled(dialogModel.entityId)
-			)
-			{
-				void openTaskComments(dialogModel.chatId, Number(dialogModel.entityId), normalizedOptions.messageId);
-
-				return true;
-			}
-
-			const dialog = await createDialog(dialogModel);
 			this.#dialogList.push(dialog);
 
 			const originalCloseHandler = normalizedOptions.onClose;
@@ -122,6 +153,23 @@ jn.define('im/messenger/application/lib/dialog-manager/manager', (require, expor
 				this.#dialogList = this.#dialogList.filter((openDialog) => openDialog !== dialog);
 				originalCloseHandler();
 			};
+
+			this.logger.log('openDialog: options: ', normalizedOptions);
+
+			const dialogHelper = DialogHelper.createByDialogId(dialogId);
+			if (dialogHelper?.isOpenlines)
+			{
+				const openLineOptions = {
+					dialogId,
+					dialogTitleParams: {
+						chatType: DialogType.lines,
+					},
+				};
+
+				dialog.openLine(openLineOptions);
+
+				return true;
+			}
 
 			await dialog.open(normalizedOptions, parentWidget);
 

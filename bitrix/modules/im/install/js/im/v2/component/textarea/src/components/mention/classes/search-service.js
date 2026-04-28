@@ -1,6 +1,8 @@
-import { LocalSearch, sortByDate, type SearchResultItem, type EntitySearchConfigType } from 'im.v2.lib.search';
+import { LocalSearch, sortByDate } from 'im.v2.lib.search';
 
 import { BaseServerSearch } from './search/base-search';
+
+import type { MentionSearchConfigType, SearchResultItem } from 'im.v2.lib.search';
 
 export class MentionSearchService
 {
@@ -8,7 +10,7 @@ export class MentionSearchService
 	#baseServerSearch: BaseServerSearch;
 	#localCollection: Map<string, Date> = new Map();
 
-	constructor(searchConfig: EntitySearchConfigType)
+	constructor(searchConfig: MentionSearchConfigType)
 	{
 		this.#localSearch = new LocalSearch(searchConfig);
 		this.#baseServerSearch = new BaseServerSearch(searchConfig);
@@ -34,18 +36,28 @@ export class MentionSearchService
 		return this.#getDialogIds(sortedResult);
 	}
 
-	async search(query: string): Promise<string[]>
+	async search(query: string): Promise<{ dialogIds: string[], participantDialogIds: string[] }>
 	{
 		const searchResult = await this.#baseServerSearch.search(query);
 		searchResult.forEach((searchItem) => {
 			this.#localCollection.set(searchItem.dialogId, searchItem);
 		});
 
-		return this.#getDialogIds(searchResult);
+		return {
+			dialogIds: this.#getDialogIds(searchResult),
+			participantDialogIds: this.#getParticipantDialogIds(searchResult),
+		};
 	}
 
 	#getDialogIds(items: SearchResultItem[]): string[]
 	{
 		return items.map((item) => item.dialogId);
+	}
+
+	#getParticipantDialogIds(items: SearchResultItem[]): string[]
+	{
+		const chatParticipants = items.filter((item) => item.isChatParticipant);
+
+		return chatParticipants.map((item) => item.dialogId);
 	}
 }

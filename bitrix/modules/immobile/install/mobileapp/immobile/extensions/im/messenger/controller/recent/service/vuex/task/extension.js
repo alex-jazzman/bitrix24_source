@@ -8,6 +8,8 @@ jn.define('im/messenger/controller/recent/service/vuex/task', (require, exports,
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AnchorMutationHandler } = require('im/messenger/controller/recent/service/vuex/lib/handlers/anchor');
 	const { CounterMutationHandler } = require('im/messenger/controller/recent/service/vuex/lib/handlers/counter');
+	const { RecentFilteredSync } = require('im/messenger/controller/recent/service/vuex/lib/sync/filter');
+	const { MessengerHeaderController } = require('im/messenger/controller/messenger-header');
 
 	/**
 	 * @implements {IVuexService}
@@ -21,6 +23,7 @@ jn.define('im/messenger/controller/recent/service/vuex/task', (require, exports,
 
 			this.anchor = new AnchorMutationHandler(this.recentLocator, this.logger);
 			this.counter = new CounterMutationHandler(this.recentLocator, this.logger);
+			this.recentFilteredSync = new RecentFilteredSync(this.recentLocator, this.logger);
 			this.#subscribeStoreMutation();
 		}
 
@@ -34,12 +37,14 @@ jn.define('im/messenger/controller/recent/service/vuex/task', (require, exports,
 
 		#subscribeStoreMutation()
 		{
+			this.recentFilteredSync.subscribeStoreMutation();
 			this.storeManager
 				.on('recentModel/add', this.recentAddHandler)
 				.on('recentModel/update', this.recentUpdateHandler)
 				.on('recentModel/delete', this.recentDeleteHandler)
 				.on('recentModel/storeIdCollection', this.recentFirstPageHandler)
 				.on('recentModel/deleteFromTaskIdCollection', this.recentDeleteFromIdCollectionHandler)
+				.on('recentModel/recentFilteredModel/setCurrentFilter', this.filterChangeHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
 				.on('dialoguesModel/clearAllCounters', this.dialogReadAllCountersHandler)
@@ -183,6 +188,7 @@ jn.define('im/messenger/controller/recent/service/vuex/task', (require, exports,
 		 */
 		recentDeleteFromIdCollectionHandler = ({ payload }) => {
 			this.logger.log('recentDeleteFromIdCollectionHandler', payload);
+
 			if (payload.actionName !== 'hideByNavigationTabs')
 			{
 				return;
@@ -218,20 +224,9 @@ jn.define('im/messenger/controller/recent/service/vuex/task', (require, exports,
 		dialogUpdateHandler = ({ payload }) => {
 			this.logger.log('dialogUpdateHandler', payload);
 			const dialogId = payload.data.dialogId;
-
-			const isTaskItems = this.#filterByTaskCollection([{ id: dialogId }], (item) => item.id).length > 0;
-			if (!isTaskItems)
-			{
-				this.logger.warn('dialogUpdateHandler: dialog updating an item not from the Task tab, skipping');
-
-				return;
-			}
-
 			const recentItem = this.storeManager.store.getters['recentModel/getById'](String(dialogId));
-			if (recentItem)
-			{
-				this.#updateItems([recentItem]);
-			}
+
+			this.#updateItems(recentItem ? [recentItem] : [{ id: String(dialogId) }]);
 		};
 
 		/**
@@ -249,20 +244,13 @@ jn.define('im/messenger/controller/recent/service/vuex/task', (require, exports,
 				return;
 			}
 
-			const recentIdList = dialogIdList.map((id) => ({ id }));
-			const taskRecentItemList = this.#filterByTaskCollection(recentIdList, (item) => item.id);
-			if (!Type.isArrayFilled(taskRecentItemList))
-			{
-				this.logger.warn('dialogReadAllCountersHandler: update recent list after filtering is empty, skipping');
+			const items = dialogIdList.map((id) => {
+				const recentItem = this.storeManager.store.getters['recentModel/getById'](String(id));
 
-				return;
-			}
+				return recentItem ?? { id: String(id) };
+			});
 
-			const recentItemList = taskRecentItemList
-				.map((item) => this.storeManager.store.getters['recentModel/getById'](String(item.id)))
-				.filter(Boolean);
-
-			this.#updateItems(recentItemList);
+			this.#updateItems(items);
 		}
 
 		/**
@@ -270,8 +258,74 @@ jn.define('im/messenger/controller/recent/service/vuex/task', (require, exports,
 		 */
 		#updateItems(items)
 		{
-			this.recentLocator.get('render').upsertItems(items);
+			if (!this.recentLocator.has('render'))
+			{
+				this.logger.error('#updateItems', 'render is not ready, skipping');
+
+				return;
+			}
+
+			const collection = this.storeManager.store.getters['recentModel/getTaskIdCollection']();
+			const render = this.recentLocator.get('render');
+			const { toUpsert, toDelete } = this.#partitionItemsForUpdate(items, collection, render);
+
+			if (Type.isArrayFilled(toUpsert))
+			{
+				render.upsertItems(toUpsert);
+			}
+
+			if (Type.isArrayFilled(toDelete))
+			{
+				render.deleteItems(toDelete);
+			}
 		}
+
+		/**
+		 * @param {Array<RecentModelState>} items
+		 * @param {Set<string>} collection
+		 * @param {object} render
+		 * @returns {{ toUpsert: Array<RecentModelState>, toDelete: Array<RecentModelState> }}
+		 */
+		#partitionItemsForUpdate(items, collection, render)
+		{
+			const toUpsert = [];
+			const toDelete = [];
+
+			items.forEach((item) => {
+				const id = String(item.id ?? item.dialogId ?? '');
+				if (!Type.isStringFilled(id))
+				{
+					return;
+				}
+
+				if (collection.has(id))
+				{
+					toUpsert.push(item);
+				}
+				else if (render.hasItemRendered(id))
+				{
+					toDelete.push({ id });
+				}
+			});
+
+			return { toUpsert, toDelete };
+		}
+
+		/**
+		 * @param {MutationPayload<{tabId: string, filterId: FilterId}, 'setCurrentFilter'>} payload
+		 */
+		filterChangeHandler = ({ payload }) => {
+			this.logger.log('filterChangeHandler', payload);
+
+			if (payload?.data?.tabId !== NavigationTabId.task)
+			{
+				this.logger.log('filterChangeHandler: tab is not task, skipping');
+
+				return;
+			}
+
+			MessengerHeaderController.getInstance().redrawRightButtonsIfNeeded(NavigationTabId.task);
+		};
 
 		/**
 		 * @param {Array<object>} items
@@ -285,12 +339,12 @@ jn.define('im/messenger/controller/recent/service/vuex/task', (require, exports,
 				return [];
 			}
 
-			const taskCollection = this.storeManager.store.getters['recentModel/getTaskIdCollection']();
+			const collection = this.storeManager.store.getters['recentModel/getTaskIdCollection']();
 
 			return items.filter((item) => {
 				const id = idExtractor(item);
 
-				return id && taskCollection.has(id);
+				return id && collection.has(id);
 			});
 		}
 	}

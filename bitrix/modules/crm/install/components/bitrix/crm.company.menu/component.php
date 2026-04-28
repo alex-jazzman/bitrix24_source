@@ -15,10 +15,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var array $arResult
  */
 
+use Bitrix\Crm\Component\EntityList\Settings\ImportItem;
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
+use Bitrix\Crm\Integration\Analytics\Builder\Import;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -255,6 +258,32 @@ if ($arParams['TYPE'] === 'details')
 		);
 	}
 
+	if ($bWrite && isset($scripts['DETACH_OPEN_LINE']))
+	{
+		$item = \Bitrix\Crm\Service\Container::getInstance()
+			->getFactory(CCrmOwnerType::Company)
+			->getItem($arParams['ELEMENT_ID'], [\Bitrix\Crm\Item::FIELD_NAME_FM]);
+
+		if ($item)
+		{
+			foreach ($item->getFm() as $field)
+			{
+				if (
+					$field->getTypeId() === \Bitrix\Crm\Multifield\Type\Link::ID
+					&& $field->getValueType() === \Bitrix\Crm\Multifield\Type\Link::VALUE_TYPE_USER
+				)
+				{
+					$arResult['BUTTONS'][] = [
+						'TEXT' => Loc::getMessage('COMPANY_DETACH_OPEN_LINE'),
+						'ONCLICK' => $scripts['DETACH_OPEN_LINE'],
+					];
+
+					break;
+				}
+			}
+		}
+	}
+
 	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
 	{
 		$arResult['BUTTONS'][] = [
@@ -331,22 +360,32 @@ if($arParams['TYPE'] === 'list')
 
 	if (!$isMyCompanyMode && $bImport && !$isInSlider && $arResult['CATEGORY_ID'] === 0)
 	{
-		$importUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_IMPORT'], []);
-		if ($arResult['CATEGORY_ID'] > 0)
+		$importItem = (new ImportItem(CCrmOwnerType::Company))
+			->setCategoryId(0);
+
+		if ($importItem->canShow())
 		{
-			$importUrl = CCrmUrlUtil::AddUrlParams($importUrl, ['category_id' => $arResult['CATEGORY_ID']]);
+			Container::getInstance()->getRouter()->renderBindAnchors();
+
+			$arResult['BUTTONS'][] = $importItem->toInterfaceToolbarButton();
 		}
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('COMPANY_IMPORT'),
-			'TITLE' => GetMessage('COMPANY_IMPORT_TITLE'),
-			'LINK' => $importUrl,
-			'ICON' => 'btn-import'
-		);
+
+		$migrationUrl = new Uri($arParams['PATH_TO_MIGRATION']);
+
+		$migrationViewEvent = (new Import\ViewEvent())
+			->setEntityTypeId(CCrmOwnerType::Company)
+			->setIsMigration(true)
+		;
+
+		if ($migrationViewEvent->validate()->isSuccess())
+		{
+			$migrationUrl = $migrationViewEvent->buildUri($migrationUrl);
+		}
 
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('COMPANY_MIGRATION'),
 			'TITLE' => GetMessage('COMPANY_MIGRATION_TITLE'),
-			'LINK' => $arParams['PATH_TO_MIGRATION'],
+			'LINK' => $migrationUrl,
 			'ICON' => 'btn-migration'
 		);
 	}
@@ -667,15 +706,26 @@ else if ($qty >= 3)
 
 if ($bAdd && $arParams['TYPE'] != 'list' && $arParams['TYPE'] !== 'portrait')
 {
-	$createUrl = CComponentEngine::MakePathFromTemplate(
+	$createUrl = new Uri(CComponentEngine::MakePathFromTemplate(
 		$arParams[$isSliderEnabled ? 'PATH_TO_COMPANY_DETAILS' : 'PATH_TO_COMPANY_EDIT'],
 		array('company_id' => 0)
-	);
+	));
 
 	if ($isMyCompanyMode)
 	{
-		$createUrl = CHTTP::urlAddParams($createUrl, array('mycompany' => 'y'));
+		$createUrl->addParams([
+			'mycompany' => 'y',
+		]);
 	}
+
+	if ($arParams['TYPE'] === 'import')
+	{
+		$createUrl = (new Import\EditEvent())
+			->setEntityTypeId(CCrmOwnerType::Company)
+			->setIsCreateButton()
+			->buildUri($createUrl);
+	}
+
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => $createUrl,

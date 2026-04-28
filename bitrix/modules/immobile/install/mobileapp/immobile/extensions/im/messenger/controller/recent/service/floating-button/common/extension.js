@@ -21,9 +21,32 @@ jn.define('im/messenger/controller/recent/service/floating-button/common', (requ
 		{
 			this.logger.log('onInit');
 
+			this.isTapProcessing = false;
+
 			if (Type.isFunction(this.props.onTap))
 			{
-				this.tapHandler = this.props.onTap;
+				this.tapHandler = async () => {
+					if (this.isTapProcessing)
+					{
+						this.logger.log('tapHandler: event in progress, tap ignored');
+
+						return;
+					}
+					this.isTapProcessing = true;
+
+					try
+					{
+						await this.props.onTap();
+					}
+					catch (error)
+					{
+						this.logger.error('tapHandler: error in onTap', error);
+					}
+					finally
+					{
+						this.isTapProcessing = false;
+					}
+				};
 			}
 			else
 			{

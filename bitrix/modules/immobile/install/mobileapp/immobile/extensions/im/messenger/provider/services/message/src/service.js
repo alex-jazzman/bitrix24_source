@@ -74,9 +74,19 @@ jn.define('im/messenger/provider/services/message/service', (require, exports, m
 			return this.loadService.updateModelByLocalStorageContextResult(messageId);
 		}
 
-		loadContext(messageId)
+		loadContextAndRead(messageId)
 		{
-			return this.loadService.loadContext(messageId);
+			return this.loadService.loadContextAndRead(messageId);
+		}
+
+		loadContextFromServer(messageId)
+		{
+			return this.loadService.loadContextFromServer(messageId);
+		}
+
+		abortLoadingContextFromServer()
+		{
+			Object.values(this.loadService.abortAction).forEach((abort) => abort?.());
 		}
 
 		/**

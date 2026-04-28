@@ -1,6 +1,6 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
 
 if (!is_array($arResult["PresetFilters"]) &&
 	!(array_key_exists("SHOW_SETTINGS_LINK", $arParams) && $arParams["SHOW_SETTINGS_LINK"] == "Y"))

@@ -4,6 +4,7 @@ import { RichLoc } from 'ui.vue3.components.rich-loc';
 import { ExpandAnimation } from 'im.v2.component.animation';
 import { TranscriptionStatus, FileType, SliderCode } from 'im.v2.const';
 import { Parser } from 'im.v2.lib.parser';
+import { CopilotManager } from 'im.v2.lib.copilot';
 
 import './transcription-text.css';
 
@@ -55,7 +56,9 @@ export const TranscriptionText = {
 		{
 			if (this.isLimitError)
 			{
-				return this.loc('IM_MESSAGE_FILE_TRANSCRIPTION_LIMIT_ERROR');
+				return this.loc('IM_MESSAGE_FILE_TRANSCRIPTION_LIMIT_ERROR_MSGVER_1', {
+					'#COPILOT_NAME#': this.copilotManager.getName(),
+				});
 			}
 
 			const code = ErrorMessageByType[this.file.type];
@@ -75,10 +78,14 @@ export const TranscriptionText = {
 			return this.$store.getters['messages/getById'](this.messageId);
 		},
 	},
+	created()
+	{
+		this.copilotManager = new CopilotManager();
+	},
 	methods: {
-		loc(code: string): string
+		loc(code: string, replacements: {[p: string]: string} = {}): string
 		{
-			return this.$Bitrix.Loc.getMessage(code);
+			return this.$Bitrix.Loc.getMessage(code, replacements);
 		},
 		onLimitErrorLinkClick()
 		{

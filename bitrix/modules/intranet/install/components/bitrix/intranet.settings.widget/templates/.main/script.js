@@ -760,13 +760,9 @@ this.BX = this.BX || {};
 	  const onclick = () => {
 	    this.getWidget().close();
 	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _mainPage)[_mainPage].settingsPath);
-	    BX.UI.Analytics.sendData({
-	      tool: 'vibe',
-	      category: 'vibe',
-	      event: 'open_settings_main',
-	      c_sub_section: 'from_widget_vibe_point'
-	    });
+	    // todo: add vibe analytic context sub_section = from_widget_vibe_point
 	  };
+
 	  const element = main_core.Tag.render(_t6 || (_t6 = _$1`
 			<div onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-main-page">
 				<div class="intranet-settings-widget_inner">
@@ -779,7 +775,7 @@ this.BX = this.BX || {};
 				</div>
 				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
 			</div>
-		`), onclick, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_PAGE_TITLE'));
+		`), onclick, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_WELCOME_PAGE_TITLE'));
 	  return babelHelpers.classPrivateFieldLooseBase(this, _prepareElement)[_prepareElement](element);
 	}
 	function _getRequisitesElement2() {

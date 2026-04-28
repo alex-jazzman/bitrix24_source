@@ -297,21 +297,18 @@ $editTab->BeginNextTab();
 			}
 		}
 		</script><?php
-		CAdminFileDialog::ShowScript(
-
-			[
-				'event' => 'OpenFileBrowserWindFile',
-				'arResultDest' => ['FUNCTION_NAME' => 'setFile'],
-				//"arPath" => Array("SITE" => "ru", 'PATH' => "/"),
-				'select' => 'DF',// F - file only, D - folder only, DF - files & dirs
-				'operation' => 'O',// O - open, S - save
-				'showUploadTab' => true,
-				'showAddToMenuTab' => true,
-				//"fileFilter" => '',
-				'allowAllFiles' => true,
-				'SaveConfig' => true
-			]
-		);
+		CAdminFileDialog::ShowScript([
+			'event' => 'OpenFileBrowserWindFile',
+			'arResultDest' => ['FUNCTION_NAME' => 'setFile'],
+			//'arPath' => ['SITE' => 'ru', 'PATH' => '/'],
+			'select' => 'DF',// F - file only, D - folder only, DF - files & dirs
+			'operation' => 'O',// O - open, S - save
+			'showUploadTab' => true,
+			'showAddToMenuTab' => true,
+			//'fileFilter' => '',
+			'allowAllFiles' => true,
+			'SaveConfig' => true
+		]);
 		?><input type="button" onclick="OpenFileBrowserWindFile();" value="<?php echo GetMessage('CTRLR_UPLOAD_OPEN_FILE_BUTTON')?>">
 	</td>
 </tr>

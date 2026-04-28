@@ -19,6 +19,9 @@ export type HeaderPopupCreateButtonConfig = {
 	testId?: string;
 	sections?: HeaderSectionConfig[],
 	badgeCode?: string;
+	getSections?: () => HeaderSectionConfig[];
+	getType?: () => string;
+	isAccent?: () => boolean,
 }
 
 export type HeaderSectionConfig = {
@@ -33,4 +36,5 @@ export type HeaderPopupButtonConfig = {
 	sectionCode?: string;
 	iconName?: string;
 	shouldShow?: () => Promise<boolean>;
+	checked: boolean;
 }

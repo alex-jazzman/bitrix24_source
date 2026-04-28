@@ -1,6 +1,7 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die;
 
+use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
@@ -14,7 +15,7 @@ use Bitrix\Main\Web\Json;
 	'ui.alerts',
 ]);
 
-$codes = array_filter($arResult['CODES'] ?? [], fn ($code) => $code['USED'] === 'N');
+$codes = array_filter($arResult['CODES'] ?? [], static fn ($code) => $code['USED'] === 'N');
 $codes = array_values($codes);
 
 ?>
@@ -26,7 +27,7 @@ $codes = array_values($codes);
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 		(new BX.Intranet.Security.RecoveryCodes({
 			codes: <?= Json::encode($codes) ?>,
-			downloadLink: '<?= \CUtil::JSEscape($arParams["PATH_TO_CODES"] . "?codesAction=download&ncc=1") ?>',
+			downloadLink: '<?= UrlManager::getInstance()->create('intranet.v2.Otp.generateRecoveryCodesFile') ?>',
 		})).renderTo(BX('recovery-code-container'));
 	});
 </script>

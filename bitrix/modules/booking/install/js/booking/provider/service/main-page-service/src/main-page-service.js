@@ -79,7 +79,7 @@ class MainPageService
 				extractor.getShouldShowWhatsAppEmergency(),
 			),
 			Core.getStore().dispatch(`${Model.FormsMenu}/setFormsMenu`, extractor.getFormsMenu()),
-			Core.getStore().dispatch(`${Model.Bookings}/setCatalogSkuEntityOptions`, extractor.getCatalogSkuEntityOptions()),
+			Core.getStore().dispatch(`${Model.Sku}/setCatalogSkuEntityOptions`, extractor.getCatalogSkuEntityOptions()),
 		]);
 	}
 
@@ -143,6 +143,14 @@ class MainPageService
 			promises.push(
 				Core.getStore().dispatch(`${Model.Favorites}/set`, [editingBooking.resourcesIds[0]]),
 				Core.getStore().dispatch(`${Model.Interface}/setResourcesIds`, [editingBooking.resourcesIds[0]]),
+			);
+		}
+
+		const catalogSkuEntityOptions = Core.getStore().state[Model.Sku].catalogSkuEntityOptions;
+		if (Type.isNull(catalogSkuEntityOptions) || Object.keys(catalogSkuEntityOptions).length === 0)
+		{
+			promises.push(
+				Core.getStore().dispatch(`${Model.Sku}/setCatalogSkuEntityOptions`, extractor.getCatalogSkuEntityOptions()),
 			);
 		}
 

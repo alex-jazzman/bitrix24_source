@@ -15,6 +15,7 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 		MessengerInitRestMethod,
 		WaitingEntity,
 		RefreshMode,
+		RecentFilterId,
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
@@ -261,13 +262,31 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 			}
 
 			const methods = this.getInitRestMethods(shortMode, mode, activeRecent);
+			const options = this.#prepareActionOptions(activeRecent);
 
-			return this.#messengerInitService.runAction(methods)
+			return this.#messengerInitService.runAction(methods, options)
 				.then(() => this.#afterRefresh())
 				.catch((response) => this.#afterRefreshError(response))
 				.finally(() => {
 					MessengerEmitter.emit(EventType.dialog.external.scrollToFirstUnread);
 				});
+		}
+
+		/**
+		 * @param {RecentController} activeRecent
+		 * @returns {object}
+		 */
+		#prepareActionOptions(activeRecent)
+		{
+			const options = {};
+
+			const currentFilterId = activeRecent?.getCurrentFilterId();
+			if (currentFilterId === RecentFilterId.unread)
+			{
+				options.unreadOnly = 'Y';
+			}
+
+			return options;
 		}
 
 		async #afterRefresh()
@@ -282,8 +301,6 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 
 			this.refreshErrorNoticeFlag = false;
 			this.refreshErrorWorker.stop();
-
-			serviceLocator.get('tab-counters').update();
 
 			const isRequestedDepartmentColleagues = this.departmentColleaguesStore.get('isRequested');
 			if (!isRequestedDepartmentColleagues)
@@ -347,7 +364,8 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 			}
 
 			this.isFirstLoad = false;
-			await serviceLocator.get('read-service').readMessagesFromQueue();
+			serviceLocator.get('counters-update-system').enableReadingQueue();
+			await serviceLocator.get('counters-update-system').startReadingQueue();
 
 			return this.core.setAppStatus(AppStatus.running, true)
 				.then(() => {

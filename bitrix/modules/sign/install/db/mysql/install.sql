@@ -13,6 +13,7 @@ create table if not exists b_sign_blank
 	DATE_CREATE timestamp null,
 	DATE_MODIFY timestamp not null,
 	FOR_TEMPLATE tinyint not null default 0,
+	HAS_PLACEHOLDERS tinyint not null default 0,
 	PRIMARY KEY(ID),
 	INDEX IX_B_EXTERNAL_HOST (EXTERNAL_ID, HOST)
 );

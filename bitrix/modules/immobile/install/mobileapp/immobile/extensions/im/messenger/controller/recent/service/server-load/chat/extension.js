@@ -20,7 +20,6 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 	 */
 	class ChatServerLoadService extends BaseRecentService
 	{
-
 		/**
 		 * @param {RecentLocator} recentLocator
 		 * @param {string} serviceId
@@ -36,6 +35,11 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 		onInit()
 		{
 			this.logger.log('onInit');
+
+			/** @type {IFilterService} */
+			this.filterService = this.recentLocator.has('filter')
+				? this.recentLocator.get('filter')
+				: null;
 		}
 
 		/**
@@ -129,8 +133,20 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 		getRestListOptions(lastItem)
 		{
 			const lastActivityDate = lastItem.date_last_activity ?? lastItem.message.date;
+			const enabledFilter = {};
 
-			return { skipOpenlines: true, onlyCopilot: false, lastActivityDate };
+			if (this.filterService?.hasSelectedFilter())
+			{
+				enabledFilter[this.filterService.getCurrentFilterId()] = true;
+			}
+
+			return {
+				skipOpenlines: true,
+				onlyCopilot: false,
+				withCounters: false,
+				lastActivityDate,
+				...enabledFilter,
+			};
 		}
 
 		/**
@@ -206,7 +222,6 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 					this.store.dispatch('usersModel/set', modelData.users),
 					this.store.dispatch('dialoguesModel/set', modelData.dialogues),
 					this.store.dispatch('dialoguesModel/copilotModel/setCollection', modelData.copilot),
-					this.store.dispatch('counterModel/setList', { counterList: modelData.counterState }),
 				]);
 
 				const recentAction = firstPage ? 'recentModel/setFirstPageByTab' : 'recentModel/setChat';
@@ -238,7 +253,6 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 			let users = [];
 			const dialogues = [];
 			const recent = [];
-			const counterState = [];
 			const copilotChats = { ...copilotChatsInitial };
 
 			recentData.items.forEach((item) => {
@@ -255,7 +269,6 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 
 				dialogues.push(result.dialogue);
 				recent.push(result.recentItem);
-				counterState.push(result.counter);
 
 				if (result.updateCopilotChat)
 				{
@@ -275,7 +288,6 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 				dialogues,
 				recent,
 				copilot,
-				counterState,
 			};
 		}
 
@@ -283,7 +295,7 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 		 * @param {RecentItemData} item
 		 * @param {Object} messagesAutoDeleteConfigs
 		 * @param {Record<string,boolean>} copilotChats
-		 * @return {{user,dialogue,recentItem,counter,updateCopilotChat}}
+		 * @return {{user,dialogue,recentItem,updateCopilotChat}}
 		 */
 		processRecentItem(item, messagesAutoDeleteConfigs, copilotChats)
 		{
@@ -297,7 +309,6 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 
 			const dialogue = this.buildDialogueItem(item, messagesAutoDeleteConfigs);
 			const recentItem = ServerLoadUtils.prepareRecentItem(item);
-			const counter = ServerLoadUtils.buildCounterState(dialogue);
 
 			if (copilotChats[item.id])
 			{
@@ -308,7 +319,6 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 				user,
 				dialogue,
 				recentItem,
-				counter,
 				updateCopilotChat,
 			};
 		}
@@ -326,7 +336,6 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 			{
 				dialogItem = {
 					...item.chat,
-					counter: item.counter,
 					dialogId: item.id,
 				};
 				if (item.message)
@@ -344,7 +353,6 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 					color: item.user.color,
 					name: item.user.name,
 					type: DialogType.private,
-					counter: item.counter,
 					permissions: ChatPermission.getActionGroupsByChatType(DialogType.user),
 				};
 

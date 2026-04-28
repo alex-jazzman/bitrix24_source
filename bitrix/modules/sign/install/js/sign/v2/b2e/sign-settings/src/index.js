@@ -134,6 +134,8 @@ export class B2ESignSettings extends SignSettings
 			templateFolderId,
 			isOpenedAsFolder,
 			initiatedByType,
+			isPlaceholderDocumentEnabled,
+			type,
 		} = signOptions;
 
 		const { blankSelectorConfig, documentSendConfig } = config;
@@ -144,6 +146,9 @@ export class B2ESignSettings extends SignSettings
 		blankSelectorConfig.templateFolderId = templateFolderId;
 		blankSelectorConfig.isOpenedAsFolder = isOpenedAsFolder;
 		blankSelectorConfig.initiatedByType = initiatedByType;
+		blankSelectorConfig.type = type;
+		blankSelectorConfig.isPlaceholderDocumentEnabled = isPlaceholderDocumentEnabled;
+
 		documentSendConfig.documentMode = documentMode;
 		documentSendConfig.isOpenedFromRobot = fromRobot;
 		documentSendConfig.templateFolderId = templateFolderId;
@@ -885,7 +890,7 @@ export class B2ESignSettings extends SignSettings
 					return false;
 				}
 
-				await this.#addDocumentInGroup(setupData).then(() => {
+				await this.#setDocumentInGroup(setupData).then(() => {
 					if (this.isGroupDocuments())
 					{
 						this.#setPreviewDocumentDropdownItems();
@@ -1052,12 +1057,12 @@ export class B2ESignSettings extends SignSettings
 
 					this.editor.entityData = await this.#setupParties();
 
-					const { uid, isTemplate, entityId } = this.documentSetup.setupData;
+					const { uid, isTemplate, entityId, hasPlaceholders } = this.documentSetup.setupData;
 					const blocks = await this.documentSetup.loadBlocks(uid);
 
 					this.#executeDocumentSendActions();
 
-					const editorData = { isTemplate, uid, blocks, entityId };
+					const editorData = { isTemplate, uid, blocks, entityId, hasPlaceholders };
 					await this.#executeEditorActions(editorData);
 
 					return true;
@@ -1092,7 +1097,8 @@ export class B2ESignSettings extends SignSettings
 		isTemplate: boolean,
 		uid: string,
 		blocks: Array,
-		entityId: number
+		entityId: number,
+		hasPlaceholders: boolean
 	}): Promise<void>
 	{
 		if (this.isTemplateCreateMode())
@@ -1104,7 +1110,7 @@ export class B2ESignSettings extends SignSettings
 		{
 			this.editor.documentData = editorData;
 			await this.editor.renderDocument();
-			if (!this.#needSkipEditorStep || this.isTemplateMode())
+			if ((!this.#needSkipEditorStep || this.isTemplateMode()) && !editorData.hasPlaceholders)
 			{
 				await this.editor.show();
 			}
@@ -1379,14 +1385,9 @@ export class B2ESignSettings extends SignSettings
 		}
 	}
 
-	async #addDocumentInGroup(setupData: DocumentDetails): Promise<void>
+	async #setDocumentInGroup(setupData: DocumentDetails): Promise<void>
 	{
 		if (this.documentSetup.blankIsNotSelected)
-		{
-			return;
-		}
-
-		if (this.documentsGroup.has(setupData.uid))
 		{
 			return;
 		}
@@ -1702,10 +1703,10 @@ export class B2ESignSettings extends SignSettings
 		const isB2eDocumentSectionDisabled = !this.documentSetup.isRuRegion() || this.#isInitiatedByEmployee();
 		this.editor.setIsB2eDocumentSectionDisabled(isB2eDocumentSectionDisabled);
 		this.editor.entityData = await this.#setupParties();
-		const { isTemplate, entityId } = this.documentSetup.setupData;
+		const { isTemplate, entityId, hasPlaceholders } = this.documentSetup.setupData;
 		const blocks = await this.documentSetup.loadBlocks(uid);
 
-		const editorData = { isTemplate, uid, blocks, entityId };
+		const editorData = { isTemplate, uid, blocks, entityId, hasPlaceholders };
 		this.#executeEditorActions(editorData);
 	}
 }

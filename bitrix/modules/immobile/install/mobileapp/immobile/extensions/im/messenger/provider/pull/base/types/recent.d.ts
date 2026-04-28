@@ -6,3 +6,5 @@ export type SectionRecentType = {
 	openChannel: 'openChannel',
 	collab: 'collab',
 }
+
+export type SectionRecentValue = SectionRecentType[keyof SectionRecentType];

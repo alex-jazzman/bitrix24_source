@@ -16,7 +16,6 @@ export function mapDtoToModel(dto: GetYandexIntegrationDto): YandexIntegrationMo
 	return {
 		status: dto.status,
 		catalogPermissions: dto.catalogPermissions,
-		catalogSkuEntityOptions: dto.catalogSkuEntityOptions,
 		isResourceSkuRelationsSaved: dto.isResourceSkuRelationsSaved,
 		resources,
 		cabinetLink: dto.cabinetLink,

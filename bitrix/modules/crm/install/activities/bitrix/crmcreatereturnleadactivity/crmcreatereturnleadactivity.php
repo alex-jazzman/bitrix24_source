@@ -109,14 +109,6 @@ class CBPCrmCreateReturnLeadActivity extends CBPActivity
 			}
 
 			$this->LeadId = $id;
-			if (\COption::GetOptionString("crm", "start_bp_within_bp", "N") === "Y")
-			{
-				$CCrmBizProc = new \CCrmBizProc('LEAD');
-				if ($CCrmBizProc->CheckFields(false, true))
-				{
-					$CCrmBizProc->StartWorkflow($id);
-				}
-			}
 
 			\CCrmBizProcHelper::sendOperationsAnalytics(
 				Dictionary::EVENT_ENTITY_CREATE,
@@ -124,10 +116,16 @@ class CBPCrmCreateReturnLeadActivity extends CBPActivity
 				'lead',
 			);
 
-			//Region automation
-			$starter = new Starter(\CCrmOwnerType::Lead, $id);
-			$starter->setContextToBizproc()->runOnAdd();
-			//End region
+			$starter = new \Bitrix\Crm\Integration\BizProc\Starter\CrmStarter(
+				new \Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto(\CCrmOwnerType::Lead, (int)$id)
+			);
+			$starter
+				->setContextModuleId('bizproc')
+				->runOnInnerDocumentAdd(
+					new \Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+						actualFields: $leadFields,
+					)
+				);
 		}
 
 		return CBPActivityExecutionStatus::Closed;

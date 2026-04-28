@@ -86,7 +86,7 @@ $arResult['HEADERS'] = [
 	],
 	[
 		'id' => 'SOURCE_ID',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_SOURCE_ID'),
+		'name' => Loc::getMessage('CT_BBSU_COLUMN_SOURCE_ID_MSGVER_1'),
 		'default' => true,
 		'editable' => false,
 	],
@@ -123,6 +123,12 @@ $arResult['HEADERS'] = [
 		'default' => false,
 		'editable' => false,
 	],
+	[
+		'id' => 'DATASET_TYPE',
+		'name' => Loc::getMessage('CT_BBSU_COLUMN_DATASET_TYPE'),
+		'default' => true,
+		'editable' => false,
+	]
 ];
 
 if (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y')

@@ -27,6 +27,7 @@ export {
 	useGroupSelectionLogic,
 	useGroupDragLogic,
 	useKeyboardShortcuts,
+	useAutoScroll,
 } from './composables';
 export { DragBlock } from './directives';
 export type { Point } from './types';

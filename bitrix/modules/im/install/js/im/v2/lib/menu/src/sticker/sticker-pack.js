@@ -1,18 +1,16 @@
 import { Loc } from 'main.core';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
-import { MenuItemDesign } from 'ui.system.menu';
+import { MenuItemDesign, type MenuItemOptions, type MenuOptions, type MenuSectionOptions } from 'ui.system.menu';
 
-import { Notifier } from 'im.v2.lib.notifier';
 import { Core } from 'im.v2.application.core';
-import { PermissionManager } from 'im.v2.lib.permission';
 import { ActionByUserType, PopupType, StickerPackType } from 'im.v2.const';
-import { StickerService } from 'im.v2.provider.service.sticker';
 import { showStickerPackDeleteConfirm, showStickerPackUnlinkConfirm } from 'im.v2.lib.confirm';
+import { Notifier } from 'im.v2.lib.notifier';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { type ImModelStickerPack } from 'im.v2.model';
+import { StickerService } from 'im.v2.provider.service.sticker';
 
 import { BaseMenu } from '../base/base';
-
-import type { MenuItemOptions, MenuOptions, MenuSectionOptions } from 'ui.system.menu';
-import type { ImModelStickerPack } from 'im.v2.model';
 
 const MenuSectionCode = {
 	first: 'first',

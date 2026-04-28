@@ -300,7 +300,7 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _isBitrix24SenderAvailable2() {
-	  const bitrix24Sender = this.store.getters[`${booking_const.Model.Notifications}/getSenders`].find(sender => sender.moduleId === booking_const.Module.Crm && sender.code === crm_messagesender.Types.bitrix24);
+	  const bitrix24Sender = this.store.getters[`${booking_const.Model.Notifications}/getSenders`].find(sender => sender.code === crm_messagesender.Types.bitrix24);
 	  if (!bitrix24Sender) {
 	    return false;
 	  }
@@ -319,7 +319,7 @@ this.BX = this.BX || {};
 	}
 	function _prepareResourceTypeNotifications2(resource) {
 	  const resourceType = this.store.getters[`${booking_const.Model.ResourceTypes}/getById`](resource.typeId);
-	  return Object.values(this.store.getters[`${booking_const.Model.Dictionary}/getNotifications`]).map(({
+	  const reduceResult = Object.values(this.store.getters[`${booking_const.Model.Dictionary}/getNotifications`]).map(({
 	    value
 	  }) => value).reduce((acc, type) => {
 	    const notificationOnField = booking_const.NotificationFieldsMap.NotificationOn[type];
@@ -336,6 +336,10 @@ this.BX = this.BX || {};
 	      }), {})
 	    };
 	  }, {});
+	  return {
+	    ...reduceResult,
+	    senderCode: resource.senderCode
+	  };
 	}
 	async function _upsertResource2(resource) {
 	  const isUpdate = Boolean(resource.id);
@@ -1100,7 +1104,7 @@ this.BX = this.BX || {};
 	      return ui_iconSet_api_vue.Set.PERSONS_3;
 	    },
 	    catalogSkuEntityOptions() {
-	      return this.$store.state[booking_const.Model.ResourceCreationWizard].catalogSkuEntityOptions;
+	      return this.$store.state[booking_const.Model.Sku].catalogSkuEntityOptions;
 	    },
 	    disabled() {
 	      return this.catalogSkuEntityOptions.length === 0;
@@ -4014,7 +4018,8 @@ this.BX = this.BX || {};
 	        text: this.loc('BOOKING_AHA_MESSAGE_TEMPLATE_TEXT'),
 	        article: booking_const.HelpDesk.AhaMessageTemplate,
 	        target: this.$refs.card.getChooseTemplateButton(),
-	        targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+	        targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
+	        isPulsarTransparent: true
 	      });
 	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.MessageTemplate);
 	    }

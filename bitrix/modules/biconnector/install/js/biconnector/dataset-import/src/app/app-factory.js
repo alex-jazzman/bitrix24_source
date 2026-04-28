@@ -9,6 +9,8 @@ const codeMap = {
 	csv: CsvApp,
 	'1c': ExternalConnectionApp,
 	rest: ExternalConnectionApp,
+	mysql: ExternalConnectionApp,
+	pgsql: ExternalConnectionApp,
 };
 
 type AppParams = {
@@ -17,6 +19,7 @@ type AppParams = {
 	separators: Array,
 	reservedNames: Array,
 	connections: Array,
+	isSupersetReady: boolean,
 };
 
 export class AppFactory
@@ -30,6 +33,7 @@ export class AppFactory
 				dataFormats: {},
 				datasetProperties: {},
 				fieldsSettings: [],
+				sectionsConfig: {},
 			},
 		};
 

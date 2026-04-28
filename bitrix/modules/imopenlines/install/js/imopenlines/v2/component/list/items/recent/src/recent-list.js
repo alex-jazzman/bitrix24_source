@@ -2,6 +2,7 @@ import { Core } from 'im.v2.application.core';
 import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
 import { Utils } from 'im.v2.lib.utils';
 import { StatusGroup } from 'imopenlines.v2.const';
+import { RecentContextMenu } from 'imopenlines.v2.lib.menu';
 import { RecentService } from 'imopenlines.v2.provider.service';
 
 import { EmptyState } from './components/empty-state';
@@ -34,7 +35,7 @@ export const RecentList = {
 	{
 		collection(): ImolModelRecentItem[]
 		{
-			return Core.getStore().getters['recentOpenLines/getOpenLinesCollection'];
+			return Core.getStore().getters['openLines/recent/getOpenLinesCollection'];
 		},
 		collectionByGroups(): StatusGroupItemCollection
 		{
@@ -76,10 +77,19 @@ export const RecentList = {
 		this.firstPageLoaded = true;
 		this.isLoading = false;
 	},
+	created()
+	{
+		this.contextMenuManager = new RecentContextMenu();
+	},
+	beforeUnmount()
+	{
+		this.destroyContextMenu();
+	},
 	methods:
 	{
 		async onScroll(event: Event)
 		{
+			this.destroyContextMenu();
 			if (!Utils.dom.isOneScreenRemaining(event.target) || !this.getRecentService().hasMoreItemsToLoad())
 			{
 				return;
@@ -95,7 +105,7 @@ export const RecentList = {
 		},
 		getSessionByDialogId(dialogId: string): ?ImolModelSession
 		{
-			return this.$store.getters['recentOpenLines/getSession'](dialogId);
+			return this.$store.getters['openLines/recent/getSession'](dialogId);
 		},
 		getStatusByDialogId(dialogId: string): StatusGroupName
 		{
@@ -140,6 +150,19 @@ export const RecentList = {
 
 			return this.service;
 		},
+		onContextMenu(dialogId: string, event: PointerEvent)
+		{
+			const positionTarget = {
+				left: event.pageX,
+				top: event.pageY,
+			};
+			this.contextMenuManager.openMenu({ dialogId }, positionTarget);
+		},
+
+		destroyContextMenu()
+		{
+			this.contextMenuManager.destroy();
+		},
 	},
 	template: `
 		<div class="bx-imol-list-recent__content">
@@ -152,6 +175,7 @@ export const RecentList = {
 					:groupName="groupName"
 					:key="groupName"
 					@recentClick="onClick"
+					@recentContextMenu="onContextMenu"
 				/>
 				<LoadingState v-if="isLoadingNextPage" />
 			</div>

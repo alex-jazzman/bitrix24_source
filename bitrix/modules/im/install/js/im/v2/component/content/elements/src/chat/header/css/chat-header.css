@@ -156,3 +156,11 @@
 	background-image: url('./images/panel-active.svg');
 	opacity: 1;
 }
+
+.bx-im-chat-header__separator {
+	margin-right: var(--im-space-inline-sm);
+	width: 1px;
+	height: 16px;
+	background-color: var(--ui-color-gray-90);
+	opacity: 0.2;
+}

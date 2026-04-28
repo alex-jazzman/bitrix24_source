@@ -1,2 +1,2 @@
 <?php
-$MESS["INTRANET_MAIN_PAGE_NAME"] = "Start page";
+$MESS["INTRANET_WELCOME_PAGE_NAME"] = "Start page";

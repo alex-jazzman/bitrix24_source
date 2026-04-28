@@ -4,7 +4,7 @@ import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import type { JsonObject } from 'main.core';
 import type { Store } from 'ui.vue3.vuex';
-import type { ImModelMessage, ImModelUser, ImModelChat, ImModelCopilotRole } from 'im.v2.model';
+import type { ImModelMessage, ImModelChat, ImModelCopilotRole } from 'im.v2.model';
 
 export class CopilotManager
 {
@@ -145,17 +145,25 @@ export class CopilotManager
 		return this.store.getters['copilot/messages/getRole'](messageId)?.avatar?.medium;
 	}
 
-	getName({ dialogId, messageId }): string
+	getNameWithRole(messageId: string | number): string
 	{
-		const { name: userName }: ImModelUser = this.store.getters['users/get'](dialogId);
-		const { default: isDefaultRole, name: roleName }: ImModelCopilotRole = this.store.getters['copilot/messages/getRole'](messageId);
+		const copilotName = this.getName();
+		const {
+			default: isDefaultRole,
+			name: roleName,
+		}: ImModelCopilotRole = this.store.getters['copilot/messages/getRole'](messageId);
 
 		if (isDefaultRole)
 		{
-			return userName;
+			return copilotName;
 		}
 
-		return `${userName} (${roleName})`;
+		return `${copilotName} (${roleName})`;
+	}
+
+	getName(): string
+	{
+		return this.store.getters['copilot/getName'];
 	}
 
 	getAIModelName(dialogId: string): string

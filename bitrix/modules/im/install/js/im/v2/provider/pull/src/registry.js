@@ -10,8 +10,6 @@ export { PromotionPullHandler } from './promotion';
 export { AnchorPullHandler } from './anchor';
 export { StickersPullHandler } from './stickers';
 
-export { NewMessageManager } from './recent/classes/new-message-manager';
-
 export type { ChatHideParams } from './types/chat';
 export type { PullExtraParams, RawUser } from './types/common';
 export type { MessageAddParams, ReadMessageParams, UnreadMessageParams } from './types/message';

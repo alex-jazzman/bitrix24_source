@@ -585,7 +585,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 	if($NS["step"] == 5)
 	{
 		$step_done = 0;
-		if (IntOption('dump_integrity_check') || $NS['check_archive'])
+		if (IntOption('dump_integrity_check') || !empty($NS['check_archive']))
 		{
 			if (haveTime())
 			{

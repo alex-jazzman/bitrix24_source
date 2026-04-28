@@ -941,19 +941,22 @@
 			}
 
 			const me = this;
+
 			const data = {
-				ajax_action: 'save_automation',
-				document_signed: this.documentSigned,
-				triggers_json: Helper.toJsonString(this.triggerManager.serialize()),
-				templates_json: Helper.toJsonString(this.templateManager.serializeModified()),
+				triggers: Helper.toJsonPayload(this.triggerManager.serialize()),
+				templates: Helper.toJsonPayload(this.templateManager.serializeModified()),
 			};
 
-			const analyticsLabel = {
-				automation_save: 'Y',
-				robots_count: this.templateManager.countAllActivatedRobots(),
-				triggers_count: this.triggerManager.countAllTriggers(),
-				automation_module: this.document.getRawType()[0],
-				automation_entity: this.document.getRawType()[2] + '_' + this.document.getCategoryId(),
+			const urlParams = {
+				analyticsLabel: {
+					automation_save: 'Y',
+					robots_count: this.templateManager.countAllActivatedRobots(),
+					triggers_count: this.triggerManager.countAllTriggers(),
+					automation_module: this.document.getRawType()[0],
+					automation_entity: this.document.getRawType()[2] + '_' + this.document.getCategoryId(),
+				},
+				ajax_action: 'save_automation',
+				document_signed: this.documentSigned,
 			};
 
 			this.savingAutomation = true;
@@ -961,8 +964,10 @@
 			return BX.ajax({
 				method: 'POST',
 				dataType: 'json',
-				url: BX.Uri.addParam(this.getAjaxUrl(), { analyticsLabel }),
-				data: data,
+				url: BX.Uri.addParam(this.getAjaxUrl(), urlParams),
+				data,
+				headers: [{name: 'Content-Type', value: 'application/json'}],
+				preparePost: false,
 				onsuccess: function(response)
 				{
 					me.savingAutomation = null;
@@ -1069,10 +1074,8 @@
 			}
 
 			const data = {
-				ajax_action: 'save_automation',
-				document_signed: this.documentSigned,
-				templates_json: Helper.toJsonString(templatesData),
-				triggers_json: Helper.toJsonString(triggersData),
+				templates: Helper.toJsonPayload(templatesData),
+				triggers: Helper.toJsonPayload(triggersData),
 			};
 
 			this.savingAutomation = true;
@@ -1081,8 +1084,13 @@
 			return BX.ajax({
 				method: 'POST',
 				dataType: 'json',
-				url: this.getAjaxUrl(),
-				data: data,
+				url: BX.Uri.addParam(this.getAjaxUrl(), {
+					ajax_action: 'save_automation',
+					document_signed: this.documentSigned,
+				}),
+				data,
+				headers: [{name: 'Content-Type', value: 'application/json'}],
+				preparePost: false,
 				onsuccess: function(response)
 				{
 					self.savingAutomation = null;
@@ -1649,6 +1657,7 @@
 				variables: {},
 				templateContainerNode: this.component.node,
 				delayMinLimitM: this.component.data.DELAY_MIN_LIMIT_M,
+				delayMaxLimitD: this.component.data.DELAY_MAX_LIMIT_D,
 				userOptions: this.component.userOptions,
 			});
 

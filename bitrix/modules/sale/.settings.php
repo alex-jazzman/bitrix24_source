@@ -35,7 +35,25 @@ return array(
 			],
 			'sale.entityLabel' => [
 				'className' => \Bitrix\Sale\Label\EntityLabelService::class,
-			]
+			],
+			'sale.basketItemCalculator' => [
+				'className' => \Bitrix\Sale\Public\Service\BasketItemCalculator::class,
+			],
+			'sale.basketCalculator' => [
+				'className' => \Bitrix\Sale\Public\Service\BasketCalculator::class,
+			],
+			'sale.orderCalculator' => [
+				'className' => \Bitrix\Sale\Public\Service\OrderCalculator::class,
+			],
+			'sale.discountCalculator' => [
+				'className' => \Bitrix\Sale\Public\Service\DiscountCalculator::class,
+			],
+			'sale.vatCalculator' => [
+				'className' => \Bitrix\Sale\Public\Service\VatCalculator::class,
+			],
+			'sale.basketItemInputFactory' => [
+				'className' => \Bitrix\Sale\Public\Factory\BasketItemInputFactory::class,
+			],
 		],
 	],
 	'ui.entity-selector' => [

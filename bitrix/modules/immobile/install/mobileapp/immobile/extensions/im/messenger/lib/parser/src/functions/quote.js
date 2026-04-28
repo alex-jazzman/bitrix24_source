@@ -18,6 +18,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
 	const { parserImage } = require('im/messenger/lib/parser/functions/image');
 	const { getLogger } = require('im/messenger/lib/logger');
+	const { NEW_LINE } = require('im/messenger/lib/parser/const');
 	const logger = getLogger('parser');
 
 	const QUOTE_SIGN = '>>';
@@ -36,7 +37,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 
 			let isProcessed = false;
 
-			let textLines = text.split('\n');
+			let textLines = text.split(NEW_LINE);
 			for (let i = 0; i < textLines.length; i++)
 			{
 				if (!textLines[i].startsWith(QUOTE_SIGN))
@@ -50,7 +51,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 				while (++i < textLines.length && textLines[i].startsWith(QUOTE_SIGN))
 				{
 					textLines[i] = textLines[i].replace(QUOTE_SIGN, '');
-					quoteText += '\n' + textLines[i];
+					quoteText += NEW_LINE + textLines[i];
 				}
 
 				quoteText = parserImage.simplifyIcon(quoteText);
@@ -60,6 +61,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 				textLines.splice(quoteStartIndex, quoteEndIndex - quoteStartIndex);
 				const inactiveQuoteId = parsedElements.add(new QuoteInactive('', quoteText));
 				textLines[quoteStartIndex] = `${PLACEHOLDER}${inactiveQuoteId}`;
+				i = quoteStartIndex;
 
 				isProcessed = true;
 			}
@@ -69,7 +71,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 				return text;
 			}
 
-			return textLines.join('\n');
+			return textLines.join(NEW_LINE);
 		},
 
 		/**
@@ -115,7 +117,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 						.map((line) => line.trim())
 						.filter(Boolean);
 
-					quoteText = lines.length > 1 ? lines.slice(1).join('\n') : '';
+					quoteText = lines.length > 1 ? lines.slice(1).join(NEW_LINE) : '';
 				}
 
 				const hasUserBlock = userName && timeTag;
@@ -269,7 +271,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 
 		decodeTextAroundQuotes(text)
 		{
-			let textLines = text.split('\n');
+			let textLines = text.split(NEW_LINE);
 
 			textLines.forEach((line, index, lines) => {
 				if (index === lines.length - 1)
@@ -277,7 +279,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 					return;
 				}
 
-				lines[index] += '\n';
+				lines[index] += NEW_LINE;
 			});
 
 			text = '';
@@ -287,14 +289,14 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 				if (textLines[i].startsWith(PLACEHOLDER))
 				{
 					currentTextId = -1;
-					text += textLines[i] + '\n';
+					text += textLines[i] + NEW_LINE;
 					continue;
 				}
 
 				let endOfLine = '';
 				if (textLines[i] === '')
 				{
-					endOfLine = '\n';
+					endOfLine = NEW_LINE;
 				}
 
 				if (currentTextId === -1)
@@ -302,7 +304,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 					const line = textLines[i] + endOfLine;
 					const messageText = new MessageText(line);
 					currentTextId = parsedElements.add(messageText);
-					text += `${PLACEHOLDER}${currentTextId}` + '\n';
+					text += `${PLACEHOLDER}${currentTextId}` + NEW_LINE;
 
 					continue;
 				}

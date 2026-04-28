@@ -1610,15 +1610,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    return this;
 	  }
 	  getState() {
-	    var _collection$, _collection$$fromList, _collection$2, _collection$2$toList$;
+	    var _collection$, _collection$$toList$;
 	    const collection = this.getVariable('collection', []);
 	    deepFreeze(collection);
 	    return {
 	      collection,
 	      selected: {
 	        channelId: this.getVariable('selected.channelId'),
-	        fromId: this.getVariable('selected.fromId', (_collection$ = collection[0]) == null ? void 0 : (_collection$$fromList = _collection$.fromList[0]) == null ? void 0 : _collection$$fromList.id),
-	        receiverAddressId: this.getVariable('selected.receiverAddressId', (_collection$2 = collection[0]) == null ? void 0 : (_collection$2$toList$ = _collection$2.toList[0]) == null ? void 0 : _collection$2$toList$.address.id)
+	        fromId: this.getVariable('selected.fromId'),
+	        receiverAddressId: this.getVariable('selected.receiverAddressId', (_collection$ = collection[0]) == null ? void 0 : (_collection$$toList$ = _collection$.toList[0]) == null ? void 0 : _collection$$toList$.address.id)
 	      }
 	    };
 	  }
@@ -1638,12 +1638,17 @@ this.BX.Crm = this.BX.Crm || {};
 	        return state.collection.find(chan => chan.id === firstId) || state.collection[0];
 	      },
 	      /** @function channels/from */
-	      from: (state, getters) => {
+	      from: (state, getters, rootState, rootGetters) => {
+	        var _state$selected$fromI;
 	        const channel = getters.current;
 	        if (!channel) {
 	          return null;
 	        }
-	        return channel.fromList.find(from => from.id === state.selected.fromId) || channel.fromList[0];
+	        const channelsLastUsedFrom = rootGetters['preferences/channelsLastUsedFrom'];
+	        const channelId = channel.id;
+	        const lastUsed = channelsLastUsedFrom == null ? void 0 : channelsLastUsedFrom.find(item => item.channelId === channelId);
+	        const fromId = (_state$selected$fromI = state.selected.fromId) != null ? _state$selected$fromI : lastUsed == null ? void 0 : lastUsed.fromId;
+	        return channel.fromList.find(from => from.id === fromId) || channel.fromList[0];
 	      },
 	      /** @function channels/receiver */
 	      receiver: (state, getters) => {
@@ -1975,7 +1980,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  getState() {
 	    return {
-	      channelsSort: main_core.Runtime.clone(this.getVariable('channelsSort', null))
+	      channelsSort: main_core.Runtime.clone(this.getVariable('channelsSort', [])),
+	      channelsLastUsedFrom: main_core.Runtime.clone(this.getVariable('channelsLastUsedFrom', []))
 	    };
 	  }
 	  getGetters() {
@@ -2001,6 +2007,11 @@ this.BX.Crm = this.BX.Crm || {};
 	          return visible[0].channelId;
 	        }
 	        return null;
+	      },
+	      channelsLastUsedFrom: state => {
+	        var _state$channelsLastUs;
+	        const channelsLastUsedFrom = [...((_state$channelsLastUs = state.channelsLastUsedFrom) != null ? _state$channelsLastUs : [])];
+	        return channelsLastUsedFrom.filter(channelLastUsedFrom => main_core.Type.isString(channelLastUsedFrom.fromId));
 	      }
 	    };
 	  }
@@ -2031,6 +2042,28 @@ this.BX.Crm = this.BX.Crm || {};
 	        store.commit('setChannelsSort', {
 	          channelsSort: normalized
 	        });
+	      },
+	      /** @function preferences/setChannelsLastUsedFrom */
+	      setChannelsLastUsedFrom: (store, payload) => {
+	        const {
+	          channelsLastUsedFrom
+	        } = payload;
+	        if (!main_core.Type.isArray(channelsLastUsedFrom)) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _logger$4)[_logger$4].warn('setChannelsLastUsedFrom: channelsLastUsedFrom should be an array', {
+	            payload
+	          });
+	          return;
+	        }
+	        const normalized = channelsLastUsedFrom.filter(channelLastUsedFrom => main_core.Type.isPlainObject(channelLastUsedFrom) && main_core.Type.isString(channelLastUsedFrom == null ? void 0 : channelLastUsedFrom.fromId)).map(channelLastUsedFrom => main_core.Runtime.clone(channelLastUsedFrom));
+	        if (!main_core.Type.isArrayFilled(normalized)) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _logger$4)[_logger$4].warn('setChannelsLastUsedFrom: channelsLastUsedFrom should contain at least one channelLastUsedFrom', {
+	            payload
+	          });
+	          return;
+	        }
+	        store.commit('setChannelsLastUsedFrom', {
+	          channelsLastUsedFrom
+	        });
 	      }
 	    };
 	  }
@@ -2049,6 +2082,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        channelsSort
 	      }) => {
 	        state.channelsSort = channelsSort;
+	      },
+	      setChannelsLastUsedFrom: (state, {
+	        channelsLastUsedFrom
+	      }) => {
+	        state.channelsLastUsedFrom = channelsLastUsedFrom;
 	      }
 	    };
 	  }
@@ -2865,6 +2903,28 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5] = params.store;
 	  }
+	  saveChannelLastUsedFrom(channel, fromId) {
+	    const channelsLastUsedFrom = babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].getters['preferences/channelsLastUsedFrom'];
+	    const index = channelsLastUsedFrom.findIndex(item => item.channelId === channel.id);
+	    if (index >= 0) {
+	      if (channelsLastUsedFrom[index].fromId === fromId) {
+	        return;
+	      }
+	      channelsLastUsedFrom[index].fromId = fromId;
+	    } else {
+	      channelsLastUsedFrom.push({
+	        channelId: channel.id,
+	        fromId: fromId
+	      });
+	    }
+	    this.saveChannelsLastUsedFrom(channelsLastUsedFrom);
+	  }
+	  saveChannelsLastUsedFrom(channelsLastUsedFrom) {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('preferences/setChannelsLastUsedFrom', {
+	      channelsLastUsedFrom
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _savePreferences)[_savePreferences]();
+	  }
 	  saveChannelsSort(sort) {
 	    void babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('preferences/setChannelsSort', {
 	      channelsSort: sort
@@ -2970,6 +3030,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _messageModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messageModel");
 	var _emitter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitter");
 	var _analyticsService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analyticsService");
+	var _preferencesService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preferencesService");
 	var _prepareParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareParams");
 	var _prepareNotificationParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareNotificationParams");
 	var _prepareTemplateParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareTemplateParams");
@@ -3012,11 +3073,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _preferencesService, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _logger$a)[_logger$a] = params.logger;
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7] = params.store;
 	    babelHelpers.classPrivateFieldLooseBase(this, _messageModel)[_messageModel] = params.messageModel;
 	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter] = params.eventEmitter;
 	    babelHelpers.classPrivateFieldLooseBase(this, _analyticsService)[_analyticsService] = params.analyticsService;
+	    babelHelpers.classPrivateFieldLooseBase(this, _preferencesService)[_preferencesService] = params.preferencesService;
 	  }
 	  sendMessage() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].getters['application/isProgress']) {
@@ -3043,6 +3109,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _messageModel)[_messageModel].clearState();
 	      void babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('application/resetAlert');
 	      babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].emit('crm:messagesender:editor:onSendSuccess');
+	      babelHelpers.classPrivateFieldLooseBase(this, _preferencesService)[_preferencesService].saveChannelLastUsedFrom(channel, from.id);
 	    }).catch(response => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _logger$a)[_logger$a].error('sendMessage: error', {
 	        response
@@ -3266,7 +3333,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        store: babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9],
 	        messageModel: this.getMessageModel(),
 	        eventEmitter: babelHelpers.classPrivateFieldLooseBase(this, _emitter$1)[_emitter$1],
-	        analyticsService: this.getAnalyticsService()
+	        analyticsService: this.getAnalyticsService(),
+	        preferencesService: this.getPreferencesService()
 	      });
 	    });
 	  }
@@ -3748,7 +3816,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      isLoading: true
 	    }));
 	    return babelHelpers.classPrivateFieldLooseBase(this, _actualizeOptions)[_actualizeOptions]().then(() => {
-	      var _babelHelpers$classPr16, _babelHelpers$classPr17, _babelHelpers$classPr18, _babelHelpers$classPr19;
+	      var _babelHelpers$classPr16, _babelHelpers$classPr17, _babelHelpers$classPr18, _babelHelpers$classPr19, _babelHelpers$classPr20;
 	      void ((_babelHelpers$classPr16 = babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b]) == null ? void 0 : _babelHelpers$classPr16.dispatch('application/actualizeState', {
 	        context: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].context,
 	        contentProviders: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].contentProviders,
@@ -3761,22 +3829,23 @@ this.BX.Crm = this.BX.Crm || {};
 	        collection: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].channels
 	      }));
 	      void ((_babelHelpers$classPr18 = babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b]) == null ? void 0 : _babelHelpers$classPr18.dispatch('preferences/actualizeState', {
-	        channelsSort: (_babelHelpers$classPr19 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].preferences) == null ? void 0 : _babelHelpers$classPr19.channelsSort
+	        channelsSort: (_babelHelpers$classPr19 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].preferences) == null ? void 0 : _babelHelpers$classPr19.channelsSort,
+	        channelsLastUsedFrom: (_babelHelpers$classPr20 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].preferences) == null ? void 0 : _babelHelpers$classPr20.channelsLastUsedFrom
 	      }));
 	    }).finally(() => {
-	      var _babelHelpers$classPr20;
-	      void ((_babelHelpers$classPr20 = babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b]) == null ? void 0 : _babelHelpers$classPr20.dispatch('application/setProgress', {
+	      var _babelHelpers$classPr21;
+	      void ((_babelHelpers$classPr21 = babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b]) == null ? void 0 : _babelHelpers$classPr21.dispatch('application/setProgress', {
 	        isLoading: false
 	      }));
 	    });
 	  }
 	  destroy() {
-	    var _babelHelpers$classPr21, _babelHelpers$classPr22;
-	    (_babelHelpers$classPr21 = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app]) == null ? void 0 : _babelHelpers$classPr21.unmount();
+	    var _babelHelpers$classPr22, _babelHelpers$classPr23;
+	    (_babelHelpers$classPr22 = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app]) == null ? void 0 : _babelHelpers$classPr22.unmount();
 	    babelHelpers.classPrivateFieldLooseBase(this, _app)[_app] = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _rootComponent)[_rootComponent].$Bitrix.eventEmitter.unsubscribeAll();
 	    babelHelpers.classPrivateFieldLooseBase(this, _rootComponent)[_rootComponent] = null;
-	    (_babelHelpers$classPr22 = babelHelpers.classPrivateFieldLooseBase(this, _stateExporter)[_stateExporter]) == null ? void 0 : _babelHelpers$classPr22.destroy();
+	    (_babelHelpers$classPr23 = babelHelpers.classPrivateFieldLooseBase(this, _stateExporter)[_stateExporter]) == null ? void 0 : _babelHelpers$classPr23.destroy();
 	    babelHelpers.classPrivateFieldLooseBase(this, _stateExporter)[_stateExporter] = null;
 	    this.unsubscribeAll();
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b] = null;
@@ -3816,7 +3885,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return result;
 	}
 	async function _buildStore2() {
-	  var _babelHelpers$classPr23;
+	  var _babelHelpers$classPr24, _babelHelpers$classPr25;
 	  const messageModel = MessageModel.create().useDatabase(false).setLogger(babelHelpers.classPrivateFieldLooseBase(this, _locator)[_locator].getLogger()).setVariables({
 	    text: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].message.text
 	  });
@@ -3833,7 +3902,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    collection: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].channels
 	  })).addModel(messageModel).addModel(TemplatesModel.create().useDatabase(true) // cache for faster render, actualize on template load
 	  .setLogger(babelHelpers.classPrivateFieldLooseBase(this, _locator)[_locator].getLogger())).addModel(PreferencesModel.create().useDatabase(false).setLogger(babelHelpers.classPrivateFieldLooseBase(this, _locator)[_locator].getLogger()).setVariables({
-	    channelsSort: (_babelHelpers$classPr23 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].preferences) == null ? void 0 : _babelHelpers$classPr23.channelsSort
+	    channelsSort: (_babelHelpers$classPr24 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].preferences) == null ? void 0 : _babelHelpers$classPr24.channelsSort,
+	    channelsLastUsedFrom: (_babelHelpers$classPr25 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].preferences) == null ? void 0 : _babelHelpers$classPr25.channelsLastUsedFrom
 	  })).addModel(AnalyticsModel.create().useDatabase(false).setLogger(babelHelpers.classPrivateFieldLooseBase(this, _locator)[_locator].getLogger()).setVariables({
 	    analytics: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].analytics
 	  })).setDatabaseConfig({
@@ -3864,10 +3934,10 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _loadOptions2() {
 	  return new Promise((resolve, reject) => {
-	    var _babelHelpers$classPr24;
+	    var _babelHelpers$classPr26;
 	    main_core.ajax.runAction('crm.messagesender.editor.load', {
 	      json: {
-	        sceneId: (_babelHelpers$classPr24 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].scene) == null ? void 0 : _babelHelpers$classPr24.id,
+	        sceneId: (_babelHelpers$classPr26 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].scene) == null ? void 0 : _babelHelpers$classPr26.id,
 	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].context.entityTypeId,
 	        entityId: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].context.entityId,
 	        categoryId: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].context.categoryId

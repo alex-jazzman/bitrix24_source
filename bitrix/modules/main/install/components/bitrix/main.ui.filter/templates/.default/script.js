@@ -6565,7 +6565,8 @@ this.BX = this.BX || {};
 	          closeIcon: false,
 	          closeByEsc: false,
 	          noAllPaddings: true,
-	          zIndex: 12
+	          zIndex: 12,
+	          focusTrap: false
 	        });
 	        this.popup.setContent(this.getTemplate());
 	        BX.bind(this.getFieldListContainer(), 'keydown', BX.delegate(this._onFieldsContainerKeydown, this));

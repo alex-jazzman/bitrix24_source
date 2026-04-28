@@ -11,6 +11,5 @@ return [
 		'ui-system/layout/card-list',
 		'utils/test',
 		'utils/validation',
-		'intranet:results-year/more-menu-button',
 	],
 ];

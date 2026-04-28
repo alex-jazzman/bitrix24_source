@@ -35,7 +35,7 @@ export class LikeManager
 		}
 
 		this.store.dispatch('recent/like', {
-			id: dialogId,
+			dialogId,
 			liked: false,
 		});
 	}

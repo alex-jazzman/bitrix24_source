@@ -11,6 +11,7 @@
 		const createChatId = BX.componentParameters.get('CREATE_CHAT_ID', null);
 		const createMailId = BX.componentParameters.get('CREATE_MAIL_ID', null);
 		const uuid = BX.componentParameters.get('UUID', null);
+		const eventType = BX.componentParameters.get('EVENT_TYPE', null);
 
 		await EventEditForm.initEditForm({
 			ownerId,
@@ -20,6 +21,7 @@
 			createChatId,
 			createMailId,
 			uuid,
+			eventType,
 		});
 
 		layout.enableNavigationBarBorder(false);

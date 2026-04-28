@@ -15,8 +15,11 @@ export class DashboardParametersSelector
 	#params: Set<string>;
 	#initialParams: Set<string>;
 	#paramList: { [paramCode: string]: Parameter };
+	#requiredParamList: Map<string, string>;
 	#groupSelector: TagSelector;
 	#paramsSelector: TagSelector;
+
+	#isNew: boolean;
 
 	#scopeOwners: Map<string, Set<string>> = new Map();
 
@@ -31,7 +34,10 @@ export class DashboardParametersSelector
 		this.#params = params.params;
 		this.#initialParams = new Set(params.params);
 
+		this.#isNew = params.isNew ?? false;
+
 		this.#paramList = params.paramList;
+		this.#requiredParamList = new Map(Object.entries(params.requiredParamList ?? {}));
 
 		this.activeUrlParamsSelector = params.activeUrlParamsSelector ?? true;
 		this.isNewDashboard = params.isNewDashboard ?? false;
@@ -134,7 +140,8 @@ export class DashboardParametersSelector
 						id: 'biconnector-superset-group',
 						dynamicLoad: true,
 						options: {
-							checkAccessEditRights: true,
+							checkAccessRights: true,
+							onlyEditGroupsSelectable: !this.#isAllowedClearGroups,
 						},
 					},
 				],
@@ -142,6 +149,10 @@ export class DashboardParametersSelector
 				events: {
 					onLoad: () => {
 						this.#initParamsSelector();
+						if (!this.#isAllowedClearGroups)
+						{
+							this.#bindLockedGroupHints();
+						}
 					},
 					'Item:onSelect': (event: BaseEvent) => {
 						const item: Item = event.getData().item;
@@ -177,13 +188,21 @@ export class DashboardParametersSelector
 
 		Object.values(this.#paramList).forEach((param: Parameter) => {
 			const itemTitle = this.#getParamTitle(param.code);
+			const isRequired = this.#requiredParamList.has(param.code);
 			items.push({
 				id: param.code,
 				entityId: 'biconnector-superset-params',
 				title: itemTitle.title,
 				supertitle: itemTitle.supertitle,
 				tabs: 'params',
+				deselectable: !isRequired,
+				selected: this.#isNew && isRequired,
 			});
+			if (this.#isNew && isRequired)
+			{
+				this.#params.add(param.code);
+				this.#onChange();
+			}
 		});
 
 		const preselectedItems = [];
@@ -191,11 +210,13 @@ export class DashboardParametersSelector
 		this.#params.forEach((paramCode: string) => {
 			preselectedItems.push(['biconnector-superset-params', paramCode]);
 			const itemTitle = this.#getParamTitle(paramCode);
+			const isRequired = this.#requiredParamList.has(paramCode);
 			tagItems.push({
 				id: paramCode,
 				entityId: 'biconnector-superset-params',
 				title: itemTitle.title,
 				supertitle: itemTitle.supertitle,
+				deselectable: !isRequired,
 			});
 		});
 
@@ -248,6 +269,8 @@ export class DashboardParametersSelector
 
 		this.#paramsSelector = paramSelector;
 
+		this.#addHintsToExistingTags();
+
 		if (!this.activeUrlParamsSelector)
 		{
 			const listLink = document.querySelector('.dashboard-params-list-link');
@@ -260,6 +283,21 @@ export class DashboardParametersSelector
 		this.#buildInitialScopeOwners();
 
 		EventEmitter.emit('BIConnector.DashboardParamsSelector:initCompleted');
+	}
+
+	#addHintsToExistingTags(): void
+	{
+		for (const tag of this.#paramsSelector.getTags())
+		{
+			const hintText = this.#requiredParamList.get(tag.getId());
+			if (hintText)
+			{
+				const container = tag.getContainer();
+				container.setAttribute('data-hint', hintText);
+				container.setAttribute('data-hint-no-icon', '');
+				BX.UI.Hint.initNode(container);
+			}
+		}
 	}
 
 	#getParamTitle(paramCode: string): { title: string, supertitle: string }
@@ -316,6 +354,25 @@ export class DashboardParametersSelector
 				allowChangeHistory: false,
 			},
 		);
+	}
+
+	#bindLockedGroupHints(): void
+	{
+		const hint = BX.UI.Hint.createInstance();
+		const hintText = Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_GROUP_NOT_EDITABLE_HINT');
+
+		this.#groupSelector.getTags().forEach((tag) => {
+			if (!tag.isDeselectable())
+			{
+				const node = tag.getContainer();
+				Event.bind(node, 'click', () => {
+					hint.show(node, hintText);
+				});
+				Event.bind(node, 'mouseleave', () => {
+					hint.hide(node);
+				});
+			}
+		});
 	}
 
 	#buildInitialScopeOwners(): void

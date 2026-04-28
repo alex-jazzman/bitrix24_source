@@ -9,6 +9,8 @@ import { Switcher, SwitcherSize } from 'ui.switcher';
 import { Popup } from 'main.popup';
 import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage, ErrorCollection, DescriptionField } from 'ui.form-elements.field';
 import { PushOtp } from 'intranet.notify-banner.push-otp';
+import { AirButtonStyle, Button, CloseButton } from "ui.buttons";
+import {MessageBox} from "ui.dialogs.messagebox";
 
 export class SecurityPage extends BaseSettingsPage
 {
@@ -215,50 +217,47 @@ export class SecurityPage extends BaseSettingsPage
 		return this.#otpChecker;
 	}
 
-	#getOTPPopup(): Popup
+	#getOTPPopup(): MessageBox
 	{
-		if (this.#otpPopup instanceof Popup)
+		if (this.#otpPopup instanceof MessageBox)
 		{
 			return this.#otpPopup;
 		}
 
-		const popupDescription = Tag.render`
-			<div class="intranet-settings__security_popup_info">
-				${Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE')}
-			</div>	
-		`;
-
-		const popupButton = new BX.UI.Button({
-			text: Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_BUTTON'),
-			color: BX.UI.Button.Color.PRIMARY,
-			events: {
-				click: () => {
-					this.#getOTPPopup().close();
-					BX.SidePanel.Instance.open(this.getValue('SECURITY_OTP_PATH'));
+		this.#otpPopup = MessageBox.create({
+			popupOptions: {
+				bindElement: this.#otpChecker.getInputNode(),
+				closeByEsc: true,
+				autoHide: true,
+				overlay: false,
+				angle: {
+					offset: 200 - 15,
 				},
+				offsetLeft: this.#otpChecker.getInputNode().offsetWidth - 200 + 15,
 			},
-		});
-
-		const popupContent = Tag.render`
-			<div class="intranet-settings__security_popup_container">
-				${popupDescription}
-				<div class="ui-btn-container ui-btn-container-center">
-					${popupButton.getContainer()}
-				</div>			
-			</div>
-		`;
-
-		this.#otpPopup = new Popup({
-			bindElement: this.#otpChecker.getInputNode(),
-			content: popupContent,
-			autoHide: true,
-			width: 337,
-			angle: {
-				offset: 200 - 15,
-			},
-			offsetLeft: this.#otpChecker.getInputNode().offsetWidth - 200 + 15,
-			closeByEsc: true,
-			borderRadius: 18,
+			message: Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_MSGVER_1'),
+			modal: true,
+			useAirDesign: true,
+			buttons: [
+				new Button({
+					text: Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_BUTTON_MSGVER_1'),
+					style: AirButtonStyle.FILLED,
+					useAirDesign: true,
+					events: {
+						click: () => {
+							this.#getOTPPopup().close();
+							BX.SidePanel.Instance.open(this.getValue('SECURITY_OTP_PATH'));
+						},
+					},
+				}),
+				new CloseButton({
+					useAirDesign: true,
+					style: AirButtonStyle.PLAIN_NO_ACCENT,
+					onclick: () => {
+						this.#otpPopup.close();
+					},
+				}),
+			],
 		});
 
 		return this.#otpPopup;

@@ -152,16 +152,6 @@ export class BasePullHandler
 		this.#chatHandler.handleChatUnread(params);
 	}
 
-	handleReadAllChats()
-	{
-		this.#chatHandler.handleReadAllChats();
-	}
-
-	handleReadAllChatsByType(params)
-	{
-		this.#chatHandler.handleReadAllChatsByType(params);
-	}
-
 	handleChatMuteNotify(params)
 	{
 		this.#chatHandler.handleChatMuteNotify(params);
@@ -238,11 +228,6 @@ export class BasePullHandler
 	handleCommentSubscribe(params)
 	{
 		this.#commentsHandler.handleCommentSubscribe(params);
-	}
-
-	handleReadAllChannelComments(params)
-	{
-		this.#commentsHandler.handleReadAllChannelComments(params);
 	}
 	// endregion 'comments'
 

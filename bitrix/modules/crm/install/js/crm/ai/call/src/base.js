@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Slider } from 'crm.ai.slider';
 import { Attention, AttentionPresets, Textbox } from 'crm.ai.textbox';
 import { AudioPlayer } from 'crm.audio-player';
@@ -216,6 +217,7 @@ export class Base
 			'#LANGUAGE_TITLE#': `<span style="text-transform: lowercase">${Text.encode(this.languageTitle)}</span>`,
 			'[helpdesklink]': `<a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${helpdeskCode}');">`,
 			'[/helpdesklink]': '</a>',
+			'#COPILOT_NAME#': NameService.copilotName(),
 		});
 
 		return new Attention({

@@ -7,7 +7,8 @@ import { Utils } from 'im.v2.lib.utils';
 import { getSearchConfig, StoreUpdater } from 'im.v2.lib.search';
 import { runAction } from 'im.v2.lib.rest';
 
-import type { ImRecentProviderItem, SearchConfig, SearchResultItem } from 'im.v2.lib.search';
+import type { ImRecentProviderItem, SearchConfig, SearchResultItem, MentionSearchConfigType } from 'im.v2.lib.search';
+import type { ImModelUser } from 'im.v2.model';
 
 const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
 
@@ -16,7 +17,7 @@ export class BaseServerSearch
 	#storeUpdater: StoreUpdater;
 	#searchConfig: SearchConfig;
 
-	constructor(searchConfig)
+	constructor(searchConfig: MentionSearchConfigType)
 	{
 		this.#searchConfig = searchConfig;
 		this.#storeUpdater = new StoreUpdater();
@@ -27,7 +28,7 @@ export class BaseServerSearch
 		const items = await this.#searchRequest(query);
 		await this.#storeUpdater.update(items);
 
-		return this.#getDialogIdAndDate(items);
+		return this.#prepareSearchResults(items);
 	}
 
 	async loadChatParticipants(dialogId: string): Promise<SearchResultItem[]>
@@ -48,7 +49,7 @@ export class BaseServerSearch
 
 			void (new UserManager()).setUsersToModel(users);
 
-			return this.#getDialogIdAndDate(users);
+			return this.#getDialogIds(users);
 		}
 		catch (error)
 		{
@@ -83,12 +84,24 @@ export class BaseServerSearch
 		return items;
 	}
 
-	#getDialogIdAndDate(items: ImRecentProviderItem[]): SearchResultItem[]
+	#prepareSearchResults(items: ImRecentProviderItem[]): SearchResultItem[]
+	{
+		return items.map((item) => {
+			const { id, customData } = item;
+
+			return {
+				dialogId: id.toString(),
+				dateMessage: customData.dateMessage ?? '',
+				isChatParticipant: customData.isContextChatMember ?? null,
+			};
+		});
+	}
+
+	#getDialogIds(items: ImModelUser[]): { dialogId: string }[]
 	{
 		return items.map((item) => {
 			return {
 				dialogId: item.id.toString(),
-				dateMessage: item.customData?.dateMessage ?? '',
 			};
 		});
 	}

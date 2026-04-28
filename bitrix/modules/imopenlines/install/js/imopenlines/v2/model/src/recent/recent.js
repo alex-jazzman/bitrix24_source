@@ -16,11 +16,12 @@ type RecentState = {
 	collection: {[dialogId: string]: ImolModelRecentItem},
 };
 
-export class OpenLinesRecentModel extends BuilderModel
+/* eslint-disable no-param-reassign */
+export class RecentModel extends BuilderModel
 {
 	getName(): string
 	{
-		return 'recentOpenLines';
+		return 'recent';
 	}
 
 	getState(): RecentState
@@ -41,21 +42,20 @@ export class OpenLinesRecentModel extends BuilderModel
 				text: '',
 				date: null,
 			},
-			unread: false,
 			pinned: false,
 			liked: false,
 		};
 	}
 
-	getGetters(): GetterTree
+	getGetters(): GetterTree<RecentState>
 	{
 		return {
-			/** @function recentOpenLines/getOpenLinesCollection */
+			/** @function openlines/recent/getOpenLinesCollection */
 			getOpenLinesCollection: (state: RecentState): ImolModelRecentItem[] => {
 				const openLinesItems = [];
 
 				Object.keys(state.collection).forEach((dialogId) => {
-					const dialog = this.store.getters['chats/get'](dialogId);
+					const dialog = Core.getStore().getters['chats/get'](dialogId);
 
 					if (dialog)
 					{
@@ -65,9 +65,9 @@ export class OpenLinesRecentModel extends BuilderModel
 
 				return openLinesItems;
 			},
-			/** @function recentOpenLines/getSession */
+			/** @function openlines/recent/getSession */
 			getSession: (state: RecentState) => (dialogId: string, getBlank: boolean = false): ImolModelSession | null => {
-				const session: number = state.collection[dialogId];
+				const session = state.collection[dialogId];
 
 				if (!session && getBlank)
 				{
@@ -81,9 +81,9 @@ export class OpenLinesRecentModel extends BuilderModel
 
 				const sessionId = session.sessionId;
 
-				return Core.getStore().getters['sessions/getById'](sessionId);
+				return Core.getStore().getters['openLines/sessions/getById'](sessionId);
 			},
-			/** @function recentOpenLines/get */
+			/** @function recent/get */
 			get: (state: RecentState) => (dialogId: string): ImolModelRecentItem | null => {
 				if (!state.collection[dialogId])
 				{
@@ -92,7 +92,7 @@ export class OpenLinesRecentModel extends BuilderModel
 
 				return state.collection[dialogId];
 			},
-			/** @function recentOpenLines/getChatIdByDialogId */
+			/** @function recent/getChatIdByDialogId */
 			getChatIdByDialogId: (state: RecentState) => (dialogId: string): number | null => {
 				if (!state.collection[dialogId])
 				{
@@ -104,10 +104,10 @@ export class OpenLinesRecentModel extends BuilderModel
 		};
 	}
 
-	getActions(): ActionTree
+	getActions(): ActionTree<RecentState>
 	{
 		return {
-			/** @function recentOpenLines/set */
+			/** @function openLines/recent/set */
 			set: (store, payload: RawRecentItem | RawRecentItem[]) => {
 				let openLines = payload;
 
@@ -144,7 +144,7 @@ export class OpenLinesRecentModel extends BuilderModel
 					store.commit('update', itemsToUpdate);
 				}
 			},
-			/** @function recentOpenLines/delete */
+			/** @function openLines/recent/delete */
 			delete: (store, payload: { id: string | number }) => {
 				const existingItem = store.state.collection[payload.id];
 				if (!existingItem)
@@ -159,7 +159,7 @@ export class OpenLinesRecentModel extends BuilderModel
 		};
 	}
 
-	getMutations(): MutationTree
+	getMutations(): MutationTree<RecentState>
 	{
 		return {
 			add: (state: RecentState, payload: RawRecentItem | RawRecentItem[]) => {
@@ -191,7 +191,6 @@ export class OpenLinesRecentModel extends BuilderModel
 				});
 			},
 			delete: (state: RecentState, payload: {id: string}) => {
-				// eslint-disable-next-line no-param-reassign
 				delete state.collection[payload.id];
 			},
 		};

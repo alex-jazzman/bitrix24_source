@@ -1,6 +1,8 @@
-import { Type } from 'main.core';
+import { Type, Loc } from 'main.core';
+import { SetupTemplate, type SetupTemplateData } from 'bizproc.setup-template';
 
 import { ACTION_TYPE, AJAX_REQUEST_TYPE, GRID_API_ACTION } from '../constants';
+import { StartAgentResponse } from '../types';
 
 import type {
 	RestartActionParams,
@@ -55,13 +57,18 @@ export class RestartAction extends BaseAction
 		return data;
 	}
 
-	handleSuccess(result: any): void
+	handleSuccess(result: StartAgentResponse): void
 	{
-		/*
-		// temporary disabled
+		const setupTemplate: ?SetupTemplateData = result?.data?.setupTemplateData;
+		if (setupTemplate && Type.isObjectLike(setupTemplate))
+		{
+			SetupTemplate.showSidePanel(setupTemplate);
+
+			return;
+		}
+
 		BX.UI.Notification.Center.notify({
 			content: Loc.getMessage('BIZPROC_AI_AGENTS_GRID_RESTART_ACTION_NOTIFICATION_TITLE'),
 		});
-		 */
 	}
 }

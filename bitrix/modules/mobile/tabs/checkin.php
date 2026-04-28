@@ -79,8 +79,8 @@ class CheckIn implements Tabable
 		return [
 			'name' => 'JSStackComponent',
 			'title' => $this->getTitle(),
-			'componentCode' => 'stafftrack.check-in.tabs',
-			'scriptPath' => Manager::getComponentPath('stafftrack:stafftrack.check-in.tabs'),
+			'componentCode' => 'stafftrack.check-in-v2.tabs',
+			'scriptPath' => Manager::getComponentPath('stafftrack:stafftrack.check-in-v2.tabs'),
 			'rootWidget' => [
 				'name' => 'tabs',
 				'settings' => [
@@ -100,7 +100,7 @@ class CheckIn implements Tabable
 				],
 			],
 			'params' => [
-				'COMPONENT_CODE' => 'stafftrack.check-in.tabs',
+				'COMPONENT_CODE' => 'stafftrack.check-in-v2.tabs',
 				'USER_ID' => $this->context->userId,
 				'SITE_ID' => $this->context->siteId,
 			],
@@ -112,6 +112,7 @@ class CheckIn implements Tabable
 		return [
 			'id' => 'shifts',
 			'title' => Loc::getMessage('TAB_STAFFTRACK_NAVIGATION_TAB_SHIFTS'),
+			'disableScroll' => true,
 			'widget' => [
 				'name' => 'layout',
 				'code' => 'shifts',

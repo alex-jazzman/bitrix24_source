@@ -52,7 +52,8 @@ $APPLICATION->IncludeComponent(
 		'OWNER_INFO' => $arResult['ENTITY_INFO'],
 		'TYPE' => 'details',
 		'SCRIPTS' => [
-			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();'
+			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();',
+			'DETACH_OPEN_LINE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processDetachOpenLine();',
 		],
 		'ANALYTICS' => $arResult['ANALYTICS'] ?? [],
 	],

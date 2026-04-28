@@ -126,14 +126,7 @@ use Bitrix\Main\Localization\Loc;
 			<option value="h"<?= ($arCurrentValues["timeout_duration_type"] == "h") ? " selected" : "" ?>><?= GetMessage("BPAA_PD_TIME_H") ?></option>
 			<option value="d"<?= ($arCurrentValues["timeout_duration_type"] == "d") ? " selected" : "" ?>><?= GetMessage("BPAA_PD_TIME_D") ?></option>
 		</select>
-		<?
-			$delayMinLimit = CBPSchedulerService::getDelayMinLimit();
-			if ($delayMinLimit):
-		?>
-		<p style="color: red;">* <?= GetMessage("BPAA_PD_TIMEOUT_LIMIT") ?>: <?=CBPHelper::FormatTimePeriod($delayMinLimit)?></p>
-		<?
-			endif;
-		?>
+		<?= \CBPViewHelper::renderDelayLimitsInfo() ?>
 	</td>
 </tr>
 <tr>

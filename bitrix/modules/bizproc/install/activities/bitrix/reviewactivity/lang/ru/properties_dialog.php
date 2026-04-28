@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["BPAR_PD_REVIEWERS"] = "Ознакомить пользователей";
 $MESS["BPAR_PD_DESCR"] = "Описание задания";
 $MESS["BPAR_PD_NAME"] = "Название задания";
@@ -21,6 +22,4 @@ $MESS["BPAR_PD_SHOW_COMMENT_1"] = "Показывать поле с поясне
 $MESS["BPAR_PD_COMMENT_REQUIRED_1"] = "Запрашивать пояснение";
 $MESS["BPAR_PD_COMMENT_LABEL_MESSAGE_1"] = "Название поля для пояснения";
 $MESS["BPAR_PD_ACCESS_CONTROL"] = "Ограничить доступ";
-$MESS["BPAR_PD_TIMEOUT_LIMIT"] = "Минимальный период ознакомления";
 $MESS["BPAR_PD_DELEGATION_TYPE"] = "Тип делегирования";
-?>

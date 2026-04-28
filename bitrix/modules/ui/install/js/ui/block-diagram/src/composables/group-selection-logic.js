@@ -44,23 +44,14 @@ export function useGroupSelectionLogic(closeContextMenu, options: UseGroupSelect
 	const height = options.defaultBlockSize.height;
 
 	const getBlockDimensions = (block, container) => {
-		let w = block.dimensions?.width;
-		let h = block.dimensions?.height;
-
-		if (!w || !h)
+		const el = container?.querySelector(`[data-id="${block.id}"]`);
+		if (el)
 		{
-			const el = container?.querySelector(`[data-id="${block.id}"]`);
-			if (el)
-			{
-				w = el.offsetWidth;
-				h = el.offsetHeight;
-			}
-			else
-			{
-				w = width;
-				h = height;
-			}
+			return { w: el.offsetWidth, h: el.offsetHeight };
 		}
+
+		const w = block.dimensions?.width || width;
+		const h = block.dimensions?.height || height;
 
 		return { w, h };
 	};

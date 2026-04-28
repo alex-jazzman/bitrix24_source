@@ -24,6 +24,9 @@ export const CommonNodeSettings = {
 		...mapState(useDiagramStore, [
 			'documentType',
 		]),
+		...mapState(useAppStore, [
+			'isShownRightPanel',
+		]),
 	},
 	methods: {
 		...mapActions(useAppStore, ['hideRightPanel', 'setShowPreviewPanel']),
@@ -39,6 +42,7 @@ export const CommonNodeSettings = {
 			v-if="isVisible"
 			:block="block"
 			:documentType="documentType"
+			:panelAlreadyOpened="isShownRightPanel"
 			@close="onCloseSettings"
 			@showPreview="setShowPreviewPanel"
 		>

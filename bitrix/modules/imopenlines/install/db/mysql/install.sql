@@ -231,6 +231,7 @@ CREATE TABLE b_imopenlines_config
 	KPI_FURTHER_ANSWER_TEXT text null,
 	KPI_CHECK_OPERATOR_ACTIVITY char(1) not null default 'N',
 	SEND_NOTIFICATION_EMPTY_QUEUE char(1) not null default 'N',
+	SHOW_NOTIFICATION_REDIRECT char(1) null,
 	USE_WELCOME_FORM char(1) not null DEFAULT 'Y',
 	WELCOME_FORM_ID int(11) DEFAULT NULL,
 	WELCOME_FORM_DELAY char(1) DEFAULT 'Y',

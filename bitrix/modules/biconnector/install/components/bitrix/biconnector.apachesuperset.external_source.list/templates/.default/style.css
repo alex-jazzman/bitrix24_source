@@ -48,6 +48,15 @@
 	padding-left: 10px;
 }
 
+.biconnector-grid-source-icon {
+	width: 22px;
+	min-width: 22px;
+	height: 22px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
 .external-source-active-label-wrapper {
 	display: flex;
 }

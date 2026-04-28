@@ -2,13 +2,54 @@
  * @module im/messenger/controller/sidebar-v2/ui/primary-button/factory
  */
 jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Icon } = require('assets/icons');
 	const { Color, Indent } = require('tokens');
 	const { Text6 } = require('ui-system/typography/text');
 	const { SpinnerLoader } = require('layout/ui/loaders/spinner');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 	const { SidebarPrimaryActionButtonId } = require('im/messenger/controller/sidebar-v2/const');
+	const { ChatEntityType } = require('im/messenger/const');
 	const { SidebarAvatar } = require('im/messenger/controller/sidebar-v2/ui/sidebar-avatar');
+
+	const ChatEntityLinkParams = Object.freeze({
+		[ChatEntityType.tasks]: {
+			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_TASK'),
+			icon: Icon.CIRCLE_CHECK_FORWARD,
+		},
+		[ChatEntityType.calendar]: {
+			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_MEETING'),
+			icon: Icon.CALENDAR_SHARE,
+		},
+		[ChatEntityType.sonetGroup]: {
+			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_GROUP'),
+			icon: Icon.MOVE_TO,
+		},
+		[ChatEntityType.mail]: {
+			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_MAIL'),
+			icon: Icon.MAIL_SEND,
+		},
+		[ChatEntityType.contact]: {
+			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_CONTACT'),
+			icon: Icon.CONTACT_SEND,
+		},
+		[ChatEntityType.deal]: {
+			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_DEAL'),
+			icon: Icon.HANDSHAKE_SEND,
+		},
+		[ChatEntityType.lead]: {
+			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_LEAD'),
+			icon: Icon.LEAD_SEND,
+		},
+		[ChatEntityType.dynamic]: {
+			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_DYNAMIC_ELEMENT'),
+			icon: Icon.MY_DEALS_SEND,
+		},
+		[ChatEntityType.company]: {
+			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_OPEN_COMPANY'),
+			icon: Icon.COMPANY_SEND,
+		},
+	});
 
 	const createSearchButton = ({ onClick, ...rest }) => ({
 		id: SidebarPrimaryActionButtonId.SEARCH,
@@ -132,7 +173,33 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (requi
 		};
 	};
 
+	/**
+	 * @param {object} props
+	 * @param {string} props.entityType
+	 * @param {Function} props.onClick
+	 * @return {SidebarPrimaryActionButton|null}
+	 */
+	const createEntityButton = ({ entityType, onClick, ...rest }) => {
+		const params = ChatEntityLinkParams[entityType];
+		if (!Type.isPlainObject(params))
+		{
+			return null;
+		}
+
+		const { title, icon } = params;
+
+		return {
+			id: SidebarPrimaryActionButtonId.ENTITY_LINK,
+			icon,
+			title,
+			onClick,
+			selected: false,
+			...rest,
+		};
+	};
+
 	module.exports = {
+		createEntityButton,
 		createSearchButton,
 		createMuteButton,
 		createVideoCallButton,

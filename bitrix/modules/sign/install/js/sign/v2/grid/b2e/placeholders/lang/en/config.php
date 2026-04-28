@@ -1,0 +1,19 @@
+<?php
+$MESS["PLACEHOLDER_CREATE_LIST_DYNAMIC_MEMBER_ITEM"] = "Dynamic fields";
+$MESS["PLACEHOLDER_CREATE_LIST_HINT"] = "This form manages Bitrix24 fields only. Open your 1C to create 1C fields.";
+$MESS["PLACEHOLDER_CREATE_LIST_PROFILE_ITEM"] = "Personal information";
+$MESS["PLACEHOLDER_CREATE_LIST_TITLE"] = "Symbolic fields";
+$MESS["PLACEHOLDER_LIST_ADD_FIELD"] = "Create";
+$MESS["PLACEHOLDER_LIST_COMPANY_SELECTOR"] = "Company";
+$MESS["PLACEHOLDER_LIST_COPIED_LABEL"] = "Copy done.";
+$MESS["PLACEHOLDER_LIST_FIELDS_TITLE"] = "Symbolic fields";
+$MESS["PLACEHOLDER_LIST_FIELDS_TITLE_MSGVER_1"] = "Symbolic fields";
+$MESS["PLACEHOLDER_LIST_HCMLINK_COMPANY_SELECTOR"] = "Solution";
+$MESS["PLACEHOLDER_LIST_HELPDESK"] = "Click the field to copy the symbolic code to the Clipboard. [helpdesklink]Learn more[/helpdesklink]";
+$MESS["PLACEHOLDER_LIST_NOTHING_CONFIGURED_DESCRIPTION"] = "Select company and solution";
+$MESS["PLACEHOLDER_LIST_NOTHING_CONFIGURED_TITLE"] = "Parameters";
+$MESS["PLACEHOLDER_LIST_NOTHING_FOUND_DESCRIPTION"] = "Try a different search phrase.";
+$MESS["PLACEHOLDER_LIST_NOTHING_FOUND_TITLE"] = "No entries have been found.";
+$MESS["PLACEHOLDER_LIST_SEARCH_PLACEHOLDER"] = "Search";
+$MESS["PLACEHOLDER_LIST_TAB_1C"] = "1C fields";
+$MESS["PLACEHOLDER_LIST_TAB_BITRIX24"] = "Bitrix24 fields";

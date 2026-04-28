@@ -241,6 +241,30 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	}
 
+	class PlaceholderApi {
+	  list(clearCache = false) {
+	    return post('sign.api_v1.b2e.document.placeholder.list', {
+	      clearCache
+	    });
+	  }
+	  listByHcmLinkCompanyId(hcmLinkCompanyId) {
+	    return post('sign.api_v1.b2e.document.placeholder.listByHcmLinkId', {
+	      hcmLinkCompanyId
+	    });
+	  }
+	  saveLastSelectionBySelectorType(selectorType, value) {
+	    return post('sign.api_v1.b2e.document.placeholder.saveLastSelectionBySelectorType', {
+	      selectorType,
+	      value
+	    });
+	  }
+	  getLastSelectionBySelectorType(selectorType) {
+	    return post('sign.api_v1.b2e.document.placeholder.getLastSelectionBySelectorType', {
+	      selectorType
+	    });
+	  }
+	}
+
 	var _post = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("post");
 	class Api {
 	  constructor() {
@@ -250,6 +274,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    this.template = new TemplateApi();
 	    this.templateFolder = new TemplateFolderApi();
 	    this.signersList = new SignersListApi();
+	    this.placeholder = new PlaceholderApi();
 	  }
 	  register(blankId, scenarioType = null, asTemplate = false, chatId = 0, templateFolderId = 0, initiatedByType = null) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.register', {
@@ -278,11 +303,12 @@ this.BX.Sign = this.BX.Sign || {};
 	      countPerPage
 	    });
 	  }
-	  createBlank(files, scenario = null, forTemplate = false) {
+	  createBlank(files, scenario = null, forTemplate = false, hasPlaceholders = false) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.blank.create', {
 	      files,
 	      scenario,
-	      forTemplate
+	      forTemplate,
+	      hasPlaceholders
 	    });
 	  }
 	  saveBlank(documentUid, blocks) {

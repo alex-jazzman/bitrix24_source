@@ -6,16 +6,19 @@ $MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_TEXTAREA_TITLE'] = 'Текст дела CR
 $MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_SECTION_TITLE'] = 'Воронка для новых сделок';
 $MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_STAGE_TITLE'] = 'Стадия';
 
-$MESS['CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT'] = 'Подробно опишите, что нужно сделать менеджеру, или нажмите пробел для запуска CoPilot';
+$MESS['CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT'] = 'Подробно опишите, что нужно сделать менеджеру, или нажмите пробел для запуска #COPILOT_NAME#';
 $MESS['CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER'] = 'Подробно опишите, что нужно сделать менеджеру';
 
 $MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_HELP'] = 'Как это будет работать в сделках';
 $MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_NAME_PATTERN_TITLE'] = 'Название для новых сделок';
-$MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE'] = 'Ответственные';
+$MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TYPE_BY_CLIENT'] = 'Ответственный за клиента';
+$MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TYPE_BY_CLIENT_LAST_DEAL'] = 'Ответственный за последнюю сделку с клиентом';
+$MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TYPE_BY_USER'] = 'Выбрать сотрудников';
+$MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE_MSGVER_1'] = 'Ответственный за новые сделки';
 
 $MESS['CRM_REPEAT_SALE_SEGMENT_HOW_IT_WORK_TITLE'] = 'Как это будет работать в сделках';
 
-$MESS['CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE'] = 'Автоматика CoPilot';
+$MESS['CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE'] = 'Автоматика #COPILOT_NAME#';
 $MESS['CRM_REPEAT_SALE_SEGMENT_COPILOT_DESCRIPTION'] = 'AI проанализирует историю взаимодействия с клиентами и всю информацию из прошлых сделок, создаст новые сделки и подготовит рекомендации. Это поможет правильно построить диалог с клиентом и успешно завершить сделку';
 $MESS['CRM_REPEAT_SALE_SEGMENT_COPILOT_ENABLED'] = 'Включена';
 $MESS['CRM_REPEAT_SALE_SEGMENT_COPILOT_DISABLED'] = 'Отключена';

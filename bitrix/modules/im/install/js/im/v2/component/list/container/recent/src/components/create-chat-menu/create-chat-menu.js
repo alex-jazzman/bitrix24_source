@@ -11,6 +11,7 @@ import { PromoManager } from 'im.v2.lib.promo';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { CopilotService } from 'im.v2.provider.service.copilot';
+import { CopilotManager } from 'im.v2.lib.copilot';
 
 import { CreateChatHelp } from './components/create-chat-help';
 import { DescriptionBanner } from './components/collab/description-banner';
@@ -117,11 +118,18 @@ export const CreateChatMenu = {
 				'--loading': this.isLoading,
 			};
 		},
+		createCopilotTitle(): string
+		{
+			return this.loc('IM_RECENT_CREATE_COPILOT_TITLE_MSGVER_1', {
+				'#COPILOT_NAME#': this.copilotManager.getName(),
+			});
+		},
 	},
 	created()
 	{
 		this.showCollabPromo = PromoManager.getInstance().needToShow(PromoId.createCollabDescription);
 		this.showInvitePromo = PromoManager.getInstance().needToShow(PromoId.recentCreateChatInviteUsers);
+		this.copilotManager = new CopilotManager();
 	},
 	methods:
 	{
@@ -237,9 +245,9 @@ export const CreateChatMenu = {
 		{
 			return PromoByChatType[this.chatTypeToCreate] ?? '';
 		},
-		loc(phraseCode: string): string
+		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 		getCopilotService(): CopilotService
 		{
@@ -279,7 +287,7 @@ export const CreateChatMenu = {
 			<MenuItem
 				v-if="isCopilotAvailableAndCreatable"
 				:icon="MenuItemIcon.copilot"
-				:title="loc('IM_RECENT_CREATE_COPILOT_TITLE')"
+				:title="createCopilotTitle"
 				:subtitle="loc('IM_RECENT_CREATE_COPILOT_SUBTITLE_MSGVER_1')"
 				@click.stop="onDefaultCopilotCreateClick"
 			>

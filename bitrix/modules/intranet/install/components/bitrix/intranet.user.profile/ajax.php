@@ -2,6 +2,7 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die;
 
+use Bitrix\Intranet\Internal\Integration\Bitrix24\Integrator\PartnerInfo;
 use Bitrix\Intranet\Public\Service\IntegratorService;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Intranet\Service\ServiceContainer;
@@ -129,7 +130,8 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		$userData = \Bitrix\Main\UserTable::query()
 			->setSelect(['ID', 'CONFIRM_CODE', 'ACTIVE'])
 			->addFilter('ID', $this->userId)
-			->fetch();
+			->fetch()
+		;
 
 		if (empty($userData['CONFIRM_CODE']) || $userData['ACTIVE'] !== 'Y')
 		{
@@ -437,7 +439,9 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		}
 
 		$error = new \Bitrix\Main\Error('');
-		if (!Integrator::checkPartnerEmail($userData["EMAIL"], $error))
+		$checkResult = Integrator::checkPartnerEmail($userData['EMAIL'], $error);
+
+		if (!$checkResult->isSuccess())
 		{
 			$this->addError($error);
 
@@ -470,6 +474,11 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		$fields["GROUP_ID"] = $arGroups;
 
 		$USER->Update($this->userId, $fields);
+
+		(new PartnerInfo())->addByResponseAndUserId(
+			$checkResult->getData(),
+			$this->userId,
+		);
 
 		ServiceContainer::getInstance()->getUserService()->clearCache();
 
@@ -564,5 +573,4 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			],
 		);
 	}
-
 }

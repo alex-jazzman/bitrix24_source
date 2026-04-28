@@ -6078,7 +6078,7 @@
 							BX.create("span", { props : { className : "bx-messenger-content-item-arrow"}}),
 							BX.create("span", { props : { className : "bx-messenger-content-item-avatar-block"}, children: [
 								BX.create('span', { props : { className : "bx-messenger-content-item-avatar-img"+(BX.MessengerCommon.isBlankAvatar(messageUser.avatar)? " bx-messenger-content-item-avatar-img-default": "") }, attrs : {style: (this.isBlankAvatar(messageUser.avatar)? 'background-color: '+messageUser.color: 'background: url(\''+this.formatUrl(messageUser.avatar)+'\'); background-size: cover;')}}),
-								this.BXIM.messenger.openChatFlag? BX.create("span", { props : { className : "bx-messenger-content-item-avatar-name"}, attrs : { title: BX.util.htmlspecialcharsback(messageUser.name)}, html: messageUser.first_name? messageUser.first_name: messageUser.name.split(" ")[0]}): null
+								this.BXIM.messenger.openChatFlag? BX.create("span", { props : { className : "bx-messenger-content-item-avatar-name"}, attrs : { title: BX.util.htmlspecialcharsback(messageUser.name)}, text: messageUser.first_name? messageUser.first_name: messageUser.name.split(" ")[0]}): null
 							]})
 						]}),
 						BX.create("span", { props : { className : "bx-messenger-content-item-status"}, children: []}),
@@ -6120,7 +6120,7 @@
 							BX.create("span", { props : { className : "bx-messenger-content-item-arrow"}}),
 							BX.create("span", { props : { className : "bx-messenger-content-item-avatar-block"}, children: [
 								BX.create('span', { props : { className : "bx-messenger-content-item-avatar-img"+(BX.MessengerCommon.isBlankAvatar(messageUser.avatar)? " bx-messenger-content-item-avatar-img-default": "") }, attrs : {style: (this.isBlankAvatar(messageUser.avatar)? 'background-color: '+messageUser.color: 'background: url(\''+this.formatUrl(messageUser.avatar)+'\'); background-size: cover;')}}),
-								this.BXIM.messenger.openChatFlag? BX.create("span", { props : { className : "bx-messenger-content-item-avatar-name"}, attrs : { title: BX.util.htmlspecialcharsback(messageUser.name)}, html: messageUser.first_name? messageUser.first_name: messageUser.name.split(" ")[0]}): null
+								this.BXIM.messenger.openChatFlag? BX.create("span", { props : { className : "bx-messenger-content-item-avatar-name"}, attrs : { title: BX.util.htmlspecialcharsback(messageUser.name)}, text: messageUser.first_name? messageUser.first_name: messageUser.name.split(" ")[0]}): null
 							]})
 						]}),
 						retry? (
@@ -6173,7 +6173,7 @@
 							BX.create("span", { props : { className : "bx-messenger-content-item-arrow"}}),
 							BX.create("span", { props : { className : "bx-messenger-content-item-avatar-block"}, children: [
 								BX.create('span', { props : { className : "bx-messenger-content-item-avatar-img"+(BX.MessengerCommon.isBlankAvatar(messageUser.avatar)? " bx-messenger-content-item-avatar-img-default": "") }, attrs : {style: (this.isBlankAvatar(messageUser.avatar)? 'background-color: '+messageUser.color: 'background: url(\''+this.formatUrl(messageUser.avatar)+'\'); background-size: cover;')}}),
-								this.BXIM.messenger.openChatFlag || messageUser.bot? BX.create("span", { props : { className : "bx-messenger-content-item-avatar-name"}, attrs : { title: BX.util.htmlspecialcharsback(messageUser.name)}, html: messageUser.first_name? messageUser.first_name: messageUser.name.split(" ")[0]}): null
+								this.BXIM.messenger.openChatFlag || messageUser.bot? BX.create("span", { props : { className : "bx-messenger-content-item-avatar-name"}, attrs : { title: BX.util.htmlspecialcharsback(messageUser.name)}, text: messageUser.first_name? messageUser.first_name: messageUser.name.split(" ")[0]}): null
 							]})
 						]}),
 						BX.create("span", { props : { className : "bx-messenger-content-item-status"}, children:[]}),

@@ -35,94 +35,109 @@ $isCollaber = (
 // If a page doesn't have a top menu then show one item with a page title or a property 'title'
 AirTemplate::tryApplyDefaultTopMenu();
 
-					?></main>
-					</div>
-				</div><?
-				$dynamicArea = StaticArea::getCurrentDynamicArea();
-				if ($dynamicArea !== null)
-				{
-					$dynamicArea->finishDynamicArea();
-				}
-			?>
+			?></main>
 			</div>
-			<footer class="app__footer" id="air-footer">
-			<div class="air-footer">
-				<? if ($isBitrix24Cloud): ?>
-					<div class="air-footer__buttons">
-						<div class="air-footer__button">
-							<a
-								target="_blank"
-								href="<?=Loc::getMessage('BITRIX24_AIR_URL')?>"
-								class="air-footer-button --logo-clock"
-							>
-								<span class="air-footer-button-logo">
-									<span class="
-									air-footer-button-logo__text"><?=Loc::getMessage('MENU_HEADER_LOGO_TEXT')?></span>
-									<span class="air-footer-button-logo__number">24</span>
-								</span>
-							</a>
-						</div>
-						<?php
-							$b24Languages = (new LanguageProvider())->getPublicArray();
-						?>
-						<div class="air-footer__button">
-							<button
-								onclick='BX.Intranet.Bitrix24.languageSwitcher.showLanguageListPopup(this, <?= Json::encode($b24Languages) ?>)'
-								class="air-footer-button --dropdown"
-							><?=$b24Languages[LANGUAGE_ID]['NAME']?></button>
-						</div>
+		</div><?
+			$dynamicArea = StaticArea::getCurrentDynamicArea();
+			if ($dynamicArea !== null)
+			{
+				$dynamicArea->finishDynamicArea();
+			}
+		?>
+	</div>
+	<footer class="app__footer" id="air-footer">
+		<div class="air-footer">
+			<? if ($isBitrix24Cloud): ?>
+				<div class="air-footer__buttons">
+					<div class="air-footer__button">
+						<a
+							target="_blank"
+							href="<?=Loc::getMessage('BITRIX24_AIR_URL')?>"
+							class="air-footer-button --logo-clock"
+						>
+							<span class="air-footer-button-logo">
+								<span class="air-footer-button-logo__text"><?=Loc::getMessage('MENU_HEADER_LOGO_TEXT')?></span>
+								<span class="air-footer-button-logo__number">24</span>
+							</span>
+						</a>
 					</div>
-				<? endif ?>
-				<div class="air-footer__copyright">
-					<?=Loc::getMessage('BITRIX24_AIR_COPYRIGHT', array('#CURRENT_YEAR#' => date('Y')))?>
-				</div>
-				<div class="air-footer__links">
-					<?
-						$partnerID = \COption::getOptionString('bitrix24', 'partner_id', '');
-						$showPartnerOptions = $isBitrix24Cloud && Loader::includeModule('bitrix24');
-						if ($partnerID && $showPartnerOptions)
-						{
-							$formParams = \CBitrix24::getPartnerFormParams();
-							?><button
-								onclick='BX.Intranet.Bitrix24.PartnerForm.showConnectForm(<?= Json::encode($formParams) ?>);'
-								class="air-footer__link"
-								><?=Loc::getMessage('BITRIX24_AIR_PARTNER_CONNECT')?>
-							</button><?php
-						}
-						elseif (!$isCollaber && $showPartnerOptions)
-						{
-							$orderParams = [];
-							$orderParams['title'] = Loc::getMessage('BITRIX24_AIR_PARTNER_POPUP_TITLE');
-							$orderParams['source'] = 'intranet.bitrix24.partner-order-form';
-							?><button
-							class="air-footer__link"
-							onclick='BX.Intranet.Bitrix24.PartnerForm.showIntegrationOrderForm(<?= Json::encode($orderParams) ?>);'
-							>
-							<?= Loc::getMessage("BITRIX24_AIR_PARTNER_ORDER") ?>
-							</button><?php
-						}
-						else
-						{
-							?><button
-								onclick="BX.Intranet.Bitrix24.PartnerForm.showHelper();"
-								class="air-footer__link"
-							><?=Loc::getMessage('BITRIX24_AIR_MENU_CLOUDMAN')?>
-							</button><?
-						}
+					<?php
+						$b24Languages = (new LanguageProvider())->getPublicArray();
 					?>
-					<button
-						class="air-footer__link"
-						onclick="BX.Intranet.Bitrix24.ThemePicker.Singleton.showDialog()"
-					><?=Loc::getMessage('BITRIX24_AIR_THEME')?></button>
-					<button
-						class="air-footer__link"
-						onclick="window.scroll(0, 0); setTimeout(function() {window.print()}, 0)"
-					><?=Loc::getMessage('BITRIX24_AIR_PRINT')?>
-					</button>
+					<div class="air-footer__button">
+						<button
+							onclick='BX.Intranet.Bitrix24.languageSwitcher.showLanguageListPopup(this, <?= Json::encode($b24Languages) ?>)'
+							class="air-footer-button --dropdown"
+						><?=$b24Languages[LANGUAGE_ID]['NAME']?></button>
+					</div>
 				</div>
+			<? endif ?>
+			<div class="air-footer__copyright">
+				<?=Loc::getMessage('BITRIX24_AIR_COPYRIGHT', array('#CURRENT_YEAR#' => date('Y')))?>
 			</div>
-		</footer>
+			<div class="air-footer__links">
+				<?
+					$partnerID = \COption::getOptionString('bitrix24', 'partner_id', '');
+					$showPartnerOptions = $isBitrix24Cloud && Loader::includeModule('bitrix24');
+					if ($partnerID && $showPartnerOptions)
+					{
+						$formParams = \CBitrix24::getPartnerFormParams();
+						?><button
+							onclick='BX.Intranet.Bitrix24.PartnerForm.showConnectForm(<?= Json::encode($formParams) ?>);'
+							class="air-footer__link"
+							><?=Loc::getMessage('BITRIX24_AIR_PARTNER_CONNECT')?>
+						</button><?php
+					}
+					elseif (!$isCollaber && $showPartnerOptions)
+					{
+						$orderParams = [];
+						$orderParams['title'] = Loc::getMessage('BITRIX24_AIR_PARTNER_POPUP_TITLE');
+						$orderParams['source'] = 'intranet.bitrix24.partner-order-form';
+						?><button
+						class="air-footer__link"
+						onclick='BX.Intranet.Bitrix24.PartnerForm.showIntegrationOrderForm(<?= Json::encode($orderParams) ?>);'
+						>
+						<?= Loc::getMessage("BITRIX24_AIR_PARTNER_ORDER") ?>
+						</button><?php
+					}
+					else
+					{
+						?><button
+							onclick="BX.Intranet.Bitrix24.PartnerForm.showHelper();"
+							class="air-footer__link"
+						><?=Loc::getMessage('BITRIX24_AIR_MENU_CLOUDMAN')?>
+						</button><?
+					}
+				?>
+				<button
+					class="air-footer__link"
+					onclick="BX.Intranet.Bitrix24.ThemePicker.Singleton.showDialog()"
+				><?=Loc::getMessage('BITRIX24_AIR_THEME')?></button>
+				<button
+					class="air-footer__link"
+					onclick="window.scroll(0, 0); setTimeout(function() {window.print()}, 0)"
+				><?=Loc::getMessage('BITRIX24_AIR_PRINT')?>
+				</button>
+			</div>
 		</div>
+	</footer>
+	<? if (AirTemplate::shouldShowImBar()): ?>
+	<div class="app__right-bar" id="right-bar">
+		<div class="air-chat-bar"><?php
+			$dynamicArea = new StaticArea('chat-bar');
+			$dynamicArea->setAssetMode(AssetMode::STANDARD);
+			$dynamicArea->startDynamicArea();
+			$APPLICATION->includeComponent('bitrix:intranet.chat.bar', '');
+			$dynamicArea->finishDynamicArea();
+		?></div>
+	</div>
+	<? endif ?>
+	<div class="app__right-panel" id="app__right-panel"></div>
+	<div class="app__go-top-button" id="goTopButtonWrapper">
+	<?
+		$goTopButton = AirTemplate::getGoTopButton();
+		echo $goTopButton->render(false);
+	?>
 	</div>
 </div>
 

@@ -1,7 +1,7 @@
-import { DialogId } from '../../../../types/common';
-import { messagesAutoDeleteConfigs } from '../../../../provider/pull/base/types/message';
-import { RawFile, RawMessage, RawUser } from '../../../../provider/pull/base/types/common';
-import { DialogPermissions, DialogType } from '../../../../model/dialogues/src/types';
+import { DialogId } from '../../../../../types/common';
+import { MessagesAutoDeleteConfigs } from '../../../../../provider/pull/base/types/message';
+import { DialogPermissions, DialogType } from '../../../../../model/dialogues/src/types';
+import { RawFile, RawMessage, RawUser } from '../../../../../provider/pull/base/types/common';
 
 export type imV2CollabTailResult = {
 	additionalMessages: Array<RawMessage>,
@@ -11,7 +11,7 @@ export type imV2CollabTailResult = {
 	messages: Array<CollabTailResultMessageData>,
 	recentItems: Array<CollabRecentItemData>,
 	users: Array<RawUser>,
-	messagesAutoDeleteConfigs: Array<messagesAutoDeleteConfigs>
+	messagesAutoDeleteConfigs: Array<MessagesAutoDeleteConfigs>
 }
 
 export type CollabRecentItemData = {

@@ -1,16 +1,14 @@
-import { Tag, Dom, Loc, Event, Type, ajax } from 'main.core';
+import { Tag, Dom, Loc, Type, ajax } from 'main.core';
 import 'ui.forms';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { PageObject } from 'main.pageobject';
 
 export class DashboardLanguageField extends BX.UI.EntityEditorCustom
 {
-	#changeLanguageLink;
 	#currentLanguage = '';
 	#initialLanguage = '';
 	#languageChanged = false;
-	#settingsUrl = '';
 	#languageInfoContainer;
 	#loader;
 
@@ -28,8 +26,9 @@ export class DashboardLanguageField extends BX.UI.EntityEditorCustom
 
 		const fieldSettings = settings.model.getData();
 		this.#currentLanguage = fieldSettings.currentLanguage || '';
-		this.#settingsUrl = fieldSettings.settingsUrl;
 		this.#initialLanguage = this.#currentLanguage;
+
+		EventEmitter.subscribe('biconnector:onGlobalSettingsChange', this.#refreshLanguageInfo.bind(this));
 	}
 
 	layout(options): void
@@ -43,72 +42,12 @@ export class DashboardLanguageField extends BX.UI.EntityEditorCustom
 		const languageInfoContainer = this.#getLanguageInfoContainer();
 		this.#languageInfoContainer = languageInfoContainer;
 
-		this.#changeLanguageLink = Tag.render`
-			<a href="#" class="biconnector-dashboard-language-change-link">
-				${Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_CHANGE_DASHBOARD_LANGUAGE')}
-			</a>
-		`;
-
-		Event.bind(
-			this.#changeLanguageLink,
-			'click',
-			() => this.#onChangeLanguageClick(),
-		);
-
-		Dom.append(
-			this.#changeLanguageLink,
-			languageInfoContainer.querySelector('.biconnector-dashboard-language-button-wrapper'),
-		);
 		Dom.append(languageInfoContainer, this._innerWrapper);
 
 		this.registerLayout(options);
 		this._hasLayout = true;
 
 		this.#ensureSettingsSliderCloseHandler();
-	}
-
-	#onChangeLanguageClick(): void
-	{
-		this.#openGlobalSettings();
-	}
-
-	#openGlobalSettings(): void
-	{
-		const hostWindow = window.top ?? window;
-		const hostBX = hostWindow.BX;
-
-		hostBX?.Event.EventEmitter.subscribeOnce(
-			hostBX?.Event.EventEmitter.GLOBAL_TARGET,
-			'SidePanel.Slider:onLoad',
-			(baseEvent) => {
-				const slider = baseEvent.getTarget();
-
-				slider.getWindow().BX.Event.EventEmitter.subscribeOnce(
-					slider.getWindow().BX.Event.EventEmitter.GLOBAL_TARGET,
-					'BX.Intranet.Settings:onSuccessSave',
-					(innerBaseEvent: BaseEvent) => {
-						const extraSettings = innerBaseEvent.getData();
-						if (Type.isObject(extraSettings))
-						{
-							extraSettings.reloadAfterClose = false;
-						}
-					},
-				);
-			},
-		);
-
-		BX.SidePanel.Instance.open(
-			this.#settingsUrl,
-			{
-				cacheable: false,
-				width: 1034,
-				events: {
-					onCloseComplete: () => {
-						this.#refreshLanguageInfo();
-					},
-				},
-			},
-		);
 	}
 
 	#getCurrentLanguageBlock(): String
@@ -122,7 +61,7 @@ export class DashboardLanguageField extends BX.UI.EntityEditorCustom
 
 	#getCurrentLanguage(): String
 	{
-		return Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_CURRENT_DASHBOARD_LANGUAGE')
+		return Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_CURRENT_DASHBOARD_LANGUAGE_MSGVER_1')
 			.replace('[div]', '<div class="biconnector-dashboard-language-current-title">')
 			.replace('[/div]', '</div>')
 			.replace('#LANGUAGE#', this.#getCurrentLanguageBlock())
@@ -135,8 +74,6 @@ export class DashboardLanguageField extends BX.UI.EntityEditorCustom
 			<div class="biconnector-dashboard-language-info">
 				<div class="biconnector-dashboard-language-current">
 					${this.#getCurrentLanguage()}
-				</div>
-				<div class="biconnector-dashboard-language-button-wrapper">
 				</div>
 			</div>
 		`;

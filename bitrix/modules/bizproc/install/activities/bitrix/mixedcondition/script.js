@@ -47,7 +47,7 @@
 	  }, {
 	    key: "addCondition",
 	    value: function addCondition() {
-	      var _this$getProperty, _condition$object, _condition$field;
+	      var _this$getProperty, _condition$__property, _condition$object, _condition$field;
 	      var condition = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
 	        object: null,
 	        field: null,
@@ -64,17 +64,17 @@
 	        useOperatorModified: false,
 	        documentType: babelHelpers.classPrivateFieldGet(this, _documentType)
 	      });
-	      var property = (_this$getProperty = this.getProperty(condition.object, condition.field)) !== null && _this$getProperty !== void 0 ? _this$getProperty : {
+	      var property = (_this$getProperty = this.getProperty(condition.object, condition.field)) !== null && _this$getProperty !== void 0 ? _this$getProperty : (_condition$__property = condition['__property__']) !== null && _condition$__property !== void 0 ? _condition$__property : {
 	        Type: 'string'
 	      };
 	      var joiner = this.index > 0 ? _classPrivateMethodGet(this, _createJoiner, _createJoiner2).call(this, condition.joiner) : '';
 	      var tbody = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<tbody \n\t\t\t\tdata-index=\"", "\"\n\t\t\t\tdata-object=\"", "\"\n\t\t\t\tdata-field=\"", "\"\n\t\t\t>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</tbody>\n\t\t"])), main_core.Text.toInteger(this.index), main_core.Text.encode((_condition$object = condition.object) !== null && _condition$object !== void 0 ? _condition$object : ''), main_core.Text.encode((_condition$field = condition.field) !== null && _condition$field !== void 0 ? _condition$field : ''), joiner, _classPrivateMethodGet(this, _createSource, _createSource2).call(this, condition.object, condition.field), bpCondition.renderOperator(property.Type), bpCondition.renderValue(property));
 	      if (this.selector) {
 	        this.selector.subscribe('onSelect', function (event) {
-	          var _this$getProperty2;
+	          var _event$data$item$prop, _this$getProperty2;
 	          var object = event.data.item.object;
 	          var field = event.data.item.field;
-	          var property = (_this$getProperty2 = this.getProperty(object, field)) !== null && _this$getProperty2 !== void 0 ? _this$getProperty2 : {
+	          var property = (_event$data$item$prop = event.data.item.property) !== null && _event$data$item$prop !== void 0 ? _event$data$item$prop : (_this$getProperty2 = this.getProperty(object, field)) !== null && _this$getProperty2 !== void 0 ? _this$getProperty2 : {
 	            Type: 'string'
 	          };
 	          tbody.setAttribute('data-object', object);
@@ -131,11 +131,9 @@
 	  this.selector.renderMixedSelector();
 	  if (object && field && this.objectTabs[object] && this.objectTabs[object][field]) {
 	    this.selector.setSelectedObjectAndField(object, field, this.objectTabs[object][field]['Name']);
-	  } else {
+	  } else if (object) {
 	    var sourceName = _classPrivateMethodGet(this, _findActivityTitle, _findActivityTitle2).call(this, object, field);
-	    if (sourceName) {
-	      this.selector.setSelectedObjectAndField(object, field, sourceName);
-	    }
+	    this.selector.setSelectedObjectAndField(object, field, sourceName);
 	  }
 	  return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<tr>\n\t\t\t\t<td align=\"right\" width=\"40%\" class=\"adm-detail-content-cell-l\">\n\t\t\t\t\t", "\n\t\t\t\t</td>\n\t\t\t\t", "\n\t\t\t</tr>\n\t\t"])), main_core.Loc.getMessage('BPMC_PD_FIELD') + ':', source);
 	}

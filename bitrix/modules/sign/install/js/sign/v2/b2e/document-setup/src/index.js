@@ -735,18 +735,22 @@ export class DocumentSetup extends BaseDocumentSetup
 		this.hintPopup.show();
 	}
 
+	#canCopyBlocksFromPreviousBlank(): boolean
+	{
+		return this.isEditActionMode()
+			&& this.isTemplateMode()
+			&& this.blankSelector.isFilesReadyForUpload()
+			&& !this.blankSelector.hasPlaceholderFilesForUpload();
+	}
+
 	async setup(uid: ?string): Promise<void>
 	{
 		try
 		{
-			const copyBlocksFromPreviousBlank = this.isEditActionMode()
-				&& this.isTemplateMode()
-				&& this.blankSelector.isFilesReadyForUpload();
-
 			await super.setup(
 				uid,
 				this.isTemplateMode(),
-				copyBlocksFromPreviousBlank,
+				this.#canCopyBlocksFromPreviousBlank(),
 				this.#getDocumentSenderType(),
 			);
 			if (!this.setupData || this.blankIsNotSelected)

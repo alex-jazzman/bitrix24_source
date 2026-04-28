@@ -2,7 +2,10 @@ import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
 import { Layout } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
+import { Notifier } from 'im.v2.lib.notifier';
 import { runAction } from 'im.v2.lib.rest';
+import { Logger } from 'im.v2.lib.logger';
+
 import { RestMethod } from 'imopenlines.v2.const';
 
 export class FinishService
@@ -19,7 +22,8 @@ export class FinishService
 
 		return runAction(RestMethod.linesV2SessionMarkSpam, queryParams)
 			.catch((error) => {
-				console.error('Imol.MarkSpam: request error', error);
+				Notifier.onDefaultError();
+				Logger.error('Imol.MarkSpam: request error', error);
 			});
 	}
 
@@ -35,7 +39,8 @@ export class FinishService
 
 		return runAction(RestMethod.linesV2SessionFinish, queryParams)
 			.catch((error) => {
-				console.error('Imol.Finish: request error', error);
+				Notifier.onDefaultError();
+				Logger.error('Imol.Finish: request error', error);
 			});
 	}
 
@@ -43,7 +48,7 @@ export class FinishService
 	{
 		const chatIsOpened = Core.getStore().getters['application/isLinesChatOpen'](dialogId);
 		const chatId = Core.getStore().getters['chats/get'](dialogId).chatId;
-		const session = Core.getStore().getters['sessions/getByChatId'](chatId);
+		const session = Core.getStore().getters['openLines/sessions/getByChatId'](chatId);
 
 		if (chatIsOpened)
 		{
@@ -51,12 +56,12 @@ export class FinishService
 			this.#clearLastOpenedElement();
 		}
 
-		void Core.getStore().dispatch('sessions/set', {
+		void Core.getStore().dispatch('openLines/sessions/set', {
 			...session,
 			isClosed: true,
 		});
 
-		void Core.getStore().dispatch('recentOpenLines/delete', {
+		void Core.getStore().dispatch('openLines/recent/delete', {
 			id: dialogId,
 		});
 	}

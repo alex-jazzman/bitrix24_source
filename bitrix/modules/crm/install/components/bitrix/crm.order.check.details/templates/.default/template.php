@@ -10,7 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 global $APPLICATION;
 
-CJSCore::Init(array('date', 'popup', 'ajax', 'tooltip', 'ui.fonts.opensans'));
+CJSCore::Init(array('date', 'popup', 'ajax', 'tooltip', 'ui.fonts.opensans', 'intranet.old-interface.intranet-common'));
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/slider.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/requisite.js');

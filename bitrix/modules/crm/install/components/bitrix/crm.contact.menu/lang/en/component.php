@@ -5,6 +5,7 @@ $MESS["CONTACT_DEDUPE"] = "Duplicate control";
 $MESS["CONTACT_DEDUPE_AUTOSEARCH"] = "Find and merge duplicates";
 $MESS["CONTACT_DEDUPE_HELP"] = "How do I handle duplicate entities?";
 $MESS["CONTACT_DEDUPE_TITLE"] = "Duplicate control";
+$MESS["CONTACT_DETACH_OPEN_LINE"] = "Detach contact from all chats";
 $MESS["CRM_CONTACT_ADD"] = "Add";
 $MESS["CRM_CONTACT_ADD_ACTIVITY"] = "Add";
 $MESS["CRM_CONTACT_ADD_ACTIVITY_TITLE"] = "Add";

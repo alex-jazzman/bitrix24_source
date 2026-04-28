@@ -37,9 +37,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      invalidSku: false,
 	      invalidResource: false,
 	      options: ui_vue3.markRaw({
-	        canAdd: false,
-	        canRemove: false,
-	        catalogSkuEntityOptions: null
+	        canBeEmpty: false,
+	        editMode: false
 	      })
 	    };
 	  }
@@ -70,12 +69,14 @@ this.BX.Booking = this.BX.Booking || {};
 	    return {
 	      /** @function sku-resources-editor/setResources */
 	      setResources({
-	        commit
+	        commit,
+	        state
 	      }, resources) {
+	        const canBeEmpty = state.options.canBeEmpty;
 	        const resourcesSkusMap = new Map();
 	        const skusMap = new Map();
 	        for (const resource of resources) {
-	          if (resource.skus.length === 0) {
+	          if (resource.skus.length === 0 && !canBeEmpty) {
 	            continue;
 	          }
 	          resourcesSkusMap.set(resource.id, new Set(resource.skus.map(({

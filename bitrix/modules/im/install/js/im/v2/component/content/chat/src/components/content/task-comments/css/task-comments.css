@@ -1,0 +1,71 @@
+.bx-im-task-comments-card__container {
+	position: relative;
+	left: -1px;
+	min-width: 567px;
+	width: 567px;
+	height: 100%;
+	border-left: 1px solid var(--ui-color-gray-15);
+	background-color: var(--ui-color-bg-content-tertiary);
+	z-index: 20;
+}
+
+.bx-im-task-comments-header-button__container {
+	--bx-im-task-comments-card__color_active: #00ACE3;
+
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.bx-im-task-comments-header-button__container.--compact {
+	display: none;
+}
+
+.bx-im-task-comments-header-button__icon {
+	margin-right: 4px;
+	width: 22px;
+	height: 22px;
+	background-position: center;
+	background-repeat: no-repeat;
+	cursor: pointer;
+	background-image: url("./images/icon.svg");
+	opacity: 0.35;
+}
+
+.bx-im-task-comments-header-button__title {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--ui-color-gray-90);
+	opacity: 0.6;
+}
+
+.bx-im-task-comments-header-button__title.--compact {
+	display: none;
+}
+
+.bx-im-task-comments-header-button__container.--active .bx-im-task-comments-header-button__title {
+	opacity: 1;
+	color: var(--bx-im-task-comments-card__color_active);
+}
+
+.bx-im-task-comments-header-button__container.--active .bx-im-task-comments-header-button__icon {
+	opacity: 1;
+	background-image: url("./images/icon-active.svg");
+}
+
+.bx-im-task-comments-header-button__container:hover .bx-im-task-comments-header-button__title {
+	color: var(--ui-color-base-3);
+	opacity: 1;
+}
+
+.bx-im-task-comments-header-button__container:hover .bx-im-task-comments-header-button__icon {
+	opacity: 0.7;
+}
+
+.bx-im-task-comments-header-button__container.--active:hover .bx-im-task-comments-header-button__title {
+	color: var(--bx-im-task-comments-card__color_active);
+}
+
+.bx-im-task-comments-header-button__container.--active:hover .bx-im-task-comments-header-button__icon {
+	opacity: 1;
+}

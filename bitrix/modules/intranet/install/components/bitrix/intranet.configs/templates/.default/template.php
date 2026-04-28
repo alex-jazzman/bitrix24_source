@@ -724,12 +724,6 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		?>
 
 		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="create_overdue_chats"><?=GetMessage('CONFIG_CREATE_OVERDUE_CHATS')?></label></td>
-			<td class="content-edit-form-field-input"><input type="checkbox" name="create_overdue_chats" id="create_overdue_chats" <?if (COption::GetOptionString("tasks", "create_overdue_chats", "N") == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
-			<td class="content-edit-form-field-error"></td>
-		</tr>
-
-		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left">
 				<label for="collect_geo_data"><?=Loc::getMessage('CONFIG_COLLECT_GEO_DATA') ?></label>
 			</td>

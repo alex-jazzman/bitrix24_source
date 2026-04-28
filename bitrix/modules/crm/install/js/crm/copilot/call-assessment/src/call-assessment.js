@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Loc, Reflection, Type } from 'main.core';
 import { BasicEditor } from 'ui.text-editor';
 import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
@@ -110,6 +111,7 @@ export class CallAssessment
 				Type.isPlainObject(copilotSettings)
 					? 'CRM_COPILOT_CALL_ASSESSMENT_PLACEHOLDER_WITH_COPILOT'
 					: null,
+				NameService.copilotNameReplacement(),
 			),
 			toolbar,
 			floatingToolbar: [],

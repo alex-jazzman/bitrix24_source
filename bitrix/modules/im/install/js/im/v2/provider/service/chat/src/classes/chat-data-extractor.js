@@ -1,7 +1,6 @@
 import { ChatType } from 'im.v2.const';
 import { UserManager } from 'im.v2.lib.user';
 
-import type { RawSession } from 'imopenlines.v2.provider.service';
 import type {
 	RawChat,
 	RawFile,
@@ -162,11 +161,6 @@ export class ChatDataExtractor
 	getCopilot(): RawCopilot
 	{
 		return this.#restResult.copilot;
-	}
-
-	getSession(): RawSession
-	{
-		return this.#restResult.session;
 	}
 
 	getAutoDeleteConfig(): RawMessagesAutoDeleteConfig[]

@@ -105,9 +105,9 @@ export const TableSelectorField = {
 		hintOptions(): Object
 		{
 			const hintCode: string =
-				this.selectedConnectionType === 'rest'
-					? 'DATASET_IMPORT_REST_TABLES_HINT'
-					: 'DATASET_IMPORT_TABLES_HINT'
+				this.selectedConnectionType === '1c'
+					? 'DATASET_IMPORT_TABLES_HINT'
+					: 'DATASET_IMPORT_REST_TABLES_HINT'
 			;
 
 			return {

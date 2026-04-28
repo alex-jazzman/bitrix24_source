@@ -62,6 +62,7 @@ $MESS["SETTINGS_V2_STRUCTURE_SECURITY_COPY_TEXT_BAN"] = "Disable text copying";
 $MESS["SETTINGS_V2_STRUCTURE_SECURITY_COPY_TEXT_BAN_SUBTITLE"] = "Users can forward messages to each other inside the mobile app, but copying text or sending it outside your Bitrix24 will not be possible.";
 $MESS["SETTINGS_V2_STRUCTURE_SECURITY_FACE_ID"] = "Use Face ID";
 $MESS["SETTINGS_V2_STRUCTURE_SECURITY_FEEDBACK"] = "Feedback";
+$MESS["SETTINGS_V2_STRUCTURE_SECURITY_LOGIN_HISTORY"] = "Login history";
 $MESS["SETTINGS_V2_STRUCTURE_SECURITY_LOGIN_TITLE"] = "Log in";
 $MESS["SETTINGS_V2_STRUCTURE_SECURITY_QR_AUTH_2FA"] = "Two-factor authentication";
 $MESS["SETTINGS_V2_STRUCTURE_SECURITY_SAFE_ACCOUNT"] = "Account protection";

@@ -15,6 +15,9 @@ return [
 	],
 	'controllers' => [
 		'value' => [
+			'namespaces' => [
+				'\\Bitrix\\Imbot\\V2\\Controller' => 'v2',
+			],
 			'defaultNamespace' => '\\Bitrix\\ImBot\\Controller',
 			'restIntegration' => [
 				'enabled' => true,

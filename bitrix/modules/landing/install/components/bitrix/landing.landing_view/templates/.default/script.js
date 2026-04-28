@@ -60,7 +60,7 @@
 			this.type = options.type || '';
 			this.title = options.title || '';
 			this.url = options.url || '';
-			this.isMainpage = options.type === 'MAINPAGE';
+			this.isMainpage = options.type === 'VIBE';
 			this.isFormEditor = options.specialType === 'crm_forms';
 			this.topInit = options.topInit || false;
 			this.active = options.active || false;
@@ -1718,18 +1718,28 @@
 			BX.bind(this.buttonPublic, 'click', this.public.bind(this));
 			BX.bind(this.buttonUnpublic, 'click', this.unpublic.bind(this));
 		}
+		this.vibeModuleId = options.vibeModuleId;
+		this.vibeEmbedId = options.vibeEmbedId;
 	};
 
 	BX.Landing.Component.View.MainpagePublication.prototype = {
 		public: function ()
 		{
 			BX.addClass(this.buttonPublic, 'ui-btn-wait');
-			BX.ajax.runAction('intranet.mainpage.publish')
-				.then(() => {
-					BX.removeClass(this.buttonPublic, 'ui-btn-wait');
-					BX.hide(this.buttonPublic);
-					BX.show(this.buttonUnpublic);
-				});
+
+			BX.ajax.runAction('landing.vibe.publish', {
+				data: {
+					moduleId: this.vibeModuleId,
+					embedId: this.vibeEmbedId,
+				},
+			})
+			.then(() => {
+				BX.removeClass(this.buttonPublic, 'ui-btn-wait');
+				BX.hide(this.buttonPublic);
+				BX.show(this.buttonUnpublic);
+			});
+
+			// todo: change to landing metrika (need?)
 			BX.UI.Analytics.sendData({
 				tool: 'vibe',
 				category: 'vibe',
@@ -1742,7 +1752,12 @@
 		unpublic: function ()
 		{
 			BX.addClass(this.buttonUnpublic, 'ui-btn-wait');
-			BX.ajax.runAction('intranet.mainpage.withdraw')
+			BX.ajax.runAction('landing.vibe.withdraw', {
+				data: {
+					moduleId: this.vibeModuleId,
+					embedId: this.vibeEmbedId,
+				},
+			})
 				.then(() => {
 					BX.removeClass(this.buttonUnpublic, 'ui-btn-wait');
 					BX.hide(this.buttonUnpublic);

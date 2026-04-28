@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -8,7 +9,9 @@ return [
 	'css' => 'dist/ai-form-fill.bundle.css',
 	'js' => 'dist/ai-form-fill.bundle.js',
 	'rel' => [
+		'crm.ai.name-service',
 		'crm.ai.slider',
+		'crm.integration.ui.settings',
 		'ui.dialogs.messagebox',
 		'ui.vue3',
 		'ui.vue3.vuex',
@@ -19,7 +22,6 @@ return [
 		'ui.notification',
 		'main.core',
 		'ui.buttons',
-		'crm.integration.ui.settings',
 	],
 	'skip_core' => false,
 ];

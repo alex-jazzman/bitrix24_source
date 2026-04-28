@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Controller;
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Field;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Kanban\Entity\Deadlines;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Multifield\Assembler;
@@ -24,6 +25,7 @@ use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ORM\Fields\Relations\Relation;
 use Bitrix\Main\Type\Collection;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Main\ArgumentException;
 
 class Item extends Base
 {
@@ -244,7 +246,17 @@ class Item extends Base
 
 		$categoryId = $item->getCategoryId();
 
-		$operation = $factory->getDeleteOperation($item);
+		$context = clone \Bitrix\Crm\Service\Container::getInstance()->getContext();
+		if ($this->isRest())
+		{
+			$context->setAnalytics(['c_section' => Dictionary::SECTION_REST]);
+		}
+		elseif ($this->request->get('analytics'))
+		{
+			$context->setAnalytics($this->request->get('analytics'));
+		}
+
+		$operation = $factory->getDeleteOperation($item, $context);
 		$result = $operation->launch();
 		if (!$result->isSuccess())
 		{
@@ -451,7 +463,15 @@ class Item extends Base
 
 		$isUseOriginalUfNames = ($useOriginalUfNames === 'Y');
 		$fields = $this->convertFieldNamesToUpper($fields, $isUseOriginalUfNames);
-		$this->processFields($item, $fields, $factory->getFieldsCollection());
+		try
+		{
+			$this->processFields($item, $fields, $factory->getFieldsCollection());
+		}
+		catch (ArgumentException $exception)
+		{
+			$this->addError(new Error($exception->getMessage(), $exception->getCode()));
+			return null;
+		}
 
 		$operation = $factory->getAddOperation($item);
 		if (
@@ -516,7 +536,16 @@ class Item extends Base
 
 		$isUseOriginalUfNames = ($useOriginalUfNames === 'Y');
 		$fields = $this->convertFieldNamesToUpper($fields, $isUseOriginalUfNames);
-		$this->processFields($item, $fields, $factory->getFieldsCollection());
+
+		try
+		{
+			$this->processFields($item, $fields, $factory->getFieldsCollection());
+		}
+		catch (ArgumentException $exception)
+		{
+			$this->addError(new Error($exception->getMessage(), $exception->getCode()));
+			return null;
+		}
 
 		$operation = $factory->getUpdateOperation($item);
 		if (
@@ -590,7 +619,16 @@ class Item extends Base
 		$item = $factory->createItem();
 
 		$fields = $this->convertFieldNamesToUpper($fields, $isUseOriginalUfNames);
-		$this->processFields($item, $fields, $factory->getFieldsCollection());
+
+		try
+		{
+			$this->processFields($item, $fields, $factory->getFieldsCollection());
+		}
+		catch (ArgumentException $exception)
+		{
+			$this->addError(new Error($exception->getMessage(), $exception->getCode()));
+			return null;
+		}
 
 		if (!empty($fmValues) && $item->hasField(\Bitrix\Crm\Item::FIELD_NAME_FM))
 		{

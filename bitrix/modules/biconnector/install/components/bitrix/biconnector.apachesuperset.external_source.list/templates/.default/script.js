@@ -50,7 +50,7 @@
 	    });
 	    _classPrivateFieldInitSpec(this, _datasetUrl, {
 	      writable: true,
-	      value: '/bi/dataset/'
+	      value: '/bi/table/'
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _grid, (_BX$Main$gridManager$ = BX.Main.gridManager.getById(props.gridId)) === null || _BX$Main$gridManager$ === void 0 ? void 0 : _BX$Main$gridManager$.instance);
 	    babelHelpers.classPrivateFieldSet(this, _filter, BX.Main.filterManager.getById(props.gridId));
@@ -256,10 +256,10 @@
 	function _getDeleteSourceWithDatasetDialog2(id) {
 	  var _this5 = this;
 	  var deleteSourcePopupInstance = new ui_system_dialog.Dialog({
-	    title: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_TITLE'),
+	    title: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_TITLE_MSGVER_1'),
 	    content: _classPrivateMethodGet(this, _getDeleteSourceWithDatasetDialogContent, _getDeleteSourceWithDatasetDialogContent2).call(this),
 	    centerButtons: [new ui_buttons.Button({
-	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_OK_CAPTION'),
+	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_OK_CAPTION_MSGVER_1'),
 	      size: ui_buttons.ButtonSize.LARGE,
 	      style: ui_buttons.AirButtonStyle.FILLED,
 	      useAirDesign: true,
@@ -282,7 +282,7 @@
 	  return deleteSourcePopupInstance;
 	}
 	function _getDeleteSourceWithDatasetDialogContent2() {
-	  return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-delete-source-with-dataset-dialog-content\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_DESCRIPTION'));
+	  return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-delete-source-with-dataset-dialog-content\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_DESCRIPTION_MSGVER_1'));
 	}
 	function _openDatasetSlider2(id) {
 	  var _this6 = this;

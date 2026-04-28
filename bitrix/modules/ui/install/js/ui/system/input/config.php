@@ -14,6 +14,7 @@ return [
 		'main.core',
 		'ui.icon-set.api.core',
 		'ui.system.chip',
+		'ui.hint',
 	],
 	'skip_core' => false,
 ];

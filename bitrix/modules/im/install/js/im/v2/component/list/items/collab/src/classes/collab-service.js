@@ -1,5 +1,8 @@
-import { RestMethod } from 'im.v2.const';
+import { Core } from 'im.v2.application.core';
+import { RecentType, RestMethod } from 'im.v2.const';
 import { BaseRecentService } from 'im.v2.provider.service.recent';
+
+import type { RawRecentItem } from 'im.v2.provider.service.types';
 
 export class CollabService extends BaseRecentService
 {
@@ -8,8 +11,11 @@ export class CollabService extends BaseRecentService
 		return RestMethod.imV2RecentCollabTail;
 	}
 
-	getRecentSaveActionName(): string
+	saveRecentItems(recentItems: RawRecentItem[]): Promise
 	{
-		return 'recent/setCollab';
+		return Core.getStore().dispatch('recent/setCollection', {
+			type: RecentType.collab,
+			items: recentItems,
+		});
 	}
 }

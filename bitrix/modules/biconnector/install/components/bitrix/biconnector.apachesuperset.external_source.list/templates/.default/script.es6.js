@@ -20,7 +20,7 @@ class ExternalSourceManager
 	#filter: BX.Main.Filter;
 	#sourceTitleList: Object;
 
-	#datasetUrl: String = '/bi/dataset/';
+	#datasetUrl: String = '/bi/table/';
 
 	constructor(props: Props)
 	{
@@ -271,11 +271,11 @@ class ExternalSourceManager
 	#getDeleteSourceWithDatasetDialog(id: number): Dialog
 	{
 		const deleteSourcePopupInstance = new Dialog({
-			title: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_TITLE'),
+			title: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_TITLE_MSGVER_1'),
 			content: this.#getDeleteSourceWithDatasetDialogContent(),
 			centerButtons: [
 				new Button({
-					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_OK_CAPTION'),
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_OK_CAPTION_MSGVER_1'),
 					size: ButtonSize.LARGE,
 					style: AirButtonStyle.FILLED,
 					useAirDesign: true,
@@ -303,7 +303,7 @@ class ExternalSourceManager
 	{
 		return Tag.render`
 			<div class="biconnector-delete-source-with-dataset-dialog-content">
-				${Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_DESCRIPTION')}
+				${Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_DESCRIPTION_MSGVER_1')}
 			</div>
 		`;
 	}

@@ -3,6 +3,8 @@
  */
 jn.define('im/messenger/provider/services/chat/read', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { UuidManager } = require('im/messenger/lib/uuid-manager');
+	const { LocalReadMessageAction } = require('im/messenger/lib/counters/update-system/action/read-message/local');
 	const { getLogger } = require('im/messenger/lib/logger');
 
 	const logger = getLogger('read-service--chat');
@@ -53,16 +55,18 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 
 					const copiedMessageIds = [...messageIds];
 					delete this.messagesToRead[queueChatId];
-					const lastReadId = this.#getLastReadId(queueChatId);
+					const dialogModel = this.#getDialog(queueChatId);
 					const unreadMessageList = this.#getUnreadMessageIdList(copiedMessageIds);
 
-					this.#readMessagesOnClient(queueChatId, copiedMessageIds);
-					this.sendMessagesToReadService({
-						messageIdList: copiedMessageIds,
+					serviceLocator.get('counters-update-system').dispatch(new LocalReadMessageAction({
 						chatId: queueChatId,
-						lastReadId,
-						unreadMessageList,
-					});
+						messageIdList: copiedMessageIds,
+						lastReadId: dialogModel.lastReadId,
+						unreadMessages: unreadMessageList,
+						actionUuid: UuidManager.getInstance().getActionUuid(),
+						lastMessageId: dialogModel.lastMessageId,
+					}));
+					this.#markedMessagesAsRead(queueChatId, copiedMessageIds);
 				});
 			}, READ_TIMEOUT);
 		}
@@ -72,7 +76,7 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 		 * @param {Array<number>} messageIds
 		 * @returns {Promise<any>}
 		 */
-		#readMessagesOnClient(chatId, messageIds)
+		#markedMessagesAsRead(chatId, messageIds)
 		{
 			const maxMessageId = Math.max(...messageIds);
 			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
@@ -94,13 +98,11 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 
 		/**
 		 * @param {number} chatId
-		 * @returns {number}
+		 * @returns {?DialoguesModelState}
 		 */
-		#getLastReadId(chatId)
+		#getDialog(chatId)
 		{
-			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
-
-			return dialog.lastReadId;
+			return  this.store.getters['dialoguesModel/getByChatId'](chatId);
 		}
 
 		/**
@@ -113,23 +115,6 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 				.filter((message) => message.unread === true)
 				.map((message) => message.id)
 			;
-		}
-
-		sendMessagesToReadService({
-			messageIdList,
-			chatId,
-			lastReadId,
-			unreadMessageList,
-		})
-		{
-			serviceLocator.get('read-service').readMessages({
-				messageIdList,
-				chatId,
-				lastReadId,
-				unreadMessageList,
-			}).catch((error) => {
-				logger.error('ReadService.sendMessagesToReadService error', error);
-			});
 		}
 	}
 

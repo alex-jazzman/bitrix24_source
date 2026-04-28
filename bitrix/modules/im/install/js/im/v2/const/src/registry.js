@@ -36,7 +36,6 @@ export { TextareaPanelType } from './textarea';
 export { ChatEntityLinkType } from './chat-entity-link';
 export { MultidialogStatus } from './multidialog';
 export { SliderCode } from './slider-code';
-export { CounterType } from './counter';
 export { CollabEntityType } from './collab';
 export { ErrorCode } from './error';
 export { NavigationMenuItem } from './navigation';
@@ -74,4 +73,6 @@ export type { RawSettings, RawNotificationSettingsBlock, NotificationSettingsBlo
 
 export type { SidebarMainPanelBlockType } from './sidebar';
 export type { LayoutType } from './layout';
+export type { RecentTypeItem } from './recent';
 export type { ApplicationContext } from './application';
+export type { Relation } from './relation';

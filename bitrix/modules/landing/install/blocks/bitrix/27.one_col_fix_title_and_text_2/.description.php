@@ -10,7 +10,7 @@ use \Bitrix\Main\Localization\Loc;
 return [
 	'block' => [
 		'name' => Loc::getMessage('LANDING_BLOCK_9_ONE_COL_FIX_TITLE_AND_TEXT_2_NAME_NEW'),
-		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'mainpage'],
+		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'vibe'],
 		'section' => ['title', 'text', 'recommended', 'widgets_text'],
 	],
 	'cards' => [],

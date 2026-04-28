@@ -181,13 +181,13 @@
 	display: flex;
 	padding: 5px 0 0 4px;
 }
-.bx-im-search-my-notes__scope {
-	--im-search-my-notes__color_name: var(--im-color-palette-gray-60, #959ca4);
-	--im-search-my-notes__color_hover-name: var(--im-color-palette-gray-80, #6a737f);
-	--im-search-my-notes__background-color_avatar: var(--im-color-palette-blue-50, #2fc6f6);
+.bx-im-search-self-chat__scope {
+	--im-search-self-chat__color_name: var(--im-color-palette-gray-60, #959ca4);
+	--im-search-self-chat__color_hover-name: var(--im-color-palette-gray-80, #6a737f);
+	--im-search-self-chat__background-color_avatar: var(--im-color-palette-blue-50, #2fc6f6);
 }
 
-.bx-im-search-my-notes__container {
+.bx-im-search-self-chat__container {
 	display: flex;
 	width: 62px;
 	height: 100%;
@@ -195,21 +195,21 @@
 	align-items: center;
 	cursor: pointer;
 	position: relative;
-	color: var(--im-search-my-notes__color_name);
+	color: var(--im-search-self-chat__color_name);
 }
 
-.bx-im-search-my-notes__container:hover {
-	color: var(--im-search-my-notes__color_hover-name);
+.bx-im-search-self-chat__container:hover {
+	color: var(--im-search-self-chat__color_hover-name);
 }
 
-.bx-im-search-my-notes__avatar {
+.bx-im-search-self-chat__avatar {
 	width: 48px;
 	height: 48px;
 	border-radius: 50%;
-	background: var(--im-search-my-notes__background-color_avatar) url("data:image/svg+xml;charset=utf-8,%3Csvg width='40' height='40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.85 9.9c0-1.077.874-1.95 1.952-1.95h14.396c1.078 0 1.951.873 1.951 1.95v20.82a.732.732 0 01-1.124.618L20 26.245l-8.026 5.093a.732.732 0 01-1.123-.618V9.9z' fill='%23fff'/%3E%3C/svg%3E") no-repeat center;
+	background: var(--im-search-self-chat__background-color_avatar) url("data:image/svg+xml;charset=utf-8,%3Csvg width='40' height='40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.85 9.9c0-1.077.874-1.95 1.952-1.95h14.396c1.078 0 1.951.873 1.951 1.95v20.82a.732.732 0 01-1.124.618L20 26.245l-8.026 5.093a.732.732 0 01-1.123-.618V9.9z' fill='%23fff'/%3E%3C/svg%3E") no-repeat center;
 }
 
-.bx-im-search-my-notes__title {
+.bx-im-search-self-chat__title {
 	font: var(--im-font-size-xs)/var(--im-font-line-height-2xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-medium);
 	text-align: center;

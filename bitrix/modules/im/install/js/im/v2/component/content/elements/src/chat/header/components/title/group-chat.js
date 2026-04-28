@@ -18,6 +18,10 @@ export const GroupChatTitle = {
 			type: String,
 			required: true,
 		},
+		withEntityLink: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	emits: ['newTitle'],
 	computed:
@@ -28,7 +32,7 @@ export const GroupChatTitle = {
 		},
 		hasEntityLink(): boolean
 		{
-			return Boolean(this.dialog.entityLink?.url);
+			return this.withEntityLink && Boolean(this.dialog.entityLink?.url);
 		},
 	},
 	methods:

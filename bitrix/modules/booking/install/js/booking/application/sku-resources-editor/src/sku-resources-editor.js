@@ -6,6 +6,8 @@ import { Core } from 'booking.core';
 import { EventName, Model } from 'booking.const';
 import { locMixin } from 'booking.component.mixin.loc-mixin';
 import { SidePanelInstance } from 'booking.lib.side-panel-instance';
+import { Resources } from 'booking.model.resources';
+import { ResourceTypes } from 'booking.model.resource-types';
 import { SkuResourcesEditorModel } from 'booking.model.sku-resources-editor';
 
 import { App } from './components/app';
@@ -21,8 +23,8 @@ export class SkuResourcesEditor
 	constructor(params: SkuResourcesEditorParams)
 	{
 		const options = {
-			canAdd: false,
-			canRemove: false,
+			editMode: false,
+			canBeEmpty: false,
 			catalogSkuEntityOptions: null,
 			...params.options,
 		};
@@ -55,7 +57,12 @@ export class SkuResourcesEditor
 	{
 		try
 		{
-			await Core.init();
+			await Core.init({
+				skipCoreModels: true,
+				skipPull: true,
+			});
+			await Core.addDynamicModule(Resources.create());
+			await Core.addDynamicModule(ResourceTypes.create());
 			await Core.addDynamicModule(SkuResourcesEditorModel.create());
 		}
 		catch (error)
@@ -91,7 +98,7 @@ export class SkuResourcesEditor
 		});
 	}
 
-	async closeSidePanel(): Promise<void>
+	closeSidePanel(): Promise<void>
 	{
 		if (Type.isFunction(this.#params.save))
 		{
@@ -101,7 +108,7 @@ export class SkuResourcesEditor
 		this.#application.unmount();
 		this.#application = null;
 
-		await Core.removeDynamicModule(Model.SkuResourcesEditor);
+		Core.removeDynamicModule(Model.SkuResourcesEditor);
 
 		this.unsubscribeEvents();
 	}

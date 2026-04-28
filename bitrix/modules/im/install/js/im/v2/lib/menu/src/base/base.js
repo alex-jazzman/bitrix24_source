@@ -1,13 +1,12 @@
-import { EventEmitter } from 'main.core.events';
 import { Event } from 'main.core';
-import { Menu } from 'ui.system.menu';
+import { EventEmitter } from 'main.core.events';
+import { PopupManager, type PopupTarget } from 'main.popup';
+import { Menu, type MenuItemOptions, type MenuOptions, type MenuSectionOptions } from 'ui.system.menu';
 import { Store } from 'ui.vue3.vuex';
-import { RestClient } from 'rest.client';
+
+import { type RestClient } from 'rest.client';
 
 import { Core } from 'im.v2.application.core';
-
-import type { PopupTarget } from 'main.popup';
-import type { MenuItemOptions, MenuOptions, MenuSectionOptions } from 'ui.system.menu';
 
 const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
 
@@ -36,6 +35,12 @@ export class BaseMenu extends EventEmitter
 	// public
 	openMenu(context: Object, target: PopupTarget)
 	{
+		const existingPopupWithId = PopupManager.getPopupById(this.id);
+		if (existingPopupWithId)
+		{
+			existingPopupWithId.close();
+		}
+
 		if (this.menuInstance)
 		{
 			this.close();

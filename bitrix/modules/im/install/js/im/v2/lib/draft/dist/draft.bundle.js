@@ -196,7 +196,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    type: chatType
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat](dialogId);
 	  void im_v2_application_core.Core.getStore().dispatch('recent/setDraft', {
-	    id: dialogId,
+	    dialogId,
 	    text,
 	    addFakeItems: !STANDALONE_SECTION_CHAT_TYPES.has(chatType)
 	  });

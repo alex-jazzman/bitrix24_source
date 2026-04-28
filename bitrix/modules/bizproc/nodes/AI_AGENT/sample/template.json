@@ -80,11 +80,6 @@
                         1769690123661
                     ],
                     [
-                        "A6799_3346_2347_2123:a0",
-                        "A9610_6597_9992_4868:t0",
-                        1769690123661
-                    ],
-                    [
                         "A5172_6770_9062_4959:o0",
                         "A8106_3093_8889_3355:i0",
                         1769690123661
@@ -279,8 +274,8 @@
                             "colorIndex": 0,
                             "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": 1769693215167,
-                            "published": 1769693215167
+                            "updated": 1770967991065,
+                            "published": 1770967991065
                         }
                     }
                 },
@@ -416,8 +411,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "SETTINGS",
-                            "updated": 1769693215167,
-                            "published": 1769693215167
+                            "updated": 1770967991065,
+                            "published": 1770967991065
                         }
                     }
                 },
@@ -463,8 +458,8 @@
                             "colorIndex": 1,
                             "frameColorName": null,
                             "icon": "MESSENGER",
-                            "updated": 1769693215167,
-                            "published": 1769693215167
+                            "updated": 1770967991065,
+                            "published": 1770967991065
                         }
                     }
                 },
@@ -481,6 +476,7 @@
                         "chatId": null,
                         "message": "###BIZPROC_NODES_SAMPLE_MESSAGE_1###",
                         "asError": "N",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_SAMPLE_TITLE_5###",
                         "EditorComment": ""
                     },
@@ -514,8 +510,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1769693215167,
-                            "published": 1769693215167
+                            "updated": 1770967991065,
+                            "published": 1770967991065
                         }
                     }
                 },
@@ -532,6 +528,7 @@
                         "chatId": "{=A9700_4393_6634_9720:chatId}",
                         "message": "{{=if(strlen({=A6799_3346_2347_2123:chatAnswer}) > 0, {=A6799_3346_2347_2123:chatAnswer}, {=A6799_3346_2347_2123:errorMessage})}}",
                         "asError": "{{=if(strlen({=A6799_3346_2347_2123:aiResult}) > 0, 'N', 'Y')}}",
+                        "aiWarning": "Y",
                         "Title": "###BIZPROC_NODES_SAMPLE_TITLE_5###",
                         "EditorComment": ""
                     },
@@ -565,8 +562,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1769693215167,
-                            "published": 1769693215167
+                            "updated": 1770967991065,
+                            "published": 1770967991065
                         }
                     }
                 },
@@ -601,8 +598,8 @@
                             "colorIndex": 0,
                             "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": 1769693215167,
-                            "published": 1769693215167
+                            "updated": 1770967991065,
+                            "published": 1770967991065
                         }
                     }
                 },
@@ -644,8 +641,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "MESSAGE",
-                            "updated": 1769693215167,
-                            "published": 1769693215167
+                            "updated": 1770967991065,
+                            "published": 1770967991065
                         }
                     }
                 }

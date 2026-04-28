@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 global $APPLICATION;
 $APPLICATION->SetTitle($arResult['TITLE']);
 
+\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 
 $APPLICATION->IncludeComponent(

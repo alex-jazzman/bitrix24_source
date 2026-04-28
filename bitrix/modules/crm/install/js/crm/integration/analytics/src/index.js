@@ -33,6 +33,15 @@ import { CancelEvent as RepeatSaleSegmentCancelBuilder } from './builders/repeat
 import { EditEvent as RepeatSaleSegmentEditBuilder } from './builders/repeat-sale/segment/edit-event';
 import { ViewEvent as RepeatSaleSegmentViewBuilder } from './builders/repeat-sale/segment/view-event';
 
+import { ViewEvent as OldEntityViewOldInvoiceReadonlyViewBuilder } from './builders/old-entity-view/old-invoice-readonly/view-event';
+import { ClickEvent as OldEntityViewOldInvoiceReadonlyClickBuilder } from './builders/old-entity-view/old-invoice-readonly/click-event';
+import { CloseEvent as OldEntityViewOldInvoiceReadonlyCloseBuilder } from './builders/old-entity-view/old-invoice-readonly/close-event';
+
+import { ViewEvent as ImportViewEventBuilder } from './builders/import/view-event';
+import { EditEvent as ImportEditEventBuilder } from './builders/import/edit-event';
+import { CreateEvent as ImportCreateEventBuilder } from './builders/import/create-event';
+import { CancelEvent as ImportCancelEventBuilder } from './builders/import/cancel-event';
+
 import { Dictionary } from './dictionary';
 import { getCrmMode } from './helpers';
 
@@ -57,6 +66,13 @@ import type {
 	RepeatSaleSegmentCancelEvent,
 	RepeatSaleSegmentEditEvent,
 	RepeatSaleSegmentViewEvent,
+	OldEntityViewOldInvoiceReadonlyViewEvent,
+	OldEntityViewOldInvoiceReadonlyClickEvent,
+	OldEntityViewOldInvoiceReadonlyCloseEvent,
+	ImportViewEvent,
+	ImportCreateEvent,
+	ImportEditEvent,
+	ImportCancelEvent,
 } from './types';
 
 const Builder = Object.freeze({
@@ -115,6 +131,19 @@ const Builder = Object.freeze({
 			EditEvent: RepeatSaleSegmentEditBuilder,
 		},
 	},
+	OldEntityView: {
+		OldInvoiceReadonly: {
+			ViewEvent: OldEntityViewOldInvoiceReadonlyViewBuilder,
+			ClickEvent: OldEntityViewOldInvoiceReadonlyClickBuilder,
+			CloseEvent: OldEntityViewOldInvoiceReadonlyCloseBuilder,
+		},
+	},
+	Import: {
+		ViewEvent: ImportViewEventBuilder,
+		EditEvent: ImportEditEventBuilder,
+		CreateEvent: ImportCreateEventBuilder,
+		CancelEvent: ImportCancelEventBuilder,
+	},
 });
 
 export {
@@ -144,4 +173,11 @@ export type {
 	CommunicationEditorResendEvent,
 	CommunicationEditorCancelEvent,
 	CommunicationEditorViewEvent,
+	OldEntityViewOldInvoiceReadonlyViewEvent,
+	OldEntityViewOldInvoiceReadonlyClickEvent,
+	OldEntityViewOldInvoiceReadonlyCloseEvent,
+	ImportViewEvent,
+	ImportCreateEvent,
+	ImportEditEvent,
+	ImportCancelEvent,
 };

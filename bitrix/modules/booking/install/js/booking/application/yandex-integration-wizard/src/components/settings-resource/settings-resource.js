@@ -1,4 +1,3 @@
-import type { CatalogSkuEntityOptions } from 'booking.model.yandex-integration-wizard';
 import { Loc, Type } from 'main.core';
 import { BIcon as Icon, Outline, Main } from 'ui.icon-set.api.vue';
 
@@ -8,7 +7,9 @@ import { UiResourceWizardItem } from 'booking.component.ui-resource-wizard-item'
 import { Avatar as UiAvatar } from 'booking.component.avatar';
 import { SkuResourcesEditor } from 'booking.application.sku-resources-editor';
 import { deepToRaw } from 'booking.lib.deep-to-raw';
+import { resourceDialogService } from 'booking.provider.service.resource-dialog-service';
 import type { ResourceModel } from 'booking.model.resources';
+import type { CatalogSkuEntityOptions } from 'booking.model.sku';
 
 import './settings-resource.css';
 
@@ -21,8 +22,12 @@ export const YandexIntegrationWizardSettingsResource = {
 		UiAvatar,
 		Icon,
 	},
-	// eslint-disable-next-line flowtype/require-return-type
-	setup()
+	setup(): {
+		ButtonColor: typeof ButtonColor,
+		ButtonSize: typeof ButtonSize,
+		Outline: typeof Outline,
+		Main: typeof Main
+		}
 	{
 		return {
 			ButtonColor,
@@ -109,12 +114,11 @@ export const YandexIntegrationWizardSettingsResource = {
 			const editor = new SkuResourcesEditor({
 				title: this.loc('YANDEX_WIZARD_POPUP_RESOURCE_POPUP_TITLE'),
 				description: this.loc('YANDEX_WIZARD_POPUP_RESOURCE_POPUP_DESCRIPTION'),
-				resources: this.getResources(),
 				options: {
-					canAdd: true,
-					canRemove: true,
+					editMode: true,
 					catalogSkuEntityOptions: this.getCatalogSkuEntityOptions(),
 				},
+				loadData: () => this.getResources(),
 				save: (data) => this.saveResources(data),
 			});
 
@@ -122,7 +126,7 @@ export const YandexIntegrationWizardSettingsResource = {
 		},
 		getCatalogSkuEntityOptions(): CatalogSkuEntityOptions
 		{
-			return this.$store.state[Model.YandexIntegrationWizard].integration.catalogSkuEntityOptions;
+			return this.$store.state[Model.Sku].catalogSkuEntityOptions;
 		},
 		saveResources(data): void
 		{
@@ -139,17 +143,30 @@ export const YandexIntegrationWizardSettingsResource = {
 			});
 			void this.$store.dispatch(`${Model.YandexIntegrationWizard}/updateResourcesSkusYandex`, resources);
 		},
-		getResources(): ResourceModel[]
+		async getResources(): ResourceModel[]
 		{
 			const notConnected = this.integrationStatus === IntegrationMapItemStatus.NOT_CONNECTED;
-
-			return this.$store.state[Model.YandexIntegrationWizard].resources.map((resource) => {
+			const resources = this.$store.state[Model.YandexIntegrationWizard].resources.map((resource) => {
 				return {
 					...resource,
 					avatar: { ...resource.avatar },
 					skus: deepToRaw(notConnected && resource.skusYandex.length === 0 ? resource.skus : resource.skusYandex),
 				};
 			});
+
+			await resourceDialogService.getMainResources();
+			const mainResources = (this.$store.getters[`${Model.Resources}/get`] || []).map((resource) => {
+				return {
+					...resource,
+					skus: [],
+					skusYandex: [],
+				};
+			});
+
+			return [
+				...mainResources,
+				...resources,
+			];
 		},
 	},
 	template: `
@@ -194,6 +211,7 @@ export const YandexIntegrationWizardSettingsResource = {
 							:text="buttonTitle"
 							:size="ButtonSize.SMALL"
 							:color="ButtonColor.PRIMARY"
+							data-element="booking-yiw-btn-add-more-resource"
 							noCaps
 							useAirDesign
 							@click="openSkuResourcesEditor"

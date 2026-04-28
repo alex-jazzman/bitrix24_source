@@ -203,7 +203,7 @@ export const SearchBar = {
 
 		function onClickOutside(event: MouseEvent): void
 		{
-			if (toValue(searchPanel) && !toValue(searchPanel).contains(event.target))
+			if (toValue(searchPanel) && !toValue(searchPanel).contains(event.target) && toValue(isOpenedSearchBar))
 			{
 				closeAndResetSearch();
 				toValue(searchInputRef)?.collapseSearchBar();

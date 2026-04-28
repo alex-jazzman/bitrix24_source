@@ -46,3 +46,19 @@
 	display: flex !important;
 	justify-content: center;
 }
+
+.field-row .storage-fields__code-button {
+	display: block !important;
+	font-size: 11px;
+	color: #999;
+	text-decoration: none;
+	padding: 2px 6px;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	margin-left: 8px;
+}
+
+.field-row .storage-fields__code-button:hover {
+	background-color: #f5f5f5;
+	color: #333;
+}

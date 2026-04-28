@@ -23,3 +23,4 @@ export * from './canvas-selection';
 export * from './group-drag-logic';
 export * from './group-selection-logic';
 export * from './keybord-shortcuts';
+export * from './autoscroll';

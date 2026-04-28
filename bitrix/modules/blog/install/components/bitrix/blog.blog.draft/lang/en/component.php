@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_MODULE_NOT_INSTALL'] = "Blog module is not installed.";
 $MESS ['BLOG_BLOG_BLOG_NO_BLOG'] = "Blog cannot be found";
 $MESS ['B_B_DRAFT_TITLE'] = "Draft posts";
@@ -11,4 +11,3 @@ $MESS ['BLOG_SONET_MODULE_NOT_AVAIBLE'] = "Blogs are not available for this user
 $MESS ['BLOG_BLOG_BLOG_MES_SHOWED'] = "The post has been published.";
 $MESS ['BLOG_BLOG_BLOG_MES_SHOW_ERROR'] = "Error publishing the post.";
 $MESS ['BLOG_BLOG_BLOG_MES_SHOW_NO_RIGHTS'] = "You do not have permission to publish posts.";
-?>

@@ -1,5 +1,6 @@
 import { SkuResourcesEditorTab } from 'booking.const';
 import type { ResourceModel, Skus } from 'booking.model.resources';
+import type { CatalogSkuEntityOptions } from 'booking.model.sku';
 
 export type SkuResourcesEditorState = {
 	fetching: boolean;
@@ -52,15 +53,7 @@ export type UpdateInvalidPayload = {
 }
 
 export type SkuResourcesEditorOptions = {
-	canAdd: boolean;
-	canRemove: boolean;
-	catalogSkuEntityOptions: ?CatalogSkuEntityOptions;
-}
-
-export type CatalogSkuEntityOptions = {
-	basePriceId: number;
-	iblockId: number;
-	linkType: string;
-	restrictedProductTypes: number[];
-	showPriceInCaption: boolean;
+	canBeEmpty: boolean;
+	editMode: boolean;
+	catalogSkuEntityOptions: CatalogSkuEntityOptions;
 }

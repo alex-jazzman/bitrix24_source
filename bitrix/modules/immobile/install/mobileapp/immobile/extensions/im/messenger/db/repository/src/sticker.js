@@ -43,6 +43,15 @@ jn.define('im/messenger/db/repository/sticker', (require, exports, module) => {
 			return this.stickerTable.add(stickerListToAdd);
 		}
 
+		/**
+		 * @param {Array<StickerState>} stickerList
+		 * @return {Promise<*>}
+		 */
+		async saveFromPush(stickerList)
+		{
+			return this.saveFromModel(stickerList);
+		}
+
 		async deleteStickersByPack(packData)
 		{
 			const { packId, packType } = packData;

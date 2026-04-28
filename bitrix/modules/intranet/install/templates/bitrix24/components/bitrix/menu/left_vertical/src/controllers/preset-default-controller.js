@@ -36,6 +36,12 @@ export default class PresetDefaultController extends DefaultController
 					[...content.querySelectorAll('.js-left-menu-preset-item')]
 						.forEach((node) => {
 							node.addEventListener('click', () => {
+								const radio = node.querySelector('input[type="radio"]');
+								if (radio)
+								{
+									radio.checked = true;
+								}
+
 								[...content.querySelectorAll('.js-left-menu-preset-item')]
 									.forEach((otherNode) => {
 										otherNode.classList[otherNode === node ? 'add' : 'remove']('left-menu-popup-selected');

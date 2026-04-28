@@ -1,4 +1,6 @@
+import { NameService } from 'crm.ai.name-service';
 import { Switcher, SwitcherSize } from 'ui.switcher';
+
 import { AdditionalInfoComponent } from './additional-info-component';
 
 export const AiSwitcherComponent = {
@@ -62,6 +64,7 @@ export const AiSwitcherComponent = {
 				'--enabled': this.checked,
 			};
 		},
+
 		badgeTitle(): string
 		{
 			if (this.checked)
@@ -70,6 +73,11 @@ export const AiSwitcherComponent = {
 			}
 
 			return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_DISABLED');
+		},
+
+		segmentCopilotTitle(): string
+		{
+			return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE', NameService.copilotNameReplacement());
 		},
 	},
 
@@ -85,11 +93,11 @@ export const AiSwitcherComponent = {
 		<div class="crm-repeat-sale__segment-ai-switcher-wrapper">
 			<div>
 				<div class="crm-repeat-sale__segment-ai-switcher-title">
-					{{this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE')}}
-					<span :class="badgeClassList">{{badgeTitle}}</span>
+					{{ segmentCopilotTitle }}
+					<span :class="badgeClassList">{{ badgeTitle }}</span>
 				</div>
 				<div class="crm-repeat-sale__segment-ai-switcher-description">
-					{{this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_DESCRIPTION')}}
+					{{ this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_DESCRIPTION') }}
 				</div>
 			</div>
 			<div class="crm-repeat-sale__segment-ai-switcher" ref="switcher"></div>

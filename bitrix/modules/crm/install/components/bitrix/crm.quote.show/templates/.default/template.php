@@ -13,7 +13,8 @@ use Bitrix\Crm\Restriction\RestrictionManager;
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
-	'ui.fonts.opensans'
+	'ui.fonts.opensans',
+	'intranet.old-interface.intranet-common',
 ]);
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');

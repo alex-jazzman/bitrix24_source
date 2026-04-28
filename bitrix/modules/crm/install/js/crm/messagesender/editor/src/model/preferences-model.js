@@ -1,7 +1,7 @@
 import { Runtime, Type } from 'main.core';
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
 import { BuilderModel } from 'ui.vue3.vuex';
-import { type Channel, type ChannelPosition, type Preferences } from '../editor';
+import { type Channel, type ChannelPosition, type Preferences, type ChannelLastUsedFrom } from '../editor';
 import { type Logger } from '../service/logger';
 
 type PreferencesState = Preferences;
@@ -25,7 +25,8 @@ export class PreferencesModel extends BuilderModel
 	getState(): PreferencesState
 	{
 		return {
-			channelsSort: Runtime.clone(this.getVariable('channelsSort', null)),
+			channelsSort: Runtime.clone(this.getVariable('channelsSort', [])),
+			channelsLastUsedFrom: Runtime.clone(this.getVariable('channelsLastUsedFrom', [])),
 		};
 	}
 
@@ -59,6 +60,13 @@ export class PreferencesModel extends BuilderModel
 				}
 
 				return null;
+			},
+			channelsLastUsedFrom: (state): ChannelLastUsedFrom[] => {
+				const channelsLastUsedFrom = [...(state.channelsLastUsedFrom ?? [])];
+
+				return channelsLastUsedFrom.filter((channelLastUsedFrom: ChannelLastUsedFrom) =>
+					Type.isString(channelLastUsedFrom.fromId)
+				);
 			},
 		};
 	}
@@ -98,6 +106,34 @@ export class PreferencesModel extends BuilderModel
 					channelsSort: normalized,
 				});
 			},
+			/** @function preferences/setChannelsLastUsedFrom */
+			setChannelsLastUsedFrom: (store, payload: { channelsLastUsedFrom: ChannelLastUsedFrom[] }) => {
+				const { channelsLastUsedFrom } = payload;
+				if (!Type.isArray(channelsLastUsedFrom))
+				{
+					this.#logger.warn('setChannelsLastUsedFrom: channelsLastUsedFrom should be an array', { payload });
+
+					return;
+				}
+
+				const normalized = channelsLastUsedFrom
+					.filter((channelLastUsedFrom) => Type.isPlainObject(channelLastUsedFrom) && Type.isString(channelLastUsedFrom?.fromId))
+					.map((channelLastUsedFrom) => Runtime.clone(channelLastUsedFrom))
+				;
+				if (!Type.isArrayFilled(normalized))
+				{
+					this.#logger.warn(
+						'setChannelsLastUsedFrom: channelsLastUsedFrom should contain at least one channelLastUsedFrom',
+						{ payload },
+					);
+
+					return;
+				}
+
+				store.commit('setChannelsLastUsedFrom', {
+					channelsLastUsedFrom,
+				});
+			},
 		};
 	}
 
@@ -116,6 +152,9 @@ export class PreferencesModel extends BuilderModel
 			},
 			setChannelsSort: (state, { channelsSort }) => {
 				state.channelsSort = channelsSort;
+			},
+			setChannelsLastUsedFrom: (state, { channelsLastUsedFrom }) => {
+				state.channelsLastUsedFrom = channelsLastUsedFrom;
 			},
 		};
 	}

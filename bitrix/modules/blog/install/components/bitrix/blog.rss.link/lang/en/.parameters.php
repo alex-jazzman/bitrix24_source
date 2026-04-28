@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BRL_PATH_TO_RSS'] = "RSS page path template";
 $MESS ['BRL_PATH_TO_RSS_ALL'] = "Path template for page with RSS of all blogs";
 $MESS ['BRL_BLOG_VAR'] = "Blog identifier variable";
@@ -16,4 +16,3 @@ $MESS ['BRL_P_C'] = "Comments to Post";
 $MESS ['BRL_MODE'] = "Display links to RSS";
 $MESS ['B_VARIABLE_ALIASES'] = "Variable aliases";
 $MESS ['BRL_POST_ID'] = "Blog Post ID";
-?>

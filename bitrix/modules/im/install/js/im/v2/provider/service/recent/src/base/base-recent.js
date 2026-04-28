@@ -49,9 +49,9 @@ export class BaseRecentService
 		throw new Error('BaseRecentList: you should implement "getRestMethodName" for child class');
 	}
 
-	getRecentSaveActionName(): string
+	saveRecentItems(recentItems: RawRecentItem[]): Promise
 	{
-		throw new Error('BaseRecentList: you should implement "getRecentSaveActionName" for child class');
+		throw new Error('BaseRecentList: you should implement "saveRecentItems" for child class');
 	}
 
 	getQueryParams(firstPage: boolean = false): BaseRecentQueryParams
@@ -114,7 +114,7 @@ export class BaseRecentService
 		const autoDeletePromise = Core.getStore().dispatch('chats/autoDelete/set', messagesAutoDeleteConfigs);
 		const messagesPromise = Core.getStore().dispatch('messages/store', messages);
 		const filesPromise = Core.getStore().dispatch('files/set', files);
-		const recentPromise = Core.getStore().dispatch(this.getRecentSaveActionName(), recentItems);
+		const recentPromise = this.saveRecentItems(recentItems);
 
 		const copilotManager = new CopilotManager();
 		const copilotPromise = copilotManager.handleRecentListResponse(copilot);

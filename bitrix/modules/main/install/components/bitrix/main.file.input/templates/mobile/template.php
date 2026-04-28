@@ -12,7 +12,7 @@ use Bitrix\Main\Web\Json;
  * @var array $arResult
  */
 
-CJSCore::Init(['uploader']);
+CJSCore::Init(['uploader', 'intranet.old-interface.intranet-common']);
 
 $request = Context::getCurrent()->getRequest();
 

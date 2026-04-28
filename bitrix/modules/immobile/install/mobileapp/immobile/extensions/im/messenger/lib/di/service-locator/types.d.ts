@@ -2,8 +2,8 @@ declare type MessengerLocatorServices = {
 	'core': CoreApplication,
 	'emitter': JNEventEmitter,
 	'messenger-init-service'?: MessengerInitService,
-	'tab-counters': BaseTabCounters,
-
+	'tab-counters': TabCounters,
+	'counters-update-system': CountersUpdateSystem
 	'refresher'?: Refresher,
 	'connection-service'?: ConnectionService,
 	'sync-service'?: SyncService,
@@ -23,7 +23,7 @@ export interface IServiceLocator<T>
 {
 	add<U extends keyof T>(serviceName: U, service: T[U]): IServiceLocator<T>;
 	get<U extends keyof T>(serviceName: U): T[U] | null;
-	has<U extends keyof T>(serviceName: U): T[U] | null;
+	has<U extends keyof T>(serviceName: U): boolean;
 }
 
 declare type MessengerLocator = IServiceLocator<MessengerLocatorServices>;

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Vue3 = this.BX.Vue3 || {};
-(function (exports,rest_client,ui_dexie,ui_vue3_directives_lazyload,ui_system_chip_vue) {
+(function (exports,rest_client,ui_dexie,main_core,ui_vue3_directives_lazyload,ui_system_chip_vue) {
 	'use strict';
 
 	class SmileManager {
@@ -384,7 +384,8 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	  }, {
 	    symbol: '\uD83D\uDCAA'
 	  }, {
-	    symbol: '\uD83D\uDD95'
+	    symbol: '\uD83D\uDD95',
+	    restrictedRegions: ['ru', 'kz', 'uz']
 	  }, {
 	    symbol: '\u270D'
 	  }, {
@@ -568,13 +569,17 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	  }, {
 	    symbol: '\uD83D\uDC6B'
 	  }, {
-	    symbol: '\uD83D\uDC6D'
+	    symbol: '\uD83D\uDC6D',
+	    restrictedRegions: ['ru', 'kz', 'uz']
 	  }, {
-	    symbol: '\uD83D\uDC6C'
+	    symbol: '\uD83D\uDC6C',
+	    restrictedRegions: ['ru', 'kz', 'uz']
 	  }, {
-	    symbol: '\uD83D\uDC91'
+	    symbol: '\uD83D\uDC91',
+	    restrictedRegions: ['ru', 'kz', 'uz']
 	  }, {
-	    symbol: '\uD83D\uDC8F'
+	    symbol: '\uD83D\uDC8F',
+	    restrictedRegions: ['ru', 'kz', 'uz']
 	  }, {
 	    symbol: '\uD83D\uDC6A'
 	  }, {
@@ -967,7 +972,8 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	  }, {
 	    symbol: '\uD83C\uDF2A'
 	  }, {
-	    symbol: '\uD83C\uDF08'
+	    symbol: '\uD83C\uDF08',
+	    restrictedRegions: ['ru', 'kz', 'uz']
 	  }, {
 	    symbol: '\u2600'
 	  }, {
@@ -3087,6 +3093,12 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	  created() {
 	    this.emoji = emoji;
 	  },
+	  computed: {
+	    region() {
+	      var _Extension$getSetting;
+	      return (_Extension$getSetting = main_core.Extension.getSettings('ui.vue3.components.smiles').get('region')) != null ? _Extension$getSetting : '';
+	    }
+	  },
 	  methods: {
 	    selectSmile(text) {
 	      this.$emit('selectSmile', {
@@ -3111,6 +3123,9 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	          });
 	        }
 	      }
+	    },
+	    isShowEmoji(emoji$$1) {
+	      return !(emoji$$1.restrictedRegions && emoji$$1.restrictedRegions.includes(this.region));
 	    }
 	  },
 	  template: `
@@ -3133,7 +3148,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 					</div>
 					<div class="bx-ui-smiles-emoji-grid">
 						<template v-for="element in category.emoji">
-							<div class="bx-ui-smiles-smile" style="font-size: 22px;">
+							<div  v-if="isShowEmoji(element)" class="bx-ui-smiles-smile" style="font-size: 22px;">
 								<div class="bx-ui-smiles-smile-icon" @click="selectSmile(element.symbol)">
 									{{ element.symbol }}
 								</div>
@@ -3143,7 +3158,6 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 				</template>
 			</div>
 		</div>
-		
 	`
 	};
 
@@ -3409,6 +3423,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 
 	exports.Smiles = Smiles;
 	exports.emoji = emoji;
+	exports.EmojiTab = EmojiTab;
 
-}((this.BX.Vue3.Components = this.BX.Vue3.Components || {}),BX,BX.DexieExport,BX.Vue3.Directives,BX.UI.System.Chip.Vue));
+}((this.BX.Vue3.Components = this.BX.Vue3.Components || {}),BX,BX.DexieExport,BX,BX.Vue3.Directives,BX.UI.System.Chip.Vue));
 //# sourceMappingURL=smiles.bundle.js.map

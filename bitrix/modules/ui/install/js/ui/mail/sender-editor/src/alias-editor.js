@@ -341,7 +341,7 @@ export class AliasEditor
 		} = this.#renderSenderNameContainer(sender.name);
 		let handleShowEditInput = null;
 
-		if (sender.canEdit)
+		if (sender.canEdit && sender.type === aliasType)
 		{
 			const {
 				nameEditContainer,
@@ -497,22 +497,27 @@ export class AliasEditor
 			return senderEditContainer;
 		}
 
-		const senderNameEditButton = Tag.render`
-			<div class="sender-item-btn ui-btn ui-btn-xs ui-icon-set --pencil-50"></div>
-		`;
-		Dom.append(senderNameEditButton, senderEditContainer);
-
-		if (handleShowInput)
-		{
-			Event.bind(senderNameEditButton, 'click', handleShowInput);
-		}
-
 		if (sender.type === aliasType)
 		{
+			const senderNameEditButton = Tag.render`
+				<div class="sender-item-btn ui-btn ui-btn-xs ui-icon-set --pencil-50"></div>
+			`;
+			Dom.append(senderNameEditButton, senderEditContainer);
+
+			if (handleShowInput)
+			{
+				Event.bind(senderNameEditButton, 'click', handleShowInput);
+			}
+
 			Dom.append(this.#renderDeleteButton(sender.id, senderNode), senderEditContainer);
 
 			return senderEditContainer;
 		}
+
+		const senderNameEditButton = Tag.render`
+			<div class="sender-item-btn"></div>
+		`;
+		Dom.append(senderNameEditButton, senderEditContainer);
 
 		Dom.append(this.#renderSettingsButton(sender.type, sender.id, sender.editHref), senderEditContainer);
 

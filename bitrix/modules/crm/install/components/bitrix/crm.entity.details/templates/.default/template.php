@@ -80,6 +80,33 @@ $fillDefaultMessages = static function (string $entityTypeName, array $messages)
 	 */
 	$messages['EXCLUDE_DIALOG_MESSAGE'] = $messages['EXCLUDE_DIALOG_MESSAGE'] ?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_EXCLUDE_DIALOG_MESSAGE");
 
+	/*
+	 * CRM_ENT_DETAIL_LEAD_DETACH_OPEN_LINE_DIALOG_TITLE
+	 * CRM_ENT_DETAIL_CONTACT_DETACH_OPEN_LINE_DIALOG_TITLE
+	 * CRM_ENT_DETAIL_COMPANY_DETACH_OPEN_LINE_DIALOG_TITLE
+	 */
+	$messages['DETACH_OPEN_LINE_DIALOG_TITLE'] = $messages['DETACH_OPEN_LINE_DIALOG_TITLE']
+		?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DETACH_OPEN_LINE_DIALOG_TITLE")
+	;
+
+	/*
+	 * CRM_ENT_DETAIL_LEAD_DETACH_OPEN_LINE_DIALOG_MESSAGE
+	 * CRM_ENT_DETAIL_CONTACT_DETACH_OPEN_LINE_DIALOG_MESSAGE
+	 * CRM_ENT_DETAIL_COMPANY_DETACH_OPEN_LINE_DIALOG_MESSAGE
+	 */
+	$messages['DETACH_OPEN_LINE_DIALOG_MESSAGE'] = $messages['DETACH_OPEN_LINE_DIALOG_MESSAGE']
+		?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DETACH_OPEN_LINE_DIALOG_MESSAGE")
+	;
+
+	/*
+	 * CRM_ENT_DETAIL_LEAD_DETACH_OPEN_LINE_SUCCESS
+	 * CRM_ENT_DETAIL_CONTACT_DETACH_OPEN_LINE_SUCCESS
+	 * CRM_ENT_DETAIL_COMPANY_DETACH_OPEN_LINE_SUCCESS
+	 */
+	$messages['DETACH_OPEN_LINE_SUCCESS'] = $messages['DETACH_OPEN_LINE_SUCCESS']
+		?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_DETACH_OPEN_LINE_SUCCESS")
+	;
+
 	return $messages;
 };
 
@@ -414,7 +441,12 @@ $tabs = array_map(static function(array $tab) {
 				goToDetails: "<?=CUtil::JSEscape(GetMessage("CRM_ENT_DETAIL_DELETION_GO_TO_DETAILS"))?>",
 				exclusionDialogTitle: "<?=CUtil::JSEscape($messages['EXCLUDE_DIALOG_TITLE'])?>",
 				exclusionConfirmDialogContent: "<?=CUtil::JSEscape($messages['EXCLUDE_DIALOG_MESSAGE'])?>",
-				exclusionConfirmDialogContentHelp: "<?=CUtil::JSEscape(GetMessage('CRM_ENT_DETAIL_EXCLUDE_DIALOG_MESSAGE_HELP'))?>"
+				exclusionConfirmDialogContentHelp: "<?=CUtil::JSEscape(GetMessage('CRM_ENT_DETAIL_EXCLUDE_DIALOG_MESSAGE_HELP'))?>",
+				detachOpenLineDialogTitle: "<?=CUtil::JSEscape($messages['DETACH_OPEN_LINE_DIALOG_TITLE'])?>",
+				detachOpenLineDialogContent: "<?=CUtil::JSEscape($messages['DETACH_OPEN_LINE_DIALOG_MESSAGE'])?>",
+				detachOpenLineSuccess: "<?=CUtil::JSEscape($messages['DETACH_OPEN_LINE_SUCCESS'])?>",
+				detachContinueButton: "<?=GetMessageJS('CRM_ENT_DETAIL_BUTTON_DETACH_CONTINUE')?>",
+				detachCancelButton: "<?=GetMessageJS('CRM_ENT_DETAIL_BUTTON_DETACH_CANCEL')?>"
 			};
 
 			BX.Crm.EntityDetailManager.entityListUrls = <?=CUtil::PhpToJSObject($arResult['ENTITY_LIST_URLS'])?>;

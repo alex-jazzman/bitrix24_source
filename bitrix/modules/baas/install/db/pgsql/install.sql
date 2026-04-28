@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS b_baas_purchased_package (
 	START_DATE timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	EXPIRATION_DATE timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	ACTIVE char(1) NOT NULL DEFAULT 'Y',
+	NOTIFIED CHAR(1) NOT NULL DEFAULT 'N',
 	PRIMARY KEY (ID)
 );
 CREATE UNIQUE INDEX ux_b_baas_purchased_package_code ON b_baas_purchased_package (code);

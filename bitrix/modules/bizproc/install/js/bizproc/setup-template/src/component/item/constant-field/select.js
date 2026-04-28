@@ -28,7 +28,13 @@ export const ConstantSelect = {
 		},
 		options(): Array<{ id: string, name: string }>
 		{
-			return this.item.options || [];
+			const rawOptions = this.item.options;
+			if (!rawOptions)
+			{
+				return [];
+			}
+
+			return Object.entries(rawOptions).map(([id, name]) => ({ id, name }));
 		},
 		showScroll(): boolean
 		{

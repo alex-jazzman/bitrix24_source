@@ -6,7 +6,7 @@ use \Bitrix\Main\Page\Asset;
 Asset::getInstance()->addJs($this->GetFolder().'/drag_and_drop.js');
 CUtil::InitJSCore(array("amcharts", "amcharts_funnel", "amcharts_serial"));
 
-\Bitrix\Main\UI\Extension::load("popup");
+\Bitrix\Main\UI\Extension::load(["popup", 'intranet.old-interface.intranet-common']);
 
 global $APPLICATION;
 $APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/crm-entity-show.css');

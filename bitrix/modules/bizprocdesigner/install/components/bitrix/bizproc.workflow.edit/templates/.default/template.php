@@ -643,6 +643,19 @@ if ($arParams['BACK_URL'])
 		ShowError(GetMessage('BIZPROC_WFEDIT_CHECK_ERROR_1'));
 	endif;
 	?>
+
+	<?php if (
+		$ID > 0
+		&& defined('Bitrix\Bizproc\Dev\ENV')
+		&& $arResult['TEMPLATE'][0]['Type'] === 'StateMachineWorkflowActivity'
+	): ?>
+		<div class="ui-alert ui-alert-primary ui-alert-icon-info">
+			<div class="ui-alert-message">
+				<a href="/bizprocdesigner/editor/?ID=<?=(int)$ID?>">&gt;&gt;&gt; OPEN NODE DESIGNER &lt;&lt;&lt;</a>
+			</div>
+		</div>
+	<?php endif; ?>
+
 	<form>
 		<div
 			id="wf1"

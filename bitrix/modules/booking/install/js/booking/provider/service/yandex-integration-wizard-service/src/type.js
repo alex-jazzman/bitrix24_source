@@ -2,14 +2,12 @@ import { IntegrationMapItemStatus } from 'booking.const';
 import type {
 	CatalogPermissions,
 	YandexIntegrationSettings,
-	CatalogSkuEntityOptions,
 } from 'booking.model.yandex-integration-wizard';
 import type { ResourceDto } from 'booking.provider.service.resources-service';
 
 export type GetYandexIntegrationDto = {
 	status: $Values<typeof IntegrationMapItemStatus> | null,
 	catalogPermissions: CatalogPermissions,
-	catalogSkuEntityOptions: CatalogSkuEntityOptions,
 	isResourceSkuRelationsSaved: boolean,
 	resources: ResourceDto[],
 	cabinetLink: string,

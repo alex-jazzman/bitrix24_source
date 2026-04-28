@@ -1,0 +1,72 @@
+.crm-item-import__field.--encoding .ui-ctl {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	gap: 10px;
+	align-items: center;
+}
+
+.crm-item-import__detect-encoding-popup {
+	background: #ffffff;
+	border-radius: 10px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+	border: 1px solid #e6e6e6;
+	overflow: hidden;
+	width: 100%;
+}
+
+.crm-item-import__detect-encoding-popup-encoding-list {
+	max-height: 600px;
+	overflow-y: auto;
+	padding: 8px 0;
+}
+
+.crm-item-import__detect-encoding-popup-encoding-item {
+	display: flex;
+	align-items: center;
+	padding: 12px 16px;
+	border-bottom: 1px solid #f0f0f0;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	position: relative;
+}
+
+.crm-item-import__detect-encoding-popup-encoding-item:hover {
+	background-color: #f8f9fa;
+}
+
+.crm-item-import__detect-encoding-popup-encoding-item:last-child {
+	border-bottom: none;
+}
+
+.crm-item-import__detect-encoding-popup-encoding-item.selected {
+	background-color: #f0f7ff;
+	border-left: 3px solid #2a6fd7;
+}
+
+.crm-item-import__detect-encoding-popup-encoding-value {
+	flex: 0 0 180px;
+	font-size: 13px;
+	font-weight: 500;
+	color: #1f1f1f;
+	line-height: 1.4;
+	padding-right: 16px;
+}
+
+.crm-item-import__detect-encoding-popup-encoding-preview {
+	flex: 1;
+	font-size: 12px;
+	color: #666;
+	background: #fafafa;
+	padding: 8px 12px;
+	border-radius: 4px;
+	border: 1px solid #e8e8e8;
+	font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+	line-height: 1.3;
+	min-height: 32px;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

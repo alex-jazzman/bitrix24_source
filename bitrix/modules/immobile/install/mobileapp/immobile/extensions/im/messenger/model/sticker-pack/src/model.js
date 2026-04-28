@@ -417,20 +417,32 @@ jn.define('im/messenger/model/sticker-pack/model', (require, exports, module) =>
 			 * @param payload
 			 */
 			addStickers: ({ commit }, payload) => {
-				const { stickers } = payload;
+				const { stickers, actionName = 'addStickers' } = payload;
 				if (!Type.isArrayFilled(stickers))
 				{
 					return;
 				}
 
 				commit('addStickers', {
-					actionName: 'addStickers',
+					actionName,
 					data: {
 						stickers: stickers.map((sticker) => ({
 							...stickerDefaultElement,
 							...normalizeSticker(sticker),
 						})),
 					},
+				});
+			},
+
+			/**
+			 * @function stickerPackModel/addStickersFromPush
+			 * @param store
+			 * @param payload
+			 */
+			addStickersFromPush: ({ dispatch }, payload) => {
+				return dispatch('addStickers', {
+					stickers: payload.stickers,
+					actionName: 'addStickersFromPush',
 				});
 			},
 
@@ -719,7 +731,7 @@ jn.define('im/messenger/model/sticker-pack/model', (require, exports, module) =>
 					state.stickerCollection.delete(key);
 
 					state.recentCollection = state.recentCollection.filter((recentSticker) => {
-						return recentSticker.packId !== packId || recentSticker.packType !== packType || recentSticker.id !== id
+						return recentSticker.packId !== packId || recentSticker.packType !== packType || recentSticker.id !== id;
 					});
 				}
 			},

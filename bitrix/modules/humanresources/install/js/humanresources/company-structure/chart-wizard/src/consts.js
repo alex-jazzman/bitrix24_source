@@ -15,6 +15,7 @@ export const StepIds: Record<StepIdType, StepIdType> = Object.freeze({
 
 export const AuthorityTypes: Record<string> = {
 	departmentHead: 'HEAD',
+	departmentAllHeads: 'ALL_DEPARTMENT_HEADS',
 	departmentDeputy: 'DEPUTY_HEAD',
 	teamHead: 'TEAM_HEAD',
 	teamDeputy: 'TEAM_DEPUTY',

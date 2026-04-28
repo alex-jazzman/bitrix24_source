@@ -2,7 +2,7 @@ import type { FeatureCodeType } from 'bizprocdesigner.feature';
 import { FeatureCode } from 'bizprocdesigner.feature';
 import type { MenuItemOptions } from 'main.popup';
 import type { Point } from 'ui.block-diagram';
-import { computed, toValue, inject } from 'ui.vue3';
+import { computed, toValue, inject, watch } from 'ui.vue3';
 import { storeToRefs } from 'ui.vue3.pinia';
 import { Runtime, Browser } from 'main.core';
 import { UI } from 'ui.notification';
@@ -13,6 +13,7 @@ import {
 	useKeyboardShortcuts,
 	useBlockDiagram,
 	useHighlightedBlocks,
+	useContextMenu,
 } from 'ui.block-diagram';
 import { setUserSelectedBlock } from '../../../../entities/ai-assistant/api/api';
 import { useFeature, useLoc } from '../../../../shared/composables';
@@ -26,6 +27,8 @@ import {
 	useBufferStore,
 } from '../../../../entities/blocks';
 import { CopyPaste, BlockMediator } from '../../lib';
+
+import './block-diagram.css';
 
 type SetupType = {
 	blocks: Array<Block>,
@@ -61,6 +64,7 @@ export const BlockDiagram = {
 			default: false,
 		},
 	},
+	// eslint-disable-next-line max-lines-per-function
 	setup(): SetupType
 	{
 		const showBlockSettings = inject('showBlockSettings');
@@ -73,9 +77,8 @@ export const BlockDiagram = {
 		const highlitedBlockIds = highlightedBlocks.highlitedBlockIds;
 		const history = useHistory();
 		const { isFeatureAvailable } = useFeature();
-		const { transformEventToPoint, transformX, transformY } = useBlockDiagram();
+		const { transformEventToPoint, transformX, transformY, currentSnapshot } = useBlockDiagram();
 		const copyPaste = new CopyPaste();
-		const isMac = Browser.isMac();
 		const mediator = new BlockMediator();
 
 		const selectionBoxConfig = computed(() => {
@@ -106,6 +109,101 @@ export const BlockDiagram = {
 				defaultBlockSize: DEFAULT_BLOCK_SIZE,
 			};
 		});
+		const performPaste = (point: Point): void => {
+			try
+			{
+				highlightedBlocks.clear();
+
+				const newBlocks = copyPaste.paste(point);
+				if (newBlocks.length > 0)
+				{
+					highlightedBlocks.set(newBlocks.map((block) => block.id));
+				}
+
+				if (newBlocks.length === 1)
+				{
+					mediator.showNodeSettings(newBlocks[0]);
+				}
+
+				history.makeSnapshot();
+			}
+			catch (e)
+			{
+				console.error('Paste error:', e);
+			}
+		};
+
+		const handleCopy = () => {
+			const selectedIds = toValue(highlitedBlockIds);
+			if (selectedIds.length === 0)
+			{
+				return;
+			}
+
+			const selectedBlocks = blocks.value.filter((block) => selectedIds.includes(block.id));
+
+			const selectedConnections = toValue(connections).filter((conn) => {
+				return selectedIds.includes(conn.sourceBlockId) && selectedIds.includes(conn.targetBlockId);
+			});
+
+			bufferStore.setBufferContent({
+				blocks: selectedBlocks,
+				connections: selectedConnections,
+			});
+			closeContextMenu();
+		};
+
+		const handlePasteShortcut = (event: KeyboardEvent, mousePos: { x: number, y: number }) => {
+			const rawPoint = transformEventToPoint({
+				clientX: mousePos.x,
+				clientY: mousePos.y,
+			});
+
+			const correctedPoint = {
+				x: rawPoint.x + (toValue(transformX) || 0),
+				y: rawPoint.y + (toValue(transformY) || 0),
+			};
+			performPaste(correctedPoint);
+		};
+
+		const handleDelete = () => {
+			const ids = toValue(highlitedBlockIds);
+			if (ids.length === 0)
+			{
+				return;
+			}
+
+			ids.forEach((id) => {
+				diagramStore.deleteBlockById(id);
+				mediator.hideCurrentBlockSettings(id);
+			});
+
+			history.makeSnapshot();
+			highlightedBlocks.clear();
+			closeContextMenu();
+			fetchUpdateDiagram();
+		};
+
+		useKeyboardShortcuts([
+			{
+				keys: ['Mod', 'c'],
+				handler: handleCopy,
+			},
+			{
+				keys: ['Mod', 'v'],
+				handler: handlePasteShortcut,
+			},
+			{
+				keys: ['Delete'],
+				handler: handleDelete,
+			},
+			{
+				keys: ['Backspace'],
+				handler: handleDelete,
+			},
+		]);
+
+		const { closeContextMenu } = useContextMenu();
 
 		const blocks = computed({
 			get(): Block[]
@@ -129,106 +227,15 @@ export const BlockDiagram = {
 				fetchUpdateDiagram();
 			},
 		});
-		const performPaste = (point: Point): void => {
-			try
-			{
-				copyPaste.paste(point);
-				history.makeSnapshot();
-			}
-			catch (e)
-			{
-				console.error('Paste error:', e);
-			}
-		};
-
-		const handleCopy = () => {
-			const ids = toValue(highlitedBlockIds);
-			if (ids.length > 0)
-			{
-				const blockToCopy = toValue(blocksInStore).find((b) => b.id === ids[0]);
-				if (blockToCopy)
-				{
-					bufferStore.copyBlock(blockToCopy);
-				}
-			}
-		};
-
-		const handlePasteShortcut = (event: KeyboardEvent, mousePos: { x: number, y: number }) => {
-			const rawPoint = transformEventToPoint({
-				clientX: mousePos.x,
-				clientY: mousePos.y,
-			});
-
-			const correctedPoint = {
-				x: rawPoint.x + (toValue(transformX) || 0),
-				y: rawPoint.y + (toValue(transformY) || 0),
-			};
-			performPaste(correctedPoint);
-		};
-
-		const handleUndo = () => {
-			if (history.hasPrev)
-			{
-				history.prev();
-				mediator.syncSettingsWithDiagram();
-			}
-		};
-
-		const handleRedo = () => {
-			if (history.hasNext)
-			{
-				history.next();
-				mediator.syncSettingsWithDiagram();
-			}
-		};
-
-		const handleDelete = () => {
-			const ids = toValue(highlitedBlockIds);
-			if (ids.length === 0)
-			{
-				return;
-			}
-
-			ids.forEach((id) => {
-				diagramStore.deleteBlockById(id);
-				mediator.hideCurrentBlockSettings(id);
-			});
-
-			history.makeSnapshot();
-			highlightedBlocks.clear();
-			fetchUpdateDiagram();
-		};
-
-		useKeyboardShortcuts([
-			{
-				keys: ['Mod', 'c'],
-				handler: handleCopy,
-			},
-			{
-				keys: ['Mod', 'v'],
-				handler: handlePasteShortcut,
-			},
-			{
-				keys: ['Mod', 'z'],
-				handler: handleUndo,
-			},
-			{
-				keys: isMac ? ['Mod', 'Shift', 'z'] : ['Mod', 'y'],
-				handler: handleRedo,
-			},
-			{
-				keys: ['Delete'],
-				handler: handleDelete,
-			},
-			{
-				keys: ['Backspace'],
-				handler: handleDelete,
-			},
-		]);
 
 		const fetchUpdateDiagram = Runtime.debounce(updateDiagramData, 700);
 
 		const groupMenuItems = computed(() => [
+			{
+				id: 'copy-group',
+				text: getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
+				onclick: handleCopy,
+			},
 			{
 				id: 'delete-group',
 				text: getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
@@ -272,6 +279,9 @@ export const BlockDiagram = {
 		function onDropNewBlock(block: Block): void
 		{
 			diagramStore.updateBlockPublishStatus(block);
+			highlightedBlocks.clear();
+			highlightedBlocks.add(block.id);
+			mediator.showNodeSettings(block);
 		}
 
 		async function onBlockTransitionEnd(block: Block): Promise<void>
@@ -305,6 +315,20 @@ export const BlockDiagram = {
 			diagramStore.setConnectionCurrentTimestamp(connection.id);
 		}
 
+		watch(currentSnapshot, () => {
+			mediator.syncSettingsWithDiagram();
+		});
+
+		function onCanvasMouseDown(event: MouseEvent): void
+		{
+			if (event.button !== 0)
+			{
+				return;
+			}
+
+			mediator.hideAllSettings();
+		}
+
 		return {
 			blocks,
 			connections,
@@ -320,6 +344,8 @@ export const BlockDiagram = {
 			isBufferEmpty,
 			onDeleteConnection,
 			onCreateConnection,
+			closeContextMenu,
+			onCanvasMouseDown,
 		};
 	},
 	computed: {
@@ -334,11 +360,32 @@ export const BlockDiagram = {
 			return {
 				id: 'paste',
 				disabled: this.isBufferEmpty,
-				text: this.$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_PASTE'),
+				html: `
+					<span class="editor-chart-block-control-menu-item">
+						${this.menuItemText}
+						<span class="editor-chart-block-control-menu-item__action-code">
+							<span class="editor-chart-block-control-menu-item__action-code_text">
+								${this.menuItemShortcut}
+							</span>
+						</span>
+					</span>
+				`,
 				onclick: (point: Point): void => {
 					this.performPaste(point);
 				},
 			};
+		},
+		isMac(): boolean
+		{
+			return Browser.isMac();
+		},
+		menuItemShortcut(): string
+		{
+			return this.isMac ? '⌘ V' : 'Ctrl-V';
+		},
+		menuItemText(): string
+		{
+			return this.$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_PASTE');
 		},
 	},
 	// @todo to widget
@@ -376,6 +423,7 @@ export const BlockDiagram = {
 			:disabled="disabled"
 			:enableGrouping="enableGrouping"
 			:contextMenuItems="contextMenuItems"
+			@mousedown="onCanvasMouseDown"
 			@blockTransitionEnd="onBlockTransitionEnd"
 			@dropNewBlock="onDropNewBlock"
 			@createConnection="onCreateConnection"

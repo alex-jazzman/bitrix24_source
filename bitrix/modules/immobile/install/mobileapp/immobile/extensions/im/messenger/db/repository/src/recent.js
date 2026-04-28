@@ -226,6 +226,7 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 		 * @param {string} searchText
 		 * @param {'asc'|'desc'} order='asc'
 		 * @param {number} limit=25
+		 * @param {DialoguesFilter | {}} filter
 		 *
 		 * @returns {Promise<{items: *[]}>}
 		 */
@@ -233,9 +234,10 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 			searchText,
 			order = 'desc',
 			limit = 25,
+			filter = {},
 		})
 		{
-			return this.recentTable.searchByText(searchText, order, limit);
+			return this.recentTable.searchByText(searchText, order, limit, filter);
 		}
 
 		prepareRecentMessage(fields)

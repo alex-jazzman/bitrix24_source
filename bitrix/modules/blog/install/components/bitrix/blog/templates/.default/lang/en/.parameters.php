@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["USER_PROPERTY_NAME"] = "Name of the additional properties Tab";
 $MESS["SEARCH_PERIOD_NEW_TAGS"] = "Consider tag new during (days)";
 $MESS["SEARCH_COLOR_TYPE"] = "Use gradient colors";
@@ -35,4 +35,3 @@ $MESS["BPE_PATH_TO_GROUP_POST"] = "Social Network Group Blog Post Page";
 $MESS["BPE_PATH_TO_GROUP_POST_EDIT"] = "Social Network Group Blog Post Editor Page";
 $MESS["BPE_PATH_TO_GROUP_DRAFT"] = "Social Network Group Blog Drafts Page";
 $MESS["BPE_PATH_TO_GROUP_BLOG"] = "Social Network Group Blog Page";
-?>

@@ -1,0 +1,13 @@
+<?php
+
+$MESS['CRM_IMPORT_FIELD_GMAIL_EMAIL_LABEL'] = 'E-mail #INDEX# - Тип';
+$MESS['CRM_IMPORT_FIELD_GMAIL_EMAIL_VALUE'] = 'E-mail #INDEX# - Значение';
+
+$MESS['CRM_IMPORT_FIELD_GMAIL_PHONE_LABEL'] = 'Телефон #INDEX# - Тип';
+$MESS['CRM_IMPORT_FIELD_GMAIL_PHONE_VALUE'] = 'Телефон #INDEX# - Значение';
+
+$MESS['CRM_IMPORT_FIELD_GMAIL_WEB_LABEL'] = 'Сайт #INDEX# - Тип';
+$MESS['CRM_IMPORT_FIELD_GMAIL_WEB_VALUE'] = 'Сайт #INDEX# - Значение';
+
+$MESS['CRM_IMPORT_FIELD_GMAIL_IM_LABEL'] = 'Мессенджер #INDEX# - Тип';
+$MESS['CRM_IMPORT_FIELD_GMAIL_IM_VALUE'] = 'Мессенджер #INDEX# - Значение';

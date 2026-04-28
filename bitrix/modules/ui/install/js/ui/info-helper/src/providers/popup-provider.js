@@ -51,7 +51,7 @@ export class PopupProvider extends BaseProvider
 		}
 
 		this.#analytics = new Analytics(
-			config.analytics?.type ?? this.#code,
+			config.analytics?.code ?? this.#code,
 			ProvidersType.POPUP,
 		);
 	}

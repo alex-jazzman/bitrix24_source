@@ -629,13 +629,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _updateRecentForCompleteDelete2(newLastId) {
 	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat]();
 	  if (!newLastId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('recent/hide', {
-	      id: chat.dialogId
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('recent/hide', {
+	      dialogId: chat.dialogId
 	    });
 	    return;
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('recent/update', {
-	    id: chat.dialogId,
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('recent/update', {
+	    dialogId: chat.dialogId,
 	    fields: {
 	      messageId: newLastId
 	    }
@@ -669,14 +669,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].getters['recent/get'](chat.dialogId);
 	  if (recentItem.messageId === messageId) {
 	    const newLastId = babelHelpers.classPrivateFieldLooseBase(this, _getPreviousMessageId)[_getPreviousMessageId](messageId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('recent/update', {
-	      id: chat.dialogId,
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('recent/update', {
+	      dialogId: chat.dialogId,
 	      fields: {
 	        messageId: newLastId
 	      }
 	    });
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('messages/delete', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('messages/delete', {
 	    id: messageId
 	  });
 	}
@@ -723,10 +723,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const {
 	      dialogId
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId$2)[_chatId$2]);
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch('recent/unread', {
-	      id: dialogId,
-	      action: true
-	    });
 	    void babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch('chats/update', {
 	      dialogId,
 	      fields: {

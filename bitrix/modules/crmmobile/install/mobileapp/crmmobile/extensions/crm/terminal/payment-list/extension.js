@@ -20,6 +20,7 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 	const { magnifierWithMenuAndDot } = require('assets/common');
 	const { SearchBar } = require('layout/ui/search-bar');
 	const { Filter } = require('layout/ui/kanban/filter');
+	const { UIMenuType } = require('layout/ui/menu');
 
 	/**
 	 * @class PaymentList
@@ -447,7 +448,7 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 		{
 			return [
 				{
-					type: UI.Menu.Types.HELPDESK,
+					type: UIMenuType.HELPDESK,
 					data: {
 						articleCode: '17399046',
 					},

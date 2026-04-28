@@ -3434,7 +3434,8 @@ import { Presets } from './presets';
 						closeIcon : false,
 						closeByEsc : false,
 						noAllPaddings: true,
-						zIndex: 12
+						zIndex: 12,
+						focusTrap: false,
 					}
 				);
 

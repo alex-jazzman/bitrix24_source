@@ -263,6 +263,7 @@ BX.UI.Selector.prototype.openDialogPromiseFulfilled = function(result)
 			bindOptions: this.bindOptions,
 			cacheable: false,
 			closeByEsc: true,
+			focusTrap: false,
 			closeIcon: (
 				this.getOption('showCloseIcon') == 'Y'
 					? {
@@ -368,6 +369,7 @@ BX.UI.Selector.prototype.openContainer = function()
 		bindOptions: this.bindOptions,
 		cacheable: false,
 		closeByEsc: true,
+		focusTrap: false,
 		closeIcon: (
 			this.getOption('showCloseIcon') == 'Y'
 				? {
@@ -486,6 +488,7 @@ BX.UI.Selector.prototype.openSearch = function(params)
 			closeByEsc: true,
 			closeIcon: false,
 			lightShadow: true,
+			focusTrap: false,
 			events: {
 				onPopupShow: function() {
 					if (

@@ -121,6 +121,7 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 				templateId: Number,
 				documentType: ?Array,
 				startTrigger: ?string,
+				editBlock: ?string,
 			},
 		): Promise<void>
 		{

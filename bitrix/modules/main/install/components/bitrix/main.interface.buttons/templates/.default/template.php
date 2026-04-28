@@ -50,9 +50,9 @@ if (!empty($arParams["THEME_VARS"]))
 
 ?>
 
-<div class="main-buttons main-buttons__scope ui-icon-set__scope<?=$arParams["THEME_ID"]?><?=$context?>"<?=$styles?>>
-	<div class="main-buttons-box">
-		<div class="main-buttons-inner-container" id="<?=$arResult["ID"]?>">
+<div role="navigation" class="main-buttons main-buttons__scope ui-icon-set__scope<?=$arParams["THEME_ID"]?><?=$context?>"<?=$styles?>>
+	<div class="main-buttons-box" role="list">
+		<div class="main-buttons-inner-container" id="<?=$arResult["ID"]?>" role="presentation">
 		<? foreach ($arResult["ITEMS"] as $key => $arItem) :
 			if (isset($arItem['PARENT_ITEM_ID']) && !empty($arItem['PARENT_ITEM_ID']))
 			{
@@ -100,6 +100,7 @@ if (!empty($arParams["THEME_VARS"]))
 
 			?><div
 				class="main-buttons-item <?=$itemClass?>"
+				role="listitem"
 				id="<?=$arItem["ID"]?>"
 				data-disabled="<?=$arItem["IS_DISABLED"]?>"
 				data-class="<?=$arItem["CLASS_SUBMENU_ITEM"]?>"
@@ -118,10 +119,10 @@ if (!empty($arParams["THEME_VARS"]))
 				title="<?=htmlspecialcharsbx($arItem["TITLE"])?>"><?
 				if (!$arItem["HTML"]):
 					if (!empty($arItem["URL"])):
-						?><a class="main-buttons-item-link<?=$arParams["CLASS_ITEM_LINK"] ? " ".$arParams["CLASS_ITEM_LINK"] : ""?>"
+						?><a tabindex="0" class="main-buttons-item-link<?=$arParams["CLASS_ITEM_LINK"] ? " ".$arParams["CLASS_ITEM_LINK"] : ""?>"
 						href="<?=htmlspecialcharsbx($arItem["URL"])?>"><?
 					else:
-						?><span class="main-buttons-item-link<?=$arParams["CLASS_ITEM_LINK"] ? " ".$arParams["CLASS_ITEM_LINK"] : ""?>"><?
+						?><button type="button" tabindex="0" class="main-buttons-item-link<?=$arParams["CLASS_ITEM_LINK"] ? " ".$arParams["CLASS_ITEM_LINK"] : ""?>"><?
 					endif
 						?><span class="main-buttons-item-icon<?=$arParams["CLASS_ITEM_ICON"] ? " ".$arParams["CLASS_ITEM_ICON"] : ""?>"></span><?
 						?><span class="main-buttons-item-text<?=$arParams["CLASS_ITEM_TEXT"] ? " ".$arParams["CLASS_ITEM_TEXT"] : ""?>"><?
@@ -239,7 +240,7 @@ if (!empty($arParams["THEME_VARS"]))
 										?><a class="main-buttons-item-link<?=$arParams["CLASS_ITEM_LINK"] ? " ".$arParams["CLASS_ITEM_LINK"] : ""?>"
 										href="<?=htmlspecialcharsbx($arChildItem["URL"])?>"><?
 									else:
-										?><span class="main-buttons-item-link<?=$arParams["CLASS_ITEM_LINK"] ? " ".$arParams["CLASS_ITEM_LINK"] : ""?>"><?
+										?><button type="button" tabindex="0" class="main-buttons-item-link<?=$arParams["CLASS_ITEM_LINK"] ? " ".$arParams["CLASS_ITEM_LINK"] : ""?>"><?
 									endif;
 
 									?><span class="main-buttons-item-icon<?=$arParams["CLASS_ITEM_ICON"] ? " ".$arParams["CLASS_ITEM_ICON"] : ""?>"></span><?
@@ -281,9 +282,9 @@ if (!empty($arParams["THEME_VARS"]))
 				endif;
 			endforeach;
 		?></div>
-		<div class="main-buttons-item <?=$arResult["MORE_BUTTON"]["CLASS"]?> main-buttons-item-more --has-menu" id="<?=$arResult["ID"]?>_more_button"<?=$arParams["DISABLE_SETTINGS"] ? " style=\"display: none;\"" : ""?>>
+		<div role="listitem" class="main-buttons-item <?=$arResult["MORE_BUTTON"]["CLASS"]?> main-buttons-item-more --has-menu" id="<?=$arResult["ID"]?>_more_button"<?=$arParams["DISABLE_SETTINGS"] ? " style=\"display: none;\"" : ""?>>
 		<? if (!$arResult["MORE_BUTTON"]["HTML"]):
-			?><span class="main-buttons-item-link<?=$arParams["CLASS_ITEM_LINK"] ? " ".$arParams["CLASS_ITEM_LINK"] : ""?>"><?
+			?><button type="button" tabindex="0" class="main-buttons-item-link<?=$arParams["CLASS_ITEM_LINK"] ? " ".$arParams["CLASS_ITEM_LINK"] : ""?>"><?
 				?><span class="main-buttons-item-icon<?=$arParams["CLASS_ITEM_ICON"] ? " ".$arParams["CLASS_ITEM_ICON"] : ""?>"></span><?
 				?><span class="main-buttons-item-text<?=$arParams["CLASS_ITEM_TEXT"] ? " ".$arParams["CLASS_ITEM_TEXT"] : ""?>"><?
 					?><span class="main-buttons-item-text-title"><?
@@ -291,7 +292,7 @@ if (!empty($arParams["THEME_VARS"]))
 					?></span><?
 				?></span><?
 				?><span class="main-buttons-item-counter"></span><?
-			?></span>
+			?></button>
 		<? else : ?>
 			<?=$arResult["MORE_BUTTON"]["HTML"]?>
 		<? endif; ?>

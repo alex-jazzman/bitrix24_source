@@ -15,6 +15,8 @@ export function useResizableBlock(options): {...}
 		transformY,
 		zoom,
 		updateBlock,
+		updateBlockRectangle,
+		isBoxIntersection,
 	} = useBlockDiagram();
 	const {
 		block,
@@ -66,6 +68,15 @@ export function useResizableBlock(options): {...}
 				height: toValue(resizingBlock).dimensions.height,
 			},
 		});
+		if (toValue(isBoxIntersection))
+		{
+			updateBlockRectangle(toValue(block).id, {
+				x: toValue(resizingBlock).position.x,
+				y: toValue(resizingBlock).position.y,
+				width: toValue(resizingBlock).dimensions.width,
+				height: toValue(resizingBlock).dimensions.height,
+			});
+		}
 	}
 
 	function onMounted(): void

@@ -64,7 +64,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _sendAnalyticsOnSendStepError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsOnSendStepError");
 	var _sendAnalyticsOnStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsOnStart");
 	var _processSetupData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processSetupData");
-	var _addDocumentInGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addDocumentInGroup");
+	var _setDocumentInGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDocumentInGroup");
 	var _scrollToTop = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollToTop");
 	var _scrollToDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollToDown");
 	var _resetDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetDocument");
@@ -144,8 +144,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    Object.defineProperty(this, _scrollToTop, {
 	      value: _scrollToTop2
 	    });
-	    Object.defineProperty(this, _addDocumentInGroup, {
-	      value: _addDocumentInGroup2
+	    Object.defineProperty(this, _setDocumentInGroup, {
+	      value: _setDocumentInGroup2
 	    });
 	    Object.defineProperty(this, _processSetupData, {
 	      value: _processSetupData2
@@ -637,7 +637,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    b2eDocumentLimitCount,
 	    templateFolderId,
 	    isOpenedAsFolder,
-	    initiatedByType
+	    initiatedByType,
+	    isPlaceholderDocumentEnabled,
+	    type
 	  } = signOptions;
 	  const {
 	    blankSelectorConfig,
@@ -650,6 +652,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  blankSelectorConfig.templateFolderId = templateFolderId;
 	  blankSelectorConfig.isOpenedAsFolder = isOpenedAsFolder;
 	  blankSelectorConfig.initiatedByType = initiatedByType;
+	  blankSelectorConfig.type = type;
+	  blankSelectorConfig.isPlaceholderDocumentEnabled = isPlaceholderDocumentEnabled;
 	  documentSendConfig.documentMode = documentMode;
 	  documentSendConfig.isOpenedFromRobot = fromRobot;
 	  documentSendConfig.templateFolderId = templateFolderId;
@@ -980,7 +984,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      if (!setupData) {
 	        return false;
 	      }
-	      await babelHelpers.classPrivateFieldLooseBase(this, _addDocumentInGroup)[_addDocumentInGroup](setupData).then(() => {
+	      await babelHelpers.classPrivateFieldLooseBase(this, _setDocumentInGroup)[_setDocumentInGroup](setupData).then(() => {
 	        if (this.isGroupDocuments()) {
 	          babelHelpers.classPrivateFieldLooseBase(this, _setPreviewDocumentDropdownItems)[_setPreviewDocumentDropdownItems]();
 	        }
@@ -1094,7 +1098,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        const {
 	          uid,
 	          isTemplate,
-	          entityId
+	          entityId,
+	          hasPlaceholders
 	        } = this.documentSetup.setupData;
 	        const blocks = await this.documentSetup.loadBlocks(uid);
 	        babelHelpers.classPrivateFieldLooseBase(this, _executeDocumentSendActions)[_executeDocumentSendActions]();
@@ -1102,7 +1107,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	          isTemplate,
 	          uid,
 	          blocks,
-	          entityId
+	          entityId,
+	          hasPlaceholders
 	        };
 	        await babelHelpers.classPrivateFieldLooseBase(this, _executeEditorActions)[_executeEditorActions](editorData);
 	        return true;
@@ -1135,7 +1141,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  if (this.isSingleDocument()) {
 	    this.editor.documentData = editorData;
 	    await this.editor.renderDocument();
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _needSkipEditorStep)[_needSkipEditorStep] || this.isTemplateMode()) {
+	    if ((!babelHelpers.classPrivateFieldLooseBase(this, _needSkipEditorStep)[_needSkipEditorStep] || this.isTemplateMode()) && !editorData.hasPlaceholders) {
 	      await this.editor.show();
 	    }
 	  }
@@ -1287,11 +1293,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    this.wizard.toggleBtnActiveState('next', false);
 	  }
 	}
-	async function _addDocumentInGroup2(setupData) {
+	async function _setDocumentInGroup2(setupData) {
 	  if (this.documentSetup.blankIsNotSelected) {
-	    return;
-	  }
-	  if (this.documentsGroup.has(setupData.uid)) {
 	    return;
 	  }
 	  if (this.isTemplateMode() || !sign_featureStorage.FeatureStorage.isGroupSendingEnabled()) {
@@ -1524,14 +1527,16 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  this.editor.entityData = await babelHelpers.classPrivateFieldLooseBase(this, _setupParties)[_setupParties]();
 	  const {
 	    isTemplate,
-	    entityId
+	    entityId,
+	    hasPlaceholders
 	  } = this.documentSetup.setupData;
 	  const blocks = await this.documentSetup.loadBlocks(uid);
 	  const editorData = {
 	    isTemplate,
 	    uid,
 	    blocks,
-	    entityId
+	    entityId,
+	    hasPlaceholders
 	  };
 	  babelHelpers.classPrivateFieldLooseBase(this, _executeEditorActions)[_executeEditorActions](editorData);
 	}

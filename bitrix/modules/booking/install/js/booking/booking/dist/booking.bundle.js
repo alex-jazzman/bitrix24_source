@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,booking_component_mixin_locMixin,main_loader,booking_component_emptyFilterResultsPopup,booking_provider_service_mainPageService,booking_provider_service_saleChannelsService,booking_provider_service_dictionaryService,booking_provider_service_calendarService,booking_lib_filterResultNavigator,booking_component_whatsappPopupChangesSendingMessages,ui_counterpanel,main_core_events,booking_lib_drag,ui_vue3_components_richLoc,ui_notificationManager,booking_provider_service_bookingActionsService,ui_vue3_directives_hint,booking_lib_mousePosition,booking_component_timeSelector,booking_component_notePopup,ui_iconSet_animated,booking_component_counter,booking_lib_checkBookingIntersection,booking_lib_grid,booking_lib_inInterval,booking_lib_range,ui_datePicker,booking_component_counterFloating,booking_lib_isRealId,ui_dialogs_messagebox,booking_component_actionsPopup,booking_component_booking,booking_lib_dealHelper,ui_iconSet_api_core,ui_iconSet_outline,booking_model_bookings,booking_model_clients,booking_provider_service_waitListService,booking_lib_removeBooking,booking_lib_removeWaitListItem,ui_label,booking_lib_currencyFormat,booking_component_statisticsPopup,ui_hint,booking_lib_removeResource,ui_iconSet_actions,booking_lib_sidePanelInstance,booking_resourceCreationWizard,booking_provider_service_resourceDialogService,booking_lib_resources,booking_lib_resourcesDateCache,main_popup,ui_iconSet_main,booking_provider_service_optionService,booking_lib_helpDesk,booking_lib_busySlots,ui_entitySelector,booking_lib_limit,booking_provider_service_bookingService,booking_provider_service_clientService,ui_ears,main_date,booking_lib_duration,booking_component_clientPopup,booking_lib_analytics,ui_autoLaunch,ui_vue3_vuex,ui_vue3,ui_bannerDispatcher,booking_lib_resolvable,booking_component_button,booking_core,booking_component_popup,booking_component_loader,booking_application_yandexIntegrationWizard,booking_const,booking_lib_ahaMoments,ui_iconSet_api_vue,main_core,ui_cnt) {
+(function (exports,booking_component_mixin_locMixin,main_loader,booking_component_emptyFilterResultsPopup,booking_provider_service_mainPageService,booking_provider_service_saleChannelsService,booking_provider_service_dictionaryService,booking_provider_service_calendarService,booking_lib_filterResultNavigator,booking_component_whatsappPopupChangesSendingMessages,ui_counterpanel,booking_lib_drag,ui_vue3_components_richLoc,booking_provider_service_bookingActionsService,ui_vue3_directives_hint,booking_lib_mousePosition,booking_component_timeSelector,booking_component_notePopup,ui_iconSet_animated,booking_component_counter,booking_lib_checkBookingIntersection,booking_lib_grid,booking_lib_inInterval,booking_lib_range,booking_core,ui_datePicker,booking_component_counterFloating,booking_lib_isRealId,ui_dialogs_messagebox,booking_component_actionsPopup,booking_component_booking,booking_lib_dealHelper,ui_iconSet_api_core,ui_iconSet_outline,booking_model_bookings,booking_model_clients,booking_provider_service_waitListService,booking_lib_removeBooking,booking_lib_removeWaitListItem,ui_label,booking_lib_currencyFormat,booking_component_statisticsPopup,ui_hint,booking_lib_removeResource,ui_iconSet_actions,booking_lib_sidePanelInstance,booking_resourceCreationWizard,booking_lib_resources,booking_lib_resourcesDateCache,main_popup,ui_iconSet_main,booking_provider_service_optionService,booking_lib_helpDesk,booking_lib_busySlots,ui_entitySelector,booking_lib_limit,booking_provider_service_bookingService,booking_provider_service_clientService,ui_ears,main_date,booking_lib_duration,booking_component_clientPopup,booking_lib_analytics,ui_autoLaunch,ui_vue3_vuex,ui_vue3,ui_bannerDispatcher,booking_lib_resolvable,booking_component_button,booking_component_popup,booking_component_loader,booking_application_yandexIntegrationWizard,booking_lib_ahaMoments,ui_iconSet_api_vue,ui_cnt,main_core_events,main_core,ui_notificationManager,booking_const,booking_application_skuResourcesEditor,booking_provider_service_resourcesService,booking_provider_service_resourceDialogService) {
 	'use strict';
 
 	const cellHeight = 50;
@@ -1347,6 +1347,7 @@ this.BX = this.BX || {};
 	        clients: this.clients,
 	        counter: 0,
 	        counters: [],
+	        skus: [],
 	        createdAt: Date.now(),
 	        externalData: this.embedItems,
 	        isConfirmed: false,
@@ -1769,7 +1770,8 @@ this.BX = this.BX || {};
 	        id: 'booking-add-client',
 	        title: this.loc('BOOKING_AHA_ADD_CLIENT_TITLE'),
 	        text: this.loc('BOOKING_AHA_ADD_CLIENT_TEXT_MSGVER_1'),
-	        target: (_this$$refs$bookingAd = this.$refs.bookingAddClientBtn) == null ? void 0 : (_this$$refs$bookingAd2 = _this$$refs$bookingAd.$refs) == null ? void 0 : _this$$refs$bookingAd2.button
+	        target: (_this$$refs$bookingAd = this.$refs.bookingAddClientBtn) == null ? void 0 : (_this$$refs$bookingAd2 = _this$$refs$bookingAd.$refs) == null ? void 0 : _this$$refs$bookingAd2.button,
+	        isPulsarTransparent: true
 	      });
 	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.AddClient);
 	    }
@@ -2741,6 +2743,14 @@ this.BX = this.BX || {};
 	      const statusNotVisited = this.booking.visitStatus === booking_const.VisitStatus.NotVisited;
 	      return started && statusUnknown || statusNotVisited;
 	    },
+	    isPayable() {
+	      var _this$booking$payment;
+	      return Boolean((_this$booking$payment = this.booking.payment) == null ? void 0 : _this$booking$payment.id);
+	    },
+	    isPaid() {
+	      var _this$booking$payment2, _this$booking$payment3;
+	      return Boolean((_this$booking$payment2 = this.booking.payment) == null ? void 0 : _this$booking$payment2.isPaid) || Boolean((_this$booking$payment3 = this.booking.payment) == null ? void 0 : _this$booking$payment3.isPaidManually);
+	    },
 	    disabledHover() {
 	      return this.draggedDataTransfer.id > 0 && (this.draggedDataTransfer.kind !== booking_const.DraggedElementKind.Booking || this.draggedDataTransfer.id !== this.bookingId);
 	    }
@@ -2844,6 +2854,8 @@ this.BX = this.BX || {};
 				'--confirmed': booking.isConfirmed && !isNotVisited,
 				'--expired': isExpiredBooking,
 				'--not-visited': isNotVisited,
+				'--is-payable': isPayable,
+				'--not-paid': isPayable && !isPaid,
 				'--resizing': resizeFromTs && resizeToTs,
 				'--no-pointer-events': disabledHover,
 			}].flat(1)"
@@ -4542,279 +4554,60 @@ this.BX = this.BX || {};
 	`
 	};
 
-	let _ = t => t,
-	  _t;
-	const isAirTemplate = main_core.Extension.getSettings('booking.booking').isAirTemplate;
-	const duration = 200;
-	const counterPanelScopeClass = 'ui-counter-panel__scope';
-	const darkThemeClass = 'bitrix24-dark-theme --ui-context-content-light';
-	var _slider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("slider");
-	var _overlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("overlay");
-	var _handleSliderClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderClose");
-	var _renderOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderOverlay");
-	var _isExpanded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExpanded");
-	var _getInset = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInset");
-	var _animate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("animate");
-	var _applyMaximizedStyles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyMaximizedStyles");
-	var _applyMinimizedStyles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyMinimizedStyles");
-	var _appContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appContainer");
-	var _appHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appHeader");
-	var _counterPanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("counterPanel");
-	var _appContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appContent");
-	var _contentPaddingElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contentPaddingElement");
-	var _imBarWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("imBarWidth");
-	class Maximize {
-	  constructor({
-	    onOverlayClick
-	  }) {
-	    Object.defineProperty(this, _imBarWidth, {
-	      get: _get_imBarWidth,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _contentPaddingElement, {
-	      get: _get_contentPaddingElement,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _appContent, {
-	      get: _get_appContent,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _counterPanel, {
-	      get: _get_counterPanel,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _appHeader, {
-	      get: _get_appHeader,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _appContainer, {
-	      get: _get_appContainer,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _applyMinimizedStyles, {
-	      value: _applyMinimizedStyles2
-	    });
-	    Object.defineProperty(this, _applyMaximizedStyles, {
-	      value: _applyMaximizedStyles2
-	    });
-	    Object.defineProperty(this, _animate, {
-	      value: _animate2
-	    });
-	    Object.defineProperty(this, _getInset, {
-	      value: _getInset2
-	    });
-	    Object.defineProperty(this, _isExpanded, {
-	      get: _get_isExpanded,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _renderOverlay, {
-	      value: _renderOverlay2
-	    });
-	    Object.defineProperty(this, _slider, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _overlay, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _handleSliderClose, {
-	      writable: true,
-	      value: () => {
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].applyHacks();
-	          BX.SidePanel.Instance.disablePageScrollbar();
-	        }
-	      }
-	    });
-	    this.onOverlayClick = onOverlayClick;
-	    babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] = new (BX.SidePanel.Manager.getSliderClass())('');
-	    babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay] = babelHelpers.classPrivateFieldLooseBase(this, _renderOverlay)[_renderOverlay]();
-	    if (top.BX) {
-	      top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderClose)[_handleSliderClose]);
-	      top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onDestroy', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderClose)[_handleSliderClose]);
-	    }
-	  }
-	  async maximize() {
-	    await booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setExpanded`, true);
-	    babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].applyHacks();
-	    BX.SidePanel.Instance.disablePageScrollbar();
-	    const start = babelHelpers.classPrivateFieldLooseBase(this, _getInset)[_getInset](babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer]);
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'position', 'fixed');
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'inset', '0 0 0 0');
-	    const finish = babelHelpers.classPrivateFieldLooseBase(this, _getInset)[_getInset](babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _applyMaximizedStyles)[_applyMaximizedStyles]();
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay], '--closing');
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay], '--opening');
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay], document.body);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _animate)[_animate](start, finish);
-	  }
-	  async minimize() {
-	    await booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setExpanded`, false);
-	    babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].resetHacks();
-	    BX.SidePanel.Instance.enablePageScrollbar();
-	    const start = babelHelpers.classPrivateFieldLooseBase(this, _getInset)[_getInset](babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer]);
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'position', null);
-	    const finish = babelHelpers.classPrivateFieldLooseBase(this, _getInset)[_getInset](babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _applyMinimizedStyles)[_applyMinimizedStyles]();
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay], '--opening');
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay], '--closing');
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'position', 'fixed');
-	    await babelHelpers.classPrivateFieldLooseBase(this, _animate)[_animate](start, finish);
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'position', null);
-	    main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay]);
-	  }
-	}
-	function _renderOverlay2() {
-	  return main_core.Tag.render(_t || (_t = _`
-			<div class="booking-booking-overlay" onclick="${0}"></div>
-		`), this.onOverlayClick);
-	}
-	function _get_isExpanded() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/expanded`];
-	}
-	function _getInset2(container) {
-	  const rect = container.getBoundingClientRect();
-	  return {
-	    left: rect.left,
-	    top: rect.top,
-	    right: window.innerWidth - (rect.left + rect.width),
-	    bottom: window.innerHeight - (rect.top + rect.height)
-	  };
-	}
-	function _animate2(start, finish) {
-	  return new Promise(complete => new BX.easing({
-	    duration,
-	    start,
-	    finish,
-	    step: ({
-	      top,
-	      right,
-	      bottom,
-	      left
-	    }) => {
-	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'inset', `${top}px ${right}px ${bottom}px ${left}px`);
-	    },
-	    complete
-	  }).animate());
-	}
-	function _applyMaximizedStyles2() {
-	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _counterPanel)[_counterPanel], counterPanelScopeClass);
-	  main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], darkThemeClass);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'height', 'initial');
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'position', 'fixed');
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'clip-path', `inset(0 ${babelHelpers.classPrivateFieldLooseBase(this, _imBarWidth)[_imBarWidth]}px 0 0)`);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'background', 'var(--ui-color-palette-white-base)');
-	  if (isAirTemplate) {
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appHeader)[_appHeader], 'padding-left', '12px');
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appHeader)[_appHeader], 'padding-right', '12px');
-	  }
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appHeader)[_appHeader], 'border-bottom', '1px solid var(--ui-color-base-10)');
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appHeader)[_appHeader], 'max-width', '100%');
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appHeader)[_appHeader].parentElement, 'padding-right', `${babelHelpers.classPrivateFieldLooseBase(this, _imBarWidth)[_imBarWidth]}px`);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContent)[_appContent], 'margin', 0);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContent)[_appContent], 'border-radius', 0);
-	  if (isAirTemplate) {
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _contentPaddingElement)[_contentPaddingElement], 'padding', 0);
-	  } else {
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _contentPaddingElement)[_contentPaddingElement], 'padding-bottom', 0);
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _contentPaddingElement)[_contentPaddingElement], 'padding-right', `${babelHelpers.classPrivateFieldLooseBase(this, _imBarWidth)[_imBarWidth]}px`);
-	  }
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay], '--right', `${babelHelpers.classPrivateFieldLooseBase(this, _imBarWidth)[_imBarWidth]}px`);
-	  BX.ZIndexManager.register(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], {
-	    overlay: babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay]
-	  });
-	}
-	function _applyMinimizedStyles2() {
-	  main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _counterPanel)[_counterPanel], counterPanelScopeClass);
-	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], darkThemeClass);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'position', null);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'clip-path', null);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer], 'background', null);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appHeader)[_appHeader], 'border-bottom', null);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appHeader)[_appHeader], 'max-width', null);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appHeader)[_appHeader].parentElement, 'padding-right', null);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContent)[_appContent], 'margin', null);
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _appContent)[_appContent], 'border-radius', null);
-	  if (isAirTemplate) {
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _contentPaddingElement)[_contentPaddingElement], 'padding', null);
-	  } else {
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _contentPaddingElement)[_contentPaddingElement], 'padding-bottom', null);
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _contentPaddingElement)[_contentPaddingElement], 'padding-right', null);
-	  }
-	  BX.ZIndexManager.unregister(babelHelpers.classPrivateFieldLooseBase(this, _appContainer)[_appContainer]);
-	}
-	function _get_appContainer() {
-	  if (isAirTemplate) {
-	    return document.querySelector('.app__page');
-	  }
-	  return BX('content-table');
-	}
-	function _get_appHeader() {
-	  if (isAirTemplate) {
-	    return document.querySelector('.page__toolbar');
-	  }
-	  return document.querySelector('.page-header');
-	}
-	function _get_counterPanel() {
-	  return booking_core.Core.getParams().counterPanelContainer.firstElementChild;
-	}
-	function _get_appContent() {
-	  if (isAirTemplate) {
-	    return BX('air-workarea-content');
-	  }
-	  return BX('workarea-content');
-	}
-	function _get_contentPaddingElement() {
-	  var _BX;
-	  if (isAirTemplate) {
-	    return document.querySelector('.app__page');
-	  }
-	  return (_BX = BX('workarea')) == null ? void 0 : _BX.parentElement;
-	}
-	function _get_imBarWidth() {
-	  if (isAirTemplate) {
-	    return 0;
-	  }
-	  const imBar = isAirTemplate ? BX('right-bar') : BX('bx-im-bar');
-	  return window.innerWidth - imBar.getBoundingClientRect().left;
-	}
-
+	// @vue/component
 	const ScalePanel = {
+	  name: 'ScalePanel',
 	  props: {
-	    getColumnsContainer: Function
+	    getColumnsContainer: {
+	      type: Function,
+	      required: true
+	    }
 	  },
 	  data() {
 	    return {
 	      isSlider: booking_core.Core.getParams().isSlider,
-	      maximize: new Maximize({
-	        onOverlayClick: () => this.collapse()
-	      }),
 	      desiredZoom: this.$store.getters['interface/zoom'],
 	      minZoom: 0.5,
-	      maxZoom: 1
+	      maxZoom: 1,
+	      hasFullscreenMode: false
 	    };
-	  },
-	  mounted() {
-	    if (location.hash === '#maximize') {
-	      void this.maximize.maximize();
-	    }
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
-	      zoom: 'interface/zoom',
-	      expanded: 'interface/expanded'
+	      zoom: `${booking_const.Model.Interface}/zoom`
 	    }),
+	    expanded() {
+	      return this.$store.state[booking_const.Model.Interface].expanded;
+	    },
 	    zoomFormatted() {
 	      return this.loc('BOOKING_BOOKING_ZOOM_PERCENT', {
 	        '#PERCENT#': Math.round(this.zoom * 100)
 	      });
 	    }
 	  },
+	  beforeMount() {
+	    const SiteTemplate = main_core.Reflection.getClass('BX.Intranet.Bitrix24.Template');
+	    this.hasFullscreenMode = main_core.Type.isFunction(SiteTemplate == null ? void 0 : SiteTemplate.toggleFullscreen);
+	  },
+	  mounted() {
+	    if (location.hash === '#maximize') {
+	      this.expand();
+	    }
+	  },
+	  unmounted() {
+	    main_core.Event.unbind(window, 'mouseup', this.onMouseUp);
+	  },
 	  methods: {
+	    syncExpandedState() {
+	      setTimeout(() => {
+	        const expanded = BX.Intranet.Bitrix24.Template.isFullscreen();
+	        this.$store.dispatch(`${booking_const.Model.Interface}/setExpanded`, expanded);
+	      }, 300);
+	    },
 	    expand(event) {
 	      if (location.hash === '#maximize' || this.isAnyModifierKeyPressed(event)) {
-	        void this.maximize.maximize();
+	        BX.Intranet.Bitrix24.Template.enterFullscreen();
+	        this.syncExpandedState();
 	      } else {
 	        window.open(`${location.href}#maximize`, '_blank').focus();
 	      }
@@ -4823,7 +4616,8 @@ this.BX = this.BX || {};
 	      return event.altKey || event.shiftKey || event.ctrlKey || event.metaKey;
 	    },
 	    collapse() {
-	      void this.maximize.minimize();
+	      BX.Intranet.Bitrix24.Template.exitFullscreen();
+	      this.syncExpandedState();
 	    },
 	    fitToScreen() {
 	      const sidebarPadding = 260;
@@ -4890,14 +4684,15 @@ this.BX = this.BX || {};
 	        title: this.loc('BOOKING_AHA_EXPAND_GRID_TITLE_MSGVER_1'),
 	        text: this.loc('BOOKING_AHA_EXPAND_GRID_TEXT_MSGVER_1'),
 	        target: this.$refs.expand,
-	        top: true
+	        top: true,
+	        isPulsarTransparent: true
 	      });
 	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.ExpandGrid);
 	    }
 	  },
 	  template: `
 		<div class="booking-booking-grid-scale-panel">
-			<div v-if="!isSlider" class="booking-booking-grid-scale-panel-full-screen" ref="expand">
+			<div v-if="!isSlider && hasFullscreenMode" class="booking-booking-grid-scale-panel-full-screen" ref="expand">
 				<div v-if="expanded" class="ui-icon-set --collapse-diagonal" @click="collapse"></div>
 				<div v-else class="ui-icon-set --expand-diagonal" @click="expand"></div>
 			</div>
@@ -6918,7 +6713,8 @@ this.BX = this.BX || {};
 	        title: this.loc('BOOKING_AHA_RESOURCE_WORKLOAD_TITLE'),
 	        text: this.loc('BOOKING_AHA_RESOURCE_WORKLOAD_TEXT'),
 	        article: booking_const.HelpDesk.AhaResourceWorkload,
-	        target: this.$refs.container
+	        target: this.$refs.container,
+	        isPulsarTransparent: true
 	      });
 	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.ResourceWorkload);
 	    }
@@ -7263,7 +7059,8 @@ this.BX = this.BX || {};
 	          ...booking_const.HelpDesk.AhaAddResource,
 	          title: this.loc('BOOKING_AHA_ARTICLE_LINK_TITLE')
 	        },
-	        target: this.$refs.button
+	        target: this.$refs.button,
+	        isPulsarTransparent: true
 	      });
 	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.AddResource);
 	      if (booking_lib_sidePanelInstance.SidePanelInstance.openSliders.every(({
@@ -7855,7 +7652,8 @@ this.BX = this.BX || {};
 	          ...booking_const.HelpDesk.AhaSelectResources,
 	          title: this.loc('BOOKING_AHA_ARTICLE_LINK_TITLE')
 	        },
-	        target: this.$refs.button
+	        target: this.$refs.button,
+	        isPulsarTransparent: true
 	      });
 	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.SelectResources);
 	    },
@@ -8263,7 +8061,8 @@ this.BX = this.BX || {};
 	        title: this.loc('BOOKING_AHA_RESOURCE_INTERSECTION_TITLE'),
 	        text: this.loc('BOOKING_AHA_RESOURCE_INTERSECTION_TEXT'),
 	        article: booking_const.HelpDesk.AhaResourceIntersection,
-	        target: this.selector.getAddButton()
+	        target: this.selector.getAddButton(),
+	        isPulsarTransparent: true
 	      });
 	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.ResourceIntersection);
 	    },
@@ -8941,7 +8740,7 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    async showBanner() {
-	      ui_bannerDispatcher.BannerDispatcher.critical.toQueue(async onDone => {
+	      ui_bannerDispatcher.BannerDispatcher.high.toQueue(async onDone => {
 	        const {
 	          PromoBanner
 	        } = await main_core.Runtime.loadExtension('booking.component.promo-banner');
@@ -9000,7 +8799,7 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    async showBanner() {
-	      ui_bannerDispatcher.BannerDispatcher.critical.toQueue(async onDone => {
+	      ui_bannerDispatcher.BannerDispatcher.high.toQueue(async onDone => {
 	        const {
 	          TrialBanner
 	        } = await main_core.Runtime.loadExtension('booking.component.trial-banner');
@@ -9245,7 +9044,7 @@ this.BX = this.BX || {};
 	        id: 'optionMapYa',
 	        code: booking_const.IntegrationMapItemCode.YANDEX,
 	        imgSrc: this.imgLogoYa,
-	        head: this.loc('BOOKING_INTEGRATIONS_POPUP_YANDEX_MAP_LABEL'),
+	        head: this.loc('BOOKING_INTEGRATIONS_POPUP_YANDEX_MAP_LABEL_MSGVER_1'),
 	        counter: {
 	          id: 'counterMapsYa',
 	          value: this.counterMapsYa
@@ -9310,7 +9109,8 @@ this.BX = this.BX || {};
 	        title: '',
 	        text: this.loc('BOOKING_INTEGRATIONS_POPUP_YANDEX_MAP_AHA'),
 	        target: optionYandexMapEl,
-	        top: true
+	        top: true,
+	        isPulsarTransparent: true
 	      });
 	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.IntegrationMapsYa);
 	      this.$emit('unfreeze');
@@ -9435,7 +9235,8 @@ this.BX = this.BX || {};
 	      };
 	    },
 	    description() {
-	      return this.loc(this.integrations.some(integration => integration.code === booking_const.IntegrationMapItemCode.YANDEX) ? 'BOOKING_INTEGRATIONS_POPUP_DESCRIPTION_WITH_YANDEX' : 'BOOKING_INTEGRATIONS_POPUP_DESCRIPTION_MSGVER_1');
+	      const hasYandexMap = this.integrations.some(integration => integration.code === booking_const.IntegrationMapItemCode.YANDEX);
+	      return this.loc(hasYandexMap ? 'BOOKING_INTEGRATIONS_POPUP_DESCRIPTION_WITH_YANDEX_MSGVER_1' : 'BOOKING_INTEGRATIONS_POPUP_DESCRIPTION_MSGVER_1').replaceAll('[NBSP/]', '\u00A0');
 	    }
 	  },
 	  async mounted() {
@@ -9548,8 +9349,7 @@ this.BX = this.BX || {};
 	      AirButtonStyle: booking_component_button.AirButtonStyle,
 	      ButtonColor: booking_component_button.ButtonColor,
 	      ButtonSize: booking_component_button.ButtonSize,
-	      ButtonStyle: booking_component_button.ButtonStyle,
-	      Core: booking_core.Core
+	      ButtonStyle: booking_component_button.ButtonStyle
 	    };
 	  },
 	  data() {
@@ -9558,13 +9358,6 @@ this.BX = this.BX || {};
 	    };
 	  },
 	  computed: {
-	    storeState() {
-	      var _this$Core$getStore;
-	      return (_this$Core$getStore = this.Core.getStore()) == null ? void 0 : _this$Core$getStore.state;
-	    },
-	    counters() {
-	      return this.storeState.counters.counters;
-	    },
 	    newYandexMapsCounter() {
 	      return this.$store.state[booking_const.Model.Counters].counters.newYandexMaps;
 	    },
@@ -9606,6 +9399,63 @@ this.BX = this.BX || {};
 	};
 
 	// @vue/component
+	const SkusSettings = {
+	  name: 'SkusSettings',
+	  created() {
+	    main_core_events.EventEmitter.subscribe(booking_const.EventName.BookingOpenSkusSettings, this.openSkuResourcesEditor);
+	  },
+	  methods: {
+	    async openSkuResourcesEditor() {
+	      const editor = new booking_application_skuResourcesEditor.SkuResourcesEditor({
+	        title: this.loc('BOOKING_BOOKING_SKUS_SETTINGS_TITLE'),
+	        description: this.loc('BOOKING_BOOKING_SKUS_SETTINGS_DESCRIPTION'),
+	        options: {
+	          editMode: false,
+	          canBeEmpty: true,
+	          catalogSkuEntityOptions: this.getCatalogSkuEntityOptions()
+	        },
+	        loadData: () => this.getResources(),
+	        save: data => this.saveResources(data)
+	      });
+	      editor.open();
+	    },
+	    async fetchResourceSkuRelations() {
+	      await booking_provider_service_resourcesService.resourceService.loadResourceSkuRelations();
+	    },
+	    async fetchMainResources() {
+	      await booking_provider_service_resourceDialogService.resourceDialogService.getMainResources();
+	    },
+	    getCatalogSkuEntityOptions() {
+	      return this.$store.state[booking_const.Model.Sku].catalogSkuEntityOptions;
+	    },
+	    async getResources() {
+	      await Promise.all([this.fetchResourceSkuRelations(), this.fetchMainResources()]);
+	      return this.$store.state[booking_const.Model.Resources].resourcesSkuRelations;
+	    },
+	    async saveResources(data) {
+	      if (main_core.Type.isNil(data) || !main_core.Type.isArray(data.resources)) {
+	        return;
+	      }
+	      try {
+	        await booking_provider_service_resourcesService.resourceService.updateResourceSkuRelations(data.resources);
+	        ui_notificationManager.Notifier.notify(this.prepareNotificationOptions(this.loc('BOOKING_BOOKING_SKUS_SETTINGS_UPDATE_SUCCESS_MESSAGE')));
+	      } catch (error) {
+	        console.error('save Resources data error', error);
+	      }
+	    },
+	    prepareNotificationOptions(text) {
+	      return {
+	        id: main_core.Text.getRandom(),
+	        text
+	      };
+	    }
+	  },
+	  template: `
+
+	`
+	};
+
+	// @vue/component
 	const App = {
 	  name: 'BookingApp',
 	  components: {
@@ -9617,6 +9467,7 @@ this.BX = this.BX || {};
 	    Banner,
 	    Trial,
 	    IntegrationsButton,
+	    SkusSettings,
 	    EmptyFilterResultsPopup: booking_component_emptyFilterResultsPopup.EmptyFilterResultsPopup,
 	    WhatsappPopupChangesSendingMessages: booking_component_whatsappPopupChangesSendingMessages.WhatsappPopupChangesSendingMessages
 	  },
@@ -9654,7 +9505,8 @@ this.BX = this.BX || {};
 	      fetchingNextDate: `${booking_const.Model.Filter}/fetchingNextDate`,
 	      datesCount: `${booking_const.Model.Filter}/datesCount`,
 	      requestFields: `${booking_const.Model.Filter}/requestFields`,
-	      shouldShowWhatsAppEmergency: `${booking_const.Model.Interface}/shouldShowWhatsAppEmergency`
+	      shouldShowWhatsAppEmergency: `${booking_const.Model.Interface}/shouldShowWhatsAppEmergency`,
+	      isReloadRelations: `${booking_const.Model.Sku}/isReloadRelations`
 	    }),
 	    hasSelectedCells() {
 	      return Object.keys(this.selectedCells).length > 0;
@@ -9682,6 +9534,12 @@ this.BX = this.BX || {};
 	    isFilterMode(isFilterMode) {
 	      if (!isFilterMode) {
 	        void this.fetchPage(this.selectedDateTs / 1000);
+	      }
+	    },
+	    isReloadRelations(isReloadRelations) {
+	      if (isReloadRelations) {
+	        void this.fetchPage(Date.now());
+	        void this.$store.dispatch(`${booking_const.Model.Sku}/setReloadRelations`, false);
 	      }
 	    },
 	    isDeletingResourceFilterMode(isDeletingResourceFilterMode) {
@@ -9937,6 +9795,7 @@ this.BX = this.BX || {};
 			<WhatsappPopupChangesSendingMessages
 				v-if="shouldShowWhatsAppEmergency"
 			/>
+			<SkusSettings/>
 		</div>
 	`
 	};
@@ -9991,5 +9850,5 @@ this.BX = this.BX || {};
 
 	exports.Booking = Booking$1;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX.Booking.Component.Mixin,BX,BX.Booking.Component,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Component,BX.UI,BX.Event,BX.Booking.Lib,BX.UI.Vue3.Components,BX.UI.NotificationManager,BX.Booking.Provider.Service,BX.Vue3.Directives,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.UI.DatePicker,BX.Booking.Component,BX.Booking.Lib,BX.UI.Dialogs,BX.Booking.Component,BX.Booking.Component,BX.Booking.Lib,BX.UI.IconSet,BX,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI,BX.Booking.Lib,BX.Booking.Component,BX,BX.Booking.Lib,BX,BX.Booking.Lib,BX.Booking,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.Main,BX,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI.EntitySelector,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.UI,BX.Main,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Lib,BX.UI.AutoLaunch,BX.Vue3.Vuex,BX.Vue3,BX.UI,BX.Booking.Lib,BX.Booking.Component,BX.Booking,BX.Booking.Component,BX.Booking.Component,BX.Booking.Application,BX.Booking.Const,BX.Booking.Lib,BX.UI.IconSet,BX,BX.UI));
+}((this.BX.Booking = this.BX.Booking || {}),BX.Booking.Component.Mixin,BX,BX.Booking.Component,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Component,BX.UI,BX.Booking.Lib,BX.UI.Vue3.Components,BX.Booking.Provider.Service,BX.Vue3.Directives,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking,BX.UI.DatePicker,BX.Booking.Component,BX.Booking.Lib,BX.UI.Dialogs,BX.Booking.Component,BX.Booking.Component,BX.Booking.Lib,BX.UI.IconSet,BX,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI,BX.Booking.Lib,BX.Booking.Component,BX,BX.Booking.Lib,BX,BX.Booking.Lib,BX.Booking,BX.Booking.Lib,BX.Booking.Lib,BX.Main,BX,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI.EntitySelector,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.UI,BX.Main,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Lib,BX.UI.AutoLaunch,BX.Vue3.Vuex,BX.Vue3,BX.UI,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.Booking.Component,BX.Booking.Application,BX.Booking.Lib,BX.UI.IconSet,BX.UI,BX.Event,BX,BX.UI.NotificationManager,BX.Booking.Const,BX.Booking.Application,BX.Booking.Provider.Service,BX.Booking.Provider.Service));
 //# sourceMappingURL=booking.bundle.js.map

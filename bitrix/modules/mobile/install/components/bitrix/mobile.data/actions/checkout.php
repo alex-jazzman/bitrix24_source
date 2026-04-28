@@ -385,10 +385,11 @@ else
 
 	$userRole = null;
 	$isCollabToolEnabled = true;
+	$userId = $USER->GetID();
 
 	if (Loader::includeModule('intranet'))
 	{
-		$userRole = (new \Bitrix\Intranet\User((int)$USER->GetID()))->getUserRole();
+		$userRole = (new \Bitrix\Intranet\User((int)$userId))->getUserRole();
 		if ($userRole === UserRole::COLLABER)
 		{
 			$isCollabToolEnabled = ToolsManager::getInstance()->checkAvailabilityByToolId('collab');
@@ -476,7 +477,6 @@ else
 	$needAppPass = Context::getCurrent()->getServer()->get("HTTP_BX_APP_PASS");
 	$appUUID = Context::getCurrent()->getServer()->get("HTTP_BX_APP_UUID");
 	$deviceName = Context::getCurrent()->getServer()->get("HTTP_BX_DEVICE_NAME");
-	$userId = $USER->GetID();
 	$hitHash = trim($_REQUEST["bx_hit_hash"] ?? '');
 	$forceGenerate = Auth::removeOneTimeAuthHash($hitHash);
 	if (($needAppPass == 'mobile' && $USER->GetParam("APPLICATION_ID") === null) || $forceGenerate)

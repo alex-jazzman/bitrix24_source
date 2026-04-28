@@ -552,6 +552,8 @@
 	font-weight: var(--mib-item-font-weight);
 	color: var(--mib-item-color);
 	outline: none;
+	background-color: transparent;
+	border: none;
 	transition: var(--mib-item-link-transition);
 	text-decoration: none;
 	vertical-align: middle;
@@ -563,6 +565,20 @@
 	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 	white-space: nowrap;
 	align-items: stretch;
+}
+
+.main-buttons-item-link:focus-visible:before {
+	display: block;
+	content: '';
+	position: absolute;
+	left: -10px;
+	right: -10px;
+	top: 6px;
+	bottom: 6px;
+	border-radius: 8px;
+	transition: background-color 200ms, opacity 200ms;
+	pointer-events: none;
+	border: var(--ui-color-focus-outline) solid 2px;
 }
 
 .main-buttons-edit .main-buttons-item-link {

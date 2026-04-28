@@ -12,6 +12,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		ComponentCode,
 		OpenDialogContextType,
 		NavigationTabId,
+		DialogType,
 	} = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -23,6 +24,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		{
 			this.store = serviceLocator.get('core').getStore();
 			this.manager = Application.getNotificationHistory('im_message');
+			this.openlineManager = Application.getNotificationHistory('im_lines_message');
 
 			this.storedPullEvents = [];
 		}
@@ -51,10 +53,22 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				return pushEvents;
 			}
 
-			const pushEvents = await this.manager.getAsync();
-			logger.log('get push async', pushEvents);
+			const pushMessageEvents = await this.manager.getAsync();
+			const openlinePushEvents = await this.openlineManager.getAsync();
 
-			return pushEvents;
+			logger.log('get push async, pushMessageEvents: ', pushMessageEvents, ' openlinePushEvents: ', openlinePushEvents);
+			let eventList = [];
+			if (Type.isArrayFilled(pushMessageEvents?.IM_MESS))
+			{
+				eventList = pushMessageEvents?.IM_MESS;
+			}
+
+			if (Feature.isOpenlinesInMessengerAvailable && Type.isArrayFilled(openlinePushEvents?.IM_MESS))
+			{
+				eventList = [...eventList, ...openlinePushEvents.IM_MESS];
+			}
+
+			return eventList;
 		}
 
 		/**
@@ -66,16 +80,16 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			/** @type {Array<MessengerPushEvent>} */
 			const eventList = [];
 
-			if (!list || !list.IM_MESS || list.IM_MESS.length <= 0)
+			if (!Type.isArrayFilled(list))
 			{
 				logger.info('getPushEventList: list is empty');
 
 				return eventList;
 			}
 
-			logger.info('getPushEventList: parse push messages', list.IM_MESS);
+			logger.info('getPushEventList: parse push messages', list);
 
-			list.IM_MESS.forEach((push) => {
+			list.forEach((push) => {
 				if (push?.data?.cmd !== 'message' && push?.data?.cmd !== 'messageChat')
 				{
 					return;
@@ -175,6 +189,25 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			{
 				if (MessengerParams.isOpenlinesOperator() && pushParams.CHAT_TYPE === 'L')
 				{
+					if (Feature.isOpenlinesInMessengerAvailable)
+					{
+						const dialogId = pushParams.PARAMS?.RECIPIENT_ID;
+
+						if (Type.isStringFilled(dialogId))
+						{
+							const openDialogParams = {
+								dialogId,
+								dialogTitleParams: {
+									chatType: DialogType.lines,
+								},
+							};
+
+							this.#openDialog(openDialogParams);
+						}
+
+						return true;
+					}
+
 					const navigationController = serviceLocator.get('navigation-controller');
 					void navigationController.makeMessengerTabActive();
 					void navigationController.setActiveTab(NavigationTabId.openlines);
@@ -214,6 +247,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		clearHistory()
 		{
 			this.manager.clear();
+			this.openlineManager.clear();
 		}
 
 		/**

@@ -1,16 +1,13 @@
+import { TodoNotificationSkipMenu } from 'crm.activity.todo-notification-skip-menu';
+import { TodoPingSettingsMenu } from 'crm.activity.todo-ping-settings-menu';
+import { NameService } from 'crm.ai.name-service';
+import { Restriction } from 'crm.kanban.restriction';
+import { SettingsController, Type as SortType } from 'crm.kanban.sort';
 import { Extension, Loc, Reflection, Text, Type, userOptions as UserOptions } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Menu, MenuItemOptions } from 'main.popup';
 import { Dialog } from 'ui.entity-selector';
-import { TodoNotificationSkipMenu } from 'crm.activity.todo-notification-skip-menu';
-import { TodoPingSettingsMenu } from 'crm.activity.todo-ping-settings-menu';
-import { Restriction } from 'crm.kanban.restriction';
-import { SettingsController, Type as SortType } from 'crm.kanban.sort';
-
-import { SortController as GridSortController } from './grid/sort-controller.js';
-import { SettingsMigrator } from './settings-migrator';
 import { AISettingsService } from './ai-settings-service';
-import { BaseChannelHandler } from './handlers/base-channel-handler';
 import {
 	CHANNEL_TYPE_CALL,
 	CHANNEL_TYPE_CHAT,
@@ -20,8 +17,12 @@ import {
 	NOT_CHECKED_CLASS,
 } from './constants';
 
-import { requireArrayOfString, requireClass, requireClassOrNull, requireStringOrNull } from './params-handling';
+import { SortController as GridSortController } from './grid/sort-controller.js';
+import { BaseChannelHandler } from './handlers/base-channel-handler';
 import { ChannelHandlerFactory } from './handlers/channel-handler-factory';
+
+import { requireArrayOfString, requireClass, requireClassOrNull, requireStringOrNull } from './params-handling';
+import { SettingsMigrator } from './settings-migrator';
 
 const EntityType = Reflection.getClass('BX.CrmEntityType');
 
@@ -397,7 +398,7 @@ export class SettingsButtonExtender
 		}
 
 		return {
-			text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_IN_CRM'),
+			text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_IN_CRM', NameService.copilotNameReplacement()),
 			disabled: this.#isSetAiSettingsRequestRunning,
 			items: menuItems,
 		};

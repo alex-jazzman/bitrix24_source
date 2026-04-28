@@ -49,18 +49,18 @@ export const ForwardContent = {
 			Analytics.getInstance().messageForward.onStartSearch({ dialogId: this.dialogId });
 			this.searchQuery = query.trim().toLowerCase();
 		},
-		isNotes(dialogId: string): boolean
+		isSelfChat(dialogId: string): boolean
 		{
-			return this.$store.getters['chats/isNotes'](dialogId);
+			return this.$store.getters['chats/isSelfChat'](dialogId);
 		},
-		async forwardToNotes(forwardDialogId: string)
+		async forwardToSelfChat(forwardDialogId: string)
 		{
 			await SendingService.getInstance().forwardMessages({
 				forwardIds: this.messagesIds,
 				dialogId: forwardDialogId,
 			});
 
-			Notifier.message.onForwardNotesComplete(this.messagesIds);
+			Notifier.message.onForwardSelfChatComplete(this.messagesIds);
 
 			SoundNotificationManager.getInstance().playOnce(SoundType.send);
 		},
@@ -72,11 +72,11 @@ export const ForwardContent = {
 				dialogId: this.dialogId,
 			});
 
-			const isNotesForward = this.isNotes(forwardDialogId);
-			const isNotesOpen = this.isNotes(this.dialogId);
-			if (isNotesForward && !isNotesOpen)
+			const isSelfChatForward = this.isSelfChat(forwardDialogId);
+			const isSelfChatOpen = this.isSelfChat(this.dialogId);
+			if (isSelfChatForward && !isSelfChatOpen)
 			{
-				void this.forwardToNotes(forwardDialogId);
+				void this.forwardToSelfChat(forwardDialogId);
 			}
 			else
 			{

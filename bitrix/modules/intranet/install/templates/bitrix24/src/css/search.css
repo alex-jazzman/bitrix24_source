@@ -10,6 +10,12 @@
 	--air-header-search-input-opacity: 0;
 }
 
+@container app-header (max-width: 767px) {
+	.air-header__search {
+		display: none;
+	}
+}
+
 .air-header__search-container {
 	display: flex;
 	align-items: center;
@@ -80,7 +86,7 @@
 	text-shadow: none;
 }
 
-@media (min-width: 1620px) {
+@container app-header (min-width: 1620px) {
 	.air-header__search.--active,
 	.air-header__search.header-search-active,
 	.air-header__search.header-search-not-empty {

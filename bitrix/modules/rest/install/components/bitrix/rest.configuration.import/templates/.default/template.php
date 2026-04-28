@@ -165,6 +165,7 @@ else
 						'MANIFEST_CODE' => $arResult['MANIFEST_CODE'],
 						'APP' => $arResult['APP'] ?? null,
 						'FROM' => $arResult['FROM'],
+						'ADDITIONAL' => $arParams['ADDITIONAL'] ?? null,
 					),
 					$component,
 					array(
@@ -212,7 +213,7 @@ else
 					'APP_CODE' => $arResult['INSTALL_APP'],
 					'IFRAME' => 'Y',
 					'FROM' => $arResult['FROM'],
-					'ADDITIONAL' => $arParams['ADDITIONAL'],
+					'ADDITIONAL' => $arParams['ADDITIONAL'] ?? null,
 					'ZIP_ID' => $arParams['ZIP_ID'],
 				),
 				$component,

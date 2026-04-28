@@ -76,16 +76,16 @@ jn.define('ai/mcp-selector', (require, exports, module) => {
 		}
 
 		onLoad = async (data) => {
-			const { items, disabledByTariff } = data;
+			const { items, disabledByTariff, disabledBySubscription } = data;
 
-			if (disabledByTariff)
+			if (disabledByTariff || disabledBySubscription)
 			{
 				this.showPlanRestriction();
 			}
 
 			this.items = items;
 
-			this.setState({ isLoading: false, disabledByTariff });
+			this.setState({ isLoading: false, disabledByTariff, disabledBySubscription });
 		};
 
 		render()
@@ -201,7 +201,7 @@ jn.define('ai/mcp-selector', (require, exports, module) => {
 
 			if (selectedServer.isDisabled)
 			{
-				if (this.state.disabledByTariff)
+				if (this.state.disabledByTariff || this.state.disabledBySubscription)
 				{
 					this.showPlanRestriction();
 

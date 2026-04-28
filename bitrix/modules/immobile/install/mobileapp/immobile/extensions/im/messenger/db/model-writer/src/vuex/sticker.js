@@ -42,6 +42,17 @@ jn.define('im/messenger/db/model-writer/vuex/sticker', (require, exports, module
 				return;
 			}
 
+			const actionName = mutation?.payload?.actionName;
+			const saveActions = [
+				'addStickers',
+			];
+			if (!saveActions.includes(actionName))
+			{
+				logger.warn('addRouter skip: unknown action', actionName);
+
+				return;
+			}
+
 			const { stickers } = mutation.payload.data;
 
 			this.repository.sticker.saveFromModel(stickers)

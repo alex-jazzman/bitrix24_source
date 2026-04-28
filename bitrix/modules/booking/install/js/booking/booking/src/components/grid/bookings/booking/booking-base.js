@@ -163,6 +163,16 @@ export const BookingBase = {
 
 			return (started && statusUnknown) || statusNotVisited;
 		},
+		isPayable(): boolean
+		{
+			return Boolean(this.booking.payment?.id);
+		},
+		isPaid(): boolean
+		{
+			return Boolean(this.booking.payment?.isPaid)
+				|| Boolean(this.booking.payment?.isPaidManually)
+			;
+		},
 		disabledHover(): boolean
 		{
 			return (
@@ -290,6 +300,8 @@ export const BookingBase = {
 				'--confirmed': booking.isConfirmed && !isNotVisited,
 				'--expired': isExpiredBooking,
 				'--not-visited': isNotVisited,
+				'--is-payable': isPayable,
+				'--not-paid': isPayable && !isPaid,
 				'--resizing': resizeFromTs && resizeToTs,
 				'--no-pointer-events': disabledHover,
 			}].flat(1)"

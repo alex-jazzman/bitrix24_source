@@ -252,6 +252,9 @@ this.BX = this.BX || {};
 	        [ButtonTag.SUBMIT]: () => main_core.Tag.render(_t3 || (_t3 = _`<input class="${0}" type="submit">`), this.getBaseClass()),
 	        [ButtonTag.DIV]: () => main_core.Tag.render(_t4 || (_t4 = _`<div class="${0}"></div>`), this.getBaseClass())
 	      })[this.getTag()]) === null || _ButtonTag$LINK$Butto2 === void 0 ? void 0 : _ButtonTag$LINK$Butto2.call(_ButtonTag$LINK$Butto3)) !== null && _ButtonTag$LINK$Butto !== void 0 ? _ButtonTag$LINK$Butto : main_core.Tag.render(_t5 || (_t5 = _`<button class="${0}"></button>`), this.getBaseClass());
+	      if (this.isDisabled() === false) {
+	        main_core.Dom.attr(this.button, 'tabindex', '0');
+	      }
 	      return this.button;
 	    }
 	    /**
@@ -496,7 +499,8 @@ this.BX = this.BX || {};
 	    value: function setDisabled(disabled = true) {
 	      this.disabled = disabled;
 	      this.setProps({
-	        disabled: disabled ? true : null
+	        disabled: disabled ? true : null,
+	        tabindex: disabled ? null : '0'
 	      });
 	      return this;
 	    }
@@ -1305,6 +1309,26 @@ this.BX = this.BX || {};
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(SplitSubButton.prototype), "setText", this).call(this, text);
 	    }
 	  }, {
+	    key: "getContainer",
+	    value: function getContainer() {
+	      const container = babelHelpers.get(babelHelpers.getPrototypeOf(SplitSubButton.prototype), "getContainer", this).call(this);
+	      if (this.isSwitcherButton()) {
+	        main_core.Dom.attr(this.button, 'tabindex', -1);
+	      }
+	      return container;
+	    }
+	  }, {
+	    key: "setDisabled",
+	    value: function setDisabled(disabled = true) {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(SplitSubButton.prototype), "setDisabled", this).call(this, disabled);
+	      if (this.isSwitcherButton()) {
+	        this.setProps({
+	          tabindex: -1
+	        });
+	      }
+	      return this;
+	    }
+	  }, {
 	    key: "getSwitcher",
 	    value: function getSwitcher() {
 	      return this.switcher;
@@ -1429,6 +1453,7 @@ this.BX = this.BX || {};
 	    ...switcherOptions
 	  });
 	  _classPrivateMethodGet$1(this, _renderSwitcher, _renderSwitcher2).call(this, this.getContainer(), switcherOptions);
+	  main_core.Dom.attr(this.getContainer(), 'tabindex', -1);
 	}
 	babelHelpers.defineProperty(SplitSubButton, "Type", SplitSubButtonType);
 

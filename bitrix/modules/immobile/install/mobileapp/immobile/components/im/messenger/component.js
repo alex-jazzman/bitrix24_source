@@ -8,11 +8,15 @@ function destructMessengerIfExist()
 	const require = jn.require;
 	const { Type } = require('type');
 
+	console.warn('before execute destructor');
 	if (Type.isObject(window.messenger) && Type.isFunction(window.messenger.destructor))
 	{
+		console.warn('destructor is available. execute');
+
 		window.messenger.destructor();
 		window.messenger = undefined;
 	}
+	console.warn('after execute destructor');
 }
 
 /**
@@ -22,8 +26,11 @@ function destructMessengerIfExist()
 function executeBeforeMessengerInit()
 {
 	const require = jn.require;
+	const { Loc } = require('im/messenger/loc');
 
 	window.tabs?.setActiveItem(BX.componentParameters.get('FIRST_TAB_ID', 'chats'));
+
+	Loc.initMessages();
 
 	/** region messenger developer tools */
 	window.messengerDebug = {};

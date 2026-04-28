@@ -8,7 +8,7 @@ jn.define('user-profile/common-tab/src/block/gratitude/block', (require, exports
 	const { dispatch } = require('statemanager/redux/store');
 	const { Loc } = require('loc');
 	const { ViewMode } = require('user-profile/common-tab/src/block/base-view');
-	const { GratitudeListManager } = require('layout/ui/gratitude-list');
+	const { requireLazy } = require('require-lazy');
 
 	class GratitudeBlock extends BaseBlock
 	{
@@ -57,9 +57,11 @@ jn.define('user-profile/common-tab/src/block/gratitude/block', (require, exports
 			return ViewMode.FULL_WIDTH;
 		}
 
-		onClick()
+		async onClick()
 		{
 			const { ownerId, parentWidget } = this.props;
+
+			const { GratitudeListManager } = await requireLazy('layout/ui/gratitude-list');
 
 			void GratitudeListManager.openList({
 				ownerId,

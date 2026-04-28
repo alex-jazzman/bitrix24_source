@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_component_elements_loader,im_v2_lib_logger,im_v2_lib_menu,im_v2_provider_service_chat,im_v2_lib_textHighlighter,im_v2_lib_dateFormatter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_component_elements_searchInput,ui_designTokens,ui_fonts_opensans,main_core,main_core_events,im_v2_application_core,im_v2_lib_utils,im_v2_const,im_v2_lib_analytics,im_v2_lib_search,im_v2_component_elements_scrollWithGradient) {
+(function (exports,im_v2_component_elements_loader,im_v2_lib_logger,im_v2_lib_menu,im_v2_provider_service_chat,im_v2_component_elements_chatTitle,im_v2_lib_dateFormatter,im_v2_lib_textHighlighter,im_v2_component_elements_avatar,im_v2_component_elements_searchInput,ui_designTokens,ui_fonts_opensans,main_core,main_core_events,im_v2_application_core,im_v2_lib_utils,im_v2_const,im_v2_lib_analytics,im_v2_lib_search,im_v2_component_elements_scrollWithGradient) {
 	'use strict';
 
 	const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
@@ -299,7 +299,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: String,
 	      default: ''
 	    },
-	    replaceWithNotes: {
+	    selfChatReplace: {
 	      type: Boolean,
 	      default: true
 	    },
@@ -320,23 +320,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    isUser() {
 	      return this.dialog.type === im_v2_const.ChatType.user;
 	    },
-	    isNotes() {
-	      if (!this.replaceWithNotes) {
+	    needToReplaceSelfChat() {
+	      if (!this.selfChatReplace) {
 	        return false;
 	      }
-	      return this.$store.getters['chats/isNotes'](this.dialogId);
+	      return this.$store.getters['chats/isSelfChat'](this.dialogId);
 	    },
 	    avatarType() {
-	      if (!this.replaceWithNotes) {
+	      if (!this.selfChatReplace) {
 	        return '';
 	      }
-	      return this.isNotes ? im_v2_component_elements_avatar.ChatAvatarType.notes : '';
+	      return this.needToReplaceSelfChat ? im_v2_component_elements_avatar.ChatAvatarType.selfChat : '';
 	    },
 	    titleType() {
-	      if (!this.replaceWithNotes) {
+	      if (!this.selfChatReplace) {
 	        return '';
 	      }
-	      return this.isNotes ? im_v2_component_elements_chatTitle.ChatTitleType.notes : '';
+	      return this.needToReplaceSelfChat ? im_v2_component_elements_chatTitle.ChatTitleType.selfChat : '';
 	    },
 	    position() {
 	      if (!this.isUser) {
@@ -355,18 +355,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return (_ItemTextByChatType$t = ItemTextByChatType[this.dialog.type]) != null ? _ItemTextByChatType$t : ItemTextByChatType.default;
 	    },
 	    itemText() {
-	      if (this.isNotes) {
-	        return this.notesText;
+	      if (this.needToReplaceSelfChat) {
+	        return this.selfChatText;
 	      }
 	      return this.isUser ? this.userItemText : this.chatItemText;
 	    },
 	    itemTextForTitle() {
-	      if (this.isNotes) {
-	        return this.notesText;
+	      if (this.needToReplaceSelfChat) {
+	        return this.selfChatText;
 	      }
 	      return this.isUser ? this.position : this.chatItemText;
 	    },
-	    notesText() {
+	    selfChatText() {
 	      return this.loc('IM_LIST_RECENT_CHAT_SELF_SUBTITLE');
 	    },
 	    formattedDate() {
@@ -415,13 +415,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					:customType="avatarType"
 				/>
 			</div>
-			<div class="bx-im-search-item__content-container" :class="{'--centered': isNotes}">
+			<div class="bx-im-search-item__content-container" :class="{'--centered': selfChatReplace}">
 				<div class="bx-im-search-item__content_header">
 					<ChatTitleWithHighlighting
 						:dialogId="dialogId"
 						:textToHighlight="query"
 						:customType="titleType"
-						:showItsYou="!replaceWithNotes"
+						:showItsYou="!selfChatReplace"
 						:twoLine="titleTwoLine"
 					/>
 					<div v-if="withDate && formattedDate" class="bx-im-search-item__date">
@@ -436,8 +436,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
-	const MyNotes = {
-	  name: 'MyNotes',
+	const SelfChat = {
+	  name: 'SelfChat',
 	  emits: ['clickItem'],
 	  computed: {
 	    dialogId() {
@@ -468,14 +468,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  template: `
 		<div 
-			class="bx-im-search-my-notes__container bx-im-search-my-notes__scope"
+			class="bx-im-search-self-chat__container bx-im-search-self-chat__scope"
 			@click="onClick" 
 			@click.right.prevent
 		>
-			<div class="bx-im-search-my-notes__avatar"></div>
-			<div class="bx-im-search-my-notes__title" :title="name">
-				{{ name }}
-			</div>
+			<div class="bx-im-search-self-chat__avatar"></div>
+			<div class="bx-im-search-self-chat__title" :title="name">{{ name }}</div>
 		</div>
 	`
 	};
@@ -561,7 +559,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  name: 'RecentUsersCarousel',
 	  components: {
 	    CarouselUser,
-	    MyNotes
+	    SelfChat
 	  },
 	  emits: ['clickItem', 'openContextMenu'],
 	  computed: {
@@ -592,9 +590,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				</span>
 			</div>
 			<div class="bx-im-recent-users-carousel__users-container">
-				<MyNotes
-					@clickItem="$emit('clickItem', $event)" 
-				/>
+				<SelfChat @clickItem="$emit('clickItem', $event)" />
 				<CarouselUser
 					v-for="userDialogId in items"
 					:key="userDialogId"
@@ -832,7 +828,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						v-for="item in recentItems"
 						:key="item.dialogId"
 						:dialogId="item.dialogId"
-						:replaceWithNotes="true"
 						:titleTwoLine="true"
 						@clickItem="onClickRecentSearchItem"
 						@openContextMenu="onOpenContextMenu"
@@ -847,7 +842,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						:dateMessage="item.dateMessage"
 						:withDate="true"
 						:query="cleanQuery"
-						:replaceWithNotes="true"
 						:titleTwoLine="true"
 						@clickItem="onClickSearchResultItem($event, index)"
 						@openContextMenu="onOpenContextMenu"
@@ -1075,7 +1069,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						:key="item.dialogId"
 						:dialogId="item.dialogId"
 						:selected="isSelected(item.dialogId)"
-						:replaceWithNotes="false"
+						:selfChatReplace="false"
 						@clickItem="onClickItemRecentItem($event, index)"
 					/>
 				</template>
@@ -1088,7 +1082,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						:withDate="true"
 						:isSelected="isSelected(item.dialogId)"
 						:query="query"
-						:replaceWithNotes="false"
+						:selfChatReplace="false"
 						@clickItem="onClickItem($event, index)"
 					/>
 					<EmptyState v-if="isEmptyState" />
@@ -1255,7 +1249,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						v-for="(item, index) in recentSearchItems"
 						:key="item.dialogId"
 						:dialogId="item.dialogId"
-						:replaceWithNotes="true"
 						@clickItem="onClickRecentItem($event, index)"
 					/>
 				</template>
@@ -1267,7 +1260,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						:dateMessage="item.dateMessage"
 						:withDate="true"
 						:query="query"
-						:replaceWithNotes="true"
 						@clickItem="onClickItem($event, index)"
 					/>
 					<EmptyState v-if="isEmptyState" />
@@ -1282,5 +1274,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.AddToChatSearch = AddToChatSearch;
 	exports.ForwardSearch = ForwardSearch;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=registry.bundle.js.map

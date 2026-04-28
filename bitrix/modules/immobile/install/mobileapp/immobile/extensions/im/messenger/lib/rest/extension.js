@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/rest', (require, exports, module) => {
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('network');
+	const ABORT_ERROR = 'AbortError';
 
 	/**
 	 * @template T
@@ -54,8 +55,35 @@ jn.define('im/messenger/lib/rest', (require, exports, module) => {
 		});
 	};
 
+	/**
+	 * @template T
+	 * @param {string} action
+	 * @param {ajaxConfig} config
+	 * @return {{promise: Promise<T>, abort: () => void}}
+	 */
+	const runAbortableAction = (action, config = {}) => {
+		let abortCallback = null;
+		const abortPromise = new Promise((resolve, reject) => {
+			abortCallback = () => {
+				reject(new Error(ABORT_ERROR));
+			};
+		});
+
+		const promise = Promise.race([
+			runAction(action, config),
+			abortPromise,
+		]);
+
+		return {
+			promise,
+			abort: abortCallback,
+		};
+	};
+
 	module.exports = {
 		runAction,
+		runAbortableAction,
 		callMethod,
+		ABORT_ERROR,
 	};
 });

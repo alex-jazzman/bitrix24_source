@@ -2,7 +2,32 @@ export type UserMiniProfileOptions = {
 	userId: number,
 	bindElement: HTMLElement,
 };
-export type UserRole = 'admin' | 'employee' | 'integrator' | 'collaber' | 'extranet' | 'visitor' | 'email' | 'shop' | 'external';
+
+export type UserRoleCodeType =
+	'firstAdmin'
+	| 'admin'
+	| 'employee'
+	| 'integrator'
+	| 'collaber'
+	| 'extranet'
+	| 'visitor'
+	| 'email'
+	| 'shop'
+	| 'external'
+;
+
+export const UserRole: Record<string, UserStatusCodeType> = Object.freeze({
+	FirstAdmin: 'firstAdmin',
+	Admin: 'admin',
+	Employee: 'employee',
+	Integrator: 'integrator',
+	Collaber: 'collaber',
+	Extranet: 'extranet',
+	Visitor: 'visitor',
+	Email: 'email',
+	Shop: 'shop',
+	External: 'external',
+});
 
 export type UserMiniProfileData = {
 	access: {
@@ -12,7 +37,7 @@ export type UserMiniProfileData = {
 		time: string,
 		status: UserStatusType,
 		utcOffset: number,
-		role: UserRole | null,
+		role: UserRoleCodeType | null,
 		access: {
 			canChat: boolean,
 		},
@@ -71,4 +96,8 @@ export const UserStatus: Record<string, UserStatusCodeType> = Object.freeze({
 	DoNotDisturb: 'dnd',
 	Vacation: 'vacation',
 	Fired: 'fired',
+});
+
+export const UserStatusToShow: Record<string, UserStatusCodeType> = Object.freeze({
+	Vacation: UserStatus.Vacation,
 });

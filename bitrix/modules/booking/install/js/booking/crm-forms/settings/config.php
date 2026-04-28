@@ -13,11 +13,12 @@ return [
 	'css' => 'dist/settings.bundle.css',
 	'rel' => [
 		'main.loader',
+		'booking.application.sku-resources-editor',
 		'booking.provider.service.crm-form-service',
 		'main.core.events',
 		'booking.const',
-		'ui.entity-selector',
 		'main.core',
+		'ui.entity-selector',
 	],
 	'skip_core' => false,
 	'settings' => [

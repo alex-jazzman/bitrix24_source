@@ -4,6 +4,7 @@
 jn.define('layout/ui/list/base-more-menu', (require, exports, module) => {
 	const { downloadImages } = require('asset-manager');
 	const { Color } = require('tokens');
+	const { UIMenu } = require('layout/ui/menu');
 	const { OutlineIconTypes } = require('assets/icons/types');
 	const { Button, ButtonSize } = require('ui-system/form/buttons');
 
@@ -118,7 +119,7 @@ jn.define('layout/ui/list/base-more-menu', (require, exports, module) => {
 		openMoreMenu = () => {
 			const menuItems = this.getMenuItems();
 
-			this.menu = new UI.Menu(menuItems);
+			this.menu = new UIMenu(menuItems);
 			this.menu.show();
 		};
 

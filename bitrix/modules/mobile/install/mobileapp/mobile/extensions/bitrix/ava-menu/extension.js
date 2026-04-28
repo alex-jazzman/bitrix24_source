@@ -9,7 +9,7 @@ jn.define('ava-menu', (require, exports, module) => {
 	const { Sign } = require('ava-menu/sign');
 	const { Calendar } = require('ava-menu/calendar');
 	const { RunActionExecutor } = require('rest/run-action-executor');
-	const { UserProfile, fetchNewProfileFeatureEnabled } = require('user-profile');
+	const { UserProfile } = require('user-profile');
 	const { ComponentOpener } = require('whats-new/ui-manager/component-opener');
 	const { throttle } = require('utils/function');
 	const store = require('statemanager/redux/store');
@@ -232,18 +232,10 @@ jn.define('ava-menu', (require, exports, module) => {
 				case entryTypes.component:
 					if (entryParams.componentCode === 'profile.view')
 					{
-						const isNewProfileFeatureEnabled = await fetchNewProfileFeatureEnabled();
-						if (isNewProfileFeatureEnabled)
-						{
-							void UserProfile.open({
-								openInComponent: true,
-								analyticsSection: 'ava_menu',
-							});
-
-							return;
-						}
-
-						PageManager.openComponent('JSStackComponent', { canOpenInDefault: true, ...entryParams });
+						void UserProfile.open({
+							openInComponent: true,
+							analyticsSection: 'ava_menu',
+						});
 					}
 					else
 					{

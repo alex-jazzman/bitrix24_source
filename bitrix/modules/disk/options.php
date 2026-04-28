@@ -2,13 +2,19 @@
 
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Document\BoardsHandler;
+use Bitrix\Disk\Document\DocumentHandlersManager;
 use Bitrix\Disk\Document\OnlyOffice;
 use Bitrix\Disk\Document\Flipchart;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
+use Bitrix\Disk\Internal\Entity\CustomServers\CustomServerCollection;
+use Bitrix\Disk\Public\Command\ChangeDefaultViewerServiceCommand;
+use Bitrix\Disk\Public\Provider\CustomServerAvailabilityProvider;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\ZipNginx;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 if(!$USER->IsAdmin())
 	return;
@@ -16,13 +22,24 @@ if(!$USER->IsAdmin())
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/options.php");
 IncludeModuleLangFile(__FILE__);
 
-\Bitrix\Main\UI\Extension::load(["popup", "loader", "disk.b24-documents-client-registration", "disk.b24-boards-client-registration"]);
+Extension::load([
+	'popup',
+	'loader',
+	'disk.b24-documents-client-registration',
+	'disk.b24-boards-client-registration',
+	'disk.admin-custom-servers',
+	'ui.hint',
+]);
 
 include_once($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/disk/default_option.php');
 $arDefaultValues['default'] = $disk_default_option;
 
 $notices = $noticeBlock = array();
 $socialServiceNotice = '';
+$documentHandlersManager = null;
+$isCustomServersAvailable = false;
+$isCustomServersAvailableForEdit = false;
+
 if(\Bitrix\Main\Loader::includeModule('disk'))
 {
 	$documentHandlersManager = \Bitrix\Disk\Driver::getInstance()->getDocumentHandlersManager();
@@ -45,7 +62,7 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 	$arDefaultValues['default']['default_viewer_service'] = Configuration::getDefaultViewerServiceCode();
 	$noticeBlock['default_viewer_service'] = Loc::getMessage("DISK_TRANSFORM_FILES_EXTERNAL_SERVICES_NOTICE");
 
-	if (!OnlyOfficeHandler::isEnabled())
+	if (!OnlyOfficeHandler::isEnabled(true))
 	{
 		$labelButton = Loc::getMessage('DISK_SETTINGS_B24_DOCS_REGISTER_BUTTON', ['#NAME#' => OnlyOfficeHandler::getName()]);
 		$notices['default_viewer_service'] = '<input type="button" id="registerBitrix24Docs" name="registerBitrix24Docs" value="' . $labelButton . '" class="adm-btn-save">';
@@ -107,7 +124,7 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 		));
 	}
 
-	if(OnlyOfficeHandler::isEnabled())
+	if(OnlyOfficeHandler::isEnabled(true))
 	{
 		$secretKey = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getSecretKey();
 		$isValidToken = OnlyOfficeHandler::isValidToken($secretKey);
@@ -120,6 +137,14 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
             $notices['disk_onlyoffice_server'] = $isValidToken->getData()['version'];
         }
 	}
+
+	$customServerAvailabilityProvider =
+		ServiceLocator::getInstance()
+			->get(CustomServerAvailabilityProvider::class)
+	;
+
+	$isCustomServersAvailable = $customServerAvailabilityProvider->isAvailable();
+	$isCustomServersAvailableForEdit = $customServerAvailabilityProvider->isAvailableForEdit();
 }
 
 $onlyOfficeEnabledOnBitrix24 = Configuration::isEnabledDocuments() && ModuleManager::isModuleInstalled('bitrix24');
@@ -150,6 +175,16 @@ $arAllOptions = array_filter(array(
 $aTabs = array(
 	array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "ib_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
 );
+
+if ($isCustomServersAvailable)
+{
+	$aTabs[] = [
+		'DIV' => 'customServers',
+		'TAB' => Loc::getMessage('DISK_CUSTOM_SERVERS'),
+		'TITLE' => Loc::getMessage('DISK_CUSTOM_SERVERS'),
+	];
+}
+
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 if($_SERVER["REQUEST_METHOD"]=="POST" && ($_POST['Update'] || $_POST['Apply'] || $_POST['RestoreDefaults'])>0 && check_bitrix_sessid())
@@ -179,6 +214,12 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && ($_POST['Update'] || $_POST['Apply'] ||
 			$val=$_REQUEST[$name];
 			if($arOption[3][0]=="checkbox" && $val!="Y")
 				$val="N";
+			elseif ($name === 'default_viewer_service')
+			{
+				(new ChangeDefaultViewerServiceCommand($val))->run();
+
+				continue;
+			}
 			COption::SetOptionString("disk", $name, $val, $arOption[1]);
 		}
 	}
@@ -191,7 +232,11 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && ($_POST['Update'] || $_POST['Apply'] ||
 
 $tabControl->Begin();
 ?>
-<form method="post" action="<?echo $APPLICATION->GetCurPage()?>?mid=<?=urlencode($mid)?>&amp;lang=<?echo LANGUAGE_ID?>">
+<form
+	id="settingsForm"
+	method="post"
+	action="<?echo $APPLICATION->GetCurPage()?>?mid=<?=urlencode($mid)?>&amp;lang=<?echo LANGUAGE_ID?>"
+>
 <?$tabControl->BeginNextTab();?>
 	<?
 	foreach($arAllOptions as $arOption):
@@ -210,6 +255,13 @@ HTML;
 		if (!is_array($arOption))
 		{
             $arOption = [null, $arOption, null, ['heading']];
+		}
+		elseif (
+			$arOption[0] === 'default_viewer_service' &&
+			$documentHandlersManager instanceof DocumentHandlersManager
+		)
+		{
+			$val = $documentHandlersManager->getDefaultViewerServiceForView();
 		}
 		else
         {
@@ -259,6 +311,14 @@ HTML;
 		</tr>
 	<? endif; ?>
 	<?endforeach?>
+<?php
+if ($isCustomServersAvailable)
+{
+	$tabControl->BeginNextTab();
+	include __DIR__ . '/admin/custom_servers.php';
+	$tabControl->End();
+}
+?>
 <?$tabControl->Buttons();?>
 	<input type="submit" name="Update" value="<?=GetMessage("MAIN_SAVE")?>" title="<?=GetMessage("MAIN_OPT_SAVE_TITLE")?>" class="adm-btn-save">
 	<input type="submit" name="Apply" value="<?=GetMessage("MAIN_OPT_APPLY")?>" title="<?=GetMessage("MAIN_OPT_APPLY_TITLE")?>">
@@ -271,7 +331,39 @@ HTML;
 <?$tabControl->End();?>
 </form>
 <script>
+	BX.message({
+		DISK_ADMIN_CHANGE_DEFAULT_VIEWER_NOTIFICATION: '<?= Loc::getMessage('DISK_ADMIN_CHANGE_DEFAULT_VIEWER_NOTIFICATION') ?>',
+	});
+
 	BX.ready(function(){
+		const isOnlyOfficeEnabled = <?= Json::encode(OnlyOfficeHandler::isEnabled()) ?>;
+
+		const settingsForm = document.getElementById('settingsForm');
+		const defaultViewerServiceSelect = settingsForm.querySelector('[name="default_viewer_service"]');
+
+		const currentDefaultViewerServiceCode = defaultViewerServiceSelect.value;
+
+		BX.bind(BX('settingsForm'), 'submit', event => {
+			const newDefaultViewerServiceCode = defaultViewerServiceSelect.value;
+
+			if (
+				currentDefaultViewerServiceCode === newDefaultViewerServiceCode
+				|| !isOnlyOfficeEnabled
+			)
+			{
+				return;
+			}
+
+			const isConfirmed = confirm(BX.message('DISK_ADMIN_CHANGE_DEFAULT_VIEWER_NOTIFICATION'));
+
+			if (!isConfirmed)
+			{
+				event.stopPropagation();
+				event.preventDefault();
+				BX.defer(BX.adminPanel.closeWait)();
+			}
+		});
+
 		BX.bind(BX('registerBitrix24Docs'), 'click', function(e){
 			e.preventDefault();
 
@@ -293,6 +385,9 @@ HTML;
 
 			(new BX.Disk.B24Boards.ClientUnRegistration()).start();
 		});
+
+		BX.Disk.Admin.CustomServers.init(<?= Json::encode($isCustomServersAvailableForEdit) ?>);
+		BX.UI.Hint.init(BX('settingsForm'));
 	});
 
 </script>

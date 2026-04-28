@@ -176,8 +176,8 @@ export class DocumentSend extends EventEmitter
 	set documentData(documentData: Map<string, DocumentDetails>)
 	{
 		documentData.forEach((data) => {
-			const { uid, id, title, blocks, externalId, isTemplate, entityId, urls } = data;
-			this.#documentSummary.addItem(uid, { uid, id, title, blocks, externalId, isTemplate, entityId, urls });
+			const { uid, id, title, blocks, externalId, isTemplate, entityId, urls, hasPlaceholders } = data;
+			this.#documentSummary.addItem(uid, { uid, id, title, blocks, externalId, isTemplate, entityId, urls, hasPlaceholders });
 		});
 
 		this.#documentData = documentData;

@@ -36,13 +36,14 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { ExternalEventHandler } = require('im/messenger/application/lib/event-handler/external');
 	const { MessengerEventHandler } = require('im/messenger/application/lib/event-handler/messenger');
 	const { ChannelPullWatchManager } = require('im/messenger/application/lib/channel-pull-watch-manager');
+	const { initializeCountersUpdateSystem } = require('im/messenger/application/lib/counters-update-system');
 	const { RecentManager } = require('im/messenger/controller/recent/manager');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
-	const { MessengerCounters } = require('im/messenger/lib/counters/tab-counters/messenger');
+	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { MessageQueueRequestManager } = require('im/messenger/application/lib/message-queue-request-manager');
 	const { showUpdateAppScreenIfNeeded } = require('im/messenger/application/lib/update-notifier');
 
-	const mobileRevision = 22; // sync with im/lib/revision.php. TODO: move value to some config?
+	const mobileRevision = 23; // sync with im/lib/revision.php. TODO: move value to some config?
 
 	/**
 	 * @class Messenger
@@ -59,15 +60,22 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 		{
 			this.logger.log('destructor');
 
-			this.pullHandlerLauncher?.unsubscribeEvents();
-			this.recentManager?.destructor();
-			this.unsubscribeEvents();
-			this.promotion?.destruct();
-			this.promotionTriggerManager?.unsubscribeAll();
-			this.connectionService?.destructor();
-			BX.listeners = {};
+			try
+			{
+				BX.listeners = {};
+				this.pullHandlerLauncher?.unsubscribeEvents();
+				this.recentManager?.destructor();
+				this.unsubscribeEvents();
+				this.promotion?.destruct();
+				this.promotionTriggerManager?.unsubscribeAll();
+				this.connectionService?.destructor();
 
-			this.logger.warn('Messenger: Garbage collection after refresh complete');
+				this.logger.warn('Messenger: Garbage collection after refresh complete');
+			}
+			catch (error)
+			{
+				this.logger.error('destructor error!', error);
+			}
 		}
 
 		async init()
@@ -90,6 +98,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			try
 			{
 				await this.initCore();
+				await this.initCountersUpdateSystem();
 				this.initPushManager();
 				await this.pushManager.fillDatabaseFromPush();
 				this.initServices();
@@ -177,10 +186,10 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			this.chatInitService = new MessengerInitService({ actionName: RestMethod.immobileMessengerLoad });
 			serviceLocator.add('messenger-init-service', this.chatInitService);
 
-			this.tabCounters = new MessengerCounters();
+			this.tabCounters = new TabCounters();
 			serviceLocator.add('tab-counters', this.tabCounters);
 
-			this.connectionService = ConnectionService.getInstance();
+			this.connectionService = new ConnectionService();
 			serviceLocator.add('connection-service', this.connectionService);
 
 			this.syncService = SyncService.getInstance();
@@ -223,6 +232,14 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 		{
 			this.refresher = Refresher.getInstance();
 			serviceLocator.add('refresher', this.refresher);
+		}
+
+		async initCountersUpdateSystem()
+		{
+			this.countersUpdateSystem = initializeCountersUpdateSystem(this.core);
+			serviceLocator.add('counters-update-system', this.countersUpdateSystem);
+
+			await this.countersUpdateSystem.restoreCounters();
 		}
 
 		initPushManager()
@@ -285,6 +302,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 
 			const currentTabId = await this.navigationController.getActiveTab();
 			this.headerController.redrawRightButtonsIfNeeded(currentTabId);
+			this.tabCounters.update();
 		}
 
 		initPullHandlers()

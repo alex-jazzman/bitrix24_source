@@ -21,14 +21,13 @@ export const AddResourcesButton = {
 			default: () => [],
 		},
 	},
-	// eslint-disable-next-line flowtype/require-return-type
-	setup()
+	setup(): { Outline: typeof Outline }
 	{
 		return {
 			Outline,
 		};
 	},
-	data(): { shown: boolean }
+	data(): { shown: boolean, resourceIds: Set<number> }
 	{
 		return {
 			shown: false,
@@ -42,7 +41,7 @@ export const AddResourcesButton = {
 		},
 	},
 	watch: {
-		shown(shown: boolean)
+		shown(shown: boolean): void
 		{
 			if (shown)
 			{
@@ -60,7 +59,7 @@ export const AddResourcesButton = {
 		dialog = undefined;
 	},
 	methods: {
-		toggleDialog()
+		toggleDialog(): void
 		{
 			this.shown = !this.shown;
 		},
@@ -123,7 +122,7 @@ export const AddResourcesButton = {
 
 			return dialog;
 		},
-		updateSkusResources()
+		updateSkusResources(): void
 		{
 			void this.$store.dispatch(`${Model.SkuResourcesEditor}/addSkusToResources`, {
 				resourcesIds: [...this.resourceIds],

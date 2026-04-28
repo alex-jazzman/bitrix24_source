@@ -4,14 +4,7 @@
 	border: none;
 	background: transparent;
 	cursor: pointer;
-}
-
-.editor-chart-icon-button {
-	display: block;
-	padding: 0;
-	border: none;
-	background: transparent;
-	cursor: pointer;
+	outline: none;
 }
 
 .editor-chart-icon-button.--disabled {

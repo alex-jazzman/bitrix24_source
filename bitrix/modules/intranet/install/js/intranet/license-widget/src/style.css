@@ -72,8 +72,8 @@
 
 .license-widget-item-help {
 	display: inline-block;
-	height: 11px;
-	width: 11px;
+	min-height: 11px;
+	min-width: 11px;
 	margin-left: 5px;
 	margin-top: 2px;
 	background-image: url(../img/b24-license-widget_helper-icon.svg);
@@ -396,6 +396,18 @@
 
 .license-widget-item-icon--partner {
 	background-image: url("../img/b24-license-widget_icon-partner.svg");
+}
+
+.license-widget-item-icon--b24-partner {
+	background-image: url("../img/b24-license-widget_icon-partner.svg");
+}
+
+.license-widget-item-icon--b24-partner:has(> .license-widget-item-icon-img) {
+	background-image: none;
+}
+
+.license-widget-item-icon.license-widget-item-icon--b24-partner {
+	border-radius: 0;
 }
 
 .license-widget-item-icon--tel-active {
@@ -1198,3 +1210,184 @@
 .license-widget-item.--pointer {
 	cursor: pointer;
 }
+
+.license-widget-item-icon-img {
+	object-fit: contain;
+	width: 100%;
+	height: 100%;
+	border-radius: 6px;
+}
+
+.license-widget-item-btn-container
+{
+	display: flex;
+	align-items: center;
+	height: 100%;
+}
+
+.license-widget-item-btn-container .license-widget-partner-btn {
+	height: var(--ui-size-xl);
+	border-radius: var(--ui-border-radius-sm);
+	width: max-content;
+}
+
+.license-widget-partner-btn.--partner-more {
+	padding: 0;
+}
+
+.license-widget-item-btn.--partner-more {
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: 6px;
+}
+
+.license-widget-item-chevron-right .ui-icon-set {
+	--ui-icon-set__icon-size: 17px;
+	--ui-icon-set__icon-color: inherit;
+	display: inline-flex;
+	align-items: center;
+	margin-top: 5px;
+}
+
+.license-widget-item-chevron-right .ui-icon-set:hover {
+	--ui-icon-set__icon-color: #00c5ff;
+}
+
+.license-widget-item-name.--link {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	color: var(--ui-color-accent-main-primary);
+}
+
+.license-widget-option-text {
+	color: var(--ui-color-palette-gray-50);
+	transition: color .2s linear;
+	word-break: break-word;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: calc(100% - 35px);
+	font-size: 12px;
+	line-height: 18px;
+	font-weight: var(--ui-font-weight-normal);
+}
+
+/* region integrator widget box */
+
+.license-widget-section-with-box .ui-popupcomponentmaker__content--section-item,
+.license-widget-section-with-box .license-widget-item {
+	box-shadow: none;
+	background: none;
+	padding: 0;
+}
+
+.license-widget-section-with-box .license-widget-inner {
+	height: auto;
+	padding: 0 8px 0 12px;
+	background: #fff;
+	box-sizing: border-box;
+	box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .09);
+	border-radius: var(--ui-border-radius-lg);
+}
+
+/* region discontinue popup */
+
+.license-widget-partner-success-discontinue-popup {
+	background-image: url("../img/bitrix24-license-widget_success-discontinue-popup-bg.svg");
+}
+
+.license-widget-partner-success-discontinue-popup-content {
+	display: flex;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-lg) 0 var(--ui-space-inset-lg);
+	align-items: center;
+}
+
+.license-widget-partner-success-discontinue-popup-content-text-wrapper {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 452px;
+	padding: 0 var(--ui-space-inset-sm) 0 0 !important;
+}
+
+.license-widget-partner-success-discontinue-popup-content-title {
+	color: var(--ui-color-palette-black-solid, #000);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans)), serif;
+	font-size: var(--ui-font-size-xl, 19px);
+	font-style: normal;
+	font-weight: 500;
+	line-height: var(--ui-font-line-height-xl, 26px);
+	letter-spacing: var(--ui-letter-spacing-s, -0.2px);
+	margin-bottom: 8px;
+}
+
+.license-widget-partner-success-discontinue-popup-content-description {
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans)), serif;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-black-base, #333);
+	line-height: var(--ui-font-line-height-lg, 20px);
+	letter-spacing: var(--ui-letter-spacing-l, -0.05px);
+	font-weight: 400;
+}
+
+.license-widget-partner-success-discontinue-popup-content-image {
+	background-image: url('../img/b24-license-widget_icon-partner-success-disconnect-popup.svg');
+	width: 78px;
+	height: 78px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.license-widget-partner-success-discontinue-popup-choose-new-btn {
+	margin-right: var(--ui-space-inset-sm);
+}
+
+.license-widget-partner-discontinue-popup {
+	background-color: var(--ui-color-palette-white-base);
+}
+
+.license-widget-partner-discontinue-popup .popup-window-titlebar-text {
+	color: var(--ui-color-black-base, #333);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans)), serif;
+	font-size: var(--ui-font-size-xl, 19px);
+	font-style: normal;
+	font-weight: 500;
+	line-height: var(--ui-font-line-height-2xl, 26px);
+	letter-spacing: var(--ui-letter-spacing-m, -0.2px);
+	padding: var(--ui-space-inset-sm) 0 var(--ui-space-inset-sm) var(--ui-space-inset-lg);
+}
+
+.license-widget-partner-discontinue-popup .popup-window-content {
+	background-color: var(--ui-color-palette-white-base);
+	padding: 0 var(--ui-space-inset-lg);
+}
+
+.license-widget-partner-discontinue-popup-content {
+	background-color: var(--ui-color-palette-white-base);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans)), serif;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-black-base, #333);
+	line-height: var(--ui-font-line-height-lg, 20px);
+	letter-spacing: var(--ui-letter-spacing-l, -0.05px);
+	font-weight: 400;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: var(--ui-space-inset-sm);
+}
+
+.license-widget-partner-discontinue-popup .popup-window-buttons {
+	display: flex;
+	justify-content: flex-end;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-lg);
+}
+
+.license-widget-partner-discontinue-popup-cancel-btn {
+	margin-right: var(--ui-space-inset-sm);
+}
+
+/* endregion */

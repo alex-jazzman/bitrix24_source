@@ -5,6 +5,7 @@ import { BaseView } from './base-view';
 import { CodeInput } from '../code-input';
 import './css/enter-code.css';
 import { Analytics } from '../analytics';
+import { SendNumberView } from 'intranet.push-otp.connect-popup';
 
 export class EnterCodeView extends BaseView
 {
@@ -21,6 +22,8 @@ export class EnterCodeView extends BaseView
 	#phoneNumber: string = '';
 	#backButton: BaseButton;
 	#isFirstView: boolean = false;
+	#skipButton: Button;
+	#forceChangeMode: boolean = false;
 
 	constructor(options)
 	{
@@ -28,6 +31,7 @@ export class EnterCodeView extends BaseView
 		this.#signedUserId = options.signedUserId || null;
 		this.#phoneNumber = options.phoneNumber || '';
 		this.#backButton = this.#createBackBtn();
+		this.#skipButton = SendNumberView.createSkipAddPhoneNumberButton(this);
 		this.#input = new CodeInput({
 			codeLength: 6,
 			name: 'confirm_code',
@@ -83,6 +87,7 @@ export class EnterCodeView extends BaseView
 							${this.#timerContainer}
 					</div>
 					<div class="intranet-push-otp-connect-popup__view-button-container">
+						${this.#skipButton.render()}
 						${this.#isFirstView ? '' : this.#backButton.render()}
 						${this.#button.render()}
 					</div>
@@ -193,6 +198,7 @@ export class EnterCodeView extends BaseView
 			events: {
 				click: () => {
 					this.#codeSent = false;
+					this.#input.clear();
 					this.sendCode();
 				},
 			},
@@ -270,7 +276,7 @@ export class EnterCodeView extends BaseView
 			text: Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_BUTTON_BACK'),
 			noCaps: true,
 			size: Button.Size.MD,
-			style: AirButtonStyle.PLAIN_NO_ACCENT,
+			style: AirButtonStyle.OUTLINE,
 			useAirDesign: true,
 			disabled: false,
 			onclick: () => {
@@ -305,5 +311,15 @@ export class EnterCodeView extends BaseView
 		this.#cooldown = 0;
 		clearInterval(this.#cooldownInterval);
 		this.#input.clear();
+	}
+
+	setForceChangeMode(force: boolean): void
+	{
+		this.#forceChangeMode = force;
+	}
+
+	isForceChangeMode(): boolean
+	{
+		return this.#forceChangeMode;
 	}
 }

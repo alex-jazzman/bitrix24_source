@@ -1,6 +1,7 @@
 <?php
 
-$MESS["IM_TEXTAREA_PLACEHOLDER_V3"] = "Нажмите @, чтобы упомянуть человека или чат";
+$MESS["IM_TEXTAREA_PLACEHOLDER_MSGVER_1"] = "Нажмите @ или +, чтобы упомянуть человека, чат или AI";
+$MESS["IM_TEXTAREA_PLACEHOLDER_WITHOUT_AI"] = "Нажмите @ или +, чтобы упомянуть человека или чат";
 $MESS["IM_TEXTAREA_ICON_SEND_VOICE"] = "Отправить голосовое сообщение";
 $MESS["IM_TEXTAREA_ICON_SEND_TEXT"] = "Отправить сообщение (#SEND_MESSAGE_COMBINATION#)";
 $MESS["IM_TEXTAREA_ICON_UPLOAD_TITLE"] = "Прикрепить";
@@ -86,6 +87,8 @@ $MESS["IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TITLE"] = "Все";
 $MESS["IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_AVATAR_TITLE"] = "Все";
 $MESS["IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_SUBTITLE"] = "Все участники";
 $MESS["IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TEXT"] = "Все";
+$MESS["IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_TITLE"] = "Нет в чате";
+$MESS["IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_MENU"] = "Добавить в чат";
 
 $MESS["IM_TEXTAREA_EMOTE_POPUP_PROMO_TITLE"] = "Стикер вместо сотни слов 🔥";
 $MESS["IM_TEXTAREA_EMOTE_POPUP_PROMO_DESCRIPTION"] = "Теперь делиться эмоциями ещё быстрее. Можно использовать готовые стикеры и создавать свои";

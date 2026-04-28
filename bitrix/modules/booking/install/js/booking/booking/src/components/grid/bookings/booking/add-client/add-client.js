@@ -1,7 +1,7 @@
 import { mapGetters } from 'ui.vue3.vuex';
 
 import { AddClient } from 'booking.component.booking';
-import { AhaMoment, HelpDesk, Model } from 'booking.const';
+import { AhaMoment, Model } from 'booking.const';
 import { bookingService } from 'booking.provider.service.booking-service';
 import { ahaMoments } from 'booking.lib.aha-moments';
 import { isRealId } from 'booking.lib.is-real-id';
@@ -58,6 +58,7 @@ export const BookingAddClient = {
 				title: this.loc('BOOKING_AHA_ADD_CLIENT_TITLE'),
 				text: this.loc('BOOKING_AHA_ADD_CLIENT_TEXT_MSGVER_1'),
 				target: this.$refs.bookingAddClientBtn?.$refs?.button,
+				isPulsarTransparent: true,
 			});
 
 			ahaMoments.setShown(AhaMoment.AddClient);

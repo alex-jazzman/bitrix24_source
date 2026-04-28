@@ -182,6 +182,21 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 			result.extranet = fields.extranet;
 		}
 
+		if (Type.isStringFilled(fields.entity_data_1))
+		{
+			result.entityData1 = fields.entity_data_1;
+		}
+
+		if (Type.isStringFilled(fields.entity_data_2))
+		{
+			result.entityData2 = fields.entity_data_2;
+		}
+
+		if (Type.isStringFilled(fields.entity_data_3))
+		{
+			result.entityData3 = fields.entity_data_3;
+		}
+
 		if (!Type.isUndefined(fields.entity_type))
 		{
 			fields.entityType = fields.entity_type;

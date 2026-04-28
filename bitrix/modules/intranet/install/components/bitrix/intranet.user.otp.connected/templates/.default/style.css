@@ -149,3 +149,7 @@
 	flex-direction: column;
 	text-align: center;
 }
+
+#bx-intranet-2fa-recovery-codes-tooltip .popup-window-titlebar-text {
+	white-space: normal;
+}

@@ -403,7 +403,7 @@ if (!isset($fileUsingCountTitle) || !is_callable($fileUsingCountTitle))
 					{
 						/** @var \Bitrix\Disk\Volume\File $indicator */
 						$attachedObjects = $indicator::getAttachedList($fragment, $USER->getId());
-						$usingCount = $row['ATTACHED_COUNT'] = count($attachedObjects);
+						$usingCount = $row['ATTACHED_COUNT'] = is_array($attachedObjects) ? count($attachedObjects) : 0;
 
 						foreach ($attachedObjects as $attached)
 						{

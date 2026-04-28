@@ -2026,6 +2026,14 @@ export class DatePicker extends EventEmitter
 	{
 		const { year, month, day } = event.getData();
 		let selectedDate = createUtcDate(year, month, day);
+
+		const dayEvent = new BaseEvent({ data: { date: selectedDate } });
+		this.emit(DatePickerEvent.BEFORE_DAY_SELECT, dayEvent);
+		if (dayEvent.isDefaultPrevented())
+		{
+			return;
+		}
+
 		if (this.isRangeMode())
 		{
 			const currentRange = this.#selectedDates;

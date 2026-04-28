@@ -1,12 +1,9 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
 
 /**
  * @module im/messenger/lib/parser/elements/dialog/message/quote-active
  */
 jn.define('im/messenger/lib/parser/elements/dialog/message/quote-active', (require, exports, module) => {
-
 	const { Type } = require('type');
 
 	/**
@@ -38,7 +35,7 @@ jn.define('im/messenger/lib/parser/elements/dialog/message/quote-active', (requi
 				this.messageId = messageId;
 			}
 
-			this.displayLinesNumber = 2;
+			this.displayLinesNumber = 4;
 		}
 
 		static getType()

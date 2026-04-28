@@ -2,13 +2,12 @@ import { BIcon, Outline as OutlineIcons, SmallOutline as SmallOutlineIcons } fro
 import 'ui.icon-set.small-outline'; // temp fix, does not work without direct import
 
 import { Spinner, SpinnerSize, SpinnerColor } from 'im.v2.component.elements.loader';
-import { Color, TranscriptionStatus } from 'im.v2.const';
-import { MessageService } from 'im.v2.provider.service.message';
+import { TranscriptionStatus } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
+import { type ImModelTranscription } from 'im.v2.model';
+import { MessageService } from 'im.v2.provider.service.message';
 
 import './transcription-button.css';
-
-import type { ImModelTranscription } from 'im.v2.model';
 
 // @vue/component
 export const TranscriptionButton = {
@@ -33,8 +32,7 @@ export const TranscriptionButton = {
 		},
 	},
 	emits: ['transcriptionToggle'],
-	computed:
-	{
+	computed: {
 		SpinnerSize: () => SpinnerSize,
 		SpinnerColor: () => SpinnerColor,
 		fileId(): boolean
@@ -70,13 +68,8 @@ export const TranscriptionButton = {
 
 			return this.isOverlay ? SmallOutlineIcons.TRANSCRIPTION : OutlineIcons.TRANSCRIPTION;
 		},
-		iconColor(): string
-		{
-			return this.isOverlay ? Color.white : Color.accentBlue;
-		},
 	},
-	watch:
-	{
+	watch: {
 		status(newStatus: TranscriptionStatus | null, oldStatus: TranscriptionStatus | null)
 		{
 			if (oldStatus === TranscriptionStatus.PENDING)
@@ -86,8 +79,7 @@ export const TranscriptionButton = {
 			}
 		},
 	},
-	methods:
-	{
+	methods: {
 		async onButtonClick(): Promise<void>
 		{
 			if (this.isPending)
@@ -142,8 +134,7 @@ export const TranscriptionButton = {
 				<BIcon
 					v-else
 					:name="buttonIcon"
-					:color="iconColor"
-					:size="20"
+					class="bx-im-transcription-button__icon"
 				/>
 			</button>
 		</div>

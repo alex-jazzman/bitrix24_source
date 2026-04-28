@@ -1,7 +1,10 @@
+import { Analytics } from '../analytics';
+
 export type FeaturePromoterConfiguration = {
 	code?: string,
 	featureId?: string,
 	bindElement?: HTMLElement,
+	analytics?: Analytics,
 }
 
 export type PopupProviderConfiguration = {

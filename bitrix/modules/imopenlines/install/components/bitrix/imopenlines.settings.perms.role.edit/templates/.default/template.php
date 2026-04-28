@@ -10,7 +10,7 @@ use Bitrix\Imopenlines\Limit;
  * @var CMain $APPLICATION
  */
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'intranet.old-interface.intranet-common']);
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.buttons']);
 $this->addExternalCss('/bitrix/css/main/table/style.css');
 
 if($arResult['ERRORS'] && $arResult['ERRORS'] instanceof \Bitrix\Main\ErrorCollection)
@@ -131,7 +131,7 @@ Extension::load([
 				'BUTTONS' => [
 					[
 						'TYPE' => 'custom',
-						'LAYOUT' => '<span class="webform-small-button webform-small-button-accept" onclick="openTrialInfoHelper(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_ACCESS_PERMISSIONS . '\');">
+						'LAYOUT' => '<span class="ui-btn ui-btn-no-caps ui-btn-lg --air --style-filled" onclick="openTrialInfoHelper(\'' . Limit::INFO_HELPER_LIMIT_CONTACT_CENTER_ACCESS_PERMISSIONS . '\');">
 		' . Loc::getMessage('IMOL_ROLE_SAVE') . '
 		<div class="tariff-lock-holder-title"><div class="tariff-lock"></div></div>
 		</span>'

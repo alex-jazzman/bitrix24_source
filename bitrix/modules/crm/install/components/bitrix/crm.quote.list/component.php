@@ -610,6 +610,7 @@ foreach ($arFilter as $k => $v)
 		unset($arFilter[$k]);
 	}
 }
+\Bitrix\Crm\Filter\FieldsTransform\DateTimeField::applyTimezoneOffset(CCrmOwnerType::Quote, $arFilter);
 
 \Bitrix\Crm\UI\Filter\EntityHandler::internalize($arResult['FILTER'], $arFilter);
 
@@ -626,7 +627,12 @@ if($actionData['ACTIVE'] && $actionData['METHOD'] == 'GET')
 		{
 			$DB->StartTransaction();
 
-			if($CCrmQuote->Delete($ID))
+			if($CCrmQuote->Delete($ID, [
+				'ANALYTICS' => [
+					'c_section' => Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
+					'c_sub_section' => Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+				],
+			]))
 			{
 				$DB->Commit();
 			}

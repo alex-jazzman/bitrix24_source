@@ -3,8 +3,9 @@
 return [
 	'extensions' => [
 		'im:lib/theme',
+		'im:messenger/const',
 		'im:messenger/core/embedded',
-		'im:messenger/controller/search/experimental',
+		'im:messenger/lib/chat-search',
 		'im:messenger/lib/converter/ui/layout',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/ui/selector',

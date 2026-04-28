@@ -3,6 +3,7 @@ import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 import { Messenger } from 'im.public';
 import { NavigationMenuItem, Color } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
+import { CounterManager } from 'im.v2.lib.counter';
 
 const NavigationItemToIcon = Object.freeze({
 	[NavigationMenuItem.notification]: OutlineIcons.NOTIFICATION,
@@ -49,7 +50,7 @@ export const CompactNavigationItem = {
 				return '';
 			}
 
-			return this.counter > 99 ? '99+' : String(this.counter);
+			return CounterManager.formatCounter(this.counter);
 		},
 		iconColorToken(): string
 		{

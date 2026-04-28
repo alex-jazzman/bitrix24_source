@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BMS_COUNT'] = "Messages per page";
 $MESS ['BMS_SEARCH_PAGE'] = "Search page";
 $MESS ['BMS_PATH_TO_BLOG'] = "Blog page path template";
@@ -11,4 +11,3 @@ $MESS ['BMS_PAGE_VAR'] = "Page variable";
 $MESS ['B_VARIABLE_ALIASES'] = "Variable aliases";
 $MESS ['BC_DATE_TIME_FORMAT'] = "Date and time format";
 $MESS ['BB_NAV_TEMPLATE'] = "Paging template name";
-?>

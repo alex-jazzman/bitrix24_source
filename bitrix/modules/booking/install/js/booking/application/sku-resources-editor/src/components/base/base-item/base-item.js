@@ -1,5 +1,9 @@
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
+
 import { Avatar as UiAvatar } from 'booking.component.avatar';
+import { Model } from 'booking.const';
+
+import type { SkuResourcesEditorOptions } from 'booking.model.sku-resources-editor';
 
 import './base-item.css';
 
@@ -45,8 +49,7 @@ export const BaseItem = {
 		},
 	},
 	emits: ['update:selected', 'remove'],
-	// eslint-disable-next-line flowtype/require-return-type
-	setup()
+	setup(): { Outline: typeof Outline}
 	{
 		return {
 			Outline,
@@ -62,6 +65,10 @@ export const BaseItem = {
 			{
 				this.$emit('update:selected', checked);
 			},
+		},
+		skusResourcesEditorOptions(): SkuResourcesEditorOptions
+		{
+			return this.$store.state[Model.SkuResourcesEditor].options;
 		},
 	},
 	template: `
@@ -89,6 +96,7 @@ export const BaseItem = {
 				<h6 class="booking-services-settings-popup__base-item__title">{{ name }}</h6>
 				<slot name="header"/>
 				<BIcon
+					v-if="skusResourcesEditorOptions.editMode"
 					class="booking-sre-app__base-item__close-icon"
 					:name="Outline.CROSS_L"
 					:size="18"

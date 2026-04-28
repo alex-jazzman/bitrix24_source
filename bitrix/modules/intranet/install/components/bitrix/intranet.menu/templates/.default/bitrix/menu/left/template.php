@@ -151,7 +151,9 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 					<div class="intranet__desktop-menu_section">
 						<div class="intranet__desktop-menu_subject">
 							<div class="intranet__desktop-menu_title"><?=Loc::getMessage("MENU_YOUR_BITRIX24")?></div>
-							<div class="intranet__desktop-menu_show-more" data-block-hidden=""><?=Loc::getMessage("MENU_SHOW_ALL")?></div>
+							<?php if(count($arResult['ITEMS']['hidden']) > 0): ?>
+								<div class="intranet__desktop-menu_show-more" data-block-hidden=""><?=Loc::getMessage("MENU_SHOW_ALL")?></div>
+							<?php endif ?>
 						</div>
 						<ul class="intranet__desktop-menu_list menu-items">
 							<?

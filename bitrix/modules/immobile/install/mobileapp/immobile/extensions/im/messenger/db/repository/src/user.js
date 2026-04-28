@@ -284,6 +284,30 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 		{
 			return this.validateRestUser(user);
 		}
+
+		/**
+		 * @param {Partial<SearchOptions>} searchOptions
+		 * @returns {Promise<{items: *[]}>}
+		 */
+		async searchByText(searchOptions = {})
+		{
+			const {
+				searchText = '',
+				order = 'desc',
+				limit = 25,
+			} = searchOptions;
+
+			return this.userTable.searchByText(searchText, order, limit);
+		}
+
+		/**
+		 * @param {Array<string | number>} idList
+		 * @return {Promise<{items: Array<UserStoredData>}>}
+		 */
+		async getListByIds(idList)
+		{
+			return this.userTable.getListByIds(idList, true);
+		}
 	}
 
 	module.exports = {

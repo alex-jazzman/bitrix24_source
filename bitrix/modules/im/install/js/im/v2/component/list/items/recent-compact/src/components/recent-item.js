@@ -1,6 +1,6 @@
-import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
 import { ChatAvatar, AvatarSize, ChatAvatarType } from 'im.v2.component.elements.avatar';
+import { CounterManager } from 'im.v2.lib.counter';
 
 import type { JsonObject } from 'main.core';
 import type { ImModelRecentItem, ImModelChat } from 'im.v2.model';
@@ -35,34 +35,25 @@ export const RecentItem = {
 		{
 			return this.dialog.type === ChatType.user;
 		},
-		isChatMuted(): boolean
-		{
-			if (this.isUser)
-			{
-				return false;
-			}
-
-			const isMuted = this.dialog.muteList.find((element) => {
-				return element === Core.getUserId();
-			});
-
-			return Boolean(isMuted);
-		},
 		invitation(): { isActive: boolean, originator: number, canResend: boolean }
 		{
 			return this.recentItem.invitation;
 		},
 		totalCounter(): number
 		{
-			return this.dialog.counter + this.channelCommentsCounter;
+			return this.chatCounter + this.childrenCounter;
 		},
-		channelCommentsCounter(): number
+		chatCounter(): number
 		{
-			return this.$store.getters['counters/getChannelCommentsCounter'](this.dialog.chatId);
+			return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
+		},
+		childrenCounter(): number
+		{
+			return this.$store.getters['counters/getChildrenTotalCounter'](this.dialog.chatId);
 		},
 		formattedCounter(): string
 		{
-			return this.totalCounter > 99 ? '99+' : this.totalCounter.toString();
+			return CounterManager.formatCounter(this.totalCounter);
 		},
 		wrapClasses(): Object
 		{
@@ -72,9 +63,11 @@ export const RecentItem = {
 		{
 			return { '--no-counter': this.totalCounter === 0 };
 		},
-		getAvatarType(): string
+		avatarType(): string
 		{
-			return Number.parseInt(this.recentItem.dialogId, 10) === Core.getUserId() ? ChatAvatarType.notes : '';
+			const isSelfChat = this.$store.getters['chats/isSelfChat'](this.recentItem.dialogId);
+
+			return isSelfChat ? ChatAvatarType.selfChat : '';
 		},
 	},
 	methods:
@@ -96,9 +89,9 @@ export const RecentItem = {
 						:avatarDialogId="recentItem.dialogId"
 						:size="AvatarSize.M" 
 						:withSpecialTypes="false"
-						:customType="getAvatarType"
+						:customType="avatarType"
 					/>
-					<div v-if="totalCounter > 0" :class="{'--muted': isChatMuted}" class="bx-im-list-recent-compact-item__avatar_counter">
+					<div v-if="totalCounter > 0" :class="{'--muted': dialog.isMuted}" class="bx-im-list-recent-compact-item__avatar_counter">
 						{{ formattedCounter }}
 					</div>
 				</div>

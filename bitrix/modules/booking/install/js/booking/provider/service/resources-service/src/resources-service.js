@@ -3,9 +3,15 @@ import type { AjaxResponse } from 'main.core';
 import { Core } from 'booking.core';
 import { Model } from 'booking.const';
 import { ApiClient } from 'booking.lib.api-client';
-import type { ResourceModelWithFile } from 'booking.model.resources';
+import type { ResourceModelWithFile, ResourceModel, ResourceSkuRelationsModel } from 'booking.model.resources';
+import type { ResourceSkuRelationsDto } from './types';
 
-import { mapModelToDto, mapDtoToModel } from './mappers';
+import {
+	mapModelToDto,
+	mapDtoToModel,
+	mapResourceSkuRelationsDtoToModel,
+	mapResourceSkuRelationsModelToDto,
+} from './mappers';
 
 class ResourceService
 {
@@ -138,6 +144,53 @@ class ResourceService
 		await new Promise((resolve) => setTimeout(resolve, 2000));
 
 		await Core.getStore().dispatch(`${Model.Interface}/setIsShownTrialPopup`, true);
+	}
+
+	async loadResourceSkuRelations(): Promise<void>
+	{
+		try
+		{
+			const { resources } = await new ApiClient().get('ResourceSkuRelations.get');
+
+			const resourcesSkuRelationsModel = resources.map(
+				(resourceSkuRelationsDto: ResourceSkuRelationsDto): ResourceSkuRelationsModel => {
+					return mapResourceSkuRelationsDtoToModel(resourceSkuRelationsDto);
+				},
+			);
+
+			await Promise.all([
+				Core.getStore().dispatch(`${Model.Resources}/setResourcesSkuRelations`, resourcesSkuRelationsModel),
+			]);
+		}
+		catch (error)
+		{
+			console.error('BookingLoadResourceSkuRelations: error', error);
+		}
+	}
+
+	async updateResourceSkuRelations(resources: (ResourceSkuRelationsModel | ResourceModel)[]): Promise<void>
+	{
+		try
+		{
+			const resourcesSkuRelationsDto = resources.map(
+				(resourceSkuRelationsModel: ResourceSkuRelationsModel | ResourceModel): ResourceSkuRelationsModel => {
+					return mapResourceSkuRelationsModelToDto(resourceSkuRelationsModel);
+				},
+			);
+
+			await (new ApiClient()).post(
+				'ResourceSkuRelations.save',
+				{ resources: resourcesSkuRelationsDto },
+			);
+
+			await Promise.all([
+				Core.getStore().dispatch(`${Model.Sku}/setReloadRelations`, true),
+			]);
+		}
+		catch (error)
+		{
+			console.error('ResourceService updateResourceSkuRelations API error:', error);
+		}
 	}
 }
 

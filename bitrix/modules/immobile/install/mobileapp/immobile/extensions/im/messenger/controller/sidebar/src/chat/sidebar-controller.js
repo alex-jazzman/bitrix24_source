@@ -322,7 +322,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 					? ButtonFactory.createIconButton(
 						{
 							icon: buttonIcons.copilotInline(),
-							text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_ROLE'),
+							text: Loc.getMessageWithCopilotBotName('IMMOBILE_DIALOG_SIDEBAR_BTN_ROLE_MSGVER_1'),
 							callback: () => this.onClickRoleButton(),
 							disable: false,
 							style: this.styleBtn,
@@ -515,7 +515,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 			if (this.permission.canCall)
 			{
 				CallManager.getInstance().sendAnalyticsEvent(this.dialogId, Analytics.Element.videocall, Analytics.Section.chatSidebar);
-				CallManager.getInstance().createVideoCall(this.dialogId);
+				void CallManager.getInstance().createVideoCall(this.dialogId);
 			}
 			else
 			{
@@ -565,7 +565,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 			if (this.permission.canCall)
 			{
 				CallManager.getInstance().sendAnalyticsEvent(this.dialogId, Analytics.Element.audiocall, Analytics.Section.chatSidebar);
-				CallManager.getInstance().createAudioCall(this.dialogId);
+				void CallManager.getInstance().createAudioCall(this.dialogId);
 			}
 			else
 			{

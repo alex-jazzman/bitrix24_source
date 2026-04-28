@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,ui_vue3_vuex,booking_model_bookings,booking_model_messageStatus,booking_model_clients,booking_model_counters,booking_model_interface,booking_model_resourceTypes,booking_model_resources,booking_model_favorites,booking_model_dictionary,booking_model_mainResources,booking_model_waitList,booking_provider_pull_bookingPullManager,booking_model_filter,booking_model_formsMenu,booking_model_saleChannels) {
+(function (exports,main_core,ui_vue3_vuex,booking_model_bookings,booking_model_messageStatus,booking_model_clients,booking_model_counters,booking_model_interface,booking_model_resourceTypes,booking_model_resources,booking_model_favorites,booking_model_dictionary,booking_model_mainResources,booking_model_waitList,booking_provider_pull_bookingPullManager,booking_model_filter,booking_model_formsMenu,booking_model_saleChannels,booking_model_sku) {
 	'use strict';
 
 	const featuresMap = Object.freeze({
@@ -107,7 +107,7 @@ this.BX = this.BX || {};
 	async function _initStore2(options) {
 	  const settings = main_core.Extension.getSettings('booking.core');
 	  babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder] = ui_vue3_vuex.Builder.init();
-	  if (!options.skipBookingCore) {
+	  if (!options.skipCoreModels) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder].addModel(booking_model_bookings.Bookings.create()).addModel(booking_model_messageStatus.MessageStatus.create()).addModel(booking_model_clients.Clients.create()).addModel(booking_model_counters.Counters.create()).addModel(booking_model_interface.Interface.create().setVariables({
 	      schedule: settings.schedule,
 	      editingBookingId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].editingBookingId,
@@ -134,7 +134,7 @@ this.BX = this.BX || {};
 	      calendarExpanded: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isCalendarExpanded,
 	      waitListExpanded: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isWaitListExpanded,
 	      enabledFeature: extractFeatures(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params])
-	    })).addModel(booking_model_resourceTypes.ResourceTypes.create()).addModel(booking_model_resources.Resources.create()).addModel(booking_model_favorites.Favorites.create()).addModel(booking_model_dictionary.Dictionary.create()).addModel(booking_model_mainResources.MainResources.create()).addModel(booking_model_waitList.WaitList.create()).addModel(booking_model_filter.Filter.create()).addModel(booking_model_formsMenu.FormsMenu.create()).addModel(booking_model_saleChannels.SaleChannels.create());
+	    })).addModel(booking_model_resourceTypes.ResourceTypes.create()).addModel(booking_model_resources.Resources.create()).addModel(booking_model_favorites.Favorites.create()).addModel(booking_model_dictionary.Dictionary.create()).addModel(booking_model_mainResources.MainResources.create()).addModel(booking_model_waitList.WaitList.create()).addModel(booking_model_filter.Filter.create()).addModel(booking_model_formsMenu.FormsMenu.create()).addModel(booking_model_saleChannels.SaleChannels.create()).addModel(booking_model_sku.SkuModel.create());
 	  }
 	  const builderResult = await babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder].build();
 	  return builderResult.store;
@@ -149,5 +149,5 @@ this.BX = this.BX || {};
 
 	exports.Core = Core;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX,BX.Vue3.Vuex,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Pull,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model));
+}((this.BX.Booking = this.BX.Booking || {}),BX,BX.Vue3.Vuex,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Pull,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model));
 //# sourceMappingURL=core.bundle.js.map

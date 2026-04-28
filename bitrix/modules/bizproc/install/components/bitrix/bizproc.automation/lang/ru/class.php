@@ -7,3 +7,4 @@ $MESS["BIZPROC_AUTOMATION_NO_EDIT_PERMISSIONS"] = "Недостаточно пр
 $MESS["BIZPROC_AUTOMATION_NOT_AVAILABLE"] = "Использование роботов недоступно";
 $MESS["BIZPROC_AUTOMATION_TO_HEAD"] = "Руководителю";
 $MESS["BIZPROC_AUTOMATION_DELAY_MIN_LIMIT"] = "Минимальный период ожидания: #VAL#";
+$MESS["BIZPROC_AUTOMATION_DELAY_MAX_LIMIT"] = "Максимальный период ожидания (дней): #VAL#";

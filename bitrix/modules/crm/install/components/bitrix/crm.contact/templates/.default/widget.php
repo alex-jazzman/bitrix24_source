@@ -10,7 +10,7 @@ global $APPLICATION;
 use Bitrix\Crm\Activity;
 
 $APPLICATION->SetTitle(GetMessage('CRM_CONTACT_WGT_PAGE_TITLE'));
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+\Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',

@@ -40,11 +40,11 @@
 		this.createStore = BX.type.isBoolean(params.createStore)
 						? params.createStore
 						: false;
-		this.createMainpage = BX.type.isBoolean(params.createMainpage)
-			? params.createMainpage
+		this.createVibe = BX.type.isBoolean(params.createVibe)
+			? params.createVibe
 			: false;
-		this.isMainpageExists = BX.type.isBoolean(params.isMainpageExists)
-			? params.isMainpageExists
+		this.isVibeExists = BX.type.isBoolean(params.isVibeExists)
+			? params.isVibeExists
 			: false;
 
 		this.disableStoreRedirect = BX.type.isBoolean(params.disableStoreRedirect)
@@ -66,6 +66,7 @@
 						: '';
 		this.folderId = params.folderId || 0;
 		this.replaceLid = params.replaceLid || 0;
+		this.replaceSiteId = params.replaceSiteId || 0;
 		this.isCrmForm = (params.isCrmForm || 'N') === 'Y';
 		this.isKnowledgeBase = (params.isKnowledgeBase || 'N') === 'Y';
 		this.urlPreview = params.urlPreview || '';
@@ -466,8 +467,8 @@
 			else if (this.zipInstallPath)
 			{
 				if (
-					this.isMainpage()
-					&& this.isMainpageExists
+					this.isVibe()
+					&& this.isVibeExists
 				)
 				{
 					let isClickOnButtonOk = false;
@@ -561,7 +562,7 @@
 				{
 					tool = 'kb';
 				}
-				else if (this.isMainpage())
+			else if (this.isVibe())
 				{
 					tool = 'vibe';
 				}
@@ -588,7 +589,7 @@
 				];
 			}
 
-			if (this.isMainpage())
+			if (this.isVibe())
 			{
 				delete metrikaParams.type;
 			}
@@ -683,16 +684,23 @@
 				}
 
 				add['additional[appCode]'] = this.appCode;
-				add['additional[siteId]'] = this.siteId;
-				add['additional[folderId]'] = this.folderId;
-				if (this.replaceLid > 0)
-				{
-					add['additional[replaceLid]'] = this.replaceLid;
-				}
+
+				[
+					'siteId',
+					'replaceLid',
+					'replaceSiteId',
+					'folderId',
+				].forEach((param) => {
+					if (this[param] > 0)
+					{
+						add[`additional[${param}]`] = this[param];
+					}
+				});
 
 				const metrikaParams = this.getMetrikaParams(this.getMetrikaCreateEvent(), 'success');
 
 				add['additional[st_tool]'] = metrikaParams.tool;
+				add['additional[st_category]'] = metrikaParams.category;
 				add['additional[st_event]'] = metrikaParams.event;
 				if (metrikaParams.c_section)
 				{
@@ -822,9 +830,9 @@
 			return this.createStore;
 		},
 
-		isMainpage: function()
+		isVibe: function()
 		{
-			return this.createMainpage;
+			return this.createVibe;
 		},
 
 		createParamsStrFromUrl(url)

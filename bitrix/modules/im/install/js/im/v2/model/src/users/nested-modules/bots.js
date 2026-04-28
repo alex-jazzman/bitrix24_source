@@ -128,7 +128,7 @@ export class BotsModel extends BuilderModel
 			result.isHuman = true;
 		}
 
-		const TYPES_MAPPED_TO_DEFAULT_BOT = [RawBotType.openline, RawBotType.supervisor];
+		const TYPES_MAPPED_TO_DEFAULT_BOT = [RawBotType.openline, RawBotType.supervisor, RawBotType.personal];
 		if (TYPES_MAPPED_TO_DEFAULT_BOT.includes(result.type))
 		{
 			result.type = BotType.bot;

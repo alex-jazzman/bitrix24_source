@@ -18,6 +18,7 @@ use Bitrix\UI\Toolbar\Facade\Toolbar;
 	'ui.alerts',
 	'ui.buttons',
 	'ui.buttons.icons',
+	'intranet.old-interface.intranet-common',
 ]);
 
 if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')

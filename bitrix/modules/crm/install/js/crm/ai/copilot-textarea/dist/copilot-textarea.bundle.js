@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core_events,main_popup,ai_copilot,main_core) {
+(function (exports,ai_copilot,crm_ai_nameService,main_core_events,main_popup,main_core) {
 	'use strict';
 
 	var _templateObject, _templateObject2;
@@ -201,7 +201,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    width: babelHelpers.classPrivateFieldGet(this, _element).offsetWidth - 10
 	  });
 	  babelHelpers.classPrivateFieldGet(this, _copilot).subscribe('cancel', function (event) {
-	    _classPrivateMethodGet(_this2, _logEventInfo, _logEventInfo2).call(_this2, 'CoPilot canceled', event);
+	    _classPrivateMethodGet(_this2, _logEventInfo, _logEventInfo2).call(_this2, 'AI canceled', event);
 	    _classPrivateMethodGet(_this2, _cleanWrappedText, _cleanWrappedText2).call(_this2);
 	    babelHelpers.classPrivateFieldGet(_this2, _copilot).adjust({
 	      hide: false,
@@ -210,14 +210,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	  var handleKeyUpEscape = _classPrivateMethodGet(this, _handleKeyUpEscape, _handleKeyUpEscape2).bind(this);
 	  babelHelpers.classPrivateFieldGet(this, _copilot).subscribe('hide', function (event) {
-	    _classPrivateMethodGet(_this2, _logEventInfo, _logEventInfo2).call(_this2, 'CoPilot hidden', event);
+	    _classPrivateMethodGet(_this2, _logEventInfo, _logEventInfo2).call(_this2, 'AI hidden', event);
 	    main_core.Event.unbind(window, 'keyup', handleKeyUpEscape);
 	  });
 	  main_core.Event.bind(window, 'keyup', handleKeyUpEscape);
 	}
 	function _showCopilotButton2() {
 	  var _this3 = this;
-	  var copilotButton = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"show-copilot-btn\">\n\t\t\t\t<div class=\"show-copilot-btn-icon ui-icon-set --copilot-ai\"></div>\n\t\t\t\t", "\n\t\t\t</button>\n\t\t"])), main_core.Loc.getMessage('CRM_COMMON_COPILOT').toUpperCase());
+	  var copilotButton = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"show-copilot-btn\">\n\t\t\t\t<div class=\"show-copilot-btn-icon ui-icon-set --copilot-ai\"></div>\n\t\t\t\t", "\n\t\t\t</button>\n\t\t"])), crm_ai_nameService.NameService.copilotName().toUpperCase());
 	  main_core.Event.bind(copilotButton, 'click', function (event) {
 	    _classPrivateMethodGet(_this3, _showCopilot, _showCopilot2).call(_this3, {
 	      context: _classPrivateMethodGet(_this3, _getTextAreaValue, _getTextAreaValue2).call(_this3),
@@ -253,16 +253,16 @@ this.BX.Crm = this.BX.Crm || {};
 	function _bindHandlers2() {
 	  var _this4 = this;
 	  babelHelpers.classPrivateFieldGet(this, _copilot).subscribe('start-init', function (event) {
-	    _classPrivateMethodGet(_this4, _logEventInfo, _logEventInfo2).call(_this4, 'CoPilot load start', event);
+	    _classPrivateMethodGet(_this4, _logEventInfo, _logEventInfo2).call(_this4, 'AI load start', event);
 	    _this4.setReadOnly();
 	  });
 	  babelHelpers.classPrivateFieldGet(this, _copilot).subscribe('finish-init', function (event) {
-	    _classPrivateMethodGet(_this4, _logEventInfo, _logEventInfo2).call(_this4, 'CoPilot loaded', event);
+	    _classPrivateMethodGet(_this4, _logEventInfo, _logEventInfo2).call(_this4, 'AI loaded', event);
 	    babelHelpers.classPrivateFieldSet(_this4, _copilotLoaded, true);
 	    _this4.setReadOnly(false);
 	  });
 	  babelHelpers.classPrivateFieldGet(this, _copilot).subscribe('aiResult', function (event) {
-	    _classPrivateMethodGet(_this4, _logEventInfo, _logEventInfo2).call(_this4, 'CoPilot result received', event);
+	    _classPrivateMethodGet(_this4, _logEventInfo, _logEventInfo2).call(_this4, 'AI result received', event);
 	    var newValue = '';
 	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(_this4, _currentSelectedText))) {
 	      var start = babelHelpers.classPrivateFieldGet(_this4, _element).selectionStart;
@@ -279,13 +279,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  });
 	  babelHelpers.classPrivateFieldGet(this, _copilot).subscribe('save', function (event) {
-	    _classPrivateMethodGet(_this4, _logEventInfo, _logEventInfo2).call(_this4, 'CoPilot result saved', event);
+	    _classPrivateMethodGet(_this4, _logEventInfo, _logEventInfo2).call(_this4, 'AI result saved', event);
 	    _classPrivateMethodGet(_this4, _replaceSelectionText, _replaceSelectionText2).call(_this4, event.data.result);
 	    _classPrivateMethodGet(_this4, _cleanWrapChars, _cleanWrapChars2).call(_this4);
 	    babelHelpers.classPrivateFieldGet(_this4, _copilot).hide();
 	  });
 	  babelHelpers.classPrivateFieldGet(this, _copilot).subscribe('add_below', function (event) {
-	    _classPrivateMethodGet(_this4, _logEventInfo, _logEventInfo2).call(_this4, 'CoPilot result text place below', event);
+	    _classPrivateMethodGet(_this4, _logEventInfo, _logEventInfo2).call(_this4, 'AI result text place below', event);
 	    var currentText = _classPrivateMethodGet(_this4, _getTextAreaValue, _getTextAreaValue2).call(_this4);
 	    _classPrivateMethodGet(_this4, _setTextAreaValue, _setTextAreaValue2).call(_this4, "".concat(currentText, "\n").concat(event.data.result));
 	    babelHelpers.classPrivateFieldGet(_this4, _copilot).hide();
@@ -330,7 +330,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _assertValidParams2(params) {
 	  if (!main_core.Type.isPlainObject(params)) {
-	    throw new TypeError('BX.Crm.AI.CopilotTextarea: The CoPilot textarea params must be object');
+	    throw new TypeError('BX.Crm.AI.CopilotTextarea: textarea params must be object');
 	  }
 	  if (!main_core.Type.isStringFilled(params.id)) {
 	    throw new TypeError('BX.Crm.AI.CopilotTextarea: The "id" argument must be filled');
@@ -406,5 +406,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Events = Events;
 	exports.CopilotTextarea = CopilotTextarea;
 
-}((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX.Event,BX.Main,BX.AI,BX));
+}((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX.AI,BX.Crm.AI,BX.Event,BX.Main,BX));
 //# sourceMappingURL=copilot-textarea.bundle.js.map

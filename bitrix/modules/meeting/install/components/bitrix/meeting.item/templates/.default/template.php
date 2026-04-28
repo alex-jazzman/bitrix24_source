@@ -1,7 +1,7 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-$APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
+\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
 
 if ($arResult['FROM_MEETING'] > 0):
 	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
@@ -283,7 +283,7 @@ function saveReport(el, form)
 </script>
 <?
 endif;
-if (CBXFeatures::IsFeatureEnabled('tasks') && IsModuleInstalled('tasks')):
+if (CBXFeatures::IsFeatureEnabled('tasks') && \Bitrix\Main\Loader::includeModule('tasks')):
 ?>
 <div id="task_selector" style="display: none;">
 <?

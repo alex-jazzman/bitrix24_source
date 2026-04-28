@@ -32,6 +32,7 @@ type SidebarPrimaryActionButton = {
 	testIdSuffix?: string,
 	renderCustomContent?: () => {},
 	ahaMoment?: string,
+	separatorAfter?: boolean,
 };
 
 type SidebarViewDefaultProps = {

@@ -1,5 +1,5 @@
-import { MessengerModel, PayloadData } from '../../../../messenger/model/base';
-import { DialogId } from '../../../../messenger/types/common';
+import { MessengerModel, PayloadData } from '../../base';
+import { DialogId } from '../../../types/common';
 
 export enum MessageStatus
 {
@@ -50,12 +50,14 @@ export type RecentModelCollection = {
 	channelIdCollection: Set<string>,
 	collabIdCollection: Set<string>,
 	taskIdCollection: Set<string>,
+	openlineIdCollection: Set<string>,
 }
 
 export type RecentMessengerModel = MessengerModel<RecentModelCollection>;
 
 export type RecentModelActions =
 	'recentModel/set'
+	| 'recentModel/syncFilteredIdCollection'
 	| 'recentModel/setChat'
 	| 'recentModel/setCopilot'
 	| 'recentModel/setChannel'

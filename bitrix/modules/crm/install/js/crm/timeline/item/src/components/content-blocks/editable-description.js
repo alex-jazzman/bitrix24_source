@@ -1,18 +1,19 @@
+import { NameService } from 'crm.ai.name-service';
 import { Dom, Runtime, Text, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
-import { BasicEditor, TextEditorComponent } from 'ui.text-editor';
 import { HtmlFormatterComponent } from 'ui.bbcode.formatter.html-formatter';
+import { BasicEditor, TextEditorComponent } from 'ui.text-editor';
 
 import { Action } from '../../action';
-import { Button } from '../layout/button';
-import { ButtonState } from '../enums/button-state';
-import { ButtonType } from '../enums/button-type';
-import { EditableDescriptionHeight } from '../enums/editable-description-height';
-import { EditableDescriptionBackgroundColor } from '../enums/editable-description-background-color';
-import { EditableDescriptionAiStatus } from '../enums/editable-description-ai-status';
 
 import CopilotHeader from '../content-blocks/internal/copilot/header-text';
+import { ButtonState } from '../enums/button-state';
+import { ButtonType } from '../enums/button-type';
+import { EditableDescriptionAiStatus } from '../enums/editable-description-ai-status';
+import { EditableDescriptionBackgroundColor } from '../enums/editable-description-background-color';
+import { EditableDescriptionHeight } from '../enums/editable-description-height';
+import { Button } from '../layout/button';
 
 export const EditableDescription = {
 	components: {
@@ -382,9 +383,8 @@ export const EditableDescription = {
 				maxHeight: 600,
 				content: this.bbcode,
 				paragraphPlaceholder: this.$Bitrix.Loc.getMessage(
-					Type.isPlainObject(this.copilotSettings)
-						? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT'
-						: null,
+					Type.isPlainObject(this.copilotSettings) ? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT' : null,
+					NameService.copilotNameReplacement(),
 				),
 				toolbar: [],
 				floatingToolbar: [

@@ -1,0 +1,5 @@
+.crm-item-import__error-message {
+	color: var(--ui-field-color-danger);
+	font-size: var(--ui-font-size-xs);
+	margin-top: var(--ui-size-2xs);
+}

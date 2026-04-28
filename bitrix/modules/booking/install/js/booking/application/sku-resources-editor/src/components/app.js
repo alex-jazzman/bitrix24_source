@@ -4,7 +4,6 @@ import { SkuResourcesEditorLayout } from './layout/layout';
 import { SkuResourcesEditorFooter } from './footer/footer';
 import { SkuResourcesEditorHeader } from './header/header';
 import { SkuResourcesEditorSku } from './sku-settings/sku-settings';
-import { fetchMainResources } from '../lib/fetch-main-resources';
 
 import type { SkuResourcesEditorParams } from './types';
 
@@ -44,12 +43,9 @@ export const App = {
 		{
 			this.loading = true;
 			this.$store.commit(`${Model.SkuResourcesEditor}/setFetching`, true);
+			const resources = await this.params.loadData();
 
-			const mainResources = await fetchMainResources(this.params.resources);
-			await this.$store.dispatch(`${Model.SkuResourcesEditor}/setResources`, [
-				...mainResources,
-				...this.params.resources,
-			]);
+			await this.$store.dispatch(`${Model.SkuResourcesEditor}/setResources`, resources);
 
 			this.loading = false;
 			this.$store.commit(`${Model.SkuResourcesEditor}/setFetching`, false);

@@ -6,9 +6,9 @@ import { RestMethod, ChatType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { UuidManager } from 'im.v2.lib.uuid';
 import { runAction } from 'im.v2.lib.rest';
-import { CounterClearActionsByChatType, CounterClearActionsDefault } from 'im.v2.lib.counter';
+import { CounterManager, CounterClearHandlersByChatType, CounterClearActions } from 'im.v2.lib.counter';
 
-import type { ImModelChat, ImModelRecentItem } from 'im.v2.model';
+import type { ImModelChat } from 'im.v2.model';
 
 type ReadResult = {
 	chatId: number,
@@ -34,12 +34,12 @@ export class ReadService
 
 	readAllByType(type: $Values<typeof ChatType>)
 	{
-		const counterClearActions = CounterClearActionsByChatType[type];
+		const counterClearHandlers = CounterClearHandlersByChatType[type];
 
-		if (counterClearActions)
+		if (counterClearHandlers)
 		{
-			counterClearActions.forEach((actionName) => {
-				void this.#store.dispatch(actionName, { type });
+			counterClearHandlers.forEach((handler) => {
+				handler(type);
 			});
 		}
 
@@ -53,8 +53,8 @@ export class ReadService
 	readAll(): void
 	{
 		Logger.warn('ReadService: readAll');
-		CounterClearActionsDefault.forEach((actionName) => {
-			void this.#store.dispatch(actionName);
+		CounterClearActions.forEach((actionHandler) => {
+			void actionHandler();
 		});
 
 		runAction(RestMethod.imV2ChatReadAll)
@@ -66,14 +66,9 @@ export class ReadService
 	readDialog(dialogId: string): void
 	{
 		Logger.warn('ReadService: readDialog', dialogId);
-		void this.#store.dispatch('recent/unread', {
-			id: dialogId,
-			action: false,
-		});
-		void this.#store.dispatch('chats/update', {
-			dialogId,
-			fields: { counter: 0 },
-		});
+		const { chatId }: ImModelChat = this.#store.getters['chats/get'](dialogId);
+		void this.#store.dispatch('counters/clearById', { chatId });
+
 		this.#restClient.callMethod(RestMethod.imV2ChatRead, { dialogId })
 			.catch((result: RestResult) => {
 				console.error('ReadService: error reading chat', result.error());
@@ -83,14 +78,9 @@ export class ReadService
 	unreadDialog(dialogId: string): void
 	{
 		Logger.warn('ReadService: unreadDialog', dialogId);
-		void this.#store.dispatch('recent/unread', {
-			id: dialogId,
-			action: true,
-		});
 		this.#restClient.callMethod(RestMethod.imV2ChatUnread, { dialogId })
 			.catch((result: RestResult) => {
 				console.error('ReadService: error setting chat as unread', result.error());
-				void this.#store.dispatch('recent/unread', { id: dialogId, action: false });
 			});
 	}
 
@@ -125,22 +115,19 @@ export class ReadService
 	clearDialogMark(dialogId: string): void
 	{
 		Logger.warn('ReadService: clear dialog mark', dialogId);
-		const dialog: ImModelChat = this.#store.getters['chats/get'](dialogId);
-		const recentItem: ImModelRecentItem = this.#store.getters['recent/get'](dialogId);
-		if (dialog.markedId === 0 && !recentItem?.unread)
+		const { markedId, chatId }: ImModelChat = this.#store.getters['chats/get'](dialogId);
+		const unreadStatus = this.#store.getters['counters/getUnreadStatus'](chatId);
+		if (markedId === 0 && !unreadStatus)
 		{
 			return;
 		}
-		void this.#store.dispatch('recent/unread', {
-			id: dialogId,
-			action: false,
-		});
+
+		void this.#store.dispatch('counters/setUnreadStatus', { chatId, status: false });
 		void this.#store.dispatch('chats/update', {
 			dialogId,
-			fields: {
-				markedId: 0,
-			},
+			fields: { markedId: 0 },
 		});
+
 		this.#restClient.callMethod(RestMethod.imV2ChatRead, {
 			dialogId,
 			onlyRecent: 'Y',
@@ -194,42 +181,22 @@ export class ReadService
 		});
 	}
 
-	#decreaseCommentCounter(chatId: number, readMessagesCount: number): Promise
-	{
-		const chat = this.#getDialogByChatId(chatId);
-		let newCounter = chat.counter - readMessagesCount;
-		if (newCounter < 0)
-		{
-			newCounter = 0;
-		}
-
-		const counters = {
-			[chat.parentChatId]: {
-				[chatId]: newCounter,
-			},
-		};
-
-		return Core.getStore().dispatch('counters/setCommentCounters', counters);
-	}
-
 	#decreaseChatCounter(chatId: number, readMessagesCount: number): Promise
 	{
-		const chat = this.#getDialogByChatId(chatId);
-		if (chat.type === ChatType.comment)
+		const currentCounter = this.#store.getters['counters/getCounterByChatId'](chatId);
+		const shouldSkipLocalUpdate = currentCounter >= CounterManager.getCounterDisplayLimit();
+		if (shouldSkipLocalUpdate)
 		{
-			return this.#decreaseCommentCounter(chatId, readMessagesCount);
+			return Promise.resolve();
 		}
 
-		let newCounter = chat.counter - readMessagesCount;
+		let newCounter = currentCounter - readMessagesCount;
 		if (newCounter < 0)
 		{
 			newCounter = 0;
 		}
 
-		return this.#store.dispatch('chats/update', {
-			dialogId: this.#getDialogIdByChatId(chatId),
-			fields: { counter: newCounter },
-		});
+		return this.#store.dispatch('counters/setCounter', { chatId, counter: newCounter });
 	}
 
 	#readMessageOnServer(chatId: number, messageIds: number[]): Promise
@@ -254,14 +221,11 @@ export class ReadService
 
 		const { chatId, counter } = readResult;
 
-		const dialog = this.#getDialogByChatId(chatId);
-		if (dialog.counter > counter)
+		const currentCounter = this.#store.getters['counters/getCounterByChatId'](chatId);
+		if (currentCounter > counter)
 		{
-			Logger.warn('ReadService: counter from server is lower than local one', dialog.counter, counter);
-			void this.#store.dispatch('chats/update', {
-				dialogId: dialog.dialogId,
-				fields: { counter },
-			});
+			Logger.warn('ReadService: counter from server is lower than local one', currentCounter, counter);
+			void this.#store.dispatch('counters/setCounter', { chatId, counter });
 		}
 	}
 

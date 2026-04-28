@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Loc, Type } from 'main.core';
 import { BBCodeParser } from 'ui.bbcode.parser';
 import { TextEditor, TextEditorComponent } from 'ui.text-editor';
@@ -62,12 +63,14 @@ export const AboutPage = {
 		{
 			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_ABOUT_TITLE');
 		},
+
 		pageDescription(): string
 		{
-			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_ABOUT_DESCRIPTION');
+			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_ABOUT_DESCRIPTION', NameService.copilotNameReplacement());
 		},
 	},
 
+	// language=Vue
 	template: `
 		<div v-if="isActive">
 			<div class="crm-copilot__call-assessment_page-section">

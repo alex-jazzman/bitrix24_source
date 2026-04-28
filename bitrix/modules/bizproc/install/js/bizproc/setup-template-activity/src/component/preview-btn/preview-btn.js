@@ -1,4 +1,4 @@
-import 'main.polyfill.intersectionobserver';
+import { Event, Dom } from 'main.core';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { Outline } from 'ui.icon-set.api.core';
 import { getScrollParent } from '../../utils';
@@ -16,12 +16,11 @@ export const PreviewBtn = {
 			default: false,
 		},
 	},
-	data(): { isFixed: boolean, containerWidth: string, containerTop: string }
+	data(): { isFixed: boolean, fixedStyle: Object }
 	{
 		return {
 			isFixed: false,
-			containerWidth: 'auto',
-			containerTop: '0px',
+			fixedStyle: {},
 		};
 	},
 	computed: {
@@ -40,49 +39,45 @@ export const PreviewBtn = {
 	},
 	mounted(): void
 	{
-		this.initObserver();
+		this.scrollContainer = getScrollParent(this.$el);
+
+		if (!this.scrollContainer)
+		{
+			return;
+		}
+
+		Dom.style(this.$el, 'minHeight', `${this.$el.offsetHeight}px`);
+		Event.bind(this.scrollContainer, 'scroll', this.handleScroll, { passive: true });
 	},
 	beforeUnmount(): void
 	{
-		this.observer?.disconnect();
+		Event.unbind(this.scrollContainer, 'scroll', this.handleScroll);
 	},
 	methods: {
-		updatePosition(scrollContainer: HTMLElement): void
+		handleScroll(): void
 		{
-			if (this.$el && scrollContainer)
+			if (this.isFixed && this.scrollContainer.scrollTop < this.fixScrollTop)
 			{
-				const rect = scrollContainer.getBoundingClientRect();
-				this.containerTop = `${rect.top}px`;
-				this.containerWidth = `${scrollContainer.offsetWidth}px`;
+				this.isFixed = false;
 			}
-		},
-		initObserver(): void
-		{
-			const scrollContainer = getScrollParent(this.$el);
 
-			if (!scrollContainer)
+			if (this.isFixed)
 			{
 				return;
 			}
 
-			this.observer = new IntersectionObserver(
-				([entry]) => {
-					const rootTop = entry.rootBounds ? entry.rootBounds.top : 0;
-					this.isFixed = entry.boundingClientRect.top <= rootTop;
+			const elRect = this.$el.getBoundingClientRect();
+			const containerRect = this.scrollContainer.getBoundingClientRect();
 
-					if (this.isFixed)
-					{
-						this.updatePosition(scrollContainer);
-					}
-				},
-				{
-					root: scrollContainer,
-					threshold: [1],
-					rootMargin: '0px',
-				},
-			);
-
-			this.observer.observe(this.$el);
+			if (elRect.top <= containerRect.top)
+			{
+				this.fixScrollTop = this.scrollContainer.scrollTop;
+				this.isFixed = true;
+				this.fixedStyle = {
+					top: `${containerRect.top}px`,
+					width: `${this.scrollContainer.offsetWidth}px`,
+				};
+			}
 		},
 	},
 	template: `
@@ -90,7 +85,7 @@ export const PreviewBtn = {
 			<div
 				class="bizproc-setuptemplateactivity-preview-btn-wrapper"
 				:class="{ '--fixed': isFixed }"
-				:style="isFixed ? { width: containerWidth, top: containerTop } : {}"
+				:style="isFixed ? fixedStyle : {}"
 			>
 				<button
 					class="bizproc-setuptemplateactivity-preview-btn"

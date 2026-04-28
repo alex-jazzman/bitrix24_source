@@ -234,8 +234,16 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				},
 			);
 
+			$documentType = \CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+			if (is_null($documentType))
+			{
+				$result->addError(new Error(Loc::getMessage('CRM_UDA_ENTITY_TYPE_ERROR')));
+
+				return $result;
+			}
+
 			$dynamicFieldsDialog = clone $dialog;
-			$dynamicFieldsDialog->setDocumentType(\CCrmBizProcHelper::ResolveDocumentType($entityTypeId));
+			$dynamicFieldsDialog->setDocumentType($documentType);
 
 			$extractingFieldsResult = parent::extractPropertiesValues(
 				$dynamicFieldsDialog,
@@ -346,7 +354,7 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$fieldsMap = [];
 		foreach (Document\Dynamic::getEntityFields($entityTypeId) as $fieldId => $field)
 		{
-			if ($field['Editable'] && !static::isInternalField($fieldId))
+			if (isset($field['Editable']) && $field['Editable'] && !static::isInternalField($fieldId))
 			{
 				$field['FieldName'] = $fieldId;
 				$fieldsMap[$fieldId] = $field;

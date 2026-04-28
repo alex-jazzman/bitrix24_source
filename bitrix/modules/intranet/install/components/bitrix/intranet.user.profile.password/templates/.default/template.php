@@ -2,9 +2,11 @@
 <?
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page;
+use Bitrix\Main\UI\Extension;
 
 $APPLICATION->SetTitle("");
 Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
+Extension::load(['intranet.logout-all-confirm']);
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 \Bitrix\UI\Toolbar\Facade\Toolbar::hideTitle();
 ?>
@@ -48,21 +50,8 @@ Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
 </div>
 
 <script>
-	BX.message({
-		"INTRANET_USER_PROFILE_PASSWORD_BUTTON_CONTINUE" : "<?=CUtil::JSEscape(GetMessage("INTRANET_USER_PROFILE_PASSWORD_BUTTON_CONTINUE"))?>",
-		"INTRANET_USER_PROFILE_PASSWORD_BUTTON_CANCEL" : "<?=CUtil::JSEscape(GetMessage("INTRANET_USER_PROFILE_PASSWORD_BUTTON_CANCEL"))?>",
-		"INTRANET_USER_PROFILE_PASSWORD_LOGOUT_TEXT" : "<?=CUtil::JSEscape(GetMessage("INTRANET_USER_PROFILE_PASSWORD_LOGOUT_TEXT"))?>",
-		"INTRANET_USER_PROFILE_PASSWORD_LOGOUT_TITLE" : "<?=CUtil::JSEscape(GetMessage("INTRANET_USER_PROFILE_PASSWORD_LOGOUT_TITLE"))?>",
-		"INTRANET_USER_PROFILE_PASSWORD_LOGOUT_SUCCESS" : "<?=CUtil::JSEscape(GetMessage("INTRANET_USER_PROFILE_PASSWORD_LOGOUT_SUCCESS"))?>",
-		"INTRANET_USER_PROFILE_PASSWORD_CLOSE" : "<?=CUtil::JSEscape(GetMessage("INTRANET_USER_PROFILE_PASSWORD_CLOSE"))?>"
-	});
-
 	BX.ready(() => {
-		new BX.Intranet.UserProfile.Password({
-			signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
-			componentName: '<?=$this->getComponent()->getName() ?>',
-			userId: '<?=CUtil::JSEscape($arParams["USER_ID"])?>'
-		});
+		new BX.Intranet.UserProfile.Password();
 		const editor = BX.UI.EntityEditor.get('INTRANET_USER_PROFILE_PASSWORD') || BX.UI.EntityEditor.getDefault();
 		editor.cancel = () => {
 			BX.SidePanel.Instance.close();

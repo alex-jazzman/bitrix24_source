@@ -1,7 +1,8 @@
+import { NameService } from 'crm.ai.name-service';
 import { Loc } from 'main.core';
 
-import { ActivityProvider, Base } from './base.js';
 import type { aiData } from './base.js';
+import { ActivityProvider, Base } from './base.js';
 
 /**
  * @memberOf BX.Crm.AI.Call
@@ -21,7 +22,7 @@ export class Transcription extends Base
 		this.id = 'crm-copilot-transcript';
 		this.aiDataAction = 'crm.timeline.ai.getCopilotTranscript';
 
-		this.sliderTitle = Loc.getMessage('CRM_COMMON_COPILOT');
+		this.sliderTitle = NameService.copilotName();
 		this.sliderWidth = 730;
 
 		this.textboxTitle = Loc.getMessage('CRM_COPILOT_CALL_TRANSCRIPT_TITLE');

@@ -1,57 +1,55 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\Security\Random;
+use Bitrix\Main\Web\Json;
 
-$component = $this->getComponent();
-$selectorName = $arResult['selectorName'];
+$itemStyle = static function (array $item): string {
+	$style = '';
+	if ($item['personalPhoto'])
+	{
+		$style = 'style="background-image:url(\'' . htmlspecialcharsbx($item['personalPhoto']) . '\'); background-size: 30px;"';
+	}
 
-if($arResult['userField']['EDIT_IN_LIST'] === 'Y')
-{
-	?>
+	return $style;
+};
 
-	<div
-		id="cont_<?= $selectorName ?>"
-		data-has-input="no"
-	>
-		<div
-			id="value_<?= $selectorName ?>"
-			style="display: none;"
-		>
-			<input
-				type="hidden"
-				name="<?= HtmlFilter::encode($arResult['fieldName']) ?>"
-				value=""
-			>
-		</div>
-	</div>
+/**
+ * @var array $arResult
+ */
 
+$container = 'user-selector-container-' . Random::getString(16);
+
+$fieldName = $arResult['userField']['FIELD_NAME'];
+$selectedUserIds = $arResult['selectedUserIds'];
+$isMultiple = $arResult['isMultiple'];
+
+?>
+
+<?php if($arResult['userField']['EDIT_IN_LIST'] === 'Y'): ?>
+	<div class="<?= $container ?>"></div>
 	<script>
-		BX.ready(function ()
-		{
-			new BX.Intranet.UserField.EmployeeEditor({
-				selectorName: '<?= $selectorName ?>',
-				isMultiple: <?= $arResult['isMultiple'] ? 'true' : 'false' ?>,
-				fieldNameJs: '<?= $arResult['fieldNameJs'] ?>',
-				selectedItems: <?= \Bitrix\Main\Web\Json::encode($arResult['itemIds']) ?>,
-			});
+		BX.ready(() => {
+			void BX
+				.Runtime
+				.loadExtension('intranet.userfield.employee.employee-selector')
+				.then(({ EmployeeSelector }) => {
+					new EmployeeSelector({
+						fieldName: '<?= CUtil::JSEscape($fieldName) ?>',
+						container: document.querySelector('.<?= $container ?>'),
+						isMultiple: <?= $isMultiple ? 'true' : 'false' ?>,
+						preselectedUserIds: <?= Json::encode($selectedUserIds) ?>,
+					});
+				})
 		});
 	</script>
-
-	<?php
-}
-elseif($arResult['value'])
-{
-	foreach($arResult['value'] as $item)
-	{
-		$style = null;
-		if($item['personalPhoto'])
-		{
-			$style = 'style="background-image:url(\'' . htmlspecialcharsbx($item['personalPhoto']) . '\'); background-size: 30px;"';
-		}
-		?>
+<?php elseif($arResult['value']): ?>
+	<?php foreach($arResult['value'] as $item): ?>
 		<span class="fields employee field-item" data-has-input="no">
 			<a
 				class="uf-employee-wrap"
@@ -60,7 +58,7 @@ elseif($arResult['value'])
 			>
 				<span
 					class="uf-employee-image"
-					<?= ($style ?? '') ?>
+					<?= ($itemStyle($item)) ?>
 				>
 				</span>
 				<span class="uf-employee-data">
@@ -73,53 +71,35 @@ elseif($arResult['value'])
 				</span>
 			</a>
 		</span>
-		<?php
-	}
-}
-else
-{
-	?>
+	<?php endforeach ?>
+<?php else: ?>
 	<span class="fields employee field-wrap" data-has-input="no">
-	<?php
-	if(is_array($arResult['value']))
-	{
-		foreach($arResult['value'] as $item)
-		{
-			$style = null;
-			if($item['personalPhoto'])
-			{
-				$style = 'style="background-image:url(' . $item['personalPhoto'] . '); background-size: 30px;"';
-			}
-			?>
-			<span class="fields employee field-item">
-				<a
-					class="uf-employee-wrap"
-					href="<?= $item['href'] ?>"
-					target="_blank"
-				>
-					<span
-						class="uf-employee-image"
-						<?= ($style ?? '') ?>
+		<?php if (is_array($arResult['value'])): ?>
+			<?php foreach($arResult['value'] as $item): ?>
+				<span class="fields employee field-item">
+					<a
+						class="uf-employee-wrap"
+						href="<?= $item['href'] ?>"
+						target="_blank"
 					>
-					</span>
-					<span class="uf-employee-data">
-						<span class="uf-employee-name">
-							<?= $item['name'] ?>
+						<span
+							class="uf-employee-image"
+							<?= ($itemStyle($item)) ?>
+						>
 						</span>
-						<span class="uf-employee-position">
-							<?= $item['workPosition'] ?>
+						<span class="uf-employee-data">
+							<span class="uf-employee-name">
+								<?= $item['name'] ?>
+							</span>
+							<span class="uf-employee-position">
+								<?= $item['workPosition'] ?>
+							</span>
 						</span>
-					</span>
-				</a>
-			</span>
-			<?php
-		}
-	}
-	else
-	{
-		print Loc::getMessage('EMPLOYEE_FIELD_EMPTY');
-	}
-	?>
+					</a>
+				</span>
+			<?php endforeach ?>
+		<?php else: ?>
+			<?= Loc::getMessage('EMPLOYEE_FIELD_EMPTY') ?>
+		<?php endif ?>
 	</span>
-	<?php
-}
+<?php endif ?>

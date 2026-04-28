@@ -21,6 +21,7 @@ Extension::load([
 	'ui.alerts',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'intranet.old-interface.intranet-common',
 	'ui.progressround',
 	'ui.viewer',
 	'ui.notification',

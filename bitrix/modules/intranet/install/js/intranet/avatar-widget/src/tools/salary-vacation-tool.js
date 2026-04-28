@@ -28,7 +28,14 @@ export class SalaryVacationTool extends BaseMainTool
 			});
 
 			Event.bind(container, 'mouseleave', () => {
-				this.#getHintInstance().hide(container);
+				setTimeout(() => {
+					const hintPopup = this.#getHintInstance()?.popup?.popupContainer;
+
+					if (!hintPopup || !hintPopup.matches(':hover'))
+					{
+						this.#getHintInstance().hide(container);
+					}
+				}, 100);
 			});
 		}
 

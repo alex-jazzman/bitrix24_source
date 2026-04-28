@@ -22,6 +22,7 @@ jn.define('in-app-url/src/in-app-url', (require, exports, module) => {
 		 * @public
 		 * @param {string} pattern
 		 * @param {Function} handler
+		 * @return {Route}
 		 */
 		register(pattern, handler)
 		{

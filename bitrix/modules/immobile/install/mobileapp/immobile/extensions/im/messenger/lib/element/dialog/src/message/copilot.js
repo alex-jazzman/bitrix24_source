@@ -66,7 +66,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 
 		setFootNote()
 		{
-			this.copilot.footnote = `${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_BASIC')} [U]${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_UNDERLINE')}[/U]`;
+			this.copilot.footnote = `${Loc.getMessageWithCopilotBotName('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_BASIC_MSGVER_1')} [U]${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_UNDERLINE')}[/U]`;
 
 			return this;
 		}

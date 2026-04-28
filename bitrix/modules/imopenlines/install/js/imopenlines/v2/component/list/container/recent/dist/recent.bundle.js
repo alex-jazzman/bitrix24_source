@@ -17,7 +17,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  emits: ['selectEntity'],
 	  created() {
 	    const settings = main_core.Extension.getSettings('im.v2.application.messenger');
-	    this.$store.dispatch('queue/set', settings.get('queueConfig'));
+	    this.$store.dispatch('openLines/queue/set', settings.get('queueConfig'));
 	  },
 	  methods: {
 	    onChatClick(dialogId) {

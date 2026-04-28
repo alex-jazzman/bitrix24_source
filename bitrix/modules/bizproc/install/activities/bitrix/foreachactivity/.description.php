@@ -6,8 +6,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
+use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
+use Bitrix\Ui\Public\Enum\IconSet\Outline;
 use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = (new ActivityDescription(
@@ -45,5 +48,8 @@ $arActivityDescription = (new ActivityDescription(
 			),
 		)
 	))
+	->setColorIndex(ActivityColorIndex::GREY->value)
+	->setGroups([ActivityGroup::WORKFLOW->value])
+	->setIcon(Outline::REPEAT->name)
 	->toArray()
 ;

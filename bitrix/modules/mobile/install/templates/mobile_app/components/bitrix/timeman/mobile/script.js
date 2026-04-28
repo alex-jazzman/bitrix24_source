@@ -263,7 +263,6 @@
 				this.formats = formats;
 
 				BX.onCustomEvent("onMobileTimeManInit", [this.id]);
-				BXMobileApp.onCustomEvent('OnTimemanOpenDay', {}, true);
 
 				BX.ready(BX.proxy(function(){this.init(DATA);}, this));
 
@@ -495,6 +494,7 @@
 		timeManager = (function(){
 			var d = function(node, DATA, formats) {
 				d.superclass.constructor.apply(this, arguments);
+				BXMobileApp.onCustomEvent('OnTimemanOpenDay', {}, true);
 			};
 			BX.extend(d, baseObj);
 			d.prototype.buttons = {
@@ -572,6 +572,7 @@
 							name: BX.message("TM_MENU_START1"),
 							icon: 'play',
 							action: BX.proxy(function() {
+								BXMobileApp.onCustomEvent('OnTimemanClickStartCustomTime', {}, true);
 								this.showStartForm("extended");
 								_initPage(this.getMenu(status, false));
 							}, this)
@@ -607,6 +608,7 @@
 								name: BX.message("TM_MENU_STOP1"),
 								icon: 'flag',
 								action: BX.proxy(function(){
+									BXMobileApp.onCustomEvent('OnTimemanClickFinishCustomTime', {}, true);
 									this.showStopForm("extended");
 									_initPage(this.getMenu(status, false));
 								}, this)
@@ -833,6 +835,7 @@
 				return BX.PreventDefault(e);
 			};
 			d.prototype.edit = function() {
+				BXMobileApp.onCustomEvent('OnTimemanEditDay', {}, true);
 				window.BXMobileApp.PageManager.loadPageModal({
 					url: BX.message("SITE_DIR") + "mobile/timeman/index.php?edit=Y",
 					bx24ModernStyle : true,
@@ -840,6 +843,7 @@
 				});
 			};
 			d.prototype.report = function() {
+				BXMobileApp.onCustomEvent('onTimemanWorkDoneSave', {}, true);
 				window.BXMobileApp.PageManager.loadPageModal({
 					url: BX.message("SITE_DIR") + "mobile/timeman/index.php?report=Y",
 					bx24ModernStyle : true,

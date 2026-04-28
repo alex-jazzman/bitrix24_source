@@ -47,7 +47,7 @@ $MESS["UNSPLASH_SEARCH_FIELD_LABEL"] = "Найти в библиотеке Unspl
 $MESS["UNSPLASH_SEARCH_FIELD_LOADER"] = "Загружаем";
 $MESS["GOOGLE_SEARCH_FIELD_LABEL"] = "Найти в Google картинках";
 $MESS["SEARCH_FIELD_PLACEHOLDER"] = "поиск...";
-$MESS["LANDING_IMAGE_LIBRARY_LOAD_MORE"] = "Показать еще";
+$MESS["LANDING_IMAGE_LIBRARY_LOAD_MORE"] = "Показать ещё";
 $MESS["LANDING_MESSAGE_ADD_YOUR_FIRST_BLOCK_HEADER"] = "Добавьте свой первый блок";
 $MESS["LANDING_MESSAGE_ADD_YOUR_FIRST_BLOCK_POPULAR"] = "Популярные";
 $MESS["LANDING_MESSAGE_ADD_YOUR_FIRST_BLOCK_ALL"] = "Все блоки";
@@ -432,7 +432,7 @@ $MESS["LANDING_TABLE_DND_ROWS"] = "Потяните для перемещени�
 $MESS["LANDING_TABLE_DND_COLS"] = "Потяните для перемещения столбца";
 $MESS["LANDING_TABLE_RESIZE_COLS"] = "Потяните для изменения ширины столбца";
 $MESS["LANDING_TABLE_SELECT_TABLE"] = "Выбрать всю таблицу";
-$MESS['LANDING_FONTS_PANEL_MORE_BUTTON_LABEL'] = 'Загрузить еще';
+$MESS['LANDING_FONTS_PANEL_MORE_BUTTON_LABEL'] = 'Загрузить ещё';
 $MESS['LANDING_FONTS_PANEL_EMPTY_STUB'] = 'Шрифты не найдены...';
 //link control phrases
 //actions

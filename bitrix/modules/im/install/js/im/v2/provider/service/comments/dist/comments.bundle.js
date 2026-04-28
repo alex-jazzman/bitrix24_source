@@ -31,12 +31,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	  },
 	  readAllChannelComments(channelDialogId) {
-	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](channelDialogId, true);
-	    const currentChannelCounter = im_v2_application_core.Core.getStore().getters['counters/getChannelCommentsCounter'](chat.chatId);
+	    const {
+	      chatId
+	    } = im_v2_application_core.Core.getStore().getters['chats/get'](channelDialogId, true);
+	    const currentChannelCounter = im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](chatId);
 	    if (currentChannelCounter === 0) {
 	      return Promise.resolve();
 	    }
-	    void im_v2_application_core.Core.getStore().dispatch('counters/readAllChannelComments', chat.chatId);
+	    void im_v2_application_core.Core.getStore().dispatch('counters/clearByParentId', {
+	      parentChatId: chatId
+	    });
 	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatCommentReadAll, {
 	      data: {
 	        dialogId: channelDialogId

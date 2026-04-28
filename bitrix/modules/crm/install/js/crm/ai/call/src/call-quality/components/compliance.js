@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Loc } from 'main.core';
 import { ViewMode } from './common/view-mode';
 
@@ -78,7 +79,7 @@ export const Compliance = {
 		{
 			return (
 				this.viewMode === ViewMode.emptyScriptList
-					? Loc.getMessage('CRM_COPILOT_CALL_QUALITY_COMPLIANCE_EMPTY_SCRIPT_LIST_TITLE')
+					? Loc.getMessage('CRM_COPILOT_CALL_QUALITY_COMPLIANCE_EMPTY_SCRIPT_LIST_TITLE', NameService.copilotNameReplacement())
 					: Loc.getMessage('CRM_COPILOT_CALL_QUALITY_COMPLIANCE_TITLE')
 			);
 		},

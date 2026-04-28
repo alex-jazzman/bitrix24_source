@@ -27,7 +27,7 @@ UI\Extension::load([
 global $APPLICATION;
 $APPLICATION->SetTitle($arResult['PAGE_TITLE']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
-CJSCore::Init(array('amcharts', 'amcharts_pie'));
+CJSCore::Init(array('amcharts', 'amcharts_pie', 'intranet.old-interface.intranet-common'));
 
 $element = $arResult['ELEMENT'];
 $loadbars = $arResult['LOADBARS'];

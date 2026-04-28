@@ -2,7 +2,7 @@ import { BuilderModel, Store } from 'ui.vue3.vuex';
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
-import type { ResourceModel, ResourcesState, SlotRange, Skus } from './types';
+import type { ResourceModel, ResourcesState, SlotRange, Skus, ResourceSkuRelationsModel } from './types';
 
 export class Resources extends BuilderModel
 {
@@ -15,6 +15,7 @@ export class Resources extends BuilderModel
 	{
 		return {
 			collection: {},
+			resourcesSkuRelations: [],
 		};
 	}
 
@@ -76,6 +77,8 @@ export class Resources extends BuilderModel
 					),
 				);
 			},
+			/** @function resources/resourcesSkuRelations */
+			resourcesSkuRelations: (state): ResourceSkuRelationsModel => state.resourcesSkuRelations,
 		};
 	}
 
@@ -98,6 +101,10 @@ export class Resources extends BuilderModel
 			delete: (store: Store, resourceId: number): void => {
 				store.commit('delete', resourceId);
 			},
+			/** @function resources/setResourcesSkuRelations */
+			setResourcesSkuRelations: (store, resourcesSkuRelations: ResourceSkuRelationsModel) => {
+				store.commit('setResourcesSkuRelations', resourcesSkuRelations);
+			},
 		};
 	}
 
@@ -115,6 +122,9 @@ export class Resources extends BuilderModel
 			},
 			delete: (state: ResourcesState, resourceId: number): void => {
 				delete state.collection[resourceId];
+			},
+			setResourcesSkuRelations: (state, resourcesSkuRelations: ResourceSkuRelationsModel) => {
+				state.resourcesSkuRelations = resourcesSkuRelations;
 			},
 		};
 	}

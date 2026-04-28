@@ -61,6 +61,7 @@ export const AddResourceButton = {
 					title: this.loc('BOOKING_AHA_ARTICLE_LINK_TITLE'),
 				},
 				target: this.$refs.button,
+				isPulsarTransparent: true,
 			});
 
 			ahaMoments.setShown(AhaMoment.AddResource);

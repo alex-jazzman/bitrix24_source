@@ -306,7 +306,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		inAppUrl.register(
 			'/online/\\?FEATURE_PROMOTER=limit_boost_copilot',
 			() => openGoToWebWidget({
-				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BAAS_LIMIT_TITLE'),
+				title: Loc.getMessageWithCopilotBotName('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BAAS_LIMIT_TITLE_MSGVER_1'),
 				hintText: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BAAS_LIMIT_HINT'),
 				redirectUrl: '/?feature_promoter=limit_boost_copilot',
 			}),
@@ -315,7 +315,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		inAppUrl.register(
 			'/online/\\?FEATURE_PROMOTER=limit_subscription_market_access_buy_marketplus',
 			() => openGoToWebWidget({
-				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_SUBSCRIPTION_BAAS_LIMIT_TITLE'),
+				title: Loc.getMessageWithCopilotBotName('IMMOBILE_ELEMENT_DIALOG_MESSAGE_SUBSCRIPTION_BAAS_LIMIT_TITLE_MSGVER_1'),
 				hintText: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_SUBSCRIPTION_BAAS_LIMIT_HINT'),
 				redirectUrl: '/online/?FEATURE_PROMOTER=limit_subscription_market_access_buy_marketplus',
 			}),

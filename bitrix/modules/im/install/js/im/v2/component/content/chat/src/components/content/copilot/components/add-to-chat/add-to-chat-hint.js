@@ -1,5 +1,6 @@
 import { PopupOptions } from 'main.popup';
 
+import { CopilotManager } from 'im.v2.lib.copilot';
 import { MessengerPopup } from 'im.v2.component.elements.popup';
 
 import '../../css/add-to-chat-hint.css';
@@ -32,12 +33,28 @@ export const AddToChatHint = {
 				contentBorderRadius: 0,
 			};
 		},
+		hintTitle(): string
+		{
+			return this.loc('IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_TITLE_MSGVER_1', {
+				'#COPILOT_NAME#': this.copilotManager.getName(),
+			});
+		},
+		hintDescription(): string
+		{
+			return this.loc('IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_DESCRIPTION_MSGVER_1', {
+				'#COPILOT_NAME#': this.copilotManager.getName(),
+			});
+		},
+	},
+	created()
+	{
+		this.copilotManager = new CopilotManager();
 	},
 	methods:
 	{
-		loc(phraseCode: string): string
+		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
 	template: `
@@ -46,13 +63,9 @@ export const AddToChatHint = {
 			:id="POPUP_ID"
 			@close="$emit('close')"
 		>
-			<div class="bx-im-copilot-add-to-chat-hint__title">
-				{{ loc('IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_TITLE') }}
-			</div>
+			<div class="bx-im-copilot-add-to-chat-hint__title">{{ hintTitle }}</div>
 			<br />
-			<div class="bx-im-copilot-add-to-chat-hint__description">
-				{{ loc('IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_DESCRIPTION') }}
-			</div>
+			<div class="bx-im-copilot-add-to-chat-hint__description">{{ hintDescription }}</div>
 			<br />
 			<button class="bx-im-copilot-add-to-chat-hint__hide" @click="$emit('hide')">
 				{{ loc('IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_HIDE') }}

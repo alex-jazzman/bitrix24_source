@@ -6,4 +6,5 @@ export const EventName = Object.freeze({
 	DeleteBooking: 'booking:booking:delete',
 	UpdateBooking: 'booking:booking:update',
 	StartLockedBookingAnimation: 'booking:booking:startLockedBookingAnimation',
+	BookingOpenSkusSettings: 'booking:booking:open-skus-settings',
 });

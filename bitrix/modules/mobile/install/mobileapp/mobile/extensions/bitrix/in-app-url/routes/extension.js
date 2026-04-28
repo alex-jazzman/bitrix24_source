@@ -2,18 +2,22 @@
  * @module in-app-url/routes
  */
 jn.define('in-app-url/routes', (require, exports, module) => {
-	const { UserProfile } = require('user-profile');
 	const { WorkgroupUtil } = require('project/utils');
+	const { requireLazy } = require('require-lazy');
 
 	/**
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = function(inAppUrl) {
 		inAppUrl.register('/company/personal/user/:userId/(\\?\\w+)?$', ({ userId }, { context = {} }) => {
-			void UserProfile.open({
-				ownerId: userId,
-				analyticsSection: context.analyticsSection ?? '',
-			});
+			requireLazy('user-profile')
+				.then(({ UserProfile }) => {
+					void UserProfile.open({
+						ownerId: userId,
+						analyticsSection: context.analyticsSection ?? '',
+					});
+				})
+				.catch(console.error);
 		}).name('open:user');
 
 		inAppUrl.register('/company/personal/user/:userId/blog/:postId/$', ({ postId }) => {

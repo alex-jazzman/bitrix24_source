@@ -23,15 +23,15 @@
 }
 
 .bx-im-base-file-item__download-icon {
-	background: url('./images/download-file-icon.svg') no-repeat center;
-	width: 24px;
-	height: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-chat-overall-tech);
+	--ui-icon-set__icon-size: 22px;
+
 	margin-left: auto;
 	flex-shrink: 0;
 }
 
 .bx-im-base-file-item__download-icon.--not-active {
-	background: url('./images/download-file-icon-not-active.svg') no-repeat center;
+	--ui-icon-set__icon-color: var(--ui-color-chat-overall-base-0);
 }
 
 .bx-im-base-file-item__type-icon {

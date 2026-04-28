@@ -1,15 +1,16 @@
+import { NameService } from 'crm.ai.name-service';
+import { Setting, Settings } from 'crm.integration.ui.settings';
 import { Dom, Loc, Type } from 'main.core';
 import { Button } from 'ui.buttons';
 import { SidePanel } from 'ui.sidepanel';
 import { Layout } from 'ui.sidepanel.layout';
-import { Settings, Setting } from 'crm.integration.ui.settings';
 
 import './style.css';
 
 export class Slider
 {
 	DEFAULT_OPTIONS = {
-		title: Loc.getMessage('CRM_COMMON_COPILOT'),
+		title: NameService.copilotName(),
 		allowChangeTitle: false,
 		allowChangeHistory: false,
 		cacheable: false,

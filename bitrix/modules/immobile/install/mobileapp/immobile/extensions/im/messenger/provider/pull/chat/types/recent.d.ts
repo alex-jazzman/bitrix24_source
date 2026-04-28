@@ -9,7 +9,6 @@ declare type RecentUpdateParams = {
 	lastActivityDate: string,
 	messages: RawMessage[],
 	users: RawUser[],
-	counterType: string,
 	recentConfig: {
 		chatId: number,
 		sections: RecentConfigSections,

@@ -1,7 +1,7 @@
-import { ChatTitle } from 'im.v2.component.elements.chat-title';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { Layout } from 'im.v2.const';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
+import { ChatTitle } from 'im.v2.component.elements.chat-title';
 
 import { MessageText } from './components/message-text';
 import { ItemCounter } from './components/item-counter';
@@ -69,7 +69,7 @@ export const RecentItem = {
 		},
 	},
 	template: `
-		<div class="bx-imol-list-recent__item" :class="wrapClasses">
+		<div class="bx-imol-list-recent__item" :class="wrapClasses" >
 			<div class="bx-imol-list-recent-item__main_content">
 				<div class="bx-imol-list-recent-item__avatar_container">
 					<div class="bx-imol-list-recent-item__avatar_content">

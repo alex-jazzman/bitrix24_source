@@ -41,14 +41,13 @@ export default class MassInvitationField
 		{
 			return Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT');
 		}
-		else if (this.#isPhoneEnabled)
+
+		if (this.#isPhoneEnabled)
 		{
 			return Loc.getMessage('INTRANET_INVITE_DIALOG_PHONE_INPUT');
 		}
-		else
-		{
-			return Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INPUT');
-		}
+
+		return Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INPUT');
 	}
 
 	reset(): void
@@ -61,28 +60,13 @@ export default class MassInvitationField
 		this.#input.renderTo(node);
 	}
 
-	getValue(): Object
+	render(): HTMLElement
 	{
-		const selector = this.#input.getTagSelector();
-		const tags = selector.getTags();
-		const values = [];
-		const errorElements = [];
+		return this.#input.render();
+	}
 
-		tags.forEach((tag) => {
-			if (this.#isPhoneEnabled && tag.getEntityType() === 'phone')
-			{
-				values.push(tag.getTitle());
-			}
-			else if (this.#isEmailEnabled && tag.getEntityType() === 'email')
-			{
-				values.push(tag.getTitle());
-			}
-			else
-			{
-				errorElements.push(tag.getTitle());
-			}
-		});
-
-		return { values, errorElements };
+	invite(departmentIds: Array<number>): Promise
+	{
+		return this.#input.inviteToDepartment(departmentIds);
 	}
 }

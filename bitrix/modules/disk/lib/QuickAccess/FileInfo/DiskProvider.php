@@ -7,17 +7,13 @@ namespace Bitrix\Disk\QuickAccess\FileInfo;
 use Bitrix\Disk\AttachedObject;
 use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\File;
-use Bitrix\Disk\QuickAccess\Storage\ScopeStorage;
 use Bitrix\Disk\TypeFile;
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Web\Uri;
+use Bitrix\Main\NotImplementedException;
 
 class DiskProvider extends BaseProvider
 {
 	private int $id;
 	private string $name;
-
-	private AttachedObject|BaseObject $object;
 
 	/**
 	 * @param BaseObject $file
@@ -65,7 +61,7 @@ class DiskProvider extends BaseProvider
 	public function getFileInfo(): ?FileInfoDto
 	{
 		$fileObject = File::loadById($this->id);
-		$fileData = $fileObject->getFile();
+		$fileData = $fileObject?->getFile();
 		if (
 			!is_array($fileData)
 			|| empty($fileData)
@@ -120,10 +116,16 @@ class DiskProvider extends BaseProvider
 	 * @param File $fileObject
 	 * @param array $fileData File data
 	 * @return bool True if the object is an image or media file, false otherwise
+	 * @throws NotImplementedException
 	 */
 	private function isMediaFile(File $fileObject, array $fileData): bool
 	{
 		if (TypeFile::isVideo($fileObject))
+		{
+			return true;
+		}
+
+		if (TypeFile::isAudio($fileObject))
 		{
 			return true;
 		}

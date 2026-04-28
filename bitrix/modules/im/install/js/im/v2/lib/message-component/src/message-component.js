@@ -34,6 +34,7 @@ const serverComponentList = new Set([
 	MessageComponent.voteMessage,
 	MessageComponent.convertToCollabMessage,
 	MessageComponent.sticker,
+	MessageComponent.aiBizprocMessage,
 ]);
 
 const demoComponentList = new Set([
@@ -68,11 +69,6 @@ export class MessageComponentManager
 		if (this.#isServerComponent() || this.#isDemoComponent())
 		{
 			return this.#message.componentId;
-		}
-
-		if (this.#isSystemMessage())
-		{
-			return MessageComponent.system;
 		}
 
 		if (this.#hasFiles())
@@ -131,11 +127,6 @@ export class MessageComponentManager
 	#isDeletedMessage(): boolean
 	{
 		return this.#message.isDeleted || this.#isEmptyMessage();
-	}
-
-	#isSystemMessage(): boolean
-	{
-		return this.#message.authorId === 0;
 	}
 
 	#isEmojiOnly(): boolean

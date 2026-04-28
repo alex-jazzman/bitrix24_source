@@ -23,6 +23,7 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/rest/scope.php
 Extension::load(
 	[
 		'ui.notification',
+		'intranet.old-interface.intranet-common',
 	]
 );
 

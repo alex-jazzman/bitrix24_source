@@ -10,7 +10,8 @@ export type NotificationOptions = {
 	userOptionName: string;
 }
 
-export class MassConnectNotification
+// unused at the moment, but may be used in the future for other notifications
+class MassConnectNotification
 {
 	#popup: Popup = null;
 	#options: NotificationOptions = null;

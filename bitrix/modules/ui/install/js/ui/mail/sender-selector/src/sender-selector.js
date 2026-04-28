@@ -85,6 +85,10 @@ export class SenderSelector
 		{
 			selectorText = `${senderName} <${senderEmail}>`;
 		}
+		else if (senderEmail)
+		{
+			selectorText = `<${senderEmail}>`;
+		}
 
 		if (this.selectCallback && !this.#container)
 		{

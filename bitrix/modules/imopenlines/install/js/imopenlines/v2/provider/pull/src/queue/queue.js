@@ -16,11 +16,11 @@ export class QueuePullHandler
 
 	handleQueueItemUpdate(params: QueueUpdateParams)
 	{
-		void this.store.dispatch('queue/set', params);
+		void this.store.dispatch('openLines/queue/set', params);
 	}
 
 	handleQueueItemDelete(params: QueueUpdateParams)
 	{
-		void this.store.dispatch('queue/delete', params.id);
+		void this.store.dispatch('openLines/queue/delete', params.id);
 	}
 }

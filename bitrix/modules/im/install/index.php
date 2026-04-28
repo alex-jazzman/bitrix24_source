@@ -94,6 +94,7 @@ class im extends \CModule
 		\CAgent::AddAgent('\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncMemberAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncMemberAgent() */
 		\CAgent::AddAgent('\Bitrix\Im\V2\Recent\Initializer::executeAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Recent\Initializer::executeAgent() */
 		\CAgent::AddAgent('Bitrix\Im\V2\Message\CounterService\CounterServiceAgent::cleanGhostCountersAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Message\CounterService\CounterServiceAgent::cleanGhostCountersAgent() */
+		\CAgent::AddAgent('Bitrix\Im\V2\EventLog\EventService::cleanAgent();', 'im', 'N', 3600); /** @see \Bitrix\Im\V2\EventLog\EventService::cleanAgent() */
 
 		$eventManager->registerEventHandler('pull', 'onGetMobileCounter', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounter');
 		$eventManager->registerEventHandler('pull', 'onGetMobileCounterTypes', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounterTypes');
@@ -409,6 +410,7 @@ class im extends \CModule
 		\CAgent::RemoveAgent('\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncMemberAgent();', 'im');
 		\CAgent::RemoveAgent('\Bitrix\Im\V2\Recent\Initializer::executeAgent();', 'im');
 		\CAgent::RemoveAgent('Bitrix\Im\V2\Message\CounterService\CounterServiceAgent::cleanGhostCountersAgent();', 'im');
+		\CAgent::RemoveAgent('Bitrix\Im\V2\EventLog\EventService::cleanAgent();', 'im');
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 

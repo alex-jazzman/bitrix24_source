@@ -1,26 +1,24 @@
-import { Type } from 'main.core';
+import { Type, type JsonObject } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
+import { type GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { Utils } from 'im.v2.lib.utils';
+import { MessageComponent, MessageType, UserIdNetworkPrefix, type AttachConfig } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
-import { MessageComponent, MessageType, UserIdNetworkPrefix } from 'im.v2.const';
 import { UserManager } from 'im.v2.lib.user';
+import { Utils } from 'im.v2.lib.utils';
 import { formatFieldsWithConfig } from 'im.v2.model';
+import { type ImModelMessage, ImModelFile } from 'im.v2.model';
+import { MessageManager } from 'im.v2.lib.message';
 
+import { type RawMessage } from '../type/message';
 import { convertToNumber } from '../utils/format';
 import { messageFieldsConfig } from './format/field-config';
+import { AnchorsModel } from './nested-modules/anchors/anchors';
+import { CommentsModel } from './nested-modules/comments/comments';
 import { PinModel } from './nested-modules/pin';
 import { ReactionsModel } from './nested-modules/reactions';
-import { CommentsModel } from './nested-modules/comments/comments';
 import { SelectModel } from './nested-modules/select';
-import { AnchorsModel } from './nested-modules/anchors/anchors';
-
-import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
-import type { JsonObject } from 'main.core';
-import type { ImModelMessage, ImModelFile } from 'im.v2.model';
-import type { AttachConfig } from 'im.v2.const';
-import type { RawMessage } from '../type/message';
 
 type MessageId = string | number;
 
@@ -338,7 +336,7 @@ export class MessagesModel extends BuilderModel
 			},
 			/** @function messages/isRealMessage */
 			isRealMessage: () => (messageId: MessageId): boolean => {
-				return !Utils.text.isTempMessage(messageId);
+				return !MessageManager.isTempMessage(messageId);
 			},
 		};
 	}
@@ -788,7 +786,7 @@ export class MessagesModel extends BuilderModel
 				firstId = element.id;
 			}
 
-			if (Utils.text.isTempMessage(element.id))
+			if (MessageManager.isTempMessage(element.id))
 			{
 				continue;
 			}
@@ -809,7 +807,7 @@ export class MessagesModel extends BuilderModel
 		for (const messageId of messages)
 		{
 			const element = state.collection[messageId];
-			if (Utils.text.isTempMessage(element.id))
+			if (MessageManager.isTempMessage(element.id))
 			{
 				continue;
 			}
@@ -830,7 +828,7 @@ export class MessagesModel extends BuilderModel
 		for (const messageId of messages)
 		{
 			const element = state.collection[messageId];
-			if (Utils.text.isTempMessage(element.id))
+			if (MessageManager.isTempMessage(element.id))
 			{
 				continue;
 			}

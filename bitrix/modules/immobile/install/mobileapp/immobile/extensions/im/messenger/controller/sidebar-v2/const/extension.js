@@ -42,6 +42,7 @@ jn.define('im/messenger/controller/sidebar-v2/const', (require, exports, module)
 	const SIDEBAR_DEFAULT_TOAST_OFFSET = 26;
 
 	const SidebarPrimaryActionButtonId = {
+		ENTITY_LINK: 'entity-link',
 		SEARCH: 'search',
 		MUTE: 'mute',
 		VIDEO_CALL: 'video-call',

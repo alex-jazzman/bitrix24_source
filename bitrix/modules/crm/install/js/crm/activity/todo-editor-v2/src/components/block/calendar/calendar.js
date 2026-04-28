@@ -1,6 +1,7 @@
 import { SectionSelector as CalendarSectionSelector } from 'calendar.controls';
-import 'ui.design-tokens';
 import { Planner } from 'calendar.planner';
+import { Util } from 'calendar.util';
+import 'ui.design-tokens';
 import { ajax as Ajax, Text, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { DateTimeFormat, Timezone } from 'main.date';
@@ -71,7 +72,6 @@ export const TodoEditorBlocksCalendar = {
 			from,
 			to,
 			duration,
-			plannerInstance: null,
 			showLocation: this.settings.showLocation ?? false,
 			locationId: null,
 			timezoneName: this.settings.timezoneName,
@@ -92,14 +92,6 @@ export const TodoEditorBlocksCalendar = {
 	{
 		this.$Bitrix.eventEmitter.subscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
 		this.$Bitrix.eventEmitter.subscribe(Events.EVENT_DEADLINE_CHANGE, this.onDeadlineChange);
-
-		this.showPlanner();
-
-		this.getPlanner().selector.subscribe('onChange', this.handlePlannerSelectorChanges.bind(this));
-
-		const userIds = this.selectedUsersIdsArray;
-		const data = this.prepareUpdatePlannerData(userIds);
-		this.updatePlanner(userIds, data);
 
 		if (this.settings.showUserSelector && this.isFocused)
 		{
@@ -159,12 +151,16 @@ export const TodoEditorBlocksCalendar = {
 			if (Type.isObject(filledValues?.config))
 			{
 				data.config = filledValues.config;
+
+				void this.$nextTick(() => this.initPlanner());
 			}
 			else if (data.canUseCalendarSectionSelector)
 			{
 				void this.fetchConfig().then((response) => {
 					this.config = response.data ?? {};
 					this.sectionSelectorReadOnly = data.config.readOnly ?? false;
+
+					Util.setUserSettings(this.config.userSettings);
 
 					const hasSelectedSection = this.config.sections.some((section) => section.ID === this.sectionId);
 					if (this.sectionSelectorReadOnly && !hasSelectedSection)
@@ -185,10 +181,31 @@ export const TodoEditorBlocksCalendar = {
 							this.sectionId = firstUserSection?.ID ?? 0;
 						}
 					}
+
+					void this.$nextTick(() => this.initPlanner());
 				});
+			}
+			else
+			{
+				void this.$nextTick(() => this.initPlanner());
 			}
 
 			return data;
+		},
+		initPlanner(): void
+		{
+			if (this.plannerInstance)
+			{
+				return;
+			}
+
+			this.showPlanner();
+
+			this.getPlanner().selector.subscribe('onChange', this.handlePlannerSelectorChanges.bind(this));
+
+			const userIds = [...this.selectedUserIds];
+			const data = this.prepareUpdatePlannerData(userIds);
+			this.updatePlanner(userIds, data);
 		},
 		/* eslint-enable no-param-reassign */
 		getId(): string
@@ -201,7 +218,7 @@ export const TodoEditorBlocksCalendar = {
 		},
 		getPlanner(): Planner
 		{
-			if (this.plannerInstance === null)
+			if (!this.plannerInstance)
 			{
 				this.plannerInstance = new Planner({
 					wrap: this.$refs.plannerContainer,
@@ -502,11 +519,12 @@ export const TodoEditorBlocksCalendar = {
 		getExecutedData(): Object
 		{
 			const { duration, from, location, sectionId } = this;
+			const microsecondsInSecond = 1000;
 
 			return {
-				from,
-				to: from + duration,
-				duration,
+				from: Timezone.UserTime.toBrowser(from / microsecondsInSecond),
+				to: Timezone.UserTime.toBrowser((from + duration) / microsecondsInSecond),
+				duration: duration / microsecondsInSecond,
 				selectedUserIds: [...this.getSelectedUserIds()],
 				sectionId,
 				location,
@@ -604,6 +622,8 @@ export const TodoEditorBlocksCalendar = {
 
 	created()
 	{
+		this.plannerInstance = null;
+
 		this.$watch(
 			'ownerId',
 			(newOwnerId: number, oldOwnerId: number) => {

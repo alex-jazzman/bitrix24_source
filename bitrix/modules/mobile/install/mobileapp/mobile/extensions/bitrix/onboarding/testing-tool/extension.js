@@ -13,7 +13,6 @@ jn.define('onboarding/testing-tool', (require, exports, module) => {
 
 	const TAB_CASES_MAP = {
 		tasks: [
-			RegisteredCaseId.ON_EMPTY_TASK_LIST,
 			RegisteredCaseId.MORE_THAN_THREE_TASKS,
 			RegisteredCaseId.MORE_THAN_SIX_TASKS,
 			RegisteredCaseId.SUPPOSEDLY_COMPLETED_TASKS,
@@ -201,10 +200,6 @@ jn.define('onboarding/testing-tool', (require, exports, module) => {
 		get #cases()
 		{
 			return [
-				{
-					id: RegisteredCaseId.ON_EMPTY_TASK_LIST,
-					title: `[Задачи]: ${RegisteredCaseId.ON_EMPTY_TASK_LIST}`,
-				},
 				{
 					id: RegisteredCaseId.MORE_THAN_THREE_TASKS,
 					title: `[Задачи]: ${RegisteredCaseId.MORE_THAN_THREE_TASKS}`,

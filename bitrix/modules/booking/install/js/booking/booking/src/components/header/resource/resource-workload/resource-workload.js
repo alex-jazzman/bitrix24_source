@@ -152,6 +152,7 @@ export const ResourceWorkload = {
 				text: this.loc('BOOKING_AHA_RESOURCE_WORKLOAD_TEXT'),
 				article: HelpDesk.AhaResourceWorkload,
 				target: this.$refs.container,
+				isPulsarTransparent: true,
 			});
 
 			ahaMoments.setShown(AhaMoment.ResourceWorkload);

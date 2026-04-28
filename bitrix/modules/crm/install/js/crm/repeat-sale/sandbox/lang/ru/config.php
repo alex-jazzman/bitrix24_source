@@ -1,0 +1,21 @@
+<?php
+$MESS['CRM_REPEAT_SALE_SANDBOX_PROMPT_PLACEHOLDER'] = 'Напиши сюда промпт для генерации сценария повторных продаж';
+$MESS['CRM_REPEAT_SALE_SANDBOX_SEGMENT_LABEL'] = 'Выбор сегмента повторных продаж';
+$MESS['CRM_REPEAT_SALE_SANDBOX_DATE'] = 'Дата';
+$MESS['CRM_REPEAT_SALE_SANDBOX_DATE_PERIOD'] = 'Период';
+$MESS['CRM_REPEAT_SALE_SANDBOX_DATE_PERIOD_FROM'] = 'От';
+$MESS['CRM_REPEAT_SALE_SANDBOX_DATE_PERIOD_TO'] = 'До';
+$MESS['CRM_REPEAT_SALE_SANDBOX_DEAL_LABEL'] = 'Выбор сделки';
+$MESS['CRM_REPEAT_SALE_SANDBOX_CLIENT_LABEL'] = 'Выбор клиента';
+$MESS['CRM_REPEAT_SALE_SANDBOX_PROMPT_LABEL'] = 'Промпт';
+$MESS['CRM_REPEAT_SALE_SANDBOX_AI_ANSWER_LABEL'] = 'Ответ AI';
+$MESS['CRM_REPEAT_SALE_SANDBOX_GET_MARKERS'] = 'Получить Json структуру запроса в AI';
+$MESS['CRM_REPEAT_SALE_SANDBOX_GET_MARKERS_VALIDATE_ERROR'] = 'Не заполнены обязательные поля';
+$MESS['CRM_REPEAT_SALE_SANDBOX_HIDE'] = 'Скрыть';
+$MESS['CRM_REPEAT_SALE_SANDBOX_ERROR'] = 'Что-то пошло не так. Попробуйте снова';
+$MESS['CRM_REPEAT_SALE_SANDBOX_IS_SUITABLE_ITEM_CHECK'] = 'Проверить сделку';
+$MESS['CRM_REPEAT_SALE_SANDBOX_IS_SUITABLE_ITEM'] = 'Элемент подходит под сегмент: #SEGMENT_NAME#';
+$MESS['CRM_REPEAT_SALE_SANDBOX_IS_NOT_SUITABLE_ITEM'] = 'Элемент не подходит под сегмент: #SEGMENT_NAME#';
+$MESS['CRM_REPEAT_SALE_SANDBOX_AI_SEND'] = 'Отправить запрос в AI';
+$MESS['CRM_REPEAT_SALE_SANDBOX_PERIOD_CHECK'] = 'Найти сделки за период';
+$MESS['CRM_REPEAT_SALE_SANDBOX_PERIOD_CHECK_INFO'] = 'Стоит учитывать, что здесь подходящие сделки за период показаны в логической изоляции от других сделок, т.е. не учитываются кейсы, когда, к примеру, период 3 дня и в первый день может быть создана повторная продажа, которая в реальности не даст создать повторную сделку для этого же клиента во второй день (если сделку первого дня не закроют конечно к этому времени). Дак вот, сейчас такое не учитывается и в результатах для одного и того же клиента могут быть показаны несколько сделок.';

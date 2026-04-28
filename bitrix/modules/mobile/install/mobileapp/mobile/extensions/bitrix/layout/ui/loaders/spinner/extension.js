@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/loaders/spinner', (require, exports, module) => {
 	const { mergeImmutable } = require('utils/object');
+	const { PropTypes } = require('utils/validation');
 	const { SpinnerDesign } = require('layout/ui/loaders/spinner/src/design-enum');
 
 	/**

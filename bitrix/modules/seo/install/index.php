@@ -71,17 +71,17 @@ class seo extends CModule
 			$eventManager->registerEventHandler("fileman", "OnBeforeHTMLEditorScriptRuns", "seo", "CSeoEventHandlers", "OnBeforeHTMLEditorScriptRuns");
 		}
 
-		$eventManager->registerEventHandler("iblock", "OnAfterIBlockSectionAdd", "seo", "\\Bitrix\\Seo\\SitemapIblock", "addSection");
-		$eventManager->registerEventHandler("iblock", "OnAfterIBlockElementAdd", "seo", "\\Bitrix\\Seo\\SitemapIblock", "addElement");
+		$eventManager->registerEventHandler("iblock", "OnAfterIBlockSectionAdd", "seo", \Bitrix\Seo\Sitemap\Source\Iblock::class, "addSection");
+		$eventManager->registerEventHandler("iblock", "OnAfterIBlockElementAdd", "seo", \Bitrix\Seo\Sitemap\Source\Iblock::class, "addElement");
 
-		$eventManager->registerEventHandler("iblock", "OnAfterIBlockSectionDelete", "seo", "\\Bitrix\\Seo\\Sitemap\\Source\\Iblock", "deleteSection");
-		$eventManager->registerEventHandler("iblock", "OnAfterIBlockElementDelete", "seo", "\\Bitrix\\Seo\\Sitemap\\Source\\Iblock", "deleteElement");
-		$eventManager->registerEventHandler("iblock", "OnAfterIBlockSectionUpdate", "seo", "\\Bitrix\\Seo\\Sitemap\\Source\\Iblock", "updateSection");
-		$eventManager->registerEventHandler("iblock", "OnAfterIBlockElementUpdate", "seo", "\\Bitrix\\Seo\\Sitemap\\Source\\Iblock", "updateElement");
+		$eventManager->registerEventHandler("iblock", "OnAfterIBlockSectionDelete", "seo", \Bitrix\Seo\Sitemap\Source\Iblock::class, "deleteSection");
+		$eventManager->registerEventHandler("iblock", "OnAfterIBlockElementDelete", "seo", \Bitrix\Seo\Sitemap\Source\Iblock::class, "deleteElement");
+		$eventManager->registerEventHandler("iblock", "OnAfterIBlockSectionUpdate", "seo", \Bitrix\Seo\Sitemap\Source\Iblock::class, "updateSection");
+		$eventManager->registerEventHandler("iblock", "OnAfterIBlockElementUpdate", "seo", \Bitrix\Seo\Sitemap\Source\Iblock::class, "updateElement");
 
-		$eventManager->registerEventHandler("forum", "onAfterTopicAdd", "seo", "\\Bitrix\\Seo\\Sitemap\\Source\\Forum", "addTopic");
-		$eventManager->registerEventHandler("forum", "onAfterTopicUpdate", "seo", "\\Bitrix\\Seo\\Sitemap\\Source\\Forum", "updateTopic");
-		$eventManager->registerEventHandler("forum", "onAfterTopicDelete", "seo", "\\Bitrix\\Seo\\Sitemap\\Source\\Forum", "deleteTopic");
+		$eventManager->registerEventHandler("forum", "onAfterTopicAdd", "seo", \Bitrix\Seo\Sitemap\Source\Forum::class, "addTopic");
+		$eventManager->registerEventHandler("forum", "onAfterTopicUpdate", "seo", \Bitrix\Seo\Sitemap\Source\Forum::class, "updateTopic");
+		$eventManager->registerEventHandler("forum", "onAfterTopicDelete", "seo", \Bitrix\Seo\Sitemap\Source\Forum::class, "deleteTopic");
 
 		$eventManager->registerEventHandler("main", "OnAdminIBlockElementEdit", "seo", "\\Bitrix\\Seo\\AdvTabEngine", "eventHandler");
 		$eventManager->registerEventHandler("main", "OnBeforeProlog", "seo", "\\Bitrix\\Seo\\AdvSession", "checkSession");

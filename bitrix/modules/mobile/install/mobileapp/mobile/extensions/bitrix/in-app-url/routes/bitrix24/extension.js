@@ -3,8 +3,8 @@
  */
 jn.define('in-app-url/routes/bitrix24', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { requireLazy } = require('require-lazy');
 	const { ComponentOpener } = require('whats-new/ui-manager/component-opener');
+	const { requireLazy } = require('require-lazy');
 
 	module.exports = function(inAppUrl) {
 		inAppUrl.register('/whats-new/', (params, { context }) => {
@@ -12,38 +12,11 @@ jn.define('in-app-url/routes/bitrix24', (require, exports, module) => {
 		}).name('/bitrix24/whats-new');
 
 		inAppUrl.register('/bitrix24/profile', (params, { context }) => {
-			const {
-				canEditProfile = false,
-			} = context;
-
 			void requireLazy('user-profile')
-				.then(async ({ UserProfile, fetchNewProfileFeatureEnabled }) => {
-					const isNewProfileFeatureEnabled = await fetchNewProfileFeatureEnabled();
-					if (isNewProfileFeatureEnabled)
-					{
-						void UserProfile.open({
-							openInComponent: true,
-							analyticsSection: 'in_app_url_profile',
-						});
-
-						return;
-					}
-
-					PageManager.openComponent('JSStackComponent', {
-						componentCode: 'user.profile',
-						// eslint-disable-next-line no-undef
-						scriptPath: availableComponents['user.profile'].publicUrl,
-						params: {
-							userId: env.userId,
-							mode: canEditProfile ? 'edit' : 'view',
-							items: [],
-						},
-						rootWidget: {
-							name: canEditProfile ? 'form' : 'list',
-							settings: {
-								objectName: 'form',
-							},
-						},
+				.then(async ({ UserProfile }) => {
+					await UserProfile?.open({
+						openInComponent: true,
+						analyticsSection: 'in_app_url_profile',
 					});
 				})
 				.catch(console.error);

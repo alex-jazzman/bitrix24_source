@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Bizproc\BaseType\Date;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -13,13 +16,17 @@ return [
 		'main.core.events',
 		'bizproc.rag-selector',
 		'ui.entity-selector',
-		'main.core',
 		'ui.uploader.tile-widget',
 		'ui.uploader.core',
+		'main.core',
+		'ui.date-picker',
 		'ui.alerts',
 		'ui.sidepanel-content',
 		'ui.forms',
 		'ui.layout-form',
 	],
 	'skip_core' => false,
+	'settings' => [
+		'timezones' => \Bitrix\Main\Loader::includeModule('bizproc') ? Date::getZones() : [],
+	],
 ];

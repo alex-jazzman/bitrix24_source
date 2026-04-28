@@ -117,6 +117,10 @@ export const ChatDialog = {
 		{
 			return this.$store.getters['messages/pin/getPinned'](this.dialog.chatId);
 		},
+		chatCounter(): number
+		{
+			return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
+		},
 		isOpened(): boolean
 		{
 			const openedDialogId = this.$store.getters['application/getLayout'].entityId;
@@ -602,7 +606,7 @@ export const ChatDialog = {
 			}
 
 			this.getScrollManager().scrollButtonClicked = true;
-			if (this.dialog.counter === 0)
+			if (this.chatCounter === 0)
 			{
 				this.showLoadingBar();
 				await this.getMessageService().loadInitialMessages();

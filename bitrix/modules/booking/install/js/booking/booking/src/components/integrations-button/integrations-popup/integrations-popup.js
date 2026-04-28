@@ -113,13 +113,13 @@ export const IntegrationsPopup = {
 		},
 		description(): string
 		{
-			return this.loc(
-				this.integrations.some(
-					(integration) => integration.code === IntegrationMapItemCode.YANDEX,
-				)
-					? 'BOOKING_INTEGRATIONS_POPUP_DESCRIPTION_WITH_YANDEX'
-					: 'BOOKING_INTEGRATIONS_POPUP_DESCRIPTION_MSGVER_1',
+			const hasYandexMap = this.integrations.some(
+				(integration) => integration.code === IntegrationMapItemCode.YANDEX,
 			);
+
+			return this.loc(hasYandexMap
+				? 'BOOKING_INTEGRATIONS_POPUP_DESCRIPTION_WITH_YANDEX_MSGVER_1'
+				: 'BOOKING_INTEGRATIONS_POPUP_DESCRIPTION_MSGVER_1').replaceAll('[NBSP/]', '\u00A0');
 		},
 	},
 	async mounted(): void

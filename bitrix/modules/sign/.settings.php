@@ -2,6 +2,8 @@
 
 use Bitrix\Sign\Access\Model\UserModelRepository;
 use Bitrix\Sign\Access\Service\AccessService;
+use Bitrix\Sign\Debug\Logger;
+use Bitrix\Sign\Serializer\ItemPropertyJsonSerializer;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Config;
 use Bitrix\Sign\Connector;
@@ -18,9 +20,9 @@ return [
 				'\\Bitrix\\Sign\\Controller' => 'api',
 				'\\Bitrix\\Sign\\Controllers\\V1' => 'api_v1',
 			],
-			'defaultNamespace' => '\\Bitrix\\Sign\\Controller'
+			'defaultNamespace' => '\\Bitrix\\Sign\\Controller',
 		],
-		'readonly' => true
+		'readonly' => true,
 	],
 	'ui.uploader' => [
 		'value' => [
@@ -259,19 +261,22 @@ return [
 				'className' => Service\Sign\B2e\KanbanCategoryService::class,
 			],
 			'sign.service.integration.crm.b2e.document' => [
-				'className' => Service\Integration\Crm\B2eDocumentService::class
+				'className' => Service\Integration\Crm\B2eDocumentService::class,
+			],
+			'sign.service.integration.crm.fieldSelector' => [
+				'className' => Service\Integration\Crm\FieldSelectorService::class,
 			],
 			'sign.service.integration.im' => [
-				'className' => Service\Integration\Im\ImService::class
+				'className' => Service\Integration\Im\ImService::class,
 			],
 			'sign.service.hrbotmessage' => [
-				'className' => Service\HrBotMessageService::class
+				'className' => Service\HrBotMessageService::class,
 			],
 			'sign.service.integration.im.groupChat' => [
-				'className' => Service\Integration\Im\GroupChatService::class
+				'className' => Service\Integration\Im\GroupChatService::class,
 			],
 			'sign.service.sign.documentChat.chatTypeConverter' => [
-				'className' => Service\Sign\DocumentChat\ChatTypeConverterService::class
+				'className' => Service\Sign\DocumentChat\ChatTypeConverterService::class,
 			],
 			'sign.service.integration.crm.events' => [
 				'className' => \Bitrix\Sign\Service\Integration\Crm\EventHandlerService::class,
@@ -289,7 +294,7 @@ return [
 				'className' => Service\ApiService::class,
 				'constructorParams' => static function() {
 					return [
-						'apiEndpoint' => Config\Storage::instance()->getApiEndpoint()
+						'apiEndpoint' => Config\Storage::instance()->getApiEndpoint(),
 					];
 				},
 			],
@@ -298,7 +303,7 @@ return [
 				'constructorParams' => static function() {
 					return [
 						'api' => Service\Container::instance()->getApiService(),
-						'serializer' => new \Bitrix\Sign\Serializer\ItemPropertyJsonSerializer
+						'serializer' => new ItemPropertyJsonSerializer(),
 					];
 				},
 			],
@@ -307,7 +312,7 @@ return [
 				'constructorParams' => static function() {
 					return [
 						'api' => Service\Container::instance()->getApiService(),
-						'serializer' => new \Bitrix\Sign\Serializer\ItemPropertyJsonSerializer
+						'serializer' => new ItemPropertyJsonSerializer(),
 					];
 				},
 			],
@@ -330,12 +335,20 @@ return [
 				'className' => Repository\BlockRepository::class,
 				'constructorParams' => static function() {
 					return [
-						'serializer' => new \Bitrix\Sign\Serializer\ItemPropertyJsonSerializer(),
+						'serializer' => new ItemPropertyJsonSerializer(),
 					];
 				},
 			],
 			'sign.service.api.document.page' => [
 				'className' => Service\Api\Document\PageService::class,
+				'constructorParams' => static function() {
+					return [
+						'api' => Service\Container::instance()->getApiService(),
+					];
+				},
+			],
+			'sign.service.api.document.placeholder' => [
+				'className' => Service\Api\Document\ApiDocumentPlaceholderService::class,
 				'constructorParams' => static function() {
 					return [
 						'api' => Service\Container::instance()->getApiService(),
@@ -355,7 +368,7 @@ return [
 				'constructorParams' => static function() {
 					return [
 						'api' => Service\Container::instance()->getApiService(),
-						'serializer' => new \Bitrix\Sign\Serializer\ItemPropertyJsonSerializer
+						'serializer' => new ItemPropertyJsonSerializer(),
 					];
 				},
 			],
@@ -364,7 +377,7 @@ return [
 				'constructorParams' => static function() {
 					return [
 						'api' => Service\Container::instance()->getApiService(),
-						'serializer' => new \Bitrix\Sign\Serializer\ItemPropertyJsonSerializer
+						'serializer' => new ItemPropertyJsonSerializer(),
 					];
 				},
 			],
@@ -373,14 +386,29 @@ return [
 				'constructorParams' => static function() {
 					return [
 						'api' => Service\Container::instance()->getApiService(),
-						'serializer' => new \Bitrix\Sign\Serializer\ItemPropertyJsonSerializer
+						'serializer' => new ItemPropertyJsonSerializer(),
 					];
 				},
 			],
 			'sign.service.api.external-sign-provider' => [
 				'className' => Service\Api\B2e\ExternalSignProviderService::class,
 				'constructorParams' => static fn() => [
-						'api' => Service\Container::instance()->getApiService(),
+					'api' => Service\Container::instance()->getApiService(),
+				],
+			],
+			'sign.service.document.field' => [
+				'className' => Service\Document\FieldService::class,
+				'constructorParams' => static fn() => [
+					'profileProvider' => Service\Container::instance()->getServiceProfileProvider(),
+					'memberDynamicFieldProvider' => Service\Container::instance()->getMemberDynamicFieldProvider(),
+					'crmFieldSelectorService' => Service\Container::instance()->getCrmFieldSelectorService(),
+					'fieldAccessService' => Service\Container::instance()->getDocumentFieldAccessService(),
+				],
+			],
+			'sign.service.document.fieldAccess' => [
+				'className' => Service\Document\FieldAccessService::class,
+				'constructorParams' => static fn() => [
+					'accessControllerFactory' => Service\Container::instance()->getAccessControllerFactory(),
 				],
 			],
 			'sign.service.sign.blank.file' => [
@@ -532,7 +560,7 @@ return [
 			'sign.access.service.access' => [
 				'className' => AccessService::class,
 			],
-			'sign.service.document.group' => [
+'sign.service.document.group' => [
 				'className' => GroupService::class,
 			],
 			'sign.repository.required_field' => [
@@ -619,6 +647,21 @@ return [
 			'sign.service.preset.templates' => [
 				'className' => Service\Sign\PresetTemplatesService::class,
 			],
+			'sign.service.placeholder.fieldAlias' => [
+				'className' => Service\Placeholder\FieldAlias\FieldAliasService::class,
+			],
+			'sign.service.placeholder.aliasRoleResolver' => [
+				'className' => Service\Placeholder\FieldAlias\AliasRoleResolver::class,
+			],
+			'sign.debug.logger' => [
+				'constructor' => static fn() => Logger::getInstance(),
+			],
+			'sign.service.placeholder.block' => [
+				'className' => Service\Sign\PlaceholderBlockService::class,
+				'constructorParams' => static fn() => [
+					'blankService' => Service\Container::instance()->getSignBlankService(),
+				],
+			],
 			'sign.repository.access.userModel' => [
 				'className' => UserModelRepository::class,
 			],
@@ -652,12 +695,24 @@ return [
 			'sign.service.provider.visibility' => [
 				'className' => Service\Providers\ProviderVisibilityService::class,
 			],
+			'sign.service.document.placeholder.placeholderCache' => [
+				'className' => Service\Document\Placeholder\PlaceholderCacheService::class,
+				'constructorParams' => static fn() => [
+					'cacheManager' => Service\Container::instance()->getCacheManager(),
+				],
+			],
+			'sign.service.document.placeholder.placeholderCollector' => [
+				'className' => Service\Document\Placeholder\PlaceholderCollectorService::class,
+			],
+			'sign.repository.grid.placeholder' => [
+				'className' => Repository\Grid\PlaceholderRepository::class,
+			],
 			'sign.service.api.b2e.company' => [
 				'className' => Service\Api\B2e\CompanyService::class,
 				'constructorParams' => static function() {
 					return [
 						'api' => Service\Container::instance()->getApiService(),
-						'serializer' => new \Bitrix\Sign\Serializer\ItemPropertyJsonSerializer(),
+						'serializer' => new ItemPropertyJsonSerializer(),
 					];
 				},
 			],
@@ -669,9 +724,9 @@ return [
 					];
 				},
 			],
-		]
+		],
 	],
-	'service.new.ui' => [ 'value' => true,],
+	'service.new.ui' => ['value' => true],
 	'ui.entity-selector' => [
 		'value' => [
 			'entities' => [

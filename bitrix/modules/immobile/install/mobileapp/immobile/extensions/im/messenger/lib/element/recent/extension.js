@@ -7,6 +7,7 @@ jn.define('im/messenger/lib/element/recent', (require, exports, module) => {
 	const { CopilotItem } = require('im/messenger/lib/element/recent/item/copilot');
 	const { CallItem } = require('im/messenger/lib/element/recent/item/call');
 	const { CollabItem } = require('im/messenger/lib/element/recent/item/chat/collab');
+	const { OpenlineItem } = require('im/messenger/lib/element/recent/item/openline');
 	const { AnnouncementItem } = require('im/messenger/lib/element/recent/item/chat/announcement');
 	const { ExtranetItem } = require('im/messenger/lib/element/recent/item/chat/extranet');
 	const { Support24NotifierItem } = require('im/messenger/lib/element/recent/item/chat/support-24-notifier');
@@ -29,6 +30,7 @@ jn.define('im/messenger/lib/element/recent', (require, exports, module) => {
 		CopilotItem,
 		CallItem,
 		CollabItem,
+		OpenlineItem,
 		AnnouncementItem,
 		ExtranetItem,
 		Support24NotifierItem,

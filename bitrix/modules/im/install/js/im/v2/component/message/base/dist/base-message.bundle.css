@@ -129,6 +129,10 @@
 	box-shadow: none;
 }
 
+.bx-im-message-base__wrap.--system .bx-im-message-base__body {
+	background-color: rgba(var(--im-color-palette-white-base-rgb), 0.3);
+}
+
 .bx-im-message-base__wrap.--has-error .bx-im-message-base__body {
 	background-color: var(--im-message-base__background-color_error);
 }
@@ -142,6 +146,9 @@
 /* body border radius */
 .bx-im-message-base__body {
 	border-radius: 6px
+}
+.bx-im-message-base__wrap.--system .bx-im-message-base__body {
+	border-radius: var(--im-border-radius-md);
 }
 
 /* bigger top radius for first in batch */

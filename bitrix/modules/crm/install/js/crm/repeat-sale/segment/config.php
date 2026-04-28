@@ -22,6 +22,7 @@ return [
 		'ui.info-helper',
 		'ui.notification',
 		'ui.promo-video-popup',
+		'crm.ai.name-service',
 		'ui.switcher',
 		'ui.text-editor',
 		'ui.buttons',

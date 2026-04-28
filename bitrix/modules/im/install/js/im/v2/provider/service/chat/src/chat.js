@@ -31,6 +31,11 @@ export class ChatService
 		this.#initServices();
 	}
 
+	createLoadService(): LoadService
+	{
+		return new LoadService();
+	}
+
 	// region 'load'
 	loadChat(dialogId: string): Promise
 	{
@@ -77,6 +82,18 @@ export class ChatService
 	createChat(chatConfig): Promise<{ newDialogId: string, newChatId: number }>
 	{
 		return this.#createService.createChat(chatConfig);
+	}
+
+	extendToGroupChat(chatConfig): Promise<{ newDialogId: string, newChatId: number }>
+	{
+		const config = {
+			title: null,
+			description: null,
+			isPrivate: true,
+			...chatConfig,
+		};
+
+		return this.#createService.createChat(config);
 	}
 
 	createCollab(collabConfig): Promise<{ newDialogId: string, newChatId: number }>
@@ -243,7 +260,7 @@ export class ChatService
 
 	#initServices()
 	{
-		this.#loadService = new LoadService();
+		this.#loadService = this.createLoadService();
 		this.#createService = new CreateService();
 		this.#updateService = new UpdateService();
 		this.#renameService = new RenameService();

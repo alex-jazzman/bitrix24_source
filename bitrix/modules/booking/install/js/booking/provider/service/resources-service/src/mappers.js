@@ -1,7 +1,7 @@
-import { Utils } from 'booking.utils';
+import { Utils } from 'booking.lib.utils';
 import { ResourceEntityType } from 'booking.const';
-import type { IntegrationCalendarType, ResourceModel, ResourceModelWithFile } from 'booking.model.resources';
-import type { ResourceDto, ResourceDtoWithFile } from './types';
+import type { IntegrationCalendarType, ResourceModel, ResourceModelWithFile, ResourceSkuRelationsModel } from 'booking.model.resources';
+import type { ResourceDto, ResourceDtoWithFile, ResourceSkuRelationsDto } from './types';
 
 export function mapDtoToModel(resourceDto: ResourceDto | ResourceDtoWithFile): ResourceModel
 {
@@ -26,6 +26,8 @@ export function mapDtoToModel(resourceDto: ResourceDto | ResourceDtoWithFile): R
 		createdAt: resourceDto.createdAt,
 		updatedAt: resourceDto.updatedAt,
 		deletedAt: resourceDto.deletedAt,
+
+		senderCode: resourceDto.senderCode,
 
 		// info
 		isInfoNotificationOn: resourceDto.isInfoNotificationOn,
@@ -86,6 +88,8 @@ export async function mapModelToDto(resource: ResourceModelWithFile): ResourceDt
 		createdAt: null,
 		updatedAt: null,
 
+		senderCode: resource.senderCode,
+
 		// info
 		isInfoNotificationOn: resource.isInfoNotificationOn,
 		templateTypeInfo: resource.templateTypeInfo,
@@ -132,4 +136,35 @@ function checkEntityCalendar(entities: IntegrationCalendarType): Array
 {
 	// eslint-disable-next-line max-len
 	return entities.filter((entity) => !(entity.entityType === ResourceEntityType.Calendar && entity.data?.userIds.length === 0));
+}
+
+export function mapResourceSkuRelationsDtoToModel(resource: ResourceSkuRelationsDto): ResourceSkuRelationsModel
+{
+	return {
+		id: resource.id,
+		typeId: resource.type?.id,
+		name: resource.name,
+		skus: resource.skus,
+		avatar: resource?.avatar ? {
+			id: resource.avatar.id,
+			url: resource.avatar.url,
+		} : null,
+	};
+}
+
+// eslint-disable-next-line max-len
+export function mapResourceSkuRelationsModelToDto(resource: ResourceSkuRelationsModel | ResourceModel): ResourceSkuRelationsDto
+{
+	return {
+		id: resource.id,
+		type: {
+			id: resource.typeId,
+		},
+		name: resource.name,
+		skus: resource.skus,
+		avatar: resource?.avatar ? {
+			id: resource.avatar.id,
+			url: resource.avatar.url,
+		} : null,
+	};
 }

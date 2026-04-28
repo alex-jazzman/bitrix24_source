@@ -120,7 +120,8 @@ CREATE TABLE b_biconnector_superset_user
 	CLIENT_ID VARCHAR (32) NOT NULL,
 	PERMISSION_HASH VARCHAR (32) NULL,
 	UPDATED CHAR(1) NOT NULL DEFAULT 'Y',
-	PRIMARY KEY pk_b_biconnector_superset_user(ID)
+	PRIMARY KEY pk_b_biconnector_superset_user(ID),
+	INDEX ix_b_biconnector_superset_user_user_id (USER_ID)
 );
 
 CREATE TABLE b_biconnector_superset_tag

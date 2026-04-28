@@ -1,17 +1,10 @@
 /**
- * @module im/messenger/const/counter
+ * @module im/messenger/const/src/counter
  */
-jn.define('im/messenger/const/counter', (require, exports, module) => {
-	const CounterType = Object.freeze({
-		chat: 'chat',
-		comment: 'comment',
-		copilot: 'copilot',
-		openline: 'openline',
-		collab: 'collab',
-		tasksTask: 'tasksTask',
-	});
+jn.define('im/messenger/const/src/counter', (require, exports, module) => {
+	const COUNTER_OVERFLOW_LIMIT = 100;
 
 	module.exports = {
-		CounterType,
+		COUNTER_OVERFLOW_LIMIT,
 	};
 });

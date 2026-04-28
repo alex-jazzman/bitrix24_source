@@ -63,3 +63,47 @@
 .ui-typography-token-parentheses {
 	color: #af9a9a;
 }
+
+.ui-typography-code-copy-button {
+	display: flex;
+	top: 12px;
+	right: 2px;
+	opacity: 0;
+	pointer-events: none;
+	appearance: none;
+	background-color: #fdf6e3;
+	position: absolute;
+	align-items: center;
+	height: 29px;
+	border: none;
+	cursor: pointer;
+	transition: opacity 0.3s ease;
+}
+
+.ui-typography-code-copy-button.--visible {
+	opacity: 1;
+	transition: opacity 0.3s ease;
+	transition-delay: 500ms;
+	pointer-events: auto;
+}
+
+.ui-typography-code-copy-button.--copied .ui-typography-code-copy-icon.--o-copied {
+	display: block;
+}
+
+.ui-typography-code-copy-button.--copied .ui-typography-code-copy-icon.--o-copy {
+	display: none;
+}
+
+.ui-typography-code-copy-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.ui-typography-code-copy-icon:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.ui-typography-code-copy-icon.--o-copied {
+	display: none;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-success);
+}

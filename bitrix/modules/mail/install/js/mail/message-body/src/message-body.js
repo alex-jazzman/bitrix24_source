@@ -243,14 +243,23 @@ export class MessageBody
 			const STYLES_MESSAGE_TYPE = "${stylesMessageType}";
 			const QUOTE_UNFOLDED_CLASS = "${quoteUnfoldedClass}";
 
+			let lastHeight = 0;
+
 			function sendHeight()
 			{
-				const body = document.body;
-				const html = document.documentElement;
-				const height = Math.max(
-					body.scrollHeight, body.offsetHeight,
-					html.clientHeight, html.scrollHeight, html.offsetHeight
-				);
+				const content = document.body?.firstElementChild;
+				if (!content)
+				{
+					return;
+				}
+
+				const height = content.offsetHeight;
+				if (height === lastHeight)
+				{
+					return;
+				}
+
+				lastHeight = height;
 				parent.postMessage({ type: MESSAGE_TYPE, height: height, id: MESSAGE_ID }, '*');
 			}
 
@@ -288,13 +297,22 @@ export class MessageBody
 				sendHeight();
 			});
 
-			if (document.body)
+			function observeContent()
 			{
-				resizeObserver.observe(document.body);
+				const content = document.body?.firstElementChild;
+				if (content)
+				{
+					resizeObserver.observe(content);
+				}
+			}
+
+			if (document.body?.firstElementChild)
+			{
+				observeContent();
 			}
 			else
 			{
-				window.addEventListener('DOMContentLoaded', () => resizeObserver.observe(document.body));
+				window.addEventListener('DOMContentLoaded', observeContent);
 			}
 		`;
 	}

@@ -1,7 +1,7 @@
-import { MenuManager } from 'main.popup';
+import { Menu, MenuManager } from 'main.popup';
 import { BIcon as Icon, Outline } from 'ui.icon-set.api.vue';
 
-import { Utils } from 'booking.utils';
+import { Utils } from 'booking.lib.utils';
 import { Model } from 'booking.const';
 import { UiResourceWizardItem } from 'booking.component.ui-resource-wizard-item';
 import { mainPageService } from 'booking.provider.service.main-page-service';
@@ -15,24 +15,24 @@ export const YandexIntegrationWizardTimeZone = {
 		UiResourceWizardItem,
 		Icon,
 	},
-	setup(): Object
+	inject: ['menuTimeZoneContainerClass'],
+	setup(): { Outline: typeof Outline }
 	{
-		const popupId = 'booking-yiw-timezone-menu';
-		const menuPopup: Menu | null = null;
-
 		return {
 			Outline,
-			menuPopup,
-			popupId,
 		};
 	},
-	data(): Object
+	data(): { timezones: any[] }
 	{
 		return {
 			timezones: [],
 		};
 	},
 	computed: {
+		popupId(): string
+		{
+			return 'booking-yiw-timezone-menu';
+		},
 		timezoneId: {
 			get(): string
 			{
@@ -78,7 +78,7 @@ export const YandexIntegrationWizardTimeZone = {
 					offsetLeft: 40,
 					angle: true,
 					cacheable: true,
-					targetContainer: document.querySelector('div.yandex-wizard__wrapper'),
+					targetContainer: document.querySelector(`.${this.menuTimeZoneContainerClass}`),
 					events: {
 						onClose: () => this.destroy(),
 						onDestroy: () => this.destroy(),

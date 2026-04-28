@@ -24,6 +24,7 @@ return [
 		'ui.info-helper',
 		'ui.feedback.form',
 		'disk.promo-boost',
+		'disk.popup-limits',
 	],
 	'skip_core' => false,
 	'settings' => [

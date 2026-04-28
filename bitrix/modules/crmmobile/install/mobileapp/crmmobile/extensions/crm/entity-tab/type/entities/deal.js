@@ -7,6 +7,7 @@ jn.define('crm/entity-tab/type/entities/deal', (require, exports, module) => {
 	const { TypeId, TypeName } = require('crm/type');
 	const { Loc } = require('loc');
 	const { Icon } = require('ui-system/blocks/icon');
+	const { UIMenuType } = require('layout/ui/menu');
 
 	/**
 	 * @class Deal
@@ -66,7 +67,7 @@ jn.define('crm/entity-tab/type/entities/deal', (require, exports, module) => {
 		{
 			return [
 				{
-					type: UI.Menu.Types.HELPDESK,
+					type: UIMenuType.HELPDESK,
 					data: {
 						articleCode: '16758628',
 					},

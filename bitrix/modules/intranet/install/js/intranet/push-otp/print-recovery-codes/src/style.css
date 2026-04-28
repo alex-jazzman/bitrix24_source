@@ -1,0 +1,88 @@
+.intranet-otp-codes-print-page {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.intranet-otp-codes-print-page__wrapper {
+	padding: 52px;
+}
+
+.intranet-otp-codes-print-page__grid-item::marker {
+	color: var(--ui-color-base-3);
+}
+
+.intranet-otp-codes-print-page__header {
+	margin-bottom: 20px;
+}
+
+.intranet-otp-codes-print-page__section {
+	margin-bottom: 24px;
+	color: var(--ui-color-base-1);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.intranet-otp-codes-print-page-section__title {
+	font-size: var(--ui-font-size-xl);
+	line-height: 21px;
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.intranet-otp-codes-print-page-section__description {
+	font-size: var(--ui-font-size-lg);
+	line-height: 20px;
+}
+
+.intranet-otp-codes-print-page-section__list {
+	padding-left: 1.5em;
+	margin: 0;
+}
+
+.intranet-otp-codes-print-page-section__list.--sm .ui-text {
+	color: var(--ui-color-base-2);
+	padding-left: 0;
+}
+
+.intranet-otp-codes-print-page__grid {
+	display: grid;
+	grid-template-columns: repeat(4, auto);
+	list-style-position: inside;
+	margin: 0;
+	padding: 14px 12px;
+	gap: 14px 12px;
+}
+
+.intranet-otp-codes-print-page__grid-item {
+	color: var(--ui-color-base-1);
+	margin-left: 22px;
+	list-style-position: outside;
+}
+
+.intranet-otp-codes-print-page__grid-item .ui-text.--sm {
+	--ui-text-sm-font-size: 64px;
+}
+
+.intranet-otp-codes-print-page__grid-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-top: 8px;
+	margin-bottom: 12px;
+}
+
+.intranet-otp-codes-print-page__grid .--ui-alert {
+	--ui-alert-background: var(--ui-color-bg-content-secondary);
+}
+
+.intranet-otp-codes-print-page__button-container {
+	display: flex;
+	justify-content: center;
+}
+
+@media print {
+	body {
+		print-color-adjust: exact;
+	}
+
+	.intranet-otp-codes-print-page__button-container {
+		visibility: hidden;
+	}
+}

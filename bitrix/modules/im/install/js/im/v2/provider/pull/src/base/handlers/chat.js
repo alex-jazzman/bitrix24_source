@@ -4,13 +4,11 @@ import { ChatType, UserRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 import { UserManager } from 'im.v2.lib.user';
 import { CallManager } from 'im.v2.lib.call';
-import { ChannelManager } from 'im.v2.lib.channel';
 import { InputActionListener } from 'im.v2.lib.input-action';
 import { Logger } from 'im.v2.lib.logger';
 import { getChatRoleForUser } from 'im.v2.lib.role-manager';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Notifier } from 'im.v2.lib.notifier';
-import { CounterClearActionsByChatType, CounterClearActionsDefault } from 'im.v2.lib.counter';
 
 import type { Store } from 'ui.vue3.vuex';
 
@@ -27,10 +25,10 @@ import type {
 	ChatConvertParams,
 	ChatDeleteParams,
 	MessagesAutoDeleteDelayParams,
-	Relation,
 } from '../../types/chat';
 import type { RawUser, RawChat } from '../../types/common';
 import type { ImModelChat } from 'im.v2.model';
+import type { Relation } from 'im.v2.const';
 
 export class ChatPullHandler
 {
@@ -126,12 +124,7 @@ export class ChatPullHandler
 			fields: { inited: false },
 		});
 		void this.#store.dispatch('messages/clearChatCollection', { chatId });
-
-		const isChannel = ChannelManager.isChannel(dialogId);
-		if (isChannel)
-		{
-			void this.#store.dispatch('counters/deleteForChannel', { channelChatId: chatId });
-		}
+		void this.#store.dispatch('counters/clearByParentId', { parentChatId: chatId });
 
 		const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
 		if (chatIsOpened)
@@ -219,30 +212,6 @@ export class ChatPullHandler
 		});
 	}
 
-	handleReadAllChats()
-	{
-		Logger.warn('ChatPullHandler: handleReadAllChats');
-		CounterClearActionsDefault.forEach((actionName) => {
-			void this.#store.dispatch(actionName);
-		});
-	}
-
-	handleReadAllChatsByType(params: { type: $Values<typeof ChatType> })
-	{
-		const { type } = params;
-
-		const counterClearActions = CounterClearActionsByChatType[type];
-
-		if (!counterClearActions)
-		{
-			return;
-		}
-
-		counterClearActions.forEach((actionName) => {
-			void this.#store.dispatch(actionName, { type });
-		});
-	}
-
 	handleChatConvert(params: ChatConvertParams)
 	{
 		Logger.warn('ChatPullHandler: handleChatConvert', params);
@@ -296,48 +265,31 @@ export class ChatPullHandler
 	handleChatDelete(params: ChatDeleteParams)
 	{
 		Logger.warn('ChatPullHandler: handleChatDelete', params);
+		const { userId, chatId, dialogId } = params;
 
 		const currentUserId = Core.getUserId();
-		if (params.userId === currentUserId)
+		if (userId === currentUserId)
 		{
 			return;
 		}
 
 		void this.#store.dispatch('chats/update', {
-			dialogId: params.dialogId,
+			dialogId,
 			fields: { inited: false },
 		});
-		void this.#store.dispatch('recent/delete', { id: params.dialogId });
+		void this.#store.dispatch('recent/delete', { dialogId });
+		void this.#store.dispatch('messages/clearChatCollection', { chatId });
 
-		const isCommentChat = params.type === ChatType.comment;
-		if (isCommentChat)
-		{
-			void this.#store.dispatch('counters/deleteForChannel', {
-				channelChatId: params.parentChatId,
-				commentChatId: params.chatId,
-			});
-		}
-
-		const isChannel = ChannelManager.isChannel(params.dialogId);
-		if (isChannel)
-		{
-			void this.#store.dispatch('counters/deleteForChannel', {
-				channelChatId: params.chatId,
-			});
-		}
-
-		void this.#store.dispatch('messages/clearChatCollection', { chatId: params.chatId });
-
-		const chatIsOpened = this.#store.getters['application/isChatOpen'](params.dialogId);
+		const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
 		if (chatIsOpened)
 		{
-			Analytics.getInstance().chatDelete.onChatDeletedNotification(params.dialogId);
+			Analytics.getInstance().chatDelete.onChatDeletedNotification(dialogId);
 			Notifier.chat.onNotFoundError();
 			void LayoutManager.getInstance().clearCurrentLayoutEntityId();
-			void LayoutManager.getInstance().deleteLastOpenedElementById(params.dialogId);
+			void LayoutManager.getInstance().deleteLastOpenedElementById(dialogId);
 		}
 
-		const chatHasCall = CallManager.getInstance().getCurrentCallDialogId() === params.dialogId;
+		const chatHasCall = CallManager.getInstance().getCurrentCallDialogId() === dialogId;
 		if (chatHasCall)
 		{
 			CallManager.getInstance().leaveCurrentCall();

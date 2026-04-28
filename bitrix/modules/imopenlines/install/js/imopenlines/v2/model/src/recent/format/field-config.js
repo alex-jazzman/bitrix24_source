@@ -35,11 +35,6 @@ export const recentFieldsConfig: FieldsConfig = [
 		formatFunction: prepareDraft,
 	},
 	{
-		fieldName: 'unread',
-		targetFieldName: 'unread',
-		checkFunction: Type.isBoolean,
-	},
-	{
 		fieldName: 'pinned',
 		targetFieldName: 'pinned',
 		checkFunction: Type.isBoolean,

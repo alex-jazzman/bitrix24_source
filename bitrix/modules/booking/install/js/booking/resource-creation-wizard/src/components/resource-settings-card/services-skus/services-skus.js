@@ -8,7 +8,7 @@ import { createNamespacedHelpers } from 'ui.vue3.vuex';
 import { EntitySelectorEntity, Model } from 'booking.const';
 import { catalogServiceSkuService } from 'booking.provider.service.catalog-service-sku-service';
 import { SidePanelInstance } from 'booking.lib.side-panel-instance';
-import type { CatalogSkuEntityOptions } from 'booking.model.resource-creation-wizard';
+import type { CatalogSkuEntityOptions } from 'booking.model.sku';
 
 import { TextLayout } from '../text-layout/text-layout';
 import { TitleLayout } from '../title-layout/title-layout';
@@ -40,7 +40,7 @@ export const ServicesSkus = {
 		},
 		catalogSkuEntityOptions(): CatalogSkuEntityOptions
 		{
-			return this.$store.state[Model.ResourceCreationWizard].catalogSkuEntityOptions;
+			return this.$store.state[Model.Sku].catalogSkuEntityOptions;
 		},
 		disabled(): boolean
 		{

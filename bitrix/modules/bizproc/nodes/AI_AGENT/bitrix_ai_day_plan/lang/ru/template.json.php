@@ -8,16 +8,16 @@ $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_DESCRIPTION_1"] = "Этот цифров
 - где нужна реакция или решение в ближайшее время.
 
 Это поможет тратить меньше времени на сбор информации и сразу приступать к действиям.";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_1"] = "Ошибка получения чатов";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_10"] = "Ошибка сводного анализа";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_2"] = "Ошибка получения итогов";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_1"] = "Не удалось получить чаты сотрудника";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_10"] = "Не удалось выполнить сводный анализ";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_2"] = "Не удалось получить итоги встреч";
 $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_3"] = "Есть исходные данные";
 $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_4"] = "Есть задачи";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_5"] = "Ошибка анализа в чатов в задачах";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_5"] = "Не удалось проанализировать чаты задач";
 $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_6"] = "Есть чаты";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_7"] = "Ошибка анализа чатов";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_8"] = "Есть итоги Bitrix Follow-up";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_9"] = "Ошибка анализа Bitrix Follow-up";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_7"] = "Не удалось проанализировать чаты";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_8"] = "Есть итоги BitrixGPT Follow-up";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_EDITORCOMMENT_9"] = "Не удалось выполнить анализ BitrixGPT Follow-up";
 $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGESITE_1"] = "Не удалось создать хранилище для дат запуска рабочего дня: {=A7210_5668_2147_6675:CreateErrorText}";
 $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_1"] = "Привет!
 
@@ -26,15 +26,15 @@ $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_1"] = "Привет!
 Что я делаю:
 1. При запуске рабочего дня я анализирую ваш календарь, задачи и рабочие чаты.
 2. Формирую для вас план на день, выделяя самые важные задачи и места, где нужны ваши решения.";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_2"] = "Ошибка подготовки плана дня при сводном AI анализе: {=A5681_5166_8586_9567:errorMessage}";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_2"] = "Не удалось подготовить план дня при сводном AI-анализе: {=A5681_5166_8586_9567:errorMessage}";
 $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_3"] = "Я пока не умею отвечать на такие вопросы, но я учусь, чтобы стать лучше.";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_4"] = "Ошибка подготовки плана дня при получении информации из групповых чатов: {=A3338_7972_1098_1418:ErrorMessage}";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_5"] = "Данных для создания плана дня нет, начинайте пользоваться Битрикс24 и я помогу вам сосредоточится на результате!";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_6"] = "Ошибка подготовки плана дня при получении итогов Bitrix Follow-Up: {=A1848_1842_8388_6025:ErrorMessage}";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_7"] = "Ошибка подготовки плана дня при AI анализе чатов в задачах: {=A5180_6520_4912_2952:errorMessage}";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_8"] = "Ошибка подготовки плана дня при AI анализе групповых чатов: {=A6725_9320_1794_2127:errorMessage}";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_9"] = "Ошибка подготовки плана дня при AI анализе итогов Bitrix Follow-up: {=A3277_4971_3927_7639:errorMessage}";
-$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_NAME_1"] = "Агент для планирования дня";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_4"] = "Не удалось подготовить план дня при получении информации из групповых чатов: {=A3338_7972_1098_1418:ErrorMessage}";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_5"] = "Данных для создания плана дня нет. Начинайте пользоваться Битрикс24, и я помогу вам сосредоточиться на результате!";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_6"] = "Не удалось подготовить план дня при получении итогов BitrixGPT Follow-Up: {=A1848_1842_8388_6025:ErrorMessage}";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_7"] = "Не удалось подготовить план дня при AI-анализе чатов задач: {=A5180_6520_4912_2952:errorMessage}";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_8"] = "Не удалось подготовить план дня при AI-анализе групповых чатов: {=A6725_9320_1794_2127:errorMessage}";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_9"] = "Не удалось подготовить план дня при AI-анализе итогов BitrixGPT Follow-up: {=A3277_4971_3927_7639:errorMessage}";
+$MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_NAME_1"] = "Агент для планирования дня (4 промпта)";
 $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_NAME_10"] = "Кем создано";
 $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_NAME_11"] = "Когда создано";
 $MESS["BIZPROC_NODES_BITRIX_AI_DAY_PLAN_NAME_12"] = "Дата запуска рабочего дня";

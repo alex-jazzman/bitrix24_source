@@ -15,6 +15,7 @@ use \Bitrix\Main\Localization\Loc;
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/tools/clock.php");
 global $APPLICATION, $USER_FIELD_MANAGER;
 
+\Bitrix\Main\UI\Extension::load(["intranet.old-interface.intranet-common"]);
 $id = $arParams['id'];
 $event = $arParams['event'];
 $isSocialNetworkEnabled = $arParams['bSocNet'];

@@ -184,6 +184,23 @@
 		});
 	};
 
+	BX.Voximplant.openLimitPopup = function(popupCode = '', event)
+	{
+		if (!popupCode)
+		{
+			return;
+		}
+
+		const bindElement = event?.currentTarget || null;
+
+		BX.loadExt('ui.info-helper').then(function()
+		{
+			BX?.UI?.FeaturePromotersRegistry?.getPromoter({
+				code: popupCode, bindElement,
+			}).show();
+		});
+	};
+
 	BX.Voximplant.openBilling = function()
 	{
 		var maybeShowDemoWarning = function(title, text)

@@ -127,5 +127,7 @@ return [
 		'./src/message/video-note-text',
 		'./src/message/sticker',
 		'./src/message/deleted-sticker',
+		'./src/message/ai-bizproc/message',
+		'./src/message/ai-bizproc/handler',
 	],
 ];

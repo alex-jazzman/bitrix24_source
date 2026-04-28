@@ -98,8 +98,7 @@
 	transform: translate(-50%, -50%);
 	width: 50%;
 	height: 50%;
-	-webkit-mask-image: var(--ui-icon-set__path_picture);
-	        mask-image: var(--ui-icon-set__path_picture);
+	mask-image: var(--o-ui-icon-set__path_image);
 	-webkit-mask-size: 100%;
 	        mask-size: 100%;
 	-webkit-mask-position: center;
@@ -204,6 +203,51 @@
 
 .ui-typography-token-parentheses {
 	color: #af9a9a;
+}
+
+.ui-typography-code-copy-button {
+	display: flex;
+	top: 12px;
+	right: 2px;
+	opacity: 0;
+	pointer-events: none;
+	-webkit-appearance: none;
+	        appearance: none;
+	background-color: #fdf6e3;
+	position: absolute;
+	align-items: center;
+	height: 29px;
+	border: none;
+	cursor: pointer;
+	transition: opacity 0.3s ease;
+}
+
+.ui-typography-code-copy-button.--visible {
+	opacity: 1;
+	transition: opacity 0.3s ease;
+	transition-delay: 500ms;
+	pointer-events: auto;
+}
+
+.ui-typography-code-copy-button.--copied .ui-typography-code-copy-icon.--o-copied {
+	display: block;
+}
+
+.ui-typography-code-copy-button.--copied .ui-typography-code-copy-icon.--o-copy {
+	display: none;
+}
+
+.ui-typography-code-copy-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.ui-typography-code-copy-icon:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.ui-typography-code-copy-icon.--o-copied {
+	display: none;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-success);
 }
 
 .ui-typography-table-scroll {
@@ -329,8 +373,7 @@
 	top: 7px;
 	width: 20px;
 	height: 20px;
-	-webkit-mask-image: var(--ui-icon-set__path_plus-in-circle);
-	        mask-image: var(--ui-icon-set__path_plus-in-circle);
+	mask-image: var(--o-ui-icon-set__path_circle-plus);
 	-webkit-mask-size: 20px;
 	        mask-size: 20px;
 	-webkit-mask-position: center;
@@ -339,8 +382,7 @@
 }
 
 .ui-typography-spoiler[open] > .ui-typography-spoiler-title:before {
-	-webkit-mask-image: var(--ui-icon-set__path_minus-in-circle);
-	        mask-image: var(--ui-icon-set__path_minus-in-circle);
+	mask-image: var(--o-ui-icon-set__path_circle-minus);
 }
 
 .ui-typography-spoiler-content {

@@ -1,5 +1,5 @@
 import type { SlotRange } from 'booking.model.resources';
-import type { AdvertisingResourceType, CatalogSkuEntityOptions, NotificationsSettings } from './types';
+import type { AdvertisingResourceType, NotificationsSettings } from './types';
 
 export class ResourceCreationWizardDataExtractor
 {
@@ -53,10 +53,5 @@ export class ResourceCreationWizardDataExtractor
 	isChannelChoiceAvailable(): boolean
 	{
 		return this.#data.isChannelChoiceAvailable;
-	}
-
-	getCatalogSkuEntityOptions(): CatalogSkuEntityOptions
-	{
-		return this.#data.catalogSkuEntityOptions;
 	}
 }

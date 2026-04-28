@@ -29,7 +29,7 @@ export type BookingParams = {
 };
 
 export type InitCoreOptions = {
-	skipBookingCore: ?boolean;
+	skipCoreModels: ?boolean;
 	skipPull: ?boolean;
 }
 

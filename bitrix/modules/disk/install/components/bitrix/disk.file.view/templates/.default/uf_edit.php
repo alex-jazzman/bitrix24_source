@@ -52,7 +52,7 @@ $APPLICATION->setTitle(Loc::getMessage('DISK_FILE_VIEW_FILE_TITLE_USERFIELDS', [
 		<? }?>
 	</tbody>
 </table>
-	<div class="webform-buttons disk-detail-uf-form-buttons-fixed">
+	<div class="disk-detail-uf-form-buttons-fixed --center">
 		<div class="disk-detail-uf-form-footer-container">
 			<button class="ui-btn ui-btn-success" id="bx-disk-submit-uf-file-edit-form"><?= Loc::getMessage('DISK_FILE_VIEW_BTN_EDIT_USER_FIELDS') ?></button>
 			<button class="ui-btn ui-btn-link" id="bx-disk-submit-uf-file-discard-form"><?= Loc::getMessage('DISK_FILE_VIEW_BTN_DISCARD_USER_FIELDS') ?></button>

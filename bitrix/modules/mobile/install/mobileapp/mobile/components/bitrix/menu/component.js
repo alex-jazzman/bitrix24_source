@@ -10,6 +10,7 @@
 	const { showAhaMoment } = require('more-menu/aha-moment');
 	const ACTIVE_INIT_STORAGE_KEY = 'moreMenu.activeInitToken';
 	const { qrauth } = require('qrauth/utils');
+	const { MoreMenuAnalytics } = require('more-menu/analytics');
 
 	const MORE_MENU_TEST_ID = 'more-menu';
 
@@ -33,6 +34,7 @@
 			BX.addCustomEvent('BackgroundUIManager::openComponentInAnotherContext', this.showAhaMoment);
 			BX.addCustomEvent('onUpdateUserCounters', this.handleUserCountersUpdate);
 			BX.addCustomEvent('onSetUserCounters', this.handleUserCountersUpdate);
+			BX.addCustomEvent('onTabsSelected', this.handleChangeTab);
 		}
 
 		showAhaMoment = (componentName) => {
@@ -51,6 +53,13 @@
 
 			this.menuCounters = { ...this.menuCounters, ...siteCounters };
 			updateMenuBadgeCounter(this.menuList, this.menuCounters);
+		};
+
+		handleChangeTab = (tabId) => {
+			if (tabId === 'menu')
+			{
+				MoreMenuAnalytics.sendMenuOpenEvent();
+			}
 		};
 
 		startInitSession()

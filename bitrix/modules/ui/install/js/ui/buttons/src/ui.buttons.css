@@ -58,7 +58,6 @@
 .ui-btn-menu {
 	box-sizing: border-box;
 	margin: 0;
-	outline: none;
 	height: var(--ui-btn-height);
 	border: var(--ui-btn-border);
 	border-color: var(--ui-btn-border-color);
@@ -163,9 +162,16 @@ a.ui-btn:focus,
 	text-shadow: var(--ui-btn-text-shadow-hover);
 }
 
+.ui-btn:focus-visible,
+.ui-btn-main:focus-visible,
+.ui-btn-menu:not(.--switcher):focus-visible {
+	outline-offset: 2px;
+	outline-width: 2px;
+	outline-color: var(--ui-color-accent-main-link);
+	outline-style: solid;
+}
+
 .ui-btn:active,
-a.ui-btn:focus,
-a.ui-btn-split:focus,
 .ui-btn-main:active,
 .ui-btn-menu:not(.--switcher):active,
 .ui-btn-extra:active,

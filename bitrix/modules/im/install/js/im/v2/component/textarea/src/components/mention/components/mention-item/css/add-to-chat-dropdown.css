@@ -1,0 +1,21 @@
+.bx-im-mention-chat-add-dropdown__container {
+	display: flex;
+	align-items: center;
+}
+
+.bx-im-mention-chat-add-dropdown__separator {
+	margin-right: 16px;
+	width: 1px;
+	height: 12px;
+	background-color: var(--ui-color-divider-default);
+}
+
+.bx-im-mention-chat-add-dropdown__title {
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--ui-color-base-3);
+}
+
+.bx-im-mention-chat-add-dropdown__icon.ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}

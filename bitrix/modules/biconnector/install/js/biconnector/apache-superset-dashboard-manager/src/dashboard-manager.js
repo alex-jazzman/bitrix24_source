@@ -216,6 +216,24 @@ export class DashboardManager
 		});
 	}
 
+	getDashboardRelatedItems(dashboardId: number | string): Promise
+	{
+		return Ajax.runAction('biconnector.dashboard.getMarketDashboardRelatedItems', {
+			data: {
+				id: dashboardId,
+			},
+		});
+	}
+
+	getSupersetEntityLoginUrl(entityUrl: string): Promise
+	{
+		return Ajax.runAction('biconnector.dashboard.getSupersetEntityLoginUrl', {
+			data: {
+				entityUrl,
+			},
+		});
+	}
+
 	exportDashboard(
 		dashboardId: number,
 		openedFrom: string,
@@ -367,7 +385,7 @@ export class DashboardManager
 	static openDatasetListSlider()
 	{
 		BX.SidePanel.Instance.open(
-			'/bi/dataset/',
+			'/bi/table/',
 			{
 				cacheable: false,
 				allowChangeHistory: true,

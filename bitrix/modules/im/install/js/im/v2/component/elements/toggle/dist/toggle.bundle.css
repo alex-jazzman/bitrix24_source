@@ -11,6 +11,7 @@
 	cursor: pointer;
 	position: relative;
 	z-index: 1;
+	flex-shrink: 0;
 }
 
 .bx-im-toggle__container.--size-s {

@@ -25,6 +25,7 @@ Extension::load([
 	'ui.tooltip',
 	'ui.fonts.opensans',
 	'ui.icons.b24',
+	'intranet.old-interface.intranet-common',
 ]);
 
 Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');

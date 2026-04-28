@@ -10,3 +10,5 @@ $MESS["INTRANET_USER_OTP_LIST_CHANGE_BTN"] = "Изменить";
 $MESS["INTRANET_USER_OTP_LIST_ADD_PHONE_NUMBER_BTN"] = "Укажите номер";
 $MESS["INTRANET_USER_OTP_LIST_DISABLE_DEF_BTN"] = "Выключить защиту";
 $MESS["INTRANET_USER_OTP_LIST_ENABLE_DEF_BTN"] = "Включить защиту";
+$MESS["INTRANET_USER_OTP_RECOVERY_TOOLTIP_TITLE"] = "Сохраните резервные коды заранее";
+$MESS["INTRANET_USER_OTP_RECOVERY_TOOLTIP_DESCRIPTION"] = "Они помогут войти в аккаунт, если доверенное устройство будет недоступно";

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_notification,im_v2_application_core,im_public,im_v2_const,im_v2_provider_service_settings,main_core) {
+(function (exports,ui_notification,im_public,im_v2_application_core,im_v2_const,im_v2_provider_service_settings,main_core) {
 	'use strict';
 
 	const showNotification = (text, params) => {
@@ -78,6 +78,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      '#MAX_PINS#': pinLimit
 	    }));
 	  },
+	  onUserAddComplete() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHAT_USER_ADD_COMPLETE'));
+	  },
+	  onUserAddError() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHAT_USER_ADD_ERROR'));
+	  },
 	  onCopyIdComplete() {
 	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHAT_COPY_ID_COMPLETE'));
 	  }
@@ -93,19 +99,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  onAddToFavoriteComplete() {
 	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FAVORITE_ADD_COMPLETE'));
 	  },
-	  onForwardNotesComplete(messagesIds) {
+	  onForwardSelfChatComplete(messagesIds) {
 	    const text = messagesIds.length > 1 ? main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_SEVERAL_MESSAGES_COMPLETE') : main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_COMPLETE');
 	    const dialogId = im_v2_application_core.Core.getUserId().toString();
-	    const notesOpeningAction = {
+	    const selfChatOpeningAction = {
 	      title: main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_OPEN_COMPLETE'),
 	      events: {
-	        click: () => {
-	          void im_public.Messenger.openChat(dialogId);
-	        }
+	        click: () => im_public.Messenger.openChat(dialogId)
 	      }
 	    };
 	    showNotification(text, {
-	      actions: [notesOpeningAction]
+	      actions: [selfChatOpeningAction]
 	    });
 	  },
 	  handleLoadContextError(error) {
@@ -374,5 +378,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Notifier = Notifier;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Service,BX));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Service,BX));
 //# sourceMappingURL=notifier.bundle.js.map

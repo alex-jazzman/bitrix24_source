@@ -123,6 +123,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/service/service', (req
 		 */
 		async sendSticker(stickerParams)
 		{
+			logger.log('sendSticker', stickerParams);
 			const stickerData = this.#modelService.getStickerData({
 				id: stickerParams.stickerId,
 				packId: stickerParams.packId,

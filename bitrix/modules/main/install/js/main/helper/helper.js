@@ -203,7 +203,7 @@ BX.Helper =
 				className: 'helper-container'
 			},
 			children: [
-				this.getLoader(),
+				this.isNewHelpdesk ? this.getNewLoader() : this.getLoader(),
 				this.getFrame()
 			]
 		});
@@ -249,6 +249,23 @@ BX.Helper =
 				text : BX.message("MAIN_HELPER_LOADER")
 			})]
 		});
+
+		return this.popupLoader;
+	},
+
+	getNewLoader()
+	{
+		if (this.popupLoader)
+		{
+			return this.popupLoader;
+		}
+
+		const loader = new BX.Loader({
+			size: 100,
+		});
+
+		loader.show();
+		this.popupLoader = loader.data.container;
 
 		return this.popupLoader;
 	},

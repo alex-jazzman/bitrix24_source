@@ -128,6 +128,7 @@ export const Single = {
 				text: this.loc('BOOKING_AHA_RESOURCE_INTERSECTION_TEXT'),
 				article: HelpDesk.AhaResourceIntersection,
 				target: this.selector.getAddButton(),
+				isPulsarTransparent: true,
 			});
 
 			ahaMoments.setShown(AhaMoment.ResourceIntersection);

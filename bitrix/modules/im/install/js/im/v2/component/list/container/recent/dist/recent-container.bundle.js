@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core_events,im_v2_component_search,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_component_list_container_elements_baseHeaderMenu,ui_infoHelper,im_public,im_v2_component_elements_menu,im_v2_component_elements_copilotRolesDialog,im_v2_component_list_container_elements_createChatPromo,im_v2_lib_permission,im_v2_lib_createChat,im_v2_lib_feature,im_v2_provider_service_copilot,im_v2_lib_helpdesk,main_core,im_v2_lib_analytics,im_v2_lib_invite,im_v2_lib_promo,im_v2_const,im_v2_component_animation,im_v2_component_list_items_recent) {
+(function (exports,main_core_events,im_v2_component_search,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_component_list_container_elements_baseHeaderMenu,ui_infoHelper,im_public,im_v2_component_elements_menu,im_v2_component_elements_copilotRolesDialog,im_v2_component_list_container_elements_createChatPromo,im_v2_lib_permission,im_v2_lib_createChat,im_v2_lib_feature,im_v2_provider_service_copilot,im_v2_lib_helpdesk,main_core,im_v2_lib_copilot,im_v2_lib_analytics,im_v2_lib_invite,im_v2_lib_promo,im_v2_const,im_v2_component_animation,im_v2_component_list_items_recent) {
 	'use strict';
 
 	// @vue/component
@@ -113,16 +113,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const CopilotRoleSelectionButton = {
+	  computed: {
+	    title() {
+	      return this.loc('IM_RECENT_CREATE_COPILOT_ROLE_SELECTION_TITLE_MSGVER_1', {
+	        '#COPILOT_NAME#': this.copilotManager.getName()
+	      });
+	    }
+	  },
+	  created() {
+	    this.copilotManager = new im_v2_lib_copilot.CopilotManager();
+	  },
 	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
-		<div
-			class="bx-im-create-chat-menu-item__button --copilot"
-			:title="loc('IM_RECENT_CREATE_COPILOT_ROLE_SELECTION_TITLE')"
-		>
+		<div class="bx-im-create-chat-menu-item__button --copilot" :title="title">
 			<div class="bx-im-create-chat-menu-item__icon-more"></div>
 		</div>
 	`
@@ -234,11 +241,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        '--default': !this.isLoading,
 	        '--loading': this.isLoading
 	      };
+	    },
+	    createCopilotTitle() {
+	      return this.loc('IM_RECENT_CREATE_COPILOT_TITLE_MSGVER_1', {
+	        '#COPILOT_NAME#': this.copilotManager.getName()
+	      });
 	    }
 	  },
 	  created() {
 	    this.showCollabPromo = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.createCollabDescription);
 	    this.showInvitePromo = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.recentCreateChatInviteUsers);
+	    this.copilotManager = new im_v2_lib_copilot.CopilotManager();
 	  },
 	  methods: {
 	    onChatCreateClick(type) {
@@ -329,8 +342,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      var _PromoByChatType$this;
 	      return (_PromoByChatType$this = PromoByChatType[this.chatTypeToCreate]) != null ? _PromoByChatType$this : '';
 	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    },
 	    getCopilotService() {
 	      if (!this.copilotService) {
@@ -366,7 +379,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<MenuItem
 				v-if="isCopilotAvailableAndCreatable"
 				:icon="MenuItemIcon.copilot"
-				:title="loc('IM_RECENT_CREATE_COPILOT_TITLE')"
+				:title="createCopilotTitle"
 				:subtitle="loc('IM_RECENT_CREATE_COPILOT_SUBTITLE_MSGVER_1')"
 				@click.stop="onDefaultCopilotCreateClick"
 			>
@@ -556,7 +569,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.onChatClick(dialogId);
 	    },
 	    onToggleUnreadMode() {
-	      this.$store.dispatch('recent/clearUnreadCollection');
+	      this.$store.dispatch('recent/clearUnreadCollection', {
+	        type: im_v2_const.RecentType.default
+	      });
 	      this.unreadOnlyMode = !this.unreadOnlyMode;
 	    }
 	  },
@@ -600,5 +615,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentListContainer = RecentListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.List,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Component.List));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.List,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Component.List));
 //# sourceMappingURL=recent-container.bundle.js.map

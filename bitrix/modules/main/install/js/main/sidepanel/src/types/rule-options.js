@@ -12,4 +12,5 @@ export type RuleOptions = {
 	loader?: string,
 	options?: SliderOptions | (link: LinkOptions) => SliderOptions,
 	minimizeOptions: (link: LinkOptions) => MinimizeOptions,
+	forceAnchorBinding?: boolean,
 };

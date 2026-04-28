@@ -18,7 +18,6 @@ $MESS["SIGN_SIGNERS_GRID_LIST_CREATE_FAIL"] = "Error creating a group.";
 $MESS["SIGN_SIGNERS_GRID_LIST_CREATE_SUCCESS"] = "Group has been created.";
 $MESS["SIGN_SIGNERS_SIGNERS_GRID_DELETE_HINT_FAIL"] = "Could not remove employees from group.";
 $MESS["SIGN_SIGNERS_SIGNERS_GRID_DELETE_HINT_SUCCESS"] = "Employees have been removed from group.";
-$MESS["SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_MESSAGE"] = "Are you sure you want to remove employees from the group? This action cannot be undone.";
 $MESS["SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_TITLE"] = "Are you sure you want to remove the employee from the group?";
 $MESS["SIGN_SIGNERS_SIGNER_GRID_DELETE_HINT_FAIL"] = "Could not remove employee from group.";
 $MESS["SIGN_SIGNERS_SIGNER_GRID_DELETE_HINT_SUCCESS"] = "Employee has been removed from group.";

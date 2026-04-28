@@ -14,11 +14,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @global CDatabase $DB
  */
 
+use Bitrix\Crm\Component\EntityList\Settings\ImportItem;
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
+use Bitrix\Crm\Import\Enum\Contact\Origin;
+use Bitrix\Crm\Integration\Analytics\Builder\Import;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -257,6 +262,32 @@ if($arParams['TYPE'] === 'details')
 		);
 	}
 
+	if ($bWrite && isset($scripts['DETACH_OPEN_LINE']))
+	{
+		$item = \Bitrix\Crm\Service\Container::getInstance()
+			->getFactory(CCrmOwnerType::Contact)
+			->getItem($arParams['ELEMENT_ID'], [\Bitrix\Crm\Item::FIELD_NAME_FM]);
+
+		if ($item)
+		{
+			foreach ($item->getFm() as $field)
+			{
+				if (
+					$field->getTypeId() === \Bitrix\Crm\Multifield\Type\Link::ID
+					&& $field->getValueType() === \Bitrix\Crm\Multifield\Type\Link::VALUE_TYPE_USER
+				)
+				{
+					$arResult['BUTTONS'][] = [
+						'TEXT' => Loc::getMessage('CONTACT_DETACH_OPEN_LINE'),
+						'ONCLICK' => $scripts['DETACH_OPEN_LINE'],
+					];
+
+					break;
+				}
+			}
+		}
+	}
+
 	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
 	{
 		$arResult['BUTTONS'][] = [
@@ -314,90 +345,45 @@ if($arParams['TYPE'] === 'list')
 
 	if ($bImport && !$isInSlider && $arResult['CATEGORY_ID'] === 0)
 	{
-		$importFromVCardUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_IMPORTVCARD'], []);
-		if ($arResult['CATEGORY_ID'] > 0)
+		$importButtons = [];
+		foreach (Origin::getContactImportList() as $origin)
 		{
-			$importFromVCardUrl = CCrmUrlUtil::AddUrlParams($importFromVCardUrl, ['category_id' => $arResult['CATEGORY_ID']]);
-		}
-		$arResult['BUTTONS'][] = array(
-			'HTML' => GetMessage('CRM_CONTACT_IMPORT_VCARD'),
-			'TITLE' => GetMessage('CRM_CONTACT_IMPORT_VCARD_TITLE'),
-			'LINK' => $importFromVCardUrl,
-			'ICON' => 'btn-import'
-		);
+			$importItem = (new ImportItem(CCrmOwnerType::Contact))
+				->setOrigin($origin)
+				->setCategoryId(0);
 
-		$importUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_IMPORT'], array());
-		if ($arResult['CATEGORY_ID'] > 0)
-		{
-			$importUrl = CCrmUrlUtil::AddUrlParams($importUrl, ['category_id' => $arResult['CATEGORY_ID']]);
+			if ($importItem->canShow())
+			{
+				$importButtons[] = $importItem;
+			}
 		}
 
-		$arResult['BUTTONS'][] = array(
-			'HTML' => GetMessage('CRM_CONTACT_IMPORT_GMAIL'),
-			'TITLE' => GetMessage('CRM_CONTACT_IMPORT_GMAIL_TITLE'),
-			'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'gmail')),
-			'ICON' => 'btn-import'
-		);
-
-		$arResult['BUTTONS'][] = array(
-			'HTML' => GetMessage('CRM_CONTACT_IMPORT_OUTLOOK'),
-			'TITLE' => GetMessage('CRM_CONTACT_IMPORT_OUTLOOK_TITLE'),
-			'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'outlook')),
-			'ICON' => 'btn-import'
-		);
-
-		$zone = LANGUAGE_ID;
-		if (CModule::IncludeModule('bitrix24'))
+		if (!empty($importButtons))
 		{
-			$zone = \CBitrix24::getPortalZone();
+			Container::getInstance()->getRouter()->renderBindAnchors();
+
+			foreach ($importButtons as $importButton)
+			{
+				$arResult['BUTTONS'][] = $importButton->toInterfaceToolbarButton();
+			}
 		}
 
-		if($zone === 'ru')
+		$migrationUrl = new Uri($arParams['PATH_TO_MIGRATION']);
+
+		$migrationViewEvent = (new Import\ViewEvent())
+			->setEntityTypeId(CCrmOwnerType::Contact)
+			->setIsMigration(true)
+		;
+
+		if ($migrationViewEvent->validate()->isSuccess())
 		{
-			$arResult['BUTTONS'][] = array(
-				'HTML' => GetMessage('CRM_CONTACT_IMPORT_YANDEX'),
-				'TITLE' => GetMessage('CRM_CONTACT_IMPORT_YANDEX_TITLE'),
-				'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'yandex')),
-				'ICON' => 'btn-import'
-			);
+			$migrationUrl = $migrationViewEvent->buildUri($migrationUrl);
 		}
-
-		$arResult['BUTTONS'][] = array(
-			'HTML' => GetMessage('CRM_CONTACT_IMPORT_YAHOO'),
-			'TITLE' => GetMessage('CRM_CONTACT_IMPORT_YAHOO_TITLE'),
-			'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'yahoo')),
-			'ICON' => 'btn-import'
-		);
-
-		if($zone === 'ru')
-		{
-			$arResult['BUTTONS'][] = array(
-				'HTML' => GetMessage('CRM_CONTACT_IMPORT_MAILRU'),
-				'TITLE' => GetMessage('CRM_CONTACT_IMPORT_MAILRU_TITLE'),
-				'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'mailru')),
-				'ICON' => 'btn-import'
-			);
-		}
-
-		/*
-		* LIVEMAIL is temporary disabled due to implementation error
-		* $arResult['BUTTONS'][] = array(
-		*  'TEXT' => GetMessage('CRM_CONTACT_IMPORT_LIVEMAIL'),
-		*  'TITLE' => GetMessage('CRM_CONTACT_IMPORT_LIVEMAIL_TITLE'),
-		*  'LINK' => CCrmUrlUtil::AddUrlParams($importUrl, array('origin' => 'livemail')),
-		*  'ICON' => 'btn-import'
-		);*/
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('CRM_CONTACT_IMPORT_CUSTOM'),
-			'TITLE' => GetMessage('CRM_CONTACT_IMPORT_CUSTOM_TITLE'),
-			'LINK' => $importUrl,
-			'ICON' => 'btn-import'
-		);
 
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('CRM_CONTACT_MIGRATION'),
 			'TITLE' => GetMessage('CRM_CONTACT_MIGRATION_TITLE'),
-			'LINK' => $arParams['PATH_TO_MIGRATION'],
+			'LINK' => $migrationUrl,
 			'ICON' => 'btn-migration'
 		);
 	}
@@ -742,12 +728,25 @@ elseif ($qty >= 3)
 
 if ($bAdd && $arParams['TYPE'] != 'list' && $arParams['TYPE'] !== 'portrait')
 {
+	$addUrl = new Uri(CComponentEngine::MakePathFromTemplate(
+		$arParams[$isSliderEnabled ? 'PATH_TO_CONTACT_DETAILS' : 'PATH_TO_CONTACT_EDIT'],
+		array('contact_id' => 0)
+	));
+
+	if ($arParams['TYPE'] === 'import')
+	{
+		$origin = Application::getInstance()->getContext()->getRequest()->get('origin');
+
+		$addUrl = (new Import\EditEvent())
+			->setEntityTypeId(CCrmOwnerType::Contact)
+			->setOrigin(Origin::tryFrom($origin))
+			->setIsCreateButton()
+			->buildUri($addUrl);
+	}
+
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
-		'LINK' => CComponentEngine::MakePathFromTemplate(
-			$arParams[$isSliderEnabled ? 'PATH_TO_CONTACT_DETAILS' : 'PATH_TO_CONTACT_EDIT'],
-			array('contact_id' => 0)
-		),
+		'LINK' => $addUrl,
 		'TARGET' => '_blank',
 		'ICON' => 'btn-new'
 	);

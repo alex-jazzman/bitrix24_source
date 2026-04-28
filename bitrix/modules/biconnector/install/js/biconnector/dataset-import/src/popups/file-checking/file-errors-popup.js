@@ -55,8 +55,8 @@ export const FileErrorsPopup = {
 			}
 
 			return this.isEditMode
-				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_TITLE_STOPPED_UPDATING')
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_TITLE_STOPPED_CREATING')
+				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_TITLE_STOPPED_UPDATING_MSGVER_1')
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_TITLE_STOPPED_CREATING_MSGVER_1')
 			;
 		},
 		hintContent(): string
@@ -65,20 +65,20 @@ export const FileErrorsPopup = {
 			{
 				if (this.isEditMode)
 				{
-					return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_UPDATING_MANY_ERRORS');
+					return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_UPDATING_MANY_ERRORS_MSGVER_1');
 				}
 
-				return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_CREATION_MANY_ERRORS');
+				return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_CREATION_MANY_ERRORS_MSGVER_1');
 			}
 
 			if (this.isSavingMode)
 			{
 				if (this.isEditMode)
 				{
-					return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_UPDATING');
+					return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_UPDATING_MSGVER_1');
 				}
 
-				return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_CREATION');
+				return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_CREATION_MSGVER_1');
 			}
 
 			return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_CHECKING');
@@ -137,7 +137,7 @@ export const FileErrorsPopup = {
 		{
 			const link = document.createElement('a');
 			link.href = this.reportDownloadLink;
-			link.download = `${this.$store.state.config.datasetProperties.name ?? 'csv_dataset'}_errors.html`;
+			link.download = `${this.$store.state.config.datasetProperties.name ?? 'csv_table'}_errors.html`;
 			Dom.append(link, document.body);
 			link.click();
 			Dom.remove(link);
@@ -238,10 +238,10 @@ export const FileErrorsPopup = {
 					</template>
 					<template v-else>
 						<button v-if="isEditMode" @click="this.onClose" class="ui-btn ui-btn-md ui-btn-primary">
-							{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_BUTTON_STOP_UPDATE') }}
+							{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_BUTTON_STOP_UPDATE_MSGVER_1') }}
 						</button>
 						<button v-else @click="this.onClose" class="ui-btn ui-btn-md ui-btn-primary">
-							{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_BUTTON_STOP') }}
+							{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_BUTTON_STOP_MSGVER_1') }}
 						</button>
 
 						<button @click="this.onIgnoreErrorsClick" class="ui-btn ui-btn-md ui-btn-light-border">

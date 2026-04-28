@@ -79,7 +79,7 @@ jn.define('im/messenger/provider/services/chat/user', (require, exports, module)
 			{
 				const collabUserAddQueryParams = {
 					dialogId: dialog.dialogId,
-					members: members.map((userId) => `U${userId}`),
+					members: members.map((userId) => ['user', userId]),
 				};
 
 				return runAction(RestMethod.socialnetworkCollabMemberAdd, {
@@ -132,6 +132,40 @@ jn.define('im/messenger/provider/services/chat/user', (require, exports, module)
 			return runAction(RestMethod.imV2ChatDeleteUser, {
 				data: chatUserDeleteQueryParams,
 			});
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @param {Array<string>} userIds
+		 * @return {Promise<MemberFilterUsersByParticipation>}
+		 */
+		verifyUsersChatMembership(chatId, userIds)
+		{
+			const data = {
+				chatId,
+				userIds,
+			};
+
+			return runAction(RestMethod.imV2ChatMemberFilterUsersByParticipation, { data });
+		}
+
+		/**
+		 * @param {number} dialogId
+		 * @param {?object} params
+		 * @return {Promise<{users: Array<RawUser>}>}
+		 */
+		getMentionListByChat(dialogId, params = {})
+		{
+			const { orderDirection = 'desc', limit = 50 } = params;
+			const data = {
+				order: {
+					lastSendMessageId: orderDirection,
+				},
+				dialogId,
+				limit,
+			};
+
+			return runAction(RestMethod.imV2ChatMentionList, { data });
 		}
 
 		/**

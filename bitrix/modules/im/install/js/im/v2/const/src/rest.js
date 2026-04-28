@@ -67,6 +67,7 @@ export const RestMethod = Object.freeze({
 	imV2ChatJoinByCode: 'im.v2.Chat.joinByCode',
 	imV2ChatSharedLinkRevoke: 'im.v2.Chat.SharingLink.revoke',
 	imV2ChatSharedLinkRegenerateIndividual: 'im.v2.Chat.SharingLink.regenerateIndividual',
+	imV2ChatFilterUsersByParticipation: 'im.v2.Chat.Member.filterUsersByParticipation',
 
 	imV2RecentPin: 'im.v2.Chat.pin',
 	imV2RecentUnpin: 'im.v2.Chat.unpin',

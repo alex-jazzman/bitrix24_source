@@ -4,3 +4,6 @@ $MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NAME'] = 'Изменена отг
 $MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NAME_1'] = 'Отследить изменения в статусе отгрузки';
 $MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_DESCRIPTION'] = 'Меняет стадию после любых изменений в процессе отгрузки - смены статуса, запрета или разрешения на отгрузку';
 $MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_CONDITION'] = 'Поля отгрузки';
+
+$MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NODE_DESCRIPTION'] = 'Запускает процесс после любых изменений в процессе отгрузки';
+

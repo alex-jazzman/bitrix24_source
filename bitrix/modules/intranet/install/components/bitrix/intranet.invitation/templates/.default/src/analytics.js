@@ -1,5 +1,6 @@
-import { Event, Type } from 'main.core';
 import { sendData } from 'ui.analytics';
+import DepartmentControl from 'intranet.department-control';
+import InviteType from './type/invite-type';
 
 export class Analytics
 {
@@ -7,6 +8,7 @@ export class Analytics
 	static TOOLS_HEADER = 'headerPopup';
 	static EVENT_OPEN_SLIDER_INVITATION = 'drawer_open';
 	static CATEGORY_INVITATION = 'invitation';
+	static CATEGORY_SETTINGS = 'settings';
 	static EVENT_COPY = 'copy_invitation_link';
 	static ADMIN_ALLOW_MODE_Y = 'askAdminToAllow_Y';
 	static ADMIN_ALLOW_MODE_N = 'askAdminToAllow_N';
@@ -15,8 +17,12 @@ export class Analytics
 
 	static EVENT_TAB_VIEW = 'tab_view';
 	static EVENT_LOCAL_MAIL = 'invitation_local_mail';
+	static EVENT_REFRESH_LINK = 'refresh_link';
 	static TAB_EMAIL = 'tab_by_email';
 	static TAB_MASS = 'tab_mass';
+	static TAB_MASS_EMAIL = 'tab_mass_by_email';
+	static TAB_MASS_EMAIL_PHONE = 'tab_mass_by_email_phone';
+	static TAB_MASS_PHONE = 'tab_mass_by_phone';
 	static TAB_DEPARTMENT = 'tab_department';
 	static TAB_INTEGRATOR = 'tab_integrator';
 	static TAB_LINK = 'by_link';
@@ -35,11 +41,12 @@ export class Analytics
 		this.#isAdmin = isAdmin;
 	}
 
-	#getAdminAllowMode(): string
+	getDataForAction(type: ?string = null): Object
 	{
-		return document.querySelector('#allow_register_confirm')?.checked
-			? Analytics.ADMIN_ALLOW_MODE_Y
-			: Analytics.ADMIN_ALLOW_MODE_N;
+		return {
+			section: this.#getCSection(),
+			type,
+		};
 	}
 
 	#getIsAdmin(): string
@@ -52,15 +59,17 @@ export class Analytics
 		return this.#cSection.source;
 	}
 
-	send(): void
+	sendCopyLink(departmentControl: DepartmentControl, needConfirmRegistration: boolean): void
 	{
 		sendData({
 			tool: Analytics.TOOLS,
 			category: Analytics.CATEGORY_INVITATION,
 			event: Analytics.EVENT_COPY,
 			c_section: this.#getCSection(),
+			c_sub_section: Analytics.TAB_LINK,
 			p1: this.#getIsAdmin(),
-			p2: this.#getAdminAllowMode(),
+			p2: needConfirmRegistration ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N,
+			...this.#getDepartmentControlAnalytics(departmentControl),
 		});
 	}
 
@@ -90,22 +99,48 @@ export class Analytics
 		});
 	}
 
-	sendOpenLocalEmailPopup(): void
+	sendOpenMassInvitePopup(inviteType: InviteType): void
 	{
 		sendData({
 			tool: Analytics.TOOLS,
 			category: Analytics.CATEGORY_INVITATION,
 			event: Analytics.EVENT_TAB_VIEW,
-			c_sub_section: Analytics.TAB_EMAIL,
+			c_section: this.#getCSection(),
+			c_sub_section: inviteType === InviteType.EMAIL
+				? Analytics.TAB_MASS_EMAIL
+				: (inviteType === InviteType.PHONE ? Analytics.TAB_MASS_PHONE : Analytics.TAB_MASS_EMAIL_PHONE),
 		});
 	}
 
-	sendLocalEmailProgram(): void
+	sendLocalEmailProgram(departmentControl: DepartmentControl, needConfirmRegistration: boolean): void
 	{
 		sendData({
 			tool: Analytics.TOOLS,
 			category: Analytics.CATEGORY_INVITATION,
 			event: Analytics.EVENT_LOCAL_MAIL,
+			c_section: this.#getCSection(),
+			c_sub_section: Analytics.TAB_LOCAL_EMAIL,
+			p1: this.#getIsAdmin(),
+			p2: needConfirmRegistration ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N,
+			...this.#getDepartmentControlAnalytics(departmentControl),
 		});
+	}
+
+	sendRegenerateLink(): void
+	{
+		sendData({
+			tool: Analytics.TOOLS,
+			category: Analytics.CATEGORY_SETTINGS,
+			event: Analytics.EVENT_REFRESH_LINK,
+			c_section: this.#getCSection(),
+		});
+	}
+
+	#getDepartmentControlAnalytics(departmentControl: DepartmentControl): Object
+	{
+		return {
+			p3: departmentControl.getValues().length > 0 ? 'department_Y' : 'department_N',
+			p4: departmentControl.getGroupValues().length > 0 ? 'group_Y' : 'group_N',
+		};
 	}
 }

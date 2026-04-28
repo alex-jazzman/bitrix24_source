@@ -1,0 +1,164 @@
+.intranet-trust-device-confirmation-popup--blue {
+	background-image: url("../images/background-blue.svg");
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.intranet-trust-device-confirmation-popup--red {
+	background-image: url("../images/background-red.svg");
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.intranet-trust-device-confirmation-popup__wrapper {
+	padding: 16px 14px;
+}
+
+.intranet-trust-device-confirmation-popup__header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.intranet-trust-device-confirmation-popup__title-wrapper {
+	display: flex;
+	flex-direction: column;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__text {
+	width: 100%;
+}
+
+.intranet-trust-device-confirmation-popup__title {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: 19px;
+	line-height: 26px;
+	color: var(--ui-color-base-0);
+}
+
+.intranet-trust-device-confirmation-popup__description {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: 15px;
+	line-height: 20px;
+	color: var(--ui-color-base-1);
+}
+
+.intranet-trust-device-confirmation-popup__icon {
+	display: flex;
+}
+
+.intranet-trust-device-confirmation-popup__icon i {
+	width: 78px;
+	height: 78px;
+	background-image: url("../images/header.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.intranet-trust-device-confirmation-popup__content {
+	margin-top: 26px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.intranet-trust-device-confirmation-popup-content__item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background-color: var(--ui-color-palette-white-base);
+	box-shadow: 0 1px 2px 0 var(--ui-color-box-shadow-contrast-default-color);
+	height: 60px;
+	border-radius: 20px;
+	padding: 10px 18px 10px 10px;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__icon-wrapper {
+	width: 60px;
+	height: 60px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__icon {
+	width: 45px;
+	height: 45px;
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__icon.--device {
+	background-image: url("../images/device-icon.png");
+}
+
+.intranet-trust-device-confirmation-popup-content-item__icon.--number {
+	background-image: url("../images/number-icon.png");
+}
+
+.intranet-trust-device-confirmation-popup-content-item__icon--device {
+	width: 45px;
+	height: 45px;
+	background-image: url("../images/number-icon.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__title {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-base-3);
+}
+
+.intranet-trust-device-confirmation-popup-content-item__description {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: 16px;
+	line-height: 21px;
+	color: var(--ui-color-base-1);
+}
+
+.intranet-trust-device-confirmation-popup-content-item__description i {
+	--ui-icon-set__icon-size: 14px;
+	--ui-icon-set__icon-color: var(--ui-color-base-1);
+	margin-right: 4px;
+	height: 20px;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__description i.--apple-and-ios {
+	vertical-align: middle;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__description i.--android {
+	vertical-align: text-bottom;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__description span.--disabled-item {
+	color: var(--ui-color-base-4);
+}
+
+.intranet-trust-device-confirmation-popup-content-item__action {
+	cursor: pointer;
+	--ui-color: var(--ui-color-base-3);
+	color: var(--ui-color);
+	font-weight: var(--ui-font-weight-normal);
+	font-size: 14px;
+	line-height: 19px;
+	transition: 0.2s ease-in-out color;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__action.--action-blue {
+	--ui-color: var(--ui-color-accent-main-link);
+}
+
+.intranet-trust-device-confirmation-popup-content-item__action:hover {
+	color: color-mix(in srgb, var(--ui-color) 100%, var(--ui-color-bg-state-hover-default-overlay-hex) var(--ui-color-bg-state-hover-default-overlay-opacity));
+}
+
+.intranet-trust-device-confirmation-popup__buttons {
+	margin-top: 36px;
+	display: flex;
+	justify-content: center;
+	gap: 12px;
+}

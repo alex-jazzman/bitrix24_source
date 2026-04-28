@@ -25,10 +25,11 @@ if(!empty($arResult['ERROR']))
 	$APPLICATION->IncludeComponent(
 		'bitrix:rest.configuration.import',
 		'',
-		array(
+		[
 			'SET_TITLE' => 'Y',
 			'MANIFEST_CODE' => $arResult['MANIFEST_CODE'],
 			'FROM' => $arResult['FROM'],
-		)
+			'ADDITIONAL' => $arResult['VARIABLES']['ADDITIONAL_PARAMS'] ?? null,
+		]
 	);
 ?>

@@ -15,6 +15,7 @@ return [
 		'im.v2.component.message.elements',
 		'im.v2.lib.helpdesk',
 		'im.v2.lib.notifier',
+		'im.v2.lib.copilot',
 	],
 	'skip_core' => false,
 ];

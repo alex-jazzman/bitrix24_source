@@ -34,6 +34,7 @@ return [
 		'booking.model.filter',
 		'booking.model.forms-menu',
 		'booking.model.sale-channels',
+		'booking.model.sku',
 	],
 	'skip_core' => false,
 	'settings' => [

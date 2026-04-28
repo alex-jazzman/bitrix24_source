@@ -98,24 +98,28 @@
 	margin-bottom: 0 !important;
 }
 
-.biconnector-dashboard-language-current {
+.biconnector-dashboard-language-current,
+.biconnector-dashboard-timezone-current {
 	display: flex;
 	gap: 6px;
 }
 
-	.biconnector-dashboard-language-current-title {
+.biconnector-dashboard-language-current-title,
+.biconnector-dashboard-timezone-current-title {
 	font-weight: var(--ui-font-weight-normal);
 	font-size: var(--ui-font-size-md);
 	color: var(--ui-color-palette-gray-50);
 }
 
-.biconnector-dashboard-language-current-block {
+.biconnector-dashboard-language-current-block,
+.biconnector-dashboard-timezone-current-block {
 	font-weight: var(--ui-font-weight-semi-bold);
 	font-size: var(--ui-font-size-md);
 	color: var(--ui-color-palette-gray-90);
 }
 
-.biconnector-dashboard-language-info {
+.biconnector-dashboard-language-info,
+.biconnector-dashboard-timezone-info {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -193,9 +197,31 @@
 	}
 }
 
-.biconnector-dashboard-language-change-link {
+.biconnector-dashboard-language-change-link,
+.biconnector-dashboard-timezone-change-link {
 	color: var(--ui-color-link-primary-base);
 	font-weight: var(--ui-font-weight-normal);
 	font-size: var(--ui-font-size-md);
 	border-bottom: rgba(var(--ui-color-link-primary-base-rgb), 0.4) solid 1px;
+}
+
+.ui-entity-editor-section-edit.--founded-item {
+	background-color: var(--ui-color-palette-green-10) !important;
+}
+
+.ui-entity-editor-section-edit.--after-founded-item {
+	background-color: var(--ui-color-background-primary);
+	transition: background-color 5s ease-in-out;
+}
+
+.biconnector-superset-settings-panel-switcher {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.biconnector-superset-settings-panel-switcher__label {
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
 }

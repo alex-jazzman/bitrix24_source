@@ -1676,7 +1676,6 @@ BX.CRM.Kanban.Grid.prototype = {
 			}
 		}
 
-		// some vars
 		var afterItemId = 0;
 		var itemId = item.getId();
 

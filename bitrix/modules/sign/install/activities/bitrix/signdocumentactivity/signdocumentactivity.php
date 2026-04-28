@@ -10,7 +10,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign;
 use Bitrix\BizProc;
 use Bitrix\Sign\Config\Storage;
-use Bitrix\Crm\Service\Context;
 
 class CBPSignDocumentActivity extends CBPActivity
 {
@@ -146,6 +145,8 @@ class CBPSignDocumentActivity extends CBPActivity
 			return;
 		}
 
+		$initiatorName = CBPHelper::stringify($this->initiatorName);
+
 		if (Storage::instance()->isNewSignEnabled())
 		{
 			$documentService = Sign\Service\Container::instance()->getDocumentService();
@@ -197,7 +198,8 @@ class CBPSignDocumentActivity extends CBPActivity
 				$this->addSigningErrorMessage($result->getErrorMessages()[0]);
 				return;
 			}
-			$documentService->modifyInitiator($document->uid, $this->initiatorName);
+
+			$documentService->modifyInitiator($document->uid, $initiatorName);
 			Sign\Service\Container::instance()->getCrmSignDocumentService()->configureMembers($document);
 
 			$members = Sign\Service\Container::instance()->getMemberRepository()->listByDocumentId($document->id);
@@ -231,7 +233,7 @@ class CBPSignDocumentActivity extends CBPActivity
 			return;
 		}
 		$doc->setMeta([
-			'initiatorName' => $this->initiatorName,
+			'initiatorName' => $initiatorName,
 		]);
 		$doc->send();
 	}

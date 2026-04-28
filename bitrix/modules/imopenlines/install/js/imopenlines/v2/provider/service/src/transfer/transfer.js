@@ -1,7 +1,10 @@
 import { Messenger } from 'im.public';
 import { Layout } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
+import { Notifier } from 'im.v2.lib.notifier';
 import { runAction } from 'im.v2.lib.rest';
+import { Logger } from 'im.v2.lib.logger';
+
 import { RestMethod } from 'imopenlines.v2.const';
 
 export class TransferService
@@ -21,7 +24,8 @@ export class TransferService
 
 		return runAction(RestMethod.linesV2SessionTransfer, queryParams)
 			.catch((error) => {
-				console.error('Imol.transfer: request error', error);
+				Notifier.onDefaultError();
+				Logger.error('Imol.transfer: request error', error);
 			});
 	}
 }

@@ -52,4 +52,5 @@ $MESS ['INTR_ISBN_PARAM_NAME_TEMPLATE'] = "Отображение имени";
 $MESS ['INTR_ISBN_PARAM_NAME_TEMPLATE_DEFAULT'] = "#NOBR##LAST_NAME# #NAME##/NOBR#";
 $MESS ['INTR_ISBN_PARAM_SHOW_LOGIN'] = "Показывать логин, если не задано имя";
 $MESS ['INTR_PREDEF_DEPARTMENT'] = "Отдел/офис";
+$MESS['INTR_ISBN_PARAM_DATE_INTERVAL'] = 'Интервал времени, дней';
 ?>

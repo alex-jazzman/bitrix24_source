@@ -21,6 +21,7 @@ jn.define('im/messenger/db/const', (require, exports, module) => {
 		[FieldType.boolean]: 'TEXT',
 		[FieldType.json]: 'TEXT',
 		[FieldType.map]: 'TEXT',
+		[FieldType.set]: 'TEXT',
 		[FieldType.object]: 'TEXT',
 		[FieldType.array]: 'TEXT',
 	};

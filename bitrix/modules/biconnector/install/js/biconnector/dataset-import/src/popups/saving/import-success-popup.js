@@ -21,7 +21,12 @@ export const ImportSuccessPopup = {
 			type: Boolean,
 			required: false,
 			default: false,
-		}
+		},
+		showOpenDatasetButton: {
+			type: Boolean,
+			required: false,
+			default: true,
+		},
 	},
 	computed: {},
 	methods: {
@@ -29,7 +34,7 @@ export const ImportSuccessPopup = {
 		{
 			Dom.addClass(this.$refs.openDatasetButton, 'ui-btn-wait');
 			Ajax.runAction(
-				'biconnector.externalsource.dataset.getEditUrl',
+				'biconnector.externalsource.dataset.getCreateUrl',
 				{
 					data: {
 						id: this.datasetId,
@@ -69,8 +74,8 @@ export const ImportSuccessPopup = {
 				<div class="biconnector-save-progress-popup__success-logo"></div>
 			</template>
 			<template v-slot:buttons>
-				<a class="ui-btn ui-btn-md ui-btn-primary" @click="onButtonClick" ref="openDatasetButton">
-					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_BUTTON_MSGVER_1') }}
+				<a v-if="showOpenDatasetButton" class="ui-btn ui-btn-md ui-btn-primary" @click="onButtonClick" ref="openDatasetButton">
+					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_BUTTON_MSGVER_2') }}
 				</a>
 				<a class="ui-btn ui-btn-md ui-btn-light-border" @click="onOneMoreButtonClick" ref="oneMoreButton" v-if="showMoreButton">
 					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_ONE_MORE_BUTTON') }}

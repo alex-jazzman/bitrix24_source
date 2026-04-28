@@ -1,23 +1,126 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_date,main_popup,sign_v2_signSettings,ui_sidepanel_layout,ui_uploader_tileWidget,ui_uploader_core,main_loader,ui_icons,main_core,main_core_events,sign_v2_api,ui_entitySelector,ui_notification) {
+(function (exports,main_date,main_popup,sign_type,sign_v2_signSettings,ui_sidepanel_layout,ui_uploader_tileWidget,ui_uploader_core,main_loader,ui_icons,main_core,main_core_events,sign_v2_api,ui_entitySelector,ui_notification) {
 	'use strict';
+
+	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
+	var _isDragOver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDragOver");
+	var _onDragEnter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDragEnter");
+	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
+	var _handleDragEnter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragEnter");
+	var _handleDragOver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragOver");
+	var _handleDrop = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDrop");
+	var _handleDragLeave = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragLeave");
+	var _resetDragState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetDragState");
+	var _setDragState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDragState");
+	class DragDropHandler {
+	  constructor(layout, options = {}) {
+	    Object.defineProperty(this, _setDragState, {
+	      value: _setDragState2
+	    });
+	    Object.defineProperty(this, _resetDragState, {
+	      value: _resetDragState2
+	    });
+	    Object.defineProperty(this, _handleDragLeave, {
+	      value: _handleDragLeave2
+	    });
+	    Object.defineProperty(this, _handleDrop, {
+	      value: _handleDrop2
+	    });
+	    Object.defineProperty(this, _handleDragOver, {
+	      value: _handleDragOver2
+	    });
+	    Object.defineProperty(this, _handleDragEnter, {
+	      value: _handleDragEnter2
+	    });
+	    Object.defineProperty(this, _bindEvents, {
+	      value: _bindEvents2
+	    });
+	    Object.defineProperty(this, _layout, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _isDragOver, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _onDragEnter, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = layout;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onDragEnter)[_onDragEnter] = options.onDragEnter;
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
+	  }
+	}
+	function _bindEvents2() {
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], 'dragenter', babelHelpers.classPrivateFieldLooseBase(this, _handleDragEnter)[_handleDragEnter].bind(this));
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], 'dragover', babelHelpers.classPrivateFieldLooseBase(this, _handleDragOver)[_handleDragOver].bind(this));
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], 'drop', babelHelpers.classPrivateFieldLooseBase(this, _handleDrop)[_handleDrop].bind(this));
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], 'dragleave', babelHelpers.classPrivateFieldLooseBase(this, _handleDragLeave)[_handleDragLeave].bind(this));
+	}
+	function _handleDragEnter2(event) {
+	  event.preventDefault();
+	  babelHelpers.classPrivateFieldLooseBase(this, _setDragState)[_setDragState]();
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _onDragEnter)[_onDragEnter]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _onDragEnter)[_onDragEnter](event);
+	  }
+	}
+	function _handleDragOver2(event) {
+	  event.preventDefault();
+	}
+	function _handleDrop2(event) {
+	  event.preventDefault();
+	  babelHelpers.classPrivateFieldLooseBase(this, _resetDragState)[_resetDragState]();
+	}
+	function _handleDragLeave2(event) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].contains(event.relatedTarget)) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _resetDragState)[_resetDragState]();
+	  }
+	}
+	function _resetDragState2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isDragOver)[_isDragOver]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isDragOver)[_isDragOver] = false;
+	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], '--drag-over');
+	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], '--dragging');
+	  }
+	}
+	function _setDragState2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isDragOver)[_isDragOver]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isDragOver)[_isDragOver] = true;
+	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], '--drag-over');
+	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], '--dragging');
+	  }
+	}
 
 	let _ = t => t,
 	  _t,
-	  _t2;
-	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
+	  _t2,
+	  _t3,
+	  _t4,
+	  _t5,
+	  _t6,
+	  _t7,
+	  _t8;
+	var _layout$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _props = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("props");
 	var _titleNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleNode");
 	var _descriptionNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("descriptionNode");
+	var _linkNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkNode");
+	var _contentNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contentNode");
+	var _dragOverlayNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dragOverlayNode");
 	var _createListItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createListItem");
+	var _bindDragEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindDragEvents");
 	class ListItem {
 	  constructor(props) {
+	    Object.defineProperty(this, _bindDragEvents, {
+	      value: _bindDragEvents2
+	    });
 	    Object.defineProperty(this, _createListItem, {
 	      value: _createListItem2
 	    });
-	    Object.defineProperty(this, _layout, {
+	    Object.defineProperty(this, _layout$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -33,17 +136,33 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _linkNode, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _contentNode, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _dragOverlayNode, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode] = main_core.Tag.render(_t || (_t = _`
 			<span class="sign-blank-selector__list_item-title"></span>
 		`));
 	    babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode] = main_core.Tag.render(_t2 || (_t2 = _`
 			<span class="sign-blank-selector__list_item-info"></span>
 		`));
+	    babelHelpers.classPrivateFieldLooseBase(this, _linkNode)[_linkNode] = null;
 	    this.setProps(props);
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = babelHelpers.classPrivateFieldLooseBase(this, _createListItem)[_createListItem]();
 	  }
 	  getLayout() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout];
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1]) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1];
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1] = babelHelpers.classPrivateFieldLooseBase(this, _createListItem)[_createListItem]();
+	    return babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1];
 	  }
 	  setTitle(title = '') {
 	    babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode].textContent = title;
@@ -72,23 +191,89 @@ this.BX.Sign = this.BX.Sign || {};
 	  const {
 	    title,
 	    description,
-	    modifier
+	    modifier,
+	    link,
+	    onLinkClick,
+	    isNew,
+	    isPlaceholderDocumentAvailable
 	  } = this.getProps();
 	  this.setTitle(title);
 	  this.setDescription(description);
-	  return main_core.Dom.create('div', {
-	    attrs: {
-	      className: `sign-blank-selector__list_item --${modifier}`
-	    },
-	    children: [babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode], babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode]]
+	  const children = [babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode], babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode]];
+	  if (link && onLinkClick) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _linkNode)[_linkNode] = main_core.Tag.render(_t3 || (_t3 = _`
+				<a class="sign-blank-selector__list_item-link" onclick="${0}">
+					${0}
+				</a>
+			`), e => {
+	      e.stopPropagation();
+	      onLinkClick();
+	    }, main_core.Text.encode(link));
+	    children.push(babelHelpers.classPrivateFieldLooseBase(this, _linkNode)[_linkNode]);
+	  }
+	  if (isNew) {
+	    const badgeText = main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_NEW_BADGE');
+	    const badge = main_core.Tag.render(_t4 || (_t4 = _`
+				<span class="sign-blank-selector__list_item-badge" title="${0}">
+					${0}
+				</span>
+			`), main_core.Text.encode(badgeText), main_core.Text.encode(badgeText));
+	    children.push(badge);
+	  }
+	  if (isPlaceholderDocumentAvailable) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _contentNode)[_contentNode] = main_core.Tag.render(_t5 || (_t5 = _`
+				<div class="sign-blank-selector__list_item-content">
+					${0}
+				</div>
+			`), children);
+	    const {
+	      dragDescriptionTextHTML
+	    } = this.getProps();
+	    babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayNode)[_dragOverlayNode] = main_core.Tag.render(_t6 || (_t6 = _`
+				<div class="sign-blank-selector__list_item-drag-overlay">
+					<div class="sign-blank-selector__list_item-drag-overlay-content">
+						<span class="sign-blank-selector__list_item-drag-overlay-title">
+							${0}
+						</span>
+						<span>
+							${0}
+						</span>
+					</div>
+				</div>
+			`), main_core.Text.encode(title), dragDescriptionTextHTML);
+	    const layout = main_core.Tag.render(_t7 || (_t7 = _`
+				<div class="sign-blank-selector__list_item --${0} --b2e">
+					${0}
+					${0}
+				</div>
+			`), main_core.Text.encode(modifier), babelHelpers.classPrivateFieldLooseBase(this, _contentNode)[_contentNode], babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayNode)[_dragOverlayNode]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindDragEvents)[_bindDragEvents](layout);
+	    return layout;
+	  }
+	  return main_core.Tag.render(_t8 || (_t8 = _`
+			<div class="sign-blank-selector__list_item --${0} --b2b">
+				${0}
+			</div>
+		`), main_core.Text.encode(modifier), children);
+	}
+	function _bindDragEvents2(layout) {
+	  new DragDropHandler(layout, {
+	    onDragEnter: event => {
+	      const {
+	        onDragEnter
+	      } = this.getProps();
+	      if (onDragEnter) {
+	        onDragEnter(event);
+	      }
+	    }
 	  });
 	}
 
 	let _$1 = t => t,
 	  _t$1,
 	  _t2$1,
-	  _t3,
-	  _t4;
+	  _t3$1,
+	  _t4$1;
 	var _placeholder = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("placeholder");
 	var _preview = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preview");
 	var _loader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loader");
@@ -135,9 +320,9 @@ this.BX.Sign = this.BX.Sign || {};
 	      ...this.getProps(),
 	      userAvatarUrl
 	    });
-	    const avatarIcon = userAvatarUrl ? main_core.Tag.render(_t3 || (_t3 = _$1`
+	    const avatarIcon = userAvatarUrl ? main_core.Tag.render(_t3$1 || (_t3$1 = _$1`
 				<img class="sign-blank-selector__list_item-info-avatar" src="${0}" />
-			`), userAvatarUrl) : main_core.Tag.render(_t4 || (_t4 = _$1`
+			`), userAvatarUrl) : main_core.Tag.render(_t4$1 || (_t4$1 = _$1`
 				<span class="sign-blank-selector__list_item-info-avatar ui-icon ui-icon-common-user">
 					<i></i>
 				</span>
@@ -324,13 +509,18 @@ this.BX.Sign = this.BX.Sign || {};
 	let _$3 = t => t,
 	  _t$3,
 	  _t2$2,
-	  _t3$1,
-	  _t4$1,
-	  _t5,
-	  _t6;
+	  _t3$2,
+	  _t4$2,
+	  _t5$1,
+	  _t6$1;
+	const blankType = Object.freeze({
+	  default: 'default',
+	  placeholders: 'placeholders'
+	});
 	const uploaderOptions = {
 	  controller: 'sign.upload.blankUploadController',
 	  acceptedFileTypes: ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.rtf', '.odt'],
+	  acceptedPlaceholdersFileTypes: ['.docx'],
 	  multiple: true,
 	  autoUpload: false,
 	  maxFileSize: 50 * 1024 * 1024,
@@ -363,14 +553,21 @@ this.BX.Sign = this.BX.Sign || {};
 	var _loadMoreButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadMoreButton");
 	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
 	var _config = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("config");
+	var _isPlaceholdersUpload = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPlaceholdersUpload");
+	var _getAcceptedFileTypes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAcceptedFileTypes");
 	var _checkForFilesValid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkForFilesValid");
 	var _onFileBeforeAdd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFileBeforeAdd");
 	var _getImagesLimit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getImagesLimit");
 	var _onFileAdd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFileAdd");
+	var _onUploadComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUploadComplete");
 	var _onFileRemove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFileRemove");
 	var _onUploadStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUploadStart");
 	var _toggleTileVisibility = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleTileVisibility");
 	var _createUploadButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createUploadButtons");
+	var _getUploadButtonsConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUploadButtonsConfig");
+	var _isPlaceholderDocumentAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPlaceholderDocumentAvailable");
+	var _getB2bButtonsConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getB2bButtonsConfig");
+	var _getB2eButtonsConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getB2eButtonsConfig");
 	var _resumeUploading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resumeUploading");
 	var _loadBlanks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadBlanks");
 	var _setupBlank = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setupBlank");
@@ -382,8 +579,8 @@ this.BX.Sign = this.BX.Sign || {};
 	var _getSaveButtonIntoSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSaveButtonIntoSlider");
 	var _isAllFileUploadsComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAllFileUploadsComplete");
 	class BlankSelector extends main_core_events.EventEmitter {
-	  constructor(config) {
-	    var _config$events;
+	  constructor(_config2) {
+	    var _config2$events;
 	    super();
 	    Object.defineProperty(this, _isAllFileUploadsComplete, {
 	      value: _isAllFileUploadsComplete2
@@ -415,6 +612,18 @@ this.BX.Sign = this.BX.Sign || {};
 	    Object.defineProperty(this, _resumeUploading, {
 	      value: _resumeUploading2
 	    });
+	    Object.defineProperty(this, _getB2eButtonsConfig, {
+	      value: _getB2eButtonsConfig2
+	    });
+	    Object.defineProperty(this, _getB2bButtonsConfig, {
+	      value: _getB2bButtonsConfig2
+	    });
+	    Object.defineProperty(this, _isPlaceholderDocumentAvailable, {
+	      value: _isPlaceholderDocumentAvailable2
+	    });
+	    Object.defineProperty(this, _getUploadButtonsConfig, {
+	      value: _getUploadButtonsConfig2
+	    });
 	    Object.defineProperty(this, _createUploadButtons, {
 	      value: _createUploadButtons2
 	    });
@@ -427,6 +636,9 @@ this.BX.Sign = this.BX.Sign || {};
 	    Object.defineProperty(this, _onFileRemove, {
 	      value: _onFileRemove2
 	    });
+	    Object.defineProperty(this, _onUploadComplete, {
+	      value: _onUploadComplete2
+	    });
 	    Object.defineProperty(this, _onFileAdd, {
 	      value: _onFileAdd2
 	    });
@@ -438,6 +650,9 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    Object.defineProperty(this, _checkForFilesValid, {
 	      value: _checkForFilesValid2
+	    });
+	    Object.defineProperty(this, _getAcceptedFileTypes, {
+	      value: _getAcceptedFileTypes2
 	    });
 	    this.events = Object.freeze({
 	      beforeAddFileSuccessfully: 'beforeAddFileSuccessfully',
@@ -488,12 +703,17 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _isPlaceholdersUpload, {
+	      writable: true,
+	      value: false
+	    });
 	    this.setEventNamespace('BX.Sign.V2.BlankSelector');
-	    this.subscribeFromOptions((_config$events = config == null ? void 0 : config.events) != null ? _config$events : {});
-	    babelHelpers.classPrivateFieldLooseBase(this, _config)[_config] = config;
+	    this.subscribeFromOptions((_config2$events = _config2 == null ? void 0 : _config2.events) != null ? _config2$events : {});
+	    babelHelpers.classPrivateFieldLooseBase(this, _config)[_config] = _config2;
 	    this.selectedBlankId = 0;
 	    babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks] = new Map();
 	    babelHelpers.classPrivateFieldLooseBase(this, _page)[_page] = 0;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload] = false;
 	    const uploadButtons = babelHelpers.classPrivateFieldLooseBase(this, _createUploadButtons)[_createUploadButtons]();
 	    const dragArea = main_core.Tag.render(_t$3 || (_t$3 = _$3`
 			<label class="sign-blank-selector__list_drag-area-label">
@@ -530,23 +750,25 @@ this.BX.Sign = this.BX.Sign || {};
 				${0}
 			</div>
 		`), uploadButtons, dragArea);
+	    new DragDropHandler(babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget] = new ui_uploader_tileWidget.TileWidget({
 	      ...uploaderOptions,
-	      ...config.uploaderOptions,
+	      ..._config2.uploaderOptions,
 	      dropElement: babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer],
 	      browseElement: [...uploadButtons, dragArea],
 	      events: {
 	        [ui_uploader_core.UploaderEvent.BEFORE_FILES_ADD]: event => babelHelpers.classPrivateFieldLooseBase(this, _onFileBeforeAdd)[_onFileBeforeAdd](event),
 	        [ui_uploader_core.UploaderEvent.FILE_ADD]: event => babelHelpers.classPrivateFieldLooseBase(this, _onFileAdd)[_onFileAdd](event),
 	        [ui_uploader_core.UploaderEvent.FILE_REMOVE]: event => babelHelpers.classPrivateFieldLooseBase(this, _onFileRemove)[_onFileRemove](event),
-	        [ui_uploader_core.UploaderEvent.UPLOAD_START]: event => babelHelpers.classPrivateFieldLooseBase(this, _onUploadStart)[_onUploadStart](event)
+	        [ui_uploader_core.UploaderEvent.UPLOAD_START]: event => babelHelpers.classPrivateFieldLooseBase(this, _onUploadStart)[_onUploadStart](event),
+	        [ui_uploader_core.UploaderEvent.UPLOAD_COMPLETE]: event => babelHelpers.classPrivateFieldLooseBase(this, _onUploadComplete)[_onUploadComplete](event)
 	      }
 	    }, widgetOptions);
 	    babelHelpers.classPrivateFieldLooseBase(this, _relatedTarget)[_relatedTarget] = null;
 	    main_core.Event.bind(document, 'mousedown', event => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _relatedTarget)[_relatedTarget] = event.target;
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer] = main_core.Tag.render(_t3$1 || (_t3$1 = _$3`
+	    babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer] = main_core.Tag.render(_t3$2 || (_t3$2 = _$3`
 			<div
 				class="sign-blank-selector__list"
 				onfocusin="${0}"
@@ -565,10 +787,10 @@ this.BX.Sign = this.BX.Sign || {};
 	        this.resetSelectedBlank(Number(target.dataset.id), babelHelpers.classPrivateFieldLooseBase(this, _relatedTarget)[_relatedTarget]);
 	      }
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer] = main_core.Tag.render(_t4$1 || (_t4$1 = _$3`
+	    babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer] = main_core.Tag.render(_t4$2 || (_t4$2 = _$3`
 			<div class="sign-blank-selector__tile-widget"></div>
 		`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _loadMoreButton)[_loadMoreButton] = main_core.Tag.render(_t5 || (_t5 = _$3`
+	    babelHelpers.classPrivateFieldLooseBase(this, _loadMoreButton)[_loadMoreButton] = main_core.Tag.render(_t5$1 || (_t5$1 = _$3`
 			<div class="sign-blank-selector__load-more --hidden">
 				<span onclick="${0}">
 					${0}
@@ -609,10 +831,12 @@ this.BX.Sign = this.BX.Sign || {};
 	    try {
 	      var _babelHelpers$classPr;
 	      const filesIds = files.map(file => file.getServerFileId());
-	      const blankData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].createBlank(filesIds, (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr : null, sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].documentMode));
+	      const hasPlaceholders = files.some(file => file.getCustomData('uploadType') === blankType.placeholders);
+	      const blankData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].createBlank(filesIds, (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr : null, sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].documentMode), hasPlaceholders);
 	      babelHelpers.classPrivateFieldLooseBase(this, _setupBlank)[_setupBlank]({
 	        ...blankData,
-	        userName: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF')
+	        userName: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),
+	        hasPlaceholders
 	      }, blank);
 	      return blankData.id;
 	    } catch (ex) {
@@ -640,10 +864,12 @@ this.BX.Sign = this.BX.Sign || {};
 	    try {
 	      var _babelHelpers$classPr2;
 	      const filesIds = files.map(file => file.getServerFileId());
-	      const blankData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].createBlank(filesIds, (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr2 : null, sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].documentMode));
+	      const hasPlaceholders = files.some(file => file.getCustomData('uploadType') === 'placeholders');
+	      const blankData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].createBlank(filesIds, (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr2 : null, sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].documentMode), hasPlaceholders);
 	      babelHelpers.classPrivateFieldLooseBase(this, _setupBlank)[_setupBlank]({
 	        ...blankData,
-	        userName: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF')
+	        userName: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),
+	        hasPlaceholders
 	      }, blank);
 	      return blankData.id;
 	    } catch (ex) {
@@ -728,12 +954,15 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	    return babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader().getFiles().every(file => file.getErrors().length <= 0);
 	  }
+	  hasPlaceholderFilesForUpload() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader().getFiles().some(file => file.getCustomData('uploadType') === blankType.placeholders);
+	  }
 	  getLayout() {
 	    var _babelHelpers$classPr3;
 	    babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].renderTo(babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _toggleTileVisibility)[_toggleTileVisibility](false);
 	    const canUploadNewBlank = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].canUploadNewBlank) != null ? _babelHelpers$classPr3 : true;
-	    const selectorContainer = main_core.Tag.render(_t6 || (_t6 = _$3`
+	    const selectorContainer = main_core.Tag.render(_t6$1 || (_t6$1 = _$3`
 			<div class="sign-blank-selector">
 				${0}
 				${0}
@@ -796,12 +1025,16 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	  }
 	}
+	function _getAcceptedFileTypes2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload] ? uploaderOptions.acceptedPlaceholdersFileTypes : uploaderOptions.acceptedFileTypes;
+	}
 	function _checkForFilesValid2(addedFiles) {
 	  const isImage = file => file.getType().includes('image/');
 	  const allAddedImages = addedFiles.every(file => isImage(file));
+	  const acceptedFileTypes = babelHelpers.classPrivateFieldLooseBase(this, _getAcceptedFileTypes)[_getAcceptedFileTypes]();
 	  const validExtension = addedFiles.every(file => {
 	    // TODO merge with this.#config.uploaderOptions.acceptedFileTypes
-	    return uploaderOptions.acceptedFileTypes.includes(`.${file.getExtension()}`);
+	    return acceptedFileTypes.includes(`.${file.getExtension()}`);
 	  });
 	  if (!validExtension || addedFiles.length > 1 && !allAddedImages) {
 	    return false;
@@ -834,6 +1067,11 @@ this.BX.Sign = this.BX.Sign || {};
 	    return;
 	  }
 	  let bindElement = babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer].firstElementChild;
+	  let messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_HINT';
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload]) {
+	    bindElement = babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer].querySelector('.--placeholders');
+	    messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_PLACEHOLDERS_HINT';
+	  }
 	  if (main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer], '--hidden')) {
 	    const {
 	      $refs: {
@@ -842,14 +1080,19 @@ this.BX.Sign = this.BX.Sign || {};
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getRootComponent();
 	    bindElement = container.firstElementChild;
 	  }
-	  const errorPopup = new main_popup.Popup({
-	    ...errorPopupOptions,
-	    bindElement,
-	    content: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_UPLOAD_HINT', {
-	      '%imageCountLimit%': babelHelpers.classPrivateFieldLooseBase(this, _getImagesLimit)[_getImagesLimit]()
-	    })
-	  });
-	  errorPopup.show();
+
+	  // Wait for CSS transition to complete before showing popup
+	  setTimeout(() => {
+	    const errorPopup = new main_popup.Popup({
+	      ...errorPopupOptions,
+	      bindElement,
+	      content: main_core.Loc.getMessage(messageCode, {
+	        '%imageCountLimit%': babelHelpers.classPrivateFieldLooseBase(this, _getImagesLimit)[_getImagesLimit]()
+	      })
+	    });
+	    errorPopup.show();
+	    setTimeout(() => errorPopup.close(), 7000);
+	  }, 200);
 	  uploaderEvent.preventDefault();
 	}
 	function _getImagesLimit2() {
@@ -857,12 +1100,21 @@ this.BX.Sign = this.BX.Sign || {};
 	  return main_core.Type.isInteger(parseInt((_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config]) == null ? void 0 : (_babelHelpers$classPr5 = _babelHelpers$classPr4.uploaderOptions) == null ? void 0 : _babelHelpers$classPr5.maxFileCount, 10)) ? (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config]) == null ? void 0 : (_babelHelpers$classPr7 = _babelHelpers$classPr6.uploaderOptions) == null ? void 0 : _babelHelpers$classPr7.maxFileCount : uploaderOptions.maxFileCount;
 	}
 	function _onFileAdd2(event) {
-	  const title = event.data.file.getName();
+	  const file = event.data.file;
+	  const title = file.getName();
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload]) {
+	    file.setCustomData('uploadType', blankType.placeholders);
+	  } else {
+	    file.setCustomData('uploadType', blankType.default);
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _toggleTileVisibility)[_toggleTileVisibility](true);
 	  this.resetSelectedBlank();
 	  this.emit(this.events.addFile, {
 	    title: babelHelpers.classPrivateFieldLooseBase(this, _normalizeTitle)[_normalizeTitle](title)
 	  });
+	}
+	function _onUploadComplete2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload] = false;
 	}
 	function _onFileRemove2(event) {
 	  this.emit('removeFile');
@@ -899,7 +1151,40 @@ this.BX.Sign = this.BX.Sign || {};
 	  });
 	}
 	function _createUploadButtons2() {
-	  const buttons = {
+	  const entries = Object.entries(babelHelpers.classPrivateFieldLooseBase(this, _getUploadButtonsConfig)[_getUploadButtonsConfig]());
+	  return entries.map(([key, config]) => {
+	    var _config$link, _config$onLinkClick, _config$dragDescripti;
+	    const isPlaceholders = key === blankType.placeholders;
+	    const listItem = new ListItem({
+	      title: config.title,
+	      description: config.description,
+	      modifier: key,
+	      link: (_config$link = config.link) != null ? _config$link : null,
+	      onLinkClick: (_config$onLinkClick = config.onLinkClick) != null ? _config$onLinkClick : null,
+	      isNew: isPlaceholders,
+	      isPlaceholderDocumentAvailable: babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholderDocumentAvailable)[_isPlaceholderDocumentAvailable](),
+	      dragDescriptionTextHTML: (_config$dragDescripti = config.dragDescriptionTextHTML) != null ? _config$dragDescripti : null,
+	      onDragEnter: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload] = isPlaceholders;
+	      }
+	    });
+	    main_core.Event.bind(listItem.getLayout(), 'click', () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload] = isPlaceholders;
+	    });
+	    return listItem.getLayout();
+	  });
+	}
+	function _getUploadButtonsConfig2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholderDocumentAvailable)[_isPlaceholderDocumentAvailable]()) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getB2eButtonsConfig)[_getB2eButtonsConfig]();
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _getB2bButtonsConfig)[_getB2bButtonsConfig]();
+	}
+	function _isPlaceholderDocumentAvailable2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type === sign_type.BlankScenario.b2e && babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].isPlaceholderDocumentEnabled;
+	}
+	function _getB2bButtonsConfig2() {
+	  return {
 	    img: {
 	      title: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATE_NEW_PIC'),
 	      description: 'jpeg, png'
@@ -913,18 +1198,32 @@ this.BX.Sign = this.BX.Sign || {};
 	      description: 'doc, docx'
 	    }
 	  };
-	  const entries = Object.entries(buttons);
-	  return entries.map(([key, {
-	    title,
-	    description
-	  }]) => {
-	    const listItem = new ListItem({
-	      title,
-	      description,
-	      modifier: key
-	    });
-	    return listItem.getLayout();
-	  });
+	}
+	function _getB2eButtonsConfig2() {
+	  return {
+	    placeholders: {
+	      title: 'docx',
+	      description: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_PLACEHOLDERS_DOCX_MSGVER_1'),
+	      link: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_PLACEHOLDERS_LINK_MSGVER_1'),
+	      onLinkClick: () => {
+	        void top.BX.Runtime.loadExtension('sign.v2.grid.b2e.placeholders').then(() => {
+	          new top.BX.Sign.V2.Grid.B2e.Placeholders().show();
+	        });
+	      },
+	      dragDescriptionTextHTML: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_DROP_ZONE_PLACEHOLDERS', {
+	        '[highlight]': '<span class="sign-blank-selector__list_item-drag-overlay-highlighting">',
+	        '[/highlight]': '</span>'
+	      })
+	    },
+	    mixed: {
+	      title: 'pdf, png, doc, jpeg',
+	      description: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_MIXED'),
+	      dragDescriptionTextHTML: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_DROP_ZONE_MIXED', {
+	        '[highlight]': '<span class="sign-blank-selector__list_item-drag-overlay-highlighting">',
+	        '[/highlight]': '</span>'
+	      })
+	    }
+	  };
 	}
 	async function _resumeUploading2() {
 	  const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
@@ -978,7 +1277,8 @@ this.BX.Sign = this.BX.Sign || {};
 	    previewUrl,
 	    userAvatarUrl,
 	    userName,
-	    dateCreate
+	    dateCreate,
+	    hasPlaceholders = false
 	  } = blankData;
 	  const creationDate = dateCreate ? new Date(dateCreate) : new Date();
 	  const descriptionText = `${userName}, ${main_date.DateTimeFormat.format('j M. Y', creationDate)}`;
@@ -986,6 +1286,9 @@ this.BX.Sign = this.BX.Sign || {};
 	  blank.setReady(true);
 	  blank.setPreview(previewUrl);
 	  blank.setAvatarWithDescription(descriptionText, userAvatarUrl);
+	  if (hasPlaceholders) {
+	    blank.getLayout().dataset.hasPlaceholders = 'true';
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].set(blankId, blank);
 	}
 	function _normalizeTitle2(title) {
@@ -1027,5 +1330,5 @@ this.BX.Sign = this.BX.Sign || {};
 	exports.ListItem = ListItem;
 	exports.BlankSelector = BlankSelector;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Main,BX.Main,BX.Sign.V2,BX.UI.SidePanel,BX.UI.Uploader,BX.UI.Uploader,BX,BX,BX,BX.Event,BX.Sign.V2,BX.UI.EntitySelector,BX));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Main,BX.Main,BX.Sign,BX.Sign.V2,BX.UI.SidePanel,BX.UI.Uploader,BX.UI.Uploader,BX,BX,BX,BX.Event,BX.Sign.V2,BX.UI.EntitySelector,BX));
 //# sourceMappingURL=blank-selector.bundle.js.map

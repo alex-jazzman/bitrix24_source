@@ -1621,11 +1621,11 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 			const classes = ['main-buttons-item-link', this.classExtraItemLink].join(' ').trim();
 			if (BX.Type.isStringFilled(options['URL']))
 			{
-				container = BX.Tag.render`<a class="${classes}" href="${BX.Text.encode(options['URL'])}"></a>`;
+				container = BX.Tag.render`<a class="${classes}" tabindex="0" href="${BX.Text.encode(options['URL'])}"></a>`;
 			}
 			else
 			{
-				container = BX.Tag.render`<span class="${classes}"></span>`;
+				container = BX.Tag.render`<button type="button" tabindex="0" class="${classes}"></button>`;
 			}
 
 			BX.Dom.append(this.createItemIcon(options), container);

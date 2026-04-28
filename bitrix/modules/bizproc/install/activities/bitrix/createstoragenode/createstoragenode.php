@@ -251,6 +251,10 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 				'Required' => false,
 				'AllowSelection' => true,
 				'CustomType' => 'storage-fields',
+				'Options' => [
+					'codeCaption' => Loc::getMessage('BPCSN_DESCRIPTION_FIELD_CODE_CAPTION') ?? '',
+					'copyNotification' => Loc::getMessage('BPCSN_DESCRIPTION_FIELD_COPY_NOTIFICATION') ?? '',
+				]
 			],
 		];
 	}

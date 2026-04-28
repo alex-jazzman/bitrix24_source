@@ -41,7 +41,7 @@ jn.define('ai/mcp-selector/ui/item', (require, exports, module) => {
 			if (Type.isArrayFilled(authorizations))
 			{
 				return authorizations.some((auth) => {
-					return selectedAuthId === auth.id && auth.mcpServerId === id;
+					return selectedAuthId === auth.id && auth.serverId === id;
 				});
 			}
 
@@ -72,11 +72,17 @@ jn.define('ai/mcp-selector/ui/item', (require, exports, module) => {
 				? Loc.getMessage('MCP_SELECTOR_STATUS_CHIP_CONNECTED')
 				: Loc.getMessage('MCP_SELECTOR_STATUS_CHIP_NOT_CONNECTED');
 
+			let preparedSubtitle = subtitle;
+			if (Type.isArrayFilled(authorizations))
+			{
+				preparedSubtitle = authorizations.length > 1 ? Loc.getMessage('MCP_SELECTOR_ITEM_MANY_AUTH') : authorizations[0].name;
+			}
+
 			return EntityCell({
 				title: name,
-				subtitle,
+				subtitle: preparedSubtitle,
 				avatar: iconUrl.startsWith('http') ? iconUrl : withCurrentDomain(iconUrl),
-				badgeHeader: isAuthorization ? null : badgeHeader,
+				badgeHeader: (isAuthorization || isDisabled) ? null : badgeHeader,
 				badgeDesign:
 					(isActive && Type.isArrayFilled(authorizations))
 						? ChipStatusDesign.SUCCESS

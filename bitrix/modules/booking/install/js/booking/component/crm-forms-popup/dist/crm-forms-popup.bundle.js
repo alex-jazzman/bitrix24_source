@@ -244,7 +244,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    CrmFormsToolbar,
 	    HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc
 	  },
-	  // eslint-disable-next-line flowtype/require-return-type
 	  setup() {
 	    const helpDesk = booking_const.HelpDesk.CrmFormsPopup;
 	    return {

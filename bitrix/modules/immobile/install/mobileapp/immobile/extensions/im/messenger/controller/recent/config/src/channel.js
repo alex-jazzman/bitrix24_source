@@ -58,6 +58,7 @@ jn.define('im/messenger/controller/recent/config/channel', (require, exports, mo
 							return DateFormatter.getRecentFormat(item.getMessageDate());
 						},
 					},
+					convertorExtension: 'im/messenger/controller/recent/service/render/lib/convertor/common',
 				},
 			},
 			[RecentServiceName.vuex]: {

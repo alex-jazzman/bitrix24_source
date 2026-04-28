@@ -54,7 +54,7 @@ if ($arResult['FATAL'])
 $row = $arResult['LANDING'];
 $hooks = $arResult['HOOKS'];
 $isFormEditor = $arResult['SPECIAL_TYPE'] === Site\Type::PSEUDO_SCOPE_CODE_FORMS;
-$isMainpageEditor = $arParams['TYPE'] === Site\Type::SCOPE_CODE_MAINPAGE;
+ $isMainpageEditor = $arParams['TYPE'] === Site\Type::SCOPE_CODE_VIBE;
 $colorMain = LandingEditComponent::COLOR_PICKER_DEFAULT_COLOR_TEXT;
 $colorTitle = LandingEditComponent::COLOR_PICKER_DEFAULT_COLOR_TEXT;
 $tplRefs = $arResult['TEMPLATES_REF'];

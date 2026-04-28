@@ -62,6 +62,7 @@ export class ServiceLocator
 				messageModel: this.getMessageModel(),
 				eventEmitter: this.#emitter,
 				analyticsService: this.getAnalyticsService(),
+				preferencesService: this.getPreferencesService(),
 			});
 		});
 	}

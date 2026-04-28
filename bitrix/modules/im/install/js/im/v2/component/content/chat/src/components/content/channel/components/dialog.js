@@ -42,18 +42,13 @@ export const ChannelDialog = {
 		{
 			return this.layout.name === Layout.chat;
 		},
-		channelComments(): number[]
+		commentIdsWithCounter(): number[]
 		{
-			return this.$store.getters['counters/getChannelComments'](this.dialog.chatId);
+			return this.$store.getters['counters/getChildrenIdsWithCounter'](this.dialog.chatId);
 		},
 		totalChannelCommentsCounter(): number
 		{
-			let counter = 0;
-			Object.values(this.channelComments).forEach((commentCounter) => {
-				counter += commentCounter;
-			});
-
-			return counter;
+			return this.$store.getters['counters/getChildrenTotalCounter'](this.dialog.chatId);
 		},
 		showCommentsButton(): boolean
 		{
@@ -105,7 +100,7 @@ export const ChannelDialog = {
 		},
 		getNextChatIdToJump(): number
 		{
-			const commentChatIds = this.getCommentsChatIds();
+			const commentChatIds = [...this.commentIdsWithCounter];
 			commentChatIds.sort((a, z) => a - z);
 			if (this.lastScrolledChatId === 0)
 			{
@@ -119,12 +114,6 @@ export const ChannelDialog = {
 			}
 
 			return filteredChatIds[0];
-		},
-		getCommentsChatIds(): number[]
-		{
-			return Object.keys(this.channelComments).map((chatId) => {
-				return Number(chatId);
-			});
 		},
 		readAllChannelComments()
 		{

@@ -24,6 +24,18 @@ $arComponentParameters = Array(
 			'NAME' => getMessage('LANDING_CMP_PAR_SITE_ID'),
 			'TYPE' => 'STRING'
 		),
+		'REPLACE_SITE_ID' => array(
+			'NAME' => getMessage('LANDING_CMP_DEMO_PREVIEW_REPLACE_SITE_ID'),
+			'TYPE' => 'STRING'
+		),
+		'REPLACE_LID' => array(
+			'NAME' => getMessage('LANDING_CMP_DEMO_PREVIEW_REPLACE_LID'),
+			'TYPE' => 'STRING'
+		),
+		'FOLDER_ID' => array(
+			'NAME' => getMessage('LANDING_CMP_DEMO_PREVIEW_FOLDER_ID'),
+			'TYPE' => 'STRING'
+		),
 		'SITE_WORK_MODE' => array(
 			'NAME' => getMessage('LANDING_CMP_PAR_SITE_WORK_MODE'),
 			'TYPE' => 'CHECKBOX'

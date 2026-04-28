@@ -6,6 +6,7 @@ import { BaseMessage } from 'im.v2.component.message.base';
 import { ReactionList, MessageStatus, AuthorTitle } from 'im.v2.component.message.elements';
 import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
 import { Notifier } from 'im.v2.lib.notifier';
+import { CopilotManager } from 'im.v2.lib.copilot';
 
 import './css/copilot-answer.css';
 
@@ -55,13 +56,18 @@ export const CopilotMessage = {
 		warningText(): string
 		{
 			return this.loc(
-				'IM_MESSAGE_COPILOT_ANSWER_WARNING',
+				'IM_MESSAGE_COPILOT_ANSWER_WARNING_MSGVER_1',
 				{
 					'#LINK_START#': '<a class="bx-im-message-copilot-answer__warning_more">',
 					'#LINK_END#': '</a>',
+					'#COPILOT_NAME#': this.copilotManager.getName(),
 				},
 			);
 		},
+	},
+	created()
+	{
+		this.copilotManager = new CopilotManager();
 	},
 	methods:
 	{

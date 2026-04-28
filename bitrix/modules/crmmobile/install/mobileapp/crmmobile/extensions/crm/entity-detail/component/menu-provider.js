@@ -10,6 +10,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 	const { TypeId } = require('crm/type');
 	const { getEntityMessage } = require('crm/loc');
 	const { Loc } = require('loc');
+	const { UIMenuType } = require('layout/ui/menu');
 	const { getActionToCopyEntity, getActionToChangePipeline, getActionToShare } = require('crm/entity-actions');
 	const { getSmartActivityMenuItem } = require('crm/entity-detail/component/smart-activity-menu-item');
 	const { CrmDocumentList } = require('crm/document/list');
@@ -175,7 +176,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 			});
 
 			result.push({
-				type: UI.Menu.Types.DESKTOP,
+				type: UIMenuType.DESKTOP,
 				showHint: false,
 				data: { qrUrl },
 				sectionCode: 'additional',
@@ -186,7 +187,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 			if (articleCode)
 			{
 				result.push({
-					type: UI.Menu.Types.HELPDESK,
+					type: UIMenuType.HELPDESK,
 					data: { articleCode },
 					sectionCode: 'additional',
 					sort: 1050,

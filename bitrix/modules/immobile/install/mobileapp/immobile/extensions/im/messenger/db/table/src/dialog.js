@@ -4,12 +4,14 @@
 jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 
+	const { DialogType } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		Table,
 		FieldType,
 		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
+	const { getStartWordsSearchVariants } = require('im/messenger/db/helper/start-words');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('database-table--dialog');
 
@@ -142,6 +144,79 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 			logger.log('DialogTable.deleteByChatIdList complete: ', idList);
 
 			return result;
+		}
+
+		/**
+		 * @param {string} searchText
+		 * @param {'asc'|'desc'} order='asc'
+		 * @param {number} limit=25
+		 * @param {DialoguesFilter | {}} filter
+		 * @param {boolean} shouldRestoreRows
+		 *
+		 * @returns {Promise<{items: *[]}>}
+		 */
+		async searchByText(
+			searchText,
+			order = 'desc',
+			limit = 25,
+			filter = {},
+			shouldRestoreRows = true,
+		)
+		{
+			if (!this.isSupported || !Feature.isLocalStorageEnabled)
+			{
+				return {
+					items: [],
+				};
+			}
+
+			const filterString = this.createFilter(filter);
+			const { sqlCondition, values } = getStartWordsSearchVariants('name', searchText);
+			const result = await this.executeSql({
+				query: `
+					SELECT ${this.getName()}.*
+					FROM ${this.getName()}
+					LEFT JOIN b_im_recent ON ${this.getName()}.dialogId = b_im_recent.id
+					${filterString} AND ${sqlCondition} 
+					ORDER BY id ${order}
+					LIMIT ${limit}
+				`,
+				values: [
+					...values,
+				],
+			});
+
+			return this.prepareListResult(result, shouldRestoreRows);
+		}
+
+		/**
+		 * @param {DialoguesFilter['dialogTypes']} dialogTypes
+		 * @param {DialoguesFilter['exceptDialogTypes']} exceptDialogTypes
+		 * @return {string}
+		 */
+		createFilter({ dialogTypes = [], exceptDialogTypes = [] })
+		{
+			let filterString = '';
+			if (dialogTypes.length > 0)
+			{
+				const types = dialogTypes.map((item) => `'${item}'`);
+				filterString = `WHERE ${this.getName()}.type IN (${types})`;
+			}
+
+			if (exceptDialogTypes.length > 0)
+			{
+				const types = exceptDialogTypes.map((item) => `'${item}'`);
+				if (filterString.length > 0)
+				{
+					filterString += ` AND ${this.getName()}.type NOT IN (${types})`;
+				}
+				else
+				{
+					filterString = `WHERE ${this.getName()}.type NOT IN (${types})`;
+				}
+			}
+
+			return filterString;
 		}
 	}
 

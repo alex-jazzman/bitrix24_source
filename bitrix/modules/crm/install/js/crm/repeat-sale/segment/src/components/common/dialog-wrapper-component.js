@@ -44,6 +44,25 @@ export const DialogWrapperComponent = {
 		readOnly: {
 			type: Boolean,
 		},
+		enableSearch: {
+			type: Boolean,
+			default: true,
+		},
+		showInputIcon: {
+			type: Boolean,
+			default: true,
+		},
+		halfWidth: {
+			type: Boolean,
+		},
+		useItemMaxSize: {
+			type: Boolean,
+			default: true,
+		},
+		width: {
+			type: Number,
+			default: 450,
+		},
 	},
 
 	methods: {
@@ -60,8 +79,8 @@ export const DialogWrapperComponent = {
 					multiple: this.multiple,
 					dropdownMode: true,
 					showAvatars: this.showAvatars,
-					enableSearch: true,
-					width: 450,
+					enableSearch: this.enableSearch,
+					width: this.width,
 					zIndex: 2500,
 					items: this.items,
 					entities: this.entities,
@@ -152,15 +171,21 @@ export const DialogWrapperComponent = {
 			return [
 				'ui-ctl',
 				'ui-ctl-after-icon',
+				{ 'ui-ctl-w50': this.halfWidth },
 				{ 'ui-ctl-dropdown': !this.readOnly },
 			];
 		},
 		iconClassList(): Array
 		{
-			return [
-				'crm-repeat-sale__segment-dialog-field-icon',
-				{ '--color': Boolean(this.customData?.color) },
-			];
+			if (this.showInputIcon)
+			{
+				return [
+					'crm-repeat-sale__segment-dialog-field-icon',
+					{ '--color': Boolean(this.customData?.color) },
+				];
+			}
+
+			return [];
 		},
 		iconStyleList(): Object
 		{
@@ -171,6 +196,13 @@ export const DialogWrapperComponent = {
 
 			return {
 				backgroundColor: this.customData.color,
+			};
+		},
+		itemClassList(): Array
+		{
+			return {
+				'crm-repeat-sale__segment-dialog-field-value': true,
+				'--max-size': this.useItemMaxSize,
 			};
 		},
 	},
@@ -192,7 +224,7 @@ export const DialogWrapperComponent = {
 						:class="iconClassList"
 						:style="iconStyleList"
 					></span>
-					<span class="crm-repeat-sale__segment-dialog-field-value">
+					<span :class="itemClassList">
 						{{elementTitle}}
 					</span>
 				</span>

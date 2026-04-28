@@ -1,9 +1,10 @@
+import { type JsonObject } from 'main.core';
+
 import { Core } from 'im.v2.application.core';
+import { RecentType } from 'im.v2.const';
+import { type RawLegacyRecentItem } from 'im.v2.provider.service.types';
 
 import { LegacyRecentService } from '../legacy-recent';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelRecentItem } from 'im.v2.model';
 
 export class UnreadRecentService extends LegacyRecentService
 {
@@ -27,13 +28,11 @@ export class UnreadRecentService extends LegacyRecentService
 		};
 	}
 
-	getModelSaveMethod(): string
+	saveRecentItems(recentItems: RawLegacyRecentItem[]): Promise
 	{
-		return 'recent/setUnread';
-	}
-
-	getCollection(): ImModelRecentItem[]
-	{
-		return Core.getStore().getters['recent/getUnreadCollection'];
+		return Core.getStore().dispatch('recent/setUnreadCollection', {
+			type: RecentType.default,
+			items: recentItems,
+		});
 	}
 }

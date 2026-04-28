@@ -6,7 +6,7 @@ jn.define('intranet/qualification/fields-triggers-handler', (require, exports, m
 	const { Type } = require('type');
 	const { StepSwitchButtonType } = require('layout/ui/wizard/const');
 	const { FieldType, TriggerType } = require('intranet/qualification/const');
-	const { setPreset, saveFieldValue } = require('intranet/qualification/api');
+	const { setPreset, saveFieldValue } = require('intranet/qualification/src/api');
 	const { AnalyticsHandler } = require('intranet/qualification/analytics-handler');
 
 	class FieldsTriggersHandler

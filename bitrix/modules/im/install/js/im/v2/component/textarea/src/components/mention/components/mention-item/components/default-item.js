@@ -1,10 +1,13 @@
 import { Text } from 'main.core';
 
 import { ChatTitleWithHighlighting } from 'im.v2.component.elements.chat-title';
-import { ChatType } from 'im.v2.const';
+import { ActionByRole, ActionByUserType, ChatType } from 'im.v2.const';
 import { highlightText } from 'im.v2.lib.text-highlighter';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { MentionItem } from './mention-item';
+import { AddToChatDropdown } from './add-to-chat-dropdown';
 
 import type { ImModelChat } from 'im.v2.model';
 import type { MentionItemType } from '../../../mention-content';
@@ -12,7 +15,7 @@ import type { MentionItemType } from '../../../mention-content';
 // @vue/component
 export const DefaultItem = {
 	name: 'DefaultMentionItem',
-	components: { ChatTitleWithHighlighting, MentionItem },
+	components: { ChatTitleWithHighlighting, MentionItem, AddToChatDropdown },
 	props: {
 		item: {
 			type: Object,
@@ -30,15 +33,27 @@ export const DefaultItem = {
 			type: String,
 			required: true,
 		},
+		isParticipant: {
+			type: Boolean,
+			required: true,
+		},
 	},
 	computed: {
 		dialog(): ImModelChat
 		{
-			return this.$store.getters['chats/get'](this.item.id, true);
+			return this.getDialog(this.dialogId);
 		},
-		isUser(): boolean
+		itemDialog(): ImModelChat
+		{
+			return this.getDialog(this.item.id);
+		},
+		isChatUser(): boolean
 		{
 			return this.dialog.type === ChatType.user;
+		},
+		isItemUser(): boolean
+		{
+			return this.itemDialog.type === ChatType.user;
 		},
 		subtitleWithHighlighting(): string
 		{
@@ -47,6 +62,36 @@ export const DefaultItem = {
 		currentItem(): MentionItemType
 		{
 			return this.item;
+		},
+		isAddingUserByMentionAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isAddingUserByMentionAvailable);
+		},
+		canAddToChat(): boolean
+		{
+			if (!this.isAddingUserByMentionAvailable)
+			{
+				return false;
+			}
+
+			if (!this.isItemUser || this.isParticipant)
+			{
+				return false;
+			}
+
+			const canCreateChat = PermissionManager.getInstance().canPerformActionByUserType(ActionByUserType.createChat);
+			if (this.isChatUser && !canCreateChat)
+			{
+				return false;
+			}
+
+			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.extend, this.dialogId);
+		},
+	},
+	methods: {
+		getDialog(dialogId: string): ImModelChat
+		{
+			return this.$store.getters['chats/get'](dialogId, true);
 		},
 	},
 	template: `
@@ -64,10 +109,11 @@ export const DefaultItem = {
 					/>
 				</template>
 				<template #subtitle>
-					<div v-if="isUser" class="bx-im-mention-item__subtitle" :title="currentItem.subtitle" v-html="subtitleWithHighlighting"></div>
+					<div v-if="isItemUser" class="bx-im-mention-item__subtitle" :title="currentItem.subtitle" v-html="subtitleWithHighlighting"></div>
 					<div v-else class="bx-im-mention-item__subtitle" :title="currentItem.subtitle">{{ currentItem.subtitle }}</div>
 				</template>
 			</MentionItem>
+			<AddToChatDropdown v-if="canAddToChat" :dialogId="dialogId" :userId="currentItem.id" />
 		</div>
 	`,
 };

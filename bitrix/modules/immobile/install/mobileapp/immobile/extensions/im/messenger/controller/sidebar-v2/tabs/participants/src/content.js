@@ -150,8 +150,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/content', (r
 		getListViewData()
 		{
 			const items = [];
-			const addParticipantsEnabled = this.dialogLocator.get('configurator')?.config?.sidebar?.params?.addParticipantsEnabled ?? true;
-			if (this.permissionManager.canAddParticipants() && addParticipantsEnabled)
+			if (this.permissionManager.canAddParticipants())
 			{
 				items.push(new SidebarTabListItemModel(this.getButton()));
 			}

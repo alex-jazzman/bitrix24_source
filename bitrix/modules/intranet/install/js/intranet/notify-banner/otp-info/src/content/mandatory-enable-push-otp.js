@@ -38,10 +38,10 @@ export class MandatoryEnablePushOtp extends BaseContent
 	{
 		if (this.#promoteMode === 'high')
 		{
-			return Loc.getMessage('NOTIFY_BANNER_INFO_REQ_BLOCK_HIGH_PROMOTE', { '#END_DATE#': DateTimeFormat.format(this.#formatEndDate, this.#endDateTs) });
+			return Loc.getMessage('NOTIFY_BANNER_INFO_REQ_BLOCK_HIGH_PROMOTE_MSGVER_1', { '#END_DATE#': DateTimeFormat.format(this.#formatEndDate, this.#endDateTs) });
 		}
 
-		return Loc.getMessage('NOTIFY_BANNER_INFO_REQ_BLOCK', { '#END_DATE#': DateTimeFormat.format(this.#formatEndDate, this.#endDateTs) });
+		return Loc.getMessage('NOTIFY_BANNER_INFO_REQ_BLOCK_MSGVER_1', { '#END_DATE#': DateTimeFormat.format(this.#formatEndDate, this.#endDateTs) });
 	}
 
 	isTimeEnd(): boolean

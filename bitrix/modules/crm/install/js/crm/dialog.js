@@ -71,14 +71,14 @@ if(typeof(BX.Crm.ConfirmationDialog) === "undefined")
 					[
 						new BX.PopupWindowButton(
 							{
-								text : BX.message("JS_CORE_WINDOW_CONTINUE"),
+								text : BX.prop.getString(this._settings, "acceptButtonTitle", BX.message("JS_CORE_WINDOW_CONTINUE")),
 								className : "popup-window-button-accept",
 								events: { click: this._confirmListener }
 							}
 						),
 						new BX.PopupWindowButtonLink(
 							{
-								text : BX.message("JS_CORE_WINDOW_CANCEL"),
+								text : BX.prop.getString(this._settings, "cancelButtonTitle", BX.message("JS_CORE_WINDOW_CANCEL")),
 								className : "popup-window-button-link-cancel",
 								events: { click: this._cancelListener }
 							}

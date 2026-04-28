@@ -74,6 +74,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatJoinByCode: 'im.v2.Chat.joinByCode',
 	  imV2ChatSharedLinkRevoke: 'im.v2.Chat.SharingLink.revoke',
 	  imV2ChatSharedLinkRegenerateIndividual: 'im.v2.Chat.SharingLink.regenerateIndividual',
+	  imV2ChatFilterUsersByParticipation: 'im.v2.Chat.Member.filterUsersByParticipation',
 	  imV2RecentPin: 'im.v2.Chat.pin',
 	  imV2RecentUnpin: 'im.v2.Chat.unpin',
 	  imV2StickerPackLoad: 'im.v2.Sticker.Pack.load',
@@ -193,7 +194,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    insertMention: 'IM:Textarea:insertMention',
 	    insertForward: 'IM:Textarea:insertForward',
 	    sendMessage: 'IM:Textarea:sendMessage',
-	    openUploadPreview: 'IM:Textarea:openUploadPreview'
+	    openUploadPreview: 'IM:Textarea:openUploadPreview',
+	    getText: 'IM:Textarea:getText'
 	  },
 	  sidebar: {
 	    open: 'IM:Sidebar:open',
@@ -209,7 +211,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    openSearch: 'IM.Recent:openSearch'
 	  },
 	  mention: {
-	    selectItem: 'IM:Mention:selectItem'
+	    selectItem: 'IM:Mention:selectItem',
+	    onAddUserToChat: 'IM:Mention:onAddUserToChat',
+	    onNestedMenuClosed: 'IM:Mention:onNestedMenuClosed'
 	  },
 	  reaction: {
 	    onReactionSelected: 'IM:Reaction:onReactionSelected'
@@ -392,7 +396,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  supportVote: 'SupportVoteMessage',
 	  supportSessionNumber: 'SupportSessionNumberMessage',
 	  supportChatCreation: 'SupportChatCreationMessage',
-	  system: 'SystemMessage',
 	  channelPost: 'ChannelPost',
 	  generalChatCreationMessage: 'GeneralChatCreationMessage',
 	  generalChannelCreationMessage: 'GeneralChannelCreationMessage',
@@ -402,6 +405,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  taskChatCreationMessage: 'TaskChatCreationMessage',
 	  convertToCollabMessage: 'ConvertToCollabMessage',
 	  aiAssistantMessage: 'AiAssistantMessage',
+	  aiBizprocMessage: 'AiBizprocMessage',
 	  ...imopenlines_v2_const.OpenLinesMessageComponent
 	});
 	const MessageMentionType = Object.freeze({
@@ -441,7 +445,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  copilot: 'copilot',
 	  openChannel: 'openChannel',
 	  collab: 'collab',
-	  taskComments: 'tasksTask'
+	  taskComments: 'tasksTask',
+	  openlines: 'lines'
 	};
 
 	const NotificationTypesCodes = Object.freeze({
@@ -539,7 +544,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const SidebarMainPanelBlock = {
 	  support: 'support',
 	  chat: 'chat',
-	  notes: 'notes',
+	  selfChat: 'selfChat',
 	  user: 'user',
 	  copilot: 'copilot',
 	  copilotInfo: 'copilotInfo',
@@ -667,7 +672,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  lastNotificationId: 'lastNotificationId',
 	  layoutConfig: 'layoutConfig',
 	  audioPlaybackRate: 'audioPlaybackRate',
-	  emotePopupTab: 'emotePopupTab'
+	  emotePopupTab: 'emotePopupTab',
+	  taskCommentsCardOpened: 'taskCommentsCardOpened'
 	});
 
 	const PlacementType = Object.freeze({
@@ -700,7 +706,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  stickerPack: 'im-sticker-pack-popup',
 	  stickerContextMenu: 'im-sticker-context-menu',
 	  stickerPackContextMenu: 'im-sticker-pack-context-menu',
-	  sharedLinkContextMenu: 'im-shared-link-context-menu'
+	  sharedLinkContextMenu: 'im-shared-link-context-menu',
+	  mentionAddToChatDropdown: 'im-mention-add-to-chat-dropdown'
 	});
 
 	const Settings = Object.freeze({
@@ -842,7 +849,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  support24: 'support24',
 	  human: 'human',
 	  openline: 'openline',
-	  supervisor: 'supervisor'
+	  supervisor: 'supervisor',
+	  personal: 'personal'
 	});
 	const BotType = Object.freeze({
 	  bot: 'bot',
@@ -915,14 +923,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  collabDisabled: 'socialnetwork_collab_off',
 	  buyMarketPlus: 'limit_subscription_market_access_buy_marketplus'
 	};
-
-	const CounterType = Object.freeze({
-	  chat: 'chat',
-	  comment: 'comment',
-	  copilot: 'copilot',
-	  openline: 'openline',
-	  collab: 'collab'
-	});
 
 	const CollabEntityType = {
 	  tasks: 'tasks',
@@ -1063,7 +1063,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.ChatEntityLinkType = ChatEntityLinkType;
 	exports.MultidialogStatus = MultidialogStatus;
 	exports.SliderCode = SliderCode;
-	exports.CounterType = CounterType;
 	exports.CollabEntityType = CollabEntityType;
 	exports.ErrorCode = ErrorCode;
 	exports.NavigationMenuItem = NavigationMenuItem;

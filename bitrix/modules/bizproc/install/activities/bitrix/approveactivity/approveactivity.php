@@ -246,7 +246,7 @@ class CBPApproveActivity extends CBPCompositeActivity implements
 		if ($timeoutDuration > 0)
 		{
 			$overdueDate = DateTime::createFromTimestamp(
-				time() + max($timeoutDuration, CBPSchedulerService::getDelayMinLimit())
+				CBPSchedulerService::calculateExpirationTime(time() + $timeoutDuration)
 			);
 		}
 

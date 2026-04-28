@@ -14,7 +14,7 @@ import { BaseChatContent } from 'im.v2.component.content.elements';
 import { ChannelContent } from '../../content/channel/channel';
 import { CollabContent } from '../../content/collab/collab';
 import { MultidialogContent } from '../../content/multidialog/multidialog';
-import { NotesContent } from '../../content/notes/notes-content';
+import { SelfChatContent } from '../../content/self-chat/self-chat';
 import { CopilotContent } from '../../content/copilot/copilot';
 import { AiAssistantBotContent } from '../../content/ai-assistant-bot/ai-assistant-bot';
 import { TaskCommentsContent } from '../../content/task-comments/task-comments';
@@ -74,9 +74,9 @@ export const ChatOpener = {
 		{
 			return this.$store.getters['sidebar/multidialog/isSupport'](this.dialogId);
 		},
-		isNotes(): boolean
+		isSelfChat(): boolean
 		{
-			return this.$store.getters['chats/isNotes'](this.dialogId);
+			return this.$store.getters['chats/isSelfChat'](this.dialogId);
 		},
 		isCopilot(): boolean
 		{
@@ -110,8 +110,8 @@ export const ChatOpener = {
 					component: MultidialogContent,
 				},
 				{
-					condition: this.isNotes,
-					component: NotesContent,
+					condition: this.isSelfChat,
+					component: SelfChatContent,
 				},
 				{
 					condition: this.isCopilot,

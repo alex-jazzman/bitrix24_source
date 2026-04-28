@@ -532,7 +532,7 @@ BX.Kanban.Item.prototype =
 
 			this.dragElement.style.position = "absolute";
 			this.dragElement.style.width = bodyContainer.offsetWidth + "px";
-			this.dragElement.className = "main-kanban-item main-kanban-item-drag";
+			this.dragElement.className = "main-kanban-item main-kanban-item-drag --ui-context-content-light";
 
 			document.body.appendChild(this.dragElement);
 		}
@@ -546,7 +546,7 @@ BX.Kanban.Item.prototype =
 
 		this.dragElement = BX.create("div", {
 			props: {
-				className: "main-kanban-item-drag-multi"
+				className: "main-kanban-item-drag-multi --ui-context-content-light"
 			}
 		});
 

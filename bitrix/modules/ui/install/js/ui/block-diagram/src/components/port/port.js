@@ -46,6 +46,10 @@ export const Port = {
 				return Object.values(PORT_POSITION).includes(position);
 			},
 		},
+		index: {
+			type: Number,
+			required: true,
+		},
 		/** @type Array<DiagramValidationPortRuleFn> */
 		validationRules: {
 			type: Array,
@@ -72,6 +76,7 @@ export const Port = {
 			block: props.block,
 			port: props.port,
 			position: props.position,
+			index: props.index,
 		});
 		const {
 			isSourcePort,
@@ -83,6 +88,7 @@ export const Port = {
 			block: props.block,
 			port: props.port,
 			position: props.position,
+			index: props.index,
 			validationRules: props.validationRules,
 			normalyzeConnectionFn: props.normalyzeConnectionFn,
 		});

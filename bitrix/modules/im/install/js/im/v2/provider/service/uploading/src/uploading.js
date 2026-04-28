@@ -244,6 +244,7 @@ export class UploadingService extends EventEmitter
 						clientPreview: file.getClientPreview(),
 						id,
 						customData: {
+							sendAsFile,
 							...options,
 						},
 						treatImageAsFile: sendAsFile,
@@ -256,6 +257,7 @@ export class UploadingService extends EventEmitter
 				options: {
 					id,
 					customData: {
+						sendAsFile,
 						...options,
 					},
 					downloadUrl: URL.createObjectURL(file),
@@ -551,15 +553,13 @@ export class UploadingService extends EventEmitter
 			if (Type.isString(lastMessageId) || Type.isNumber(lastMessageId))
 			{
 				void this.#store.dispatch('recent/update', {
-					id: chat.dialogId,
+					dialogId: chat.dialogId,
 					fields: { messageId: lastMessageId },
 				});
 			}
 			else
 			{
-				void this.#store.dispatch('recent/hide', {
-					id: chat.dialogId,
-				});
+				void this.#store.dispatch('recent/hide', { dialogId: chat.dialogId });
 			}
 		}
 	}
@@ -809,12 +809,14 @@ export class UploadingService extends EventEmitter
 		const dialogId = uploaderWrapper.getCustomData('dialogId');
 		const text = uploaderWrapper.getCustomData('text');
 		const tempMessageId = uploaderWrapper.getCustomData('tempMessageId');
+		const sendAsFile = uploaderWrapper.getCustomData('sendAsFile');
 
 		const binaryFiles: Array<File> = uploaderWrapper.getBinaryFiles();
 
 		const { uploaderId: newUploaderId, loadAllComplete } = await this.addFiles({
 			dialogId,
 			files: binaryFiles,
+			sendAsFile,
 		});
 
 		void this.#store.dispatch('messages/deleteLoadingMessageByMessageId', {

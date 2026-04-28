@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_RATING_USER_VOTE_POST_NAME"] = "Voting For User's Posts In Blogs";
 $MESS["BLOG_RATING_USER_VOTE_COMMENT_NAME"] = "Voting For User's Comments In Blogs";
 $MESS["BLOG_RATING_USER_RATING_ACTIVITY_NAME"] = "Blogging Activity";
@@ -20,4 +20,3 @@ $MESS["BLOG_RATING_USER_VOTE_POST_DESC"] = "Calculate rating using the voting re
 $MESS["BLOG_RATING_USER_VOTE_POST_LIMIT_NAME"] = "Day Span:";
 $MESS["BLOG_RATING_USER_VOTE_COMMENT_DESC"] = "Calculate rating using the voting results for the specified number of days.<br> Set days to \"0\" to use all data for calculation.";
 $MESS["BLOG_RATING_USER_VOTE_COMMENT_LIMIT_NAME"] = "Day Span:";
-?>

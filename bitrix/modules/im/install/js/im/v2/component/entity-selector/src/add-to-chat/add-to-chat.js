@@ -85,7 +85,7 @@ export const AddToChat = {
 			else
 			{
 				members.push(this.dialogId, Core.getUserId());
-				void this.createChat(members);
+				void this.extendToGroupChat(members);
 			}
 		},
 		extendChat(members: Array<string | number>, showHistory: boolean)
@@ -103,15 +103,12 @@ export const AddToChat = {
 				this.$emit('close');
 			});
 		},
-		async createChat(members: number[])
+		async extendToGroupChat(members: number[])
 		{
 			this.isLoading = true;
-			const { newDialogId } = await this.chatService.createChat({
-				title: null,
-				description: null,
+			const { newDialogId } = await this.chatService.extendToGroupChat({
 				members,
 				ownerId: Core.getUserId(),
-				isPrivate: true,
 			}).catch(() => {
 				this.isLoading = false;
 			});

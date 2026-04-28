@@ -12,3 +12,5 @@ $MESS["CC_BBUS_SERVICE_PBI"] = "Microsoft Power BI";
 $MESS["CC_BBUS_SERVICE_SUPERSET"] = "BI Builder";
 $MESS["CC_BBUS_SHOW_MORE"] = "more #N#";
 $MESS["CC_BBUS_TITLE"] = "Usage statistics";
+$MESS["CT_BBSU_COLUMN_DATASET_TYPE_CUSTOM"] = "Custom";
+$MESS["CT_BBSU_COLUMN_DATASET_TYPE_SYSTEM"] = "System";

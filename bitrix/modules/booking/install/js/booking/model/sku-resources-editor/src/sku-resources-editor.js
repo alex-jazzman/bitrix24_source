@@ -37,9 +37,8 @@ export class SkuResourcesEditorModel extends BuilderModel
 			invalidSku: false,
 			invalidResource: false,
 			options: markRaw({
-				canAdd: false,
-				canRemove: false,
-				catalogSkuEntityOptions: null,
+				canBeEmpty: false,
+				editMode: false,
 			}),
 		};
 	}
@@ -79,14 +78,15 @@ export class SkuResourcesEditorModel extends BuilderModel
 	{
 		return {
 			/** @function sku-resources-editor/setResources */
-			setResources({ commit }, resources: ResourceModel[])
+			setResources({ commit, state }, resources: ResourceModel[])
 			{
+				const canBeEmpty = state.options.canBeEmpty;
 				const resourcesSkusMap: Map<number, Set<number>> = new Map();
 				const skusMap: Map<number, Skus> = new Map();
 
 				for (const resource of resources)
 				{
-					if (resource.skus.length === 0)
+					if (resource.skus.length === 0 && !canBeEmpty)
 					{
 						continue;
 					}

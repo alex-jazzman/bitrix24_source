@@ -29,7 +29,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		CopilotRepository,
 		DraftRepository,
 		CommentRepository,
-		// CounterRepository,
+		CounterRepository,
 		// SidebarFileRepository, TODO: The backend is not ready yet
 		VoteRepository,
 		TranscriptRepository,
@@ -90,6 +90,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				vote: null,
 				transcript: null,
 				sticker: null,
+				counter: null,
 			};
 
 			this.store = null;
@@ -195,11 +196,12 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				this.repository.copilot.copilotTable.drop();
 				this.repository.draft.draftTable.drop();
 				this.repository.comment.commentTable.drop();
-				// this.repository.counter.counterTable.drop();
 				// this.repository.sidebarFile.sidebarFileTable.drop(); TODO: The backend is not ready yet
 				this.repository.vote.voteTable.drop();
 				this.repository.transcript.transcriptTable.drop();
 				this.repository.sticker.stickerTable.drop();
+				this.repository.counter.counterTable.drop();
+				this.repository.counter.counterPendingOperationInternalTable.drop();
 
 				logger.warn('CoreApplication drop database complete');
 			};
@@ -223,7 +225,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				draft: new DraftRepository(),
 				comment: new CommentRepository(),
 				// sidebarFile: new SidebarFileRepository(),
-				// counter: new CounterRepository(),
+				counter: new CounterRepository(),
 				vote: new VoteRepository(),
 				transcript: new TranscriptRepository(),
 				sticker: new StickerRepository(),
@@ -262,6 +264,8 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			this.repository.comment.commentTable.createDatabaseTableInstance();
 			this.repository.transcript.transcriptTable.createDatabaseTableInstance();
 			this.repository.sticker.stickerTable.createDatabaseTableInstance();
+			this.repository.counter.counterTable.createDatabaseTableInstance();
+			this.repository.counter.counterPendingOperationInternalTable.createDatabaseTableInstance();
 		}
 
 		getStoreModules()

@@ -236,6 +236,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _onClickEditDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClickEditDocument");
 	var _sendDocumentSenderType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendDocumentSenderType");
 	var _getDocumentSenderType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentSenderType");
+	var _canCopyBlocksFromPreviousBlank = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canCopyBlocksFromPreviousBlank");
 	var _validateInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("validateInput");
 	var _disableDocumentInputs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableDocumentInputs");
 	class DocumentSetup extends sign_v2_documentSetup.DocumentSetup {
@@ -246,6 +247,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    });
 	    Object.defineProperty(this, _validateInput, {
 	      value: _validateInput2
+	    });
+	    Object.defineProperty(this, _canCopyBlocksFromPreviousBlank, {
+	      value: _canCopyBlocksFromPreviousBlank2
 	    });
 	    Object.defineProperty(this, _getDocumentSenderType, {
 	      value: _getDocumentSenderType2
@@ -558,8 +562,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  }
 	  async setup(uid) {
 	    try {
-	      const copyBlocksFromPreviousBlank = this.isEditActionMode() && this.isTemplateMode() && this.blankSelector.isFilesReadyForUpload();
-	      await super.setup(uid, this.isTemplateMode(), copyBlocksFromPreviousBlank, babelHelpers.classPrivateFieldLooseBase(this, _getDocumentSenderType)[_getDocumentSenderType]());
+	      await super.setup(uid, this.isTemplateMode(), babelHelpers.classPrivateFieldLooseBase(this, _canCopyBlocksFromPreviousBlank)[_canCopyBlocksFromPreviousBlank](), babelHelpers.classPrivateFieldLooseBase(this, _getDocumentSenderType)[_getDocumentSenderType]());
 	      if (!this.setupData || this.blankIsNotSelected) {
 	        this.ready = true;
 	        return;
@@ -952,6 +955,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _initiatedByType)[_initiatedByType];
 	  }
 	  return babelHelpers.classPrivateFieldLooseBase(this, _documentSenderTypeDropdown)[_documentSenderTypeDropdown].getSelectedId();
+	}
+	function _canCopyBlocksFromPreviousBlank2() {
+	  return this.isEditActionMode() && this.isTemplateMode() && this.blankSelector.isFilesReadyForUpload() && !this.blankSelector.hasPlaceholderFilesForUpload();
 	}
 	function _validateInput2(input) {
 	  if (!input) {

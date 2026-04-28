@@ -1,6 +1,9 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Text\HtmlFilter;
@@ -8,12 +11,10 @@ use Bitrix\Main\UserTable;
 
 CJSCore::init(['uf', 'intranet_userfield_employee']);
 
-$selectorName = $arResult['userField']['FIELD_NAME'] . \Bitrix\Main\Security\Random::getString(5);
-$fieldName = $arResult['fieldName'];
-
-$arResult['selectorName'] = $selectorName;
-$arResult['fieldName'] = $fieldName;
-$arResult['fieldNameJs'] = CUtil::JSEscape($fieldName);
+/**
+ * @var array $arResult
+ * @var array $arParams
+ */
 
 $pathToUser = COption::GetOptionString(
 	'main',
@@ -30,10 +31,11 @@ $users = UserTable::getList([
 	],
 ]);
 
-$i=0;
+$i = 0;
 $results = [];
-$itemIds = [];
-while($user = $users->fetch())
+$selectedUserIds = [];
+
+while ($user = $users->fetch())
 {
 	$name = \CUser::FormatName(
 		\CSite::GetNameFormat(),
@@ -53,12 +55,12 @@ while($user = $users->fetch())
 		'personalPhoto' => false
 	];
 
-	if(isset($user['PERSONAL_PHOTO']))
+	if (isset($user['PERSONAL_PHOTO']))
 	{
-		$imageFile = \CFile::GetFileArray($user['PERSONAL_PHOTO']);
+		$imageFile = CFile::GetFileArray($user['PERSONAL_PHOTO']);
 		if($imageFile !== false)
 		{
-			$tmpFile = \CFile::ResizeImageGet(
+			$tmpFile = CFile::ResizeImageGet(
 				$imageFile,
 				['width' => 60, 'height' => 60],
 				BX_RESIZE_IMAGE_EXACT
@@ -67,26 +69,20 @@ while($user = $users->fetch())
 		}
 	}
 
-	$itemIds[] = ['user', $user['ID']];
+	$selectedUserIds[] = $user['ID'];
 	$results[] = $resultItem;
 }
 
 
 $arResult['value'] = $results;
-$arResult['itemIds'] = $itemIds;
+$arResult['selectedUserIds'] = $selectedUserIds;
 $arResult['isMultiple'] = ($arResult['userField']['MULTIPLE'] === 'Y');
 
 /**
  * @var EmployeeUfComponent $component
  */
 $component = $this->getComponent();
-if($component->isDefaultMode())
-{
-	Asset::getInstance()->addJs(
-		'/bitrix/components/bitrix/intranet.field.employee/templates/main.edit/default.js'
-	);
-}
-elseif($component->isMobileMode())
+if ($component->isMobileMode())
 {
 	Asset::getInstance()->addJs(
 		'/bitrix/js/mobile/userfield/mobile_field.js'

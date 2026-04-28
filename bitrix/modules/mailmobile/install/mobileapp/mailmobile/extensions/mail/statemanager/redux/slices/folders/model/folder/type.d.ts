@@ -6,4 +6,6 @@ declare type FolderReduxModel = {
 	isHidden: boolean;
 	unreadCount: number;
 	messageCount: number;
+	parentId: number | null;
+	hasChild: boolean;
 };

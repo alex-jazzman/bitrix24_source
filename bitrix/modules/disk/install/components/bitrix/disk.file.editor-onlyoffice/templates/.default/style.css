@@ -445,9 +445,11 @@
 
 .disk-fe-office-warning-file-name {
 	margin-bottom: 14px;
+	min-width: 0;
 	font-size: 17px;
 	line-height: 23px;
 	color: #0075ff;
+	overflow-wrap: anywhere;
 }
 
 .disk-fe-office-warning-desc {

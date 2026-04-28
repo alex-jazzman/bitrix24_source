@@ -6,7 +6,33 @@ export default class Animation
 	{
 		const properties = Type.isArray(propertyName) ? new Set(propertyName) : new Set([propertyName]);
 
-		return new Promise(function(resolve) {
+		const computed = getComputedStyle(element);
+		const durations = computed.transitionDuration.split(',').map((v: string) => parseFloat(v) * 1000);
+		const delays = computed.transitionDelay.split(',').map((v: string) => parseFloat(v) * 1000);
+
+		const timeout = Math.max(...durations.map((d, i) => d + (delays[i] ?? delays[0] ?? 0)), 0) + 50;
+
+		return new Promise((resolve) => {
+			let finished = false;
+			let timer: number | null = null;
+
+			const finish = (event: TransitionEvent | null) => {
+				if (finished)
+				{
+					return;
+				}
+
+				finished = true;
+
+				if (timer !== null)
+				{
+					clearTimeout(timer);
+				}
+
+				Event.unbind(element, 'transitionend', handler);
+				resolve(event);
+			};
+
 			const handler = (event: TransitionEvent) => {
 				if (event.target !== element || !properties.has(event.propertyName))
 				{
@@ -14,14 +40,25 @@ export default class Animation
 				}
 
 				properties.delete(event.propertyName);
+
 				if (properties.size === 0)
 				{
-					resolve(event);
-					Event.unbind(element, 'transitionend', handler);
+					finish(event);
 				}
 			};
 
+			if (timeout <= 50)
+			{
+				queueMicrotask(() => finish(null));
+
+				return;
+			}
+
 			Event.bind(element, 'transitionend', handler);
+
+			timer = setTimeout(() => {
+				finish(null);
+			}, timeout);
 		});
 	}
 

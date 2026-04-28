@@ -99,6 +99,10 @@ export const Chart = {
 			type: String,
 			default: null,
 		},
+		initEditBlock: {
+			type: String,
+			default: null,
+		},
 	},
 	setup(props): {...}
 	{
@@ -133,6 +137,7 @@ export const Chart = {
 							templateId: props.initTemplateId,
 							documentType: props.initDocumentType,
 							startTrigger: props.initStartTrigger,
+							editBlock: props.initEditBlock,
 						},
 					),
 					catalogStore.init(),

@@ -1,0 +1,37 @@
+.intranet-push-otp-connect-popup__reconnect-qr-placeholder-image {
+	width: 230px;
+	height: 230px;
+	background: url('./../images/qr-placeholder.png') no-repeat center;
+	background-size: contain;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+}
+
+.intranet-push-otp-connect-popup__reconnect-device-name {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 0 10px;
+	font-weight: 600;
+	font-size: 15px;
+	line-height: 20px;
+}
+
+.intranet-push-otp-connect-popup__reconnect-device-icon {
+	width: 20px;
+	height: 24px;
+	background: url('./../images/phone-ios.png') no-repeat center;
+	background-size: contain;
+}
+
+.intranet-push-otp-connect-popup__reconnect-device-icon.--android {
+	background-image: url('./../images/phone-android.png');
+}
+
+.intranet-push-otp-connect-popup__qr-icon {
+	--ui-icon-set__icon-size: 40px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+	margin-bottom: 20px;
+}

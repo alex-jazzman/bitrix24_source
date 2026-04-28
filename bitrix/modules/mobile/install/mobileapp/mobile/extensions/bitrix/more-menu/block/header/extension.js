@@ -2,7 +2,7 @@
  * @module more-menu/block/header
  */
 jn.define('more-menu/block/header', (require, exports, module) => {
-	const { Color, Indent, Component } = require('tokens');
+	const { Color, Indent } = require('tokens');
 	const { isModuleInstalled } = require('module');
 	const { PureComponent } = require('layout/pure-component');
 	const { Card, CardDesign, CardCorner } = require('ui-system/layout/card');

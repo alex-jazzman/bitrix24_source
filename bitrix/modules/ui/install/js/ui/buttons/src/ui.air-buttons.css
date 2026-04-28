@@ -173,8 +173,6 @@
 	color: var(--ui-btn-color-hover);
 }
 
-a.ui-btn.--air:focus,
-a.ui-btn-split.--air:focus,
 .ui-btn.--air:active,
 .ui-btn-split.--air .ui-btn-main:active,
 .ui-btn-split.--air .ui-btn-menu:not(.--switcher):active,
@@ -186,6 +184,22 @@ a.ui-btn-split.--air:focus,
 	border-color: var(--ui-btn-border-color-active);
 	background: var(--ui-btn-background-gradient-active);
 	color: var(--ui-btn-color-active);
+}
+
+:where(
+.ui-btn,
+.ui-btn-main,
+.ui-btn-menu:not(.--switcher)
+):focus-visible,
+html[data-input-modality="keyboard"] :where(.ui-btn, .ui-btn-main, .ui-btn-menu:not(.--switcher)):focus:not(:focus-visible) {
+	outline-offset: 2px;
+	outline-width: 2px;
+	outline-color: var(--ui-color-accent-main-link);
+	outline-style: solid;
+}
+
+html[data-input-modality="pointer"] :where(.ui-btn, .ui-btn-main, .ui-btn-menu:not(.--switcher)):focus-visible {
+	outline: none;
 }
 
 .ui-btn-wait.--air,

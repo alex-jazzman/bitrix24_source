@@ -87,6 +87,7 @@ export const BaseInfo = {
 				article: HelpDesk.AhaMessageTemplate,
 				target: this.$refs.card.getChooseTemplateButton(),
 				targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
+				isPulsarTransparent: true,
 			});
 
 			ahaMoments.setShown(AhaMoment.MessageTemplate);

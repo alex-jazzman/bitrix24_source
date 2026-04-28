@@ -49,10 +49,10 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		{
 			widgetParams = mergeImmutable(this.getModalWidgetParams(), widgetParams);
 
-			const { entityTypeId, entityId } = payload;
+			const { entityTypeId, entityId, categoryId } = payload;
 
 			this
-				.checkAvailability(entityTypeId)
+				.checkAvailability(entityTypeId, categoryId)
 				.then(() => this.prepareAnalytics(analytics, entityTypeId))
 				.then((preparedAnalytics) => {
 					widgetParams.titleParams = this.prepareTitleParams(payload, widgetParams.titleParams);
@@ -279,7 +279,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		 * @private
 		 * @internal
 		 */
-		static checkAvailability(entityTypeId)
+		static checkAvailability(entityTypeId, categoryId = null)
 		{
 			if (!entityTypeId || !Type.existsById(entityTypeId))
 			{
@@ -292,7 +292,10 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 			if (this.cacheExpired())
 			{
 				loading = true;
-				promise = promise.then(() => this.loadEntities(true));
+				promise = promise.then(() => this.loadEntities(
+					true,
+					{ [entityTypeId]: categoryId },
+				));
 			}
 
 			return (
@@ -310,7 +313,10 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 						{
 							// retry first reject
 							loading = true;
-							this.loadEntities(true)
+							this.loadEntities(
+								true,
+								{ [entityTypeId]: categoryId },
+							)
 								.then(() => {
 									entity = this.findEntityType(entityTypeId);
 									if (entity)
@@ -354,7 +360,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		 * @private
 		 * @internal
 		 */
-		static loadEntities(showLoader = false)
+		static loadEntities(showLoader = false, categories = {})
 		{
 			if (showLoader)
 			{
@@ -362,7 +368,10 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 			}
 
 			return new Promise((resolve, reject) => {
-				BX.ajax.runAction('crmmobile.EntityDetails.getAvailableEntityTypes', { json: {} })
+				BX.ajax.runAction(
+					'crmmobile.EntityDetails.getAvailableEntityTypes',
+					{ json: { categories } },
+				)
 					.then(({ data }) => {
 						this.updateStorage(data);
 						resolve();

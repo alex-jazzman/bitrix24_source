@@ -80,6 +80,8 @@ export class HcmLinkCompanySelector extends EventEmitter
 				if (data.length <= 0)
 				{
 					this.#ui.inactive.style.display = 'flex';
+					this.emit('integrations:loaded', { hasIntegrations: false });
+
 					return;
 				}
 
@@ -89,6 +91,7 @@ export class HcmLinkCompanySelector extends EventEmitter
 				{
 					this.#lastSavedId = undefined;
 					this.#ui.unselect.style.display = 'flex';
+					this.emit('integrations:loaded', { hasIntegrations: true });
 
 					return;
 				}
@@ -103,6 +106,7 @@ export class HcmLinkCompanySelector extends EventEmitter
 
 				this.#select(itemToSelect);
 				this.#ui.active.style.display = 'flex';
+				this.emit('integrations:loaded', { hasIntegrations: true });
 			})
 		;
 	}
@@ -133,6 +137,12 @@ export class HcmLinkCompanySelector extends EventEmitter
 		if (!this.#isAvailable && !this.isLayoutExisted)
 		{
 			return;
+		}
+
+		if (!this.#companyId)
+		{
+			BX.hide(this.#ui.active);
+			BX.hide(this.#ui.unselect);
 		}
 
 		Dom.style(this.#ui.container, { display: 'flex' });

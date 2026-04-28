@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_TITLE'] = "Blog name:";
 $MESS ['BLOG_DESCR'] = "Blog description:";
 $MESS ['BLOG_URL'] = "Pseudo name (Latin letters):";
@@ -28,4 +28,3 @@ $MESS ['BLOG_NEED_AUTH'] = "First please authorize on site";
 $MESS ['BLOG_CONFIRM_DELETE'] = "This group contain users. Are you sure you want to delete the group?";
 $MESS ['BLOG_GROUP_DELETE'] = "Delete";
 $MESS ['BLOG_NAME_CHANGE'] = "Edit";
-?>

@@ -5,6 +5,7 @@ jn.define('crm/entity-tab/type/entities/smart-invoice', (require, exports, modul
 	const { Base: BaseEntityType } = require('crm/entity-tab/type/entities/base');
 	const { TypeId, TypeName } = require('crm/type');
 	const { Loc } = require('loc');
+	const { UIMenuType } = require('layout/ui/menu');
 
 	/**
 	 * @class SmartInvoice
@@ -38,7 +39,7 @@ jn.define('crm/entity-tab/type/entities/smart-invoice', (require, exports, modul
 		{
 			return [
 				{
-					type: UI.Menu.Types.HELPDESK,
+					type: UIMenuType.HELPDESK,
 					data: {
 						articleCode: '17418408',
 					},

@@ -1,5 +1,5 @@
 <?php
-$MESS["INTRANET_USER_OTP_LIST_ADD_PHONE_NUMBER_BTN"] = "Enter phone number:";
+$MESS["INTRANET_USER_OTP_LIST_ADD_PHONE_NUMBER_BTN"] = "Enter phone number";
 $MESS["INTRANET_USER_OTP_LIST_CHANGE_BTN"] = "Change";
 $MESS["INTRANET_USER_OTP_LIST_DESCRIPTION"] = "Your account is protected. Attackers won't be able to access your account even if your password got leaked. Disabling the protection is not recommended.";
 $MESS["INTRANET_USER_OTP_LIST_DEVICES"] = "Trusted devices";
@@ -10,3 +10,5 @@ $MESS["INTRANET_USER_OTP_LIST_SMS"] = "SMS code";
 $MESS["INTRANET_USER_OTP_LIST_SMS_DESCRIPTION"] = "SMS code to confirm login if you don't have access to the app.";
 $MESS["INTRANET_USER_OTP_LIST_SMS_HINT"] = "Confirm this number or provide a new one to receive login confirmation codes.";
 $MESS["INTRANET_USER_OTP_LIST_SMS_HINT_WITHOUT_CONNECT"] = "Specify phone number to receive login confirmation codes.";
+$MESS["INTRANET_USER_OTP_RECOVERY_TOOLTIP_DESCRIPTION"] = "You can use the recovery codes in the event the trusted device is not available.";
+$MESS["INTRANET_USER_OTP_RECOVERY_TOOLTIP_TITLE"] = "Make sure you're stocked on recovery codes";

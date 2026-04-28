@@ -4,7 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 global $APPLICATION;
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
-CJSCore::Init(["sidepanel"]);
+CJSCore::Init(["sidepanel", "intranet.old-interface.intranet-common"]);
 
 if(isset($arResult['CONVERSION_LEGEND'])):
 	?><div class="crm-view-message"><?=$arResult['CONVERSION_LEGEND']?></div><?

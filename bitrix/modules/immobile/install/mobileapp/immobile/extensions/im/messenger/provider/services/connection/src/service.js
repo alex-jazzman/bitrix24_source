@@ -11,7 +11,8 @@ jn.define('im/messenger/provider/services/connection/service', (require, exports
 		ConnectionStatus,
 	} = require('im/messenger/const');
 
-	const isGetConnectionStatusSupported = Type.isFunction(device.getConnectionStatus);
+	const DEVICE_CONNECTION_STATUS_CHANGED_EVENT = 'connectionStatusChanged';
+	const STATUS_CHANGED_EVENT = 'statusChanged';
 
 	/**
 	 * @class ConnectionService
@@ -19,37 +20,57 @@ jn.define('im/messenger/provider/services/connection/service', (require, exports
 	class ConnectionService
 	{
 		/**
-		 * @return {ConnectionService}
+		 * @param {object} [options]
+		 * @param {object} [options.device]
 		 */
-		static getInstance()
+		constructor(options = {})
 		{
-			if (!this.instance)
+			this.device = options.device || device;
+			this.eventEmitter = new JNEventEmitter();
+			this.handleStatusChanged = this.statusChangedHandler.bind(this);
+
+			if (Type.isFunction(this.device.getConnectionStatus))
 			{
-				this.instance = new this();
-			}
-
-			return this.instance;
-		}
-
-		constructor()
-		{
-			this.store = serviceLocator.get('core').getStore();
-			this.onStatusChanged = this.statusChangedHandler.bind(this);
-
-			if (isGetConnectionStatusSupported)
-			{
-				device.on('connectionStatusChanged', this.onStatusChanged);
+				this.device.on(DEVICE_CONNECTION_STATUS_CHANGED_EVENT, this.handleStatusChanged);
 			}
 		}
 
 		destructor()
 		{
-			this.instance = undefined;
-
-			if (isGetConnectionStatusSupported)
+			if (Type.isFunction(this.device.getConnectionStatus))
 			{
-				device.off('connectionStatusChanged', this.onStatusChanged);
+				this.device.off(DEVICE_CONNECTION_STATUS_CHANGED_EVENT, this.handleStatusChanged);
 			}
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isOnline()
+		{
+			return this.getStatus() === ConnectionStatus.online;
+		}
+
+		/**
+		 * @param {function(ConnectionStatus.online|ConnectionStatus.offline): void} handler
+		 * @return {this}
+		 */
+		onStatusChanged(handler)
+		{
+			this.eventEmitter.on(STATUS_CHANGED_EVENT, handler);
+
+			return this;
+		}
+
+		/**
+		 * @param {function(ConnectionStatus.online|ConnectionStatus.offline): void} handler
+		 * @return {this}
+		 */
+		offStatusChanged(handler)
+		{
+			this.eventEmitter.off(STATUS_CHANGED_EVENT, handler);
+
+			return this;
 		}
 
 		/**
@@ -57,9 +78,9 @@ jn.define('im/messenger/provider/services/connection/service', (require, exports
 		 */
 		getStatus()
 		{
-			if (isGetConnectionStatusSupported)
+			if (Type.isFunction(this.device.getConnectionStatus))
 			{
-				return device.getConnectionStatus();
+				return this.device.getConnectionStatus();
 			}
 
 			Logger.warn('ConnectionService: device.getConnectionStatus() is not supported.');
@@ -94,6 +115,8 @@ jn.define('im/messenger/provider/services/connection/service', (require, exports
 					Logger.error('ConnectionService: unknown connection status: ', status);
 					break;
 			}
+
+			this.eventEmitter.emit(STATUS_CHANGED_EVENT, [status]);
 		}
 	}
 

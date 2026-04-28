@@ -126,6 +126,12 @@ else
 							$dealData['STAGE_ID'] = isset($arDeal['DEAL_STAGE_NAME']) ? $arDeal['DEAL_STAGE_NAME'] : $stageID;
 							break;
 						}
+						case 'PREVIOUS_STAGE_ID':
+						{
+							$previousStageId = !empty($arDeal['PREVIOUS_STAGE_ID']) ? $arDeal['PREVIOUS_STAGE_ID'] : '';
+							$dealData['PREVIOUS_STAGE_ID'] = $arDeal['DEAL_PREVIOUS_STAGE_NAME'] ?? $previousStageId;
+							break;
+						}
 						case 'STATE_ID':
 						{
 							$stateID = !empty($arDeal['STATE_ID']) ? $arDeal['STATE_ID'] : '';

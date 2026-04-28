@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_date) {
+(function (exports,main_core,main_date) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -16,6 +16,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _datetime = /*#__PURE__*/new WeakMap();
 	var _getDateFormat = /*#__PURE__*/new WeakSet();
 	var _isShowYear = /*#__PURE__*/new WeakSet();
+	var _getTimezoneOffset = /*#__PURE__*/new WeakSet();
 	let DatetimeConverter = /*#__PURE__*/function () {
 	  babelHelpers.createClass(DatetimeConverter, null, [{
 	    key: "createFromServerTimestamp",
@@ -27,8 +28,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      return new DatetimeConverter(main_date.Timezone.ServerTime.getDate(timestamp));
 	    }
 	  }]);
-	  function DatetimeConverter(datetime) {
+	  function DatetimeConverter(_datetime2) {
 	    babelHelpers.classCallCheck(this, DatetimeConverter);
+	    _classPrivateMethodInitSpec(this, _getTimezoneOffset);
 	    _classPrivateMethodInitSpec(this, _isShowYear);
 	    _classPrivateMethodInitSpec(this, _getDateFormat);
 	    _classPrivateFieldInitSpec(this, _timeFormat, {
@@ -60,7 +62,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldSet(this, _shortDateFormat, main_date.DateTimeFormat.getFormat('DAY_SHORT_MONTH_FORMAT'));
 	    babelHelpers.classPrivateFieldSet(this, _longDateFormat, main_date.DateTimeFormat.getFormat('LONG_DATE_FORMAT'));
 	    babelHelpers.classPrivateFieldSet(this, _mediumDateFormat, main_date.DateTimeFormat.getFormat('MEDIUM_DATE_FORMAT'));
-	    babelHelpers.classPrivateFieldSet(this, _datetime, datetime);
+	    babelHelpers.classPrivateFieldSet(this, _datetime, _datetime2);
 	  }
 	  babelHelpers.createClass(DatetimeConverter, [{
 	    key: "getValue",
@@ -70,6 +72,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "toUserTime",
 	    value: function toUserTime() {
+	      const cache = new main_core.Cache.MemoryCache();
+	      const timezone = cache.remember(`crm.timeline.tools.userTimezone`, () => {
+	        return main_core.Extension.getSettings('crm.timeline.tools').get('userTimezone');
+	      });
+	      if (timezone) {
+	        const delta = _classPrivateMethodGet(this, _getTimezoneOffset, _getTimezoneOffset2).call(this, babelHelpers.classPrivateFieldGet(this, _datetime), timezone) - _classPrivateMethodGet(this, _getTimezoneOffset, _getTimezoneOffset2).call(this, new Date(), timezone);
+	        if (delta) {
+	          babelHelpers.classPrivateFieldGet(this, _datetime).setSeconds(babelHelpers.classPrivateFieldGet(this, _datetime).getSeconds() + delta);
+	        }
+	      }
 	      babelHelpers.classPrivateFieldSet(this, _datetime, main_date.Timezone.ServerTime.toUserDate(babelHelpers.classPrivateFieldGet(this, _datetime)));
 	      return this;
 	    }
@@ -131,8 +143,17 @@ this.BX.Crm = this.BX.Crm || {};
 	function _isShowYear2() {
 	  return babelHelpers.classPrivateFieldGet(this, _datetime).getFullYear() !== main_date.Timezone.UserTime.getDate().getFullYear();
 	}
+	function _getTimezoneOffset2(datetime, timezone) {
+	  const dateInTimezone = new Date(datetime.toLocaleString('en-US', {
+	    timeZone: timezone
+	  }));
+	  const offsetMs = dateInTimezone.getTime() - new Date(datetime.toLocaleString('en-US', {
+	    timeZone: 'UTC'
+	  })).getTime();
+	  return offsetMs / 1000;
+	}
 
 	exports.DatetimeConverter = DatetimeConverter;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.Main));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.Main));
 //# sourceMappingURL=tools.bundle.js.map

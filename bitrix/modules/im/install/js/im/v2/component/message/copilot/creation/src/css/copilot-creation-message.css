@@ -12,7 +12,7 @@
 	flex-direction: column;
 	justify-content: center;
 	padding: 24px 20px 20px;
-	border-radius: 16px;
+	border-radius: inherit;
 	background-color: var(--im-message-copilot-creation__background-color_container);
 	overflow: hidden;
 	max-width: 413px;

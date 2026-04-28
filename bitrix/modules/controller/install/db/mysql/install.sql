@@ -132,7 +132,9 @@ CREATE TABLE b_controller_counter
 	COUNTER_TYPE char(1) NOT NULL default 'F',
 	COUNTER_FORMAT char(1),
 	NAME varchar(255) NOT NULL,
-	COMMAND text NOT NULL,
+	COMMAND_SOURCE varchar(4) NOT NULL default 'text',
+	COMMAND text,
+	COMMAND_FILE varchar(255),
 	PRIMARY KEY pk_b_controller_counter (ID)
 );
 

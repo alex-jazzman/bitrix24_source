@@ -130,7 +130,7 @@ if (
 		|| !$autostartSettings->shouldAutostart(TranscribeCallRecording::TYPE_ID, CCrmActivityDirection::Outgoing)
 	)
 	{
-		if (AIManager::isBaasServiceHasPackage())
+		if (Integration\AI\BaasManager::hasPackage())
 		{
 			echo (\Bitrix\Crm\Tour\CopilotInCallAutomatically::getInstance())
 				->setEntityTypeId($entityTypeId)

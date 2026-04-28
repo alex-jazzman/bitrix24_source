@@ -1,10 +1,16 @@
 <?php
 
+use Bitrix\IntranetMobile\Provider\UserProvider;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
+use Bitrix\Main\IO\File;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
-use Bitrix\Socialnetwork\Item\UserWelltory;
+use Bitrix\Mobile\Context;
+use Bitrix\Mobile\Tourist;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Crm\Terminal\AvailabilityManager;
 
@@ -37,8 +43,8 @@ function sortMenu($item, $anotherItem)
 	return -1;
 }
 
-$isExtranetUser = (\CModule::includeModule("extranet") && !\CExtranet::isIntranetUser());
-$isCollaber = (new \Bitrix\Mobile\Context())->isCollaber;
+$isExtranetUser = (CModule::includeModule("extranet") && !CExtranet::isIntranetUser());
+$isCollaber = (new Context())->isCollaber;
 $apiVersion = Bitrix\MobileApp\Mobile::getApiVersion();
 $canInviteUsers = (
 	Loader::includeModule('intranet')
@@ -55,20 +61,20 @@ $userId = $USER->getId();
 $arResult = [];
 $ttl = (defined("BX_COMP_MANAGED_CACHE") ? 2592000 : 600);
 $extEnabled = IsModuleInstalled('extranet');
-$menuSavedModificationTime = \Bitrix\Main\Config\Option::get("mobile", "jscomponent.menu.date.modified.user_" . $userId, 0);
-$menuFile = new \Bitrix\Main\IO\File($this->path . ".mobile_menu.php");
+$menuSavedModificationTime = Option::get("mobile", "jscomponent.menu.date.modified.user_" . $userId, 0);
+$menuFile = new File($this->path . ".mobile_menu.php");
 $version = $this->getVersion();
 $menuModificationTime = $menuFile->getModificationTime();
 $cacheIsActual = ($menuModificationTime == $menuSavedModificationTime);
 $clearOptionName = "clear_more_$userId";
-$force = \Bitrix\Main\Config\Option::get("mobile", $clearOptionName, false);
+$force = Option::get("mobile", $clearOptionName, false);
 
 if (!$cacheIsActual || $force)
 {
 	$CACHE_MANAGER->ClearByTag('mobile_custom_menu' . $userId);
 	$CACHE_MANAGER->ClearByTag('mobile_custom_menu');
-	\Bitrix\Main\Config\Option::set("mobile", "jscomponent.menu.date.modified.user_" . $userId, $menuModificationTime);
-	\Bitrix\Main\Config\Option::set("mobile", $clearOptionName, false);
+	Option::set("mobile", "jscomponent.menu.date.modified.user_" . $userId, $menuModificationTime);
+	Option::set("mobile", $clearOptionName, false);
 }
 $cache_id = 'more_menu_'
 	. implode(
@@ -138,7 +144,7 @@ else
 		$obCache->EndDataCache($arResult);
 	}
 }
-$events = \Bitrix\Main\EventManager::getInstance()->findEventHandlers("mobile", "onMobileMenuStructureBuilt");
+$events = EventManager::getInstance()->findEventHandlers("mobile", "onMobileMenuStructureBuilt");
 if (count($events) > 0)
 {
 	$menu = $arResult["menu"];
@@ -157,11 +163,11 @@ if (count($events) > 0)
 
 $arResult['spotlights'] = [];
 
-$event = new \Bitrix\Main\Event('mobile', 'onMobileMenuSpotlightBuildList', []);
+$event = new Event('mobile', 'onMobileMenuSpotlightBuildList', []);
 $event->send();
 foreach ($event->getResults() as $eventResult)
 {
-	/** @var \Bitrix\Main\EventResult $eventResult */
+	/** @var EventResult $eventResult */
 	$spotlight = $eventResult->getParameters();
 	if (is_array($spotlight))
 	{
@@ -176,99 +182,6 @@ $arResult["menu"][] = [
 ];
 
 $counterList = [];
-$isStressLevelTurnOn = Option::get('intranet', 'stresslevel_available', 'Y') == 'Y';
-$showStressItemCondition = (!Loader::includeModule('bitrix24') || \Bitrix\Bitrix24\Release::isAvailable('stresslevel')) && $isStressLevelTurnOn;
-$arResult["releaseStressLevel"] = $showStressItemCondition;
-if (Loader::includeModule('socialnetwork') && $showStressItemCondition)
-{
-	$favoriteSection = &$arResult["menu"][0];
-	$colors = [
-		"green" => "#9DCF00",
-		"yellow" => "#F7A700",
-		"red" => "#FF5752",
-		"unknown" => "#C8CBCE",
-	];
-
-	$stressValue = false;
-	$stressColor = $colors["unknown"];
-
-	$stressItem = [
-		"title" => Loc::getMessage("MB_BP_MAIN_STRESS_LEVEL"),
-		"id" => "stress",
-		"min_api_version" => 31,
-		"imageUrl" => $this->getPath() . "/images/favorite/icon-stress.png?1",
-		"color" => "#55D0E0",
-		'imageName' => 'stress',
-		"hidden" => false,
-		"attrs" => [
-			"id" => "stress",
-			"onclick" => "",
-		],
-
-	];
-
-	$data = UserWelltory::getHistoricData([
-		'userId' => $USER->getId(),
-		'limit' => 1,
-	]);
-
-	if (!empty($data))
-	{
-		$result = $data[0];
-		$initStressResult = \Bitrix\MobileApp\Janative\Utils::jsonEncode([
-			"value" => $result["value"],
-			"type" => $result["type"],
-			"comment" => $result["comment"],
-			"token" => $result["hash"],
-			"date" => $result["date"],
-		]);
-
-		$stressItem["styles"] = ["tag" => ["backgroundColor" => $colors[$result["type"]], "cornerRadius" => 15]];
-		$stressItem["tag"] = $result["value"] . "%";
-		$stressItem["initData"] = $initStressResult;
-		$onclick = <<<JS
-			if(typeof window.version  === "undefined" || window.version < 1.0)
-			{
-				reload();
-			}
-			else
-			{
-				let initResult = $initStressResult;
-				if(initResult["value"])
-					{
-						initResult["date"] = new Date(initResult["date"]).toLocaleString();
-					}
-				else
-					initResult = null;
-
-				openStressWidget(initResult, false);
-			}
-JS;
-
-	}
-	else
-	{
-		$stressItem["styles"] = ["tag" => ["backgroundColor" => "#3BC8F5", "cornerRadius" => 5]];
-		$stressItem["tag"] = Loc::getMessage("MEASURE_STRESS");
-		$onclick = <<<JS
-			if(typeof window.version  === "undefined" || window.version < 1.0)
-			{
-				reload();
-			}
-			else
-			{
-				openStressWidget(null, false);
-			}
-JS;
-	}
-
-	$stressItem["attrs"]["onclick"] = $onclick;
-	if (!is_array($favoriteSection["items"]))
-	{
-		$favoriteSection["items"] = [];
-	}
-	$favoriteSection["items"][] = $stressItem;
-}
 
 usort($arResult["menu"], 'sortMenu');
 
@@ -346,7 +259,7 @@ array_walk($arResult["menu"], function (&$section) use (&$counterList) {
 	}
 });
 
-$events = \Bitrix\Mobile\Tourist::getEvents();
+$events = Tourist::getEvents();
 $winter2024RuReleaseTime = 1732579200; // 26.11.2024
 $winter2024WorldReleaseTime = 1733875200; // 11.12.2024
 
@@ -354,7 +267,7 @@ $isCloud = Loader::includeModule('bitrix24');
 $isRussianRegion = false;
 if ($isCloud)
 {
-	$isRussianRegion = \CBitrix24::getPortalZone() === 'ru';
+	$isRussianRegion = CBitrix24::getPortalZone() === 'ru';
 }
 $thresholdTime = $isRussianRegion ? $winter2024RuReleaseTime : $winter2024WorldReleaseTime;
 
@@ -370,7 +283,7 @@ if (!isset($events['visited_tab_presets']))
 
 $hasMoreThanOneUser = false;
 $isUserFirstTimeInInvitations = !isset($events['visit_invitations']);
-$isUserAdmin = (($isCloud ? \CBitrix24::isPortalAdmin($USER->GetID()) : $USER->isAdmin()));
+$isUserAdmin = (($isCloud ? CBitrix24::isPortalAdmin($USER->GetID()) : $USER->isAdmin()));
 
 if (
 	$isUserFirstTimeInInvitations
@@ -379,7 +292,7 @@ if (
 	&& Loader::includeModule('intranetmobile')
 )
 {
-	$hasMoreThanOneUser = (new \Bitrix\IntranetMobile\Provider\UserProvider())->hasMoreThanOneUser();
+	$hasMoreThanOneUser = (new UserProvider())->hasMoreThanOneUser();
 }
 
 $showDiskCounter = !isset($events['visited_disk_tabs']);
@@ -388,11 +301,11 @@ if ($showDiskCounter)
 	$portalCreatedTime = null;
 	if ($isCloud)
 	{
-		$portalCreatedTime = (int)\CBitrix24::getCreateTime();
+		$portalCreatedTime = (int)CBitrix24::getCreateTime();
 	}
 	else
 	{
-		$userQueryResult = \Bitrix\Main\UserTable::query()
+		$userQueryResult = UserTable::query()
 			->setSelect(['ID', 'DATE_REGISTER'])
 			->where('ID', 1)
 			->setLimit(1)

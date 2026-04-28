@@ -10,6 +10,8 @@ $MESS["INTRANET_JS_CONTROL_BALLOON_INVITATION_NOT_ACCEPTED"] = "Invite pending";
 $MESS["INTRANET_JS_CONTROL_BALLOON_NOT_CONFIRMED"] = "Pending log in confirmation";
 $MESS["INTRANET_JS_CONTROL_BUTTON_ACCEPT_ENTER"] = "Confirm log in";
 $MESS["INTRANET_JS_CONTROL_BUTTON_INVITE_AGAIN"] = "Invite again";
+$MESS["INTRANET_JS_CONTROL_BUTTON_SEND_MESSAGE"] = "Send message
+";
 $MESS["INTRANET_USER_LIST_ACTION_CONFIRM_BUTTON"] = "Confirm";
 $MESS["INTRANET_USER_LIST_ACTION_CONFIRM_MESSAGE"] = "User will show in the company structure; they will be able to access your Bitrix24.\n\nDo you want to hire this user?";
 $MESS["INTRANET_USER_LIST_ACTION_CONFIRM_TITLE"] = "Confirm log in";

@@ -222,7 +222,8 @@
 
 .ui-selector-item-indicator-hidden {
 	background-image: none !important;
-	mask-image: none;
+	mask-image: none !important;
+	background-color: transparent !important;
 }
 
 .ui-selector-item-children {

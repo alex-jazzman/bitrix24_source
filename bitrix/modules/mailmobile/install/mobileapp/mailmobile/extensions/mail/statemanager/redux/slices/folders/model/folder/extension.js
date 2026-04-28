@@ -6,20 +6,35 @@ jn.define('mail/statemanager/redux/slices/folders/model/folder', (require, expor
 	{
 		/**
 		 * @public
-		 * @param {object} sourceFolderData
-		 * @returns {FolderReduxModel}
+		 * @param {object[]} serverFolders
+		 * @param {number|null} parentId
+		 * @returns {FolderReduxModel[]}
 		 */
-		static prepareReduxFolderFromServer(sourceFolderData)
+		static prepareReduxFoldersFromServer(serverFolders, parentId = null)
 		{
-			return {
-				id: Number(sourceFolderData.id),
-				name: sourceFolderData.name,
-				type: sourceFolderData.type,
-				path: sourceFolderData.path,
-				isHidden: sourceFolderData.isHidden,
-				unreadCount: Number(sourceFolderData.unseen || 0),
-				messageCount: Number(sourceFolderData.count || 0),
-			};
+			const result = [];
+
+			for (const folder of serverFolders)
+			{
+				result.push({
+					id: Number(folder.id),
+					name: folder.name,
+					type: folder.type,
+					path: folder.path,
+					isHidden: folder.isHidden,
+					unreadCount: Number(folder.unseen || 0),
+					messageCount: Number(folder.count || 0),
+					parentId,
+					hasChild: folder.dataset?.hasChild === true || folder.dataset?.hasChild === 1,
+				});
+
+				if (Array.isArray(folder.items) && folder.items.length > 0)
+				{
+					result.push(...FolderModel.prepareReduxFoldersFromServer(folder.items, Number(folder.id)));
+				}
+			}
+
+			return result;
 		}
 	}
 

@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { ajax as Ajax, Dom, Extension, Loc, Runtime, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
@@ -289,9 +290,8 @@ export class TodoEditorV2
 			content: this.#defaultDescription,
 			placeholder: Loc.getMessage('CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_ROLLED'),
 			paragraphPlaceholder: Loc.getMessage(
-				Type.isPlainObject(this.#copilotSettings)
-					? 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT_MSGVER_1'
-					: null,
+				Type.isPlainObject(this.#copilotSettings) ? 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT_MSGVER_1' : null,
+				NameService.copilotNameReplacement(),
 			),
 			toolbar: [],
 			floatingToolbar: [

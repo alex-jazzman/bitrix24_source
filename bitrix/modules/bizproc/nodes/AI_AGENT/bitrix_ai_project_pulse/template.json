@@ -172,6 +172,21 @@
                         "A2086_6128_5806_4579:o0",
                         "A2457_6682_5019_9693:i0",
                         1770014106829
+                    ],
+                    [
+                        "A4998_5656_3542_7716:o0",
+                        "A2242_1771_3697_9893:i0",
+                        1770968700025
+                    ],
+                    [
+                        "A2242_1771_3697_9893:o0",
+                        "A7094_9225_8856_7863:i0",
+                        1770968810379
+                    ],
+                    [
+                        "A8534_4235_6113_7858:o0",
+                        "A4786_3464_6612_4407:i0",
+                        1770968846293
                     ]
                 ]
             },
@@ -207,9 +222,10 @@
                             "type": "trigger",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_2###",
                             "colorIndex": 0,
+                            "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -320,9 +336,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_3###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "SETTINGS",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -366,57 +383,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_4###",
                             "colorIndex": 1,
+                            "frameColorName": null,
                             "icon": "MESSENGER",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
-                        }
-                    }
-                },
-                {
-                    "Name": "A2420_4854_9560_9878",
-                    "Type": "ImAddMessageToGroupChatActivity",
-                    "Activated": "Y",
-                    "Properties": {
-                        "ChatId": "{=A8534_4235_6113_7858:ChatId}",
-                        "FromMember": "{=A5868_2411_7643_6926:botId > user}",
-                        "MessageTemplate": "plain",
-                        "MessageFields": {
-                            "MessageText": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_MESSAGETEXT_1###"
-                        },
-                        "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_5###",
-                        "EditorComment": ""
-                    },
-                    "Document": null,
-                    "Node": {
-                        "id": "A2420_4854_9560_9878",
-                        "type": "simple",
-                        "position": {
-                            "x": 2377,
-                            "y": 331
-                        },
-                        "dimensions": {
-                            "width": 200,
-                            "height": 48
-                        },
-                        "ports": [
-                            {
-                                "id": "i0",
-                                "title": "",
-                                "type": "input"
-                            },
-                            {
-                                "id": "o0",
-                                "title": "",
-                                "type": "output"
-                            }
-                        ],
-                        "node": {
-                            "type": "simple",
-                            "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_5###",
-                            "colorIndex": 2,
-                            "icon": "GO_TO_MESSAGE",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -431,11 +401,16 @@
                         "Author": "{=A1821_5801_3457_5880:USER}",
                         "StorageId": null,
                         "StorageCode": "PULSE_INFO_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
                         "Fields": {
                             "EVENT_MSG": {
                                 "Value": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_EVENT_MSG_1###",
                                 "FieldName": "EVENT_MSG"
                             }
+                        },
+                        "DynamicFilterFields": {
+                            "items": []
                         },
                         "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_6###",
                         "EditorComment": ""
@@ -468,9 +443,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_6###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "PLUS_M",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -485,6 +461,7 @@
                         "returnType": "text",
                         "jsonSchema": "",
                         "jsonPath": null,
+                        "usePseudonymizer": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_7###",
                         "EditorComment": ""
                     },
@@ -521,57 +498,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_7###",
                             "colorIndex": 0,
+                            "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
-                        }
-                    }
-                },
-                {
-                    "Name": "A9581_7600_4907_3363",
-                    "Type": "ImAddMessageToGroupChatActivity",
-                    "Activated": "Y",
-                    "Properties": {
-                        "ChatId": "{=A6525_6416_2521_7767:CHAT_ID}",
-                        "FromMember": "{{=\"user_\" & {=A6525_6416_2521_7767:BOT_ID} }}",
-                        "MessageTemplate": "plain",
-                        "MessageFields": {
-                            "MessageText": "{=A2171_9514_4582_4141:aiResult}"
-                        },
-                        "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_5###",
-                        "EditorComment": ""
-                    },
-                    "Document": null,
-                    "Node": {
-                        "id": "A9581_7600_4907_3363",
-                        "type": "simple",
-                        "position": {
-                            "x": 2269,
-                            "y": 904
-                        },
-                        "dimensions": {
-                            "width": 200,
-                            "height": 48
-                        },
-                        "ports": [
-                            {
-                                "id": "i0",
-                                "title": "",
-                                "type": "input"
-                            },
-                            {
-                                "id": "o0",
-                                "title": "",
-                                "type": "output"
-                            }
-                        ],
-                        "node": {
-                            "type": "simple",
-                            "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_5###",
-                            "colorIndex": 2,
-                            "icon": "GO_TO_MESSAGE",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -617,9 +547,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_8###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "TRASHCAN",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -681,9 +612,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_9###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATA_READING",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -698,11 +630,16 @@
                         "Author": "{=A9091_4926_8068_8735:USER}",
                         "StorageId": null,
                         "StorageCode": "PULSE_INFO_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
                         "Fields": {
                             "EVENT_MSG": {
                                 "Value": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_EVENT_MSG_2###",
                                 "FieldName": "EVENT_MSG"
                             }
+                        },
+                        "DynamicFilterFields": {
+                            "items": []
                         },
                         "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_6###",
                         "EditorComment": ""
@@ -735,9 +672,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_6###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "PLUS_M",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -804,9 +742,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_10###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATABASE",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -889,9 +828,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_10###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATABASE",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -907,6 +847,8 @@
                         "Author": "{=A2045_4267_2979_9276:startedBy}",
                         "StorageId": null,
                         "StorageCode": "PULSE_SYSTEM_INFO_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
                         "Fields": {
                             "CHAT_ID": {
                                 "Value": "{=A8534_4235_6113_7858:ChatId}",
@@ -916,6 +858,9 @@
                                 "Value": "{=A5868_2411_7643_6926:botId}",
                                 "FieldName": "BOT_ID"
                             }
+                        },
+                        "DynamicFilterFields": {
+                            "items": []
                         },
                         "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_6###",
                         "EditorComment": ""
@@ -948,9 +893,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_6###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "PLUS_M",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -996,9 +942,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_8###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "TRASHCAN",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1043,9 +990,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_12###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GROUP",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1089,9 +1037,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_13###",
                             "colorIndex": 1,
+                            "frameColorName": null,
                             "icon": "CHATS",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1106,11 +1055,16 @@
                         "Author": "{=A3099_3276_3071_1024:TASK_RESPONSIBLE}",
                         "StorageId": null,
                         "StorageCode": "PULSE_INFO_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
                         "Fields": {
                             "EVENT_MSG": {
                                 "Value": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_EVENT_MSG_EDITED_3###",
                                 "FieldName": "EVENT_MSG"
                             }
+                        },
+                        "DynamicFilterFields": {
+                            "items": []
                         },
                         "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_6###",
                         "EditorComment": ""
@@ -1143,9 +1097,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_6###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "PLUS_M",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1206,9 +1161,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_9###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATA_READING",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1269,9 +1225,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_9###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATA_READING",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1325,9 +1282,10 @@
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_14###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1381,9 +1339,10 @@
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_14###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1446,9 +1405,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_9###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATA_READING",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1509,9 +1469,10 @@
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_14###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1547,9 +1508,10 @@
                             "type": "trigger",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_15###",
                             "colorIndex": 1,
+                            "frameColorName": null,
                             "icon": "IMPORTANT_TASK",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1587,9 +1549,10 @@
                             "type": "trigger",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_16###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "VACATION",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1627,9 +1590,10 @@
                             "type": "trigger",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_17###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "SICK",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1667,9 +1631,10 @@
                             "type": "trigger",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_18###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "TIMER",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1723,9 +1688,10 @@
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_14###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1765,9 +1731,10 @@
                             "type": "trigger",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_19###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "MESSAGE",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1782,6 +1749,7 @@
                         "returnType": "text",
                         "jsonSchema": "",
                         "jsonPath": null,
+                        "usePseudonymizer": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_7###",
                         "EditorComment": ""
                     },
@@ -1818,9 +1786,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_7###",
                             "colorIndex": 0,
+                            "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 },
@@ -1835,6 +1804,7 @@
                         "chatId": "{=A5267_6795_5783_6534:chatId}",
                         "message": "{{=if(strlen({=A2086_6128_5806_4579:aiResult}) > 0, {=A2086_6128_5806_4579:aiResult}, {=A2086_6128_5806_4579:errorMessage})}}",
                         "asError": "{{=if(strlen({=A2086_6128_5806_4579:aiResult}) > 0, 'N', 'Y')}}",
+                        "aiWarning": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_20###",
                         "EditorComment": ""
                     },
@@ -1866,9 +1836,110 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_20###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770014311555,
-                            "published": 1770014311555
+                            "updated": 1771527951916,
+                            "published": 1771527951916
+                        }
+                    }
+                },
+                {
+                    "Name": "A2242_1771_3697_9893",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A6525_6416_2521_7767:BOT_ID}",
+                        "botCode": "",
+                        "recipient": null,
+                        "chatId": "{=A6525_6416_2521_7767:CHAT_ID}",
+                        "message": "{=A2171_9514_4582_4141:aiResult}",
+                        "asError": "N",
+                        "aiWarning": "Y",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_20###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2242_1771_3697_9893",
+                        "type": "simple",
+                        "position": {
+                            "x": 2266,
+                            "y": 905
+                        },
+                        "dimensions": {
+                            "width": 292.1166687011719,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_20###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": 1771527951916,
+                            "published": 1771527951916
+                        }
+                    }
+                },
+                {
+                    "Name": "A4786_3464_6612_4407",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A5868_2411_7643_6926:botId}",
+                        "botCode": "",
+                        "recipient": null,
+                        "chatId": "{=A8534_4235_6113_7858:ChatId}",
+                        "message": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_MESSAGETEXT_1###",
+                        "asError": "N",
+                        "aiWarning": "N",
+                        "Title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_20###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A4786_3464_6612_4407",
+                        "type": "simple",
+                        "position": {
+                            "x": 2397,
+                            "y": 333
+                        },
+                        "dimensions": {
+                            "width": 292.1166687011719,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_AI_PROJECT_PULSE_TITLE_20###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": 1771527951916,
+                            "published": 1771527951916
                         }
                     }
                 }

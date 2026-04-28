@@ -27,6 +27,11 @@ SliderManager.registerSliderClass(
 		newWindowLabel: true,
 	},
 	{
+		focusTrap: {
+			outsideExceptionSelectors: ['.aiassistant-marta', '#right-bar', '.side-panel-toolbar', '#im-chat-menu'],
+			looped: false,
+		},
+		targetContainer: '#a11y-slider-container',
 		animationDuration: 200,
 		label: {
 			text: '',

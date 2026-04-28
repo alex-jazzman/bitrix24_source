@@ -1064,7 +1064,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }, {
 	      html: babelHelpers.classPrivateFieldLooseBase(this, _getMaskContainer)[_getMaskContainer](),
 	      backgroundColor: '#fafafa'
-	    }], babelHelpers.classPrivateFieldLooseBase(this, _getOTPContainer)[_getOTPContainer](babelHelpers.classPrivateFieldLooseBase(this, _getDeskTopContainer)[_getDeskTopContainer]() === null) && babelHelpers.classPrivateFieldLooseBase(this, _getDeskTopContainer)[_getDeskTopContainer]() ? [{
+	    }], babelHelpers.classPrivateFieldLooseBase(this, _getCompanyPulse)[_getCompanyPulse](false) ? [{
+	      html: babelHelpers.classPrivateFieldLooseBase(this, _getCompanyPulse)[_getCompanyPulse](false),
+	      overflow: true,
+	      marginBottom: 24,
+	      flex: 1,
+	      minHeight: '56px'
+	    }, null] : null, babelHelpers.classPrivateFieldLooseBase(this, _getOTPContainer)[_getOTPContainer](babelHelpers.classPrivateFieldLooseBase(this, _getDeskTopContainer)[_getDeskTopContainer]() === null) && babelHelpers.classPrivateFieldLooseBase(this, _getDeskTopContainer)[_getDeskTopContainer]() ? [{
 	      flex: 0.5,
 	      html: babelHelpers.classPrivateFieldLooseBase(this, _getQrContainer)[_getQrContainer](0.7),
 	      minHeight: '190px'

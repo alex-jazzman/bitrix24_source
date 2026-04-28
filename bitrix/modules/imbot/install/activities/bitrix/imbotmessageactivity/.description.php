@@ -17,9 +17,6 @@ $arActivityDescription = (new ActivityDescription(
 	description: Loc::getMessage('IMBOT_MESSAGE_ACTIVITY_DESCRIPTION_DESCRIPTION'),
 	type: [ ActivityType::NODE->value ],
 ))
-	->setCategory([
-		'ID' => 'interaction',
-	])
 	->setClass('ImBotMessageActivity')
 	->setJsClass('BizProcActivity')
 	->setExcluded(!Loader::includeModule('imbot'))

@@ -19,6 +19,7 @@ export type ImRecentProviderItem = {
 		dateMessage?: string,
 		user?: RawUser,
 		byUser?: boolean,
+		isContextChatMember?: boolean,
 	},
 };
 
@@ -32,6 +33,7 @@ export type LocalSearchItem = {
 export type SearchResultItem = {
 	dialogId: string,
 	dateMessage: string,
+	isChatParticipant: boolean | null,
 };
 
 type EntitySelectorProviderEntity = {
@@ -59,4 +61,8 @@ export type EntitySearchConfigType = {
 	exclude: $Values<typeof EntitySearch>[],
 }
 
-export type SearchConfig = RecentSectionSearchConfigType | EntitySearchConfigType;
+export type MentionSearchConfigType = {
+	contextChatId: number,
+} & EntitySearchConfigType;
+
+export type SearchConfig = RecentSectionSearchConfigType | EntitySearchConfigType | MentionSearchConfigType;

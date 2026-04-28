@@ -1,8 +1,14 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_vue3,crm_integration_analytics,ui_analytics,ui_bbcode_parser,ui_infoHelper,ui_notification,ui_promoVideoPopup,ui_switcher,ui_textEditor,ui_buttons,main_core,main_core_events,ui_entitySelector) {
+(function (exports,ui_vue3,crm_integration_analytics,ui_analytics,ui_bbcode_parser,ui_infoHelper,ui_notification,ui_promoVideoPopup,crm_ai_nameService,ui_switcher,ui_textEditor,ui_buttons,main_core,main_core_events,ui_entitySelector) {
 	'use strict';
+
+	const AssignmentType = Object.freeze({
+	  byUser: 1,
+	  byClient: 2,
+	  byClientLastDeal: 3
+	});
 
 	const AdditionalInfoComponent = {
 	  props: {
@@ -109,6 +115,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_ENABLED');
 	      }
 	      return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_DISABLED');
+	    },
+	    segmentCopilotTitle() {
+	      return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE', crm_ai_nameService.NameService.copilotNameReplacement());
 	    }
 	  },
 	  watch: {
@@ -121,11 +130,11 @@ this.BX.Crm = this.BX.Crm || {};
 		<div class="crm-repeat-sale__segment-ai-switcher-wrapper">
 			<div>
 				<div class="crm-repeat-sale__segment-ai-switcher-title">
-					{{this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE')}}
-					<span :class="badgeClassList">{{badgeTitle}}</span>
+					{{ segmentCopilotTitle }}
+					<span :class="badgeClassList">{{ badgeTitle }}</span>
 				</div>
 				<div class="crm-repeat-sale__segment-ai-switcher-description">
-					{{this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_DESCRIPTION')}}
+					{{ this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_COPILOT_DESCRIPTION') }}
 				</div>
 			</div>
 			<div class="crm-repeat-sale__segment-ai-switcher" ref="switcher"></div>
@@ -251,6 +260,242 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	const DialogWrapperComponent = {
+	  emits: ['change', 'onSelectItem', 'onDeselectItem'],
+	  props: {
+	    items: {
+	      type: Array,
+	      default: []
+	    },
+	    tabs: {
+	      type: Array,
+	      default: []
+	    },
+	    entities: {
+	      type: Array,
+	      default: []
+	    },
+	    showAvatars: {
+	      type: Boolean
+	    },
+	    multiple: {
+	      type: Boolean
+	    },
+	    context: {
+	      type: String,
+	      default: ''
+	    },
+	    events: {
+	      type: Object,
+	      default: {}
+	    },
+	    readOnly: {
+	      type: Boolean
+	    },
+	    enableSearch: {
+	      type: Boolean,
+	      default: true
+	    },
+	    showInputIcon: {
+	      type: Boolean,
+	      default: true
+	    },
+	    halfWidth: {
+	      type: Boolean
+	    },
+	    useItemMaxSize: {
+	      type: Boolean,
+	      default: true
+	    },
+	    width: {
+	      type: Number,
+	      default: 450
+	    }
+	  },
+	  methods: {
+	    getDialog() {
+	      if (!this.dialog) {
+	        const targetNode = this.$refs.dialog;
+	        const parentPopupContainer = targetNode.closest('body');
+	        this.dialog = new ui_entitySelector.Dialog({
+	          targetNode,
+	          context: this.context,
+	          multiple: this.multiple,
+	          dropdownMode: true,
+	          showAvatars: this.showAvatars,
+	          enableSearch: this.enableSearch,
+	          width: this.width,
+	          zIndex: 2500,
+	          items: this.items,
+	          entities: this.entities,
+	          tabs: this.tabs,
+	          searchOptions: {
+	            allowCreateItem: false
+	          },
+	          events: {
+	            'Item:onSelect': event => {
+	              const {
+	                item: selectedItem
+	              } = event.getData();
+	              this.emitSelectItem(selectedItem);
+	            },
+	            'Item:onDeselect': event => {
+	              const {
+	                item: deselectedItem
+	              } = event.getData();
+	              this.emitDeselectItem(deselectedItem);
+	            },
+	            onShow: event => {
+	              main_core.Event.bindOnce(parentPopupContainer, 'click', this.onPopupContainerClick.bind(this));
+	            }
+	          }
+	        });
+	      }
+	      return this.dialog;
+	    },
+	    emitSelectItem(selectedItem) {
+	      this.$emit('onSelectItem', selectedItem);
+	    },
+	    emitDeselectItem(deselectedItem) {
+	      this.$emit('onDeselectItem', deselectedItem);
+	    },
+	    selectItem(itemId) {
+	      const item = this.dialog.getItem(itemId);
+	      item == null ? void 0 : item.select();
+	    },
+	    onPopupContainerClick() {
+	      this.getDialog().hide();
+	    },
+	    show() {
+	      this.getDialog().show();
+	    },
+	    toggleDialog() {
+	      if (this.readOnly) {
+	        return;
+	      }
+	      const dialog = this.getDialog();
+	      if (dialog.isOpen()) {
+	        dialog.hide();
+	      } else {
+	        dialog.show();
+	      }
+	    },
+	    destroy() {
+	      var _this$dialog;
+	      (_this$dialog = this.dialog) == null ? void 0 : _this$dialog.destroy();
+	      this.dialog = null;
+	    }
+	  },
+	  computed: {
+	    elementTitle() {
+	      var _this$items$find$titl, _this$items$find;
+	      return (_this$items$find$titl = (_this$items$find = this.items.find(item => item.selected)) == null ? void 0 : _this$items$find.title) != null ? _this$items$find$titl : '';
+	    },
+	    customData() {
+	      var _this$items$find$cust, _this$items$find2;
+	      return (_this$items$find$cust = (_this$items$find2 = this.items.find(item => item.selected)) == null ? void 0 : _this$items$find2.customData) != null ? _this$items$find$cust : '';
+	    },
+	    controlClassList() {
+	      return ['ui-ctl', 'ui-ctl-after-icon', {
+	        'ui-ctl-w50': this.halfWidth
+	      }, {
+	        'ui-ctl-dropdown': !this.readOnly
+	      }];
+	    },
+	    iconClassList() {
+	      if (this.showInputIcon) {
+	        var _this$customData;
+	        return ['crm-repeat-sale__segment-dialog-field-icon', {
+	          '--color': Boolean((_this$customData = this.customData) == null ? void 0 : _this$customData.color)
+	        }];
+	      }
+	      return [];
+	    },
+	    iconStyleList() {
+	      var _this$customData2;
+	      if (((_this$customData2 = this.customData) == null ? void 0 : _this$customData2.color) === null) {
+	        return {};
+	      }
+	      return {
+	        backgroundColor: this.customData.color
+	      };
+	    },
+	    itemClassList() {
+	      return {
+	        'crm-repeat-sale__segment-dialog-field-value': true,
+	        '--max-size': this.useItemMaxSize
+	      };
+	    }
+	  },
+	  // language=Vue
+	  template: `
+		<div
+			:class="controlClassList"
+			ref="dialog"
+			@click="toggleDialog"
+		>
+    		<div 
+				v-if="!readOnly"
+				class="ui-ctl-after ui-ctl-icon-angle"
+			></div>
+			<div class="ui-ctl-element">
+				<span class="crm-repeat-sale__segment-dialog-field">
+					<span 
+						:class="iconClassList"
+						:style="iconStyleList"
+					></span>
+					<span :class="itemClassList">
+						{{elementTitle}}
+					</span>
+				</span>
+			</div>
+		</div>
+	`
+	};
+
+	const AssignmentTypeSelector = {
+	  components: {
+	    DialogWrapperComponent
+	  },
+	  props: {
+	    currentTypeId: {
+	      type: Number,
+	      required: true
+	    },
+	    types: {
+	      type: Array,
+	      required: true
+	    },
+	    readOnly: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  created() {
+	    this.tabs = [{
+	      id: 'types',
+	      title: ''
+	    }];
+	  },
+	  watch: {
+	    currentTypeId(typeId) {
+	      this.types.forEach(item => {
+	        // eslint-disable-next-line no-param-reassign
+	        item.selected = item.id === typeId;
+	      });
+	    }
+	  },
+	  // language=Vue
+	  template: `
+		<DialogWrapperComponent
+			:items="types"
+			:tabs="tabs"
+			:read-only="readOnly"
+			:width=510
+		/>
+	`
+	};
+
 	const CallAssessmentSelector = {
 	  props: {
 	    callAssessments: {
@@ -346,282 +591,8 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const DialogWrapperComponent = {
-	  emits: ['change', 'onSelectItem', 'onDeselectItem'],
-	  props: {
-	    items: {
-	      type: Array,
-	      default: []
-	    },
-	    tabs: {
-	      type: Array,
-	      default: []
-	    },
-	    entities: {
-	      type: Array,
-	      default: []
-	    },
-	    showAvatars: {
-	      type: Boolean
-	    },
-	    multiple: {
-	      type: Boolean
-	    },
-	    context: {
-	      type: String,
-	      default: ''
-	    },
-	    events: {
-	      type: Object,
-	      default: {}
-	    },
-	    readOnly: {
-	      type: Boolean
-	    }
-	  },
-	  methods: {
-	    getDialog() {
-	      if (!this.dialog) {
-	        const targetNode = this.$refs.dialog;
-	        const parentPopupContainer = targetNode.closest('body');
-	        this.dialog = new ui_entitySelector.Dialog({
-	          targetNode,
-	          context: this.context,
-	          multiple: this.multiple,
-	          dropdownMode: true,
-	          showAvatars: this.showAvatars,
-	          enableSearch: true,
-	          width: 450,
-	          zIndex: 2500,
-	          items: this.items,
-	          entities: this.entities,
-	          tabs: this.tabs,
-	          searchOptions: {
-	            allowCreateItem: false
-	          },
-	          events: {
-	            'Item:onSelect': event => {
-	              const {
-	                item: selectedItem
-	              } = event.getData();
-	              this.emitSelectItem(selectedItem);
-	            },
-	            'Item:onDeselect': event => {
-	              const {
-	                item: deselectedItem
-	              } = event.getData();
-	              this.emitDeselectItem(deselectedItem);
-	            },
-	            onShow: event => {
-	              main_core.Event.bindOnce(parentPopupContainer, 'click', this.onPopupContainerClick.bind(this));
-	            }
-	          }
-	        });
-	      }
-	      return this.dialog;
-	    },
-	    emitSelectItem(selectedItem) {
-	      this.$emit('onSelectItem', selectedItem);
-	    },
-	    emitDeselectItem(deselectedItem) {
-	      this.$emit('onDeselectItem', deselectedItem);
-	    },
-	    selectItem(itemId) {
-	      const item = this.dialog.getItem(itemId);
-	      item == null ? void 0 : item.select();
-	    },
-	    onPopupContainerClick() {
-	      this.getDialog().hide();
-	    },
-	    show() {
-	      this.getDialog().show();
-	    },
-	    toggleDialog() {
-	      if (this.readOnly) {
-	        return;
-	      }
-	      const dialog = this.getDialog();
-	      if (dialog.isOpen()) {
-	        dialog.hide();
-	      } else {
-	        dialog.show();
-	      }
-	    },
-	    destroy() {
-	      var _this$dialog;
-	      (_this$dialog = this.dialog) == null ? void 0 : _this$dialog.destroy();
-	      this.dialog = null;
-	    }
-	  },
-	  computed: {
-	    elementTitle() {
-	      var _this$items$find$titl, _this$items$find;
-	      return (_this$items$find$titl = (_this$items$find = this.items.find(item => item.selected)) == null ? void 0 : _this$items$find.title) != null ? _this$items$find$titl : '';
-	    },
-	    customData() {
-	      var _this$items$find$cust, _this$items$find2;
-	      return (_this$items$find$cust = (_this$items$find2 = this.items.find(item => item.selected)) == null ? void 0 : _this$items$find2.customData) != null ? _this$items$find$cust : '';
-	    },
-	    controlClassList() {
-	      return ['ui-ctl', 'ui-ctl-after-icon', {
-	        'ui-ctl-dropdown': !this.readOnly
-	      }];
-	    },
-	    iconClassList() {
-	      var _this$customData;
-	      return ['crm-repeat-sale__segment-dialog-field-icon', {
-	        '--color': Boolean((_this$customData = this.customData) == null ? void 0 : _this$customData.color)
-	      }];
-	    },
-	    iconStyleList() {
-	      var _this$customData2;
-	      if (((_this$customData2 = this.customData) == null ? void 0 : _this$customData2.color) === null) {
-	        return {};
-	      }
-	      return {
-	        backgroundColor: this.customData.color
-	      };
-	    }
-	  },
-	  // language=Vue
-	  template: `
-		<div
-			:class="controlClassList"
-			ref="dialog"
-			@click="toggleDialog"
-		>
-    		<div 
-				v-if="!readOnly"
-				class="ui-ctl-after ui-ctl-icon-angle"
-			></div>
-			<div class="ui-ctl-element">
-				<span class="crm-repeat-sale__segment-dialog-field">
-					<span 
-						:class="iconClassList"
-						:style="iconStyleList"
-					></span>
-					<span class="crm-repeat-sale__segment-dialog-field-value">
-						{{elementTitle}}
-					</span>
-				</span>
-			</div>
-		</div>
-	`
-	};
-
-	const TagSelectorWrapperComponent = {
-	  emits: ['change', 'onSelectItem', 'onDeselectItem'],
-	  props: {
-	    items: {
-	      type: Array,
-	      default: []
-	    },
-	    preselectedItems: {
-	      type: Array,
-	      default: []
-	    },
-	    tabs: {
-	      type: Array,
-	      default: []
-	    },
-	    entities: {
-	      type: Array,
-	      default: []
-	    },
-	    showAvatars: {
-	      type: Boolean,
-	      default: false
-	    },
-	    multiple: {
-	      type: Boolean,
-	      default: false
-	    },
-	    context: {
-	      type: String,
-	      default: ''
-	    },
-	    events: {
-	      type: Object,
-	      default: {}
-	    },
-	    readOnly: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  mounted() {
-	    this.initDialog();
-	  },
-	  watch: {
-	    items(items) {
-	      this.tagSelector.getDialog().destroy();
-	      main_core.Dom.clean(this.$refs.dialog);
-	      this.initDialog();
-	    }
-	  },
-	  methods: {
-	    initDialog() {
-	      const targetNode = this.$refs.dialog;
-	      const parentPopupContainer = targetNode.closest('body');
-	      this.tagSelector = new ui_entitySelector.TagSelector({
-	        multiple: this.multiple,
-	        readonly: this.readOnly,
-	        hideOnSelect: false,
-	        dialogOptions: {
-	          targetNode,
-	          context: this.context,
-	          multiple: this.multiple,
-	          hideOnSelect: false,
-	          dropdownMode: true,
-	          showAvatars: this.showAvatars,
-	          enableSearch: true,
-	          width: 450,
-	          zIndex: 2500,
-	          items: this.items,
-	          preselectedItems: this.preselectedItems,
-	          entities: this.entities,
-	          tabs: this.tabs,
-	          searchOptions: {
-	            allowCreateItem: false
-	          },
-	          events: {
-	            'Item:onSelect': event => {
-	              const {
-	                item: selectedItem
-	              } = event.getData();
-	              this.emitSelectItem(selectedItem);
-	            },
-	            'Item:onDeselect': event => {
-	              const {
-	                item: deselectedItem
-	              } = event.getData();
-	              this.emitDeselectItem(deselectedItem);
-	            }
-	          }
-	        }
-	      });
-	      this.tagSelector.renderTo(this.$refs.dialog);
-	    },
-	    emitSelectItem(selectedItem) {
-	      this.$emit('onSelectItem', selectedItem);
-	    },
-	    emitDeselectItem(deselectedItem) {
-	      this.$emit('onDeselectItem', deselectedItem);
-	    },
-	    selectItem(itemId) {
-	      const item = this.tagSelector.getDialog().getItem(itemId);
-	      item == null ? void 0 : item.select();
-	    }
-	  },
-	  // language=Vue
-	  template: `
-		<div ref="dialog"></div>
-	`
-	};
-
 	const CategorySelector = {
 	  components: {
-	    TagSelectorWrapperComponent,
 	    DialogWrapperComponent
 	  },
 	  props: {
@@ -763,6 +734,116 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	const TagSelectorWrapperComponent = {
+	  emits: ['change', 'onSelectItem', 'onDeselectItem'],
+	  props: {
+	    items: {
+	      type: Array,
+	      default: []
+	    },
+	    preselectedItems: {
+	      type: Array,
+	      default: []
+	    },
+	    tabs: {
+	      type: Array,
+	      default: []
+	    },
+	    entities: {
+	      type: Array,
+	      default: []
+	    },
+	    showAvatars: {
+	      type: Boolean,
+	      default: false
+	    },
+	    multiple: {
+	      type: Boolean,
+	      default: false
+	    },
+	    context: {
+	      type: String,
+	      default: ''
+	    },
+	    events: {
+	      type: Object,
+	      default: {}
+	    },
+	    readOnly: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  mounted() {
+	    this.initDialog();
+	  },
+	  watch: {
+	    items(items) {
+	      this.tagSelector.getDialog().destroy();
+	      main_core.Dom.clean(this.$refs.dialog);
+	      this.initDialog();
+	    }
+	  },
+	  methods: {
+	    initDialog() {
+	      const targetNode = this.$refs.dialog;
+	      const parentPopupContainer = targetNode.closest('body');
+	      this.tagSelector = new ui_entitySelector.TagSelector({
+	        multiple: this.multiple,
+	        readonly: this.readOnly,
+	        hideOnSelect: false,
+	        dialogOptions: {
+	          targetNode,
+	          context: this.context,
+	          multiple: this.multiple,
+	          hideOnSelect: false,
+	          dropdownMode: true,
+	          showAvatars: this.showAvatars,
+	          enableSearch: true,
+	          width: 450,
+	          zIndex: 2500,
+	          items: this.items,
+	          preselectedItems: this.preselectedItems,
+	          entities: this.entities,
+	          tabs: this.tabs,
+	          searchOptions: {
+	            allowCreateItem: false
+	          },
+	          events: {
+	            'Item:onSelect': event => {
+	              const {
+	                item: selectedItem
+	              } = event.getData();
+	              this.emitSelectItem(selectedItem);
+	            },
+	            'Item:onDeselect': event => {
+	              const {
+	                item: deselectedItem
+	              } = event.getData();
+	              this.emitDeselectItem(deselectedItem);
+	            }
+	          }
+	        }
+	      });
+	      this.tagSelector.renderTo(this.$refs.dialog);
+	    },
+	    emitSelectItem(selectedItem) {
+	      this.$emit('onSelectItem', selectedItem);
+	    },
+	    emitDeselectItem(deselectedItem) {
+	      this.$emit('onDeselectItem', deselectedItem);
+	    },
+	    selectItem(itemId) {
+	      const item = this.tagSelector.getDialog().getItem(itemId);
+	      item == null ? void 0 : item.select();
+	    }
+	  },
+	  // language=Vue
+	  template: `
+		<div ref="dialog"></div>
+	`
+	};
+
 	const UserSelector = {
 	  components: {
 	    TagSelectorWrapperComponent
@@ -817,6 +898,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    Button,
 	    AdditionalInfoComponent,
 	    AiSwitcherComponent,
+	    AssignmentTypeSelector,
 	    TextEditorWrapperComponent,
 	    CallAssessmentSelector,
 	    CategorySelector,
@@ -851,7 +933,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    textEditor: ui_textEditor.TextEditor
 	  },
 	  data() {
-	    var _segment$id, _segment$isEnabled, _settings$ai, _settings$baas, _segment$entityCatego, _segment$entityStageI, _segment$assignmentUs, _segment$entityTitleP, _segment$callAssessme;
+	    var _segment$id, _segment$isEnabled, _settings$ai, _settings$baas, _segment$entityCatego, _segment$entityStageI, _segment$assignmentTy, _segment$assignmentUs, _segment$entityTitleP, _segment$callAssessme;
 	    const {
 	      segment,
 	      textEditor,
@@ -873,11 +955,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      parser: new ui_bbcode_parser.BBCodeParser(),
 	      currentCategoryId: (_segment$entityCatego = segment.entityCategoryId) != null ? _segment$entityCatego : firstCategory.id,
 	      currentStageId: (_segment$entityStageI = segment.entityStageId) != null ? _segment$entityStageI : this.getFirstAvailableCategoryStageId(firstCategory),
+	      assignmentTypeId: (_segment$assignmentTy = segment.assignmentTypeId) != null ? _segment$assignmentTy : AssignmentType.byUser,
 	      assignmentUserIds: new Set((_segment$assignmentUs = segment.assignmentUserIds) != null ? _segment$assignmentUs : []),
 	      currentEntityTitlePattern: (_segment$entityTitleP = segment.entityTitlePattern) != null ? _segment$entityTitleP : null,
 	      currentCallAssessmentId: (_segment$callAssessme = segment.callAssessmentId) != null ? _segment$callAssessme : null,
 	      currentIsAiEnabled: isAiEnabled
 	    };
+	  },
+	  created() {
+	    this.assignmentType = AssignmentType;
 	  },
 	  mounted() {
 	    this.$Bitrix.eventEmitter.subscribe(ButtonEvents.click, this.onNavigationButtonClick);
@@ -914,6 +1000,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        entityStageId: this.currentStageId,
 	        assignmentUserIds: [...this.assignmentUserIds.values()],
 	        entityTitlePattern: this.currentEntityTitlePattern,
+	        assignmentTypeId: this.assignmentTypeId,
 	        callAssessmentId: this.currentCallAssessmentId,
 	        isAiEnabled: this.currentIsAiEnabled
 	      };
@@ -960,7 +1047,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	    },
 	    validate(data) {
-	      if (!main_core.Type.isArrayFilled(data.assignmentUserIds)) {
+	      if (!main_core.Type.isArrayFilled(data.assignmentUserIds) && data.assignmentTypeId === AssignmentType.byUser) {
 	        ui_notification.UI.Notification.Center.notify({
 	          content: this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR'),
 	          autoHideDelay: 6000
@@ -1001,6 +1088,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    getFirstAvailableCategoryStageId(category) {
 	      return category.items[0].id;
+	    },
+	    onSelectAssignmentType(type) {
+	      this.assignmentTypeId = type.id;
 	    },
 	    onSelectAssignmentUser(user) {
 	      this.assignmentUserIds.add(user.id);
@@ -1099,11 +1189,33 @@ this.BX.Crm = this.BX.Crm || {};
 	        dealHelp: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_HELP'),
 	        sectionTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_SECTION_TITLE'),
 	        stageTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_STAGE_TITLE'),
-	        dealAssignedTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE'),
+	        dealAssignedTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE_MSGVER_1'),
 	        dealTitlePattern: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_NAME_PATTERN_TITLE'),
 	        assessmentTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_TITLE'),
 	        assessmentDescription: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_DESCRIPTION')
 	      };
+	    },
+	    assignmentTypes() {
+	      const types = [{
+	        id: AssignmentType.byClient,
+	        message: 'CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TYPE_BY_CLIENT'
+	      }, {
+	        id: AssignmentType.byClientLastDeal,
+	        message: 'CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TYPE_BY_CLIENT_LAST_DEAL'
+	      }, {
+	        id: AssignmentType.byUser,
+	        message: 'CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TYPE_BY_USER'
+	      }];
+	      return types.map(({
+	        id,
+	        message
+	      }) => ({
+	        id,
+	        title: this.$Bitrix.Loc.getMessage(message),
+	        entityId: 'type',
+	        tabs: 'types',
+	        selected: this.assignmentTypeId === id
+	      }));
 	    }
 	  },
 	  watch: {
@@ -1207,6 +1319,24 @@ this.BX.Crm = this.BX.Crm || {};
 								<div class="crm-repeat-sale__segment-field-title">
 									{{messages.dealAssignedTitle}}
 								</div>
+								<AssignmentTypeSelector
+									:current-type-id="assignmentTypeId"
+									:types="assignmentTypes"
+									:read-only="readOnly"
+									:half-width="true"
+									:enable-search="false"
+									:show-input-icon="false"
+									:use-item-max-size="false"
+									@onSelectItem="onSelectAssignmentType"
+								/>
+							</div>
+						</div>
+						
+						<div 
+							v-if="assignmentTypeId === assignmentType.byUser"
+							class="crm-repeat-sale__segment-fields-row"
+						>
+							<div class="crm-repeat-sale__segment-field">
 								<UserSelector
 									:user-ids="[...assignmentUserIds.values()]"
 									:read-only="readOnly"
@@ -1332,7 +1462,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    maxHeight: 400,
 	    content,
 	    placeholder: main_core.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER'),
-	    paragraphPlaceholder: main_core.Loc.getMessage(main_core.Type.isPlainObject(copilotSettings) ? 'CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT' : null),
+	    paragraphPlaceholder: main_core.Loc.getMessage(main_core.Type.isPlainObject(copilotSettings) ? 'CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT' : null, crm_ai_nameService.NameService.copilotNameReplacement()),
 	    toolbar: [],
 	    floatingToolbar,
 	    collapsingMode: false,
@@ -1346,5 +1476,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Segment = Segment$1;
 
-}((this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}),BX.Vue3,BX.Crm.Integration.Analytics,BX.UI.Analytics,BX.UI.BBCode,BX.UI,BX,BX.UI,BX.UI,BX.UI.TextEditor,BX.UI,BX,BX.Event,BX.UI.EntitySelector));
+}((this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}),BX.Vue3,BX.Crm.Integration.Analytics,BX.UI.Analytics,BX.UI.BBCode,BX.UI,BX,BX.UI,BX.Crm.AI,BX.UI,BX.UI.TextEditor,BX.UI,BX,BX.Event,BX.UI.EntitySelector));
 //# sourceMappingURL=segment.bundle.js.map

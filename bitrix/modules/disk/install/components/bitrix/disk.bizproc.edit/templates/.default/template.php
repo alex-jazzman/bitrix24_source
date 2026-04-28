@@ -63,8 +63,8 @@ $menu[] = [
 $menu[] = array("SEPARATOR"=>"Y");
 
 $menu[] = array(
-	"TEXT"=>(($arParams["BIZPROC_EDIT_MENU_LIST_MESSAGE"] <> '') ? htmlspecialcharsbx($arParams["BIZPROC_EDIT_MENU_LIST_MESSAGE"]) : Loc::getMessage("BIZPROC_WFEDIT_MENU_LIST")),
-	"TITLE"=>(($arParams["BIZPROC_EDIT_MENU_LIST_TITLE_MESSAGE"] <> '') ? htmlspecialcharsbx($arParams["BIZPROC_EDIT_MENU_LIST_TITLE_MESSAGE"]) : GetMessage("BIZPROC_WFEDIT_MENU_LIST_TITLE")),
+	"TEXT"=>((($arParams['BIZPROC_EDIT_MENU_LIST_MESSAGE'] ?? '') !== '') ? htmlspecialcharsbx($arParams["BIZPROC_EDIT_MENU_LIST_MESSAGE"]) : Loc::getMessage("BIZPROC_WFEDIT_MENU_LIST")),
+	"TITLE"=>((($arParams['BIZPROC_EDIT_MENU_LIST_TITLE_MESSAGE'] ?? '') !== '') ? htmlspecialcharsbx($arParams["BIZPROC_EDIT_MENU_LIST_TITLE_MESSAGE"]) : GetMessage("BIZPROC_WFEDIT_MENU_LIST_TITLE")),
 	"LINK"=>$arResult['LIST_PAGE_URL'],
 	"ICON"=>"btn_list",
 );

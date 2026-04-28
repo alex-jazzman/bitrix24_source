@@ -21,6 +21,7 @@ jn.define('im/messenger/const/messenger-init-rest', (require, exports, module) =
 		channelList: 'channelList',
 		collabList: 'collabList',
 		taskList: 'taskList',
+		openlinesList: 'openlinesList',
 	});
 
 	module.exports = {

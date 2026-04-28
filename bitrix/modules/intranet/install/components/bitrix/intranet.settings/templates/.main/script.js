@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_analytics,ui_draganddrop_draggable,ui_switcherNested,ui_iconSet_crm,ui_uploader_stackWidget,ui_ears,intranet_themePicker_dialog,ui_iconSet_social,ui_alerts,ui_form,ui_forms,ui_iconSet_actions,ui_iconSet_main,ui_formElements_view,ui_switcher,intranet_notifyBanner_pushOtp,ui_buttons,ui_icon_set,ui_section,sidepanel,ui_dialogs_messagebox,ui_formElements_field,main_core_events,main_popup,main_loader,main_core) {
+(function (exports,ui_analytics,ui_draganddrop_draggable,ui_switcherNested,ui_iconSet_crm,ui_uploader_stackWidget,ui_ears,intranet_themePicker_dialog,ui_iconSet_social,ui_alerts,ui_form,ui_forms,ui_iconSet_actions,ui_iconSet_main,ui_section,ui_formElements_view,ui_switcher,intranet_notifyBanner_pushOtp,ui_buttons,ui_dialogs_messagebox,ui_formElements_field,main_core_events,main_popup,main_loader,main_core) {
 	'use strict';
 
 	var _eventList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("eventList");
@@ -21,6 +21,9 @@ this.BX = this.BX || {};
 	      value: null
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _context)[_context] = context;
+	  }
+	  getContext() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _context)[_context];
 	  }
 	  addEvent(eventType, eventData) {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _context)[_context].isBitrix24) {
@@ -1765,10 +1768,6 @@ this.BX = this.BX || {};
 	    let allowUrlPreviewField = new ui_formElements_view.Checker(this.getValue('url_preview_enable'));
 	    CommunicationPage.addToSectionHelper(allowUrlPreviewField, settingsSection);
 	  }
-	  if (this.hasValue('create_overdue_chats')) {
-	    let overdueChatsField = new ui_formElements_view.Checker(this.getValue('create_overdue_chats'));
-	    CommunicationPage.addToSectionHelper(overdueChatsField, settingsSection);
-	  }
 	  return settingsSection;
 	}
 	function _buildChannelSection2() {
@@ -1853,6 +1852,20 @@ this.BX = this.BX || {};
 	  if (this.hasValue('DISK_VIEWER_SERVICE')) {
 	    let fileViewerField = new ui_formElements_view.Selector(this.getValue('DISK_VIEWER_SERVICE'));
 	    CommunicationPage.addToSectionHelper(fileViewerField, settingsSection);
+	    const viewerChangeAlert = new ui_alerts.Alert({
+	      text: main_core.Loc.getMessage('INTRANET_SETTINGS_DISK_VIEWER_SERVICE_CHANGE_WARNING'),
+	      inline: true,
+	      size: BX.UI.Alert.Size.SMALL,
+	      color: BX.UI.Alert.Color.WARNING,
+	      animated: true
+	    });
+	    const viewerChangeAlertRow = new ui_section.Row({
+	      content: viewerChangeAlert.getContainer()
+	    });
+	    new ui_formElements_field.SettingsRow({
+	      row: viewerChangeAlertRow,
+	      parent: settingsSection
+	    });
 	  }
 	  if (this.hasValue('DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL')) {
 	    let unifiedLinkDefaultAccessLevelSelector = new ui_formElements_view.Selector(this.getValue('DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL'));
@@ -2775,6 +2788,18 @@ this.BX = this.BX || {};
 	      var _this$getAnalytic3, _baseEvent$data;
 	      (_this$getAnalytic3 = this.getAnalytic()) == null ? void 0 : _this$getAnalytic3.addEventChangeTheme((_baseEvent$data = baseEvent.data) == null ? void 0 : _baseEvent$data.id);
 	    });
+	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'onPullEvent-bitrix24', baseEvent => {
+	      if (baseEvent.data[0] === 'domain_change') {
+	        var _window$parent;
+	        const {
+	          domain
+	        } = baseEvent.data[1];
+	        const newUri = new main_core.Uri(window.location.href);
+	        newUri.setHost(domain);
+	        const currentWindow = (_window$parent = window.parent) != null ? _window$parent : window;
+	        currentWindow.location.href = newUri;
+	      }
+	    });
 	  }
 	  getType() {
 	    return 'portal';
@@ -3560,6 +3585,9 @@ this.BX = this.BX || {};
 	      });
 	      settingsSection.renderTo(contentNode);
 	    }
+	    if (BX.UI.Hint) {
+	      BX.UI.Hint.init(contentNode);
+	    }
 	  }
 	}
 	function _buildDateTimeSection2() {
@@ -3845,27 +3873,28 @@ this.BX = this.BX || {};
 	    parent: this
 	  });
 	  if (this.hasValue('biconnectorDashboardLanguage')) {
-	    const alert = new BX.UI.Alert({
-	      text: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_LANGUAGE_HINT'),
-	      inline: true,
-	      size: BX.UI.Alert.Size.SMALL,
-	      color: BX.UI.Alert.Color.PRIMARY,
-	      animated: true
-	    });
-	    const alertRow = new ui_section.Row({
-	      content: alert.getContainer(),
-	      className: '--block'
-	    });
-	    const biconnectorLanguage = new ui_formElements_view.Selector(this.getValue('biconnectorDashboardLanguage'));
+	    const biconnectorLanguageOptions = this.getValue('biconnectorDashboardLanguage');
+	    const hintMessage = main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_LANGUAGE_HINT_MSGVER_1');
+	    if (hintMessage) {
+	      biconnectorLanguageOptions.label += ` <span data-hint="${hintMessage}" class="intranet-settings__ui-hint"></span>`;
+	    }
+	    const biconnectorLanguage = new ui_formElements_view.Selector(biconnectorLanguageOptions);
 	    const biconnectorLanguageRow = new ui_section.Row({
-	      separator: 'bottom',
 	      className: '--block'
-	    });
-	    new ui_formElements_field.SettingsRow({
-	      row: alertRow,
-	      parent: settingsSection
 	    });
 	    ConfigurationPage.addToSectionHelper(biconnectorLanguage, settingsSection, biconnectorLanguageRow);
+	  }
+	  if (this.hasValue('biconnectorDashboardTimezone')) {
+	    const biconnectorDashboardTimezoneOptions = this.getValue('biconnectorDashboardTimezone');
+	    const hintMessage = main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_TIMEZONE_HINT');
+	    if (hintMessage) {
+	      biconnectorDashboardTimezoneOptions.label += ` <span data-hint="${hintMessage}" class="intranet-settings__ui-hint"></span>`;
+	    }
+	    const biconnectorTimezone = new ui_formElements_view.Selector(biconnectorDashboardTimezoneOptions);
+	    const biconnectorTimezoneRow = new ui_section.Row({
+	      className: '--block'
+	    });
+	    ConfigurationPage.addToSectionHelper(biconnectorTimezone, settingsSection, biconnectorTimezoneRow);
 	  }
 	  return settingsSection;
 	}
@@ -4306,9 +4335,7 @@ this.BX = this.BX || {};
 	  _t4$1,
 	  _t5,
 	  _t6,
-	  _t7,
-	  _t8,
-	  _t9;
+	  _t7;
 	var _otpChecker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("otpChecker");
 	var _otpSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("otpSelector");
 	var _otpPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("otpPopup");
@@ -4566,43 +4593,40 @@ this.BX = this.BX || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _otpChecker)[_otpChecker];
 	}
 	function _getOTPPopup2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _otpPopup)[_otpPopup] instanceof main_popup.Popup) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _otpPopup)[_otpPopup] instanceof ui_dialogs_messagebox.MessageBox) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _otpPopup)[_otpPopup];
 	  }
-	  const popupDescription = main_core.Tag.render(_t3$8 || (_t3$8 = _$m`
-			<div class="intranet-settings__security_popup_info">
-				${0}
-			</div>	
-		`), main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE'));
-	  const popupButton = new BX.UI.Button({
-	    text: main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_BUTTON'),
-	    color: BX.UI.Button.Color.PRIMARY,
-	    events: {
-	      click: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _getOTPPopup)[_getOTPPopup]().close();
-	        BX.SidePanel.Instance.open(this.getValue('SECURITY_OTP_PATH'));
-	      }
-	    }
-	  });
-	  const popupContent = main_core.Tag.render(_t4$1 || (_t4$1 = _$m`
-			<div class="intranet-settings__security_popup_container">
-				${0}
-				<div class="ui-btn-container ui-btn-container-center">
-					${0}
-				</div>			
-			</div>
-		`), popupDescription, popupButton.getContainer());
-	  babelHelpers.classPrivateFieldLooseBase(this, _otpPopup)[_otpPopup] = new main_popup.Popup({
-	    bindElement: babelHelpers.classPrivateFieldLooseBase(this, _otpChecker)[_otpChecker].getInputNode(),
-	    content: popupContent,
-	    autoHide: true,
-	    width: 337,
-	    angle: {
-	      offset: 200 - 15
+	  babelHelpers.classPrivateFieldLooseBase(this, _otpPopup)[_otpPopup] = ui_dialogs_messagebox.MessageBox.create({
+	    popupOptions: {
+	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _otpChecker)[_otpChecker].getInputNode(),
+	      closeByEsc: true,
+	      autoHide: true,
+	      overlay: false,
+	      angle: {
+	        offset: 200 - 15
+	      },
+	      offsetLeft: babelHelpers.classPrivateFieldLooseBase(this, _otpChecker)[_otpChecker].getInputNode().offsetWidth - 200 + 15
 	    },
-	    offsetLeft: babelHelpers.classPrivateFieldLooseBase(this, _otpChecker)[_otpChecker].getInputNode().offsetWidth - 200 + 15,
-	    closeByEsc: true,
-	    borderRadius: 18
+	    message: main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_MSGVER_1'),
+	    modal: true,
+	    useAirDesign: true,
+	    buttons: [new ui_buttons.Button({
+	      text: main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_BUTTON_MSGVER_1'),
+	      style: ui_buttons.AirButtonStyle.FILLED,
+	      useAirDesign: true,
+	      events: {
+	        click: () => {
+	          babelHelpers.classPrivateFieldLooseBase(this, _getOTPPopup)[_getOTPPopup]().close();
+	          BX.SidePanel.Instance.open(this.getValue('SECURITY_OTP_PATH'));
+	        }
+	      }
+	    }), new ui_buttons.CloseButton({
+	      useAirDesign: true,
+	      style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT,
+	      onclick: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _otpPopup)[_otpPopup].close();
+	      }
+	    })]
 	  });
 	  return babelHelpers.classPrivateFieldLooseBase(this, _otpPopup)[_otpPopup];
 	}
@@ -4734,7 +4758,7 @@ this.BX = this.BX || {};
 	      BX.UI.InfoHelper.show('limit_admin_ip');
 	    }
 	  };
-	  const additionalUsersAccessIpButton = main_core.Tag.render(_t5 || (_t5 = _$m`
+	  const additionalUsersAccessIpButton = main_core.Tag.render(_t3$8 || (_t3$8 = _$m`
 			<div class="ui-text-right">
 				<a class="ui-section__link" href="javascript:void(0)" onclick="${0}">
 					${0}
@@ -4856,7 +4880,7 @@ this.BX = this.BX || {};
 	    parent: settingsSection
 	  });
 	  if (this.hasValue('DEVICE_HISTORY_SETTINGS')) {
-	    const messageNode = main_core.Tag.render(_t6 || (_t6 = _$m`<span>${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_ENT', {
+	    const messageNode = main_core.Tag.render(_t4$1 || (_t4$1 = _$m`<span>${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_ENT', {
 	      '#TARIFF#': 'ent250'
 	    }));
 	    const cleanupDaysField = new ui_formElements_view.Selector({
@@ -4880,7 +4904,7 @@ this.BX = this.BX || {};
 	    }
 	    SecurityPage.addToSectionHelper(cleanupDaysField, settingsSection);
 	  }
-	  const goToUserListButton = main_core.Tag.render(_t7 || (_t7 = _$m`
+	  const goToUserListButton = main_core.Tag.render(_t5 || (_t5 = _$m`
 			<div class="ui-text-right">
 				<a class="ui-section__link" href="/company/" target="_blank">
 					${0}
@@ -4923,13 +4947,13 @@ this.BX = this.BX || {};
 	    row: descriptionRow,
 	    parent: settingsSection
 	  });
-	  const goToUserListButton = this.hasValue('EVENT_LOG') ? main_core.Tag.render(_t8 || (_t8 = _$m`
+	  const goToUserListButton = this.hasValue('EVENT_LOG') ? main_core.Tag.render(_t6 || (_t6 = _$m`
 				<div class="ui-text-right">
 					<a class="ui-section__link" href="${0}" target="_blank">
 						${0}
 					</a>
 				</div>
-			`), this.getValue('EVENT_LOG'), main_core.Loc.getMessage('INTRANET_SETTINGS_GO_TO_EVENT_LOG_LINK')) : main_core.Tag.render(_t9 || (_t9 = _$m`
+			`), this.getValue('EVENT_LOG'), main_core.Loc.getMessage('INTRANET_SETTINGS_GO_TO_EVENT_LOG_LINK')) : main_core.Tag.render(_t7 || (_t7 = _$m`
 				<div class="ui-text-right">
 					<a class="ui-section__link" href="javascript:void(0)" onclick="BX.UI.InfoHelper.show('limit_office_login_log')">
 						${0}
@@ -4988,836 +5012,6 @@ this.BX = this.BX || {};
 	    SecurityPage.addToSectionHelper(allowAutoDeleteField, settingsSection);
 	  }
 	  return settingsSection;
-	}
-
-	let _$n = t => t,
-	  _t$n,
-	  _t2$c,
-	  _t3$9,
-	  _t4$2,
-	  _t5$1,
-	  _t6$1,
-	  _t7$1,
-	  _t8$1,
-	  _t9$1,
-	  _t10,
-	  _t11,
-	  _t12,
-	  _t13,
-	  _t14,
-	  _t15,
-	  _t16,
-	  _t17,
-	  _t18,
-	  _t19,
-	  _t20,
-	  _t21,
-	  _t22;
-	var _urlCreate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("urlCreate");
-	var _urlEdit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("urlEdit");
-	var _urlPublic = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("urlPublic");
-	var _urlPartners = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("urlPartners");
-	var _urlImport = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("urlImport");
-	var _urlExport = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("urlExport");
-	var _previewImg = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previewImg");
-	var _title$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("title");
-	var _feedbackParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("feedbackParams");
-	var _buttonEdit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonEdit");
-	var _buttonPartners = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonPartners");
-	var _buttonMarket = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonMarket");
-	var _buttonWithdraw = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonWithdraw");
-	var _buttonPublish = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonPublish");
-	var _mainTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mainTemplate");
-	var _secondaryTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("secondaryTemplate");
-	var _buttonMainSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonMainSettings");
-	var _buttonSecondarySettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonSecondarySettings");
-	var _importPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("importPopup");
-	var _exportPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("exportPopup");
-	var _popupShare = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popupShare");
-	var _popupWithdraw = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popupWithdraw");
-	var _isPageExists = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPageExists");
-	var _isPublished = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPublished");
-	var _canEdit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canEdit");
-	var _getMainTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMainTemplate");
-	var _getSecondaryTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSecondaryTemplate");
-	var _getButtonMainSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonMainSettings");
-	var _getButtonSecondarySettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonSecondarySettings");
-	var _showImportPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showImportPopup");
-	var _showExportPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showExportPopup");
-	var _showImportSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showImportSlider");
-	var _showExportSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showExportSlider");
-	var _showSharePopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSharePopup");
-	var _showWithdrawPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWithdrawPopup");
-	var _getButtonEdit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonEdit");
-	var _getButtonPublish = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonPublish");
-	var _getButtonWithdraw = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonWithdraw");
-	var _getButtonPartners = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonPartners");
-	var _getButtonCreate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonCreate");
-	var _bindButtonEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindButtonEvents");
-	var _bindSliderCloseEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindSliderCloseEvent");
-	class MainpagePage extends ui_formElements_field.BaseSettingsPage {
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _bindSliderCloseEvent, {
-	      value: _bindSliderCloseEvent2
-	    });
-	    Object.defineProperty(this, _bindButtonEvents, {
-	      value: _bindButtonEvents2
-	    });
-	    Object.defineProperty(this, _getButtonCreate, {
-	      value: _getButtonCreate2
-	    });
-	    Object.defineProperty(this, _getButtonPartners, {
-	      value: _getButtonPartners2
-	    });
-	    Object.defineProperty(this, _getButtonWithdraw, {
-	      value: _getButtonWithdraw2
-	    });
-	    Object.defineProperty(this, _getButtonPublish, {
-	      value: _getButtonPublish2
-	    });
-	    Object.defineProperty(this, _getButtonEdit, {
-	      value: _getButtonEdit2
-	    });
-	    Object.defineProperty(this, _showWithdrawPopup, {
-	      value: _showWithdrawPopup2
-	    });
-	    Object.defineProperty(this, _showSharePopup, {
-	      value: _showSharePopup2
-	    });
-	    Object.defineProperty(this, _showExportSlider, {
-	      value: _showExportSlider2
-	    });
-	    Object.defineProperty(this, _showImportSlider, {
-	      value: _showImportSlider2
-	    });
-	    Object.defineProperty(this, _showExportPopup, {
-	      value: _showExportPopup2
-	    });
-	    Object.defineProperty(this, _showImportPopup, {
-	      value: _showImportPopup2
-	    });
-	    Object.defineProperty(this, _getButtonSecondarySettings, {
-	      value: _getButtonSecondarySettings2
-	    });
-	    Object.defineProperty(this, _getButtonMainSettings, {
-	      value: _getButtonMainSettings2
-	    });
-	    Object.defineProperty(this, _getSecondaryTemplate, {
-	      value: _getSecondaryTemplate2
-	    });
-	    Object.defineProperty(this, _getMainTemplate, {
-	      value: _getMainTemplate2
-	    });
-	    this.titlePage = '';
-	    this.descriptionPage = '';
-	    Object.defineProperty(this, _urlCreate, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _urlEdit, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _urlPublic, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _urlPartners, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _urlImport, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _urlExport, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _previewImg, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _title$2, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _feedbackParams, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _buttonEdit, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _buttonPartners, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _buttonMarket, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _buttonWithdraw, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _buttonPublish, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _mainTemplate, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _secondaryTemplate, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _buttonMainSettings, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _buttonSecondarySettings, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _importPopup, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _exportPopup, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _popupShare, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _popupWithdraw, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _isPageExists, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _isPublished, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _canEdit, {
-	      writable: true,
-	      value: true
-	    });
-	    this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_MAINPAGE');
-	    this.descriptionPage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_DESCRIPTION_PAGE_MAINPAGE');
-	  }
-	  getType() {
-	    return 'mainpage';
-	  }
-	  appendSections(contentNode) {
-	    var _options$isPageExists, _options$isPublished, _options$title, _options$canEdit;
-	    const options = this.getValue('main-page');
-	    babelHelpers.classPrivateFieldLooseBase(this, _urlCreate)[_urlCreate] = options.urlCreate || null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _urlEdit)[_urlEdit] = options.urlEdit || null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _urlPublic)[_urlPublic] = options.urlPublic || null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _urlPartners)[_urlPartners] = options.urlPartners || null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _urlImport)[_urlImport] = options.urlImport || null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _urlExport)[_urlExport] = options.urlExport || null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _previewImg)[_previewImg] = options.previewImg || null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _feedbackParams)[_feedbackParams] = options.feedbackParams || null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isPageExists)[_isPageExists] = (_options$isPageExists = options.isPageExists) != null ? _options$isPageExists : false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isPublished)[_isPublished] = (_options$isPublished = options.isPublished) != null ? _options$isPublished : false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _title$2)[_title$2] = (_options$title = options.title) != null ? _options$title : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] = (_options$canEdit = options.canEdit) != null ? _options$canEdit : false;
-	    const section = new ui_formElements_field.SettingsSection({
-	      parent: this,
-	      section: {
-	        canCollapse: false,
-	        isOpen: true
-	      }
-	    });
-	    const secondarySection = new ui_formElements_field.SettingsSection({
-	      parent: this,
-	      section: {
-	        canCollapse: false,
-	        isOpen: true
-	      }
-	    });
-	    const content = main_core.Tag.render(_t$n || (_t$n = _$n`<div>		
-			${0}		
-		</div>`), babelHelpers.classPrivateFieldLooseBase(this, _getMainTemplate)[_getMainTemplate]());
-	    section.getSectionView().append(new ui_section.Row({
-	      content: content
-	    }).render());
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isPageExists)[_isPageExists]) {
-	      const secondaryContent = main_core.Tag.render(_t2$c || (_t2$c = _$n`<div>
-				${0}			
-			</div>`), babelHelpers.classPrivateFieldLooseBase(this, _getSecondaryTemplate)[_getSecondaryTemplate]());
-	      secondarySection.getSectionView().append(new ui_section.Row({
-	        content: secondaryContent
-	      }).render());
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindButtonEvents)[_bindButtonEvents]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindSliderCloseEvent)[_bindSliderCloseEvent]();
-	    secondarySection.renderTo(contentNode);
-	    section.renderTo(contentNode);
-	  }
-	  getInfoTemplate() {
-	    this.infoTemplate = main_core.Tag.render(_t3$9 || (_t3$9 = _$n`
-			<div class="intranet-settings__main-page-info">
-				<div class="intranet-settings__main-page-info-title">
-					${0}
-				</div>
-				<div class="intranet-settings__main-page-info-subtitle">
-					${0}
-					<div class="ui-icon-set --help intranet-settings__main-page-info-help"></div>
-				</div>
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_INFO_TITLE'), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_INFO_SUBTITLE'));
-	    main_core.Event.bind(this.infoTemplate.querySelector('.intranet-settings__main-page-info-help'), 'mouseenter', event => {
-	      const width = this.infoTemplate.querySelector('.intranet-settings__main-page-info-help').offsetWidth;
-	      this.warningHintPopup = new main_popup.Popup({
-	        angle: true,
-	        autoHide: true,
-	        content: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_HINT_WARNING'),
-	        cacheable: false,
-	        animation: 'fading-slide',
-	        bindElement: event.target,
-	        offsetTop: 0,
-	        offsetLeft: parseInt(width / 2),
-	        bindOptions: {
-	          position: 'top'
-	        },
-	        darkMode: true
-	      });
-	      this.warningHintPopup.show();
-	    });
-	    main_core.Event.bind(this.infoTemplate.querySelector('.intranet-settings__main-page-info-help'), 'mouseleave', () => {
-	      if (this.warningHintPopup) {
-	        setTimeout(() => {
-	          this.warningHintPopup.destroy();
-	          this.warningHintPopup = null;
-	        }, 300);
-	      }
-	    });
-	    return this.infoTemplate;
-	  }
-	  getInfoSuccessTemplate() {
-	    this.infoSuccessTemplate = main_core.Tag.render(_t4$2 || (_t4$2 = _$n`
-			<div class="intranet-settings__main-page-info --success">
-				<div class="intranet-settings__main-page-info-title">
-					${0}				
-				</div>
-				<div class="intranet-settings__main-page-info-subtitle">
-					${0}
-					<div class="ui-icon-set --help intranet-settings__main-page-info-help"></div>
-				</div>
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_INFO_SUCCESS_TITLE'), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_INFO_SUCCESS_SUBTITLE'));
-	    main_core.Event.bind(this.infoSuccessTemplate.querySelector('.intranet-settings__main-page-info-help'), 'mouseenter', event => {
-	      const width = this.infoSuccessTemplate.querySelector('.intranet-settings__main-page-info-help').offsetWidth;
-	      this.successHintPopup = new main_popup.Popup({
-	        angle: true,
-	        autoHide: true,
-	        content: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_HINT_SUCCESS'),
-	        cacheable: false,
-	        animation: 'fading-slide',
-	        bindElement: event.target,
-	        offsetTop: 0,
-	        offsetLeft: parseInt(width / 2),
-	        bindOptions: {
-	          position: 'top'
-	        },
-	        darkMode: true
-	      });
-	      this.successHintPopup.show();
-	    });
-	    main_core.Event.bind(this.infoSuccessTemplate.querySelector('.intranet-settings__main-page-info-help'), 'mouseleave', () => {
-	      if (this.successHintPopup) {
-	        setTimeout(() => {
-	          this.successHintPopup.destroy();
-	          this.successHintPopup = null;
-	        }, 300);
-	      }
-	    });
-	    return this.infoSuccessTemplate;
-	  }
-	  renderLockElement() {
-	    return main_core.Tag.render(_t5$1 || (_t5$1 = _$n`<span class="intranet-settings-mp-icon ui-icon-set --lock"></span>`));
-	  }
-	}
-	function _getMainTemplate2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _mainTemplate)[_mainTemplate]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _mainTemplate)[_mainTemplate] = main_core.Tag.render(_t6$1 || (_t6$1 = _$n`
-				<div class="intranet-settings__main-page-template">
-					<div class="intranet-settings__main-page-icon-box">
-						<div class="intranet-settings__main-page-icon"></div>
-					</div>
-					<div class="intranet-settings__main-page-content">
-						<ul class="intranet-settings__main-page-list">
-							<li class="intranet-settings__main-page-list-item">
-								<div class="ui-icon-set --check intranet-settings__main-page-list-icon"></div>
-								<div class="intranet-settings__main-page-list-name">
-									${0}
-								</div>																																
-							</li>
-							<li class="intranet-settings__main-page-list-item">
-								<div class="ui-icon-set --check intranet-settings__main-page-list-icon"></div>
-								<div class="intranet-settings__main-page-list-name">
-									${0}
-								</div>								
-							</li>
-							<li class="intranet-settings__main-page-list-item">
-								<div class="ui-icon-set --check intranet-settings__main-page-list-icon"></div>
-								<div class="intranet-settings__main-page-list-name">
-									${0}
-								</div>
-							</li>
-						</ul>
-						<div class="intranet-settings__main-page-button-box">
-							${0}
-							<div class="intranet-settings__main-page-button-box-right">
-								${0}
-								${0}
-							</div>
-						</div>
-					</div>
-				</div>
-			`), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_LIST_ITEM_1'), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_LIST_ITEM_2'), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_LIST_ITEM_3'), babelHelpers.classPrivateFieldLooseBase(this, _getButtonCreate)[_getButtonCreate](), babelHelpers.classPrivateFieldLooseBase(this, _getButtonPartners)[_getButtonPartners](), babelHelpers.classPrivateFieldLooseBase(this, _getButtonMainSettings)[_getButtonMainSettings]());
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _mainTemplate)[_mainTemplate];
-	}
-	function _getSecondaryTemplate2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _secondaryTemplate)[_secondaryTemplate]) {
-	    var _babelHelpers$classPr;
-	    const previewImg = babelHelpers.classPrivateFieldLooseBase(this, _previewImg)[_previewImg] ? main_core.Tag.render(_t7$1 || (_t7$1 = _$n`<img 
-						src="${0}"
-						class="intranet-settings__main-page-preview" 
-					/>`), babelHelpers.classPrivateFieldLooseBase(this, _previewImg)[_previewImg]) : '';
-	    babelHelpers.classPrivateFieldLooseBase(this, _secondaryTemplate)[_secondaryTemplate] = main_core.Tag.render(_t8$1 || (_t8$1 = _$n`
-				<div class="intranet-settings__main-page-template --secondary-template">
-					<div class="intranet-settings__main-page-preview-box">
-						${0}
-					</div>
-					<div class="intranet-settings__main-page-content">
-						<div class="intranet-settings__main-page-title">
-							${0}
-						</div>
-						<div class="intranet-settings__main-page-info-template">
-							${0}
-						</div>					
-						<div class="intranet-settings__main-page-button-box">
-							${0}
-							<div class="intranet-settings__main-page-button-box-right">
-								${0}
-								${0}
-							</div>
-						</div>
-					</div>
-				</div>			
-			`), previewImg, (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _title$2)[_title$2]) != null ? _babelHelpers$classPr : '', babelHelpers.classPrivateFieldLooseBase(this, _isPublished)[_isPublished] ? this.getInfoSuccessTemplate() : this.getInfoTemplate(), babelHelpers.classPrivateFieldLooseBase(this, _getButtonEdit)[_getButtonEdit](), babelHelpers.classPrivateFieldLooseBase(this, _isPublished)[_isPublished] ? babelHelpers.classPrivateFieldLooseBase(this, _getButtonWithdraw)[_getButtonWithdraw]() : babelHelpers.classPrivateFieldLooseBase(this, _getButtonPublish)[_getButtonPublish](), babelHelpers.classPrivateFieldLooseBase(this, _getButtonSecondarySettings)[_getButtonSecondarySettings]());
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _secondaryTemplate)[_secondaryTemplate];
-	}
-	function _getButtonMainSettings2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonMainSettings)[_buttonMainSettings]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonMainSettings)[_buttonMainSettings] = main_core.Tag.render(_t9$1 || (_t9$1 = _$n`
-				<button class="intranet-settings-btn-settings">
-					<div class="ui-icon-set --more"></div>
-				</button>
-			`));
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _buttonMainSettings)[_buttonMainSettings];
-	}
-	function _getButtonSecondarySettings2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonSecondarySettings)[_buttonSecondarySettings]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonSecondarySettings)[_buttonSecondarySettings] = main_core.Tag.render(_t10 || (_t10 = _$n`
-			<button class="intranet-settings-btn-settings">
-				<div class="ui-icon-set --more"></div>
-			</button>`));
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _buttonSecondarySettings)[_buttonSecondarySettings];
-	}
-	function _showImportPopup2() {
-	  var _babelHelpers$classPr2;
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _importPopup)[_importPopup]) {
-	    const htmlContent = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? main_core.Tag.render(_t11 || (_t11 = _$n`<span>${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_IMPORT_POPUP')) : main_core.Tag.render(_t12 || (_t12 = _$n`<span class="intranet-settings-mp-popup-item">${0} ${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_IMPORT_POPUP'), this.renderLockElement());
-	    babelHelpers.classPrivateFieldLooseBase(this, _importPopup)[_importPopup] = new main_popup.Menu({
-	      angle: true,
-	      animation: 'fading-slide',
-	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _buttonMainSettings)[_buttonMainSettings],
-	      className: babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? '' : '--disabled',
-	      items: [{
-	        id: 'importPopup',
-	        html: htmlContent,
-	        onclick: babelHelpers.classPrivateFieldLooseBase(this, _showImportSlider)[_showImportSlider].bind(this)
-	      }],
-	      offsetLeft: 20,
-	      events: {
-	        onPopupClose: () => {},
-	        onPopupShow: () => {}
-	      }
-	    });
-	  }
-	  (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _importPopup)[_importPopup]) == null ? void 0 : _babelHelpers$classPr2.show();
-	}
-	function _showExportPopup2() {
-	  var _babelHelpers$classPr3;
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _exportPopup)[_exportPopup]) {
-	    const htmlContent = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? main_core.Tag.render(_t13 || (_t13 = _$n`<span>${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_EXPORT_POPUP')) : main_core.Tag.render(_t14 || (_t14 = _$n`<span class="intranet-settings-mp-popup-item --disabled">${0} ${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_EXPORT_POPUP'), this.renderLockElement());
-	    babelHelpers.classPrivateFieldLooseBase(this, _exportPopup)[_exportPopup] = new main_popup.Menu({
-	      angle: true,
-	      animation: 'fading-slide',
-	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _buttonSecondarySettings)[_buttonSecondarySettings],
-	      className: babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? '' : '--disabled',
-	      items: [{
-	        id: 'exportPopup',
-	        html: htmlContent,
-	        onclick: babelHelpers.classPrivateFieldLooseBase(this, _showExportSlider)[_showExportSlider].bind(this)
-	      }],
-	      offsetLeft: 20,
-	      events: {
-	        onPopupClose: () => {},
-	        onPopupShow: () => {}
-	      }
-	    });
-	  }
-	  (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _exportPopup)[_exportPopup]) == null ? void 0 : _babelHelpers$classPr3.show();
-	}
-	function _showImportSlider2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit]) {
-	    BX.UI.InfoHelper.show("limit_office_vibe");
-	    return;
-	  }
-	  if (typeof BX.SidePanel === 'undefined') {
-	    return;
-	  }
-	  if (typeof BX.SidePanel !== 'undefined' && babelHelpers.classPrivateFieldLooseBase(this, _urlImport)[_urlImport]) {
-	    const onOK = () => {
-	      BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _urlImport)[_urlImport], {
-	        width: 491,
-	        allowChangeHistory: false,
-	        cacheable: false,
-	        data: {
-	          rightBoundary: 0
-	        }
-	      });
-	    };
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isPageExists)[_isPageExists]) {
-	      onOK();
-	      return;
-	    }
-	    BX.Runtime.loadExtension('ui.dialogs.messagebox').then(() => {
-	      const messageBox = new BX.UI.Dialogs.MessageBox({
-	        message: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_IMPORT_POPUP_MESSAGEBOX_MESSAGE'),
-	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_IMPORT_POPUP_MESSAGEBOX_TITLE'),
-	        buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
-	        okCaption: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_IMPORT_POPUP_MESSAGEBOX_OK_BUTTON'),
-	        cancelCaption: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_IMPORT_POPUP_MESSAGEBOX_CANCEL_BUTTON'),
-	        onOk: () => {
-	          onOK();
-	          return true;
-	        },
-	        onCancel: () => {
-	          return true;
-	        }
-	      });
-	      messageBox.show();
-	      if (messageBox.popupWindow && messageBox.popupWindow.popupContainer) {
-	        messageBox.popupWindow.popupContainer.classList.add('intranet-settings__main-page-popup');
-	      }
-	    });
-	  }
-	}
-	function _showExportSlider2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit]) {
-	    BX.UI.InfoHelper.show("limit_office_vibe");
-	    return;
-	  }
-	  if (typeof BX.SidePanel === 'undefined') {
-	    return;
-	  }
-	  if (typeof BX.SidePanel !== 'undefined' && babelHelpers.classPrivateFieldLooseBase(this, _urlExport)[_urlExport]) {
-	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _urlExport)[_urlExport], {
-	      width: 491,
-	      allowChangeHistory: false,
-	      cacheable: false,
-	      data: {
-	        rightBoundary: 0
-	      }
-	    });
-	  }
-	}
-	function _showSharePopup2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _popupShare)[_popupShare]) {
-	    var _babelHelpers$classPr4;
-	    babelHelpers.classPrivateFieldLooseBase(this, _popupShare)[_popupShare] = new main_popup.Popup({
-	      titleBar: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_TITLE_MSGVER_1'),
-	      content: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_CONTENT'),
-	      width: 350,
-	      closeIcon: true,
-	      closeByEsc: true,
-	      animation: 'fading-slide',
-	      buttons: [new ui_buttons.Button({
-	        text: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_BTN_CONFIRM'),
-	        color: ui_buttons.Button.Color.PRIMARY,
-	        onclick: () => {
-	          const newTemplate = this.getInfoSuccessTemplate();
-	          const wrapper = babelHelpers.classPrivateFieldLooseBase(this, _secondaryTemplate)[_secondaryTemplate].querySelector('.intranet-settings__main-page-info-template');
-	          const innerWrapper = wrapper.querySelector('.intranet-settings__main-page-info:not(.--success)');
-	          main_core.Dom.replace(innerWrapper, newTemplate);
-	          main_core.ajax.runAction('intranet.mainpage.publish').then(() => {
-	            this.emit('publish');
-	            if (babelHelpers.classPrivateFieldLooseBase(this, _urlPublic)[_urlPublic]) {
-	              babelHelpers.classPrivateFieldLooseBase(this, _isPublished)[_isPublished] = true;
-	            }
-	          });
-	          babelHelpers.classPrivateFieldLooseBase(this, _popupShare)[_popupShare].close();
-	          BX.UI.Analytics.sendData({
-	            tool: 'vibe',
-	            category: 'vibe',
-	            event: 'publish_page',
-	            c_sub_section: 'from_settings',
-	            status: 'success'
-	          });
-	        }
-	      }), new ui_buttons.Button({
-	        text: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_POPUP_BTN_CANCEL'),
-	        color: ui_buttons.Button.Color.LIGHT_BORDER,
-	        onclick: () => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _popupShare)[_popupShare].close();
-	        }
-	      })],
-	      events: {
-	        onClose: () => {}
-	      }
-	    });
-	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _popupShare)[_popupShare]) == null ? void 0 : _babelHelpers$classPr4.show();
-	  } else {
-	    var _babelHelpers$classPr5;
-	    (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _popupShare)[_popupShare]) == null ? void 0 : _babelHelpers$classPr5.show();
-	  }
-	}
-	function _showWithdrawPopup2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _popupWithdraw)[_popupWithdraw]) {
-	    var _babelHelpers$classPr6;
-	    const title = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_TITLE') : main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_TITLE_FREE');
-	    const content = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_CONTENT') : main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_CONTENT_FREE');
-	    const okText = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM') : main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM_FREE');
-	    babelHelpers.classPrivateFieldLooseBase(this, _popupWithdraw)[_popupWithdraw] = new main_popup.Popup({
-	      titleBar: title,
-	      content: content,
-	      width: 350,
-	      closeIcon: true,
-	      closeByEsc: true,
-	      animation: 'fading-slide',
-	      buttons: [new ui_buttons.Button({
-	        text: okText,
-	        color: ui_buttons.Button.Color.DANGER_DARK,
-	        onclick: () => {
-	          const newTemplate = this.getInfoTemplate();
-	          const wrapper = babelHelpers.classPrivateFieldLooseBase(this, _secondaryTemplate)[_secondaryTemplate].querySelector('.intranet-settings__main-page-info-template');
-	          const innerWrapper = wrapper.querySelector('.intranet-settings__main-page-info');
-	          main_core.Dom.replace(innerWrapper, newTemplate);
-	          main_core.ajax.runAction('intranet.mainpage.withdraw').then(() => {
-	            this.emit('withdraw');
-	            babelHelpers.classPrivateFieldLooseBase(this, _isPublished)[_isPublished] = false;
-	          });
-	          babelHelpers.classPrivateFieldLooseBase(this, _popupWithdraw)[_popupWithdraw].close();
-	          BX.UI.Analytics.sendData({
-	            tool: 'vibe',
-	            category: 'vibe',
-	            event: 'unpublish_page',
-	            c_sub_section: 'from_settings'
-	          });
-	        }
-	      }), new ui_buttons.Button({
-	        text: main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_POPUP_BTN_CANCEL'),
-	        color: ui_buttons.Button.Color.LIGHT_BORDER,
-	        onclick: () => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _popupWithdraw)[_popupWithdraw].close();
-	        }
-	      })],
-	      events: {
-	        onClose: () => {}
-	      }
-	    });
-	    (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _popupWithdraw)[_popupWithdraw]) == null ? void 0 : _babelHelpers$classPr6.show();
-	  } else {
-	    var _babelHelpers$classPr7;
-	    (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _popupWithdraw)[_popupWithdraw]) == null ? void 0 : _babelHelpers$classPr7.show();
-	  }
-	}
-	function _getButtonEdit2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _urlEdit)[_urlEdit]) {
-	    return null;
-	  }
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonEdit)[_buttonEdit]) {
-	    const buttonEdit = main_core.Tag.render(_t15 || (_t15 = _$n`			
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue">
-					${0}
-				</button>
-			`), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_EDIT'));
-	    const buttonEditLock = main_core.Tag.render(_t16 || (_t16 = _$n`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue --disabled">
-					${0}
-					${0}
-				</button>
-			`), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_EDIT'), this.renderLockElement());
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonEdit)[_buttonEdit] = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? buttonEdit : buttonEditLock;
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _buttonEdit)[_buttonEdit];
-	}
-	function _getButtonPublish2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonPublish)[_buttonPublish]) {
-	    const renderNode = main_core.Tag.render(_t17 || (_t17 = _$n`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
-						${0}">
-					${0}
-				</button>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _isPageExists)[_isPageExists] ? 'ui-btn-primary' : '--light-blue', main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_PUBLIC'));
-	    const renderNodeLock = main_core.Tag.render(_t18 || (_t18 = _$n`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --disabled
-						${0}">
-					${0}
-					${0}
-				</button>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _isPageExists)[_isPageExists] ? 'ui-btn-primary' : '--light-blue', main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_PUBLIC'), this.renderLockElement());
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonPublish)[_buttonPublish] = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? renderNode : renderNodeLock;
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _buttonPublish)[_buttonPublish];
-	}
-	function _getButtonWithdraw2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonWithdraw)[_buttonWithdraw]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonWithdraw)[_buttonWithdraw] = main_core.Tag.render(_t19 || (_t19 = _$n`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
-						${0}">
-					${0}
-				</button>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _isPageExists)[_isPageExists] ? 'ui-btn-primary' : '--light-blue', main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_UNPUBLIC'));
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _buttonWithdraw)[_buttonWithdraw];
-	}
-	function _getButtonPartners2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _urlPartners)[_urlPartners]) {
-	    return null;
-	  }
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonPartners)[_buttonPartners]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonPartners)[_buttonPartners] = main_core.Tag.render(_t20 || (_t20 = _$n`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-gray">
-					${0}
-				</button>
-			`), main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_PARTNERS'));
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _buttonPartners)[_buttonPartners];
-	}
-	function _getButtonCreate2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _urlCreate)[_urlCreate]) {
-	    return null;
-	  }
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonMarket)[_buttonMarket]) {
-	    const buttonColor = !babelHelpers.classPrivateFieldLooseBase(this, _isPageExists)[_isPageExists] ? 'ui-btn-primary' : '--light-blue';
-	    const renderNode = main_core.Tag.render(_t21 || (_t21 = _$n`			
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${0}">
-					${0}
-				</button>
-			`), buttonColor, main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_MARKET'));
-	    const renderNodeLock = main_core.Tag.render(_t22 || (_t22 = _$n`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${0} --disabled">
-					${0}
-					${0}
-				</button>
-			`), buttonColor, main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_MARKET'), this.renderLockElement());
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonMarket)[_buttonMarket] = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? renderNode : renderNodeLock;
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _buttonMarket)[_buttonMarket];
-	}
-	function _bindButtonEvents2() {
-	  if (typeof BX.SidePanel === 'undefined') {
-	    return;
-	  }
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _getButtonMainSettings)[_getButtonMainSettings](), 'click', babelHelpers.classPrivateFieldLooseBase(this, _showImportPopup)[_showImportPopup].bind(this));
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _getButtonSecondarySettings)[_getButtonSecondarySettings](), 'click', babelHelpers.classPrivateFieldLooseBase(this, _showExportPopup)[_showExportPopup].bind(this));
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _getButtonCreate)[_getButtonCreate]()) {
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _getButtonCreate)[_getButtonCreate](), 'click', () => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit]) {
-	        BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _urlCreate)[_urlCreate]);
-	      } else {
-	        BX.UI.InfoHelper.show("limit_office_vibe");
-	      }
-	      BX.UI.Analytics.sendData({
-	        tool: 'vibe',
-	        category: 'vibe',
-	        event: 'open_market',
-	        status: babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? 'success' : 'error_limit'
-	      });
-	    });
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _getButtonEdit)[_getButtonEdit]()) {
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _getButtonEdit)[_getButtonEdit](), 'click', () => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit]) {
-	        BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _urlEdit)[_urlEdit], {
-	          customLeftBoundary: 66,
-	          events: {
-	            onCloseComplete: () => {
-	              if (babelHelpers.classPrivateFieldLooseBase(this, _urlPublic)[_urlPublic]) {
-	                window.top.location = babelHelpers.classPrivateFieldLooseBase(this, _urlPublic)[_urlPublic];
-	              }
-	            }
-	          }
-	        });
-	      } else {
-	        BX.UI.InfoHelper.show("limit_office_vibe");
-	      }
-	    });
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _getButtonPartners)[_getButtonPartners]()) {
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _getButtonPartners)[_getButtonPartners](), 'click', () => {
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _feedbackParams)[_feedbackParams]) {
-	        return;
-	      }
-
-	      // todo: need analitycs?
-
-	      main_core.Runtime.loadExtension('ui.feedback.form').then(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _feedbackParams)[_feedbackParams].title = main_core.Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_PARTNERS');
-	        BX.UI.Feedback.Form.open(babelHelpers.classPrivateFieldLooseBase(this, _feedbackParams)[_feedbackParams]);
-	      });
-	    });
-	  }
-	  this.subscribe('publish', () => {
-	    main_core.Dom.replace(babelHelpers.classPrivateFieldLooseBase(this, _getButtonPublish)[_getButtonPublish](), babelHelpers.classPrivateFieldLooseBase(this, _getButtonWithdraw)[_getButtonWithdraw]());
-	  });
-	  this.subscribe('withdraw', () => {
-	    main_core.Dom.replace(babelHelpers.classPrivateFieldLooseBase(this, _getButtonWithdraw)[_getButtonWithdraw](), babelHelpers.classPrivateFieldLooseBase(this, _getButtonPublish)[_getButtonPublish]());
-	  });
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _getButtonPublish)[_getButtonPublish](), 'click', () => {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit]) {
-	      BX.UI.InfoHelper.show("limit_office_vibe");
-	      BX.UI.Analytics.sendData({
-	        tool: 'vibe',
-	        category: 'vibe',
-	        event: 'publish_page',
-	        c_sub_section: 'from_settings',
-	        status: 'error_limit'
-	      });
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _showSharePopup)[_showSharePopup]();
-	  });
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _getButtonWithdraw)[_getButtonWithdraw](), 'click', babelHelpers.classPrivateFieldLooseBase(this, _showWithdrawPopup)[_showWithdrawPopup].bind(this));
-	}
-	function _bindSliderCloseEvent2() {
-	  const isPublishedBefore = babelHelpers.classPrivateFieldLooseBase(this, _isPublished)[_isPublished];
-	  main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onClose', () => {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isPublished)[_isPublished] !== isPublishedBefore) {
-	      const location = babelHelpers.classPrivateFieldLooseBase(this, _isPublished)[_isPublished] ? babelHelpers.classPrivateFieldLooseBase(this, _urlPublic)[_urlPublic] : '/';
-	      window.top.location = location;
-	    }
-	  });
 	}
 
 	var _type = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
@@ -6025,22 +5219,22 @@ this.BX = this.BX || {};
 	Searcher.STATE_WAIT = 'wait';
 	Searcher.STATE_NOT_FOUND = 'not_found';
 
-	let _$o = t => t,
-	  _t$o,
-	  _t2$d,
-	  _t3$a,
-	  _t4$3,
-	  _t5$2,
-	  _t6$2,
-	  _t7$2,
-	  _t8$2,
-	  _t9$2,
-	  _t10$1,
-	  _t11$1,
-	  _t12$1,
-	  _t13$1,
-	  _t14$1,
-	  _t15$1;
+	let _$n = t => t,
+	  _t$n,
+	  _t2$c,
+	  _t3$9,
+	  _t4$2,
+	  _t5$1,
+	  _t6$1,
+	  _t7$1,
+	  _t8,
+	  _t9,
+	  _t10,
+	  _t11,
+	  _t12,
+	  _t13,
+	  _t14,
+	  _t15;
 	var _searcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searcher");
 	var _inputNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputNode");
 	var _iconContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("iconContainer");
@@ -6173,14 +5367,14 @@ this.BX = this.BX || {};
 	      }
 	  }
 	  renderWait() {
-	    const loaderContainer = main_core.Tag.render(_t$o || (_t$o = _$o`<span class="title-search-waiter-img"></span>`));
+	    const loaderContainer = main_core.Tag.render(_t$n || (_t$n = _$n`<span class="title-search-waiter-img"></span>`));
 	    const loader = new main_loader.Loader({
 	      target: loaderContainer,
 	      size: 20,
 	      mode: 'inline'
 	    });
 	    loader.show();
-	    return main_core.Tag.render(_t2$d || (_t2$d = _$o`
+	    return main_core.Tag.render(_t2$c || (_t2$c = _$n`
 			<div class="title-search-waiter">
 				${0}
 				<span class="title-search-waiter-text">${0}</span>
@@ -6216,7 +5410,7 @@ this.BX = this.BX || {};
 	        href: main_core.Type.isStringFilled(option.url) ? option.url : '#',
 	        target: '_blank'
 	      },
-	      children: [main_core.Tag.render(_t3$a || (_t3$a = _$o`<span class="search-title-top-item-text"><span>${0}</span></span>`), option.title)]
+	      children: [main_core.Tag.render(_t3$9 || (_t3$9 = _$n`<span class="search-title-top-item-text"><span>${0}</span></span>`), option.title)]
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _nav)[_nav].add(link);
 	    return link;
@@ -6249,10 +5443,10 @@ this.BX = this.BX || {};
 	        title: option.title,
 	        href: "#"
 	      },
-	      children: [main_core.Tag.render(_t4$3 || (_t4$3 = _$o`<span class="search-title-top-item-text"><span>${0}</span></span>`), option.title)]
+	      children: [main_core.Tag.render(_t4$2 || (_t4$2 = _$n`<span class="search-title-top-item-text"><span>${0}</span></span>`), option.title)]
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _nav)[_nav].add(link);
-	    return main_core.Tag.render(_t5$2 || (_t5$2 = _$o`<div class="search-title-top-item search-title-top-item-js">${0}</div>`), link);
+	    return main_core.Tag.render(_t5$1 || (_t5$1 = _$n`<div class="search-title-top-item search-title-top-item-js">${0}</div>`), link);
 	  }
 	  renderOption(page, option) {
 	    let link;
@@ -6261,14 +5455,14 @@ this.BX = this.BX || {};
 	    } else {
 	      link = this.createBtnOption(page, option);
 	    }
-	    return main_core.Tag.render(_t6$2 || (_t6$2 = _$o`<div class="search-title-top-item search-title-top-item-js">${0}</div>`), link);
+	    return main_core.Tag.render(_t6$1 || (_t6$1 = _$n`<div class="search-title-top-item search-title-top-item-js">${0}</div>`), link);
 	  }
 	  renderGroup(group) {
-	    const optionsContainer = main_core.Tag.render(_t7$2 || (_t7$2 = _$o`<div class="search-title-top-list search-title-top-list-js"></div>`));
+	    const optionsContainer = main_core.Tag.render(_t7$1 || (_t7$1 = _$n`<div class="search-title-top-list search-title-top-list-js"></div>`));
 	    group.options.forEach(option => {
 	      main_core.Dom.append(this.renderOption(group.page, option), optionsContainer);
 	    });
-	    return main_core.Tag.render(_t8$2 || (_t8$2 = _$o`
+	    return main_core.Tag.render(_t8 || (_t8 = _$n`
 			<div class="search-title-top-block search-title-top-block-sonetgroups">
 				<div class="search-title-top-subtitle">
 					<div class="search-title-top-subtitle-text">${0}</div>
@@ -6280,7 +5474,7 @@ this.BX = this.BX || {};
 		`), group.title, optionsContainer);
 	  }
 	  renderContent(state = 'ready') {
-	    const optionsContainer = main_core.Tag.render(_t9$2 || (_t9$2 = _$o`<div class="search-title-top-result"></div>`));
+	    const optionsContainer = main_core.Tag.render(_t9 || (_t9 = _$n`<div class="search-title-top-result"></div>`));
 	    switch (state) {
 	      case 'ready':
 	        main_core.Dom.append(this.renderSearchResult(babelHelpers.classPrivateFieldLooseBase(this, _searcher)[_searcher].getResult()), optionsContainer);
@@ -6296,22 +5490,22 @@ this.BX = this.BX || {};
 	    return optionsContainer;
 	  }
 	  renderNotFound() {
-	    return main_core.Tag.render(_t10$1 || (_t10$1 = _$o`
+	    return main_core.Tag.render(_t10 || (_t10 = _$n`
 			<div class="title-search-waiter">
 				<span class="title-search-waiter-text">${0}</span>
 			</div>
 		`), main_core.Loc.getMessage('INTRANET_SETTINGS_SEARCH_NOT_FOUND'));
 	  }
 	  renderSearchResult(result) {
-	    const container = main_core.Tag.render(_t11$1 || (_t11$1 = _$o`<div class="search-title-content-result"></div>`));
+	    const container = main_core.Tag.render(_t11 || (_t11 = _$n`<div class="search-title-content-result"></div>`));
 	    result.forEach(item => {
 	      main_core.Dom.append(this.renderGroup(item), container);
 	    });
 	    return container;
 	  }
 	  renderOthers(links) {
-	    const wraper = main_core.Tag.render(_t12$1 || (_t12$1 = _$o`<div class="search-title-top-list search-title-top-list-js"></div>`));
-	    const other = main_core.Tag.render(_t13$1 || (_t13$1 = _$o`
+	    const wraper = main_core.Tag.render(_t12 || (_t12 = _$n`<div class="search-title-top-list search-title-top-list-js"></div>`));
+	    const other = main_core.Tag.render(_t13 || (_t13 = _$n`
 		<div class="search-title-top-block search-title-top-block-tools">
 			<div class="search-title-top-subtitle">
 				<div class="search-title-top-subtitle-text">${0}</div>
@@ -6346,10 +5540,10 @@ this.BX = this.BX || {};
 	        href: link.link,
 	        target: 'blank_'
 	      },
-	      children: [main_core.Tag.render(_t14$1 || (_t14$1 = _$o`<span class="search-title-top-item-text"><span>${0}</span></span>`), link.title)]
+	      children: [main_core.Tag.render(_t14 || (_t14 = _$n`<span class="search-title-top-item-text"><span>${0}</span></span>`), link.title)]
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _nav)[_nav].add(linkTag);
-	    return main_core.Tag.render(_t15$1 || (_t15$1 = _$o`
+	    return main_core.Tag.render(_t15 || (_t15 = _$n`
 		<div class="search-title-top-item search-title-top-item-js">
 			${0}
 		</div>`), linkTag);
@@ -6824,7 +6018,6 @@ this.BX = this.BX || {};
 	exports.ToolsPage = ToolsPage;
 	exports.EmployeePage = EmployeePage;
 	exports.PortalPage = PortalPage;
-	exports.MainpagePage = MainpagePage;
 	exports.CommunicationPage = CommunicationPage;
 	exports.RequisitePage = RequisitePage;
 	exports.ConfigurationPage = ConfigurationPage;
@@ -6836,5 +6029,5 @@ this.BX = this.BX || {};
 	exports.ServerDataSource = ServerDataSource;
 	exports.Permission = Permission;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.Analytics,BX.UI.DragAndDrop,BX.UI,BX,BX.UI.Uploader,BX.UI,BX.Intranet.Bitrix24.ThemePicker,BX,BX.UI,BX,BX,BX,BX,BX.UI.FormElements,BX.UI,BX.Intranet.NotifyBanner,BX.UI,BX,BX.UI,BX,BX.UI.Dialogs,BX.UI.FormElements,BX.Event,BX.Main,BX,BX));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.Analytics,BX.UI.DragAndDrop,BX.UI,BX,BX.UI.Uploader,BX.UI,BX.Intranet.Bitrix24.ThemePicker,BX,BX.UI,BX,BX,BX,BX,BX.UI,BX.UI.FormElements,BX.UI,BX.Intranet.NotifyBanner,BX.UI,BX.UI.Dialogs,BX.UI.FormElements,BX.Event,BX.Main,BX,BX));
 //# sourceMappingURL=script.js.map

@@ -733,9 +733,16 @@ if (!$bInternal || $isExtendedInternal)
 	Tracking\UI\Filter::appendEffectiveFields($effectiveFilterFieldIDs);
 
 	//Is necessary for deal funnel filter.
-	if ($arResult['CATEGORY_ID'] >= 0 && !in_array('STAGE_ID', $effectiveFilterFieldIDs, true))
+	if ($arResult['CATEGORY_ID'] >= 0)
 	{
-		$effectiveFilterFieldIDs[] = 'STAGE_ID';
+		if (!in_array('STAGE_ID', $effectiveFilterFieldIDs, true))
+		{
+			$effectiveFilterFieldIDs[] = 'STAGE_ID';
+		}
+		if (!in_array('PREVIOUS_STAGE_ID', $effectiveFilterFieldIDs, true))
+		{
+			$effectiveFilterFieldIDs[] = 'PREVIOUS_STAGE_ID';
+		}
 	}
 	//endregion
 
@@ -791,6 +798,15 @@ if ($arParams['IS_RECURRING'] !== 'Y')
 			'editable' => false
 		);
 	}
+	$arResult['HEADERS'][] = array(
+		'id' => 'PREVIOUS_STAGE_ID',
+		'name' => Loc::getMessage('CRM_TYPE_ITEM_FIELD_PREVIOUS_STAGE_ID'),
+		'sort' => 'previous_stage_id',
+		'width' => 200,
+		'default' => false,
+		'prevent_default' => false,
+		'editable' => false
+	);
 }
 
 // Don't display activities in INTERNAL mode.
@@ -1573,7 +1589,7 @@ $arImmutableFilters = array(
 	'PRODUCT_ROW_PRODUCT_ID', 'PRODUCT_ROW_PRODUCT_ID_value',
 	'WEBFORM_ID', 'TRACKING_SOURCE_ID', 'TRACKING_CHANNEL_CODE',
 	'SEARCH_CONTENT',
-	'PRODUCT_ID', 'TYPE_ID', 'SOURCE_ID', 'STAGE_ID', 'COMPANY_ID', 'CONTACT_ID',
+	'PRODUCT_ID', 'TYPE_ID', 'SOURCE_ID', 'STAGE_ID', 'PREVIOUS_STAGE_ID', 'COMPANY_ID', 'CONTACT_ID',
 	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID', 'PAYMENT_STAGE', 'ORDER_SOURCE',
 	'DELIVERY_STAGE', 'OBSERVER_IDS', 'COMPANY_TYPE'
 );
@@ -1652,6 +1668,7 @@ foreach ($arFilter as $k => $v)
 }
 
 $arFilter = Crm\Deal\OrderFilter::prepareFilter($arFilter);
+\Bitrix\Crm\Filter\FieldsTransform\DateTimeField::applyTimezoneOffset(CCrmOwnerType::Deal, $arFilter);
 
 \Bitrix\Crm\UI\Filter\EntityHandler::internalize($arResult['FILTER'], $arFilter);
 
@@ -1672,7 +1689,10 @@ if ($actionData['ACTIVE'] && $actionData['METHOD'] == 'GET')
 			$DB->StartTransaction();
 
 			if ($CCrmBizProc->Delete($ID, null, array('DealCategoryId' => $categoryID))
-				&& $CCrmDeal->Delete($ID, array('PROCESS_BIZPROC' => false)))
+				&& $CCrmDeal->Delete($ID, [
+					'PROCESS_BIZPROC' => false,
+					'ANALYTICS' => $arParams['ANALYTICS'] ?? [],
+				]))
 			{
 				$DB->Commit();
 			}
@@ -1874,6 +1894,9 @@ unset($addictFields);
 // Always need to remove the menu items
 if (!in_array('STAGE_ID', $arSelect))
 	$arSelect[] = 'STAGE_ID';
+
+if (!in_array('PREVIOUS_STAGE_ID', $arSelect))
+	$arSelect[] = 'PREVIOUS_STAGE_ID';
 
 if (!in_array('CATEGORY_ID', $arSelect))
 	$arSelect[] = 'CATEGORY_ID';
@@ -2642,6 +2665,17 @@ foreach($arResult['DEAL'] as &$arDeal)
 	$arDeal['~DEAL_CATEGORY_NAME'] = DealCategory::getName($categoryID);
 	$arDeal['DEAL_CATEGORY_NAME'] = htmlspecialcharsbx($arDeal['~DEAL_CATEGORY_NAME']);
 
+	$previousStageId = $arDeal['PREVIOUS_STAGE_ID'] ?? '';
+	if ($previousStageId !== '')
+	{
+		if (!isset($arResult['CATEGORY_STAGE_LIST'][$previousStageId]))
+		{
+			$previousStageId = '';
+		}
+	}
+	$arDeal['PREVIOUS_STAGE_ID'] = $previousStageId;
+	$arDeal['DEAL_PREVIOUS_STAGE_NAME'] = CCrmDeal::GetStageName($previousStageId, $categoryID);
+
 	//region Client info
 	if ($contactID > 0)
 	{
@@ -3020,6 +3054,7 @@ if (!$restriction->hasPermission())
 			[
 				'ASSIGNED_BY',
 				'~STAGE_ID',
+				'~PREVIOUS_STAGE_ID',
 				'~CATEGORY_ID',
 				'ASSIGNED_BY_ID',
 				'~ASSIGNED_BY_ID',

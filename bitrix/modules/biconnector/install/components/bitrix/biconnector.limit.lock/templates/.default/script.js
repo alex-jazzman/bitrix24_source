@@ -79,7 +79,7 @@
 	        style: ui_buttons.AirButtonStyle.PLAIN,
 	        useAirDesign: true,
 	        onclick: function onclick() {
-	          popup.close();
+	          popup.hide();
 	        }
 	      }));
 	    }
@@ -93,7 +93,7 @@
 	      hasCloseButton: true
 	    });
 	    if (babelHelpers.classPrivateFieldGet(_this, _fullLock)) {
-	      popup.subscribe('onClose', function () {
+	      popup.subscribe('onHide', function () {
 	        if (BX.SidePanel.Instance.isOpen()) {
 	          BX.SidePanel.Instance.close();
 	        }
@@ -101,7 +101,7 @@
 	        onDone();
 	      });
 	    } else {
-	      popup.subscribe('onClose', function () {
+	      popup.subscribe('onHide', function () {
 	        main_core_events.EventEmitter.emit('BiConnector:LimitPopup.Warning.onClose');
 	        onDone();
 	      });

@@ -885,7 +885,7 @@ if (
 	{
 		$valuePrecision = 2;
 	}
-	Option::set('sale', 'value_precision', $valuePrecision);
+	Option::set('sale', 'value_precision_v2', $valuePrecision);
 
 	$oldExpirationProcessingEvents = Option::get('sale', 'expiration_processing_events');
 	$newExpirationProcessingEvents = getSaleBooleanOptionFromRequest($request, 'EXPIRATION_PROCESSING_EVENTS');
@@ -1816,11 +1816,11 @@ endforeach;
 		</td>
 		<td>
 			<?php
-			$val = (int)Option::get('sale', 'value_precision');
+			$val = Sale\PriceMaths::getCurrentPrecision();
 			?>
 			<select name="VALUE_PRECISION">
 			<?php
-			for ($i = 0; $i <= 4; $i++):
+			for ($i = 0; $i <= 8; $i++):
 				?>
 				<option value="<?= $i; ?>>"<?= ($i === $val ? ' selected' : ''); ?>><?= Loc::getMessage('SMO_VALUE_PRECISION_' . $i); ?></option>
 				<?php

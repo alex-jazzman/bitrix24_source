@@ -814,7 +814,7 @@ export class LinkUrl extends Text
 	 */
 	createTypeSwitcher()
 	{
-		//type = PAGE || STORE || KNOWLEDGE || GROUP || MAINPAGE || SMN
+		//type = PAGE || STORE || KNOWLEDGE || GROUP || VIBE || SMN
 		const type = BX.Landing.Env.getInstance().getType();
 		const items = [
 			{

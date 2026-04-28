@@ -108,11 +108,6 @@ export class Content extends EventEmitter
 		if (type === 'extranet')
 		{
 			link = `${link}&firstInvitationBlock=extranet`;
-			Analytics.send(Analytics.EVENT_OPEN_SLIDER_EXTRANET_INVITATION);
-		}
-		else
-		{
-			Analytics.send(Analytics.EVENT_OPEN_SLIDER_INVITATION);
 		}
 
 		BX.SidePanel.Instance.open(

@@ -84,7 +84,8 @@ declare type DialogLocatorServices = Partial<{
 	'emitter': DialogEmitter,
 	'dialogId': DialogId,
 	'dialogCode': string,
-	'message-ui-converter': MessageUiConverter
+	'message-ui-converter': MessageUiConverter,
+	'text-format-manager': TextFormatManager,
 }>
 
 declare type DialogSendAudioHandlerEventData = {

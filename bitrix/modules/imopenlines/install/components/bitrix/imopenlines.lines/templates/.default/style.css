@@ -862,9 +862,9 @@ div.crm-webform-list-widget-content {
 /* SETTINGS BUTTONS */
 .crm-webform-list-button-settings-container { margin: 0 0 0 10px; }
 
-.webform-small-button.crm-webform-list-button-settings { margin: 10px 12px 0 0; }
+.ui-btn.crm-webform-list-button-settings { margin: 10px 12px 0 0; }
 
-.webform-small-button.crm-webform-list-button-settings:last-child { margin: 10px 0 0; }
+.ui-btn.crm-webform-list-button-settings:last-child { margin: 10px 0 0; }
 
 /* END OF SETTINGS BUTTONS */
 

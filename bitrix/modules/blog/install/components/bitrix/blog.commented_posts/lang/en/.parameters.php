@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BMNP_PATH_TO_BLOG'] = "Blog page path template";
 $MESS ['BMNP_PATH_TO_POST'] = "Template of a blog message page";
 $MESS ['BMNP_PATH_TO_USER'] = "Template of the blog user page path";
@@ -17,4 +17,3 @@ $MESS ['BC_DATE_TIME_FORMAT'] = "Date and time format";
 $MESS ['BLG_GROUP_ID'] = "Blogs group";
 $MESS ['BLG_BLOG_URL'] = "Blog url";
 $MESS ['BMNP_PATH_TO_GROUP_BLOG_POST'] = "Group Blog Post Page URL Template";
-?>

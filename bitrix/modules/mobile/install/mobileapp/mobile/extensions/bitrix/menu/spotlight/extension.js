@@ -192,13 +192,7 @@
 			{
 				return true;
 			}
-			if (
-				id === 'stress'
-				&& Application.storage.getBoolean('seen_stress_spotlight', false)
-			)
-			{
-				return true;
-			}
+
 			return menuSpotlightOptions.wasSpotlightSeen(id);
 		}
 		markAsSeen()

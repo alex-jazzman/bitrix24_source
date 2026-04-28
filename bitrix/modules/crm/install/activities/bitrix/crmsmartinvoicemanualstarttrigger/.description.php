@@ -23,7 +23,7 @@ $documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::SmartInv
 
 $arActivityDescription =
 	(new ActivityDescription(
-		Loc::getMessage('CRM_SMART_INVOICE_MANUAL_START_TRIGGER_NAME') ?? '',
+		Loc::getMessage('CRM_SMART_INVOICE_MANUAL_START_TRIGGER_NAME_MSG_V1') ?? '',
 		Loc::getMessage('CRM_SMART_INVOICE_MANUAL_START_TRIGGER_DESCRIPTION') ?? '',
 		[ActivityType::TRIGGER->value],
 	))

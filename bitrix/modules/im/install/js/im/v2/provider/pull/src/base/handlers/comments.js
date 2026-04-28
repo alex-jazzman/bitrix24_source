@@ -18,9 +18,4 @@ export class CommentsPullHandler
 
 		Core.getStore().dispatch('messages/comments/unsubscribe', messageId);
 	}
-
-	handleReadAllChannelComments(params: ReadAllChannelCommentsParams)
-	{
-		Core.getStore().dispatch('counters/readAllChannelComments', params.chatId);
-	}
 }

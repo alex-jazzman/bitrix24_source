@@ -2,6 +2,7 @@
  * @module im/messenger/lib/converter/ui/recent-search
  */
 jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, module) => {
+	const { Type } = require('type');
 	const AppTheme = require('apptheme');
 	const { UserHelper } = require('im/messenger/lib/helper');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
@@ -15,9 +16,10 @@ jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, modu
 		/**
 		 *
 		 * @param {UsersModelState} user
+		 * @param {string} [sectionCode]
 		 * @return {RecentCarouselItem}
 		 */
-		static toUserCarouselItem(user)
+		static toUserCarouselItem(user, sectionCode)
 		{
 			/** @type {RecentCarouselItem} */
 			const item = {
@@ -53,6 +55,11 @@ jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, modu
 			};
 
 			item.avatar = chatAvatar.getRecentSearchCarouselAvatarProps();
+
+			if (Type.isStringFilled(sectionCode))
+			{
+				item.sectionCode = sectionCode;
+			}
 
 			return item;
 		}

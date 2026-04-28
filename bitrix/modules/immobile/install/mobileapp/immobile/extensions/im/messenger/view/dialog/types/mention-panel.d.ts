@@ -16,7 +16,9 @@ declare interface JNChatMentionPanel extends JNChatBaseClassInterface<MentionPan
 
 	open(items : Array<MentionItem>): void;
 	close(): void;
-	setItems(items : Array<MentionItem>): void;
+	setItems(items: Array<MentionItem>): void;
+	update(id: string, item: Partial<MentionItem>): void;
+	animateAction(id: string, item: MentionItem): void;
 	showLoader(): void;
 	hideLoader(): void;
 }
@@ -29,6 +31,26 @@ declare type MentionItem = {
 	displayedDate: string,
 	titleColor: string,
 	testId: string,
+	actions?: MentionAction[],
+}
+
+declare type MentionAction = {
+	action: {
+		id: string,
+		text: string,
+		testId: string,
+		iconName: string,
+		imageUrl?: string,
+		size: string,
+		design: string,
+		mode: string,
+		rounded: boolean,
+		dropdown: boolean,
+		actionViewId: string,
+	},
+	options?: {
+		autoHideDelay: number,
+	}
 }
 
 declare type MentionPanelEvents = {

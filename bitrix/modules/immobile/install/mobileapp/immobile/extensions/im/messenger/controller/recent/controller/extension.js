@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 	const {
 		RestMethod,
 		RefreshMode,
+		RecentFilterId,
 	} = require('im/messenger/const');
 	const { RecentEventType } = require('im/messenger/controller/recent/const');
 
@@ -135,6 +136,49 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 		}
 
 		/**
+		 * @returns {boolean}
+		 */
+		isSupportedFilter()
+		{
+			return this.locator.has('filter');
+		}
+
+		/**
+		 * @parsm {string} filterId
+		 * @returns {Promise<void>}
+		 */
+		async applyFilter(filterId)
+		{
+			if (this.isSupportedFilter())
+			{
+				this.locator.get('filter').applyFilter(filterId);
+
+				await this.#loadFirstPageFromServer(RefreshMode.startUp);
+			}
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		hasSelectedFilter()
+		{
+			if (this.isSupportedFilter())
+			{
+				return this.locator.get('filter').hasSelectedFilter();
+			}
+
+			return false;
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		getCurrentFilterId()
+		{
+			return this.locator.get('filter')?.getCurrentFilterId();
+		}
+
+		/**
 		 * @param {string} mode
 		 * @return {null|string}
 		 */
@@ -188,9 +232,11 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 					return;
 				}
 
+				const options = this.#getRequestOptions();
 				const result = await runAction(RestMethod.immobileMessengerLoad, {
 					data: {
 						methodList: [method],
+						options,
 					},
 				});
 
@@ -219,6 +265,19 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 				emptyState.redraw();
 				floatingButton.redraw();
 			});
+		}
+
+		#getRequestOptions()
+		{
+			const currentFilterId = this.locator.get('filter')?.getCurrentFilterId();
+			const options = {};
+
+			if (currentFilterId === RecentFilterId.unread)
+			{
+				options.unreadOnly = 'Y';
+			}
+
+			return options;
 		}
 	}
 

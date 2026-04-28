@@ -257,7 +257,8 @@ export class FieldSelector extends EventEmitter
 
 	#load(): Promise<any>
 	{
-		const { controllerOptions = {} } = this.#getOptions();
+		const { controllerOptions = {}, categoryCaptions = {} } = this.#getOptions();
+		controllerOptions.priorityCategories = Object.keys(categoryCaptions);
 
 		return this.#getBackend()
 			.getData({ options: controllerOptions })
@@ -435,6 +436,7 @@ export class FieldSelector extends EventEmitter
 					}),
 					type: this.#isMultiple() ? ListItem.Type.CHECKBOX : ListItem.Type.RADIO,
 					disabled: this.#isFieldDisabled(field),
+					disableSelection: this.#getOptions().disableSelection,
 				});
 			});
 		}
@@ -767,6 +769,7 @@ export class FieldSelector extends EventEmitter
 					.createLayout({
 						extensions: ['sign.b2e.field-selector'],
 						title: this.#getTitle(),
+						hint: this.#getOptions().hint ?? '',
 						content: () => {
 							return this.#getLayout();
 						},
@@ -783,6 +786,14 @@ export class FieldSelector extends EventEmitter
 							return toolbarItems;
 						},
 						buttons: ({ SaveButton, closeButton }) => {
+							const options = this.#getOptions();
+							if (options.disableSelection)
+							{
+								return [
+									closeButton,
+								];
+							}
+
 							return [
 								new SaveButton({
 									text: Loc.getMessage('SIGN_B2E_FIELDS_SELECTOR_APPLY_BUTTON_LABEL'),

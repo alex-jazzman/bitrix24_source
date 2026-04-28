@@ -34,6 +34,7 @@ export class Template extends EventEmitter
 	robotSettingsControls;
 
 	#delayMinLimitM: number;
+	#delayMaxLimitD: number;
 	#userOptions: UserOptions | null;
 	#tracker: Tracker;
 	#viewMode: ViewMode;
@@ -64,6 +65,7 @@ export class Template extends EventEmitter
 
 		this.#templateContainerNode = params.templateContainerNode;
 		this.#delayMinLimitM = params.delayMinLimitM;
+		this.#delayMaxLimitD = params.delayMaxLimitD;
 		this.#userOptions = params.userOptions;
 		this.#tracker = this.#context.tracker;
 		this.#data = {};
@@ -796,7 +798,11 @@ export class Template extends EventEmitter
 
 		window.console.info('Opened robot ID: %s', robot.getId());
 
-		context.DOCUMENT_CATEGORY_ID = this.#context.document.getCategoryId();
+		if (Type.isNumber(this.#context.document.getCategoryId()))
+		{
+			context.DOCUMENT_CATEGORY_ID = this.#context.document.getCategoryId();
+		}
+
 		if (
 			Type.isPlainObject(robot.data.DialogContext)
 			&& !Type.isNil(robot.data.DialogContext.addMenuGroup)
@@ -812,19 +818,21 @@ export class Template extends EventEmitter
 				this.#context.ajaxUrl,
 				{
 					analyticsLabel: `automation_robot${robot.draft ? '_draft' : ''}_settings_${robot.data.Type.toLowerCase()}`,
+					ajax_action: 'get_robot_dialog',
+					document_signed: this.#context.signedDocument,
+					document_status: this.#context.document.getCurrentStatusId(),
+					context,
+					form_name: formName,
 				},
 			),
 			data: {
-				ajax_action: 'get_robot_dialog',
-				document_signed: this.#context.signedDocument,
-				document_status: this.#context.document.getCurrentStatusId(),
-				context,
-				robot_json: Helper.toJsonString(robot.serialize()),
-				context_robots_json: Helper.toJsonString(
+				robot: Helper.toJsonPayload(robot.serialize()),
+				context_robots: Helper.toJsonPayload(
 					this.#robots.filter((r) => r !== robot).map((r) => r.serialize()),
 				),
-				form_name: formName,
 			},
+			headers: [{name: 'Content-Type', value: 'application/json'}],
+			preparePost: false,
 			onsuccess: (html) => {
 				if (html)
 				{
@@ -1228,6 +1236,7 @@ export class Template extends EventEmitter
 
 		const docFields = this.#context.document.getFields();
 		const minLimitM = this.#delayMinLimitM;
+		const maxLimitD = this.#delayMaxLimitD;
 
 		if (Type.isArray(docFields))
 		{
@@ -1253,6 +1262,7 @@ export class Template extends EventEmitter
 			},
 			basisFields,
 			minLimitM,
+			maxLimitD,
 			useAfterBasis: true,
 			showWaitWorkDay: true,
 		});
@@ -1475,15 +1485,16 @@ export class Template extends EventEmitter
 				ajaxUrl,
 				{
 					analyticsLabel: `automation_robot${robot.draft ? '_draft' : ''}_save_${robot.data.Type.toLowerCase()}`,
+					ajax_action: 'save_robot_settings',
+					document_signed: documentSigned,
 				},
 			),
-			data: {
-				ajax_action: 'save_robot_settings',
-				document_signed: documentSigned,
-				robot_json: Helper.toJsonString(robot.serialize()),
-				form_data_json: Helper.toJsonString({ ...formData.data, ...robotData }),
-				form_data: formData.data, /** @bug 0135641 */
-			},
+			data: Helper.toJsonPayload({
+				robot: robot.serialize(),
+				form_data: { ...formData.data, ...robotData },
+			}),
+			headers: [{name: 'Content-Type', value: 'application/json'}],
+			preparePost: false,
 			onsuccess: (response) => {
 				if (btnNode)
 				{

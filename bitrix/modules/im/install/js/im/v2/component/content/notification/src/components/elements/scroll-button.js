@@ -1,5 +1,7 @@
-import { NotificationTypesCodes } from 'im.v2.const';
 import { mapState } from 'ui.vue3.vuex';
+
+import { NotificationTypesCodes } from 'im.v2.const';
+import { CounterManager } from 'im.v2.lib.counter';
 
 import './css/scroll-button.css';
 
@@ -98,12 +100,7 @@ export const ScrollButton = {
 		},
 		formattedCounter(): string
 		{
-			if (this.unreadCounter > 99)
-			{
-				return '99+';
-			}
-
-			return `${this.unreadCounter}`;
+			return CounterManager.formatCounter(this.unreadCounter);
 		},
 		...mapState({
 			notificationMapCollection: state => state.notifications.collection,

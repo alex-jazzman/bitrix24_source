@@ -53,6 +53,10 @@
 	--ui-counter-current-bg-color: var(--ui-color-base-7);
 }
 
+.intranet-user-mini-profile__user-detailed-info__list-value__counter:hover {
+	--ui-counter-current-bg-color: var(--ui-color-base-6);
+}
+
 .intranet-user-mini-profile__user-detailed-info__list-value__counter .ui-counter-inner {
 	color: var(--ui-color-base-3);
 }

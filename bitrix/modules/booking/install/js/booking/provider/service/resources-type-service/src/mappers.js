@@ -10,6 +10,8 @@ export function mapDtoToModel(resourceTypeDto: ResourceTypeDto): ResourceTypeMod
 		code: resourceTypeDto.code,
 		resourcesCnt: resourceTypeDto.resourcesCnt,
 
+		senderCode: resourceTypeDto.senderCode,
+
 		// info
 		isInfoNotificationOn: resourceTypeDto.isInfoNotificationOn,
 		templateTypeInfo: resourceTypeDto.templateTypeInfo,
@@ -48,6 +50,8 @@ export function mapModelToDto(resourceType: ResourceTypeModel): ResourceTypeDto
 		name: resourceType.name,
 		code: resourceType.code,
 		resourcesCnt: resourceType.resourcesCnt,
+
+		senderCode: resourceType.senderCode,
 
 		// info
 		isInfoNotificationOn: resourceType.isInfoNotificationOn,

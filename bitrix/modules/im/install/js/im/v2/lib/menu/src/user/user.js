@@ -1,18 +1,16 @@
 import { Loc } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+import { type MenuItemOptions } from 'ui.system.menu';
 
 import { Messenger } from 'im.public';
-import { Utils } from 'im.v2.lib.utils';
-import { ChatService } from 'im.v2.provider.service.chat';
+import { ActionByRole, ChatType, EventType, UserType, type ApplicationContext } from 'im.v2.const';
 import { showKickUserConfirm } from 'im.v2.lib.confirm';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { ActionByRole, ChatType, EventType, UserType } from 'im.v2.const';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelUser, type ImModelChat } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 import { BaseMenu } from '../base/base';
-
-import type { EventEmitter } from 'main.core.events';
-import type { MenuItemOptions } from 'ui.system.menu';
-import type { ImModelUser, ImModelChat } from 'im.v2.model';
-import type { ApplicationContext } from 'im.v2.const';
 
 type UserMenuContext = {
 	user: ImModelUser,
@@ -47,7 +45,6 @@ export class UserMenu extends BaseMenu
 		return {
 			title: this.#getKickItemText(),
 			onClick: async () => {
-				this.menuInstance.close();
 				const userChoice = await showKickUserConfirm(this.context.dialog.dialogId);
 				if (userChoice !== true)
 				{
@@ -70,7 +67,6 @@ export class UserMenu extends BaseMenu
 					dialogId: this.context.dialog.dialogId,
 					isMentionSymbol: false,
 				});
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -86,7 +82,6 @@ export class UserMenu extends BaseMenu
 			title: Loc.getMessage('IM_LIB_MENU_USER_WRITE'),
 			onClick: () => {
 				void Messenger.openChat(this.context.user.id);
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -104,7 +99,6 @@ export class UserMenu extends BaseMenu
 			title: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
 			onClick: () => {
 				BX.SidePanel.Instance.open(profileUri);
-				this.menuInstance.close();
 			},
 		};
 	}

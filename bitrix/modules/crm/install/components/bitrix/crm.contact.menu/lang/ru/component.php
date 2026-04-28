@@ -90,4 +90,5 @@ $MESS["DOCUMENT_BUTTON_TEXT"] = "Документы";
 $MESS["DOCUMENT_BUTTON_TITLE"] = "Создать документ на основе контакта";
 $MESS["CONTACT_DEDUPE_AUTOSEARCH"] = "Автоматический поиск дубликатов";
 $MESS["CONTACT_DEDUPE_HELP"] = "Как работать с дубликатами";
+$MESS["CONTACT_DETACH_OPEN_LINE"] = "Открепить контакт от всех чатов";
 ?>

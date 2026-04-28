@@ -1,6 +1,5 @@
 .intranet-island__otp {
 	background-color: #fff;
-	padding: 44px;
 	max-width: 700px;
 	align-items: center;
 	scrollbar-arrow-color: #ccc;
@@ -43,6 +42,7 @@
 	width: 310px;
 	align-items: center;
 	flex-direction: column;
+	padding: 44px;
 }
 
 .intranet-island-otp-push-recovery-codes__wrapper,
@@ -52,6 +52,27 @@
 	padding: 44px;
 	align-items: center;
 	flex-direction: column;
+}
+
+.intranet-island-otp-recover-access__wrapper {
+	width: 336px;
+}
+
+.intranet-island-otp-recover-access__icon {
+	background-repeat: no-repeat;
+	background-position: center;
+	width: 100%;
+	height: 145px;
+}
+
+.intranet-island-otp-recover-access__icon.--request {
+	background-image: -webkit-image-set(url("images/images/recoverAccessX1.png") 1x, url("images/images/recoverAccessX2.png") 2x);
+	background-image: image-set(url("images/images/recoverAccessX1.png") 1x, url("images/images/recoverAccessX2.png") 2x);
+}
+
+.intranet-island-otp-recover-access__icon.--request-sent {
+	background-image: -webkit-image-set(url("images/images/recoverAccessRequestSentX1.png") 1x, url("images/images/recoverAccessRequestSentX2.png") 2x);
+	background-image: image-set(url("images/images/recoverAccessRequestSentX1.png") 1x, url("images/images/recoverAccessRequestSentX2.png") 2x);
 }
 
 .intranet-island-otp-push-sms__wrapper {
@@ -121,6 +142,11 @@
 	margin-top: 40px;
 }
 
+.intranet-island-otp-recover-access__description {
+	margin-top: 14px;
+	margin-bottom: 40px;
+}
+
 .intranet-island-otp-push-sms__countdown {
 	font-size: 14px;
 	line-height: 22px;
@@ -131,6 +157,7 @@
 
 .intranet-island-otp-push-sms__resend {
 	height: 25px;
+	margin-top: 10px;
 }
 
 .intranet-island-otp-recover-access__description.--width {
@@ -198,6 +225,73 @@
 	background-position: center;
 	width: 167px;
 	height: 320px;
+}
+
+.intranet-island-otp-offline-code__main-content {
+	margin-top: 36px;
+	width: 100%;
+	position: relative;
+}
+
+.intranet-island-otp-offline-code__description {
+	width: 368px;
+}
+
+.intranet-island-otp-offline-code__mobile {
+	background-image: url("images/images/mobile-offline.svg");
+	background-repeat: no-repeat;
+	background-position: center;
+	width: 200px;
+	height: 320px;
+	position: absolute;
+	top: 0;
+	left: 375px;
+}
+
+.intranet-island-otp-offline-code__icon-more {
+	background-color: #E6F4FF;
+	width: 20px;
+	height: 20px;
+	display: inline-flex;
+	border-radius: 6px;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+}
+
+.intranet-island-otp-offline-code__icon-more i {
+	--ui-icon-set__icon-size: 17px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.intranet-island-otp-push__arrow.--offline-code {
+	transform: rotate(33deg);
+	top: 140px;
+	left: 330px;
+	z-index: 1;
+	width: 98px;
+	height: 32px;
+	background-size: contain;
+}
+
+.intranet-island-otp-offline-code__button-wrapper {
+	margin-top: 24px;
+	padding: 0 44px;
+}
+
+.intranet-island-otp-offline-code__description .intranet-verification-code-wrapper {
+	padding-top: 40px;
+	padding-bottom: 38px;
+}
+
+.intranet-verification-code-wrapper {
+	display: flex;
+	flex-direction: column;
+	padding-top: 56px;
+}
+
+.intranet-verification-code__label {
+	margin-bottom: 12px;
 }
 
 .intranet-island-otp-push__arrow {
@@ -383,6 +477,7 @@
 	width: 28px;
 	height: 28px;
 	background-color: var(--ui-color-gray-70);
+	cursor: pointer;
 }
 
 .intranet-back-button__arrow.--recovery {
@@ -397,6 +492,15 @@
 	left: -190px;
 }
 
+.intranet-back-button__arrow.--legacyotp {
+	left: -183px;
+}
+
+.intranet-back-button__arrow.--offline-code {
+	left: -288px;
+	top: -14px;
+}
+
 .intranet-form-add-block__headline.--margin {
 	margin-bottom: 33px;
 }
@@ -404,9 +508,12 @@
 .intranet-otp-error-block {
 	max-width: 100%;
 	display: flex;
-	margin-top: 20px;
-	margin-bottom: 10px;
+	margin: 20px auto 0;
 	color: var(--ui-color-red-70);
+}
+
+.intranet-otp-error-block.--start {
+	margin: 20px 0 10px;
 }
 /**
  * Code inputs
@@ -414,7 +521,10 @@
 
 .intranet-verification-code {
 	display: flex;
-	margin-top: 56px;
+}
+
+.intranet-verification-code.--recovery-codes {
+	margin-top: 40px;
 }
 
 /**
@@ -476,6 +586,33 @@
 .intranet-digit-input.--error,
 .intranet-char-input.--error {
 	border-bottom: 3px solid var(--ui-field-color-danger);
+}
+
+.intranet-island-otp-offline-code__steps {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	margin-top: 12px;
+}
+
+.intranet-island-otp-offline-code__step {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.intranet-island-otp-offline-code-step__number {
+	min-width: 20px;
+	height: 20px;
+	background-color: #ffffff;
+	border-radius: 100%;
+	text-align: center;
+	font-size: 11px;
+	align-items: center;
+	display: flex;
+	color: var(--ui-color-accent-main-primary);
+	justify-content: center;
+	box-shadow: 0 1px 2px 0 #0000001F;
 }
 
 @media (min-width: 768px)

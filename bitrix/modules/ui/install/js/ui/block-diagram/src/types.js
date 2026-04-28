@@ -58,6 +58,20 @@ export type DiagramBlock = {
 	ports: DiagramBlockPorts;
 };
 
+export type ShortcutHandler = (event: KeyboardEvent, mousePos: Point) => void;
+
+export type PreparedShortcut = {
+	id: string,
+	mainKey: string,
+	requiredModifiers: {
+		ctrl: boolean,
+		meta: boolean,
+		shift: boolean,
+		alt: boolean,
+	},
+	handler: ShortcutHandler,
+};
+
 export type GroupedBlocks = { [string]: Array<DiagramBlock> };
 export type BlockGroupNames = Array<string>;
 
@@ -114,6 +128,16 @@ export type State = {
 	blocks: Array<DiagramBlock>;
 	connections: Array<DiagramConnection>;
 
+	waitAllBlocksMounted: Promise<void>;
+	waitedBlockIds: Set<DiagramBlockId>;
+
+	waitAllPortsMounted: Promise<void>;
+	waitedBlockPortsIds: Set<string>;
+
+	connectionOffset: number;
+	connectionBendOffset: number;
+	connectionBorderRadius: number,
+
 	portsElMap: Map<DiagramBlockId, Map<DiagramPortId, HTMLElement>>;
 	portsRectMap: { [DiagramBlockId]: { [DiagramPortId]: DiagramPortRect } };
 
@@ -160,4 +184,8 @@ export type State = {
 	currentAnimationItem: AnimationItem | null;
 	isPauseAnimation: boolean;
 	isStopAnimation: boolean;
+
+	shortcuts: Array<PreparedShortcut>;
+	mousePosition: Point;
+	isKeyboardInitialized: boolean;
 };

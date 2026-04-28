@@ -1417,14 +1417,21 @@ export class SliderManager
 	 */
 	handleAnchorClick(event)
 	{
-		if (!this.isAnchorBinding())
+		const link = this.extractLinkFromEvent(event);
+
+		if (!link)
 		{
 			return;
 		}
 
-		const link = this.extractLinkFromEvent(event);
+		const rule = this.getUrlRule(link.url, link);
 
-		if (!link || Dom.attr(link.anchor, 'data-slider-ignore-autobinding') !== null)
+		if (!this.isAnchorBinding() && !rule?.forceAnchorBinding)
+		{
+			return;
+		}
+
+		if (Dom.attr(link.anchor, 'data-slider-ignore-autobinding') !== null)
 		{
 			return;
 		}
@@ -1433,8 +1440,6 @@ export class SliderManager
 		{
 			return;
 		}
-
-		const rule = this.getUrlRule(link.url, link);
 
 		if (!this.isValidLink(rule, link))
 		{

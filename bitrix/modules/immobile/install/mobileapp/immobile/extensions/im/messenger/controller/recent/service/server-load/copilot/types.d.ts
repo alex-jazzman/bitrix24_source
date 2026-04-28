@@ -1,9 +1,9 @@
+import { RecentItemData } from '../chat/type';
 import {
 	ChatsCopilotDataItem,
 	CopilotRoleData,
 	MessageCopilotDataItem,
-} from '../../../../model/dialogues/src/copilot/types';
-import { RecentItemData } from '../chat/type';
+} from '../../../../../model/dialogues/src/copilot/types';
 
 declare type imV2RecentCopilotResult = {
 	hasMore: boolean,

@@ -6,14 +6,14 @@ import { getUserType } from 'im.v2.lib.analytics';
 import { AnalyticsEvent, AnalyticsSection, AnalyticsSubSection, AnalyticsTool } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
-import { isNotes } from '../helpers/is-notes';
+import { isSelfChat } from '../helpers/is-self-chat';
 
 import type { ImModelChat } from 'im.v2.model';
 
 const SelectRecipientSource = Object.freeze({
 	recent: 'recent',
 	searchResult: 'search_result',
-	notes: 'notes',
+	selfChat: 'notes',
 });
 
 type RecipientParams = {
@@ -90,7 +90,7 @@ export class MessageForward
 	#onSelectRecipient({ dialogId, position, source }: RecipientParamsWithSource): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
-		const type = isNotes(dialogId) ? SelectRecipientSource.notes : source;
+		const type = isSelfChat(dialogId) ? SelectRecipientSource.selfChat : source;
 
 		sendData({
 			tool: AnalyticsTool.im,

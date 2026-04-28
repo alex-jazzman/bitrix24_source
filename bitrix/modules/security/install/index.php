@@ -129,7 +129,8 @@ class security extends CModule
 			$this->InstallTasks();
 
 			RegisterModule("security");
-			RegisterModuleDependences("main", "OnUserDelete", "security", "CSecurityUser", "OnUserDelete");
+			RegisterModuleDependences("main", "OnAfterUserDelete", "security", "CSecurityUser", "onUserDelete");
+			RegisterModuleDependences("main", "OnAfterUserUpdate", "security", "CSecurityUser", "onAfterUserUpdate");
 			RegisterModuleDependences("main", "OnEventLogGetAuditTypes", "security", "CSecurityFilter", "GetAuditTypes");
 			RegisterModuleDependences("main", "OnEventLogGetAuditTypes", "security", "CSecurityAntiVirus", "GetAuditTypes");
 			RegisterModuleDependences("main", "OnAdminInformerInsertItems", "security", "CSecurityFilter", "OnAdminInformerInsertItems");
@@ -177,7 +178,8 @@ class security extends CModule
 		UnRegisterModuleDependences("main", "OnBeforeProlog", "security", "CSecurityFilter", "OnBeforeProlog");
 		UnRegisterModuleDependences("main", "OnEndBufferContent", "security", "CSecurityXSSDetect", "OnEndBufferContent");
 		UnRegisterModuleDependences("main", "OnBeforeUserLogin", "security", "CSecurityUser", "OnBeforeUserLogin");
-		UnRegisterModuleDependences("main", "OnUserDelete", "security", "CSecurityUser", "OnUserDelete");
+		UnRegisterModuleDependences("main", "OnAfterUserDelete", "security", "CSecurityUser", "onUserDelete");
+		UnRegisterModuleDependences("main", "OnAfterUserUpdate", "security", "CSecurityUser", "onAfterUserUpdate");
 		UnRegisterModuleDependences("main", "OnEventLogGetAuditTypes", "security", "CSecurityFilter", "GetAuditTypes");
 		UnRegisterModuleDependences("main", "OnEventLogGetAuditTypes", "security", "CSecurityAntiVirus", "GetAuditTypes");
 		UnRegisterModuleDependences("main", "OnBeforeLocalRedirect", "security", "CSecurityRedirect", "BeforeLocalRedirect");

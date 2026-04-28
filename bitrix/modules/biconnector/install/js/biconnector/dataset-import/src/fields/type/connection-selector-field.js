@@ -42,7 +42,7 @@ export const ConnectionSelectorField = {
 					id: 'connections',
 					stubOptions: {
 						title: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_NO_CONNECTIONS_TITLE'),
-						subtitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_NO_CONNECTIONS_SUBTITLE'),
+						subtitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_NO_CONNECTIONS_SUBTITLE_MSGVER_1'),
 						arrow: true,
 						icon: '/bitrix/images/biconnector/database-connections/connections-empty-state.png',
 						iconOpacity: 100,

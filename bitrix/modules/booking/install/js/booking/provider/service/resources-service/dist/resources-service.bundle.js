@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
 this.BX.Booking.Provider = this.BX.Booking.Provider || {};
-(function (exports,booking_utils,booking_core,booking_const,booking_lib_apiClient) {
+(function (exports,booking_lib_utils,booking_core,booking_const,booking_lib_apiClient) {
 	'use strict';
 
 	function mapDtoToModel(resourceDto) {
@@ -27,6 +27,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    createdAt: resourceDto.createdAt,
 	    updatedAt: resourceDto.updatedAt,
 	    deletedAt: resourceDto.deletedAt,
+	    senderCode: resourceDto.senderCode,
 	    // info
 	    isInfoNotificationOn: resourceDto.isInfoNotificationOn,
 	    templateTypeInfo: resourceDto.templateTypeInfo,
@@ -68,7 +69,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    avatar: resource != null && resource.avatar ? {
 	      id: resource.avatar.id,
 	      url: resource.avatar.url,
-	      encodedFile: resource.avatar.file ? await booking_utils.Utils.file.getBase64(resource.avatar.file) : null
+	      encodedFile: resource.avatar.file ? await booking_lib_utils.Utils.file.getBase64(resource.avatar.file) : null
 	    } : null,
 	    slotRanges: resource.slotRanges,
 	    counter: null,
@@ -77,6 +78,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    createdBy: null,
 	    createdAt: null,
 	    updatedAt: null,
+	    senderCode: resource.senderCode,
 	    // info
 	    isInfoNotificationOn: resource.isInfoNotificationOn,
 	    templateTypeInfo: resource.templateTypeInfo,
@@ -116,6 +118,35 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    var _entity$data;
 	    return !(entity.entityType === booking_const.ResourceEntityType.Calendar && ((_entity$data = entity.data) == null ? void 0 : _entity$data.userIds.length) === 0);
 	  });
+	}
+	function mapResourceSkuRelationsDtoToModel(resource) {
+	  var _resource$type;
+	  return {
+	    id: resource.id,
+	    typeId: (_resource$type = resource.type) == null ? void 0 : _resource$type.id,
+	    name: resource.name,
+	    skus: resource.skus,
+	    avatar: resource != null && resource.avatar ? {
+	      id: resource.avatar.id,
+	      url: resource.avatar.url
+	    } : null
+	  };
+	}
+
+	// eslint-disable-next-line max-len
+	function mapResourceSkuRelationsModelToDto(resource) {
+	  return {
+	    id: resource.id,
+	    type: {
+	      id: resource.typeId
+	    },
+	    name: resource.name,
+	    skus: resource.skus,
+	    avatar: resource != null && resource.avatar ? {
+	      id: resource.avatar.id,
+	      url: resource.avatar.url
+	    } : null
+	  };
 	}
 
 	var _updateResourcesFromFavorites = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateResourcesFromFavorites");
@@ -200,6 +231,32 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    }
 	    return Promise.resolve();
 	  }
+	  async loadResourceSkuRelations() {
+	    try {
+	      const {
+	        resources
+	      } = await new booking_lib_apiClient.ApiClient().get('ResourceSkuRelations.get');
+	      const resourcesSkuRelationsModel = resources.map(resourceSkuRelationsDto => {
+	        return mapResourceSkuRelationsDtoToModel(resourceSkuRelationsDto);
+	      });
+	      await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/setResourcesSkuRelations`, resourcesSkuRelationsModel)]);
+	    } catch (error) {
+	      console.error('BookingLoadResourceSkuRelations: error', error);
+	    }
+	  }
+	  async updateResourceSkuRelations(resources) {
+	    try {
+	      const resourcesSkuRelationsDto = resources.map(resourceSkuRelationsModel => {
+	        return mapResourceSkuRelationsModelToDto(resourceSkuRelationsModel);
+	      });
+	      await new booking_lib_apiClient.ApiClient().post('ResourceSkuRelations.save', {
+	        resources: resourcesSkuRelationsDto
+	      });
+	      await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Sku}/setReloadRelations`, true)]);
+	    } catch (error) {
+	      console.error('ResourceService updateResourceSkuRelations API error:', error);
+	    }
+	  }
 	}
 	function _updateResourcesFromFavorites2() {
 	  const isFilterMode = booking_core.Core.getStore().getters[`${booking_const.Model.Filter}/isFilterMode`];
@@ -218,7 +275,8 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 
 	const ResourceMappers = {
 	  mapModelToDto,
-	  mapDtoToModel
+	  mapDtoToModel,
+	  mapResourceSkuRelationsDtoToModel
 	};
 
 	exports.ResourceMappers = ResourceMappers;

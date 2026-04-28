@@ -176,7 +176,7 @@ class CBPReviewActivity extends CBPActivity implements IBPEventActivity, IBPActi
 		if ($timeoutDuration > 0)
 		{
 			$overdueDate = DateTime::createFromTimestamp(
-				time() + max($timeoutDuration, CBPSchedulerService::getDelayMinLimit())
+				CBPSchedulerService::calculateExpirationTime(time() + $timeoutDuration)
 			);
 		}
 

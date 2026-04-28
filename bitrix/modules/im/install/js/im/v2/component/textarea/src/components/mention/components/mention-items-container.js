@@ -1,8 +1,10 @@
 import { Event, Type } from 'main.core';
+import { PopupManager } from 'main.popup';
 
-import { EventType, SpecialMentionDialogId } from 'im.v2.const';
+import { EventType, PopupType, SpecialMentionDialogId } from 'im.v2.const';
 import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradient';
 import { Utils } from 'im.v2.lib.utils';
+import { Core } from 'im.v2.application.core';
 
 import { AllParticipantsItem } from './mention-item/components/all-participants-item';
 import { CopilotItem } from './mention-item/components/copilot-item';
@@ -28,13 +30,17 @@ export const MentionItemsContainer = {
 			type: String,
 			required: true,
 		},
+		items: {
+			type: Array,
+			required: true,
+		},
+		participantsIds: {
+			type: Set,
+			required: true,
+		},
 		query: {
 			type: String,
 			default: '',
-		},
-		items: {
-			type: Array,
-			default: () => [],
 		},
 	},
 	emits: ['close'],
@@ -72,6 +78,16 @@ export const MentionItemsContainer = {
 		this.getEmitter().unsubscribe(EventType.mention.selectItem, this.onInsertMentionText);
 	},
 	methods: {
+		isParticipant(id: string): boolean
+		{
+			const currentUserId = Core.getUserId().toString();
+			if (currentUserId === id)
+			{
+				return true;
+			}
+
+			return this.participantsIds.has(id);
+		},
 		getComponentToShow(id: string): BitrixVueComponentProps
 		{
 			const components = {
@@ -81,6 +97,10 @@ export const MentionItemsContainer = {
 			};
 
 			return components[id] ?? components.default;
+		},
+		onScroll()
+		{
+			PopupManager.getPopupById(PopupType.mentionAddToChatDropdown)?.close();
 		},
 		onKeyDown(event: KeyboardEvent)
 		{
@@ -160,12 +180,14 @@ export const MentionItemsContainer = {
 			:gradientHeight="GRADIENT_HEIGHT"
 			:containerMaxHeight="CONTAINER_MAX_HEIGHT"
 			:withShadow="false"
+			@scroll="onScroll"
 		>
 			<div class="bx-im-mention-popup-content__items" ref="popup-items">
 				<component
 					v-for="(item, index) in items"
 					:data-index="index"
 					:is="getComponentToShow(item.id)"
+					:isParticipant="isParticipant(item.id)"
 					:item="item"
 					:query="query"
 					:dialogId="dialogId"

@@ -3,18 +3,25 @@ import { Loader } from 'main.loader';
 import { EventEmitter } from 'main.core.events';
 import type { ListItemOptions } from 'landing.ui.component.listitem';
 
+import { CrmFormTemplatesWithSku } from 'booking.const';
+import { crmFormService } from 'booking.provider.service.crm-form-service';
+import type { ResourceModel } from 'booking.model.resources';
+import type { CatalogSkuEntityOptions } from 'booking.model.sku';
+
 import { resourceStore } from './services/resource-store';
 import { BookingSettingsDataModel } from './model/booking-settings-data-model';
-import { ResourcesManager } from './components/resources-manager/resources-manager';
 import {
 	HasSlotsAllAvailableResourcesField,
 	HintField,
 	HintVisibilityField,
 	LabelField,
 	PlaceholderField,
+	SkusAndResourcesField,
+	ResourcesField,
 } from './components/fields';
-import type { BookingSettingsData } from './types';
-import type { ResourceModel } from 'booking.model.resources';
+import type { BookingSettingsData, ManagerField } from './types';
+
+import './booking-settings-popup.css';
 
 type BookingSettingsPopupOptions = {
 	listItemOptions: ListItemOptions & { sourceOptions: { settingsData: ?BookingSettingsData } },
@@ -26,6 +33,12 @@ export class BookingSettingsPopup extends EventEmitter
 {
 	#options: ListItemOptions;
 	#layout: {
+		sku: {
+			label: LabelField,
+			placeholder: PlaceholderField,
+			hint: HintField,
+			isVisibleHint: HintVisibilityField,
+		},
 		label: LabelField,
 		placeholder: PlaceholderField,
 		hint: HintField,
@@ -35,19 +48,22 @@ export class BookingSettingsPopup extends EventEmitter
 
 	#bookingSettingsDataModel: BookingSettingsDataModel;
 	#isAutoSelectionOn: boolean;
+	#templateId: string;
 
 	#resourceLoader: ?Loader = null;
 	#loadingResources: boolean = false;
 
-	#resourcesManagerButton: ?HTMLElement = null;
+	#catalogSkuEntityOptions: ?CatalogSkuEntityOptions = null;
+	#managerField: ManagerField;
 
 	constructor({ listItemOptions, isAutoSelectionOn, templateId }: BookingSettingsPopupOptions)
 	{
 		super();
-		this.setEventNamespace('BX.Booking.CrmForm.BookingSettingsPopup');
+		this.setEventNamespace('BX.Booking.CrmForm.PublicForm.BookingSettingsPopup');
 
 		this.#options = listItemOptions;
 		this.#isAutoSelectionOn = isAutoSelectionOn;
+		this.#templateId = templateId;
 
 		this.#bookingSettingsDataModel = new BookingSettingsDataModel(
 			listItemOptions.sourceOptions.settingsData || {},
@@ -86,17 +102,46 @@ export class BookingSettingsPopup extends EventEmitter
 			(hasSlotsAllAvailableResources) => changeField({ hasSlotsAllAvailableResources }),
 			this.#isAutoSelectionOn,
 		);
+
+		this.#layout.sku = {};
+		this.#layout.sku.label = new LabelField(
+			settingsData.skuLabel || '',
+			(skuLabel: string) => changeField({ skuLabel }),
+		);
+		this.#layout.sku.placeholder = new PlaceholderField(
+			settingsData.skuTextHeader || '',
+			(skuTextHeader: string) => changeField({ skuTextHeader }),
+		);
+		this.#layout.sku.hint = new HintField(
+			settingsData.skuHint || '',
+			(skuHint: string) => changeField({ skuHint }),
+		);
+		this.#layout.sku.isVisibleHint = new HintVisibilityField(
+			Boolean(settingsData?.isVisibleSkuHint),
+			(isVisibleSkuHint) => changeField({ isVisibleSkuHint }),
+		);
+	}
+
+	get #templateWithSkus(): boolean
+	{
+		return CrmFormTemplatesWithSku.includes(this.#templateId);
 	}
 
 	async show(): void
 	{
 		await this.#loadResources(this.#getResourceIds());
 
+		if (this.#templateWithSkus)
+		{
+			await this.#loadSkus();
+		}
+
 		const container = this.#getBodyContainer();
 
 		Dom.append(this.#renderContent(), container);
 		BX.UI.Hint.init(container);
-		this.#updateResourcesCounter();
+		this.#managerField.updateCounter();
+
 		Dom.style(container, 'display', 'block');
 	}
 
@@ -112,6 +157,13 @@ export class BookingSettingsPopup extends EventEmitter
 		await resourceStore.ensure(this.#getResourceIds());
 		this.#setResourceIds(this.#filterAvailableResourceIds(ids));
 
+		this.#setLoadingResources(false);
+	}
+
+	async #loadSkus(): Promise<void>
+	{
+		this.#setLoadingResources(true);
+		this.#catalogSkuEntityOptions = await crmFormService.getCatalogSkuEntityOptions();
 		this.#setLoadingResources(false);
 	}
 
@@ -175,7 +227,12 @@ export class BookingSettingsPopup extends EventEmitter
 		return Tag.render`
 			<div class="landing-ui-form landing-ui-form-form-settings booking-crm-forms-settings">
 				<div class="landing-ui-form-description"></div>
-				${this.#renderResource()}
+				${this.#templateWithSkus ? this.#renderSkuField() : this.#renderResourceField()}
+				${this.#renderSkuLabelField()}
+				${this.#renderSkuPlaceholderField()}
+				${this.#renderSkuHintField()}
+				${this.#renderIsVisibleSkuHint()}
+				${this.#templateWithSkus ? '<div class="booking-crm-forms-settings-field-divider"></div>' : ''}
 				${this.#renderLabelField()}
 				${this.#renderPlaceholderField()}
 				${this.#renderHintField()}
@@ -185,55 +242,43 @@ export class BookingSettingsPopup extends EventEmitter
 		`;
 	}
 
-	#renderResource(): HTMLElement
+	#renderSkuField(): HTMLElement
 	{
-		this.#resourcesManagerButton = Tag.render`
-			<button
-				id="booking--crm-forms--resource-manager-button"
-				type="button"
-				class="btn btn-primary g-btn-size-l"
-				onclick="${this.#showResourcesManager.bind(this)}"
-			>
-				${this.#getResourceIds().length > 0
-			? Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_CHANGE_BUTTON')
-			: Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_ADD_BUTTON')
-		}
-			</button>
-		`;
+		this.#managerField = new SkusAndResourcesField({
+			catalogSkuEntityOptions: this.#catalogSkuEntityOptions,
+			getResources: this.#getResources.bind(this),
+			getBodyContainer: this.#getBodyContainer.bind(this),
+			onUpdateResources: (resources: { id: number, skus: number[] }[]) => {
+				this.#setResources(resources);
+				this.#updateSettings();
+			},
+		});
 
-		return Tag.render`
-			<div class="landing-ui-field d-flex">
-				<div class="flex-grow-1">
-					<div class="g-line-height-1_7 g-font-size-18 g-font-weight-500 g-color-gray-dark-v2">
-						${Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_LABEL')}
-					</div>
-					<div class="crm-form--booking-resources-count"></div>
-				</div>
-				<div style="align-self: flex-end">
-					${this.#resourcesManagerButton}
-				</div>
-			</div>
-		`;
+		return this.#managerField.render();
 	}
 
-	#showResourcesManager(): void
+	#renderResourceField(): HTMLElement
 	{
-		const resourcesManager = new ResourcesManager({
-			target: this.#resourcesManagerButton,
-			selectedIds: this.#getResourceIds(),
+		this.#managerField = new ResourcesField({
+			getResourceIds: this.#getResourceIds.bind(this),
+			getBodyContainer: this.#getBodyContainer.bind(this),
 			onUpdateResourceIds: (resourceIds: number[]) => {
 				this.#setResourceIds(resourceIds);
 				this.#updateSettings();
-				this.#updateResourcesCounter();
-				this.#updateResourceManagerButton();
 			},
 		});
-		resourcesManager.show();
+
+		return this.#managerField.render();
 	}
 
 	#getResourceIds(): number[]
 	{
 		return this.#bookingSettingsDataModel.form.resourceIds;
+	}
+
+	#getResources(): { id: number, skus: number[] }[]
+	{
+		return this.#bookingSettingsDataModel.form.resources;
 	}
 
 	#setResourceIds(resourceIds: number[] | mixin): void
@@ -244,28 +289,12 @@ export class BookingSettingsPopup extends EventEmitter
 		this.#updateSettings();
 	}
 
-	#updateResourcesCounter(): void
+	#setResources(resources: { id: number, sku: number[] }[]): void
 	{
-		const counterEl = this.#getBodyContainer().querySelector('.crm-form--booking-resources-count');
-
-		if (Type.isDomNode(counterEl))
-		{
-			counterEl.innerText = this.#getResourceIds().length > 0
-				? Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_TEXT', {
-					'#COUNT#': this.#getResourceIds().length,
-				})
-				: Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_EMPTY');
-		}
-	}
-
-	#updateResourceManagerButton(): void
-	{
-		if (Type.isDomNode(this.#resourcesManagerButton))
-		{
-			this.#resourcesManagerButton.innerText = this.#getResourceIds().length > 0
-				? Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_CHANGE_BUTTON')
-				: Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_ADD_BUTTON');
-		}
+		this.#bookingSettingsDataModel.setSettingsData({
+			resources: Type.isArray(resources) ? resources : [],
+		});
+		this.#updateSettings();
 	}
 
 	#renderLabelField(): HTMLElement
@@ -298,6 +327,46 @@ export class BookingSettingsPopup extends EventEmitter
 	#renderHasSlotsAllAvailableResources(): HTMLElement | string
 	{
 		return this.#layout.hasSlotsAllAvailableResources.getLayout();
+	}
+
+	#renderSkuLabelField(): ?HTMLElement
+	{
+		if (!this.#templateWithSkus)
+		{
+			return null;
+		}
+
+		return this.#layout.sku.label.getLayout();
+	}
+
+	#renderSkuPlaceholderField(): ?HTMLElement
+	{
+		if (!this.#templateWithSkus)
+		{
+			return null;
+		}
+
+		return this.#layout.sku.placeholder.getLayout();
+	}
+
+	#renderSkuHintField(): HTMLElement
+	{
+		if (!this.#templateWithSkus)
+		{
+			return null;
+		}
+
+		if (this.#isAutoSelectionOn && !this.#bookingSettingsDataModel.form.skuHint)
+		{
+			this.#layout.sku.hint.setValue('');
+		}
+
+		return this.#layout.sku.hint.getLayout();
+	}
+
+	#renderIsVisibleSkuHint(): HTMLElement
+	{
+		return this.#layout.sku.isVisibleHint.getLayout();
 	}
 
 	#updateSettings(settings = null): void

@@ -5,7 +5,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 (function (exports,im_v2_lib_utils,im_v2_application_core,im_v2_const,im_v2_lib_smileManager,imopenlines_v2_lib_openlines) {
 	'use strict';
 
-	const serverComponentList = new Set([im_v2_const.MessageComponent.unsupported, im_v2_const.MessageComponent.error, im_v2_const.MessageComponent.chatCreation, im_v2_const.MessageComponent.ownChatCreation, im_v2_const.MessageComponent.conferenceCreation, im_v2_const.MessageComponent.callInvite, im_v2_const.MessageComponent.copilotCreation, im_v2_const.MessageComponent.copilotMessage, im_v2_const.MessageComponent.aiAssistantMessage, im_v2_const.MessageComponent.supportVote, im_v2_const.MessageComponent.supportSessionNumber, im_v2_const.MessageComponent.supportChatCreation, im_v2_const.MessageComponent.zoomInvite, im_v2_const.MessageComponent.copilotAddedUsers, im_v2_const.MessageComponent.supervisorUpdateFeature, im_v2_const.MessageComponent.supervisorEnableFeature, im_v2_const.MessageComponent.sign, im_v2_const.MessageComponent.admin, im_v2_const.MessageComponent.checkIn, im_v2_const.MessageComponent.generalChatCreationMessage, im_v2_const.MessageComponent.generalChannelCreationMessage, im_v2_const.MessageComponent.channelCreationMessage, im_v2_const.MessageComponent.callMessage, im_v2_const.MessageComponent.voteMessage, im_v2_const.MessageComponent.convertToCollabMessage, im_v2_const.MessageComponent.sticker]);
+	const serverComponentList = new Set([im_v2_const.MessageComponent.unsupported, im_v2_const.MessageComponent.error, im_v2_const.MessageComponent.chatCreation, im_v2_const.MessageComponent.ownChatCreation, im_v2_const.MessageComponent.conferenceCreation, im_v2_const.MessageComponent.callInvite, im_v2_const.MessageComponent.copilotCreation, im_v2_const.MessageComponent.copilotMessage, im_v2_const.MessageComponent.aiAssistantMessage, im_v2_const.MessageComponent.supportVote, im_v2_const.MessageComponent.supportSessionNumber, im_v2_const.MessageComponent.supportChatCreation, im_v2_const.MessageComponent.zoomInvite, im_v2_const.MessageComponent.copilotAddedUsers, im_v2_const.MessageComponent.supervisorUpdateFeature, im_v2_const.MessageComponent.supervisorEnableFeature, im_v2_const.MessageComponent.sign, im_v2_const.MessageComponent.admin, im_v2_const.MessageComponent.checkIn, im_v2_const.MessageComponent.generalChatCreationMessage, im_v2_const.MessageComponent.generalChannelCreationMessage, im_v2_const.MessageComponent.channelCreationMessage, im_v2_const.MessageComponent.callMessage, im_v2_const.MessageComponent.voteMessage, im_v2_const.MessageComponent.convertToCollabMessage, im_v2_const.MessageComponent.sticker, im_v2_const.MessageComponent.aiBizprocMessage]);
 	const demoComponentList = new Set([im_v2_const.MessageComponent.taskChatCreationMessage]);
 	var _message = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("message");
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
@@ -17,7 +17,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _hasSticker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasSticker");
 	var _isEmptyMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEmptyMessage");
 	var _isDeletedMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDeletedMessage");
-	var _isSystemMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSystemMessage");
 	var _isEmojiOnly = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEmojiOnly");
 	var _hasSmilesOnly = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasSmilesOnly");
 	var _hasOnlyText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasOnlyText");
@@ -35,9 +34,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _isEmojiOnly, {
 	      value: _isEmojiOnly2
-	    });
-	    Object.defineProperty(this, _isSystemMessage, {
-	      value: _isSystemMessage2
 	    });
 	    Object.defineProperty(this, _isDeletedMessage, {
 	      value: _isDeletedMessage2
@@ -85,9 +81,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isServerComponent)[_isServerComponent]() || babelHelpers.classPrivateFieldLooseBase(this, _isDemoComponent)[_isDemoComponent]()) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].componentId;
 	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isSystemMessage)[_isSystemMessage]()) {
-	      return im_v2_const.MessageComponent.system;
-	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _hasFiles)[_hasFiles]()) {
 	      return im_v2_const.MessageComponent.file;
 	    }
@@ -123,9 +116,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _isDeletedMessage2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].isDeleted || babelHelpers.classPrivateFieldLooseBase(this, _isEmptyMessage)[_isEmptyMessage]();
-	}
-	function _isSystemMessage2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].authorId === 0;
 	}
 	function _isEmojiOnly2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].replyId > 0) {

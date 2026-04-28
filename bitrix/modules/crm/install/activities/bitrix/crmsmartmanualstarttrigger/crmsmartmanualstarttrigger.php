@@ -24,6 +24,7 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 
 	private const PARAM_CATEGORY_ID = 'categoryId';
 	private const PARAM_SMART_TYPE_ID = 'smartTypeId';
+	private const PARAM_ONLY_AUTOMATED_SOLUTION = 'onlyAutomatedSolution';
 	private const CRM_SMART_CATEGORY_SELECT = 'crm-smart-category-select';
 	private const CATEGORIES_BY_SMART_TYPE = 'categoriesBySmartType';
 	private const DYNAMIC_TYPE_PREFIX = 'DYNAMIC_';
@@ -35,6 +36,7 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 
 		$this->arProperties[self::PARAM_CATEGORY_ID] = null;
 		$this->arProperties[self::PARAM_SMART_TYPE_ID] = null;
+		$this->arProperties[self::PARAM_ONLY_AUTOMATED_SOLUTION] = 'N';
 		$this->setPropertiesTypes([
 			self::PARAM_SMART_TYPE_ID => [
 				'Type' => FieldType::SELECT,
@@ -42,6 +44,9 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 			self::PARAM_CATEGORY_ID => [
 				'Type' => FieldType::CUSTOM,
 				'CustomType' => self::CRM_SMART_CATEGORY_SELECT,
+			],
+			self::PARAM_ONLY_AUTOMATED_SOLUTION => [
+				'Type' => FieldType::BOOL,
 			],
 		]);
 	}
@@ -126,7 +131,12 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 			return [];
 		}
 
-		[$smartList, $categoryList] = self::getSmartProcessList();
+		$onlyAutomatedSolution = (
+				$context[self::PARAM_ONLY_AUTOMATED_SOLUTION]
+				?? $context['Properties'][self::PARAM_ONLY_AUTOMATED_SOLUTION]
+				?? 'N'
+			) === 'Y';
+		[$smartList, $categoryList, $groups] = self::getSmartProcessList($onlyAutomatedSolution);
 
 		return [
 			self::PARAM_SMART_TYPE_ID => [
@@ -136,6 +146,9 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 				'Options' => $smartList,
 				'AllowSelection' => false,
 				'Required' => true,
+				'Settings' => [
+					'Groups' => array_values($groups),
+				]
 			],
 			self::PARAM_CATEGORY_ID => [
 				'Name' => Loc::getMessage('BP_CRM_DEAL_MANUAL_START_TRIGGER_FIELD_CATEGORY_ID'),
@@ -145,6 +158,12 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 				'Settings' => [
 					self::CATEGORIES_BY_SMART_TYPE => $categoryList,
 				],
+			],
+			self::PARAM_ONLY_AUTOMATED_SOLUTION => [
+				'FieldName' => self::PARAM_ONLY_AUTOMATED_SOLUTION,
+				'Type' => FieldType::BOOL,
+				'Default' => $onlyAutomatedSolution ? 'Y' : 'N',
+				'Hidden' => true,
 			],
 		];
 	}
@@ -165,7 +184,7 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 		return array_merge($arErrors, parent::ValidateProperties($arTestProperties, $user));
 	}
 
-	protected static function getSmartProcessList(): array
+	protected static function getSmartProcessList(bool $onlyAutomatedSolution): array
 	{
 		$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap();
 		$dynamicTypesMap->load([
@@ -175,11 +194,29 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 
 		$smartList = [];
 		$categories = [];
+		$groups = [];
 		foreach ($dynamicTypesMap->getTypes() as $type)
 		{
-			if ($type->getIsBizProcEnabled() && (int)$type->getCustomSectionId() === 0)
+			if (!$type->getIsBizProcEnabled())
 			{
-				$smartKey = self::DYNAMIC_TYPE_PREFIX . $type->getEntityTypeId();
+				continue;
+			}
+			$isAutomatedSolution = (int)$type->getCustomSectionId() !== 0;
+
+			$smartKey = self::DYNAMIC_TYPE_PREFIX . $type->getEntityTypeId();
+			if ($isAutomatedSolution && $onlyAutomatedSolution)
+			{
+				$automatedSolution = Container::getInstance()->getAutomatedSolutionManager()->getAutomatedSolution(
+					$type->getCustomSectionId(),
+				);
+				$groupName = $automatedSolution['TITLE'];
+
+				$groups[$groupName]['name'] ??= $groupName;
+				$groups[$groupName]['items'][$smartKey] = $type->getTitle();
+			}
+
+			if ($isAutomatedSolution === $onlyAutomatedSolution)
+			{
 				$smartList[$smartKey] = $type->getTitle();
 
 				if ($type->getIsCategoriesEnabled())
@@ -197,6 +234,7 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 		return [
 			$smartList,
 			$categories,
+			$groups,
 		];
 	}
 

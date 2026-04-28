@@ -1,11 +1,12 @@
 import { ajax, Event, Runtime, Type } from 'main.core';
 import { BaseCache, MemoryCache } from 'main.core.cache';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Counter, CounterColor, CounterStyle } from 'ui.cnt';
+import { FeaturePromotersRegistry } from 'ui.info-helper';
+
 import { LicenseWidget as Bitrix24LicenseWidget } from 'bitrix24.license-widget';
 import { LicenseWidget as IntranetLicenseWidget } from 'intranet.license-widget';
 import { WidgetLoader } from 'intranet.widget-loader';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { FeaturePromotersRegistry } from 'ui.info-helper';
-import {Counter, CounterColor, CounterStyle} from 'ui.cnt';
 import { PULL } from 'pull.client';
 
 type LicenseButtonOptions = {
@@ -14,6 +15,7 @@ type LicenseButtonOptions = {
 		failedPayment: number,
 		awaitingInvoice: number,
 		inCheckout: number,
+		highlightIntegrator: number,
 	},
 	ordersInfo: {
 		checkoutPath: string,
@@ -46,17 +48,25 @@ export class LicenseButton
 
 		if (this.#options.isCloud)
 		{
-			this.#setCounterValue(this.#options.personalTotalCount, this.#options.commonTotalCount);
+			this.#setCounterValue(
+				this.#options.personalTotalCount,
+				this.#options.commonTotalCount,
+				this.#options.counters.highlightIntegrator,
+			);
 		}
 
 		Event.bind(this.#buttonWrapper, 'click', () => {
-			Event.unbindAll(this.#buttonWrapper);
-			this.#getWidgetLoader()
-				.createSkeletonFromConfig(options.skeleton)
-				.show();
-			Runtime.loadExtension([this.#getExtensionWidgetName()]).then(() => {
-				this.#showWidget();
-			}).catch(() => {});
+			if (this.#options.isCloud)
+			{
+				LicenseButton.#sendAnalytics({
+					tool: 'intranet',
+					category: 'header_popup',
+					event: 'show',
+					c_section: 'top_menu',
+				});
+			}
+
+			this.#openWidget();
 		});
 	}
 
@@ -70,6 +80,17 @@ export class LicenseButton
 		return 'intranet.license-widget';
 	}
 
+	static #openWidget(): void
+	{
+		Event.unbindAll(this.#buttonWrapper);
+		this.#getWidgetLoader()
+			.createSkeletonFromConfig(this.#options.skeleton)
+			.show();
+		Runtime.loadExtension([this.#getExtensionWidgetName()]).then(() => {
+			this.#showWidget();
+		}).catch(() => {});
+	}
+
 	static #showWidget(): void
 	{
 		this.#getContent().then((response) => {
@@ -78,7 +99,7 @@ export class LicenseButton
 
 			if (this.#options.isCloud)
 			{
-				licenseData = response.data;
+				licenseData = { ...response.data };
 				licenseData.loader = this.#getWidgetLoader().getPopup();
 				licenseData.wrapper = this.#buttonWrapper;
 			}
@@ -92,9 +113,21 @@ export class LicenseButton
 			}
 
 			this.#getWidget().setOptions(licenseData).show();
+			this.#getWidgetLoader().getPopup().adjustPosition();
 			Event.bind(this.#buttonWrapper, 'click', () => {
 				this.#getWidget().show();
+
+				if (this.#options.isCloud)
+				{
+					LicenseButton.#sendAnalytics({
+						tool: 'intranet',
+						category: 'header_popup',
+						event: 'show',
+						c_section: 'top_menu',
+					});
+				}
 			});
+			EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.LicenseWidget:firstShow');
 		}).catch(() => {});
 	}
 
@@ -115,7 +148,7 @@ export class LicenseButton
 		return this.#cache.remember('widgetLoader', () => {
 			return new WidgetLoader({
 				bindElement: this.#buttonWrapper,
-				width: 374,
+				width: 385,
 				id: 'bx-license-header-popup',
 			});
 		});
@@ -163,9 +196,10 @@ export class LicenseButton
 		});
 	}
 
-	static #setCounterValue(personalTotalCount: number, commonTotalCount: number): void
+	static #setCounterValue(personalTotalCount: number, commonTotalCount: number, highlightIntegrator: number = 0)
 	{
-		const value = personalTotalCount + commonTotalCount;
+		const value = personalTotalCount + commonTotalCount + highlightIntegrator;
+
 		if (value < 1)
 		{
 			this.#getCounter().destroy();
@@ -202,6 +236,23 @@ export class LicenseButton
 
 		if (this.#options.isCloud)
 		{
+			EventEmitter.subscribe(
+				EventEmitter.GLOBAL_TARGET,
+				'BX.Intranet.LicenseButton:showWidget',
+				(event: BaseEvent) => {
+					LicenseButton.#sendAnalytics({
+						tool: 'intranet',
+						category: 'header_popup',
+						event: 'show',
+						c_section: event.getData()?.c_section ?? 'search',
+					});
+					this.#openWidget();
+				},
+			);
+		}
+
+		if (this.#options.isCloud)
+		{
 			PULL.subscribe({
 				moduleId: 'bitrix24',
 				command: 'updateCountOrdersAwaitingPayment',
@@ -210,7 +261,19 @@ export class LicenseButton
 				},
 			});
 			EventEmitter.subscribe(EventEmitter.GLOBAL_TARGET, 'Bitrix24InfrastructureSlider:show', this.#showInfrastructureSlider.bind(this));
+			EventEmitter.subscribe(EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.LicenseWidget.InviteHintPopup:show', this.#resetHighlightIntegrator.bind(this));
 		}
+	}
+
+	static #resetHighlightIntegrator(): void
+	{
+		this.#options.counters.highlightIntegrator = 0;
+		this.#setCounterValue(
+			this.#options.personalTotalCount,
+			this.#options.commonTotalCount,
+			this.#options.counters.highlightIntegrator,
+		);
+		BX.userOptions.save('bitrix24', 'isIntegratorHighlighted', null, 'Y');
 	}
 
 	static #updateOptionsFromPull(params): void
@@ -303,5 +366,13 @@ export class LicenseButton
 				},
 			},
 		);
+	}
+
+	static #sendAnalytics(params): void
+	{
+		// eslint-disable-next-line promise/catch-or-return
+		Runtime.loadExtension('ui.analytics').then(({ sendData }) => {
+			sendData(params);
+		});
 	}
 }

@@ -35,7 +35,7 @@ $MESS["CRM_KANBAN_EMPTY_CARD_CT_TEXT"] = "Auto update deals";
 $MESS["CRM_KANBAN_EMPTY_CARD_CT_TEXTDEAL"] = "Automatic deal sources";
 $MESS["CRM_KANBAN_EMPTY_CARD_CT_TEXTLEAD"] = "Automatic lead sources";
 $MESS["CRM_KANBAN_EMPTY_CARD_CT_TITLE"] = "Contact Center";
-$MESS["CRM_KANBAN_EMPTY_CARD_IMPORT"] = "Import data from <a href=\"#\" class=\"crm-kanban-sidepanel\" data-url=\"marketplace\">other CRM</a> or <a href=\"#\" class=\"crm-kanban-sidepanel\" data-url=\"importexcel\" data-skipslider=\"1\">Excel spreadsheet</a>";
+$MESS["CRM_KANBAN_EMPTY_CARD_IMPORT_MSGVER_1"] = "Import data from <a href=\"#\" class=\"crm-kanban-sidepanel\" data-url=\"marketplace\">another CRM</a> or <a href=\"#\" class=\"crm-kanban-sidepanel\" data-url=\"importexcel\">Excel file</a>";
 $MESS["CRM_KANBAN_GRID_RELOAD"] = "Refresh";
 $MESS["CRM_KANBAN_HIDE_CC"] = "Hide Contact center block";
 $MESS["CRM_KANBAN_ITEM_DEBUG_TITLE_MSGVER_1"] = "Test mode on";

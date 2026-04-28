@@ -161,6 +161,7 @@ elseif($action === 'MOVE_TO_CATEGORY')
 				actualFields: $newFields,
 				previousFields: [],
 				userId: max($currentUserID, 0),
+				isManual: true,
 			));
 		}
 
@@ -1257,6 +1258,7 @@ elseif($action === 'SAVE')
 				previousFields: is_array($previousFields) ? $previousFields : [],
 				userId: max($currentUserID, 0),
 				parameters: is_string($parameters) || is_array($parameters) ? $parameters : null,
+				isManual: true,
 			);
 
 			if($isNew)
@@ -1529,7 +1531,13 @@ elseif($action === 'DELETE')
 	}
 
 	$entity = new \CCrmDeal(false);
-	if (!$entity->Delete($ID, array('PROCESS_BIZPROC' => false)))
+	if (!$entity->Delete($ID, [
+		'PROCESS_BIZPROC' => false,
+		'ANALYTICS' => [
+			'c_section' => Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
+			'c_sub_section' => Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+		],
+	]))
 	{
 		/** @var CApplicationException $ex */
 		$ex = $APPLICATION->GetException();

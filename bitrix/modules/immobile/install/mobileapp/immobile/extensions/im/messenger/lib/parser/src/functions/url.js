@@ -6,6 +6,8 @@
  * @module im/messenger/lib/parser/functions/url
  */
 jn.define('im/messenger/lib/parser/functions/url', (require, exports, module) => {
+	const { NEW_LINE } = require('im/messenger/lib/parser/const');
+
 	const parserUrl = {
 		simplify(text)
 		{
@@ -50,8 +52,8 @@ jn.define('im/messenger/lib/parser/functions/url', (require, exports, module) =>
 				return `[IMG]${match}[/IMG]`;
 			});
 
-			text = text.replace(/(.)(\[img)/gim, '$1\n$2');
-			text = text.replace(/(\/img])(.)/gim, '$1\n$2');
+			text = text.replace(/(.)(\[img)/gim, `$1${NEW_LINE}$2`);
+			text = text.replace(/(\/img])(.)/gim, `$1${NEW_LINE}$2`);
 
 			return text;
 		},

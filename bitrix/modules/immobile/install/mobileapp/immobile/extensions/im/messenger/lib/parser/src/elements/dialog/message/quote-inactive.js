@@ -1,13 +1,11 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
 
 /**
  * @module im/messenger/lib/parser/elements/dialog/message/quote-inactive
  */
 jn.define('im/messenger/lib/parser/elements/dialog/message/quote-inactive', (require, exports, module) => {
-
 	const { Type } = require('type');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class QuoteInactive
@@ -26,6 +24,11 @@ jn.define('im/messenger/lib/parser/elements/dialog/message/quote-inactive', (req
 			if (Type.isStringFilled(title))
 			{
 				this.title = title;
+			}
+
+			if (Feature.isChatDialogExpandingQuoteSupported)
+			{
+				this.displayLinesNumber = 4;
 			}
 		}
 

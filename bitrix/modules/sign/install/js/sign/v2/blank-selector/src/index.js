@@ -3,6 +3,7 @@ import { DateTimeFormat } from 'main.date';
 import { Loader } from 'main.loader';
 import { Popup } from 'main.popup';
 import { EventEmitter, BaseEvent } from 'main.core.events';
+import { BlankScenario } from 'sign.type';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Layout } from 'ui.sidepanel.layout';
 import { TileWidget } from 'ui.uploader.tile-widget';
@@ -11,13 +12,19 @@ import { Api } from 'sign.v2.api';
 import { ListItem } from './list-item';
 import { Blank } from './blank';
 import { BlankField } from './blank-field';
-import type { BlankSelectorConfig, BlankData, ListItemProps, BlankProps, ToggleEvent } from './types/type';
+import { DragDropHandler } from './handlers/drag-drop-handler';
+import type { BlankSelectorConfig, BlankData, ListItemProps, BlankProps, ToggleEvent, ButtonConfig } from './types/type';
 import { UI } from 'ui.notification';
 import './style.css';
 
 type RemoveOptions = {
 	removeFromServer: boolean;
 };
+
+const blankType = Object.freeze({
+	default: 'default',
+	placeholders: 'placeholders',
+});
 
 const uploaderOptions = {
 	controller: 'sign.upload.blankUploadController',
@@ -26,6 +33,9 @@ const uploaderOptions = {
 		'.png', '.pdf',
 		'.doc', '.docx',
 		'.rtf', '.odt',
+	],
+	acceptedPlaceholdersFileTypes: [
+		'.docx',
 	],
 	multiple: true,
 	autoUpload: false,
@@ -72,6 +82,7 @@ export class BlankSelector extends EventEmitter
 	#loadMoreButton: HTMLElement;
 	#api: Api;
 	#config: BlankSelectorConfig;
+	#isPlaceholdersUpload: boolean = false;
 
 	constructor(config: BlankSelectorConfig)
 	{
@@ -82,6 +93,7 @@ export class BlankSelector extends EventEmitter
 		this.selectedBlankId = 0;
 		this.#blanks = new Map();
 		this.#page = 0;
+		this.#isPlaceholdersUpload = false;
 		const uploadButtons = this.#createUploadButtons();
 		const dragArea = Tag.render`
 			<label class="sign-blank-selector__list_drag-area-label">
@@ -116,6 +128,7 @@ export class BlankSelector extends EventEmitter
 				${dragArea}
 			</div>
 		`;
+		new DragDropHandler(this.#uploadButtonsContainer);
 		this.#tileWidget = new TileWidget({
 			...uploaderOptions,
 			...config.uploaderOptions,
@@ -126,6 +139,7 @@ export class BlankSelector extends EventEmitter
 				[UploaderEvent.FILE_ADD]: (event) => this.#onFileAdd(event),
 				[UploaderEvent.FILE_REMOVE]: (event) => this.#onFileRemove(event),
 				[UploaderEvent.UPLOAD_START]: (event) => this.#onUploadStart(event),
+				[UploaderEvent.UPLOAD_COMPLETE]: (event) => this.#onUploadComplete(event),
 			},
 		}, widgetOptions);
 		this.#relatedTarget = null;
@@ -159,13 +173,22 @@ export class BlankSelector extends EventEmitter
 		this.#api = new Api();
 	}
 
+	#getAcceptedFileTypes(): string[]
+	{
+		return this.#isPlaceholdersUpload
+			? uploaderOptions.acceptedPlaceholdersFileTypes
+			: uploaderOptions.acceptedFileTypes
+		;
+	}
+
 	#checkForFilesValid(addedFiles: UploaderFile[]): boolean
 	{
 		const isImage = (file) => file.getType().includes('image/');
 		const allAddedImages = addedFiles.every((file) => isImage(file));
+		const acceptedFileTypes = this.#getAcceptedFileTypes();
 		const validExtension = addedFiles.every((file) => {
 			// TODO merge with this.#config.uploaderOptions.acceptedFileTypes
-			return uploaderOptions.acceptedFileTypes.includes(
+			return acceptedFileTypes.includes(
 				`.${file.getExtension()}`,
 			);
 		});
@@ -207,6 +230,13 @@ export class BlankSelector extends EventEmitter
 		}
 
 		let bindElement = this.#uploadButtonsContainer.firstElementChild;
+		let messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_HINT';
+		if (this.#isPlaceholdersUpload)
+		{
+			bindElement = this.#uploadButtonsContainer.querySelector('.--placeholders');
+			messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_PLACEHOLDERS_HINT';
+		}
+
 		if (Dom.hasClass(this.#uploadButtonsContainer, '--hidden'))
 		{
 			const {
@@ -215,15 +245,20 @@ export class BlankSelector extends EventEmitter
 			bindElement = container.firstElementChild;
 		}
 
-		const errorPopup = new Popup({
-			...errorPopupOptions,
-			bindElement,
-			content: Loc.getMessage(
-				'SIGN_BLANK_SELECTOR_UPLOAD_HINT',
-				{ '%imageCountLimit%': this.#getImagesLimit() },
-			),
-		});
-		errorPopup.show();
+		// Wait for CSS transition to complete before showing popup
+		setTimeout(() => {
+			const errorPopup = new Popup({
+				...errorPopupOptions,
+				bindElement,
+				content: Loc.getMessage(
+					messageCode,
+					{ '%imageCountLimit%': this.#getImagesLimit() },
+				),
+			});
+			errorPopup.show();
+			setTimeout(() => errorPopup.close(), 7000);
+		}, 200);
+
 		uploaderEvent.preventDefault();
 	}
 
@@ -237,10 +272,25 @@ export class BlankSelector extends EventEmitter
 
 	#onFileAdd(event: BaseEvent)
 	{
-		const title = event.data.file.getName();
+		const file = event.data.file;
+		const title = file.getName();
+
+		if (this.#isPlaceholdersUpload)
+		{
+			file.setCustomData('uploadType', blankType.placeholders);
+		}
+		else
+		{
+			file.setCustomData('uploadType', blankType.default);
+		}
+
 		this.#toggleTileVisibility(true);
 		this.resetSelectedBlank();
 		this.emit(this.events.addFile, { title: this.#normalizeTitle(title) });
+	}
+
+	#onUploadComplete() {
+		this.#isPlaceholdersUpload = false;
 	}
 
 	getUploadedFileName(fileIndex: number): string | null
@@ -302,7 +352,52 @@ export class BlankSelector extends EventEmitter
 
 	#createUploadButtons(): Array<HTMLElement>
 	{
-		const buttons = {
+		const entries = Object.entries(this.#getUploadButtonsConfig());
+
+		return entries.map(([key, config]) => {
+			const isPlaceholders = key === blankType.placeholders;
+			const listItem: ListItem<ListItemProps> = new ListItem({
+				title: config.title,
+				description: config.description,
+				modifier: key,
+				link: config.link ?? null,
+				onLinkClick: config.onLinkClick ?? null,
+				isNew: isPlaceholders,
+				isPlaceholderDocumentAvailable: this.#isPlaceholderDocumentAvailable(),
+				dragDescriptionTextHTML: config.dragDescriptionTextHTML ?? null,
+				onDragEnter: () => {
+					this.#isPlaceholdersUpload = isPlaceholders;
+				},
+			});
+
+			Event.bind(listItem.getLayout(), 'click', () => {
+				this.#isPlaceholdersUpload = isPlaceholders;
+			});
+
+			return listItem.getLayout();
+		});
+	}
+
+	#getUploadButtonsConfig(): Record<string, ButtonConfig>
+	{
+		if (this.#isPlaceholderDocumentAvailable())
+		{
+			return this.#getB2eButtonsConfig();
+		}
+
+		return this.#getB2bButtonsConfig();
+	}
+
+	#isPlaceholderDocumentAvailable(): boolean
+	{
+		return this.#config.type === BlankScenario.b2e
+			&& this.#config.isPlaceholderDocumentEnabled
+		;
+	}
+
+	#getB2bButtonsConfig(): Record<string, ButtonConfig>
+	{
+		return {
 			img: {
 				title: Loc.getMessage('SIGN_BLANK_SELECTOR_CREATE_NEW_PIC'),
 				description: 'jpeg, png',
@@ -316,17 +411,34 @@ export class BlankSelector extends EventEmitter
 				description: 'doc, docx',
 			},
 		};
-		const entries = Object.entries(buttons);
+	}
 
-		return entries.map(([key, { title, description }]) => {
-			const listItem: ListItem<ListItemProps> = new ListItem({
-				title,
-				description,
-				modifier: key,
-			});
-
-			return listItem.getLayout();
-		});
+	#getB2eButtonsConfig(): Record<string, ButtonConfig>
+	{
+		return {
+			placeholders: {
+				title: 'docx',
+				description: Loc.getMessage('SIGN_BLANK_SELECTOR_PLACEHOLDERS_DOCX_MSGVER_1'),
+				link: Loc.getMessage('SIGN_BLANK_SELECTOR_PLACEHOLDERS_LINK_MSGVER_1'),
+				onLinkClick: () => {
+					void top.BX.Runtime.loadExtension('sign.v2.grid.b2e.placeholders').then(() => {
+						new top.BX.Sign.V2.Grid.B2e.Placeholders().show();
+					});
+				},
+				dragDescriptionTextHTML: Loc.getMessage('SIGN_BLANK_SELECTOR_DROP_ZONE_PLACEHOLDERS', {
+					'[highlight]': '<span class="sign-blank-selector__list_item-drag-overlay-highlighting">',
+					'[/highlight]': '</span>',
+				}),
+			},
+			mixed: {
+				title: 'pdf, png, doc, jpeg',
+				description: Loc.getMessage('SIGN_BLANK_SELECTOR_MIXED'),
+				dragDescriptionTextHTML: Loc.getMessage('SIGN_BLANK_SELECTOR_DROP_ZONE_MIXED', {
+					'[highlight]': '<span class="sign-blank-selector__list_item-drag-overlay-highlighting">',
+					'[/highlight]': '</span>',
+				}),
+			},
+		};
 	}
 
 	async #resumeUploading()
@@ -362,14 +474,19 @@ export class BlankSelector extends EventEmitter
 		try
 		{
 			const filesIds = files.map((file) => file.getServerFileId());
+			const hasPlaceholders = files.some(
+				(file) => file.getCustomData('uploadType') === blankType.placeholders,
+			);
 			const blankData = await this.#api.createBlank(
 				filesIds,
 				this.#config.type ?? null,
 				isTemplateMode(this.#config.documentMode),
+				hasPlaceholders,
 			);
 			this.#setupBlank({
 				...blankData,
 				userName: Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),
+				hasPlaceholders,
 			}, blank);
 
 			return blankData.id;
@@ -406,14 +523,18 @@ export class BlankSelector extends EventEmitter
 		try
 		{
 			const filesIds = files.map((file): string => file.getServerFileId());
+			const hasPlaceholders = files.some((file) => file.getCustomData('uploadType') === 'placeholders');
+
 			const blankData = await this.#api.createBlank(
 				filesIds,
 				this.#config.type ?? null,
 				isTemplateMode(this.#config.documentMode),
+				hasPlaceholders,
 			);
 			this.#setupBlank({
 				...blankData,
 				userName: Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),
+				hasPlaceholders,
 			}, blank);
 
 			return blankData.id;
@@ -477,6 +598,7 @@ export class BlankSelector extends EventEmitter
 			userAvatarUrl,
 			userName,
 			dateCreate,
+			hasPlaceholders = false,
 		} = blankData;
 		const creationDate = dateCreate ? new Date(dateCreate) : new Date();
 		const descriptionText = `${userName}, ${DateTimeFormat.format('j M. Y', creationDate)}`;
@@ -484,6 +606,12 @@ export class BlankSelector extends EventEmitter
 		blank.setReady(true);
 		blank.setPreview(previewUrl);
 		blank.setAvatarWithDescription(descriptionText, userAvatarUrl);
+
+		if (hasPlaceholders)
+		{
+			blank.getLayout().dataset.hasPlaceholders = 'true';
+		}
+
 		this.#blanks.set(blankId, blank);
 	}
 
@@ -610,6 +738,15 @@ export class BlankSelector extends EventEmitter
 
 		return this.#tileWidget.getUploader().getFiles()
 			.every((file: UploaderFile) => file.getErrors().length <= 0)
+		;
+	}
+
+	hasPlaceholderFilesForUpload(): boolean
+	{
+		return this.#tileWidget
+			.getUploader()
+			.getFiles()
+			.some((file: UploaderFile) => file.getCustomData('uploadType') === blankType.placeholders)
 		;
 	}
 

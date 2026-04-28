@@ -4,7 +4,7 @@ $MESS['INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_SITE_TITLE'] = 'Сайт-ви�
 $MESS['INTRANET_SETTINGS_WIDGET_SECTION_SECURITY_TITLE'] = 'Безопасность';
 $MESS['INTRANET_SETTINGS_WIDGET_SECTION_SETTINGS_TITLE'] = 'Настройки';
 $MESS['INTRANET_SETTINGS_WIDGET_SECTION_MIGRATION_TITLE'] = 'Импорт в Битрикс24';
-$MESS['INTRANET_SETTINGS_WIDGET_MAIN_PAGE_TITLE'] = 'Главная страница: наш вайб';
+$MESS['INTRANET_SETTINGS_WIDGET_WELCOME_PAGE_TITLE'] = 'Главная страница';
 
 $MESS['INTRANET_SETTINGS_WIDGET_REDIRECT_TO_REQUISITE_BUTTON'] = 'Перейти';
 $MESS['INTRANET_SETTINGS_WIDGET_COPY_LINK_BUTTON'] = 'Копировать ссылку';

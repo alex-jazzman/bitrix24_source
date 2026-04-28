@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/push/message-handler/messenger', (require, exports, module) => {
 	const { Type } = require('type');
-	const { WaitingEntity, RecentTab, CounterType } = require('im/messenger/const');
+	const { RecentTab } = require('im/messenger/const');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { BasePushMessageHandler } = require('im/messenger/provider/push/message-handler/base');
 
@@ -12,22 +12,6 @@ jn.define('im/messenger/provider/push/message-handler/messenger', (require, expo
 	 */
 	class MessengerPushMessageHandler extends BasePushMessageHandler
 	{
-		prepareData(componentEventList)
-		{
-			const modelData = super.prepareData(componentEventList);
-
-			return {
-				...modelData,
-				counters: this.prepareCounters(componentEventList),
-			};
-		}
-
-		async setData(modelData)
-		{
-			await this.setCounters(modelData.counters);
-			await super.setData(modelData);
-		}
-
 		/**
 		 * @param {Array<MessengerPushEvent>} eventList
 		 * @return {Array<MessengerPushEvent>}
@@ -68,10 +52,10 @@ jn.define('im/messenger/provider/push/message-handler/messenger', (require, expo
 		}
 
 		/**
-		 * @param {Array<MessengerPushEvent>} eventList
+		 * @param {Array<{event: MessengerPushEvent, helper: PushHelper}>} items
 		 * @return {Record<string, Array<object>>}
 		 */
-		prepareRecentItems(eventList)
+		prepareRecentItems(items)
 		{
 			const groups = {
 				[RecentTab.chat]: {},
@@ -80,10 +64,9 @@ jn.define('im/messenger/provider/push/message-handler/messenger', (require, expo
 				[RecentTab.tasksTask]: {},
 			};
 
-			for (const event of eventList)
+			for (const { event, helper } of items)
 			{
-				const helper = this.getHelper(event);
-				const message = this.prepareRecentMessage(event);
+				const message = this.prepareRecentMessage({ event, helper });
 
 				const recentItem = RecentDataConverter.fromPushToModel({
 					id: String(helper.getDialogId()),
@@ -125,55 +108,6 @@ jn.define('im/messenger/provider/push/message-handler/messenger', (require, expo
 			return groups;
 		}
 
-		/**
-		 * @param {Array<MessengerPushEvent>} eventList
-		 * @return {Array<CounterModelState>}
-		 */
-		prepareCounters(eventList)
-		{
-			/**
-			 * @type {Record<number, CounterModelState>}
-			 */
-			const counterCollection = {};
-
-			for (const event of eventList)
-			{
-				const { params } = event;
-				const helper = this.getHelper(event);
-				const chatId = helper.getChatId();
-
-				if (helper.isCollabChat())
-				{
-					counterCollection[chatId] = {
-						counter: params.counter,
-						chatId,
-						type: CounterType.collab,
-					};
-
-					continue;
-				}
-
-				if (helper.isCopilotChat())
-				{
-					counterCollection[chatId] = {
-						counter: params.counter,
-						chatId,
-						type: CounterType.copilot,
-					};
-
-					continue;
-				}
-
-				counterCollection[helper.getChatId()] = {
-					counter: params.counter,
-					chatId,
-					type: CounterType.chat,
-				};
-			}
-
-			return Object.values(counterCollection);
-		}
-
 		async setRecent(groups = {})
 		{
 			await this.store.dispatch('recentModel/setGroupCollection', {
@@ -189,6 +123,22 @@ jn.define('im/messenger/provider/push/message-handler/messenger', (require, expo
 			}
 
 			await this.store.dispatch('counterModel/setList', { counterList });
+		}
+
+		/**
+		 * @param {Array<StickerState>} stickers
+		 * @return {Promise<void>}
+		 */
+		async setStickers(stickers = [])
+		{
+			if (!Type.isArrayFilled(stickers))
+			{
+				return;
+			}
+
+			await this.store.dispatch('stickerPackModel/addStickersFromPush', {
+				stickers,
+			});
 		}
 	}
 

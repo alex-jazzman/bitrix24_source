@@ -15,7 +15,9 @@ return [
 		'./src/model',
 		'./src/normalizer',
 		'./src/default-element',
-		'./src/search/validator',
-		'./src/search/model',
+		'./src/resolvers',
+		'./src/filter/model',
+		'./src/filter/default-element',
+		'./src/filter/normalizer',
 	],
 ];

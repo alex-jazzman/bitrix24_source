@@ -8,6 +8,9 @@ import {
 	DashboardGroupsField,
 	ClearCacheField,
 	DashboardLanguageField,
+	DatasetTypingField,
+	TimeZoneField,
+	GlobalSettingsButtonField,
 } from './entities/index';
 
 export class FieldFactory
@@ -36,6 +39,12 @@ export class FieldFactory
 				return ClearCacheField.create(controlId, settings);
 			case 'dashboardLanguage':
 				return DashboardLanguageField.create(controlId, settings);
+			case 'datasetTyping':
+				return DatasetTypingField.create(controlId, settings);
+			case 'timeZone':
+				return TimeZoneField.create(controlId, settings);
+			case 'globalSettingsButton':
+				return GlobalSettingsButtonField.create(controlId, settings);
 			default:
 				return null;
 		}

@@ -82,14 +82,20 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 		readChannelComments(dialogId)
 		{
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			if (!this.#hasCommentsCounters(dialog.chatId))
+			{
+				return Promise.resolve({});
+			}
 			this.#readChannelCommentsLocal(dialog.chatId);
 
 			return runAction(RestMethod.imV2ChatCommentReadAll, {
 				data: { dialogId },
-			}).catch((error) => {
-				// eslint-disable-next-line no-console
-				logger.error('readAllChannelComments server error', error);
-			});
+			})
+				.then(() => {
+					return serviceLocator.get('counters-update-system').readChildren(dialog.chatId);
+				}).catch((error) => {
+					logger.error('readChannelComments error', error);
+				});
 		}
 
 		// eslint-disable-next-line consistent-return
@@ -122,6 +128,13 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 			{
 				logger.error('readChannelCommentsLocal old Messenger error', error);
 			}
+		}
+
+		#hasCommentsCounters(channelChatId)
+		{
+			const commentCounters = this.store.getters['counterModel/getNumberChildCounters'](channelChatId);
+
+			return commentCounters > 0;
 		}
 	}
 

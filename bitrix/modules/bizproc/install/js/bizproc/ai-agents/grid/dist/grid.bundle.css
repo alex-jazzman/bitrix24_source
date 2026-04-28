@@ -1,4 +1,4 @@
-/* Variables */
+/* region Variables */
 :root {
 	--bar-width: 4px;
 	--bar-step: 4px;
@@ -10,7 +10,9 @@
 	--avatar-counter-size: 24px;
 }
 
-/* Typography Utils */
+/* endregion */
+
+/* region Typography Utils */
 .bizproc-ai-agents-one-line-height {
 	display: -webkit-box;
 	-webkit-line-clamp: 1;
@@ -31,7 +33,9 @@
 	max-height: calc(1.4 * var(--ui-font-size-sm) * 2);
 }
 
-/* Agent Info Field */
+/* endregion */
+
+/* region Agent Info Field */
 .bizproc-ai-agents-grid-agent-name {
 	color: var(--ui-color-accent-main-link);
 	margin-bottom: 4px;
@@ -42,7 +46,9 @@
 	margin-bottom: 4px;
 }
 
-/* Employee Field */
+/* endregion */
+
+/* region Employee Field */
 .agent-grid_employee-card-container {
 	display: flex;
 	align-items: center;
@@ -75,7 +81,9 @@
 	gap: 8px;
 }
 
-/* Full Name Field */
+/* endregion */
+
+/* region Full Name Field */
 .agent-grid_full-name-wrapper {
 	max-width: calc(100% - 50px);
 }
@@ -96,7 +104,9 @@
 	max-width: 100%;
 }
 
-/* Load Indicator */
+/* endregion */
+
+/* region Load Indicator */
 .agent-grid-load-indicator {
 	display: flex;
 	align-items: flex-end;
@@ -145,7 +155,9 @@
 	fill: var(--bar-bg-active);
 }
 
-/* Used By Field */
+/* endregion */
+
+/* region Used By Field */
 .agent-grid-used-by-container {
 	display: flex;
 	flex-direction: column;
@@ -384,7 +396,9 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 	color: var(--ui-color-base-3);
 }
 
-/* Launch Control Field */
+/* endregion */
+
+/* region Launch Control Field */
 
 .launch-control-field-date
 {
@@ -472,3 +486,5 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 .launch-control-field-rag-files-hint > span {
 	margin: 0;
 }
+
+/* endregion */

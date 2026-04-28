@@ -21,11 +21,15 @@ export class SuccessView extends BaseView
 	{
 		Analytics.sendEvent(Analytics.ADD_PHONE_SUCCESS);
 		setTimeout(() => {
-			this.#setConfetti();
+			this.#setConfetti().then(() => {
+				setTimeout(() => {
+					this.emit('onParentClose');
+				}, 1000);
+			});
 		}, 500);
 	}
 
-	#setConfetti(): void
+	#setConfetti(): Promise
 	{
 		if (Browser.isFirefox())
 		{
@@ -44,20 +48,19 @@ export class SuccessView extends BaseView
 				resize: true,
 				useWorker: true,
 			});
-			confetti({
+
+			return confetti({
 				particleCount: 250,
 				origin: { y: 0.65 },
 				spread: 100,
 			});
 		}
-		else
-		{
-			Confetti.fire({
-				particleCount: 250,
-				spread: 100,
-				origin: { y: 0.65 },
-				zIndex: 111_111,
-			});
-		}
+
+		return Confetti.fire({
+			particleCount: 250,
+			spread: 100,
+			origin: { y: 0.65 },
+			zIndex: 111_111,
+		});
 	}
 }

@@ -21,4 +21,5 @@ export const PopupType = Object.freeze({
 	stickerContextMenu: 'im-sticker-context-menu',
 	stickerPackContextMenu: 'im-sticker-pack-context-menu',
 	sharedLinkContextMenu: 'im-shared-link-context-menu',
+	mentionAddToChatDropdown: 'im-mention-add-to-chat-dropdown',
 });

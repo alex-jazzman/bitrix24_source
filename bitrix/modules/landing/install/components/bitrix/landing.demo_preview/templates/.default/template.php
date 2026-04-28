@@ -34,6 +34,7 @@ Extension::load([
 	'ui.alerts',
 	'ui.progressbar',
 	'ui.notification',
+	'landing.settingsform.colorpickertheme',
 	'landing.metrika',
 	'main.qrcode',
 	'ui.analytics',
@@ -65,12 +66,14 @@ if (!$template)
 
 // create store
 $externalImport = !empty($arResult['EXTERNAL_IMPORT']);
-$isCreateStore = !$externalImport &&
-			   !$arResult['DISABLE_IMPORT'] &&
-			   ($arParams['SITE_ID'] <= 0) &&
-			   (in_array('STORE', (array) $template['TYPE']));
+$isCreateStore =
+	!$externalImport
+	&& !$arResult['DISABLE_IMPORT']
+	&& ($arParams['SITE_ID'] <= 0)
+	&& (in_array('STORE', (array)$template['TYPE'], true))
+;
 
-$isCreateMainpage = $arParams['TYPE'] === Type::SCOPE_CODE_MAINPAGE;
+$isCreateVibe = (bool)($arParams['IS_VIBE'] ?? false);
 
 if ($isCreateStore)
 {
@@ -113,8 +116,8 @@ else
 				<span class="landing-ui-panel-top-logo-icon far fa-clock-three"></span>
 				<?php if ($arParams['TYPE'] === 'KNOWLEDGE' || $arParams['TYPE'] === 'GROUP'):?>
 					<span class="landing-ui-panel-top-logo-text left-spaced"><?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_KB')?></span>
-				<?php elseif ($isCreateMainpage) : ?>
-					<span class="landing-ui-panel-top-logo-text left-spaced"><?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_MAINPAGE')?></span>
+			<?php elseif ($isCreateVibe) : ?>
+					<span class="landing-ui-panel-top-logo-text left-spaced"><?=Loc::getMessage('LANDING_TPL_DEMO_PREVIEW_LOGO_WELCOME_PAGE')?></span>
 				<?php else:?>
 					<span class="landing-ui-panel-top-logo-text left-spaced"><?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_SITE')?></span>
 				<?php endif;?>
@@ -128,7 +131,7 @@ else
 			<?= htmlspecialcharsbx($template['TITLE'])?>
 		</div>
 		<div class="right-part">
-			<?php if (!$isCreateMainpage): ?>
+			<?php if (!$isCreateVibe): ?>
 			<div class="mobile-view ui-btn ui-btn-light-border ui-btn-round">
 				<?= Loc::getMessage('LANDING_TPL_BUTTON_SHOW_IN_MOBILE')?>
 			</div>
@@ -149,7 +152,7 @@ else
 					>
 						<?php if(isset($arParams['REPLACE_LID']) && $arParams['REPLACE_LID'] !== 0) : ?>
 							<?=Loc::getMessage('LANDING_TPL_BUTTON_REPLACE_PAGE') ?>
-						<?php elseif ($arParams['SITE_ID'] !== 0) : ?>
+						<?php elseif ($arParams['SITE_ID'] || $arParams['REPLACE_SITE_ID']) : ?>
 							<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE_PAGE') ?>
 						<?php else : ?>
 							<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE_SITE') ?>
@@ -200,7 +203,7 @@ else
 					</a>
 					<?php
 				}
-				elseif ($arParams['SITE_ID'] !== 0)
+				elseif ($arParams['SITE_ID'] || $arParams['REPLACE_SITE_ID'])
 				{
 					?>
 					<a
@@ -236,7 +239,7 @@ else
 	<div class="landing-template-preview">
 		<div class="preview-container">
 			<div class="preview-left">
-				<?php if ($isCreateMainpage):?>
+				<?php if ($isCreateVibe):?>
 					<div class="preview-desktop --main-page">
 						<div class="preview-header">
 							<div class="preview-header-left">
@@ -366,8 +369,8 @@ else
 	?>
 	BX.Landing.TemplatePreviewInstance = BX.Landing.TemplatePreview.getInstance({
 		createStore: <?= ($isCreateStore ? 'true' : 'false') ?>,
-		createMainpage: <?= ($isCreateMainpage ? 'true' : 'false') ?>,
-		isMainpageExists: <?= ($arParams['MAINPAGE_EXISTS'] ?? false) ? 'true' : 'false' ?>,
+		createVibe: <?= ($isCreateVibe ? 'true' : 'false') ?>,
+		isVibeExists: <?= ($arParams['IS_VIBE_EXISTS'] ?? false) ? 'true' : 'false' ?>,
 		disableClickHandler: <?=(isset($arResult['EXTERNAL_IMPORT']['onclick']) ? 'true' : 'false') ?>,
 		messages: {
 			LANDING_LOADER_WAIT: "<?= CUtil::jsEscape(Loc::getMessage('LANDING_LOADER_WAIT_MSGVER_1')) ?>",
@@ -380,13 +383,14 @@ else
 		},
 		disableStoreRedirect: <?= ($arParams['DISABLE_REDIRECT'] === 'Y') ? 'true' : 'false' ?>,
 		zipInstallPath: '<?= ($template['ZIP_ID'] ?? null) ? Url::getConfigurationImportZipUrl($template['ZIP_ID']) : '' ?>',
-		appCode: '<?= $appCode ?>',
-		siteId: <?= ($arParams['SITE_ID'] > 0) ? $arParams['SITE_ID'] : 0 ?>,
-		replaceLid: <?= $arParams['REPLACE_LID'] ?? 0 ?>,
+		appCode: '<?= $template['APP_CODE'] ?>',
+		siteId: <?= (int)($arParams['SITE_ID'] ?? 0) ?>,
+		replaceLid: <?= (int)($arParams['REPLACE_LID'] ?? 0) ?>,
+		replaceSiteId: <?= (int)($arParams['REPLACE_SITE_ID'] ?? 0) ?>,
+		folderId: <?= (int)($arParams['FOLDER_ID'] ?? 0) ?>,
 		isCrmForm: '<?= $arParams['IS_CRM_FORM'] ?? 'N' ?>',
 		isKnowledgeBase: '<?= $isKnowledgeBase ? 'Y' : 'N' ?>',
 		langId: "<?= is_string($arParams['LANG_ID']) ? $arParams['LANG_ID'] : ''?>",
-		folderId: <?= ($arResult['FOLDER_ID'] ?? 0 && $arResult['FOLDER_ID'] > 0) ? $arResult['FOLDER_ID'] : 0 ?>,
 		adminSection: <?= $arParams['ADMIN_SECTION'] === 'Y' ? 'true' : 'false'?>,
 		urlPreview: <?=CUtil::PhpToJSObject($template['URL_PREVIEW'])?>,
 		tool: "<?= $tool ?? null ?>",

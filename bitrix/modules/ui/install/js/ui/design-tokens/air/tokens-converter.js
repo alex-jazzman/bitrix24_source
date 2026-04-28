@@ -4,14 +4,14 @@ const path = require('path');
 
 // List of special figma tokens that are in hexa format (with transparency)
 const specialHexTokens = [
-	"backgrounds/state/bg-state-hover-default",
-	"backgrounds/state/bg-state-click-default",
-	"backgrounds/state/bg-state-hover-alt",
-	"backgrounds/state/bg-state-click-alt",
-	"backgrounds/state/bg-state-hover-default-overlay",
-	"backgrounds/state/bg-state-click-default-overlay",
-	"backgrounds/state/bg-state-hover-alt-overlay",
-	"backgrounds/state/bg-state-click-alt-overlay"
+	"ui-color-bg-state-hover-default",
+	"ui-color-bg-state-click-default",
+	"ui-color-bg-state-hover-alt",
+	"ui-color-bg-state-click-alt",
+	"ui-color-bg-state-hover-default-overlay",
+	"ui-color-bg-state-click-default-overlay",
+	"ui-color-bg-state-hover-alt-overlay",
+	"ui-color-bg-state-click-alt-overlay"
 ];
 
 /**
@@ -36,18 +36,29 @@ function applyCustomRules(token, defaultValue)
 }
 
 /**
- * Checks if the token should be ignored based on excluded sections.
+ * Checks if the token should be ignored based on excluded sections and excluded name patterns.
  * Splits the token name by '/' and returns true if any section is in the excludedSections list.
+ * Also returns true if the token name (lowercased) contains any of the excludeNamePatterns substrings.
  * @param {string} tokenName - The full token name (e.g., "base/ignore/base 0")
  * @param {Array<string>} excludedSections - Array of section names to ignore
+ * @param {Array<string>} excludeNamePatterns - Array of substrings to match against the token name
  * @returns {boolean} True if the token should be ignored, false otherwise
  */
-function shouldIgnoreToken(tokenName, excludedSections)
+function shouldIgnoreToken(tokenName, excludedSections, excludeNamePatterns = [])
 {
 	const parts = tokenName.split('/');
 	for (const part of parts)
 	{
 		if (excludedSections.includes(part))
+		{
+			return true;
+		}
+	}
+
+	const lowerName = tokenName.toLowerCase();
+	for (const pattern of excludeNamePatterns)
+	{
+		if (lowerName.includes(pattern.toLowerCase()))
 		{
 			return true;
 		}
@@ -73,9 +84,9 @@ function transformTokenName(originalName, type)
 	const parts = originalName.split('/');
 	let lastPart = parts[parts.length - 1];
 	lastPart = lastPart.replace(/\s+/g, '-').toLowerCase();
-	const typePrefix = type === 'color' ? 'color-' : '';
+	const typePrefix = '';
 
-	return `ui-${typePrefix}${lastPart}`;
+	return `${lastPart}`;
 }
 
 /**
@@ -86,9 +97,10 @@ function transformTokenName(originalName, type)
  * @param {Array} collectionsData - Array of collections from the JSON
  * @param {Array<string>} excludedSections - Array of section names to ignore
  * @param {Array<string>} collectionsFilter - Array of collection names to include (if empty, include all)
+ * @param {Array<string>} excludeNamePatterns - Array of substrings to match against token names
  * @returns {Object} Lookup table for tokens
  */
-function buildTokenLookup(collectionsData, excludedSections, collectionsFilter)
+function buildTokenLookup(collectionsData, excludedSections, collectionsFilter, excludeNamePatterns = [])
 {
 	const lookup = {};
 
@@ -109,7 +121,7 @@ function buildTokenLookup(collectionsData, excludedSections, collectionsFilter)
 			{
 				mode.variables.forEach(token =>
 				{
-					if (shouldIgnoreToken(token.name, excludedSections))
+					if (shouldIgnoreToken(token.name, excludedSections, excludeNamePatterns))
 					{
 						return;
 					}
@@ -136,15 +148,16 @@ function buildTokenLookup(collectionsData, excludedSections, collectionsFilter)
  * @param {Array} tokens - Array of tokens
  * @param {Object} lookup - Lookup table for token CSS variable names
  * @param {Array<string>} excludedSections - Array of section names to ignore
+ * @param {Array<string>} excludeNamePatterns - Array of substrings to match against token names
  * @returns {string} CSS variables declarations
  */
-function generateCssVariables(tokens, lookup, excludedSections)
+function generateCssVariables(tokens, lookup, excludedSections, excludeNamePatterns = [])
 {
 	let cssContent = '';
 
 	tokens.forEach(token =>
 	{
-		if (shouldIgnoreToken(token.name, excludedSections))
+		if (shouldIgnoreToken(token.name, excludedSections, excludeNamePatterns))
 		{
 			return;
 		}
@@ -246,9 +259,10 @@ function generateCssVariables(tokens, lookup, excludedSections)
  * @param {Object} jsonData - Parsed JSON data containing collections and modes
  * @param {Array<string>} excludedSections - Array of section names to ignore
  * @param {Array<string>} collectionsFilter - Array of collection names to include (if empty, include all)
+ * @param {Array<string>} excludeNamePatterns - Array of substrings to match against token names
  * @returns {string} Generated CSS content
  */
-function generateCss(jsonData, excludedSections, collectionsFilter)
+function generateCss(jsonData, excludedSections, collectionsFilter, excludeNamePatterns = [])
 {
 	const header = `/**\n * Do not edit directly\n * Generated on ${new Date().toUTCString()}\n */\n\n`;
 	const { collections } = jsonData;
@@ -258,7 +272,7 @@ function generateCss(jsonData, excludedSections, collectionsFilter)
 	    if (collectionsFilter.length > 0 && !collectionsFilter.includes(collection.name)) return;
 	    collection.modes.forEach(mode => {
 	        mode.variables.forEach(token => {
-	            if (!shouldIgnoreToken(token.name, excludedSections) &&
+	            if (!shouldIgnoreToken(token.name, excludedSections, excludeNamePatterns) &&
 	                token.name.toLowerCase().includes('bg-blur')) {
 	                const varName = transformTokenName(token.name, token.type);
 	                bgBlurVars.add(varName);
@@ -266,7 +280,7 @@ function generateCss(jsonData, excludedSections, collectionsFilter)
 	        });
 	    });
 	});
-	const tokenLookup = buildTokenLookup(collections, excludedSections, collectionsFilter);
+	const tokenLookup = buildTokenLookup(collections, excludedSections, collectionsFilter, excludeNamePatterns);
 	let cssOutput = header;
 
 	collections.forEach(collection =>
@@ -280,7 +294,7 @@ function generateCss(jsonData, excludedSections, collectionsFilter)
 		{
 			const mode = collection.modes[0];
 			cssOutput += `:root {\n`;
-			cssOutput += generateCssVariables(mode.variables, tokenLookup, excludedSections);
+			cssOutput += generateCssVariables(mode.variables, tokenLookup, excludedSections, excludeNamePatterns);
 			cssOutput += `}\n\n`;
 		}
 		else
@@ -290,7 +304,7 @@ function generateCss(jsonData, excludedSections, collectionsFilter)
 
 			const defaultClassName = `--ui-context-${defaultMode.name.toLowerCase().replace(/\s+/g, '-')}`;
 			cssOutput += `:root, .${defaultClassName} {\n`;
-			cssOutput += generateCssVariables(defaultMode.variables, tokenLookup, excludedSections);
+			cssOutput += generateCssVariables(defaultMode.variables, tokenLookup, excludedSections, excludeNamePatterns);
 			cssOutput += `}\n\n`;
 
 			// Write separate classes for the other modes
@@ -302,7 +316,7 @@ function generateCss(jsonData, excludedSections, collectionsFilter)
 				}
 				const modeClassName = `--ui-context-${mode.name.toLowerCase().replace(/\s+/g, '-')}`;
 				cssOutput += `.${modeClassName} {\n`;
-				cssOutput += generateCssVariables(mode.variables, tokenLookup, excludedSections);
+				cssOutput += generateCssVariables(mode.variables, tokenLookup, excludedSections, excludeNamePatterns);
 				cssOutput += `}\n\n`;
 			});
 		}
@@ -335,8 +349,24 @@ function parseArgs()
 	const args = process.argv.slice(2);
 	let inputFile = defaultInputPath;
 	let outputFile = defaultOutputPath;
-	let excludeList = ['legacy', 'chat', 'stage', 'space', 'opacity', 'size', 'radius', 'component', 'font size', 'line height'];
+	let excludeList = [
+		'legacy',
+		'stage',
+		'space',
+		'opacity',
+		'size',
+		'radius',
+		'component',
+	];
 	let collectionsFilter = ['design', 'fixed'];
+	let excludeNamePatterns = [
+		'font-size',
+		'font-weight',
+		'font-family',
+		'line-height',
+		'letter-spacing',
+		'border-radius',
+	];
 
 	args.forEach(arg =>
 	{
@@ -356,6 +386,10 @@ function parseArgs()
 		{
 			collectionsFilter = arg.split('=')[1].split(',').map(s => s.trim());
 		}
+		else if (arg.startsWith('--exclude-patterns='))
+		{
+			excludeNamePatterns = arg.split('=')[1].split(',').map(s => s.trim());
+		}
 	});
 
 
@@ -363,7 +397,8 @@ function parseArgs()
 		input: path.resolve(inputFile),
 		output: path.resolve(outputFile),
 		exclude: excludeList,
-		collections: collectionsFilter
+		collections: collectionsFilter,
+		excludeNamePatterns: excludeNamePatterns,
 	};
 }
 
@@ -374,6 +409,7 @@ function parseArgs()
  * --output=<path>       - Path to output CSS file
  * --exclude=<list>      - Comma separated list of sections to ignore
  * --collections=<list>  - Comma separated list of collection names to include
+ * --exclude-patterns=<list> - Comma separated list of substrings to exclude tokens by name
  */
 function main()
 {
@@ -399,7 +435,7 @@ function main()
 		process.exit(1);
 	}
 
-	const cssContent = generateCss(jsonData, args.exclude, args.collections);
+	const cssContent = generateCss(jsonData, args.exclude, args.collections, args.excludeNamePatterns);
 
 	const finalCss = `${cssContent}${hoverableCss}`;
 

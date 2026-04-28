@@ -57,6 +57,7 @@ export type StickerPackActions =
 	| 'stickerPackModel/deletePack'
 	| 'stickerPackModel/unlinkPack'
 	| 'stickerPackModel/addStickers'
+	| 'stickerPackModel/addStickersFromPush'
 	| 'stickerPackModel/renamePack'
 	| 'stickerPackModel/deleteStickers'
 	| 'stickerPackModel/addRecentSticker'
@@ -73,6 +74,8 @@ export type StickerPackActionParams = {
 	'stickerPackModel/createPack': { pack: StickerPackState, stickers: Array<StickerState> };
 	'stickerPackModel/createStickers': { stickers: Array<StickerState> };
 	'stickerPackModel/deletePack': { packId: StickerPackId, packType: StickerPackType };
+	'stickerPackModel/addStickers': { stickers: Array<StickerState>, actionName?: StickerPackAddStickersActions };
+	'stickerPackModel/addStickersFromPush': { stickers: Array<StickerState> };
 };
 
 export type StickerPackMutation =
@@ -131,7 +134,7 @@ export interface StickerPackAddUploadingStickersData extends PayloadData
 	uploadingStickers: Array<StickerState>,
 }
 
-export type StickerPackAddStickersActions = 'addStickers';
+export type StickerPackAddStickersActions = 'addStickers' | 'addStickersFromPush';
 export interface StickerPackAddStickersData extends PayloadData
 {
 	stickers: Array<StickerState>,

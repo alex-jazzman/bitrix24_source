@@ -18,7 +18,7 @@ jn.define('im/messenger/controller/copilot-agreement', (require, exports, module
 					modal: true,
 					titleParams: {
 						type: 'dialog',
-						text: Loc.getMessage('IMMOBILE_MESSENGER_COPILOT_AGREEMENT_POPUP_TITLE'),
+						text: Loc.getMessageWithCopilotBotName('IMMOBILE_MESSENGER_COPILOT_AGREEMENT_POPUP_TITLE_MSGVER_1'),
 					},
 					backdrop: {
 						mediumPositionHeight: 550,
@@ -161,10 +161,10 @@ jn.define('im/messenger/controller/copilot-agreement', (require, exports, module
 				'#/LINK#': '[/URL]',
 			};
 
-			const line1 = Loc.getMessage('IMMOBILE_MESSENGER_COPILOT_AGREEMENT_POPUP_PARAGRAPH_1');
+			const line1 = Loc.getMessageWithCopilotBotName('IMMOBILE_MESSENGER_COPILOT_AGREEMENT_POPUP_PARAGRAPH_1_MSGVER_1');
 			const line2 = this.state.isAccepted
-				? Loc.getMessage('IMMOBILE_MESSENGER_COPILOT_AGREEMENT_POPUP_PARAGRAPH_2_ACCEPTED', replaceLink)
-				: Loc.getMessage('IMMOBILE_MESSENGER_COPILOT_AGREEMENT_POPUP_PARAGRAPH_2_DECLINED', replaceLink);
+				? Loc.getMessageWithCopilotBotName('IMMOBILE_MESSENGER_COPILOT_AGREEMENT_POPUP_PARAGRAPH_2_ACCEPTED_MSGVER_1', replaceLink)
+				: Loc.getMessageWithCopilotBotName('IMMOBILE_MESSENGER_COPILOT_AGREEMENT_POPUP_PARAGRAPH_2_DECLINED_MSGVER_1', replaceLink);
 
 			return `${line1}\n\n${line2}`;
 		}

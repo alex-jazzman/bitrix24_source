@@ -11,7 +11,7 @@ export const ConstantField = {
 		BIcon,
 		EditConstantPopupForm,
 	},
-	inject: ['editSlider'],
+	inject: ['initEditSlider'],
 	props: {
 		/** @type TitleItem */
 		item: {
@@ -81,7 +81,7 @@ export const ConstantField = {
 		},
 		onEdit(): void
 		{
-			this?.editSlider?.open();
+			this.initEditSlider().open();
 			this.$nextTick(() => {
 				this.isEdit = true;
 			});

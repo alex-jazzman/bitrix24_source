@@ -162,6 +162,9 @@ this.BX = this.BX || {};
 	      console.log('LeftMenu: cannot load ui.notification.');
 	    });
 	  }
+	  static prefersReducedMotion() {
+	    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	  }
 	  static refineUrl(originUrl) {
 	    let url = String(originUrl).trim();
 	    if (url !== '') {
@@ -226,6 +229,10 @@ this.BX = this.BX || {};
 	        onFirstShow: () => {
 	          [...content.querySelectorAll('.js-left-menu-preset-item')].forEach(node => {
 	            node.addEventListener('click', () => {
+	              const radio = node.querySelector('input[type="radio"]');
+	              if (radio) {
+	                radio.checked = true;
+	              }
 	              [...content.querySelectorAll('.js-left-menu-preset-item')].forEach(otherNode => {
 	                otherNode.classList[otherNode === node ? 'add' : 'remove']('left-menu-popup-selected');
 	              });
@@ -605,7 +612,10 @@ this.BX = this.BX || {};
 	  _t$1,
 	  _t2,
 	  _t3,
-	  _t4;
+	  _t4,
+	  _t5;
+	var _setFieldError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setFieldError");
+	var _clearFieldError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clearFieldError");
 	class Item {
 	  constructor(parentContainer, container) {
 	    this.links = [];
@@ -725,6 +735,10 @@ this.BX = this.BX || {};
 	    } else {
 	      main_core.Dom.removeClass(this.container, 'menu-item-with-index');
 	    }
+	    const linkNode = this.container.querySelector('.menu-item-link');
+	    if (linkNode) {
+	      main_core.Dom.attr(linkNode, 'aria-label', this.constructor.getItemAriaLabel(this.getName(), counterValue));
+	    }
 	    return {
 	      oldValue,
 	      newValue: counterValue
@@ -735,12 +749,12 @@ this.BX = this.BX || {};
 	  }
 	  showWarning(title, events) {
 	    this.removeWarning();
-	    const link = this.container.querySelector("a.menu-item-link");
+	    const link = this.container.querySelector(".menu-item-link");
 	    if (!link) {
 	      return;
 	    }
 	    title = title ? main_core.Text.encode(title) : '';
-	    const node = main_core.Tag.render(_t$1 || (_t$1 = _$1`<a class="menu-post-warn-icon" title="${0}"></a>`), title);
+	    const node = main_core.Tag.render(_t$1 || (_t$1 = _$1`<span class="menu-post-warn-icon" role="img" title="${0}" aria-label="${0}"></span>`), title, title);
 	    if (events) {
 	      Object.keys(events).forEach(key => {
 	        main_core.Event.bind(node, key, events[key]);
@@ -755,7 +769,7 @@ this.BX = this.BX || {};
 	    }
 	    this.container.classList.remove('menu-item-warning-state');
 	    let node;
-	    while (node = this.container.querySelector("a.menu-post-warn-icon")) {
+	    while (node = this.container.querySelector(".menu-post-warn-icon")) {
 	      node.parentNode.removeChild(node);
 	    }
 	  }
@@ -846,6 +860,7 @@ this.BX = this.BX || {};
 	      value: counterValue,
 	      id: `menu-counter-${counterId}`
 	    });
+	    const ariaLabel = this.getItemAriaLabel(text, counterValue);
 	    return main_core.Tag.render(_t2 || (_t2 = _$1`<li 
 			id="bx_left_menu_${0}" 
 			data-status="show" 
@@ -860,25 +875,25 @@ this.BX = this.BX || {};
 			${0}
 			data-new-page="${0}" 
 			class="menu-item-block menu-item-no-icon-state">
-				<span class="menu-favorites-btn menu-favorites-draggable">
+				<span class="menu-favorites-btn menu-favorites-draggable" aria-hidden="true">
 					<span class="menu-fav-draggable-icon"></span>
 				</span>
-				<a class="menu-item-link" data-slider-ignore-autobinding="true" href="${0}" target="${0}">
-					<span class="menu-item-icon-box">
+				<a class="menu-item-link" aria-label="${0}" data-slider-ignore-autobinding="true" href="${0}" target="${0}">
+					<span class="menu-item-icon-box" aria-hidden="true">
 						<span class="menu-item-icon">W</span>
 					</span>
 					<span class="menu-item-link-text " data-role="item-text">${0}</span>
 					${0}
 				</a>
-				<span data-role="item-edit-control" class="menu-fav-editable-btn menu-favorites-btn">
+				<span data-role="item-edit-control" class="menu-fav-editable-btn menu-favorites-btn" aria-hidden="true" tabindex="-1">
 					<span class="menu-favorites-btn-icon"></span>
 				</span>
-			</li>`), id, id, counterId, link, this.code, topMenuId ? `data-top-menu-id="${main_core.Text.encode(topMenuId)}"` : "", openInNewPage, link, openInNewPage === 'Y' ? '_blank' : '_self', text, counterId ? `<span class="menu-item-index-wrap">
+			</li>`), id, id, counterId, link, this.code, topMenuId ? `data-top-menu-id="${main_core.Text.encode(topMenuId)}"` : "", openInNewPage, ariaLabel, link, openInNewPage === 'Y' ? '_blank' : '_self', text, counterId ? `<span class="menu-item-index-wrap">
 						${counter.render()}
 					</span>` : '');
 	  }
 
-	  //region Edition for siblings
+	  // region Edition for siblings
 	  static backendSaveItem(itemInfo) {
 	    throw 'Function backendSaveItem must be replaced';
 	  }
@@ -887,16 +902,23 @@ this.BX = this.BX || {};
 	      this.showForm(item.container, item.getEditFields(), resolve, reject);
 	    });
 	  }
+	  static getItemAriaLabel(name, counterValue) {
+	    if (counterValue <= 0) {
+	      return name;
+	    }
+	    return main_core.Loc.getMessagePlural('MENU_ITEM_ARIA', Number(counterValue), {
+	      '#ITEM#': name,
+	      '#COUNT#': String(counterValue)
+	    });
+	  }
 	  static checkForm(form) {
 	    if (String(form.elements["text"].value).trim().length <= 0) {
-	      form.elements["text"].classList.add('menu-form-input-error');
-	      form.elements["text"].focus();
+	      babelHelpers.classPrivateFieldLooseBase(this, _setFieldError)[_setFieldError](form.elements["text"]);
 	      return false;
 	    }
 	    if (form.elements["link"]) {
 	      if (String(form.elements["link"].value).trim().length <= 0 || Utils.refineUrl(form.elements["link"].value).length <= 0) {
-	        form.elements["link"].classList.add('menu-form-input-error');
-	        form.elements["link"].focus();
+	        babelHelpers.classPrivateFieldLooseBase(this, _setFieldError)[_setFieldError](form.elements["link"]);
 	        return false;
 	      } else {
 	        form.elements["link"].value = Utils.refineUrl(form.elements["link"].value);
@@ -928,6 +950,14 @@ this.BX = this.BX || {};
 	        form.appendChild(main_core.Tag.render(_t4 || (_t4 = _$1`<input type="hidden" name="${0}" value="${0}">`), name, value));
 	      }
 	    });
+	    main_core.Event.bind(form.elements['text'], 'input', () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _clearFieldError)[_clearFieldError](form.elements['text']);
+	    });
+	    if (form.elements['link']) {
+	      main_core.Event.bind(form.elements['link'], 'input', () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _clearFieldError)[_clearFieldError](form.elements['link']);
+	      });
+	    }
 	    this.popup = main_popup.PopupManager.create('menu-self-item-popup', bindElement, {
 	      className: 'menu-self-item-popup',
 	      titleBar: itemInfo['link'] === undefined ? main_core.Loc.getMessage("MENU_RENAME_ITEM") : isEditMode ? main_core.Loc.getMessage("MENU_EDIT_SELF_PAGE") : main_core.Loc.getMessage("MENU_ADD_SELF_PAGE"),
@@ -967,6 +997,32 @@ this.BX = this.BX || {};
 	  }
 	  //endregion
 	}
+	function _setFieldError2(field) {
+	  main_core.Dom.addClass(field, 'menu-form-input-error');
+	  main_core.Dom.attr(field, 'aria-invalid', 'true');
+	  let errorMsg = field.parentNode.querySelector('.menu-form-error-message');
+	  if (!errorMsg) {
+	    errorMsg = main_core.Tag.render(_t5 || (_t5 = _$1`<span class="menu-form-error-message" id="${0}-error" role="alert"></span>`), field.id);
+	    main_core.Dom.attr(field, 'aria-describedby', `${field.id}-error`);
+	    main_core.Dom.insertAfter(errorMsg, field);
+	  }
+	  errorMsg.textContent = main_core.Loc.getMessage('MENU_EMPTY_FORM_ERROR');
+	  field.focus();
+	}
+	function _clearFieldError2(field) {
+	  main_core.Dom.removeClass(field, 'menu-form-input-error');
+	  main_core.Dom.attr(field, 'aria-invalid', null);
+	  const errorMsg = field.parentNode.querySelector('.menu-form-error-message');
+	  if (errorMsg) {
+	    errorMsg.textContent = '';
+	  }
+	}
+	Object.defineProperty(Item, _clearFieldError, {
+	  value: _clearFieldError2
+	});
+	Object.defineProperty(Item, _setFieldError, {
+	  value: _setFieldError2
+	});
 	Item.code = 'abstract';
 	function areUrlsEqual(url, currentUri) {
 	  const checkedUri = new main_core.Uri(url);
@@ -1467,10 +1523,18 @@ this.BX = this.BX || {};
 	}
 	ItemSystem.code = 'default';
 
+	var _transferAriaCurrentToChild = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transferAriaCurrentToChild");
+	var _transferAriaCurrentToGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transferAriaCurrentToGroup");
 	var _collapsingAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collapsingAnimation");
 	class ItemGroup extends Item {
 	  constructor() {
 	    super(...arguments);
+	    Object.defineProperty(this, _transferAriaCurrentToGroup, {
+	      value: _transferAriaCurrentToGroup2
+	    });
+	    Object.defineProperty(this, _transferAriaCurrentToChild, {
+	      value: _transferAriaCurrentToChild2
+	    });
 	    Object.defineProperty(this, _collapsingAnimation, {
 	      writable: true,
 	      value: void 0
@@ -1490,15 +1554,27 @@ this.BX = this.BX || {};
 	  toggleAndSave(event) {
 	    event.preventDefault();
 	    event.stopPropagation();
+	    const toggleButton = this.container.querySelector('.menu-item-link');
+	    const containsActive = this.container.getAttribute('data-contains-active-item') === 'Y';
 	    if (this.container.getAttribute('data-collapse-mode') === 'collapsed') {
 	      Backend.expandGroup(this.getId());
 	      this.expand().then(() => {
 	        this.container.setAttribute('data-collapse-mode', 'expanded');
+	        main_core.Dom.attr(toggleButton, 'aria-expanded', 'true');
+	        main_core.Dom.attr(toggleButton, 'aria-label', this.constructor.getItemAriaLabel(this.getName(), 0));
+	        if (containsActive) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _transferAriaCurrentToChild)[_transferAriaCurrentToChild](toggleButton);
+	        }
 	      });
 	    } else {
 	      Backend.collapseGroup(this.getId());
 	      this.collapse().then(() => {
 	        this.container.setAttribute('data-collapse-mode', 'collapsed');
+	        main_core.Dom.attr(toggleButton, 'aria-expanded', 'false');
+	        main_core.Dom.attr(toggleButton, 'aria-label', this.constructor.getItemAriaLabel(this.getName(), this.getCounterValue()));
+	        if (containsActive) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _transferAriaCurrentToGroup)[_transferAriaCurrentToGroup](toggleButton);
+	        }
 	      });
 	    }
 	    return false;
@@ -1518,6 +1594,28 @@ this.BX = this.BX || {};
 	      const groupContainer = this.groupContainer;
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _collapsingAnimation)[_collapsingAnimation]) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _collapsingAnimation)[_collapsingAnimation].stop();
+	      }
+	      const onComplete = () => {
+	        main_core.Dom.style(groupContainer, {
+	          display: 'none',
+	          opacity: 'auto',
+	          height: 'auto'
+	        });
+	        main_core.Dom.style(groupContainer, 'overflow', null);
+	        if (this.container.getAttribute('data-contains-active-item') === 'Y') {
+	          main_core.Dom.addClass(this.container, 'menu-item-active');
+	        }
+	        main_core.Dom.removeClass(this.container, 'menu-item-group-collapsing');
+	        main_core.Dom.removeClass(groupContainer, 'menu-item-group-collapsing');
+	        babelHelpers.classPrivateFieldLooseBase(this, _collapsingAnimation)[_collapsingAnimation] = null;
+	        if (hideGroupContainer === true) {
+	          main_core.Dom.append(groupContainer, this.container);
+	        }
+	        resolve();
+	      };
+	      if (Utils.prefersReducedMotion()) {
+	        onComplete();
+	        return;
 	      }
 	      groupContainer.style.overflow = 'hidden';
 	      main_core.Dom.addClass(this.container, 'menu-item-group-collapsing');
@@ -1542,22 +1640,7 @@ this.BX = this.BX || {};
 	          groupContainer.style.height = state.height + 'px';
 	          groupContainer.style.opacity = state.opacity / 100;
 	        },
-	        complete: () => {
-	          groupContainer.style.display = 'none';
-	          groupContainer.style.opacity = 'auto';
-	          groupContainer.style.height = 'auto';
-	          main_core.Dom.style(groupContainer, 'overflow', null);
-	          if (this.container.getAttribute('data-contains-active-item') === 'Y') {
-	            main_core.Dom.addClass(this.container, 'menu-item-active');
-	          }
-	          main_core.Dom.removeClass(this.container, 'menu-item-group-collapsing');
-	          main_core.Dom.removeClass(groupContainer, 'menu-item-group-collapsing');
-	          babelHelpers.classPrivateFieldLooseBase(this, _collapsingAnimation)[_collapsingAnimation] = null;
-	          if (hideGroupContainer === true) {
-	            this.container.appendChild(groupContainer);
-	          }
-	          resolve();
-	        }
+	        complete: onComplete
 	      });
 	      babelHelpers.classPrivateFieldLooseBase(this, _collapsingAnimation)[_collapsingAnimation].animate();
 	    });
@@ -1569,14 +1652,24 @@ this.BX = this.BX || {};
 	      if (checkAttribute === true && container.getAttribute('data-collapse-mode') === 'collapsed') {
 	        return resolve();
 	      }
+	      if (groupContainer.parentNode === this.container) {
+	        main_core.Dom.insertAfter(groupContainer, this.container);
+	      }
+	      main_core.Dom.style(groupContainer, {
+	        display: 'block'
+	      });
+	      if (Utils.prefersReducedMotion()) {
+	        main_core.Dom.style(groupContainer, {
+	          height: 'auto',
+	          opacity: 'auto'
+	        });
+	        resolve();
+	        return;
+	      }
 	      const contentHeight = groupContainer.querySelectorAll('li').length * (container.offsetHeight + 4);
 	      main_core.Dom.addClass(container, 'menu-item-group-expanding');
 	      main_core.Dom.addClass(container, 'menu-item-group-actioned');
 	      main_core.Dom.addClass(groupContainer, 'menu-item-group-expanding');
-	      if (groupContainer.parentNode === this.container) {
-	        main_core.Dom.insertAfter(groupContainer, this.container);
-	      }
-	      groupContainer.style.display = 'block';
 	      babelHelpers.classPrivateFieldLooseBase(this, _collapsingAnimation)[_collapsingAnimation] = new BX.easing({
 	        duration: 500,
 	        start: {
@@ -1618,6 +1711,9 @@ this.BX = this.BX || {};
 	    } else {
 	      main_core.Dom.removeClass(this.container, 'menu-item-with-index');
 	    }
+	    const isCollapsed = this.container.getAttribute('data-collapse-mode') === 'collapsed';
+	    const linkNode = this.container.querySelector('.menu-item-link');
+	    main_core.Dom.attr(linkNode, 'aria-label', this.constructor.getItemAriaLabel(this.getName(), isCollapsed ? counterValue : 0));
 	  }
 	  markAsActive() {
 	    this.container.setAttribute('data-contains-active-item', 'Y');
@@ -1633,6 +1729,20 @@ this.BX = this.BX || {};
 	  static detect(node) {
 	    return node.getAttribute("data-role") === 'group' && node.getAttribute("data-type") === this.code;
 	  }
+	}
+	function _transferAriaCurrentToChild2(groupButton) {
+	  groupButton.removeAttribute('aria-current');
+	  const activeChild = this.groupContainer.querySelector('.menu-item-active .menu-item-link');
+	  if (activeChild) {
+	    main_core.Dom.attr(activeChild, 'aria-current', 'page');
+	  }
+	}
+	function _transferAriaCurrentToGroup2(groupButton) {
+	  const activeChild = this.groupContainer.querySelector('.menu-item-active .menu-item-link');
+	  if (activeChild) {
+	    activeChild.removeAttribute('aria-current');
+	  }
+	  main_core.Dom.attr(groupButton, 'aria-current', 'page');
 	}
 	ItemGroup.code = 'group';
 
@@ -1657,8 +1767,12 @@ this.BX = this.BX || {};
 
 	var _link = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("link");
 	var _actualLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("actualLink");
+	var _highlightParentGroups = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("highlightParentGroups");
 	class ItemActive {
 	  constructor() {
+	    Object.defineProperty(this, _highlightParentGroups, {
+	      value: _highlightParentGroups2
+	    });
 	    Object.defineProperty(this, _link, {
 	      writable: true,
 	      value: void 0
@@ -1740,17 +1854,12 @@ this.BX = this.BX || {};
 	  highlight() {
 	    if (this.item) {
 	      this.item.container.classList.add('menu-item-active');
-	      let parent = this.item.container.closest('[data-role="group-content"]');
-	      let parentContainer;
-	      while (parent) {
-	        parentContainer = parent.parentNode.querySelector(`[data-id="${parent.getAttribute('data-group-id')}"]`);
-	        if (parentContainer) {
-	          parentContainer.setAttribute('data-contains-active-item', 'Y');
-	          if (parentContainer.getAttribute('data-collapse-mode') === 'collapsed') {
-	            parentContainer.classList.add('menu-item-active');
-	          }
-	        }
-	        parent = parent.closest('[data-relo="group-content"]');
+	      const linkNode = this.item.container.querySelector('.menu-item-link');
+	      const isInsideCollapsedGroup = babelHelpers.classPrivateFieldLooseBase(this, _highlightParentGroups)[_highlightParentGroups]();
+	      if (isInsideCollapsedGroup) {
+	        main_core.Dom.attr(linkNode, 'aria-current', null);
+	      } else {
+	        main_core.Dom.attr(linkNode, 'aria-current', 'page');
 	      }
 	    }
 	  }
@@ -1760,13 +1869,16 @@ this.BX = this.BX || {};
 	    }
 	    if (item instanceof Item) {
 	      item.container.classList.remove('menu-item-active');
+	      const linkNode = item.container.querySelector('.menu-item-link');
+	      main_core.Dom.attr(linkNode, 'aria-current', null);
 	      let parent = item.container.closest('[data-role="group-content"]');
-	      let parentContainer;
 	      while (parent) {
-	        parentContainer = parent.parentNode.querySelector(`[data-id="${parent.getAttribute('data-group-id')}"]`);
+	        const parentContainer = parent.parentNode.querySelector(`[data-id="${parent.getAttribute('data-group-id')}"]`);
 	        if (parentContainer) {
 	          parentContainer.removeAttribute('data-contains-active-item');
 	          parentContainer.classList.remove('menu-item-active');
+	          const groupLink = parentContainer.querySelector('.menu-item-link');
+	          main_core.Dom.attr(groupLink, 'aria-current', null);
 	        }
 	        parent = parent.closest('[data-relo="group-content"]');
 	      }
@@ -1774,6 +1886,24 @@ this.BX = this.BX || {};
 	    }
 	    return null;
 	  }
+	}
+	function _highlightParentGroups2() {
+	  let insideCollapsed = false;
+	  let parent = this.item.container.closest('[data-role="group-content"]');
+	  while (parent) {
+	    const parentContainer = parent.parentNode.querySelector(`[data-id="${parent.getAttribute('data-group-id')}"]`);
+	    if (parentContainer) {
+	      parentContainer.setAttribute('data-contains-active-item', 'Y');
+	      if (parentContainer.getAttribute('data-collapse-mode') === 'collapsed') {
+	        parentContainer.classList.add('menu-item-active');
+	        const groupLink = parentContainer.querySelector('.menu-item-link');
+	        main_core.Dom.attr(groupLink, 'aria-current', 'page');
+	        insideCollapsed = true;
+	      }
+	    }
+	    parent = parent.closest('[data-relo="group-content"]');
+	  }
+	  return insideCollapsed;
 	}
 
 	var _activeItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("activeItem");
@@ -1977,6 +2107,19 @@ this.BX = this.BX || {};
 	    }
 	    dragElement.appendChild(node);
 	    main_core.Dom.addClass(node, "menu-item-draggable");
+	    const onMainPageComplete = () => {
+	      this.container.insertBefore(node, BX('left-menu-empty-item').nextSibling);
+	      main_core.Dom.removeClass(node, 'menu-item-draggable');
+	      main_core.Dom.remove(dragElement);
+	      babelHelpers.classPrivateFieldLooseBase(this, _saveItemsSort)[_saveItemsSort]({
+	        action: 'mainPageIsSet',
+	        itemId: item.getId()
+	      });
+	    };
+	    if (Utils.prefersReducedMotion()) {
+	      onMainPageComplete();
+	      return;
+	    }
 	    new BX.easing({
 	      duration: 500,
 	      start: {
@@ -1989,15 +2132,7 @@ this.BX = this.BX || {};
 	      step: function (state) {
 	        dragElement.style.top = state.top + "px";
 	      },
-	      complete: () => {
-	        this.container.insertBefore(node, BX("left-menu-empty-item").nextSibling);
-	        main_core.Dom.removeClass(node, "menu-item-draggable");
-	        main_core.Dom.remove(dragElement);
-	        babelHelpers.classPrivateFieldLooseBase(this, _saveItemsSort)[_saveItemsSort]({
-	          action: 'mainPageIsSet',
-	          itemId: item.getId()
-	        });
-	      }
+	      complete: onMainPageComplete
 	    }).animate();
 	  }
 	  showItem(item) {
@@ -2078,6 +2213,7 @@ this.BX = this.BX || {};
 	        hiddenCounterNode.classList.add('menu-hidden-counter');
 	        hiddenCounterNode.innerHTML = '';
 	      }
+	      main_core_events.EventEmitter.emit(this, Options.eventName('onHiddenCounterUpdated'));
 	    }
 	    if (typeof BXIM !== 'undefined') {
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _updateCountersLastValue)[_updateCountersLastValue] === null) {
@@ -2296,6 +2432,7 @@ this.BX = this.BX || {};
 	  /*endregion*/
 	}
 	function _showHiddenContainer2(animate) {
+	  this.hiddenContainer.inert = false;
 	  main_core_events.EventEmitter.emit(this, Options.eventName('onHiddenBlockIsVisible'));
 	  if (animate === false) {
 	    return this.hiddenContainer.classList.add('menu-item-favorites-more-open');
@@ -2305,6 +2442,7 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _animation)[_animation](true, this.hiddenContainer, this.hiddenContainer.scrollHeight);
 	}
 	function _hideHiddenContainer2(animate) {
+	  this.hiddenContainer.inert = true;
 	  main_core_events.EventEmitter.emit(this, Options.eventName('onHiddenBlockIsHidden'));
 	  if (animate === false) {
 	    return this.hiddenContainer.classList.remove('menu-item-favorites-more-open');
@@ -2312,6 +2450,22 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _animation)[_animation](false, this.hiddenContainer, this.hiddenContainer.offsetHeight);
 	}
 	function _animation2(opening, hiddenBlock, maxHeight) {
+	  const onComplete = () => {
+	    if (opening) {
+	      hiddenBlock.classList.add('menu-item-favorites-more-open');
+	    } else {
+	      hiddenBlock.classList.remove('menu-item-favorites-more-open');
+	    }
+	    main_core.Dom.style(hiddenBlock, {
+	      opacity: null,
+	      overflow: null,
+	      height: null
+	    });
+	  };
+	  if (Utils.prefersReducedMotion()) {
+	    onComplete();
+	    return;
+	  }
 	  hiddenBlock.style.overflow = "hidden";
 	  new BX.easing({
 	    duration: 200,
@@ -2328,16 +2482,7 @@ this.BX = this.BX || {};
 	      hiddenBlock.style.opacity = state.opacity / 100;
 	      hiddenBlock.style.height = state.height + "px";
 	    },
-	    complete: function () {
-	      if (opening) {
-	        hiddenBlock.classList.add('menu-item-favorites-more-open');
-	      } else {
-	        hiddenBlock.classList.remove('menu-item-favorites-more-open');
-	      }
-	      hiddenBlock.style.opacity = "";
-	      hiddenBlock.style.overflow = "";
-	      hiddenBlock.style.height = "";
-	    }
+	    complete: onComplete
 	  }).animate();
 	}
 	function _recalculateCounters2(item) {
@@ -2362,6 +2507,7 @@ this.BX = this.BX || {};
 	    }
 	  });
 	  ui_cnt.Counter.updateCounterNodeValue(ui_cnt.Counter.initFromCounterNode(this.parentContainer.querySelector('#menu-hidden-counter')), hiddenCounterValue);
+	  main_core_events.EventEmitter.emit(this, Options.eventName('onHiddenCounterUpdated'));
 	}
 	function _refreshActivity2(item, oldParent) {
 	  if (this.getActiveItem() !== item) {
@@ -2488,6 +2634,10 @@ this.BX = this.BX || {};
 	}
 	function _animateTopItemToLeft2(node, animateFromPoint) {
 	  return new Promise(resolve => {
+	    if (Utils.prefersReducedMotion()) {
+	      resolve();
+	      return;
+	    }
 	    let {
 	      startX,
 	      startY
@@ -2535,6 +2685,10 @@ this.BX = this.BX || {};
 	}
 	function _animateTopItemFromLeft2(node) {
 	  return new Promise(resolve => {
+	    if (Utils.prefersReducedMotion()) {
+	      resolve();
+	      return;
+	    }
 	    new BX.easing({
 	      duration: 700,
 	      start: {
@@ -2864,10 +3018,8 @@ this.BX = this.BX || {};
 	  _t2$1,
 	  _t3$1,
 	  _t4$1,
-	  _t5,
-	  _t6,
-	  _t7,
-	  _t8;
+	  _t5$1,
+	  _t6;
 	var _refs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refs");
 	var _status = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("status");
 	var _xhr = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("xhr");
@@ -2875,6 +3027,7 @@ this.BX = this.BX || {};
 	var _handleGroupsLinkClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleGroupsLinkClick");
 	var _loadContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadContent");
 	var _handleFilterClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFilterClick");
+	var _handleFilterKeydown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFilterKeydown");
 	var _handleItemsClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemsClick");
 	var _animateStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("animateStart");
 	var _animateCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("animateCounter");
@@ -2888,6 +3041,9 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _handleItemsClick, {
 	      value: _handleItemsClick2
+	    });
+	    Object.defineProperty(this, _handleFilterKeydown, {
+	      value: _handleFilterKeydown2
 	    });
 	    Object.defineProperty(this, _handleFilterClick, {
 	      value: _handleFilterClick2
@@ -2933,39 +3089,52 @@ this.BX = this.BX || {};
 	  getItemsContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('items-container', () => {
 	      return main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
-				<div class="group-panel-items" onclick="${0}"></div>
+				<div class="group-panel-items"
+					role="tabpanel"
+					onclick="${0}"
+				></div>
 			`), babelHelpers.classPrivateFieldLooseBase(this, _handleItemsClick)[_handleItemsClick].bind(this));
 	    });
 	  }
 	  getFilterContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('filter-container', () => {
-	      return main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
-				<span class="group-panel-header-filters">${0}
-				</span>
-			`), [main_core.Tag.render(_t4$1 || (_t4$1 = _$2`
-						<span
-							class="group-panel-header-filter group-panel-header-filter-all"
-							data-filter="all"
-							onclick="${0}"
-						>${0}</span>
-					`), babelHelpers.classPrivateFieldLooseBase(this, _handleFilterClick)[_handleFilterClick].bind(this), main_core.Loc.getMessage('MENU_MY_WORKGROUPS')), babelHelpers.classPrivateFieldLooseBase(this, _isExtranetInstalled)[_isExtranetInstalled] ? main_core.Tag.render(_t5 || (_t5 = _$2`
-								<span
-									class="group-panel-header-filter group-panel-header-filter-extranet"
-									data-filter="extranet"
-									onclick="${0}"
-								>${0}</span>
-							`), babelHelpers.classPrivateFieldLooseBase(this, _handleFilterClick)[_handleFilterClick].bind(this), main_core.Loc.getMessage('MENU_MY_WORKGROUPS_EXTRANET')) : null, main_core.Tag.render(_t6 || (_t6 = _$2`
-						<span
-							class="group-panel-header-filter group-panel-header-filter-favorites"
-							data-filter="favorites"
-							onclick="${0}"
-						>${0}${0}</span>
-					`), babelHelpers.classPrivateFieldLooseBase(this, _handleFilterClick)[_handleFilterClick].bind(this), main_core.Loc.getMessage('MENU_MY_WORKGROUPS_FAVORITES'), this.getCounterContainer())]);
+	      const container = main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
+				<span class="group-panel-header-filters" role="tablist"
+					aria-label="${0}"
+				></span>
+			`), main_core.Loc.getMessagePlural('MENU_MY_WORKGROUPS'));
+	      const filters = [{
+	        filter: 'all',
+	        label: main_core.Loc.getMessage('MENU_MY_WORKGROUPS'),
+	        selected: true
+	      }, ...(babelHelpers.classPrivateFieldLooseBase(this, _isExtranetInstalled)[_isExtranetInstalled] ? [{
+	        filter: 'extranet',
+	        label: main_core.Loc.getMessage('MENU_MY_WORKGROUPS_EXTRANET')
+	      }] : []), {
+	        filter: 'favorites',
+	        label: main_core.Loc.getMessage('MENU_MY_WORKGROUPS_FAVORITES'),
+	        hasCounter: true
+	      }];
+	      filters.forEach(f => {
+	        const tab = main_core.Tag.render(_t4$1 || (_t4$1 = _$2`
+					<button type="button"
+						class="group-panel-header-filter group-panel-header-filter-${0}"
+						role="tab"
+						tabindex="${0}"
+						aria-selected="${0}"
+						data-filter="${0}"
+					>${0}${0}</button>
+				`), f.filter, f.selected ? '0' : '-1', f.selected ? 'true' : 'false', f.filter, f.label, f.hasCounter ? this.getCounterContainer() : '');
+	        main_core.Event.bind(tab, 'click', babelHelpers.classPrivateFieldLooseBase(this, _handleFilterClick)[_handleFilterClick].bind(this));
+	        main_core.Event.bind(tab, 'keydown', babelHelpers.classPrivateFieldLooseBase(this, _handleFilterKeydown)[_handleFilterKeydown].bind(this));
+	        main_core.Dom.append(tab, container);
+	      });
+	      return container;
 	    });
 	  }
 	  getCounterContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('counter-container', () => {
-	      return main_core.Tag.render(_t7 || (_t7 = _$2`<span class="group-panel-header-filter-counter"></span>`));
+	      return main_core.Tag.render(_t5$1 || (_t5$1 = _$2`<span class="group-panel-header-filter-counter"></span>`));
 	    });
 	  }
 	  saveFilter(filter) {
@@ -3027,16 +3196,20 @@ this.BX = this.BX || {};
 	    if (group.favorite) {
 	      classes.push('group-panel-item-favorite');
 	    }
-	    const dom = main_core.Tag.render(_t8 || (_t8 = _$2`
+	    const dom = main_core.Tag.render(_t6 || (_t6 = _$2`
 				<a href="${0}" 
 					class="${0}" 
 					data-id="${0}" 
 					data-slider-ignore-autobinding="true"
 				>
 					<span class="group-panel-item-text" title="${0}">${0}</span>
-					<span class="group-panel-item-star"></span>
+					<button type="button"
+						class="group-panel-item-star"
+						aria-label="${0}"
+						aria-pressed="${0}"
+					></button>
 				</a>
-			`), encodeURI(group.url), classes.join(' '), group.id, main_core.Text.encode(group.title), main_core.Text.encode(group.title));
+			`), encodeURI(group.url), classes.join(' '), group.id, main_core.Text.encode(group.title), main_core.Text.encode(group.title), main_core.Loc.getMessage('MENU_TOGGLE_FAVORITE_ARIA'), group.favorite ? 'true' : 'false');
 	    main_core.Dom.append(dom, this.getItemsContainer());
 	  }
 	  main_core.Dom.addClass(this.getContainer(), `group-panel-content-${filter}`);
@@ -3047,47 +3220,101 @@ this.BX = this.BX || {};
 	  return this.getContainer();
 	}
 	function _handleFilterClick2(event) {
-	  const filterElement = event.target;
+	  const filterElement = event.target.closest('[role="tab"]') || event.target;
 	  const currentFilter = this.getContainer().dataset.filter || 'all';
 	  const newFilter = filterElement.dataset.filter || 'all';
 	  if (currentFilter !== newFilter) {
 	    this.getContainer().dataset.filter = newFilter;
 	    this.saveFilter(newFilter);
-	    new BX.easing({
-	      duration: 50,
-	      start: {
-	        opacity: 1
-	      },
-	      finish: {
-	        opacity: 0
-	      },
-	      transition: BX.easing.transitions.linear,
-	      step: state => {
-	        main_core.Dom.style(this.getItemsContainer(), 'opacity', state.opacity / 100);
-	      },
-	      complete: () => {
-	        main_core.Dom.removeClass(this.getContainer(), `group-panel-content-${currentFilter}`);
-	        main_core.Dom.addClass(this.getContainer(), `group-panel-content-${newFilter}`);
-	        new BX.easing({
-	          duration: 50,
-	          start: {
-	            opacity: 0
-	          },
-	          finish: {
-	            opacity: 1
-	          },
-	          transition: BX.easing.transitions.linear,
-	          step: state => {
-	            main_core.Dom.style(this.getItemsContainer(), 'opacity', state.opacity / 100);
-	          },
-	          complete: () => {
-	            main_core.Dom.style(this.getItemsContainer(), 'opacity', null);
-	          }
-	        }).animate();
-	      }
-	    }).animate();
+	    const tabs = this.getFilterContainer().querySelectorAll('[role="tab"]');
+	    tabs.forEach(tab => {
+	      const isSelected = tab.dataset.filter === newFilter;
+	      main_core.Dom.attr(tab, 'aria-selected', String(isSelected));
+	      main_core.Dom.attr(tab, 'tabindex', isSelected ? '0' : '-1');
+	    });
+	    if (Utils.prefersReducedMotion()) {
+	      main_core.Dom.removeClass(this.getContainer(), `group-panel-content-${currentFilter}`);
+	      main_core.Dom.addClass(this.getContainer(), `group-panel-content-${newFilter}`);
+	    } else {
+	      new BX.easing({
+	        duration: 50,
+	        start: {
+	          opacity: 1
+	        },
+	        finish: {
+	          opacity: 0
+	        },
+	        transition: BX.easing.transitions.linear,
+	        step: state => {
+	          main_core.Dom.style(this.getItemsContainer(), 'opacity', state.opacity / 100);
+	        },
+	        complete: () => {
+	          main_core.Dom.removeClass(this.getContainer(), `group-panel-content-${currentFilter}`);
+	          main_core.Dom.addClass(this.getContainer(), `group-panel-content-${newFilter}`);
+	          new BX.easing({
+	            duration: 50,
+	            start: {
+	              opacity: 0
+	            },
+	            finish: {
+	              opacity: 1
+	            },
+	            transition: BX.easing.transitions.linear,
+	            step: state => {
+	              main_core.Dom.style(this.getItemsContainer(), 'opacity', state.opacity / 100);
+	            },
+	            complete: () => {
+	              main_core.Dom.style(this.getItemsContainer(), 'opacity', null);
+	            }
+	          }).animate();
+	        }
+	      }).animate();
+	    }
 	  }
 	  event.stopPropagation();
+	}
+	function _handleFilterKeydown2(event) {
+	  const tabs = [...this.getFilterContainer().querySelectorAll('[role="tab"]')];
+	  const currentIndex = tabs.indexOf(event.target);
+	  let newIndex = currentIndex;
+	  switch (event.key) {
+	    case 'ArrowRight':
+	    case 'ArrowDown':
+	      {
+	        event.preventDefault();
+	        newIndex = (currentIndex + 1) % tabs.length;
+	        break;
+	      }
+	    case 'ArrowLeft':
+	    case 'ArrowUp':
+	      {
+	        event.preventDefault();
+	        newIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+	        break;
+	      }
+	    case 'Home':
+	      {
+	        event.preventDefault();
+	        newIndex = 0;
+	        break;
+	      }
+	    case 'End':
+	      {
+	        event.preventDefault();
+	        newIndex = tabs.length - 1;
+	        break;
+	      }
+	    default:
+	      {
+	        return;
+	      }
+	  }
+	  tabs.forEach((tab, i) => {
+	    main_core.Dom.attr(tab, 'tabindex', i === newIndex ? '0' : '-1');
+	    main_core.Dom.attr(tab, 'aria-selected', i === newIndex ? 'true' : 'false');
+	  });
+	  tabs[newIndex].focus();
+	  tabs[newIndex].click();
 	}
 	function _handleItemsClick2(event) {
 	  if (!main_core.Dom.hasClass(event.target, 'group-panel-item-star')) {
@@ -3098,6 +3325,8 @@ this.BX = this.BX || {};
 	  const groupId = item.dataset.id;
 	  const action = main_core.Dom.hasClass(item, 'group-panel-item-favorite') ? 'removeFromFavorites' : 'addToFavorites';
 	  main_core.Dom.toggleClass(item, 'group-panel-item-favorite');
+	  const isFav = main_core.Dom.hasClass(item, 'group-panel-item-favorite');
+	  main_core.Dom.attr(star, 'aria-pressed', String(isFav));
 	  babelHelpers.classPrivateFieldLooseBase(this, _animateStart)[_animateStart](star);
 	  babelHelpers.classPrivateFieldLooseBase(this, _animateCounter)[_animateCounter](action === 'addToFavorites');
 	  void main_core.ajax.runAction(`intranet.leftmenu.${action}`, {
@@ -3108,6 +3337,9 @@ this.BX = this.BX || {};
 	  event.preventDefault();
 	}
 	function _animateStart2(star) {
+	  if (Utils.prefersReducedMotion()) {
+	    return;
+	  }
 	  const flyingStar = star.cloneNode();
 	  main_core.Dom.style(flyingStar, 'margin-left', `-${star.offsetWidth}px`);
 	  main_core.Dom.append(flyingStar, star.parentNode);
@@ -3131,6 +3363,9 @@ this.BX = this.BX || {};
 	  }).animate();
 	}
 	function _animateCounter2(positive) {
+	  if (Utils.prefersReducedMotion()) {
+	    return;
+	  }
 	  this.getCounterContainer().innerHTML = positive === false ? '-1' : '+1';
 	  new BX.easing({
 	    duration: 400,
@@ -3154,13 +3389,19 @@ this.BX = this.BX || {};
 	  }).animate();
 	}
 
+	var _transferAriaCurrentFromMoreButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transferAriaCurrentFromMoreButton");
+	var _transferAriaCurrentToMoreButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transferAriaCurrentToMoreButton");
+	var _syncMoreButtonAriaLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("syncMoreButtonAriaLabel");
 	var _getLeftMenuItemByTopMenuItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLeftMenuItemByTopMenuItem");
 	var _specialLiveFeedDecrement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("specialLiveFeedDecrement");
+	var _emitTotalCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitTotalCounter");
 	var _addLicenseButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addLicenseButton");
 	var _getLicenseButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLicenseButton");
 	var _createLicenseButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createLicenseButton");
 	class Menu {
 	  //
+
+	  // Responsive auto-collapse: forced by narrow viewport
 
 	  constructor(params) {
 	    Object.defineProperty(this, _createLicenseButton, {
@@ -3172,8 +3413,20 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _addLicenseButton, {
 	      value: _addLicenseButton2
 	    });
+	    Object.defineProperty(this, _emitTotalCounter, {
+	      value: _emitTotalCounter2
+	    });
 	    Object.defineProperty(this, _getLeftMenuItemByTopMenuItem, {
 	      value: _getLeftMenuItemByTopMenuItem2
+	    });
+	    Object.defineProperty(this, _syncMoreButtonAriaLabel, {
+	      value: _syncMoreButtonAriaLabel2
+	    });
+	    Object.defineProperty(this, _transferAriaCurrentToMoreButton, {
+	      value: _transferAriaCurrentToMoreButton2
+	    });
+	    Object.defineProperty(this, _transferAriaCurrentFromMoreButton, {
+	      value: _transferAriaCurrentFromMoreButton2
 	    });
 	    this.cache = new main_core.Cache.MemoryCache();
 	    this.scrollModeThreshold = 20;
@@ -3182,6 +3435,9 @@ this.BX = this.BX || {};
 	    this.isMenuMouseEnterBlocked = false;
 	    this.isMenuMouseLeaveBlocked = [];
 	    this.isCollapsedMode = false;
+	    this.isResponsiveCollapsed = false;
+	    this.wasExpandedBeforeResponsive = false;
+	    this.narrowViewportQuery = null;
 	    Object.defineProperty(this, _specialLiveFeedDecrement, {
 	      writable: true,
 	      value: 0
@@ -3212,6 +3468,7 @@ this.BX = this.BX || {};
 	    this.groupPanel = new GroupPanel({
 	      isExtranetInstalled: params.isExtranetInstalled !== 'N'
 	    });
+	    this.initResponsiveCollapse();
 
 	    // Emulate document scroll because init() can be invoked after page load scroll
 	    // (a hard reload with script at the bottom).
@@ -3287,6 +3544,7 @@ this.BX = this.BX || {};
 	          onHiddenBlockIsHidden: this.onHiddenBlockIsHidden.bind(this),
 	          onHiddenBlockIsEmpty: this.onHiddenBlockIsEmpty.bind(this),
 	          onHiddenBlockIsNotEmpty: this.onHiddenBlockIsNotEmpty.bind(this),
+	          onHiddenCounterUpdated: this.onHiddenCounterUpdated.bind(this),
 	          onShow: () => {
 	            this.isMenuMouseLeaveBlocked.push('items');
 	          },
@@ -3581,34 +3839,44 @@ this.BX = this.BX || {};
 	  }
 	  showGlobalPreset() {
 	    const BannerDispatcher = main_core.Reflection.getClass('BX.UI.BannerDispatcher');
-	    const handleBannerQueue = () => {
-	      BannerDispatcher.critical.toQueue(onDone => {
-	        const presetController = this.getDefaultPresetController();
-	        presetController.show('global');
-	        presetController.getPopup().subscribe('onAfterClose', event => {
-	          onDone();
-	        });
-	      });
-	    };
 	    if (BannerDispatcher) {
-	      handleBannerQueue();
+	      this.addGlobalPresetToBannerDispatcher(BannerDispatcher);
 	    } else {
-	      const loadBannerDispatcherExtensionPromise = main_core.Runtime.loadExtension('ui.banner-dispatcher');
-	      loadBannerDispatcherExtensionPromise.then(() => {
-	        handleBannerQueue();
+	      main_core.Runtime.loadExtension('ui.banner-dispatcher').then(exports => {
+	        this.addGlobalPresetToBannerDispatcher(exports.BannerDispatcher);
 	      }).catch(() => {});
 	    }
+	  }
+	  addGlobalPresetToBannerDispatcher(BannerDispatcher) {
+	    BannerDispatcher.high.toQueue(onDone => {
+	      const presetController = this.getDefaultPresetController();
+	      presetController.show('global');
+	      presetController.getPopup().subscribe('onAfterClose', event => {
+	        onDone();
+	      });
+	    });
 	  }
 	  handleShowHiddenClick() {
 	    this.getItemsController().toggleHiddenContainer(true);
 	  }
 	  onHiddenBlockIsVisible() {
 	    main_core.Dom.addClass(this.menuMoreButton, 'menu-favorites-more-btn-open');
-	    this.menuMoreButton.querySelector("#menu-more-btn-text").innerHTML = main_core.Loc.getMessage("more_items_hide");
+	    main_core.Dom.attr(this.menuMoreButton, 'aria-expanded', 'true');
+	    this.menuMoreButton.querySelector("#menu-more-btn-text").innerText = main_core.Loc.getMessage('more_items_hide');
+	    main_core.Dom.attr(this.menuMoreButton, 'aria-label', main_core.Loc.getMessage('more_items_hide'));
+	    babelHelpers.classPrivateFieldLooseBase(this, _transferAriaCurrentFromMoreButton)[_transferAriaCurrentFromMoreButton]();
 	  }
 	  onHiddenBlockIsHidden() {
 	    main_core.Dom.removeClass(this.menuMoreButton, 'menu-favorites-more-btn-open');
-	    this.menuMoreButton.querySelector("#menu-more-btn-text").innerHTML = main_core.Loc.getMessage("more_items_show");
+	    main_core.Dom.attr(this.menuMoreButton, 'aria-expanded', 'false');
+	    this.menuMoreButton.querySelector("#menu-more-btn-text").innerText = main_core.Loc.getMessage("more_items_show");
+	    babelHelpers.classPrivateFieldLooseBase(this, _syncMoreButtonAriaLabel)[_syncMoreButtonAriaLabel]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _transferAriaCurrentToMoreButton)[_transferAriaCurrentToMoreButton]();
+	  }
+	  onHiddenCounterUpdated() {
+	    if (!main_core.Dom.hasClass(this.menuMoreButton, 'menu-favorites-more-btn-open')) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _syncMoreButtonAriaLabel)[_syncMoreButtonAriaLabel]();
+	    }
 	  }
 	  onHiddenBlockIsEmpty() {
 	    main_core.Dom.addClass(this.menuMoreButton, 'menu-favorites-more-btn-hidden');
@@ -3789,6 +4057,10 @@ this.BX = this.BX || {};
 	    if (this.isMenuMouseEnterBlocked === true) {
 	      return;
 	    }
+	    if (Utils.prefersReducedMotion()) {
+	      this.switchToSlidingMode(true, true);
+	      return;
+	    }
 	    this.slidingModeTimeoutId = setTimeout(function () {
 	      this.slidingModeTimeoutId = 0;
 	      this.switchToSlidingMode(true);
@@ -3796,6 +4068,12 @@ this.BX = this.BX || {};
 	  }
 	  handleBurgerClick(open) {
 	    this.getItemsController().switchToViewMode();
+	    if (this.isResponsiveCollapsed) {
+	      // Narrow viewport: toggle sliding mode instead of expand/collapse
+	      const isSliding = BX.hasClass(this.mainTable, 'menu-sliding-mode');
+	      this.switchToSlidingMode(!isSliding);
+	      return;
+	    }
 	    this.menuHeaderBurger.classList.add("menu-switcher-hover");
 	    this.toggle(open, function () {
 	      this.blockSliding();
@@ -3814,7 +4092,7 @@ this.BX = this.BX || {};
 	  handleMenuMouseLeave(event) {
 	    this.stopSliding();
 	    if (this.isMenuMouseLeaveBlocked.length <= 0) {
-	      this.switchToSlidingMode(false);
+	      this.switchToSlidingMode(false, Utils.prefersReducedMotion());
 	    }
 	  }
 	  handleMenuDoubleClick(event) {
@@ -3862,9 +4140,9 @@ this.BX = this.BX || {};
 	      if (BX.hasClass(this.mainTable, "menu-sliding-mode")) {
 	        if (immediately !== true) {
 	          BX.addClass(this.mainTable, "menu-sliding-closing-mode");
-	          if (Options.showLicenseButton) {
-	            babelHelpers.classPrivateFieldLooseBase(this, _getLicenseButton)[_getLicenseButton]().setCollapsed(true);
-	          }
+	        }
+	        if (Options.showLicenseButton) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _getLicenseButton)[_getLicenseButton]().setCollapsed(true);
 	        }
 	        BX.removeClass(this.mainTable, "menu-sliding-mode menu-sliding-opening-mode");
 	        main_core.Dom.removeClass(this.menuContainer, '--ui-context-edge-dark');
@@ -3874,11 +4152,9 @@ this.BX = this.BX || {};
 	      main_core.Dom.removeClass(this.menuContainer, '--ui-context-edge-dark');
 	      if (immediately !== true) {
 	        BX.addClass(this.mainTable, "menu-sliding-opening-mode");
-	        if (Options.showLicenseButton) {
-	          setTimeout(() => {
-	            babelHelpers.classPrivateFieldLooseBase(this, _getLicenseButton)[_getLicenseButton]().setCollapsed(false);
-	          }, 50);
-	        }
+	      }
+	      if (Options.showLicenseButton) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _getLicenseButton)[_getLicenseButton]().setCollapsed(false);
 	      }
 	      BX.addClass(this.mainTable, "menu-sliding-mode");
 	      main_core.Dom.addClass(this.menuContainer, '--ui-context-edge-dark');
@@ -3889,6 +4165,38 @@ this.BX = this.BX || {};
 	      BX.removeClass(this.mainTable, "menu-sliding-opening-mode menu-sliding-closing-mode");
 	    }
 	  }
+
+	  // region Responsive auto-collapse
+	  initResponsiveCollapse() {
+	    this.narrowViewportQuery = window.matchMedia('(max-width: 1024px)');
+	    this.handleResponsiveChange(this.narrowViewportQuery);
+	    this.narrowViewportQuery.addEventListener('change', this.handleResponsiveChange.bind(this));
+	  }
+	  handleResponsiveChange(event) {
+	    const isNarrow = event.matches;
+	    if (isNarrow && !this.isResponsiveCollapsed) {
+	      // Viewport became narrow: force collapse without persisting to server
+	      this.wasExpandedBeforeResponsive = !this.isCollapsedMode;
+	      if (!this.isCollapsedMode) {
+	        this.isCollapsedMode = true;
+	        main_core.Dom.addClass(this.mainTable, 'menu-collapsed-mode');
+	        window.dispatchEvent(new Event('resize'));
+	      }
+	      this.isResponsiveCollapsed = true;
+	    } else if (!isNarrow && this.isResponsiveCollapsed) {
+	      // Viewport became wide: restore previous state
+	      this.isResponsiveCollapsed = false;
+	      this.switchToSlidingMode(false, true);
+	      if (this.wasExpandedBeforeResponsive) {
+	        this.isCollapsedMode = false;
+	        main_core.Dom.removeClass(this.mainTable, 'menu-collapsed-mode');
+	        window.dispatchEvent(new Event('resize'));
+	      }
+	      this.wasExpandedBeforeResponsive = false;
+	    }
+	  }
+	  // endregion
+
 	  switchToScrollMode(enable) {
 	    if (enable === false) {
 	      main_core.Dom.removeClass(this.mainTable, 'menu-scroll-mode');
@@ -3902,6 +4210,11 @@ this.BX = this.BX || {};
 	      return;
 	    }
 	    const isOpen = !this.mainTable.classList.contains('menu-collapsed-mode');
+
+	    // Block expanding when viewport forces collapsed mode
+	    if (this.isResponsiveCollapsed && !isOpen) {
+	      return;
+	    }
 	    if (flag === isOpen || this.mainTable.classList.contains('menu-animation-mode')) {
 	      return;
 	    }
@@ -3929,6 +4242,30 @@ this.BX = this.BX || {};
 	    var imBarWidth = imBar ? imBar.offsetWidth : 0;
 	    const expandedMenuWidth = parseInt(getComputedStyle(this.menuContainer).getPropertyValue('--menu-width-expanded'), 10);
 	    const collapsedMenuWidth = parseInt(getComputedStyle(this.menuContainer).getPropertyValue('--menu-width-collapsed'), 10);
+	    if (Utils.prefersReducedMotion()) {
+	      if (isOpen) {
+	        this.isCollapsedMode = true;
+	        main_core.Dom.addClass(this.mainTable, 'menu-collapsed-mode');
+	      } else {
+	        this.isCollapsedMode = false;
+	        main_core.Dom.removeClass(this.mainTable, 'menu-collapsed-mode');
+	      }
+	      if (Options.showLicenseButton) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _getLicenseButton)[_getLicenseButton]().setCollapsed(isOpen);
+	      }
+	      main_core.Dom.attr(this.menuHeaderBurger, 'aria-expanded', isOpen ? 'false' : 'true');
+	      main_core.Dom.attr(this.menuHeaderBurger, 'aria-label', main_core.Loc.getMessage(isOpen ? 'MENU_EXPAND' : 'MENU_COLLAPSE'));
+	      main_core.Dom.removeClass(this.mainTable, 'menu-animation-mode menu-animation-opening-mode menu-animation-closing-mode');
+	      this.releaseSliding();
+	      if (BX.type.isFunction(fn)) {
+	        fn();
+	      }
+	      Backend.toggleMenu(isOpen);
+	      var event = document.createEvent("Event");
+	      event.initEvent("resize", true, true);
+	      window.dispatchEvent(event);
+	      return;
+	    }
 	    new BX.easing({
 	      duration: 300,
 	      start: {
@@ -4099,6 +4436,8 @@ this.BX = this.BX || {};
 	          this.isCollapsedMode = false;
 	          BX.removeClass(this.mainTable, "menu-collapsed-mode");
 	        }
+	        main_core.Dom.attr(this.menuHeaderBurger, 'aria-expanded', isOpen ? 'false' : 'true');
+	        main_core.Dom.attr(this.menuHeaderBurger, 'aria-label', main_core.Loc.getMessage(isOpen ? 'MENU_EXPAND' : 'MENU_COLLAPSE'));
 	        BX.removeClass(this.mainTable, "menu-animation-mode menu-animation-opening-mode menu-animation-closing-mode");
 	        var containers = [leftColumn, menuTextDivider, this.menuHeaderBurger, this.headerBurger, settingsIconBox, settingsBtnText, helpIconBox, helpBtnText, menuMoreBtnDefault, menuMoreBtn, menuSitemapIcon, menuSitemapText, menuEmployeesIcon, menuEmployeesText, menuMoreCounter, this.menuContainer, pageHeader];
 	        containers.forEach(function (container) {
@@ -4215,8 +4554,37 @@ this.BX = this.BX || {};
 	      }
 	    }
 	    this.getItemsController().updateCounters(counters, send);
+	    babelHelpers.classPrivateFieldLooseBase(this, _emitTotalCounter)[_emitTotalCounter]();
 	  }
-	  //endregion
+	}
+	function _transferAriaCurrentFromMoreButton2() {
+	  if (!this.menuMoreButton.hasAttribute('aria-current')) {
+	    return;
+	  }
+	  this.menuMoreButton.removeAttribute('aria-current');
+	  const hiddenBlock = this.menuContainer.querySelector('#left-menu-hidden-items-block');
+	  if (hiddenBlock) {
+	    const activeLink = hiddenBlock.querySelector('.menu-item-active .menu-item-link');
+	    main_core.Dom.attr(activeLink, 'aria-current', 'page');
+	  }
+	}
+	function _transferAriaCurrentToMoreButton2() {
+	  const hiddenBlock = this.menuContainer.querySelector('#left-menu-hidden-items-block');
+	  if (!hiddenBlock) {
+	    return;
+	  }
+	  const activeLink = hiddenBlock.querySelector('.menu-item-active .menu-item-link');
+	  if (activeLink) {
+	    main_core.Dom.attr(activeLink, 'aria-current', null);
+	    main_core.Dom.attr(this.menuMoreButton, 'aria-current', 'page');
+	  }
+	}
+	function _syncMoreButtonAriaLabel2() {
+	  const buttonText = main_core.Loc.getMessage('more_items_show');
+	  const counterNode = this.menuContainer.querySelector('#menu-hidden-counter');
+	  const counter = ui_cnt.Counter.initFromCounterNode(counterNode);
+	  const counterValue = counter ? counter.getRealValue() : 0;
+	  main_core.Dom.attr(this.menuMoreButton, 'aria-label', Item.getItemAriaLabel(buttonText, counterValue));
 	}
 	function _getLeftMenuItemByTopMenuItem2({
 	  DATA_ID,
@@ -4234,6 +4602,14 @@ this.BX = this.BX || {};
 	    }
 	  }
 	  return (_item = item) != null ? _item : null;
+	}
+	function _emitTotalCounter2() {
+	  let total = 0;
+	  const items = this.menuContainer.querySelectorAll('.menu-item-block[data-role="item"] .ui-counter[id^="menu-counter-"]');
+	  items.forEach(node => {
+	    total += Math.max(0, parseInt(node.dataset.value, 10) || 0);
+	  });
+	  BX.onCustomEvent('BX.Intranet.LeftMenu:onTotalCounterUpdate', [total]);
 	}
 	function _addLicenseButton2() {
 	  if (Options.showLicenseButton) {

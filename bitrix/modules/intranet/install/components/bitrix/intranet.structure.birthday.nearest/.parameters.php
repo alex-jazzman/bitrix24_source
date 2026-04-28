@@ -78,7 +78,15 @@ $arComponentParameters = array(
 			'NAME' => GetMessage('INTR_ISBN_PARAM_NUM_USERS'),
 			'PARENT' => 'BASE',
 		),
-		
+
+		'DATE_INTERVAL' => array(
+			'TYPE' => 'STRING',
+			'MULTIPLE' => 'N',
+			'DEFAULT' => 14,
+			'NAME' => GetMessage('INTR_ISBN_PARAM_DATE_INTERVAL'),
+			'PARENT' => 'BASE',
+		),
+
 		'NAME_TEMPLATE' => array(
 			'TYPE' => 'LIST',
 			'NAME' => GetMessage('INTR_ISBN_PARAM_NAME_TEMPLATE'),

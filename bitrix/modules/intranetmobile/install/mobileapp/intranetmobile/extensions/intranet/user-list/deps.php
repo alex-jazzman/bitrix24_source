@@ -2,22 +2,25 @@
 
 return [
 	'extensions' => [
-		'tokens',
-		'loc',
-
+		'assets/icons/types',
+		'layout/ui/list/base-filter',
 		'layout/ui/list/base-more-menu',
 		'layout/ui/list/base-sorting',
-		'layout/ui/list/base-filter',
-
+		'layout/ui/menu',
+		'loc',
+		'qrauth/utils',
 		'selector/widget/entity/intranet/department',
-		'ui-system/typography/text',
+		'statemanager/redux/store',
+		'tokens',
 		'ui-system/blocks/icon',
-		'assets/icons/types',
+		'ui-system/typography/text',
+		'intranet:enum',
+		'intranet:statemanager/redux/slices/employees/selector',
 	],
 	'bundle' => [
-		'./src/more-menu',
-		'./src/filter',
-		'./src/sorting',
 		'./src/department-button',
+		'./src/filter',
+		'./src/more-menu',
+		'./src/sorting',
 	],
 ];

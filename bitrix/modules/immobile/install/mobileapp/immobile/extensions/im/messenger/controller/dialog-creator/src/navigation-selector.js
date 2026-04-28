@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 	const { AnalyticsEvent } = require('analytics');
 
 	const { Theme } = require('im/lib/theme');
+	const { debounce } = require('utils/function');
 
 	const {
 		EventType,
@@ -21,6 +22,8 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { isModuleInstalled } = require('module');
+
+	const CREATE_COPILOT_DEBOUNCE_DELAY = 1000;
 
 	class NavigationSelector
 	{
@@ -78,7 +81,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 						console.error(error);
 					}
 				},
-				onCreateCopilot: async () => {
+				onCreateCopilot: debounce(async () => {
 					try
 					{
 						this.sendAnalyticsStartCreate(
@@ -110,7 +113,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					{
 						console.error(error);
 					}
-				},
+				}, CREATE_COPILOT_DEBOUNCE_DELAY, this, true),
 				onClickInviteButton: async () => {
 					if (isModuleInstalled('intranet'))
 					{

@@ -1,13 +1,12 @@
 import { Type } from 'main.core';
 
-import { ThemeManager } from 'im.v2.lib.theme';
-import { LegacyRecentService } from 'im.v2.provider.service.recent';
+import { Core } from 'im.v2.application.core';
+import { RecentType } from 'im.v2.const';
+import { ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';
 
 import { FeatureBlock } from './components/feature-block';
 
 import './css/base.css';
-
-import type { BackgroundStyle } from 'im.v2.lib.theme';
 
 export const IconClass = {
 	group: '--group',
@@ -96,7 +95,9 @@ export const BaseEmptyState = {
 		},
 		isEmptyRecent(): boolean
 		{
-			return LegacyRecentService.getInstance().getCollection().length === 0;
+			const recentCollection = Core.getStore().getters['recent/getCollection']({ type: RecentType.default });
+
+			return recentCollection.length === 0;
 		},
 		backgroundStyle(): BackgroundStyle
 		{

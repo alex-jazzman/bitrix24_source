@@ -15,7 +15,7 @@ jn.define('im/messenger/controller/recent/service/base/base', (require, exports,
 		/**
 		 * @param {RecentLocator} recentLocator
 		 * @param {string} serviceId
-		 * @param {any} props
+		 * @param {object} props
 		 */
 		constructor(recentLocator, serviceId, props)
 		{

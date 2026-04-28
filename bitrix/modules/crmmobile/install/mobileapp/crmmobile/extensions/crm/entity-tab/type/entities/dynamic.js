@@ -5,6 +5,7 @@ jn.define('crm/entity-tab/type/entities/dynamic', (require, exports, module) => 
 	const { Base: BaseEntityType } = require('crm/entity-tab/type/entities/base');
 	const { Type } = require('crm/type');
 	const { Loc } = require('loc');
+	const { UIMenuType } = require('layout/ui/menu');
 
 	/**
 	 * @class Dynamic
@@ -116,7 +117,7 @@ jn.define('crm/entity-tab/type/entities/dynamic', (require, exports, module) => 
 		{
 			return [
 				{
-					type: UI.Menu.Types.HELPDESK,
+					type: UIMenuType.HELPDESK,
 					data: {
 						articleCode: '18109574',
 					},

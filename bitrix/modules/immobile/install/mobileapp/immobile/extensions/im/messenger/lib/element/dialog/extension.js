@@ -39,6 +39,8 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 	const { AiAssistantMessage } = require('im/messenger/lib/element/dialog/message/ai-assistant');
 	const { StickerMessage } = require('im/messenger/lib/element/dialog/message/sticker');
 	const { DeletedStickerMessage } = require('im/messenger/lib/element/dialog/message/deleted-sticker');
+	const { AiBizprocMessage } = require('im/messenger/lib/element/dialog/message/ai-bizproc/message');
+	const { AiBizprocMessageHandler } = require('im/messenger/lib/element/dialog/message/ai-bizproc/handler');
 
 	module.exports = {
 		Message,
@@ -76,5 +78,7 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 		AiAssistantMessage,
 		StickerMessage,
 		DeletedStickerMessage,
+		AiBizprocMessage,
+		AiBizprocMessageHandler,
 	};
 });

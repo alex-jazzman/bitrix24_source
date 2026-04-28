@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Builder, Dictionary } from 'crm.integration.analytics';
 import { ajax as Ajax, Loc, Type } from 'main.core';
 import { sendData } from 'ui.analytics';
@@ -146,12 +147,11 @@ interface FeedbackMessageBoxOpts {
  */
 export function createFeedbackMessageBox(options: FeedbackMessageBoxOpts): MessageBox
 {
+	const popupText = Loc.getMessage('CRM_AI_FEEDBACK_POPUP_TEXT', NameService.copilotNameReplacement());
 	const message = `
 		<div class="bx-crm-ai-feedback-popup-content">
 			<div class="bx-crm-ai-feedback-popup-content__icon"></div>
-			<div class="bx-crm-ai-feedback-popup-content__text">
-				${Loc.getMessage('CRM_AI_FEEDBACK_POPUP_TEXT')}
-			</div>
+			<div class="bx-crm-ai-feedback-popup-content__text">${popupText}</div>
 		</div>
 	`;
 

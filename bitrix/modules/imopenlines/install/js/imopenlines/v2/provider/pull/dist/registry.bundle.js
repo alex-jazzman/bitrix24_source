@@ -18,7 +18,6 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	  }
 	  handleMessageChat(params) {
 	    this.handleMessageAdd(params);
-	    this.updateUnloadedLinesCounter(params);
 	  }
 	  handleMessageAdd(params) {
 	    if (!params.lines) {
@@ -28,60 +27,29 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	    const userInChat = params.userInChat[params.chatId];
 	    const isClosed = params.lines.isClosed;
 	    if (userInChat.includes(userId) && !isClosed) {
-	      void this.store.dispatch('recentOpenLines/set', {
+	      void this.store.dispatch('openLines/recent/set', {
 	        id: params.dialogId,
 	        messageId: params.message.id,
 	        sessionId: params.lines.id
 	      });
 	    }
-	    void this.store.dispatch('sessions/set', {
+	    void this.store.dispatch('openLines/sessions/set', {
 	      ...params.lines,
 	      chatId: params.chatId,
 	      status: params.lines.statusGroup
 	    });
 	  }
-	  handleReadMessageChat(params) {
-	    this.updateUnloadedLinesCounter(params);
-	  }
-	  handleUnreadMessageChat(params) {
-	    this.updateUnloadedLinesCounter(params);
-	  }
 	  handleChatHide(params) {
-	    this.updateUnloadedLinesCounter({
-	      dialogId: params.dialogId,
-	      chatId: params.chatId,
-	      lines: params.lines,
-	      counter: 0
-	    });
-	    const recentItem = this.store.getters['recentOpenLines/get'](params.dialogId);
+	    const recentItem = this.store.getters['openLines/recent/get'](params.dialogId);
 	    if (!recentItem) {
 	      return;
 	    }
-	    void this.store.dispatch('recentOpenLines/delete', {
+	    void this.store.dispatch('openLines/recent/delete', {
 	      id: params.dialogId
 	    });
 	  }
-	  updateUnloadedLinesCounter(params) {
-	    const {
-	      dialogId,
-	      chatId,
-	      counter,
-	      lines
-	    } = params;
-	    if (!lines || main_core.Type.isUndefined(counter)) {
-	      return;
-	    }
-	    im_v2_lib_logger.Logger.warn('LinesPullHandler: updateUnloadedLinesCounter:', {
-	      dialogId,
-	      chatId,
-	      counter
-	    });
-	    void this.store.dispatch('counters/setUnloadedLinesCounters', {
-	      [chatId]: counter
-	    });
-	  }
 	  handleChatUserLeave(params) {
-	    const recentItem = this.store.getters['recentOpenLines/get'](params.dialogId);
+	    const recentItem = this.store.getters['openLines/recent/get'](params.dialogId);
 	    const chatIsOpened = im_v2_application_core.Core.getStore().getters['application/isLinesChatOpen'](params.dialogId);
 	    const userId = im_v2_application_core.Core.getUserId();
 	    if (chatIsOpened && params.userId === userId) {
@@ -91,7 +59,7 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	    if (!recentItem || params.userId !== im_v2_application_core.Core.getUserId()) {
 	      return;
 	    }
-	    void this.store.dispatch('recentOpenLines/delete', {
+	    void this.store.dispatch('openLines/recent/delete', {
 	      id: params.dialogId
 	    });
 	  }
@@ -108,13 +76,13 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	    const sessionItem = params.session;
 	    const isClosed = sessionItem.isClosed;
 	    if (!isClosed) {
-	      void this.store.dispatch('recentOpenLines/set', {
+	      void this.store.dispatch('openLines/recent/set', {
 	        id: params.chat.dialogId,
 	        messageId: params.message.id,
 	        sessionId: sessionItem.id
 	      });
 	    }
-	    void this.store.dispatch('sessions/set', sessionItem);
+	    void this.store.dispatch('openLines/sessions/set', sessionItem);
 	  }
 	}
 
@@ -126,10 +94,10 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	    return 'imopenlines';
 	  }
 	  handleQueueItemUpdate(params) {
-	    void this.store.dispatch('queue/set', params);
+	    void this.store.dispatch('openLines/queue/set', params);
 	  }
 	  handleQueueItemDelete(params) {
-	    void this.store.dispatch('queue/delete', params.id);
+	    void this.store.dispatch('openLines/queue/delete', params.id);
 	  }
 	}
 

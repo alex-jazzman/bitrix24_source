@@ -1,26 +1,26 @@
 import { Loc, Type } from 'main.core';
-import { MenuItemDesign } from 'ui.system.menu';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
+import { MenuItemDesign } from 'ui.system.menu';
 
-import { ChatManager } from 'im.v2.lib.chat';
-import { MessageManager } from 'im.v2.lib.message';
-import { PromoManager } from 'im.v2.lib.promo';
+import { Core } from 'im.v2.application.core';
+import { EventType, PlacementType, ActionByRole, PromoId } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { ChannelManager } from 'im.v2.lib.channel';
-import { Core } from 'im.v2.application.core';
-import { Parser } from 'im.v2.lib.parser';
+import { ChatManager } from 'im.v2.lib.chat';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
-import { MessageService } from 'im.v2.provider.service.message';
-import { DiskService } from 'im.v2.provider.service.disk';
-import { EventType, PlacementType, ActionByRole, PromoId } from 'im.v2.const';
 import { MarketManager } from 'im.v2.lib.market';
+import { MessageManager } from 'im.v2.lib.message';
+import { Parser } from 'im.v2.lib.parser';
+import { PromoManager } from 'im.v2.lib.promo';
 import { Utils } from 'im.v2.lib.utils';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { showDeleteChannelPostConfirm, showDownloadAllFilesConfirm } from 'im.v2.lib.confirm';
 import { Notifier } from 'im.v2.lib.notifier';
 import { FeatureManager, Feature } from 'im.v2.lib.feature';
+import { CopilotManager } from 'im.v2.lib.copilot';
+import { DiskService } from 'im.v2.provider.service.disk';
+import { MessageService } from 'im.v2.provider.service.message';
 
-// noinspection ES6PreferShortImport
 import { BaseMenu } from '../../base/base';
 
 import type { EventEmitter } from 'main.core.events';
@@ -130,7 +130,6 @@ export class MessageMenu extends BaseMenu
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -145,7 +144,6 @@ export class MessageMenu extends BaseMenu
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});
-				this.menuInstance.close();
 			},
 			icon: OutlineIcons.QUOTE,
 		};
@@ -166,7 +164,6 @@ export class MessageMenu extends BaseMenu
 				this.emitter.emit(EventType.dialog.showForwardPopup, {
 					messagesIds: [this.context.id],
 				});
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -190,8 +187,6 @@ export class MessageMenu extends BaseMenu
 
 				await Utils.text.copyToClipboard(textToCopy);
 				Notifier.message.onCopyComplete();
-
-				this.menuInstance.close();
 			},
 			icon: OutlineIcons.COPY,
 		};
@@ -210,7 +205,6 @@ export class MessageMenu extends BaseMenu
 				{
 					Notifier.message.onCopyLinkComplete();
 				}
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -237,7 +231,6 @@ export class MessageMenu extends BaseMenu
 				{
 					Notifier.file.onCopyComplete();
 				}
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -275,7 +268,6 @@ export class MessageMenu extends BaseMenu
 					{
 						Notifier.chat.onMessagesPinLimitError(this.maxPins);
 						Analytics.getInstance().messageContextMenu.onReachingPinsLimit(this.context.dialogId);
-						this.menuInstance.close();
 
 						return;
 					}
@@ -283,7 +275,6 @@ export class MessageMenu extends BaseMenu
 					messageService.pinMessage(this.context.chatId, this.context.id);
 					Analytics.getInstance().messageContextMenu.onPin(this.context.dialogId);
 				}
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -320,8 +311,6 @@ export class MessageMenu extends BaseMenu
 
 					messageService.addMessageToFavorite(this.context.id);
 				}
-
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -345,7 +334,6 @@ export class MessageMenu extends BaseMenu
 
 				const messageService = new MessageService({ chatId: this.context.chatId });
 				messageService.markMessage(this.context.id);
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -365,7 +353,6 @@ export class MessageMenu extends BaseMenu
 
 				const entityCreator = new EntityCreator(this.context.chatId);
 				void entityCreator.createTaskForMessage(this.context.id);
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -385,7 +372,6 @@ export class MessageMenu extends BaseMenu
 
 				const entityCreator = new EntityCreator(this.context.chatId);
 				void entityCreator.createMeetingForMessage(this.context.id);
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -407,7 +393,6 @@ export class MessageMenu extends BaseMenu
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -432,9 +417,12 @@ export class MessageMenu extends BaseMenu
 
 		const copilotBotDialogId = this.store.getters['users/bots/getCopilotBotDialogId'];
 		const { name: mentionText } = this.store.getters['users/get'](copilotBotDialogId, true);
+		const title = Loc.getMessage('IM_DIALOG_CHAT_MENU_ASK_COPILOT_MSGVER_1', {
+			'#COPILOT_NAME#': (new CopilotManager()).getName(),
+		});
 
 		return {
-			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_ASK_COPILOT'),
+			title,
 			icon: OutlineIcons.COPILOT,
 			design: MenuItemDesign.Copilot,
 			onClick: () => {
@@ -493,7 +481,6 @@ export class MessageMenu extends BaseMenu
 				icon: OutlineIcons.MARKET,
 				onClick: () => {
 					void MarketManager.openSlider(placement, context);
-					this.menuInstance.close();
 				},
 			});
 		});
@@ -538,7 +525,6 @@ export class MessageMenu extends BaseMenu
 					dialogId: this.context.dialogId,
 				});
 
-				this.menuInstance.close();
 				await this.diskService.save(this.context.files);
 				Notifier.file.onDiskSaveComplete(this.#isSingleFile());
 			}.bind(this),
@@ -634,7 +620,6 @@ export class MessageMenu extends BaseMenu
 	{
 		const { id: messageId, dialogId, chatId } = this.context;
 		Analytics.getInstance().messageContextMenu.onDelete({ messageId, dialogId });
-		this.menuInstance.close();
 
 		if (await this.#isDeletionCancelled())
 		{
@@ -678,7 +663,6 @@ export class MessageMenu extends BaseMenu
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});
-				this.menuInstance.close();
 			}.bind(this),
 		};
 	}
@@ -702,11 +686,9 @@ export class MessageMenu extends BaseMenu
 				const needToShowPopup = PromoManager.getInstance().needToShow(PromoId.downloadSeveralFiles);
 				if (needToShowPopup && Utils.browser.isChrome() && !Utils.platform.isBitrixDesktop())
 				{
-					this.menuInstance?.close();
 					await showDownloadAllFilesConfirm();
 					void PromoManager.getInstance().markAsWatched(PromoId.downloadSeveralFiles);
 				}
-				this.menuInstance?.close();
 			},
 		};
 	}

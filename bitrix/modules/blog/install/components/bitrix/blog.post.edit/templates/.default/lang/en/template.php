@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_IMAGE"] = "Image";
 $MESS["BLOG_DELETE"] = "delete";
 $MESS["BLOG_CATEGORY"] = "Tags";
@@ -79,4 +79,3 @@ $MESS["BLOG_SHOW_SEO"] = "SEO aware description";
 $MESS["BLOG_SHOW_SEO_TITLE"] = "Page title";
 $MESS["BLOG_SHOW_SEO_TAGS"] = "Keywords";
 $MESS["BLOG_SHOW_SEO_DESCRIPTION"] = "Description";
-?>

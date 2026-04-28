@@ -56,6 +56,11 @@
 	opacity: 1;
 }
 
+.left-menu-popup-close-item:focus-visible {
+	outline: 2px solid;
+	outline-offset: 2px;
+}
+
 .left-menu-popup-header {
 	margin: 0 auto 15px auto;
 	max-width: 600px;
@@ -107,6 +112,10 @@
 
 .left-menu-popup-card-item:hover {
 	border: 2px solid #2fc7f7;
+}
+
+.left-menu-popup-card-item:focus-within {
+	border-color: #2fc7f7;
 }
 
 .left-menu-popup-card-item:last-child {

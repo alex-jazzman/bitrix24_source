@@ -3,6 +3,7 @@
  */
 jn.define('intranet/simple-list/items/user-redux/action-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { UIMenu } = require('layout/ui/menu');
 	const store = require('statemanager/redux/store');
 	const { selectWholeUserById } = require('intranet/statemanager/redux/slices/employees/selector');
 	const { EmployeeActions } = require('intranet/enum');
@@ -33,7 +34,7 @@ jn.define('intranet/simple-list/items/user-redux/action-menu', (require, exports
 
 		show(target)
 		{
-			void new UI.Menu(Object.values(this.actions)).show({ target });
+			void new UIMenu(Object.values(this.actions)).show({ target });
 		}
 
 		hasActions()

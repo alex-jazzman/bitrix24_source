@@ -6,6 +6,7 @@
  * @module im/messenger/lib/parser/utils/parsed-elements
  */
 jn.define('im/messenger/lib/parser/utils/parsed-elements', (require, exports, module) => {
+	const { NEW_LINE } = require('im/messenger/lib/parser/const');
 
 	const PLACEHOLDER = '####REPLACEMENT_';
 	const TAG_PLACEHOLDER = '####REPLACEMENT_TAG_';
@@ -61,7 +62,7 @@ jn.define('im/messenger/lib/parser/utils/parsed-elements', (require, exports, mo
 
 		getOrderedList(text)
 		{
-			const textLines = text.split('\n');
+			const textLines = text.split(NEW_LINE);
 
 			const orderedList = [];
 			textLines.forEach((line) => {

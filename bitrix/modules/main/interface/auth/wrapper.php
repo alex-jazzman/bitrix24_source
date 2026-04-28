@@ -80,7 +80,7 @@ $sDocPath = $APPLICATION->GetCurPage();
 $authUrl = (defined('BX_ADMIN_SECTION_404') && BX_ADMIN_SECTION_404 == 'Y') ? '/bitrix/admin/' : $sDocPath;
 
 $pullConfig = [];
-if (Otp::isPushPossible())
+if (CModule::IncludeModule('security') && Otp::isPushPossible())
 {
 	$otpParams = Otp::getDeferredParams();
 	if (!empty($otpParams['OTP_TYPE']) && $otpParams['OTP_TYPE'] === OtpType::Push->value)

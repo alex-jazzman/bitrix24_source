@@ -208,6 +208,11 @@ export class Tour implements TourInterface
 				targetVertex: 'middle-center',
 				zIndex: 200,
 			});
+			this.#spotlight.bindEvents({
+				onTargetEnter: () => {
+					this.#spotlight.close();
+				},
+			});
 		}
 
 		return this.#spotlight;

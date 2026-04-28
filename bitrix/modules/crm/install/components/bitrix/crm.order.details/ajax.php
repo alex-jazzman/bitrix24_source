@@ -266,13 +266,18 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 								'IS_PRIMARY' => 'Y'
 							]);
 
-							$arErrors = [];
-
-							\CCrmBizProcHelper::AutoStartWorkflows(
-								CCrmOwnerType::Company,
-								$companyID,
-								\CCrmBizProcEventType::Create,
-								$arErrors
+							$starter = new \Bitrix\Crm\Integration\BizProc\Starter\CrmStarter(
+								new \Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto(
+									CCrmOwnerType::Company,
+									(int)$companyID
+								)
+							);
+							$starter->runProcess(
+								new \Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+									actualFields: $companyFields,
+									userId: \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId(),
+								),
+								\CCrmBizProcEventType::Create
 							);
 						}
 					}
@@ -337,13 +342,18 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 								'IS_PRIMARY' => $clientCollection->isPrimaryItemExists(\CCrmOwnerType::Contact) ? 'N' : 'Y'
 							]);
 
-							$arErrors = [];
-
-							\CCrmBizProcHelper::AutoStartWorkflows(
-							    CCrmOwnerType::Contact,
-								$contactID,
-							    \CCrmBizProcEventType::Create,
-							    $arErrors
+							$starter = new \Bitrix\Crm\Integration\BizProc\Starter\CrmStarter(
+								new \Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto(
+									CCrmOwnerType::Contact,
+									(int)$contactID
+								)
+							);
+							$starter->runProcess(
+								new \Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+									actualFields: $contactFields,
+									userId: \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId(),
+								),
+								\CCrmBizProcEventType::Create
 							);
 						}
 					}

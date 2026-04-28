@@ -32,7 +32,6 @@ export type NotificationsTemplateModel = {
 };
 
 export type NotificationsSenderModel = {
-	moduleId: string,
 	code: string,
 	canUse: boolean,
 };

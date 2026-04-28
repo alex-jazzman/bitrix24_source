@@ -3,7 +3,8 @@
  */
 jn.define('im/messenger/api/dialog-selector/controller', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
-	const { RecentProvider, RecentSelector } = require('im/messenger/controller/search/experimental');
+	const { DialogType } = require('im/messenger/const');
+	const { ChatSearchProvider, ChatSearchSelector } = require('im/messenger/lib/chat-search');
 
 	const { DialogSelectorView } = require('im/messenger/api/dialog-selector/view');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -13,7 +14,7 @@ jn.define('im/messenger/api/dialog-selector/controller', (require, exports, modu
 	/**
 	 * @class DialogSelector
 	 */
-	class DialogSelector extends RecentSelector
+	class DialogSelector extends ChatSearchSelector
 	{
 		constructor()
 		{
@@ -73,7 +74,15 @@ jn.define('im/messenger/api/dialog-selector/controller', (require, exports, modu
 
 		initProvider()
 		{
-			this.provider = new RecentProvider({
+			this.provider = new ChatSearchProvider({
+				filter: {
+					exceptDialogTypes: [
+						DialogType.copilot,
+						DialogType.lines,
+						DialogType.comment,
+						DialogType.tasksTask,
+					],
+				},
 				loadLatestSearchComplete: (itemIdList) => {
 					logger.log(`${this.constructor.name} loadLatestSearchComplete`, itemIdList);
 					this.recentItems = itemIdList;

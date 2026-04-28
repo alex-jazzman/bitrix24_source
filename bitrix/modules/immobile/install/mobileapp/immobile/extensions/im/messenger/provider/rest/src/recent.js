@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { RestMethod } = require('im/messenger/const');
+	const { RestMethod, RecentFilterId } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { callMethod } = require('im/messenger/lib/rest');
@@ -33,9 +33,19 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 				methodParams.ONLY_COPILOT = options.onlyCopilot ? 'Y' : 'N';
 			}
 
+			if (Type.isBoolean(options.withCounters))
+			{
+				methodParams.WITH_COUNTERS = options.withCounters ? 'Y' : 'N';
+			}
+
 			if (options.lastActivityDate)
 			{
 				methodParams.DATE_LAST_ACTIVITY = options.lastActivityDate;
+			}
+
+			if (Type.isBoolean(options[RecentFilterId.unread]))
+			{
+				methodParams.UNREAD_ONLY = options[RecentFilterId.unread] ? 'Y' : 'N';
 			}
 
 			return callMethod(RestMethod.imRecentList, methodParams);
@@ -249,6 +259,90 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 			methodParams.DIALOG_ID = options.dialogId;
 
 			return BX.rest.callMethod(RestMethod.imRecentUnread, methodParams);
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @returns {Promise<RestResult>}
+		 */
+		answerOpenline(chatId)
+		{
+			if (Type.isUndefined(chatId))
+			{
+				throw new TypeError(`${this.constructor.name}: chatId is required.`);
+			}
+
+			if (!DialogHelper.isChatId(chatId))
+			{
+				throw new Error(`${this.constructor.name}: chatId is invalid.`);
+			}
+
+			const methodParams = { CHAT_ID: chatId };
+
+			return callMethod(RestMethod.imopenlinesOperatorAnswer, methodParams);
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @returns {Promise<RestResult>}
+		 */
+		skipOpenline(chatId)
+		{
+			if (Type.isUndefined(chatId))
+			{
+				throw new TypeError(`${this.constructor.name}: chatId is required.`);
+			}
+
+			if (!DialogHelper.isChatId(chatId))
+			{
+				throw new Error(`${this.constructor.name}: chatId is invalid.`);
+			}
+
+			const methodParams = { CHAT_ID: chatId };
+
+			return callMethod(RestMethod.imopenlinesOperatorSkip, methodParams);
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @returns {Promise<RestResult>}
+		 */
+		spamOpenline(chatId)
+		{
+			if (Type.isUndefined(chatId))
+			{
+				throw new TypeError(`${this.constructor.name}: chatId is required.`);
+			}
+
+			if (!DialogHelper.isChatId(chatId))
+			{
+				throw new Error(`${this.constructor.name}: chatId is invalid.`);
+			}
+
+			const methodParams = { CHAT_ID: chatId };
+
+			return callMethod(RestMethod.imopenlinesOperatorSpam, methodParams);
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @returns {Promise<RestResult>}
+		 */
+		finishOpenline(chatId)
+		{
+			if (Type.isUndefined(chatId))
+			{
+				throw new TypeError(`${this.constructor.name}: chatId is required.`);
+			}
+
+			if (!DialogHelper.isChatId(chatId))
+			{
+				throw new Error(`${this.constructor.name}: chatId is invalid.`);
+			}
+
+			const methodParams = { CHAT_ID: chatId };
+
+			return callMethod(RestMethod.imopenlinesOperatorFinish, methodParams);
 		}
 	}
 

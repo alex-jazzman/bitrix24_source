@@ -1,6 +1,7 @@
 <?php
 $MESS["BOARDS_REGISTER_TO_PROXY"] = "Connect";
 $MESS["BOARDS_UNREGISTER_TO_PROXY"] = "Disconnect";
+$MESS["DISK_ADMIN_CHANGE_DEFAULT_VIEWER_NOTIFICATION"] = "Changing the document server will close all active document sessions. No changes users may have made to their documents will be saved.";
 $MESS["DISK_ALLOW_AUTOCONNECT_SHARED_OBJECTS"] = "Auto connect Group Drive<br/>when a user joins the group";
 $MESS["DISK_ALLOW_CREATE_FILE_BY_CLOUD"] = "Enable document editing using external services (Google Docs, MS Office Online etc.)";
 $MESS["DISK_ALLOW_DOCUMENT_TRANSFORMATION"] = "Auto generate PDF anf JPG files for documents";
@@ -10,6 +11,7 @@ $MESS["DISK_ALLOW_INDEX_FILES_2"] = "Index documents";
 $MESS["DISK_ALLOW_USE_EXTENDED_FULLTEXT"] = "Index document content";
 $MESS["DISK_ALLOW_USE_EXTERNAL_LINK"] = "Allow public links";
 $MESS["DISK_ALLOW_VIDEO_TRANSFORMATION"] = "Auto generate MP4 and JPG files for video media";
+$MESS["DISK_CUSTOM_SERVERS"] = "Custom document server";
 $MESS["DISK_DEFAULT_VIEWER_SERVICE"] = "View documents using";
 $MESS["DISK_DEFAULT_VIEWER_SERVICE_BOARD"] = "Bitrix24 Boards";
 $MESS["DISK_DEFAULT_VIEWER_SERVICE_NOTICE_SOC_SERVICE"] = "The social networking service <a href='/bitrix/admin/settings.php?lang=#LANG#&mid=socialservices' target='_blank'>#NAME#</a> is not configured.";

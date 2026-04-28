@@ -30,7 +30,6 @@ export class BaasContent extends MarketContent
 
 	#getHelpIcon(): HTMLElement
 	{
-		console.log(this.getOptions());
 		if (this.getOptions().isActive)
 		{
 			return Tag.render`<span class="license-widget-item-help" onclick="${() => this.#showHelper()}"></span>`;

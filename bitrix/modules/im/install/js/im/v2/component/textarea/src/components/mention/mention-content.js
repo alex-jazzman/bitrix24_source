@@ -1,24 +1,27 @@
-import { Extension, Runtime, type JsonObject } from 'main.core';
+import { Extension, Runtime } from 'main.core';
 
+import { Core } from 'im.v2.application.core';
 import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradient';
 import { EntitySearch, getUsersFromRecentItems } from 'im.v2.lib.search';
-import { FeatureManager, Feature } from 'im.v2.lib.feature';
-import { CopilotManager } from 'im.v2.lib.copilot';
+import { ChatType, SpecialMentionDialogId, EventType } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
-import { ChatType, SpecialMentionDialogId } from 'im.v2.const';
-import { Core } from 'im.v2.application.core';
+import { CopilotManager } from 'im.v2.lib.copilot';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
-import { SearchEmptyState } from './components/search-empty-state';
-import { LoadingState } from './components/loading-state';
-import { ContentFooter } from './components/content-footer';
 import { MentionSearchService } from './classes/search-service';
+import { ContentFooter } from './components/content-footer';
+import { LoadingState } from './components/loading-state';
 import { MentionItemsContainer } from './components/mention-items-container';
 import { MentionItemFormatter } from './classes/item-formatter';
+import { SearchEmptyState } from './components/search-empty-state';
+import { ParticipantsService } from './classes/participants-service';
 
 import './css/mention-popup-content.css';
 
 import type { SettingsCollection } from 'main.core.collections';
 import type { ImModelChat } from 'im.v2.model';
+import type { BaseEvent, EventEmitter } from 'main.core.events';
+import type { JsonObject } from 'main.core';
 
 export type MentionItemType = {
 	id: string,
@@ -62,6 +65,7 @@ export const MentionPopupContent = {
 			currentServerQueries: 0,
 			needTopShadow: false,
 			needBottomShadow: true,
+			participantsIds: new Set(),
 		};
 	},
 	computed:
@@ -138,7 +142,7 @@ export const MentionPopupContent = {
 
 			return this.items.length === 0;
 		},
-		searchConfig(): { exclude: $Values<typeof EntitySearch>[] }
+		searchConfig(): { exclude: $Values<typeof EntitySearch>[], contextChatId: string }
 		{
 			const exclude = [];
 
@@ -147,7 +151,7 @@ export const MentionPopupContent = {
 				exclude.push(EntitySearch.chats);
 			}
 
-			return { exclude };
+			return { exclude, contextChatId: this.dialog.chatId };
 		},
 		copilotBotDialogId(): ?string
 		{
@@ -190,15 +194,45 @@ export const MentionPopupContent = {
 			void this.startSearch(newQuery);
 		},
 	},
-	created()
+	async created()
 	{
 		this.initSettings();
 		this.searchService = new MentionSearchService(this.searchConfig);
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 400, this);
-		void this.loadChatParticipants();
+
+		this.getEmitter().subscribe(EventType.mention.onAddUserToChat, this.onAddUserToChat);
+
+		void this.initChatParticipants();
+	},
+	beforeUnmount()
+	{
+		this.getEmitter().unsubscribe(EventType.mention.onAddUserToChat, this.onAddUserToChat);
 	},
 	methods:
 	{
+		async initChatParticipants()
+		{
+			this.isLoading = true;
+
+			await this.loadChatParticipants();
+
+			const participantsIdsFromRecent = await this.getRecentParticipantsIds();
+			this.addParticipants(participantsIdsFromRecent);
+
+			this.isLoading = false;
+		},
+		getRecentParticipantsIds(): Promise<string[]>
+		{
+			const participantsService = new ParticipantsService();
+
+			return participantsService.getRecentIds(this.dialogId);
+		},
+		onAddUserToChat(event: BaseEvent<{ userId: string }>)
+		{
+			const { userId } = event.getData();
+
+			this.participantsIds.add(userId);
+		},
 		initSettings()
 		{
 			const settings: SettingsCollection = Extension.getSettings('im.v2.component.textarea');
@@ -207,23 +241,23 @@ export const MentionPopupContent = {
 		},
 		async loadChatParticipants()
 		{
-			this.isLoading = true;
 			this.chatParticipants = await this.searchService.loadChatParticipants(this.dialogId);
+			this.addParticipants(this.chatParticipants);
 			this.searchResult = this.chatParticipants;
-			this.isLoading = false;
 			this.chatParticipantsLoaded = true;
 		},
 		async searchOnServer(query: string)
 		{
 			this.currentServerQueries++;
-
 			try
 			{
-				const dialogIds = await this.searchService.search(query);
+				const { dialogIds, participantDialogIds } = await this.searchService.search(query);
 				if (query !== this.preparedQuery)
 				{
 					return;
 				}
+
+				this.addParticipants(participantDialogIds);
 
 				this.searchResult = [...new Set([...this.searchResult, ...dialogIds])];
 			}
@@ -291,6 +325,14 @@ export const MentionPopupContent = {
 				return (new MentionItemFormatter(dialogId)).format();
 			});
 		},
+		addParticipants(items: string[])
+		{
+			items.forEach((userId) => this.participantsIds.add(userId));
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -304,6 +346,7 @@ export const MentionPopupContent = {
 				:dialogId="dialogId"
 				:query="query"
 				:items="items"
+				:participantsIds="participantsIds"
 				@close="$emit('close')"
 			/>
 			<SearchEmptyState v-if="isSearchEmptyState" />

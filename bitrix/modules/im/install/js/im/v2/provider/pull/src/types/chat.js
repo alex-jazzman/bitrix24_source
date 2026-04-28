@@ -1,12 +1,8 @@
 import type { JsonObject } from 'main.core';
 
-import { CounterType } from 'im.v2.const';
-
 import type { InputActionType } from 'im.v2.lib.input-action';
+import type { RecentTypeItem } from 'im.v2.const';
 import type { RawUser } from './common';
-import type { RecentTypeItem } from './recent';
-
-type CounterTypeItem = $Values<typeof CounterType>;
 
 export type ChatOwnerParams = {
 	chatId: number,
@@ -69,7 +65,7 @@ export type ChatUnreadParams = {
 	counter: number,
 	markedId: number | "0",
 	lines: boolean,
-	counterType: CounterTypeItem,
+	parentChatId: number,
 	recentConfig: {
 		chatId: number,
 		sections: RecentTypeItem[],
@@ -84,7 +80,6 @@ export type ChatMuteNotifyParams = {
 	counter: number,
 	lines: boolean,
 	unread: boolean,
-	counterType: CounterTypeItem
 };
 
 export type ChatRenameParams = {
@@ -123,12 +118,4 @@ export type MessagesAutoDeleteDelayParams = {
 	chatId: number,
 	dialogId: string,
 	delay: number,
-};
-
-export type Relation = {
-	id: number,
-	userId: number,
-	chatId: number,
-	isHidden: boolean,
-	role: 'guest' | 'member' | 'admin' | 'owner',
 };

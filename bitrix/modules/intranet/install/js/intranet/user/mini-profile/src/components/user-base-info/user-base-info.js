@@ -8,12 +8,13 @@ import { OpenActionService } from '../../classes/open-action-service';
 import { IconSetMixin } from '../../mixins/icon-set-mixin';
 import { LocMixin } from '../../mixins/loc-mixin';
 import { PopupPrefixId } from '../../user-mini-profile';
+import { FirstAdminBadge } from './components/user-role/first-admin-badge/first-admin-badge';
 import { UserRole } from './components/user-role/user-role';
 import { UserStatusIcon } from './components/user-status-icon/user-status-icon';
 import { UserStatusDescription } from './components/user-status-description/user-status-description';
 import { UserTime } from './components/user-time/user-time';
 import { UserAvatarTypeByRole } from './const';
-import { UserStatus as UserStatusDict } from '../../type';
+import { UserStatus as UserStatusDict, UserRole as UserRoleCode } from '../../type';
 
 import type { UserBaseInfoDataType } from './type';
 
@@ -31,6 +32,7 @@ export const UserBaseInfo = {
 		UserTime,
 		Avatar,
 		BMenu,
+		FirstAdminBadge,
 	},
 	mixins: [LocMixin, IconSetMixin],
 	props: {
@@ -95,6 +97,10 @@ export const UserBaseInfo = {
 		{
 			return ChatService.isMessengerAvailable() && this.canChat;
 		},
+		shouldShowFirstAdminBadge(): boolean
+		{
+			return this.info.role === UserRoleCode.FirstAdmin;
+		},
 		currentUserId(): number
 		{
 			return Number(this.loc('USER_ID'));
@@ -135,7 +141,7 @@ export const UserBaseInfo = {
 		<div class="intranet-user-mini-profile__base-info">
 			<div class="intranet-user-mini-profile__base-info__user">
 				<div class="intranet-user-mini-profile__base-info__user-avatar-wrapper">
-					<div 
+					<div
 						class="intranet-user-mini-profile__base-info__user-avatar"
 						data-test-id="usermp_avatar"
 						@click="openProfile"
@@ -143,9 +149,9 @@ export const UserBaseInfo = {
 						<Avatar 
 							:type="avatarType"
 							:options="{
-								userName: info.name, 
-								size: 72, 
-								title: info.name, 
+								userName: info.name,
+								size: 72,
+								title: info.name,
 								picPath: info.avatar ? encodeURI(info.avatar) : undefined,
 							}"
 						/>
@@ -157,21 +163,22 @@ export const UserBaseInfo = {
 				</div>
 				<div class="intranet-user-mini-profile__base-info__user-data">
 					<div class="intranet-user-mini-profile__base-info__user-data__name"
-						 :title="info.name"
-						 data-test-id="usermp_name"
-						 @click="openProfile"
+						:title="info.name"
+						data-test-id="usermp_name"
+						@click="openProfile"
 					>
 						{{ info.name }}
 					</div>
 					<div class="intranet-user-mini-profile__base-info__user-data__position"
-						 :title="info.workPosition"
-						 data-test-id="usermp_position"
+						:title="info.workPosition"
+						data-test-id="usermp_position"
 					>
 						{{ info.workPosition }}
 					</div>
+					<FirstAdminBadge v-if="shouldShowFirstAdminBadge"/>
 					<div class="intranet-user-mini-profile__base-info__user-data__status">
 						<UserStatusDescription v-if="info.status"
-							:personalGender="info.personalGender"   
+							:personalGender="info.personalGender"
 							:status="info.status"
 							data-test-id="usermp_status-description"
 						/>

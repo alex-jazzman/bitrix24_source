@@ -1104,6 +1104,11 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      });
 	    }
 	  }, {
+	    key: "toJsonPayload",
+	    value: function toJsonPayload(data) {
+	      return JSON.parse(Helper.toJsonString(data));
+	    }
+	  }, {
 	    key: "getResponsibleUserExpression",
 	    value: function getResponsibleUserExpression(fields) {
 	      if (main_core.Type.isArray(fields)) {
@@ -4365,6 +4370,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _context = /*#__PURE__*/new WeakMap();
 	var _delayMinLimitM = /*#__PURE__*/new WeakMap();
+	var _delayMaxLimitD = /*#__PURE__*/new WeakMap();
 	var _userOptions$1 = /*#__PURE__*/new WeakMap();
 	var _tracker$1 = /*#__PURE__*/new WeakMap();
 	var _viewMode$3 = /*#__PURE__*/new WeakMap();
@@ -4392,6 +4398,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      value: void 0
 	    });
 	    _classPrivateFieldInitSpec$d(babelHelpers.assertThisInitialized(_this), _delayMinLimitM, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$d(babelHelpers.assertThisInitialized(_this), _delayMaxLimitD, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -4437,6 +4447,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    _this.variables = params.variables;
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _templateContainerNode, params.templateContainerNode);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _delayMinLimitM, params.delayMinLimitM);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _delayMaxLimitD, params.delayMaxLimitD);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userOptions$1, params.userOptions);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _tracker$1, babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _context).tracker);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _data$2, {});
@@ -4995,7 +5006,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        form: form
 	      });
 	      window.console.info('Opened robot ID: %s', robot.getId());
-	      context.DOCUMENT_CATEGORY_ID = babelHelpers.classPrivateFieldGet(this, _context).document.getCategoryId();
+	      if (main_core.Type.isNumber(babelHelpers.classPrivateFieldGet(this, _context).document.getCategoryId())) {
+	        context.DOCUMENT_CATEGORY_ID = babelHelpers.classPrivateFieldGet(this, _context).document.getCategoryId();
+	      }
 	      if (main_core.Type.isPlainObject(robot.data.DialogContext) && !main_core.Type.isNil(robot.data.DialogContext.addMenuGroup)) {
 	        context.addMenuGroup = robot.data.DialogContext.addMenuGroup;
 	      }
@@ -5003,21 +5016,26 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        method: 'POST',
 	        dataType: 'html',
 	        url: main_core.Uri.addParam(babelHelpers.classPrivateFieldGet(this, _context).ajaxUrl, {
-	          analyticsLabel: "automation_robot".concat(robot.draft ? '_draft' : '', "_settings_").concat(robot.data.Type.toLowerCase())
-	        }),
-	        data: {
+	          analyticsLabel: "automation_robot".concat(robot.draft ? '_draft' : '', "_settings_").concat(robot.data.Type.toLowerCase()),
 	          ajax_action: 'get_robot_dialog',
 	          document_signed: babelHelpers.classPrivateFieldGet(this, _context).signedDocument,
 	          document_status: babelHelpers.classPrivateFieldGet(this, _context).document.getCurrentStatusId(),
 	          context: context,
-	          robot_json: Helper.toJsonString(robot.serialize()),
-	          context_robots_json: Helper.toJsonString(babelHelpers.classPrivateFieldGet(this, _robots).filter(function (r) {
+	          form_name: formName
+	        }),
+	        data: {
+	          robot: Helper.toJsonPayload(robot.serialize()),
+	          context_robots: Helper.toJsonPayload(babelHelpers.classPrivateFieldGet(this, _robots).filter(function (r) {
 	            return r !== robot;
 	          }).map(function (r) {
 	            return r.serialize();
-	          })),
-	          form_name: formName
+	          }))
 	        },
+	        headers: [{
+	          name: 'Content-Type',
+	          value: 'application/json'
+	        }],
+	        preparePost: false,
 	        onsuccess: function onsuccess(html) {
 	          if (html) {
 	            var dialogRows = main_core.Dom.create('div', {
@@ -5275,6 +5293,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      var basisFields = [];
 	      var docFields = babelHelpers.classPrivateFieldGet(this, _context).document.getFields();
 	      var minLimitM = babelHelpers.classPrivateFieldGet(this, _delayMinLimitM);
+	      var maxLimitD = babelHelpers.classPrivateFieldGet(this, _delayMaxLimitD);
 	      if (main_core.Type.isArray(docFields)) {
 	        var _iterator2 = _createForOfIteratorHelper$7(docFields),
 	          _step2;
@@ -5304,6 +5323,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        },
 	        basisFields: basisFields,
 	        minLimitM: minLimitM,
+	        maxLimitD: maxLimitD,
 	        useAfterBasis: true,
 	        showWaitWorkDay: true
 	      });
@@ -5416,16 +5436,19 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        method: 'POST',
 	        dataType: 'json',
 	        url: main_core.Uri.addParam(ajaxUrl, {
-	          analyticsLabel: "automation_robot".concat(robot.draft ? '_draft' : '', "_save_").concat(robot.data.Type.toLowerCase())
-	        }),
-	        data: {
+	          analyticsLabel: "automation_robot".concat(robot.draft ? '_draft' : '', "_save_").concat(robot.data.Type.toLowerCase()),
 	          ajax_action: 'save_robot_settings',
-	          document_signed: documentSigned,
-	          robot_json: Helper.toJsonString(robot.serialize()),
-	          form_data_json: Helper.toJsonString(_objectSpread$2(_objectSpread$2({}, formData.data), robotData)),
-	          form_data: formData.data /** @bug 0135641 */
-	        },
-
+	          document_signed: documentSigned
+	        }),
+	        data: Helper.toJsonPayload({
+	          robot: robot.serialize(),
+	          form_data: _objectSpread$2(_objectSpread$2({}, formData.data), robotData)
+	        }),
+	        headers: [{
+	          name: 'Content-Type',
+	          value: 'application/json'
+	        }],
+	        preparePost: false,
 	        onsuccess: function onsuccess(response) {
 	          if (btnNode) {
 	            main_core.Dom.removeClass(btnNode, 'ui-btn-wait');
@@ -9086,6 +9109,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      }
 	      this.onchange = options.onchange;
 	      this.minLimitM = options.minLimitM;
+	      this.maxLimitD = options.maxLimitD;
 	      this.showWaitWorkDay = options.showWaitWorkDay;
 	    }
 	  }
@@ -9459,6 +9483,12 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	          content: main_core.Loc.getMessage('BIZPROC_AUTOMATION_DELAY_MIN_LIMIT_LABEL')
 	        });
 	        this.delay.setValue(this.minLimitM);
+	      }
+	      if (this.maxLimitD > 0 && this.delay.basis === DelayInterval.BASIS_TYPE.CurrentDateTime && this.delay.valueType === 'd' && this.delay.value > this.maxLimitD) {
+	        BX.UI.Notification.Center.notify({
+	          content: main_core.Loc.getMessage('BIZPROC_AUTOMATION_DELAY_MAX_LIMIT_LABEL')
+	        });
+	        this.delay.setValue(this.maxLimitD);
 	      }
 	    } else {
 	      this.delay.setBasis(formData.get('basis_before'));

@@ -94,16 +94,3 @@ CJSCore::RegisterExt("intranet_userfield_employee", array(
 ));
 
 CJSCore::RegisterExt("sidepanel_bitrix24", ["rel" => ["intranet.sidepanel.bitrix24"]]);
-
-if(
-	(!defined("ADMIN_SECTION") || ADMIN_SECTION !== true)
-	&& (
-		!ModuleManager::isModuleInstalled('landing')
-		|| !defined("SITE_TEMPLATE_ID")
-		|| SITE_TEMPLATE_ID !== 'pub'
-	)
-)
-{
-	$GLOBALS["APPLICATION"]->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
-}
-

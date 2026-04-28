@@ -1,5 +1,7 @@
-import { Content } from './content';
 import { Tag } from 'main.core';
+
+import { AdminRestrictedPopup } from '../popups/admin-restricted-popup';
+import { Content } from './content';
 
 export class UpdatesContent extends Content
 {
@@ -15,9 +17,14 @@ export class UpdatesContent extends Content
 	getLayout(): HTMLElement
 	{
 		return this.cache.remember('layout', () => {
-			const onclick = () => {
-				window.open(this.getOptions().link, '_blank');
-			};
+			const onclick = this.getOptions().isAdminRestricted
+				? (event) => {
+					event.preventDefault();
+					AdminRestrictedPopup.show(event.target);
+				}
+				: () => {
+					window.open(this.getOptions().link, '_blank');
+				};
 
 			return Tag.render`
 				<div onclick="${onclick}" data-id="license-widget-block-whatsnew" class="license-widget-item license-widget-item--secondary --pointer">

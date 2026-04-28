@@ -2,7 +2,6 @@ import { Type } from 'main.core';
 
 import { Settings } from 'im.v2.const';
 
-import { convertToNumber, isNumberOrString } from '../../../../utils/format';
 import { prepareNotificationSettings } from './format-functions';
 
 import type { FieldsConfig } from '../../../../utils/validate';
@@ -52,8 +51,7 @@ export const settingsFieldsConfig: FieldsConfig = [
 	{
 		fieldName: Settings.appearance.background,
 		targetFieldName: Settings.appearance.background,
-		checkFunction: isNumberOrString,
-		formatFunction: convertToNumber,
+		checkFunction: Type.isString,
 	},
 	{
 		fieldName: Settings.appearance.alignment,

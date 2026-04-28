@@ -194,6 +194,12 @@ export default class Item
 			Dom.removeClass(this.container, 'menu-item-with-index');
 		}
 
+		const linkNode = this.container.querySelector('.menu-item-link');
+		if (linkNode)
+		{
+			Dom.attr(linkNode, 'aria-label', this.constructor.getItemAriaLabel(this.getName(), counterValue));
+		}
+
 		return {
 			oldValue,
 			newValue: counterValue,
@@ -208,13 +214,13 @@ export default class Item
 	showWarning(title, events)
 	{
 		this.removeWarning();
-		const link = this.container.querySelector("a.menu-item-link");
+		const link = this.container.querySelector(".menu-item-link");
 		if (!link)
 		{
 			return
 		}
 		title = title ? Text.encode(title) : '';
-		const node = Tag.render`<a class="menu-post-warn-icon" title="${title}"></a>`;
+		const node = Tag.render`<span class="menu-post-warn-icon" role="img" title="${title}" aria-label="${title}"></span>`;
 		if (events)
 		{
 			Object.keys(events).forEach((key) => {
@@ -233,7 +239,7 @@ export default class Item
 		}
 		this.container.classList.remove('menu-item-warning-state');
 		let node;
-		while (node = this.container.querySelector("a.menu-post-warn-icon"))
+		while (node = this.container.querySelector(".menu-post-warn-icon"))
 		{
 			node.parentNode.removeChild(node);
 		}
@@ -333,6 +339,8 @@ export default class Item
 			id: `menu-counter-${counterId}`,
 		});
 
+		const ariaLabel = this.getItemAriaLabel(text, counterValue);
+
 		return Tag.render`<li 
 			id="bx_left_menu_${id}" 
 			data-status="show" 
@@ -347,11 +355,11 @@ export default class Item
 			${topMenuId ? `data-top-menu-id="${Text.encode(topMenuId)}"` : ""}
 			data-new-page="${openInNewPage}" 
 			class="menu-item-block menu-item-no-icon-state">
-				<span class="menu-favorites-btn menu-favorites-draggable">
+				<span class="menu-favorites-btn menu-favorites-draggable" aria-hidden="true">
 					<span class="menu-fav-draggable-icon"></span>
 				</span>
-				<a class="menu-item-link" data-slider-ignore-autobinding="true" href="${link}" target="${openInNewPage === 'Y' ? '_blank' : '_self'}">
-					<span class="menu-item-icon-box">
+				<a class="menu-item-link" aria-label="${ariaLabel}" data-slider-ignore-autobinding="true" href="${link}" target="${openInNewPage === 'Y' ? '_blank' : '_self'}">
+					<span class="menu-item-icon-box" aria-hidden="true">
 						<span class="menu-item-icon">W</span>
 					</span>
 					<span class="menu-item-link-text " data-role="item-text">${text}</span>
@@ -360,30 +368,73 @@ export default class Item
 						${counter.render()}
 					</span>` : '' }
 				</a>
-				<span data-role="item-edit-control" class="menu-fav-editable-btn menu-favorites-btn">
+				<span data-role="item-edit-control" class="menu-fav-editable-btn menu-favorites-btn" aria-hidden="true" tabindex="-1">
 					<span class="menu-favorites-btn-icon"></span>
 				</span>
 			</li>`;
 	}
 
-	//region Edition for siblings
+	// region Edition for siblings
 	static backendSaveItem(itemInfo): Promise
 	{
 		throw 'Function backendSaveItem must be replaced';
 	}
+
 	static popup: Popup;
-	static showUpdate(item: Item)
+
+	static showUpdate(item: Item): Promise
 	{
 		return new Promise((resolve, reject) => {
 			this.showForm(item.container, item.getEditFields(), resolve, reject);
 		});
 	}
+
+	static getItemAriaLabel(name: string, counterValue: number): string
+	{
+		if (counterValue <= 0)
+		{
+			return name;
+		}
+
+		return Loc.getMessagePlural('MENU_ITEM_ARIA', Number(counterValue), {
+			'#ITEM#': name,
+			'#COUNT#': String(counterValue),
+		});
+	}
+
+	static #setFieldError(field: HTMLInputElement): void
+	{
+		Dom.addClass(field, 'menu-form-input-error');
+		Dom.attr(field, 'aria-invalid', 'true');
+
+		let errorMsg = field.parentNode.querySelector('.menu-form-error-message');
+		if (!errorMsg)
+		{
+			errorMsg = Tag.render`<span class="menu-form-error-message" id="${field.id}-error" role="alert"></span>`;
+			Dom.attr(field, 'aria-describedby', `${field.id}-error`);
+			Dom.insertAfter(errorMsg, field);
+		}
+		errorMsg.textContent = Loc.getMessage('MENU_EMPTY_FORM_ERROR');
+
+		field.focus();
+	}
+
+	static #clearFieldError(field: HTMLInputElement): void
+	{
+		Dom.removeClass(field, 'menu-form-input-error');
+		Dom.attr(field, 'aria-invalid', null);
+		const errorMsg = field.parentNode.querySelector('.menu-form-error-message');
+		if (errorMsg)
+		{
+			errorMsg.textContent = '';
+		}
+	}
+
 	static checkForm(form: HTMLFormElement): boolean
 	{
 		if (String(form.elements["text"].value).trim().length <= 0)
 		{
-			form.elements["text"].classList.add('menu-form-input-error');
-			form.elements["text"].focus();
+			this.#setFieldError(form.elements["text"]);
 			return false;
 		}
 		if (form.elements["link"])
@@ -391,8 +442,7 @@ export default class Item
 			if (String(form.elements["link"].value).trim().length <= 0 ||
 				Utils.refineUrl(form.elements["link"].value).length <= 0)
 			{
-				form.elements["link"].classList.add('menu-form-input-error');
-				form.elements["link"].focus();
+				this.#setFieldError(form.elements["link"]);
 				return false;
 			}
 			else
@@ -434,6 +484,16 @@ export default class Item
 				}
 			})
 		;
+
+		Event.bind(form.elements['text'], 'input', () => {
+			this.#clearFieldError(form.elements['text']);
+		});
+		if (form.elements['link'])
+		{
+			Event.bind(form.elements['link'], 'input', () => {
+				this.#clearFieldError(form.elements['link']);
+			});
+		}
 
 		this.popup = PopupManager.create('menu-self-item-popup', bindElement, {
 			className: 'menu-self-item-popup',

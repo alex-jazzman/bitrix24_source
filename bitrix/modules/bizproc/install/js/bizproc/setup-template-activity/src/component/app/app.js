@@ -65,6 +65,7 @@ export const BlocksAppComponent = {
 	{
 		return {
 			editSlider: computed(() => this.sliderInstance),
+			initEditSlider: () => this.initEditSlider(),
 		};
 	},
 	props:
@@ -154,7 +155,6 @@ export const BlocksAppComponent = {
 	},
 	mounted(): void
 	{
-		this.initEditSlider();
 		this.blocks = JSON.parse(this.serializedBlocks) ?? [];
 		this.initialConstantIds = new Set(this.localConstantIds);
 
@@ -171,6 +171,7 @@ export const BlocksAppComponent = {
 		EventEmitter.unsubscribe('SidePanel.Slider:onClosing', this.onCancelConstant);
 		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:drop', this.onItemDrop);
 		this.sliderInstance?.destroy();
+		this.sliderInstance = null;
 	},
 	unmounted()
 	{
@@ -181,8 +182,13 @@ export const BlocksAppComponent = {
 	},
 	methods:
 	{
-		initEditSlider(): void
+		initEditSlider(): Object
 		{
+			if (this.sliderInstance)
+			{
+				return this.sliderInstance;
+			}
+
 			this.sliderInstance = markRaw(new Slider('', {
 				contentCallback: () => this.$refs.bizprocSetupTemplateActivityPopup,
 				width: 596,
@@ -193,6 +199,8 @@ export const BlocksAppComponent = {
 				startPosition: 'bottom',
 				overlayClassName: 'bizproc-setuptemplateactivity-app__overlay',
 			}));
+
+			return this.sliderInstance;
 		},
 		onAddBlock(): void
 		{
@@ -206,7 +214,7 @@ export const BlocksAppComponent = {
 		{
 			this.currentBlockIndex = blockIndex;
 			this.createdConstant = { ...item };
-			this.sliderInstance?.open();
+			this.initEditSlider().open();
 		},
 		onSaveConstant(blockIndex: number, item: Item): void
 		{

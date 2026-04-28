@@ -25,7 +25,7 @@ export class SettingsModel extends BuilderModel
 	getState(): SettingsState
 	{
 		return {
-			[Settings.appearance.background]: 1,
+			[Settings.appearance.background]: 'azure',
 			[Settings.appearance.alignment]: DialogAlignment.left,
 
 			[Settings.notification.enableSound]: true,

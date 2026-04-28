@@ -2004,7 +2004,12 @@ export default class Dialog extends EventEmitter
 									const item = this.getItem(itemOptions);
 									if (item)
 									{
-										nodeOptionsMap.set(item, itemOptions.nodeOptions);
+										const nodeOptions: ItemNodeOptions = { ...itemOptions.nodeOptions };
+										delete nodeOptions.dynamic;
+										delete nodeOptions.open;
+										delete nodeOptions.itemOrder;
+
+										nodeOptionsMap.set(item, nodeOptions);
 									}
 								}
 							});

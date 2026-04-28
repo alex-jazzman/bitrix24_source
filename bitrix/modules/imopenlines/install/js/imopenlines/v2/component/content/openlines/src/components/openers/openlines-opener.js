@@ -1,11 +1,14 @@
 import { Logger } from 'im.v2.lib.logger';
-import { ChatService } from 'im.v2.provider.service.chat';
 import { Messenger } from 'im.public';
+
+import { ChatServiceOl } from 'imopenlines.v2.provider.service';
 
 import { OpenLinesContent } from '../content/openlines';
 import { EmptyState } from './components/empty-state';
 
 import './css/default-openlines-content.css';
+
+import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const OpenLinesOpener = {
@@ -16,6 +19,13 @@ export const OpenLinesOpener = {
 		dialogId: {
 			type: String,
 			required: true,
+		},
+	},
+	computed:
+	{
+		dialog(): ImModelChat
+		{
+			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
 	},
 	watch:
@@ -44,6 +54,20 @@ export const OpenLinesOpener = {
 				return;
 			}
 
+			if (this.dialog.inited)
+			{
+				Logger.warn(`OpenLinesContent: openlines ${this.dialogId} is already loaded`);
+
+				return;
+			}
+
+			if (this.dialog.loading)
+			{
+				Logger.warn(`OpenLinesContent: openlines ${this.dialogId} is loading`);
+
+				return;
+			}
+
 			Logger.warn(`OpenLinesContent: loading openlines ${this.dialogId}`);
 
 			await this.getChatService().loadChatWithMessages(this.dialogId)
@@ -53,11 +77,11 @@ export const OpenLinesOpener = {
 
 			Logger.warn(`OpenLinesContent: openlines ${this.dialogId} is loaded`);
 		},
-		getChatService(): ChatService
+		getChatService(): ChatServiceOl
 		{
 			if (!this.chatService)
 			{
-				this.chatService = new ChatService();
+				this.chatService = new ChatServiceOl();
 			}
 
 			return this.chatService;

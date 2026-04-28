@@ -19,6 +19,10 @@ type SendQuoteEventPayload = {
 const QUOTE_DELIMITER = '-'.repeat(54);
 
 export const Quote = {
+	wrapWithDelimiters(text: string): string
+	{
+		return `${QUOTE_DELIMITER}\n${text}\n${QUOTE_DELIMITER}\n`;
+	},
 	sendQuoteEvent(payload: SendQuoteEventPayload)
 	{
 		const { text, dialogId, context: { emitter }, additionalParams = {} } = payload;
@@ -64,11 +68,9 @@ export const Quote = {
 			quoteContext = `#${dialog.dialogId}/${message.id}`;
 		}
 
-		return `${QUOTE_DELIMITER}\n`
-			+ `${quoteTitle} [${quoteDate}] ${quoteContext}\n`
-			+ `${quoteText}\n`
-			+ `${QUOTE_DELIMITER}\n`
-		;
+		const content = `${quoteTitle} [${quoteDate}] ${quoteContext}\n${quoteText}`;
+
+		return this.wrapWithDelimiters(content);
 	},
 };
 
@@ -78,10 +80,7 @@ const getName = (message: ImModelMessage): string => {
 	const copilotManager = new CopilotManager();
 	if (copilotManager.isCopilotBot(message.authorId))
 	{
-		name = copilotManager.getName({
-			dialogId: message.authorId,
-			messageId: message.id,
-		});
+		name = copilotManager.getNameWithRole(message.id);
 	}
 	else
 	{

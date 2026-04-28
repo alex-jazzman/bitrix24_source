@@ -23,7 +23,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 \Bitrix\Main\UI\Extension::load([
 	'main.pagination.lazyloadtotalcount',
 	'bizproc.ai-agents.grid',
-	'bizproc.setup-template',
 	'ui.system.typography',
 	'ui.icon-set.api.core',
 	'ui.tooltip',
@@ -152,7 +151,6 @@ $availableAiAgentsCount = $arResult['AVAILABLE_AI_AGENTS_COUNT'] ?? 0;
 	BX.ready(function ()
 	{
 		(new BX.Main.Pagination.Lazyloadtotalcount()).register();
-		BX.Bizproc.SetupTemplate.subscribeOnPull();
 
 		new BX.Bizproc.Ai.Agents.AiAgentsPage({
 			agentsGridId: '<?= CUtil::JSEscape($arResult['GRID_ID']) ?>',

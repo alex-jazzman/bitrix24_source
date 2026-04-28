@@ -22,8 +22,10 @@ jn.define('im/messenger/db/table/counter', (require, exports, module) => {
 			return [
 				{ name: 'chatId', type: FieldType.integer, unique: true, index: true },
 				{ name: 'parentChatId', type: FieldType.integer, index: true },
-				{ name: 'type', type: FieldType.text },
 				{ name: 'counter', type: FieldType.integer },
+				{ name: 'isMarkedAsUnread', type: FieldType.boolean },
+				{ name: 'isMuted', type: FieldType.boolean },
+				{ name: 'recentSections', type: FieldType.array },
 			];
 		}
 

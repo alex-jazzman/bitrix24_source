@@ -1,7 +1,8 @@
-import { Tag, Loc, bind, Dom, Reflection } from 'main.core';
+import { NameService } from 'crm.ai.name-service';
+import { bind, Dom, Loc, Reflection, Tag } from 'main.core';
 import { Popup } from 'main.popup';
 import { Button, ButtonColor } from 'ui.buttons';
-import { Icon, Main as MainIconSet, Actions as ActionsIconSet } from 'ui.icon-set.api.core';
+import { Actions as ActionsIconSet, Icon, Main as MainIconSet } from 'ui.icon-set.api.core';
 import 'ui.icon-set.main';
 import 'ui.icon-set.actions';
 import { Lottie } from 'ui.lottie';
@@ -59,6 +60,7 @@ export class RecognitionPromo
 	shouldShowAgain(): boolean
 	{
 		const checkbox = document.getElementById('crm__ai-recognition-promo_checkbox_dont_show_again');
+
 		return checkbox ? !checkbox.checked : true;
 	}
 
@@ -99,6 +101,8 @@ export class RecognitionPromo
 
 	#renderPopupContent(): HTMLElement
 	{
+		const headerTitle = Loc.getMessage('RECOGNITION_PROMO_TITLE', NameService.copilotNameReplacement());
+
 		return Tag.render`
 			<div class="crm__ai-recognition-promo">
 				<header class="crm__ai-recognition-promo_header">
@@ -106,9 +110,7 @@ export class RecognitionPromo
 						<div class="crm__ai-recognition-promo_header-icon">
 							${this.#renderHeaderCopilotIcon()}
 						</div>
-						<h4 class="crm__ai-recognition-promo_header-title">
-							${Loc.getMessage('RECOGNITION_PROMO_TITLE')}
-						</h4>
+						<h4 class="crm__ai-recognition-promo_c">${headerTitle}</h4>
 					</div>
 					<div class="crm__ai-recognition-promo_header-close-button">
 						${this.#renderHidePopupButton()}
@@ -241,6 +243,7 @@ export class RecognitionPromo
 			'[/LINK1]': '</a>',
 			'[LINK2]': '<a ref="link2">',
 			'[/LINK2]': '</a>',
+			'#COPILOT_NAME#': NameService.copilotName(),
 		});
 
 		const container: { root: HTMLElement, link1: HTMLElement, link2: HTMLElement } = Tag.render`

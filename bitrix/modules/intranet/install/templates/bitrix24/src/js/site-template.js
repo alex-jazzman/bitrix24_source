@@ -3,11 +3,12 @@ import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { ChatMenu } from './chat-menu';
 import { Composite } from './composite';
 import { LeftMenu } from './left-menu';
-import { RightBar } from './right-bar';
+import { RightBar, type BackgroundStyle } from './right-bar';
 import { Header } from './header/header';
 import { Footer } from './footer';
 import { GoTopButton } from './go-top-button';
 import { CollaborationMenu } from './collaboration-menu';
+import { RightPanel } from './right-panel';
 
 export class SiteTemplate
 {
@@ -19,6 +20,7 @@ export class SiteTemplate
 	#chatMenu: ChatMenu | null = null;
 	#goTopButton: GoTopButton | null = null;
 	#collaborationMenu: CollaborationMenu | null = null;
+	#rightPanel: RightPanel | null = null;
 
 	constructor()
 	{
@@ -38,6 +40,7 @@ export class SiteTemplate
 		this.#composite = new Composite();
 		this.#chatMenu = new ChatMenu();
 		this.#collaborationMenu = new CollaborationMenu();
+		this.#rightPanel = new RightPanel();
 
 		this.#applyUserAgentRules();
 	}
@@ -75,6 +78,11 @@ export class SiteTemplate
 	getCollaborationMenu(): CollaborationMenu
 	{
 		return this.#collaborationMenu;
+	}
+
+	getRightPanel(): RightPanel
+	{
+		return this.#rightPanel;
 	}
 
 	enterFullscreen(): void
@@ -144,6 +152,28 @@ export class SiteTemplate
 	isFullscreen(): boolean
 	{
 		return Dom.hasClass(document.body, 'air-fullscreen-mode');
+	}
+
+	setAvatarBlockBackground(background: BackgroundStyle): void
+	{
+		Dom.style(document.getElementById('avatar-area'), {
+			backgroundImage: background?.backgroundImage ?? null,
+			backgroundColor: background?.backgroundColor ?? null,
+			backgroundPosition: background?.backgroundPosition ?? null,
+			backgroundRepeat: background?.backgroundRepeat ?? null,
+			backgroundSize: background?.backgroundSize ?? null,
+		});
+	}
+
+	resetAvatarBlockBackground(): void
+	{
+		Dom.style(document.getElementById('avatar-area'), {
+			backgroundImage: null,
+			backgroundColor: null,
+			backgroundPosition: null,
+			backgroundRepeat: null,
+			backgroundSize: null,
+		});
 	}
 
 	#supportViewTransition(): boolean

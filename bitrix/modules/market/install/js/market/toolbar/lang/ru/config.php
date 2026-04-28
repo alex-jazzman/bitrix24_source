@@ -1,11 +1,11 @@
 <?php
 $MESS["MARKET_TOOLBAR_JS_MARKET_TITLE_MSGVER_1"] = "Маркетплейс";
 $MESS["MARKET_TOOLBAR_JS_CATALOG_TITLE"] = "Каталог";
-$MESS["MARKET_TOOLBAR_JS_SEARCH_PLACEHOLDER_MSGVER_1"] = "Искать в маркетплейсе ...";
-$MESS["MARKET_TOOLBAR_JS_SEARCH_PLACEHOLDER_V2"] = "Искать в маркетплейсе ...";
+$MESS["MARKET_TOOLBAR_JS_SEARCH_PLACEHOLDER_MSGVER_2"] = "Искать в маркетплейсе ...";
+$MESS["MARKET_TOOLBAR_JS_SEARCH_PLACEHOLDER_MSGVER_2_V2"] = "Искать в маркетплейсе ...";
 $MESS["MARKET_TOOLBAR_JS_FAVORITES_TITLE"] = "Избранное";
 $MESS["MARKET_TOOLBAR_JS_MARKET_PLUS_TITLE_MSGVER_1"] = "Маркетплейс Плюс";
-$MESS["MARKET_TOOLBAR_JS_MORE"] = "Еще";
+$MESS["MARKET_TOOLBAR_JS_MORE"] = "Ещё";
 $MESS["MARKET_TOOLBAR_JS_LOOKING_RIGHT_APPS"] = "Начните искать подходящие приложения";
 $MESS["MARKET_TOOLBAR_JS_NO_SEARCH_RESULT_TITLE"] = "Ничего не найдено";
 $MESS["MARKET_TOOLBAR_JS_NO_SEARCH_RESULT_DESCRIPTION"] = "Попробуйте изменить запрос";

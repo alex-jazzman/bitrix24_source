@@ -958,7 +958,7 @@ body.--user-dragging .hr-department-detail-content__user-container:hover {
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	min-height: 493px;
+	min-height: 481px;
 }
 
 .hr-company-structure__multi-role-user-settings_hint-panel {

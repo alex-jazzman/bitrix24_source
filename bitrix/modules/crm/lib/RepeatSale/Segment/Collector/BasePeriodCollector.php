@@ -9,7 +9,7 @@ use Bitrix\Crm\Service\Communication\Utils\Common;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\Date;
 
-abstract class BasePeriodCollector extends BaseCollector
+abstract class BasePeriodCollector extends BaseSqlCollector
 {
 	abstract protected function getIntervals(): array;
 
@@ -110,9 +110,18 @@ abstract class BasePeriodCollector extends BaseCollector
 		$offset = $this->getOffset();
 		$period = $this->getPeriod();
 
-		$buildPeriod = static function ($interval, $isNextDay) use ($offset, $period) {
-			$start = (new Date())->add($offset)->add($interval);
-			$finish = (new Date())->add($offset)->add($interval)->add($period);
+		if ($this->date)
+		{
+			$date = $this->date;
+		}
+		else
+		{
+			$date = new Date();
+		}
+
+		$buildPeriod = static function ($interval, $isNextDay) use ($date, $offset, $period) {
+			$start = (clone $date)->add($offset)->add($interval);
+			$finish = (clone $date)->add($offset)->add($interval)->add($period);
 
 			if ($isNextDay)
 			{

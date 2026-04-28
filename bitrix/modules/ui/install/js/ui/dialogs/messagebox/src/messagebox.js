@@ -113,6 +113,9 @@ export default class MessageBox
 		const messageBox = this.create({
 			message,
 			title,
+			popupOptions: {
+				closeByEsc: true,
+			},
 			okCaption,
 			onOk: okCallback,
 			buttons: BX.UI.Dialogs.MessageBoxButtons.OK,

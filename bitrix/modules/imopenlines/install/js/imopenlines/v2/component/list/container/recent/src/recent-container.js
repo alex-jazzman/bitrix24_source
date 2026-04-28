@@ -17,7 +17,7 @@ export const RecentListContainer = {
 	created()
 	{
 		const settings = Extension.getSettings('im.v2.application.messenger');
-		this.$store.dispatch('queue/set', settings.get('queueConfig'));
+		this.$store.dispatch('openLines/queue/set', settings.get('queueConfig'));
 	},
 	methods:
 	{

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.OpenLines = this.BX.OpenLines || {};
 this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
-(function (exports,im_v2_application_core,im_v2_component_elements_listLoadingState,imopenlines_v2_const,imopenlines_v2_provider_service,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_const,im_v2_lib_dateFormatter,im_v2_lib_utils,im_v2_lib_parser) {
+(function (exports,im_v2_application_core,im_v2_component_elements_listLoadingState,imopenlines_v2_const,imopenlines_v2_lib_menu,imopenlines_v2_provider_service,im_v2_component_elements_avatar,im_v2_const,im_v2_lib_dateFormatter,im_v2_component_elements_chatTitle,im_v2_lib_utils,im_v2_lib_parser) {
 	'use strict';
 
 	// @vue/component
@@ -99,14 +99,11 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.item.dialogId);
 	    },
-	    openLinesCounter() {
-	      return this.$store.getters['counters/getSpecificLinesCounter'](this.dialog.chatId);
-	    },
-	    totalCounter() {
-	      return this.openLinesCounter;
+	    counter() {
+	      return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
 	    },
 	    formattedCounter() {
-	      return this.formatCounter(this.totalCounter);
+	      return this.formatCounter(this.counter);
 	    }
 	  },
 	  methods: {
@@ -175,7 +172,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<div class="bx-imol-list-recent__item" :class="wrapClasses">
+		<div class="bx-imol-list-recent__item" :class="wrapClasses" >
 			<div class="bx-imol-list-recent-item__main_content">
 				<div class="bx-imol-list-recent-item__avatar_container">
 					<div class="bx-imol-list-recent-item__avatar_content">
@@ -221,7 +218,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	      required: true
 	    }
 	  },
-	  emits: ['recentClick'],
+	  emits: ['recentClick', 'recentContextMenu'],
 	  computed: {
 	    groupTitle() {
 	      return this.loc(`IMOL_LIST_STATUS_MESSAGE_${this.groupName.toUpperCase()}`);
@@ -230,6 +227,9 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  methods: {
 	    onRecentClick(dialogId) {
 	      this.$emit('recentClick', dialogId);
+	    },
+	    onContextMenu(dialogId, event) {
+	      this.$emit('recentContextMenu', dialogId, event);
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -248,6 +248,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				:item="item"
 				:key="item.dialogId"
 				@click="onRecentClick(item.dialogId)"
+				@contextmenu.prevent="onContextMenu(item.dialogId, $event)"
 			/>
 		</div>
 	`
@@ -271,7 +272,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  },
 	  computed: {
 	    collection() {
-	      return im_v2_application_core.Core.getStore().getters['recentOpenLines/getOpenLinesCollection'];
+	      return im_v2_application_core.Core.getStore().getters['openLines/recent/getOpenLinesCollection'];
 	    },
 	    collectionByGroups() {
 	      const groupsRecent = {
@@ -303,8 +304,15 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    this.firstPageLoaded = true;
 	    this.isLoading = false;
 	  },
+	  created() {
+	    this.contextMenuManager = new imopenlines_v2_lib_menu.RecentContextMenu();
+	  },
+	  beforeUnmount() {
+	    this.destroyContextMenu();
+	  },
 	  methods: {
 	    async onScroll(event) {
+	      this.destroyContextMenu();
 	      if (!im_v2_lib_utils.Utils.dom.isOneScreenRemaining(event.target) || !this.getRecentService().hasMoreItemsToLoad()) {
 	        return;
 	      }
@@ -316,7 +324,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	      this.$emit('chatClick', dialogId);
 	    },
 	    getSessionByDialogId(dialogId) {
-	      return this.$store.getters['recentOpenLines/getSession'](dialogId);
+	      return this.$store.getters['openLines/recent/getSession'](dialogId);
 	    },
 	    getStatusByDialogId(dialogId) {
 	      const session = this.getSessionByDialogId(dialogId);
@@ -347,6 +355,18 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	        this.service = new imopenlines_v2_provider_service.RecentService();
 	      }
 	      return this.service;
+	    },
+	    onContextMenu(dialogId, event) {
+	      const positionTarget = {
+	        left: event.pageX,
+	        top: event.pageY
+	      };
+	      this.contextMenuManager.openMenu({
+	        dialogId
+	      }, positionTarget);
+	    },
+	    destroyContextMenu() {
+	      this.contextMenuManager.destroy();
 	    }
 	  },
 	  template: `
@@ -360,6 +380,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 					:groupName="groupName"
 					:key="groupName"
 					@recentClick="onClick"
+					@recentContextMenu="onContextMenu"
 				/>
 				<LoadingState v-if="isLoadingNextPage" />
 			</div>
@@ -369,5 +390,5 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 
 	exports.RecentList = RecentList;
 
-}((this.BX.OpenLines.v2.Component.List = this.BX.OpenLines.v2.Component.List || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Component.Elements,BX.OpenLines.v2.Const,BX.OpenLines.v2.Provider.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.OpenLines.v2.Component.List = this.BX.OpenLines.v2.Component.List || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Component.Elements,BX.OpenLines.v2.Const,BX.OpenLines.v2.Lib,BX.OpenLines.v2.Provider.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=recent-list.bundle.js.map

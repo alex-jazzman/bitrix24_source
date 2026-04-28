@@ -100,9 +100,15 @@ jn.define('utils/url', (require, exports, module) => {
 	 */
 	function isValidLink(url)
 	{
-		const href = getHttpPath(url);
-
+		const parsedUrl = URL(url);
+		const href = parsedUrl?.href;
 		if (!href)
+		{
+			return false;
+		}
+
+		const isValidHostName = parsedUrl.hostname?.includes('.') || parsedUrl.hostname === 'localhost';
+		if (!isValidHostName)
 		{
 			return false;
 		}

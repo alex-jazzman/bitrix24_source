@@ -5,7 +5,7 @@ use Bitrix\Crm\EntityAddressType;
 
 global $APPLICATION;
 
-\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.fonts.opensans"]);
+\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.fonts.opensans", "intranet.old-interface.intranet-common"]);
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_form.js');

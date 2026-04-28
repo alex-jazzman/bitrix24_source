@@ -1,4 +1,6 @@
+import { NameService } from 'crm.ai.name-service';
 import { Loc } from 'main.core';
+
 import 'ui.icon-set.main';
 
 export const AiDisabledInSettings = {
@@ -12,10 +14,11 @@ export const AiDisabledInSettings = {
 	computed: {
 		message(): string
 		{
-			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_AI_DISABLED');
+			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_AI_DISABLED', NameService.copilotNameReplacement());
 		},
 	},
 
+	// language=Vue
 	template: `
 		<div class="crm-copilot__call-assessment-ai-disabled">
 			<span v-html="message"></span>

@@ -48,6 +48,10 @@ this.BX = this.BX || {};
 	  STRUCTURE_NODE_ROLE: 'structure-node-role',
 	  COMPANY: 'company'
 	});
+	var BlankScenario = Object.freeze({
+	  b2b: 'b2b',
+	  b2e: 'b2e'
+	});
 
 	exports.DocumentInitiated = DocumentInitiated;
 	exports.DocumentMode = DocumentMode;
@@ -57,6 +61,7 @@ this.BX = this.BX || {};
 	exports.Reminder = Reminder;
 	exports.TemplateEntity = TemplateEntity;
 	exports.EntityType = EntityType;
+	exports.BlankScenario = BlankScenario;
 
 }((this.BX.Sign = this.BX.Sign || {})));
 //# sourceMappingURL=type.bundle.js.map

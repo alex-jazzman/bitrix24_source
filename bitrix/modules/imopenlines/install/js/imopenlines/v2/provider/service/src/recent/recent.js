@@ -1,5 +1,8 @@
 import { Core } from 'im.v2.application.core';
+import { Notifier } from 'im.v2.lib.notifier';
 import { runAction } from 'im.v2.lib.rest';
+import { Logger } from 'im.v2.lib.logger';
+
 import { RestMethod, StatusGroup } from 'imopenlines.v2.const';
 
 import type { RecentRestResult } from '../types/rest';
@@ -55,7 +58,8 @@ export class RecentService
 
 		const result = await runAction(RestMethod.linesV2RecentList, queryParams)
 			.catch((error) => {
-				console.error('Imol.OpenlinesList: page request error', error);
+				Notifier.onDefaultError();
+				Logger.error('Imol.OpenlinesList: page request error', error);
 			});
 
 		const { messages, recentItems, sessions, hasNextPage } = result;
@@ -94,8 +98,8 @@ export class RecentService
 		const dialoguesPromise = Core.getStore().dispatch('chats/set', chats);
 		const messagesPromise = Core.getStore().dispatch('messages/store', messages);
 		const filesPromise = Core.getStore().dispatch('files/set', files);
-		const openLinesPromise = Core.getStore().dispatch('recentOpenLines/set', recentItems);
-		const sessionsPromise = Core.getStore().dispatch('sessions/set', sessions);
+		const openLinesPromise = Core.getStore().dispatch('openLines/recent/set', recentItems);
+		const sessionsPromise = Core.getStore().dispatch('openLines/sessions/set', sessions);
 
 		return Promise.all([
 			usersPromise,

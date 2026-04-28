@@ -184,6 +184,17 @@
 	margin-bottom: 0;
 }
 
+.bizproc-setup-template__time-row {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.bizproc-setup-template__time-row > .ui-ctl {
+	flex: 1;
+	min-width: 0;
+}
+
 .bizproc-setup-template__form .ui-ctl-checkbox .ui-ctl-label-text,
 .bizproc-setup-template__form .ui-ctl.ui-ctl-radio .ui-ctl-label-text {
 	font-size: var(--ui-font-size-lg);

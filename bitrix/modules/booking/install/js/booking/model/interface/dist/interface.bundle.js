@@ -146,8 +146,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      isLoaded: state => state.isLoaded,
 	      /** @function interface/zoom */
 	      zoom: state => state.zoom,
-	      /** @function interface/expanded */
-	      expanded: state => state.expanded,
 	      /** @function interface/scroll */
 	      scroll: state => state.scroll,
 	      /** @function interface/offHoursHover */

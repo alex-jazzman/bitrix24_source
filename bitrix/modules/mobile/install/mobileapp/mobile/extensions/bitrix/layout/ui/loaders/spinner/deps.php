@@ -3,8 +3,9 @@
 return [
 	'extensions' => [
 		'utils/color',
-		'utils/object',
 		'utils/enums/base',
+		'utils/object',
+		'utils/validation',
 	],
 	'bundle' => [
 		'./src/design-enum',

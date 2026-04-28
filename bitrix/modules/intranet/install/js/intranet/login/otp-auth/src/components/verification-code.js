@@ -1,4 +1,5 @@
 import { DigitInput } from './digit-input';
+import { Headline } from 'ui.system.typography.vue';
 
 const CODE_CHANGE = 'code-change';
 const CODE_COMPLETE = 'code-complete';
@@ -7,12 +8,17 @@ const CODE_COMPLETE = 'code-complete';
 export const VerificationCode = {
 	components: {
 		DigitInput,
+		Headline,
 	},
 
 	props: {
 		code: {
 			type: String,
 			required: true,
+		},
+		label: {
+			type: String,
+			default: '',
 		},
 		error: {
 			type: String,
@@ -22,6 +28,11 @@ export const VerificationCode = {
 		isPhoneCode: {
 			type: Boolean,
 			default: false,
+		},
+		// Enables spacing between digit groups (e.g., "XXX XXX" for 6-digit codes)
+		enableSpacing: {
+			type: Boolean,
+			default: true,
 		},
 	},
 
@@ -45,6 +56,10 @@ export const VerificationCode = {
 		codeLength(): number
 		{
 			return this.isPhoneCode ? 6 : 8;
+		},
+		hasLabel(): boolean
+		{
+			return Boolean(this.label);
 		},
 		isCodeComplete(): boolean
 		{
@@ -194,7 +209,7 @@ export const VerificationCode = {
 
 		isShiftedInput(inputIndex: number): boolean
 		{
-			return this.isPhoneCode && inputIndex === this.codeLength / 2;
+			return this.enableSpacing && this.isPhoneCode && inputIndex === this.codeLength / 2;
 		},
 
 		onPaste(pastedValue): void
@@ -236,19 +251,25 @@ export const VerificationCode = {
 	},
 
 	template: `
-		<div class="intranet-verification-code">
-			<digit-input
-				v-for="digitPos in codeLength"
-				class="intranet-verification-code__digit"
-				:class="{ 'intranet-verification-code__digit--shifted': isShiftedInput(digitPos - 1) }"
-				:key="digitPos"
-				:is-focused="focusIndex === (digitPos - 1)"
-				:digit-value="codeArray[digitPos - 1] ?? ''"
-				:error="error"
-				@value-paste="onPaste"
-				@click="onClick(digitPos - 1)"
-				@digit-change="onDigitChange(digitPos - 1, $event)"
-			></digit-input>
+		<div class="intranet-verification-code-wrapper">
+			<Headline size='xs' v-if="hasLabel" class="intranet-verification-code__label">
+				{{ label }}
+			</Headline>
+			<div class="intranet-verification-code">
+				<digit-input
+					v-for="digitPos in codeLength"
+					class="intranet-verification-code__digit"
+					:class="{ 'intranet-verification-code__digit--shifted': isShiftedInput(digitPos - 1) }"
+					:key="digitPos"
+					:is-focused="focusIndex === (digitPos - 1)"
+					:digit-value="codeArray[digitPos - 1] ?? ''"
+					:error="error"
+					@value-paste="onPaste"
+					@click="onClick(digitPos - 1)"
+					@digit-change="onDigitChange(digitPos - 1, $event)"
+				></digit-input>
+			</div>
+			<div v-if="error" :class="['intranet-otp-error-block', label ? '--start' : '']" v-html="error"></div>
 		</div>
 	`,
 };

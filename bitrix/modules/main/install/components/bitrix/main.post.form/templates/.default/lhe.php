@@ -6,9 +6,17 @@ if (!CModule::IncludeModule("fileman"))
  * @var array $arParams
  */
 
+use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
+
+$copilotNameService = GetMessage('MPF_COPILOT');
+if (class_exists(CopilotNameService::class))
+{
+	$copilotNameService = (new CopilotNameService())->getCopilotName();
+}
+
 $possibleButtons = [
 	'Copilot' => [
-		'HTML' => '<i class="ui-icon-set --copilot-ai" id="bx-b-copilot-'.$arParams['FORM_ID'].'"></i><span class="main-post-form-toolbar-button-copilot">'.GetMessage('MPF_COPILOT')."</span>",
+		'HTML' => '<i class="ui-icon-set --copilot-ai" id="bx-b-copilot-'.$arParams['FORM_ID'].'"></i><span class="main-post-form-toolbar-button-copilot">'.$copilotNameService."</span>",
 		'ID' => 'copilot',
 	],
 	'UploadFile' => [ //Custom button

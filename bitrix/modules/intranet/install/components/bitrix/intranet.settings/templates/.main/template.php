@@ -30,6 +30,7 @@ Extension::load([
 	'ui.entity-selector',
 	'ui.alerts',
 	'ui.tabs',
+	'ui.hint',
 	'ui.ears',
 	'ui.form-elements.view',
 	'ui.form-elements.field',
@@ -67,6 +68,7 @@ $this->EndViewTarget();
 ?>
 
 <div id="intranet-settings-page" class="intranet-settings-page-wrapper">
+
 
 
 	<?php
@@ -193,19 +195,5 @@ if (Bitrix\Main\Loader::includeModule('bitrix24'))
 			pagesPermission: pagesPermission,
 		});
 		settings.show(startPage, '<?= CUtil::JSEscape($arResult['OPTION_TO_MOVE']) ?? '' ?>');
-
-		const mainPageSection = document.querySelector(".ui-page-slider-left-panel a[data-type='mainpage']");
-		if (mainPageSection)
-		{
-			mainPageSection.onclick = function()
-			{
-				BX.UI.Analytics.sendData({
-					tool: 'vibe',
-					category: 'vibe',
-					event: 'open_settings_main',
-					c_sub_section: 'from_settings',
-				});
-			};
-		}
 	});
 </script>

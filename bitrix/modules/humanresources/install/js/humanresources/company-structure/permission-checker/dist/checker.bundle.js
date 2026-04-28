@@ -267,7 +267,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.areTeamReportSettingsAvailable = false;
 	      this.isDeputyGetReportsAvailable = false;
 	      this.areDepartmentReportsSettingsAvailable = false;
-	      this.areMultipleUsersSettingsAvailable = false;
+	      this.areTeamReportExceptionsAvailable = false;
+	      this.areMultipleUsersBPSettingsAvailable = false;
+	      this.multipleUsersReportSettingsAvailable = false;
 	      this.isInitialized = false;
 	      this.departmentChecker = new DepartmentPermissionChecker();
 	      this.teamChecker = new TeamPermissionChecker(this.departmentChecker, this.currentUserPermissions);
@@ -291,7 +293,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      areTeamReportSettingsAvailable,
 	      isDeputyGetReportsAvailable,
 	      areDepartmentReportsSettingsAvailable,
-	      multipleUsersSettingsAvailable
+	      multipleUsersBPSettingsAvailable,
+	      multipleUsersReportSettingsAvailable,
+	      teamReportExceptionsAvailable
 	    } = await chartAPI.getDictionary();
 	    this.currentUserPermissions = currentUserPermissions;
 	    this.isTeamsAvailable = teamsAvailable;
@@ -301,7 +305,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    this.areTeamReportSettingsAvailable = areTeamReportSettingsAvailable;
 	    this.isDeputyGetReportsAvailable = isDeputyGetReportsAvailable;
 	    this.areDepartmentReportsSettingsAvailable = areDepartmentReportsSettingsAvailable;
-	    this.areMultipleUsersSettingsAvailable = multipleUsersSettingsAvailable;
+	    this.areMultipleUsersBPSettingsAvailable = multipleUsersBPSettingsAvailable;
+	    this.areMultipleUsersReportSettingsAvailable = multipleUsersReportSettingsAvailable;
+	    this.areTeamReportExceptionsAvailable = teamReportExceptionsAvailable;
 	    this.isInitialized = true;
 	  }
 	  hasPermission(action, entityId, minLevel = null) {
@@ -332,8 +338,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  checkDepartmentReportsSettingsAvailable() {
 	    return this.areDepartmentReportsSettingsAvailable;
 	  }
-	  checkMultipleUsersSettingsAvailable() {
-	    return this.areMultipleUsersSettingsAvailable;
+	  checkMultipleUsersBPSettingsAvailable() {
+	    return this.areMultipleUsersBPSettingsAvailable;
+	  }
+	  checkMultipleUsersReportSettingsAvailable() {
+	    return this.areMultipleUsersReportSettingsAvailable;
+	  }
+	  checkTeamReportExceptionsAvailable() {
+	    return this.areTeamReportExceptionsAvailable;
 	  }
 	  hasPermissionOfAction(action) {
 	    const permissionLevel = this.currentUserPermissions[action];

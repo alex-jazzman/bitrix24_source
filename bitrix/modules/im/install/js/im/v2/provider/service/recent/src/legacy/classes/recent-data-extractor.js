@@ -210,7 +210,6 @@ export class RecentDataExtractor
 	{
 		return {
 			...item.chat,
-			counter: item.counter,
 			dialogId: item.id,
 		};
 	}
@@ -224,7 +223,6 @@ export class RecentDataExtractor
 			dialogId: item.id,
 			name: item.user.name,
 			type: ChatType.user,
-			counter: item.counter,
 			role: UserRole.member,
 			backgroundId: item.chat.background_id,
 			textFieldEnabled: item.chat.text_field_enabled,

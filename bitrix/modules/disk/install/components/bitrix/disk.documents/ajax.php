@@ -6,6 +6,7 @@ use Bitrix\Disk;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -13,6 +14,45 @@ Main\Loader::requireModule('disk');
 
 final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 {
+
+	public function copyToMeAction(Disk\Document\TrackedObject $trackedObject)
+	{
+		$currentUserId = $this->getCurrentUser()->getId();
+		$userStorage = Driver::getInstance()->getStorageByUserId($currentUserId);
+
+		if (!$userStorage)
+		{
+			$this->addError(new Error('Could not find storage for current user'));
+
+			return null;
+		}
+		$folder = $userStorage->getFolderForCreatedFiles() ?? $userStorage->getFolderForSavedFiles();
+		if (!$folder)
+		{
+			$this->addError(new Error('Could not find folder for created files'));
+
+			return null;
+		}
+		$file = $trackedObject->getRealObject();
+		if (!$file)
+		{
+			$this->addError(new Error('Cannot obtain file'));
+
+			return null;
+		}
+
+		$newFile = $file->getRealObject()->copyTo($folder, $currentUserId, true);
+
+		if (!$newFile)
+		{
+			$this->addError(new Error('Could not copy file to storage for current user'));
+
+			return null;
+		}
+
+		$newFile->renameInternal(Loc::getMessage('DISK_DOCUMENTS_DUPLICATE_NEW_NAME', ['#DOC_NAME#' => $file->getNameWithoutExtension()]) . '.' . $file->getExtension(), true);
+	}
+
 	public function showFileHistoryAction(Disk\Document\TrackedObject $trackedObject): Main\Engine\Response\AjaxJson
 	{
 		if (!$trackedObject->canRead($this->getCurrentUser()->getId()))
@@ -153,6 +193,18 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 				'id' => 'rename',
 				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_RENAME'),
 				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_rename.svg',
+			];
+		}
+
+		if ($isBoard)
+		{
+			$actions[] = [
+				'id' => 'copyToMe',
+				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_DUPLICATE'),
+				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_copy.svg',
+				'dataset' => [
+					'objectId' => $trackedObject->getFileId(),
+				],
 			];
 		}
 

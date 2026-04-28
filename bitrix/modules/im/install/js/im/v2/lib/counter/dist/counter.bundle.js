@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core_events,main_core,im_v2_application_core,im_v2_lib_desktop,im_v2_lib_logger,im_v2_const) {
+(function (exports,main_core_events,main_core,im_v2_lib_desktop,im_v2_lib_logger,im_v2_application_core,im_v2_const) {
 	'use strict';
 
 	const updateBrowserTitleCounter = newCounter => {
@@ -22,16 +22,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
-	const CounterClearActionsByChatType = {
-	  [im_v2_const.ChatType.taskComments]: ['chats/clearCountersByChatType', 'recent/resetTasksUnreadStatus', 'counters/clearUnloadedTaskCounters', 'messages/anchors/removeAllAnchorsByChatType']
+	const CounterClearHandlersByChatType = {
+	  [im_v2_const.ChatType.taskComments]: [type => im_v2_application_core.Core.getStore().dispatch('counters/clearByRecentType', {
+	    recentType: type
+	  }), type => im_v2_application_core.Core.getStore().dispatch('chats/clearMarkedChatsByType', {
+	    type
+	  }), type => im_v2_application_core.Core.getStore().dispatch('messages/anchors/removeAllAnchorsByChatType', {
+	    type
+	  })]
 	};
-	const CounterClearActionsDefault = ['chats/clearCounters', 'recent/resetUnreadStatus', 'counters/clear', 'messages/anchors/removeAllAnchors'];
+	const CounterClearActions = [() => im_v2_application_core.Core.getStore().dispatch('counters/clear'), () => im_v2_application_core.Core.getStore().dispatch('chats/clearMarkedChats'), () => im_v2_application_core.Core.getStore().dispatch('messages/anchors/removeAllAnchors')];
 
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _emitCountersUpdateWithDebounce = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitCountersUpdateWithDebounce");
 	var _init = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("init");
-	var _prepareChatCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareChatCounters");
 	var _subscribeToCountersChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToCountersChange");
 	var _emitLegacyNotificationCounterUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitLegacyNotificationCounterUpdate");
 	var _emitLegacyChatCounterUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitLegacyChatCounterUpdate");
@@ -60,9 +65,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _subscribeToCountersChange, {
 	      value: _subscribeToCountersChange2
 	    });
-	    Object.defineProperty(this, _prepareChatCounters, {
-	      value: _prepareChatCounters2
-	    });
 	    Object.defineProperty(this, _init, {
 	      value: _init2
 	    });
@@ -76,14 +78,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _emitCountersUpdateWithDebounce)[_emitCountersUpdateWithDebounce] = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _emitCountersUpdate)[_emitCountersUpdate], 0, this);
-	    const {
-	      counters: _counters
-	    } = im_v2_application_core.Core.getApplicationData();
-	    im_v2_lib_logger.Logger.warn('CounterManager: counters', _counters);
-	    babelHelpers.classPrivateFieldLooseBase(this, _init)[_init](_counters);
+	    void babelHelpers.classPrivateFieldLooseBase(this, _init)[_init]();
 	  }
 	  static init() {
 	    CounterManager.getInstance();
+	  }
+	  static getCounterDisplayLimit() {
+	    const settings = main_core.Extension.getSettings('im.v2.lib.counter');
+	    return settings.get('counterDisplayLimit');
+	  }
+	  static formatCounter(counter) {
+	    if (counter >= CounterManager.getCounterDisplayLimit()) {
+	      return '99+';
+	    }
+	    return String(counter);
 	  }
 	  emitCounters() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _emitCountersUpdate)[_emitCountersUpdate]();
@@ -98,36 +106,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    document.title = document.title.slice(counterPrefixLength);
 	  }
 	}
-	function _init2(counters) {
-	  const preparedChatCounters = babelHelpers.classPrivateFieldLooseBase(this, _prepareChatCounters)[_prepareChatCounters](counters.CHAT, counters.CHAT_UNREAD);
-	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setUnloadedChatCounters', preparedChatCounters);
-	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setUnloadedLinesCounters', counters.LINES);
-	  const preparedCollabCounters = babelHelpers.classPrivateFieldLooseBase(this, _prepareChatCounters)[_prepareChatCounters](counters.COLLAB, counters.COLLAB_UNREAD);
-	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setUnloadedCollabCounters', preparedCollabCounters);
-	  const preparedCopilotCounters = babelHelpers.classPrivateFieldLooseBase(this, _prepareChatCounters)[_prepareChatCounters](counters.COPILOT, counters.COPILOT_UNREAD);
-	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setUnloadedCopilotCounters', preparedCopilotCounters);
-	  const preparedTaskCounters = babelHelpers.classPrivateFieldLooseBase(this, _prepareChatCounters)[_prepareChatCounters](counters.TASKS_TASK, counters.TASKS_TASK_UNREAD);
-	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setUnloadedTaskCounters', preparedTaskCounters);
-	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setCommentCounters', counters.CHANNEL_COMMENT);
-	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('notifications/setCounter', counters.TYPE.NOTIFY);
+	async function _init2() {
+	  const {
+	    counters,
+	    notificationCounter
+	  } = im_v2_application_core.Core.getApplicationData();
+	  im_v2_lib_logger.Logger.warn('CounterManager: counters', counters);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setCounters', counters);
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('notifications/setCounter', notificationCounter);
+	  const initialChatCounter = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalChatCounter'];
+	  const initialNotificationCounter = notificationCounter;
 	  babelHelpers.classPrivateFieldLooseBase(this, _emitCountersUpdate)[_emitCountersUpdate]();
 	  babelHelpers.classPrivateFieldLooseBase(this, _subscribeToCountersChange)[_subscribeToCountersChange]();
-	  babelHelpers.classPrivateFieldLooseBase(this, _emitLegacyChatCounterUpdate)[_emitLegacyChatCounterUpdate](counters.TYPE.CHAT);
-	  babelHelpers.classPrivateFieldLooseBase(this, _emitLegacyNotificationCounterUpdate)[_emitLegacyNotificationCounterUpdate](counters.TYPE.NOTIFY);
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitLegacyChatCounterUpdate)[_emitLegacyChatCounterUpdate](initialChatCounter);
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitLegacyNotificationCounterUpdate)[_emitLegacyNotificationCounterUpdate](initialNotificationCounter);
 	  babelHelpers.classPrivateFieldLooseBase(this, _onTotalCounterChange)[_onTotalCounterChange]();
-	}
-	function _prepareChatCounters2(counters, unreadCounters) {
-	  const resultCounters = {
-	    ...counters
-	  };
-	  unreadCounters.forEach(markedChatId => {
-	    const unreadChatHasCounter = Boolean(counters[markedChatId]);
-	    if (unreadChatHasCounter) {
-	      return;
-	    }
-	    resultCounters[markedChatId] = 1;
-	  });
-	  return resultCounters;
 	}
 	function _subscribeToCountersChange2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].watch(notificationCounterWatch, newValue => {
@@ -195,8 +188,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const taskCounterWatch = (state, getters) => getters['counters/getTotalTaskCounter'];
 
 	exports.CounterManager = CounterManager;
-	exports.CounterClearActionsByChatType = CounterClearActionsByChatType;
-	exports.CounterClearActionsDefault = CounterClearActionsDefault;
+	exports.CounterClearHandlersByChatType = CounterClearHandlersByChatType;
+	exports.CounterClearActions = CounterClearActions;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
 //# sourceMappingURL=counter.bundle.js.map

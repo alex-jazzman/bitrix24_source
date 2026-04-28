@@ -2,15 +2,24 @@
  * @module im/messenger/controller/dialog/lib/mention/manager
  */
 jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, exports, module) => {
+	const { Icon } = require('assets/icons');
+	const { isOnline } = require('device/connection');
+	const { ChatService } = require('im/messenger/provider/services/chat');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { callMethod } = require('im/messenger/lib/rest');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MentionProvider } = require('im/messenger/controller/dialog/lib/mention/provider');
 	const { Loc } = require('im/messenger/loc');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const {
 		EventType,
 		BBCode,
 		BBCodeEntity,
+		DialogType,
+		RestMethod,
 	} = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -23,6 +32,29 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 	const MENTION_PREFIX = new Set([' ', '\n']);
 
 	const logger = getLogger('mention');
+
+	const ButtonDesignType = Object.freeze({
+		primary: 'primary',
+		success: 'success',
+		alert: 'alert',
+		grey: 'grey',
+		black: 'black',
+		disabledAlike: 'disabled-alike',
+	});
+
+	const ButtonDesignMode = Object.freeze({
+		solid: 'solid',
+		outline: 'outline',
+		tinted: 'tinted',
+	});
+
+	const ButtonDesignSize = Object.freeze({
+		S: 'S',
+		M: 'M',
+		L: 'L',
+	});
+
+	const ACTION_MENU_SECTION_ID_GENERAL = 'general';
 
 	class MentionManager
 	{
@@ -90,6 +122,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			this.bindMethods();
 			this.initProvider();
 			this.subscribeEvents();
+			this.subscribeStoreEvents();
 		}
 
 		bindMethods()
@@ -124,6 +157,21 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			}
 			this.view.textField.on(EventType.dialog.textField.changeState, this.changeTextStateHandler);
 			this.view.mentionPanel.on(EventType.dialog.mentionPanel.itemTap, this.mentionItemSelectedHandler);
+			this.view.mentionPanel.on(EventType.dialog.mentionPanel.actionTap, this.mentionItemActionTapHandler);
+		}
+
+		subscribeStoreEvents()
+		{
+			serviceLocator.get('core').getStoreManager()
+				.on('dialoguesModel/update', this.#onUpdateParticipants)
+			;
+		}
+
+		unsubscribeStoreEvents()
+		{
+			serviceLocator.get('core').getStoreManager()
+				.off('dialoguesModel/update', this.#onUpdateParticipants)
+			;
 		}
 
 		/**
@@ -139,6 +187,31 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			}
 			this.view.textField.off(EventType.dialog.textField.changeState, this.changeTextStateHandler);
 			this.view.mentionPanel.off(EventType.dialog.mentionPanel.itemTap, this.mentionItemSelectedHandler);
+			this.view.mentionPanel.off(EventType.dialog.mentionPanel.actionTap, this.mentionItemActionTapHandler);
+		}
+
+		/**
+		 * @return {MessengerCoreStore}
+		 */
+		get #store()
+		{
+			return serviceLocator.get('core').getStore();
+		}
+
+		/**
+		 * @return {number}
+		 */
+		get chatId()
+		{
+			return this.#getChatIdByDialogId(this.dialogId);
+		}
+
+		/**
+		 * @return {number}
+		 */
+		get currentUserId()
+		{
+			return serviceLocator.get('core').getUserId();
 		}
 
 		/**
@@ -148,6 +221,70 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		get isMentionProcessed()
 		{
 			return this.isProcessed;
+		}
+
+		get canAddParticipants()
+		{
+			return ChatPermission.canAddParticipants(this.dialogId)
+				&& Feature.isAddingUserByMentionAvailable;
+		}
+
+		/**
+		 * @param {MutationPayload<DialoguesUpdateData, DialoguesUpdateActions>} payload
+		 */
+		#onUpdateParticipants = ({ payload }) => {
+			if (!this.provider.isMembershipMapLoaded)
+			{
+				return;
+			}
+
+			const { actionName, data } = payload;
+
+			if (actionName === 'addParticipants')
+			{
+				this.#removeParticipantsToMentionPanel(data);
+			}
+
+			if (actionName === 'removeParticipants')
+			{
+				this.#addParticipantsToMentionPanel(data);
+			}
+		};
+
+		/**
+		 * @param {DialoguesUpdateData} data
+		 */
+		#addParticipantsToMentionPanel(data)
+		{
+			if (!isOnline())
+			{
+				return;
+			}
+
+			const { participants } = data.fields;
+			for (const participant of participants)
+			{
+				const isCopilot = participant === this.#store.getters['usersModel/getCopilotData']()?.id;
+				if (isCopilot)
+				{
+					continue;
+				}
+
+				this.provider.updateMembershipMap(participant, true);
+				this.view.mentionPanel.update(participant, { actions: [this.#buildInviteActionButton(participant)] });
+			}
+		}
+
+		/**
+		 * @param {DialoguesUpdateData} data
+		 */
+		#removeParticipantsToMentionPanel(data)
+		{
+			for (const participant of data.removeData)
+			{
+				this.provider.updateMembershipMap(participant, false);
+				this.view.mentionPanel.update(participant, { actions: [] });
+			}
 		}
 
 		/**
@@ -221,6 +358,15 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		{
 			return {
 				dialogId: this.dialogId,
+				canAddParticipants: () => this.canAddParticipants,
+				filter: {
+					exceptDialogTypes: [
+						DialogType.copilot,
+						DialogType.lines,
+						DialogType.comment,
+						DialogType.tasksTask,
+					],
+				},
 				loadSearchProcessed: (dialogIdList, isStartServerSearch) => {
 					if (isStartServerSearch)
 					{
@@ -296,9 +442,13 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return;
 			}
 
+			this.provider.setOptionConfig(this.chatId);
+
 			this.lastQuerySymbolPosition = cursorPosition - 1;
 			if (this.mentionSymbolPosition === this.lastQuerySymbolPosition)
 			{
+				void this.#initialUsersMembership();
+
 				const userIdList = DialogHelper.isChatId(this.dialogId)
 					? this.getRecentUsers()
 					: await this.provider.loadChatParticipants()
@@ -310,7 +460,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			}
 
 			this.curruntQuery = text.slice(this.mentionSymbolPosition + 1, cursorPosition);
-			this.provider.doSearch(this.curruntQuery);
+			void this.provider.doSearch(this.curruntQuery);
 		}
 
 		/**
@@ -326,12 +476,46 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return;
 			}
 
+			if (!this.chatId)
+			{
+				return;
+			}
+
 			logger.warn('Mention: open mention panel, cursorPosition:', cursorPosition);
 
 			this.mentionSymbolPosition = cursorPosition - 1;
-			const userIdList = await this.loadUsersForInitial();
+			this.provider.setOptionConfig(this.chatId);
+			void this.#initialUsersMembership();
 
+			const userIdList = await this.loadUsersForInitial();
 			this.drawUserFoInitial(userIdList);
+		}
+
+		async #initialUsersMembership()
+		{
+			if (!this.canAddParticipants)
+			{
+				return;
+			}
+
+			const notParticipantsIds = await this.provider.loadChatUsersMembership();
+			if (!Type.isArrayFilled(notParticipantsIds))
+			{
+				return;
+			}
+
+			notParticipantsIds.forEach((itemId) => {
+				const dialogHelper = DialogHelper.createByDialogId(itemId);
+				const copilotId = this.#store.getters['usersModel/getCopilotData']()?.id;
+				const isNotCopilot = String(itemId) !== String(copilotId);
+
+				if (dialogHelper?.isDirect && isNotCopilot)
+				{
+					this.view.mentionPanel.update(itemId, { actions: [this.#buildInviteActionButton(itemId)] });
+				}
+			});
+
+			logger.log(`${this.constructor.name}.#initialUsersMembership : ${notParticipantsIds}`);
 		}
 
 		/**
@@ -410,6 +594,171 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		}
 
 		/**
+		 * protected
+		 * @param {string} actionId
+		 * @param {string} actionViewId
+		 * @param {string} mentionId
+		 */
+		mentionItemActionTapHandler = ({ actionId, actionViewId, mentionId }) => {
+			logger.log(`${this.constructor.name}.mentionItemActionTapHandler tapped: ${actionId}, ${actionViewId}, ${mentionId}`);
+
+			const sections = [{ id: ACTION_MENU_SECTION_ID_GENERAL }];
+			const isTaskComment = DialogHelper.createByDialogId(this.dialogId)?.isTaskComment;
+			const title = isTaskComment
+				? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MENTION_POPUP_ADD_USER_TO_TASK')
+				: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MENTION_POPUP_ADD_USER');
+
+			const items = [{
+				id: mentionId,
+				title,
+				iconName: Icon.ADD_PERSON.getIconName(),
+				sectionCode: ACTION_MENU_SECTION_ID_GENERAL,
+			}];
+
+			let wasTappedUserAdd = false;
+			const addUserHandler = async (event) => {
+				switch (event)
+				{
+					case 'onItemSelected': {
+						wasTappedUserAdd = true;
+						this.#onAddParticipant(mentionId);
+
+						break;
+					}
+
+					case 'onHide': {
+						if (!wasTappedUserAdd)
+						{
+							this.#onHideAddUserPopup(mentionId);
+						}
+
+						break;
+					}
+
+					case 'onShow': {
+						this.#onShowAddUserInProgress(mentionId);
+
+						break;
+					}
+
+					default:
+				}
+			};
+
+			const addUserPopup = dialogs.createPopupMenu();
+			addUserPopup.setData(items, sections, addUserHandler);
+			addUserPopup.setTarget(actionViewId);
+			addUserPopup.show();
+		};
+
+		/**
+		 * @param {string} mentionId
+		 */
+		#onAddParticipant(mentionId)
+		{
+			AnalyticsService.getInstance().sendAddParticipantFromMentionPanel(this.dialogId);
+			if (DialogHelper.isDialogId(this.dialogId))
+			{
+				void this.#addParticipant(mentionId);
+			}
+			else
+			{
+				void this.#addChat(mentionId);
+			}
+
+			this.provider.updateMembershipMap(mentionId, true);
+			this.#onShowAddUserSuccess(mentionId);
+		}
+
+		/**
+		 * @param {string|number} userId
+		 */
+		#onShowAddUserInProgress(userId)
+		{
+			const item = {
+				actions: [this.#buildProgressActionButton(userId)],
+			};
+
+			this.view.mentionPanel.update(userId, item);
+		}
+
+		/**
+		 * @param {string|number} userId
+		 */
+		#onShowAddUserSuccess(userId)
+		{
+			this.view.mentionPanel.update(userId, { actions: [] });
+			this.view.mentionPanel.animateAction(userId, this.#buildSuccessActionButton(userId));
+		}
+
+		/**
+		 * @param {string|number} userId
+		 */
+		#onHideAddUserPopup(userId)
+		{
+			this.view.mentionPanel.update(userId, { actions: [this.#buildInviteActionButton(userId)] });
+		}
+
+		/**
+		 * @param {string|number} userId
+		 * @return {Promise<void>}
+		 */
+		async #addParticipant(userId)
+		{
+			const chatSettings = Application.storage.getObject('settings.chat', {
+				historyShow: true,
+			});
+
+			const showHistory = chatSettings.historyShow;
+			const chatService = new ChatService();
+
+			const { chatId } = this;
+			if (!chatId)
+			{
+				return Promise.reject(new Error('chatId is not available'));
+			}
+
+			return chatService.addToChat(chatId, [userId], showHistory)
+				.then(() => {
+					logger.log(`${this.constructor.name}.#addParticipant with id = ${userId} was add to chat = ${chatId}`);
+				})
+				.catch((error) => {
+					logger.error(`${this.constructor.name}.#addParticipant error:`, error);
+				})
+			;
+		}
+
+		/**
+		 * @param {string|number} userId
+		 * @return {Promise<boolean>}
+		 */
+		async #addChat(userId)
+		{
+			const userIds = [userId, this.dialogId, this.currentUserId];
+
+			try
+			{
+				const result = await callMethod(RestMethod.imChatAdd, { USERS: userIds });
+				const chatId = parseInt(result.data(), 10);
+				if (!chatId)
+				{
+					return false;
+				}
+
+				MessengerEmitter.emit(
+					EventType.messenger.openDialog,
+					{ dialogId: `chat${chatId}` },
+				);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}#addСhat error:`, error);
+			}
+
+			return true;
+		}
+
+		/**
 		 * @private
 		 * @param {string|number} id
 		 * @param {string} type
@@ -467,6 +816,39 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		}
 
 		/**
+		 * @param {DialogId} dialogId
+		 * @return {boolean}
+		 */
+		#isNeedAddActionToAddUser(dialogId)
+		{
+			if (!this.canAddParticipants || !isOnline())
+			{
+				return false;
+			}
+
+			const copilotData = this.#store.getters['usersModel/getCopilotData']();
+			if (String(copilotData?.id) === String(dialogId))
+			{
+				return false;
+			}
+
+			const isNotGroupCurrentChat = !DialogHelper.isDialogId(this.dialogId);
+			const isDirect = DialogHelper.createByDialogId(dialogId)?.isDirect;
+			const isNotCurrentChat = Number(this.dialogId) !== Number(dialogId)
+				&& Number(this.currentUserId) !== Number(dialogId);
+
+			if (isNotGroupCurrentChat && isDirect && isNotCurrentChat)
+			{
+				return true;
+			}
+
+			const isNotParticipant = !this.provider.membershipMap[dialogId];
+			const isMembershipMapLoaded = this.provider.isMembershipMapLoaded;
+
+			return isNotParticipant && isDirect && isMembershipMapLoaded;
+		}
+
+		/**
 		 * @private
 		 * @param {DialogId} itemId
 		 * @return {MentionItem}
@@ -475,6 +857,12 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		{
 			const chatTitleParams = ChatTitle.createFromDialogId(itemId);
 			const avatarTitleParams = ChatAvatar.createFromDialogId(itemId);
+
+			const actions = [];
+			if (this.#isNeedAddActionToAddUser(itemId))
+			{
+				actions.push(this.#buildInviteActionButton(itemId));
+			}
 
 			return {
 				id: String(itemId),
@@ -489,6 +877,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				isSuperEllipseIcon: avatarTitleParams.getIsSuperEllipseIcon(),
 				avatar: avatarTitleParams.getMentionAvatarProps(),
 				testId: String(itemId),
+				actions,
 			};
 		}
 
@@ -498,24 +887,23 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		 */
 		drawItems(itemIds)
 		{
-			const result = [];
+			let result = [];
 
 			itemIds.forEach((itemId) => {
 				const item = this.prepareItemForDrawing(itemId);
+				const recentItem = this.#store.getters['recentModel/getById'](item.id);
 
-				const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](item.id)
-					?? serviceLocator.get('core').getStore().getters['recentModel/searchModel/getById'](item.id)
-				;
-
-				item.displayedDate = DateFormatter.getRecentFormat(recentItem.dateMessage);
+				item.displayedDate = DateFormatter.getRecentFormat(recentItem?.dateMessage);
 
 				result.push(item);
 			});
 
 			const copilotMentionItem = this.getCopilotMentionItem();
 			const copilotMentionItemTitle = copilotMentionItem?.title.toLowerCase();
-			if (copilotMentionItemTitle.includes(this.curruntQuery.toLowerCase()))
+			if (copilotMentionItemTitle?.includes(this.curruntQuery.toLowerCase()))
 			{
+				result = result.filter((item) => item.id !== copilotMentionItem.id);
+
 				result.push(copilotMentionItem);
 			}
 
@@ -568,6 +956,72 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			this.view.mentionPanel.hideLoader();
 		}
 
+		/**
+		 * @param {string|number} userId
+		 * @return {MentionAction}
+		 */
+		#buildInviteActionButton(userId)
+		{
+			return {
+				action: {
+					id: userId,
+					testId: 'button-invite',
+					iconName: Icon.ADD_PERSON.getIconName(),
+					size: ButtonDesignSize.M,
+					design: ButtonDesignType.primary,
+					mode: ButtonDesignMode.outline,
+					rounded: true,
+					dropdown: true,
+					viewId: `ref-action-button-${userId}`,
+				},
+			};
+		}
+
+		/**
+		 * @param {string|number} userId
+		 * @return {MentionAction}
+		 */
+		#buildSuccessActionButton(userId)
+		{
+			return {
+				options: {
+					autoHideDelay: 1500,
+				},
+				action: {
+					id: userId,
+					testId: 'button-success',
+					iconName: Icon.CHECK.getIconName(),
+					size: ButtonDesignSize.M,
+					design: ButtonDesignType.primary,
+					mode: ButtonDesignMode.tinted,
+					rounded: true,
+					dropdown: false,
+					viewId: `ref-action-button-${userId}`,
+				},
+			};
+		}
+
+		/**
+		 * @param {string|number} userId
+		 * @return {MentionAction}
+		 */
+		#buildProgressActionButton(userId)
+		{
+			return {
+				action: {
+					id: userId,
+					testId: 'button-progress',
+					iconName: Icon.ADD_PERSON.getIconName(),
+					size: ButtonDesignSize.M,
+					design: ButtonDesignType.primary,
+					mode: ButtonDesignMode.tinted,
+					rounded: true,
+					dropdown: true,
+					viewId: `ref-action-button-${userId}`,
+				},
+			};
+		}
+
 		async loadUsersForInitial()
 		{
 			if (DialogHelper.isChatId(this.dialogId))
@@ -587,6 +1041,11 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		 */
 		drawUserFoInitial(userIdList)
 		{
+			if (Type.isNumber(this.lastQuerySymbolPosition))
+			{
+				return;
+			}
+
 			this.drawParticipantsItems(userIdList);
 		}
 
@@ -648,7 +1107,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 		createCopilotMentionItem()
 		{
-			const copilotData = serviceLocator.get('core').getStore().getters['usersModel/getCopilotData']();
+			const copilotData = this.#store.getters['usersModel/getCopilotData']();
 			const chatTitleParams = ChatTitle.getCopilotMentionTitle(copilotData);
 			const avatarTitleParams = ChatAvatar.createCopilotMentionAvatar();
 
@@ -659,7 +1118,26 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				description: chatTitleParams.description,
 				avatar: avatarTitleParams,
 				testId: 'copilot',
+				actions: [],
 			};
+		}
+
+		/**
+		 * @param {string} dialogId
+		 * @return {object|undefined}
+		 */
+		#getDialogById(dialogId)
+		{
+			return this.#store.getters['dialoguesModel/getById'](dialogId);
+		}
+
+		/**
+		 * @param {string} dialogId
+		 * @return {number}
+		 */
+		#getChatIdByDialogId(dialogId)
+		{
+			return this.#getDialogById(dialogId)?.chatId ?? 0;
 		}
 
 		/**
@@ -697,7 +1175,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 		#getBBCodeUserText(userId)
 		{
-			const userModelState = serviceLocator.get('core').getStore().getters['usersModel/getById'](userId);
+			const userModelState = this.#store.getters['usersModel/getById'](userId);
 			if (Type.isUndefined(userModelState))
 			{
 				return '';
@@ -711,7 +1189,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 		#getBBCodeChatText(dialogId)
 		{
-			const dialogModelState = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+			const dialogModelState = this.#getDialogById(dialogId);
 			if (Type.isUndefined(dialogModelState))
 			{
 				return '';
@@ -752,6 +1230,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				description: chatTitleParams.description,
 				avatar: avatarTitleParams,
 				testId: BBCodeEntity.all,
+				actions: [],
 			};
 		}
 
@@ -768,7 +1247,11 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			if (DialogHelper.isDialogId(item.id))
 			{
-				const id = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](item.id).chatId;
+				const id = this.#getChatIdByDialogId(item.id);
+				if (!id)
+				{
+					return '';
+				}
 
 				return this.#wrapTextInBBCode(item.title, BBCode.chat, id);
 			}

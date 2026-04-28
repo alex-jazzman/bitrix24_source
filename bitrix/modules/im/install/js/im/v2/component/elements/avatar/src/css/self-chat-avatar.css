@@ -1,0 +1,10 @@
+.bx-im-self-chat-avatar__container {
+	--im-self-chat-avatar__background-color_primary: var(--im-color-palette-blue-50);
+
+	background-color: var(--im-self-chat-avatar__background-color_primary);
+	background-image: url("./images/self-chat-avatar.svg");
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: 75% 75%;
+	border-radius: 50%;
+}

@@ -1,12 +1,11 @@
 import { Loc } from 'main.core';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
+import { type MenuItemOptions, type MenuSectionOptions } from 'ui.system.menu';
 
 import { EventType } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
 
 import { MessageMenu, MenuSectionCode, NestedMenuSectionCode } from './message-base';
-
-import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
 
 export class CommentsMessageMenu extends MessageMenu
 {
@@ -57,8 +56,6 @@ export class CommentsMessageMenu extends MessageMenu
 			icon: OutlineIcons.GO_TO_MESSAGE,
 			onClick: () => {
 				this.emitter.emit(EventType.dialog.closeComments);
-
-				this.menuInstance.close();
 			},
 		};
 	}

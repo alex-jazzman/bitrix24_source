@@ -204,7 +204,7 @@ $lAdmin->SetNavigationParams($rsData);
 
 while ($arRes = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($arRes['ID'], $arRes, 'controller_group_edit.php?lang=' . LANGUAGE_ID . '&ID=' . intval($arRes['ID']));
+	$row = $lAdmin->AddRow($arRes['ID'], $arRes, 'controller_group_edit.php?lang=' . LANGUAGE_ID . '&ID=' . intval($arRes['ID']));
 
 	$USER_FIELD_MANAGER->AddUserFields($entity_id, $arRes, $row);
 

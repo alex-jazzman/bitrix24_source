@@ -1,0 +1,33 @@
+.crm-item-import__table-container {
+	overflow: auto;
+	max-width: 100%;
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-palette-gray-10);
+}
+
+.crm-item-import__table {
+	border: 1px solid #E8E8E8;
+}
+
+.crm-item-import__table tr th:first-child,
+.crm-item-import__table tr td:first-child {
+	border-left: 0;
+}
+.crm-item-import__table tr th,
+.crm-item-import__table tr td {
+	padding: 5px;
+	border-left: 1px solid #E8E8E8;
+	white-space: nowrap;
+	border-bottom: 1px solid #E8E8E8;
+}
+
+.crm-item-import__table .crm-item-import__error {
+	color: red;
+	padding-top: 18px;
+}
+
+.crm-item-import__table .value {
+	max-width: 400px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}

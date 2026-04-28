@@ -74,8 +74,8 @@ $hooks = $arResult['HOOKS'];
 $domains = $arResult['DOMAINS'];
 $sites = $arResult['SITES'];
 $isIntranet = $arResult['IS_INTRANET'];
-$isFormEditor = $arResult['SPECIAL_TYPE'] == Site\Type::PSEUDO_SCOPE_CODE_FORMS;
-$isMainpageEditor = $arParams['TYPE'] == Site\Type::SCOPE_CODE_MAINPAGE;
+$isFormEditor = $arResult['SPECIAL_TYPE'] === Site\Type::PSEUDO_SCOPE_CODE_FORMS;
+$isVibeEditor = $arParams['TYPE'] === Site\Type::SCOPE_CODE_VIBE;
 $siteCurrent = $sites[$row['SITE_ID']['CURRENT']] ?? null;
 $isSMN = $siteCurrent['TYPE'] === 'SMN';
 $isAjax = $component->isAjax();
@@ -173,7 +173,7 @@ if ($isFormEditor)
 
 	$arResult['TEMPLATES'] = [];
 }
-elseif ($isMainpageEditor)
+elseif ($isVibeEditor)
 {
 	$formHooks = [
 		'METAOG',
@@ -181,7 +181,7 @@ elseif ($isMainpageEditor)
 
 	foreach($hooks as $code => $hook)
 	{
-		if (!in_array($code, $formHooks))
+		if (!in_array($code, $formHooks, true))
 		{
 			unset($hooks[$code]);
 		}
@@ -268,16 +268,9 @@ if ($arParams['SUCCESS_SAVE'])
 							<span class="landing-form-site-name-label">
 								<?php
 								echo $domainName;
-								if ($isMainpageEditor)
+								if ($isVibeEditor)
 								{
-									if ($siteCurrent)
-									{
-										echo htmlspecialcharsbx(Manager::getPublicationPath());
-									}
-									else
-									{
-										echo '/';
-									}
+									echo $arResult['VIBE_PUBLIC_URL'] ?? '/';
 								}
 								elseif ($isIntranet)
 								{
@@ -325,7 +318,7 @@ if ($arParams['SUCCESS_SAVE'])
 								maxlength="100"
 								class="ui-input"/>
 							<?=($isIndex || $isFolderIndex) ? '' : '<span class="landing-form-site-name-label">/</span>'?>
-							<?php if ($isIndex && !$isMainpageEditor): ?>
+							<?php if ($isIndex && !$isVibeEditor): ?>
 								<?php
 								$link1 = '';
 								if ($arParams['PAGE_URL_SITE_EDIT'])
@@ -568,7 +561,7 @@ if ($arParams['SUCCESS_SAVE'])
 						<span class="landing-additional-alt-promo-text"
 							data-landing-additional-option="css"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_CSS')?></span>
 					<?php endif; ?>
-					<?php if (!$isIntranet && !$isFormEditor && !$isMainpageEditor && !$isSMN): ?>
+					<?php if (!$isIntranet && !$isFormEditor && !$isVibeEditor && !$isSMN): ?>
 						<span class="landing-additional-alt-promo-text"
 							data-landing-additional-option="sitemap"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_SITEMAP')?></span>
 					<?php endif; ?>
@@ -829,7 +822,7 @@ if ($arParams['SUCCESS_SAVE'])
 									</label>
 								</div>
 								<div
-									class="ui-form-row-hidden landing-form-page-layout<?= $isMainpageEditor ? ' --main-page' : '' ?>"
+									class="ui-form-row-hidden landing-form-page-layout<?= $isVibeEditor ? ' --main-page' : '' ?>"
 									id="<?= $template->getFieldId('PAGE_LAYOUT') ?>"
 								>
 									<div class="landing-form-layout-select">
@@ -846,7 +839,7 @@ if ($arParams['SUCCESS_SAVE'])
 										<?php endforeach; ?>
 										<div class="landing-form-list">
 											<div class="landing-form-select-buttons">
-												<?php if (!$isMainpageEditor): ?>
+												<?php if (!$isVibeEditor): ?>
 													<div class="landing-form-select-prev"></div>
 													<div class="landing-form-select-next"></div>
 												<?php endif; ?>
@@ -1094,7 +1087,7 @@ if ($arParams['SUCCESS_SAVE'])
 				<?php endif;?>
 
 				<!--SITEMAP-->
-				<?php if (!$isIntranet && !$isFormEditor && !$isMainpageEditor && !$isSMN): ?>
+				<?php if (!$isIntranet && !$isFormEditor && !$isVibeEditor && !$isSMN): ?>
 					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="sitemap">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">

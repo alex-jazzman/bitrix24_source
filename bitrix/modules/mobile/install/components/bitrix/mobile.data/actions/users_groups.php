@@ -1,7 +1,11 @@
-<? if (!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+<?
+
+if (!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+use Bitrix\Mobile\CacheId;
 
 //cache data
 
@@ -22,41 +26,81 @@ else
 	$onlyBusiness = 'N';
 }
 
+$isIntranetUser = false;
+if (CModule::includeModule('intranet') && \Bitrix\Intranet\Util::isIntranetUser())
+{
+	$isIntranetUser = true;
+}
+
+$isExtranetUser = !$isIntranetUser;
+
 $cache_path = '/mobile_cache/' . $action;
+if ($isIntranetUser)
+{
+	$cache_path .= '/intranet';
+}
+else
+{
+	$userHash = md5($USER->GetID());
+	$cache_path .= '/extranet/' . substr($userHash, 2, 2);
+}
+
 $data = array();
 $action = $_REQUEST["mobile_action"] ?? null;
 $showBots = false;
+
 if ($action && in_array($action, array("get_user_list", "get_usergroup_list")))
 {
 	$withTags = ($_REQUEST["tags"] ?? 'N') === "N" ? "N" : "Y";
-	$cache_id = "mobileAction|get_users|" . $USER->GetID() . "|" . $detailurl . "|" . $withTags . "|" . LANGUAGE_ID . "|" . $onlyBusiness . "|" . md5(implode('|', $businessUsers));
+
+	$cacheId = new CacheId('mobileAction|get_users');
+	if ($isExtranetUser)
+	{
+		$cacheId->add($USER->GetID());
+	}
+	$cacheId
+		->add($detailurl)
+		->add($withTags)
+		->add(LANGUAGE_ID)
+		->add($onlyBusiness)
+		->add(md5(implode('|', $businessUsers)))
+	;
+
 	$useNameFormat = false;
 	if (array_key_exists("use_name_format", $_REQUEST) && $_REQUEST["use_name_format"] == "Y")
 	{
 		$useNameFormat = true;
-		$cache_id .= "|useNameFormat";
+		$cacheId->add('useNameFormat');
 	}
 
 	if (array_key_exists("with_bots", $_REQUEST) && $_REQUEST["with_bots"] == "Y")
 	{
-		$cache_id .= "|bots";
+		$cacheId->add('bots');
 		$showBots = true;
 	}
 
 	$nameTemplate = ($useNameFormat ? CSite::GetNameFormat() : "#LAST_NAME# #NAME#");
-	$cache_id .= "|" . $nameTemplate;
+	$cacheId->add($nameTemplate);
 
-	if ($cache->InitCache($cache_time, $cache_id, $cache_path))
+	if ($cache->InitCache($cache_time, $cacheId->get(), $cache_path))
 	{
 		$cachedData = $cache->GetVars();
 		$data = $cachedData["DATA"];
 		$tableType = $cachedData["TYPE"];
-
 	}
 	else
 	{
 		$CACHE_MANAGER->StartTagCache($cache_path);
-		$CACHE_MANAGER->RegisterTag("sonet_user2group_U" . $USER->GetID());
+
+		if ($isExtranetUser)
+		{
+			$CACHE_MANAGER->RegisterTag("sonet_user2group_U" . $USER->GetID());
+		}
+		else
+		{
+			$CACHE_MANAGER->RegisterTag("sonet_user2group");
+		}
+
 		$CACHE_MANAGER->RegisterTag("USER_CARD");
 
 		$tmpData = array(
@@ -71,10 +115,7 @@ if ($action && in_array($action, array("get_user_list", "get_usergroup_list")))
 			$tmpData
 		);
 
-		if (
-			!CModule::IncludeModule('extranet')
-			|| CExtranet::IsIntranetUser()
-		)
+		if ($isIntranetUser)
 		{
 			$blockedTypes = \Bitrix\Main\UserTable::getExternalUserTypes();
 
@@ -238,8 +279,14 @@ if ($action && in_array($action, array("get_user_list", "get_usergroup_list")))
 
 if (in_array($action, array("get_group_list", "get_usergroup_list")))
 {
-	$cache_id = "mobileAction|get_groups|" . $USER->GetID() . "|" . $detailurl . "|" . $feature;
-	if ($cache->InitCache($cache_time, $cache_id, $cache_path))
+	$cacheId = new CacheId('mobileAction|get_groups');
+	if ($isExtranetUser)
+	{
+		$cacheId->add($USER->GetID());
+	}
+	$cacheId->add($detailurl)->add($feature);
+
+	if ($cache->InitCache($cache_time, $cacheId->get(), $cache_path))
 	{
 		$cachedData = $cache->GetVars();
 		$data = $cachedData["DATA"];
@@ -250,7 +297,16 @@ if (in_array($action, array("get_group_list", "get_usergroup_list")))
 		if (CModule::IncludeModule("socialnetwork"))
 		{
 			$CACHE_MANAGER->StartTagCache($cache_path);
-			$CACHE_MANAGER->RegisterTag("sonet_user2group_U" . $USER->GetID());
+
+			if ($isIntranetUser)
+			{
+				$CACHE_MANAGER->RegisterTag("sonet_user2group");
+			}
+			else
+			{
+				$CACHE_MANAGER->RegisterTag("sonet_user2group_U" . $USER->GetID());
+			}
+
 			$CACHE_MANAGER->RegisterTag("sonet_group");
 
 			$data = Array();

@@ -12,6 +12,7 @@ return [
 		'im.public',
 		'im.v2.component.message.base',
 		'im.v2.component.elements.user-list-popup',
+		'im.v2.lib.copilot',
 	],
 	'skip_core' => true,
 ];

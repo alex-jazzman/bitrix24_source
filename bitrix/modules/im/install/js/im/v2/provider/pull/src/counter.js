@@ -1,37 +1,19 @@
-import { Type } from 'main.core';
-
-import { Logger } from 'im.v2.lib.logger';
-import { NewMessageManager } from 'im.v2.provider.pull';
+import { ChatType } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
-import { CounterType, RecentType } from 'im.v2.const';
+import { CounterClearHandlersByChatType, CounterClearActions } from 'im.v2.lib.counter';
+import { UuidManager } from 'im.v2.lib.uuid';
+import { Logger } from 'im.v2.lib.logger';
 
-import type { MessageAddParams, PullExtraParams, ReadMessageParams, UnreadMessageParams } from 'im.v2.provider.pull';
-import type { ChatMuteNotifyParams, ChatUnreadParams } from './types/chat';
-import type { MessageDeleteCompleteParams } from './types/message';
+import { NewMessageManager } from './classes/new-message-manager';
 
-type RecentTypeItem = $Values<typeof RecentType>;
-
-type CounterParams = {
-	dialogId: string,
-	chatId: number,
-	parentChatId: number,
-	counter: number,
-	muted: boolean,
-	unread: boolean,
-	counterType: $Values<typeof CounterType>,
-	recentConfig: {
-		chatId: number,
-		sections: RecentTypeItem[],
-	},
-};
+import type { ImModelCounter } from 'im.v2.model';
+import type { ChatUnreadParams, ChatDeleteParams } from './types/chat';
+import type { ReadAllChannelCommentsParams } from './types/comments';
+import type { MessageAddParams, ReadMessageParams, MultipleMessageDeleteParams } from './types/message';
+import type { PullExtraParams } from './types/common';
 
 export class CounterPullHandler
 {
-	constructor()
-	{
-		this.store = Core.getStore();
-	}
-
 	getModuleId(): string
 	{
 		return 'im';
@@ -39,182 +21,130 @@ export class CounterPullHandler
 
 	handleMessage(params: MessageAddParams, extra: PullExtraParams)
 	{
-		this.handleMessageAdd(params, extra);
+		this.handleMessageChat(params, extra);
 	}
 
 	handleMessageChat(params: MessageAddParams, extra: PullExtraParams)
 	{
-		this.handleMessageAdd(params, extra);
-	}
-
-	handleMessageAdd(params: MessageAddParams, extra: PullExtraParams)
-	{
 		const manager = new NewMessageManager(params, extra);
-		if (!manager.isCommentChat())
+		if (!manager.isUserInChat())
 		{
 			return;
 		}
 
-		this.#updateCommentCounter({
-			channelChatId: manager.getParentChatId(),
-			commentChatId: manager.getChatId(),
-			commentCounter: params.counter,
-		});
+		const { chatId, counter, userBlockChat, recentConfig } = params;
+
+		const chatMuteMap = userBlockChat[chatId];
+		const isMuted = chatMuteMap[Core.getUserId()] === true;
+		const isMarkedAsUnread = Core.getStore().getters['counters/getUnreadStatus'](chatId);
+
+		const counterItem: ImModelCounter = {
+			chatId,
+			counter,
+			isMarkedAsUnread,
+			isMuted,
+			parentChatId: manager.getParentChatId(),
+			recentSections: recentConfig.sections,
+		};
+
+		void Core.getStore().dispatch('counters/setCounters', [counterItem]);
 	}
 
-	handleMessageDeleteComplete(params: MessageDeleteCompleteParams)
+	handleReadMessage(params: ReadMessageParams, extra: PullExtraParams)
 	{
-		this.#handleCounters(params);
+		this.handleReadMessageChat(params, extra);
 	}
 
-	handleReadMessage(params: ReadMessageParams)
+	handleReadMessageChat(params: ReadMessageParams, extra: PullExtraParams)
 	{
-		this.#handleCounters(params);
+		const { chatId, counter: newCounter, unread, muted, parentChatId, recentConfig } = params;
+
+		const uuidManager = UuidManager.getInstance();
+		if (uuidManager.hasActionUuid(extra.action_uuid))
+		{
+			Logger.warn('CounterPullHandler: handleReadMessage: we have this uuid, skip');
+			uuidManager.removeActionUuid(extra.action_uuid);
+
+			return;
+		}
+
+		const counterItem: ImModelCounter = {
+			chatId,
+			counter: newCounter,
+			isMarkedAsUnread: unread,
+			isMuted: muted,
+			parentChatId,
+			recentSections: recentConfig.sections,
+		};
+
+		void Core.getStore().dispatch('counters/setCounters', [counterItem]);
 	}
 
-	handleReadMessageChat(params: ReadMessageParams)
+	handleMessageDeleteV2(params: MultipleMessageDeleteParams)
 	{
-		this.#handleCounters(params);
-	}
+		const { chatId, counter, unread, muted, parentChatId, recentConfig } = params;
 
-	handleUnreadMessage(params: UnreadMessageParams)
-	{
-		this.#handleCounters(params);
-	}
+		const counterItem: ImModelCounter = {
+			chatId,
+			counter,
+			isMarkedAsUnread: unread,
+			isMuted: muted,
+			parentChatId,
+			recentSections: recentConfig.sections,
+		};
 
-	handleUnreadMessageChat(params: UnreadMessageParams)
-	{
-		this.#handleCounters(params);
+		void Core.getStore().dispatch('counters/setCounters', [counterItem]);
 	}
 
 	handleChatUnread(params: ChatUnreadParams)
 	{
-		this.#handleCounters({
-			...params,
-			unread: params.active,
-		});
-	}
+		const { chatId, counter, active, muted, parentChatId, recentConfig } = params;
 
-	handleChatMuteNotify(params: ChatMuteNotifyParams)
-	{
-		this.#handleCounters(params);
-	}
-
-	#handleCounters(params: CounterParams)
-	{
-		const {
+		const counterItem: ImModelCounter = {
 			chatId,
 			counter,
-			counterType = CounterType.chat,
-			parentChatId = 0,
-		} = params;
-
-		if (counterType === CounterType.openline)
-		{
-			return;
-		}
-
-		Logger.warn('CounterPullHandler: handleCounters:', params);
-
-		if (counterType === CounterType.comment)
-		{
-			this.#updateCommentCounter({
-				channelChatId: parentChatId,
-				commentChatId: chatId,
-				commentCounter: counter,
-			});
-
-			return;
-		}
-
-		this.#handleUnloadedChatCounters(params);
-	}
-
-	#getNewCounter(params: CounterParams): number
-	{
-		const { counter, muted, unread } = params;
-
-		let newCounter = 0;
-		if (muted)
-		{
-			newCounter = 0;
-		}
-		else if (unread && counter === 0)
-		{
-			newCounter = 1;
-		}
-		else if (unread && counter > 0)
-		{
-			newCounter = counter;
-		}
-		else if (!unread)
-		{
-			newCounter = counter;
-		}
-
-		return newCounter;
-	}
-
-	#updateCommentCounter(payload: { channelChatId: number, commentChatId: number, commentCounter: number })
-	{
-		const { channelChatId, commentChatId, commentCounter } = payload;
-		if (Type.isUndefined(commentCounter))
-		{
-			return;
-		}
-
-		const counters = {
-			[channelChatId]: {
-				[commentChatId]: commentCounter,
-			},
+			isMarkedAsUnread: active,
+			isMuted: muted,
+			parentChatId,
+			recentSections: recentConfig.sections,
 		};
 
-		Core.getStore().dispatch('counters/setCommentCounters', counters);
+		void Core.getStore().dispatch('counters/setCounters', [counterItem]);
 	}
 
-	#handleUnloadedChatCounters(params: CounterParams)
+	handleChatDelete(params: ChatDeleteParams)
 	{
-		const { chatId, recentConfig, dialogId } = params;
-		const newCounter = this.#getNewCounter(params);
+		const { chatId } = params;
 
-		recentConfig.sections.forEach((recentSection) => {
-			const sectionConfig = this.#getRecentSectionConfig(recentSection);
-			if (!sectionConfig)
-			{
-				return;
-			}
+		void Core.getStore().dispatch('counters/clearById', { chatId });
+	}
 
-			const isInRecentCollection = this.store.getters[sectionConfig.collectionGetter](dialogId);
-			if (isInRecentCollection)
-			{
-				return;
-			}
-
-			void Core.getStore().dispatch(sectionConfig.setUnloadedCounterAction, { [chatId]: newCounter });
+	handleReadAllChats()
+	{
+		CounterClearActions.forEach((actionHandler) => {
+			void actionHandler();
 		});
 	}
 
-	#getRecentSectionConfig(section: RecentTypeItem): ?{ setUnloadedCounterAction: string, collectionGetter: string }
+	handleReadAllChatsByType(params: { type: $Values<typeof ChatType> })
 	{
-		const handlers = {
-			[RecentType.default]: {
-				setUnloadedCounterAction: 'counters/setUnloadedChatCounters',
-				collectionGetter: 'recent/isInRecentCollection',
-			},
-			[RecentType.collab]: {
-				setUnloadedCounterAction: 'counters/setUnloadedCollabCounters',
-				collectionGetter: 'recent/isInCollabCollection',
-			},
-			[RecentType.copilot]: {
-				setUnloadedCounterAction: 'counters/setUnloadedCopilotCounters',
-				collectionGetter: 'recent/isInCopilotCollection',
-			},
-			[RecentType.taskComments]: {
-				setUnloadedCounterAction: 'counters/setUnloadedTaskCounters',
-				collectionGetter: 'recent/isInTaskCollection',
-			},
-		};
+		const { type } = params;
 
-		return handlers[section];
+		const counterClearHandlers = CounterClearHandlersByChatType[type];
+		if (!counterClearHandlers)
+		{
+			return;
+		}
+
+		counterClearHandlers.forEach((handler) => {
+			handler(type);
+		});
+	}
+
+	handleReadChildren(params: ReadAllChannelCommentsParams)
+	{
+		const { chatId } = params;
+
+		void Core.getStore().dispatch('counters/clearByParentId', { parentChatId: chatId });
 	}
 }

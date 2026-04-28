@@ -1,0 +1,21 @@
+<?php
+$MESS["BPSCT_INTERVAL"] = "Wait between instances (timeframe periods):";
+$MESS["BPSCT_INTERVAL_INVALID"] = "The value of \"Wait between instances\" must be from 1 to 12.";
+$MESS["BPSCT_MONTH_DAY"] = "Calendar day:";
+$MESS["BPSCT_MONTH_DAY_INVALID"] = "Calendar day is incorrect (possible values are 1 to 31).";
+$MESS["BPSCT_RUN_AT"] = "Run at:";
+$MESS["BPSCT_RUN_AT_EMPTY"] = "The \"Run at\" field is required.";
+$MESS["BPSCT_SCHEDULE_TYPE"] = "Scheduling timeframe:";
+$MESS["BPSCT_SCHEDULE_TYPE_DAILY"] = "Day";
+$MESS["BPSCT_SCHEDULE_TYPE_EMPTY"] = "Scheduling timeframe is not specified.";
+$MESS["BPSCT_SCHEDULE_TYPE_HOURLY"] = "Hour";
+$MESS["BPSCT_SCHEDULE_TYPE_MONTHLY"] = "Month";
+$MESS["BPSCT_SCHEDULE_TYPE_ONCE"] = "Run only once";
+$MESS["BPSCT_SCHEDULE_TYPE_WEEKLY"] = "Week";
+$MESS["BPSCT_SCHEDULE_TYPE_YEARLY"] = "Year";
+$MESS["BPSCT_WEEK_DAYS"] = "Days of week:";
+$MESS["BPSCT_WEEK_DAYS_EMPTY"] = "Select at least one day of week.";
+$MESS["BPSCT_YEAR_MONTH"] = "Month:";
+$MESS["BPSCT_YEAR_MONTH_DAY"] = "Calendar day:";
+$MESS["BPSCT_YEAR_MONTH_DAY_INVALID"] = "Calendar day is incorrect (possible values are 1 to 31).";
+$MESS["BPSCT_YEAR_MONTH_INVALID"] = "Month is incorrect (possible values are 1 to 12).";

@@ -1,0 +1,4 @@
+<?php
+
+$MESS['DISK_CUSTOM_SERVER_R7_TITLE'] = 'Р7-Офис';
+$MESS['DISK_CUSTOM_SERVER_ONLYOFFICE_TITLE'] = 'OnlyOffice';

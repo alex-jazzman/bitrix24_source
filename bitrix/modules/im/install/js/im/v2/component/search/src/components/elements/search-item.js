@@ -1,15 +1,14 @@
 import { Text, Loc } from 'main.core';
 
-import { ChatType } from 'im.v2.const';
-import { Utils } from 'im.v2.lib.utils';
-import { highlightText } from 'im.v2.lib.text-highlighter';
-import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
-import { ChatTitleWithHighlighting, ChatTitleType } from 'im.v2.component.elements.chat-title';
 import { ChatAvatar, AvatarSize, ChatAvatarType } from 'im.v2.component.elements.avatar';
+import { ChatTitleWithHighlighting, ChatTitleType } from 'im.v2.component.elements.chat-title';
+import { ChatType } from 'im.v2.const';
+import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
+import { highlightText } from 'im.v2.lib.text-highlighter';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat } from 'im.v2.model';
 
 import '../css/search-item.css';
-
-import type { ImModelChat } from 'im.v2.model';
 
 const ItemTextByChatType = {
 	[ChatType.openChannel]: Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
@@ -44,7 +43,7 @@ export const SearchItem = {
 			type: String,
 			default: '',
 		},
-		replaceWithNotes: {
+		selfChatReplace: {
 			type: Boolean,
 			default: true,
 		},
@@ -69,32 +68,32 @@ export const SearchItem = {
 		{
 			return this.dialog.type === ChatType.user;
 		},
-		isNotes(): boolean
+		needToReplaceSelfChat(): boolean
 		{
-			if (!this.replaceWithNotes)
+			if (!this.selfChatReplace)
 			{
 				return false;
 			}
 
-			return this.$store.getters['chats/isNotes'](this.dialogId);
+			return this.$store.getters['chats/isSelfChat'](this.dialogId);
 		},
 		avatarType(): string
 		{
-			if (!this.replaceWithNotes)
+			if (!this.selfChatReplace)
 			{
 				return '';
 			}
 
-			return this.isNotes ? ChatAvatarType.notes : '';
+			return this.needToReplaceSelfChat ? ChatAvatarType.selfChat : '';
 		},
 		titleType(): string
 		{
-			if (!this.replaceWithNotes)
+			if (!this.selfChatReplace)
 			{
 				return '';
 			}
 
-			return this.isNotes ? ChatTitleType.notes : '';
+			return this.needToReplaceSelfChat ? ChatTitleType.selfChat : '';
 		},
 		position(): string
 		{
@@ -120,23 +119,23 @@ export const SearchItem = {
 		},
 		itemText(): string
 		{
-			if (this.isNotes)
+			if (this.needToReplaceSelfChat)
 			{
-				return this.notesText;
+				return this.selfChatText;
 			}
 
 			return this.isUser ? this.userItemText : this.chatItemText;
 		},
 		itemTextForTitle(): string
 		{
-			if (this.isNotes)
+			if (this.needToReplaceSelfChat)
 			{
-				return this.notesText;
+				return this.selfChatText;
 			}
 
 			return this.isUser ? this.position : this.chatItemText;
 		},
-		notesText(): string
+		selfChatText(): string
 		{
 			return this.loc('IM_LIST_RECENT_CHAT_SELF_SUBTITLE');
 		},
@@ -193,13 +192,13 @@ export const SearchItem = {
 					:customType="avatarType"
 				/>
 			</div>
-			<div class="bx-im-search-item__content-container" :class="{'--centered': isNotes}">
+			<div class="bx-im-search-item__content-container" :class="{'--centered': selfChatReplace}">
 				<div class="bx-im-search-item__content_header">
 					<ChatTitleWithHighlighting
 						:dialogId="dialogId"
 						:textToHighlight="query"
 						:customType="titleType"
-						:showItsYou="!replaceWithNotes"
+						:showItsYou="!selfChatReplace"
 						:twoLine="titleTwoLine"
 					/>
 					<div v-if="withDate && formattedDate" class="bx-im-search-item__date">

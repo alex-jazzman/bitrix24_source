@@ -633,7 +633,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		{
 			return this.handleCommonCallAction((callManager) => {
 				callManager.sendAnalyticsEvent(this.dialogId, Analytics.Element.videocall, Analytics.Section.chatSidebar);
-				callManager.createVideoCall(this.dialogId);
+				void callManager.createVideoCall(this.dialogId);
 			});
 		}
 
@@ -641,7 +641,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		{
 			return this.handleCommonCallAction((callManager) => {
 				callManager.sendAnalyticsEvent(this.dialogId, Analytics.Element.audiocall, Analytics.Section.chatSidebar);
-				callManager.createAudioCall(this.dialogId);
+				void callManager.createAudioCall(this.dialogId);
 			});
 		}
 

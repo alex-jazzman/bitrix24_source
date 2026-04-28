@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.OpenLines = this.BX.OpenLines || {};
 this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
-(function (exports,im_v2_application_core,ui_vue3_vuex,imopenlines_v2_const,main_core,im_v2_model) {
+(function (exports,im_v2_application_core,imopenlines_v2_const,main_core,im_v2_model,ui_vue3_vuex) {
 	'use strict';
 
 	const sessionsFieldsConfig = [{
@@ -69,7 +69,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	  }
 	  getGetters() {
 	    return {
-	      /** @function sessions/getById */
+	      /** @function openlines/sessions/getById */
 	      getById: state => (id, getBlank = false) => {
 	        if (!state.collection[id] && getBlank) {
 	          return this.getElementState();
@@ -79,7 +79,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	        }
 	        return state.collection[id];
 	      },
-	      /** @function sessions/getByChatId */
+	      /** @function openlines/sessions/getByChatId */
 	      getByChatId: state => (chatId, getBlank = false) => {
 	        const session = Object.values(state.collection).find(item => item.chatId === chatId);
 	        if (!session && getBlank) {
@@ -94,9 +94,12 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	  }
 	  getActions() {
 	    return {
-	      /** @function sessions/set */
+	      /** @function openlines/sessions/set */
 	      set: (store, payload) => {
 	        let sessions = payload;
+	        if (main_core.Type.isNil(sessions)) {
+	          return;
+	        }
 	        if (!Array.isArray(sessions) && main_core.Type.isPlainObject(sessions)) {
 	          sessions = [sessions];
 	        }
@@ -123,7 +126,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	          store.commit('add', itemsToAdd);
 	        }
 	      },
-	      /** @function sessions/pin */
+	      /** @function openlines/sessions/pin */
 	      pin: (store, payload) => {
 	        const existingItem = store.state.collection[payload.id];
 	        if (!existingItem) {
@@ -192,10 +195,6 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	  checkFunction: main_core.Type.isPlainObject,
 	  formatFunction: im_v2_model.prepareDraft
 	}, {
-	  fieldName: 'unread',
-	  targetFieldName: 'unread',
-	  checkFunction: main_core.Type.isBoolean
-	}, {
 	  fieldName: 'pinned',
 	  targetFieldName: 'pinned',
 	  checkFunction: main_core.Type.isBoolean
@@ -206,7 +205,8 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	}];
 
 	var _formatFields$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
-	class OpenLinesRecentModel extends ui_vue3_vuex.BuilderModel {
+	/* eslint-disable no-param-reassign */
+	class RecentModel extends ui_vue3_vuex.BuilderModel {
 	  constructor(...args) {
 	    super(...args);
 	    Object.defineProperty(this, _formatFields$1, {
@@ -214,7 +214,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	    });
 	  }
 	  getName() {
-	    return 'recentOpenLines';
+	    return 'recent';
 	  }
 	  getState() {
 	    return {
@@ -231,25 +231,24 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	        text: '',
 	        date: null
 	      },
-	      unread: false,
 	      pinned: false,
 	      liked: false
 	    };
 	  }
 	  getGetters() {
 	    return {
-	      /** @function recentOpenLines/getOpenLinesCollection */
+	      /** @function openlines/recent/getOpenLinesCollection */
 	      getOpenLinesCollection: state => {
 	        const openLinesItems = [];
 	        Object.keys(state.collection).forEach(dialogId => {
-	          const dialog = this.store.getters['chats/get'](dialogId);
+	          const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
 	          if (dialog) {
 	            openLinesItems.push(state.collection[dialogId]);
 	          }
 	        });
 	        return openLinesItems;
 	      },
-	      /** @function recentOpenLines/getSession */
+	      /** @function openlines/recent/getSession */
 	      getSession: state => (dialogId, getBlank = false) => {
 	        const session = state.collection[dialogId];
 	        if (!session && getBlank) {
@@ -259,16 +258,16 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	          return null;
 	        }
 	        const sessionId = session.sessionId;
-	        return im_v2_application_core.Core.getStore().getters['sessions/getById'](sessionId);
+	        return im_v2_application_core.Core.getStore().getters['openLines/sessions/getById'](sessionId);
 	      },
-	      /** @function recentOpenLines/get */
+	      /** @function recent/get */
 	      get: state => dialogId => {
 	        if (!state.collection[dialogId]) {
 	          return null;
 	        }
 	        return state.collection[dialogId];
 	      },
-	      /** @function recentOpenLines/getChatIdByDialogId */
+	      /** @function recent/getChatIdByDialogId */
 	      getChatIdByDialogId: state => dialogId => {
 	        if (!state.collection[dialogId]) {
 	          return null;
@@ -279,7 +278,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	  }
 	  getActions() {
 	    return {
-	      /** @function recentOpenLines/set */
+	      /** @function openLines/recent/set */
 	      set: (store, payload) => {
 	        let openLines = payload;
 	        if (!Array.isArray(openLines) && main_core.Type.isPlainObject(openLines)) {
@@ -312,7 +311,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	          store.commit('update', itemsToUpdate);
 	        }
 	      },
-	      /** @function recentOpenLines/delete */
+	      /** @function openLines/recent/delete */
 	      delete: (store, payload) => {
 	        const existingItem = store.state.collection[payload.id];
 	        if (!existingItem) {
@@ -354,7 +353,6 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	        });
 	      },
 	      delete: (state, payload) => {
-	        // eslint-disable-next-line no-param-reassign
 	        delete state.collection[payload.id];
 	      }
 	    };
@@ -385,6 +383,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	}];
 
 	var _formatFields$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
+	/* eslint-disable no-param-reassign */
 	class QueueModel extends ui_vue3_vuex.BuilderModel {
 	  constructor(...args) {
 	    super(...args);
@@ -483,7 +482,6 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	        };
 	      },
 	      delete: (state, payload) => {
-	        // eslint-disable-next-line no-param-reassign
 	        delete state.collection[payload.id];
 	      }
 	    };
@@ -493,12 +491,206 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	  return im_v2_model.formatFieldsWithConfig(rawFields, queueFieldsConfig);
 	}
 
-	const OpenLinesModels = [OpenLinesRecentModel, SessionsModel, QueueModel];
+	/* eslint-disable no-param-reassign */
+	class CurrentSessionModel extends ui_vue3_vuex.BuilderModel {
+	  getName() {
+	    return 'currentSession';
+	  }
+	  getState() {
+	    return {
+	      collection: {}
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      sessionId: 0,
+	      pause: false,
+	      waitAction: false,
+	      blockDate: '',
+	      blockReason: '',
+	      silentMode: false,
+	      dateCreate: '',
+	      multidialog: false
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function openlines/currentSession/getByDialogId */
+	      getByDialogId: state => dialogId => {
+	        return state.collection[dialogId] || null;
+	      },
+	      /** @function openlines/currentSession/getSilentModeByDialogId */
+	      getSilentModeByDialogId: state => dialogId => {
+	        var _state$collection$dia;
+	        return ((_state$collection$dia = state.collection[dialogId]) == null ? void 0 : _state$collection$dia.silentMode) || false;
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function openlines/currentSession/set */
+	      set: (store, payload) => {
+	        if (!payload.data) {
+	          return;
+	        }
+	        store.commit('set', payload);
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      set: (state, payload) => {
+	        var _state$collection$dia2;
+	        const {
+	          dialogId,
+	          data
+	        } = payload;
+	        const currentElement = (_state$collection$dia2 = state.collection[dialogId]) != null ? _state$collection$dia2 : this.getElementState();
+	        state.collection[dialogId] = {
+	          ...currentElement,
+	          ...data
+	        };
+	      }
+	    };
+	  }
+	}
+
+	/* eslint-disable no-param-reassign */
+	class ConnectorModel extends ui_vue3_vuex.BuilderModel {
+	  getName() {
+	    return 'connector';
+	  }
+	  getState() {
+	    return {
+	      collection: {}
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      connectorId: '',
+	      lineId: 0,
+	      connectorChatId: 0,
+	      connectorUserId: 0
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function openlines/connector/getByDialogId */
+	      getByDialogId: state => dialogId => {
+	        return state.collection[dialogId] || null;
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function openlines/connector/set */
+	      set: (store, payload) => {
+	        if (!payload.data) {
+	          return;
+	        }
+	        store.commit('set', payload);
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      set: (state, payload) => {
+	        var _state$collection$dia;
+	        const {
+	          dialogId,
+	          data
+	        } = payload;
+	        const currentElement = (_state$collection$dia = state.collection[dialogId]) != null ? _state$collection$dia : this.getElementState();
+	        state.collection[dialogId] = {
+	          ...currentElement,
+	          ...data
+	        };
+	      }
+	    };
+	  }
+	}
+
+	/* eslint-disable no-param-reassign */
+	class CrmModel extends ui_vue3_vuex.BuilderModel {
+	  getName() {
+	    return 'crm';
+	  }
+	  getState() {
+	    return {
+	      collection: {}
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      crmEnabled: false,
+	      crmEntityType: '',
+	      crmEntityId: 0,
+	      leadId: null,
+	      companyId: null,
+	      contactId: null,
+	      dealId: null
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function openlines/crm/getByDialogId */
+	      getByDialogId: state => dialogId => {
+	        return state.collection[dialogId] || null;
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function openlines/crm/set */
+	      set: (store, payload) => {
+	        if (!payload.data) {
+	          return;
+	        }
+	        store.commit('set', payload);
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      set: (state, payload) => {
+	        var _state$collection$dia;
+	        const {
+	          dialogId,
+	          data
+	        } = payload;
+	        const currentElement = (_state$collection$dia = state.collection[dialogId]) != null ? _state$collection$dia : this.getElementState();
+	        state.collection[dialogId] = {
+	          ...currentElement,
+	          ...data
+	        };
+	      }
+	    };
+	  }
+	}
+
+	class OpenLinesModel extends ui_vue3_vuex.BuilderModel {
+	  getName() {
+	    return 'openLines';
+	  }
+	  getNestedModules() {
+	    return {
+	      sessions: SessionsModel,
+	      recent: RecentModel,
+	      queue: QueueModel,
+	      connector: ConnectorModel,
+	      crm: CrmModel,
+	      currentSession: CurrentSessionModel
+	    };
+	  }
+	}
 
 	exports.SessionsModel = SessionsModel;
-	exports.OpenLinesRecentModel = OpenLinesRecentModel;
+	exports.RecentModel = RecentModel;
 	exports.QueueModel = QueueModel;
-	exports.OpenLinesModels = OpenLinesModels;
+	exports.CurrentSessionModel = CurrentSessionModel;
+	exports.ConnectorModel = ConnectorModel;
+	exports.CrmModel = CrmModel;
+	exports.OpenLinesModel = OpenLinesModel;
 
-}((this.BX.OpenLines.v2.Model = this.BX.OpenLines.v2.Model || {}),BX.Messenger.v2.Application,BX.Vue3.Vuex,BX.OpenLines.v2.Const,BX,BX.Messenger.v2.Model));
+}((this.BX.OpenLines.v2.Model = this.BX.OpenLines.v2.Model || {}),BX.Messenger.v2.Application,BX.OpenLines.v2.Const,BX,BX.Messenger.v2.Model,BX.Vue3.Vuex));
 //# sourceMappingURL=registry.bundle.js.map

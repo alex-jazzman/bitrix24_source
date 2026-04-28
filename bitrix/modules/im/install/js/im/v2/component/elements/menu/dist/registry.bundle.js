@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_utils,im_v2_component_elements_popup) {
+(function (exports,im_v2_lib_utils,im_v2_component_elements_popup,im_v2_lib_counter) {
 	'use strict';
 
 	const ID_PREFIX = 'im-v2-menu';
@@ -108,7 +108,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (this.counter === 0) {
 	        return '';
 	      }
-	      return this.counter > 99 ? '99+' : String(this.counter);
+	      return im_v2_lib_counter.CounterManager.formatCounter(this.counter);
 	    },
 	    containerClasses() {
 	      return {
@@ -140,5 +140,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.MenuItem = MenuItem;
 	exports.MenuItemIcon = MenuItemIcon;
 
-}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

@@ -1,10 +1,10 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_analytics,emailInvitationInput,ui_fonts_inter,ui_buttons,main_popup,ui_switcher,intranet_invitationInput,main_core_events,ui_entitySelector,DepartmentControl,main_core,ui_notification) {
+(function (exports,ui_analytics,ui_system_typography,ui_avatar,main_popup,ui_switcher,ui_system_chip,intranet_invitationInput,ui_system_input,DepartmentControl,ui_buttons,main_core_events,main_core) {
 	'use strict';
 
-	DepartmentControl = DepartmentControl && DepartmentControl.hasOwnProperty('default') ? DepartmentControl['default'] : DepartmentControl;
+	var DepartmentControl__default = 'default' in DepartmentControl ? DepartmentControl['default'] : DepartmentControl;
 
 	class ActiveDirectory {
 	  showForm() {
@@ -20,21 +20,27 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
+	const InviteType = Object.freeze({
+	  EMAIL: 'email',
+	  PHONE: 'phone',
+	  ALL: 'all'
+	});
+
 	var _cSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cSection");
 	var _isAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdmin");
-	var _getAdminAllowMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAdminAllowMode");
 	var _getIsAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIsAdmin");
 	var _getCSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCSection");
+	var _getDepartmentControlAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDepartmentControlAnalytics");
 	class Analytics {
 	  constructor(cSection, isAdmin) {
+	    Object.defineProperty(this, _getDepartmentControlAnalytics, {
+	      value: _getDepartmentControlAnalytics2
+	    });
 	    Object.defineProperty(this, _getCSection, {
 	      value: _getCSection2
 	    });
 	    Object.defineProperty(this, _getIsAdmin, {
 	      value: _getIsAdmin2
-	    });
-	    Object.defineProperty(this, _getAdminAllowMode, {
-	      value: _getAdminAllowMode2
 	    });
 	    Object.defineProperty(this, _cSection, {
 	      writable: true,
@@ -47,14 +53,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _cSection)[_cSection] = cSection;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] = isAdmin;
 	  }
-	  send() {
+	  getDataForAction(type = null) {
+	    return {
+	      section: babelHelpers.classPrivateFieldLooseBase(this, _getCSection)[_getCSection](),
+	      type
+	    };
+	  }
+	  sendCopyLink(departmentControl, needConfirmRegistration) {
 	    ui_analytics.sendData({
 	      tool: Analytics.TOOLS,
 	      category: Analytics.CATEGORY_INVITATION,
 	      event: Analytics.EVENT_COPY,
 	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getCSection)[_getCSection](),
+	      c_sub_section: Analytics.TAB_LINK,
 	      p1: babelHelpers.classPrivateFieldLooseBase(this, _getIsAdmin)[_getIsAdmin](),
-	      p2: babelHelpers.classPrivateFieldLooseBase(this, _getAdminAllowMode)[_getAdminAllowMode]()
+	      p2: needConfirmRegistration ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getDepartmentControlAnalytics)[_getDepartmentControlAnalytics](departmentControl)
 	    });
 	  }
 	  sendTabData(section, subSection) {
@@ -77,25 +91,35 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      c_section: section
 	    });
 	  }
-	  sendOpenLocalEmailPopup() {
+	  sendOpenMassInvitePopup(inviteType) {
 	    ui_analytics.sendData({
 	      tool: Analytics.TOOLS,
 	      category: Analytics.CATEGORY_INVITATION,
 	      event: Analytics.EVENT_TAB_VIEW,
-	      c_sub_section: Analytics.TAB_EMAIL
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getCSection)[_getCSection](),
+	      c_sub_section: inviteType === InviteType.EMAIL ? Analytics.TAB_MASS_EMAIL : inviteType === InviteType.PHONE ? Analytics.TAB_MASS_PHONE : Analytics.TAB_MASS_EMAIL_PHONE
 	    });
 	  }
-	  sendLocalEmailProgram() {
+	  sendLocalEmailProgram(departmentControl, needConfirmRegistration) {
 	    ui_analytics.sendData({
 	      tool: Analytics.TOOLS,
 	      category: Analytics.CATEGORY_INVITATION,
-	      event: Analytics.EVENT_LOCAL_MAIL
+	      event: Analytics.EVENT_LOCAL_MAIL,
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getCSection)[_getCSection](),
+	      c_sub_section: Analytics.TAB_LOCAL_EMAIL,
+	      p1: babelHelpers.classPrivateFieldLooseBase(this, _getIsAdmin)[_getIsAdmin](),
+	      p2: needConfirmRegistration ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getDepartmentControlAnalytics)[_getDepartmentControlAnalytics](departmentControl)
 	    });
 	  }
-	}
-	function _getAdminAllowMode2() {
-	  var _document$querySelect;
-	  return (_document$querySelect = document.querySelector('#allow_register_confirm')) != null && _document$querySelect.checked ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N;
+	  sendRegenerateLink() {
+	    ui_analytics.sendData({
+	      tool: Analytics.TOOLS,
+	      category: Analytics.CATEGORY_SETTINGS,
+	      event: Analytics.EVENT_REFRESH_LINK,
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getCSection)[_getCSection]()
+	    });
+	  }
 	}
 	function _getIsAdmin2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] ? Analytics.IS_ADMIN_Y : Analytics.IS_ADMIN_N;
@@ -103,10 +127,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _getCSection2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cSection)[_cSection].source;
 	}
+	function _getDepartmentControlAnalytics2(departmentControl) {
+	  return {
+	    p3: departmentControl.getValues().length > 0 ? 'department_Y' : 'department_N',
+	    p4: departmentControl.getGroupValues().length > 0 ? 'group_Y' : 'group_N'
+	  };
+	}
 	Analytics.TOOLS = 'Invitation';
 	Analytics.TOOLS_HEADER = 'headerPopup';
 	Analytics.EVENT_OPEN_SLIDER_INVITATION = 'drawer_open';
 	Analytics.CATEGORY_INVITATION = 'invitation';
+	Analytics.CATEGORY_SETTINGS = 'settings';
 	Analytics.EVENT_COPY = 'copy_invitation_link';
 	Analytics.ADMIN_ALLOW_MODE_Y = 'askAdminToAllow_Y';
 	Analytics.ADMIN_ALLOW_MODE_N = 'askAdminToAllow_N';
@@ -114,8 +145,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	Analytics.IS_ADMIN_N = 'isAdmin_N';
 	Analytics.EVENT_TAB_VIEW = 'tab_view';
 	Analytics.EVENT_LOCAL_MAIL = 'invitation_local_mail';
+	Analytics.EVENT_REFRESH_LINK = 'refresh_link';
 	Analytics.TAB_EMAIL = 'tab_by_email';
 	Analytics.TAB_MASS = 'tab_mass';
+	Analytics.TAB_MASS_EMAIL = 'tab_mass_by_email';
+	Analytics.TAB_MASS_EMAIL_PHONE = 'tab_mass_by_email_phone';
+	Analytics.TAB_MASS_PHONE = 'tab_mass_by_phone';
 	Analytics.TAB_DEPARTMENT = 'tab_department';
 	Analytics.TAB_INTEGRATOR = 'tab_integrator';
 	Analytics.TAB_LINK = 'by_link';
@@ -127,311 +162,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	let _ = t => t,
 	  _t;
-	class Phone {
-	  constructor() {
-	    this.count = 0;
-	    this.index = 0;
-	    this.maxCount = 5;
-	    this.inputStack = [];
-	  }
-	  renderPhoneRow(inputNode) {
-	    if (this.count >= this.maxCount) {
-	      return;
-	    }
-	    if (!main_core.Type.isDomNode(inputNode)) {
-	      return;
-	    }
-	    const num = inputNode.getAttribute('data-num');
-	    if (inputNode.parentNode.querySelector(`#phone_number_${num}`)) {
-	      return;
-	    }
-	    const element = main_core.Tag.render(_t || (_t = _`
-			<span style="z-index: 3;" class="ui-ctl-before" data-role="phone-block">
-				<input type="hidden" name="PHONE_COUNTRY[]" id="phone_country_${0}" value="">
-				<input type="hidden" name="PHONE[]" id="phone_number_${0}" value="">
-				<div class="invite-dialog-phone-flag-block" data-role="flag">
-					<span data-role="phone_flag_${0}" style="pointer-events: none;"></span>
-				</div>
-				<input class="invite-dialog-phone-input" type="hidden" id="phone_input_${0}" value="">&nbsp;
-			</span>
-		`), num, num, num, num);
-	    inputNode.style.paddingLeft = '57px';
-	    main_core.Dom.append(element, inputNode.parentNode);
-	    const flagNode = inputNode.parentNode.querySelector("[data-role='flag']");
-	    if (main_core.Type.isDomNode(flagNode)) {
-	      main_core.Event.bind(inputNode.parentNode.querySelector("[data-role='flag']"), 'click', () => {
-	        this.showCountrySelector(num);
-	      });
-	    }
-	    const changeCallback = function (i, inputNode) {
-	      return function (e) {
-	        if (main_core.Type.isDomNode(inputNode.parentNode)) {
-	          inputNode.parentNode.querySelector(`#phone_number_${i}`).value = e.value;
-	          inputNode.parentNode.querySelector(`#phone_country_${i}`).value = e.country;
-	        }
-	      };
-	    };
-	    this.inputStack[num] = new BX.PhoneNumber.Input({
-	      node: inputNode,
-	      flagNode: inputNode.parentNode.querySelector(`[data-role='phone_flag_${num}']`),
-	      flagSize: 16,
-	      onChange: changeCallback(num, inputNode)
-	    });
-
-	    // for ctrl+v paste
-	    const id = setInterval(() => {
-	      var _inputNode$parentNode, _inputNode$parentNode2;
-	      if (!((_inputNode$parentNode = inputNode.parentNode) != null && _inputNode$parentNode.querySelector(`#phone_number_${num}`).value) || !((_inputNode$parentNode2 = inputNode.parentNode) != null && _inputNode$parentNode2.querySelector(`#phone_country_${num}`).value)) {
-	        changeCallback(num, inputNode)({
-	          value: this.inputStack[num].getValue(),
-	          country: this.inputStack[num].formatter ? this.inputStack[num].getCountry() : null
-	        });
-	      } else {
-	        clearInterval(id);
-	      }
-	    }, 1000);
-	  }
-	  showCountrySelector(i) {
-	    this.inputStack[i]._onFlagClick();
-	  }
-	}
-
-	let _$1 = t => t,
-	  _t$1,
-	  _t2;
-	const InputRowType = Object.freeze({
-	  PHONE: 'phone',
-	  EMAIL: 'email',
-	  ALL: 'all'
-	});
-	var _inputRowType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputRowType");
-	var _isPhoneEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPhoneEnabled");
-	var _isEmailEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEmailEnabled");
-	var _checkPhoneInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkPhoneInput");
-	var _bindPhoneChecker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindPhoneChecker");
-	var _renderDefaultRow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDefaultRow");
-	var _getDialogInputMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogInputMessage");
-	class InputRowFactory {
-	  constructor(params) {
-	    var _params$inputRowType;
-	    Object.defineProperty(this, _getDialogInputMessage, {
-	      value: _getDialogInputMessage2
-	    });
-	    Object.defineProperty(this, _renderDefaultRow, {
-	      value: _renderDefaultRow2
-	    });
-	    Object.defineProperty(this, _bindPhoneChecker, {
-	      value: _bindPhoneChecker2
-	    });
-	    Object.defineProperty(this, _checkPhoneInput, {
-	      value: _checkPhoneInput2
-	    });
-	    Object.defineProperty(this, _inputRowType, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isPhoneEnabled, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isEmailEnabled, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.inputNum = 0;
-	    babelHelpers.classPrivateFieldLooseBase(this, _inputRowType)[_inputRowType] = (_params$inputRowType = params.inputRowType) != null ? _params$inputRowType : InputRowType.ALL;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled)[_isPhoneEnabled] = [InputRowType.ALL, InputRowType.PHONE].includes(babelHelpers.classPrivateFieldLooseBase(this, _inputRowType)[_inputRowType]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _isEmailEnabled)[_isEmailEnabled] = [InputRowType.ALL, InputRowType.EMAIL].includes(babelHelpers.classPrivateFieldLooseBase(this, _inputRowType)[_inputRowType]);
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled)[_isPhoneEnabled]) {
-	      this.phoneObj = new Phone();
-	    }
-	  }
-	  bindCloseIcons(container) {
-	    const inputNodes = Array.prototype.slice.call(container.querySelectorAll('input'));
-	    (inputNodes || []).forEach(node => {
-	      const closeIcon = node.nextElementSibling;
-	      main_core.Event.bind(node, 'input', () => {
-	        main_core.Dom.style(closeIcon, 'display', node.value === '' ? 'none' : 'block');
-	      });
-	      main_core.Event.bind(closeIcon, 'click', event => {
-	        event.preventDefault();
-	        if (main_core.Type.isDomNode(node.parentNode)) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _renderDefaultRow)[_renderDefaultRow](node);
-	        }
-	        main_core.Dom.style(closeIcon, 'display', 'none');
-	      });
-	    });
-	  }
-	  renderInputRowTo(target, showTitles = false) {
-	    const element = this.renderEmailInputsRow(showTitles);
-	    main_core.Dom.append(element, target);
-	  }
-	  renderInputRowsTo(target, count = 3) {
-	    for (let i = 0; i < count; i++) {
-	      this.renderInputRowTo(target, i === 0);
-	    }
-	  }
-	  renderEmailInputsRow(showTitles) {
-	    let fieldTitle = '';
-	    let nameTitle = '';
-	    let lastNameTitle = '';
-	    if (showTitles) {
-	      fieldTitle = `
-				<div class="invite-content__field-lable">
-					${babelHelpers.classPrivateFieldLooseBase(this, _getDialogInputMessage)[_getDialogInputMessage]()}
-				</div>
-			`;
-	      nameTitle = `
-				<div class="invite-content__field-lable">
-					${main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE')}
-				</div>
-			`;
-	      lastNameTitle = `
-				<div class="invite-content__field-lable">
-					${main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE')}
-				</div>
-			`;
-	    }
-	    const element = main_core.Tag.render(_t$1 || (_t$1 = _$1`
-			<div class="invite-form-row js-form-row">
-				<div class="invite-form-col">
-					${0}
-					<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-						<input 
-							name="EMAIL[]" 
-							type="text" 
-							maxlength="50"
-							data-num="${0}" 
-							class="ui-ctl-element js-email-phone-input" 
-							placeholder="${0}"
-						/>
-						<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
-					</div>
-				</div>
-				<div class="invite-form-col">
-					${0}
-					<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-						<input name="NAME[]" type="text" class="ui-ctl-element js-email-name-input" placeholder="${0}">
-						<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
-					</div>
-				</div>
-				<div class="invite-form-col">
-					${0}
-					<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-						<input name="LAST_NAME[]" type="text" class="ui-ctl-element js-email-last-name-input" placeholder="${0}">
-						<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
-					</div>
-				</div>
-			</div>
-		`), showTitles ? fieldTitle : '', this.inputNum++, babelHelpers.classPrivateFieldLooseBase(this, _getDialogInputMessage)[_getDialogInputMessage](), showTitles ? nameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'), showTitles ? lastNameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'));
-	    this.bindCloseIcons(element);
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindPhoneChecker)[_bindPhoneChecker](element);
-	    return element;
-	  }
-	  parseEmailAndPhone(form) {
-	    if (!main_core.Type.isDomNode(form)) {
-	      return;
-	    }
-	    const errorInputData = [];
-	    const items = [];
-	    const phoneExp = /^[\d+][\d ()-]{4,22}\d$/;
-	    const rows = Array.prototype.slice.call(form.querySelectorAll('.js-form-row'));
-	    (rows || []).forEach(row => {
-	      const emailInput = row.querySelector("input[name='EMAIL[]']");
-	      const phoneInput = row.querySelector("input[name='PHONE[]']");
-	      const nameInput = row.querySelector("input[name='NAME[]']");
-	      const lastNameInput = row.querySelector("input[name='LAST_NAME[]']");
-	      const emailValue = emailInput.value.trim();
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled)[_isPhoneEnabled] && main_core.Type.isDomNode(phoneInput)) {
-	        const phoneValue = phoneInput.value.trim();
-	        if (phoneValue) {
-	          if (phoneExp.test(String(phoneValue).toLowerCase())) {
-	            const phoneCountryInput = row.querySelector("input[name='PHONE_COUNTRY[]']");
-	            items.push({
-	              PHONE: phoneValue,
-	              PHONE_COUNTRY: phoneCountryInput.value.trim(),
-	              NAME: nameInput.value,
-	              LAST_NAME: lastNameInput.value
-	            });
-	          } else {
-	            errorInputData.push(phoneValue);
-	          }
-	        }
-	      } else if (babelHelpers.classPrivateFieldLooseBase(this, _isEmailEnabled)[_isEmailEnabled] && emailValue) {
-	        if (main_core.Validation.isEmail(emailValue)) {
-	          items.push({
-	            EMAIL: emailValue,
-	            NAME: nameInput.value,
-	            LAST_NAME: lastNameInput.value
-	          });
-	        } else {
-	          errorInputData.push(emailValue);
-	        }
-	      } else if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled)[_isPhoneEnabled] && !babelHelpers.classPrivateFieldLooseBase(this, _isEmailEnabled)[_isEmailEnabled] && emailValue) {
-	        errorInputData.push(emailValue);
-	      }
-	    });
-	    return [items, errorInputData];
-	  }
-	}
-	function _checkPhoneInput2(element) {
-	  const phoneExp = /^[\d+][\d ()-]{2,14}\d$/;
-	  if (element.value && phoneExp.test(String(element.value).toLowerCase())) {
-	    this.phoneObj.renderPhoneRow(element);
-	  } else if (element.value.length === 0) {
-	    var _babelHelpers$classPr;
-	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _renderDefaultRow)[_renderDefaultRow](element)) == null ? void 0 : _babelHelpers$classPr.focus();
-	  }
-	}
-	function _bindPhoneChecker2(element) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled)[_isPhoneEnabled] && main_core.Type.isDomNode(element)) {
-	    const inputNodes = Array.prototype.slice.call(element.querySelectorAll('.js-email-phone-input'));
-	    if (inputNodes) {
-	      inputNodes.forEach(element => {
-	        main_core.Event.bind(element, 'input', () => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _checkPhoneInput)[_checkPhoneInput](element);
-	        });
-	      });
-	    }
-	  }
-	}
-	function _renderDefaultRow2(node) {
-	  const phoneFlagBlock = node.parentNode.querySelector('[data-role="phone-block"]');
-	  if (main_core.Type.isDomNode(phoneFlagBlock)) {
-	    main_core.Dom.remove(phoneFlagBlock);
-	  }
-	  const phoneBlock = node.parentNode.querySelector('input.ui-ctl-element');
-	  if (main_core.Type.isDomNode(phoneBlock)) {
-	    const newInput = main_core.Tag.render(_t2 || (_t2 = _$1`
-				<input
-					name="${0}"
-					type="text"
-					maxlength="50"
-					data-num="${0}"
-					class="ui-ctl-element js-email-phone-input"
-					placeholder="${0}"
-				/>
-			`), phoneBlock.name, node.getAttribute('data-num'), phoneBlock.placeholder);
-	    main_core.Dom.replace(phoneBlock, newInput);
-	    this.bindCloseIcons(newInput.parentNode);
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindPhoneChecker)[_bindPhoneChecker](newInput.parentNode);
-	    main_core.Dom.remove(phoneBlock);
-	    return newInput;
-	  }
-	  return phoneBlock;
-	}
-	function _getDialogInputMessage2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled)[_isPhoneEnabled] && babelHelpers.classPrivateFieldLooseBase(this, _isEmailEnabled)[_isEmailEnabled]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT');
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled)[_isPhoneEnabled]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_PHONE_INPUT');
-	  } else {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INPUT');
-	  }
-	}
-
-	let _$2 = t => t,
-	  _t$2;
 	var _errorContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errorContainer");
 	var _successContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("successContainer");
 	var _wrapMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wrapMessage");
@@ -480,68 +210,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 	function _wrapMessage2(text) {
-	  return main_core.Tag.render(_t$2 || (_t$2 = _$2`<span class="ui-alert-message">${0}</span>`), BX.util.htmlspecialchars(text));
+	  return main_core.Tag.render(_t || (_t = _`<span class="ui-alert-message">${0}</span>`), BX.util.htmlspecialchars(text));
 	}
-
-	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _disableSubmitButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableSubmitButton");
-	class SubmitButton extends main_core_events.EventEmitter {
-	  constructor(options) {
-	    var _options$events;
-	    super();
-	    Object.defineProperty(this, _disableSubmitButton, {
-	      value: _disableSubmitButton2
-	    });
-	    Object.defineProperty(this, _container, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = options.node;
-	    this.setEventNamespace('BX.Intranet.Invitation.Submit');
-	    main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
-	    if (main_core.Type.isFunction((_options$events = options.events) == null ? void 0 : _options$events.click)) {
-	      main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], 'click', options.events.click);
-	    }
-	  }
-	  wait() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _disableSubmitButton)[_disableSubmitButton](true);
-	  }
-	  isWaiting() {
-	    return main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], 'ui-btn-wait');
-	  }
-	  ready() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _disableSubmitButton)[_disableSubmitButton](false);
-	  }
-	  disable() {
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], 'ui-btn-disabled');
-	  }
-	  enable() {
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], 'ui-btn-disabled');
-	  }
-	  isEnabled() {
-	    return !main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], 'ui-btn-disabled');
-	  }
-	  setLabel(lable) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].innerText = lable;
-	  }
-	  sendSuccessEvent(users) {
-	    BX.SidePanel.Instance.postMessageAll(window, 'BX.Intranet.Invitation:onAdd', {
-	      users
-	    });
-	  }
-	}
-	function _disableSubmitButton2(isDisable) {
-	  if (!main_core.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]) || !main_core.Type.isBoolean(isDisable)) {
-	    return;
-	  }
-	  if (isDisable) {
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], ['ui-btn-wait', 'invite-cursor-auto']);
-	  } else {
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], ['ui-btn-wait', 'invite-cursor-auto']);
-	  }
-	}
-	SubmitButton.ENABLED_STATE = 'enabled';
-	SubmitButton.DISABLED_STATE = 'disabled';
 
 	class Page {
 	  constructor() {
@@ -553,30 +223,32 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  onSubmit(event) {}
 	  onInviteSuccess(event) {}
-	  getSubmitButtonText() {
-	    return null;
-	  }
-	  getButtonState() {
-	    return SubmitButton.ENABLED_STATE;
-	  }
 	  hasShownButtonPanel() {
 	    return true;
 	  }
 	}
 
 	var _pages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pages");
-	var _container$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _first = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("first");
 	var _current = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("current");
 	var _history = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("history");
+	var _subscribeEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeEvents");
+	var _onPageUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPageUpdate");
 	class Navigation extends main_core_events.EventEmitter {
 	  constructor(options) {
 	    super();
+	    Object.defineProperty(this, _onPageUpdate, {
+	      value: _onPageUpdate2
+	    });
+	    Object.defineProperty(this, _subscribeEvents, {
+	      value: _subscribeEvents2
+	    });
 	    Object.defineProperty(this, _pages, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _container$1, {
+	    Object.defineProperty(this, _container, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -593,25 +265,27 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      value: []
 	    });
 	    this.setEventNamespace('BX.Intranet.Navigation');
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1] = main_core.Type.isDomNode(options.container) ? options.container : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = main_core.Type.isDomNode(options.container) ? options.container : null;
 	    if (main_core.Type.isMap(options.pages)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages] = new Map([...options.pages].filter(([k, page]) => page instanceof Page));
 	    } else {
 	      babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages] = new Map();
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _first)[_first] = main_core.Type.isStringFilled(options.first) && this.has(options.first) ? options.first : babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages].next().value;
+	    babelHelpers.classPrivateFieldLooseBase(this, _first)[_first] = main_core.Type.isStringFilled(options.first) && this.has(options.first) ? options.first : babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages].keys().next().value;
+	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeEvents)[_subscribeEvents]();
 	  }
 	  show(code) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1] || !this.has(code)) {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] || !this.has(code)) {
 	      return;
 	    }
 	    const page = this.get(code);
 	    this.emit('onBeforeChangePage', {
 	      current: this.current(),
-	      new: page
+	      new: page,
+	      newPageCode: code
 	    });
-	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1]);
-	    main_core.Dom.append(page.render(), babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1]);
+	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	    main_core.Dom.append(page.render(), babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _current)[_current]) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _history)[_history].push(babelHelpers.classPrivateFieldLooseBase(this, _current)[_current]);
 	    }
@@ -652,9 +326,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages].delete(code);
 	  }
 	}
+	function _subscribeEvents2() {
+	  main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:pageUpdate', babelHelpers.classPrivateFieldLooseBase(this, _onPageUpdate)[_onPageUpdate].bind(this));
+	}
+	function _onPageUpdate2(event) {
+	  var _event$data, _event$data2;
+	  if ((_event$data = event.data) != null && _event$data.pages && main_core.Type.isMap((_event$data2 = event.data) == null ? void 0 : _event$data2.pages)) {
+	    var _event$data3;
+	    babelHelpers.classPrivateFieldLooseBase(this, _pages)[_pages] = (_event$data3 = event.data) == null ? void 0 : _event$data3.pages;
+	    this.show(babelHelpers.classPrivateFieldLooseBase(this, _current)[_current]);
+	  }
+	}
 
 	var _componentName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("componentName");
 	var _signedParameters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedParameters");
+	var _onSuccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSuccess");
+	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	class Transport {
 	  constructor(options) {
 	    Object.defineProperty(this, _componentName, {
@@ -665,425 +352,663 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _onSuccess, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _analytics, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _componentName)[_componentName] = options.componentName;
 	    babelHelpers.classPrivateFieldLooseBase(this, _signedParameters)[_signedParameters] = options.signedParameters;
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = options.analytics;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onSuccess)[_onSuccess] = options.onSuccess;
+	    this.onError = options.onError;
 	  }
-	  send(request) {
-	    return BX.ajax.runComponentAction(babelHelpers.classPrivateFieldLooseBase(this, _componentName)[_componentName], request.action, {
+	  send(request, onError = null, analyticsData = null) {
+	    request.data.analyticsData = analyticsData != null ? analyticsData : babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].getDataForAction();
+	    return main_core.ajax.runComponentAction(babelHelpers.classPrivateFieldLooseBase(this, _componentName)[_componentName], request.action, {
 	      signedParameters: babelHelpers.classPrivateFieldLooseBase(this, _signedParameters)[_signedParameters],
 	      mode: main_core.Type.isStringFilled(request.mode) ? request.mode : 'ajax',
 	      method: main_core.Type.isStringFilled(request.method) ? request.method : 'post',
 	      data: request.data,
 	      analyticsLabel: request.analyticsLabel
-	    });
-	  }
-	}
-
-	let _$3 = t => t,
-	  _t$3;
-	var _input = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
-	class EmailInvitationInput {
-	  constructor() {
-	    Object.defineProperty(this, _input, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input] = new intranet_invitationInput.InvitationInput({
-	      inputType: intranet_invitationInput.InvitationInputType.EMAIL
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].getTagSelector().setPlaceholder(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_PLACEHOLDER'));
-	    Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].getTagSelector().getContainer(), 'click', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].getTagSelector().focusTextBox();
-	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:InviteSuccess', () => {
-	      this.clearTags();
-	    });
-	  }
-	  onReadySaveInputHandler(callback) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].unsubscribe('onReadySave', callback);
-	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].subscribe('onReadySave', callback);
-	  }
-	  onUnreadySaveInputHandler(callback) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].unsubscribe('onUnreadySave', callback);
-	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].subscribe('onUnreadySave', callback);
-	  }
-	  getContent(actionBlock = null) {
-	    this.clearTags();
-	    return main_core.Tag.render(_t$3 || (_t$3 = _$3`
-			<div class="email-popup-container">
-				<div class="email-popup-container__title">
-					${0}
-				</div>
-				<div class="email-popup-container__description">
-					${0}
-				</div>
-				<div class="email-popup-container__input">
-					${0}
-				</div>
-				${0}
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_DESCRIPTION'), babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].render(), actionBlock != null ? actionBlock : '');
-	  }
-	  clearTags() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].getTagSelector().removeTags();
-	  }
-	  getValues() {
-	    const selector = babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].getTagSelector();
-	    const tags = selector.getTags();
-	    const emails = [];
-	    const errorElements = [];
-	    tags.forEach(tag => {
-	      if (tag.getEntityType() === 'email') {
-	        emails.push({
-	          EMAIL: tag.getTitle()
-	        });
+	    }).then(response => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onSuccess)[_onSuccess](response);
+	      return response;
+	    }).catch(reject => {
+	      if (onError) {
+	        onError(reject);
 	      } else {
-	        errorElements.push(tag.getTitle());
+	        this.onError(reject);
 	      }
 	    });
-	    return {
-	      emails,
-	      errorElements
-	    };
+	  }
+	  sendAction(request, onError = null, analyticsData = null) {
+	    request.data.analyticsData = analyticsData != null ? analyticsData : babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].getDataForAction();
+	    return main_core.ajax.runAction(request.action, {
+	      signedParameters: babelHelpers.classPrivateFieldLooseBase(this, _signedParameters)[_signedParameters],
+	      mode: main_core.Type.isStringFilled(request.mode) ? request.mode : 'ajax',
+	      method: main_core.Type.isStringFilled(request.method) ? request.method : 'post',
+	      data: request.data,
+	      analytics: request.analytics
+	    }).then(response => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onSuccess)[_onSuccess](response);
+	      return response;
+	    }).catch(reject => {
+	      if (onError) {
+	        onError(reject);
+	      } else {
+	        this.onError(reject);
+	      }
+	    });
 	  }
 	}
 
-	let _$4 = t => t,
-	  _t$4;
-	var _sendButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendButton");
+	let _$1 = t => t,
+	  _t$1,
+	  _t2,
+	  _t3,
+	  _t4,
+	  _t5,
+	  _t6,
+	  _t7,
+	  _t8,
+	  _t9,
+	  _t10,
+	  _t11,
+	  _t12,
+	  _t13,
+	  _t14,
+	  _t15;
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
-	var _input$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
-	var _actionContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("actionContent");
+	var _sendButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendButton");
+	var _userList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userList");
+	var _selectedUserIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedUserIds");
+	var _transport = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
+	var _popupContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popupContainer");
+	var _isMultipleMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMultipleMode");
+	var _isRestoreUsersAccessAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRestoreUsersAccessAvailable");
+	var _getPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopup");
+	var _getPopupContentWithoutRestoreAccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupContentWithoutRestoreAccess");
+	var _getPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupContent");
+	var _getUserRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserRole");
+	var _getUserBlockContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserBlockContent");
+	var _bindCheckboxChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindCheckboxChange");
+	var _renderUserAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderUserAvatar");
 	var _getActionContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getActionContent");
+	var _checkSendButtonState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkSendButtonState");
 	var _getSendButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSendButton");
-	var _getCancelButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCancelButton");
-	class InviteEmailPopup {
-	  constructor(input) {
-	    Object.defineProperty(this, _getCancelButton, {
-	      value: _getCancelButton2
+	var _getPassLoginButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPassLoginButton");
+	var _showSuccessNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSuccessNotification");
+	var _getNotificationContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNotificationContent");
+	class RestoreFiredUsersPopup {
+	  constructor(options) {
+	    Object.defineProperty(this, _getNotificationContent, {
+	      value: _getNotificationContent2
+	    });
+	    Object.defineProperty(this, _showSuccessNotification, {
+	      value: _showSuccessNotification2
+	    });
+	    Object.defineProperty(this, _getPassLoginButton, {
+	      value: _getPassLoginButton2
 	    });
 	    Object.defineProperty(this, _getSendButton, {
 	      value: _getSendButton2
 	    });
+	    Object.defineProperty(this, _checkSendButtonState, {
+	      value: _checkSendButtonState2
+	    });
 	    Object.defineProperty(this, _getActionContent, {
 	      value: _getActionContent2
+	    });
+	    Object.defineProperty(this, _renderUserAvatar, {
+	      value: _renderUserAvatar2
+	    });
+	    Object.defineProperty(this, _bindCheckboxChange, {
+	      value: _bindCheckboxChange2
+	    });
+	    Object.defineProperty(this, _getUserBlockContent, {
+	      value: _getUserBlockContent2
+	    });
+	    Object.defineProperty(this, _getUserRole, {
+	      value: _getUserRole2
+	    });
+	    Object.defineProperty(this, _getPopupContent, {
+	      value: _getPopupContent2
+	    });
+	    Object.defineProperty(this, _getPopupContentWithoutRestoreAccess, {
+	      value: _getPopupContentWithoutRestoreAccess2
+	    });
+	    Object.defineProperty(this, _getPopup, {
+	      value: _getPopup2
+	    });
+	    Object.defineProperty(this, _popup, {
+	      writable: true,
+	      value: void 0
 	    });
 	    Object.defineProperty(this, _sendButton, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _popup, {
+	    Object.defineProperty(this, _userList, {
 	      writable: true,
-	      value: null
+	      value: void 0
 	    });
-	    Object.defineProperty(this, _input$1, {
+	    Object.defineProperty(this, _selectedUserIds, {
 	      writable: true,
-	      value: null
+	      value: void 0
 	    });
-	    Object.defineProperty(this, _actionContent, {
+	    Object.defineProperty(this, _transport, {
 	      writable: true,
-	      value: null
+	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$1)[_input$1] = input;
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$1)[_input$1].onReadySaveInputHandler(this.onReadySaveInputHandler.bind(this));
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$1)[_input$1].onUnreadySaveInputHandler(this.onUnreadySaveInputHandler.bind(this));
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:InviteSuccess', () => {
-	      var _babelHelpers$classPr;
-	      (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr.close();
-	      this.onReadySaveInputHandler();
-	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onSubmitReady');
-	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
+	    Object.defineProperty(this, _popupContainer, {
+	      writable: true,
+	      value: void 0
 	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:InviteFailed', () => {
-	      this.onReadySaveInputHandler();
+	    Object.defineProperty(this, _isMultipleMode, {
+	      writable: true,
+	      value: void 0
 	    });
+	    Object.defineProperty(this, _isRestoreUsersAccessAvailable, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList] = options.userList;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isRestoreUsersAccessAvailable)[_isRestoreUsersAccessAvailable] = options.isRestoreUsersAccessAvailable;
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport)[_transport] = options.transport;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isMultipleMode)[_isMultipleMode] = babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList].length > 1;
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectedUserIds)[_selectedUserIds] = babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList].map(user => user.id);
 	  }
 	  show() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = main_popup.PopupManager.create({
-	        id: 'email-invitation-email',
-	        className: 'email-invitation-container',
-	        closeIcon: true,
-	        autoHide: false,
-	        closeByEsc: true,
-	        width: 515,
-	        height: 310
-	      });
+	    if (main_core.Type.isArray(babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList]) && babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList].length > 0) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().show();
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].setContent(babelHelpers.classPrivateFieldLooseBase(this, _input$1)[_input$1].getContent(babelHelpers.classPrivateFieldLooseBase(this, _getActionContent)[_getActionContent]()));
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$1)[_input$1].clearTags();
-	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();
-	  }
-	  onReadySaveInputHandler() {
-	    var _babelHelpers$classPr2;
-	    (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton]) == null ? void 0 : _babelHelpers$classPr2.setState(null);
-	  }
-	  onUnreadySaveInputHandler() {
-	    var _babelHelpers$classPr3;
-	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton]) == null ? void 0 : _babelHelpers$classPr3.setState(ui_buttons.ButtonState.DISABLED);
-	  }
-	  submitData() {
-	    this.onUnreadySaveInputHandler();
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation.EmailPopup:onSubmit');
 	  }
 	}
-	function _getActionContent2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _actionContent)[_actionContent]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _actionContent)[_actionContent] = main_core.Tag.render(_t$4 || (_t$4 = _$4`
-				<div class="email-popup-container__action">
-					${0}
-					${0}
-				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _getSendButton)[_getSendButton](), babelHelpers.classPrivateFieldLooseBase(this, _getCancelButton)[_getCancelButton]());
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _actionContent)[_actionContent];
-	}
-	function _getSendButton2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton] = new ui_buttons.Button({
-	    className: 'email-popup-container__action-send',
-	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_SEND'),
-	    state: ui_buttons.ButtonState.DISABLED,
-	    size: ui_buttons.Button.Size.SMALL,
-	    color: ui_buttons.Button.Color.PRIMARY,
-	    noCaps: true,
-	    onclick: () => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton].isDisabled()) {
-	        return;
+	function _getPopup2() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup))[_popup]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_popup] = new main_popup.Popup({
+	    id: 'intranet-restore-fired-users',
+	    content: babelHelpers.classPrivateFieldLooseBase(this, _isRestoreUsersAccessAvailable)[_isRestoreUsersAccessAvailable] ? babelHelpers.classPrivateFieldLooseBase(this, _getPopupContent)[_getPopupContent]() : babelHelpers.classPrivateFieldLooseBase(this, _getPopupContentWithoutRestoreAccess)[_getPopupContentWithoutRestoreAccess](),
+	    closeByEsc: true,
+	    closeIcon: true,
+	    closeIconSize: main_popup.CloseIconSize.LARGE,
+	    autoHide: true,
+	    padding: 25,
+	    width: babelHelpers.classPrivateFieldLooseBase(this, _isRestoreUsersAccessAvailable)[_isRestoreUsersAccessAvailable] ? 515 : 400,
+	    events: {
+	      onPopupClose: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].destroy();
 	      }
-	      this.submitData();
 	    }
 	  });
-	  return babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton].render();
+	  return babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup];
 	}
-	function _getCancelButton2() {
-	  return new ui_buttons.CancelButton({
-	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_CANCEL'),
-	    size: ui_buttons.Button.Size.SMALL,
-	    onclick: () => babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].close(),
-	    noCaps: true
+	function _getPopupContentWithoutRestoreAccess2() {
+	  var _babelHelpers$classPr3;
+	  const button = new ui_buttons.Button({
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_OK'),
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    useAirDesign: true,
+	    onclick: () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().close();
+	    }
 	  }).render();
+	  return main_core.Tag.render(_t$1 || (_t$1 = _$1`
+			<div>
+				<span class="ui-text --lg">
+					${0}
+				</span>
+				<div class="intranet-invitation-popup__footer">
+					${0}
+				</div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _isMultipleMode)[_isMultipleMode] ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_NO_ACCESS_MULTIPLE', {
+	    '#LOGIN#': `<strong>${babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList].map(user => user.login).join(', ')}</strong>`
+	  }) : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_NO_ACCESS_SINGLE', {
+	    '#LOGIN#': `<strong>${(_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList][0]) == null ? void 0 : _babelHelpers$classPr3.login}</strong>`
+	  }), button);
+	}
+	function _getPopupContent2() {
+	  var _babelHelpers$classPr4;
+	  babelHelpers.classPrivateFieldLooseBase(this, _popupContainer)[_popupContainer] = main_core.Tag.render(_t2 || (_t2 = _$1`
+			<div class="" data-role="intranet-invitation-fired-popup-container"></div>
+		`));
+	  const headTitle = main_core.Tag.render(_t3 || (_t3 = _$1`
+			<span class="ui-text --md">
+				${0}
+			</span>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _isMultipleMode)[_isMultipleMode] ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_TITLE_MULTIPLE') : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_TITLE_SINGLE', {
+	    '#LOGIN#': `<strong>${(_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList][0]) == null ? void 0 : _babelHelpers$classPr4.login}</strong>`
+	  }));
+	  main_core.Dom.append(headTitle, babelHelpers.classPrivateFieldLooseBase(this, _popupContainer)[_popupContainer]);
+	  const wrapper = main_core.Tag.render(_t4 || (_t4 = _$1`
+			<div class="intranet-invitation-fired-popup-wrapper"></div>
+		`));
+	  babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList].forEach(user => {
+	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getUserBlockContent)[_getUserBlockContent](user), wrapper);
+	  });
+	  main_core.Dom.append(wrapper, babelHelpers.classPrivateFieldLooseBase(this, _popupContainer)[_popupContainer]);
+	  const buttons = main_core.Tag.render(_t5 || (_t5 = _$1`
+			<div class="intranet-invitation-popup__footer">
+				${0}
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getActionContent)[_getActionContent]());
+	  main_core.Dom.append(buttons, babelHelpers.classPrivateFieldLooseBase(this, _popupContainer)[_popupContainer]);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _popupContainer)[_popupContainer];
+	}
+	function _getUserRole2(user) {
+	  let roleNode = main_core.Tag.render(_t6 || (_t6 = _$1``));
+	  if (user.role === 'collaber') {
+	    roleNode = main_core.Tag.render(_t7 || (_t7 = _$1`
+				<span class="ui-text --3xs intranet-invitation-fired-popup-user__name-role --collaber">
+					${0}
+				</span>
+			`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_USER_ROLE_COLLABER'));
+	  }
+	  if (user.role === 'extranet') {
+	    roleNode = main_core.Tag.render(_t8 || (_t8 = _$1`
+				<span class="ui-text --3xs intranet-invitation-fired-popup-user__name-role --extranet">
+					${0}
+				</span>
+			`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_USER_ROLE_EXTRANET'));
+	  }
+	  return roleNode;
+	}
+	function _getUserBlockContent2(user) {
+	  let checkboxNode = main_core.Tag.render(_t9 || (_t9 = _$1``));
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isMultipleMode)[_isMultipleMode]) {
+	    checkboxNode = main_core.Tag.render(_t10 || (_t10 = _$1`
+				<div style="margin-left: 10px;">
+					<input 
+						type="checkbox" 
+						checked 
+						class="intranet-invitation-checkbox" 
+						value="${0}"
+					/>
+				</div>
+			`), user == null ? void 0 : user.id);
+	  }
+	  const userBlock = main_core.Tag.render(_t11 || (_t11 = _$1`
+			<div class="intranet-invitation-fired-popup-user__wrapper ${0}">
+				${0}
+				<div>
+					${0}
+				</div>
+				<div class="intranet-invitation-fired-popup-user__name-block ${0}">
+					<a href="${0}" class="ui-link ui-link-dashed" style="font-size:16px;">${0}</a>
+					<div>${0}</div>
+					${0}
+				</div>
+				<div>
+					${0}
+					<div>${0}</div>
+				</div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _isMultipleMode)[_isMultipleMode] ? '--filled' : '', checkboxNode, babelHelpers.classPrivateFieldLooseBase(this, _renderUserAvatar)[_renderUserAvatar](user), babelHelpers.classPrivateFieldLooseBase(this, _isMultipleMode)[_isMultipleMode] ? '' : '--wide', user.profileUrl, user.name, ui_system_typography.Text.render(user == null ? void 0 : user.position, {
+	    size: '2xs',
+	    className: 'intranet-invitation-fired-popup-user__text'
+	  }), babelHelpers.classPrivateFieldLooseBase(this, _getUserRole)[_getUserRole](user), user != null && user.email ? main_core.Tag.render(_t12 || (_t12 = _$1`<a href="mailto:${0}" class="ui-link ui-link-dashed">${0}</a>`), user.email, user.email) : '', ui_system_typography.Text.render(user == null ? void 0 : user.phoneNumber, {
+	    size: '2xs',
+	    className: 'intranet-invitation-fired-popup-user__text'
+	  }));
+	  babelHelpers.classPrivateFieldLooseBase(this, _bindCheckboxChange)[_bindCheckboxChange](userBlock);
+	  return userBlock;
+	}
+	function _bindCheckboxChange2(userBlock) {
+	  const checkbox = userBlock.querySelector('input[type="checkbox"]');
+	  main_core.Event.bind(checkbox, 'change', () => {
+	    const userId = Number(checkbox.value);
+	    if (checkbox.checked) {
+	      main_core.Dom.addClass(userBlock, '--filled');
+	      if (!babelHelpers.classPrivateFieldLooseBase(this, _selectedUserIds)[_selectedUserIds].includes(userId)) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _selectedUserIds)[_selectedUserIds].push(userId);
+	      }
+	    } else {
+	      main_core.Dom.removeClass(userBlock, '--filled');
+	      babelHelpers.classPrivateFieldLooseBase(this, _selectedUserIds)[_selectedUserIds] = babelHelpers.classPrivateFieldLooseBase(this, _selectedUserIds)[_selectedUserIds].filter(id => id !== userId);
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkSendButtonState)[_checkSendButtonState]();
+	  });
+	}
+	function _renderUserAvatar2(user) {
+	  var _user$photo;
+	  const avatarWrapper = main_core.Tag.render(_t13 || (_t13 = _$1`<div class='intranet-invitation-fired-popup-user__avatar-wrapper'></div>`));
+	  const avatarOptions = {
+	    size: 40,
+	    userpicPath: (_user$photo = user == null ? void 0 : user.photo) != null ? _user$photo : null
+	  };
+	  let avatar = null;
+	  if (user.role === 'collaber') {
+	    avatar = new ui_avatar.AvatarRoundGuest(avatarOptions);
+	  } else if (user.role === 'extranet') {
+	    avatar = new ui_avatar.AvatarRoundExtranet(avatarOptions);
+	  } else {
+	    avatar = new ui_avatar.AvatarRound(avatarOptions);
+	  }
+	  avatar.renderTo(avatarWrapper);
+	  return avatarWrapper;
+	}
+	function _getActionContent2() {
+	  return main_core.Tag.render(_t14 || (_t14 = _$1`
+			<div class="intranet-invitation-popup__footer-button-container">
+				${0}
+				${0}
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getSendButton)[_getSendButton]().render(), babelHelpers.classPrivateFieldLooseBase(this, _getPassLoginButton)[_getPassLoginButton]().render());
+	}
+	function _checkSendButtonState2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _selectedUserIds)[_selectedUserIds].length > 0) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton].setState(ui_buttons.ButtonState.ACTIVE);
+	  } else {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton].setState(ui_buttons.ButtonState.DISABLED);
+	  }
+	}
+	function _getSendButton2() {
+	  var _babelHelpers$classPr5, _babelHelpers$classPr6;
+	  (_babelHelpers$classPr6 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _sendButton))[_sendButton]) != null ? _babelHelpers$classPr6 : _babelHelpers$classPr5[_sendButton] = new ui_buttons.Button({
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_RESTORE'),
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    useAirDesign: true,
+	    onclick: () => {
+	      const currentButtonState = babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton].getState();
+	      if (currentButtonState === ui_buttons.ButtonState.WAITING || currentButtonState === ui_buttons.ButtonState.DISABLED) {
+	        return;
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton].setState(ui_buttons.ButtonState.WAITING);
+	      babelHelpers.classPrivateFieldLooseBase(this, _transport)[_transport].send({
+	        action: 'restoreFiredUsers',
+	        data: {
+	          userIds: babelHelpers.classPrivateFieldLooseBase(this, _isMultipleMode)[_isMultipleMode] ? babelHelpers.classPrivateFieldLooseBase(this, _selectedUserIds)[_selectedUserIds] : [babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList][0].id]
+	        }
+	      }, {
+	        showSuccessPopup: false
+	      }).then(response => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().close();
+	        babelHelpers.classPrivateFieldLooseBase(this, _showSuccessNotification)[_showSuccessNotification](response.data.restoredUserIds);
+	      }).catch(reject => {
+	        console.error(reject);
+	      });
+	    }
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton];
+	}
+	function _getPassLoginButton2() {
+	  return new ui_buttons.Button({
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_PASS_LOGIN'),
+	    useAirDesign: true,
+	    style: ui_buttons.AirButtonStyle.PLAIN,
+	    onclick: () => {
+	      if (top.BX.Helper) {
+	        top.BX.Helper.show('redirect=detail&code=17964466');
+	      }
+	    }
+	  });
+	}
+	function _showSuccessNotification2(restoredUserIds) {
+	  const restoredUserIdsNumeric = new Set(restoredUserIds.map(id => Number(id)));
+	  const restoredUsers = babelHelpers.classPrivateFieldLooseBase(this, _userList)[_userList].filter(user => restoredUserIdsNumeric.has(user.id));
+	  const notificationOptions = {
+	    id: 'restore-notification-success',
+	    autoHideDelay: 4000,
+	    closeButton: false,
+	    autoHide: true,
+	    content: babelHelpers.classPrivateFieldLooseBase(this, _getNotificationContent)[_getNotificationContent](restoredUsers),
+	    useAirDesign: true
+	  };
+	  const notify = BX.UI.Notification.Center.notify(notificationOptions);
+	  notify.show();
+	  notify.activateAutoHide();
+	}
+	function _getNotificationContent2(restoredUsers) {
+	  var _restoredUsers$, _restoredUsers$2;
+	  return main_core.Tag.render(_t15 || (_t15 = _$1`
+			<div class="invite-email-notification">
+				<div class="invite-email-notification__content">
+					<div class="invite-email-notification__description ui-text --2xs">
+						${0}
+					</div>
+				</div>
+			</div>
+		`), restoredUsers.length > 1 ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_SUCCESS_NOTIFICATION_MULTIPLE', {
+	    '#NAME#': `<strong>${(_restoredUsers$ = restoredUsers[0]) == null ? void 0 : _restoredUsers$.name}</strong>`,
+	    '#NUM#': restoredUsers.length - 1
+	  }) : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FIRED_POPUP_SUCCESS_NOTIFICATION_SINGLE', {
+	    '#NAME#': `<strong>${(_restoredUsers$2 = restoredUsers[0]) == null ? void 0 : _restoredUsers$2.name}</strong>`
+	  }));
 	}
 
-	let _$5 = t => t,
-	  _t$5;
+	let _$2 = t => t,
+	  _t$2,
+	  _t2$1;
+	var _popup$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
+	var _input = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
+	var _sendButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendButton");
 	var _departmentControl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
-	var _linkRegisterEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkRegisterEnabled");
-	var _transport = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
-	var _input$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
-	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
+	var _inviteType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inviteType");
+	var _analytics$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
+	var _transport$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
+	var _getInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInput");
+	var _getPlaceholder = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPlaceholder");
+	var _getPopup$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopup");
+	var _getPopupContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupContent");
+	var _getActionContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getActionContent");
+	var _getSendButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSendButton");
+	var _getCancelButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCancelButton");
+	class InviteEmailPopup {
+	  constructor(options) {
+	    Object.defineProperty(this, _getCancelButton, {
+	      value: _getCancelButton2
+	    });
+	    Object.defineProperty(this, _getSendButton$1, {
+	      value: _getSendButton2$1
+	    });
+	    Object.defineProperty(this, _getActionContent$1, {
+	      value: _getActionContent2$1
+	    });
+	    Object.defineProperty(this, _getPopupContent$1, {
+	      value: _getPopupContent2$1
+	    });
+	    Object.defineProperty(this, _getPopup$1, {
+	      value: _getPopup2$1
+	    });
+	    Object.defineProperty(this, _getPlaceholder, {
+	      value: _getPlaceholder2
+	    });
+	    Object.defineProperty(this, _getInput, {
+	      value: _getInput2
+	    });
+	    Object.defineProperty(this, _popup$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _input, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _sendButton$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _departmentControl, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _inviteType, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _analytics$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _transport$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl)[_departmentControl] = options.departmentControl;
+	    babelHelpers.classPrivateFieldLooseBase(this, _inviteType)[_inviteType] = options.inviteType;
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics$1)[_analytics$1] = options.analytics;
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport$1)[_transport$1] = options.transport;
+	  }
+	  show() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _getPopup$1)[_getPopup$1]().show();
+	  }
+	  onReadySaveInputHandler() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _getSendButton$1)[_getSendButton$1]().setState(null);
+	  }
+	  onUnreadySaveInputHandler() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _getSendButton$1)[_getSendButton$1]().setState(ui_buttons.ButtonState.DISABLED);
+	  }
+	}
+	function _getInput2() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _input))[_input]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_input] = new intranet_invitationInput.InvitationInput({
+	    id: 'invite-page-popup-invitation-input',
+	    inputType: babelHelpers.classPrivateFieldLooseBase(this, _inviteType)[_inviteType],
+	    onReadySave: this.onReadySaveInputHandler.bind(this),
+	    onUnreadySave: this.onUnreadySaveInputHandler.bind(this),
+	    placeholder: babelHelpers.classPrivateFieldLooseBase(this, _getPlaceholder)[_getPlaceholder]()
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _input)[_input];
+	}
+	function _getPlaceholder2() {
+	  switch (babelHelpers.classPrivateFieldLooseBase(this, _inviteType)[_inviteType]) {
+	    case InviteType.EMAIL:
+	      return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_PLACEHOLDER');
+	    case InviteType.PHONE:
+	      return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_PHONE_PLACEHOLDER');
+	    case InviteType.ALL:
+	    default:
+	      return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_OR_PHONE_PLACEHOLDER');
+	  }
+	}
+	function _getPopup2$1() {
+	  var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	  (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _popup$1))[_popup$1]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[_popup$1] = new main_popup.Popup({
+	    content: babelHelpers.classPrivateFieldLooseBase(this, _getPopupContent$1)[_getPopupContent$1](),
+	    id: 'email-invitation-email',
+	    className: 'email-invitation-container',
+	    closeIcon: true,
+	    autoHide: false,
+	    closeByEsc: true,
+	    width: 515,
+	    closeIconSize: main_popup.CloseIconSize.LARGE,
+	    padding: 0,
+	    overlay: {
+	      backgroundColor: 'rgba(0, 32, 78, 0.46)'
+	    }
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _popup$1)[_popup$1];
+	}
+	function _getPopupContent2$1() {
+	  return main_core.Tag.render(_t$2 || (_t$2 = _$2`
+			<div class="intranet-invitation-popup">
+				<div class="intranet-invitation-popup__title">
+					<span class="ui-headline --sm">${0}</span>
+				</div>
+				<div class="intranet-invitation-popup__body">
+					<p class="intranet-invitation-description ui-text --sm">
+						${0}
+					</p>
+					<div class="email-popup-container__input">
+						${0}
+					</div>
+				</div>
+				<div class="intranet-invitation-popup__footer">
+					${0}
+				</div>
+			</div>
+		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_DESCRIPTION_MSGVER_1'), babelHelpers.classPrivateFieldLooseBase(this, _getInput)[_getInput]().render(), babelHelpers.classPrivateFieldLooseBase(this, _getActionContent$1)[_getActionContent$1]());
+	}
+	function _getActionContent2$1() {
+	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
+			<div class="intranet-invitation-popup__footer-button-container">
+				${0}
+				${0}
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getSendButton$1)[_getSendButton$1]().render(), babelHelpers.classPrivateFieldLooseBase(this, _getCancelButton)[_getCancelButton]().render());
+	}
+	function _getSendButton2$1() {
+	  var _babelHelpers$classPr5, _babelHelpers$classPr6;
+	  (_babelHelpers$classPr6 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _sendButton$1))[_sendButton$1]) != null ? _babelHelpers$classPr6 : _babelHelpers$classPr5[_sendButton$1] = new ui_buttons.Button({
+	    id: 'invite-popup-send-button',
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_SEND'),
+	    state: ui_buttons.ButtonState.DISABLED,
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    useAirDesign: true,
+	    onclick: () => {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _sendButton$1)[_sendButton$1].getState() === ui_buttons.ButtonState.WAITING) {
+	        return;
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _sendButton$1)[_sendButton$1].setState(ui_buttons.ButtonState.WAITING);
+	      babelHelpers.classPrivateFieldLooseBase(this, _getInput)[_getInput]().inviteToDepartmentGroup(babelHelpers.classPrivateFieldLooseBase(this, _departmentControl)[_departmentControl].getValues(), babelHelpers.classPrivateFieldLooseBase(this, _departmentControl)[_departmentControl].getGroupValues(), babelHelpers.classPrivateFieldLooseBase(this, _analytics$1)[_analytics$1].getDataForAction('mass')).then(response => {
+	        var _response$data, _response$data2;
+	        if (response.data.invitedUserIds.length > 0) {
+	          main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
+	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _getPopup$1)[_getPopup$1]().close();
+	        babelHelpers.classPrivateFieldLooseBase(this, _sendButton$1)[_sendButton$1].setState(null);
+	        if ((_response$data = response.data) != null && _response$data.firedUserList && ((_response$data2 = response.data) == null ? void 0 : _response$data2.firedUserList.length) > 0) {
+	          new RestoreFiredUsersPopup({
+	            userList: response.data.firedUserList,
+	            isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
+	            transport: babelHelpers.classPrivateFieldLooseBase(this, _transport$1)[_transport$1]
+	          }).show();
+	        }
+	      }).catch(() => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _sendButton$1)[_sendButton$1].setState(null);
+	      });
+	    }
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _sendButton$1)[_sendButton$1];
+	}
+	function _getCancelButton2() {
+	  return new ui_buttons.Button({
+	    id: 'invite-popup-cancel-button',
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_ACTION_CANCEL'),
+	    useAirDesign: true,
+	    style: ui_buttons.AirButtonStyle.OUTLINE,
+	    onclick: () => babelHelpers.classPrivateFieldLooseBase(this, _getPopup$1)[_getPopup$1]().close()
+	  });
+	}
+
+	let _$3 = t => t,
+	  _t$3,
+	  _t2$2;
+	var _container$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _departmentControl$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
+	var _inviteEmailPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inviteEmailPopup");
+	var _analytics$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
+	var _transport$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
+	var _needConfirmRegistration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needConfirmRegistration");
+	var _renderDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDescription");
+	var _getInviteButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInviteButton");
+	var _openEmailInputPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openEmailInputPopup");
 	var _onSubmitWithLocalEmailProgram = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSubmitWithLocalEmailProgram");
 	var _openLocalMailProgram = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openLocalMailProgram");
-	var _onSubmitWithMailService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSubmitWithMailService");
-	var _showNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotification");
-	var _getNotificationContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNotificationContent");
-	var _openInvitationPageWithFilter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openInvitationPageWithFilter");
-	class InviteEmailHandler {
-	  constructor(options, input) {
-	    Object.defineProperty(this, _openInvitationPageWithFilter, {
-	      value: _openInvitationPageWithFilter2
-	    });
-	    Object.defineProperty(this, _getNotificationContent, {
-	      value: _getNotificationContent2
-	    });
-	    Object.defineProperty(this, _showNotification, {
-	      value: _showNotification2
-	    });
-	    Object.defineProperty(this, _onSubmitWithMailService, {
-	      value: _onSubmitWithMailService2
-	    });
+	class LocalEmailPage extends Page {
+	  constructor(options) {
+	    super();
 	    Object.defineProperty(this, _openLocalMailProgram, {
 	      value: _openLocalMailProgram2
 	    });
 	    Object.defineProperty(this, _onSubmitWithLocalEmailProgram, {
 	      value: _onSubmitWithLocalEmailProgram2
 	    });
-	    Object.defineProperty(this, _departmentControl, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _linkRegisterEnabled, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _transport, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _input$2, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _analytics, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _transport)[_transport] = options.transport;
-	    babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled)[_linkRegisterEnabled] = options.linkRegisterEnabled;
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl)[_departmentControl] = options.departmentControl instanceof DepartmentControl ? options.departmentControl : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2] = input;
-	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = options.analytics;
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:selfChange', event => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled)[_linkRegisterEnabled] = event.getData().selfEnabled;
-	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:InviteSuccess', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showNotification)[_showNotification](true);
-	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:InviteFailed', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showNotification)[_showNotification](false);
-	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation.EmailPopup:onSubmit', babelHelpers.classPrivateFieldLooseBase(this, _onSubmitWithMailService)[_onSubmitWithMailService].bind(this));
-	  }
-	  onSubmit() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled)[_linkRegisterEnabled]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _onSubmitWithLocalEmailProgram)[_onSubmitWithLocalEmailProgram]();
-	    } else {
-	      babelHelpers.classPrivateFieldLooseBase(this, _onSubmitWithMailService)[_onSubmitWithMailService]();
-	    }
-	  }
-	}
-	function _onSubmitWithLocalEmailProgram2() {
-	  const departmentsId = babelHelpers.classPrivateFieldLooseBase(this, _departmentControl)[_departmentControl].getValues();
-
-	  // eslint-disable-next-line promise/catch-or-return
-	  babelHelpers.classPrivateFieldLooseBase(this, _transport)[_transport].send({
-	    action: 'getInviteLink',
-	    data: {
-	      departmentsId
-	    }
-	  }).then(response => {
-	    var _response$data;
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onSubmitReady');
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
-	    const invitationUrl = (_response$data = response.data) == null ? void 0 : _response$data.invitationLink;
-	    if (main_core.Type.isStringFilled(invitationUrl)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _openLocalMailProgram)[_openLocalMailProgram](invitationUrl);
-	    }
-	  }, response => {
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onSubmitReady');
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
-	  });
-	}
-	function _openLocalMailProgram2(invitationUrl) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].sendLocalEmailProgram();
-	  const subject = `subject=${encodeURIComponent(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_SUBJECT'))}`;
-	  const body = `body=${encodeURIComponent(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_BODY'))} ${invitationUrl}`;
-	  window.location = `mailto:?${subject}&${body}`;
-	}
-	function _onSubmitWithMailService2() {
-	  const {
-	    emails,
-	    errorElements
-	  } = babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2].getValues();
-	  const errors = [];
-	  if (emails.length <= 0) {
-	    errors.push(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMPTY_ERROR_EMAIL'));
-	  }
-	  if (errorElements.length > 0) {
-	    errors.push(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL'));
-	  }
-	  if (errors.length > 0) {
-	    main_core_events.EventEmitter.emit(window.invitationForm, 'BX.Intranet.Invitation:onSendData', {
-	      errors
-	    });
-	    return;
-	  }
-	  const data = {
-	    invitations: emails,
-	    departmentIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl)[_departmentControl].getValues(),
-	    tab: 'email'
-	  };
-	  const analyticsLabel = {
-	    INVITATION_TYPE: 'invite',
-	    INVITATION_COUNT: emails.length
-	  };
-	  main_core_events.EventEmitter.emit(window.invitationForm, 'BX.Intranet.Invitation:onSendData', {
-	    action: 'invite',
-	    type: 'invite-email',
-	    data,
-	    analyticsLabel
-	  });
-	}
-	function _showNotification2(isSuccess) {
-	  const notificationOptions = {
-	    id: 'invite-notification-result',
-	    closeButton: true,
-	    autoHideDelay: 4000,
-	    autoHide: true,
-	    content: babelHelpers.classPrivateFieldLooseBase(this, _getNotificationContent)[_getNotificationContent](isSuccess)
-	  };
-	  const notify = BX.UI.Notification.Center.notify(notificationOptions);
-	  notify.show();
-	  notify.activateAutoHide();
-	}
-	function _getNotificationContent2(isSuccess) {
-	  const title = isSuccess ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_TITLE') : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_FAILED_TITLE');
-	  const description = isSuccess ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_DESCRIPTION', {
-	    '[LINK]': '<a class="intranet-invitation-dialog-link">',
-	    '[/LINK]': '</a>'
-	  }) : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_FAILED_DESCRIPTION');
-	  const content = main_core.Tag.render(_t$5 || (_t$5 = _$5`
-			<div class="invite-email-notification">
-				<div class="invite-email-notification__title">
-					${0}
-				</div>
-				<div class="invite-email-notification__description">
-					${0}
-				</div>
-			</div>
-		`), title, description);
-	  const link = content.querySelector('.intranet-invitation-dialog-link');
-	  if (main_core.Type.isDomNode(link)) {
-	    main_core.Event.unbindAll(link);
-	    main_core.Event.bind(link, 'click', babelHelpers.classPrivateFieldLooseBase(this, _openInvitationPageWithFilter)[_openInvitationPageWithFilter].bind(this));
-	  }
-	  return content;
-	}
-	function _openInvitationPageWithFilter2() {
-	  window.top.location = '/company/?apply_filter=Y&INVITED=Y';
-	}
-
-	let _$6 = t => t,
-	  _t$6,
-	  _t2$1,
-	  _t3,
-	  _t4,
-	  _t5,
-	  _t6;
-	var _container$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _departmentControl$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
-	var _inviteEmailPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inviteEmailPopup");
-	var _linkRegisterEnabled$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkRegisterEnabled");
-	var _input$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
-	var _process = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("process");
-	var _analytics$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
-	var _titleRender = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleRender");
-	var _renderForm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderForm");
-	var _getNotifyBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNotifyBlock");
-	var _getDepartmentBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDepartmentBlock");
-	var _getMailServiceBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMailServiceBlock");
-	var _openEmailInputPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openEmailInputPopup");
-	class LocalEmailPage extends Page {
-	  constructor(options) {
-	    super();
 	    Object.defineProperty(this, _openEmailInputPopup, {
 	      value: _openEmailInputPopup2
 	    });
-	    Object.defineProperty(this, _getMailServiceBlock, {
-	      value: _getMailServiceBlock2
+	    Object.defineProperty(this, _getInviteButton, {
+	      value: _getInviteButton2
 	    });
-	    Object.defineProperty(this, _getDepartmentBlock, {
-	      value: _getDepartmentBlock2
+	    Object.defineProperty(this, _renderDescription, {
+	      value: _renderDescription2
 	    });
-	    Object.defineProperty(this, _getNotifyBlock, {
-	      value: _getNotifyBlock2
-	    });
-	    Object.defineProperty(this, _renderForm, {
-	      value: _renderForm2
-	    });
-	    Object.defineProperty(this, _titleRender, {
-	      value: _titleRender2
-	    });
-	    Object.defineProperty(this, _container$2, {
+	    Object.defineProperty(this, _container$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1095,244 +1020,395 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _linkRegisterEnabled$1, {
+	    Object.defineProperty(this, _analytics$2, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _transport$2, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _input$3, {
+	    Object.defineProperty(this, _needConfirmRegistration, {
 	      writable: true,
-	      value: null
+	      value: void 0
 	    });
-	    Object.defineProperty(this, _process, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _analytics$1, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled$1)[_linkRegisterEnabled$1] = options.linkRegisterEnabled;
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$1)[_departmentControl$1] = options.departmentControl instanceof DepartmentControl ? options.departmentControl : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _analytics$1)[_analytics$1] = options.analytics;
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$3)[_input$3] = new EmailInvitationInput();
-	    babelHelpers.classPrivateFieldLooseBase(this, _process)[_process] = new InviteEmailHandler(options, babelHelpers.classPrivateFieldLooseBase(this, _input$3)[_input$3]);
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:selfChange', event => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled$1)[_linkRegisterEnabled$1] = event.getData().selfEnabled;
-	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$1)[_departmentControl$1] = options.departmentControl instanceof DepartmentControl__default ? options.departmentControl : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics$2)[_analytics$2] = options.analytics;
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport$2)[_transport$2] = options.transport;
+	    babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration)[_needConfirmRegistration] = options.needConfirmRegistration === true;
 	  }
 	  render() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$2)[_container$2]) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _container$2)[_container$2];
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1]) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1];
 	    }
-	    return main_core.Tag.render(_t$6 || (_t$6 = _$6`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="invite-block">
-				${0}
-				${0}
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1] = main_core.Tag.render(_t$3 || (_t$3 = _$3`
+			<div class="intranet-invitation-block">
+				<div class="intranet-invitation-block__department-control">
+					<div class="intranet-invitation-block__department-control-inner">${0}</div>
+				</div>
+				<div class="intranet-invitation-block__content">
+					<span class="intranet-invitation-status__title ui-headline --sm">${0}</span>
+					<ol class="intranet-invitation-list ui-text --md">
+						<li class="intranet-invitation-list-item">${0}</li>
+						<li class="intranet-invitation-list-item">${0}</li>
+						<li class="intranet-invitation-list-item">${0}</li>
+						<li class="intranet-invitation-list-item">${0}</li>
+					</ol>
+					${0}
+					<div class="intranet-invitation-block__footer">
+						${0}
+					</div>
+				</div>
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _titleRender)[_titleRender](), babelHelpers.classPrivateFieldLooseBase(this, _renderForm)[_renderForm]());
-	  }
-	  onReadySaveInputHandler() {
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onSubmitReady');
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onChangeForm');
-	  }
-	  onUnreadySaveInputHandler() {
-	    main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onSubmitDisabled');
-	  }
-	  onSubmit(event) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _process)[_process].onSubmit();
+		`), babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$1)[_departmentControl$1].render(), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INVITATION_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEP_1'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEP_2'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEP_3'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEP_4'), babelHelpers.classPrivateFieldLooseBase(this, _renderDescription)[_renderDescription](), babelHelpers.classPrivateFieldLooseBase(this, _getInviteButton)[_getInviteButton]().render());
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1];
 	  }
 	  getAnalyticTab() {
 	    return Analytics.TAB_LOCAL_EMAIL;
 	  }
-	  getSubmitButtonText() {
-	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
-	  }
 	}
-	function _titleRender2() {
-	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$6`
-			<div class="invite-title-container">
-				<div class="invite-title-icon invite-title-icon-message">
-					<div class="ui-icon-set --person-letter"></div>
-				</div>
-				<div class="invite-title-text">
-					${0}
-				</div>
-				<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=25375678');"></div>
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_EMAIL_MSGVER_1'));
-	}
-	function _renderForm2() {
-	  let topBlock = null;
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled$1)[_linkRegisterEnabled$1]) {
-	    topBlock = babelHelpers.classPrivateFieldLooseBase(this, _getNotifyBlock)[_getNotifyBlock]();
-	  } else {
-	    topBlock = babelHelpers.classPrivateFieldLooseBase(this, _input$3)[_input$3].getContent();
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$3)[_input$3].onReadySaveInputHandler(this.onReadySaveInputHandler);
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$3)[_input$3].onUnreadySaveInputHandler(this.onUnreadySaveInputHandler);
-	  }
-	  return main_core.Tag.render(_t3 || (_t3 = _$6`
-			<div class="invite-content-container">
+	function _renderDescription2() {
+	  const description = main_core.Tag.render(_t2$2 || (_t2$2 = _$3`
+			<span class="intranet-invitation-description ui-text --md">
 				${0}
-				${0}
-				${0}
-			</div>
-		`), topBlock, babelHelpers.classPrivateFieldLooseBase(this, _getDepartmentBlock)[_getDepartmentBlock](), babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled$1)[_linkRegisterEnabled$1] && babelHelpers.classPrivateFieldLooseBase(this, _getMailServiceBlock)[_getMailServiceBlock]());
-	}
-	function _getNotifyBlock2() {
-	  return main_core.Tag.render(_t4 || (_t4 = _$6`
-			<div class="invite-content-notify">
-				<div class="invite-content-notify-wrapper">
-					<div class="invite-content-notify__image"></div>
-				</div>
-				<div class="invite-content-notify-content">
-					<div class="invite-content-notify-content__description"> 
-						${0}
-					</div>
-					<div class="invite-content-notify-content__step">
-						${0}
-					</div>
-				</div>
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_DESCRIPTION'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEPS'));
-	}
-	function _getDepartmentBlock2() {
-	  return main_core.Tag.render(_t5 || (_t5 = _$6`
-			<div class="invite-content-department">
-				${0}
-			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$1)[_departmentControl$1].render());
-	}
-	function _getMailServiceBlock2() {
-	  const text = main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_SERVICE', {
-	    '[LINK]': '<a class="invite-content-mail-service__link">',
-	    '[/LINK]': '</a>'
-	  });
-	  const block = main_core.Tag.render(_t6 || (_t6 = _$6`
-			<div class="invite-content-mail-service">
-				${0}
-			</div>
-		`), text);
-	  const link = block.querySelector('.invite-content-mail-service__link');
+			</span>
+		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_SERVICE_MSGVER_1', {
+	    '[LINK]': '<span class="ui-link ui-link-secondary ui-link-dashed ui-text --md">',
+	    '[/LINK]': '</span>'
+	  }));
+	  const link = description.querySelector('.ui-link');
 	  if (main_core.Type.isDomNode(link)) {
-	    main_core.Event.unbindAll(link);
 	    main_core.Event.bind(link, 'click', babelHelpers.classPrivateFieldLooseBase(this, _openEmailInputPopup)[_openEmailInputPopup].bind(this));
 	  }
-	  return block;
+	  return description;
+	}
+	function _getInviteButton2() {
+	  return new ui_buttons.Button({
+	    useAirDesign: true,
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_EMAIL_MSGVER_1'),
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    onclick: babelHelpers.classPrivateFieldLooseBase(this, _onSubmitWithLocalEmailProgram)[_onSubmitWithLocalEmailProgram].bind(this),
+	    props: {
+	      'data-test-id': 'invite-local-email-program-button'
+	    }
+	  });
 	}
 	function _openEmailInputPopup2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _inviteEmailPopup)[_inviteEmailPopup]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _inviteEmailPopup)[_inviteEmailPopup] = new InviteEmailPopup(babelHelpers.classPrivateFieldLooseBase(this, _input$3)[_input$3]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _inviteEmailPopup)[_inviteEmailPopup] = new InviteEmailPopup({
+	      id: 'open-invite-popup',
+	      departmentControl: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$1)[_departmentControl$1],
+	      inviteType: InviteType.EMAIL,
+	      transport: babelHelpers.classPrivateFieldLooseBase(this, _transport$2)[_transport$2],
+	      analytics: babelHelpers.classPrivateFieldLooseBase(this, _analytics$2)[_analytics$2]
+	    });
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _analytics$1)[_analytics$1].sendOpenLocalEmailPopup();
+	  babelHelpers.classPrivateFieldLooseBase(this, _analytics$2)[_analytics$2].sendOpenMassInvitePopup(InviteType.EMAIL);
 	  babelHelpers.classPrivateFieldLooseBase(this, _inviteEmailPopup)[_inviteEmailPopup].show();
 	}
+	function _onSubmitWithLocalEmailProgram2() {
+	  const departmentsId = babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$1)[_departmentControl$1].getValues();
+	  babelHelpers.classPrivateFieldLooseBase(this, _transport$2)[_transport$2].send({
+	    action: 'getInviteLink',
+	    data: {
+	      departmentsId,
+	      analyticsType: 'by_local_email_program'
+	    }
+	  }).then(response => {
+	    var _response$data;
+	    const invitationUrl = (_response$data = response.data) == null ? void 0 : _response$data.invitationLink;
+	    if (main_core.Type.isStringFilled(invitationUrl)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _openLocalMailProgram)[_openLocalMailProgram](invitationUrl);
+	    }
+	  }).catch(reject => {});
+	}
+	function _openLocalMailProgram2(invitationUrl) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _analytics$2)[_analytics$2].sendLocalEmailProgram(babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$1)[_departmentControl$1], babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration)[_needConfirmRegistration]);
+	  const subject = `subject=${encodeURIComponent(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_SUBJECT'))}`;
+	  const body = `body=${encodeURIComponent(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_EMAIL_BODY'))} ${invitationUrl}`;
+	  window.location = `mailto:?${subject}&${body}`;
+	}
 
-	var _prepareOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareOptions");
-	class Selector {
-	  constructor(params) {
-	    Object.defineProperty(this, _prepareOptions, {
-	      value: _prepareOptions2
+	var _input$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
+	var _onInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onInput");
+	var _onClear = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClear");
+	var _validateContactsInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("validateContactsInput");
+	class ContactsInput {
+	  constructor() {
+	    Object.defineProperty(this, _validateContactsInput, {
+	      value: _validateContactsInput2
 	    });
-	    this.options = params.options;
-	    this.entities = [];
-	    babelHelpers.classPrivateFieldLooseBase(this, _prepareOptions)[_prepareOptions]();
+	    Object.defineProperty(this, _onClear, {
+	      value: _onClear2
+	    });
+	    Object.defineProperty(this, _onInput, {
+	      value: _onInput2
+	    });
+	    Object.defineProperty(this, _input$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  getInput() {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2;
+	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _input$1))[_input$1]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_input$1] = new ui_system_input.Input({
+	      placeholder: this.getPlaceholder(),
+	      design: ui_system_input.InputDesign.Grey,
+	      withClear: true,
+	      onBlur: babelHelpers.classPrivateFieldLooseBase(this, _validateContactsInput)[_validateContactsInput].bind(this),
+	      onInput: babelHelpers.classPrivateFieldLooseBase(this, _onInput)[_onInput].bind(this),
+	      onClear: babelHelpers.classPrivateFieldLooseBase(this, _onClear)[_onClear].bind(this),
+	      dataTestId: 'invite-page-contact-input'
+	    });
+	    return babelHelpers.classPrivateFieldLooseBase(this, _input$1)[_input$1];
+	  }
+	  getValue() {
+	    throw new Error('Not Implemented');
+	  }
+	  getPlaceholder() {
+	    throw new Error('Not Implemented');
+	  }
+	  isValidValue(value) {
+	    throw new Error('Not Implemented');
+	  }
+	  getValidationErrorMessage() {
+	    throw new Error('Not Implemented');
+	  }
+	}
+	function _onInput2() {
+	  this.getInput().setError('');
+	}
+	function _onClear2() {
+	  this.getInput().setError('');
+	}
+	function _validateContactsInput2() {
+	  const value = this.getInput().getValue();
+	  if (value && !this.isValidValue(value)) {
+	    this.getInput().setError(this.getValidationErrorMessage());
+	  } else {
+	    this.getInput().setError('');
+	  }
+	}
+
+	let _$4 = t => t,
+	  _t$4;
+	var _container$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _nameInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("nameInput");
+	var _lastNameInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastNameInput");
+	var _contactsInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contactsInput");
+	var _id = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
+	class InputRow {
+	  constructor(options) {
+	    Object.defineProperty(this, _container$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _nameInput, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _lastNameInput, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _contactsInput, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _id, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _id)[_id] = options.id;
+	    babelHelpers.classPrivateFieldLooseBase(this, _contactsInput)[_contactsInput] = options.contactsInput;
+	    babelHelpers.classPrivateFieldLooseBase(this, _nameInput)[_nameInput] = options.nameInput;
+	    babelHelpers.classPrivateFieldLooseBase(this, _lastNameInput)[_lastNameInput] = options.lastNameInput;
+	  }
+	  render() {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2;
+	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _container$2))[_container$2]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_container$2] = main_core.Tag.render(_t$4 || (_t$4 = _$4`
+			<div data-test-id="invite-input-row${0}" class="intranet-invite-form-row">
+				${0}
+				${0}
+				${0}
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _id)[_id], babelHelpers.classPrivateFieldLooseBase(this, _contactsInput)[_contactsInput].getInput().render(), babelHelpers.classPrivateFieldLooseBase(this, _nameInput)[_nameInput].render(), babelHelpers.classPrivateFieldLooseBase(this, _lastNameInput)[_lastNameInput].render());
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container$2)[_container$2];
 	  }
 	  renderTo(target) {
-	    this.tagSelector = this.renderTagSelector();
-	    if (main_core.Type.isDomNode(target)) {
-	      this.tagSelector.renderTo(target);
-	    }
+	    main_core.Dom.append(this.render(), target);
 	  }
-	  renderTagSelector() {
-	    var _this$options;
-	    const preselectedItems = [];
-	    if (((_this$options = this.options) == null ? void 0 : _this$options.projectId) > 0) {
-	      preselectedItems.push(['project', this.options.projectId]);
-	    }
-	    return new ui_entitySelector.TagSelector({
-	      dialogOptions: {
-	        preselectedItems,
-	        entities: this.entities,
-	        context: 'INTRANET_INVITATION'
-	      }
-	    });
+	  isEmpty() {
+	    return !(babelHelpers.classPrivateFieldLooseBase(this, _contactsInput)[_contactsInput].getInput().getValue() || babelHelpers.classPrivateFieldLooseBase(this, _nameInput)[_nameInput].getValue() || babelHelpers.classPrivateFieldLooseBase(this, _lastNameInput)[_lastNameInput].getValue());
 	  }
-	  getItems() {
-	    let departments = [];
-	    let projects = [];
-	    const tagSelectorItems = this.tagSelector.getDialog().getSelectedItems();
-	    tagSelectorItems.forEach(item => {
-	      const id = parseInt(item.getId());
-	      const type = item.getEntityId();
-	      if (type === "department") {
-	        departments.push(id);
-	      } else if (type === "project") {
-	        projects.push(id);
-	      }
-	    });
+	  isInvitationRowEmpty() {
+	    return !main_core.Type.isStringFilled(this.getContactsValue());
+	  }
+	  getValue() {
 	    return {
-	      departments: departments,
-	      projects: projects
+	      NAME: babelHelpers.classPrivateFieldLooseBase(this, _nameInput)[_nameInput].getValue(),
+	      LAST_NAME: babelHelpers.classPrivateFieldLooseBase(this, _lastNameInput)[_lastNameInput].getValue(),
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _contactsInput)[_contactsInput].getValue()
 	    };
 	  }
-	}
-	function _prepareOptions2() {
-	  for (const type in this.options) {
-	    if (!this.options.hasOwnProperty(type)) {
-	      continue;
-	    }
-	    if (type === "project" && !!this.options[type]) {
-	      var _this$options$showCre;
-	      const options = {
-	        fillRecentTab: true,
-	        '!type': ['collab'],
-	        createProjectLink: (_this$options$showCre = this.options.showCreateButton) != null ? _this$options$showCre : true
-	      };
-	      if (Object.prototype.hasOwnProperty.call(this.options, 'projectLimitExceeded') && Object.prototype.hasOwnProperty.call(this.options, 'projectLimitFeatureId')) {
-	        options.lockProjectLink = this.options.projectLimitExceeded;
-	        options.lockProjectLinkFeatureId = this.options.projectLimitFeatureId;
-	      }
-	      const optionValue = {
-	        id: 'project',
-	        options
-	      };
-	      if (this.options[type] === "extranet") {
-	        optionValue["options"]["extranet"] = true;
-	      }
-	      this.entities.push(optionValue);
-	    }
+	  getContactsValue() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _contactsInput)[_contactsInput].getInput().getValue();
+	  }
+	  setContactsError(error) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _contactsInput)[_contactsInput].getInput().setError(error);
+	  }
+	  hasContactsError() {
+	    return main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _contactsInput)[_contactsInput].getInput().getError());
+	  }
+	  clear() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _contactsInput)[_contactsInput].getInput().setValue('');
+	    babelHelpers.classPrivateFieldLooseBase(this, _nameInput)[_nameInput].setValue('');
+	    babelHelpers.classPrivateFieldLooseBase(this, _lastNameInput)[_lastNameInput].setValue('');
 	  }
 	}
 
-	let _$7 = t => t,
-	  _t$7,
-	  _t2$2,
-	  _t3$1;
+	class EmailInput extends ContactsInput {
+	  getValue() {
+	    return {
+	      EMAIL: this.getInput().getValue()
+	    };
+	  }
+	  isValidValue(value) {
+	    return main_core.Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value);
+	  }
+	  getPlaceholder() {
+	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INPUT');
+	  }
+	  getValidationErrorMessage() {
+	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL');
+	  }
+	}
+
+	const PHONE_REGEX = /^[\d+][\d ()-]{4,22}\d$/;
+	class PhoneValidator {
+	  static isValid(phone) {
+	    return PHONE_REGEX.test(phone);
+	  }
+	}
+
+	class PhoneInput extends ContactsInput {
+	  getValue() {
+	    return {
+	      PHONE: this.getInput().getValue()
+	    };
+	  }
+	  isValidValue(value) {
+	    return PhoneValidator.isValid(value);
+	  }
+	  getPlaceholder() {
+	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_PHONE');
+	  }
+	  getValidationErrorMessage() {
+	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE');
+	  }
+	}
+
+	class EmailOrPhoneInput extends ContactsInput {
+	  getValue() {
+	    const rawValue = this.getInput().getValue();
+	    return PhoneValidator.isValid(rawValue) ? {
+	      PHONE: rawValue
+	    } : {
+	      EMAIL: rawValue
+	    };
+	  }
+	  isValidValue(value) {
+	    return PhoneValidator.isValid(value) || main_core.Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value);
+	  }
+	  getPlaceholder() {
+	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT');
+	  }
+	  getValidationErrorMessage() {
+	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL_AND_PHONE');
+	  }
+	}
+
+	var _inviteType$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inviteType");
+	var _createContactsInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createContactsInput");
+	var _createNameInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createNameInput");
+	var _createLastNameInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createLastNameInput");
+	class InputRowFactory {
+	  constructor(params) {
+	    var _params$inviteType;
+	    Object.defineProperty(this, _createLastNameInput, {
+	      value: _createLastNameInput2
+	    });
+	    Object.defineProperty(this, _createNameInput, {
+	      value: _createNameInput2
+	    });
+	    Object.defineProperty(this, _createContactsInput, {
+	      value: _createContactsInput2
+	    });
+	    Object.defineProperty(this, _inviteType$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _inviteType$1)[_inviteType$1] = (_params$inviteType = params.inviteType) != null ? _params$inviteType : InviteType.ALL;
+	  }
+	  createInputsRow(id) {
+	    return new InputRow({
+	      id,
+	      contactsInput: babelHelpers.classPrivateFieldLooseBase(this, _createContactsInput)[_createContactsInput](),
+	      nameInput: babelHelpers.classPrivateFieldLooseBase(this, _createNameInput)[_createNameInput](),
+	      lastNameInput: babelHelpers.classPrivateFieldLooseBase(this, _createLastNameInput)[_createLastNameInput]()
+	    });
+	  }
+	}
+	function _createContactsInput2() {
+	  switch (babelHelpers.classPrivateFieldLooseBase(this, _inviteType$1)[_inviteType$1]) {
+	    case InviteType.EMAIL:
+	      return new EmailInput();
+	    case InviteType.PHONE:
+	      return new PhoneInput();
+	    case InviteType.All:
+	    default:
+	      return new EmailOrPhoneInput();
+	  }
+	}
+	function _createNameInput2() {
+	  return new ui_system_input.Input({
+	    placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_PLACEHOLDER'),
+	    design: ui_system_input.InputDesign.Grey,
+	    withClear: true,
+	    dataTestId: 'invite-page-name-input'
+	  });
+	}
+	function _createLastNameInput2() {
+	  return new ui_system_input.Input({
+	    placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_PLACEHOLDER'),
+	    design: ui_system_input.InputDesign.Grey,
+	    withClear: true,
+	    dataTestId: 'invite-page-last-name-input'
+	  });
+	}
+
+	let _$5 = t => t,
+	  _t$5,
+	  _t2$3;
 	var _container$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _inputsFactory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsFactory");
-	var _smsAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smsAvailable");
-	var _useOnlyPhone = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useOnlyPhone");
-	var _onClickSwitchMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClickSwitchMode");
-	var _onClickAddInputRow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClickAddInputRow");
+	var _inputsRows = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsRows");
+	var _transport$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
 	var _departmentControl$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
-	var _titleRender$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleRender");
-	var _renderForm$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderForm");
-	var _getValidateError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getValidateError");
-	var _getEmptyError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmptyError");
-	class EmailPage extends Page {
+	var _getInviteButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInviteButton");
+	var _getAddButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAddButton");
+	var _getEnteredInvitations = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEnteredInvitations");
+	class ExtranetPage extends Page {
 	  constructor(options) {
 	    super();
-	    Object.defineProperty(this, _getEmptyError, {
-	      value: _getEmptyError2
+	    Object.defineProperty(this, _getEnteredInvitations, {
+	      value: _getEnteredInvitations2
 	    });
-	    Object.defineProperty(this, _getValidateError, {
-	      value: _getValidateError2
+	    Object.defineProperty(this, _getAddButton, {
+	      value: _getAddButton2
 	    });
-	    Object.defineProperty(this, _renderForm$1, {
-	      value: _renderForm2$1
-	    });
-	    Object.defineProperty(this, _titleRender$1, {
-	      value: _titleRender2$1
+	    Object.defineProperty(this, _getInviteButton$1, {
+	      value: _getInviteButton2$1
 	    });
 	    Object.defineProperty(this, _container$3, {
 	      writable: true,
@@ -1342,19 +1418,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _smsAvailable, {
+	    Object.defineProperty(this, _inputsRows, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _useOnlyPhone, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _onClickSwitchMode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _onClickAddInputRow, {
+	    Object.defineProperty(this, _transport$3, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1362,917 +1430,458 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputsRows)[_inputsRows] = [];
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport$3)[_transport$3] = options.transport;
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory)[_inputsFactory] = options.inputsFactory instanceof InputRowFactory ? options.inputsFactory : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable)[_smsAvailable] = options.smsAvailable === true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone)[_useOnlyPhone] = options.useLocalEmailProgram === true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _onClickSwitchMode)[_onClickSwitchMode] = main_core.Type.isFunction(options.onClickSwitchMode) ? options.onClickSwitchMode : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _onClickAddInputRow)[_onClickAddInputRow] = main_core.Type.isFunction(options.onClickAddInputRow) ? options.onClickAddInputRow : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$2)[_departmentControl$2] = options.departmentControl instanceof DepartmentControl ? options.departmentControl : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$2)[_departmentControl$2] = options.departmentControl instanceof DepartmentControl__default ? options.departmentControl : null;
 	  }
 	  render() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$3)[_container$3]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _container$3)[_container$3];
 	    }
-	    const title = babelHelpers.classPrivateFieldLooseBase(this, _titleRender$1)[_titleRender$1]();
-	    const form = babelHelpers.classPrivateFieldLooseBase(this, _renderForm$1)[_renderForm$1]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory)[_inputsFactory].renderInputRowsTo(form.querySelector('div[data-role="rows-container"]'), 5);
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$2)[_departmentControl$2].renderTo(form.querySelector('form'));
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$3)[_container$3] = main_core.Tag.render(_t$7 || (_t$7 = _$7`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="invite-block">
-				${0}
-				${0}
-			</div>
-		`), title, form);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _container$3)[_container$3];
-	  }
-	  getAnalyticTab() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone)[_useOnlyPhone] ? Analytics.TAB_PHONE : Analytics.TAB_EMAIL;
-	  }
-	  onSubmit(event) {
-	    var _event$getData;
-	    const formNode = this.render().querySelector('form');
-	    const [items, errorInputData] = babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory)[_inputsFactory].parseEmailAndPhone(formNode);
-	    const errors = [];
-	    if (errorInputData.length > 0) {
-	      errors.push(`${babelHelpers.classPrivateFieldLooseBase(this, _getValidateError)[_getValidateError]()}: ${errorInputData.join(', ')}`);
+	    const rowsContainer = main_core.Tag.render(_t$5 || (_t$5 = _$5`
+			<div class="intranet-invite-form-rows-container"></div>
+		`));
+	    for (let i = 0; i < 2; i++) {
+	      const inputsRow = babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory)[_inputsFactory].createInputsRow(i);
+	      babelHelpers.classPrivateFieldLooseBase(this, _inputsRows)[_inputsRows].push(inputsRow);
+	      inputsRow.renderTo(rowsContainer);
 	    }
-	    if (items.length <= 0) {
-	      errors.push(babelHelpers.classPrivateFieldLooseBase(this, _getEmptyError)[_getEmptyError]());
-	    }
-	    const context = (_event$getData = event.getData()) == null ? void 0 : _event$getData.context;
-	    if (errors.length > 0) {
-	      main_core_events.EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-	        errors
-	      });
-	      return;
-	    }
-	    const data = {
-	      invitations: items,
-	      departmentIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$2)[_departmentControl$2].getValues(),
-	      tab: 'email'
-	    };
-	    const analyticsLabel = {
-	      INVITATION_TYPE: 'invite',
-	      INVITATION_COUNT: items.length
-	    };
-	    main_core_events.EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-	      action: 'invite',
-	      data,
-	      analyticsLabel
-	    });
-	  }
-	  onInviteSuccess(event) {
-	    var _this$render$querySel;
-	    (_this$render$querySel = this.render().querySelector('form')) == null ? void 0 : _this$render$querySel.reset();
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$2)[_departmentControl$2].reset();
-	  }
-	  getSubmitButtonText() {
-	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
-	  }
-	}
-	function _titleRender2$1() {
-	  const suffix = babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone)[_useOnlyPhone] ? 'PHONE_MSGVER_1' : babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable)[_smsAvailable] ? 'EMAIL_AND_PHONE' : 'EMAIL';
-	  const code = babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone)[_useOnlyPhone] || babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable)[_smsAvailable] ? '21141922' : '25375678';
-	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$7`
-			<div class="invite-title-container">
-				<div class="invite-title-icon invite-title-icon-message">
-					<div class="ui-icon-set --person-letter"></div>
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$3)[_container$3] = main_core.Tag.render(_t2$3 || (_t2$3 = _$5`
+			<div class="intranet-invitation-block">
+				<div class="intranet-invitation-block__department-control">
+					<div class="intranet-invitation-block__department-control-inner">${0}</div>
 				</div>
-				<div class="invite-title-text">
+				<div class="intranet-invitation-block__content">
+					<span class="intranet-invitation-status__title ui-headline --sm">${0}</span>
 					${0}
-				</div>
-				<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=${0}');"></div>
-			</div>
-		`), main_core.Loc.getMessage(`INTRANET_INVITE_DIALOG_TITLE_${suffix}`), code);
-	}
-	function _renderForm2$1() {
-	  const form = main_core.Tag.render(_t3$1 || (_t3$1 = _$7`
-			<div class="invite-content-container">
-				<form method="POST" name="INVITE_DIALOG_FORM" class="invite-form-container">
-					<div data-role="rows-container"></div>
-					<div class="invite-form-buttons --border-bottom --pt-3">
-							<span class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-icon-add ui-btn-round"
-								  data-role="invite-more"
-							>
-								${0}
-							</span>
-						<span style="padding: 0 10px;">${0}</span>
-						<span
-							class="invite-content__switch_button swith-email-invitation-persons-mode"
-						>
-								${0}
-							</span>
+					${0}
+					<div class="intranet-invitation-block__footer">
+						${0}
 					</div>
-				</form>
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MORE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_OR'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MASSIVE'));
-	  const moreButton = form.querySelector("[data-role='invite-more']");
-	  if (main_core.Type.isDomNode(moreButton)) {
-	    main_core.Event.unbindAll(moreButton);
-	    main_core.Event.bind(moreButton, 'click', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory)[_inputsFactory].renderInputRowTo(form.querySelector('div[data-role="rows-container"]'));
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _onClickAddInputRow)[_onClickAddInputRow]) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _onClickAddInputRow)[_onClickAddInputRow]();
-	      }
-	    });
-	  }
-	  const switchBtn = form.querySelector('.swith-email-invitation-persons-mode');
-	  if (main_core.Type.isDomNode(switchBtn)) {
-	    main_core.Event.unbindAll(switchBtn);
-	    main_core.Event.bind(switchBtn, 'click', babelHelpers.classPrivateFieldLooseBase(this, _onClickSwitchMode)[_onClickSwitchMode]);
-	  }
-	  return form;
-	}
-	function _getValidateError2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone)[_useOnlyPhone]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_PHONE_VALIDATE_ERROR');
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable)[_smsAvailable]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_VALIDATE_ERROR');
-	  }
-	  return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_VALIDATE_ERROR');
-	}
-	function _getEmptyError2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone)[_useOnlyPhone]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_PHONE_EMPTY_ERROR');
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable)[_smsAvailable]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_EMPTY_ERROR');
-	  }
-	  return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_EMPTY_ERROR');
-	}
-
-	let _$8 = t => t,
-	  _t$8;
-	var _container$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _inputsFactory$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsFactory");
-	var _tagSelectorGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tagSelectorGroup");
-	var _onClickAddInputRow$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClickAddInputRow");
-	class ExtranetPage extends Page {
-	  constructor(options) {
-	    super();
-	    Object.defineProperty(this, _container$4, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _inputsFactory$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _tagSelectorGroup, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _onClickAddInputRow$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$1)[_inputsFactory$1] = options.inputsFactory instanceof InputRowFactory ? options.inputsFactory : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup)[_tagSelectorGroup] = options.tagSelectorGroup instanceof ui_entitySelector.TagSelector ? options.tagSelectorGroup : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _onClickAddInputRow$1)[_onClickAddInputRow$1] = main_core.Type.isFunction(options.onClickAddInputRow) ? options.onClickAddInputRow : null;
-	  }
-	  render() {
-	    var _babelHelpers$classPr;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4]) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4];
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4] = main_core.Tag.render(_t$8 || (_t$8 = _$8`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="extranet-block">
-				<div class="invite-title-container">
-					<div class="invite-title-icon invite-title-icon-message">
-						<div class="ui-icon-set --earth"></div>
-					</div>
-					<div class="invite-title-text">${0}</div>
-				</div>
-				<div class="invite-content-container">
-					<form method="POST" name="EXTRANET_DIALOG_FORM" class="invite-form-container">
-						<div class="invite-form-row" style="margin-bottom: 15px;">
-							<div class="invite-form-col">
-								<div class="ui-ctl-label-text">${0}</div>
-								<div data-role="entity-selector-container"></div>
-							</div>
-						</div>
-						<div data-role="rows-container"></div>
-						<div class="invite-form-buttons">
-							<span class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-icon-add ui-btn-round" data-role="invite-more">
-								${0}
-							</span>
-						</div>
-					</form>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EXTRANET_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EXTRANET_GROUP'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MORE'));
-	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup)[_tagSelectorGroup]) == null ? void 0 : _babelHelpers$classPr.renderTo(babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4].querySelector('[data-role="entity-selector-container"]'));
-	    babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$1)[_inputsFactory$1].renderInputRowsTo(babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4].querySelector('div[data-role="rows-container"]'), 3);
-	    const moreButton = babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4].querySelector("[data-role='invite-more']");
-	    if (main_core.Type.isDomNode(moreButton)) {
-	      main_core.Event.unbindAll(moreButton);
-	      main_core.Event.bind(moreButton, 'click', () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$1)[_inputsFactory$1].renderInputRowTo(babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4].querySelector('div[data-role="rows-container"]'));
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _onClickAddInputRow$1)[_onClickAddInputRow$1]) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _onClickAddInputRow$1)[_onClickAddInputRow$1]();
-	        }
-	      });
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4];
+		`), babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$2)[_departmentControl$2].render(), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE'), rowsContainer, babelHelpers.classPrivateFieldLooseBase(this, _getAddButton)[_getAddButton](rowsContainer).render(), babelHelpers.classPrivateFieldLooseBase(this, _getInviteButton$1)[_getInviteButton$1]().render());
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container$3)[_container$3];
 	  }
 	  getAnalyticTab() {
 	    return Analytics.TAB_EXTRANET;
 	  }
-	  onSubmit(event) {
-	    var _event$getData;
-	    const formNode = this.render().querySelector('form');
-	    const [items, errorInputData] = babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$1)[_inputsFactory$1].parseEmailAndPhone(formNode);
-	    const errors = [];
-	    if (errorInputData.length > 0) {
-	      errors.push(`${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_VALIDATE_ERROR')}: ${errorInputData.join(', ')}`);
-	    }
-	    if (items.length <= 0) {
-	      errors.push(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_EMPTY_ERROR'));
-	    }
-	    const context = (_event$getData = event.getData()) == null ? void 0 : _event$getData.context;
-	    if (errors.length > 0) {
-	      main_core_events.EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-	        errors
+	}
+	function _getInviteButton2$1() {
+	  const inviteButton = new ui_buttons.Button({
+	    useAirDesign: true,
+	    text: main_core.Loc.getMessage('BX24_INVITE_DIALOG_BUTTON_INVITE'),
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    props: {
+	      'data-test-id': 'invite-extranet-page-submit-button'
+	    },
+	    onclick: () => {
+	      if (inviteButton.isWaiting()) {
+	        return;
+	      }
+	      inviteButton.setState(ui_buttons.ButtonState.WAITING);
+	      babelHelpers.classPrivateFieldLooseBase(this, _transport$3)[_transport$3].send({
+	        action: 'extranet',
+	        data: {
+	          invitations: babelHelpers.classPrivateFieldLooseBase(this, _getEnteredInvitations)[_getEnteredInvitations](),
+	          tab: 'email',
+	          workgroupIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$2)[_departmentControl$2].getAllValues()[DepartmentControl.EntityType.EXTRANET]
+	        },
+	        analyticsLabel: {
+	          INVITATION_TYPE: 'extranet',
+	          INVITATION_COUNT: babelHelpers.classPrivateFieldLooseBase(this, _getEnteredInvitations)[_getEnteredInvitations]().length
+	        }
+	      }).then(response => {
+	        if (response.data.invitedUserIds.length > 0) {
+	          main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
+	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _inputsRows)[_inputsRows].forEach(inputRow => {
+	          inputRow.clear();
+	        });
+	        inviteButton.setState(null);
+	        if (response.data.firedUserList && response.data.firedUserList.length > 0) {
+	          new RestoreFiredUsersPopup({
+	            userList: response.data.firedUserList,
+	            isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
+	            transport: babelHelpers.classPrivateFieldLooseBase(this, _transport$3)[_transport$3]
+	          }).show();
+	        }
+	      }).catch(reject => {
+	        inviteButton.setState(null);
 	      });
-	      return;
 	    }
-	    const tagSelectorItems = babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup)[_tagSelectorGroup].getDialog().getSelectedItems();
-	    const projectIds = [];
-	    tagSelectorItems.forEach(item => {
-	      const id = parseInt(item.getId(), 10);
-	      projectIds.push(id);
-	    });
-	    const data = {
-	      invitations: items,
-	      workgroupIds: projectIds,
-	      tab: 'email'
-	    };
-	    const analyticsLabel = {
-	      INVITATION_TYPE: 'extranet',
-	      INVITATION_COUNT: items.length
-	    };
-	    main_core_events.EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-	      action: 'extranet',
-	      data,
-	      analyticsLabel
-	    });
-	  }
-	  onInviteSuccess(event) {
-	    var _this$render$querySel;
-	    (_this$render$querySel = this.render().querySelector('form')) == null ? void 0 : _this$render$querySel.reset();
-	  }
-	  getSubmitButtonText() {
-	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
-	  }
+	  });
+	  return inviteButton;
+	}
+	function _getAddButton2(rowsContainer) {
+	  return new ui_buttons.Button({
+	    useAirDesign: true,
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MORE'),
+	    style: ui_buttons.AirButtonStyle.PLAIN_ACCENT,
+	    icon: BX.UI.IconSet.Outline.CIRCLE_PLUS,
+	    props: {
+	      'data-test-id': 'invite-extranet-page-add-more-button'
+	    },
+	    onclick: () => {
+	      const inputsRow = babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory)[_inputsFactory].createInputsRow();
+	      babelHelpers.classPrivateFieldLooseBase(this, _inputsRows)[_inputsRows].push(inputsRow);
+	      inputsRow.renderTo(rowsContainer);
+	    }
+	  });
+	}
+	function _getEnteredInvitations2() {
+	  const result = [];
+	  babelHelpers.classPrivateFieldLooseBase(this, _inputsRows)[_inputsRows].forEach(inputRow => {
+	    if (!inputRow.isEmpty()) {
+	      result.push(inputRow.getValue());
+	    }
+	  });
+	  return result;
 	}
 
-	let _$9 = t => t,
-	  _t$9;
-	var _container$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _inputsFactory$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsFactory");
-	var _tagSelectorGroup$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tagSelectorGroup");
-	var _onClickAddInputRow$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClickAddInputRow");
-	var _departmentControl$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
-	class GroupPage extends Page {
+	let _$6 = t => t,
+	  _t$6;
+	var _popup$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
+	var _onConfirm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onConfirm");
+	var _onCancel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCancel");
+	var _getPopup$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopup");
+	var _getPopupContent$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupContent");
+	var _getConfirmButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getConfirmButton");
+	var _getCancelButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCancelButton");
+	var _getDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDescription");
+	class IntegratorInviteConfirmPopup {
 	  constructor(options) {
-	    super();
-	    Object.defineProperty(this, _container$5, {
+	    Object.defineProperty(this, _getDescription, {
+	      value: _getDescription2
+	    });
+	    Object.defineProperty(this, _getCancelButton$1, {
+	      value: _getCancelButton2$1
+	    });
+	    Object.defineProperty(this, _getConfirmButton, {
+	      value: _getConfirmButton2
+	    });
+	    Object.defineProperty(this, _getPopupContent$2, {
+	      value: _getPopupContent2$2
+	    });
+	    Object.defineProperty(this, _getPopup$2, {
+	      value: _getPopup2$2
+	    });
+	    Object.defineProperty(this, _popup$2, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _inputsFactory$2, {
+	    Object.defineProperty(this, _onConfirm, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _tagSelectorGroup$1, {
+	    Object.defineProperty(this, _onCancel, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _onClickAddInputRow$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _departmentControl$3, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$2)[_inputsFactory$2] = options.inputsFactory instanceof InputRowFactory ? options.inputsFactory : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup$1)[_tagSelectorGroup$1] = options.tagSelectorGroup instanceof ui_entitySelector.TagSelector ? options.tagSelectorGroup : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _onClickAddInputRow$2)[_onClickAddInputRow$2] = main_core.Type.isFunction(options.onClickAddInputRow) ? options.onClickAddInputRow : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3] = options.departmentControl instanceof DepartmentControl ? options.departmentControl : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onConfirm)[_onConfirm] = options.onConfirm;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onCancel)[_onCancel] = options.onCancel;
 	  }
-	  render() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5]) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5];
+	  show() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _getPopup$2)[_getPopup$2]().show();
+	  }
+	}
+	function _getPopup2$2() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup$2))[_popup$2]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_popup$2] = new main_popup.Popup({
+	    id: 'integrator-confirm-invitation-popup',
+	    content: babelHelpers.classPrivateFieldLooseBase(this, _getPopupContent$2)[_getPopupContent$2](),
+	    closeByEsc: true,
+	    closeIcon: true,
+	    closeIconSize: main_popup.CloseIconSize.LARGE,
+	    autoHide: true,
+	    padding: 0,
+	    overlay: {
+	      backgroundColor: 'rgba(0, 32, 78, 0.46)'
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5] = main_core.Tag.render(_t$9 || (_t$9 = _$9`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="invite-with-group-dp-block">
-				<div class="invite-title-container">
-					<div class="invite-title-icon invite-title-icon-message">
-						<div class="ui-icon-set --group"></div>
-					</div>
-					<div class="invite-title-text">
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _popup$2)[_popup$2];
+	}
+	function _getPopupContent2$2() {
+	  return main_core.Tag.render(_t$6 || (_t$6 = _$6`
+			<div class="intranet-invitation-popup">
+				<div class="intranet-invitation-popup__title">
+					<span class="ui-headline --sm">${0}</span>
+				</div>
+				<div class="intranet-invitation-popup__body">
+					<p class="intranet-invitation-description ui-text --sm">
+						${0}
+					</p>
+				</div>
+				<div class="intranet-invitation-popup__footer">
+					<div class="intranet-invitation-popup__footer-button-container">
+						${0}
 						${0}
 					</div>
 				</div>
-				<div class="invite-content-container">
-					<form method="POST" name="INVITE_WITH_GROUP_DP_DIALOG_FORM" class="invite-form-container">
-						<div data-role="rows-container"></div>
-						<div class="invite-form-buttons --border-bottom --pt-3 --mb-17">
-							<span class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-icon-add ui-btn-round" data-role="invite-more">
-								${0}
-							</span>
-						</div>
-						<div class="invite-form-row">
-							<div class="invite-form-col">
-								<div class="invite-content__field-lable">${0}</div>
-								<div data-role="entity-selector-container"></div>
-							</div>
-						</div>
-						<div class="invite-form-row" id="intranet-invitation__department-control-palce">
-						</div>
-					</form>
-				</div>
 			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_GROUP_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MORE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_GROUP_INPUT'));
-	    babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$2)[_inputsFactory$2].renderInputRowsTo(babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5].querySelector('div[data-role="rows-container"]'), 3);
-	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup$1)[_tagSelectorGroup$1].renderTo(babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5].querySelector('[data-role="entity-selector-container"]'));
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3].renderTo(babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5].querySelector('#intranet-invitation__department-control-palce'));
-	    const moreButton = babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5].querySelector("[data-role='invite-more']");
-	    if (main_core.Type.isDomNode(moreButton)) {
-	      main_core.Event.unbindAll(moreButton);
-	      main_core.Event.bind(moreButton, 'click', () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$2)[_inputsFactory$2].renderInputRowTo(babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5].querySelector('div[data-role="rows-container"]'));
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _onClickAddInputRow$2)[_onClickAddInputRow$2]) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _onClickAddInputRow$2)[_onClickAddInputRow$2]();
-	        }
-	      });
+		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_POPUP_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _getDescription)[_getDescription](), babelHelpers.classPrivateFieldLooseBase(this, _getConfirmButton)[_getConfirmButton]().render(), babelHelpers.classPrivateFieldLooseBase(this, _getCancelButton$1)[_getCancelButton$1]().render());
+	}
+	function _getConfirmButton2() {
+	  return new ui_buttons.Button({
+	    id: 'integrator-confirm-invitation-popup-submit-button',
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_YES'),
+	    useAirDesign: true,
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    onclick: () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onConfirm)[_onConfirm]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _getPopup$2)[_getPopup$2]().close();
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5];
-	  }
-	  getAnalyticTab() {
-	    return Analytics.TAB_DEPARTMENT;
-	  }
-	  onSubmit(event) {
-	    var _event$getData;
-	    const formNode = this.render().querySelector('form');
-	    const [items, errorInputData] = babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$2)[_inputsFactory$2].parseEmailAndPhone(formNode);
-	    const errors = [];
-	    if (errorInputData.length > 0) {
-	      errors.push(`${main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_VALIDATE_ERROR')}: ${errorInputData.join(', ')}`);
+	  });
+	}
+	function _getCancelButton2$1() {
+	  return new ui_buttons.Button({
+	    id: 'integrator-confirm-invitation-popup-cancel-button',
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_NO'),
+	    useAirDesign: true,
+	    style: ui_buttons.AirButtonStyle.OUTLINE,
+	    onclick: () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onCancel)[_onCancel]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _getPopup$2)[_getPopup$2]().close();
 	    }
-	    if (items.length <= 0) {
-	      errors.push(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_EMPTY_ERROR'));
-	    }
-	    const context = (_event$getData = event.getData()) == null ? void 0 : _event$getData.context;
-	    if (errors.length > 0) {
-	      main_core_events.EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-	        errors
-	      });
-	      return;
-	    }
-	    const tagSelectorItems = babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup$1)[_tagSelectorGroup$1].getDialog().getSelectedItems();
-	    const projectIds = [];
-	    tagSelectorItems.forEach(item => {
-	      const id = parseInt(item.getId(), 10);
-	      projectIds.push(id);
-	    });
-	    const data = {
-	      invitations: items,
-	      departmentIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3].getValues(),
-	      workgroupIds: projectIds,
-	      tab: 'group'
-	    };
-	    const analyticsLabel = {
-	      INVITATION_TYPE: 'withGroupOrDepartment',
-	      INVITATION_COUNT: items.length
-	    };
-	    main_core_events.EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-	      action: 'inviteWithGroupDp',
-	      data,
-	      analyticsLabel
-	    });
-	  }
-	  onInviteSuccess(event) {
-	    var _this$render$querySel;
-	    (_this$render$querySel = this.render().querySelector('form')) == null ? void 0 : _this$render$querySel.reset();
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3].reset();
-	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup$1)[_tagSelectorGroup$1].removeTags();
-	  }
-	  getSubmitButtonText() {
-	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
-	  }
+	  });
+	}
+	function _getDescription2() {
+	  return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_DESCRIPTION_MSGVER_1', {
+	    '[LINK]': '<a href="javascript:top.BX.Helper.show(\'redirect=detail&code=20682986\')" class="ui-link ui-link-secondary ui-link-dashed ui-text --sm">',
+	    '[/LINK]': '</a>'
+	  });
 	}
 
-	let _$a = t => t,
-	  _t$a,
-	  _t2$3;
-	var _container$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	let _$7 = t => t,
+	  _t$7,
+	  _t2$4;
+	var _container$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _emailInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emailInput");
+	var _transport$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
+	var _inviteButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inviteButton");
+	var _confirmPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("confirmPopup");
+	var _renderDescription$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDescription");
+	var _getEmailInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmailInput");
+	var _getInviteButton$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInviteButton");
+	var _getConfirmPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getConfirmPopup");
 	class IntegratorPage extends Page {
 	  constructor(options) {
 	    super();
-	    Object.defineProperty(this, _container$6, {
+	    Object.defineProperty(this, _getConfirmPopup, {
+	      value: _getConfirmPopup2
+	    });
+	    Object.defineProperty(this, _getInviteButton$2, {
+	      value: _getInviteButton2$2
+	    });
+	    Object.defineProperty(this, _getEmailInput, {
+	      value: _getEmailInput2
+	    });
+	    Object.defineProperty(this, _renderDescription$1, {
+	      value: _renderDescription2$1
+	    });
+	    Object.defineProperty(this, _container$4, {
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _emailInput, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _transport$4, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _inviteButton, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _confirmPopup, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport$4)[_transport$4] = options.transport;
 	  }
 	  render() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6]) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6];
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4]) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4];
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6] = main_core.Tag.render(_t$a || (_t$a = _$a`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="integrator-block">
-				<form method="POST" name="INTEGRATOR_DIALOG_FORM">
-					<div class="invite-title-container">
-						<div class="invite-title-icon invite-title-icon-mass">
-							<div class="ui-icon-set --persons-3"></div>
-						</div>
-					<div class="invite-title-text">${0}</div>
-					<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=7725333');"></div>
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4] = main_core.Tag.render(_t$7 || (_t$7 = _$7`
+			<div class="intranet-invitation-block">
+				<div class="intranet-invitation-block__content">
+					<div class="intranet-invitation-block__header">
+						${0}
 					</div>
-					<div class="invite-content-container">
-						<div class="invite-form-container">
-							<div data-role="rows-container">
-								<div class="invite-form-row">
-									<div class="invite-form-col">
-										<div class="invite-content__field-lable">${0}</div>
-										<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-											<input 
-												type="text" 
-												class="ui-ctl-element" 
-												value="" 
-												maxlength="50"
-												name="integrator_email" 
-												id="integrator_email" 
-												placeholder="${0}"
-											/>
-											<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
+					<div class="intranet-invitation-block__body">
+						${0}
 					</div>
-				</form>
+					<div class="intranet-invitation-block__footer">
+						${0}
+					</div>
+				</div>
 			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_SECTION'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER'));
-	    const input = babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6].querySelector('input');
-	    const closeIcon = input.nextElementSibling;
-	    main_core.Event.bind(input, 'input', () => {
-	      main_core.Dom.style(closeIcon, 'display', input.value === '' ? 'none' : 'block');
-	    });
-	    main_core.Event.bind(closeIcon, 'click', event => {
-	      event.preventDefault();
-	      main_core.Dom.style(closeIcon, 'display', 'none');
-	    });
-	    return babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6];
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderDescription$1)[_renderDescription$1](), babelHelpers.classPrivateFieldLooseBase(this, _getEmailInput)[_getEmailInput]().render(), babelHelpers.classPrivateFieldLooseBase(this, _getInviteButton$2)[_getInviteButton$2]().render());
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4];
 	  }
 	  getAnalyticTab() {
 	    return Analytics.TAB_INTEGRATOR;
 	  }
-	  onSubmit(event) {
-	    const formNode = this.render().querySelector('form');
-	    const data = {
-	      integrator_email: formNode.integrator_email.value
-	    };
-	    const analyticsLabel = {
-	      INVITATION_TYPE: 'integrator'
-	    };
-	    const message = main_core.Tag.render(_t2$3 || (_t2$3 = _$a`
-			<div class="invite-integrator-confirm-message">
-				${0}
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_DESCRIPTION'));
-	    const moreLink = message.querySelector('span');
-	    main_core.Event.bind(moreLink, 'click', () => {
-	      top.BX.Helper.show('redirect=detail&code=20682986');
-	    });
-	    const request = {
-	      action: 'inviteIntegrator',
-	      data,
-	      analyticsLabel
-	    };
-	    const popup = new main_popup.Popup({
-	      id: 'integrator-confirm-invitation-popup',
-	      maxWidth: 500,
-	      closeIcon: false,
-	      overlay: true,
-	      contentPadding: 10,
-	      titleBar: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_POPUP_TITLE'),
-	      content: message,
-	      offsetLeft: 100,
-	      buttons: [new ui_buttons.CreateButton({
-	        text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_YES'),
-	        onclick: () => {
-	          var _event$getData;
-	          const context = (_event$getData = event.getData()) == null ? void 0 : _event$getData.context;
-	          main_core_events.EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', request);
-	          popup.close();
-	        }
-	      }), new ui_buttons.CancelButton({
-	        text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_NO'),
-	        onclick: () => {
-	          popup.close();
-	        }
-	      })],
-	      events: {
-	        onClose: () => {
-	          popup.destroy();
-	        }
+	}
+	function _renderDescription2$1() {
+	  const message = main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_POPUP_DESCRIPTION', {
+	    '[LINK]': '<a href="javascript:top.BX.Helper.show(\'redirect=detail&code=7725333\')" class="ui-link ui-link-secondary ui-link-dashed ui-text --md">',
+	    '[/LINK]': '</a>'
+	  });
+	  return main_core.Tag.render(_t2$4 || (_t2$4 = _$7`
+			<p class="intranet-invitation-description ui-text --md">${0}</p>
+		`), message);
+	}
+	function _getEmailInput2() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _emailInput))[_emailInput]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_emailInput] = new ui_system_input.Input({
+	    label: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER'),
+	    design: ui_system_input.InputDesign.Grey
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _emailInput)[_emailInput];
+	}
+	function _getInviteButton2$2() {
+	  var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	  (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _inviteButton))[_inviteButton]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[_inviteButton] = new ui_buttons.Button({
+	    useAirDesign: true,
+	    text: main_core.Loc.getMessage('BX24_INVITE_DIALOG_BUTTON_INVITE'),
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    props: {
+	      'data-test-id': 'invite-integrator-page-submit-button'
+	    },
+	    onclick: () => {
+	      var _babelHelpers$classPr5, _babelHelpers$classPr6;
+	      if ((_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _inviteButton)[_inviteButton]) != null && _babelHelpers$classPr5.isWaiting()) {
+	        return;
 	      }
-	    });
-	    popup.show();
-	  }
-	  getSubmitButtonText() {
-	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
-	  }
-	  onInviteSuccess(event) {
-	    var _this$render$querySel;
-	    (_this$render$querySel = this.render().querySelector('form')) == null ? void 0 : _this$render$querySel.reset();
-	  }
+	      (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _inviteButton)[_inviteButton]) == null ? void 0 : _babelHelpers$classPr6.setState(ui_buttons.ButtonState.WAITING);
+	      babelHelpers.classPrivateFieldLooseBase(this, _getConfirmPopup)[_getConfirmPopup]().show();
+	    }
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _inviteButton)[_inviteButton];
+	}
+	function _getConfirmPopup2() {
+	  var _babelHelpers$classPr7, _babelHelpers$classPr8;
+	  (_babelHelpers$classPr8 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _confirmPopup))[_confirmPopup]) != null ? _babelHelpers$classPr8 : _babelHelpers$classPr7[_confirmPopup] = new IntegratorInviteConfirmPopup({
+	    onConfirm: () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _transport$4)[_transport$4].sendAction({
+	        action: 'intranet.v2.Integrator.Invitation.send',
+	        data: {
+	          integratorEmail: babelHelpers.classPrivateFieldLooseBase(this, _getEmailInput)[_getEmailInput]().getValue()
+	        },
+	        analytics: {
+	          INVITATION_TYPE: 'integrator'
+	        }
+	      }, reject => {
+	        var _babelHelpers$classPr9;
+	        (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _inviteButton)[_inviteButton]) == null ? void 0 : _babelHelpers$classPr9.setState(null);
+	        babelHelpers.classPrivateFieldLooseBase(this, _transport$4)[_transport$4].onError(reject);
+	      }).then(() => {
+	        var _babelHelpers$classPr10;
+	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
+	        (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _inviteButton)[_inviteButton]) == null ? void 0 : _babelHelpers$classPr10.setState(null);
+	      }).catch(reject => {
+	        top.console.error(reject);
+	      });
+	    },
+	    onCancel: () => {
+	      var _babelHelpers$classPr11;
+	      (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _inviteButton)[_inviteButton]) == null ? void 0 : _babelHelpers$classPr11.setState(null);
+	    }
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _confirmPopup)[_confirmPopup];
 	}
 
-	var _container$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _isEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEnabled");
-	var _analytics$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
-	var _transport$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
-	var _departmentControl$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
-	var _page = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("page");
-	var _previousSwitcherState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previousSwitcherState");
-	var _previousConfirmCheckboxState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("previousConfirmCheckboxState");
-	var _applySettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applySettings");
-	var _restoreSwitcherState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restoreSwitcherState");
-	var _restoreConfirmCheckboxState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restoreConfirmCheckboxState");
-	class SelfRegister {
-	  constructor(options) {
-	    var _babelHelpers$classPr, _confirmCheckbox$chec;
-	    Object.defineProperty(this, _restoreConfirmCheckboxState, {
-	      value: _restoreConfirmCheckboxState2
-	    });
-	    Object.defineProperty(this, _restoreSwitcherState, {
-	      value: _restoreSwitcherState2
-	    });
-	    Object.defineProperty(this, _applySettings, {
-	      value: _applySettings2
-	    });
-	    Object.defineProperty(this, _container$7, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isEnabled, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _analytics$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _transport$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _departmentControl$4, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _page, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _previousSwitcherState, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _previousConfirmCheckboxState, {
-	      writable: true,
-	      value: false
-	    });
-	    this.confirmationPopup = null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7] = options.container;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isEnabled)[_isEnabled] = options.isSelfRegisterEnabled;
-	    babelHelpers.classPrivateFieldLooseBase(this, _analytics$2)[_analytics$2] = options.analytics;
-	    babelHelpers.classPrivateFieldLooseBase(this, _transport$1)[_transport$1] = options.transport;
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$4)[_departmentControl$4] = options.departmentControl;
-	    babelHelpers.classPrivateFieldLooseBase(this, _page)[_page] = options.page;
-	    babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] = babelHelpers.classPrivateFieldLooseBase(this, _isEnabled)[_isEnabled];
-	    const _confirmCheckbox = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7]) == null ? void 0 : _babelHelpers$classPr.querySelector("[data-role='allowRegisterConfirm']");
-	    babelHelpers.classPrivateFieldLooseBase(this, _previousConfirmCheckboxState)[_previousConfirmCheckboxState] = (_confirmCheckbox$chec = _confirmCheckbox == null ? void 0 : _confirmCheckbox.checked) != null ? _confirmCheckbox$chec : false;
-	    if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7])) {
-	      this.bindActions();
-	      const switcherNode = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector('.invite-dialog-fast-reg-control-switcher');
-	      this.switcher = new ui_switcher.Switcher({
-	        inputName: 'allow_register',
-	        id: 'allow_register',
-	        checked: babelHelpers.classPrivateFieldLooseBase(this, _isEnabled)[_isEnabled],
-	        node: switcherNode,
-	        size: ui_switcher.SwitcherSize.small,
-	        handlers: {
-	          toggled: this.toggleSettings.bind(this)
-	        }
-	      });
-	    }
-	    const generateLinkBtnNode = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfRegenerateSecretButton']");
-	    this.generateLinkHint = null;
-	    main_core.Event.bind(generateLinkBtnNode, 'mouseover', event => {
-	      this.generateLinkHint = this.showHintPopup(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_WARNING_MSGVER_1'), generateLinkBtnNode);
-	    });
-	    main_core.Event.bind(generateLinkBtnNode, 'mouseout', () => {
-	      var _this$generateLinkHin;
-	      (_this$generateLinkHin = this.generateLinkHint) == null ? void 0 : _this$generateLinkHin.destroy();
-	      this.generateLinkHint = null;
-	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:confirmShutdown', event => {
-	      const data = event.getData();
-	      this.showNotificationPopup(data);
-	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Navigation:onBeforeChangePage', () => {
-	      var _this$confirmationPop;
-	      (_this$confirmationPop = this.confirmationPopup) == null ? void 0 : _this$confirmationPop.close();
-	      babelHelpers.classPrivateFieldLooseBase(this, _restoreConfirmCheckboxState)[_restoreConfirmCheckboxState]();
-	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onSendDataSuccess', () => {
-	      var _babelHelpers$classPr2, _currentConfirmCheckb;
-	      const currentConfirmCheckbox = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7]) == null ? void 0 : _babelHelpers$classPr2.querySelector("[data-role='allowRegisterConfirm']");
-	      babelHelpers.classPrivateFieldLooseBase(this, _previousConfirmCheckboxState)[_previousConfirmCheckboxState] = (_currentConfirmCheckb = currentConfirmCheckbox == null ? void 0 : currentConfirmCheckbox.checked) != null ? _currentConfirmCheckb : false;
-	    });
-	  }
-	  bindActions() {
-	    const regenerateButton = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfRegenerateSecretButton']");
-	    if (main_core.Type.isDomNode(regenerateButton)) {
-	      main_core.Event.bind(regenerateButton, 'click', () => {
-	        this.regenerateSecret();
-	      });
-	    }
-	    const copyRegisterUrlButton = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='copyRegisterUrlButton']");
-	    if (main_core.Type.isDomNode(copyRegisterUrlButton)) {
-	      main_core.Event.bind(copyRegisterUrlButton, 'click', () => {
-	        this.copyRegisterUrl();
-	      });
-	    }
-	    const allowRegisterConfirm = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='allowRegisterConfirm']");
-	    if (main_core.Type.isDomNode(allowRegisterConfirm)) {
-	      main_core.Event.bind(allowRegisterConfirm, 'change', () => {
-	        var _BX, _BX$Intranet, _BX$Intranet$Invitati, _BX2, _BX2$Intranet, _BX2$Intranet$Invitat;
-	        (_BX = BX) == null ? void 0 : (_BX$Intranet = _BX.Intranet) == null ? void 0 : (_BX$Intranet$Invitati = _BX$Intranet.Invitation) == null ? void 0 : _BX$Intranet$Invitati.Form.submitButton.enable();
-	        babelHelpers.classPrivateFieldLooseBase(this, _page)[_page].setButtonState(SubmitButton.ENABLED_STATE);
-	        this.toggleWhiteList(allowRegisterConfirm);
-	        (_BX2 = BX) == null ? void 0 : (_BX2$Intranet = _BX2.Intranet) == null ? void 0 : (_BX2$Intranet$Invitat = _BX2$Intranet.Invitation) == null ? void 0 : _BX2$Intranet$Invitat.Form.changeStateOfButtonPanel('show');
-	      });
-	    }
-	    const selfWhiteList = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfWhiteList']");
-	    if (main_core.Type.isDomNode(selfWhiteList)) {
-	      main_core.Event.bind(selfWhiteList, 'input', () => {
-	        var _BX3, _BX3$Intranet, _BX3$Intranet$Invitat, _BX4, _BX4$Intranet, _BX4$Intranet$Invitat;
-	        babelHelpers.classPrivateFieldLooseBase(this, _page)[_page].setButtonState(SubmitButton.ENABLED_STATE);
-	        (_BX3 = BX) == null ? void 0 : (_BX3$Intranet = _BX3.Intranet) == null ? void 0 : (_BX3$Intranet$Invitat = _BX3$Intranet.Invitation) == null ? void 0 : _BX3$Intranet$Invitat.Form.submitButton.enable();
-	        (_BX4 = BX) == null ? void 0 : (_BX4$Intranet = _BX4.Intranet) == null ? void 0 : (_BX4$Intranet$Invitat = _BX4$Intranet.Invitation) == null ? void 0 : _BX4$Intranet$Invitat.Form.changeStateOfButtonPanel('show');
-	      });
-	    }
-	  }
-	  regenerateSecret() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _transport$1)[_transport$1].send({
-	      action: 'self',
-	      data: {
-	        allow_register_secret: main_core.Text.getRandom(8)
-	      }
-	    }).then(response => {
-	      top.BX.UI.Notification.Center.notify({
-	        content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'),
-	        autoHideDelay: 2500,
-	        useAirDesign: true
-	      });
-	    }, response => {
-	      top.BX.UI.Notification.Center.notify({
-	        content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'),
-	        autoHideDelay: 2500,
-	        useAirDesign: true
-	      });
-	    });
-	  }
-	  copyRegisterUrl() {
-	    const copyBtnNode = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='copyRegisterUrlButton']");
-	    if (main_core.Dom.hasClass(copyBtnNode, 'ui-btn-wait')) {
-	      return;
-	    }
-	    main_core.Dom.addClass(copyBtnNode, 'ui-btn-wait');
-	    babelHelpers.classPrivateFieldLooseBase(this, _transport$1)[_transport$1].send({
-	      action: 'getInviteLink',
-	      data: {
-	        departmentsId: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$4)[_departmentControl$4].getValues()
-	      }
-	    }).then(response => {
-	      var _response$data;
-	      main_core.Dom.removeClass(copyBtnNode, 'ui-btn-wait');
-	      const invitationUrl = (_response$data = response.data) == null ? void 0 : _response$data.invitationLink;
-	      if (main_core.Type.isStringFilled(invitationUrl)) {
-	        this.copyToClipboard(invitationUrl).then(r => {
-	          top.BX.UI.Notification.Center.notify({
-	            content: main_core.Loc.getMessage('BX24_INVITE_DIALOG_COPY_URL'),
-	            autoHideDelay: 2500,
-	            useAirDesign: true
-	          });
-	        }).catch(e => {
-	          console.log(e);
-	        });
-	        babelHelpers.classPrivateFieldLooseBase(this, _analytics$2)[_analytics$2].send();
-	      }
-	    }, response => {
-	      main_core.Dom.removeClass(copyBtnNode, 'ui-btn-wait');
-	    });
-	  }
-	  async copyToClipboard(textToCopy) {
-	    var _BX$clipboard;
-	    if (!main_core.Type.isString(textToCopy)) {
-	      return Promise.reject();
-	    }
-
-	    // navigator.clipboard defined only if window.isSecureContext === true
-	    // so or https should be activated, or localhost address
-	    if (window.isSecureContext && navigator.clipboard) {
-	      // safari not allowed clipboard manipulation as result of ajax request
-	      // so timeout is hack for this, to prevent "not have permission"
-	      return new Promise((resolve, reject) => {
-	        setTimeout(() => navigator.clipboard.writeText(textToCopy).then(() => resolve()).catch(e => reject(e)), 0);
-	      });
-	    }
-	    return (_BX$clipboard = BX.clipboard) != null && _BX$clipboard.copy(textToCopy) ? Promise.resolve() : Promise.reject();
-	  }
-	  showHintPopup(message, bindNode) {
-	    if (!main_core.Type.isDomNode(bindNode) || !message) {
-	      return;
-	    }
-	    const popup = new BX.PopupWindow('inviteHint' + main_core.Text.getRandom(8), bindNode, {
-	      content: message,
-	      zIndex: 15000,
-	      angle: true,
-	      offsetTop: 0,
-	      offsetLeft: 50,
-	      closeIcon: false,
-	      autoHide: true,
-	      darkMode: true,
-	      overlay: false,
-	      maxWidth: 400,
-	      events: {
-	        onAfterPopupShow() {
-	          setTimeout(() => {
-	            this.close();
-	          }, 4000);
-	        }
-	      }
-	    });
-	    popup.show();
-	    return popup;
-	  }
-	  showNotificationPopup(data) {
-	    const popup = new BX.PopupWindow({
-	      className: 'confirm-self-register',
-	      titleBar: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_TITLE'),
-	      content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_TEXT'),
-	      width: 364,
-	      height: 188,
-	      closeIcon: true,
-	      buttons: [new BX.UI.Button({
-	        text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_OK'),
-	        color: BX.UI.Button.Color.PRIMARY,
-	        round: true,
-	        onclick: () => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] = this.switcher.checked;
-	          main_core_events.EventEmitter.emit(data.page, 'BX.Intranet.Invitation:submit', {
-	            context: data.context,
-	            isConfirm: true
-	          });
-	          popup.close();
-	        }
-	      }), new BX.UI.Button({
-	        text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_CANCEL'),
-	        round: true,
-	        color: BX.UI.Button.Color.LIGHT_BORDER,
-	        onclick: () => {
-	          popup.close();
-	        }
-	      })],
-	      events: {
-	        onClose: (restoreState = true) => {
-	          if (restoreState) {
-	            babelHelpers.classPrivateFieldLooseBase(this, _restoreSwitcherState)[_restoreSwitcherState]();
-	          }
-	          main_core_events.EventEmitter.emit('BX.Intranet.Invitation:onSubmitReady');
-	          this.confirmationPopup = null;
-	          popup.destroy();
-	        }
-	      }
-	    });
-	    this.confirmationPopup = popup;
-	    popup.show();
-	  }
-	  toggleSettings() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] === this.switcher.checked) {
-	      var _this$confirmationPop2;
-	      (_this$confirmationPop2 = this.confirmationPopup) == null ? void 0 : _this$confirmationPop2.close();
-	      return;
-	    }
-	    if (this.switcher.checked === true) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] = true;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _applySettings)[_applySettings]();
-	  }
-	  toggleWhiteList(inputElement) {
-	    const selfWhiteList = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfWhiteList']");
-	    if (main_core.Type.isDomNode(selfWhiteList)) {
-	      main_core.Dom.style(selfWhiteList, 'display', inputElement.checked ? 'block' : 'none');
-	    }
-	  }
-	}
-	function _applySettings2() {
-	  var _BX5, _BX5$Intranet, _BX5$Intranet$Invitat, _BX6, _BX6$Intranet, _BX6$Intranet$Invitat, _BX7, _BX7$Intranet, _BX7$Intranet$Invitat;
-	  (_BX5 = BX) == null ? void 0 : (_BX5$Intranet = _BX5.Intranet) == null ? void 0 : (_BX5$Intranet$Invitat = _BX5$Intranet.Invitation) == null ? void 0 : _BX5$Intranet$Invitat.Form.submitButton.enable();
-	  babelHelpers.classPrivateFieldLooseBase(this, _page)[_page].setButtonState(SubmitButton.ENABLED_STATE);
-	  const controlBlock = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector('.js-invite-dialog-fast-reg-control-container');
-	  if (main_core.Type.isDomNode(controlBlock)) {
-	    main_core.Dom.toggleClass(controlBlock, 'disallow-registration');
-	  }
-	  const settingsBlock = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector('[data-role=\'selfSettingsBlock\']');
-	  if (main_core.Type.isDomNode(settingsBlock)) {
-	    main_core.Dom.style(settingsBlock, 'display', this.switcher.checked ? 'block' : 'none');
-	  }
-	  (_BX6 = BX) == null ? void 0 : (_BX6$Intranet = _BX6.Intranet) == null ? void 0 : (_BX6$Intranet$Invitat = _BX6$Intranet.Invitation) == null ? void 0 : _BX6$Intranet$Invitat.Form.handleSubmitClick();
-	  (_BX7 = BX) == null ? void 0 : (_BX7$Intranet = _BX7.Intranet) == null ? void 0 : (_BX7$Intranet$Invitat = _BX7$Intranet.Invitation) == null ? void 0 : _BX7$Intranet$Invitat.Form.changeStateOfButtonPanel('hide');
-	}
-	function _restoreSwitcherState2() {
-	  this.switcher.check(babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState], false);
-	  const controlBlock = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector('.js-invite-dialog-fast-reg-control-container');
-	  if (main_core.Type.isDomNode(controlBlock)) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] === true) {
-	      main_core.Dom.removeClass(controlBlock, 'disallow-registration');
-	    } else {
-	      main_core.Dom.addClass(controlBlock, 'disallow-registration');
-	    }
-	  }
-	  const settingsBlock = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfSettingsBlock']");
-	  if (main_core.Type.isDomNode(settingsBlock)) {
-	    main_core.Dom.style(settingsBlock, 'display', babelHelpers.classPrivateFieldLooseBase(this, _previousSwitcherState)[_previousSwitcherState] ? 'block' : 'none');
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _restoreConfirmCheckboxState)[_restoreConfirmCheckboxState]();
-	}
-	function _restoreConfirmCheckboxState2() {
-	  var _babelHelpers$classPr3;
-	  const confirmCheckbox = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7]) == null ? void 0 : _babelHelpers$classPr3.querySelector("[data-role='allowRegisterConfirm']");
-	  if (main_core.Type.isDomNode(confirmCheckbox)) {
-	    confirmCheckbox.checked = babelHelpers.classPrivateFieldLooseBase(this, _previousConfirmCheckboxState)[_previousConfirmCheckboxState];
-	    this.toggleWhiteList(confirmCheckbox);
-	  }
-	}
-
-	let _$b = t => t,
-	  _t$b,
-	  _t2$4,
-	  _t3$2,
+	let _$8 = t => t,
+	  _t$8,
+	  _t2$5,
+	  _t3$1,
 	  _t4$1,
 	  _t5$1,
-	  _t6$1,
-	  _t7;
-	var _container$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _isAdmin$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdmin");
+	  _t6$1;
+	var _optionsPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("optionsPopup");
+	var _linkRegisterEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkRegisterEnabled");
+	var _needConfirmRegistration$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needConfirmRegistration");
 	var _isCloud = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCloud");
-	var _fastRegistrationAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fastRegistrationAvailable");
-	var _needConfirmRegistration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needConfirmRegistration");
-	var _wishlist = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wishlist");
-	var _departmentControl$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
-	var _linkRegisterEnabled$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkRegisterEnabled");
+	var _allowRegisterWhiteList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("allowRegisterWhiteList");
+	var _transport$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
+	var _whitelist = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("whitelist");
+	var _confirmRegistrationSwitcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("confirmRegistrationSwitcher");
+	var _allowInviteWithLinkSwitcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("allowInviteWithLinkSwitcher");
+	var _onDisable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDisable");
+	var _saveButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveButton");
 	var _analytics$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
-	var _transport$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
-	var _btnState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("btnState");
-	var _renderCopyBtnDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCopyBtnDescription");
-	var _renderUpdateLinkBtn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderUpdateLinkBtn");
-	var _renderFastRegistrationSwitcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderFastRegistrationSwitcher");
-	var _renderConfirmRegistrationCheckbox = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderConfirmRegistrationCheckbox");
-	var _renderWhiteListField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderWhiteListField");
-	var _renderWarningContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderWarningContainer");
-	class LinkPage extends Page {
+	var _getPopup$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopup");
+	var _getPopupContent$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupContent");
+	var _renderRegenerateSecretButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderRegenerateSecretButton");
+	var _getSaveButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSaveButton");
+	var _getCancelButton$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCancelButton");
+	var _getAllowInviteWithLinkSwitcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAllowInviteWithLinkSwitcher");
+	var _getAllowRegisterWhiteList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAllowRegisterWhiteList");
+	var _getConfirmRegistrationSwitcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getConfirmRegistrationSwitcher");
+	var _resetOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetOptions");
+	var _regenerateSecret = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("regenerateSecret");
+	var _onAllowRegisterWhiteListInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onAllowRegisterWhiteListInput");
+	var _addDefaultChips = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addDefaultChips");
+	var _addChip = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addChip");
+	var _isValidDomain = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValidDomain");
+	class LinkOptionsPopup {
 	  constructor(options) {
-	    super();
-	    Object.defineProperty(this, _renderWarningContainer, {
-	      value: _renderWarningContainer2
+	    Object.defineProperty(this, _isValidDomain, {
+	      value: _isValidDomain2
 	    });
-	    Object.defineProperty(this, _renderWhiteListField, {
-	      value: _renderWhiteListField2
+	    Object.defineProperty(this, _addChip, {
+	      value: _addChip2
 	    });
-	    Object.defineProperty(this, _renderConfirmRegistrationCheckbox, {
-	      value: _renderConfirmRegistrationCheckbox2
+	    Object.defineProperty(this, _addDefaultChips, {
+	      value: _addDefaultChips2
 	    });
-	    Object.defineProperty(this, _renderFastRegistrationSwitcher, {
-	      value: _renderFastRegistrationSwitcher2
+	    Object.defineProperty(this, _onAllowRegisterWhiteListInput, {
+	      value: _onAllowRegisterWhiteListInput2
 	    });
-	    Object.defineProperty(this, _renderUpdateLinkBtn, {
-	      value: _renderUpdateLinkBtn2
+	    Object.defineProperty(this, _regenerateSecret, {
+	      value: _regenerateSecret2
 	    });
-	    Object.defineProperty(this, _renderCopyBtnDescription, {
-	      value: _renderCopyBtnDescription2
+	    Object.defineProperty(this, _resetOptions, {
+	      value: _resetOptions2
 	    });
-	    Object.defineProperty(this, _container$8, {
+	    Object.defineProperty(this, _getConfirmRegistrationSwitcher, {
+	      value: _getConfirmRegistrationSwitcher2
+	    });
+	    Object.defineProperty(this, _getAllowRegisterWhiteList, {
+	      value: _getAllowRegisterWhiteList2
+	    });
+	    Object.defineProperty(this, _getAllowInviteWithLinkSwitcher, {
+	      value: _getAllowInviteWithLinkSwitcher2
+	    });
+	    Object.defineProperty(this, _getCancelButton$2, {
+	      value: _getCancelButton2$2
+	    });
+	    Object.defineProperty(this, _getSaveButton, {
+	      value: _getSaveButton2
+	    });
+	    Object.defineProperty(this, _renderRegenerateSecretButton, {
+	      value: _renderRegenerateSecretButton2
+	    });
+	    Object.defineProperty(this, _getPopupContent$3, {
+	      value: _getPopupContent2$3
+	    });
+	    Object.defineProperty(this, _getPopup$3, {
+	      value: _getPopup2$3
+	    });
+	    Object.defineProperty(this, _optionsPopup, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _isAdmin$1, {
+	    Object.defineProperty(this, _linkRegisterEnabled, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _needConfirmRegistration$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2280,23 +1889,31 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _fastRegistrationAvailable, {
+	    Object.defineProperty(this, _allowRegisterWhiteList, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _needConfirmRegistration, {
+	    Object.defineProperty(this, _transport$5, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _wishlist, {
+	    Object.defineProperty(this, _whitelist, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _departmentControl$5, {
+	    Object.defineProperty(this, _confirmRegistrationSwitcher, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _linkRegisterEnabled$2, {
+	    Object.defineProperty(this, _allowInviteWithLinkSwitcher, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _onDisable, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _saveButton, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2304,453 +1921,311 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _transport$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _btnState, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] = options.isAdmin === true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isCloud)[_isCloud] = options.isCloud === true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _fastRegistrationAvailable)[_fastRegistrationAvailable] = options.fastRegistrationAvailable === true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration)[_needConfirmRegistration] = options.needConfirmRegistration === true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _wishlist)[_wishlist] = main_core.Type.isStringFilled(options.wishlist) ? options.wishlist : '';
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$5)[_departmentControl$5] = options.departmentControl instanceof DepartmentControl ? options.departmentControl : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled$2)[_linkRegisterEnabled$2] = options.linkRegisterEnabled;
+	    babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled)[_linkRegisterEnabled] = options.linkRegisterEnabled;
+	    babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration$1)[_needConfirmRegistration$1] = options.needConfirmRegistration;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isCloud)[_isCloud] = options.isCloud;
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport$5)[_transport$5] = options.transport;
+	    babelHelpers.classPrivateFieldLooseBase(this, _whitelist)[_whitelist] = options.whiteList;
+	    babelHelpers.classPrivateFieldLooseBase(this, _onDisable)[_onDisable] = options.onDisable;
 	    babelHelpers.classPrivateFieldLooseBase(this, _analytics$3)[_analytics$3] = options.analytics;
-	    babelHelpers.classPrivateFieldLooseBase(this, _transport$2)[_transport$2] = options.transport;
-	    babelHelpers.classPrivateFieldLooseBase(this, _btnState)[_btnState] = SubmitButton.DISABLED_STATE;
 	  }
-	  render() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8]) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8];
+	  show() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _getPopup$3)[_getPopup$3]().show();
+	  }
+	}
+	function _getPopup2$3() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _optionsPopup))[_optionsPopup]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_optionsPopup] = new main_popup.Popup({
+	    id: 'intranet-invitation-link-options-popup',
+	    content: babelHelpers.classPrivateFieldLooseBase(this, _getPopupContent$3)[_getPopupContent$3](),
+	    closeByEsc: true,
+	    closeIcon: true,
+	    closeIconSize: main_popup.CloseIconSize.LARGE,
+	    autoHide: true,
+	    padding: 0,
+	    overlay: {
+	      backgroundColor: 'rgba(0, 32, 78, 0.46)'
+	    },
+	    events: {
+	      onClose: babelHelpers.classPrivateFieldLooseBase(this, _resetOptions)[_resetOptions].bind(this)
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8] = main_core.Tag.render(_t$b || (_t$b = _$b`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="self-block">
-				<div class="invite-title-container">
-					<div class="invite-title-icon invite-title-icon-link">
-						<div class="ui-icon-set --link-3"></div>
-					</div>
-					<div class="invite-title-text">${0}</div>
-					<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=6546149');"></div>
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _optionsPopup)[_optionsPopup];
+	}
+	function _getPopupContent2$3() {
+	  const allowInviteWithLinkSwitcherContainer = main_core.Tag.render(_t$8 || (_t$8 = _$8`
+			<div class="intranet-invitation-popup__switcher">
+				<div class="intranet-invitation-popup__switcher-header">
+					${0}
+					<span class="intranet-invitation-popup__switcher-title">${0}</span>
 				</div>
-				<form method="POST" name="SELF_DIALOG_FORM">
+				<div class="intranet-invitation-popup__switcher-description">${0}</div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getAllowInviteWithLinkSwitcher)[_getAllowInviteWithLinkSwitcher]().getNode(), main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK'), main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK_HINT'));
+	  const confirmRegistrationSwitcherContainer = main_core.Tag.render(_t2$5 || (_t2$5 = _$8`
+			<div class="intranet-invitation-popup__switcher">
+				<div class="intranet-invitation-popup__switcher-header">
 					${0}
-					<div class="invite-content-container --department-bg">
-						<div class="invite-form-container">
-							<div 
-								style="border-top: none; ${0}" 
-								data-role="selfSettingsBlock" 
-								id="intranet-dialog-tab-content-self-block" 
-								class="invite-dialog-inv-link-block"
-							>
-								<div id="invitation-department-status" class="invitation-department__status"></div>
-								<div>
-									${0}
-									<div class="intranet-invitation__link-department-control"></div>
-									<div class="invite-form-container-reg-row">
-										<span class="ui-btn ui-btn-primary ui-btn-themes ui-btn-icon-copy invite-form-btn-copy" data-role="copyRegisterUrlButton">
-											${0}
-										</span>
-										${0}
-									</div>
-									${0}
-									${0}
-								</div>
-							</div>
-						</div>
+					<span class="intranet-invitation-popup__switcher-title">${0}</span>
+				</div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getConfirmRegistrationSwitcher)[_getConfirmRegistrationSwitcher]().getNode(), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TYPE'));
+	  const optionsContainer = main_core.Tag.render(_t3$1 || (_t3$1 = _$8`
+			<div class="intranet-invitation-popup__body --divided">
+				<div class="intranet-invitation-popup__item">
+					${0}
+				</div>
+			</div>
+		`), allowInviteWithLinkSwitcherContainer);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isCloud)[_isCloud]) {
+	    main_core.Dom.append(main_core.Tag.render(_t4$1 || (_t4$1 = _$8`
+				<div class="intranet-invitation-popup__item">
+					${0}
+					${0}
+				</div>
+			`), confirmRegistrationSwitcherContainer, babelHelpers.classPrivateFieldLooseBase(this, _getAllowRegisterWhiteList)[_getAllowRegisterWhiteList]().render()), optionsContainer);
+	  }
+	  return main_core.Tag.render(_t5$1 || (_t5$1 = _$8`
+			<div class="intranet-invitation-popup">
+				<div class="intranet-invitation-popup__title">
+					<span class="ui-headline --sm">${0}</span>
+				</div>
+				${0}
+				<div class="intranet-invitation-popup__footer">
+					<div class="intranet-invitation-popup__footer-button-container">
+						${0}
+						${0}
 					</div>
-				</form>
-				${0}
+					${0}
+				</div>
 			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] ? babelHelpers.classPrivateFieldLooseBase(this, _renderFastRegistrationSwitcher)[_renderFastRegistrationSwitcher]() : '', babelHelpers.classPrivateFieldLooseBase(this, _fastRegistrationAvailable)[_fastRegistrationAvailable] ? '' : 'display: none;', babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] ? '' : babelHelpers.classPrivateFieldLooseBase(this, _renderCopyBtnDescription)[_renderCopyBtnDescription](), main_core.Loc.getMessage('BX24_INVITE_DIALOG_COPY_LINK'), babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] ? babelHelpers.classPrivateFieldLooseBase(this, _renderUpdateLinkBtn)[_renderUpdateLinkBtn]() : '', babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] && babelHelpers.classPrivateFieldLooseBase(this, _isCloud)[_isCloud] ? babelHelpers.classPrivateFieldLooseBase(this, _renderConfirmRegistrationCheckbox)[_renderConfirmRegistrationCheckbox]() : '', babelHelpers.classPrivateFieldLooseBase(this, _isCloud)[_isCloud] ? babelHelpers.classPrivateFieldLooseBase(this, _renderWhiteListField)[_renderWhiteListField]() : '', !babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] && !babelHelpers.classPrivateFieldLooseBase(this, _fastRegistrationAvailable)[_fastRegistrationAvailable] ? babelHelpers.classPrivateFieldLooseBase(this, _renderWarningContainer)[_renderWarningContainer]() : '');
-	    main_core.Dom.prepend(babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$5)[_departmentControl$5].render(), babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8].querySelector('.intranet-invitation__link-department-control'));
-	    new SelfRegister({
-	      container: babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8],
-	      isSelfRegisterEnabled: babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled$2)[_linkRegisterEnabled$2],
-	      analytics: babelHelpers.classPrivateFieldLooseBase(this, _analytics$3)[_analytics$3],
-	      transport: babelHelpers.classPrivateFieldLooseBase(this, _transport$2)[_transport$2],
-	      departmentControl: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$5)[_departmentControl$5],
-	      page: this
-	    });
-	    return babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8];
-	  }
-	  hasShownButtonPanel() {
-	    return false;
-	  }
-	  getAnalyticTab() {
-	    return Analytics.TAB_LINK;
-	  }
-	  onSubmit(event) {
-	    var _formNode$allow_regis, _formNode$allow_regis2, _formNode$allow_regis3, _event$getData, _event$getData2;
-	    const formNode = this.render().querySelector('form');
-	    const data = {
-	      allow_register: formNode.allow_register.value,
-	      allow_register_confirm: formNode != null && (_formNode$allow_regis = formNode.allow_register_confirm) != null && _formNode$allow_regis.checked ? 'Y' : 'N',
-	      allow_register_whitelist: (_formNode$allow_regis2 = formNode == null ? void 0 : (_formNode$allow_regis3 = formNode.allow_register_whitelist) == null ? void 0 : _formNode$allow_regis3.value) != null ? _formNode$allow_regis2 : ''
-	    };
-	    const context = (_event$getData = event.getData()) == null ? void 0 : _event$getData.context;
-	    const isConfirm = (_event$getData2 = event.getData()) == null ? void 0 : _event$getData2.isConfirm;
-	    if (formNode.allow_register.value === 'N' && !isConfirm) {
-	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:confirmShutdown', {
-	        page: this,
-	        context
+		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS'), optionsContainer, babelHelpers.classPrivateFieldLooseBase(this, _getSaveButton)[_getSaveButton]().render(), babelHelpers.classPrivateFieldLooseBase(this, _getCancelButton$2)[_getCancelButton$2]().render(), babelHelpers.classPrivateFieldLooseBase(this, _renderRegenerateSecretButton)[_renderRegenerateSecretButton]());
+	}
+	function _renderRegenerateSecretButton2() {
+	  const regenerateSecretButton = main_core.Tag.render(_t6$1 || (_t6$1 = _$8`
+			<div class="intranet-invitation-popup__footer-link" id="invite-link-options-popup-regenerate-button">
+				<i class="ui-icon-set --o-refresh"></i>
+				<span class="ui-link ui-link-secondary ui-link-dashed">${0}</span>
+			</div>
+		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS_BUTTON_UPDATE'));
+	  main_core.Event.bind(regenerateSecretButton, 'click', babelHelpers.classPrivateFieldLooseBase(this, _regenerateSecret)[_regenerateSecret].bind(this));
+	  return regenerateSecretButton;
+	}
+	function _getSaveButton2() {
+	  var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	  (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _saveButton))[_saveButton]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[_saveButton] = new ui_buttons.SaveButton({
+	    id: 'invite-link-options-popup-save-button',
+	    useAirDesign: true,
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    onclick: () => {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton].isWaiting()) {
+	        return;
+	      }
+	      const whiteListChipsToSave = babelHelpers.classPrivateFieldLooseBase(this, _getAllowRegisterWhiteList)[_getAllowRegisterWhiteList]().getChips().filter(chip => chip.getDesign() !== ui_system_chip.ChipDesign.TintedAlert);
+	      const whiteList = whiteListChipsToSave.map(chip => chip.getText()).join(';');
+	      babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton].setState(ui_buttons.ButtonState.WAITING);
+	      babelHelpers.classPrivateFieldLooseBase(this, _transport$5)[_transport$5].send({
+	        action: 'self',
+	        data: {
+	          allow_register: babelHelpers.classPrivateFieldLooseBase(this, _getAllowInviteWithLinkSwitcher)[_getAllowInviteWithLinkSwitcher]().isChecked() ? 'Y' : 'N',
+	          allow_register_secret: main_core.Text.getRandom(8),
+	          allow_register_confirm: babelHelpers.classPrivateFieldLooseBase(this, _getConfirmRegistrationSwitcher)[_getConfirmRegistrationSwitcher]().isChecked() ? 'Y' : 'N',
+	          allow_register_whitelist: whiteList
+	        }
+	      }, () => {}).then(() => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled)[_linkRegisterEnabled] = babelHelpers.classPrivateFieldLooseBase(this, _getAllowInviteWithLinkSwitcher)[_getAllowInviteWithLinkSwitcher]().isChecked();
+	        babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration$1)[_needConfirmRegistration$1] = babelHelpers.classPrivateFieldLooseBase(this, _getConfirmRegistrationSwitcher)[_getConfirmRegistrationSwitcher]().isChecked();
+	        babelHelpers.classPrivateFieldLooseBase(this, _whitelist)[_whitelist] = whiteList;
+	        babelHelpers.classPrivateFieldLooseBase(this, _addDefaultChips)[_addDefaultChips]();
+	        babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton].setState(null);
+	        babelHelpers.classPrivateFieldLooseBase(this, _getPopup$3)[_getPopup$3]().close();
+	        if (!babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled)[_linkRegisterEnabled]) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _getPopup$3)[_getPopup$3]().destroy();
+	          babelHelpers.classPrivateFieldLooseBase(this, _onDisable)[_onDisable]();
+	        }
+	      }).catch(reject => {
+	        console.error(reject);
+	        babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton].setState(null);
 	      });
-	      return;
 	    }
-	    main_core_events.EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-	      action: 'self',
-	      data
-	    });
-	  }
-	  getSubmitButtonText() {
-	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_SAVE');
-	  }
-	  getButtonState() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _btnState)[_btnState];
-	  }
-	  setButtonState(state) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _btnState)[_btnState] = state;
-	  }
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton];
 	}
-	function _renderCopyBtnDescription2() {
-	  return main_core.Tag.render(_t2$4 || (_t2$4 = _$b`
-			<div class="invite-form__copy-button-description">
-				${0}
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_COPY_BUTTON_DESCRIPTION'));
+	function _getCancelButton2$2() {
+	  return new ui_buttons.CancelButton({
+	    id: 'invite-link-options-popup-cancel-button',
+	    useAirDesign: true,
+	    style: ui_buttons.AirButtonStyle.OUTLINE,
+	    onclick: () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _getPopup$3)[_getPopup$3]().close();
+	    }
+	  });
 	}
-	function _renderUpdateLinkBtn2() {
-	  return main_core.Tag.render(_t3$2 || (_t3$2 = _$b`
-			<span data-role="selfRegenerateSecretButton">
-				<a
-				href="javascript:void(0)"
-				class="invite-dialog-update-link"
-				>
-					${0}
-				</a>
-			</span>
-		`), main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_NEW_LINK'));
+	function _getAllowInviteWithLinkSwitcher2() {
+	  var _babelHelpers$classPr5, _babelHelpers$classPr6;
+	  (_babelHelpers$classPr6 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _allowInviteWithLinkSwitcher))[_allowInviteWithLinkSwitcher]) != null ? _babelHelpers$classPr6 : _babelHelpers$classPr5[_allowInviteWithLinkSwitcher] = new ui_switcher.Switcher({
+	    id: 'allow-invite-with-link-switcher',
+	    checked: babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled)[_linkRegisterEnabled],
+	    size: ui_switcher.SwitcherSize.medium,
+	    useAirDesign: true,
+	    handlers: {
+	      // There is in error in Switcher UI, so we have inversion in event names
+	      unchecked: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _getAllowRegisterWhiteList)[_getAllowRegisterWhiteList]().setDesign(babelHelpers.classPrivateFieldLooseBase(this, _getConfirmRegistrationSwitcher)[_getConfirmRegistrationSwitcher]().isChecked() ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled);
+	        babelHelpers.classPrivateFieldLooseBase(this, _getConfirmRegistrationSwitcher)[_getConfirmRegistrationSwitcher]().disable(false);
+	      },
+	      checked: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _getAllowRegisterWhiteList)[_getAllowRegisterWhiteList]().setDesign(ui_system_input.InputDesign.Disabled);
+	        babelHelpers.classPrivateFieldLooseBase(this, _getConfirmRegistrationSwitcher)[_getConfirmRegistrationSwitcher]().disable(true);
+	      }
+	    }
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _allowInviteWithLinkSwitcher)[_allowInviteWithLinkSwitcher];
 	}
-	function _renderFastRegistrationSwitcher2() {
-	  return main_core.Tag.render(_t4$1 || (_t4$1 = _$b`
-			<label class="invite-dialog-fast-reg-control-container js-invite-dialog-fast-reg-control-container ${0}" for="allow_register">
-				<div class="invite-dialog-fast-reg-control-switcher" data-role="self-switcher"></div>
-				<span class="invite-dialog-fast-reg-control-label">
-					<div class="invite-dialog-fast-reg-control-label-title">${0}</div>
-				</span>
-			</label>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _fastRegistrationAvailable)[_fastRegistrationAvailable] ? '' : 'disallow-registration', main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK'));
-	}
-	function _renderConfirmRegistrationCheckbox2() {
-	  return main_core.Tag.render(_t5$1 || (_t5$1 = _$b`
-			<div style="padding-top: 12px;">
-				<label class="ui-ctl ui-ctl-w100 ui-ctl-checkbox invite-form-check-box">
-					<input
-					type="checkbox"
-					class="ui-ctl-element"
-					name="allow_register_confirm"
-					id="allow_register_confirm"
-					data-role="allowRegisterConfirm"
-					${0}
-					${0}
-					/>
-					<div class="ui-ctl-label-text">${0}</div>
-				</label>
-			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration)[_needConfirmRegistration] ? 'checked' : '', babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] ? '' : 'disabled', main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TYPE'));
-	}
-	function _renderWhiteListField2() {
-	  return main_core.Tag.render(_t6$1 || (_t6$1 = _$b`
-		<div id="intranet-dialog-tab-content-self-whitelist" data-role="selfWhiteList" ${0}>
-			<span class="invite-form-ctl-title">
-				${0}
-			</span>
-			<label class="ui-ctl ui-ctl-w75 ui-ctl-textbox">
-				<input
-				type="text"
-				${0}
-				class="ui-ctl-element"
-				name="allow_register_whitelist"
-				value="${0}"
-				placeholder="${0}"
-				/>
-			</label>
-		</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration)[_needConfirmRegistration] ? '' : 'style="display: none"', main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_DOMAINS'), babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] ? '' : 'disabled', babelHelpers.classPrivateFieldLooseBase(this, _wishlist)[_wishlist], main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_PLACEHOLDER'));
-	}
-	function _renderWarningContainer2() {
-	  return main_core.Tag.render(_t7 || (_t7 = _$b`
-			<div class="intranet-invitation__error-box">
-				<div class="intranet-invitation__error-icon"></div>
-				<div class="intranet-invitation__error-title">${0}</div>
-				<div class="intranet-invitation__error-desc">${0}</div>
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED'), main_core.Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED_DESCRIPTION'));
-	}
-
-	var _input$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
-	var _invitationType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("invitationType");
-	var _isPhoneEnabled$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPhoneEnabled");
-	var _isEmailEnabled$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEmailEnabled");
-	var _getDialogInputMessage$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogInputMessage");
-	class MassInvitationField {
-	  constructor(options) {
-	    Object.defineProperty(this, _getDialogInputMessage$1, {
-	      value: _getDialogInputMessage2$1
-	    });
-	    Object.defineProperty(this, _input$4, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _invitationType, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isPhoneEnabled$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isEmailEnabled$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _invitationType)[_invitationType] = options.useOnlyPhone ? intranet_invitationInput.InvitationInputType.PHONE : options.smsAvailable ? intranet_invitationInput.InvitationInputType.ALL : intranet_invitationInput.InvitationInputType.EMAIL;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled$1)[_isPhoneEnabled$1] = [intranet_invitationInput.InvitationInputType.ALL, intranet_invitationInput.InvitationInputType.PHONE].includes(babelHelpers.classPrivateFieldLooseBase(this, _invitationType)[_invitationType]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _isEmailEnabled$1)[_isEmailEnabled$1] = [intranet_invitationInput.InvitationInputType.ALL, intranet_invitationInput.InvitationInputType.EMAIL].includes(babelHelpers.classPrivateFieldLooseBase(this, _invitationType)[_invitationType]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4] = new intranet_invitationInput.InvitationInput({
-	      inputType: babelHelpers.classPrivateFieldLooseBase(this, _invitationType)[_invitationType]
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].getTagSelector().setPlaceholder(main_core.Type.isStringFilled(options.placeholder) ? options.placeholder : babelHelpers.classPrivateFieldLooseBase(this, _getDialogInputMessage$1)[_getDialogInputMessage$1]());
-	    BX.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].getTagSelector().getContainer(), 'height', '103px');
-	    BX.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].getTagSelector().getContainer(), 'cursor', 'text');
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].getTagSelector().getContainer(), 'click', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].getTagSelector().focusTextBox();
-	    });
-	  }
-	  reset() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].getTagSelector().removeTags();
-	  }
-	  renderTo(node) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].renderTo(node);
-	  }
-	  getValue() {
-	    const selector = babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].getTagSelector();
-	    const tags = selector.getTags();
-	    const values = [];
-	    const errorElements = [];
-	    tags.forEach(tag => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled$1)[_isPhoneEnabled$1] && tag.getEntityType() === 'phone') {
-	        values.push(tag.getTitle());
-	      } else if (babelHelpers.classPrivateFieldLooseBase(this, _isEmailEnabled$1)[_isEmailEnabled$1] && tag.getEntityType() === 'email') {
-	        values.push(tag.getTitle());
-	      } else {
-	        errorElements.push(tag.getTitle());
+	function _getAllowRegisterWhiteList2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _allowRegisterWhiteList)[_allowRegisterWhiteList]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _allowRegisterWhiteList)[_allowRegisterWhiteList] = new ui_system_input.Input({
+	      label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS'),
+	      placeholder: 'example.com',
+	      design: babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration$1)[_needConfirmRegistration$1] && babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled)[_linkRegisterEnabled] ? ui_system_input.InputDesign.Grey : ui_system_input.InputDesign.Disabled,
+	      onInput: babelHelpers.classPrivateFieldLooseBase(this, _onAllowRegisterWhiteListInput)[_onAllowRegisterWhiteListInput].bind(this),
+	      onChipClear: (chip, event) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _allowRegisterWhiteList)[_allowRegisterWhiteList].removeChip(chip);
 	      }
 	    });
-	    return {
-	      values,
-	      errorElements
-	    };
+	    babelHelpers.classPrivateFieldLooseBase(this, _addDefaultChips)[_addDefaultChips]();
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _allowRegisterWhiteList)[_allowRegisterWhiteList];
+	}
+	function _getConfirmRegistrationSwitcher2() {
+	  var _babelHelpers$classPr7, _babelHelpers$classPr8;
+	  (_babelHelpers$classPr8 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _confirmRegistrationSwitcher))[_confirmRegistrationSwitcher]) != null ? _babelHelpers$classPr8 : _babelHelpers$classPr7[_confirmRegistrationSwitcher] = new ui_switcher.Switcher({
+	    id: 'confirm-registration-switcher',
+	    checked: babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration$1)[_needConfirmRegistration$1],
+	    size: ui_switcher.SwitcherSize.medium,
+	    useAirDesign: true,
+	    disabled: !babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled)[_linkRegisterEnabled],
+	    handlers: {
+	      // There is in error in Switcher UI, so we have inversion in event names
+	      unchecked: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _getAllowRegisterWhiteList)[_getAllowRegisterWhiteList]().setDesign(ui_system_input.InputDesign.Grey);
+	      },
+	      checked: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _getAllowRegisterWhiteList)[_getAllowRegisterWhiteList]().setDesign(ui_system_input.InputDesign.Disabled);
+	      }
+	    }
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _confirmRegistrationSwitcher)[_confirmRegistrationSwitcher];
+	}
+	function _resetOptions2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _getConfirmRegistrationSwitcher)[_getConfirmRegistrationSwitcher]().check(babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration$1)[_needConfirmRegistration$1]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _getAllowInviteWithLinkSwitcher)[_getAllowInviteWithLinkSwitcher]().check(babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled)[_linkRegisterEnabled]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _addDefaultChips)[_addDefaultChips]();
+	}
+	function _regenerateSecret2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _transport$5)[_transport$5].send({
+	    action: 'self',
+	    data: {
+	      allow_register_secret: main_core.Text.getRandom(8)
+	    }
+	  }).then(response => {
+	    top.BX.UI.Notification.Center.notify({
+	      content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'),
+	      autoHideDelay: 2500
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics$3)[_analytics$3].sendRegenerateLink();
+	  }).catch(reject => {
+	    top.BX.UI.Notification.Center.notify({
+	      content: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'),
+	      autoHideDelay: 2500
+	    });
+	  });
+	}
+	function _onAllowRegisterWhiteListInput2(event) {
+	  const specialSymbols = [' ', ',', ';'];
+	  if (specialSymbols.includes(event.data)) {
+	    const value = babelHelpers.classPrivateFieldLooseBase(this, _getAllowRegisterWhiteList)[_getAllowRegisterWhiteList]().getValue().slice(0, -1).trim();
+	    if (value.length > 0) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _addChip)[_addChip](value);
+	      babelHelpers.classPrivateFieldLooseBase(this, _getAllowRegisterWhiteList)[_getAllowRegisterWhiteList]().setValue('');
+	    }
 	  }
 	}
-	function _getDialogInputMessage2$1() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled$1)[_isPhoneEnabled$1] && babelHelpers.classPrivateFieldLooseBase(this, _isEmailEnabled$1)[_isEmailEnabled$1]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT');
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled$1)[_isPhoneEnabled$1]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_PHONE_INPUT');
+	function _addDefaultChips2() {
+	  var _babelHelpers$classPr9;
+	  (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _allowRegisterWhiteList)[_allowRegisterWhiteList]) == null ? void 0 : _babelHelpers$classPr9.removeChips();
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _whitelist)[_whitelist].trim().length > 0) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _whitelist)[_whitelist].split(';').forEach(domain => {
+	      if (domain.trim().length > 0) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _addChip)[_addChip](domain.trim());
+	      }
+	    });
+	  }
+	}
+	function _addChip2(value) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isValidDomain)[_isValidDomain](value)) {
+	    var _babelHelpers$classPr10;
+	    (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _allowRegisterWhiteList)[_allowRegisterWhiteList]) == null ? void 0 : _babelHelpers$classPr10.addChip({
+	      text: value,
+	      design: ui_system_chip.ChipDesign.TintedSuccess,
+	      withClear: true
+	    });
 	  } else {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INPUT');
+	    var _babelHelpers$classPr11;
+	    (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _allowRegisterWhiteList)[_allowRegisterWhiteList]) == null ? void 0 : _babelHelpers$classPr11.addChip({
+	      text: value,
+	      design: ui_system_chip.ChipDesign.TintedAlert,
+	      withClear: true
+	    });
 	  }
+	}
+	function _isValidDomain2(domain) {
+	  if (!domain) {
+	    return true;
+	  }
+	  const domainPattern = /^(?:[\da-z](?:[\da-z-]{0,61}[\da-z])?\.)+[a-z]{2,}$/i;
+	  return domainPattern.test(domain);
 	}
 
-	let _$c = t => t,
-	  _t$c,
-	  _t2$5;
-	var _container$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _smsAvailable$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smsAvailable");
-	var _useOnlyPhone$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useOnlyPhone");
-	var _onClickSwitchMode$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClickSwitchMode");
-	var _massInvitationField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("massInvitationField");
-	var _departmentControl$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
-	var _getEmptyError$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmptyError");
-	var _getValidateError$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getValidateError");
-	class MassPage extends Page {
-	  constructor(options) {
-	    super();
-	    Object.defineProperty(this, _getValidateError$1, {
-	      value: _getValidateError2$1
-	    });
-	    Object.defineProperty(this, _getEmptyError$1, {
-	      value: _getEmptyError2$1
-	    });
-	    Object.defineProperty(this, _container$9, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _smsAvailable$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _useOnlyPhone$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _onClickSwitchMode$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _massInvitationField, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _departmentControl$6, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable$1)[_smsAvailable$1] = options.smsAvailable === true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone$1)[_useOnlyPhone$1] = options.useOnlyPhone === true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _onClickSwitchMode$1)[_onClickSwitchMode$1] = main_core.Type.isFunction(options.onClickSwitchMode) ? options.onClickSwitchMode : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _massInvitationField)[_massInvitationField] = new MassInvitationField({
-	      placeholder: '',
-	      useOnlyPhone: babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone$1)[_useOnlyPhone$1],
-	      smsAvailable: babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable$1)[_smsAvailable$1]
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6] = options.departmentControl instanceof DepartmentControl ? options.departmentControl : null;
-	  }
-	  render() {
-	    var _babelHelpers$classPr;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9]) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9];
-	    }
-	    const helper = main_core.Tag.render(_t$c || (_t$c = _$c`
-			<div class="invite-title-helper"
-				 data-hint="${0}"
-				 data-hint-no-icon
-			>
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_MASS_INVITE_HINT'));
-	    const sufix = babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone$1)[_useOnlyPhone$1] ? 'PHONE' : babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable$1)[_smsAvailable$1] ? 'EMAIL_AND_PHONE' : 'EMAIL';
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9] = main_core.Tag.render(_t2$5 || (_t2$5 = _$c`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="mass-invite-block">
-				<div class="invite-title-container">
-					<div class="invite-title-icon invite-title-icon-mass">
-						<div class="ui-icon-set --person-letter"></div>
-					</div>
-					<div class="invite-title-text">${0}</div>
-					${0}
-				</div>
-				<div class="invite-content-container">
-					<div class="invite-form-container">
-						<form method="POST" name="MASS_INVITE_DIALOG_FORM" class="invite-form-container">
-							<div class="invite-content__field-lable">
-								${0}
-							</div>
-							<div id="invite-content__mass-field">
-							</div>
-							<div class="invite-form-ctl-description --border-bottom">
-								<span href="javascript:void(0)"
-								   class="invite-content__switch_button swith-email-invitation-mass-mode"
-								>
-									${0}
-								</span>
-							</div>
-							<div class="invite-form-row" id="intranet-invitation__department-control-palce"></div>
-						</form>
-					</div>
-				</div>
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_MASS_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable$1)[_smsAvailable$1] ? helper : '', main_core.Loc.getMessage(`INTRANET_INVITE_DIALOG_MASS_TITLE_${sufix}`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_PERSONAL'));
-	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _massInvitationField)[_massInvitationField]) == null ? void 0 : _babelHelpers$classPr.renderTo(babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9].querySelector('#invite-content__mass-field'));
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6].renderTo(babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9].querySelector('#intranet-invitation__department-control-palce'));
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9].querySelector('.swith-email-invitation-mass-mode'), 'click', babelHelpers.classPrivateFieldLooseBase(this, _onClickSwitchMode$1)[_onClickSwitchMode$1]);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9];
-	  }
-	  getAnalyticTab() {
-	    return Analytics.TAB_MASS;
-	  }
-	  onSubmit(event) {
-	    var _event$getData;
-	    const {
-	      values,
-	      errorElements
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _massInvitationField)[_massInvitationField].getValue();
-	    const errors = [];
-	    if (values.length <= 0) {
-	      errors.push(babelHelpers.classPrivateFieldLooseBase(this, _getEmptyError$1)[_getEmptyError$1]());
-	    }
-	    if (errorElements.length > 0) {
-	      errors.push(babelHelpers.classPrivateFieldLooseBase(this, _getValidateError$1)[_getValidateError$1]());
-	    }
-	    if (errors.length > 0) {
-	      main_core_events.EventEmitter.emit(window.invitationForm, 'BX.Intranet.Invitation:onSendData', {
-	        errors
-	      });
-	      return;
-	    }
-	    const data = {
-	      invitationText: values.join(' '),
-	      departmentIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6].getValues(),
-	      tab: 'mass'
-	    };
-	    const analyticsLabel = {
-	      INVITATION_TYPE: 'mass'
-	    };
-	    const context = (_event$getData = event.getData()) == null ? void 0 : _event$getData.context;
-	    main_core_events.EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-	      action: 'massInvite',
-	      data,
-	      analyticsLabel
-	    });
-	  }
-	  onInviteSuccess(event) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _massInvitationField)[_massInvitationField].reset();
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6].reset();
-	  }
-	  getSubmitButtonText() {
-	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
-	  }
-	}
-	function _getEmptyError2$1() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone$1)[_useOnlyPhone$1]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMPTY_ERROR_PHONE');
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable$1)[_smsAvailable$1]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMPTY_ERROR_EMAIL_AND_PHONE');
-	  }
-	  return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMPTY_ERROR_EMAIL');
-	}
-	function _getValidateError2$1() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone$1)[_useOnlyPhone$1]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE');
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable$1)[_smsAvailable$1]) {
-	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL_AND_PHONE');
-	  }
-	  return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL');
-	}
-
-	let _$d = t => t,
-	  _t$d,
-	  _t2$6;
-	var _container$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _inputsFactory$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsFactory");
+	let _$9 = t => t,
+	  _t$9,
+	  _t2$6,
+	  _t3$2,
+	  _t4$2;
+	var _container$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _isAdmin$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdmin");
 	var _isCloud$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCloud");
-	var _withoutConfirm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("withoutConfirm");
-	var _tagSelectorGroup$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tagSelectorGroup");
-	var _departmentControl$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
-	var _renderFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderFields");
-	class RegisterPage extends Page {
+	var _needConfirmRegistration$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needConfirmRegistration");
+	var _whiteList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("whiteList");
+	var _departmentControl$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
+	var _linkRegisterEnabled$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkRegisterEnabled");
+	var _analytics$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
+	var _transport$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
+	var _optionsPopup$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("optionsPopup");
+	var _copyRegisterUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copyRegisterUrl");
+	var _copyToClipboard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copyToClipboard");
+	var _renderLinkOptionButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLinkOptionButton");
+	var _getOptionsPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOptionsPopup");
+	class LinkPage extends Page {
 	  constructor(options) {
 	    super();
-	    Object.defineProperty(this, _renderFields, {
-	      value: _renderFields2
+	    Object.defineProperty(this, _getOptionsPopup, {
+	      value: _getOptionsPopup2
 	    });
-	    Object.defineProperty(this, _container$a, {
+	    Object.defineProperty(this, _renderLinkOptionButton, {
+	      value: _renderLinkOptionButton2
+	    });
+	    Object.defineProperty(this, _copyToClipboard, {
+	      value: _copyToClipboard2
+	    });
+	    Object.defineProperty(this, _copyRegisterUrl, {
+	      value: _copyRegisterUrl2
+	    });
+	    Object.defineProperty(this, _container$5, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _inputsFactory$3, {
+	    Object.defineProperty(this, _isAdmin$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2758,369 +2233,1191 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _withoutConfirm, {
+	    Object.defineProperty(this, _needConfirmRegistration$2, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _tagSelectorGroup$2, {
+	    Object.defineProperty(this, _whiteList, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _departmentControl$7, {
+	    Object.defineProperty(this, _departmentControl$3, {
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _linkRegisterEnabled$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _analytics$4, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _transport$6, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _optionsPopup$1, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] = options.isAdmin === true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isCloud$1)[_isCloud$1] = options.isCloud === true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _withoutConfirm)[_withoutConfirm] = options.withoutConfirm === true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$3)[_inputsFactory$3] = options.inputsFactory instanceof InputRowFactory ? options.inputsFactory : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup$2)[_tagSelectorGroup$2] = options.tagSelectorGroup instanceof ui_entitySelector.TagSelector ? options.tagSelectorGroup : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$7)[_departmentControl$7] = options.departmentControl instanceof DepartmentControl ? options.departmentControl : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration$2)[_needConfirmRegistration$2] = options.needConfirmRegistration === true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _whiteList)[_whiteList] = main_core.Type.isStringFilled(options.whiteList) ? options.whiteList : '';
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3] = options.departmentControl instanceof DepartmentControl__default ? options.departmentControl : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled$1)[_linkRegisterEnabled$1] = options.linkRegisterEnabled;
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics$4)[_analytics$4] = options.analytics;
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport$6)[_transport$6] = options.transport;
+	  }
+	  render() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5]) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5];
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5] = main_core.Tag.render(_t$9 || (_t$9 = _$9`
+			<div class="intranet-invitation-block" data-role="self-block"></div>
+		`));
+	    main_core.Dom.append(main_core.Tag.render(_t2$6 || (_t2$6 = _$9`
+			<div class="intranet-invitation-block__department-control">
+				<div class="intranet-invitation-block__department-control-inner">${0}</div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3].render()), babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5]);
+	    const copyLinkButton = new ui_buttons.Button({
+	      useAirDesign: true,
+	      text: main_core.Loc.getMessage('BX24_INVITE_DIALOG_COPY_LINK'),
+	      icon: BX.UI.IconSet.Outline.LINK,
+	      style: ui_buttons.AirButtonStyle.FILLED,
+	      onclick: babelHelpers.classPrivateFieldLooseBase(this, _copyRegisterUrl)[_copyRegisterUrl].bind(this),
+	      props: {
+	        'data-test-id': 'invite-link-page-copy-link-button'
+	      }
+	    });
+	    main_core.Dom.append(main_core.Tag.render(_t3$2 || (_t3$2 = _$9`
+			<div class="intranet-invitation-block__content">
+				<div class="intranet-invitation-block__footer">
+					${0}
+					${0}
+				</div>
+			</div>
+		`), copyLinkButton.render(), babelHelpers.classPrivateFieldLooseBase(this, _renderLinkOptionButton)[_renderLinkOptionButton]()), babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5]);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5];
+	  }
+	  getAnalyticTab() {
+	    return Analytics.TAB_LINK;
+	  }
+	}
+	function _copyRegisterUrl2(copyLinkButton) {
+	  if (copyLinkButton.getState() === ui_buttons.ButtonState.WAITING) {
+	    return;
+	  }
+	  copyLinkButton.setState(ui_buttons.ButtonState.WAITING);
+	  babelHelpers.classPrivateFieldLooseBase(this, _transport$6)[_transport$6].send({
+	    action: 'getInviteLink',
+	    data: {
+	      departmentsId: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3].getValues(),
+	      analyticsType: 'by_link'
+	    }
+	  }, reject => {
+	    copyLinkButton.setState(null);
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport$6)[_transport$6].onError(reject);
+	  }).then(response => {
+	    var _response$data;
+	    copyLinkButton.setState(null);
+	    const invitationUrl = (_response$data = response.data) == null ? void 0 : _response$data.invitationLink;
+	    if (main_core.Type.isStringFilled(invitationUrl)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _copyToClipboard)[_copyToClipboard](invitationUrl).then(() => {
+	        top.BX.UI.Notification.Center.notify({
+	          content: main_core.Loc.getMessage('BX24_INVITE_DIALOG_COPY_URL_MSGVER_2'),
+	          autoHideDelay: 4000,
+	          useAirDesign: true
+	        });
+	      }).catch(e => {
+	        console.log(e);
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _analytics$4)[_analytics$4].sendCopyLink(babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3], babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration$2)[_needConfirmRegistration$2]);
+	    }
+	  }).catch(reject => {
+	    console.error(reject);
+	  });
+	}
+	async function _copyToClipboard2(textToCopy) {
+	  var _BX$clipboard;
+	  if (!main_core.Type.isString(textToCopy)) {
+	    return Promise.reject();
+	  }
+
+	  // navigator.clipboard defined only if window.isSecureContext === true
+	  // so or https should be activated, or localhost address
+	  if (window.isSecureContext && navigator.clipboard) {
+	    // safari not allowed clipboard manipulation as result of ajax request
+	    // so timeout is hack for this, to prevent "not have permission"
+	    return new Promise((resolve, reject) => {
+	      setTimeout(() => navigator.clipboard.writeText(textToCopy).then(() => resolve()).catch(e => reject(e)), 0);
+	    });
+	  }
+	  return (_BX$clipboard = BX.clipboard) != null && _BX$clipboard.copy(textToCopy) ? Promise.resolve() : Promise.reject();
+	}
+	function _renderLinkOptionButton2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1]) {
+	    return '';
+	  }
+	  const onclick = () => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _getOptionsPopup)[_getOptionsPopup]().show();
+	  };
+	  return main_core.Tag.render(_t4$2 || (_t4$2 = _$9`
+			<span data-test-id="invite-link-page-option-button" onclick="${0}" class="ui-link ui-link-secondary ui-link-dashed">${0}</span>
+		`), onclick, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS'));
+	}
+	function _getOptionsPopup2() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _optionsPopup$1))[_optionsPopup$1]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_optionsPopup$1] = new LinkOptionsPopup({
+	    linkRegisterEnabled: babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled$1)[_linkRegisterEnabled$1],
+	    needConfirmRegistration: babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration$2)[_needConfirmRegistration$2],
+	    isCloud: babelHelpers.classPrivateFieldLooseBase(this, _isCloud$1)[_isCloud$1],
+	    transport: babelHelpers.classPrivateFieldLooseBase(this, _transport$6)[_transport$6],
+	    whiteList: babelHelpers.classPrivateFieldLooseBase(this, _whiteList)[_whiteList],
+	    analytics: babelHelpers.classPrivateFieldLooseBase(this, _analytics$4)[_analytics$4],
+	    onDisable: () => {
+	      main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
+	        selfEnabled: false
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _optionsPopup$1)[_optionsPopup$1] = null;
+	    }
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _optionsPopup$1)[_optionsPopup$1];
+	}
+
+	let _$a = t => t,
+	  _t$a;
+	var _inputRows = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputRows");
+	var _container$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	class InputRowsContainer {
+	  constructor(inputRows) {
+	    Object.defineProperty(this, _inputRows, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _container$6, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputRows)[_inputRows] = inputRows;
+	  }
+	  render() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6] = main_core.Tag.render(_t$a || (_t$a = _$a`
+				<div data-test-id="invite-input-rows" class="intranet-invite-form-rows-container"></div>
+			`));
+	      babelHelpers.classPrivateFieldLooseBase(this, _inputRows)[_inputRows].forEach(inputRow => {
+	        inputRow.renderTo(babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6]);
+	      });
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6];
+	  }
+	  addRow(inputRow) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputRows)[_inputRows].push(inputRow);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6]) {
+	      inputRow.renderTo(babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6]);
+	    }
+	  }
+	  clearAll() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputRows)[_inputRows].forEach(inputRow => {
+	      inputRow.clear();
+	    });
+	  }
+	  isInvitationInputRowsEmpty() {
+	    for (const inputRow of babelHelpers.classPrivateFieldLooseBase(this, _inputRows)[_inputRows]) {
+	      if (!inputRow.isInvitationRowEmpty()) {
+	        return false;
+	      }
+	    }
+	    return true;
+	  }
+	  getEnteredInvitations() {
+	    const result = [];
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputRows)[_inputRows].forEach(inputRow => {
+	      if (!inputRow.isEmpty()) {
+	        result.push(inputRow.getValue());
+	      }
+	    });
+	    return result;
+	  }
+	  hasError() {
+	    for (const inputRow of babelHelpers.classPrivateFieldLooseBase(this, _inputRows)[_inputRows]) {
+	      if (inputRow.hasContactsError()) {
+	        return true;
+	      }
+	    }
+	    return false;
+	  }
+	  highlightErrorInputs(values, error) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputRows)[_inputRows].forEach(inputRow => {
+	      const value = inputRow.getContactsValue();
+	      if (value && values.includes(value)) {
+	        inputRow.setContactsError(error);
+	      }
+	    });
+	  }
+	}
+
+	let _$b = t => t,
+	  _t$b,
+	  _t2$7,
+	  _t3$3;
+	var _container$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _inputsFactory$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsFactory");
+	var _departmentControl$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
+	var _transport$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
+	var _inviteType$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inviteType");
+	var _inviteEmailPopup$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inviteEmailPopup");
+	var _analytics$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
+	var _inputsRowsContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsRowsContainer");
+	var _showMassInviteButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showMassInviteButton");
+	var _getInputRowsContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInputRowsContainer");
+	var _renderMassInviteButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderMassInviteButton");
+	var _openMassInvitePopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openMassInvitePopup");
+	var _getInviteButton$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInviteButton");
+	var _handleErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleErrors");
+	var _getAddButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAddButton");
+	var _getEmptyError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmptyError");
+	class InvitePage extends Page {
+	  constructor(options) {
+	    super();
+	    Object.defineProperty(this, _getEmptyError, {
+	      value: _getEmptyError2
+	    });
+	    Object.defineProperty(this, _getAddButton$1, {
+	      value: _getAddButton2$1
+	    });
+	    Object.defineProperty(this, _handleErrors, {
+	      value: _handleErrors2
+	    });
+	    Object.defineProperty(this, _getInviteButton$3, {
+	      value: _getInviteButton2$3
+	    });
+	    Object.defineProperty(this, _openMassInvitePopup, {
+	      value: _openMassInvitePopup2
+	    });
+	    Object.defineProperty(this, _renderMassInviteButton, {
+	      value: _renderMassInviteButton2
+	    });
+	    Object.defineProperty(this, _getInputRowsContainer, {
+	      value: _getInputRowsContainer2
+	    });
+	    Object.defineProperty(this, _container$7, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _inputsFactory$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _departmentControl$4, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _transport$7, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _inviteType$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _inviteEmailPopup$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _analytics$5, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _inputsRowsContainer, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _showMassInviteButton, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$1)[_inputsFactory$1] = options.inputsFactory;
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$4)[_departmentControl$4] = options.departmentControl;
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport$7)[_transport$7] = options.transport;
+	    babelHelpers.classPrivateFieldLooseBase(this, _inviteType$2)[_inviteType$2] = options.inviteType;
+	    babelHelpers.classPrivateFieldLooseBase(this, _showMassInviteButton)[_showMassInviteButton] = options.showMassInviteButton;
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics$5)[_analytics$5] = options.analytics;
+	  }
+	  render() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7]) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7];
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7] = main_core.Tag.render(_t$b || (_t$b = _$b`
+			<div class="intranet-invitation-block">
+				<div class="intranet-invitation-block__department-control">
+					<div class="intranet-invitation-block__department-control-inner">${0}</div>
+				</div>
+				<div class="intranet-invitation-block__content">
+					<span class="intranet-invitation-status__title ui-headline --sm">${0}</span>
+					${0}
+					<span class="intranet-invitation-actions">
+						${0}
+						${0}
+					</span>
+					<div class="intranet-invitation-block__footer">
+						${0}
+					</div>
+				</div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$4)[_departmentControl$4].render(), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _getInputRowsContainer)[_getInputRowsContainer]().render(), babelHelpers.classPrivateFieldLooseBase(this, _getAddButton$1)[_getAddButton$1]().render(), babelHelpers.classPrivateFieldLooseBase(this, _showMassInviteButton)[_showMassInviteButton] ? main_core.Tag.render(_t2$7 || (_t2$7 = _$b`
+							<span class="intranet-invitation-description ui-text --sm">
+								${0}
+							</span>
+							${0}
+						`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_OR'), babelHelpers.classPrivateFieldLooseBase(this, _renderMassInviteButton)[_renderMassInviteButton]()) : '', babelHelpers.classPrivateFieldLooseBase(this, _getInviteButton$3)[_getInviteButton$3]().render());
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7];
+	  }
+	  getAnalyticTab() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _inviteType$2)[_inviteType$2] === InviteType.PHONE ? Analytics.TAB_PHONE : Analytics.TAB_EMAIL;
+	  }
+	}
+	function _getInputRowsContainer2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer]) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer];
+	  }
+	  const inputsRows = [];
+	  for (let i = 0; i < 2; i++) {
+	    const inputsRow = babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$1)[_inputsFactory$1].createInputsRow(i);
+	    inputsRows.push(inputsRow);
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer] = new InputRowsContainer(inputsRows);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer];
+	}
+	function _renderMassInviteButton2() {
+	  const button = main_core.Tag.render(_t3$3 || (_t3$3 = _$b`
+			<span data-test-id="invite-invite-page-open-invite-popup-button" class="ui-link ui-link-secondary ui-link-dashed ui-text --sm">
+				${0}
+			</span>
+		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MASSIVE'));
+	  main_core.Event.bind(button, 'click', babelHelpers.classPrivateFieldLooseBase(this, _openMassInvitePopup)[_openMassInvitePopup].bind(this));
+	  return button;
+	}
+	function _openMassInvitePopup2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _inviteEmailPopup$1)[_inviteEmailPopup$1]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _inviteEmailPopup$1)[_inviteEmailPopup$1] = new InviteEmailPopup({
+	      departmentControl: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$4)[_departmentControl$4],
+	      inviteType: babelHelpers.classPrivateFieldLooseBase(this, _inviteType$2)[_inviteType$2],
+	      analytics: babelHelpers.classPrivateFieldLooseBase(this, _analytics$5)[_analytics$5],
+	      transport: babelHelpers.classPrivateFieldLooseBase(this, _transport$7)[_transport$7]
+	    });
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _analytics$5)[_analytics$5].sendOpenMassInvitePopup(babelHelpers.classPrivateFieldLooseBase(this, _inviteType$2)[_inviteType$2]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _inviteEmailPopup$1)[_inviteEmailPopup$1].show();
+	}
+	function _getInviteButton2$3() {
+	  const inviteButton = new ui_buttons.Button({
+	    useAirDesign: true,
+	    text: main_core.Loc.getMessage('BX24_INVITE_DIALOG_BUTTON_INVITE'),
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    props: {
+	      'data-test-id': 'invite-invite-page-submit-button'
+	    },
+	    onclick: () => {
+	      if (inviteButton.isWaiting() || babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer].hasError()) {
+	        return;
+	      }
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer].isInvitationInputRowsEmpty()) {
+	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:onError', {
+	          error: babelHelpers.classPrivateFieldLooseBase(this, _getEmptyError)[_getEmptyError]()
+	        });
+	        return;
+	      }
+	      main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:clearError');
+	      inviteButton.setState(ui_buttons.ButtonState.WAITING);
+	      babelHelpers.classPrivateFieldLooseBase(this, _transport$7)[_transport$7].send({
+	        action: 'inviteWithGroupDp',
+	        data: {
+	          invitations: babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer].getEnteredInvitations(),
+	          departmentIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$4)[_departmentControl$4].getValues(),
+	          workgroupIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$4)[_departmentControl$4].getGroupValues(),
+	          tab: 'email'
+	        }
+	      }, reject => {
+	        inviteButton.setState(null);
+	        let handled = false;
+	        if (reject.errors) {
+	          handled = babelHelpers.classPrivateFieldLooseBase(this, _handleErrors)[_handleErrors](reject.errors);
+	        }
+	        if (!handled) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _transport$7)[_transport$7].onError(reject);
+	        }
+	      }, babelHelpers.classPrivateFieldLooseBase(this, _analytics$5)[_analytics$5].getDataForAction('default')).then(response => {
+	        var _response$data, _response$data2;
+	        if (response.data.invitedUserIds.length > 0) {
+	          main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
+	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer].clearAll();
+	        inviteButton.setState(null);
+	        if ((_response$data = response.data) != null && _response$data.firedUserList && ((_response$data2 = response.data) == null ? void 0 : _response$data2.firedUserList.length) > 0) {
+	          new RestoreFiredUsersPopup({
+	            userList: response.data.firedUserList,
+	            isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
+	            transport: babelHelpers.classPrivateFieldLooseBase(this, _transport$7)[_transport$7]
+	          }).show();
+	        }
+	      }).catch(reject => {
+	        console.error(reject);
+	      });
+	    }
+	  });
+	  return inviteButton;
+	}
+	function _handleErrors2(errors) {
+	  let handled = false;
+	  errors.forEach(error => {
+	    if (error.code === 'EMAIL_EXIST_ERROR') {
+	      babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer].highlightErrorInputs(error.customData.emailList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INPUT_EMAIL_EXIST_ERROR'));
+	      handled = true;
+	    }
+	    if (error.code === 'PHONE_EXIST_ERROR') {
+	      babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer].highlightErrorInputs(error.customData.phoneList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INPUT_PHONE_EXIST_ERROR'));
+	      handled = true;
+	    }
+	    if (error.code === 'EMAIL_INVALID_ERROR') {
+	      babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer].highlightErrorInputs(error.customData.emailList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL'));
+	      handled = true;
+	    }
+	    if (error.code === 'PHONE_INVALID_ERROR') {
+	      babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer].highlightErrorInputs(error.customData.phoneList, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_PHONE'));
+	      handled = true;
+	    }
+	  });
+	  return handled;
+	}
+	function _getAddButton2$1() {
+	  return new ui_buttons.Button({
+	    useAirDesign: true,
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MORE'),
+	    style: ui_buttons.AirButtonStyle.PLAIN_ACCENT,
+	    icon: BX.UI.IconSet.Outline.CIRCLE_PLUS,
+	    props: {
+	      'data-test-id': 'invite-invite-page-add-more-button'
+	    },
+	    onclick: () => {
+	      const inputsRow = babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$1)[_inputsFactory$1].createInputsRow();
+	      babelHelpers.classPrivateFieldLooseBase(this, _inputsRowsContainer)[_inputsRowsContainer].addRow(inputsRow);
+	    }
+	  });
+	}
+	function _getEmptyError2() {
+	  switch (babelHelpers.classPrivateFieldLooseBase(this, _inviteType$2)[_inviteType$2]) {
+	    case InviteType.EMAIL:
+	      return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMPTY_ERROR_EMAIL');
+	    case InviteType.PHONE:
+	      return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMPTY_ERROR_PHONE');
+	    case InviteType.ALL:
+	    default:
+	      return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMPTY_ERROR_EMAIL_AND_PHONE');
+	  }
+	}
+
+	var _input$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
+	var _invitationType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("invitationType");
+	var _isPhoneEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPhoneEnabled");
+	var _isEmailEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEmailEnabled");
+	var _getDialogInputMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogInputMessage");
+	class MassInvitationField {
+	  constructor(options) {
+	    Object.defineProperty(this, _getDialogInputMessage, {
+	      value: _getDialogInputMessage2
+	    });
+	    Object.defineProperty(this, _input$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _invitationType, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _isPhoneEnabled, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _isEmailEnabled, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _invitationType)[_invitationType] = options.useOnlyPhone ? intranet_invitationInput.InvitationInputType.PHONE : options.smsAvailable ? intranet_invitationInput.InvitationInputType.ALL : intranet_invitationInput.InvitationInputType.EMAIL;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled)[_isPhoneEnabled] = [intranet_invitationInput.InvitationInputType.ALL, intranet_invitationInput.InvitationInputType.PHONE].includes(babelHelpers.classPrivateFieldLooseBase(this, _invitationType)[_invitationType]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isEmailEnabled)[_isEmailEnabled] = [intranet_invitationInput.InvitationInputType.ALL, intranet_invitationInput.InvitationInputType.EMAIL].includes(babelHelpers.classPrivateFieldLooseBase(this, _invitationType)[_invitationType]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2] = new intranet_invitationInput.InvitationInput({
+	      inputType: babelHelpers.classPrivateFieldLooseBase(this, _invitationType)[_invitationType]
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2].getTagSelector().setPlaceholder(main_core.Type.isStringFilled(options.placeholder) ? options.placeholder : babelHelpers.classPrivateFieldLooseBase(this, _getDialogInputMessage)[_getDialogInputMessage]());
+	    BX.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2].getTagSelector().getContainer(), 'height', '103px');
+	    BX.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2].getTagSelector().getContainer(), 'cursor', 'text');
+	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2].getTagSelector().getContainer(), 'click', () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2].getTagSelector().focusTextBox();
+	    });
+	  }
+	  reset() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2].getTagSelector().removeTags();
+	  }
+	  renderTo(node) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2].renderTo(node);
+	  }
+	  render() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2].render();
+	  }
+	  invite(departmentIds) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _input$2)[_input$2].inviteToDepartment(departmentIds);
+	  }
+	}
+	function _getDialogInputMessage2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled)[_isPhoneEnabled] && babelHelpers.classPrivateFieldLooseBase(this, _isEmailEnabled)[_isEmailEnabled]) {
+	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT');
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPhoneEnabled)[_isPhoneEnabled]) {
+	    return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_PHONE_INPUT');
+	  }
+	  return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INPUT');
+	}
+
+	let _$c = t => t,
+	  _t$c;
+	var _container$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _massInvitationField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("massInvitationField");
+	var _departmentControl$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
+	var _getInviteButton$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInviteButton");
+	class MassPage extends Page {
+	  constructor(options) {
+	    super();
+	    Object.defineProperty(this, _getInviteButton$4, {
+	      value: _getInviteButton2$4
+	    });
+	    Object.defineProperty(this, _container$8, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _massInvitationField, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _departmentControl$5, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _massInvitationField)[_massInvitationField] = new MassInvitationField({
+	      placeholder: '',
+	      smsAvailable: false
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$5)[_departmentControl$5] = options.departmentControl instanceof DepartmentControl__default ? options.departmentControl : null;
+	  }
+	  render() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8]) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8];
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8] = main_core.Tag.render(_t$c || (_t$c = _$c`
+			<div class="intranet-invitation-block">
+				<div class="intranet-invitation-block__department-control">
+					<div class="intranet-invitation-block__department-control-inner">${0}</div>
+				</div>
+				<div class="intranet-invitation-block__content">
+					<span class="intranet-invitation-status__title ui-headline --sm">${0}</span>
+					${0}
+					<div class="intranet-invitation-block__footer">
+						${0}
+					</div>
+				</div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$5)[_departmentControl$5].render(), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_INVITATION_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _massInvitationField)[_massInvitationField].render(), babelHelpers.classPrivateFieldLooseBase(this, _getInviteButton$4)[_getInviteButton$4]().render());
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8];
+	  }
+	  getAnalyticTab() {
+	    return Analytics.TAB_MASS;
+	  }
+	}
+	function _getInviteButton2$4() {
+	  const inviteButton = new ui_buttons.Button({
+	    useAirDesign: true,
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_EMAIL_MSGVER_1'),
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    onclick: () => {
+	      if (inviteButton.getState() === ui_buttons.ButtonState.WAITING) {
+	        return;
+	      }
+	      inviteButton.setState(ui_buttons.ButtonState.WAITING);
+	      babelHelpers.classPrivateFieldLooseBase(this, _massInvitationField)[_massInvitationField].invite(babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$5)[_departmentControl$5].getValues()).then(() => {
+	        inviteButton.setState(null);
+	      }).catch(() => {
+	        inviteButton.setState(null);
+	      });
+	    }
+	  });
+	  return inviteButton;
+	}
+
+	let _$d = t => t,
+	  _t$d,
+	  _t2$8,
+	  _t3$4;
+	var _container$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _departmentControl$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
+	var _emailInput$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emailInput");
+	var _nameInput$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("nameInput");
+	var _lastNameInput$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastNameInput");
+	var _positionInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("positionInput");
+	var _checkboxInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkboxInput");
+	var _transport$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
+	var _getEmailInput$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmailInput");
+	var _getNameInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNameInput");
+	var _getLastNameInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLastNameInput");
+	var _getPositionInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPositionInput");
+	var _renderCheckbox = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCheckbox");
+	var _getCheckboxInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCheckboxInput");
+	var _getRegisterButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRegisterButton");
+	class RegisterPage extends Page {
+	  constructor(options) {
+	    super();
+	    Object.defineProperty(this, _getRegisterButton, {
+	      value: _getRegisterButton2
+	    });
+	    Object.defineProperty(this, _getCheckboxInput, {
+	      value: _getCheckboxInput2
+	    });
+	    Object.defineProperty(this, _renderCheckbox, {
+	      value: _renderCheckbox2
+	    });
+	    Object.defineProperty(this, _getPositionInput, {
+	      value: _getPositionInput2
+	    });
+	    Object.defineProperty(this, _getLastNameInput, {
+	      value: _getLastNameInput2
+	    });
+	    Object.defineProperty(this, _getNameInput, {
+	      value: _getNameInput2
+	    });
+	    Object.defineProperty(this, _getEmailInput$1, {
+	      value: _getEmailInput2$1
+	    });
+	    Object.defineProperty(this, _container$9, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _departmentControl$6, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _emailInput$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _nameInput$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _lastNameInput$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _positionInput, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _checkboxInput, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _transport$8, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6] = options.departmentControl instanceof DepartmentControl__default ? options.departmentControl : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport$8)[_transport$8] = options.transport;
+	  }
+	  render() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9]) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9];
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9] = main_core.Tag.render(_t$d || (_t$d = _$d`
+			<div class="intranet-invitation-block">
+				<div class="intranet-invitation-block__department-control">
+					<div class="intranet-invitation-block__department-control-inner">${0}</div>
+				</div>
+				<div class="intranet-invitation-block__content">
+					<div class="intranet-invitation-block__header">
+						<span class="intranet-invitation-status__title ui-headline --sm">${0}</span>
+						<p class="intranet-invitation-description ui-text --md">${0}</p>
+					</div>
+					<div class="intranet-invitation-block__body">
+						${0}
+						${0}
+						${0}
+						${0}
+					</div>
+					${0}
+					<div class="intranet-invitation-block__footer">
+						${0}
+					</div>
+				</div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6].render(), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_DESCRIPTION'), babelHelpers.classPrivateFieldLooseBase(this, _getEmailInput$1)[_getEmailInput$1]().render(), babelHelpers.classPrivateFieldLooseBase(this, _getNameInput)[_getNameInput]().render(), babelHelpers.classPrivateFieldLooseBase(this, _getLastNameInput)[_getLastNameInput]().render(), babelHelpers.classPrivateFieldLooseBase(this, _getPositionInput)[_getPositionInput]().render(), babelHelpers.classPrivateFieldLooseBase(this, _renderCheckbox)[_renderCheckbox](), babelHelpers.classPrivateFieldLooseBase(this, _getRegisterButton)[_getRegisterButton]().render());
+	    BX.UI.Hint.init(babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9]);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9];
+	  }
+	  getAnalyticTab() {
+	    return Analytics.TAB_REGISTRATION;
+	  }
+	}
+	function _getEmailInput2$1() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _emailInput$1))[_emailInput$1]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_emailInput$1] = new ui_system_input.Input({
+	    label: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_LABEL'),
+	    placeholder: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_PLACEHOLDER'),
+	    design: ui_system_input.InputDesign.Grey
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _emailInput$1)[_emailInput$1];
+	}
+	function _getNameInput2() {
+	  var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	  (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _nameInput$1))[_nameInput$1]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[_nameInput$1] = new ui_system_input.Input({
+	    label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'),
+	    placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_PLACEHOLDER'),
+	    design: ui_system_input.InputDesign.Grey
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _nameInput$1)[_nameInput$1];
+	}
+	function _getLastNameInput2() {
+	  var _babelHelpers$classPr5, _babelHelpers$classPr6;
+	  (_babelHelpers$classPr6 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _lastNameInput$1))[_lastNameInput$1]) != null ? _babelHelpers$classPr6 : _babelHelpers$classPr5[_lastNameInput$1] = new ui_system_input.Input({
+	    label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'),
+	    placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_PLACEHOLDER'),
+	    design: ui_system_input.InputDesign.Grey
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _lastNameInput$1)[_lastNameInput$1];
+	}
+	function _getPositionInput2() {
+	  var _babelHelpers$classPr7, _babelHelpers$classPr8;
+	  (_babelHelpers$classPr8 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _positionInput))[_positionInput]) != null ? _babelHelpers$classPr8 : _babelHelpers$classPr7[_positionInput] = new ui_system_input.Input({
+	    label: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_POSITION_TITLE'),
+	    placeholder: main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_POSITION_PLACEHOLDER'),
+	    design: ui_system_input.InputDesign.Grey
+	  });
+	  return babelHelpers.classPrivateFieldLooseBase(this, _positionInput)[_positionInput];
+	}
+	function _renderCheckbox2() {
+	  return main_core.Tag.render(_t2$8 || (_t2$8 = _$d`
+			<div class="intranet-invitation-checkbox__container">
+				${0}
+				<label class="intranet-invitation-checkbox__label ui-text --sm" for="ADD_SEND_PASSWORD">
+					${0}
+				</label>
+				<div class="invite-invitation-helper"
+					 data-hint="${0}"
+					 data-hint-no-icon
+				>
+				</div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getCheckboxInput)[_getCheckboxInput](), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_CHECKBOX_LABEL'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_CHECKBOX_HINT'));
+	}
+	function _getCheckboxInput2() {
+	  var _babelHelpers$classPr9, _babelHelpers$classPr10;
+	  (_babelHelpers$classPr10 = (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _checkboxInput))[_checkboxInput]) != null ? _babelHelpers$classPr10 : _babelHelpers$classPr9[_checkboxInput] = main_core.Tag.render(_t3$4 || (_t3$4 = _$d`
+			<input
+				type="checkbox"
+				name="ADD_SEND_PASSWORD"
+				data-test-id="invite-register-checkbox"
+				class="intranet-invitation-checkbox"
+			>
+		`));
+	  return babelHelpers.classPrivateFieldLooseBase(this, _checkboxInput)[_checkboxInput];
+	}
+	function _getRegisterButton2() {
+	  const registerButton = new ui_buttons.Button({
+	    useAirDesign: true,
+	    text: main_core.Loc.getMessage('BX24_INVITE_DIALOG_TAB_ADD_TITLE_NEW'),
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    props: {
+	      'data-test-id': 'invite-register-submit-button'
+	    },
+	    onclick: () => {
+	      if (registerButton.isWaiting()) {
+	        return;
+	      }
+	      registerButton.setState(ui_buttons.ButtonState.WAITING);
+	      babelHelpers.classPrivateFieldLooseBase(this, _transport$8)[_transport$8].send({
+	        action: 'add',
+	        data: {
+	          ADD_EMAIL: babelHelpers.classPrivateFieldLooseBase(this, _getEmailInput$1)[_getEmailInput$1]().getValue(),
+	          ADD_NAME: babelHelpers.classPrivateFieldLooseBase(this, _getNameInput)[_getNameInput]().getValue(),
+	          ADD_LAST_NAME: babelHelpers.classPrivateFieldLooseBase(this, _getLastNameInput)[_getLastNameInput]().getValue(),
+	          ADD_POSITION: babelHelpers.classPrivateFieldLooseBase(this, _getPositionInput)[_getPositionInput]().getValue(),
+	          ADD_SEND_PASSWORD: babelHelpers.classPrivateFieldLooseBase(this, _getCheckboxInput)[_getCheckboxInput]().checked ? 'Y' : 'N',
+	          SONET_GROUPS_CODE: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6].getGroupValues(),
+	          departmentIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6].getValues()
+	        }
+	      }, reject => {
+	        registerButton.setState(null);
+	        babelHelpers.classPrivateFieldLooseBase(this, _transport$8)[_transport$8].onError(reject);
+	      }).then(response => {
+	        registerButton.setState(null);
+	        babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6].reset();
+	        babelHelpers.classPrivateFieldLooseBase(this, _getEmailInput$1)[_getEmailInput$1]().setValue('');
+	        babelHelpers.classPrivateFieldLooseBase(this, _getNameInput)[_getNameInput]().setValue('');
+	        babelHelpers.classPrivateFieldLooseBase(this, _getLastNameInput)[_getLastNameInput]().setValue('');
+	        babelHelpers.classPrivateFieldLooseBase(this, _getPositionInput)[_getPositionInput]().setValue('');
+	        if (response.data.firedUserList) {
+	          new RestoreFiredUsersPopup({
+	            userList: response.data.firedUserList,
+	            isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
+	            transport: babelHelpers.classPrivateFieldLooseBase(this, _transport$8)[_transport$8]
+	          }).show();
+	        } else {
+	          main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
+	        }
+	      }).catch(reject => {
+	        console.error(reject);
+	      });
+	    }
+	  });
+	  return registerButton;
+	}
+
+	let _$e = t => t,
+	  _t$e,
+	  _t2$9,
+	  _t3$5,
+	  _t4$3;
+	var _container$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _isAdmin$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdmin");
+	var _transport$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
+	var _getEnableButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEnableButton");
+	class LinkDisabledPage extends Page {
+	  constructor(options) {
+	    super();
+	    Object.defineProperty(this, _getEnableButton, {
+	      value: _getEnableButton2
+	    });
+	    Object.defineProperty(this, _container$a, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _isAdmin$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _transport$9, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$2)[_isAdmin$2] = options.isAdmin === true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _transport$9)[_transport$9] = options.transport;
 	  }
 	  render() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a];
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a] = main_core.Tag.render(_t$d || (_t$d = _$d`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="add-block">
-				<form method="POST" name="ADD_DIALOG_FORM">
-					<div class="invite-title-container">
-						<div class="invite-title-icon invite-title-icon-registration">
-							<div class="ui-icon-set --person-plus"></div>
-						</div>
-						<div class="invite-title-text">${0}</div>
-					</div>
-					<div class="invite-content-container">
-						<div class="invite-form-container">
-							<div data-role="rows-container">
-								${0}
-							</div>
-							<div class="invite-form-row">
-								<div class="invite-form-col">
-									<div class="invite-content__field-lable">${0}</div>
-									<div data-role="entity-selector-container"></div>
-								</div>
-							</div>
-							<div class="invite-form-row" id="intranet-invitation__department-control-palce"></div>
-							<div class="invite-form-row">
-								<div class="invite-form-col">
-									<div class="invite-dialog-inv-form-checkbox-wrap">
-										<input
-										type="checkbox"
-										name="ADD_SEND_PASSWORD"
-										id="ADD_SEND_PASSWORD"
-										value="Y"
-										class="invite-dialog-inv-form-checkbox"
-										${0}
-										>
-										<label class="invite-dialog-inv-form-checkbox-label" for="ADD_SEND_PASSWORD">
-											${0}
-											${0}
-										</label>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</form>
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a] = main_core.Tag.render(_t$e || (_t$e = _$e`
+			<div class="intranet-invitation-block" data-role="self-block"></div>
+		`));
+	    const statusBlock = main_core.Tag.render(_t2$9 || (_t2$9 = _$e`
+			<div class="intranet-invitation-status --invite-link-disabled">
+				<div class="intranet-invitation-status__content">
+					<span class="intranet-invitation-status__title ui-headline --md">${0}</span>
+					<p class="intranet-invitation-status__description ui-text --lg">
+						${0}
+					</p>
+				</div>
 			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _renderFields)[_renderFields](), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_GROUP_INPUT'), babelHelpers.classPrivateFieldLooseBase(this, _withoutConfirm)[_withoutConfirm] ? 'checked' : '', main_core.Loc.getMessage(babelHelpers.classPrivateFieldLooseBase(this, _isCloud$1)[_isCloud$1] ? 'BX24_INVITE_DIALOG_ADD_WO_CONFIRMATION_TITLE' : 'BX24_INVITE_DIALOG_ADD_SEND_PASSWORD_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _isCloud$1)[_isCloud$1] ? '' : '<span id="ADD_SEND_PASSWORD_EMAIL"></span>');
-	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup$2)[_tagSelectorGroup$2].renderTo(babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a].querySelector('[data-role="entity-selector-container"]'));
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$7)[_departmentControl$7].renderTo(babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a].querySelector('#intranet-invitation__department-control-palce'));
+		`), main_core.Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED'), main_core.Loc.getMessage(babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$2)[_isAdmin$2] ? 'INTRANET_INVITE_DIALOG_STATUS_INVITATION_LINK_DISABLE_DESCRIPTION' : 'INTRANET_INVITE_DIALOG_STATUS_INVITATION_LINK_DISABLE_DESCRIPTION_NOT_ADMIN'));
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$2)[_isAdmin$2]) {
+	      main_core.Dom.append(main_core.Tag.render(_t3$5 || (_t3$5 = _$e`
+				<div class="intranet-invitation-status__footer">${0}</div>
+			`), babelHelpers.classPrivateFieldLooseBase(this, _getEnableButton)[_getEnableButton]().render()), statusBlock);
+	    }
+	    main_core.Dom.append(main_core.Tag.render(_t4$3 || (_t4$3 = _$e`
+			<div class="intranet-invitation-block__content">
+				${0}
+			</div>
+		`), statusBlock), babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a]);
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a];
 	  }
 	  getAnalyticTab() {
-	    return Analytics.TAB_REGISTRATION;
-	  }
-	  onSubmit(event) {
-	    var _event$getData;
-	    const addForm = this.render().querySelector('form');
-	    const tagSelectorItems = babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup$2)[_tagSelectorGroup$2].getDialog().getSelectedItems();
-	    const projectIds = [];
-	    tagSelectorItems.forEach(item => {
-	      const id = parseInt(item.getId(), 10);
-	      projectIds.push(id);
-	    });
-	    const data = {
-	      ADD_EMAIL: addForm.ADD_EMAIL.value,
-	      ADD_NAME: addForm.ADD_NAME.value,
-	      ADD_LAST_NAME: addForm.ADD_LAST_NAME.value,
-	      ADD_POSITION: addForm.ADD_POSITION.value,
-	      ADD_SEND_PASSWORD: addForm.ADD_SEND_PASSWORD && Boolean(addForm.ADD_SEND_PASSWORD.checked) ? addForm.ADD_SEND_PASSWORD.value : 'N',
-	      departmentIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$7)[_departmentControl$7].getValues(),
-	      SONET_GROUPS_CODE: projectIds
-	    };
-	    const analyticsLabel = {
-	      INVITATION_TYPE: 'add'
-	    };
-	    const context = (_event$getData = event.getData()) == null ? void 0 : _event$getData.context;
-	    main_core_events.EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-	      action: 'add',
-	      data,
-	      analyticsLabel
-	    });
-	  }
-	  getSubmitButtonText() {
-	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_ADD');
-	  }
-	  onInviteSuccess(event) {
-	    var _this$render$querySel;
-	    (_this$render$querySel = this.render().querySelector('form')) == null ? void 0 : _this$render$querySel.reset();
-	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$7)[_departmentControl$7].reset();
-	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup$2)[_tagSelectorGroup$2].removeTags();
+	    return Analytics.TAB_LINK;
 	  }
 	}
-	function _renderFields2() {
-	  const element = main_core.Tag.render(_t2$6 || (_t2$6 = _$d`
-			<div>
-				<div class="invite-form-row">
-					<div class="invite-form-col">
-						<div class="invite-content__field-lable">${0}</div>
-						<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-							<input type="text" name="ADD_NAME" placeholder="${0}" id="ADD_NAME" class="ui-ctl-element">
-							<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
-						</div>
-					</div>
-				</div>
-				<div class="invite-form-row">
-					<div class="invite-form-col">
-						<div class="invite-content__field-lable">${0}</div>
-						<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-							<input type="text" name="ADD_LAST_NAME" placeholder="${0}" id="ADD_LAST_NAME" class="ui-ctl-element">
-							<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
-						</div>
-					</div>
-				</div>
-				<div class="invite-form-row">
-					<div class="invite-form-col">
-						<div class="invite-content__field-lable">${0}</div>
-						<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-							<input type="text" name="ADD_EMAIL" placeholder="${0}" id="ADD_EMAIL" class="ui-ctl-element" maxlength="50">
-							<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
-						</div>
-					</div>
-				</div>
-				<div class="invite-form-row">
-					<div class="invite-form-col">
-						<div class="invite-content__field-lable">${0}</div>
-						<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-							<input type="text" name="ADD_POSITION" placeholder="${0}" id="ADD_POSITION" class="ui-ctl-element">
-							<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
-						</div>			
-					</div>
-				</div>
-			</div>
-		`), main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_PLACEHOLDER_NAME'), main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_PLACEHOLDER_LAST_NAME'), main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_EMAIL_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_PLACEHOLDER_EMAIL'), main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_POSITION_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_PLACEHOLDER_POSITION'));
-	  babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory$3)[_inputsFactory$3].bindCloseIcons(element);
-	  return element;
+	function _getEnableButton2() {
+	  const enableButton = new ui_buttons.Button({
+	    useAirDesign: true,
+	    text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_ENABLE_BUTTON'),
+	    style: ui_buttons.AirButtonStyle.FILLED,
+	    props: {
+	      'data-test-id': 'invite-link-page-enable-button'
+	    },
+	    onclick: () => {
+	      if (enableButton.isWaiting()) {
+	        return;
+	      }
+	      enableButton.setState(ui_buttons.ButtonState.WAITING);
+	      babelHelpers.classPrivateFieldLooseBase(this, _transport$9)[_transport$9].send({
+	        action: 'self',
+	        data: {
+	          allow_register: 'Y'
+	        }
+	      }).then(() => {
+	        enableButton.setState(null);
+	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
+	          selfEnabled: true
+	        });
+	      }).catch(() => {
+	        enableButton.setState(null);
+	      });
+	    }
+	  });
+	  return enableButton;
 	}
 
-	let _$e = t => t,
-	  _t$e;
-	var _container$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	class SuccessPage extends Page {
-	  constructor(...args) {
-	    super(...args);
-	    Object.defineProperty(this, _container$b, {
+	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
+	var _userOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userOptions");
+	var _getProjectId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getProjectId");
+	class PageFactory {
+	  constructor(options, userOptions) {
+	    Object.defineProperty(this, _getProjectId, {
+	      value: _getProjectId2
+	    });
+	    Object.defineProperty(this, _options, {
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _userOptions, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
+	    babelHelpers.classPrivateFieldLooseBase(this, _userOptions)[_userOptions] = userOptions;
 	  }
-	  render() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$b)[_container$b]) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _container$b)[_container$b];
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$b)[_container$b] = main_core.Tag.render(_t$e || (_t$e = _$e`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="success-block" style="position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: #fff; z-index: 90;">
-				<div style="height: 78vh;" class="invite-send-success-wrap">
-					<div class="invite-send-success-text">${0}</div>
-					<div class="invite-send-success-decal-1"></div>
-					<div class="invite-send-success-decal-2"></div>
-					<div class="invite-send-success-decal-3"></div>
-					<div class="invite-send-success-decal-4"></div>
-					<div class="invite-send-success-decal-5"></div>
-				</div>
-			</div>
-		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_SUCCESS_SEND'));
-	    return babelHelpers.classPrivateFieldLooseBase(this, _container$b)[_container$b];
-	  }
-	  getAnalyticTab() {
-	    return null;
-	  }
-	  onSubmit(event) {
-	    var _event$getData, _event$getData$contex, _event$getData2, _event$getData2$conte, _event$getData3, _event$getData3$conte, _event$getData4, _event$getData4$conte, _event$getData5, _event$getData5$conte, _event$getData6, _event$getData6$conte;
-	    (_event$getData = event.getData()) == null ? void 0 : (_event$getData$contex = _event$getData.context) == null ? void 0 : _event$getData$contex.submitButton.enable();
-	    (_event$getData2 = event.getData()) == null ? void 0 : (_event$getData2$conte = _event$getData2.context) == null ? void 0 : _event$getData2$conte.submitButton.ready();
-	    (_event$getData3 = event.getData()) == null ? void 0 : (_event$getData3$conte = _event$getData3.context) == null ? void 0 : _event$getData3$conte.changeContent((_event$getData4 = event.getData()) == null ? void 0 : (_event$getData4$conte = _event$getData4.context) == null ? void 0 : _event$getData4$conte.firstInvitationBlock);
-	    (_event$getData5 = event.getData()) == null ? void 0 : (_event$getData5$conte = _event$getData5.context) == null ? void 0 : _event$getData5$conte.activeMenuItem((_event$getData6 = event.getData()) == null ? void 0 : (_event$getData6$conte = _event$getData6.context) == null ? void 0 : _event$getData6$conte.firstInvitationBlock);
-	  }
-	  getSubmitButtonText() {
-	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE_MORE');
-	  }
-	}
-
-	class PageFactory {
 	  createLocalEmailPage() {
 	    return new LocalEmailPage({
-	      departmentControl: this.createDepartmentControl(),
-	      transport: this.transport,
-	      linkRegisterEnabled: this.isSelfRegisterEnabled,
-	      analytics: this.analytics
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _options)[_options],
+	      departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION'), [DepartmentControl.EntityType.DEPARTMENT])
 	    });
 	  }
-	  createEmailPage() {
-	    return new EmailPage({
-	      departmentControl: this.createDepartmentControl(),
-	      inputsFactory: this.createInputRowFactory(this.useLocalEmailProgram),
-	      smsAvailable: this.isInvitationBySmsAvailable,
-	      useLocalEmailProgram: this.useLocalEmailProgram,
-	      onClickSwitchMode: () => {
-	        this.changeContent('mass-invite');
-	      },
-	      onClickAddInputRow: () => {
-	        this.getSetupArrow();
-	        this.updateArrow();
-	      }
-	    });
-	  }
-	  createGroupPage() {
-	    var _this$userOptions;
-	    const projectId = (_this$userOptions = this.userOptions) != null && _this$userOptions.groupId ? parseInt(this.userOptions.groupId, 10) : 0;
-	    const intranetSelector = new Selector({
-	      options: {
-	        project: true,
-	        projectId,
-	        isAdmin: this.isAdmin,
-	        projectLimitExceeded: this.projectLimitExceeded,
-	        projectLimitFeatureId: this.projectLimitFeatureId
-	      }
-	    });
-	    return new GroupPage({
-	      departmentControl: this.createDepartmentControl(),
-	      inputsFactory: this.createInputRowFactory(),
-	      tagSelectorGroup: intranetSelector.renderTagSelector(),
-	      onClickAddInputRow: () => {
-	        this.getSetupArrow();
-	        this.updateArrow();
-	      }
+	  createInvitePage(inviteType, showMassInviteButton = true) {
+	    return new InvitePage({
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _options)[_options],
+	      inviteType,
+	      departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_WITH_GROUP'), [DepartmentControl.EntityType.DEPARTMENT, DepartmentControl.EntityType.GROUP, DepartmentControl.EntityType.EXTRANET]),
+	      inputsFactory: this.createInputRowFactory(inviteType),
+	      showMassInviteButton
 	    });
 	  }
 	  createExtranetPage() {
-	    var _this$userOptions2;
-	    const projectId = (_this$userOptions2 = this.userOptions) != null && _this$userOptions2.groupId ? parseInt(this.userOptions.groupId, 10) : 0;
-	    const selectorParams = {
-	      options: {
-	        project: 'extranet',
-	        projectId,
-	        isAdmin: this.isAdmin,
-	        projectLimitExceeded: this.projectLimitExceeded,
-	        projectLimitFeatureId: this.projectLimitFeatureId,
-	        showCreateButton: !this.isCollabEnabled
-	      }
-	    };
 	    return new ExtranetPage({
-	      inputsFactory: this.createInputRowFactory(),
-	      tagSelectorGroup: new Selector(selectorParams).renderTagSelector(),
-	      onClickAddInputRow: () => {
-	        this.getSetupArrow();
-	        this.updateArrow();
-	      }
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _options)[_options],
+	      inputsFactory: this.createInputRowFactory(InviteType.ALL),
+	      departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_EXTRANET'), [DepartmentControl.EntityType.EXTRANET])
 	    });
 	  }
 	  createRegisterPage() {
-	    var _this$userOptions3;
-	    const projectId = (_this$userOptions3 = this.userOptions) != null && _this$userOptions3.groupId ? parseInt(this.userOptions.groupId, 10) : 0;
-	    const intranetSelector = new Selector({
-	      options: {
-	        project: true,
-	        projectId,
-	        isAdmin: this.isAdmin,
-	        projectLimitExceeded: this.projectLimitExceeded,
-	        projectLimitFeatureId: this.projectLimitFeatureId
-	      }
-	    });
 	    return new RegisterPage({
-	      departmentControl: this.createDepartmentControl(),
-	      isCloud: this.isCloud,
-	      inputsFactory: this.createInputRowFactory(),
-	      withoutConfirm: !this.registerNeedeConfirm,
-	      tagSelectorGroup: intranetSelector.renderTagSelector()
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _options)[_options],
+	      departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_WITH_GROUP'), [DepartmentControl.EntityType.DEPARTMENT, DepartmentControl.EntityType.GROUP, DepartmentControl.EntityType.EXTRANET]),
+	      inputsFactory: this.createInputRowFactory()
 	    });
 	  }
 	  createIntegratorPage() {
-	    return new IntegratorPage();
+	    return new IntegratorPage({
+	      transport: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].transport
+	    });
 	  }
 	  createLinkPage() {
 	    return new LinkPage({
-	      departmentControl: this.createDepartmentControl(),
-	      isAdmin: this.isAdmin,
-	      fastRegistrationAvailable: this.isSelfRegisterEnabled,
-	      needConfirmRegistration: this.registerNeedeConfirm,
-	      wishlist: this.wishlistValue,
-	      isCloud: this.isCloud,
-	      linkRegisterEnabled: this.isSelfRegisterEnabled,
-	      analytics: this.analytics,
-	      transport: this.transport
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _options)[_options],
+	      departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION'), [DepartmentControl.EntityType.DEPARTMENT])
+	    });
+	  }
+	  createLinkDisabledPage() {
+	    return new LinkDisabledPage({
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _options)[_options]
 	    });
 	  }
 	  createMassPage() {
 	    return new MassPage({
-	      departmentControl: this.createDepartmentControl(),
-	      smsAvailable: this.isInvitationBySmsAvailable,
-	      useOnlyPhone: this.useLocalEmailProgram,
-	      onClickSwitchMode: () => {
-	        this.changeContent('invite');
-	      }
+	      departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION'), [DepartmentControl.EntityType.DEPARTMENT])
 	    });
 	  }
-	  createSeccessPage() {
-	    return new SuccessPage();
+	  createDepartmentControl(description, entitiesType) {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6;
+	    const departmentsId = main_core.Type.isArray((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _userOptions)[_userOptions]) == null ? void 0 : _babelHelpers$classPr.departmentList) ? babelHelpers.classPrivateFieldLooseBase(this, _userOptions)[_userOptions].departmentList : [];
+	    let groupOptions = {};
+	    const preselectedItems = [];
+	    const rootDepartment = ((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _userOptions)[_userOptions]) == null ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.rootDepartment) == null ? void 0 : _babelHelpers$classPr3.id) === ((_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _userOptions)[_userOptions]) == null ? void 0 : (_babelHelpers$classPr5 = _babelHelpers$classPr4.companyRootDepartment) == null ? void 0 : _babelHelpers$classPr5.id) ? null : (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _userOptions)[_userOptions]) == null ? void 0 : _babelHelpers$classPr6.rootDepartment;
+	    const withGroups = entitiesType.includes(DepartmentControl.EntityType.GROUP) || entitiesType.includes(DepartmentControl.EntityType.EXTRANET);
+	    if (withGroups) {
+	      groupOptions = {
+	        createProjectLink: !(!entitiesType.includes(DepartmentControl.EntityType.GROUP) && entitiesType.includes(DepartmentControl.EntityType.EXTRANET))
+	      };
+	      if (this.projectLimitExceeded && this.projectLimitFeatureId) {
+	        groupOptions.lockProjectLink = this.projectLimitExceeded;
+	        groupOptions.lockProjectLinkFeatureId = this.projectLimitFeatureId;
+	      }
+	      const projectId = babelHelpers.classPrivateFieldLooseBase(this, _getProjectId)[_getProjectId]();
+	      if (projectId) {
+	        preselectedItems.push(['project', projectId]);
+	      }
+	    }
+	    return new DepartmentControl__default({
+	      id: 'invite-page-department-control',
+	      title: '',
+	      description,
+	      entitiesType,
+	      groupOptions,
+	      preselectedItems,
+	      departmentList: departmentsId,
+	      dialogOptions: {
+	        alwaysShowLabels: true
+	      },
+	      rootDepartment: main_core.Type.isObject(rootDepartment) ? rootDepartment : null,
+	      addButtonCaption: withGroups ? main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION_WITH_GROUP') : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_CAPTION')
+	    });
+	  }
+	  createInputRowFactory(inviteType) {
+	    return new InputRowFactory({
+	      inviteType
+	    });
 	  }
 	}
+	function _getProjectId2() {
+	  var _babelHelpers$classPr7;
+	  return (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _userOptions)[_userOptions]) != null && _babelHelpers$classPr7.groupId ? parseInt(babelHelpers.classPrivateFieldLooseBase(this, _userOptions)[_userOptions].groupId, 10) : 0;
+	}
 
+	var _options$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
+	var _pageFactory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pageFactory");
+	var _pages$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pages");
+	var _subscribeEvents$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeEvents");
+	var _onSelfRegisterChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelfRegisterChange");
 	class PageProvider {
-	  provide() {
-	    const pageFactory = new PageFactory();
-	    const pages = new Map();
-	    if (this.canCurrentUserInvite) {
-	      if (this.useLocalEmailProgram) {
-	        pages.set('invite-email', pageFactory.createLocalEmailPage.call(this));
-	      }
-	      pages.set('invite', pageFactory.createEmailPage.call(this));
-	      pages.set('mass-invite', pageFactory.createMassPage.call(this));
-	      pages.set('invite-with-group-dp', pageFactory.createGroupPage.call(this));
-	      pages.set('add', pageFactory.createRegisterPage.call(this));
-	      pages.set('self', pageFactory.createLinkPage.call(this));
-	    }
-	    if (this.isExtranetInstalled) {
-	      pages.set('extranet', pageFactory.createExtranetPage.call(this));
-	    }
-	    if (this.isCloud && this.canCurrentUserInvite) {
-	      pages.set('integrator', pageFactory.createIntegratorPage.call(this));
-	    }
-	    pages.set('success', pageFactory.createSeccessPage.call(this));
-	    return pages;
+	  constructor(options, userOptions) {
+	    Object.defineProperty(this, _onSelfRegisterChange, {
+	      value: _onSelfRegisterChange2
+	    });
+	    Object.defineProperty(this, _subscribeEvents$1, {
+	      value: _subscribeEvents2$1
+	    });
+	    Object.defineProperty(this, _options$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _pageFactory, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _pages$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = options;
+	    babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory] = new PageFactory(options, userOptions);
+	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeEvents$1)[_subscribeEvents$1]();
 	  }
+	  provide() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1] = new Map();
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].canCurrentUserInvite) {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].useLocalEmailProgram) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('invite-email', babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isSelfRegisterEnabled ? babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createLocalEmailPage() : babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createInvitePage(InviteType.EMAIL));
+	        babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('invite', babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createInvitePage(InviteType.PHONE));
+	        babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('invite-with-group-dp', babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createInvitePage(InviteType.EMAIL, false));
+	      } else {
+	        babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('invite', babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createInvitePage(babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].smsAvailable ? InviteType.ALL : InviteType.EMAIL));
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('add', babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createRegisterPage());
+	      babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('self', babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isSelfRegisterEnabled ? babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createLinkPage() : babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createLinkDisabledPage());
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isExtranetInstalled) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('extranet', babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createExtranetPage());
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud && babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].canCurrentUserInvite) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('integrator', babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createIntegratorPage());
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1];
+	  }
+	}
+	function _subscribeEvents2$1() {
+	  main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:selfChange', babelHelpers.classPrivateFieldLooseBase(this, _onSelfRegisterChange)[_onSelfRegisterChange].bind(this));
+	}
+	function _onSelfRegisterChange2(event) {
+	  var _event$data;
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1]) {
+	    return;
+	  }
+	  if ((_event$data = event.data) != null && _event$data.selfEnabled) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('invite-email', babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createLocalEmailPage());
+	    babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('self', babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createLinkPage());
+	  } else {
+	    babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('invite-email', babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createInvitePage(InviteType.EMAIL));
+	    babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1].set('self', babelHelpers.classPrivateFieldLooseBase(this, _pageFactory)[_pageFactory].createLinkDisabledPage());
+	  }
+	  main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:pageUpdate', {
+	    pages: babelHelpers.classPrivateFieldLooseBase(this, _pages$1)[_pages$1]
+	  });
+	}
+
+	let _$f = t => t,
+	  _t$f;
+	var _getNotificationContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNotificationContent");
+	class SuccessInvitePopup {
+	  constructor() {
+	    Object.defineProperty(this, _getNotificationContent$1, {
+	      value: _getNotificationContent2$1
+	    });
+	  }
+	  show() {
+	    const notificationOptions = {
+	      id: 'invite-notification-result',
+	      autoHideDelay: 4000,
+	      closeButton: false,
+	      autoHide: true,
+	      content: babelHelpers.classPrivateFieldLooseBase(this, _getNotificationContent$1)[_getNotificationContent$1](),
+	      useAirDesign: true
+	    };
+	    const notify = BX.UI.Notification.Center.notify(notificationOptions);
+	    notify.show();
+	    notify.activateAutoHide();
+	  }
+	}
+	function _getNotificationContent2$1() {
+	  return main_core.Tag.render(_t$f || (_t$f = _$f`
+			<div class="invite-email-notification">
+				<div class="invite-email-notification__content">
+					<div class="invite-email-notification__title ui-text --sm --accent">
+						${0}
+					</div>
+					<div class="invite-email-notification__description ui-text --2xs">
+						${0}
+					</div>
+				</div>
+				<a href="/company/?apply_filter=Y&INVITED=Y" target="_blank" class="ui-link ui-link-secondary ui-link-dashed">
+					${0}
+				</a>
+			</div>
+		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_TITLE'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_DESCRIPTION_MSGVER_1'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_BUTTON'));
 	}
 
 	var _initMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initMenu");
-	var _enrichRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enrichRequest");
-	var _handleRequestError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleRequestError");
-	var _handleRequestSuccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleRequestSuccess");
-	var _showNotification$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotification");
+	var _showSuccessPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSuccessPopup");
+	var _onSuccessRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSuccessRequest");
+	var _onErrorRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onErrorRequest");
 	class Form extends main_core_events.EventEmitter {
 	  constructor(formParams) {
 	    super();
-	    Object.defineProperty(this, _showNotification$1, {
-	      value: _showNotification2$1
+	    Object.defineProperty(this, _onErrorRequest, {
+	      value: _onErrorRequest2
 	    });
-	    Object.defineProperty(this, _handleRequestSuccess, {
-	      value: _handleRequestSuccess2
+	    Object.defineProperty(this, _onSuccessRequest, {
+	      value: _onSuccessRequest2
 	    });
-	    Object.defineProperty(this, _handleRequestError, {
-	      value: _handleRequestError2
-	    });
-	    Object.defineProperty(this, _enrichRequest, {
-	      value: _enrichRequest2
+	    Object.defineProperty(this, _showSuccessPopup, {
+	      value: _showSuccessPopup2
 	    });
 	    Object.defineProperty(this, _initMenu, {
 	      value: _initMenu2
@@ -3129,17 +3426,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    const params = main_core.Type.isPlainObject(formParams) ? formParams : {};
 	    this.initParams(params);
 	    this.initUI();
-	    this.initSubmitButton();
 	    this.initAnalytics();
+	    this.initTransport(params);
 	    this.initNavigation();
-	    this.initArrow();
 	    this.subscribeEvents();
-	    this.hideButtonPanelForLinkPage();
-	    BX.Intranet.Invitation.Form = this;
 	  }
 	  initParams(params) {
 	    this.menuContainer = params.menuContainerNode;
 	    this.subMenuContainer = params.subMenuContainerNode;
+	    this.leftMenuItems = params.leftMenuItems;
+	    this.titleContainer = params.titleContainer;
 	    this.contentContainer = params.contentContainerNode;
 	    this.pageContainer = this.contentContainer.querySelector('.popup-window-tabs-content-invite');
 	    this.userOptions = params.userOptions;
@@ -3154,43 +3450,30 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    this.analyticsLabel = params.analyticsLabel;
 	    this.projectLimitExceeded = main_core.Type.isBoolean(params.projectLimitExceeded) ? params.projectLimitExceeded : true;
 	    this.projectLimitFeatureId = main_core.Type.isString(params.projectLimitFeatureId) ? params.projectLimitFeatureId : '';
-	    this.wishlistValue = main_core.Type.isStringFilled(params.wishlistValue) ? params.wishlistValue : '';
+	    this.whitelistValue = main_core.Type.isStringFilled(params.whitelistValue) ? params.whitelistValue : '';
 	    this.isCollabEnabled = params.isCollabEnabled === 'Y';
-	    this.registerNeedeConfirm = params.registerConfirm === true;
+	    this.registerNeedConfirm = params.registerConfirm === true;
 	    this.useLocalEmailProgram = params.useLocalEmailProgram === true;
+	  }
+	  initTransport(params) {
 	    this.transport = new Transport({
 	      componentName: params.componentName,
-	      signedParameters: params.signedParameters
+	      signedParameters: params.signedParameters,
+	      onSuccess: babelHelpers.classPrivateFieldLooseBase(this, _onSuccessRequest)[_onSuccessRequest].bind(this),
+	      onError: babelHelpers.classPrivateFieldLooseBase(this, _onErrorRequest)[_onErrorRequest].bind(this),
+	      analytics: this.analytics
 	    });
 	  }
 	  initUI() {
 	    if (main_core.Type.isDomNode(this.contentContainer)) {
 	      this.messageBar = new MessageBar({
-	        errorContainer: this.contentContainer.querySelector("[data-role='error-message']"),
-	        successContainer: this.contentContainer.querySelector("[data-role='success-message']")
+	        errorContainer: this.contentContainer.querySelector('[data-role=\'error-message\']'),
+	        successContainer: this.contentContainer.querySelector('[data-role=\'success-message\']')
 	      });
 	      BX.UI.Hint.init(this.contentContainer);
 	    }
 	    if (main_core.Type.isDomNode(this.menuContainer)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _initMenu)[_initMenu]();
-	    }
-	  }
-	  initSubmitButton() {
-	    this.submitButton = new SubmitButton({
-	      node: document.querySelector('#intranet-invitation-btn'),
-	      events: {
-	        click: event => {
-	          this.handleSubmitClick();
-	        }
-	      }
-	    });
-	  }
-	  initArrow() {
-	    this.arrowBox = document.querySelector('.invite-wrap-decal-arrow');
-	    if (main_core.Type.isDomNode(this.arrowBox)) {
-	      this.arrowRect = this.arrowBox.getBoundingClientRect();
-	      this.arrowHeight = this.arrowRect.height;
-	      this.setSetupArrow();
 	    }
 	  }
 	  initAnalytics() {
@@ -3200,81 +3483,34 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  initNavigation() {
 	    var _this$navigation, _this$navigation2;
 	    this.navigation = this.createNavigation();
-	    (_this$navigation = this.navigation) == null ? void 0 : _this$navigation.subscribe('onBeforeChangePage', () => {
-	      this.messageBar.hideAll();
-	    });
+	    (_this$navigation = this.navigation) == null ? void 0 : _this$navigation.subscribe('onBeforeChangePage', this.onBeforeChangePage.bind(this));
 	    (_this$navigation2 = this.navigation) == null ? void 0 : _this$navigation2.subscribe('onAfterChangePage', this.onAfterChangePage.bind(this));
 	    this.navigation.showFirst();
 	  }
 	  subscribeEvents() {
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onChangeForm', () => {
-	      this.submitButton.enable();
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onError', event => {
+	      var _event$data;
+	      this.messageBar.showError(event == null ? void 0 : (_event$data = event.data) == null ? void 0 : _event$data.error);
 	    });
-	    this.subscribe('BX.Intranet.Invitation:onSendData', this.onSendRequest.bind(this));
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onSubmitReady', () => {
-	      this.submitButton.ready();
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:clearError', () => {
+	      this.messageBar.hideAll();
 	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onSubmitDisabled', () => {
-	      this.submitButton.disable();
-	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onSubmitWait', () => {
-	      this.submitButton.wait();
-	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:changeButtonPanelState', event => {
-	      var _event$getData;
-	      const state = ((_event$getData = event.getData()) == null ? void 0 : _event$getData.state) || 'show';
-	      this.changeStateOfButtonPanel(state);
-	    });
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:toggleSelfRegister', event => {
-	      this.onSendRequest(event);
-	    });
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:showSuccessPopup', babelHelpers.classPrivateFieldLooseBase(this, _showSuccessPopup)[_showSuccessPopup].bind(this));
 	  }
-	  handleSubmitClick() {
-	    if (!this.isCreatorEmailConfirmed && !(this.navigation.current() instanceof LinkPage) && !(this.navigation.current() instanceof LocalEmailPage)) {
-	      this.messageBar.showError(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
-	      return;
-	    }
-	    if (!this.submitButton.isWaiting() && this.submitButton.isEnabled()) {
-	      this.submitButton.wait();
-	      main_core_events.EventEmitter.emit(this.navigation.current(), 'BX.Intranet.Invitation:submit', {
-	        context: this
-	      });
-	      if (this.isCloud) {
-	        BX.userOptions.del('intranet.invitation', 'open_invitation_form_ts');
-	      }
-	    }
-	  }
-	  hideButtonPanelForLinkPage() {
-	    const currentPage = this.navigation.current();
-	    if (currentPage.hasShownButtonPanel() === false) {
-	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', {
-	        state: 'hide'
-	      });
-	    }
+	  onBeforeChangePage(event) {
+	    var _BX, _BX$UI, _BX$UI$ToolbarManager, _ref, _this$leftMenuItems$n, _this$leftMenuItems$n2, _this$leftMenuItems$n3;
+	    this.messageBar.hideAll();
+	    const {
+	      newPageCode
+	    } = event.data;
+	    (_BX = BX) == null ? void 0 : (_BX$UI = _BX.UI) == null ? void 0 : (_BX$UI$ToolbarManager = _BX$UI.ToolbarManager) == null ? void 0 : _BX$UI$ToolbarManager.getDefaultToolbar().setTitle((_ref = (_this$leftMenuItems$n = (_this$leftMenuItems$n2 = this.leftMenuItems[newPageCode]) == null ? void 0 : _this$leftMenuItems$n2.TOOLBAR_TITLE) != null ? _this$leftMenuItems$n : (_this$leftMenuItems$n3 = this.leftMenuItems[newPageCode]) == null ? void 0 : _this$leftMenuItems$n3.NAME) != null ? _ref : '');
 	  }
 	  onAfterChangePage(event) {
 	    const section = this.getSubSection();
 	    const page = event.getData().current;
-	    if (page.hasShownButtonPanel()) {
-	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', {
-	        state: 'show'
-	      });
-	    } else {
-	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', {
-	        state: 'hide'
-	      });
-	    }
 	    let subSection = null;
 	    if (page) {
 	      subSection = page.getAnalyticTab();
-	      if (page.getSubmitButtonText()) {
-	        this.submitButton.setLabel(page.getSubmitButtonText());
-	      }
-	      if (page.getButtonState() === SubmitButton.ENABLED_STATE) {
-	        this.submitButton.enable();
-	      } else if (page.getButtonState() === SubmitButton.DISABLED_STATE) {
-	        this.submitButton.disable();
-	      }
 	    }
 	    if (this.analytics && section && subSection) {
 	      this.analytics.sendTabData(section, subSection);
@@ -3314,81 +3550,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return new Navigation({
 	      container: this.pageContainer,
 	      first: this.firstInvitationBlock,
-	      pages: new PageProvider().provide.call(this)
-	    });
-	  }
-	  onSendRequest(event) {
-	    this.submitButton.disable();
-	    const request = event.getData();
-	    const currentPage = this.navigation.current();
-	    this.messageBar.hideAll();
-	    if (main_core.Type.isArray(request.errors) && request.errors.length > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _handleRequestError)[_handleRequestError](request.errors, currentPage, false);
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _enrichRequest)[_enrichRequest](request);
-	    this.transport.send(request).then(response => babelHelpers.classPrivateFieldLooseBase(this, _handleRequestSuccess)[_handleRequestSuccess](response, request, currentPage), response => babelHelpers.classPrivateFieldLooseBase(this, _handleRequestError)[_handleRequestError](response.errors, currentPage, true, response, request)).catch(() => {});
-	  }
-	  createDepartmentControl() {
-	    var _this$userOptions, _this$userOptions2;
-	    const departmentsId = main_core.Type.isArray((_this$userOptions = this.userOptions) == null ? void 0 : _this$userOptions.departmentList) ? this.userOptions.departmentList : [];
-	    const rootDepartment = (_this$userOptions2 = this.userOptions) == null ? void 0 : _this$userOptions2.rootDepartment;
-	    return new DepartmentControl({
-	      departmentList: departmentsId,
-	      rootDepartment: main_core.Type.isObject(rootDepartment) ? rootDepartment : null
-	    });
-	  }
-	  createInputRowFactory(useOnlyPhone = false) {
-	    const inputRowType = useOnlyPhone ? InputRowType.PHONE : this.isInvitationBySmsAvailable ? InputRowType.ALL : InputRowType.EMAIL;
-	    return new InputRowFactory({
-	      inputRowType
-	    });
-	  }
-	  getSetupArrow() {
-	    var _this$sliderHeader;
-	    this.body = document.querySelector('.invite-body');
-	    this.panelConfirmBtn = document.getElementById('intranet-invitation-btn');
-	    this.sliderContent = document.querySelector('.ui-page-slider-workarea');
-	    this.sliderHeader = document.querySelector('.ui-side-panel-wrap-title-wrap');
-	    this.buttonPanel = document.querySelector('.ui-button-panel');
-	    this.sliderHeaderHeight = (_this$sliderHeader = this.sliderHeader) == null ? void 0 : _this$sliderHeader.getBoundingClientRect().height;
-	    this.buttonPanelRect = this.buttonPanel.getBoundingClientRect();
-	    this.panelRect = this.panelConfirmBtn.getBoundingClientRect();
-	    this.btnWidth = Math.ceil(this.panelRect.width);
-	    this.arrowWidth = Math.ceil(this.arrowRect.width);
-	    this.sliderContentRect = this.sliderContent.getBoundingClientRect();
-	    this.bodyHeight = this.body.getBoundingClientRect().height - this.buttonPanelRect.height + this.sliderHeaderHeight;
-	    this.contentHeight = this.arrowHeight + this.sliderContentRect.height + this.buttonPanelRect.height + this.sliderHeaderHeight - 65;
-	  }
-	  updateArrow() {
-	    this.bodyHeight = this.body.getBoundingClientRect().height - this.buttonPanelRect.height + this.sliderHeaderHeight;
-	    this.contentHeight = this.arrowHeight + this.sliderContentRect.height + this.buttonPanelRect.height + this.sliderHeaderHeight - 65;
-	    // eslint-disable-next-line no-unused-expressions
-	    this.contentHeight > this.bodyHeight ? main_core.Dom.addClass(this.body, 'js-intranet-invitation-arrow-hide') : main_core.Dom.removeClass(this.body, 'js-intranet-invitation-arrow-hide');
-	  }
-	  setSetupArrow() {
-	    this.getSetupArrow();
-	    const btnPadding = 40;
-	    main_core.Dom.style(this.arrowBox, 'left', `${this.panelRect.left + this.btnWidth / 2 - this.arrowWidth / 2 - btnPadding}px`);
-	    // eslint-disable-next-line no-unused-expressions
-	    this.contentHeight > this.bodyHeight ? main_core.Dom.addClass(this.body, 'js-intranet-invitation-arrow-hide') : main_core.Dom.removeClass(this.body, 'js-intranet-invitation-arrow-hide');
-	    main_core.Event.bind(window, 'resize', () => {
-	      if (window.innerWidth <= 1100) {
-	        main_core.Dom.style(this.arrowBox, 'left', `${this.panelRect.left + this.btnWidth / 2 - this.arrowWidth / 2 - btnPadding}px`);
-	      }
-	      this.getSetupArrow();
-	      this.updateArrow();
-	    });
-	  }
-	  changeStateOfButtonPanel(state = 'show') {
-	    const buttonPanel = document.getElementById('ui-button-panel');
-	    const elements = [this.arrowBox, buttonPanel];
-	    elements.forEach(element => {
-	      if (main_core.Type.isDomNode(element)) {
-	        main_core.Dom.style(element, {
-	          display: state === 'show' ? '' : 'none'
-	        });
-	      }
+	      pages: new PageProvider({
+	        transport: this.transport,
+	        isSelfRegisterEnabled: this.isSelfRegisterEnabled,
+	        analytics: this.analytics,
+	        smsAvailable: this.isInvitationBySmsAvailable,
+	        useLocalEmailProgram: this.useLocalEmailProgram,
+	        isAdmin: this.isAdmin,
+	        needConfirmRegistration: this.registerNeedConfirm,
+	        whiteList: this.whitelistValue,
+	        isCloud: this.isCloud,
+	        linkRegisterEnabled: this.isSelfRegisterEnabled,
+	        isExtranetInstalled: this.isExtranetInstalled,
+	        canCurrentUserInvite: this.canCurrentUserInvite
+	      }, this.userOptions).provide()
 	    });
 	  }
 	}
@@ -3410,80 +3585,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  });
 	}
-	function _enrichRequest2(request) {
-	  request.userOptions = this.userOptions;
-	  request.analyticsData = this.analyticsLabel;
-	  if (request.data) {
-	    request.data.analyticsData = this.analyticsLabel;
-	  }
+	function _showSuccessPopup2() {
+	  new SuccessInvitePopup().show();
 	}
-	function _handleRequestError2(errors, currentPage, isPromise = false, response = {}, request = {}) {
-	  var _errors$;
-	  this.submitButton.enable();
-	  this.submitButton.ready();
-	  const errorMsg = (errors == null ? void 0 : (_errors$ = errors[0]) == null ? void 0 : _errors$.message) || (errors == null ? void 0 : errors[0]) || main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_UNKNOWN_ERROR');
-	  const hasButtonPanel = (currentPage == null ? void 0 : currentPage.hasShownButtonPanel == null ? void 0 : currentPage.hasShownButtonPanel()) === false;
-	  if (isPromise && (response == null ? void 0 : response.data) === 'user_limit') {
-	    // eslint-disable-next-line no-undef
-	    B24.licenseInfoPopup.show('featureID', main_core.Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TITLE'), main_core.Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TEXT'));
-	    return;
-	  }
-	  if (hasButtonPanel) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _showNotification$1)[_showNotification$1](errorMsg);
-	  } else {
-	    this.messageBar.showError(errorMsg);
-	  }
-	  if (isPromise && (request == null ? void 0 : request.action) === 'invite' && this.useLocalEmailProgram && (request == null ? void 0 : request.type) === 'invite-email') {
-	    main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:InviteFailed');
-	  }
-	}
-	function _handleRequestSuccess2(response, request, currentPage) {
-	  this.submitButton.ready();
-	  if (!response.data) {
-	    return;
-	  }
-	  const hasButtonPanel = (currentPage == null ? void 0 : currentPage.hasShownButtonPanel == null ? void 0 : currentPage.hasShownButtonPanel()) === false;
-	  const emitGlobal = (event, data = {}) => {
-	    main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, event, data);
-	  };
-	  if ((request == null ? void 0 : request.action) === 'self') {
-	    if (hasButtonPanel) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showNotification$1)[_showNotification$1](response.data);
-	      main_core_events.EventEmitter.emit('BX.Intranet.Invitation:changeButtonPanelState', {
-	        state: 'hide'
-	      });
-	    } else {
-	      this.messageBar.showSuccess(response.data);
-	    }
-	    this.isSelfRegisterEnabled = request.data.allow_register === 'Y';
-	    emitGlobal('BX.Intranet.Invitation:selfChange', {
-	      selfEnabled: this.isSelfRegisterEnabled
+	function _onSuccessRequest2(response) {
+	  this.messageBar.hideAll();
+	  if (response.data) {
+	    main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:onInviteRequestSuccess', {
+	      response
 	    });
-	    emitGlobal('BX.Intranet.Invitation:onSendDataSuccess');
-	  } else if (this.useLocalEmailProgram && (request == null ? void 0 : request.action) === 'invite' && (request == null ? void 0 : request.type) === 'invite-email') {
-	    emitGlobal('BX.Intranet.Invitation:InviteSuccess');
-	  } else {
-	    this.changeContent('success');
-	    this.submitButton.sendSuccessEvent(response.data);
 	  }
-	  emitGlobal('BX.Intranet.Invitation:onInviteRequestSuccess', {
-	    response
-	  });
 	  main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onClose', () => {
 	    BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
 	  });
 	}
-	function _showNotification2$1(message) {
-	  ui_notification.UI.Notification.Center.notify({
-	    content: message,
-	    autoHideDelay: 3500,
-	    useAirDesign: true,
-	    position: 'top-right'
-	  });
+	function _onErrorRequest2(reject) {
+	  this.messageBar.showError(reject.errors[0].message);
 	}
 
 	exports.Form = Form;
 	exports.MassInvitationField = MassInvitationField;
 
-}((this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}),BX.UI.Analytics,BX,BX,BX.UI,BX.Main,BX.UI,BX.Intranet,BX.Event,BX.UI.EntitySelector,BX.Intranet,BX,BX));
+}((this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}),BX.UI.Analytics,BX.UI.System.Typography,BX.UI,BX.Main,BX.UI,BX.UI.System.Chip,BX.Intranet,BX.UI.System.Input,BX.Intranet,BX.UI,BX.Event,BX));
 //# sourceMappingURL=script.js.map

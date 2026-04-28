@@ -22,6 +22,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    isMain: true,
 	    isPrimary: false,
 	    isDeleted: false,
+	    senderCode: 'bitrix24',
 	    isConfirmationNotificationOn: false,
 	    isFeedbackNotificationOn: false,
 	    isInfoNotificationOn: false,
@@ -52,7 +53,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      resourceAvatarFile: null,
 	      resource: getEmptyResource(),
 	      advertisingResourceTypes: [],
-	      catalogSkuEntityOptions: {},
 	      companyScheduleSlots: [],
 	      fetching: false,
 	      step: 1,
@@ -257,12 +257,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      }, checked) {
 	        commit('setGlobalSchedule', checked);
 	      },
-	      /** @function resource-creation-wizard/setCatalogSkuEntityOptions */
-	      setCatalogSkuEntityOptions({
-	        commit
-	      }, options) {
-	        commit('setCatalogSkuEntityOptions', options);
-	      },
 	      /** @function resource-creation-wizard/setCompanyScheduleAccess */
 	      setCompanyScheduleAccess({
 	        commit
@@ -377,9 +371,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      setAdvertisingTypes(state, types) {
 	        state.advertisingResourceTypes = types;
-	      },
-	      setCatalogSkuEntityOptions(state, options) {
-	        state.catalogSkuEntityOptions = options;
 	      },
 	      setCompanyScheduleSlots(state, slots) {
 	        state.companyScheduleSlots = slots;

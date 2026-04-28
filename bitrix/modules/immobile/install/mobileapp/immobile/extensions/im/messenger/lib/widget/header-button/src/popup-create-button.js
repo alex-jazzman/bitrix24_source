@@ -33,6 +33,10 @@ jn.define('im/messenger/lib/widget/header-button/popup-create-button', (require,
 			this.sections = Type.isArrayFilled(options.sections) ? options.sections : [{ id: 'general' }];
 			this.testId = Type.isStringFilled(options.testId) ? options.testId : `${options.id}_button`;
 			this.badgeCode = Type.isStringFilled(options.badgeCode) ? options.badgeCode : null;
+
+			this.getSections = options.getSections ?? (() => this.sections);
+			this.isAccent = options.isAccent ?? (() => false);
+			this.getType = options.getType ?? (() => this.type);
 		}
 
 		async shouldShow()
@@ -72,7 +76,7 @@ jn.define('im/messenger/lib/widget/header-button/popup-create-button', (require,
 				}
 			};
 
-			menuPopup.setData(menuButtons, this.sections, menuButtonHandler);
+			menuPopup.setData(menuButtons, this.getSections(), menuButtonHandler);
 			menuPopup.show([]);
 		}
 
@@ -81,7 +85,8 @@ jn.define('im/messenger/lib/widget/header-button/popup-create-button', (require,
 			return {
 				id: this.id,
 				testId: this.testId,
-				type: this.type,
+				type: this.getType(),
+				accent: this.isAccent(),
 				callback: this.callback.bind(this),
 				badgeCode: this.badgeCode,
 			};

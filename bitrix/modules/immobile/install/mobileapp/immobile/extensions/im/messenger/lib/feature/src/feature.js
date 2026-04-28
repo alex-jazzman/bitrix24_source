@@ -429,6 +429,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 				&& MessengerParams.isAiAssistantMcpSelectorAvailable();
 		}
 
+		static get isOpenlinesInMessengerAvailable()
+		{
+			return MessengerParams.isOpenlinesInMessengerAvailable();
+		}
+
 		static get isAiTaskCreationUISupported()
 		{
 			return Feature.nativeFeature.isFeatureEnabled('chat_ai_task_create');
@@ -444,6 +449,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return MessengerParams.isAutoTasksEnabled();
 		}
 
+		static get isAttachPickerForBitrixGPTAvailable()
+		{
+			return MessengerParams.getImFeatures().isCopilotFileUploadAvailable;
+		}
+
 		static get isTasksRecentListAvailable()
 		{
 			return MessengerParams.getTasksRecentListAvailable();
@@ -454,9 +464,50 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return Feature.nativeFeature?.isFeatureEnabled('chat_sticker_type') ?? false;
 		}
 
+		static get isEmptyFilterIconSupported()
+		{
+			return Feature.nativeFeature?.isFeatureEnabled('ws_empty_filter') ?? false;
+		}
+
+		static get isRecentFilterAvailable()
+		{
+			return MessengerParams.isRecentFilterAvailable();
+		}
+
+		static get isAddingUserByMentionAvailable()
+		{
+			return MessengerParams.getImFeatures().isAddingUserByMentionAvailable
+			&& Feature.nativeFeature?.isFeatureEnabled('chat_mention_actions');
+		}
+
 		static get isBannerButtonNewlineSupported()
 		{
 			return Feature.nativeFeature?.isFeatureEnabled('chat_banner_button_newline') ?? false;
+		}
+
+		static get isFootnoteMessageIdAvailable()
+		{
+			return Feature.nativeFeature?.isFeatureEnabled('footnote_message_id') ?? false;
+		}
+
+		static get isChatDialogTextFieldActionsSupported()
+		{
+			return Feature.nativeFeature.isFeatureEnabled('chat_textfield_stylable');
+		}
+
+		static get isChatDialogTextFieldMultiLevelActionsSupported()
+		{
+			return Feature.isChatDialogTextFieldActionsSupported && Application.getPlatform() === 'ios' && parseInt(device.version, 10) >= 16;
+		}
+
+		static get isChatDialogExpandingQuoteSupported()
+		{
+			return Feature.nativeFeature.isFeatureEnabled('chat_message_quote_expanding');
+		}
+
+		static get isChatDialogCompactQuoteSupported()
+		{
+			return Feature.isChatDialogExpandingQuoteSupported;
 		}
 	}
 

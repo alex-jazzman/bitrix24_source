@@ -10,6 +10,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/lib/date-formatter',
 		'im:messenger/controller/sidebar-v2/search/src/analytics',
+		'im:messenger/provider/services/analytics/helper',
 		'im:messenger/const/rest',
 		'im:messenger/lib/logger',
 		'im:messenger/const/analytics',

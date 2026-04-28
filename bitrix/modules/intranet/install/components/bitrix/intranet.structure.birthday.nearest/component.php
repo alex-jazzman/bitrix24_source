@@ -1,11 +1,15 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+/**
+ * @global CUser $USER
+ */
 
 /*
 Parameters:
 
-NUM_USERS => 5 - number of users to show
-DATE_INTERVAL => 60 - date interval to show (days) // not yet
+NUM_USERS => 10 - number of users to show
+DATE_INTERVAL => 14 - date interval to show (days)
 */
 
 if (!CModule::IncludeModule('intranet'))
@@ -13,7 +17,8 @@ if (!CModule::IncludeModule('intranet'))
 	return;
 }
 
-$arParams['NUM_USERS'] = intval($arParams['NUM_USERS'] ?? 5);
+$arParams['NUM_USERS'] = intval($arParams['NUM_USERS'] ?? 10);
+$arParams['DATE_INTERVAL'] = intval($arParams['DATE_INTERVAL'] ?? 14);
 
 if (trim($arParams["NAME_TEMPLATE"] ?? '') === '')
 {
@@ -135,6 +140,7 @@ else
 	$arFilter = array(
 		'ACTIVE' => 'Y',
 		'!EXTERNAL_AUTH_ID' => \Bitrix\Main\UserTable::getExternalUserTypes(),
+		'CURRENT_BIRTHDAY_DAYS' => $arParams['DATE_INTERVAL'],
 	);
 
 	if ($arResult['DEPARTMENT'] > 0 && (!CModule::IncludeModule('extranet') || !CExtranet::IsExtranetSite()))

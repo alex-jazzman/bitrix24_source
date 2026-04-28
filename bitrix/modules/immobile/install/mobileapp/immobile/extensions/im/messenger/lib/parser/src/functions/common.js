@@ -4,11 +4,12 @@
  * @module im/messenger/lib/parser/functions/common
  */
 jn.define('im/messenger/lib/parser/functions/common', (require, exports, module) => {
+	const { NEW_LINE } = require('im/messenger/lib/parser/const');
 
 	const parserCommon = {
 		decodeNewLine(text)
 		{
-			text = text.replace(/\[br]/gi, '\n');
+			text = text.replace(/\[br]/gi, NEW_LINE);
 
 			return text;
 		},
@@ -39,7 +40,7 @@ jn.define('im/messenger/lib/parser/functions/common', (require, exports, module)
 
 		simplifyNewLine(text, replaceSymbol = ' ')
 		{
-			if (replaceSymbol !== '\n')
+			if (replaceSymbol !== NEW_LINE)
 			{
 				text = text.replace(/\n/gi, replaceSymbol);
 			}

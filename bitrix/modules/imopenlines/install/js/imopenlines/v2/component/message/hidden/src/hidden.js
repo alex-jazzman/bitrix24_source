@@ -3,6 +3,7 @@ import { hint } from 'ui.vue3.directives.hint';
 import { BaseMessage } from 'im.v2.component.message.base';
 import { DateCode, DateFormatter } from 'im.v2.lib.date-formatter';
 import { MessageAttach, ReactionList } from 'im.v2.component.message.elements';
+import { MediaContent } from 'im.v2.component.message.file';
 import { Parser } from 'im.v2.lib.parser';
 
 import './css/hidden.css';
@@ -12,7 +13,7 @@ import type { ImModelMessage } from 'im.v2.model';
 // @vue/component
 export const HiddenMessage = {
 	name: 'HiddenMessage',
-	components: { BaseMessage, MessageAttach, ReactionList },
+	components: { BaseMessage, MessageAttach, ReactionList, MediaContent },
 	directives: {
 		hint,
 	},
@@ -32,6 +33,10 @@ export const HiddenMessage = {
 		message(): ImModelMessage
 		{
 			return this.item;
+		},
+		hasMedia(): boolean
+		{
+			return this.message.files?.length > 0;
 		},
 		formattedText(): string
 		{
@@ -70,12 +75,14 @@ export const HiddenMessage = {
 			:item="item"
 			:withTitle="false"
 			:withBackground="false"
-			:withContextMenu="false"
 			:withReactions="false"
 			class="bx-imol-message-hidden__container"
 		>
 			<div class="bx-imol-message-hidden__content">
 				<div class="bx-imol-message-hidden-content__text" v-html="formattedText"></div>
+				<div v-if="hasMedia" class="bx-imol-message-hidden-content__media">
+					<MediaContent :item="message" />
+				</div>
 				<div v-if="message.attach.length > 0" class="bx-imol-message-hidden-content__attach">
 					<MessageAttach :item="message" :dialogId="dialogId" />
 				</div>

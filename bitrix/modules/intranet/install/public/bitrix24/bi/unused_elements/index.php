@@ -28,7 +28,7 @@ else
 				'SEF_MODE' => 'Y',
 				'SEF_FOLDER' => '/',
 				'SEF_URL_TEMPLATES' => [
-					'dataset' => 'bi/dataset/',
+					'table' => 'bi/table/',
 					'source' => 'bi/source/',
 					'statistics' => 'bi/statistics/',
 					'unused_elements' => 'bi/unused_elements/',

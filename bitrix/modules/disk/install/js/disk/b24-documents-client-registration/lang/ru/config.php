@@ -1,7 +1,7 @@
 <?php
 $MESS['JS_B24_DOCUMENTS_CLIENT_REGISTRATION_SELECT_SERVER_LABEL'] = 'Выберите сервер:';
 $MESS['JS_B24_DOCUMENTS_CLIENT_REGISTRATION_BUTTON'] = 'Зарегистрироваться';
-$MESS['JS_B24_DOCUMENTS_CLIENT_REGISTRATION_WARNING'] = 'Обратите внимание, для работы с #NAME# требуется активная лицензия.';
+$MESS['JS_B24_DOCUMENTS_CLIENT_REGISTRATION_WARNING'] = 'Обратите внимание, для работы с #NAME# требуется активная лицензия.<br><br> Все активные сессии работы с документами будут прерваны. Изменения в таких документах не сохранятся.';
 $MESS['JS_B24_DOCUMENTS_CLIENT_REGISTRATION_ERROR_AFTER_REG'] = 'К сожалению, ваша лицензия не поддерживает работу с #NAME#.';
 $MESS['JS_B24_DOCUMENTS_CLIENT_REGISTRATION_ERROR_DOMAIN_VERIFICATION'] = 'При регистрации #NAME# не удалось подтвердить домен (#DOMAIN#). Возможно, сайт находится в закрытом контуре, недоступен снаружи.';
 $MESS['JS_B24_DOCUMENTS_CLIENT_REGISTRATION_ERROR_COMMON'] = 'Произошла ошибка, не удалось зарегистрироваться. Попробуйте позже.';

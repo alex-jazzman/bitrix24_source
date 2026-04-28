@@ -1,72 +1,184 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_buttons,intranet_avatarWidget,timeman_workTimeStateIcon,bitrix24_licenseWidget,intranet_licenseWidget,ui_infoHelper,pull_client,main_core_cache,main_core_events,intranet_widgetLoader,intranet_invitationWidget,ui_cnt,main_core) {
+(function (exports,main_popup,ui_buttons,intranet_avatarWidget,timeman_workTimeStateIcon,ui_infoHelper,bitrix24_licenseWidget,intranet_licenseWidget,pull_client,main_core_cache,main_core_events,intranet_widgetLoader,intranet_invitationWidget,ui_cnt,main_core) {
 	'use strict';
 
+	let _ = t => t,
+	  _t,
+	  _t2,
+	  _t3,
+	  _t4,
+	  _t5,
+	  _t6,
+	  _t7,
+	  _t8;
 	async function showPartnerConnectForm(params) {
 	  main_core.Loc.setMessage(params.messages);
 	  await showPartnerFormPopup({
 	    ...params,
-	    titleBar: main_core.Loc.getMessage('PARTNER_POPUP_TITLE'),
-	    sendButtonText: main_core.Loc.getMessage('PARTNER_POPUP_SEND_BUTTON')
+	    titleBar: main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_TITLE'),
+	    sendButtonText: main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_SEND_BUTTON')
 	  });
 	}
 	async function showPartnerFormPopup(options) {
-	  const titleBar = options.titleBar;
-	  const sendButtonText = options.sendButtonText;
-	  const partnerName = options.partnerName;
-	  const partnerLogo = options.partnerLogo;
+	  const partnerLogo = options.partnerLogo === '' || main_core.Type.isNil(options.partnerLogo) ? '/bitrix/modules/intranet/install/templates/bitrix24/dist/dist/images/b24-partner__icon.svg' : options.partnerLogo;
 	  const partnerCardUrl = `${options.publicDomain}partners/partner/${options.partnerId}/`;
-	  const hasCustomLogo = partnerLogo && partnerLogo !== '';
-	  const logoClass = hasCustomLogo ? 'bitrix24-partner__popup-content_name--custom-logo' : '';
-	  const logoStyle = hasCustomLogo ? `style="background-image: url('${encodeURI(partnerLogo)}')"` : '';
-	  const [{
-	    Popup
-	  }, {
-	    Button,
-	    ButtonColor
-	  }] = await Promise.all([main_core.Runtime.loadExtension('main.popup'), main_core.Runtime.loadExtension('ui.buttons')]);
+	  const clipboardButton = initCopyBtn();
+	  const email = initEmail(clipboardButton, options);
+	  const phone = initPhone(clipboardButton, options);
+	  const partnerAbout = initAboutPartner(partnerCardUrl);
 	  const popupOptions = {
 	    className: 'bitrix24-partner__popup',
-	    autoHide: false,
+	    autoHide: true,
 	    cacheable: false,
 	    zIndex: 0,
 	    offsetLeft: 0,
 	    offsetTop: 0,
-	    width: 540,
-	    height: 350,
+	    width: 316,
 	    overlay: true,
 	    draggable: {
 	      restrict: true
 	    },
 	    closeByEsc: true,
-	    titleBar,
+	    titleBar: main_core.Loc.getMessage('INTRANET_PARTNER_TITLE_FOR_NAME_MSGVER_2'),
 	    closeIcon: true,
 	    content: `
-			<div class="bitrix24-partner__popup-content">
-				<div class="bitrix24-partner__popup-content_title">${main_core.Loc.getMessage('PARTNER_TITLE_FOR_NAME')}</div>
+			<div class="bitrix24-partner__popup-content" id="b24-partner-popup-main">
 				<div class="bitrix24-partner__popup-content_main">
-					<div class="bitrix24-partner__popup-content_name ${logoClass}" ${logoStyle}>${partnerName}</div>
-					<a class="bitrix24-partner__popup-content_link" href="${encodeURI(partnerCardUrl)}" target="_blank">${main_core.Loc.getMessage('PARTNER_LINK_NAME_MORE')}</a>
+					<div class="">
+						<div class="bitrix24-partner__popup-content_partner-preview">
+							<img class="bitrix24-partner__popup-content-logo" src="${main_core.Tag.safe(_t || (_t = _`${0}`), encodeURI(partnerLogo))}" alt="">
+							<div class="bitrix24-partner__popup-content_name-wrapper">
+								<div class="bitrix24-partner__popup-content_name">${main_core.Tag.safe(_t2 || (_t2 = _`${0}`), options.partnerName)}</div>
+								<div class="bitrix24-partner__popup-content_description">${main_core.Tag.safe(_t3 || (_t3 = _`${0}`), options.partnerCompany)}</div>
+							</div>
+						</div>
+		
+						<div>
+							${email}
+							${phone} 
+							${partnerAbout}
+						</div>
+					</div>
 				</div>
-				<div class="bitrix24-partner__popup-content_desc">${main_core.Loc.getMessage('PARTNER_POPUP_DESCRIPTION_BOTTOM')}</div>
+				<div class="bitrix24-partner__popup-content_desc">${main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_DESCRIPTION_BOTTOM_MSGVER_1')}</div>
 			</div>
 		`,
-	    buttons: [new Button({
-	      color: ButtonColor.SUCCESS,
-	      text: sendButtonText,
+	    buttons: [new ui_buttons.Button({
+	      style: ui_buttons.AirButtonStyle.FILLED,
+	      text: options.sendButtonText,
+	      useAirDesign: true,
 	      onclick: async button => {
-	        setTimeout(() => {
-	          button.setClocking(true);
-	        }, 200);
+	        button.setClocking(true);
+	        const onSliderClose = () => {
+	          button.setClocking(false);
+	          top.BX.removeCustomEvent('SidePanel.Slider:onClose', onSliderClose);
+	        };
+	        top.BX.addCustomEvent('SidePanel.Slider:onClose', onSliderClose);
 	        await showIntegratorApplicationForm();
-	        button.setClocking(false);
 	      }
-	    })]
+	    }).setWide(true)]
 	  };
-	  const popup = new Popup(popupOptions);
+	  const popup = new main_popup.Popup(popupOptions);
 	  popup.show();
+	  initCopyHandler();
+	}
+	function initCopyBtn() {
+	  if (isNavigatorClipboardSupported()) {
+	    return dataCopy => {
+	      return `
+				<div class="copy-icon" type="button" data-copy="${main_core.Tag.safe(_t4 || (_t4 = _`${0}`), dataCopy)}">
+					<div class="ui-icon-set --o-copy"></div>
+				</div>
+			`;
+	    };
+	  }
+	  return '';
+	}
+	function initEmail(clipboardButton, options) {
+	  if (!main_core.Type.isNil(options.partnerEmail) && options.partnerEmail !== '') {
+	    return `
+			<div class="bitrix24-partner__popup-content_info-block">
+				<div class="bitrix24-partner__popup-content_info-block-icon-wrapper">
+					<div class="ui-icon-set --mail"></div>
+				</div>
+				<a
+					class="bitrix24-partner__popup-content_info-block-info-value"
+					href="mailto:${main_core.Tag.safe(_t5 || (_t5 = _`${0}`), options.partnerEmail)}"
+				>
+					${main_core.Tag.safe(_t6 || (_t6 = _`${0}`), options.partnerEmail)}
+				</a>
+				${main_core.Type.isFunction(clipboardButton) ? clipboardButton(options.partnerEmail) : ''}
+			</div>
+		`;
+	  }
+	  return '';
+	}
+	function initPhone(clipboardButton, options) {
+	  if (!main_core.Type.isNil(options.partnerPhone) && options.partnerPhone !== '') {
+	    return `
+			<div class="bitrix24-partner__popup-content_info-block">
+				<div class="bitrix24-partner__popup-content_info-block-icon-wrapper">
+					<div class="ui-icon-set --telephony-handset-5"></div>
+				</div>
+				<a
+					class="bitrix24-partner__popup-content_info-block-info-value"
+					href="tel:${main_core.Tag.safe(_t7 || (_t7 = _`${0}`), options.partnerPhone)}"
+				>
+					${main_core.Tag.safe(_t8 || (_t8 = _`${0}`), options.partnerPhone)}
+				</a>
+				${main_core.Type.isFunction(clipboardButton) ? clipboardButton(options.partnerPhone) : ''}
+			</div>
+		`;
+	  }
+	  return '';
+	}
+	function initAboutPartner(partnerCardUrl) {
+	  return `
+		<div class="bitrix24-partner__popup-content_info-block">
+			<div class="bitrix24-partner__popup-content_info-block-icon-wrapper">
+				<div class="ui-icon-set --earth-language"></div>
+			</div>
+			<a 
+				class="bitrix24-partner__popup-content_info-block-info-value" 
+				href="${encodeURI(partnerCardUrl)}" target="_blank"
+			>
+				${main_core.Loc.getMessage('INTRANET_PARTNER_LINK_NAME_MORE')}
+			</a>
+		</div>
+	`;
+	}
+	function initCopyHandler() {
+	  setTimeout(() => {
+	    if (isNavigatorClipboardSupported()) {
+	      const popupContent = document.getElementById('b24-partner-popup-main');
+	      if (popupContent) {
+	        main_core.Event.bind(popupContent, 'click', async e => {
+	          const btn = e.target.closest('.copy-icon');
+	          if (btn && btn.dataset.copy) {
+	            try {
+	              await navigator.clipboard.writeText(btn.dataset.copy);
+	              main_core.Dom.addClass(btn, 'copied');
+	              BX.UI.Notification.Center.notify({
+	                content: main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_COPIED'),
+	                autoHideDelay: 2500,
+	                useAirDesign: true
+	              });
+	              setTimeout(() => {
+	                main_core.Dom.removeClass(btn, 'copied');
+	              }, 1000);
+	            } catch (err) {
+	              top.console.error(err);
+	            }
+	          }
+	        });
+	      }
+	    }
+	  }, 200);
+	}
+	function isNavigatorClipboardSupported() {
+	  return window.isSecureContext && navigator.clipboard;
 	}
 	async function showIntegratorApplicationForm() {
 	  const {
@@ -238,14 +350,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return result;
 	}
 
-	let _ = t => t,
-	  _t,
-	  _t2;
+	let _$1 = t => t,
+	  _t$1,
+	  _t2$1;
 	const createToolbarSkeleton = (options = {}) => {
 	  const {
 	    showIconButton = false
 	  } = options;
-	  return main_core.Tag.render(_t || (_t = _`
+	  return main_core.Tag.render(_t$1 || (_t$1 = _$1`
 		<div class="toolbar-skeleton">
 			<span class="toolbar-skeleton__page-title"></span>
 			${0}
@@ -253,7 +365,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`), showIconButton ? createIconButton() : null);
 	};
 	function createIconButton() {
-	  return main_core.Tag.render(_t2 || (_t2 = _`
+	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
 		<span class="toolbar-skeleton__icon-buttons">
 			<span class="toolbar-skeleton__icon-button">
 				<span class="toolbar-skeleton__icon-button-text"></span>
@@ -262,19 +374,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`));
 	}
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2$1,
-	  _t3,
-	  _t4,
-	  _t5;
+	let _$2 = t => t,
+	  _t$2,
+	  _t2$2,
+	  _t3$1,
+	  _t4$1,
+	  _t5$1;
 	const createActionsBarSkeleton = (options = {}) => {
 	  const {
 	    showNavigationPanel = true,
 	    showCounterPanel = false,
 	    rightButtonsCount = 0
 	  } = options;
-	  return main_core.Tag.render(_t$1 || (_t$1 = _$1`
+	  return main_core.Tag.render(_t$2 || (_t$2 = _$2`
 		<div class="actions-bar-skeleton">
 			${0}
 			${0}
@@ -283,7 +395,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`), showNavigationPanel ? createNavigationPanelSkeleton() : null, showCounterPanel ? createCounterPanelSkeleton() : null, rightButtonsCount > 0 ? createRightButtons(rightButtonsCount) : null);
 	};
 	function createNavigationPanelSkeleton() {
-	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
+	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$2`
 		<div class="navigation-skeleton">
 				<div class="navigation-skeleton__item">
 					<div class="navigation-skeleton__item-text"></div>
@@ -292,7 +404,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`));
 	}
 	function createCounterPanelSkeleton() {
-	  return main_core.Tag.render(_t3 || (_t3 = _$1`
+	  return main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
 		<div class="counters-skeleton">
 			<div class="counters-skeleton__item">
 				<div class="counters-skeleton__item-text"></div>
@@ -301,9 +413,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`));
 	}
 	function createRightButtons(count) {
-	  const wrapper = main_core.Tag.render(_t4 || (_t4 = _$1`<div class="actions-bar-skeleton__right-buttons"></div>`));
+	  const wrapper = main_core.Tag.render(_t4$1 || (_t4$1 = _$2`<div class="actions-bar-skeleton__right-buttons"></div>`));
 	  for (let i = 0; i < count; i++) {
-	    const button = main_core.Tag.render(_t5 || (_t5 = _$1`
+	    const button = main_core.Tag.render(_t5$1 || (_t5$1 = _$2`
 			<div class="actions-bar-skeleton__right-button">
 				<div class="actions-bar-skeleton__right-button-text"></div>
 			</div>
@@ -313,12 +425,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return wrapper;
 	}
 
-	let _$2 = t => t,
-	  _t$2,
-	  _t2$2,
-	  _t3$1;
+	let _$3 = t => t,
+	  _t$3,
+	  _t2$3,
+	  _t3$2;
 	const createGridSkeleton = () => {
-	  return main_core.Tag.render(_t$2 || (_t$2 = _$2`
+	  return main_core.Tag.render(_t$3 || (_t$3 = _$3`
 		<div class="grid-skeleton-container --ui-context-content-light">
 			<table class="grid-skeleton">
 				<thead>
@@ -352,7 +464,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`), getGridSkeletonRows());
 	};
 	function getGridSkeletonRows() {
-	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$2`
+	  return main_core.Tag.render(_t2$3 || (_t2$3 = _$3`
 		<tbody>
 			${0}
 			${0}
@@ -365,7 +477,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow());
 	}
 	function createGridSkeletonRow() {
-	  return main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
+	  return main_core.Tag.render(_t3$2 || (_t3$2 = _$3`
 		<tr class="grid-skeleton__row">
 			<td class="grid-skeleton__cell">
 				<div class="grid-skeleton__checkbox"></div>
@@ -404,10 +516,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`));
 	}
 
-	let _$3 = t => t,
-	  _t$3;
+	let _$4 = t => t,
+	  _t$4;
 	const createKanbanSkeleton = () => {
-	  return main_core.Tag.render(_t$3 || (_t$3 = _$3`
+	  return main_core.Tag.render(_t$4 || (_t$4 = _$4`
 		<div class="kanban-skeleton --stage-right">
 			<div class="kanban-skeleton__col">
 				<div class="kanban-skeleton__col-stage"></div>
@@ -455,13 +567,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`));
 	};
 
-	let _$4 = t => t,
-	  _t$4,
-	  _t2$3,
-	  _t3$2,
-	  _t4$1,
-	  _t5$1,
-	  _t6;
+	let _$5 = t => t,
+	  _t$5,
+	  _t2$4,
+	  _t3$3,
+	  _t4$2,
+	  _t5$2,
+	  _t6$1;
 	var _refs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refs");
 	var _showLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showLoader");
 	var _getGridSkeletonOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getGridSkeletonOptions");
@@ -530,7 +642,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getLoaderContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('loader', () => {
-	      return main_core.Tag.render(_t$4 || (_t$4 = _$4`
+	      return main_core.Tag.render(_t$5 || (_t$5 = _$5`
 				<div class="composite-skeleton-container">
 					<div class="composite-loader-container">
 						<svg class="composite-loader-circular" viewBox="25 25 50 50">
@@ -543,7 +655,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getLiveFeedSkeleton() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-skeleton', () => {
-	      return main_core.Tag.render(_t2$3 || (_t2$3 = _$4`
+	      return main_core.Tag.render(_t2$4 || (_t2$4 = _$5`
 				<div class="page top-menu-mode start-page no-background no-all-paddings no-page-header">
 					<div class="page__workarea">
 						<div class="page__sidebar">${0}</div>
@@ -555,7 +667,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getLiveFeedSidebar() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-sidebar', () => {
-	      return main_core.Tag.render(_t3$2 || (_t3$2 = _$4`
+	      return main_core.Tag.render(_t3$3 || (_t3$3 = _$5`
 				<div class="skeleton__white-bg-element skeleton__sidebar skeleton__intranet-ustat">
 					<div class="skeleton__graph-circle"></div>
 					<div class="skeleton__graph-right">
@@ -672,7 +784,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getLiveFeedWorkArea() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-work-area', () => {
-	      return main_core.Tag.render(_t4$1 || (_t4$1 = _$4`
+	      return main_core.Tag.render(_t4$2 || (_t4$2 = _$5`
 				<div class="skeleton__white-bg-element skeleton__feed-wrap">
 					<div class="skeleton__feed-wrap_header">
 						<div class="skeleton__feed-wrap_header-link --long"></div>
@@ -886,7 +998,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  var _options$actionsBarOp;
 	  const actionsBarOptions = (_options$actionsBarOp = options == null ? void 0 : options.actionsBarOptions) != null ? _options$actionsBarOp : {};
 	  const showActionsBar = main_core.Type.isObject(options == null ? void 0 : options.actionsBarOptions) || (options == null ? void 0 : options.actionsBarOptions) === true;
-	  return main_core.Tag.render(_t5$1 || (_t5$1 = _$4`
+	  return main_core.Tag.render(_t5$2 || (_t5$2 = _$5`
 			<div class="grid-skeleton-wrapper">
 				${0}
 				${0}
@@ -928,7 +1040,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  var _options$actionsBarOp2;
 	  const actionsBarOptions = (_options$actionsBarOp2 = options == null ? void 0 : options.actionsBarOptions) != null ? _options$actionsBarOp2 : {};
 	  const showActionsBar = main_core.Type.isObject(options == null ? void 0 : options.actionsBarOptions) || (options == null ? void 0 : options.actionsBarOptions) === true;
-	  return main_core.Tag.render(_t6 || (_t6 = _$4`
+	  return main_core.Tag.render(_t6$1 || (_t6$1 = _$5`
 			<div class="grid-skeleton-wrapper">
 				${0}
 				${0}
@@ -987,16 +1099,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	var _isTransparentMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTransparentMode");
 	var _isScrollMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isScrollMode");
 	var _scrollModeThreshold = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollModeThreshold");
 	var _goTopButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("goTopButton");
 	class RightBar {
 	  constructor(options) {
-	    Object.defineProperty(this, _isTransparentMode, {
-	      writable: true,
-	      value: false
-	    });
 	    Object.defineProperty(this, _isScrollMode, {
 	      writable: true,
 	      value: false
@@ -1038,19 +1145,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      main_core.Dom.removeClass(rightBar, '--scroll-mode');
 	      babelHelpers.classPrivateFieldLooseBase(this, _isScrollMode)[_isScrollMode] = false;
 	    }
-	    if (!rightBar || rightBar.dataset.lockRedraw === 'true') {
-	      return;
-	    }
-	    const hasHorizontalScroll = document.documentElement.scrollWidth > window.innerWidth;
-	    if (hasHorizontalScroll > 0) {
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _isTransparentMode)[_isTransparentMode]) {
-	        main_core.Dom.addClass(rightBar, '--transparent');
-	        babelHelpers.classPrivateFieldLooseBase(this, _isTransparentMode)[_isTransparentMode] = true;
-	      }
-	    } else if (babelHelpers.classPrivateFieldLooseBase(this, _isTransparentMode)[_isTransparentMode]) {
-	      main_core.Dom.removeClass(rightBar, '--transparent');
-	      babelHelpers.classPrivateFieldLooseBase(this, _isTransparentMode)[_isTransparentMode] = false;
-	    }
 	  }
 	  getContainer() {
 	    return document.getElementById('right-bar');
@@ -1064,9 +1158,44 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  isVisible() {
 	    return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
 	  }
+	  setBackground(background) {
+	    var _background$backgroun, _background$backgroun2, _background$backgroun3, _background$backgroun4, _background$backgroun5;
+	    main_core.Dom.style(this.getContainer(), {
+	      backgroundImage: (_background$backgroun = background == null ? void 0 : background.backgroundImage) != null ? _background$backgroun : null,
+	      backgroundColor: (_background$backgroun2 = background == null ? void 0 : background.backgroundColor) != null ? _background$backgroun2 : null,
+	      backgroundPosition: (_background$backgroun3 = background == null ? void 0 : background.backgroundPosition) != null ? _background$backgroun3 : null,
+	      backgroundRepeat: (_background$backgroun4 = background == null ? void 0 : background.backgroundRepeat) != null ? _background$backgroun4 : null,
+	      backgroundSize: (_background$backgroun5 = background == null ? void 0 : background.backgroundSize) != null ? _background$backgroun5 : null
+	    });
+	  }
+	  resetBackground() {
+	    main_core.Dom.style(this.getContainer(), {
+	      backgroundImage: null,
+	      backgroundColor: null,
+	      backgroundRepeat: null,
+	      backgroundSize: null,
+	      backgroundPosition: null
+	    });
+	  }
 	}
 
+	var _burgerCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("burgerCounter");
+	var _initMobileBurger = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initMobileBurger");
+	var _initBurgerCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initBurgerCounter");
 	class Header {
+	  constructor() {
+	    Object.defineProperty(this, _initBurgerCounter, {
+	      value: _initBurgerCounter2
+	    });
+	    Object.defineProperty(this, _initMobileBurger, {
+	      value: _initMobileBurger2
+	    });
+	    Object.defineProperty(this, _burgerCounter, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _initMobileBurger)[_initMobileBurger]();
+	  }
 	  getContainer() {
 	    return document.getElementById('app-header');
 	  }
@@ -1079,6 +1208,45 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  isVisible() {
 	    return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
 	  }
+	}
+	function _initMobileBurger2() {
+	  main_core.ready(() => {
+	    const burger = document.getElementById('air-header-burger');
+	    if (!burger) {
+	      return;
+	    }
+	    main_core.Event.bind(burger, 'click', () => {
+	      const menu = main_core.Reflection.getClass('BX.Intranet.LeftMenu');
+	      if (!menu) {
+	        return;
+	      }
+	      const root = document.querySelector('.js-app');
+	      if (!root) {
+	        return;
+	      }
+	      const isSliding = main_core.Dom.hasClass(root, 'menu-sliding-mode');
+	      menu.switchToSlidingMode(!isSliding);
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _initBurgerCounter)[_initBurgerCounter](burger);
+	  });
+	}
+	function _initBurgerCounter2(burger) {
+	  const counterWrapper = burger.querySelector('.air-header__burger-counter');
+	  if (!counterWrapper) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _burgerCounter)[_burgerCounter] = new ui_cnt.Counter({
+	    value: 0,
+	    size: ui_cnt.Counter.Size.SMALL,
+	    color: ui_cnt.Counter.Color.DANGER,
+	    useAirDesign: true,
+	    style: ui_cnt.CounterStyle.FILLED_ALERT,
+	    hideIfZero: true
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _burgerCounter)[_burgerCounter].renderTo(counterWrapper);
+	  main_core.addCustomEvent('BX.Intranet.LeftMenu:onTotalCounterUpdate', total => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _burgerCounter)[_burgerCounter].update(total);
+	  });
 	}
 
 	class Footer {
@@ -1263,6 +1431,85 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
+	var _EXPANDED_CLASS = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("EXPANDED_CLASS");
+	var _isExpanded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExpanded");
+	var _getRootElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRootElement");
+	var _getAvatarWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAvatarWrapper");
+	class RightPanel extends main_core_events.EventEmitter {
+	  constructor() {
+	    super();
+	    Object.defineProperty(this, _getAvatarWrapper, {
+	      value: _getAvatarWrapper2
+	    });
+	    Object.defineProperty(this, _getRootElement, {
+	      value: _getRootElement2
+	    });
+	    Object.defineProperty(this, _isExpanded, {
+	      writable: true,
+	      value: false
+	    });
+	    this.setEventNamespace('BX.Intranet.Bitrix24.RightPanel');
+	  }
+	  getContainer() {
+	    return document.getElementById('app__right-panel');
+	  }
+	  expand() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
+	      return;
+	    }
+	    const root = babelHelpers.classPrivateFieldLooseBase(this, _getRootElement)[_getRootElement]();
+	    if (!root) {
+	      return;
+	    }
+	    main_core.Dom.addClass(root, babelHelpers.classPrivateFieldLooseBase(RightPanel, _EXPANDED_CLASS)[_EXPANDED_CLASS]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = true;
+	    const avatarWrapper = babelHelpers.classPrivateFieldLooseBase(this, _getAvatarWrapper)[_getAvatarWrapper]();
+	    if (avatarWrapper) {
+	      main_core.Dom.addClass(avatarWrapper, '--collapsed');
+	    }
+	    const container = this.getContainer();
+	    if (container) {
+	      main_core.Event.bindOnce(container, 'transitionend', () => {
+	        this.emit('onExpand');
+	      });
+	    }
+	  }
+	  collapse() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
+	      return;
+	    }
+	    const root = babelHelpers.classPrivateFieldLooseBase(this, _getRootElement)[_getRootElement]();
+	    if (!root) {
+	      return;
+	    }
+	    main_core.Dom.removeClass(root, babelHelpers.classPrivateFieldLooseBase(RightPanel, _EXPANDED_CLASS)[_EXPANDED_CLASS]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = false;
+	    const avatarWrapper = babelHelpers.classPrivateFieldLooseBase(this, _getAvatarWrapper)[_getAvatarWrapper]();
+	    if (avatarWrapper && window.scrollY <= 20) {
+	      main_core.Dom.removeClass(avatarWrapper, '--collapsed');
+	    }
+	    const container = this.getContainer();
+	    if (container) {
+	      main_core.Event.bindOnce(container, 'transitionend', () => {
+	        this.emit('onCollapse');
+	      });
+	    }
+	  }
+	  isExpanded() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded];
+	  }
+	}
+	function _getRootElement2() {
+	  return document.querySelector('.root');
+	}
+	function _getAvatarWrapper2() {
+	  return document.querySelector('[data-id="bx-avatar-widget"]');
+	}
+	Object.defineProperty(RightPanel, _EXPANDED_CLASS, {
+	  writable: true,
+	  value: '--right-panel-expanded'
+	});
+
 	var _leftMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("leftMenu");
 	var _rightBar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
 	var _header = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("header");
@@ -1271,6 +1518,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _chatMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatMenu");
 	var _goTopButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("goTopButton");
 	var _collaborationMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collaborationMenu");
+	var _rightPanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightPanel");
 	var _supportViewTransition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("supportViewTransition");
 	var _enterFullscreen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enterFullscreen");
 	var _exitFullscreen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("exitFullscreen");
@@ -1341,6 +1589,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _rightPanel, {
+	      writable: true,
+	      value: null
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _preventFromIframe)[_preventFromIframe]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _patchPopupMenu)[_patchPopupMenu]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _patchRestAPI)[_patchRestAPI]();
@@ -1355,6 +1607,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _composite)[_composite] = new Composite();
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatMenu)[_chatMenu] = new ChatMenu();
 	    babelHelpers.classPrivateFieldLooseBase(this, _collaborationMenu)[_collaborationMenu] = new CollaborationMenu();
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel] = new RightPanel();
 	    babelHelpers.classPrivateFieldLooseBase(this, _applyUserAgentRules)[_applyUserAgentRules]();
 	  }
 	  getLeftMenu() {
@@ -1377,6 +1630,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getCollaborationMenu() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _collaborationMenu)[_collaborationMenu];
+	  }
+	  getRightPanel() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel];
 	  }
 	  enterFullscreen() {
 	    if (this.isFullscreen()) {
@@ -1423,6 +1679,25 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  isFullscreen() {
 	    return main_core.Dom.hasClass(document.body, 'air-fullscreen-mode');
+	  }
+	  setAvatarBlockBackground(background) {
+	    var _background$backgroun, _background$backgroun2, _background$backgroun3, _background$backgroun4, _background$backgroun5;
+	    main_core.Dom.style(document.getElementById('avatar-area'), {
+	      backgroundImage: (_background$backgroun = background == null ? void 0 : background.backgroundImage) != null ? _background$backgroun : null,
+	      backgroundColor: (_background$backgroun2 = background == null ? void 0 : background.backgroundColor) != null ? _background$backgroun2 : null,
+	      backgroundPosition: (_background$backgroun3 = background == null ? void 0 : background.backgroundPosition) != null ? _background$backgroun3 : null,
+	      backgroundRepeat: (_background$backgroun4 = background == null ? void 0 : background.backgroundRepeat) != null ? _background$backgroun4 : null,
+	      backgroundSize: (_background$backgroun5 = background == null ? void 0 : background.backgroundSize) != null ? _background$backgroun5 : null
+	    });
+	  }
+	  resetAvatarBlockBackground() {
+	    main_core.Dom.style(document.getElementById('avatar-area'), {
+	      backgroundImage: null,
+	      backgroundColor: null,
+	      backgroundPosition: null,
+	      backgroundRepeat: null,
+	      backgroundSize: null
+	    });
 	  }
 	}
 	function _supportViewTransition2() {
@@ -1857,6 +2132,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _buttonWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonWrapper");
 	var _cache$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _getExtensionWidgetName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getExtensionWidgetName");
+	var _openWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openWidget");
 	var _showWidget$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWidget");
 	var _getWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidget");
 	var _getWidgetLoader$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetLoader");
@@ -1865,23 +2141,29 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _getCounterWrapper$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounterWrapper");
 	var _setCounterValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCounterValue");
 	var _setEventHandlers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlers");
+	var _resetHighlightIntegrator = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetHighlightIntegrator");
 	var _updateOptionsFromPull = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateOptionsFromPull");
 	var _emitOrdersUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitOrdersUpdate");
 	var _showInfrastructureSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showInfrastructureSlider");
+	var _sendAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
 	class LicenseButton {
 	  static init(options) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = options;
 	    babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper] = document.querySelector('[data-id="licenseWidgetWrapper"]');
 	    babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlers)[_setEventHandlers]();
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount);
+	      babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.highlightIntegrator);
 	    }
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper], 'click', () => {
-	      main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper]);
-	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().createSkeletonFromConfig(options.skeleton).show();
-	      main_core.Runtime.loadExtension([babelHelpers.classPrivateFieldLooseBase(this, _getExtensionWidgetName)[_getExtensionWidgetName]()]).then(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _showWidget$1)[_showWidget$1]();
-	      }).catch(() => {});
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
+	        babelHelpers.classPrivateFieldLooseBase(LicenseButton, _sendAnalytics)[_sendAnalytics]({
+	          tool: 'intranet',
+	          category: 'header_popup',
+	          event: 'show',
+	          c_section: 'top_menu'
+	        });
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _openWidget)[_openWidget]();
 	    });
 	  }
 	}
@@ -1891,12 +2173,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  return 'intranet.license-widget';
 	}
+	function _openWidget2() {
+	  main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().createSkeletonFromConfig(babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].skeleton).show();
+	  main_core.Runtime.loadExtension([babelHelpers.classPrivateFieldLooseBase(this, _getExtensionWidgetName)[_getExtensionWidgetName]()]).then(() => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _showWidget$1)[_showWidget$1]();
+	  }).catch(() => {});
+	}
 	function _showWidget2$1() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _getContent$1)[_getContent$1]().then(response => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().clearBeforeInsertContent();
 	    let licenseData = null;
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	      licenseData = response.data;
+	      licenseData = {
+	        ...response.data
+	      };
 	      licenseData.loader = babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().getPopup();
 	      licenseData.wrapper = babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper];
 	    } else {
@@ -1907,9 +2198,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      };
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _getWidget)[_getWidget]().setOptions(licenseData).show();
+	    babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().getPopup().adjustPosition();
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper], 'click', () => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _getWidget)[_getWidget]().show();
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
+	        babelHelpers.classPrivateFieldLooseBase(LicenseButton, _sendAnalytics)[_sendAnalytics]({
+	          tool: 'intranet',
+	          category: 'header_popup',
+	          event: 'show',
+	          c_section: 'top_menu'
+	        });
+	      }
 	    });
+	    main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.LicenseWidget:firstShow');
 	  }).catch(() => {});
 	}
 	function _getWidget2() {
@@ -1924,7 +2225,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('widgetLoader', () => {
 	    return new intranet_widgetLoader.WidgetLoader({
 	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper],
-	      width: 374,
+	      width: 385,
 	      id: 'bx-license-header-popup'
 	    });
 	  });
@@ -1956,8 +2257,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper].querySelector('.air-header-button__counter');
 	  });
 	}
-	function _setCounterValue2(personalTotalCount, commonTotalCount) {
-	  const value = personalTotalCount + commonTotalCount;
+	function _setCounterValue2(personalTotalCount, commonTotalCount, highlightIntegrator = 0) {
+	  const value = personalTotalCount + commonTotalCount + highlightIntegrator;
 	  if (value < 1) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _getCounter$1)[_getCounter$1]().destroy();
 	    babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].delete('counter');
@@ -1983,6 +2284,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
+	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.LicenseButton:showWidget', event => {
+	      var _event$getData$c_sect, _event$getData;
+	      babelHelpers.classPrivateFieldLooseBase(LicenseButton, _sendAnalytics)[_sendAnalytics]({
+	        tool: 'intranet',
+	        category: 'header_popup',
+	        event: 'show',
+	        c_section: (_event$getData$c_sect = (_event$getData = event.getData()) == null ? void 0 : _event$getData.c_section) != null ? _event$getData$c_sect : 'search'
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _openWidget)[_openWidget]();
+	    });
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
 	    pull_client.PULL.subscribe({
 	      moduleId: 'bitrix24',
 	      command: 'updateCountOrdersAwaitingPayment',
@@ -1991,7 +2304,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	    });
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'Bitrix24InfrastructureSlider:show', babelHelpers.classPrivateFieldLooseBase(this, _showInfrastructureSlider)[_showInfrastructureSlider].bind(this));
+	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.LicenseWidget.InviteHintPopup:show', babelHelpers.classPrivateFieldLooseBase(this, _resetHighlightIntegrator)[_resetHighlightIntegrator].bind(this));
 	  }
+	}
+	function _resetHighlightIntegrator2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.highlightIntegrator = 0;
+	  babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.highlightIntegrator);
+	  BX.userOptions.save('bitrix24', 'isIntegratorHighlighted', null, 'Y');
 	}
 	function _updateOptionsFromPull2(params) {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
@@ -2064,6 +2383,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  });
 	}
+	function _sendAnalytics2(params) {
+	  // eslint-disable-next-line promise/catch-or-return
+	  main_core.Runtime.loadExtension('ui.analytics').then(({
+	    sendData
+	  }) => {
+	    sendData(params);
+	  });
+	}
+	Object.defineProperty(LicenseButton, _sendAnalytics, {
+	  value: _sendAnalytics2
+	});
 	Object.defineProperty(LicenseButton, _showInfrastructureSlider, {
 	  value: _showInfrastructureSlider2
 	});
@@ -2072,6 +2402,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	});
 	Object.defineProperty(LicenseButton, _updateOptionsFromPull, {
 	  value: _updateOptionsFromPull2
+	});
+	Object.defineProperty(LicenseButton, _resetHighlightIntegrator, {
+	  value: _resetHighlightIntegrator2
 	});
 	Object.defineProperty(LicenseButton, _setEventHandlers, {
 	  value: _setEventHandlers2
@@ -2096,6 +2429,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	});
 	Object.defineProperty(LicenseButton, _showWidget$1, {
 	  value: _showWidget2$1
+	});
+	Object.defineProperty(LicenseButton, _openWidget, {
+	  value: _openWidget2
 	});
 	Object.defineProperty(LicenseButton, _getExtensionWidgetName, {
 	  value: _getExtensionWidgetName2
@@ -2283,9 +2619,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  value: void 0
 	});
 
-	let _$5 = t => t,
-	  _t$5,
-	  _t2$4;
+	let _$6 = t => t,
+	  _t$6,
+	  _t2$5;
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _initPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initPopup");
 	var _renderPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
@@ -2344,9 +2680,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  main_core.Event.bind(window, 'scroll', windowScrollHandler);
 	}
 	function _renderPopupContent2(languages) {
-	  const container = main_core.Tag.render(_t$5 || (_t$5 = _$5`<div class="intranet__language-popup_list"></div>`));
+	  const container = main_core.Tag.render(_t$6 || (_t$6 = _$6`<div class="intranet__language-popup_list"></div>`));
 	  Object.entries(languages).forEach(([languageCode, languageItem]) => {
-	    const languageItemElement = main_core.Tag.render(_t2$4 || (_t2$4 = _$5`
+	    const languageItemElement = main_core.Tag.render(_t2$5 || (_t2$5 = _$6`
 				<div class="intranet__language-popup_language-item">
 					<span class="intranet__language-popup_language-item-name">${0}</span>
 					<span class="intranet__language-popup_language-beta">${0}</span>
@@ -2403,5 +2739,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.LicenseButton = LicenseButton;
 	exports.AvatarButton = AvatarButton;
 
-}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX.UI,BX.Intranet,BX.Timeman,BX.Bitrix24,BX.Intranet,BX.UI,BX,BX.Cache,BX.Event,BX.Intranet,BX.Intranet,BX.UI,BX));
+}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX.Main,BX.UI,BX.Intranet,BX.Timeman,BX.UI,BX.Bitrix24,BX.Intranet,BX,BX.Cache,BX.Event,BX.Intranet,BX.Intranet,BX.UI,BX));
 //# sourceMappingURL=bitrix24.bundle.js.map

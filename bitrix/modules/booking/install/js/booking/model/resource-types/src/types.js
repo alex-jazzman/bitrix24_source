@@ -9,6 +9,8 @@ export type ResourceTypeModel = {
 	code: string,
 	resourcesCnt: number | null,
 
+	senderCode: string,
+
 	// info
 	isInfoNotificationOn: boolean,
 	templateTypeInfo: string,

@@ -236,11 +236,16 @@
 
 .biconnector-grid-scope-hint-more {
 	color: var(--ui-color-link-primary-base);
+	text-decoration: underline;
+	text-decoration-style: dotted;
+	text-decoration-color: color-mix(in srgb, var(--ui-color-link-primary-base) 28%, transparent);
+	text-underline-offset: 3px;
+	cursor: pointer;
 	transition: .2s ease;
 }
 
 .biconnector-grid-scope-hint-more:hover {
-	color: var(--ui-color-palette-blue-95);
+	--ui-hoverable: true;
 }
 
 .main-grid-row .ui-hint {
@@ -284,4 +289,54 @@
 .biconnector-grid-name-link .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-link-primary-base);
 	margin-right: 2px;
+}
+
+.market-dashboard-delete-popup {
+	font-family: 'Inter', var(--ui-font-family-helvetica);
+}
+
+.market-dashboard-delete-popup-text {
+	color: #525C69;
+	font-size: 15px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	margin-bottom: 16px;
+}
+
+.market-dashboard-delete-popup-list-title {
+	margin-top: 20px;
+	margin-bottom: 8px;
+	color: #333;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 600;
+	line-height: 19px;
+	letter-spacing: -0.05px;
+}
+
+.dashboard-delete-loading-popup {
+	text-align: center;
+	padding-bottom: 50px;
+	padding-top: 5px;
+}
+
+.dashboard-delete-loading-popup-text span {
+	color: var(--ui-color-base-2);
+}
+
+.dashboard-delete-loading-popup-spinner {
+	width: 40px;
+	height: 40px;
+	animation: spin 1.3s linear infinite;
+}
+
+.dashboard-delete-loading-popup-spinner-wrapper {
+	margin-bottom: 20px;
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
 }

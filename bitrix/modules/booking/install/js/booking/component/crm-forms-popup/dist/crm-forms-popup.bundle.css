@@ -14,11 +14,11 @@
 
 .booking--booking--crm-forms-popup__header-title {
 	color: var(--ui-color-text-primary, #333);
-	font-size: 19px;
+	font-size: var(--ui-font-size-2xl);
 	font-style: normal;
 	font-weight: var(--ui-font-weight-medium);
 	line-height: 26px;
-	letter-spacing: -0.2px;
+	letter-spacing: var(--ui-letter-spacing-s);
 }
 
 .booking--booking--crm-forms-popup__header-description {
@@ -37,7 +37,7 @@
 .booking--booking-crm-forms-popup__list-wrapper {
 	background: var(--ui-color-palette-white-base, #FFF);
 	border-radius: 12px;
-	border: 1px solid rgba(var(--ui-color-palette-black-solid-rgb), 0.08);
+	border: var(--ui-border-width-thin) solid rgba(var(--ui-color-palette-black-solid-rgb), var(--ui-opacity-10));
 	display: flex;
 	flex-grow: 1;
 }
@@ -77,7 +77,7 @@
 	font-style: normal;
 	font-weight: var(--ui-font-weight-normal);
 	line-height: 20px;
-	letter-spacing: -0.05px;
+	letter-spacing: var(--ui-letter-spacing-l);
 }
 
 .booking--booking--crm-forms-popup-sort span {
@@ -137,7 +137,7 @@
 	font-size: 14px;
 	font-weight: var(--ui-font-weight-normal);
 	line-height: 19px;
-	letter-spacing: -0.05px;
+	letter-spacing: var(--ui-letter-spacing-l);
 }
 
 .booking--booking--crm-forms-popup--item__copy-btn {
@@ -184,8 +184,8 @@
 	flex-shrink: 0;
 	gap: 8px;
 	border-radius: 8px;
-	border: 1px solid rgba(0, 0, 0, 0.03);
-	background: #FFF;
+	border: var(--ui-border-width-thin) solid rgba(0, 0, 0, 0.03);
+	background: var(--ui-color-bg-content-primary);
 	padding: 0 9px;
 }
 

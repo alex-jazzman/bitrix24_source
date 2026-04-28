@@ -893,6 +893,7 @@ class CTranslateUtils
 		'ru',
 		'en',
 		'de',
+		'kz',
 	];
 
 	public static function setLanguageList(int $languages = self::LANGUAGES_DEFAULT, $customList = [])
@@ -939,44 +940,55 @@ class CTranslateUtils
 				'ru',
 				'en',
 				'de',
+				'kz',
 			];
 		}
 
 	}
 
-	public static function CopyMessage($code, $fileFrom, $fileTo, $newCode = '')
+	protected static function findLangDir(string $file): array
+	{
+		$langDir = '';
+		$fileName = '';
+		$filePath = $file;
+		while (($slashPos = strrpos($filePath, "/")) !== false)
+		{
+			$filePath = substr($filePath, 0, $slashPos);
+			if (is_dir($filePath . "/lang"))
+			{
+				$langDir = $filePath . "/lang";
+				$fileName = substr($file, $slashPos);
+				break;
+			}
+		}
+
+		return [$langDir, $fileName];
+	}
+
+	public static function exportMess(array $MESS): string
+	{
+		$s = "<?php\n";
+		foreach($MESS as $c => $m)
+		{
+			$s .= "\$MESS['".EscapePHPString($c, "'")."'] = \"".EscapePHPString($m)."\";\n";
+		}
+
+		return $s;
+	}
+
+	public static function CopyMessage($code, $fileFrom, $fileTo, $newCode = '', $move = false)
 	{
 		$newCode = (string)$newCode;
 		if ($newCode === '')
 			$newCode = $code;
-		$langDir = $fileName = "";
-		$filePath = $fileFrom;
-		while(($slashPos = mb_strrpos($filePath, "/")) !== false)
-		{
-			$filePath = mb_substr($filePath, 0, $slashPos);
-			if(is_dir($filePath."/lang"))
-			{
-				$langDir = $filePath."/lang";
-				$fileName = mb_substr($fileFrom, $slashPos);
-				break;
-			}
-		}
-		if($langDir <> '')
-		{
-			$langDirTo = $fileNameTo = "";
-			$filePath = $fileTo;
-			while(($slashPos = mb_strrpos($filePath, "/")) !== false)
-			{
-				$filePath = mb_substr($filePath, 0, $slashPos);
-				if(is_dir($filePath."/lang"))
-				{
-					$langDirTo = $filePath."/lang";
-					$fileNameTo = mb_substr($fileTo, $slashPos);
-					break;
-				}
-			}
 
-			if($langDirTo <> '')
+		[$langDir, $fileName] = static::findLangDir($fileFrom);
+
+		if($langDir != '')
+		{
+			[$langDirTo, $fileNameTo] = self::findLangDir($fileTo);
+
+			if($langDirTo != '')
 			{
 				$langs = self::$languageList;
 				foreach($langs as $lang)
@@ -988,6 +1000,14 @@ class CTranslateUtils
 						if(isset($MESS[$code]))
 						{
 							$message = $MESS[$code];
+
+							if ($move)
+							{
+								unset($MESS[$code]);
+
+								file_put_contents($langDir . "/" . $lang . $fileName, static::exportMess($MESS));
+							}
+
 							$MESS = array();
 							if (file_exists($langDirTo."/".$lang.$fileNameTo))
 							{
@@ -997,13 +1017,10 @@ class CTranslateUtils
 							{
 								@mkdir(dirname($langDirTo."/".$lang.$fileNameTo), 0777, true);
 							}
+
 							$MESS[$newCode] = $message;
-							$s = "<?php\n";
-							foreach($MESS as $c => $m)
-							{
-								$s .= "\$MESS['".EscapePHPString($c)."'] = \"".EscapePHPString($m)."\";\n";
-							}
-							file_put_contents($langDirTo."/".$lang.$fileNameTo, $s);
+
+							file_put_contents($langDirTo . "/" . $lang . $fileNameTo, static::exportMess($MESS));
 						}
 					}
 				}
@@ -1054,7 +1071,7 @@ class CTranslateUtils
 				{
 					foreach(self::$languageList as $destLang)
 					{
-						if($destLang <> $lang)
+						if($destLang != $lang)
 						{
 							$MESS = array();
 							$sourceFile = str_replace("/lang/".$lang."/", "/lang/".$destLang."/", $sourceDir."/".$file);
@@ -1091,7 +1108,7 @@ class CTranslateUtils
 
 						foreach($destMess as $code => $val)
 						{
-							if(isset($MESS[$code]) && $MESS[$code] <> $val)
+							if(isset($MESS[$code]) && $MESS[$code] != $val)
 							{
 								echo $sourceDir."/".$file.": ".$code." already exists in the destination file.\n";
 							}
@@ -1101,12 +1118,7 @@ class CTranslateUtils
 							}
 						}
 
-						$s = "<?php\n";
-						foreach($MESS as $c => $m)
-						{
-							$s .= "\$MESS['".EscapePHPString($c)."'] = \"".EscapePHPString($m)."\";\n";
-						}
-						file_put_contents($destFile, $s);
+						file_put_contents($destFile, static::exportMess($MESS));
 					}
 				}
 			}
@@ -1382,14 +1394,11 @@ function saveTranslationFile($langFileName, $phrases, &$errorCollection)
 		ksort($phrases, SORT_STRING);
 	}
 
-	$content = '';
 	foreach ($phrases as $phraseId => $phrase)
 	{
-		$phrase = str_replace(["\r\n", "\r"], ["\n", ''], $phrase);
-		$row = "\$MESS[\"". EscapePHPString($phraseId). "\"] = \"". EscapePHPString($phrase). "\"";
-		$content .= "\n". $row. ';';
+		$phrases[$phraseId] = str_replace(["\r\n", "\r"], ["\n", ''], $phrase);
 	}
-	unset($phraseId, $phrase, $row);
+	unset($phraseId, $phrase);
 
 	if (!TR_BACKUP($langFileName))
 	{
@@ -1406,15 +1415,11 @@ function saveTranslationFile($langFileName, $phrases, &$errorCollection)
 			}
 		}
 
-		$checkFullPath = realpath($fullPath);
-		//if ($checkFullPath === false)
-
-
 		$file = new Translate\IO\File(Translate\IO\Path::tidy($fullPath));
 
-		if ($content <> '')
+		if ($phrases)
 		{
-			if ($file->putContents('<?'. $content. "\n?". '>') === false)
+			if ($file->putContents(CTranslateUtils::exportMess($phrases)) === false)
 			{
 				$errorCollection[] = Loc::getMessage('TR_TOOLS_ERROR_WRITE_FILE', array('%FILE%' => $langFileName));
 			}

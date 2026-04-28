@@ -17,7 +17,7 @@ return [
 		'/bitrix/js/crm/interface_grid.js',
 		'/bitrix/js/crm/report/filterselectors/init.js',
 	],
-	'rel' => ['ui.fonts.opensans'],
+	'rel' => ['ui.fonts.opensans', 'intranet.old-interface.intranet-common'],
 	'css' => [
 		'/bitrix/js/crm/css/crm.css',
 	],

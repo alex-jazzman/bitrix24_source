@@ -96,7 +96,14 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 		 * @param {ListByDialogTypeFilter}
 		 * @return {Promise<RecentListResult>}
 		 */
-		async getListByDialogTypeFilter({ dialogTypes = [], exceptDialogTypes = [], lastActivityDate = null, limit })
+		async getListByDialogTypeFilter(
+			{
+				dialogTypes = [],
+				exceptDialogTypes = [],
+				lastActivityDate = null,
+				limit,
+			},
+		)
 		{
 			if (!this.isSupported || !Feature.isLocalStorageEnabled)
 			{
@@ -109,13 +116,11 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 				});
 			}
 
-			const filterString = this.createFilter(
-				{
-					dialogTypes,
-					exceptDialogTypes,
-					lastActivityDate,
-				},
-			);
+			const filterString = this.createFilter({
+				dialogTypes,
+				exceptDialogTypes,
+				lastActivityDate,
+			});
 
 			const query = `
 				SELECT b_im_recent.*, b_im_dialog.*
@@ -151,13 +156,11 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 			try
 			{
 				const lastActivityDateObj = restoredRows.items[restoredRows.items.length - 1]?.lastActivityDate;
-				restoredRows.hasMore = await this.#getHasMorePage(
-					{
-						dialogTypes,
-						exceptDialogTypes,
-						lastActivityDate: lastActivityDateObj?.toISOString() ?? null,
-					},
-				);
+				restoredRows.hasMore = await this.#getHasMorePage({
+					dialogTypes,
+					exceptDialogTypes,
+					lastActivityDate: lastActivityDateObj?.toISOString() ?? null,
+				});
 			}
 			catch (error)
 			{
@@ -171,6 +174,8 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 		 * @param {string} searchText
 		 * @param {'asc'|'desc'} order='asc'
 		 * @param {number} limit=25
+		 * @param {DialoguesFilter | {}} filter
+		 * @param {boolean} shouldRestoreRows
 		 *
 		 * @returns {Promise<{items: *[]}>}
 		 */
@@ -178,6 +183,7 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 			searchText,
 			order = 'desc',
 			limit = 25,
+			filter = {},
 			shouldRestoreRows = true,
 		)
 		{
@@ -188,24 +194,13 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 				};
 			}
 
-			// TODO: MessengerV2 move to config
-			const filterString = this.createFilter(
-				{
-					exceptDialogTypes: [
-						DialogType.copilot,
-						DialogType.lines,
-						DialogType.comment,
-						DialogType.tasksTask,
-					],
-				},
-			);
-
+			const filterString = this.createFilter(filter);
 			const { sqlCondition, values } = getStartWordsSearchVariants('name', searchText);
 			const result = await this.executeSql({
 				query: `
 					SELECT * 
 					FROM b_im_dialog
-					JOIN b_im_recent ON b_im_recent.id = b_im_dialog.dialogId
+					JOIN ${this.getName()} ON ${this.getName()}.id = b_im_dialog.dialogId
 					${filterString} AND ${sqlCondition} 
 					ORDER BY id ${order}
 					LIMIT ${limit}
@@ -233,13 +228,11 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 
 			let hasMore = false;
 
-			const filterString = this.createFilter(
-				{
-					dialogTypes,
-					exceptDialogTypes,
-					lastActivityDate,
-				},
-			);
+			const filterString = this.createFilter({
+				dialogTypes,
+				exceptDialogTypes,
+				lastActivityDate,
+			});
 
 			const query = `
 				SELECT COUNT(*) AS total_count
@@ -292,12 +285,16 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {Array<string>} dialogTypes
-		 * @param {Array<string>} exceptDialogTypes
+		 * @param {DialoguesFilter['dialogTypes']} dialogTypes
+		 * @param {DialoguesFilter['exceptDialogTypes']} exceptDialogTypes
 		 * @param {string} lastActivityDate
 		 * @return {string}
 		 */
-		createFilter({ dialogTypes = [], exceptDialogTypes = [], lastActivityDate = null })
+		createFilter({
+			dialogTypes = [],
+			exceptDialogTypes = [],
+			lastActivityDate = null,
+		})
 		{
 			let filterString = '';
 			if (dialogTypes.length > 0)

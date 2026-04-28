@@ -56,7 +56,7 @@ jn.define('utils/array', (require, exports, module) => {
 	 * Returns a new array with unique items by predicate
 	 * @template T
 	 * @param {Array<T>} arr
-	 * @param {string|function} predicate
+	 * @param {keyof T|string|function} predicate
 	 * @returns {Array<T>}
 	 */
 	function uniqBy(arr, predicate)
@@ -81,7 +81,7 @@ jn.define('utils/array', (require, exports, module) => {
 	 * the results of running each element in a collection through each iteratee.
 	 * @template T
 	 * @param {Iterable<T>} collection
-	 * @param predicate
+	 * @param {keyof T | string} predicate
 	 * @return {Array<T>}
 	 */
 	function sortBy(collection, predicate)

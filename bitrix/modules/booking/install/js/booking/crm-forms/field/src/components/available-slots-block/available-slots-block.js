@@ -2,6 +2,7 @@ import { Loader } from 'main.loader';
 
 import { locMixin } from 'booking.component.mixin.loc-mixin';
 
+import { SlotsCreator } from '../../lib/slots-creator';
 import { Occupancy, createOccupancy } from '../../occupancy';
 import { ResourceSlotsUiBlock } from '../resource-slots-ui-block/resource-slots-ui-block';
 import type { ResourceSlotsUiBlockSelectEventPayload } from '../resource-slots-ui-block/resource-slots-ui-block';
@@ -143,17 +144,18 @@ export const AvailableSlotsBlock = {
 				.map((resource) => {
 					const resourceId = resource.id;
 					const resourceOccupancies = this.resourceOccupancy;
+					const slotsCreator = new SlotsCreator({
+						date: this.date,
+						slotRanges: resource.slotRanges,
+						resourceOccupancy: resourceOccupancies,
+						resourceId,
+						timezone: this.timezone,
+					});
 
 					return {
 						resourceId,
 						resource,
-						slots: Occupancy.calcResourceSlots({
-							date: this.date,
-							slotRanges: resource.slotRanges,
-							resourceOccupancy: resourceOccupancies,
-							resourceId,
-							timezone: this.timezone,
-						}),
+						slots: slotsCreator.calcResourceSlots(),
 					};
 				})
 				.sort((a, b) => b.slots.length - a.slots.length);

@@ -24,6 +24,7 @@ export function getEmptyResource(): ResourceModel
 		isMain: true,
 		isPrimary: false,
 		isDeleted: false,
+		senderCode: 'bitrix24',
 		isConfirmationNotificationOn: false,
 		isFeedbackNotificationOn: false,
 		isInfoNotificationOn: false,

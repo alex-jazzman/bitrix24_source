@@ -1,4 +1,5 @@
-<?
+<?php
+
 namespace Bitrix\Sale\Cashbox\AdminPage\Settings
 {
 	use Bitrix\Main\Localization\Loc;
@@ -49,32 +50,9 @@ namespace Bitrix\Sale\Cashbox\AdminPage\Settings
 
 					if ($group === 'VAT')
 					{
-						$attentionVatMessages = [Loc::getMessage('SALE_CASHBOX_VAT_ATTENTION')];
-
-						if (Application::getInstance()->getLicense()->getRegion() === 'ru')
-						{
-							$vat22CashboxCode = match (true)
-							{
-								is_a($handler, Cashbox\CashboxAtolFarmV4::class, true),
-								is_a($handler, Cashbox\CashboxRobokassa::class, true) => 'vat22',
-								is_a($handler, Cashbox\CashboxYooKassa::class, true) => '11',
-								default => null,
-							};
-							if ($vat22CashboxCode)
-							{
-								$attentionVatMessages[] = Loc::getMessage(
-									'SALE_CASHBOX_VAT_22_ATTENTION',
-									['#CODE#' => $vat22CashboxCode],
-								);
-							}
-						}
-
-						foreach ($attentionVatMessages as $attentionVatMessage)
-						{
-							$result .= '<tr><td colspan="2" style="text-align: center">';
-							$result .= BeginNote() . $attentionVatMessage . EndNote();
-							$result .= '</td></tr>';
-						}
+						$result .= '<tr><td colspan="2" style="text-align: center">';
+						$result .= BeginNote() . Loc::getMessage('SALE_CASHBOX_VAT_ATTENTION') . EndNote();
+						$result .= '</td></tr>';
 					}
 
 					$className = 'adm-detail-content-cell-l';

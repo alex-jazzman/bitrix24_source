@@ -141,13 +141,22 @@ this.BX.Booking = this.BX.Booking || {};
 	const CrmFormTemplateId = Object.freeze({
 	  BookingAutoSelection: 'booking_auto_selection',
 	  BookingAnyResource: 'booking_any_resource',
-	  BookingManualSettings: 'booking_manual_settings'
+	  BookingManualSettings: 'booking_manual_settings',
+	  // with pay
+	  BookingAutoSelectionPay: 'booking_auto_selection_pay',
+	  BookingAnyResourcePay: 'booking_any_resource_pay',
+	  BookingManualSettingsPay: 'booking_manual_settings_pay',
+	  // with service
+	  BookingAutoSelectionSku: 'booking_auto_selection_services',
+	  BookingAnyResourceSku: 'booking_any_resource_services',
+	  BookingManualSettingsSku: 'booking_manual_settings_services'
 	});
 	const CrmFormSettingsDataPropName = Object.freeze({
 	  autoSelection: 'autoSelection',
 	  default: 'default',
 	  isAutoSelectionOn: 'isAutoSelectionOn'
 	});
+	const CrmFormTemplatesWithSku = Object.freeze([CrmFormTemplateId.BookingAutoSelectionPay, CrmFormTemplateId.BookingAnyResourcePay, CrmFormTemplateId.BookingManualSettingsPay, CrmFormTemplateId.BookingAutoSelectionSku, CrmFormTemplateId.BookingAnyResourceSku, CrmFormTemplateId.BookingManualSettingsSku]);
 
 	const DateFormat = Object.freeze({
 	  Server: 'Y-m-d',
@@ -182,7 +191,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  CreateBookings: 'booking:booking:create',
 	  DeleteBooking: 'booking:booking:delete',
 	  UpdateBooking: 'booking:booking:update',
-	  StartLockedBookingAnimation: 'booking:booking:startLockedBookingAnimation'
+	  StartLockedBookingAnimation: 'booking:booking:startLockedBookingAnimation',
+	  BookingOpenSkusSettings: 'booking:booking:open-skus-settings'
 	});
 
 	const Limit = Object.freeze({
@@ -215,7 +225,9 @@ this.BX.Booking = this.BX.Booking || {};
 	  WaitList: 'wait-list',
 	  Filter: 'filter',
 	  SaleChannels: 'sale-channels',
-	  SkuResourcesEditor: 'sku-resources-editor'
+	  SkuResourcesEditor: 'sku-resources-editor',
+	  ResourceSkuRelations: 'resource-sku-relations',
+	  Sku: 'sku'
 	});
 
 	const Module = Object.freeze({
@@ -359,6 +371,7 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.CrmEntity = CrmEntity;
 	exports.CrmFormTemplateId = CrmFormTemplateId;
 	exports.CrmFormSettingsDataPropName = CrmFormSettingsDataPropName;
+	exports.CrmFormTemplatesWithSku = CrmFormTemplatesWithSku;
 	exports.DateFormat = DateFormat;
 	exports.EntitySelectorEntity = EntitySelectorEntity;
 	exports.EntitySelectorTab = EntitySelectorTab;

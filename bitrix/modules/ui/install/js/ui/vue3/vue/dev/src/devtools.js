@@ -8,7 +8,7 @@
 
 class DevTools
 {
-	constructor(params)
+	constructor()
 	{
 		this.host = 'http://localhost';
 		this.port = '8098';

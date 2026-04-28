@@ -12,6 +12,12 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
+use Bitrix\Crm\Import\Deprecated\CsvFileImportFactory;
+use Bitrix\Crm\Import\Enum\Contact\Origin;
+use Bitrix\Crm\Import\Enum\DuplicateControl\DuplicateControlBehavior;
+use Bitrix\Crm\Integration\Analytics\Builder\Import\CancelEvent;
+use Bitrix\Crm\Integration\Analytics\Builder\Import\CreateEvent;
+use Bitrix\Crm\Integration\Analytics\Builder\Import\EditEvent;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
 use Bitrix\Main\SystemException;
@@ -524,7 +530,7 @@ if(!function_exists('__CrmImportCreateCustom'))
 			$_SESSION['CRM_IMPORT_FILE_FLIPPED_HEADERS'] = isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? array_flip($_SESSION['CRM_IMPORT_FILE_HEADERS']) : array();
 		}
 
-		return \Bitrix\Crm\Import\CsvFileImportFactory::createByTypeName(
+		return CsvFileImportFactory::createByTypeName(
 			$origin,
 			array(
 				'MAP' => $_SESSION['CRM_IMPORT_FILE_FLIPPED_HEADERS'],
@@ -1994,6 +2000,10 @@ elseif (isset($_REQUEST['import']) && file_exists($_SESSION['CRM_IMPORT_FILE'] ?
 		$arResult['duplicate_url'] = SITE_DIR.'bitrix/components/bitrix/crm.contact.import/show_file.php?name=duplicate';
 	}
 
+	$_SESSION['CRM_IMPORT_SUCCESS_COUNT'] += $arResult['import'];
+	$_SESSION['CRM_IMPORT_ERROR_COUNT'] += $arResult['error'];
+	$_SESSION['CRM_IMPORT_DUPLICATE_COUNT'] += $arResult['duplicate'];
+
 	Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 	echo CUtil::PhpToJsObject($arResult);
 	CMain::FinalActions();
@@ -2001,6 +2011,15 @@ elseif (isset($_REQUEST['import']) && file_exists($_SESSION['CRM_IMPORT_FILE'] ?
 }
 else if(isset($_REQUEST['complete_import']))
 {
+	(new CreateEvent())
+		->setEntityTypeId(CCrmOwnerType::Contact)
+		->setOrigin(Origin::tryFrom($_SESSION['CRM_IMPORT_FILE_ORIGIN'] ?? $fixedOrigin ?? null))
+		->setSuccessCount($_SESSION['CRM_IMPORT_SUCCESS_COUNT'])
+		->setErrorCount($_SESSION['CRM_IMPORT_ERROR_COUNT'])
+		->setDuplicateCount($_SESSION['CRM_IMPORT_DUPLICATE_COUNT'])
+		->buildEvent()
+		->send();
+
 	$APPLICATION->RestartBuffer();
 	Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 	echo CUtil::PhpToJsObject(array('RESULT' => 'SUCCESS'));
@@ -2041,6 +2060,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				$errorMsg .= GetMessage('CRM_INVALID_IMP_RQ_PRESET_ID');
 			}
 
+			$error = '';
 			if($errorOccured)
 			{
 				ShowError($errorMsg);
@@ -2182,6 +2202,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						}
 					}
 
+					$_SESSION['CRM_IMPORT_SUCCESS_COUNT'] = 0;
+					$_SESSION['CRM_IMPORT_ERROR_COUNT'] = 0;
+					$_SESSION['CRM_IMPORT_DUPLICATE_COUNT'] = 0;
+
 					$_SESSION['CRM_IMPORT_ADDR_TO_REQUISITE'] = (isset($_POST['IMPORT_ADDR_TO_REQUISITE']) && $_POST['IMPORT_ADDR_TO_REQUISITE'] == 'Y') ? 'Y' : 'N';
 					$_SESSION['CRM_IMPORT_ADDR_PRESET'] = (isset($_POST['IMPORT_ADDR_PRESET']) && $_POST['IMPORT_ADDR_PRESET'] > 0) ? (int)$_POST['IMPORT_ADDR_PRESET'] : 0;
 					$_SESSION['CRM_IMPORT_REQUISITE'] = $importRequisite ? 'Y' : 'N';
@@ -2198,6 +2222,29 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				}
 
 				$arResult['STEP'] = 2;
+			}
+
+			if ($importRequisite)
+			{
+				(new EditEvent())
+					->setEntityTypeId(CCrmOwnerType::Contact)
+					->setOrigin(Origin::tryFrom($_SESSION['CRM_IMPORT_FILE_ORIGIN'] ?? $fixedOrigin ?? null))
+					->setStatus($errorOccured || $error !== '' ? 'error' : 'success')
+					->setIsImportRequisite()
+					->buildEvent()
+					->send();
+			}
+
+			$isOpenedDefaultly = $_POST['IMPORT_DEFAULT_OPENED'] ?? $_SESSION['CRM_IMPORT_DEFAULT_OPENED'] ?? '';
+			if (mb_strtoupper($isOpenedDefaultly) === 'Y')
+			{
+				(new EditEvent())
+					->setEntityTypeId(CCrmOwnerType::Contact)
+					->setOrigin(Origin::tryFrom($_SESSION['CRM_IMPORT_FILE_ORIGIN'] ?? $fixedOrigin ?? null))
+					->setStatus($errorOccured || $error !== '' ? 'error' : 'success')
+					->setIsDefaultOpened()
+					->buildEvent()
+					->send();
 			}
 		}
 		else if ($arResult['STEP'] == 2)
@@ -2257,6 +2304,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			{
 				$_SESSION['CRM_IMPORT_DUP_CONTROL_TYPE'] = 'NO_CONTROL';
 			}
+
+			(new EditEvent())
+				->setEntityTypeId(CCrmOwnerType::Contact)
+				->setOrigin(Origin::tryFrom($_SESSION['CRM_IMPORT_FILE_ORIGIN'] ?? $fixedOrigin ?? null))
+				->setDuplicateControlBehavior(DuplicateControlBehavior::tryFrom($_SESSION['CRM_IMPORT_DUP_CONTROL_TYPE']))
+				->buildEvent()
+				->send();
 
 			$_SESSION['CRM_IMPORT_DUP_CONTROL_ENABLE_PERSON_NAME'] =
 				isset($_POST['IMPORT_DUP_CONTROL_ENABLE_PERSON_NAME'])
@@ -2342,6 +2396,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		}
 		else if ($arResult['STEP'] == 4)
 		{
+			(new CreateEvent())
+				->setEntityTypeId(CCrmOwnerType::Contact)
+				->setOrigin(Origin::tryFrom($_SESSION['CRM_IMPORT_FILE_ORIGIN'] ?? $fixedOrigin ?? null))
+				->setIsDoneButton()
+				->buildEvent()
+				->send();
+
 			@unlink($_SESSION['CRM_IMPORT_FILE']);
 			foreach ($_SESSION as $key => $value)
 				if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
@@ -2368,6 +2429,16 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		}
 		else
 		{
+			if ($arResult['STEP'] !== 2)
+			{
+				(new CreateEvent())
+					->setEntityTypeId(CCrmOwnerType::Contact)
+					->setOrigin(Origin::tryFrom($_SESSION['CRM_IMPORT_FILE_ORIGIN'] ?? $fixedOrigin ?? null))
+					->setIsAgainButton()
+					->buildEvent()
+					->send();
+			}
+
 			@unlink($_SESSION['CRM_IMPORT_FILE']);
 			foreach ($_SESSION as $key => $value)
 				if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
@@ -2382,6 +2453,19 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		foreach ($_SESSION as $key => $value)
 			if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 				unset($_SESSION[$key]);
+
+		(new CancelEvent())
+			->setEntityTypeId(CCrmOwnerType::Contact)
+			->setOrigin(Origin::tryFrom($_SESSION['CRM_IMPORT_FILE_ORIGIN'] ?? $fixedOrigin ?? null))
+			->setStep(match ($arResult['STEP']) {
+				1 => CancelEvent::STEP_CONFIGURE_IMPORT_SETTINGS,
+				2 => CancelEvent::STEP_CONFIGURE_FIELD_RATIO,
+				3 => CancelEvent::STEP_CONFIGURE_DUPLICATE_CONTROL,
+				4 => CancelEvent::STEP_IMPORT,
+			})
+			->buildEvent()
+			->send()
+		;
 
 		LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_LIST'], array()));
 	}

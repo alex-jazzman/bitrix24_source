@@ -10,6 +10,7 @@ jn.define('im/messenger/controller/recent/const/service', (require, exports, mod
 		emptyState: 'empty-state',
 		pagination: 'pagination',
 		search: 'search',
+		filter: 'filter',
 		render: 'render',
 		vuex: 'vuex',
 		action: 'action',

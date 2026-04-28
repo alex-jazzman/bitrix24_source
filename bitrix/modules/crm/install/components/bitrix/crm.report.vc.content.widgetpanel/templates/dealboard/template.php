@@ -1,7 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+\Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 
 CJSCore::RegisterExt('crm_common', [
 	'js' => '/bitrix/js/crm/common.js',

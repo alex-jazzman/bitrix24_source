@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core_events,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,im_v2_lib_chat,im_v2_lib_message,im_v2_lib_promo,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_feature,im_v2_lib_channel,im_v2_lib_analytics,im_v2_lib_copilot,im_v2_lib_feedback,im_v2_lib_notifier,im_v2_lib_permission,im_v2_lib_confirm,main_core,ui_iconSet_api_core,ui_system_menu,im_v2_application_core,im_v2_provider_service_sending,im_v2_provider_service_sticker,im_v2_const) {
+(function (exports,main_core_events,main_popup,ui_vue3_vuex,ui_dialogs_messagebox,im_v2_lib_call,im_v2_lib_invite,im_v2_provider_service_recent,im_public,im_v2_provider_service_chat,im_v2_lib_chat,im_v2_lib_entityCreator,im_v2_lib_market,im_v2_lib_message,im_v2_lib_parser,im_v2_lib_promo,im_v2_lib_utils,im_v2_lib_feature,im_v2_provider_service_disk,im_v2_provider_service_message,im_v2_lib_channel,im_v2_lib_analytics,im_v2_lib_copilot,im_v2_lib_feedback,im_v2_lib_confirm,im_v2_lib_notifier,im_v2_lib_permission,main_core,ui_iconSet_api_core,ui_system_menu,im_v2_application_core,im_v2_const,im_v2_provider_service_sending,im_v2_provider_service_sticker) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
@@ -25,6 +25,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	  // public
 	  openMenu(context, target) {
+	    const existingPopupWithId = main_popup.PopupManager.getPopupById(this.id);
+	    if (existingPopupWithId) {
+	      existingPopupWithId.close();
+	    }
 	    if (this.menuInstance) {
 	      this.close();
 	    }
@@ -169,7 +173,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_LIB_MENU_WRITE_V2'),
 	      onClick: () => {
 	        void im_public.Messenger.openChat(this.context.dialogId);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -178,7 +181,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_LIB_MENU_OPEN'),
 	      onClick: () => {
 	        void im_public.Messenger.openChat(this.context.dialogId);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -190,8 +192,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!recentItem) {
 	      return null;
 	    }
-	    const dialog = this.store.getters['chats/get'](dialogId, true);
-	    const showReadOption = recentItem.unread || dialog.counter > 0;
+	    const {
+	      chatId
+	    } = this.store.getters['chats/get'](dialogId, true);
+	    const chatCounter = this.store.getters['counters/getCounterByChatId'](chatId);
+	    const childrenCounter = this.store.getters['counters/getChildrenTotalCounter'](chatId);
+	    const isChatMarkedUnread = this.store.getters['counters/getUnreadStatus'](chatId);
+	    const showReadOption = isChatMarkedUnread || chatCounter > 0 || childrenCounter > 0;
 	    return {
 	      title: showReadOption ? main_core.Loc.getMessage('IM_LIB_MENU_READ') : main_core.Loc.getMessage('IM_LIB_MENU_UNREAD'),
 	      onClick: () => {
@@ -202,7 +209,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          this.chatService.unreadDialog(dialogId);
 	          im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onUnread(dialogId);
 	        }
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -225,7 +231,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          this.chatService.pinChat(dialogId);
 	          im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onPin(dialogId);
 	        }
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -237,8 +242,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!canMute) {
 	      return null;
 	    }
-	    const dialog = this.store.getters['chats/get'](dialogId, true);
-	    const isMuted = dialog.muteList.includes(im_v2_application_core.Core.getUserId());
+	    const {
+	      isMuted
+	    } = this.store.getters['chats/get'](dialogId, true);
 	    return {
 	      title: isMuted ? main_core.Loc.getMessage('IM_LIB_MENU_UNMUTE_2') : main_core.Loc.getMessage('IM_LIB_MENU_MUTE_2'),
 	      onClick: () => {
@@ -249,7 +255,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          this.chatService.muteChat(dialogId);
 	          im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onMute(dialogId);
 	        }
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -263,7 +268,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      onClick: () => {
 	        BX.SidePanel.Instance.open(profileUri);
 	        im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onOpenProfile(this.context.dialogId);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -276,7 +280,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      onClick: () => {
 	        im_v2_provider_service_recent.LegacyRecentService.getInstance().hideChat(this.context.dialogId);
 	        im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onHide(this.context.dialogId);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -303,7 +306,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          dialogId: this.context.dialogId
 	        });
 	        im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onFindChatsWithUser(this.context.dialogId);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -342,7 +344,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_LIB_INVITE_RESEND'),
 	      onClick: () => {
 	        im_v2_lib_invite.InviteManager.resendInvite(dialogId);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -362,7 +363,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	            messageBox.close();
 	          }
 	        });
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -415,7 +415,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return {
 	    title,
 	    onClick: async () => {
-	      this.menuInstance.close();
 	      const userChoice = await im_v2_lib_confirm.showLeaveChatConfirm(this.context.dialogId);
 	      if (userChoice === true) {
 	        this.chatService.leaveChat(this.context.dialogId);
@@ -433,7 +432,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return {
 	    title: main_core.Loc.getMessage('IM_LIB_MENU_LEAVE_MSGVER_1'),
 	    onClick: async () => {
-	      this.menuInstance.close();
 	      const userChoice = await im_v2_lib_confirm.showLeaveChatConfirm(this.context.dialogId);
 	      if (!userChoice) {
 	        return;
@@ -503,7 +501,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return {
 	      title: babelHelpers.classPrivateFieldLooseBase(this, _getKickItemText)[_getKickItemText](),
 	      onClick: async () => {
-	        this.menuInstance.close();
 	        const userChoice = await im_v2_lib_confirm.showKickUserConfirm(this.context.dialog.dialogId);
 	        if (userChoice !== true) {
 	          return;
@@ -522,7 +519,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          dialogId: this.context.dialog.dialogId,
 	          isMentionSymbol: false
 	        });
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -534,7 +530,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_LIB_MENU_USER_WRITE'),
 	      onClick: () => {
 	        void im_public.Messenger.openChat(this.context.user.id);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -547,7 +542,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
 	      onClick: () => {
 	        BX.SidePanel.Instance.open(profileUri);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -673,7 +667,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
 	        });
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -686,7 +679,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
 	        });
-	        this.menuInstance.close();
 	      },
 	      icon: ui_iconSet_api_core.Outline.QUOTE
 	    };
@@ -703,7 +695,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        this.emitter.emit(im_v2_const.EventType.dialog.showForwardPopup, {
 	          messagesIds: [this.context.id]
 	        });
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -721,7 +712,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        const textToCopy = im_v2_lib_parser.Parser.prepareCopy(this.context);
 	        await im_v2_lib_utils.Utils.text.copyToClipboard(textToCopy);
 	        im_v2_lib_notifier.Notifier.message.onCopyComplete();
-	        this.menuInstance.close();
 	      },
 	      icon: ui_iconSet_api_core.Outline.COPY
 	    };
@@ -737,7 +727,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        if ((_BX$clipboard = BX.clipboard) != null && _BX$clipboard.copy(textToCopy)) {
 	          im_v2_lib_notifier.Notifier.message.onCopyLinkComplete();
 	        }
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -759,7 +748,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        if ((_BX$clipboard2 = BX.clipboard) != null && _BX$clipboard2.copy(textToCopy)) {
 	          im_v2_lib_notifier.Notifier.file.onCopyComplete();
 	        }
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -786,13 +774,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          if (babelHelpers.classPrivateFieldLooseBase(this, _arePinsExceedLimit)[_arePinsExceedLimit]()) {
 	            im_v2_lib_notifier.Notifier.chat.onMessagesPinLimitError(this.maxPins);
 	            im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onReachingPinsLimit(this.context.dialogId);
-	            this.menuInstance.close();
 	            return;
 	          }
 	          messageService.pinMessage(this.context.chatId, this.context.id);
 	          im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onPin(this.context.dialogId);
 	        }
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -818,7 +804,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          });
 	          messageService.addMessageToFavorite(this.context.id);
 	        }
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -838,7 +823,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          chatId: this.context.chatId
 	        });
 	        messageService.markMessage(this.context.id);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -853,7 +837,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCreateTask(this.context.dialogId);
 	        const entityCreator = new im_v2_lib_entityCreator.EntityCreator(this.context.chatId);
 	        void entityCreator.createTaskForMessage(this.context.id);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -868,7 +851,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCreateEvent(this.context.dialogId);
 	        const entityCreator = new im_v2_lib_entityCreator.EntityCreator(this.context.chatId);
 	        void entityCreator.createMeetingForMessage(this.context.id);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -885,7 +867,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
 	        });
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -904,8 +885,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const {
 	      name: mentionText
 	    } = this.store.getters['users/get'](copilotBotDialogId, true);
+	    const title = main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_ASK_COPILOT_MSGVER_1', {
+	      '#COPILOT_NAME#': new im_v2_lib_copilot.CopilotManager().getName()
+	    });
 	    return {
-	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_ASK_COPILOT'),
+	      title,
 	      icon: ui_iconSet_api_core.Outline.COPILOT,
 	      design: ui_system_menu.MenuItemDesign.Copilot,
 	      onClick: () => {
@@ -955,7 +939,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        icon: ui_iconSet_api_core.Outline.MARKET,
 	        onClick: () => {
 	          void im_v2_lib_market.MarketManager.openSlider(placement, context);
-	          this.menuInstance.close();
 	        }
 	      });
 	    });
@@ -984,7 +967,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
 	        });
-	        this.menuInstance.close();
 	        await this.diskService.save(this.context.files);
 	        im_v2_lib_notifier.Notifier.file.onDiskSaveComplete(babelHelpers.classPrivateFieldLooseBase(this, _isSingleFile)[_isSingleFile]());
 	      }.bind(this)
@@ -1048,7 +1030,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    messageId,
 	    dialogId
 	  });
-	  this.menuInstance.close();
 	  if (await babelHelpers.classPrivateFieldLooseBase(this, _isDeletionCancelled)[_isDeletionCancelled]()) {
 	    return;
 	  }
@@ -1086,7 +1067,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        messageId: this.context.id,
 	        dialogId: this.context.dialogId
 	      });
-	      this.menuInstance.close();
 	    }.bind(this)
 	  };
 	}
@@ -1098,7 +1078,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_DOWNLOAD_FILES'),
 	    icon: ui_iconSet_api_core.Outline.DOWNLOAD,
 	    onClick: async () => {
-	      var _this$menuInstance2;
 	      im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onFileDownload({
 	        messageId: this.context.id,
 	        dialogId: this.context.dialogId
@@ -1106,12 +1085,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      im_v2_lib_utils.Utils.file.downloadFiles(files);
 	      const needToShowPopup = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.downloadSeveralFiles);
 	      if (needToShowPopup && im_v2_lib_utils.Utils.browser.isChrome() && !im_v2_lib_utils.Utils.platform.isBitrixDesktop()) {
-	        var _this$menuInstance;
-	        (_this$menuInstance = this.menuInstance) == null ? void 0 : _this$menuInstance.close();
 	        await im_v2_lib_confirm.showDownloadAllFilesConfirm();
 	        void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.downloadSeveralFiles);
 	      }
-	      (_this$menuInstance2 = this.menuInstance) == null ? void 0 : _this$menuInstance2.close();
 	    }
 	  };
 	}
@@ -1181,7 +1157,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      icon: ui_iconSet_api_core.Outline.GO_TO_MESSAGE,
 	      onClick: () => {
 	        this.emitter.emit(im_v2_const.EventType.dialog.closeComments);
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -1224,7 +1199,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      onClick: () => {
 	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onSendFeedback(this.context.dialogId);
 	        void babelHelpers.classPrivateFieldLooseBase(this, _openForm)[_openForm]();
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -1268,7 +1242,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      icon: ui_iconSet_api_core.Outline.FEEDBACK,
 	      onClick: () => {
 	        void new im_v2_lib_feedback.FeedbackManager().openAiAssistantForm({});
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -1664,7 +1637,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	            packType: this.context.sticker.packType
 	          }
 	        });
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -1686,7 +1658,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          packId: this.context.sticker.packId,
 	          packType: this.context.sticker.packType
 	        });
-	        this.menuInstance.close();
 	      }
 	    };
 	  }
@@ -1732,5 +1703,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.StickerMenu = StickerMenu;
 	exports.TaskCommentsMessageMenu = TaskCommentsMessageMenu;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.UI.System,BX.Messenger.v2.Application,BX.Messenger.v2.Service,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Main,BX.Vue3.Vuex,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.UI.System,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Service,BX.Messenger.v2.Provider.Service));
 //# sourceMappingURL=registry.bundle.js.map

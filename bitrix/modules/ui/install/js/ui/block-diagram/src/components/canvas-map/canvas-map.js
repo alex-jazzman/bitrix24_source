@@ -2,6 +2,7 @@ import './canvas-map.css';
 import { Type } from 'main.core';
 import { toValue, computed, toRefs, useTemplateRef, reactive } from 'ui.vue3';
 import { useBlockDiagram, useCanvas } from '../../composables';
+import { DiagramBlockDimensions } from '../../types';
 import type { DiagramBlock } from '../../types';
 
 type ViewportIndicatorRect = {
@@ -58,6 +59,7 @@ export const CanvasMap = {
 	{
 		const {
 			blocks,
+			blocksRectMap,
 			canvasWidth,
 			canvasHeight,
 			transformX,
@@ -108,20 +110,25 @@ export const CanvasMap = {
 
 			items.forEach((block: DiagramBlock) => {
 				const { x, y } = block.position;
-				const { width, height } = block.dimensions;
+				const { width, height } = getBlockSize(block);
 
 				minX = Math.min(minX, x);
 				minY = Math.min(minY, y);
 				maxX = Math.max(maxX, x + width);
 				maxY = Math.max(maxY, y + height);
 
+				const renderBlock = {
+					...block,
+					dimensions: { width, height },
+				};
+
 				if (block?.type === FRAME_BLOCK_TYPE)
 				{
-					frames.push(block);
+					frames.push(renderBlock);
 				}
 				else
 				{
-					content.push(block);
+					content.push(renderBlock);
 				}
 			});
 
@@ -283,6 +290,25 @@ export const CanvasMap = {
 			const palette = toValue(blockColors) ?? {};
 
 			return palette[colorIndex] || DEFAULT_BLOCK_COLOR;
+		}
+
+		function getBlockSize(block: ?DiagramBlock): DiagramBlockDimensions
+		{
+			const dimensions = {
+				width: block.dimensions.width,
+				height: block.dimensions.height,
+			};
+
+			if (!dimensions.width || !dimensions.height)
+			{
+				const blocksRectangleMap = toValue(blocksRectMap);
+				const blockDimensions = blocksRectangleMap[block.id];
+
+				dimensions.width = blockDimensions.width ?? 200;
+				dimensions.height = blockDimensions.height ?? 50;
+			}
+
+			return dimensions;
 		}
 
 		return {

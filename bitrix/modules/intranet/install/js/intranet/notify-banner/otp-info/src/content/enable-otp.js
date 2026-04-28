@@ -10,17 +10,17 @@ export class EnableOtp extends BaseContent
 
 	getTitle(): string
 	{
-		return Loc.getMessage('NOTIFY_BANNER_INFO_DEF_COMPANY_DATA_TITLE');
+		return Loc.getMessage('NOTIFY_BANNER_INFO_DEF_COMPANY_DATA_TITLE_MSGVER_1');
 	}
 
 	getFirstContentBlock(): string
 	{
-		return Loc.getMessage('NOTIFY_BANNER_INFO_WARNING_BLOCK');
+		return Loc.getMessage('NOTIFY_BANNER_INFO_WARNING_BLOCK_MSGVER_1');
 	}
 
 	getSecondContentBlock(): string
 	{
-		return Loc.getMessage('NOTIFY_BANNER_INFO_DESC_BLOCK');
+		return Loc.getMessage('NOTIFY_BANNER_INFO_DESC_BLOCK_MSGVER_1');
 	}
 
 	getButtons(): Array

@@ -1,0 +1,21 @@
+.crm-item-import__alert {
+	background: var(--ui-color-palette-blue-15);
+	padding: var(--ui-space-inline-xs2) var(--ui-space-inline-sm);
+	color: var(--ui-color-palette-gray-70);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.crm-item-import__alert.--error {
+	background: var(--ui-color-background-alert);
+	color: var(--ui-color-text-alert);
+}
+
+.crm-item-import__alert.--warning {
+	background: var(--ui-color-background-warning);
+	color: var(--ui-color-text-warning);
+}
+
+.crm-item-import__alert a {
+	cursor: pointer;
+	color: var(--ui-color-link-primary-base);
+}

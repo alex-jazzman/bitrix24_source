@@ -5,20 +5,30 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
 use Bitrix\Main\Localization\Loc;
 
-$arActivityDescription = [
-	'NAME' => Loc::getMessage('BPAA_DESCR_NAME'),
-	'DESCRIPTION' => Loc::getMessage('BPAA_DESCR_DESCR'),
-	'TYPE' => 'activity',
-	'CLASS' => 'ApproveActivity',
-	'JSCLASS' => 'ApproveActivity',
-	'CATEGORY' => [
+$type = [ActivityType::ACTIVITY->value];
+if (defined('Bitrix\Bizproc\Dev\ENV'))
+{
+	$type[] = ActivityType::NODE->value;
+}
+
+$arActivityDescription = (new ActivityDescription(
+	name: Loc::getMessage('BPAA_DESCR_NAME'),
+	description: Loc::getMessage('BPAA_DESCR_DESCR'),
+	type: $type,
+))
+	->setCategory([
 		'ID' => 'document',
 		'OWN_ID' => 'task',
 		'OWN_NAME' => Loc::getMessage('BPAA_DESCR_TASKS'),
-	],
-	'RETURN' => [
+	])
+	->setClass('ApproveActivity')
+	->setJsClass('ApproveActivity')
+	->setReturn([
 		'TaskId' => [
 			'NAME' => 'ID',
 			'TYPE' => 'int',
@@ -83,6 +93,19 @@ $arActivityDescription = [
 			'NAME' => Loc::getMessage('BPAA_DESCR_TA1'),
 			'TYPE' => 'int',
 		],
-	],
-	'SORT' => 100,
-];
+	])
+	->setSort(100)
+	->setNodeType(ActivityNodeType::COMPLEX->value)
+	->setNodeSettings(new \Bitrix\Bizproc\Activity\Dto\NodeSettings(
+		ports: new \Bitrix\Bizproc\Activity\Dto\NodePorts(
+			input: new \Bitrix\Bizproc\Activity\Dto\PortCollection(
+				new \Bitrix\Bizproc\Activity\Dto\Port('i0'),
+			),
+			output: new \Bitrix\Bizproc\Activity\Dto\PortCollection(
+				new \Bitrix\Bizproc\Activity\Dto\Port('o0', 1, 'yes'),
+				new \Bitrix\Bizproc\Activity\Dto\Port('o1', 2, 'no'),
+			),
+		)
+	))
+	->toArray()
+;

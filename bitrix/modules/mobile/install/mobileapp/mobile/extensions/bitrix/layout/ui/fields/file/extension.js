@@ -17,6 +17,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 	const { clone, isEqual } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
 	const { Circle } = require('utils/skeleton');
+	const { Indent } = require('tokens');
 	const {
 		NativeViewerMediaTypes,
 		getNativeViewerMediaType,
@@ -281,6 +282,11 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		isEmpty()
 		{
 			return this.getFilesCount() === 0;
+		}
+
+		getFilePreviewIndent()
+		{
+			return this.getConfig().filePreviewIndent ?? Indent.XL2.toNumber();
 		}
 
 		showAddButton()
@@ -1427,6 +1433,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			mediaType: PropTypes.oneOf(Object.values(NativeViewerMediaTypes)),
 			enableToEdit: PropTypes.bool, // enable delete file without opening attachment list
 			emptyEditableButtonStyle: PropTypes.object,
+			filePreviewIndent: PropTypes.number,
 
 			disk: PropTypes.oneOfType([
 				PropTypes.object, PropTypes.shape({

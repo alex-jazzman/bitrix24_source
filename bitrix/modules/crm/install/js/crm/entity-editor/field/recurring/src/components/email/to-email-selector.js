@@ -271,7 +271,15 @@ export const ToEmailSelector = {
 			{
 				BX.Crm.EntityEditor.getDefault().reload();
 
-				const id = this.currentCommunications[0]?.emails[0]?.id;
+				const selectedClientEmails = this.currentCommunications
+					.find((communication: Object) => (
+						communication.entityId === this.selectedClient.entityId
+						&& communication.entityTypeId === this.selectedClient.entityTypeId
+					))
+					?.emails || []
+				;
+
+				const id = selectedClientEmails[0]?.id;
 				if (id)
 				{
 					this.currentEmailIds.add(id);

@@ -334,6 +334,7 @@ if (!isset($arParams['HIDE_TOOLBAR']) || $arParams['HIDE_TOOLBAR'] !== 'Y')
 				BIZPROC_AUTOMATION_YES: '<?=GetMessageJS('MAIN_YES')?>',
 				BIZPROC_AUTOMATION_NO: '<?=GetMessageJS('MAIN_NO')?>',
 				BIZPROC_AUTOMATION_DELAY_MIN_LIMIT_LABEL: '<?=CUtil::JSEscape($arResult['DELAY_MIN_LIMIT_LABEL'])?>',
+				BIZPROC_AUTOMATION_DELAY_MAX_LIMIT_LABEL: '<?=CUtil::JSEscape($arResult['DELAY_MAX_LIMIT_LABEL'])?>',
 				BIZPROC_AUTOMATION_RIGHTS_ERROR_1: '<?=GetMessageJS("BIZPROC_AUTOMATION_RIGHTS_ERROR_1")?>',
 				BIZPOC_AUTOMATION_NO_ROBOT_OR_TRIGGER_SELECTED: '<?=GetMessageJS("BIZPOC_AUTOMATION_NO_ROBOT_OR_TRIGGER_SELECTED")?>',
 			});
@@ -380,6 +381,7 @@ if (!isset($arParams['HIDE_TOOLBAR']) || $arParams['HIDE_TOOLBAR'] !== 'Y')
 					'ROBOTS_LIMIT' => $robotsLimit,
 
 					'DELAY_MIN_LIMIT_M' => $arResult['DELAY_MIN_LIMIT_M'],
+					'DELAY_MAX_LIMIT_D' => $arResult['DELAY_MAX_LIMIT_D'],
 					'IS_WORKTIME_AVAILABLE' => $arResult['IS_WORKTIME_AVAILABLE'],
 					'NEW_ENTITIES_BUTTON_ID' => $newEntitiesButtonUniqId ?? '',
 					'NEW_ENTITIES_BUTTON_SHOW_HINT' => $arResult['NEW_ENTITIES_BUTTON_SHOW_HINT'] ?? '',

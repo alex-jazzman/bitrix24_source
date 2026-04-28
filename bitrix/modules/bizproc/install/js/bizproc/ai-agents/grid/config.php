@@ -24,6 +24,8 @@ return [
 	'rel' => [
 		'bizproc.ai-agents.grid',
 		'main.popup',
+		'main.sidepanel',
+		'ui.entity-selector',
 		'im.public',
 		'humanresources.company-structure.public',
 		'ui.avatar',
@@ -32,6 +34,7 @@ return [
 		'ui.info-helper',
 		'ui.system.typography',
 		'main.core.events',
+		'bizproc.setup-template',
 		'main.core',
 		'ui.dialogs.messagebox',
 	],

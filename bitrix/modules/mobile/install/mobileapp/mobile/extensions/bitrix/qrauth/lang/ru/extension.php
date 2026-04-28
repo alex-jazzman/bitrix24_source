@@ -6,7 +6,7 @@ $MESS['WRONG_QR'] = 'Неверный qr-код';
 $MESS['QR_HOW_TO_AUTH_MSGVER_2'] = 'Быстрый вход по QR ';
 $MESS['STEP_OPEN_SITE_MSGVER_2'] = 'Откройте на компьютере';
 $MESS['STEP_PRESS_CLOUD'] = 'Нажмите [B]Вход[/B] и [IMG WIDTH="18" HEIGHT="18"]#URL#[/IMG][B] QR-код[/B]';
-$MESS['STEP_PRESS_SELF_HOSTED_MSGVER_2'] = 'Нажмите на иконку [B]QR-кода[/B]';
+$MESS['STEP_PRESS_SELF_HOSTED_MSGVER_3'] = 'Нажмите [B]Войти[/B] в правом верхнем углу экрана';
 $MESS['STEP_SCAN'] = 'Сканируйте QR-код';
 $MESS['SCAN_QR_BUTTON_MSGVER_2'] = 'Сканировать QR-код';
 $MESS['STEP_CAMERA_TITLE'] = 'Наведите камеру на QR-код';

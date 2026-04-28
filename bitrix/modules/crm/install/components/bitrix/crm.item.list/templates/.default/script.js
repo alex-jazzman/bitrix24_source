@@ -41,6 +41,7 @@
 	      this.entityTypeId = main_core.Text.toInteger(params.entityTypeId);
 	      this.entityTypeName = params.entityTypeName;
 	      this.categoryId = main_core.Text.toInteger(params.categoryId);
+	      this.analytics = main_core.Type.isPlainObject(params.analytics) ? params.analytics : {};
 	      if (main_core.Type.isString(params.gridId)) {
 	        this.gridId = params.gridId;
 	      }
@@ -208,10 +209,10 @@
 	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
 	        onYes: function onYes(messageBox) {
 	          main_core.ajax.runAction('crm.controller.item.delete', {
-	            analyticsLabel: 'crmItemListDeleteItem',
 	            data: {
 	              entityTypeId: entityTypeId,
-	              id: id
+	              id: id,
+	              analytics: _this4.analytics
 	            }
 	          }).then(function () {
 	            BX.UI.Notification.Center.notify({

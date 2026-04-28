@@ -6,6 +6,7 @@ import { type Channel, type From } from '../editor';
 import { type MessageModel } from '../model/message-model';
 import { type Template } from '../model/templates-model';
 import { type AnalyticsService } from './analytics-service';
+import { type PreferencesService } from './preferences-service';
 import { type Logger } from './logger';
 
 type Params = {
@@ -14,6 +15,7 @@ type Params = {
 	messageModel: MessageModel,
 	eventEmitter: EventEmitter,
 	analyticsService: AnalyticsService,
+	preferencesService: PreferencesService,
 };
 
 export class SendService
@@ -23,6 +25,7 @@ export class SendService
 	#messageModel: MessageModel;
 	#emitter: EventEmitter;
 	#analyticsService: AnalyticsService;
+	#preferencesService: PreferencesService;
 
 	constructor(params: Params)
 	{
@@ -31,6 +34,7 @@ export class SendService
 		this.#messageModel = params.messageModel;
 		this.#emitter = params.eventEmitter;
 		this.#analyticsService = params.analyticsService;
+		this.#preferencesService = params.preferencesService;
 	}
 
 	sendMessage(): Promise<void>
@@ -66,6 +70,7 @@ export class SendService
 			this.#messageModel.clearState();
 			void this.#store.dispatch('application/resetAlert');
 			this.#emitter.emit('crm:messagesender:editor:onSendSuccess');
+			this.#preferencesService.saveChannelLastUsedFrom(channel, from.id);
 		}).catch((response) => {
 			this.#logger.error('sendMessage: error', { response });
 

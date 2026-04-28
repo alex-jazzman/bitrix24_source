@@ -11,3 +11,4 @@ $MESS["BIZPROC_CALC_FUNCTION_UCWORDS_DESCRIPTION"] = "Преобразует в 
 $MESS["BIZPROC_CALC_FUNCTION_UCFIRST_DESCRIPTION"] = "Преобразует первый символ строки в верхний регистр";
 $MESS["BIZPROC_CALC_FUNCTION_NUMBER_FORMAT_DESCRIPTION"] = "Форматирует число с разделением групп";
 $MESS['BIZPROC_CALC_FUNCTION_TRIM_DESCRIPTION'] = 'Удаляет пробелы из начала и конца строки';
+$MESS['BIZPROC_CALC_FUNCTION_JSON_VAL_DESCRIPTION'] = 'Возвращает значение из JSON-строки по указанному пути';

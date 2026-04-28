@@ -48,7 +48,7 @@ export class YandexIntegrationWizard
 	#makeContainer(): HTMLElement
 	{
 		return Tag.render`
-			<div id="booking--yandex-integration-wizard--app" class="booking--yandex-integration-wizard--app"></div>
+			<div id="booking--yandex-integration-wizard--app" class="booking__yandex-integration-wizard_app"></div>
 		`;
 	}
 

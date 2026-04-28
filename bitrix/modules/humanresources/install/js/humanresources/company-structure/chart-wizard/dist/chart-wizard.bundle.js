@@ -17,6 +17,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	});
 	const AuthorityTypes = {
 	  departmentHead: 'HEAD',
+	  departmentAllHeads: 'ALL_DEPARTMENT_HEADS',
 	  departmentDeputy: 'DEPUTY_HEAD',
 	  teamHead: 'TEAM_HEAD',
 	  teamDeputy: 'TEAM_DEPUTY'
@@ -2221,6 +2222,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const HEAD_TYPE_ENTITY_ID = 'head-type';
+	const USER_TYPE_ENTITY_ID = 'user';
 
 	// @vue/component
 	const Settings = {
@@ -2231,7 +2233,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      required: true
 	    },
 	    /** @type {Record<string, Set>} */
-	    settings: {
+	    initSettings: {
 	      type: Object,
 	      required: false,
 	      default: () => {}
@@ -2250,6 +2252,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      required: false,
 	      default: () => []
 	    },
+	    employeesIds: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    },
 	    isEditMode: {
 	      type: Boolean,
 	      required: true
@@ -2258,7 +2265,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  emits: ['applyData'],
 	  data() {
 	    return {
-	      permissionChecker: null
+	      permissionChecker: null,
+	      settings: {
+	        [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: new Set(),
+	        [humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]: new Set(),
+	        [humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions]: new Set()
+	      }
 	    };
 	  },
 	  computed: {
@@ -2273,6 +2285,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return !bpSettings || bpSettings.size === 0;
 	    },
 	    isReportsHeadNotSelected() {
+	      return false; // temporary allow empty list
+
 	      if (!this.isTeamEntity) {
 	        return false;
 	      }
@@ -2298,49 +2312,90 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      if (this.isTeamEntity || this.isBpSelectorLocked) {
 	        return null;
 	      }
-	      return this.getWarningTest(settingsType, phrasePrefix);
+	      return this.getWarningText(settingsType, phrasePrefix);
 	    },
 	    reportWarningText() {
 	      const settingsType = humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority;
 	      const phrasePrefix = 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT';
+	      if (this.isTeamEntity && this.settings[settingsType].size === 0) {
+	        return this.loc(`${phrasePrefix}_EMPTY`);
+	      }
 	      if (this.isTeamEntity || this.isReportSelectorLocked) {
 	        return null;
 	      }
-	      return this.getWarningTest(settingsType, phrasePrefix);
+	      return this.getWarningText(settingsType, phrasePrefix);
 	    },
 	    isBpSelectorLocked() {
 	      return this.isTeamEntity ? false : !this.permissionChecker.checkDepartmentBPSettingsAvailable();
 	    },
 	    isReportSelectorLocked() {
 	      return this.isTeamEntity ? !this.permissionChecker.checkTeamReportSettingsAvailable() : !this.permissionChecker.checkDepartmentReportsSettingsAvailable();
+	    },
+	    areTeamReportExceptionsAvailable() {
+	      return this.isTeamEntity && this.permissionChecker.checkTeamReportExceptionsAvailable();
 	    }
 	  },
 	  watch: {
-	    settings: {
+	    /**
+	     * In case entityType was changed
+	     */
+	    initSettings: {
 	      handler(payload) {
-	        this.initSettingsValue(payload, humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority);
-	        this.initSettingsValue(payload, humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority);
+	        this.settings = payload;
+	        this.initSettingsValue(this.settings, humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority);
+	        this.initSettingsValue(this.settings, humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority);
+	        this.initSettingsValue(this.settings, humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions);
+	      }
+	    },
+	    heads: {
+	      handler(payload, oldVal) {
+	        const isSameArray = Array.isArray(payload) && Array.isArray(oldVal) && payload.length === oldVal.length && payload.every(item => oldVal.some(oldItem => oldItem.id === item.id)) && oldVal.every(oldItem => payload.some(item => item.id === oldItem.id));
+	        if (isSameArray || !this.reportExceptionsSelector) {
+	          return;
+	        }
+	        this.reloadUserSelector(this.employeesIds, payload);
+	      }
+	    },
+	    employeesIds: {
+	      /**
+	       * When employees list is updated, we need to update selector which can include only employees from the list
+	       * @param payload
+	       * @param oldVal
+	       */
+	      handler(payload, oldVal) {
+	        const isSameArray = Array.isArray(payload) && Array.isArray(oldVal) && payload.length === oldVal.length && payload.every(item => oldVal.includes(item)) && oldVal.every(oldItem => payload.includes(oldItem));
+	        if (isSameArray || !this.reportExceptionsSelector) {
+	          return;
+	        }
+	        this.reloadUserSelector(payload, this.heads);
 	      }
 	    }
 	  },
 	  created() {
 	    this.hints = [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_HINT_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_HINT_2')];
+	    this.settings = this.initSettings;
 	    this.permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
 	    this.initialSettingsValues = {
 	      [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: new Set(),
-	      [humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]: new Set()
+	      [humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]: new Set(),
+	      [humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions]: new Set()
 	    };
 	    this.initBPSelector();
 	    this.initReportsSelector();
+	    this.initReportExceptionsSelector();
 	  },
 	  mounted() {
 	    this.businessProcSelector.renderTo(this.$refs['business-proc-selector']);
 	    this.reportsSelector.renderTo(this.$refs['reports-selector']);
+	    if (this.areTeamReportExceptionsAvailable) {
+	      this.reportExceptionsSelector.renderTo(this.$refs['report-exceptions-selector']);
+	    }
 	  },
 	  activated() {
 	    this.$emit('applyData', {
 	      isDepartmentDataChanged: false,
-	      isValid: !this.isBusinessProcHeadNotSelected && !this.isReportsHeadNotSelected
+	      isValid: !this.isBusinessProcHeadNotSelected,
+	      settings: this.settings
 	    });
 	  },
 	  methods: {
@@ -2352,19 +2407,38 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        apiEntityChanged: humanresources_companyStructure_utils.WizardApiEntityChangedDict.settings,
 	        settings: this.settings,
 	        isDepartmentDataChanged: true,
-	        isValid: !this.isBusinessProcHeadNotSelected && !this.isReportsHeadNotSelected
+	        isValid: !this.isBusinessProcHeadNotSelected
 	      });
 	    },
+	    /**
+	     * This method is used in case entityType was changed, so all settings should be reevaluated
+	     */
 	    initSettingsValue(payload, settingType) {
-	      if (!payload[settingType]) {
+	      var _payload$settingType;
+	      const initValues = (_payload$settingType = payload[settingType]) != null ? _payload$settingType : new Set();
+	      if (settingType === humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority) {
+	        initValues.add(AuthorityTypes.departmentAllHeads);
+	      }
+	      if (settingType === humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions) {
+	        this.reportExceptionsSelector.dialog.setPreselectedItems([...initValues].map(item => [USER_TYPE_ENTITY_ID, item]));
 	        return;
 	      }
-	      const preselectedItems = this.getTagItems(false, true).filter(item => payload[settingType].has(item.id));
+	      const preselectedItems = this.getTagItems(false, true).filter(item => initValues.has(item.id)).map(item => item.id);
 	      preselectedItems.forEach(preselectedItem => {
-	        const selector = settingType === humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority ? this.businessProcSelector : this.reportsSelector;
-	        const item = selector.dialog.getItem([HEAD_TYPE_ENTITY_ID, preselectedItem.id]);
+	        let selector = null;
+	        switch (settingType) {
+	          case humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority:
+	            selector = this.businessProcSelector;
+	            break;
+	          case humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority:
+	            selector = this.reportsSelector;
+	            break;
+	          default:
+	            return;
+	        }
+	        const item = selector.dialog.getItem([HEAD_TYPE_ENTITY_ID, preselectedItem]);
 	        if (item) {
-	          this.initialSettingsValues[settingType].add(preselectedItem.id);
+	          this.initialSettingsValues[settingType].add(preselectedItem);
 	          item.select();
 	        }
 	      });
@@ -2377,9 +2451,22 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    initReportsSelector() {
 	      const canSelectDeputy = this.permissionChecker.checkDeputyGetReportsAvailable() || !this.isTeamEntity;
-	      this.reportsSelector = this.getTagSelector(humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority, this.isReportSelectorLocked, false, canSelectDeputy);
+
+	      // add mandatory item
+	      if (this.isTeamEntity) {
+	        this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority].add(AuthorityTypes.departmentAllHeads);
+	      }
+	      this.reportsSelector = this.getTagSelector(humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority, this.isReportSelectorLocked, true, canSelectDeputy);
 	    },
-	    getWarningTest(settingsType, phrasePrefix) {
+	    initReportExceptionsSelector() {
+	      if (!this.isTeamEntity) {
+	        return;
+	      }
+	      const deputyIds = this.heads.filter(head => head.role !== humanresources_companyStructure_api.teamMemberRoles.head).map(head => head.id);
+	      this.initialSettingsValues[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions] = new Set(this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions]);
+	      this.reportExceptionsSelector = this.getUserSelector([...this.employeesIds, ...deputyIds]);
+	    },
+	    getWarningText(settingsType, phrasePrefix) {
 	      const memberRoles = humanresources_companyStructure_api.getMemberRoles(this.entityType);
 	      const hasHead = this.heads.some(item => item.role === memberRoles.head);
 	      const hasDeputy = this.heads.some(item => item.role === memberRoles.deputyHead);
@@ -2406,7 +2493,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return null;
 	    },
 	    getTagSelector(settingType, isLocked, canUnselectHead, isDeputyAvailable) {
-	      const items = this.getTagItems(isLocked, isDeputyAvailable);
+	      const items = this.getTagItems(isLocked, isDeputyAvailable, settingType);
+	      const unselectedHeadItems = settingType === humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority ? [[HEAD_TYPE_ENTITY_ID, AuthorityTypes.departmentAllHeads]] : [[HEAD_TYPE_ENTITY_ID, AuthorityTypes.departmentHead]];
+
+	      // cleanup unused settings
+	      this.settings[settingType] = new Set([...this.settings[settingType]].filter(item => items.some(availableItem => availableItem.id === item)));
 	      return new ui_entitySelector.TagSelector({
 	        events: {
 	          onTagAdd: event => {
@@ -2453,11 +2544,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          showAvatars: false,
 	          selectedItems: items.filter(item => this.settings[settingType].has(item.id)),
 	          items,
-	          undeselectedItems: canUnselectHead ? [] : [[HEAD_TYPE_ENTITY_ID, AuthorityTypes.departmentHead]]
+	          undeselectedItems: canUnselectHead ? [] : unselectedHeadItems
 	        }
 	      });
 	    },
-	    getTagItems(isLocked, isDeputyAvailable) {
+	    getTagItems(isLocked, isDeputyAvailable, settingType) {
 	      const lockedTagOptions = {
 	        bgColor: '#BDC1C6',
 	        textColor: '#525C69'
@@ -2501,6 +2592,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          selectable: true
 	        }
 	      };
+	      const departmentAllHeads = {
+	        id: AuthorityTypes.departmentAllHeads,
+	        entityId: HEAD_TYPE_ENTITY_ID,
+	        tabs: 'recents',
+	        title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_ALL_HEADS'),
+	        tagOptions: isLocked ? lockedTagOptions : departmentTagOptions,
+	        customData: {
+	          selectable: true
+	        }
+	      };
 	      const teamHead = {
 	        id: AuthorityTypes.teamHead,
 	        entityId: HEAD_TYPE_ENTITY_ID,
@@ -2528,6 +2629,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        ...deputyOptions
 	      };
 	      if (this.isTeamEntity) {
+	        if (settingType === humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority) {
+	          return [departmentAllHeads, teamHead, teamDeputy];
+	        }
+
 	        // put deputies if they are locked, otherwise put after corresponding heads
 	        return isDeputyAvailable ? [departmentHead, departmentDeputy, teamHead, teamDeputy] : [departmentHead, teamHead, departmentDeputy, teamDeputy];
 	      }
@@ -2544,6 +2649,77 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        event.preventDefault();
 	        top.BX.Helper.show('redirect=detail&code=27450586');
 	      }
+	    },
+	    getUserSelector(allUsers) {
+	      return new ui_entitySelector.TagSelector({
+	        events: {
+	          onTagAdd: event => {
+	            const {
+	              tag
+	            } = event.getData();
+	            this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions].add(tag.id);
+	            if (this.initialSettingsValues[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions].has(tag.id)) {
+	              this.initialSettingsValues[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions].delete(tag.id);
+	            } else {
+	              this.applyData();
+	            }
+	          },
+	          onTagRemove: event => {
+	            const {
+	              tag
+	            } = event.getData();
+	            this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions].delete(tag.id);
+	            this.applyData();
+	          }
+	        },
+	        multiple: true,
+	        locked: allUsers.length === 0,
+	        dialogOptions: {
+	          preselectedItems: [...this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions]].map(item => [USER_TYPE_ENTITY_ID, item]),
+	          events: {
+	            onLoad: event => {
+	              const users = event.target.items.get(USER_TYPE_ENTITY_ID);
+	              users.forEach(user => {
+	                user.setLink('');
+	              });
+	            }
+	          },
+	          height: 250,
+	          width: 380,
+	          entities: [{
+	            id: USER_TYPE_ENTITY_ID,
+	            options: {
+	              intranetUsersOnly: true,
+	              inviteEmployeeLink: false,
+	              maxUsersInRecentTab: 100,
+	              userId: allUsers
+	            }
+	          }],
+	          dropdownMode: true,
+	          hideOnDeselect: false
+	        }
+	      });
+	    },
+	    reloadUserSelector(employeeIds, heads) {
+	      const deputyIds = heads.filter(head => head.role !== humanresources_companyStructure_api.teamMemberRoles.head).map(head => head.id);
+	      const {
+	        dialog
+	      } = this.reportExceptionsSelector;
+	      // we copy current settings because with removing items they also will be removed via an event
+	      const currentSettings = new Set([...this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions]].filter(userId => employeeIds.includes(userId) || deputyIds.includes(userId)));
+	      // remove all items, because "load" method only adds new items, but doesn't remove old ones
+	      dialog.removeItems();
+	      if ([...employeeIds, ...deputyIds].length === 0) {
+	        // explicitly lock selector, otherwise all users will be present
+	        this.reportExceptionsSelector.setLocked(true);
+	      } else {
+	        dialog.getEntity(USER_TYPE_ENTITY_ID).options.userId = [...employeeIds, ...deputyIds];
+	        dialog.loadState = 'UNSENT'; // without this force reload doesn't work
+	        dialog.load(); // force reload dialog items
+	      }
+
+	      this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions] = currentSettings;
+	      this.initSettingsValue(this.settings, humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions);
 	    }
 	  },
 	  template: `
@@ -2629,9 +2805,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						</span>
 					</div>
 					<div class="chart-wizard__settings__item-description-container">
-						<span 
+						<span
 							class="chart-wizard__settings__item-description-text"
-							:class="{'--soon': isReportSelectorLocked}" 
+							:class="{'--soon': isReportSelectorLocked}"
 							v-html="reportsDescriptions"
 						>
 						</span>
@@ -2659,6 +2835,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 							{{ reportWarningText }}
 						</span>
 					</div>
+				</div>
+				<div class="chart-wizard__settings__item-options" v-if="areTeamReportExceptionsAvailable">
+					<div class="chart-wizard__settings__item-description-container">
+						<span class="chart-wizard__settings__item-description-text">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_DESCRIPTION') }}
+						</span>
+					</div>
+					<div
+						class="chart-wizard__settings__report-exceptions-selector"
+						ref="report-exceptions-selector"
+						data-test-id="hr-company-structure__settings__report-exceptions-selector"
+					/>
 				</div>
 			</div>
 		</div>
@@ -2940,16 +3128,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        teamColor: humanresources_companyStructure_utils.NodeColorsSettingsDict.blue,
 	        entityType: humanresources_companyStructure_utils.EntityTypes.department,
 	        settings: {
-	          [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: new Set([AuthorityTypes.departmentHead]),
-	          [humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]: new Set([AuthorityTypes.departmentHead])
+	          [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: new Set(),
+	          [humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]: new Set(),
+	          [humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions]: new Set()
 	        }
 	      },
 	      removedUsers: [],
 	      moveUsersMap: [],
 	      employeesIds: [],
 	      departmentSettings: {
-	        [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: new Set([AuthorityTypes.departmentHead]),
-	        [humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]: new Set([AuthorityTypes.departmentHead])
+	        [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: new Set(),
+	        [humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]: new Set(),
+	        [humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions]: new Set()
 	      },
 	      initChats: [],
 	      initChannels: [],
@@ -3056,7 +3246,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          params: {
 	            name,
 	            heads,
-	            settings: this.departmentSettings,
+	            employeesIds: employees.length > 0 ? employees.map(employee => employee.id) : this.employeesIds,
+	            initSettings: this.departmentSettings,
 	            entityType,
 	            features: {
 	              isDeputyApprovesBPAvailable: this.isDeputyApprovesBPAvailable
@@ -3115,7 +3306,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        if (!Object.hasOwn(acc, settingsType)) {
 	          acc[settingsType] = new Set();
 	        }
-	        acc[settingsType].add(settingsValue);
+	        if (settingsType === humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions) {
+	          acc[settingsType].add(Number(settingsValue));
+	        } else {
+	          acc[settingsType].add(settingsValue);
+	        }
 	        return acc;
 	      }, {});
 	    },
@@ -3161,6 +3356,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        const rawSettings = await WizardAPI.getSettings(this.nodeId);
 	        const newSettings = this.mapRawSettings(rawSettings);
 	        this.departmentSettings[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority] = new Set();
+	        this.departmentSettings[humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority] = new Set();
+	        this.departmentSettings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions] = new Set();
 	        this.departmentSettings = {
 	          ...this.departmentSettings,
 	          ...newSettings
@@ -3180,6 +3377,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.getMemberRoles(this.entityType);
 	      this.createSteps(this.entityType, this.departmentData.id);
 	      this.createDefaultSaveMode(this.entityType);
+	      this.createDefaultSettings(this.entityType);
 	      if (this.nodeId) {
 	        this.departmentData.parentId = this.nodeId;
 	        return;
@@ -3288,6 +3486,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        this.getMemberRoles(this.departmentData.entityType);
 	        this.createSteps(this.departmentData.entityType, this.departmentData.id);
 	        this.createDefaultSaveMode(this.departmentData.entityType);
+	        this.createDefaultSettings(this.departmentData.entityType);
 	        const prevMemberRoles = humanresources_companyStructure_api.getMemberRoles(prevEntityType);
 	        const rolesKeys = Object.keys(prevMemberRoles);
 	        this.departmentData.heads = this.departmentData.heads.map(item => {
@@ -3495,6 +3694,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            replace: true
 	          }
 	        };
+	        if (entityType === humanresources_companyStructure_utils.EntityTypes.team) {
+	          nodeSettings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions] = {
+	            values: [...settings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions]],
+	            replace: true
+	          };
+	        }
 	        let newDepartment = {};
 	        let updatedDepartmentIds = false;
 	        let userMovedToRootIds = false;
@@ -3597,7 +3802,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      }
 	      const usersPromise = this.apiEntityChanged.has(humanresources_companyStructure_utils.WizardApiEntityChangedDict.employees) ? this.getUsersPromise(id) : Promise.resolve();
 	      const departmentPromise = this.apiEntityChanged.has(humanresources_companyStructure_utils.WizardApiEntityChangedDict.department) ? WizardAPI.updateDepartment(id, targetNodeId, name, description, teamColor == null ? void 0 : teamColor.name) : Promise.resolve();
-	      const settingsPromise = this.apiEntityChanged.has(humanresources_companyStructure_utils.WizardApiEntityChangedDict.settings) ? WizardAPI.updateSettings(id, {
+	      const nodeSettings = {
 	        [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: {
 	          values: [...settings[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]],
 	          replace: true
@@ -3606,7 +3811,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          values: [...settings[humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority]],
 	          replace: true
 	        }
-	      }, parentId) : Promise.resolve();
+	      };
+	      if (this.isTeamEntity) {
+	        nodeSettings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions] = {
+	          values: [...settings[humanresources_companyStructure_utils.NodeSettingsTypes.teamReportExceptions]],
+	          replace: true
+	        };
+	      }
+	      const settingsPromise = this.apiEntityChanged.has(humanresources_companyStructure_utils.WizardApiEntityChangedDict.settings) ? WizardAPI.updateSettings(id, nodeSettings, parentId) : Promise.resolve();
 	      this.pickEditAnalytics(id, parentId);
 	      let usersResponse = null;
 	      try {
@@ -3692,6 +3904,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        this.saveMode = SaveMode$1.addUsers;
 	      } else {
 	        this.saveMode = SaveMode$1.moveUsers;
+	      }
+	    },
+	    createDefaultSettings(entityType = 'DEPARTMENT') {
+	      this.departmentSettings[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority] = new Set([AuthorityTypes.departmentHead]);
+	      if (entityType === humanresources_companyStructure_utils.EntityTypes.team) {
+	        this.departmentSettings[humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority] = new Set([AuthorityTypes.departmentAllHeads]);
+	      } else {
+	        this.departmentSettings[humanresources_companyStructure_utils.NodeSettingsTypes.reportsAuthority] = new Set([AuthorityTypes.departmentHead]);
 	      }
 	    },
 	    pickEditAnalytics(departmentId, parentId) {

@@ -14,6 +14,11 @@
 	opacity: 1;
 	transition: opacity .3s;
 	border-radius: var(--ui-border-radius-md);
+	border: none;
+	background: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
 }
 
 .menu-switcher__icon {
@@ -31,6 +36,12 @@
 }
 .menu-switcher:active {
 	background-color: color-mix(in srgb, transparent 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+}
+
+.menu-switcher:focus-visible {
+	outline: revert;
+	outline-offset: 2px;
+	border-radius: var(--menu-item-border-radius, 4px);
 }
 
 .menu-switcher-lines {

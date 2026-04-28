@@ -50,7 +50,7 @@ jn.define('layout/ui/fields/file/theme/air/src/content', (require, exports, modu
 					(canDeleteFilesInPreview || file.token) && !file.readOnly && field.deleteFileHandler,
 					true,
 					2,
-					Indent.XL2.toNumber(),
+					field.getFilePreviewIndent(),
 					field.onFilePreviewMenuClick,
 				)),
 				View(

@@ -1,5 +1,8 @@
-import { RestMethod, ChatType } from 'im.v2.const';
+import { Core } from 'im.v2.application.core';
+import { RestMethod, ChatType, RecentType } from 'im.v2.const';
 import { BaseRecentService, type BaseRecentQueryParams } from 'im.v2.provider.service.recent';
+
+import type { RawRecentItem } from 'im.v2.provider.service.types';
 
 export class TaskService extends BaseRecentService
 {
@@ -16,8 +19,11 @@ export class TaskService extends BaseRecentService
 		};
 	}
 
-	getRecentSaveActionName(): string
+	saveRecentItems(recentItems: RawRecentItem[]): Promise
 	{
-		return 'recent/setTask';
+		return Core.getStore().dispatch('recent/setCollection', {
+			type: RecentType.taskComments,
+			items: recentItems,
+		});
 	}
 }

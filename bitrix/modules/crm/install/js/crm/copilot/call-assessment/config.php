@@ -26,6 +26,7 @@ return [
 		'ui.icon-set.main',
 		'ui.notification',
 		'ui.entity-selector',
+		'crm.ai.name-service',
 		'ui.info-helper',
 		'ui.forms',
 		'main.date',

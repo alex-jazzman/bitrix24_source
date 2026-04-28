@@ -40,7 +40,7 @@ export class ChannelsModel extends BuilderModel
 			collection,
 			selected: {
 				channelId: this.getVariable('selected.channelId'),
-				fromId: this.getVariable('selected.fromId', collection[0]?.fromList[0]?.id),
+				fromId: this.getVariable('selected.fromId'),
 				receiverAddressId: this.getVariable('selected.receiverAddressId', collection[0]?.toList[0]?.address.id),
 			},
 		};
@@ -66,14 +66,19 @@ export class ChannelsModel extends BuilderModel
 				return state.collection.find((chan) => chan.id === firstId) || state.collection[0];
 			},
 			/** @function channels/from */
-			from: (state, getters): ?From => {
+			from: (state, getters, rootState, rootGetters): ?From => {
 				const channel: Channel = getters.current;
 				if (!channel)
 				{
 					return null;
 				}
 
-				return channel.fromList.find((from) => from.id === state.selected.fromId) || channel.fromList[0];
+				const channelsLastUsedFrom = rootGetters['preferences/channelsLastUsedFrom'];
+				const channelId = channel.id;
+				const lastUsed = channelsLastUsedFrom?.find(item => item.channelId === channelId);
+				const fromId = state.selected.fromId ?? lastUsed?.fromId;
+
+				return channel.fromList.find(from => from.id === fromId) || channel.fromList[0];
 			},
 			/** @function channels/receiver */
 			receiver: (state, getters): ?Receiver => {

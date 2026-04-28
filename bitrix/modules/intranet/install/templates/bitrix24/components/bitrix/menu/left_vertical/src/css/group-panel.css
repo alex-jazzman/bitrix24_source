@@ -120,11 +120,47 @@
 }
 
 .group-panel-item:hover .group-panel-item-star,
+.group-panel-item:focus-within .group-panel-item-star,
+.group-panel-item-star:focus,
 .group-panel-content-all .group-panel-item-favorite .group-panel-item-star,
 .group-panel-content-extranet .group-panel-item-favorite .group-panel-item-star {
 	opacity: 1;
 	width: 20px;
 	pointer-events: auto;
+}
+
+button.group-panel-header-filter {
+	border: none;
+	background: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+button.group-panel-item-star {
+	border: none;
+	background: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+.group-panel-header-filter:focus-visible {
+	outline: 2px solid;
+	outline-offset: 2px;
+}
+
+.group-panel-item:focus-visible {
+	outline: 2px solid;
+	outline-offset: 2px;
+}
+
+.group-panel-item-star:focus-visible {
+	outline: 2px solid;
+	outline-offset: 2px;
+	border-radius: 50%;
 }
 
 .group-panel-item-star:before {

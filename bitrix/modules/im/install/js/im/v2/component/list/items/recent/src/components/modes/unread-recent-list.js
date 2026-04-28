@@ -1,16 +1,17 @@
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+
 import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
+import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
+import { RecentType } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
 import { RecentMenu } from 'im.v2.lib.menu';
 import { Utils } from 'im.v2.lib.utils';
+import { type ImModelCallItem, ImModelRecentItem } from 'im.v2.model';
 import { UnreadRecentService } from 'im.v2.provider.service.recent';
-import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
 
 import { LikeManager } from '../../classes/like-manager';
 import { RecentItem } from '../recent-item/recent-item';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelCallItem, ImModelRecentItem } from 'im.v2.model';
 
 // @vue/component
 export const RecentUnreadList = {
@@ -28,22 +29,13 @@ export const RecentUnreadList = {
 		};
 	},
 	computed: {
-		collection(): ImModelRecentItem[]
-		{
-			return this.getUnreadRecentService().getCollection();
-		},
 		isEmptyCollection(): boolean
 		{
-			return this.collection.length === 0;
+			return this.preparedItems.length === 0;
 		},
 		preparedItems(): ImModelRecentItem[]
 		{
-			return [...this.collection].sort((a, b) => {
-				const firstDate = this.$store.getters['recent/getSortDate'](a.dialogId);
-				const secondDate = this.$store.getters['recent/getSortDate'](b.dialogId);
-
-				return secondDate - firstDate;
-			});
+			return this.$store.getters['recent/getSortedUnreadCollection']({ type: RecentType.default });
 		},
 		activeCalls(): ImModelCallItem[]
 		{
@@ -51,15 +43,11 @@ export const RecentUnreadList = {
 		},
 		pinnedItems(): ImModelRecentItem[]
 		{
-			return this.preparedItems.filter((item) => {
-				return item.pinned === true;
-			});
+			return this.preparedItems.filter((item) => item.pinned === true);
 		},
 		generalItems(): ImModelRecentItem[]
 		{
-			return this.preparedItems.filter((item) => {
-				return item.pinned === false;
-			});
+			return this.preparedItems.filter((item) => item.pinned === false);
 		},
 	},
 	async created() {

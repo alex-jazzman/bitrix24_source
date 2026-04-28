@@ -33,7 +33,6 @@ export class LinesPullHandler
 	handleMessageChat(params)
 	{
 		this.handleMessageAdd(params);
-		this.updateUnloadedLinesCounter(params);
 	}
 
 	handleMessageAdd(params: MessageAddParams)
@@ -50,71 +49,37 @@ export class LinesPullHandler
 
 		if (userInChat.includes(userId) && !isClosed)
 		{
-			void this.store.dispatch('recentOpenLines/set', {
+			void this.store.dispatch('openLines/recent/set', {
 				id: params.dialogId,
 				messageId: params.message.id,
 				sessionId: params.lines.id,
 			});
 		}
 
-		void this.store.dispatch('sessions/set', {
+		void this.store.dispatch('openLines/sessions/set', {
 			...params.lines,
 			chatId: params.chatId,
 			status: params.lines.statusGroup,
 		});
 	}
 
-	handleReadMessageChat(params: ReadMessageParams)
-	{
-		this.updateUnloadedLinesCounter(params);
-	}
-
-	handleUnreadMessageChat(params: UnreadMessageParams)
-	{
-		this.updateUnloadedLinesCounter(params);
-	}
-
 	handleChatHide(params: ChatHideParams)
 	{
-		this.updateUnloadedLinesCounter({
-			dialogId: params.dialogId,
-			chatId: params.chatId,
-			lines: params.lines,
-			counter: 0,
-		});
-
-		const recentItem = this.store.getters['recentOpenLines/get'](params.dialogId);
+		const recentItem = this.store.getters['openLines/recent/get'](params.dialogId);
 
 		if (!recentItem)
 		{
 			return;
 		}
 
-		void this.store.dispatch('recentOpenLines/delete', {
+		void this.store.dispatch('openLines/recent/delete', {
 			id: params.dialogId,
 		});
 	}
 
-	updateUnloadedLinesCounter(params: {
-		dialogId: string,
-		chatId: number,
-		counter: number,
-		lines: ?Object<string, any>,
-	})
-	{
-		const { dialogId, chatId, counter, lines } = params;
-		if (!lines || Type.isUndefined(counter))
-		{
-			return;
-		}
-
-		Logger.warn('LinesPullHandler: updateUnloadedLinesCounter:', { dialogId, chatId, counter });
-		void this.store.dispatch('counters/setUnloadedLinesCounters', { [chatId]: counter });
-	}
-
 	handleChatUserLeave(params: ChatUserLeaveParams)
 	{
-		const recentItem = this.store.getters['recentOpenLines/get'](params.dialogId);
+		const recentItem = this.store.getters['openLines/recent/get'](params.dialogId);
 		const chatIsOpened = Core.getStore().getters['application/isLinesChatOpen'](params.dialogId);
 
 		const userId = Core.getUserId();
@@ -130,7 +95,7 @@ export class LinesPullHandler
 			return;
 		}
 
-		void this.store.dispatch('recentOpenLines/delete', {
+		void this.store.dispatch('openLines/recent/delete', {
 			id: params.dialogId,
 		});
 	}

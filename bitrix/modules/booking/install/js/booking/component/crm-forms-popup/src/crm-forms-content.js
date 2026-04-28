@@ -18,8 +18,7 @@ export const CrmFormsContent = {
 		CrmFormsToolbar,
 		HelpDeskLoc,
 	},
-	// eslint-disable-next-line flowtype/require-return-type
-	setup()
+	setup(): { helpDesk: { code: '23712054'; anchorCode: 'inte' } }
 	{
 		const helpDesk = HelpDesk.CrmFormsPopup;
 

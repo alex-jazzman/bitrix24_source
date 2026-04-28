@@ -1,17 +1,18 @@
-import { DraftManager } from 'im.v2.lib.draft';
-import { Utils } from 'im.v2.lib.utils';
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+
 import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
 import { RecentItem } from 'im.v2.component.list.items.recent';
+import { RecentType } from 'im.v2.const';
+import { DraftManager } from 'im.v2.lib.draft';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelRecentItem } from 'im.v2.model';
 
-import { EmptyState } from './components/empty-state';
 import { CollabService } from './classes/collab-service';
 import { CollabRecentMenu } from './classes/context-menu-manager';
+import { EmptyState } from './components/empty-state';
 
 import './css/collab-list.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelRecentItem } from 'im.v2.model';
 
 // @vue/component
 export const CollabList = {
@@ -28,34 +29,21 @@ export const CollabList = {
 	},
 	computed:
 	{
-		collection(): ImModelRecentItem[]
-		{
-			return this.$store.getters['recent/getCollabCollection'];
-		},
 		preparedItems(): ImModelRecentItem[]
 		{
-			return [...this.collection].sort((a, b) => {
-				const firstDate: Date = this.$store.getters['recent/getSortDate'](a.dialogId);
-				const secondDate: Date = this.$store.getters['recent/getSortDate'](b.dialogId);
-
-				return secondDate - firstDate;
-			});
+			return this.$store.getters['recent/getSortedCollection']({ type: RecentType.collab });
 		},
 		pinnedItems(): ImModelRecentItem[]
 		{
-			return this.preparedItems.filter((item) => {
-				return item.pinned === true;
-			});
+			return this.preparedItems.filter((item) => item.pinned === true);
 		},
 		generalItems(): ImModelRecentItem[]
 		{
-			return this.preparedItems.filter((item) => {
-				return item.pinned === false;
-			});
+			return this.preparedItems.filter((item) => item.pinned === false);
 		},
 		isEmptyCollection(): boolean
 		{
-			return this.collection.length === 0;
+			return this.preparedItems.length === 0;
 		},
 	},
 	created()

@@ -1,7 +1,7 @@
-import {EventEmitter, BaseEvent} from 'main.core.events';
-import {Cache, Tag, Dom, Text, Type} from 'main.core';
+import { EventEmitter, BaseEvent } from 'main.core.events';
+import { Cache, Tag, Dom, Text, Type } from 'main.core';
 
-import {type Field} from '../types/field';
+import { type Field } from '../types/field';
 
 import './css/style.css';
 
@@ -14,6 +14,7 @@ type ListItemOptions = {
 	},
 	type: $Values<ListItem.Type>,
 	disabled?: boolean,
+	disableSelection?: boolean,
 };
 
 export default class ListItem extends EventEmitter
@@ -32,7 +33,7 @@ export default class ListItem extends EventEmitter
 		this.subscribeFromOptions(options.events);
 		this.#setOptions(options);
 
-		const {targetContainer} = options;
+		const { targetContainer } = options;
 		if (Type.isDomNode(targetContainer))
 		{
 			this.renderTo(targetContainer);
@@ -41,7 +42,7 @@ export default class ListItem extends EventEmitter
 
 	#setOptions(options: ListItemOptions)
 	{
-		this.#cache.set('options', {type: ListItem.Type.CHECKBOX, ...options});
+		this.#cache.set('options', { type: ListItem.Type.CHECKBOX, ...options });
 	}
 
 	#getOptions(): ListItemOptions
@@ -84,14 +85,20 @@ export default class ListItem extends EventEmitter
 		return this.#getOptions().disabled ?? false;
 	}
 
+	#isSelectionDisabled(): boolean
+	{
+		return this.#getOptions().disableSelection ?? false;
+	}
+
 	getLayout(): HTMLDivElement
 	{
 		return this.#cache.remember(`layout`, () => {
 			const fieldDisabledClassName = 'sign-b2e-fields-selector-field--disabled';
+
 			return Tag.render`
 				<div class="sign-b2e-fields-selector-field${this.#isDisabled() ? " " + fieldDisabledClassName : ''}">
 					<label class="ui-ctl ui-ctl-checkbox sign-b2e-fields-selector-field-checkbox">
-						${this.#getCheckbox()}
+						${this.#isSelectionDisabled() ? '' : this.#getCheckbox()}
 						<div class="ui-ctl-label-text">${Text.encode(this.#getOptions().field.caption)}</div>
 					</label>
 				</div>

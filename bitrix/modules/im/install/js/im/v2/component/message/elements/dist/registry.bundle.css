@@ -79,6 +79,10 @@
 	margin-left: 4px;
 }
 
+.bx-im-message-base__wrap.--system .bx-im-message-status__date {
+	color: var(--ui-color-chat-other-base-1_1);
+}
+
 .bx-im-message-attach__container {
 	padding-right: 10px;
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Bitrix\Bizproc\Automation\Helper;
+use Bitrix\Bizproc\Integration\UI\EntitySelector\DocumentTypeProvider;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -23,6 +24,7 @@ class CBPCrmEntityFieldChangedTrigger extends CBPFieldChangedTrigger
 		// return
 		$this->arProperties['ReturnDocument'] = null;
 		$this->arProperties['ChangedFields'] = null;
+		$this->arProperties['IsAutomatedSolution'] = 'N';
 	}
 
 	public function execute(): int
@@ -124,22 +126,82 @@ class CBPCrmEntityFieldChangedTrigger extends CBPFieldChangedTrigger
 			return [];
 		}
 
-		return [CCrmOwnerType::DealName, CCrmOwnerType::OrderName];
+		return [
+			CCrmOwnerType::DealName,
+			CCrmOwnerType::CompanyName,
+			CCrmOwnerType::OrderName,
+			CCrmOwnerType::ContactName,
+			CCrmOwnerType::LeadName,
+			CCrmOwnerType::QuoteName,
+		];
 	}
 
 	public static function getPropertiesMap(array $documentType, array $context = []): array
 	{
 		$document = $context['Properties']['Document'] ?? $context['Document'] ?? '';
+		$isAutomatedSolution = CBPHelper::getBool(
+			$context['Properties']['IsAutomatedSolution'] ?? $context['IsAutomatedSolution'] ?? 'N'
+		);
 
 		$map = parent::getPropertiesMap($documentType, $context);
+		$complexDocumentType = static::resolveDocumentTypeFromDocument($document);
+
+		$type = $complexDocumentType ? (string)$complexDocumentType[2] : (string)$document;
 		$presetEntities = static::getPresetEntities();
 
-		if (in_array($document, $presetEntities, true))
+		if (static::isEntitySelectorAvailable())
 		{
-			// only one hidden option from preset
+			unset($map['Document']['Options']);
+			$map['Document']['Type'] = \Bitrix\Bizproc\FieldType::DOCUMENT_TYPE;
+			$map['Document']['Settings'] = [
+				'entity' => [
+					'options' => [
+						'moduleIds' => ['crm'],
+					],
+				],
+			];
+			$map['Document']['Getter'] = static function($dialog, $property, $activity, $compatible = false) {
+				$document = $activity['Properties']['Document'] ?? null;
+				$complexType = static::resolveDocumentTypeFromDocument((string)$document);
+
+				return $complexType ? implode('@', $complexType) : null;
+			};
+
+			if (in_array($type, $presetEntities, true))
+			{
+				$map['Document']['Hidden'] = true;
+				$map['Document']['Settings']['entity']['options']['crm'] = ['onlyEntities' => [$type]];
+			}
+			else
+			{
+				$map['Document']['Settings']['entity']['options']['crm'] =
+					$isAutomatedSolution
+						? ['onlyAutomatedSolution' => true]
+						: ['onlyDynamic' => true]
+				;
+				if ($isAutomatedSolution)
+				{
+					$map['IsAutomatedSolution'] = [
+						'Name' => '',
+						'FieldName' => 'IsAutomatedSolution',
+						'Type' => \Bitrix\Bizproc\FieldType::BOOL,
+						'Multiple' => false,
+						'Required' => false,
+						'Default' => 'Y',
+						'Hidden' => true,
+						'AllowSelection' => false,
+					];
+				}
+			}
+
+			return $map;
+		}
+
+		if (in_array($type, $presetEntities, true))
+		{
 			$map['Document']['Hidden'] = true;
 			$map['Document']['Settings'] = array_merge($map['Document']['Settings'] ?? [], ['ShowEmptyValue' => false]);
-			$map['Document']['Options'] = [$document => $map['Document']['Options'][$document]];
+			$map['Document']['Options'] = [$type => $map['Document']['Options'][$type]];
 		}
 		else
 		{
@@ -156,12 +218,19 @@ class CBPCrmEntityFieldChangedTrigger extends CBPFieldChangedTrigger
 
 	protected static function getAvailableDocuments(): array
 	{
+		if (static::isEntitySelectorAvailable())
+		{
+			return [];
+		}
+
 		if (!\Bitrix\Main\Loader::includeModule('crm'))
 		{
 			return [];
 		}
 
 		$documents = [];
+
+		$presetEntities = static::getPresetEntities();
 
 		// Factory is not returned for orders
 		$typesMap = \Bitrix\Crm\Service\Container::getInstance()->getTypesMap();
@@ -175,7 +244,13 @@ class CBPCrmEntityFieldChangedTrigger extends CBPFieldChangedTrigger
 			}
 
 			$name = CCrmOwnerType::resolveName($entityTypeId);
-			$documents[$name] = ['id' => $name, 'name' => static::getDocumentName($documentType)];
+			if (
+				in_array($name, $presetEntities, true)
+				|| (CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId) && !$factory->isInCustomSection())
+			)
+			{
+				$documents[$name] = ['id' => $name, 'name' => static::getDocumentName($documentType)];
+			}
 		}
 
 		$orderTypeId = CCrmOwnerType::Order;
@@ -221,6 +296,7 @@ class CBPCrmEntityFieldChangedTrigger extends CBPFieldChangedTrigger
 						|| str_starts_with($id, 'WEB_')
 						|| str_starts_with($id, 'EMAIL_')
 						|| str_starts_with($id, 'IM_')
+						|| str_starts_with($id, 'LINK_')
 						|| str_starts_with($id, 'UTM_')
 						|| str_contains($id, 'OPPORTUNITY')
 						|| str_contains($id, 'CURRENCY_ID')
@@ -257,7 +333,12 @@ class CBPCrmEntityFieldChangedTrigger extends CBPFieldChangedTrigger
 			return null;
 		}
 
-		return CCrmBizProcHelper::ResolveDocumentType(CCrmOwnerType::resolveID($document));
+		if (strpos($document, '@') !== false)
+		{
+			return explode('@', $document);
+		}
+
+		return CCrmBizProcHelper::ResolveDocumentType(CCrmOwnerType::resolveID($document)); // compatible behavior
 	}
 
 	private static function getIgnoredFieldIds(): array
@@ -269,6 +350,7 @@ class CBPCrmEntityFieldChangedTrigger extends CBPFieldChangedTrigger
 			'CONTACT_ID',
 			'CONTACT_IDS',
 			'COMPANY_ID',
+			'COMPANY_IDS',
 			'CREATED_BY_ID',
 			'MODIFY_BY_ID',
 			'DATE_CREATE',
@@ -278,6 +360,30 @@ class CBPCrmEntityFieldChangedTrigger extends CBPFieldChangedTrigger
 			'CATEGORY_ID',
 			'ORIGINATOR_ID',
 			'ORIGIN_ID',
+			'XML_ID',
+			'TAX_VALUE',
+			'TAX_VALUE_ACCOUNT',
+			'LAST_ACTIVITY_BY',
+			'LAST_ACTIVITY_TIME',
+			'IS_RECURRING',
+			'MYCOMPANY_ID',
+			'QUOTE_NUMBER',
+			'TERMS',
+			'LOCATION_ID',
+			'EXCH_RATE',
+
+			// address
+			'ADDRESS',
+			'ADDRESS_2',
+			'ADDRESS_CITY',
+			'ADDRESS_POSTAL_CODE',
+			'ADDRESS_REGION',
+			'ADDRESS_PROVINCE',
+			'ADDRESS_COUNTRY',
+			'ADDRESS_LOC_ADDR_ID',
+			'FULL_ADDRESS',
+			'ADDRESS_LEGAL',
+			'BANKING_DETAILS',
 
 			// not compatible
 			'CRM_ID',
@@ -286,11 +392,35 @@ class CBPCrmEntityFieldChangedTrigger extends CBPFieldChangedTrigger
 			'TIME_CREATE',
 			'PRODUCT_IDS',
 			'TRACKING_SOURCE_ID',
+
+			// not changed
+			'CREATED_TIME',
+			'CREATED_BY',
 		];
 	}
 
 	private static function getIgnoredFieldTypes(): array
 	{
-		return ['phone', 'web', 'email', 'im'];
+		return ['phone', 'web', 'email', 'im', 'link'];
+	}
+
+	/**
+	 * @param $request
+	 * @return array
+	 */
+	public static function getAjaxResponse($request): array
+	{
+		$document = $request['document'] ?? null;
+		if ($document)
+		{
+			return static::getTrackedFields($document);
+		}
+
+		return [];
+	}
+
+	protected static function isEntitySelectorAvailable(): bool
+	{
+		return defined(DocumentTypeProvider::class . '::PRESELECTED_ITEMS_SUPPORTED');
 	}
 }

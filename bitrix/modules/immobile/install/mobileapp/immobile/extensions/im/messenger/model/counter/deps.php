@@ -10,6 +10,7 @@ return [
 	'bundle' => [
 		'./src/default-element',
 		'./src/model',
+		'./src/normalizer',
 		'./src/validator',
 	],
 ];

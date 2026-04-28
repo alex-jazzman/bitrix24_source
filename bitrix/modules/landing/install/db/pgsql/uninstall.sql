@@ -37,3 +37,4 @@ drop table if exists b_landing_copilot_steps;
 drop table if exists b_landing_copilot_request_to_entities;
 drop table if exists b_landing_copilot_request_to_step;
 drop table if exists b_landing_copilot_site_to_chat;
+drop table if exists b_landing_vibe;

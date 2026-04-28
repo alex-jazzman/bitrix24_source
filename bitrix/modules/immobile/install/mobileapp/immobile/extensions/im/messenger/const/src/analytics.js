@@ -54,6 +54,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		cancelSearch: 'cancel_search',
 		selectSearchResult: 'select_search_result',
 		backToSearch: 'back_to_search',
+		clickRecentSuggest: 'click_recent_suggest',
 		clickCreatePoll: 'click_create_poll',
 		publishPoll: 'publish_poll',
 		finishPoll: 'finish_poll',
@@ -73,11 +74,16 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		openStickerTab: 'open_sticker_tab',
 		clickCreateStickerPack: 'click_create_stickerpack',
 		addStickerPack: 'add_stickerpack',
+		addMentionedUser: 'add_mentioned_user',
+		useTextFormatting: 'use_text_formatting',
+		showUnread: 'show_unread',
+		readAll: 'read_all',
 	});
 
 	const Tool = Object.freeze({
 		ai: 'ai',
 		im: 'im',
+		task: 'task',
 	});
 
 	const Category = Object.freeze({
@@ -230,6 +236,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		chatStart: 'chat_start',
 		messageLink: 'message_link',
 		chatWindow: 'chat_window',
+		taskChat: 'task_chat',
+		chatTasks: 'chat_tasks',
 		chatSidebar: 'chat_sidebar',
 		comments: 'comments',
 		editor: 'editor',
@@ -245,6 +253,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		contextMenu: 'context_menu',
 		chatList: 'chat_list',
 		chat: 'chat',
+		taskCard: 'task_card',
 	});
 
 	const Element = Object.freeze({

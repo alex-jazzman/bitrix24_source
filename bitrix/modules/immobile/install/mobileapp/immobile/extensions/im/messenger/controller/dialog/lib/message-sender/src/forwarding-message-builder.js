@@ -56,7 +56,6 @@ jn.define('im/messenger/controller/dialog/lib/message-sender/src/forwarding-mess
 			const modelMessage = this.store
 				.getters['messagesModel/getById'](Number(this.messageId))
 			;
-			console.warn(modelMessage, this.messageId);
 
 			const forwardUuid = Uuid.getV4();
 

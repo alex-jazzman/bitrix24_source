@@ -29,7 +29,7 @@ export const DatasetPropertiesStep = {
 		},
 		defaultTitle()
 		{
-			return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROPERTIES_HEADER');
+			return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROPERTIES_HEADER_MSGVER_1');
 		},
 		defaultHint()
 		{
@@ -38,7 +38,7 @@ export const DatasetPropertiesStep = {
 				return '';
 			}
 
-			return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROPERTIES_HINT');
+			return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROPERTIES_HINT_MSGVER_1');
 		},
 		disabledFields()
 		{
@@ -103,7 +103,7 @@ export const DatasetPropertiesStep = {
 			{
 				return {
 					result: false,
-					message: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_VALIDATION_DATASET_EXISTS'),
+					message: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_VALIDATION_DATASET_EXISTS_MSGVER_1'),
 				};
 			}
 

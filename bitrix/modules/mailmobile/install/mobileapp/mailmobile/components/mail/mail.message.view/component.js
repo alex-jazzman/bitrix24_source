@@ -29,8 +29,6 @@
 		else
 		{
 			BX.onViewLoaded(() => {
-				console.log(this.layout)
-				this.layout.close();
 				const messageChainParams = {
 					isCrmMessage,
 					threadId: id,

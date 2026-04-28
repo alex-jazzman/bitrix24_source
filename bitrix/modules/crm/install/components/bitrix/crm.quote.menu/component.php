@@ -11,9 +11,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @global \CMain $APPLICATION
  */
 
+use Bitrix\Crm\Component\EntityList\Settings\ImportItem;
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Integration\DocumentGenerator;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
@@ -21,7 +24,7 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+Container::getInstance()->getLocalization()->loadMessages();
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
@@ -99,21 +102,21 @@ $isInSlider = isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y';
 
 if ($arParams['TYPE'] === 'list')
 {
-	$bRead = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Quote);
-	$bExport = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canExportItems(CCrmOwnerType::Quote);
-	$bWrite = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canUpdateItems(CCrmOwnerType::Quote);
+	$bRead = Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Quote);
+	$bExport = Container::getInstance()->getUserPermissions()->entityType()->canExportItems(CCrmOwnerType::Quote);
+	$bWrite = Container::getInstance()->getUserPermissions()->entityType()->canUpdateItems(CCrmOwnerType::Quote);
 	$bDelete = false;
 }
 else
 {
 	$bExport = false;
-	$bRead = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Quote, $arParams['ELEMENT_ID']);
-	$bWrite = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Quote, $arParams['ELEMENT_ID']);
-	$bDelete = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canDelete(CCrmOwnerType::Quote, $arParams['ELEMENT_ID']);
+	$bRead = Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Quote, $arParams['ELEMENT_ID']);
+	$bWrite = Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Quote, $arParams['ELEMENT_ID']);
+	$bDelete = Container::getInstance()->getUserPermissions()->item()->canDelete(CCrmOwnerType::Quote, $arParams['ELEMENT_ID']);
 }
 
-$bAdd = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Quote);
-$bConfig = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
+$bAdd = Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Quote);
+$bConfig = Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] === 'Y')
 {
@@ -234,8 +237,8 @@ if ($arParams['TYPE'] === 'list')
 
 	if ($bConfig && !$isInSlider)
 	{
-		\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
-		$userFieldListUrl = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getUserFieldListUrl(\CCrmOwnerType::Quote);
+		Container::getInstance()->getLocalization()->loadMessages();
+		$userFieldListUrl = Container::getInstance()->getRouter()->getUserFieldListUrl(\CCrmOwnerType::Quote);
 		if ($userFieldListUrl)
 		{
 			$userFieldListUrl = $userFieldListUrl->__toString();
@@ -323,6 +326,17 @@ if ($arParams['TYPE'] === 'list')
 		$arResult['EXPORT_EXCEL_PARAMS']['messages']['DialogTitle'] = Loc::getMessage('QUOTE_EXPORT_EXCEL_TITLE_MSGVER_1');
 
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
+
+		if (Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y')
+		{
+			Container::getInstance()->getRouter()->renderBindAnchors();
+		}
+
+		$importItem = (new ImportItem(CCrmOwnerType::Quote));
+		if ($importItem->canShow())
+		{
+			$arResult['BUTTONS'][] = $importItem->toInterfaceToolbarButton();
+		}
 
 		$arResult['BUTTONS'][] = array(
 			'TITLE' => Loc::getMessage('QUOTE_EXPORT_CSV_TITLE_MSGVER_1'),

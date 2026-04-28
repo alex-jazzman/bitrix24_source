@@ -769,6 +769,56 @@ BX.ready(() => {
 		userpicPath: collabImagePath,
 	});
 	avatar.renderTo(BX('disk-collab-icon-' + ownerId));
+
+	BX.Reflection.namespace('BX.Disk.Folder.List.Bizproc');
+	BX.Disk.Folder.List.Bizproc.showTemplates = (params) => {
+		if (
+			!BX.Type.isPlainObject(params)
+			|| !BX.Type.isStringFilled(params.documentType)
+			|| !BX.Type.isStringFilled(params.documentId)
+		)
+		{
+			return;
+		}
+
+		const starter = BX.Reflection.getClass(BX.Bizproc.Workflow.Starter);
+		if (!starter)
+		{
+			return;
+		}
+
+		starter.showTemplates(
+			{ signedDocumentType: params.documentType, signedDocumentId: params.documentId },
+			{
+				callback: () => {
+					if (!BX.Type.isStringFilled(params.gridId) || !BX.Type.isStringFilled(params.rowId))
+					{
+						return;
+					}
+
+					if (BX.Main.gridManager)
+					{
+						const grid = BX.Main.gridManager.getById(params.gridId);
+						const row = (grid && grid.instance) ? grid.instance.getRows().getById(params.rowId) : null;
+						if (row)
+						{
+							row.closeActionsMenu();
+						}
+					}
+
+					if (BX.Main.tileGridManager)
+					{
+						const instance = BX.Main.tileGridManager.getInstanceById(params.gridId);
+						const item = instance ? instance.getItem(params.rowId) : null;
+						if (item)
+						{
+							item.destroyActionsMenu();
+						}
+					}
+				},
+			}
+		);
+	};
 });
 </script>
 

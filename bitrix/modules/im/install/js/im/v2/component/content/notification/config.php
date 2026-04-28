@@ -26,6 +26,7 @@ return [
 		'im.public',
 		'im.v2.component.elements.chat-title',
 		'ui.vue3.vuex',
+		'im.v2.lib.counter',
 		'ui.system.chip.vue',
 		'im.v2.component.elements.popup',
 		'ui.vue3.components.button',

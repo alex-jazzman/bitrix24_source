@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/messenger-header/buttons-controller', (requir
 	const { isEqual } = require('utils/object');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { PopupCreateButton } = require('im/messenger/lib/widget/header-button/popup-create-button');
 	const { headerControllerConfig } = require('im/messenger/controller/messenger-header/config');
 
 	/**
@@ -21,9 +22,9 @@ jn.define('im/messenger/controller/messenger-header/buttons-controller', (requir
 			this.rightButtons = null;
 		}
 
-		redrawRightButtonsIfNeeded(tabId)
+		async redrawRightButtonsIfNeeded(tabId)
 		{
-			const rightButtons = this.getRightButtons(tabId);
+			const rightButtons = await this.getRightButtons(tabId);
 			if (isEqual(this.rightButtons, rightButtons))
 			{
 				return;
@@ -36,12 +37,23 @@ jn.define('im/messenger/controller/messenger-header/buttons-controller', (requir
 		 * @protected
 		 * @param {string} tabId
 		 */
-		getRightButtons(tabId)
+		async getRightButtons(tabId)
 		{
 			const config = headerControllerConfig[tabId];
 			if (config)
 			{
-				return config.rightButtons.map((button) => button.toWidgetHeaderButton());
+				const filterResults = await Promise.all(config.rightButtons.map(async (button) => {
+					if (button instanceof PopupCreateButton)
+					{
+						return button.shouldShow();
+					}
+
+					return true;
+				}));
+
+				return config.rightButtons
+					.filter((button, index) => filterResults[index])
+					.map((button) => button.toWidgetHeaderButton());
 			}
 
 			return [];

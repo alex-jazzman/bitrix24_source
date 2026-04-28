@@ -343,6 +343,68 @@ jn.define('im/messenger/db/update/updater', (require, exports, module) => {
 				throw error;
 			}
 		}
+
+		/**
+		 * @param {typeof Table} TableClass
+		 * @param {() => Promise} callback
+		 * @return {Promise<void>}
+		 */
+		async ifTableExists(TableClass, callback)
+		{
+			const table = new TableClass();
+			const isTableExists = await this.isTableExists(table.getName());
+			if (isTableExists)
+			{
+				await callback();
+			}
+		}
+
+		/**
+		 * @param {typeof Table} TableClass
+		 * @param {() => Promise} callback
+		 * @return {Promise<void>}
+		 */
+		async ifTableNotExists(TableClass, callback)
+		{
+			const table = new TableClass();
+			const isTableExists = await this.isTableExists(table.getName());
+			if (!isTableExists)
+			{
+				await callback();
+			}
+		}
+
+		/**
+		 * @param {typeof Table} TableClass
+		 * @param {string} columnName
+		 * @param {() => Promise} callback
+		 * @return {Promise<void>}
+		 */
+		async ifColumnExists(TableClass, columnName, callback)
+		{
+			const table = new TableClass();
+			const isColumnExist = await this.isColumnExists(table.getName(), columnName);
+			if (isColumnExist)
+			{
+				await callback();
+			}
+		}
+
+		/**
+		 * @param {typeof Table} TableClass
+		 * @param {string} columnName
+		 * @param {() => Promise} callback
+		 * @return {Promise<void>}
+		 */
+		async ifColumnNotExists(TableClass, columnName, callback)
+		{
+			const table = new TableClass();
+			const isColumnExist = await this.isColumnExists(table.getName(), columnName);
+			if (!isColumnExist)
+			{
+				await callback();
+			}
+		}
 	}
 
 	module.exports = {

@@ -396,7 +396,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const hasMessageSticker = main_core.Type.isPlainObject(message.stickerParams);
 	  if (hasMessageText || hasMessageFile || hasMessageSticker) {
 	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('recent/update', {
-	      id: message.dialogId,
+	      dialogId: message.dialogId,
 	      fields: {
 	        messageId: message.temporaryId
 	      }
@@ -454,7 +454,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  });
 	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('recent/update', {
-	    id: dialogId,
+	    dialogId,
 	    fields: {
 	      messageId: newId
 	    }

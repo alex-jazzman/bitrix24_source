@@ -30,27 +30,30 @@ CUtil::InitJSCore(['popup']);
 
 $toolbarId = mb_strtolower($arResult['GRID_ID']).'_toolbar';
 
-Toolbar::addFilter(\Bitrix\Main\Filter\Component\ComponentParams::get($arResult['GRID_FILTER'],
-	[
-		'GRID_ID' => $arResult['FILTER_ID'],
-		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-		'ENABLE_LIVE_SEARCH' => true,
-		'ENABLE_LABEL' => true,
-		'LAZY_LOAD' => [
-			'CONTROLLER' => [
-				'getList' => 'intranet.filter.user.getlist',
-				'getField' => 'intranet.filter.user.getfield',
-				'componentName' => 'intranet.user.list',
-				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters('intranet.user.list', [
-					'USER_PROPERTY_LIST' => $arParams['USER_PROPERTY_LIST']
-				])
-			]
-		],
-		'CONFIG' => [
-			'AUTOFOCUS' => false,
-		],
-	])
-);
+if ($arResult['VIEW'] === 'default')
+{
+	Toolbar::addFilter(\Bitrix\Main\Filter\Component\ComponentParams::get($arResult['GRID_FILTER'],
+		[
+			'GRID_ID' => $arResult['FILTER_ID'],
+			'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+			'ENABLE_LIVE_SEARCH' => true,
+			'ENABLE_LABEL' => true,
+			'LAZY_LOAD' => [
+				'CONTROLLER' => [
+					'getList' => 'intranet.filter.user.getlist',
+					'getField' => 'intranet.filter.user.getfield',
+					'componentName' => 'intranet.user.list',
+					'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters('intranet.user.list', [
+						'USER_PROPERTY_LIST' => $arParams['USER_PROPERTY_LIST']
+					])
+				]
+			],
+			'CONFIG' => [
+				'AUTOFOCUS' => false,
+			],
+		])
+	);
+}
 
 if (
 	isset($_REQUEST['IFRAME'])
@@ -122,9 +125,11 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'c
 
 $this->SetViewTarget('below_pagetitle', 1000);
 ?>
+<?php if ($arResult['VIEW'] === 'default'): ?>
 	<div class="ui-actions-bar">
 		<div id="invitation-employee-counter_panel" class="ui-actions-bar"></div>
 	</div>
+<?php endif; ?>
 <?php
 $this->EndViewTarget();
 endif;
@@ -186,7 +191,7 @@ $APPLICATION->IncludeComponent(
 					separator: true,
 					title: '<?=Loc::getMessage('INTRANET_USER_LIST_COUNTER_WAITING_CONFIRMATION_TITLE')?>',
 					value: <?=$intranetUser->getWaitConfirmationCounterValue()?>,
-					isActive: filter.getPreset().getCurrentPresetId() === waitConfirmationPresetId,
+					isActive: filter?.getPreset().getCurrentPresetId() === waitConfirmationPresetId,
 					eventsForActive: {
 						click: () => {
 							if (filter !== null)
@@ -216,7 +221,7 @@ $APPLICATION->IncludeComponent(
 					separator: false,
 					title: '<?=Loc::getMessage('INTRANET_USER_LIST_COUNTER_INVITED_TITLE')?>',
 					value: <?=$intranetUser->getInvitationCounterValue()?>,
-					isActive: filter.getPreset().getCurrentPresetId() === presetId,
+					isActive: filter?.getPreset().getCurrentPresetId() === presetId,
 					eventsForActive: {
 						click: () => {
 							if (filter !== null)
@@ -247,7 +252,7 @@ $APPLICATION->IncludeComponent(
 					const counterItem = counter.getCounterPanel().getItemById(counterId);
 					const waitConfirmationCounterItem = counter.getCounterPanel().getItemById(waitConfirmationCounterId);
 
-					if (filter.getPreset().getCurrentPresetId() === presetId)
+					if (filter?.getPreset().getCurrentPresetId() === presetId)
 					{
 						counterItem?.activate(false);
 					}
@@ -256,7 +261,7 @@ $APPLICATION->IncludeComponent(
 						counterItem?.deactivate(false);
 					}
 
-					if (filter.getPreset().getCurrentPresetId() === waitConfirmationPresetId)
+					if (filter?.getPreset().getCurrentPresetId() === waitConfirmationPresetId)
 					{
 						waitConfirmationCounterItem?.activate(false);
 					}

@@ -127,7 +127,7 @@ export const RecentListContainer = {
 		},
 		onToggleUnreadMode()
 		{
-			this.$store.dispatch('recent/clearUnreadCollection');
+			this.$store.dispatch('recent/clearUnreadCollection', { type: RecentType.default });
 			this.unreadOnlyMode = !this.unreadOnlyMode;
 		},
 	},

@@ -161,22 +161,10 @@ $gridContainerId = 'bx-mml-' . $arResult['GRID_ID'] . '-container';
 		new BX.Mail.MailboxList.Manager({
 			gridId,
 		});
-
-		<?php if (
-			$arResult['MAILBOX_MASS_CONNECT_ENABLED']
-			&& $arResult['HAS_ACCESS_TO_MASS_CONNECT']
-			&& $arResult['NEED_SHOW_MAILBOX_LIST_HINT']
-		): ?>
-		(new BX.Mail.MassConnectNotification({
-			contentContainerId: 'mass-connection-popup-content',
-			okButtonText: '<?= Loc::getMessage("MAIL_MESSAGE_MAILBOX_GRID_POPUP_OK_BUTTON") ?>',
-			skipButtonText: '<?= Loc::getMessage("MAIL_MESSAGE_MAILBOX_GRID_POPUP_SKIP_BUTTON") ?>',
-			userOptionName: '<?= $arResult['MAILBOX_LIST_HINT_NAME'] ?>',
-		})).show();
-		<?php endif ?>
 	});
 </script>
 
+<?php // Popup for MassConnectNotification (mail/install/js/mail/notification/massconnect-notification/src/massconnect-notification.js) ?>
 <div hidden>
 	<div id="mass-connection-popup-content">
 		<div class="popup">

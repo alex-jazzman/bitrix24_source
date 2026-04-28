@@ -89,16 +89,18 @@ export const ChartWizard = {
 				teamColor: NodeColorsSettingsDict.blue,
 				entityType: EntityTypes.department,
 				settings: {
-					[NodeSettingsTypes.businessProcAuthority]: new Set([AuthorityTypes.departmentHead]),
-					[NodeSettingsTypes.reportsAuthority]: new Set([AuthorityTypes.departmentHead]),
+					[NodeSettingsTypes.businessProcAuthority]: new Set(),
+					[NodeSettingsTypes.reportsAuthority]: new Set(),
+					[NodeSettingsTypes.teamReportExceptions]: new Set(),
 				},
 			},
 			removedUsers: [],
 			moveUsersMap: [],
 			employeesIds: [],
 			departmentSettings: {
-				[NodeSettingsTypes.businessProcAuthority]: new Set([AuthorityTypes.departmentHead]),
-				[NodeSettingsTypes.reportsAuthority]: new Set([AuthorityTypes.departmentHead]),
+				[NodeSettingsTypes.businessProcAuthority]: new Set(),
+				[NodeSettingsTypes.reportsAuthority]: new Set(),
+				[NodeSettingsTypes.teamReportExceptions]: new Set(),
 			},
 			initChats: [],
 			initChannels: [],
@@ -239,7 +241,8 @@ export const ChartWizard = {
 					params: {
 						name,
 						heads,
-						settings: this.departmentSettings,
+						employeesIds: employees.length > 0 ? employees.map((employee) => employee.id) : this.employeesIds,
+						initSettings: this.departmentSettings,
 						entityType,
 						features: {
 							isDeputyApprovesBPAvailable: this.isDeputyApprovesBPAvailable,
@@ -309,7 +312,14 @@ export const ChartWizard = {
 					acc[settingsType] = new Set();
 				}
 
-				acc[settingsType].add(settingsValue);
+				if (settingsType === NodeSettingsTypes.teamReportExceptions)
+				{
+					acc[settingsType].add(Number(settingsValue));
+				}
+				else
+				{
+					acc[settingsType].add(settingsValue);
+				}
 
 				return acc;
 			}, {});
@@ -361,6 +371,8 @@ export const ChartWizard = {
 				const newSettings = this.mapRawSettings(rawSettings);
 
 				this.departmentSettings[NodeSettingsTypes.businessProcAuthority] = new Set();
+				this.departmentSettings[NodeSettingsTypes.reportsAuthority] = new Set();
+				this.departmentSettings[NodeSettingsTypes.teamReportExceptions] = new Set();
 				this.departmentSettings = {
 					...this.departmentSettings,
 					...newSettings,
@@ -385,6 +397,7 @@ export const ChartWizard = {
 			this.getMemberRoles(this.entityType);
 			this.createSteps(this.entityType, this.departmentData.id);
 			this.createDefaultSaveMode(this.entityType);
+			this.createDefaultSettings(this.entityType);
 
 			if (this.nodeId)
 			{
@@ -534,6 +547,7 @@ export const ChartWizard = {
 				this.getMemberRoles(this.departmentData.entityType);
 				this.createSteps(this.departmentData.entityType, this.departmentData.id);
 				this.createDefaultSaveMode(this.departmentData.entityType);
+				this.createDefaultSettings(this.departmentData.entityType);
 
 				const prevMemberRoles = getMemberRoles(prevEntityType);
 				const rolesKeys = Object.keys(prevMemberRoles);
@@ -775,13 +789,20 @@ export const ChartWizard = {
 						},
 				};
 
+				if (entityType === EntityTypes.team)
+				{
+					nodeSettings[NodeSettingsTypes.teamReportExceptions] = {
+						values: [...settings[NodeSettingsTypes.teamReportExceptions]],
+						replace: true,
+					};
+				}
+
 				let newDepartment = {};
 				let updatedDepartmentIds = false;
 				let userMovedToRootIds = false;
 
 				if (entityType === EntityTypes.team)
 				{
-
 					({
 						node: newDepartment,
 						updatedDepartmentIds = false,
@@ -935,21 +956,27 @@ export const ChartWizard = {
 				: Promise.resolve()
 			;
 
+			const nodeSettings = {
+				[NodeSettingsTypes.businessProcAuthority]: {
+					values: [...settings[NodeSettingsTypes.businessProcAuthority]],
+					replace: true,
+				},
+				[NodeSettingsTypes.reportsAuthority]: {
+					values: [...settings[NodeSettingsTypes.reportsAuthority]],
+					replace: true,
+				},
+			};
+
+			if (this.isTeamEntity)
+			{
+				nodeSettings[NodeSettingsTypes.teamReportExceptions] = {
+					values: [...settings[NodeSettingsTypes.teamReportExceptions]],
+					replace: true,
+				};
+			}
+
 			const settingsPromise = this.apiEntityChanged.has(WizardApiEntityChangedDict.settings)
-				? WizardAPI.updateSettings(
-					id,
-					{
-						[NodeSettingsTypes.businessProcAuthority]: {
-							values: [...settings[NodeSettingsTypes.businessProcAuthority]],
-							replace: true,
-						},
-						[NodeSettingsTypes.reportsAuthority]: {
-							values: [...settings[NodeSettingsTypes.reportsAuthority]],
-							replace: true,
-						},
-					},
-					parentId,
-				)
+				? WizardAPI.updateSettings(id, nodeSettings, parentId)
 				: Promise.resolve()
 			;
 
@@ -1091,6 +1118,24 @@ export const ChartWizard = {
 			else
 			{
 				this.saveMode = SaveMode.moveUsers;
+			}
+		},
+		createDefaultSettings(entityType: string = 'DEPARTMENT'): void
+		{
+			this.departmentSettings[NodeSettingsTypes.businessProcAuthority] = new Set(
+				[AuthorityTypes.departmentHead],
+			);
+			if (entityType === EntityTypes.team)
+			{
+				this.departmentSettings[NodeSettingsTypes.reportsAuthority] = new Set(
+					[AuthorityTypes.departmentAllHeads],
+				);
+			}
+			else
+			{
+				this.departmentSettings[NodeSettingsTypes.reportsAuthority] = new Set(
+					[AuthorityTypes.departmentHead],
+				);
 			}
 		},
 		pickEditAnalytics(departmentId: number, parentId: number): void

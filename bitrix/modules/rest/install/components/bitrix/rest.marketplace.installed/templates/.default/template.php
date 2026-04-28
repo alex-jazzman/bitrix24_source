@@ -26,7 +26,7 @@ $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, $bo
 	'ui.alerts',
 ]);
 
-if (!$arResult['SLIDER'])
+if (empty($arResult['SLIDER']))
 {
 	$this->setViewTarget("inside_pagetitle", 10);
 }
@@ -51,7 +51,7 @@ if (!$arResult['SLIDER'])
 </div>
 
 <?
-if (!$arResult['SLIDER'])
+if (empty($arResult['SLIDER']))
 {
 	$this->endViewTarget();
 }
@@ -201,7 +201,7 @@ if (!$arResult['SLIDER'])
 								<?
 								if ($app["ACTIVE"] == "N")
 								{
-									if (is_array($app["PRICE"]) && !empty($app["PRICE"]) && $app["PUBLIC"] == "Y")
+									if (!empty($app["PRICE"]) && is_array($app["PRICE"]) && $app["PUBLIC"] == "Y")
 									{
 										if ($app["STATUS"] == "P")
 										{

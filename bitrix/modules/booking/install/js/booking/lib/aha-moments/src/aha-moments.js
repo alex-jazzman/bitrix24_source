@@ -40,7 +40,7 @@ class AhaMoments
 		}
 
 		return new Promise((resolve) => {
-			BannerDispatcher.critical.toQueue(async (onDone) => {
+			BannerDispatcher.high.toQueue(async (onDone) => {
 				if (!params.target?.offsetWidth)
 				{
 					onDone();

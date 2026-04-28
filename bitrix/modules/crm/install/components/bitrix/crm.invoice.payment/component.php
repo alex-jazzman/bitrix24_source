@@ -83,7 +83,7 @@ if ($arOrder)
 
 	if ($arPaySysAction = $dbPaySysAction->Fetch())
 	{
-		if ($arPaySysAction["ACTION_FILE"] <> '')
+		if ($arPaySysAction["ACTION_FILE"] <> ''  && !\Bitrix\Sale\PaySystem\Manager::isRestHandler($arPaySysAction["ACTION_FILE"]))
 		{
 			CSalePaySystemAction::InitParamArrays(
 				$arOrder,

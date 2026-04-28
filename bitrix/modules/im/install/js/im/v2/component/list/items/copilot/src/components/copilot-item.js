@@ -1,18 +1,18 @@
 import 'main.date';
 
-import { Core } from 'im.v2.application.core';
 import { Settings, Layout } from 'im.v2.const';
 import { InputActionIndicator } from 'im.v2.component.list.items.elements.input-action-indicator';
 import { ChatTitle } from 'im.v2.component.elements.chat-title';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
+import { CounterManager } from 'im.v2.lib.counter';
 
 import { MessageText } from './message-text';
 
 import '../css/copilot-item.css';
 
 import type { JsonObject } from 'main.core';
-import type { ImModelRecentItem, ImModelChat, ImModelMessage } from 'im.v2.model';
+import type { ImModelRecentItem, ImModelChat, ImModelMessage, ImModelLayout } from 'im.v2.model';
 
 // @vue/component
 export const CopilotItem = {
@@ -36,14 +36,6 @@ export const CopilotItem = {
 		{
 			return this.item;
 		},
-		formattedDate(): string
-		{
-			return this.formatDate(this.message.date);
-		},
-		formattedCounter(): string
-		{
-			return this.dialog.counter > 99 ? '99+' : this.dialog.counter.toString();
-		},
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.recentItem.dialogId, true);
@@ -52,9 +44,25 @@ export const CopilotItem = {
 		{
 			return this.$store.getters['recent/getMessage'](this.recentItem.dialogId);
 		},
-		layout(): { name: string, entityId: string }
+		layout(): ImModelLayout
 		{
 			return this.$store.getters['application/getLayout'];
+		},
+		chatCounter(): number
+		{
+			return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
+		},
+		isCounterLimitReached(): boolean
+		{
+			return this.chatCounter >= CounterManager.getCounterDisplayLimit();
+		},
+		formattedDate(): string
+		{
+			return this.formatDate(this.message.date);
+		},
+		formattedCounter(): string
+		{
+			return CounterManager.formatCounter(this.chatCounter);
 		},
 		isChatSelected(): boolean
 		{
@@ -65,13 +73,9 @@ export const CopilotItem = {
 
 			return this.layout.entityId === this.recentItem.dialogId;
 		},
-		isChatMuted(): boolean
+		isChatMarkedUnread(): boolean
 		{
-			const isMuted = this.dialog.muteList.find((element) => {
-				return element === Core.getUserId();
-			});
-
-			return Boolean(isMuted);
+			return this.$store.getters['counters/getUnreadStatus'](this.dialog.chatId);
 		},
 		hasActiveInputAction(): boolean
 		{
@@ -83,15 +87,15 @@ export const CopilotItem = {
 		},
 		showPinnedIcon(): boolean
 		{
-			return this.recentItem.pinned && this.dialog.counter === 0 && !this.recentItem.unread;
+			return this.recentItem.pinned && this.chatCounter === 0 && !this.isChatMarkedUnread;
 		},
 		showUnreadWithoutCounter(): boolean
 		{
-			return this.recentItem.unread && this.dialog.counter === 0;
+			return this.isChatMarkedUnread && this.chatCounter === 0;
 		},
 		showCounter(): boolean
 		{
-			return this.dialog.counter > 0;
+			return this.chatCounter > 0;
 		},
 		wrapClasses(): Object
 		{
@@ -142,10 +146,10 @@ export const CopilotItem = {
 					</div>
 					<div class="bx-im-list-copilot-item__content_bottom">
 						<MessageText :item="recentItem" />
-						<div :class="{'--extended': dialog.counter > 99}" class="bx-im-list-copilot-item__counter_wrap">
+						<div :class="{'--extended': isCounterLimitReached}" class="bx-im-list-copilot-item__counter_wrap">
 							<div class="bx-im-list-copilot-item__counter_container">
 								<div v-if="showPinnedIcon" class="bx-im-list-copilot-item__pinned-icon"></div>
-								<div v-else-if="showCounter" :class="{'--muted': isChatMuted}" class="bx-im-list-copilot-item__counter_number">
+								<div v-else-if="showCounter" :class="{'--muted': dialog.isMuted}" class="bx-im-list-copilot-item__counter_number">
 									{{ formattedCounter }}
 								</div>
 								<div v-else-if="showUnreadWithoutCounter" class="bx-im-list-copilot-item__counter_number --no-counter"></div>

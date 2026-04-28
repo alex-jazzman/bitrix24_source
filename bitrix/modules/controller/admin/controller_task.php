@@ -27,21 +27,23 @@ if (
 	&& $USER->CanDoOperation('controller_task_run')
 )
 {
-	$strError = '';
 	$onlyRetry = false;
 	$endTime = microtime(true) + COption::GetOptionString('controller', 'tasks_run_step_time');
 
 	require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_js.php';
 	if ($USER->CanDoOperation('controller_task_run'))
 	{
-		$sleep = 0;
 		//1. Finish partial
 		//2. Execute new tasks
 		//3. Retry failed tasks
 		//4. Run low priority tasks
 		foreach (['P', 'N', 'R', 'L'] as $status2exec)
 		{
-			$dbrTask = CControllerTask::GetList(['ID' => 'ASC'], ['=STATUS' => $status2exec]);
+			$dbrTask = CControllerTask::GetList(
+				['ID' => 'ASC'],
+				['=STATUS' => $status2exec],
+				['ID', 'RETRY_TIMEOUT', 'EXECUTED_INTERVAL']
+			);
 			while ($arTask = $dbrTask->Fetch())
 			{
 				if ($status2exec === 'R')
@@ -56,20 +58,6 @@ if (
 				$onlyRetry = false;
 
 				$status = CControllerTask::ProcessTask($arTask['ID']);
-
-				if ($status === '0' && $e = $APPLICATION->GetException())
-				{
-					$strError = GetMessage('CTRLR_TASK_ERR_LOCK') . '<br>' . $e->GetString();
-					if (mb_strpos($strError, 'PLS-00201') !== false && mb_strpos($strError, "'DBMS_LOCK'") !== false)
-					{
-						$strError .= '<br>' . GetMessage('CTRLR_TASK_ERR_LOCK_ADVICE');
-					}
-					$APPLICATION->ResetException();
-					break;
-				}
-
-				$iCntExecuted++;
-
 				while ($status === 'P')
 				{
 					$status = CControllerTask::ProcessTask($arTask['ID']);
@@ -79,14 +67,9 @@ if (
 					}
 				}
 
-				if ($status === 'F' && $arTask['RETRY_COUNT'] > 0)
+				if ($status !== 'P')
 				{
-					CControllerTask::PostponeTask($arTask['ID'], $arTask['RETRY_COUNT'] - 1);
-					$iCntExecuted--;
-				}
-				elseif ($status === 'P')
-				{
-					$iCntExecuted--;
+					$iCntExecuted++;
 				}
 
 				if (microtime(true) > $endTime)
@@ -97,12 +80,14 @@ if (
 		}
 	}
 
-	if ($strError !== '')
-	{
-		$message = new CAdminMessage($strError);
-		echo $message->Show();
-	}
-	elseif (!CControllerTask::GetList([],['=STATUS' => ['P', 'N', 'R', 'L']],['ID'],['bOnlyCount' => true]) || $onlyRetry)
+	if (
+		!CControllerTask::GetList(
+			[],
+			['=STATUS' => ['P', 'N', 'R', 'L']],
+			['ID'],
+			['bOnlyCount' => true])
+		|| $onlyRetry
+	)
 	{
 		$message = new CAdminMessage([
 			'TYPE' => 'PROGRESS',
@@ -398,7 +383,7 @@ while ($arRes = $rsData->Fetch())
 		}
 	}
 
-	$row =& $lAdmin->AddRow($arRes['ID'], $arRes);
+	$row = $lAdmin->AddRow($arRes['ID'], $arRes);
 
 	if ($arRes['STATUS'] == 'N')
 	{

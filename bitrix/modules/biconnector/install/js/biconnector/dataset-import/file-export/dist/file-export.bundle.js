@@ -77,7 +77,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  var _dataset$title;
 	  const anchorElement = document.createElement('a');
 	  anchorElement.href = link;
-	  anchorElement.download = `${(_dataset$title = dataset.title) != null ? _dataset$title : 'csv_dataset'}.csv`;
+	  anchorElement.download = `${(_dataset$title = dataset.title) != null ? _dataset$title : 'csv_table'}.csv`;
 	  main_core.Dom.append(anchorElement, document.body);
 	  anchorElement.click();
 	  main_core.Dom.remove(anchorElement);

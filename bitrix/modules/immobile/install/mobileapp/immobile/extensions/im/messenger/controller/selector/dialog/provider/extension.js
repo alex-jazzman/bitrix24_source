@@ -9,7 +9,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 
 	const { BaseSelectorProvider } = require('selector/providers/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { RecentProvider: SearchProvider } = require('im/messenger/controller/search/experimental');
+	const { ChatSearchProvider: SearchProvider } = require('im/messenger/lib/chat-search');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { DialogType } = require('im/messenger/const');
@@ -46,6 +46,14 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 			this.store = serviceLocator.get('core').getMessengerStore();
 
 			this.searchProvider = new SearchProvider({
+				filter: {
+					exceptDialogTypes: [
+						DialogType.copilot,
+						DialogType.lines,
+						DialogType.comment,
+						DialogType.tasksTask,
+					],
+				},
 				loadSearchProcessed: this.#onLocalSearchComplete,
 				loadSearchComplete: this.#onServerSearchComplete,
 			});

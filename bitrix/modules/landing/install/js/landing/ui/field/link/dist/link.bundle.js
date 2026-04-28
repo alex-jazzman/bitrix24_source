@@ -434,7 +434,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        } else {
 	          this.targetInput.setValue(Link.TARGET_BLANK);
 	        }
-	      } else if (type === 'MAINPAGE') {
+	      } else if (type === 'VIBE') {
 	        this.targetInput.disable();
 	        this.targetInput.setValue(Link.TARGET_BLANK);
 	      } else {

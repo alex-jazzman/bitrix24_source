@@ -22,13 +22,13 @@ export class SessionPullHandler
 
 		if (!isClosed)
 		{
-			void this.store.dispatch('recentOpenLines/set', {
+			void this.store.dispatch('openLines/recent/set', {
 				id: params.chat.dialogId,
 				messageId: params.message.id,
 				sessionId: sessionItem.id,
 			});
 		}
 
-		void this.store.dispatch('sessions/set', sessionItem);
+		void this.store.dispatch('openLines/sessions/set', sessionItem);
 	}
 }

@@ -6,7 +6,7 @@ import { Dom, debounce } from 'main.core';
 
 export const PreviewTable = {
 	props: {
-		headers: {
+		fields: {
 			type: Array,
 			required: false,
 			default: [],
@@ -20,6 +20,11 @@ export const PreviewTable = {
 			type: Array,
 			required: false,
 			default: [],
+		},
+		sourceType: {
+			type: String,
+			required: false,
+			default: '',
 		},
 	},
 	data()
@@ -61,7 +66,12 @@ export const PreviewTable = {
 	template: `
 		<div class="dataset-preview-table" ref="table">
 			<table class="dataset-preview-table__table">
-				<TableHeader v-if="headers.length > 0" :headers="headers" :column-visibility="displayedColumnVisibility" />
+				<TableHeader
+					v-if="fields.length > 0"
+					:fields="fields"
+					:column-visibility="displayedColumnVisibility"
+					:source-type="sourceType"
+				/>
 				<tbody>
 					<TableRow v-for="row in rows" :row="row" :column-visibility="displayedColumnVisibility" />
 				</tbody>

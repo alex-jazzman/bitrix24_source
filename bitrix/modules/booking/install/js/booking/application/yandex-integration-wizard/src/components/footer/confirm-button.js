@@ -29,6 +29,7 @@ export const ConfirmButton = {
 			:size="ButtonSize.LARGE"
 			:color="ButtonColor.PRIMARY"
 			:disabled
+			data-element="booking-yiw-btn-confirm"
 			noCaps
 			useAirDesign
 		/>

@@ -11,7 +11,7 @@ import { getUserType } from './helpers/get-user-type';
 import { getCategoryByChatType } from './helpers/get-category-by-chat-type';
 import { getChatType } from './helpers/get-chat-type';
 import { isAiAssistant } from './helpers/is-ai-assistant';
-import { isNotes } from './helpers/is-notes';
+import { isSelfChat } from './helpers/is-self-chat';
 
 import { CollabEntities } from './classes/collab-entities';
 import { ChatEntities } from './classes/chat-entities';
@@ -40,6 +40,8 @@ import { MessageSearch } from './classes/message-search';
 import { RecentContextMenu } from './classes/recent-context-menu';
 import { FormatToolbar } from './classes/format-toolbar';
 import { RecentSearch } from './classes/recent-search';
+import { Mention } from './classes/mention';
+import { TaskComments } from './classes/task-comments';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -82,6 +84,8 @@ export class Analytics
 	recentContextMenu: RecentContextMenu = new RecentContextMenu();
 	formatToolbar: FormatToolbar = new FormatToolbar();
 	recentSearch: RecentSearch = new RecentSearch();
+	mention: Mention = new Mention();
+	taskComments: TaskComments = new TaskComments();
 
 	static #instance: Analytics;
 
@@ -167,7 +171,7 @@ export class Analytics
 			p2: getUserType(),
 		};
 
-		if (!isNotes(dialog.dialogId))
+		if (!isSelfChat(dialog.dialogId))
 		{
 			params.p5 = `chatId_${dialog.chatId}`;
 		}
@@ -200,7 +204,7 @@ export class Analytics
 
 	onTypeMessage(dialog: ImModelChat): void
 	{
-		if (!isNotes(dialog.dialogId) || this.#chatsWithTyping.has(dialog.dialogId))
+		if (!isSelfChat(dialog.dialogId) || this.#chatsWithTyping.has(dialog.dialogId))
 		{
 			return;
 		}

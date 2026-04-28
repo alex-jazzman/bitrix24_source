@@ -105,7 +105,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  aiAssistantMcpSelectorAvailable: 'aiAssistantMcpSelectorAvailable',
 	  videoNoteTranscriptionAvailable: 'videoNoteTranscriptionAvailable',
 	  chatSharedLinkAvailable: 'chatSharingLinkAvailable',
-	  isCopilotFileUploadAvailable: 'isCopilotFileUploadAvailable'
+	  isCopilotFileUploadAvailable: 'isCopilotFileUploadAvailable',
+	  isTaskCardAvailable: 'isMountedTasksCardAvailable',
+	  isAddingUserByMentionAvailable: 'isAddingUserByMentionAvailable'
 	};
 	const FeatureManager = {
 	  chatHistory: ChatHistoryManager,

@@ -1,3 +1,4 @@
+import type { SetupTemplateData } from '../../../setup-template/src/types';
 import { ACTION_TYPE, AJAX_REQUEST_TYPE, GRID_API_ACTION } from './constants';
 
 export type AgentInfoFieldType = {
@@ -122,6 +123,7 @@ export type AddRowOptions = {
 export type FetchAiAgentRowResponse = {
 	columns: GridColumns,
 	actions: GridRowAction[],
+	setupTemplateData: ?SetupTemplateData,
 };
 
 export type CopyAndStartActionResponse = FetchAiAgentRowResponse;
@@ -170,4 +172,10 @@ export type RagFileStatusDataType = {
 	status: ?string,
 	statusMessage: ?string,
 	iconClass: string,
+};
+
+export type StartAgentResponse = {
+	data: {
+		setupTemplateData: ?SetupTemplateData,
+	}
 };

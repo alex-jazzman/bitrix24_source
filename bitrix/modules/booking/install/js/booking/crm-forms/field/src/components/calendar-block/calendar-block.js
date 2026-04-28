@@ -56,6 +56,17 @@ export const CalendarBlock = {
 			return this.loc('BOOKING_CRM_FORMS_FIELD_DATE_TIME_TITLE');
 		},
 	},
+	watch: {
+		date(nextDate, prevDate): void
+		{
+			if (!(nextDate instanceof Date) || !(prevDate instanceof Date) || nextDate === prevDate || !this.datePicker)
+			{
+				return;
+			}
+
+			this.datePicker.selectDate(nextDate);
+		},
+	},
 	created(): void
 	{
 		this.viewDate = this.date;

@@ -30,3 +30,61 @@
 	margin-bottom: 14px;
 	text-align: center;
 }
+
+.biconnector-link-superset-wrapper {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	flex-grow: 1;
+	min-height: 100%;
+	box-sizing: border-box;
+}
+
+.page__workarea-content:has(.biconnector-link-superset-wrapper) {
+	display: flex;
+	flex-direction: column;
+}
+
+.biconnector-link-superset-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	max-width: 540px;
+	padding: 0 18px;
+}
+
+.biconnector-link-superset-icon {
+	display: block;
+	width: 200px;
+	height: 162px;
+	background-image: url("svg/link_superset.svg");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	margin-bottom: 14px;
+}
+
+.biconnector-link-superset-title {
+	font-size: 19px;
+	line-height: 26px;
+	font-weight: 500;
+	color: #333;
+	text-align: center;
+	margin-bottom: 10px;
+	letter-spacing: -0.2px;
+}
+
+.biconnector-link-superset-description {
+	font-size: 16px;
+	line-height: 21px;
+	font-weight: 400;
+	color: #525c69;
+	text-align: center;
+	margin-bottom: 20px;
+	letter-spacing: -0.1px;
+}
+
+.biconnector-link-superset-button-container {
+	padding-top: 6px;
+}

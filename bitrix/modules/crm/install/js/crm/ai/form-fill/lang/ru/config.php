@@ -13,4 +13,4 @@ $MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CLOSE"] = "Закрыть";
 $MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CANCEL"] = "Отмена";
 $MESS["CRM_AI_FORM_FILL_MERGER_TRANSCRIPTION"] = "Расшифровка";
 $MESS["CRM_AI_FORM_FILL_MERGER_RESUME"] = "Резюме";
-$MESS["CRM_AI_FORM_FILL_MERGER_TITLE"] = "CoPilot предлагает обновить данные в полях";
+$MESS["CRM_AI_FORM_FILL_MERGER_TITLE"] = "#COPILOT_NAME# предлагает обновить данные в полях";

@@ -17,7 +17,7 @@ jn.define('im/messenger/provider/rest/openlines', (require, exports, module) => 
 				throw new Error('OpenLinesRest: userCode must be a filled string.');
 			}
 
-			return BX.rest.callMethod(RestMethod.openlinesDialogGet, { USER_CODE: userCode });
+			return BX.rest.callMethod(RestMethod.imopenlinesDialogGet, { USER_CODE: userCode });
 		}
 
 		getBySessionId(sessionId)
@@ -27,7 +27,7 @@ jn.define('im/messenger/provider/rest/openlines', (require, exports, module) => 
 				throw new Error('OpenLinesRest: sessionId must be a number.');
 			}
 
-			return BX.rest.callMethod(RestMethod.openlinesDialogGet, { SESSION_ID: sessionId });
+			return BX.rest.callMethod(RestMethod.imopenlinesDialogGet, { SESSION_ID: sessionId });
 		}
 	}
 

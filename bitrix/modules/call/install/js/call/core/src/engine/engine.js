@@ -425,6 +425,8 @@ class Engine
 					const callFactory = this.#getCallFactory(newProvider);
 					const instanceId = Util.getUuidv4();
 
+					CallTokenManager.setToken(chatId, token);
+
 					Util.getCallConnectionData({
 						instanceId,
 						callType,
@@ -810,11 +812,11 @@ class Engine
 		{
 			DesktopApi.writeToLogFile(BX.message('USER_ID') + '.video.log', text);
 		}
-		
+
 		if ((CallEngine.debugFlag || Util.isConsoleLogsEnabled()) && console)
-		{			
+		{
 			const a = ['Call log [' + Util.getTimeForLog() + ']: '];
-			console.warn.apply(this, a.concat(Array.prototype.slice.call(arguments)));			
+			console.warn.apply(this, a.concat(Array.prototype.slice.call(arguments)));
 		}
 	};
 

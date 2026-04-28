@@ -58,7 +58,7 @@ export class InitManager
 		this.#initTariffRestrictions();
 		this.#initAnchors();
 		this.#initCallManager();
-		this.#initAvailableAIModelsList();
+		this.#initCopilot();
 		this.#initPreloadedEntities();
 		this.#initCurrentUserAdminStatus();
 		this.#initBindings();
@@ -129,9 +129,10 @@ export class InitManager
 		void Core.getStore().dispatch('messages/anchors/setAnchors', { anchors });
 	}
 
-	#initAvailableAIModelsList(): void
+	#initCopilot(): void
 	{
-		const { copilot }: ApplicationDataType = Core.getApplicationData();
+		const { copilot } = Core.getApplicationData();
+		void Core.getStore().dispatch('copilot/setName', copilot.botName);
 
 		if (!copilot.availableEngines)
 		{

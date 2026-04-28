@@ -360,5 +360,3 @@ endif;
 <?php endif;
 
 echo \CCrmComponentHelper::prepareInitReceiverRepositoryJS(\CCrmOwnerType::Deal, (int)($arResult['ENTITY_ID'] ?? 0));
-
-include 'mango_popup.php'; // temporary notification. Will be removed soon

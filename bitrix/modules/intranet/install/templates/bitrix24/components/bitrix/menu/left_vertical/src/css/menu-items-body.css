@@ -7,7 +7,8 @@
 .menu-items-body {
 	box-sizing: border-box;
 	min-width: calc(var(--menu-width-expanded) - var(--menu-items-block-padding-x));
-	margin-bottom: 14px;
+	padding-bottom: 6px;
+	margin-bottom: 8px;
 	padding-right: var(--menu-scroll-width);
 	display: flex;
 	flex-direction: column;
@@ -34,8 +35,8 @@
 		--menu-scroll-width: 14px;
 	}
 
-	.bx-mac .app.menu-collapsed-mode .menu-items-body,
-	.bx-mac .app.menu-animation-closing-mode .menu-items-body {
+	.bx-mac .root.menu-collapsed-mode .menu-items-body,
+	.bx-mac .root.menu-animation-closing-mode .menu-items-body {
 		scrollbar-width: none;
 	}
 
@@ -44,8 +45,8 @@
 	}
 }
 
-.app.menu-collapsed-mode:not(.menu-sliding-mode) .menu-items-body,
-.app.menu-animation-closing-mode .menu-items-body {
+.root.menu-collapsed-mode:not(.menu-sliding-mode) .menu-items-body,
+.root.menu-animation-closing-mode .menu-items-body {
 	min-width: 0;
 }
 

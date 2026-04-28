@@ -764,8 +764,9 @@
 
 .ui-selector-item-indicator-hidden {
 	background-image: none !important;
-	-webkit-mask-image: none;
-	        mask-image: none;
+	-webkit-mask-image: none !important;
+	        mask-image: none !important;
+	background-color: transparent !important;
 }
 
 .ui-selector-item-children {

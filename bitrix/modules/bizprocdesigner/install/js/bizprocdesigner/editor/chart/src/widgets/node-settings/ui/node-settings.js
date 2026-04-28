@@ -40,7 +40,7 @@ export const NodeSettings = {
 	},
 	computed:
 	{
-		...mapState(useDiagramStore, ['documentType']),
+		...mapState(useDiagramStore, ['documentType', 'connections']),
 		...mapState(useNodeSettingsStore, [
 			'block',
 			'isShown',
@@ -71,6 +71,7 @@ export const NodeSettings = {
 			'updateBlockActivityField',
 			'setPorts',
 			'getBlockAncestorsByInputPortId',
+			'deleteConnectionByBlockIdAndPortId',
 		]),
 		...mapActions(useAppStore, [
 			'hideRightPanel',
@@ -80,8 +81,9 @@ export const NodeSettings = {
 			this.toggleRuleSettingsVisibility(true);
 			this.setCurrentRuleId(ruleId);
 		},
-		onDeleteRule(ruleId: string): void
+		async onDeleteRule(ruleId: string): Promise<void>
 		{
+			const connections = [...this.connections];
 			this.deletePort(ruleId);
 			const { outputPortsToAdd, outputPortsToDelete } = this.deleteRuleSettings(ruleId);
 			outputPortsToAdd.values().forEach(({ portId, title }) => {
@@ -89,7 +91,13 @@ export const NodeSettings = {
 			});
 			outputPortsToDelete.keys().forEach((portId) => {
 				this.deletePort(portId);
+				this.deleteConnectionByBlockIdAndPortId(this.block.id, portId);
 			});
+			this.deleteConnectionByBlockIdAndPortId(this.block.id, ruleId);
+			if (this.connections.length < connections.length)
+			{
+				await this.publicDraft();
+			}
 		},
 		async onSaveForm(): Promise<void>
 		{

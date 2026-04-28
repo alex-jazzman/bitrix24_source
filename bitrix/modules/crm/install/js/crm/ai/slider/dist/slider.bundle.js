@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,ui_buttons,ui_sidepanel,ui_sidepanel_layout,crm_integration_ui_settings) {
+(function (exports,crm_ai_nameService,crm_integration_ui_settings,main_core,ui_buttons,ui_sidepanel,ui_sidepanel_layout) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -20,7 +20,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  function Slider(options) {
 	    babelHelpers.classCallCheck(this, Slider);
 	    babelHelpers.defineProperty(this, "DEFAULT_OPTIONS", {
-	      title: main_core.Loc.getMessage('CRM_COMMON_COPILOT'),
+	      title: crm_ai_nameService.NameService.copilotName(),
 	      allowChangeTitle: false,
 	      allowChangeHistory: false,
 	      cacheable: false,
@@ -247,5 +247,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Slider = Slider;
 
-}((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX,BX.UI,BX,BX.UI.SidePanel,BX.Crm.Integration.UI));
+}((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX.Crm.AI,BX.Crm.Integration.UI,BX,BX.UI,BX,BX.UI.SidePanel));
 //# sourceMappingURL=slider.bundle.js.map

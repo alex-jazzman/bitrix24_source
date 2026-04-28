@@ -1,17 +1,17 @@
 import { Type } from 'main.core';
-import { FileType } from 'im.v2.const';
-import { UnsupportedMessage } from 'im.v2.component.message.unsupported';
-import { UploadingService } from 'im.v2.provider.service.uploading';
 import { UploaderFile } from 'ui.uploader.core';
 
-import { MediaMessage } from './components/media-message';
-import { BaseFileMessage } from './components/base-file-message';
+import { UnsupportedMessage } from 'im.v2.component.message.unsupported';
+import { FileType } from 'im.v2.const';
+import { type ImModelMessage, type ImModelFile, type ImModelChat } from 'im.v2.model';
+import { UploadingService } from 'im.v2.provider.service.uploading';
+
 import { AudioMessage } from './components/audio-message';
-import { VideoNoteMessage } from './components/video-note-message';
+import { BaseFileMessage } from './components/base-file-message';
 import { FileCollectionMessage } from './components/file-collection-message';
 import { MediaContent } from './components/media-content';
-
-import type { ImModelMessage, ImModelFile, ImModelChat } from 'im.v2.model';
+import { MediaMessage } from './components/media-message';
+import { VideoNoteMessage } from './components/video-note-message';
 
 const FileMessageType = Object.freeze({
 	media: 'MediaMessage',
@@ -160,15 +160,13 @@ export const FileMessage = {
 				if (Type.isString(lastMessageId) || Type.isNumber(lastMessageId))
 				{
 					void this.$store.dispatch('recent/update', {
-						id: chat.dialogId,
+						dialogId: chat.dialogId,
 						fields: { messageId: lastMessageId },
 					});
 				}
 				else
 				{
-					void this.$store.dispatch('recent/hide', {
-						id: chat.dialogId,
-					});
+					void this.$store.dispatch('recent/hide', { dialogId: chat.dialogId });
 				}
 			}
 		},

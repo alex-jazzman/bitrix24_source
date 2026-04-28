@@ -3,12 +3,11 @@
  */
 jn.define('im/messenger/controller/recent/service/server-load/lib/utils', (require, exports, module) => {
 	const { Type } = require('type');
-	const { CounterHelper } = require('im/messenger/lib/helper');
 
 	class ServerLoadUtils
 	{
 		/**
-		 * @param {Array<messagesAutoDeleteConfigs>} configs
+		 * @param {Array<MessagesAutoDeleteConfigs>} configs
 		 * @return {Object}
 		 */
 		static prepareAutoDeleteConfigs(configs)
@@ -39,21 +38,6 @@ jn.define('im/messenger/controller/recent/service/server-load/lib/utils', (requi
 			}
 
 			return map;
-		}
-
-		/**
-		 * @param {object} dialogItem
-		 * @return {CounterModelState}
-		 */
-		static buildCounterState(dialogItem)
-		{
-			return {
-				chatId: dialogItem.chatId ?? dialogItem.id ?? 0,
-				type: CounterHelper.getCounterTypeByDialogType(dialogItem.type),
-				parentChatId: dialogItem.parent_chat_id ?? dialogItem.parentChatId ?? 0,
-				counter: dialogItem.counter,
-				disabled: CounterHelper.getDisabledByMuteList(dialogItem.muteList ?? dialogItem.mute_list),
-			};
 		}
 
 		/**

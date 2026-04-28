@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Intranet\Enum\InvitationType;
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Intranet\CurrentUser;
 use Bitrix\Main\Application;
@@ -18,14 +19,15 @@ class Analytics
 	private const ANALYTIC_PARAM_EMPLOYEE_COUNT = 'employeeCount_';
 	private const ANALYTIC_CATEGORY_REGISTRATION = 'registration';
 	private const ANALYTIC_EVENT_INVITATION = 'invitation';
+	private const ANALYTIC_EVENT_REGISTRATION = 'registration';
 	private const ANALYTIC_INVITATION_TYPE_EMAIL = 'email';
 	private const ANALYTIC_INVITATION_TYPE_PHONE = 'phone';
-	const ANALYTIC_EVENT_CHANGE_QUICK_REG = 'change_quick_reg';
-	const ANALYTIC_CATEGORY_SETTINGS = 'settings';
-	const ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_EMAIL = 'tab_by_email';
-	const ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_MASS = 'tab_mass';
-	const ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_DEPARTMENT = 'tab_department';
-	const ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_INTEGRATOR = 'tab_integrator';
+	public const ANALYTIC_EVENT_CHANGE_QUICK_REG = 'change_quick_reg';
+	public const ANALYTIC_CATEGORY_SETTINGS = 'settings';
+	public const ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_EMAIL = 'tab_by_email';
+	public const ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_MASS = 'tab_mass';
+	public const ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_DEPARTMENT = 'tab_department';
+	public const ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_INTEGRATOR = 'tab_integrator';
 
 	private function send(array $data): void
 	{
@@ -73,45 +75,91 @@ class Analytics
 	}
 
 	public function sendRegistration(
-		int $userId,
-		string $category = self::ANALYTIC_CATEGORY_REGISTRATION,
-		string $event = self::ANALYTIC_CATEGORY_REGISTRATION,
-		string $status = '',
-		array $userData = [],
-		bool $isGroupSelected = false,
+		bool $isSuccess,
+		bool $withDepartments,
+		bool $withGroups,
+		bool $withInvite,
+		?\Bitrix\Intranet\Entity\User $invitedUser = null,
 	): void
 	{
+		$event = new AnalyticsEvent(
+			event: self::ANALYTIC_EVENT_REGISTRATION,
+			tool: self::ANALYTIC_TOOL,
+			category: self::ANALYTIC_CATEGORY_REGISTRATION,
+		);
 		$analyticData = $this->getData();
-		$analytic = [
-			'tool' => self::ANALYTIC_TOOL,
-			'category' => $category,
-			'event' => $event,
-			'section' => $analyticData['source'] ?? '',
-			'p1' => $this->getAdmin(),
-			'p2' => isset($userData['ADD_SEND_PASSWORD']) && $userData['ADD_SEND_PASSWORD'] === 'Y' ? 'Сonfirm_Y' : 'Сonfirm_N',
-			'p3' => isset($userData['UF_DEPARTMENT']) && count($userData['UF_DEPARTMENT']) > 0 ? 'department_Y' : 'department_N',
-			'p4' => $isGroupSelected ? 'group_Y' : 'group_N',
-			'p5' => 'userId_' . $userId,
-		];
+		$event
+			->setStatus($isSuccess ? 'success' : 'fail')
+			->setSection($analyticData['section'] ?? '')
+			->setSubSection('email')
+			->setP1($this->getAdmin())
+			->setP2($withInvite ? 'withoutInvite_N' : 'withoutInvite_Y')
+			->setP3($withDepartments ? 'department_Y' : 'department_N')
+			->setP4($withGroups ? 'group_Y' : 'group_N')
+		;
 
-		if ($status !== '')
+		if ($invitedUser)
 		{
-			$success = 'success';
-			$fail = 'fail';
-			if ($event === self::ANALYTIC_EVENT_CHANGE_QUICK_REG) {
-				$success = 'on';
-				$fail = 'off';
-			}
-			$analytic['status'] = $status === 'Y' ? $success : $fail;
+			$event->setP5('userId_' . $invitedUser->getId());
 		}
-		$analytics[] = $analytic;
-		$this->send($analytics);
+
+		$event->send();
+	}
+
+	public function sendChangeQuickRegistration(bool $isEnabled): void
+	{
+		$event = new AnalyticsEvent(
+			event: self::ANALYTIC_EVENT_CHANGE_QUICK_REG,
+			tool: self::ANALYTIC_TOOL,
+			category: self::ANALYTIC_CATEGORY_INVITATION,
+		);
+		$analyticData = $this->getData();
+		$event
+			->setStatus($isEnabled ? 'on' : 'off')
+			->setSection($analyticData['section'] ?? '')
+			->setP1($this->getAdmin())
+		;
+		$event->send();
+	}
+
+	public function sendInvitationByContacts(
+		bool $isSuccess,
+		int $totalCount,
+		bool $withDepartments,
+		bool $withGroups,
+		?\Bitrix\Intranet\Entity\User $invitedUser = null,
+	): void
+	{
+		$event = new AnalyticsEvent(
+			event: self::ANALYTIC_EVENT_INVITATION,
+			tool: self::ANALYTIC_TOOL,
+			category: self::ANALYTIC_CATEGORY_INVITATION,
+		);
+		$analyticData = $this->getData();
+		$event
+			->setType($analyticData['type'] ?? '')
+			->setStatus($isSuccess ? 'success' : 'fail')
+			->setSection($analyticData['section'] ?? '')
+			->setP1($this->getAdmin())
+			->setP2('employeeCount_' . $totalCount)
+			->setP3($withDepartments ? 'department_Y' : 'department_N')
+			->setP4($withGroups ? 'group_Y' : 'group_N')
+		;
+
+		if ($invitedUser)
+		{
+			$event->setP5('userId_' . $invitedUser->getId());
+			$event->setSubSection($invitedUser->getInvitedVia()?->value ?? '');
+		}
+
+		$event->send();
 	}
 
 	private function getData(): array
 	{
 		$analyticsData = Application::getInstance()->getContext()->getRequest()->getPost('analyticsData');
 		$result = [];
+
 		if (is_array($analyticsData))
 		{
 			$result = $analyticsData;
@@ -169,7 +217,6 @@ class Analytics
 	{
 		return CurrentUser::get()->isAdmin()
 			? self::ANALYTIC_PARAM_IS_ADMIN_Y
-			: self::ANALYTIC_PARAM_IS_ADMIN_N
-		;
+			: self::ANALYTIC_PARAM_IS_ADMIN_N;
 	}
 }

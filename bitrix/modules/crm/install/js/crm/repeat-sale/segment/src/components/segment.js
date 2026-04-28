@@ -7,10 +7,12 @@ import { InfoHelper } from 'ui.info-helper';
 import { UI } from 'ui.notification';
 import { TextEditor } from 'ui.text-editor';
 
+import { AssignmentType } from '../assignment-type';
 import { AdditionalInfoComponent } from './common/additional-info-component';
 import { AiSwitcherComponent } from './common/ai-switcher-component';
 import { TextEditorWrapperComponent } from './common/text-editor-wrapper-component';
 import { Button, ButtonEvents } from './navigation/button';
+import { AssignmentTypeSelector } from './selector/assignment-type-selector';
 import { CallAssessmentSelector } from './selector/call-assessment-selector';
 import { CategorySelector } from './selector/category-selector';
 import { StageSelector } from './selector/stage-selector';
@@ -21,6 +23,7 @@ export const Segment = {
 		Button,
 		AdditionalInfoComponent,
 		AiSwitcherComponent,
+		AssignmentTypeSelector,
 		TextEditorWrapperComponent,
 		CallAssessmentSelector,
 		CategorySelector,
@@ -78,11 +81,17 @@ export const Segment = {
 
 			currentCategoryId: segment.entityCategoryId ?? firstCategory.id,
 			currentStageId: segment.entityStageId ?? this.getFirstAvailableCategoryStageId(firstCategory),
+			assignmentTypeId: segment.assignmentTypeId ?? AssignmentType.byUser,
 			assignmentUserIds: new Set(segment.assignmentUserIds ?? []),
 			currentEntityTitlePattern: segment.entityTitlePattern ?? null,
 			currentCallAssessmentId: segment.callAssessmentId ?? null,
 			currentIsAiEnabled: isAiEnabled,
 		};
+	},
+
+	created(): void
+	{
+		this.assignmentType = AssignmentType;
 	},
 
 	mounted(): void
@@ -126,6 +135,7 @@ export const Segment = {
 				entityStageId: this.currentStageId,
 				assignmentUserIds: [...this.assignmentUserIds.values()],
 				entityTitlePattern: this.currentEntityTitlePattern,
+				assignmentTypeId: this.assignmentTypeId,
 				callAssessmentId: this.currentCallAssessmentId,
 				isAiEnabled: this.currentIsAiEnabled,
 			};
@@ -193,7 +203,7 @@ export const Segment = {
 		},
 		validate(data: Object): boolean
 		{
-			if (!Type.isArrayFilled(data.assignmentUserIds))
+			if (!Type.isArrayFilled(data.assignmentUserIds) && data.assignmentTypeId === AssignmentType.byUser)
 			{
 				UI.Notification.Center.notify({
 					content: this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR'),
@@ -249,6 +259,10 @@ export const Segment = {
 		getFirstAvailableCategoryStageId(category: Object): string
 		{
 			return category.items[0].id;
+		},
+		onSelectAssignmentType(type: Object): void
+		{
+			this.assignmentTypeId = type.id;
 		},
 		onSelectAssignmentUser(user: Object): void
 		{
@@ -375,11 +389,27 @@ export const Segment = {
 				dealHelp: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_HELP'),
 				sectionTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_SECTION_TITLE'),
 				stageTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_STAGE_TITLE'),
-				dealAssignedTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE'),
+				dealAssignedTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE_MSGVER_1'),
 				dealTitlePattern: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_NAME_PATTERN_TITLE'),
 				assessmentTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_TITLE'),
 				assessmentDescription: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_DESCRIPTION'),
 			};
+		},
+		assignmentTypes(): Array
+		{
+			const types = [
+				{ id: AssignmentType.byClient, message: 'CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TYPE_BY_CLIENT' },
+				{ id: AssignmentType.byClientLastDeal, message: 'CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TYPE_BY_CLIENT_LAST_DEAL' },
+				{ id: AssignmentType.byUser, message: 'CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TYPE_BY_USER' },
+			];
+
+			return types.map(({ id, message }) => ({
+				id,
+				title: this.$Bitrix.Loc.getMessage(message),
+				entityId: 'type',
+				tabs: 'types',
+				selected: this.assignmentTypeId === id,
+			}));
 		},
 	},
 
@@ -494,6 +524,24 @@ export const Segment = {
 								<div class="crm-repeat-sale__segment-field-title">
 									{{messages.dealAssignedTitle}}
 								</div>
+								<AssignmentTypeSelector
+									:current-type-id="assignmentTypeId"
+									:types="assignmentTypes"
+									:read-only="readOnly"
+									:half-width="true"
+									:enable-search="false"
+									:show-input-icon="false"
+									:use-item-max-size="false"
+									@onSelectItem="onSelectAssignmentType"
+								/>
+							</div>
+						</div>
+						
+						<div 
+							v-if="assignmentTypeId === assignmentType.byUser"
+							class="crm-repeat-sale__segment-fields-row"
+						>
+							<div class="crm-repeat-sale__segment-field">
 								<UserSelector
 									:user-ids="[...assignmentUserIds.values()]"
 									:read-only="readOnly"

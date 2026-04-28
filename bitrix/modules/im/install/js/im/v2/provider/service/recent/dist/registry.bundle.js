@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_layout,main_core,im_v2_const,im_v2_lib_copilot,im_v2_lib_logger,im_v2_lib_rest,im_v2_lib_user,im_v2_application_core) {
+(function (exports,im_v2_lib_layout,main_core,im_v2_lib_copilot,im_v2_lib_logger,im_v2_lib_rest,im_v2_lib_user,im_v2_application_core,im_v2_const) {
 	'use strict';
 
 	var _restResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restResult");
@@ -232,7 +232,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _prepareGroupChat2(item) {
 	  return {
 	    ...item.chat,
-	    counter: item.counter,
 	    dialogId: item.id
 	  };
 	}
@@ -244,7 +243,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    dialogId: item.id,
 	    name: item.user.name,
 	    type: im_v2_const.ChatType.user,
-	    counter: item.counter,
 	    role: im_v2_const.UserRole.member,
 	    backgroundId: item.chat.background_id,
 	    textFieldEnabled: item.chat.text_field_enabled,
@@ -293,9 +291,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 
 	  // region public
-	  getCollection() {
-	    return im_v2_application_core.Core.getStore().getters['recent/getRecentCollection'];
-	  }
 	  async loadFirstPage({
 	    ignorePreloadedItems = false
 	  } = {}) {
@@ -337,7 +332,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return;
 	    }
 	    void im_v2_application_core.Core.getStore().dispatch('recent/hide', {
-	      id: dialogId
+	      dialogId
 	    });
 	    const chatIsOpened = im_v2_application_core.Core.getStore().getters['application/isChatOpen'](dialogId);
 	    if (chatIsOpened) {
@@ -376,11 +371,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      LIMIT: this.itemsPerPage,
 	      LAST_MESSAGE_DATE: firstPage ? null : this.lastMessageDate,
 	      GET_ORIGINAL_TEXT: 'Y',
-	      PARSE_TEXT: 'Y'
+	      PARSE_TEXT: 'Y',
+	      WITH_COUNTERS: 'N'
 	    };
 	  }
-	  getModelSaveMethod() {
-	    return 'recent/setRecent';
+	  saveRecentItems(recentItems) {
+	    return im_v2_application_core.Core.getStore().dispatch('recent/setCollection', {
+	      type: im_v2_const.RecentType.default,
+	      items: recentItems
+	    });
 	  }
 	  updateModels(rawData) {
 	    const extractor = new RecentDataExtractor({
@@ -404,7 +403,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const autoDeletePromise = im_v2_application_core.Core.getStore().dispatch('chats/autoDelete/set', messagesAutoDeleteConfigs);
 	    const messagesPromise = im_v2_application_core.Core.getStore().dispatch('messages/store', messages);
 	    const filesPromise = im_v2_application_core.Core.getStore().dispatch('files/set', files);
-	    const recentPromise = im_v2_application_core.Core.getStore().dispatch(this.getModelSaveMethod(), recentItems);
+	    const recentPromise = this.saveRecentItems(recentItems);
 	    const stickersPromise = im_v2_application_core.Core.getStore().dispatch('stickers/messages/set', stickerMessages);
 	    const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	    const copilotPromise = copilotManager.handleRecentListResponse(copilot);
@@ -492,8 +491,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getRestMethodName() {
 	    throw new Error('BaseRecentList: you should implement "getRestMethodName" for child class');
 	  }
-	  getRecentSaveActionName() {
-	    throw new Error('BaseRecentList: you should implement "getRecentSaveActionName" for child class');
+	  saveRecentItems(recentItems) {
+	    throw new Error('BaseRecentList: you should implement "saveRecentItems" for child class');
 	  }
 	  getQueryParams(firstPage = false) {
 	    return {
@@ -551,7 +550,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const autoDeletePromise = im_v2_application_core.Core.getStore().dispatch('chats/autoDelete/set', messagesAutoDeleteConfigs);
 	  const messagesPromise = im_v2_application_core.Core.getStore().dispatch('messages/store', messages);
 	  const filesPromise = im_v2_application_core.Core.getStore().dispatch('files/set', files);
-	  const recentPromise = im_v2_application_core.Core.getStore().dispatch(this.getRecentSaveActionName(), recentItems);
+	  const recentPromise = this.saveRecentItems(recentItems);
 	  const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	  const copilotPromise = copilotManager.handleRecentListResponse(copilot);
 	  return Promise.all([usersPromise, chatsPromise, messagesPromise, filesPromise, recentPromise, autoDeletePromise, copilotPromise]);
@@ -618,11 +617,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      UNREAD_ONLY: 'Y'
 	    };
 	  }
-	  getModelSaveMethod() {
-	    return 'recent/setUnread';
-	  }
-	  getCollection() {
-	    return im_v2_application_core.Core.getStore().getters['recent/getUnreadCollection'];
+	  saveRecentItems(recentItems) {
+	    return im_v2_application_core.Core.getStore().dispatch('recent/setUnreadCollection', {
+	      type: im_v2_const.RecentType.default,
+	      items: recentItems
+	    });
 	  }
 	}
 	UnreadRecentService.instance = null;
@@ -631,5 +630,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.BaseRecentService = BaseRecentService;
 	exports.UnreadRecentService = UnreadRecentService;
 
-}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application));
+}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
 //# sourceMappingURL=registry.bundle.js.map

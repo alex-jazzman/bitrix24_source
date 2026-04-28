@@ -4,6 +4,8 @@ define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
+use Bitrix\Crm\Integration\BizProc\Starter\CrmStarter;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Service\Container;
@@ -1814,13 +1816,17 @@ elseif($action == 'SAVE_EMAIL')
 				if ($contactId > 0)
 				{
 					$commEntityType = CCrmOwnerType::ContactName;
-					$commEntityID   = $contactId;
+					$commEntityID = $contactId;
 
-					$bizprocErrors = [];
-					\CCrmBizProcHelper::autostartWorkflows(
-						CCrmOwnerType::Contact, $contactId,
-						\CCrmBizProcEventType::Create,
-						$bizprocErrors
+					$starter = new CrmStarter(
+						new DocumentDto(CCrmOwnerType::Contact, (int)$contactId)
+					);
+					$starter->runProcess(
+						new \Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+							actualFields: $contactFields,
+							userId: (int)$userID,
+						),
+						\CCrmBizProcEventType::Create
 					);
 				}
 			}
@@ -1860,17 +1866,18 @@ elseif($action == 'SAVE_EMAIL')
 				if ($leadId > 0)
 				{
 					$commEntityType = CCrmOwnerType::LeadName;
-					$commEntityID   = $leadId;
+					$commEntityID = $leadId;
 
-					$bizprocErrors = [];
-					\CCrmBizProcHelper::autostartWorkflows(
-						CCrmOwnerType::Lead, $leadId,
-						\CCrmBizProcEventType::Create,
-						$bizprocErrors
+					$starter = new CrmStarter(
+						new DocumentDto(CCrmOwnerType::Lead, (int)$leadId)
 					);
-
-					$starter = new \Bitrix\Crm\Automation\Starter(CCrmOwnerType::Lead, $leadId);
-					$starter->setUserIdFromCurrent()->runOnAdd();
+					$starter->runOnDocumentAdd(
+						new \Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+							actualFields: $leadFields,
+							userId: (int)$userID,
+							isManual: true,
+						),
+					);
 				}
 			}
 		}

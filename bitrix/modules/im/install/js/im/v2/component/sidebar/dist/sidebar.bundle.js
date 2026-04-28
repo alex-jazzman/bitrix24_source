@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,im_v2_lib_layout,ui_vue3_directives_lazyload,ui_label,main_date,im_v2_lib_sidebar,im_v2_lib_channel,im_v2_component_elements_toggle,im_v2_component_elements_autoDelete,im_v2_lib_autoDelete,ui_iconSet_api_vue,ui_iconSet_api_core,ui_system_menu,ui_vue3_directives_hint,im_v2_component_elements_copilotRolesDialog,ui_promoVideoPopup,im_v2_component_elements_popup,im_v2_lib_helpdesk,im_v2_lib_rest,ui_manual,im_v2_lib_promo,ui_viewer,im_v2_provider_service_disk,im_v2_model,im_v2_component_elements_player,ui_icons,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_component_entitySelector,im_v2_lib_feature,im_v2_lib_notifier,im_v2_lib_chat,im_v2_lib_copilot,im_v2_lib_menu,im_v2_lib_call,im_v2_provider_service_chat,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service_message,im_v2_lib_logger,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_lib_analytics,im_v2_component_elements_searchInput,main_core,im_v2_lib_utils,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_application_core,im_public,im_v2_const,im_v2_component_elements_loader,im_v2_component_elements_button,im_v2_lib_dateFormatter) {
+(function (exports,im_v2_lib_localStorage,im_v2_lib_layout,ui_vue3_directives_lazyload,ui_label,main_date,im_v2_lib_sidebar,im_v2_component_elements_autoDelete,im_v2_component_elements_toggle,im_v2_lib_autoDelete,im_v2_lib_channel,ui_iconSet_api_vue,ui_iconSet_api_core,ui_system_menu,ui_vue3_directives_hint,im_v2_component_elements_copilotRolesDialog,ui_promoVideoPopup,im_v2_component_elements_popup,im_v2_lib_helpdesk,im_v2_lib_rest,ui_manual,im_v2_lib_promo,ui_viewer,im_v2_provider_service_disk,im_v2_model,im_v2_component_elements_player,ui_icons,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_component_entitySelector,im_v2_lib_feature,im_v2_lib_notifier,im_v2_lib_chat,im_v2_lib_copilot,im_v2_lib_menu,im_v2_lib_call,im_v2_provider_service_chat,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service_message,im_v2_lib_logger,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_lib_analytics,im_v2_component_elements_searchInput,main_core,im_v2_lib_utils,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_application_core,im_public,im_v2_const,im_v2_component_elements_loader,im_v2_component_elements_button,im_v2_lib_dateFormatter,im_v2_lib_counter) {
 	'use strict';
 
 	function getChatId(dialogId) {
@@ -1255,11 +1255,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  methods: {
 	    getCounterString(counter) {
-	      const MAX_COUNTER = 100;
-	      if (counter >= MAX_COUNTER) {
-	        return '99+';
-	      }
-	      return counter.toString();
+	      return im_v2_lib_counter.CounterManager.formatCounter(counter);
 	    },
 	    onLinkClick() {
 	      if (!this.isLinksAvailable) {
@@ -1324,11 +1320,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  methods: {
 	    getCounterString(counter) {
-	      const MAX_COUNTER = 100;
-	      if (counter >= MAX_COUNTER) {
-	        return '99+';
-	      }
-	      return counter.toString();
+	      return im_v2_lib_counter.CounterManager.formatCounter(counter);
 	    },
 	    onFavouriteClick() {
 	      this.getEmitter().emit(im_v2_const.EventType.sidebar.open, {
@@ -2449,12 +2441,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    canBeMuted() {
 	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.mute, this.dialogId);
 	    },
-	    isChatMuted() {
-	      const isMuted = this.dialog.muteList.find(element => {
-	        return element === im_v2_application_core.Core.getUserId();
-	      });
-	      return Boolean(isMuted);
-	    },
 	    hintMuteNotAvailable() {
 	      if (this.canBeMuted) {
 	        return null;
@@ -2484,7 +2470,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!this.canBeMuted) {
 	        return;
 	      }
-	      if (this.isChatMuted) {
+	      if (this.dialog.isMuted) {
 	        this.getChatService().unmuteChat(this.dialogId);
 	      } else {
 	        this.getChatService().muteChat(this.dialogId);
@@ -2504,7 +2490,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<div class="bx-im-sidebar-mute-chat__title-text bx-im-sidebar-mute-chat__icon">
 					{{ loc('IM_SIDEBAR_ENABLE_NOTIFICATION_TITLE_2') }}
 				</div>
-				<Toggle :size="ToggleSize.M" :isEnabled="!isChatMuted" @click="muteActionHandler" />
+				<Toggle :size="ToggleSize.M" :isEnabled="!dialog.isMuted" @click="muteActionHandler" />
 			</div>
 		</div>
 	`
@@ -2609,8 +2595,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			class="bx-im-sidebar-auto-delete__container"
 			ref="auto-delete"
 		>
-			<div class="bx-im-sidebar-auto-delete__title">
-				<div class="bx-im-sidebar-auto-delete__title-text bx-im-sidebar-auto-delete__icon">
+			<div class="bx-im-sidebar-auto-delete__title bx-im-sidebar-auto-delete__icon">
+				<div
+					:title="loc('IM_SIDEBAR_ENABLE_AUTODELETE_TITLE')"
+					class="bx-im-sidebar-auto-delete__title-text --ellipsis"
+				>
 					{{ loc('IM_SIDEBAR_ENABLE_AUTODELETE_TITLE') }}
 				</div>
 				<Toggle
@@ -3216,9 +3205,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  emits: ['hide', 'accept'],
 	  computed: {
 	    text() {
-	      return main_core.Loc.getMessage('IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TEXT', {
+	      return main_core.Loc.getMessage('IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TEXT_MSGVER_1', {
 	        '[copilot_color]': '<em class="bx-im-copilot-change-role-promo__copilot">',
-	        '[/copilot_color]': '</em>'
+	        '[/copilot_color]': '</em>',
+	        '#COPILOT_NAME#': this.copilotManager.getName()
 	      });
 	    },
 	    videoSource() {
@@ -3232,9 +3222,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
+	    this.copilotManager = new im_v2_lib_copilot.CopilotManager();
 	    this.promoPopup = new ui_promoVideoPopup.PromoVideoPopup({
 	      videoSrc: this.videoSource,
-	      title: this.loc('IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TITLE'),
+	      title: this.loc('IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TITLE_MSGVER_1', {
+	        '#COPILOT_NAME#': this.copilotManager.getName()
+	      }),
 	      text: this.text,
 	      targetOptions: this.bindElement,
 	      angleOptions: {
@@ -3737,7 +3730,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    totalChatCounter() {
 	      const counter = this.$store.getters['sidebar/multidialog/getTotalChatCounter'];
-	      return counter > 99 ? '99+' : counter;
+	      return im_v2_lib_counter.CounterManager.formatCounter(counter);
 	    }
 	  },
 	  methods: {
@@ -3934,8 +3927,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
-	const NotesPreview = {
-	  name: 'NotesPreview',
+	const SelfChatPreview = {
+	  name: 'SelfChatPreview',
 	  components: {
 	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
 	    ChatTitle: im_v2_component_elements_chatTitle.ChatTitle
@@ -3957,17 +3950,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  template: `
-		<div class="bx-im-sidebar-notes-preview">
-			<div class="bx-im-sidebar-notes-preview__avatar">
+		<div class="bx-im-sidebar-self-chat-preview">
+			<div class="bx-im-sidebar-self-chat-preview__avatar">
 				<ChatAvatar 
 					:avatarDialogId="dialogId"
 					:size="AvatarSize.XXXL"
-					:customType="ChatAvatarType.notes"
+					:customType="ChatAvatarType.selfChat"
 				/>
 			</div>
-			<div class="bx-im-sidebar-notes-preview__head">
-				<ChatTitle :dialogId="dialogId" :customType="ChatTitleType.notes" :showItsYou="false"/>
-				<span class="bx-im-sidebar-notes-preview__description">
+			<div class="bx-im-sidebar-self-chat-preview__head">
+				<ChatTitle :dialogId="dialogId" :customType="ChatTitleType.selfChat" :showItsYou="false"/>
+				<span class="bx-im-sidebar-self-chat-preview__description">
 					{{ loc('IM_SIDEBAR_NOTES_PREVIEW_DESCRIPTION') }}
 				</span>
 			</div>
@@ -4047,7 +4040,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const ComponentMap = {
 	  [im_v2_const.SidebarMainPanelBlock.chat]: ChatPreview,
-	  [im_v2_const.SidebarMainPanelBlock.notes]: NotesPreview,
+	  [im_v2_const.SidebarMainPanelBlock.selfChat]: SelfChatPreview,
 	  [im_v2_const.SidebarMainPanelBlock.post]: PostPreview,
 	  [im_v2_const.SidebarMainPanelBlock.user]: UserPreview,
 	  [im_v2_const.SidebarMainPanelBlock.support]: SupportPreview,
@@ -8834,9 +8827,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }];
 	    },
 	    counter() {
-	      var _this$$store$getters$;
-	      const counter = (_this$$store$getters$ = this.$store.getters['counters/getChatCounterByChatId'](this.chatId)) != null ? _this$$store$getters$ : 0;
-	      return counter > 99 ? '99+' : counter;
+	      const counter = this.$store.getters['counters/getCounterByChatId'](this.chatId);
+	      return im_v2_lib_counter.CounterManager.formatCounter(counter);
 	    },
 	    formatDate() {
 	      const date = this.multidialogItem.date;
@@ -9282,5 +9274,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatSidebar = ChatSidebar;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.UI.IconSet,BX.UI.IconSet,BX.UI.System,BX.Vue3.Directives,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Manual,BX.Messenger.v2.Lib,BX.UI.Viewer,BX.Messenger.v2.Service,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.IconSet,BX.UI.IconSet,BX.UI.System,BX.Vue3.Directives,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Manual,BX.Messenger.v2.Lib,BX.UI.Viewer,BX.Messenger.v2.Service,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=sidebar.bundle.js.map

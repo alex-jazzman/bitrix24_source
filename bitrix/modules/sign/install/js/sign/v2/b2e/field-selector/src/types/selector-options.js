@@ -38,12 +38,14 @@ export type SelectorOptions = {
 		filter?: (
 			FieldsFactoryFilter
 			| (Array<{[key: string]: any}>) => Array<{[key: string]: any}>
-		),
+			),
 	},
 	disabledFields?: Array<string | (Field) => boolean>,
 	title?: string,
+	hint?: string,
 	categoryCaptions?: {[category: string]: string},
 	languages?: {[key: string]: { NAME: string; IS_BETA: boolean; }},
 	customBackendSettings?: CustomBackendSettings,
 	alwaysHideCreateFieldButton?: boolean,
+	disableSelection?: boolean,
 };

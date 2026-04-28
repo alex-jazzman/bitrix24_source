@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_MODULE_NOT_INSTALL"] = "Blog module is not installed.";
 $MESS["B_B_PC_CAPTCHA_ERROR"] = "The automated form submission prevention code is incorrect.";
 $MESS["B_B_PC_COM_ERROR"] = "Error adding comment:";
@@ -24,4 +24,3 @@ $MESS["B_B_PC_MES_NOCOMMENTREASON_A"] = "Unregistered visitors cannot add links.
 $MESS["B_B_PC_MES_NOCOMMENTREASON_R"] = "Your rating is too low. You cannot use links.";
 $MESS["B_B_PC_SONET_POST_TITLE"] = "has added post \"#TITLE#\" in blog";
 $MESS["B_B_PC_DUPLICATE_COMMENT"] = "You have already added your comment";
-?>

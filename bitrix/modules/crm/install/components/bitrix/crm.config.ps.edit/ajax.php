@@ -31,6 +31,8 @@ if(!isset($arReturn['ERROR']))
 		{
 			case 'get_fields':
 
+				$ID = preg_replace("/[^a-zA-Z0-9_-]/", '', $ID);
+
 				$arReturn['FIELDS'] = CCrmPaySystem::getPSCorrespondence($ID, $psMode);
 
 				$path = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($ID);
@@ -164,6 +166,11 @@ if(!isset($arReturn['ERROR']))
 				$context = $instance->getContext();
 				$request = $context->getRequest();
 				$formData = $request->get('formData');
+
+				if (isset($formData['data']["ACTION_FILE"]))
+				{
+					$formData['data']["ACTION_FILE"] = preg_replace("/[^a-zA-Z0-9_-]/", '', $formData['data']["ACTION_FILE"]);
+				}
 
 				$arPsActFields = CCrmPaySystem::getPSCorrespondence($formData['data']["ACTION_FILE"], $formData['data']['PS_MODE'] ?? null);
 

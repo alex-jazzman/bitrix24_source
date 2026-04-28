@@ -1,13 +1,11 @@
-import { Core } from 'im.v2.application.core';
 import { Loc } from 'main.core';
 
 import { Messenger } from 'im.public';
+import { Core } from 'im.v2.application.core';
 import { ErrorCode } from 'im.v2.const';
+import { type CallBatchError } from 'im.v2.lib.rest';
 
-import { showNotification } from '../utils/notification';
-
-import type { CallBatchError } from 'im.v2.lib.rest';
-import type { NotificationAction } from '../utils/notification';
+import { showNotification, type NotificationAction } from '../utils/notification';
 
 export const MessageNotifier = {
 	onCopyComplete(): void
@@ -25,7 +23,7 @@ export const MessageNotifier = {
 		showNotification(Loc.getMessage('IM_NOTIFIER_MESSAGE_FAVORITE_ADD_COMPLETE'));
 	},
 
-	onForwardNotesComplete(messagesIds: number[]): void
+	onForwardSelfChatComplete(messagesIds: number[]): void
 	{
 		const text = messagesIds.length > 1
 			? Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_SEVERAL_MESSAGES_COMPLETE')
@@ -33,19 +31,15 @@ export const MessageNotifier = {
 
 		const dialogId = Core.getUserId().toString();
 
-		const notesOpeningAction: NotificationAction = {
+		const selfChatOpeningAction: NotificationAction = {
 			title: Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_OPEN_COMPLETE'),
 			events: {
-				click: () => {
-					void Messenger.openChat(dialogId);
-				},
+				click: () => Messenger.openChat(dialogId),
 			},
 		};
 
 		showNotification(text, {
-			actions: [
-				notesOpeningAction,
-			],
+			actions: [selfChatOpeningAction],
 		});
 	},
 

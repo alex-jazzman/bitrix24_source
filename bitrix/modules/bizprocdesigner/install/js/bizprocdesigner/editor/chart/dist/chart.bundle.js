@@ -114,6 +114,11 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	const SHARED_TOAST_TYPES = Object.freeze({
 	  WARNING: 'warning'
 	});
+	const COMPLEX_NODE_PORT_LABELS = Object.freeze({
+	  inputRule: 'G',
+	  outputRule: 'E',
+	  connection: 'NG'
+	});
 
 	const ToastColorScheme = {
 	  Warning: 'warning'
@@ -441,10 +446,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	const BLOCK_TOAST_TYPES = Object.freeze({
 	  ACTIVITY_PUBLIC_ERROR: 'activity-public-error'
 	});
-	const BUFFER_CONTENT_TYPES = {
-	  BLOCK: 'block',
-	  SELECTION: 'selection'
-	};
 	const ICON_BG_COLORS = {
 	  0: 'var(--designer-bp-ai-bg)',
 	  1: 'var(--designer-bp-entities-bg)',
@@ -542,6 +543,17 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  }
 	  return true;
 	}
+
+	const parsePortTitle = title => {
+	  if (!title) {
+	    return null;
+	  }
+	  const [label, num] = title.split(/(\d+)/);
+	  return {
+	    label,
+	    id: Number(num)
+	  };
+	};
 
 	function isBlockPropertiesDifferent(currentBlock, newBlock) {
 	  if (currentBlock.node.title !== newBlock.node.title) {
@@ -645,6 +657,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	}
 	function normalyzeAuxConnection(newConnection) {
 	  const {
+	    id,
 	    sourceBlockId,
 	    sourcePortId,
 	    sourcePort,
@@ -653,6 +666,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  } = newConnection;
 	  if (sourcePort.type === PORT_TYPES.aux) {
 	    return {
+	      id,
 	      sourceBlockId,
 	      sourcePortId,
 	      targetBlockId,
@@ -661,6 +675,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    };
 	  }
 	  return {
+	    id,
 	    sourceBlockId: targetBlockId,
 	    sourcePortId: targetPortId,
 	    targetBlockId: sourceBlockId,
@@ -680,13 +695,13 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    activity.Children.forEach(child => addActivityIdsToSet(child, activityIds));
 	  }
 	}
-	function cloneSingleBlockWithNewIds(block) {
-	  return cloneBlocksWithNewIds([block])[0];
-	}
-	function cloneBlocksWithNewIds(blocks) {
+	function cloneBLocksWithNewIds(target) {
+	  const {
+	    blocks
+	  } = target;
 	  const activityIds = findBlocksIds(blocks);
 	  const replaceMap = makeReplaceMap(activityIds);
-	  return cloneAndReplaceBlocksActivityIds(blocks, replaceMap);
+	  return cloneAndReplaceBlocksActivityIds(target, replaceMap);
 	}
 	function findBlocksIds(blocks) {
 	  const activityIds = new Set();
@@ -705,10 +720,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  });
 	  return replaceMap;
 	}
-	function cloneAndReplaceBlocksActivityIds(blocks, replaceMap) {
-	  let serialized = JSON.stringify(blocks);
+	function cloneAndReplaceBlocksActivityIds(target, replaceMap) {
+	  let serialized = JSON.stringify(target);
 	  for (const [pattern, replacement] of replaceMap.entries()) {
-	    serialized = serialized.replaceAll(pattern, replacement);
+	    serialized = serialized.replaceAll(`"${pattern}"`, `"${replacement}"`);
 	  }
 	  return JSON.parse(serialized);
 	}
@@ -1144,23 +1159,14 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    }
 	  },
 	  actions: {
-	    copyBlock(block) {
-	      this.copied = {
-	        type: BUFFER_CONTENT_TYPES.BLOCK,
-	        content: JSON.parse(JSON.stringify(block))
-	      };
+	    setBufferContent(content) {
+	      this.copied = JSON.parse(JSON.stringify(content));
 	    },
 	    getBufferContent() {
 	      if (!this.copied) {
 	        return null;
 	      }
-	      if (this.copied.type === BUFFER_CONTENT_TYPES.BLOCK) {
-	        return {
-	          type: this.copied.type,
-	          content: cloneSingleBlockWithNewIds(this.copied.content)
-	        };
-	      }
-	      throw new Error('Unexpected copied content type');
+	      return cloneBLocksWithNewIds(this.copied);
 	    }
 	  }
 	});
@@ -2131,6 +2137,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:styled="false"
 					:validationRules="[validationInputOutputRule]"
 					:normalyzeConnectionFn="normalyzeInputOutputConnection"
+					:index="0"
 					position="left"
 				/>
 			</div>
@@ -2146,6 +2153,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:styled="false"
 					:validationRules="[validationInputOutputRule]"
 					:normalyzeConnectionFn="normalyzeInputOutputConnection"
+					:index="0"
 					position="right"
 				/>
 			</div>
@@ -2160,6 +2168,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:styled="false"
 					:validationRules="[validationAuxRule]"
 					:normalyzeConnectionFn="normalyzeAuxConnection"
+					:index="0"
 					position="bottom"
 				/>
 			</div>
@@ -2174,6 +2183,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:styled="false"
 					:validationRules="[validationAuxRule]"
 					:normalyzeConnectionFn="normalyzeAuxConnection"
+					:index="0"
 					position="top"
 				/>
 			</div>
@@ -2218,13 +2228,21 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	`
 	};
 
-	const NOT_REALLY_COMPLEX_BLOCK = new Set(['ForEachActivity', 'IfElseBranchActivity']);
+	const NOT_REALLY_COMPLEX_BLOCK = new Set(['ForEachActivity', 'IfElseBranchActivity', 'IfElseActivity', 'WhileActivity', 'ApproveActivity', 'RequestInformationOptionalActivity', 'ListenActivity']);
+	const MIN_RULE_ITEMS_COUNT = 5;
+	const RESERVED_INPUT_RULES_TITLES = Array.from({
+	  length: MIN_RULE_ITEMS_COUNT
+	}, (_, i) => {
+	  return `${COMPLEX_NODE_PORT_LABELS.inputRule}${i + 1}`;
+	});
+	const RESERVED_OUTPUT_RULES_TITLES = Array.from({
+	  length: MIN_RULE_ITEMS_COUNT
+	}, (_, i) => {
+	  return `${COMPLEX_NODE_PORT_LABELS.outputRule}${i + 1}`;
+	});
 	// @vue/component
 	const BlockComplexContent = {
 	  name: 'BlockComplexContent',
-	  components: {
-	    Port: ui_blockDiagram.Port
-	  },
 	  props: {
 	    /** @type Block */
 	    block: {
@@ -2247,8 +2265,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  },
 	  setup() {
 	    const {
-	      updatePortPosition,
-	      newConnection
+	      updatePort,
+	      newConnection,
+	      addConnection
 	    } = ui_blockDiagram.useBlockDiagram();
 	    const {
 	      getMessage
@@ -2257,12 +2276,11 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      isFeatureAvailable
 	    } = useFeature();
 	    return {
-	      updatePortPosition,
+	      updatePort,
 	      newConnection,
+	      addConnection,
 	      getMessage,
-	      isFeatureAvailable,
-	      normalyzeInputOutputConnection,
-	      validationInputOutputRule
+	      isFeatureAvailable
 	    };
 	  },
 	  computed: {
@@ -2285,25 +2303,157 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      return this.outputPorts.length;
 	    },
 	    areConnectionsAvailable() {
-	      return this.isFeatureAvailable(bizprocdesigner_feature.FeatureCode.complexNodeConnections) && this.connectionPorts.length > 0;
+	      return this.isFeatureAvailable(bizprocdesigner_feature.FeatureCode.complexNodeConnections) && this.isReallyComplexBlock;
 	    },
 	    isReallyComplexBlock() {
 	      return !NOT_REALLY_COMPLEX_BLOCK.has(this.block.activity.Type);
+	    },
+	    reservedInputRules() {
+	      return RESERVED_INPUT_RULES_TITLES.map(title => {
+	        const port = this.rulePorts.find(p => p.title === title);
+	        if (port) {
+	          return port;
+	        }
+	        return {
+	          id: createUniqueId(),
+	          title
+	        };
+	      });
+	    },
+	    restInputRules() {
+	      return this.rulePorts.filter(p => {
+	        return !RESERVED_INPUT_RULES_TITLES.includes(p.title);
+	      });
+	    },
+	    lastInputRulePlaceholder() {
+	      let lastRule = null;
+	      if (this.restInputRules.length > 0) {
+	        lastRule = this.restInputRules[this.restInputRules.length - 1];
+	      } else if (this.reservedInputRules[this.reservedInputRules.length - 1].type) {
+	        lastRule = this.reservedInputRules[this.reservedInputRules.length - 1];
+	      }
+	      if (!lastRule) {
+	        return null;
+	      }
+	      const {
+	        label,
+	        id
+	      } = parsePortTitle(lastRule.title);
+	      const title = `${label}${id + 1}`;
+	      return {
+	        id: createUniqueId(),
+	        title
+	      };
+	    },
+	    allInputRules() {
+	      if (!this.isReallyComplexBlock) {
+	        return this.rulePorts;
+	      }
+	      return this.lastInputRulePlaceholder ? [...this.reservedInputRules, ...this.restInputRules, this.lastInputRulePlaceholder] : [...this.reservedInputRules, ...this.restInputRules];
+	    },
+	    connectionPlaceholder() {
+	      var _parsePortTitle;
+	      const connection = this.connectionPorts[this.connectionPorts.length - 1];
+	      const {
+	        label,
+	        id
+	      } = (_parsePortTitle = parsePortTitle(connection == null ? void 0 : connection.title)) != null ? _parsePortTitle : {
+	        label: COMPLEX_NODE_PORT_LABELS.connection,
+	        id: 0
+	      };
+	      const title = `${label}${id + 1}`;
+	      return {
+	        id: createUniqueId(),
+	        title
+	      };
+	    },
+	    reservedOutputRules() {
+	      return RESERVED_OUTPUT_RULES_TITLES.map(title => {
+	        const port = this.outputPorts.find(p => p.title === title);
+	        if (port) {
+	          return port;
+	        }
+	        return {
+	          id: createUniqueId(),
+	          title
+	        };
+	      });
+	    },
+	    restOutputRules() {
+	      return this.outputPorts.filter(p => {
+	        return !RESERVED_OUTPUT_RULES_TITLES.includes(p.title);
+	      });
+	    },
+	    lastOutputRulePlaceholder() {
+	      let lastRule = null;
+	      if (this.restOutputRules.length > 0) {
+	        lastRule = this.restOutputRules[this.restOutputRules.length - 1];
+	      } else if (this.reservedOutputRules[this.reservedOutputRules.length - 1].type) {
+	        lastRule = this.reservedOutputRules[this.reservedOutputRules.length - 1];
+	      }
+	      if (!lastRule) {
+	        return null;
+	      }
+	      const {
+	        label,
+	        id
+	      } = parsePortTitle(lastRule.title);
+	      const title = `${label}${id + 1}`;
+	      return {
+	        id: createUniqueId(),
+	        title
+	      };
+	    },
+	    allOutputRules() {
+	      if (!this.isReallyComplexBlock) {
+	        return this.outputPorts;
+	      }
+	      return this.lastOutputRulePlaceholder ? [...this.reservedOutputRules, ...this.restOutputRules, this.lastOutputRulePlaceholder] : [...this.reservedOutputRules, ...this.restOutputRules];
+	    },
+	    ruleTypes() {
+	      return [{
+	        id: 'input-rules',
+	        items: this.allInputRules,
+	        label: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_BLOCK_RULES_INPUT_TITLE'),
+	        position: 'left'
+	      }, {
+	        id: 'output-rules',
+	        items: this.allOutputRules,
+	        label: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_BLOCK_RULES_OUTPUT_TITLE'),
+	        position: 'right',
+	        classList: ['--right']
+	      }];
 	    }
 	  },
 	  watch: {
 	    inputPortsLength() {
 	      this.$nextTick(() => {
-	        this.inputPorts.forEach(port => {
-	          this.updatePortPosition(this.block.id, port.id);
+	        this.inputPorts.forEach((port, index) => {
+	          this.updatePort(this.block.id, port.id, index);
 	        });
 	      });
 	    },
 	    outputPortsLength() {
 	      this.$nextTick(() => {
-	        this.outputPorts.forEach(port => {
-	          this.updatePortPosition(this.block.id, port.id);
+	        this.outputPorts.forEach((port, index) => {
+	          this.updatePort(this.block.id, port.id, index);
 	        });
+	      });
+	    },
+	    inputPorts(newInputPorts, oldInputPorts) {
+	      if (!this.newConnection) {
+	        return;
+	      }
+	      const oldPortsIds = new Set(oldInputPorts.map(port => port.id));
+	      const addedPort = newInputPorts.find(port => !oldPortsIds.has(port.id));
+	      if (!addedPort) {
+	        return;
+	      }
+	      this.addConnection({
+	        ...this.newConnection,
+	        targetBlockId: this.block.id,
+	        targetPort: addedPort,
+	        targetPortId: addedPort.id
 	      });
 	    }
 	  },
@@ -2315,50 +2465,27 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			/>
 			<div class="block-complex__content">
 				<div class="block-complex__content_row block-complex__content_rules">
-					<div class="block-complex__content_col">
+					<div
+						v-for="ruleType in ruleTypes"
+						:key="ruleType.id"
+						class="block-complex__content_col"
+						:class="ruleType.classList"
+					>
 						<span class="block-complex__content_label">
-							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_BLOCK_RULES_INPUT_TITLE') }}
+							{{ ruleType.label }}
 						</span>
 						<div
-							v-for="port in rulePorts"
-							:key="port.id"
+							v-for="(item, index) in ruleType.items"
+							:key="item.id"
 							class="block-complex__content_col-value"
 						>
-							<Port
-								:block="block"
-								:port="port"
-								:disabled="disabled"
-								:validationRules="[validationInputOutputRule]"
-								:normalyzeConnectionFn="normalyzeInputOutputConnection"
-								position="left"
-							/>
-							<span class="block-complex__content_col-value-text">{{ port.title }}</span>
-						</div>
-						<div class="block-complex__content_col-value">
 							<slot
-								v-if="isReallyComplexBlock"
-								name="portPlaceholder"
-								:ports="rulePorts"
-							/>
-						</div>
-					</div>
-					<div class="block-complex__content_col --right">
-						<span class="block-complex__content_label">
-							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_BLOCK_RULES_OUTPUT_TITLE') }}
-						</span>
-						<div
-							v-for="port in outputPorts"
-							:key="port.id"
-							class="block-complex__content_col-value"
-						>
-							<span class="block-complex__content_col-value-text">{{ port.title }}</span>
-							<Port
-								:block="block"
-								:port="port"
+								:name="item.type ? 'port' : 'portPlaceholder'"
+								:item="item"
+								:index="index"
 								:disabled="disabled"
-								:validationRules="[validationInputOutputRule]"
-								:normalyzeConnectionFn="normalyzeInputOutputConnection"
-								position="right"
+								:position="ruleType.position"
+								:isOutput="ruleType.id === 'output-rules'"
 							/>
 						</div>
 					</div>
@@ -2373,17 +2500,26 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					<div class="block-complex__content_row">
 						<div class="block-complex__content_col">
 							<div
-								v-for="port in connectionPorts"
+								v-for="(port, index) in connectionPorts"
 								:key="port.id"
 								class="block-complex__content_col-value"
 							>
-								<Port
-									:block="block"
-									:port="port"
+								<slot
+									name="port"
+									:item="port"
+									:index="index"
 									:disabled="disabled"
 									position="left"
 								/>
-								<span class="block-complex__content_col-value-text">{{ port.title }}</span>
+							</div>
+							<div
+								class="block-complex__content_col-value"
+								:key="connectionPlaceholder.id"
+							>
+								<slot
+									name="portPlaceholder"
+									:item="connectionPlaceholder"
+								/>
 							</div>
 						</div>
 					</div>
@@ -2692,6 +2828,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 				v-model="editedTitle"
 				ref="editInput"
 				class="ui-top-panel-editable-title-edit-input"
+				@keydown.enter.prevent="onSaveTitle"
 			/>
 			<div class="ui-top-panel-editable-title-edit-buttons">
 				<UiButton
@@ -3456,69 +3593,43 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	const BlockComplexPortPlaceholder = {
 	  name: 'block-complex-port-placeholder',
 	  props: {
-	    blockId: {
+	    title: {
 	      type: String,
 	      required: true
 	    },
-	    /** @type Array<Port> */
-	    ports: {
-	      type: Array,
-	      required: true
+	    isOutput: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['addPort'],
 	  setup() {
 	    const {
-	      newConnection,
-	      addConnection
+	      newConnection
 	    } = ui_blockDiagram.useBlockDiagram();
 	    return {
-	      newConnection,
-	      addConnection
+	      newConnection
 	    };
-	  },
-	  computed: {
-	    title() {
-	      var _lastPort$title$split;
-	      if (!this.ports) {
-	        return '';
-	      }
-	      const lastPort = this.ports[this.ports.length - 1];
-	      const [label, num] = (_lastPort$title$split = lastPort == null ? void 0 : lastPort.title.split(/(\d+)/)) != null ? _lastPort$title$split : ['G', 0];
-	      return `${label}${Number(num) + 1}`;
-	    }
 	  },
 	  methods: {
 	    onMouseUp() {
-	      if (!this.newConnection) {
+	      if (!this.newConnection || this.isOutput) {
 	        return;
 	      }
 	      this.$emit('addPort', this.title);
-	      this.$nextTick(() => {
-	        const addedPort = this.ports[this.ports.length - 1];
-	        this.addConnection({
-	          ...this.newConnection,
-	          targetBlockId: this.blockId,
-	          targetPort: addedPort,
-	          targetPortId: addedPort.id
-	        });
-	      });
 	    }
 	  },
 	  template: `
 		<div
-			class="complex-block-port-placeholder"
+			class="ui-block-diagram-port"
 			@mouseup="onMouseUp"
+		></div>
+		<span
+			class="complex-block-port-placeholder-title"
+			:class="{ '--output': isOutput }"
 		>
-			<svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#B1BBC7" xmlns="http://www.w3.org/2000/svg">
-				<circle cx="4.5" cy="4.5" r="4" fill="white" />
-				<rect x="4.25" y="2.25" width="0.5" height="4.5" rx="0.25" stroke-width="0.5"/>
-				<rect x="2.25" y="4.75" width="0.5" height="4.5" rx="0.25" transform="rotate(-90 2.25 4.75)" stroke-width="0.5"/>
-			</svg>
-			<span class="complex-block-port-placeholder__title">
-				{{ title }}
-			</span>
-		</div>
+			{{ title }}
+		</span>
 	`
 	};
 
@@ -3774,10 +3885,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  return (field == null ? void 0 : field.Type) === PROPERTY_TYPES.DOCUMENT && main_core.Type.isArrayFilled(field.Default) ? field.Default : [];
 	};
 
-	const PORT_LABELS = Object.freeze({
-	  input: 'G',
-	  output: 'E'
-	});
 	const PORT_POSITIONS = Object.freeze({
 	  left: 'left',
 	  right: 'right'
@@ -3792,10 +3899,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    prevSavedNodeSettings: null,
 	    ports: null,
 	    nodeSettings: null,
-	    block: null
+	    block: null,
+	    lastFetchId: 0
 	  }),
 	  actions: {
 	    async fetchNodeSettings(block) {
+	      const fetchId = ++this.lastFetchId;
 	      this.nodeSettings = {
 	        title: block.node.title,
 	        description: '',
@@ -3810,6 +3919,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        title: loadedTitle,
 	        description
 	      } = await complexNodeApi.loadSettings(block.activity);
+	      if (this.lastFetchId !== fetchId || !this.nodeSettings) {
+	        return;
+	      }
 	      if (main_core.Type.isStringFilled(loadedTitle)) {
 	        this.nodeSettings.title = loadedTitle;
 	      }
@@ -3829,7 +3941,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        description
 	      };
 	      this.prevSavedNodeSettings = main_core.Runtime.clone(this.nodeSettings);
-	      this.ports = [...block.ports];
+	      this.ports = [...block.ports].sort((a, b) => {
+	        const {
+	          id: aId
+	        } = parsePortTitle(a.title);
+	        const {
+	          id: bId
+	        } = parsePortTitle(b.title);
+	        return aId - bId;
+	      });
 	      const rulesIds = new Set(this.nodeSettings.rules.keys());
 	      this.ports.forEach(port => {
 	        if (port.type === PORT_TYPES.input && !rulesIds.has(port.id) && !port.isConnectionPort) {
@@ -4055,14 +4175,22 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    },
 	    addRulePort(portId, type, portTitle) {
 	      const currentPorts = this.ports.filter(port => port.type === type && !port.isConnectionPort);
-	      const label = type === PORT_TYPES.input ? PORT_LABELS.input : PORT_LABELS.output;
+	      const label = type === PORT_TYPES.input ? COMPLEX_NODE_PORT_LABELS.inputRule : COMPLEX_NODE_PORT_LABELS.outputRule;
 	      const port = this.createPort(currentPorts, {
 	        portId,
 	        type,
 	        label,
 	        portTitle
 	      });
-	      this.ports.push(port);
+	      const addedPortId = parsePortTitle(port.title).id;
+	      for (let i = currentPorts.length - 1; i >= 0; i--) {
+	        const currentPortId = parsePortTitle(currentPorts[i].title).id;
+	        if (currentPortId < addedPortId) {
+	          this.ports.splice(this.ports.indexOf(currentPorts[i]) + 1, 0, port);
+	          return;
+	        }
+	      }
+	      this.ports.unshift(port);
 	    },
 	    addConnectionPort(portId, type) {
 	      const currentPorts = type === PORT_TYPES.input ? this.ports.filter(port => port.type === PORT_TYPES.input) : this.ports.filter(port => port.type === PORT_TYPES.output);
@@ -4070,7 +4198,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      const port = this.createPort(connectionPorts, {
 	        portId,
 	        type,
-	        label: 'NG'
+	        label: COMPLEX_NODE_PORT_LABELS.connection
 	      });
 	      this.ports.push({
 	        ...port,
@@ -5536,7 +5664,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					 @click="onChooseDocument"
 				>
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-					<div class="ui-ctl-element">
+					<div
+						class="ui-ctl-element"
+						:data-test-id="$testId('selectedActionDocument')"
+					>
 						{{ selectedDocumentTitle }}
 					</div>
 				</div>
@@ -5605,7 +5736,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	var _getTabs$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTabs");
 	var _getValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getValue");
 	var _getItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItems");
-	var _addDocumentItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addDocumentItem");
 	var _processChildrenProperties$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processChildrenProperties");
 	var _processReturnProperties$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processReturnProperties");
 	class ValueSelector {
@@ -5615,9 +5745,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    });
 	    Object.defineProperty(this, _processChildrenProperties$1, {
 	      value: _processChildrenProperties2$1
-	    });
-	    Object.defineProperty(this, _addDocumentItem, {
-	      value: _addDocumentItem2
 	    });
 	    Object.defineProperty(this, _getItems, {
 	      value: _getItems2
@@ -5632,11 +5759,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      value: _getEntities2
 	    });
 	    this.currentPortId = null;
+	    this.selectedItem = null;
 	    this.store = store;
 	    this.currentBlock = currentBlock;
 	    this.currentPortId = currentPortId;
 	  }
-	  show(targetElement) {
+	  show(targetElement, options = {}) {
 	    return new Promise(resolve => {
 	      const dialog = new ui_entitySelector.Dialog({
 	        targetNode: targetElement,
@@ -5647,11 +5775,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        enableSearch: true,
 	        items: babelHelpers.classPrivateFieldLooseBase(this, _getItems)[_getItems](),
 	        tabs: babelHelpers.classPrivateFieldLooseBase(this, _getTabs$1)[_getTabs$1](),
-	        entities: babelHelpers.classPrivateFieldLooseBase(this, _getEntities)[_getEntities](),
+	        entities: babelHelpers.classPrivateFieldLooseBase(this, _getEntities)[_getEntities](options.showOnlyRealProperties),
 	        cacheable: false,
 	        showAvatars: false,
 	        events: {
 	          'Item:onSelect': event => {
+	            this.selectedItem = event.getData().item;
 	            resolve(babelHelpers.classPrivateFieldLooseBase(this, _getValue)[_getValue](event.getData().item));
 	          }
 	        },
@@ -5684,7 +5813,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	          children.push({
 	            id,
 	            entityId: elem.key,
-	            title: item.Name
+	            title: item.Name,
+	            customData: {
+	              property: item
+	            }
 	          });
 	        });
 	        items.push({
@@ -5716,7 +5848,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    }, []);
 	  }
 	}
-	function _getEntities2() {
+	function _getEntities2(showOnlyRealProperties = false) {
+	  if (showOnlyRealProperties) {
+	    return [{
+	      id: 'bizproc-document'
+	    }];
+	  }
 	  return [{
 	    id: 'bizproc-document'
 	  }, {
@@ -5760,28 +5897,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	}
 	function _getItems2() {
 	  const items = this.getReturnItems();
-	  babelHelpers.classPrivateFieldLooseBase(this, _addDocumentItem)[_addDocumentItem](items);
 	  this.addTemplateItems(items);
 	  return items;
-	}
-	function _addDocumentItem2(items) {
-	  // compatible document
-	  items.push({
-	    id: 'template-document',
-	    entityId: 'bizproc-document',
-	    entityType: 'document',
-	    title: main_core.Loc.getMessage('BIZPROCDESIGNER_SELECTOR_DOCUMENT_FIELDS'),
-	    customData: {
-	      document: this.store.documentType,
-	      idTemplate: '{{ #FIELD_NAME# }}',
-	      supertitle: main_core.Loc.getMessage('BIZPROCDESIGNER_SELECTOR_DOCUMENT_FIELDS')
-	    },
-	    tabs: ['documents'],
-	    nodeOptions: {
-	      open: false,
-	      dynamic: true
-	    }
-	  });
 	}
 	function _processChildrenProperties2$1(block) {
 	  const childrenProperties = [];
@@ -5864,12 +5981,20 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        searchable: false
 	      });
 	    } else {
+	      const customProperty = main_core.Runtime.clone(property);
+	      if (customProperty.Type === 'json') {
+	        var _customProperty$BaseT;
+	        customProperty.Type = (_customProperty$BaseT = customProperty.BaseType) != null ? _customProperty$BaseT : 'string';
+	      }
 	      res.properties.push({
 	        id,
 	        entityId: 'block-node-property',
 	        title: property.Name,
 	        property,
-	        block
+	        block,
+	        customData: {
+	          property: customProperty
+	        }
 	      });
 	    }
 	    return res;
@@ -5919,6 +6044,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    documentType: {
 	      type: Array,
 	      required: true
+	    },
+	    panelAlreadyOpened: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['showPreview'],
@@ -5932,7 +6061,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  data() {
 	    return {
 	      isLoading: false,
-	      isVisible: false,
+	      isVisible: this.panelAlreadyOpened,
 	      hasErrors: false,
 	      isSubmitting: false,
 	      hasSettings: false,
@@ -5945,7 +6074,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      dragMouseY: 0,
 	      autoScrollFrameId: null,
 	      scrollBoundaries: null,
-	      rendererInstance: null
+	      rendererInstance: null,
+	      entitySelectorDialogs: new Set(),
+	      lastRenderRequestId: 0
 	    };
 	  },
 	  computed: {
@@ -5969,6 +6100,23 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      return this.block.activity.Activated === ACTIVATION_STATUS.ACTIVE ? this.iconSet.PAUSE_L : this.iconSet.PLAY_L;
 	    }
 	  },
+	  watch: {
+	    block(newBlock) {
+	      this.cleanupFormResources();
+	      this.hasSettings = false;
+	      this.isLoading = true;
+	      this.currentBlock = newBlock;
+	      this.$nextTick(async () => {
+	        if (this.$refs.scrollContainer) {
+	          this.$refs.scrollContainer.scrollTop = 0;
+	        }
+	        await this.renderControls();
+	        window.BPAShowSelector = this.showSelector;
+	        window.HideShow = this.hideShow;
+	        this.blurActiveElementIfNeeded();
+	      });
+	    }
+	  },
 	  async mounted() {
 	    this.isVisible = true;
 	    this.currentBlock = this.block;
@@ -5980,17 +6128,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.onDragStart);
 	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:move', this.onDragMove);
 	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:end', this.onDragEnd);
+	    main_core_events.EventEmitter.subscribe('BX.UI.EntitySelector.Dialog:onShow', this.onEntitySelectorShow);
+	    main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:askShowValueSelector', this.onAskShowValueSelector);
 	    window.BPAShowSelector = this.showSelector;
 	    window.HideShow = this.hideShow;
+	    this.blurActiveElementIfNeeded();
 	  },
 	  unmounted() {
 	    this.stopAutoScroll();
-	    if (this.inputListeners && this.handleFieldInput) {
-	      this.inputListeners.forEach(input => {
-	        main_core.Event.unbind(input, 'input', this.handleFieldInput);
-	      });
-	      this.inputListeners = [];
-	    }
+	    this.cleanupFormResources();
 	    main_core.Event.unbind(document, 'mousedown', this.multiSelectMouseHandler);
 	    main_core.Event.unbind(this.$refs.scrollContainer, 'scroll', this.handleScroll);
 	    main_core_events.EventEmitter.unsubscribe('BX.Bizproc:setuptemplateactivity:preview', this.showPreview);
@@ -5998,12 +6144,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:move', this.onDragMove);
 	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:end', this.onDragEnd);
 	    main_core_events.EventEmitter.emit('BX.Bizproc.Activity.unmount');
-	    if (this.rendererInstance && main_core.Type.isFunction(this.rendererInstance.destroy)) {
-	      this.rendererInstance.destroy();
-	    }
-	    this.rendererInstance = null;
+	    main_core_events.EventEmitter.unsubscribe('BX.UI.EntitySelector.Dialog:onShow', this.onEntitySelectorShow);
+	    main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:askShowValueSelector', this.onAskShowValueSelector);
+	    this.destroyEntitySelectorDialogs();
+	    this.destroyRendererInstance();
 	  },
 	  methods: {
+	    isRenderCancelled(requestId) {
+	      return this.lastRenderRequestId !== requestId || !this.$refs.contentContainer;
+	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    },
@@ -6187,6 +6336,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    },
 	    async renderControls() {
 	      var _this$currentBlock$ac7, _this$currentBlock$ac8, _this$currentBlock, _settingControls;
+	      const requestId = ++this.lastRenderRequestId;
 	      window.BPAShowSelector = this.showSelector;
 	      window.HideShow = this.hideShow;
 	      this.isLoading = true;
@@ -6224,7 +6374,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        }
 	      });
 	      this.isLoading = true;
-	      this.$refs.contentContainer.innerHTML = '';
+	      if (this.$refs.contentContainer) {
+	        this.$refs.contentContainer.innerHTML = '';
+	      }
 	      this.hasErrors = false;
 	      this.nodeControls = [];
 	      let settingControls = null;
@@ -6240,17 +6392,24 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	            workflowConstants: JSON.stringify(workflowConstants)
 	          }
 	        });
+	        if (this.isRenderCancelled(requestId)) {
+	          return;
+	        }
 	      } catch (error) {
+	        if (this.isRenderCancelled(requestId)) {
+	          return;
+	        }
 	        handleResponseError(error);
+	        return;
 	      }
 	      this.useDocumentContext = Boolean((_settingControls = settingControls) == null ? void 0 : _settingControls.useDocumentContext);
 	      if (settingControls && main_core.Type.isArray(settingControls.controls)) {
-	        await this.renderNodeControls(settingControls);
+	        await this.renderNodeControls(settingControls, requestId);
 	      } else {
 	        await this.renderPropertyDialog(formData);
 	      }
 	    },
-	    renderNodeControls(settingControls) {
+	    renderNodeControls(settingControls, requestId) {
 	      this.nodeControls = main_core.Type.isArray(settingControls.controls) ? settingControls.controls : [];
 	      const brokenLinks = main_core.Type.isPlainObject(settingControls.brokenLinks) ? settingControls.brokenLinks : {};
 	      const eventName = 'BX.Bizproc.FieldType.onCollectionRenderControlFinished';
@@ -6265,6 +6424,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      const renderedControls = BX.Bizproc.FieldType.renderControlCollection(this.documentType, this.nodeControls.filter(field => field.property.Type !== 'custom'), 'designer');
 	      return new Promise(resolve => {
 	        var _this$currentBlock$ac9, _this$currentBlock$ac10;
+	        if (this.isRenderCancelled(requestId)) {
+	          resolve();
+	          return;
+	        }
 	        const form = main_core.Tag.render(_t3 || (_t3 = _$3`<form id="form-settings"></form>`));
 	        this.settingsForm = form;
 	        if (main_core.Type.isObject(brokenLinks) && Object.keys(brokenLinks).length > 0) {
@@ -6292,7 +6455,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	          }
 	          if (control) {
 	            const row = this.renderField(control, field);
-	            const escapedFieldName = field.fieldName.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
+	            const escapedFieldName = field.fieldName.replaceAll(/[!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~]/g, '\\$&');
 	            const input = row.querySelector(`[name^="${escapedFieldName}"]`);
 	            if (input) {
 	              main_core.Event.bind(input, 'input', this.handleFieldInput);
@@ -6301,11 +6464,23 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	            main_core.Dom.append(row, form);
 	          }
 	        });
+	        if (this.isRenderCancelled(requestId)) {
+	          resolve();
+	          return;
+	        }
 	        this.$refs.contentContainer.innerHTML = '';
 	        main_core.Dom.append(form, this.$refs.contentContainer);
 	        main_core.Event.EventEmitter.subscribeOnce(eventName, () => {
+	          if (this.isRenderCancelled(requestId)) {
+	            resolve();
+	            return;
+	          }
 	          if (instance && main_core.Type.isFunction(instance.afterFormRender)) {
-	            instance.afterFormRender(form);
+	            const activityFields = this.nodeControls.reduce((acc, field) => {
+	              acc[field.fieldName] = field;
+	              return acc;
+	            }, {});
+	            instance.afterFormRender(form, activityFields);
 	          }
 	          this.hasSettings = true;
 	          this.isLoading = false;
@@ -6380,7 +6555,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      this.hasErrors = false;
 	      this.nodeControls.forEach(field => {
 	        const value = formData[field.fieldName];
-	        const escapedFieldName = field.fieldName.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
+	        const escapedFieldName = field.fieldName.replaceAll(/[!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~]/g, '\\$&');
 	        const input = document.querySelector(`[name^="${escapedFieldName}"]`);
 	        if (!input) {
 	          return;
@@ -6463,6 +6638,26 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      this.scrollBoundaries = null;
 	      this.stopAutoScroll();
 	    },
+	    onEntitySelectorShow(event) {
+	      const dialog = event.getTarget();
+	      if (dialog) {
+	        this.entitySelectorDialogs.add(dialog);
+	      }
+	    },
+	    destroyEntitySelectorDialogs() {
+	      this.entitySelectorDialogs.forEach(dialog => {
+	        if (dialog && main_core.Type.isFunction(dialog.destroy)) {
+	          dialog.destroy();
+	        }
+	      });
+	      this.entitySelectorDialogs.clear();
+	    },
+	    destroyRendererInstance() {
+	      if (this.rendererInstance && main_core.Type.isFunction(this.rendererInstance.destroy)) {
+	        this.rendererInstance.destroy();
+	      }
+	      this.rendererInstance = null;
+	    },
 	    startAutoScroll() {
 	      this.autoScrollFrameId = requestAnimationFrame(this.processAutoScroll);
 	    },
@@ -6489,11 +6684,53 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        container.scrollTop += scrollDelta;
 	      }
 	      this.autoScrollFrameId = requestAnimationFrame(this.processAutoScroll);
+	    },
+	    cleanupFormResources() {
+	      var _this$rendererInstanc;
+	      if (this.inputListeners && this.handleFieldInput) {
+	        this.inputListeners.forEach(input => {
+	          main_core.Event.unbind(input, 'input', this.handleFieldInput);
+	        });
+	        this.inputListeners = [];
+	      }
+	      if (main_core.Type.isFunction((_this$rendererInstanc = this.rendererInstance) == null ? void 0 : _this$rendererInstanc.destroy)) {
+	        this.rendererInstance.destroy();
+	      }
+	      this.rendererInstance = null;
+	      this.settingsForm = null;
+	    },
+	    blurActiveElementIfNeeded() {
+	      setTimeout(() => {
+	        var _this$$refs$settingsP;
+	        const activeElement = document.activeElement;
+	        if (activeElement && (_this$$refs$settingsP = this.$refs.settingsPanel) != null && _this$$refs$settingsP.contains(activeElement)) {
+	          activeElement.blur();
+	        }
+	      }, 150);
+	    },
+	    async onAskShowValueSelector(event) {
+	      var _event$getData$showOn, _event$getData$onSele;
+	      const target = event.getTarget();
+	      const selector = new ValueSelector(this.store, this.currentBlock);
+	      const showOptions = {
+	        showOnlyRealProperties: (_event$getData$showOn = event.getData().showOnlyRealProperties) != null ? _event$getData$showOn : false
+	      };
+	      const onSelect = (_event$getData$onSele = event.getData().onSelect) != null ? _event$getData$onSele : null;
+	      const value = await selector.show(target, showOptions);
+	      if (onSelect && value) {
+	        var _selector$selectedIte;
+	        onSelect.call(null, value, (_selector$selectedIte = selector.selectedItem) == null ? void 0 : _selector$selectedIte.getCustomData().get('property'));
+	      }
 	    }
 	  },
 	  template: `
 		<transition name="slide-fade">
-			<div v-if="isVisible" class="node-settings-panel" ref="settingsPanel">
+			<div 
+				v-if="isVisible"
+				class="node-settings-panel"
+				:class="{ '--loading': isLoading }"
+				ref="settingsPanel"
+			>
 				<div class="node-settings-header">
 					<h3 class="node-settings-title">{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TITLE')}}</h3>
 					<span class="node-settings-title-close-icon" @click="handleFormCancel"></span>
@@ -6539,26 +6776,32 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 						<div ref="contentContainer"></div>
 					</div>
 				</Transition>
-				<div v-if="isLoading" class="loader-spinner node-settings-content">
-					<span class="dot dot1"></span>
-					<span class="dot dot2"></span>
-					<span class="dot dot3"></span>
-				</div>
-				<div class="node-settings-footer" v-show="hasSettings">
-					<button class="ui-btn --air ui-btn-lg --style-outline-fill-accent ui-btn-no-caps" @click="handleFormSave">
-						{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_SAVE')}}
-					</button>
-					<button class="ui-btn --air ui-btn-lg --style-outline ui-btn-no-caps" @click="handleFormCancel">
-						{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CANCEL')}}
-					</button>
+				<div
+					v-show="isLoading || hasSettings"
+					class="node-settings-footer"
+				>
+					<template v-if="hasSettings">
+						<button 
+							class="ui-btn --air ui-btn-lg --style-outline-fill-accent ui-btn-no-caps"
+							@click="handleFormSave"
+						>
+							{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_SAVE')}}
+						</button>
+						<button
+							class="ui-btn --air ui-btn-lg --style-outline ui-btn-no-caps"
+							@click="handleFormCancel"
+						>
+							{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CANCEL')}}
+						</button>
 
-					<div class="node-settings-document-selector" v-show="useDocumentContext">
-						<BIcon
-							name="document"
-							:size="24"
-							@click="handleDocumentSelector"
-						/>
-					</div>
+						<div class="node-settings-document-selector" v-show="useDocumentContext">
+							<BIcon
+								name="document"
+								:size="24"
+								@click="handleDocumentSelector"
+							/>
+						</div>
+					</template>
 				</div>
 			</div>
 		</transition>
@@ -7388,12 +7631,38 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  Error: 'error'
 	});
 	const CorrectDocumentTypeLength = 3;
+	const formInputTrackerHandlers = new WeakMap();
+	const vFormInputTracker = {
+	  mounted(el, binding) {
+	    const handler = () => binding.value();
+	    formInputTrackerHandlers.set(el, handler);
+	    main_core.Event.bind(el, 'input', handler);
+	  },
+	  beforeUnmount(el) {
+	    const handler = formInputTrackerHandlers.get(el);
+	    if (handler) {
+	      main_core.Event.unbind(el, 'input', handler);
+	      formInputTrackerHandlers.delete(el);
+	    }
+	  }
+	};
+	const vBxControl = {
+	  mounted(el, binding) {
+	    if (binding.value) {
+	      main_core.Dom.append(binding.value, el);
+	    }
+	  }
+	};
 
 	// @vue/component
 	const EditExtendedAction = {
 	  name: 'edit-extended-action',
 	  components: {
 	    Loader
+	  },
+	  directives: {
+	    FormInputTracker: vFormInputTracker,
+	    BxControl: vBxControl
 	  },
 	  props: {
 	    /** @type Construction */
@@ -7434,7 +7703,11 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  data() {
 	    return {
 	      status: '',
-	      settingsForm: null
+	      settingsForm: null,
+	      nodeControls: null,
+	      renderedControlsMap: null,
+	      rendererInstance: null,
+	      lastRenderRequestId: 0
 	    };
 	  },
 	  computed: {
@@ -7475,10 +7748,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    this.init();
 	  },
 	  unmounted() {
+	    this.lastRenderRequestId++;
 	    this.unsubscribe();
+	    this.cleanupFormResources();
 	  },
 	  methods: {
 	    ...ui_vue3_pinia.mapActions(useNodeSettingsStore, ['changeRuleExpression']),
+	    isRenderCancelled(requestId) {
+	      return this.lastRenderRequestId !== requestId;
+	    },
 	    async init() {
 	      if (!this.isPropertiesDialogDocumentTypeReady) {
 	        this.clearForm();
@@ -7487,8 +7765,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      }
 	      try {
 	        await this.loadForm();
-	        window.BPAShowSelector = () => {};
-	        window.HideShow = this.hideShow;
 	        this.subscribeOnBeforeSubmit();
 	      } catch (error) {
 	        this.status = Status.Error;
@@ -7505,29 +7781,194 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        main_core_events.EventEmitter.unsubscribe(EVENT_NAMES.BEFORE_SUBMIT_EVENT, this.onChangeCallback);
 	      }
 	    },
-	    async showSelector(targetElement) {
-	      var _JSON$parse$controlId, _JSON$parse;
-	      const props = targetElement.getAttribute('data-bp-selector-props');
-	      const controlId = (_JSON$parse$controlId = (_JSON$parse = JSON.parse(props)) == null ? void 0 : _JSON$parse.controlId) != null ? _JSON$parse$controlId : null;
-	      if (!controlId) {
-	        return;
+	    async loadForm() {
+	      const requestId = ++this.lastRenderRequestId;
+	      this.clearForm();
+	      this.status = Status.Loading;
+	      let activity = this.activityData;
+	      if (!activity) {
+	        const defaultProps = main_core.Type.isPlainObject(this.action.properties) ? {
+	          ...this.action.properties
+	        } : {};
+	        activity = {
+	          Name: createUniqueId(),
+	          Type: this.actionId,
+	          Activated: 'Y',
+	          Properties: {
+	            Title: this.action.title,
+	            ...defaultProps
+	          }
+	        };
 	      }
-	      const inputElement = this.settingsForm.querySelector(`#${CSS.escape(controlId)}`);
-	      if (!inputElement) {
-	        return;
-	      }
-	      const selector = new ValueSelector(this.store, this.block, this.currentRuleId);
+	      const compatibleTemplate = [{
+	        Type: 'NodeWorkflowActivity',
+	        Children: [],
+	        Name: 'Template'
+	      }];
+	      compatibleTemplate[0].Children.push(activity, ...this.store.getAllBlockAncestors(this.block, this.currentRuleId).map(b => b.activity));
 	      try {
-	        const value = await selector.show(targetElement);
-	        const beforePart = inputElement.value.slice(0, inputElement.selectionEnd);
-	        const middlePart = value;
-	        const afterPart = inputElement.value.slice(inputElement.selectionEnd);
-	        inputElement.value = beforePart + middlePart + afterPart;
-	        inputElement.selectionEnd = beforePart.length + middlePart.length + 1;
-	        inputElement.focus();
-	      } catch (error) {
-	        console.error(error);
+	        var _this$template$PARAME, _this$template, _this$template$VARIAB, _this$template2, _this$template$CONSTA, _this$template3;
+	        const settingControls = await editorAPI.getNodeSettingsControls({
+	          documentType: this.propertiesDialogDocumentType,
+	          activity,
+	          workflow: {
+	            workflowParameters: JSON.stringify((_this$template$PARAME = (_this$template = this.template) == null ? void 0 : _this$template.PARAMETERS) != null ? _this$template$PARAME : {}),
+	            workflowVariables: JSON.stringify((_this$template$VARIAB = (_this$template2 = this.template) == null ? void 0 : _this$template2.VARIABLES) != null ? _this$template$VARIAB : {}),
+	            workflowTemplate: JSON.stringify(compatibleTemplate),
+	            workflowConstants: JSON.stringify((_this$template$CONSTA = (_this$template3 = this.template) == null ? void 0 : _this$template3.CONSTANTS) != null ? _this$template$CONSTA : {})
+	          }
+	        });
+	        if (this.isRenderCancelled(requestId)) {
+	          return;
+	        }
+	        if (main_core.Type.isArray(settingControls == null ? void 0 : settingControls.controls)) {
+	          await this.renderNodeControls(settingControls.controls, requestId, activity);
+	        } else {
+	          var _this$template$PARAME2, _this$template4, _this$template$VARIAB2, _this$template5, _this$template$CONSTA2, _this$template6;
+	          const {
+	            createFormData
+	          } = usePropertyDialog();
+	          const formData = createFormData({
+	            id: activity.Name,
+	            documentType: this.propertiesDialogDocumentType,
+	            activity: this.actionId,
+	            workflow: {
+	              parameters: (_this$template$PARAME2 = (_this$template4 = this.template) == null ? void 0 : _this$template4.PARAMETERS) != null ? _this$template$PARAME2 : [],
+	              variables: (_this$template$VARIAB2 = (_this$template5 = this.template) == null ? void 0 : _this$template5.VARIABLES) != null ? _this$template$VARIAB2 : [],
+	              template: compatibleTemplate,
+	              constants: (_this$template$CONSTA2 = (_this$template6 = this.template) == null ? void 0 : _this$template6.CONSTANTS) != null ? _this$template$CONSTA2 : []
+	            }
+	          });
+	          await this.renderPropertyDialog(formData);
+	        }
+	        this.status = Status.Loaded;
+	      } catch (e) {
+	        if (!this.isRenderCancelled(requestId)) {
+	          this.status = Status.Error;
+	          throw e;
+	        }
 	      }
+	    },
+	    async renderNodeControls(controls, requestId, activity) {
+	      this.nodeControls = this.prepareNodeControls(controls);
+	      const renderedControls = this.getRenderedControlsCollection();
+	      if (this.isRenderCancelled(requestId)) {
+	        return;
+	      }
+	      const customRenderers = this.initRendererInstance();
+	      this.renderedControlsMap = this.buildRenderedControlsMap(renderedControls, customRenderers);
+	      await this.waitForRenderFinished(requestId, renderedControls);
+	    },
+	    prepareNodeControls(controls) {
+	      const isNewActivity = !this.activityData;
+	      return controls.map(control => {
+	        const property = control.property || {};
+	        let currentValue = control.value;
+	        if (isNewActivity && property.Default !== undefined) {
+	          const isValueEmpty = currentValue === undefined || currentValue === null || currentValue === '' || main_core.Type.isArray(currentValue) && currentValue.length === 0;
+	          if (isValueEmpty) {
+	            currentValue = property.Default;
+	          }
+	        }
+	        return {
+	          ...control,
+	          value: currentValue,
+	          fieldName: property.FieldName || null,
+	          controlId: property.FieldName || null
+	        };
+	      });
+	    },
+	    getRenderedControlsCollection() {
+	      return BX.Bizproc.FieldType.renderControlCollection(this.propertiesDialogDocumentType, this.nodeControls.filter(field => field.property.Type !== 'custom'), 'designer');
+	    },
+	    initRendererInstance() {
+	      const rendererName = `${this.actionId}Renderer`;
+	      const RendererClass = main_core.Type.isFunction(window[rendererName]) ? window[rendererName] : null;
+	      if (!RendererClass) {
+	        return null;
+	      }
+	      this.rendererInstance = new RendererClass();
+	      return main_core.Type.isFunction(this.rendererInstance.getControlRenderers) ? this.rendererInstance.getControlRenderers() : null;
+	    },
+	    buildRenderedControlsMap(renderedControls, customRenderers) {
+	      const map = {};
+	      this.nodeControls.forEach(field => {
+	        let control = renderedControls[field.controlId];
+	        if (field.property.Type === 'custom' && this.rendererInstance && customRenderers) {
+	          const renderer = customRenderers[field.property.CustomType];
+	          if (main_core.Type.isFunction(renderer)) {
+	            control = renderer(field);
+	          }
+	        }
+	        if (control) {
+	          map[field.controlId] = control;
+	        }
+	      });
+	      return map;
+	    },
+	    waitForRenderFinished(requestId, renderedControls) {
+	      this.cleanupRenderFinishedHandler();
+	      return new Promise(resolve => {
+	        const eventName = 'BX.Bizproc.FieldType.onCollectionRenderControlFinished';
+	        const handler = async () => {
+	          if (!this.isCollectionRendered(renderedControls)) {
+	            return;
+	          }
+	          this.cleanupRenderFinishedHandler();
+	          await this.$nextTick();
+	          if (!this.isRenderCancelled(requestId)) {
+	            var _this$rendererInstanc;
+	            if ((_this$rendererInstanc = this.rendererInstance) != null && _this$rendererInstanc.afterFormRender) {
+	              this.rendererInstance.afterFormRender(this.$refs.settingsForm);
+	            }
+	            this.settingsForm = this.$refs.settingsForm;
+	          }
+	          resolve();
+	        };
+	        this.pendingRenderFinishedHandler = {
+	          eventName,
+	          handler
+	        };
+	        main_core.Event.EventEmitter.subscribe(eventName, handler);
+	      });
+	    },
+	    isCollectionRendered(renderedControls) {
+	      return Object.values(renderedControls).every(node => node.childElementCount > 0 || node.textContent !== '...');
+	    },
+	    cleanupRenderFinishedHandler() {
+	      if (this.pendingRenderFinishedHandler) {
+	        const {
+	          eventName,
+	          handler
+	        } = this.pendingRenderFinishedHandler;
+	        main_core.Event.EventEmitter.unsubscribe(eventName, handler);
+	        this.pendingRenderFinishedHandler = null;
+	      }
+	    },
+	    async renderPropertyDialog(formData) {
+	      const {
+	        renderPropertyDialog
+	      } = usePropertyDialog();
+	      const form = await renderPropertyDialog(this.$refs.contentContainer, formData);
+	      if (form) {
+	        this.settingsForm = form;
+	      }
+	    },
+	    clearForm() {
+	      this.cleanupFormResources();
+	      this.renderedControlsMap = null;
+	      this.nodeControls = null;
+	      if (this.$refs.contentContainer) {
+	        this.$refs.contentContainer.innerHTML = '';
+	      }
+	    },
+	    cleanupFormResources() {
+	      this.cleanupRenderFinishedHandler();
+	      if (this.rendererInstance && main_core.Type.isFunction(this.rendererInstance.destroy)) {
+	        this.rendererInstance.destroy();
+	      }
+	      this.rendererInstance = null;
+	      this.settingsForm = null;
 	    },
 	    getFormData() {
 	      return this.extractFormData(this.settingsForm);
@@ -7548,66 +7989,6 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        documentType: this.propertiesDialogDocumentType,
 	        id: main_core.Type.isStringFilled(formData.activity_id) ? formData.activity_id : createUniqueId()
 	      };
-	    },
-	    async loadForm() {
-	      var _this$template$PARAME, _this$template, _this$template$VARIAB, _this$template2, _this$template$CONSTA, _this$template3;
-	      this.clearForm();
-	      this.status = Status.Loading;
-	      let activity = this.activityData;
-	      if (!activity) {
-	        activity = {
-	          Name: createUniqueId(),
-	          Type: this.actionId,
-	          Activated: 'Y',
-	          Properties: {
-	            Title: this.action.title,
-	            ...this.action.properties
-	          }
-	        };
-	      }
-	      const compatibleTemplate = [{
-	        Type: 'NodeWorkflowActivity',
-	        Children: [],
-	        Name: 'Template'
-	      }];
-	      compatibleTemplate[0].Children.push(activity, ...this.store.getAllBlockAncestors(this.block, this.currentRuleId).map(b => b.activity));
-	      if (window.CreateActivity) {
-	        window.arAllId = {};
-	        window.arWorkflowTemplate = compatibleTemplate;
-	        window.rootActivity = window.CreateActivity(compatibleTemplate[0]);
-	      }
-	      const {
-	        createFormData
-	      } = usePropertyDialog();
-	      const formData = createFormData({
-	        id: activity.Name,
-	        documentType: this.propertiesDialogDocumentType,
-	        activity: this.actionId,
-	        workflow: {
-	          parameters: (_this$template$PARAME = (_this$template = this.template) == null ? void 0 : _this$template.PARAMETERS) != null ? _this$template$PARAME : [],
-	          variables: (_this$template$VARIAB = (_this$template2 = this.template) == null ? void 0 : _this$template2.VARIABLES) != null ? _this$template$VARIAB : [],
-	          template: compatibleTemplate,
-	          constants: (_this$template$CONSTA = (_this$template3 = this.template) == null ? void 0 : _this$template3.CONSTANTS) != null ? _this$template$CONSTA : []
-	        }
-	      });
-	      await this.renderPropertyDialog(formData);
-	      this.status = Status.Loaded;
-	    },
-	    async renderPropertyDialog(formData) {
-	      const {
-	        renderPropertyDialog
-	      } = usePropertyDialog();
-	      const form = await renderPropertyDialog(this.$refs.contentContainer, formData);
-	      if (!form) {
-	        this.hasSettings = false;
-	        return;
-	      }
-	      this.settingsForm = form;
-	      this.hasSettings = true;
-	    },
-	    clearForm() {
-	      this.$refs.contentContainer.innerHTML = '';
-	      this.settingsForm = null;
 	    },
 	    getPropertyDialogDocumentType(selectedDocument) {
 	      if (!this.action) {
@@ -7635,17 +8016,70 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        return;
 	      }
 	      if (this.isSelectorButton(target)) {
+	        event.stopPropagation();
 	        void this.showSelector(target);
 	      }
 	    },
 	    isSelectorButton(element) {
 	      return element.getAttribute('data-role') === 'bp-selector-button';
+	    },
+	    async showSelector(targetElement) {
+	      let inputElement = null;
+	      const propsAttr = targetElement.getAttribute('data-bp-selector-props');
+	      if (propsAttr) {
+	        var _JSON$parse$controlId, _JSON$parse;
+	        const controlId = (_JSON$parse$controlId = (_JSON$parse = JSON.parse(propsAttr)) == null ? void 0 : _JSON$parse.controlId) != null ? _JSON$parse$controlId : null;
+	        if (controlId) {
+	          inputElement = this.settingsForm.querySelector(`#${CSS.escape(controlId)}`);
+	        }
+	      }
+	      if (!inputElement) {
+	        var _targetElement$closes;
+	        inputElement = (_targetElement$closes = targetElement.closest('.field-row')) == null ? void 0 : _targetElement$closes.querySelector('input[type="text"], textarea');
+	      }
+	      if (!inputElement) {
+	        return;
+	      }
+	      const selector = new ValueSelector(this.store, this.block, this.currentRuleId);
+	      try {
+	        const value = await selector.show(targetElement);
+	        const beforePart = inputElement.value.slice(0, inputElement.selectionEnd || 0);
+	        const middlePart = value;
+	        const afterPart = inputElement.value.slice(inputElement.selectionEnd || 0);
+	        inputElement.value = beforePart + middlePart + afterPart;
+	        inputElement.selectionEnd = beforePart.length + middlePart.length;
+	        inputElement.focus();
+	        inputElement.dispatchEvent(new window.Event('change'));
+	        this.onChange();
+	      } catch (error) {
+	        console.error(error);
+	      }
 	    }
 	  },
 	  template: `
-		<Loader v-if="status === Status.Loading" />
+		<Loader v-if="status === Status.Loading"/>
+		<form
+			v-if="renderedControlsMap"
+			id="form-settings-extended"
+			ref="settingsForm"
+			@click.capture="onFormClick"
+			v-form-input-tracker="onChange"
+		>
+			<div
+				v-for="field in nodeControls"
+				:key="field.fieldName"
+				class="node-settings-edit-box"
+				:class="{ hidden: field.property.Hidden }"
+				:id="'row_' + field.fieldName"
+			>
+				<div class="edit-action-expression-form__label">{{ field.property.Name }}</div>
+				<div class="field-row" v-bx-control="renderedControlsMap[field.controlId]"></div>
+			</div>
+		</form>
 		<div
-			@click="onFormClick"
+			v-else
+			@click.capture="onFormClick"
+			v-form-input-tracker="onChange"
 			ref="contentContainer"
 		></div>
 	`
@@ -7672,19 +8106,20 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    };
 	  },
 	  computed: {
-	    ...ui_vue3_pinia.mapState(diagramStore, ['documentType']),
+	    ...ui_vue3_pinia.mapState(diagramStore, ['documentType', 'connections']),
 	    ...ui_vue3_pinia.mapState(useNodeSettingsStore, ['block', 'isShown', 'isRuleSettingsShown', 'nodeSettings', 'isLoading', 'isSaving', 'ports']),
 	    ...ui_vue3_pinia.mapWritableState(useNodeSettingsStore, ['isSaving'])
 	  },
 	  methods: {
 	    ...ui_vue3_pinia.mapActions(useNodeSettingsStore, ['toggleVisibility', 'toggleRuleSettingsVisibility', 'reset', 'setCurrentRuleId', 'deleteRuleSettings', 'saveForm', 'discardFormSettings', 'addRulePort', 'deletePort']),
-	    ...ui_vue3_pinia.mapActions(diagramStore, ['updateNodeTitle', 'publicDraft', 'updateBlockActivityField', 'setPorts', 'getBlockAncestorsByInputPortId']),
+	    ...ui_vue3_pinia.mapActions(diagramStore, ['updateNodeTitle', 'publicDraft', 'updateBlockActivityField', 'setPorts', 'getBlockAncestorsByInputPortId', 'deleteConnectionByBlockIdAndPortId']),
 	    ...ui_vue3_pinia.mapActions(useAppStore, ['hideRightPanel']),
 	    onShowRuleConstructions(ruleId) {
 	      this.toggleRuleSettingsVisibility(true);
 	      this.setCurrentRuleId(ruleId);
 	    },
-	    onDeleteRule(ruleId) {
+	    async onDeleteRule(ruleId) {
+	      const connections = [...this.connections];
 	      this.deletePort(ruleId);
 	      const {
 	        outputPortsToAdd,
@@ -7698,7 +8133,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      });
 	      outputPortsToDelete.keys().forEach(portId => {
 	        this.deletePort(portId);
+	        this.deleteConnectionByBlockIdAndPortId(this.block.id, portId);
 	      });
+	      this.deleteConnectionByBlockIdAndPortId(this.block.id, ruleId);
+	      if (this.connections.length < connections.length) {
+	        await this.publicDraft();
+	      }
 	    },
 	    async onSaveForm() {
 	      try {
@@ -9254,6 +9694,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	RequestQueue.nextRequest = null;
 
 	const HIDE_SETTINGS_DELAY = 300;
+	const DRAG_THRESHOLD = 5;
 	var _loc = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loc");
 	var _history = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("history");
 	var _appStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appStore");
@@ -9261,11 +9702,21 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	var _complexNodeSettingsStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("complexNodeSettingsStore");
 	var _diagramStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("diagramStore");
 	var _bufferStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bufferStore");
+	var _highlightedBlocks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("highlightedBlocks");
+	var _contextMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contextMenuItems");
+	var _clickStartX = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clickStartX");
+	var _clickStartY = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clickStartY");
+	var _isShowingSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isShowingSettings");
+	var _resetSettingsState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetSettingsState");
 	var _areComplexNodeSettingsDirty = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("areComplexNodeSettingsDirty");
 	var _showConfirm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showConfirm");
 	var _shouldSwitchToBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldSwitchToBlock");
+	var _getMenuItemHtml = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMenuItemHtml");
 	class BlockMediator {
 	  constructor() {
+	    Object.defineProperty(this, _getMenuItemHtml, {
+	      value: _getMenuItemHtml2
+	    });
 	    Object.defineProperty(this, _shouldSwitchToBlock, {
 	      value: _shouldSwitchToBlock2
 	    });
@@ -9274,6 +9725,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    });
 	    Object.defineProperty(this, _areComplexNodeSettingsDirty, {
 	      value: _areComplexNodeSettingsDirty2
+	    });
+	    Object.defineProperty(this, _resetSettingsState, {
+	      value: _resetSettingsState2
 	    });
 	    Object.defineProperty(this, _loc, {
 	      writable: true,
@@ -9303,6 +9757,26 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _highlightedBlocks, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _contextMenuItems, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _clickStartX, {
+	      writable: true,
+	      value: 0
+	    });
+	    Object.defineProperty(this, _clickStartY, {
+	      writable: true,
+	      value: 0
+	    });
+	    Object.defineProperty(this, _isShowingSettings, {
+	      writable: true,
+	      value: false
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc] = useLoc();
 	    babelHelpers.classPrivateFieldLooseBase(this, _history)[_history] = ui_blockDiagram.useHistory();
 	    babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore] = useAppStore();
@@ -9310,17 +9784,42 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore] = useNodeSettingsStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore] = diagramStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _bufferStore)[_bufferStore] = useBufferStore();
+	    const isMac = main_core.Browser.isMac();
+	    babelHelpers.classPrivateFieldLooseBase(this, _contextMenuItems)[_contextMenuItems] = {
+	      deleteBlock: {
+	        text: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
+	        shortcut: isMac ? '⌫' : 'Del'
+	      },
+	      copyBlock: {
+	        text: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
+	        shortcut: isMac ? '⌘ С' : 'Ctrl-C'
+	      }
+	    };
+	    babelHelpers.classPrivateFieldLooseBase(this, _highlightedBlocks)[_highlightedBlocks] = ui_blockDiagram.useHighlightedBlocks();
+	    const {
+	      hooks
+	    } = ui_blockDiagram.useBlockDiagram();
+	    hooks.startDragBlock.on(block => {
+	      var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
+	      const settingsBlockId = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].block) == null ? void 0 : _babelHelpers$classPr2.id) != null ? _babelHelpers$classPr : (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].block) == null ? void 0 : _babelHelpers$classPr3.id;
+	      if (settingsBlockId && settingsBlockId !== block.value.id) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _highlightedBlocks)[_highlightedBlocks].clear();
+	        babelHelpers.classPrivateFieldLooseBase(this, _highlightedBlocks)[_highlightedBlocks].add(settingsBlockId);
+	      }
+	    });
 	  }
 	  isCurrentBlock(blockId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].isCurrentBlock(blockId) || babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(blockId);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].isCurrentBlock(blockId) || babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isShown && babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(blockId);
 	  }
 	  isCurrentComplexBlock(blockId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(blockId);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isShown && babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(blockId);
 	  }
 	  hideAllSettings() {
 	    return new Promise(resolve => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore].hideRightPanel();
 	      babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].hideSettings();
+	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].toggleVisibility(false);
+	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].reset();
 	      setTimeout(() => resolve(), HIDE_SETTINGS_DELAY);
 	    });
 	  }
@@ -9330,29 +9829,54 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    }
 	  }
 	  async showNodeSettings(block) {
-	    const notReallyComplexBlock = ['ForEachActivity', 'IfElseBranchActivity'];
-	    if (block.type === BLOCK_TYPES$1.COMPLEX && !notReallyComplexBlock.includes(block.activity.Type)) {
-	      this.showComplexNodeSettings(block);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isShowingSettings)[_isShowingSettings]) {
 	      return;
 	    }
-	    this.showCommonNodeSettings(block);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isShowingSettings)[_isShowingSettings] = true;
+	    try {
+	      const blockActivities = ['StateInitializationActivity', 'StateFinalizationActivity', 'EventDrivenActivity'];
+	      if (blockActivities.includes(block.activity.Type)) {
+	        await main_core.Runtime.loadExtension('sidepanel');
+	        const url = `/bizprocdesigner/editor/?ID=${babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore].templateId}&editBlock=${block.id}`;
+	        window.BX.SidePanel.Instance.open(url, {
+	          customLeftBoundary: 50,
+	          allowChangeHistory: false,
+	          cacheable: false
+	        });
+	        return;
+	      }
+	      const notReallyComplexBlock = ['ForEachActivity', 'WhileActivity', 'IfElseBranchActivity'];
+	      if (block.type === BLOCK_TYPES$1.COMPLEX && !notReallyComplexBlock.includes(block.activity.Type)) {
+	        await this.showComplexNodeSettings(block);
+	        return;
+	      }
+	      await this.showCommonNodeSettings(block);
+	    } finally {
+	      babelHelpers.classPrivateFieldLooseBase(this, _isShowingSettings)[_isShowingSettings] = false;
+	    }
 	  }
 	  async showCommonNodeSettings(block) {
 	    const shouldSwitch = await babelHelpers.classPrivateFieldLooseBase(this, _shouldSwitchToBlock)[_shouldSwitchToBlock]();
-	    if (shouldSwitch) {
-	      await this.hideAllSettings();
-	      babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore].showRightPanel();
-	      babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].showSettings(block);
+	    if (!shouldSwitch) {
+	      return;
 	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].isVisible) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _resetSettingsState)[_resetSettingsState]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore].showRightPanel();
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].showSettings(block);
 	  }
 	  async showComplexNodeSettings(block) {
 	    const shouldSwitch = await babelHelpers.classPrivateFieldLooseBase(this, _shouldSwitchToBlock)[_shouldSwitchToBlock]();
-	    if (shouldSwitch) {
-	      await this.hideAllSettings();
+	    if (!shouldSwitch) {
+	      return;
+	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isShown) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _resetSettingsState)[_resetSettingsState]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _appStore)[_appStore].showRightPanel();
 	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].toggleVisibility(true);
-	      await babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].fetchNodeSettings(block);
 	    }
+	    await babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].fetchNodeSettings(block);
 	  }
 	  getCtxMenuItemShowSettings(block) {
 	    return {
@@ -9362,9 +9886,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    };
 	  }
 	  getCtxMenuItemDeleteBlock(block) {
+	    const itemId = 'deleteBlock';
 	    return {
-	      id: 'deleteBlock',
-	      text: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
+	      id: itemId,
+	      html: babelHelpers.classPrivateFieldLooseBase(this, _getMenuItemHtml)[_getMenuItemHtml](itemId),
 	      onclick: () => {
 	        const isCurrentComplexBlock = this.isCurrentComplexBlock(block.id);
 	        this.hideCurrentBlockSettings(block.id);
@@ -9380,61 +9905,81 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    return [this.getCtxMenuItemShowSettings(block), this.getCtxMenuItemCopyBlock(block), this.getCtxMenuItemDeleteBlock(block)];
 	  }
 	  getCtxMenuItemCopyBlock(block) {
+	    const itemId = 'copyBlock';
 	    return {
-	      id: 'copyBlock',
-	      text: babelHelpers.classPrivateFieldLooseBase(this, _loc)[_loc].getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
+	      id: itemId,
+	      html: babelHelpers.classPrivateFieldLooseBase(this, _getMenuItemHtml)[_getMenuItemHtml](itemId),
 	      onclick: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _bufferStore)[_bufferStore].copyBlock(block);
+	        babelHelpers.classPrivateFieldLooseBase(this, _bufferStore)[_bufferStore].setBufferContent({
+	          blocks: [block],
+	          connections: []
+	        });
 	      }
 	    };
 	  }
 	  addComplexBlockPort(block, title) {
 	    let portId = '';
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(block.id)) {
+	    const isConnectionPort = `${title[0]}${title[1]}` === COMPLEX_NODE_PORT_LABELS.connection;
+	    if (this.isCurrentComplexBlock(block.id)) {
 	      portId = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].addRule();
-	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].addRulePort(portId, PORT_TYPES.input);
+	      if (isConnectionPort) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].addConnectionPort(portId, PORT_TYPES.input);
+	      } else {
+	        babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].addRulePort(portId, PORT_TYPES.input, title);
+	      }
 	    } else {
 	      portId = generateNextInputPortId(block.ports.filter(port => port.type === PORT_TYPES.input));
+	    }
+	    const isPortExists = block.ports.some(port => port.title === title);
+	    if (isPortExists) {
+	      return;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore].setPorts(block.id, [...block.ports, {
 	      id: portId,
 	      title,
 	      type: PORT_TYPES.input,
-	      position: 'left'
+	      position: 'left',
+	      isConnectionPort
 	    }]);
 	  }
 	  getComplexBlockPorts(block) {
-	    var _babelHelpers$classPr;
+	    var _babelHelpers$classPr4;
 	    const {
 	      id,
 	      ports
 	    } = block;
-	    return this.isCurrentComplexBlock(id) ? (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].ports) != null ? _babelHelpers$classPr : ports : ports;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(id) ? (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].ports) != null ? _babelHelpers$classPr4 : ports : ports;
 	  }
 	  getComplexBlockTitle(block) {
-	    var _babelHelpers$classPr2;
+	    var _babelHelpers$classPr5;
 	    const {
 	      id,
 	      node: {
 	        title
 	      }
 	    } = block;
-	    return this.isCurrentComplexBlock(id) ? (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].nodeSettings) == null ? void 0 : _babelHelpers$classPr2.title : title;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isCurrentBlock(id) ? (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].nodeSettings) == null ? void 0 : _babelHelpers$classPr5.title : title;
 	  }
-	  resetComplexBlockSettings() {
+	  resetComplexBlockSettings(shouldHide = true) {
 	    const {
 	      block: complexBlock,
 	      nodeSettings
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore];
-	    babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].discardFormSettings();
-	    babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore].updateNodeTitle(complexBlock, nodeSettings.title);
-	    babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].toggleVisibility(false);
-	    babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].reset();
+	    if (complexBlock && nodeSettings) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].discardFormSettings();
+	      babelHelpers.classPrivateFieldLooseBase(this, _diagramStore)[_diagramStore].updateNodeTitle(complexBlock, nodeSettings.title);
+	    }
+	    if (shouldHide) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].toggleVisibility(false);
+	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].reset();
+	    } else if (complexBlock) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].setCurrentRuleId('');
+	    }
 	  }
 	  syncSettingsWithDiagram() {
-	    var _babelHelpers$classPr3, _babelHelpers$classPr4;
-	    const complexBlockId = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].block) == null ? void 0 : _babelHelpers$classPr3.id;
-	    const currentId = complexBlockId || ((_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].block) == null ? void 0 : _babelHelpers$classPr4.id);
+	    var _babelHelpers$classPr6, _babelHelpers$classPr7;
+	    const complexBlockId = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isShown ? (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].block) == null ? void 0 : _babelHelpers$classPr6.id : null;
+	    const currentId = complexBlockId || ((_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].block) == null ? void 0 : _babelHelpers$classPr7.id);
 	    if (!currentId) {
 	      return;
 	    }
@@ -9447,6 +9992,42 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      }
 	    }
 	  }
+	  handleMouseUp(event, block) {
+	    if (event.button !== 0) {
+	      return;
+	    }
+	    const isGroupSelected = babelHelpers.classPrivateFieldLooseBase(this, _highlightedBlocks)[_highlightedBlocks].highlitedBlockIds.value.length > 1;
+	    if (isGroupSelected) {
+	      return;
+	    }
+	    const delta = Math.hypot(event.clientX - babelHelpers.classPrivateFieldLooseBase(this, _clickStartX)[_clickStartX], event.clientY - babelHelpers.classPrivateFieldLooseBase(this, _clickStartY)[_clickStartY]);
+	    const isDrag = delta > DRAG_THRESHOLD;
+	    if (isDrag && !this.isAnySettingsOpen()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _highlightedBlocks)[_highlightedBlocks].clear();
+	      return;
+	    }
+	    if (this.isCurrentBlock(block.id)) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _highlightedBlocks)[_highlightedBlocks].clear();
+	    babelHelpers.classPrivateFieldLooseBase(this, _highlightedBlocks)[_highlightedBlocks].add(block.id);
+	    this.showNodeSettings(block);
+	  }
+	  handleMouseDown(event) {
+	    if (event.button !== 0) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _clickStartX)[_clickStartX] = event.clientX;
+	    babelHelpers.classPrivateFieldLooseBase(this, _clickStartY)[_clickStartY] = event.clientY;
+	  }
+	  isAnySettingsOpen() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].isVisible || babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].isShown;
+	  }
+	}
+	function _resetSettingsState2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _commonNodeSettingsStore)[_commonNodeSettingsStore].hideSettings();
+	  babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].toggleVisibility(false);
+	  babelHelpers.classPrivateFieldLooseBase(this, _complexNodeSettingsStore)[_complexNodeSettingsStore].reset();
 	}
 	function _areComplexNodeSettingsDirty2(block) {
 	  var _block$activity$Prope;
@@ -9489,23 +10070,43 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  }
 	  const areComplexNodeSettingsDirty = babelHelpers.classPrivateFieldLooseBase(this, _areComplexNodeSettingsDirty)[_areComplexNodeSettingsDirty](complexBlock);
 	  if (!areComplexNodeSettingsDirty) {
-	    this.resetComplexBlockSettings();
+	    this.resetComplexBlockSettings(false);
 	    return true;
 	  }
 	  const shouldStay = await babelHelpers.classPrivateFieldLooseBase(this, _showConfirm)[_showConfirm]();
 	  if (!shouldStay) {
-	    this.resetComplexBlockSettings();
+	    this.resetComplexBlockSettings(false);
 	  }
 	  return !shouldStay;
+	}
+	function _getMenuItemHtml2(itemId) {
+	  return `
+			<span class="editor-chart-block-control-menu-item">
+				${babelHelpers.classPrivateFieldLooseBase(this, _contextMenuItems)[_contextMenuItems][itemId].text}
+				<span class="editor-chart-block-control-menu-item__action-code">
+					<span class="editor-chart-block-control-menu-item__action-code_text">
+						${babelHelpers.classPrivateFieldLooseBase(this, _contextMenuItems)[_contextMenuItems][itemId].shortcut}
+					</span>
+				</span>
+			</span>
+		`;
 	}
 
 	var _diagramStore$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("diagramStore");
 	var _bufferStore$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bufferStore");
+	var _pasteGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pasteGroup");
 	var _pasteBlock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pasteBlock");
+	var _pasteConnections = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pasteConnections");
 	class CopyPaste {
 	  constructor() {
+	    Object.defineProperty(this, _pasteConnections, {
+	      value: _pasteConnections2
+	    });
 	    Object.defineProperty(this, _pasteBlock, {
 	      value: _pasteBlock2
+	    });
+	    Object.defineProperty(this, _pasteGroup, {
+	      value: _pasteGroup2
 	    });
 	    Object.defineProperty(this, _diagramStore$1, {
 	      writable: true,
@@ -9519,16 +10120,32 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _bufferStore$1)[_bufferStore$1] = useBufferStore();
 	  }
 	  paste(point) {
-	    const bufferContent = babelHelpers.classPrivateFieldLooseBase(this, _bufferStore$1)[_bufferStore$1].getBufferContent();
-	    if (!bufferContent) {
-	      return;
+	    const data = babelHelpers.classPrivateFieldLooseBase(this, _bufferStore$1)[_bufferStore$1].getBufferContent();
+	    if (!data) {
+	      return [];
 	    }
-	    if (bufferContent.type === BUFFER_CONTENT_TYPES.BLOCK) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _pasteBlock)[_pasteBlock](bufferContent.content, point);
-	      return;
-	    }
-	    throw new Error('Unsupported buffer content type');
+	    return babelHelpers.classPrivateFieldLooseBase(this, _pasteGroup)[_pasteGroup](data, point);
 	  }
+	}
+	function _pasteGroup2({
+	  blocks,
+	  connections
+	}, point) {
+	  if (blocks.length === 0) {
+	    return [];
+	  }
+	  const origin = {
+	    ...blocks[0].position
+	  };
+	  const newBlocks = blocks.map(block => {
+	    const targetPoint = {
+	      x: point.x + (block.position.x - origin.x),
+	      y: point.y + (block.position.y - origin.y)
+	    };
+	    return babelHelpers.classPrivateFieldLooseBase(this, _pasteBlock)[_pasteBlock](block, targetPoint);
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _pasteConnections)[_pasteConnections](connections);
+	  return newBlocks;
 	}
 	function _pasteBlock2(block, point) {
 	  const positionedBlock = {
@@ -9537,6 +10154,16 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  };
 	  babelHelpers.classPrivateFieldLooseBase(this, _diagramStore$1)[_diagramStore$1].addBlock(positionedBlock);
 	  babelHelpers.classPrivateFieldLooseBase(this, _diagramStore$1)[_diagramStore$1].updateBlockPublishStatus(positionedBlock);
+	  return positionedBlock;
+	}
+	function _pasteConnections2(connections) {
+	  if (connections.length === 0) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _diagramStore$1)[_diagramStore$1].setConnections([...babelHelpers.classPrivateFieldLooseBase(this, _diagramStore$1)[_diagramStore$1].connections, ...connections]);
+	  connections.forEach(item => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _diagramStore$1)[_diagramStore$1].setConnectionCurrentTimestamp(item.id);
+	  });
 	}
 
 	const DEFAULT_SELECTION_PADDING = {
@@ -9568,6 +10195,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      default: false
 	    }
 	  },
+	  // eslint-disable-next-line max-lines-per-function
 	  setup() {
 	    const showBlockSettings = ui_vue3.inject('showBlockSettings');
 	    const animationQueue = ui_blockDiagram.useAnimationQueue();
@@ -9589,10 +10217,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    const {
 	      transformEventToPoint,
 	      transformX,
-	      transformY
+	      transformY,
+	      currentSnapshot
 	    } = ui_blockDiagram.useBlockDiagram();
 	    const copyPaste = new CopyPaste();
-	    const isMac = main_core.Browser.isMac();
 	    const mediator = new BlockMediator();
 	    const selectionBoxConfig = ui_vue3.computed(() => {
 	      const selectedIds = ui_vue3.toValue(highlitedBlockIds);
@@ -9615,6 +10243,77 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        defaultBlockSize: DEFAULT_BLOCK_SIZE
 	      };
 	    });
+	    const performPaste = point => {
+	      try {
+	        highlightedBlocks.clear();
+	        const newBlocks = copyPaste.paste(point);
+	        if (newBlocks.length > 0) {
+	          highlightedBlocks.set(newBlocks.map(block => block.id));
+	        }
+	        if (newBlocks.length === 1) {
+	          mediator.showNodeSettings(newBlocks[0]);
+	        }
+	        history.makeSnapshot();
+	      } catch (e) {
+	        console.error('Paste error:', e);
+	      }
+	    };
+	    const handleCopy = () => {
+	      const selectedIds = ui_vue3.toValue(highlitedBlockIds);
+	      if (selectedIds.length === 0) {
+	        return;
+	      }
+	      const selectedBlocks = blocks.value.filter(block => selectedIds.includes(block.id));
+	      const selectedConnections = ui_vue3.toValue(connections).filter(conn => {
+	        return selectedIds.includes(conn.sourceBlockId) && selectedIds.includes(conn.targetBlockId);
+	      });
+	      bufferStore.setBufferContent({
+	        blocks: selectedBlocks,
+	        connections: selectedConnections
+	      });
+	      closeContextMenu();
+	    };
+	    const handlePasteShortcut = (event, mousePos) => {
+	      const rawPoint = transformEventToPoint({
+	        clientX: mousePos.x,
+	        clientY: mousePos.y
+	      });
+	      const correctedPoint = {
+	        x: rawPoint.x + (ui_vue3.toValue(transformX) || 0),
+	        y: rawPoint.y + (ui_vue3.toValue(transformY) || 0)
+	      };
+	      performPaste(correctedPoint);
+	    };
+	    const handleDelete = () => {
+	      const ids = ui_vue3.toValue(highlitedBlockIds);
+	      if (ids.length === 0) {
+	        return;
+	      }
+	      ids.forEach(id => {
+	        diagramStore$$1.deleteBlockById(id);
+	        mediator.hideCurrentBlockSettings(id);
+	      });
+	      history.makeSnapshot();
+	      highlightedBlocks.clear();
+	      closeContextMenu();
+	      fetchUpdateDiagram();
+	    };
+	    ui_blockDiagram.useKeyboardShortcuts([{
+	      keys: ['Mod', 'c'],
+	      handler: handleCopy
+	    }, {
+	      keys: ['Mod', 'v'],
+	      handler: handlePasteShortcut
+	    }, {
+	      keys: ['Delete'],
+	      handler: handleDelete
+	    }, {
+	      keys: ['Backspace'],
+	      handler: handleDelete
+	    }]);
+	    const {
+	      closeContextMenu
+	    } = ui_blockDiagram.useContextMenu();
 	    const blocks = ui_vue3.computed({
 	      get() {
 	        return ui_vue3.toValue(blocksInStore);
@@ -9633,80 +10332,12 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        fetchUpdateDiagram();
 	      }
 	    });
-	    const performPaste = point => {
-	      try {
-	        copyPaste.paste(point);
-	        history.makeSnapshot();
-	      } catch (e) {
-	        console.error('Paste error:', e);
-	      }
-	    };
-	    const handleCopy = () => {
-	      const ids = ui_vue3.toValue(highlitedBlockIds);
-	      if (ids.length > 0) {
-	        const blockToCopy = ui_vue3.toValue(blocksInStore).find(b => b.id === ids[0]);
-	        if (blockToCopy) {
-	          bufferStore.copyBlock(blockToCopy);
-	        }
-	      }
-	    };
-	    const handlePasteShortcut = (event, mousePos) => {
-	      const rawPoint = transformEventToPoint({
-	        clientX: mousePos.x,
-	        clientY: mousePos.y
-	      });
-	      const correctedPoint = {
-	        x: rawPoint.x + (ui_vue3.toValue(transformX) || 0),
-	        y: rawPoint.y + (ui_vue3.toValue(transformY) || 0)
-	      };
-	      performPaste(correctedPoint);
-	    };
-	    const handleUndo = () => {
-	      if (history.hasPrev) {
-	        history.prev();
-	        mediator.syncSettingsWithDiagram();
-	      }
-	    };
-	    const handleRedo = () => {
-	      if (history.hasNext) {
-	        history.next();
-	        mediator.syncSettingsWithDiagram();
-	      }
-	    };
-	    const handleDelete = () => {
-	      const ids = ui_vue3.toValue(highlitedBlockIds);
-	      if (ids.length === 0) {
-	        return;
-	      }
-	      ids.forEach(id => {
-	        diagramStore$$1.deleteBlockById(id);
-	        mediator.hideCurrentBlockSettings(id);
-	      });
-	      history.makeSnapshot();
-	      highlightedBlocks.clear();
-	      fetchUpdateDiagram();
-	    };
-	    ui_blockDiagram.useKeyboardShortcuts([{
-	      keys: ['Mod', 'c'],
-	      handler: handleCopy
-	    }, {
-	      keys: ['Mod', 'v'],
-	      handler: handlePasteShortcut
-	    }, {
-	      keys: ['Mod', 'z'],
-	      handler: handleUndo
-	    }, {
-	      keys: isMac ? ['Mod', 'Shift', 'z'] : ['Mod', 'y'],
-	      handler: handleRedo
-	    }, {
-	      keys: ['Delete'],
-	      handler: handleDelete
-	    }, {
-	      keys: ['Backspace'],
-	      handler: handleDelete
-	    }]);
 	    const fetchUpdateDiagram = main_core.Runtime.debounce(updateDiagramData, 700);
 	    const groupMenuItems = ui_vue3.computed(() => [{
+	      id: 'copy-group',
+	      text: getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
+	      onclick: handleCopy
+	    }, {
 	      id: 'delete-group',
 	      text: getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
 	      onclick: handleDelete
@@ -9735,6 +10366,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    }
 	    function onDropNewBlock(block) {
 	      diagramStore$$1.updateBlockPublishStatus(block);
+	      highlightedBlocks.clear();
+	      highlightedBlocks.add(block.id);
+	      mediator.showNodeSettings(block);
 	    }
 	    async function onBlockTransitionEnd(block) {
 	      if (!block || !block.position) {
@@ -9755,6 +10389,15 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    function onCreateConnection(connection) {
 	      diagramStore$$1.setConnectionCurrentTimestamp(connection.id);
 	    }
+	    ui_vue3.watch(currentSnapshot, () => {
+	      mediator.syncSettingsWithDiagram();
+	    });
+	    function onCanvasMouseDown(event) {
+	      if (event.button !== 0) {
+	        return;
+	      }
+	      mediator.hideAllSettings();
+	    }
 	    return {
 	      blocks,
 	      connections,
@@ -9769,7 +10412,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      performPaste,
 	      isBufferEmpty,
 	      onDeleteConnection,
-	      onCreateConnection
+	      onCreateConnection,
+	      closeContextMenu,
+	      onCanvasMouseDown
 	    };
 	  },
 	  computed: {
@@ -9780,11 +10425,29 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	      return {
 	        id: 'paste',
 	        disabled: this.isBufferEmpty,
-	        text: this.$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_PASTE'),
+	        html: `
+					<span class="editor-chart-block-control-menu-item">
+						${this.menuItemText}
+						<span class="editor-chart-block-control-menu-item__action-code">
+							<span class="editor-chart-block-control-menu-item__action-code_text">
+								${this.menuItemShortcut}
+							</span>
+						</span>
+					</span>
+				`,
 	        onclick: point => {
 	          this.performPaste(point);
 	        }
 	      };
+	    },
+	    isMac() {
+	      return main_core.Browser.isMac();
+	    },
+	    menuItemShortcut() {
+	      return this.isMac ? '⌘ V' : 'Ctrl-V';
+	    },
+	    menuItemText() {
+	      return this.$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_PASTE');
 	    }
 	  },
 	  // @todo to widget
@@ -9815,6 +10478,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			:disabled="disabled"
 			:enableGrouping="enableGrouping"
 			:contextMenuItems="contextMenuItems"
+			@mousedown="onCanvasMouseDown"
 			@blockTransitionEnd="onBlockTransitionEnd"
 			@dropNewBlock="onDropNewBlock"
 			@createConnection="onCreateConnection"
@@ -9934,6 +10598,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			:icon-name="iconSet.TRASHCAN"
 			:color="'var(--ui-color-palette-gray-40)'"
 			:data-test-id="$testId('blockDelete', blockId)"
+			@mousedown.stop
+			@mouseup.stop
 			@click="onDeleteBlock"
 		/>
 	`
@@ -10398,7 +11064,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:deactivated="!isBlockActivated"
 					:hoverable="!isMakeNewConnection"
 					:contextMenuItems="contextMenuItems"
-					@dblclick.stop="blockMediator.showNodeSettings(block)"
+					@mouseup="blockMediator.handleMouseUp($event, block)"
+					@mousedown="blockMediator.handleMouseDown($event)"
 				>
 					<BlockLayout
 						:block="block"
@@ -10515,7 +11182,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:deactivated="!isBlockActivated"
 					:hoverable="!isMakeNewConnection"
 					:contextMenuItems="contextMenuItems"
-					@dblclick.stop="blockMediator.showNodeSettings(block)"
+					@mouseup="blockMediator.handleMouseUp($event, block)"
+					@mousedown="blockMediator.handleMouseDown($event)"
 				>
 					<BlockLayout
 						:block="block"
@@ -10589,7 +11257,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    BlockComplexContent,
 	    BlockComplexPortPlaceholder,
 	    UpdatePublishedStatusLabel,
-	    BlockTopTitle
+	    BlockTopTitle,
+	    Port: ui_blockDiagram.Port
 	  },
 	  props: {
 	    /** @type Block */
@@ -10601,7 +11270,9 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  setup(props) {
 	    return {
 	      iconSet: ui_iconSet_api_vue.Outline,
-	      blockMediator: new BlockMediator()
+	      blockMediator: new BlockMediator(),
+	      validationInputOutputRule,
+	      normalyzeInputOutputConnection
 	    };
 	  },
 	  computed: {
@@ -10616,7 +11287,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    }
 	  },
 	  methods: {
-	    onAddRulePort(title) {
+	    onAddPort(title) {
 	      this.blockMediator.addComplexBlockPort(this.block, title);
 	    },
 	    onDeletedBlock(blockId) {
@@ -10636,7 +11307,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
 					:hoverable="!isMakeNewConnection"
-					@dblclick.stop="blockMediator.showNodeSettings(block)"
+					@mouseup="blockMediator.handleMouseUp($event, block)"
+					@mousedown="blockMediator.handleMouseDown($event)"
 				>
 					<BlockLayout
 						:block="block"
@@ -10680,12 +11352,26 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 										</template>
 									</BlockHeader>
 								</template>
-								<template #portPlaceholder="{ ports }">
+								<template #portPlaceholder="{ item, isOutput }">
 									<BlockComplexPortPlaceholder
-										:blockId="block.id"
-										:ports="ports"
-										@addPort="onAddRulePort($event)"
+										:title="item.title"
+										:isOutput="isOutput"
+										@addPort="onAddPort($event)"
 									/>
+								</template>
+								<template #port="{ item, disabled, position, index }">
+									<Port
+										:block="block"
+										:port="item"
+										:index="index"
+										:disabled="disabled"
+										:validationRules="[validationInputOutputRule]"
+										:normalyzeConnectionFn="normalyzeInputOutputConnection"
+										:position="position"
+									/>
+									<span class="block-complex__content_col-value-text">
+										{{ item.title }}
+									</span>
 								</template>
 							</BlockComplexContent>
 						</template>
@@ -10786,7 +11472,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 					:deactivated="!isBlockActivated"
 					:hoverable="!isMakeNewConnection"
 					:contextMenuItems="contextMenuItems"
-					@dblclick.stop="blockMediator.showCommonNodeSettings(block)"
+					@mouseup="blockMediator.handleMouseUp($event, block)"
+					@mousedown="blockMediator.handleMouseDown($event)"
 				>
 					<BlockLayout
 						:block="block"
@@ -11303,7 +11990,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	  },
 	  computed: {
 	    ...ui_vue3_pinia.mapState(useCommonNodeSettingsStore, ['isVisible', 'block']),
-	    ...ui_vue3_pinia.mapState(diagramStore, ['documentType'])
+	    ...ui_vue3_pinia.mapState(diagramStore, ['documentType']),
+	    ...ui_vue3_pinia.mapState(useAppStore, ['isShownRightPanel'])
 	  },
 	  methods: {
 	    ...ui_vue3_pinia.mapActions(useAppStore, ['hideRightPanel', 'setShowPreviewPanel']),
@@ -11318,6 +12006,7 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 			v-if="isVisible"
 			:block="block"
 			:documentType="documentType"
+			:panelAlreadyOpened="isShownRightPanel"
 			@close="onCloseSettings"
 			@showPreview="setShowPreviewPanel"
 		>
@@ -11961,6 +12650,10 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	    initStartTrigger: {
 	      type: String,
 	      default: null
+	    },
+	    initEditBlock: {
+	      type: String,
+	      default: null
 	    }
 	  },
 	  setup(props) {
@@ -11995,7 +12688,8 @@ this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {};
 	        await Promise.all([diagramStore().refreshDiagramData({
 	          templateId: props.initTemplateId,
 	          documentType: props.initDocumentType,
-	          startTrigger: props.initStartTrigger
+	          startTrigger: props.initStartTrigger,
+	          editBlock: props.initEditBlock
 	        }), catalogStore.init()]);
 	        initAiUpdatePull(({
 	          blocks,

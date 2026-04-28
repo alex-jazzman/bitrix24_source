@@ -11,6 +11,7 @@ use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Extension::load("ui.buttons");
 Extension::load("ui.buttons.icons");
+Extension::load("intranet.old-interface.intranet-common");
 \Bitrix\Main\Loader::includeModule('ui');
 
 /** @var CMain $APPLICATION */

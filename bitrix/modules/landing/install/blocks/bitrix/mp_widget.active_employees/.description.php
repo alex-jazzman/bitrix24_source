@@ -4,15 +4,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Landing\Mainpage;
+use Bitrix\Landing\Vibe\Vibe;
 use Bitrix\Main\Localization\Loc;
 
 $return = [
 	'block' => [
-		'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_ACTIVE_EMPLOYEES_NAME'),
-		'type' => ['mainpage'],
+		'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_ACTIVE_EMPLOYEES_NAME_NEW'),
+		'type' => ['vibe'],
 		'section' => ['widgets_team', 'widgets_hr'],
-		'disableEditButton' => Mainpage\Manager::isUseDemoData(),
+		'disableEditButton' => Vibe::isUseDemoData(),
 	],
 	'nodes' => [
 		"bitrix:landing.blocks.mp_widget.active_employees" => [

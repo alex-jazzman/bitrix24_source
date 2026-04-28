@@ -1006,6 +1006,7 @@ this.BX.UI = this.BX.UI || {};
 	  BEFORE_SELECT: 'onBeforeSelect',
 	  SELECT: 'onSelect',
 	  BEFORE_DESELECT: 'onBeforeDeselect',
+	  BEFORE_DAY_SELECT: 'onBeforeDaySelect',
 	  DESELECT: 'onDeselect',
 	  DESTROY: 'onDestroy'
 	};
@@ -4569,6 +4570,15 @@ this.BX.UI = this.BX.UI || {};
 	    day
 	  } = event.getData();
 	  let selectedDate = createUtcDate(year, month, day);
+	  const dayEvent = new main_core_events.BaseEvent({
+	    data: {
+	      date: selectedDate
+	    }
+	  });
+	  this.emit(DatePickerEvent.BEFORE_DAY_SELECT, dayEvent);
+	  if (dayEvent.isDefaultPrevented()) {
+	    return;
+	  }
 	  if (this.isRangeMode()) {
 	    const currentRange = babelHelpers.classPrivateFieldLooseBase(this, _selectedDates)[_selectedDates];
 	    if (currentRange.length === 0) {

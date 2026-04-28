@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Loc } from 'main.core';
 import { UI } from 'ui.notification';
 import { BordersAccord } from '../../validator/border-accord';
@@ -57,12 +58,24 @@ export const ControlPage = {
 		{
 			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_TITLE');
 		},
+
 		pageDescription(): string
 		{
-			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_DESCRIPTION');
+			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_DESCRIPTION', NameService.copilotNameReplacement());
+		},
+
+		lowBorderDescription(): string
+		{
+			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_DESCRIPTION', NameService.copilotNameReplacement());
+		},
+
+		highBorderDescription(): string
+		{
+			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_DESCRIPTION', NameService.copilotNameReplacement());
 		},
 	},
 
+	// language=Vue
 	template: `
 		<div v-if="isActive">
 			<div class="crm-copilot__call-assessment_page-section">
@@ -84,7 +97,7 @@ export const ControlPage = {
 						<div class="crm-copilot__call-assessment_page-section-body-field-content">
 							<div
 								class="crm-copilot__call-assessment_page-section-body-field-subtitle"
-								v-html="this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_DESCRIPTION')"
+								v-html="lowBorderDescription"
 							>
 							</div>
 							<Pill
@@ -97,7 +110,7 @@ export const ControlPage = {
 							</div>
 						</div>
 					</div>
-					
+	
 					<div class="crm-copilot__call-assessment_page-section-body-field-container">
 						<div class="crm-copilot__call-assessment_page-section-body-field-title --high-icon">
 							{{ this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_TITLE') }}
@@ -105,7 +118,7 @@ export const ControlPage = {
 						<div class="crm-copilot__call-assessment_page-section-body-field-content">
 							<div 
 								class="crm-copilot__call-assessment_page-section-body-field-subtitle"
-								v-html="this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_DESCRIPTION')"
+								v-html="highBorderDescription"
 							>
 							</div>
 							<Pill

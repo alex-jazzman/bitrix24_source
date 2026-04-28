@@ -79,14 +79,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			{
 				selector.setSelectedObjectAndField(object, field, objectTabs[object][field]['Name']);
 			}
-			else
+			else if (object)
 			{
 				var activityTabItems = selector.getMenuItemsByTabName('Activity');
 				var sourceName = bpForEachActivityFindActivityTitle(activityTabItems, object, field);
-				if (sourceName)
-				{
-					selector.setSelectedObjectAndField(object, field, sourceName);
-				}
+				selector.setSelectedObjectAndField(object, field, sourceName);
 			}
 		}
 	});

@@ -5,8 +5,8 @@
 
 	try
 	{
-		const { IntranetBackground } = require('intranet/background');
-		IntranetBackground?.init();
+		const { IntranetBackground } = require('intranet/intranet-background');
+		void IntranetBackground?.init();
 	}
 	catch (e)
 	{
@@ -52,11 +52,11 @@
 		command: '2FA',
 		type: BX.PullClient.SubscriptionType.Server,
 		callback: (params, extra, commandName) => {
-			params["type"] = commandName;
-			if (typeof Application["show2FAIfNeeded"] === 'function')
+			params.type = commandName;
+			if (typeof Application?.show2FAIfNeeded === 'function')
 			{
-				Application.show2FAIfNeeded(params)
+				Application.show2FAIfNeeded(params);
 			}
-		}
+		},
 	});
 })();

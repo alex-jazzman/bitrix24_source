@@ -7,28 +7,53 @@ jn.define('intranet/qualification', (require, exports, module) => {
 	const { Step } = require('intranet/qualification/step');
 	const { StepLayout } = require('intranet/qualification/step-layout');
 	const { AnalyticsHandler } = require('intranet/qualification/analytics-handler');
-	const { getQualificationData } = require('intranet/qualification/api');
+	const { getQualificationData } = require('intranet/qualification/src/api');
 	const { Type } = require('type');
+	const { isEmpty } = require('utils/object');
 
 	const COMPONENT_NAME = 'intranet:qualification';
 
 	class Qualification
 	{
+		constructor(props)
+		{
+			this.qualificationData = props?.data;
+		}
+
 		static async init()
 		{
-			const qualificationData = await getQualificationData();
+			const qualificationData = await getQualificationData().catch(console.error);
 
-			if (
-				Type.isArrayFilled(qualificationData.steps)
-				&& Type.isStringFilled(qualificationData.version)
-			)
+			return new Qualification({ data: qualificationData });
+		}
+
+		tryShowComponent()
+		{
+			if (this.shouldShowQualification())
 			{
 				BackgroundUIManager.openComponent(
 					COMPONENT_NAME,
-					Qualification.openComponent.bind(null, qualificationData),
+					Qualification.openComponent.bind(null, this.getQualificationData()),
 					20000,
 				);
 			}
+		}
+
+		hasQualificationData()
+		{
+			return !isEmpty(this.qualificationData);
+		}
+
+		getQualificationData()
+		{
+			return this.qualificationData;
+		}
+
+		shouldShowQualification()
+		{
+			return this.hasQualificationData()
+				&& Type.isArrayFilled(this.qualificationData?.steps)
+				&& Type.isStringFilled(this.qualificationData?.version);
 		}
 
 		static openComponent(qualificationData)

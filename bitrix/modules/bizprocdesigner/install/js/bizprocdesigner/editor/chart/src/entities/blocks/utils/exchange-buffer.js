@@ -6,6 +6,11 @@ type ActivityId = string;
 type ActivityIds = Set<ActivityId>;
 type ActivityIdsReplaceMap = Map<ActivityId, ActivityId>;
 
+type BlocksContent = {
+	blocks: Block[],
+	connections: Connection[],
+};
+
 function addActivityIdsToSet(activity: ActivityData, activityIds: ActivityIds): void
 {
 	if (!Type.isObject(activity))
@@ -24,17 +29,13 @@ function addActivityIdsToSet(activity: ActivityData, activityIds: ActivityIds): 
 	}
 }
 
-export function cloneSingleBlockWithNewIds(block: Block): Block
+export function cloneBLocksWithNewIds(target: BlocksContent): BlocksContent
 {
-	return cloneBlocksWithNewIds([block])[0];
-}
-
-function cloneBlocksWithNewIds(blocks: Array<Block>): Array<Block>
-{
+	const { blocks } = target;
 	const activityIds: ActivityIds = findBlocksIds(blocks);
 	const replaceMap: ActivityIdsReplaceMap = makeReplaceMap(activityIds);
 
-	return cloneAndReplaceBlocksActivityIds(blocks, replaceMap);
+	return cloneAndReplaceBlocksActivityIds(target, replaceMap);
 }
 
 function findBlocksIds(blocks: Array<Block>): ActivityIds
@@ -64,13 +65,13 @@ function makeReplaceMap(activityIds: ActivityIds): ActivityIdsReplaceMap
 	return replaceMap;
 }
 
-function cloneAndReplaceBlocksActivityIds(blocks: Array<Block>, replaceMap: ActivityIdsReplaceMap): Array<Block>
+function cloneAndReplaceBlocksActivityIds(target: BlocksContent, replaceMap: ActivityIdsReplaceMap): BlocksContent
 {
-	let serialized: string = JSON.stringify(blocks);
+	let serialized = JSON.stringify(target);
 
-	for (const [pattern: string, replacement: string] of replaceMap.entries())
+	for (const [pattern, replacement] of replaceMap.entries())
 	{
-		serialized = serialized.replaceAll(pattern, replacement);
+		serialized = serialized.replaceAll(`"${pattern}"`, `"${replacement}"`);
 	}
 
 	return JSON.parse(serialized);

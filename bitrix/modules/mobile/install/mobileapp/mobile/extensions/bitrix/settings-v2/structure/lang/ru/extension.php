@@ -115,3 +115,4 @@ $MESS['SETTINGS_V2_STRUCTURE_SECURITY_SAFE_INFORMATION_SECTION_TITLE'] = 'Защ
 $MESS['SETTINGS_V2_STRUCTURE_SECURITY_USER_SELECTOR_UNSELECT_LAST_WARNING'] = 'Выберите, кому запретить';
 $MESS['SETTINGS_V2_STRUCTURE_SECURITY_ADMIN_2FA_NECESSITY_BANNER_DESCRIPTION'] = 'Двухфакторную аутентификацию отключить нельзя — это важно для защиты данных в вашем Битрикс24. Если у вас есть вопросы, [URL]напишите в поддержку[/URL]';
 $MESS['SETTINGS_V2_STRUCTURE_SECURITY_FEEDBACK'] = 'Обратная связь';
+$MESS['SETTINGS_V2_STRUCTURE_SECURITY_LOGIN_HISTORY'] = 'История входов';

@@ -19,6 +19,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 	const { Feature } = require('im/messenger/lib/feature');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { UnreadSeparatorMessage } = require('im/messenger/lib/element/dialog');
+	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
 
 	const { StateManager } = require('im/messenger/view/lib/state-manager');
 	const { DialogTextField } = require('im/messenger/view/dialog/text-field');
@@ -88,9 +89,12 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.readingMessageId = options.lastReadId;
 			this.messageIdToScrollAfterSet = options.lastReadId;
 			this.delayedMessageListToRead = [];
+			this.processReadMessagesAfterSetPromise = Promise.resolve();
 
 			this.onShowScrollToNewMessageButton = options.onShowScrollToNewMessageButton ?? doNothing;
 			this.onHideScrollToNewMessageButton = options.onHideScrollToNewMessageButton ?? doNothing;
+
+			this.visibleAttachItems = options.visibleAttachItems;
 			/**
 			 * @private
 			 * @type {VisibilityManager}
@@ -468,9 +472,9 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {MessagesContextOptions.targetMessageId} targetMessageId
-		 * @param {MessagesContextOptions.withMessageHighlight} withMessageHighlight
-		 * @param {MessagesContextOptions.targetMessagePosition} targetMessagePosition
+		 * @param {MessagesContextOptions['targetMessageId']} targetMessageId
+		 * @param {MessagesContextOptions['withMessageHighlight']} [withMessageHighlight=false]
+		 * @param {MessagesContextOptions['targetMessagePosition']} [targetMessagePosition=AfterScrollMessagePosition.top]
 		 */
 		setContextOptions(
 			targetMessageId,
@@ -537,17 +541,23 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				this.emitCustomEvent(EventType.dialog.loadBottomPage);
 			}
 
+			const { promise, resolve } = createPromiseWithResolvers();
+			this.processReadMessagesAfterSetPromise = promise;
+
 			// TODO: refactor temporary hack. Without it, extra messages are read, somehow connected with the scroll
 			setTimeout(() => {
 				this.#processReadMessagesAfterSet()
 					.catch((error) => {
 						logger.error(`${this.constructor.name}.#processReadMessagesAfterSet`, error);
-					});
+					})
+					.finally(resolve)
+				;
 			}, 200);
 		}
 
-		readDelayedMessageList()
+		async readDelayedMessageList()
 		{
+			await this.processReadMessagesAfterSetPromise;
 			if (!Type.isArrayFilled(this.delayedMessageListToRead))
 			{
 				return;
@@ -1460,7 +1470,8 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				},
 			};
 
-			if (isModuleInstalled('tasks'))
+			const isShowTask = this.visibleAttachItems.includes(AttachPickerId.task) && isModuleInstalled('tasks');
+			if (isShowTask)
 			{
 				imagePickerParams.settings.attachButton.items.push({
 					id: AttachPickerId.task,
@@ -1469,7 +1480,8 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				});
 			}
 
-			if (isModuleInstalled('calendar'))
+			const isShowMeeting = this.visibleAttachItems.includes(AttachPickerId.meeting) && isModuleInstalled('calendar');
+			if (isShowMeeting)
 			{
 				imagePickerParams.settings.attachButton.items.push({
 					id: AttachPickerId.meeting,
@@ -1478,7 +1490,12 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				});
 			}
 
-			if (Feature.isVoteMessageAvailable && !DialogHelper.createByDialogId(this.dialogId).isDirect)
+			const isShowVote = Feature.isVoteMessageAvailable
+				&& this.visibleAttachItems.includes(AttachPickerId.task)
+				&& !DialogHelper.createByDialogId(this.dialogId).isDirect
+			;
+
+			if (isShowVote)
 			{
 				imagePickerParams.settings.attachButton.items.push({
 					id: AttachPickerId.vote,

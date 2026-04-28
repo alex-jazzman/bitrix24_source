@@ -1,7 +1,6 @@
 import { defineStore } from 'ui.vue3.pinia';
-import type { Block, BufferContent } from '../../../shared/types';
-import { BUFFER_CONTENT_TYPES } from '../constants';
-import { cloneSingleBlockWithNewIds } from '../utils';
+import { cloneBLocksWithNewIds } from '../utils';
+import type { BufferContent } from '../../../shared/types';
 
 type BufferState = {
 	copied: BufferContent | null,
@@ -18,29 +17,18 @@ export const useBufferStore = defineStore('bizprocdesigner-editor-buffer', {
 		},
 	},
 	actions: {
-		copyBlock(block: Block): void
+		setBufferContent(content: BlocksContent): void
 		{
-			this.copied = {
-				type: BUFFER_CONTENT_TYPES.BLOCK,
-				content: JSON.parse(JSON.stringify(block)),
-			};
+			this.copied = JSON.parse(JSON.stringify(content));
 		},
-		getBufferContent(): BufferContent | null
+		getBufferContent(): ?GroupContent
 		{
 			if (!this.copied)
 			{
 				return null;
 			}
 
-			if (this.copied.type === BUFFER_CONTENT_TYPES.BLOCK)
-			{
-				return {
-					type: this.copied.type,
-					content: cloneSingleBlockWithNewIds(this.copied.content),
-				};
-			}
-
-			throw new Error('Unexpected copied content type');
+			return cloneBLocksWithNewIds(this.copied);
 		},
 	},
 });

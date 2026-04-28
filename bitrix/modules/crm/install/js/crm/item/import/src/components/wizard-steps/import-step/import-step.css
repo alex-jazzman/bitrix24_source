@@ -1,0 +1,17 @@
+.crm-item-import__import-step-statistics {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.crm-item-import__import-step-statistic-item {
+	font-feature-settings: 'liga' off, 'clig' off;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-palette-gray-70);
+}
+
+.crm-item-import__import-step-alerts {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}

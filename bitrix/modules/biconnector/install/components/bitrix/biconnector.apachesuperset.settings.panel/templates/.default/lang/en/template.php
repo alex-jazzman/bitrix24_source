@@ -1,5 +1,5 @@
 <?php
-$MESS["BICONNECTOR_SUPERSET_SETTINGS_CHANGE_DASHBOARD_LANGUAGE"] = "Change";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CHANGE_GLOBAL_SETTINGS"] = "Change";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON"] = "Update data now";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_0"] = "Update will be available in #COUNT# minute.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_1"] = "Update will be available in #COUNT# minutes.";
@@ -15,10 +15,15 @@ $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT_LINK"] = "Learn mor
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FROM_TITLE"] = "Start date";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_TO_TITLE"] = "End date";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_CURRENT_DASHBOARD_LANGUAGE"] = "[div]Current language:[/div] #LANGUAGE#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CURRENT_DASHBOARD_LANGUAGE_MSGVER_1"] = "[div]Current language:[/div] #LANGUAGE#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CURRENT_TIMEZONE"] = "[div]Current time zone:[/div] #TIME_ZONE#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK"] = "Learn more";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_RANGE_FIELD_HINT"] = "New date range will be applied to this dashboard only.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DATASET_TYPING_HINT"] = "After enabling this option, datasets that use CAST functions will no longer work correctly in your charts.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DATASET_TYPING_TOGGLE"] = "Use original data types for custom fields.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_GLOBAL_SETTINGS_SECTION_HINT"] = "You can change the dashboard language and time zone in the Bitrix24 settings.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT"] = "You may lose access to the dashboard if you remove it from the groups you have access to. #HINT_LINK#";
-$MESS["BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT_CLEARABLE"] = "Dashboard will not be available to your Bitrix24's users if you remove it from all workgroups.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT_CLEARABLE"] = "Dashboard will not be available to your Bitrix24's users if you remove it from all groups.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_GROUP_HINT"] = "Adding a dashboard to the group will add it to the Dashboards menu item in the top menu. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED"] = "Error refreshing key.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS"] = "Key has been refreshed.";

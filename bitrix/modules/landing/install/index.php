@@ -50,6 +50,7 @@ class Landing extends \CModule
 		],
 		'intranet' => [
 			'onBuildBindingMenu' => ['\Bitrix\Landing\Connector\Intranet', 'onBuildBindingMenu'],
+			'onSettingsProvidersCollect' => ['\Bitrix\Landing\Vibe\Integration\Intranet\EventHandler', 'onSettingsProvidersCollect'],
 		],
 		'landing' => [
 			'onBuildSourceList' => ['\Bitrix\Landing\Connector\Landing', 'onSourceBuildHandler'],

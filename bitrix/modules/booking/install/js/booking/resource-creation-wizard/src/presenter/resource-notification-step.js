@@ -2,7 +2,7 @@ import { Event, Loc, Text, Type } from 'main.core';
 import { Notifier, NotificationOptions } from 'ui.notification-manager';
 import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
 
-import { EventName, Model, NotificationFieldsMap, Module } from 'booking.const';
+import { EventName, Model, NotificationFieldsMap } from 'booking.const';
 import { resourceService } from 'booking.provider.service.resources-service';
 import { resourceTypeService } from 'booking.provider.service.resources-type-service';
 import { RcwAnalytics } from 'booking.lib.analytics';
@@ -95,7 +95,7 @@ export class ResourceNotificationStep extends Step
 	#isBitrix24SenderAvailable(): boolean
 	{
 		const bitrix24Sender = this.store.getters[`${Model.Notifications}/getSenders`]
-			.find((sender) => sender.moduleId === Module.Crm && sender.code === SenderTypes.bitrix24)
+			.find((sender) => sender.code === SenderTypes.bitrix24)
 		;
 
 		if (!bitrix24Sender)
@@ -123,7 +123,7 @@ export class ResourceNotificationStep extends Step
 	{
 		const resourceType = this.store.getters[`${Model.ResourceTypes}/getById`](resource.typeId);
 
-		return Object.values(this.store.getters[`${Model.Dictionary}/getNotifications`])
+		const reduceResult = Object.values(this.store.getters[`${Model.Dictionary}/getNotifications`])
 			.map(({ value }) => value)
 			.reduce((acc: Object, type: string) => {
 				const notificationOnField = NotificationFieldsMap.NotificationOn[type];
@@ -143,6 +143,11 @@ export class ResourceNotificationStep extends Step
 				};
 			}, {})
 		;
+
+		return {
+			...reduceResult,
+			senderCode: resource.senderCode,
+		};
 	}
 
 	async #upsertResource(resource: ResourceModel): Promise<boolean>

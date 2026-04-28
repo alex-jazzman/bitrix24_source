@@ -2,7 +2,6 @@ import {Uri, Type, Tag, Cache, Loc, Browser, Text, Dom, ajax, Event} from 'main.
 import {EventEmitter} from 'main.core.events';
 import { AvatarRoundGuest } from 'ui.avatar';
 import {PopupComponentsMaker} from 'ui.popupcomponentsmaker';
-import {StressLevel} from './stress-level';
 import ThemePicker from './theme-picker';
 import {Menu} from 'main.popup';
 import 'main.qrcode';

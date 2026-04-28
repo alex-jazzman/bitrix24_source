@@ -1,18 +1,21 @@
 import {RecentItemData} from '../../../../controller/recent/service/server-load/chat/type';
-import {UsersModelState} from '../../../../model/users/src/types';
-import {DialoguesModelState} from '../../../../model/dialogues/src/types';
-import {RawMessage, RawFile} from '../../sync/types/sync-list-result';
+import { UsersModelState } from '../../../../model/users/src/types';
+import { DialoguesModelState } from '../../../../model/dialogues/src/types';
 import {ChannelRecentItemData} from '../../../../controller/recent/service/server-load/channel/types';
-import {channelChatId, commentChatId} from '../../../../model/comment/src/types';
+import { channelChatId, commentChatId } from '../../../../model/comment/src/types';
 import {
 	ChatsCopilotDataItem,
 	CopilotRoleData,
-	MessageCopilotDataItem
+	MessageCopilotDataItem,
 } from '../../../../model/dialogues/src/copilot/types';
-import {PlanLimits} from '../../../../lib/params/types/params';
-import {messagesAutoDeleteConfigs} from '../../../pull/base/types/message';
-import {AnchorModelState} from "../../../../model/anchor/src/types";
-import {imV2CollabTailResult} from "../../../../controller/recent/collab/types/recent";
+import { PlanLimits } from '../../../../lib/params/types/params';
+import { MessagesAutoDeleteConfigs } from '../../../pull/base/types/message';
+import { AnchorModelState } from '../../../../model/anchor/src/types';
+import { imV2CollabTailResult } from '../../../../controller/recent/collab/types/recent';
+import { DialogId } from '../../../../types/common';
+import { RawFile, RawMessage } from '../../../pull/base/types/common';
+import { OpenlinesSessionStatus } from '../../../../model/dialogues/src/openlines/type';
+import {CounterModelState} from "../../../../model/counter/src/types";
 
 declare type immobileTabsLoadCommonResult = {
 	desktopStatus: {
@@ -20,25 +23,8 @@ declare type immobileTabsLoadCommonResult = {
 		version: number,
 	},
 	imCounters: {
-		channelComment: Record<channelChatId, Record<commentChatId, number>>,
-		chat: Record<string, number>,
-		chatMuted: number[],
-		chatUnread: number[],
-		collab: Record<number, number>,
-		collabUnread: number[],
-		copilot: Record<number, number>,
-		copilotUnread: number[],
-		tasksTask: Record<number, number>,
-		tasksTaskUnread: number[],
-		lines: unknown[],
-		type: {
-			all: number,
-			chat: number,
-			collab: number,
-			copilot: number,
-			lines: number,
-			notify: number,
-		},
+		messengerCounters: Array<CounterModelState>
+		notifyCounters: number,
 	},
 	mobileRevision: number,
 	portalCounters: {
@@ -67,7 +53,7 @@ declare type immobileTabChatLoadResultRecentList = {
 	hasMore: boolean,
 	hasNextPage: boolean,
 	items: RecentItemData[],
-	messagesAutoDeleteConfigs: Array<messagesAutoDeleteConfigs>,
+	messagesAutoDeleteConfigs: Array<MessagesAutoDeleteConfigs>,
 }
 
 declare type immobileTabChannelLoadResult = Partial<immobileTabsLoadCommonResult> & {
@@ -97,6 +83,10 @@ declare type immobileTabCollabLoadResultV2 = {
 	collabList: immobileTabCollabLoadResultCollabList,
 }
 
+declare type immobileTabOpenlinesLoadResultV2 = {
+	openlinesList: immobileTabOpenlinesLoadResultOpenlinesList,
+}
+
 declare type immobileTabCopilotLoadResultCopilotList = {
 	birthdayList: unknown[],
 	copilot: immobileTabLoadResultCopilotData | null,
@@ -112,6 +102,19 @@ declare type immobileTabChatsLoadResultChatsList = {
 	hasMorePages: boolean,
 	items: RecentItemData[],
 	messagesAutoDeleteConfigs: Array<MessagesAutoDeleteConfigs>,
+}
+
+declare type immobileTabOpenlinesLoadResultOpenlinesList = {
+	additionalMessages: Array<RawMessage>,
+	chats: Array<DialoguesModelState>,
+	copilot: null,
+	files: RawFile[],
+	hasNextPage: boolean,
+	messages: Array<RawMessage>,
+	messagesAutoDeleteConfigs: Array<MessagesAutoDeleteConfigs>,
+	recentItems: Array<OpenlinesRecentItemData>,
+	sessions: Array<OpenlinesSession>,
+	users: Array<UsersModelState>,
 }
 
 declare type immobileTabCollabLoadResultCollabList = imV2CollabTailResult
@@ -133,10 +136,26 @@ declare type MessengerInitActionData = {
 	}
 }
 
-
 declare type immobileTabLoadResultCopilotData = {
 	chats: ChatsCopilotDataItem[],
 	messages: MessageCopilotDataItem[],
 	recommendedRoles: string[],
 	roles: Record<string, CopilotRoleData>,
 };
+
+declare type OpenlinesRecentItemData = {
+	chatId: number,
+	dialogId: DialogId,
+	messageId: number,
+	sessionId: number,
+}
+
+declare type OpenlinesSession = {
+	id: number,
+	operatorId: number,
+	chatId: number,
+	status: OpenlinesSessionStatus,
+	queueId: string,
+	pinned: boolean,
+	isClosed: boolean,
+}

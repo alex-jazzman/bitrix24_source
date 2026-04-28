@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\Enum\SchedulerTransport;
+
 $runtime = CBPRuntime::GetRuntime();
 $runtime->includeActivityFile('DelayActivity');
 
@@ -103,6 +105,7 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 				'OnAfterTMDayStart',
 				['USER_ID' => $userId],
 				sort: self::START_EVENT_SORT,
+				schedulerTransport: SchedulerTransport::Messenger,
 			);
 
 			$this->continueEventId = $schedulerService->subscribeOnEvent(
@@ -112,6 +115,7 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 				'OnAfterTMDayContinue',
 				['USER_ID' => $userId],
 				sort: self::CONTINUE_EVENT_SORT,
+				schedulerTransport: SchedulerTransport::Messenger,
 			);
 
 			$this->logMessage(
@@ -131,11 +135,11 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 		$schedulerService = $this->workflow->GetService('SchedulerService');
 		if (isset($this->startEventId))
 		{
-			$schedulerService->unSubscribeByEventId($this->startEventId, 'USER_ID');
+			$schedulerService->unSubscribeByEventId($this->startEventId, 'USER_ID', SchedulerTransport::Messenger);
 		}
 		if (isset($this->continueEventId))
 		{
-			$schedulerService->unSubscribeByEventId($this->continueEventId, 'USER_ID');
+			$schedulerService->unSubscribeByEventId($this->continueEventId, 'USER_ID', SchedulerTransport::Messenger);
 		}
 
 		$this->startEventId = null;

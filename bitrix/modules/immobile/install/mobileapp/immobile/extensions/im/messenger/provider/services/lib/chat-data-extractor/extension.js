@@ -203,31 +203,6 @@ jn.define('im/messenger/provider/services/lib/chat-data-extractor', (require, ex
 			return this.restResult.recentConfig ?? null;
 		}
 
-		/**
-		 * @return {Array<CounterModelState>}
-		 */
-		getCounterState()
-		{
-			const chat = this.getMainChat();
-
-			const storedDialogData = serviceLocator.get('core').getStore()
-				.getters['dialoguesModel/getById'](chat.dialogId)
-			;
-
-			if (storedDialogData && storedDialogData.lastReadId > chat.lastId)
-			{
-				return [];
-			}
-
-			return [{
-				chatId: chat.id,
-				counter: chat.counter,
-				type: CounterHelper.getCounterTypeByDialogType(chat.type),
-				disabled: CounterHelper.getDisabledByMuteList(chat.muteList ?? chat.mute_list),
-				parentChatId: chat.parentChatId ?? 0,
-			}];
-		}
-
 		getStickers()
 		{
 			return this.restResult.stickers;

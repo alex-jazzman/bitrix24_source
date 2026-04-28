@@ -15,7 +15,7 @@
 	<?
 	}
 
-	\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
+	\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 
 	$GLOBALS['APPLICATION']->SetAdditionalCSS('/bitrix/js/report/css/report.css');
 	$GLOBALS['APPLICATION']->AddHeadScript('/bitrix/js/report/construct.js');

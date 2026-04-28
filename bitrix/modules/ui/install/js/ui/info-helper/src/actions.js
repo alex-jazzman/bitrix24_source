@@ -31,9 +31,18 @@ export class Actions
 		top.BX.SidePanel.Instance.open(data.url);
 	}
 
-	static openPriceTable(): void
+	static openPriceTable(data): void
 	{
-		Actions.openSlider({ url: '/settings/license_all.php' });
+		let url = '/settings/license_all.php';
+
+		if (data && data.subscr)
+		{
+			url = Uri.addParam(url, {
+				subscr: data.subscr,
+			});
+		}
+
+		Actions.openSlider({ url });
 	}
 
 	static openChatWithHead(data): void
@@ -80,21 +89,25 @@ export class Actions
 
 	static openCheckout(data): void
 	{
-		if (data.mpSubscribe && Extension.getSettings('ui.info-helper').licenseType)
+		if (data.tariff)
 		{
 			const url = Uri.addParam('/settings/order/make.php', {
-				product: Extension.getSettings('ui.info-helper').licenseType + '12',
-				subscr: 'o',
+				product: data.period ? data.tariff + data.period : `${data.tariff}12`,
+				subscr: data.subscr ?? null,
 			});
-			Actions.openSlider({ url: url });
+			Actions.openSlider({ url });
 		}
-		else if (data.tariff)
+		else if (Extension.getSettings('ui.info-helper').licenseType)
 		{
 			const url = Uri.addParam('/settings/order/make.php', {
-				product: data.period ? data.tariff + data.period : data.tariff + '12',
-				subscr: data.mpSubscribe ? 'o' : null,
+				product: `${Extension.getSettings('ui.info-helper').licenseType}12`,
+				subscr: data.subscr ?? null,
 			});
-			Actions.openSlider({ url: url });
+			Actions.openSlider({ url });
+		}
+		else
+		{
+			this.openPriceTable(data);
 		}
 	}
 
@@ -140,27 +153,12 @@ export class Actions
 
 				if (!result.error)
 				{
-					const settings = Extension.getSettings('ui.info-helper');
 					let url = window.location.href;
 
-					if (settings.region === 'ru' && settings.licenseNeverPayed)
-					{
-						url += url.includes('?') ? '&' : '?';
-						url += 'feature_promoter=limit_market_trial_active';
+					url += url.includes('?') ? '&' : '?';
+					url += 'feature_promoter=limit_market_trial_active';
 
-						window.location.href = url;
-					}
-					else if (settings.marketUrl)
-					{
-						if (url.includes(settings.marketUrl))
-						{
-							window.location.reload();
-						}
-						else
-						{
-							window.location.href = settings.marketUrl;
-						}
-					}
+					window.location.href = url;
 				}
 			};
 

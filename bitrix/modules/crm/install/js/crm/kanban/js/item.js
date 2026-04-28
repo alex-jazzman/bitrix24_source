@@ -205,7 +205,7 @@ BX.CRM.Kanban.Item.prototype = {
 				? BX.Tag.render`
 					<div>
 						<div class="crm-kanban-item-contact-center-title crm-kanban-item-contact-center-title-import">
-							${BX.Loc.getMessage('CRM_KANBAN_EMPTY_CARD_IMPORT')}
+							${BX.Loc.getMessage('CRM_KANBAN_EMPTY_CARD_IMPORT_MSGVER_1')}
 						</div>
 					</div>
 				`
@@ -2325,19 +2325,6 @@ BX.CRM.Kanban.Item.prototype = {
 		void this.getGrid()
 			.moveItem(draggableItem, this.getColumn(), this, true)
 			.then((result) => {
-				if (result && result.status)
-				{
-					BX.onCustomEvent(
-						this.getGrid(),
-						'Kanban.Grid:onItemMoved',
-						[
-							draggableItem,
-							this.getColumn(),
-							this,
-						],
-					);
-				}
-
 				if (draggableItem.getColumn().getId() === this.getColumn().getId())
 				{
 					this.getGrid().resetMultiSelectMode();

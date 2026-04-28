@@ -9,6 +9,14 @@ const defaultBookingForm = {
 	hasSlotsAllAvailableResources: false,
 };
 
+export const defaultSkuBookingForm = {
+	resources: [],
+	skuLabel: Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_SKU_FIELD_LABEL_DEFAULT'),
+	skuTextHeader: Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_SKU_FIELD_PLACEHOLDER_DEFAULT_VALUE'),
+	isVisibleSkuHint: true,
+	skuHint: '',
+};
+
 export const defaultBookingDefaultForm: BookingDefaultForm = {
 	...defaultBookingForm,
 	resourceIds: [],

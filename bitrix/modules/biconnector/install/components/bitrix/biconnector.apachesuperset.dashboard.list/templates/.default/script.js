@@ -1,8 +1,8 @@
 /* eslint-disable */
-(function (exports,main_core,main_popup,main_date,biconnector_apacheSupersetDashboardManager,main_core_events,biconnector_apacheSupersetAnalytics,ui_entitySelector,ui_tour,biconnector_apacheSupersetMarketManager,biconnector_entitySelector,ui_buttons,ui_alerts,ui_forms,ui_system_dialog) {
+(function (exports,main_core,main_popup,main_date,biconnector_apacheSupersetDashboardManager,main_core_events,biconnector_apacheSupersetAnalytics,ui_entitySelector,ui_tour,biconnector_apacheSupersetMarketManager,biconnector_entitySelector,ui_buttons,biconnector_dashboardRelatedItemsList,ui_alerts,ui_forms,ui_system_dialog,ui_system_typography) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
@@ -25,6 +25,8 @@
 	var _colorPinnedRows = /*#__PURE__*/new WeakSet();
 	var _isActiveGroupIdFilter = /*#__PURE__*/new WeakSet();
 	var _notifyErrors = /*#__PURE__*/new WeakSet();
+	var _showDeleteConfirmationPopup = /*#__PURE__*/new WeakSet();
+	var _showRelatedEntitiesToDelete = /*#__PURE__*/new WeakSet();
 	var _buildDashboardTitleEditor = /*#__PURE__*/new WeakSet();
 	var _getTitlePreview = /*#__PURE__*/new WeakSet();
 	var _setDateModifyNow = /*#__PURE__*/new WeakSet();
@@ -46,6 +48,8 @@
 	    _classPrivateMethodInitSpec(this, _setDateModifyNow);
 	    _classPrivateMethodInitSpec(this, _getTitlePreview);
 	    _classPrivateMethodInitSpec(this, _buildDashboardTitleEditor);
+	    _classPrivateMethodInitSpec(this, _showRelatedEntitiesToDelete);
+	    _classPrivateMethodInitSpec(this, _showDeleteConfirmationPopup);
 	    _classPrivateMethodInitSpec(this, _notifyErrors);
 	    _classPrivateMethodInitSpec(this, _isActiveGroupIdFilter);
 	    _classPrivateMethodInitSpec(this, _colorPinnedRows);
@@ -413,45 +417,51 @@
 	    }
 	  }, {
 	    key: "deleteDashboard",
-	    value: function deleteDashboard(dashboardId, isCustom) {
+	    value: function deleteDashboard(dashboardId, dashboardType) {
 	      var _this7 = this;
-	      var message = isCustom ? main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_MESSAGE_CUSTOM') : main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_MESSAGE_MARKET');
-	      var deletePopup = new ui_system_dialog.Dialog({
-	        title: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE_MSGVER_1'),
-	        subtitle: message,
+	      var isCustom = dashboardType === 'CUSTOM';
+	      if (dashboardType !== 'MARKET') {
+	        _classPrivateMethodGet(this, _showDeleteConfirmationPopup, _showDeleteConfirmationPopup2).call(this, dashboardId, isCustom);
+	        return;
+	      }
+	      var loaderText = ui_system_typography.Text.render(main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_LOAD'), {
+	        size: 'sm'
+	      });
+	      var isPopupClosedByUser = false;
+	      var loadingPopup = new ui_system_dialog.Dialog({
+	        content: main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"dashboard-delete-loading-popup\">\n\t\t\t\t\t<div class=\"dashboard-delete-loading-popup-spinner-wrapper\">\n\t\t\t\t\t\t<img\n\t\t\t\t\t\t\tclass=\"dashboard-delete-loading-popup-spinner\"\n\t\t\t\t\t\t\tsrc=\"/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.list/templates/.default/images/spinner.png\" alt=\"Loading\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"dashboard-delete-loading-popup-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), loaderText),
 	        width: 400,
+	        height: 176,
+	        title: ' ',
+	        // popup without title has no close-button
 	        hasCloseButton: true,
 	        hasOverlay: true,
-	        closeByEsc: true,
 	        disableScrolling: true,
-	        centerButtons: [new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'),
-	          useAirDesign: true,
-	          size: ui_buttons.ButtonSize.LARGE,
-	          style: ui_buttons.AirButtonStyle.FILLED_ALERT,
-	          onclick: function onclick(button) {
-	            button.setWaiting();
-	            babelHelpers.classPrivateFieldGet(_this7, _dashboardManager).deleteDashboard(dashboardId).then(function () {
-	              _this7.getGrid().reload();
-	              deletePopup.hide();
-	            })["catch"](function (response) {
-	              deletePopup.hide();
-	              if (response.errors) {
-	                _classPrivateMethodGet(_this7, _notifyErrors, _notifyErrors2).call(_this7, response.errors);
-	              }
-	            });
+	        hasVerticalPadding: false,
+	        hasHorizontalPadding: false,
+	        events: {
+	          onHide: function onHide(event) {
+	            isPopupClosedByUser = true;
 	          }
-	        }), new ui_buttons.CancelButton({
-	          text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_NO'),
-	          size: ui_buttons.ButtonSize.LARGE,
-	          useAirDesign: true,
-	          style: ui_buttons.AirButtonStyle.PLAIN,
-	          onclick: function onclick(button) {
-	            return deletePopup.hide();
-	          }
-	        })]
+	        }
 	      });
-	      deletePopup.show();
+	      loadingPopup.show();
+	      babelHelpers.classPrivateFieldGet(this, _dashboardManager).getDashboardRelatedItems(dashboardId).then(function (result) {
+	        if (isPopupClosedByUser) {
+	          return;
+	        }
+	        loadingPopup.hide();
+	        if (result.data && result.data.length > 0) {
+	          _classPrivateMethodGet(_this7, _showRelatedEntitiesToDelete, _showRelatedEntitiesToDelete2).call(_this7, result.data);
+	        } else {
+	          _classPrivateMethodGet(_this7, _showDeleteConfirmationPopup, _showDeleteConfirmationPopup2).call(_this7, dashboardId, isCustom);
+	        }
+	      })["catch"](function (response) {
+	        loadingPopup.hide();
+	        BX.UI.Notification.Center.notify({
+	          content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_ERROR')
+	        });
+	      });
 	    }
 	  }, {
 	    key: "deleteGroup",
@@ -507,6 +517,18 @@
 	    value: function notifyPermissionErrorOpenCreationSlider() {
 	      BX.UI.Notification.Center.notify({
 	        content: main_core.Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_ERROR_OPEN_CREATE_DASHBOARD')
+	      });
+	    }
+	  }, {
+	    key: "openDatasetTypingSettings",
+	    value: function openDatasetTypingSettings() {
+	      BX.SidePanel.Instance.open('/bitrix/components/bitrix/biconnector.apachesuperset.setting/slider.php', {
+	        width: 790,
+	        allowChangeHistory: false,
+	        cacheable: false,
+	        data: {
+	          focusSection: 'DATASET_SETTINGS_SECTION'
+	        }
 	      });
 	    }
 	  }, {
@@ -736,7 +758,7 @@
 	              })["catch"](function (result) {
 	                var errors = result.errors;
 	                errors.forEach(function (error) {
-	                  var alert = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t\t\t<div class=\"dashboard-tag-already-exists-alert\">\n\t\t\t\t\t\t\t\t\t\t\t<div class='ui-alert ui-alert-xs ui-alert-danger'> \n\t\t\t\t\t\t\t\t\t\t\t\t<span class='ui-alert-message'>\n\t\t\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t\t\t</span> \n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t"])), error.message);
+	                  var alert = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t\t\t<div class=\"dashboard-tag-already-exists-alert\">\n\t\t\t\t\t\t\t\t\t\t\t<div class='ui-alert ui-alert-xs ui-alert-danger'> \n\t\t\t\t\t\t\t\t\t\t\t\t<span class='ui-alert-message'>\n\t\t\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t\t\t</span> \n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t"])), error.message);
 	                  main_core.Dom.prepend(alert, babelHelpers.classPrivateFieldGet(_this11, _tagSelectorDialog).getFooterContainer());
 	                  setTimeout(function () {
 	                    main_core.Dom.remove(alert);
@@ -788,10 +810,11 @@
 	    key: "addToTopMenu",
 	    value: function addToTopMenu(dashboardId, url) {
 	      var _this12 = this;
+	      var restrictionCode = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 	      BX.UI.Notification.Center.notify({
 	        content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ADD_TO_TOP_MENU_SUCCESS')
 	      });
-	      _classPrivateMethodGet(this, _switchTopMenuAction, _switchTopMenuAction2).call(this, dashboardId, true, url);
+	      _classPrivateMethodGet(this, _switchTopMenuAction, _switchTopMenuAction2).call(this, dashboardId, true, url, restrictionCode);
 	      return babelHelpers.classPrivateFieldGet(this, _dashboardManager).addToTopMenu(dashboardId).then(function (response) {})["catch"](function (response) {
 	        babelHelpers.classPrivateFieldGet(_this12, _grid).updateRow(dashboardId);
 	        BX.UI.Notification.Center.notify({
@@ -803,10 +826,11 @@
 	    key: "deleteFromTopMenu",
 	    value: function deleteFromTopMenu(dashboardId, url) {
 	      var _this13 = this;
+	      var restrictionCode = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 	      BX.UI.Notification.Center.notify({
 	        content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_FROM_TOP_MENU_SUCCESS')
 	      });
-	      _classPrivateMethodGet(this, _switchTopMenuAction, _switchTopMenuAction2).call(this, dashboardId, false, url);
+	      _classPrivateMethodGet(this, _switchTopMenuAction, _switchTopMenuAction2).call(this, dashboardId, false, url, restrictionCode);
 	      return babelHelpers.classPrivateFieldGet(this, _dashboardManager).deleteFromTopMenu(dashboardId).then(function (response) {})["catch"](function (response) {
 	        babelHelpers.classPrivateFieldGet(_this13, _grid).updateRow(dashboardId);
 	        BX.UI.Notification.Center.notify({
@@ -835,6 +859,10 @@
 	}();
 	function _subscribeToEvents2() {
 	  var _this16 = this;
+	  main_core.Event.bind(document.getElementById('biconnector-dataset-typing-warning-details'), 'click', function (event) {
+	    event.preventDefault();
+	    _this16.openDatasetTypingSettings();
+	  });
 	  main_core.Event.bind(window, 'popstate', function (event) {
 	    var _event$state;
 	    var filterState = (_event$state = event.state) === null || _event$state === void 0 ? void 0 : _event$state.filter;
@@ -921,7 +949,14 @@
 	  main_core_events.EventEmitter.subscribe('BIConnector.DashboardManager:onEmbeddedDataLoaded', function () {
 	    babelHelpers.classPrivateFieldGet(_this16, _grid).reload();
 	  });
-	  main_core_events.EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', function () {
+	  main_core_events.EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', function (event) {
+	    var data = event.getData();
+	    if ((data === null || data === void 0 ? void 0 : data.datasetTypingEnabled) === true) {
+	      var warning = document.getElementById('biconnector-dataset-typing-warning');
+	      if (warning) {
+	        warning.remove();
+	      }
+	    }
 	    babelHelpers.classPrivateFieldGet(_this16, _grid).reload();
 	  });
 	  main_core_events.EventEmitter.subscribe('BIConnector.CreateForm:onDashboardCreated', function () {
@@ -1063,8 +1098,96 @@
 	    });
 	  }
 	}
+	function _showDeleteConfirmationPopup2(dashboardId, isCustom) {
+	  var _this17 = this,
+	    _SystemDialog;
+	  var message = isCustom ? main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_MESSAGE_CUSTOM') : main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_MESSAGE_MARKET');
+	  var deletePopup = new ui_system_dialog.Dialog((_SystemDialog = {
+	    title: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE_MSGVER_1'),
+	    subtitle: message,
+	    width: 400,
+	    hasCloseButton: true,
+	    hasOverlay: true,
+	    closeByEsc: true,
+	    disableScrolling: true
+	  }, babelHelpers.defineProperty(_SystemDialog, "hasOverlay", true), babelHelpers.defineProperty(_SystemDialog, "centerButtons", [new ui_buttons.Button({
+	    text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'),
+	    useAirDesign: true,
+	    size: ui_buttons.ButtonSize.LARGE,
+	    style: ui_buttons.AirButtonStyle.FILLED_ALERT,
+	    onclick: function onclick(button) {
+	      button.setWaiting();
+	      babelHelpers.classPrivateFieldGet(_this17, _dashboardManager).deleteDashboard(dashboardId).then(function () {
+	        _this17.getGrid().reload();
+	        deletePopup.hide();
+	      })["catch"](function (response) {
+	        deletePopup.hide();
+	        if (response.errors) {
+	          _classPrivateMethodGet(_this17, _notifyErrors, _notifyErrors2).call(_this17, response.errors);
+	        }
+	      });
+	    }
+	  }), new ui_buttons.CancelButton({
+	    text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_NO'),
+	    size: ui_buttons.ButtonSize.LARGE,
+	    useAirDesign: true,
+	    style: ui_buttons.AirButtonStyle.PLAIN,
+	    onclick: function onclick(button) {
+	      return deletePopup.hide();
+	    }
+	  })]), _SystemDialog));
+	  deletePopup.show();
+	}
+	function _showRelatedEntitiesToDelete2(entities) {
+	  var _this18 = this;
+	  var list = new biconnector_dashboardRelatedItemsList.DashboardRelatedEntitiesList(entities, {
+	    onOpen: function onOpen(url, onDone) {
+	      var tab = window.open('about:blank', '_blank');
+	      babelHelpers.classPrivateFieldGet(_this18, _dashboardManager).getSupersetEntityLoginUrl(url).then(function (result) {
+	        if (tab) {
+	          tab.location.href = result.data;
+	        } else {
+	          window.open(result.data, '_blank');
+	        }
+	        if (onDone) {
+	          onDone();
+	        }
+	      }, function () {
+	        if (tab) {
+	          tab.location.href = url;
+	        } else {
+	          window.open(url, '_blank');
+	        }
+	        if (onDone) {
+	          onDone();
+	        }
+	      });
+	    }
+	  });
+	  var popup = new ui_system_dialog.Dialog({
+	    content: main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"market-dashboard-delete-popup\">\n\t\t\t\t<div class=\"market-dashboard-delete-popup-text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>"])), main_core.Loc.getMessage('SUPERSET_MARKET_DASHBOARD_DELETE_RELATED_OBJECTS_TEXT', {
+	      '[link]': '<a class="biconnector-grid-scope-hint-more" onclick="top.BX.Helper.show(`redirect=detail&code=26703788`)">',
+	      '[/link]': '</a>'
+	    }), list.render()),
+	    width: 540,
+	    closeByEsc: true,
+	    hasOverlay: true,
+	    disableScrolling: true,
+	    title: main_core.Loc.getMessage('SUPERSET_MARKET_DASHBOARD_DELETE_RELATED_OBJECTS_TITLE'),
+	    centerButtons: [new ui_buttons.Button({
+	      color: ui_buttons.Button.Color.LIGHT,
+	      text: main_core.Loc.getMessage('SUPERSET_MARKET_DASHBOARD_DELETE_RELATED_OBJECTS_OK_BTN'),
+	      onclick: function onclick() {
+	        popup.hide();
+	      },
+	      useAirDesign: true,
+	      style: ui_buttons.AirButtonStyle.FILLED
+	    })]
+	  });
+	  popup.show();
+	}
 	function _buildDashboardTitleEditor2(id, title, onCancel, onSave) {
-	  var input = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input class=\"main-grid-editor main-grid-editor-text\" type=\"text\">\n\t\t"])));
+	  var input = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input class=\"main-grid-editor main-grid-editor-text\" type=\"text\">\n\t\t"])));
 	  input.value = title;
 	  var saveInputValue = function saveInputValue() {
 	    var value = input.value;
@@ -1089,14 +1212,14 @@
 	      event.preventDefault();
 	    }
 	  });
-	  var applyButton = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a>\n\t\t\t\t<i\n\t\t\t\t\tclass=\"ui-icon-set --check\"\n\t\t\t\t\tstyle=\"--ui-icon-set__icon-size: 21px; --ui-icon-set__icon-color: var(--ui-color-palette-gray-40);\"\n\t\t\t\t></i>\n\t\t\t</a>\n\t\t"])));
-	  var cancelButton = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a>\n\t\t\t\t<i\n\t\t\t\t\tclass=\"ui-icon-set --cross-60\"\n\t\t\t\t\tstyle=\"--ui-icon-set__icon-size: 21px; --ui-icon-set__icon-color: var(--ui-color-palette-gray-40);\"\n\t\t\t\t></i>\n\t\t\t</a>\n\t\t"])));
-	  var buttons = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"dashboard-title-wrapper__buttons\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), applyButton, cancelButton);
+	  var applyButton = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a>\n\t\t\t\t<i\n\t\t\t\t\tclass=\"ui-icon-set --check\"\n\t\t\t\t\tstyle=\"--ui-icon-set__icon-size: 21px; --ui-icon-set__icon-color: var(--ui-color-palette-gray-40);\"\n\t\t\t\t></i>\n\t\t\t</a>\n\t\t"])));
+	  var cancelButton = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a>\n\t\t\t\t<i\n\t\t\t\t\tclass=\"ui-icon-set --cross-60\"\n\t\t\t\t\tstyle=\"--ui-icon-set__icon-size: 21px; --ui-icon-set__icon-color: var(--ui-color-palette-gray-40);\"\n\t\t\t\t></i>\n\t\t\t</a>\n\t\t"])));
+	  var buttons = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"dashboard-title-wrapper__buttons\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), applyButton, cancelButton);
 	  main_core.Event.bind(cancelButton, 'click', function () {
 	    onCancel();
 	  });
 	  main_core.Event.bind(applyButton, 'click', saveInputValue);
-	  return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"dashboard-title-wrapper__item dashboard-title-edit\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"dashboard-title-wrapper__buttons-wrapper\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), input, buttons);
+	  return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"dashboard-title-wrapper__item dashboard-title-edit\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"dashboard-title-wrapper__buttons-wrapper\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), input, buttons);
 	}
 	function _getTitlePreview2(dashboardId) {
 	  var _row$getCellById5;
@@ -1124,12 +1247,13 @@
 	  var cellContent = dateModifyCell.querySelector('.main-grid-cell-content span');
 	  var date = main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('FORMAT_DATETIME'), Math.floor(Date.now() / 1000));
 	  var readableDate = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DATE_MODIFY_NOW');
-	  var newCellContent = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span data-hint=\"", "\" data-hint-no-icon data-hint-interactivity>", "</span>\n\t\t"])), date, readableDate);
+	  var newCellContent = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span data-hint=\"", "\" data-hint-no-icon data-hint-interactivity>", "</span>\n\t\t"])), date, readableDate);
 	  main_core.Dom.replace(cellContent, newCellContent);
 	  _classPrivateMethodGet(this, _initHints, _initHints2).call(this);
 	}
 	function _switchTopMenuAction2(dashboardId, isInTopMenu) {
 	  var url = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '/';
+	  var restrictionCode = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
 	  var row = babelHelpers.classPrivateFieldGet(this, _grid).getRows().getById(dashboardId);
 	  var rowActions = row === null || row === void 0 ? void 0 : row.getActions();
 	  var _iterator5 = _createForOfIteratorHelper(rowActions.entries()),
@@ -1141,11 +1265,11 @@
 	        action = _step5$value[1];
 	      if (isInTopMenu && action.ACTION_ID === 'addToTopMenu') {
 	        rowActions[index].ACTION_ID = 'deleteFromTopMenu';
-	        rowActions[index].onclick = "BX.BIConnector.SupersetDashboardGridManager.Instance.deleteFromTopMenu(".concat(dashboardId, ")");
+	        rowActions[index].onclick = "BX.BIConnector.SupersetDashboardGridManager.Instance.deleteFromTopMenu(".concat(dashboardId, ", `").concat(url, "`, `").concat(restrictionCode, "`)");
 	        rowActions[index].text = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_DELETE_FROM_TOP_MENU');
 	      } else if (!isInTopMenu && action.ACTION_ID === 'deleteFromTopMenu') {
 	        rowActions[index].ACTION_ID = 'addToTopMenu';
-	        rowActions[index].onclick = "BX.BIConnector.SupersetDashboardGridManager.Instance.addToTopMenu(".concat(dashboardId, ", `").concat(url, "`)");
+	        rowActions[index].onclick = "BX.BIConnector.SupersetDashboardGridManager.Instance.addToTopMenu(".concat(dashboardId, ", `").concat(url, "`, `").concat(restrictionCode, "`)");
 	        rowActions[index].text = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_ADD_TO_TOP_MENU');
 	      }
 	    }
@@ -1161,16 +1285,20 @@
 	    var titleWrapper = titleCell.querySelector('.dashboard-title-wrapper__item');
 	    dashboardTitle = titleWrapper.querySelector('a').innerText;
 	  }
+	  var onClick = restrictionCode ? "top.BX.UI.InfoHelper.show('".concat(restrictionCode, "');") : "window.open(`".concat(url, "`, '_blank');");
+	  var isLocked = restrictionCode ? true : false;
 	  var menu = BX.Main.interfaceButtonsManager.getById('biconnector_superset_menu');
 	  if (isInTopMenu && dashboardTitle) {
 	    menu.addMenuItem({
 	      ID: "biconnector_superset_menu_dashboard_".concat(dashboardId),
 	      TEXT: dashboardTitle,
-	      ON_CLICK: "window.open(`".concat(url, "`, '_blank');"),
+	      ON_CLICK: onClick,
+	      IS_LOCKED: isLocked,
 	      // TODO: Temporary workaround for compatibility with main 25.300.0, remove after that version is released
 	      id: "biconnector_superset_menu_dashboard_".concat(dashboardId),
 	      text: dashboardTitle,
-	      onClick: "window.open(`".concat(url, "`, '_blank');")
+	      onClick: onClick,
+	      isLocked: isLocked
 	    });
 	    var menuItem = menu.getItemById("biconnector_superset_menu_dashboard_".concat(dashboardId));
 	    var firstMenuItem = menu.getVisibleItems();
@@ -1209,5 +1337,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').SupersetDashboardGridManager = SupersetDashboardGridManager;
 
-}((this.window = this.window || {}),BX,BX.Main,BX.Main,BX.BIConnector,BX.Event,BX.BIConnector,BX.UI.EntitySelector,BX.UI.Tour,BX.BIConnector,BX.BIConnector.EntitySelector,BX.UI,BX.UI,BX,BX.UI.System));
+}((this.window = this.window || {}),BX,BX.Main,BX.Main,BX.BIConnector,BX.Event,BX.BIConnector,BX.UI.EntitySelector,BX.UI.Tour,BX.BIConnector,BX.BIConnector.EntitySelector,BX.UI,BX.BIConnector,BX.UI,BX,BX.UI.System,BX.UI.System.Typography));
 //# sourceMappingURL=script.js.map

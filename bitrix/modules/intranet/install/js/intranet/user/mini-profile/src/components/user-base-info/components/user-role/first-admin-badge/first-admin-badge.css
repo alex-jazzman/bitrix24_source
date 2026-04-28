@@ -1,0 +1,56 @@
+.intranet-user-mini-profile__first-admin-badge {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	cursor: pointer;
+	gap: 4px;
+}
+
+.intranet-user-mini-profile__first-admin-badge_icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-link);
+}
+
+.intranet-user-mini-profile__first-admin-badge_title {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-accent-main-link);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-wrap: nowrap;
+
+	display: block;
+	width: fit-content;
+
+	border-bottom: 1px solid transparent;
+	padding: 3px 0;
+}
+
+.intranet-user-mini-profile__first-admin-badge:hover .intranet-user-mini-profile__first-admin-badge_title {
+	border-bottom: 1px solid rgb(from var(--ui-color-accent-main-link) r g b / 0.28);
+}
+
+.intranet-user-mini-profile__first-admin-badge_hint {
+	color: var(--ui-color-base-8);
+	font-size: var(--ui-font-size-lg);
+	max-width: 280px;
+}
+
+.intranet-user-mini-profile__first-admin-badge_hint-link {
+	color: var(--ui-color-base-8);
+	cursor: pointer;
+}
+
+.intranet-user-mini-profile__first-admin-badge_hint-content {
+	display: flex;
+	flex-direction: column;
+	padding: var(--ui-space-inset-sm, 12px) var(--ui-space-inset-lg2, 22px) var(--ui-space-inset-sm, 12px) var(--ui-space-inset-sm, 12px);
+}
+
+.intranet-user-mini-profile__first-admin-badge_hint-content_hint-block {
+	display: block;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+}
+
+.intranet-user-mini-profile__first-admin-badge_hint-link {
+	border-bottom: 1px solid var(--ui-color-base-8);
+}

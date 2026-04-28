@@ -10,9 +10,15 @@ import { Guide } from 'ui.tour';
 import { ApacheSupersetMarketManager } from 'biconnector.apache-superset-market-manager';
 import { TagFooter } from 'biconnector.entity-selector';
 import { AirButtonStyle, Button, CancelButton, ButtonSize } from 'ui.buttons';
+import {
+	DashboardRelatedEntitiesList,
+	Entity as DashboardRelatedEntity,
+	SubEntity,
+} from 'biconnector.dashboard-related-items-list';
 import 'ui.alerts';
 import 'ui.forms';
 import { Dialog as SystemDialog } from 'ui.system.dialog';
+import { Text as TypographyText } from 'ui.system.typography';
 
 type Props = {
 	gridId: ?string,
@@ -59,6 +65,15 @@ class SupersetDashboardGridManager
 
 	#subscribeToEvents()
 	{
+		Event.bind(
+			document.getElementById('biconnector-dataset-typing-warning-details'),
+			'click',
+			(event) => {
+				event.preventDefault();
+				this.openDatasetTypingSettings();
+			},
+		);
+
 		Event.bind(
 			window,
 			'popstate',
@@ -174,7 +189,17 @@ class SupersetDashboardGridManager
 			this.#grid.reload();
 		});
 
-		EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', () => {
+		EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', (event) => {
+			const data = event.getData();
+			if (data?.datasetTypingEnabled === true)
+			{
+				const warning = document.getElementById('biconnector-dataset-typing-warning');
+				if (warning)
+				{
+					warning.remove();
+				}
+			}
+
 			this.#grid.reload();
 		});
 
@@ -759,7 +784,77 @@ class SupersetDashboardGridManager
 		;
 	}
 
-	deleteDashboard(dashboardId: number, isCustom: boolean): void
+	deleteDashboard(dashboardId: number, dashboardType: boolean): void
+	{
+		const isCustom = (dashboardType === 'CUSTOM');
+
+		if (dashboardType !== 'MARKET')
+		{
+			this.#showDeleteConfirmationPopup(dashboardId, isCustom);
+
+			return;
+		}
+
+		const loaderText = TypographyText.render(Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_LOAD'), {size: 'sm'});
+		let isPopupClosedByUser = false;
+
+		const loadingPopup = new SystemDialog({
+			content: Tag.render`
+				<div class="dashboard-delete-loading-popup">
+					<div class="dashboard-delete-loading-popup-spinner-wrapper">
+						<img
+							class="dashboard-delete-loading-popup-spinner"
+							src="/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.list/templates/.default/images/spinner.png" alt="Loading"
+						/>
+					</div>
+					<div class="dashboard-delete-loading-popup-text">
+						${loaderText}
+					</div>
+				</div>
+			`,
+			width: 400,
+			height: 176,
+			title: ' ', // popup without title has no close-button
+			hasCloseButton: true,
+			hasOverlay: true,
+			disableScrolling: true,
+			hasVerticalPadding: false,
+			hasHorizontalPadding: false,
+			events: {
+				onHide: (event) => {
+					isPopupClosedByUser = true;
+				}
+			}
+		});
+
+		loadingPopup.show();
+
+		this.#dashboardManager.getDashboardRelatedItems(dashboardId)
+			.then((result) => {
+				if (isPopupClosedByUser)
+				{
+					return;
+				}
+
+				loadingPopup.hide();
+
+				if (result.data && result.data.length > 0)
+				{
+					this.#showRelatedEntitiesToDelete(result.data);
+				}
+				else
+				{
+					this.#showDeleteConfirmationPopup(dashboardId, isCustom);
+				}
+			}).catch((response) => {
+				loadingPopup.hide();
+				BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_ERROR'),
+				});
+			});
+	}
+
+	#showDeleteConfirmationPopup(dashboardId: number, isCustom: boolean): void
 	{
 		const message = isCustom
 			? Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_MESSAGE_CUSTOM')
@@ -774,6 +869,7 @@ class SupersetDashboardGridManager
 			hasOverlay: true,
 			closeByEsc: true,
 			disableScrolling: true,
+			hasOverlay: true,
 			centerButtons: [
 				new Button({
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'),
@@ -807,6 +903,78 @@ class SupersetDashboardGridManager
 		});
 
 		deletePopup.show();
+	}
+
+	#showRelatedEntitiesToDelete(entities: DashboardRelatedEntity[]): void
+	{
+		const list = new DashboardRelatedEntitiesList(entities, {
+			onOpen: (url, onDone) => {
+				const tab = window.open('about:blank', '_blank');
+				this.#dashboardManager.getSupersetEntityLoginUrl(url)
+					.then(
+						(result) => {
+							if (tab)
+							{
+								tab.location.href = result.data;
+							}
+							else
+							{
+								window.open(result.data, '_blank');
+							}
+
+							if (onDone)
+							{
+								onDone();
+							}
+						},
+						() => {
+							if (tab)
+							{
+								tab.location.href = url;
+							}
+							else
+							{
+								window.open(url, '_blank');
+							}
+
+							if (onDone)
+							{
+								onDone();
+							}
+						},
+					);
+			},
+		});
+
+		const popup = new SystemDialog({
+			content: Tag.render`<div class="market-dashboard-delete-popup">
+				<div class="market-dashboard-delete-popup-text">
+					${Loc.getMessage('SUPERSET_MARKET_DASHBOARD_DELETE_RELATED_OBJECTS_TEXT', {
+				'[link]': '<a class="biconnector-grid-scope-hint-more" onclick="top.BX.Helper.show(`redirect=detail&code=26703788`)">',
+				'[/link]': '</a>',
+			})}
+				</div>
+				${list.render()}
+			</div>`,
+			width: 540,
+			closeByEsc: true,
+			hasOverlay: true,
+			disableScrolling: true,
+			title: Loc.getMessage('SUPERSET_MARKET_DASHBOARD_DELETE_RELATED_OBJECTS_TITLE'),
+			centerButtons: [
+				new Button({
+					color: Button.Color.LIGHT,
+					text: Loc.getMessage('SUPERSET_MARKET_DASHBOARD_DELETE_RELATED_OBJECTS_OK_BTN'),
+					onclick: () => {
+						popup.hide();
+					},
+					useAirDesign: true,
+					style: AirButtonStyle.FILLED
+				}),
+			],
+		});
+
+		popup.show();
 	}
 
 	deleteGroup(groupId: number): void
@@ -867,6 +1035,21 @@ class SupersetDashboardGridManager
 		BX.UI.Notification.Center.notify({
 			content: Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_ERROR_OPEN_CREATE_DASHBOARD'),
 		});
+	}
+
+	openDatasetTypingSettings(): void
+	{
+		BX.SidePanel.Instance.open(
+			'/bitrix/components/bitrix/biconnector.apachesuperset.setting/slider.php',
+			{
+				width: 790,
+				allowChangeHistory: false,
+				cacheable: false,
+				data: {
+					focusSection: 'DATASET_SETTINGS_SECTION',
+				},
+			},
+		);
 	}
 
 	showMarketSlider(isMarketExists: boolean, marketUrl: string): void
@@ -1351,12 +1534,12 @@ class SupersetDashboardGridManager
 		filterApi.apply();
 	}
 
-	addToTopMenu(dashboardId: number, url: string): Promise
+	addToTopMenu(dashboardId: number, url: string, restrictionCode: ?string = null): Promise
 	{
 		BX.UI.Notification.Center.notify({
 			content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ADD_TO_TOP_MENU_SUCCESS'),
 		});
-		this.#switchTopMenuAction(dashboardId, true, url);
+		this.#switchTopMenuAction(dashboardId, true, url, restrictionCode);
 
 		return this.#dashboardManager.addToTopMenu(dashboardId)
 			.then((response) => {})
@@ -1369,12 +1552,12 @@ class SupersetDashboardGridManager
 		;
 	}
 
-	deleteFromTopMenu(dashboardId: number, url: string): Promise
+	deleteFromTopMenu(dashboardId: number, url: string, restrictionCode: ?string = null): Promise
 	{
 		BX.UI.Notification.Center.notify({
 			content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_FROM_TOP_MENU_SUCCESS'),
 		});
-		this.#switchTopMenuAction(dashboardId, false, url);
+		this.#switchTopMenuAction(dashboardId, false, url, restrictionCode);
 
 		return this.#dashboardManager.deleteFromTopMenu(dashboardId)
 			.then((response) => {})
@@ -1387,7 +1570,7 @@ class SupersetDashboardGridManager
 		;
 	}
 
-	#switchTopMenuAction(dashboardId: number, isInTopMenu: boolean, url: string = '/')
+	#switchTopMenuAction(dashboardId: number, isInTopMenu: boolean, url: string = '/', restrictionCode: ?string = null)
 	{
 		const row = this.#grid.getRows().getById(dashboardId);
 		const rowActions = row?.getActions();
@@ -1396,13 +1579,13 @@ class SupersetDashboardGridManager
 			if (isInTopMenu && action.ACTION_ID === 'addToTopMenu')
 			{
 				rowActions[index].ACTION_ID = 'deleteFromTopMenu';
-				rowActions[index].onclick = `BX.BIConnector.SupersetDashboardGridManager.Instance.deleteFromTopMenu(${dashboardId})`;
+				rowActions[index].onclick = `BX.BIConnector.SupersetDashboardGridManager.Instance.deleteFromTopMenu(${dashboardId}, \`${url}\`, \`${restrictionCode}\`)`;
 				rowActions[index].text = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_DELETE_FROM_TOP_MENU');
 			}
 			else if (!isInTopMenu && action.ACTION_ID === 'deleteFromTopMenu')
 			{
 				rowActions[index].ACTION_ID = 'addToTopMenu';
-				rowActions[index].onclick = `BX.BIConnector.SupersetDashboardGridManager.Instance.addToTopMenu(${dashboardId}, \`${url}\`)`;
+				rowActions[index].onclick = `BX.BIConnector.SupersetDashboardGridManager.Instance.addToTopMenu(${dashboardId}, \`${url}\`, \`${restrictionCode}\`)`;
 				rowActions[index].text = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_ADD_TO_TOP_MENU');
 			}
 		}
@@ -1416,18 +1599,26 @@ class SupersetDashboardGridManager
 			dashboardTitle = titleWrapper.querySelector('a').innerText;
 		}
 
+		const onClick = restrictionCode
+			? `top.BX.UI.InfoHelper.show('${restrictionCode}');`
+			: `window.open(\`${url}\`, '_blank');`
+		;
+		const isLocked = restrictionCode ? true : false;
+
 		const menu: BX.Main.interfaceButtons = BX.Main.interfaceButtonsManager.getById('biconnector_superset_menu');
 		if (isInTopMenu && dashboardTitle)
 		{
 			menu.addMenuItem({
 				ID: `biconnector_superset_menu_dashboard_${dashboardId}`,
 				TEXT: dashboardTitle,
-				ON_CLICK: `window.open(\`${url}\`, '_blank');`,
+				ON_CLICK: onClick,
+				IS_LOCKED: isLocked,
 
 				// TODO: Temporary workaround for compatibility with main 25.300.0, remove after that version is released
 				id: `biconnector_superset_menu_dashboard_${dashboardId}`,
 				text: dashboardTitle,
-				onClick: `window.open(\`${url}\`, '_blank');`,
+				onClick,
+				isLocked,
 			});
 			const menuItem = menu.getItemById(`biconnector_superset_menu_dashboard_${dashboardId}`);
 			const firstMenuItem = menu.getVisibleItems();

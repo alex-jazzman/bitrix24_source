@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_popup,pull_vue3_status,im_v2_lib_analytics,im_v2_component_messageList,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_layout,im_v2_lib_access,im_v2_lib_feature,im_v2_provider_service_message,im_v2_provider_service_chat,main_core_events,im_v2_lib_logger,im_v2_lib_animation,im_v2_application_core,im_v2_lib_rest,im_v2_lib_channel,im_v2_lib_demo,im_v2_lib_permission,im_v2_component_elements_avatar,im_v2_lib_parser,main_core,im_v2_lib_quote,im_v2_lib_utils,im_v2_component_elements_popup,im_v2_const) {
+(function (exports,main_popup,pull_vue3_status,im_v2_lib_analytics,im_v2_component_messageList,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_layout,im_v2_lib_access,im_v2_lib_feature,im_v2_provider_service_message,im_v2_provider_service_chat,main_core_events,im_v2_lib_logger,im_v2_lib_animation,im_v2_application_core,im_v2_lib_rest,im_v2_lib_channel,im_v2_lib_demo,im_v2_lib_permission,im_v2_component_elements_avatar,im_v2_lib_parser,main_core,im_v2_lib_quote,im_v2_lib_utils,im_v2_component_elements_popup,im_v2_lib_counter,im_v2_const) {
 	'use strict';
 
 	const DEBOUNCE_TIME = 50;
@@ -989,10 +989,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (this.counter === 0) {
 	        return '';
 	      }
-	      if (this.counter > 99) {
-	        return '99+';
-	      }
-	      return String(this.counter);
+	      return im_v2_lib_counter.CounterManager.formatCounter(this.counter);
 	    }
 	  },
 	  template: `
@@ -1017,18 +1014,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      required: true
 	    }
 	  },
-	  data() {
-	    return {};
-	  },
 	  computed: {
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    chatCounter() {
+	      return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
 	    },
 	    floatButtonProps() {
 	      return {
 	        color: FloatButtonColor.accent,
 	        icon: FloatButtonIcon.chevronDown,
-	        counter: this.dialog.counter
+	        counter: this.chatCounter
 	      };
 	    }
 	  },
@@ -1263,6 +1260,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    pinnedMessages() {
 	      return this.$store.getters['messages/pin/getPinned'](this.dialog.chatId);
+	    },
+	    chatCounter() {
+	      return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
 	    },
 	    isOpened() {
 	      const openedDialogId = this.$store.getters['application/getLayout'].entityId;
@@ -1657,7 +1657,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        return;
 	      }
 	      this.getScrollManager().scrollButtonClicked = true;
-	      if (this.dialog.counter === 0) {
+	      if (this.chatCounter === 0) {
 	        this.showLoadingBar();
 	        await this.getMessageService().loadInitialMessages();
 	        this.hideLoadingBar();
@@ -1954,5 +1954,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.FloatButtonIcon = FloatButtonIcon;
 	exports.FloatButtonColor = FloatButtonColor;
 
-}((this.BX.Messenger.v2.Component.Dialog = this.BX.Messenger.v2.Component.Dialog || {}),BX.Main,window,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.Dialog = this.BX.Messenger.v2.Component.Dialog || {}),BX.Main,window,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
 //# sourceMappingURL=chat-dialog.bundle.js.map

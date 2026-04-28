@@ -1,4 +1,4 @@
-import { Dom } from 'main.core';
+import { Dom, Tag, Loc } from 'main.core';
 import {
 	NodeFormatter,
 	type NodeFormatterOptions,
@@ -24,19 +24,77 @@ export class CodeNodeFormatter extends NodeFormatter
 			convert({ node }: ConvertCallbackOptions): HTMLElement {
 				const content = node.getTextContent();
 
-				return Dom.create({
+				const code = Dom.create({
 					tag: 'code',
 					attrs: {
 						className: 'ui-typography-code',
+					},
+					events: {
+						mouseenter: () => {
+							Dom.removeClass(button, ['--copied']);
+							Dom.addClass(button, '--visible');
+						},
+						mouseleave: () => {
+							Dom.removeClass(button, ['--visible']);
+						},
 					},
 					dataset: {
 						decorator: true,
 					},
 					children: getCodeTokenNodes(this.#codeParser.parse(content)),
 				});
+
+				const button = Tag.render`
+					<button type="button" 
+						class="ui-typography-code-copy-button" 
+						onclick="${this.#handleCopyButtonClick.bind(this)}" 
+						title="${Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD')}"
+						aria-label="${Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD')}"
+					>
+						<span class="ui-typography-code-copy-icon ui-icon-set --o-copy"></span>
+						<span class="ui-typography-code-copy-icon ui-icon-set --o-copied"></span>
+					</button>
+				`;
+
+				code.append(button);
+
+				return code;
 			},
 			...options,
 		});
+	}
+
+	#handleCopyButtonClick(event: MouseEvent): void
+	{
+		const button: HTMLButtonElement = event.currentTarget;
+		const codeElement = button.parentElement;
+		const text = codeElement.innerText;
+
+		event.stopPropagation();
+
+		if (navigator.clipboard && window.isSecureContext)
+		{
+			void navigator.clipboard.writeText(text);
+		}
+		else
+		{
+			const textarea = document.createElement('textarea');
+			textarea.value = text;
+
+			Dom.style(textarea, {
+				position: 'fixed',
+				left: '-9999px',
+			});
+
+			Dom.attr(textarea, 'aria-hidden', 'true');
+
+			document.body.appendChild(textarea);
+			textarea.select();
+			document.execCommand('copy');
+			document.body.removeChild(textarea);
+		}
+
+		Dom.addClass(button, '--copied');
 	}
 }
 

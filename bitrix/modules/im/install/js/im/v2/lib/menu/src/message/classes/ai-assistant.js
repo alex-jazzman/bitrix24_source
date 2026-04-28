@@ -1,12 +1,11 @@
 import { Loc } from 'main.core';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
+import { type MenuItemOptions, type MenuSectionOptions } from 'ui.system.menu';
 
 import { Core } from 'im.v2.application.core';
 import { FeedbackManager } from 'im.v2.lib.feedback';
 
 import { MessageMenu, MenuSectionCode, NestedMenuSectionCode } from './message-base';
-
-import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
 
 export class AiAssistantMessageMenu extends MessageMenu
 {
@@ -63,7 +62,6 @@ export class AiAssistantMessageMenu extends MessageMenu
 			icon: OutlineIcons.FEEDBACK,
 			onClick: () => {
 				void (new FeedbackManager()).openAiAssistantForm({});
-				this.menuInstance.close();
 			},
 		};
 	}

@@ -1,3 +1,4 @@
+import { Extension } from 'main.core';
 import { emoji } from '../emoji';
 import { isWindows } from '../utils';
 
@@ -14,6 +15,11 @@ export const EmojiTab = {
 	created()
 	{
 		this.emoji = emoji;
+	},
+	computed: {
+		region(): string {
+			return Extension.getSettings('ui.vue3.components.smiles').get('region') ?? '';
+		},
 	},
 	methods:
 	{
@@ -49,6 +55,10 @@ export const EmojiTab = {
 					});
 				}
 			}
+		},
+		isShowEmoji(emoji): boolean
+		{
+			return !(emoji.restrictedRegions && emoji.restrictedRegions.includes(this.region));
 		}
 	},
 	template: `
@@ -71,7 +81,7 @@ export const EmojiTab = {
 					</div>
 					<div class="bx-ui-smiles-emoji-grid">
 						<template v-for="element in category.emoji">
-							<div class="bx-ui-smiles-smile" style="font-size: 22px;">
+							<div  v-if="isShowEmoji(element)" class="bx-ui-smiles-smile" style="font-size: 22px;">
 								<div class="bx-ui-smiles-smile-icon" @click="selectSmile(element.symbol)">
 									{{ element.symbol }}
 								</div>
@@ -81,6 +91,5 @@ export const EmojiTab = {
 				</template>
 			</div>
 		</div>
-		
 	`,
 };

@@ -7,7 +7,6 @@ export type RecentItem = {
 		text: string,
 		date: ?Date
 	},
-	unread: boolean,
 	pinned: boolean,
 	liked: boolean,
 };

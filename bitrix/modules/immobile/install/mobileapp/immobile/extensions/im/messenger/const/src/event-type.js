@@ -173,7 +173,6 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			internal: {
 				readMessages: 'ImMobile.Messenger.Dialog:readMessages',
 			},
-
 			textField: {
 				submit: 'submit',
 				cancelQuote: 'cancelQuote',
@@ -188,6 +187,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				actionButtonMenuHidden: 'actionButtonMenuHidden',
 				assistantButtonTap: 'assistantButtonTap',
 				stickerButtonTap: 'stickerButtonTap',
+				textActionTap: 'textActionTap',
+				textSet: 'custom:textSet',
 			},
 			statusField: {
 				tap: 'tap',
@@ -213,6 +214,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			},
 			mentionPanel: {
 				itemTap: 'itemTap',
+				actionTap: 'actionTap',
 			},
 			commentsButton: {
 				tap: 'tap',

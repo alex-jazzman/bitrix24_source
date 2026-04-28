@@ -1,5 +1,5 @@
-import { Cache, Dom, Tag, Type } from 'main.core';
-import { AirButtonStyle, Button, ButtonColor, ButtonTag } from 'ui.buttons';
+import { Cache, Dom, Tag, Type, ajax } from 'main.core';
+import { AirButtonStyle, Button, ButtonColor, ButtonState, ButtonTag } from 'ui.buttons';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
 import type {
 	ButtonConfig,
@@ -138,7 +138,7 @@ export class SaleTemplate extends BaseTemplate
 
 	#getButton(config: ButtonConfig): HTMLElement
 	{
-		const buttonTag = config.target ? ButtonTag.BUTTON : ButtonTag.LINK;
+		const buttonTag = config.target || config.action ? ButtonTag.BUTTON : ButtonTag.LINK;
 
 		const button = new Button({
 			text: config.text,
@@ -148,7 +148,7 @@ export class SaleTemplate extends BaseTemplate
 			color: ButtonColor.PRIMARY,
 			noCaps: true,
 			tag: buttonTag,
-			link: config.target ? null : config.url,
+			link: config.target || config.action ? null : config.url,
 			wide: true,
 			events: {
 				mousedown: () => {
@@ -162,6 +162,11 @@ export class SaleTemplate extends BaseTemplate
 				if (config.target)
 				{
 					window.open(config.url, config.target);
+				}
+				else if (config.action && config.action === 'activateDemo')
+				{
+					button.setState(ButtonState.WAITING);
+					this.#activateDemo();
 				}
 			},
 		});
@@ -186,6 +191,20 @@ export class SaleTemplate extends BaseTemplate
 		this.#setTextStyles(buttonDescription, config);
 
 		return buttonDescription;
+	}
+
+	#activateDemo(): void
+	{
+		ajax.runAction('ui.infoHelper.activateDemoLicense').then((response) => {
+			if (response.data.success === 'Y')
+			{
+				BX.onCustomEvent('BX.UI.InfoHelper:onActivateDemoLicenseSuccess', {
+					result: response,
+				});
+
+				window.location.reload();
+			}
+		});
 	}
 
 	#setTextStyles(element: HTMLElement, config: TextConfig): void

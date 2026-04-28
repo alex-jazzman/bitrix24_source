@@ -6,10 +6,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 return [
 	'js' => [
-		'./dist/chat.bundle.js',
+		'./dist/registry.bundle.js',
 	],
 	'rel' => [
-		'imopenlines.v2.lib.openlines',
 		'call.lib.call-token-manager',
 		'im.public',
 		'im.v2.provider.service.message',

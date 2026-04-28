@@ -1,4 +1,4 @@
-import type { SlotRange, IntegrationCalendarType, Skus } from 'booking.model.resources';
+import type { SlotRange, IntegrationCalendarType, Skus, SkuRelations } from 'booking.model.resources';
 
 export type ResourceDto = {
 	id: number | null,
@@ -20,6 +20,8 @@ export type ResourceDto = {
 	createdAt: number | null,
 	updatedAt: number | null,
 	deletedAt: number | null,
+
+	senderCode: string,
 
 	// info
 	isInfoNotificationOn: boolean,
@@ -63,4 +65,17 @@ export type ResourceDtoWithFile = ResourceDto & {
 		url: string | null,
 		encodedFile: string | null,
 	} | null,
-}
+};
+
+export type ResourceSkuRelationsDto = {
+	avatar: {
+		id: number | null,
+		url: string | null,
+	} | null,
+	id: number,
+	type: {
+		id: number,
+	},
+	name: string,
+	skus: SkuRelations[],
+};

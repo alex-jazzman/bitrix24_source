@@ -14,6 +14,7 @@ export const Dictionary = Object.freeze({
 	CATEGORY_COMMUNICATION_OPERATIONS: 'communication',
 	CATEGORY_BANNERS: 'banners',
 	CATEGORY_EDITOR: 'editor',
+	CATEGORY_IMPORT: 'import_operations',
 
 	// region Event const
 	EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
@@ -66,6 +67,15 @@ export const Dictionary = Object.freeze({
 	EVENT_REPEAT_SALE_SEGMENT_VIEW: 'view',
 	EVENT_REPEAT_SALE_SEGMENT_EDIT: 'edit',
 	EVENT_REPEAT_SALE_SEGMENT_CANCEL: 'cancel',
+
+	EVENT_OLD_INVOICE_READONLY_ALERT_VIEW: 'banner_view',
+	EVENT_OLD_INVOICE_READONLY_ALERT_CLICK: 'banner_click',
+	EVENT_OLD_INVOICE_READONLY_ALERT_CLOSE: 'banner_close',
+
+	EVENT_IMPORT_VIEW: 'view',
+	EVENT_IMPORT_EDIT: 'edit',
+	EVENT_IMPORT_CREATE: 'create',
+	EVENT_IMPORT_CANCEL: 'cancel',
 	// endregion
 
 	// region Type const
@@ -88,6 +98,7 @@ export const Dictionary = Object.freeze({
 	TYPE_REPEAT_SALE_BANNER_START: 'repeat_sale_start',
 	TYPE_REPEAT_SALE_BANNER_START_FORCE: 'repeat_sale_force_start',
 	TYPE_REPEAT_SALE_BANNER_STATISTICS: 'repeat_sale_statistics',
+	TYPE_OLD_INVOICE_READONLY_ALERT: 'old_invoice',
 	// endregion
 
 	// region Section const
@@ -99,6 +110,7 @@ export const Dictionary = Object.freeze({
 	SECTION_COMPANY: 'company_section',
 	SECTION_MYCOMPANY: 'my_company_section',
 	SECTION_QUOTE: 'quote_section',
+	SECTION_INVOICE: 'invoice_section',
 	SECTION_SMART_INVOICE: 'smart_invoice_section',
 	SECTION_DYNAMIC: 'dynamic_section',
 	SECTION_CUSTOM: 'custom_section',
@@ -199,6 +211,7 @@ export const Dictionary = Object.freeze({
 	ELEMENT_CHANNEL_LIST_CHANGE: 'channel_list_change',
 	ELEMENT_ELEMENT_ADD: 'element_add',
 	ELEMENT_AHA_MOMENT: 'aha_moment',
+	ELEMENT_INFO_BUTTON: 'info_button',
 	// endregion
 
 	// region Status const

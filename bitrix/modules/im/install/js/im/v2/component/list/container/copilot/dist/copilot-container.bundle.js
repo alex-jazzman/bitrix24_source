@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_public,im_v2_component_list_items_copilot,im_v2_const,im_v2_lib_analytics,im_v2_lib_logger,im_v2_provider_service_copilot,im_v2_lib_permission) {
+(function (exports,im_public,im_v2_component_list_items_copilot,im_v2_const,im_v2_lib_analytics,im_v2_lib_logger,im_v2_provider_service_copilot,im_v2_lib_permission,im_v2_lib_copilot) {
 	'use strict';
 
 	// @vue/component
@@ -21,9 +21,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  computed: {
 	    canCreate() {
 	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createCopilot);
+	    },
+	    headerTitle() {
+	      return this.loc('IM_LIST_CONTAINER_COPILOT_HEADER_MSGVER_1', {
+	        '#COPILOT_NAME#': this.copilotManager.getName()
+	      });
 	    }
 	  },
 	  created() {
+	    this.copilotManager = new im_v2_lib_copilot.CopilotManager();
 	    im_v2_lib_logger.Logger.warn('List: Copilot container created');
 	  },
 	  methods: {
@@ -53,14 +59,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.isCreatingChat = false;
 	      void im_public.Messenger.openCopilot(newDialogId);
 	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
 	  },
 	  template: `
 		<div class="bx-im-list-container-copilot__scope bx-im-list-container-copilot__container">
 			<div class="bx-im-list-container-copilot__header_container">
-				<div class="bx-im-list-container-copilot__header_title">{{ loc('IM_LIST_CONTAINER_COPILOT_HEADER') }}</div>
+				<div class="bx-im-list-container-copilot__header_title">{{ headerTitle }}</div>
 				<div
 					v-if="canCreate"
 					class="bx-im-list-container-copilot__create-chat"
@@ -82,5 +88,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CopilotListContainer = CopilotListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=copilot-container.bundle.js.map

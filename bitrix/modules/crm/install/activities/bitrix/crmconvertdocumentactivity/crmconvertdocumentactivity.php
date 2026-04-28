@@ -344,9 +344,9 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 		$arProperties = [
 			'Responsible' => CBPHelper::UsersStringToArray($arCurrentValues["responsible"], $documentType, $errors),
-			'Items' => $arCurrentValues['items'],
+			'Items' => $arCurrentValues['items'] ?? null,
 			'DealCategoryId' => $arCurrentValues['deal_category_id'] ?? 0,
-			'DisableActivityCompletion' => $arCurrentValues['disable_activity_completion'],
+			'DisableActivityCompletion' => $arCurrentValues['disable_activity_completion'] ?? null,
 		];
 
 		if ($arProperties['DealCategoryId'] === '' && static::isExpression($arCurrentValues['deal_category_id_text']))

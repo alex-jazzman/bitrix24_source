@@ -1,7 +1,7 @@
 import 'window';
 import { Dom, Tag, Type, Event, Loc, ajax, Text } from 'main.core';
 import { MenuManager, type MenuItem } from 'main.popup';
-import { EventEmitter } from 'main.core.events';
+import { EventEmitter, BaseEvent } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
@@ -41,6 +41,11 @@ export const CommonNodeSettingsForm = {
 			type: Array,
 			required: true,
 		},
+		panelAlreadyOpened:
+		{
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['showPreview'],
 	setup(): Object
@@ -68,11 +73,13 @@ export const CommonNodeSettingsForm = {
 		autoScrollFrameId: number,
 		scrollBoundaries: { top: number, bottom: number } | null,
 		rendererInstance: ?Object,
+		entitySelectorDialogs: Set<Object>,
+		lastRenderRequestId: number,
 		}
 	{
 		return {
 			isLoading: false,
-			isVisible: false,
+			isVisible: this.panelAlreadyOpened,
 			hasErrors: false,
 			isSubmitting: false,
 			hasSettings: false,
@@ -86,6 +93,8 @@ export const CommonNodeSettingsForm = {
 			autoScrollFrameId: null,
 			scrollBoundaries: null,
 			rendererInstance: null,
+			entitySelectorDialogs: new Set(),
+			lastRenderRequestId: 0,
 		};
 	},
 	computed:
@@ -119,6 +128,27 @@ export const CommonNodeSettingsForm = {
 				: this.iconSet.PLAY_L;
 		},
 	},
+	watch: {
+		block(newBlock): void
+		{
+			this.cleanupFormResources();
+
+			this.hasSettings = false;
+			this.isLoading = true;
+			this.currentBlock = newBlock;
+
+			this.$nextTick(async () => {
+				if (this.$refs.scrollContainer)
+				{
+					this.$refs.scrollContainer.scrollTop = 0;
+				}
+				await this.renderControls();
+				window.BPAShowSelector = this.showSelector;
+				window.HideShow = this.hideShow;
+				this.blurActiveElementIfNeeded();
+			});
+		},
+	},
 	async mounted()
 	{
 		this.isVisible = true;
@@ -131,20 +161,19 @@ export const CommonNodeSettingsForm = {
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.onDragStart);
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:move', this.onDragMove);
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:end', this.onDragEnd);
+		EventEmitter.subscribe('BX.UI.EntitySelector.Dialog:onShow', this.onEntitySelectorShow);
+		EventEmitter.subscribe('Bizproc.NodeSettings:askShowValueSelector', this.onAskShowValueSelector);
 
 		window.BPAShowSelector = this.showSelector;
 		window.HideShow = this.hideShow;
+		this.blurActiveElementIfNeeded();
 	},
 	unmounted(): void
 	{
 		this.stopAutoScroll();
-		if (this.inputListeners && this.handleFieldInput)
-		{
-			this.inputListeners.forEach((input) => {
-				Event.unbind(input, 'input', this.handleFieldInput);
-			});
-			this.inputListeners = [];
-		}
+
+		this.cleanupFormResources();
+
 		Event.unbind(document, 'mousedown', this.multiSelectMouseHandler);
 		Event.unbind(this.$refs.scrollContainer, 'scroll', this.handleScroll);
 
@@ -153,13 +182,17 @@ export const CommonNodeSettingsForm = {
 		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:move', this.onDragMove);
 		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:end', this.onDragEnd);
 		EventEmitter.emit('BX.Bizproc.Activity.unmount');
-		if (this.rendererInstance && Type.isFunction(this.rendererInstance.destroy))
-		{
-			this.rendererInstance.destroy();
-		}
-		this.rendererInstance = null;
+		EventEmitter.unsubscribe('BX.UI.EntitySelector.Dialog:onShow', this.onEntitySelectorShow);
+		EventEmitter.unsubscribe('Bizproc.NodeSettings:askShowValueSelector', this.onAskShowValueSelector);
+
+		this.destroyEntitySelectorDialogs();
+		this.destroyRendererInstance();
 	},
 	methods: {
+		isRenderCancelled(requestId: number): boolean
+		{
+			return this.lastRenderRequestId !== requestId || !this.$refs.contentContainer;
+		},
 		loc(phraseCode: string, replacements: { [p: string]: string } = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -406,6 +439,7 @@ export const CommonNodeSettingsForm = {
 		},
 		async renderControls(): void
 		{
+			const requestId = ++this.lastRenderRequestId;
 			window.BPAShowSelector = this.showSelector;
 			window.HideShow = this.hideShow;
 
@@ -446,7 +480,10 @@ export const CommonNodeSettingsForm = {
 
 			this.isLoading = true;
 
-			this.$refs.contentContainer.innerHTML = '';
+			if (this.$refs.contentContainer)
+			{
+				this.$refs.contentContainer.innerHTML = '';
+			}
 			this.hasErrors = false;
 			this.nodeControls = [];
 
@@ -463,23 +500,33 @@ export const CommonNodeSettingsForm = {
 						workflowConstants: JSON.stringify(workflowConstants),
 					},
 				});
+				if (this.isRenderCancelled(requestId))
+				{
+					return;
+				}
 			}
 			catch (error)
 			{
+				if (this.isRenderCancelled(requestId))
+				{
+					return;
+				}
 				handleResponseError(error);
+
+				return;
 			}
 
 			this.useDocumentContext = Boolean(settingControls?.useDocumentContext);
 			if (settingControls && Type.isArray(settingControls.controls))
 			{
-				await this.renderNodeControls(settingControls);
+				await this.renderNodeControls(settingControls, requestId);
 			}
 			else
 			{
 				await this.renderPropertyDialog(formData);
 			}
 		},
-		renderNodeControls(settingControls: SettingsControls): void
+		renderNodeControls(settingControls: SettingsControls, requestId: number): void
 		{
 			this.nodeControls = Type.isArray(settingControls.controls) ? settingControls.controls : [];
 			const brokenLinks = Type.isPlainObject(settingControls.brokenLinks)
@@ -505,6 +552,13 @@ export const CommonNodeSettingsForm = {
 			);
 
 			return new Promise((resolve) => {
+				if (this.isRenderCancelled(requestId))
+				{
+					resolve();
+
+					return;
+				}
+
 				const form = Tag.render`<form id="form-settings"></form>`;
 				this.settingsForm = form;
 
@@ -544,7 +598,7 @@ export const CommonNodeSettingsForm = {
 					if (control)
 					{
 						const row = this.renderField(control, field);
-						const escapedFieldName = field.fieldName.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
+						const escapedFieldName = field.fieldName.replaceAll(/[!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~]/g, '\\$&');
 						const input = row.querySelector(`[name^="${escapedFieldName}"]`);
 						if (input)
 						{
@@ -556,13 +610,32 @@ export const CommonNodeSettingsForm = {
 					}
 				});
 
+				if (this.isRenderCancelled(requestId))
+				{
+					resolve();
+
+					return;
+				}
+
 				this.$refs.contentContainer.innerHTML = '';
 				Dom.append(form, this.$refs.contentContainer);
 
 				Event.EventEmitter.subscribeOnce(eventName, () => {
+					if (this.isRenderCancelled(requestId))
+					{
+						resolve();
+
+						return;
+					}
+
 					if (instance && Type.isFunction(instance.afterFormRender))
 					{
-						instance.afterFormRender(form);
+						const activityFields = this.nodeControls.reduce((acc, field) => {
+							acc[field.fieldName] = field;
+
+							return acc;
+						}, {});
+						instance.afterFormRender(form, activityFields);
 					}
 
 					this.hasSettings = true;
@@ -656,7 +729,7 @@ export const CommonNodeSettingsForm = {
 			this.nodeControls.forEach((field) => {
 				const value = formData[field.fieldName];
 				const required = false; // field.property.Required;
-				const escapedFieldName = field.fieldName.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
+				const escapedFieldName = field.fieldName.replaceAll(/[!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~]/g, '\\$&');
 				const input = document.querySelector(`[name^="${escapedFieldName}"]`);
 
 				if (!input)
@@ -794,6 +867,32 @@ export const CommonNodeSettingsForm = {
 			this.scrollBoundaries = null;
 			this.stopAutoScroll();
 		},
+		onEntitySelectorShow(event: BaseEvent): void
+		{
+			const dialog = event.getTarget();
+			if (dialog)
+			{
+				this.entitySelectorDialogs.add(dialog);
+			}
+		},
+		destroyEntitySelectorDialogs(): void
+		{
+			this.entitySelectorDialogs.forEach((dialog) => {
+				if (dialog && Type.isFunction(dialog.destroy))
+				{
+					dialog.destroy();
+				}
+			});
+			this.entitySelectorDialogs.clear();
+		},
+		destroyRendererInstance(): void
+		{
+			if (this.rendererInstance && Type.isFunction(this.rendererInstance.destroy))
+			{
+				this.rendererInstance.destroy();
+			}
+			this.rendererInstance = null;
+		},
 		startAutoScroll(): void
 		{
 			this.autoScrollFrameId = requestAnimationFrame(this.processAutoScroll);
@@ -835,10 +934,61 @@ export const CommonNodeSettingsForm = {
 
 			this.autoScrollFrameId = requestAnimationFrame(this.processAutoScroll);
 		},
+		cleanupFormResources(): void
+		{
+			if (this.inputListeners && this.handleFieldInput)
+			{
+				this.inputListeners.forEach((input) => {
+					Event.unbind(input, 'input', this.handleFieldInput);
+				});
+				this.inputListeners = [];
+			}
+
+			if (Type.isFunction(this.rendererInstance?.destroy))
+			{
+				this.rendererInstance.destroy();
+			}
+			this.rendererInstance = null;
+			this.settingsForm = null;
+		},
+		blurActiveElementIfNeeded(): void
+		{
+			setTimeout(() => {
+				const activeElement = document.activeElement;
+				if (activeElement && this.$refs.settingsPanel?.contains(activeElement))
+				{
+					activeElement.blur();
+				}
+			}, 150);
+		},
+		async onAskShowValueSelector(event: BaseEvent): void
+		{
+			const target = event.getTarget();
+			const selector = new ValueSelector(this.store, this.currentBlock);
+			const showOptions = {
+				showOnlyRealProperties: event.getData().showOnlyRealProperties ?? false,
+			};
+			const onSelect = event.getData().onSelect ?? null;
+			const value = await selector.show(target, showOptions);
+
+			if (onSelect && value)
+			{
+				onSelect.call(
+					null,
+					value,
+					selector.selectedItem?.getCustomData().get('property'),
+				);
+			}
+		},
 	},
 	template: `
 		<transition name="slide-fade">
-			<div v-if="isVisible" class="node-settings-panel" ref="settingsPanel">
+			<div 
+				v-if="isVisible"
+				class="node-settings-panel"
+				:class="{ '--loading': isLoading }"
+				ref="settingsPanel"
+			>
 				<div class="node-settings-header">
 					<h3 class="node-settings-title">{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TITLE')}}</h3>
 					<span class="node-settings-title-close-icon" @click="handleFormCancel"></span>
@@ -884,26 +1034,32 @@ export const CommonNodeSettingsForm = {
 						<div ref="contentContainer"></div>
 					</div>
 				</Transition>
-				<div v-if="isLoading" class="loader-spinner node-settings-content">
-					<span class="dot dot1"></span>
-					<span class="dot dot2"></span>
-					<span class="dot dot3"></span>
-				</div>
-				<div class="node-settings-footer" v-show="hasSettings">
-					<button class="ui-btn --air ui-btn-lg --style-outline-fill-accent ui-btn-no-caps" @click="handleFormSave">
-						{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_SAVE')}}
-					</button>
-					<button class="ui-btn --air ui-btn-lg --style-outline ui-btn-no-caps" @click="handleFormCancel">
-						{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CANCEL')}}
-					</button>
+				<div
+					v-show="isLoading || hasSettings"
+					class="node-settings-footer"
+				>
+					<template v-if="hasSettings">
+						<button 
+							class="ui-btn --air ui-btn-lg --style-outline-fill-accent ui-btn-no-caps"
+							@click="handleFormSave"
+						>
+							{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_SAVE')}}
+						</button>
+						<button
+							class="ui-btn --air ui-btn-lg --style-outline ui-btn-no-caps"
+							@click="handleFormCancel"
+						>
+							{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CANCEL')}}
+						</button>
 
-					<div class="node-settings-document-selector" v-show="useDocumentContext">
-						<BIcon
-							name="document"
-							:size="24"
-							@click="handleDocumentSelector"
-						/>
-					</div>
+						<div class="node-settings-document-selector" v-show="useDocumentContext">
+							<BIcon
+								name="document"
+								:size="24"
+								@click="handleDocumentSelector"
+							/>
+						</div>
+					</template>
 				</div>
 			</div>
 		</transition>

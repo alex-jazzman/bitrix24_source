@@ -22,6 +22,7 @@ return [
 		'ui.design-tokens',
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
+		'ui.icon-set.solid',
 	],
 	'post_rel' => $extensions,
 	'settings' => [

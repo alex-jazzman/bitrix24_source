@@ -5,6 +5,7 @@ import { ChatType, Settings } from 'im.v2.const';
 
 import {
 	SelectableBackground,
+	SelectableBackgroundId,
 	SpecialBackground,
 	SpecialBackgroundId,
 	ThemeType,
@@ -13,7 +14,13 @@ import {
 
 import type { BackgroundItem } from './color-scheme';
 
-export { SelectableBackground, SpecialBackgroundId as SpecialBackground, ThemeType, ThemeManager };
+export {
+	SelectableBackground,
+	SelectableBackgroundId,
+	SpecialBackgroundId as SpecialBackground,
+	ThemeType,
+	ThemeManager,
+};
 
 const IMAGE_FOLDER_PATH = '/bitrix/js/im/images/chat-v2-background';
 
@@ -32,16 +39,16 @@ const BackgroundPatternColor = Object.freeze({
 const ThemeManager = {
 	isLightTheme(): boolean
 	{
-		const selectedBackgroundId = Core.getStore().getters['application/settings/get'](Settings.appearance.background);
-		const selectedColorScheme: BackgroundItem = SelectableBackground[selectedBackgroundId];
+		const backgroundId = Core.getStore().getters['application/settings/get'](Settings.appearance.background);
+		const selectedColorScheme: BackgroundItem = SelectableBackground[backgroundId];
 
 		return selectedColorScheme?.type === ThemeType.light;
 	},
 
 	isDarkTheme(): boolean
 	{
-		const selectedBackgroundId = Core.getStore().getters['application/settings/get'](Settings.appearance.background);
-		const selectedColorScheme: BackgroundItem = SelectableBackground[selectedBackgroundId];
+		const backgroundId = Core.getStore().getters['application/settings/get'](Settings.appearance.background);
+		const selectedColorScheme: BackgroundItem = SelectableBackground[backgroundId];
 
 		return selectedColorScheme?.type === ThemeType.dark;
 	},
@@ -53,7 +60,7 @@ const ThemeManager = {
 		return this.getBackgroundStyleById(backgroundId);
 	},
 
-	getBackgroundStyleById(backgroundId: string | number): BackgroundStyle
+	getBackgroundStyleById(backgroundId: string): BackgroundStyle
 	{
 		const backgroundsList = { ...SelectableBackground, ...SpecialBackground };
 		const colorScheme: BackgroundItem = backgroundsList[backgroundId];
@@ -114,15 +121,15 @@ const resolveBackgroundId = (dialogId?: string): string => {
 	}
 
 	const chatBackground = Core.getStore().getters['chats/getBackgroundId'](dialogId);
-	const botBackground = Core.getStore().getters['users/bots/getBackgroundId'](dialogId);
-	if (SpecialBackgroundId[chatBackground])
+	if (Type.isStringFilled(chatBackground))
 	{
-		return SpecialBackgroundId[chatBackground];
+		return chatBackground;
 	}
 
-	if (SpecialBackgroundId[botBackground])
+	const botBackground = Core.getStore().getters['users/bots/getBackgroundId'](dialogId);
+	if (Type.isStringFilled(botBackground))
 	{
-		return SpecialBackgroundId[botBackground];
+		return botBackground;
 	}
 
 	return userBackground;

@@ -38,6 +38,11 @@ export class OpenLinesMessageManager
 
 	getMessageComponent(): MessageComponentValues
 	{
+		if (this.#message.isDeleted)
+		{
+			return MessageComponent.deleted;
+		}
+
 		if (componentForReplace.has(this.#message.componentId))
 		{
 			return this.#getUpdatedComponentId();
@@ -53,6 +58,6 @@ export class OpenLinesMessageManager
 			return OpenLinesMessageComponent.FeedbackFormMessage;
 		}
 
-		return MessageComponent.system;
+		return MessageComponent.default;
 	}
 }

@@ -672,8 +672,8 @@ div.bizproc-statuses{width:22px;height:18px;margin-right:6px;float: right;backgr
 
 .bitrix24-light-theme .disk-folder-list-no-data-inner-create-file,
 .bitrix24-light-theme .disk-folder-list-no-data-inner-create-folder {
-	background: rgba(255,255,255,.18);
-	border-color: rgba(255,255,255,.4);
+	background: rgba(var(--ui-color-palette-white-base-rgb),.4);
+	border-color: rgba(var(--ui-color-palette-white-base-rgb),.6);
 	color: rgba(255,255,255,.85);
 }
 

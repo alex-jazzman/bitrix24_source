@@ -16,4 +16,7 @@ return [
 		'ui.vue3',
 	],
 	'skip_core' => false,
+	 'settings' => [
+        'isRenderOptimizationAvailable' => \Bitrix\Main\Config\Option::get('ui', 'block_diagram_render_optimization', 'N'),
+    ],
 ];

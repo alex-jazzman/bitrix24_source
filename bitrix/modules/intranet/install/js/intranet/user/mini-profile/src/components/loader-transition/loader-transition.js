@@ -57,7 +57,6 @@ export const LoaderTransition = {
 		{
 			this.onEnd();
 		},
-
 		onAfterEnter(): void
 		{
 			this.onEnd();
@@ -69,10 +68,6 @@ export const LoaderTransition = {
 			name="intranet-user-mini-profile-fade"
 			tag="div"
 			class="intranet-user-mini-profile__loader-transition-wrapper"
-			@enter="onEnter"
-			@beforeLeave="onBeforeLeave"
-			@afterLeave="onAfterLeave"
-			@afterEnter="onAfterEnter"
 		>
 			<div v-if="isLoading"
                  class="intranet-user-mini-profile__loader-transition-wrapper__loader"

@@ -7,7 +7,7 @@
 
 .block-complex__content {
 	flex: 1;
-	background: var(--ui-color-palette-gray-02);
+	background: var(--ui-color-bg-content-secondary);
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	border-radius: 0 0 7px 7px;
 }
@@ -27,6 +27,7 @@
 
 .block-complex__content_connections {
 	padding-top: 6px;
+	padding-bottom: 4px;
 	flex-direction: column;
 }
 
@@ -35,13 +36,13 @@
 }
 
 .block-complex__content_label {
-	font-size: 10px;
-	line-height: 12px;
+	font-size: 12px;
+	line-height: 15px;
 }
 
 .block-complex__content_rules .block-complex__content_label {
 	color: var(--ui-color-palette-gray-50);
-	padding: 0 8px;
+	padding: 0 10px;
 	margin: 6px 0;
 }
 
@@ -50,6 +51,7 @@
 	text-align: center;
 	color: var(--ui-color-palette-black-solid);
 	opacity: 0.3;
+	margin-bottom: 12px;
 }
 
 .block-complex__content_col {
@@ -68,14 +70,14 @@
 .block-complex__content_col-value {
 	display: flex;
 	align-items: center;
-	margin-bottom: 6px;
+	margin-bottom: 8px;
 }
 
 .block-complex__content_col-value-text {
-	font-size: 12px;
-	line-height: 15px;
+	font-size: 14px;
+	line-height: 19px;
 	color: var(--ui-color-palette-gray-90);
-	margin-left: 5px;
+	margin-left: 10px;
 }
 
 .block-complex__content_col-value-text.--placeholder {
@@ -93,5 +95,5 @@
 
 .block-complex__content_col.--right .block-complex__content_col-value-text {
 	margin-left: 0;
-	margin-right: 5px;
+	margin-right: 10px;
 }

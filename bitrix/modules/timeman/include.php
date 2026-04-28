@@ -65,6 +65,7 @@ CJSCore::RegisterExt('timeman', array(
 		'planner',
 		'ui.layout-form',
 		'ui.analytics',
+		'intranet.old-interface.intranet-common',
 	],
 	'oninit' => function () {
 		return [

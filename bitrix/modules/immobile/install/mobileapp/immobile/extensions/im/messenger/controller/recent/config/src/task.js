@@ -4,6 +4,8 @@
 jn.define('im/messenger/controller/recent/config/task', (require, exports, module) => {
 	const {
 		DialogType,
+		ChatSearchSelectorSection,
+		RecentTab,
 	} = require('im/messenger/const');
 	const { RecentServiceName } = require('im/messenger/controller/recent/const/service');
 
@@ -48,11 +50,23 @@ jn.define('im/messenger/controller/recent/config/task', (require, exports, modul
 				extension: 'im/messenger/controller/recent/service/pagination/common',
 				props: {},
 			},
+			[RecentServiceName.search]: {
+				extension: 'im/messenger/controller/recent/service/search/common',
+				props: {
+					recentTab: RecentTab.tasksTask,
+					sections: [ChatSearchSelectorSection.recent, ChatSearchSelectorSection.common],
+				},
+			},
+			[RecentServiceName.filter]: {
+				extension: 'im/messenger/controller/recent/service/filter/common',
+				props: {},
+			},
 			[RecentServiceName.render]: {
 				extension: 'im/messenger/controller/recent/service/render/common',
 				props: {
 					sections: ['pinned', 'general'],
 					defaultSection: 'general',
+					convertorExtension: 'im/messenger/controller/recent/service/render/lib/convertor/common',
 				},
 			},
 			[RecentServiceName.vuex]: {

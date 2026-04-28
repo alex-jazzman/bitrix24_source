@@ -3,10 +3,13 @@
  */
 jn.define('intranet/simple-list/items', (require, exports, module) => {
 	const { User } = require('intranet/simple-list/items/user-redux');
-	const { ListItemsFactory: BaseListItemsFactory } = require('layout/ui/simple-list/items');
+	const { Login } = require('intranet/simple-list/items/login');
+	const { ListItemsFactory: BaseListItemsFactory, ListItemType: BaseListItemType } = require('layout/ui/simple-list/items');
 
 	const ListItemType = {
-		USER: 'User',
+		...BaseListItemType,
+		USER: 'user',
+		LOGIN: 'login',
 	};
 
 	/**
@@ -19,6 +22,11 @@ jn.define('intranet/simple-list/items', (require, exports, module) => {
 			if (type === ListItemType.USER)
 			{
 				return new User(data);
+			}
+
+			if (type === ListItemType.LOGIN)
+			{
+				return new Login(data);
 			}
 
 			return BaseListItemsFactory.create(type, data);

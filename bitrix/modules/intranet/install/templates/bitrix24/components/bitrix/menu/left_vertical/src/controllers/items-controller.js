@@ -174,6 +174,7 @@ export default class ItemsController extends DefaultController{
 
 	#showHiddenContainer(animate)
 	{
+		this.hiddenContainer.inert = false;
 		EventEmitter.emit(
 			this,
 			Options.eventName('onHiddenBlockIsVisible')
@@ -190,6 +191,8 @@ export default class ItemsController extends DefaultController{
 
 	#hideHiddenContainer(animate)
 	{
+		this.hiddenContainer.inert = true;
+
 		EventEmitter.emit(
 			this,
 			Options.eventName('onHiddenBlockIsHidden')
@@ -203,6 +206,29 @@ export default class ItemsController extends DefaultController{
 
 	#animation(opening, hiddenBlock, maxHeight)
 	{
+		const onComplete = () => {
+			if (opening)
+			{
+				hiddenBlock.classList.add('menu-item-favorites-more-open');
+			}
+			else
+			{
+				hiddenBlock.classList.remove('menu-item-favorites-more-open');
+			}
+			Dom.style(hiddenBlock, {
+				opacity: null,
+				overflow: null,
+				height: null,
+			});
+		};
+
+		if (Utils.prefersReducedMotion())
+		{
+			onComplete();
+
+			return;
+		}
+
 		hiddenBlock.style.overflow = "hidden";
 		(new BX.easing({
 			duration: 200,
@@ -213,20 +239,7 @@ export default class ItemsController extends DefaultController{
 				hiddenBlock.style.opacity = state.opacity / 100;
 				hiddenBlock.style.height = state.height + "px";
 			},
-			complete: function () {
-				if (opening)
-				{
-					hiddenBlock.classList.add('menu-item-favorites-more-open');
-				}
-				else
-				{
-					hiddenBlock.classList.remove('menu-item-favorites-more-open');
-				}
-				hiddenBlock.style.opacity = "";
-				hiddenBlock.style.overflow = "";
-				hiddenBlock.style.height = "";
-			}
-
+			complete: onComplete,
 		})).animate();
 	}
 
@@ -254,21 +267,30 @@ export default class ItemsController extends DefaultController{
 
 		Dom.addClass(node, "menu-item-draggable");
 
+		const onMainPageComplete = () => {
+			this.container.insertBefore(node, BX('left-menu-empty-item').nextSibling);
+			Dom.removeClass(node, 'menu-item-draggable');
+			Dom.remove(dragElement);
+			this.#saveItemsSort({
+				action: 'mainPageIsSet',
+				itemId: item.getId(),
+			});
+		};
+
+		if (Utils.prefersReducedMotion())
+		{
+			onMainPageComplete();
+
+			return;
+		}
+
 		(new BX.easing({
 			duration: 500,
 			start: {top: startTop},
 			finish: {top: 0},
 			transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
 			step: function (state) { dragElement.style.top = state.top + "px"; },
-			complete: () => {
-				this.container.insertBefore(node, BX("left-menu-empty-item").nextSibling);
-				Dom.removeClass(node, "menu-item-draggable");
-				Dom.remove(dragElement);
-				this.#saveItemsSort({
-					action: 'mainPageIsSet',
-					itemId: item.getId()
-				});
-			}
+			complete: onMainPageComplete,
 		})).animate();
 	}
 
@@ -375,6 +397,8 @@ export default class ItemsController extends DefaultController{
 			Counter.initFromCounterNode(this.parentContainer.querySelector('#menu-hidden-counter')),
 			hiddenCounterValue,
 		);
+
+		EventEmitter.emit(this, Options.eventName('onHiddenCounterUpdated'));
 	}
 
 	#refreshActivity(item: Item, oldParent:? ItemGroup)
@@ -450,6 +474,8 @@ export default class ItemsController extends DefaultController{
 				hiddenCounterNode.classList.add('menu-hidden-counter');
 				hiddenCounterNode.innerHTML = '';
 			}
+
+			EventEmitter.emit(this, Options.eventName('onHiddenCounterUpdated'));
 		}
 
 		if (typeof BXIM !== 'undefined')
@@ -895,6 +921,12 @@ export default class ItemsController extends DefaultController{
 	#animateTopItemToLeft(node, animateFromPoint)
 	{
 		return new Promise((resolve) => {
+			if (Utils.prefersReducedMotion())
+			{
+				resolve();
+				return;
+			}
+
 			let {startX, startY} = animateFromPoint;
 			const topMenuNode = document.createElement('DIV');
 			topMenuNode.style = `position: absolute; z-index: 1000; top: ${startY + 25}px;`
@@ -935,6 +967,12 @@ export default class ItemsController extends DefaultController{
 	#animateTopItemFromLeft(node)
 	{
 		return new Promise((resolve) => {
+			if (Utils.prefersReducedMotion())
+			{
+				resolve();
+				return;
+			}
+
 			(new BX.easing({
 				duration: 700,
 				start: {left: node.offsetLeft, opacity: 1},

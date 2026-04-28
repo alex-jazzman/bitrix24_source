@@ -9,14 +9,14 @@ return [
 	'js' => 'dist/base-message.bundle.js',
 	'rel' => [
 		'main.core',
-		'im.v2.lib.utils',
 		'im.v2.application.core',
-		'im.v2.lib.parser',
 		'im.v2.component.message.elements',
 		'im.v2.const',
-		'im.v2.lib.permission',
 		'im.v2.lib.channel',
 		'im.v2.lib.menu',
+		'im.v2.lib.parser',
+		'im.v2.lib.permission',
+		'im.v2.lib.utils',
 	],
 	'skip_core' => false,
 ];

@@ -1,5 +1,6 @@
 import { locMixin } from 'booking.component.mixin.loc-mixin';
 
+import { SlotsCreator } from '../../lib/slots-creator';
 import { Occupancy, createOccupancy } from '../../occupancy';
 import { ResourceSlotsUiBlock } from '../resource-slots-ui-block/resource-slots-ui-block';
 // eslint-disable-next-line no-unused-vars
@@ -68,12 +69,14 @@ export const TimeSelectorBlock = {
 	computed: {
 		resourceSlots(): ResourceSlot[]
 		{
-			return Occupancy.calcResourceSlots({
+			const slotsCreator = new SlotsCreator({
 				date: this.date,
 				slotRanges: this.resource?.slotRanges || [],
 				resourceOccupancy: this.resourceOccupancy || [],
 				timezone: this.timezone,
 			});
+
+			return slotsCreator.calcResourceSlots();
 		},
 	},
 	watch: {

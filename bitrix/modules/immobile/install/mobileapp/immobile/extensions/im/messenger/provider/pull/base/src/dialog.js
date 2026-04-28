@@ -85,7 +85,6 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				chatId,
 				muted,
 				counter,
-				counterType,
 				parentChatId = 0,
 			} = params;
 
@@ -93,16 +92,12 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			const counterState = {
 				chatId,
 				counter,
-				type: counterType,
 				parentChatId,
 			};
 
 			const dialog = clone(this.store.getters['dialoguesModel/getById'](dialogId));
 			if (Type.isUndefined(dialog))
 			{
-				this.updateCounterChatMutedCollection(counterState, muted);
-				serviceLocator.get('tab-counters').update();
-
 				return;
 			}
 
@@ -126,7 +121,6 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				isMute: muted,
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatMuteNotify.sidebarModel/changeMute.catch:`, err));
 
-			this.updateCounterChatMutedCollection(counterState, muted);
 			serviceLocator.get('tab-counters').update();
 		}
 
@@ -137,22 +131,9 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				return;
 			}
 
-			if (params.lines)
-			{
-				if (MessengerParams.isOpenlinesOperator())
-				{
-					const tabCounters = serviceLocator.get('tab-counters');
-					tabCounters.deleteCounterByChatId(params.chatId);
-					tabCounters.update();
-				}
-
-				return;
-			}
-
 			this.logger.info(`${this.getClassName()}.handleChatHide`, params);
 
 			this.store.dispatch('recentModel/delete', { id: params.dialogId })
-				.then(() => serviceLocator.get('tab-counters').updateDelayed())
 				.catch((err) => this.logger.error(`${this.getClassName()}.handleChatHide.updateDelayed().catch:`, err))
 			;
 		}
@@ -330,8 +311,6 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				id: chatId,
 			});
 
-			this.deleteCounters(chatId);
-
 			if (Number(userId) === MessengerParams.getUserId())
 			{
 				const chatProvider = new ChatDataProvider();
@@ -418,15 +397,6 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 					fields: dialogUpdatingFields,
 				});
 			}
-		}
-
-		/**
-		 * @param {number} chatId
-		 * @void
-		 */
-		deleteCounters(chatId)
-		{
-			serviceLocator.get('tab-counters').deleteCounterByChatId(chatId);
 		}
 
 		handleChatAvatar(params, extra, command)
@@ -622,25 +592,6 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 		#getDialogModel(dialogId)
 		{
 			return this.store.getters['dialoguesModel/getById'](dialogId);
-		}
-
-		/**
-		 * @param {CounterState} counterState
-		 * @param {boolean} isMuted
-		 */
-		updateCounterChatMutedCollection(counterState, isMuted)
-		{
-			const tabCounters = serviceLocator.get('tab-counters');
-			if (isMuted)
-			{
-				tabCounters.addChatToMutedCollection(counterState.chatId);
-				tabCounters.deleteCounterByChatId(counterState.chatId);
-			}
-			else
-			{
-				tabCounters.deleteChatFromMutedCollection(counterState.chatId);
-				tabCounters.updateCounterDetailByCounterState(counterState);
-			}
 		}
 	}
 

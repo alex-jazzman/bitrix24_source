@@ -112,7 +112,7 @@ export const ChatTitle = {
 		},
 		dialogName(): string
 		{
-			if (this.customType === ChatTitleType.notes)
+			if (this.customType === ChatTitleType.selfChat)
 			{
 				return this.loc('IM_CHAT_TITLE_MY_NOTES');
 			}
@@ -275,14 +275,6 @@ export const ChatTitle = {
 
 			return false;
 		},
-		isChatMuted(): boolean
-		{
-			const isMuted = this.dialog.muteList.find((element) => {
-				return element === Core.getUserId();
-			});
-
-			return Boolean(isMuted);
-		},
 		isAutoDeleteEnabled(): boolean
 		{
 			if (!this.withAutoDelete)
@@ -294,7 +286,7 @@ export const ChatTitle = {
 		},
 		tooltipText(): string
 		{
-			if (this.customType === ChatTitleType.notes)
+			if (this.customType === ChatTitleType.selfChat)
 			{
 				return this.loc('IM_CHAT_TITLE_MY_NOTES');
 			}
@@ -331,7 +323,7 @@ export const ChatTitle = {
 				<strong v-if="isSelfChat && showItsYou">
 					<span class="bx-im-chat-title__text --self">({{ loc('IM_CHAT_TITLE_SELF') }})</span>
 				</strong>
-				<span v-if="withMute && isChatMuted" class="bx-im-chat-title__muted-icon"></span>
+				<span v-if="withMute && dialog.isMuted" class="bx-im-chat-title__muted-icon"></span>
 				<BIcon
 					v-if="isAutoDeleteEnabled"
 					:name="OutlineIcons.TIMER_DOT"

@@ -54,6 +54,17 @@ jn.define('mail/message-grid', (require, exports, module) => {
 	const PAGE_SIZE = 50;
 	const CACHE_TTL = 20;
 
+	const FilterField = {
+		FILTER_APPLIED: 'FILTER_APPLIED',
+		DIR: 'DIR',
+		IS_SEEN: 'IS_SEEN',
+		FIND: 'FIND',
+		ATTACHMENTS: 'ATTACHMENTS',
+		DATE_FROM: 'DATE_from',
+		DATE_TO: 'DATE_to',
+		BIND: 'BIND',
+	};
+
 	/**
 	 * @class MessageGrid
 	 */
@@ -86,7 +97,8 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			});
 			this.search = new SearchLayout({
 				layout: this.parentWidget,
-				disablePresets: true,
+				searchDataAction: AjaxMethod.mailGetFilterPresets,
+				searchDataActionParams: { mailboxId },
 				onSearch: this.#onSearch,
 				onCancel: this.#onSearch,
 			});
@@ -354,15 +366,6 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			});
 		}
 
-		get actionParams()
-		{
-			return {
-				loadItems: {
-					filterParams: this.filter,
-				},
-			};
-		}
-
 		openFolderMenu = () => {
 			this.parentWidget.openWidget(
 				'layout',
@@ -410,10 +413,11 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			if (selected !== null && selected !== undefined)
 			{
 				this.tabViewRef.setActiveItem(FILTER_PRESET_ALL_INCOME);
-				this.filter.folderPath = null;
-				this.filter.mailboxId = Number(selected.id);
 				dispatch(clearFolders());
-				this.setState({}, () => this.stateFulListRef.reload({ skipUseCache: true }));
+				this.#updateFilterAndLoad({
+					folderPath: null,
+					mailboxId: Number(selected.id),
+				});
 				this.updateMultiSelectModeTitle(true);
 			}
 		};
@@ -772,9 +776,7 @@ jn.define('mail/message-grid', (require, exports, module) => {
 				this.tabViewRef.setActiveItem(FILTER_PRESET_ALL_INCOME);
 			}
 
-			this.filter.folderPath = folder.path;
-
-			this.setState({}, () => this.stateFulListRef.reload({ skipUseCache: true }));
+			this.#updateFilterAndLoad({ folderPath: folder.path });
 		};
 
 		#onTabSelected = (tab) => {
@@ -821,14 +823,15 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			}
 			else
 			{
-				this.filter.tabId = tab.id;
-				this.setState({}, () => this.stateFulListRef.reload({ skipUseCache: true }));
+				this.#updateFilterAndLoad({ tabId: tab.id });
 			}
 		};
 
-		#onSearch = ({ text }) => {
-			this.filter.searchString = text ?? '';
-			this.setState({}, () => this.stateFulListRef.reload({ skipUseCache: true }));
+		#onSearch = ({ text, presetId }) => {
+			this.#updateFilterAndLoad({
+				searchString: text ?? '',
+				presetId: presetId ?? '',
+			});
 		};
 
 		#onPullCallback = (params) => {
@@ -865,6 +868,38 @@ jn.define('mail/message-grid', (require, exports, module) => {
 
 		onTabsRef = (ref) => {
 			this.tabViewRef = ref;
+		};
+
+		get actionParams()
+		{
+			const loadItems = {
+				mailboxId: this.filter.mailboxId ?? null,
+				presetId: this.filter.presetId ?? null,
+				tabId: this.filter.tabId ?? null,
+				filterParams: {},
+			};
+
+			if (this.filter.folderPath)
+			{
+				loadItems.filterParams[FilterField.DIR] = this.filter.folderPath;
+			}
+
+			if (this.filter.tabId === FILTER_PRESET_UNREAD)
+			{
+				loadItems.filterParams[FilterField.IS_SEEN] = 'N';
+			}
+
+			if (this.filter.searchString && this.filter.searchString.trim() !== '')
+			{
+				loadItems.filterParams[FilterField.FIND] = this.filter.searchString.trim();
+			}
+
+			return { loadItems };
+		}
+
+		#updateFilterAndLoad = (filterUpdates) => {
+			Object.assign(this.filter, filterUpdates);
+			this.setState({}, () => this.stateFulListRef.reload({ skipUseCache: true }));
 		};
 	}
 

@@ -20,13 +20,16 @@ if (!CModule::IncludeModule('crm'))
 }
 
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Component\EntityList\Settings\ImportItem;
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
+use Bitrix\Crm\Integration\Analytics\Builder\Import;
 use Bitrix\Crm\Integration\Sender\Rc;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
 
 Container::getInstance()->getLocalization()->loadMessages();
 
@@ -644,23 +647,31 @@ if($arParams['TYPE'] === 'list')
 
 	if ($bImport && !$isInSlider)
 	{
-		$importUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_IMPORT'], array());
-		if($arResult['CATEGORY_ID'] >= 0)
+		$importItem = (new ImportItem(CCrmOwnerType::Deal))
+			->setCategoryId($arResult['CATEGORY_ID']);
+
+		if ($importItem->canShow())
 		{
-			$importUrl = CCrmUrlUtil::AddUrlParams($importUrl, array('category_id' => $arResult['CATEGORY_ID']));
+			Container::getInstance()->getRouter()->renderBindAnchors();
+			$arResult['BUTTONS'][] = $importItem->toInterfaceToolbarButton();
 		}
 
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('DEAL_IMPORT'),
-			'TITLE' => GetMessage('DEAL_IMPORT_TITLE'),
-			'LINK' => $importUrl,
-			'ICON' => 'btn-import'
-		);
+		$migrationUrl = new Uri($arParams['PATH_TO_MIGRATION']);
+
+		$migrationViewEvent = (new Import\ViewEvent())
+			->setEntityTypeId(CCrmOwnerType::Deal)
+			->setIsMigration(true)
+		;
+
+		if ($migrationViewEvent->validate()->isSuccess())
+		{
+			$migrationUrl = $migrationViewEvent->buildUri($migrationUrl);
+		}
 
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('DEAL_MIGRATION'),
 			'TITLE' => GetMessage('DEAL_MIGRATION_TITLE'),
-			'LINK' => $arParams['PATH_TO_MIGRATION'],
+			'LINK' => $migrationUrl,
 			'ICON' => 'btn-migration'
 		);
 	}
@@ -1037,15 +1048,25 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 
 if ($bAdd && $arParams['TYPE'] != 'list')
 {
+	$addUrl = new Uri(CCrmUrlUtil::AddUrlParams(
+		CComponentEngine::MakePathFromTemplate(
+			$arParams[$isSliderEnabled ? 'PATH_TO_DEAL_DETAILS' : 'PATH_TO_DEAL_EDIT'],
+			array('deal_id' => 0)
+		),
+		array('category_id' => $arResult['CATEGORY_ID'])
+	));
+
+	if ($arParams['TYPE'] === 'import')
+	{
+		$addUrl = (new Import\EditEvent())
+			->setEntityTypeId(CCrmOwnerType::Deal)
+			->setIsCreateButton()
+			->buildUri($addUrl);
+	}
+
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
-		'LINK' => CCrmUrlUtil::AddUrlParams(
-			CComponentEngine::MakePathFromTemplate(
-				$arParams[$isSliderEnabled ? 'PATH_TO_DEAL_DETAILS' : 'PATH_TO_DEAL_EDIT'],
-				array('deal_id' => 0)
-			),
-			array('category_id' => $arResult['CATEGORY_ID'])
-		),
+		'LINK' => $addUrl,
 		'TARGET' => '_blank',
 		'ICON' => 'btn-new'
 	);

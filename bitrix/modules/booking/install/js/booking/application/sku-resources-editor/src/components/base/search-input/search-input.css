@@ -19,3 +19,7 @@
 .booking-services-settings-popup__search-input::placeholder {
 	color: rgba(168, 173, 180, 1);
 }
+
+input.booking-services-settings-popup__search-input:focus-visible {
+	outline: none;
+}

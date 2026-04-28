@@ -300,7 +300,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 		id: MessageMenuActionType.askCopilot,
 		testId: 'MESSAGE_MENU_ACTION_ASK_COPILOT',
 		type: ActionViewType.button,
-		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_ASK_COPILOT'),
+		text: Loc.getMessageWithCopilotBotName('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_ASK_COPILOT_MSGVER_1'),
 		iconName: Icon.COPILOT.getIconName(),
 		iconFallbackUrl: Url.createFromPath(Icon.COPILOT.getPath()).href,
 		iconSvg: Icon.COPILOT.getSvg(),

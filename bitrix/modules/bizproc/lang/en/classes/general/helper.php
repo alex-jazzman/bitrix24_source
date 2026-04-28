@@ -25,6 +25,7 @@ $MESS["BPCGHLP_PROP_INTERNALSELECT_1"] = "Bind to element lists";
 $MESS["BPCGHLP_PROP_SELECT"] = "List";
 $MESS["BPCGHLP_PROP_STRING"] = "String";
 $MESS["BPCGHLP_PROP_TEXT"] = "Multiline Text";
+$MESS["BPCGHLP_PROP_TIME"] = "Time";
 $MESS["BPCGHLP_PROP_USER"] = "User";
 $MESS["BPCGHLP_SEC1"] = "second";
 $MESS["BPCGHLP_SEC2"] = "seconds";

@@ -10,7 +10,7 @@ use \Bitrix\Main\Localization\Loc;
 return [
 	'block' => [
 		'name' => Loc::getMessage('LANDING_BLOCK_49_3_TWO_COLS_TEXT_VIDEO_FIX--NAME'),
-		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'mainpage'],
+		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'vibe'],
 		'section' => ['video', 'widgets_video'],
 		'dynamic' => false,
 		'version' => '18.5.0',

@@ -4,10 +4,12 @@ return [
 	'extensions' => [
 		'type',
 		'in-app-url',
+		'device/connection',
 		'assets/icons',
 		'require-lazy',
 		'ui-system/typography',
 		'im:messenger/const',
+		'im:messenger/lib/ui/notification',
 		'im:messenger/controller/sidebar-v2/controller/base',
 		'im:messenger/controller/sidebar-v2/tabs/common-chats',
 		'im:messenger/controller/sidebar-v2/tabs/audio',

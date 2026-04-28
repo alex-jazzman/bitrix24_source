@@ -45,6 +45,7 @@ export type TimelineData = {
 	userStatuses: Map<UserId, TaskStatus>,
 	stats: TimelineStatsData,
 	biMenu?: Array<BiMenuItem>,
+	isBiBuilderDisabled: boolean,
 };
 
 type BiMenuItem = {
@@ -254,6 +255,7 @@ export class Timeline
 						efficiency: getString(response.data.stats.efficiency),
 					},
 					biMenu: getArray(response.data.biMenu, null),
+					isBiBuilderDisabled: getBool(response.data.isBiBuilderDisabled, false),
 				};
 
 				for (const user of getArray(response.data.users))
@@ -922,7 +924,33 @@ export class Timeline
 
 	#renderBiPopupContent(menu: Array<BiMenuItem>): Element
 	{
+		const btn = this.#getBiPopupButton(menu);
+
+		return Tag.render`
+			<div class="bizproc-timeline-popup">
+				<div class="bizproc-timeline-popup-title">${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_TITLE')}</div>
+				<p class="bizproc-timeline-popup-info">${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_TIP')}</p>
+				${btn}
+			</div>
+		`;
+	}
+
+	#getBiPopupButton(menu: Array<BiMenuItem>): Element
+	{
 		let btn = null;
+
+		if (this.#data.isBiBuilderDisabled)
+		{
+			const clickHandler = () => top.BX.UI.InfoHelper.show('limit_crm_BI_constructor');
+			btn = Tag.render`
+				<a class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-icon-lock ui-icon-set__scope --with-left-icon" onclick="${clickHandler}">
+					<span class="ui-btn-text">${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_LINK')}</span>
+				</a>
+			`;
+
+			return btn;
+		}
+
 		if (menu.length === 1)
 		{
 			btn = Tag.render`
@@ -944,13 +972,7 @@ export class Timeline
 			`;
 		}
 
-		return Tag.render`
-			<div class="bizproc-timeline-popup">
-				<div class="bizproc-timeline-popup-title">${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_TITLE')}</div>
-				<p class="bizproc-timeline-popup-info">${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_TIP')}</p>
-				${btn}
-			</div>
-		`;
+		return btn;
 	}
 
 	#renderLoadingStub(): HTMLElement

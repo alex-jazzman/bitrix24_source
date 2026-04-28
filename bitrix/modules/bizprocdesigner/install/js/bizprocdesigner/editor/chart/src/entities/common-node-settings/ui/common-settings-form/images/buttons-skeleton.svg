@@ -1,0 +1,16 @@
+<svg width="201" height="38" viewBox="0 0 201 38" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<g id="animated-elements">
+		<rect width="120" height="38" rx="8" fill="#EDEEF0"/>
+		<rect x="138" y="13" width="63" height="12" rx="6" fill="#EDEEF0"/>
+	</g>
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="38"/>
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#828b95" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#828b95" stop-opacity="0.05" offset="50%" />
+		<stop stop-color="#828b95" stop-opacity="0" offset="100%" />
+	</linearGradient>
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1.5s" begin="0s" repeatCount="indefinite"/>
+</svg>

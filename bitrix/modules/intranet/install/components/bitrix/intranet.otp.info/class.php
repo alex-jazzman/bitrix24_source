@@ -7,18 +7,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\Entity\UserOtp;
+use Bitrix\Intranet\Internal\Enum\Otp\OtpBannerType;
 use Bitrix\Intranet\Internal\Enum\Otp\PromoteMode;
 use Bitrix\Intranet\Internal\Factory\Otp\BannerTypeFactory;
-use Bitrix\Intranet\Internal\Integration\Main\OtpSigner;
 use Bitrix\Intranet\Internal\Integration\Security\OtpSettings;
-use Bitrix\Intranet\Internal\Integration\Security\PersonalOtp;
 use Bitrix\Intranet\Internal\Service\Otp\MobilePush;
 use Bitrix\Intranet\Portal;
-use Bitrix\Intranet\Internal\Integration\Security\Otp;
+use Bitrix\Main\Application;
 use Bitrix\Security\Mfa\OtpType;
 
 class CIntranetOtpInfoComponent extends CBitrixComponent
 {
+	private const SESSION_BANNER_TTL = 900;
+	private const SESSION_BANNER_KEY = 'otp_banner_type';
+
 	private CurrentUser $currentUser;
 	private OtpSettings $otpSettings;
 
@@ -31,45 +33,58 @@ class CIntranetOtpInfoComponent extends CBitrixComponent
 
 	public function executeComponent(): void
 	{
+		if (!$this->currentUser->isAuthorized() || !$this->otpSettings->isAvailable())
+		{
+			return;
+		}
+
 		$this->arResult['DEFAULT_OTP_TYPE'] = $this->otpSettings->getDefaultType();
 		$mobilePush = MobilePush::createByDefault();
 		$this->arResult['OLD_OTP_POPUP'] = true;
 
-		if (
-			$this->arResult['DEFAULT_OTP_TYPE'] === OtpType::Push
-			|| (
-				$mobilePush->getPromoteMode()->isGreaterOrEqual(PromoteMode::Medium)
-			)
-		)
-		{
-			$type = (new BannerTypeFactory())->create();
+		$isLegacyOtpAllowed = $mobilePush->isLegacyOtpAllowedByUserId((int)$this->currentUser->getId());
 
-			if (!$this->currentUser->isAuthorized() || !$type || !$this->checkPopupShowEvents())
+		if (
+			!$isLegacyOtpAllowed
+			&& (
+				$this->arResult['DEFAULT_OTP_TYPE'] === OtpType::Push
+				|| $mobilePush->getPromoteMode()->isGreaterOrEqual(PromoteMode::Medium)
+			)
+		) {
+			$type = $this->getBannerType();
+
+			if (!$type || !$this->checkPopupShowEvents())
 			{
 				return;
 			}
 
 			$this->arResult['OLD_OTP_POPUP'] = false;
-			$mobilePush = MobilePush::createByDefault();
+			$this->arResult['TRUST_DEVICE_CONFIRMATION'] = $type === OtpBannerType::TRUST_DEVICE_CONFIRMATION;
+			$this->arResult['TRUST_PHONE_NUMBER_CONFIRMATION'] = $type === OtpBannerType::TRUST_PHONE_NUMBER_CONFIRMATION;
+			$this->arResult['RECONNECT_TRUSTED_DEVICE'] = $type === OtpBannerType::RECONNECT_TRUSTED_DEVICE;
 
-			$this->arResult['pushOtpConfig'] = [
-				'type' => $type->value,
-				'gracePeriod' => $this->otpSettings
-					->getPersonalSettingsByUserId($this->currentUser->getId())
-					?->getGracePeriod()
-					?->getTimestamp(),
-				'signedUserId' => (new OtpSigner())->signUserId((int)CurrentUser::get()->getId()),
-				'settingsUrl' => Portal::getInstance()->getSettings()->getSettingsUrl(),
-				'promoteMode' => $mobilePush->getPromoteMode()->value,
-			];
+			if (!$this->arResult['TRUST_DEVICE_CONFIRMATION'])
+			{
+				$this->arResult['pushOtpConfig'] = [
+					'type' => $type->value,
+					'gracePeriod' => $this->otpSettings
+						->getPersonalSettingsByUserId($this->currentUser->getId())
+						?->getGracePeriod()
+						?->getTimestamp(),
+					'settingsUrl' => Portal::getInstance()->getSettings()->getSettingsUrl(),
+					'promoteMode' => $mobilePush->getPromoteMode()->value,
+					'deviceName' => $this->otpSettings
+						->getPersonalSettingsByUserId((int)$this->currentUser->getId())
+						?->getInitParams()['deviceInfo']['displayModel'] ?? null,
+					'devicePlatform' => $this->otpSettings
+						->getPersonalSettingsByUserId((int)$this->currentUser->getId())
+						?->getInitParams()['deviceInfo']['platform'] ?? null,
+					...($this->otpSettings->getPersonalSettingsByUserId((int)$this->currentUser->getId())?->getOtpConfig() ?? []),
+				];
+			}
 		}
 		else
 		{
-			if (!$this->currentUser->isAuthorized())
-			{
-				return;
-			}
-
 			if (
 				!$this->otpSettings->isMandatoryUsing()
 				|| $this->isSavedLocalStorageInfo()
@@ -81,19 +96,35 @@ class CIntranetOtpInfoComponent extends CBitrixComponent
 			$otpPersonal = $this->otpSettings->getPersonalSettingsByUserId((int)$this->currentUser->getId());
 
 			if (
-				$otpPersonal->isActivated()
-				|| !$otpPersonal->isRequired()
+				$otpPersonal?->isActivated()
+				|| !$otpPersonal?->isRequired()
 			) {
 				return;
 			}
 
 			$this->arResult['PATH_TO_PROFILE_SECURITY'] = $this->getPathToProfileSecurity();
 			$this->arResult['POPUP_NAME'] = 'otp_mandatory_info';
-			$this->arResult['USER']['OTP_DAYS_LEFT'] = $this->getFormattedOtpDaysLeft($otpPersonal->getOtpInfo());
+			$this->arResult['USER']['OTP_DAYS_LEFT'] = $otpPersonal ? $this->getFormattedOtpDaysLeft($otpPersonal->getOtpInfo()) : null;
 			$this->saveLocalStorageInfo();
 		}
 
 		$this->includeComponentTemplate();
+	}
+
+	private function getBannerType(): ?OtpBannerType
+	{
+		$session = Application::getInstance()->getLocalSession(self::SESSION_BANNER_KEY);
+		$lastCheckTime = $session->get('lastCheckTime');
+
+		if ($lastCheckTime !== null && (time() - $lastCheckTime) < self::SESSION_BANNER_TTL)
+		{
+			return null;
+		}
+
+		$type = (new BannerTypeFactory())->create();
+		$session->set('lastCheckTime', time());
+
+		return $type;
 	}
 
 	private function checkPopupShowEvents(): bool

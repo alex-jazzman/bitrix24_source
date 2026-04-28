@@ -18,4 +18,6 @@ export const Model = Object.freeze({
 	Filter: 'filter',
 	SaleChannels: 'sale-channels',
 	SkuResourcesEditor: 'sku-resources-editor',
+	ResourceSkuRelations: 'resource-sku-relations',
+	Sku: 'sku',
 });

@@ -65,10 +65,7 @@ export const MessageAuthorTitle = {
 				return '';
 			}
 
-			return copilotManager.getName({
-				dialogId: this.dialogId,
-				messageId: this.messageId,
-			});
+			return copilotManager.getNameWithRole(this.messageId);
 		},
 	},
 	template: `

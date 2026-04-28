@@ -1,7 +1,7 @@
 <?php
 
 use Bitrix\Main;
-use Bitrix\Sale\Cashbox;
+use Bitrix\Sale\Cashbox\CheckManager;
 use Bitrix\Sale\Cashbox\Logger;
 
 define('NOT_CHECK_PERMISSIONS', true);
@@ -25,7 +25,7 @@ if ($json)
 
 if (array_key_exists('payload', $data))
 {
-	Cashbox\CashboxAtolFarm::applyCheckResult($data);
+	CheckManager::applyCheckResultFromCallback($data);
 }
 
 \Bitrix\Main\Application::getInstance()->end();

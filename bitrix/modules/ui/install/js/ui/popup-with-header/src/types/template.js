@@ -35,9 +35,12 @@ export type ButtonConfig = {
 	text: string,
 	backgroundColor?: string,
 	color?: string,
+	airStyle?: string,
 	onclick?: function,
 	description?: TextConfig,
 	target?: string,
+	action?: string,
+	analyticsEvent?: string,
 }
 
 export type TextConfig = {

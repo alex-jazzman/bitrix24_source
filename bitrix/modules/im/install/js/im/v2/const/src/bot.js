@@ -5,6 +5,7 @@ export const RawBotType = Object.freeze({
 	human: 'human',
 	openline: 'openline',
 	supervisor: 'supervisor',
+	personal: 'personal',
 });
 
 export const BotType = Object.freeze({

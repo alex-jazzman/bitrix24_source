@@ -24,6 +24,7 @@ return [
 		'im.v2.provider.service.copilot',
 		'im.v2.lib.helpdesk',
 		'main.core',
+		'im.v2.lib.copilot',
 		'im.v2.lib.analytics',
 		'im.v2.lib.invite',
 		'im.v2.lib.promo',

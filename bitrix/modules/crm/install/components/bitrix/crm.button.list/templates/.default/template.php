@@ -27,6 +27,7 @@ Extension::load([
 	'ui.fonts.opensans',
 	'clipboard',
 	'ui.buttons',
+	'intranet.old-interface.intranet-common',
 ]);
 
 $interfaceToolbarButtons = [];

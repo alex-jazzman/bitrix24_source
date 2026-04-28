@@ -116,11 +116,11 @@ if ($articleCode > 0)
 }
 if ($arParams['datasetId'])
 {
-	$APPLICATION->SetTitle(Loc::getMessage('DATASET_IMPORT_EDIT_TITLE'));
+	$APPLICATION->SetTitle(Loc::getMessage('DATASET_IMPORT_EDIT_TITLE_MSGVER_1'));
 }
 else
 {
-	$APPLICATION->SetTitle(Loc::getMessage('DATASET_IMPORT_TITLE'));
+	$APPLICATION->SetTitle(Loc::getMessage('DATASET_IMPORT_TITLE_MSGVER_1'));
 }
 ?>
 <div id="app-root"></div>

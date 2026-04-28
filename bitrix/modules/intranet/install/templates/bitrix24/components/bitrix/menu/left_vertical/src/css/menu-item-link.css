@@ -11,7 +11,7 @@
 	flex: 1;
 	font-size: var(--ui-font-size-lg);
 	line-height: var(--ui-font-line-height-3xs);
-	outline: none;
+	outline: revert;
 	position: relative;
 	text-decoration: none;
 	white-space: nowrap;
@@ -27,6 +27,8 @@
 .menu-items-edit-mode .menu-item-link {
 	cursor: default;
 	overflow: hidden;
+	overflow: clip;
+	overflow-clip-margin: 2px;
 }
 
 .menu-item-draggable .menu-item-link {
@@ -46,6 +48,15 @@
 	transition: clip-path .3s .6s, mask-position .3s .6s;
 	mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) var(--menu-item-link-edit-icon-space));
 	mask-position: calc(var(--menu-item-link-edit-icon-space) * -1) 0;
+}
+
+.menu-items-view-mode .menu-item-link:focus-visible,
+.menu-items-view-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link:focus-visible {
+	outline: revert;
+	outline-offset: 2px;
+	border-radius: var(--menu-item-border-radius, 4px);
+	clip-path: none;
+	mask-image: none;
 }
 
 .menu-items-view-mode .menu-item-block.menu-all-groups:not(.menu-item-draggable) .menu-item-link {
@@ -72,4 +83,13 @@
 	mask-image: none;
 }
 
-
+button.menu-item-link {
+	border: none;
+	background: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	text-align: left;
+	width: 100%;
+}

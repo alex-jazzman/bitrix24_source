@@ -1,15 +1,15 @@
-import { ChannelManager } from 'im.v2.lib.channel';
-import { Toggle, ToggleSize } from 'im.v2.component.elements.toggle';
+import { type JsonObject } from 'main.core';
+
 import { AutoDeleteDropdown, AutoDeletePopup, AutoDeleteHint } from 'im.v2.component.elements.auto-delete';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { ChatService } from 'im.v2.provider.service.chat';
+import { Toggle, ToggleSize } from 'im.v2.component.elements.toggle';
 import { ChatType, UserType, AutoDeleteDelay } from 'im.v2.const';
 import { AutoDeleteManager } from 'im.v2.lib.auto-delete';
+import { ChannelManager } from 'im.v2.lib.channel';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { type ImModelChat, type ImModelUser } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 import './css/auto-delete.css';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelChat, ImModelUser } from 'im.v2.model';
 
 // @vue/component
 export const AutoDelete = {
@@ -145,8 +145,11 @@ export const AutoDelete = {
 			class="bx-im-sidebar-auto-delete__container"
 			ref="auto-delete"
 		>
-			<div class="bx-im-sidebar-auto-delete__title">
-				<div class="bx-im-sidebar-auto-delete__title-text bx-im-sidebar-auto-delete__icon">
+			<div class="bx-im-sidebar-auto-delete__title bx-im-sidebar-auto-delete__icon">
+				<div
+					:title="loc('IM_SIDEBAR_ENABLE_AUTODELETE_TITLE')"
+					class="bx-im-sidebar-auto-delete__title-text --ellipsis"
+				>
 					{{ loc('IM_SIDEBAR_ENABLE_AUTODELETE_TITLE') }}
 				</div>
 				<Toggle

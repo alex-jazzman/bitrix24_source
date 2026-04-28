@@ -186,7 +186,10 @@ export const EditActionExpression = {
 					 @click="onChooseDocument"
 				>
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-					<div class="ui-ctl-element">
+					<div
+						class="ui-ctl-element"
+						:data-test-id="$testId('selectedActionDocument')"
+					>
 						{{ selectedDocumentTitle }}
 					</div>
 				</div>

@@ -8,6 +8,7 @@ UI\Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.tooltip',
+	'intranet.old-interface.intranet-common',
 ]);
 
 /** @var array $arResult */

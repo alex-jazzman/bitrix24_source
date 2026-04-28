@@ -2,6 +2,7 @@ import { Dom, Loc, Type, Text, Tag } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { Button, ButtonSize } from 'ui.buttons';
 import { Text as TypographyText } from 'ui.system.typography';
+import { SetupTemplate } from 'bizproc.setup-template';
 import { gridApi as Api } from '../api';
 import { RowHelper } from '../row-helper';
 
@@ -83,6 +84,11 @@ export class LaunchControlField extends BaseField
 			grid?.tableUnfade();
 
 			new RowHelper(grid).addToGrid(newRowFields);
+			const setupTemplate = result?.setupTemplateData;
+			if (setupTemplate && Type.isObjectLike(setupTemplate))
+			{
+				SetupTemplate.showSidePanel(setupTemplate);
+			}
 		}
 		catch (error)
 		{

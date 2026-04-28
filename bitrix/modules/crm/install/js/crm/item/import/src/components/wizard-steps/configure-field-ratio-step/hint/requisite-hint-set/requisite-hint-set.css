@@ -1,0 +1,17 @@
+.crm-item-import__requisite-help {
+	--icon: url('settings.png'),
+}
+
+.crm-item-import__requisite-help .ui-system-alert-inner {
+	align-items: flex-start;
+}
+
+.crm-item-import__requisite-help p {
+	margin: 0;
+}
+
+.crm-item-import__requisite-help-hint-group-list {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}

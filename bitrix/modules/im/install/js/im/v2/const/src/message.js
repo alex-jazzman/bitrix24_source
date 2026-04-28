@@ -30,7 +30,6 @@ export const MessageComponent = Object.freeze({
 	supportVote: 'SupportVoteMessage',
 	supportSessionNumber: 'SupportSessionNumberMessage',
 	supportChatCreation: 'SupportChatCreationMessage',
-	system: 'SystemMessage',
 	channelPost: 'ChannelPost',
 	generalChatCreationMessage: 'GeneralChatCreationMessage',
 	generalChannelCreationMessage: 'GeneralChannelCreationMessage',
@@ -40,6 +39,7 @@ export const MessageComponent = Object.freeze({
 	taskChatCreationMessage: 'TaskChatCreationMessage',
 	convertToCollabMessage: 'ConvertToCollabMessage',
 	aiAssistantMessage: 'AiAssistantMessage',
+	aiBizprocMessage: 'AiBizprocMessage',
 	...OpenLinesMessageComponent,
 });
 

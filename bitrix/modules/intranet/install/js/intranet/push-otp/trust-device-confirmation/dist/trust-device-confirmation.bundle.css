@@ -1,0 +1,164 @@
+.intranet-trust-device-confirmation-popup--blue {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='590' height='394' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_11940_4222)'%3E%3Cpath d='M0 20C0 8.954 8.954 0 20 0h550c11.046 0 20 8.954 20 20v354c0 11.046-8.954 20-20 20H20c-11.046 0-20-8.954-20-20V20z' fill='url(%23paint0_linear_11940_4222)'/%3E%3Cg filter='url(%23filter0_f_11940_4222)'%3E%3Cellipse cx='65.14' cy='43.717' rx='65.14' ry='43.717' transform='matrix(.98584 .16766 -.09491 .99549 449.207 -6.562)' fill='%23C4E6FF'/%3E%3C/g%3E%3Cg opacity='.47' filter='url(%23filter1_f_11940_4222)'%3E%3Cellipse cx='94.924' cy='50.383' rx='94.924' ry='50.383' transform='matrix(-.61353 .78967 -.58513 -.81094 594.376 78.603)' fill='%23fff'/%3E%3C/g%3E%3Cg opacity='.68' filter='url(%23filter2_f_11940_4222)'%3E%3Cellipse cx='102.447' cy='58.005' rx='102.447' ry='58.005' transform='matrix(.96712 .25434 -.14585 .9893 16.92 -27.58)' fill='%23E6F4FF'/%3E%3C/g%3E%3Cg opacity='.85' filter='url(%23filter3_f_11940_4222)'%3E%3Cellipse cx='102.447' cy='58.005' rx='102.447' ry='58.005' transform='matrix(.96712 .25434 -.14585 .9893 228.689 24.993)' fill='%23E6F4FF'/%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_f_11940_4222' x='424.922' y='-17.001' width='168.708' height='129.759' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur stdDeviation='8' result='effect1_foregroundBlur_11940_4222'/%3E%3C/filter%3E%3Cfilter id='filter1_f_11940_4222' x='406.35' y='-7.701' width='200.614' height='240.809' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur stdDeviation='17.509' result='effect1_foregroundBlur_11940_4222'/%3E%3C/filter%3E%3Cfilter id='filter2_f_11940_4222' x='-20.212' y='-35.484' width='255.502' height='182.688' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur stdDeviation='14.153' result='effect1_foregroundBlur_11940_4222'/%3E%3C/filter%3E%3Cfilter id='filter3_f_11940_4222' x='189.863' y='15.395' width='258.89' height='186.076' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur stdDeviation='15' result='effect1_foregroundBlur_11940_4222'/%3E%3C/filter%3E%3ClinearGradient id='paint0_linear_11940_4222' x1='295' y1='0' x2='295' y2='394' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='.2' stop-color='%23C4E6FF'/%3E%3Cstop offset='.5' stop-color='%23fff'/%3E%3C/linearGradient%3E%3CclipPath id='clip0_11940_4222'%3E%3Cpath fill='%23fff' d='M0 0h590v394H0z'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.intranet-trust-device-confirmation-popup--red {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='590' height='394' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_11787_1996)'%3E%3Cpath d='M0 20C0 8.954 8.954 0 20 0h550c11.046 0 20 8.954 20 20v354c0 11.046-8.954 20-20 20H20c-11.046 0-20-8.954-20-20V20z' fill='url(%23paint0_linear_11787_1996)'/%3E%3Cg filter='url(%23filter0_f_11787_1996)'%3E%3Cellipse cx='65.14' cy='43.717' rx='65.14' ry='43.717' transform='matrix(.98584 .16766 -.09491 .99549 449.207 -6.562)' fill='%23FFCDCC'/%3E%3C/g%3E%3Cg opacity='.47' filter='url(%23filter1_f_11787_1996)'%3E%3Cellipse cx='94.924' cy='50.383' rx='94.924' ry='50.383' transform='matrix(-.61353 .78967 -.58513 -.81094 594.376 78.603)' fill='%23fff'/%3E%3C/g%3E%3Cg opacity='.68' filter='url(%23filter2_f_11787_1996)'%3E%3Cellipse cx='102.447' cy='58.005' rx='102.447' ry='58.005' transform='matrix(.96712 .25434 -.14585 .9893 16.92 -27.58)' fill='%23FFE8E8'/%3E%3C/g%3E%3Cg opacity='.85' filter='url(%23filter3_f_11787_1996)'%3E%3Cellipse cx='102.447' cy='58.005' rx='102.447' ry='58.005' transform='matrix(.96712 .25434 -.14585 .9893 228.689 24.993)' fill='%23FFE8E8'/%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_f_11787_1996' x='424.922' y='-17.001' width='168.708' height='129.759' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur stdDeviation='8' result='effect1_foregroundBlur_11787_1996'/%3E%3C/filter%3E%3Cfilter id='filter1_f_11787_1996' x='406.35' y='-7.701' width='200.614' height='240.809' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur stdDeviation='17.509' result='effect1_foregroundBlur_11787_1996'/%3E%3C/filter%3E%3Cfilter id='filter2_f_11787_1996' x='-20.212' y='-35.484' width='255.502' height='182.688' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur stdDeviation='14.153' result='effect1_foregroundBlur_11787_1996'/%3E%3C/filter%3E%3Cfilter id='filter3_f_11787_1996' x='189.863' y='15.395' width='258.89' height='186.076' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur stdDeviation='15' result='effect1_foregroundBlur_11787_1996'/%3E%3C/filter%3E%3ClinearGradient id='paint0_linear_11787_1996' x1='295' y1='0' x2='295' y2='394' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='.2' stop-color='%23FFCDCC'/%3E%3Cstop offset='.5' stop-color='%23fff'/%3E%3C/linearGradient%3E%3CclipPath id='clip0_11787_1996'%3E%3Cpath fill='%23fff' d='M0 0h590v394H0z'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.intranet-trust-device-confirmation-popup__wrapper {
+	padding: 16px 14px;
+}
+
+.intranet-trust-device-confirmation-popup__header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.intranet-trust-device-confirmation-popup__title-wrapper {
+	display: flex;
+	flex-direction: column;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__text {
+	width: 100%;
+}
+
+.intranet-trust-device-confirmation-popup__title {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: 19px;
+	line-height: 26px;
+	color: var(--ui-color-base-0);
+}
+
+.intranet-trust-device-confirmation-popup__description {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: 15px;
+	line-height: 20px;
+	color: var(--ui-color-base-1);
+}
+
+.intranet-trust-device-confirmation-popup__icon {
+	display: flex;
+}
+
+.intranet-trust-device-confirmation-popup__icon i {
+	width: 78px;
+	height: 78px;
+	background-image: url("images/header.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.intranet-trust-device-confirmation-popup__content {
+	margin-top: 26px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.intranet-trust-device-confirmation-popup-content__item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background-color: var(--ui-color-palette-white-base);
+	box-shadow: 0 1px 2px 0 var(--ui-color-box-shadow-contrast-default-color);
+	height: 60px;
+	border-radius: 20px;
+	padding: 10px 18px 10px 10px;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__icon-wrapper {
+	width: 60px;
+	height: 60px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__icon {
+	width: 45px;
+	height: 45px;
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__icon.--device {
+	background-image: url("images/device-icon.png");
+}
+
+.intranet-trust-device-confirmation-popup-content-item__icon.--number {
+	background-image: url("images/number-icon.png");
+}
+
+.intranet-trust-device-confirmation-popup-content-item__icon--device {
+	width: 45px;
+	height: 45px;
+	background-image: url("images/number-icon.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__title {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-base-3);
+}
+
+.intranet-trust-device-confirmation-popup-content-item__description {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: 16px;
+	line-height: 21px;
+	color: var(--ui-color-base-1);
+}
+
+.intranet-trust-device-confirmation-popup-content-item__description i {
+	--ui-icon-set__icon-size: 14px;
+	--ui-icon-set__icon-color: var(--ui-color-base-1);
+	margin-right: 4px;
+	height: 20px;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__description i.--apple-and-ios {
+	vertical-align: middle;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__description i.--android {
+	vertical-align: text-bottom;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__description span.--disabled-item {
+	color: var(--ui-color-base-4);
+}
+
+.intranet-trust-device-confirmation-popup-content-item__action {
+	cursor: pointer;
+	--ui-color: var(--ui-color-base-3);
+	color: var(--ui-color);
+	font-weight: var(--ui-font-weight-normal);
+	font-size: 14px;
+	line-height: 19px;
+	transition: 0.2s ease-in-out color;
+}
+
+.intranet-trust-device-confirmation-popup-content-item__action.--action-blue {
+	--ui-color: var(--ui-color-accent-main-link);
+}
+
+.intranet-trust-device-confirmation-popup-content-item__action:hover {
+	color: color-mix(in srgb, var(--ui-color) 100%, var(--ui-color-bg-state-hover-default-overlay-hex) var(--ui-color-bg-state-hover-default-overlay-opacity));
+}
+
+.intranet-trust-device-confirmation-popup__buttons {
+	margin-top: 36px;
+	display: flex;
+	justify-content: center;
+	gap: 12px;
+}

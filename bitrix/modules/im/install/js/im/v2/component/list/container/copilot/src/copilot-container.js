@@ -5,6 +5,7 @@ import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
 import { CopilotService } from 'im.v2.provider.service.copilot';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { CopilotManager } from 'im.v2.lib.copilot';
 
 import './css/copilot-container.css';
 
@@ -27,9 +28,16 @@ export const CopilotListContainer = {
 		{
 			return PermissionManager.getInstance().canPerformActionByUserType(ActionByUserType.createCopilot);
 		},
+		headerTitle(): string
+		{
+			return this.loc('IM_LIST_CONTAINER_COPILOT_HEADER_MSGVER_1', {
+				'#COPILOT_NAME#': this.copilotManager.getName(),
+			});
+		},
 	},
 	created()
 	{
+		this.copilotManager = new CopilotManager();
 		Logger.warn('List: Copilot container created');
 	},
 	methods:
@@ -64,15 +72,15 @@ export const CopilotListContainer = {
 			this.isCreatingChat = false;
 			void Messenger.openCopilot(newDialogId);
 		},
-		loc(phraseCode: string): string
+		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
 	template: `
 		<div class="bx-im-list-container-copilot__scope bx-im-list-container-copilot__container">
 			<div class="bx-im-list-container-copilot__header_container">
-				<div class="bx-im-list-container-copilot__header_title">{{ loc('IM_LIST_CONTAINER_COPILOT_HEADER') }}</div>
+				<div class="bx-im-list-container-copilot__header_title">{{ headerTitle }}</div>
 				<div
 					v-if="canCreate"
 					class="bx-im-list-container-copilot__create-chat"

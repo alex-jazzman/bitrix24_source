@@ -10,6 +10,12 @@ jn.define('utils/logger', (require, exports, module) => {
 		TRACE: 'trace',
 	};
 
+	/**
+	 * @class Logger
+	 * @typedef {Object} LoggerOptions
+	 * @property {Array<string>} [enabledLogTypes=[]]
+	 * @property {boolean} [onlyForBeta=false]
+	 */
 	class Logger
 	{
 		static getSupportedLogTypes()
@@ -22,9 +28,10 @@ jn.define('utils/logger', (require, exports, module) => {
 			return Logger.getSupportedLogTypes().includes(type);
 		}
 
-		constructor(enabledLogTypes = [])
+		constructor(enabledLogTypes = [], onlyForBeta = false)
 		{
 			this.enabledLogTypes = new Set();
+			this.canLog = !onlyForBeta || Application.isBeta();
 
 			enabledLogTypes.forEach((type) => this.enable(type));
 		}
@@ -60,7 +67,7 @@ jn.define('utils/logger', (require, exports, module) => {
 
 		log(...params)
 		{
-			if (this.isEnabledLogType(LogType.LOG))
+			if (this.isEnabledLogType(LogType.LOG) && this.canLog)
 			{
 				// eslint-disable-next-line no-console
 				console.log(...params);
@@ -69,7 +76,7 @@ jn.define('utils/logger', (require, exports, module) => {
 
 		info(...params)
 		{
-			if (this.isEnabledLogType(LogType.INFO))
+			if (this.isEnabledLogType(LogType.INFO) && this.canLog)
 			{
 				// eslint-disable-next-line no-console
 				console.info(...params);
@@ -78,7 +85,7 @@ jn.define('utils/logger', (require, exports, module) => {
 
 		warn(...params)
 		{
-			if (this.isEnabledLogType(LogType.WARN))
+			if (this.isEnabledLogType(LogType.WARN) && this.canLog)
 			{
 				// eslint-disable-next-line no-console
 				console.warn(...params);
@@ -87,7 +94,7 @@ jn.define('utils/logger', (require, exports, module) => {
 
 		error(...params)
 		{
-			if (this.isEnabledLogType(LogType.ERROR))
+			if (this.isEnabledLogType(LogType.ERROR) && this.canLog)
 			{
 				// eslint-disable-next-line no-console
 				console.error(...params);
@@ -96,7 +103,7 @@ jn.define('utils/logger', (require, exports, module) => {
 
 		trace(...params)
 		{
-			if (this.isEnabledLogType(LogType.TRACE))
+			if (this.isEnabledLogType(LogType.TRACE) && this.canLog)
 			{
 				// eslint-disable-next-line no-console
 				console.trace(...params);

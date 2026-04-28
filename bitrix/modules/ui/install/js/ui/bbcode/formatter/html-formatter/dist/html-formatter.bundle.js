@@ -470,7 +470,10 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  }
 	}
 
+	let _$2 = t => t,
+	  _t$2;
 	var _codeParser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("codeParser");
+	var _handleCopyButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCopyButtonClick");
 	class CodeNodeFormatter extends ui_bbcode_formatter.NodeFormatter {
 	  constructor(options = {}) {
 	    super({
@@ -484,24 +487,71 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	        node
 	      }) {
 	        const content = node.getTextContent();
-	        return main_core.Dom.create({
+	        const code = main_core.Dom.create({
 	          tag: 'code',
 	          attrs: {
 	            className: 'ui-typography-code'
+	          },
+	          events: {
+	            mouseenter: () => {
+	              main_core.Dom.removeClass(button, ['--copied']);
+	              main_core.Dom.addClass(button, '--visible');
+	            },
+	            mouseleave: () => {
+	              main_core.Dom.removeClass(button, ['--visible']);
+	            }
 	          },
 	          dataset: {
 	            decorator: true
 	          },
 	          children: getCodeTokenNodes(babelHelpers.classPrivateFieldLooseBase(this, _codeParser)[_codeParser].parse(content))
 	        });
+	        const button = main_core.Tag.render(_t$2 || (_t$2 = _$2`
+					<button type="button" 
+						class="ui-typography-code-copy-button" 
+						onclick="${0}" 
+						title="${0}"
+						aria-label="${0}"
+					>
+						<span class="ui-typography-code-copy-icon ui-icon-set --o-copy"></span>
+						<span class="ui-typography-code-copy-icon ui-icon-set --o-copied"></span>
+					</button>
+				`), babelHelpers.classPrivateFieldLooseBase(this, _handleCopyButtonClick)[_handleCopyButtonClick].bind(this), main_core.Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD'), main_core.Loc.getMessage('HTML_FORMATTER_COPY_TO_CLIPBOARD'));
+	        code.append(button);
+	        return code;
 	      },
 	      ...options
+	    });
+	    Object.defineProperty(this, _handleCopyButtonClick, {
+	      value: _handleCopyButtonClick2
 	    });
 	    Object.defineProperty(this, _codeParser, {
 	      writable: true,
 	      value: new ui_codeParser.CodeParser()
 	    });
 	  }
+	}
+	function _handleCopyButtonClick2(event) {
+	  const button = event.currentTarget;
+	  const codeElement = button.parentElement;
+	  const text = codeElement.innerText;
+	  event.stopPropagation();
+	  if (navigator.clipboard && window.isSecureContext) {
+	    void navigator.clipboard.writeText(text);
+	  } else {
+	    const textarea = document.createElement('textarea');
+	    textarea.value = text;
+	    main_core.Dom.style(textarea, {
+	      position: 'fixed',
+	      left: '-9999px'
+	    });
+	    main_core.Dom.attr(textarea, 'aria-hidden', 'true');
+	    document.body.appendChild(textarea);
+	    textarea.select();
+	    document.execCommand('copy');
+	    document.body.removeChild(textarea);
+	  }
+	  main_core.Dom.addClass(button, '--copied');
 	}
 	function getCodeTokenNodes(tokens) {
 	  const nodes = [];

@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/provider/push/message-handler/database', (require, exports, module) => {
 	const { Type } = require('type');
-	const { WaitingEntity } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { BasePushMessageHandler } = require('im/messenger/provider/push/message-handler/base');
 
@@ -15,26 +14,32 @@ jn.define('im/messenger/provider/push/message-handler/database', (require, expor
 		constructor()
 		{
 			super();
+
+			const repositoryCollection = serviceLocator.get('core').getRepository();
 			/**
 			 * @type {DialogRepository}
 			 */
-			this.dialogRepository = serviceLocator.get('core').getRepository().dialog;
+			this.dialogRepository = repositoryCollection.dialog;
 			/**
 			 * @type {UserRepository}
 			 */
-			this.userRepository = serviceLocator.get('core').getRepository().user;
+			this.userRepository = repositoryCollection.user;
 			/**
 			 * @type {FileRepository}
 			 */
-			this.fileRepository = serviceLocator.get('core').getRepository().file;
+			this.fileRepository = repositoryCollection.file;
 			/**
 			 * @type {MessageRepository}
 			 */
-			this.messageRepository = serviceLocator.get('core').getRepository().message;
+			this.messageRepository = repositoryCollection.message;
 			/**
 			 * @type {RecentRepository}
 			 */
-			this.recentRepository = serviceLocator.get('core').getRepository().recent;
+			this.recentRepository = repositoryCollection.recent;
+			/**
+			 * @type {StickerRepository}
+			 */
+			this.stickerRepository = repositoryCollection.sticker;
 		}
 
 		/**
@@ -124,6 +129,30 @@ jn.define('im/messenger/provider/push/message-handler/database', (require, expor
 			}
 
 			return this.recentRepository.saveFromPush(recentItems);
+		}
+
+		/**
+		 * @param {Array<StickerState>} stickers
+		 * @return {Promise<void>}
+		 */
+		async setStickers(stickers = [])
+		{
+			if (!Type.isArrayFilled(stickers))
+			{
+				return Promise.resolve();
+			}
+
+			return this.stickerRepository.saveFromPush(stickers);
+		}
+
+		/**
+		 * @desc Local storage of counters is not supported
+		 * @param counters
+		 * @return {Promise<unknown>}
+		 */
+		async setCounters(counters)
+		{
+			return Promise.resolve({});
 		}
 	}
 

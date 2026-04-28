@@ -198,7 +198,7 @@ this.BX = this.BX || {};
 	          var key = "p".concat(pos);
 	          var param = data[key];
 	          if (param && main_core.Type.isArray(param) && param.length === 2) {
-	            preparedData[key] = "".concat(main_core.Text.toCamelCase(param[0]), "_").concat(main_core.Text.toCamelCase(param[1]));
+	            preparedData[key] = "".concat(main_core.Text.toCamelCase(param[0]), "_").concat(main_core.Text.toKebabCase(param[1]));
 	          }
 	        }
 	        var sendData = exports.sendData;

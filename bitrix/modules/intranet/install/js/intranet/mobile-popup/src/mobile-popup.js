@@ -102,7 +102,7 @@ export class MobilePopup extends EventEmitter
 			return;
 		}
 
-		BannerDispatcher.critical.toQueue((onDone) => {
+		BannerDispatcher.high.toQueue((onDone) => {
 			this.#calculatePopupPosition();
 			this.#popup ??= this.#createPopup(onDone);
 			this.#popup?.show();

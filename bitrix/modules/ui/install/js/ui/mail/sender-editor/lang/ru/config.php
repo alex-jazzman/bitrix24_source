@@ -3,6 +3,7 @@
 $MESS['UI_MAIL_SMTP_SLIDER_ADD_TITLE'] = 'Новый отправитель';
 $MESS['UI_MAIL_SMTP_SLIDER_EDIT_TITLE'] = 'Редактирование отправителя';
 $MESS['UI_MAIL_SMTP_SLIDER_SENDER_MAIN_SECTION_TITLE'] = 'Данные отправителя';
+$MESS['UI_MAIL_SMTP_SLIDER_SENDER_USE_SENDER_NAME'] = 'Использовать одно имя отправителя для всех сотрудников с доступом к этому ящику';
 $MESS['UI_MAIL_SMTP_SLIDER_SENDER_NAME'] = 'Имя отправителя';
 $MESS['UI_MAIL_SMTP_SLIDER_NAME_HINT'] = 'Это имя будут видеть получатели ваших писем';
 $MESS['UI_MAIL_SMTP_SLIDER_SENDER_AVAILABLE_TOGGLE'] = 'Доступен всем';

@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\BIConnector\Integration\Superset\CultureFormatter;
+
 define('NOT_CHECK_PERMISSIONS', true);
 define('NO_KEEP_STATISTIC', true);
 define('BX_SECURITY_SESSION_VIRTUAL', true);
@@ -37,14 +40,14 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	if (isset($input['key']))
 	{
 		$accessKey = substr($input['key'], 0 ,32);
-		$languageCode = substr($input['key'], 32, 2);
+		$languageCode = CultureFormatter::getLanguageCode();
 		$input['key'] = 'hide-the-key-from-the-log';
 	}
 	else
 	{
 		$token = $_GET['token'] ?? '';
 		$accessKey = substr($token, 0 ,32);
-		$languageCode = substr($token, 32, 2);
+		$languageCode = CultureFormatter::getLanguageCode();
 	}
 
 	$lockFileName = CTempFile::GetAbsoluteRoot() . '/' . md5($accessKey) . '-bi.lock';

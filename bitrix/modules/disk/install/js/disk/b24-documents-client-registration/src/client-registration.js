@@ -59,7 +59,7 @@ export default class ClientRegistration
 
 		const popup = new Popup({
 			overlay: true,
-			height: 280,
+			height: 350,
 			width: 350,
 			content: popupContent,
 			closeIcon: true,

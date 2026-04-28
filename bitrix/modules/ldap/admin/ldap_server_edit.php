@@ -1,12 +1,11 @@
 <?php
-/*
-##############################################
-# Bitrix: SiteManager                        #
-# Copyright (c) 2002-2024 Bitrix             #
-# https://www.bitrixsoft.com                 #
-# mailto:admin@bitrixsoft.com                #
-##############################################
-*/
+
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage ldap
+ * @copyright 2001-2025 Bitrix
+ */
 
 use Bitrix\Ldap\EncryptionType;
 
@@ -555,7 +554,7 @@ else
 		<td>
 			<?php
 			if ($ldp):
-				$rootDseList = $ldp->RootDSE();
+				$rootDseList = $ldp->getNamingContexts();
 				$rootDseCount = count($rootDseList);
 				if ($rootDseCount > 0):
 				?>
@@ -594,15 +593,12 @@ else
 			<input type="text" name="LDAP_OPT_NETWORK_TIMEOUT" id="LDAP_OPT_NETWORK_TIMEOUT" size="15" maxlength="255" value="<?=(intval($str_LDAP_OPT_NETWORK_TIMEOUT) > 0 ? intval($str_LDAP_OPT_NETWORK_TIMEOUT) : 5)?>">
 		</td>
 	</tr>
-
-	<?if(CLdapUtil::isLdapPaginationAviable()):?>
-		<tr>
-			<td><?echo GetMessage("LDAP_EDIT_MAX_PAGE_SIZE")?></td>
-			<td>
-				<input type="text" name="MAX_PAGE_SIZE" id="MAX_PAGE_SIZE" size="15" maxlength="255" value="<?=(intval($str_MAX_PAGE_SIZE) > 0 ? intval($str_MAX_PAGE_SIZE) : $defaultMaxPageSizeAD)?>">
-			</td>
-		</tr>
-	<?endif;?>
+	<tr>
+		<td><?echo GetMessage("LDAP_EDIT_MAX_PAGE_SIZE")?></td>
+		<td>
+			<input type="text" name="MAX_PAGE_SIZE" id="MAX_PAGE_SIZE" size="15" maxlength="255" value="<?=(intval($str_MAX_PAGE_SIZE) > 0 ? intval($str_MAX_PAGE_SIZE) : $defaultMaxPageSizeAD)?>">
+		</td>
+	</tr>
 <?$tabControl->BeginNextTab();?>
 	<script>
 		function OutLDSDefParams(t)

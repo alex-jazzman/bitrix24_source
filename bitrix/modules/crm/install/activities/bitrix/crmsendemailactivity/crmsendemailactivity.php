@@ -272,8 +272,6 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		Crm\Activity\Provider\Email::compressActivity($activityFields);
-
 		$id = CCrmActivity::Add($activityFields, false, false, $addOptions);
 		if (!$id)
 		{
@@ -770,27 +768,38 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 		if ($properties['MessageTextType'] === self::TEXT_TYPE_HTML)
 		{
+			$messageText = $properties['MessageText'];
 			$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 			$rawData = $request->getPostList()->getRaw('message_text');
 			if ($rawData === null)
 			{
 				$rawData = (array)$request->getPostList()->getRaw('form_data');
-				$rawData = $rawData['message_text'];
+				$rawData = $rawData['message_text'] ?? null;
 			}
 
-			//TODO: fix for WAF, needs refactoring.
-			$rawData = \Bitrix\Crm\Automation\Helper::unConvertExpressions($rawData, $documentType);
+			if ($rawData)
+			{
+				//TODO: fix for WAF, needs refactoring.
+				$messageText = \Bitrix\Crm\Automation\Helper::unConvertExpressions($rawData, $documentType);
+			}
 
-			$properties['MessageText'] = self::encodeMessageText($rawData);
-			$properties['MessageTextEncoded'] = 1;
+			if (!empty($messageText))
+			{
+				$properties['MessageText'] = self::encodeMessageText($messageText);
+				$properties['MessageTextEncoded'] = 1;
+			}
 		}
 
-		if (count($errors) > 0)
+		if ($errors)
+		{
 			return false;
+		}
 
 		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
-		if (count($errors) > 0)
+		if ($errors)
+		{
 			return false;
+		}
 
 		$arCurrentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
 		$arCurrentActivity["Properties"] = $properties;

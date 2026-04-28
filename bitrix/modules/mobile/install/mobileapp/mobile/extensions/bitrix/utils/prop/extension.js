@@ -1,82 +1,88 @@
 (() => {
-
+	/**
+	 * @deprecated use utils/type or utils/object extensions
+	 */
 	BX.prop = {
-		get: function (object, key, defaultValue)
+		get(object, key, defaultValue)
 		{
 			return object && object.hasOwnProperty(key) ? object[key] : defaultValue;
 		},
-		getObject: function (object, key, defaultValue)
+		getObject(object, key, defaultValue)
 		{
 			return object && BX.type.isPlainObject(object[key]) ? object[key] : defaultValue;
 		},
-		getElementNode: function (object, key, defaultValue)
+		getElementNode(object, key, defaultValue)
 		{
 			return object && BX.type.isElementNode(object[key]) ? object[key] : defaultValue;
 		},
-		getArray: function (object, key, defaultValue)
+		getArray(object, key, defaultValue)
 		{
 			return object && BX.type.isArray(object[key]) ? object[key] : defaultValue;
 		},
-		getFunction: function (object, key, defaultValue)
+		getFunction(object, key, defaultValue)
 		{
 			return object && BX.type.isFunction(object[key]) ? object[key] : defaultValue;
 		},
-		getNumber: function (object, key, defaultValue)
+		getNumber(object, key, defaultValue)
 		{
 			if (!(object && object.hasOwnProperty(key)))
 			{
 				return defaultValue;
 			}
 
-			var value = object[key];
+			let value = object[key];
 			if (BX.type.isNumber(value))
 			{
 				return value;
 			}
 
 			value = parseFloat(value);
-			return !isNaN(value) ? value : defaultValue;
+
+			return isNaN(value) ? defaultValue : value;
 		},
-		getInteger: function (object, key, defaultValue)
+		getInteger(object, key, defaultValue)
 		{
 			if (!(object && object.hasOwnProperty(key)))
 			{
 				return defaultValue;
 			}
 
-			var value = object[key];
+			let value = object[key];
 			if (BX.type.isNumber(value))
 			{
 				return value;
 			}
 
 			value = parseInt(value);
-			return !isNaN(value) ? value : defaultValue;
+
+			return isNaN(value) ? defaultValue : value;
 		},
-		getBoolean: function (object, key, defaultValue)
+		getBoolean(object, key, defaultValue)
 		{
 			if (!(object && object.hasOwnProperty(key)))
 			{
 				return defaultValue;
 			}
 
-			var value = object[key];
+			const value = object[key];
+
 			return (BX.type.isBoolean(value)
 					? value
-					: (BX.type.isString(value) ? (value.toLowerCase() === "true") : !!value)
+					: (BX.type.isString(value) ? (value.toLowerCase() === 'true') : Boolean(value))
 			);
 		},
-		getString: function (object, key, defaultValue)
+		getString(object, key, defaultValue)
 		{
 			if (!(object && object.hasOwnProperty(key)))
 			{
 				return defaultValue;
 			}
 
-			var value = object[key];
-			return BX.type.isString(value) ? value : (value ? value.toString() : "");
+			const value = object[key];
+
+			return BX.type.isString(value) ? value : (value ? value.toString() : '');
 		},
-		extractDate: function (datetime)
+		extractDate(datetime)
 		{
 			if (!BX.type.isDate(datetime))
 			{
@@ -91,5 +97,4 @@
 			return datetime;
 		},
 	};
-
 })();

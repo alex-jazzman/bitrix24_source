@@ -24,7 +24,6 @@ export class FeaturePromoter
 		this.#options.bindElement = options.bindElement ?? null;
 		this.#code = options.code ?? '';
 		this.#analytics = options.analytics ?? null;
-
 		const settings = Extension.getSettings('ui.info-helper');
 		this.#provider = this.#createProvider(settings);
 	}

@@ -143,8 +143,8 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 		async appActiveBeforeHandler()
 		{
 			this.logger.log('appActiveBeforeHandler');
+			serviceLocator.get('counters-update-system').disableReadingQueue();
 			await serviceLocator.get('push-manager').executeStoredPullEvents();
-			serviceLocator.get('read-service').disableReading();
 
 			await waitViewLoaded();
 

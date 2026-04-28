@@ -78,6 +78,7 @@ jn.define('intranet/invite-opener-new/api', (require, exports, module) => {
 			canInviteByEmail = false,
 			isBitrix24Included = false,
 			isInviteWithLocalEmailAppEnabled = true,
+			availableRootDepartment = null,
 		} = data;
 
 		return {
@@ -89,6 +90,7 @@ jn.define('intranet/invite-opener-new/api', (require, exports, module) => {
 			canInviteByEmail,
 			isBitrix24Included,
 			isInviteWithLocalEmailAppEnabled,
+			availableRootDepartment,
 		};
 	}
 

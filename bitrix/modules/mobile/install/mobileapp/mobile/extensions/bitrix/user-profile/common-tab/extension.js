@@ -7,8 +7,8 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 	const { AreaList } = require('ui-system/layout/area-list');
 	const { ButtonDesign, ButtonSize, Button } = require('ui-system/form/buttons/button');
 	const { Link4, LinkDesign, LinkMode } = require('ui-system/blocks/link');
-	const { Indent, Color } = require('tokens');
-	const { getTabsRunActionExecutor } = require('user-profile/api');
+	const { Indent, Color, Corner, Component } = require('tokens');
+	const { getTabsDataRunActionExecutor } = require('user-profile/api');
 	const { TabsCacheManager } = require('user-profile/common-tab/src/cache-manager');
 	const { ProfileBlockFactory } = require('user-profile/common-tab/src/block/factory');
 	const { createTestIdGenerator } = require('utils/test');
@@ -20,12 +20,18 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 	const { dispatch } = require('statemanager/redux/store');
 	const { Type } = require('type');
 	const { ajaxPublicErrorHandler } = require('error');
-	const { TabType } = require('user-profile/const');
+	const { TabType, closeIcon } = require('user-profile/const');
 	const { confirmClosing } = require('alert');
 	const { FieldChangeManager } = require('user-profile/common-tab/src/field-change-manager');
 	const { OnboardingBase, CaseName } = require('onboarding');
 	const { isCloudAccount, openDeleteDialog } = require('user/account');
 	const { UserProfileAnalytics } = require('user-profile/analytics');
+	const { StatusBlock } = require('ui-system/blocks/status-block');
+	const { makeLibraryImagePath } = require('asset-manager');
+	const { Circle, Line } = require('utils/skeleton');
+	const { Card, CardDesign } = require('ui-system/layout/card');
+	const { Area } = require('ui-system/layout/area');
+	const { Random } = require('utils/random');
 
 	const CloseEditActions = {
 		SAVE_AND_EXIT: 'save_and_exit',
@@ -51,8 +57,18 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 				context: this,
 			});
 
+			const {
+				ownerId,
+				data,
+				isEditMode,
+				canView,
+				canUpdate,
+				isPending,
+				selectedTabId,
+			} = props;
+
 			this.cacheManager = new TabsCacheManager();
-			this.cacheManager.setRunActionExecutor(getTabsRunActionExecutor(this.props.ownerId));
+			this.cacheManager.setRunActionExecutor(getTabsDataRunActionExecutor({ ownerId, selectedTabId }));
 
 			this.onFieldChange = this.onFieldChange.bind(this);
 
@@ -67,8 +83,11 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			this.isKeyboardVisible = false;
 
 			this.state = {
-				data: props.data ?? {},
-				isEditMode: false,
+				data: data ?? null,
+				isEditMode: isEditMode ?? false,
+				canView: canView ?? false,
+				canUpdate: canUpdate ?? false,
+				isPending: isPending ?? true,
 			};
 		}
 
@@ -101,7 +120,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 		componentDidUpdate()
 		{
 			const { isEditMode } = this.state;
-			const { parentWidget, closeIcon } = this.props;
+			const { parentWidget } = this.props;
 
 			if (isEditMode && !this.closeButtonUpdated)
 			{
@@ -138,7 +157,46 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			}
 		};
 
-		#updateSaveButtonState() {
+		update(newProps)
+		{
+			const { canView, isPending, data = null, canUpdate = null } = newProps;
+			this.setState({
+				data,
+				canUpdate,
+				canView,
+				isPending,
+			}, () => {
+				this.#addEditProfileButton();
+			});
+		}
+
+		#addEditProfileButton()
+		{
+			const { parentWidget, ownerId } = this.props;
+			const { canUpdate, data } = this.state;
+			const { commonFields } = data ?? {};
+
+			if (canUpdate)
+			{
+				parentWidget.setRightButtons([
+					{
+						type: 'edit',
+						badgeCode: 'profile_edit',
+						testId: this.getTestId('edit-button'),
+						callback: () => this.#activateEditMode(),
+					},
+				]);
+
+				void OnboardingBase.tryToShow(CaseName.ON_PROFILE_SHOULD_BE_FILLED, {
+					targetRef: 'profile_edit',
+					ownerId,
+					commonFields,
+				});
+			}
+		}
+
+		#updateSaveButtonState()
+		{
 			if (!this.saveButtonRef)
 			{
 				return;
@@ -150,7 +208,17 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 
 		render()
 		{
-			const { isEditMode } = this.state;
+			const { isEditMode, canView, isPending } = this.state;
+
+			if (isPending)
+			{
+				return this.#renderShimmer();
+			}
+
+			if (!canView)
+			{
+				return this.#renderPermissionDenied();
+			}
 
 			return Box(
 				{
@@ -216,6 +284,122 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 					...this.blocks,
 					this.#renderDeleteProfileButton(),
 				),
+			);
+		}
+
+		#renderPermissionDenied()
+		{
+			return StatusBlock({
+				title: Loc.getMessage('M_PROFILE_PERMISSION_DENIED_TEXT'),
+				titleColor: Color.base3,
+				emptyScreen: true,
+				preventRefresh: true,
+				image: Image({
+					resizeMode: 'contain',
+					style: {
+						width: 108,
+						height: 108,
+					},
+					uri: makeLibraryImagePath('lock.png', 'profile/permission-denied'),
+				}),
+				style: {
+					backgroundColor: Color.bgContentSecondary.toHex(),
+				},
+			});
+		}
+
+		#renderShimmer()
+		{
+			const buttonWidth = (device.screen.width - Indent.XL2 - Component.areaPaddingLr.toNumber() * 2) / 2;
+
+			return View(
+				{},
+				Area(
+					{
+						isFirst: true,
+						excludePaddingSide: {
+							bottom: true,
+						},
+					},
+					Card(
+						{
+							design: CardDesign.SECONDARY,
+							style: {
+								flexDirection: 'row',
+								justifyContent: 'flex-start',
+								alignItems: 'center',
+							},
+						},
+						View(
+							{},
+							Circle(72),
+						),
+						View(
+							{
+								style: {
+									paddingLeft: Indent.XL2.toNumber(),
+								},
+							},
+							Line(160, 18, 0, Indent.S.toNumber(), Corner.L.toNumber()),
+							Line(220, 13, 0, Indent.L.toNumber(), Corner.L.toNumber()),
+							Line(130, 12, 0, 0, Corner.L.toNumber()),
+						),
+					),
+					View(
+						{
+							style: {
+								flexDirection: 'row',
+								marginTop: Indent.XL.toNumber(),
+								marginBottom: Indent.XL.toNumber(),
+							},
+						},
+						View(
+							{
+								style: {
+									marginRight: Indent.XL2.toNumber(),
+								},
+							},
+							Line(buttonWidth, 42, 0, 0, Corner.L.toNumber()),
+						),
+						Line(buttonWidth, 42, 0, 0, Corner.L.toNumber()),
+					),
+				),
+				Area(
+					{
+						style: {
+							flex: 1,
+							backgroundColor: Color.bgContentSecondary.toHex(),
+							marginTop: Component.cardListPaddingTb.toNumber(),
+						},
+					},
+					Card(
+						{},
+						this.#renderShimmerField(),
+						this.#renderShimmerField(),
+						this.#renderShimmerField(),
+						this.#renderShimmerField(),
+						this.#renderShimmerField(),
+						this.#renderShimmerField(),
+						this.#renderShimmerField(),
+					),
+				),
+			);
+		}
+
+		#renderShimmerField()
+		{
+			const titleWidth = Random.getInt(130, 190);
+			const fieldValueWidth = Random.getInt(190, 250);
+
+			return View(
+				{
+					style: {
+						paddingVertical: Indent.S.toNumber(),
+						marginBottom: Indent.M.toNumber(),
+					},
+				},
+				Line(titleWidth, 13, 0, Indent.S.toNumber(), Corner.L.toNumber()),
+				Line(fieldValueWidth, 15, 0, 0, Corner.L.toNumber()),
 			);
 		}
 

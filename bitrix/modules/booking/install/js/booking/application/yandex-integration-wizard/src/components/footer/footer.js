@@ -1,7 +1,9 @@
 import { createNamespacedHelpers } from 'ui.vue3.vuex';
+
 import { Runtime } from 'main.core';
-import { EventName, Model } from 'booking.const';
 import { EventEmitter } from 'main.core.events';
+
+import { EventName, Model } from 'booking.const';
 import { yandexIntegrationWizardService } from 'booking.provider.service.yandex-integration-wizard-service';
 
 import { ConfirmButton } from './confirm-button';
@@ -40,7 +42,7 @@ export const YandexIntegrationWizardLayoutFooter = {
 		]),
 		async onConfirmButtonClick(): void
 		{
-			this.validateFormData();
+			await this.validateFormData();
 
 			if (this.isFormDataValid)
 			{
@@ -51,33 +53,33 @@ export const YandexIntegrationWizardLayoutFooter = {
 		{
 			this.setFetching(true);
 
-			try
+			const wasConnected = this.isConnected;
+			const updateIntegrationResult = await yandexIntegrationWizardService.updateIntegration(
+				this.updatedIntegration
+			);
+
+			if (!updateIntegrationResult.success)
 			{
-				const wasConnected = this.isConnected;
-				await yandexIntegrationWizardService.updateIntegration(this.updatedIntegration);
-
-				if (this.isConnected && !wasConnected)
-				{
-					await this.showConfetti();
-				}
-
-				this.closeWizard();
-			}
-			catch (error)
-			{
-				console.error('Update wizard data error', error);
-
+				const publicError = updateIntegrationResult.errors.find((errorItem) => errorItem.customData.isPublic);
 				const { Notifier } = await Runtime.loadExtension('ui.notification-manager');
 
 				Notifier.notifyViaBrowserProvider({
 					id: 'booking-yiw-update-error',
-					text: this.loc('YANDEX_WIZARD_UPDATE_ERROR'),
+					text: publicError?.message || this.loc('YANDEX_WIZARD_UPDATE_ERROR'),
 				});
-			}
-			finally
-			{
+
 				this.setFetching(false);
+
+				return;
 			}
+
+			if (this.isConnected && !wasConnected)
+			{
+				await this.showConfetti();
+			}
+
+			this.closeWizard();
+			this.setFetching(false);
 		},
 		closeWizard(): void
 		{
@@ -99,7 +101,10 @@ export const YandexIntegrationWizardLayoutFooter = {
 		},
 	},
 	template: `
-		<div v-show="!isFetching && (!isConnected || hasChanges)" class="yandex-integration-wizard__footer">
+		<div
+			v-show="!isFetching && (!isConnected || hasChanges)"
+			class="booking-yiw__footer"
+		>
 			<ConfirmButton
 				:buttonText="confirmButtonText"
 				:disabled="!isFormDataValid"

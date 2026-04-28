@@ -150,7 +150,7 @@ $lAdmin->SetNavigationParams($rsData);
 
 while ($arRes = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($arRes['ID'], $arRes);
+	$row = $lAdmin->AddRow($arRes['ID'], $arRes);
 
 	$row->AddViewField('TIMESTAMP_X', htmlspecialcharsEx($arRes['TIMESTAMP_X']));
 	adminListAddUserLink($row, 'USER_ID', $arRes['USER_ID'], $arRes['USER_ID_USER']);

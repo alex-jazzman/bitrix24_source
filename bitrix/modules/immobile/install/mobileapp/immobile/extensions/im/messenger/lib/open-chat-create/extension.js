@@ -20,12 +20,10 @@ jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
 
 		if (openChatCreateCollection[tabId])
 		{
-			openChatCreateCollection[tabId]();
-
-			return;
+			return openChatCreateCollection[tabId]();
 		}
 
-		openChatCreateCollection[NavigationTabId.chats]();
+		return openChatCreateCollection[NavigationTabId.chats]();
 	}
 
 	function openChatCreate()
@@ -35,12 +33,12 @@ jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
 
 	function openCopilotCreate()
 	{
-		serviceLocator.get('dialog-creator').createCopilotDialog();
+		return serviceLocator.get('dialog-creator').createCopilotDialog();
 	}
 
 	function directCopilotChatCreate()
 	{
-		serviceLocator.get('dialog-creator').createCopilotDialogWithoutSelector();
+		return serviceLocator.get('dialog-creator').createCopilotDialogWithoutSelector();
 	}
 
 	function openChannelCreate()
@@ -51,7 +49,7 @@ jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
 
 	function openCollabCreate()
 	{
-		void serviceLocator.get('dialog-creator').createCollab();
+		return serviceLocator.get('dialog-creator').createCollab();
 	}
 
 	module.exports = {

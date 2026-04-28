@@ -7,28 +7,42 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 require_once($_SERVER["DOCUMENT_ROOT"] . $componentPath . "/analytics.php");
 
+use Bitrix\Bitrix24\CurrentUser;
 use Bitrix\Bitrix24\Integration\Network\RegisterSettingsSynchronizer;
+use Bitrix\Intranet\Component\UserProfile;
+use Bitrix\Intranet\Entity\User;
+use Bitrix\Intranet\Infrastructure\Controller\ActionFilter\InviteLimitControl;
+use Bitrix\Intranet\Infrastructure\Controller\ActionFilter\PortalCreatorEmailConfirmationControl;
+use Bitrix\Intranet\Internal\Integration\Socialnetwork\ExternalAuthType;
+use Bitrix\Intranet\Internal\Integration\Bitrix24\Integrator\PartnerInfo;
 use Bitrix\Intranet\Public\Type\EmailInvitation;
 use Bitrix\Intranet\Public\Type\PhoneInvitation;
 use Bitrix\Intranet\Repository\HrDepartmentRepository;
 use Bitrix\Intranet\Repository\UserRepository;
+use Bitrix\Intranet\Service\UserService;
+use Bitrix\Intranet\User\Access\UserAccessController;
+use Bitrix\Intranet\User\Access\UserActionDictionary;
+use Bitrix\Intranet\Util;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\AutoWire\Parameter;
 use Bitrix\Main\Engine\Response\AjaxJson;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Bitrix24\Integrator;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Response;
 use Bitrix\Socialnetwork\Integration\UI\EntitySelector;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Intranet;
+use Bitrix\Main\PhoneNumber\Parser;
 
 class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
 	private Analytics $analytics;
+	private Intranet\Integration\HumanResources\PermissionInvitation $permission;
 	private Intranet\Contract\Repository\DepartmentRepository $departmentRepository;
 
 	public function __construct(?\Bitrix\Main\Request $request = null)
@@ -36,6 +50,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		parent::__construct($request);
 
 		$this->departmentRepository = new HrDepartmentRepository();
+		$this->permission = Intranet\Integration\HumanResources\PermissionInvitation::createByCurrentUser();
 	}
 
 	/**
@@ -56,20 +71,17 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 				Intranet\Entity\Collection\DepartmentCollection::class,
 				'departmentCollection',
 				function ($className, $departmentIds) {
-
 					$departmentCollection = $this->departmentRepository->findAllByIds($departmentIds);
 					$departmentCollection = $departmentCollection->filter(function ($department) {
-						return Intranet\Integration\HumanResources\PermissionInvitation::createByCurrentUser()
-							->canInviteToDepartment($department)
-						;
+						return $this->permission->canInviteToDepartment($department);
 					});
 
 					if ($departmentCollection->empty())
 					{
-						$departmentCollection->add($this->departmentRepository->getRootDepartment());
+						$departmentCollection->add($this->getRootDepartment());
 					}
 
-					return $this->departmentRepository->findAllByIds($departmentIds);
+					return $departmentCollection;
 				},
 			),
 			new ExactParameter(
@@ -89,7 +101,8 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			[
 				new Intranet\ActionFilter\UserType(['employee']),
 				new Intranet\Infrastructure\Controller\ActionFilter\InviteIntranetAccessControl(),
-				new Intranet\ActionFilter\InviteLimitControl(),
+				new PortalCreatorEmailConfirmationControl(),
+				new InviteLimitControl(),
 			],
 		);
 	}
@@ -101,7 +114,8 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 				'-prefilters' => [
 					ActionFilter\Csrf::class,
 					Intranet\Infrastructure\Controller\ActionFilter\InviteIntranetAccessControl::class,
-					Intranet\ActionFilter\InviteLimitControl::class,
+					PortalCreatorEmailConfirmationControl::class,
+					InviteLimitControl::class,
 				],
 			],
 			'extranet' => [
@@ -122,12 +136,14 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			],
 			'self' => [
 				'-prefilters' => [
-					Intranet\ActionFilter\InviteLimitControl::class,
+					InviteLimitControl::class,
+					PortalCreatorEmailConfirmationControl::class,
 				],
 			],
 			'getInviteLink' => [
 				'-prefilters' => [
-					Intranet\ActionFilter\InviteLimitControl::class,
+					InviteLimitControl::class,
+					PortalCreatorEmailConfirmationControl::class,
 				],
 			],
 			'invite' => [
@@ -154,11 +170,15 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			],
 			'inviteWithGroupDp' => [
 				'+prefilters' => [
+					Intranet\Infrastructure\Controller\ActionFilter\EmailDailyLimit::createByDefault(),
 					new Intranet\Infrastructure\Controller\ActionFilter\ActiveUserInvitation(
 						new UserRepository(),
 					),
 					new Intranet\Infrastructure\Controller\ActionFilter\UserInvitedExtranet(
 						new UserRepository(),
+					),
+					new Intranet\Infrastructure\Controller\ActionFilter\UserInvitationValidation(
+						Parser::getInstance(),
 					),
 				],
 			],
@@ -232,15 +252,9 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return Loader::includeModule("bitrix24") && Option::get('bitrix24', 'phone_invite_allowed', 'N') === 'Y';
 	}
 
-	/**
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\HumanResources\Exception\WrongStructureItemException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
 	protected function getRootDepartment(): ?Intranet\Entity\Department
 	{
-		return $this->departmentRepository->getRootDepartment();
+		return $this->permission->findFirstPossibleAvailableDepartment();
 	}
 
 	protected function prepareUsersForResponse($userIds): array
@@ -271,6 +285,13 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return $formattedGroups;
 	}
 
+	protected function isRestoreUsersAccessAvailable(): bool
+	{
+		$access = UserAccessController::createByDefault();
+
+		return ($access->check(UserActionDictionary::RESTORE));
+	}
+
 	private function isSelectedDepartments(
 		Intranet\Entity\Department $rootDepartment,
 		Intranet\Entity\Collection\DepartmentCollection $selectedDepartments,
@@ -296,19 +317,19 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		foreach ($formData as $invitationData)
 		{
-			if (isset($invitationData['EMAIL']))
+			if (isset($invitationData['EMAIL']) || isset($invitationData['email']))
 			{
 				$invitation = new EmailInvitation(
-					$invitationData['EMAIL'],
+					$invitationData['EMAIL'] ?? $invitationData['email'],
 					$invitationData['NAME'] ?? null,
 					$invitationData['LAST_NAME'] ?? null,
 					$formType,
 				);
 			}
-			elseif (isset($invitationData['PHONE']) && $this->isInvitationBySmsAvailable())
+			elseif ((isset($invitationData['PHONE']) || isset($invitationData['phone'])) && $this->isInvitationBySmsAvailable())
 			{
 				$invitation = new PhoneInvitation(
-					$invitationData['PHONE'],
+					$invitationData['PHONE'] ?? $invitationData['phone'],
 					$invitationData['NAME'] ?? null,
 					$invitationData['LAST_NAME'] ?? null,
 					$invitationData['PHONE_COUNTRY'] ?? null,
@@ -331,11 +352,15 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
+	 * @throws \Bitrix\HumanResources\Exception\WrongStructureItemException
 	 */
 	public function inviteAction(
 		Intranet\Public\Type\Collection\InvitationCollection $invitationCollection,
-		Intranet\Entity\Collection\DepartmentCollection $departmentCollection,
-	): array {
+		?Intranet\Entity\Collection\DepartmentCollection $departmentCollection = null,
+	): array
+	{
+		$departmentCollection ??= $this->getDefaultDepartmentCollection();
+
 		try
 		{
 			$invitationService = new Intranet\Public\Facade\Invitation\IntranetInvitationFacade($departmentCollection);
@@ -385,10 +410,19 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function inviteWithGroupDpAction(
 		Intranet\Public\Type\Collection\InvitationCollection $invitationCollection,
-		Intranet\Entity\Collection\DepartmentCollection $departmentCollection,
+		?Intranet\Entity\Collection\DepartmentCollection $departmentCollection = null,
 		array $workgroupIds = [],
+		?array $firedUserList = []
 	): array
 	{
+		$departmentCollection ??= $this->getDefaultDepartmentCollection();
+
+		$withDepartments = $this->isSelectedDepartments(
+			$this->getRootDepartment(),
+			$departmentCollection,
+		);
+		$withGroups = !empty($workgroupIds);
+
 		try
 		{
 			$invitationService = new Intranet\Public\Facade\Invitation\IntranetInvitationFacade($departmentCollection, $workgroupIds);
@@ -401,32 +435,35 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 				'invite_dialog',
 			);
 
-			$userCollection->forEach(function (Intranet\Entity\User $user) use ($invitationCollection, $departmentCollection) {
-				$this->getAnalyticsInstance()->sendInvitation(
-					$user->getId(),
-					Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_DEPARTMENT,
-					true,
-					$invitationCollection->countEmailInvitation(),
-					$invitationCollection->countPhoneInvitation(),
-					isSelectedDepartments: $this->isSelectedDepartments(
-						$this->getRootDepartment(),
-						$departmentCollection,
-					),
+			foreach ($userCollection->toArray() as $user)
+			{
+				$this->getAnalyticsInstance()->sendInvitationByContacts(
+					isSuccess: true,
+					totalCount: $invitationCollection->count(),
+					withDepartments: $withDepartments,
+					withGroups: $withGroups,
+					invitedUser: $user,
 				);
-			});
+			}
 
-			return $userCollection->map(fn($user) => $user->getId());
+			$response = [
+				'invitedUserIds' => $userCollection->map(fn($user) => $user->getId()),
+			];
+
+			if (!empty($firedUserList))
+			{
+				$response = array_merge($response, $this->getFiredUsersResponse($firedUserList));
+			}
+
+			return $response;
 		}
 		catch (Intranet\Exception\ErrorCollectionException $exception)
 		{
-			$this->getAnalyticsInstance()->sendInvitation(
-				0,
-				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_DEPARTMENT,
-				false,
-				isSelectedDepartments: $this->isSelectedDepartments(
-					$this->getRootDepartment(),
-					$departmentCollection,
-				),
+			$this->getAnalyticsInstance()->sendInvitationByContacts(
+				isSuccess: false,
+				totalCount: $invitationCollection->count(),
+				withDepartments: $withDepartments,
+				withGroups: $withGroups,
 			);
 
 			$this->errorCollection = $exception->getErrors();
@@ -489,8 +526,8 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	public function massInviteAction(
 		Intranet\Public\Type\Collection\InvitationCollection $invitationCollection,
 		Intranet\Entity\Collection\DepartmentCollection $departmentCollection,
-	) {
-
+	)
+	{
 		try
 		{
 			$invitationService = new Intranet\Public\Facade\Invitation\IntranetInvitationFacade($departmentCollection);
@@ -540,6 +577,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	public function extranetAction(
 		Intranet\Public\Type\Collection\InvitationCollection $invitationCollection,
 		array $workgroupIds = [],
+		?array $firedUserList = []
 	): array
 	{
 		if (!$this->isExtranetInstalled())
@@ -557,27 +595,36 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			'invite_dialog',
 		);
 
-		return $userCollection->map(fn($user) => $user->getId());
+		$response = [
+			'invitedUserIds' => $userCollection->map(fn($user) => $user->getId()),
+		];
+
+		if (!empty($firedUserList))
+		{
+			$response = array_merge($response, $this->getFiredUsersResponse($firedUserList));
+		}
+
+		return $response;
 	}
 
 	public function selfAction(): ?string
 	{
 		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 		$allowRegister = $request->getPost('allow_register');
+
 		if ($allowRegister)
 		{
-			$this->getAnalyticsInstance()->sendRegistration(
-				0,
-				Analytics::ANALYTIC_CATEGORY_SETTINGS,
-				Analytics::ANALYTIC_EVENT_CHANGE_QUICK_REG,
-				$allowRegister,
-			);
+			$current = Intranet\Invitation::getRegisterSettings()['REGISTER'] ?? '';
+
+			if ($current !== $allowRegister)
+			{
+				$this->getAnalyticsInstance()->sendChangeQuickRegistration($allowRegister === 'Y');
+			}
 		}
 
 		$isCurrentUserAdmin = Intranet\CurrentUser::get()->isAdmin();
-		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 		$settings = [
-			"REGISTER" => $request->getPost('allow_register'),
+			"REGISTER" => $allowRegister,
 			"INVITE_TOKEN_SECRET" => $request->getPost('allow_register_secret'),
 		];
 
@@ -597,13 +644,60 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return Loc::getMessage("BX24_INVITE_DIALOG_SELF_SUCCESS", ["#SITE_DIR#" => SITE_DIR]);
 	}
 
+	private function checkFiredUsersAndGetData(array $emails): ?array
+	{
+		$users = (new UserRepository())
+			->findActivatedUsersByLogins(
+				$emails,
+				(new ExternalAuthType())->getAllTypeList(),
+			)
+			->filter(fn(User $user) => $user->getActive() === false)
+			->map(fn($user) => [
+				'id' => $user->getId(),
+				'login' => $user->getLogin(),
+				'email' => $user->getEmail(),
+				'name' => $user->getFormattedName(),
+				'photo' => UserProfile::getUserPhoto($user->getPersonalPhoto(), 40),
+				'role' => $user->getRole(),
+				'phoneNumber' => $user->getPhoneNumber(),
+				'position' => $user->getWorkPosition(),
+				'profileUrl' => (new UserService())->getDetailUrl($user->getId()),
+			])
+		;
+
+		if (!empty($users))
+		{
+			return $users;
+		}
+
+		return null;
+	}
+
 	public function addAction(
-		Intranet\Entity\Collection\DepartmentCollection $departmentCollection,
-	) {
+		?Intranet\Entity\Collection\DepartmentCollection $departmentCollection = null,
+	)
+	{
+		$departmentCollection ??= $this->getDefaultDepartmentCollection();
+
 		$userData = $_POST;
+
+		if (!empty($userData['ADD_EMAIL']))
+		{
+			$firedUserList = $this->checkFiredUsersAndGetData([$userData['ADD_EMAIL']]);
+
+			if ($firedUserList)
+			{
+				return $this->getFiredUsersResponse($firedUserList);
+			}
+		}
+
 		$userData["DEPARTMENT_ID"] = $departmentCollection->map(fn (Intranet\Entity\Department $department) => $department->getIblockSectionId());
 
 		$idAdded = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError, 'register');
+		$withDepartments = $this->isSelectedDepartments(
+			$this->getRootDepartment(),
+			$departmentCollection,
+		);
 
 		if ($idAdded && isset($_POST["SONET_GROUPS_CODE"]) && is_array($_POST["SONET_GROUPS_CODE"]))
 		{
@@ -619,20 +713,21 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			$strError = str_replace("<br>", " ", $strError);
 			$this->addError(new \Bitrix\Main\Error($strError));
 			$this->getAnalyticsInstance()->sendRegistration(
-				0,
-				status: 'N',
-				userData: $userData,
-				isGroupSelected: isset($_POST["SONET_GROUPS_CODE"]) && is_array($_POST["SONET_GROUPS_CODE"]),
+				isSuccess: false,
+				withDepartments: $withDepartments,
+				withGroups: isset($_POST['SONET_GROUPS_CODE']) && is_array($_POST['SONET_GROUPS_CODE']),
+				withInvite: isset($_POST['ADD_SEND_PASSWORD']) && ($_POST['ADD_SEND_PASSWORD'] === 'N'),
 			);
 
 			return false;
 		}
 
 		$this->getAnalyticsInstance()->sendRegistration(
-			$idAdded,
-			status: 'Y',
-			userData: $userData,
-			isGroupSelected: isset($_POST["SONET_GROUPS_CODE"]) && is_array($_POST["SONET_GROUPS_CODE"]),
+			isSuccess: true,
+			withDepartments: $withDepartments,
+			withGroups: isset($_POST['SONET_GROUPS_CODE']) && is_array($_POST['SONET_GROUPS_CODE']),
+			withInvite: isset($_POST['ADD_SEND_PASSWORD']) && ($_POST['ADD_SEND_PASSWORD'] === 'N'),
+			invitedUser: (new UserRepository())->getUserById($idAdded),
 		);
 
 		$res = $this->prepareUsersForResponse([$idAdded]);
@@ -674,7 +769,9 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		}
 
 		$error = new \Bitrix\Main\Error('');
-		if (!Integrator::checkPartnerEmail($_POST["integrator_email"], $error))
+		$checkResult = Integrator::checkPartnerEmail($_POST['integrator_email'], $error);
+
+		if (!$checkResult->isSuccess())
 		{
 			$this->addError($error);
 
@@ -708,9 +805,32 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			);
 		}
 
+		(new PartnerInfo())->addByResponseAndUserId(
+			$checkResult->getData(),
+			$newIntegratorId,
+		);
+
 		CIntranetInviteDialog::logAction($newIntegratorId, 'intranet', 'invite_user', 'integrator_dialog');
 
 		return $this->prepareUsersForResponse([$newIntegratorId]);
+	}
+
+	private function getFiredUsersResponse(array $firedUserList): array
+	{
+		$isRestoreUsersAccessAvailable = $this->isRestoreUsersAccessAvailable();
+
+		if (!$isRestoreUsersAccessAvailable)
+		{
+			$firedUserList = array_map(
+				fn($user) => ['login' => $user['login']],
+				$firedUserList
+			);
+		}
+
+		return [
+			'isRestoreUsersAccessAvailable' => $isRestoreUsersAccessAvailable,
+			'firedUserList' => $firedUserList,
+		];
 	}
 
 	private function getAnalyticsInstance(): Analytics
@@ -728,25 +848,74 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 * @throws \Bitrix\Main\ObjectNotFoundException
 	 */
-	public function getInviteLinkAction(array $departmentsId): AjaxJson
+	public function getInviteLinkAction(array $departmentsId = [], string $analyticsType = ''): AjaxJson
 	{
 		$departmentsId = array_map(fn($departmentId) => (int)$departmentId, $departmentsId);
 		$departmentsId = array_filter($departmentsId, fn($departmentId) => $departmentId > 0);
 
 		if (count($departmentsId) <= 0)
 		{
-			$rootDepartment = Intranet\Service\ServiceContainer::getInstance()
-				->departmentRepository()
-				->getRootDepartment()
-			;
+			$rootDepartment = $this->getRootDepartment();
 			$departmentsId = [$rootDepartment->getId()];
 		}
 
-		$linkGenerator = Intranet\Service\InviteLinkGenerator::createByDepartmentsIds($departmentsId);
+		$analyticsParams = [
+			'st' => [
+				'tool' => 'Invitation',
+				'category' => 'invitation_by_link',
+				'event' => 'openLink',
+				'type' => in_array($analyticsType, ['by_link', 'by_local_email_program']) ?  $analyticsType : '',
+			],
+		];
+
+		$linkGenerator = Intranet\Service\InviteLinkGenerator::createByDepartmentsIds($departmentsId, $analyticsParams);
 		$link = $linkGenerator->getShortLink();
 
 		return AjaxJson::createSuccess([
 			'invitationLink' => $link,
 		]);
+	}
+
+	public function restoreFiredUsersAction(array $userIds = []): Response
+	{
+		if (!$this->isRestoreUsersAccessAvailable())
+		{
+			$this->addError(new Error('no permissions', 403));
+
+			return AjaxJson::createError($this->errorCollection);
+		}
+
+		$restoredUserIds = [];
+
+		foreach ($userIds as $userId)
+		{
+			$res = Util::activateUser([
+				'userId' => $userId,
+				'currentUserId' => Intranet\CurrentUser::get()->getId(),
+				'isCurrentUserAdmin' => Intranet\CurrentUser::get()->isAdmin(),
+			]);
+
+			if ($res)
+			{
+				$restoredUserIds[] = $userId;
+			}
+		}
+
+		return AjaxJson::createSuccess([
+			'restoredUserIds' => $restoredUserIds,
+		]);
+	}
+
+	/**
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function getDefaultDepartmentCollection(): Intranet\Entity\Collection\DepartmentCollection
+	{
+		$departmentCollection = new Intranet\Entity\Collection\DepartmentCollection();
+		$departmentCollection->add($this->getRootDepartment());
+
+		return $departmentCollection;
 	}
 }

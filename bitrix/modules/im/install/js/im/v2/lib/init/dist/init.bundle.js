@@ -188,7 +188,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _initTariffRestrictions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initTariffRestrictions");
 	var _initCallManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCallManager");
 	var _initAnchors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initAnchors");
-	var _initAvailableAIModelsList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initAvailableAIModelsList");
+	var _initCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCopilot");
 	var _initPreloadedEntities = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initPreloadedEntities");
 	var _initCurrentUserAdminStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCurrentUserAdminStatus");
 	var _initBindings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initBindings");
@@ -211,8 +211,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _initPreloadedEntities, {
 	      value: _initPreloadedEntities2
 	    });
-	    Object.defineProperty(this, _initAvailableAIModelsList, {
-	      value: _initAvailableAIModelsList2
+	    Object.defineProperty(this, _initCopilot, {
+	      value: _initCopilot2
 	    });
 	    Object.defineProperty(this, _initAnchors, {
 	      value: _initAnchors2
@@ -238,7 +238,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _initTariffRestrictions)[_initTariffRestrictions]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initAnchors)[_initAnchors]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initCallManager)[_initCallManager]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initAvailableAIModelsList)[_initAvailableAIModelsList]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _initCopilot)[_initCopilot]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initPreloadedEntities)[_initPreloadedEntities]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initCurrentUserAdminStatus)[_initCurrentUserAdminStatus]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initBindings)[_initBindings]();
@@ -301,10 +301,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    anchors
 	  });
 	}
-	function _initAvailableAIModelsList2() {
+	function _initCopilot2() {
 	  const {
 	    copilot
 	  } = im_v2_application_core.Core.getApplicationData();
+	  void im_v2_application_core.Core.getStore().dispatch('copilot/setName', copilot.botName);
 	  if (!copilot.availableEngines) {
 	    return;
 	  }

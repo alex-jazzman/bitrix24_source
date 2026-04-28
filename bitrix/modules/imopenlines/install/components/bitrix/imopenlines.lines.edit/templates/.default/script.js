@@ -372,6 +372,15 @@
 			{
 				BX('imol_worktime_answer_block').classList.add('invisible');
 			}
+
+			if (BX('imol_check_available').checked)
+			{
+				BX('imol_show_notification_redirect_block').classList.remove('invisible');
+			}
+			else
+			{
+				BX('imol_show_notification_redirect_block').classList.add('invisible');
+			}
 		},
 		toggleBotBlock: function()
 		{

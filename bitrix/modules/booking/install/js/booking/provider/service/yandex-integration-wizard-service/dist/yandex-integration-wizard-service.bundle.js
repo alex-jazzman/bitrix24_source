@@ -18,7 +18,6 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  return {
 	    status: dto.status,
 	    catalogPermissions: dto.catalogPermissions,
-	    catalogSkuEntityOptions: dto.catalogSkuEntityOptions,
 	    isResourceSkuRelationsSaved: dto.isResourceSkuRelationsSaved,
 	    resources,
 	    cabinetLink: dto.cabinetLink,
@@ -85,22 +84,37 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    }
 	  }
 	  async updateIntegration(model) {
-	    const configuration = await mapModelToDto(model);
-	    const updatedModel = await booking_lib_apiClient.apiClient.post('YandexIntegration.saveConfiguration', {
-	      configuration
-	    });
-	    const yiwModel = booking_const.Model.YandexIntegrationWizard;
-	    await Promise.all([this.$store.dispatch(`${yiwModel}/setIntegration`, updatedModel), this.$store.dispatch(`${yiwModel}/setStatus`, updatedModel.status), this.$store.dispatch(`${booking_const.Model.SaleChannels}/setIntegrationStatus`, {
-	      code: booking_const.IntegrationMapItemCode.YANDEX,
-	      status: updatedModel.status
-	    }), this.$store.dispatch(`${yiwModel}/setResourceSkuRelationsSaved`, true), this.$store.dispatch(`${yiwModel}/resetFormDataChanges`)]);
+	    try {
+	      const configuration = await mapModelToDto(model);
+	      const updatedModel = await booking_lib_apiClient.apiClient.post('YandexIntegration.saveConfiguration', {
+	        configuration
+	      });
+	      const yiwModel = booking_const.Model.YandexIntegrationWizard;
+	      await Promise.all([this.$store.dispatch(`${yiwModel}/setIntegration`, updatedModel), this.$store.dispatch(`${yiwModel}/setStatus`, updatedModel.status), this.$store.dispatch(`${booking_const.Model.SaleChannels}/setIntegrationStatus`, {
+	        code: booking_const.IntegrationMapItemCode.YANDEX,
+	        status: updatedModel.status
+	      }), this.$store.dispatch(`${yiwModel}/setResourceSkuRelationsSaved`, true), this.$store.dispatch(`${yiwModel}/resetFormDataChanges`)]);
+	      return {
+	        success: true
+	      };
+	    } catch (error) {
+	      console.error('YandexIntegrationWizardService updateIntegration API error:', error);
+	      return {
+	        success: false,
+	        errors: error.errors
+	      };
+	    }
 	  }
 	  async deactivateIntegration() {
-	    const updatedModel = await booking_lib_apiClient.apiClient.post('YandexIntegration.deactivate', {});
-	    await Promise.all([this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/setStatus`, updatedModel.status), this.$store.dispatch(`${booking_const.Model.SaleChannels}/setIntegrationStatus`, {
-	      code: booking_const.IntegrationMapItemCode.YANDEX,
-	      status: updatedModel.status
-	    })]);
+	    try {
+	      const updatedModel = await booking_lib_apiClient.apiClient.post('YandexIntegration.deactivate', {});
+	      await Promise.all([this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/setStatus`, updatedModel.status), this.$store.dispatch(`${booking_const.Model.SaleChannels}/setIntegrationStatus`, {
+	        code: booking_const.IntegrationMapItemCode.YANDEX,
+	        status: updatedModel.status
+	      })]);
+	    } catch (error) {
+	      console.error('YandexIntegrationWizardService deactivateIntegration API error:', error);
+	    }
 	  }
 	  async dropCounterIntegration() {
 	    try {

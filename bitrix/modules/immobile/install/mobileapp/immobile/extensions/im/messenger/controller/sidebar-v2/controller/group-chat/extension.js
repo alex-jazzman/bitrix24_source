@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, exports, module) => {
 	const { Type } = require('type');
 	const { inAppUrl } = require('in-app-url');
+	const { isOnline } = require('device/connection');
 	const { DialogType } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 	const { SidebarBaseController } = require('im/messenger/controller/sidebar-v2/controller/base');
@@ -16,12 +17,15 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 	const {
 		SidebarContextMenuActionId,
 		SidebarContextMenuActionPosition,
+		SIDEBAR_DEFAULT_TOAST_OFFSET,
 	} = require('im/messenger/controller/sidebar-v2/const');
 	const { Icon } = require('assets/icons');
+	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { onAddParticipants } = require('im/messenger/controller/sidebar-v2/user-actions/participants');
 	const { onLeaveChat } = require('im/messenger/controller/sidebar-v2/user-actions/user');
 	const { onDeleteChat, onClearHistoryChat } = require('im/messenger/controller/sidebar-v2/user-actions/chat');
 	const {
+		createEntityButton,
 		createSearchButton,
 		createMuteButton,
 		createVideoCallButton,
@@ -114,6 +118,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 			const muted = this.dialogHelper.isMuted;
 
 			return [
+				this.#getEntityButton(),
 				createVideoCallButton({
 					onClick: () => this.handleVideoCallAction(),
 					disabled: !this.permissionManager.canCall(),
@@ -137,6 +142,52 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 		}
 
 		// endregion
+
+		/**
+		 * @return {SidebarPrimaryActionButton|null}
+		 */
+		#getEntityButton()
+		{
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			if (!Type.isPlainObject(dialog))
+			{
+				return null;
+			}
+
+			const { type: entityType, url: entityUrl } = dialog.entityLink;
+
+			if (!Type.isStringFilled(entityType) || !Type.isStringFilled(entityUrl))
+			{
+				return null;
+			}
+
+			return createEntityButton({
+				entityType,
+				onClick: () => this.handleOpenEntityAction(entityUrl),
+				separatorAfter: true,
+			});
+		}
+
+		/**
+		 * @param {string} entityUrl
+		 */
+		handleOpenEntityAction(entityUrl)
+		{
+			if (!Type.isStringFilled(entityUrl))
+			{
+				return;
+			}
+
+			if (!isOnline())
+			{
+				Notification.showOfflineToast({ offset: SIDEBAR_DEFAULT_TOAST_OFFSET });
+
+				return;
+			}
+
+			const url = `${currentDomain}${entityUrl}`;
+			inAppUrl.open(url);
+		}
 
 		// region tabs
 

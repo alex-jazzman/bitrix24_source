@@ -77,6 +77,11 @@ export const BaseApp = {
 		this.$Bitrix.eventEmitter.subscribe('biconnector:dataset-import:createButtonClick', this.onSaveButtonClick);
 		this.$Bitrix.eventEmitter.subscribe('biconnector:dataset-import:cancelButtonClick', this.onCancelButtonClick);
 
+		if (this.$store.state.config.sectionsConfig)
+		{
+			this.$store.commit('setSectionsConfig', this.$store.state.config.sectionsConfig);
+		}
+
 		const slider = SidePanel.Instance.getTopSlider();
 		if (slider)
 		{
@@ -91,6 +96,7 @@ export const BaseApp = {
 	{
 		this.$Bitrix.eventEmitter.unsubscribe('biconnector:dataset-import:createButtonClick', this.onSaveButtonClick);
 		this.$Bitrix.eventEmitter.unsubscribe('biconnector:dataset-import:cancelButtonClick', this.onCancelButtonClick);
+		this.$store.commit('resetSectionsConfig');
 	},
 	methods: {
 		markAsChanged()
@@ -316,6 +322,31 @@ export const BaseApp = {
 				c_section: 'BI_Builder',
 				category: this.sourceCode.toUpperCase(),
 			};
+		},
+		getSectionConfig(sectionName, property)
+		{
+			if (!this.$store || !this.$store.getters || !this.$store.getters.getSectionConfig)
+			{
+				return this.getDefaultSectionConfig(property);
+			}
+
+			const configState = this.$store.getters.getSectionConfig(sectionName, property);
+			if (configState !== undefined)
+			{
+				return configState;
+			}
+
+			return this.getDefaultSectionConfig(property);
+		},
+		getDefaultSectionConfig(property: string): boolean
+		{
+			switch (property)
+			{
+				case 'isOpenInitially':
+				case 'isOpenOnLoadData':
+				default:
+					return true;
+			}
 		},
 	},
 };

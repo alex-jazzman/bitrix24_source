@@ -32,6 +32,30 @@ jn.define('im/messenger/provider/services/analytics/chat-create', (require, expo
 				console.error(`${this.constructor.name}.sendStartCreation.catch:`, e);
 			}
 		}
+
+		/**
+		 * @param {{chatId: number}} params
+		 */
+		sendCreateCopilotDialog({ chatId })
+		{
+			try
+			{
+				const analytics = new AnalyticsEvent()
+					.setTool(Analytics.Tool.ai)
+					.setCategory(Analytics.Category.chatOperations)
+					.setEvent(Analytics.Event.createNewChat)
+					.setType(Analytics.Type.ai)
+					.setSection(Analytics.Section.copilotTab)
+					.setP3(Analytics.CopilotChatType.private)
+					.setP5(`chatId_${chatId}`);
+
+				analytics.send();
+			}
+			catch (e)
+			{
+				console.error(`${this.constructor.name}.sendCreateCopilotDialog.catch:`, e);
+			}
+		}
 	}
 
 	module.exports = { ChatCreate };

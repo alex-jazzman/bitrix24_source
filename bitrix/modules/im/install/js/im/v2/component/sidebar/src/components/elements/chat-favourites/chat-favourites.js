@@ -1,4 +1,5 @@
 import { SidebarDetailBlock, EventType } from 'im.v2.const';
+import { CounterManager } from 'im.v2.lib.counter';
 
 import './css/chat-favourites.css';
 
@@ -36,13 +37,7 @@ export const ChatFavourites = {
 	{
 		getCounterString(counter: number): string
 		{
-			const MAX_COUNTER = 100;
-			if (counter >= MAX_COUNTER)
-			{
-				return '99+';
-			}
-
-			return counter.toString();
+			return CounterManager.formatCounter(counter);
 		},
 		onFavouriteClick()
 		{

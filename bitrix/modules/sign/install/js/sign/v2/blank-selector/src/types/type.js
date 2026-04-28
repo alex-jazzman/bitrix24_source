@@ -25,6 +25,7 @@ export type BlankSelectorConfig = {
 	isOpenedFromRobot?: boolean,
 	isOpenedFromTemplateFolder?: boolean,
 	initiatedByType?: DocumentInitiatedType,
+	isPlaceholderDocumentEnabled?: boolean,
 };
 
 export type BlankData = {
@@ -33,13 +34,28 @@ export type BlankData = {
 	previewUrl: string | null,
 	userAvatarUrl: string | null,
 	userName: string | null,
-	dateCreate: string | null
+	dateCreate: string | null,
+	hasPlaceholders?: boolean,
 };
 
 export type ListItemProps = {
 	title: string;
 	modifier: string;
 	description?: string;
+	link?: string | null;
+	onLinkClick?: (() => void) | null;
+	isNew?: boolean;
+	isPlaceholderDocumentAvailable?: boolean,
+	dragDescriptionTextHTML?: HTMLElement,
+	onDragEnter?: (event: DragEvent) => void,
+};
+
+export type ButtonConfig = {
+	title: string;
+	description: string;
+	link?: string;
+	onLinkClick?: () => void;
+	dragDescriptionTextHTML?: HTMLElement;
 };
 
 export type BlankProps = {

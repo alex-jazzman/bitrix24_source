@@ -20,6 +20,7 @@
 	const { resolveFileIcon } = require('assets/icons');
 	const { IconView } = require('ui-system/blocks/icon');
 	const { stringify } = require('utils/string');
+	const { requireLazy } = require('require-lazy');
 
 	const throttledNativeViewer = throttle(async (params) => {
 		const { file } = params;
@@ -133,7 +134,7 @@
 					resizeMode: 'cover',
 					clickable: false,
 				}),
-				View(
+				name && View(
 					{
 						style: {
 							marginTop: 2,

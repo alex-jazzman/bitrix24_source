@@ -2,6 +2,9 @@
 $MESS['LANDING_CMP_PAR_LANDING_TYPE'] = 'Тип';
 $MESS['LANDING_CMP_PAR_CODE'] = 'Идентификатор шаблона';
 $MESS['LANDING_CMP_PAR_SITE_ID'] = 'Идентификатор сайта';
+$MESS['LANDING_CMP_DEMO_PREVIEW_REPLACE_SITE_ID'] = 'Идентификатор сайта для замены';
+$MESS['LANDING_CMP_DEMO_PREVIEW_REPLACE_LID'] = 'Идентификатор страницы для замены';
+$MESS['LANDING_CMP_DEMO_PREVIEW_FOLDER_ID'] = 'Идентификатор папки';
 $MESS['LANDING_CMP_PAR_SITE_WORK_MODE'] = 'Работать в режиме сайта насильно';
 $MESS['LANDING_CMP_PAR_DONT_LEAVE_FRAME'] = 'Не покидать фрейм, если работаем во фрейме';
 $MESS['LANDING_CMP_PAR_BINDING_TYPE'] = 'Тип привязки';

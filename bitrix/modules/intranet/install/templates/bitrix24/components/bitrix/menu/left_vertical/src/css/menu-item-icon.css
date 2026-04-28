@@ -213,6 +213,11 @@
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/documents.svg");
 }
 
+.menu-note-base .menu-item-icon {
+	--menu-item-icon-default: url("/bitrix/js/ui/icon-set/outline/images/document-sign.svg");
+	--menu-item-icon-active: url("/bitrix/js/ui/icon-set/outline/images/document-sign.svg");
+}
+
 .menu-boards .menu-item-icon {
 	--menu-item-icon-default: url("../images/icons/menu-items/outline/boards.svg");
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/boards.svg");

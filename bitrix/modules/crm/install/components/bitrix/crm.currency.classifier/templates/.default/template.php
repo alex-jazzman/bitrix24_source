@@ -10,6 +10,7 @@ use Bitrix\Main\Text\HtmlFilter;
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'sidepanel',
+	'intranet.old-interface.intranet-common',
 ]);
 
 Loc::loadMessages(__FILE__);

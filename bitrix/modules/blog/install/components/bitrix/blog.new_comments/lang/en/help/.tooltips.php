@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['MESSAGE_COUNT_TIP'] = "Maximum number of messages that can be displayed on a page.";
 $MESS ['PATH_TO_BLOG_TIP'] = "The path to the main blog page. Example: blog_blog.php?page=blog&blog=#blog#.";
 $MESS ['PATH_TO_POST_TIP'] = "The path to a blog post view page. Example: <nobr>blog_post.php?page=post&blog=#blog#&post_id=#post_id#.</nobr>";
@@ -11,4 +11,3 @@ $MESS ['CACHE_TYPE_TIP'] = "<i>Auto</i>: the cache is valid during the time pred
 $MESS ['CACHE_TIME_TIP'] = "Specify here the period of time during which the cache is valid.";
 $MESS ['PATH_TO_SMILE_TIP'] = "The path to a folder containing smileys, relative to the site root.";
 $MESS ['MESSAGE_LENGHT_TIP'] = "The length of a single post excerpt, in symbols.";
-?>

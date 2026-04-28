@@ -22,6 +22,7 @@ $asset->addJs('/bitrix/js/crm/common.js');
 // some common langs
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Kanban\ViewMode;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 
@@ -170,7 +171,7 @@ else
 		]
 	);
 
-	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+	Container::getInstance()->getLocalization()->loadMessages();
 
 	$viewMode = ($kanbanViewMode ?? ViewMode::MODE_STAGES);
 
@@ -182,7 +183,7 @@ else
 			'VIEW_MODE' => $viewMode,
 			'USE_ITEM_PLANNER' => ($kanbanViewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
 			'SHOW_ACTIVITY' => 'Y',
-			'PATH_TO_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
+			'PATH_TO_IMPORT' => Container::getInstance()->getRouter()->getImportUrl(CCrmOwnerType::Lead),
 			'PATH_TO_MERGE' => $arResult['PATH_TO_LEAD_MERGE'],
 			'HEADERS_SECTIONS' => [
 				[

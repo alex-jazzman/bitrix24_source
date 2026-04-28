@@ -13,7 +13,6 @@ export type Chat = {
 	color: string,
 	extranet: boolean,
 	containsCollaber: boolean,
-	counter: number,
 	userCounter: number,
 	lastReadId: number,
 	markedId: number,
@@ -29,7 +28,7 @@ export type Chat = {
 	},
 	savedPositionMessageId: number,
 	managerList: number[],
-	muteList: number[],
+	isMuted: boolean,
 	quoteId: number,
 	ownerId: number,
 	entityLink: {

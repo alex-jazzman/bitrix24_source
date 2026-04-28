@@ -41,7 +41,7 @@ jn.define('im/messenger/controller/recent/config/collab', (require, exports, mod
 						);
 					},
 					onTap: async () => {
-						void openChatCreateByActiveRecentTab();
+						return openChatCreateByActiveRecentTab();
 					},
 				},
 			},
@@ -60,6 +60,7 @@ jn.define('im/messenger/controller/recent/config/collab', (require, exports, mod
 				props: {
 					sections: ['pinned', 'general'],
 					defaultSection: 'general',
+					convertorExtension: 'im/messenger/controller/recent/service/render/lib/convertor/common',
 				},
 			},
 			[RecentServiceName.vuex]: {

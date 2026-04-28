@@ -1,6 +1,6 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-CUtil::InitJSCore(array('ajax', 'popup', 'ui.fonts.opensans'));
+CUtil::InitJSCore(array('ajax', 'popup', 'ui.fonts.opensans', 'intranet.old-interface.intranet-common'));
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/crm.js');

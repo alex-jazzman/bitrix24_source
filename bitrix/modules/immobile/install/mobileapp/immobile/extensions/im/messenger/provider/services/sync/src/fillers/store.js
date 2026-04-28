@@ -5,7 +5,7 @@ jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports
 	const { Type } = require('type');
 
 	const { DialogType, RecentTab } = require('im/messenger/const');
-	const { DialogHelper, CounterHelper } = require('im/messenger/lib/helper');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
 	const { SyncFillerBase } = require('im/messenger/provider/services/sync/fillers/base');
@@ -41,7 +41,6 @@ jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports
 		{
 			await this.processStickers(syncListResult);
 			await super.updateModels(syncListResult);
-			await this.processCounters(syncListResult);
 		}
 
 		/**
@@ -161,38 +160,6 @@ jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports
 					});
 				}
 			}));
-		}
-
-		/**
-		 * @param {SyncListResult} syncListResult
-		 */
-		async processCounters(syncListResult)
-		{
-			logger.log('processCounters', syncListResult);
-			const { chatSync, chats } = syncListResult;
-
-			const deletedChats = [
-				...Object.values(chatSync.deletedChats),
-				...Object.values(chatSync.completeDeletedChats),
-			];
-
-			const counterStateList = Object.values(chats).map((chat) => {
-				return {
-					chatId: chat.id,
-					counter: chat.counter,
-					type: CounterHelper.getCounterTypeByDialogType(chat.type),
-					parentChatId: chat.parentChatId,
-					disabled: CounterHelper.getDisabledByMuteList(chat.muteList),
-				};
-			});
-
-			await this.store.dispatch('counterModel/setList', {
-				counterList: counterStateList,
-			});
-
-			await this.store.dispatch('counterModel/delete', {
-				chatIdList: deletedChats,
-			});
 		}
 
 		/**

@@ -10,7 +10,7 @@ export class AdminEnableMandatory extends BaseContent
 
 	getTitle(): string
 	{
-		return Loc.getMessage('NOTIFY_BANNER_INFO_DEF_TITLE');
+		return Loc.getMessage('NOTIFY_BANNER_INFO_DEF_TITLE_MSGVER_1');
 	}
 
 	getFirstContentBlock(): string

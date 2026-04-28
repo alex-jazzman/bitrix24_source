@@ -1,4 +1,5 @@
-<?
+<?php
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 \Bitrix\Main\Loader::includeModule('bizproc');
 
@@ -11,6 +12,7 @@ $runtime = CBPRuntime::GetRuntime();
 $runtime->StartRuntime();
 $documentService = $runtime->GetService("DocumentService");
 
+$arErrors = [];
 $v = $documentService->GetFieldInputValue($_REQUEST['DocumentType'], $_REQUEST['Type'], $_REQUEST['Field'], $_REQUEST, $arErrors);
 
 echo CUtil::PhpToJSObject([$v, '']);

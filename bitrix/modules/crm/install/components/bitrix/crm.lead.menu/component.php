@@ -19,11 +19,20 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
+use Bitrix\Crm\Component\EntityList\Settings\ImportItem;
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Integration\Sender\Rc;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Integration\Analytics\Builder\Import;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
+
+\Bitrix\Main\UI\Extension::load([
+	'crm.integration.analytics',
+	'ui.analytics',
+]);
 
 Container::getInstance()->getLocalization()->loadMessages();
 
@@ -327,6 +336,32 @@ if($arParams['TYPE'] === 'details')
 		);
 	}
 
+	if ($bWrite && isset($scripts['DETACH_OPEN_LINE']))
+	{
+		$item = \Bitrix\Crm\Service\Container::getInstance()
+			->getFactory(CCrmOwnerType::Lead)
+			->getItem($arParams['ELEMENT_ID'], [\Bitrix\Crm\Item::FIELD_NAME_FM]);
+
+		if ($item)
+		{
+			foreach ($item->getFm() as $field)
+			{
+				if (
+					$field->getTypeId() === \Bitrix\Crm\Multifield\Type\Link::ID
+					&& $field->getValueType() === \Bitrix\Crm\Multifield\Type\Link::VALUE_TYPE_USER
+				)
+				{
+					$arResult['BUTTONS'][] = [
+						'TEXT' => Loc::getMessage('LEAD_DETACH_OPEN_LINE'),
+						'ONCLICK' => $scripts['DETACH_OPEN_LINE'],
+					];
+
+					break;
+				}
+			}
+		}
+	}
+
 	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
 	{
 		$arResult['BUTTONS'][] = [
@@ -430,20 +465,33 @@ if (isset($arParams['TYPE']) && $arParams['TYPE'] === 'list')
 
 	if ($bImport && !$isInSlider)
 	{
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('LEAD_IMPORT'),
-			'TITLE' => GetMessage('LEAD_IMPORT_TITLE'),
-			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_IMPORT'], array()),
-			'ICON' => 'btn-import'
-		);
+		Container::getInstance()->getRouter()->renderBindAnchors();
+
+		$importItem = new ImportItem(CCrmOwnerType::Lead);
+		if ($importItem->canShow())
+		{
+			$arResult['BUTTONS'][] = $importItem->toInterfaceToolbarButton();
+		}
 
 		CModule::IncludeModule('rest');
 		CJSCore::Init(array('marketplace'));
 
+		$migrationUrl = new Uri($arParams['PATH_TO_MIGRATION']);
+
+		$migrationViewEvent = (new Import\ViewEvent())
+			->setEntityTypeId(CCrmOwnerType::Lead)
+			->setIsMigration(true)
+		;
+
+		if ($migrationViewEvent->validate()->isSuccess())
+		{
+			$migrationUrl = $migrationViewEvent->buildUri($migrationUrl);
+		}
+
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('LEAD_MIGRATION'),
 			'TITLE' => GetMessage('LEAD_MIGRATION_TITLE'),
-			'LINK' => $arParams['PATH_TO_MIGRATION'],
+			'LINK' => $migrationUrl,
 			'ICON' => 'btn-migration'
 		);
 
@@ -802,27 +850,54 @@ if ($bAdd && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show' || $arP
 /*if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show' || $arParams['TYPE'] == 'convert') && $bDelete
 	&& !empty($arParams['ELEMENT_ID']))*/
 {
+	$onClickDeleteParams = [
+		GetMessage('LEAD_DELETE_DLG_TITLE'),
+		GetMessage('LEAD_DELETE_DLG_MESSAGE'),
+		GetMessage('LEAD_DELETE_DLG_BTNTITLE'),
+		CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_EDIT'],
+			array(
+				'lead_id' => $arParams['ELEMENT_ID']
+			)),
+			array('delete' => '', 'sessid' => bitrix_sessid())
+		),
+		[
+			'type' => $arParams['TYPE'],
+		],
+	];
+
+	$onClickDeleteParamsJson = Json::encode($onClickDeleteParams);
+
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('LEAD_DELETE'),
 		'TITLE' => GetMessage('LEAD_DELETE_TITLE'),
-		'LINK' => "javascript:BX.Crm.Lead.Menu.onClickDelete('".GetMessage('LEAD_DELETE_DLG_TITLE')."', '".GetMessage('LEAD_DELETE_DLG_MESSAGE')."', '".GetMessage('LEAD_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_EDIT'],
-				array(
-					'lead_id' => $arParams['ELEMENT_ID']
-				)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+		'LINK' => "javascript:BX.Crm.Lead.Menu.onClickDelete(...{$onClickDeleteParamsJson})",
 		'ICON' => 'btn-delete'
 	);
 }
 
 if ($bAdd && $arParams['TYPE'] != 'list')
 {
+	$addUrl = new Uri(CComponentEngine::MakePathFromTemplate(
+		$arParams[$isSliderEnabled ? 'PATH_TO_LEAD_DETAILS' : 'PATH_TO_LEAD_EDIT'],
+		array('lead_id' => 0)
+	));
+
+	if ($arParams['TYPE'] === 'import')
+	{
+		$importEditEvent = (new Import\EditEvent())
+			->setEntityTypeId(CCrmOwnerType::Lead)
+			->setIsCreateButton()
+		;
+
+		if ($importEditEvent->validate()->isSuccess())
+		{
+			$addUrl = $importEditEvent->buildUri($addUrl);
+		}
+	}
+
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
-		'LINK' => CComponentEngine::MakePathFromTemplate(
-			$arParams[$isSliderEnabled ? 'PATH_TO_LEAD_DETAILS' : 'PATH_TO_LEAD_EDIT'],
-			array('lead_id' => 0)
-		),
+		'LINK' => $addUrl,
 		'TARGET' => '_blank',
 		'ICON' => 'btn-new'
 	);

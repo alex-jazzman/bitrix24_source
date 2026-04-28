@@ -10,23 +10,18 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
-	const { Feature } = require('im/messenger/lib/feature');
 
 	const {
-		RestMethod,
 		DialogType,
-		EventType,
-		ComponentCode,
 		BotCode,
 		Analytics,
 		OpenDialogContextType,
 		CopilotRoleType,
 	} = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
-	const { AnalyticsEvent } = require('analytics');
 	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
+	const { ChatService } = require('im/messenger/provider/services/chat');
 
 	/**
 	 * @class DialogCreator
@@ -94,6 +89,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 					Logger.log(`${this.constructor.name}.CopilotRoleSelector.result:`, result);
 					const fields = {
 						type: DialogType.copilot.toUpperCase(),
+						copilotMainRole: CopilotRoleType.copilotUniversalRole,
 					};
 
 					if (result?.role?.code)
@@ -101,7 +97,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 						fields.copilotMainRole = result?.role?.code;
 					}
 
-					this.callRestCreateCopilotDialog(fields);
+					return this.createCopilot(fields);
 				})
 				.catch((error) => Logger.error(error));
 		}
@@ -117,7 +113,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 			Logger.log(`${this.constructor.name}.createCopilotDialogWithoutSelector.fields:`, fields);
 
-			this.callRestCreateCopilotDialog(fields);
+			return this.createCopilot(fields);
 		}
 
 		sendAnalyticsStartCreateCopilotDialog()
@@ -132,53 +128,37 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 		}
 
 		/**
-		 * @param {object} fields
-		 * @param {string} fields.type
-		 * @param {string?} fields.copilotMainRole
+		 * @param {CreateCopilotParams} fields
+		 * @returns {Promise<void>}
 		 */
-		callRestCreateCopilotDialog(fields)
+		async createCopilot(fields)
 		{
-			BX.rest.callMethod(
-				RestMethod.imV2ChatAdd,
-				{ fields },
-			).then((result) => {
-				const chatId = parseInt(result.data().chatId, 10);
+			Logger.log(`${this.constructor.name}.createCopilot.fields:`, fields);
+
+			try
+			{
+				const chatService = new ChatService();
+				const newChatWithCopilot = await chatService.createCopilot(fields);
+				const chatId = newChatWithCopilot.chatId;
 				if (chatId > 0)
 				{
-					setTimeout(
-						() => {
-							const openDialogParams = {
-								dialogId: `chat${chatId}`,
-								context: OpenDialogContextType.chatCreation,
-							};
+					const openDialogParams = {
+						dialogId: `chat${chatId}`,
+						context: OpenDialogContextType.chatCreation,
+					};
 
-							void serviceLocator.get('dialog-manager').openDialog(openDialogParams);
-
-							const analytics = new AnalyticsEvent()
-								.setTool(Analytics.Tool.ai)
-								.setCategory(Analytics.Category.chatOperations)
-								.setEvent(Analytics.Event.createNewChat)
-								.setType(Analytics.Type.ai)
-								.setSection(Analytics.Section.copilotTab)
-								.setP3(Analytics.CopilotChatType.private)
-								.setP5(`chatId_${chatId}`);
-
-							analytics.send();
-						},
-						200,
-					);
-
-					if (result.answer.error || result.error())
-					{
-						Logger.error(`${this.constructor.name}.callRestCreateCopilotDialog.result.error`, result.error());
-					}
+					await serviceLocator.get('dialog-manager').openDialog(openDialogParams);
+					AnalyticsService.getInstance().sendCreateCopilotDialog({ chatId });
 				}
-			})
-				.catch(
-					(err) => {
-						Logger.error(`${this.constructor.name}.callRestCreateCopilotDialog.catch:`, err);
-					},
-				);
+				else
+				{
+					Logger.error(`${this.constructor.name}.createCopilot: chatId is invalid`, chatId);
+				}
+			}
+			catch (error)
+			{
+				Logger.error(`${this.constructor.name}.createCopilot.catch:`, error);
+			}
 		}
 
 		getUserList()

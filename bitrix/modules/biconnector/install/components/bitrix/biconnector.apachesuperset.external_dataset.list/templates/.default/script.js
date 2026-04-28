@@ -1,8 +1,8 @@
 /* eslint-disable */
-(function (exports,biconnector_datasetImport_fileExport,main_popup,main_core,main_core_events,ui_buttons,ui_system_dialog) {
+(function (exports,biconnector_datasetImport_fileExport,biconnector_loadingPopup,main_popup,main_core,main_core_events,ui_buttons,ui_system_dialog) {
 	'use strict';
 
-	var _templateObject;
+	var _templateObject, _templateObject2;
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -16,6 +16,9 @@
 	var _getDeleteDatasetPopup = /*#__PURE__*/new WeakSet();
 	var _getDeleteDatasetPopupContent = /*#__PURE__*/new WeakSet();
 	var _notifyErrors = /*#__PURE__*/new WeakSet();
+	var _checkRelatedDatasets = /*#__PURE__*/new WeakSet();
+	var _getRelatedDatasetsWarningPopup = /*#__PURE__*/new WeakSet();
+	var _getWarningDatasetPopupContent = /*#__PURE__*/new WeakSet();
 	/**
 	 * @namespace BX.BIConnector
 	 */
@@ -23,6 +26,9 @@
 	  function ExternalDatasetManager(props) {
 	    var _BX$Main$gridManager$;
 	    babelHelpers.classCallCheck(this, ExternalDatasetManager);
+	    _classPrivateMethodInitSpec(this, _getWarningDatasetPopupContent);
+	    _classPrivateMethodInitSpec(this, _getRelatedDatasetsWarningPopup);
+	    _classPrivateMethodInitSpec(this, _checkRelatedDatasets);
 	    _classPrivateMethodInitSpec(this, _notifyErrors);
 	    _classPrivateMethodInitSpec(this, _getDeleteDatasetPopupContent);
 	    _classPrivateMethodInitSpec(this, _getDeleteDatasetPopup);
@@ -100,8 +106,26 @@
 	    }
 	  }, {
 	    key: "deleteDataset",
-	    value: function deleteDataset(id) {
-	      _classPrivateMethodGet(this, _getDeleteDatasetPopup, _getDeleteDatasetPopup2).call(this, id).show();
+	    value: function deleteDataset(datasetId, datasetType) {
+	      var _this2 = this;
+	      var callbacks = {
+	        loadData: function loadData() {
+	          return _classPrivateMethodGet(_this2, _checkRelatedDatasets, _checkRelatedDatasets2).call(_this2, datasetId);
+	        },
+	        checkData: function checkData(result) {
+	          return result.data && result.data.length > 0;
+	        },
+	        onSuccess: function onSuccess() {
+	          _classPrivateMethodGet(_this2, _getRelatedDatasetsWarningPopup, _getRelatedDatasetsWarningPopup2).call(_this2, datasetId, datasetType).show();
+	        },
+	        onFail: function onFail() {
+	          _classPrivateMethodGet(_this2, _getDeleteDatasetPopup, _getDeleteDatasetPopup2).call(_this2, datasetId).show();
+	        }
+	      };
+	      var loadingPopup = new biconnector_loadingPopup.LoadingPopup({
+	        callbacks: callbacks
+	      });
+	      loadingPopup.showLoadPopup();
 	    }
 	  }, {
 	    key: "deleteDatasetAjaxAction",
@@ -113,11 +137,11 @@
 	      });
 	    }
 	  }, {
-	    key: "createChart",
-	    value: function createChart(datasetId) {
-	      var _this2 = this;
+	    key: "createExternalDataset",
+	    value: function createExternalDataset(datasetId) {
+	      var _this3 = this;
 	      babelHelpers.classPrivateFieldGet(this, _grid).tableFade();
-	      main_core.ajax.runAction('biconnector.externalsource.dataset.getEditUrl', {
+	      main_core.ajax.runAction('biconnector.externalsource.dataset.getCreateUrl', {
 	        data: {
 	          id: datasetId
 	        }
@@ -126,11 +150,11 @@
 	        if (link) {
 	          window.open(link, '_blank').focus();
 	        }
-	        babelHelpers.classPrivateFieldGet(_this2, _grid).tableUnfade();
+	        babelHelpers.classPrivateFieldGet(_this3, _grid).tableUnfade();
 	      })["catch"](function (response) {
-	        babelHelpers.classPrivateFieldGet(_this2, _grid).tableUnfade();
+	        babelHelpers.classPrivateFieldGet(_this3, _grid).tableUnfade();
 	        if (response.errors) {
-	          _classPrivateMethodGet(_this2, _notifyErrors, _notifyErrors2).call(_this2, response.errors);
+	          _classPrivateMethodGet(_this3, _notifyErrors, _notifyErrors2).call(_this3, response.errors);
 	        }
 	      });
 	    }
@@ -138,7 +162,7 @@
 	    key: "showSupersetError",
 	    value: function showSupersetError() {
 	      BX.UI.Notification.Center.notify({
-	        content: main_core.Text.encode(main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_ERROR_SUPERSET'))
+	        content: main_core.Text.encode(main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_ERROR_SUPERSET_MSGVER_1'))
 	      });
 	    }
 	  }]);
@@ -153,48 +177,48 @@
 	  manager.init(babelHelpers.classPrivateFieldGet(this, _grid).getContainer());
 	}
 	function _subscribeToEvents2() {
-	  var _this3 = this;
+	  var _this4 = this;
 	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', function (event) {
 	    var _event$getData = event.getData(),
 	      _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
 	      messageEvent = _event$getData2[0];
 	    if (messageEvent.getEventId() === 'BIConnector.dataset-import:onDatasetCreated') {
-	      babelHelpers.classPrivateFieldGet(_this3, _grid).reload();
+	      babelHelpers.classPrivateFieldGet(_this4, _grid).reload();
 	    }
 	  });
 	  main_core_events.EventEmitter.subscribe('Grid::updated', function () {
-	    _classPrivateMethodGet(_this3, _initHints, _initHints2).call(_this3);
+	    _classPrivateMethodGet(_this4, _initHints, _initHints2).call(_this4);
 	  });
 	}
-	function _getDeleteDatasetPopup2(id) {
-	  var _this4 = this;
+	function _getDeleteDatasetPopup2(datasetId) {
+	  var _this5 = this;
 	  var deleteDatasetPopupInstance = new ui_system_dialog.Dialog({
-	    title: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_TITLE_MSGVER_1'),
+	    title: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_TITLE_MSGVER_2'),
 	    content: _classPrivateMethodGet(this, _getDeleteDatasetPopupContent, _getDeleteDatasetPopupContent2).call(this),
 	    centerButtons: [new ui_buttons.Button({
-	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_YES'),
+	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_NO'),
 	      size: ui_buttons.ButtonSize.LARGE,
 	      style: ui_buttons.AirButtonStyle.FILLED,
 	      useAirDesign: true,
+	      onclick: function onclick() {
+	        return deleteDatasetPopupInstance.hide();
+	      }
+	    }), new ui_buttons.Button({
+	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_YES'),
+	      size: ui_buttons.ButtonSize.LARGE,
+	      style: ui_buttons.AirButtonStyle.PLAIN,
+	      useAirDesign: true,
 	      onclick: function onclick(button) {
 	        button.setWaiting();
-	        _this4.deleteDatasetAjaxAction(id).then(function () {
-	          babelHelpers.classPrivateFieldGet(_this4, _grid).reload();
+	        _this5.deleteDatasetAjaxAction(datasetId).then(function () {
+	          babelHelpers.classPrivateFieldGet(_this5, _grid).reload();
 	          deleteDatasetPopupInstance.hide();
 	        })["catch"](function (response) {
 	          deleteDatasetPopupInstance.hide();
 	          if (response.errors) {
-	            _classPrivateMethodGet(_this4, _notifyErrors, _notifyErrors2).call(_this4, response.errors);
+	            _classPrivateMethodGet(_this5, _notifyErrors, _notifyErrors2).call(_this5, response.errors);
 	          }
 	        });
-	      }
-	    }), new ui_buttons.Button({
-	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_NO'),
-	      size: ui_buttons.ButtonSize.LARGE,
-	      style: ui_buttons.AirButtonStyle.PLAIN,
-	      useAirDesign: true,
-	      onclick: function onclick() {
-	        return deleteDatasetPopupInstance.hide();
 	      }
 	    })],
 	    hasOverlay: true,
@@ -203,7 +227,7 @@
 	  return deleteDatasetPopupInstance;
 	}
 	function _getDeleteDatasetPopupContent2() {
-	  return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-delete-dataset-popup-content\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_DESCRIPTION_MSGVER_1'));
+	  return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-delete-dataset-popup-content\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_DESCRIPTION_MSGVER_2'));
 	}
 	function _notifyErrors2(errors) {
 	  if (errors[0] && errors[0].message) {
@@ -212,7 +236,54 @@
 	    });
 	  }
 	}
+	function _checkRelatedDatasets2(datasetId) {
+	  return main_core.ajax.runAction('biconnector.externalsource.dataset.getRelatedSupersetDatasets', {
+	    data: {
+	      id: datasetId
+	    }
+	  });
+	}
+	function _getRelatedDatasetsWarningPopup2(datasetId, datasetType) {
+	  var warningContent = _classPrivateMethodGet(this, _getWarningDatasetPopupContent, _getWarningDatasetPopupContent2).call(this);
+	  var popup = new ui_system_dialog.Dialog({
+	    title: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_WARNING_TITLE'),
+	    content: warningContent,
+	    centerButtons: [new ui_buttons.Button({
+	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_NO'),
+	      size: ui_buttons.ButtonSize.LARGE,
+	      style: ui_buttons.AirButtonStyle.FILLED,
+	      useAirDesign: true,
+	      onclick: function onclick() {
+	        return popup.hide();
+	      }
+	    }), new ui_buttons.Button({
+	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_WARNING_GO_BUTTON'),
+	      size: ui_buttons.ButtonSize.LARGE,
+	      style: ui_buttons.AirButtonStyle.PLAIN,
+	      useAirDesign: true,
+	      onclick: function onclick() {
+	        BX.BIConnector.DatasetImport.Slider.open(datasetType, datasetId, {}, {
+	          properties: {
+	            isOpenInitially: false,
+	            isOpenOnLoadData: false
+	          },
+	          fields: {
+	            isOpenInitially: false,
+	            isOpenOnLoadData: false
+	          }
+	        });
+	        popup.hide();
+	      }
+	    })],
+	    hasOverlay: true,
+	    width: 400
+	  });
+	  return popup;
+	}
+	function _getWarningDatasetPopupContent2() {
+	  return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-delete-dataset-popup-content\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_WARNING_TEXT'));
+	}
 	main_core.Reflection.namespace('BX.BIConnector').ExternalDatasetManager = ExternalDatasetManager;
 
-}((this.window = this.window || {}),BX.BIConnector.DatasetImport,BX.Main,BX,BX.Event,BX.UI,BX.UI.System));
+}((this.window = this.window || {}),BX.BIConnector.DatasetImport,BX.Biconnector,BX.Main,BX,BX.Event,BX.UI,BX.UI.System));
 //# sourceMappingURL=script.js.map

@@ -2,6 +2,7 @@ import Item from './item';
 import Backend from '../backend';
 import { Dom, Text } from 'main.core';
 import { Counter } from 'ui.cnt';
+import Utils from '../utils';
 
 export default class ItemGroup extends Item
 {
@@ -29,6 +30,8 @@ export default class ItemGroup extends Item
 	{
 		event.preventDefault();
 		event.stopPropagation();
+		const toggleButton = this.container.querySelector('.menu-item-link');
+		const containsActive = this.container.getAttribute('data-contains-active-item') === 'Y';
 		if (this.container.getAttribute('data-collapse-mode') === 'collapsed')
 		{
 			Backend.expandGroup(this.getId());
@@ -36,6 +39,16 @@ export default class ItemGroup extends Item
 				.expand()
 				.then(() => {
 					this.container.setAttribute('data-collapse-mode', 'expanded');
+					Dom.attr(toggleButton, 'aria-expanded', 'true');
+					Dom.attr(toggleButton, 'aria-label', this.constructor.getItemAriaLabel(
+						this.getName(),
+						0,
+					));
+
+					if (containsActive)
+					{
+						this.#transferAriaCurrentToChild(toggleButton);
+					}
 				});
 		}
 		else
@@ -45,9 +58,42 @@ export default class ItemGroup extends Item
 				.collapse()
 				.then(() => {
 					this.container.setAttribute('data-collapse-mode', 'collapsed');
+					Dom.attr(toggleButton, 'aria-expanded', 'false');
+					Dom.attr(toggleButton, 'aria-label', this.constructor.getItemAriaLabel(
+						this.getName(),
+						this.getCounterValue(),
+					));
+
+					if (containsActive)
+					{
+						this.#transferAriaCurrentToGroup(toggleButton);
+					}
 				});
 		}
+
 		return false;
+	}
+
+	#transferAriaCurrentToChild(groupButton)
+	{
+		groupButton.removeAttribute('aria-current');
+		const activeChild = this.groupContainer.querySelector('.menu-item-active .menu-item-link');
+
+		if (activeChild)
+		{
+			Dom.attr(activeChild, 'aria-current', 'page');
+		}
+	}
+
+	#transferAriaCurrentToGroup(groupButton)
+	{
+		const activeChild = this.groupContainer.querySelector('.menu-item-active .menu-item-link');
+
+		if (activeChild)
+		{
+			activeChild.removeAttribute('aria-current');
+		}
+		Dom.attr(groupButton, 'aria-current', 'page');
 	}
 
 	checkAndCorrect(): ItemGroup
@@ -77,6 +123,37 @@ export default class ItemGroup extends Item
 				this.#collapsingAnimation.stop();
 			}
 
+			const onComplete = () => {
+				Dom.style(groupContainer, {
+					display: 'none',
+					opacity: 'auto',
+					height: 'auto',
+				});
+
+				Dom.style(groupContainer, 'overflow', null);
+
+				if (this.container.getAttribute('data-contains-active-item') === 'Y')
+				{
+					Dom.addClass(this.container, 'menu-item-active');
+				}
+				Dom.removeClass(this.container, 'menu-item-group-collapsing');
+				Dom.removeClass(groupContainer, 'menu-item-group-collapsing');
+				this.#collapsingAnimation = null;
+
+				if (hideGroupContainer === true)
+				{
+					Dom.append(groupContainer, this.container);
+				}
+				resolve();
+			};
+
+			if (Utils.prefersReducedMotion())
+			{
+				onComplete();
+
+				return;
+			}
+
 			groupContainer.style.overflow = 'hidden';
 			Dom.addClass(this.container, 'menu-item-group-collapsing');
 			Dom.addClass(this.container, 'menu-item-group-actioned');
@@ -95,25 +172,7 @@ export default class ItemGroup extends Item
 					groupContainer.style.height = state.height + 'px';
 					groupContainer.style.opacity = state.opacity / 100;
 				},
-				complete: () => {
-					groupContainer.style.display = 'none';
-					groupContainer.style.opacity = 'auto';
-					groupContainer.style.height = 'auto';
-					Dom.style(groupContainer, 'overflow', null);
-
-					if (this.container.getAttribute('data-contains-active-item') === 'Y')
-					{
-						Dom.addClass(this.container, 'menu-item-active');
-					}
-					Dom.removeClass(this.container, 'menu-item-group-collapsing');
-					Dom.removeClass(groupContainer, 'menu-item-group-collapsing');
-					this.#collapsingAnimation = null;
-					if (hideGroupContainer === true)
-					{
-						this.container.appendChild(groupContainer);
-					}
-					resolve();
-				}
+				complete: onComplete,
 			}));
 			this.#collapsingAnimation.animate();
 		});
@@ -131,17 +190,32 @@ export default class ItemGroup extends Item
 				return resolve();
 			}
 
-			const contentHeight = groupContainer.querySelectorAll('li').length * (container.offsetHeight + 4);
-			Dom.addClass(container, 'menu-item-group-expanding');
-			Dom.addClass(container, 'menu-item-group-actioned');
-			Dom.addClass(groupContainer, 'menu-item-group-expanding');
-
 			if (groupContainer.parentNode === this.container)
 			{
 				Dom.insertAfter(groupContainer, this.container);
 			}
 
-			groupContainer.style.display = 'block';
+			Dom.style(groupContainer, {
+				display: 'block',
+			});
+
+			if (Utils.prefersReducedMotion())
+			{
+				Dom.style(groupContainer, {
+					height: 'auto',
+					opacity: 'auto',
+				});
+
+				resolve();
+
+				return;
+			}
+
+			const contentHeight = groupContainer.querySelectorAll('li').length * (container.offsetHeight + 4);
+			Dom.addClass(container, 'menu-item-group-expanding');
+			Dom.addClass(container, 'menu-item-group-actioned');
+			Dom.addClass(groupContainer, 'menu-item-group-expanding');
+
 			this.#collapsingAnimation = (new BX.easing({
 				duration: 500,
 				start: {height: 0, opacity: 0},
@@ -193,6 +267,14 @@ export default class ItemGroup extends Item
 		{
 			Dom.removeClass(this.container, 'menu-item-with-index');
 		}
+
+		const isCollapsed = this.container.getAttribute('data-collapse-mode') === 'collapsed';
+		const linkNode = this.container.querySelector('.menu-item-link');
+
+		Dom.attr(linkNode, 'aria-label', this.constructor.getItemAriaLabel(
+			this.getName(),
+			isCollapsed ? counterValue : 0,
+		));
 	}
 
 	markAsActive()

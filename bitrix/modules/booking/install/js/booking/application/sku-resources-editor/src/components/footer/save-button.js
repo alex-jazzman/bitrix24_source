@@ -7,8 +7,7 @@ export const SaveButton = {
 		UiButton: Button,
 	},
 	emits: ['click'],
-	// eslint-disable-next-line flowtype/require-return-type
-	setup(): Object
+	setup(): { ButtonSize: typeof ButtonSize, ButtonColor: typeof ButtonColor }
 	{
 		return {
 			ButtonSize,

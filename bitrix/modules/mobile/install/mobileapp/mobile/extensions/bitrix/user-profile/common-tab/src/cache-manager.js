@@ -2,6 +2,8 @@
  * @module user-profile/common-tab/src/cache-manager
  */
 jn.define('user-profile/common-tab/src/cache-manager', (require, exports, module) => {
+	const { TabType } = require('user-profile/const');
+
 	/**
 	 * @class TabsCacheManager
 	 */
@@ -43,7 +45,7 @@ jn.define('user-profile/common-tab/src/cache-manager', (require, exports, module
 				return;
 			}
 
-			this.getCache().saveDataDebounced(modifiedData);
+			this.getCache().saveData(modifiedData);
 		}
 
 		/**
@@ -73,7 +75,7 @@ jn.define('user-profile/common-tab/src/cache-manager', (require, exports, module
 
 			const currentData = this.getData();
 			const currentTabs = currentData?.data?.tabs ?? [];
-			const commonTabIndex = currentTabs.findIndex((tab) => tab.id === 'common');
+			const commonTabIndex = currentTabs.findIndex((tab) => tab.id === TabType.COMMON);
 			if (currentData && commonTabIndex !== -1)
 			{
 				currentTabs[commonTabIndex].params.data = modifiedData ?? {};

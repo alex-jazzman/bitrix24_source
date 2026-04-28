@@ -219,6 +219,7 @@ foreach($arResult['DEAL'] as $sKey => $arDeal)
 					'READ_ONLY' => !(isset($arDeal['EDIT']) && $arDeal['EDIT'] === true)
 				)
 			),
+			'PREVIOUS_STAGE_ID' => $arDeal['DEAL_PREVIOUS_STAGE_NAME'],
 			'CATEGORY_ID' => $arDeal['DEAL_CATEGORY_NAME'],
 			'IS_RETURN_CUSTOMER' => isset($arDeal['IS_RETURN_CUSTOMER']) && $arDeal['IS_RETURN_CUSTOMER'] === 'Y'
 				? Loc::getMessage('MAIN_YES')

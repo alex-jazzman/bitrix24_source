@@ -1,9 +1,7 @@
 import { DialogWrapperComponent } from '../common/dialog-wrapper-component';
-import { TagSelectorWrapperComponent } from '../common/tag-selector-wrapper-component';
 
 export const CategorySelector = {
 	components: {
-		TagSelectorWrapperComponent,
 		DialogWrapperComponent,
 	},
 

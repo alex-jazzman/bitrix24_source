@@ -1,5 +1,5 @@
 import { Dom, Loc, Tag, Type } from 'main.core';
-import { Popup } from 'main.popup';
+import { MenuItem, Popup } from 'main.popup';
 import { Guide, Backend, type StepOption } from 'sign.tour';
 import { B2EOnboardingSignSettings } from 'sign.v2.b2e.sign-settings-onboarding';
 import { Api } from 'sign.v2.api';
@@ -33,6 +33,30 @@ export class Onboarding
 {
 	#api: Api = new Api();
 	#backend: Backend = new Backend();
+
+	static closeSettingsMenuAndOpenTestSigningSlider(event: PointerEvent, item: MenuItem): void
+	{
+		if (item && Type.isFunction(item.getMenuWindow))
+		{
+			const window = item.getMenuWindow();
+			if (window)
+			{
+				window.close();
+				(new Onboarding()).openTestSigningSlider();
+
+				return;
+			}
+		}
+
+		// eslint-disable-next-line unicorn/no-this-assignment
+		const menu = this;
+		if (menu && Type.isFunction(menu.close))
+		{
+			menu.close();
+		}
+
+		(new Onboarding()).openTestSigningSlider();
+	}
 
 	async startB2eWelcomeOnboarding(options: WelcomeGuideOptions): Promise<void>
 	{
@@ -89,7 +113,7 @@ export class Onboarding
 				}`,
 				events: options.showTariffSlider ? {} : {
 					click: () => {
-						this.#openSigningSlider();
+						this.openTestSigningSlider();
 					},
 				},
 			});
@@ -123,7 +147,7 @@ export class Onboarding
 	{
 		const popupContent = Tag.render`
 			<div class="sign__b2e-close-onboarding-signing-warning-popup-content">
-				${Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CONTENT')}
+				${Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CONTENT_MSGVER_1')}
 			</div>
 		`;
 
@@ -131,17 +155,17 @@ export class Onboarding
 			id: 'sign__b2e-close-onboarding-signing-banner-warning-popup',
 			content: popupContent,
 			minHeigh: 180,
-			width: 480,
+			width: 400,
 			padding: 20,
 			contentColor: 'white',
 			overlay: true,
 			closeByEsc: true,
-			closeIcon: true,
 			buttons: [
 				new Button({
 					id: 'sign__b2e-close-onboarding-signing-banner-warning-popup-confirm-button',
-					text: Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CONFIRM_BUTTON'),
-					color: Button.Color.PRIMARY,
+					text: Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CONFIRM_BUTTON_MSGVER_1'),
+					useAirDesign: true,
+					style: Button.AirStyle.FILLED,
 					events: {
 						click: () => {
 							popup.close();
@@ -151,16 +175,6 @@ export class Onboarding
 								banner.remove();
 								this.#api.hideOnboardingSigningBanner();
 							}
-						},
-					},
-				}),
-				new Button({
-					id: 'sign__b2e-close-onboarding-signing-banner-warning-popup-cancel-button',
-					text: Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CANCEL_BUTTON'),
-					color: Button.Color.LINK,
-					events: {
-						click() {
-							popup.close();
 						},
 					},
 				}),
@@ -227,7 +241,7 @@ export class Onboarding
 				events: options.showTariffSlider ? {} : {
 					click: () => {
 						popup.close();
-						this.#openSigningSlider();
+						this.openTestSigningSlider();
 					},
 				},
 			}));
@@ -343,7 +357,7 @@ export class Onboarding
 		return icon.render();
 	}
 
-	#openSigningSlider(): void
+	openTestSigningSlider(): void
 	{
 		BX.SidePanel.Instance.open('onboarding-signing-slider', {
 			width: 750,

@@ -99,18 +99,30 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 			}
 
 			$itemBeforeSave = $operation->getItemBeforeSave();
+			if ($itemBeforeSave)
+			{
+				$entityTypeId = $itemBeforeSave->getEntityTypeId();
 
-			$starter = new Crm\Automation\Starter($item->getEntityTypeId(), $item->getId());
-			$starter->setContextToBizproc()->runOnUpdate(
-				Crm\Automation\Helper::prepareCompatibleData(
-					$itemBeforeSave->getEntityTypeId(),
-					$itemBeforeSave->getCompatibleData(\Bitrix\Main\ORM\Objectify\Values::CURRENT),
-				),
-				Crm\Automation\Helper::prepareCompatibleData(
-					$itemBeforeSave->getEntityTypeId(),
-					$itemBeforeSave->getCompatibleData(\Bitrix\Main\ORM\Objectify\Values::ACTUAL),
-				)
-			);
+				$starter = new Crm\Integration\BizProc\Starter\CrmStarter(
+					new Crm\Integration\BizProc\Starter\Dto\DocumentDto($item->getEntityTypeId(), $item->getId())
+				);
+				$starter
+					->setContextModuleId('bizproc')
+					->runAutomation(
+						new Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+							actualFields: Crm\Automation\Helper::prepareCompatibleData(
+								$entityTypeId,
+								$itemBeforeSave->getCompatibleData(\Bitrix\Main\ORM\Objectify\Values::CURRENT),
+							),
+							previousFields: Crm\Automation\Helper::prepareCompatibleData(
+								$entityTypeId,
+								$itemBeforeSave->getCompatibleData(\Bitrix\Main\ORM\Objectify\Values::ACTUAL),
+							),
+						),
+						\CCrmBizProcEventType::Edit
+					)
+				;
+			}
 
 			return CBPActivityExecutionStatus::Closed;
 		}

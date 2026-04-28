@@ -1,0 +1,96 @@
+.related-external-datasets__list {
+	margin: 0;
+	padding-left: 0;
+	list-style: none;
+}
+
+.related-external-datasets__list li {
+	padding-left: 0;
+	margin-bottom: 0;
+}
+
+.related-external-datasets__item {
+	display: flex;
+	align-items: center;
+	padding: 14px 0;
+}
+
+.related-external-datasets__link {
+	text-decoration-line: underline;
+	text-decoration-style: dashed;
+	text-decoration-color: #A4C0DF;
+	text-underline-offset: 4px;
+	text-decoration-thickness: 1px;
+}
+
+.related-external-datasets__header-right-create-btn {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	height: 20px;
+	padding: 0 8px;
+	background-color: var(--ui-color-palette-blue-20);
+	color: var(--ui-color-palette-blue-60);
+	border: 1px solid var(--ui-color-palette-blue-20);
+	border-radius: var(--ui-border-radius-2xl);
+	font-family: var(--ui-font-family-primary);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-sm);
+	font-weight: var(--ui-font-weight-medium);
+	letter-spacing: 0;
+	text-align: right;
+	cursor: pointer;
+	transition: 160ms linear background-color, 160ms linear color, 160ms linear opacity, 160ms linear box-shadow, 160ms linear border-color;
+}
+
+.related-external-datasets__header-right-create-btn:hover {
+	color: var(--ui-color-palette-blue-70);
+	background-color: var(--ui-color-palette-blue-25);
+	border-color: var(--ui-color-palette-blue-25);
+}
+
+.related-external-datasets__header-right-create-btn span {
+	display: block;
+}
+
+.related-external-datasets__header-right-create-btn-icon {
+	--ui-icon-set__icon-size: 10px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-60);
+}
+
+
+.related-external-datasets__empty-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 200px;
+}
+
+.related-external-datasets__no-data-logo-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.related-external-datasets__no-data-logo {
+	width: 115px;
+	height: 93px;
+	background-image: url('../images/datasets-empty-state.svg');
+	background-size: 115px 93px;
+}
+
+.related-external-datasets__no-data-logo-text {
+	color: var(--ui-color-base-60);
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+	margin-top: 24px;
+}
+
+.menu-popup-item-disabled-with-hint {
+	opacity: 0.5;
+	cursor: not-allowed !important;
+}
+
+.menu-popup-item-disabled-with-hint:hover {
+	background-color: transparent;
+}

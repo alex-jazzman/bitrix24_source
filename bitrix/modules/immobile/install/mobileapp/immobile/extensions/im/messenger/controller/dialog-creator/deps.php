@@ -10,6 +10,7 @@ return [
 		'files/converter',
 		'utils/color',
 		'utils/object',
+		'utils/function',
 		'assets/icons',
 		'im:lib/theme',
 		'im:chat/selector/chat',

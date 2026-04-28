@@ -1,25 +1,23 @@
 import { Type } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
 
-import { Utils } from 'im.v2.lib.utils';
 import { Core } from 'im.v2.application.core';
-import { Parser } from 'im.v2.lib.parser';
 import { ContextMenu, RetryButton, MessageKeyboard, ReactionSelector } from 'im.v2.component.message.elements';
 import { ActionByRole, EventType } from 'im.v2.const';
-import { PermissionManager } from 'im.v2.lib.permission';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { MessageMenuManager } from 'im.v2.lib.menu';
+import { Parser } from 'im.v2.lib.parser';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat, type ImModelMessage } from 'im.v2.model';
 
 import './css/base-message.css';
-
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 
 // @vue/component
 export const BaseMessage = {
 	name: 'BaseMessage',
 	components: { ContextMenu, RetryButton, MessageKeyboard, ReactionSelector },
-	props:
-	{
+	props: {
 		item: {
 			type: Object,
 			required: true,
@@ -53,8 +51,7 @@ export const BaseMessage = {
 			default: false,
 		},
 	},
-	computed:
-	{
+	computed: {
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -91,13 +88,14 @@ export const BaseMessage = {
 		{
 			const hasAfterContent = Boolean(this.$slots['after-message']);
 
-			return !this.withBackground || this.isChannelPost || hasAfterContent;
+			return !this.isTransparentBackground && !this.isChannelPost && !hasAfterContent;
 		},
 		containerClasses(): {[className: string]: boolean}
 		{
 			return {
 				'--self': this.isSelfMessage,
 				'--opponent': this.isOpponentMessage,
+				'--system': this.isSystemMessage,
 				'--has-error': this.hasError,
 				'--has-after-content': Boolean(this.$slots['after-message']),
 				'--selected': this.isMessageSelected,
@@ -107,9 +105,13 @@ export const BaseMessage = {
 		bodyClasses(): {[className: string]: boolean}
 		{
 			return {
-				'--transparent': !this.withBackground,
-				'--no-angle': this.showMessageAngle,
+				'--transparent': this.isTransparentBackground,
+				'--no-angle': !this.showMessageAngle,
 			};
+		},
+		isTransparentBackground(): boolean
+		{
+			return !this.withBackground || this.isSystemMessage;
 		},
 		showRetryButton(): boolean
 		{
@@ -128,8 +130,7 @@ export const BaseMessage = {
 			return this.withError || this.message.error;
 		},
 	},
-	methods:
-	{
+	methods: {
 		onContainerClick(event: PointerEvent)
 		{
 			Parser.executeClickEvent(event, { emitter: this.getEmitter() });

@@ -292,6 +292,14 @@ class booking extends CModule
 			'\Bitrix\Booking\Internals\Integration\Catalog\SkuTypeChangeEventHandler',
 			'onBeforeConvertProductsType',
 		);
+
+		EventManager::getInstance()->registerEventHandler(
+			'notifications',
+			'onMessageSuccessfullyUpdated',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Notifications\EventHandler',
+			'onMessageStatusUpdate'
+		);
 	}
 
 	public function InstallAgents(): void
@@ -425,6 +433,14 @@ class booking extends CModule
 			'booking',
 			'\Bitrix\Booking\Internals\Integration\Catalog\SkuTypeChangeEventHandler',
 			'onBeforeConvertProductsType',
+		);
+
+		EventManager::getInstance()->unRegisterEventHandler(
+			'notifications',
+			'onMessageSuccessfullyUpdated',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Notifications\EventHandler',
+			'onMessageStatusUpdate'
 		);
 	}
 

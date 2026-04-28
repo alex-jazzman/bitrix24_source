@@ -7,6 +7,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
 	const { EventEmitter } = require('event-emitter');
 	const { Haptics } = require('haptics');
+	const { UIMenu } = require('layout/ui/menu');
 	const { NotifyManager } = require('notify-manager');
 	const { ActionsPanel } = require('layout/ui/detail-card/toolbar/actions-panel');
 	const { FloatingButton } = require('layout/ui/detail-card/floating-button');
@@ -2011,7 +2012,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		createMenu()
 		{
-			this.menu = new UI.Menu(() => {
+			this.menu = new UIMenu(() => {
 				return this.menuActionsProvider(
 					this,
 					{

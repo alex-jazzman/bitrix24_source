@@ -795,7 +795,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	          externalId = data.externalId,
 	          isTemplate = data.isTemplate,
 	          entityId = data.entityId,
-	          urls = data.urls;
+	          urls = data.urls,
+	          hasPlaceholders = data.hasPlaceholders;
 	        babelHelpers.classPrivateFieldGet(_this4, _documentSummary).addItem(uid, {
 	          uid: uid,
 	          id: id,
@@ -804,7 +805,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	          externalId: externalId,
 	          isTemplate: isTemplate,
 	          entityId: entityId,
-	          urls: urls
+	          urls: urls,
+	          hasPlaceholders: hasPlaceholders
 	        });
 	      });
 	      babelHelpers.classPrivateFieldSet(this, _documentData, documentData);

@@ -3,8 +3,26 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_draft,im_v2_lib_utils,im_v2_component_elements_listLoadingState,im_v2_component_list_items_recent,im_v2_const,im_v2_provider_service_recent,im_v2_lib_menu) {
+(function (exports,im_v2_component_elements_listLoadingState,im_v2_component_list_items_recent,im_v2_lib_draft,im_v2_lib_utils,im_v2_application_core,im_v2_const,im_v2_provider_service_recent,im_v2_lib_menu) {
 	'use strict';
+
+	class CollabService extends im_v2_provider_service_recent.BaseRecentService {
+	  getRestMethodName() {
+	    return im_v2_const.RestMethod.imV2RecentCollabTail;
+	  }
+	  saveRecentItems(recentItems) {
+	    return im_v2_application_core.Core.getStore().dispatch('recent/setCollection', {
+	      type: im_v2_const.RecentType.collab,
+	      items: recentItems
+	    });
+	  }
+	}
+
+	class CollabRecentMenu extends im_v2_lib_menu.RecentMenu {
+	  getMenuItems() {
+	    return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getMuteItem()];
+	  }
+	}
 
 	// @vue/component
 	const EmptyState = {
@@ -24,21 +42,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	class CollabService extends im_v2_provider_service_recent.BaseRecentService {
-	  getRestMethodName() {
-	    return im_v2_const.RestMethod.imV2RecentCollabTail;
-	  }
-	  getRecentSaveActionName() {
-	    return 'recent/setCollab';
-	  }
-	}
-
-	class CollabRecentMenu extends im_v2_lib_menu.RecentMenu {
-	  getMenuItems() {
-	    return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getMuteItem()];
-	  }
-	}
-
 	// @vue/component
 	const CollabList = {
 	  name: 'CollabList',
@@ -56,28 +59,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    collection() {
-	      return this.$store.getters['recent/getCollabCollection'];
-	    },
 	    preparedItems() {
-	      return [...this.collection].sort((a, b) => {
-	        const firstDate = this.$store.getters['recent/getSortDate'](a.dialogId);
-	        const secondDate = this.$store.getters['recent/getSortDate'](b.dialogId);
-	        return secondDate - firstDate;
+	      return this.$store.getters['recent/getSortedCollection']({
+	        type: im_v2_const.RecentType.collab
 	      });
 	    },
 	    pinnedItems() {
-	      return this.preparedItems.filter(item => {
-	        return item.pinned === true;
-	      });
+	      return this.preparedItems.filter(item => item.pinned === true);
 	    },
 	    generalItems() {
-	      return this.preparedItems.filter(item => {
-	        return item.pinned === false;
-	      });
+	      return this.preparedItems.filter(item => item.pinned === false);
 	    },
 	    isEmptyCollection() {
-	      return this.collection.length === 0;
+	      return this.preparedItems.length === 0;
 	    }
 	  },
 	  created() {
@@ -160,5 +154,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CollabList = CollabList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Const,BX.Messenger.v2.Service,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Service,BX.Messenger.v2.Lib));
 //# sourceMappingURL=collab-list.bundle.js.map

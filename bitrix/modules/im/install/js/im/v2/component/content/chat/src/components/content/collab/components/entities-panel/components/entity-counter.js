@@ -1,3 +1,5 @@
+import { CounterManager } from 'im.v2.lib.counter';
+
 // @vue/component
 export const EntityCounter = {
 	name: 'EntityCounter',
@@ -12,7 +14,7 @@ export const EntityCounter = {
 	{
 		preparedCounter(): string
 		{
-			return this.counter > 99 ? '99+' : this.counter.toString();
+			return CounterManager.formatCounter(this.counter);
 		},
 	},
 	template: `

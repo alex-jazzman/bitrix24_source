@@ -67,6 +67,7 @@
 }
 
 .sender-item-btn {
+	width: 26px;
 	margin: 0;
 	opacity: var(--ui-opacity-50);
 }

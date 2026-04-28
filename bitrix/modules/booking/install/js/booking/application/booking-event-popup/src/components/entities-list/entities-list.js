@@ -32,8 +32,7 @@ export const EntitiesList = {
 			default: false,
 		},
 	},
-	// eslint-disable-next-line flowtype/require-return-type
-	setup()
+	setup(): Object
 	{
 		return {
 			Outline,
@@ -58,7 +57,7 @@ export const EntitiesList = {
 		},
 		more(): string
 		{
-			return this.loc('BOOKING_EVENT_POPUP_ENTITIES_MORE_MSGVER_1', {
+			return this.loc('BOOKING_EVENT_POPUP_ENTITIES_MORE_MSGVER_2', {
 				'#COUNT#': (this.entities.length - this.names.length) || '',
 				'#RESOURCES#': this.names.join(', '),
 			});
@@ -126,7 +125,7 @@ export const EntitiesList = {
 						{ '--no-access': hasNoAccess }
 					]"
 				>
-					<RichLoc :text="more" placeholder="[button]" style="display: inline-block">
+					<RichLoc v-if="hasMore" :text="more" placeholder="[button]" style="display: inline-block">
 						<template #button="{ text }">
 							<span
 								v-if="hasMore"
@@ -137,6 +136,9 @@ export const EntitiesList = {
 							</span>
 						</template>
 					</RichLoc>
+					<text v-else>
+						{{ names.join(', ') }}
+					</text>
 				</div>
 			</div>
 		</div>

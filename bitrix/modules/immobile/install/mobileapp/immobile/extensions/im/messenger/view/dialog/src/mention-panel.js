@@ -2,6 +2,7 @@
  * @module im/messenger/view/dialog/mention-panel
  */
 jn.define('im/messenger/view/dialog/mention-panel', (require, exports, module) => {
+	const { mergeImmutable } = require('utils/object');
 	const { EventFilterType } = require('im/messenger/const');
 
 	const { StateManager } = require('im/messenger/view/lib/state-manager');
@@ -65,13 +66,56 @@ jn.define('im/messenger/view/dialog/mention-panel', (require, exports, module) =
 		 */
 		close()
 		{
-			const newState = { isOpen: false };
+			const newState = { isOpen: false, items: null };
 			const hasChanges = this.stateManager.hasChanges(newState);
 
 			if (this.isUiAvailable() && hasChanges)
 			{
 				this.stateManager.updateState(newState);
 				this.ui.close();
+			}
+		}
+
+		/**
+		 * @param {string} id
+		 * @param {Partial<MentionItem>} item
+		 */
+		update(id, item)
+		{
+			let hasChanges = false;
+			let newItem = { ...item };
+
+			const newStateItems = this.stateManager.state.items?.map((mention) => {
+				const needUpdate = id === mention.id;
+				if (needUpdate)
+				{
+					hasChanges = true;
+					newItem = mergeImmutable(mention, newItem);
+
+					return newItem;
+				}
+
+				return mention;
+			});
+
+			if (this.isUiAvailable() && hasChanges)
+			{
+				this.ui.update(id, newItem);
+				this.stateManager.updateState({ items: newStateItems });
+			}
+		}
+
+		/**
+		 * @param {string} id
+		 * @param {MentionAction} item
+		 */
+		animateAction(id, item)
+		{
+			const existingItem = this.stateManager.state.items.find((mention) => mention.id === id);
+
+			if (this.isUiAvailable() && existingItem)
+			{
+				this.ui.animateAction(id, item);
 			}
 		}
 

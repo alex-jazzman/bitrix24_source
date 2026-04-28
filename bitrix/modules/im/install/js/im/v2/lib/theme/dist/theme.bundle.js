@@ -13,65 +13,78 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  default: 'default',
 	  aiAssistant: 'ai-assistant'
 	});
+
+	/**
+	 * Synced with \Bitrix\Im\V2\Chat\Background\BackgroundId (selectable cases).
+	 */
+	const SelectableBackgroundId = Object.freeze({
+	  azure: 'azure',
+	  mint: 'mint',
+	  steel: 'steel',
+	  slate: 'slate',
+	  teal: 'teal',
+	  cornflower: 'cornflower',
+	  sky: 'sky',
+	  peach: 'peach',
+	  frost: 'frost'
+	});
 	const SelectableBackground = Object.freeze({
 	  // dark ones
-	  1: {
+	  [SelectableBackgroundId.azure]: {
 	    color: '#9fcfff',
 	    type: ThemeType.dark,
 	    pattern: ThemePattern.default
 	  },
-	  2: {
+	  [SelectableBackgroundId.mint]: {
 	    color: '#81d8bf',
 	    type: ThemeType.dark,
 	    pattern: ThemePattern.default
 	  },
-	  3: {
+	  [SelectableBackgroundId.steel]: {
 	    color: '#7fadd1',
 	    type: ThemeType.dark,
 	    pattern: ThemePattern.default
 	  },
-	  4: {
+	  [SelectableBackgroundId.slate]: {
 	    color: '#7a90b6',
 	    type: ThemeType.dark,
 	    pattern: ThemePattern.default
 	  },
-	  5: {
+	  [SelectableBackgroundId.teal]: {
 	    color: '#5f9498',
 	    type: ThemeType.dark,
 	    pattern: ThemePattern.default
 	  },
-	  6: {
+	  [SelectableBackgroundId.cornflower]: {
 	    color: '#799fe1',
 	    type: ThemeType.dark,
 	    pattern: ThemePattern.default
 	  },
 	  // light ones
-	  7: {
+	  [SelectableBackgroundId.sky]: {
 	    color: '#cfeefa',
 	    type: ThemeType.light,
 	    pattern: ThemePattern.default
 	  },
-	  9: {
+	  [SelectableBackgroundId.peach]: {
 	    color: '#efded3',
 	    type: ThemeType.light,
 	    pattern: ThemePattern.default
 	  },
-	  11: {
+	  [SelectableBackgroundId.frost]: {
 	    color: '#eff4f6',
 	    type: ThemeType.light,
 	    pattern: ThemePattern.default
 	  }
 	});
 
-	// should be synced with \Bitrix\Im\V2\Chat\Background\BackgroundId, can potentially be used externally
+	// should be synced with \Bitrix\Im\V2\Chat\Background\BackgroundId
 	const SpecialBackgroundId = {
 	  collab: 'collab',
 	  martaAI: 'martaAI',
 	  copilot: 'copilot',
 	  notifications: 'notifications'
 	};
-	const COPILOT_BACKGROUND_ID = 4;
-	const NOTIFICATIONS_BACKGROUND_ID = 11;
 	const SpecialBackground = {
 	  [SpecialBackgroundId.collab]: {
 	    color: '#76c68b',
@@ -83,18 +96,32 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    type: ThemeType.dark,
 	    pattern: ThemePattern.aiAssistant
 	  },
-	  [SpecialBackgroundId.copilot]: SelectableBackground[COPILOT_BACKGROUND_ID],
+	  [SpecialBackgroundId.copilot]: SelectableBackground[SelectableBackgroundId.slate],
 	  [SpecialBackgroundId.notifications]: {
 	    color: '#fafcfd',
 	    type: ThemeType.light,
 	    pattern: ThemePattern.default
 	  }
 	};
+
+	/**
+	 * Maps background IDs to image file (without extension).
+	 * Images are at /bitrix/js/im/images/chat-v2-background/{name}.png
+	 */
 	const ImageFileByBackgroundId = {
 	  [SpecialBackgroundId.collab]: 'collab-v2',
 	  [SpecialBackgroundId.martaAI]: 'ai-assistant',
-	  [SpecialBackgroundId.copilot]: COPILOT_BACKGROUND_ID.toString(),
-	  [SpecialBackgroundId.notifications]: NOTIFICATIONS_BACKGROUND_ID.toString()
+	  [SpecialBackgroundId.copilot]: '4',
+	  [SpecialBackgroundId.notifications]: '11',
+	  [SelectableBackgroundId.azure]: '1',
+	  [SelectableBackgroundId.mint]: '2',
+	  [SelectableBackgroundId.steel]: '3',
+	  [SelectableBackgroundId.slate]: '4',
+	  [SelectableBackgroundId.teal]: '5',
+	  [SelectableBackgroundId.cornflower]: '6',
+	  [SelectableBackgroundId.sky]: '7',
+	  [SelectableBackgroundId.peach]: '9',
+	  [SelectableBackgroundId.frost]: '11'
 	};
 
 	const IMAGE_FOLDER_PATH = '/bitrix/js/im/images/chat-v2-background';
@@ -104,13 +131,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	});
 	const ThemeManager = {
 	  isLightTheme() {
-	    const selectedBackgroundId = im_v2_application_core.Core.getStore().getters['application/settings/get'](im_v2_const.Settings.appearance.background);
-	    const selectedColorScheme = SelectableBackground[selectedBackgroundId];
+	    const backgroundId = im_v2_application_core.Core.getStore().getters['application/settings/get'](im_v2_const.Settings.appearance.background);
+	    const selectedColorScheme = SelectableBackground[backgroundId];
 	    return (selectedColorScheme == null ? void 0 : selectedColorScheme.type) === ThemeType.light;
 	  },
 	  isDarkTheme() {
-	    const selectedBackgroundId = im_v2_application_core.Core.getStore().getters['application/settings/get'](im_v2_const.Settings.appearance.background);
-	    const selectedColorScheme = SelectableBackground[selectedBackgroundId];
+	    const backgroundId = im_v2_application_core.Core.getStore().getters['application/settings/get'](im_v2_const.Settings.appearance.background);
+	    const selectedColorScheme = SelectableBackground[backgroundId];
 	    return (selectedColorScheme == null ? void 0 : selectedColorScheme.type) === ThemeType.dark;
 	  },
 	  getCurrentBackgroundStyle(dialogId) {
@@ -166,17 +193,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return SpecialBackgroundId.martaAI;
 	  }
 	  const chatBackground = im_v2_application_core.Core.getStore().getters['chats/getBackgroundId'](dialogId);
-	  const botBackground = im_v2_application_core.Core.getStore().getters['users/bots/getBackgroundId'](dialogId);
-	  if (SpecialBackgroundId[chatBackground]) {
-	    return SpecialBackgroundId[chatBackground];
+	  if (main_core.Type.isStringFilled(chatBackground)) {
+	    return chatBackground;
 	  }
-	  if (SpecialBackgroundId[botBackground]) {
-	    return SpecialBackgroundId[botBackground];
+	  const botBackground = im_v2_application_core.Core.getStore().getters['users/bots/getBackgroundId'](dialogId);
+	  if (main_core.Type.isStringFilled(botBackground)) {
+	    return botBackground;
 	  }
 	  return userBackground;
 	};
 
 	exports.SelectableBackground = SelectableBackground;
+	exports.SelectableBackgroundId = SelectableBackgroundId;
 	exports.SpecialBackground = SpecialBackgroundId;
 	exports.ThemeType = ThemeType;
 	exports.ThemeManager = ThemeManager;

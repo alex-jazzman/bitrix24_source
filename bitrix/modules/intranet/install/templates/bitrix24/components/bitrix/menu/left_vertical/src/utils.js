@@ -46,6 +46,11 @@ export default class Utils
 		;
 	}
 
+	static prefersReducedMotion(): boolean
+	{
+		return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	}
+
 	static refineUrl(originUrl: string): string
 	{
 		let url = String(originUrl).trim();

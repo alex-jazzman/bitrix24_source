@@ -5,8 +5,8 @@ return [
 		'apptheme',
 		'analytics',
 		'require-lazy',
-		'layout/pure-component',
 		'user-profile',
 		'utils/object',
+		'layout/pure-component',
 	],
 ];

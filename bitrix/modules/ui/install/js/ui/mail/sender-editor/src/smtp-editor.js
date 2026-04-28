@@ -1,11 +1,13 @@
 import { Loc, Tag, Dom, ready, ajax, Type, Event } from 'main.core';
 import { Layout } from 'ui.sidepanel.layout';
 import { LayoutForm } from 'ui.layout-form';
-import './css/style.css';
+import { SaveButton } from 'ui.buttons';
 import 'ui.hint';
 import 'ui.alerts';
-import { SaveButton } from "ui.buttons";
+
 import { AliasEditor } from './alias-editor';
+
+import './css/style.css';
 
 type SenderData = {
 	name: string,
@@ -16,6 +18,7 @@ type SenderData = {
 	protocol: string,
 	login: string,
 	limit: null | number,
+	useName: boolean,
 };
 
 type Options = {
@@ -67,6 +70,7 @@ export class SmtpEditor
 				onLoad: () => {
 					ready(() => {
 						new LayoutForm({ container: instance.limitSection });
+						new LayoutForm({ container: instance.senderSection });
 					});
 				},
 			},
@@ -146,6 +150,7 @@ export class SmtpEditor
 
 	#setFieldData(senderData: SenderData): void
 	{
+		this.useName.checked = senderData.useName;
 		this.nameField.value = senderData.name;
 		this.accessField.checked = senderData.isPublic;
 		this.emailField.value = senderData.email;
@@ -255,6 +260,7 @@ export class SmtpEditor
 
 		const data = {
 			id: this.senderId ?? null,
+			useName: this.useName.checked ? 'Y' : 'N',
 			name: this.nameField.value,
 			email: this.email,
 			smtp: {},
@@ -310,34 +316,41 @@ export class SmtpEditor
 
 	#createSenderSection(): void
 	{
-		const { root, nameField, accessField } = Tag.render`
+		const { root, senderUseNameCheckbox, nameField, accessField } = Tag.render`
 			<div class="ui-slider-section">
 				<div class="ui-slider-content-box">
 					<div class="ui-slider-heading-4">${Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_MAIN_SECTION_TITLE')}</div>
 					<div class="ui-form-row">
-						<div class="ui-ctl-top smtp-sender-name">
-							<div class="ui-form-label">${Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_NAME')}</div>
-							<span data-hint="${Loc.getMessage('UI_MAIL_SMTP_SLIDER_NAME_HINT')}"></span>
+						<div class="ui-form-label" data-form-row-hidden="">
+							<label class="ui-ctl ui-ctl-checkbox smtp-editor-limit-checkbox">
+								<input type="checkbox" class="ui-ctl-element" data-name="hasSenderName" ref="senderUseNameCheckbox">
+								<div class="ui-ctl-label-text">${Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_USE_SENDER_NAME')}</div>
+							</label>
 						</div>
-						<div class="ui-form-row-inline ui-ctl-w100">
+						<div class="ui-form-row-hidden">
 							<div class="ui-form-row">
+								<div class="ui-ctl-top">
+									<div class="ui-form-label">${Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_NAME')}</div>
+									<span data-hint="${Loc.getMessage('UI_MAIL_SMTP_SLIDER_NAME_HINT')}"></span>
+								</div>
 								<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
 									<input type="text" data-name="name" value="" class="ui-ctl-element" ref="nameField">
 								</div>
 							</div>
-							<div class="ui-form-row">
-								<label class="ui-ctl ui-ctl-checkbox">
-									<input type="checkbox" class="ui-ctl-element" data-name="access" ref="accessField">
-									<div class="ui-ctl-label-text">${Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_AVAILABLE_TOGGLE')}</div>
-									<span data-hint="${Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_AVAILABLE_TOGGLE_HINT')}"></span>
-								</label>
-							</div>
 						</div>
+					</div>
+					<div class="ui-form-row">
+						<label class="ui-ctl ui-ctl-checkbox">
+							<input type="checkbox" class="ui-ctl-element" data-name="access" ref="accessField">
+							<div class="ui-ctl-label-text">${Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_AVAILABLE_TOGGLE')}</div>
+							<span data-hint="${Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_AVAILABLE_TOGGLE_HINT')}"></span>
+						</label>
 					</div>
 				</div>
 			</div>
 		`;
 		this.senderSection = root;
+		this.useName = senderUseNameCheckbox;
 		this.nameField = nameField;
 		this.accessField = accessField;
 

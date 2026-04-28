@@ -1,6 +1,6 @@
 import type { MenuItemOptions } from 'ui.vue3.components.menu';
 
-import { MoveableBlock } from 'ui.block-diagram';
+import { MoveableBlock, Port } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
 
 import { IconDivider, IconButton } from '../../../../shared/ui';
@@ -15,7 +15,7 @@ import {
 	BlockTopTitle,
 } from '../../../../entities/blocks';
 import { DeleteBlockIconBtn, UpdatePublishedStatusLabel } from '../../../../features/blocks';
-import { isBlockActivated, getBlockUserTitle } from '../../../../entities/blocks/utils';
+import { isBlockActivated, getBlockUserTitle, validationInputOutputRule, normalyzeInputOutputConnection } from '../../../../entities/blocks/utils';
 
 import { BlockMediator } from '../../lib';
 
@@ -47,6 +47,7 @@ export const BlockComplex = {
 		BlockComplexPortPlaceholder,
 		UpdatePublishedStatusLabel,
 		BlockTopTitle,
+		Port,
 	},
 	props: {
 		/** @type Block */
@@ -60,6 +61,8 @@ export const BlockComplex = {
 		return {
 			iconSet: Outline,
 			blockMediator: new BlockMediator(),
+			validationInputOutputRule,
+			normalyzeInputOutputConnection,
 		};
 	},
 	computed:
@@ -79,7 +82,7 @@ export const BlockComplex = {
 	},
 	methods:
 	{
-		onAddRulePort(title: string): void
+		onAddPort(title: string): void
 		{
 			this.blockMediator.addComplexBlockPort(this.block, title);
 		},
@@ -102,7 +105,8 @@ export const BlockComplex = {
 					:disabled="isDisabled"
 					:deactivated="!isBlockActivated"
 					:hoverable="!isMakeNewConnection"
-					@dblclick.stop="blockMediator.showNodeSettings(block)"
+					@mouseup="blockMediator.handleMouseUp($event, block)"
+					@mousedown="blockMediator.handleMouseDown($event)"
 				>
 					<BlockLayout
 						:block="block"
@@ -146,12 +150,26 @@ export const BlockComplex = {
 										</template>
 									</BlockHeader>
 								</template>
-								<template #portPlaceholder="{ ports }">
+								<template #portPlaceholder="{ item, isOutput }">
 									<BlockComplexPortPlaceholder
-										:blockId="block.id"
-										:ports="ports"
-										@addPort="onAddRulePort($event)"
+										:title="item.title"
+										:isOutput="isOutput"
+										@addPort="onAddPort($event)"
 									/>
+								</template>
+								<template #port="{ item, disabled, position, index }">
+									<Port
+										:block="block"
+										:port="item"
+										:index="index"
+										:disabled="disabled"
+										:validationRules="[validationInputOutputRule]"
+										:normalyzeConnectionFn="normalyzeInputOutputConnection"
+										:position="position"
+									/>
+									<span class="block-complex__content_col-value-text">
+										{{ item.title }}
+									</span>
 								</template>
 							</BlockComplexContent>
 						</template>

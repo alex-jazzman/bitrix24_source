@@ -105,11 +105,11 @@ $MESS["CRM_COMMON_ADDRESS"] = "Адрес";
 $MESS["CRM_COMMON_REPEAT_SALE"] = "Повторные продажи";
 
 $MESS["CRM_COMMON_PERMISSIONS_SETTINGS_ITEM"] = 'Права доступа';
+
 $MESS["CRM_COMMON_READ_ACCESS_DENIED"] = "У Вас нет прав на просмотр этого элемента";
 $MESS["CRM_COMMON_ADD_ACCESS_DENIED"] = "У вас нет прав на добавление нового элемента сущности #ENTITY_DESCRIPTION#";
 
 $MESS["CRM_COMMON_UNTITLED"] = "Без названия";
-$MESS["CRM_COMMON_COPILOT"] = "CoPilot";
 
 $MESS["CRM_TYPE_TYPE_SETTINGS"] = "Настройки смарт-процесса";
 $MESS["CRM_TYPE_TYPE_FIELDS_SETTINGS"] = "Настройки полей";
@@ -144,20 +144,26 @@ $MESS["CRM_TYPE_ITEM_FIELD_SORT"] = "Сортировка";
 $MESS["CRM_TYPE_ITEM_FIELD_XML_ID"] = "Внешний код";
 $MESS["CRM_TYPE_ITEM_FIELD_CREATED_BY"] = "Кем создан";
 $MESS["CRM_TYPE_ITEM_FIELD_CREATED_BY_FEMININE"] = "Кем создана";
+$MESS["CRM_TYPE_ITEM_FIELD_CREATED_BY_NEUTRAL"] = "Кем создано";
 $MESS["CRM_TYPE_ITEM_FIELD_UPDATED_BY"] = "Кем обновлён";
 $MESS["CRM_TYPE_ITEM_FIELD_UPDATED_BY_FEMININE"] = "Кем обновлена";
+$MESS["CRM_TYPE_ITEM_FIELD_UPDATED_BY_NEUTRAL"] = "Кем обновлено";
 $MESS["CRM_TYPE_ITEM_FIELD_MOVED_BY"] = "Кем передвинут";
 $MESS["CRM_TYPE_ITEM_FIELD_MOVED_BY_V2"] = "Кто изменил стадию";
 $MESS["CRM_TYPE_ITEM_FIELD_MOVED_BY_FEMININE"] = "Кем передвинута";
+$MESS["CRM_TYPE_ITEM_FIELD_MOVED_BY_NEUTRAL"] = "Кем передвинуто";
 $MESS["CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_BY_MSGVER_1"] = "Автор последней активности в таймлайне";
 $MESS["CRM_TYPE_ITEM_FIELD_ASSIGNED_BY_ID"] = "Ответственный";
 $MESS["CRM_TYPE_ITEM_FIELD_CREATED_TIME"] = "Когда создан";
 $MESS["CRM_TYPE_ITEM_FIELD_CREATED_TIME_FEMININE"] = "Когда создана";
+$MESS["CRM_TYPE_ITEM_FIELD_CREATED_TIME_NEUTRAL"] = "Когда создано";
 $MESS["CRM_TYPE_ITEM_FIELD_UPDATED_TIME"] = "Когда обновлён";
 $MESS["CRM_TYPE_ITEM_FIELD_UPDATED_TIME_FEMININE"] = "Когда обновлена";
+$MESS["CRM_TYPE_ITEM_FIELD_UPDATED_TIME_NEUTRAL"] = "Когда обновлено";
 $MESS["CRM_TYPE_ITEM_FIELD_MOVED_TIME"] = "Когда передвинут";
 $MESS["CRM_TYPE_ITEM_FIELD_MOVED_TIME_V2"] = "Дата изменения стадии";
 $MESS["CRM_TYPE_ITEM_FIELD_MOVED_TIME_FEMININE"] = "Когда передвинута";
+$MESS["CRM_TYPE_ITEM_FIELD_MOVED_TIME_NEUTRAL"] = "Когда передвинуто";
 $MESS["CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_TIME_2"] = "Последняя активность";
 $MESS["CRM_TYPE_ITEM_FIELD_OPENED"] = "Доступно для всех";
 $MESS["CRM_TYPE_ITEM_FIELD_BEGINDATE"] = "Дата начала";
@@ -187,6 +193,7 @@ $MESS["CRM_TYPE_ITEM_FIELD_LOCATION"] = "Местоположение";
 $MESS["CRM_TYPE_ITEM_FIELD_ORIGINATOR_ID"] = "Внешний источник";
 $MESS["CRM_TYPE_ITEM_FIELD_ORIGIN_ID"] = "Идентификатор элемента во внешнем источнике";
 $MESS["CRM_TYPE_ITEM_FIELD_ORIGIN_VERSION"] = "Версия оригинала";
+$MESS["CRM_TYPE_ITEM_FIELD_FULL_NAME"] = "Полное имя";
 $MESS["CRM_TYPE_ITEM_FIELD_NAME"] = "Имя";
 $MESS["CRM_TYPE_ITEM_FIELD_SECOND_NAME"] = "Отчество";
 $MESS["CRM_TYPE_ITEM_FIELD_LAST_NAME"] = "Фамилия";

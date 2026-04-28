@@ -8,8 +8,9 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 global $APPLICATION;
 $APPLICATION->SetTitle("");
 
-if (Loader::includeModule('market')) {
-	$path = str_replace('/marketplace/', '/market/', Context::getCurrent()->getRequest()->getRequestUri());
+$request = Context::getCurrent()->getRequest();
+if ($request->get('useRestVersion') !== 'Y' &&  Loader::includeModule('market')) {
+	$path = str_replace('/marketplace/', '/market/', $request->getRequestUri());
 	LocalRedirect($path);
 }
 

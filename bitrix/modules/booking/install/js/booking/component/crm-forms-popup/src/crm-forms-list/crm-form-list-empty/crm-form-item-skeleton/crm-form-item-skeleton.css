@@ -7,8 +7,8 @@
 	flex-shrink: 0;
 	gap: 8px;
 	border-radius: 8px;
-	border: 1px solid rgba(0, 0, 0, 0.03);
-	background: #FFF;
+	border: var(--ui-border-width-thin) solid rgba(0, 0, 0, 0.03);
+	background: var(--ui-color-bg-content-primary);
 	padding: 0 9px;
 }
 

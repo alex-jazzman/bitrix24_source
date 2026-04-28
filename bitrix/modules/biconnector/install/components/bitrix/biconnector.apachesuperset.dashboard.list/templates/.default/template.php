@@ -48,6 +48,7 @@ Extension::load([
 	'biconnector.apache-superset-market-manager',
 	'biconnector.apache-superset-analytics',
 	'biconnector.dashboard-export-master',
+	'biconnector.dashboard-related-items-list',
 	'ui.dialogs.messagebox',
 	'ui.hint',
 	'ui.buttons',
@@ -61,6 +62,7 @@ Extension::load([
 	'ui.entity-selector',
 	'spotlight',
 	'ui.system.dialog',
+	'ui.system.typography',
 ]);
 
 if ($arResult['SHOW_DELETE_INSTANCE_WARNING']):
@@ -97,6 +99,20 @@ if ($arResult['SHOW_DELETE_INSTANCE_WARNING']):
 				'BICONNECTOR_SUPERSET_DASHBOARD_GRID_SECOND_DB_CONNECT_KEY_UPDATE',
 				[
 					'[link]' => "<a href=\"{$arResult['SECOND_DB_LINK_HELP']}\" target='_blank'>",
+					'[/link]' => '</a>',
+				],
+			)?>
+		</span>
+	</div>
+<?php endif; ?>
+
+<?php if ($arResult['SHOW_DATASET_TYPING_WARNING']): ?>
+	<div id="biconnector-dataset-typing-warning" class="ui-alert ui-alert-warning">
+		<span class="ui-alert-message">
+			<?= Loc::getMessage(
+				'BICONNECTOR_APACHE_SUPERSET_GRID_DATASET_TYPING_WARNING',
+				[
+					'[link]' => "<a id=\"biconnector-dataset-typing-warning-details\" href=\"#\">",
 					'[/link]' => '</a>',
 				],
 			)?>

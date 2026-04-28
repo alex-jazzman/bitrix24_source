@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Main\ModuleManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -64,7 +65,7 @@ return [
 	'oninit' => static function() {
 		return [
 			'lang_additional' => [
-				'AI_APP_COLLECTION_MARKET_LINK' => \Bitrix\Crm\Integration\AI\AIManager::getAiAppCollectionMarketLink(),
+				'AI_APP_COLLECTION_MARKET_LINK' => AIManager::getAiAppCollectionMarketLink(),
 			],
 		];
 	}

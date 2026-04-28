@@ -9,7 +9,7 @@ import { SiteTitlePreviewWidget } from '../fields/site-title-preview-widget';
 import { SiteThemePickerField } from '../fields/site-theme-picker-field';
 import { setPortalSettings, setPortalThemeSettings } from '../fields/site-utils';
 
-import { Tag, Loc, Runtime, Text, Dom, Type, Event } from 'main.core';
+import { Tag, Loc, Runtime, Text, Uri, Type, Event } from 'main.core';
 import 'ui.icon-set.main';
 import 'ui.icon-set.actions';
 
@@ -49,6 +49,21 @@ export class PortalPage extends BaseSettingsPage
 			this.getEventNamespace() + ':ThemePicker:Change',
 			(baseEvent: BaseEvent) => {
 				this.getAnalytic()?.addEventChangeTheme(baseEvent.data?.id);
+			}
+		);
+
+		EventEmitter.subscribe(
+			EventEmitter.GLOBAL_TARGET,
+			'onPullEvent-bitrix24',
+			(baseEvent: BaseEvent) => {
+				if (baseEvent.data[0] === 'domain_change')
+				{
+					const {domain} = baseEvent.data[1];
+					const newUri = new Uri(window.location.href);
+					newUri.setHost(domain);
+					const currentWindow = window.parent ?? window;
+					currentWindow.location.href = newUri;
+				}
 			}
 		);
 	}

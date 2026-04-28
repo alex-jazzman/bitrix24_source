@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.fonts.opensans',
 	'ajax',
 	'popup',
+	'intranet.old-interface.intranet-common',
 ]);
 
 global $APPLICATION;

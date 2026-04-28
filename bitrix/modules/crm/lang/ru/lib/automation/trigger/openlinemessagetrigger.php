@@ -4,3 +4,6 @@ $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_MESSAGE_NAME'] = 'Каждое сообщ
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_MESSAGE_NAME_1'] = 'Отследить активность клиента в чате';
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_MESSAGE_DESCRIPTION'] = 'Меняет стадию на каждое поступающее сообщение от клиента';
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_MESSAGE_PROPERTY_MSG_TEXT'] = 'Текст сообщения содержит';
+
+$MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_MESSAGE_NODE_NAME'] = 'Отследить активность клиента в чате';
+$MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_MESSAGE_NODE_DESCRIPTION'] = 'Запускает процесс при каждом поступившем сообщении от клиента';

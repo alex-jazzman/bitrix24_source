@@ -1,7 +1,7 @@
 /**
- * @module intranet/qualification/api
+ * @module intranet/qualification/src/api
  */
-jn.define('intranet/qualification/api', (require, exports, module) => {
+jn.define('intranet/qualification/src/api', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	function getQualificationData()

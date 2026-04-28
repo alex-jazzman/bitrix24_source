@@ -3,10 +3,18 @@
  */
 jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 	const { Type } = require('type');
-	const { CounterType } = require('im/messenger/const');
+	const { DialogType, RecentTab } = require('im/messenger/const');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserHelper, CounterHelper } = require('im/messenger/lib/helper');
+	const {
+		NewOwnPullMessageAction,
+		NewParticipantPullMessageAction,
+	} = require('im/messenger/lib/counters/update-system/action/new-message/pull');
+	const { DeleteMessagePullAction } = require('im/messenger/lib/counters/update-system/action/delete-message/pull');
+	const { ConfirmationReadMessageAction } = require('im/messenger/lib/counters/update-system/action/read-message/server');
+	const { ReadMessagePullAction } = require('im/messenger/lib/counters/update-system/action/read-message/pull');
 
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
@@ -20,10 +28,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		/** @type {UuidManager} */
 		#uuidManager;
 
-		/**
-		 * @param {CounterStorageWriter} storageWriter
-		 */
-		constructor(storageWriter)
+		constructor()
 		{
 			super({});
 
@@ -36,36 +41,43 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		 */
 		handleMessage(params, extra, command)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
 			logger.log('handleMessage', params, extra, command);
 
 			const {
 				chatId,
 				counter,
-				type = CounterType.chat,
 				parentChatId = 0,
 				message,
+				recentConfig,
+				userBlockChat,
 			} = params;
 
-			const templateMessageId = message.templateId;
-
-			if (this.#uuidManager.hasActionUuid(templateMessageId))
-			{
-				return;
-			}
-
-			this.#setCounter({
+			/** @type {CounterModelState} */
+			const counterState = {
 				chatId,
 				counter,
-				type,
 				parentChatId,
-			})
-				.catch((error) => {
-					logger.error('handleMessage error', error);
+				recentSections: recentConfig.sections,
+				isMuted: CounterHelper.getMutedByMuteList(userBlockChat[chatId]),
+			};
+
+			const currentUserId = serviceLocator.get('core').getUserId();
+
+			const action = message.senderId === currentUserId
+				? new NewOwnPullMessageAction({ chatId, counterState })
+				: new NewParticipantPullMessageAction({
+					chatId,
+					incomingCounterState: counterState,
+					previousMessageId: message.prevId,
+					messageId: message.id,
+					templateId: message.templateId,
 				});
+
+			serviceLocator.get('counters-update-system').dispatch(action)
+				.catch((error) => {
+					logger.error('handleMessage: dispatch action error', error);
+				})
+			;
 		}
 
 		/**
@@ -74,10 +86,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		 */
 		handleMessageChat(params, extra, command)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
 			logger.log('handleMessageChat', params, extra, command);
 
 			if (this.#isSharedEvent(extra))
@@ -87,21 +95,41 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				return;
 			}
 
-			const chat = params.chat[params.chatId];
+			const {
+				chatId,
+				counter,
+				message,
+				recentConfig,
+			} = params;
+
+			const chat = params.chat[chatId];
 
 			/** @type {CounterModelState} */
 			const counterState = {
-				chatId: params.chatId,
-				counter: params.counter,
-				type: params.counterType,
+				chatId,
+				counter,
 				parentChatId: chat.parent_chat_id,
-				disabled: CounterHelper.getDisabledByMuteList(chat.mute_list),
+				isMuted: CounterHelper.getMutedByMuteList(chat.mute_list),
+				recentSections: recentConfig.sections,
 			};
 
-			this.#setCounter(counterState)
-				.catch((error) => {
-					logger.error('handleMessageChat error', error);
+			const currentUserId = serviceLocator.get('core').getUserId();
+
+			const action = message.senderId === currentUserId
+				? new NewOwnPullMessageAction({ chatId, counterState })
+				: new NewParticipantPullMessageAction({
+					chatId,
+					incomingCounterState: counterState,
+					previousMessageId: message.prevId,
+					messageId: message.id,
+					templateId: message.templateId,
 				});
+
+			serviceLocator.get('counters-update-system').dispatch(action)
+				.catch((error) => {
+					logger.error('handleMessage: dispatch action error', error);
+				})
+			;
 		}
 
 		/**
@@ -109,10 +137,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		 */
 		handleMessageDeleteV2(params, extra, command)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
 			logger.log('handleMessageDeleteV2', params, extra, command);
 
 			if (this.#isSharedEvent(extra))
@@ -123,82 +147,190 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			const {
 				chatId,
 				counter,
-				counterType,
-			} = params;
-
-			let {
 				parentChatId = 0,
+				recentConfig,
+				muted,
+				unread,
+				messages,
 			} = params;
 
-			if (counterType === CounterType.comment) // in this event for comment chat property "type" is equal 'chat'
-			{
-				const commentCounterState = this.#getStoredState(chatId);
-
-				parentChatId = commentCounterState?.parentChatId ?? 0;
-			}
-
-			this.#setCounter({
+			const action = new DeleteMessagePullAction({
 				chatId,
-				counter,
-				type: counterType,
-				parentChatId,
-			})
+				incomingCounterState: {
+					chatId,
+					counter,
+					parentChatId,
+					recentSections: recentConfig.sections,
+					isMuted: muted,
+					isMarkedAsUnread: unread,
+				},
+				deletedMessageIds: messages.map((message) => message.id),
+			});
+
+			serviceLocator.get('counters-update-system').dispatch(action)
 				.catch((error) => {
-					logger.error('handleMessageDeleteV2 error', error);
+					logger.error('handleMessageDeleteV2: dispatch action error', error);
 				});
 		}
 
 		async handleReadMessage(params, extra, command)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
-
 			if (this.#isSharedEvent(extra))
 			{
 				return;
 			}
 			logger.log('handleReadMessage', params, extra, command);
 
+			const {
+				chatId,
+				counter,
+				lastId,
+				recentConfig,
+				muted,
+				unread,
+				parentChatId,
+			} = params;
+
+			// If actionUuid is registered, this is confirmation of our local action
 			if (this.#isLocalActionUuid(extra))
 			{
-				logger.log('handleReadMessage. This event sent by current device. Skip event');
+				const action = new ConfirmationReadMessageAction({
+					chatId,
+					actionUuid: extra.action_uuid,
+					lastReadId: lastId,
+					counter,
+				});
+
+				serviceLocator.get('counters-update-system').dispatch(action)
+					.catch((error) => {
+						logger.error('handleReadMessage: dispatch confirmation error', error);
+					});
+
+				this.#uuidManager.removeActionUuid(extra.action_uuid);
 
 				return;
 			}
+
+			const counterState = {
+				chatId,
+				counter,
+				parentChatId,
+				recentSections: recentConfig.sections,
+				isMuted: muted,
+				isMarkedAsUnread: unread,
+			};
+
+			const repository = serviceLocator.get('counters-update-system').getChatCounterRepository();
+			if (repository.hasPendingOperations(chatId))
+			{
+				const action = new ReadMessagePullAction({
+					chatId,
+					incomingCounterState: counterState,
+					lastReadId: lastId,
+				});
+
+				serviceLocator.get('counters-update-system').dispatch(action)
+					.catch((error) => {
+						logger.error('handleReadMessage: dispatch pull action error', error);
+					});
+
+				return;
+			}
+
+			this.#setCounter(counterState)
+				.catch((error) => {
+					logger.error('handleReadMessage: setCounter error', error);
+				});
+		}
+
+		handleReadMessageChat(params, extra, command)
+		{
+			if (this.#isSharedEvent(extra))
+			{
+				return;
+			}
+			logger.log('handleReadMessageChat', params, extra, command);
 
 			const {
 				chatId,
 				counter,
+				lastId,
+				recentConfig,
+				muted,
+				unread,
+				parentChatId,
 			} = params;
 
-			/** @type {CounterState} */
-			const counterState = {
-				chatId,
-				counter,
-				type: CounterType.chat,
-				parentChatId: 0,
-			};
-
-			this.#setCounter(counterState)
-				.catch((error) => {
-					logger.error('handleReadMessage error', error);
-				});
-		}
-
-		handleReadAllChats(params, extra, command)
-		{
-			if (this.interceptEvent(extra))
+			// If actionUuid is registered, this is confirmation of our local action
+			if (this.#isLocalActionUuid(extra))
 			{
+				const action = new ConfirmationReadMessageAction({
+					chatId,
+					actionUuid: extra.action_uuid,
+					lastReadId: lastId,
+					counter,
+				});
+
+				serviceLocator.get('counters-update-system').dispatch(action)
+					.catch((error) => {
+						logger.error('handleReadMessageChat: dispatch confirmation error', error);
+					});
+
+				this.#uuidManager.removeActionUuid(extra.action_uuid);
+
 				return;
 			}
 
-			logger.info('handleReadAllChats', params);
-			this.#clearCounters()
-				.catch((error) => {
-					logger.error('handleReadAllChats error', error);
+			// PULL from another device
+			const counterState = {
+				chatId,
+				counter,
+				parentChatId,
+				recentSections: recentConfig.sections,
+				isMuted: muted,
+				isMarkedAsUnread: unread,
+			};
+
+			// Check if we have pending operations - if yes, resolve conflict
+			const repository = serviceLocator.get('counters-update-system').getChatCounterRepository();
+			if (repository.hasPendingOperations(chatId))
+			{
+				const action = new ReadMessagePullAction({
+					chatId,
+					incomingCounterState: counterState,
+					lastReadId: lastId,
 				});
+
+				serviceLocator.get('counters-update-system').dispatch(action)
+					.catch((error) => {
+						logger.error('handleReadMessageChat: dispatch pull action error', error);
+					});
+
+				return;
+			}
+
+			// No pending operations - simple counter update
+			this.#setCounter(counterState)
+				.catch((error) => {
+					logger.error('handleReadMessageChat: setCounter error', error);
+				});
+		}
+
+		async handleReadAllChats(params, extra, command)
+		{
+			logger.info('handleReadAllChats', params, extra, command);
+
+			// Use system to clear counters (Vuex + database, except openlines)
+			await serviceLocator.get('counters-update-system').readAllChats()
+				.catch((error) => {
+					logger.error('handleReadAllChats: readAllChats error', error);
+				});
+
+			// Unregister action if it was ours
+			if (extra.action_uuid && this.#isLocalActionUuid(extra))
+			{
+				this.#uuidManager.removeActionUuid(extra.action_uuid);
+			}
 		}
 
 		/**
@@ -208,70 +340,25 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		 */
 		handleReadAllChatsByType(params, extra, command)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
+			logger.info('handleReadAllChatsByType', params);
 
 			const { type } = params;
 
-			logger.info('handleReadAllChatsByType', params);
-			this.#clearCountersByDialogType(type)
+			if (type !== DialogType.tasksTask)
+			{
+				logger.warn('handleReadAllChatsByType: unsupported type', type);
+
+				return;
+			}
+
+			serviceLocator.get('counters-update-system').readByRecentSection(RecentTab.tasksTask)
 				.catch((error) => {
 					logger.error('handleReadAllChatsByType error', error);
 				});
 		}
 
-		handleReadMessageChat(params, extra, command)
+		handleReadChildren(params, extra, command)
 		{
-			logger.log(params, extra, command);
-
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
-
-			if (this.#isSharedEvent(extra))
-			{
-				return;
-			}
-			logger.log('handleReadMessageChat', params, extra, command);
-
-			if (this.#isLocalActionUuid(extra))
-			{
-				logger.log('handleReadMessageChat. This event sent by current device. Skip event');
-
-				return;
-			}
-
-			const {
-				chatId,
-				counter,
-				counterType,
-				parentChatId,
-			} = params;
-
-			/** @type {CounterState} */
-			const counterState = {
-				chatId,
-				counter,
-				parentChatId,
-				type: counterType,
-			};
-
-			this.#setCounter(counterState)
-				.catch((error) => {
-					logger.error('handleReadMessageChat error', error);
-				});
-		}
-
-		handleReadAllChannelComments(params, extra, command)
-		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
-
 			if (this.#isSharedEvent(extra))
 			{
 				return;
@@ -280,18 +367,15 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			logger.log(`${this.constructor.name}.handleReadAllChannelComments`, params, extra, command);
 
 			const { chatId } = params;
-			this.store.dispatch('counterModel/readChildChatsCounters', { parentChatId: chatId })
+			serviceLocator.get('counters-update-system').readChildren(chatId)
 				.catch((error) => {
-					logger.error('handleReadAllChannelComments error', error);
-				});
+					logger.error('handleReadChildren error', error);
+				})
+			;
 		}
 
 		handleUnreadMessage(params, extra, command)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
 			logger.log(`${this.constructor.name}.handleUnreadMessage`, params, extra, command);
 
 			if (this.#isLocalActionUuid(extra))
@@ -304,14 +388,12 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			const {
 				chatId,
 				counter,
-				type = CounterType.chat,
 				parentChatId = 0,
 			} = params;
 
 			this.#setCounter({
 				chatId,
 				counter,
-				type,
 				parentChatId,
 			})
 				.catch((error) => {
@@ -321,10 +403,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 		handleUnreadMessageChat(params, extra, command)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
 			logger.log(`${this.constructor.name}.handleUnreadMessageChat`, params, extra, command);
 
 			if (this.#isLocalActionUuid(extra))
@@ -337,7 +415,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			const {
 				chatId,
 				counter,
-				counterType,
 			} = params;
 
 			const storedEvent = this.#getStoredState(chatId);
@@ -345,7 +422,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			this.#setCounter({
 				chatId,
 				counter,
-				type: counterType,
 				parentChatId: storedEvent?.parentChatId ?? 0,
 			})
 				.catch((error) => {
@@ -359,11 +435,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		 */
 		handleChatUnread(params, extra)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
-
 			if (this.#isSharedEvent(extra))
 			{
 				return;
@@ -371,31 +442,30 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			logger.log(`${this.constructor.name}.handleChatUnread`, params, extra);
 
 			const {
+				active: isMarkedAsUnread,
 				chatId,
 				counter,
-				counterType,
+				muted: isMuted,
+				parentChatId,
+				recentConfig,
 			} = params;
-
-			const storedEvent = this.#getStoredState(chatId);
 
 			this.#setCounter({
 				chatId,
 				counter,
-				type: counterType,
-				parentChatId: storedEvent?.parentChatId ?? 0,
+				parentChatId,
+				isMarkedAsUnread,
+				isMuted,
+				recentSections: recentConfig.sections,
 			})
 				.catch((error) => {
 					logger.error('handleChatUnread error', error);
 				});
 		}
 
-		handleChatDelete(params, extra, command)
+		async handleChatDelete(params, extra, command)
 		{
 			logger.log(`${this.constructor.name}.handleChatDelete`, params, extra, command);
-			/*
-			 intercept event doesn't need
-			 the event contains the deletion of the comment chat, which is not included in the synchronization.
-			 */
 
 			if (this.#isSharedEvent(extra))
 			{
@@ -404,18 +474,14 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 			const { chatId } = params;
 
-			this.#deleteCounter(chatId)
+			await serviceLocator.get('counters-update-system').deleteCountersByChatIdList([chatId])
 				.catch((error) => {
-					logger.error('handleChatDelete error', error);
+					logger.error('handleChatDelete: deleteCountersByChatIdList error', error);
 				});
 		}
 
-		handleChatHide(params, extra, command)
+		async handleChatHide(params, extra, command)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
 			logger.log(`${this.constructor.name}.handleChatHide`, params, extra, command);
 
 			if (this.#isSharedEvent(extra))
@@ -423,20 +489,48 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				return;
 			}
 
-			const { chatId } = params;
+			const { chatId, recentConfigToHide } = params;
 
-			this.#deleteCounter(chatId)
-				.catch((error) => {
-					logger.error('handleChatHide error', error);
-				});
-		}
+			const currentCounterState = this.#getStoredState(chatId);
 
-		handleChatUserLeave(params, extra, command)
-		{
-			if (this.interceptEvent(extra))
+			if (!currentCounterState)
 			{
+				logger.warn('handleChatHide: counter state not found for chatId', chatId);
+
 				return;
 			}
+
+			const sectionsToHide = recentConfigToHide?.sections || [];
+			if (!Type.isArrayFilled(sectionsToHide))
+			{
+				logger.warn('handleChatHide: no sections to hide', chatId);
+
+				return;
+			}
+
+			const updatedRecentSections = (currentCounterState.recentSections || [])
+				.filter((section) => !sectionsToHide.includes(section));
+
+			if (!Type.isArrayFilled(updatedRecentSections))
+			{
+				await serviceLocator.get('counters-update-system').deleteCountersByChatIdList([chatId])
+					.catch((error) => {
+						logger.error('handleChatHide: deleteCountersByChatIdList error', error);
+					});
+
+				return;
+			}
+
+			const updatedCounterState = {
+				...currentCounterState,
+				recentSections: updatedRecentSections,
+			};
+
+			await this.#setCounter(updatedCounterState);
+		}
+
+		async handleChatUserLeave(params, extra, command)
+		{
 			logger.log(`${this.constructor.name}.handleChatUserLeave`, params, extra, command);
 
 			if (this.#isSharedEvent(extra))
@@ -454,34 +548,32 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				return;
 			}
 
-			this.#deleteCounter(chatId)
+			await serviceLocator.get('counters-update-system').deleteCountersByChatIdList([chatId])
 				.catch((error) => {
-					logger.error('handleChatUserLeave error', error);
+					logger.error('handleChatUserLeave: deleteCountersByChatIdList error', error);
 				});
 		}
 
 		handleChatMuteNotify(params, extra, command)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
 			logger.log(`${this.constructor.name}.handleChatMuteNotify`, params, extra, command);
 
 			const {
 				chatId,
 				counter,
-				counterType,
-				muted: disabled,
+				muted,
 				parentChatId = 0,
+				recentConfig,
+				unread,
 			} = params;
 
 			this.#setCounter({
 				chatId,
 				counter,
 				parentChatId,
-				disabled,
-				type: counterType,
+				isMuted: muted,
+				recentSections: recentConfig.sections,
+				isMarkedAsUnread: unread,
 			})
 				.catch((error) => {
 					logger.error('handleChatMuteNotify error', error);
@@ -494,16 +586,12 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		 */
 		handleRecentUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(extra))
-			{
-				return;
-			}
 			logger.log(`${this.constructor.name}.handleRecentUpdate`, params, extra, command);
 
 			const {
 				counter,
-				counterType,
 				chat,
+				recentConfig,
 			} = params;
 
 			const {
@@ -512,14 +600,14 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				mute_list: muteList,
 			} = chat;
 
-			const disabled = CounterHelper.getDisabledByMuteList(muteList);
+			const isMuted = CounterHelper.getMutedByMuteList(muteList);
 
 			this.#setCounter({
 				chatId,
 				counter,
 				parentChatId,
-				disabled,
-				type: counterType,
+				isMuted,
+				recentSections: recentConfig.sections,
 			});
 		}
 
@@ -539,26 +627,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			logger.log(`${this.constructor.name}.setCounter`, counterState);
 
-			return this.store.dispatch('counterModel/setList', { counterList: [counterState] });
-		}
-
-		async #deleteCounter(chatId)
-		{
-			return this.store.dispatch('counterModel/delete', { chatIdList: [chatId] });
-		}
-
-		async #clearCounters()
-		{
-			return this.store.dispatch('counterModel/clear');
-		}
-
-		async #clearCountersByDialogType(dialogType)
-		{
-			const counterType = CounterHelper.getCounterTypeByDialogType(dialogType);
-
-			return this.store.dispatch('counterModel/clearByType', {
-				type: counterType,
-			});
+			return serviceLocator.get('counters-update-system').updateCounterState(counterState);
 		}
 
 		/**

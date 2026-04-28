@@ -48,6 +48,7 @@ $APPLICATION->IncludeComponent(
 		'TYPE' => 'details',
 		'SCRIPTS' => [
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processRemoval();',
+			'DETACH_OPEN_LINE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processDetachOpenLine();',
 		],
 		'ANALYTICS' => [
 			'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,

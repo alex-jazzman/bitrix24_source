@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_provider_service_chat,ui_entitySelector,im_v2_lib_channel,intranet_invitationInput,main_core_events,im_v2_application_core,im_v2_lib_helpdesk,im_v2_component_elements_scrollWithGradient,ui_infoHelper,im_v2_lib_permission,im_v2_lib_feature,im_v2_component_elements_button,im_v2_lib_rest,im_v2_lib_utils,intranet_languages,main_core,ui_vue3_directives_hint,main_popup,im_v2_component_elements_popup,im_v2_lib_soundNotification,im_v2_provider_service_sending,im_public,im_v2_const,im_v2_lib_analytics,im_v2_component_search,im_v2_lib_notifier) {
+(function (exports,im_v2_provider_service_chat,ui_entitySelector,im_v2_lib_channel,intranet_invitationInput,main_core_events,im_v2_application_core,im_v2_lib_helpdesk,im_v2_component_elements_scrollWithGradient,ui_infoHelper,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_feature,im_v2_component_elements_button,intranet_languages,main_core,ui_vue3_directives_hint,im_v2_provider_service_collabInvitation,main_popup,im_v2_component_elements_popup,im_v2_lib_soundNotification,im_v2_provider_service_sending,im_public,im_v2_const,im_v2_lib_analytics,im_v2_component_search,im_v2_lib_notifier) {
 	'use strict';
 
 	const SEARCH_ENTITY_ID = 'user';
@@ -298,7 +298,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.extendChat(members, showHistory);
 	      } else {
 	        members.push(this.dialogId, im_v2_application_core.Core.getUserId());
-	        void this.createChat(members);
+	        void this.extendToGroupChat(members);
 	      }
 	    },
 	    extendChat(members, showHistory) {
@@ -315,16 +315,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.$emit('close');
 	      });
 	    },
-	    async createChat(members) {
+	    async extendToGroupChat(members) {
 	      this.isLoading = true;
 	      const {
 	        newDialogId
-	      } = await this.chatService.createChat({
-	        title: null,
-	        description: null,
+	      } = await this.chatService.extendToGroupChat({
 	        members,
-	        ownerId: im_v2_application_core.Core.getUserId(),
-	        isPrivate: true
+	        ownerId: im_v2_application_core.Core.getUserId()
 	      }).catch(() => {
 	        this.isLoading = false;
 	      });
@@ -348,46 +345,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		</MessengerPopup>
 	`
 	};
-
-	class CollabInvitationService {
-	  addEmployees({
-	    dialogId,
-	    members
-	  }) {
-	    const payload = {
-	      data: {
-	        dialogId,
-	        members: im_v2_lib_utils.Utils.user.prepareSelectorIds(members)
-	      }
-	    };
-	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.socialnetworkMemberAdd, payload).catch(([error]) => {
-	      console.error('CollabInvitationService: add employee error', error);
-	    });
-	  }
-	  copyLink(collabId, userLang) {
-	    const payload = {
-	      data: {
-	        collabId,
-	        userLang
-	      }
-	    };
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.intranetInviteGetLinkByCollabId, payload).catch(([error]) => {
-	      console.error('CollabInvitationService: getting invite link error', error);
-	      throw error;
-	    });
-	  }
-	  updateLink(collabId) {
-	    const payload = {
-	      data: {
-	        collabId
-	      }
-	    };
-	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.intranetInviteRegenerateLinkByCollabId, payload).catch(([error]) => {
-	      console.error('CollabInvitationService: updating invite link error', error);
-	      throw error;
-	    });
-	  }
-	}
 
 	// @vue/component
 	const CopyInviteLink = {
@@ -456,7 +413,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      try {
 	        this.isCopyingInviteLink = true;
-	        const link = await new CollabInvitationService().copyLink(this.collabId, this.langCode);
+	        const link = await new im_v2_provider_service_collabInvitation.CollabInvitationService().copyLink(this.collabId, this.langCode);
 	        await im_v2_lib_utils.Utils.text.copyToClipboard(link);
 	        im_v2_lib_notifier.Notifier.onCopyLinkComplete();
 	      } catch {
@@ -472,7 +429,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      try {
 	        this.isUpdatingLink = true;
-	        await new CollabInvitationService().updateLink(this.collabId);
+	        await new im_v2_provider_service_collabInvitation.CollabInvitationService().updateLink(this.collabId);
 	        im_v2_lib_notifier.Notifier.collab.onUpdateLinkComplete();
 	      } catch {
 	        im_v2_lib_notifier.Notifier.onDefaultError();
@@ -897,7 +854,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    inviteMembers({
 	      members
 	    }) {
-	      new CollabInvitationService().addEmployees({
+	      new im_v2_provider_service_collabInvitation.CollabInvitationService().addEmployees({
 	        dialogId: this.dialogId,
 	        members
 	      });
@@ -1083,15 +1040,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      });
 	      this.searchQuery = query.trim().toLowerCase();
 	    },
-	    isNotes(dialogId) {
-	      return this.$store.getters['chats/isNotes'](dialogId);
+	    isSelfChat(dialogId) {
+	      return this.$store.getters['chats/isSelfChat'](dialogId);
 	    },
-	    async forwardToNotes(forwardDialogId) {
+	    async forwardToSelfChat(forwardDialogId) {
 	      await im_v2_provider_service_sending.SendingService.getInstance().forwardMessages({
 	        forwardIds: this.messagesIds,
 	        dialogId: forwardDialogId
 	      });
-	      im_v2_lib_notifier.Notifier.message.onForwardNotesComplete(this.messagesIds);
+	      im_v2_lib_notifier.Notifier.message.onForwardSelfChatComplete(this.messagesIds);
 	      im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
 	    },
 	    async onSelectItem(event) {
@@ -1101,10 +1058,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.getEmitter().emit(im_v2_const.EventType.dialog.closeBulkActionsMode, {
 	        dialogId: this.dialogId
 	      });
-	      const isNotesForward = this.isNotes(forwardDialogId);
-	      const isNotesOpen = this.isNotes(this.dialogId);
-	      if (isNotesForward && !isNotesOpen) {
-	        void this.forwardToNotes(forwardDialogId);
+	      const isSelfChatForward = this.isSelfChat(forwardDialogId);
+	      const isSelfChatOpen = this.isSelfChat(this.dialogId);
+	      if (isSelfChatForward && !isSelfChatOpen) {
+	        void this.forwardToSelfChat(forwardDialogId);
 	      } else {
 	        await im_public.Messenger.openChat(forwardDialogId);
 	        this.getEmitter().emit(im_v2_const.EventType.textarea.insertForward, {
@@ -1206,5 +1163,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.AddToCollab = AddToCollab;
 	exports.ForwardPopup = ForwardPopup;
 
-}((this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}),BX.Messenger.v2.Service,BX.UI.EntitySelector,BX.Messenger.v2.Lib,BX.Intranet,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Intranet,BX,BX.Vue3.Directives,BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}),BX.Messenger.v2.Service,BX.UI.EntitySelector,BX.Messenger.v2.Lib,BX.Intranet,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Intranet,BX,BX.Vue3.Directives,BX.Messenger.v2.Service,BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

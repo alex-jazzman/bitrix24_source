@@ -91,6 +91,16 @@ export const ChatNotifier = {
 		}));
 	},
 
+	onUserAddComplete(): void
+	{
+		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_USER_ADD_COMPLETE'));
+	},
+
+	onUserAddError(): void
+	{
+		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_USER_ADD_ERROR'));
+	},
+
 	onCopyIdComplete()
 	{
 		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_COPY_ID_COMPLETE'));

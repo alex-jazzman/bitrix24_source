@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,ui_vue3,booking_component_mixin_locMixin,booking_model_skuResourcesEditor,booking_component_uiTabs,booking_lib_currencyFormat,booking_component_avatar,booking_lib_sidePanelInstance,booking_provider_service_catalogServiceSkuService,main_core,booking_lib_deepToRaw,ui_vue3_components_counter,ui_cnt,booking_component_button,main_core_events,ui_entitySelector,ui_vue3_vuex,ui_iconSet_api_vue,booking_core,booking_const,booking_provider_service_resourceDialogService) {
+(function (exports,ui_vue3,booking_component_mixin_locMixin,booking_model_resources,booking_model_resourceTypes,booking_model_skuResourcesEditor,booking_component_uiTabs,booking_lib_currencyFormat,booking_component_avatar,booking_lib_sidePanelInstance,booking_provider_service_catalogServiceSkuService,main_core,booking_core,booking_lib_deepToRaw,booking_provider_service_resourceDialogService,ui_vue3_components_counter,ui_cnt,booking_component_button,main_core_events,ui_entitySelector,ui_vue3_vuex,ui_iconSet_api_vue,booking_const) {
 	'use strict';
 
 	// @vue/component
@@ -27,7 +27,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    UiButton: booking_component_button.Button
 	  },
 	  emits: ['click'],
-	  // eslint-disable-next-line flowtype/require-return-type
 	  setup() {
 	    return {
 	      ButtonSize: booking_component_button.ButtonSize,
@@ -53,7 +52,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    UiButton: booking_component_button.Button
 	  },
 	  emits: ['click'],
-	  // eslint-disable-next-line flowtype/require-return-type
 	  setup() {
 	    return {
 	      ButtonSize: booking_component_button.ButtonSize,
@@ -86,13 +84,18 @@ this.BX.Booking = this.BX.Booking || {};
 	      required: true
 	    }
 	  },
+	  computed: {
+	    skusResourcesEditorOptions() {
+	      return this.$store.state[booking_const.Model.SkuResourcesEditor].options;
+	    }
+	  },
 	  methods: {
 	    closeEditor() {
 	      main_core_events.EventEmitter.emit(booking_const.EventName.CloseSkuResourcesEditor);
 	    },
 	    async save() {
 	      if (main_core.Type.isFunction(this.params.save)) {
-	        if ((await this.validate()).invalid) {
+	        if (!this.skusResourcesEditorOptions.canBeEmpty && (await this.validate()).invalid) {
 	          return;
 	        }
 	        this.params.save({
@@ -106,8 +109,8 @@ this.BX.Booking = this.BX.Booking || {};
 	        invalidSku: false,
 	        invalidResource: false
 	      });
-	      const hasInvalidResources = this.validateResources().invalid;
-	      const hasInvalidSkus = this.validateSkus().invalid;
+	      const hasInvalidResources = this.isResourcesValid();
+	      const hasInvalidSkus = this.isSkusValid();
 	      await this.$store.dispatch(`${booking_const.Model.SkuResourcesEditor}/updateInvalid`, {
 	        invalidSku: hasInvalidSkus,
 	        invalidResource: hasInvalidResources
@@ -120,31 +123,23 @@ this.BX.Booking = this.BX.Booking || {};
 	        invalid: hasInvalidResources || hasInvalidSkus
 	      };
 	    },
-	    validateResources() {
+	    isResourcesValid() {
 	      const skusSets = this.$store.state[booking_const.Model.SkuResourcesEditor].resourcesSkusMap.values();
 	      for (const skusSet of skusSets) {
 	        if (!(skusSet instanceof Set) || skusSet.size === 0) {
-	          return {
-	            invalid: true
-	          };
+	          return true;
 	        }
 	      }
-	      return {
-	        invalid: false
-	      };
+	      return false;
 	    },
-	    validateSkus() {
+	    isSkusValid() {
 	      const resourcesSets = this.$store.getters[`${booking_const.Model.SkuResourcesEditor}/skusResourcesMap`].values();
 	      for (const resourcesSet of resourcesSets) {
 	        if (!(resourcesSet instanceof Set) || resourcesSet.size === 0) {
-	          return {
-	            invalid: true
-	          };
+	          return true;
 	        }
 	      }
-	      return {
-	        invalid: false
-	      };
+	      return false;
 	    },
 	    async changeTab({
 	      hasInvalidSkus = false,
@@ -163,7 +158,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      const skusMap = this.$store.state[booking_const.Model.SkuResourcesEditor].skus;
 	      const resources = [];
 	      for (const [resourceId, skusSet] of resourcesSkusMap) {
-	        if (!resourcesMap.has(resourceId) || skusSet.size === 0) {
+	        if (!resourcesMap.has(resourceId) || skusSet.size === 0 && !this.skusResourcesEditorOptions.canBeEmpty) {
 	          continue;
 	        }
 	        const skus = [];
@@ -221,7 +216,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  },
 	  emits: ['update:modelValue'],
-	  // eslint-disable-next-line flowtype/require-return-type
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_vue.Outline
@@ -305,7 +299,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  },
 	  emits: ['update:selected', 'remove'],
-	  // eslint-disable-next-line flowtype/require-return-type
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_vue.Outline
@@ -319,6 +312,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      set(checked) {
 	        this.$emit('update:selected', checked);
 	      }
+	    },
+	    skusResourcesEditorOptions() {
+	      return this.$store.state[booking_const.Model.SkuResourcesEditor].options;
 	    }
 	  },
 	  template: `
@@ -346,6 +342,7 @@ this.BX.Booking = this.BX.Booking || {};
 				<h6 class="booking-services-settings-popup__base-item__title">{{ name }}</h6>
 				<slot name="header"/>
 				<BIcon
+					v-if="skusResourcesEditorOptions.editMode"
 					class="booking-sre-app__base-item__close-icon"
 					:name="Outline.CROSS_L"
 					:size="18"
@@ -915,7 +912,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  },
 	  emits: ['update:checked'],
-	  // eslint-disable-next-line flowtype/require-return-type
 	  setup() {
 	    return {
 	      CounterStyle: ui_cnt.CounterStyle
@@ -1011,7 +1007,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  },
 	  emits: ['close'],
-	  // eslint-disable-next-line flowtype/require-return-type
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_vue.Outline
@@ -1056,7 +1051,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      default: () => []
 	    }
 	  },
-	  // eslint-disable-next-line flowtype/require-return-type
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_vue.Outline
@@ -1377,7 +1371,7 @@ this.BX.Booking = this.BX.Booking || {};
 			>
 				<template #button>
 					<AddSkusButton
-						v-if="skusResourcesEditorOptions.canAdd && skusResourcesEditorOptions.catalogSkuEntityOptions"
+						v-if="skusResourcesEditorOptions.editMode && skusResourcesEditorOptions.catalogSkuEntityOptions"
 						:skus
 					/>
 				</template>
@@ -1650,10 +1644,15 @@ this.BX.Booking = this.BX.Booking || {};
 	async function loadResourcesByIds(resourceIds) {
 	  const $store = booking_core.Core.getStore();
 	  try {
-	    await booking_provider_service_resourceDialogService.resourceDialogService.loadByIds(resourceIds, Date.now() / 1000);
-	    const resources = booking_lib_deepToRaw.deepToRaw($store.getters[`${booking_const.Model.Resources}/getByIds`](resourceIds));
-	    await $store.dispatch(`${booking_const.Model.SkuResourcesEditor}/addResources`, resources);
-	    await $store.dispatch(`${booking_const.Model.SkuResourcesEditor}/addSkus`, getServicesCollection(resources));
+	    const existingResources = $store.getters[`${booking_const.Model.Resources}/getByIds`](resourceIds);
+	    const existingIds = new Set(existingResources.filter(resource => main_core.Type.isObject(resource) && 'id' in resource).map(resource => resource.id));
+	    const idsToLoad = resourceIds.filter(id => !existingIds.has(id));
+	    if (idsToLoad.length > 0) {
+	      await booking_provider_service_resourceDialogService.resourceDialogService.loadByIds(idsToLoad, Math.round(Date.now() / 1000));
+	    }
+	    const allResources = booking_lib_deepToRaw.deepToRaw($store.getters[`${booking_const.Model.Resources}/getByIds`](resourceIds));
+	    await $store.dispatch(`${booking_const.Model.SkuResourcesEditor}/addResources`, allResources);
+	    await $store.dispatch(`${booking_const.Model.SkuResourcesEditor}/addSkus`, getServicesCollection(allResources));
 	  } catch (error) {
 	    console.error('SkuResourcesEditor. Fetch resource error', error);
 	  }
@@ -1736,9 +1735,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      for (const item of items) {
 	        if (this.resourcesIds.includes(item.getId())) {
 	          item.setHidden(true);
-	        }
-	        if (!item.getAvatar()) {
-	          item.setAvatar('/bitrix/js/booking/application/sku-resources-editor/images/resource-icon.svg');
 	        }
 	      }
 	    },
@@ -1973,7 +1969,6 @@ this.BX.Booking = this.BX.Booking || {};
 	  watch: {
 	    shown(shown) {
 	      if (shown) {
-	        // this.setSelectedSkuIds();
 	        this.getDialog().show();
 	      } else {
 	        this.getDialog().hide();
@@ -1989,39 +1984,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    toggleDialog() {
 	      this.shown = !this.shown;
 	    },
-	    setSelectedSkuIds() {
-	      this.selectedSkus.clear();
-	      this.initialSkuIds.clear();
-	      const minSkusResource = this.findResourceWithMinSkus(this.resources);
-	      if (!minSkusResource) {
-	        return;
-	      }
-	      for (const sku of minSkusResource.skus) {
-	        if (this.resources.every(({
-	          skus
-	        }) => skus.some(({
-	          id
-	        }) => id === sku.id))) {
-	          this.selectedSkus.set(sku.id, sku);
-	          this.initialSkuIds.add(sku.id);
-	        }
-	      }
-	    },
-	    findResourceWithMinSkus(resources) {
-	      let min = Infinity;
-	      let minResource = null;
-	      for (const resource of resources) {
-	        const count = resource.skus.length;
-	        if (count === 1) {
-	          return resource;
-	        }
-	        if (count < min) {
-	          min = count;
-	          minResource = resource;
-	        }
-	      }
-	      return minResource;
-	    },
 	    getDialog() {
 	      if (dialog$1 instanceof ui_entitySelector.Dialog) {
 	        return dialog$1;
@@ -2029,7 +1991,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      dialog$1 = new ui_entitySelector.Dialog({
 	        id: 'booking-sre-app__add-sku-dialog',
 	        targetNode: this.$refs.button,
-	        // preselectedItems: [...this.selectedSkuIds].map((id: number) => [EntitySelectorEntity.Product, id]),
 	        width: 400,
 	        enableSearch: true,
 	        dropdownMode: true,
@@ -2137,7 +2098,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  },
 	  emits: ['selectGroup'],
-	  // eslint-disable-next-line flowtype/require-return-type
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_vue.Outline
@@ -2196,7 +2156,7 @@ this.BX.Booking = this.BX.Booking || {};
 						<span class="booking-sre-app__resources_group-header--collapse-label">{{ collapseLabel }}</span>
 						<BIcon
 							class="booking-sre-app__resources_group-header--collapse-icon"
-							:class="{ '--expand': collapsed }"
+							:class="{ '--expanded': collapsed }"
 							:name="Outline.CHEVRON_TOP_L"
 							:size="18"
 							color="var(--ui-color-base-70)"
@@ -2260,6 +2220,9 @@ this.BX.Booking = this.BX.Booking || {};
 	        groupedResources.set(resource.typeId, resources);
 	      }
 	      return groupedResources;
+	    },
+	    skusResourcesEditorOptions() {
+	      return this.$store.state[booking_const.Model.SkuResourcesEditor].options;
 	    }
 	  },
 	  methods: {
@@ -2310,7 +2273,9 @@ this.BX.Booking = this.BX.Booking || {};
 				@update:checked="toggleAll"
 			>
 				<template #button>
-					<AddResourcesButton/>
+					<AddResourcesButton
+						v-if="skusResourcesEditorOptions.editMode"
+					/>
 				</template>
 			</ResourcesBar>
 			<div class="booking-sre-app__resources-view__resources-list">
@@ -2425,17 +2390,6 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
-	async function fetchMainResources() {
-	  await booking_provider_service_resourceDialogService.resourceDialogService.getMainResources();
-	  return (booking_core.Core.getStore().getters[`${booking_const.Model.Resources}/get`] || []).map(resource => {
-	    return {
-	      ...resource,
-	      skus: [],
-	      skusYandex: []
-	    };
-	  });
-	}
-
 	// @vue/component
 	const App = {
 	  name: 'SkuResourcesEditorApp',
@@ -2467,8 +2421,8 @@ this.BX.Booking = this.BX.Booking || {};
 	    async fetchResources() {
 	      this.loading = true;
 	      this.$store.commit(`${booking_const.Model.SkuResourcesEditor}/setFetching`, true);
-	      const mainResources = await fetchMainResources(this.params.resources);
-	      await this.$store.dispatch(`${booking_const.Model.SkuResourcesEditor}/setResources`, [...mainResources, ...this.params.resources]);
+	      const resources = await this.params.loadData();
+	      await this.$store.dispatch(`${booking_const.Model.SkuResourcesEditor}/setResources`, resources);
 	      this.loading = false;
 	      this.$store.commit(`${booking_const.Model.SkuResourcesEditor}/setFetching`, false);
 	    },
@@ -2524,8 +2478,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      value: void 0
 	    });
 	    const options = {
-	      canAdd: false,
-	      canRemove: false,
+	      editMode: false,
+	      canBeEmpty: false,
 	      catalogSkuEntityOptions: null,
 	      ...params.options
 	    };
@@ -2553,13 +2507,13 @@ this.BX.Booking = this.BX.Booking || {};
 	      }
 	    });
 	  }
-	  async closeSidePanel() {
+	  closeSidePanel() {
 	    if (main_core.Type.isFunction(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].save)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].save();
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _application)[_application].unmount();
 	    babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = null;
-	    await booking_core.Core.removeDynamicModule(booking_const.Model.SkuResourcesEditor);
+	    booking_core.Core.removeDynamicModule(booking_const.Model.SkuResourcesEditor);
 	    this.unsubscribeEvents();
 	  }
 	  close() {
@@ -2584,7 +2538,12 @@ this.BX.Booking = this.BX.Booking || {};
 	}
 	async function _initCore2() {
 	  try {
-	    await booking_core.Core.init();
+	    await booking_core.Core.init({
+	      skipCoreModels: true,
+	      skipPull: true
+	    });
+	    await booking_core.Core.addDynamicModule(booking_model_resources.Resources.create());
+	    await booking_core.Core.addDynamicModule(booking_model_resourceTypes.ResourceTypes.create());
 	    await booking_core.Core.addDynamicModule(booking_model_skuResourcesEditor.SkuResourcesEditorModel.create());
 	  } catch (error) {
 	    console.error('Init SkuResourcesEditor error', error);
@@ -2602,5 +2561,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.SkuResourcesEditor = SkuResourcesEditor;
 
-}((this.BX.Booking.Application = this.BX.Booking.Application || {}),BX.Vue3,BX.Booking.Component.Mixin,BX.Booking.Model,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Provider.Service,BX,BX.Booking.Lib,BX.UI.Vue3.Components,BX.UI,BX.Booking.Component,BX.Event,BX.UI.EntitySelector,BX.Vue3.Vuex,BX.UI.IconSet,BX.Booking,BX.Booking.Const,BX.Booking.Provider.Service));
+}((this.BX.Booking.Application = this.BX.Booking.Application || {}),BX.Vue3,BX.Booking.Component.Mixin,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Provider.Service,BX,BX.Booking,BX.Booking.Lib,BX.Booking.Provider.Service,BX.UI.Vue3.Components,BX.UI,BX.Booking.Component,BX.Event,BX.UI.EntitySelector,BX.Vue3.Vuex,BX.UI.IconSet,BX.Booking.Const));
 //# sourceMappingURL=sku-resources-editor.bundle.js.map

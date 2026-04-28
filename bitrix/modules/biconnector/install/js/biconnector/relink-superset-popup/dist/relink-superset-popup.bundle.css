@@ -1,0 +1,117 @@
+.biconnector-relink-popup-content {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: column;
+	        flex-direction: column;
+	gap: 18px;
+}
+
+.biconnector-relink-popup-card {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	gap: 12px;
+	-webkit-box-align: start;
+	    -ms-flex-align: start;
+	        align-items: flex-start;
+	padding: 18px;
+	background-color: var(--ui-color-bg-content-primary);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	-webkit-box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.04);
+	        box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.04);
+	cursor: pointer;
+	-webkit-transition: border-color 0.2s ease, opacity 0.2s ease;
+	-o-transition: border-color 0.2s ease, opacity 0.2s ease;
+	transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.biconnector-relink-popup-card:hover {
+	border-color: var(--ui-color-divider-accent);
+}
+
+.biconnector-relink-popup-card.--selected {
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+.biconnector-relink-popup-card.--disabled {
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+.biconnector-relink-popup-card-radio {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
+	width: 18px;
+	height: 18px;
+	min-width: 18px;
+	margin-top: 1px;
+	border: 1.5px solid var(--ui-color-design-outline-stroke);
+	border-radius: 50%;
+	background-color: var(--ui-color-design-outline-bg);
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+	-webkit-transition: border-color 0.2s ease, background-color 0.2s ease;
+	-o-transition: border-color 0.2s ease, background-color 0.2s ease;
+	transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.biconnector-relink-popup-card.--selected .biconnector-relink-popup-card-radio {
+	border-color: var(--ui-color-design-filled-bg);
+	background-color: var(--ui-color-design-filled-bg);
+}
+
+.biconnector-relink-popup-card-radio-inner {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background-color: transparent;
+	-webkit-transition: background-color 0.2s ease;
+	-o-transition: background-color 0.2s ease;
+	transition: background-color 0.2s ease;
+}
+
+.biconnector-relink-popup-card-radio-inner.--checked {
+	background-color: var(--ui-color-design-filled-content);
+}
+
+.biconnector-relink-popup-card-content {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: column;
+	        flex-direction: column;
+	gap: 4px;
+	-webkit-box-flex: 1;
+	    -ms-flex: 1;
+	        flex: 1;
+	min-width: 0;
+}
+
+.biconnector-relink-popup-card-title {
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 20px;
+	color: var(--ui-color-base-1);
+	letter-spacing: -0.05px;
+}
+
+.biconnector-relink-popup-card-description {
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 17px;
+	color: var(--ui-color-base-2);
+	letter-spacing: -0.05px;
+}

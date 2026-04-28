@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Integration\Market\Router;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -32,7 +34,7 @@ return [
 	'oninit' => function() {
 		return [
 			'lang_additional' => [
-				'MARKET_BASE_PATH' => \Bitrix\Crm\Integration\Market\Router::getBasePath(),
+				'MARKET_BASE_PATH' => Router::getBasePath(),
 			],
 		];
 	},

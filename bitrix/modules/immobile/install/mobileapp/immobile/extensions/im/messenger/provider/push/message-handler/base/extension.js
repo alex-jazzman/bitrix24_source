@@ -1,12 +1,12 @@
 /**
  * @module im/messenger/provider/push/message-handler/base
  */
-
 jn.define('im/messenger/provider/push/message-handler/base', (require, exports, module) => {
 	const { Type } = require('type');
 	const {
 		DialogType,
 		MessageStatus,
+		CounterType,
 	} = require('im/messenger/const');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -39,6 +39,10 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 			throw new Error('should implements this method');
 		}
 
+		/**
+		 * @param {Array<MessengerPushEvent>} eventList
+		 * @return {Promise<void>}
+		 */
 		async handleMessageBatch(eventList)
 		{
 			const componentEventList = this.filterMessageEvents(eventList);
@@ -64,7 +68,9 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 			await this.setUsers(modelData.users);
 			await this.setDialogs(modelData.dialogs);
 			await this.setFiles(modelData.files);
+			await this.setStickers(modelData.stickers);
 			await this.setMessages(modelData.messages);
+			await this.setCounters(modelData.counters);
 			await this.setRecent(modelData.recent);
 		}
 
@@ -108,47 +114,73 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 			await this.store.dispatch('messagesModel/setFromPush', messages);
 		}
 
+		/**
+		 * @abstract
+		 * @param recentItems
+		 * @return {Promise<void>}
+		 */
 		async setRecent(recentItems = [])
 		{
-			if (!Type.isArrayFilled(recentItems))
-			{
-				return;
-			}
-
-			await this.store.dispatch('recentModel/setFromPush', recentItems);
+			throw new Error('You must implement setRecent() method.');
 		}
 
+		/**
+		 * @abstract
+		 * @param {Array<StickerState>} stickers
+		 * @return {Promise<void>}
+		 */
+		async setStickers(stickers = [])
+		{
+			throw new Error('You must implement setStickers() method.');
+		}
+
+		/**
+		 * @abstract
+		 * @param {Array<CounterModelState>} counters
+		 * @return {Promise<void>}
+		 */
+		async setCounters(counters = [])
+		{
+			throw new Error('You must implement setCounters() method.');
+		}
+
+		/**
+		 * @param {Array<MessengerPushEvent>} componentEventList
+		 * @param componentEventList
+		 */
 		prepareData(componentEventList)
 		{
+			const items = this.prepareEventWithHelperList(componentEventList);
+
 			return {
-				dialogs: this.prepareDialogs(componentEventList),
-				users: this.prepareUsers(componentEventList),
-				files: this.prepareFiles(componentEventList),
-				messages: this.prepareMessages(componentEventList),
-				recent: this.prepareRecentItems(componentEventList),
+				dialogs: this.prepareDialogs(items),
+				users: this.prepareUsers(items),
+				files: this.prepareFiles(items),
+				messages: this.prepareMessages(items),
+				recent: this.prepareRecentItems(items),
+				stickers: this.prepareStickers(items),
+				counters: this.prepareCounters(items),
 			};
 		}
 
 		/**
-		 * @param {Array<MessengerPushEvent>} eventList
+		 * @param {Array<{event: MessengerPushEvent, helper: PushHelper}>} items
 		 * @return {Array<RawChat>}
 		 */
-		prepareDialogs(eventList)
+		prepareDialogs(items)
 		{
 			const dialogCollection = {};
 
-			for (const event of eventList)
+			for (const { event, helper } of items)
 			{
 				let dialog = null;
-				const helper = this.getHelper(event);
-
 				if (helper.isChatExist())
 				{
-					dialog = this.prepareGroupChat(event);
+					dialog = this.prepareGroupChat(event, helper);
 				}
 				else
 				{
-					dialog = this.prepareUserChat(event);
+					dialog = this.prepareUserChat(event, helper);
 				}
 
 				dialogCollection[dialog.dialogId] = dialog;
@@ -158,17 +190,15 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 		}
 
 		/**
-		 * @param {Array<MessengerPushEvent>} eventList
+		 * @param {Array<{event: MessengerPushEvent, helper: PushHelper}>} items
 		 * @return {Array<RawUser>}
 		 */
-		prepareUsers(eventList)
+		prepareUsers(items)
 		{
 			const userCollection = {};
 
-			for (const event of eventList)
+			for (const { helper } of items)
 			{
-				const helper = this.getHelper(event);
-
 				helper.getUsers().forEach((user) => {
 					userCollection[user.id] = user;
 				});
@@ -178,19 +208,17 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 		}
 
 		/**
-		 * @param {Array<MessengerPushEvent>} eventList
+		 * @param {Array<{event: MessengerPushEvent, helper: PushHelper}>} items
 		 * @return {Array<RawFile>}
 		 */
-		prepareFiles(eventList)
+		prepareFiles(items)
 		{
 			const filesCollection = {};
 
-			for (const event of eventList)
+			for (const { helper } of items)
 			{
-				const helper = this.getHelper(event);
-
-				helper.getFiles().forEach((user) => {
-					filesCollection[user.id] = user;
+				helper.getFiles().forEach((file) => {
+					filesCollection[file.id] = file;
 				});
 			}
 
@@ -198,16 +226,16 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 		}
 
 		/**
-		 * @param {Array<MessengerPushEvent>} eventList
+		 * @param {Array<{event: MessengerPushEvent, helper: PushHelper}>} items
 		 * @return {Array<RawMessage>}
 		 */
-		prepareMessages(eventList)
+		prepareMessages(items)
 		{
 			const messages = [];
 
-			for (const event of eventList)
+			for (const { helper } of items)
 			{
-				const message = this.getHelper(event).getMessage();
+				const message = helper.getMessage();
 
 				// if params are empty then they have an array type.
 				if (Type.isPlainObject(message.params) && Type.isArrayFilled(message.params?.FILE_ID))
@@ -224,17 +252,16 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 		}
 
 		/**
-		 * @param {Array<MessengerPushEvent>} eventList
+		 * @param {Array<{event: MessengerPushEvent, helper: PushHelper}>} items
 		 * @return {Array<object>}
 		 */
-		prepareRecentItems(eventList)
+		prepareRecentItems(items)
 		{
 			const recentCollection = {};
 
-			for (const event of eventList)
+			for (const { event, helper } of items)
 			{
-				const helper = this.getHelper(event);
-				const message = this.prepareRecentMessage(event);
+				const message = this.prepareRecentMessage({ event, helper });
 
 				const recentItem = RecentDataConverter.fromPushToModel({
 					id: helper.getDialogId(),
@@ -255,13 +282,63 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 		}
 
 		/**
-		 *
-		 * @param {MessengerPushEvent} event
+		 * @desc the method returns an array of unique stickers
+		 * @param {Array<{event: MessengerPushEvent, helper: PushHelper}>} items
+		 * @return {Array<StickerState>}
+		 */
+		prepareStickers(items)
+		{
+			const stickerCollection = {};
+
+			for (const { helper } of items)
+			{
+				const sticker = helper.getSticker();
+				if (Type.isNil(sticker))
+				{
+					continue;
+				}
+				const stickerId = `${sticker.packId}|${sticker.packType}|${sticker.id}`;
+
+				stickerCollection[stickerId] = sticker;
+			}
+
+			return Object.values(stickerCollection);
+		}
+
+		/**
+		 * @param {Array<{event: MessengerPushEvent, helper: PushHelper}>} items
+		 * @return {Array<CounterModelState>}
+		 */
+		prepareCounters(items)
+		{
+			/**
+			 * @type {Record<number, CounterModelState>}
+			 */
+			const counterCollection = {};
+
+			for (const { event, helper } of items)
+			{
+				const { params } = event;
+				const chatId = helper.getChatId();
+
+				counterCollection[chatId] = {
+					chatId,
+					parentChatId: 0,
+					counter: params.counter,
+					recentSections: helper.getRecentSections(),
+					isMuted: false,
+				};
+			}
+
+			return Object.values(counterCollection);
+		}
+
+		/**
+		 * @param {{event: MessengerPushEvent, helper: PushHelper}} item
 		 * @return {PushRawMessage & {status: string}}
 		 */
-		prepareRecentMessage(event)
+		prepareRecentMessage({ helper })
 		{
-			const helper = this.getHelper(event);
 			const messageStatus = helper.getSenderId() === helper.getCurrentUserId()
 				? MessageStatus.received
 				: ''
@@ -289,13 +366,14 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 
 		/**
 		 * @param {MessengerPushEvent} event
+		 * @param {PushHelper} helper
 		 */
-		prepareGroupChat(event)
+		prepareGroupChat(event, helper)
 		{
 			const { params } = event;
 
 			return {
-				...this.getHelper(event).getChat(),
+				...helper.getChat(),
 				dialogId: params.dialogId,
 				counter: params.counter,
 			};
@@ -303,12 +381,13 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 
 		/**
 		 * @param {MessengerPushEvent} event
+		 * @param {PushHelper} helper
 		 */
-		prepareUserChat(event)
+		prepareUserChat(event, helper)
 		{
 			const { params } = event;
 
-			const sender = this.getHelper(event).getSender();
+			const sender = helper.getSender();
 
 			return {
 				dialogId: params.dialogId,
@@ -319,6 +398,19 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 				color: sender.color,
 				chatId: params.chatId,
 			};
+		}
+
+		/**
+		 * @protected
+		 * @param {Array<MessengerPushEvent>} eventList
+		 * @return {Array<{event: MessengerPushEvent, helper: PushHelper}>}
+		 */
+		prepareEventWithHelperList(eventList)
+		{
+			return eventList.map((event) => ({
+				event,
+				helper: this.getHelper(event),
+			}));
 		}
 	}
 

@@ -23,6 +23,7 @@ CJSCore::Init([
 	'drag_drop',
 	'popup',
 	'date',
+	'intranet.old-interface.intranet-common',
 ]);
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');

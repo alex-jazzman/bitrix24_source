@@ -1,40 +1,46 @@
 import { Type, type JsonObject } from 'main.core';
-import { BuilderModel } from 'ui.vue3.vuex';
+import { BuilderModel, type Store, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType, FakeDraftMessagePrefix, Settings } from 'im.v2.const';
-import { Utils } from 'im.v2.lib.utils';
-import { ChannelManager } from 'im.v2.lib.channel';
-import { formatFieldsWithConfig, convertObjectKeysToCamelCase } from 'im.v2.model';
+import { FakeDraftMessagePrefix, RecentType, type RecentTypeItem } from 'im.v2.const';
+import { RecentManager } from 'im.v2.lib.recent';
+import { MessageManager } from 'im.v2.lib.message';
 
+import { formatFieldsWithConfig } from '../utils/validate';
+import { type ImModelMessage } from '../registry';
+
+import { type RecentItem as ImModelRecentItem } from '../type/recent-item';
 import { recentFieldsConfig } from './format/field-config';
 import { CallsModel } from './nested-modules/calls';
-
-import type { Store, GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
-import type { ImModelMessage, ImModelChat } from 'im.v2.model';
-
-import type { RecentItem as ImModelRecentItem } from '../type/recent-item';
+import {
+	type RawSetPayload,
+	type SetPayload,
+	type RawClearPayload,
+	type ClearPayload,
+	type GetPayload,
+	type UpdatePayload,
+	type RawRecentItemsPayload,
+	type SetDraftPayload,
+} from './types/payload-types.js';
 
 type RecentStore = Store<RecentState>;
 
 type RecentState = {
-	collection: {[dialogId: string]: ImModelRecentItem},
-	recentCollection: Set<string>,
-	unreadCollection: Set<string>,
-	copilotCollection: Set<string>,
-	channelCollection: Set<string>,
-	collabCollection: Set<string>,
-	taskCollection: Set<string>,
+	collection: { [dialogId: string]: ImModelRecentItem },
+	recentIndex: IndexByParentAndType,
+	unreadIndex: IndexByParentAndType,
 };
 
-type SetDraftPayload = {
-	id: string | number,
-	text: string,
-	addFakeItems: boolean,
-};
+type IndexByParentAndType = {
+	[parentChatId: string]: {
+		[type: RecentTypeItem]: Set<string>,
+	}
+}
 
 export class RecentModel extends BuilderModel
 {
+	static ROOT_PARENT_ID = 0;
+
 	getName(): string
 	{
 		return 'recent';
@@ -51,12 +57,8 @@ export class RecentModel extends BuilderModel
 	{
 		return {
 			collection: {},
-			recentCollection: new Set(),
-			unreadCollection: new Set(),
-			copilotCollection: new Set(),
-			channelCollection: new Set(),
-			collabCollection: new Set(),
-			taskCollection: new Set(),
+			recentIndex: {},
+			unreadIndex: {},
 		};
 	}
 
@@ -69,7 +71,6 @@ export class RecentModel extends BuilderModel
 				text: '',
 				date: null,
 			},
-			unread: false,
 			pinned: false,
 			liked: false,
 			invitation: {
@@ -87,77 +88,53 @@ export class RecentModel extends BuilderModel
 	getGetters(): GetterTree
 	{
 		return {
-			/** @function recent/getRecentCollection */
-			getRecentCollection: (state: RecentState): ImModelRecentItem[] => {
-				return [...state.recentCollection].filter((dialogId) => {
-					const dialog = this.store.getters['chats/get'](dialogId);
+			/** @function recent/getCollection */
+			getCollection: (state: RecentState) => (payload: GetPayload & { unread?: boolean }): ImModelRecentItem[] => {
+				const { type, unread = false, parentChatId = RecentModel.ROOT_PARENT_ID } = payload;
+				const index = unread ? state.unreadIndex : state.recentIndex;
 
-					return Boolean(dialog);
-				}).map((id) => {
-					return state.collection[id];
-				});
+				const parentGroup = index[parentChatId];
+				if (!parentGroup)
+				{
+					return [];
+				}
+
+				const typeGroup = parentGroup[type];
+				if (!typeGroup)
+				{
+					return [];
+				}
+
+				return [...typeGroup]
+					.filter((dialogId) => this.store.getters['chats/get'](dialogId) && state.collection[dialogId])
+					.map((dialogId) => state.collection[dialogId]);
 			},
 			/** @function recent/getUnreadCollection */
-			getUnreadCollection: (state: RecentState): ImModelRecentItem[] => {
-				return [...state.unreadCollection].map((id) => {
-					return state.collection[id];
-				});
-			},
-			/** @function recent/getCopilotCollection */
-			getCopilotCollection: (state: RecentState): ImModelRecentItem[] => {
-				return [...state.copilotCollection].filter((dialogId) => {
-					const dialog = this.store.getters['chats/get'](dialogId);
-
-					return Boolean(dialog);
-				}).map((id) => {
-					return state.collection[id];
-				});
-			},
-			/** @function recent/getChannelCollection */
-			getChannelCollection: (state: RecentState): ImModelRecentItem[] => {
-				return [...state.channelCollection].filter((dialogId) => {
-					const dialog = this.store.getters['chats/get'](dialogId);
-
-					return Boolean(dialog);
-				}).map((id) => {
-					return state.collection[id];
-				});
-			},
-			/** @function recent/getCollabCollection */
-			getCollabCollection: (state: RecentState): ImModelRecentItem[] => {
-				return [...state.collabCollection].filter((dialogId) => {
-					const dialog = this.store.getters['chats/get'](dialogId);
-
-					return Boolean(dialog);
-				}).map((id) => {
-					return state.collection[id];
-				});
-			},
-			/** @function recent/getTaskCollection */
-			getTaskCollection: (state: RecentState): ImModelRecentItem[] => {
-				return [...state.taskCollection].filter((dialogId) => {
-					const dialog = this.store.getters['chats/get'](dialogId);
-
-					return Boolean(dialog);
-				}).map((id) => {
-					return state.collection[id];
-				});
+			getUnreadCollection: () => (payload: GetPayload): ImModelRecentItem[] => {
+				return this.store.getters['recent/getCollection']({ ...payload, unread: true });
 			},
 			/** @function recent/getSortedCollection */
-			getSortedCollection: (state: RecentState): ImModelRecentItem[] => {
-				const recentCollectionAsArray = [...state.recentCollection].map((dialogId) => {
-					return state.collection[dialogId];
-				});
+			getSortedCollection: () => (payload: GetPayload & { unread?: boolean }): ImModelRecentItem[] => {
+				const collection: ImModelRecentItem[] = this.store.getters['recent/getCollection'](payload);
 
-				return recentCollectionAsArray.sort((a, b) => {
-					const messageA: ImModelMessage = this.#getMessage(a.messageId);
-					const messageB: ImModelMessage = this.#getMessage(b.messageId);
+				return [...collection].sort((a, b) => {
+					const dateA = RecentManager.getSortDate(a.dialogId);
+					const dateB = RecentManager.getSortDate(b.dialogId);
 
-					return messageB.date - messageA.date;
+					if (dateA?.getTime() === dateB?.getTime())
+					{
+						return a.dialogId > b.dialogId ? 1 : -1;
+					}
+
+					return dateB - dateA;
 				});
 			},
+			/** @function recent/getSortedUnreadCollection */
+			getSortedUnreadCollection: () => (payload: GetPayload): ImModelRecentItem[] => {
+				return this.store.getters['recent/getSortedCollection']({ ...payload, unread: true });
+			},
 			/** @function recent/get */
-			get: (state: RecentState) => (dialogId: string): ImModelRecentItem | null => {
+			get: (state: RecentState) => (dialogId: string): ?ImModelRecentItem => {
 				if (!state.collection[dialogId])
 				{
 					return null;
@@ -166,7 +143,7 @@ export class RecentModel extends BuilderModel
 				return state.collection[dialogId];
 			},
 			/** @function recent/getMessage */
-			getMessage: (state: RecentState) => (dialogId: string): ImModelMessage | null => {
+			getMessage: (state: RecentState) => (dialogId: string): ?ImModelMessage => {
 				const element = state.collection[dialogId];
 				if (!element)
 				{
@@ -175,111 +152,23 @@ export class RecentModel extends BuilderModel
 
 				return this.#getMessage(element.messageId);
 			},
-			/** @function recent/needsBirthdayPlaceholder */
-			needsBirthdayPlaceholder: (state: RecentState) => (dialogId): boolean => {
-				const currentItem = state.collection[dialogId];
-				if (!currentItem)
+			/** @function recent/hasInCollection */
+			hasInCollection: (state: RecentState) => (payload: GetPayload & { dialogId: string }): boolean => {
+				const { dialogId, type, parentChatId = RecentModel.ROOT_PARENT_ID } = payload;
+
+				const parentGroup = state.recentIndex[parentChatId];
+				if (!parentGroup)
 				{
 					return false;
 				}
 
-				const dialog = this.store.getters['chats/get'](dialogId);
-				if (!dialog || dialog.type !== ChatType.user)
-				{
-					return false;
-				}
-				const hasBirthday = this.store.getters['users/hasBirthday'](dialogId);
-				if (!hasBirthday)
+				const typeGroup = parentGroup[type];
+				if (!typeGroup)
 				{
 					return false;
 				}
 
-				const isSelfChat = Number.parseInt(dialogId, 10) === Core.getUserId();
-				if (isSelfChat)
-				{
-					return false;
-				}
-
-				const showBirthday = this.store.getters['application/settings/get'](Settings.recent.showBirthday);
-				const hasTodayMessage = this.#hasTodayMessage(currentItem.messageId);
-
-				return showBirthday && !hasTodayMessage && dialog.counter === 0;
-			},
-			/** @function recent/needsVacationPlaceholder */
-			needsVacationPlaceholder: (state: RecentState) => (dialogId): boolean => {
-				const currentItem = state.collection[dialogId];
-				if (!currentItem)
-				{
-					return false;
-				}
-
-				const isNotes = Core.getStore().getters['chats/isNotes'](dialogId);
-				if (isNotes)
-				{
-					return false;
-				}
-
-				const dialog = this.store.getters['chats/get'](dialogId);
-				if (!dialog || dialog.type !== ChatType.user)
-				{
-					return false;
-				}
-
-				const hasVacation = this.store.getters['users/hasVacation'](dialogId);
-				if (!hasVacation)
-				{
-					return false;
-				}
-
-				const hasTodayMessage = this.#hasTodayMessage(currentItem.messageId);
-
-				return !hasTodayMessage && dialog.counter === 0;
-			},
-			/** @function recent/getSortDate */
-			getSortDate: (state: RecentState) => (dialogId): Date | null => {
-				const currentItem = state.collection[dialogId];
-				if (!currentItem)
-				{
-					return null;
-				}
-
-				const message: ImModelMessage = this.#getMessage(currentItem.messageId);
-
-				if (Type.isDate(currentItem.draft.date) && currentItem.draft.date > message.date)
-				{
-					return currentItem.draft.date;
-				}
-
-				const needsBirthdayPlaceholder = this.store.getters['recent/needsBirthdayPlaceholder'](currentItem.dialogId);
-				if (needsBirthdayPlaceholder)
-				{
-					return Utils.date.getStartOfTheDay();
-				}
-
-				const lastActivity = currentItem.lastActivityDate;
-				const needToUseActivityDate = Type.isDate(lastActivity) && lastActivity > message.date;
-				if (ChannelManager.isChannel(currentItem.dialogId) && needToUseActivityDate)
-				{
-					return lastActivity;
-				}
-
-				return message.date;
-			},
-			/** @function recent/isInRecentCollection */
-			isInRecentCollection: (state: RecentState) => (dialogId: string): boolean => {
-				return state.recentCollection.has(dialogId);
-			},
-			/** @function recent/isInCollabCollection */
-			isInCollabCollection: (state: RecentState) => (dialogId: string): boolean => {
-				return state.collabCollection.has(dialogId);
-			},
-			/** @function recent/isInTaskCollection */
-			isInTaskCollection: (state: RecentState) => (dialogId: string): boolean => {
-				return state.taskCollection.has(dialogId);
-			},
-			/** @function recent/isInCopilotCollection */
-			isInCopilotCollection: (state: RecentState) => (dialogId: string): boolean => {
-				return state.copilotCollection.has(dialogId);
+				return typeGroup.has(dialogId);
 			},
 		};
 	}
@@ -289,230 +178,163 @@ export class RecentModel extends BuilderModel
 	getActions(): ActionTree
 	{
 		return {
-			/** @function recent/setRecent */
-			setRecent: async (store: RecentStore, payload: Array | Object) => {
-				const itemIds = await Core.getStore().dispatch('recent/store', payload);
+			/** @function recent/setCollection */
+			setCollection: async (store: RecentStore, payload: RawSetPayload & { unread?: boolean }) => {
+				const { type, items, unread = false, parentChatId = RecentModel.ROOT_PARENT_ID } = payload;
 
-				store.commit('setRecentCollection', itemIds);
+				const itemIds = await Core.getStore().dispatch('recent/set', items);
 
-				this.#updateUnloadedRecentCounters(payload);
+				store.commit('setIndex', { parentChatId, type, itemIds, unread });
 			},
-			/** @function recent/setUnread */
-			setUnread: async (store: RecentStore, payload: Array | Object) => {
-				const itemIds = await this.store.dispatch('recent/store', payload);
-				store.commit('setUnreadCollection', itemIds);
+			/** @function recent/setUnreadCollection */
+			setUnreadCollection: async (store: RecentStore, payload: RawSetPayload) => {
+				void Core.getStore().dispatch('recent/setCollection', { ...payload, unread: true });
 			},
-			/** @function recent/setCopilot */
-			setCopilot: async (store: RecentStore, payload: Array | Object) => {
-				const itemIds = await this.store.dispatch('recent/store', payload);
-				store.commit('setCopilotCollection', itemIds);
+			/** @function recent/clearCollection */
+			clearCollection: async (store: RecentStore, payload: RawClearPayload & { unread?: boolean }) => {
+				const { type, unread = false, parentChatId = RecentModel.ROOT_PARENT_ID } = payload;
 
-				this.#updateUnloadedCopilotCounters(payload);
-			},
-			/** @function recent/setChannel */
-			setChannel: async (store: RecentStore, payload: Array | Object) => {
-				const itemIds = await this.store.dispatch('recent/store', payload);
-				store.commit('setChannelCollection', itemIds);
-			},
-			/** @function recent/setCollab */
-			setCollab: async (store: RecentStore, payload: Array | Object) => {
-				const itemIds = await this.store.dispatch('recent/store', payload);
-				store.commit('setCollabCollection', itemIds);
-
-				this.#updateUnloadedCollabCounters(payload);
-			},
-			/** @function recent/setTask */
-			setTask: async (store: RecentStore, payload: Array | Object) => {
-				const itemIds = await this.store.dispatch('recent/store', payload);
-				store.commit('setTaskCollection', itemIds);
-
-				this.#updateUnloadedTaskCounters(payload);
-			},
-			/** @function recent/clearChannelCollection */
-			clearChannelCollection: (store: RecentStore) => {
-				store.commit('clearChannelCollection');
+				store.commit('clearCollection', { parentChatId, type, unread });
 			},
 			/** @function recent/clearUnreadCollection */
-			clearUnreadCollection: (store: RecentStore) => {
-				store.commit('clearUnreadCollection');
+			clearUnreadCollection: async (store: RecentStore, payload: RawClearPayload) => {
+				void Core.getStore().dispatch('recent/clearCollection', { ...payload, unread: true });
 			},
-			/** @function recent/store */
-			store: (store: RecentStore, payload: Array | Object) => {
-				if (!Array.isArray(payload) && Type.isPlainObject(payload))
+			/** @function recent/set */
+			set: (store: RecentStore, payload: RawRecentItemsPayload): string[] => {
+				if (!Type.isArray(payload) && Type.isPlainObject(payload))
 				{
 					payload = [payload];
 				}
 
 				const itemsToUpdate = [];
 				const itemsToAdd = [];
-				payload.map((element) => {
-					return this.#formatFields(element);
-				}).forEach((element) => {
-					const preparedElement = { ...element };
+
+				for (const rawElement of payload)
+				{
+					const element = this.#formatFields(rawElement);
+
 					const existingItem = store.state.collection[element.dialogId];
 					if (existingItem)
 					{
-						itemsToUpdate.push({ dialogId: existingItem.dialogId, fields: preparedElement });
-					}
-					else
-					{
-						itemsToAdd.push({ ...this.getElementState(), ...preparedElement });
-					}
-				});
+						itemsToUpdate.push({ dialogId: existingItem.dialogId, fields: element });
 
-				if (itemsToAdd.length > 0)
-				{
-					store.commit('add', itemsToAdd);
+						continue;
+					}
+
+					itemsToAdd.push({ ...this.getElementState(), ...element });
 				}
 
-				if (itemsToUpdate.length > 0)
-				{
-					store.commit('update', itemsToUpdate);
-				}
+				store.commit('add', itemsToAdd);
+				store.commit('update', itemsToUpdate);
 
 				return [...itemsToAdd, ...itemsToUpdate].map((item) => item.dialogId);
 			},
 			/** @function recent/update */
-			update: (store: RecentStore, payload: { id: string | number, fields: Object }) => {
-				const { id, fields } = payload;
-				const existingItem: ImModelRecentItem = store.state.collection[id];
+			update: (store: RecentStore, payload: UpdatePayload) => {
+				const { dialogId, fields } = payload;
+				const existingItem: ImModelRecentItem = store.state.collection[dialogId];
 				if (!existingItem)
 				{
 					return;
 				}
 
 				store.commit('update', {
-					dialogId: existingItem.dialogId,
+					dialogId,
 					fields: this.#formatFields(fields),
 				});
 			},
-			/** @function recent/unread */
-			unread: (store: RecentStore, payload: { id: string | number, action: boolean }) => {
-				const existingItem = store.state.collection[payload.id];
-				if (!existingItem)
-				{
-					return;
-				}
-
-				store.commit('update', {
-					dialogId: existingItem.dialogId,
-					fields: { unread: payload.action },
-				});
-			},
 			/** @function recent/pin */
-			pin: (store: RecentStore, payload: { id: string | number, action: boolean }) => {
-				const existingItem = store.state.collection[payload.id];
+			pin: (store: RecentStore, payload: { dialogId: string | number, action: boolean }) => {
+				const { dialogId, action } = payload;
+				const existingItem = store.state.collection[dialogId];
 				if (!existingItem)
 				{
 					return;
 				}
 
 				store.commit('update', {
-					dialogId: existingItem.dialogId,
-					fields: { pinned: payload.action },
+					dialogId,
+					fields: { pinned: action },
 				});
 			},
 			/** @function recent/like */
-			like: (store: RecentStore, payload: { id: string | number, messageId: number, liked: boolean }) => {
-				const existingItem: ImModelRecentItem = store.state.collection[payload.id];
+			like: (store: RecentStore, payload: { dialogId: string | number, messageId: number, liked: boolean }) => {
+				const { dialogId, messageId, liked } = payload;
+				const existingItem: ImModelRecentItem = store.state.collection[dialogId];
 				if (!existingItem)
 				{
 					return;
 				}
 
-				const isLastMessage = existingItem.messageId === Number.parseInt(payload.messageId, 10);
-				const isExactMessageLiked = !Type.isUndefined(payload.messageId) && payload.liked === true;
+				const isLastMessage = existingItem.messageId === Number.parseInt(messageId, 10);
+				const isExactMessageLiked = !Type.isUndefined(messageId) && liked === true;
 				if (isExactMessageLiked && !isLastMessage)
 				{
 					return;
 				}
 
 				store.commit('update', {
-					dialogId: existingItem.dialogId,
-					fields: { liked: payload.liked === true },
+					dialogId,
+					fields: { liked: liked === true },
 				});
 			},
 			/** @function recent/setDraft */
 			setDraft: (store: RecentStore, payload: SetDraftPayload) => {
-				const { id, text, addFakeItems = true } = payload;
+				const { dialogId, text, addFakeItems = true } = payload;
 				const isRemovingDraft = !Type.isStringFilled(text);
 				if (isRemovingDraft && this.#shouldDeleteItemWithDraft(payload))
 				{
-					void Core.getStore().dispatch('recent/hide', { id });
+					void Core.getStore().dispatch('recent/hide', { dialogId });
 
 					return;
 				}
 
-				const existingCollectionItem = store.state.recentCollection.has(id);
-				const needsFakeItem = !existingCollectionItem && !isRemovingDraft;
+				const hasRecentItem = Core.getStore().getters['recent/hasInCollection']({
+					dialogId,
+					type: RecentType.default,
+				});
+
+				const needsFakeItem = !hasRecentItem && !isRemovingDraft;
 				if (needsFakeItem && addFakeItems)
 				{
 					this.#handleFakeItemWithDraft(payload, store);
 				}
 
-				const existingItem = store.state.collection[id];
+				const existingItem = store.state.collection[dialogId];
 				if (!existingItem)
 				{
 					return;
 				}
 
 				void Core.getStore().dispatch('recent/update', {
-					id,
+					dialogId,
 					fields: {
 						draft: { text: text.toString() },
 					},
 				});
 			},
 			/** @function recent/hide */
-			hide: (store: RecentStore, payload: { id: string | number }) => {
-				const existingItem = store.state.collection[payload.id];
+			hide: (store: RecentStore, payload: { dialogId: string | number }) => {
+				const { dialogId } = payload;
+				const existingItem = store.state.collection[dialogId];
 				if (!existingItem)
 				{
 					return;
 				}
 
-				store.commit('deleteCollections', existingItem.dialogId);
-
-				const canDelete = this.#canDelete(existingItem.dialogId);
-
-				if (!canDelete)
-				{
-					return;
-				}
-
-				store.commit('delete', {
-					id: existingItem.dialogId,
-				});
+				store.commit('removeFromCollections', { dialogId });
 			},
 			/** @function recent/delete */
-			delete: (store: RecentStore, payload: { id: string | number }) => {
-				const existingItem = store.state.collection[payload.id];
+			delete: (store: RecentStore, payload: { dialogId: string | number }) => {
+				const { dialogId } = payload;
+				const existingItem = store.state.collection[dialogId];
 				if (!existingItem)
 				{
 					return;
 				}
 
-				store.commit('deleteCollections', existingItem.dialogId);
-				store.commit('deleteFromChannelCollection', existingItem.dialogId);
-
-				const canDelete = this.#canDelete(existingItem.dialogId);
-
-				if (!canDelete)
-				{
-					return;
-				}
-
-				store.commit('delete', {
-					id: existingItem.dialogId,
-				});
-			},
-			/** @function recent/resetTasksUnreadStatus */
-			resetTasksUnreadStatus: (store: RecentStore) => {
-				store.commit('resetTasksUnreadStatus');
-			},
-			/** @function recent/resetUnreadStatus */
-			resetUnreadStatus: (store: RecentStore) => {
-				store.commit('resetUnreadStatus');
+				store.commit('delete', { dialogId });
 			},
 		};
 	}
@@ -520,65 +342,50 @@ export class RecentModel extends BuilderModel
 	getMutations(): MutationTree
 	{
 		return {
-			setRecentCollection: (state: RecentState, payload: string[]) => {
-				payload.forEach((dialogId) => {
-					state.recentCollection.add(dialogId);
+			setIndex: (state: RecentState, payload: SetPayload) => {
+				const { parentChatId, type, itemIds, unread } = payload;
+				const index = unread ? state.unreadIndex : state.recentIndex;
+
+				if (!index[parentChatId])
+				{
+					index[parentChatId] = {};
+				}
+
+				const parentGroup = index[parentChatId];
+				if (!parentGroup[type])
+				{
+					parentGroup[type] = new Set();
+				}
+
+				const typeGroup = parentGroup[type];
+				itemIds.forEach((dialogId) => {
+					typeGroup.add(dialogId);
 				});
 			},
-			setUnreadCollection: (state: RecentState, payload: string[]) => {
-				payload.forEach((dialogId) => {
-					state.unreadCollection.add(dialogId);
-				});
+			clearCollection: (state: RecentState, payload: ClearPayload) => {
+				const { parentChatId, type, unread } = payload;
+				const index = unread ? state.unreadIndex : state.recentIndex;
+
+				delete index[parentChatId]?.[type];
 			},
-			setCopilotCollection: (state: RecentState, payload: string[]) => {
-				payload.forEach((dialogId) => {
-					state.copilotCollection.add(dialogId);
-				});
-			},
-			deleteFromChannelCollection: (state: RecentState, payload: string) => {
-				state.channelCollection.delete(payload);
-			},
-			setChannelCollection: (state: RecentState, payload: string[]) => {
-				payload.forEach((dialogId) => {
-					state.channelCollection.add(dialogId);
-				});
-			},
-			clearChannelCollection: (state: RecentState) => {
-				state.channelCollection = new Set();
-			},
-			clearUnreadCollection: (state: RecentState) => {
-				state.unreadCollection = new Set();
-			},
-			setCollabCollection: (state: RecentState, payload: string[]) => {
-				payload.forEach((dialogId) => {
-					state.collabCollection.add(dialogId);
-				});
-			},
-			setTaskCollection: (state: RecentState, payload: string[]) => {
-				payload.forEach((dialogId) => {
-					state.taskCollection.add(dialogId);
-				});
-			},
-			add: (state: RecentState, payload: Object[] | Object) => {
-				if (!Array.isArray(payload) && Type.isPlainObject(payload))
+			add: (state: RecentState, payload: ImModelRecentItem[] | ImModelRecentItem) => {
+				if (!Type.isArray(payload) && Type.isPlainObject(payload))
 				{
 					payload = [payload];
 				}
+
 				payload.forEach((item) => {
 					state.collection[item.dialogId] = item;
 				});
 			},
-			update: (state: RecentState, payload: Object[] | Object) => {
-				if (!Array.isArray(payload) && Type.isPlainObject(payload))
+			update: (state: RecentState, payload: UpdatePayload | UpdatePayload[]) => {
+				if (!Type.isArray(payload) && Type.isPlainObject(payload))
 				{
 					payload = [payload];
 				}
+
 				payload.forEach(({ dialogId, fields }) => {
-					// if we already got chat - we should not update it with fake user chat
-					// (unless it's an accepted invitation or fake user with real message)
-					const elementIsInRecent = state.recentCollection.has(dialogId);
-					const isFakeElement = fields.isFakeElement && Utils.text.isTempMessage(fields.messageId);
-					if (elementIsInRecent && isFakeElement && !fields.invitation)
+					if (!this.#shouldApplyUpdate(dialogId, fields))
 					{
 						return;
 					}
@@ -587,25 +394,17 @@ export class RecentModel extends BuilderModel
 					state.collection[dialogId] = { ...currentElement, ...fields };
 				});
 			},
-			delete: (state: RecentState, payload: {id: string}) => {
-				delete state.collection[payload.id];
+			removeFromCollections: (state: RecentState, payload: { dialogId: string }) => {
+				const { dialogId } = payload;
+
+				const collections = this.#getAllCollections(state, [RecentType.openChannel]);
+
+				collections.forEach((idSet) => idSet.delete(dialogId));
 			},
-			resetTasksUnreadStatus: (state: RecentState) => {
-				[...state.taskCollection].forEach((key) => {
-					state.collection[key].unread = false;
-				});
-			},
-			resetUnreadStatus: (state: RecentState) => {
-				Object.keys(state.collection).forEach((key) => {
-					state.collection[key].unread = false;
-				});
-			},
-			deleteCollections: (state: RecentState, payload: string) => {
-				state.recentCollection.delete(payload);
-				state.copilotCollection.delete(payload);
-				state.collabCollection.delete(payload);
-				state.taskCollection.delete(payload);
-				state.unreadCollection.delete(payload);
+			delete: (state: RecentState, payload: { dialogId: string }) => {
+				const { dialogId } = payload;
+
+				delete state.collection[dialogId];
 			},
 		};
 	}
@@ -618,39 +417,48 @@ export class RecentModel extends BuilderModel
 		return formatFieldsWithConfig(fields, recentFieldsConfig);
 	}
 
-	#updateUnloadedRecentCounters(payload: Array | Object)
+	#shouldApplyUpdate(dialogId: string, fields: Partial<ImModelRecentItem>): boolean
 	{
-		this.#updateUnloadedCounters(payload, 'counters/setUnloadedChatCounters');
-	}
-
-	#updateUnloadedCopilotCounters(payload: Array | Object)
-	{
-		this.#updateUnloadedCounters(payload, 'counters/setUnloadedCopilotCounters');
-	}
-
-	#updateUnloadedCollabCounters(payload: Array | Object)
-	{
-		this.#updateUnloadedCounters(payload, 'counters/setUnloadedCollabCounters');
-	}
-
-	#updateUnloadedTaskCounters(payload: Array | Object)
-	{
-		this.#updateUnloadedCounters(payload, 'counters/setUnloadedTaskCounters');
-	}
-
-	#updateUnloadedCounters(payload: Array | Object, updateMethod: string)
-	{
-		if (!Array.isArray(payload) && Type.isPlainObject(payload))
-		{
-			payload = [payload];
-		}
-		const zeroedCountersForNewItems = {};
-		const preparedItems = payload.map((item) => convertObjectKeysToCamelCase(item));
-
-		preparedItems.forEach((item) => {
-			zeroedCountersForNewItems[item.chatId] = 0;
+		// if we already got chat - we should not update it with fake user chat
+		// (unless it's an accepted invitation or fake user with real message)
+		const hasRecentItem = Core.getStore().getters['recent/hasInCollection']({
+			dialogId,
+			type: RecentType.default,
 		});
-		void Core.getStore().dispatch(updateMethod, zeroedCountersForNewItems);
+
+		if (!hasRecentItem)
+		{
+			return true;
+		}
+
+		const isFakeElement = fields.isFakeElement && MessageManager.isTempMessage(fields.messageId);
+		if (!isFakeElement)
+		{
+			return true;
+		}
+
+		return Boolean(fields.invitation);
+	}
+
+	#getAllCollections(state: RecentState, excludeTypes: RecentTypeItem[] = []): Set<string>[]
+	{
+		const result = [];
+		const trees = [state.recentIndex, state.unreadIndex];
+
+		trees.forEach((indexTree) => {
+			Object.values(indexTree).forEach((parentGroup) => {
+				Object.entries(parentGroup).forEach(([recentType, idSet]) => {
+					if (excludeTypes.includes(recentType))
+					{
+						return;
+					}
+
+					result.push(idSet);
+				});
+			});
+		});
+
+		return result;
 	}
 
 	#getMessage(messageId: number | string): ImModelMessage
@@ -658,46 +466,23 @@ export class RecentModel extends BuilderModel
 		return Core.getStore().getters['messages/getById'](messageId);
 	}
 
-	#getDialog(dialogId: string): ImModelChat
+	#handleFakeItemWithDraft(payload: SetDraftPayload): void
 	{
-		return Core.getStore().getters['chats/get'](dialogId);
-	}
+		const recentItem = { ...this.getElementState(), ...this.#prepareFakeItemWithDraft(payload) };
 
-	#hasTodayMessage(messageId: number | string): boolean
-	{
-		const message: ImModelMessage = this.#getMessage(messageId);
-		const hasMessage = Utils.text.isUuidV4(message.id) || message.id > 0;
-
-		return hasMessage && Utils.date.isToday(message.date);
-	}
-
-	#canDelete(dialogId: string): boolean
-	{
-		const NOT_DELETABLE_TYPES = [ChatType.openChannel];
-		const { type } = this.#getDialog(dialogId);
-
-		return !NOT_DELETABLE_TYPES.includes(type);
-	}
-
-	#handleFakeItemWithDraft(payload: SetDraftPayload, store: RecentStore): void
-	{
-		const existingItem = store.state.collection[payload.id];
-		if (!existingItem)
-		{
-			store.commit('add', { ...this.getElementState(), ...this.#prepareFakeItemWithDraft(payload) });
-		}
-		store.commit('setRecentCollection', [payload.id.toString()]);
+		void Core.getStore().dispatch('recent/setCollection', {
+			type: RecentType.default,
+			items: [recentItem],
+		});
 	}
 
 	#prepareFakeItemWithDraft(payload: SetDraftPayload): Partial<ImModelRecentItem>
 	{
-		const messageId = this.#createFakeMessageForDraft(payload.id);
+		const messageId = this.#createFakeMessageForDraft(payload.dialogId);
 
 		return this.#formatFields({
-			dialogId: payload.id.toString(),
-			draft: {
-				text: payload.text.toString(),
-			},
+			dialogId: payload.dialogId.toString(),
+			draft: { text: payload.text.toString() },
 			messageId,
 		});
 	}
@@ -712,7 +497,7 @@ export class RecentModel extends BuilderModel
 
 	#shouldDeleteItemWithDraft(payload: SetDraftPayload): boolean
 	{
-		const existingItem = Core.getStore().state.recent.collection[payload.id];
+		const existingItem = Core.getStore().getters['recent/get'](payload.dialogId);
 
 		return existingItem
 			&& !Type.isStringFilled(payload.text)

@@ -12,6 +12,7 @@ import { IActionService } from '../service/action/type';
 import { ISelectService } from '../service/select/types';
 import { IEmptyStateService } from '../service/empty-state/types';
 import { IExternalService } from '../service/external/types';
+import { IFilterService } from '../service/filter/types';
 
 declare type RecentLocatorServices = Partial<{
 	'id': string,
@@ -23,6 +24,7 @@ declare type RecentLocatorServices = Partial<{
 	'empty-state'?: IEmptyStateService,
 	pagination?: IPaginationService,
 	search?: ISearchService,
+	filter?: IFilterService,
 	render?: IRenderService,
 	vuex?: IVuexService,
 	action?: IActionService,

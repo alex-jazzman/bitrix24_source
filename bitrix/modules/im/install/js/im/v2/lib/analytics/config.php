@@ -13,9 +13,9 @@ return [
 		'main.core',
 		'im.v2.lib.analytics',
 		'im.v2.lib.message-component',
+		'im.v2.const',
 		'ui.analytics',
 		'im.v2.application.core',
-		'im.v2.const',
 	],
 	'skip_core' => false,
 ];

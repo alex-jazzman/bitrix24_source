@@ -469,6 +469,46 @@
 				menuItems.push(menuItem.getProfileItem());
 			}
 
+			if (!this.isOwnProfile && this.otp?.canEdit && this.otp?.canSetLegacyOtpAllowed)
+			{
+				menuItems.push({
+					text: BX.message('INTRANET_USER_PROFILE_LEGACY_OTP_ALLOW'),
+					className: 'menu-popup-no-icon',
+					onclick: () => {
+						BX.PopupMenu.getMenuById('user-profile-action-popup').destroy();
+						BX.ajax.runAction('intranet.v2.Otp.setLegacyOtpAllowed', {
+							data: {
+								userId: this.userId,
+								allowed: 'Y',
+							},
+						}).then(() => {
+							BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
+							location.reload();
+						});
+					},
+				});
+			}
+
+			if (!this.isOwnProfile && this.otp?.canEdit && this.otp?.isLegacyOtpAllowed)
+			{
+				menuItems.push({
+					text: BX.message('INTRANET_USER_PROFILE_LEGACY_OTP_DISALLOW'),
+					className: 'menu-popup-no-icon',
+					onclick: () => {
+						BX.PopupMenu.getMenuById('user-profile-action-popup').destroy();
+						BX.ajax.runAction('intranet.v2.Otp.setLegacyOtpAllowed', {
+							data: {
+								userId: this.userId,
+								allowed: 'N',
+							},
+						}).then(() => {
+							BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
+							location.reload();
+						});
+					},
+				});
+			}
+
 			if (menuItems.length > 0)
 			{
 				BX.PopupMenu.show(
@@ -496,7 +536,7 @@
 				content:
 					BX.create('div', {
 						props: {
-							style: 'max-width: 450px',
+							style: 'max-width: 450px; padding-top: 20px;',
 						},
 						html: text,
 					}),
@@ -720,7 +760,7 @@
 						props: {
 							style: 'max-width: 450px',
 						},
-						html: error,
+						html: BX.Text.encode(error),
 					}),
 				closeIcon: true,
 				lightShadow: true,
@@ -811,26 +851,17 @@
 		{
 			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
-			BX.ajax.runComponentAction(this.componentName, 'setAdminRights', {
+			BX.ajax.runAction('intranet.v2.Admin.setRights', {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
-				data: {},
+				data: {
+					userId: this.userId,
+				},
 			}).then((response) => {
-				if (response.data === true)
-				{
-					BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
-					location.reload();
-				}
-				else
-				{
-					this.hideLoader({ loader });
-					BX.UI.Notification.Center.notify({
-						content: 'Error',
-						position: 'top-right',
-						autoHideDelay: 10000,
-					});
-					BX.PopupWindowManager.getPopupById('intranet-user-profile-confirm-popup').close();
-				}
+				this.hideLoader({ loader });
+				BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
+
+				location.reload();
 			}).catch((response) => {
 				this.hideLoader({ loader });
 				BX.UI.Notification.Center.notify({
@@ -850,9 +881,11 @@
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
 				data: {},
-			}).then(function(response) {
+			}).then((response) => {
 				if (response.data === true)
 				{
+					this.hideLoader({ loader });
+
 					location.reload();
 				}
 				else
@@ -933,8 +966,9 @@
 									}
 									this.hideLoader({ loader });
 								}).catch((error) => {
-									top.console.error(error);
-									this.showErrorPopup(`An error occurred while executing the ${action}`);
+									this.hideLoader({ loader });
+
+									this.showErrorPopup(error?.errors[0]?.message);
 								});
 							},
 							() => {},
@@ -1009,7 +1043,9 @@
 			}).then((response) => {
 				if (response.data === true)
 				{
+					this.hideLoader({ loader });
 					BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
+
 					location.reload();
 				}
 				else
@@ -1034,6 +1070,8 @@
 			}).then((response) => {
 				if (response.data === true)
 				{
+					this.hideLoader({ loader });
+
 					location.reload();
 				}
 				else
@@ -1058,6 +1096,8 @@
 			}).then(function(response) {
 				if (response.data === true)
 				{
+					this.hideLoader({ loader });
+
 					if (confirm === 'Y')
 					{
 						location.reload();
@@ -1089,6 +1129,8 @@
 			}).then((response) => {
 				if (response.data === true)
 				{
+					this.hideLoader({ loader });
+
 					BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
 					BX.SidePanel.Instance.close();
 				}

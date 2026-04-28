@@ -35,6 +35,10 @@ jn.define('im/messenger/controller/recent/config/dummy', (require, exports, modu
 				extension: 'im/messenger/controller/recent/service/search/dummy',
 				props: {},
 			},
+			[RecentServiceName.filter]: {
+				extension: 'im/messenger/controller/recent/service/filter/dummy',
+				props: {},
+			},
 			[RecentServiceName.render]: {
 				extension: 'im/messenger/controller/recent/service/render/dummy',
 				props: {},

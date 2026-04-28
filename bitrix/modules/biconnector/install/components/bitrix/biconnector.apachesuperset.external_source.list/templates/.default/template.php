@@ -42,7 +42,7 @@ if ($arResult['ENABLED_TRACKING_SOURCE_DATASET_INFO'])
 {
 ?>
 	<div class='ui-alert ui-alert-primary ui-alert-icon-info'>
-		<span class='ui-alert-message'><?= Loc::getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_TRACKING_SOURCE_DATASET_INFO') ?></span>
+		<span class='ui-alert-message'><?= Loc::getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_TRACKING_SOURCE_DATASET_INFO_MSGVER_1') ?></span>
 	</div>
 <?php
 }

@@ -43,13 +43,13 @@
 		loadSettings()
 		{
 			return new Promise((resolve) => {
-				BX.ajax.runAction(RestMethod.immobileSettingsGet)
+				BX.ajax.runAction(RestMethod.immobileApiSettingsGet)
 					.then((result) => {
-						console.log(RestMethod.immobileSettingsGet);
+						console.log(RestMethod.immobileApiSettingsGet);
 						resolve(result.data);
 					})
 					.catch((error) => {
-						console.error(RestMethod.immobileSettingsGet, error);
+						console.error(RestMethod.immobileApiSettingsGet, error);
 						resolve({});
 					})
 				;

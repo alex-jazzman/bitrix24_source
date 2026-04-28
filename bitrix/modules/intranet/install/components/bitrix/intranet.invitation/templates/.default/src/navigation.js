@@ -1,5 +1,5 @@
 import { Type, Dom } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Page } from './page/page';
 
 export class Navigation extends EventEmitter
@@ -28,8 +28,9 @@ export class Navigation extends EventEmitter
 
 		this.#first = Type.isStringFilled(options.first) && this.has(options.first)
 			? options.first
-			: this.#pages.next().value
+			: this.#pages.keys().next().value
 		;
+		this.#subscribeEvents();
 	}
 
 	show(code: string): void
@@ -42,6 +43,7 @@ export class Navigation extends EventEmitter
 		this.emit('onBeforeChangePage', {
 			current: this.current(),
 			new: page,
+			newPageCode: code,
 		});
 		Dom.clean(this.#container);
 		Dom.append(page.render(), this.#container);
@@ -104,5 +106,19 @@ export class Navigation extends EventEmitter
 	delete(code: string): void
 	{
 		this.#pages.delete(code);
+	}
+
+	#subscribeEvents(): void
+	{
+		EventEmitter.subscribe('BX.Intranet.Invitation:pageUpdate', this.#onPageUpdate.bind(this));
+	}
+
+	#onPageUpdate(event: BaseEvent): void
+	{
+		if (event.data?.pages && Type.isMap(event.data?.pages))
+		{
+			this.#pages = event.data?.pages;
+			this.show(this.#current);
+		}
 	}
 }

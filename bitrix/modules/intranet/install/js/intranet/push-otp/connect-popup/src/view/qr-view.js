@@ -9,6 +9,7 @@ import { BaseView } from './base-view';
 import 'ui.icon-set.outline';
 import { RepeatingRequest } from '../repeating-request';
 import { Analytics } from '../analytics';
+import { makeQrCodeTo } from '../util';
 
 export class QrView extends BaseView
 {
@@ -21,13 +22,14 @@ export class QrView extends BaseView
 	#loader: Loader;
 	#isAppSuccessConnected: boolean = false;
 	#onAppConnected: () => {};
+	#unsubscribePull: ?Function = null;
 
 	constructor(options)
 	{
 		super(options);
 		this.#signedUserId = options.signedUserId || null;
 		this.#repeatingRequest = options.repeatingRequest;
-		this.#pullConfig = Type.isObject(options.pullConfig) ? options.pullConfig : {};
+		this.#pullConfig = Type.isObject(options.pullConfig) ? { ...options.pullConfig } : {};
 		this.#callback = Type.isFunction(options.callback) ? options.callback : () => {};
 		this.#linkProvider = Type.isFunction(options.linkProvider) ? options.linkProvider : () => new Promise();
 		this.#qrContainer = Tag.render`<div class="intranet-push-otp-connect-popup__qr-container"></div>`;
@@ -47,7 +49,6 @@ export class QrView extends BaseView
 	render(): HTMLElement
 	{
 		this.#subscribeToScanQr();
-		this.#subscribeRefreshQr();
 
 		return Tag.render`
 			<div class="intranet-push-otp-connect-popup__view-container">
@@ -77,7 +78,7 @@ export class QrView extends BaseView
 							<li class="intranet-push-otp-connect-popup-ol-list-item --marker-4">${Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_4')}</li>
 						</ol>
 						<div class="intranet-push-otp-connect-popup-alert">
-							<div style="--ui-icon-set__icon-size: 20px; --ui-icon-set__icon-color: #FF5752;" class="ui-icon-set --o-alert"></div>
+							<div class="ui-icon-set --o-alert"></div>
 							<div class="intranet-push-otp-connect-popup-alert-text">${Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_DANGER')}</div>
 						</div>
 					</div>
@@ -88,24 +89,9 @@ export class QrView extends BaseView
 		`;
 	}
 
-	#makeQrCodeTo(element: HTMLElement, deeplink: string): void
-	{
-		// eslint-disable-next-line no-undef
-		new QRCode(element, {
-			text: deeplink,
-			width: 152,
-			height: 152,
-			colorDark: '#000000',
-			colorLight: '#ffffff',
-			// eslint-disable-next-line no-undef
-			correctLevel: QRCode.CorrectLevel.H,
-		});
-	}
-
 	#showQrCode(deeplink: string): HTMLElement
 	{
-		Dom.clean(this.#qrContainer);
-		this.#makeQrCodeTo(this.#qrContainer, deeplink);
+		makeQrCodeTo(this.#qrContainer, deeplink);
 	}
 
 	afterShow(option: Object): void
@@ -117,6 +103,12 @@ export class QrView extends BaseView
 	beforeDismiss(option: Object): void
 	{
 		this.#repeatingRequest.stop();
+
+		if (this.#unsubscribePull)
+		{
+			this.#unsubscribePull();
+			this.#unsubscribePull = null;
+		}
 	}
 
 	#fetchQrCode(): Promise
@@ -137,7 +129,7 @@ export class QrView extends BaseView
 	#subscribeToScanQr(): void
 	{
 		const pull = new PullClient();
-		pull.subscribe({
+		this.#unsubscribePull = pull.subscribe({
 			moduleId: 'security',
 			command: 'pushOtpCode',
 			callback: (params) => {
@@ -145,7 +137,6 @@ export class QrView extends BaseView
 				this.#callback(params).then(
 					(response) => {
 						this.#isAppSuccessConnected = true;
-						console.log(this.#onAppConnected);
 						this.#onAppConnected(this);
 						this.emit(
 							'onNextView',
@@ -170,21 +161,6 @@ export class QrView extends BaseView
 	{
 		Dom.clean(this.#qrContainer);
 		this.#loader.show();
-	}
-
-	#subscribeRefreshQr(): void
-	{
-		if (PULL)
-		{
-			PULL.subscribe({
-				type: 'BX.PullClient.SubscriptionType.Server',
-				moduleId: 'mobile',
-				command: 'onDeeplinkShouldRefresh',
-				callback: (params) => {
-					this.success();
-				},
-			});
-		}
 	}
 
 	isAppSuccessConnected(): boolean

@@ -655,7 +655,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	   * @return {BX.Landing.UI.Field.Dropdown}
 	   */
 	  createTypeSwitcher() {
-	    //type = PAGE || STORE || KNOWLEDGE || GROUP || MAINPAGE || SMN
+	    //type = PAGE || STORE || KNOWLEDGE || GROUP || VIBE || SMN
 	    const type = BX.Landing.Env.getInstance().getType();
 	    const items = [{
 	      name: BX.Landing.Loc.getMessage("LANDING_LINK_URL_ACTION_SELECT"),

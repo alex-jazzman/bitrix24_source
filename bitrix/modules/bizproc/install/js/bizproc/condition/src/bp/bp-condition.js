@@ -141,6 +141,11 @@ export class BpCondition
 				return false;
 			}
 
+			if (fieldType === 'document')
+			{
+				return (operator === Operator.EMPTY || operator === Operator.NOT_EMPTY);
+			}
+
 			const filterFields = Operator.getOperatorFieldTypeFilter(operator);
 
 			// todo: white list

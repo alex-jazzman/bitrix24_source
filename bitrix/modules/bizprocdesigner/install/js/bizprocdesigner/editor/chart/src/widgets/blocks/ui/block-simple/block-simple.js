@@ -91,7 +91,8 @@ export const BlockSimple = {
 					:deactivated="!isBlockActivated"
 					:hoverable="!isMakeNewConnection"
 					:contextMenuItems="contextMenuItems"
-					@dblclick.stop="blockMediator.showNodeSettings(block)"
+					@mouseup="blockMediator.handleMouseUp($event, block)"
+					@mousedown="blockMediator.handleMouseDown($event)"
 				>
 					<BlockLayout
 						:block="block"

@@ -20,8 +20,7 @@ export const SkusBar = {
 		},
 	},
 	emits: ['update:checked'],
-	// eslint-disable-next-line flowtype/require-return-type
-	setup()
+	setup(): { CounterStyle: typeof CounterStyle }
 	{
 		return {
 			CounterStyle,

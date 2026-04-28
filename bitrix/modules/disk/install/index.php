@@ -6,6 +6,8 @@ use Bitrix\Disk\Document\BitrixHandler;
 use Bitrix\Disk\Document\DocumentHandlersManager;
 use Bitrix\Disk\Document\Models\DocumentSessionTable;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
+use Bitrix\Disk\Internal\EventHandlers\RestrictDeleteCustomServerHandler;
+use Bitrix\Disk\Public\Event\DeletingCustomServerEvent;
 use Bitrix\Disk\UserConfiguration;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
@@ -248,6 +250,23 @@ Class disk extends CModule
 		/** @see \Bitrix\Disk\Document\OnlyOffice\RestrictionManager::DELETE_SESSION_EVENT */
 		$eventManager->registerEventHandler('disk', 'OnDeleteSessionsFromRestrictionLog', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleSessionCountChanges');
 		$eventManager->registerEventHandler('baas', 'onServiceBalanceChanged', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleBalanceChanges');
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onGetDocumentType',
+			toModuleId: 'disk',
+			toClass: \Bitrix\Disk\Internal\Integration\Bizproc\EventHandlers\OnGetDocumentType\GetDocumentTypes::class,
+			toMethod: 'onGetDocumentType',
+		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'disk',
+			/** @see DeletingCustomServerEvent::EVENT_NAME */
+			eventType: 'deletingCustomServer',
+			toModuleId: 'disk',
+			toClass: '\\Bitrix\\Disk\\Internal\\EventHandlers\\RestrictDeleteCustomServerHandler',
+			toMethod: 'handle',
+		);
 	}
 
 	function UnInstallDB($arParams = Array())
@@ -325,6 +344,23 @@ Class disk extends CModule
 		$eventManager->unRegisterEventHandler('disk', 'OnSaveSessionInRestrictionLog', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleSessionCountChanges');
 		$eventManager->unRegisterEventHandler('disk', 'OnDeleteSessionsFromRestrictionLog', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleSessionCountChanges');
 		$eventManager->unRegisterEventHandler('baas', 'onServiceBalanceChanged', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleBalanceChanges');
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onGetDocumentType',
+			toModuleId: 'disk',
+			toClass: \Bitrix\Disk\Internal\Integration\Bizproc\EventHandlers\OnGetDocumentType\GetDocumentTypes::class,
+			toMethod: 'onGetDocumentType',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'disk',
+			/** @see DeletingCustomServerEvent::EVENT_NAME */
+			eventType: 'deletingCustomServer',
+			toModuleId: 'disk',
+			toClass: '\\Bitrix\\Disk\\Internal\\EventHandlers\\RestrictDeleteCustomServerHandler',
+			toMethod: 'handle',
+		);
 
 		UnRegisterModule("disk");
 

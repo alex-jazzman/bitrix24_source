@@ -145,7 +145,7 @@ jn.define('in-app-url/route', (require, exports, module) => {
 
 		/**
 		 * @param {string} pattern
-		 * @param {Object} params
+		 * @param {Object} [params]
 		 */
 		addRoute(pattern, params)
 		{

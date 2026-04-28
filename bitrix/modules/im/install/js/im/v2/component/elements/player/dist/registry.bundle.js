@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,ui_iconSet_api_vue,ui_iconSet_smallOutline,im_v2_component_elements_loader,im_v2_provider_service_message,ui_fonts_opensans,main_polyfill_intersectionobserver,im_v2_lib_feature,main_core_events,im_v2_lib_localStorage,im_v2_component_elements_avatar,im_v2_lib_analytics,ui_infoHelper,ui_vue3_components_richLoc,im_v2_component_animation,im_v2_const,im_v2_lib_parser,im_v2_lib_utils) {
+(function (exports,ui_iconSet_api_vue,ui_iconSet_smallOutline,im_v2_component_elements_loader,im_v2_provider_service_message,ui_fonts_opensans,main_polyfill_intersectionobserver,im_v2_lib_feature,main_core_events,im_v2_lib_localStorage,im_v2_component_elements_avatar,im_v2_lib_analytics,ui_infoHelper,ui_vue3_components_richLoc,im_v2_component_animation,im_v2_const,im_v2_lib_parser,im_v2_lib_copilot,im_v2_lib_utils) {
 	'use strict';
 
 	const State = Object.freeze({
@@ -428,9 +428,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        return ui_iconSet_api_vue.Outline.CHEVRON_TOP_M;
 	      }
 	      return this.isOverlay ? ui_iconSet_api_vue.SmallOutline.TRANSCRIPTION : ui_iconSet_api_vue.Outline.TRANSCRIPTION;
-	    },
-	    iconColor() {
-	      return this.isOverlay ? im_v2_const.Color.white : im_v2_const.Color.accentBlue;
 	    }
 	  },
 	  watch: {
@@ -484,8 +481,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<BIcon
 					v-else
 					:name="buttonIcon"
-					:color="iconColor"
-					:size="20"
+					class="bx-im-transcription-button__icon"
 				/>
 			</button>
 		</div>
@@ -933,7 +929,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    errorText() {
 	      if (this.isLimitError) {
-	        return this.loc('IM_MESSAGE_FILE_TRANSCRIPTION_LIMIT_ERROR');
+	        return this.loc('IM_MESSAGE_FILE_TRANSCRIPTION_LIMIT_ERROR_MSGVER_1', {
+	          '#COPILOT_NAME#': this.copilotManager.getName()
+	        });
 	      }
 	      const code = ErrorMessageByType[this.file.type];
 	      return this.loc(code);
@@ -949,9 +947,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.$store.getters['messages/getById'](this.messageId);
 	    }
 	  },
+	  created() {
+	    this.copilotManager = new im_v2_lib_copilot.CopilotManager();
+	  },
 	  methods: {
-	    loc(code) {
-	      return this.$Bitrix.Loc.getMessage(code);
+	    loc(code, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(code, replacements);
 	    },
 	    onLimitErrorLinkClick() {
 	      const promoter = new ui_infoHelper.FeaturePromoter({
@@ -1529,5 +1530,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.AudioPlayer = AudioPlayer;
 	exports.TranscribedVideoPlayer = TranscribedVideoPlayer;
 
-}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX.UI.IconSet,BX,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX,BX,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.UI,BX.UI.Vue3.Components,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX.UI.IconSet,BX,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX,BX,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.UI,BX.UI.Vue3.Components,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

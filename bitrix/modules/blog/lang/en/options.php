@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLO_AVATAR_MAX_SIZE"] = "Maximum avatar file size (bytes):";
 $MESS["BLO_IMAGE_MAX_SIZE"] = "Maximum file size (bytes):";
 $MESS["BLO_AVATAR_MAX_WIDTH"] = "Maximum avatar width (pixels)";
@@ -48,4 +48,3 @@ $MESS["BLO_SITE_PATH3"] = "Path templates";
 $MESS["MAIN_RESTORE_DEFAULTS"] = "Default settings";
 $MESS["BLOG_OPTIONS_SMILE_GALLERY_ID"] = "Blog emoticon gallery";
 $MESS["BLOG_OPTIONS_SMILE_SET_ID"] = "Blog emoticons";
-?>

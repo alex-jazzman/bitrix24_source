@@ -14,7 +14,11 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var \CDiskVolumeComponent $component */
 
 use Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.fonts.opensans"]);
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Size;
+
+\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.fonts.opensans",]);
 
 Loc::loadMessages(__FILE__);
 
@@ -85,10 +89,16 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				<div class="disk-volume-logo-main"></div>
 			</div>
 		</div>
-		<div id="bx-disk-volume-buttons" class="webform-buttons pinable-block disk-volume-button-container">
-			<button id="bx-disk-volume-link-measure" class="webform-small-button webform-small-button-accept disk-volume-button-margin-top">
-				<span class="webform-small-button-text"><?= Loc::getMessage("DISK_VOLUME_MEASURE_DATA"); ?></span>
-			</button>
+		<div id="bx-disk-volume-buttons" class="disk-volume-button-container --with-top-border --center">
+			<?=
+				(new Button([
+					'text' => Loc::getMessage("DISK_VOLUME_MEASURE_DATA"),
+					'className' => 'disk-volume-button-margin-top',
+					'color' => Color::SUCCESS,
+				]))
+					->addAttribute('id', 'bx-disk-volume-link-measure')
+					->render(false)
+			?>
 		</div>
 
 		<div id="bx-disk-volume-process" class="disk-volume-container disk-volume-wrap-state">
@@ -272,7 +282,7 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				<div class="disc-volume-file-count">(<?= Loc::getMessage('DISK_VOLUME_COUNT', array('#FILE_COUNT#' => $arResult['DROP_TOTAL_COUNT']))?>)</div>
 			<? endif; ?>
 			<div class="disc-volume-notice"><?= Loc::getMessage("DISK_VOLUME_MAY_DROP"); ?></div>
-			<div class="webform-buttons pinable-block ">
+			<div class="disk-volume-button-container --center">
 				<div id="disc-volume-space-selector" class="disc-volume-space-entity-container">
 					<? if ($arResult['DROP_UNNECESSARY_VERSION_COUNT'] > 0): ?>
 						<div id="disc-volume-space-unnecessaryVersion" data-checked="N" data-type="unnecessaryVersion" class="disc-volume-space-entity-block <?
@@ -324,7 +334,18 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				</div>
 
 				<div class="disk-volume-button-container">
-					<button id="bx-disk-volume-link-run-cleaner" class="webform-button webform-button-blue disc-volume-button webform-button-disable"><?= Loc::getMessage("DISK_VOLUME_RUN_CLEANER"); ?></button>
+					<?=
+					(new Button([
+						'text' => Loc::getMessage("DISK_VOLUME_RUN_CLEANER"),
+						'color' => Color::PRIMARY,
+						'size' => Size::LARGE,
+					]))
+						->addAttribute('id', 'bx-disk-volume-link-run-cleaner')
+						->addClass('disc-volume-button')
+						->setDisabled(true)
+						->render(false)
+					;
+					?>
 				</div>
 
 				<div class="disc-volume-notice-small">
@@ -333,9 +354,6 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 						<?= Loc::getMessage('DISK_VOLUME_AVAILABLE_SPACE'); ?>
 					</span>
 				</div>
-
-
-
 			</div>
 			<?
 		}
@@ -348,12 +366,18 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				<span class="disk-volume-space-amount-item"><?= $arResult['DROP_TOTAL_SIZE_UNITS'] ?></span>
 			</div>
 			<div class="disc-volume-notice"><?= Loc::getMessage("DISK_VOLUME_CANNT_DROP"); ?></div>
-			<div class="webform-buttons pinable-block ">
-
-				<div class="disk-volume-button-container">
-					<a href="<?= $component->getActionUrl(array('reload' => 'Y', 'action' => $component::ACTION_DEFAULT)); ?>" class="ui-btn ui-btn-lg ui-btn-light-border disk-volume-reload-link"><?= Loc::getMessage("DISK_VOLUME_MEASURE_DATA_REPEAT");?></a>
-				</div>
-
+			<div class="disk-volume-button-container --center">
+				<?=
+				(new Button([
+					'text' => Loc::getMessage("DISK_VOLUME_MEASURE_DATA_REPEAT"),
+					'tag' => 'a',
+					'link' => $component->getActionUrl(array('reload' => 'Y', 'action' => $component::ACTION_DEFAULT)),
+					'color' => Color::LIGHT_BORDER,
+					'size' => Size::LARGE,
+				]))
+					->addClass('disk-volume-reload-link')
+					->render(false);
+				?>
 			</div>
 			<?
 		}
@@ -379,8 +403,8 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 		{
 			BX.Disk.measureManager.stopQueue();
 
-			BX.removeClass(buttonRunCleaner, 'webform-button-wait');
-			BX.removeClass(startMeasureButton, 'webform-button-wait');
+			BX.removeClass(buttonRunCleaner, 'ui-btn-wait');
+			BX.removeClass(startMeasureButton, 'ui-btn-wait');
 
 			BX.Disk.showActionModal({
 				text: BX.message('DISK_VOLUME_PERFORMING_CANCEL_MEASURE'),
@@ -396,8 +420,8 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				after: function(){
 					BX.Disk.measureManager.progressBarHide();
 
-					BX.removeClass(buttonRunCleaner, 'webform-button-wait');
-					BX.removeClass(startMeasureButton, 'webform-button-wait');
+					BX.removeClass(buttonRunCleaner, 'ui-btn-wait');
+					BX.removeClass(startMeasureButton, 'ui-btn-wait');
 					startMeasureButton.disabled = false;
 
 					BX.addClass(spaceSelectorUnnecessaryVersion, 'disc-volume-space-entity-block-inprocess');
@@ -449,11 +473,13 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				}
 				if(drop.unnecessaryVersion || drop.trashcan)
 				{
-					BX.removeClass(buttonRunCleaner, 'webform-button-disable');
+					BX.Dom.removeClass(buttonRunCleaner, 'ui-btn-disabled');
+					BX.Dom.attr(buttonRunCleaner, 'disabled', null);
 				}
 				else
 				{
-					BX.addClass(buttonRunCleaner, 'webform-button-disable');
+					BX.Dom.addClass(buttonRunCleaner, 'ui-btn-disabled');
+					BX.Dom.attr(buttonRunCleaner, 'disabled', true);
 				}
 
 				if(drop.unnecessaryVersion || drop.trashcan)
@@ -515,8 +541,8 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				<? if(count($filterIdsStorage) > 0): ?>param.filterIdsStorage = [<?= implode(',', $filterIdsStorage); ?>];<? endif ?>
 				<? if($arResult['STORAGE_ID'] > 0): ?>param.storageId = '<?= $arResult['STORAGE_ID'] ?>';<? endif ?>
 
-				BX.addClass(startMeasureButton, 'webform-button-wait');
-				BX.addClass(buttonRunCleaner, 'webform-button-wait');
+				BX.addClass(startMeasureButton, 'ui-btn-wait');
+				BX.addClass(buttonRunCleaner, 'ui-btn-wait');
 				buttonRunCleaner.disabled = true;
 
 				BX.Disk.measureManager.callAction(BX.merge(
@@ -524,8 +550,8 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 						'action': '<?= $component::ACTION_SETUP_CLEANER_JOB ?>',
 						'after': function () {
 							buttonRunCleaner.disabled = false;
-							BX.removeClass(startMeasureButton, 'webform-button-wait');
-							BX.removeClass(buttonRunCleaner, 'webform-button-wait');
+							BX.removeClass(startMeasureButton, 'ui-btn-wait');
+							BX.removeClass(buttonRunCleaner, 'ui-btn-wait');
 							if (param.deleteUnnecessaryVersion === 'Y')
 							{
 								BX.addClass(spaceSelectorUnnecessaryVersion, 'disc-volume-space-entity-block-inprocess');

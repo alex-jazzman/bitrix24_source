@@ -20,6 +20,7 @@ return [
 		'./src/dialog',
 		'./src/draft',
 		'./src/file',
+		'./src/internal/counter-pending-operation',
 		'./src/internal/dialog',
 		'./src/link-pin',
 		'./src/link-pin-message',

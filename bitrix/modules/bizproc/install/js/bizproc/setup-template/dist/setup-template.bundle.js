@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,pull_client,ui_vue3,main_core_events,bizproc_ragSelector,ui_entitySelector,main_core,ui_uploader_tileWidget,ui_uploader_core) {
+(function (exports,pull_client,ui_vue3,main_core_events,bizproc_ragSelector,ui_entitySelector,ui_uploader_tileWidget,ui_uploader_core,main_core,ui_datePicker) {
 	'use strict';
 
 	const ITEM_TYPES = Object.freeze({
@@ -18,7 +18,8 @@ this.BX = this.BX || {};
 	  TEXT: 'text',
 	  SELECT: 'select',
 	  KNOWLEDGE: 'rag_knowledge_base',
-	  PROJECT: 'project'
+	  PROJECT: 'project',
+	  TIME: 'time'
 	});
 	const DELIMITER_TYPES = Object.freeze({
 	  LINE: 'line'
@@ -155,7 +156,14 @@ this.BX = this.BX || {};
 	      }
 	    },
 	    options() {
-	      return this.item.options || [];
+	      const rawOptions = this.item.options;
+	      if (!rawOptions) {
+	        return [];
+	      }
+	      return Object.entries(rawOptions).map(([id, name]) => ({
+	        id,
+	        name
+	      }));
 	    },
 	    showScroll() {
 	      return this.options.length > 7;
@@ -691,6 +699,195 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const boundTimePickers = new WeakSet();
+	const REGEX_PATTERNS = {
+	  TIME_FORMAT: /(\d{1,2}:\d{2})(?::\d{2})?/,
+	  TIMEZONE_OFFSET: /\s\[[\d-]+]$/
+	};
+
+	// @vue/component
+	const ConstantTime = {
+	  name: 'ConstantTime',
+	  props: {
+	    item: {
+	      type: Object,
+	      required: true
+	    },
+	    modelValue: {
+	      type: String,
+	      default: ''
+	    },
+	    disabled: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['update:modelValue'],
+	  data() {
+	    return {
+	      timeValue: '',
+	      timezone: '',
+	      timezones: [],
+	      timePicker: null
+	    };
+	  },
+	  mounted() {
+	    var _Extension$getSetting;
+	    this.timezones = (_Extension$getSetting = main_core.Extension.getSettings('bizproc.setup-template')) == null ? void 0 : _Extension$getSetting.timezones;
+	    this.syncFromModel();
+	  },
+	  beforeUnmount() {
+	    var _this$timePicker;
+	    if ((_this$timePicker = this.timePicker) != null && _this$timePicker.destroy) {
+	      this.timePicker.destroy();
+	      this.timePicker = null;
+	    }
+	  },
+	  methods: {
+	    syncFromModel() {
+	      this.applyValueFromModule();
+	      this.applyTimezoneFromModel();
+	    },
+	    getDefaultTimezone() {
+	      return 'current';
+	    },
+	    applyValueFromModule() {
+	      const model = this.modelValue;
+	      this.timeValue = this.extractTimeValue(main_core.Type.isString(model) ? model : '');
+	    },
+	    applyTimezoneFromModel() {
+	      var _match$, _this$timezones, _timezones$find$value, _timezones$find;
+	      const value = this.modelValue;
+	      const timezoneOffsetRegex = /\s\[[\d-]+]$/;
+	      const defaultValue = main_core.Type.isString(value) ? value : '';
+	      const match = defaultValue.match(timezoneOffsetRegex);
+	      const offset = ((_match$ = match == null ? void 0 : match[0]) != null ? _match$ : '').replaceAll(/[\s[\]]/g, '');
+	      const timezones = (_this$timezones = this.timezones) != null ? _this$timezones : [];
+	      this.timezone = (_timezones$find$value = (_timezones$find = timezones.find(zone => String(zone.offset) === offset)) == null ? void 0 : _timezones$find.value) != null ? _timezones$find$value : this.getDefaultTimezone();
+	    },
+	    extractTimeValue(value) {
+	      if (!main_core.Type.isString(value)) {
+	        return '';
+	      }
+	      const clean = value.replace(REGEX_PATTERNS.TIMEZONE_OFFSET, '');
+	      const match = clean.match(REGEX_PATTERNS.TIME_FORMAT);
+	      return match ? match[1] : '';
+	    },
+	    emitUpdate(value) {
+	      this.$emit('update:modelValue', value);
+	    },
+	    onTimeChange(event) {
+	      var _event$target$value, _event$target;
+	      const raw = (_event$target$value = event == null ? void 0 : (_event$target = event.target) == null ? void 0 : _event$target.value) != null ? _event$target$value : '';
+	      const match = raw.match(REGEX_PATTERNS.TIME_FORMAT);
+	      const time = match ? match[1] : raw;
+	      this.timeValue = time;
+	      this.emitUpdate(this.prepareEventData(time, this.timezone));
+	    },
+	    onTimezoneChange(event) {
+	      var _event$target$value2, _event$target2;
+	      const timezone = (_event$target$value2 = event == null ? void 0 : (_event$target2 = event.target) == null ? void 0 : _event$target2.value) != null ? _event$target$value2 : 0;
+	      this.timezone = timezone;
+	      this.applyValueFromModule();
+	      this.emitUpdate(this.prepareEventData(this.timeValue, timezone));
+	    },
+	    onSelect() {
+	      const input = this.$refs.timeInput;
+	      const selectedDate = this.timePicker.getSelectedDate() || this.timePicker.getFocusDate();
+	      if (!selectedDate) {
+	        return;
+	      }
+	      const timeString = this.timePicker.formatTime(selectedDate);
+	      if (timeString === this.timeValue) {
+	        return;
+	      }
+	      const timezoneOffsetRegex = /\s\[[\d-]+]$/;
+	      const rawValue = timeString;
+	      const normalizedValue = main_core.Type.isString(rawValue) ? rawValue.replace(timezoneOffsetRegex, '') : rawValue;
+	      this.timeValue = timeString;
+	      this.emitUpdate(this.prepareEventData(normalizedValue, this.timezone));
+	      input.value = timeString;
+	    },
+	    openTimePicker() {
+	      if (this.disabled) {
+	        return;
+	      }
+	      const input = this.$refs.timeInput;
+	      if (!input) {
+	        return;
+	      }
+	      if (!this.timePicker) {
+	        var _input$ownerDocument;
+	        this.timePicker = new ui_datePicker.DatePicker({
+	          targetNode: input,
+	          inputField: input,
+	          type: 'time',
+	          timePickerStyle: 'wheel',
+	          amPmMode: false,
+	          minuteStep: 5,
+	          popupOptions: {
+	            targetContainer: ((_input$ownerDocument = input.ownerDocument) == null ? void 0 : _input$ownerDocument.body) || document.body
+	          }
+	        });
+	      }
+	      const timeView = this.timePicker.getPicker('time');
+	      if (timeView != null && timeView.subscribe && !boundTimePickers.has(this.timePicker)) {
+	        // default DatePicker events do not work in the slider
+	        timeView.subscribe('onSelect', () => {
+	          setTimeout(this.onSelect, 0);
+	        });
+	        boundTimePickers.add(this.timePicker);
+	      }
+	      this.timePicker.show();
+	    },
+	    prepareEventData(time, timezone) {
+	      let offset = timezone;
+	      if (!main_core.Type.isNumber(timezone)) {
+	        var _this$timezones$find$, _this$timezones$find;
+	        offset = (_this$timezones$find$ = (_this$timezones$find = this.timezones.find(zone => zone.value === timezone)) == null ? void 0 : _this$timezones$find.offset) != null ? _this$timezones$find$ : '0';
+	      }
+	      return `${time} [${offset}]`;
+	    }
+	  },
+	  template: `
+		<div class="bizproc-setup-template__time-row">
+		  <div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
+		    <input
+		        ref="timeInput"
+		        :value="timeValue"
+		        type="text"
+		        class="ui-ctl-element"
+		        :disabled="disabled"
+		        placeholder="HH:MM"
+		        readonly
+		        @change="onTimeChange"
+		        @click="openTimePicker"
+		        style="cursor: pointer;"
+		        data-test-id="bizproc-setup-template__form-time-value"
+		    >
+		  </div>
+		  <div v-if="timezones.length > 0" class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+		    <div class="ui-ctl-after ui-ctl-icon-angle"></div>
+		    <select
+		        class="ui-ctl-element"
+		        :value="timezone"
+		        :disabled="disabled"
+		        @change="onTimezoneChange"
+		        data-test-id="bizproc-setup-template__form-time-timezone"
+		    >
+		      <option
+		          v-for="zone in timezones"
+		          :key="zone.value"
+		          :value="zone.value"
+		      >
+		        {{ zone.text }}
+		      </option>
+		    </select>
+		  </div>
+		</div>
+	`
+	};
+
 	const ConstantFieldMap = {
 	  [CONSTANT_TYPES.TEXT]: 'ConstantTextarea',
 	  [CONSTANT_TYPES.STRING]: 'ConstantTextual',
@@ -699,7 +896,8 @@ this.BX = this.BX || {};
 	  [CONSTANT_TYPES.USER]: 'ConstantUser',
 	  [CONSTANT_TYPES.KNOWLEDGE]: 'ConstantKnowledge',
 	  [CONSTANT_TYPES.PROJECT]: 'ConstantProject',
-	  [CONSTANT_TYPES.FILE]: 'ConstantFile'
+	  [CONSTANT_TYPES.FILE]: 'ConstantFile',
+	  [CONSTANT_TYPES.TIME]: 'ConstantTime'
 	};
 
 	// @vue/component
@@ -712,7 +910,8 @@ this.BX = this.BX || {};
 	    ConstantTextarea,
 	    ConstantKnowledge,
 	    ConstantProject,
-	    ConstantFile
+	    ConstantFile,
+	    ConstantTime
 	  },
 	  props: {
 	    /** @type ConstantItem */
@@ -1295,5 +1494,5 @@ this.BX = this.BX || {};
 	exports.ActivatorAppComponent = ActivatorAppComponent;
 	exports.FormElement = FormElement;
 
-}((this.BX.Bizproc = this.BX.Bizproc || {}),BX,BX.Vue3,BX.Event,BX.Bizproc.RagSelector,BX.UI.EntitySelector,BX,BX.UI.Uploader,BX.UI.Uploader));
+}((this.BX.Bizproc = this.BX.Bizproc || {}),BX,BX.Vue3,BX.Event,BX.Bizproc.RagSelector,BX.UI.EntitySelector,BX.UI.Uploader,BX.UI.Uploader,BX,BX.UI.DatePicker));
 //# sourceMappingURL=setup-template.bundle.js.map

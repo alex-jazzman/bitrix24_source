@@ -1,8 +1,8 @@
 /* eslint-disable no-param-reassign */
 import { BuilderModel } from 'ui.vue3.vuex';
-import { Model } from 'booking.const';
-
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
+
+import { Model } from 'booking.const';
 import type { SaleChannelsState, FormsMenu, IntegrationItem, SetIntegrationStatusPayload } from './types';
 
 export class SaleChannels extends BuilderModel

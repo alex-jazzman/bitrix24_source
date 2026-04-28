@@ -1,0 +1,39 @@
+.crm-item-import__field.--tag-selector .ui-ctl-element {
+	padding: 0;
+	border: none;
+}
+
+.crm-item-import__field-select-hint {
+	margin-top: var(--ui-size-xs2);
+}
+
+.crm-item-import__field .ui-tag-selector-text-box {
+	flex: 1;
+}
+
+
+.crm-item-import__field.--tag-selector.--row {
+	display: flex;
+	justify-content: space-between;
+}
+
+.crm-item-import__field.--tag-selector.--row .ui-ctl-w100 {
+	flex: 0 0 68%;
+}
+
+.crm-item-import__field.--tag-selector.--row .ui-form-label {
+	flex: 0 0 32%;
+	display: flex;
+	align-items: center;
+}
+
+.crm-item-import__field.--tag-selector.--row .ui-ctl-label-text {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	line-height: 1.4;
+	max-height: calc(1.4em * 2);
+	padding: 0;
+}

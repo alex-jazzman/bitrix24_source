@@ -4,7 +4,6 @@
 jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (require, exports, module) => {
 	const { Type } = require('type');
 	const { unique } = require('utils/array');
-	const { CounterType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	class CounterMutationHandler
@@ -80,7 +79,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 
 			const rawChatIdList = counterStateList
 				.map((counterState) => {
-					if (counterState.type === CounterType.comment)
+					if (counterState.parentChatId > 0 && !Type.isArrayFilled(counterState.recentSections))
 					{
 						return counterState.parentChatId;
 					}
@@ -104,29 +103,56 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 				return;
 			}
 
-			const itemsToUpdate = [];
-			recentItems.forEach((recentItem) => {
-				if (this.#hasItemInCurrentTab(recentItem?.id))
-				{
-					itemsToUpdate.push(recentItem);
-				}
-			});
-
-			if (!Type.isArrayFilled(itemsToUpdate))
+			if (!this.recentLocator.has('render'))
 			{
 				return;
 			}
 
-			this.recentLocator.get('render').upsertItems(itemsToUpdate);
+			const tabId = this.recentLocator.get('id');
+			const collection = this.store.getters['recentModel/getIdCollection'](tabId);
+			const render = this.recentLocator.get('render');
+			const { toUpsert, toDelete } = this.#partitionItemsForUpdate(recentItems, collection, render);
+
+			if (Type.isArrayFilled(toUpsert))
+			{
+				render.upsertItems(toUpsert);
+			}
+
+			if (Type.isArrayFilled(toDelete))
+			{
+				render.deleteItems(toDelete);
+			}
 		}
 
 		/**
-		 * @param {?string} dialogId
-		 * @return {boolean}
+		 * @param {Array<RecentModelState>} items
+		 * @param {Set<string>} collection
+		 * @param {object} render
+		 * @returns {{ toUpsert: Array<RecentModelState>, toDelete: Array<RecentModelState> }}
 		 */
-		#hasItemInCurrentTab(dialogId)
+		#partitionItemsForUpdate(items, collection, render)
 		{
-			return this.store.getters['recentModel/hasItemInTab'](dialogId, this.recentLocator.get('id'));
+			const toUpsert = [];
+			const toDelete = [];
+
+			items.forEach((item) => {
+				const id = String(item.id ?? item.dialogId ?? '');
+				if (!Type.isStringFilled(id))
+				{
+					return;
+				}
+
+				if (collection.has(id))
+				{
+					toUpsert.push(item);
+				}
+				else if (render.hasItemRendered(id))
+				{
+					toDelete.push({ id });
+				}
+			});
+
+			return { toUpsert, toDelete };
 		}
 	}
 

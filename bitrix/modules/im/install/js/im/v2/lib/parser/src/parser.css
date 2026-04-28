@@ -18,7 +18,7 @@
 	--bx-im-message-quote-with-context__background: var(--bx-im-message-quote__background);
 	--bx-im-message-quote-toggle__background: linear-gradient(90deg, rgba(var(--bx-im-message-quote__background-rgb), 0) 0%, var(--bx-im-message-quote__background) 40%);
 }
-.bx-im-message-system__scope {
+.bx-im-message-base__wrap.--system {
 	--bx-im-message-quote__color: var(--ui-color-palette-gray-90);
 	--bx-im-message-quote__background: rgba(var(--ui-color-palette-white-base-rgb), 0.16);
 	--bx-im-message-quote-with-context__background: rgba(var(--ui-color-palette-white-base-rgb), 0.16);

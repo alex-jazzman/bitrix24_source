@@ -22,3 +22,4 @@ DROP TABLE IF EXISTS b_booking_delayed_task;
 DROP TABLE IF EXISTS b_booking_booking_sku;
 DROP TABLE IF EXISTS b_booking_resource_sku;
 DROP TABLE IF EXISTS b_booking_resource_sku_yandex;
+DROP TABLE IF EXISTS b_booking_booking_payment;

@@ -20,6 +20,7 @@ if ($saleModulePermissions < "W")
 Loc::loadMessages(__FILE__);
 
 \Bitrix\Main\Loader::includeModule('sale');
+\Bitrix\Main\Loader::includeModule('currency');
 
 \Bitrix\Main\Loader::includeModule('ui');
 \Bitrix\Main\UI\Extension::load('ui.buttons.icons');
@@ -279,7 +280,10 @@ $contextMenu->Show();
 if ($errorMessage !== '')
 	CAdminMessage::ShowMessage(array("DETAILS"=>$errorMessage, "TYPE"=>"ERROR", "MESSAGE"=>Loc::getMessage("SALE_CASHBOX_ERROR"), "HTML"=>true));
 
-$valuePrecision = (int)Config\Option::get('sale', 'value_precision');
+
+$baseCurrency = \Bitrix\Currency\CurrencyManager::getBaseCurrency();
+$currencyFormat = CCurrencyLang::GetFormatDescription($baseCurrency);
+$valuePrecision = (int)($currencyFormat['DECIMALS'] ?? 2);
 if ($valuePrecision > 2)
 {
 	$note = BeginNote();

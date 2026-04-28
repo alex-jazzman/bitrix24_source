@@ -2,9 +2,10 @@
  * @module intranet/user-list/src/more-menu
  */
 jn.define('intranet/user-list/src/more-menu', (require, exports, module) => {
-
 	const { BaseListMoreMenu } = require('layout/ui/list/base-more-menu');
 	const { Loc } = require('loc');
+	const { qrauth } = require('qrauth/utils');
+	const { UIMenuType } = require('layout/ui/menu');
 
 	const iconPrefix = `${currentDomain}/bitrix/mobileapp/intranetmobile/extensions/intranet/user-list/images/more-menu-`;
 
@@ -84,7 +85,7 @@ jn.define('intranet/user-list/src/more-menu', (require, exports, module) => {
 					showCheckedIcon: false,
 				}),
 				{
-					type: UI.Menu.Types.HELPDESK,
+					type: UIMenuType.HELPDESK,
 					data: { articleCode: '20955260' },
 				},
 			];

@@ -1,16 +1,15 @@
 /**
- * @module im/messenger/model/counter/default-element
+ * @module im/messenger/model/counter/src/default-element
  */
-jn.define('im/messenger/model/counter/default-element', (require, exports, module) => {
-	const { CounterType } = require('im/messenger/const');
-
+jn.define('im/messenger/model/counter/src/default-element', (require, exports, module) => {
+	/** @type {CounterModelState} */
 	const counterDefaultElement = Object.freeze({
 		chatId: 0,
 		parentChatId: 0,
-		type: CounterType.chat,
 		counter: 0,
-		locked: false,
-		disabled: false,
+		recentSections: [],
+		isMarkedAsUnread: false,
+		isMuted: false,
 	});
 
 	module.exports = {

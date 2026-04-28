@@ -9,7 +9,7 @@ use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main\UI;
 
-UI\Extension::load(["ui.tooltip", "ui.fonts.opensans", 'crm.autorun']);
+UI\Extension::load(["ui.tooltip", "ui.fonts.opensans", 'crm.autorun', 'intranet.old-interface.intranet-common']);
 
 /**
  * Bitrix vars

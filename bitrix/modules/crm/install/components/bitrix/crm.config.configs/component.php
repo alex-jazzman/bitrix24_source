@@ -774,25 +774,27 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'required' => false
 );
 
-if(\Bitrix\Crm\Settings\InvoiceSettings::allowDisableSign())
+if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 {
-	$arResult['FIELDS']['tab_main'][] = array(
-		'id' => 'ENABLE_ENABLED_PUBLIC_B24_SIGN',
-		'name' => GetMessage('CRM_FIELD_PUBLIC_INVOICE_B24_SIGN'),
-		'type' => 'checkbox',
-		'value' => \Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->getEnableSignFlag(),
-		'required' => false
-	);
-}
-else
-{
-	$arResult['FIELDS']['tab_main'][] = array(
-		'id' => 'ENABLE_ENABLED_PUBLIC_B24_SIGN',
-		'name' => GetMessage('CRM_FIELD_PUBLIC_INVOICE_B24_SIGN'),
-		'type' => 'label',
-		'value' =>  GetMessage('CRM_FIELD_PUBLIC_INVOICE_B24_SIGN_ENABLED'),
-		'required' => false
-	);
+	if (\Bitrix\Crm\Settings\InvoiceSettings::allowDisableSign())
+	{
+		$arResult['FIELDS']['tab_main'][] = array(
+			'id' => 'ENABLE_ENABLED_PUBLIC_B24_SIGN',
+			'name' => GetMessage('CRM_FIELD_PUBLIC_INVOICE_B24_SIGN'),
+			'type' => 'checkbox',
+			'value' => \Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->getEnableSignFlag(),
+			'required' => false
+		);
+	} else
+	{
+		$arResult['FIELDS']['tab_main'][] = array(
+			'id' => 'ENABLE_ENABLED_PUBLIC_B24_SIGN',
+			'name' => GetMessage('CRM_FIELD_PUBLIC_INVOICE_B24_SIGN'),
+			'type' => 'label',
+			'value' => GetMessage('CRM_FIELD_PUBLIC_INVOICE_B24_SIGN_ENABLED'),
+			'required' => false
+		);
+	}
 }
 
 if (Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnablingPossible())

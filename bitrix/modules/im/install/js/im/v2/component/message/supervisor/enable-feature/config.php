@@ -12,8 +12,9 @@ return [
 		'main.core',
 		'im.v2.lib.analytics',
 		'im.v2.lib.helpdesk',
-		'stafftrack.user-statistics-link',
+		'im.v2.lib.copilot',
 		'im.v2.component.message.supervisor.base',
+		'stafftrack.user-statistics-link',
 	],
 	'skip_core' => false,
 ];

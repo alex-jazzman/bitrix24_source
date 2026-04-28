@@ -3,6 +3,7 @@ import { post } from './request';
 import { TemplateApi } from './template/template-api';
 import { TemplateFolderApi } from './template/template-folder-api';
 import { SignersListApi } from './signers-list-api';
+import { PlaceholderApi } from './document/placeholder-api';
 import type {
 	B2eCompanyList,
 	BlockData,
@@ -23,6 +24,7 @@ export class Api
 	template: TemplateApi = new TemplateApi();
 	templateFolder: TemplateFolderApi = new TemplateFolderApi();
 	signersList: SignersListApi = new SignersListApi();
+	placeholder: PlaceholderApi = new PlaceholderApi();
 
 	#post(endpoint: string, data: Object | null = null, notifyError: boolean = true): $Call<typeof post>
 	{
@@ -61,13 +63,22 @@ export class Api
 		return this.#post('sign.api_v1.document.blank.list', { page, scenario, countPerPage });
 	}
 
-	createBlank(files: Array<string>, scenario: string | null = null, forTemplate: boolean = false): Promise<{
+	createBlank(
+		files: Array<string>,
+		scenario: string | null = null,
+		forTemplate: boolean = false,
+		hasPlaceholders: boolean = false,
+	): Promise<{
 		id: number,
 		userAvatarUrl: null | string,
 		userName: null | string,
+		hasPlaceholders: boolean,
 	}>
 	{
-		return this.#post('sign.api_v1.document.blank.create', { files, scenario, forTemplate });
+		return this.#post(
+			'sign.api_v1.document.blank.create',
+			{ files, scenario, forTemplate, hasPlaceholders },
+		);
 	}
 
 	saveBlank(documentUid: string, blocks: []): Promise<[]>

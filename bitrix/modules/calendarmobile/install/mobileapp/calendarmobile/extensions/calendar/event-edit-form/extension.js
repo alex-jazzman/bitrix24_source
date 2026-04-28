@@ -193,7 +193,8 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 		 * @param description {string}
 		 * @param {?number} [createChatId = null]
 		 * @param {?number} [createMailId = null]
-		 * @param uuid {string}
+		 * @param {?string} [uuid = null]
+		 * @param {?string} [eventType = null]
 		 * @param showLoading {boolean}
 		 * @returns {Promise<void>}
 		 */
@@ -205,6 +206,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 			createChatId = null,
 			createMailId = null,
 			uuid = null,
+			eventType = null,
 			showLoading = false,
 		})
 		{
@@ -259,6 +261,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 					firstWeekday,
 					description,
 					participantsEntityList,
+					eventType,
 				});
 
 				if (showLoading)

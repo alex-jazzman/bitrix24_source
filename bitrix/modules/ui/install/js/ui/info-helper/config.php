@@ -16,8 +16,8 @@ return [
 	'js' => 'dist/info-helper.bundle.js',
 	'rel' => [
 		'main.loader',
-		'ui.info-helper',
 		'ui.analytics',
+		'ui.info-helper',
 		'ui.popup-with-header',
 		'main.core',
 	],

@@ -8,10 +8,15 @@ return [
 	'css' => 'dist/license-widget.bundle.css',
 	'js' => 'dist/license-widget.bundle.js',
 	'rel' => [
+		'ui.popupcomponentsmaker',
 		'main.core.events',
+		'ui.buttons',
+		'ui.feedback.partnerform',
+		'ui.icon-set.outlined',
+		'intranet.partner-discontinue',
+		'main.popup',
 		'ui.info-helper',
 		'main.core',
-		'ui.popupcomponentsmaker',
 	],
 	'skip_core' => false,
 ];

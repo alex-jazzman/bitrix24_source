@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\Enum\SchedulerTransport;
+
 class CBPWaitWorkDayActivity extends CBPActivity implements
 	IBPEventActivity,
 	IBPActivityExternalEventListener,
@@ -78,7 +80,8 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 			'timeman',
 			'OnAfterTMDayStart',
 			['USER_ID' => $userId],
-			self::START_EVENT_SORT,
+			sort: self::START_EVENT_SORT,
+			schedulerTransport: SchedulerTransport::Messenger,
 		);
 
 		$this->continueEventId = $schedulerService->subscribeOnEvent(
@@ -87,7 +90,8 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 			'timeman',
 			'OnAfterTMDayContinue',
 			['USER_ID' => $userId],
-			self::CONTINUE_EVENT_SORT
+			sort: self::CONTINUE_EVENT_SORT,
+			schedulerTransport: SchedulerTransport::Messenger,
 		);
 
 		$this->writeToTrackingService(
@@ -104,11 +108,11 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 		$schedulerService = $this->workflow->GetService('SchedulerService');
 		if (isset($this->startEventId))
 		{
-			$schedulerService->unSubscribeByEventId($this->startEventId, 'USER_ID');
+			$schedulerService->unSubscribeByEventId($this->startEventId, 'USER_ID', SchedulerTransport::Messenger);
 		}
 		if (isset($this->continueEventId))
 		{
-			$schedulerService->unSubscribeByEventId($this->continueEventId, 'USER_ID');
+			$schedulerService->unSubscribeByEventId($this->continueEventId, 'USER_ID', SchedulerTransport::Messenger);
 		}
 
 		$this->startEventId = null;

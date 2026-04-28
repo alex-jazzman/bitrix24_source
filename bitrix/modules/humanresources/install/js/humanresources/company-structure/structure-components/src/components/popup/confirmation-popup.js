@@ -61,6 +61,14 @@ export const ConfirmationPopup = {
 			type: String,
 			default: 'ui-btn-primary',
 		},
+		minHeight: {
+			type: Number,
+			default: false,
+		},
+		maxHeight: {
+			type: Number,
+			default: false,
+		},
 	},
 
 	methods: {
@@ -124,6 +132,8 @@ export const ConfirmationPopup = {
 				autoHide: false,
 				draggable: true,
 				titleBar: this.withoutTitleBar ? null : this.getTitleBar(),
+				maxHeight: this.maxHeight,
+				minHeight: this.minHeight,
 			};
 		},
 	},

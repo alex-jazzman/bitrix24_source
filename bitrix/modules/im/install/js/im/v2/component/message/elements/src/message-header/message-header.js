@@ -1,17 +1,16 @@
-import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 import { Text, Loc } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
 import { EventType, Color } from 'im.v2.const';
-import { Parser } from 'im.v2.lib.parser';
-import { CopilotManager } from 'im.v2.lib.copilot';
 import { ChannelManager } from 'im.v2.lib.channel';
+import { CopilotManager } from 'im.v2.lib.copilot';
+import { Parser } from 'im.v2.lib.parser';
+import { type ImModelMessage } from 'im.v2.model';
 
 import { AuthorTitle } from '../author-title/author-title';
 
 import './message-header.css';
-
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelMessage } from 'im.v2.model';
 
 const FORWARD_ICON_SIZE = 20;
 
@@ -64,10 +63,7 @@ export const MessageHeader = {
 			{
 				const forwardMessageId = this.forwardContextId.split('/')[1];
 
-				return copilotManager.getName({
-					dialogId: this.forwardAuthorId,
-					messageId: forwardMessageId,
-				});
+				return copilotManager.getNameWithRole(forwardMessageId);
 			}
 
 			return this.$store.getters['users/get'](this.forwardAuthorId, true).name;
@@ -79,6 +75,14 @@ export const MessageHeader = {
 		isSystemMessage(): boolean
 		{
 			return this.message.forward.userId === 0;
+		},
+		isSystemAuthor(): boolean
+		{
+			return this.message.authorId === 0;
+		},
+		shouldShowAuthorTitle(): boolean
+		{
+			return this.withTitle && !this.isSystemAuthor && !this.isForwarded;
 		},
 		forwardAuthorTitle(): string
 		{
@@ -147,6 +151,6 @@ export const MessageHeader = {
 			<span v-else-if="isChannelForward" v-html="forwardChannelTitle" class="--ellipsis"></span>
 			<span v-else v-html="forwardAuthorTitle" class="--ellipsis"></span>
 		</div>
-		<AuthorTitle v-else-if="withTitle" :item="item" />
+		<AuthorTitle v-else-if="shouldShowAuthorTitle" :item="item" />
 	`,
 };

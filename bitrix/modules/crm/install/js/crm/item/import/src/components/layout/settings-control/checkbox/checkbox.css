@@ -1,0 +1,5 @@
+.crm-item-import__field.--checkbox .ui-ctl-checkbox {
+	min-height: 0;
+	margin-bottom: 0;
+	cursor: pointer;
+}

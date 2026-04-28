@@ -101,7 +101,9 @@
 	    params: new Set(),
 	    paramList: babelHelpers.classPrivateFieldGet(this, _props).paramList,
 	    activeUrlParamsSelector: babelHelpers.classPrivateFieldGet(this, _props).activeUrlParamsSelector,
-	    isNewDashboard: true
+	    isNewDashboard: true,
+	    requiredParamList: babelHelpers.classPrivateFieldGet(this, _props).requiredParamList,
+	    isNew: true
 	  }));
 	  main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _paramsSelector).getLayout(), babelHelpers.classPrivateFieldGet(this, _node));
 	}

@@ -16,6 +16,7 @@ CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/interface_grid.js');
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'intranet.old-interface.intranet-common',
 ]);
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');

@@ -101,7 +101,8 @@
 						BX.Tasks.CommentActionController.processLink(link);
 					}
 					event.preventDefault();
-				}
+				},
+				forceAnchorBinding: true,
 			},
 			{
 				condition: [
@@ -120,7 +121,8 @@
 
 						chatActionService.process(link, { coordinates });
 					}
-				}
+				},
+				forceAnchorBinding: true,
 			},
 			{
 				condition: [
@@ -182,7 +184,6 @@
 					let card = null;
 
 					return {
-						width: 1510,
 						customLeftBoundary: 0,
 						cacheable: false,
 						skeleton: '/bitrix/js/tasks/v2/application/task-card/src/skeleton-full.html?v=1',
@@ -1062,6 +1063,7 @@
 							;
 						});
 				},
+				forceAnchorBinding: true,
 			},
 			{
 				condition: [
@@ -1117,6 +1119,7 @@
 						BX.Calendar.Util.downloadIcsFileByEventId(eventId)
 					);
 				},
+				forceAnchorBinding: true,
 			},
 			{
 				condition: [
@@ -1210,6 +1213,17 @@
 			},
 			{
 				condition: [
+					'/bitrix/templates/bitrix24/components/bitrix/security.user.recovery.codes/push/print.php',
+				],
+				options: {
+					width: 600,
+					cacheable: false,
+					allowChangeHistory: false,
+					title: BX.message('INTRANET_BINDINGS_RECOVERY_CODES'),
+				},
+			},
+			{
+				condition: [
 					"/bitrix/services/main/ajax.php\\?action=disk.controller.documentservice.goToPreview"
 				],
 				options: {
@@ -1286,6 +1300,27 @@
 					width: 765,
 					customRightBoundary: 0,
 				},
+				handler: function(event, link) {
+					if (link.url.indexOf('TARIFF_WIDGET=Y') !== -1)
+					{
+						event.preventDefault();
+
+						var isMenu = link.anchor && link.anchor.closest('[data-id="menu_tariff"]');
+						BX.Event.EventEmitter.emit(
+							'BX.Intranet.LicenseButton:showWidget',
+							new BX.Event.BaseEvent({
+								data: {
+									c_section: isMenu ? 'left_menu' : 'search',
+								},
+							})
+						);
+
+						return;
+					}
+
+					event.preventDefault();
+					BX.SidePanel.Instance.open(link.url, this.options);
+				},
 			},
 			{
 				condition: ['/settings/license_limit.php'],
@@ -1293,6 +1328,30 @@
 					cacheable: false,
 					allowChangeHistory: false,
 					width: 765,
+					customRightBoundary: 0,
+				},
+			},
+			{
+				condition: ['/settings/order/'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					customRightBoundary: 0,
+				},
+			},
+			{
+				condition: ['/settings/support.php'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					customRightBoundary: 0,
+				},
+			},
+			{
+				condition: ['/settings/integrator.php'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
 					customRightBoundary: 0,
 				},
 			},

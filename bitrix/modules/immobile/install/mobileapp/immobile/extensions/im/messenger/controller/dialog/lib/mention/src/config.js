@@ -3,9 +3,9 @@
  */
 jn.define('im/messenger/controller/dialog/lib/mention/config', (require, exports, module) => {
 
-	const { RecentConfig } = require('im/messenger/controller/search/experimental');
+	const { ChatSearchConfig } = require('im/messenger/lib/chat-search');
 
-	class MentionConfig extends RecentConfig
+	class MentionConfig extends ChatSearchConfig
 	{
 		constructor()
 		{

@@ -1,3 +1,5 @@
+import { CounterManager } from 'im.v2.lib.counter';
+
 import './css/menu-item.css';
 
 export const MenuItemIcon = {
@@ -63,7 +65,7 @@ export const MenuItem = {
 				return '';
 			}
 
-			return this.counter > 99 ? '99+' : String(this.counter);
+			return CounterManager.formatCounter(this.counter);
 		},
 		containerClasses(): Record<string, boolean>
 		{

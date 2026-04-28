@@ -31,10 +31,22 @@ export class ConnectPopup extends EventEmitter
 		this.#viewCollection.forEach((view) => {
 			view.subscribe('onNextView', (event) => {
 				const viewCode = event.getData()?.viewCode;
+				const fallbackViewCode = event.getData()?.fallbackViewCode;
 				const options = event.getData()?.options;
-				Type.isStringFilled(viewCode, this.getViewByCode(viewCode))
-					? this.changeView(this.getViewByCode(viewCode), options)
-					: this.nextView(options);
+				const targetView = Type.isStringFilled(viewCode) ? this.getViewByCode(viewCode) : null;
+				const fallbackView = Type.isStringFilled(fallbackViewCode) ? this.getViewByCode(fallbackViewCode) : null;
+				if (targetView)
+				{
+					this.changeView(targetView, options);
+				}
+				else if (fallbackView)
+				{
+					this.changeView(fallbackView, options);
+				}
+				else
+				{
+					this.nextView(options);
+				}
 			});
 			view.subscribe('onPreviousView', (event) => {
 				const viewCode = event.getData()?.viewCode;
@@ -42,6 +54,9 @@ export class ConnectPopup extends EventEmitter
 				Type.isStringFilled(viewCode, this.getViewByCode(viewCode))
 					? this.changeView(this.getViewByCode(viewCode), options)
 					: this.previousView(options);
+			});
+			view.subscribe('onParentClose', () => {
+				this.close();
 			});
 		});
 	}
@@ -186,6 +201,9 @@ export class ConnectPopup extends EventEmitter
 			contentColor: 'white',
 			autoHide: true,
 			closeIcon: true,
+			fixed: true,
+			overlay: true,
+			disableScroll: true,
 			events: {
 				onPopupShow: () => {
 					this.emit(

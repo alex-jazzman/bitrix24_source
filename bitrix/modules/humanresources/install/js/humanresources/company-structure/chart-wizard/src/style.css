@@ -602,7 +602,8 @@
 	margin-top: 0;
 }
 
-.chart-wizard__bind-chat__item-options:last-child {
+.chart-wizard__bind-chat__item-options:last-child,
+.chart-wizard__settings__item-options:last-child {
 	padding-bottom: 6px;
 }
 

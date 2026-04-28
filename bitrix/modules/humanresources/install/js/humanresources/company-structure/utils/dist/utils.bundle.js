@@ -107,7 +107,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	});
 	var NodeSettingsTypes = {
 	  businessProcAuthority: 'BUSINESS_PROC_AUTHORITY',
-	  reportsAuthority: 'REPORTS_AUTHORITY'
+	  reportsAuthority: 'REPORTS_AUTHORITY',
+	  teamReportExceptions: 'TEAM_REPORT_EXCEPTIONS'
 	};
 	var UserSettingsTypes = {
 	  businessProcExcludeNodes: 'BUSINESS_PROC_EXCLUDE_NODES',

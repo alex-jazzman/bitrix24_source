@@ -244,7 +244,7 @@ export class Metrika
 					const param = data[key];
 					if (param && Type.isArray(param) && param.length === 2)
 					{
-						preparedData[key] = `${Text.toCamelCase(param[0])}_${Text.toCamelCase(param[1])}`;
+						preparedData[key] = `${Text.toCamelCase(param[0])}_${Text.toKebabCase(param[1])}`;
 					}
 				}
 

@@ -195,6 +195,7 @@ create table if not exists b_intranet_user_annual_summary
 	USER_ID int not null,
 	NAME varchar(255) not null,
 	VALUE mediumtext null,
+	TOTAL int null,
 	PRIMARY KEY (ID),
 	UNIQUE INDEX ux_user_name(USER_ID, NAME)
 );

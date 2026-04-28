@@ -1,15 +1,16 @@
 import { Core } from 'im.v2.application.core';
+import { ChatHeader } from 'im.v2.component.content.elements';
+
 import { StatusGroup } from 'imopenlines.v2.const';
 import { FinishService, PinService, InterceptService } from 'imopenlines.v2.provider.service';
-import type { JsonObject } from 'main.core';
 
-import { ChatHeader } from 'im.v2.component.content.elements';
 import { ChatTransfer } from '../entity-selector/chat-transfer/chat-transfer';
 
 import './css/header.css';
 
 import type { ImModelChat } from 'im.v2.model';
 import type { ImolModelSession } from 'imopenlines.v2.model';
+import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const OpenLinesHeader = {
@@ -40,7 +41,7 @@ export const OpenLinesHeader = {
 		},
 		session(): ImolModelSession
 		{
-			return this.$store.getters['sessions/getByChatId'](this.dialog.chatId, true);
+			return this.$store.getters['openLines/sessions/getByChatId'](this.dialog.chatId, true);
 		},
 		isPinned(): boolean
 		{
@@ -150,7 +151,11 @@ export const OpenLinesHeader = {
 	},
 	template: `
 		<div class="bx-imol-header-button_container">
-			<ChatHeader :dialogId="dialogId" :withCallButton="false" :withSearchButton="false">
+			<ChatHeader
+				:dialogId="dialogId"
+				:withCallButton="false"
+				:withSearchButton="true"
+			>
 				<template v-if="!isClosed" #before-actions>
 					<ul v-if="isOperator || isNewSession" class="bx-imol-header-button_container-list">
 						<li v-if="isOperator || isQueueTypeAll" class="bx-imol-header-button_container-item">

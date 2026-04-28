@@ -63,6 +63,7 @@ Extension::load([
 	'ui.icon-set.main',
 	'ui.feedback.form',
 	'disk.onlyoffice-promo-actions',
+	'disk.url-cleaner',
 ]);
 
 Asset::getInstance()->addString('<script src="' . $arResult['SERVER'] . '/web-apps/apps/api/documents/api.js"></script>');
@@ -241,6 +242,10 @@ $limitSlider = $arResult['LIMIT_SLIDER'] ?? null;
 <script>
 	<?='BX.message(' . \CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__)) . ');'?>
 
+	BX.Disk.UrlCleaner.cleanUrl(window.location, window.history, [
+		/^analytics\[/i,
+	]);
+
 	new BX.Disk.Editor.OnlyOffice({
 		targetNode: document.querySelector('[data-id="<?= $containerId ?>"]'),
 		userBoxNode: document.querySelector('[data-id="<?= $containerId ?>-user-box"]'),
@@ -282,15 +287,15 @@ $limitSlider = $arResult['LIMIT_SLIDER'] ?? null;
 		realtimeForceReloadCommand: '<?= \CUtil::JSEscape($arResult['REALTIME_FORCE_RELOAD_COMMAND'] ?? null) ?>',
 		autoForceReloadAfter: <?= Json::encode($arResult['AUTO_FORCE_RELOAD_AFTER'] ?? null) ?>,
 		texts: {
-			forceReloadRegularServer: '<?= Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_REGULAR_SERVER') ?>',
-			forceReloadBoosterServer: '<?= Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_BOOSTER_SERVER') ?>',
-			forceReloadUndefinedServer: '<?= Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_UNDEFINED_SERVER') ?>',
-			forceReloadPopupOkButton: '<?= Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_POPUP_OK_BUTTON') ?>',
+			forceReloadRegularServer: '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_REGULAR_SERVER')) ?>',
+			forceReloadBoosterServer: '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_BOOSTER_SERVER')) ?>',
+			forceReloadUndefinedServer: '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_UNDEFINED_SERVER')) ?>',
+			forceReloadPopupOkButton: '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_POPUP_OK_BUTTON')) ?>',
 		},
 	});
 
-	<?php if ($limitSlider === 'tariff'): ?>
-	BX.UI.InfoHelper.show('<?= $arResult['LIMIT_SLIDER_TARIFF_ID'] ?>');
+	<?php if ($limitSlider === 'infoHelper'): ?>
+	BX.UI.InfoHelper.show('<?= $arResult['LIMIT_SLIDER_INFO_HELPER_CODE'] ?>');
 	<?php elseif ($limitSlider === 'feedbackForm'): ?>
 	BX.UI.Feedback.Form.open(
 		{

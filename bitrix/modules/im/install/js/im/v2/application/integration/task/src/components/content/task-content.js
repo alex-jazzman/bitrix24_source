@@ -59,7 +59,7 @@ export const TaskChatContent = {
 				<ChatTextarea
 					:dialogId="dialogId"
 					:key="dialogId"
-					:withMarket="false"
+					:withMarket="true"
 					:withAutoFocus="false"
 					@mounted="onTextareaMount"
 				/>

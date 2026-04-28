@@ -24,7 +24,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 	/**
 	 * @desc It's Set should be sync with serverComponentList in the im module
-	 * @see im/install/js/im/v2/component/message-list/src/classes/message-component-manager.js
+	 * @see im/install/js/im/v2/lib/message-component/src/message-component.js
 	 */
 	const serverComponentList = new Set([
 		MessageComponent.unsupported,
@@ -49,6 +49,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		MessageComponent.channelCreationMessage,
 		MessageComponent.vote,
 		MessageComponent.sticker,
+		MessageComponent.aiBizprocMessage,
 	]);
 
 	const customMessages = new Set([
@@ -447,6 +448,14 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		get isCopilot()
 		{
 			return this.getComponentId() === MessageParams.ComponentId.CopilotMessage;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		get isAiBizproc()
+		{
+			return this.getComponentId() === MessageParams.ComponentId.AiBizprocMessage;
 		}
 
 		/**

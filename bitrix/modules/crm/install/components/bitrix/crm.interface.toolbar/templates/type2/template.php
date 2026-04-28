@@ -2,7 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)die();
 global $APPLICATION;
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+\Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 $toolbarID =  $arParams['TOOLBAR_ID'];

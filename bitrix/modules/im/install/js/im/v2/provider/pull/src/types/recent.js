@@ -1,9 +1,6 @@
-import { RecentType } from 'im.v2.const';
-
+import type { RecentTypeItem } from 'im.v2.const';
 import type { RawSticker, RawCopilot } from 'im.v2.provider.service.types';
 import type { RawChat, RawFile, RawUser, RawMessage } from './common';
-
-export type RecentTypeItem = $Values<typeof RecentType>;
 
 export type RecentUpdateParams = {
 	additionalMessages: RawMessage[],
@@ -20,13 +17,12 @@ export type RecentPinChatParams = {
 	additionalMessages: RawMessage[],
 	chat: RawChat,
 	copilot: RawCopilot,
-	counterType: string,
 	dialogId: string,
 	files: RawFile[],
 	messages: RawMessage[],
 	recentConfig: {
 		chatId: number,
-		sections: $Values<typeof RecentType>[],
+		sections: RecentTypeItem[],
 	},
 	stickers: RawSticker[],
 	users: RawUser[],
@@ -42,7 +38,7 @@ export type RecentHideParams = {
 	lines: boolean,
 	recentConfigToHide: {
 		chatId: number,
-		sections: $Values<typeof RecentType>[],
+		sections: RecentTypeItem[],
 	}
 };
 

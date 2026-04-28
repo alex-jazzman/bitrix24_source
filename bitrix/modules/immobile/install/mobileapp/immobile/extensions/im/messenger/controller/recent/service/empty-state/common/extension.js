@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/recent/service/empty-state/common', (require,
 	const { RecentEventType } = require('im/messenger/controller/recent/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { BaseUiRecentService } = require('im/messenger/controller/recent/service/base');
+	const CommonFilterEmptyScreen = require('im/messenger/controller/recent/service/empty-state/lib/filter/common');
 
 	/**
 	 * @implements {IEmptyStateService}
@@ -46,6 +47,7 @@ jn.define('im/messenger/controller/recent/service/empty-state/common', (require,
 
 		redraw()
 		{
+			this.itemCollectionSize = null;
 			const size = this.recentLocator.get('render').getItemCollectionSize();
 			void this.itemCollectionSizeChangedHandler(size);
 		}
@@ -94,6 +96,16 @@ jn.define('im/messenger/controller/recent/service/empty-state/common', (require,
 			return serviceLocator.get('core').getStore();
 		}
 
+		get hasSelectedFilter()
+		{
+			if (!this.recentLocator.has('filter'))
+			{
+				return false;
+			}
+
+			return this.recentLocator.get('filter').hasSelectedFilter();
+		}
+
 		/**
 		 * @private
 		 * @return {Promise<void>}
@@ -128,7 +140,9 @@ jn.define('im/messenger/controller/recent/service/empty-state/common', (require,
 		 */
 		renderWelcomeScreenIfNeeded()
 		{
-			const welcomeScreen = new this.WelcomeScreenClass();
+			const WelcomeScreenClass = this.hasSelectedFilter ? CommonFilterEmptyScreen : this.WelcomeScreenClass;
+			const welcomeScreen = new WelcomeScreenClass();
+
 			if (isEqual(welcomeScreen, this.renderedWelcomeScreen))
 			{
 				this.logger.log('renderWelcomeScreenIfNeeded skipped');
@@ -136,6 +150,7 @@ jn.define('im/messenger/controller/recent/service/empty-state/common', (require,
 				return;
 			}
 
+			this.ui.welcomeScreen.hide(); // hide for show new welcomeScreen
 			this.ui.welcomeScreen.show(welcomeScreen.toChatRecentWidgetItem());
 
 			this.renderedWelcomeScreen = welcomeScreen;

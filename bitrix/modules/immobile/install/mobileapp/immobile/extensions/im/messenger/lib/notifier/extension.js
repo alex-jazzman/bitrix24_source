@@ -23,6 +23,7 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 		[NavigationTabId.collab]: RecentTab.collab,
 		[NavigationTabId.channel]: RecentTab.openChannel,
 		[NavigationTabId.task]: RecentTab.tasksTask,
+		[NavigationTabId.openlines]: RecentTab.openlines,
 	};
 
 	/**

@@ -2,39 +2,36 @@ import { Tag, Loc, Type, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Analytics } from '../analytics';
 import DepartmentControl from 'intranet.department-control';
-import { SelfRegister } from '../self-register';
 import { Transport } from '../transport';
 import { Page } from './page';
-import { SubmitButton } from '../submit-button';
+import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
+import { LinkOptionsPopup } from '../popup/link-options-popup';
 
 export class LinkPage extends Page
 {
 	#container: HTMLElement;
 	#isAdmin: boolean;
 	#isCloud: boolean;
-	#fastRegistrationAvailable: boolean;
 	#needConfirmRegistration: boolean;
-	#wishlist: string;
+	#whiteList: string;
 	#departmentControl: DepartmentControl;
 
 	#linkRegisterEnabled: boolean;
 	#analytics: Analytics;
 	#transport: Transport;
-	#btnState: string;
+	#optionsPopup: ?LinkOptionsPopup = null;
 
 	constructor(options)
 	{
 		super();
 		this.#isAdmin = options.isAdmin === true;
 		this.#isCloud = options.isCloud === true;
-		this.#fastRegistrationAvailable = options.fastRegistrationAvailable === true;
 		this.#needConfirmRegistration = options.needConfirmRegistration === true;
-		this.#wishlist = Type.isStringFilled(options.wishlist) ? options.wishlist : '';
+		this.#whiteList = Type.isStringFilled(options.whiteList) ? options.whiteList : '';
 		this.#departmentControl = options.departmentControl instanceof DepartmentControl ? options.departmentControl : null;
 		this.#linkRegisterEnabled = options.linkRegisterEnabled;
 		this.#analytics = options.analytics;
 		this.#transport = options.transport;
-		this.#btnState = SubmitButton.DISABLED_STATE;
 	}
 
 	render(): HTMLElement
@@ -45,199 +42,148 @@ export class LinkPage extends Page
 		}
 
 		this.#container = Tag.render`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="self-block">
-				<div class="invite-title-container">
-					<div class="invite-title-icon invite-title-icon-link">
-						<div class="ui-icon-set --link-3"></div>
-					</div>
-					<div class="invite-title-text">${Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TITLE')}</div>
-					<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=6546149');"></div>
-				</div>
-				<form method="POST" name="SELF_DIALOG_FORM">
-					${this.#isAdmin ? this.#renderFastRegistrationSwitcher() : ''}
-					<div class="invite-content-container --department-bg">
-						<div class="invite-form-container">
-							<div 
-								style="border-top: none; ${this.#fastRegistrationAvailable ? '' : 'display: none;'}" 
-								data-role="selfSettingsBlock" 
-								id="intranet-dialog-tab-content-self-block" 
-								class="invite-dialog-inv-link-block"
-							>
-								<div id="invitation-department-status" class="invitation-department__status"></div>
-								<div>
-									${this.#isAdmin ? '' : this.#renderCopyBtnDescription()}
-									<div class="intranet-invitation__link-department-control"></div>
-									<div class="invite-form-container-reg-row">
-										<span class="ui-btn ui-btn-primary ui-btn-themes ui-btn-icon-copy invite-form-btn-copy" data-role="copyRegisterUrlButton">
-											${Loc.getMessage('BX24_INVITE_DIALOG_COPY_LINK')}
-										</span>
-										${this.#isAdmin ? this.#renderUpdateLinkBtn() : ''}
-									</div>
-									${this.#isAdmin && this.#isCloud ? this.#renderConfirmRegistrationCheckbox() : ''}
-									${this.#isCloud ? this.#renderWhiteListField() : ''}
-								</div>
-							</div>
-						</div>
-					</div>
-				</form>
-				${!this.#isAdmin && !this.#fastRegistrationAvailable ? this.#renderWarningContainer() : ''}
-			</div>
+			<div class="intranet-invitation-block" data-role="self-block"></div>
 		`;
 
-		Dom.prepend(
-			this.#departmentControl.render(),
-			this.#container.querySelector('.intranet-invitation__link-department-control'),
-		);
+		Dom.append(Tag.render`
+			<div class="intranet-invitation-block__department-control">
+				<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
+			</div>
+		`, this.#container);
 
-		new SelfRegister({
-			container: this.#container,
-			isSelfRegisterEnabled: this.#linkRegisterEnabled,
-			analytics: this.#analytics,
-			transport: this.#transport,
-			departmentControl: this.#departmentControl,
-			page: this,
+		const copyLinkButton = new Button({
+			useAirDesign: true,
+			text: Loc.getMessage('BX24_INVITE_DIALOG_COPY_LINK'),
+			icon: BX.UI.IconSet.Outline.LINK,
+			style: AirButtonStyle.FILLED,
+			onclick: this.#copyRegisterUrl.bind(this),
+			props: {
+				'data-test-id': 'invite-link-page-copy-link-button',
+			},
 		});
+
+		Dom.append(Tag.render`
+			<div class="intranet-invitation-block__content">
+				<div class="intranet-invitation-block__footer">
+					${copyLinkButton.render()}
+					${this.#renderLinkOptionButton()}
+				</div>
+			</div>
+		`, this.#container);
 
 		return this.#container;
 	}
 
-	hasShownButtonPanel(): boolean
+	#copyRegisterUrl(copyLinkButton: Button): void
 	{
-		return false;
+		if (copyLinkButton.getState() === ButtonState.WAITING)
+		{
+			return;
+		}
+
+		copyLinkButton.setState(ButtonState.WAITING);
+		this.#transport.send(
+			{
+				action: 'getInviteLink',
+				data: {
+					departmentsId: this.#departmentControl.getValues(),
+					analyticsType: 'by_link',
+				},
+			},
+			(reject) => {
+				copyLinkButton.setState(null);
+				this.#transport.onError(reject);
+			},
+		)
+			.then((response) => {
+				copyLinkButton.setState(null);
+				const invitationUrl = response.data?.invitationLink;
+
+				if (Type.isStringFilled(invitationUrl))
+				{
+					this.#copyToClipboard(invitationUrl)
+						.then(() => {
+							top.BX.UI.Notification.Center.notify({
+								content: Loc.getMessage('BX24_INVITE_DIALOG_COPY_URL_MSGVER_2'),
+								autoHideDelay: 4000,
+								useAirDesign: true,
+							});
+						})
+						.catch((e) => {
+							console.log(e);
+						});
+
+					this.#analytics.sendCopyLink(this.#departmentControl, this.#needConfirmRegistration);
+				}
+			}).catch((reject) => {
+				console.error(reject);
+			});
 	}
 
-	#renderCopyBtnDescription(): HTMLElement
+	async #copyToClipboard(textToCopy: string): Promise<void>
 	{
+		if (!Type.isString(textToCopy))
+		{
+			return Promise.reject();
+		}
+
+		// navigator.clipboard defined only if window.isSecureContext === true
+		// so or https should be activated, or localhost address
+		if (window.isSecureContext && navigator.clipboard)
+		{
+			// safari not allowed clipboard manipulation as result of ajax request
+			// so timeout is hack for this, to prevent "not have permission"
+			return new Promise((resolve, reject) => {
+				setTimeout(() => (
+					navigator.clipboard
+						.writeText(textToCopy)
+						.then(() => resolve())
+						.catch((e) => reject(e))
+				), 0);
+			});
+		}
+
+		return BX.clipboard?.copy(textToCopy) ? Promise.resolve() : Promise.reject();
+	}
+
+	#renderLinkOptionButton(): HTMLElement | ''
+	{
+		if (!this.#isAdmin)
+		{
+			return '';
+		}
+
+		const onclick = () => {
+			this.#getOptionsPopup().show();
+		};
+
 		return Tag.render`
-			<div class="invite-form__copy-button-description">
-				${Loc.getMessage('INTRANET_INVITE_COPY_BUTTON_DESCRIPTION')}
-			</div>
+			<span data-test-id="invite-link-page-option-button" onclick="${onclick}" class="ui-link ui-link-secondary ui-link-dashed">${Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_OPTIONS')}</span>
 		`;
 	}
 
-	#renderUpdateLinkBtn(): HTMLElement
+	#getOptionsPopup(): LinkOptionsPopup
 	{
-		return Tag.render`
-			<span data-role="selfRegenerateSecretButton">
-				<a
-				href="javascript:void(0)"
-				class="invite-dialog-update-link"
-				>
-					${Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_NEW_LINK')}
-				</a>
-			</span>
-		`;
-	}
+		this.#optionsPopup ??= new LinkOptionsPopup({
+			linkRegisterEnabled: this.#linkRegisterEnabled,
+			needConfirmRegistration: this.#needConfirmRegistration,
+			isCloud: this.#isCloud,
+			transport: this.#transport,
+			whiteList: this.#whiteList,
+			analytics: this.#analytics,
+			onDisable: () => {
+				EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
+					selfEnabled: false,
+				});
+				this.#optionsPopup = null;
+			},
+		});
 
-	#renderFastRegistrationSwitcher(): HTMLElement
-	{
-		return Tag.render`
-			<label class="invite-dialog-fast-reg-control-container js-invite-dialog-fast-reg-control-container ${this.#fastRegistrationAvailable ? '' : 'disallow-registration'}" for="allow_register">
-				<div class="invite-dialog-fast-reg-control-switcher" data-role="self-switcher"></div>
-				<span class="invite-dialog-fast-reg-control-label">
-					<div class="invite-dialog-fast-reg-control-label-title">${Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK')}</div>
-				</span>
-			</label>
-		`;
-	}
-
-	#renderConfirmRegistrationCheckbox(): HTMLElement
-	{
-		return Tag.render`
-			<div style="padding-top: 12px;">
-				<label class="ui-ctl ui-ctl-w100 ui-ctl-checkbox invite-form-check-box">
-					<input
-					type="checkbox"
-					class="ui-ctl-element"
-					name="allow_register_confirm"
-					id="allow_register_confirm"
-					data-role="allowRegisterConfirm"
-					${this.#needConfirmRegistration ? 'checked' : ''}
-					${this.#isAdmin ? '' : 'disabled'}
-					/>
-					<div class="ui-ctl-label-text">${Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TYPE')}</div>
-				</label>
-			</div>
-		`;
-	}
-
-	#renderWhiteListField(): HTMLElement
-	{
-		return Tag.render`
-		<div id="intranet-dialog-tab-content-self-whitelist" data-role="selfWhiteList" ${this.#needConfirmRegistration ? '' : 'style="display: none"'}>
-			<span class="invite-form-ctl-title">
-				${Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_DOMAINS')}
-			</span>
-			<label class="ui-ctl ui-ctl-w75 ui-ctl-textbox">
-				<input
-				type="text"
-				${this.#isAdmin ? '' : 'disabled'}
-				class="ui-ctl-element"
-				name="allow_register_whitelist"
-				value="${this.#wishlist}"
-				placeholder="${Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_PLACEHOLDER')}"
-				/>
-			</label>
-		</div>
-		`;
-	}
-
-	#renderWarningContainer(): HTMLElement
-	{
-		return Tag.render`
-			<div class="intranet-invitation__error-box">
-				<div class="intranet-invitation__error-icon"></div>
-				<div class="intranet-invitation__error-title">${Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED')}</div>
-				<div class="intranet-invitation__error-desc">${Loc.getMessage('INTRANET_INVITE_ALERT_INVITATION_LINK_DISABLED_DESCRIPTION')}</div>
-			</div>
-		`;
+		return this.#optionsPopup;
 	}
 
 	getAnalyticTab(): string
 	{
 		return Analytics.TAB_LINK;
-	}
-
-	onSubmit(event: BaseEvent)
-	{
-		const formNode = this.render().querySelector('form');
-		const data = {
-			allow_register: formNode.allow_register.value,
-			allow_register_confirm: formNode?.allow_register_confirm?.checked ? 'Y' : 'N',
-			allow_register_whitelist: formNode?.allow_register_whitelist?.value ?? '',
-		};
-
-		const context = event.getData()?.context;
-		const isConfirm = event.getData()?.isConfirm;
-
-		if (formNode.allow_register.value === 'N' && !isConfirm)
-		{
-			EventEmitter.emit('BX.Intranet.Invitation:confirmShutdown', {
-				page: this,
-				context,
-			});
-
-			return;
-		}
-
-		EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-			action: 'self',
-			data,
-		});
-	}
-
-	getSubmitButtonText(): ?string
-	{
-		return Loc.getMessage('BX24_INVITE_DIALOG_ACTION_SAVE');
-	}
-
-	getButtonState(): ?string
-	{
-		return this.#btnState;
-	}
-
-	setButtonState(state: string): ?string
-	{
-		this.#btnState = state;
 	}
 }

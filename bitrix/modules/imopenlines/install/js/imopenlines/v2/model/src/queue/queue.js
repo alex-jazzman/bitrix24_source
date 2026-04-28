@@ -16,6 +16,7 @@ type QueueState = {
 	}
 }
 
+/* eslint-disable no-param-reassign */
 export class QueueModel extends BuilderModel
 {
 	getName(): string
@@ -40,7 +41,7 @@ export class QueueModel extends BuilderModel
 		};
 	}
 
-	getGetters(): GetterTree
+	getGetters(): GetterTree<QueueState>
 	{
 		return {
 			/** @function queue/getTypeById */
@@ -60,7 +61,7 @@ export class QueueModel extends BuilderModel
 		};
 	}
 
-	getActions(): ActionTree
+	getActions(): ActionTree<QueueState>
 	{
 		return {
 			/** @function queue/set */
@@ -109,7 +110,7 @@ export class QueueModel extends BuilderModel
 		};
 	}
 
-	getMutations(): MutationTree
+	getMutations(): MutationTree<QueueState>
 	{
 		return {
 			add: (state: QueueState, payload: QueueState | QueueState[]) => {
@@ -128,7 +129,6 @@ export class QueueModel extends BuilderModel
 				queueState.collection[payload.id] = { ...currentElement, ...payload.fields };
 			},
 			delete: (state: QueueState, payload: { id: number }) => {
-				// eslint-disable-next-line no-param-reassign
 				delete state.collection[payload.id];
 			},
 		};

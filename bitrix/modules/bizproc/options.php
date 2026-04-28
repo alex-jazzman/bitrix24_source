@@ -24,7 +24,12 @@ if ($bizprocPerms >= "R") :
 	}
 	$subTabControl = new CAdminViewTabControl("subTabControl", $aSubTabs);
 
-	if ($_SERVER['REQUEST_METHOD'] === "GET" && !empty($RestoreDefaults) && $bizprocPerms === "W" && check_bitrix_sessid())
+	if (
+		$_SERVER['REQUEST_METHOD'] === "GET"
+		&& !empty($_REQUEST['RestoreDefaults'])
+		&& $bizprocPerms === "W"
+		&& check_bitrix_sessid()
+	)
 	{
 		COption::RemoveOption("bizproc");
 	}
@@ -47,10 +52,15 @@ if ($bizprocPerms >= "R") :
 	];
 
 	$strWarning = "";
-	if ($_SERVER['REQUEST_METHOD'] === "POST" && !empty($Update) && $bizprocPerms === "W" && check_bitrix_sessid())
+	if (
+		$_SERVER['REQUEST_METHOD'] === "POST"
+		&& !empty($_REQUEST['Update'])
+		&& $bizprocPerms === "W"
+		&& check_bitrix_sessid()
+	)
 	{
-		COption::SetOptionString("bizproc", "log_cleanup_days", ($log_cleanup_days ?? 0));
-		if ($log_cleanup_days > 0)
+		COption::SetOptionString("bizproc", "log_cleanup_days", ($_REQUEST['log_cleanup_days'] ?? 0));
+		if (($_REQUEST['log_cleanup_days'] ?? 0) > 0)
 		{
 			CAgent::AddAgent("CBPTrackingService::ClearOldAgent();", "bizproc", "N", 86400);
 		}
@@ -59,8 +69,8 @@ if ($bizprocPerms >= "R") :
 			CAgent::RemoveAgent("CBPTrackingService::ClearOldAgent();", "bizproc");
 		}
 
-		COption::SetOptionString("bizproc", "search_cleanup_days", ($search_cleanup_days ?? 0));
-		if ($search_cleanup_days > 0)
+		COption::SetOptionString("bizproc", "search_cleanup_days", ($_REQUEST['search_cleanup_days'] ?? 0));
+		if (($_REQUEST['search_cleanup_days'] ?? 0) > 0)
 		{
 			CAgent::AddAgent(\Bitrix\Bizproc\Worker\Workflow\ClearFilterAgent::getName(), "bizproc", "N", 86400);
 			CAgent::AddAgent(\Bitrix\Bizproc\Worker\Task\ClearSearchContentAgent::getName(), "bizproc", "N", 86400);
@@ -71,19 +81,36 @@ if ($bizprocPerms >= "R") :
 			CAgent::RemoveAgent(\Bitrix\Bizproc\Worker\Task\ClearSearchContentAgent::getName(), "bizproc");
 		}
 
-		COption::SetOptionString("bizproc", "employee_compatible_mode", ($employee_compatible_mode ?? 'N') === "Y" ? "Y" : "N");
-		COption::SetOptionString("bizproc", "limit_simultaneous_processes", ($limit_simultaneous_processes ?? 0) ? $limit_simultaneous_processes : 0);
-		COption::SetOptionString("bizproc", "limit_while_iterations", ($limit_while_iterations ?? 1000));
-		COption::SetOptionString("bizproc", "log_skip_types", ($log_skip_types ?? '') ? implode(',', $log_skip_types) : "");
-		COption::SetOptionString("bizproc", "automation_no_forced_tracking", ($automation_no_forced_tracking ?? 'N') === "Y" ? "Y" : "N");
-		COption::SetOptionString('bizproc', 'enable_getdocument_select', ($enable_getdocument_select ?? 'N') === 'Y' ? 'Y' : 'N');
-		COption::SetOptionString('bizproc', 'storage_items_cleanup_days', ($storage_items_cleanup_days ?? 90));
-		COption::SetOptionString('bizproc', 'storage_item_data_limit', ($storage_item_data_limit ?? 1));
+		COption::SetOptionString("bizproc", "employee_compatible_mode", ($_REQUEST['employee_compatible_mode'] ?? 'N') === "Y" ? "Y" : "N");
+		COption::SetOptionString("bizproc", "limit_simultaneous_processes", ($_REQUEST['limit_simultaneous_processes'] ?? 0) ? $_REQUEST['limit_simultaneous_processes'] : 0);
+		COption::SetOptionString("bizproc", "limit_while_iterations", ($_REQUEST['limit_while_iterations'] ?? 1000));
+		COption::SetOptionString("bizproc", "log_skip_types", ($_REQUEST['log_skip_types'] ?? '') ? implode(',', (array)$_REQUEST['log_skip_types']) : "");
+		COption::SetOptionString("bizproc", "automation_no_forced_tracking", ($_REQUEST['automation_no_forced_tracking'] ?? 'N') === "Y" ? "Y" : "N");
+		COption::SetOptionString('bizproc', 'enable_getdocument_select', ($_REQUEST['enable_getdocument_select'] ?? 'N') === 'Y' ? 'Y' : 'N');
+		COption::SetOptionString('bizproc', 'storage_items_cleanup_days', ($_REQUEST['storage_items_cleanup_days'] ?? 90));
+		COption::SetOptionString('bizproc', 'storage_item_data_limit', ($_REQUEST['storage_item_data_limit'] ?? 1));
 
 		\Bitrix\Main\Config\Option::set("bizproc", "use_gzip_compression", $_REQUEST["use_gzip_compression"]);
 		\Bitrix\Main\Config\Option::set("bizproc", "locked_wi_path", $_REQUEST["locked_wi_path"]);
 
 		CBPSchedulerService::setDelayMinLimit($_REQUEST["delay_min_limit"], $_REQUEST['delay_min_limit_type']);
+
+		$delayMaxDays = (int)($_REQUEST["delay_max_days"] ?? 0);
+		CBPSchedulerService::setDelayMaxDays($delayMaxDays);
+		$clearZombieAgentName = \Bitrix\Bizproc\Infrastructure\Agent\ClearZombieInstanceAgent::next();
+		if ($delayMaxDays > 0)
+		{
+			$nextTs = strtotime('tomorrow 01:00');
+			CAgent::AddAgent(
+				$clearZombieAgentName,
+				'bizproc',
+				next_exec: \ConvertTimeStamp($nextTs, 'FULL')
+			);
+		}
+		else
+		{
+			CAgent::RemoveAgent($clearZombieAgentName, "bizproc");
+		}
 
 		foreach ($arSites as $site)
 		{
@@ -108,7 +135,7 @@ if ($bizprocPerms >= "R") :
 	?>
 	<form method="POST"
 		name="bizproc_opt_form"
-		action="<?= $APPLICATION->GetCurPage() ?>?mid=<?= htmlspecialcharsbx($mid ?? 'bizproc') ?>&lang=<?= LANGUAGE_ID ?>"
+		action="<?= $APPLICATION->GetCurPage() ?>?mid=<?= htmlspecialcharsbx($_REQUEST['mid'] ?? 'bizproc') ?>&lang=<?= LANGUAGE_ID ?>"
 		ENCTYPE="multipart/form-data"><?php
 		echo bitrix_sessid_post();
 		$tabControl->BeginNextTab();
@@ -212,6 +239,12 @@ if ($bizprocPerms >= "R") :
 			</td>
 		</tr>
 		<tr>
+			<td width="50%" valign="top"><?= GetMessage("BIZPROC_OPT_MAX_DAYS_LIMIT") ?>:</td>
+			<td width="50%" valign="top">
+				<input type="text" name="delay_max_days" value="<?= CBPSchedulerService::getDelayMaxDays() ?>" size="5" />
+			</td>
+		</tr>
+		<tr>
 			<td valign="top" colspan="2" align="center">
 				<?php
 				$subTabControl->Begin();
@@ -248,7 +281,7 @@ if ($bizprocPerms >= "R") :
 			function RestoreDefaults()
 			{
 				if (confirm('<?= AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>'))
-					window.location = "<?= $APPLICATION->GetCurPage() ?>?RestoreDefaults=Y&lang=<?= LANG ?>&mid=<?= urlencode($mid) ?>&<?= bitrix_sessid_get() ?>";
+					window.location = "<?= $APPLICATION->GetCurPage() ?>?RestoreDefaults=Y&lang=<?= LANG ?>&mid=<?= urlencode($_REQUEST['mid'] ?? 'bizproc') ?>&<?= bitrix_sessid_get() ?>";
 			}
 		</script>
 

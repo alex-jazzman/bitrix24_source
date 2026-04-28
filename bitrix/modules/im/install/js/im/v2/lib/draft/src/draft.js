@@ -180,7 +180,7 @@ export class DraftManager
 		const { type: chatType }: ImModelChat = this.#getChat(dialogId);
 
 		void Core.getStore().dispatch('recent/setDraft', {
-			id: dialogId,
+			dialogId,
 			text,
 			addFakeItems: !STANDALONE_SECTION_CHAT_TYPES.has(chatType),
 		});

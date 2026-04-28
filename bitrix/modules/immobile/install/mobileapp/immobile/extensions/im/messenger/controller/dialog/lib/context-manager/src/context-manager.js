@@ -218,18 +218,39 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				showPlanLimitWidget = isChannel !== true;
 			}
 
+			this.#abortLoadingContextFromServer();
 			const isContextLoaded = await this.#goToLocalStorageMessageContext(
 				messageId,
 				withMessageHighlight,
 				targetMessagePosition,
 				showPlanLimitWidget,
 			);
-			if (isContextLoaded)
+			if (isContextLoaded && messageId)
 			{
+				void this.#syncMessageContextFromServer(messageId);
+
 				return;
 			}
 
 			await this.#goToServerMessageContext(messageId, withMessageHighlight, targetMessagePosition, showPlanLimitWidget);
+		}
+
+		async #syncMessageContextFromServer(messageId)
+		{
+			this.#log(`syncMessageContextFromServer: messageId: ${messageId}`);
+			try
+			{
+				this.#messageService.loadContextFromServer(messageId);
+			}
+			catch (error)
+			{
+				this.#logError(`syncMessageContextFromServer: messageId: ${messageId} error:`, error);
+			}
+		}
+
+		#abortLoadingContextFromServer()
+		{
+			this.#messageService.abortLoadingContextFromServer();
 		}
 
 		async goToLastReadMessageContext()
@@ -479,7 +500,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 
 			try
 			{
-				const result = await this.#messageService.loadContext(messageId);
+				const result = await this.#messageService.loadContextAndRead(messageId);
 				if (result?.answer?.error)
 				{
 					this.#topLoader.hide();

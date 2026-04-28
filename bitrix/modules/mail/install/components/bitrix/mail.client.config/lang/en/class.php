@@ -73,6 +73,7 @@ $MESS["MAIL_CLIENT_CONFIG_MAILBOX_EMAIL"] = "E-mail";
 $MESS["MAIL_CLIENT_CONFIG_MAILBOX_LINK"] = "Email server web interface URL";
 $MESS["MAIL_CLIENT_CONFIG_MAILBOX_NAME"] = "Mailbox name";
 $MESS["MAIL_CLIENT_CONFIG_MAILBOX_USERNAME"] = "Sender name";
+$MESS["MAIL_CLIENT_CONFIG_MAILBOX_USE_SENDER_NAME"] = "Use the same sender name for every message instead of the actual sender";
 $MESS["MAIL_CLIENT_CONFIG_MAX_AGE_ERROR"] = "Specify synchronization period";
 $MESS["MAIL_CLIENT_CONFIG_OAUTH"] = "Authentication";
 $MESS["MAIL_CLIENT_CONFIG_OAUTH_CONNECT"] = "Authentication";

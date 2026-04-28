@@ -9,7 +9,7 @@ use Bitrix\Main\Localization\Loc;
 $return = [
 	'block' => [
 		'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_ENT_16_NAME'),
-		'type' => ['mainpage'],
+		'type' => ['vibe'],
 		'section' => ['widgets_hr'],
 		'system' => true,
 	],

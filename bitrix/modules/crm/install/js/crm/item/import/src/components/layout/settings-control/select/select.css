@@ -1,0 +1,8 @@
+.crm-item-import__field-select-hint {
+	margin-top: var(--ui-size-xs2);
+}
+
+.crm-item-import__field.--select .title {
+	display: flex;
+	align-items: center;
+}

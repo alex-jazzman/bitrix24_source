@@ -6,6 +6,8 @@ export type ParameterSelectorParams = {
 	activeUrlParamsSelector: boolean,
 	isNewDashboard: boolean,
 	isAllowedClearGroups: boolean,
+	requiredParamList: ?{ [paramCode: string]: string },
+	isNew: boolean,
 };
 
 export type Parameter = {

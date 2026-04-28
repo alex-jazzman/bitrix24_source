@@ -8,8 +8,7 @@ return [
 	'css' => 'dist/typography.bundle.css',
 	'rel' => [
 		'ui.design-tokens',
-		'ui.icon-set.actions',
-		'ui.icon-set.main',
+		'ui.icon-set.outline',
 	],
 	'skip_core' => true,
 ];

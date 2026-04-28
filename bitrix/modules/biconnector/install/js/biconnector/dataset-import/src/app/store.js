@@ -60,6 +60,14 @@ export class Store
 				{
 					state.config.fieldsSettings = settings;
 				},
+				setSectionsConfig(state, config)
+				{
+					state.config.sectionsConfig = config;
+				},
+				resetSectionsConfig(state)
+				{
+					state.config.sectionsConfig = {};
+				},
 			},
 			getters: {
 				isEditMode(state)
@@ -102,6 +110,9 @@ export class Store
 				datasetProperties(state)
 				{
 					return state.config?.datasetProperties;
+				},
+				getSectionConfig: (state) => (sectionName, property) => {
+					return state.config?.sectionsConfig?.[sectionName]?.[property];
 				},
 			},
 		});

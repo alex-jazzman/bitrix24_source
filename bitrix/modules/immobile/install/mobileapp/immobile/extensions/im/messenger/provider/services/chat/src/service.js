@@ -206,6 +206,26 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 		}
 
 		/**
+		 * @param {number} chatId
+		 * @param {Array<string>} userIds
+		 * @return {Promise<MemberFilterUsersByParticipation>}
+		 */
+		verifyUsersChatMembership(chatId, userIds)
+		{
+			return this.userService.verifyUsersChatMembership(chatId, userIds);
+		}
+
+		/**
+		 * @param {number} dialogId
+		 * @param {?object} params
+		 * @return {Promise<{users: Array<RawUser>}>}
+		 */
+		getMentionListByChat(dialogId, params)
+		{
+			return this.userService.getMentionListByChat(dialogId, params);
+		}
+
+		/**
 		 * @param {DialogId} dialogId
 		 *
 		 * @return {Promise<*|T>}

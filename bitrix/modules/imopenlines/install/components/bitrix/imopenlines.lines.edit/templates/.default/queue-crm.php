@@ -180,6 +180,16 @@ if ($arResult['CAN_EDIT'])
 					<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_CHECK_OPERATOR_AVAILABLE_DESC'))?>"></span>
 				</label>
 			</div>
+			<div id="imol_show_notification_redirect_block" class="imopenlines-control-checkbox-container<?php if ($arResult['CONFIG']['CHECK_AVAILABLE'] !== 'Y') { ?> invisible<?php } ?>">
+				<label class="imopenlines-control-checkbox-label">
+					<input type="checkbox"
+						   name="CONFIG[SHOW_NOTIFICATION_REDIRECT]"
+						   value="Y"
+						   class="imopenlines-control-checkbox"
+						   <?php if ($arResult['CONFIG']['SHOW_NOTIFICATION_REDIRECT'] === 'Y') { ?>checked<?php }?>>
+					<?= Loc::getMessage('IMOL_CONFIG_EDIT_SHOW_NOTIFICATION_REDIRECT') ?>
+				</label>
+			</div>
 
 
 			<?php /*

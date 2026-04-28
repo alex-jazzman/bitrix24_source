@@ -38,3 +38,14 @@ declare type DialogStoredData = {
 	backgroundId: string,
 	containsCollaber: boolean,
 };
+
+declare type DialoguesFilter = {
+	dialogTypes: Array<DialogType>,
+	exceptDialogTypes: Array<DialogType>,
+}
+
+declare type SearchOptions = {
+	searchText: string,
+	order: 'asc' | 'desc',
+	limit: number,
+}

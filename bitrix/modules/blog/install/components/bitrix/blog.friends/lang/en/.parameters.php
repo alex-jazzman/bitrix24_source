@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BF_MESSAGE_COUNT"] = "Display messages ";
 $MESS["BF_PATH_TO_BLOG"] = "Blog page path template";
 $MESS["BF_PATH_TO_BLOG_CATEGORY"] = "Blog page path template with the tag filter";
@@ -23,4 +23,3 @@ $MESS["RATING_TYPE_STANDART_TEXT"] = "Like/Unlike (text)";
 $MESS["RATING_TYPE_STANDART_GRAPHIC"] = "Like/Unlike (image)";
 $MESS["RATING_TYPE_LIKE_TEXT"] = "Like (text)";
 $MESS["RATING_TYPE_LIKE_GRAPHIC"] = "Like (image)";
-?>

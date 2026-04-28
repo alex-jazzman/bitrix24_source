@@ -3,7 +3,7 @@ export type Block = {
 };
 
 export type ItemType = 'delimiter' | 'title' | 'description' | 'constant';
-export type ConstantType = 'string' | 'int' | 'user' | 'file';
+export type ConstantType = 'string' | 'int' | 'user' | 'file' | 'time';
 export type DelimiterType = 'line';
 
 export type Item = {
@@ -38,9 +38,11 @@ export type ConstantItem = Item & {
 	options: Record<string, string>;
 };
 
-export type SetupActivityPushData = {
-	description: string,
+export type SetupTemplateData = {
+	templateName: ?string,
+	templateDescription: ?string,
 	templateId: number,
-	instanceId: number,
-	blocks: Array<Block>,
+	instanceId: string,
+	blocks: ?Array<Block>,
+	userId: number,
 };

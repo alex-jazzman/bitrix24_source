@@ -7,7 +7,7 @@ import { EntitySelectorEntity, Model } from 'booking.const';
 import { currencyFormat } from 'booking.lib.currency-format';
 import type { BookingModel } from 'booking.model.bookings';
 import type { Skus } from 'booking.model.resources';
-import type { CatalogSkuEntityOptions } from 'booking.model.resource-creation-wizard';
+import type { CatalogSkuEntityOptions } from 'booking.model.sku';
 
 import './skus-info-selector.css';
 
@@ -43,7 +43,7 @@ export const SkusInfoSelector = {
 		}),
 		catalogSkuEntityOptions(): CatalogSkuEntityOptions
 		{
-			return this.$store.state[Model.Bookings].catalogSkuEntityOptions;
+			return this.$store.state[Model.Sku].catalogSkuEntityOptions;
 		},
 		bookings(): BookingModel[]
 		{

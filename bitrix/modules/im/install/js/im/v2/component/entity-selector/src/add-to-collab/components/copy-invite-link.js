@@ -7,8 +7,7 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Notifier } from 'im.v2.lib.notifier';
 import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
-
-import { CollabInvitationService } from '../classes/collab-invitation-service';
+import { CollabInvitationService } from 'im.v2.provider.service.collab-invitation';
 
 import type { JsonObject } from 'main.core';
 import type { PopupOptions } from 'main.popup';

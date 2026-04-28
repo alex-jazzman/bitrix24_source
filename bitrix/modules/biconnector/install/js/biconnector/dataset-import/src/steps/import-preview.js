@@ -29,15 +29,20 @@ export const ImportPreview = {
 			required: false,
 			default: false,
 		},
+		sourceType: {
+			type: String,
+			required: false,
+			default: '',
+		},
 	},
 	computed: {
 		isEditMode(): boolean
 		{
 			return this.$store.getters.isEditMode;
 		},
-		headers()
+		fields()
 		{
-			return this.$store.getters.previewHeaders;
+			return this.$store.state.config.fieldsSettings;
 		},
 		rows()
 		{
@@ -45,7 +50,7 @@ export const ImportPreview = {
 		},
 		isEverythingHidden()
 		{
-			return this.headers.length > 0 && this.$store.getters.areNoRowsVisible;
+			return this.fields.length > 0 && this.$store.getters.areNoRowsVisible;
 		},
 		hasData()
 		{
@@ -53,7 +58,7 @@ export const ImportPreview = {
 		},
 		hasHeaders(): boolean
 		{
-			return this.headers.length > 0;
+			return this.fields.length > 0;
 		},
 		displayedEmptyStateText()
 		{
@@ -78,15 +83,15 @@ export const ImportPreview = {
 		displayedTitle()
 		{
 			return this.isEditModeInitialDataDisplayed
-				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_TITLE')
+				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_TITLE_MSGVER_1')
 				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_TITLE')
 			;
 		},
 		hasDataDisplayedHint()
 		{
 			return this.isEditModeInitialDataDisplayed
-				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_HINT')
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT')
+				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_HINT_MSGVER_1')
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT_MSGVER_1')
 			;
 		},
 	},
@@ -125,10 +130,11 @@ export const ImportPreview = {
 					</div>
 					<template v-else>
 						<div class="import-preview__has-data import-preview__has-data--edit-mode-error" v-if="isEditMode">
-							<span class="import-preview__hint">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT') }}</span>
+							<span class="import-preview__hint">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT_MSGVER_1') }}</span>
 							<PreviewTable
-								:headers="headers"
+								:fields="fields"
 								:column-visibility="columnVisibility"
+								:source-type="sourceType"
 							/>
 							<div class="import-preview__edit-mode-error">
 								<div class="import-preview__error-logo"></div>
@@ -137,8 +143,9 @@ export const ImportPreview = {
 						</div>
 						<div class="import-preview__has-data" v-else>
 							<PreviewTable
-								:headers="headers"
+								:fields="fields"
 								:column-visibility="columnVisibility"
+								:source-type="sourceType"
 							/>
 							<div class="import-preview__edit-mode-error">
 								<div class="import-preview__error-logo"></div>
@@ -155,15 +162,17 @@ export const ImportPreview = {
 					<div class="import-preview__has-data" v-else-if="hasData">
 						<span class="import-preview__hint">{{ hasDataDisplayedHint }}</span>
 						<PreviewTable
-							:headers="headers"
+							:fields="fields"
 							:rows="rows"
 							:column-visibility="columnVisibility"
+							:source-type="sourceType"
 						/>
 					</div>
 					<div class="import-preview__has-data" v-else-if="hasHeaders && needShowHeadersWithEmptyRows">
 						<PreviewTable
-							:headers="headers"
+							:fields="fields"
 							:column-visibility="columnVisibility"
+							:source-type="sourceType"
 						/>
 						<div class="import-preview__edit-mode-error">
 							<div class="import-preview__no-data-logo"></div>

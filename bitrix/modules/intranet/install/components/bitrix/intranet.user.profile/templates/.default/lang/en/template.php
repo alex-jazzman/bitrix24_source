@@ -36,14 +36,17 @@ $MESS["INTRANET_USER_PROFILE_FIRE"] = "Dismiss";
 $MESS["INTRANET_USER_PROFILE_FIRE_CONFIRM"] = "The employee will not be able to log on to Bitrix24, and will not be seen in the company structure. All of their data (files, messages, tasks etc.) will remain intact.
 <br/><br/>
 Are you sure you want to dismiss the employee?";
+$MESS["INTRANET_USER_PROFILE_FIRE_CONFIRM_EXTRANET"] = "Are you sure you want to revoke guest access from this external user? They won't be able to log in to your Bitrix24; however, their data will remain intact.";
 $MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "You cannot delete the invited user from Bitrix24 because there are bindings to other entities. Deactivate (dismiss) the user to close their access to this Bitrix24.
 <br><br>Do you want to dismiss the user?";
 $MESS["INTRANET_USER_PROFILE_FIRE_POPUP_TITLE"] = "Dismiss employee";
+$MESS["INTRANET_USER_PROFILE_FIRE_POPUP_TITLE_EXTRANET"] = "Dismiss external user";
 $MESS["INTRANET_USER_PROFILE_FIRST_ADMIN_REQUEST_SENT"] = "[b]Request sent[/b][br]You will be notified when #NAME# responds to your request.";
 $MESS["INTRANET_USER_PROFILE_HIRE"] = "Hire";
 $MESS["INTRANET_USER_PROFILE_HIRE_CONFIRM"] = "The employee will be able to log on to Bitrix24 and will be seen in the company structure.
 <br/><br/>
 Are you sure you want to grant the employee access?";
+$MESS["INTRANET_USER_PROFILE_HIRE_CONFIRM_EXTRANET"] = "Are you sure you want to restore guest access for this external user?";
 $MESS["INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER"] = "User is not certified and thus cannot be Bitrix24 Partner. Partners have access to your Bitrix24 which is why only the employees of the trusted companies can get a Bitrix24 Partner status.
 <br/><br/>
 Partner level permissions are sufficient to set up and configure your Bitrix24. We strongly advise against granting third parties administrator access because they can accidentally or maliciously dismiss all employees and gain full control of your Bitrix24.
@@ -62,6 +65,8 @@ $MESS["INTRANET_USER_PROFILE_LAST_SEEN_F"] = "last seen #LAST_SEEN#";
 $MESS["INTRANET_USER_PROFILE_LAST_SEEN_IDLE_F"] = "idle since #LAST_SEEN#";
 $MESS["INTRANET_USER_PROFILE_LAST_SEEN_IDLE_M"] = "idle since #LAST_SEEN#";
 $MESS["INTRANET_USER_PROFILE_LAST_SEEN_M"] = "last seen #LAST_SEEN#";
+$MESS["INTRANET_USER_PROFILE_LEGACY_OTP_ALLOW"] = "Allow legacy OTP login";
+$MESS["INTRANET_USER_PROFILE_LEGACY_OTP_DISALLOW"] = "Enable two-factor authentication";
 $MESS["INTRANET_USER_PROFILE_MOBILE_APPSTORE_URL"] = "https://itunes.apple.com/app/bitrix24/id561683423";
 $MESS["INTRANET_USER_PROFILE_MOBILE_GOOGLE_PLAY_URL"] = "https://play.google.com/store/apps/details?id=com.bitrix24.android";
 $MESS["INTRANET_USER_PROFILE_MORE"] = "Show more #NUM#";

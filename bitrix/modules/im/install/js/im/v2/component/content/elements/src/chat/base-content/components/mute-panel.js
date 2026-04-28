@@ -30,16 +30,12 @@ export const MutePanel = {
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
-		isMuted(): boolean
-		{
-			return this.dialog.muteList.includes(Core.getUserId());
-		},
 		buttonText(): string
 		{
 			const mutedCode = this.loc('IM_CONTENT_BLOCKED_TEXTAREA_ENABLE_NOTIFICATIONS');
 			const unmutedCode = this.loc('IM_CONTENT_BLOCKED_TEXTAREA_DISABLE_NOTIFICATIONS');
 
-			return this.isMuted ? mutedCode : unmutedCode;
+			return this.dialog.isMuted ? mutedCode : unmutedCode;
 		},
 		buttonColorScheme(): CustomColorScheme
 		{
@@ -56,7 +52,7 @@ export const MutePanel = {
 	{
 		onButtonClick()
 		{
-			if (this.isMuted)
+			if (this.dialog.isMuted)
 			{
 				this.getChatService().unmuteChat(this.dialogId);
 

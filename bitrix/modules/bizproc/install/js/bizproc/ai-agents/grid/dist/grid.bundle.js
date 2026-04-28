@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
 this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
-(function (exports,bizproc_aiAgents_grid,main_popup,im_public,humanresources_companyStructure_public,ui_avatar,main_date,ui_buttons,ui_infoHelper,ui_system_typography,main_core_events,main_core,ui_dialogs_messagebox) {
+(function (exports,bizproc_aiAgents_grid,main_popup,main_sidepanel,ui_entitySelector,im_public,humanresources_companyStructure_public,ui_avatar,main_date,ui_buttons,ui_infoHelper,ui_system_typography,main_core_events,bizproc_setupTemplate,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	var _fieldId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fieldId");
@@ -55,21 +55,31 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	class AgentInfoField extends BaseField {
 	  render(params) {
 	    var _params$name, _params$description;
-	    const nameNode = ui_system_typography.Text.render((_params$name = params.name) != null ? _params$name : '', {
+	    const agentName = (_params$name = params.name) != null ? _params$name : '';
+	    const agentDescription = (_params$description = params.description) != null ? _params$description : '';
+	    const nameNode = this.createAgentNameNode(agentName);
+	    main_core.Dom.attr(nameNode, 'data-test-id', 'bizproc-ai-agents-grid-agent-title');
+	    main_core.Dom.attr(nameNode, 'title', agentName);
+	    const descriptionNode = this.createAgentDescriptionNode(agentDescription);
+	    main_core.Dom.attr(descriptionNode, 'title', agentDescription);
+	    this.appendToFieldNode(nameNode);
+	    this.appendToFieldNode(descriptionNode);
+	  }
+	  createAgentNameNode(agentName) {
+	    return ui_system_typography.Text.render(agentName, {
 	      size: 'md',
 	      accent: true,
 	      tag: 'div',
 	      className: 'bizproc-ai-agents-grid-agent-name bizproc-ai-agents-one-line-height'
 	    });
-	    main_core.Dom.attr(nameNode, 'data-test-id', 'bizproc-ai-agents-grid-agent-title');
-	    const descriptionNode = ui_system_typography.Text.render((_params$description = params.description) != null ? _params$description : '', {
+	  }
+	  createAgentDescriptionNode(agentDescription) {
+	    return ui_system_typography.Text.render(agentDescription, {
 	      size: 'xs',
 	      accent: false,
 	      tag: 'div',
 	      className: 'bizproc-ai-agents-grid-agent-description bizproc-ai-agents-two-lines-height'
 	    });
-	    this.appendToFieldNode(nameNode);
-	    this.appendToFieldNode(descriptionNode);
 	  }
 	}
 
@@ -201,11 +211,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  _t8,
 	  _t9,
 	  _t10,
-	  _t11,
-	  _t12,
-	  _t13,
-	  _t14;
-	var _combinedPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("combinedPopup");
+	  _t11;
 	var _chatsPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatsPopup");
 	var _renderCombinedView = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCombinedView");
 	var _renderUsersOnlyView = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderUsersOnlyView");
@@ -213,9 +219,9 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	var _createAvatarsContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createAvatarsContainer");
 	var _createDepartmentsCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDepartmentsCounter");
 	var _createDepartmentsNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDepartmentsNode");
+	var _getDepartmentNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDepartmentNode");
 	var _getDisplayedNumber = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDisplayedNumber");
 	var _createCounterNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createCounterNode");
-	var _toggleCombinedPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleCombinedPopup");
 	var _createChatNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createChatNode");
 	var _getChatNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatNode");
 	var _getChatsCounterNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatsCounterNode");
@@ -224,24 +230,28 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	var _fillChatsListContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillChatsListContent");
 	var _openCombinedPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openCombinedPopup");
 	var _fillDepartmentsListContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillDepartmentsListContent");
-	var _getDepartmentNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDepartmentNode");
 	var _fillUsersListContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillUsersListContent");
-	var _getUserWithNameNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserWithNameNode");
 	var _openUserProfile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openUserProfile");
+	var _handleBeforeSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleBeforeSelect");
+	var _handleSelectDepartment = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSelectDepartment");
+	var _handleSelectUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSelectUser");
 	class UsedByField extends BaseField {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _handleSelectUser, {
+	      value: _handleSelectUser2
+	    });
+	    Object.defineProperty(this, _handleSelectDepartment, {
+	      value: _handleSelectDepartment2
+	    });
+	    Object.defineProperty(this, _handleBeforeSelect, {
+	      value: _handleBeforeSelect2
+	    });
 	    Object.defineProperty(this, _openUserProfile, {
 	      value: _openUserProfile2
 	    });
-	    Object.defineProperty(this, _getUserWithNameNode, {
-	      value: _getUserWithNameNode2
-	    });
 	    Object.defineProperty(this, _fillUsersListContent, {
 	      value: _fillUsersListContent2
-	    });
-	    Object.defineProperty(this, _getDepartmentNode, {
-	      value: _getDepartmentNode2
 	    });
 	    Object.defineProperty(this, _fillDepartmentsListContent, {
 	      value: _fillDepartmentsListContent2
@@ -267,14 +277,14 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    Object.defineProperty(this, _createChatNode, {
 	      value: _createChatNode2
 	    });
-	    Object.defineProperty(this, _toggleCombinedPopup, {
-	      value: _toggleCombinedPopup2
-	    });
 	    Object.defineProperty(this, _createCounterNode, {
 	      value: _createCounterNode2
 	    });
 	    Object.defineProperty(this, _getDisplayedNumber, {
 	      value: _getDisplayedNumber2
+	    });
+	    Object.defineProperty(this, _getDepartmentNode, {
+	      value: _getDepartmentNode2
 	    });
 	    Object.defineProperty(this, _createDepartmentsNode, {
 	      value: _createDepartmentsNode2
@@ -293,10 +303,6 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    });
 	    Object.defineProperty(this, _renderCombinedView, {
 	      value: _renderCombinedView2
-	    });
-	    Object.defineProperty(this, _combinedPopup, {
-	      writable: true,
-	      value: void 0
 	    });
 	    Object.defineProperty(this, _chatsPopup, {
 	      writable: true,
@@ -418,6 +424,28 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  }
 	  main_core.Dom.append(departmentNode, container);
 	}
+	function _getDepartmentNode2(department, nodeId, shouldAddHover = false) {
+	  const departmentWrapper = main_core.Tag.render(_t6 || (_t6 = _`
+			<div class="${0}"></div>
+		`), shouldAddHover ? 'agent-grid-department-in-list' : 'agent-grid-department');
+	  const circle = main_core.Tag.render(_t7 || (_t7 = _`<div class="agent-grid-department-circle">${0}</div>`), GridIcons.DEPARTMENT);
+	  const label = ui_system_typography.Text.render(department, {
+	    size: 'xs',
+	    accent: false,
+	    tag: 'span',
+	    className: 'agent-grid-department-label'
+	  });
+	  main_core.Dom.attr(label, 'title', department);
+	  main_core.Dom.append(circle, departmentWrapper);
+	  main_core.Dom.append(label, departmentWrapper);
+	  main_core.Event.bind(departmentWrapper, 'click', event => {
+	    event.stopPropagation();
+	    humanresources_companyStructure_public.Structure == null ? void 0 : humanresources_companyStructure_public.Structure.open({
+	      focusNodeId: nodeId
+	    });
+	  });
+	  return departmentWrapper;
+	}
 	function _getDisplayedNumber2(remainingCount) {
 	  return remainingCount > UsedByField.MAX_COUNTER_VALUE ? UsedByField.MAX_COUNTER_VALUE : remainingCount;
 	}
@@ -425,7 +453,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  if (count <= 0) {
 	    return null;
 	  }
-	  const counterWrapper = main_core.Tag.render(_t6 || (_t6 = _`<div class="${0}"></div>`), counterWrapperClassName);
+	  const counterWrapper = main_core.Tag.render(_t8 || (_t8 = _`<div class="${0}"></div>`), counterWrapperClassName);
 	  const displayedNumber = babelHelpers.classPrivateFieldLooseBase(this, _getDisplayedNumber)[_getDisplayedNumber](count);
 	  let counterText = String(displayedNumber);
 	  if (withPlusPrefix) {
@@ -441,19 +469,12 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  if (withOpenPopupEvent) {
 	    main_core.Event.bind(counterWrapper, 'click', event => {
 	      event.stopPropagation();
-	      babelHelpers.classPrivateFieldLooseBase(this, _toggleCombinedPopup)[_toggleCombinedPopup](departments, users, counterWrapper);
+	      babelHelpers.classPrivateFieldLooseBase(this, _openCombinedPopup)[_openCombinedPopup](departments, users, counterWrapper);
 	    });
 	  } else {
 	    main_core.Dom.addClass(numberNode, 'agent-grid-counter-default-cursor');
 	  }
 	  return counterWrapper;
-	}
-	function _toggleCombinedPopup2(departments, users, bindElement) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _combinedPopup)[_combinedPopup] && babelHelpers.classPrivateFieldLooseBase(this, _combinedPopup)[_combinedPopup].isShown()) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _combinedPopup)[_combinedPopup].close();
-	  } else {
-	    babelHelpers.classPrivateFieldLooseBase(this, _openCombinedPopup)[_openCombinedPopup](departments, users, bindElement);
-	  }
 	}
 	function _createChatNode2(container, chats) {
 	  var _chats$length, _chats$;
@@ -481,7 +502,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  });
 	  const encodedChatName = main_core.Text.encode(chatName);
 	  const containerClass = shouldAddHover ? 'agent-grid-chats-in-list' : 'agent-grid-chat-container';
-	  const chatContainer = main_core.Tag.render(_t7 || (_t7 = _`
+	  const chatContainer = main_core.Tag.render(_t9 || (_t9 = _`
 			<div class="${0}" title="${0}">
 				${0}
 				<a href="#" class="agent-grid-chat-link">
@@ -496,7 +517,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  return chatContainer;
 	}
 	function _getChatsCounterNode2(remainingCount, chats) {
-	  const counterWrapper = main_core.Tag.render(_t8 || (_t8 = _`<div class="ai-agents-chats-counter-wrapper"></div>`));
+	  const counterWrapper = main_core.Tag.render(_t10 || (_t10 = _`<div class="ai-agents-chats-counter-wrapper"></div>`));
 	  const counterClassName = 'ai-agents-chats-counter';
 	  const displayedNumber = babelHelpers.classPrivateFieldLooseBase(this, _getDisplayedNumber)[_getDisplayedNumber](remainingCount);
 	  const counterText = `+${displayedNumber}`;
@@ -521,7 +542,7 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  }
 	}
 	function _openChatsListPopup2(chats, bindElement) {
-	  const contentNode = main_core.Tag.render(_t9 || (_t9 = _`<div class="agent-grid-chats-list-wrapper"></div>`));
+	  const contentNode = main_core.Tag.render(_t11 || (_t11 = _`<div class="agent-grid-chats-list-wrapper"></div>`));
 	  babelHelpers.classPrivateFieldLooseBase(this, _fillChatsListContent)[_fillChatsListContent](chats, contentNode);
 	  babelHelpers.classPrivateFieldLooseBase(this, _chatsPopup)[_chatsPopup] = new main_popup.Popup({
 	    content: contentNode,
@@ -551,96 +572,108 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	  return contentNode;
 	}
 	function _openCombinedPopup2(departments, users, bindElement) {
-	  const contentNode = main_core.Tag.render(_t10 || (_t10 = _`<div class="agent-grid-departments-list-wrapper"></div>`));
-	  babelHelpers.classPrivateFieldLooseBase(this, _fillDepartmentsListContent)[_fillDepartmentsListContent](departments, contentNode);
-	  babelHelpers.classPrivateFieldLooseBase(this, _fillUsersListContent)[_fillUsersListContent](users, contentNode);
-	  babelHelpers.classPrivateFieldLooseBase(this, _combinedPopup)[_combinedPopup] = new main_popup.Popup({
-	    content: contentNode,
-	    bindElement,
-	    cacheable: false,
-	    minHeight: 50,
-	    maxWidth: 400,
-	    maxHeight: 200,
-	    padding: 0,
+	  const items = [];
+	  babelHelpers.classPrivateFieldLooseBase(this, _fillDepartmentsListContent)[_fillDepartmentsListContent](departments, items);
+	  babelHelpers.classPrivateFieldLooseBase(this, _fillUsersListContent)[_fillUsersListContent](users, items);
+	  const entities = [{
+	    id: UsedByField.ENTITY_USER,
+	    dynamicLoad: false
+	  }, {
+	    id: UsedByField.ENTITY_DEPARTMENT,
+	    dynamicLoad: false
+	  }];
+	  const dialog = new ui_entitySelector.Dialog({
+	    targetNode: bindElement,
+	    width: 306,
+	    height: 309,
+	    dropdownMode: true,
+	    showAvatars: true,
 	    autoHide: true,
-	    className: 'agents-grid-popup'
+	    multiple: false,
+	    hideOnSelect: false,
+	    focusOnFirst: false,
+	    showDefaultFooter: false,
+	    searchTabOptions: {
+	      visible: false
+	    },
+	    recentTabOptions: {
+	      visible: false
+	    },
+	    events: {
+	      'Item:onBeforeSelect': babelHelpers.classPrivateFieldLooseBase(this, _handleBeforeSelect)[_handleBeforeSelect].bind(this)
+	    },
+	    entities,
+	    items
 	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _combinedPopup)[_combinedPopup].show();
-	  babelHelpers.classPrivateFieldLooseBase(this, _combinedPopup)[_combinedPopup].subscribe('onClose', () => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _combinedPopup)[_combinedPopup] = null;
-	  });
+	  dialog.show();
 	}
-	function _fillDepartmentsListContent2(departments, contentNode) {
+	function _fillDepartmentsListContent2(departments, items) {
 	  if (!departments || Object.keys(departments).length === 0) {
-	    return contentNode;
+	    return items;
 	  }
 	  Object.entries(departments).forEach(([id, name]) => {
-	    const nodeId = main_core.Text.toInteger(id);
-	    const departmentNode = babelHelpers.classPrivateFieldLooseBase(this, _getDepartmentNode)[_getDepartmentNode](name, nodeId, true);
-	    main_core.Dom.append(departmentNode, contentNode);
-	  });
-	  return contentNode;
-	}
-	function _getDepartmentNode2(department, nodeId, shouldAddHover = false) {
-	  const departmentWrapper = main_core.Tag.render(_t11 || (_t11 = _`
-			<div class="${0}"></div>
-		`), shouldAddHover ? 'agent-grid-department-in-list' : 'agent-grid-department');
-	  const circle = main_core.Tag.render(_t12 || (_t12 = _`<div class="agent-grid-department-circle">${0}</div>`), GridIcons.DEPARTMENT);
-	  const label = ui_system_typography.Text.render(department, {
-	    size: 'xs',
-	    accent: false,
-	    tag: 'span',
-	    className: 'agent-grid-department-label'
-	  });
-	  main_core.Dom.attr(label, 'title', department);
-	  main_core.Dom.append(circle, departmentWrapper);
-	  main_core.Dom.append(label, departmentWrapper);
-	  main_core.Event.bind(departmentWrapper, 'click', event => {
-	    event.stopPropagation();
-	    humanresources_companyStructure_public.Structure == null ? void 0 : humanresources_companyStructure_public.Structure.open({
-	      focusNodeId: nodeId
+	    items.push({
+	      id: main_core.Text.toInteger(id),
+	      title: name,
+	      entityId: UsedByField.ENTITY_DEPARTMENT,
+	      tabs: 'recents'
 	    });
 	  });
-	  return departmentWrapper;
+	  return items;
 	}
-	function _fillUsersListContent2(users, contentNode) {
+	function _fillUsersListContent2(users, items) {
 	  if (!users || users.length === 0) {
-	    return contentNode;
+	    return items;
 	  }
 	  users.forEach(user => {
-	    const departmentNode = babelHelpers.classPrivateFieldLooseBase(this, _getUserWithNameNode)[_getUserWithNameNode](user, true);
-	    main_core.Dom.append(departmentNode, contentNode);
+	    const itemOptions = {
+	      id: user.id,
+	      title: user.fullName,
+	      entityId: UsedByField.ENTITY_USER,
+	      tabs: 'recents',
+	      avatarOptions: {
+	        bgSize: 'cover'
+	      }
+	    };
+	    if (user != null && user.photoUrl) {
+	      itemOptions.avatar = decodeURIComponent(user.photoUrl);
+	    }
+	    if (user != null && user.profileLink) {
+	      itemOptions.link = user.profileLink;
+	    }
+	    items.push(itemOptions);
 	  });
-	  return contentNode;
-	}
-	function _getUserWithNameNode2(user) {
-	  const userFullName = (user == null ? void 0 : user.fullName) || '';
-	  const userWrapper = main_core.Tag.render(_t13 || (_t13 = _`<div title="${0}" class="agent-grid-user-in-list"></div>`), userFullName);
-	  const imageWrapper = main_core.Tag.render(_t14 || (_t14 = _`<div class="agent-grid-user-img-container"></div>`));
-	  new PhotoField({
-	    fieldNode: imageWrapper
-	  }).render({
-	    user
-	  });
-	  const label = ui_system_typography.Text.render(userFullName, {
-	    size: 'xs',
-	    accent: false,
-	    tag: 'span',
-	    className: 'agent-grid-user-full-name'
-	  });
-	  main_core.Event.bind(userWrapper, 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _openUserProfile)[_openUserProfile](user == null ? void 0 : user.profileLink));
-	  main_core.Dom.append(imageWrapper, userWrapper);
-	  main_core.Dom.append(label, userWrapper);
-	  return userWrapper;
+	  return items;
 	}
 	function _openUserProfile2(profileLink) {
 	  if (main_core.Type.isStringFilled(profileLink)) {
-	    BX.SidePanel.Instance.open(profileLink);
+	    main_sidepanel.SidePanel.Instance.open(profileLink);
 	  }
+	}
+	function _handleBeforeSelect2(event) {
+	  const item = event.getData().item;
+	  event.preventDefault();
+	  if (item.getEntityId() === UsedByField.ENTITY_DEPARTMENT) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _handleSelectDepartment)[_handleSelectDepartment](item);
+	    return;
+	  }
+	  if (item.getEntityId() === UsedByField.ENTITY_USER) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _handleSelectUser)[_handleSelectUser](item);
+	  }
+	}
+	function _handleSelectDepartment2(item) {
+	  humanresources_companyStructure_public.Structure == null ? void 0 : humanresources_companyStructure_public.Structure.open({
+	    focusNodeId: item.id
+	  });
+	}
+	function _handleSelectUser2(item) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _openUserProfile)[_openUserProfile](item == null ? void 0 : item.link);
 	}
 	UsedByField.MAX_VISIBLE_AVATARS_COMBINED = 3;
 	UsedByField.MAX_VISIBLE_AVATARS_USERS_ONLY = 5;
 	UsedByField.MAX_COUNTER_VALUE = 99;
+	UsedByField.ENTITY_DEPARTMENT = 'department';
+	UsedByField.ENTITY_USER = 'user';
 
 	let _$1 = t => t,
 	  _t$1,
@@ -939,6 +972,10 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    const newRowFields = RowHelper.prepareNewRowParams(columns, actions);
 	    grid == null ? void 0 : grid.tableUnfade();
 	    new RowHelper(grid).addToGrid(newRowFields);
+	    const setupTemplate = result == null ? void 0 : result.setupTemplateData;
+	    if (setupTemplate && main_core.Type.isObjectLike(setupTemplate)) {
+	      bizproc_setupTemplate.SetupTemplate.showSidePanel(setupTemplate);
+	    }
 	  } catch (error) {
 	    var _error$errors, _error$errors$;
 	    buttonInstance.setWaiting(false);
@@ -1245,12 +1282,15 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	    return data;
 	  }
 	  handleSuccess(result) {
-	    /*
-	    // temporary disabled
+	    var _result$data;
+	    const setupTemplate = result == null ? void 0 : (_result$data = result.data) == null ? void 0 : _result$data.setupTemplateData;
+	    if (setupTemplate && main_core.Type.isObjectLike(setupTemplate)) {
+	      bizproc_setupTemplate.SetupTemplate.showSidePanel(setupTemplate);
+	      return;
+	    }
 	    BX.UI.Notification.Center.notify({
-	    	content: Loc.getMessage('BIZPROC_AI_AGENTS_GRID_RESTART_ACTION_NOTIFICATION_TITLE'),
+	      content: main_core.Loc.getMessage('BIZPROC_AI_AGENTS_GRID_RESTART_ACTION_NOTIFICATION_TITLE')
 	    });
-	     */
 	  }
 	}
 
@@ -1427,5 +1467,5 @@ this.BX.Bizproc.Ai = this.BX.Bizproc.Ai || {};
 	exports.LoadIndicatorField = LoadIndicatorField;
 	exports.GridManager = GridManager;
 
-}((this.BX.Bizproc.Ai.Agents = this.BX.Bizproc.Ai.Agents || {}),BX.Bizproc.Ai.Agents,BX.Main,BX.Messenger.v2.Lib,BX.Humanresources.CompanyStructure,BX.UI,BX.Main,BX.UI,BX.UI,BX.UI.System.Typography,BX.Event,BX,BX.UI.Dialogs));
+}((this.BX.Bizproc.Ai.Agents = this.BX.Bizproc.Ai.Agents || {}),BX.Bizproc.Ai.Agents,BX.Main,BX.SidePanel,BX.UI.EntitySelector,BX.Messenger.v2.Lib,BX.Humanresources.CompanyStructure,BX.UI,BX.Main,BX.UI,BX.UI,BX.UI.System.Typography,BX.Event,BX.Bizproc,BX,BX.UI.Dialogs));
 //# sourceMappingURL=grid.bundle.js.map

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_polyfill_intersectionobserver,im_v2_provider_service_notification,im_v2_component_elements_userListPopup,im_v2_component_elements_loader,im_v2_lib_theme,im_v2_lib_rest,im_v2_provider_service_settings,im_v2_lib_notifier,im_v2_lib_analytics,im_v2_lib_utils,im_v2_component_elements_attach,im_v2_lib_dateFormatter,im_v2_component_elements_avatar,ui_reactionsSelect,im_v2_lib_parser,im_public,im_v2_component_elements_chatTitle,ui_vue3_vuex,ui_system_chip_vue,im_v2_component_elements_popup,ui_vue3_components_button,ui_iconSet_api_core,ui_entitySelector,main_core_events,main_popup,ui_system_menu,ui_datePicker,ui_system_input_vue,ui_iconSet_api_vue,im_v2_css_classes,main_core,im_v2_application_core,im_v2_lib_user,im_v2_lib_logger,im_v2_const) {
+(function (exports,main_polyfill_intersectionobserver,im_v2_provider_service_notification,im_v2_component_elements_userListPopup,im_v2_component_elements_loader,im_v2_lib_theme,im_v2_lib_rest,im_v2_provider_service_settings,im_v2_lib_notifier,im_v2_lib_analytics,im_v2_lib_utils,im_v2_component_elements_attach,im_v2_lib_dateFormatter,im_v2_component_elements_avatar,ui_reactionsSelect,im_v2_lib_parser,im_public,im_v2_component_elements_chatTitle,ui_vue3_vuex,im_v2_lib_counter,ui_system_chip_vue,im_v2_component_elements_popup,ui_vue3_components_button,ui_iconSet_api_core,ui_entitySelector,main_core_events,main_popup,ui_system_menu,ui_datePicker,ui_system_input_vue,ui_iconSet_api_vue,im_v2_css_classes,main_core,im_v2_application_core,im_v2_lib_user,im_v2_lib_logger,im_v2_const) {
 	'use strict';
 
 	class NotificationReadService {
@@ -2061,10 +2061,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      };
 	    },
 	    formattedCounter() {
-	      if (this.unreadCounter > 99) {
-	        return '99+';
-	      }
-	      return `${this.unreadCounter}`;
+	      return im_v2_lib_counter.CounterManager.formatCounter(this.unreadCounter);
 	    },
 	    ...ui_vue3_vuex.mapState({
 	      notificationMapCollection: state => state.notifications.collection
@@ -3617,7 +3614,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.confirmNotifications.length;
 	    },
 	    formattedCounter() {
-	      return this.confirmNotificationsCounter > 99 ? '99+' : String(this.confirmNotificationsCounter);
+	      return im_v2_lib_counter.CounterManager.formatCounter(this.confirmNotificationsCounter);
 	    },
 	    searchResultCollection() {
 	      return this.$store.getters['notifications/getSearchResultCollection'];
@@ -3983,5 +3980,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.NotificationContent = NotificationContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Ui,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Vue3.Vuex,BX.UI.System.Chip.Vue,BX.Messenger.v2.Component.Elements,BX.Vue3.Components,BX.UI.IconSet,BX.UI.EntitySelector,BX.Event,BX.Main,BX.UI.System,BX.UI.DatePicker,BX.UI.System.Input.Vue,BX.UI.IconSet,BX.Messenger.v2.Css,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Ui,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.UI.System.Chip.Vue,BX.Messenger.v2.Component.Elements,BX.Vue3.Components,BX.UI.IconSet,BX.UI.EntitySelector,BX.Event,BX.Main,BX.UI.System,BX.UI.DatePicker,BX.UI.System.Input.Vue,BX.UI.IconSet,BX.Messenger.v2.Css,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
 //# sourceMappingURL=notification-content.bundle.js.map

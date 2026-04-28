@@ -535,7 +535,7 @@ export class Link extends BaseField
 					this.targetInput.setValue(Link.TARGET_BLANK);
 				}
 			}
-			else if (type === 'MAINPAGE')
+			else if (type === 'VIBE')
 			{
 				this.targetInput.disable();
 				this.targetInput.setValue(Link.TARGET_BLANK);

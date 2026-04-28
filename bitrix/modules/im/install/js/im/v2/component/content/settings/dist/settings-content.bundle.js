@@ -150,9 +150,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return im_v2_lib_theme.ThemeManager.getBackgroundStyleById(backgroundId);
 	    },
 	    onBackgroundClick(backgroundId) {
-	      const preparedBackgroundId = Number.parseInt(backgroundId, 10);
 	      const settingsService = new im_v2_provider_service_settings.SettingsService();
-	      settingsService.changeSetting(im_v2_const.Settings.appearance.background, preparedBackgroundId);
+	      settingsService.changeSetting(im_v2_const.Settings.appearance.background, backgroundId);
 	    }
 	  },
 	  template: `

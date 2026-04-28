@@ -209,6 +209,16 @@ $arComponentParameters = Array(
 				'DEFAULT' => 'ai/',
 				'VARIABLES' => array()
 			),
+			'vibe_new' => [
+				'NAME' => getMessage('LANDING_CMP_PAR_SM_VIBE_NEW'),
+				'DEFAULT' => 'new/#vibe_module#/#vibe_embed#/',
+				'VARIABLES' => ['site_show'],
+			],
+			'vibe_edit' => [
+				'NAME' => getMessage('LANDING_CMP_PAR_SM_VIBE_EDIT'),
+				'DEFAULT' => 'edit/#vibe_module#/#vibe_embed#/',
+				'VARIABLES' => ['site_show'],
+			],
 		)
 	)
 );

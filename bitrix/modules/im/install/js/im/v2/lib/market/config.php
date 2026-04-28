@@ -11,9 +11,10 @@ return [
 	],
 	'rel' => [
 		'ui.vue3.vuex',
-		'main.core',
-		'im.v2.application.core',
 		'im.v2.lib.logger',
+		'main.core',
+		'im.public',
+		'im.v2.application.core',
 		'im.v2.const',
 	],
 	'skip_core' => false,

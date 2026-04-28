@@ -101,7 +101,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<ChatTextarea
 					:dialogId="dialogId"
 					:key="dialogId"
-					:withMarket="false"
+					:withMarket="true"
 					:withAutoFocus="false"
 					@mounted="onTextareaMount"
 				/>

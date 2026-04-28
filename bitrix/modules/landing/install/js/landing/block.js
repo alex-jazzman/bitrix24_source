@@ -931,7 +931,7 @@
 							if (
 								isPlainObject(this.manifest.style)
 								&& this.isAllowedByTariff()
-								&& !this.isMainpage()
+								&& !this.isVibe()
 							)
 							{
 								return new BX.Main.MenuItem({
@@ -1087,7 +1087,7 @@
 							}
 						})(),
 						(() => {
-							if (!this.isMainpage())
+							if (!this.isVibe())
 							{
 								return new BX.Main.MenuItem({
 									text: BX.Landing.Loc.getMessage("LANDING_BLOCKS_ACTIONS_SAVE_BLOCK_BUTTON_MSGVER_1"),
@@ -1161,7 +1161,7 @@
 				{
 					if (isPlainObject(this.manifest.style))
 					{
-						if (!this.isMainpage())
+						if (!this.isVibe())
 						{
 							contentPanel.addButton(
 								new ActionButton("designblock", {
@@ -1546,7 +1546,7 @@
 			const landing = BX.Landing.Main.getInstance();
 			const type = landing.options.params.type;
 			if (
-				type === 'MAINPAGE'
+				type === 'VIBE'
 				&& Object.keys(this.manifest.nodes).length === 0
 				&& Object.keys(this.manifest.attrs).length === 0
 			)
@@ -1570,7 +1570,7 @@
 		{
 			let hint = null;
 			let type = 'BLOCK';
-			if (this.isMainpage())
+			if (this.isVibe())
 			{
 				type = 'WIDGET';
 			}
@@ -1847,7 +1847,7 @@
 							}
 						})(),
 						(() => {
-							if (!this.isMainpage())
+							if (!this.isVibe())
 							{
 								return new BX.Main.MenuItem({
 									delimiter: true,
@@ -1855,7 +1855,7 @@
 							}
 						})(),
 						(() => {
-							if (!this.isMainpage())
+							if (!this.isVibe())
 							{
 								return new BX.Main.MenuItem({
 									text: BX.Landing.Loc.getMessage("LANDING_BLOCKS_ACTIONS_SAVE_BLOCK_BUTTON_MSGVER_1"),
@@ -2094,12 +2094,12 @@
 		},
 
 		/**
-		 * Check is page are mainpage
+		 * Check is page are vibe page
 		 * @return {boolean}
 		 */
-		isMainpage: function()
+		isVibe: function()
 		{
-			return BX.Landing.Env.getInstance().getType() === 'MAINPAGE';
+			return BX.Landing.Env.getInstance().getType() === 'VIBE';
 		},
 
 		isCrmFormBlock: function()
@@ -3115,7 +3115,7 @@
 
 		getRestrictedMessageText: function()
 		{
-			if (this.isMainpage())
+			if (this.isVibe())
 			{
 				return BX.Landing.Loc.getMessage("LANDING_BLOCK_RESTRICTED_TEXT_MAINPAGE");
 			}
@@ -5753,7 +5753,7 @@
 				}
 
 				// Block settings
-				const notAllowedTypes = ['MAINPAGE'];
+				const notAllowedTypes = ['VIBE'];
 				const landing = BX.Landing.Main.getInstance();
 				const type = landing.options.params.type;
 				if (!notAllowedTypes.includes(type))

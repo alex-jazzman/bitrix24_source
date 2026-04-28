@@ -11,6 +11,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 		EventType,
 		AiTasksStatusType,
 	} = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { Notifier } = require('im/messenger/lib/notifier');
@@ -76,8 +77,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 			}
 			this.logger.info('handleMessageChat:', params, extra);
 
-			// TODO: MessengerV2 remove after openlines support
-			if (params.lines)
+			if (!Feature.isOpenlinesInMessengerAvailable && params.lines)
 			{
 				return;
 			}
@@ -91,6 +91,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 			await this.#setCommentInfo(params);
 			await this.#processMessage(params);
 			await this.#updateCopilot(params);
+			await this.#updateOpenline(params);
 			await this.#checkMessageParams(params.message);
 		}
 
@@ -892,6 +893,8 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 			}
 
 			const dialogFieldsToUpdate = {};
+			const chat = params.chat[params.chatId];
+
 			if (params.message.id > dialog.lastMessageId)
 			{
 				dialogFieldsToUpdate.lastMessageId = params.message.id;
@@ -900,6 +903,16 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 			if (params.message.senderId === MessengerParams.getUserId() && params.message.id > dialog.lastReadId)
 			{
 				dialogFieldsToUpdate.lastId = params.message.id;
+			}
+
+			if (this.getNewMessageManager(params).isOpenLineChat())
+			{
+				dialogFieldsToUpdate.owner = chat.owner;
+			}
+
+			if (Type.isStringFilled(chat?.name) && dialog.name !== chat.name)
+			{
+				dialogFieldsToUpdate.name = chat.name;
 			}
 
 			if (this.isCurrentUserOwner(dialog.owner))
@@ -1396,6 +1409,47 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 			{
 				this.logger.error('#updateCopilot:', error);
 			}
+		}
+
+		/**
+		 * @param {MessageAddParams} params
+		 * @return {Promise<any>}
+		 */
+		async #updateOpenline(params)
+		{
+			const messageManager = this.getNewMessageManager(params);
+			if (!messageManager.isOpenLineChat())
+			{
+				return;
+			}
+
+			try
+			{
+				await this.store.dispatch('dialoguesModel/openlinesModel/set', [this.#prepareOpenlineModel(params)]);
+			}
+			catch (error)
+			{
+				this.logger.error('#updateOpenLine:', error);
+			}
+		}
+
+		/**
+		 * @param {MessageAddParams} params
+		 * @return {OpenlinesSessionModelState}
+		 */
+		#prepareOpenlineModel(params)
+		{
+			const openline = params.lines;
+
+			return {
+				id: openline.id,
+				operatorId: openline.operatorId,
+				chatId: params.chatId,
+				status: openline.statusGroup,
+				queueId: openline.queueId,
+				pinned: openline.pinned,
+				isClosed: openline.isClosed,
+			};
 		}
 
 		/**

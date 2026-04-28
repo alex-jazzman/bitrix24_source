@@ -1,21 +1,16 @@
 .air-user-profile {
 	display: flex;
 	align-items: center;
-	justify-content: flex-end;
+	justify-content: center;
 	min-height: var(--air-header-height);
 	cursor: pointer;
 	position: absolute;
-	right: calc(var(--air-right-bar-width) / 2 - 14px);
+	right: var(--air-content-area-left-shift);
 	max-width: 120px;
 	--wrapper-color: var(--ui-color-base-8);
 	--border-color: var(--ui-color-base-8);
 	--avatar-border-color: var(--ui-color-base-8);
 	--status-icon-color: var(--ui-color-base-5);
-}
-
-.air-header__user-profile .air-user-profile {
-	position: relative;
-	right: 0;
 }
 
 .air-user-profile.--worktime-not-started {
@@ -60,7 +55,7 @@
 	transition: none;
 }
 
-.app__right-bar:is(.--transparent, .--overlay-mode) .air-user-profile__wrapper,
+.root:has(.app__right-bar:is(.--transparent, .--overlay-mode)) .app__avatar .air-user-profile__wrapper,
 .air-user-profile.--collapsed .air-user-profile__wrapper {
 	opacity: 0;
 	visibility: hidden;
@@ -71,9 +66,25 @@
 			max-width 0s ease-in-out 0.3s;
 }
 
-.app__right-bar:is(.--transparent, .--overlay-mode) .air-user-profile-avatar__work-time-state-short,
+.root:has(.app__right-bar:is(.--transparent, .--overlay-mode)) .app__avatar .air-user-profile-avatar__work-time-state-short,
 .air-user-profile.--collapsed .air-user-profile-avatar__work-time-state-short {
 	opacity: 1;
+}
+
+@media (max-width: 767px) {
+	.air-user-profile .air-user-profile__wrapper {
+		opacity: 0;
+		visibility: hidden;
+		max-width: 0;
+		transition:
+				opacity 0.3s ease-in-out,
+				visibility 0s linear 0.3s,
+				max-width 0s ease-in-out 0.3s;
+	}
+
+	.air-user-profile .air-user-profile-avatar__work-time-state-short {
+		opacity: 1;
+	}
 }
 
 .air-user-profile .air-user-profile__avatar::before {
@@ -94,14 +105,13 @@
 	opacity: 1;
 }
 
-.app__right-bar .air-user-profile::after {
+.app__avatar .air-user-profile::after {
 	content: "";
 	position: absolute;
 	width: 24px;
 	height: 1px;
 	bottom: 0;
-	left: 50%;
-	transform: translateX(-50%);
+	right: 0;
 	background: var(--ui-color-divider-accent);
 
 	opacity: 0;
@@ -110,7 +120,7 @@
 	animation-timeline: scroll(y);
 }
 
-.app__right-bar:is(.--transparent, .--overlay-mode) .air-user-profile::after {
+.root:has(.app__right-bar:is(.--transparent, .--overlay-mode)) .app__avatar .air-user-profile::after {
 	animation-name: none;
 	opacity: 1;
 }
@@ -132,6 +142,7 @@
 	align-items: center;
 	justify-content: center;
 	position: absolute;
+	right: 0;
 	width: 29px;
 	height: 29px;
 	border-radius: 50%;

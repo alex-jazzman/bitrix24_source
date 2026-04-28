@@ -1,6 +1,6 @@
 import { CopilotRecentItemData, RecentItemMessageData } from '../copilot/types';
 import { RawChat, RawUser } from '../../../../../provider/pull/base/types/common';
-import { messagesAutoDeleteConfigs } from '../../../../../provider/pull/base/types/message';
+import { MessagesAutoDeleteConfigs } from '../../../../../provider/pull/base/types/message';
 
 declare type RecentItemData = {
 	id: string,
@@ -24,5 +24,5 @@ declare type imV2RecentChatsResult = {
 	hasMorePages: boolean,
 	items: Array<RecentItemData>,
 	copilot: CopilotRecentItemData,
-	messagesAutoDeleteConfigs: Array<messagesAutoDeleteConfigs>,
+	messagesAutoDeleteConfigs: Array<MessagesAutoDeleteConfigs>,
 }

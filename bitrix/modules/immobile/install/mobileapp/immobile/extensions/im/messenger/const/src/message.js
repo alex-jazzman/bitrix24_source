@@ -71,6 +71,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 
 			AiAssistantMessage: 'AiAssistantMessage',
 			AdminMessage: 'AdminMessage',
+			AiBizprocMessage: 'AiBizprocMessage',
 		},
 	});
 
@@ -103,6 +104,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		vote: 'VoteMessage',
 		sticker: 'StickerMessage',
 		admin: 'AdminMessage',
+		aiBizprocMessage: 'AiBizprocMessage',
 	});
 
 	module.exports = {

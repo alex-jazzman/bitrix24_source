@@ -40,14 +40,14 @@
 	top: 7px;
 	width: 20px;
 	height: 20px;
-	mask-image: var(--ui-icon-set__path_plus-in-circle);
+	mask-image: var(--o-ui-icon-set__path_circle-plus);
 	mask-size: 20px;
 	mask-position: center;
 	background-color: rgba(var(--ui-color-text-secondary-rgb), 0.5);
 }
 
 .ui-typography-spoiler[open] > .ui-typography-spoiler-title:before {
-	mask-image: var(--ui-icon-set__path_minus-in-circle);
+	mask-image: var(--o-ui-icon-set__path_circle-minus);
 }
 
 .ui-typography-spoiler-content {

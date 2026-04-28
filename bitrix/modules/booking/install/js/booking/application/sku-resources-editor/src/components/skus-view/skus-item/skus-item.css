@@ -4,10 +4,9 @@
 
 .booking-sre-app--sku-item--price {
 	font-size: var(--ui-font-size-md);
-	font-style: normal;
 	font-weight: var(--ui-font-weight-normal);
 	line-height: var(--ui-font-line-height-sm);
-	letter-spacing: -0.05px;
+	letter-spacing: var(--ui-letter-spacing-l);
 	color: var(--ui-color-base-50);
 	margin-right: var(--ui-space-inline-xs);
 }

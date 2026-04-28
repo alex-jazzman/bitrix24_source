@@ -53,7 +53,7 @@ export class LocalSearch
 	{
 		const recentListItems = getRecentListItems({
 			withFakeUsers: true,
-			searchConfig: this.#searchConfig,
+			searchRecentSection: this.#searchConfig.searchRecentSection,
 		});
 
 		return recentListItems.map((item) => {
@@ -186,6 +186,7 @@ export class LocalSearch
 				return false;
 			}
 
+			// eslint-disable-next-line sonarjs/prefer-single-boolean-return
 			if (isUser && exclude.includes(EntitySearch.users))
 			{
 				return false;

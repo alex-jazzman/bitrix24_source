@@ -1,6 +1,9 @@
 import { Loc, Type } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { type MenuItemOptions, type MenuSectionOptions, type MenuOptions } from 'ui.system.menu';
 
+import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
 import {
 	ActionByRole,
@@ -10,24 +13,20 @@ import {
 	UserType,
 	ActionByUserType,
 	UserRole,
+	type ApplicationContext,
 } from 'im.v2.const';
-import { CallManager } from 'im.v2.lib.call';
-import { LegacyRecentService } from 'im.v2.provider.service.recent';
-import { ChatService } from 'im.v2.provider.service.chat';
-import { Utils } from 'im.v2.lib.utils';
-import { PermissionManager } from 'im.v2.lib.permission';
-import { showLeaveChatConfirm } from 'im.v2.lib.confirm';
-import { ChannelManager } from 'im.v2.lib.channel';
-import { Messenger } from 'im.public';
-import { InviteManager } from 'im.v2.lib.invite';
 import { Analytics } from 'im.v2.lib.analytics';
+import { CallManager } from 'im.v2.lib.call';
+import { ChannelManager } from 'im.v2.lib.channel';
+import { showLeaveChatConfirm } from 'im.v2.lib.confirm';
+import { InviteManager } from 'im.v2.lib.invite';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelRecentItem, type ImModelUser, type ImModelChat } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
+import { LegacyRecentService } from 'im.v2.provider.service.recent';
 
 import { BaseMenu } from '../base/base';
-
-import type { EventEmitter } from 'main.core.events';
-import type { MenuItemOptions, MenuSectionOptions, MenuOptions } from 'ui.system.menu';
-import type { ImModelRecentItem, ImModelUser, ImModelChat } from 'im.v2.model';
-import type { ApplicationContext } from 'im.v2.const';
 
 type MenuItemContext = {
 	dialogId: string,
@@ -120,7 +119,6 @@ export class RecentMenu extends BaseMenu
 			title: Loc.getMessage('IM_LIB_MENU_WRITE_V2'),
 			onClick: () => {
 				void Messenger.openChat(this.context.dialogId);
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -131,7 +129,6 @@ export class RecentMenu extends BaseMenu
 			title: Loc.getMessage('IM_LIB_MENU_OPEN'),
 			onClick: () => {
 				void Messenger.openChat(this.context.dialogId);
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -144,8 +141,11 @@ export class RecentMenu extends BaseMenu
 			return null;
 		}
 
-		const dialog = this.store.getters['chats/get'](dialogId, true);
-		const showReadOption = recentItem.unread || dialog.counter > 0;
+		const { chatId }: ImModelChat = this.store.getters['chats/get'](dialogId, true);
+		const chatCounter = this.store.getters['counters/getCounterByChatId'](chatId);
+		const childrenCounter = this.store.getters['counters/getChildrenTotalCounter'](chatId);
+		const isChatMarkedUnread = this.store.getters['counters/getUnreadStatus'](chatId);
+		const showReadOption = isChatMarkedUnread || chatCounter > 0 || childrenCounter > 0;
 
 		return {
 			title: showReadOption ? Loc.getMessage('IM_LIB_MENU_READ') : Loc.getMessage('IM_LIB_MENU_UNREAD'),
@@ -160,7 +160,6 @@ export class RecentMenu extends BaseMenu
 					this.chatService.unreadDialog(dialogId);
 					Analytics.getInstance().recentContextMenu.onUnread(dialogId);
 				}
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -191,7 +190,6 @@ export class RecentMenu extends BaseMenu
 					this.chatService.pinChat(dialogId);
 					Analytics.getInstance().recentContextMenu.onPin(dialogId);
 				}
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -205,8 +203,7 @@ export class RecentMenu extends BaseMenu
 			return null;
 		}
 
-		const dialog = this.store.getters['chats/get'](dialogId, true);
-		const isMuted = dialog.muteList.includes(Core.getUserId());
+		const { isMuted }: ImModelChat = this.store.getters['chats/get'](dialogId, true);
 
 		return {
 			title: isMuted ? Loc.getMessage('IM_LIB_MENU_UNMUTE_2') : Loc.getMessage('IM_LIB_MENU_MUTE_2'),
@@ -221,7 +218,6 @@ export class RecentMenu extends BaseMenu
 					this.chatService.muteChat(dialogId);
 					Analytics.getInstance().recentContextMenu.onMute(dialogId);
 				}
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -240,7 +236,6 @@ export class RecentMenu extends BaseMenu
 			onClick: () => {
 				BX.SidePanel.Instance.open(profileUri);
 				Analytics.getInstance().recentContextMenu.onOpenProfile(this.context.dialogId);
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -257,7 +252,6 @@ export class RecentMenu extends BaseMenu
 			onClick: () => {
 				LegacyRecentService.getInstance().hideChat(this.context.dialogId);
 				Analytics.getInstance().recentContextMenu.onHide(this.context.dialogId);
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -295,7 +289,6 @@ export class RecentMenu extends BaseMenu
 					dialogId: this.context.dialogId,
 				});
 				Analytics.getInstance().recentContextMenu.onFindChatsWithUser(this.context.dialogId);
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -346,7 +339,6 @@ export class RecentMenu extends BaseMenu
 			title: Loc.getMessage('IM_LIB_INVITE_RESEND'),
 			onClick: () => {
 				InviteManager.resendInvite(dialogId);
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -368,7 +360,6 @@ export class RecentMenu extends BaseMenu
 						messageBox.close();
 					},
 				});
-				this.menuInstance.close();
 			},
 		};
 	}
@@ -443,7 +434,6 @@ export class RecentMenu extends BaseMenu
 		return {
 			title,
 			onClick: async () => {
-				this.menuInstance.close();
 				const userChoice = await showLeaveChatConfirm(this.context.dialogId);
 				if (userChoice === true)
 				{
@@ -466,7 +456,6 @@ export class RecentMenu extends BaseMenu
 		return {
 			title: Loc.getMessage('IM_LIB_MENU_LEAVE_MSGVER_1'),
 			onClick: async () => {
-				this.menuInstance.close();
 				const userChoice = await showLeaveChatConfirm(this.context.dialogId);
 				if (!userChoice)
 				{

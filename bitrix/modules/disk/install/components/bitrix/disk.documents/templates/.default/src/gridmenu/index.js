@@ -1,4 +1,5 @@
 import Item from './item';
+import ItemCopyToMe from './item-copytome';
 import ItemHistory from './item-history';
 import ItemOpen from './itemopen';
 import ItemShareSection from './itemsharesection';
@@ -17,6 +18,7 @@ const itemMappings = [
 	ItemHistory,
 	ItemRename,
 	ItemDelete,
+	ItemCopyToMe,
 ];
 
 export default function getMenuItem(trackedObjectId, itemData)

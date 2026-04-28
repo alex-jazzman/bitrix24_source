@@ -1,7 +1,6 @@
 body.im-chat-embedded {
 	overscroll-behavior: none;
 	overflow-y: auto;
-	--air-app-min-width: 800px;
 }
 
 .im-chat-embedded .air-header::before {
@@ -12,7 +11,7 @@ body.im-chat-embedded {
 	margin-top: 0;
 }
 
-.im-chat-embedded .app__main {
+.im-chat-embedded .app__page {
 	--air-content-area-left-shift: 18px;
 }
 
@@ -36,7 +35,13 @@ body.im-chat-embedded {
 	--im-chat-embedded-bg-color: #2d2d2d;
 }
 
-.im-chat-embedded .app__main::before {
+.im-chat-embedded .app__page {
+	position: relative;
+	padding-right: var(--air-content-area-left-shift);
+}
+
+.im-chat-embedded .app__header::before,
+.im-chat-embedded .app__page::before {
 	content: '';
 	position: absolute;
 	inset: 0;
@@ -47,11 +52,10 @@ body.im-chat-embedded {
 	z-index: -1;
 }
 
-.im-chat-embedded .app {
+.im-chat-embedded .root {
 	--air-footer-min-height: 0px;
 }
 
 .im-chat-embedded .app__footer {
 	display: none;
 }
-

@@ -190,6 +190,7 @@ CREATE TABLE b_intranet_user_annual_summary
 	USER_ID int NOT NULL,
 	NAME varchar(255) NOT NULL,
 	VALUE text,
+	TOTAL int,
 	PRIMARY KEY (ID)
 );
 CREATE UNIQUE INDEX ux_b_user_option_user_id_name ON b_intranet_user_annual_summary (user_id, name);

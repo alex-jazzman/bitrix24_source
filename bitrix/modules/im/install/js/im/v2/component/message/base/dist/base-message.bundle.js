@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,im_v2_component_message_elements,im_v2_const,im_v2_lib_permission,im_v2_lib_channel,im_v2_lib_menu) {
+(function (exports,main_core,im_v2_application_core,im_v2_component_message_elements,im_v2_const,im_v2_lib_channel,im_v2_lib_menu,im_v2_lib_parser,im_v2_lib_permission,im_v2_lib_utils) {
 	'use strict';
 
 	// @vue/component
@@ -76,12 +76,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    showMessageAngle() {
 	      const hasAfterContent = Boolean(this.$slots['after-message']);
-	      return !this.withBackground || this.isChannelPost || hasAfterContent;
+	      return !this.isTransparentBackground && !this.isChannelPost && !hasAfterContent;
 	    },
 	    containerClasses() {
 	      return {
 	        '--self': this.isSelfMessage,
 	        '--opponent': this.isOpponentMessage,
+	        '--system': this.isSystemMessage,
 	        '--has-error': this.hasError,
 	        '--has-after-content': Boolean(this.$slots['after-message']),
 	        '--selected': this.isMessageSelected,
@@ -90,9 +91,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    bodyClasses() {
 	      return {
-	        '--transparent': !this.withBackground,
-	        '--no-angle': this.showMessageAngle
+	        '--transparent': this.isTransparentBackground,
+	        '--no-angle': !this.showMessageAngle
 	      };
+	    },
+	    isTransparentBackground() {
+	      return !this.withBackground || this.isSystemMessage;
 	    },
 	    showRetryButton() {
 	      return this.withRetryButton && this.isSelfMessage && this.hasError;
@@ -190,5 +194,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.BaseMessage = BaseMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX,BX.Messenger.v2.Application,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=base-message.bundle.js.map

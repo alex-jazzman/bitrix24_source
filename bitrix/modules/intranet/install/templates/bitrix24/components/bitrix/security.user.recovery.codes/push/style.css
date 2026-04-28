@@ -36,19 +36,3 @@
 .intranet-otp-codes__grid-item .ui-text.--sm {
 	--ui-text-sm-font-size: 64px;
 }
-
-@media print {
-	body * {
-		visibility: hidden;
-	}
-
-	.intranet-otp-codes__grid, .intranet-otp-codes__grid * {
-		visibility: visible;
-	}
-
-	.intranet-otp-codes__grid {
-		position: absolute;
-		left: 0;
-		top: 0;
-	}
-}

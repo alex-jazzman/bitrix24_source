@@ -1,5 +1,13 @@
 import './moveable-block.css';
-import { toRefs, useTemplateRef, watch, onUnmounted, computed, toValue } from 'ui.vue3';
+import {
+	toRefs,
+	useTemplateRef,
+	watch,
+	onMounted,
+	onUnmounted,
+	computed,
+	toValue,
+} from 'ui.vue3';
 import { useMoveableBlock, useBlockState, useHighlightedBlocks, useBlockDiagram } from '../../composables';
 // eslint-disable-next-line no-unused-vars
 import type { DiagramBlock } from '../../types';
@@ -29,15 +37,18 @@ export const MoveableBlock = {
 	setup(props): MoveableBlockSetup
 	{
 		const { block } = toRefs(props);
+		const blockRef = useTemplateRef('blockEl');
 		const { isMakeNewConnection } = useBlockDiagram();
 		const {
 			blockZindex,
 			isHiglitedBlock,
 			isDisabled,
-		} = useBlockState(block);
+			onMountedBlock,
+			onUnmountedBlock,
+		} = useBlockState({ block, blockRef });
 		const highlightedBlocks = useHighlightedBlocks();
 		const { isDragged, blockPositionStyle } = useMoveableBlock(
-			useTemplateRef('blockEl'),
+			blockRef,
 			block,
 		);
 
@@ -57,8 +68,13 @@ export const MoveableBlock = {
 			...toValue(blockZindex),
 		}));
 
+		onMounted(() => {
+			onMountedBlock();
+		});
+
 		onUnmounted(() => {
 			highlightedBlocks.remove(props.block.id);
+			onUnmountedBlock();
 		});
 
 		function onMouseDownSelectBlock(): void

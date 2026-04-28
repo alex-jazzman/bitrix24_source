@@ -1,23 +1,12 @@
 import { Browser, Event } from 'main.core';
-import { onMounted, onUnmounted } from 'ui.vue3';
+import { onMounted, onUnmounted, toValue } from 'ui.vue3';
+import { useBlockDiagram } from './block-diagram';
 import { INPUT_TAGS } from '../constants';
-
-type ShortcutHandler = (event: KeyboardEvent, mousePos: { x: number, y: number }) => void;
+import type { ShortcutHandler, PreparedShortcut } from '../types';
 
 type ShortcutConfig = {
 	keys: string[],
 	handler: ShortcutHandler,
-};
-
-type PreparedShortcut = {
-	mainKey: string;
-	requiredModifiers: {
-		ctrl: boolean;
-		meta: boolean;
-		shift: boolean;
-		alt: boolean;
-	};
-	handler: ShortcutHandler;
 };
 
 const MODIFIER_KEYS = new Set([
@@ -26,14 +15,12 @@ const MODIFIER_KEYS = new Set([
 
 const KEY_CODE_PREFIX = 'Key';
 
-export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]): void
+export function useKeyboardShortcuts(shortcutsConfig: ShortcutConfig[]): void
 {
-	let mouseX = 0;
-	let mouseY = 0;
-
+	const { shortcuts, mousePosition, isKeyboardInitialized } = useBlockDiagram();
 	const isMac = Browser.isMac();
 
-	const preparedShortcuts: PreparedShortcut[] = shortcuts.map(({ keys, handler }) => {
+	const prepareShortcut = ({ keys, handler }): PreparedShortcut => {
 		const lowerKeys = keys.map((k) => k.toLowerCase());
 		const keySet = new Set(lowerKeys);
 
@@ -48,6 +35,7 @@ export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]): void
 		}
 
 		return {
+			id: Math.random().toString(36).slice(2, 11),
 			mainKey: mainKey || '',
 			requiredModifiers: {
 				ctrl: needCtrl,
@@ -57,18 +45,17 @@ export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]): void
 			},
 			handler,
 		};
-	});
+	};
 
-	function onMouseMove(event: MouseEvent): void
-	{
-		mouseX = event.clientX;
-		mouseY = event.clientY;
-	}
+	const localPrepared = shortcutsConfig.map((element) => prepareShortcut(element));
 
-	function onKeyDown(event: KeyboardEvent): void
-	{
+	const onMouseMove = (event: MouseEvent) => {
+		mousePosition.x = event.clientX;
+		mousePosition.y = event.clientY;
+	};
+
+	const onKeyDown = (event: KeyboardEvent) => {
 		const target = event.target;
-
 		const pressedKey = event.code.startsWith(KEY_CODE_PREFIX)
 			? event.code.slice(KEY_CODE_PREFIX.length).toLowerCase()
 			: event.key.toLowerCase();
@@ -84,15 +71,14 @@ export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]): void
 			return;
 		}
 
-		for (const shortcut of preparedShortcuts)
+		for (const { mainKey, requiredModifiers, handler } of toValue(shortcuts))
 		{
-			if (shortcut.mainKey !== pressedKey)
+			if (mainKey !== pressedKey)
 			{
 				continue;
 			}
 
-			const { ctrl, meta, shift, alt } = shortcut.requiredModifiers;
-
+			const { ctrl, meta, shift, alt } = requiredModifiers;
 			const isMatch = event.ctrlKey === ctrl
 				&& event.metaKey === meta
 				&& event.shiftKey === shift
@@ -101,20 +87,26 @@ export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]): void
 			if (isMatch)
 			{
 				event.preventDefault();
-				shortcut.handler(event, { x: mouseX, y: mouseY });
+				handler(event, { x: mousePosition.x, y: mousePosition.y });
 
 				return;
 			}
 		}
-	}
+	};
 
 	onMounted(() => {
-		Event.bind(window, 'keydown', onKeyDown);
-		Event.bind(window, 'mousemove', onMouseMove);
+		shortcuts.value.push(...localPrepared);
+
+		if (!isKeyboardInitialized.value)
+		{
+			Event.bind(window, 'keydown', onKeyDown);
+			Event.bind(window, 'mousemove', onMouseMove);
+			isKeyboardInitialized.value = true;
+		}
 	});
 
 	onUnmounted(() => {
-		Event.unbind(window, 'keydown', onKeyDown);
-		Event.unbind(window, 'mousemove', onMouseMove);
+		const idsToRemove = new Set(localPrepared.map((item) => item.id));
+		shortcuts.value = shortcuts.value.filter((item) => !idsToRemove.has(item.id));
 	});
 }

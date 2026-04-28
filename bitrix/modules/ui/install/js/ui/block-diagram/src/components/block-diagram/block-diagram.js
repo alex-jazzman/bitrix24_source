@@ -21,7 +21,13 @@ import {
 } from '../../composables';
 import { getGroupBlockSlotName, getGroupConnectionSlotName } from '../../utils';
 
-import { HOOK_NAMES, CURSOR_TYPES } from '../../constants';
+import {
+	HOOK_NAMES,
+	CURSOR_TYPES,
+	CONNECTION_OFFSET,
+	CONNECTION_BEND_OFFSET,
+	CONNECTION_BORDER_RADIUS,
+} from '../../constants';
 import type {
 	BlockGroupNames,
 	ConnectionGroupNames,
@@ -118,6 +124,18 @@ export const BlockDiagram = {
 		maxZoom: {
 			type: Number,
 			default: 4,
+		},
+		connectionOffset: {
+			type: Number,
+			default: CONNECTION_OFFSET,
+		},
+		connectionBendOffset: {
+			type: Number,
+			default: CONNECTION_BEND_OFFSET,
+		},
+		connectionBorderRadius: {
+			type: Number,
+			default: CONNECTION_BORDER_RADIUS,
 		},
 		historyHooks: {
 			type: Array,
@@ -304,7 +322,7 @@ export const BlockDiagram = {
 									:key="connection.id"
 								>
 									<template #default="{ isDisabled }">
-										<DeleteConnectionBtn 
+										<DeleteConnectionBtn
 											:connectionId="connection.id"
 											:disabled="isDisabled"
 										/>

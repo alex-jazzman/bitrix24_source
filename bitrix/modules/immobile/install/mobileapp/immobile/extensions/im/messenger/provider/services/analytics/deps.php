@@ -22,6 +22,7 @@ return [
 		'./src/chat-pin',
 		'./src/collab-entities',
 		'./src/dialog-edit',
+		'./src/dialog-text-format',
 		'./src/download-file',
 		'./src/entity-manager',
 		'./src/file-sending',
@@ -39,6 +40,9 @@ return [
 		'./src/sticker',
 		'./src/tariff-restrictions',
 		'./src/video-note',
+		'./src/mention',
 		'./src/vote',
+		'./src/search',
+		'./src/recent',
 	],
 ];

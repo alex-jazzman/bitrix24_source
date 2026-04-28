@@ -5,6 +5,7 @@ import { Core } from 'im.v2.application.core';
 import { ChatType, Settings } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { Parser } from 'im.v2.lib.parser';
+import { RecentManager } from 'im.v2.lib.recent';
 import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 
 import type { ImModelUser, ImModelChat, ImModelRecentItem, ImModelMessage } from 'im.v2.model';
@@ -48,25 +49,25 @@ export const MessageText = {
 		},
 		needsBirthdayPlaceholder(): boolean
 		{
-			return this.$store.getters['recent/needsBirthdayPlaceholder'](this.recentItem.dialogId);
+			return RecentManager.needsBirthdayPlaceholder(this.recentItem.dialogId);
 		},
 		needsVacationPlaceholder(): boolean
 		{
-			return this.$store.getters['recent/needsVacationPlaceholder'](this.recentItem.dialogId);
+			return RecentManager.needsVacationPlaceholder(this.recentItem.dialogId);
 		},
 		showLastMessage(): boolean
 		{
 			return this.$store.getters['application/settings/get'](Settings.recent.showLastMessage);
 		},
-		notesText(): string
+		selfChatText(): string
 		{
 			return this.loc('IM_LIST_RECENT_CHAT_SELF_SUBTITLE');
 		},
 		hiddenMessageText(): string
 		{
-			if (this.isNotes)
+			if (this.isSelfChat)
 			{
-				return this.notesText;
+				return this.selfChatText;
 			}
 
 			if (this.isUser)
@@ -129,9 +130,9 @@ export const MessageText = {
 		{
 			return !this.isUser;
 		},
-		isNotes(): boolean
+		isSelfChat(): boolean
 		{
-			return this.$store.getters['chats/isNotes'](this.recentItem.dialogId);
+			return this.$store.getters['chats/isSelfChat'](this.recentItem.dialogId);
 		},
 	},
 	methods:

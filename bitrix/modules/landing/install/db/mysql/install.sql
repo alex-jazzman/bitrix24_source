@@ -598,3 +598,16 @@ create table if not exists b_landing_copilot_site_to_chat
 	PRIMARY KEY (SITE_ID, CHAT_ID, USER_ID),
 	INDEX IX_IX_LANDING_COPILOT_SITE_TO_CHAT_SITE_ID (SITE_ID)
 );
+
+create table if not exists b_landing_vibe
+(
+	ID int not null auto_increment,
+	MODULE_ID varchar(255) not null,
+	EMBED_ID varchar(255) not null,
+	PROVIDER_CLASS varchar(255) not null,
+	SITE_ID int not null,
+	STATUS char(1) not null,
+	PRIMARY KEY (ID),
+	INDEX IX_LANDING_VIBE_MODULE_ID_EMBED_ID (MODULE_ID, EMBED_ID),
+	INDEX IX_LANDING_VIBE_SITE_ID (SITE_ID)
+);

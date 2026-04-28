@@ -159,6 +159,7 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 		 * @param {array} [props.participantsEntityList]
 		 * @param {string} [props.description]
 		 * @param {boolean} [props.editAttendeesMode]
+		 * @param {string} [props.eventType]
 		 */
 		initNewForm(props)
 		{
@@ -194,6 +195,7 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 			this.user = props.user;
 			this.firstWeekday = props.firstWeekday;
 			this.recursionMode = props.recursionMode;
+			this.eventType = props.eventType ?? null;
 			this.todayButtonClick = false;
 			this.originalDateFrom = null;
 		}
@@ -240,6 +242,7 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 			));
 
 			this.id = event.id;
+
 			this.initialProps = {
 				parentId: event.parentId,
 				sectionId: event.sectionId,
@@ -477,6 +480,11 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 			if (this.createMailId)
 			{
 				fields.analyticsMailId = this.createMailId;
+			}
+
+			if (this.eventType)
+			{
+				fields.event_type = this.eventType;
 			}
 
 			return fields;

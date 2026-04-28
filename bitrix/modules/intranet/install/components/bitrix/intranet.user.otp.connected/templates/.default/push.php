@@ -21,6 +21,7 @@ Extension::load([
 	'ui.design-tokens',
 	'intranet.design-tokens',
 	'ui.system.typography',
+	'ui.dialogs.tooltip',
 ]);
 
 $this->addExternalCss('/bitrix/components/bitrix/intranet.user.profile.section.security/templates/.default/style.css');
@@ -37,6 +38,8 @@ $arJSParams = [
 	'canShowBannerPushOtp' => (int)$USER->GetID() === (int)$arParams["USER_ID"],
 	'isOtpActive' => $arResult["OTP"]["IS_ACTIVE"] === true,
 	'isNotPushOtp' => $arResult['OTP']['TYPE'] !== \Bitrix\Security\Mfa\OtpType::Push,
+	"tooltipTitle" => Loc::getMessage("INTRANET_USER_OTP_RECOVERY_TOOLTIP_TITLE"),
+	"tooltipDescription" => Loc::getMessage("INTRANET_USER_OTP_RECOVERY_TOOLTIP_DESCRIPTION"),
 ];
 
 ?>

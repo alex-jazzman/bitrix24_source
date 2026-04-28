@@ -181,7 +181,9 @@ export class Security
 		promise.then(
 			BX.delegate(function() {
 				const html = BX.prop.getString(result.data, 'html', '');
-				BX.html(this.container, html);
+				BX.html(this.container, html).then(() => {
+					top.BX.Event.EventEmitter.emit('BX.Intranet.Security:onChangePage', { page: pageName });
+				});
 
 				const pageTitle = BX.prop.getString(BX.prop.getObject(result.data, 'additionalParams', ''), 'pageTitle', '');
 				BX.html(BX('pagetitle'), pageTitle);

@@ -134,8 +134,20 @@ $dbApps = AppTable::getList(
 $arResult['NAV_OBJECT']->setRecordCount($dbApps->getCount());
 while ($app = $dbApps->Fetch())
 {
-
 	$arCodes[] = $app["CODE"];
+	$app['VER'] = $app['VER'] ?? 1;
+	$app['NAME'] = $app['NAME'] ?? $app['APP_NAME'] ?? $app['MENU_NAME'] ?? '';
+	$app['ICON'] = $app['ICON'] ?? '';
+	$app['DESC'] = $app['DESC'] ?? '';
+	$app['PUBLIC'] = $app['PUBLIC'] ?? '';
+	$app['DEMO'] = $app['DEMO'] ?? 'N';
+	$app['PARTNER_NAME'] = $app['PARTNER_NAME'] ?? '';
+	$app['PARTNER_URL'] = $app['PARTNER_URL'] ?? '';
+	$app['OTHER_REGION'] = $app['OTHER_REGION'] ?? 'N';
+	$app['VENDOR_SHOP_LINK'] = $app['VENDOR_SHOP_LINK'] ?? '';
+	$app['TYPE'] = $app['TYPE'] ?? '';
+	$app['CAN_INSTALL'] = 'N';
+
 	$app['APP_STATUS'] = AppTable::getAppStatusInfo($app, str_replace(
 		array("#app#"),
 		array(urlencode($app['CODE'])),
@@ -157,7 +169,6 @@ while ($app = $dbApps->Fetch())
 	$arResult["ITEMS"][$app["CODE"]] = $app;
 }
 
-
 if (!empty($arCodes))
 {
 	$arAppsBuy = Client::getBuy($arCodes);
@@ -178,20 +189,20 @@ if (!empty($arCodes))
 
 			$arResult['ITEMS'][$key]['VER'] = $app["VER"];
 			$arResult['ITEMS'][$key]['NAME'] = $app["NAME"];
-			$arResult['ITEMS'][$key]['ICON'] = $app["ICON"];
+			$arResult['ITEMS'][$key]['ICON'] = $app["ICON"] ?? '';
 			$arResult['ITEMS'][$key]['DESC'] = $app["DESC"];
 			$arResult['ITEMS'][$key]['PUBLIC'] = $app["PUBLIC"];
 			$arResult['ITEMS'][$key]['DEMO'] = $app["DEMO"];
-			$arResult['ITEMS'][$key]['PARTNER_NAME'] = $app["PARTNER_NAME"];
-			$arResult['ITEMS'][$key]['PARTNER_URL'] = $app["PARTNER_URL"];
-			$arResult['ITEMS'][$key]['OTHER_REGION'] = $app["OTHER_REGION"];
-			$arResult['ITEMS'][$key]['VENDOR_SHOP_LINK'] = $app["VENDOR_SHOP_LINK"];
+			$arResult['ITEMS'][$key]['PARTNER_NAME'] = $app["PARTNER_NAME"] ?? '';
+			$arResult['ITEMS'][$key]['PARTNER_URL'] = $app["PARTNER_URL"] ?? '';
+			$arResult['ITEMS'][$key]['OTHER_REGION'] = $app["OTHER_REGION"] ?? 'N';
+			$arResult['ITEMS'][$key]['VENDOR_SHOP_LINK'] = $app["VENDOR_SHOP_LINK"] ?? '';
 			$arResult['ITEMS'][$key]['TYPE'] = $app["TYPE"];
 			$arResult['ITEMS'][$key]['CAN_INSTALL'] = \CRestUtil::canInstallApplication($app);
 
 			if (
-				is_array($app["PRICE"])
-				&& !empty($app["PRICE"])
+				!empty($app["PRICE"])
+				&& is_array($app["PRICE"])
 				&& $arResult['ADMIN']
 				&& $app['BY_SUBSCRIPTION'] !== 'Y'
 			)

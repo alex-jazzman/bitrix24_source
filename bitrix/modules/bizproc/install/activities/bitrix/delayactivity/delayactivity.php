@@ -14,10 +14,6 @@ class CBPDelayActivity extends CBPActivity implements
 	IBPEventDrivenActivity
 {
 
-	const DEFAULT_SORT = 95;
-	const MAX_SORT = 150;
-	const MIN_SORT = 50;
-
 	private $subscriptionId = 0;
 	private $isInEventActivityMode = false;
 
@@ -31,13 +27,12 @@ class CBPDelayActivity extends CBPActivity implements
 			'TimeoutTime' => null,
 			'TimeoutTimeIsLocal' => 'N',
 			'WriteToLog' => 'N',
-			'Sort' => null,
 		];
 	}
 
 	public function cancel()
 	{
-		if (!$this->isInEventActivityMode && $this->subscriptionId > 0)
+		if (!$this->isInEventActivityMode)
 		{
 			$this->Unsubscribe($this);
 		}
@@ -71,9 +66,7 @@ class CBPDelayActivity extends CBPActivity implements
 		];
 
 		$timeoutDuration = $this->parseValue($delayIntervalProperties['TimeoutDuration']);
-		$timeoutDurationValue = 0;
 		$timeoutTime = $this->parseValue($delayIntervalProperties['TimeoutTime']);
-		$sort = $this->parseValue($delayIntervalProperties['Sort']);
 
 		if (is_array($timeoutTime)) //if multiple value
 		{
@@ -81,6 +74,7 @@ class CBPDelayActivity extends CBPActivity implements
 		}
 
 		$nowTime = time();
+		$timeoutDurationValue = 0;
 		if ($timeoutDuration != null)
 		{
 			$timeoutDurationValue = $this->CalculateTimeoutDuration();
@@ -90,6 +84,7 @@ class CBPDelayActivity extends CBPActivity implements
 		{
 			$timeoutTime = $this->timeoutTimeToTimestamp($timeoutTime, $delayIntervalProperties);
 			$expiresAt = $timeoutTime;
+			$timeoutDurationValue = $timeoutTime - $nowTime;
 		}
 		else
 		{
@@ -115,74 +110,39 @@ class CBPDelayActivity extends CBPActivity implements
 			return false;
 		}
 
-		if (!is_numeric($sort))
-		{
-			$sort = self::DEFAULT_SORT;
-		}
-
-		$schedulerService = $this->workflow->getService('SchedulerService');
-		$this->subscriptionId = $schedulerService->subscribeOnTime(
+		$schedulerService = $this->workflow->getSchedulerService();
+		$schedulerService->sendResumeWorkflowMessage(
 			$this->workflow->getInstanceId(),
 			$this->name,
-			$expiresAt,
-			$sort
-		)
-		;
-
-		if (!$this->subscriptionId)
-		{
-			throw new Exception(GetMessage('BPDA_SUBSCRIBE_ERROR_MSGVER_1'));
-		}
+			(int)$timeoutDurationValue
+		);
 
 		$this->workflow->addEventHandler($this->name, $eventHandler);
 
-		if ($timeoutDuration !== null)
-		{
-			$timeoutDurationValue = max($timeoutDurationValue, CBPSchedulerService::getDelayMinLimit());
-			$timestamp = $nowTime + $timeoutDurationValue;
+		$timestamp = CBPSchedulerService::calculateExpirationTime($expiresAt);
+		$period = $this->getConvertedForLogTimestamp($timestamp);
 
-			$period1 = trim(CBPHelper::formatTimePeriod($timeoutDurationValue));
-			$period2 = $this->getConvertedForLogTimestamp($timestamp);
-			$message = Loc::getMessage(
-				'BPDA_TRACK4',
+		$this->logMessage(
+			Loc::getMessage(
+				'BPDA_TRACK1',
 				[
-					'#PERIOD1#' => $period1,
-					'#PERIOD2#' => $period2,
+					'#PERIOD#' => $period
 				]
-			);
-			if (!empty($message))
-			{
-				$this->logMessage($message);
-			}
-		}
-		elseif ($timeoutTime != null)
-		{
-			$timestamp = max($timeoutTime, $nowTime + CBPSchedulerService::getDelayMinLimit());
-			$period = $this->getConvertedForLogTimestamp($timestamp);
-
-			$this->logMessage(
-				Loc::getMessage(
-					'BPDA_TRACK1',
-					[
-						'#PERIOD#' => $period
-					]
-				)
-			);
-		}
-		else
-		{
-			$this->logMessage(GetMessage('BPDA_TRACK2'));
-		}
+			)
+		);
 
 		return true;
 	}
 
 	public function Unsubscribe(IBPActivityExternalEventListener $eventHandler)
 	{
-		$schedulerService = $this->workflow->getService('SchedulerService');
-		$schedulerService->unSubscribeOnTime($this->subscriptionId);
+		if ($this->subscriptionId > 0) {
+			$schedulerService = $this->workflow->getService('SchedulerService');
+			$schedulerService->unSubscribeOnTime($this->subscriptionId);
+			$this->subscriptionId = 0;
+		}
+
 		$this->workflow->removeEventHandler($this->name, $eventHandler);
-		$this->subscriptionId = 0;
 	}
 
 	public function OnExternalEvent($arEventParameters = [])
@@ -219,21 +179,6 @@ class CBPDelayActivity extends CBPActivity implements
 				'code' => 'NotExist',
 				'parameter' => 'TimeoutDuration',
 				'message' => GetMessage('BPDA_EMPTY_PROP')
-			];
-		}
-
-		if (
-			!empty($arTestProperties['Sort'])
-			&& ($arTestProperties['Sort'] < self::MIN_SORT || $arTestProperties['Sort'] > self::MAX_SORT)
-		)
-		{
-			$errors[] = [
-				'code' => 'NotExist',
-				'parameter' => 'Sort',
-				'message' => GetMessage('BPDA_PROP_SORT_VALIDATION_ERROR', [
-					'#MIN_SORT#' => self::MIN_SORT,
-					'#MAX_SORT#' => self::MAX_SORT,
-				]),
 			];
 		}
 
@@ -307,7 +252,7 @@ class CBPDelayActivity extends CBPActivity implements
 			$this->needWriteToLog()
 				? sprintf('[timestamp=%u]%s[/timestamp]', $timestamp, $convertedFullTimestamp)
 				: sprintf('%s (%s)', $convertedFullTimestamp, date('P', $timestamp))
-		;
+			;
 	}
 
 	public static function GetPropertiesDialog(
@@ -337,9 +282,6 @@ class CBPDelayActivity extends CBPActivity implements
 				}
 				$arCurrentValues['delay_date_is_local'] = $arCurrentActivity['Properties']['TimeoutTimeIsLocal'] ?? 'N';
 				$arCurrentValues['delay_write_to_log'] = $arCurrentActivity['Properties']['WriteToLog'] ?? 'N';
-
-				$sort = $arCurrentActivity['Properties']['Sort'] ?? self::DEFAULT_SORT;
-				$arCurrentValues['Sort'] = !empty($sort) ? $sort : self::DEFAULT_SORT;
 			}
 
 			if (
@@ -392,11 +334,6 @@ class CBPDelayActivity extends CBPActivity implements
 		if (!is_array($arCurrentValues) || !array_key_exists('delay_write_to_log', $arCurrentValues))
 		{
 			$arCurrentValues['delay_write_to_log'] = 'N';
-		}
-
-		if (!is_array($arCurrentValues) || !array_key_exists('Sort', $arCurrentValues))
-		{
-			$arCurrentValues['Sort'] = self::DEFAULT_SORT;
 		}
 
 		return new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
@@ -453,7 +390,6 @@ class CBPDelayActivity extends CBPActivity implements
 		}
 
 		$properties['WriteToLog'] = CBPHelper::getBool($arCurrentValues['delay_write_to_log'] ?? null) ? 'Y' : 'N';
-		$properties['Sort'] = $arCurrentValues['Sort'] ?? self::DEFAULT_SORT;
 
 		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
 		$errors = self::validateProperties($properties, $user);

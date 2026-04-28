@@ -14,6 +14,7 @@ import { FieldsSettingsStep } from '../steps/fields-settings';
 import { FileStep } from '../steps/file';
 import { ImportPreview } from '../steps/import-preview';
 import { BaseApp } from './base-app';
+import { RelatedExternalDatasetsStep } from '../steps/related-external-datasets';
 import { ajax as Ajax, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
@@ -35,6 +36,10 @@ export const CsvApp = {
 					disabled: !this.$store.getters.isEditMode,
 					valid: true,
 				},
+				externalDatasets: {
+					disabled: !this.$store.getters.isEditMode,
+					valid: true,
+				}
 			},
 			shownPopups: {
 				savingProgress: false,
@@ -56,6 +61,7 @@ export const CsvApp = {
 			lastReloadSource: null,
 			initialPreviewData: {},
 			initialFieldsSettings: [],
+			initialDataFormats: {},
 			previewError: '',
 			isEditModeSaveConfirmed: false,
 			isDataLoadingAnimationDisplayed: false,
@@ -102,13 +108,13 @@ export const CsvApp = {
 		},
 		importFailurePopupTitle()
 		{
-			return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER');
+			return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_EDIT_MSGVER_1') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_MSGVER_1');
 		},
 		importSuccessPopupTitle()
 		{
 			return this.isEditMode
-				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_EDIT').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title)
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title);
+				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_EDIT_MSGVER_1').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title)
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_MSGVER_1').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title);
 		},
 		importSuccessPopupDescription()
 		{
@@ -120,14 +126,35 @@ export const CsvApp = {
 		{
 			return this.isEditMode
 				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_EDIT')
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION');
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_MSGVER_1');
 		},
 		sourceType(): string
 		{
 			return 'csv';
 		},
+		propertiesIsOpenInitially(): boolean
+		{
+			return this.getSectionConfig('properties', 'isOpenInitially');
+		},
+		fieldsIsOpenInitially(): boolean
+		{
+			return this.getSectionConfig('fields', 'isOpenInitially');
+		},
+		externalDatasetsIsOpenInitially(): boolean
+		{
+			return this.getSectionConfig('externalDatasets', 'isOpenInitially');
+		},
 	},
 	methods: {
+		cloneConfigValue(value)
+		{
+			if (value === null || value === undefined)
+			{
+				return value;
+			}
+
+			return JSON.parse(JSON.stringify(value));
+		},
 		markAsChanged()
 		{
 			this.isChanged = true;
@@ -187,8 +214,9 @@ export const CsvApp = {
 			}
 			else if (this.isEditMode)
 			{
-				this.$store.commit('setPreviewData', this.initialPreviewData);
-				this.$store.commit('setFieldsSettings', this.initialFieldsSettings);
+				this.$store.commit('setPreviewData', this.cloneConfigValue(this.initialPreviewData));
+				this.$store.commit('setFieldsSettings', this.cloneConfigValue(this.initialFieldsSettings));
+				this.$store.commit('setDataFormats', this.cloneConfigValue(this.initialDataFormats));
 			}
 			else
 			{
@@ -236,8 +264,21 @@ export const CsvApp = {
 			this.stopPreviewLoadingAnimation();
 			this.processLoadResponse(response);
 
-			this.$refs.propertiesStep.open();
-			this.$refs.fieldsStep.open();
+			if (this.getSectionConfig('properties', 'isOpenOnLoadData'))
+			{
+				this.$refs.propertiesStep.open();
+			}
+
+			if (this.getSectionConfig('fields', 'isOpenOnLoadData'))
+			{
+				this.$refs.fieldsStep.open();
+			}
+
+			if (this.getSectionConfig('externalDatasets', 'isOpenOnLoadData'))
+			{
+				this.$refs.externalDatasetsStep.open();
+			}
+
 			this.toggleStepState('properties', false);
 			this.toggleStepState('fields', false);
 			this.$refs.fieldsStep.validate();
@@ -473,8 +514,9 @@ export const CsvApp = {
 	{
 		if (this.isEditMode)
 		{
-			this.initialPreviewData = this.$store.state.previewData.rows;
-			this.initialFieldsSettings = this.$store.state.config.fieldsSettings;
+			this.initialPreviewData = this.cloneConfigValue(this.$store.state.previewData.rows);
+			this.initialFieldsSettings = this.cloneConfigValue(this.$store.state.config.fieldsSettings);
+			this.initialDataFormats = this.cloneConfigValue(this.$store.state.config.dataFormats);
 		}
 
 		EventEmitter.subscribe('biconnector:dataset-import:onCheckFileClick', this.onCheckFileClick);
@@ -496,6 +538,7 @@ export const CsvApp = {
 		FileStep,
 		DatasetPropertiesStep,
 		FieldsSettingsStep,
+		RelatedExternalDatasetsStep,
 		ImportProgressPopup,
 		ImportSuccessPopup,
 		ImportFailurePopup,
@@ -521,7 +564,7 @@ export const CsvApp = {
 						@parsing-options-changed="onDatasetReloadNeeded('fields')"
 					/>
 					<DatasetPropertiesStep
-						:is-open-initially="isEditMode"
+						:is-open-initially="isEditMode && propertiesIsOpenInitially"
 						:disabled="steps.properties.disabled"
 						:reserved-names="appParams.reservedNames"
 						:name-max-length=30
@@ -531,7 +574,7 @@ export const CsvApp = {
 						:dataset-source-code="sourceCode"
 					/>
 					<FieldsSettingsStep
-						:is-open-initially="isEditMode"
+						:is-open-initially="isEditMode && fieldsIsOpenInitially"
 						:disabled="steps.fields.disabled"
 						:source-type="sourceType"
 						ref="fieldsStep"
@@ -539,12 +582,19 @@ export const CsvApp = {
 						@parsing-options-changed="onDatasetReloadNeeded('fields')"
 						@settings-changed="onFieldsSettingsChanged"
 					/>
+					<RelatedExternalDatasetsStep
+						:is-open-initially="isEditMode && externalDatasetsIsOpenInitially"
+						:disabled="steps.externalDatasets.disabled"
+						:is-superset-ready="appParams.isSupersetReady"
+						ref="externalDatasetsStep"
+					/>
 				</ImportConfig>
 			</template>
 			<template v-slot:right-panel>
-				<ImportPreview 
+				<ImportPreview
 					:error="previewError"
 					:is-loading="isDataLoadingAnimationDisplayed || !hasMinimalLoadingAnimationTimePassed"
+					:source-type="sourceType"
 				/>
 			</template>
 		</AppLayout>
@@ -563,6 +613,7 @@ export const CsvApp = {
 			:description="importSuccessPopupDescription"
 			:dataset-id="popupParams.savingSuccess.datasetId"
 			:show-more-button="!isEditMode"
+			:show-open-dataset-button="appParams.isSupersetReady"
 		/>
 
 		<ImportFailurePopup
@@ -579,7 +630,7 @@ export const CsvApp = {
 			@close="togglePopup('editModeFileReplacement', false)"
 		>
 			<template v-slot:content>
-				{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_REPLACEMENT_TEXT') }}
+				{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_REPLACEMENT_TEXT_MSGVER_1') }}
 			</template>
 			<template v-slot:buttons>
 				<button @click="onReplacementButtonClick" class="ui-btn ui-btn-md ui-btn-primary">{{

@@ -16,6 +16,7 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 	const { Reasoning } = require('im/messenger/lib/reasoning');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { ChatService } = require('im/messenger/provider/services/chat');
 
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('dialog--assistant-button-manager');
@@ -218,8 +219,8 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 				const MCPButtonIntegrated = {
 					...MCPButton,
 					design: AssistantButtonDesign.primary,
-					text: selectedServer.name,
-					imageUrl: withCurrentDomain(selectedServer.iconUrl),
+					text: selectedAuth.name,
+					imageUrl: withCurrentDomain(selectedAuth.iconUrl),
 					iconName: null,
 				};
 
@@ -228,12 +229,13 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 				 */
 				const aiAssistantMCPModel = {
 					selectedAuthId: selectedAuth.id,
-					name: selectedServer.name,
-					iconUrl: selectedServer.iconUrl,
+					name: selectedAuth.name,
+					iconUrl: selectedAuth.iconUrl,
 				};
 
 				await this.store.dispatch('dialoguesModel/aiAssistantModel/setMCP', aiAssistantMCPModel);
 				await this.updateAssistantButton(MCPButton.id, MCPButtonIntegrated);
+				void this.#sendSelectionHint(selectedAuth.id);
 
 				return;
 			}
@@ -241,6 +243,14 @@ jn.define('im/messenger/controller/dialog/lib/assistant-button-manager', (requir
 			await this.store.dispatch('dialoguesModel/aiAssistantModel/resetMCP');
 			await this.updateAssistantButton(MCPButton.id, MCPButton);
 		};
+
+		/**
+		 * @param {MCPAuth['id']} selectedAuthId
+		 */
+		async #sendSelectionHint(selectedAuthId)
+		{
+			await new ChatService().botService.sendAiAssistantMCPSelection(selectedAuthId);
+		}
 	}
 
 	module.exports = { AssistantButtonManager };

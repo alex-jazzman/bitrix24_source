@@ -57,6 +57,18 @@ jn.define('mail/statemanager/redux/slices/folders/selector', (require, exports, 
 		return allFolders.filter((folder) => folder.type === 'custom');
 	};
 
+	const selectRootCustomFolders = (state, getHiddenFolders = false) => {
+		const allFolders = selectAll(state, getHiddenFolders);
+
+		return allFolders.filter((folder) => folder.type === 'custom' && folder.parentId === null);
+	};
+
+	const selectChildrenByFolderId = (state, folderId, getHiddenFolders = false) => {
+		const allFolders = selectAll(state, getHiddenFolders);
+
+		return allFolders.filter((folder) => folder.parentId === folderId);
+	};
+
 	const selectFoldersByType = (state, type, getHiddenFolders = false) => {
 		const allFolders = selectAll(state, getHiddenFolders);
 
@@ -104,6 +116,8 @@ jn.define('mail/statemanager/redux/slices/folders/selector', (require, exports, 
 		selectCurrentFolder,
 		selectSystemFolders,
 		selectCustomFolders,
+		selectRootCustomFolders,
+		selectChildrenByFolderId,
 		selectFoldersByType,
 		selectDefaultFolderByType,
 		selectCurrentFolderCounter,

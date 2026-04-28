@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule('bizproc');
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/prolog.php");
@@ -65,15 +66,30 @@ $arFilterFields = array(
 
 $lAdmin->InitFilter($arFilterFields);
 
+$filterName = (string)($_REQUEST['filter_name'] ?? '');
+$filterAutoexecute = (string)($_REQUEST['filter_autoexecute'] ?? '');
+
+$sortBy = (string)($_REQUEST['by'] ?? 'ID');
+$sortOrder = strtoupper((string)($_REQUEST['order'] ?? 'DESC'));
+if ($sortOrder !== 'ASC' && $sortOrder !== 'DESC')
+{
+	$sortOrder = 'DESC';
+}
+
+$requestAction = (string)($_REQUEST['action'] ?? '');
+$requestActionTarget = (string)($_REQUEST['action_target'] ?? '');
+$backUrlRequest = (string)($_REQUEST['back_url'] ?? '');
+$fieldsRequest = (isset($_REQUEST['FIELDS']) && is_array($_REQUEST['FIELDS'])) ? $_REQUEST['FIELDS'] : array();
+
 $arFilter = array("DOCUMENT_TYPE" => $documentType);
-if ($filter_name <> '')
-	$arFilter["~NAME"] = "%".$filter_name."%";
-if (intval($filter_autoexecute) > 0)
-	$arFilter["AUTO_EXECUTE"] = intval($filter_autoexecute);
+if ($filterName <> '')
+	$arFilter["~NAME"] = "%".$filterName."%";
+if (intval($filterAutoexecute) > 0)
+	$arFilter["AUTO_EXECUTE"] = intval($filterAutoexecute);
 
 if($lAdmin->EditAction())
 {
-	foreach($FIELDS as $ID=>$arFields)
+	foreach($fieldsRequest as $ID=>$arFields)
 	{
 		$ID = intval($ID);
 
@@ -93,7 +109,7 @@ if($lAdmin->EditAction())
 
 if ($arID = $lAdmin->GroupAction())
 {
-	if ($_REQUEST['action_target'] == 'selected')
+	if ($requestActionTarget === 'selected')
 	{
 		$arID = Array();
 		$dbResultList = CBPWorkflowTemplateLoader::GetList(
@@ -112,7 +128,7 @@ if ($arID = $lAdmin->GroupAction())
 		if ($ID == '')
 			continue;
 
-		switch ($_REQUEST['action'])
+		switch ($requestAction)
 		{
 			case "delete":
 				$arErrorsTmp = array();
@@ -125,15 +141,15 @@ if ($arID = $lAdmin->GroupAction())
 				break;
 		}
 	}
-	if (empty($lAdmin->arGroupErrors) && !empty($_REQUEST["back_url"]))
+	if (empty($lAdmin->arGroupErrors) && $backUrlRequest !== '')
 	{
-		LocalRedirect($_REQUEST["back_url"]);
+		LocalRedirect($backUrlRequest);
 	}
 }
 
 
 $dbResultList = CBPWorkflowTemplateLoader::GetList(
-	array($by => $order),
+	[$sortBy => $sortOrder],
 	$arFilter,
 	false,
 	false,
@@ -273,11 +289,11 @@ $lAdmin->CheckListMode();
 $APPLICATION->SetTitle(GetMessage("BPATT_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 ?>
-<form name="find_form" method="GET" action="<?echo $APPLICATION->GetCurPage()?>?">
+<form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage()?>?">
 	<input type="hidden" name="document_type" value="<?= htmlspecialcharsbx($documentType[2]) ?>">
 	<input type="hidden" name="back_url_list" value="<?= htmlspecialcharsbx($backUrl) ?>">
 
-<?
+<?php
 $oFilter = new CAdminFilter(
 	$sTableID."_filter",
 	array(
@@ -290,19 +306,19 @@ $oFilter->Begin();
 ?>
 	<tr>
 		<td><?= GetMessage("BPATT_F_NAME") ?>:</td>
-		<td><input type="text" name="filter_name" value="<?echo htmlspecialcharsex($filter_name)?>" size="47"></td>
+		<td><input type="text" name="filter_name" value="<?= htmlspecialcharsex($filterName)?>" size="47"></td>
 	</tr>
 	<tr>
 		<td><?= GetMessage("BPATT_F_AUTOEXECUTE") ?>:</td>
 		<td><select name="filter_autoexecute">
 				<option value="">(<?= GetMessage("BPATT_ANY") ?>)</option>
-				<option value="<?= CBPDocumentEventType::Create ?>"<?= ($filter_autoexecute == CBPDocumentEventType::Create ? " selected" : "") ?>><?= GetMessage("BPATT_F_CREATE") ?></option>
-				<option value="<?= CBPDocumentEventType::Edit ?>"<?= ($filter_autoexecute == CBPDocumentEventType::Edit ? " selected" : "") ?>><?= GetMessage("BPATT_F_EDIT") ?></option>
+				<option value="<?= CBPDocumentEventType::Create ?>"<?= ($filterAutoexecute == CBPDocumentEventType::Create ? " selected" : "") ?>><?= GetMessage("BPATT_F_CREATE") ?></option>
+				<option value="<?= CBPDocumentEventType::Edit ?>"<?= ($filterAutoexecute == CBPDocumentEventType::Edit ? " selected" : "") ?>><?= GetMessage("BPATT_F_EDIT") ?></option>
 			</select>
 		</td>
 	</tr>
 
-<?
+<?php
 $oFilter->Buttons(
 	array(
 		"table_id" => $sTableID,
@@ -314,10 +330,6 @@ $oFilter->End();
 ?>
 </form>
 
-<?
+<?php
 $lAdmin->DisplayList();
-?>
-
-<?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
-?>

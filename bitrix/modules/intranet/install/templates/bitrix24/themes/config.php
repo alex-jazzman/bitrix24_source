@@ -176,6 +176,17 @@ return [
 			"resizable" => true,
 		],
 
+		"light:pancakes-kitties" => [
+			"title" => Loc::getMessage("BITRIX24_THEME_PANCAKES_KITTIES"),
+			"prefetchImages" => ["pancakes-kitties.jpg", "pancakes-kitties-blurred.webp"],
+			"previewImage" => "pancakes-kitties-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"zones" => ["ru", "by"],
+			"new" => time() < strtotime('10 March 2026'),
+		],
+
 		"light:pancakes-cat" => [
 			"title" => Loc::getMessage("BITRIX24_THEME_PANCAKES_CAT"),
 			"prefetchImages" => ["pancakes-cat.jpg", "pancakes-cat-blurred.webp"],

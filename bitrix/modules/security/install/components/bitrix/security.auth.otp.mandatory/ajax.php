@@ -72,6 +72,7 @@ switch($request->getPost('action'))
 				'SECRET' => $_POST['secret'],
 				'SYNC1' => $_POST['sync1'],
 				'SYNC2' => $_POST['sync2'],
+				'TYPE' => $_POST['type'],
 				'INIT_PARAMS' => [],
 			);
 
@@ -110,8 +111,9 @@ function checkAndActivate($fields)
 
 		$otp = Otp::getByUser($deferredParams['USER_ID']);
 		$binarySecret = pack('H*', $fields['SECRET']);
+		$type = OtpType::tryFrom($fields['TYPE']) ?: $otp->getType();
 		$otp
-			->regenerate($binarySecret)
+			->regenerate($binarySecret, $type)
 			->setInitParams($fields['INIT_PARAMS'])
 			->syncParameters($fields['SYNC1'], $fields['SYNC2'])
 			->save()

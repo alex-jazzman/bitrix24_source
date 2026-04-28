@@ -23,7 +23,7 @@ export const FieldsSettingsStep = {
 		},
 		defaultTitle()
 		{
-			return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HEADER');
+			return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HEADER_MSGVER_1');
 		},
 		defaultHint()
 		{
@@ -35,7 +35,7 @@ export const FieldsSettingsStep = {
 				;
 			}
 
-			return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT')
+			return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_MSGVER_1')
 				.replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378698`)">')
 				.replace('[/link]', '</a>')
 			;
@@ -116,7 +116,7 @@ export const FieldsSettingsStep = {
 			{
 				return {
 					result: false,
-					message: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_VALIDATION_FIELD_ALREADY_USED'),
+					message: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_VALIDATION_FIELD_ALREADY_USED_MSGVER_1'),
 				};
 			}
 

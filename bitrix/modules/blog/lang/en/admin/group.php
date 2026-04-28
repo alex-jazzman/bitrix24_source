@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLG_ERROR_UPDATE"] = "Error updating group parameters";
 $MESS["BLG_UPDATE_ALT"] = "Edit group parameters";
 $MESS["BLG_DELETE_ALT"] = "Delete group";
@@ -15,4 +15,3 @@ $MESS["BLG_SPT_ALL"] = "[all]";
 $MESS["MAIN_ADMIN_LIST_SELECTED"] = "Selected:";
 $MESS["MAIN_ADMIN_LIST_CHECKED"] = "Checked:";
 $MESS["MAIN_ADMIN_LIST_DELETE"] = "delete";
-?>

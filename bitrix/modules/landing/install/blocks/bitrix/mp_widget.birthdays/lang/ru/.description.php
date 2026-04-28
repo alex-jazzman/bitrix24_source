@@ -1,2 +1,2 @@
 <?php
-$MESS['LANDING_BLOCK_WIDGET_BIRTHDAYS_NAME'] = 'Дни рождения: профессиональный вайб';
+$MESS['LANDING_BLOCK_WIDGET_BIRTHDAYS_NAME_NEW'] = 'Дни рождения: профессиональный шаблон';

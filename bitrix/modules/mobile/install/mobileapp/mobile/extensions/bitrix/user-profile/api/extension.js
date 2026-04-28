@@ -3,15 +3,13 @@
  */
 jn.define('user-profile/api', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
-	const { TabType } = require('user-profile/const');
-	const { ajaxPublicErrorHandler } = require('error');
 	const { guid } = require('utils/guid');
 
-	const cacheTtl = 86400;
+	const cacheTtlOneWeek = 604_800;
 	const sharedStorageKey = 'user-profile';
 	const appSessionKey = 'appSessionId';
 
-	const getCacheId = (ownerId, selectedTabId) => {
+	const getTabsDataCacheId = (ownerId, selectedTabId) => {
 		return `user-profile-tabs-${env.userId}-${ownerId}-${selectedTabId}-${getAppSessionId()}`;
 	};
 
@@ -31,53 +29,50 @@ jn.define('user-profile/api', (require, exports, module) => {
 	const fetchTabs = ({
 		ownerId,
 		selectedTabId,
+		handler,
+		cacheHandler,
 	}) => {
-		return new Promise((resolve, reject) => {
-			getTabsRunActionExecutor(ownerId, selectedTabId)
-				.enableJson()
-				.setHandler(resolve)
-				.call(false)
-				.catch(ajaxPublicErrorHandler(reject));
-		});
+		getTabsDataRunActionExecutor({
+			ownerId,
+			selectedTabId,
+		})
+			.enableJson()
+			.setHandler(handler)
+			.setCacheHandler(cacheHandler)
+			.call(true)
+			.catch(console.error);
 	};
 
-	const getTabsRunActionExecutor = (ownerId, selectedTabId = TabType.COMMON) => {
-		const cacheId = getCacheId(ownerId, selectedTabId);
-
+	const createTabsDataExecutor = ({
+		ownerId,
+		selectedTabId,
+	}) => {
 		return new RunActionExecutor(
 			'mobile.Profile.getTabs',
 			{
 				ownerId,
 				selectedTabId,
 			},
-		)
+		);
+	};
+
+	const getTabsDataRunActionExecutor = ({
+		ownerId,
+		selectedTabId,
+	}) => {
+		const cacheId = getTabsDataCacheId(ownerId, selectedTabId);
+
+		return createTabsDataExecutor({ ownerId, selectedTabId })
 			.setCacheId(cacheId)
-			.setCacheTtl(cacheTtl)
+			.setCacheTtl(cacheTtlOneWeek)
 		;
 	};
 
-	const fetchNewProfileFeatureEnabled = () => {
-		return new Promise((resolve, reject) => {
-			const handler = (response) => {
-				if (response.status === 'success')
-				{
-					resolve(response.data);
-
-					return;
-				}
-
-				resolve(false);
-			};
-
-			new RunActionExecutor(
-				'mobile.Profile.isNewProfileFeatureEnabled',
-				{},
-			)
-				.enableJson()
-				.setHandler(handler)
-				.call(true)
-				.catch(ajaxPublicErrorHandler(reject));
-		});
+	const getTabsDataRunActionExecutorNoCache = ({
+		ownerId,
+		selectedTabId,
+	}) => {
+		return createTabsDataExecutor({ ownerId, selectedTabId });
 	};
 
 	const getChatId = (userId) => {
@@ -102,8 +97,8 @@ jn.define('user-profile/api', (require, exports, module) => {
 
 	module.exports = {
 		fetchTabs,
-		getTabsRunActionExecutor,
-		fetchNewProfileFeatureEnabled,
+		getTabsDataRunActionExecutor,
+		getTabsDataRunActionExecutorNoCache,
 		getChatId,
 	};
 });

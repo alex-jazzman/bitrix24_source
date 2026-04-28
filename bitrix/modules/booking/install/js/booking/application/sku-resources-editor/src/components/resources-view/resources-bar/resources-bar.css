@@ -16,7 +16,7 @@
 	font-size: var(--ui-font-size-sm);
 	font-weight: var(--ui-font-weight-normal);
 	line-height: var( --ui-typography-heading-h3-line-height);
-	letter-spacing: -0.05px;
+	letter-spacing: var(--ui-letter-spacing-l);
 	flex-grow: 1;
 }
 

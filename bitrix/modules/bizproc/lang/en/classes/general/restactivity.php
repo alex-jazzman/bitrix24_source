@@ -1,4 +1,5 @@
 <?php
+
 $MESS["BPRA_DEBUG_EVENT"] = "Application response wait skipped due to test mode event";
 $MESS["BPRA_DEFAULT_LOG_MESSAGE"] = "Received application response";
 $MESS["BPRA_DEFAULT_STATUS_MESSAGE"] = "Waiting for application response";
@@ -10,7 +11,6 @@ $MESS["BPRA_PD_SET_STATUS_MESSAGE"] = "Set status message";
 $MESS["BPRA_PD_STATUS_MESSAGE"] = "Status text";
 $MESS["BPRA_PD_TIMEOUT_DURATION"] = "Timeout";
 $MESS["BPRA_PD_TIMEOUT_DURATION_HINT"] = "Time to wait for application response";
-$MESS["BPRA_PD_TIMEOUT_LIMIT"] = "Minimum wait time";
 $MESS["BPRA_PD_TIME_D"] = "days";
 $MESS["BPRA_PD_TIME_H"] = "hours";
 $MESS["BPRA_PD_TIME_M"] = "minutes";

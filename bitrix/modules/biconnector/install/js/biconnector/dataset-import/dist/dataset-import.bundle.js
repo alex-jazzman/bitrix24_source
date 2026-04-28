@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.BIConnector = this.BX.BIConnector || {};
-(function (exports,biconnector_datasetImport_fileExport,ui_pinner,ui_section,ui_alerts,ui_hint,ui_sidepanel_layout,ui_iconSet_crm,ui_switcher,ui_uploader_stackWidget,main_loader,ui_ears,main_popup,ui_analytics,ui_buttons,ui_vue3,ui_entitySelector,ui_iconSet_api_vue,ui_vue3_directives_hint,main_core_events,ui_vue3_vuex,main_core,ui_sidepanel) {
+(function (exports,biconnector_datasetImport_fileExport,ui_pinner,ui_section,ui_alerts,ui_hint,ui_sidepanel_layout,ui_iconSet_crm,ui_switcher,ui_uploader_stackWidget,main_loader,ui_ears,ui_analytics,ui_buttons,main_popup,ui_vue3,ui_entitySelector,ui_iconSet_api_vue,ui_vue3_directives_hint,main_core_events,ui_vue3_vuex,main_core,ui_sidepanel) {
 	'use strict';
 
 	const AppLayout = {
@@ -186,20 +186,20 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      if (this.errors.length <= 200) {
 	        return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_TITLE');
 	      }
-	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_TITLE_STOPPED_UPDATING') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_TITLE_STOPPED_CREATING');
+	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_TITLE_STOPPED_UPDATING_MSGVER_1') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_TITLE_STOPPED_CREATING_MSGVER_1');
 	    },
 	    hintContent() {
 	      if (this.errors.length > 200) {
 	        if (this.isEditMode) {
-	          return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_UPDATING_MANY_ERRORS');
+	          return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_UPDATING_MANY_ERRORS_MSGVER_1');
 	        }
-	        return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_CREATION_MANY_ERRORS');
+	        return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_CREATION_MANY_ERRORS_MSGVER_1');
 	      }
 	      if (this.isSavingMode) {
 	        if (this.isEditMode) {
-	          return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_UPDATING');
+	          return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_UPDATING_MSGVER_1');
 	        }
-	        return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_CREATION');
+	        return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_CREATION_MSGVER_1');
 	      }
 	      return this.prepareHintContent('DATASET_IMPORT_CSV_ERROR_POPUP_HINT_CHECKING');
 	    },
@@ -241,7 +241,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      var _this$$store$state$co;
 	      const link = document.createElement('a');
 	      link.href = this.reportDownloadLink;
-	      link.download = `${(_this$$store$state$co = this.$store.state.config.datasetProperties.name) != null ? _this$$store$state$co : 'csv_dataset'}_errors.html`;
+	      link.download = `${(_this$$store$state$co = this.$store.state.config.datasetProperties.name) != null ? _this$$store$state$co : 'csv_table'}_errors.html`;
 	      main_core.Dom.append(link, document.body);
 	      link.click();
 	      main_core.Dom.remove(link);
@@ -335,10 +335,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 					</template>
 					<template v-else>
 						<button v-if="isEditMode" @click="this.onClose" class="ui-btn ui-btn-md ui-btn-primary">
-							{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_BUTTON_STOP_UPDATE') }}
+							{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_BUTTON_STOP_UPDATE_MSGVER_1') }}
 						</button>
 						<button v-else @click="this.onClose" class="ui-btn ui-btn-md ui-btn-primary">
-							{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_BUTTON_STOP') }}
+							{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_CSV_ERROR_POPUP_BUTTON_STOP_MSGVER_1') }}
 						</button>
 
 						<button @click="this.onIgnoreErrorsClick" class="ui-btn ui-btn-md ui-btn-light-border">
@@ -677,13 +677,18 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      type: Boolean,
 	      required: false,
 	      default: false
+	    },
+	    showOpenDatasetButton: {
+	      type: Boolean,
+	      required: false,
+	      default: true
 	    }
 	  },
 	  computed: {},
 	  methods: {
 	    onButtonClick() {
 	      main_core.Dom.addClass(this.$refs.openDatasetButton, 'ui-btn-wait');
-	      main_core.ajax.runAction('biconnector.externalsource.dataset.getEditUrl', {
+	      main_core.ajax.runAction('biconnector.externalsource.dataset.getCreateUrl', {
 	        data: {
 	          id: this.datasetId
 	        }
@@ -717,8 +722,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 				<div class="biconnector-save-progress-popup__success-logo"></div>
 			</template>
 			<template v-slot:buttons>
-				<a class="ui-btn ui-btn-md ui-btn-primary" @click="onButtonClick" ref="openDatasetButton">
-					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_BUTTON_MSGVER_1') }}
+				<a v-if="showOpenDatasetButton" class="ui-btn ui-btn-md ui-btn-primary" @click="onButtonClick" ref="openDatasetButton">
+					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_BUTTON_MSGVER_2') }}
 				</a>
 				<a class="ui-btn ui-btn-md ui-btn-light-border" @click="onOneMoreButtonClick" ref="oneMoreButton" v-if="showMoreButton">
 					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_ONE_MORE_BUTTON') }}
@@ -797,11 +802,6 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      };
 	    }
 	  },
-	  methods: {
-	    toggleCollapse(open) {
-	      this.section.toggle(open);
-	    }
-	  },
 	  mounted() {
 	    const contentContainer = this.$refs.contentContainer;
 	    const section = new ui_section.Section({
@@ -812,14 +812,61 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    section.append(this.$refs.content);
 	    section.renderTo(contentContainer);
 	    this.section = section;
+	    this.$nextTick(() => {
+	      this.updateHeaderRightContent();
+	    });
+	  },
+	  methods: {
+	    toggleCollapse(open) {
+	      this.section.toggle(open);
+	    },
+	    updateHeaderRightContent() {
+	      var _this$section$getCont;
+	      if (!this.section) {
+	        return;
+	      }
+	      const headerElement = (_this$section$getCont = this.section.getContent()) == null ? void 0 : _this$section$getCont.querySelector('.ui-section__header');
+	      if (!headerElement) {
+	        return;
+	      }
+	      const headerRightSlot = this.$refs.headerRightSlot;
+	      const existingRightContent = headerElement.querySelector('.step-block__header-right');
+	      if (headerRightSlot && headerRightSlot.children.length > 0) {
+	        // Create or find the container for the right content
+	        let rightContentContainer = existingRightContent;
+	        if (!rightContentContainer) {
+	          rightContentContainer = document.createElement('div');
+	          rightContentContainer.className = 'step-block__header-right';
+	          headerElement.appendChild(rightContentContainer);
+	        }
+	        rightContentContainer.innerHTML = '';
+	        while (headerRightSlot.firstChild) {
+	          rightContentContainer.appendChild(headerRightSlot.firstChild);
+	        }
+	      } else if (existingRightContent) {
+	        // If there is no slot, remove the container
+	        existingRightContent.remove();
+	      }
+	    }
 	  },
 	  watch: {
 	    title(newValue) {
 	      if (!this.section) {
 	        return;
 	      }
-	      this.section.getContent().querySelector('.ui-section__title').innerHTML = main_core.Text.encode(newValue);
+	      const titleElement = this.section.getContent().querySelector('.ui-section__title');
+	      if (titleElement) {
+	        titleElement.innerHTML = main_core.Text.encode(newValue);
+	        this.$nextTick(() => {
+	          this.updateHeaderRightContent();
+	        });
+	      }
 	    }
+	  },
+	  updated() {
+	    this.$nextTick(() => {
+	      this.updateHeaderRightContent();
+	    });
 	  },
 	  components: {
 	    StepHint
@@ -833,6 +880,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 				<span v-html="hint"></span>
 			</StepHint>
 			<slot></slot>
+		</div>
+		<div ref="headerRightSlot">
+			<slot name="headerRightContent"></slot>
 		</div>
 	`
 	};
@@ -1150,7 +1200,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 				:defaultValue="defaultName"
 				@value-change="onValueChange"
 				:title="this.$Bitrix.Loc.getMessage('DATASET_IMPORT_DATASET_PROPERTIES_CODE')"
-				:placeholder="this.$Bitrix.Loc.getMessage('DATASET_IMPORT_DATASET_PROPERTIES_CODE_PLACEHOLDER', { '#CODE#': this.datasetSourceCode })"
+				:placeholder="this.$Bitrix.Loc.getMessage('DATASET_IMPORT_DATASET_PROPERTIES_CODE_PLACEHOLDER_MSGVER_1', { '#CODE#': this.datasetSourceCode })"
 				:is-valid="unvalidatedFields.name?.result ?? true"
 				:is-disabled="disabledFields.name ?? false"
 				:error-message="unvalidatedFields.name?.message ?? ''"
@@ -1189,13 +1239,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.$store.state.config.datasetProperties;
 	    },
 	    defaultTitle() {
-	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROPERTIES_HEADER');
+	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROPERTIES_HEADER_MSGVER_1');
 	    },
 	    defaultHint() {
 	      if (this.isEditMode) {
 	        return '';
 	      }
-	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROPERTIES_HINT');
+	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROPERTIES_HINT_MSGVER_1');
 	    },
 	    disabledFields() {
 	      return {
@@ -1245,7 +1295,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      if (isReserved) {
 	        return {
 	          result: false,
-	          message: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_VALIDATION_DATASET_EXISTS')
+	          message: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_VALIDATION_DATASET_EXISTS_MSGVER_1')
 	        };
 	      }
 	      if (name.length > this.nameMaxLength) {
@@ -1337,7 +1387,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  int: 'int',
 	  double: 'double',
 	  date: 'date',
-	  datetime: 'datetime'
+	  datetime: 'datetime',
+	  timezone: 'timezone'
 	};
 	const DataTypeDescriptions = {
 	  [DataType.string]: {
@@ -1906,13 +1957,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.$store.state.config.fieldsSettings;
 	    },
 	    defaultTitle() {
-	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HEADER');
+	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HEADER_MSGVER_1');
 	    },
 	    defaultHint() {
 	      if (this.isEditMode) {
 	        return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT').replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378698`)">').replace('[/link]', '</a>');
 	      }
-	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT').replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378698`)">').replace('[/link]', '</a>');
+	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_MSGVER_1').replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378698`)">').replace('[/link]', '</a>');
 	    },
 	    unvalidatedRows() {
 	      const rows = {};
@@ -1969,7 +2020,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      if (isAlreadyUsed) {
 	        return {
 	          result: false,
-	          message: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_VALIDATION_FIELD_ALREADY_USED')
+	          message: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_VALIDATION_FIELD_ALREADY_USED_MSGVER_1')
 	        };
 	      }
 	      return {
@@ -2058,7 +2109,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	var _getContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
 	var _getDropdownControl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDropdownControl");
 	class FormatSelector {
-	  static openSlider(selected, dataFormatTemplates, onClose) {
+	  static openSlider(selected, dataFormatTemplates, onClose, options = {}) {
+	    var _options$isEditable;
+	    const isEditable = (_options$isEditable = options.isEditable) != null ? _options$isEditable : true;
 	    BX.SidePanel.Instance.open('biconnector:import-field-formats', {
 	      width: 584,
 	      contentCallback: () => {
@@ -2066,12 +2119,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          extensions: ['ui.forms', 'ui.layout-form', 'ui.alerts', 'biconnector.dataset-import'],
 	          title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TITLE'),
 	          content() {
-	            return babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getContent)[_getContent](selected, dataFormatTemplates);
+	            return babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getContent)[_getContent](selected, dataFormatTemplates, isEditable);
 	          },
 	          buttons({
 	            cancelButton,
 	            SaveButton
 	          }) {
+	            if (!isEditable) {
+	              return [cancelButton];
+	            }
 	            return [new SaveButton({
 	              onclick: () => {
 	                // hack: using a singleton instance to store the form didn't work
@@ -2099,38 +2155,50 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  });
 	  return result;
 	}
-	function _getContent2(selected, dataFormatTemplates) {
+	function _getContent2(selected, dataFormatTemplates, isEditable) {
 	  const formRoot = main_core.Tag.render(_t$1 || (_t$1 = _$1`
 			<form class="ui-form" id="formatSelectorForm">
 			</form>
 		`));
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getDropdownControl)[_getDropdownControl]({
+	    title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TIMEZONE'),
+	    subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TIMEZONE_HINT'),
+	    options: dataFormatTemplates[DataType.timezone],
+	    fieldType: DataType.timezone,
+	    selected: selected[DataType.timezone],
+	    isEditable
+	  }), formRoot);
+	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getDropdownControl)[_getDropdownControl]({
 	    title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATE'),
 	    subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATE_HINT'),
 	    options: dataFormatTemplates[DataType.date],
 	    fieldType: DataType.date,
-	    selected: selected[DataType.date]
+	    selected: selected[DataType.date],
+	    isEditable
 	  }), formRoot);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getDropdownControl)[_getDropdownControl]({
 	    title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATETIME'),
 	    subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATETIME_HINT'),
 	    options: dataFormatTemplates[DataType.datetime],
 	    fieldType: DataType.datetime,
-	    selected: selected[DataType.datetime]
+	    selected: selected[DataType.datetime],
+	    isEditable
 	  }), formRoot);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getDropdownControl)[_getDropdownControl]({
 	    title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_MONEY'),
 	    subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_MONEY_HINT'),
 	    options: dataFormatTemplates[DataType.money],
 	    fieldType: DataType.money,
-	    selected: selected[DataType.money]
+	    selected: selected[DataType.money],
+	    isEditable
 	  }), formRoot);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getDropdownControl)[_getDropdownControl]({
 	    title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DOUBLE'),
 	    subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DOUBLE_HINT'),
 	    options: dataFormatTemplates[DataType.double],
 	    fieldType: DataType.double,
-	    selected: selected[DataType.double]
+	    selected: selected[DataType.double],
+	    isEditable
 	  }), formRoot);
 	  return main_core.Tag.render(_t2 || (_t2 = _$1`
 			<div class="format-selector">
@@ -2151,6 +2219,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			<select class="ui-ctl-element" name="${0}">
 			</select>
 		`), options.fieldType);
+	  if (!options.isEditable) {
+	    selectRoot.disabled = true;
+	  }
 	  let isCustomSelected = true;
 	  let customElement = null;
 	  let customOptionInput = null;
@@ -2175,14 +2246,18 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						<input class="ui-ctl-element" name="${0}CustomValue" type="text" placeholder="..." value="${0}">
 					</div>
 				`), options.fieldType, (_option$value = option.value) != null ? _option$value : '');
-	      main_core.Event.bind(selectRoot, 'change', event => {
-	        const value = event.target.value;
-	        if (value === 'custom') {
-	          main_core.Dom.removeClass(customOptionInput, 'format-selector__custom-value-input--hidden');
-	        } else {
-	          main_core.Dom.addClass(customOptionInput, 'format-selector__custom-value-input--hidden');
-	        }
-	      });
+	      if (!options.isEditable) {
+	        customOptionInput.querySelector('input').disabled = true;
+	      } else {
+	        main_core.Event.bind(selectRoot, 'change', event => {
+	          const value = event.target.value;
+	          if (value === 'custom') {
+	            main_core.Dom.removeClass(customOptionInput, 'format-selector__custom-value-input--hidden');
+	          } else {
+	            main_core.Dom.addClass(customOptionInput, 'format-selector__custom-value-input--hidden');
+	          }
+	        });
+	      }
 	    }
 	    main_core.Dom.append(optionElement, selectRoot);
 	  });
@@ -2205,13 +2280,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						${0}
 					</div>
 				</div>
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100 ${0}">
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 					${0}
 				</div>
 				${0}
 			</div>
-		`), options.title, options.subtitle, selectRoot, customOptionInput);
+		`), options.title, options.subtitle, options.isEditable ? '' : 'ui-ctl-disabled', selectRoot, customOptionInput);
 	}
 	Object.defineProperty(FormatSelector, _getDropdownControl, {
 	  value: _getDropdownControl2
@@ -2362,6 +2437,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  },
 	  emits: ['valueChange', 'uploadError', 'parsingOptionsChanged'],
 	  computed: {
+	    isDataFormatsEditable() {
+	      return !this.isEditMode || Boolean(this.$store.state.config.fileProperties.fileToken);
+	    },
 	    uploaderOptions() {
 	      return {
 	        controller: 'biconnector.integration.ui.fileUploaderController.datasetUploaderController',
@@ -2427,6 +2505,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      FormatSelector.openSlider(this.$store.state.config.dataFormats, this.dataFormatTemplates, selectedFormats => {
 	        this.$store.commit('setDataFormats', selectedFormats);
 	        this.$emit('parsingOptionsChanged');
+	      }, {
+	        isEditable: this.isDataFormatsEditable
 	      });
 	    }
 	  },
@@ -2504,9 +2584,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_HINT_ERROR');
 	      }
 	      if (this.isEditMode) {
-	        return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_HINT_EDIT').replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378680`)">').replace('[/link]', '</a>');
+	        return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_HINT_EDIT_MSGVER_1').replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378680`)">').replace('[/link]', '</a>');
 	      }
-	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_HINT').replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378680`)">').replace('[/link]', '</a>');
+	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_HINT_MSGVER_1').replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378680`)">').replace('[/link]', '</a>');
 	    },
 	    hintClass() {
 	      return this.isErrorDisplayed ? 'ui-alert-danger' : 'ui-alert-primary';
@@ -2622,8 +2702,14 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	};
 
 	const TableHeader$1 = {
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
 	  props: {
-	    headers: {
+	    fields: {
 	      type: Array,
 	      required: false,
 	      default: []
@@ -2632,18 +2718,71 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      type: Array,
 	      required: false,
 	      default: []
+	    },
+	    sourceType: {
+	      type: String,
+	      required: false,
+	      default: ''
 	    }
 	  },
 	  computed: {
-	    visibleHeaders() {
-	      return this.headers.filter((_, index) => this.columnVisibility[index]);
+	    visibleFields() {
+	      return this.fields.filter((_, index) => this.columnVisibility[index]);
+	    },
+	    sourceTypeCsv() {
+	      return this.sourceType === 'csv';
+	    },
+	    hintOptions() {
+	      return {
+	        text: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_COLUMN_DATETIME_HINT'),
+	        popupOptions: {
+	          bindOptions: {
+	            position: 'bottom'
+	          },
+	          angle: {
+	            position: 'top'
+	          },
+	          width: 300,
+	          offsetLeft: 10,
+	          autoHide: false
+	        }
+	      };
+	    },
+	    set() {
+	      return ui_iconSet_api_vue.Set;
+	    }
+	  },
+	  methods: {
+	    isHintVisible(field) {
+	      return this.sourceTypeCsv && field.type === 'datetime';
 	    }
 	  },
 	  // language=Vue
 	  template: `
 		<thead>
 			<tr class="dataset-preview-table__header-row">
-				<th class="dataset-preview-table__header" v-for="header in visibleHeaders" :title="header">{{ header }}</th>
+				<th
+					class="dataset-preview-table__header"
+					v-for="field in visibleFields"
+				>
+					<div class="dataset-preview-table__header-content">
+						<span
+							class="dataset-preview-table__header-title"
+							:title="field.name"
+						>{{ field.name }}</span>
+						<span
+							v-if="isHintVisible(field)"
+							class="dataset-preview-table__header-hint"
+							v-hint="hintOptions"
+						>
+							<BIcon
+								:name="set.INFO_1"
+								:size="20"
+								color="#B5BABE"
+							></BIcon>
+						</span>
+					</div>
+				</th>
 			</tr>
 		</thead>
 	`
@@ -2676,7 +2815,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 
 	const PreviewTable = {
 	  props: {
-	    headers: {
+	    fields: {
 	      type: Array,
 	      required: false,
 	      default: []
@@ -2690,6 +2829,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      type: Array,
 	      required: false,
 	      default: []
+	    },
+	    sourceType: {
+	      type: String,
+	      required: false,
+	      default: ''
 	    }
 	  },
 	  data() {
@@ -2726,7 +2870,12 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  template: `
 		<div class="dataset-preview-table" ref="table">
 			<table class="dataset-preview-table__table">
-				<TableHeader v-if="headers.length > 0" :headers="headers" :column-visibility="displayedColumnVisibility" />
+				<TableHeader
+					v-if="fields.length > 0"
+					:fields="fields"
+					:column-visibility="displayedColumnVisibility"
+					:source-type="sourceType"
+				/>
 				<tbody>
 					<TableRow v-for="row in rows" :row="row" :column-visibility="displayedColumnVisibility" />
 				</tbody>
@@ -2760,26 +2909,31 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      type: Boolean,
 	      required: false,
 	      default: false
+	    },
+	    sourceType: {
+	      type: String,
+	      required: false,
+	      default: ''
 	    }
 	  },
 	  computed: {
 	    isEditMode() {
 	      return this.$store.getters.isEditMode;
 	    },
-	    headers() {
-	      return this.$store.getters.previewHeaders;
+	    fields() {
+	      return this.$store.state.config.fieldsSettings;
 	    },
 	    rows() {
 	      return this.$store.state.previewData.rows;
 	    },
 	    isEverythingHidden() {
-	      return this.headers.length > 0 && this.$store.getters.areNoRowsVisible;
+	      return this.fields.length > 0 && this.$store.getters.areNoRowsVisible;
 	    },
 	    hasData() {
 	      return this.$store.getters.hasData;
 	    },
 	    hasHeaders() {
-	      return this.headers.length > 0;
+	      return this.fields.length > 0;
 	    },
 	    displayedEmptyStateText() {
 	      var _this$emptyStateText;
@@ -2798,10 +2952,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.isEditMode && !this.$store.state.config.fileProperties.fileToken;
 	    },
 	    displayedTitle() {
-	      return this.isEditModeInitialDataDisplayed ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_TITLE') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_TITLE');
+	      return this.isEditModeInitialDataDisplayed ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_TITLE_MSGVER_1') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_TITLE');
 	    },
 	    hasDataDisplayedHint() {
-	      return this.isEditModeInitialDataDisplayed ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_HINT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT');
+	      return this.isEditModeInitialDataDisplayed ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_HINT_MSGVER_1') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT_MSGVER_1');
 	    }
 	  },
 	  watch: {
@@ -2835,10 +2989,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 					</div>
 					<template v-else>
 						<div class="import-preview__has-data import-preview__has-data--edit-mode-error" v-if="isEditMode">
-							<span class="import-preview__hint">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT') }}</span>
+							<span class="import-preview__hint">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT_MSGVER_1') }}</span>
 							<PreviewTable
-								:headers="headers"
+								:fields="fields"
 								:column-visibility="columnVisibility"
+								:source-type="sourceType"
 							/>
 							<div class="import-preview__edit-mode-error">
 								<div class="import-preview__error-logo"></div>
@@ -2847,8 +3002,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						</div>
 						<div class="import-preview__has-data" v-else>
 							<PreviewTable
-								:headers="headers"
+								:fields="fields"
 								:column-visibility="columnVisibility"
+								:source-type="sourceType"
 							/>
 							<div class="import-preview__edit-mode-error">
 								<div class="import-preview__error-logo"></div>
@@ -2865,15 +3021,17 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 					<div class="import-preview__has-data" v-else-if="hasData">
 						<span class="import-preview__hint">{{ hasDataDisplayedHint }}</span>
 						<PreviewTable
-							:headers="headers"
+							:fields="fields"
 							:rows="rows"
 							:column-visibility="columnVisibility"
+							:source-type="sourceType"
 						/>
 					</div>
 					<div class="import-preview__has-data" v-else-if="hasHeaders && needShowHeadersWithEmptyRows">
 						<PreviewTable
-							:headers="headers"
+							:fields="fields"
 							:column-visibility="columnVisibility"
+							:source-type="sourceType"
 						/>
 						<div class="import-preview__edit-mode-error">
 							<div class="import-preview__no-data-logo"></div>
@@ -2946,6 +3104,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  mounted() {
 	    this.$Bitrix.eventEmitter.subscribe('biconnector:dataset-import:createButtonClick', this.onSaveButtonClick);
 	    this.$Bitrix.eventEmitter.subscribe('biconnector:dataset-import:cancelButtonClick', this.onCancelButtonClick);
+	    if (this.$store.state.config.sectionsConfig) {
+	      this.$store.commit('setSectionsConfig', this.$store.state.config.sectionsConfig);
+	    }
 	    const slider = ui_sidepanel.SidePanel.Instance.getTopSlider();
 	    if (slider) {
 	      top.BX.addCustomEvent(slider, 'SidePanel.Slider:onClose', this.onSliderClose);
@@ -2957,6 +3118,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  beforeUnmount() {
 	    this.$Bitrix.eventEmitter.unsubscribe('biconnector:dataset-import:createButtonClick', this.onSaveButtonClick);
 	    this.$Bitrix.eventEmitter.unsubscribe('biconnector:dataset-import:cancelButtonClick', this.onCancelButtonClick);
+	    this.$store.commit('resetSectionsConfig');
 	  },
 	  methods: {
 	    markAsChanged() {
@@ -3122,8 +3284,166 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        c_section: 'BI_Builder',
 	        category: this.sourceCode.toUpperCase()
 	      };
+	    },
+	    getSectionConfig(sectionName, property) {
+	      if (!this.$store || !this.$store.getters || !this.$store.getters.getSectionConfig) {
+	        return this.getDefaultSectionConfig(property);
+	      }
+	      const configState = this.$store.getters.getSectionConfig(sectionName, property);
+	      if (configState !== undefined) {
+	        return configState;
+	      }
+	      return this.getDefaultSectionConfig(property);
+	    },
+	    getDefaultSectionConfig(property) {
+	      switch (property) {
+	        case 'isOpenInitially':
+	        case 'isOpenOnLoadData':
+	        default:
+	          return true;
+	      }
 	    }
 	  }
+	};
+
+	const RelatedExternalDatasetsStep = {
+	  extends: BaseStep,
+	  props: {
+	    isSupersetReady: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    }
+	  },
+	  data() {
+	    return {
+	      createDatasetsMenu: null
+	    };
+	  },
+	  computed: {
+	    defaultTitle() {
+	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_RELATED_EXTERNAL_DATASETS_HEADER_MSGVER_1');
+	    },
+	    items() {
+	      var _this$$store$getters$, _this$$store$getters$2;
+	      return (_this$$store$getters$ = (_this$$store$getters$2 = this.$store.getters.datasetProperties) == null ? void 0 : _this$$store$getters$2.externalDatasets) != null ? _this$$store$getters$ : [];
+	    },
+	    hasItems() {
+	      var _this$items$length, _this$items;
+	      return ((_this$items$length = (_this$items = this.items) == null ? void 0 : _this$items.length) != null ? _this$items$length : 0) > 0;
+	    },
+	    createPhysicalDatasetUrl() {
+	      var _this$$store$getters$3, _this$$store$getters$4, _this$$store$getters$5;
+	      return (_this$$store$getters$3 = (_this$$store$getters$4 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$4.createPhysicalDatasetUrl) != null ? _this$$store$getters$3 : (_this$$store$getters$5 = this.$store.getters.datasetProperties) == null ? void 0 : _this$$store$getters$5.createPhysicalDatasetUrl;
+	    },
+	    createVirtualDatasetUrl() {
+	      var _this$$store$getters$6, _this$$store$getters$7, _this$$store$getters$8;
+	      return (_this$$store$getters$6 = (_this$$store$getters$7 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$7.createVirtualDatasetUrl) != null ? _this$$store$getters$6 : (_this$$store$getters$8 = this.$store.getters.datasetProperties) == null ? void 0 : _this$$store$getters$8.createVirtualDatasetUrl;
+	    },
+	    showCreateButton() {
+	      return this.isSupersetReady && Boolean(this.createPhysicalDatasetUrl || this.createVirtualDatasetUrl);
+	    }
+	  },
+	  methods: {
+	    onCreateClick(event) {
+	      if (this.createDatasetsMenu) {
+	        this.createDatasetsMenu.toggle();
+	        return;
+	      }
+	      const items = [{
+	        text: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_RELATED_EXTERNAL_DATASETS_CREATE_PHYSICAL'),
+	        onclick: () => {
+	          if (!this.createPhysicalDatasetUrl) {
+	            return false;
+	          }
+	          window.open(this.createPhysicalDatasetUrl, '_blank').focus();
+	          this.createDatasetsMenu.close();
+	          return true;
+	        },
+	        className: this.createPhysicalDatasetUrl ? '' : 'menu-popup-no-icon menu-popup-item-disabled-with-hint'
+	      }, {
+	        text: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_RELATED_EXTERNAL_DATASETS_CREATE_VIRTUAL'),
+	        onclick: () => {
+	          if (!this.createVirtualDatasetUrl) {
+	            return false;
+	          }
+	          window.open(this.createVirtualDatasetUrl, '_blank').focus();
+	          this.createDatasetsMenu.close();
+	          return true;
+	        }
+	      }];
+	      this.createDatasetsMenu = new main_popup.Menu({
+	        bindElement: event.currentTarget,
+	        items
+	      });
+	      this.createDatasetsMenu.show();
+	      if (!this.createPhysicalDatasetUrl) {
+	        const disabledMenuItem = this.createDatasetsMenu.itemsContainer.querySelector('.menu-popup-item-disabled-with-hint');
+	        if (disabledMenuItem) {
+	          const hintManager = BX.UI.Hint.createInstance({
+	            id: 'menu-popup-item-disabled-with-hint',
+	            popupParameters: {
+	              offsetLeft: disabledMenuItem.offsetWidth,
+	              offsetTop: -50,
+	              autoHide: true,
+	              width: 270,
+	              angle: {
+	                position: 'left',
+	                offset: 15
+	              }
+	            }
+	          });
+	          main_core.Event.bind(disabledMenuItem, 'mouseenter', () => {
+	            hintManager.show(disabledMenuItem, this.$Bitrix.Loc.getMessage('DATASET_IMPORT_RELATED_EXTERNAL_DATASETS_CREATE_PHYSICAL_DISABLE'), false, false);
+	          });
+	          main_core.Event.bind(disabledMenuItem, 'mouseleave', () => {
+	            hintManager.hide();
+	          });
+	        }
+	      }
+	    }
+	  },
+	  components: {
+	    Step: StepBlock
+	  },
+	  // language=Vue
+	  template: `
+		<Step
+			:title="displayedTitle"
+			:is-open-initially="isOpenInitially"
+			:disabled="disabled"
+			ref="stepBlock"
+		>
+			<template #headerRightContent>
+				<button
+					v-if="showCreateButton"
+					class="ui-btn-icon-add related-external-datasets__header-right-create-btn"
+					@click.stop="onCreateClick"
+					type="button"
+					:disabled="disabled"
+				>
+					<span>{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_RELATED_EXTERNAL_DATASETS_CREATE_BUTTON') }}</span>
+					<i class="ui-icon-set related-external-datasets__header-right-create-btn-icon --chevron-down"/>
+				</button>
+			</template>
+			<div class="ui-form-row" v-if="hasItems">
+				<ul class="ui-list related-external-datasets__list">
+					<li v-for="item in items" :key="item.id" class="related-external-datasets__item">
+						<a :href="item.url" target="_blank" class="related-external-datasets__link">
+							{{ item.table_name ?? item.name}}
+						</a>
+					</li>
+				</ul>
+			</div>
+			<div class="ui-form-row related-external-datasets__empty-row" v-else>
+				<div class="related-external-datasets__no-data-logo-content">
+					<div class="related-external-datasets__no-data-logo">
+					</div>
+					<span class="related-external-datasets__no-data-logo-text">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_RELATED_EXTERNAL_DATASETS_NO_DATASETS') }}</span>
+				</div>
+			</div>
+		</Step>
+	`
 	};
 
 	const CsvApp = {
@@ -3140,6 +3460,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          valid: true
 	        },
 	        fields: {
+	          disabled: !this.$store.getters.isEditMode,
+	          valid: true
+	        },
+	        externalDatasets: {
 	          disabled: !this.$store.getters.isEditMode,
 	          valid: true
 	        }
@@ -3164,6 +3488,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      lastReloadSource: null,
 	      initialPreviewData: {},
 	      initialFieldsSettings: [],
+	      initialDataFormats: {},
 	      previewError: '',
 	      isEditModeSaveConfirmed: false,
 	      isDataLoadingAnimationDisplayed: false,
@@ -3203,22 +3528,37 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.steps.fields.valid && this.steps.properties.valid && this.steps.file.valid;
 	    },
 	    importFailurePopupTitle() {
-	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER');
+	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_EDIT_MSGVER_1') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_MSGVER_1');
 	    },
 	    importSuccessPopupTitle() {
-	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_EDIT').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title) : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title);
+	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_EDIT_MSGVER_1').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title) : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_MSGVER_1').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title);
 	    },
 	    importSuccessPopupDescription() {
 	      return this.$store.state.config.fileProperties.fileName ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_DESCRIPTION').replace('#FILE_NAME#', this.popupParams.savingSuccess.fileName) : '';
 	    },
 	    importProgressPopupDescription() {
-	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION');
+	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_MSGVER_1');
 	    },
 	    sourceType() {
 	      return 'csv';
+	    },
+	    propertiesIsOpenInitially() {
+	      return this.getSectionConfig('properties', 'isOpenInitially');
+	    },
+	    fieldsIsOpenInitially() {
+	      return this.getSectionConfig('fields', 'isOpenInitially');
+	    },
+	    externalDatasetsIsOpenInitially() {
+	      return this.getSectionConfig('externalDatasets', 'isOpenInitially');
 	    }
 	  },
 	  methods: {
+	    cloneConfigValue(value) {
+	      if (value === null || value === undefined) {
+	        return value;
+	      }
+	      return JSON.parse(JSON.stringify(value));
+	    },
 	    markAsChanged() {
 	      this.isChanged = true;
 	    },
@@ -3268,8 +3608,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        }
 	        this.loadDataset();
 	      } else if (this.isEditMode) {
-	        this.$store.commit('setPreviewData', this.initialPreviewData);
-	        this.$store.commit('setFieldsSettings', this.initialFieldsSettings);
+	        this.$store.commit('setPreviewData', this.cloneConfigValue(this.initialPreviewData));
+	        this.$store.commit('setFieldsSettings', this.cloneConfigValue(this.initialFieldsSettings));
+	        this.$store.commit('setDataFormats', this.cloneConfigValue(this.initialDataFormats));
 	      } else {
 	        this.$store.commit('setPreviewData', []);
 	        this.$refs.propertiesStep.close();
@@ -3306,8 +3647,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    onLoadSuccess(response) {
 	      this.stopPreviewLoadingAnimation();
 	      this.processLoadResponse(response);
-	      this.$refs.propertiesStep.open();
-	      this.$refs.fieldsStep.open();
+	      if (this.getSectionConfig('properties', 'isOpenOnLoadData')) {
+	        this.$refs.propertiesStep.open();
+	      }
+	      if (this.getSectionConfig('fields', 'isOpenOnLoadData')) {
+	        this.$refs.fieldsStep.open();
+	      }
+	      if (this.getSectionConfig('externalDatasets', 'isOpenOnLoadData')) {
+	        this.$refs.externalDatasetsStep.open();
+	      }
 	      this.toggleStepState('properties', false);
 	      this.toggleStepState('fields', false);
 	      this.$refs.fieldsStep.validate();
@@ -3496,8 +3844,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  },
 	  mounted() {
 	    if (this.isEditMode) {
-	      this.initialPreviewData = this.$store.state.previewData.rows;
-	      this.initialFieldsSettings = this.$store.state.config.fieldsSettings;
+	      this.initialPreviewData = this.cloneConfigValue(this.$store.state.previewData.rows);
+	      this.initialFieldsSettings = this.cloneConfigValue(this.$store.state.config.fieldsSettings);
+	      this.initialDataFormats = this.cloneConfigValue(this.$store.state.config.dataFormats);
 	    }
 	    main_core_events.EventEmitter.subscribe('biconnector:dataset-import:onCheckFileClick', this.onCheckFileClick);
 	    main_core_events.EventEmitter.subscribe('biconnector:dataset-import:onExportFileClick', this.onExportFileClick);
@@ -3517,6 +3866,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    FileStep,
 	    DatasetPropertiesStep,
 	    FieldsSettingsStep,
+	    RelatedExternalDatasetsStep,
 	    ImportProgressPopup,
 	    ImportSuccessPopup,
 	    ImportFailurePopup,
@@ -3542,7 +3892,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						@parsing-options-changed="onDatasetReloadNeeded('fields')"
 					/>
 					<DatasetPropertiesStep
-						:is-open-initially="isEditMode"
+						:is-open-initially="isEditMode && propertiesIsOpenInitially"
 						:disabled="steps.properties.disabled"
 						:reserved-names="appParams.reservedNames"
 						:name-max-length=30
@@ -3552,7 +3902,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						:dataset-source-code="sourceCode"
 					/>
 					<FieldsSettingsStep
-						:is-open-initially="isEditMode"
+						:is-open-initially="isEditMode && fieldsIsOpenInitially"
 						:disabled="steps.fields.disabled"
 						:source-type="sourceType"
 						ref="fieldsStep"
@@ -3560,12 +3910,19 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						@parsing-options-changed="onDatasetReloadNeeded('fields')"
 						@settings-changed="onFieldsSettingsChanged"
 					/>
+					<RelatedExternalDatasetsStep
+						:is-open-initially="isEditMode && externalDatasetsIsOpenInitially"
+						:disabled="steps.externalDatasets.disabled"
+						:is-superset-ready="appParams.isSupersetReady"
+						ref="externalDatasetsStep"
+					/>
 				</ImportConfig>
 			</template>
 			<template v-slot:right-panel>
-				<ImportPreview 
+				<ImportPreview
 					:error="previewError"
 					:is-loading="isDataLoadingAnimationDisplayed || !hasMinimalLoadingAnimationTimePassed"
+					:source-type="sourceType"
 				/>
 			</template>
 		</AppLayout>
@@ -3584,6 +3941,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			:description="importSuccessPopupDescription"
 			:dataset-id="popupParams.savingSuccess.datasetId"
 			:show-more-button="!isEditMode"
+			:show-open-dataset-button="appParams.isSupersetReady"
 		/>
 
 		<ImportFailurePopup
@@ -3600,7 +3958,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			@close="togglePopup('editModeFileReplacement', false)"
 		>
 			<template v-slot:content>
-				{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_REPLACEMENT_TEXT') }}
+				{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_REPLACEMENT_TEXT_MSGVER_1') }}
 			</template>
 			<template v-slot:buttons>
 				<button @click="onReplacementButtonClick" class="ui-btn ui-btn-md ui-btn-primary">{{
@@ -3656,7 +4014,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  },
 	  methods: {
 	    getDescription() {
-	      return this.isChange ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_DESCRIPTION_CHANGED') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_DESCRIPTION_NOT_CHANGED');
+	      return this.isChange ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_DESCRIPTION_CHANGED_MSGVER_1') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_DESCRIPTION_NOT_CHANGED_MSGVER_1');
 	    },
 	    onClose() {
 	      this.$emit('close');
@@ -3668,7 +4026,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  // language=Vue
 	  template: `
 		<Popup id="syncFields" @close="this.onClose" :options="popupOptions" wrapper-class="generic-popup">
-			<h3 class="generic-popup__header">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_HEADER') }}</h3>
+			<h3 class="generic-popup__header">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_HEADER_MSGVER_1') }}</h3>
 			<div class="generic-popup__content">
 				{{ getDescription() }}
 			</div>
@@ -3720,7 +4078,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          id: 'connections',
 	          stubOptions: {
 	            title: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_NO_CONNECTIONS_TITLE'),
-	            subtitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_NO_CONNECTIONS_SUBTITLE'),
+	            subtitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_NO_CONNECTIONS_SUBTITLE_MSGVER_1'),
 	            arrow: true,
 	            icon: '/bitrix/images/biconnector/database-connections/connections-empty-state.png',
 	            iconOpacity: 100
@@ -3941,7 +4299,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return ui_iconSet_api_vue.Set;
 	    },
 	    hintOptions() {
-	      const hintCode = this.selectedConnectionType === 'rest' ? 'DATASET_IMPORT_REST_TABLES_HINT' : 'DATASET_IMPORT_TABLES_HINT';
+	      const hintCode = this.selectedConnectionType === '1c' ? 'DATASET_IMPORT_TABLES_HINT' : 'DATASET_IMPORT_REST_TABLES_HINT';
 	      return {
 	        text: this.$Bitrix.Loc.getMessage(hintCode),
 	        popupOptions: {
@@ -4288,6 +4646,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          disabled: !this.$store.getters.isEditMode,
 	          valid: true,
 	          disabledElements: null
+	        },
+	        externalDatasets: {
+	          disabled: !this.$store.getters.isEditMode,
+	          valid: true
 	        }
 	      },
 	      shownPopups: {
@@ -4354,13 +4716,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.steps.fields.valid && this.steps.properties.valid && this.steps.connection.valid;
 	    },
 	    importFailurePopupTitle() {
-	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER');
+	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_EDIT_MSGVER_1') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_MSGVER_1');
 	    },
 	    importSuccessPopupTitle() {
-	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_EDIT').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title) : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title);
+	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_EDIT_MSGVER_1').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title) : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_MSGVER_1').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title);
 	    },
 	    importProgressPopupDescription() {
-	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION');
+	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_MSGVER_1');
 	    },
 	    loadFailurePopupTitle() {
 	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_ERROR_EDIT_TITLE') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_ERROR_TITLE');
@@ -4369,8 +4731,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      let articleCode = '';
 	      let hintCode = '';
 	      if (!this.isEditMode && !this.isRestEntity) {
-	        articleCode = '23508958';
-	        hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
+	        if (this.sourceCode === '1c') {
+	          articleCode = '23508958';
+	          hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
+	        } else {
+	          articleCode = '23508958';
+	          hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_SQL';
+	        }
 	      }
 	      if (this.isRestEntity && !this.connectionIsSupportMapping) {
 	        articleCode = '24486426';
@@ -4382,10 +4749,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.$Bitrix.Loc.getMessage(hintCode).replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=' + articleCode + '`)">').replace('[/link]', '</a>');
 	    },
 	    unsavedChangesPopupTitle() {
-	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TITLE_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TITLE_EXTERNAL');
+	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TITLE_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TITLE_EXTERNAL_MSGVER_1');
 	    },
 	    unsavedChangesPopupText() {
-	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT_EXTERNAL');
+	      return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT_EXTERNAL_MSGVER_1');
 	    },
 	    emptyStateText() {
 	      return this.previewDataLoaded ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_EMPTY_TABLE') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_EMPTY_STATE_EXTERNAL');
@@ -4398,6 +4765,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    },
 	    sourceType() {
 	      return 'external';
+	    },
+	    propertiesIsOpenInitially() {
+	      return this.getSectionConfig('properties', 'isOpenInitially');
+	    },
+	    fieldsIsOpenInitially() {
+	      return this.getSectionConfig('fields', 'isOpenInitially');
+	    },
+	    externalDatasetsIsOpenInitially() {
+	      return this.getSectionConfig('externalDatasets', 'isOpenInitially');
 	    }
 	  },
 	  mounted() {
@@ -4503,8 +4879,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    },
 	    onLoadSuccess(response) {
 	      this.processLoadResponse(response);
-	      this.$refs.propertiesStep.open();
-	      this.$refs.fieldsStep.open();
+	      if (this.getSectionConfig('properties', 'isOpenOnLoadData')) {
+	        this.$refs.propertiesStep.open();
+	      }
+	      if (this.getSectionConfig('fields', 'isOpenOnLoadData')) {
+	        this.$refs.fieldsStep.open();
+	      }
+	      if (this.getSectionConfig('externalDatasets', 'isOpenOnLoadData')) {
+	        this.$refs.externalDatasetsStep.open();
+	      }
 	      this.toggleStepState('properties', false);
 	      if (this.isRestEntity && !this.connectionIsSupportMapping) {
 	        this.steps.fields.disabledElements = {
@@ -4533,8 +4916,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    },
 	    onSyncSuccess(response) {
 	      this.processSyncResponse(response);
-	      this.$refs.propertiesStep.open();
-	      this.$refs.fieldsStep.open();
+	      if (this.getSectionConfig('properties', 'isOpenOnLoadData')) {
+	        this.$refs.propertiesStep.open();
+	      }
+	      if (this.getSectionConfig('fields', 'isOpenOnLoadData')) {
+	        this.$refs.fieldsStep.open();
+	      }
+	      if (this.getSectionConfig('externalDatasets', 'isOpenOnLoadData')) {
+	        this.$refs.externalDatasetsStep.open();
+	      }
 	      this.toggleStepState('properties', false);
 	      this.toggleStepState('fields', false);
 	      this.$refs.propertiesStep.validate();
@@ -4681,6 +5071,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    ConnectionStep,
 	    DatasetPropertiesStep,
 	    FieldsSettingsStep,
+	    RelatedExternalDatasetsStep,
 	    ImportProgressPopup,
 	    ImportSuccessPopup,
 	    ImportFailurePopup,
@@ -4705,7 +5096,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						@validation="onStepValidation('connection', $event)"
 					/>
 					<DatasetPropertiesStep
-						:is-open-initially="isEditMode"
+						:is-open-initially="isEditMode && propertiesIsOpenInitially"
 						:disabled="steps.properties.disabled"
 						:reserved-names="appParams.reservedNames"
 						:name-max-length=230
@@ -4715,7 +5106,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						:dataset-source-code="'external_' + sourceCode"
 					/>
 					<FieldsSettingsStep
-						:is-open-initially="isEditMode"
+						:is-open-initially="isEditMode && fieldsIsOpenInitially"
 						:disabled="steps.fields.disabled"
 						:disabled-elements="steps.fields.disabledElements"
 						:source-type="sourceType"
@@ -4727,14 +5118,21 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 						:sync-fields-props="syncFieldsProps"
 						@sync-fields="onSyncFields"
 					/>
+					<RelatedExternalDatasetsStep
+						:is-open-initially="isEditMode && externalDatasetsIsOpenInitially"
+						:disabled="steps.externalDatasets.disabled"
+						:is-superset-ready="appParams.isSupersetReady"
+						ref="externalDatasetsStep"
+					/>
 				</ImportConfig>
 			</template>
 			<template v-slot:right-panel>
-				<ImportPreview 
+				<ImportPreview
 					:empty-state-text="emptyStateText"
 					:is-loading="isLoading"
 					:error="previewError"
 					:needShowHeadersWithEmptyRows="true"
+					:source-type="sourceType"
 				/>
 			</template>
 		</AppLayout>
@@ -4753,6 +5151,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			:dataset-id="popupParams.savingSuccess.datasetId"
 			:dataset-link="popupParams.savingSuccess.link"
 			:show-more-button="!isEditMode"
+			:show-open-dataset-button="appParams.isSupersetReady"
 			@one-more-click="reload"
 		/>
 
@@ -4792,7 +5191,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			@close="togglePopup('fieldsSettingsChanges', false)"
 		>
 			<template v-slot:content>
-				<p>{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_MESSAGE_MSGVER_1') }}</p>
+				<p>{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_MESSAGE_MSGVER_2') }}</p>
 			</template>
 			<template v-slot:buttons>
 				<button @click="onConfirmFieldsSettingsChangesPopup" class="ui-btn ui-btn-md ui-btn-success">
@@ -4849,6 +5248,12 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        },
 	        setFieldsSettings(state, settings) {
 	          state.config.fieldsSettings = settings;
+	        },
+	        setSectionsConfig(state, config) {
+	          state.config.sectionsConfig = config;
+	        },
+	        resetSectionsConfig(state) {
+	          state.config.sectionsConfig = {};
 	        }
 	      },
 	      getters: {
@@ -4885,6 +5290,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        datasetProperties(state) {
 	          var _state$config2;
 	          return (_state$config2 = state.config) == null ? void 0 : _state$config2.datasetProperties;
+	        },
+	        getSectionConfig: state => (sectionName, property) => {
+	          var _state$config3, _state$config3$sectio, _state$config3$sectio2;
+	          return (_state$config3 = state.config) == null ? void 0 : (_state$config3$sectio = _state$config3.sectionsConfig) == null ? void 0 : (_state$config3$sectio2 = _state$config3$sectio[sectionName]) == null ? void 0 : _state$config3$sectio2[property];
 	        }
 	      }
 	    });
@@ -4894,7 +5303,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	const codeMap = {
 	  csv: CsvApp,
 	  '1c': ExternalConnectionApp,
-	  rest: ExternalConnectionApp
+	  rest: ExternalConnectionApp,
+	  mysql: ExternalConnectionApp,
+	  pgsql: ExternalConnectionApp
 	};
 	class AppFactory {
 	  static getApp(code, stateOptions = {}, appParams = {}) {
@@ -4904,7 +5315,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        fileProperties: {},
 	        dataFormats: {},
 	        datasetProperties: {},
-	        fieldsSettings: []
+	        fieldsSettings: [],
+	        sectionsConfig: {}
 	      }
 	    };
 	    const state = BX.util.objectMerge(defaultStructure, stateOptions);
@@ -4941,7 +5353,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	}
 
 	class Slider {
-	  static open(sourceId, datasetId = 0, connection = {}) {
+	  static open(sourceId, datasetId = 0, connection = {}, sectionsConfig = {}) {
 	    const componentLink = '/bitrix/components/bitrix/biconnector.dataset.import/slider.php';
 	    const sliderLink = new main_core.Uri(componentLink);
 	    sliderLink.setQueryParam('sourceId', sourceId);
@@ -4951,6 +5363,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    if (Object.keys(connection).length > 0) {
 	      sliderLink.setQueryParam('connection', connection);
 	    }
+	    if (main_core.Type.isObject(sectionsConfig) && Object.keys(sectionsConfig).length > 0) {
+	      const sectionsConfigParams = Slider.serializeNestedObject(sectionsConfig, 'sectionsConfig');
+	      sliderLink.setQueryParams(sectionsConfigParams);
+	    }
 	    const options = {
 	      allowChangeHistory: false,
 	      cacheable: false,
@@ -4958,10 +5374,22 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    };
 	    ui_sidepanel.SidePanel.Instance.open(sliderLink.toString(), options);
 	  }
+	  static serializeNestedObject(obj, prefix = '') {
+	    const params = {};
+	    Object.entries(obj).forEach(([key, value]) => {
+	      const paramKey = prefix ? `${prefix}[${key}]` : key;
+	      if (main_core.Type.isObject(value) && value !== null && !Array.isArray(value)) {
+	        Object.assign(params, Slider.serializeNestedObject(value, paramKey));
+	      } else {
+	        params[paramKey] = String(value);
+	      }
+	    });
+	    return params;
+	  }
 	}
 
 	exports.AppFactory = AppFactory;
 	exports.Slider = Slider;
 
-}((this.BX.BIConnector.DatasetImport = this.BX.BIConnector.DatasetImport || {}),BX.BIConnector.DatasetImport,BX,BX.UI,BX.UI,BX,BX.UI.SidePanel,BX,BX.UI,BX.UI.Uploader,BX,BX.UI,BX.Main,BX.UI.Analytics,BX.UI,BX.Vue3,BX.UI.EntitySelector,BX.UI.IconSet,BX.Vue3.Directives,BX.Event,BX.Vue3.Vuex,BX,BX));
+}((this.BX.BIConnector.DatasetImport = this.BX.BIConnector.DatasetImport || {}),BX.BIConnector.DatasetImport,BX,BX.UI,BX.UI,BX,BX.UI.SidePanel,BX,BX.UI,BX.UI.Uploader,BX,BX.UI,BX.UI.Analytics,BX.UI,BX.Main,BX.Vue3,BX.UI.EntitySelector,BX.UI.IconSet,BX.Vue3.Directives,BX.Event,BX.Vue3.Vuex,BX,BX));
 //# sourceMappingURL=dataset-import.bundle.js.map

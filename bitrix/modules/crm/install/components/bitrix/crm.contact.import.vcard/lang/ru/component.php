@@ -43,4 +43,6 @@ $MESS["CRM_FIELD_IMPORT_ADDR_PRESET"] = "Шаблон реквизитов";
 $MESS["CRM_FIELD_IMPORT_ADDR_PRESET_UNDEFINED"] = "[не выбран]";
 $MESS["CRM_REQUISITE_PRESET_NAME_EMPTY"] = "Шаблон без названия";
 $MESS["CRM_INVALID_IMP_ADDR_PRESET_ID"] = "Для импорта адресов в реквизиты необходимо выбрать шаблон";
+
+$MESS['CRM_CSV_NF_ERROR'] = 'Загрузите файл для импорта, чтобы продолжить';
 ?>

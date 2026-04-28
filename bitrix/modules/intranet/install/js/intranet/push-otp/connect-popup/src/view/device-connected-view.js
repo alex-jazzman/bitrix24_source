@@ -1,4 +1,4 @@
-import { Loc, Tag, Type } from 'main.core';
+import { Loc, Tag, Type, Text } from 'main.core';
 import { BaseButton, Button } from 'ui.buttons';
 import { BaseView } from './base-view';
 import { Analytics } from '../analytics';
@@ -49,7 +49,7 @@ export class DeviceConnectedView extends BaseView
 				<div class="intranet-push-otp-connect-popup__view-connect-container">
 					<div>
 						<div class="intranet-push-otp-connect-popup__view-connect-logo ${this.#phoneOs === 'ios' ? '' : '--android'}"></div>
-						<div class="intranet-push-otp-connect-popup__view-connect-logo-text">${this.#phoneLabel}</div>
+						<div class="intranet-push-otp-connect-popup__view-connect-logo-text">${Text.encode(this.#phoneLabel)}</div>
 					</div>
 				</div>
 				<div class="intranet-push-otp-connect-popup__view-button-container">

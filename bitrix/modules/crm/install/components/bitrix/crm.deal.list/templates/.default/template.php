@@ -548,6 +548,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 						'READ_ONLY' => !(isset($arDeal['EDIT']) && $arDeal['EDIT'] === true)
 					)
 				),
+				'PREVIOUS_STAGE_ID' => htmlspecialcharsbx($arDeal['DEAL_PREVIOUS_STAGE_NAME']),
 				'CATEGORY_ID' => $arDeal['DEAL_CATEGORY_NAME'],
 				'IS_RETURN_CUSTOMER' => $arDeal['IS_RETURN_CUSTOMER'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 				'IS_REPEATED_APPROACH' => $arDeal['IS_REPEATED_APPROACH'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),

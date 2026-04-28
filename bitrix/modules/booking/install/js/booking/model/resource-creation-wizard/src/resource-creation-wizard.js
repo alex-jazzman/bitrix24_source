@@ -13,7 +13,6 @@ import type {
 	InitPayload,
 	ResourceModel,
 	AdvertisingResourceType,
-	CatalogSkuEntityOptions,
 } from './types';
 
 export class ResourceCreationWizardModel extends BuilderModel
@@ -31,7 +30,6 @@ export class ResourceCreationWizardModel extends BuilderModel
 			resourceAvatarFile: null,
 			resource: getEmptyResource(),
 			advertisingResourceTypes: [],
-			catalogSkuEntityOptions: {},
 			companyScheduleSlots: [],
 			fetching: false,
 			step: 1,
@@ -245,11 +243,6 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				commit('setGlobalSchedule', checked);
 			},
-			/** @function resource-creation-wizard/setCatalogSkuEntityOptions */
-			setCatalogSkuEntityOptions({ commit }, options: CatalogSkuEntityOptions): void
-			{
-				commit('setCatalogSkuEntityOptions', options);
-			},
 			/** @function resource-creation-wizard/setCompanyScheduleAccess */
 			setCompanyScheduleAccess({ commit }, isCompanyScheduleAccess: boolean): void
 			{
@@ -343,10 +336,6 @@ export class ResourceCreationWizardModel extends BuilderModel
 			setAdvertisingTypes(state: ResourceCreationWizardState, types: AdvertisingResourceType[]): void
 			{
 				state.advertisingResourceTypes = types;
-			},
-			setCatalogSkuEntityOptions(state, options: CatalogSkuEntityOptions): void
-			{
-				state.catalogSkuEntityOptions = options;
 			},
 			setCompanyScheduleSlots(state: ResourceCreationWizardState, slots: SlotRange[]): void
 			{

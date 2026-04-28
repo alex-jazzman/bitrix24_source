@@ -127,6 +127,7 @@ foreach ($allActivities as $description)
 			initTemplateId: <?= Json::encode($arResult['templateId'] ?? null) ?>,
 			initDocumentType: <?= Json::encode($arResult['documentType'] ?? null) ?>,
 			initStartTrigger: <?= Json::encode($arResult['startTrigger'] ?? null) ?>,
+			initEditBlock: <?= Json::encode($_GET['editBlock'] ?? null) ?>,
 		};
 
 		App.mount('bizprocdesigner-editor', rootProps);

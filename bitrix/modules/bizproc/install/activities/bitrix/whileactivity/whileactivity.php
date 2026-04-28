@@ -69,9 +69,17 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 		}
 	}
 
-	public function Execute()
+	public function execute()
 	{
-		if ($this->TryNextIteration())
+		if (!$this->hasIterations())
+		{
+			$this->outputPortId = 1;
+			$this->trackError(GetMessage('BPWA_ERROR_EMPTY_BODY'));
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		if ($this->tryNextIteration())
 		{
 			return CBPActivityExecutionStatus::Executing;
 		}
@@ -92,11 +100,11 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	public function OnEvent(CBPActivity $sender, $arEventParameters = [])
+	public function onEvent(CBPActivity $sender, $arEventParameters = [])
 	{
 		$sender->RemoveStatusChangeHandler(self::ClosedEvent, $this);
 
-		if (!$this->TryNextIteration())
+		if (!$this->tryNextIteration())
 		{
 			$this->workflow->CloseActivity($this);
 		}
@@ -107,13 +115,13 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 		$this->cycleCounter = 0;
 	}
 
-	private function TryNextIteration()
+	private function tryNextIteration()
 	{
 		$this->outputPortId = 1;
 
 		if (
-			$this->executionStatus == CBPActivityExecutionStatus::Canceling
-			|| $this->executionStatus == CBPActivityExecutionStatus::Faulting
+			$this->executionStatus === CBPActivityExecutionStatus::Canceling
+			|| $this->executionStatus === CBPActivityExecutionStatus::Faulting
 		)
 		{
 			return false;
@@ -152,8 +160,18 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 		return false;
 	}
 
-	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters,
-		$arWorkflowVariables, $arCurrentValues = null, $formName = "")
+	public static function GetPropertiesDialog(
+		$documentType,
+		$activityName,
+		$arWorkflowTemplate,
+		$arWorkflowParameters,
+		$arWorkflowVariables,
+		$arCurrentValues = null,
+		$formName = "",
+		$popupWindow = null,
+		$currentSiteId = null,
+		$arWorkflowConstants = null,
+	)
 	{
 		if (!is_array($arWorkflowParameters))
 		{
@@ -207,6 +225,9 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 					(($defaultCondition == $activityKey) ? $defaultConditionValue : null),
 					$arCurrentValues,
 					$formName,
+					$popupWindow,
+					$currentSiteId,
+					$arWorkflowConstants,
 				]
 			);
 			if ($v == null)
@@ -275,8 +296,16 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 		return array_merge($arErrors, parent::ValidateProperties($arTestProperties, $user));
 	}
 
-	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate,
-		&$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$arErrors)
+	public static function GetPropertiesDialogValues(
+		$documentType,
+		$activityName,
+		&$arWorkflowTemplate,
+		&$arWorkflowParameters,
+		&$arWorkflowVariables,
+		$arCurrentValues,
+		&$arErrors,
+		$arWorkflowConstants = null
+	)
 	{
 		$runtime = CBPRuntime::GetRuntime();
 		$arActivities = $runtime->SearchActivitiesByType("condition", $documentType);
@@ -300,6 +329,7 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 				$arWorkflowVariables,
 				$arCurrentValues,
 				&$arErrors,
+				$arWorkflowConstants,
 			]
 		);
 
@@ -379,5 +409,23 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 		}
 
 		return $rootWhile;
+	}
+
+	private function hasIterations(): bool
+	{
+		if (!empty($this->arActivities))
+		{
+			return true;
+		}
+
+		$rootActivity = $this->getRootActivity();
+		if ($rootActivity instanceof CBPNodeWorkflowActivity)
+		{
+			$names = $rootActivity->getOutputNames($this->getName());
+
+			return !empty($names);
+		}
+
+		return false;
 	}
 }

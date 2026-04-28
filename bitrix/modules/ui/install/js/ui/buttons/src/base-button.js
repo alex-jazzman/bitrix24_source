@@ -138,6 +138,11 @@ export default class BaseButton implements IButton
 			[ButtonTag.DIV]: () => Tag.render`<div class="${this.getBaseClass()}"></div>`,
 		}[this.getTag()]?.() ?? Tag.render`<button class="${this.getBaseClass()}"></button>`;
 
+		if (this.isDisabled() === false)
+		{
+			Dom.attr(this.button, 'tabindex', '0');
+		}
+
 		return this.button;
 	}
 
@@ -455,7 +460,11 @@ export default class BaseButton implements IButton
 	setDisabled(disabled: boolean = true): this
 	{
 		this.disabled = disabled;
-		this.setProps({ disabled: disabled ? true : null });
+
+		this.setProps({
+			disabled: disabled ? true : null,
+			tabindex: disabled ? null : '0',
+		});
 
 		return this;
 	}

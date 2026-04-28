@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/recent/config/chats', (require, exports, modu
 	const {
 		DialogType,
 		ActionByUserType,
+		RecentTab,
 	} = require('im/messenger/const');
 	const { UserPermission } = require('im/messenger/lib/permission-manager');
 	const { openChatCreateByActiveRecentTab } = require('im/messenger/lib/open-chat-create');
@@ -60,7 +61,13 @@ jn.define('im/messenger/controller/recent/config/chats', (require, exports, modu
 				props: {},
 			},
 			[RecentServiceName.search]: {
-				extension: 'im/messenger/controller/recent/service/search/chat',
+				extension: 'im/messenger/controller/recent/service/search/common',
+				props: {
+					recentTab: RecentTab.chat,
+				},
+			},
+			[RecentServiceName.filter]: {
+				extension: 'im/messenger/controller/recent/service/filter/common',
 				props: {},
 			},
 			[RecentServiceName.render]: {
@@ -68,6 +75,7 @@ jn.define('im/messenger/controller/recent/config/chats', (require, exports, modu
 				props: {
 					sections: ['call', 'pinned', 'general'],
 					defaultSection: 'general',
+					convertorExtension: 'im/messenger/controller/recent/service/render/lib/convertor/chats',
 				},
 			},
 			[RecentServiceName.vuex]: {

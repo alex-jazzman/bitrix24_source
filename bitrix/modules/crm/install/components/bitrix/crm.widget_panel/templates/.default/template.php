@@ -24,7 +24,8 @@ CJSCore::Init([
 	'popup',
 	'date',
 	'sidepanel',
-	'crm.autorun'
+	'crm.autorun',
+	'intranet.old-interface.intranet-common',
 ]);
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');

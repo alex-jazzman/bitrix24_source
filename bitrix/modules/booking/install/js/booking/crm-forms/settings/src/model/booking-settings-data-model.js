@@ -1,6 +1,10 @@
-import { CrmFormTemplateId, CrmFormSettingsDataPropName } from 'booking.const';
+import { CrmFormTemplateId, CrmFormSettingsDataPropName, CrmFormTemplatesWithSku } from 'booking.const';
 
-import { defaultBookingDefaultForm, defaultBookingAutoSelectionForm } from '../const';
+import {
+	defaultBookingDefaultForm,
+	defaultBookingAutoSelectionForm,
+	defaultSkuBookingForm,
+} from '../const';
 import type {
 	BookingSettingsData,
 	BookingSettingsDataProperty,
@@ -34,22 +38,41 @@ export class BookingSettingsDataModel
 		};
 	}
 
-	#getAutoSelectionFormByTemplate(): BookingAutoSelectionForm
+	#isTemplateWithSkus(templateId: string): boolean
 	{
-		return defaultBookingAutoSelectionForm;
+		return CrmFormTemplatesWithSku.includes(templateId);
+	}
+
+	#getAutoSelectionFormByTemplate(templateId: string): BookingAutoSelectionForm
+	{
+		const form = defaultBookingAutoSelectionForm;
+
+		if (this.#isTemplateWithSkus(templateId))
+		{
+			return { ...form, ...defaultSkuBookingForm };
+		}
+
+		return form;
 	}
 
 	#getDefaultFormByTemplate(templateId: TemplateId): BookingDefaultForm
 	{
-		if (templateId === CrmFormTemplateId.BookingAnyResource)
+		let form = { ...defaultBookingDefaultForm };
+
+		if (
+			templateId === CrmFormTemplateId.BookingAnyResource
+			|| templateId === CrmFormTemplateId.BookingAnyResourceSku
+		)
 		{
-			return {
-				...defaultBookingDefaultForm,
-				hasSlotsAllAvailableResources: true,
-			};
+			form.hasSlotsAllAvailableResources = true;
 		}
 
-		return { ...defaultBookingDefaultForm };
+		if (this.#isTemplateWithSkus(templateId))
+		{
+			form = { ...form, ...defaultSkuBookingForm };
+		}
+
+		return form;
 	}
 
 	get dataSettingsProperty(): BookingSettingsDataProperty

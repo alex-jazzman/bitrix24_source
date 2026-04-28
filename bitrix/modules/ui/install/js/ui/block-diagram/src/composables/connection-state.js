@@ -1,6 +1,6 @@
 import { toValue, computed } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
-import { getBeziePath, getSmoothStepPath, BEZIER_DIR } from '../utils';
+import { getBeziePath, getSmoothStepPath, BEZIER_DIR, distance } from '../utils';
 import { PORT_POSITION } from '../constants';
 import type { PathInfo } from '../utils';
 import type { DiagramConnection, DiagramConnectionViewType } from '../../types';
@@ -26,6 +26,8 @@ export type UseConnectionStateOptions = {
 	viewType: DiagramConnectionViewType;
 };
 
+const MIN_DISTANCE_DISPLAY_BIZIER_LINE = 100;
+
 const DEFAULT_PATH_INFO: PathInfo = {
 	path: '',
 	center: {
@@ -33,8 +35,6 @@ const DEFAULT_PATH_INFO: PathInfo = {
 		y: 0,
 	},
 };
-const SMOOTHSTEP_OFFSET = 30;
-const SMOOTHSTEP_BORDER_RADIUS = 10;
 
 // eslint-disable-next-line max-lines-per-function
 export function useConnectionState(connection: DiagramConnection): UseConnectionState
@@ -42,10 +42,15 @@ export function useConnectionState(connection: DiagramConnection): UseConnection
 	const {
 		portsRectMap,
 		isDisabledBlockDiagram,
+		connectionsOffsetMap,
+		connectionOffset,
+		connectionBendOffset,
+		connectionBorderRadius,
 	} = useBlockDiagram();
 
 	const connectionPortsPosition = computed((): ConnectionPortPosition | null => {
 		const {
+			id: connectionId,
 			sourceBlockId,
 			sourcePortId,
 			targetBlockId,
@@ -67,12 +72,37 @@ export function useConnectionState(connection: DiagramConnection): UseConnection
 			return null;
 		}
 
+		const hasManyConnectionSourcePort = Object.keys(
+			toValue(connectionsOffsetMap)?.[sourceBlockId]?.[sourcePortId] ?? {},
+		).length > 1;
+
+		const hasManyConnectionTargetPort = Object.keys(
+			toValue(connectionsOffsetMap)?.[targetBlockId]?.[targetPortId] ?? {},
+		).length > 1;
+
+		const {
+			firstSegmentSize: sourceConnectionFirstSegmentSize = 0,
+			secondSegmentOrder: sourceSecondSegmentOrder = 0,
+		} = toValue(connectionsOffsetMap)
+			?.[sourceBlockId]
+			?.[sourcePortId]
+			?.[connectionId] ?? {};
+		const {
+			firstSegmentSize: targetConnectionFirstSegmentSize = 0,
+			secondSegmentOrder: targetSecondSegmentOrder = 0,
+		} = toValue(connectionsOffsetMap)
+			?.[targetBlockId]
+			?.[targetPortId]
+			?.[connectionId] ?? {};
 		const {
 			x: sourceX,
 			y: sourceY,
 			width: sourceWidth,
 			height: sourceHeight,
 			position: sourcePosition,
+			firstSegmentSize: sourceFirstSegmentSize,
+			secondSegmentSize: sourceSecondSegmentSize,
+			secondSegmentSizeWithoutOffset: sourceSecondSegmentSizeWithoutOffset,
 		} = toValue(portsRectMap)[sourceBlockId][sourcePortId];
 		const {
 			x: targetX,
@@ -80,6 +110,9 @@ export function useConnectionState(connection: DiagramConnection): UseConnection
 			width: targetWidth,
 			height: targetHeight,
 			position: targetPosition,
+			firstSegmentSize: targetFirstSegmentSize,
+			secondSegmentSize: targetSecondSegmentSize,
+			secondSegmentSizeWithoutOffset: targetSecondSegmentSizeWithoutOffset,
 		} = toValue(portsRectMap)[targetBlockId][targetPortId];
 
 		return {
@@ -87,11 +120,23 @@ export function useConnectionState(connection: DiagramConnection): UseConnection
 				x: sourceX + (sourceWidth / 2),
 				y: sourceY + (sourceHeight / 2),
 				position: sourcePosition,
+				firstSegmentSize: hasManyConnectionSourcePort
+					? sourceConnectionFirstSegmentSize
+					: sourceFirstSegmentSize,
+				secondSegmentSize: hasManyConnectionSourcePort
+					? sourceSecondSegmentSizeWithoutOffset + (toValue(connectionBendOffset) * sourceSecondSegmentOrder)
+					: sourceSecondSegmentSize,
 			},
 			targetPort: {
 				x: targetX + (targetWidth / 2),
 				y: targetY + (targetHeight / 2),
 				position: targetPosition,
+				firstSegmentSize: hasManyConnectionTargetPort
+					? targetConnectionFirstSegmentSize
+					: targetFirstSegmentSize,
+				secondSegmentSize: hasManyConnectionTargetPort
+					? targetSecondSegmentSizeWithoutOffset + (toValue(connectionBendOffset) * targetSecondSegmentOrder)
+					: targetSecondSegmentSize,
 			},
 		};
 	});
@@ -105,25 +150,26 @@ export function useConnectionState(connection: DiagramConnection): UseConnection
 		const sourcePosition = toValue(connectionPortsPosition).sourcePort.position;
 		const targetPosition = toValue(connectionPortsPosition).targetPort.position;
 
-		const isVerticalDirBezier = sourcePosition !== targetPosition
+		const isVerticalDirection = sourcePosition !== targetPosition
 			&& ([PORT_POSITION.TOP, PORT_POSITION.BOTTOM]).includes(sourcePosition)
 			&& ([PORT_POSITION.TOP, PORT_POSITION.BOTTOM]).includes(targetPosition);
 
-		const isHorizontalDirBezier = sourcePosition !== targetPosition
+		const isHorizontalDirection = sourcePosition !== targetPosition
 			&& ([PORT_POSITION.LEFT, PORT_POSITION.RIGHT]).includes(sourcePosition)
 			&& ([PORT_POSITION.LEFT, PORT_POSITION.RIGHT]).includes(targetPosition);
 
-		const { path: smoothStepPath, center, points } = getSmoothStepPath({
+		const { points } = getSmoothStepPath({
 			sourceX: toValue(connectionPortsPosition).sourcePort.x,
 			sourceY: toValue(connectionPortsPosition).sourcePort.y,
 			sourcePosition,
 			targetX: toValue(connectionPortsPosition).targetPort.x,
 			targetY: toValue(connectionPortsPosition).targetPort.y,
 			targetPosition,
-			borderRadius: SMOOTHSTEP_BORDER_RADIUS,
-			offset: SMOOTHSTEP_OFFSET,
+			borderRadius: toValue(connectionBorderRadius),
+			offset: toValue(connectionOffset),
 		});
 		const [p1, p2, p3, p4, p5, p6] = points;
+		const isDisplayBezierLineByDistance = distance(p1, p6) < MIN_DISTANCE_DISPLAY_BIZIER_LINE;
 
 		const isXConsistOfThreeParts = p1.x === p2.x
 			&& p1.x === p3.x
@@ -135,20 +181,65 @@ export function useConnectionState(connection: DiagramConnection): UseConnection
 			&& p4.y === p6.y;
 
 		if (
-			(isXConsistOfThreeParts && isVerticalDirBezier)
-			|| (isYConsistOfThreeParts && isHorizontalDirBezier)
+			isDisplayBezierLineByDistance
+			|| (isXConsistOfThreeParts && isVerticalDirection)
+			|| (isYConsistOfThreeParts && isHorizontalDirection)
 		)
 		{
 			return getBeziePath(
 				toValue(connectionPortsPosition).sourcePort,
 				toValue(connectionPortsPosition).targetPort,
-				isVerticalDirBezier ? BEZIER_DIR.VERTICAL : BEZIER_DIR.HORIZONTAL,
+				isVerticalDirection ? BEZIER_DIR.VERTICAL : BEZIER_DIR.HORIZONTAL,
 			);
 		}
 
+		const {
+			x: sourceX,
+			y: sourceY,
+			firstSegmentSize: sourceFirtsSegmentSize,
+			secondSegmentSize,
+		} = toValue(connectionPortsPosition).sourcePort;
+		const {
+			x: targetX,
+			y: targetY,
+			firstSegmentSize: targetFirstSegmentSize,
+		} = toValue(connectionPortsPosition).targetPort;
+
+		const firstSegmentTargetX = isHorizontalDirection
+			? (sourceX + targetX) / 2
+			: sourceX + secondSegmentSize;
+		const firstSegmentTargetY = isHorizontalDirection
+			? sourceY + secondSegmentSize
+			: (sourceY + targetY) / 2;
+
+		const firstSegmentPath = getSmoothStepPath({
+			sourceX,
+			sourceY,
+			targetX: firstSegmentTargetX,
+			targetY: firstSegmentTargetY,
+			sourcePosition,
+			targetPosition: isHorizontalDirection ? PORT_POSITION.RIGHT : PORT_POSITION.BOTTOM,
+			borderRadius: toValue(connectionBorderRadius),
+			offset: sourceFirtsSegmentSize,
+		});
+
+		const secondSegmentPath = getSmoothStepPath({
+			sourceX: firstSegmentTargetX,
+			sourceY: firstSegmentTargetY,
+			targetX,
+			targetY,
+			sourcePosition: isHorizontalDirection ? PORT_POSITION.LEFT : PORT_POSITION.TOP,
+			targetPosition,
+			borderRadius: toValue(connectionBorderRadius),
+			offset: targetFirstSegmentSize,
+		});
+
 		return {
-			path: smoothStepPath,
-			center,
+			path: `${firstSegmentPath.path} ${secondSegmentPath.path}`,
+			center: {
+				x: firstSegmentTargetX,
+				y: firstSegmentTargetY,
+			},
 		};
 	});
 

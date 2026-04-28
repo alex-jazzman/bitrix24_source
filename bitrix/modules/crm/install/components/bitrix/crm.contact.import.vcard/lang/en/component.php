@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_CONTACT_NAV_TITLE_LIST"] = "Import contacts from vCard";
+$MESS["CRM_CSV_NF_ERROR"] = "Upload import file to continue.";
 $MESS["CRM_FIELD_DUP_CONTROL_ENABLE_EMAIL"] = "E-mail";
 $MESS["CRM_FIELD_DUP_CONTROL_ENABLE_PERSON"] = "Full name";
 $MESS["CRM_FIELD_DUP_CONTROL_ENABLE_PHONE"] = "Phone";

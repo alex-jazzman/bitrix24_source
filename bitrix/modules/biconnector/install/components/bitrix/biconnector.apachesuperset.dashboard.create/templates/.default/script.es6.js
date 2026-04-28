@@ -10,6 +10,7 @@ type Props = {
 	signedParameters: string,
 	defaultValues: Object,
 	paramList: Object,
+	requiredParamList: Array,
 	groupIds: number[],
 	activeUrlParamsSelector: boolean,
 };
@@ -46,8 +47,10 @@ class SupersetDashboardCreateManager
 			scopes: new Set(),
 			params: new Set(),
 			paramList: this.#props.paramList,
-				activeUrlParamsSelector: this.#props.activeUrlParamsSelector,
-				isNewDashboard: true,
+			activeUrlParamsSelector: this.#props.activeUrlParamsSelector,
+			isNewDashboard: true,
+			requiredParamList: this.#props.requiredParamList,
+			isNew: true,
 		});
 		Dom.append(this.#paramsSelector.getLayout(), this.#node);
 	}

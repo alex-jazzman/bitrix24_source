@@ -1,8 +1,8 @@
 import { Core } from 'im.v2.application.core';
-import { RestMethod } from 'im.v2.const';
+import { RecentType, RestMethod } from 'im.v2.const';
 import { BaseRecentService, type RecentRestResult } from 'im.v2.provider.service.recent';
 
-import type { RawMessage } from 'im.v2.provider.service.types';
+import type { RawMessage, RawRecentItem } from 'im.v2.provider.service.types';
 
 export class ChannelService extends BaseRecentService
 {
@@ -13,9 +13,12 @@ export class ChannelService extends BaseRecentService
 		return RestMethod.imV2RecentChannelTail;
 	}
 
-	getRecentSaveActionName(): string
+	saveRecentItems(recentItems: RawRecentItem[]): Promise
 	{
-		return 'recent/setChannel';
+		return Core.getStore().dispatch('recent/setCollection', {
+			type: RecentType.openChannel,
+			items: recentItems,
+		});
 	}
 
 	getRequestFilter(firstPage: boolean = false): Record
@@ -32,7 +35,7 @@ export class ChannelService extends BaseRecentService
 			return;
 		}
 
-		void Core.getStore().dispatch('recent/clearChannelCollection');
+		void Core.getStore().dispatch('recent/clearCollection', { type: RecentType.openChannel });
 	}
 
 	handlePaginationField(result: RecentRestResult): void

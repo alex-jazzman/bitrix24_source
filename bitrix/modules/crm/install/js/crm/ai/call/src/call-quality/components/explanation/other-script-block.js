@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Loc } from 'main.core';
 
 export const OtherScriptBlock = {
@@ -19,7 +20,7 @@ export const OtherScriptBlock = {
 		},
 		text(): string
 		{
-			return Loc.getMessage('CRM_COPILOT_CALL_QUALITY_OLD_EXPLANATION_TEXT');
+			return Loc.getMessage('CRM_COPILOT_CALL_QUALITY_OLD_EXPLANATION_TEXT', NameService.copilotNameReplacement());
 		},
 		buttonShowText(): string
 		{

@@ -5,8 +5,11 @@ $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_RESPONSIBLE"] = "Кто будет от
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_REVIEWER"] = "Кто будет согласовывать";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_EDITOR"] = "Кто будет заполнять";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_EMPLOYEE"] = "Сотрудники, которые будут подписывать документ";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_FILE"] = "Замените файл для подписи";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_FILE_HINT"] = "Выберите, откуда взять документ для подписи, или оставьте это поле пустым, если хотите использовать файл из шаблона";
 
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_EMPTY_TEMPLATE_ID"] = "Не выбран шаблон документа";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_FILE_ID"] = "Некорректный файл";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_TEMPLATE_TYPE"] = "Неверный тип шаблона документа";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_EMPLOYEE_NOT_SET"] = "Выберите сотрудников, которые будут подписывать документ";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_RESPONSIBLE_NOT_SET"] = "Выберите сотрудника, который будет ответственным за документ";

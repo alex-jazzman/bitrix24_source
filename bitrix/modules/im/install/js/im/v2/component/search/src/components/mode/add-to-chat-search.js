@@ -201,7 +201,7 @@ export const AddToChatSearch = {
 						:key="item.dialogId"
 						:dialogId="item.dialogId"
 						:selected="isSelected(item.dialogId)"
-						:replaceWithNotes="false"
+						:selfChatReplace="false"
 						@clickItem="onClickItemRecentItem($event, index)"
 					/>
 				</template>
@@ -214,7 +214,7 @@ export const AddToChatSearch = {
 						:withDate="true"
 						:isSelected="isSelected(item.dialogId)"
 						:query="query"
-						:replaceWithNotes="false"
+						:selfChatReplace="false"
 						@clickItem="onClickItem($event, index)"
 					/>
 					<EmptyState v-if="isEmptyState" />

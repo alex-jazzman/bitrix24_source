@@ -71,11 +71,7 @@ export const CommentsPanel = {
 		},
 		unreadCount(): string
 		{
-			const counter = this.$store.getters['counters/getSpecificCommentsCounter']({
-				channelId: this.dialog.chatId,
-				commentChatId: this.commentsChatId,
-			});
-
+			const counter = this.$store.getters['counters/getCounterByChatId'](this.commentsChatId);
 			if (!counter)
 			{
 				return '';

@@ -188,9 +188,13 @@ this.BX.Sign = this.BX.Sign || {};
 	var _onChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChange");
 	var _getCheckbox = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCheckbox");
 	var _isDisabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDisabled");
+	var _isSelectionDisabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSelectionDisabled");
 	class ListItem extends main_core_events.EventEmitter {
 	  constructor(_options) {
 	    super();
+	    Object.defineProperty(this, _isSelectionDisabled, {
+	      value: _isSelectionDisabled2
+	    });
 	    Object.defineProperty(this, _isDisabled, {
 	      value: _isDisabled2
 	    });
@@ -236,7 +240,7 @@ this.BX.Sign = this.BX.Sign || {};
 						<div class="ui-ctl-label-text">${0}</div>
 					</label>
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _isDisabled)[_isDisabled]() ? " " + fieldDisabledClassName : '', babelHelpers.classPrivateFieldLooseBase(this, _getCheckbox)[_getCheckbox](), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _getOptions$1)[_getOptions$1]().field.caption));
+			`), babelHelpers.classPrivateFieldLooseBase(this, _isDisabled)[_isDisabled]() ? " " + fieldDisabledClassName : '', babelHelpers.classPrivateFieldLooseBase(this, _isSelectionDisabled)[_isSelectionDisabled]() ? '' : babelHelpers.classPrivateFieldLooseBase(this, _getCheckbox)[_getCheckbox](), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _getOptions$1)[_getOptions$1]().field.caption));
 	    });
 	  }
 	  renderTo(targetContainer) {
@@ -273,6 +277,10 @@ this.BX.Sign = this.BX.Sign || {};
 	function _isDisabled2() {
 	  var _babelHelpers$classPr;
 	  return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getOptions$1)[_getOptions$1]().disabled) != null ? _babelHelpers$classPr : false;
+	}
+	function _isSelectionDisabled2() {
+	  var _babelHelpers$classPr2;
+	  return (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getOptions$1)[_getOptions$1]().disableSelection) != null ? _babelHelpers$classPr2 : false;
 	}
 	ListItem.Type = {
 	  CHECKBOX: 'checkbox',
@@ -666,8 +674,10 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 	function _load2() {
 	  const {
-	    controllerOptions = {}
+	    controllerOptions = {},
+	    categoryCaptions = {}
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]();
+	  controllerOptions.priorityCategories = Object.keys(categoryCaptions);
 	  return babelHelpers.classPrivateFieldLooseBase(this, _getBackend)[_getBackend]().getData({
 	    options: controllerOptions
 	  }).then(({
@@ -772,7 +782,8 @@ this.BX.Sign = this.BX.Sign || {};
 	          return selectedField.name === field.name;
 	        }),
 	        type: babelHelpers.classPrivateFieldLooseBase(this, _isMultiple)[_isMultiple]() ? ListItem.Type.CHECKBOX : ListItem.Type.RADIO,
-	        disabled: babelHelpers.classPrivateFieldLooseBase(this, _isFieldDisabled)[_isFieldDisabled](field)
+	        disabled: babelHelpers.classPrivateFieldLooseBase(this, _isFieldDisabled)[_isFieldDisabled](field),
+	        disableSelection: babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]().disableSelection
 	      });
 	    });
 	  }
@@ -987,9 +998,11 @@ this.BX.Sign = this.BX.Sign || {};
 	function _getSliderLayout2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('sliderLayout', () => {
 	    return new Promise(resolve => {
+	      var _babelHelpers$classPr5;
 	      ui_sidepanel_layout.Layout.createLayout({
 	        extensions: ['sign.b2e.field-selector'],
 	        title: babelHelpers.classPrivateFieldLooseBase(this, _getTitle)[_getTitle](),
+	        hint: (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]().hint) != null ? _babelHelpers$classPr5 : '',
 	        content: () => {
 	          return babelHelpers.classPrivateFieldLooseBase(this, _getLayout)[_getLayout]();
 	        },
@@ -1007,6 +1020,10 @@ this.BX.Sign = this.BX.Sign || {};
 	          SaveButton,
 	          closeButton
 	        }) => {
+	          const options = babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]();
+	          if (options.disableSelection) {
+	            return [closeButton];
+	          }
 	          return [new SaveButton({
 	            text: main_core.Loc.getMessage('SIGN_B2E_FIELDS_SELECTOR_APPLY_BUTTON_LABEL'),
 	            onclick: babelHelpers.classPrivateFieldLooseBase(this, _onSaveClick)[_onSaveClick].bind(this)

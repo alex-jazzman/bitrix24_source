@@ -4,3 +4,4 @@ $MESS["SIGN_CMP_BASE_ERROR_INCORRECT_SESSID"] = "The session has expired. Please
 $MESS["SIGN_CMP_BASE_ERROR_MODULE_SIGN_NOT_INSTALLED"] = "The required module is not installed [#MODULE_NAME#]";
 $MESS["SIGN_CMP_BASE_ERROR_WRONG_LANG"] = "Current language is not supported. Available languages: %languages%.";
 $MESS["SIGN_CMP_BASE_HIDDEN_PAGE"] = "Hidden page";
+$MESS["SIGN_CMP_DEFAULT_PAGE_TITLE"] = "Document signing";

@@ -9,5 +9,6 @@ return [
 		'more-menu/aha-moment',
 		'utils/function',
         'qrauth/utils',
+		'more-menu/analytics',
 	],
 ];

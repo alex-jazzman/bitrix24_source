@@ -178,7 +178,7 @@
 	--o-ui-icon-set__path_location: url('/bitrix/js/ui/icon-set/outline/images/location.svg');
 	--o-ui-icon-set__path_log-in: url('/bitrix/js/ui/icon-set/outline/images/log-in.svg');
 	--o-ui-icon-set__path_log-out: url('/bitrix/js/ui/icon-set/outline/images/log-out.svg');
-	--o-ui-icon-set__path_lower-right-arrow: url('/bitrix/js/ui/icon-set/outline/images/lower-right-arrow.svg');
+	--o-ui-icon-set__path_lower-right-arrow: url('/bitrix/js/ui/icon-set/outline/images/lower-right-arrow.svg?v2');
 	--o-ui-icon-set__path_magic-wand: url('/bitrix/js/ui/icon-set/outline/images/magic-wand.svg');
 	--o-ui-icon-set__path_mail-counter: url('/bitrix/js/ui/icon-set/outline/images/mail-counter.svg');
 	--o-ui-icon-set__path_mail-forward: url('/bitrix/js/ui/icon-set/outline/images/mail-forward.svg');
@@ -620,6 +620,15 @@
 	--o-ui-icon-set__path_text-format-reset: url('/bitrix/js/ui/icon-set/outline/images/text-format-reset.svg');
 	--o-ui-icon-set__path_spoiler: url('/bitrix/js/ui/icon-set/outline/images/spoiler.svg');
 	--o-ui-icon-set__path_open-new: url('/bitrix/js/ui/icon-set/outline/images/open-new.svg');
+	--o-ui-icon-set__path_list-viewer: url('/bitrix/js/ui/icon-set/outline/images/list-viewer.svg');
+	--o-ui-icon-set__path_video-record-2: url('/bitrix/js/ui/icon-set/outline/images/video-record-2.svg');
+	--o-ui-icon-set__path_three-persons-check: url('/bitrix/js/ui/icon-set/outline/images/three-persons-check.svg');
+	--o-ui-icon-set__path_package-receive: url('/bitrix/js/ui/icon-set/outline/images/package-receive.svg');
+	--o-ui-icon-set__path_package-cancel: url('/bitrix/js/ui/icon-set/outline/images/package-cancel.svg');
+	--o-ui-icon-set__path_lower-left-arrow: url('/bitrix/js/ui/icon-set/outline/images/lower-left-arrow.svg');
+
+	--o-ui-icon-set__path_mail-plus: url('/bitrix/js/ui/icon-set/outline/images/mail-plus.svg');
+	--o-ui-icon-set__path_messages-multi: url('/bitrix/js/ui/icon-set/outline/images/messages-multi.svg');
 }
 
 .ui-icon-set.--o-double-gis {
@@ -3100,4 +3109,36 @@
 
 .ui-icon-set.--o-open-new {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_open-new);
+}
+
+.ui-icon-set.--o-list-viewer {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_list-viewer);
+}
+
+.ui-icon-set.--o-video-record-2 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_video-record-2);
+}
+
+.ui-icon-set.--o-three-persons-check {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_three-persons-check);
+}
+
+.ui-icon-set.--o-package-receive {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_package-receive);
+}
+
+.ui-icon-set.--o-package-cancel {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_package-cancel);
+}
+
+.ui-icon-set.--o-lower-left-arrow {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_lower-left-arrow);
+}
+
+.ui-icon-set.--o-mail-plus {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_mail-plus);
+}
+
+.ui-icon-set.--o-messages-multi {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_messages-multi);
 }

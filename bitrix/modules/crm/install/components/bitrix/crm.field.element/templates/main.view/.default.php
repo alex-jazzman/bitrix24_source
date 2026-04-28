@@ -13,7 +13,7 @@ use Bitrix\Main\Text\HtmlFilter;
  * @var array $arResult
  */
 
-Bitrix\Main\UI\Extension::load(['ui.tooltip', 'ui.fonts.opensans']);
+Bitrix\Main\UI\Extension::load(['ui.tooltip', 'ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 
 Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 if(\CCrmSipHelper::isEnabled())

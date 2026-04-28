@@ -2,9 +2,7 @@
  * @module im/messenger/controller/dialog/lib/header/title/title
  */
 jn.define('im/messenger/controller/dialog/lib/header/title/title', (require, exports, module) => {
-	const { Loc } = require('im/messenger/loc');
-
-	const { AppStatus, DialogType } = require('im/messenger/const');
+	const { DialogType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserUtils } = require('im/messenger/lib/utils');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
@@ -13,6 +11,7 @@ jn.define('im/messenger/controller/dialog/lib/header/title/title', (require, exp
 		DialogHelper,
 		UserHelper,
 	} = require('im/messenger/lib/helper');
+	const { applyAppStatusToTitleParams } = require('im/messenger/controller/dialog/lib/header/title/status');
 
 	/**
 	 * @class HeaderTitle
@@ -70,39 +69,16 @@ jn.define('im/messenger/controller/dialog/lib/header/title/title', (require, exp
 				return result;
 			}
 
-			let status = '';
 			if (DialogHelper.isChatId(dialogId) && !result.hasInputActions)
 			{
 				const userData = serviceLocator.get('core').getStore().getters['usersModel/getById'](dialogId);
-				status = userData?.status ? (new UserUtils()).getLastDateText(userData) : result.detailText;
+				if (userData?.status)
+				{
+					result.detailText = (new UserUtils()).getLastDateText(userData);
+				}
 			}
 
-			let detailLottie = null;
-			const appStatus = serviceLocator.get('core').getAppStatus();
-			switch (appStatus)
-			{
-				case AppStatus.networkWaiting:
-					status = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_TITLE_NETWORK_WAITING');
-					break;
-
-				case AppStatus.connection:
-					status = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_TITLE_CONNECTION');
-					break;
-
-				case AppStatus.sync:
-					status = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_TITLE_SYNC');
-					break;
-
-				default:
-					detailLottie = result.detailLottie;
-					break;
-			}
-
-			if (status)
-			{
-				result.detailLottie = detailLottie;
-				result.detailText = status;
-			}
+			applyAppStatusToTitleParams(result);
 
 			return result;
 		}

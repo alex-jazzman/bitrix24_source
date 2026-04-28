@@ -32,7 +32,11 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { VideoNoteAnalytics } = require('im/messenger/provider/services/analytics/video-note');
 	const { NotificationAnalytics } = require('im/messenger/provider/services/analytics/src/notification');
 	const { Reactions } = require('im/messenger/provider/services/analytics/src/reaction');
+	const { Mention } = require('im/messenger/provider/services/analytics/src/mention');
 	const { StickerAnalytics } = require('im/messenger/provider/services/analytics/src/sticker');
+	const { DialogTextFormatAnalytics } = require('im/messenger/provider/services/analytics/src/dialog-text-format');
+	const { SearchAnalytics } = require('im/messenger/provider/services/analytics/src/search');
+	const { RecentAnalytics } = require('im/messenger/provider/services/analytics/src/recent');
 
 	/** @type {AnalyticsService} */
 	let instance = null;
@@ -88,10 +92,18 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		#assistantButtonAnalytics;
 		/** @type {NotificationAnalytics} */
 		#notificationAnalytics;
+		/** @type {RecentAnalytics} */
+		#recentFilter;
 		/** @type {Reactions} */
 		#reactions;
+		/** @type {Mention} */
+		#mention;
 		/** @type {StickerAnalytics} */
 		#sticker;
+		/** @type {DialogTextFormatAnalytics} */
+		#dialogTextFormat;
+		/** @type {SearchAnalytics} */
+		#search;
 
 		static getInstance()
 		{
@@ -274,11 +286,31 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			return this.#assistantButtonAnalytics;
 		}
 
+		/**
+		 * @return {RecentAnalytics}
+		 */
+		get recentAnalytics()
+		{
+			this.#recentFilter = this.#recentFilter ?? new RecentAnalytics();
+
+			return this.#recentFilter;
+		}
+
 		get reactions()
 		{
 			this.#reactions = this.#reactions ?? new Reactions();
 
 			return this.#reactions;
+		}
+
+		/**
+		 * @return {Mention}
+		 */
+		get mention()
+		{
+			this.#mention = this.#mention ?? new Mention();
+
+			return this.#mention;
 		}
 
 		/**
@@ -289,6 +321,26 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			this.#sticker = this.#sticker ?? new StickerAnalytics();
 
 			return this.#sticker;
+		}
+
+		/**
+		 * @return {DialogTextFormatAnalytics}
+		 */
+		get dialogTextFormatAnalytics()
+		{
+			this.#dialogTextFormat = this.#dialogTextFormat ?? new DialogTextFormatAnalytics();
+
+			return this.#dialogTextFormat;
+		}
+
+		/**
+		 * @return {SearchAnalytics}
+		 */
+		get searchAnalytics()
+		{
+			this.#search = this.#search ?? new SearchAnalytics();
+
+			return this.#search;
 		}
 
 		/**
@@ -497,6 +549,14 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendStartCreation(params)
 		{
 			return this.chatCreate.sendStartCreation(params);
+		}
+
+		/**
+		 * @param {{chatId: number}} params
+		 */
+		sendCreateCopilotDialog(params)
+		{
+			return this.chatCreate.sendCreateCopilotDialog(params);
 		}
 
 		/**
@@ -739,6 +799,14 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		/**
 		 * @param {DialogId} dialogId
 		 */
+		sendAddParticipantFromMentionPanel(dialogId)
+		{
+			this.mention.sendAddParticipant(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
 		sendOpenStickerSelector(dialogId)
 		{
 			this.stickerAnalytics.sendOpenStickerSelector(dialogId);
@@ -752,6 +820,55 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendAddStickerPack()
 		{
 			this.stickerAnalytics.sendAddStickerPack();
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {string} actionId
+		 */
+		sendUseTextFormatting(dialogId, actionId)
+		{
+			this.dialogTextFormatAnalytics.sendUseTextFormatting(dialogId, actionId);
+		}
+
+		sendOpenSearch()
+		{
+			this.searchAnalytics.sendOpenSearch();
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {string} recentSelectorSection
+		 */
+		sendClickRecentSuggest(dialogId, recentSelectorSection)
+		{
+			this.searchAnalytics.sendClickRecentSuggest(dialogId, recentSelectorSection);
+		}
+
+		sendStartSearch()
+		{
+			this.searchAnalytics.sendStartSearch();
+		}
+
+		/**
+		 * @param {boolean} hasResult
+		 */
+		sendSearchResult(hasResult)
+		{
+			this.searchAnalytics.sendSearchResult(hasResult);
+		}
+
+		sendCancelSearch()
+		{
+			this.searchAnalytics.sendCancelSearch();
+		}
+
+		/**
+		 * @param {number} position
+		 */
+		sendSelectSearchResult(position)
+		{
+			this.searchAnalytics.sendSelectSearchResult(position);
 		}
 	}
 

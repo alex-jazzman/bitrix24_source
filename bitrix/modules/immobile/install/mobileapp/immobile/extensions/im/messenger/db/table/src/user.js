@@ -9,6 +9,8 @@ jn.define('im/messenger/db/table/user', (require, exports, module) => {
 	} = require('im/messenger/db/table/table');
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { getStartWordsSearchVariants } = require('im/messenger/db/helper/start-words');
 
 	/**
 	 * @extends {Table<UserStoredData>}
@@ -99,6 +101,45 @@ jn.define('im/messenger/db/table/user', (require, exports, module) => {
 			}
 
 			return value;
+		}
+
+		/**
+		 * @param {string} searchText
+		 * @param {'asc'|'desc'} order='asc'
+		 * @param {number} limit=25
+		 * @param {boolean} shouldRestoreRows
+		 *
+		 * @returns {Promise<{items: *[]}>}
+		 */
+		async searchByText(
+			searchText,
+			order = 'desc',
+			limit = 25,
+			shouldRestoreRows = true,
+		)
+		{
+			if (!this.isSupported || !Feature.isLocalStorageEnabled)
+			{
+				return {
+					items: [],
+				};
+			}
+
+			const { sqlCondition, values } = getStartWordsSearchVariants(['name', 'workPosition'], searchText);
+			const result = await this.executeSql({
+				query: `
+					SELECT ${this.getName()}.*
+					FROM ${this.getName()}
+					WHERE ${sqlCondition}  
+					ORDER BY id ${order}
+					LIMIT ${limit}
+				`,
+				values: [
+					...values,
+				],
+			});
+
+			return this.prepareListResult(result, shouldRestoreRows);
 		}
 	}
 

@@ -333,18 +333,17 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 		])
 	)
 	{
-		$arErrors = array();
-		CCrmBizProcHelper::AutoStartWorkflows(
-			CCrmOwnerType::Lead,
-			$ID,
-			CCrmBizProcEventType::Edit,
-			$arErrors
+		$starter = new \Bitrix\Crm\Integration\BizProc\Starter\CrmStarter(
+			new \Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto(CCrmOwnerType::Lead, (int)$ID)
 		);
-
-		//Region automation
-		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-		$starter->setUserIdFromCurrent()->runOnUpdate(['STATUS_ID' => $statusID], []);
-		//end region
+		$starter->runOnDocumentUpdate(
+			new \Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+				actualFields: ['STATUS_ID' => $statusID],
+				previousFields: [],
+				userId: \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId(),
+				isManual: true,
+			)
+		);
 
 		__CrmLeadListEndResponse(array('TYPE' => $targetTypeName, 'ID' => $ID, 'VALUE' => $statusID));
 	}

@@ -1,5 +1,5 @@
 <?php
-
+$MESS["BIZPROC_CALC_FUNCTION_JSON_VAL_DESCRIPTION"] = "Returns a scalar value from JSON string using a JSON path expression";
 $MESS["BIZPROC_CALC_FUNCTION_NUMBER_FORMAT_DESCRIPTION"] = "Formats number using thousands separator";
 $MESS["BIZPROC_CALC_FUNCTION_RANDSTRING_DESCRIPTION"] = "Returns a random string";
 $MESS["BIZPROC_CALC_FUNCTION_STRLEN_DESCRIPTION"] = "Returns string length";

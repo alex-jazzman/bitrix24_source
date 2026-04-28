@@ -50,6 +50,14 @@ jn.define('im/messenger/application/lib/event-handler/store', (require, exports,
 		}
 
 		/**
+		 * @return {CountersUpdateSystem}
+		 */
+		get #countersUpdateSystem()
+		{
+			return serviceLocator.get('counters-update-system');
+		}
+
+		/**
 		 * @return {MessengerHeaderController}
 		 */
 		get #headerController()
@@ -92,6 +100,14 @@ jn.define('im/messenger/application/lib/event-handler/store', (require, exports,
 		applicationSetStatusHandler = async (mutation) => {
 			const statusKey = mutation.payload.data.status.name;
 			const statusValue = mutation.payload.data.status.value;
+
+			const wasAppOnline = this.appStatus !== AppStatus.networkWaiting;
+			const isAppOffline = (statusKey === AppStatus.networkWaiting && statusValue === true);
+			if (wasAppOnline && isAppOffline)
+			{
+				this.#countersUpdateSystem.disableReadingQueue();
+			}
+
 			const wasAppOffline = this.appStatus === AppStatus.networkWaiting;
 			const isAppOnline = (statusKey === AppStatus.networkWaiting && statusValue === false);
 			if (wasAppOffline && isAppOnline)

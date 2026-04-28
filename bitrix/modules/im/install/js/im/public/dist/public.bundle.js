@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core) {
+(function (exports,main_core_events,main_core) {
 	'use strict';
 
 	/* eslint-disable no-console */
@@ -111,7 +111,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return Promise.resolve(true);
 	  }
 	}
-	const desktop = new Desktop();
 
 	const AvailableSectionNameMap = {
 	  appearance: 'appearance',
@@ -125,6 +124,80 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  var _AvailableSectionName;
 	  return (_AvailableSectionName = AvailableSectionNameMap[rawSectionName]) != null ? _AvailableSectionName : '';
 	};
+
+	var _getDialogIdByChatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogIdByChatId");
+	class Textarea {
+	  constructor() {
+	    Object.defineProperty(this, _getDialogIdByChatId, {
+	      value: _getDialogIdByChatId2
+	    });
+	  }
+	  async getText(chatId) {
+	    const {
+	      EventType
+	    } = main_core.Reflection.getClass('BX.Messenger.v2.Const');
+	    if (!EventType) {
+	      return '';
+	    }
+	    const dialogId = babelHelpers.classPrivateFieldLooseBase(this, _getDialogIdByChatId)[_getDialogIdByChatId](chatId);
+	    if (!dialogId) {
+	      return '';
+	    }
+	    const result = await main_core_events.EventEmitter.emitAsync(EventType.textarea.getText, {
+	      dialogId
+	    });
+	    if (result.length === 0) {
+	      return '';
+	    }
+	    return result[0];
+	  }
+	  insertQuote(chatId, text, options = {}) {
+	    const {
+	      Quote
+	    } = main_core.Reflection.getClass('BX.Messenger.v2.Lib');
+	    if (!Quote) {
+	      return;
+	    }
+	    const formattedText = Quote.wrapWithDelimiters(text);
+	    this.insertText(chatId, formattedText, {
+	      withNewLine: true,
+	      ...options
+	    });
+	  }
+	  insertText(chatId, text, options = {}) {
+	    const {
+	      EventType
+	    } = main_core.Reflection.getClass('BX.Messenger.v2.Const');
+	    if (!EventType) {
+	      return;
+	    }
+	    const dialogId = babelHelpers.classPrivateFieldLooseBase(this, _getDialogIdByChatId)[_getDialogIdByChatId](chatId);
+	    if (!dialogId) {
+	      return;
+	    }
+	    const config = {
+	      dialogId,
+	      text,
+	      withNewLine: false,
+	      replace: false,
+	      ...options
+	    };
+	    main_core_events.EventEmitter.emit(EventType.textarea.insertText, config);
+	  }
+	}
+	function _getDialogIdByChatId2(chatId) {
+	  const {
+	    Core
+	  } = main_core.Reflection.getClass('BX.Messenger.v2.Application');
+	  if (!Core) {
+	    return '';
+	  }
+	  const dialog = Core.getStore().getters['chats/getByChatId'](chatId);
+	  if (!dialog) {
+	    return '';
+	  }
+	  return dialog.dialogId;
+	}
 
 	class SharedLinkService {
 	  joinChatByCode(code) {
@@ -151,9 +224,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class Messenger {
 	  constructor() {
 	    this.v2enabled = false;
+	    this.desktop = new Desktop();
+	    this.textarea = new Textarea();
 	    const settings = main_core.Extension.getSettings('im.public');
 	    this.v2enabled = settings.get('v2enabled', false);
-	    this.desktop = desktop;
 	  }
 	  async openChat(dialogId = '', messageId = 0) {
 	    var _getOpener;
@@ -496,5 +570,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Messenger = messenger;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX));
 //# sourceMappingURL=public.bundle.js.map

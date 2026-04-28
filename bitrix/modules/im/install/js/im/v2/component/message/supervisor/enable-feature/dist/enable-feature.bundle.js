@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_elements_button,main_core,im_v2_lib_analytics,im_v2_lib_helpdesk,stafftrack_userStatisticsLink,im_v2_component_message_supervisor_base) {
+(function (exports,im_v2_component_elements_button,main_core,im_v2_lib_analytics,im_v2_lib_helpdesk,im_v2_lib_copilot,im_v2_component_message_supervisor_base,stafftrack_userStatisticsLink) {
 	'use strict';
 
 	const onOpenToolsSettings = toolId => {
@@ -21,9 +21,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  }).show();
 	};
 	const onHelpClick = ARTICLE_CODE => im_v2_lib_helpdesk.openHelpdeskArticle(ARTICLE_CODE);
-	const metaData = {
+	const getMetaData = () => {
+	  const processedMetaData = {};
+	  const name = new im_v2_lib_copilot.CopilotManager().getName();
+	  Object.entries(rawMetaData).forEach(([key, meta]) => {
+	    const title = meta.title.replaceAll('#COPILOT_NAME#', name);
+	    processedMetaData[key] = {
+	      ...meta,
+	      title
+	    };
+	  });
+	  return processedMetaData;
+	};
+	const rawMetaData = {
 	  [im_v2_component_message_supervisor_base.EnableFeatures.copilot]: {
-	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_COPILOT_TITLE'),
+	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_COPILOT_TITLE_MSGVER_1'),
 	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_COPILOT_DESCRIPTION'),
 	    detailButton: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
@@ -290,7 +302,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.message.componentParams[TOOL_ID_PARAMS_KEY];
 	    },
 	    toolData() {
-	      return metaData[this.toolId];
+	      return getMetaData()[this.toolId];
 	    },
 	    modifierImageClass() {
 	      return `--${this.toolId}`;
@@ -327,5 +339,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.SupervisorEnableFeatureMessage = SupervisorEnableFeatureMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Stafftrack,BX.Messenger.v2.Component.Message));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Stafftrack));
 //# sourceMappingURL=enable-feature.bundle.js.map

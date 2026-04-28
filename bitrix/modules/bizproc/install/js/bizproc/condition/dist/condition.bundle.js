@@ -241,6 +241,9 @@ this.BX = this.BX || {};
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _useModified)[_useModified] && operator === Operator.MODIFIED) {
 	      return false;
 	    }
+	    if (fieldType === 'document') {
+	      return operator === Operator.EMPTY || operator === Operator.NOT_EMPTY;
+	    }
 	    const filterFields = Operator.getOperatorFieldTypeFilter(operator);
 
 	    // todo: white list

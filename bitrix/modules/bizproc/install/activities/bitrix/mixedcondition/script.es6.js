@@ -80,7 +80,9 @@ class MixedCondition
 			useOperatorModified: false,
 			documentType: this.#documentType,
 		});
-		const property = this.getProperty(condition.object, condition.field) ?? {Type: 'string'};
+		const property = this.getProperty(condition.object, condition.field)
+			?? (condition['__property__'] ?? {Type: 'string'})
+		;
 
 		const joiner = this.index > 0 ? this.#createJoiner(condition.joiner) : '';
 		const tbody = Tag.render`
@@ -101,7 +103,7 @@ class MixedCondition
 			this.selector.subscribe('onSelect', function (event) {
 				const object = event.data.item.object;
 				const field = event.data.item.field;
-				const property = this.getProperty(object, field) ?? {Type: 'string'};
+				const property = event.data.item.property ?? (this.getProperty(object, field) ?? { Type: 'string' });
 
 				tbody.setAttribute('data-object', object);
 				tbody.setAttribute('data-field', field);
@@ -154,13 +156,10 @@ class MixedCondition
 		{
 			this.selector.setSelectedObjectAndField(object, field, this.objectTabs[object][field]['Name']);
 		}
-		else
+		else if (object)
 		{
 			const sourceName = this.#findActivityTitle(object, field);
-			if (sourceName)
-			{
-				this.selector.setSelectedObjectAndField(object, field, sourceName);
-			}
+			this.selector.setSelectedObjectAndField(object, field, sourceName);
 		}
 
 		return Tag.render`

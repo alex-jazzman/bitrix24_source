@@ -69,6 +69,8 @@ export const DeleteBlockIconBtn = {
 			:icon-name="iconSet.TRASHCAN"
 			:color="'var(--ui-color-palette-gray-40)'"
 			:data-test-id="$testId('blockDelete', blockId)"
+			@mousedown.stop
+			@mouseup.stop
 			@click="onDeleteBlock"
 		/>
 	`,

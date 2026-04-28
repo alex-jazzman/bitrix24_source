@@ -1,6 +1,6 @@
 import { Text } from 'main.core';
 import { TagSelector } from 'ui.entity-selector';
-import { getMemberRoles } from 'humanresources.company-structure.api';
+import { getMemberRoles, teamMemberRoles } from 'humanresources.company-structure.api';
 import { PermissionChecker, PermissionCheckerClass } from 'humanresources.company-structure.permission-checker';
 import {
 	WizardApiEntityChangedDict,
@@ -11,6 +11,7 @@ import {
 import { AuthorityTypes } from '../../consts';
 
 const HEAD_TYPE_ENTITY_ID = 'head-type';
+const USER_TYPE_ENTITY_ID = 'user';
 
 // @vue/component
 export const Settings = {
@@ -22,7 +23,7 @@ export const Settings = {
 			required: true,
 		},
 		/** @type {Record<string, Set>} */
-		settings: {
+		initSettings: {
 			type: Object,
 			required: false,
 			default: () => {},
@@ -41,6 +42,11 @@ export const Settings = {
 			required: false,
 			default: () => [],
 		},
+		employeesIds: {
+			type: Array,
+			required: false,
+			default: () => [],
+		},
 		isEditMode: {
 			type: Boolean,
 			required: true,
@@ -53,6 +59,11 @@ export const Settings = {
 	{
 		return {
 			permissionChecker: null,
+			settings: {
+				[NodeSettingsTypes.businessProcAuthority]: new Set(),
+				[NodeSettingsTypes.reportsAuthority]: new Set(),
+				[NodeSettingsTypes.teamReportExceptions]: new Set(),
+			},
 		};
 	},
 
@@ -75,6 +86,8 @@ export const Settings = {
 		},
 		isReportsHeadNotSelected(): boolean
 		{
+			return false; // temporary allow empty list
+
 			if (!this.isTeamEntity)
 			{
 				return false;
@@ -119,19 +132,24 @@ export const Settings = {
 				return null;
 			}
 
-			return this.getWarningTest(settingsType, phrasePrefix);
+			return this.getWarningText(settingsType, phrasePrefix);
 		},
 		reportWarningText(): string | null
 		{
 			const settingsType = NodeSettingsTypes.reportsAuthority;
 			const phrasePrefix = 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT';
 
+			if (this.isTeamEntity && this.settings[settingsType].size === 0)
+			{
+				return this.loc(`${phrasePrefix}_EMPTY`);
+			}
+
 			if (this.isTeamEntity || this.isReportSelectorLocked)
 			{
 				return null;
 			}
 
-			return this.getWarningTest(settingsType, phrasePrefix);
+			return this.getWarningText(settingsType, phrasePrefix);
 		},
 		isBpSelectorLocked(): boolean
 		{
@@ -144,16 +162,68 @@ export const Settings = {
 				: !this.permissionChecker.checkDepartmentReportsSettingsAvailable()
 			;
 		},
+		areTeamReportExceptionsAvailable(): boolean
+		{
+			return this.isTeamEntity && this.permissionChecker.checkTeamReportExceptionsAvailable();
+		},
 	},
 
 	watch:
 	{
-		settings:
+		/**
+		 * In case entityType was changed
+		 */
+		initSettings:
 		{
 			handler(payload: Record<string, Set>): void
 			{
-				this.initSettingsValue(payload, NodeSettingsTypes.businessProcAuthority);
-				this.initSettingsValue(payload, NodeSettingsTypes.reportsAuthority);
+				this.settings = payload;
+				this.initSettingsValue(this.settings, NodeSettingsTypes.businessProcAuthority);
+				this.initSettingsValue(this.settings, NodeSettingsTypes.reportsAuthority);
+				this.initSettingsValue(this.settings, NodeSettingsTypes.teamReportExceptions);
+			},
+		},
+		heads:
+		{
+			handler(payload: number[], oldVal: number[]): void
+			{
+				const isSameArray = Array.isArray(payload)
+					&& Array.isArray(oldVal)
+					&& payload.length === oldVal.length
+					&& payload.every((item) => oldVal.some((oldItem) => oldItem.id === item.id))
+					&& oldVal.every((oldItem) => payload.some((item) => item.id === oldItem.id))
+				;
+
+				if (isSameArray || !this.reportExceptionsSelector)
+				{
+					return;
+				}
+
+				this.reloadUserSelector(this.employeesIds, payload);
+			},
+		},
+		employeesIds:
+		{
+			/**
+			 * When employees list is updated, we need to update selector which can include only employees from the list
+			 * @param payload
+			 * @param oldVal
+			 */
+			handler(payload: number[], oldVal: number[]): void
+			{
+				const isSameArray = Array.isArray(payload)
+					&& Array.isArray(oldVal)
+					&& payload.length === oldVal.length
+					&& payload.every((item) => oldVal.includes(item))
+					&& oldVal.every((oldItem) => payload.includes(oldItem))
+				;
+
+				if (isSameArray || !this.reportExceptionsSelector)
+				{
+					return;
+				}
+
+				this.reloadUserSelector(payload, this.heads);
 			},
 		},
 	},
@@ -165,26 +235,34 @@ export const Settings = {
 			this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_HINT_2'),
 		];
 
+		this.settings = this.initSettings;
 		this.permissionChecker = PermissionChecker.getInstance();
 		this.initialSettingsValues = {
 			[NodeSettingsTypes.businessProcAuthority]: new Set(),
 			[NodeSettingsTypes.reportsAuthority]: new Set(),
+			[NodeSettingsTypes.teamReportExceptions]: new Set(),
 		};
 		this.initBPSelector();
 		this.initReportsSelector();
+		this.initReportExceptionsSelector();
 	},
 
 	mounted(): void
 	{
 		this.businessProcSelector.renderTo(this.$refs['business-proc-selector']);
 		this.reportsSelector.renderTo(this.$refs['reports-selector']);
+		if (this.areTeamReportExceptionsAvailable)
+		{
+			this.reportExceptionsSelector.renderTo(this.$refs['report-exceptions-selector']);
+		}
 	},
 
 	activated(): void
 	{
 		this.$emit('applyData', {
 			isDepartmentDataChanged: false,
-			isValid: !this.isBusinessProcHeadNotSelected && !this.isReportsHeadNotSelected,
+			isValid: !this.isBusinessProcHeadNotSelected,
+			settings: this.settings,
 		});
 	},
 
@@ -200,30 +278,55 @@ export const Settings = {
 				apiEntityChanged: WizardApiEntityChangedDict.settings,
 				settings: this.settings,
 				isDepartmentDataChanged: true,
-				isValid: !this.isBusinessProcHeadNotSelected && !this.isReportsHeadNotSelected,
+				isValid: !this.isBusinessProcHeadNotSelected,
 			});
 		},
+		/**
+		 * This method is used in case entityType was changed, so all settings should be reevaluated
+		 */
 		initSettingsValue(payload: Record<string, Set>, settingType: string): void
 		{
-			if (!payload[settingType])
+			const initValues = payload[settingType] ?? new Set();
+
+			if (settingType === NodeSettingsTypes.reportsAuthority)
 			{
+				initValues.add(AuthorityTypes.departmentAllHeads);
+			}
+
+			if (settingType === NodeSettingsTypes.teamReportExceptions)
+			{
+				this.reportExceptionsSelector.dialog.setPreselectedItems(
+					[...initValues].map((item) => [USER_TYPE_ENTITY_ID, item]),
+				);
+
 				return;
 			}
 
 			const preselectedItems = this.getTagItems(false, true)
-				.filter((item) => payload[settingType].has(item.id))
+				.filter((item) => initValues.has(item.id))
+				.map((item) => item.id)
 			;
 
 			preselectedItems.forEach((preselectedItem): void => {
-				const selector: TagSelector = settingType === NodeSettingsTypes.businessProcAuthority
-					? this.businessProcSelector
-					: this.reportsSelector
-				;
-				const item = selector.dialog.getItem([HEAD_TYPE_ENTITY_ID, preselectedItem.id]);
+				let selector: TagSelector = null;
+
+				switch (settingType)
+				{
+					case NodeSettingsTypes.businessProcAuthority:
+						selector = this.businessProcSelector;
+						break;
+					case NodeSettingsTypes.reportsAuthority:
+						selector = this.reportsSelector;
+						break;
+					default:
+						return;
+				}
+
+				const item = selector.dialog.getItem([HEAD_TYPE_ENTITY_ID, preselectedItem]);
 
 				if (item)
 				{
-					this.initialSettingsValues[settingType].add(preselectedItem.id);
+					this.initialSettingsValues[settingType].add(preselectedItem);
 					item.select();
 				}
 			});
@@ -243,14 +346,37 @@ export const Settings = {
 		initReportsSelector(): void
 		{
 			const canSelectDeputy = this.permissionChecker.checkDeputyGetReportsAvailable() || !this.isTeamEntity;
+
+			// add mandatory item
+			if (this.isTeamEntity)
+			{
+				this.settings[NodeSettingsTypes.reportsAuthority].add(AuthorityTypes.departmentAllHeads);
+			}
+
 			this.reportsSelector = this.getTagSelector(
 				NodeSettingsTypes.reportsAuthority,
 				this.isReportSelectorLocked,
-				false,
+				true,
 				canSelectDeputy,
 			);
 		},
-		getWarningTest(settingsType: string, phrasePrefix: string): string | null
+		initReportExceptionsSelector(): void
+		{
+			if (!this.isTeamEntity)
+			{
+				return;
+			}
+
+			const deputyIds = this.heads
+				.filter((head) => head.role !== teamMemberRoles.head)
+				.map((head) => head.id)
+			;
+			this.initialSettingsValues[NodeSettingsTypes.teamReportExceptions] = new Set(
+				this.settings[NodeSettingsTypes.teamReportExceptions],
+			);
+			this.reportExceptionsSelector = this.getUserSelector([...this.employeesIds, ...deputyIds]);
+		},
+		getWarningText(settingsType: string, phrasePrefix: string): string | null
 		{
 			const memberRoles = getMemberRoles(this.entityType);
 			const hasHead = this.heads.some((item: UserData) => item.role === memberRoles.head);
@@ -299,7 +425,17 @@ export const Settings = {
 			isDeputyAvailable: boolean,
 		): TagSelector
 		{
-			const items = this.getTagItems(isLocked, isDeputyAvailable);
+			const items = this.getTagItems(isLocked, isDeputyAvailable, settingType);
+			const unselectedHeadItems = settingType === NodeSettingsTypes.reportsAuthority
+				? [[HEAD_TYPE_ENTITY_ID, AuthorityTypes.departmentAllHeads]]
+				: [[HEAD_TYPE_ENTITY_ID, AuthorityTypes.departmentHead]]
+			;
+
+			// cleanup unused settings
+			this.settings[settingType] = new Set(
+				[...this.settings[settingType]]
+					.filter((item) => items.some((availableItem) => availableItem.id === item)),
+			);
 
 			return new TagSelector({
 				events: {
@@ -347,11 +483,11 @@ export const Settings = {
 					items,
 					undeselectedItems: canUnselectHead
 						? []
-						: [[HEAD_TYPE_ENTITY_ID, AuthorityTypes.departmentHead]],
+						: unselectedHeadItems,
 				},
 			});
 		},
-		getTagItems(isLocked: boolean, isDeputyAvailable: boolean): Array
+		getTagItems(isLocked: boolean, isDeputyAvailable: boolean, settingType: string): Array
 		{
 			const lockedTagOptions = {
 				bgColor: '#BDC1C6',
@@ -397,6 +533,15 @@ export const Settings = {
 				customData: { selectable: true },
 			};
 
+			const departmentAllHeads = {
+				id: AuthorityTypes.departmentAllHeads,
+				entityId: HEAD_TYPE_ENTITY_ID,
+				tabs: 'recents',
+				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_ALL_HEADS'),
+				tagOptions: isLocked ? lockedTagOptions : departmentTagOptions,
+				customData: { selectable: true },
+			};
+
 			const teamHead = {
 				id: AuthorityTypes.teamHead,
 				entityId: HEAD_TYPE_ENTITY_ID,
@@ -426,6 +571,11 @@ export const Settings = {
 
 			if (this.isTeamEntity)
 			{
+				if (settingType === NodeSettingsTypes.reportsAuthority)
+				{
+					return [departmentAllHeads, teamHead, teamDeputy];
+				}
+
 				// put deputies if they are locked, otherwise put after corresponding heads
 				return isDeputyAvailable
 					? [departmentHead, departmentDeputy, teamHead, teamDeputy]
@@ -450,6 +600,88 @@ export const Settings = {
 				event.preventDefault();
 				top.BX.Helper.show('redirect=detail&code=27450586');
 			}
+		},
+		getUserSelector(allUsers: number[]): TagSelector
+		{
+			return new TagSelector({
+				events: {
+					onTagAdd: (event: BaseEvent) => {
+						const { tag } = event.getData();
+						this.settings[NodeSettingsTypes.teamReportExceptions].add(tag.id);
+
+						if (this.initialSettingsValues[NodeSettingsTypes.teamReportExceptions].has(tag.id))
+						{
+							this.initialSettingsValues[NodeSettingsTypes.teamReportExceptions].delete(tag.id);
+						}
+						else
+						{
+							this.applyData();
+						}
+					},
+					onTagRemove: (event: BaseEvent) => {
+						const { tag } = event.getData();
+						this.settings[NodeSettingsTypes.teamReportExceptions].delete(tag.id);
+						this.applyData();
+					},
+				},
+				multiple: true,
+				locked: allUsers.length === 0,
+				dialogOptions: {
+					preselectedItems: [...this.settings[NodeSettingsTypes.teamReportExceptions]]
+						.map((item) => [USER_TYPE_ENTITY_ID, item]),
+					events: {
+						onLoad: (event) => {
+							const users = event.target.items.get(USER_TYPE_ENTITY_ID);
+
+							users.forEach((user) => {
+								user.setLink('');
+							});
+						},
+					},
+					height: 250,
+					width: 380,
+					entities: [
+						{
+							id: USER_TYPE_ENTITY_ID,
+							options: {
+								intranetUsersOnly: true,
+								inviteEmployeeLink: false,
+								maxUsersInRecentTab: 100,
+								userId: allUsers,
+							},
+						},
+					],
+					dropdownMode: true,
+					hideOnDeselect: false,
+				},
+			});
+		},
+		reloadUserSelector(employeeIds, heads): void
+		{
+			const deputyIds = heads
+				.filter((head) => head.role !== teamMemberRoles.head)
+				.map((head) => head.id)
+			;
+			const { dialog } = this.reportExceptionsSelector;
+			// we copy current settings because with removing items they also will be removed via an event
+			const currentSettings = new Set([...this.settings[NodeSettingsTypes.teamReportExceptions]]
+				.filter((userId) => employeeIds.includes(userId) || deputyIds.includes(userId)))
+			;
+			// remove all items, because "load" method only adds new items, but doesn't remove old ones
+			dialog.removeItems();
+			if ([...employeeIds, ...deputyIds].length === 0)
+			{
+				// explicitly lock selector, otherwise all users will be present
+				this.reportExceptionsSelector.setLocked(true);
+			}
+			else
+			{
+				dialog.getEntity(USER_TYPE_ENTITY_ID).options.userId = [...employeeIds, ...deputyIds];
+				dialog.loadState = 'UNSENT'; // without this force reload doesn't work
+				dialog.load(); // force reload dialog items
+			}
+			this.settings[NodeSettingsTypes.teamReportExceptions] = currentSettings;
+			this.initSettingsValue(this.settings, NodeSettingsTypes.teamReportExceptions);
 		},
 	},
 
@@ -536,9 +768,9 @@ export const Settings = {
 						</span>
 					</div>
 					<div class="chart-wizard__settings__item-description-container">
-						<span 
+						<span
 							class="chart-wizard__settings__item-description-text"
-							:class="{'--soon': isReportSelectorLocked}" 
+							:class="{'--soon': isReportSelectorLocked}"
 							v-html="reportsDescriptions"
 						>
 						</span>
@@ -566,6 +798,18 @@ export const Settings = {
 							{{ reportWarningText }}
 						</span>
 					</div>
+				</div>
+				<div class="chart-wizard__settings__item-options" v-if="areTeamReportExceptionsAvailable">
+					<div class="chart-wizard__settings__item-description-container">
+						<span class="chart-wizard__settings__item-description-text">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_DESCRIPTION') }}
+						</span>
+					</div>
+					<div
+						class="chart-wizard__settings__report-exceptions-selector"
+						ref="report-exceptions-selector"
+						data-test-id="hr-company-structure__settings__report-exceptions-selector"
+					/>
 				</div>
 			</div>
 		</div>

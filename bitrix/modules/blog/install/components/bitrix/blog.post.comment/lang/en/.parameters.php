@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BPC_BLOG_URL"] = "Blog URL";
 $MESS["BPC_PATH_TO_BLOG"] = "Blog page path template";
 $MESS["BPC_PATH_TO_USER"] = "Template of the blog user page path";
@@ -42,4 +42,3 @@ $MESS["RATING_TYPE_STANDART_GRAPHIC"] = "Like/Unlike (image)";
 $MESS["RATING_TYPE_LIKE_TEXT"] = "Like (text)";
 $MESS["RATING_TYPE_LIKE_GRAPHIC"] = "Like (image)";
 $MESS["BPC_AJAX_PAGINATION"] = "Use AJAX based page navigation in comments";
-?>

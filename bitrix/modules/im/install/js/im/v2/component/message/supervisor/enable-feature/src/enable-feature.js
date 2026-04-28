@@ -1,7 +1,7 @@
 import { ChatButton, ButtonSize, type CustomColorScheme } from 'im.v2.component.elements.button';
 import { SupervisorBaseMessage } from 'im.v2.component.message.supervisor.base';
 
-import { metaData } from './const/tools';
+import { getMetaData } from './const/tools';
 
 import './css/enable-feature.css';
 
@@ -48,7 +48,7 @@ export const SupervisorEnableFeatureMessage = {
 		},
 		toolData(): SupervisorComponentParams
 		{
-			return metaData[this.toolId];
+			return getMetaData()[this.toolId];
 		},
 		modifierImageClass(): string
 		{

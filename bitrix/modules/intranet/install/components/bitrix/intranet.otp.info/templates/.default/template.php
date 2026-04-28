@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Web\Json;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die;
@@ -48,13 +50,64 @@ CJSCore::Init(["popup", "ui.fonts.opensans"]);
 		}
 	});
 </script>
+<?php elseif($arResult['TRUST_DEVICE_CONFIRMATION'] ?? false): ?>
+<script>
+	BX.ready(() => {
+		BX.Runtime.loadExtension('intranet.push-otp.trust-device-confirmation', 'ui.banner-dispatcher')
+			.then((exports) => {
+				const { TrustDeviceConfirmation, BannerDispatcher } = exports;
+				BannerDispatcher.high.toQueue((onDone) => {
+					const deviceConfirmation = new TrustDeviceConfirmation();
+					deviceConfirmation.subscribe('onClose', onDone);
+					deviceConfirmation.show();
+				});
+			});
+	});
+</script>
+<?php elseif($arResult['TRUST_PHONE_NUMBER_CONFIRMATION'] ?? false): ?>
+<script>
+	BX.ready(() => {
+		BX.Runtime.loadExtension('intranet.notify-banner.otp-info', 'ui.banner-dispatcher', 'intranet.push-otp.connect-popup')
+			.then((exports) => {
+				const { EnablePushOtpProvider, BannerDispatcher } = exports;
+				BannerDispatcher.high.toQueue((onDone) => {
+					const provider = new EnablePushOtpProvider(
+						<?= Json::encode($arResult['pushOtpConfig'] ?? []) ?>
+					);
+					const popup = provider.onlySmsOtpChange();
+					popup.subscribe('onClose', onDone);
+					popup.subscribe('onShow', () => {
+						BX.userOptions.save('intranet', 'otp_phone_number_last_confirmation_date', null, BX.Main.DateTimeFormat.format('d.m.Y'));
+					});
+					popup.show();
+				});
+			})
+	});
+</script>
+<?php elseif($arResult['RECONNECT_TRUSTED_DEVICE'] ?? false): ?>
+<script>
+	BX.ready(() => {
+		BX.Runtime.loadExtension('intranet.push-otp.connect-popup', 'ui.banner-dispatcher')
+			.then((exports) => {
+				const { EnablePushOtpProvider, BannerDispatcher } = exports;
+				BannerDispatcher.high.toQueue((onDone) => {
+					const provider = new EnablePushOtpProvider(
+						<?= Json::encode($arResult['pushOtpConfig'] ?? []) ?>
+					);
+					const popup = provider.reconnectDevice();
+					popup.subscribe('onClose', onDone);
+					popup.show();
+				});
+			});
+	});
+</script>
 <?php else: ?>
 <script>
 	const qrDataProvider = () => {
 		return BX.ajax.runAction('intranet.v2.Otp.getConfig', {
 			method: 'POST',
 			data: {
-				signedUserId: '<?= $arResult['pushOtpConfig']['signedUserId']?>',
+				signedUserId: '<?= $arResult['pushOtpConfig']['signedUserId'] ?? '' ?>',
 			},
 		});
 	};
@@ -87,11 +140,11 @@ CJSCore::Init(["popup", "ui.fonts.opensans"]);
 			.then((exports) => {
 				const { BannerFactory, BannerDispatcher } = exports;
 				BannerDispatcher.critical.toQueue((onDone) => {
-					const popup = new BannerFactory().create(<?= $arResult['pushOtpConfig']['type']?>, {
+					const popup = new BannerFactory().create(<?= $arResult['pushOtpConfig']['type'] ?? '' ?>, {
 						endDate: <?= $arResult['pushOtpConfig']['gracePeriod'] ?? 'null' ?>,
 						formatEndDate: '<?= \Bitrix\Main\Context::getCurrent()->getCulture()->getDayMonthFormat() ?>',
-						settingsUrl: '<?= $arResult['pushOtpConfig']['settingsUrl'] ?>',
-						promoteMode: '<?= $arResult['pushOtpConfig']['promoteMode'] ?>',
+						settingsUrl: '<?= $arResult['pushOtpConfig']['settingsUrl'] ?? '' ?>',
+						promoteMode: '<?= $arResult['pushOtpConfig']['promoteMode'] ?? '' ?>',
 						pushOtpPopupProvider: pushOtpPopupProvider,
 					});
 					popup.subscribe('onClose', onDone);

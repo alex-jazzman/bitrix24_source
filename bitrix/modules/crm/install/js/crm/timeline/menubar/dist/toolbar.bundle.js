@@ -3704,6 +3704,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      targetVertex: 'middle-center',
 	      zIndex: 200
 	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1].bindEvents({
+	      onTargetEnter: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1].close();
+	      }
+	    });
 	  }
 	  return babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1];
 	}

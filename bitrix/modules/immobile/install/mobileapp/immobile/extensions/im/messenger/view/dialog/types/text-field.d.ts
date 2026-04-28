@@ -35,6 +35,8 @@ declare interface JNChatTextField extends JNChatBaseClassInterface<DialogTextFie
 	hideAssistantButtons(animated: boolean): Promise<any>;
 	updateAssistantButton(id: AssistantButton['id'], button:AssistantButton): Promise<any>;
 	removeAssistantButton(id: AssistantButton['id']): Promise<any>;
+	setTextActions(actions: TextAction[]): void;
+	setSelectionRange(startIndex: number, endIndex: number): void;
 }
 
 declare type DialogTextFieldEvents = {
@@ -45,6 +47,25 @@ declare type DialogTextFieldEvents = {
 	cancelQuote: () => any,
 	blur: () => any,
 	focus: () => any,
+	textActionTap: (event: TextActionTapEvent) => any,
+}
+
+export interface TextAction {
+	id: string;
+	title: string;
+	items?: TextActionItem[];
+}
+
+export interface TextActionItem {
+	id: string;
+	title: string;
+}
+
+export interface TextActionTapEvent {
+	text: string;
+	actionId: string;
+	startIndex: number;
+	endIndex: number;
 }
 
 export interface AssistantButton {
@@ -58,16 +79,6 @@ export interface AssistantButton {
 	mode: 'solid' | 'outline',
 	rounded: boolean,
 	dropdown: boolean,
-}
-
-declare type DialogTextFieldEvents = {
-	changeState: (text: string, inputCharacters: string, cursorPosition: number) => any,
-	changeText: (text: string) => any,
-	quoteTap: (message: object) => any,
-	quoteRemoveAnimationEnd: () => any,
-	cancelQuote: () => any,
-	blur: () => any,
-	focus: () => any,
 }
 
 declare type QuoteParams = {

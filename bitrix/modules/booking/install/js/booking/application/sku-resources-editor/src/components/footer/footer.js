@@ -1,14 +1,14 @@
-import { deepToRaw } from 'booking.lib.deep-to-raw';
-import type { ResourceModel } from 'booking.model.resources';
 import { Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
+import { deepToRaw } from 'booking.lib.deep-to-raw';
 import { EventName, Model, SkuResourcesEditorTab } from 'booking.const';
+import type { ResourceModel } from 'booking.model.resources';
+import type { SkuResourcesEditorOptions } from 'booking.model.sku-resources-editor';
+
 
 import { SaveButton } from './save-button';
 import { CancelButton } from './cancel-button';
-// eslint-disable-next-line no-unused-vars
-import type { SkuResourcesEditorParams } from '../types';
 
 import './footer.css';
 
@@ -26,8 +26,14 @@ export const SkuResourcesEditorFooter = {
 			required: true,
 		},
 	},
+	computed: {
+		skusResourcesEditorOptions(): SkuResourcesEditorOptions
+		{
+			return this.$store.state[Model.SkuResourcesEditor].options;
+		},
+	},
 	methods: {
-		closeEditor()
+		closeEditor(): void
 		{
 			EventEmitter.emit(EventName.CloseSkuResourcesEditor);
 		},
@@ -35,7 +41,7 @@ export const SkuResourcesEditorFooter = {
 		{
 			if (Type.isFunction(this.params.save))
 			{
-				if ((await this.validate()).invalid)
+				if (!this.skusResourcesEditorOptions.canBeEmpty && (await this.validate()).invalid)
 				{
 					return;
 				}
@@ -54,8 +60,8 @@ export const SkuResourcesEditorFooter = {
 				invalidResource: false,
 			});
 
-			const hasInvalidResources = this.validateResources().invalid;
-			const hasInvalidSkus = this.validateSkus().invalid;
+			const hasInvalidResources = this.isResourcesValid();
+			const hasInvalidSkus = this.isSkusValid();
 
 			await this.$store.dispatch(`${Model.SkuResourcesEditor}/updateInvalid`, {
 				invalidSku: hasInvalidSkus,
@@ -67,7 +73,7 @@ export const SkuResourcesEditorFooter = {
 				invalid: hasInvalidResources || hasInvalidSkus,
 			};
 		},
-		validateResources(): { invalid: boolean }
+		isResourcesValid(): boolean
 		{
 			const skusSets: MapIterator<Set<number>> = this.$store.state[Model.SkuResourcesEditor].resourcesSkusMap.values();
 
@@ -75,13 +81,13 @@ export const SkuResourcesEditorFooter = {
 			{
 				if (!(skusSet instanceof Set) || skusSet.size === 0)
 				{
-					return { invalid: true };
+					return true;
 				}
 			}
 
-			return { invalid: false };
+			return false;
 		},
-		validateSkus(): { invalid: boolean }
+		isSkusValid(): boolean
 		{
 			const resourcesSets = this.$store.getters[`${Model.SkuResourcesEditor}/skusResourcesMap`].values();
 
@@ -89,11 +95,11 @@ export const SkuResourcesEditorFooter = {
 			{
 				if (!(resourcesSet instanceof Set) || resourcesSet.size === 0)
 				{
-					return { invalid: true };
+					return true;
 				}
 			}
 
-			return { invalid: false };
+			return false;
 		},
 		async changeTab({ hasInvalidSkus = false, hasInvalidResources = false }): Promise<void>
 		{
@@ -118,7 +124,7 @@ export const SkuResourcesEditorFooter = {
 
 			for (const [resourceId, skusSet] of resourcesSkusMap)
 			{
-				if (!resourcesMap.has(resourceId) || skusSet.size === 0)
+				if (!resourcesMap.has(resourceId) || (skusSet.size === 0 && !this.skusResourcesEditorOptions.canBeEmpty))
 				{
 					continue;
 				}

@@ -399,12 +399,16 @@ this.BX = this.BX || {};
 	      main_core.Dom.append(headTitle, descriptionText);
 	    }
 	    let moreLink = main_core.Tag.render(_t7 || (_t7 = _$1``));
-	    if (!main_core.Type.isNil(descriptionOptions.code)) {
+	    if (!main_core.Type.isNil(descriptionOptions.code) || !main_core.Type.isNil(descriptionOptions.moreHelperCode)) {
 	      const onclick = e => {
 	        e.stopPropagation();
-	        ui_infoHelper.FeaturePromotersRegistry.getPromoter({
-	          code: descriptionOptions.code
-	        }).show();
+	        if (descriptionOptions.code) {
+	          ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	            code: descriptionOptions.code
+	          }).show();
+	        } else if (descriptionOptions.moreHelperCode) {
+	          BX.UI.InfoHelper.show(descriptionOptions.moreHelperCode);
+	        }
 	      };
 	      moreLink = main_core.Tag.render(_t8 || (_t8 = _$1`<a onclick="${0}" target="_blank" class="ui-popupcomponentsmaker-header-tariff__more">${0}</a>`), onclick, descriptionOptions.moreLabel);
 	    }
@@ -587,7 +591,7 @@ this.BX = this.BX || {};
 	  main_core.Dom.removeClass(this.layout.container, 'bitrix24-dark-theme bitrix24-light-theme bitrix24-default-theme');
 	  let themeClass = 'bitrix24-default-theme';
 	  if (theme.id !== 'default') {
-	    themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-dark-theme' : 'bitrix24-light-theme';
+	    themeClass = String(theme.id).indexOf('dark:') === 0 ? '--ui-context-edge-light' : '--ui-context-edge-dark';
 	  }
 	  main_core.Dom.addClass(this.layout.container, themeClass);
 	}
@@ -883,7 +887,7 @@ this.BX = this.BX || {};
 	  main_core.Dom.removeClass(container, 'bitrix24-dark-theme bitrix24-light-theme bitrix24-default-theme');
 	  let themeClass = 'bitrix24-default-theme';
 	  if (theme.id !== 'default') {
-	    themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-dark-theme' : 'bitrix24-light-theme';
+	    themeClass = String(theme.id).indexOf('dark:') === 0 ? '--ui-context-edge-light' : '--ui-context-edge-dark';
 	  }
 	  main_core.Dom.addClass(container, themeClass);
 	}
@@ -913,12 +917,16 @@ this.BX = this.BX || {};
 	var _getMoreLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMoreLink");
 	var _getButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButton");
 	var _getButtonDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonDescription");
+	var _activateDemo = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("activateDemo");
 	var _setTextStyles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setTextStyles");
 	class SaleTemplate extends BaseTemplate {
 	  constructor(options = {}) {
 	    super();
 	    Object.defineProperty(this, _setTextStyles, {
 	      value: _setTextStyles2
+	    });
+	    Object.defineProperty(this, _activateDemo, {
+	      value: _activateDemo2
 	    });
 	    Object.defineProperty(this, _getButtonDescription, {
 	      value: _getButtonDescription2
@@ -1037,7 +1045,7 @@ this.BX = this.BX || {};
 	}
 	function _getButton2(config) {
 	  var _config$airStyle;
-	  const buttonTag = config.target ? ui_buttons.ButtonTag.BUTTON : ui_buttons.ButtonTag.LINK;
+	  const buttonTag = config.target || config.action ? ui_buttons.ButtonTag.BUTTON : ui_buttons.ButtonTag.LINK;
 	  const button = new ui_buttons.Button({
 	    text: config.text,
 	    size: ui_buttons.Button.Size.EXTRA_SMALL,
@@ -1046,7 +1054,7 @@ this.BX = this.BX || {};
 	    color: ui_buttons.ButtonColor.PRIMARY,
 	    noCaps: true,
 	    tag: buttonTag,
-	    link: config.target ? null : config.url,
+	    link: config.target || config.action ? null : config.url,
 	    wide: true,
 	    events: {
 	      mousedown: () => {
@@ -1059,6 +1067,9 @@ this.BX = this.BX || {};
 	    onclick: () => {
 	      if (config.target) {
 	        window.open(config.url, config.target);
+	      } else if (config.action && config.action === 'activateDemo') {
+	        button.setState(ui_buttons.ButtonState.WAITING);
+	        babelHelpers.classPrivateFieldLooseBase(this, _activateDemo)[_activateDemo]();
 	      }
 	    }
 	  });
@@ -1076,6 +1087,16 @@ this.BX = this.BX || {};
 		`), config.text);
 	  babelHelpers.classPrivateFieldLooseBase(this, _setTextStyles)[_setTextStyles](buttonDescription, config);
 	  return buttonDescription;
+	}
+	function _activateDemo2() {
+	  main_core.ajax.runAction('ui.infoHelper.activateDemoLicense').then(response => {
+	    if (response.data.success === 'Y') {
+	      BX.onCustomEvent('BX.UI.InfoHelper:onActivateDemoLicenseSuccess', {
+	        result: response
+	      });
+	      window.location.reload();
+	    }
+	  });
 	}
 	function _setTextStyles2(element, config) {
 	  if (config.color) {

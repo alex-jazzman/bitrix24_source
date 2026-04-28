@@ -492,6 +492,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 			AppRatingClient.tryOpenAppRatingAfterCalendarEventViewed({
 				parentWidget: this.props.layout,
 			});
+			BX.postComponentEvent('calendar.event:onClosed');
 		};
 
 		onConfirmButtonClick = () => {

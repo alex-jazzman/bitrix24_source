@@ -271,7 +271,7 @@ else:?>
 								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_THERE_IS_NO_ENTITY_WHERE_THE_ADMINISTRATOR') ?>
 							</div>
 							<a href="https://vk.com/groups?tab=admin"
-							   class="webform-small-button webform-small-button-accept webform-small-button-accept-nomargin"
+							   class="ui-btn ui-btn-sm ui-btn-success" style="margin: 0;"
 							   target="_blank">
 								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_TO_CREATE') ?>
 							</a>

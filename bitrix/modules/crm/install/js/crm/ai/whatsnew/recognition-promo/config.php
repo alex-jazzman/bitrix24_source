@@ -1,14 +1,15 @@
-<?
+<?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-
 return [
 	'css' => 'dist/recognition-promo.bundle.css',
 	'js' => 'dist/recognition-promo.bundle.js',
 	'rel' => [
+		'crm.ai.name-service',
 		'main.core',
 		'main.popup',
 		'ui.buttons',

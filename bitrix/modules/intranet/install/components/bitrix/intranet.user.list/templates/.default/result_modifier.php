@@ -172,19 +172,32 @@ $arResult['TOOLBAR_MENU'] = new \Bitrix\UI\Buttons\Button([
 
 $arResult['TOOLBAR_BUTTONS'] = [];
 
-if (
-	(
+if (PermissionInvitation::createByCurrentUser()->canInvite())
+{
+	if (
 		!isset($_REQUEST['IFRAME'])
 		|| $_REQUEST['IFRAME'] != 'Y'
 	)
-	&& PermissionInvitation::createByCurrentUser()->canInvite()
-)
-{
-	$arResult['TOOLBAR_BUTTONS'][] = [
-		'TITLE' => Loc::getMessage('INTRANET_USER_LIST_BUTTON_INVITE_TITLE_MSG_1'),
-		'CLICK' => new JsHandler(
-			"jsBXIUL.showInvitation",
-			"jsBXIUL"
-		),
-	];
+	{
+		$arResult['TOOLBAR_BUTTONS'][] = [
+			'TITLE' => Loc::getMessage('INTRANET_USER_LIST_BUTTON_INVITE_TITLE_MSG_1'),
+			'CLICK' => new JsHandler(
+				"jsBXIUL.showInvitation",
+				"jsBXIUL"
+			),
+		];
+	}
+	elseif ($arResult['VIEW'] === 'integrator')
+	{
+		{
+			$arResult['TOOLBAR_BUTTONS'][] = [
+				'TITLE' => Loc::getMessage('INTRANET_USER_LIST_BUTTON_INVITE_TITLE_MSG_1'),
+				'CLICK' => new JsHandler(
+					"jsBXIUL.showIntegratorInvitation",
+					"jsBXIUL"
+				),
+			];
+		}
+	}
 }
+

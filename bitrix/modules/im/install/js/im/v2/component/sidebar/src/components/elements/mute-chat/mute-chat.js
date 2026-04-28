@@ -1,7 +1,6 @@
 import { hint } from 'ui.vue3.directives.hint';
 
 import { ActionByRole } from 'im.v2.const';
-import { Core } from 'im.v2.application.core';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Toggle, ToggleSize } from 'im.v2.component.elements.toggle';
@@ -32,14 +31,6 @@ export const MuteChat = {
 		canBeMuted(): boolean
 		{
 			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.mute, this.dialogId);
-		},
-		isChatMuted(): boolean
-		{
-			const isMuted = this.dialog.muteList.find((element) => {
-				return element === Core.getUserId();
-			});
-
-			return Boolean(isMuted);
 		},
 		hintMuteNotAvailable(): ?Object
 		{
@@ -80,7 +71,7 @@ export const MuteChat = {
 				return;
 			}
 
-			if (this.isChatMuted)
+			if (this.dialog.isMuted)
 			{
 				this.getChatService().unmuteChat(this.dialogId);
 			}
@@ -104,7 +95,7 @@ export const MuteChat = {
 				<div class="bx-im-sidebar-mute-chat__title-text bx-im-sidebar-mute-chat__icon">
 					{{ loc('IM_SIDEBAR_ENABLE_NOTIFICATION_TITLE_2') }}
 				</div>
-				<Toggle :size="ToggleSize.M" :isEnabled="!isChatMuted" @click="muteActionHandler" />
+				<Toggle :size="ToggleSize.M" :isEnabled="!dialog.isMuted" @click="muteActionHandler" />
 			</div>
 		</div>
 	`,

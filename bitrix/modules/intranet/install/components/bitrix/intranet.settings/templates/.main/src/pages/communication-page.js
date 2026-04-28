@@ -6,6 +6,7 @@ import 'ui.icon-set.actions';
 import {Section, Row, SeparatorRow} from 'ui.section';
 import 'ui.forms';
 import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage } from 'ui.form-elements.field';
+import { Alert } from 'ui.alerts';
 
 export class CommunicationPage extends BaseSettingsPage
 {
@@ -202,12 +203,6 @@ export class CommunicationPage extends BaseSettingsPage
 			CommunicationPage.addToSectionHelper(allowUrlPreviewField, settingsSection);
 		}
 
-		if (this.hasValue('create_overdue_chats'))
-		{
-			let overdueChatsField = new Checker(this.getValue('create_overdue_chats'));
-			CommunicationPage.addToSectionHelper(overdueChatsField, settingsSection);
-		}
-
 		return settingsSection;
 	}
 
@@ -328,6 +323,23 @@ export class CommunicationPage extends BaseSettingsPage
 		{
 			let fileViewerField = new Selector(this.getValue('DISK_VIEWER_SERVICE'));
 			CommunicationPage.addToSectionHelper(fileViewerField, settingsSection);
+
+			const viewerChangeAlert = new Alert({
+				text: Loc.getMessage('INTRANET_SETTINGS_DISK_VIEWER_SERVICE_CHANGE_WARNING'),
+				inline: true,
+				size: BX.UI.Alert.Size.SMALL,
+				color: BX.UI.Alert.Color.WARNING,
+				animated: true,
+			});
+
+			const viewerChangeAlertRow = new Row({
+				content: viewerChangeAlert.getContainer(),
+			});
+
+			new SettingsRow({
+				row: viewerChangeAlertRow,
+				parent: settingsSection,
+			});
 		}
 
 		if (this.hasValue('DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL'))

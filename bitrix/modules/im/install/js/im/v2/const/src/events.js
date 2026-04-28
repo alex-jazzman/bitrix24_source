@@ -30,6 +30,7 @@ export const EventType = {
 		insertForward: 'IM:Textarea:insertForward',
 		sendMessage: 'IM:Textarea:sendMessage',
 		openUploadPreview: 'IM:Textarea:openUploadPreview',
+		getText: 'IM:Textarea:getText',
 	},
 	sidebar:
 	{
@@ -51,6 +52,8 @@ export const EventType = {
 	mention:
 	{
 		selectItem: 'IM:Mention:selectItem',
+		onAddUserToChat: 'IM:Mention:onAddUserToChat',
+		onNestedMenuClosed: 'IM:Mention:onNestedMenuClosed',
 	},
 	reaction:
 	{

@@ -23,7 +23,7 @@ if(!function_exists('__CrmFieldMultiEditRenderItem'))
 
 global $APPLICATION;
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+\Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $editorID = isset($arResult['EDITOR_ID']) ? $arResult['EDITOR_ID'] : uniqid("{$arResult['FM_MNEMONIC']}_{$arResult['TYPE_ID']}_");
 ?><div id="<?=htmlspecialcharsbx($editorID)?>" class="bx-crm-edit-fm-container"><?

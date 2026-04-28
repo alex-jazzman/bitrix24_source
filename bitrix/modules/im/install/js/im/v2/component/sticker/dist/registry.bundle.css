@@ -92,6 +92,10 @@
 	margin-top: 16px;
 }
 
+.bx-im-sticker-pack-form-upload-button__button {
+	display: inline-block;
+}
+
 .bx-im-sticker-pack-form-upload-button__description {
 	margin-top: 16px;
 	max-width: 492px;

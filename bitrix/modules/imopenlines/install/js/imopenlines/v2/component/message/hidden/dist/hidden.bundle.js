@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.OpenLines = this.BX.OpenLines || {};
 this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
-(function (exports,ui_vue3_directives_hint,im_v2_component_message_base,im_v2_lib_dateFormatter,im_v2_component_message_elements,im_v2_lib_parser) {
+(function (exports,ui_vue3_directives_hint,im_v2_component_message_base,im_v2_lib_dateFormatter,im_v2_component_message_elements,im_v2_component_message_file,im_v2_lib_parser) {
 	'use strict';
 
 	// @vue/component
@@ -12,7 +12,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  components: {
 	    BaseMessage: im_v2_component_message_base.BaseMessage,
 	    MessageAttach: im_v2_component_message_elements.MessageAttach,
-	    ReactionList: im_v2_component_message_elements.ReactionList
+	    ReactionList: im_v2_component_message_elements.ReactionList,
+	    MediaContent: im_v2_component_message_file.MediaContent
 	  },
 	  directives: {
 	    hint: ui_vue3_directives_hint.hint
@@ -30,6 +31,10 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  computed: {
 	    message() {
 	      return this.item;
+	    },
+	    hasMedia() {
+	      var _this$message$files;
+	      return ((_this$message$files = this.message.files) == null ? void 0 : _this$message$files.length) > 0;
 	    },
 	    formattedText() {
 	      return im_v2_lib_parser.Parser.decodeMessage(this.item);
@@ -63,12 +68,14 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			:item="item"
 			:withTitle="false"
 			:withBackground="false"
-			:withContextMenu="false"
 			:withReactions="false"
 			class="bx-imol-message-hidden__container"
 		>
 			<div class="bx-imol-message-hidden__content">
 				<div class="bx-imol-message-hidden-content__text" v-html="formattedText"></div>
+				<div v-if="hasMedia" class="bx-imol-message-hidden-content__media">
+					<MediaContent :item="message" />
+				</div>
 				<div v-if="message.attach.length > 0" class="bx-imol-message-hidden-content__attach">
 					<MessageAttach :item="message" :dialogId="dialogId" />
 				</div>
@@ -92,5 +99,5 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 
 	exports.HiddenMessage = HiddenMessage;
 
-}((this.BX.OpenLines.v2.Component.Message = this.BX.OpenLines.v2.Component.Message || {}),BX.Vue3.Directives,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib));
+}((this.BX.OpenLines.v2.Component.Message = this.BX.OpenLines.v2.Component.Message || {}),BX.Vue3.Directives,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib));
 //# sourceMappingURL=hidden.bundle.js.map

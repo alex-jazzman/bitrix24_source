@@ -243,9 +243,16 @@
 					this.items.push(item);
 				}
 
-				if (item.isCountable())
+				if (item.isVisible())
 				{
-					this.incrementTotal();
+					if (item.isCountable())
+					{
+						this.incrementTotal();
+					}
+				}
+				else
+				{
+					this.getGrid().unhideItem(item);
 				}
 			}
 

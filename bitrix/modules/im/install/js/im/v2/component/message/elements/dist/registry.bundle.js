@@ -1198,10 +1198,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	      if (copilotManager.isCopilotBot(this.forwardAuthorId)) {
 	        const forwardMessageId = this.forwardContextId.split('/')[1];
-	        return copilotManager.getName({
-	          dialogId: this.forwardAuthorId,
-	          messageId: forwardMessageId
-	        });
+	        return copilotManager.getNameWithRole(forwardMessageId);
 	      }
 	      return this.$store.getters['users/get'](this.forwardAuthorId, true).name;
 	    },
@@ -1211,6 +1208,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    isSystemMessage() {
 	      return this.message.forward.userId === 0;
+	    },
+	    isSystemAuthor() {
+	      return this.message.authorId === 0;
+	    },
+	    shouldShowAuthorTitle() {
+	      return this.withTitle && !this.isSystemAuthor && !this.isForwarded;
 	    },
 	    forwardAuthorTitle() {
 	      return main_core.Loc.getMessage('IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_CHAT', {
@@ -1270,7 +1273,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<span v-else-if="isChannelForward" v-html="forwardChannelTitle" class="--ellipsis"></span>
 			<span v-else v-html="forwardAuthorTitle" class="--ellipsis"></span>
 		</div>
-		<AuthorTitle v-else-if="withTitle" :item="item" />
+		<AuthorTitle v-else-if="shouldShowAuthorTitle" :item="item" />
 	`
 	};
 
@@ -1326,10 +1329,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }).reverse();
 	    },
 	    unreadCount() {
-	      const counter = this.$store.getters['counters/getSpecificCommentsCounter']({
-	        channelId: this.dialog.chatId,
-	        commentChatId: this.commentsChatId
-	      });
+	      const counter = this.$store.getters['counters/getCounterByChatId'](this.commentsChatId);
 	      if (!counter) {
 	        return '';
 	      }

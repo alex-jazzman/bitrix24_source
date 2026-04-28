@@ -76,3 +76,7 @@
 .bx-im-message-status__date + .bx-im-message-status__icon {
 	margin-left: 4px;
 }
+
+.bx-im-message-base__wrap.--system .bx-im-message-status__date {
+	color: var(--ui-color-chat-other-base-1_1);
+}

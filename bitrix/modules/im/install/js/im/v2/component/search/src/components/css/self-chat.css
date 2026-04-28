@@ -1,0 +1,38 @@
+.bx-im-search-self-chat__scope {
+	--im-search-self-chat__color_name: var(--im-color-palette-gray-60, #959ca4);
+	--im-search-self-chat__color_hover-name: var(--im-color-palette-gray-80, #6a737f);
+	--im-search-self-chat__background-color_avatar: var(--im-color-palette-blue-50, #2fc6f6);
+}
+
+.bx-im-search-self-chat__container {
+	display: flex;
+	width: 62px;
+	height: 100%;
+	flex-direction: column;
+	align-items: center;
+	cursor: pointer;
+	position: relative;
+	color: var(--im-search-self-chat__color_name);
+}
+
+.bx-im-search-self-chat__container:hover {
+	color: var(--im-search-self-chat__color_hover-name);
+}
+
+.bx-im-search-self-chat__avatar {
+	width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	background: var(--im-search-self-chat__background-color_avatar) url("./images/self-chat.svg") no-repeat center;
+}
+
+.bx-im-search-self-chat__title {
+	font: var(--im-font-size-xs)/var(--im-font-line-height-2xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin-top: 3px;
+	width: 100%;
+}

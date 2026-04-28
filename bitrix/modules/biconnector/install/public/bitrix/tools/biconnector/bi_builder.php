@@ -85,7 +85,7 @@ unset($input['superset_key']);
 
 $biKey = $input['key'] ?? '';
 unset($input['key']);
-$languageCode = substr($biKey, 32, 2);
+$languageCode = BIConnector\Integration\Superset\CultureFormatter::getLanguageCode();
 $biKey = substr($biKey, 0, 32);
 
 $lockFileName = CTempFile::GetAbsoluteRoot() . '/' . md5($biKey) . '-bi.lock';
@@ -210,10 +210,10 @@ elseif ($service->getTableFields($tableName))
 
 			if (!empty($errorsDescMsg))
 			{
-				$outputError['errstr'] = implode('; ', $errorsDescMsg);
+				$outputError['errorMessage'] = implode('; ', $errorsDescMsg);
 			}
 
-			echo Json::encode($outputError);
+			echo Json::encode([$outputError]);
 		}
 	}
 }

@@ -15,6 +15,7 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configurator', (requi
 	const {
 		defaultConfig,
 		baseDialogConfig,
+		channelCommentDialogConfig,
 	} = require('im/messenger/controller/dialog/lib/configurator/configuration');
 
 	const logger = getLogger('dialog--configurator');
@@ -35,6 +36,7 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configurator', (requi
 				baseDialogConfig.header.title.controller.extensionName,
 				baseDialogConfig.header.buttons.controller.extensionName,
 				baseDialogConfig.message.contextMenu.controller.extensionName,
+				channelCommentDialogConfig.header.title.controller.extensionName,
 			]);
 
 			/** @type {MessengerCoreStore} */

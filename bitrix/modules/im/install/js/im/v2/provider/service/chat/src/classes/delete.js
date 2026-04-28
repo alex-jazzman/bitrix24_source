@@ -65,7 +65,7 @@ export class DeleteService
 			fields: { inited: false },
 		});
 
-		void this.#store.dispatch('recent/delete', { id: dialogId });
+		void this.#store.dispatch('recent/delete', { dialogId });
 
 		const chat = this.#store.getters['chats/get'](dialogId, true);
 		void this.#store.dispatch('messages/clearChatCollection', { chatId: chat.chatId });

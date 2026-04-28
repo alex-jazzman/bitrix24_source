@@ -115,13 +115,13 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (
 			{
 				case CallVideoButton.id: {
 					CallManager.getInstance().sendAnalyticsEvent(this.dialogId, Analytics.Element.videocall, Analytics.Section.chatWindow);
-					CallManager.getInstance().createVideoCall(this.dialogId);
+					void CallManager.getInstance().createVideoCall(this.dialogId);
 					break;
 				}
 
 				case CallAudioButton.id: {
 					CallManager.getInstance().sendAnalyticsEvent(this.dialogId, Analytics.Element.audiocall, Analytics.Section.chatWindow);
-					CallManager.getInstance().createAudioCall(this.dialogId);
+					void CallManager.getInstance().createAudioCall(this.dialogId);
 					break;
 				}
 

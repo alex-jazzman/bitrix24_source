@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Intranet\Integration\Templates\Air\AirTemplate;
+use Bitrix\Intranet\UI\LeftMenu\Menu;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -35,12 +36,16 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 ;
 ?>
 
-<div class="menu-items-block menu-items-view-mode <?= $showAiAssistantWidget ? '--with-ai' : '' ?>" id="menu-items-block">
+<nav aria-label="<?=Loc::getMessage('MENU_NAV_ARIA_LABEL')?>" class="menu-items-block menu-items-view-mode <?= $showAiAssistantWidget ? '--with-ai' : '' ?>" id="menu-items-block">
 	<div class="menu-items-header">
 		<div class="menu-items-header__menu-swticher">
-			<div class="menu-switcher">
-				<span class="menu-switcher__icon"></span>
-			</div>
+			<button type="button"
+				class="menu-switcher"
+				aria-label="<?=Loc::getMessage(Menu::isCollapsed() ? 'MENU_EXPAND' : 'MENU_COLLAPSE')?>"
+				aria-expanded="<?= Menu::isCollapsed() ? 'false' : 'true'?>"
+			>
+				<span class="menu-switcher__icon" aria-hidden="true"></span>
+			</button>
 		</div>
 		<a href="<?= $siteUrl ?>" class="menu-items-header__logo">
 			<span class="menu-items-header__logo-text"><?=Loc::getMessage('MENU_HEADER_LOGO_TEXT')?></span>
@@ -55,7 +60,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 		{
 			if ($status === "hide")
 			{
-				?><div class="menu-item-favorites-more" id="left-menu-hidden-items-block"><?
+				?><div class="menu-item-favorites-more" id="left-menu-hidden-items-block" inert><?
 					?><ul class="menu-items-fav-more-block" id="left-menu-hidden-items-list"><?
 						?><li class="menu-item-separator" id="left-menu-hidden-separator">
 							<span class="menu-item-sepor-text-line"></span><?
@@ -66,7 +71,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 			else
 			{
 				?><ul class="menu-items"><?
-					?><li class="menu-items-empty-li" id="left-menu-empty-item"></li><?
+					?><li class="menu-items-empty-li" id="left-menu-empty-item" aria-hidden="true"></li><?
 			}
 
 			if (isset($arResult["ITEMS"][$status]) && is_array($arResult["ITEMS"][$status]))
@@ -215,34 +220,55 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 					><? if ($item['ITEM_TYPE'] !== 'main'):
 						?><span
 							class="menu-favorites-btn menu-favorites-draggable"
+							aria-hidden="true"
 						><?
 							?><span class="menu-fav-draggable-icon"></span>
 						</span><?endif;
 
+						$itemText = htmlspecialcharsbx(htmlspecialcharsback($item["TEXT"]));
+						$isGroup = isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y';
+						$counterInt = (int)$counter;
+						$itemAriaLabel = ($counterId !== '' && !$isCompositeMode && $counterInt > 0)
+							? Loc::getMessagePlural('MENU_ITEM_ARIA', $counterInt, ['#ITEM#' => $itemText, '#COUNT#' => $counterInt])
+							: $itemText;
+
 						if (isset($item["PARAMS"]["sub_link"])):
-							?><a href="<?=htmlspecialcharsbx($item["PARAMS"]["sub_link"])?>" class="menu-item-plus">
-								<span class="menu-item-plus-icon"></span>
+							?><a tabindex="-1" aria-hidden="true" href="<?=htmlspecialcharsbx($item["PARAMS"]["sub_link"])?>" class="menu-item-plus" aria-label="<?=Loc::getMessage('MENU_ADD_SUB_ITEM_ARIA', [
+								'#TOPIC#' => $itemText,
+						])?>">
+								<span class="menu-item-plus-icon" aria-hidden="true"></span>
 							</a><?
 						elseif (isset($item["PARAMS"]["sub_link_onclick"])):
-							?><a href="javascript:void(0)" class="menu-item-plus"
-								 onclick="<?=htmlspecialcharsbx($item["PARAMS"]["sub_link_onclick"])?>">
+							?><button type="button" class="menu-item-plus" tabindex="-1" aria-hidden="true"
+								aria-label="<?=Loc::getMessage('MENU_ADD_SUB_ITEM_ARIA', [
+									'#TOPIC#' => $itemText,
+								])?>"
+								onclick="<?=htmlspecialcharsbx($item["PARAMS"]["sub_link_onclick"])?>">
 								<span class="menu-item-plus-icon"></span>
-							</a><?
-						endif
+							</button><?
+						endif;
+
+						if ($isGroup):
+						?><button type="button"
+							class="menu-item-link"
+							aria-label="<?=$itemAriaLabel?>"
+							aria-expanded="<?=($item['PARAMS']['collapse_mode'] === 'collapsed') ? 'false' : 'true'?>"
+						><?
+						else:
 						?><a
 							class="menu-item-link"
 							href="<?=(isset($item["PARAMS"]["onclick"])) ? "javascript:void(0)" : htmlspecialcharsbx($curLink)?>"
+							aria-label="<?=$itemAriaLabel?>"
 							<?if (isset($item["OPEN_IN_NEW_PAGE"]) && ($item["OPEN_IN_NEW_PAGE"] === "Y")):?>
 								target="_blank"
 								data-slider-ignore-autobinding="true"
 							<?endif?>
 							onclick="<?if (isset($item["PARAMS"]["onclick"])):?>
 								<?=htmlspecialcharsbx($item["PARAMS"]["onclick"])?>
-							<?endif?>">
-							<span class="menu-item-icon-box"><span class="menu-item-icon"></span></span><?
-							?><span class="menu-item-link-text <? echo isset($item["PARAMS"]["is_beta"]) ? ' menu-item-link-beta' : ''?>" data-role="item-text">
-							<?= htmlspecialcharsbx(htmlspecialcharsback($item["TEXT"])) ?>
-							</span><?
+							<?endif?>"><?
+						endif;
+							?><span class="menu-item-icon-box"><span class="menu-item-icon" aria-hidden="true"></span></span><?
+							?><span class="menu-item-link-text <? echo isset($item["PARAMS"]["is_beta"]) ? ' menu-item-link-beta' : ''?>" data-role="item-text"><?=$itemText?></span><?
 							if (isset($item["PARAMS"]["is_beta"]))
 							{
 								?><span class="menu-item-beta">beta</span><?
@@ -272,19 +298,23 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 								</span>
 							<?
 							}
-							if (isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y'):?>
-								<span class="menu-item-link-arrow">
+							if ($isGroup):?>
+								<span class="menu-item-link-arrow" aria-hidden="true">
 									<span class="ui-icon-set --chevron-down-l"></span>
 								</span>
 							<?endif ?>
-						</a><?
+						<?php if ($isGroup): ?>
+						</button><?
+						else:
+						?></a><?
+						endif;
 						$editBtnHideClass = "";
 						if ($item["PARAMS"]["menu_item_id"] === "menu_all_groups" && $arResult["GROUP_COUNT"] > 0):
 							$editBtnHideClass = " menu-fav-editable-btn-hide";
-							?><span class="menu-item-show-link" id="menu-all-groups-link"><?=Loc::getMessage("MENU_SHOW")?></span><?
+							?><button type="button" class="menu-item-show-link" id="menu-all-groups-link"><?=Loc::getMessage("MENU_SHOW")?></button><?
 						endif;
 						if ($item['ITEM_TYPE'] !== 'main' || $arResult['IS_ADMIN']):
-						?><span data-role="item-edit-control" class="menu-fav-editable-btn menu-favorites-btn<?=$editBtnHideClass?>"><?
+						?><span data-role="item-edit-control" class="menu-fav-editable-btn menu-favorites-btn<?=$editBtnHideClass?>" aria-hidden="true" tabindex="-1"><?
 							?><span class="menu-favorites-btn-icon"></span><?
 						?></span><?php endif;
 					?></li><?
@@ -306,7 +336,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 
 			if ($status === "hide")
 			{
-						?><li class="menu-items-hidden-empty-li" id="left-menu-hidden-empty-item"></li><?
+						?><li class="menu-items-hidden-empty-li" id="left-menu-hidden-empty-item" aria-hidden="true"></li><?
 					?></ul><?
 				?></div><?
 			}
@@ -319,13 +349,21 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 		}
 		?>
 	</div>
+		<?php
+		$moreButtonText = Loc::getMessage('MENU_MORE_ITEMS_EXPAND');
+		$moreButtonAriaLabel = (!$isCompositeMode && $sumHiddenCounters > 0)
+			? Loc::getMessagePlural('MENU_ITEM_ARIA', $sumHiddenCounters, ['#ITEM#' => $moreButtonText, '#COUNT#' => $sumHiddenCounters])
+			: $moreButtonText;
+	?>
 		<button class="menu-item-block menu-expand --footer <?php if (empty($arResult["ITEMS"]["hide"])):?> menu-favorites-more-btn-hidden<?php endif?>"
 			data-role="expand-menu-item"
 			data-storage=""
+			aria-expanded="false"
+			aria-label="<?=htmlspecialcharsbx($moreButtonAriaLabel)?>"
 		>
 			<span class="menu-item-link">
 					<span class="menu-item-icon-box" style="">
-						<span class="menu-item-icon"></span>
+						<span class="menu-item-icon" aria-hidden="true"></span>
 					</span>
 				<span class="menu-item-link-text" id="menu-more-btn-text" data-role="item-text" style=""><?=Loc::getMessage("MENU_MORE_ITEMS_EXPAND")?></span>
 				<?php if ($isCompositeMode || $sumHiddenCounters <= 0): ?>
@@ -374,9 +412,9 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 			>
 				<span class="menu-item-link" style="">
 					<span class="menu-item-icon-box" style="">
-						<span class="menu-item-icon"></span>
+						<span class="menu-item-icon" aria-hidden="true"></span>
 					</span>
-					<span class="menu-item-link-text" id="menu-more-btn-text" data-role="item-text" style=""><?=Loc::getMessage("LEFT_MENU_SETTINGS")?></span>
+					<span class="menu-item-link-text" id="menu-settings-btn-text" data-role="item-text" style=""><?=Loc::getMessage("LEFT_MENU_SETTINGS")?></span>
 				</span>
 			</button>
 			<?php endif; ?>
@@ -385,7 +423,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 			<?php endif; ?>
 		</div>
 	</div>
-</div>
+</nav>
 
 <?php if ($showAiAssistantWidget): ?>
 	<div class="menu-items-ai-assistant-stub menu-items-block__scope">
@@ -404,7 +442,7 @@ $arJSParams = array(
 	"isAdmin" => $arResult["IS_ADMIN"],
 	"isExtranet" => $arResult["IS_EXTRANET"] ? "Y" : "N",
 	"isExtranetInstalled" => ModuleManager::isModuleInstalled('extranet') ? "Y" : "N",
-	"isCollapsedMode" => \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed(),
+	"isCollapsedMode" => Menu::isCollapsed(),
 	"isCustomPresetAvailable" => $arResult["IS_CUSTOM_PRESET_AVAILABLE"] ? "Y" : "N",
 	"customPresetExists" => !empty($arResult["CUSTOM_PRESET_EXISTS"]) ? "Y" : "N",
 	'availablePresetTools' => $arResult['PRESET_TOOLS_AVAILABILITY'],
@@ -503,6 +541,9 @@ BX.message({
 	MENU_MY_WORKGROUPS: '<?=GetMessageJS("MENU_MY_WORKGROUPS")?>',
 	MENU_MY_WORKGROUPS_EXTRANET: '<?=GetMessageJS("MENU_MY_WORKGROUPS_EXTRANET")?>',
 	MENU_MY_WORKGROUPS_FAVORITES: '<?=GetMessageJS("MENU_MY_WORKGROUPS_FAVORITES")?>',
+	MENU_ITEM_ARIA_PLURAL_0: '<?=GetMessageJS("MENU_ITEM_ARIA_PLURAL_0")?>',
+	MENU_ITEM_ARIA_PLURAL_1: '<?=GetMessageJS("MENU_ITEM_ARIA_PLURAL_1")?>',
+	MENU_TOGGLE_FAVORITE_ARIA: '<?=GetMessageJS("MENU_TOGGLE_FAVORITE_ARIA")?>',
 	mainpage_settings_path: '<?= (new Bitrix\Intranet\Site\FirstPage\MainFirstPage())->getSettingsPath() ?>',
 	MENU_LICENSE_ALL: '<?=GetMessageJS("MENU_LICENSE_ALL")?>',
 });

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_MODULE_NOT_INSTALL'] = "Blog module is not installed.";
 $MESS ['B_B_MES_REQUEST_ALREADY'] = "Your request is already pending with the blog author";
 $MESS ['B_B_MES_REQUEST_ADDED'] = "Your request has been taken for consideration by the blog author";
@@ -22,4 +22,3 @@ $MESS ['BLOG_BLOG_BLOG_MES_HIDE_ERROR'] = "Error hiding the post";
 $MESS ['BLOG_BLOG_BLOG_MES_HIDE_NO_RIGHTS'] = "You do not have permission to hide this post";
 $MESS ['MICROBLOG_SONET_MODULE_NOT_AVAIBLE'] = "Microblogs are not available for this user.";
 $MESS ['MICROBLOG_TITLE'] = "Microblog";
-?>

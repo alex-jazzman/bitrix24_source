@@ -1,3 +1,6 @@
+export { convertToNumber, convertToString, isNumberOrString, convertObjectKeysToCamelCase } from './utils/format';
+export { prepareDraft, prepareInvitation } from './recent/format/format-functions';
+
 export { ApplicationModel } from './application/application';
 export { MessagesModel } from './messages/messages';
 export { ChatsModel } from './chats/chats';
@@ -14,9 +17,6 @@ export { StickersModel } from './stickers/stickers';
 
 export { formatFieldsWithConfig } from './utils/validate';
 export type { FieldsConfig } from './utils/validate';
-
-export { convertToNumber, convertToString, isNumberOrString, convertObjectKeysToCamelCase } from './utils/format';
-export { prepareDraft, prepareInvitation } from './recent/format/format-functions';
 
 export type {
 	Chat as ImModelChat,
@@ -64,3 +64,4 @@ export type {
 	PackIdentifier as ImModelStickerPackIdentifier,
 	StickerIdentifier as ImModelStickerIdentifier,
 } from './type/stickers';
+export type { CounterItem as ImModelCounter } from './type/counter';

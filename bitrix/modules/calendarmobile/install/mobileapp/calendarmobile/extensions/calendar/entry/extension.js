@@ -115,6 +115,7 @@ jn.define('calendar/entry', (require, exports, module) => {
 			createChatId = null,
 			createMailId = null,
 			uuid = null,
+			eventType = null,
 		})
 		{
 			const calendarAvailable = await Entry.checkToolAvailable();
@@ -135,6 +136,7 @@ jn.define('calendar/entry', (require, exports, module) => {
 					createChatId,
 					createMailId,
 					uuid,
+					eventType,
 					showLoading: true,
 				});
 
@@ -176,6 +178,7 @@ jn.define('calendar/entry', (require, exports, module) => {
 						CREATE_CHAT_ID: createChatId,
 						CREATE_MAIL_ID: createMailId,
 						UUID: uuid,
+						EVENT_TYPE: eventType,
 					},
 				});
 			}

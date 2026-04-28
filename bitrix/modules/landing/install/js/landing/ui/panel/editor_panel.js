@@ -168,7 +168,7 @@
 		if (
 			rights
 			&& rights.includes('edit')
-			&& BX.Landing.Env.getInstance().getType() !== 'MAINPAGE'
+			&& BX.Landing.Env.getInstance().getType() !== 'VIBE'
 		)
 		{
 			editor.addButton(new BX.Landing.UI.Button.CreatePage("createPage", {

@@ -221,7 +221,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 	}
 
 	const Label$$1 = {
-	  name: 'UILabel',
+	  name: 'UiLabel',
 	  props: {
 	    size: {
 	      type: String,
@@ -246,7 +246,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 	    },
 	    value: {
 	      type: String,
-	      required: true
+	      default: ''
 	    },
 	    icon: {
 	      type: String,
@@ -299,7 +299,8 @@ this.BX.UI.System = this.BX.UI.System || {};
 	};
 
 	var vue = /*#__PURE__*/Object.freeze({
-		Label: Label$$1
+		Label: Label$$1,
+		UiLabel: Label$$1
 	});
 
 	exports.Vue = vue;

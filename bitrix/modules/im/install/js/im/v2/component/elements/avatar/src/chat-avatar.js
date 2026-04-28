@@ -1,18 +1,23 @@
+import { type BitrixVueComponentProps } from 'ui.vue3';
+
 import { ChatType, UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 
-import { AvatarSize, ChatAvatarType } from './const/const';
+import { AiAssistantAvatar } from './components/ai-assistant-avatar';
 import { Avatar } from './components/base/avatar';
 import { CollabChatAvatar } from './components/collab/collab-chat';
 import { CollaberAvatar } from './components/collab/collaber';
+import { CopilotAvatar } from './components/copilot/copilot';
 import { ExtranetChatAvatar } from './components/extranet/extranet-chat-avatar';
 import { ExtranetUserAvatar } from './components/extranet/extranet-user-avatar';
-import { AiAssistantAvatar } from './components/ai-assistant-avatar';
-import { CopilotAvatar } from './components/copilot/copilot';
-import { NotesAvatar } from './components/notes-avatar';
+import { SelfChatAvatar } from './components/self-chat-avatar';
+import { AvatarSize, ChatAvatarType } from './const/const';
 
-import type { BitrixVueComponentProps } from 'ui.vue3';
-import type { ImModelChat, ImModelUser } from 'im.v2.model';
+type AvatarComponentConfigItem = {
+	condition: () => boolean,
+	component: BitrixVueComponentProps
+};
 
 // @vue/component
 export const ChatAvatar = {
@@ -98,6 +103,10 @@ export const ChatAvatar = {
 		{
 			return this.copilotManager.isCopilotChatOrBot(this.avatarDialogId);
 		},
+		isSelfChat(): boolean
+		{
+			return this.customType === ChatAvatarType.selfChat;
+		},
 		copilotRoleAvatarUrl(): string
 		{
 			if (!this.contextDialogId)
@@ -110,39 +119,23 @@ export const ChatAvatar = {
 				contextDialogId: this.contextDialogId,
 			});
 		},
+		avatarComponentConfig(): AvatarComponentConfigItem[]
+		{
+			return [
+				{ condition: () => this.isSelfChat, component: SelfChatAvatar },
+				{ condition: () => this.isExtranet, component: ExtranetUserAvatar },
+				{ condition: () => this.isCollaber, component: CollaberAvatar },
+				{ condition: () => this.isCollabChat, component: CollabChatAvatar },
+				{ condition: () => this.isCopilot, component: CopilotAvatar },
+				{ condition: () => this.isAiAssistant, component: AiAssistantAvatar },
+				{ condition: () => this.isExtranetChat, component: ExtranetChatAvatar },
+			];
+		},
 		avatarComponent(): BitrixVueComponentProps
 		{
-			if (this.customType === ChatAvatarType.notes)
-			{
-				return NotesAvatar;
-			}
+			const matchingItem: ?AvatarComponentConfigItem = this.avatarComponentConfig.find((item) => item.condition());
 
-			if (this.isExtranet)
-			{
-				return ExtranetUserAvatar;
-			}
-
-			if (this.isCollaber)
-			{
-				return CollaberAvatar;
-			}
-
-			if (this.isCollabChat)
-			{
-				return CollabChatAvatar;
-			}
-
-			if (this.isCopilot)
-			{
-				return CopilotAvatar;
-			}
-
-			if (this.isAiAssistant)
-			{
-				return AiAssistantAvatar;
-			}
-
-			return this.isExtranetChat ? ExtranetChatAvatar : Avatar;
+			return matchingItem ? matchingItem.component : Avatar;
 		},
 	},
 	created()

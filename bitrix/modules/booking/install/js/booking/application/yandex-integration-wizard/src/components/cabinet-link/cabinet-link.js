@@ -136,6 +136,7 @@ export const YandexIntegrationWizardCabinetLink = {
 							:size="ButtonSize.MEDIUM"
 							noCaps
 							useAirDesign
+							data-element="booking-yiw-btn-cabinet-link"
 							@click="goToYandexBusiness"
 						/>
 					</div>

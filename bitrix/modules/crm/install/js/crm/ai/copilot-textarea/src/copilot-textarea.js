@@ -1,7 +1,8 @@
-import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
+import { Copilot } from 'ai.copilot';
+import { NameService } from 'crm.ai.name-service';
+import { Dom, Event, Tag, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
-import { Copilot } from 'ai.copilot';
 
 import { getCaretCoordinates } from './textarea-caret-coordinates';
 
@@ -92,7 +93,7 @@ export class CopilotTextarea
 		});
 
 		this.#copilot.subscribe('cancel', (event) => {
-			this.#logEventInfo('CoPilot canceled', event);
+			this.#logEventInfo('AI canceled', event);
 
 			this.#cleanWrappedText();
 			this.#copilot.adjust({
@@ -103,7 +104,7 @@ export class CopilotTextarea
 
 		const handleKeyUpEscape = this.#handleKeyUpEscape.bind(this);
 		this.#copilot.subscribe('hide', (event) => {
-			this.#logEventInfo('CoPilot hidden', event);
+			this.#logEventInfo('AI hidden', event);
 
 			Event.unbind(window, 'keyup', handleKeyUpEscape);
 		});
@@ -115,7 +116,7 @@ export class CopilotTextarea
 		const copilotButton = Tag.render`
 			<button class="show-copilot-btn">
 				<div class="show-copilot-btn-icon ui-icon-set --copilot-ai"></div>
-				${Loc.getMessage('CRM_COMMON_COPILOT').toUpperCase()}
+				${NameService.copilotName().toUpperCase()}
 			</button>
 		`;
 
@@ -163,18 +164,18 @@ export class CopilotTextarea
 	#bindHandlers(): void
 	{
 		this.#copilot.subscribe('start-init', (event) => {
-			this.#logEventInfo('CoPilot load start', event);
+			this.#logEventInfo('AI load start', event);
 			this.setReadOnly();
 		});
 
 		this.#copilot.subscribe('finish-init', (event) => {
-			this.#logEventInfo('CoPilot loaded', event);
+			this.#logEventInfo('AI loaded', event);
 			this.#copilotLoaded = true;
 			this.setReadOnly(false);
 		});
 
 		this.#copilot.subscribe('aiResult', (event) => {
-			this.#logEventInfo('CoPilot result received', event);
+			this.#logEventInfo('AI result received', event);
 
 			let newValue = '';
 			if (Type.isStringFilled(this.#currentSelectedText))
@@ -201,7 +202,7 @@ export class CopilotTextarea
 		});
 
 		this.#copilot.subscribe('save', (event) => {
-			this.#logEventInfo('CoPilot result saved', event);
+			this.#logEventInfo('AI result saved', event);
 
 			this.#replaceSelectionText(event.data.result);
 			this.#cleanWrapChars();
@@ -209,7 +210,7 @@ export class CopilotTextarea
 		});
 
 		this.#copilot.subscribe('add_below', (event) => {
-			this.#logEventInfo('CoPilot result text place below', event);
+			this.#logEventInfo('AI result text place below', event);
 
 			const currentText = this.#getTextAreaValue();
 			this.#setTextAreaValue(`${currentText}\n${event.data.result}`);
@@ -279,7 +280,7 @@ export class CopilotTextarea
 	{
 		if (!Type.isPlainObject(params))
 		{
-			throw new TypeError('BX.Crm.AI.CopilotTextarea: The CoPilot textarea params must be object');
+			throw new TypeError('BX.Crm.AI.CopilotTextarea: textarea params must be object');
 		}
 
 		if (!Type.isStringFilled(params.id))

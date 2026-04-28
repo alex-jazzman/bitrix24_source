@@ -24,6 +24,9 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	    return OpenLinesComponentList.has(babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].componentId);
 	  }
 	  getMessageComponent() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].isDeleted) {
+	      return im_v2_const.MessageComponent.deleted;
+	    }
 	    if (componentForReplace.has(babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].componentId)) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _getUpdatedComponentId)[_getUpdatedComponentId]();
 	    }
@@ -34,7 +37,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].componentParams.imolForm === imopenlines_v2_const.FormType.like) {
 	    return imopenlines_v2_const.OpenLinesMessageComponent.FeedbackFormMessage;
 	  }
-	  return im_v2_const.MessageComponent.system;
+	  return im_v2_const.MessageComponent.default;
 	}
 
 	exports.OpenLinesMessageManager = OpenLinesMessageManager;

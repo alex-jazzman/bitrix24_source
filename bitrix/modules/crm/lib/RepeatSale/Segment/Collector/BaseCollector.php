@@ -2,13 +2,12 @@
 
 namespace Bitrix\Crm\RepeatSale\Segment\Collector;
 
-use Bitrix\Crm\RepeatSale\Segment\Data\LastSegmentData;
-use Bitrix\Crm\RepeatSale\Segment\Data\SegmentData;
+use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\DealTable;
 use Bitrix\Crm\RepeatSale\Segment\Data\SegmentDataInterface;
-use Bitrix\Crm\RepeatSale\Segment\Data\WrongSegmentData;
-use Bitrix\Crm\Service\Communication\Utils\Common;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Traits\Singleton;
+use Bitrix\Main\Type\Date;
 
 abstract class BaseCollector
 {
@@ -16,6 +15,8 @@ abstract class BaseCollector
 
 	protected int $limit = 50;
 	protected bool $isOnlyCalc = false;
+	protected ?Date $date = null;
+	protected const MAX_DAYS_FOR_LAST_CLOSED_ENTITY_FILTER = 365;
 
 	public function setLimit(int $limit): self
 	{
@@ -24,14 +25,25 @@ abstract class BaseCollector
 		return $this;
 	}
 
-	public function setIsOnlyCalc(bool $isOnlyCalc): BaseCollector
+	public function setIsOnlyCalc(bool $isOnlyCalc): self
 	{
 		$this->isOnlyCalc = $isOnlyCalc;
 
 		return $this;
 	}
 
-	public function getSegmentData(int $entityTypeId, ?int $lastItemId = null): SegmentDataInterface
+	public function setDate(?Date $date): self
+	{
+		$this->date = $date;
+
+		return $this;
+	}
+
+	public function getSegmentData(
+		int $entityTypeId,
+		?int $lastItemId = null,
+		int $minimumDaysAfterLastClosedEntity = 0,
+	): SegmentDataInterface
 	{
 		$filter = [];
 		if ($lastItemId > 0)
@@ -39,56 +51,16 @@ abstract class BaseCollector
 			$filter['>ID'] = $lastItemId;
 		}
 
-		return $this->createSegmentData($entityTypeId, $filter);
+		return $this->createSegmentData($entityTypeId, $filter, $minimumDaysAfterLastClosedEntity);
 	}
 
-	protected function createSegmentData(int $entityTypeId, array $filter): SegmentDataInterface
-	{
-		if (!Common::isClientEntityTypeId($entityTypeId))
-		{
-			return new WrongSegmentData();
-		}
+	abstract protected function createSegmentData(
+		int $entityTypeId,
+		array $filter,
+		int $minimumDaysAfterLastClosedEntity,
+	): SegmentDataInterface;
 
-		if ($entityTypeId === \CCrmOwnerType::Contact)
-		{
-			$ids = $this->getContactIds($filter);
-		}
-		else
-		{
-			$ids = $this->getCompanyIds($filter);
-		}
-
-		$items = $this->getItemsByIds($ids, $entityTypeId);
-		if (empty($items))
-		{
-			$nextItemId = $this->getNextItemsMinId($entityTypeId, $filter);
-
-			if ($nextItemId)
-			{
-				return new SegmentData(
-					[],
-					$entityTypeId,
-					$nextItemId,
-				);
-			}
-
-			$lastItemId = $filter['>ID'] ?? 0;
-
-			return new LastSegmentData($entityTypeId, $lastItemId);
-		}
-
-		return new SegmentData(
-			$items,
-			$entityTypeId,
-			array_pop($ids),
-		);
-	}
-
-	abstract protected function getContactIds(array $filter): array;
-
-	abstract protected function getCompanyIds(array $filter): array;
-
-	private function getItemsByIds(array $ids, int $entityTypeId): array
+	final protected function getItemsByIds(array $ids, int $entityTypeId): array
 	{
 		if (empty($ids))
 		{
@@ -98,12 +70,93 @@ abstract class BaseCollector
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 
 		return $factory?->getItems([
-			'select' => ['ID'],
+			'select' => $this->getItemFields(),
 			'filter' => [
 				'@ID' => $ids,
 			],
 		]) ?? [];
 	}
 
-	abstract protected function getNextItemsMinId(int $entityTypeId, array $filter): ?int;
+	protected function getItemFields(): array
+	{
+		return ['ID'];
+	}
+
+	protected function filterItemsWithRecentlyClosedEntities(
+		array $ids,
+		int $entityTypeId,
+		int $minimumDaysAfterLastClosedEntity,
+	): array
+	{
+		if ($minimumDaysAfterLastClosedEntity <= 0 || empty($ids))
+		{
+			return $ids;
+		}
+
+		$minimumDaysAfterLastClosedEntity = min(
+			$minimumDaysAfterLastClosedEntity,
+			self::MAX_DAYS_FOR_LAST_CLOSED_ENTITY_FILTER,
+		);
+		$entityClosedDate = (new \Bitrix\Main\Type\DateTime())->add('- ' . $minimumDaysAfterLastClosedEntity . ' days');
+
+		/*
+		 * I put this logic in if-statements on purpose so it will be easier in future to pull it into separate classes
+		 */
+		if ($entityTypeId === \CCrmOwnerType::Company)
+		{
+			$entityFieldName = 'COMPANY_ID';
+
+			$itemsWithRecentlyClosedEntities =
+				DealTable::query()
+					->addSelect($entityFieldName)
+					->setDistinct()
+					->whereIn($entityFieldName, $ids)
+					->where('CLOSED', '=', 'Y')
+					->where('CLOSEDATE', '>', $entityClosedDate)
+					->exec()
+					->fetchAll()
+			;
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			$entityFieldName = 'CONTACT_ID';
+
+			$recentlyClosedEntities =
+				DealTable::query()
+					->addSelect('ID')
+					->whereIn($entityFieldName, $ids)
+					->where('CLOSED', '=', 'Y')
+					->where('CLOSEDATE', '>', $entityClosedDate)
+					->exec()
+					->fetchAll()
+			;
+
+			if (empty($recentlyClosedEntities))
+			{
+				return $ids;
+			}
+
+			$recentlyClosedEntitiesIds = array_column($recentlyClosedEntities, 'ID');
+
+			$itemsWithRecentlyClosedEntities =
+				DealContactTable::query()
+					->addSelect($entityFieldName)
+					->setDistinct()
+					->whereIn('DEAL_ID', $recentlyClosedEntitiesIds)
+					->exec()
+					->fetchAll()
+			;
+		}
+		else
+		{
+			return $ids;
+		}
+
+		$itemsWithRecentlyClosedEntities = array_column(
+			$itemsWithRecentlyClosedEntities,
+			$entityFieldName,
+		);
+
+		return array_diff($ids, $itemsWithRecentlyClosedEntities);
+	}
 }

@@ -4,7 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'intranet.old-interface.intranet-common']);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/main.ui.grid/templates/.default/style.css');
 ?>

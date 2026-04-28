@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["ID_TIP"] = "Specifies the code in which the blog post ID will be passed.";
 $MESS["BLOG_URL_TIP"] = "Specifies the code in which the blog ID will be passed.";
 $MESS["PATH_TO_BLOG_TIP"] = "The path to the main blog page. Example: blog_blog.php?page=blog&blog=#blog#.";
@@ -12,4 +12,3 @@ $MESS["CACHE_TYPE_TIP"] = "<i>Auto</i>: the cache is valid during the time prede
 $MESS["CACHE_TIME_TIP"] = "Specify here the period of time during which the cache is valid.";
 $MESS["POST_VAR_TIP"] = "Specify here the name of a variable to which the blog post ID will be passed.";
 $MESS["SIMPLE_COMMENT_TIP"] = "In simple mode, comments can be added to a null post (used with Photo Gallery 2.0).";
-?>

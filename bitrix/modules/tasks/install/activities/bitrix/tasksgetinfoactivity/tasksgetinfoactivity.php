@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 use Bitrix\Im\Model\MessageTable;
@@ -16,30 +17,69 @@ use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\UI\Task\Status;
 use Bitrix\Main\Web\Json;
 use Bitrix\Bizproc\Activity\PropertiesDialog;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
 	die();
 }
 
-class CBPTasksGetInfoActivity extends BaseActivity
+class CBPTasksGetInfoActivity extends BaseActivity implements IBPConfigurableActivity
 {
-	private const MAX_MESSAGE_COUNT_LIMIT = 50;
-	private const MAX_TASKS_LIMIT = 50;
+	private const MAX_MESSAGE_COUNT_LIMIT_MAX = 500;
+	private const MESSAGE_COUNT_DEFAULT = 50;
+	private const MESSAGE_COUNT_MIN = 0;
+	private const TASKS_LIMIT_MAX = 500;
+	private const TASKS_LIMIT_DEFAULT = 50;
+	private const TASKS_LIMIT_MIN = 1;
 	private const USER_NAME_SYSTEM = 'System';
-
+	private const TASK_ACTIVITY_DAYS_DEFAULT = 7;
+	private const TASK_ACTIVITY_DAYS_MAX = 365;
+	private const TASK_ACTIVITY_DAYS_MIN = 1;
+	private const MESSAGES_DAYS_DEFAULT = 7;
+	private const MESSAGES_DAYS_MAX = 365;
+	private const MESSAGES_DAYS_MIN = 0;
 	private const PARAM_USER_ID = 'PARAM_USER_ID';
 	private const PARAM_MESSAGE_COUNT_LIMIT = 'MESSAGE_COUNT_LIMIT';
-
+	private const PARAM_TASK_LIMIT = 'TaskLimit';
+	private const PARAM_TASK_ACTIVITY_DAYS = 'TaskActivityDays';
+	private const PARAM_MESSAGES_DAYS = 'MessagesDays';
+	private const PARAM_USER_TASK_ROLE = 'UserTaskRole';
+	private const PARAM_TASK_SELECT_FIELD = 'TaskSelectField';
 	private const RETURN_PARAM_TASKS_INFO_JSON = 'TASKS_INFO_JSON';
 	private const RETURN_PARAM_COUNTER_TASKS_INFO = 'COUNTER_TASKS_INFO';
+	private const SELECT_FIELD_DESCRIPTION = 'description';
+	private const SELECT_FIELD_STATUS = 'status';
+	private const SELECT_FIELD_DEADLINE = 'deadline';
+	private const SELECT_FIELD_ORIGINATOR = 'originator';
+	private const SELECT_FIELD_RESPONSIBLE = 'responsible';
+	private const SELECT_FIELD_ACCOMPLICE = 'accomplice';
+	private const SELECT_FIELD_AUDITOR = 'auditor';
+	private const SELECT_FIELD_CHECKLISTS = 'checklists';
+	private const SELECT_FIELD_RESULTS = 'results';
+	private const SELECT_FIELD_CHAT = 'chat';
+	private const SELECT_FIELD_ACTIVITY_DATE = 'activityDate';
+	private const SELECT_FIELD_IS_OVERDUE = 'isOverdue';
+	private const SELECT_FIELD_URL = 'url';
+	private const SELECT_FIELD_PRIORITY = 'priority';
+
+	protected static $requiredModules = [
+		'tasks',
+		'im',
+	];
 
 	public function __construct($name)
 	{
 		parent::__construct($name);
 
 		$this->arProperties = [
-			self::PARAM_USER_ID => [],
-			self::PARAM_MESSAGE_COUNT_LIMIT => '',
+			self::PARAM_USER_ID => null,
+			self::PARAM_MESSAGE_COUNT_LIMIT => null,
+			self::PARAM_MESSAGES_DAYS => null,
+			self::PARAM_TASK_ACTIVITY_DAYS => null,
+			self::PARAM_TASK_LIMIT => null,
+			self::PARAM_USER_TASK_ROLE => null,
+			self::PARAM_TASK_SELECT_FIELD => null,
 			self::RETURN_PARAM_TASKS_INFO_JSON => null,
 			self::RETURN_PARAM_COUNTER_TASKS_INFO => null,
 		];
@@ -54,45 +94,35 @@ class CBPTasksGetInfoActivity extends BaseActivity
 		]);
 	}
 
-	public function execute(): int
+	protected function reInitialize(): void
 	{
-		if (!CModule::IncludeModule('tasks') || !CModule::IncludeModule('im'))
-		{
-			return CBPActivityExecutionStatus::Closed;
-		}
+		parent::reInitialize();
 
-		$userId = $this->{self::PARAM_USER_ID};
-		if (!is_numeric($userId))
+		$this->{self::RETURN_PARAM_TASKS_INFO_JSON} = null;
+		$this->{self::RETURN_PARAM_COUNTER_TASKS_INFO} = null;
+	}
+
+	protected function internalExecute(): ErrorCollection
+	{
+		$errors = new ErrorCollection();
+		$userId = $this->getTargetUserId();
+
+		try
 		{
-			$userId = CBPHelper::ExtractFirstUser(
-				$userId,
-				$this->getDocumentId()
+			[$tasks, $userIdList, $chatIdList] = $this->getTasks((int)$userId);
+			$formattedTasks = $this->prepareTasks($tasks, $userIdList, $chatIdList);
+			$this->{self::RETURN_PARAM_TASKS_INFO_JSON} = Json::encode(
+				$formattedTasks,
+				JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
 			);
-		}
-
-		if (empty($userId))
-		{
-			return CBPActivityExecutionStatus::Closed;
-		}
-
-		try {
-			[$tasks, $userIdList] = $this->getTasks((int)$userId);
-			$this->prepareTasks($tasks, $userIdList);
+			$this->{self::RETURN_PARAM_COUNTER_TASKS_INFO} = count($tasks);
 		}
 		catch (\Throwable $exception)
 		{
-			$this->trackError($exception->getMessage());
-
-			return CBPActivityExecutionStatus::Closed;
+			$errors->setError(new Error($exception->getMessage()));
 		}
 
-		$this->{self::RETURN_PARAM_TASKS_INFO_JSON} = Json::encode(
-			array_values($tasks),
-			JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
-		);
-		$this->{self::RETURN_PARAM_COUNTER_TASKS_INFO} = count($tasks);
-
-		return CBPActivityExecutionStatus::Closed;
+		return $errors;
 	}
 
 	protected static function getPropertiesMap(array $documentType, array $context = []): array
@@ -108,80 +138,77 @@ class CBPTasksGetInfoActivity extends BaseActivity
 				'Name' => Loc::getMessage('TASKS_GET_INFO_FIELD_MESSAGE_COUNT_LIMIT'),
 				'FieldName' => self::PARAM_MESSAGE_COUNT_LIMIT,
 				'Type' => FieldType::INT,
-				'Default' => self::MAX_MESSAGE_COUNT_LIMIT,
-				'AllowSelection' => false,
+				'Default' => self::MESSAGE_COUNT_DEFAULT,
+			],
+			self::PARAM_TASK_LIMIT => [
+				'Name' => Loc::getMessage('TASKS_GET_INFO_FIELD_TASK_LIMIT'),
+				'FieldName' => self::PARAM_TASK_LIMIT,
+				'Type' => FieldType::INT,
+				'Default' => self::TASKS_LIMIT_DEFAULT,
+			],
+			self::PARAM_TASK_ACTIVITY_DAYS => [
+				'Name' => Loc::getMessage('TASKS_GET_INFO_FIELD_TASK_ACTIVITY_DAYS'),
+				'FieldName' => self::PARAM_TASK_ACTIVITY_DAYS,
+				'Type' => FieldType::INT,
+				'Default' => self::TASK_ACTIVITY_DAYS_DEFAULT,
+			],
+			self::PARAM_MESSAGES_DAYS => [
+				'Name' => Loc::getMessage('TASKS_GET_INFO_FIELD_MESSAGE_DAYS'),
+				'FieldName' => self::PARAM_MESSAGES_DAYS,
+				'Type' => FieldType::INT,
+				'Default' => self::MESSAGES_DAYS_DEFAULT,
+			],
+			self::PARAM_USER_TASK_ROLE => [
+				'Name' => Loc::getMessage('TASKS_GET_INFO_FIELD_USER_TASK_ROLE'),
+				'FieldName' => self::PARAM_USER_TASK_ROLE,
+				'Type' => FieldType::SELECT,
+				'Default' => array_keys(self::getTaskRoles()),
+				'Options' => self::getTaskRoles(),
+				'Required' => true,
+				'Multiple' => true,
+			],
+			self::PARAM_TASK_SELECT_FIELD  => [
+				'Name' => Loc::getMessage('TASKS_GET_INFO_FIELD_TASK_SELECT_FIELD'),
+				'FieldName' => self::PARAM_TASK_SELECT_FIELD,
+				'Type' => FieldType::SELECT,
+				'Default' => array_keys(self::getSelectedFieldsOptions()),
+				'Options' => self::getSelectedFieldsOptions(),
+				'Multiple' => true,
 			],
 		];
 	}
 
-	public static function getPropertiesDialogValues(
-		$documentType,
-		$activityName,
-		&$workflowTemplate,
-		&$workflowParameters,
-		&$workflowVariables,
-		$arCurrentValues,
-		&$errors,
-	): bool
+	protected function prepareProperties(): void
 	{
-		$properties = [];
-		$errors = [];
+		parent::prepareProperties();
 
-		$documentService = CBPRuntime::getRuntime()->getDocumentService();
-		foreach (static::getPropertiesMap($documentType) as $id => $property)
-		{
-			$value = $documentService->getFieldInputValue(
-				$documentType,
-				$property,
-				$property['FieldName'],
-				$arCurrentValues,
-				$errors
-			);
-
-			if (!empty($errors))
-			{
-				return false;
-			}
-
-			if ($id == self::PARAM_MESSAGE_COUNT_LIMIT && is_null($value))
-			{
-				$value = self::MAX_MESSAGE_COUNT_LIMIT;
-			}
-
-			$properties[$id] = $value;
-		}
-
-		$errors = self::validateProperties(
-			$properties,
-			new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser)
-		);
-
-		if ($errors)
-		{
-			return false;
-		}
-
-		$currentActivity = &CBPWorkflowTemplateLoader::findActivityByName($workflowTemplate, $activityName);
-		$currentActivity['Properties'] = $properties;
-
-		return true;
+		$this->setDefaultValuesToNullProperties();
+		$this->filterIncorrectSelectTypeProperties();
 	}
 
 	protected function checkProperties(): ErrorCollection
 	{
 		$errorCollection = new ErrorCollection();
-		$propertyMap = self::getPropertiesDialogMap();
-
-		if (!is_numeric($this->{self::PARAM_MESSAGE_COUNT_LIMIT}))
+		if (empty($this->getTargetUserId()))
 		{
-			$errorCollection->setError(
-				new Error(
-					Loc::getMessage(
-						'TASKS_GET_INFO_FIELD_ERROR_INVALID_VALUE',
-						['#PROPERTY_NAME#' => $propertyMap[self::PARAM_MESSAGE_COUNT_LIMIT]['Name'] ?? ''],
-					),
-				),
-			);
+			$errorCollection->setError($this->getIncorrectPropertyError(self::PARAM_USER_ID));
+		}
+
+		foreach (self::getPropertiesDialogMap() as $propertyId => $propertyFields)
+		{
+			$type = $propertyFields['Type'] ?? null;
+			$isRequired = (bool)($propertyFields['Required'] ?? false);
+			$error = match ($type)
+			{
+				FieldType::INT => $this->checkIntRuntimePropertyValue($propertyId),
+				FieldType::SELECT => $this->checkSelectRuntimePropertyValue($propertyId, $isRequired),
+				default => null,
+			};
+
+			if ($error)
+			{
+				$errorCollection->setError($error);
+			}
 		}
 
 		return $errorCollection;
@@ -192,112 +219,75 @@ class CBPTasksGetInfoActivity extends BaseActivity
 		$errors = [];
 		foreach (self::getPropertiesMap([]) as $id => $property)
 		{
-			if ($id == self::PARAM_MESSAGE_COUNT_LIMIT && !is_null($arTestProperties[$id]))
+			$value = $arTestProperties[$id] ?? null;
+			$error = match ($property['Type'] ?? null)
 			{
-				if (
-					!is_numeric($arTestProperties[$id])
-					|| (int)$arTestProperties[$id] <= 0
-					|| (int)$arTestProperties[$id] > self::MAX_MESSAGE_COUNT_LIMIT
-				)
-				{
-					$errors[] = self::makeError($id);
-				}
+				FieldType::INT => self::validateIntRangeValue($id, $value),
+				default => null,
+			};
+
+			if ($error)
+			{
+				$errors[] = $error->jsonSerialize();
 			}
 		}
 
 		return array_merge($errors, parent::ValidateProperties($arTestProperties, $user));
 	}
 
-	private static function makeError(string $property): array
-	{
-		return [
-			'message' => match ($property)
-			{
-				self::PARAM_MESSAGE_COUNT_LIMIT => Loc::getMessage(
-					'TASKS_GET_INFO_FIELD_ERROR_INVALID_VALUE_IN_RANGE',
-					[
-						'#PROPERTY_NAME#' => Loc::getMessage('TASKS_GET_INFO_FIELD_MESSAGE_COUNT_LIMIT'),
-						'#MIN_VALUE#' => 1,
-						'#MAX_VALUE#' => self::MAX_MESSAGE_COUNT_LIMIT,
-					],
-				),
-				default => '',
-			},
-		];
-	}
-
 	private function getTasks(int $userId): array
 	{
-		$select = [
-			'ID',
-			'TITLE',
-			'DESCRIPTION',
-			'STATUS',
-			'RESPONSIBLE_ID',
-			'DEADLINE',
-			'CREATED_BY',
-			'CHANGED_BY',
-			'CHANGED_DATE',
-			'CHAT_ID' => 'CHAT_TASK.CHAT_ID',
-		];
+		$activityDays = (int)$this->{self::PARAM_TASK_ACTIVITY_DAYS};
 
-		$tasksQuery = TaskTable::query()
-			->setSelect($select)
+		$tasksResult = TaskTable::query()
+			->setSelect($this->getTaskQuerySelectFields())
 			->setFilter([
-				'LOGIC' => 'AND',
-				[
-					'LOGIC' => 'OR',
-					'CREATED_BY' => $userId,
-					'RESPONSIBLE_ID' => $userId,
-					[
-						'MEMBERS.USER_ID' => $userId,
-						'MEMBERS.TYPE' => MemberTable::MEMBER_TYPE_ACCOMPLICE,
-					],
-					[
-						'MEMBERS.USER_ID' => $userId,
-						'MEMBERS.TYPE' => MemberTable::MEMBER_TYPE_AUDITOR,
-					],
-
-				],
-				[
-					'LOGIC' => 'OR',
-					'>CHANGED_DATE' => (new DateTime())->add('-7 days'),
-					'>ACTIVITY_DATE' => (new DateTime())->add('-7 days'),
-				],
+				'>ACTIVITY_DATE' => (new DateTime())->add("-$activityDays days"),
+				'=MEMBERS.USER_ID' => $userId,
+				'@MEMBERS.TYPE' => (array)$this->{self::PARAM_USER_TASK_ROLE},
 			])
 			->setGroup(['ID'])
-			->setOrder(['CHANGED_DATE' => 'DESC'])
-			->setLimit(self::MAX_TASKS_LIMIT)
+			->setOrder(['ACTIVITY_DATE' => 'DESC'])
+			->setLimit((int)$this->{self::PARAM_TASK_LIMIT})
+			->exec()
 		;
 
-		$userIdList = [$userId => $userId];
+		$userIdList = [];
 		$tasks = [];
-		foreach ($tasksQuery->fetchAll() as $task)
+		$chatIdList = [];
+		while ($row = $tasksResult->fetch())
 		{
-			$status = Status::getList()[$task['STATUS']] ?? $task['STATUS'];
-			$deadline = $task['DEADLINE'] instanceof DateTime ? $task['DEADLINE']->format('c') : $task['DEADLINE'];
-			$changedDate = $task['CHANGED_DATE'] instanceof DateTime
-				? $task['CHANGED_DATE']->format('c')
-				: $task['CHANGED_DATE']
-			;
-			$tasks[$task['ID']] = [
-				'TITLE' => $task['TITLE'],
-				'DESCRIPTION' => $task['DESCRIPTION'],
+			$status = $row['STATUS'] ?? null;
+			$status = Status::getList()[$status] ?? $status;
+			$tasks[$row['ID']] = [
+				'TITLE' => $row['TITLE'],
+				'DESCRIPTION' => $row['DESCRIPTION'] ?? null,
 				'STATUS' => $status,
-				'RESPONSIBLE' => $task['RESPONSIBLE_ID'],
-				'DEADLINE' => $deadline,
-				'CREATOR' => $task['CREATED_BY'],
-				'EDITOR' => $task['CHANGED_BY'],
-				'CHANGED_DATE' => $changedDate,
-				'CHAT_ID' => $task['CHAT_ID'],
+				'RESPONSIBLE' => $row['RESPONSIBLE_ID'] ?? null,
+				'DEADLINE' => $row['DEADLINE'] ?? null,
+				'CREATOR' => $row['CREATED_BY'] ?? null,
+				'ACTIVITY_DATE' => $row['ACTIVITY_DATE'] ?? null,
+				'CHAT_ID' => $row['CHAT_ID'] ?? null,
+				'PRIORITY' => $row['PRIORITY'] ?? null,
 			];
 
-			$userIdList[$task['RESPONSIBLE_ID']] = $task['RESPONSIBLE_ID'];
-			$userIdList[$task['CREATED_BY']] = $task['CREATED_BY'];
-			$userIdList[$task['CHANGED_BY']] = $task['CHANGED_BY'];
+			if (!empty($row['CHAT_ID']))
+			{
+				$chatIdList[$row['CHAT_ID']] = $row['CHAT_ID'];
+			}
+
+			if (!empty($row['RESPONSIBLE_ID']))
+			{
+				$userIdList[$row['RESPONSIBLE_ID']] = $row['RESPONSIBLE_ID'];
+			}
+
+			if (!empty($row['CREATED_BY']))
+			{
+				$userIdList[$row['CREATED_BY']] = $row['CREATED_BY'];
+			}
 		}
 
-		return [$tasks, $userIdList];
+		return [$tasks, $userIdList, $chatIdList];
 	}
 
 	private function fetchChecklists(array $taskIds, array &$userIdList): array
@@ -307,7 +297,13 @@ class CBPTasksGetInfoActivity extends BaseActivity
 			return [];
 		}
 
-		$checkLists = CheckListTable::query()
+		$userSelectedFields = (array)$this->{self::PARAM_TASK_SELECT_FIELD};
+		if (!in_array(self::SELECT_FIELD_CHECKLISTS, $userSelectedFields, true))
+		{
+			return [];
+		}
+
+		$checkListResult = CheckListTable::query()
 			->setSelect([
 				'TITLE',
 				'TOGGLED_BY',
@@ -315,19 +311,19 @@ class CBPTasksGetInfoActivity extends BaseActivity
 				'TASK_ID',
 			])
 			->whereIn('TASK_ID', $taskIds)
-			->fetchAll()
+			->exec()
 		;
 
 		$list = [];
-		foreach ($checkLists as $checkList)
+		while ($row = $checkListResult->fetch())
 		{
-			$list[$checkList['TASK_ID']][] = [
-				'TITLE' => $checkList['TITLE'],
-				'TOGGLED_BY' => $checkList['TOGGLED_BY'],
-				'IS_COMPLETE' => $checkList['IS_COMPLETE'],
+			$list[$row['TASK_ID']][] = [
+				'TITLE' => $row['TITLE'],
+				'TOGGLED_BY' => $row['TOGGLED_BY'],
+				'IS_COMPLETE' => $row['IS_COMPLETE'],
 			];
 
-			$userIdList[$checkList['TOGGLED_BY']] = $checkList['TOGGLED_BY'];
+			$userIdList[$row['TOGGLED_BY']] ??= $row['TOGGLED_BY'];
 		}
 
 		return $list;
@@ -340,25 +336,31 @@ class CBPTasksGetInfoActivity extends BaseActivity
 			return [];
 		}
 
-		$resultList = ResultTable::query()
+		$userSelectedFields = (array)$this->{self::PARAM_TASK_SELECT_FIELD};
+		if (!in_array(self::SELECT_FIELD_RESULTS, $userSelectedFields, true))
+		{
+			return [];
+		}
+
+		$result = ResultTable::query()
 			->setSelect([
 				'TASK_ID',
 				'TEXT',
 				'CREATED_BY',
 			])
 			->whereIn('TASK_ID', $taskIds)
-			->fetchAll()
+			->exec()
 		;
 
 		$list = [];
-		foreach ($resultList as $result)
+		while ($row = $result->fetch())
 		{
-			$list[$result['TASK_ID']][] = [
-				'TEXT' => $result['TEXT'],
-				'CREATOR' => $result['CREATED_BY'],
+			$list[$row['TASK_ID']][] = [
+				'TEXT' => $row['TEXT'],
+				'CREATOR' => $row['CREATED_BY'],
 			];
 
-			$userIdList[$result['CREATED_BY']] = $result['CREATED_BY'];
+			$userIdList[$row['CREATED_BY']] ??= $row['CREATED_BY'];
 		}
 
 		return $list;
@@ -367,53 +369,50 @@ class CBPTasksGetInfoActivity extends BaseActivity
 	private function fetchMessagesByChatId(
 		int $chatId,
 		int $limit,
+		array &$userIdList,
 	): array
 	{
-		$messagesRow = MessageTable::query()
+		$messageDays = (int)$this->{self::PARAM_MESSAGES_DAYS};
+
+		$chatResult = MessageTable::query()
 			->setSelect([
 				'AUTHOR_ID',
 				'MESSAGE',
 				'DATE_CREATE',
 			])
-			->where('DATE_CREATE', '>=', (new DateTime())->add('-7 days'))
+			->where('DATE_CREATE', '>=', (new DateTime())->add("-$messageDays days"))
 			->where('CHAT_ID', $chatId)
+			->where('MESSAGE', '!=', '')
+			->whereNotNull('MESSAGE')
 			->setOrder(['DATE_CREATE' => 'DESC'])
 			->setLimit($limit)
-			->fetchAll()
+			->exec()
 		;
 
-		$messagesRow = array_reverse($messagesRow);
-
-		$userIdList = [];
-		$result = [];
-		foreach ($messagesRow as $messageRow)
+		$list = [];
+		while ($row = $chatResult->fetch())
 		{
-			if (empty($messageRow['MESSAGE']))
+			if (empty($row['MESSAGE']))
 			{
 				continue;
 			}
 
-			$result[] = [
-				'AUTHOR' => $messageRow['AUTHOR_ID'],
-				'MESSAGE' => $messageRow['MESSAGE'],
-				'DATE' => $messageRow['DATE_CREATE']?->format('c'),
+			$dateCreate = $row['DATE_CREATE'] instanceof DateTime
+				? $row['DATE_CREATE']->format('c')
+				: $row['DATE_CREATE'];
+
+			$authorId = (int)$row['AUTHOR_ID'];
+
+			$list[] = [
+				'AUTHOR' => $authorId,
+				'MESSAGE' => $row['MESSAGE'],
+				'DATE' => $dateCreate,
 			];
 
-			$userIdList[$messageRow['AUTHOR_ID']] = $messageRow['AUTHOR_ID'];
+			$userIdList[$authorId] ??= $authorId;
 		}
 
-		$userList = $this->getFormatUserByIds(array_keys($userIdList));
-
-		foreach ($result as &$item)
-		{
-			$item['AUTHOR'] = $userList[$item['AUTHOR']] ?? $item['AUTHOR'];
-			if ($item['AUTHOR'] == 0)
-			{
-				$item['AUTHOR'] = $this->formatUser(['ID' => 0]);
-			}
-		}
-
-		return $result;
+		return array_values(array_reverse($list));
 	}
 
 	private function fetchMembers(array $taskIds, array &$userIdList): array
@@ -423,29 +422,45 @@ class CBPTasksGetInfoActivity extends BaseActivity
 			return [];
 		}
 
-		$query = MemberTable::query()
+		$userSelectedFields = (array)$this->{self::PARAM_TASK_SELECT_FIELD};
+		$memberTypes = [];
+		if (in_array(self::SELECT_FIELD_ACCOMPLICE, $userSelectedFields, true))
+		{
+			$memberTypes[] = MemberTable::MEMBER_TYPE_ACCOMPLICE;
+		}
+
+		if (in_array(self::SELECT_FIELD_AUDITOR, $userSelectedFields, true))
+		{
+			$memberTypes[] = MemberTable::MEMBER_TYPE_AUDITOR;
+		}
+
+		if (empty($memberTypes))
+		{
+			return [];
+		}
+
+		$memberResult = MemberTable::query()
 			->setSelect([
 				'TASK_ID',
 				'USER_ID',
 				'TYPE',
 			])
 			->whereIn('TASK_ID', $taskIds)
-			->whereIn('TYPE', [
-				MemberTable::MEMBER_TYPE_ACCOMPLICE,
-				MemberTable::MEMBER_TYPE_AUDITOR,
-			]);
+			->whereIn('TYPE', $memberTypes)
+			->exec()
+		;
 
 		$list = [];
-		foreach ($query->fetchAll() as $member)
+		while ($row = $memberResult->fetch())
 		{
-			$list[$member['TASK_ID']] ??= [
+			$list[$row['TASK_ID']] ??= [
 				MemberTable::MEMBER_TYPE_ACCOMPLICE => [],
 				MemberTable::MEMBER_TYPE_AUDITOR => [],
 			];
 
-			$list[$member['TASK_ID']][$member['TYPE']][] = $member['USER_ID'];
+			$list[$row['TASK_ID']][$row['TYPE']][] = $row['USER_ID'];
 
-			$userIdList[$member['USER_ID']] = $member['USER_ID'];
+			$userIdList[$row['USER_ID']] ??= $row['USER_ID'];
 		}
 
 		return $list;
@@ -454,23 +469,18 @@ class CBPTasksGetInfoActivity extends BaseActivity
 	private function formatUser(array $author): string
 	{
 		$userId = (int)$author['ID'];
-		$params = [
-			'NAME' => $author['NAME'],
-			'LAST_NAME' => $author['LAST_NAME'],
-			'LOGIN' => $author['LOGIN'],
-		];
-
-		if (empty($userId))
+		$userName = self::USER_NAME_SYSTEM;
+		if (!empty($userId))
 		{
-			$params = [
-				'NAME' => self::USER_NAME_SYSTEM,
-			];
+			$userName = \CUser::formatName(
+				\CSite::GetNameFormat(),
+				[
+					'NAME' => $author['NAME'],
+					'LAST_NAME' => $author['LAST_NAME'],
+					'LOGIN' => $author['LOGIN'],
+				]
+			);
 		}
-
-		$userName = \CUser::formatName(
-			\CSite::GetNameFormat(),
-			$params
-		);
 
 		return User::build(
 			$userId,
@@ -486,7 +496,7 @@ class CBPTasksGetInfoActivity extends BaseActivity
 			return [];
 		}
 
-		$userQuery = UserTable::query()
+		$userResult = UserTable::query()
 			->setSelect([
 				'ID',
 				'NAME',
@@ -494,22 +504,23 @@ class CBPTasksGetInfoActivity extends BaseActivity
 				'LOGIN',
 			])
 			->whereIn('ID', $ids)
+			->exec()
 		;
 
 		$list = [];
-		foreach ($userQuery->fetchAll() as $user)
+		while ($row = $userResult->fetch())
 		{
-			$list[$user['ID']] = $this->formatUser($user);
+			$list[$row['ID']] = $this->formatUser($row);
 		}
 
 		return $list;
 	}
 
-	private function prepareTasks(array &$tasks, array $userIdList): void
+	private function prepareTasks(array $tasks, array $userIdList, array $chatIds): array
 	{
 		if (empty($tasks))
 		{
-			return;
+			return [];
 		}
 
 		$taskIds = array_keys($tasks);
@@ -518,50 +529,138 @@ class CBPTasksGetInfoActivity extends BaseActivity
 		$checklistList = $this->fetchChecklists($taskIds, $userIdList);
 		$resultList = $this->fetchResults($taskIds, $userIdList);
 
+		$chatMessages = [];
+		foreach ($chatIds as $chatId)
+		{
+			$chatMessages[$chatId] = $this->fetchMessagesByChatId(
+				$chatId,
+				$this->{self::PARAM_MESSAGE_COUNT_LIMIT},
+				$userIdList,
+			);
+		}
+
 		$formatUsers = $this->getFormatUserByIds(array_keys($userIdList));
 
 		$this->replaceUserField($checklistList, 'TOGGLED_BY', $formatUsers);
 		$this->replaceUserField($resultList, 'CREATOR', $formatUsers);
 
-		foreach ($memberList as &$member) {
+		foreach ($memberList as &$member)
+		{
 			$this->replaceUserIds($member[MemberTable::MEMBER_TYPE_ACCOMPLICE], $formatUsers);
 			$this->replaceUserIds($member[MemberTable::MEMBER_TYPE_AUDITOR], $formatUsers);
 		}
 		unset($member);
 
-		foreach ($tasks as $taskId => &$task) {
-			$task['RESPONSIBLE'] = $formatUsers[$task['RESPONSIBLE']] ?? $task['RESPONSIBLE'];
-			$task['CREATOR'] = $formatUsers[$task['CREATOR']] ?? $task['CREATOR'];
-			$task['EDITOR'] = $formatUsers[$task['EDITOR']] ?? $task['EDITOR'];
+		$this->replaceUserField($chatMessages, 'AUTHOR', $formatUsers, true);
 
-			$task['CHECKLISTS'] = $checklistList[$taskId] ?? [];
-			$task['RESULTS'] = $resultList[$taskId] ?? [];
-			$task['ACCOMPLICES'] = $memberList[$taskId][MemberTable::MEMBER_TYPE_ACCOMPLICE] ?? [];
-			$task['AUDITORS'] = $memberList[$taskId][MemberTable::MEMBER_TYPE_AUDITOR] ?? [];
+		$userSelectedFields = (array)$this->{self::PARAM_TASK_SELECT_FIELD};
+		$showDeadline = in_array(self::SELECT_FIELD_DEADLINE, $userSelectedFields, true);
+		$showIsOverdue = in_array(self::SELECT_FIELD_IS_OVERDUE, $userSelectedFields, true);
+		$showUrl = in_array(self::SELECT_FIELD_URL, $userSelectedFields, true);
+		$linkService = Container::getInstance()->getLinkService();
+		$userId = (int)$this->getTargetUserId();
+
+		$formattedTasks = [];
+		foreach ($tasks as $taskId => $task)
+		{
+			$formattedTask = [
+				'TITLE' => $task['TITLE'],
+			];
+
+			if (!empty($task['DESCRIPTION']))
+			{
+				$formattedTask['DESCRIPTION'] = $task['DESCRIPTION'];
+			}
+
+			if (!empty($task['STATUS']))
+			{
+				$formattedTask['STATUS'] = $task['STATUS'];
+			}
+
+			if (isset($task['ACTIVITY_DATE']) && $task['ACTIVITY_DATE'] instanceof DateTime)
+			{
+				$formattedTask['ACTIVITY_DATE'] = $task['ACTIVITY_DATE']->format('c');
+			}
+
+			if ($showDeadline && isset($task['DEADLINE']) && $task['DEADLINE'] instanceof DateTime)
+			{
+				$formattedTask['DEADLINE'] = $task['DEADLINE']->format('c');
+			}
+
+			if (!empty($task['RESPONSIBLE']))
+			{
+				$formattedTask['RESPONSIBLE'] = $formatUsers[$task['RESPONSIBLE']] ?? $task['RESPONSIBLE'];
+			}
+
+			if (!empty($task['CREATOR']))
+			{
+				$formattedTask['CREATOR'] = $formatUsers[$task['CREATOR']] ?? $task['CREATOR'];
+			}
+
+			if (!empty($checklistList[$taskId]))
+			{
+				$formattedTask['CHECKLISTS'] = $checklistList[$taskId];
+			}
+
+			if (!empty($resultList[$taskId]))
+			{
+				$formattedTask['RESULTS'] = $resultList[$taskId];
+			}
+
+			if (!empty($memberList[$taskId][MemberTable::MEMBER_TYPE_ACCOMPLICE]))
+			{
+				$formattedTask['ACCOMPLICES'] = $memberList[$taskId][MemberTable::MEMBER_TYPE_ACCOMPLICE];
+			}
+
+			if (!empty($memberList[$taskId][MemberTable::MEMBER_TYPE_AUDITOR]))
+			{
+				$formattedTask['AUDITORS'] = $memberList[$taskId][MemberTable::MEMBER_TYPE_AUDITOR];
+			}
 
 			if (!empty($task['CHAT_ID']))
 			{
-				$task['CHAT_INFO'] = $this->fetchMessagesByChatId(
-					$task['CHAT_ID'],
-					$this->{self::PARAM_MESSAGE_COUNT_LIMIT},
-				);
+				$formattedTask['CHAT_INFO'] = $chatMessages[$task['CHAT_ID']] ?? [];
 			}
 
-			unset($task['CHAT_ID']);
+			if ($showIsOverdue && isset($task['DEADLINE']) && $task['DEADLINE'] instanceof DateTime)
+			{
+				$formattedTask['IS_OVERDUE'] = $task['DEADLINE']->getTimestamp() <= time();
+			}
+
+			if ($showUrl)
+			{
+				$taskEntity = new Bitrix\Tasks\V2\Internal\Entity\Task(id: (int)$taskId);
+				$formattedTask['URL'] = '/' . ltrim($linkService->get($taskEntity, $userId), '/');
+			}
+
+			if (isset($task['PRIORITY']))
+			{
+				$formattedTask['PRIORITY'] = (int)$task['PRIORITY'];
+			}
+
+			$formattedTasks[] = $formattedTask;
 		}
-		unset($task);
+
+		return $formattedTasks;
 	}
 
-	private function replaceUserField(array &$list, string $field, array $users): void
+	private function replaceUserField(array &$list, string $field, array $users, bool $useUnsetEmptyId = false): void
 	{
 		foreach ($list as &$group)
 		{
 			foreach ($group as &$item)
 			{
 				$id = $item[$field] ?? null;
-				if ($id !== null && isset($users[$id]))
+				if ($id !== null)
 				{
-					$item[$field] = $users[$id];
+					if ($useUnsetEmptyId && empty($id))
+					{
+						unset($item[$field]);
+					}
+					elseif (isset($users[$id]))
+					{
+						$item[$field] = $users[$id];
+					}
 				}
 			}
 		}
@@ -588,5 +687,232 @@ class CBPTasksGetInfoActivity extends BaseActivity
 	protected static function getFileName(): string
 	{
 		return __FILE__;
+	}
+
+	/**
+	 * @return array<string, string>
+	 */
+	private static function getTaskRoles(): array
+	{
+		if (!Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		return [
+			MemberTable::MEMBER_TYPE_ORIGINATOR => Loc::getMessage('TASKS_GET_INFO_TASK_ROLE_ORIGINATOR'),
+			MemberTable::MEMBER_TYPE_RESPONSIBLE => Loc::getMessage('TASKS_GET_INFO_TASK_ROLE_RESPONSIBLE'),
+			MemberTable::MEMBER_TYPE_ACCOMPLICE => Loc::getMessage('TASKS_GET_INFO_TASK_ROLE_ACCOMPLICE'),
+			MemberTable::MEMBER_TYPE_AUDITOR => Loc::getMessage('TASKS_GET_INFO_TASK_ROLE_AUDITOR'),
+		];
+	}
+
+	/**
+	 * @return array<string, string>
+	 */
+	private static function getSelectedFieldsOptions(): array
+	{
+		return [
+			self::SELECT_FIELD_DESCRIPTION => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_DESCRIPTION'),
+			self::SELECT_FIELD_STATUS => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_STATUS'),
+			self::SELECT_FIELD_DEADLINE => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_DEADLINE'),
+			self::SELECT_FIELD_ORIGINATOR => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_ORIGINATOR'),
+			self::SELECT_FIELD_RESPONSIBLE => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_RESPONSIBLE'),
+			self::SELECT_FIELD_ACCOMPLICE => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_ACCOMPLICE'),
+			self::SELECT_FIELD_AUDITOR => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_AUDITOR'),
+			self::SELECT_FIELD_CHECKLISTS => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_CHECKLISTS'),
+			self::SELECT_FIELD_RESULTS => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_RESULTS'),
+			self::SELECT_FIELD_CHAT => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_CHAT'),
+			self::SELECT_FIELD_ACTIVITY_DATE => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_ACTIVITY_DATE'),
+			self::SELECT_FIELD_IS_OVERDUE => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_IS_OVERDUE'),
+			self::SELECT_FIELD_URL => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_URL'),
+			self::SELECT_FIELD_PRIORITY => Loc::getMessage('TASKS_GET_INFO_SELECT_FIELD_PRIORITY'),
+		];
+	}
+
+	private static function getPropertyMapName(string $propertyId): ?string
+	{
+		return self::getPropertiesDialogMap()[$propertyId]['Name'] ?? null;
+	}
+
+	private function getTargetUserId(): ?int
+	{
+		return CBPHelper::extractFirstUser($this->{self::PARAM_USER_ID}, $this->getDocumentId());
+	}
+
+	private function setDefaultValuesToNullProperties(): void
+	{
+		foreach (self::getPropertiesDialogMap() as $propertyId => $propertyFields)
+		{
+			$defaultValue = $propertyFields['Default'] ?? null;
+			if ($defaultValue === null)
+			{
+				continue;
+			}
+
+			$this->{$propertyId} ??= $defaultValue;
+		}
+	}
+
+	private function filterIncorrectSelectTypeProperties(): void
+	{
+		foreach (self::getPropertiesDialogMap() as $propertyId => $propertyFields)
+		{
+			$type = $propertyFields['Type'] ?? null;
+			$options = $propertyFields['Options'] ?? null;
+			$value = $this->{$propertyId};
+			if ($type !== FieldType::SELECT || empty($options) || !is_array($value) || !is_array($options))
+			{
+				continue;
+			}
+
+			$this->{$propertyId} = array_intersect(array_keys($options), $value);
+		}
+	}
+
+	private function getIncorrectPropertyValueMessage(string $propertyId): ?string
+	{
+		return Loc::getMessage(
+			'TASKS_GET_INFO_FIELD_ERROR_INVALID_VALUE',
+			['#PROPERTY_NAME#' => $this->getPropertyMapName($propertyId)],
+		);
+	}
+
+	private function getIncorrectPropertyError(string $propertyId): Error
+	{
+		return new Error($this->getIncorrectPropertyValueMessage($propertyId) ?? '');
+	}
+
+	private static function getIntPropertyMin(string $propertyId): ?int
+	{
+		return match ($propertyId)
+		{
+			self::PARAM_TASK_LIMIT => self::TASKS_LIMIT_MIN,
+			self::PARAM_TASK_ACTIVITY_DAYS => self::TASK_ACTIVITY_DAYS_MIN,
+			self::PARAM_MESSAGE_COUNT_LIMIT => self::MESSAGE_COUNT_MIN,
+			self::PARAM_MESSAGES_DAYS => self::MESSAGES_DAYS_MIN,
+			default => null,
+		};
+	}
+
+	private static function getIntPropertyMax(string $propertyId): ?int
+	{
+		return match ($propertyId)
+		{
+			self::PARAM_TASK_LIMIT => self::TASKS_LIMIT_MAX,
+			self::PARAM_TASK_ACTIVITY_DAYS => self::TASK_ACTIVITY_DAYS_MAX,
+			self::PARAM_MESSAGE_COUNT_LIMIT => self::MAX_MESSAGE_COUNT_LIMIT_MAX,
+			self::PARAM_MESSAGES_DAYS => self::MESSAGES_DAYS_MAX,
+			default => null,
+		};
+	}
+
+	private static function validateIntRangeValue(string $propertyId, mixed $value): ?Error
+	{
+		if (!is_numeric($value))
+		{
+			return null;
+		}
+
+		$min = self::getIntPropertyMin($propertyId);
+		$max = self::getIntPropertyMax($propertyId);
+		$name = self::getPropertyMapName($propertyId);
+		if ($min === null || $max === null || $name === null)
+		{
+			return null;
+		}
+
+		$value = (int)$value;
+		if ($value >= $min && $value <= $max)
+		{
+			return null;
+		}
+
+		$message = Loc::getMessage('TASKS_GET_INFO_FIELD_ERROR_INVALID_VALUE_IN_RANGE', [
+			'#PROPERTY_NAME#' => $name,
+			'#MIN_VALUE#' => $min,
+			'#MAX_VALUE#' => $max,
+		]);
+
+		return new Error($message ?? '');
+	}
+
+	private function checkIntRuntimePropertyValue(string $propertyId): ?Error
+	{
+		$value = $this->{$propertyId};
+		if (!is_numeric($value))
+		{
+			return $this->getIncorrectPropertyError($propertyId);
+		}
+
+		return self::validateIntRangeValue($propertyId, (int)$value);
+	}
+
+	private function checkSelectRuntimePropertyValue(string $propertyId, bool $isRequired): ?Error
+	{
+		$value = $this->{$propertyId};
+		if (!is_array($value) || ($isRequired && empty($value)))
+		{
+			return $this->getIncorrectPropertyError($propertyId);
+		}
+
+		return null;
+	}
+
+	private function getTaskQuerySelectFields(): array
+	{
+		$select = [
+			'ID',
+			'TITLE',
+		];
+
+		$userSelectedFields = (array)$this->{self::PARAM_TASK_SELECT_FIELD};
+		if (in_array(self::SELECT_FIELD_DESCRIPTION, $userSelectedFields, true))
+		{
+			$select[] = 'DESCRIPTION';
+		}
+
+		if (in_array(self::SELECT_FIELD_STATUS, $userSelectedFields, true))
+		{
+			$select[] = 'STATUS';
+		}
+
+		if (in_array(self::SELECT_FIELD_RESPONSIBLE, $userSelectedFields, true))
+		{
+			$select[] = 'RESPONSIBLE_ID';
+		}
+
+		if (
+			in_array(self::SELECT_FIELD_DEADLINE, $userSelectedFields, true)
+			|| in_array(self::SELECT_FIELD_IS_OVERDUE, $userSelectedFields, true)
+		)
+		{
+			$select[] = 'DEADLINE';
+		}
+
+		if (in_array(self::SELECT_FIELD_ORIGINATOR, $userSelectedFields, true))
+		{
+			$select[] = 'CREATED_BY';
+		}
+
+		if (in_array(self::SELECT_FIELD_ACTIVITY_DATE, $userSelectedFields, true))
+		{
+			$select[] = 'ACTIVITY_DATE';
+		}
+
+		if (
+			in_array(self::SELECT_FIELD_CHAT, $userSelectedFields, true)
+			&& !empty($this->{self::PARAM_MESSAGE_COUNT_LIMIT})
+		)
+		{
+			$select['CHAT_ID'] = 'CHAT_TASK.CHAT_ID';
+		}
+
+		if (in_array(self::SELECT_FIELD_PRIORITY, $userSelectedFields, true))
+		{
+			$select[] = 'PRIORITY';
+		}
+
+		return $select;
 	}
 }

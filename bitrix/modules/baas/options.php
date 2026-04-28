@@ -75,7 +75,7 @@ if (
 					Main\Config\Option::set('baas', 'servers', $historyBaasServersJson);
 					if ($action === 'saveAndRegister' && Baas\Service\BillingService::getInstance()->register(true)->isSuccess())
 					{
-						Baas\Service\BillingService::getInstance()->synchronizeWithBilling();
+						Baas\Baas::getInstance()->sync(true);
 					}
 				break;
 		}

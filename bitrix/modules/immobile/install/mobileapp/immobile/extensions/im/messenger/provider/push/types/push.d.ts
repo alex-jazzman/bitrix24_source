@@ -1,5 +1,6 @@
 import {RawChat, RawFile, RawUser} from "../../service/src/types/sync-list-result";
 import {DialogId} from "../../../types/common";
+import {StickerState} from "../../../model/sticker-pack/src/types";
 
 declare type MessengerPushEvent = {
 	command: 'message' | 'messageChat',
@@ -18,6 +19,7 @@ declare type MessengerPushEvent = {
 		notify: boolean,
 		userInChat: Record<number, Array<number>>,
 		users: Record<number, RawUser>
+		sticker: StickerState | '',
 	}
 }
 

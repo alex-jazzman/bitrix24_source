@@ -69,6 +69,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessageUnpin: 'im.v2.Chat.Message.unpin',
 		imV2ChatMessageSearch: 'im.v2.Chat.Message.search',
 		imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
+		imV2ChatMemberFilterUsersByParticipation: 'im.v2.Chat.Member.filterUsersByParticipation',
 
 		imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
 		imV2ChatPinCount: 'im.v2.Chat.Pin.count',
@@ -182,9 +183,14 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		userCounters: 'user.counters',
 		serverTime: 'server.time',
 
-		openlinesDialogGet: 'imopenlines.dialog.get',
+		imopenlinesDialogGet: 'imopenlines.dialog.get',
+		imopenlinesV2RecentList: 'imopenlines.v2.Recent.list',
+		imopenlinesOperatorAnswer: 'imopenlines.operator.answer',
+		imopenlinesOperatorSkip: 'imopenlines.operator.skip',
+		imopenlinesOperatorSpam: 'imopenlines.operator.spam',
+		imopenlinesOperatorFinish: 'imopenlines.operator.finish',
 
-		immobileSettingsGet: 'immobile.api.Settings.get',
+		immobileApiSettingsGet: 'immobile.api.Settings.get',
 
 		immobileMessengerLoad: 'immobile.Messenger.load',
 
@@ -207,6 +213,8 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		voteAttachedVoteGetAnswerVoted: 'vote.AttachedVote.getAnswerVoted',
 
 		mobileOnboardingGetMessagesAmountByChatId: 'mobile.Onboarding.getMessagesAmountByChatId',
+
+		aiAssistantApiMCPHintSendSelectionHintOnce: 'aiassistant.api.McpHint.sendSelectionHintOnce',
 	});
 
 	module.exports = {

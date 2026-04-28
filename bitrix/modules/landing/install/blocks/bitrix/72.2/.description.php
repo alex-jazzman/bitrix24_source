@@ -9,7 +9,7 @@ use Bitrix\Main\Localization\Loc;
 $return = [
 	'block' => [
 		'name' => 'test',
-		//'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'mainpage'],
+		//'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'vibe'],
 		'type' => 'null',
 		'section' => ['widgets_columns'],
 	],

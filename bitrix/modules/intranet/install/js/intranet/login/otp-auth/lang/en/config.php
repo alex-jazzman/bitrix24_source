@@ -1,6 +1,11 @@
 <?php
 $MESS["INTRANET_AUTH_OTP_ALTERNATIVE_WAY"] = "Other login methods";
 $MESS["INTRANET_AUTH_OTP_ALTERNATIVE_WAY_TITLE"] = "Select login confirmation method";
+$MESS["INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE"] = "Verification code";
+$MESS["INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE_INPUT_LABEL"] = "Enter code";
+$MESS["INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE_STEP_1"] = "Open the Bitrix24 mobile app on your trusted device.";
+$MESS["INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE_STEP_2"] = "Open the menu and select \"Change account\".";
+$MESS["INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE_STEP_3"] = "Tap #MORE_ICON# beside the required account and select \"Verification code\".";
 $MESS["INTRANET_AUTH_OTP_CAPTCHA_PROMT"] = "Enter the characters you see on the picture";
 $MESS["INTRANET_AUTH_OTP_CONFIRM_AUTH"] = "Confirm your login in Bitrix24 mobile app";
 $MESS["INTRANET_AUTH_OTP_CONFIRM_LOGIN"] = "Confirm login";
@@ -15,6 +20,12 @@ $MESS["INTRANET_AUTH_OTP_PUSH_SENDED"] = "A request has been sent to your device
 $MESS["INTRANET_AUTH_OTP_RECOVERY_CODES"] = "Recovery code";
 $MESS["INTRANET_AUTH_OTP_RECOVERY_CODES_DESC"] = "You can use your recovery codes if you provided them after enabling two-factor authentication.";
 $MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS"] = "Recover account";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_REQUEST_BUTTON"] = "Send request";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_REQUEST_DESCRIPTION"] = "Send a request to your Bitrix24's administrator to restore access.";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_REQUEST_SENT_BUTTON"] = "Refresh page";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_REQUEST_SENT_DESCRIPTION"] = "The administrator will contact you shortly. Once your access has been restored, refresh the page.";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_REQUEST_SENT_TITLE"] = "Request sent";
+$MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_REQUEST_TITLE"] = "Restore access";
 $MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_TEXT"] = "Please contact your Bitrix24 administrator to recover your account.";
 $MESS["INTRANET_AUTH_OTP_RECOVER_ACCESS_TITLE"] = "Cannot confirm login";
 $MESS["INTRANET_AUTH_OTP_REMEMBER_ME"] = "Remember me on this device";

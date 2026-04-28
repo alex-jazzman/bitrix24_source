@@ -26,18 +26,12 @@ export const UserStatusIcon = {
 	computed: {
 		iconSetting(): UserStatusIconSetting | null
 		{
-			let status = this.status;
-			if (!Type.isStringFilled(status))
+			if (!Type.isStringFilled(this.status) || !StatusService.isSupportedToShow(this.status))
 			{
 				return null;
 			}
 
-			if (!StatusService.isSupported(status))
-			{
-				status = StatusService.getFailoverStatus();
-			}
-
-			return IconSettingByStatus[status] ?? null;
+			return IconSettingByStatus[this.status] ?? null;
 		},
 	},
 	template: `

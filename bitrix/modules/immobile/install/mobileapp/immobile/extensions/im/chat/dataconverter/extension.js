@@ -1306,6 +1306,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		4: 'dialogId',
 		5: 'files',
 		6: 'message',
+		7: 'sticker',
 		8: 'users',
 		9: 'name',
 		10: 'avatar',
@@ -1341,6 +1342,11 @@ ChatDataConverter.preparePushFormat = function(element)
 		63: 'params',
 		64: 'senderId',
 		601: 'system',
+
+		70: 'uri',
+		71: 'packId',
+		72: 'packType',
+		73: 'sort',
 
 		80: 'extension',
 		81: 'image',

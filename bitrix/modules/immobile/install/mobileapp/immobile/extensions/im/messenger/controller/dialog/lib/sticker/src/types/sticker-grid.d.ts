@@ -75,12 +75,20 @@ declare type StickerPackHeaderState = {
 
 declare type StickerViewProps = {
 	id: number | string,
-	onClick: () => void,
-	onLongClick: () => void,
+	packId: StickerPackId,
+	packType: StickerPackType,
+	onClick: (stickerData: StickerViewClickData, ref: object) => void,
+	onLongClick: (stickerData: StickerViewClickData, ref: object) => void,
 	uri: string,
 	ref(ref: object): BaseMethods;
 	isUploading: boolean,
 };
+
+declare type StickerViewClickData = {
+	id: number | string,
+	packId: StickerPackId,
+	packType: StickerPackType,
+}
 
 declare type StickerViewState = {};
 

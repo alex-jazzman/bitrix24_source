@@ -620,6 +620,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    confirmButtonClass: {
 	      type: String,
 	      default: 'ui-btn-primary'
+	    },
+	    minHeight: {
+	      type: Number,
+	      default: false
+	    },
+	    maxHeight: {
+	      type: Number,
+	      default: false
 	    }
 	  },
 	  methods: {
@@ -678,7 +686,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        className: 'hr_structure_confirmation_popup',
 	        autoHide: false,
 	        draggable: true,
-	        titleBar: this.withoutTitleBar ? null : this.getTitleBar()
+	        titleBar: this.withoutTitleBar ? null : this.getTitleBar(),
+	        maxHeight: this.maxHeight,
+	        minHeight: this.minHeight
 	      };
 	    }
 	  },

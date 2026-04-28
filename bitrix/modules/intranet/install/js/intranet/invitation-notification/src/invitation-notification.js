@@ -164,7 +164,7 @@ export class InvitationNotification
 			return;
 		}
 
-		BannerDispatcher.critical.toQueue((onDone) => {
+		BannerDispatcher.normal.toQueue((onDone) => {
 			this.#popup = this.createNotificationBalloon(onDone);
 			this.#popup.show();
 			this.#popup.zIndexComponent.setZIndex(400);

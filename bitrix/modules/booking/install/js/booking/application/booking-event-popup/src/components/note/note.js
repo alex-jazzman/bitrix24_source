@@ -1,5 +1,6 @@
 import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as UiIcon, Outline } from 'ui.icon-set.api.vue';
+import { RichLoc } from 'ui.vue3.components.rich-loc';
 
 import { Model } from 'booking.const';
 
@@ -9,6 +10,7 @@ import './note.css';
 export const BookingEventPopupNote = {
 	name: 'BookingEventPopupNote',
 	components: {
+		RichLoc,
 		UiIcon,
 	},
 	setup(): { iconName: string }
@@ -29,13 +31,39 @@ export const BookingEventPopupNote = {
 		...mapGetters({
 			note: `${Model.BookingInfo}/note`,
 		}),
-		more(): string
-		{
-			return this.loc('BOOKING_EVENT_POPUP_NOTE_MORE');
-		},
 		shortNote(): string
 		{
-			return this.showedMore ? this.note : this.note.slice(0, 100 - this.more.length).trimEnd();
+			if (this.showedMore)
+			{
+				return this.note;
+			}
+
+			const moreText = this.extractMoreText(this.loc('BOOKING_EVENT_POPUP_NOTE_MORE_MSGVER_1', {
+				'#NOTE#': '',
+			}));
+
+			return this.note.slice(0, 100 - moreText.length - 3).trimEnd();
+		},
+		richLocText(): string
+		{
+			return this.loc('BOOKING_EVENT_POPUP_NOTE_MORE_MSGVER_1', {
+				'#NOTE#': this.shortNote,
+			});
+		},
+
+	},
+	methods: {
+		extractMoreText(text): string
+		{
+			const regex = /\[button](.*?)\[\/button]/;
+			const matchResult = text.match(regex);
+
+			if (matchResult && matchResult.length > 1)
+			{
+				return matchResult[1];
+			}
+
+			return '';
 		},
 	},
 	template: `
@@ -44,14 +72,19 @@ export const BookingEventPopupNote = {
 				<UiIcon :name="iconName" :size="22" color="rgba(250, 167, 44, 1)"/>
 			</div>
 			<div class="booking-event-popup__person-info_text">
-				<text>{{ shortNote }}</text>
-				<span
-					v-if="shortNote.length < note.length"
-					class="booking-event-popup__person-info_text-more"
-					@click="showedMore = true"
-				>
-					{{ more }}
-				</span>
+				<RichLoc v-if="shortNote.length < note.length" :text="richLocText" placeholder="[button]">
+					<template #button="{ text }">
+						<span
+							class="booking-event-popup__person-info_text-more"
+							@click="showedMore = true"
+						>
+							{{ text }}
+						</span>
+					</template>
+				</RichLoc>
+				<text v-else>
+					{{ note }}
+				</text>
 			</div>
 		</div>
 	`,

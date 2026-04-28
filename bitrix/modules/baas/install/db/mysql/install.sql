@@ -111,6 +111,7 @@ create table if not exists b_baas_purchased_package
 	EXPIRATION_DATE DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 	ACTIVE CHAR(1) NOT NULL DEFAULT 'Y',
+	NOTIFIED CHAR(1) NOT NULL DEFAULT 'N',
 
 	unique index `ux_baas_pp_code` (`CODE`),
 	index `ux_baas_pp_code_pack_code` (`CODE`, `PACKAGE_CODE`),

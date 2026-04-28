@@ -38,6 +38,12 @@ Extension::load([
 	'intranet.invitation-input',
 	'intranet.department-control',
 	'ui.notification',
+	'ui.form-elements.view',
+	'ui.form-elements.field',
+	'ui.system.typography',
+	'ui.system.input',
+	'ui.type',
+	'ui.avatar',
 ]);
 
 CJSCore::Init(['phone_number']);
@@ -46,6 +52,7 @@ $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-background invite-body');
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+//\Bitrix\UI\Toolbar\Facade\Toolbar::setTitle('title');
 $menuContainerId = 'invitation-form-menu-' . $this->randString();
 $contentContainerId = 'invitation-form-content-' . $this->randString();
 
@@ -78,7 +85,8 @@ $APPLICATION->IncludeComponent(
 $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 	"ID" => $menuContainerId,
 	"ITEMS" => $arResult["MENU_ITEMS"],
-	"TITLE" => Loc::getMessage("INTRANET_INVITE_DIALOG_TITLE")
+	"TITLE" => Loc::getMessage("INTRANET_INVITE_DIALOG_TITLE"),
+	'USE_UI_TOOLBAR' => 'Y',
 ));
 $this->SetViewTarget('left-panel');
 
@@ -115,71 +123,69 @@ if ($arResult["IS_CLOUD"])
 
 if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 {
-	$isMaxUsersUnlimited = ($arResult["USER_MAX_COUNT"] == 0);
+	$isMaxUsersUnlimited = !(isset($arResult['USER_MAX_COUNT']) && $arResult['USER_MAX_COUNT'] > 0);
+	$currentCountFormatted = number_format($arResult['USER_CURRENT_COUNT'], 0, '', ' ');
 
-	$APPLICATION->AddViewContent(
-		"left-panel-after", '
-		<div class="invite-limit-counters-container">
-			<div class="invite-limit-counters-row">
-				<div class="invite-limit-counters-block-name">' . Loc::getMessage("INTRANET_INVITE_DIALOG_USER_MAX_COUNT") . '</div>
-				<div class="' . ($isMaxUsersUnlimited
-			? 'invite-limit-counters-block-value-unlimited' : 'invite-limit-counters-block-value-current') . '">'
-		. ($isMaxUsersUnlimited ? Loc::getMessage("INTRANET_INVITE_DIALOG_UNLIMITED") : $arResult["USER_MAX_COUNT"])
-		. '</div>
-			</div>
-			<div class="invite-limit-counters-row">
-				<div class="invite-limit-counters-block-name">' . Loc::getMessage("INTRANET_INVITE_DIALOG_USER_CURRENT_COUNT") . '</div>
-				<div class="invite-limit-counters-block-value-overflow">' . $arResult["USER_CURRENT_COUNT"] . '</div>
-			</div>
-		</div>
-	'
-	);
+	if ($isMaxUsersUnlimited)
+	{
+		$APPLICATION->AddViewContent(
+			"left-panel-after", '
+				<div class="invite-limit-counters-container">
+					<div class="invite-limit-counters-container__body">
+						<span class="invite-limit-counters-container__title ui-headline --xs">
+							' . Loc::getMessage('INTRANET_INVITE_DIALOG_USER_CURRENT_COUNT', [
+								'#COUNT#' => '<span class="invite-limit-counters-container__number ui-headline --xs --accent" data-test-id="invite-limit-count">' . $currentCountFormatted . '</span>'
+							]) . '
+						</span>
+						<div class="invite-limit-counters-container__count ui-text --2xs">
+							' . Loc::getMessage('INTRANET_INVITE_DIALOG_USER_COUNT_UNLIMITED') . '
+						</div>
+					</div>
+				</div>
+			'
+		);
+	}
+	else
+	{
+		$counterBarWidth = $arResult['USER_CURRENT_COUNT'] / $arResult['USER_MAX_COUNT'] * 100;
+		$leftCount = max($arResult['USER_MAX_COUNT'] - $arResult['USER_CURRENT_COUNT'], 0);
+		$leftCountFormatted = number_format($leftCount, 0, '', ' ');
+
+		$APPLICATION->AddViewContent(
+			"left-panel-after", '
+				<div class="invite-limit-counters-container">
+					<span class="invite-limit-counters-container__title ui-text --sm --accent">' . Loc::getMessage('INTRANET_INVITE_DIALOG_USER_COUNT_TITLE') . '</span>
+					<div class="invite-limit-counters-container__body">
+						<div class="invite-limit-counters-container__count ui-headline --xs">
+							' . Loc::getMessagePlural('INTRANET_INVITE_DIALOG_USER_MAX_COUNT', $leftCount, [
+								'#COUNT#' => '<span class="invite-limit-counters-container__number ui-headline --lg --accent" data-test-id="invite-limit-max-count">' . $leftCountFormatted . '</span>'
+							]) . ' 
+						</div>
+						<div class="invite-limit-counters-container__bar">
+							<div class="invite-limit-counters-container__bar-slider" style="width: ' . $counterBarWidth . '%"></div>
+						</div>
+						<div class="invite-limit-counters-container__legend ui-text --3xs">
+							' . Loc::getMessage('INTRANET_INVITE_DIALOG_USER_CURRENT_COUNT', [
+								'#COUNT#' => '<span class="invite-limit-counters-container__legend_number ui-text --3xs --accent" data-test-id="invite-limit-count">' . $currentCountFormatted . '</span>'
+							]) . '
+						</div>
+					</div>
+				</div>
+			'
+		);
+	}
 }
 ?>
 
 <div data-id="<?= $contentContainerId ?>" class="popup-window-tabs-box">
-	<div class="ui-alert ui-alert-danger" data-role="error-message" style="display: none;">
-
+	<div class="ui-alert ui-alert-danger intranet-invitation-alert ui-text --sm" data-role="error-message" style="display: none;">
 	</div>
 	<div class="ui-alert ui-alert-success" data-role="success-message" style="display: none;">
-
 	</div>
 
 	<div class="popup-window-tabs-content popup-window-tabs-content-invite">
 	</div>
 </div>
-
-<?php
-$APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
-	"BUTTONS" => [
-		[
-			'ID' => 'intranet-invitation-btn',
-			'TYPE' => 'save',
-			"CAPTION" => $arResult["IS_CLOUD"] ? Loc::getMessage("BX24_INVITE_DIALOG_ACTION_SAVE")
-				: Loc::getMessage("BX24_INVITE_DIALOG_ACTION_INVITE"),
-			'ONCLICK' => '',
-		],
-		[
-			'TYPE' => 'close',
-			'ONCLICK' => "BX.SidePanel.Instance.close();"
-		]
-	]
-));
-?>
-
-<?php $this->SetViewTarget("below_page", 10); ?>
-<div class="invite-wrap-decal-arrow">
-	<svg width="79" height="74" xmlns="http://www.w3.org/2000/svg">
-		<g stroke="#2FC6F6" stroke-width="2" fill="none" fill-rule="evenodd" opacity=".73" stroke-linecap="round"
-		   stroke-linejoin="round">
-			<path d="M71.747 72.41C59.827 32.816 36.576 9.119 1.992 1.32M76.4 62.11l-4.512 10.558-9.862-5.279"/>
-		</g>
-	</svg>
-</div>
-<div class="invite-wrap-decal" id="invite-wrap-decal">
-	<div class="invite-wrap-decal-image"><?= Loc::getMessage("INTRANET_INVITE_DIALOG_PICTURE_TITLE") ?></div>
-</div>
-<?php $this->EndViewTarget(); ?>
 
 <script>
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
@@ -198,9 +204,9 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 		INTRANET_INVITE_DIALOG_PHONE_INPUT: '<?=GetMessageJS('INTRANET_INVITE_DIALOG_INPUT_PHONE')?>',
 		INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT: '<?=GetMessageJS('INTRANET_INVITE_DIALOG_INPUT_EMAIL_AND_PHONE')?>',
 
-		INTRANET_INVITE_DIALOG_INTEGRATOR_SECTION: '<?= Loc::getMessage(($arResult['IS_RENAMED_INTEGRATOR'] ?? false) ? 'BX24_INVITE_DIALOG_TAB_INTEGRATOR_TITLE_RENAMED' : 'BX24_INVITE_DIALOG_TAB_INTEGRATOR_TITLE') ?>',
-		INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER: '<?= Loc::getMessage(($arResult['IS_RENAMED_INTEGRATOR'] ?? false) ? 'INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_RENAMED' : 'INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL') ?>',
-		INTRANET_INVITE_DIALOG_INTEGRATOR_POPUP_TITLE: '<?= Loc::getMessage(($arResult['IS_RENAMED_INTEGRATOR'] ?? false) ? 'INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE_RENAMED' : 'INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE') ?>',
+		INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_PLACEHOLDER: '<?= Loc::getMessage($arResult['IS_INTEGRATOR_RENAMED'] ? 'INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL_RENAMED' : 'INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL') ?>',
+		INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_POPUP_TITLE: '<?= Loc::getMessage($arResult['IS_INTEGRATOR_RENAMED'] ? 'INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE_RENAMED' : 'INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE') ?>',
+		INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_POPUP_DESCRIPTION: '<?= Loc::getMessage($arResult['IS_INTEGRATOR_RENAMED'] ? 'INTRANET_INVITE_DIALOG_INTEGRATOR_DESCRIPTION_RENAMED' : 'INTRANET_INVITE_DIALOG_INTEGRATOR_DESCRIPTION') ?>',
 	});
 
 	BX.ready(function () {
@@ -224,31 +230,12 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 			) ?>,
 			projectLimitExceeded: <?= Json::encode($isProjectLimitExceeded); ?>,
 			projectLimitFeatureId: '<?= $projectLimitFeatureId ?>',
-			wishlistValue: '<?= CUtil::JSEscape($arResult['REGISTER_SETTINGS']['REGISTER_WHITELIST'])?>',
+			whitelistValue: '<?= CUtil::JSEscape($arResult['REGISTER_SETTINGS']['REGISTER_WHITELIST'])?>',
 			registerConfirm: <?= (isset($arResult['REGISTER_SETTINGS']['REGISTER_CONFIRM']) && $arResult['REGISTER_SETTINGS']['REGISTER_CONFIRM'] === 'Y' ? 'true' : 'false') ?>,
 			isCollabEnabled: '<?= $arResult['IS_COLLAB_ENABLED'] ? 'Y' : 'N' ?>',
 			canCurrentUserInvite: <?= $arResult['canCurrentUserInvite'] ? 'true' : 'false' ?>,
 			useLocalEmailProgram: <?= $arResult['USE_INVITE_LOCAL_EMAIL_PROGRAM'] ? 'true' : 'false' ?>,
 			leftMenuItems: <?= Json::encode(array_merge($arResult['MENU_ITEMS'], $arResult['SUB_MENU_ITEMS'] ?? [])); ?>,
 		});
-
-		var imageMail = document.getElementById('invite-wrap-decal');
-		var leftPanel = document.getElementById('left-panel');
-
-		function adjustImageShow()
-		{
-			if (window.innerHeight - leftPanel.offsetHeight <= 240)
-			{
-				imageMail.style.display = 'none';
-			}
-
-			if (window.innerHeight - leftPanel.offsetHeight > 240)
-			{
-				imageMail.style.display = null;
-			}
-		}
-
-		adjustImageShow();
-		BX.bind(window, 'resize', BX.throttle(adjustImageShow, 100, this));
 	});
 </script>

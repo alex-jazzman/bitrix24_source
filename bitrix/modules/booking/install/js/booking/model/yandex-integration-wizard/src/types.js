@@ -25,7 +25,6 @@ export type YandexIntegrationModel = {
 	resources: ResourceModel[],
 	cabinetLink: string,
 	timezone: string,
-	catalogSkuEntityOptions: CatalogSkuEntityOptions,
 	settings: YandexIntegrationSettings,
 }
 
@@ -46,14 +45,6 @@ export type setResourcesPayload = {
 export type setTimezonePayload = {
 	timezone: string;
 	skipCalculateChanges?: boolean;
-}
-
-export type CatalogSkuEntityOptions = {
-	basePriceId: number;
-	iblockId: number;
-	linkType: string;
-	restrictedProductTypes: number[];
-	showPriceInCaption: boolean;
 }
 
 export type YandexIntegrationSettings = {

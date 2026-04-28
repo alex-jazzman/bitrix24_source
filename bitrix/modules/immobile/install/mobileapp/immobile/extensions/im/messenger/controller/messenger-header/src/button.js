@@ -6,12 +6,14 @@
  */
 jn.define('im/messenger/controller/messenger-header/button', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
+	const { Type } = require('type');
 
 	const { Loc } = require('im/messenger/loc');
-	const { NavigationTabId } = require('im/messenger/const');
+	const { NavigationTabId, RecentFilterId } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { showNotificationList } = require('im/messenger/api/notifications-opener');
+	const { RecentManager } = require('im/messenger/controller/recent/manager');
 	const { readAllChatsByActiveRecentTab } = require('im/messenger/lib/read-all-chats');
 	const {
 		Button,
@@ -19,11 +21,19 @@ jn.define('im/messenger/controller/messenger-header/button', (require, exports, 
 		PopupButton,
 	} = require('im/messenger/lib/widget/header-button');
 
+	const HeaderButtonSection = Object.freeze({
+		general: 'general',
+		filter: 'filter',
+		developer: 'developer',
+	});
+
 	const HeaderButtonId = Object.freeze({
 		search: 'search',
 		notification: 'notification',
-		readAll: 'read-all',
 		more: 'more',
+		filterAll: RecentFilterId.all,
+		filterUnread: RecentFilterId.unread,
+		readAll: 'read-all',
 		developerConsole: 'developer-console',
 		developerMenu: 'developer-menu',
 		developerReload: 'developer-reload',
@@ -33,6 +43,7 @@ jn.define('im/messenger/controller/messenger-header/button', (require, exports, 
 		search: 'search',
 		notification: 'notification',
 		more: 'more',
+		filter: 'filter_funnel',
 	});
 
 	const ButtonBadgeCode = Object.freeze({
@@ -66,16 +77,52 @@ jn.define('im/messenger/controller/messenger-header/button', (require, exports, 
 
 			return Loc.getMessage('IMMOBILE_MESSENGER_HEADER_BUTTON_READ_ALL');
 		},
-		iconName: Icon.CHATS_WITH_CHECK.getIconName(),
+		iconName: Icon.DOUBLE_CHECK.getIconName(),
+		shouldShow: async () => RecentManager.getInstance().getActiveRecentId() !== NavigationTabId.openlines,
 		callback: async () => {
 			void readAllChatsByActiveRecentTab();
 		},
+	});
+
+	const filterAllPopupButton = PopupButton.create({
+		id: HeaderButtonId.filterAll,
+		title: Loc.getMessage('IMMOBILE_MESSENGER_HEADER_BUTTON_FILTER_ALL'),
+		sectionCode: HeaderButtonSection.filter,
+		checked: () => {
+			const activeRecent = serviceLocator.get('recent-manager').getActiveRecent();
+
+			return activeRecent?.getCurrentFilterId() === HeaderButtonId.filterAll;
+		},
+		callback: () => {
+			void serviceLocator.get('recent-manager').getActiveRecent().applyFilter(HeaderButtonId.filterAll);
+		},
+		shouldShow: () => (
+			Feature.isRecentFilterAvailable && serviceLocator.get('recent-manager').getActiveRecent().isSupportedFilter()
+		),
+	});
+
+	const filterUnreadPopupButton = PopupButton.create({
+		id: HeaderButtonId.filterUnread,
+		title: Loc.getMessage('IMMOBILE_MESSENGER_HEADER_BUTTON_FILTER_UNREAD'),
+		sectionCode: HeaderButtonSection.filter,
+		checked: () => {
+			const activeRecent = serviceLocator.get('recent-manager').getActiveRecent();
+
+			return activeRecent?.getCurrentFilterId() === HeaderButtonId.filterUnread;
+		},
+		callback: () => {
+			void serviceLocator.get('recent-manager').getActiveRecent().applyFilter(HeaderButtonId.filterUnread);
+		},
+		shouldShow: () => (
+			Feature.isRecentFilterAvailable && serviceLocator.get('recent-manager').getActiveRecent().isSupportedFilter()
+		),
 	});
 
 	const developerConsolePopupButton = PopupButton.create({
 		id: HeaderButtonId.developerConsole,
 		title: 'Developer console',
 		iconName: Icon.EDIT.getIconName(),
+		sectionCode: HeaderButtonSection.developer,
 		shouldShow: async () => Feature.isDevModeEnabled,
 		callback: async () => {
 			const { Console } = await requireLazy('im:messenger/lib/dev/tools');
@@ -87,6 +134,7 @@ jn.define('im/messenger/controller/messenger-header/button', (require, exports, 
 		id: HeaderButtonId.developerMenu,
 		title: 'Developer menu',
 		iconName: Icon.MORE.getIconName(),
+		sectionCode: HeaderButtonSection.developer,
 		shouldShow: async () => Feature.isDevelopmentEnvironment,
 		callback: async () => {
 			void window.messengerDebug.showDeveloperMenu();
@@ -97,6 +145,7 @@ jn.define('im/messenger/controller/messenger-header/button', (require, exports, 
 		id: HeaderButtonId.developerReload,
 		title: 'reload();',
 		iconName: Icon.REFRESH.getIconName(),
+		sectionCode: HeaderButtonSection.developer,
 		shouldShow: async () => Feature.isDevelopmentEnvironment,
 		callback: async () => {
 			window.reload();
@@ -105,8 +154,22 @@ jn.define('im/messenger/controller/messenger-header/button', (require, exports, 
 
 	const moreButton = PopupCreateButton.create({
 		id: HeaderButtonId.more,
-		type: ButtonType.more,
+		type: ButtonType.filter,
+		isAccent: () => serviceLocator.get('recent-manager').getActiveRecent().hasSelectedFilter(),
+		getSections() {
+			const isSupportedFilter = serviceLocator.get('recent-manager').getActiveRecent().isSupportedFilter();
+			const isShowFilterSection = Feature.isRecentFilterAvailable && isSupportedFilter;
+			const isShowDeveloperSection = Feature.isDevModeEnabled || Feature.isDevelopmentEnvironment;
+
+			return [
+				isShowFilterSection && { id: HeaderButtonSection.filter },
+				{ id: HeaderButtonSection.general },
+				isShowDeveloperSection && { id: HeaderButtonSection.developer },
+			].filter((item) => Type.isPlainObject(item));
+		},
 		buttons: [
+			filterAllPopupButton,
+			filterUnreadPopupButton,
 			readAllPopupButton,
 			developerConsolePopupButton,
 			developerMenuPopupButton,
@@ -119,6 +182,8 @@ jn.define('im/messenger/controller/messenger-header/button', (require, exports, 
 		notificationButton,
 		moreButton,
 		readAllPopupButton,
+		filterAllPopupButton,
+		filterUnreadPopupButton,
 		developerConsolePopupButton,
 		developerMenuPopupButton,
 		developerReloadPopupButton,

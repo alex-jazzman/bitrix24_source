@@ -15,6 +15,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const { ListItemType, ListItemsFactory } = require('layout/ui/simple-list/items');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { Loc } = require('loc');
+	const { UIMenu } = require('layout/ui/menu');
 	const { showOfflineToast, showErrorToast } = require('toast');
 	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button',);
 	const { Type } = require('type');
@@ -1993,7 +1994,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		{
 			if (this.menuProps.layoutMenuActions)
 			{
-				const menu = new UI.Menu(this.menuProps.layoutMenuActions);
+				const menu = new UIMenu(this.menuProps.layoutMenuActions);
 				menu.show();
 			}
 		}

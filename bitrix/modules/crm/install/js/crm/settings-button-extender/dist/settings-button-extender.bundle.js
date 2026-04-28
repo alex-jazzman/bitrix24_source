@@ -1,7 +1,70 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core_events,ui_entitySelector,crm_activity_todoNotificationSkipMenu,crm_activity_todoPingSettingsMenu,crm_kanban_restriction,crm_kanban_sort,main_core,main_popup) {
+(function (exports,crm_activity_todoNotificationSkipMenu,crm_activity_todoPingSettingsMenu,crm_ai_nameService,crm_kanban_restriction,crm_kanban_sort,main_core_events,ui_entitySelector,main_popup,main_core) {
 	'use strict';
+
+	class AISettingsService {
+	  constructor(entityTypeId, categoryId) {
+	    this.entityTypeId = entityTypeId;
+	    this.categoryId = categoryId;
+	  }
+	  saveAutostartSettings(settings) {
+	    return main_core.ajax.runAction('crm.settings.ai.saveAutostartSettings', {
+	      json: {
+	        entityTypeId: this.entityTypeId,
+	        categoryId: this.categoryId,
+	        settings
+	      }
+	    });
+	  }
+	  getAutostartSettings() {
+	    return main_core.ajax.runAction('crm.settings.ai.getAutostartSettings', {
+	      json: {
+	        entityTypeId: this.entityTypeId,
+	        categoryId: this.categoryId
+	      }
+	    });
+	  }
+	  async saveWithErrorHandling(settings) {
+	    try {
+	      const response = await this.saveAutostartSettings(settings);
+	      return response.data.settings;
+	    } catch (error) {
+	      await console.error('Could not save ai settings', error);
+	      try {
+	        const response = await this.getAutostartSettings();
+	        return response.data.settings;
+	      } catch (fetchError) {
+	        await console.error('Could not fetch ai settings after error in save', fetchError);
+	        throw fetchError;
+	      }
+	    }
+	  }
+	}
+
+	/**
+	 * channels for autostart copilot
+	 */
+	const CHANNEL_TYPE_CALL = 'call';
+	const CHANNEL_TYPE_CHAT = 'chat';
+
+	/**
+	 * calls directions
+	 */
+	const CALL_DIRECTION_INCOMING = 1;
+	const CALL_DIRECTION_OUTGOING = 2;
+
+	/**
+	 * popup menu CSS classes
+	 */
+	const CHECKED_CLASS = 'menu-popup-item-accept';
+	const NOT_CHECKED_CLASS = 'menu-popup-item-none';
+
+	/**
+	 * other constants
+	 */
+	const COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY = 750;
+	const COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH = 300;
 
 	function requireClassOrNull(param, constructor, paramName) {
 	  if (main_core.Type.isNil(param)) {
@@ -171,126 +234,6 @@ this.BX = this.BX || {};
 	    showedColumns.push(column);
 	    babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getSettingsWindow().saveColumns(showedColumns, resolve);
 	  });
-	}
-
-	/**
-	 * channels for autostart copilot
-	 */
-	const CHANNEL_TYPE_CALL = 'call';
-	const CHANNEL_TYPE_CHAT = 'chat';
-
-	/**
-	 * calls directions
-	 */
-	const CALL_DIRECTION_INCOMING = 1;
-	const CALL_DIRECTION_OUTGOING = 2;
-
-	/**
-	 * popup menu CSS classes
-	 */
-	const CHECKED_CLASS = 'menu-popup-item-accept';
-	const NOT_CHECKED_CLASS = 'menu-popup-item-none';
-
-	/**
-	 * other constants
-	 */
-	const COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY = 750;
-	const COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH = 300;
-
-	class SettingsMigrator {
-	  static migrateToChannelFormat(settings) {
-	    if (settings && settings.channels) {
-	      return settings;
-	    }
-
-	    // old format migration to new format
-	    const result = {
-	      channels: {}
-	    };
-
-	    // call settings
-	    if (settings && (settings.autostartOperationTypes || !main_core.Type.isUndefined(settings.autostartCallDirections))) {
-	      result.channels[CHANNEL_TYPE_CALL] = {
-	        channelType: CHANNEL_TYPE_CALL,
-	        autostartOperationTypes: settings.autostartOperationTypes || [],
-	        // eslint-disable-next-line max-len
-	        autostartTranscriptionOnlyOnFirstCallWithRecording: Boolean(settings.autostartTranscriptionOnlyOnFirstCallWithRecording),
-	        autostartCallDirections: settings.autostartCallDirections || [CALL_DIRECTION_INCOMING]
-	      };
-	    }
-
-	    // chat settings
-	    if (settings && !main_core.Type.isUndefined(settings.autostartOnlyFirstChat)) {
-	      result.channels[CHANNEL_TYPE_CHAT] = {
-	        channelType: CHANNEL_TYPE_CHAT,
-	        autostartOperationTypes: [],
-	        // no such setting in old format
-	        autostartOnlyFirstChat: Boolean(settings.autostartOnlyFirstChat)
-	      };
-	    }
-	    return result;
-	  }
-	  static isValidChannelFormat(settings) {
-	    if (!main_core.Type.isPlainObject(settings)) {
-	      return false;
-	    }
-	    if (!main_core.Type.isPlainObject(settings.channels)) {
-	      return false;
-	    }
-
-	    // check each channel settings
-	    for (const [channelType, channelSettings] of Object.entries(settings.channels)) {
-	      if (!main_core.Type.isPlainObject(channelSettings)) {
-	        return false;
-	      }
-	      if (channelSettings.channelType !== channelType) {
-	        return false;
-	      }
-	      if (!main_core.Type.isArrayFilled(channelSettings.autostartOperationTypes)) {
-	        return false;
-	      }
-	    }
-	    return true;
-	  }
-	}
-
-	class AISettingsService {
-	  constructor(entityTypeId, categoryId) {
-	    this.entityTypeId = entityTypeId;
-	    this.categoryId = categoryId;
-	  }
-	  saveAutostartSettings(settings) {
-	    return main_core.ajax.runAction('crm.settings.ai.saveAutostartSettings', {
-	      json: {
-	        entityTypeId: this.entityTypeId,
-	        categoryId: this.categoryId,
-	        settings
-	      }
-	    });
-	  }
-	  getAutostartSettings() {
-	    return main_core.ajax.runAction('crm.settings.ai.getAutostartSettings', {
-	      json: {
-	        entityTypeId: this.entityTypeId,
-	        categoryId: this.categoryId
-	      }
-	    });
-	  }
-	  async saveWithErrorHandling(settings) {
-	    try {
-	      const response = await this.saveAutostartSettings(settings);
-	      return response.data.settings;
-	    } catch (error) {
-	      await console.error('Could not save ai settings', error);
-	      try {
-	        const response = await this.getAutostartSettings();
-	        return response.data.settings;
-	      } catch (fetchError) {
-	        await console.error('Could not fetch ai settings after error in save', fetchError);
-	        throw fetchError;
-	      }
-	    }
-	  }
 	}
 
 	/**
@@ -478,6 +421,63 @@ this.BX = this.BX || {};
 	  }
 	  static getSupportedChannelTypes() {
 	    return [CHANNEL_TYPE_CALL, CHANNEL_TYPE_CHAT];
+	  }
+	}
+
+	class SettingsMigrator {
+	  static migrateToChannelFormat(settings) {
+	    if (settings && settings.channels) {
+	      return settings;
+	    }
+
+	    // old format migration to new format
+	    const result = {
+	      channels: {}
+	    };
+
+	    // call settings
+	    if (settings && (settings.autostartOperationTypes || !main_core.Type.isUndefined(settings.autostartCallDirections))) {
+	      result.channels[CHANNEL_TYPE_CALL] = {
+	        channelType: CHANNEL_TYPE_CALL,
+	        autostartOperationTypes: settings.autostartOperationTypes || [],
+	        // eslint-disable-next-line max-len
+	        autostartTranscriptionOnlyOnFirstCallWithRecording: Boolean(settings.autostartTranscriptionOnlyOnFirstCallWithRecording),
+	        autostartCallDirections: settings.autostartCallDirections || [CALL_DIRECTION_INCOMING]
+	      };
+	    }
+
+	    // chat settings
+	    if (settings && !main_core.Type.isUndefined(settings.autostartOnlyFirstChat)) {
+	      result.channels[CHANNEL_TYPE_CHAT] = {
+	        channelType: CHANNEL_TYPE_CHAT,
+	        autostartOperationTypes: [],
+	        // no such setting in old format
+	        autostartOnlyFirstChat: Boolean(settings.autostartOnlyFirstChat)
+	      };
+	    }
+	    return result;
+	  }
+	  static isValidChannelFormat(settings) {
+	    if (!main_core.Type.isPlainObject(settings)) {
+	      return false;
+	    }
+	    if (!main_core.Type.isPlainObject(settings.channels)) {
+	      return false;
+	    }
+
+	    // check each channel settings
+	    for (const [channelType, channelSettings] of Object.entries(settings.channels)) {
+	      if (!main_core.Type.isPlainObject(channelSettings)) {
+	        return false;
+	      }
+	      if (channelSettings.channelType !== channelType) {
+	        return false;
+	      }
+	      if (!main_core.Type.isArrayFilled(channelSettings.autostartOperationTypes)) {
+	        return false;
+	      }
+	    }
+	    return true;
 	  }
 	}
 
@@ -896,7 +896,7 @@ this.BX = this.BX || {};
 	    return null;
 	  }
 	  return {
-	    text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_IN_CRM'),
+	    text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_IN_CRM', crm_ai_nameService.NameService.copilotNameReplacement()),
 	    disabled: babelHelpers.classPrivateFieldLooseBase(this, _isSetAiSettingsRequestRunning)[_isSetAiSettingsRequestRunning],
 	    items: menuItems
 	  };
@@ -993,5 +993,5 @@ this.BX = this.BX || {};
 
 	exports.SettingsButtonExtender = SettingsButtonExtender;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Event,BX.UI.EntitySelector,BX.Crm.Activity,BX.Crm.Activity,BX.CRM.Kanban,BX.CRM.Kanban,BX,BX.Main));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.Activity,BX.Crm.Activity,BX.Crm.AI,BX.CRM.Kanban,BX.CRM.Kanban,BX.Event,BX.UI.EntitySelector,BX.Main,BX));
 //# sourceMappingURL=settings-button-extender.bundle.js.map

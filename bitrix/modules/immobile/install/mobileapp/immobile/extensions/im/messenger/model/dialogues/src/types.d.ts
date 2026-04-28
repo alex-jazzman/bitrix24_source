@@ -35,6 +35,7 @@ export type DialoguesModelState = {
 	avatar: string,
 	color: string,
 	extranet: boolean,
+	/** @deprecated use counterModel */
 	counter: number,
 	userCounter: number,
 	participants: Array<any>,
@@ -51,6 +52,9 @@ export type DialoguesModelState = {
 	textareaMessage: string,
 	quoteId: number,
 	owner: number,
+	entityData1: string,
+	entityData2: string,
+	entityData3: string,
 	entityType: string,
 	entityId: string,
 	entityLink: {

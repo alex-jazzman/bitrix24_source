@@ -7,6 +7,7 @@ define('DisableEventsCheck', true);
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
 use Bitrix\Crm;
+use Bitrix\Crm\FieldMultiTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Main;
@@ -117,16 +118,16 @@ elseif($action === 'SAVE')
 	if($ID > 0)
 	{
 		$dbResult = \CCrmContact::GetListEx(
-			array(),
-			array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
+			[],
+			['=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'],
 			false,
 			false,
-			array('*')
+			['*', 'UF_*']
 		);
 		$presentFields = $dbResult->Fetch();
 		if(!is_array($presentFields))
 		{
-			$presentFields = array();
+			$presentFields = [];
 		}
 	}
 
@@ -245,6 +246,13 @@ elseif($action === 'SAVE')
 	if (isset($_POST['OBSERVER_IDS']))
 	{
 		$fields['OBSERVER_IDS'] = is_array($_POST['OBSERVER_IDS']) ? $_POST['OBSERVER_IDS'] : array();
+		if ($ID > 0 && $presentFields && !array_key_exists('OBSERVER_IDS', $presentFields))
+		{
+			$presentFields['OBSERVER_IDS'] = Crm\Observer\ObserverManager::getEntityObserverIDs(
+				CCrmOwnerType::Contact,
+				$ID
+			);
+		}
 	}
 
 	if($isNew)
@@ -531,13 +539,18 @@ elseif($action === 'SAVE')
 			$isNew
 		);
 
-		$arErrors = array();
-		\CCrmBizProcHelper::AutoStartWorkflows(
-			\CCrmOwnerType::Contact,
-			$ID,
-			$isNew ? \CCrmBizProcEventType::Create : \CCrmBizProcEventType::Edit,
-			$arErrors,
-			isset($_POST['bizproc_parameters']) ? $_POST['bizproc_parameters'] : null
+		$bpParameters = $_POST['bizproc_parameters'] ?? null;
+		$starter = new Crm\Integration\BizProc\Starter\CrmStarter(
+			new Crm\Integration\BizProc\Starter\Dto\DocumentDto(\CCrmOwnerType::Contact, (int)$ID)
+		);
+		$starter->runProcess(
+			new Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+				actualFields: $fields,
+				previousFields: $presentFields,
+				userId: $currentUserID,
+				parameters: is_array($bpParameters) || is_string($bpParameters) ? $bpParameters : null,
+			),
+			$isNew ? \CCrmBizProcEventType::Create : \CCrmBizProcEventType::Edit
 		);
 
 		if($conversionWizard !== null)
@@ -645,7 +658,13 @@ elseif($action === 'DELETE')
 	}
 
 	$entity = new \CCrmContact(false);
-	if (!$entity->Delete($ID, array('PROCESS_BIZPROC' => false)))
+	if (!$entity->Delete($ID, [
+		'PROCESS_BIZPROC' => false,
+		'ANALYTICS' => [
+			'c_section' => Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+			'c_sub_section' => Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+		],
+	]))
 	{
 		/** @var CApplicationException $ex */
 		$ex = $APPLICATION->GetException();
@@ -873,4 +892,49 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	}
 	require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
 	die();
+}
+elseif ($action === 'DETACH_OPEN_LINE')
+{
+	$entityId = (int)($_POST['ACTION_ENTITY_ID'] ?? 0);
+
+	if ($entityId <= 0)
+	{
+		__CrmContactDetailsEndJsonResonse(['ERROR' => GetMessage('CRM_CONTACT_NOT_FOUND')]);
+	}
+
+	$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::Contact);
+	$item = $factory->getItem($entityId, [\Bitrix\Crm\Item::FIELD_NAME_FM]);
+
+	if (!$item)
+	{
+		__CrmCompanyDetailsEndJsonResonse(['ERROR' => GetMessage('CRM_CONTACT_NOT_FOUND')]);
+	}
+
+	$multiField = $item->getFm();
+	foreach ($multiField as $field)
+	{
+		if (
+			$field->getTypeId() === \Bitrix\Crm\Multifield\Type\Link::ID
+			&& $field->getValueType() === \Bitrix\Crm\Multifield\Type\Link::VALUE_TYPE_USER
+			&& $field->getId()
+		)
+		{
+			$multiField->removeById($field->getId());
+		}
+	}
+
+	$item->setFm($multiField);
+
+	$updateOperation = $factory
+		->getUpdateOperation($item)
+		->disableAllChecks()
+		->disableAutomation()
+		->disableBizProc()
+		->enableCheckAccess();
+	$result = $updateOperation->launch();
+
+	__CrmContactDetailsEndJsonResonse([
+		'IS_SUCCESS' => $result->isSuccess(),
+		'ERROR' => implode(', ', $result->getErrorMessages())
+	]);
 }

@@ -127,7 +127,9 @@ export const UserMiniProfileComponent = {
 				})
 				.finally(() => {
 					this.isLoading = false;
-					this.adjustPopup();
+					this.$nextTick(() => {
+						this.adjustPopup();
+					});
 				})
 			;
 		}
@@ -148,12 +150,15 @@ export const UserMiniProfileComponent = {
 
 			this.isExpanded = !this.isExpanded;
 			InitialParamService.save(InitialParamDict.RightSideExpand, this.isExpanded ? 'Y' : 'N');
+
+			this.$nextTick(() => {
+				this.adjustPopup();
+			});
 		},
 		adjustPopup(): void
 		{
 			this.popup?.adjustPosition();
 		},
-
 		onCollapseStart(): void
 		{
 			this.isExpandBlocked = true;
@@ -209,25 +214,19 @@ export const UserMiniProfileComponent = {
 								/>
 							</template>
 						</div>
-						<CollapseTransition
-							@start="onCollapseStart"
-							@end="onCollapseEnd"
-							:initialHeight="$refs.leftColumn?.offsetHeight"
+						<div v-if="isShowStructure" 
+							class="intranet-user-mini-profile-wrapper__content__right-wrapper"
+							data-test-id="usermp_structure-wrapper"
 						>
-							<div v-if="isShowStructure" 
-								class="intranet-user-mini-profile-wrapper__content__right-wrapper"
-								data-test-id="usermp_structure-wrapper"
-							>
-								<Divider isVertical style="margin: 0 18px"/>
-								<div class="intranet-user-mini-profile-wrapper__column --right" data-test-id="usermp_structure-column">
-									<StructureViewList
-										:structure="backendData.structure"
-										:user="getUserData()"
-										data-test-id="usermp_structure-view-list"
-									/>
-								</div>
+							<Divider isVertical style="margin: 0 18px"/>
+							<div class="intranet-user-mini-profile-wrapper__column --right" data-test-id="usermp_structure-column">
+								<StructureViewList
+									:structure="backendData.structure"
+									:user="getUserData()"
+									data-test-id="usermp_structure-view-list"
+								/>
 							</div>
-						</CollapseTransition>
+						</div>
 					</div>
 				</LoaderTransition>
 			</template>

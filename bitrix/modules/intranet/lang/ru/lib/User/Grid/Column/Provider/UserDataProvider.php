@@ -37,3 +37,5 @@ $MESS["INTRANET_USER_LIST_COLUMN_WORK_DEPARTMENT"] = "Департамент / �
 $MESS["INTRANET_USER_LIST_COLUMN_TAGS"] = "Интересы";
 $MESS["INTRANET_USER_LIST_COLUMN_MOBILE_APPS"] = "Мобильное приложение";
 $MESS["INTRANET_USER_LIST_COLUMN_DESKTOP_APPS"] = "Приложение для компьютера";
+$MESS["INTRANET_USER_LIST_COLUMN_CONNECT"] = "Связь";
+$MESS["INTRANET_USER_LIST_COLUMN_INTEGRATOR"] = "Интегратор";

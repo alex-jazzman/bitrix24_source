@@ -10,7 +10,7 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 	const { Feature } = require('im/messenger/lib/feature');
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { RestManager } = require('im/messenger/lib/rest-manager');
-	const { runAction } = require('im/messenger/lib/rest');
+	const { runAction, runAbortableAction, ABORT_ERROR } = require('im/messenger/lib/rest');
 	const { MessageContextCreator } = require('im/messenger/provider/services/lib/message-context-creator');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { DialogHelper, DateHelper } = require('im/messenger/lib/helper');
@@ -55,6 +55,7 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 
 			this.userManager = new UserManager(this.store);
 			this.reactions = null;
+			this.abortAction = {};
 		}
 
 		get className()
@@ -253,7 +254,10 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 				},
 			};
 
-			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then(async (result) => {
+			const { promise, abort } = runAbortableAction(RestMethod.imV2ChatMessageTail, { data: query });
+			this.abortAction.loadHistory = abort;
+
+			return promise.then(async (result) => {
 				logger.warn(`${this.className}: loadHistory result`, result);
 				const hasPrevPage = result.hasNextPage; // FIXME convert key name when back and web switch to two keys
 				this.preparedHistoryMessages = result.messages.sort((a, b) => a.id - b.id);
@@ -285,7 +289,16 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 
 				return true;
 			}).catch((error) => {
+				if (error?.message === ABORT_ERROR)
+				{
+					logger.warn(`${this.className}: loadHistoryMessagesFromServer was aborted:`);
+
+					return;
+				}
+
 				logger.error(`${this.className}: loadHistoryMessagesFromServer error:`, error);
+			}).finally(() => {
+				delete this.abortAction.loadHistory;
 			});
 		}
 
@@ -333,7 +346,10 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 				},
 			};
 
-			return runAction(RestMethod.imV2ChatMessageTail, { data: query }).then(async (result) => {
+			const { promise, abort } = runAbortableAction(RestMethod.imV2ChatMessageTail, { data: query });
+			this.abortAction.loadUnread = abort;
+
+			return promise.then(async (result) => {
 				logger.warn(`${this.className}: loadUnread result`, result);
 				this.preparedUnreadMessages = result.messages.sort((a, b) => a.id - b.id);
 				this.preparedUnreadMessages = await this.contextCreator
@@ -352,11 +368,22 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 				};
 
 				return this.updateModels(result);
-			}).then(() => {
-				this.drawPreparedUnreadMessages();
+			})
+				.then(() => {
+					this.drawPreparedUnreadMessages();
 
-				return true;
-			});
+					return true;
+				})
+				.catch((error) => {
+					if (error?.message === ABORT_ERROR)
+					{
+						logger.warn(`${this.className}: loadUnreadMessagesFromServer was aborted:`);
+					}
+				})
+				.finally(() => {
+					delete this.abortAction.loadUnread;
+				})
+			;
 		}
 
 		async loadFirstPage()
@@ -386,7 +413,43 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 			return result;
 		}
 
-		async loadContext(messageId)
+		/**
+		 * @param {number} messageId
+		 * @return {Promise<void>}
+		 */
+		async loadContextFromServer(messageId)
+		{
+			const queryParams = {
+				data: {
+					id: messageId,
+					range: LoadService.getMessageRequestLimit(),
+				},
+			};
+
+			const { promise, abort } = runAbortableAction(RestMethod.imV2ChatMessageGetContext, queryParams);
+			this.abortAction.loadContext = abort;
+
+			return promise
+				.then((data) => {
+					this.updateModelsByContext(data);
+				})
+				.catch((error) => {
+					if (error?.message === ABORT_ERROR)
+					{
+						logger.warn(`${this.className}: loadContextFromServer was aborted:`);
+
+						return;
+					}
+
+					logger.error('MessageService: loadContextByChatId error ', error);
+				})
+				.finally(() => {
+					delete this.abortAction.loadContext;
+				})
+			;
+		}
+
+		async loadContextAndRead(messageId)
 		{
 			logger.log('MessageService: loadContext for: ', messageId);
 			this.isHistoryLoading = true;
@@ -675,16 +738,58 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 			;
 			messages = this.addUploadingMessagesToMessageList(messages);
 
-			const reactions = {
-				reactions: result.reactions,
-				usersShort: result.usersShort,
-			};
+			const reactions = result.reactions.map((reaction) => ({
+				...reaction,
+				dialogId: this.dialogId,
+			}));
 
-			await this.store.dispatch('messagesModel/reactionsModel/set', reactions);
+			await this.store.dispatch('messagesModel/reactionsModel/set', {
+				reactions,
+				usersShort: result.usersShort,
+			});
 			await this.store.dispatch('messagesModel/setChatCollection', {
 				messages,
 				clearCollection: true,
 			});
+		}
+
+		/**
+		 * @param {Array<SyncRawMessage>} result.messages
+		 * @param {Array<SyncRawMessage>} result.additionalMessages
+		 * @param {Array<RawReaction>} result.reactions
+		 * @param {Array<ReactionUser>} result.usersShort
+		 * @param {Array<StickerState>} result.stickers
+		 * @param {?Array<CommentInfoMessageFormat>} result.commentInfo
+		 */
+		async updateModelsByContext(result)
+		{
+			logger.log(`${this.constructor.name}.updateModelReactionsAndComments: `, result);
+
+			const messagesPromise = this.drawContextMessages(result);
+			let commentPromise = Promise.resolve();
+			if (Type.isArrayFilled(result.commentInfo))
+			{
+				commentPromise = this.store.dispatch('commentModel/setComments', result.commentInfo);
+			}
+
+			let addStickersPromise = Promise.resolve();
+			if (Type.isArrayFilled(result.stickers))
+			{
+				addStickersPromise = this.store.dispatch('stickerPackModel/addStickers', { stickers: result.stickers });
+			}
+
+			const stickerDataProvider = new StickerDataProvider();
+			const removeDeletedStickersPromise = stickerDataProvider.removeDeletedStickers(
+				[...messages, ...additionalMessages],
+				result.stickers,
+			);
+
+			return Promise.all([
+				messagesPromise,
+				addStickersPromise,
+				removeDeletedStickersPromise,
+				commentPromise,
+			]);
 		}
 
 		/**

@@ -380,7 +380,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 
 		/**
 		 *
-		 * @returns {JSPopoverMenu}
+		 * @returns {DialogPopupMenu}
 		 */
 		get popupMenu()
 		{

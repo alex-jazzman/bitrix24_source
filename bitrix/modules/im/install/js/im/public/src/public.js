@@ -1,14 +1,14 @@
 import { Type, Extension, Reflection, type JsonObject } from 'main.core';
 
-import { legacyMessenger, legacyDesktop } from './legacy';
-import { desktop } from './desktop';
-import { prepareSettingsSection } from './functions/settings';
-import { SharedLinkService } from './classes/shared-link';
+import { type NavigationMenuItemParams } from 'im.v2.lib.navigation';
+import { type CreatableChatType, type OpenChatCreationParams } from 'im.v2.component.content.chat-forms.forms';
+import { type ChatEmbeddedApplicationType, type ChatEmbeddedApplicationInstance } from 'im.v2.application.launch';
 
-import type { NavigationMenuItemParams } from 'im.v2.lib.navigation';
-import type { CreatableChatType, OpenChatCreationParams } from 'im.v2.component.content.chat-forms.forms';
-import type { ChatEmbeddedApplicationType, ChatEmbeddedApplicationInstance } from 'im.v2.application.launch';
-import type { JoinChatResult } from './classes/shared-link';
+import { legacyMessenger, legacyDesktop } from './legacy';
+import { Desktop } from './classes/desktop';
+import { prepareSettingsSection } from './functions/settings';
+import { Textarea } from './classes/textarea';
+import { SharedLinkService, type JoinChatResult } from './classes/shared-link';
 
 type Opener = {
 	openChat: (dialogId?: string, messageId?: number) => Promise,
@@ -37,11 +37,13 @@ class Messenger
 {
 	v2enabled: boolean = false;
 
+	desktop: Desktop = new Desktop();
+	textarea: Textarea = new Textarea();
+
 	constructor()
 	{
 		const settings = Extension.getSettings('im.public');
 		this.v2enabled = settings.get('v2enabled', false);
-		this.desktop = desktop;
 	}
 
 	async openChat(dialogId: string = '', messageId: number = 0): Promise

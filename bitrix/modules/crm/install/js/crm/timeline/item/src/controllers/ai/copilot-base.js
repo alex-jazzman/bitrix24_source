@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Router } from 'crm.router';
 import { ajax as Ajax, Loc, Runtime, Text, Type } from 'main.core';
 import { Button as ButtonUI, ButtonState } from 'ui.buttons';
@@ -142,7 +143,7 @@ export class CopilotBase extends Base
 		const aiCopilotBtn = item.getLayoutFooterButtonById('aiButton');
 		if (!aiCopilotBtn)
 		{
-			throw new Error('"CoPilot" button is not found in layout');
+			throw new Error('"AI button" component is not found in layout');
 		}
 
 		return aiCopilotBtn;
@@ -203,7 +204,7 @@ export class CopilotBase extends Base
 	{
 		if (this.#isSliderCodeExist(data))
 		{
-			this.#handleSliderCode(data, item);
+			this.#showInfoSlider(data.sliderCode);
 		}
 		else if (this.#isAiMarketplaceAppsExist(data))
 		{
@@ -240,57 +241,6 @@ export class CopilotBase extends Base
 		}
 	}
 
-	#handleSliderCode(data: CoPilotAdditionalInfoData, item: ConfigurableItem): void
-	{
-		if (data.sliderCode === 'limit_boost_copilot')
-		{
-			void this.#showBoostLimitSlider(item);
-		}
-		else
-		{
-			this.#showInfoSlider(data.sliderCode);
-		}
-	}
-
-	async #showBoostLimitSlider(item: ConfigurableItem): Promise<void>
-	{
-		try
-		{
-			const { ServiceWidget, Analytics } = await Runtime.loadExtension('baas.store');
-			if (!ServiceWidget)
-			{
-				this.#showFallbackBoostLimit();
-
-				return;
-			}
-
-			const serviceWidget = ServiceWidget?.getInstanceByCode('ai_copilot_token');
-			const bindElement = item.getLayoutFooterButtonById('aiButton')?.getUiButton()?.getContainer();
-
-			serviceWidget.bind(bindElement, Analytics.CONTEXT_CRM);
-			serviceWidget.show(bindElement);
-			serviceWidget.getPopup().adjustPosition({ forceTop: true });
-		}
-		catch
-		{
-			this.#showFallbackBoostLimit();
-
-			await console.error('Cant load "baas.store" extension');
-		}
-	}
-
-	#showFallbackBoostLimit(): void
-	{
-		if (this.useInfoHelper())
-		{
-			BX?.UI?.InfoHelper.show('limit_boost_copilot');
-		}
-		else
-		{
-			void FeaturePromotersRegistry.getPromoter({ code: 'limit_boost_copilot' }).show();
-		}
-	}
-
 	#showInfoSlider(sliderCode: string): void
 	{
 		if (sliderCode?.includes('redirect=detail&code'))
@@ -310,11 +260,11 @@ export class CopilotBase extends Base
 	#showFeedbackMessageBox(): void
 	{
 		MessageBox.show({
-			title: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE'),
-			message: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT'),
+			title: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE', NameService.copilotNameReplacement()),
+			message: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT', NameService.copilotNameReplacement()),
 			modal: true,
 			buttons: MessageBoxButtons.OK_CANCEL,
-			okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT'),
+			okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT', NameService.copilotNameReplacement()),
 			onOk: (messageBox) => {
 				messageBox.close();
 				this.#openFeedbackForm();
@@ -349,10 +299,11 @@ export class CopilotBase extends Base
 	#showMarketMessageBox(): void
 	{
 		MessageBox.show({
-			title: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
+			title: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE', NameService.copilotNameReplacement()),
 			message: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
 				'[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
 				'[/helpdesklink]': '</a>',
+				'#COPILOT_NAME#': NameService.copilotName(),
 			}),
 			modal: true,
 			buttons: MessageBoxButtons.OK_CANCEL,

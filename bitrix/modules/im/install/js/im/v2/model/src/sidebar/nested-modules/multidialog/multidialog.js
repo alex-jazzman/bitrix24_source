@@ -67,12 +67,7 @@ export class MultidialogModel extends BuilderModel
 			},
 			/** @function sidebar/multidialog/getTotalChatCounter */
 			getTotalChatCounter: ({ unreadChats }): number => {
-				let count = 0;
-				unreadChats.forEach((chatId: number) => {
-					count += Core.getStore().getters['counters/getChatCounterByChatId'](chatId);
-				});
-
-				return count;
+				return Core.getStore().getters['counters/getTotalCounterByIds']([...unreadChats]);
 			},
 			/** @function sidebar/multidialog/get */
 			get: ({ multidialogs }) => (chatId): ImModelSidebarMultidialogItem => {

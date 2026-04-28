@@ -5,6 +5,7 @@ import type { ResourceDto } from 'booking.provider.service.resources-service';
 import type { ResourceTypeDto } from 'booking.provider.service.resources-type-service';
 import type { WaitListItemDto } from 'booking.provider.service.wait-list-service';
 import type { FormsMenuModel } from 'booking.model.forms-menu';
+import type { CatalogSkuEntityOptions } from 'booking.model.sku';
 
 export type MainPageGetResponse = {
 	favorites: {
@@ -23,6 +24,7 @@ export type MainPageGetResponse = {
 	isCurrentSenderAvailable: boolean,
 	formsMenu: FormsMenuModel,
 	shouldShowWhatsAppEmergency: boolean,
+	catalogSkuEntityOptions: CatalogSkuEntityOptions,
 };
 
 export type MainPageGetCountersResponse = {
@@ -44,13 +46,6 @@ export type MoneyStatisticsDto = {
 		opportunity: number,
 	}[],
 };
-
-export type CatalogSkuEntityOptions = {
-	basePriceId: number;
-	iblockId: number;
-	restrictedProductTypes: number[];
-	showPriceInCaption: boolean;
-}
 
 export type TimezonesDto = {
 	timezoneId: string;

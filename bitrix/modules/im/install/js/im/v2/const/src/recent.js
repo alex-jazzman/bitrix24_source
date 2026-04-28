@@ -9,4 +9,7 @@ export const RecentType = {
 	openChannel: 'openChannel',
 	collab: 'collab',
 	taskComments: 'tasksTask',
+	openlines: 'lines',
 };
+
+export type RecentTypeItem = $Values<typeof RecentType>;

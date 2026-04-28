@@ -25,7 +25,7 @@
 	font-size: 14px;
 	font-weight: var(--ui-font-weight-normal);
 	line-height: 19px;
-	letter-spacing: -0.05px;
+	letter-spacing: var(--ui-letter-spacing-l);
 }
 
 .booking--booking--crm-forms-popup--item__copy-btn {

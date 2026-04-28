@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Tour;
 
 use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\BaasManager;
 use Bitrix\Main\Localization\Loc;
 
 final class CopilotRunManually extends CopilotInCall
@@ -22,8 +23,14 @@ final class CopilotRunManually extends CopilotInCall
 		return [
 			[
 				'id' => self::OPTION_NAME,
-				'title' => Loc::getMessage('CRM_TOUR_COPILOT_RUN_MANUALLY_TITLE'),
-				'text' => Loc::getMessage('CRM_TOUR_COPILOT_RUN_MANUALLY_TEXT'),
+				'title' => Loc::getMessage(
+					'CRM_TOUR_COPILOT_RUN_MANUALLY_TITLE',
+					['#COPILOT_NAME#' => AIManager::getCopilotName()]
+				),
+				'text' => Loc::getMessage(
+					'CRM_TOUR_COPILOT_RUN_MANUALLY_TEXT',
+					['#COPILOT_NAME#' => AIManager::getCopilotName()]
+				),
 				'position' => 'top',
 				'useDynamicTarget' => true,
 				'eventName' => 'BX.Crm.Timeline.Call:onShowTourWhenCopilotManuallyStart',
@@ -50,7 +57,7 @@ final class CopilotRunManually extends CopilotInCall
 		return
 			parent::isShowEnabled()
 			&& AIManager::isAiCallAutomaticProcessingAllowed()
-			&& !AIManager::isBaasServiceHasPackage()
+			&& !BaasManager::hasPackage()
 		;
 	}
 

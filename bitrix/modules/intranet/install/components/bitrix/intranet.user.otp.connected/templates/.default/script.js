@@ -15,15 +15,15 @@
 				phoneNumber: params.phoneNumber,
 				isPhoneNumberConfirmed: params.isPhoneNumberConfirmed,
 				signedUserId: params.signedUserId,
+				userId: params.userId,
+				enablePostConnectFlow: false,
 				events: {
 					onPopupClose: () => {
 						BX.SidePanel.Instance.reload();
 					},
 				},
 			});
-			const popup = params.provideSmsOtp
-				? this.provider.full()
-				: this.provider.onlyPushOtp();
+			const popup = this.provider.full();
 
 			const changePhoneNode = document.querySelector("[data-role='intranet-otp-change-phone']");
 			if (BX.type.isDomNode(changePhoneNode))
@@ -85,6 +85,16 @@
 						},
 					});
 				}
+			}
+
+			if (
+				sessionStorage.getItem('showRecoveryCodesTooltip')
+				&& params.tooltipTitle
+				&& params.tooltipDescription
+			)
+			{
+				sessionStorage.removeItem('showRecoveryCodesTooltip');
+				this.showRecoveryTooltip(params.tooltipTitle, params.tooltipDescription);
 			}
 		},
 
@@ -194,6 +204,30 @@
 					},
 				},
 			);
+		},
+
+		showRecoveryTooltip(title, description)
+		{
+			const bindElement = document.querySelector('#recovery-code-container')?.querySelector('#row-chevron');
+			if (!bindElement)
+			{
+				return;
+			}
+
+			const tooltip = new BX.UI.Dialogs.Tooltip({
+				bindElement,
+				title,
+				content: description,
+				minWidth: 250,
+				maxWidth: 400,
+				popupOptions: {
+					id: 'bx-intranet-2fa-recovery-codes-tooltip',
+					autoHide: true,
+					offsetLeft: 10,
+				},
+			});
+
+			tooltip.show();
 		},
 	};
 })();

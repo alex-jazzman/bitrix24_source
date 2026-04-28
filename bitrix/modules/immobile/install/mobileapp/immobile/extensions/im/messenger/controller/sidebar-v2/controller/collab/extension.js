@@ -221,6 +221,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 					icon: Icon.CIRCLE_CHECK,
 					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_TASKS'),
 					counter: this.getCollabEntityCounter(CollabEntity.tasks),
+					separatorAfter: true,
 					onClick: () => this.handleOpenTasksAction(),
 				},
 				createSearchButton({

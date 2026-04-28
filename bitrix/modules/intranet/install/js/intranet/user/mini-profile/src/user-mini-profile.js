@@ -95,7 +95,7 @@ export class UserMiniProfile
 				targetContainer: document.body,
 				bindElement: this.#options.bindElement,
 				maxWidth: 643,
-				maxHeight: 497,
+				maxHeight: 517,
 				padding: 0,
 				contentNoPaddings: true,
 				angle: {

@@ -1,3 +1,5 @@
+import { CounterManager } from 'im.v2.lib.counter';
+
 export const FloatButtonColor = Object.freeze({
 	accent: 'accent',
 	alert: 'alert',
@@ -53,12 +55,7 @@ export const FloatButton = {
 				return '';
 			}
 
-			if (this.counter > 99)
-			{
-				return '99+';
-			}
-
-			return String(this.counter);
+			return CounterManager.formatCounter(this.counter);
 		},
 	},
 	template: `

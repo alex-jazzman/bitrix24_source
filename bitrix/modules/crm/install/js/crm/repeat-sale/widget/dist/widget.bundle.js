@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_confetti,ui_notification,crm_timeline_tools,ui_feedback_form,crm_integration_analytics,main_core,main_popup,ui_analytics,ui_lottie) {
+(function (exports,ui_confetti,ui_notification,crm_timeline_tools,ui_feedback_form,crm_ai_nameService,crm_integration_analytics,main_core,main_popup,ui_analytics,ui_lottie) {
 	'use strict';
 
 	let _ = t => t,
@@ -889,7 +889,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  const hasClients = babelHelpers.classPrivateFieldLooseBase(this, _hasClients$1)[_hasClients$1];
 	  const code = hasClients ? 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITH_CLIENTS' : 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_CLIENTS';
-	  const content = main_core.Loc.getMessage(code);
+	  const content = main_core.Loc.getMessage(code, crm_ai_nameService.NameService.copilotNameReplacement());
 	  return main_core.Tag.render(_t10 || (_t10 = _$3`
 			<div class="crm-rs__w-body-description ${0}">
 				${0}
@@ -1365,5 +1365,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.WidgetType = WidgetType;
 	exports.Widget = Widget;
 
-}((this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}),BX.UI,BX,BX.Crm.Timeline,BX.UI.Feedback,BX.Crm.Integration.Analytics,BX,BX.Main,BX.UI.Analytics,BX.UI));
+}((this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}),BX.UI,BX,BX.Crm.Timeline,BX.UI.Feedback,BX.Crm.AI,BX.Crm.Integration.Analytics,BX,BX.Main,BX.UI.Analytics,BX.UI));
 //# sourceMappingURL=widget.bundle.js.map

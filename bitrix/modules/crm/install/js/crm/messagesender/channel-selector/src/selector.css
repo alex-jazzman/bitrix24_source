@@ -120,10 +120,3 @@
 .crm-messagesender-channel-selector-banner-container {
 	margin-top: var(--ui-space-stack-md);
 }
-
-.crm-messagesender-channel-selector-banner-title {
-	font-size: var(--ui-font-size-xs);
-	margin-bottom: var(--ui-space-stack-sm);
-	color: var(--ui-color-palette-gray-70);
-	text-align: center;
-}

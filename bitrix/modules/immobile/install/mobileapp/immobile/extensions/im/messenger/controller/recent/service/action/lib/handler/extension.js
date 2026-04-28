@@ -5,9 +5,11 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 	const { Type } = require('type');
 	const { UserProfile } = require('user-profile');
 	const { Loc } = require('im/messenger/loc');
-	const { ErrorType } = require('im/messenger/const');
+	const { ErrorType, OpenlineStatus } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerNotifier } = require('im/messenger/lib/ui/notification/messenger-notifier');
+	const { openDialog } = require('im/messenger/controller/recent/service/select/lib/opener');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const {
 		RecentRest,
@@ -97,9 +99,9 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 			muteList: [...muteList],
 		}]);
 
-		await store.dispatch('counterModel/setDisableChatCounter', {
+		await store.dispatch('counterModel/setMuted', {
 			chatId: dialog.chatId,
-			disabled: shouldMute,
+			isMuted: shouldMute,
 		});
 
 		try
@@ -110,12 +112,69 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 		{
 			logger.error('Recent item mute error: ', error?.error?.() ?? error?.message);
 			await store.dispatch('dialoguesModel/set', [dialog]);
-			await store.dispatch('counterModel/setDisableChatCounter', {
+			await store.dispatch('counterModel/setMuted', {
 				chatId: dialog.chatId,
-				disabled: !shouldMute,
+				isMuted: !shouldMute,
 			});
 
 			renderRecent(recentLocator);
+		}
+	}
+
+	/**
+	 * @param {{store: MessengerCoreStore, logger: Logger}} deps
+	 * @param {string} itemId
+	 * @returns {Promise<void>}
+	 */
+	async function handleDeleteChatFromRecentModel({ store, logger }, itemId)
+	{
+		const recentItem = getRecentItemById(store, itemId);
+		if (Type.isNil(recentItem))
+		{
+			return;
+		}
+
+		const recentProvider = new RecentDataProvider();
+
+		try
+		{
+			await recentProvider.deleteFromSource(RecentDataProvider.source.model, { dialogId: recentItem.id });
+		}
+		catch (error)
+		{
+			logger.error('handler delete recent item from model error: ', error);
+		}
+	}
+
+	/**
+	 * @param {{store: MessengerCoreStore, logger: Logger}} deps
+	 * @param {string} itemId
+	 * @returns {Promise<void>}
+	 */
+	async function handleFullDeleteChat({ store, logger }, itemId)
+	{
+		const recentItem = getRecentItemById(store, itemId);
+		if (Type.isNil(recentItem))
+		{
+			return;
+		}
+
+		const tabs = store.getters['recentModel/getTabsContainsItem'](recentItem.id);
+		const recentProvider = new RecentDataProvider();
+
+		try
+		{
+			const chatProvider = new ChatDataProvider();
+			await recentProvider.delete({ dialogId: recentItem.id });
+			await chatProvider.delete({ dialogId: recentItem.id });
+		}
+		catch (error)
+		{
+			logger.error('handler full delete chat error: ', error);
+			await store.dispatch('recentModel/setByNavigationTabs', {
+				tabs,
+				itemList: [recentItem],
+			});
 		}
 	}
 
@@ -146,6 +205,7 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 			try
 			{
 				await RecentRest.hideChat({ dialogId: recentItem.id });
+				await serviceLocator.get('counters-update-system').deleteCountersByChatIdList([counterState.chatId]);
 			}
 			catch (error)
 			{
@@ -167,39 +227,17 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 		 * @param {string} itemId
 		 * @returns {Promise<void>}
 		 */
-		leave: async ({ store, logger }, itemId) => {
-			const recentItem = getRecentItemById(store, itemId);
-			if (Type.isUndefined(recentItem))
-			{
-				return;
-			}
-			const tabs = store.getters['recentModel/getTabsContainsItem'](recentItem.id);
-
-			const recentProvider = new RecentDataProvider();
-
+		leave: async (deps, itemId) => {
+			const { logger } = deps;
 			try
 			{
-				await recentProvider.deleteFromSource(RecentDataProvider.source.model, { dialogId: recentItem.id });
-			}
-			catch (err)
-			{
-				logger.error('handler recent item leave error: ', err);
-			}
-
-			try
-			{
-				await ChatRest.leave({ dialogId: recentItem.id });
-				const chatProvider = new ChatDataProvider();
-				await recentProvider.delete({ dialogId: recentItem.id });
-				await chatProvider.delete({ dialogId: recentItem.id });
+				await handleDeleteChatFromRecentModel(deps, itemId);
+				await ChatRest.leave({ dialogId: itemId });
+				await handleFullDeleteChat(deps, itemId);
 			}
 			catch (error)
 			{
-				logger.error('handler recent item leave error: ', error?.error?.() ?? error?.message);
-				await store.dispatch('recentModel/setByNavigationTabs', {
-					tabs,
-					itemList: [recentItem],
-				});
+				logger.error('handler recent item leave error: ', error);
 			}
 		},
 
@@ -284,6 +322,7 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 			try
 			{
 				await RecentRest.readChat({ dialogId: itemId });
+				await serviceLocator.get('counters-update-system').readChat(counterState.chatId);
 			}
 			catch (error)
 			{
@@ -311,17 +350,34 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 				return;
 			}
 
+			const counterState = getCounterStateById(store, itemId);
 			await store.dispatch('recentModel/update', [{ id: itemId, unread: true }]);
+			await store.dispatch('counterModel/setList', {
+				counterList: [{
+					...counterState,
+					isMarkedAsUnread: true,
+				}],
+			});
 			renderRecent(recentLocator);
 
 			try
 			{
 				await RecentRest.unreadChat({ dialogId: itemId });
+				await serviceLocator.get('counters-update-system').updateCounterState({
+					...counterState,
+					isMarkedAsUnread: true,
+				});
 			}
 			catch (error)
 			{
 				logger.error('handler recent item unread error: ', error?.error?.() ?? error?.message);
 				await store.dispatch('recentModel/update', [recentItem]);
+				await store.dispatch('counterModel/setList', {
+					counterList: [{
+						...counterState,
+						isMarkedAsUnread: false,
+					}],
+				});
 				renderRecent(recentLocator);
 			}
 		},
@@ -414,6 +470,127 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 				ownerId,
 				analyticsSection: 'im_messenger_recent_service_action_profile',
 			});
+		},
+
+		/**
+		 * @param {{store: MessengerCoreStore, logger: Logger, recentLocator: RecentLocator}} deps
+		 * @param {string} itemId
+		 * @returns {Promise<void>}
+		 */
+		operatorAnswer: async ({ store, logger, recentLocator }, itemId) => {
+			const recentItem = getRecentItemById(store, itemId);
+			const dialog = getDialogById(store, itemId);
+			const counterState = getCounterStateById(store, itemId);
+			if (Type.isNil(dialog) || Type.isNil(recentItem) || Type.isNil(counterState))
+			{
+				return;
+			}
+
+			const { chatId } = dialog;
+			await store.dispatch('counterModel/setList', {
+				counterList: [{
+					...counterState,
+					counter: 0,
+				}],
+			});
+			await store.dispatch('dialoguesModel/openlinesModel/update', { chatId, fields: { status: OpenlineStatus.work } });
+			await store.dispatch('dialoguesModel/update', {
+				dialogId: itemId,
+				fields: {
+					owner: MessengerParams.getUserId(),
+				},
+			});
+
+			renderRecent(recentLocator);
+			openDialog(itemId);
+
+			try
+			{
+				await RecentRest.answerOpenline(chatId);
+			}
+			catch (error)
+			{
+				logger.error('handler recent item answer error: ', error);
+				await store.dispatch('dialoguesModel/openlinesModel/update', { chatId, fields: { status: OpenlineStatus.new } });
+				await store.dispatch('dialoguesModel/update', { dialogId: itemId, owner: 0 });
+
+				renderRecent(recentLocator);
+			}
+		},
+
+		/**
+		 * @param {{store: MessengerCoreStore, logger: Logger, recentLocator: RecentLocator}} deps
+		 * @param {string} itemId
+		 * @returns {Promise<void>}
+		 */
+		operatorSkip: async (deps, itemId) => {
+			const dialog = getDialogById(deps.store, itemId);
+			if (Type.isNil(dialog))
+			{
+				return;
+			}
+
+			const { logger } = deps;
+			try
+			{
+				await handleDeleteChatFromRecentModel(deps, itemId);
+				await RecentRest.skipOpenline(dialog.chatId);
+				await handleFullDeleteChat(deps, itemId);
+			}
+			catch (error)
+			{
+				logger.error('handler recent item operator skip error: ', error);
+			}
+		},
+
+		/**
+		 * @param {{store: MessengerCoreStore, logger: Logger, recentLocator: RecentLocator}} deps
+		 * @param {string} itemId
+		 * @returns {Promise<void>}
+		 */
+		operatorSpam: async (deps, itemId) => {
+			const dialog = getDialogById(deps.store, itemId);
+			if (Type.isNil(dialog))
+			{
+				return;
+			}
+
+			const { logger } = deps;
+			try
+			{
+				await handleDeleteChatFromRecentModel(deps, itemId);
+				await RecentRest.spamOpenline(dialog.chatId);
+				await handleFullDeleteChat(deps, itemId);
+			}
+			catch (error)
+			{
+				logger.error('handler recent item operator spam error: ', error);
+			}
+		},
+
+		/**
+		 * @param {{store: MessengerCoreStore, logger: Logger, recentLocator: RecentLocator}} deps
+		 * @param {string} itemId
+		 * @returns {Promise<void>}
+		 */
+		operatorFinish: async (deps, itemId) => {
+			const dialog = getDialogById(deps.store, itemId);
+			if (Type.isNil(dialog))
+			{
+				return;
+			}
+
+			const { logger } = deps;
+			try
+			{
+				await handleDeleteChatFromRecentModel(deps, itemId);
+				await RecentRest.finishOpenline(dialog.chatId);
+				await handleFullDeleteChat(deps, itemId);
+			}
+			catch (error)
+			{
+				logger.error('handler recent item operator finish error: ', error);
+			}
 		},
 	};
 

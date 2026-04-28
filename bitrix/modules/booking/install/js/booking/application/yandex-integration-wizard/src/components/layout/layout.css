@@ -1,15 +1,15 @@
-.booking--yandex-integration-wizard--app {
+.booking__yandex-integration-wizard_app {
 	height: 100%;
 }
 
-.yandex-integration-wizard-layout {
+.booking-yiw__layout {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	box-sizing: border-box;
 }
 
-.yandex-wizard__wrapper {
+.booking-yiw__wrapper {
 	display: flex;
 	flex-direction: column;
 	padding: 18px 20px 18px 22px;
@@ -19,21 +19,21 @@
 	overflow-y: scroll;
 }
 
-.yandex-wizard__content.--loading {
+.booking-yiw__content.--loading {
 	opacity: 0.6;
 }
 
-.yandex-wizard__loader {
+.booking-yiw__loader {
 	position: absolute;
 	top: 50%;
 	left: 50%;
 }
 
-.yandex-wizard__wrapper::-webkit-scrollbar {
+.booking-yiw__wrapper::-webkit-scrollbar {
 	width: 5px;
 }
 
-.yandex-wizard__wrapper::-webkit-scrollbar-thumb {
+.booking-yiw__wrapper::-webkit-scrollbar-thumb {
 	border-radius: 4px;
 	background: var(--ui-color-base-20);
 }

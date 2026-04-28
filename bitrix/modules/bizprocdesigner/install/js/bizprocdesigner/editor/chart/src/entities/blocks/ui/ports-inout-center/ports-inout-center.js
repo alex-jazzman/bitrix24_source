@@ -93,6 +93,7 @@ export const PortsInOutCenter = {
 					:styled="false"
 					:validationRules="[validationInputOutputRule]"
 					:normalyzeConnectionFn="normalyzeInputOutputConnection"
+					:index="0"
 					position="left"
 				/>
 			</div>
@@ -108,6 +109,7 @@ export const PortsInOutCenter = {
 					:styled="false"
 					:validationRules="[validationInputOutputRule]"
 					:normalyzeConnectionFn="normalyzeInputOutputConnection"
+					:index="0"
 					position="right"
 				/>
 			</div>
@@ -122,6 +124,7 @@ export const PortsInOutCenter = {
 					:styled="false"
 					:validationRules="[validationAuxRule]"
 					:normalyzeConnectionFn="normalyzeAuxConnection"
+					:index="0"
 					position="bottom"
 				/>
 			</div>
@@ -136,6 +139,7 @@ export const PortsInOutCenter = {
 					:styled="false"
 					:validationRules="[validationAuxRule]"
 					:normalyzeConnectionFn="normalyzeAuxConnection"
+					:index="0"
 					position="top"
 				/>
 			</div>

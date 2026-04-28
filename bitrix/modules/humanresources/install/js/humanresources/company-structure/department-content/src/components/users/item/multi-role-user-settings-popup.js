@@ -1,3 +1,4 @@
+import { PermissionChecker } from 'humanresources.company-structure.permission-checker';
 import { Type } from 'main.core';
 import { TagSelector } from 'ui.entity-selector';
 import { BIcon } from 'ui.icon-set.api.vue';
@@ -50,14 +51,35 @@ export const MultiRoleUserSettingsPopup = {
 	computed:
 	{
 		...mapState(useChartStore, ['multipleUsers', 'departments', 'focusedNode']),
-		businessProcListEmpty(): boolean
+		businessProcListInvalid(): boolean
 		{
-			if (!Type.isArray(this.multipleUsers[this.user.id]))
+			if (!PermissionChecker.getInstance().checkMultipleUsersBPSettingsAvailable())
 			{
-				return true;
+				return false;
 			}
 
-			return this.settings[UserSettingsTypes.businessProcExcludeNodes].size === this.multipleUsers[this.user.id].length;
+			return this.checkIfSettingsInvalid(UserSettingsTypes.businessProcExcludeNodes);
+		},
+		reportListInvalid(): boolean
+		{
+			if (!PermissionChecker.getInstance().checkMultipleUsersReportSettingsAvailable())
+			{
+				return false;
+			}
+
+			return this.checkIfSettingsInvalid(UserSettingsTypes.reportsExcludeNodes);
+		},
+		areSomeSettingsInvalid(): boolean
+		{
+			return this.reportListInvalid || this.businessProcListInvalid;
+		},
+		businessProcFeatureAvailable(): boolean
+		{
+			return PermissionChecker.getInstance().checkMultipleUsersBPSettingsAvailable();
+		},
+		reportFeatureAvailable(): boolean
+		{
+			return PermissionChecker.getInstance().checkMultipleUsersReportSettingsAvailable();
 		},
 	},
 
@@ -70,14 +92,29 @@ export const MultiRoleUserSettingsPopup = {
 
 		this.settings = { ...this.settings, ...this.mapRawSettings(settings) };
 
-		this.businessProcSelector = this.createTagSelector(UserSettingsTypes.businessProcExcludeNodes, false);
+		this.businessProcSelector = this.createTagSelector(
+			UserSettingsTypes.businessProcExcludeNodes,
+			!this.businessProcFeatureAvailable,
+		);
 		this.businessProcSelector.renderTo(this.$refs['business-proc-selector']);
-		this.reportsSelector = this.createTagSelector(UserSettingsTypes.reportsExcludeNodes, true);
+		this.reportsSelector = this.createTagSelector(
+			UserSettingsTypes.reportsExcludeNodes,
+			!this.reportFeatureAvailable,
+		);
 		this.reportsSelector.renderTo(this.$refs['reports-selector']);
 	},
 
 	methods:
 	{
+		checkIfSettingsInvalid(type: string): boolean
+		{
+			if (!Type.isArray(this.multipleUsers[this.user.id]))
+			{
+				return true;
+			}
+
+			return this.settings[type]?.size === this.multipleUsers[this.user.id].length;
+		},
 		mapRawSettings(rawSettings: { settingsType: string, settingsValue: string }[]): Object<string, Set<(string)>>
 		{
 			return rawSettings.reduce((acc, { settingsType, settingsValue }) => {
@@ -91,7 +128,7 @@ export const MultiRoleUserSettingsPopup = {
 				return acc;
 			}, {});
 		},
-		createTagSelector(settingType: string, locked: boolean): TagSelector
+		createTagSelector(settingType: string, isLocked: boolean): TagSelector
 		{
 			const tagItems = this.getTagItems();
 
@@ -108,7 +145,7 @@ export const MultiRoleUserSettingsPopup = {
 				},
 				multiple: true,
 				id: `multi-role-user-settings-selector-${settingType.toLowerCase()}`,
-				locked,
+				locked: isLocked,
 				tagFontWeight: '700',
 				dialogOptions: {
 					id: `multi-role-user-settings-dialog-${settingType.toLowerCase()}`,
@@ -118,7 +155,7 @@ export const MultiRoleUserSettingsPopup = {
 					dropdownMode: true,
 					showAvatars: false,
 					items: tagItems,
-					selectedItems: this.settings[settingType] && !locked
+					selectedItems: this.settings[settingType] && !isLocked
 						? tagItems.filter((item) => !this.settings[settingType].has(item.id))
 						: [],
 					undeselectedItems: tagItems.filter((item) => !this.departments.get(item.id))
@@ -170,16 +207,24 @@ export const MultiRoleUserSettingsPopup = {
 			this.showActionLoader = true;
 			try
 			{
-				await DepartmentAPI.saveUserSettings(
-					this.user.id,
-					this.focusedNode,
-					{
-						[UserSettingsTypes.businessProcExcludeNodes]: {
-							values: [...this.settings[UserSettingsTypes.businessProcExcludeNodes]],
-							replace: true,
-						},
-					},
-				);
+				const settings = {};
+				if (this.businessProcFeatureAvailable)
+				{
+					settings[UserSettingsTypes.businessProcExcludeNodes] = {
+						values: [...this.settings[UserSettingsTypes.businessProcExcludeNodes]],
+						replace: true,
+					};
+				}
+
+				if (this.reportFeatureAvailable)
+				{
+					settings[UserSettingsTypes.reportsExcludeNodes] = {
+						values: [...this.settings[UserSettingsTypes.reportsExcludeNodes]],
+						replace: true,
+					};
+				}
+
+				await DepartmentAPI.saveUserSettings(this.user.id, this.focusedNode, settings);
 
 				UI.Notification.Center.notify({
 					content: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_MULTI_ROLE_POPUP_SAVE_SUCCESS'),
@@ -201,7 +246,15 @@ export const MultiRoleUserSettingsPopup = {
 		},
 		goToBPHelp(event): void
 		{
-			if (top.BX.Helper)
+			if (top.BX.Helper && this.businessProcFeatureAvailable)
+			{
+				event.preventDefault();
+				top.BX.Helper.show('redirect=detail&code=27513420');
+			}
+		},
+		goToReportsHelp(event): void
+		{
+			if (top.BX.Helper && this.reportFeatureAvailable)
 			{
 				event.preventDefault();
 				top.BX.Helper.show('redirect=detail&code=27513420');
@@ -214,11 +267,13 @@ export const MultiRoleUserSettingsPopup = {
 			@action="confirm"
 			@close="$emit('close')"
 			:showActionButtonLoader="showActionLoader"
-			:lockActionButton="businessProcListEmpty"
+			:lockActionButton="areSomeSettingsInvalid"
 			:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_MULTI_ROLE_POPUP_TITLE')"
 			:confirmBtnText = "loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_MULTI_ROLE_POPUP_CONFIRM_BUTTON')"
 			:width="580"
 			:padding="6"
+			:minHeight="622"
+			:maxHeight="622"
 		>
 			<template v-slot:content>
 				<div class="hr-company-structure__multi-role-user-settings_container">
@@ -226,11 +281,21 @@ export const MultiRoleUserSettingsPopup = {
 						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_MULTI_ROLE_POPUP_HINT_PANEL_TEXT') }}
 					</div>
 					<div class="hr-company-structure__multi-role-user-settings_option">
-						<div class="hr-company-structure__multi-role-user-settings_option-title">
+						<div
+							class="hr-company-structure__multi-role-user-settings_option-title"
+							:class="{'--soon': !businessProcFeatureAvailable}"
+							:data-title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_MULTI_ROLE_POPUP_SOON_BADGE')"
+						>
 							<div class="chart-wizard__settings__item-options__item-content_title-text">
 								{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_MULTI_ROLE_POPUP_BUSINESS_PROC_TITLE') }}
 							</div>
-							<span class="ui-hint" @click="goToBPHelp">
+							<span 
+								:class="{
+									'ui-hint': businessProcFeatureAvailable, 
+									'hr-company-structure__multi-role-user-settings_ui-hint-disabled': !businessProcFeatureAvailable,
+								}" 
+								@click="goToBPHelp"
+							>
 								<span class="ui-hint-icon"/>
 							</span>
 						</div>
@@ -239,7 +304,7 @@ export const MultiRoleUserSettingsPopup = {
 							data-test-id="hr-company-structure__multi-role-user-settings__business-proc-selector"
 						/>
 						<div
-							v-if="businessProcListEmpty"
+							v-if="businessProcListInvalid"
 							class="hr-company-structure__multi-role-user-settings_item-options-error"
 						>
 							<div class="ui-icon-set --warning"></div>
@@ -250,13 +315,20 @@ export const MultiRoleUserSettingsPopup = {
 					</div>
 					<div class="hr-company-structure__multi-role-user-settings_option">
 						<div 
-							class="hr-company-structure__multi-role-user-settings_option-title --soon"
+							class="hr-company-structure__multi-role-user-settings_option-title"
+							:class="{'--soon': !reportFeatureAvailable}"
 							:data-title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_MULTI_ROLE_POPUP_SOON_BADGE')"
 						>
 							<div class="chart-wizard__settings__item-options__item-content_title-text">
 								{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_MULTI_ROLE_POPUP_REPORTS_TITLE') }}
 							</div>
-							<span class="hr-company-structure__multi-role-user-settings_ui-hint-disabled">
+							<span
+								:class="{
+									'ui-hint': reportFeatureAvailable, 
+									'hr-company-structure__multi-role-user-settings_ui-hint-disabled': !reportFeatureAvailable,
+								}"
+								@click="goToReportsHelp"
+							>
 								<span class="ui-hint-icon"/>
 							</span>
 						</div>
@@ -264,6 +336,15 @@ export const MultiRoleUserSettingsPopup = {
 							ref="reports-selector"
 							data-test-id="hr-company-structure__multi-role-user-settings__reports-selector"
 						/>
+						<div
+							v-if="reportListInvalid"
+							class="hr-company-structure__multi-role-user-settings_item-options-error"
+						>
+							<div class="ui-icon-set --warning"></div>
+							<span>
+								{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_MULTI_ROLE_POPUP_EMPTY_LIST_ERROR') }}
+							</span>
+						</div>
 					</div>
 				</div>
 			</template>

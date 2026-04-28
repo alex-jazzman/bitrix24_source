@@ -16,5 +16,6 @@ return [
 		'ui-system/blocks/avatar',
 		'statemanager/redux/slices/users',
 		'user-profile',
+		'statemanager/redux/store',
 	],
 ];

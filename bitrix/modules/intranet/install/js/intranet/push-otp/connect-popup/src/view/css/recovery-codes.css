@@ -1,0 +1,47 @@
+.intranet-push-otp-connect-popup-recovery-codes__subtitle {
+	font-size: 15px;
+	line-height: 20px;
+	font-weight: 600;
+}
+
+.intranet-push-otp-connect-popup-recovery-codes__action-wrapper {
+	display: flex;
+	gap: 10px;
+}
+
+.intranet-push-otp-connect-popup-recovery-codes-action__icon {
+	width: 66px;
+	height: 66px;
+}
+
+.intranet-push-otp-connect-popup-recovery-codes-action__icon.--print {
+	background: url('./../images/print.svg') no-repeat center;
+	background-size: cover;
+}
+
+.intranet-push-otp-connect-popup-recovery-codes-action__icon.--download {
+	background: url('./../images/download.svg') no-repeat center;
+	background-size: cover;
+}
+
+.intranet-push-otp-connect-popup-recovery-codes-action__text {
+	color: var(--ui-color-base-2);
+	font-size: 10px;
+	line-height: 12px;
+	text-align: center;
+	margin-bottom: 16px;
+}
+
+.intranet-push-otp-connect-popup__view-connect-container.--column {
+	flex-direction: column;
+}
+
+.intranet-push-otp-connect-popup-recovery-codes-action__container {
+	width: 134px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	background-color: #ffffff;
+	border-radius: 18px;
+	padding: 10px 18px 18px 18px;
+}

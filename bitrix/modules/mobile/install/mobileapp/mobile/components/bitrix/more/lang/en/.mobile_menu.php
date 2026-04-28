@@ -1,6 +1,5 @@
 <?php
 $MESS["MB_BP_MAIN_MENU_ITEM"] = "Workflows";
-$MESS["MB_BP_MAIN_STRESS_LEVEL"] = "Stress level";
 $MESS["MB_CALENDAR_LIST"] = "Calendar";
 $MESS["MB_CHAT_AND_CALLS"] = "Chat & Calls";
 $MESS["MB_COMPANY"] = "Employees";
@@ -33,7 +32,6 @@ $MESS["MB_SEC_GROUPS_MSGVER_1"] = "Workgroups";
 $MESS["MB_SHARED_FILES_MAIN_MENU_ITEM"] = "Shared Files";
 $MESS["MB_SHARED_FILES_MAIN_MENU_ITEM_NEW"] = "Shared Drive";
 $MESS["MB_TASKS_MAIN_MENU_ITEM"] = "Tasks and Projects";
-$MESS["MEASURE_STRESS"] = "Measure";
 $MESS["MENU_AI_MSGVER_1"] = "Your AI-powered assistant";
 $MESS["MENU_BITRIX24_INVITE"] = "Invite";
 $MESS["MENU_BITRIX24_MENU_BOTTOM"] = "Bottom navigation";

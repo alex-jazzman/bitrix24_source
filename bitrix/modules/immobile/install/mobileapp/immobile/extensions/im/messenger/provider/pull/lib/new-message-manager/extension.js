@@ -6,6 +6,7 @@ jn.define('im/messenger/provider/pull/lib/new-message-manager', (require, export
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogType, MessageStatus } = require('im/messenger/const');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class NewMessageManager
@@ -173,7 +174,12 @@ jn.define('im/messenger/provider/pull/lib/new-message-manager', (require, export
 		 */
 		needToSkipMessageEvent()
 		{
-			return this.isLinesChat() || this.isCommentChat();
+			if (this.isCommentChat())
+			{
+				return true;
+			}
+
+			return !Feature.isOpenlinesInMessengerAvailable && this.isLinesChat();
 		}
 
 		/**
@@ -210,6 +216,14 @@ jn.define('im/messenger/provider/pull/lib/new-message-manager', (require, export
 		isCopilotChat()
 		{
 			return this.getChatType() === DialogType.copilot;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isOpenLineChat()
+		{
+			return this.getChatType() === DialogType.lines;
 		}
 
 		/**

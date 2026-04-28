@@ -46,7 +46,7 @@ $hasUserMailbox = empty(MailboxTable::getUserMailboxes($USER->getId(), onlyIds: 
 	let titleNode = null;
 	<?php if ($isMainPage === true): ?>
 		titleNode = BX.Tag.render`
-			<div class="mail-provider-showcase-title"><?= Loc::getMessage('MAIL_CLIENT_CONFIG_PROMPT') ?></div>
+			<h2 class="mail-provider-showcase-title"><?= Loc::getMessage('MAIL_CLIENT_CONFIG_PROMPT') ?></h2>
 		`;
 	<?php endif; ?>
 
@@ -130,7 +130,7 @@ $hasUserMailbox = empty(MailboxTable::getUserMailboxes($USER->getId(), onlyIds: 
 		{
 			(new BX.Mail.MailGuide({
 				id: 'mail-provider-showcase-mailbox-grid-guide',
-				description: '<?= Loc::getMessage("MAIL_CLIENT_CONFIG_MAILBOX_GRID_GUIDE_TEXT") ?>',
+				description: '<?= GetMessageJS("MAIL_CLIENT_CONFIG_MAILBOX_GRID_GUIDE_TEXT") ?>',
 				bindElement: button,
 				addHighlighter: true,
 				userOptionName: '<?= \CUtil::jsEscape($arParams['MAILBOX_GRID_GUIDE_NAME'] ?? null) ?>',

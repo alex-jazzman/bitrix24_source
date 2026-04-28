@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Loc, Type } from 'main.core';
 
 export const ErrorBlock = {
@@ -21,16 +22,22 @@ export const ErrorBlock = {
 			return (
 				Type.isStringFilled(this.errorText)
 					? this.errorText
-					: Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TEXT')
+					: Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TEXT', NameService.copilotNameReplacement())
 			);
+		},
+
+		errorTitle(): string
+		{
+			return Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TITLE', NameService.copilotNameReplacement());
 		},
 	},
 
+	// language=Vue
 	template: `
 		<div class="call-quality__explanation">
 			<div class="call-quality__explanation__container --error">
 				<div class="call-quality__explanation-title">
-					{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TITLE') }}
+					{{ errorTitle }}
 				</div>
 				<div 
 					class="call-quality__explanation-text"

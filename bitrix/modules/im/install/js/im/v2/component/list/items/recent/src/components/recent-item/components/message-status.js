@@ -1,5 +1,6 @@
 import { Core } from 'im.v2.application.core';
 import { ChatType, OwnMessageStatus, UserType, AnchorType } from 'im.v2.const';
+import { RecentManager } from 'im.v2.lib.recent';
 
 import type { JsonObject } from 'main.core';
 import type { ImModelChat, ImModelRecentItem, ImModelUser, ImModelMessage } from 'im.v2.model';
@@ -119,7 +120,7 @@ export const MessageStatus = {
 				return false;
 			}
 
-			return this.$store.getters['recent/needsBirthdayPlaceholder'](this.recentItem.dialogId);
+			return RecentManager.needsBirthdayPlaceholder(this.recentItem.dialogId);
 		},
 	},
 	template: `

@@ -19,6 +19,7 @@ export type BookingDto = {
 	externalData: DealDataDto,
 	messages: MessageDto[],
 	skus: SkuDto[],
+	payment: PaymentDto,
 };
 
 export type DealDataDto = {
@@ -43,6 +44,12 @@ export type SkuDto = {
 	name: string,
 	price: number,
 	currencyId: string,
+};
+
+export type PaymentDto = {
+	id: number,
+	isPaid: boolean,
+	isPaidManually: boolean,
 };
 
 type DatePeriodDto = {

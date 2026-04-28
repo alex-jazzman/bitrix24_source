@@ -64,7 +64,7 @@ class LimitLockPopup
 						style: AirButtonStyle.PLAIN,
 						useAirDesign: true,
 						onclick: () => {
-							popup.close();
+							popup.hide();
 						},
 					}),
 				);
@@ -91,7 +91,7 @@ class LimitLockPopup
 
 			if (this.#fullLock)
 			{
-				popup.subscribe('onClose', () => {
+				popup.subscribe('onHide', () => {
 					if (BX.SidePanel.Instance.isOpen())
 					{
 						BX.SidePanel.Instance.close();
@@ -102,7 +102,7 @@ class LimitLockPopup
 			}
 			else
 			{
-				popup.subscribe('onClose', () => {
+				popup.subscribe('onHide', () => {
 					EventEmitter.emit('BiConnector:LimitPopup.Warning.onClose');
 					onDone();
 				});

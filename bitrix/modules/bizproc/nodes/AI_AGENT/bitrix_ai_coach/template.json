@@ -43,103 +43,128 @@
                 "Links": [
                     [
                         "A9654_3504_4807_2932:o0",
-                        "A4120_8802_2523_2854:i0"
+                        "A4120_8802_2523_2854:i0",
+                        1770978412313
                     ],
                     [
                         "A4372_1460_5476_9814:o0",
-                        "A8369_8149_6365_5481:i0"
+                        "A8369_8149_6365_5481:i0",
+                        1770978412313
                     ],
                     [
                         "A8369_8149_6365_5481:o0",
-                        "A9598_6102_8882_8646:i0"
+                        "A9598_6102_8882_8646:i0",
+                        1770978412313
                     ],
                     [
                         "A8369_8149_6365_5481:o0",
-                        "A5647_8130_8558_3635:i0"
+                        "A5647_8130_8558_3635:i0",
+                        1770978412313
                     ],
                     [
                         "A9598_6102_8882_8646:o0",
-                        "A5722_9997_9025_4029:i0"
+                        "A5722_9997_9025_4029:i0",
+                        1770978412313
                     ],
                     [
                         "A7586_4625_6752_3529:o0",
-                        "A9312_1858_2156_7551:i0"
+                        "A9312_1858_2156_7551:i0",
+                        1770978412313
                     ],
                     [
                         "A9312_1858_2156_7551:o0",
-                        "A8762_2315_5201_1662:i0"
+                        "A8762_2315_5201_1662:i0",
+                        1770978412313
                     ],
                     [
                         "A4769_8071_8996_8194:o0",
-                        "A9692_4897_2126_2020:i0"
+                        "A9692_4897_2126_2020:i0",
+                        1770978412313
                     ],
                     [
                         "A3246_1874_7458_8230:o0",
-                        "A2087_9399_5384_5330:i0"
+                        "A2087_9399_5384_5330:i0",
+                        1770978412313
                     ],
                     [
                         "A2087_9399_5384_5330:o0",
-                        "A8947_9497_6913_6578:i0"
+                        "A8947_9497_6913_6578:i0",
+                        1770978412313
                     ],
                     [
                         "A8369_8149_6365_5481:o0",
-                        "A4306_9994_2013_8543:i0"
+                        "A4306_9994_2013_8543:i0",
+                        1770978412313
                     ],
                     [
                         "A8947_9497_6913_6578:o0",
-                        "A5846_8478_5020_2228:i0"
+                        "A5846_8478_5020_2228:i0",
+                        1770978412313
                     ],
                     [
                         "A5846_8478_5020_2228:o0",
-                        "A2087_9399_5384_5330:i1"
+                        "A2087_9399_5384_5330:i1",
+                        1770978412313
                     ],
                     [
                         "A9692_4897_2126_2020:o0",
-                        "A9433_3697_1811_2293:i0"
+                        "A9433_3697_1811_2293:i0",
+                        1770978412313
                     ],
                     [
                         "A9433_3697_1811_2293:o0",
-                        "A9833_6990_1088_4471:i0"
+                        "A9833_6990_1088_4471:i0",
+                        1770978412313
                     ],
                     [
                         "A9433_3697_1811_2293:o1",
-                        "A1689_5301_1167_3785:i0"
+                        "A1689_5301_1167_3785:i0",
+                        1770978412313
                     ],
                     [
                         "A1096_4690_2822_9024:o1",
-                        "A8569_7164_3775_5606:i0"
+                        "A8569_7164_3775_5606:i0",
+                        1770978412313
                     ],
                     [
                         "A1535_5119_7045_4611:o0",
-                        "A1096_4690_2822_9024:i0"
+                        "A1096_4690_2822_9024:i0",
+                        1770978412313
                     ],
                     [
                         "A1096_4690_2822_9024:o0",
-                        "A6125_8815_9480_4420:i0"
+                        "A6125_8815_9480_4420:i0",
+                        1770978412313
                     ],
                     [
                         "A1096_4690_2822_9024:o0",
-                        "A7586_4625_6752_3529:i0"
+                        "A7586_4625_6752_3529:i0",
+                        1770978412313
                     ],
                     [
                         "A9433_3697_1811_2293:o0",
-                        "A3246_1874_7458_8230:i0"
+                        "A3246_1874_7458_8230:i0",
+                        1770978412313
                     ],
                     [
                         "A7464_6478_5578_9056:o0",
-                        "A1535_5119_7045_4611:i0"
+                        "A1535_5119_7045_4611:i0",
+                        1770978412313
                     ],
                     [
                         "A7464_6478_5578_9056:o1",
-                        "A8489_1316_1178_9993:i0"
+                        "A8489_1316_1178_9993:i0",
+                        1770978412313
                     ],
                     [
                         "A4120_8802_2523_2854:o0",
-                        "A7464_6478_5578_9056:i0"
+                        "A7464_6478_5578_9056:i0",
+                        1770978412313
                     ],
                     [
                         "A4306_9994_2013_8543:o0",
-                        "A2636_8739_1696_8052:i0"
+                        "A2636_8739_1696_8052:i0",
+                        1770978412313
                     ]
                 ]
             },
@@ -170,22 +195,21 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "trigger",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_2###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -199,7 +223,10 @@
                         "recipient": [
                             "{=A4769_8071_8996_8194:SenderId}"
                         ],
+                        "chatId": null,
                         "message": "{=A9692_4897_2126_2020:message}",
+                        "asError": "N",
+                        "aiWarning": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                         "EditorComment": ""
                     },
@@ -215,27 +242,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -257,22 +283,21 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "trigger",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_4###",
                             "colorIndex": 0,
+                            "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -300,27 +325,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_6###",
                             "colorIndex": 1,
+                            "frameColorName": null,
                             "icon": "MESSENGER",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -348,27 +372,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_6###",
                             "colorIndex": 1,
+                            "frameColorName": null,
                             "icon": "MESSENGER",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -382,8 +405,10 @@
                         "recipient": [
                             "{=Constant:SetupTemplateActivity_f8J9TnkjX5}"
                         ],
+                        "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_1###",
-                        "asError": null,
+                        "asError": "N",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                         "EditorComment": ""
                     },
@@ -400,27 +425,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -450,22 +474,21 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "trigger",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_2###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -495,91 +518,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
-                        }
-                    }
-                },
-                {
-                    "Name": "A6357_6275_4301_2053",
-                    "Type": "EmptyBlockActivity",
-                    "Properties": {
-                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_8###"
-                    },
-                    "Activated": "Y",
-                    "Node": {
-                        "id": "A6357_6275_4301_2053",
-                        "type": "frame",
-                        "position": {
-                            "x": 75,
-                            "y": -85
-                        },
-                        "dimensions": {
-                            "width": 1330.7858459143351,
-                            "height": 281.12990289435044
-                        },
-                        "ports": {
-                            "input": [],
-                            "output": []
-                        },
-                        "node": {
-                            "type": "frame",
-                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_8###",
-                            "colorIndex": null,
-                            "icon": null,
-                            "updated": null,
-                            "published": null
-                        }
-                    }
-                },
-                {
-                    "Name": "A4649_3219_2693_9076",
-                    "Type": "EmptyBlockActivity",
-                    "Properties": {
-                        "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_8###"
-                    },
-                    "Activated": "Y",
-                    "Node": {
-                        "id": "A4649_3219_2693_9076",
-                        "type": "frame",
-                        "position": {
-                            "x": -145,
-                            "y": 541
-                        },
-                        "dimensions": {
-                            "width": 1893.198600361702,
-                            "height": 510.3069210531767
-                        },
-                        "ports": {
-                            "input": [],
-                            "output": []
-                        },
-                        "node": {
-                            "type": "frame",
-                            "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_8###",
-                            "colorIndex": null,
-                            "icon": null,
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -593,9 +551,11 @@
                             "questions": "{=A9692_4897_2126_2020:questions}",
                             "author": "{=A4769_8071_8996_8194:SenderId}"
                         },
-                        "Author": "=\"user_\" & {=A2087_9399_5384_5330:Value}",
+                        "Author": "{=A2087_9399_5384_5330:Value > bbcodetouser}",
                         "StorageId": null,
                         "StorageCode": "storage_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
                         "Fields": {
                             "title": {
                                 "Value": "{=A9692_4897_2126_2020:topic}",
@@ -609,6 +569,9 @@
                                 "Value": "{=A4769_8071_8996_8194:SenderId}",
                                 "FieldName": "author"
                             }
+                        },
+                        "DynamicFilterFields": {
+                            "items": []
                         },
                         "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_9###",
                         "EditorComment": ""
@@ -625,27 +588,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_9###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "PLUS_M",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -657,10 +619,12 @@
                         "botId": null,
                         "botCode": "{=Workflow:TemplateId}-feedback-interviewer",
                         "recipient": [
-                            "=\"user_\" & {=A2087_9399_5384_5330:Value}"
+                            "{=A2087_9399_5384_5330:Value > bbcodetouser}"
                         ],
+                        "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_2###",
                         "asError": null,
+                        "aiWarning": null,
                         "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                         "EditorComment": ""
                     },
@@ -676,27 +640,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -764,27 +727,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_11###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATA_READING",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -824,27 +786,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_12###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "TRASHCAN",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -858,7 +819,10 @@
                         "recipient": [
                             "{=A4120_8802_2523_2854:author}"
                         ],
+                        "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_3###",
+                        "asError": "N",
+                        "aiWarning": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                         "EditorComment": ""
                     },
@@ -874,27 +838,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -979,27 +942,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_13###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "SETTINGS",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1039,35 +1001,31 @@
                             "width": 200,
                             "height": 176
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 0,
-                                    "title": "true"
-                                },
-                                {
-                                    "id": "o1",
-                                    "position": 1,
-                                    "title": "false"
-                                }
-                            ],
-                            "aux": null
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output"
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1100,35 +1058,31 @@
                             "width": 200,
                             "height": 176
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 0,
-                                    "title": "true"
-                                },
-                                {
-                                    "id": "o1",
-                                    "position": 1,
-                                    "title": "false"
-                                }
-                            ],
-                            "aux": null
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output"
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1141,11 +1095,12 @@
                         "query": "{=A4769_8071_8996_8194:Message}",
                         "systemPrompt": "###BIZPROC_NODES_BITRIX_AI_COACH_SYSTEMPROMPT_1###",
                         "returnType": "json",
-                        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"message\": {\n      \"type\": \"string\",\n      \"description\": \"Next message for chat\"\n    },\n    \"number_of_questions\": {\n      \"type\": \"integer\",\n      \"description\": \"Number of questions\"\n    },\n    \"topic\": {\n      \"type\": \"string\",\n      \"description\": \"Topic\"\n    },\n    \"tested_user_ids\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"integer\",\n        \"description\": \"Tested User ID\"\n      }\n    },\n    \"questions_is_approved\": {\n      \"type\": \"boolean\",\n      \"description\": \"questions is approved\"\n    },\n    \"input_data_is_known\": {\n      \"type\": \"boolean\",\n      \"description\": \"Input data is known\"\n    },\n    \"questions\": {\n      \"type\": \"string\",\n      \"description\": \"Questions of test\"\n    }\n  },\n  \"required\": [\n    \"message\",\n    \"number_of_questions\",\n    \"topic\",\n    \"tested_user_ids\",\n    \"questions_is_approved\",\n    \"input_data_is_known\",\n    \"questions\"\n  ]\n}",
+                        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"message\": {\n      \"type\": \"string\",\n      \"description\": \"Next message for chat\"\n    },\n    \"number_of_questions\": {\n      \"type\": \"integer\",\n      \"description\": \"Number of questions\"\n    },\n    \"topic\": {\n      \"type\": \"string\",\n      \"description\": \"Topic\"\n    },\n    \"tested_users_bbcodes\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\",\n        \"description\": \"Tested User in bbcode format [USER=id][USER=id]name[\/USER][\/USER]\"\n      }\n    },\n    \"questions_is_approved\": {\n      \"type\": \"boolean\",\n      \"description\": \"questions is approved\"\n    },\n    \"input_data_is_known\": {\n      \"type\": \"boolean\",\n      \"description\": \"Input data is known\"\n    },\n    \"questions\": {\n      \"type\": \"string\",\n      \"description\": \"Questions of test\"\n    }\n  },\n  \"required\": [\n    \"message\",\n    \"number_of_questions\",\n    \"topic\",\n    \"tested_user_ids\",\n    \"questions_is_approved\",\n    \"input_data_is_known\",\n    \"questions\"\n  ]\n}",
                         "jsonPath": {
                             "message": {
                                 "Id": "message",
                                 "Type": "json",
+                                "BaseType": "string",
                                 "Name": "JSON:message",
                                 "Description": null,
                                 "Multiple": false,
@@ -1157,6 +1112,7 @@
                             "number_of_questions": {
                                 "Id": "number_of_questions",
                                 "Type": "json",
+                                "BaseType": "int",
                                 "Name": "JSON:number_of_questions",
                                 "Description": null,
                                 "Multiple": false,
@@ -1168,6 +1124,7 @@
                             "topic": {
                                 "Id": "topic",
                                 "Type": "json",
+                                "BaseType": "string",
                                 "Name": "JSON:topic",
                                 "Description": null,
                                 "Multiple": false,
@@ -1176,10 +1133,11 @@
                                 "Settings": null,
                                 "Default": null
                             },
-                            "tested_user_ids": {
-                                "Id": "tested_user_ids",
+                            "tested_users_bbcodes": {
+                                "Id": "tested_users_bbcodes",
                                 "Type": "json",
-                                "Name": "JSON:tested_user_ids",
+                                "BaseType": "string",
+                                "Name": "JSON:tested_users_bbcodes",
                                 "Description": null,
                                 "Multiple": false,
                                 "Required": false,
@@ -1190,6 +1148,7 @@
                             "questions_is_approved": {
                                 "Id": "questions_is_approved",
                                 "Type": "json",
+                                "BaseType": "bool",
                                 "Name": "JSON:questions_is_approved",
                                 "Description": null,
                                 "Multiple": false,
@@ -1201,6 +1160,7 @@
                             "input_data_is_known": {
                                 "Id": "input_data_is_known",
                                 "Type": "json",
+                                "BaseType": "bool",
                                 "Name": "JSON:input_data_is_known",
                                 "Description": null,
                                 "Multiple": false,
@@ -1212,6 +1172,7 @@
                             "questions": {
                                 "Id": "questions",
                                 "Type": "json",
+                                "BaseType": "string",
                                 "Name": "JSON:questions",
                                 "Description": null,
                                 "Multiple": false,
@@ -1221,6 +1182,7 @@
                                 "Default": null
                             }
                         },
+                        "usePseudonymizer": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_15###",
                         "EditorComment": ""
                     },
@@ -1236,37 +1198,31 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "aux": [
-                                {
-                                    "id": "a0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "topAux": null
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            },
+                            {
+                                "id": "a0",
+                                "title": "",
+                                "type": "aux"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_15###",
                             "colorIndex": 0,
+                            "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1275,7 +1231,7 @@
                     "Type": "ForEachActivity",
                     "Activated": "Y",
                     "Properties": {
-                        "Variable": "tested_user_ids",
+                        "Variable": "tested_users_bbcodes",
                         "Object": "A9692_4897_2126_2020",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_16###",
                         "EditorComment": ""
@@ -1292,41 +1248,36 @@
                             "width": 200,
                             "height": 176
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1,
-                                    "title": "in"
-                                },
-                                {
-                                    "id": "i1",
-                                    "position": 2,
-                                    "title": "->>"
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o1",
-                                    "position": 1,
-                                    "title": "out"
-                                },
-                                {
-                                    "id": "o0",
-                                    "position": 2,
-                                    "title": "->>"
-                                }
-                            ],
-                            "aux": null,
-                            "topAux": null
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "in",
+                                "type": "input"
+                            },
+                            {
+                                "id": "i1",
+                                "title": "->>",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o1",
+                                "title": "out",
+                                "type": "output"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "->>",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_16###",
-                            "colorIndex": null,
-                            "icon": "",
-                            "updated": null,
-                            "published": null
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "icon": "REPEAT",
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1390,37 +1341,31 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "aux": [
-                                {
-                                    "id": "a0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "topAux": null
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            },
+                            {
+                                "id": "a0",
+                                "title": "",
+                                "type": "aux"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_15###",
                             "colorIndex": 0,
+                            "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1503,27 +1448,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_17###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATABASE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1556,36 +1500,31 @@
                             "width": 200,
                             "height": 120
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 0,
-                                    "title": "true"
-                                },
-                                {
-                                    "id": "o1",
-                                    "position": 1,
-                                    "title": "false"
-                                }
-                            ],
-                            "aux": null,
-                            "topAux": null
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output"
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1616,27 +1555,26 @@
                             "width": 302.5625,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1667,27 +1605,26 @@
                             "width": 302.5625,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1720,36 +1657,31 @@
                             "width": 200,
                             "height": 120
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 0,
-                                    "title": "true"
-                                },
-                                {
-                                    "id": "o1",
-                                    "position": 1,
-                                    "title": "false"
-                                }
-                            ],
-                            "aux": null,
-                            "topAux": null
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output"
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1780,27 +1712,26 @@
                             "width": 302.5625,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1833,36 +1764,31 @@
                             "width": 200,
                             "height": 120
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 0,
-                                    "title": ""
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 0,
-                                    "title": "true"
-                                },
-                                {
-                                    "id": "o1",
-                                    "position": 1,
-                                    "title": "false"
-                                }
-                            ],
-                            "aux": null,
-                            "topAux": null
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output"
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_14###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 },
@@ -1892,27 +1818,26 @@
                             "width": 200,
                             "height": 48
                         },
-                        "ports": {
-                            "input": [
-                                {
-                                    "id": "i0",
-                                    "position": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "id": "o0",
-                                    "position": 1
-                                }
-                            ]
-                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output"
+                            }
+                        ],
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_COACH_TITLE_12###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "TRASHCAN",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771522438361,
+                            "published": 1771522438361
                         }
                     }
                 }

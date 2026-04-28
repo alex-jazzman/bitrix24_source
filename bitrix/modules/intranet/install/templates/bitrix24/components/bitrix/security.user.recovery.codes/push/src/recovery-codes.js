@@ -2,6 +2,7 @@ import { Tag, Cache, Dom, Loc, Text, Event, ajax as Ajax } from 'main.core';
 import { Button, AirButtonStyle } from 'ui.buttons';
 import { Outline } from 'ui.icon-set.api.core';
 import { sendData } from 'ui.analytics';
+import { SidePanel } from 'main.sidepanel';
 
 export type RecoveryCodesOptions = {
 	codes: Array<{ VALUE: string }>;
@@ -181,7 +182,7 @@ export class RecoveryCodes
 				useAirDesign: true,
 				icon: Outline.PRINTER,
 				onclick: () => {
-					window.print();
+					SidePanel.Instance.open('/bitrix/templates/bitrix24/components/bitrix/security.user.recovery.codes/push/print.php');
 					this.#sendAnalyticsEvent('print_codes_click');
 				},
 			});

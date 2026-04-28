@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm\Decorator\JsonSerializable\ClearNullValues;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router\Contract\Page;
 use Bitrix\Crm\Service\Router\Dto\RouterAnchor;
 use Bitrix\Crm\Tour\Base;
@@ -21,7 +22,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 global $APPLICATION;
 
 $page = $arResult['page'];
-$anchors = $arResult['anchors'];
 $isBindAnchors = !$arResult['isIframe'];
 
 /** @see \Bitrix\Crm\Component\Base::addJsRouter() */
@@ -29,22 +29,8 @@ $this->getComponent()->addJsRouter($this);
 
 if ($isBindAnchors)
 {
-	Extension::load(['sidepanel']);
-	$jsonAnchors = Json::encode(ClearNullValues::decorateList($anchors));
-
-	echo <<<HTML
-		<script>
-			BX.ready(() => {
-				const anchors = ({$jsonAnchors});
-				anchors.forEach((anchor) => {
-					BX.Crm.Component.Router.bindAnchor(anchor.roots, anchor.rule);
-				});
-			});
-		</script>
-	HTML;
+	Container::getInstance()->getRouter()->renderBindAnchors();
 }
-
-$page->render($this->getComponent());
 
 if ($page->title() !== null)
 {
@@ -62,3 +48,5 @@ if ($page->canUseFavoriteStar() !== null)
 		Toolbar::deleteFavoriteStar();
 	}
 }
+
+$page->render($this->getComponent());

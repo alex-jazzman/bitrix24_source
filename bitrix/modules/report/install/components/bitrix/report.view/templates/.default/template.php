@@ -10,6 +10,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	'ui.fonts.opensans',
 	'ui.buttons',
 	'ui.buttons.icons',
+	'intranet.old-interface.intranet-common',
 ]);
 
 \Bitrix\Main\UI\Extension::load('intranet.old-interface.sidebar-filter');

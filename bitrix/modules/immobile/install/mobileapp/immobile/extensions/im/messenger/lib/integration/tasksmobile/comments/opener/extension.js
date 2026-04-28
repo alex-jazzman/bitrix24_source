@@ -13,9 +13,9 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/opener', (require, 
 	 * @param {number} chatId
 	 * @param {number} taskId
 	 * @param {number?} messageId
-	 * @return {Promise<DialoguesModelState>}
+	 * @return {DialogOpenOptions}
 	 */
-	async function openTaskComments(chatId, taskId, messageId)
+	function createOpenTaskCommentsOptions(chatId, taskId, messageId)
 	{
 		/** @type ChatIntegrationSettings */
 		const integrationSettings = {
@@ -35,14 +35,13 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/opener', (require, 
 			sidebar: {
 				enabled: true,
 				params: {
-					addParticipantsEnabled: false,
 					headerContextMenuItems: [
 						SidebarContextMenuActionId.COPY_LINK,
 						SidebarContextMenuActionId.PIN,
 						SidebarContextMenuActionId.UNPIN,
 					],
 					primaryActionButtons: [
-						'open_task',
+						SidebarPrimaryActionButtonId.ENTITY_LINK,
 						SidebarPrimaryActionButtonId.VIDEO_CALL,
 						SidebarPrimaryActionButtonId.AUDIO_CALL,
 						SidebarPrimaryActionButtonId.SEARCH,
@@ -72,10 +71,22 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/opener', (require, 
 			options.withMessageHighlight = true;
 		}
 
-		return DialogOpener.open(options);
+		return options;
+	}
+
+	/**
+	 * @param {number} chatId
+	 * @param {number} taskId
+	 * @param {number?} messageId
+	 * @return {Promise<DialoguesModelState>}
+	 */
+	async function openTaskComments(chatId, taskId, messageId)
+	{
+		return DialogOpener.open(createOpenTaskCommentsOptions(chatId, taskId, messageId));
 	}
 
 	module.exports = {
+		createOpenTaskCommentsOptions,
 		openTaskComments,
 	};
 });

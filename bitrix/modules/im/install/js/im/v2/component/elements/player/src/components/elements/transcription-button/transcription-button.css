@@ -41,3 +41,12 @@
 .bx-im-message-base__wrap.--self .bx-im-transcription-button__button:not(.--overlay):hover {
 	background-color: var(--im-transcription-button__background-color_button-self-hover);
 }
+
+.bx-im-transcription-button__icon {
+	--ui-icon-set__icon-color: var(--im-color-accent-blue);
+	--ui-icon-set__icon-size: 20px;
+}
+
+.bx-im-transcription-button__button.--overlay .bx-im-transcription-button__icon {
+	--ui-icon-set__icon-color: var(--im-color-palette-white-base);
+}

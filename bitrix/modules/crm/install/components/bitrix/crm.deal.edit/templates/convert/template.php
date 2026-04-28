@@ -1,6 +1,7 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 global $APPLICATION;
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_form.js');
+\CJSCore::Init(["intranet.old-interface.intranet-common"]);
 // resort additional fields
 $arFields = array();
 $arrAddRequiredFields = array();

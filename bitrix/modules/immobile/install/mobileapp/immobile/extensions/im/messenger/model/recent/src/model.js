@@ -15,7 +15,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ModelUtils } = require('im/messenger/lib/utils');
 	const { recentDefaultElement } = require('im/messenger/model/recent/default-element');
-	const { searchModel } = require('im/messenger/model/recent/search/model');
+	const { recentFilteredModel } = require('im/messenger/model/recent/filter/model');
+	const { filterResolvers } = require('im/messenger/model/recent/resolvers');
 
 	const { normalize } = require('im/messenger/model/recent/normalizer');
 
@@ -28,6 +29,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		[NavigationTabId.channel]: 'setChannelIdCollection',
 		[NavigationTabId.collab]: 'setCollabIdCollection',
 		[NavigationTabId.task]: 'setTaskIdCollection',
+		[NavigationTabId.openlines]: 'setOpenlineIdCollection',
 	};
 
 	const MutationHideCollectionIdByTab = {
@@ -36,6 +38,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		[NavigationTabId.channel]: 'deleteFromChannelIdCollection',
 		[NavigationTabId.collab]: 'deleteFromCollabIdCollection',
 		[NavigationTabId.task]: 'deleteFromTaskIdCollection',
+		[NavigationTabId.openlines]: 'deleteOpenlineIdCollection',
 	};
 
 	const CollectionByTab = {
@@ -44,6 +47,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		[NavigationTabId.channel]: 'channelIdCollection',
 		[NavigationTabId.collab]: 'collabIdCollection',
 		[NavigationTabId.task]: 'taskIdCollection',
+		[NavigationTabId.openlines]: 'openlineIdCollection',
 	};
 
 	// TODO: MessengerV2 move to helper
@@ -53,9 +57,9 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		[RecentTab.collab]: NavigationTabId.collab,
 		[RecentTab.openChannel]: NavigationTabId.channel,
 		[RecentTab.tasksTask]: NavigationTabId.task,
+		[RecentTab.openlines]: NavigationTabId.openlines,
 	};
 
-	const RECENT_MODEL_NAME = 'recentModel';
 	const FIRST_PAGE_SIZE = 50;
 
 	/** @type {RecentMessengerModel} */
@@ -68,11 +72,29 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			channelIdCollection: new Set(),
 			collabIdCollection: new Set(),
 			taskIdCollection: new Set(),
+			openlineIdCollection: new Set(),
 		}),
 		modules: {
-			searchModel,
+			recentFilteredModel,
 		},
 		getters: {
+			/**
+			 * @function recentModel/getIdCollection
+			 * @param {string} tabId
+			 * @return {Set<string>}
+			 */
+			getIdCollection: (state, getters, rootState, rootGetters) => (tabId) => {
+				const hasSelectedFilter = rootGetters['recentModel/recentFilteredModel/hasSelectedFilter'](tabId);
+				if (!hasSelectedFilter)
+				{
+					const rawCollection = state[CollectionByTab[tabId]];
+
+					return rawCollection ? new Set(rawCollection) : new Set();
+				}
+
+				return rootGetters['recentModel/recentFilteredModel/getIdCollection'](tabId);
+			},
+
 			/**
 			 * @function recentModel/getById
 			 * @return {?RecentModelState}
@@ -100,8 +122,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @function recentModel/getChatIdCollection
 			 * @return {Set<string>}
 			 */
-			getChatIdCollection: (state) => () => {
-				return new Set(state.chatIdCollection);
+			getChatIdCollection: (state, getters) => () => {
+				return getters.getIdCollection(NavigationTabId.chats);
 			},
 
 			/**
@@ -109,15 +131,15 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {Array<RecentModelState>}
 			 */
 			getChatFirstPage: (state, getters) => () => {
-				return getters.getFirstPageByIdCollection(state.chatIdCollection);
+				return getters.getFirstPageByIdCollection(getters.getChatIdCollection());
 			},
 
 			/**
 			 * @function recentModel/getCopilotIdCollection
 			 * @return {Set<string>}
 			 */
-			getCopilotIdCollection: (state) => () => {
-				return new Set(state.copilotIdCollection);
+			getCopilotIdCollection: (state, getters) => () => {
+				return getters.getIdCollection(NavigationTabId.copilot);
 			},
 
 			/**
@@ -132,8 +154,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @function recentModel/getCollabIdCollection
 			 * @return {Set<string>}
 			 */
-			getCollabIdCollection: (state) => () => {
-				return new Set(state.collabIdCollection);
+			getCollabIdCollection: (state, getters) => () => {
+				return getters.getIdCollection(NavigationTabId.collab);
 			},
 
 			/**
@@ -148,8 +170,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @function recentModel/getChannelIdCollection
 			 * @return {Set<string>}
 			 */
-			getChannelIdCollection: (state) => () => {
-				return new Set(state.channelIdCollection);
+			getChannelIdCollection: (state, getters) => () => {
+				return getters.getIdCollection(NavigationTabId.channel);
 			},
 
 			/**
@@ -161,11 +183,27 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			},
 
 			/**
+			 * @function recentModel/getOpenlinesIdCollection
+			 * @return {Set<string>}
+			 */
+			getOpenlinesIdCollection: (state, getters) => () => {
+				return getters.getIdCollection(NavigationTabId.openlines);
+			},
+
+			/**
+			 * @function recentModel/getOpenlinesFirstPage
+			 * @return {Array<RecentModelState>}
+			 */
+			getOpenlinesFirstPage: (state, getters) => () => {
+				return getters.getFirstPageByIdCollection(state.openlineIdCollection);
+			},
+
+			/**
 			 * @function recentModel/getTaskIdCollection
 			 * @return {Set<string>}
 			 */
-			getTaskIdCollection: (state) => () => {
-				return new Set(state.taskIdCollection);
+			getTaskIdCollection: (state, getters) => () => {
+				return getters.getIdCollection(NavigationTabId.task);
 			},
 
 			/**
@@ -173,7 +211,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {Array<RecentModelState>}
 			 */
 			getTaskFirstPage: (state, getters) => () => {
-				return getters.getFirstPageByIdCollection(state.taskIdCollection);
+				return getters.getFirstPageByIdCollection(getters.getTaskIdCollection());
 			},
 
 			/**
@@ -187,7 +225,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 					if (Type.isStringFilled(dialogId))
 					{
 						const item = state.collection[dialogId];
-						if (item)
+						if (Type.isPlainObject(item))
 						{
 							items.push(item);
 						}
@@ -227,8 +265,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 */
 			getByIdList: (state) => (idList) => {
 				return Object.values(state.collection)
-					.filter((recentItem) => idList.includes(recentItem.id))
-				;
+					.filter((recentItem) => idList.includes(recentItem.id));
 			},
 
 			/**
@@ -264,13 +301,9 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {Array<string>} // value NavigationTabId properties
 			 */
 			getTabsContainsItem: (state) => (id) => {
-				return [
-					state.chatIdCollection.has(id) ? NavigationTabId.chats : null,
-					state.copilotIdCollection.has(id) ? NavigationTabId.copilot : null,
-					state.channelIdCollection.has(id) ? NavigationTabId.channel : null,
-					state.collabIdCollection.has(id) ? NavigationTabId.collab : null,
-					state.taskIdCollection.has(id) ? NavigationTabId.task : null,
-				].filter(Boolean);
+				return Object.entries(CollectionByTab)
+					.filter(([_, collectionKey]) => state[collectionKey]?.has(id))
+					.map(([tabId]) => tabId);
 			},
 
 			/**
@@ -316,39 +349,15 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {recentModelHasItemInTab}
 			 */
 			hasItemInTab: (state) => (dialogId, navigationTabId) => {
-				if (!Object.values(NavigationTabId).includes(navigationTabId))
+				const collection = state[CollectionByTab[navigationTabId]];
+				if (!Type.isObject(collection))
 				{
 					logger.error('recentModel/hasItemInTab invalid navigationTabId', navigationTabId);
 
 					return false;
 				}
 
-				if (navigationTabId === NavigationTabId.chats)
-				{
-					return state.chatIdCollection.has(dialogId);
-				}
-
-				if (navigationTabId === NavigationTabId.copilot)
-				{
-					return state.copilotIdCollection.has(dialogId);
-				}
-
-				if (navigationTabId === NavigationTabId.channel)
-				{
-					return state.channelIdCollection.has(dialogId);
-				}
-
-				if (navigationTabId === NavigationTabId.collab)
-				{
-					return state.collabIdCollection.has(dialogId);
-				}
-
-				if (navigationTabId === NavigationTabId.task)
-				{
-					return state.taskIdCollection.has(dialogId);
-				}
-
-				return false;
+				return collection.has(dialogId);
 			},
 
 			/**
@@ -421,10 +430,36 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			},
 		},
 		actions: {
+			/**
+			 * @function recentModel/syncFilteredIdCollection
+			 * @param {string} payload.tabId
+			 */
+			syncFilteredIdCollection: async (store, payload) => {
+				const { tabId } = payload;
+				const hasTab = store.getters['recentFilteredModel/hasNavigationTabId'](tabId);
+				const hasSelectedFilter = store.getters['recentFilteredModel/hasSelectedFilter'](tabId);
+				if (!hasTab || !hasSelectedFilter)
+				{
+					return;
+				}
+
+				const baseIds = store.state[CollectionByTab[tabId]] || new Set();
+				const currentFilterId = store.getters['recentFilteredModel/getCurrentFilterId'](tabId);
+				const rootGetters = store.rootGetters;
+				const resolver = filterResolvers[currentFilterId];
+				const filteredIds = resolver ? resolver(tabId, baseIds, rootGetters) : baseIds;
+
+				await store.dispatch('recentFilteredModel/setIdCollection', {
+					tabId,
+					itemIds: [...filteredIds],
+				});
+			},
+
 			/** @function recentModel/setChat */
 			setChat: async (store, payload) => {
 				const { itemList } = ModelUtils.normalizeItemListPayload(payload);
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
+
 				store.commit('setChatIdCollection', {
 					actionName: 'setChat',
 					data: {
@@ -481,8 +516,23 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			setTask: async (store, payload) => {
 				const { itemList } = ModelUtils.normalizeItemListPayload(payload);
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
+
 				store.commit('setTaskIdCollection', {
 					actionName: 'setTask',
+					data: {
+						itemIds,
+					},
+				});
+
+				await store.dispatch('set', payload);
+			},
+
+			/** @function recentModel/setOpenline */
+			setOpenline: async (store, payload) => {
+				const { itemList } = ModelUtils.normalizeItemListPayload(payload);
+				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
+				store.commit('setOpenlineIdCollection', {
+					actionName: 'setOpenline',
 					data: {
 						itemIds,
 					},
@@ -623,7 +673,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			},
 
 			/** @function recentModel/set */
-			set: async (store, payload) => {
+			set: (store, payload) => {
 				/**
 				 * @type {Array<RecentModelState>}
 				 */
@@ -678,6 +728,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				store.commit('deleteFromChannelIdCollection', { data: { id: existingItem.id }, actionName });
 				store.commit('deleteFromCollabIdCollection', { data: { id: existingItem.id }, actionName });
 				store.commit('deleteFromTaskIdCollection', { data: { id: existingItem.id }, actionName });
+				store.commit('deleteOpenlineIdCollection', { data: { id: existingItem.id }, actionName });
 
 				store.commit('delete', {
 					actionName,
@@ -911,6 +962,17 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			},
 			/**
 			 * @param state
+			 * @param {MutationPayload<RecentSetIdCollectionData, RecentSetIdCollectionActions>} payload
+			 */
+			setOpenlineIdCollection: (state, payload) => {
+				logger.warn('RecentModel.setOpenlineIdCollection', payload);
+				const { data } = payload;
+				data.itemIds.forEach((dialogId) => {
+					state.openlineIdCollection.add(dialogId);
+				});
+			},
+			/**
+			 * @param state
 			 * @param {MutationPayload<RecentDeleteData, RecentDeleteActions>} payload
 			 */
 			deleteFromChatIdCollection: (state, payload) => {
@@ -948,6 +1010,14 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			deleteFromTaskIdCollection: (state, payload) => {
 				logger.warn('RecentModel.deleteFromTaskIdCollection', payload);
 				state.taskIdCollection.delete(payload.data.id);
+			},
+			/**
+			 * @param state
+			 * @param {MutationPayload<RecentDeleteData, RecentDeleteActions>} payload
+			 */
+			deleteOpenlineIdCollection: (state, payload) => {
+				logger.warn('RecentModel.deleteOpenlineIdCollection', payload);
+				state.openlineIdCollection.delete(payload.data.id);
 			},
 
 			/**

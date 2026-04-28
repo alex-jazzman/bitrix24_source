@@ -6,6 +6,7 @@ Loc::loadMessages(__FILE__);
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'clipboard',
+	'intranet.old-interface.intranet-common',
 ]);
 
 $getFormattedScript = function ($script)

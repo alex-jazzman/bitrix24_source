@@ -76,6 +76,8 @@ Class intranet extends CModule
 		RegisterModuleDependences("forum", "onAfterMessageDelete", "intranet", "CIntranetEventHandlers", "onAfterForumMessageDelete");
 		RegisterModuleDependences("main", "OnAfterUserTypeAdd", "intranet", "CIntranetEventHandlers", "OnAfterUserTypeAdd");
 
+		RegisterModuleDependences('main', 'OnBeforeUserRegister', 'intranet', \Bitrix\Intranet\Internal\Integration\Main\EventHandler\User\UserRegisterSiteGroups::class, 'addEmployeeSiteGroups');
+
 		RegisterModuleDependences("iblock", "OnBeforeIBlockSectionUpdate", "intranet", "CIntranetEventHandlers", "OnBeforeIBlockSectionUpdate");
 		RegisterModuleDependences("iblock", "OnBeforeIBlockSectionAdd", "intranet", "CIntranetEventHandlers", "OnBeforeIBlockSectionAdd");
 
@@ -421,6 +423,12 @@ Class intranet extends CModule
 		CopyDirFiles(
 			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/services",
 			$_SERVER["DOCUMENT_ROOT"]."/bitrix/services",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bitrix24/install/routes",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/routes",
 			true, true
 		);
 

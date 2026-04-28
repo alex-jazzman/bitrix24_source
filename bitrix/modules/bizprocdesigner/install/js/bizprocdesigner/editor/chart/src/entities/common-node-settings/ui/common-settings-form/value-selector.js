@@ -1,13 +1,17 @@
-import { Type, Loc } from 'main.core';
+import { Type, Loc, Runtime } from 'main.core';
 import { Dialog, Item, ItemOptions, TabOptions, EntityOptions } from 'ui.entity-selector';
 import type { Block, PortId } from '../../../../shared/types';
 import { diagramStore } from '../../../blocks';
 
+type ShowOptions = {
+	showOnlyRealProperties: boolean
+};
 export class ValueSelector
 {
 	store: diagramStore;
 	currentBlock: Block;
 	currentPortId: PortId | null = null;
+	selectedItem: Item | null = null;
 
 	constructor(
 		store: diagramStore,
@@ -20,7 +24,7 @@ export class ValueSelector
 		this.currentPortId = currentPortId;
 	}
 
-	show(targetElement: Element): Promise
+	show(targetElement: Element, options: ShowOptions = {}): Promise
 	{
 		return new Promise((resolve) => {
 			const dialog = new Dialog({
@@ -32,11 +36,12 @@ export class ValueSelector
 				enableSearch: true,
 				items: this.#getItems(),
 				tabs: this.#getTabs(),
-				entities: this.#getEntities(),
+				entities: this.#getEntities(options.showOnlyRealProperties),
 				cacheable: false,
 				showAvatars: false,
 				events: {
 					'Item:onSelect': (event) => {
+						this.selectedItem = event.getData().item;
 						resolve(this.#getValue(event.getData().item));
 					},
 				},
@@ -47,8 +52,17 @@ export class ValueSelector
 		});
 	}
 
-	#getEntities(): EntityOptions[]
+	#getEntities(showOnlyRealProperties: boolean = false): EntityOptions[]
 	{
+		if (showOnlyRealProperties)
+		{
+			return [
+				{
+					id: 'bizproc-document',
+				}
+			];
+		}
+
 		return [
 			{
 				id: 'bizproc-document',
@@ -113,31 +127,9 @@ export class ValueSelector
 	{
 		const items = this.getReturnItems();
 
-		this.#addDocumentItem(items);
 		this.addTemplateItems(items);
 
 		return items;
-	}
-
-	#addDocumentItem(items: ItemOptions[]): void
-	{
-		// compatible document
-		items.push({
-			id: 'template-document',
-			entityId: 'bizproc-document',
-			entityType: 'document',
-			title: Loc.getMessage('BIZPROCDESIGNER_SELECTOR_DOCUMENT_FIELDS'),
-			customData: {
-				document: this.store.documentType,
-				idTemplate: '{{ #FIELD_NAME# }}',
-				supertitle: Loc.getMessage('BIZPROCDESIGNER_SELECTOR_DOCUMENT_FIELDS'),
-			},
-			tabs: ['documents'],
-			nodeOptions: {
-				open: false,
-				dynamic: true,
-			},
-		});
 	}
 
 	addTemplateItems(items: ItemOptions[]): void
@@ -172,6 +164,9 @@ export class ValueSelector
 						id,
 						entityId: elem.key,
 						title: item.Name,
+						customData: {
+							property: item
+						}
 					});
 				});
 
@@ -310,12 +305,21 @@ export class ValueSelector
 				}
 				else
 				{
+					const customProperty = Runtime.clone(property);
+					if (customProperty.Type === 'json')
+					{
+						customProperty.Type = customProperty.BaseType ?? 'string';
+					}
+
 					res.properties.push({
 						id,
 						entityId: 'block-node-property',
 						title: property.Name,
 						property,
 						block,
+						customData: {
+							property: customProperty,
+						},
 					});
 				}
 

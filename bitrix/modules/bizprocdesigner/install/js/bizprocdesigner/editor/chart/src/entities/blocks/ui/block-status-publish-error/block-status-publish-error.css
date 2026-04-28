@@ -4,7 +4,7 @@
 	height: 16px;
 	margin: 0;
 	font-weight: var(--ui-font-weight-normal);
-	font-size: var(--ui-font-size-4xs);
+	font-size: var(--ui-font-size-xs);
 	letter-spacing: 0;
 	color: var(--ui-color-base-3);
 	overflow: hidden;

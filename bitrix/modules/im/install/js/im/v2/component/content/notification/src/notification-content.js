@@ -10,9 +10,10 @@ import { UserListPopup } from 'im.v2.component.elements.user-list-popup';
 import { Loader } from 'im.v2.component.elements.loader';
 import { Utils } from 'im.v2.lib.utils';
 import { SpecialBackground, ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';
+import { CounterManager } from 'im.v2.lib.counter';
+
 import { NotificationHeaderMenu } from './classes/notification-header-menu';
 import { NotificationMenu } from './classes/notification-menu';
-
 import { NotificationComponents } from './components';
 import { ItemPlaceholder } from './components/elements/placeholder';
 import { ScrollButton } from './components/elements/scroll-button';
@@ -104,7 +105,7 @@ export const NotificationContent = {
 		},
 		formattedCounter(): string
 		{
-			return this.confirmNotificationsCounter > 99 ? '99+' : String(this.confirmNotificationsCounter);
+			return CounterManager.formatCounter(this.confirmNotificationsCounter);
 		},
 		searchResultCollection(): ImModelNotification[]
 		{

@@ -127,8 +127,6 @@ if (!empty($_REQUEST['unique_id']) && is_string($_REQUEST['unique_id']))
 			else
 			{
 				echo 'move_uploaded_file('.$tmp_name.','.$image.')=false'."\n";
-				echo '$_FILES='."\n";
-				print_r($_FILES);
 				die();
 			}
 

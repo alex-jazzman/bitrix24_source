@@ -186,7 +186,7 @@ export class Canvas
 	{
 		const newZoom = Math.max(
 			this.#minZoom,
-			Math.min(this.#maxZoom, (this.#camera.zoom + zoomChange) * 2 ** (event.deltaY * -0.01)),
+			Math.min(this.#maxZoom, (this.#camera.zoom + zoomChange)),
 		);
 
 		const viewport = this.clientToViewport({
@@ -205,6 +205,14 @@ export class Canvas
 
 	setCameraPositionByWheel(event: MouseEvent): void
 	{
+		if (event.shiftKey)
+		{
+			this.#camera.x += event.deltaY / this.#camera.zoom;
+			this.#camera.y += event.deltaX / this.#camera.zoom;
+
+			return;
+		}
+
 		this.#camera.x += event.deltaX / this.#camera.zoom;
 		this.#camera.y += event.deltaY / this.#camera.zoom;
 	}

@@ -24,7 +24,7 @@ if (
 $showInCatalog = \Bitrix\Main\Config\Option::get('bizproc', 'bitrix_ai_day_plan_available', 'N') === 'Y';
 
 $arActivityDescription = (new ActivityDescription(
-	Loc::getMessage('BPCA1_DESCR_NAME2'),
+	Loc::getMessage('BPCA1_DESCR_NAME3'),
 	Loc::getMessage('BPCA1_DESCR_DESCR2'),
 	[
 		\Bitrix\Bizproc\Activity\Enum\ActivityType::NODE->value,

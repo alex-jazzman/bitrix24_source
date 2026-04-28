@@ -1,6 +1,7 @@
 import { Messenger } from 'im.public';
 import { BaseMessage } from 'im.v2.component.message.base';
 import { UserListPopup } from 'im.v2.component.elements.user-list-popup';
+import { CopilotManager } from 'im.v2.lib.copilot';
 
 import './css/copilot-added-users-message.css';
 
@@ -61,10 +62,15 @@ export const ChatCopilotAddedUsersMessage = {
 		},
 		preparedDescription(): string
 		{
-			return this.loc('IM_MESSAGE_COPILOT_ADDED_USERS_DESCRIPTION_MENTION_MSGVER_1', {
+			return this.loc('IM_MESSAGE_COPILOT_ADDED_USERS_DESCRIPTION_MENTION_MSGVER_2', {
 				'#BR#': '\n',
+				'#COPILOT_NAME#': this.copilotManager.getName(),
 			});
 		},
+	},
+	created()
+	{
+		this.copilotManager = new CopilotManager();
 	},
 	methods:
 	{

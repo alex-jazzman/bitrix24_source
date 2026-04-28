@@ -1,8 +1,9 @@
-import './history-bar.css';
+import { Browser } from 'main.core';
 import { toValue } from 'ui.vue3';
-import { useHistory, useBlockDiagram } from '../../composables';
+import { useHistory, useBlockDiagram, useKeyboardShortcuts } from '../../composables';
 import { IconButton } from '../icon-button/icon-button';
 import { Outline } from 'ui.icon-set.api.vue';
+import './history-bar.css';
 
 export type HistoryBarSetup = {
 	hasNext: boolean,
@@ -33,6 +34,18 @@ export const HistoryBar = {
 			next,
 			prev,
 		} = useHistory();
+		const isMac = Browser.isMac();
+
+		useKeyboardShortcuts([
+			{
+				keys: ['Mod', 'z'],
+				handler: prev,
+			},
+			{
+				keys: isMac ? ['Mod', 'Shift', 'z'] : ['Mod', 'y'],
+				handler: next,
+			},
+		]);
 
 		function onNext(): void
 		{

@@ -26,6 +26,7 @@ export function mapModelToDto(booking: BookingModel): BookingDto
 		visitStatus: () => booking.visitStatus,
 		externalData: () => booking.externalData,
 		skus: () => booking.skus,
+		payment: () => booking.payment,
 	};
 
 	const dependentFields = new Map([
@@ -75,6 +76,7 @@ export function mapDtoToModel(bookingDto: BookingDto): BookingModel
 		externalData: bookingDto.externalData,
 		messages: bookingDto.messages?.length ? bookingDto.messages : undefined,
 		skus: bookingDto.skus,
+		payment: bookingDto.payment,
 	};
 
 	return Object.fromEntries(Object.entries(booking).filter(([, value]) => !Type.isUndefined(value)));

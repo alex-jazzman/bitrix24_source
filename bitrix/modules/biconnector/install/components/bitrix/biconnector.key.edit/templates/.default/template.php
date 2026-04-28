@@ -95,7 +95,7 @@ foreach ($arResult['FORM_DATA']['USERS'] as $userId)
 			<div class="ui-slider-heading-4"><?=Loc::getMessage('CT_BBKE_ACCESS_KEY')?></div>
 			<div class="biconnector-key-edit__input_box">
 				<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-					<input type="password" class="ui-ctl-element biconnector-key-edit-access-key" readonly value="<?=htmlspecialcharsbx($arResult['FORM_DATA']['ACCESS_KEY'] . LANGUAGE_ID)?>" id="ACCESS_KEY">
+					<input type="password" class="ui-ctl-element biconnector-key-edit-access-key" readonly value="<?=htmlspecialcharsbx($arResult['FORM_DATA']['ACCESS_KEY'])?>" id="ACCESS_KEY">
 					<button class="biconnector-key-edit_btn" onclick="return showText(this, '<?= CUtil::JSEscape(Loc::getMessage('CT_BBKE_KEY_SHOW')) ?>', '<?= CUtil::JSEscape(Loc::getMessage('CT_BBKE_KEY_HIDE')) ?>')">
 						<span class="ui-icon-set --crossed-eye"></span>
 					</button>

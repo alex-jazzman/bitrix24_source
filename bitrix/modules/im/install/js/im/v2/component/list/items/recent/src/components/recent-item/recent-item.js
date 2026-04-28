@@ -1,12 +1,13 @@
 import 'main.date';
 
-import { Core } from 'im.v2.application.core';
 import { ChatType, Settings, Layout } from 'im.v2.const';
 import { InputActionIndicator } from 'im.v2.component.list.items.elements.input-action-indicator';
 import { ChatTitle, ChatTitleType } from 'im.v2.component.elements.chat-title';
 import { ChatAvatar, AvatarSize, ChatAvatarType } from 'im.v2.component.elements.avatar';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
 import { ChannelManager } from 'im.v2.lib.channel';
+import { CounterManager } from 'im.v2.lib.counter';
+import { RecentManager } from 'im.v2.lib.recent';
 
 import { MessageText } from './components/message-text';
 import { ItemCounters } from './components/item-counter';
@@ -14,7 +15,7 @@ import { MessageStatus } from './components/message-status';
 
 import './css/recent-item.css';
 
-import type { ImModelRecentItem, ImModelChat, ImModelMessage } from 'im.v2.model';
+import type { ImModelRecentItem, ImModelChat, ImModelMessage, ImModelLayout } from 'im.v2.model';
 
 // @vue/component
 export const RecentItem = {
@@ -33,6 +34,22 @@ export const RecentItem = {
 		{
 			return this.item;
 		},
+		dialog(): ImModelChat
+		{
+			return this.$store.getters['chats/get'](this.recentItem.dialogId, true);
+		},
+		layout(): ImModelLayout
+		{
+			return this.$store.getters['application/getLayout'];
+		},
+		message(): ImModelMessage
+		{
+			return this.$store.getters['recent/getMessage'](this.recentItem.dialogId);
+		},
+		chatCounter(): number
+		{
+			return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
+		},
 		formattedDate(): string
 		{
 			if (this.needsBirthdayPlaceholder)
@@ -44,23 +61,11 @@ export const RecentItem = {
 		},
 		formattedCounter(): string
 		{
-			return this.dialog.counter > 99 ? '99+' : this.dialog.counter.toString();
-		},
-		dialog(): ImModelChat
-		{
-			return this.$store.getters['chats/get'](this.recentItem.dialogId, true);
-		},
-		layout(): { name: string, entityId: string }
-		{
-			return this.$store.getters['application/getLayout'];
-		},
-		message(): ImModelMessage
-		{
-			return this.$store.getters['recent/getMessage'](this.recentItem.dialogId);
+			return CounterManager.formatCounter(this.chatCounter);
 		},
 		itemDate(): Date
 		{
-			return this.$store.getters['recent/getSortDate'](this.recentItem.dialogId);
+			return RecentManager.getSortDate(this.recentItem.dialogId);
 		},
 		isUser(): boolean
 		{
@@ -74,17 +79,17 @@ export const RecentItem = {
 		{
 			return ChannelManager.isChannel(this.recentItem.dialogId);
 		},
-		isNotes(): boolean
+		isSelfChat(): boolean
 		{
-			return this.$store.getters['chats/isNotes'](this.recentItem.dialogId);
+			return this.$store.getters['chats/isSelfChat'](this.recentItem.dialogId);
 		},
 		avatarType(): string
 		{
-			return this.isNotes ? ChatAvatarType.notes : '';
+			return this.isSelfChat ? ChatAvatarType.selfChat : '';
 		},
 		chatType(): string
 		{
-			return this.isNotes ? ChatTitleType.notes : '';
+			return this.isSelfChat ? ChatTitleType.selfChat : '';
 		},
 		isChatSelected(): boolean
 		{
@@ -96,21 +101,13 @@ export const RecentItem = {
 
 			return this.layout.entityId === this.recentItem.dialogId;
 		},
-		isChatMuted(): boolean
-		{
-			const isMuted = this.dialog.muteList.find((element) => {
-				return element === Core.getUserId();
-			});
-
-			return Boolean(isMuted);
-		},
 		hasActiveInputAction(): boolean
 		{
 			return this.$store.getters['chats/inputActions/isChatActive'](this.recentItem.dialogId);
 		},
 		needsBirthdayPlaceholder(): boolean
 		{
-			return this.$store.getters['recent/needsBirthdayPlaceholder'](this.recentItem.dialogId);
+			return RecentManager.needsBirthdayPlaceholder(this.recentItem.dialogId);
 		},
 		showLastMessage(): boolean
 		{
@@ -177,7 +174,7 @@ export const RecentItem = {
 					</div>
 					<div class="bx-im-list-recent-item__content_bottom">
 						<MessageText :item="recentItem" />
-						<ItemCounters :item="recentItem" :isChatMuted="isChatMuted" />
+						<ItemCounters :item="recentItem" :isChatMuted="dialog.isMuted" />
 					</div>
 				</div>
 			</div>

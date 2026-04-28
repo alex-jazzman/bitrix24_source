@@ -203,5 +203,4 @@ $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_4"] = "Запуск AI-агента";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_5"] = "Сохранение бот-мейкер";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_6"] = "Сохранение настроек чат-бота";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_7"] = "Сохранение бот-интервьюер";
-$MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_8"] = "Подложка";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_9"] = "Запись данных";

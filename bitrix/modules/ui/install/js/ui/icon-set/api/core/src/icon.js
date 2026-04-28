@@ -1357,6 +1357,14 @@ export const Outline = Object.freeze({
 	TEXT_FORMAT_RESET: 'o-text-format-reset',
 	SPOILER: 'o-spoiler',
 	OPEN_NEW: 'o-open-new',
+	LIST_VIEWER: 'o-list-viewer',
+	VIDEO_RECORD_2: 'o-video-record-2',
+	THREE_PERSONS_CHECK: 'o-three-persons-check',
+	PACKAGE_RECEIVE: 'o-package-receive',
+	PACKAGE_CANCEL: 'o-package-cancel',
+	LOWER_LEFT_ARROW: 'o-lower-left-arrow',
+	MAIL_PLUS: 'o-mail-plus',
+	MESSAGES_MULTI: 'o-messages-multi',
 });
 
 export const Solid = Object.freeze({

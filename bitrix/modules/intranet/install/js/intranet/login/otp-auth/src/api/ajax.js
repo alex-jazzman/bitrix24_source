@@ -15,4 +15,22 @@ export class Ajax
 			},
 		});
 	}
+
+	static sendRequestRecoverAccess(signedUserId: string): Promise
+	{
+		return ajax.runAction('intranet.v2.Otp.sendRequestRecoverAccess', {
+			data: {
+				signedUserId,
+			},
+		});
+	}
+
+	static resetOtpSession(signedUserId: string): Promise
+	{
+		return ajax.runAction('intranet.v2.Otp.resetOtpSession', {
+			data: {
+				signedUserId,
+			},
+		});
+	}
 }

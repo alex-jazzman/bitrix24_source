@@ -163,14 +163,8 @@ return [
 			'booking.counter.repository' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\CounterRepository::class,
 			],
-			'booking.provider.manager' => [
-				'className' => \Bitrix\Booking\Internals\Service\ProviderManager::class,
-			],
 			'booking.option.repository' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\OptionRepository::class,
-			],
-			'booking.message.sender' => [
-				'className' => \Bitrix\Booking\Internals\Service\Notifications\MessageSender::class,
 			],
 			'booking.wait.list.item.repository.mapper' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\Mapper\WaitListItemMapper::class,
@@ -222,6 +216,9 @@ return [
 				'constructorParams' => static function() {
 					return [
 						'bookingClientRepository' => \Bitrix\Booking\Internals\Container::getBookingClientRepository(),
+						'dealClientSynchronizer' => \Bitrix\Booking\Internals\Container::getCrmDealClientSynchronizer(),
+						'crmClientDataLoader' => \Bitrix\Booking\Internals\Container::getCrmClientDataLoader(),
+						'clientAccessProvider' => \Bitrix\Booking\Internals\Container::getCrmClientAccessProvider(),
 					];
 				},
 			],
@@ -242,6 +239,7 @@ return [
 						'bookingClientRepository' => \Bitrix\Booking\Internals\Container::getBookingClientRepository(),
 						'bookingExternalDataRepository' => \Bitrix\Booking\Internals\Container::getBookingExternalDataRepository(),
 						'clientService' => \Bitrix\Booking\Internals\Container::getClientService(),
+						'dealClientSynchronizer' => \Bitrix\Booking\Internals\Container::getCrmDealClientSynchronizer(),
 					];
 				},
 			],
@@ -365,7 +363,7 @@ return [
 					return [
 						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
 						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
-						'contactService' => \Bitrix\Booking\Internals\Container::getCrmContactService(),
+						'contactSearcherService' => \Bitrix\Booking\Internals\Container::getCrmContactSearcherService(),
 						'findResourceService' => \Bitrix\Booking\Internals\Container::getYandexFindResourceService(),
 					];
 				},
@@ -388,8 +386,8 @@ return [
 					];
 				},
 			],
-			'booking.internals.integration.crm.contact.service' => [
-				'className' => Bitrix\Booking\Internals\Integration\Crm\Contact\ContactService::class,
+			\Bitrix\Booking\Internals\Integration\Crm\ContactSearcher\ContactSearcherService::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\ContactSearcher\ContactSearcherService::class,
 			],
 			'booking.internals.integration.crm.deal.service' => [
 				'className' => Bitrix\Booking\Internals\Integration\Crm\DealService::class,
@@ -455,8 +453,70 @@ return [
 					];
 				},
 			],
+			\Bitrix\Booking\Internals\Integration\Crm\DealDataProvider::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\DealDataProvider::class,
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\ExternalDataItemExtractor::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\ExternalDataItemExtractor::class,
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\ClientDataProvider::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\ClientDataProvider::class,
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\DealClientSynchronizer::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\DealClientSynchronizer::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Booking\Internals\Container::getDealDataProvider(),
+						\Bitrix\Booking\Internals\Container::getCrmExternalDataItemExtractor(),
+					];
+				},
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\DataLoader\ClientDataLoader::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\DataLoader\ClientDataLoader::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Booking\Internals\Container::getCrmClientDataProvider(),
+					];
+				},
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\ClientAccessProvider::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\ClientAccessProvider::class,
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\ClientDataRecentProvider::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\ClientDataRecentProvider::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Booking\Internals\Container::getCrmClientDataProvider(),
+					];
+				},
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\ClientTypeRepository::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\ClientTypeRepository::class,
+			],
+			\Bitrix\Booking\Internals\Service\Notifications\MessageSender\BookingDataExtractor::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Notifications\MessageSender\BookingDataExtractor::class,
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\MessageSender::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\MessageSender::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Booking\Internals\Container::getDealDataProvider(),
+						\Bitrix\Booking\Internals\Container::getCrmExternalDataItemExtractor(),
+						new \Bitrix\Booking\Provider\NotificationsLanguageProvider(),
+						\Bitrix\Booking\Internals\Container::getBookingMessageRepository(),
+						\Bitrix\Booking\Internals\Container::getBookingDataExtractor(),
+						\Bitrix\Booking\Internals\Container::getLicenseChecker(),
+					];
+				},
+			],
 			'booking.internals.integration.crm.deal.data.loader' => [
-				'className' => Bitrix\Booking\Internals\Integration\Crm\CrmDealDataLoader::class,
+				'className' => Bitrix\Booking\Internals\Integration\Crm\DataLoader\DealDataLoader::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Booking\Internals\Container::getDealDataProvider(),
+						\Bitrix\Booking\Internals\Container::getCrmExternalDataItemExtractor(),
+					];
+				},
 			],
 			'booking.internals.integration.intranet.booking.tool' => [
 				'className' => \Bitrix\Booking\Internals\Integration\Intranet\BookingTool::class,
@@ -561,8 +621,8 @@ return [
 			\Bitrix\Booking\Internals\Service\Yandex\CompanyFeedHashService::class => [
 				'className' => \Bitrix\Booking\Internals\Service\Yandex\CompanyFeedHashService::class,
 			],
-			\Bitrix\Booking\Internals\Integration\Crm\ProductRowDataLoader::class => [
-				'className' => \Bitrix\Booking\Internals\Integration\Crm\ProductRowDataLoader::class,
+			\Bitrix\Booking\Internals\Integration\Crm\DataLoader\ProductRowDataLoader::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\DataLoader\ProductRowDataLoader::class,
 			],
 			\Bitrix\Booking\Internals\Service\DealForBookingService::class => [
 				'className' => \Bitrix\Booking\Internals\Service\DealForBookingService::class,
@@ -575,6 +635,9 @@ return [
 					];
 				}
 			],
+			\Bitrix\Booking\Internals\Repository\ORM\BookingPaymentRepository::class => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\BookingPaymentRepository::class,
+			],
 			\Bitrix\Booking\Internals\Service\Notifications\WhatsAppEmergencyService::class => [
 				'className' => \Bitrix\Booking\Internals\Service\Notifications\WhatsAppEmergencyService::class,
 				'constructorParams' => static function()
@@ -584,6 +647,55 @@ return [
 						'optionRepository' => \Bitrix\Booking\Internals\Container::getOptionRepository(),
 					];
 				}
+			],
+			\Bitrix\Booking\Internals\Service\CrmForm\CrmFormService::class => [
+				'className' => \Bitrix\Booking\Internals\Service\CrmForm\CrmFormService::class,
+				'constructorParams' => static function()
+				{
+					return [
+						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+						'resourceAutoSelectionService' => \Bitrix\Booking\Internals\Container::getCrmFormResourceAutoSelectionService(),
+						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
+					];
+				}
+			],
+			\Bitrix\Booking\Internals\Service\CrmForm\ResourceAutoSelectionService::class => [
+				'className' => \Bitrix\Booking\Internals\Service\CrmForm\ResourceAutoSelectionService::class,
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\WebForm\BookingBuilder::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\WebForm\BookingBuilder::class,
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\WebForm\EventHandler::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\WebForm\EventHandler::class,
+				'constructorParams' => static function() {
+					return [
+						'builder' => \Bitrix\Booking\Internals\Container::getWebFormBookingBuilder(),
+					];
+				},
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\MyCompanyProvider::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\MyCompanyProvider::class,
+			],
+			\Bitrix\Booking\Internals\Service\LicenseChecker::class => [
+				'className' => \Bitrix\Booking\Internals\Service\LicenseChecker::class,
+			],
+			\Bitrix\Booking\Internals\Service\Notifications\MessageSender\MessageSenderPicker::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Notifications\MessageSender\MessageSenderPicker::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+					];
+				},
+			],
+			\Bitrix\Booking\Internals\Service\Notifications\MessageSender\DummyBaseMessageSender::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Notifications\MessageSender\DummyBaseMessageSender::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Booking\Internals\Container::getBookingMessageRepository(),
+						\Bitrix\Booking\Internals\Container::getBookingDataExtractor(),
+					];
+				},
 			],
 		],
 	],

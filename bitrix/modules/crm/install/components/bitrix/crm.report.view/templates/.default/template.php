@@ -16,7 +16,7 @@ $APPLICATION->IncludeComponent(
 	false
 );
 
-CUtil::InitJSCore(array('ajax', 'popup', 'ui.fonts.opensans'));
+CUtil::InitJSCore(array('ajax', 'popup', 'ui.fonts.opensans', 'intranet.old-interface.intranet-common'));
 
 $APPLICATION->AddHeadScript('/bitrix/js/crm/crm.js');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');

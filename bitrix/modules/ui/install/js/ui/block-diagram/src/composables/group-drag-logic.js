@@ -6,6 +6,7 @@ type UseGroupDragLogic = {
 	onGroupMouseDown: MouseEvent;
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function useGroupDragLogic(
 	closeContextMenu: () => void,
 ): UseGroupDragLogic
@@ -16,82 +17,87 @@ export function useGroupDragLogic(
 		updateBlock,
 		setPortOffsetByBlockId,
 		highlitedBlockIds,
+		startAutoScroll,
+		stopAutoScroll,
+		updateMousePosition,
+		updateBlockRectangle,
+		isBoxIntersection,
 	} = useBlockDiagram();
 
-	let checkBoxDragStartX = 0;
-	let checkBoxDragStartY = 0;
-	let lastDeltaX = 0;
-	let lastDeltaY = 0;
+	let currentZoom = 1;
 	let movingItems = [];
+	let anchor = { x: 0, y: 0 };
+	let client = { x: 0, y: 0 };
+	let lastTotalDelta = { x: 0, y: 0 };
 
-	function onGroupMouseDown(event: MouseEvent): void
-	{
-		event.stopPropagation();
-		closeContextMenu();
+	const updatePositions = (clientX: number, clientY: number): void => {
+		const totalDeltaX = (clientX - anchor.x) / currentZoom;
+		const totalDeltaY = (clientY - anchor.y) / currentZoom;
+
+		const stepX = totalDeltaX - lastTotalDelta.x;
+		const stepY = totalDeltaY - lastTotalDelta.y;
+
+		if (stepX === 0 && stepY === 0)
+		{
+			return;
+		}
+
+		for (const item of movingItems)
+		{
+			item.block.position.x = item.startX + totalDeltaX;
+			item.block.position.y = item.startY + totalDeltaY;
+			if (setPortOffsetByBlockId)
+			{
+				setPortOffsetByBlockId(item.block.id, { x: -stepX, y: -stepY });
+			}
+		}
+
+		lastTotalDelta.x = totalDeltaX;
+		lastTotalDelta.y = totalDeltaY;
+	};
+
+	const onGroupMouseDown = (event: MouseEvent): void => {
 		if (event.button !== 0)
 		{
 			return;
 		}
+		event.stopPropagation();
+		closeContextMenu();
 
-		checkBoxDragStartX = event.clientX;
-		checkBoxDragStartY = event.clientY;
-		lastDeltaX = 0;
-		lastDeltaY = 0;
+		currentZoom = toValue(zoom);
+		anchor = { x: event.clientX, y: event.clientY };
+		client = { x: event.clientX, y: event.clientY };
+		lastTotalDelta = { x: 0, y: 0 };
 
-		movingItems = [];
-		const ids = toValue(highlitedBlockIds);
-		const blocks = toValue(uiBlocksRef);
+		const selectedIds = new Set(toValue(highlitedBlockIds));
+		movingItems = toValue(uiBlocksRef)
+			.filter((block) => selectedIds.has(block.id))
+			.map((block) => ({
+				block,
+				startX: Number(block.position.x),
+				startY: Number(block.position.y),
+			}));
 
-		ids.forEach((id) => {
-			const block = blocks.find((item) => item.id === id);
-			if (block)
-			{
-				movingItems.push({
-					block,
-					startX: Number(block.position.x),
-					startY: Number(block.position.y),
-				});
-			}
+		startAutoScroll(event, (dx: number, dy: number) => {
+			anchor.x -= dx;
+			anchor.y -= dy;
+			updatePositions(client.x, client.y);
 		});
 
 		Event.bind(window, 'mousemove', onGroupMouseMove);
 		Event.bind(window, 'mouseup', onGroupMouseUp);
-	}
+	};
 
-	function onGroupMouseMove(event: MouseEvent): void
-	{
-		event.preventDefault();
+	const onGroupMouseMove = (event: MouseEvent): void => {
+		client.x = event.clientX;
+		client.y = event.clientY;
 
-		const currentZoom = toValue(zoom);
-		if (!currentZoom)
-		{
-			return;
-		}
+		updateMousePosition(event);
+		updatePositions(client.x, client.y);
+	};
 
-		const totalDeltaX = (event.clientX - checkBoxDragStartX) / currentZoom;
-		const totalDeltaY = (event.clientY - checkBoxDragStartY) / currentZoom;
-
-		const stepX = totalDeltaX - lastDeltaX;
-		const stepY = totalDeltaY - lastDeltaY;
-		lastDeltaX = totalDeltaX;
-		lastDeltaY = totalDeltaY;
-
-		for (const item of movingItems)
-		{
-			const { block, startX, startY } = item;
-
-			block.position.x = startX + totalDeltaX;
-			block.position.y = startY + totalDeltaY;
-
-			if (setPortOffsetByBlockId)
-			{
-				setPortOffsetByBlockId(block.id, { x: -stepX, y: -stepY });
-			}
-		}
-	}
-
-	function onGroupMouseUp(): void
-	{
+	const onGroupMouseUp = (): void => {
+		stopAutoScroll();
 		Event.unbind(window, 'mousemove', onGroupMouseMove);
 		Event.unbind(window, 'mouseup', onGroupMouseUp);
 
@@ -107,11 +113,19 @@ export function useGroupDragLogic(
 				setPortOffsetByBlockId(block.id, { x: 0, y: 0 });
 			}
 
-			updateBlock({ ...block });
+			const newBlock = { ...block };
+			updateBlock(newBlock);
+			if (toValue(isBoxIntersection))
+			{
+				updateBlockRectangle(block.id, {
+					x: block.position.x,
+					y: block.position.y,
+				});
+			}
 		}
 
 		movingItems = [];
-	}
+	};
 
 	return { onGroupMouseDown };
 }

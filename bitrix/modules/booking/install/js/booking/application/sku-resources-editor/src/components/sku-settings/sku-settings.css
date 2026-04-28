@@ -3,7 +3,7 @@
 	flex-direction: column;
 	gap: 16px;
 	padding: 20px 24px;
-	border-radius: 18px;
+	border-radius: var(--ui-border-radius-2xl);
 	background: var(--ui-color-palette-white-base);
 }
 
@@ -16,4 +16,8 @@
 
 .booking-sre-app__sku-settings-content {
 	position: relative;
+}
+
+.booking-sre-app__sku-settings-content .ui-form-row-inline {
+	margin-bottom: 0;
 }

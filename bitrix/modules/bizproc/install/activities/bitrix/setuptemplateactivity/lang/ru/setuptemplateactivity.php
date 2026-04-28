@@ -1,10 +1,7 @@
 <?php
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCKS_EMPTY'] = 'Блоки не заполнены';
-$MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_USER_NAME'] = 'Сотрудник';
-$MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_USER_EMPTY'] = 'Укажите сотрудника, который настроит шаблон';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCKS'] = 'Настройка полей';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_NO_STARTER_USER'] = 'Не найден идентификатор сотрудника, который настроит шаблон';
-$MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_NO_PULL_MODULE'] = 'Модуль Push and Pull не установлен';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCKS_INVALID_STRUCT'] = 'Ошибка в структуре блоков';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCK_ITEMS_EMPTY'] = 'Элементы в блоке #blockPosition# не заполнены';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCK_ITEMS_ITEM_TYPE_EMPTY'] = 'В элементе #itemPosition# блока #blockPosition# не заполнен тип';

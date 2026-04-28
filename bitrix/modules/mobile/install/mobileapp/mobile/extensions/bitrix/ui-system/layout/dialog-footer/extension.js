@@ -12,16 +12,6 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 	const SAFE_AREA_HEIGHT = 18;
 
 	/**
-	 * @typedef {Object} DialogFooterProps
-	 * @property {string} testId
-	 * @property {boolean} [safeArea]
-	 * @property {Function} onLayoutFooterHeight
-	 * @property {ButtonProps | Function} [keyboardButton]
-	 * @property {Color} [backgroundColor=Color.bgPrimary]
-	 * @property {Object} children
-	 * @property {boolean} [isKeyboardShown=false]
-	 * @property {Object} [style]
-	 *
 	 * @class DialogFooter
 	 */
 	class DialogFooter extends LayoutComponent
@@ -77,6 +67,8 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 					},
 					style: {
 						position: 'absolute',
+						left: 0,
+						right: 0,
 						bottom: 0,
 						backgroundColor: this.#getBackgroundColor(),
 						paddingBottom: this.isSafeArea() ? 0 : this.#getPaddingBottom(),
@@ -296,7 +288,7 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 		 */
 		DialogFooter: (props, ...children) => new DialogFooter({ ...props, children }),
 		/**
-		 * @param {DialogFooterProps} props
+		 * @param {BoxFooterProps} props
 		 * @param {...*} [children]
 		 * @returns {function(*): DialogFooter}
 		 */

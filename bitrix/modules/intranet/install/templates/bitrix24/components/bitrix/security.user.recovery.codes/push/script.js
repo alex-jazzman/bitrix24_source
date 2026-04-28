@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_core,ui_buttons,ui_iconSet_api_core,ui_analytics) {
+(function (exports,main_core,ui_buttons,ui_iconSet_api_core,ui_analytics,main_sidepanel) {
 	'use strict';
 
 	let _ = t => t,
@@ -230,7 +230,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      useAirDesign: true,
 	      icon: ui_iconSet_api_core.Outline.PRINTER,
 	      onclick: () => {
-	        window.print();
+	        main_sidepanel.SidePanel.Instance.open('/bitrix/templates/bitrix24/components/bitrix/security.user.recovery.codes/push/print.php');
 	        babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsEvent)[_sendAnalyticsEvent]('print_codes_click');
 	      }
 	    });
@@ -329,5 +329,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.RecoveryCodes = RecoveryCodes;
 
-}((this.BX.Intranet.Security = this.BX.Intranet.Security || {}),BX,BX.UI,BX.UI.IconSet,BX.UI.Analytics));
+}((this.BX.Intranet.Security = this.BX.Intranet.Security || {}),BX,BX.UI,BX.UI.IconSet,BX.UI.Analytics,BX.SidePanel));
 //# sourceMappingURL=script.js.map

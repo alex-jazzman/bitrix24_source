@@ -2,6 +2,7 @@ import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager'
 import { Event, Reflection, Type, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Item, Dialog } from 'ui.entity-selector';
+import { FeaturePromoter } from 'ui.info-helper';
 
 type Props = {
 	containerId: string,
@@ -68,6 +69,13 @@ class SupersetDashboardSelector
 			preselectedItems: [['biconnector-superset-dashboard', this.#dashboardId]],
 			events: {
 				'Item:onSelect': this.#onSelectItem.bind(this),
+				'Item:onBeforeSelect': (event) => {
+					if (!event.data.item.getCustomData().get('isAvailable'))
+					{
+						event.preventDefault();
+						this.#openTariffSlider();
+					}
+				},
 			},
 		});
 
@@ -85,6 +93,13 @@ class SupersetDashboardSelector
 			.then((response) => {
 				if (response.data.dashboard)
 				{
+					if (!response.data.dashboard.isAvailable)
+					{
+						this.#openTariffSlider();
+
+						return response;
+					}
+
 					this.#setTitle(response.data.dashboard.title);
 					EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
 						item,
@@ -162,6 +177,11 @@ class SupersetDashboardSelector
 			});
 			resolve();
 		});
+	}
+
+	#openTariffSlider(): void
+	{
+		(new FeaturePromoter({ code: 'limit_benefit_market_active' })).show();
 	}
 }
 

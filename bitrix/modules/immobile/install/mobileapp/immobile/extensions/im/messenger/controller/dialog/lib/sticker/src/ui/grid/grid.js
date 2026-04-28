@@ -15,7 +15,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/grid', (requir
 	const { emitter } = require('im/messenger/controller/dialog/lib/sticker/src/utils/emitter');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
-	const logger = getLoggerWithContext('dialog--sticker', 'StickerGrid')
+	const logger = getLoggerWithContext('dialog--sticker', 'StickerGrid');
 
 	const {
 		StickerEventType,
@@ -49,7 +49,8 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/grid', (requir
 		/**
 		 * @param {StickerGridProps} props
 		 */
-		constructor(props) {
+		constructor(props)
+		{
 			super(props);
 			this.state = {
 				isLoaded: this.props.isLoaded ?? false,
@@ -203,6 +204,8 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/grid', (requir
 			];
 
 			this.calculateMapHeaders(data);
+
+			logger.log('getData: data', data);
 
 			return data;
 		}

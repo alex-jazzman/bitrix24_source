@@ -229,6 +229,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
+	class ConnectField extends BaseField {
+	  render(params) {
+	    const button = new BX.UI.Button({
+	      text: main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_SEND_MESSAGE'),
+	      useAirDesign: true,
+	      style: BX.UI.AirButtonStyle.FILLED,
+	      size: BX.UI.Button.Size.EXTRA_SMALL,
+	      onclick: () => {
+	        var _top$BXIM;
+	        (_top$BXIM = top.BXIM) == null ? void 0 : _top$BXIM.openMessenger(params.userId);
+	      }
+	    });
+	    button.renderTo(this.getFieldNode());
+	  }
+	}
+
 	var _grid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("grid");
 	var _firstAdminId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("firstAdminId");
 	class GridManager {
@@ -1315,6 +1331,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.PhotoField = PhotoField;
 	exports.FullNameField = FullNameField;
 	exports.EmployeeField = EmployeeField;
+	exports.ConnectField = ConnectField;
 	exports.ActivityField = ActivityField;
 	exports.DepartmentField = DepartmentField;
 	exports.GridManager = GridManager;

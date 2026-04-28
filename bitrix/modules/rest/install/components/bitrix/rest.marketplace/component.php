@@ -15,6 +15,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  */
 
 $arDefaultUrlTemplates404 = array(
+	"top" => "",
 	"category" => "category/#category#/",
 	"detail" => "detail/#app#/",
 	"placement_view" => "view/#APP#/",
@@ -64,19 +65,19 @@ if($arParams["SEF_MODE"] == "Y")
 
 	$SEF_FOLDER = $arParams["SEF_FOLDER"];
 
-	$arParams["TOP_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["top"], $arVariables);
-	$arParams["CATEGORY_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["category"], $arVariables);
-	$arParams["DETAIL_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["detail"], $arVariables);
-	$arParams["SEARCH_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["search"], $arVariables);
-	$arParams["BUY_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["buy"], $arVariables);
-	$arParams["UPDATES_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["updates"], $arVariables);
-	$arParams["INSTALLED_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["installed"], $arVariables);
-	$arParams["PLACEMENT_VIEW"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["placement_view"], $arVariables);
-	$arParams["PLACEMENT"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["placement"], $arVariables);
-	$arParams["BOOKLET"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["booklet"], $arVariables);
+	$arParams["TOP_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arUrlTemplates["top"], $arVariables);
+	$arParams["CATEGORY_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arUrlTemplates["category"], $arVariables);
+	$arParams["DETAIL_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arUrlTemplates["detail"], $arVariables);
+	$arParams["SEARCH_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arUrlTemplates["search"], $arVariables);
+	$arParams["BUY_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arUrlTemplates["buy"], $arVariables);
+	$arParams["UPDATES_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arUrlTemplates["updates"], $arVariables);
+	$arParams["INSTALLED_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arUrlTemplates["installed"], $arVariables);
+	$arParams["PLACEMENT_VIEW"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arUrlTemplates["placement_view"], $arVariables);
+	$arParams["PLACEMENT"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arUrlTemplates["placement"], $arVariables);
+	$arParams["BOOKLET"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FOLDER"].$arUrlTemplates["booklet"], $arVariables);
 
-	$arParams["CATEGORY_URL_TPL"] = $arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["category"];
-	$arParams["DETAIL_URL_TPL"] = $arParams["SEF_FOLDER"].$arParams["SEF_URL_TEMPLATES"]["detail"];
+	$arParams["CATEGORY_URL_TPL"] = $arParams["SEF_FOLDER"].$arUrlTemplates["category"];
+	$arParams["DETAIL_URL_TPL"] = $arParams["SEF_FOLDER"].$arUrlTemplates["detail"];
 	if (\CRestUtil::isSlider())
 	{
 		$request = \Bitrix\Main\Context::getCurrent()->getRequest();

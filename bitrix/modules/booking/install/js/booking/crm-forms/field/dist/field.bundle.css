@@ -363,6 +363,35 @@
 	text-align: center;
 }
 
+.booking--crm-forms--skus-selector-sku {
+	display: flex;
+	justify-content: space-between;
+	align-items: start;
+	width: 100%;
+}
+
+.booking--crm-forms--skus-selector-sku-price {
+	font-weight: bold;
+	white-space: nowrap;
+}
+
+.booking-crm-forms-field-sku-selector-container {
+	margin-bottom: 0;
+}
+
+.booking-crm-forms-field-sku-selector-quantity {
+	position: relative;
+	display: flex;
+	justify-content: end;
+	align-items: center;
+	border: 1px solid var(--b24-field-border-color);
+	border-top: none;
+	text-align: center;
+	min-height: 58px;
+	border-radius: 0 0 4px 4px;
+	margin-bottom: 12px;
+}
+
 .booking--crm-forms--resource-selector-resource {
 	min-height: 58px;
 }

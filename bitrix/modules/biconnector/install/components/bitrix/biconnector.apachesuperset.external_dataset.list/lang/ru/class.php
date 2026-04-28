@@ -3,5 +3,5 @@
 $MESS['BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_MENU_ITEM_IMPORT_CSV_MSGVER_1'] = 'Из CSV-файла';
 $MESS['BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_MENU_ITEM_EXTERNAL_CONNECTION'] = 'Из внешнего подключения';
 $MESS['BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_ERROR_LOAD_MODULES'] = 'Не подключены необходимые модули';
-$MESS['BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_STUB_TITLE'] = 'У вас пока нет ни одного датасета';
-$MESS['BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_STUB_DESCRIPTION_MSGVER_1'] = 'Чтобы создать датасет, импортируйте CSV-файл или создайте подключение к внешним источникам';
+$MESS['BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_STUB_TITLE_MSGVER_1'] = 'У вас пока нет ни одной таблицы';
+$MESS['BICONNECTOR_APACHE_SUPERSET_DATASET_GRID_STUB_DESCRIPTION_MSGVER_2'] = 'Чтобы создать таблицу, импортируйте CSV-файл или создайте подключение к внешним источникам';

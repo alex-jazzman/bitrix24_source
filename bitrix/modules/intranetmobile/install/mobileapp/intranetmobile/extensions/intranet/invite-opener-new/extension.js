@@ -120,6 +120,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 		adminConfirm = false,
 		isBitrix24Included = false,
 		isInviteWithLocalEmailAppEnabled = true,
+		availableRootDepartment = null,
 	}) => {
 		const inviteAnalytics = new IntranetInviteAnalytics({ analytics });
 		inviteAnalytics.sendDrawerOpenEvent();
@@ -173,6 +174,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 					adminConfirm,
 					isBitrix24Included,
 					isInviteWithLocalEmailAppEnabled,
+					department: availableRootDepartment,
 				}));
 
 				readyLayout.on('onViewRemoved', () => {
@@ -212,6 +214,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 		adminConfirm = false,
 		isBitrix24Included = false,
 		isInviteWithLocalEmailAppEnabled = true,
+		availableRootDepartment = null,
 		onHidden = () => {},
 	}) => {
 		if (!analyticsSection)
@@ -263,6 +266,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 					adminConfirm,
 					isBitrix24Included,
 					isInviteWithLocalEmailAppEnabled,
+					availableRootDepartment,
 					analyticsSection,
 					onHidden,
 				},

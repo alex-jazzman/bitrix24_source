@@ -1,16 +1,8 @@
-import { DateTimeFormat } from 'main.date';
-
 import { DateFormat } from 'booking.const';
 import { Segments } from 'booking.lib.segments';
 import { SlotRanges } from 'booking.lib.slot-ranges';
 
-import type { ResourceSlot, SlotRange } from './types';
-
-type OccupancyItem = {
-	fromTs: number,
-	toTs: number,
-	resourcesIds: ?number[],
-};
+import type { OccupancyItem, SlotRange } from './types';
 
 let occupancyInstance: Occupancy | null = null;
 
@@ -83,7 +75,7 @@ export class Occupancy
 			this.#requestedResourcesIds[dateTs].add(resourceId);
 		});
 
-		const { data: occupancy } = await this.#runAction('booking.api_v1.CrmForm.getOccupancy', {
+		const { data: occupancy } = await this.#runAction('booking.api_v1.CrmForm.PublicForm.getOccupancy', {
 			data: {
 				ids,
 				dateTs: Math.floor(dateTs / 1000),
@@ -130,98 +122,9 @@ export class Occupancy
 			});
 	}
 
-	static calcResourceSlots({
-		date,
-		slotRanges,
-		resourceOccupancy,
-		resourceId = null,
-		timezone,
-	}: CalcResourceSlotsOptions): ResourceSlot[]
+	clearCache(): void
 	{
-		const slots: ResourceSlot[] = [];
-		const now = Date.now();
-
-		const isAmPmMode = new Intl.DateTimeFormat(navigator.language, { hour: 'numeric' })
-			.resolvedOptions()
-			.hour12
-		;
-
-		const timeFormat = isAmPmMode ? 'h:i a' : 'H:i';
-
-		SlotRanges
-			.applyTimezone(slotRanges, date.getTime(), timezone)
-			.filter((slotRange) => slotRange.weekDays.includes(date.getDay()))
-			.sort((a, b) => a.from - b.from)
-			.forEach((slotRange) => {
-				const slotSizeTs = slotRange.slotSize * 60 * 1000;
-				const slotToTs = convertMinToTs(date, slotRange.to);
-				const step = slotRange.slotSize <= 120 ? 30 : 60;
-				const stepTs = step * 60 * 1000;
-
-				const occupancies = resourceId === null
-					? resourceOccupancy
-					: resourceOccupancy.filter(({ resourcesIds }) => resourcesIds.includes(resourceId));
-
-				let fromTs = convertMinToTs(date, slotRange.from);
-				if (fromTs < now)
-				{
-					fromTs = roundSlotStart(fromTs, step);
-				}
-
-				while (fromTs < slotToTs)
-				{
-					const toTs = fromTs + slotSizeTs;
-
-					if (fromTs <= now || toTs > slotToTs || checkIsOccupiedSlot({ fromTs, toTs }, occupancies))
-					{
-						fromTs += stepTs;
-						continue;
-					}
-
-					slots.push({
-						fromTs,
-						toTs,
-						label: DateTimeFormat.format(timeFormat, new Date(fromTs)),
-					});
-					fromTs += stepTs;
-				}
-			});
-
-		return slots;
+		this.#requestCache = {};
+		this.#requestedResourcesIds = {};
 	}
-}
-
-function roundSlotStart(slotStartTs: number, step: number): number
-{
-	const date = new Date(slotStartTs);
-	date.setMinutes((step - date.getMinutes() > 3) ? step : step * 2);
-
-	return date.getTime();
-}
-
-function convertMinToTs(date: Date, min: number): number
-{
-	const d = new Date(date);
-	d.setHours(0, 0, 0, 0);
-	d.setMinutes(min);
-
-	return d.getTime();
-}
-
-function checkIsOccupiedSlot(slot: { fromTs: number, toTs: number }, resourceOccupancy: OccupancyItem[]): boolean
-{
-	return resourceOccupancy.some((occupancy) => {
-		return (
-			(slot.fromTs >= occupancy.fromTs && slot.fromTs < occupancy.toTs)
-			|| (slot.toTs > occupancy.fromTs && slot.toTs <= occupancy.toTs)
-		);
-	});
-}
-
-type CalcResourceSlotsOptions = {
-	date: Date,
-	resourceOccupancy: OccupancyItem;
-	slotRanges: SlotRange[];
-	resourceId: ?number;
-	timezone: string;
 }

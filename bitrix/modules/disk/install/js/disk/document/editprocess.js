@@ -50,19 +50,27 @@
 		{
 			if (this.serviceCode === 'onlyoffice')
 			{
-				const onlyOfficePromoActions = new BX.Disk.OnlyOfficePromoActions.OnlyOfficePromoActions();
+				const analyticsDocumentType = {
+					docx: 'doc',
+					xlsx: 'sheet',
+					pptx: 'pres',
+				}[this.typeFile] || this.typeFile;
+
+				const onlyOfficePromoActions = new BX.Disk.OnlyOfficePromoActions.OnlyOfficePromoActions(
+					this.isCreate,
+					{
+						c_sub_section: this.isCreate ? 'new_element' : 'old_element',
+						c_element: this.analytics?.c_element,
+						p3: analyticsDocumentType,
+						...(this.objectId ? { p4: `fileId_${this.objectId}` } : {}),
+					},
+				);
 				if (onlyOfficePromoActions.shouldShow())
 				{
 					onlyOfficePromoActions.show(this.triggerNode);
 
 					if (this.onlyOfficeSessionRestrictions.isExceeded())
 					{
-						const analyticsDocumentType = {
-							docx: 'doc',
-							xlsx: 'sheet',
-							pptx: 'pres',
-						}[this.typeFile] || this.typeFile;
-
 						if (this.isCreate)
 						{
 							const data = {

@@ -30,7 +30,6 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		DialogType,
 		EventType,
 		UserRole,
-		CounterType,
 	} = require('im/messenger/const');
 	const { NewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager/base');
 	const { FileUtils } = require('im/messenger/provider/pull/lib/file');
@@ -145,13 +144,6 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			{
 				if (MessengerParams.isOpenlinesOperator())
 				{
-					const tabCounters = serviceLocator.get('tab-counters');
-					tabCounters.updateCounterDetailByCounterState({
-						chatId: params.chatId,
-						counter: params.counter,
-						type: CounterType.openline,
-					});
-					tabCounters.update();
 				}
 
 				return;
@@ -536,13 +528,6 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			{
 				if (MessengerParams.isOpenlinesOperator())
 				{
-					const tabCounters = serviceLocator.get('tab-counters');
-					tabCounters.updateCounterDetailByCounterState({
-						chatId: params.chatId,
-						counter: params.counter,
-						type: CounterType.openline,
-					});
-					tabCounters.update();
 				}
 
 				return;

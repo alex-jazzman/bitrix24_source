@@ -15,7 +15,7 @@ export const RecentGroup = {
 			required: true,
 		},
 	},
-	emits: ['recentClick'],
+	emits: ['recentClick', 'recentContextMenu'],
 	computed:
 	{
 		groupTitle(): string
@@ -28,6 +28,10 @@ export const RecentGroup = {
 		onRecentClick(dialogId: string)
 		{
 			this.$emit('recentClick', dialogId);
+		},
+		onContextMenu(dialogId: string, event: PointerEvent)
+		{
+			this.$emit('recentContextMenu', dialogId, event);
 		},
 		loc(phraseCode: string): string
 		{
@@ -47,6 +51,7 @@ export const RecentGroup = {
 				:item="item"
 				:key="item.dialogId"
 				@click="onRecentClick(item.dialogId)"
+				@contextmenu.prevent="onContextMenu(item.dialogId, $event)"
 			/>
 		</div>
 	`,

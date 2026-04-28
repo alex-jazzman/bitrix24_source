@@ -1,4 +1,5 @@
 <?php
+
 $MESS["BPAR_PD_ACCESS_CONTROL"] = "Show assignment description only to responsible persons";
 $MESS["BPAR_PD_APPROVE_TYPE"] = "Require reading by";
 $MESS["BPAR_PD_APPROVE_TYPE_ALL"] = "All Employees";
@@ -17,7 +18,6 @@ $MESS["BPAR_PD_STATUS_MESSAGE_HINT1"] = "The following macros are available: #PE
 $MESS["BPAR_PD_TASK_BUTTON_MESSAGE"] = "Assignment button label";
 $MESS["BPAR_PD_TIMEOUT_DURATION"] = "Time limit";
 $MESS["BPAR_PD_TIMEOUT_DURATION_HINT"] = "The process of element examination will be terminated automatically when the period times out. An empty or zero value specifies no period of approval is to be applied.";
-$MESS["BPAR_PD_TIMEOUT_LIMIT"] = "Minimum read time";
 $MESS["BPAR_PD_TIME_D"] = "days";
 $MESS["BPAR_PD_TIME_H"] = "hours";
 $MESS["BPAR_PD_TIME_M"] = "minutes";

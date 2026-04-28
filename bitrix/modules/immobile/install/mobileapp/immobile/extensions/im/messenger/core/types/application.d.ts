@@ -24,4 +24,5 @@ declare type MessengerCoreRepository = {
 	readMessageQueue: ReadMessageQueueRepository,
 	transcript: TranscriptRepository,
 	sticker: StickerRepository,
+	counter: CounterRepository,
 }

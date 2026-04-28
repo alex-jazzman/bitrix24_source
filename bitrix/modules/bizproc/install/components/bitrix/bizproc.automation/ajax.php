@@ -47,6 +47,15 @@ $jsonDataMap = [
 ];
 $jsonValues = [];
 
+try
+{
+	$jsonInput = \Bitrix\Main\Web\Json::decode(\Bitrix\Main\HttpRequest::getInput());
+}
+catch (ArgumentException $e)
+{
+	$jsonInput = null;
+}
+
 foreach ($jsonDataMap as $k => $v)
 {
 	if (isset($_REQUEST[$k]))
@@ -60,6 +69,10 @@ foreach ($jsonDataMap as $k => $v)
 		}
 
 		unset($_REQUEST[$k]);
+	}
+	if (isset($jsonInput[$v]))
+	{
+		$jsonValues[$v] = $jsonInput[$v];
 	}
 }
 
@@ -119,7 +132,7 @@ $sendHtmlResponse = function($html)
 
 CBitrixComponent::includeComponentClass('bitrix:bizproc.automation');
 
-$documentInformation = \BizprocAutomationComponent::unSignDocument($_POST['document_signed']);
+$documentInformation = \BizprocAutomationComponent::unSignDocument($_REQUEST['document_signed']);
 
 if (!$documentInformation)
 {
@@ -199,7 +212,7 @@ switch ($action)
 		$robotData = isset($_REQUEST['robot']) && is_array($_REQUEST['robot']) ? $_REQUEST['robot'] : null;
 		if (!$robotData)
 		{
-			$sendError(Loc::getMessage('BIZPROC_AUTOMATION_AJAX_NO_DATA_ERROR'));
+			$sendHtmlResponse(Loc::getMessage('BIZPROC_AUTOMATION_AJAX_NO_DATA_ERROR'));
 		}
 
 		$context = isset($_REQUEST['context']) && is_array($_REQUEST['context']) ? $_REQUEST['context'] : null;

@@ -5492,7 +5492,11 @@ var Vue = exports.Vue;
                 _this.component = BX.Booking.CrmForms.Field;
                 _this.dependencies = {
                   mixinDropdown: MixinDropDown,
-                  mixinField: MixinField
+                  mixinField: MixinField,
+                  componentFieldProduct: {
+                    FieldProduct: FieldProduct,
+                    Item: Item$2
+                  }
                 };
               case 7:
               case "end":

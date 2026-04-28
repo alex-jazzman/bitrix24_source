@@ -244,7 +244,7 @@ export class PopupWithHeader extends PopupComponentsMaker
 
 		if (theme.id !== 'default')
 		{
-			themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-dark-theme' : 'bitrix24-light-theme';
+			themeClass = String(theme.id).indexOf('dark:') === 0 ? '--ui-context-edge-light' : '--ui-context-edge-dark';
 		}
 
 		Dom.addClass(container, themeClass);

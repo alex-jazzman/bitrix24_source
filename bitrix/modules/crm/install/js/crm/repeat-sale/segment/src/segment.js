@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Loc, Type } from 'main.core';
 import { BasicEditor } from 'ui.text-editor';
 import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
@@ -78,9 +79,8 @@ export class Segment
 			content,
 			placeholder: Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER'),
 			paragraphPlaceholder: Loc.getMessage(
-				Type.isPlainObject(copilotSettings)
-					? 'CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT'
-					: null,
+				Type.isPlainObject(copilotSettings) ? 'CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT' : null,
+				NameService.copilotNameReplacement(),
 			),
 			toolbar: [],
 			floatingToolbar,

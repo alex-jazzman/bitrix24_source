@@ -1,7 +1,7 @@
 import { Label as JSLabel, LabelSize, LabelStyle, LabelIcon } from './index';
 
 export const Label = {
-	name: 'UILabel',
+	name: 'UiLabel',
 	props: {
 		size: {
 			type: String,
@@ -26,7 +26,7 @@ export const Label = {
 		},
 		value: {
 			type: String,
-			required: true,
+			default: '',
 		},
 		icon: {
 			type: String,
@@ -80,3 +80,5 @@ export const Label = {
 		<div ref="container"></div>
 	`,
 };
+
+export { Label as UiLabel };

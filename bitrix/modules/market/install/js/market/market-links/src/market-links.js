@@ -4,7 +4,8 @@ const MAIN_DIR = '/market/';
 
 export class MarketLinks
 {
-	static siteTemplateUrn = false;
+	static siteTemplateUri = '';
+	static siteCurrentType = null;
 
 	static mainLink()
 	{
@@ -21,19 +22,23 @@ export class MarketLinks
 		return MAIN_DIR + 'installed/';
 	}
 
-	static categoryLink(categoryCode) {
+	static categoryLink(categoryCode)
+	{
 		return MAIN_DIR + 'category/' + categoryCode + '/';
 	}
 
-	static collectionLink(collectionId, showOnPage) {
-		if (showOnPage === 'Y') {
+	static collectionLink(collectionId, showOnPage)
+	{
+		if (showOnPage === 'Y')
+		{
 			return MarketLinks.collectionPageLink(collectionId);
 		}
 
 		return MAIN_DIR + 'collection/' + collectionId + '/';
 	}
 
-	static collectionPageLink(collectionId) {
+	static collectionPageLink(collectionId)
+	{
 		return MAIN_DIR + 'collection/page/' + collectionId + '/';
 	}
 
@@ -41,12 +46,11 @@ export class MarketLinks
 	{
 		const appCode = appItem.CODE ?? appItem.APP_CODE;
 
-		if (appItem.IS_SITE_TEMPLATE === 'Y') {
-			if (Type.isString(appItem.LANDING_TYPE) && appItem.LANDING_TYPE === 'VIBE') {
-				return MarketLinks.vibeDetailLink(appCode, queryParams);
-			}
+		if (appItem.IS_SITE_TEMPLATE === 'Y')
+		{
+			const landingType = Type.isString(appItem.LANDING_TYPE) ? appItem.LANDING_TYPE : 'LANDING';
 
-			return MarketLinks.siteDetailLink(appCode, queryParams);
+			return MarketLinks.getSiteDetailLink(appCode, landingType, queryParams);
 		}
 
 		const params = (new URLSearchParams(queryParams)).toString();
@@ -55,39 +59,58 @@ export class MarketLinks
 		return MAIN_DIR + 'detail/' + appCode + '/' + query;
 	}
 
-	static siteDetailLink(appCode, queryParams)
+	static getSiteDetailLink(appCode, landingType, queryParams)
 	{
 		const from = queryParams.from ?? '';
-		let path = '/sites/site/edit/0/?IS_FRAME=Y&tpl=market/' + appCode + '&from=' + from;
+		const baseUri = MarketLinks.getSiteTemplateUri(landingType);
 
-		if (MarketLinks.siteTemplateUrn === false) {
-			MarketLinks.siteTemplateUrn = (new URLSearchParams(document.location.search)).get("create_uri");
-			if (!Type.isString(MarketLinks.siteTemplateUrn)) {
-				MarketLinks.siteTemplateUrn = '';
-			}
+		const uri = new URL(baseUri, window.location.href);
+		uri.searchParams.set('IS_FRAME', 'Y');
+		uri.searchParams.set('tpl', 'market/' + appCode);
+
+		if (from.length > 0)
+		{
+			uri.searchParams.set('from', from);
 		}
 
-		if (MarketLinks.siteTemplateUrn.length > 0 && MarketLinks.siteTemplateUrn.startsWith('/')) {
-			let uri = new URL(MarketLinks.siteTemplateUrn, window.location.href);
-			uri.searchParams.append('IS_FRAME', 'Y');
-			uri.searchParams.append('tpl', 'market/' + appCode);
-
-			path = uri.pathname + uri.search;
-		}
-
-		return path;
+		return uri.pathname + uri.search;
 	}
 
-	static vibeDetailLink(appCode, queryParams)
+	static getSiteTemplateUri(landingType): string
 	{
-		const from = queryParams.from ?? '';
+		if (MarketLinks.siteCurrentType === null)
+		{
+			MarketLinks.siteCurrentType = landingType;
 
-		return '/vibe/new/?tpl=market/' + appCode + '&from=' + from;
+			const uri = (new URLSearchParams(document.location.search)).get('create_uri');
+			MarketLinks.siteTemplateUri = (Type.isString(uri) && uri.startsWith('/')) ? uri : '';
+		}
+
+		if (
+			landingType !== MarketLinks.siteCurrentType
+			|| MarketLinks.siteTemplateUri.length <= 0
+		)
+		{
+			return MarketLinks.getSiteTemplateDefaultUri(landingType);
+		}
+
+		return MarketLinks.siteTemplateUri;
+	}
+
+	static getSiteTemplateDefaultUri(landingType)
+	{
+		if (landingType === 'VIBE')
+		{
+			return '/welcome/new/';
+		}
+
+		return '/sites/site/edit/0/';
 	}
 
 	static openSiteTemplate(event, isSiteTemplate)
 	{
-		if (isSiteTemplate) {
+		if (isSiteTemplate)
+		{
 			event.preventDefault();
 			BX.SidePanel.Instance.open(event.currentTarget.href, {
 				customLeftBoundary: 60,

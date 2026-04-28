@@ -1,4 +1,6 @@
 <?php
+$MESS["CRM_SEGMENT_ITEM_AI_APPROVE"] = "Customers that made a holiday purchase a year ago. This includes all public holidays and everything that can be found in he customer profile (birthdays, wedding etc.). Remind the customer of the upcoming event to increase the probability of a successful deal.";
+$MESS["CRM_SEGMENT_ITEM_AI_SCREENING"] = "Customers that made a holiday purchase a year ago. This includes all public holidays and everything that can be found in he customer profile (birthdays, wedding etc.). Remind the customer of the upcoming event to increase the probability of a successful deal.";
 $MESS["CRM_SEGMENT_ITEM_SYSTEM_DEAL_EVERY_HALF_YEAR"] = "This script focuses on customers that make a purchase every six months. The system defines them by successful deals completed within the same time frame over the recent years.";
 $MESS["CRM_SEGMENT_ITEM_SYSTEM_DEAL_EVERY_MONTH"] = "This script focuses on customers that make a purchase roughly once a month. The system defines them by successful deals completed within the last 3 months, current month excluded.";
 $MESS["CRM_SEGMENT_ITEM_SYSTEM_DEAL_EVERY_YEAR"] = "This script focuses on customers that make a purchase once a year. The system defines them by successful deals completed within the last two years.";

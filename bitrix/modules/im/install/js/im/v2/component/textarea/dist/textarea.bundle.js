@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_iconSet_outline,ui_uploader_core,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_inputAction,im_v2_lib_escManager,im_v2_lib_message,im_v2_lib_desktopApi,ui_system_chip_vue,im_v2_lib_localStorage,im_v2_component_elements_pulseAnimation,im_v2_lib_smileManager,im_v2_provider_service_sticker,main_polyfill_intersectionobserver,main_core_events,im_v2_lib_menu,im_v2_provider_service_sending,im_v2_component_sticker,im_v2_lib_sticker,im_v2_lib_promo,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,im_v2_lib_permission,im_v2_lib_notifier,file_dialog,im_v2_model,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_provider_service_uploading,im_v2_component_elements_mediaGallery,im_v2_component_elements_sendButton,ui_icons,im_v2_lib_feature,im_v2_lib_copilot,im_v2_lib_channel,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_rest,im_v2_component_elements_scrollWithGradient,im_v2_component_elements_avatar,im_v2_component_elements_chatTitle,im_v2_lib_textHighlighter,im_v2_application_core,im_v2_lib_parser,ui_vue3_components_richLoc,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const,main_core,main_popup,im_v2_lib_textarea,im_v2_component_elements_popup,im_v2_lib_quote,im_v2_lib_analytics,ui_system_input_vue,ui_iconSet_api_vue,im_v2_lib_utils) {
+(function (exports,ui_iconSet_outline,ui_uploader_core,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_inputAction,im_v2_lib_escManager,im_v2_lib_message,im_v2_lib_desktopApi,ui_system_chip_vue,im_v2_lib_localStorage,im_v2_component_elements_pulseAnimation,im_v2_lib_smileManager,im_v2_provider_service_sticker,main_polyfill_intersectionobserver,main_core_events,im_v2_provider_service_sending,im_v2_component_sticker,im_v2_lib_sticker,im_v2_lib_promo,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,file_dialog,im_v2_model,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_provider_service_uploading,im_v2_component_elements_mediaGallery,im_v2_component_elements_sendButton,ui_icons,im_v2_lib_channel,im_v2_lib_copilot,im_v2_lib_user,im_v2_lib_logger,im_v2_component_elements_scrollWithGradient,im_v2_component_elements_avatar,im_v2_component_elements_chatTitle,im_v2_lib_textHighlighter,im_v2_lib_permission,im_v2_lib_feature,ui_iconSet_api_core,im_v2_lib_menu,im_v2_lib_notifier,im_v2_provider_service_collabInvitation,im_public,im_v2_lib_rest,im_v2_lib_search,im_v2_application_core,im_v2_lib_parser,ui_vue3_components_richLoc,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const,main_core,main_popup,im_v2_lib_textarea,im_v2_component_elements_popup,im_v2_lib_quote,im_v2_lib_analytics,ui_system_input_vue,ui_iconSet_api_vue,im_v2_lib_utils) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -5820,40 +5820,161 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	// @vue/component
-	const SearchEmptyState = {
-	  name: 'MentionSearchEmptyState',
-	  template: `
-		<div class="bx-im-mention-empty-state__scope bx-im-mention-empty-state__container">
-			<span class="bx-im-mention-empty-state__icon"></span>
-			<span class="bx-im-mention-empty-state__title">
-				{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_EMPTY_STATE') }}
-			</span>
-		</div>
-	`
-	};
+	const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
+	var _storeUpdater = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storeUpdater");
+	var _searchConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchConfig");
+	var _searchRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchRequest");
+	var _prepareSearchResults = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareSearchResults");
+	var _getDialogIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogIds");
+	class BaseServerSearch {
+	  constructor(searchConfig) {
+	    Object.defineProperty(this, _getDialogIds, {
+	      value: _getDialogIds2
+	    });
+	    Object.defineProperty(this, _prepareSearchResults, {
+	      value: _prepareSearchResults2
+	    });
+	    Object.defineProperty(this, _searchRequest, {
+	      value: _searchRequest2
+	    });
+	    Object.defineProperty(this, _storeUpdater, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _searchConfig, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig] = searchConfig;
+	    babelHelpers.classPrivateFieldLooseBase(this, _storeUpdater)[_storeUpdater] = new im_v2_lib_search.StoreUpdater();
+	  }
+	  async search(query) {
+	    const items = await babelHelpers.classPrivateFieldLooseBase(this, _searchRequest)[_searchRequest](query);
+	    await babelHelpers.classPrivateFieldLooseBase(this, _storeUpdater)[_storeUpdater].update(items);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _prepareSearchResults)[_prepareSearchResults](items);
+	  }
+	  async loadChatParticipants(dialogId) {
+	    const queryParams = {
+	      order: {
+	        lastSendMessageId: 'desc'
+	      },
+	      dialogId,
+	      limit: 50
+	    };
+	    try {
+	      const response = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMentionList, {
+	        data: queryParams
+	      });
+	      const {
+	        users
+	      } = response;
+	      void new im_v2_lib_user.UserManager().setUsersToModel(users);
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds)[_getDialogIds](users);
+	    } catch (error) {
+	      console.error('Mention search service: load chat participants error', error);
+	      throw error;
+	    }
+	  }
+	}
+	async function _searchRequest2(query) {
+	  const config = {
+	    json: im_v2_lib_search.getSearchConfig(babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig])
+	  };
+	  config.json.searchQuery = {
+	    queryWords: im_v2_lib_utils.Utils.text.getWordsFromString(query),
+	    query
+	  };
+	  let items = [];
+	  try {
+	    const response = await main_core.ajax.runAction(SEARCH_REQUEST_ENDPOINT, config);
+	    im_v2_lib_logger.Logger.warn('Mention search service: request result', response);
+	    items = response.data.dialog.items;
+	  } catch (error) {
+	    im_v2_lib_logger.Logger.warn('Mention search service: request error', error);
+	  }
+	  return items;
+	}
+	function _prepareSearchResults2(items) {
+	  return items.map(item => {
+	    var _customData$dateMessa, _customData$isContext;
+	    const {
+	      id,
+	      customData
+	    } = item;
+	    return {
+	      dialogId: id.toString(),
+	      dateMessage: (_customData$dateMessa = customData.dateMessage) != null ? _customData$dateMessa : '',
+	      isChatParticipant: (_customData$isContext = customData.isContextChatMember) != null ? _customData$isContext : null
+	    };
+	  });
+	}
+	function _getDialogIds2(items) {
+	  return items.map(item => {
+	    return {
+	      dialogId: item.id.toString()
+	    };
+	  });
+	}
 
-	// @vue/component
-	const LoadingState = {
-	  name: 'MentionLoadingState',
-	  components: {
-	    Spinner: im_v2_component_elements_loader.Spinner
-	  },
-	  computed: {
-	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
-	    SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor
-	  },
-	  template: `
-		<div class="bx-im-mention-loading-state__scope bx-im-mention-loading-state__container">
-			<div class="bx-im-mention-loading-state__loader">
-				<Spinner :size="SpinnerSize.XXS" :color="SpinnerColor.grey"/>
-			</div>
-			<span class="bx-im-mention-loading-state__title">
-				{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_LOADING_STATE') }}
-			</span>
-		</div>
-	`
-	};
+	var _localSearch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("localSearch");
+	var _baseServerSearch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("baseServerSearch");
+	var _localCollection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("localCollection");
+	var _getDialogIds$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogIds");
+	var _getParticipantDialogIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getParticipantDialogIds");
+	class MentionSearchService {
+	  constructor(searchConfig) {
+	    Object.defineProperty(this, _getParticipantDialogIds, {
+	      value: _getParticipantDialogIds2
+	    });
+	    Object.defineProperty(this, _getDialogIds$1, {
+	      value: _getDialogIds2$1
+	    });
+	    Object.defineProperty(this, _localSearch, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _baseServerSearch, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _localCollection, {
+	      writable: true,
+	      value: new Map()
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _localSearch)[_localSearch] = new im_v2_lib_search.LocalSearch(searchConfig);
+	    babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch] = new BaseServerSearch(searchConfig);
+	  }
+	  async loadChatParticipants(dialogId) {
+	    const items = await babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch].loadChatParticipants(dialogId);
+	    items.forEach(searchItem => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _localCollection)[_localCollection].set(searchItem.dialogId, searchItem);
+	    });
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds$1)[_getDialogIds$1](items);
+	  }
+	  searchLocal(query) {
+	    const localCollection = [...babelHelpers.classPrivateFieldLooseBase(this, _localCollection)[_localCollection].values()];
+	    const result = babelHelpers.classPrivateFieldLooseBase(this, _localSearch)[_localSearch].search(query, localCollection);
+	    const sortedResult = im_v2_lib_search.sortByDate(result);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds$1)[_getDialogIds$1](sortedResult);
+	  }
+	  async search(query) {
+	    const searchResult = await babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch].search(query);
+	    searchResult.forEach(searchItem => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _localCollection)[_localCollection].set(searchItem.dialogId, searchItem);
+	    });
+	    return {
+	      dialogIds: babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds$1)[_getDialogIds$1](searchResult),
+	      participantDialogIds: babelHelpers.classPrivateFieldLooseBase(this, _getParticipantDialogIds)[_getParticipantDialogIds](searchResult)
+	    };
+	  }
+	}
+	function _getDialogIds2$1(items) {
+	  return items.map(item => item.dialogId);
+	}
+	function _getParticipantDialogIds2(items) {
+	  const chatParticipants = items.filter(item => item.isChatParticipant);
+	  return chatParticipants.map(item => item.dialogId);
+	}
 
 	// @vue/component
 	const ContentFooter = {
@@ -5901,134 +6022,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
-	var _storeUpdater = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storeUpdater");
-	var _searchConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchConfig");
-	var _searchRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchRequest");
-	var _getDialogIdAndDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogIdAndDate");
-	class BaseServerSearch {
-	  constructor(searchConfig) {
-	    Object.defineProperty(this, _getDialogIdAndDate, {
-	      value: _getDialogIdAndDate2
-	    });
-	    Object.defineProperty(this, _searchRequest, {
-	      value: _searchRequest2
-	    });
-	    Object.defineProperty(this, _storeUpdater, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _searchConfig, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig] = searchConfig;
-	    babelHelpers.classPrivateFieldLooseBase(this, _storeUpdater)[_storeUpdater] = new im_v2_lib_search.StoreUpdater();
-	  }
-	  async search(query) {
-	    const items = await babelHelpers.classPrivateFieldLooseBase(this, _searchRequest)[_searchRequest](query);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _storeUpdater)[_storeUpdater].update(items);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIdAndDate)[_getDialogIdAndDate](items);
-	  }
-	  async loadChatParticipants(dialogId) {
-	    const queryParams = {
-	      order: {
-	        lastSendMessageId: 'desc'
-	      },
-	      dialogId,
-	      limit: 50
-	    };
-	    try {
-	      const response = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMentionList, {
-	        data: queryParams
-	      });
-	      const {
-	        users
-	      } = response;
-	      void new im_v2_lib_user.UserManager().setUsersToModel(users);
-	      return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIdAndDate)[_getDialogIdAndDate](users);
-	    } catch (error) {
-	      console.error('Mention search service: load chat participants error', error);
-	      throw error;
-	    }
-	  }
-	}
-	async function _searchRequest2(query) {
-	  const config = {
-	    json: im_v2_lib_search.getSearchConfig(babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig])
-	  };
-	  config.json.searchQuery = {
-	    queryWords: im_v2_lib_utils.Utils.text.getWordsFromString(query),
-	    query
-	  };
-	  let items = [];
-	  try {
-	    const response = await main_core.ajax.runAction(SEARCH_REQUEST_ENDPOINT, config);
-	    im_v2_lib_logger.Logger.warn('Mention search service: request result', response);
-	    items = response.data.dialog.items;
-	  } catch (error) {
-	    im_v2_lib_logger.Logger.warn('Mention search service: request error', error);
-	  }
-	  return items;
-	}
-	function _getDialogIdAndDate2(items) {
-	  return items.map(item => {
-	    var _item$customData$date, _item$customData;
-	    return {
-	      dialogId: item.id.toString(),
-	      dateMessage: (_item$customData$date = (_item$customData = item.customData) == null ? void 0 : _item$customData.dateMessage) != null ? _item$customData$date : ''
-	    };
-	  });
-	}
-
-	var _localSearch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("localSearch");
-	var _baseServerSearch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("baseServerSearch");
-	var _localCollection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("localCollection");
-	var _getDialogIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogIds");
-	class MentionSearchService {
-	  constructor(searchConfig) {
-	    Object.defineProperty(this, _getDialogIds, {
-	      value: _getDialogIds2
-	    });
-	    Object.defineProperty(this, _localSearch, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _baseServerSearch, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _localCollection, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _localSearch)[_localSearch] = new im_v2_lib_search.LocalSearch(searchConfig);
-	    babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch] = new BaseServerSearch(searchConfig);
-	  }
-	  async loadChatParticipants(dialogId) {
-	    const items = await babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch].loadChatParticipants(dialogId);
-	    items.forEach(searchItem => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _localCollection)[_localCollection].set(searchItem.dialogId, searchItem);
-	    });
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds)[_getDialogIds](items);
-	  }
-	  searchLocal(query) {
-	    const localCollection = [...babelHelpers.classPrivateFieldLooseBase(this, _localCollection)[_localCollection].values()];
-	    const result = babelHelpers.classPrivateFieldLooseBase(this, _localSearch)[_localSearch].search(query, localCollection);
-	    const sortedResult = im_v2_lib_search.sortByDate(result);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds)[_getDialogIds](sortedResult);
-	  }
-	  async search(query) {
-	    const searchResult = await babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch].search(query);
-	    searchResult.forEach(searchItem => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _localCollection)[_localCollection].set(searchItem.dialogId, searchItem);
-	    });
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds)[_getDialogIds](searchResult);
-	  }
-	}
-	function _getDialogIds2(items) {
-	  return items.map(item => item.dialogId);
-	}
+	// @vue/component
+	const LoadingState = {
+	  name: 'MentionLoadingState',
+	  components: {
+	    Spinner: im_v2_component_elements_loader.Spinner
+	  },
+	  computed: {
+	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
+	    SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor
+	  },
+	  template: `
+		<div class="bx-im-mention-loading-state__scope bx-im-mention-loading-state__container">
+			<div class="bx-im-mention-loading-state__loader">
+				<Spinner :size="SpinnerSize.XXS" :color="SpinnerColor.grey"/>
+			</div>
+			<span class="bx-im-mention-loading-state__title">
+				{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_LOADING_STATE') }}
+			</span>
+		</div>
+	`
+	};
 
 	const MentionItem = {
 	  name: 'MentionItem',
@@ -6174,12 +6188,214 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	var _getAddToChatItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAddToChatItems");
+	var _handleAddToChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleAddToChat");
+	var _createChatFromUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createChatFromUser");
+	var _addUserToChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addUserToChat");
+	var _addToChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addToChat");
+	var _addToCollab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addToCollab");
+	var _getChatType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatType");
+	var _isUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUser");
+	class AddToChatDropdownMenu extends im_v2_lib_menu.BaseMenu {
+	  constructor(applicationContext) {
+	    super();
+	    Object.defineProperty(this, _isUser, {
+	      value: _isUser2
+	    });
+	    Object.defineProperty(this, _getChatType, {
+	      value: _getChatType2
+	    });
+	    Object.defineProperty(this, _addToCollab, {
+	      value: _addToCollab2
+	    });
+	    Object.defineProperty(this, _addToChat, {
+	      value: _addToChat2
+	    });
+	    Object.defineProperty(this, _addUserToChat, {
+	      value: _addUserToChat2
+	    });
+	    Object.defineProperty(this, _createChatFromUser, {
+	      value: _createChatFromUser2
+	    });
+	    Object.defineProperty(this, _handleAddToChat, {
+	      value: _handleAddToChat2
+	    });
+	    Object.defineProperty(this, _getAddToChatItems, {
+	      value: _getAddToChatItems2
+	    });
+	    this.id = im_v2_const.PopupType.mentionAddToChatDropdown;
+	    const {
+	      emitter
+	    } = applicationContext;
+	    this.emitter = emitter;
+	    this.chatService = new im_v2_provider_service_chat.ChatService();
+	  }
+	  getMenuOptions() {
+	    return {
+	      ...super.getMenuOptions(),
+	      angle: false
+	    };
+	  }
+	  getMenuItems() {
+	    return [babelHelpers.classPrivateFieldLooseBase(this, _getAddToChatItems)[_getAddToChatItems]()];
+	  }
+	}
+	function _getAddToChatItems2() {
+	  return {
+	    title: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_MENU'),
+	    icon: ui_iconSet_api_core.Outline.ADD_PERSON,
+	    onClick: async () => {
+	      try {
+	        await babelHelpers.classPrivateFieldLooseBase(this, _handleAddToChat)[_handleAddToChat]();
+	      } catch {
+	        im_v2_lib_notifier.Notifier.chat.onUserAddError();
+	      }
+	    }
+	  };
+	}
+	async function _handleAddToChat2() {
+	  im_v2_lib_analytics.Analytics.getInstance().mention.onClickAddToChat(this.context.dialogId);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isUser)[_isUser]()) {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _createChatFromUser)[_createChatFromUser]();
+	    return;
+	  }
+	  await babelHelpers.classPrivateFieldLooseBase(this, _addUserToChat)[_addUserToChat]();
+	  im_v2_lib_notifier.Notifier.chat.onUserAddComplete();
+	}
+	async function _createChatFromUser2() {
+	  const {
+	    newDialogId
+	  } = await this.chatService.extendToGroupChat({
+	    members: [this.context.dialogId, this.context.userId, im_v2_application_core.Core.getUserId()],
+	    ownerId: im_v2_application_core.Core.getUserId()
+	  });
+	  void im_public.Messenger.openChat(newDialogId);
+	}
+	async function _addUserToChat2() {
+	  var _addUserHandlers$babe;
+	  const addUserHandlers = {
+	    [im_v2_const.ChatType.collab]: () => babelHelpers.classPrivateFieldLooseBase(this, _addToCollab)[_addToCollab](),
+	    default: () => babelHelpers.classPrivateFieldLooseBase(this, _addToChat)[_addToChat]()
+	  };
+	  const handler = (_addUserHandlers$babe = addUserHandlers[babelHelpers.classPrivateFieldLooseBase(this, _getChatType)[_getChatType]()]) != null ? _addUserHandlers$babe : addUserHandlers.default;
+	  await handler();
+	  this.emitter.emit(im_v2_const.EventType.mention.onAddUserToChat, {
+	    userId: this.context.userId
+	  });
+	}
+	async function _addToChat2() {
+	  await this.chatService.addToChat({
+	    chatId: this.context.chatId,
+	    members: [this.context.userId],
+	    showHistory: true
+	  });
+	}
+	async function _addToCollab2() {
+	  await new im_v2_provider_service_collabInvitation.CollabInvitationService().addEmployees({
+	    dialogId: this.context.dialogId,
+	    members: [this.context.userId]
+	  });
+	}
+	function _getChatType2() {
+	  const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](this.context.dialogId, true);
+	  return dialog.type;
+	}
+	function _isUser2() {
+	  return im_v2_application_core.Core.getStore().getters['chats/isUser'](this.context.dialogId);
+	}
+
+	// @vue/component
+	const AddToChatDropdown = {
+	  name: 'AddToChatDropdown',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  inject: ['disableAutoHide', 'enableAutoHide'],
+	  props: {
+	    userId: {
+	      type: String,
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  data() {
+	    return {
+	      showMenu: false
+	    };
+	  },
+	  computed: {
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    title() {
+	      return this.loc('IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_TITLE');
+	    }
+	  },
+	  methods: {
+	    closeMenu() {
+	      this.enableAutoHide();
+	      this.showMenu = false;
+	      this.getEmitter().emit(im_v2_const.EventType.mention.onNestedMenuClosed);
+	    },
+	    openMenu(event) {
+	      if (!this.contextMenuManager) {
+	        this.contextMenuManager = new AddToChatDropdownMenu({
+	          emitter: this.getEmitter()
+	        });
+	        this.contextMenuManager.subscribe(im_v2_lib_menu.BaseMenu.events.close, this.closeMenu);
+	      }
+	      const context = {
+	        chatId: this.dialog.chatId,
+	        dialogId: this.dialogId,
+	        userId: this.userId
+	      };
+	      this.contextMenuManager.openMenu(context, event.currentTarget);
+	      this.disableAutoHide();
+	      this.showMenu = true;
+	    },
+	    toggleMenu(event) {
+	      if (this.showMenu) {
+	        this.closeMenu();
+	        return;
+	      }
+	      this.openMenu(event);
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-mention-chat-add-dropdown__container" @mousedown.prevent @click.stop="toggleMenu">
+			<div class="bx-im-mention-chat-add-dropdown__separator"></div>
+			<div :title="title" class="bx-im-mention-chat-add-dropdown__title">{{ title }}</div>
+			<BIcon
+				v-if="!showMenu"
+				class="bx-im-mention-chat-add-dropdown__icon"
+				:name="OutlineIcons.CHEVRON_DOWN_S"
+			/>
+			<BIcon
+				v-else
+				class="bx-im-mention-chat-add-dropdown__icon"
+				:name="OutlineIcons.CHEVRON_TOP_S"
+			/>
+		</div>
+	`
+	};
+
 	// @vue/component
 	const DefaultItem = {
 	  name: 'DefaultMentionItem',
 	  components: {
 	    ChatTitleWithHighlighting: im_v2_component_elements_chatTitle.ChatTitleWithHighlighting,
-	    MentionItem
+	    MentionItem,
+	    AddToChatDropdown
 	  },
 	  props: {
 	    item: {
@@ -6197,20 +6413,51 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    dialogId: {
 	      type: String,
 	      required: true
+	    },
+	    isParticipant: {
+	      type: Boolean,
+	      required: true
 	    }
 	  },
 	  computed: {
 	    dialog() {
-	      return this.$store.getters['chats/get'](this.item.id, true);
+	      return this.getDialog(this.dialogId);
 	    },
-	    isUser() {
+	    itemDialog() {
+	      return this.getDialog(this.item.id);
+	    },
+	    isChatUser() {
 	      return this.dialog.type === im_v2_const.ChatType.user;
+	    },
+	    isItemUser() {
+	      return this.itemDialog.type === im_v2_const.ChatType.user;
 	    },
 	    subtitleWithHighlighting() {
 	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(this.item.subtitle), this.query);
 	    },
 	    currentItem() {
 	      return this.item;
+	    },
+	    isAddingUserByMentionAvailable() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAddingUserByMentionAvailable);
+	    },
+	    canAddToChat() {
+	      if (!this.isAddingUserByMentionAvailable) {
+	        return false;
+	      }
+	      if (!this.isItemUser || this.isParticipant) {
+	        return false;
+	      }
+	      const canCreateChat = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChat);
+	      if (this.isChatUser && !canCreateChat) {
+	        return false;
+	      }
+	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
+	    }
+	  },
+	  methods: {
+	    getDialog(dialogId) {
+	      return this.$store.getters['chats/get'](dialogId, true);
 	    }
 	  },
 	  template: `
@@ -6228,10 +6475,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					/>
 				</template>
 				<template #subtitle>
-					<div v-if="isUser" class="bx-im-mention-item__subtitle" :title="currentItem.subtitle" v-html="subtitleWithHighlighting"></div>
+					<div v-if="isItemUser" class="bx-im-mention-item__subtitle" :title="currentItem.subtitle" v-html="subtitleWithHighlighting"></div>
 					<div v-else class="bx-im-mention-item__subtitle" :title="currentItem.subtitle">{{ currentItem.subtitle }}</div>
 				</template>
 			</MentionItem>
+			<AddToChatDropdown v-if="canAddToChat" :dialogId="dialogId" :userId="currentItem.id" />
 		</div>
 	`
 	};
@@ -6333,13 +6581,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: String,
 	      required: true
 	    },
+	    items: {
+	      type: Array,
+	      required: true
+	    },
+	    participantsIds: {
+	      type: Set,
+	      required: true
+	    },
 	    query: {
 	      type: String,
 	      default: ''
-	    },
-	    items: {
-	      type: Array,
-	      default: () => []
 	    }
 	  },
 	  emits: ['close'],
@@ -6372,6 +6624,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.getEmitter().unsubscribe(im_v2_const.EventType.mention.selectItem, this.onInsertMentionText);
 	  },
 	  methods: {
+	    isParticipant(id) {
+	      const currentUserId = im_v2_application_core.Core.getUserId().toString();
+	      if (currentUserId === id) {
+	        return true;
+	      }
+	      return this.participantsIds.has(id);
+	    },
 	    getComponentToShow(id) {
 	      var _components$id;
 	      const components = {
@@ -6380,6 +6639,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        default: DefaultItem
 	      };
 	      return (_components$id = components[id]) != null ? _components$id : components.default;
+	    },
+	    onScroll() {
+	      var _PopupManager$getPopu;
+	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(im_v2_const.PopupType.mentionAddToChatDropdown)) == null ? void 0 : _PopupManager$getPopu.close();
 	    },
 	    onKeyDown(event) {
 	      if (this.items.length === 0) {
@@ -6445,12 +6708,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			:gradientHeight="GRADIENT_HEIGHT"
 			:containerMaxHeight="CONTAINER_MAX_HEIGHT"
 			:withShadow="false"
+			@scroll="onScroll"
 		>
 			<div class="bx-im-mention-popup-content__items" ref="popup-items">
 				<component
 					v-for="(item, index) in items"
 					:data-index="index"
 					:is="getComponentToShow(item.id)"
+					:isParticipant="isParticipant(item.id)"
 					:item="item"
 					:query="query"
 					:dialogId="dialogId"
@@ -6509,6 +6774,53 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	// @vue/component
+	const SearchEmptyState = {
+	  name: 'MentionSearchEmptyState',
+	  template: `
+		<div class="bx-im-mention-empty-state__scope bx-im-mention-empty-state__container">
+			<span class="bx-im-mention-empty-state__icon"></span>
+			<span class="bx-im-mention-empty-state__title">
+				{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_EMPTY_STATE') }}
+			</span>
+		</div>
+	`
+	};
+
+	class ParticipantsService {
+	  async getRecentIds(dialogId) {
+	    const recentUsersOptions = {
+	      withFakeUsers: false,
+	      userLimit: im_v2_lib_search.MAX_ENTITIES_IN_SEARCH_LIST
+	    };
+	    const userList = im_v2_lib_search.getUsersFromRecentItems(recentUsersOptions);
+	    const userIds = userList.map(({
+	      dialogId: userId
+	    }) => userId);
+	    if (userIds.length === 0) {
+	      return [];
+	    }
+	    try {
+	      const params = {
+	        data: {
+	          dialogId,
+	          userIds
+	        }
+	      };
+	      const {
+	        relations
+	      } = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatFilterUsersByParticipation, params);
+	      const members = relations.filter(member => member.isHidden === false);
+	      return members.map(({
+	        userId
+	      }) => userId.toString());
+	    } catch (error) {
+	      console.error('ParticipantsService: getIdsFromRecent error', error);
+	      return [];
+	    }
+	  }
+	}
+
+	// @vue/component
 	const MentionPopupContent = {
 	  name: 'MentionPopupContent',
 	  components: {
@@ -6541,7 +6853,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      chatParticipantsLoaded: false,
 	      currentServerQueries: 0,
 	      needTopShadow: false,
-	      needBottomShadow: true
+	      needBottomShadow: true,
+	      participantsIds: new Set()
 	    };
 	  },
 	  computed: {
@@ -6613,7 +6926,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        exclude.push(im_v2_lib_search.EntitySearch.chats);
 	      }
 	      return {
-	        exclude
+	        exclude,
+	        contextChatId: this.dialog.chatId
 	      };
 	    },
 	    copilotBotDialogId() {
@@ -6645,32 +6959,56 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      void this.startSearch(newQuery);
 	    }
 	  },
-	  created() {
+	  async created() {
 	    this.initSettings();
 	    this.searchService = new MentionSearchService(this.searchConfig);
 	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
-	    void this.loadChatParticipants();
+	    this.getEmitter().subscribe(im_v2_const.EventType.mention.onAddUserToChat, this.onAddUserToChat);
+	    void this.initChatParticipants();
+	  },
+	  beforeUnmount() {
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.mention.onAddUserToChat, this.onAddUserToChat);
 	  },
 	  methods: {
+	    async initChatParticipants() {
+	      this.isLoading = true;
+	      await this.loadChatParticipants();
+	      const participantsIdsFromRecent = await this.getRecentParticipantsIds();
+	      this.addParticipants(participantsIdsFromRecent);
+	      this.isLoading = false;
+	    },
+	    getRecentParticipantsIds() {
+	      const participantsService = new ParticipantsService();
+	      return participantsService.getRecentIds(this.dialogId);
+	    },
+	    onAddUserToChat(event) {
+	      const {
+	        userId
+	      } = event.getData();
+	      this.participantsIds.add(userId);
+	    },
 	    initSettings() {
 	      const settings = main_core.Extension.getSettings('im.v2.component.textarea');
 	      const defaultMinTokenSize = 3;
 	      this.minTokenSize = settings.get('minSearchTokenSize', defaultMinTokenSize);
 	    },
 	    async loadChatParticipants() {
-	      this.isLoading = true;
 	      this.chatParticipants = await this.searchService.loadChatParticipants(this.dialogId);
+	      this.addParticipants(this.chatParticipants);
 	      this.searchResult = this.chatParticipants;
-	      this.isLoading = false;
 	      this.chatParticipantsLoaded = true;
 	    },
 	    async searchOnServer(query) {
 	      this.currentServerQueries++;
 	      try {
-	        const dialogIds = await this.searchService.search(query);
+	        const {
+	          dialogIds,
+	          participantDialogIds
+	        } = await this.searchService.search(query);
 	        if (query !== this.preparedQuery) {
 	          return;
 	        }
+	        this.addParticipants(participantDialogIds);
 	        this.searchResult = [...new Set([...this.searchResult, ...dialogIds])];
 	      } finally {
 	        this.currentServerQueries--;
@@ -6718,6 +7056,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return new MentionItemFormatter(dialogId).format();
 	      });
 	    },
+	    addParticipants(items) {
+	      items.forEach(userId => this.participantsIds.add(userId));
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
+	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
@@ -6730,6 +7074,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				:dialogId="dialogId"
 				:query="query"
 				:items="items"
+				:participantsIds="participantsIds"
 				@close="$emit('close')"
 			/>
 			<SearchEmptyState v-if="isSearchEmptyState" />
@@ -6761,7 +7106,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      default: ''
 	    }
 	  },
-	  emits: ['close'],
+	  emits: ['close', 'onFocusTextarea'],
 	  computed: {
 	    POPUP_ID: () => POPUP_ID$2,
 	    dialog() {
@@ -6796,6 +7141,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        },
 	        className: 'bx-im-mention-popup__scope'
 	      };
+	    }
+	  },
+	  created() {
+	    this.getEmitter().subscribe(im_v2_const.EventType.mention.onNestedMenuClosed, this.onFocusTextarea);
+	  },
+	  beforeUnmount() {
+	    this.getEmitter().unsubscribe(im_v2_const.EventType.mention.onNestedMenuClosed, this.onFocusTextarea);
+	  },
+	  methods: {
+	    onFocusTextarea() {
+	      this.$emit('onFocusTextarea');
+	    },
+	    getEmitter() {
+	      return this.$Bitrix.eventEmitter;
 	    }
 	  },
 	  template: `
@@ -7994,9 +8353,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    isDisabled() {
 	      return this.text.trim() === '' && !this.editMode && !this.forwardMode;
 	    },
+	    baseTextareaPlaceholder() {
+	      if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive)) {
+	        return this.loc('IM_TEXTAREA_PLACEHOLDER_MSGVER_1');
+	      }
+	      return this.loc('IM_TEXTAREA_PLACEHOLDER_WITHOUT_AI');
+	    },
 	    textareaPlaceholder() {
 	      if (!this.placeholder) {
-	        return this.loc('IM_TEXTAREA_PLACEHOLDER_V3');
+	        return this.baseTextareaPlaceholder;
 	      }
 	      return this.placeholder;
 	    },
@@ -8045,6 +8410,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    void this.restorePanel();
 	    this.initSendingService();
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.getText, this.onGetText);
 	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
 	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
 	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
@@ -8067,6 +8434,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.getToolbarManager().destroy();
 	    this.unbindUploadingService();
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.getText, this.onGetText);
 	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
 	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
 	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
@@ -8078,6 +8447,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.getEmitter().unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
 	  },
 	  methods: {
+	    onGetText(event) {
+	      const {
+	        dialogId
+	      } = event.getData();
+	      if (this.dialogId !== dialogId) {
+	        return '';
+	      }
+	      return this.text;
+	    },
 	    sendMessage() {
 	      this.text = this.text.trim();
 	      if (this.isDisabled || !this.dialogInited) {
@@ -8715,6 +9093,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				:dialogId="dialogId"
 				:query="mentionQuery"
 				@close="closeMentionPopup"
+				@onFocusTextarea="focus"
 			/>
 			<FormatToolbar 
 				v-if="showFormatToolbar"
@@ -8730,5 +9109,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.UI?.Uploader??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.System?.Chip?.Vue??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Provider?.Service??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Model??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Vue3?.Components??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{},BX??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.System?.Input?.Vue??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Lib??{}));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.UI?.Uploader??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.System?.Chip?.Vue??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Provider?.Service??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Model??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Vue3?.Components??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{},BX??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.System?.Input?.Vue??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Lib??{}));
 //# sourceMappingURL=textarea.bundle.js.map

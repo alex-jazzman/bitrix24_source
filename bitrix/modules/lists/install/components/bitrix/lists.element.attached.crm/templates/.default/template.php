@@ -13,6 +13,7 @@
 
 use Bitrix\Main\Localization\Loc;
 
+\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
 CJSCore::init(['lists', 'bp_starter']);
 ?>
 

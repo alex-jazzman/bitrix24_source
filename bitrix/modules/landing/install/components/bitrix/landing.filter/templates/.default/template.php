@@ -165,6 +165,9 @@ Toolbar::addButton(
 		'color' => UI\Buttons\Color::LIGHT_BORDER,
 		'text' => Loc::getMessage('LANDING_TPL_RECYCLE_BIN'),
 		'click' => new UI\Buttons\JsHandler('BX.Landing.Component.Filter.onRecycleBinClick'),
+		'dataset' => [
+			'toolbar-collapsed-icon' => UI\Buttons\Icon::REMOVE,
+		],
 	])
 );
 

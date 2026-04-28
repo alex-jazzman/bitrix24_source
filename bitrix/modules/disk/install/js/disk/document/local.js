@@ -198,14 +198,17 @@
 
 			params.url = url;
 
+			params.name = params.name.replace(/\\/g, '');
+
 			return params;
 		},
 
 		goToBx: function (action, params)
 		{
 			console.log('waiting for GoToBx', action, params);
-			var link = 'bx://' + action;
-			params = BX.type.isPlainObject(params)? params : {};
+			const domain = location.hostname || 'unknown';
+			let link = `bx://v2/${domain}/${action}`;
+			params = BX.type.isPlainObject(params) ? params : {};
 			params.uidRequest = BX.util.getRandomString(16);
 
 			if (BX.type.isPlainObject(params))
@@ -217,7 +220,10 @@
 						continue;
 					}
 
-					link += '/' + name + '/' + encodeURIComponent(params[name]);
+					link += '/' + name + '/' + encodeURIComponent(params[name]).replace(
+						/'/g,
+						(c) => `%${c.codePointAt(0).toString(16).toUpperCase()}`,
+					);
 				}
 			}
 

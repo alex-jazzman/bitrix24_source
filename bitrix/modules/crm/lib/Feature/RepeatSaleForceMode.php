@@ -5,23 +5,25 @@ namespace Bitrix\Crm\Feature;
 use Bitrix\Crm\Feature;
 use Bitrix\Crm\Feature\Category\BaseCategory;
 use Bitrix\Crm\Feature\Category\Common;
+use Bitrix\Crm\Integration\Rest\Marketplace\Client;
 use Bitrix\Crm\RepeatSale\FlowController;
 use Bitrix\Crm\RepeatSale\Logger;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
+use Bitrix\Crm\RepeatSale\Segment\SegmentCode;
 use Bitrix\Crm\RepeatSale\Segment\SegmentItem;
 use Bitrix\Crm\RepeatSale\Segment\SegmentManager;
 use Bitrix\Main\Localization\Loc;
 
-class RepeatSaleForceMode extends BaseFeature
+final class RepeatSaleForceMode extends BaseFeature
 {
 	public function getName(): string
 	{
 		return Loc::getMessage('CRM_FEATURE_REPEAT_SALE_FORCE_MODE_NAME');
 	}
 
-	public function getCategory(): BaseCategory
+	public function getCategory(): Category\RepeatSale
 	{
-		return Common::getInstance();
+		return Category\RepeatSale::getInstance();
 	}
 
 	protected function getOptionName(): string
@@ -32,6 +34,11 @@ class RepeatSaleForceMode extends BaseFeature
 	protected function getEnabledValue(): bool
 	{
 		return true;
+	}
+
+	public function getSort(): int
+	{
+		return 20;
 	}
 
 	public function enable(): void
@@ -64,7 +71,12 @@ class RepeatSaleForceMode extends BaseFeature
 			'limit' => 0, // for all segments
 		]);
 
-		$defaultEnableSegments = SegmentManager::getDefaultEnableSegmentCodes();
+		$enableSegments = SegmentManager::getDefaultEnableSegmentCodes();
+		if (!(new Client())->isMarketOverdue())
+		{
+			$enableSegments[] = SegmentCode::AI_SCREENING->value;
+			$enableSegments[] = SegmentCode::AI_APPROVE->value;
+		}
 
 		$userId = FlowController::getInstance()->getExpectedUserId();
 		if ($userId <= 0)
@@ -76,7 +88,7 @@ class RepeatSaleForceMode extends BaseFeature
 		{
 			$segmentItem = SegmentItem::createFromEntity($segment)->setClientCoverage(null);
 
-			if (in_array($segmentItem->getCode(), $defaultEnableSegments, true))
+			if (in_array($segmentItem->getCode(), $enableSegments, true))
 			{
 				$segmentItem->setIsEnabled(true);
 				$segmentItem->setAssignmentUserIds([$userId]);

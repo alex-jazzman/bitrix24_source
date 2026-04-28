@@ -134,8 +134,6 @@ export class Interface extends BuilderModel
 			isLoaded: (state): boolean => state.isLoaded,
 			/** @function interface/zoom */
 			zoom: (state): number => state.zoom,
-			/** @function interface/expanded */
-			expanded: (state): boolean => state.expanded,
 			/** @function interface/scroll */
 			scroll: (state): number => state.scroll,
 			/** @function interface/offHoursHover */

@@ -1,13 +1,20 @@
 import { Event, Dom } from 'main.core';
 import type { GoTopButton } from './go-top-button';
 
+export type BackgroundStyle = {
+	backgroundColor: string;
+	backgroundImage: string;
+	backgroundPosition: string;
+	backgroundRepeat: string;
+	backgroundSize: string;
+};
+
 export type RightBarOptions = {
 	goTopButton: GoTopButton;
 };
 
 export class RightBar
 {
-	#isTransparentMode: boolean = false;
 	#isScrollMode: boolean = false;
 	#scrollModeThreshold: number = window.innerHeight;
 	#goTopButton: GoTopButton;
@@ -52,26 +59,6 @@ export class RightBar
 			Dom.removeClass(rightBar, '--scroll-mode');
 			this.#isScrollMode = false;
 		}
-
-		if (!rightBar || rightBar.dataset.lockRedraw === 'true')
-		{
-			return;
-		}
-
-		const hasHorizontalScroll = document.documentElement.scrollWidth > window.innerWidth;
-		if (hasHorizontalScroll > 0)
-		{
-			if (!this.#isTransparentMode)
-			{
-				Dom.addClass(rightBar, '--transparent');
-				this.#isTransparentMode = true;
-			}
-		}
-		else if (this.#isTransparentMode)
-		{
-			Dom.removeClass(rightBar, '--transparent');
-			this.#isTransparentMode = false;
-		}
 	}
 
 	getContainer(): HTMLElement
@@ -92,5 +79,27 @@ export class RightBar
 	isVisible(): boolean
 	{
 		return !Dom.hasClass(this.getContainer(), '--hidden');
+	}
+
+	setBackground(background: BackgroundStyle): void
+	{
+		Dom.style(this.getContainer(), {
+			backgroundImage: background?.backgroundImage ?? null,
+			backgroundColor: background?.backgroundColor ?? null,
+			backgroundPosition: background?.backgroundPosition ?? null,
+			backgroundRepeat: background?.backgroundRepeat ?? null,
+			backgroundSize: background?.backgroundSize ?? null,
+		});
+	}
+
+	resetBackground(): void
+	{
+		Dom.style(this.getContainer(), {
+			backgroundImage: null,
+			backgroundColor: null,
+			backgroundRepeat: null,
+			backgroundSize: null,
+			backgroundPosition: null,
+		});
 	}
 }

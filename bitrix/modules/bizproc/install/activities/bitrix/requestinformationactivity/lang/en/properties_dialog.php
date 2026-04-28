@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["BPSFA_PD_YES"] = "Yes";
 $MESS["BPSFA_PD_NO"] = "No";
 $MESS["BPSFA_PD_FIELDS"] = "Fields";
@@ -23,4 +24,3 @@ $MESS["BPSFA_PD_DELETE"] = "Delete";
 $MESS["BPSFA_PD_EMPTY_TITLE"] = "The field name is missing";
 $MESS["BPSFA_PD_EMPTY_NAME"] = "The field code is missing";
 $MESS["BPSFA_PD_WRONG_NAME"] = "A field code may only include Latin letters and numbers, and cannot start with a digit.";
-$MESS["BPSFA_PD_TIMEOUT_LIMIT"] = "Minimum wait time";

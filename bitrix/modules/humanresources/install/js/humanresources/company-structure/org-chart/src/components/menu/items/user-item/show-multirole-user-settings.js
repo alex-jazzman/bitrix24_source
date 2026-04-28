@@ -26,8 +26,10 @@ export class ShowMultiRoleUserSettingsMenuItem extends AbstractMenuItem
 
 	hasPermission(permissionChecker: PermissionCheckerClass, entityId: number): boolean
 	{
-		return permissionChecker.checkMultipleUsersSettingsAvailable()
-			&& permissionChecker.hasPermission(this.permissionAction, entityId)
+		const isFeatureAvailable = permissionChecker.checkMultipleUsersBPSettingsAvailable()
+			|| permissionChecker.checkMultipleUsersReportSettingsAvailable()
 		;
+
+		return isFeatureAvailable && permissionChecker.hasPermission(this.permissionAction, entityId);
 	}
 }

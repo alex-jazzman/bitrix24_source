@@ -278,6 +278,7 @@ class ExternalConnectionForm
 		}
 		else
 		{
+			errorMessage = Text.encode(errorMessage);
 			status = Tag.render`
 				<div class="db-connection-error">
 					<div class="ui-icon-set --warning" style="--ui-icon-set__icon-size: 18px; --ui-icon-set__icon-color: var(--ui-color-palette-red-60);"></div>
@@ -358,7 +359,7 @@ class ExternalConnectionForm
 				}
 				else
 				{
-					this.#showSaveSuccessPopup(response.data.connection, response.data.supersetIsReady);
+					this.#showSaveSuccessPopup(response.data.connection);
 					saveButton.setWaiting(false);
 				}
 			})
@@ -374,23 +375,17 @@ class ExternalConnectionForm
 			});
 	}
 
-	#showSaveSuccessPopup(
-		connection: { id: any, name: string, type: string, isSupportMapping: boolean},
-		supersetIsReady: boolean,
-	)
+	#showSaveSuccessPopup(connection: { id: any, name: string, type: string, isSupportMapping: boolean})
 	{
 		let popup: ?Popup = null;
 
-		// show for (new or active sources) and ready superset only
-		const showCreateDatasetButton = supersetIsReady
-			&& (
-				!(Object.hasOwn(this.#props.sourceFields, 'id'))
-				|| this.#props.sourceFields.active
-			)
+		// show for new or active sources
+		const showCreateDatasetButton = !(Object.hasOwn(this.#props.sourceFields, 'id'))
+			|| this.#props.sourceFields.active
 		;
 		const createDatasetButton = showCreateDatasetButton ? Tag.render`
 			<a class="ui-btn ui-btn-md ui-btn-primary">
-				${Loc.getMessage('EXTERNAL_CONNECTION_CREATE_DATASET')}
+				${Loc.getMessage('EXTERNAL_CONNECTION_CREATE_DATASET_MSGVER_1')}
 			</a>
 		` : false;
 

@@ -123,10 +123,14 @@ export const DetailComponent = {
 	mounted() {
 		this.descriptionWrapper = document.querySelector('[data-role="market-detail__wrapper"]');
 		this.descriptionHeight = document.querySelector('[data-role="market-detail__content"]').scrollHeight;
-		if (this.descriptionHeight <= 565) {
+
+		if (this.descriptionHeight <= 565)
+		{
 			this.hideDescription = false;
 			this.descriptionWrapper.style.maxHeight = 'none';
-		} else {
+		}
+		else
+		{
 			this.descriptionWrapper.style.height = `${this.descriptionWrapper.clientHeight}px`;
 			this.descriptionWrapper.style.maxHeight = 'none';
 		}
@@ -138,13 +142,16 @@ export const DetailComponent = {
 
 		this.initOther();
 
-		if(this.needOpenImport) {
-			setTimeout(() => this.configApp(), 500);
-		}
-
 		this.createPopupMenu();
 
-		if (this.isTestInstall) {
+		if (this.needOpenImport)
+		{
+			setTimeout(() => this.configApp(), 500);
+			return;
+		}
+
+		if (this.isTestInstall)
+		{
 			this.testInstall();
 		}
 	},

@@ -1,6 +1,5 @@
 .bx-im-mention-item__scope {
 	--im-mention-item__background-color_container: var(--im-color-palette-white-base);
-	--im-mention-item__background-color_hover-container: var(--ui-color-palette-gray-04, #f1f4f6);
 	--im-mention-item__color_name: var(--im-color-palette-black-base);
 	--im-mention-item__color_subtitle: var(--im-color-palette-gray-60);
 	--im-mention-item__color_highlight: var(--im-color-palette-black-solid);
@@ -21,7 +20,7 @@
 }
 
 .bx-im-mention-item__container.--selected {
-	background-color: var(--im-mention-item__background-color_hover-container);
+	background-color: var(--ui-color-bg-state-hover-default);
 }
 
 .bx-im-mention-item__avatar-container {

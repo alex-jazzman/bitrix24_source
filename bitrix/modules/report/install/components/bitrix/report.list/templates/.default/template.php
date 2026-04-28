@@ -7,7 +7,10 @@ global $APPLICATION;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons.icons',
+	'intranet.old-interface.intranet-common',
+]);
 
 CJSCore::Init(array('report', 'socnetlogdest'));
 

@@ -1,5 +1,9 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\UI;
+
+UI\Extension::load(["intranet.old-interface.intranet-common"]);
+
 if ($arParams['CALLBACK_NAME'] == '')
 	$arParams['CALLBACK_NAME'] = 'showMeetingSelector';
 ?>

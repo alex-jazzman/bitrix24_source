@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_vue3,pull_queuemanager,ui_buttons,ui_bbcode_parser,ui_textEditor,ui_iconSet_main,ui_notification,ui_entitySelector,ui_infoHelper,ui_forms,main_date,crm_timeline_tools,main_core_events,ui_datePicker,main_core) {
+(function (exports,ui_vue3,pull_queuemanager,ui_buttons,ui_bbcode_parser,ui_textEditor,ui_iconSet_main,ui_notification,ui_entitySelector,crm_ai_nameService,ui_infoHelper,ui_forms,main_date,crm_timeline_tools,main_core_events,ui_datePicker,main_core) {
 	'use strict';
 
 	const BreadcrumbsEvents = {
@@ -315,9 +315,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  computed: {
 	    message() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_AI_DISABLED');
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_AI_DISABLED', crm_ai_nameService.NameService.copilotNameReplacement());
 	    }
 	  },
+	  // language=Vue
 	  template: `
 		<div class="crm-copilot__call-assessment-ai-disabled">
 			<span v-html="message"></span>
@@ -449,9 +450,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_ABOUT_TITLE');
 	    },
 	    pageDescription() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_ABOUT_DESCRIPTION');
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_ABOUT_DESCRIPTION', crm_ai_nameService.NameService.copilotNameReplacement());
 	    }
 	  },
+	  // language=Vue
 	  template: `
 		<div v-if="isActive">
 			<div class="crm-copilot__call-assessment_page-section">
@@ -535,7 +537,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CLIENT_TITLE');
 	    },
 	    pageDescription() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CLIENT_DESCRIPTION');
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CLIENT_DESCRIPTION', crm_ai_nameService.NameService.copilotNameReplacement());
 	    },
 	    clientTypes() {
 	      return [{
@@ -557,6 +559,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }];
 	    }
 	  },
+	  // language=Vue
 	  template: `
 		<div v-if="isActive">
 			<div class="crm-copilot__call-assessment_page-section">
@@ -958,9 +961,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_TITLE');
 	    },
 	    pageDescription() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_DESCRIPTION');
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_DESCRIPTION', crm_ai_nameService.NameService.copilotNameReplacement());
+	    },
+	    lowBorderDescription() {
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_DESCRIPTION', crm_ai_nameService.NameService.copilotNameReplacement());
+	    },
+	    highBorderDescription() {
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_DESCRIPTION', crm_ai_nameService.NameService.copilotNameReplacement());
 	    }
 	  },
+	  // language=Vue
 	  template: `
 		<div v-if="isActive">
 			<div class="crm-copilot__call-assessment_page-section">
@@ -982,7 +992,7 @@ this.BX.Crm = this.BX.Crm || {};
 						<div class="crm-copilot__call-assessment_page-section-body-field-content">
 							<div
 								class="crm-copilot__call-assessment_page-section-body-field-subtitle"
-								v-html="this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_LOW_BORDER_DESCRIPTION')"
+								v-html="lowBorderDescription"
 							>
 							</div>
 							<Pill
@@ -995,7 +1005,7 @@ this.BX.Crm = this.BX.Crm || {};
 							</div>
 						</div>
 					</div>
-					
+	
 					<div class="crm-copilot__call-assessment_page-section-body-field-container">
 						<div class="crm-copilot__call-assessment_page-section-body-field-title --high-icon">
 							{{ this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_TITLE') }}
@@ -1003,7 +1013,7 @@ this.BX.Crm = this.BX.Crm || {};
 						<div class="crm-copilot__call-assessment_page-section-body-field-content">
 							<div 
 								class="crm-copilot__call-assessment_page-section-body-field-subtitle"
-								v-html="this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_HIGH_BORDER_DESCRIPTION')"
+								v-html="highBorderDescription"
 							>
 							</div>
 							<Pill
@@ -1727,7 +1737,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_TITLE');
 	    },
 	    pageDescription() {
-	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_DESCRIPTION');
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_DESCRIPTION', crm_ai_nameService.NameService.copilotNameReplacement());
 	    },
 	    pageSectionSettingsCallType() {
 	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE');
@@ -1739,7 +1749,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK');
 	    },
 	    pageSectionSettingsCheckDescription() {
-	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_DESCRIPTION');
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_DESCRIPTION', crm_ai_nameService.NameService.copilotNameReplacement());
 	    },
 	    callTypes() {
 	      return [{
@@ -1787,12 +1797,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_AVAILABILITY');
 	    },
 	    pageSectionSettingsAvailabilityDescription() {
-	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_AVAILABILITY_DESCRIPTION');
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_AVAILABILITY_DESCRIPTION', crm_ai_nameService.NameService.copilotNameReplacement());
 	    },
 	    isCallAssessmentAvailabilityEnabled() {
 	      return main_core.Extension.getSettings('crm.copilot.call-assessment').get('callAssessmentAvailabilityEnabled');
 	    }
 	  },
+	  // language=Vue
 	  template: `
 		<div v-show="isActive">
 			<div class="crm-copilot__call-assessment_page-section">
@@ -2284,7 +2295,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    maxHeight: 400,
 	    content,
 	    placeholder: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PLACEHOLDER'),
-	    paragraphPlaceholder: main_core.Loc.getMessage(main_core.Type.isPlainObject(copilotSettings) ? 'CRM_COPILOT_CALL_ASSESSMENT_PLACEHOLDER_WITH_COPILOT' : null),
+	    paragraphPlaceholder: main_core.Loc.getMessage(main_core.Type.isPlainObject(copilotSettings) ? 'CRM_COPILOT_CALL_ASSESSMENT_PLACEHOLDER_WITH_COPILOT' : null, crm_ai_nameService.NameService.copilotNameReplacement()),
 	    toolbar,
 	    floatingToolbar: [],
 	    collapsingMode: false,
@@ -2298,5 +2309,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.CallAssessment = CallAssessment$1;
 
-}((this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}),BX.Vue3,BX.Pull,BX.UI,BX.UI.BBCode,BX.UI.TextEditor,BX,BX,BX.UI.EntitySelector,BX.UI,BX,BX.Main,BX.Crm.Timeline,BX.Event,BX.UI.DatePicker,BX));
+}((this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}),BX.Vue3,BX.Pull,BX.UI,BX.UI.BBCode,BX.UI.TextEditor,BX,BX,BX.UI.EntitySelector,BX.Crm.AI,BX.UI,BX,BX.Main,BX.Crm.Timeline,BX.Event,BX.UI.DatePicker,BX));
 //# sourceMappingURL=call-assessment.bundle.js.map

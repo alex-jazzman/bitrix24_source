@@ -5,7 +5,6 @@ use Bitrix\Bizproc\Api\Enum\ErrorMessage;
 use Bitrix\Bizproc\Api\Request\WorkflowTemplateService\SetConstantsRequest;
 use Bitrix\Bizproc\Api\Response\WorkflowTemplateService\SetConstantsResponse;
 use Bitrix\Bizproc\Api\Service\WorkflowTemplateService;
-use Bitrix\Bizproc\BaseType;
 use Bitrix\Bizproc\Error;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\FileUploader\SetupTemplateUploaderController;
@@ -21,6 +20,7 @@ use Bitrix\Bizproc\Internal\Entity\Activity\SetupTemplateActivity\ItemCollection
 use Bitrix\Bizproc\Internal\Entity\Activity\SetupTemplateActivity\ItemType;
 use Bitrix\Bizproc\Internal\Entity\Activity\SetupTemplateActivity\Title;
 use Bitrix\Bizproc\Internal\Entity\Activity\SetupTemplateActivity\TitleWithIcon;
+use Bitrix\Bizproc\Internal\Event\SetupTemplateCurrentDataEvent;
 use Bitrix\Bizproc\Internal\Event\SetupTemplateUserInputEvent;
 use Bitrix\Bizproc\Internal\Event\SetupTemplateValidationEvent;
 use Bitrix\Bizproc\Internal\Integration\Rag\DocumentFieldTypes\RagKnowledgeBaseType;
@@ -43,7 +43,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener
 {
-	private const PARAM_USER = 'user';
 	private const PARAM_BLOCKS = 'blocks';
 	private const PARAM_BLOCK_ITEMS = 'items';
 	private const PARAM_BLOCK_ITEMS_ITEM_TYPE = 'itemType';
@@ -63,7 +62,6 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 		parent::__construct($name);
 		$this->arProperties = [
 			'Title' => '',
-			self::PARAM_USER => null,
 			self::PARAM_BLOCKS => null,
 		];
 	}
@@ -71,12 +69,6 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 	public static function validateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null): array
 	{
 		$arErrors = [];
-		if (empty($arTestProperties[self::PARAM_USER]))
-		{
-			$arErrors[] = self::makeValidationError(
-				Loc::getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_USER_EMPTY'),
-			);
-		}
 		if (empty($arTestProperties[self::PARAM_BLOCKS]))
 		{
 			$arErrors[] = self::makeValidationError(
@@ -182,12 +174,6 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 	protected static function getPropertiesMap(array $documentType, array $context = []): array
 	{
 		return [
-			self::PARAM_USER => [
-				'Name' => Loc::getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_USER_NAME'),
-				'FieldName' => self::PARAM_USER,
-				'Type' => FieldType::USER,
-				'Required' => true,
-			],
 			self::PARAM_BLOCKS => [
 				'Name' => Loc::getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCKS'),
 				'FieldName' => self::PARAM_BLOCKS,
@@ -219,13 +205,6 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		if (!Loader::includeModule('pull'))
-		{
-			$this->trackError(Loc::getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_NO_PULL_MODULE'));
-
-			return CBPActivityExecutionStatus::Closed;
-		}
-
 		$parsingErrors = [];
 		$blocks = self::validateAndParseBlocks($this->{self::PARAM_BLOCKS}, $parsingErrors);
 		if (!empty($parsingErrors))
@@ -243,7 +222,7 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$this->sendPush($userId, $blocks);
+		$this->sendCurrentData($userId, $blocks);
 		$this->subscribe($this);
 
 		return CBPActivityExecutionStatus::Executing;
@@ -256,23 +235,53 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	private function sendPush(int $userId, BlockCollection $blocks): void
+	private function sendPush(
+		int $userId,
+		BlockCollection $blocks,
+		?string $templateName = null,
+		?string $templateDescription = null,
+	)
 	{
-		$model = $this->getTemplateNameAndDescriptionModel();
+		if (!Loader::includeModule('pull'))
+		{
+			return;
+		}
 
 		(new PushWorker())
 			->send(
 				self::PUSH_COMMAND,
 				[
-					'blocks' => $this->appendConstantValuesToBlocks($blocks)->toArray(),
+					'blocks' => $blocks->toArray(),
 					'templateId' => $this->getWorkflowTemplateId(),
 					'instanceId' => $this->workflow->getInstanceId(),
-					'templateName' => $model?->getName(),
-					'templateDescription' => $model?->getDescription(),
+					'templateName' => $templateName,
+					'templateDescription' => $templateDescription,
 				],
 				[$userId],
 			)
 		;
+	}
+
+	private function sendCurrentData(
+		int $userId,
+		BlockCollection $blocks,
+	): void
+	{
+		$model = $this->getTemplateNameAndDescriptionModel();
+		$blocksWithValues = $this->appendConstantValuesToBlocks($blocks);
+
+		$this->sendCurrentDataEvent(
+			blocks: $blocksWithValues,
+			templateName: $model?->getName(),
+			templateDescription: $model?->getDescription(),
+		);
+
+		$this->sendPush(
+			userId: $userId,
+			blocks: $blocksWithValues,
+			templateName: $model?->getName(),
+			templateDescription: $model?->getDescription(),
+		);
 	}
 
 	public function subscribe(IBPActivityExternalEventListener $eventHandler): void
@@ -337,44 +346,15 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 			return;
 		}
 
-		if ($eventName === SetupTemplateUserInputEvent::EVENT_NAME)
+		$continueWorkflow = match ($eventName)
 		{
-			$instanceId = $arEventParameters[0] ?? null;
-			$userId = $arEventParameters[1] ?? null;
-			$templateId = $arEventParameters[2] ?? null;
-			$constantValues = (array)($arEventParameters[3] ?? []);
-			if (
-				$templateId !== $this->getWorkflowTemplateId()
-				|| $userId !== $this->getUserIdOnExecute()
-				|| $instanceId !== $this->workflow->getInstanceId()
-			)
-			{
-				return;
-			}
+			SetupTemplateUserInputEvent::EVENT_NAME => $this->handleUserInputEvent($arEventParameters),
+			default => false,
+		};
 
-			$errors = [];
-			$blocks = $this->validateAndParseBlocks($this->{self::PARAM_BLOCKS}, $errors);
-			if (!empty($errors))
-			{
-				$this->sendValidationEvent($this->toErrorCollection($errors));
-
-				return;
-			}
-
-			$errors = $this->validateConstants($constantValues, $userId, $blocks);
-			if (!$errors->isEmpty())
-			{
-				$this->sendValidationEvent($errors);
-
-				return;
-			}
-
-			$result = $this->setConstants($constantValues, $blocks);
-			$this->sendValidationEvent($result->getErrorCollection());
-			if (!$result->isSuccess())
-			{
-				return;
-			}
+		if (!$continueWorkflow)
+		{
+			return;
 		}
 
 		$this->unsubscribe($this);
@@ -436,7 +416,7 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 
 	private function getUserIdOnExecute(): int
 	{
-		return (int)CBPHelper::extractFirstUser($this->{self::PARAM_USER}, $this->getDocumentId());
+		return (int)$this->workflow->getStartedBy();
 	}
 
 	protected static function validateAndParseBlocks(string|array|null $inputBlocks, array &$errors): ?BlockCollection
@@ -973,6 +953,7 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 			RagKnowledgeBaseType::getType(),
 			ProjectType::getType(),
 			FieldType::FILE,
+			FieldType::TIME,
 		];
 
 		return array_filter(
@@ -1224,5 +1205,60 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 		$currentFileIds = array_map(static fn($id) => (int)$id, $currentFileIds);
 
 		return array_filter($currentFileIds);
+	}
+
+	private function handleUserInputEvent(array $eventParameters): bool
+	{
+		$instanceId = $eventParameters[0] ?? null;
+		$userId = $eventParameters[1] ?? null;
+		$templateId = $eventParameters[2] ?? null;
+		$constantValues = (array)($eventParameters[3] ?? []);
+		if (
+			$templateId !== $this->getWorkflowTemplateId()
+			|| $userId !== $this->getUserIdOnExecute()
+			|| $instanceId !== $this->workflow->getInstanceId()
+		)
+		{
+			return false;
+		}
+
+		$errors = [];
+		$blocks = $this->validateAndParseBlocks($this->{self::PARAM_BLOCKS}, $errors);
+		if (!empty($errors))
+		{
+			$this->sendValidationEvent($this->toErrorCollection($errors));
+
+			return false;
+		}
+
+		$errors = $this->validateConstants($constantValues, $userId, $blocks);
+		if (!$errors->isEmpty())
+		{
+			$this->sendValidationEvent($errors);
+
+			return false;
+		}
+
+		$result = $this->setConstants($constantValues, $blocks);
+		$this->sendValidationEvent($result->getErrorCollection());
+
+		return $result->isSuccess();
+	}
+
+	private function sendCurrentDataEvent(
+		BlockCollection $blocks,
+		?string $templateName = null,
+		?string $templateDescription = null,
+	): void
+	{
+		(new SetupTemplateCurrentDataEvent())
+			->setTemplateId($this->getWorkflowTemplateId())
+			->setUserId($this->getUserIdOnExecute())
+			->setInstanceId($this->workflow->getInstanceId())
+			->setBlocks($blocks)
+			->setTemplateName($templateName)
+			->setTemplateDescription($templateDescription)
+			->send()
+		;
 	}
 }

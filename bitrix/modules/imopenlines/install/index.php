@@ -155,6 +155,9 @@ final class imopenlines extends \CModule
 		/** @see \Bitrix\Imopenlines\MessageParameter::onInitTypes */
 		$eventManager->registerEventHandler('im', 'OnMessageParamTypesInit', 'imopenlines', '\Bitrix\ImOpenLines\MessageParameter', 'onInitTypes');
 
+		/** @see \Bitrix\ImOpenLines\V2\Message\EventHandler::onBeforeSendMessageExternalChatLines */
+		$eventManager->registerEventHandler('im', 'OnBeforeSendMessageExternalChatLines', 'imopenlines', '\Bitrix\ImOpenLines\V2\Message\EventHandler', 'onBeforeSendMessageExternalChatLines');
+
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedPost', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedPost');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedMessageUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedPostUpdate');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedMessage', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedMessage');
@@ -491,6 +494,7 @@ final class imopenlines extends \CModule
 		$eventManager->unRegisterEventHandler('im', 'OnStartWriting', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongWriting');
 		$eventManager->unRegisterEventHandler('im', 'OnChatRename', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongChatRename');
 		$eventManager->unRegisterEventHandler('im', 'OnGetNotifySchema', 'imopenlines', '\Bitrix\ImOpenLines\Chat', 'onGetNotifySchema');
+		$eventManager->unRegisterEventHandler('im', 'OnBeforeSendMessageExternalChatLines', 'imopenlines', '\Bitrix\ImOpenLines\V2\Message\EventHandler', 'onBeforeSendMessageExternalChatLines');
 
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedPost', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedPost');
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedPostUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedPostUpdate');

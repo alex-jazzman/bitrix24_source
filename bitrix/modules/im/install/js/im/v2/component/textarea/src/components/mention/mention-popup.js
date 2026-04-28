@@ -1,13 +1,14 @@
+import { type PopupOptions } from 'main.popup';
+import { type EventEmitter } from 'main.core.events';
+
 import { MessengerPopup } from 'im.v2.component.elements.popup';
-import { ChatType } from 'im.v2.const';
+import { ChatType, EventType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { type ImModelChat } from 'im.v2.model';
 
 import { MentionPopupContent } from './mention-content';
 
 import './css/mention-popup.css';
-
-import type { PopupOptions } from 'main.popup';
-import type { ImModelChat } from 'im.v2.model';
 
 const POPUP_ID = 'im-mention-popup';
 
@@ -30,7 +31,7 @@ export const MentionPopup = {
 			default: '',
 		},
 	},
-	emits: ['close'],
+	emits: ['close', 'onFocusTextarea'],
 	computed:
 	{
 		POPUP_ID: () => POPUP_ID,
@@ -74,6 +75,24 @@ export const MentionPopup = {
 				},
 				className: 'bx-im-mention-popup__scope',
 			};
+		},
+	},
+	created()
+	{
+		this.getEmitter().subscribe(EventType.mention.onNestedMenuClosed, this.onFocusTextarea);
+	},
+	beforeUnmount()
+	{
+		this.getEmitter().unsubscribe(EventType.mention.onNestedMenuClosed, this.onFocusTextarea);
+	},
+	methods: {
+		onFocusTextarea()
+		{
+			this.$emit('onFocusTextarea');
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 	},
 	template: `

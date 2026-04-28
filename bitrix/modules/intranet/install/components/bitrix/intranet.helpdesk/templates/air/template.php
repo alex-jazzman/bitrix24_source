@@ -23,6 +23,7 @@ Main\UI\Extension::load(['ui.icons.b24', 'sidepanel']);
 
 <div class="air-header__button">
 	<button class="air-header-button" id="bx-help-block">
+		<i class="ui-icon-set --o-question air-header-button__icon"></i>
 		<span class="air-header-button__text"><?= Loc::getMessage('AUTH_HELP') ?></span>
 		<span class="air-header-button__counter" id="bx-help-notify"></span>
 	</button>

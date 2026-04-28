@@ -26,7 +26,7 @@
 	transform: translate(-50%, -50%);
 	width: 50%;
 	height: 50%;
-	mask-image: var(--ui-icon-set__path_picture);
+	mask-image: var(--o-ui-icon-set__path_image);
 	mask-size: 100%;
 	mask-position: center;
 	mask-repeat: no-repeat;

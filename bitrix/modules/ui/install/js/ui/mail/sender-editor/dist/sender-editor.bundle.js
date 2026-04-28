@@ -144,6 +144,9 @@ this.BX.UI = this.BX.UI || {};
 	            new ui_layoutForm.LayoutForm({
 	              container: instance.limitSection
 	            });
+	            new ui_layoutForm.LayoutForm({
+	              container: instance.senderSection
+	            });
 	          });
 	        }
 	      }
@@ -211,6 +214,7 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	}
 	function _setFieldData2(senderData) {
+	  this.useName.checked = senderData.useName;
 	  this.nameField.value = senderData.name;
 	  this.accessField.checked = senderData.isPublic;
 	  this.emailField.value = senderData.email;
@@ -293,6 +297,7 @@ this.BX.UI = this.BX.UI || {};
 	  this.email = this.emailField.value;
 	  const data = {
 	    id: (_this$senderId = this.senderId) != null ? _this$senderId : null,
+	    useName: this.useName.checked ? 'Y' : 'N',
 	    name: this.nameField.value,
 	    email: this.email,
 	    smtp: {},
@@ -339,6 +344,7 @@ this.BX.UI = this.BX.UI || {};
 	  var _top$BX$UI$Hint;
 	  const {
 	    root,
+	    senderUseNameCheckbox,
 	    nameField,
 	    accessField
 	  } = main_core.Tag.render(_t3 || (_t3 = _`
@@ -346,29 +352,36 @@ this.BX.UI = this.BX.UI || {};
 				<div class="ui-slider-content-box">
 					<div class="ui-slider-heading-4">${0}</div>
 					<div class="ui-form-row">
-						<div class="ui-ctl-top smtp-sender-name">
-							<div class="ui-form-label">${0}</div>
-							<span data-hint="${0}"></span>
+						<div class="ui-form-label" data-form-row-hidden="">
+							<label class="ui-ctl ui-ctl-checkbox smtp-editor-limit-checkbox">
+								<input type="checkbox" class="ui-ctl-element" data-name="hasSenderName" ref="senderUseNameCheckbox">
+								<div class="ui-ctl-label-text">${0}</div>
+							</label>
 						</div>
-						<div class="ui-form-row-inline ui-ctl-w100">
+						<div class="ui-form-row-hidden">
 							<div class="ui-form-row">
+								<div class="ui-ctl-top">
+									<div class="ui-form-label">${0}</div>
+									<span data-hint="${0}"></span>
+								</div>
 								<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
 									<input type="text" data-name="name" value="" class="ui-ctl-element" ref="nameField">
 								</div>
 							</div>
-							<div class="ui-form-row">
-								<label class="ui-ctl ui-ctl-checkbox">
-									<input type="checkbox" class="ui-ctl-element" data-name="access" ref="accessField">
-									<div class="ui-ctl-label-text">${0}</div>
-									<span data-hint="${0}"></span>
-								</label>
-							</div>
 						</div>
+					</div>
+					<div class="ui-form-row">
+						<label class="ui-ctl ui-ctl-checkbox">
+							<input type="checkbox" class="ui-ctl-element" data-name="access" ref="accessField">
+							<div class="ui-ctl-label-text">${0}</div>
+							<span data-hint="${0}"></span>
+						</label>
 					</div>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_MAIN_SECTION_TITLE'), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_NAME'), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_NAME_HINT'), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_AVAILABLE_TOGGLE'), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_AVAILABLE_TOGGLE_HINT'));
+		`), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_MAIN_SECTION_TITLE'), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_USE_SENDER_NAME'), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_NAME'), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_NAME_HINT'), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_AVAILABLE_TOGGLE'), main_core.Loc.getMessage('UI_MAIL_SMTP_SLIDER_SENDER_AVAILABLE_TOGGLE_HINT'));
 	  this.senderSection = root;
+	  this.useName = senderUseNameCheckbox;
 	  this.nameField = nameField;
 	  this.accessField = accessField;
 	  this.hintInstence = (_top$BX$UI$Hint = top.BX.UI.Hint) == null ? void 0 : _top$BX$UI$Hint.createInstance();
@@ -654,7 +667,8 @@ this.BX.UI = this.BX.UI || {};
 	  _t17,
 	  _t18,
 	  _t19,
-	  _t20;
+	  _t20,
+	  _t21;
 	const mailboxType = 'mailbox';
 	const senderType$1 = 'sender';
 	const mailboxSenderType = 'mailboxSender';
@@ -1001,7 +1015,7 @@ this.BX.UI = this.BX.UI || {};
 	    textNode: nameTextContainer
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _renderSenderNameContainer)[_renderSenderNameContainer](sender.name);
 	  let handleShowEditInput = null;
-	  if (sender.canEdit) {
+	  if (sender.canEdit && sender.type === aliasType) {
 	    const {
 	      nameEditContainer,
 	      editInput: nameEditInput
@@ -1125,22 +1139,26 @@ this.BX.UI = this.BX.UI || {};
 	  if (!sender.canEdit && !sender.isOwner) {
 	    return senderEditContainer;
 	  }
-	  const senderNameEditButton = main_core.Tag.render(_t12 || (_t12 = _$1`
-			<div class="sender-item-btn ui-btn ui-btn-xs ui-icon-set --pencil-50"></div>
-		`));
-	  main_core.Dom.append(senderNameEditButton, senderEditContainer);
-	  if (handleShowInput) {
-	    main_core.Event.bind(senderNameEditButton, 'click', handleShowInput);
-	  }
 	  if (sender.type === aliasType) {
+	    const senderNameEditButton = main_core.Tag.render(_t12 || (_t12 = _$1`
+				<div class="sender-item-btn ui-btn ui-btn-xs ui-icon-set --pencil-50"></div>
+			`));
+	    main_core.Dom.append(senderNameEditButton, senderEditContainer);
+	    if (handleShowInput) {
+	      main_core.Event.bind(senderNameEditButton, 'click', handleShowInput);
+	    }
 	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderDeleteButton)[_renderDeleteButton](sender.id, senderNode), senderEditContainer);
 	    return senderEditContainer;
 	  }
+	  const senderNameEditButton = main_core.Tag.render(_t13 || (_t13 = _$1`
+			<div class="sender-item-btn"></div>
+		`));
+	  main_core.Dom.append(senderNameEditButton, senderEditContainer);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderSettingsButton)[_renderSettingsButton](sender.type, sender.id, sender.editHref), senderEditContainer);
 	  return senderEditContainer;
 	}
 	function _renderSenderAuthorContainer2(sender, senderNode) {
-	  const authorEditContainer = main_core.Tag.render(_t13 || (_t13 = _$1`
+	  const authorEditContainer = main_core.Tag.render(_t14 || (_t14 = _$1`
 			<div class="sender-item-author-container"></div>
 		`));
 	  if (sender.userUrl) {
@@ -1153,7 +1171,7 @@ this.BX.UI = this.BX.UI || {};
 	  const {
 	    root,
 	    userAvatarContainer
-	  } = main_core.Tag.render(_t14 || (_t14 = _$1`
+	  } = main_core.Tag.render(_t15 || (_t15 = _$1`
 			<div class="sender-item-owner-info">
 				${0}
 				<a href="${0}" class="ui-icon ui-icon-common-user sender-item-owner-avatar" ref="userAvatarContainer"></a> 
@@ -1161,15 +1179,15 @@ this.BX.UI = this.BX.UI || {};
 		`), main_core.Loc.getMessage('UI_MAIL_ALIAS_EDITOR_ANOTHER_USER_SENDER_NAME'), main_core.Text.encode(userUrl));
 	  let avatarIcon = '';
 	  if (avatar) {
-	    avatarIcon = main_core.Tag.render(_t15 || (_t15 = _$1`<i style="background-image: url('${0}')"></i>`), main_core.Text.encode(avatar));
+	    avatarIcon = main_core.Tag.render(_t16 || (_t16 = _$1`<i style="background-image: url('${0}')"></i>`), main_core.Text.encode(avatar));
 	  } else {
-	    avatarIcon = main_core.Tag.render(_t16 || (_t16 = _$1`<div class="sender-item-owner-avatar-icon ui-icon-set --person"></div>`));
+	    avatarIcon = main_core.Tag.render(_t17 || (_t17 = _$1`<div class="sender-item-owner-avatar-icon ui-icon-set --person"></div>`));
 	  }
 	  main_core.Dom.append(avatarIcon, userAvatarContainer);
 	  return root;
 	}
 	function _renderDeleteButton2(senderId, senderNode) {
-	  const deleteButton = main_core.Tag.render(_t17 || (_t17 = _$1`
+	  const deleteButton = main_core.Tag.render(_t18 || (_t18 = _$1`
 			<div class="sender-item-btn ui-btn ui-btn-xs ui-icon-set --trash-bin" style="margin: 0"></div>
 		`));
 	  main_core.Event.bind(deleteButton, 'click', () => {
@@ -1195,7 +1213,7 @@ this.BX.UI = this.BX.UI || {};
 	  return deleteButton;
 	}
 	function _renderSettingsButton2(type, senderId, editHref) {
-	  const editButton = main_core.Tag.render(_t18 || (_t18 = _$1`
+	  const editButton = main_core.Tag.render(_t19 || (_t19 = _$1`
 			<div class="sender-item-btn ui-btn ui-btn-xs ui-icon-set --settings-1" style="margin: 0"></div>
 		`));
 	  if (type === mailboxSenderType) {
@@ -1210,7 +1228,7 @@ this.BX.UI = this.BX.UI || {};
 	  return editButton;
 	}
 	function _renderSubmitButton2(submitPromise, targetElement) {
-	  const submitButton = main_core.Tag.render(_t19 || (_t19 = _$1`
+	  const submitButton = main_core.Tag.render(_t20 || (_t20 = _$1`
 			<div class="ui-btn ui-btn-xs ui-btn-primary ui-btn-icon-done" style="margin: 0"></div>
 		`));
 	  main_core.Event.bind(submitButton, 'click', () => {
@@ -1227,7 +1245,7 @@ this.BX.UI = this.BX.UI || {};
 	  return submitButton;
 	}
 	function _renderCancelButton2(cancelHandler) {
-	  const cancelButton = main_core.Tag.render(_t20 || (_t20 = _$1`
+	  const cancelButton = main_core.Tag.render(_t21 || (_t21 = _$1`
 			<div class="sender-item-btn ui-btn ui-btn-xs ui-icon-set --cross-45" style="margin: 0"></div>
 		`));
 	  main_core.Event.bind(cancelButton, 'click', cancelHandler);

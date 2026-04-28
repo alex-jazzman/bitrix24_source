@@ -39,15 +39,21 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 
 		/**
 		 * @param {string[]} methodList
+		 * @param {object} options
 		 * @description Sends a request to initialize messenger component.
 		 * If some common data for different contexts has not been received before, it also requests it.
 		 * Other contexts may be waiting for the request to be ready from the massager context
 		 * if the common data is not saved in the storage.
 		 */
-		async runAction(methodList)
+		async runAction(methodList, options = {})
 		{
 			const data = this.#prepareActionData(methodList);
-			let result = await runAction(this.actionName, { data });
+			let result = await runAction(this.actionName, {
+				data: {
+					...data,
+					options,
+				},
+			});
 
 			if (this.#hasCommonActionResultStore())
 			{
@@ -127,7 +133,14 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 			const preparedData = { ...data };
 			if (preparedData.methodList.includes('portalCounters'))
 			{
-				preparedData.options = { siteId: env.siteId };
+				preparedData.options ??= {};
+				preparedData.options.siteId = env.siteId;
+			}
+
+			if (preparedData.methodList.includes('chatsList'))
+			{
+				preparedData.options ??= {};
+				preparedData.options.withCounters = 'N';
 			}
 
 			return preparedData;

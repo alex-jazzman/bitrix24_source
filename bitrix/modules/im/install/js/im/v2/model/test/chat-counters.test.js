@@ -1,311 +1,495 @@
+import { Builder, type Store } from 'ui.vue3.vuex';
+
+import { RecentType } from 'im.v2.const';
+import { type ImModelCounter } from 'im.v2.model';
 import 'im.v2.test';
-import { Core } from 'im.v2.application.core';
-import { RecentModel } from 'im.v2.model';
 
-import type { Store } from 'ui.vue3.vuex';
+import { CountersModel } from '../src/counters/counters';
 
-const INITIAL_COUNTERS = {
-	1: 1,
-	2: 2,
-	3: 3,
-	4: 4,
-	5: 5,
-	6: 6,
-	7: 7,
-	8: 8,
-};
-const INITIAL_TOTAL_COUNTER = Object.values(INITIAL_COUNTERS).reduce((prev, curr) => {
-	return prev + curr;
-}, 0);
-
-describe('chat counters', () => {
+describe('CountersModel', () => {
 	let store: Store = null;
 
-	before(async () => {
-		await Core.ready();
-		store = Core.getStore();
+	const initStore = async () => {
+		const builder = Builder.init().addModel(CountersModel.create());
+		const { store: builtStore } = await builder.build();
+
+		return builtStore;
+	};
+
+	beforeEach(async () => {
+		store = await initStore();
 	});
 
-	beforeEach(() => {
-		sinon.stub(Core, 'getUserId').returns(1);
-	});
+	describe('getters', () => {
+		describe('getTotalCounterByRecentType', () => {
+			it('should calculate total counter for default recent', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 3, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 3, counter: 10, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 4, counter: 2, recentSections: [RecentType.default, RecentType.copilot] }),
+				];
 
-	afterEach(() => {
-		Core.storeBuilder.clearModelState();
-		sinon.restore();
-	});
+				await store.dispatch('counters/setCounters', counters);
 
-	describe('initial counters', () => {
-		it('should store initial counters', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const unloadedChatCounters = store.getters['counters/getUnloadedChatCounters'];
-			assert.deepEqual(unloadedChatCounters, INITIAL_COUNTERS);
-		});
-
-		it('should return total counter for initial counters', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const totalCounter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounter, INITIAL_TOTAL_COUNTER);
-		});
-	});
-
-	describe('updating after adding new items to recent', () => {
-		it('should update state after adding new items to the recent list', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItems = [
-				getRecentItem({ dialogId: 'chat5', chat_id: 5, counter: 5 }),
-				getRecentItem({ dialogId: 'chat6', chat_id: 6, counter: 6 }),
-				getRecentItem({ dialogId: 'chat7', chat_id: 7, counter: 7 }),
-				getRecentItem({ dialogId: 'chat8', chat_id: 8, counter: 8 }),
-			];
-			await store.dispatch('recent/setRecent', newRecentItems);
-			await store.dispatch('chats/set', newRecentItems);
-
-			const expectedUnloadedChatCounters = {
-				1: 1,
-				2: 2,
-				3: 3,
-				4: 4,
-			};
-
-			const unloadedChatCounters = store.getters['counters/getUnloadedChatCounters'];
-			assert.deepEqual(unloadedChatCounters, expectedUnloadedChatCounters);
-		});
-
-		it('should keep total counter the same after adding new items to the recent list', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItems = [
-				getRecentItem({ dialogId: 'chat5', chat_id: 5, counter: 5 }),
-				getRecentItem({ dialogId: 'chat6', chat_id: 6, counter: 6 }),
-				getRecentItem({ dialogId: 'chat7', chat_id: 7, counter: 7 }),
-				getRecentItem({ dialogId: 'chat8', chat_id: 8, counter: 8 }),
-			];
-			await store.dispatch('recent/setRecent', newRecentItems);
-			await store.dispatch('chats/set', newRecentItems);
-
-			const totalCounter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounter, INITIAL_TOTAL_COUNTER);
-		});
-
-		it('should keep total counter the same after adding new single item to the recent list', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItem = getRecentItem({ dialogId: 'chat8', chat_id: 8, counter: 8 });
-			await store.dispatch('recent/setRecent', newRecentItem);
-			await store.dispatch('chats/set', newRecentItem);
-
-			const totalCounter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounter, INITIAL_TOTAL_COUNTER);
-		});
-	});
-
-	describe('working with muted chats', () => {
-		it('should not count muted chats for current user total counter', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItem = getRecentItem({ dialogId: 'chat8', chat_id: 8, counter: 8, muteList: [1] });
-			await store.dispatch('recent/setRecent', newRecentItem);
-			await store.dispatch('chats/set', newRecentItem);
-
-			const totalCounter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounter, INITIAL_TOTAL_COUNTER - 8);
-		});
-
-		it('should decrement total counter after muting the chat', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItem = getRecentItem({ dialogId: 'chat8', chat_id: 8, counter: 8 });
-			await store.dispatch('recent/setRecent', newRecentItem);
-			await store.dispatch('chats/set', newRecentItem);
-
-			const totalCounterBeforeMute = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounterBeforeMute, INITIAL_TOTAL_COUNTER, 'FIRST');
-
-			await store.dispatch('chats/mute', { dialogId: 'chat8' });
-			const totalCounterAfterMute = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounterAfterMute, INITIAL_TOTAL_COUNTER - 8, 'SECOND');
-		});
-
-		it('should increment total counter after unmuting the chat', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItem = getRecentItem({ dialogId: 'chat8', chat_id: 8, counter: 8, muteList: [1] });
-			await store.dispatch('recent/setRecent', newRecentItem);
-			await store.dispatch('chats/set', newRecentItem);
-
-			const totalCounterBeforeUnmute = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounterBeforeUnmute, INITIAL_TOTAL_COUNTER - 8);
-
-			await store.dispatch('chats/unmute', { dialogId: 'chat8' });
-			const totalCounterAfterUnmute = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounterAfterUnmute, INITIAL_TOTAL_COUNTER);
-		});
-	});
-
-	describe('working with marked chats', () => {
-		it('should add 1 to total counter for unmuted marked chat without counter', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItems = [
-				getRecentItem({ dialogId: 'chat9', chat_id: 9, counter: 0, unread: true }),
-				getRecentItem({ dialogId: 'chat10', chat_id: 10, counter: 0, unread: true }),
-			];
-			await store.dispatch('recent/setRecent', newRecentItems);
-			await store.dispatch('chats/set', newRecentItems);
-
-			const totalCounter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounter, INITIAL_TOTAL_COUNTER + 2);
-		});
-
-		it('should not add 1 to total counter for unmuted marked chat with counter', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItems = [
-				getRecentItem({dialogId: 'chat7', chat_id: 7, counter: 7, unread: true}),
-				getRecentItem({dialogId: 'chat8', chat_id: 8, counter: 8, unread: true})
-			];
-			await store.dispatch('recent/setRecent', newRecentItems);
-			await store.dispatch('chats/set', newRecentItems);
-
-			const totalCounter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounter, INITIAL_TOTAL_COUNTER);
-		});
-
-		it('should not add 1 to total counter for muted marked chat without counter', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItems = [
-				getRecentItem({dialogId: 'chat9', chat_id: 9, counter: 0, unread: true, muteList: [1]}),
-				getRecentItem({dialogId: 'chat10', chat_id: 10, counter: 0, unread: true, muteList: [1]})
-			];
-			await store.dispatch('recent/setRecent', newRecentItems);
-			await store.dispatch('chats/set', newRecentItems);
-
-			const totalCounter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounter, INITIAL_TOTAL_COUNTER);
-		});
-
-		it('should not add 1 to total counter for muted marked chat with counter', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItems = [
-				getRecentItem({dialogId: 'chat9', chat_id: 9, counter: 9, unread: true, muteList: [1]}),
-				getRecentItem({dialogId: 'chat10', chat_id: 10, counter: 10, unread: true, muteList: [1]})
-			];
-			await store.dispatch('recent/setRecent', newRecentItems);
-			await store.dispatch('chats/set', newRecentItems);
-
-			const totalCounter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounter, INITIAL_TOTAL_COUNTER);
-		});
-	});
-
-	describe('updating single counters for existing chats', () => {
-		it('should not update state after updating counter for existing chat', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-
-			const newRecentItems = [
-				getRecentItem({ dialogId: 'chat5', chat_id: 5, counter: 5 }),
-				getRecentItem({ dialogId: 'chat6', chat_id: 6, counter: 6 }),
-				getRecentItem({ dialogId: 'chat7', chat_id: 7, counter: 7 }),
-				getRecentItem({ dialogId: 'chat8', chat_id: 8, counter: 8 }),
-			];
-			await store.dispatch('recent/setRecent', newRecentItems);
-			await store.dispatch('chats/set', newRecentItems);
-			await store.dispatch('chats/update', {
-				dialogId: 'chat7',
-				fields: { counter: 8 },
+				const counter = store.getters['counters/getTotalChatCounter'];
+				assert.equal(counter, 10);
 			});
 
-			const expectedUnloadedChatCounters = {
-				1: 1,
-				2: 2,
-				3: 3,
-				4: 4,
-			};
+			it('should calculate total counter for specific recent', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 3, counter: 10, recentSections: [RecentType.collab] }),
+				];
 
-			const unloadedChatCounters = store.getters['counters/getUnloadedChatCounters'];
-			assert.deepEqual(unloadedChatCounters, expectedUnloadedChatCounters);
+				await store.dispatch('counters/setCounters', counters);
+
+				const counter = store.getters['counters/getTotalCollabCounter'];
+				assert.equal(counter, 10);
+			});
 		});
 
-		it('should update total counter after updating counter for existing chat', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
+		describe('getTotalCounterByIds', () => {
+			it('should calculate total counter for provided ids', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 3, counter: 7, recentSections: [RecentType.copilot] }),
+					getCounterItem({ chatId: 4, counter: 8, parentChatId: 1 }),
+				];
 
-			const newRecentItems = [
-				getRecentItem({ dialogId: 'chat5', chat_id: 5, counter: 5 }),
-				getRecentItem({ dialogId: 'chat6', chat_id: 6, counter: 6 }),
-				getRecentItem({ dialogId: 'chat7', chat_id: 7, counter: 7 }),
-				getRecentItem({ dialogId: 'chat8', chat_id: 8, counter: 8 }),
-			];
-			await store.dispatch('recent/setRecent', newRecentItems);
-			await store.dispatch('chats/set', newRecentItems);
-			await store.dispatch('chats/update', {
-				dialogId: 'chat7',
-				fields: { counter: 8 },
+				await store.dispatch('counters/setCounters', counters);
+
+				const counter = store.getters['counters/getTotalCounterByIds']([1, 2, 3]);
+				assert.equal(counter, 18);
+			});
+		});
+
+		describe('getChildrenTotalCounter', () => {
+			it('should calculate total counter of children chats for provided parentChatId', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 3, counter: 7, parentChatId: 2 }),
+					getCounterItem({ chatId: 4, counter: 8, parentChatId: 1 }),
+					getCounterItem({ chatId: 5, counter: 9, parentChatId: 1 }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+
+				const counter = store.getters['counters/getChildrenTotalCounter'](1);
+				assert.equal(counter, 17);
 			});
 
-			const totalCounter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounter, INITIAL_TOTAL_COUNTER + 1);
+			it('should return 0 for empty parentChatId', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 3, counter: 7, parentChatId: 2 }),
+					getCounterItem({ chatId: 4, counter: 8, parentChatId: 1 }),
+					getCounterItem({ chatId: 5, counter: 9, parentChatId: 1 }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+
+				const counter = store.getters['counters/getChildrenTotalCounter'](0);
+				assert.equal(counter, 0);
+			});
+		});
+
+		describe('getChildrenIdsWithCounter', () => {
+			it('should get ids of children chats with counter for provided parentChatId', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 3, counter: 7, parentChatId: 2 }),
+					getCounterItem({ chatId: 4, counter: 8, parentChatId: 1 }),
+					getCounterItem({ chatId: 5, counter: 9, parentChatId: 1 }),
+					getCounterItem({ chatId: 6, counter: 0, isMarkedAsUnread: true, parentChatId: 1 }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+
+				const ids = store.getters['counters/getChildrenIdsWithCounter'](1);
+				assert.deepStrictEqual(ids, [4, 5]);
+			});
+
+			it('should return empty array for empty parentChatId', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 3, counter: 7, parentChatId: 2 }),
+					getCounterItem({ chatId: 4, counter: 8, parentChatId: 1 }),
+					getCounterItem({ chatId: 5, counter: 9, parentChatId: 1 }),
+					getCounterItem({ chatId: 6, counter: 0, isMarkedAsUnread: true, parentChatId: 1 }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+
+				const ids = store.getters['counters/getChildrenIdsWithCounter'](0);
+				assert.deepStrictEqual(ids, []);
+			});
+		});
+
+		describe('getCounterByChatId', () => {
+			it('should get counter for provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+
+				const counter = store.getters['counters/getCounterByChatId'](2);
+				assert.equal(counter, 6);
+			});
+
+			it('should return 0 if there is no entry for provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+
+				const counter = store.getters['counters/getCounterByChatId'](3);
+				assert.equal(counter, 0);
+			});
+		});
+
+		describe('getUnreadStatus', () => {
+			it('should get unread status for provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, isMarkedAsUnread: true, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, isMarkedAsUnread: false, recentSections: [RecentType.default] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+
+				const withUnread = store.getters['counters/getUnreadStatus'](1);
+				const withoutUnread = store.getters['counters/getUnreadStatus'](2);
+				assert.equal(withUnread, true);
+				assert.equal(withoutUnread, false);
+			});
+
+			it('should return false if there is no entry for provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, isMarkedAsUnread: true, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, isMarkedAsUnread: false, recentSections: [RecentType.default] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+
+				const status = store.getters['counters/getUnreadStatus'](3);
+				assert.equal(status, false);
+			});
 		});
 	});
 
-	describe('updating single counters for unloaded chats', () => {
-		it('should update state after updating counter for unloaded chat', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-			const newCounter = { 5: 6 };
-			await store.dispatch('counters/setUnloadedChatCounters', newCounter);
-			const expectedUnloadedChatCounters = { ...INITIAL_COUNTERS, 5: 6 };
+	describe('actions', () => {
+		describe('setCounters', () => {
+			it('should save provided counters array as mapped objects', async () => {
+				const firstChat = getCounterItem({
+					chatId: 1,
+					counter: 0,
+					isMuted: false,
+					isMarkedAsUnread: true,
+					parentChatId: 0,
+					recentSections: [RecentType.default],
+				});
+				const secondChat = getCounterItem({
+					chatId: 2,
+					counter: 1,
+					isMuted: true,
+					isMarkedAsUnread: false,
+					parentChatId: 0,
+					recentSections: [RecentType.default, RecentType.copilot],
+				});
+				const counters = [firstChat, secondChat];
 
-			const unloadedChatCounters = store.getters['counters/getUnloadedChatCounters'];
-			assert.deepEqual(unloadedChatCounters, expectedUnloadedChatCounters);
+				await store.dispatch('counters/setCounters', counters);
+
+				const result = store.state.counters.collection;
+				const expectedResult = {
+					1: { ...firstChat },
+					2: { ...secondChat },
+				};
+				assert.deepStrictEqual(result, expectedResult);
+			});
+
+			it('should handle only arrays', async () => {
+				const firstChat = getCounterItem({
+					chatId: 1,
+					counter: 0,
+					isMuted: false,
+					isMarkedAsUnread: true,
+					parentChatId: 0,
+					recentSections: [RecentType.default],
+				});
+
+				await store.dispatch('counters/setCounters', firstChat);
+
+				const result = store.state.counters.collection;
+				assert.deepStrictEqual(result, {});
+			});
 		});
+		describe('setCounter', () => {
+			it('should set counter for provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+				];
 
-		it('should update total counter after updating counter for unloaded chat', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
-			const newCounter = { 5: 6 };
-			await store.dispatch('counters/setUnloadedChatCounters', newCounter);
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/setCounter', {
+					chatId: 1,
+					counter: 9,
+				});
 
-			const totalCounter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounter, INITIAL_TOTAL_COUNTER + 1);
+				const counter = store.getters['counters/getCounterByChatId'](1);
+				assert.equal(counter, 9);
+			});
+
+			it('should do nothing if there is no entry for provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/setCounter', {
+					chatId: 3,
+					counter: 9,
+				});
+
+				const counter = store.getters['counters/getCounterByChatId'](3);
+				assert.equal(counter, 0);
+			});
+		});
+		describe('setUnreadStatus', () => {
+			it('should set unread status for provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/setUnreadStatus', {
+					chatId: 1,
+					status: true,
+				});
+
+				const status = store.getters['counters/getUnreadStatus'](1);
+				assert.equal(status, true);
+			});
+
+			it('should do nothing if there is no entry for provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/setUnreadStatus', {
+					chatId: 3,
+					status: true,
+				});
+
+				const status = store.getters['counters/getUnreadStatus'](3);
+				assert.equal(status, false);
+			});
+		});
+		describe('setMuteStatus', () => {
+			it('should set mute status for provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/setMuteStatus', {
+					chatId: 1,
+					status: true,
+				});
+
+				const collectionItem: ImModelCounter = store.state.counters.collection[1];
+				const status = collectionItem.isMuted;
+				assert.equal(status, true);
+			});
+
+			it('should do nothing if there is no entry for provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/setMuteStatus', {
+					chatId: 3,
+					counter: true,
+				});
+
+				const collectionItem: ImModelCounter = store.state.counters.collection[3];
+				assert.equal(collectionItem, undefined);
+			});
+		});
+		describe('clearByRecentType', () => {
+			it('should clear all entries of provided recent type', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 3, counter: 6, recentSections: [RecentType.default, RecentType.copilot] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/clearByRecentType', { recentType: RecentType.default });
+
+				const collectionLength: ImModelCounter = Object.values(store.state.counters.collection).length;
+				assert.equal(collectionLength, 1);
+			});
+
+			it('should clear all children chats of provided recent type', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 3, counter: 6, recentSections: [RecentType.default, RecentType.copilot] }),
+					getCounterItem({ chatId: 4, parentChatId: 3 }),
+					getCounterItem({ chatId: 5, parentChatId: 3 }),
+					getCounterItem({ chatId: 6, parentChatId: 2 }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/clearByRecentType', { recentType: RecentType.default });
+
+				const collectionLength: ImModelCounter = Object.values(store.state.counters.collection).length;
+				assert.equal(collectionLength, 2);
+			});
+		});
+		describe('clearById', () => {
+			it('should clear entry by provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 3, counter: 6, recentSections: [RecentType.default, RecentType.copilot] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/clearById', { chatId: 3 });
+				await store.dispatch('counters/clearById', { chatId: 4 });
+
+				const collectionLength: ImModelCounter = Object.values(store.state.counters.collection).length;
+				assert.equal(collectionLength, 2);
+			});
+
+			it('should clear all children chats of provided chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 4, parentChatId: 1 }),
+					getCounterItem({ chatId: 5, parentChatId: 1 }),
+					getCounterItem({ chatId: 6, parentChatId: 2 }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/clearById', { chatId: 1 });
+
+				const collectionLength: ImModelCounter = Object.values(store.state.counters.collection).length;
+				assert.equal(collectionLength, 2);
+			});
+		});
+		describe('clearByParentId', () => {
+			it('should clear all children chats by provided parent chat id', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 4, parentChatId: 1 }),
+					getCounterItem({ chatId: 5, parentChatId: 1 }),
+					getCounterItem({ chatId: 6, parentChatId: 2 }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/clearByParentId', { parentChatId: 1 });
+
+				const collectionLength: ImModelCounter = Object.values(store.state.counters.collection).length;
+				assert.equal(collectionLength, 3);
+			});
+		});
+		describe('clear', () => {
+			it('should clear all entries', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 4, parentChatId: 1 }),
+					getCounterItem({ chatId: 5, parentChatId: 1 }),
+					getCounterItem({ chatId: 6, parentChatId: 2 }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+				await store.dispatch('counters/clear');
+
+				const collectionLength: ImModelCounter = Object.values(store.state.counters.collection).length;
+				assert.equal(collectionLength, 0);
+			});
 		});
 	});
 
-	describe('adding counters after deleting item from recent', () => {
-		it('should update state after deleting item from recent', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
+	describe('total counters', () => {
+		it('should account for children chats for total counter', async () => {
+			const counters = [
+				getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+				getCounterItem({ chatId: 2, counter: 3, recentSections: [RecentType.default] }),
+				getCounterItem({ chatId: 3, counter: 10, recentSections: [RecentType.collab] }),
+				getCounterItem({ chatId: 4, counter: 2, recentSections: [RecentType.default, RecentType.copilot] }),
+				getCounterItem({ chatId: 5, parentChatId: 2, counter: 4 }),
+			];
 
-			const newRecentItem = getRecentItem({ dialogId: 'chat9', chat_id: 9, counter: 9 });
-			await store.dispatch('recent/setRecent', newRecentItem);
-			await store.dispatch('chats/set', newRecentItem);
+			await store.dispatch('counters/setCounters', counters);
 
-			await store.dispatch('recent/delete', { id: 'chat9' });
-
-			const unloadedChatCounters = store.getters['counters/getUnloadedChatCounters'];
-			assert.deepEqual(unloadedChatCounters, INITIAL_COUNTERS);
+			const totalCounter = store.getters['counters/getTotalChatCounter'];
+			assert.equal(totalCounter, 14);
 		});
 
-		it('should reduce total counter after deleting item from recent', async () => {
-			await store.dispatch('counters/setUnloadedChatCounters', INITIAL_COUNTERS);
+		it('should not account for muted chats for total counter', async () => {
+			const counters = [
+				getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+				getCounterItem({ chatId: 2, counter: 3, isMuted: true, recentSections: [RecentType.default] }),
+				getCounterItem({ chatId: 3, counter: 4, isMuted: true, parentChatId: 1 }),
+			];
 
-			const newRecentItem = getRecentItem({ dialogId: 'chat9', chat_id: 9, counter: 9 });
-			await store.dispatch('recent/setRecent', newRecentItem);
-			await store.dispatch('chats/set', newRecentItem);
+			await store.dispatch('counters/setCounters', counters);
 
-			const totalCounterBefore = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounterBefore, INITIAL_TOTAL_COUNTER + 9);
+			const totalCounter = store.getters['counters/getTotalChatCounter'];
+			assert.equal(totalCounter, 5);
+		});
 
-			await store.dispatch('recent/delete', { id: 'chat9' });
-			const totalCounterAfter = store.getters['counters/getTotalChatCounter'];
-			assert.equal(totalCounterAfter, INITIAL_TOTAL_COUNTER);
+		it('should not account for children chats if parent is muted for total counter', async () => {
+			const counters = [
+				getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+				getCounterItem({ chatId: 2, counter: 3, isMuted: true, recentSections: [RecentType.default] }),
+				getCounterItem({ chatId: 3, counter: 4, parentChatId: 2 }),
+			];
+
+			await store.dispatch('counters/setCounters', counters);
+
+			const totalCounter = store.getters['counters/getTotalChatCounter'];
+			assert.equal(totalCounter, 5);
+		});
+
+		it('should add 1 to total counter if there is no chat counter and chat is marked as unread', async () => {
+			const counters = [
+				getCounterItem({ chatId: 1, counter: 0, isMarkedAsUnread: true, recentSections: [RecentType.default] }),
+				getCounterItem({ chatId: 2, counter: 3, recentSections: [RecentType.default] }),
+			];
+
+			await store.dispatch('counters/setCounters', counters);
+
+			const totalCounter = store.getters['counters/getTotalChatCounter'];
+			assert.equal(totalCounter, 4);
 		});
 	});
 });
 
-function getRecentItem(params = {})
+function getCounterItem(params: Partial<ImModelCounter> = {}): ImModelCounter
 {
-	return { ...RecentModel.prototype.getElementState(), ...params };
+	return { ...CountersModel.prototype.getElementState(), ...params };
 }

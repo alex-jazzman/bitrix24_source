@@ -19,7 +19,7 @@ export class PinService
 	{
 		Logger.warn('PinService: pinChat', dialogId);
 		void this.#store.dispatch('recent/pin', {
-			id: dialogId,
+			dialogId,
 			action: true,
 		});
 		runAction(RestMethod.imV2RecentPin, { data: { dialogId } })
@@ -27,7 +27,7 @@ export class PinService
 				console.error('PinService: error pinning chat', error);
 				Notifier.recent.handlePinError(error);
 
-				void this.#store.dispatch('recent/pin', { id: dialogId, action: false });
+				void this.#store.dispatch('recent/pin', { dialogId, action: false });
 			});
 	}
 
@@ -35,7 +35,7 @@ export class PinService
 	{
 		Logger.warn('PinService: unpinChat', dialogId);
 		void this.#store.dispatch('recent/pin', {
-			id: dialogId,
+			dialogId,
 			action: false,
 		});
 		runAction(RestMethod.imV2RecentUnpin, { data: { dialogId } })
@@ -43,7 +43,7 @@ export class PinService
 				console.error('PinService: error unpinning chat', error);
 				Notifier.recent.onUnpinError();
 
-				void this.#store.dispatch('recent/pin', { id: dialogId, action: true });
+				void this.#store.dispatch('recent/pin', { dialogId, action: true });
 			});
 	}
 }

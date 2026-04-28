@@ -11,6 +11,7 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 		CopilotItem,
 		UserItem,
 		CallItem,
+		OpenlineItem,
 		AnnouncementItem,
 		ExtranetItem,
 		Support24NotifierItem,
@@ -195,6 +196,16 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 		toCallItem(callStatus, call)
 		{
 			return new CallItem(callStatus, call);
+		}
+
+		/**
+		 * @param {RecentModelState} modelItem
+		 * @param {object} options
+		 * @return {OpenlineItem}
+		 */
+		toOpenlineItem(modelItem, options)
+		{
+			return new OpenlineItem(modelItem, options);
 		}
 	}
 

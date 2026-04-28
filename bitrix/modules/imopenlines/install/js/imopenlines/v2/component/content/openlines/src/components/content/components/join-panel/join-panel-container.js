@@ -33,7 +33,7 @@ export const JoinPanelContainer = {
 		},
 		session(): ?ImolModelSession
 		{
-			return this.$store.getters['sessions/getByChatId'](this.dialog.chatId, true);
+			return this.$store.getters['openLines/sessions/getByChatId'](this.dialog.chatId, true);
 		},
 		isNewSession(): boolean
 		{

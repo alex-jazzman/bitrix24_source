@@ -31,6 +31,7 @@ import { MultiBooking } from './multi-booking/multi-booking';
 import { Banner } from './banner/banner';
 import { Trial } from './trial/trial';
 import { IntegrationsButton } from './integrations-button/integrations-button';
+import { SkusSettings } from './skus-settings/skus-settings';
 
 // @vue/component
 export const App = {
@@ -44,6 +45,7 @@ export const App = {
 		Banner,
 		Trial,
 		IntegrationsButton,
+		SkusSettings,
 		EmptyFilterResultsPopup,
 		WhatsappPopupChangesSendingMessages,
 	},
@@ -83,6 +85,7 @@ export const App = {
 			datesCount: `${Model.Filter}/datesCount`,
 			requestFields: `${Model.Filter}/requestFields`,
 			shouldShowWhatsAppEmergency: `${Model.Interface}/shouldShowWhatsAppEmergency`,
+			isReloadRelations: `${Model.Sku}/isReloadRelations`,
 		}),
 		hasSelectedCells(): boolean
 		{
@@ -121,6 +124,14 @@ export const App = {
 			if (!isFilterMode)
 			{
 				void this.fetchPage(this.selectedDateTs / 1000);
+			}
+		},
+		isReloadRelations(isReloadRelations: boolean): void
+		{
+			if (isReloadRelations)
+			{
+				void this.fetchPage(Date.now());
+				void this.$store.dispatch(`${Model.Sku}/setReloadRelations`, false);
 			}
 		},
 		isDeletingResourceFilterMode(isDeletingResourceFilterMode: boolean): void
@@ -510,6 +521,7 @@ export const App = {
 			<WhatsappPopupChangesSendingMessages
 				v-if="shouldShowWhatsAppEmergency"
 			/>
+			<SkusSettings/>
 		</div>
 	`,
 };

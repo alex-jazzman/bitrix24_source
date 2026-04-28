@@ -9,7 +9,7 @@ use \Bitrix\Imopenlines\Limit;
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'clipboard',
-	'intranet.old-interface.intranet-common',
+	'ui.buttons',
 ]);
 
 /** @var CBitrixComponentTemplate $this */
@@ -245,7 +245,7 @@ if(\Bitrix\Main\Loader::includeModule("bitrix24"))
 
 			<div class="crm-webform-list-button-settings-container">
 				<a onclick="BX.SidePanel.Instance.open('<?=str_replace('#ID#', $line['ID'], $arResult['PATH_TO_EDIT'])?>', {width: 996})"
-				   class="webform-small-button webform-small-button-transparent crm-webform-list-button-settings">
+				   class="ui-btn ui-btn-sm ui-btn-light-border crm-webform-list-button-settings">
 					<?if(!$line["CAN_EDIT"]):?>
 						<?=Loc::getMessage('OL_COMPONENT_LIST_ACTIONS_VIEW')?>
 					<?else:?>
@@ -256,7 +256,7 @@ if(\Bitrix\Main\Loader::includeModule("bitrix24"))
 				<span data-bx-crm-webform-item-active-btn=""
 					  data-bx-text-on="<?=Loc::getMessage('OL_COMPONENT_LIST_ITEM_ACTIVE_BTN_ON')?>"
 					  data-bx-text-off="<?=Loc::getMessage('OL_COMPONENT_LIST_ITEM_ACTIVE_BTN_OFF')?>"
-					  class="webform-small-button <?=($line['ACTIVE'] <> 'Y' ? 'webform-small-button-accept' : 'webform-small-button-transparent')?> crm-webform-list-button-settings"
+					  class="ui-btn ui-btn-sm <?=($line['ACTIVE'] <> 'Y' ? 'ui-btn-success' : 'ui-btn-light-border')?> crm-webform-list-button-settings"
 				>
 					<?if($line['ACTIVE'] == 'Y'):?>
 						<?=Loc::getMessage('OL_COMPONENT_LIST_ITEM_ACTIVE_BTN_OFF')?>
@@ -276,7 +276,7 @@ if(\Bitrix\Main\Loader::includeModule("bitrix24"))
 		(new CrmWebFormList(<?=Json::encode(
 			[
 				'context' => 'crm_web_form_list_container',
-				'canEdit' => true,
+				'canEdit' => $arResult['PERM_CAN_EDIT'],
 				'viewUserOptionName' => $arResult['userOptionViewType'],
 				'viewList' => $arResult['viewList'],
 				'actionList' => $arResult['actionList'],

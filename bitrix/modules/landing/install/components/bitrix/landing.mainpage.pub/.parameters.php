@@ -11,8 +11,13 @@ $arComponentParameters = [
 		// 	'TYPE' => 'LIST',
 		// 	'VALUES' => $types
 		// ),
-		'LID' => [
-			'NAME' => getMessage('LANDING_CMP_PAR_LID'),
+		// todo: pribraza in the phrases
+		'MODULE_ID' => [
+			'NAME' => getMessage('LANDING_CMP_LMP_MODULE_ID'),
+			'TYPE' => 'STRING'
+		],
+		'EMBED_ID' => [
+			'NAME' => getMessage('LANDING_CMP_LMP_EMBED_ID'),
 			'TYPE' => 'STRING'
 		],
 		'PATH' => [

@@ -4,6 +4,7 @@ import { Runtime } from 'main.core';
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 
+import { IframeCommunicationManager } from './classes/iframe-communication-manager';
 import { MarketService } from './classes/market-service';
 import { AvailabilityManager } from './classes/availability-manager';
 
@@ -102,5 +103,6 @@ export class MarketManager
 
 		void this.#store.dispatch('market/set', marketApps);
 		this.#marketService.setLoadLink(marketApps.links.load);
+		IframeCommunicationManager.init();
 	}
 }

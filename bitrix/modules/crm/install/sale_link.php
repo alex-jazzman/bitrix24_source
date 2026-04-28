@@ -459,6 +459,7 @@ foreach ($arOrderUserFields as $field)
 	{
 		global $APPLICATION;
 		$logger->critical('installExternalEntitiesError Add UF ' .  $arFields['FIELD_NAME'] . ' to ' . $arFields['ENTITY_ID'] . ' error: ' .$APPLICATION->GetException()->GetString() . ' [' . $APPLICATION->GetException()->GetID() . ']');
+/*
 		$errMsg[] = Loc::getMessage(
 			'CRM_CANT_ADD_USER_FIELD1',
 			[
@@ -467,6 +468,7 @@ foreach ($arOrderUserFields as $field)
 			]
 		);
 		$bError = true;
+*/
 	}
 }
 

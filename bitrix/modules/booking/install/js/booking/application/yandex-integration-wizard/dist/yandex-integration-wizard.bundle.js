@@ -1,12 +1,13 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,ui_vue3,booking_component_mixin_locMixin,booking_lib_sidePanelInstance,booking_model_yandexIntegrationWizard,booking_core,booking_component_loader,booking_component_avatar,booking_application_skuResourcesEditor,booking_lib_deepToRaw,booking_component_helpDeskLoc,booking_component_uiErrorMessage,ui_iconSet_api_vue,booking_utils,booking_component_uiResourceWizardItem,booking_provider_service_mainPageService,ui_vue3_vuex,main_core_events,booking_const,booking_component_button,booking_provider_service_yandexIntegrationWizardService,main_core,main_popup,ui_dialogs_messagebox) {
+(function (exports,ui_vue3,booking_component_mixin_locMixin,booking_lib_sidePanelInstance,booking_model_yandexIntegrationWizard,booking_core,booking_component_loader,booking_component_avatar,booking_application_skuResourcesEditor,booking_lib_deepToRaw,booking_provider_service_resourceDialogService,booking_component_helpDeskLoc,booking_component_uiErrorMessage,ui_iconSet_api_vue,booking_lib_utils,booking_component_uiResourceWizardItem,booking_provider_service_mainPageService,ui_vue3_vuex,main_core_events,booking_const,booking_component_button,booking_provider_service_yandexIntegrationWizardService,main_core,main_popup,ui_dialogs_messagebox) {
 	'use strict';
 
 	const {
 	  mapGetters
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.YandexIntegrationWizard);
+	const WRAPPER_CLASS = 'booking-yiw__wrapper';
 
 	// @vue/component
 	const YandexIntegrationWizardLayout = {
@@ -14,27 +15,33 @@ this.BX.Booking = this.BX.Booking || {};
 	  components: {
 	    Loader: booking_component_loader.Loader
 	  },
+	  provide() {
+	    return {
+	      menuTimeZoneContainerClass: WRAPPER_CLASS
+	    };
+	  },
 	  setup() {
 	    return {
-	      LoaderType: booking_component_loader.LoaderType
+	      LoaderType: booking_component_loader.LoaderType,
+	      wrapperClass: WRAPPER_CLASS
 	    };
 	  },
 	  computed: {
 	    ...mapGetters(['isFetching'])
 	  },
 	  template: `
-		<div class="yandex-integration-wizard-layout">
-			<div class="yandex-wizard__wrapper">
+		<div class="booking-yiw__layout">
+			<div :class="wrapperClass">
 				<slot name="header"/>
 				<div
-					class="yandex-wizard__content"
+					class="booking-yiw__content"
 					:class="{ '--loading': isFetching }"
 				>
 					<slot/>
 				</div>
 				<Loader
 					v-show="isFetching"
-					class = "yandex-wizard__loader"
+					class="booking-yiw__loader"
 					:options="{ type: LoaderType.DEFAULT }"
 				/>
 			</div>
@@ -65,55 +72,55 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  },
 	  template: `
-		<div class="yandex-wizard__title">
+		<div class="booking-yiw__title">
 			{{ loc('YANDEX_WIZARD_TITLE') }}
 		</div>
-		<div class="yandex-wizard__info">
-			<div class="yandex-wizard__info-text">
-				<div class="yandex-wizard__info_icon-block">
-					<div class="yandex-wizard__info_icon"></div>
+		<div class="booking-yiw__info">
+			<div class="booking-yiw__info-text">
+				<div class="booking-yiw__info_icon-block">
+					<div class="booking-yiw__info_icon"></div>
 				</div>
-				<div class="yandex-wizard__info-text_block">
-					<div class="yandex-wizard__info-text_title">
+				<div class="booking-yiw__info-text_block">
+					<div class="booking-yiw__info-text_title">
 						<EmptyRichLoc
 							:message="loc('YANDEX_WIZARD_SUB_TITLE')"
 							:rules="['br']"
 						/>
 					</div>
-					<div class="yandex-wizard__info-text_points">
-						<div class="yandex-wizard__info-text_point">
-							<div class="yandex-wizard__info-text_point-icon">
+					<div class="booking-yiw__info-text_points">
+						<div class="booking-yiw__info-text_point">
+							<div class="booking-yiw__info-text_point-icon">
 								<Icon
 									:name="Outline.OBSERVER"
 									color="white"
 									:size="14"
 								/>
 							</div>
-							<div class="yandex-wizard__info-text_point-icon-text">
+							<div class="booking-yiw__info-text_point-icon-text">
 								{{ loc('YANDEX_WIZARD_POINT_1') }}
 							</div>
 						</div>
-						<div class="yandex-wizard__info-text_point">
-							<div class="yandex-wizard__info-text_point-icon">
+						<div class="booking-yiw__info-text_point">
+							<div class="booking-yiw__info-text_point-icon">
 								<Icon
 									:name="Outline.FLAG"
 									color="white"
 									:size="14"
 								/>
 							</div>
-							<div class="yandex-wizard__info-text_point-icon-text">
+							<div class="booking-yiw__info-text_point-icon-text">
 								{{ loc('YANDEX_WIZARD_POINT_2') }}
 							</div>
 						</div>
-						<div class="yandex-wizard__info-text_point">
-							<div class="yandex-wizard__info-text_point-icon">
+						<div class="booking-yiw__info-text_point">
+							<div class="booking-yiw__info-text_point-icon">
 								<Icon
 									:name="Outline.ONLINE_BOOKING"
 									color="white"
 									:size="14"
 								/>
 							</div>
-							<div class="yandex-wizard__info-text_point-icon-text">
+							<div class="booking-yiw__info-text_point-icon-text">
 								{{ loc('YANDEX_WIZARD_POINT_3') }}
 							</div>
 						</div>
@@ -121,7 +128,7 @@ this.BX.Booking = this.BX.Booking || {};
 				</div>
 			</div>
 			<img 
-				class="yandex-wizard__info-map"
+				class="booking-yiw__info-map"
 				:src="integrationMapsImageUrl"
 				:alt="loc('YANDEX_WIZARD_TITLE')"
 				draggable="false"
@@ -158,6 +165,7 @@ this.BX.Booking = this.BX.Booking || {};
 			:size="ButtonSize.LARGE"
 			:color="ButtonColor.PRIMARY"
 			:disabled
+			data-element="booking-yiw-btn-confirm"
 			noCaps
 			useAirDesign
 		/>
@@ -178,10 +186,11 @@ this.BX.Booking = this.BX.Booking || {};
 	  },
 	  template: `
 		<UiButton
-			class="yandex-integration-wizard__cancel-button"
+			class="booking-yiw__cancel-button"
 			:text="loc('YANDEX_WIZARD_FOOTER_CANCEL_BUTTON')"
 			:size="ButtonSize.LARGE"
 			:color="ButtonColor.LINK"
+			data-element="booking-yiw-btn-cancel"
 			noCaps
 		/>
 	`
@@ -214,32 +223,32 @@ this.BX.Booking = this.BX.Booking || {};
 	  methods: {
 	    ...mapActions(['setFetching', 'validateFormData']),
 	    async onConfirmButtonClick() {
-	      this.validateFormData();
+	      await this.validateFormData();
 	      if (this.isFormDataValid) {
 	        await this.updateIntegration();
 	      }
 	    },
 	    async updateIntegration() {
 	      this.setFetching(true);
-	      try {
-	        const wasConnected = this.isConnected;
-	        await booking_provider_service_yandexIntegrationWizardService.yandexIntegrationWizardService.updateIntegration(this.updatedIntegration);
-	        if (this.isConnected && !wasConnected) {
-	          await this.showConfetti();
-	        }
-	        this.closeWizard();
-	      } catch (error) {
-	        console.error('Update wizard data error', error);
+	      const wasConnected = this.isConnected;
+	      const updateIntegrationResult = await booking_provider_service_yandexIntegrationWizardService.yandexIntegrationWizardService.updateIntegration(this.updatedIntegration);
+	      if (!updateIntegrationResult.success) {
+	        const publicError = updateIntegrationResult.errors.find(errorItem => errorItem.customData.isPublic);
 	        const {
 	          Notifier
 	        } = await main_core.Runtime.loadExtension('ui.notification-manager');
 	        Notifier.notifyViaBrowserProvider({
 	          id: 'booking-yiw-update-error',
-	          text: this.loc('YANDEX_WIZARD_UPDATE_ERROR')
+	          text: (publicError == null ? void 0 : publicError.message) || this.loc('YANDEX_WIZARD_UPDATE_ERROR')
 	        });
-	      } finally {
 	        this.setFetching(false);
+	        return;
 	      }
+	      if (this.isConnected && !wasConnected) {
+	        await this.showConfetti();
+	      }
+	      this.closeWizard();
+	      this.setFetching(false);
 	    },
 	    closeWizard() {
 	      main_core_events.EventEmitter.emit(booking_const.EventName.CloseYandexIntegrationWizard);
@@ -260,7 +269,10 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  },
 	  template: `
-		<div v-show="!isFetching && (!isConnected || hasChanges)" class="yandex-integration-wizard__footer">
+		<div
+			v-show="!isFetching && (!isConnected || hasChanges)"
+			class="booking-yiw__footer"
+		>
 			<ConfirmButton
 				:buttonText="confirmButtonText"
 				:disabled="!isFormDataValid"
@@ -280,7 +292,6 @@ this.BX.Booking = this.BX.Booking || {};
 	    UiAvatar: booking_component_avatar.Avatar,
 	    Icon: ui_iconSet_api_vue.BIcon
 	  },
-	  // eslint-disable-next-line flowtype/require-return-type
 	  setup() {
 	    return {
 	      ButtonColor: booking_component_button.ButtonColor,
@@ -349,18 +360,17 @@ this.BX.Booking = this.BX.Booking || {};
 	      const editor = new booking_application_skuResourcesEditor.SkuResourcesEditor({
 	        title: this.loc('YANDEX_WIZARD_POPUP_RESOURCE_POPUP_TITLE'),
 	        description: this.loc('YANDEX_WIZARD_POPUP_RESOURCE_POPUP_DESCRIPTION'),
-	        resources: this.getResources(),
 	        options: {
-	          canAdd: true,
-	          canRemove: true,
+	          editMode: true,
 	          catalogSkuEntityOptions: this.getCatalogSkuEntityOptions()
 	        },
+	        loadData: () => this.getResources(),
 	        save: data => this.saveResources(data)
 	      });
 	      editor.open();
 	    },
 	    getCatalogSkuEntityOptions() {
-	      return this.$store.state[booking_const.Model.YandexIntegrationWizard].integration.catalogSkuEntityOptions;
+	      return this.$store.state[booking_const.Model.Sku].catalogSkuEntityOptions;
 	    },
 	    saveResources(data) {
 	      if (main_core.Type.isNil(data) || !main_core.Type.isArray(data.resources)) {
@@ -374,9 +384,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      });
 	      void this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/updateResourcesSkusYandex`, resources);
 	    },
-	    getResources() {
+	    async getResources() {
 	      const notConnected = this.integrationStatus === booking_const.IntegrationMapItemStatus.NOT_CONNECTED;
-	      return this.$store.state[booking_const.Model.YandexIntegrationWizard].resources.map(resource => {
+	      const resources = this.$store.state[booking_const.Model.YandexIntegrationWizard].resources.map(resource => {
 	        return {
 	          ...resource,
 	          avatar: {
@@ -385,6 +395,15 @@ this.BX.Booking = this.BX.Booking || {};
 	          skus: booking_lib_deepToRaw.deepToRaw(notConnected && resource.skusYandex.length === 0 ? resource.skus : resource.skusYandex)
 	        };
 	      });
+	      await booking_provider_service_resourceDialogService.resourceDialogService.getMainResources();
+	      const mainResources = (this.$store.getters[`${booking_const.Model.Resources}/get`] || []).map(resource => {
+	        return {
+	          ...resource,
+	          skus: [],
+	          skusYandex: []
+	        };
+	      });
+	      return [...mainResources, ...resources];
 	    }
 	  },
 	  template: `
@@ -429,6 +448,7 @@ this.BX.Booking = this.BX.Booking || {};
 							:text="buttonTitle"
 							:size="ButtonSize.SMALL"
 							:color="ButtonColor.PRIMARY"
+							data-element="booking-yiw-btn-add-more-resource"
 							noCaps
 							useAirDesign
 							@click="openSkuResourcesEditor"
@@ -570,6 +590,7 @@ this.BX.Booking = this.BX.Booking || {};
 							:size="ButtonSize.MEDIUM"
 							noCaps
 							useAirDesign
+							data-element="booking-yiw-btn-cabinet-link"
 							@click="goToYandexBusiness"
 						/>
 					</div>
@@ -592,13 +613,10 @@ this.BX.Booking = this.BX.Booking || {};
 	    UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
 	    Icon: ui_iconSet_api_vue.BIcon
 	  },
+	  inject: ['menuTimeZoneContainerClass'],
 	  setup() {
-	    const popupId = 'booking-yiw-timezone-menu';
-	    const menuPopup = null;
 	    return {
-	      Outline: ui_iconSet_api_vue.Outline,
-	      menuPopup,
-	      popupId
+	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
 	  data() {
@@ -607,6 +625,9 @@ this.BX.Booking = this.BX.Booking || {};
 	    };
 	  },
 	  computed: {
+	    popupId() {
+	      return 'booking-yiw-timezone-menu';
+	    },
 	    timezoneId: {
 	      get() {
 	        return this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/getTimezone`];
@@ -619,7 +640,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    },
 	    selectedTimezoneTitle() {
 	      const selected = this.timezones.find(tz => tz.timezoneId === this.timezoneId);
-	      return selected ? selected.title : booking_utils.Utils.time.getDefaultUTCTimezone(this.timezoneId);
+	      return selected ? selected.title : booking_lib_utils.Utils.time.getDefaultUTCTimezone(this.timezoneId);
 	    }
 	  },
 	  async created() {
@@ -641,7 +662,7 @@ this.BX.Booking = this.BX.Booking || {};
 	        offsetLeft: 40,
 	        angle: true,
 	        cacheable: true,
-	        targetContainer: document.querySelector('div.yandex-wizard__wrapper'),
+	        targetContainer: document.querySelector(`.${this.menuTimeZoneContainerClass}`),
 	        events: {
 	          onClose: () => this.destroy(),
 	          onDestroy: () => this.destroy()
@@ -925,7 +946,7 @@ this.BX.Booking = this.BX.Booking || {};
 	}
 	function _makeContainer2() {
 	  return main_core.Tag.render(_t || (_t = _`
-			<div id="booking--yandex-integration-wizard--app" class="booking--yandex-integration-wizard--app"></div>
+			<div id="booking--yandex-integration-wizard--app" class="booking__yandex-integration-wizard_app"></div>
 		`));
 	}
 	Object.defineProperty(YandexIntegrationWizard, _width, {
@@ -935,5 +956,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.YandexIntegrationWizard = YandexIntegrationWizard;
 
-}((this.BX.Booking.Application = this.BX.Booking.Application || {}),BX.Vue3,BX.Booking.Component.Mixin,BX.Booking.Lib,BX.Booking.Model,BX.Booking,BX.Booking.Component,BX.Booking.Component,BX.Booking.Application,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX.Booking,BX.Booking.Component,BX.Booking.Provider.Service,BX.Vue3.Vuex,BX.Event,BX.Booking.Const,BX.Booking.Component,BX.Booking.Provider.Service,BX,BX.Main,BX.UI.Dialogs));
+}((this.BX.Booking.Application = this.BX.Booking.Application || {}),BX.Vue3,BX.Booking.Component.Mixin,BX.Booking.Lib,BX.Booking.Model,BX.Booking,BX.Booking.Component,BX.Booking.Component,BX.Booking.Application,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX.Booking,BX.Booking.Component,BX.Booking.Provider.Service,BX.Vue3.Vuex,BX.Event,BX.Booking.Const,BX.Booking.Component,BX.Booking.Provider.Service,BX,BX.Main,BX.UI.Dialogs));
 //# sourceMappingURL=yandex-integration-wizard.bundle.js.map

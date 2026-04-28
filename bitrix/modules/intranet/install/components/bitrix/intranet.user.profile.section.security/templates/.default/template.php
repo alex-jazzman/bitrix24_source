@@ -18,6 +18,7 @@ Extension::load([
 	'intranet.notify-banner.push-otp',
 	'intranet.push-otp.connect-popup',
 	'intranet.push-otp.menu',
+	'intranet.logout-all-confirm',
 	'ui.sidepanel.layout',
 	'ui.icons',
 	'main.core',
@@ -58,9 +59,10 @@ Extension::load([
 		<?php endif; ?>
 
 		<?php if ($arResult["OTP"]["IS_ENABLED"] === 'Y' && $arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
-			<?php if ($arResult["OTP"]["IS_PUSH_OTP_AVAILABLE"] === 'Y'): ?>
+			<?php if (isset($arResult["OTP"]["IS_PUSH_OTP_NEW"]) && $arResult["OTP"]["IS_PUSH_OTP_NEW"] === 'Y'): ?>
 			<li id="notify-banner-push-otp"></li>
 			<?php endif; ?>
+			<?php if ($arResult["OTP"]["2FA_SECTION_SHOW"] === 'Y'): ?>
 			<li class="intranet-user-otp-security__section-row" id="intranet-user-otp-security__2fa-config">
 				<div class="intranet-user-otp-list__section-row-header">
 					<div class="intranet-user-otp-list__row-label ui-text --md">
@@ -74,7 +76,7 @@ Extension::load([
 								<?= Loc::getMessage('INTRANET_USER_SECURITY_OTP_ENABLED')?>
 							<?php else: ?>
 								<div class="ui-icon-set --o-alert-accent"></div>
-								<?= Loc::getMessage('INTRANET_USER_SECURITY_OTP_DISABLED')?>
+								<?= $arResult["OTP"]["IS_INITIALIZED"] === 'Y' ? Loc::getMessage('INTRANET_USER_SECURITY_OTP_DISCONNECT') : Loc::getMessage('INTRANET_USER_SECURITY_OTP_DISABLED')?>
 							<?php endif; ?>
 							<?php if (($arResult["OTP"]["IS_PHONE_CONFIRMATION_REQUIRED"] ?? 'N') === 'Y'): ?>
 								<div class="intranet-user-otp-list__counter-wrapper"></div>
@@ -84,10 +86,17 @@ Extension::load([
 					</div>
 				</div>
 			</li>
+			<?php endif; ?>
 		<?php endif; ?>
 
 		<?php if (isset($arResult['PROFILE'])): ?>
-			<li id="intranet-security-section-email" class="intranet-user-otp-security__section-row" onclick="window.open('<?= $arResult['PROFILE']['NETWORK_URL']?>');">
+			<li
+				id="intranet-security-section-email"
+				class="intranet-user-otp-security__section-row"
+				<?php if ($arResult['IS_CURRENT_USER']): ?>
+				onclick="window.open('<?= $arResult['PROFILE']['NETWORK_URL']?>');"
+				<?php endif; ?>
+			>
 				<div class="intranet-user-otp-list__section-row-header">
 					<div class="intranet-user-otp-list__row-label ui-text --md">
 						<span class="ui-icon-set --o-mail"></span>
@@ -102,12 +111,20 @@ Extension::load([
 								<?= Loc::getMessage('INTRANET_USER_SECURITY_NOT_SET')?>
 							<?php endif; ?>
 						</div>
+						<?php if ($arResult['IS_CURRENT_USER']): ?>
 						<div class="ui-icon-set --chevron-right-s"></div>
+						<?php endif; ?>
 					</div>
 				</div>
 			</li>
 
-			<li id="intranet-security-section-phone" class="intranet-user-otp-security__section-row" onclick="window.open('<?= $arResult['PROFILE']['NETWORK_URL']?>');">
+			<li
+				id="intranet-security-section-phone"
+				class="intranet-user-otp-security__section-row"
+				<?php if ($arResult['IS_CURRENT_USER']): ?>
+				onclick="window.open('<?= $arResult['PROFILE']['NETWORK_URL']?>');"
+				<?php endif; ?>
+			>
 				<div class="intranet-user-otp-list__section-row-header">
 					<div class="intranet-user-otp-list__row-label ui-text --md">
 						<span class="ui-icon-set --o-mobile"></span>
@@ -122,12 +139,20 @@ Extension::load([
 								<?= Loc::getMessage('INTRANET_USER_SECURITY_NOT_SET')?>
 							<?php endif; ?>
 						</div>
-						<div class="ui-icon-set --chevron-right-s"></div>
+						<?php if ($arResult['IS_CURRENT_USER']): ?>
+							<div class="ui-icon-set --chevron-right-s"></div>
+						<?php endif; ?>
 					</div>
 				</div>
 			</li>
 
-			<li id="intranet-security-section-socserv" class="intranet-user-otp-security__section-row" onclick="window.open('<?= $arResult['PROFILE']['NETWORK_URL']?>');">
+			<li
+				id="intranet-security-section-socserv"
+				class="intranet-user-otp-security__section-row"
+				<?php if ($arResult['IS_CURRENT_USER']): ?>
+					onclick="window.open('<?= $arResult['PROFILE']['NETWORK_URL']?>');"
+				<?php endif; ?>
+			>
 				<div class="intranet-user-otp-list__section-row-header">
 					<div class="intranet-user-otp-list__row-label ui-text --md">
 						<span class="ui-icon-set --o-apps"></span>
@@ -141,7 +166,9 @@ Extension::load([
 								<?= Loc::getMessage('INTRANET_USER_SECURITY_ACCOUNTS', ['#NUM#' => count($arResult['PROFILE']['SOCSERV'])])?>
 							<?php endif; ?>
 						</div>
-						<div class="ui-icon-set --chevron-right-s"></div>
+						<?php if ($arResult['IS_CURRENT_USER']): ?>
+							<div class="ui-icon-set --chevron-right-s"></div>
+						<?php endif; ?>
 					</div>
 				</div>
 				<?php if (!empty($arResult['PROFILE']['SOCSERV'])): ?>
@@ -199,8 +226,9 @@ Extension::load([
 		<?php if ($arResult["OTP"]["IS_ENABLED"] === 'Y' && $arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
 		const params = {
 			...<?= Json::encode($arResult['OTP_PARAMS']) ?>,
-			title: '<?= $arResult["OTP"]["IS_PUSH_OTP_NEW"] === 'Y' ? \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_SECURITY_BANNER_TITLE_NEW')) : \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_SECURITY_BANNER_TITLE')) ?>',
+			title: '<?= \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_SECURITY_BANNER_TITLE_NEW')) ?>',
 			text: '<?= \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_SECURITY_BANNER_DESC')) ?>',
+			userId: '<?= CUtil::JSEscape($arParams['USER_ID']) ?>',
 			events: {
 				onAppConnected: () => {
 					securitySection.reload();
@@ -208,7 +236,7 @@ Extension::load([
 			},
 		};
 
-		<?php if ($arResult["OTP"]["IS_PUSH_OTP_AVAILABLE"] === 'Y'): ?>
+		<?php if ($arResult["OTP"]["IS_PUSH_OTP_NEW"] === 'Y'): ?>
 		BX.Intranet.BannerFactory.create(params)?.renderTo(BX('notify-banner-push-otp'));
 		<?php endif; ?>
 
@@ -226,6 +254,12 @@ Extension::load([
 			tfaBtn.onclick = () => {
 				params.isNotPushOtp ? securitySection.openOld2Fa() : securitySection.open2FaSlider();
 			};
+			top.BX.Event.EventEmitter.subscribe('BX.Intranet.Security:shouldOpen2FaSlider', () => {
+				if (!params.isNotPushOtp)
+				{
+					securitySection.open2FaSlider();
+				}
+			});
 		}
 		<?php endif; ?>
 

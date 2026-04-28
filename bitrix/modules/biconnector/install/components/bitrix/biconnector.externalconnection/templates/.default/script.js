@@ -80,7 +80,7 @@
 	        if (babelHelpers.classPrivateFieldGet(_this, _props).closeAfterCreate) {
 	          _classPrivateMethodGet(_this, _closeSlider, _closeSlider2).call(_this);
 	        } else {
-	          _classPrivateMethodGet(_this, _showSaveSuccessPopup, _showSaveSuccessPopup2).call(_this, response.data.connection, response.data.supersetIsReady);
+	          _classPrivateMethodGet(_this, _showSaveSuccessPopup, _showSaveSuccessPopup2).call(_this, response.data.connection);
 	          saveButton.setWaiting(false);
 	        }
 	      })["catch"](function (response) {
@@ -252,6 +252,7 @@
 	  if (succedeed) {
 	    status = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"db-connection-success\">\n\t\t\t\t\t<div class=\"ui-icon-set --check\" style=\"--ui-icon-set__icon-size: 18px; --ui-icon-set__icon-color: var(--ui-color-palette-green-50);\"></div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('EXTERNAL_CONNECTION_CHECK_SUCCESS'));
 	  } else {
+	    errorMessage = main_core.Text.encode(errorMessage);
 	    status = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"db-connection-error\">\n\t\t\t\t\t<div class=\"ui-icon-set --warning\" style=\"--ui-icon-set__icon-size: 18px; --ui-icon-set__icon-color: var(--ui-color-palette-red-60);\"></div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), errorMessage.replaceAll(/\s+/g, ' '));
 	  }
 	  main_core.Dom.append(status, babelHelpers.classPrivateFieldGet(this, _connectionStatusNode));
@@ -287,14 +288,14 @@
 	    });
 	  });
 	}
-	function _showSaveSuccessPopup2(connection, supersetIsReady) {
+	function _showSaveSuccessPopup2(connection) {
 	  var _this5 = this,
 	    _babelHelpers$classPr11;
 	  var popup = null;
 
-	  // show for (new or active sources) and ready superset only
-	  var showCreateDatasetButton = supersetIsReady && (!Object.hasOwn(babelHelpers.classPrivateFieldGet(this, _props).sourceFields, 'id') || babelHelpers.classPrivateFieldGet(this, _props).sourceFields.active);
-	  var createDatasetButton = showCreateDatasetButton ? main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"ui-btn ui-btn-md ui-btn-primary\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('EXTERNAL_CONNECTION_CREATE_DATASET')) : false;
+	  // show for new or active sources
+	  var showCreateDatasetButton = !Object.hasOwn(babelHelpers.classPrivateFieldGet(this, _props).sourceFields, 'id') || babelHelpers.classPrivateFieldGet(this, _props).sourceFields.active;
+	  var createDatasetButton = showCreateDatasetButton ? main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"ui-btn ui-btn-md ui-btn-primary\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('EXTERNAL_CONNECTION_CREATE_DATASET_MSGVER_1')) : false;
 	  var closeButton = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"ui-btn ui-btn-md ui-btn-light-border\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('EXTERNAL_CONNECTION_CLOSE'));
 	  var onPopupClose = function onPopupClose() {
 	    _classPrivateMethodGet(_this5, _closeSlider, _closeSlider2).call(_this5);

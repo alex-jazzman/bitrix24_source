@@ -207,7 +207,6 @@ if (
 	CJSCore::RegisterExt('socnetlogdest', array(
 		'js' => '/bitrix/js/socialnetwork/log-destination.js',
 		'css' => [
-			'/bitrix/js/intranet/intranet-common.css',
 			'/bitrix/js/main/core/css/core_finder.css',
 		],
 		'lang_additional' => array(
@@ -247,7 +246,7 @@ if (
 			'LM_POPUP_WAITER_TEXT' => GetMessage("LM_POPUP_WAITER_TEXT"),
 			'LM_POPUP_SEARCH_NETWORK_MSGVER_1' => GetMessage("LM_POPUP_SEARCH_NETWORK_MSGVER_1"),
 		),
-		'rel' => array('core', 'popup', 'finder'),
+		'rel' => array('core', 'popup', 'finder', 'intranet.old-interface.intranet-common'),
 	));
 }
 
@@ -264,7 +263,6 @@ IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/socialnetwork/i
 CJSCore::RegisterExt('videorecorder', array(
 	'js' => '/bitrix/js/socialnetwork/video_recorder.js',
 	'css' => [
-		'/bitrix/js/intranet/intranet-common.css',
 		'/bitrix/js/socialnetwork/css/video_recorder.css',
 	],
 	'lang_additional' => array(
@@ -289,7 +287,7 @@ CJSCore::RegisterExt('videorecorder', array(
 		'BLOG_VIDEO_RECORD_PERMISSIONS_ERROR_TITLE' => GetMessage('BLOG_VIDEO_RECORD_PERMISSIONS_ERROR_TITLE'),
 		'BLOG_VIDEO_RECORD_ERROR_CHROME_HTTPS' => GetMessage('BLOG_VIDEO_RECORD_ERROR_CHROME_HTTPS'),
 	),
-	'rel' => array('core', 'popup', 'ui.fonts.opensans'),
+	'rel' => array('core', 'popup', 'ui.fonts.opensans', 'intranet.old-interface.intranet-common'),
 ));
 
 CJSCore::RegisterExt('comment_aux', [

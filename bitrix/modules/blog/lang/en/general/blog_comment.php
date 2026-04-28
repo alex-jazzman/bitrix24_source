@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLG_GCM_EMPTY_BLOG_ID"] = "The comment blog is not specified";
 $MESS["BLG_GCM_ERROR_NO_BLOG"] = "Blog with ID '#ID#' cannot be found";
 $MESS["BLG_GCM_EMPTY_POST_ID"] = "The message to be commented is not specified";
@@ -15,4 +15,3 @@ $MESS["BLG_GCM_RSS_TITLE"] = "Comments in \"#BLOG_NAME#\" on \"#POST_TITLE#\"";
 $MESS["BLG_GCM_COMMENT_TITLE"] = "Comment on \"#POST_TITLE#\" from #COMMENT_AUTHOR#";
 $MESS["BLG_SONET_COMMENT_TITLE"] = "added a comment to a post \"#TITLE#\" in blog";
 $MESS["BLG_GCM_RSS_TITLE_SOCNET"] = "#AUTHOR_NAME#: comments to the conversation \"#POST_TITLE#\"";
-?>

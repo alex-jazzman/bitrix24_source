@@ -4,6 +4,7 @@ import { VerificationCode } from './verification-code';
 import { Ajax } from '../api/ajax';
 import { Captcha } from './captcha';
 import { sendData } from 'ui.analytics';
+import { useOtpCaptchaFlow } from '../composables/use-otp-captcha-flow';
 
 // @vue/component
 export const Sms = {
@@ -63,18 +64,12 @@ export const Sms = {
 		this.sendAnalytics('sms_show');
 	},
 	methods: {
-		onSubmitForm()
+		...useOtpCaptchaFlow({
+			mainBlockVisibleKey: 'isSmsBlockVisible',
+		}),
+		onSubmitForm(event)
 		{
-			if (this.captchaCode)
-			{
-				event.preventDefault();
-				this.showCaptcha();
-			}
-			else
-			{
-				this.isWaiting = true;
-				this.$emit('form-submit');
-			}
+			this.handleFormSubmit(event);
 		},
 		async sendSmsCode()
 		{
@@ -110,31 +105,12 @@ export const Sms = {
 		onCodeComplete(code)
 		{
 			this.code = code;
-			this.$nextTick(() => {
-				if (this.captchaCode)
-				{
-					this.showCaptcha();
-				}
-				else
-				{
-					this.isWaiting = true;
-					this.$emit('form-submit');
-					if (this.$refs.authForm)
-					{
-						this.$refs.authForm.submit();
-					}
-				}
-			});
+			this.handleCodeComplete(code);
 		},
-		showPushOtp()
+		showAlternativeMethods()
 		{
 			this.$emit('clear-errors');
-			this.$emit('back-to-push');
-		},
-		showCaptcha()
-		{
-			this.isSmsBlockVisible = false;
-			this.isCaptchaBlockVisible = true;
+			this.$emit('show-alternatives');
 		},
 		sendAnalytics(event)
 		{
@@ -154,7 +130,7 @@ export const Sms = {
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
 
 			<div v-show="isSmsBlockVisible" class="intranet-island-otp-push-sms__wrapper">
-				<div @click="showPushOtp" class="intranet-back-button">
+				<div @click="showAlternativeMethods" class="intranet-back-button">
 					<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow --smscode"></i>
 				</div>
 				<Headline size='lg' class="intranet-form-title --padding">
@@ -170,7 +146,6 @@ export const Sms = {
 					@code-change="onCodeChange"
 					@code-complete="onCodeComplete"
 				></VerificationCode>
-				<div class="intranet-otp-error-block" v-html="errorMessage"></div>
 
 				<div class="intranet-island-otp-push-sms__resend">
 					<span v-if="isResendSmsAvailable" class="intranet-island-otp-push__link" @click="resendSendSmsCode">
@@ -184,7 +159,7 @@ export const Sms = {
 				<button
 					class="intranet-text-btn intranet-text-btn__reg ui-btn ui-btn-lg ui-btn-success --wide"
 					type="submit"
-					@click="onSubmitForm"
+					@click="onSubmitForm($event)"
 				>
 						<span class="intranet-text-btn__content-wrapper">
 							{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONTINUE_BUTTON') }}

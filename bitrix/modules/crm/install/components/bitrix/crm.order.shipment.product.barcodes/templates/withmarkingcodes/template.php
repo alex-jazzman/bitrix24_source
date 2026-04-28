@@ -21,6 +21,7 @@ Extension::load([
 	'ui.fonts.opensans',
 	'ui.buttons',
 	'sale.barcode',
+	'intranet.old-interface.intranet-common',
 ]);
 
 Asset::getInstance()->addCss('/bitrix/js/crm/css/slider.css');

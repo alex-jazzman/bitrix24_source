@@ -1,5 +1,12 @@
 import type { RawSettings } from 'im.v2.const';
-import type { ImModelUser, ImModelAnchor, ImModelCallItem, ImModelTariffRestrictions, ImModelCopilotAIModel } from 'im.v2.model';
+import type {
+	ImModelUser,
+	ImModelAnchor,
+	ImModelCallItem,
+	ImModelTariffRestrictions,
+	ImModelCopilotAIModel,
+	ImModelCounter,
+} from 'im.v2.model';
 import type { RawUser } from 'im.v2.provider.pull';
 
 export type ApplicationData = {
@@ -12,7 +19,10 @@ export type ApplicationData = {
 	preloadedEntities: PreloadedEntityType,
 	copilot: {
 		availableEngines: ImModelCopilotAIModel[],
+		botName: string,
 	},
+	counters: ImModelCounter[],
+	notificationCounter: number,
 };
 
 export type PreloadedEntityType = {

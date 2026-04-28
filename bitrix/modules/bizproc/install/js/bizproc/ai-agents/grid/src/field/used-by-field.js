@@ -1,7 +1,10 @@
+import { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Tag, Dom, Text, Event, Type } from 'main.core';
+import { SidePanel } from 'main.sidepanel';
 
 import { Text as TypographyText } from 'ui.system.typography';
+import { Item, Dialog, ItemOptions } from 'ui.entity-selector';
 
 import { Messenger } from 'im.public';
 
@@ -18,7 +21,9 @@ export class UsedByField extends BaseField
 	static MAX_VISIBLE_AVATARS_USERS_ONLY = 5;
 	static MAX_COUNTER_VALUE = 99;
 
-	#combinedPopup: Popup | null;
+	static ENTITY_DEPARTMENT = 'department';
+	static ENTITY_USER = 'user';
+
 	#chatsPopup: Popup | null;
 
 	render(params: UsedByFieldFieldType): void
@@ -222,6 +227,41 @@ export class UsedByField extends BaseField
 		Dom.append(departmentNode, container);
 	}
 
+	#getDepartmentNode(
+		department: string,
+		nodeId: number,
+		shouldAddHover: boolean = false,
+	): HTMLElement
+	{
+		const departmentWrapper = Tag.render`
+			<div class="${shouldAddHover ? 'agent-grid-department-in-list' : 'agent-grid-department'}"></div>
+		`;
+		const circle = Tag.render`<div class="agent-grid-department-circle">${GridIcons.DEPARTMENT}</div>`;
+		const label = TypographyText.render(
+			department,
+			{
+				size: 'xs',
+				accent: false,
+				tag: 'span',
+				className: 'agent-grid-department-label',
+			},
+		);
+
+		Dom.attr(label, 'title', department);
+		Dom.append(circle, departmentWrapper);
+		Dom.append(label, departmentWrapper);
+
+		Event.bind(departmentWrapper, 'click', (event: MouseEvent) => {
+			event.stopPropagation();
+
+			Structure?.open({
+				focusNodeId: nodeId,
+			});
+		});
+
+		return departmentWrapper;
+	}
+
 	#getDisplayedNumber(remainingCount: number): number
 	{
 		return remainingCount > UsedByField.MAX_COUNTER_VALUE
@@ -270,7 +310,7 @@ export class UsedByField extends BaseField
 		{
 			Event.bind(counterWrapper, 'click', (event) => {
 				event.stopPropagation();
-				this.#toggleCombinedPopup(departments, users, counterWrapper);
+				this.#openCombinedPopup(departments, users, counterWrapper);
 			});
 		}
 		else
@@ -279,22 +319,6 @@ export class UsedByField extends BaseField
 		}
 
 		return counterWrapper;
-	}
-
-	#toggleCombinedPopup(
-		departments: DepartmentFieldType[],
-		users: UserFieldType[],
-		bindElement: HTMLElement,
-	): void
-	{
-		if (this.#combinedPopup && this.#combinedPopup.isShown())
-		{
-			this.#combinedPopup.close();
-		}
-		else
-		{
-			this.#openCombinedPopup(departments, users, bindElement);
-		}
 	}
 
 	#createChatNode(
@@ -460,132 +484,139 @@ export class UsedByField extends BaseField
 		bindElement: HTMLElement,
 	)
 	{
-		const contentNode = Tag.render`<div class="agent-grid-departments-list-wrapper"></div>`;
+		const items: ItemOptions[] = [];
 
-		this.#fillDepartmentsListContent(departments, contentNode);
-		this.#fillUsersListContent(users, contentNode);
+		this.#fillDepartmentsListContent(departments, items);
+		this.#fillUsersListContent(users, items);
 
-		this.#combinedPopup = new Popup({
-			content: contentNode,
-			bindElement,
-			cacheable: false,
-			minHeight: 50,
-			maxWidth: 400,
-			maxHeight: 200,
-			padding: 0,
+		const entities = [
+			{
+				id: UsedByField.ENTITY_USER,
+				dynamicLoad: false,
+			},
+			{
+				id: UsedByField.ENTITY_DEPARTMENT,
+				dynamicLoad: false,
+			},
+		];
+
+		const dialog = new Dialog({
+			targetNode: bindElement,
+			width: 306,
+			height: 309,
+			dropdownMode: true,
+			showAvatars: true,
 			autoHide: true,
-			className: 'agents-grid-popup',
+			multiple: false,
+			hideOnSelect: false,
+			focusOnFirst: false,
+			showDefaultFooter: false,
+			searchTabOptions: { visible: false },
+			recentTabOptions: { visible: false },
+			events: {
+				'Item:onBeforeSelect': this.#handleBeforeSelect.bind(this),
+			},
+			entities,
+			items,
 		});
 
-		this.#combinedPopup.show();
-		this.#combinedPopup.subscribe('onClose', () => {
-			this.#combinedPopup = null;
-		});
+		dialog.show();
 	}
 
 	#fillDepartmentsListContent(
 		departments: DepartmentFieldType[],
-		contentNode: HTMLElement,
-	): HTMLElement
+		items: ItemOptions[],
+	): ItemOptions[]
 	{
 		if (!departments || Object.keys(departments).length === 0)
 		{
-			return contentNode;
+			return items;
 		}
 
 		Object.entries(departments).forEach(([id, name]) => {
-			const nodeId = Text.toInteger(id);
-			const departmentNode = this.#getDepartmentNode(name, nodeId, true);
-			Dom.append(departmentNode, contentNode);
-		});
-
-		return contentNode;
-	}
-
-	#getDepartmentNode(
-		department: string,
-		nodeId: number,
-		shouldAddHover: boolean = false,
-	): HTMLElement
-	{
-		const departmentWrapper = Tag.render`
-			<div class="${shouldAddHover ? 'agent-grid-department-in-list' : 'agent-grid-department'}"></div>
-		`;
-		const circle = Tag.render`<div class="agent-grid-department-circle">${GridIcons.DEPARTMENT}</div>`;
-		const label = TypographyText.render(
-			department,
-			{
-				size: 'xs',
-				accent: false,
-				tag: 'span',
-				className: 'agent-grid-department-label',
-			},
-		);
-
-		Dom.attr(label, 'title', department);
-		Dom.append(circle, departmentWrapper);
-		Dom.append(label, departmentWrapper);
-
-		Event.bind(departmentWrapper, 'click', (event: MouseEvent) => {
-			event.stopPropagation();
-
-			Structure?.open({
-				focusNodeId: nodeId,
+			items.push({
+				id: Text.toInteger(id),
+				title: name,
+				entityId: UsedByField.ENTITY_DEPARTMENT,
+				tabs: 'recents',
 			});
 		});
 
-		return departmentWrapper;
+		return items;
 	}
 
 	#fillUsersListContent(
 		users: UserFieldType[],
-		contentNode: HTMLElement,
-	): HTMLElement
+		items: ItemOptions[],
+	): ItemOptions[]
 	{
 		if (!users || users.length === 0)
 		{
-			return contentNode;
+			return items;
 		}
 
-		users.forEach((user) => {
-			const departmentNode = this.#getUserWithNameNode(user, true);
-			Dom.append(departmentNode, contentNode);
+		users.forEach((user: UserFieldType) => {
+			const itemOptions: ItemOptions = {
+				id: user.id,
+				title: user.fullName,
+				entityId: UsedByField.ENTITY_USER,
+				tabs: 'recents',
+				avatarOptions: {
+					bgSize: 'cover',
+				},
+			};
+
+			if (user?.photoUrl)
+			{
+				itemOptions.avatar = decodeURIComponent(user.photoUrl);
+			}
+
+			if (user?.profileLink)
+			{
+				itemOptions.link = user.profileLink;
+			}
+
+			items.push(itemOptions);
 		});
 
-		return contentNode;
-	}
-
-	#getUserWithNameNode(user: UserFieldType): HTMLElement
-	{
-		const userFullName = user?.fullName || '';
-		const userWrapper = Tag.render`<div title="${userFullName}" class="agent-grid-user-in-list"></div>`;
-		const imageWrapper = Tag.render`<div class="agent-grid-user-img-container"></div>`;
-
-		new PhotoField({ fieldNode: imageWrapper }).render({ user });
-
-		const label = TypographyText.render(
-			userFullName,
-			{
-				size: 'xs',
-				accent: false,
-				tag: 'span',
-				className: 'agent-grid-user-full-name',
-			},
-		);
-
-		Event.bind(userWrapper, 'click', () => this.#openUserProfile(user?.profileLink));
-
-		Dom.append(imageWrapper, userWrapper);
-		Dom.append(label, userWrapper);
-
-		return userWrapper;
+		return items;
 	}
 
 	#openUserProfile(profileLink: ?string): void
 	{
 		if (Type.isStringFilled(profileLink))
 		{
-			BX.SidePanel.Instance.open(profileLink);
+			SidePanel.Instance.open(profileLink);
 		}
+	}
+
+	#handleBeforeSelect(event: BaseEvent): void
+	{
+		const item: Item = event.getData().item;
+		event.preventDefault();
+
+		if (item.getEntityId() === UsedByField.ENTITY_DEPARTMENT)
+		{
+			this.#handleSelectDepartment(item);
+
+			return;
+		}
+
+		if (item.getEntityId() === UsedByField.ENTITY_USER)
+		{
+			this.#handleSelectUser(item);
+		}
+	}
+
+	#handleSelectDepartment(item: Item): void
+	{
+		Structure?.open({
+			focusNodeId: item.id,
+		});
+	}
+
+	#handleSelectUser(item: Item): void
+	{
+		this.#openUserProfile(item?.link);
 	}
 }

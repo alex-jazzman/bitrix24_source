@@ -96,7 +96,7 @@ $lAdmin->SetNavigationParams($rsData);
 
 while ($arRes = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($arRes['ID'], $arRes);
+	$row = $lAdmin->AddRow($arRes['ID'], $arRes);
 
 	$row->AddViewField('CREATED_DATE', htmlspecialcharsEx($arRes['CREATED_DATE']));
 	adminListAddUserLink($row, 'USER_ID', $arRes['USER_ID'], $arRes['USER_ID_USER']);

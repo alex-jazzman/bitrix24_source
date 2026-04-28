@@ -21,7 +21,7 @@
             "Multiple": 1,
             "Options": null,
             "Default": ""
-        },
+		},
         "SetupTemplateActivity_Z15YXPjTOs": {
             "Name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_4###",
             "Description": "###BIZPROC_AI_AGENT_RAGCHATBOT_DESCRIPTION_2###",
@@ -49,15 +49,15 @@
             "Options": null,
             "Default": "###BIZPROC_AI_AGENT_RAGCHATBOT_DEFAULT_2###"
         },
-		"SetupTemplateActivity_rgrHChbMKt": {
-			"Name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_7###",
-			"Description": "",
-			"Type": "file",
-			"Required": 0,
-			"Multiple": 0,
-			"Options": null,
-			"Default": ""
-		}
+        "SetupTemplateActivity_rgrHChbMKt": {
+            "Name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_7###",
+            "Description": "",
+            "Type": "file",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": null,
+            "Default": ""
+        }
     },
     "TEMPLATE": [
         {
@@ -68,123 +68,153 @@
                 "Links": [
                     [
                         "A7649_2965_8496_3775:o0",
-                        "A7426_4464_6102_9845:i0"
+                        "A7426_4464_6102_9845:i0",
+                        1770969356280
                     ],
                     [
                         "A6799_3346_2347_2123:o0",
-                        "A5172_6770_9062_4959:i0"
+                        "A5172_6770_9062_4959:i0",
+                        1770969356280
                     ],
                     [
                         "A4791_5036_6881_3286:o0",
-                        "A7649_2965_8496_3775:i0"
+                        "A7649_2965_8496_3775:i0",
+                        1770969356280
                     ],
                     [
                         "A9700_4393_6634_9720:o0",
-                        "A6799_3346_2347_2123:i0"
+                        "A6799_3346_2347_2123:i0",
+                        1770969356280
                     ],
                     [
                         "A6799_3346_2347_2123:a0",
-                        "A9610_6597_9992_4868:t0"
+                        "A9610_6597_9992_4868:t0",
+                        1770969356280
                     ],
                     [
                         "A5172_6770_9062_4959:o0",
-                        "A8106_3093_8889_3355:i0"
+                        "A8106_3093_8889_3355:i0",
+                        1770969356280
                     ],
                     [
                         "A4889_7438_8206_9038:o0",
-                        "A4632_2501_2036_1473:i0"
+                        "A4632_2501_2036_1473:i0",
+                        1770969356280
                     ],
                     [
                         "A3922_7992_6256_9512:o0",
-                        "A8939_8471_4950_3897:i0"
+                        "A8939_8471_4950_3897:i0",
+                        1770969356280
                     ],
                     [
                         "A3922_7992_6256_9512:o0",
-                        "A4460_4773_5285_8053:i0"
+                        "A4460_4773_5285_8053:i0",
+                        1770969356280
                     ],
                     [
                         "A4460_4773_5285_8053:o1",
-                        "A6818_8593_1799_2521:i0"
+                        "A6818_8593_1799_2521:i0",
+                        1770969356280
                     ],
                     [
                         "A6799_3346_2347_2123:o0",
-                        "A6833_3320_3842_9837:i0"
+                        "A6833_3320_3842_9837:i0",
+                        1770969356280
                     ],
                     [
                         "A6833_3320_3842_9837:o0",
-                        "A3922_7992_6256_9512:i0"
+                        "A3922_7992_6256_9512:i0",
+                        1770969356280
                     ],
                     [
                         "A4460_4773_5285_8053:o1",
-                        "A7868_4961_2315_7261:i0"
+                        "A7868_4961_2315_7261:i0",
+                        1770969356280
                     ],
                     [
                         "A7426_4464_6102_9845:o0",
-                        "A4889_7438_8206_9038:i0"
+                        "A4889_7438_8206_9038:i0",
+                        1770969356280
                     ],
                     [
                         "A2532_3871_3620_3427:o0",
-                        "A9737_6776_3554_8777:i0"
+                        "A9737_6776_3554_8777:i0",
+                        1770969356280
                     ],
                     [
                         "A9737_6776_3554_8777:o1",
-                        "A9988_4968_1175_9417:i0"
+                        "A9988_4968_1175_9417:i0",
+                        1770969356280
                     ],
                     [
                         "A7868_4961_2315_7261:o0",
-                        "A7443_4094_7448_4833:i0"
+                        "A7443_4094_7448_4833:i0",
+                        1770969356280
                     ],
                     [
                         "A7443_4094_7448_4833:o0",
-                        "A2637_1165_8843_2682:i0"
+                        "A2637_1165_8843_2682:i0",
+                        1770969356280
                     ],
                     [
                         "A2637_1165_8843_2682:o0",
-                        "A7930_3492_4440_1410:i0"
+                        "A7930_3492_4440_1410:i0",
+                        1770969356280
                     ],
                     [
                         "A4460_4773_5285_8053:o0",
-                        "A7930_3492_4440_1410:i0"
+                        "A7930_3492_4440_1410:i0",
+                        1770969356280
                     ],
                     [
                         "A6833_3320_3842_9837:o1",
-                        "A3712_2922_5544_6850:i0"
+                        "A3712_2922_5544_6850:i0",
+                        1770969356280
                     ],
                     [
                         "A6833_3320_3842_9837:o0",
-                        "A1908_2854_9166_1869:i0"
+                        "A1908_2854_9166_1869:i0",
+                        1770969356280
                     ],
                     [
                         "A4460_4773_5285_8053:o1",
-                        "A2577_2609_9029_7391:i0"
+                        "A2577_2609_9029_7391:i0",
+                        1770969356280
                     ],
                     [
                         "A4460_4773_5285_8053:o0",
-                        "A7645_2085_3700_8707:i0"
+                        "A7645_2085_3700_8707:i0",
+                        1770969356280
                     ],
                     [
                         "A7868_4961_2315_7261:o0",
-                        "A8483_2519_9624_3890:i0"
+                        "A8483_2519_9624_3890:i0",
+                        1770969356280
                     ],
                     [
                         "A3922_7992_6256_9512:o0",
-                        "A8681_6811_9133_2178:i0"
+                        "A8681_6811_9133_2178:i0",
+                        1770969356280
                     ],
                     [
                         "A4889_7438_8206_9038:o0",
-                        "A7445_3035_2369_4564:i0"
+                        "A7445_3035_2369_4564:i0",
+                        1770969356280
                     ],
                     [
                         "A4632_2501_2036_1473:o0",
-                        "A2479_5231_1058_7910:i0"
+                        "A2479_5231_1058_7910:i0",
+                        1770969356280
                     ],
                     [
                         "A4632_2501_2036_1473:o0",
-                        "A2532_3871_3620_3427:i0"
+                        "A2532_3871_3620_3427:i0",
+                        1770969356280
                     ],
                     [
                         "A7868_4961_2315_7261:o0",
-                        "A2637_1165_8843_2682:i0"
+                        "A2637_1165_8843_2682:i0",
+                        1770969356280
                     ]
                 ]
             },
@@ -225,6 +255,7 @@
                                 "Default": null
                             }
                         },
+                        "usePseudonymizer": "Y",
                         "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_2###",
                         "EditorComment": ""
                     },
@@ -260,10 +291,11 @@
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_2###",
-							"colorIndex": 0,
-							"icon": "AI_ROBOT",
-                            "updated": null,
-                            "published": null
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "icon": "AI_ROBOT",
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -296,17 +328,17 @@
                                         "options": [],
                                         "default": ""
                                     },
-									{
-										"itemType": "constant",
-										"id": "SetupTemplateActivity_rgrHChbMKt",
-										"name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_7###",
-										"constantType": "file",
-										"description": "",
-										"multiple": false,
-										"required": false,
-										"options": [],
-										"default": ""
-									},
+                                    {
+                                        "itemType": "constant",
+                                        "id": "SetupTemplateActivity_rgrHChbMKt",
+                                        "name": "###BIZPROC_AI_AGENT_RAGCHATBOT_NAME_7###",
+                                        "constantType": "file",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": ""
+                                    },
                                     {
                                         "itemType": "constant",
                                         "id": "SetupTemplateActivity_BTXo5PtF6w",
@@ -389,10 +421,10 @@
                     "Node": {
                         "id": "A7649_2965_8496_3775",
                         "type": "simple",
-						"position": {
-							"x": 587,
-							"y": 234
-						},
+                        "position": {
+                            "x": 587,
+                            "y": 234
+                        },
                         "dimensions": {
                             "width": null,
                             "height": null
@@ -412,10 +444,11 @@
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_3###",
-							"colorIndex": 2,
-							"icon": "SETTINGS",
-                            "updated": null,
-                            "published": null
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "icon": "SETTINGS",
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -459,9 +492,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_4###",
                             "colorIndex": 1,
+                            "frameColorName": null,
                             "icon": "MESSENGER",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -475,8 +509,10 @@
                         "recipient": [
                             "{=Constant:SetupTemplateActivity_BTXo5PtF6w}"
                         ],
+                        "chatId": null,
                         "message": "###BIZPROC_AI_AGENT_RAGCHATBOT_MESSAGE_1###",
                         "asError": "N",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
                         "EditorComment": ""
                     },
@@ -485,8 +521,8 @@
                         "id": "A9988_4968_1175_9417",
                         "type": "simple",
                         "position": {
-                            "x": 2302,
-                            "y": 262
+                            "x": 2307,
+                            "y": 265
                         },
                         "dimensions": {
                             "width": null,
@@ -507,10 +543,11 @@
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
-							"colorIndex": 2,
-							"icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -527,6 +564,7 @@
                         "chatId": "{=A9700_4393_6634_9720:chatId}",
                         "message": "{{=if(strlen({=A6799_3346_2347_2123:chatAnswer}) > 0, {=A6799_3346_2347_2123:chatAnswer}, {=A6799_3346_2347_2123:errorMessage})}}",
                         "asError": "{{=if(strlen({=A6799_3346_2347_2123:aiResult}) > 0, 'N', 'Y')}}",
+                        "aiWarning": "Y",
                         "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
                         "EditorComment": ""
                     },
@@ -557,10 +595,11 @@
                         "node": {
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
-							"colorIndex": 2,
-							"icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "icon": "GO_TO_MESSAGE",
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -575,9 +614,9 @@
                         "id": "A4791_5036_6881_3286",
                         "type": "trigger",
                         "position": {
-							"x": 178,
-							"y": 234
-						},
+                            "x": 178,
+                            "y": 234
+                        },
                         "dimensions": {
                             "width": null,
                             "height": null
@@ -593,9 +632,10 @@
                             "type": "trigger",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_6###",
                             "colorIndex": 0,
+                            "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -635,9 +675,10 @@
                             "type": "trigger",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_7###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -673,9 +714,10 @@
                             "type": "tool",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_8###",
                             "colorIndex": 0,
+                            "frameColorName": null,
                             "icon": "DATABASE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -799,9 +841,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_1###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATABASE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -818,6 +861,8 @@
                         "Author": "{=A4791_5036_6881_3286:startedBy}",
                         "StorageId": null,
                         "StorageCode": "RAG_SYSTEM_INFO_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
                         "Fields": {
                             "{=A4889_7438_8206_9038:startUser}": {
                                 "Value": "{=A4791_5036_6881_3286:startedBy}",
@@ -831,6 +876,9 @@
                                 "Value": "{=A7426_4464_6102_9845:botId > user}",
                                 "FieldName": "{=A4889_7438_8206_9038:bot}"
                             }
+                        },
+                        "DynamicFilterFields": {
+                            "items": []
                         },
                         "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2###",
                         "EditorComment": ""
@@ -863,9 +911,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "PLUS_M",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -934,9 +983,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_3###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATA_READING",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -1005,9 +1055,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_3###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "DATA_READING",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -1061,9 +1112,10 @@
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -1124,9 +1176,10 @@
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -1170,9 +1223,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_6###",
                             "colorIndex": 1,
+                            "frameColorName": null,
                             "icon": "CHATS",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -1226,9 +1280,10 @@
                             "type": "complex",
                             "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_5###",
                             "colorIndex": 3,
+                            "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -1245,6 +1300,8 @@
                         "Author": "{=A3922_7992_6256_9512:startUser}",
                         "StorageId": null,
                         "StorageCode": "RAG_SYSTEM_INFO_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
                         "Fields": {
                             "missingGroupChatId": {
                                 "Value": "{=A7868_4961_2315_7261:ChatId}",
@@ -1259,6 +1316,9 @@
                                 "FieldName": "bot"
                             }
                         },
+                        "DynamicFilterFields": {
+                            "items": []
+                        },
                         "Title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2###",
                         "EditorComment": ""
                     },
@@ -1267,7 +1327,7 @@
                         "id": "A2637_1165_8843_2682",
                         "type": "simple",
                         "position": {
-                            "x": 2036,
+                            "x": 2037,
                             "y": 751
                         },
                         "dimensions": {
@@ -1290,9 +1350,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2###",
                             "colorIndex": 5,
+                            "frameColorName": null,
                             "icon": "PLUS_M",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 },
@@ -1307,6 +1368,7 @@
                         "chatId": "{{=if({=A3922_7992_6256_9512:missingGroupChatId} > 0, {=A3922_7992_6256_9512:missingGroupChatId},{=A7868_4961_2315_7261:ChatId})}}",
                         "message": "###BIZPROC_NODES_BITRIX_AI_RAG_BOT_MESSAGE_1###",
                         "asError": "N",
+                        "aiWarning": "Y",
                         "Title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
                         "EditorComment": ""
                     },
@@ -1315,8 +1377,8 @@
                         "id": "A7930_3492_4440_1410",
                         "type": "simple",
                         "position": {
-                            "x": 2298,
-                            "y": 648
+                            "x": 2342,
+                            "y": 647
                         },
                         "dimensions": {
                             "width": 292.1166687011719,
@@ -1338,9 +1400,10 @@
                             "type": "simple",
                             "title": "###BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5###",
                             "colorIndex": 2,
+                            "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": null,
-                            "published": null
+                            "updated": 1771525459619,
+                            "published": 1771525459619
                         }
                     }
                 }

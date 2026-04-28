@@ -43,13 +43,13 @@ export const FileStep = {
 
 			if (this.isEditMode)
 			{
-				return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_HINT_EDIT')
+				return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_HINT_EDIT_MSGVER_1')
 					.replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378680`)">')
 					.replace('[/link]', '</a>')
 				;
 			}
 
-			return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_HINT')
+			return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_HINT_MSGVER_1')
 				.replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378680`)">')
 				.replace('[/link]', '</a>')
 			;

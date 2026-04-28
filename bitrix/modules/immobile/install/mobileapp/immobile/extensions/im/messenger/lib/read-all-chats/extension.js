@@ -2,11 +2,14 @@
  * @module im/messenger/lib/read-all-chats
  */
 jn.define('im/messenger/lib/read-all-chats', (require, exports, module) => {
+	const { isOnline } = require('device/connection');
 	const {
 		NavigationTabId,
 		DialogType,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const readAllChatsCollection = {
 		[NavigationTabId.chats]: readAllChats,
@@ -20,6 +23,9 @@ jn.define('im/messenger/lib/read-all-chats', (require, exports, module) => {
 	{
 		const { RecentManager } = await requireLazy('im:messenger/controller/recent/manager');
 		const tabId = RecentManager.getInstance().getActiveRecentId();
+
+		AnalyticsService.getInstance().recentAnalytics.sendTapReadAll(tabId);
+
 		if (readAllChatsCollection[tabId])
 		{
 			return readAllChatsCollection[tabId]();
@@ -30,12 +36,26 @@ jn.define('im/messenger/lib/read-all-chats', (require, exports, module) => {
 
 	async function readAllChats()
 	{
+		if (!isOnline())
+		{
+			Notification.showOfflineToast();
+
+			return Promise.resolve({});
+		}
+
 		return serviceLocator.get('read-service').readAllMessages();
 	}
 
-	function readAllByDialogType(dialogType)
+	async function readAllByDialogType(dialogType)
 	{
-		return serviceLocator.get('read-service').readAllMessagesByDialogType(dialogType);
+		if (!isOnline())
+		{
+			Notification.showOfflineToast();
+
+			return;
+		}
+
+		await serviceLocator.get('read-service').readAllMessagesByDialogType(dialogType);
 	}
 
 	module.exports = {

@@ -15,6 +15,26 @@ IncludeModuleLangFile(__FILE__);
 $message = null;
 $ID = intval($_REQUEST['ID']);
 
+$aTabs = [
+	[
+		'DIV' => 'edit1',
+		'TAB' => GetMessage('CTRL_COUNTER_EDIT_TAB1'),
+		'TITLE' => GetMessage('CTRL_COUNTER_EDIT_TAB1_TITLE'),
+	],
+	[
+		'DIV' => 'edit2',
+		'TAB' => GetMessage('CTRL_COUNTER_EDIT_CONTROLLER_GROUP'),
+		'TITLE' => GetMessage('CTRL_COUNTER_EDIT_CONTROLLER_GROUP_TITLE'),
+	],
+	[
+		'DIV' => 'edit3',
+		'TAB' => GetMessage('CTRL_COUNTER_EDIT_COMMAND'),
+		'TITLE' => GetMessage('CTRL_COUNTER_EDIT_COMMAND_TITLE'),
+	],
+];
+
+$tabControl = new CAdminTabControl('tabControl', $aTabs);
+
 if (
 	$_SERVER['REQUEST_METHOD'] == 'POST'
 	&& check_bitrix_sessid()
@@ -38,11 +58,52 @@ if (
 			'COUNTER_TYPE' => $_POST['COUNTER_TYPE'],
 			'COUNTER_FORMAT' => $_POST['COUNTER_FORMAT'],
 			'NAME' => $_POST['NAME'],
-			'COMMAND' => $_POST['COMMAND'],
 			'CONTROLLER_GROUP_ID' => $_POST['CONTROLLER_GROUP_ID'],
+			'COMMAND_SOURCE' => $_POST['COMMAND_SOURCE'] === 'file' ? 'file' : 'text',
+			'COMMAND' => false,
+			'COMMAND_FILE' => false,
 		];
 
-		if ($ID > 0)
+		if (
+			$arFields['COMMAND_SOURCE'] === 'file'
+			&& isset($_POST['COMMAND_FILE'])
+			&& ($_POST['COMMAND_FILE'] != '')
+		)
+		{
+			$filename = trim(str_replace('\\', '/', trim($_POST['COMMAND_FILE'])), '/');
+			$FILE_NAME = Rel2Abs($_SERVER['DOCUMENT_ROOT'], '/' . $filename);
+			if (
+				(mb_strlen($FILE_NAME) > 1)
+				&& ($FILE_NAME === '/' . $filename)
+				&& ($APPLICATION->GetFileAccessPermission($FILE_NAME) >= 'W')
+			)
+			{
+				$arFields['COMMAND_FILE'] = $FILE_NAME;
+			}
+		}
+
+		if ($arFields['COMMAND_SOURCE'] === 'text')
+		{
+			$arFields['COMMAND'] = $_POST['COMMAND'] ?? '';
+		}
+
+		$command = $arFields['COMMAND_SOURCE'] === 'file' ? file_get_contents($_SERVER['DOCUMENT_ROOT'] . $arFields['COMMAND_FILE']) : $arFields['COMMAND'];
+		if (str_starts_with($command, '<' . '?'))
+		{
+			$command = mb_substr($command, 2);
+			if (str_starts_with($command, 'php'))
+			{
+				$command = mb_substr($command, 3);
+			}
+		}
+
+		if ($error = CControllerCounter::checkCommandSyntax($command))
+		{
+			$e = new CApplicationException(GetMessage('CTRL_COUNTER_EDIT_COMMAND_TITLE') . ': ' . $error);
+			$APPLICATION->ThrowException($e);
+			$res = false;
+		}
+		elseif ($ID > 0)
 		{
 			$res = CControllerCounter::Update($ID, $arFields);
 		}
@@ -66,7 +127,7 @@ if (
 			}
 			else
 			{
-				LocalRedirect('controller_counter_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $ID);
+				LocalRedirect('controller_counter_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $ID . '&' . $tabControl->ActiveTabParam());
 			}
 		}
 	}
@@ -84,7 +145,9 @@ if ($message !== null)
 		'COUNTER_TYPE' => $_POST['COUNTER_TYPE'],
 		'COUNTER_FORMAT' => $_POST['COUNTER_FORMAT'],
 		'NAME' => $_POST['NAME'],
+		'COMMAND_SOURCE' => $_POST['COMMAND_SOURCE'],
 		'COMMAND' => $_POST['COMMAND'],
+		'COMMAND_FILE' => $_POST['COMMAND_FILE'],
 		'CONTROLLER_GROUP_ID' => is_array($_POST['CONTROLLER_GROUP_ID']) ? $_POST['CONTROLLER_GROUP_ID'] : [],
 	];
 }
@@ -94,17 +157,15 @@ elseif ($ID <= 0)
 		'COUNTER_TYPE' => 'F',
 		'COUNTER_FORMAT' => '',
 		'NAME' => '',
+		'COMMAND_SOURCE' => 'text',
 		'COMMAND' => '',
+		'COMMAND_FILE' => '',
 		'CONTROLLER_GROUP_ID' => [],
 	];
 }
 
 $sDocTitle = $ID > 0 ? GetMessage('CTRL_CNT_EDIT_TITLE', ['#ID#' => $ID]) : GetMessage('CTRL_CNT_EDIT_TITLE_NEW');
 $APPLICATION->SetTitle($sDocTitle);
-
-/***************************************************************************
- * HTML form
- ****************************************************************************/
 
 require $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/include/prolog_admin_after.php';
 $aMenu = [
@@ -143,26 +204,6 @@ if ($ID > 0 && $USER->CanDoOperation('controller_counters_manage'))
 
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
-
-$aTabs = [
-	[
-		'DIV' => 'edit1',
-		'TAB' => GetMessage('CTRL_COUNTER_EDIT_TAB1'),
-		'TITLE' => GetMessage('CTRL_COUNTER_EDIT_TAB1_TITLE'),
-	],
-	[
-		'DIV' => 'edit2',
-		'TAB' => GetMessage('CTRL_COUNTER_EDIT_CONTROLLER_GROUP'),
-		'TITLE' => GetMessage('CTRL_COUNTER_EDIT_CONTROLLER_GROUP_TITLE'),
-	],
-	[
-		'DIV' => 'edit3',
-		'TAB' => GetMessage('CTRL_COUNTER_EDIT_COMMAND'),
-		'TITLE' => GetMessage('CTRL_COUNTER_EDIT_COMMAND_TITLE'),
-	],
-];
-
-$tabControl = new CAdminTabControl('tabControl', $aTabs);
 
 if ($message)
 {
@@ -285,6 +326,51 @@ if ($message)
 	</tr>
 	<?php $tabControl->BeginNextTab(); ?>
 	<tr>
+		<td width="40%">
+			<label for="ffilename"><?=GetMessage('CTRL_COUNTER_EDIT_COMMAND_SOURCE')?>:</label>
+		</td>
+		<td width="60%">
+			<label><input type="radio" name="COMMAND_SOURCE" value="text" <?php echo ($arCounter['COMMAND_SOURCE'] != 'file') ? 'checked' : ''?> onclick="toggle_command_source();">&nbsp;<?php echo GetMessage('CTRL_COUNTER_EDIT_COMMAND_SOURCE_FORM')?></label><br>
+			<label><input type="radio" name="COMMAND_SOURCE" value="file" <?php echo ($arCounter['COMMAND_SOURCE'] == 'file') ? 'checked' : ''?> onclick="toggle_command_source();">&nbsp;<?php echo GetMessage('CTRL_COUNTER_EDIT_COMMAND_SOURCE_FILE')?></label><br>
+		</td>
+	</tr>
+	<tr id="COMMAND_SOURCE_FILE">
+		<td width="40%">
+			<label for="ffilename"><?=GetMessage('CTRL_COUNTER_EDIT_COMMAND_FILE')?>:</label>
+		</td>
+		<td width="60%">
+			<input type="text" id="ffilename" name="COMMAND_FILE" value="<?php echo htmlspecialcharsbx($arCounter['COMMAND_FILE'])?>" size="80">
+			<script>
+			function setFile(filename, path, site)
+			{
+				if(filename == path)
+				{
+					document.getElementById('ffilename').value = filename;
+				}
+				else
+				{
+					if(path != '/')
+						path += '/';
+					document.getElementById('ffilename').value = path + filename;
+				}
+			}
+			</script><?php
+			CAdminFileDialog::ShowScript([
+				'event' => 'OpenFileBrowserWindFile',
+				'arResultDest' => ['FUNCTION_NAME' => 'setFile'],
+				//'arPath' => ['SITE' => 'ru', 'PATH' => '/'],
+				'select' => 'F',// F - file only, D - folder only, DF - files & dirs
+				'operation' => 'O',// O - open, S - save
+				'showUploadTab' => true,
+				'showAddToMenuTab' => true,
+				'fileFilter' => 'php',
+				'allowAllFiles' => true,
+				'SaveConfig' => true
+			]);
+			?><input type="button" onclick="OpenFileBrowserWindFile();" value="<?php echo GetMessage('CTRL_COUNTER_EDIT_OPEN_FILE_BUTTON')?>">
+		</td>
+	</tr>
+	<tr id="COMMAND_SOURCE_TEXT">
 		<td colspan="2">
 			<textarea name="COMMAND" id="COMMAND" style="width:100%" rows="20"><?php echo htmlspecialcharsbx($arCounter['COMMAND']) ?></textarea>
 		</td>
@@ -308,6 +394,24 @@ if ($message)
 	<?php endif ?>
 	<input type="hidden" value="Y" name="apply">
 </form>
+<script>
+function toggle_command_source()
+{
+	const selector = 'input[name="COMMAND_SOURCE"]:checked';
+	const selectedRadio = document.querySelector(selector);
+	if (selectedRadio && selectedRadio.value == 'file')
+	{
+		BX('COMMAND_SOURCE_FILE').style.display = '';
+		BX('COMMAND_SOURCE_TEXT').style.display = 'none';
+	}
+	else
+	{
+		BX('COMMAND_SOURCE_FILE').style.display = 'none';
+		BX('COMMAND_SOURCE_TEXT').style.display = '';
+	}
+}
+BX.ready(toggle_command_source);
+</script>
 <?php
 if (COption::GetOptionString('fileman', 'use_code_editor', 'Y') == 'Y' && CModule::IncludeModule('fileman'))
 {

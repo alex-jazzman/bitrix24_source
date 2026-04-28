@@ -516,3 +516,90 @@ export type CommunicationEditorViewEvent = {
 	,
 	c_sub_section: Dictionary.SUB_SECTION_DETAILS | Dictionary.SUB_SECTION_LIST,
 };
+
+export type DisableAlertOldInvoiceReadonlyViewEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_BANNERS,
+	event: Dictionary.EVENT_OLD_INVOICE_READONLY_ALERT_VIEW,
+	type: Dictionary.TYPE_OLD_INVOICE_READONLY_ALERT,
+	c_section: Dictionary.SECTION_INVOICE,
+};
+
+export type DisableAlertOldInvoiceReadonlyClickEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_BANNERS,
+	event: Dictionary.EVENT_OLD_INVOICE_READONLY_ALERT_CLICK,
+	type: Dictionary.TYPE_OLD_INVOICE_READONLY_ALERT,
+	c_section: Dictionary.SECTION_INVOICE,
+	c_element: Dictionary.ELEMENT_INFO_BUTTON,
+};
+
+export type DisableAlertOldInvoiceReadonlyCloseEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_BANNERS,
+	event: Dictionary.EVENT_OLD_INVOICE_READONLY_ALERT_CLOSE,
+	type: Dictionary.TYPE_OLD_INVOICE_READONLY_ALERT,
+	c_section: Dictionary.SECTION_INVOICE,
+	c_element: Dictionary.ELEMENT_CLOSE_BUTTON,
+};
+
+export type ImportEntityType = 'lead' | 'deal' | 'contact' | 'company' | 'quote' | 'smart_invoice' | 'dynamic';
+export type Origin = 'custom' | 'gmail' | 'outlook' | 'yandex' | 'yahoo' | 'mailru' | 'livemail' | 'vcard';
+
+export type ImportViewEventMigrationButton = 'migration_button';
+
+export type ImportViewEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_IMPORT,
+	event: Dictionary.EVENT_IMPORT_VIEW,
+	type: ImportEntityType,
+	c_sub_section: ?Origin,
+	c_element: ?ImportViewEventMigrationButton,
+	p1: CrmMode,
+};
+
+export type ImportEditEventStatus = 'success' | 'error';
+export type ImportEditEventControl = 'import_default_opened' | 'import_requisite' | 'create_button' | 'delete_button' | null;
+export type ImportEditEventDuplicateControlType = 'IMPORT_DUP_CONTROL_TYPE_skip' | 'IMPORT_DUP_CONTROL_TYPE_replace' | 'IMPORT_DUP_CONTROL_TYPE_merge' | 'IMPORT_DUP_CONTROL_TYPE_no_control';
+
+export type ImportEditEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_IMPORT,
+	event: Dictionary.EVENT_IMPORT_EDIT,
+	type: ImportEntityType,
+	c_sub_section: ?Origin,
+	c_element: ImportEditEventControl,
+	status: ImportEditEventStatus,
+	p1: CrmMode,
+	p2: ImportEditEventDuplicateControlType,
+};
+
+export type ImportCreateEventControl = 'crm_import_done' | 'crm_import_again' | null;
+export type ImportCreateEventStatus = 'success' | 'error' | 'cancel';
+export type ImportCreateEventSuccessCount = ?string;
+export type ImportCreateEventErrorCount = ?string;
+export type ImportCreateEventDuplicateCount = ?string;
+
+export type ImportCreateEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_IMPORT,
+	event: Dictionary.EVENT_IMPORT_CREATE,
+	type: ImportEntityType,
+	c_sub_section: ?Origin,
+	c_element: ImportCreateEventControl,
+	status: ImportCreateEventStatus,
+	p1: CrmMode,
+	p2: ImportCreateEventSuccessCount,
+	p3: ImportCreateEventErrorCount,
+	p4: ImportCreateEventDuplicateCount,
+};
+
+export type ImportCancelEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_IMPORT,
+	event: Dictionary.EVENT_IMPORT_CANCEL,
+	type: ImportEntityType,
+	c_sub_section: ?Origin,
+	p1: CrmMode,
+	p2: string, // step_<step_name>
+};

@@ -58,3 +58,9 @@ export const EntityType = Object.freeze({
 	STRUCTURE_NODE_ROLE: 'structure-node-role',
 	COMPANY: 'company',
 });
+
+export type BlankScenarioType = 'b2b' | 'b2e';
+export const BlankScenario: Readonly<Record<string, BlankScenarioType>> = Object.freeze({
+	b2b: 'b2b',
+	b2e: 'b2e',
+});

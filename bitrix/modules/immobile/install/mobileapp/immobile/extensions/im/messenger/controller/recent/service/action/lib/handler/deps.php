@@ -12,5 +12,6 @@ return [
 		'im:messenger/provider/data',
 		'im:messenger/provider/rest',
 		'im:messenger/lib/ui/notification/messenger-notifier',
+		'im:messenger/controller/recent/service/select/lib/opener',
 	],
 ];

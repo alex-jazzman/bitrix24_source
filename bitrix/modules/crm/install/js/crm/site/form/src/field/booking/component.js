@@ -1,4 +1,6 @@
 import * as Mixins from '../base/components/mixins';
+import { FieldProduct } from '../product/component';
+import { Item } from '../product/item';
 
 // @vue/component
 const BookingField = {
@@ -32,9 +34,14 @@ const BookingField = {
 		});
 
 		this.component = BX.Booking.CrmForms.Field;
+
 		this.dependencies = {
 			mixinDropdown: Mixins.MixinDropDown,
 			mixinField: Mixins.MixinField,
+			componentFieldProduct: {
+				FieldProduct,
+				Item,
+			},
 		};
 	},
 	methods: {

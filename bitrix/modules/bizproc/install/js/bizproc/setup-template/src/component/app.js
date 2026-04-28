@@ -223,7 +223,7 @@ export const ActivatorAppComponent = {
 		{
 			BX.SidePanel.Instance.close();
 		},
-		onConstantUpdate(constantId: string, value: string): void
+		onConstantUpdate(constantId: string, value: any): void
 		{
 			this.formData[constantId] = value;
 
@@ -232,7 +232,7 @@ export const ActivatorAppComponent = {
 				delete this.validationErrors[constantId];
 			}
 		},
-		isValueEmpty(value: string): boolean
+		isValueEmpty(value: any): boolean
 		{
 			if (Type.isArray(value) && value.length === 0)
 			{

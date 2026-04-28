@@ -4,6 +4,7 @@ namespace Bitrix\Intranet\Entity;
 
 use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\Enum\InvitationStatus;
+use Bitrix\Intranet\Enum\InvitationType;
 use Bitrix\Intranet\Enum\UserRole;
 use Bitrix\Intranet\Infrastructure\UserNameFormatter;
 use Bitrix\Intranet\Integration\HumanResources\HrUserService;
@@ -37,9 +38,11 @@ class User
 		private ?string $lid = null,
 		private ?string $languageId = null,
 		private ?string $personalMobile = null,
+		private ?string $workPosition = null,
 		private ?string $password = null,
 		private mixed $ufCrmEntity = null, //UF_USER_CRM_ENTITY
 		private ?Date $lastLogin = null,
+		private ?InvitationType $invitedVia = null,
 	)
 	{
 	}
@@ -388,5 +391,31 @@ class User
 		$currentUserId = (int)CurrentUser::get()->getId();
 
 		return $currentUserId > 0 && $this->id === $currentUserId;
+	}
+
+	public function getWorkPosition(): ?string
+	{
+		return $this->workPosition;
+	}
+
+	public function setWorkPosition(?string $workPosition): void
+	{
+		$this->workPosition = $workPosition;
+	}
+		
+	/**
+	 * @return InvitationType|null
+	 */
+	public function getInvitedVia(): ?InvitationType
+	{
+		return $this->invitedVia;
+	}
+
+	/**
+	 * @param InvitationType|null $invitedVia
+	 */
+	public function setInvitedVia(?InvitationType $invitedVia): void
+	{
+		$this->invitedVia = $invitedVia;
 	}
 }

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,market_slider,market_listItem,market_rating,market_popupInstall,market_popupUninstall,market_scopeList,market_installStore,market_uninstallStore,main_core_events,main_popup,ui_ears,ui_designTokens,ui_vue3_pinia) {
 	'use strict';
@@ -118,10 +119,11 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.onShowPopup);
 	    main_core_events.EventEmitter.subscribe('BX.Main.Popup:onClose', this.onClosePopup);
 	    this.initOther();
+	    this.createPopupMenu();
 	    if (this.needOpenImport) {
 	      setTimeout(() => this.configApp(), 500);
+	      return;
 	    }
-	    this.createPopupMenu();
 	    if (this.isTestInstall) {
 	      this.testInstall();
 	    }

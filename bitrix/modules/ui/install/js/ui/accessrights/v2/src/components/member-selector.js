@@ -1,10 +1,11 @@
 import { ajax as Ajax } from 'main.core';
+import { type BaseEvent } from 'main.core.events';
 import type { EntityOptions, Item, ItemId } from 'ui.entity-selector';
+import { Chip, type ChipImage } from 'ui.system.chip.vue';
 import { mapState } from 'ui.vue3.vuex';
 import { type SelectorService } from '../service/selector-service';
 import { ServiceLocator } from '../service/service-locator';
 import type { SelectedMember } from '../store/model/user-groups-model';
-import { Chip } from 'ui.system.chip.vue';
 import { SELECTED_ALL_USER_ID } from '../store/model/user-groups-model';
 
 export const MemberSelector = {
@@ -15,6 +16,7 @@ export const MemberSelector = {
 			accessCodesCache: {},
 		};
 	},
+	dialog: null,
 	computed: {
 		selectedMember: {
 			get(): SelectedMember {
@@ -44,6 +46,17 @@ export const MemberSelector = {
 
 			return this.selectedMember?.member?.avatar ?? '/bitrix/js/ui/accessrights/v2/images/user-avatar.svg';
 		},
+		chipImage(): ?ChipImage {
+			if (!this.selectedMemberAvatar)
+			{
+				return null;
+			}
+
+			return {
+				src: this.selectedMemberAvatar,
+				alt: this.selectedMemberName,
+			};
+		},
 		avatarBackgroundImage(): string {
 			return `url(${encodeURI(this.selectedMemberAvatar)})`;
 		},
@@ -60,8 +73,15 @@ export const MemberSelector = {
 		}),
 	},
 	methods: {
-		openUserSelector() {
-			this.getSelectorService()
+		toggleUserSelector() {
+			if (this.dialog?.isOpen())
+			{
+				this.dialog.hide();
+
+				return;
+			}
+
+			this.dialog ??= this.getSelectorService()
 				.createDialog({
 					targetNode: this.$refs.userSelector,
 					preselectedItems: this.selectedItems,
@@ -71,10 +91,14 @@ export const MemberSelector = {
 					events: {
 						'Item:onSelect': this.onMemberSelect,
 						'Item:onDeselect': this.onMemberDeselect,
+						onDestroy: () => {
+							this.dialog = null;
+						},
 					},
 					entities: this.getEntities(),
-				})
-				.show();
+				});
+
+			this.dialog.show();
 		},
 		getEntities(): EntityOptions[] {
 			const entities = this.getSelectorService().entities();
@@ -158,7 +182,7 @@ export const MemberSelector = {
 
 			return entityTypes.includes(item.entityId);
 		},
-		onMemberDeselect(event: BaseEvent): void {
+		onMemberDeselect(): void {
 			this.selectedMember = {
 				id: SELECTED_ALL_USER_ID,
 				entityId: SELECTED_ALL_USER_ID,
@@ -196,10 +220,10 @@ export const MemberSelector = {
 	template: `
 		<div ref="userSelector" class="ui-access-rights-v2-user-selector">
 			<Chip
-				:image="selectedMemberAvatar ? { src: selectedMemberAvatar, alt: selectedMemberName } : ''"
+				:image="chipImage"
 				:dropdown="true"
-				:text=selectedMemberName
-				@click="openUserSelector"
+				:text="selectedMemberName"
+				@click="toggleUserSelector"
 			/>
 		</div>
 	`,

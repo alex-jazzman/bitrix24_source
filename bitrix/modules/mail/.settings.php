@@ -66,4 +66,15 @@ return array(
 		],
 		'readonly' => true,
 	],
+	'aiassistant.marta' => [
+		'value' => [
+			'agents' => [
+				Bitrix\Mail\Integration\AiAssistant\Service\Agent\MailboxMessageAgent::class,
+			],
+			'toolSets' => [
+				Bitrix\Mail\Integration\AiAssistant\Service\ToolSet\MailboxToolSet::class,
+			],
+		],
+		'readonly' => true,
+	],
 );

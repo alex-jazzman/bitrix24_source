@@ -12,8 +12,10 @@ use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Calendar\Core\Event\Tools\Dictionary;
 use Bitrix\Calendar\Util;
+use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
 use Bitrix\Forum\TopicTable;
@@ -23,12 +25,23 @@ use Bitrix\Im\Model\ChatTable;
 class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivity
 {
 	private const CALENDAR_TYPE_USER = 'user';
+	private const CALENDAR_TYPE_GROUP = 'group';
 	private const CALENDAR_USER = 'CalendarUser';
+	private const CALENDAR_GROUP = 'CalendarGroup';
 	private const CALENDAR_FROM = 'CalendarFrom';
 	private const CALENDAR_TO = 'CalendarTo';
+	private const EVENT_FIELD = 'EventField';
 	private const RETURN_PARAM_JSON = 'ResultJson';
 	private const RETURN_PARAM_AI = 'ResultJsonAi';
 	private const RETURN_EVENTS_COUNT = 'EventsCount';
+	private const EVENT_FIELD_DESCRIPTION = 'description';
+	private const EVENT_FIELD_LOCATION = 'location';
+	private const EVENT_FIELD_ATTENDEES = 'attendees';
+	private const EVENT_FIELD_COMMENTS = 'comments';
+	private const EVENT_FIELD_CHAT = 'chat';
+	private const EVENT_FIELD_URL = 'url';
+
+	protected static $requiredModules = ['calendar'];
 
 	public function __construct($name)
 	{
@@ -36,8 +49,11 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 		$this->arProperties = [
 			'Title' => '',
 			self::CALENDAR_USER => '',
+			self::CALENDAR_GROUP => null,
 			self::CALENDAR_FROM => '',
 			self::CALENDAR_TO => '',
+			self::EVENT_FIELD => null,
+
 			self::RETURN_PARAM_JSON => '',
 			self::RETURN_PARAM_AI => '',
 			self::RETURN_EVENTS_COUNT => '',
@@ -46,8 +62,10 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 		$this->setPropertiesTypes(
 			[
 				self::CALENDAR_USER => ['Type' => FieldType::USER,],
+				self::CALENDAR_GROUP => ['Type' => FieldType::ENTITYSELECTOR],
 				self::CALENDAR_FROM => ['Type' => FieldType::DATETIME,],
 				self::CALENDAR_TO => ['Type' => FieldType::DATETIME,],
+				self::EVENT_FIELD => ['Type' => FieldType::SELECT],
 				self::RETURN_PARAM_JSON  => ['Type' => FieldType::STRING],
 				self::RETURN_PARAM_AI => ['Type' => FieldType::STRING],
 				self::RETURN_EVENTS_COUNT => ['Type' => FieldType::INT],
@@ -64,9 +82,12 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 		parent::reInitialize();
 	}
 
-	public function execute(): int
+	protected function internalExecute(): ErrorCollection
 	{
-		$user = CBPHelper::extractFirstUser($this->{self::CALENDAR_USER}, $this->getDocumentId());
+		$errors = new ErrorCollection();
+		$availableEventFields = array_keys(self::getEventFieldOptions());
+		$select = $this->{self::EVENT_FIELD} ?? $availableEventFields;
+		$select = array_intersect($availableEventFields, (array)$select);
 
 		$fromTs = CBPHelper::makeTimestamp($this->{self::CALENDAR_FROM});
 		$toTs = CBPHelper::makeTimestamp($this->{self::CALENDAR_TO});
@@ -77,14 +98,41 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 			$toTs = $fromTs + $maxDuration;
 		}
 
-		$results = $this->fetchEventsForUser($user, $fromTs, $toTs);
+		$userId = (int)CBPHelper::extractFirstUser($this->{self::CALENDAR_USER}, $this->getDocumentId());
+		$groupId = (int)$this->{self::CALENDAR_GROUP};
+
+		if ($groupId)
+		{
+			$calendarType = self::CALENDAR_TYPE_GROUP;
+			$ownerId = $groupId;
+		}
+		elseif ($userId)
+		{
+			$calendarType = self::CALENDAR_TYPE_USER;
+			$ownerId = $userId;
+		}
+		else
+		{
+			$errors->add([
+				new \Bitrix\Main\Error(Loc::getMessage('BPSNMA_PD_ERROR_EMPTY_SOURCE')),
+			]);
+
+			return $errors;
+		}
+
+		$results = $this->fetchEvents($ownerId, $calendarType, $fromTs, $toTs, $select);
 
 		$this->{self::RETURN_PARAM_JSON} = Json::encode($results);
-		$this->{self::RETURN_PARAM_AI} = Json::encode($this->prepareResultsForAi($results));
+		$this->{self::RETURN_PARAM_AI} = Json::encode(
+			$this->prepareResultsForAi($results),
+			JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+		);
 		$this->{self::RETURN_EVENTS_COUNT} = count($results);
 
-		return CBPActivityExecutionStatus::Closed;
+		return $errors;
 	}
+
+	protected function prepareProperties(): void {}
 
 	public static function getPropertiesMap(array $documentType, array $context = []): array
 	{
@@ -93,7 +141,14 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 				'Name' => Loc::getMessage('BPSNMA_PD_CUSER'),
 				'FieldName' => self::CALENDAR_USER,
 				'Type' => FieldType::USER,
-				'Required' => true,
+			],
+			self::CALENDAR_GROUP => [
+				'Name' => Loc::getMessage('BPSNMA_PD_CGROUP'),
+				'FieldName' => self::CALENDAR_GROUP,
+				'Type' => FieldType::ENTITYSELECTOR,
+				'Settings' => [
+					'entity' => ['id' => 'project'],
+				],
 			],
 			self::CALENDAR_FROM => [
 				'Name' => Loc::getMessage('BPSNMA_PD_CFROM'),
@@ -107,6 +162,14 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 				'Type' => FieldType::DATETIME,
 				'Required' => true,
 			],
+			self::EVENT_FIELD => [
+				'Name' => Loc::getMessage('BPSNMA_PD_EVENT_FIELD'),
+				'FieldName' => self::EVENT_FIELD,
+				'Type' => FieldType::SELECT,
+				'Options' => self::getEventFieldOptions(),
+				'Default' => array_keys(self::getEventFieldOptions()),
+				'Multiple' => true,
+			],
 		];
 	}
 
@@ -115,60 +178,8 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 		return static::getPropertiesMap([]);
 	}
 
-	public static function getPropertiesDialogValues(
-		$documentType,
-		$activityName,
-		&$workflowTemplate,
-		&$workflowParameters,
-		&$workflowVariables,
-		$currentValues,
-		&$errors,
-	): bool
+	private function fetchEvents(int $ownerId, string $calendarType, int $fromTs, int $toTs, array $select): array
 	{
-		$properties = [];
-		$errors = [];
-
-		$documentService = CBPRuntime::getRuntime()->getDocumentService();
-		foreach (static::getPropertiesMap($documentType) as $id => $property)
-		{
-			$value = $documentService->getFieldInputValue(
-				$documentType,
-				$property,
-				$property['FieldName'],
-				$currentValues,
-				$errors,
-			);
-
-			if (!empty($errors))
-			{
-				return false;
-			}
-
-			$properties[$id] = $value;
-		}
-
-		$errors = self::validateProperties(
-			$properties,
-			new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser),
-		);
-
-		if ($errors)
-		{
-			return false;
-		}
-
-		$currentActivity = &CBPWorkflowTemplateLoader::findActivityByName($workflowTemplate, $activityName);
-		$currentActivity['Properties'] = $properties;
-
-		return true;
-	}
-	private function fetchEventsForUser(int $userId, int $fromTs, int $toTs): array
-	{
-		if (!Loader::includeModule('calendar'))
-		{
-			return [];
-		}
-
 		$dateFrom = Util::formatDateTimeTimestampUTC($fromTs);
 		$dateTo = Util::formatDateTimeTimestampUTC($toTs);
 
@@ -177,12 +188,12 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 				'arFilter' => [
 					'FROM_LIMIT' => $dateFrom,
 					'TO_LIMIT' => $dateTo,
-					'CAL_TYPE' => [Dictionary::CALENDAR_TYPE[self::CALENDAR_TYPE_USER]],
-					'OWNER_ID' => [$userId],
+					'CAL_TYPE' => [Dictionary::CALENDAR_TYPE[$calendarType]],
+					'OWNER_ID' => [$ownerId],
 					'ACTIVE_SECTION' => 'Y',
 				],
 				'parseRecursion' => true,
-				'fetchAttendees' => true,
+				'fetchAttendees' => in_array(self::EVENT_FIELD_ATTENDEES, $select, true),
 				'fetchSection' => true,
 				'setDefaultLimit' => false,
 				'checkPermissions' => false,
@@ -201,33 +212,90 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 		$events = array_values($uniqueEvents);
 		$events = array_filter($events, fn(array $event) => !$this->isDeclinedMeeting($event));
 
-		return $this->formatEvents($events);
+		return $this->formatEvents($events, $select, $calendarType);
 	}
 
-	private function formatEvents(array $events): array
+	private function formatEvents(array $events, array $select, string $calType = self::CALENDAR_TYPE_USER): array
 	{
 		$result = [];
 
-		$eventsAttendees = $this->formatAttendees($events);
-		$eventsComments = $this->fetchCommentsForEvents($events);
-		$eventsChats = $this->fetchChatsForEvents($events);
+		$selectAttendees = in_array(self::EVENT_FIELD_ATTENDEES, $select, true);
+		$selectComments = in_array(self::EVENT_FIELD_COMMENTS, $select, true);
+		$selectChats = in_array(self::EVENT_FIELD_CHAT, $select, true);
+		$selectUrl = in_array(self::EVENT_FIELD_URL, $select, true);
+		$selectDescription = in_array(self::EVENT_FIELD_DESCRIPTION, $select, true);
+		$selectLocation = in_array(self::EVENT_FIELD_LOCATION, $select, true);
+
+		$eventsAttendees = $selectAttendees ? $this->formatAttendees($events) : [];
+		$eventsComments = $selectComments ? $this->fetchCommentsForEvents($events) : [];
+		$eventsChats = $selectChats ? $this->fetchChatsForEvents($events) : [];
 
 		foreach ($events as $key => $event)
 		{
-			$result[] = [
+			$isFullDayEvent = ($event['DT_SKIP_TIME'] ?? null) === 'Y';
+
+			$dateFrom = $this->mapEventDateToObject(
+				$event['DATE_FROM'] ?? null,
+				$event['TZ_FROM'] ?? null,
+				$isFullDayEvent,
+			);
+
+			$dateTo = $this->mapEventDateToObject(
+				$event['DATE_TO'] ?? null,
+				$event['TZ_TO'] ?? null,
+				$isFullDayEvent,
+			);
+
+			if ($dateTo && $isFullDayEvent)
+			{
+				$dateTo->add('+1 day');
+			}
+
+			$item = [
 				'id' => $event['ID'],
 				'name' => $event['NAME'],
-				'description' => $event['DESCRIPTION'] ?? null,
-				'location' => $event['LOCATION'] ?? null,
-				'dateFrom' => $event['DATE_FROM'] ?? null,
-				'dateTo' => $event['DATE_TO'] ?? null,
+				'dateFrom' => $dateFrom?->format($isFullDayEvent ? 'Y-m-d' : 'c'),
+				'dateTo' => $dateTo?->format($isFullDayEvent ? 'Y-m-d' : 'c'),
 				'ownerId' => $event['OWNER_ID'] ?? null,
 				'isMeeting' => (bool)($event['IS_MEETING'] ?? false),
 				'meetingStatus' => $event['MEETING_STATUS'] ?? null,
-				'attendees' => $eventsAttendees[$key] ?? [],
-				'comments' => $eventsComments[$event['ID']] ?? [],
-				'chat' => $eventsChats[$event['ID']] ?? null,
 			];
+
+			if ($selectDescription)
+			{
+				$item['description'] = $event['DESCRIPTION'] ?? null;
+			}
+
+			if ($selectLocation)
+			{
+				$item['location'] = $event['LOCATION'] ?? null;
+			}
+
+			if ($selectAttendees)
+			{
+				$item['attendees'] = $eventsAttendees[$key] ?? [];
+			}
+
+			if ($selectComments)
+			{
+				$item['comments'] = $eventsComments[$event['ID']] ?? [];
+			}
+
+			if ($selectChats)
+			{
+				$item['chat'] = $eventsChats[$event['ID']] ?? null;
+			}
+
+			if ($selectUrl)
+			{
+				$ownerId = (int)($event['OWNER_ID'] ?? 0);
+				$id = (int)($event['ID'] ?? 0);
+				$dateFrom = (string)($event['DATE_FROM'] ?? '');
+
+				$item['url'] = CCalendar::getEntryUrl($calType, $ownerId, $id, $dateFrom);
+			}
+
+			$result[] = $item;
 		}
 
 		return $result;
@@ -495,6 +563,33 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 		return $result;
 	}
 
+	private function mapEventDateToObject(
+		?string $date,
+		?string $timeZone,
+		?bool $isFullDayEvent,
+	): ?Date
+	{
+		if (!$date)
+		{
+			return null;
+		}
+
+		try
+		{
+			$dateObject = Util::getDateObject(
+				$date,
+				$isFullDayEvent,
+				$timeZone,
+			);
+		}
+		catch (\Bitrix\Main\ObjectException $e)
+		{
+			return null;
+		}
+
+		return $dateObject;
+	}
+
 	private function prepareResultsForAi(array $results): array
 	{
 		if (empty($results))
@@ -538,13 +633,19 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 	{
 		$cleanEvent = [
 			'name' => $event['name'],
-			'description' => $event['description'],
-			'location' => $event['location'],
 			'dateFrom' => $event['dateFrom'],
 			'dateTo' => $event['dateTo'],
-			'isMeeting' => $event['isMeeting'],
-			'meetingStatus' => $event['meetingStatus'],
 		];
+
+		if (!empty($event['description']))
+		{
+			$cleanEvent['description'] = $event['description'];
+		}
+
+		if (!empty($event['location']))
+		{
+			$cleanEvent['location'] = $event['location'];
+		}
 
 		if (!empty($event['attendees']))
 		{
@@ -577,11 +678,42 @@ class CBPCalendarGetInform extends BaseActivity implements IBPConfigurableActivi
 			];
 		}
 
+		if (!empty($event['url']))
+		{
+			$cleanEvent['url'] = $event['url'];
+		}
+
+
 		return $cleanEvent;
 	}
 
 	protected static function getFileName(): string
 	{
 		return __FILE__;
+	}
+
+	private static function getEventFieldOptions(): array
+	{
+		return [
+			self::EVENT_FIELD_DESCRIPTION => Loc::getMessage('BPSNMA_PD_EVENT_FIELD_DESCRIPTION'),
+			self::EVENT_FIELD_LOCATION => Loc::getMessage('BPSNMA_PD_EVENT_FIELD_LOCATION'),
+			self::EVENT_FIELD_ATTENDEES => Loc::getMessage('BPSNMA_PD_EVENT_FIELD_ATTENDEES'),
+			self::EVENT_FIELD_COMMENTS => Loc::getMessage('BPSNMA_PD_EVENT_FIELD_COMMENTS'),
+			self::EVENT_FIELD_CHAT => Loc::getMessage('BPSNMA_PD_EVENT_FIELD_CHAT'),
+			self::EVENT_FIELD_URL => Loc::getMessage('BPSNMA_PD_EVENT_FIELD_URL'),
+		];
+	}
+
+	public static function validateProperties($testProperties = [], \CBPWorkflowTemplateUser $user = null): array
+	{
+		$errors = [];
+		if (empty($testProperties[self::CALENDAR_USER]) && empty($testProperties[self::CALENDAR_GROUP]))
+		{
+			$errors[] = [
+				'message' => Loc::getMessage('BPSNMA_PD_ERROR_EMPTY_SOURCE'),
+			];
+		}
+
+		return array_merge($errors, parent::ValidateProperties($testProperties, $user));
 	}
 }

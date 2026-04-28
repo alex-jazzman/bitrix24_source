@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BR_NUM_POSTS'] = "Posts to emit";
 $MESS ['BR_PATH_TO_BLOG'] = "Blog page path template";
 $MESS ['BR_PATH_TO_POST'] = "Template of a blog message page";
@@ -14,4 +14,3 @@ $MESS ['BR_MODE_POST'] = "Posts";
 $MESS ['BR_MODE_COMMENT'] = "Comments";
 $MESS ['BR_MODE'] = "Export to RSS";
 $MESS ['BR_POST_ID'] = "Blog Post ID";
-?>

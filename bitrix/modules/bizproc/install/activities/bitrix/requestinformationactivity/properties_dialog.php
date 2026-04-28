@@ -461,13 +461,7 @@ $renderField = function(array $field, bool $allowSelection) use($dialog)
 							if($fieldId === 'TimeoutDuration')
 							{
 								echo $renderField($dialog->getMap()['TimeoutDurationType'], false);
-								$delayMinLimit = CBPSchedulerService::getDelayMinLimit();
-								if ($delayMinLimit)
-								{
-									printf('<p style="color: red;">* %s: %s</p>',
-										GetMessage("BPSFA_PD_TIMEOUT_LIMIT"), CBPHelper::FormatTimePeriod($delayMinLimit)
-									);
-								}
+								echo \CBPViewHelper::renderDelayLimitsInfo();
 							}
 							?>
 						</td>

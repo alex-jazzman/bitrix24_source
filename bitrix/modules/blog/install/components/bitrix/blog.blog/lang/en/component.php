@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_MODULE_NOT_INSTALL"] = "Blog module is not installed.";
 $MESS["BLOG_BLOG_BLOG_TITLE"] = "Blog messages";
 $MESS["BLOG_BLOG_BLOG_REQUEST_ALREADY"] = "Your request is already under consideration with the blog author";
@@ -41,4 +41,3 @@ $MESS["BLOG_BLOG_BLOG_MES_HIDED"] = "The post is hidden";
 $MESS["BLOG_BLOG_BLOG_MES_HIDE_ERROR"] = "Error hiding the post";
 $MESS["BLOG_BLOG_BLOG_MES_HIDE_NO_RIGHTS"] = "You do not have permission to hide this post.";
 $MESS["BLOG_BLOG_SESSID_WRONG"] = "Your session has expired. Please try again.";
-?>

@@ -9,7 +9,7 @@ return [
 	'js' => 'dist/resources-service.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'booking.utils',
+		'booking.lib.utils',
 		'booking.core',
 		'booking.const',
 		'booking.lib.api-client',

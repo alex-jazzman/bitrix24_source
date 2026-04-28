@@ -258,6 +258,7 @@ export const BaseChatContent = {
 				:isActive="!hasCommentsOnTop"
 				@changePanel="onChangeSidebarPanel"
 			/>
+			<slot name="extra-panel"></slot>
 		</div>
 	`,
 };

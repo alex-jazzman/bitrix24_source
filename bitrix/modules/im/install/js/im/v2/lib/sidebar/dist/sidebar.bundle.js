@@ -205,11 +205,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.marketAppList]
 	});
 
-	const isNotes = chatContext => {
-	  return im_v2_application_core.Core.getStore().getters['chats/isNotes'](chatContext.dialogId);
+	const isSelfChat = chatContext => {
+	  return im_v2_application_core.Core.getStore().getters['chats/isSelfChat'](chatContext.dialogId);
 	};
-	const notesPreset = new SidebarPreset({
-	  blocks: [im_v2_const.SidebarMainPanelBlock.notes, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList]
+	const selfChatPreset = new SidebarPreset({
+	  blocks: [im_v2_const.SidebarMainPanelBlock.selfChat, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList]
 	});
 
 	const isLines = chatContext => chatContext.type === im_v2_const.ChatType.lines;
@@ -321,7 +321,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isSupport, supportPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isAiAssistantBot, aiAssistantBotPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isBot, botPreset);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isNotes, notesPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isSelfChat, selfChatPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isLines, linesPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isCollab, collabPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isUser, userPreset);

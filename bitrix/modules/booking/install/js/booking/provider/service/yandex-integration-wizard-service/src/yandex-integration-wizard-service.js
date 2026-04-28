@@ -74,45 +74,68 @@ class YandexIntegrationWizardService
 		}
 	}
 
-	async updateIntegration(model: YandexIntegrationModel): Promise<void>
+	async updateIntegration(model: YandexIntegrationModel): Promise<Object>
 	{
-		const configuration = await mapModelToDto(model);
-		const updatedModel: YandexIntegrationModel = await apiClient.post(
-			'YandexIntegration.saveConfiguration',
-			{ configuration },
-		);
+		try
+		{
+			const configuration = await mapModelToDto(model);
+			const updatedModel: YandexIntegrationModel = await apiClient.post(
+				'YandexIntegration.saveConfiguration',
+				{ configuration },
+			);
 
-		const yiwModel = Model.YandexIntegrationWizard;
+			const yiwModel = Model.YandexIntegrationWizard;
 
-		await Promise.all([
-			this.$store.dispatch(`${yiwModel}/setIntegration`, updatedModel),
-			this.$store.dispatch(`${yiwModel}/setStatus`, updatedModel.status),
-			this.$store.dispatch(`${Model.SaleChannels}/setIntegrationStatus`, {
-				code: IntegrationMapItemCode.YANDEX,
-				status: updatedModel.status,
-			}),
-			this.$store.dispatch(`${yiwModel}/setResourceSkuRelationsSaved`, true),
-			this.$store.dispatch(`${yiwModel}/resetFormDataChanges`),
-		]);
+			await Promise.all([
+				this.$store.dispatch(`${yiwModel}/setIntegration`, updatedModel),
+				this.$store.dispatch(`${yiwModel}/setStatus`, updatedModel.status),
+				this.$store.dispatch(`${Model.SaleChannels}/setIntegrationStatus`, {
+					code: IntegrationMapItemCode.YANDEX,
+					status: updatedModel.status,
+				}),
+				this.$store.dispatch(`${yiwModel}/setResourceSkuRelationsSaved`, true),
+				this.$store.dispatch(`${yiwModel}/resetFormDataChanges`),
+			]);
+
+			return {
+				success: true,
+			};
+		}
+		catch (error)
+		{
+			console.error('YandexIntegrationWizardService updateIntegration API error:', error);
+
+			return {
+				success: false,
+				errors: error.errors,
+			};
+		}
 	}
 
 	async deactivateIntegration(): Promise<void>
 	{
-		const updatedModel: YandexIntegrationModel = await apiClient.post(
-			'YandexIntegration.deactivate',
-			{},
-		);
+		try
+		{
+			const updatedModel: YandexIntegrationModel = await apiClient.post(
+				'YandexIntegration.deactivate',
+				{},
+			);
 
-		await Promise.all([
-			this.$store.dispatch(
-				`${Model.YandexIntegrationWizard}/setStatus`,
-				updatedModel.status,
-			),
-			this.$store.dispatch(`${Model.SaleChannels}/setIntegrationStatus`, {
-				code: IntegrationMapItemCode.YANDEX,
-				status: updatedModel.status,
-			}),
-		]);
+			await Promise.all([
+				this.$store.dispatch(
+					`${Model.YandexIntegrationWizard}/setStatus`,
+					updatedModel.status,
+				),
+				this.$store.dispatch(`${Model.SaleChannels}/setIntegrationStatus`, {
+					code: IntegrationMapItemCode.YANDEX,
+					status: updatedModel.status,
+				}),
+			]);
+		}
+		catch (error)
+		{
+			console.error('YandexIntegrationWizardService deactivateIntegration API error:', error);
+		}
 	}
 
 	async dropCounterIntegration(): Promise<void>

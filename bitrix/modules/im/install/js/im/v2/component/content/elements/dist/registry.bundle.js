@@ -201,6 +201,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    dialogId: {
 	      type: String,
 	      required: true
+	    },
+	    withEntityLink: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  emits: ['newTitle'],
@@ -210,7 +214,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    hasEntityLink() {
 	      var _this$dialog$entityLi;
-	      return Boolean((_this$dialog$entityLi = this.dialog.entityLink) == null ? void 0 : _this$dialog$entityLi.url);
+	      return this.withEntityLink && Boolean((_this$dialog$entityLi = this.dialog.entityLink) == null ? void 0 : _this$dialog$entityLi.url);
 	    }
 	  },
 	  methods: {
@@ -318,17 +322,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    canChangeAvatar() {
 	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.avatar, this.dialogId);
 	    },
-	    isNotes() {
-	      return this.$store.getters['chats/isNotes'](this.dialogId);
+	    isSelfChat() {
+	      return this.$store.getters['chats/isSelfChat'](this.dialogId);
 	    },
 	    userLink() {
 	      return im_v2_lib_utils.Utils.user.getProfileLink(this.dialogId);
 	    },
 	    avatarType() {
-	      return this.isNotes ? im_v2_component_elements_avatar.ChatAvatarType.notes : '';
+	      return this.isSelfChat ? im_v2_component_elements_avatar.ChatAvatarType.selfChat : '';
 	    },
 	    needProfileLink() {
-	      return this.isUser && !this.isNotes;
+	      return this.isUser && !this.isSelfChat;
 	    }
 	  },
 	  methods: {
@@ -552,6 +556,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    withAddToChatButton: {
 	      type: Boolean,
 	      default: true
+	    },
+	    withEntityLink: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  emits: ['buttonPanelReady', 'compactModeChange'],
@@ -666,6 +674,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						<component
 							:is="chatTitleComponent"
 							:dialogId="dialogId"
+							:withEntityLink="withEntityLink"
 							@newTitle="onNewTitleSubmit"
 						/>
 					</slot>
@@ -680,7 +689,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						<AddToChatButton :dialogId="dialogId" />
 					</slot>
 					<SearchButton v-if="showSearchButton" :dialogId="dialogId" />
+					<div v-if="$slots['after-actions']" class="bx-im-chat-header__separator"></div>
 					<SidebarButton v-if="showSidebarButton" :dialogId="dialogId" />
+					<slot name="after-actions"></slot>
 				</div>
 			</FadeAnimation>
 		</div>
@@ -843,13 +854,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
-	    isMuted() {
-	      return this.dialog.muteList.includes(im_v2_application_core.Core.getUserId());
-	    },
 	    buttonText() {
 	      const mutedCode = this.loc('IM_CONTENT_BLOCKED_TEXTAREA_ENABLE_NOTIFICATIONS');
 	      const unmutedCode = this.loc('IM_CONTENT_BLOCKED_TEXTAREA_DISABLE_NOTIFICATIONS');
-	      return this.isMuted ? mutedCode : unmutedCode;
+	      return this.dialog.isMuted ? mutedCode : unmutedCode;
 	    },
 	    buttonColorScheme() {
 	      return {
@@ -863,7 +871,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    onButtonClick() {
-	      if (this.isMuted) {
+	      if (this.dialog.isMuted) {
 	        this.getChatService().unmuteChat(this.dialogId);
 	        return;
 	      }
@@ -1334,6 +1342,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:isActive="!hasCommentsOnTop"
 				@changePanel="onChangeSidebarPanel"
 			/>
+			<slot name="extra-panel"></slot>
 		</div>
 	`
 	};

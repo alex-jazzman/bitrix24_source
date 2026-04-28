@@ -26929,6 +26929,7 @@ this.BX = this.BX || {};
 	          var callType = CallType.Instant;
 	          var callFactory = _classPrivateMethodGet$9(_this2, _getCallFactory, _getCallFactory2).call(_this2, newProvider);
 	          var instanceId = Util.getUuidv4();
+	          call_lib_callTokenManager.CallTokenManager.setToken(chatId, token);
 	          Util.getCallConnectionData({
 	            instanceId: instanceId,
 	            callType: callType,

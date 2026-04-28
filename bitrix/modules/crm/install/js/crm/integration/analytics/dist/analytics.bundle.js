@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Integration = this.BX.Crm.Integration || {};
-(function (exports,main_core) {
+(function (exports,main_core,crm_integration_analytics) {
 	'use strict';
 
 	/**
@@ -20,6 +20,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  CATEGORY_COMMUNICATION_OPERATIONS: 'communication',
 	  CATEGORY_BANNERS: 'banners',
 	  CATEGORY_EDITOR: 'editor',
+	  CATEGORY_IMPORT: 'import_operations',
 	  // region Event const
 	  EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
 	  EVENT_ENTITY_ADD: 'entity_add',
@@ -64,6 +65,13 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  EVENT_REPEAT_SALE_SEGMENT_VIEW: 'view',
 	  EVENT_REPEAT_SALE_SEGMENT_EDIT: 'edit',
 	  EVENT_REPEAT_SALE_SEGMENT_CANCEL: 'cancel',
+	  EVENT_OLD_INVOICE_READONLY_ALERT_VIEW: 'banner_view',
+	  EVENT_OLD_INVOICE_READONLY_ALERT_CLICK: 'banner_click',
+	  EVENT_OLD_INVOICE_READONLY_ALERT_CLOSE: 'banner_close',
+	  EVENT_IMPORT_VIEW: 'view',
+	  EVENT_IMPORT_EDIT: 'edit',
+	  EVENT_IMPORT_CREATE: 'create',
+	  EVENT_IMPORT_CANCEL: 'cancel',
 	  // endregion
 
 	  // region Type const
@@ -86,6 +94,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  TYPE_REPEAT_SALE_BANNER_START: 'repeat_sale_start',
 	  TYPE_REPEAT_SALE_BANNER_START_FORCE: 'repeat_sale_force_start',
 	  TYPE_REPEAT_SALE_BANNER_STATISTICS: 'repeat_sale_statistics',
+	  TYPE_OLD_INVOICE_READONLY_ALERT: 'old_invoice',
 	  // endregion
 
 	  // region Section const
@@ -97,6 +106,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  SECTION_COMPANY: 'company_section',
 	  SECTION_MYCOMPANY: 'my_company_section',
 	  SECTION_QUOTE: 'quote_section',
+	  SECTION_INVOICE: 'invoice_section',
 	  SECTION_SMART_INVOICE: 'smart_invoice_section',
 	  SECTION_DYNAMIC: 'dynamic_section',
 	  SECTION_CUSTOM: 'custom_section',
@@ -194,6 +204,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  ELEMENT_CHANNEL_LIST_CHANGE: 'channel_list_change',
 	  ELEMENT_ELEMENT_ADD: 'element_add',
 	  ELEMENT_AHA_MOMENT: 'aha_moment',
+	  ELEMENT_INFO_BUTTON: 'info_button',
 	  // endregion
 
 	  // region Status const
@@ -2180,6 +2191,327 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  }
 	}
 
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.OldEntityView.OldInvoiceReadonly
+	 */
+
+	class ViewEvent$3 {
+	  static buildData() {
+	    return {
+	      tool: Dictionary.TOOL_CRM,
+	      category: Dictionary.CATEGORY_BANNERS,
+	      event: Dictionary.EVENT_OLD_INVOICE_READONLY_ALERT_VIEW,
+	      type: Dictionary.TYPE_OLD_INVOICE_READONLY_ALERT,
+	      c_section: Dictionary.SECTION_INVOICE,
+	      p1: getCrmMode()
+	    };
+	  }
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.OldEntityView.OldInvoiceReadonly
+	 */
+
+	class ClickEvent$1 {
+	  static buildData() {
+	    return {
+	      tool: Dictionary.TOOL_CRM,
+	      category: Dictionary.CATEGORY_BANNERS,
+	      event: Dictionary.EVENT_OLD_INVOICE_READONLY_ALERT_CLICK,
+	      type: Dictionary.TYPE_OLD_INVOICE_READONLY_ALERT,
+	      c_section: Dictionary.SECTION_INVOICE,
+	      c_element: Dictionary.ELEMENT_INFO_BUTTON,
+	      p1: getCrmMode()
+	    };
+	  }
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.OldEntityView.OldInvoiceReadonly
+	 */
+
+	class CloseEvent$3 {
+	  static buildData() {
+	    return {
+	      tool: Dictionary.TOOL_CRM,
+	      category: Dictionary.CATEGORY_BANNERS,
+	      event: Dictionary.EVENT_OLD_INVOICE_READONLY_ALERT_CLOSE,
+	      type: Dictionary.TYPE_OLD_INVOICE_READONLY_ALERT,
+	      c_section: Dictionary.SECTION_INVOICE,
+	      c_element: Dictionary.ELEMENT_CLOSE_BUTTON,
+	      p1: getCrmMode()
+	    };
+	  }
+	}
+
+	var _entityType$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
+	var _origin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("origin");
+	var _isMigration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMigration");
+	class ViewEvent$4 {
+	  constructor() {
+	    Object.defineProperty(this, _entityType$a, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _origin, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _isMigration, {
+	      writable: true,
+	      value: false
+	    });
+	  }
+	  static createDefault(entityType) {
+	    const self = new ViewEvent$4();
+	    babelHelpers.classPrivateFieldLooseBase(self, _entityType$a)[_entityType$a] = entityType;
+	    return self;
+	  }
+	  setOrigin(origin) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _origin)[_origin] = origin;
+	    return this;
+	  }
+	  setIsMigration(isMigration) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isMigration)[_isMigration] = isMigration;
+	    return this;
+	  }
+	  buildData() {
+	    return filterOutNilValues({
+	      tool: crm_integration_analytics.Dictionary.TOOL_CRM,
+	      category: crm_integration_analytics.Dictionary.CATEGORY_IMPORT,
+	      event: crm_integration_analytics.Dictionary.EVENT_IMPORT_VIEW,
+	      type: getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType$a)[_entityType$a]),
+	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _origin)[_origin],
+	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _isMigration)[_isMigration] ? 'migration_button' : null,
+	      p1: crm_integration_analytics.getCrmMode()
+	    });
+	  }
+	}
+
+	var _entityType$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
+	var _origin$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("origin");
+	var _control = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("control");
+	var _status$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("status");
+	var _duplicateControl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("duplicateControl");
+	class EditEvent$3 {
+	  constructor() {
+	    Object.defineProperty(this, _entityType$b, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _origin$1, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _control, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _status$a, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _duplicateControl, {
+	      writable: true,
+	      value: null
+	    });
+	  }
+	  static createDefault(entityType) {
+	    const self = new EditEvent$3();
+	    babelHelpers.classPrivateFieldLooseBase(self, _entityType$b)[_entityType$b] = entityType;
+	    return self;
+	  }
+	  setOrigin(origin) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _origin$1)[_origin$1] = origin;
+	    return this;
+	  }
+	  setIsDefaultOpened() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _control)[_control] = 'import_default_opened';
+	    return this;
+	  }
+	  setIsImportRequisite() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _control)[_control] = 'import_requisite';
+	    return this;
+	  }
+	  setIsDeleteButton() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _control)[_control] = 'delete_button';
+	    return this;
+	  }
+	  setIsCreateButton() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _control)[_control] = 'create_button';
+	    return this;
+	  }
+	  unsetControl() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _control)[_control] = null;
+	    return this;
+	  }
+	  setStatus(status) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _status$a)[_status$a] = status;
+	    return this;
+	  }
+	  setDuplicateControl(duplicateControl) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _duplicateControl)[_duplicateControl] = duplicateControl == null ? void 0 : duplicateControl.toLowerCase();
+	    return this;
+	  }
+	  buildData() {
+	    let p2 = null;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _duplicateControl)[_duplicateControl]) {
+	      p2 = `importDuplicateControlType_${babelHelpers.classPrivateFieldLooseBase(this, _duplicateControl)[_duplicateControl]}`;
+	    }
+	    return filterOutNilValues({
+	      tool: crm_integration_analytics.Dictionary.TOOL_CRM,
+	      category: crm_integration_analytics.Dictionary.CATEGORY_IMPORT,
+	      event: crm_integration_analytics.Dictionary.EVENT_IMPORT_EDIT,
+	      type: getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType$b)[_entityType$b]),
+	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _origin$1)[_origin$1],
+	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _control)[_control],
+	      status: babelHelpers.classPrivateFieldLooseBase(this, _status$a)[_status$a],
+	      p1: crm_integration_analytics.getCrmMode(),
+	      p2
+	    });
+	  }
+	}
+
+	var _entityType$c = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
+	var _origin$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("origin");
+	var _importCompleteElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("importCompleteElement");
+	var _successCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("successCount");
+	var _errorCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errorCount");
+	var _duplicateCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("duplicateCount");
+	var _status$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("status");
+	class CreateEvent$2 {
+	  constructor() {
+	    Object.defineProperty(this, _entityType$c, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _origin$2, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _importCompleteElement, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _successCount, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _errorCount, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _duplicateCount, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _status$b, {
+	      writable: true,
+	      value: null
+	    });
+	  }
+	  static createDefault(entityType) {
+	    const self = new CreateEvent$2();
+	    babelHelpers.classPrivateFieldLooseBase(self, _entityType$c)[_entityType$c] = entityType;
+	    return self;
+	  }
+	  setOrigin(origin) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _origin$2)[_origin$2] = origin;
+	    return this;
+	  }
+	  setImportCompleteButton(element) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _importCompleteElement)[_importCompleteElement] = element;
+	    return this;
+	  }
+	  setSuccessCount(successCount) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _successCount)[_successCount] = successCount;
+	    return this;
+	  }
+	  setErrorCount(errorCount) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _errorCount)[_errorCount] = errorCount;
+	    return this;
+	  }
+	  setDuplicateCount(duplicateCount) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _duplicateCount)[_duplicateCount] = duplicateCount;
+	    return this;
+	  }
+	  setStatus(status) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _status$b)[_status$b] = status;
+	    return this;
+	  }
+	  buildData() {
+	    return filterOutNilValues({
+	      tool: crm_integration_analytics.Dictionary.TOOL_CRM,
+	      category: crm_integration_analytics.Dictionary.CATEGORY_IMPORT,
+	      event: crm_integration_analytics.Dictionary.EVENT_IMPORT_CREATE,
+	      type: getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType$c)[_entityType$c]),
+	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _origin$2)[_origin$2],
+	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _importCompleteElement)[_importCompleteElement],
+	      status: babelHelpers.classPrivateFieldLooseBase(this, _status$b)[_status$b],
+	      p1: crm_integration_analytics.getCrmMode(),
+	      p2: this.moreZeroOrNull('successCount', babelHelpers.classPrivateFieldLooseBase(this, _successCount)[_successCount]),
+	      p3: this.moreZeroOrNull('errorCount', babelHelpers.classPrivateFieldLooseBase(this, _errorCount)[_errorCount]),
+	      p4: this.moreZeroOrNull('duplicateCount', babelHelpers.classPrivateFieldLooseBase(this, _duplicateCount)[_duplicateCount])
+	    });
+	  }
+	  moreZeroOrNull(key, value) {
+	    if (main_core.Type.isNumber(value) && value > 0) {
+	      return `${key}_${value}`;
+	    }
+	    return null;
+	  }
+	}
+
+	var _entityType$d = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
+	var _origin$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("origin");
+	var _step = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("step");
+	class CancelEvent$2 {
+	  constructor() {
+	    Object.defineProperty(this, _entityType$d, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _origin$3, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _step, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  static createDefault(entityType) {
+	    const self = new CancelEvent$2();
+	    babelHelpers.classPrivateFieldLooseBase(self, _entityType$d)[_entityType$d] = entityType;
+	    return self;
+	  }
+	  setOrigin(origin) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _origin$3)[_origin$3] = origin;
+	    return this;
+	  }
+	  setStep(step) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _step)[_step] = step;
+	    return this;
+	  }
+	  buildData() {
+	    return filterOutNilValues({
+	      tool: crm_integration_analytics.Dictionary.TOOL_CRM,
+	      category: crm_integration_analytics.Dictionary.CATEGORY_IMPORT,
+	      event: crm_integration_analytics.Dictionary.EVENT_IMPORT_CANCEL,
+	      type: getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType$d)[_entityType$d]),
+	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _origin$3)[_origin$3],
+	      p1: crm_integration_analytics.getCrmMode(),
+	      p2: this.filledStringOrNull('step', babelHelpers.classPrivateFieldLooseBase(this, _step)[_step])
+	    });
+	  }
+	  filledStringOrNull(key, value) {
+	    if (main_core.Type.isStringFilled(value)) {
+	      return `${key}_${value}`;
+	    }
+	    return null;
+	  }
+	}
+
 	const Builder = Object.freeze({
 	  Entity: {
 	    AddEvent: AddEvent,
@@ -2235,6 +2567,19 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	      CancelEvent: CancelEvent$1,
 	      EditEvent: EditEvent$2
 	    }
+	  },
+	  OldEntityView: {
+	    OldInvoiceReadonly: {
+	      ViewEvent: ViewEvent$3,
+	      ClickEvent: ClickEvent$1,
+	      CloseEvent: CloseEvent$3
+	    }
+	  },
+	  Import: {
+	    ViewEvent: ViewEvent$4,
+	    EditEvent: EditEvent$3,
+	    CreateEvent: CreateEvent$2,
+	    CancelEvent: CancelEvent$2
 	  }
 	});
 
@@ -2242,5 +2587,5 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	exports.Dictionary = Dictionary;
 	exports.getCrmMode = getCrmMode;
 
-}((this.BX.Crm.Integration.Analytics = this.BX.Crm.Integration.Analytics || {}),BX));
+}((this.BX.Crm.Integration.Analytics = this.BX.Crm.Integration.Analytics || {}),BX,BX.Crm.Integration.Analytics));
 //# sourceMappingURL=analytics.bundle.js.map

@@ -41,6 +41,8 @@ $MESS["DISK_FILE_VIEW_FF_EXTENSION_NAME"] = "Bitrix24 Integration";
 $MESS["DISK_FILE_VIEW_FF_EXTENSION_TITLE"] = "Firefox Add-on";
 $MESS["DISK_FILE_VIEW_FF_EXTENSION_UPDATE"] = "Please update the office document support browser add-on <a href=\"#LINK#\">\"#NAME#\"</a>.";
 $MESS["DISK_FILE_VIEW_FILE_BIZPROC_START"] = "Run Workflow";
+$MESS["DISK_FILE_VIEW_FILE_BIZPROC_START_NEW"] = "Workflow templates";
+$MESS["DISK_FILE_VIEW_FILE_BIZPROC_START_OLD"] = "Legacy workflow templates";
 $MESS["DISK_FILE_VIEW_FILE_DELETE_TIME"] = "Deleted";
 $MESS["DISK_FILE_VIEW_FILE_DOWNLOAD"] = "Download";
 $MESS["DISK_FILE_VIEW_FILE_EDIT"] = "Edit";

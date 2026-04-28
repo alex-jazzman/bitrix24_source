@@ -4,13 +4,12 @@
 		color-adjust: exact;
 	}
 
-	.root,
-	.app {
-		min-width: auto !important;
+	.root {
+		display: block !important;
 	}
 
 	body,
-	.app,
+	.root,
 	.page__workarea,
 	.page__workarea-content {
 		background: #fff !important;
@@ -22,6 +21,7 @@
 
 	#panel,
 	.app__header,
+	.app__avatar,
 	#air-footer,
 	#right-bar,
 	.app__left-menu,

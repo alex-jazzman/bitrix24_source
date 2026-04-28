@@ -122,7 +122,7 @@ function getDirection({ source, sourcePosition = PORT_POSITION.BOTTOM, target }:
 		: { x: 0, y: -1 };
 }
 
-function distance(a: Point, b: Point): number
+export function distance(a: Point, b: Point): number
 {
 	return Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
 }

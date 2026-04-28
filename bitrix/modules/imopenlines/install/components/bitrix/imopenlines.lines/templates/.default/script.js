@@ -560,8 +560,8 @@ function CrmWebFormListItemActiveDateController(params)
 	this.classOff = 'crm-webform-list-off';
 
     this.nodeButton = this.caller.node.querySelector('[data-bx-crm-webform-item-active-btn]');
-    this.classBtnOn = 'webform-small-button-transparent';
-    this.classBtnOff = 'webform-small-button-accept';
+    this.classBtnOn = 'ui-btn-light-border';
+    this.classBtnOff = 'ui-btn-success';
     this.classViewInactive = 'crm-webform-list-widget-inactive';
 
 	this.isNowShowedCounter = 0;

@@ -381,7 +381,7 @@ if ($order == 'desc')
 else
 	ksort($arFiles);
 
-$rsDirContent = new CDBResult;
+$rsDirContent = new CAdminResult(null, $sTableID);
 $rsDirContent->InitFromArray($arFiles);
 $rsDirContent->NavStart(20);
 

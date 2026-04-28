@@ -8,6 +8,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/const/rest',
 		'im:messenger/lib/converter/data/recent',
+		'im:messenger/lib/counters/update-system/action/read-message/local',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/feature',

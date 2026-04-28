@@ -58,12 +58,12 @@
 	display: flex;
 }
 
-.editor-chart-block-container.--highlighted .editor-chart-block-layout__top-menu-content {
+.editor-chart-block-container.--hoverable:hover .editor-chart-block-layout__top-menu-content {
 	display: flex;
 }
 
 .editor-chart-block-layout.--hoverable:hover .editor-chart-block-layout__top-menu.--hide,
-.editor-chart-block-layout__top-menu.--hide .editor-chart-block-layout__top-menu-content,
+.editor-chart-block-container.--hoverable:hover .editor-chart-block-layout__top-menu.--hide .editor-chart-block-layout__top-menu-content,
 .editor-chart-block-layout__top-menu.--hide .editor-chart-block-layout__top-menu-title {
 	display: none;
 }

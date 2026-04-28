@@ -51,7 +51,7 @@ export const MapsBlock = {
 				id: 'optionMapYa',
 				code: IntegrationMapItemCode.YANDEX,
 				imgSrc: this.imgLogoYa,
-				head: this.loc('BOOKING_INTEGRATIONS_POPUP_YANDEX_MAP_LABEL'),
+				head: this.loc('BOOKING_INTEGRATIONS_POPUP_YANDEX_MAP_LABEL_MSGVER_1'),
 				counter: {
 					id: 'counterMapsYa',
 					value: this.counterMapsYa,
@@ -129,6 +129,7 @@ export const MapsBlock = {
 				text: this.loc('BOOKING_INTEGRATIONS_POPUP_YANDEX_MAP_AHA'),
 				target: optionYandexMapEl,
 				top: true,
+				isPulsarTransparent: true,
 			});
 
 			ahaMoments.setShown(AhaMoment.IntegrationMapsYa);

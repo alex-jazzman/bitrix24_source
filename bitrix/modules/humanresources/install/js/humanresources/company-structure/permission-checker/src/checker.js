@@ -20,7 +20,9 @@ export class PermissionCheckerClass
 			this.areTeamReportSettingsAvailable = false;
 			this.isDeputyGetReportsAvailable = false;
 			this.areDepartmentReportsSettingsAvailable = false;
-			this.areMultipleUsersSettingsAvailable = false;
+			this.areTeamReportExceptionsAvailable = false;
+			this.areMultipleUsersBPSettingsAvailable = false;
+			this.multipleUsersReportSettingsAvailable = false;
 			this.isInitialized = false;
 			this.departmentChecker = new DepartmentPermissionChecker();
 			this.teamChecker = new TeamPermissionChecker(this.departmentChecker, this.currentUserPermissions);
@@ -51,7 +53,9 @@ export class PermissionCheckerClass
 			areTeamReportSettingsAvailable,
 			isDeputyGetReportsAvailable,
 			areDepartmentReportsSettingsAvailable,
-			multipleUsersSettingsAvailable,
+			multipleUsersBPSettingsAvailable,
+			multipleUsersReportSettingsAvailable,
+			teamReportExceptionsAvailable,
 		} = await chartAPI.getDictionary();
 
 		this.currentUserPermissions = currentUserPermissions;
@@ -62,7 +66,9 @@ export class PermissionCheckerClass
 		this.areTeamReportSettingsAvailable = areTeamReportSettingsAvailable;
 		this.isDeputyGetReportsAvailable = isDeputyGetReportsAvailable;
 		this.areDepartmentReportsSettingsAvailable = areDepartmentReportsSettingsAvailable;
-		this.areMultipleUsersSettingsAvailable = multipleUsersSettingsAvailable;
+		this.areMultipleUsersBPSettingsAvailable = multipleUsersBPSettingsAvailable;
+		this.areMultipleUsersReportSettingsAvailable = multipleUsersReportSettingsAvailable;
+		this.areTeamReportExceptionsAvailable = teamReportExceptionsAvailable;
 
 		this.isInitialized = true;
 	}
@@ -127,9 +133,19 @@ export class PermissionCheckerClass
 		return this.areDepartmentReportsSettingsAvailable;
 	}
 
-	checkMultipleUsersSettingsAvailable(): boolean
+	checkMultipleUsersBPSettingsAvailable(): boolean
 	{
-		return this.areMultipleUsersSettingsAvailable;
+		return this.areMultipleUsersBPSettingsAvailable;
+	}
+
+	checkMultipleUsersReportSettingsAvailable(): boolean
+	{
+		return this.areMultipleUsersReportSettingsAvailable;
+	}
+
+	checkTeamReportExceptionsAvailable(): boolean
+	{
+		return this.areTeamReportExceptionsAvailable;
 	}
 
 	hasPermissionOfAction(action: string): boolean

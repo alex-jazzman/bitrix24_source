@@ -4,7 +4,7 @@ import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 import { RecentType } from 'im.v2.const';
 
-import { NewMessageManager } from './classes/new-message-manager';
+import { NewMessageManager } from '../classes/new-message-manager';
 import { buildRecentItem } from './helpers/helpers';
 
 import type { MessageAddParams, PullExtraParams } from 'im.v2.provider.pull';
@@ -30,17 +30,21 @@ export class RecentUnreadPullHandler
 
 	handleChatUnread(params: ChatUnreadParams)
 	{
-		const { recentConfig, dialogId, active } = params;
+		const { recentConfig, dialogId } = params;
 
-		if (!this.#hasDefaultSection(recentConfig.sections))
+		Logger.warn('RecentUnreadPullHandler: handleChatUnread', params);
+		const recentItem = Core.getStore().getters['recent/get'](dialogId);
+		// later we should build new recent item from event params there
+		if (!recentItem)
 		{
 			return;
 		}
 
-		Logger.warn('RecentUnreadPullHandler: handleChatUnread', params);
-		void Core.getStore().dispatch('recent/setUnread', {
-			id: dialogId,
-			unread: active,
+		recentConfig.sections.forEach((section) => {
+			void Core.getStore().dispatch('recent/setUnreadCollection', {
+				type: section,
+				items: [recentItem],
+			});
 		});
 	}
 
@@ -66,37 +70,34 @@ export class RecentUnreadPullHandler
 		{
 			const parentChatId = manager.getParentChatId();
 
-			const recentItem = this.#getChannelByParentChatId(parentChatId);
-			if (!recentItem)
+			const parentRecentItem = this.#getChannelRecentItem(parentChatId);
+			if (!parentRecentItem)
 			{
 				return;
 			}
 
-			void Core.getStore().dispatch('recent/setUnread', recentItem);
+			void Core.getStore().dispatch('recent/setUnreadCollection', {
+				type: RecentType.default,
+				items: [parentRecentItem],
+			});
 
-			return;
-		}
-
-		if (!this.#hasDefaultSection(recentConfig.sections))
-		{
 			return;
 		}
 
 		const newRecentItem = buildRecentItem(params);
 
-		void Core.getStore().dispatch('recent/setUnread', newRecentItem);
+		recentConfig.sections.forEach((section) => {
+			void Core.getStore().dispatch('recent/setUnreadCollection', {
+				type: section,
+				items: [newRecentItem],
+			});
+		});
 	}
 
-	#getChannelByParentChatId(parentChatId: number): ?ImModelRecentItem
+	#getChannelRecentItem(parentChatId: number): ?ImModelRecentItem
 	{
 		const { dialogId }: ImModelChat = Core.getStore().getters['chats/getByChatId'](parentChatId);
-		const recentList = Core.getStore().getters['recent/getRecentCollection'];
 
-		return recentList.find((item) => item.dialogId === dialogId);
-	}
-
-	#hasDefaultSection(sections: RecentType[]): boolean
-	{
-		return sections.includes(RecentType.default);
+		return Core.getStore().getters['recent/get'](dialogId);
 	}
 }

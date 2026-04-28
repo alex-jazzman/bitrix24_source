@@ -3,7 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\UI;
 
-UI\Extension::load(["ui.tooltip", "ui.fonts.opensans"]);
+UI\Extension::load(["ui.tooltip", "ui.fonts.opensans", "intranet.old-interface.intranet-common"]);
 
 global $APPLICATION, $USER;
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');

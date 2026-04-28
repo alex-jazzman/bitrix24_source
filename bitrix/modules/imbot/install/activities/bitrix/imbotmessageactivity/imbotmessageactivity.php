@@ -14,7 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-class CBPImBotMessageActivity extends CBPActivity
+class CBPImBotMessageActivity extends CBPActivity implements IBPConfigurableActivity
 {
 	private const PARAM_BOT_ID = 'botId';
 	private const PARAM_RECIPIENT = 'recipient';
@@ -22,6 +22,7 @@ class CBPImBotMessageActivity extends CBPActivity
 	private const PARAM_BOT_CODE = 'botCode';
 	private const PARAM_AS_ERROR = 'asError';
 	private const PARAM_CHAT_ID = 'chatId';
+	private const PARAM_AI_WARNING = 'aiWarning';
 
 	public function __construct($name)
 	{
@@ -34,6 +35,7 @@ class CBPImBotMessageActivity extends CBPActivity
 			self::PARAM_BOT_CODE => null,
 			self::PARAM_AS_ERROR => null,
 			self::PARAM_CHAT_ID => null,
+			self::PARAM_AI_WARNING => null,
 		];
 	}
 
@@ -191,6 +193,11 @@ class CBPImBotMessageActivity extends CBPActivity
 				'FieldName' => self::PARAM_AS_ERROR,
 				'Type' => FieldType::BOOL,
 			],
+			self::PARAM_AI_WARNING => [
+				'Name' => Loc::getMessage('IMBOT_MESSAGE_ACTIVITY_PROPERTY_AI_WARNING'),
+				'FieldName' => self::PARAM_AI_WARNING,
+				'Type' => FieldType::BOOL,
+			],
 		];
 	}
 
@@ -246,9 +253,10 @@ class CBPImBotMessageActivity extends CBPActivity
 		$asError = CBPHelper::getBool($this->{self::PARAM_AS_ERROR});
 		$message = $this->prepareMessageToSend($message);
 		$chatId = (int)$this->{self::PARAM_CHAT_ID};
+		$aiWarning = CBPHelper::getBool($this->{self::PARAM_AI_WARNING});
 		if ($chatId > 0)
 		{
-			$this->sendAndTrackError($botId, "chat{$chatId}", $message, $asError);
+			$this->sendAndTrackError($botId, "chat{$chatId}", $message, $asError, $aiWarning);
 
 			return CBPActivityExecutionStatus::Closed;
 		}
@@ -263,22 +271,34 @@ class CBPImBotMessageActivity extends CBPActivity
 
 		foreach ($recipients as $recipient)
 		{
-			$this->sendAndTrackError($botId, (string)$recipient, $message, $asError);
+			$this->sendAndTrackError($botId, (string)$recipient, $message, $asError, $aiWarning);
 		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	private function sendAndTrackError(int $botId, string $dialogId, string $message, bool $asError): void
+	private function sendAndTrackError(
+		int $botId,
+		string $dialogId,
+		string $message,
+		bool $asError,
+		bool $aiWarning,
+	): void
 	{
-		$sent = $this->sendByDialogId($botId, $dialogId, $message, $asError);
+		$sent = $this->sendByDialogId($botId, $dialogId, $message, $asError, $aiWarning);
 		if (!$sent)
 		{
 			$this->trackErrorFromGlobalVariables();
 		}
 	}
 
-	private function sendByDialogId(int $botId, string $dialogId, string $message, bool $asError): bool
+	private function sendByDialogId(
+		int $botId,
+		string $dialogId,
+		string $message,
+		bool $asError,
+		bool $aiWarning,
+	): bool
 	{
 		$botIdentifier = ['BOT_ID' => $botId];
 		$messageFields = [
@@ -289,6 +309,10 @@ class CBPImBotMessageActivity extends CBPActivity
 		if ($asError)
 		{
 			$messageFields['PARAMS'] = ['COMPONENT_ID' => 'ErrorMessage'];
+		}
+		elseif ($aiWarning)
+		{
+			$messageFields['PARAMS'] = ['COMPONENT_ID' => 'AiBizprocMessage'];
 		}
 
 		return (bool)Bot::addMessage($botIdentifier, $messageFields);

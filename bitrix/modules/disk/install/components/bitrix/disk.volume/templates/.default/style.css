@@ -386,11 +386,18 @@
 	text-align: center;
 }
 
-.disk-volume-button-container.webform-buttons {
-	position: relative;
+.disk-volume-button-container {
 	margin: 0;
+	position: relative;
+}
+
+.disk-volume-button-container.--with-top-border {
 	padding: 40px 0 0 0;
 	border-top: 1px solid rgba(168, 173, 180, .2);
+}
+
+.disk-volume-button-container.--center {
+	text-align: center;
 }
 
 .disc-volume-button { margin: 0; }

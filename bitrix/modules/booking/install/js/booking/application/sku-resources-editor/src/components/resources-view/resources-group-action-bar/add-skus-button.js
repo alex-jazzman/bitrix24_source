@@ -5,7 +5,7 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
 import { EntitySelectorEntity, Model } from 'booking.const';
 import type { SkuInfo } from 'booking.model.sku-resources-editor';
-import type { ResourceModel, Skus } from 'booking.model.resources';
+import type { Skus } from 'booking.model.resources';
 
 import './add-skus-button.css';
 
@@ -51,7 +51,6 @@ export const AddSkusButton = {
 		{
 			if (shown)
 			{
-				// this.setSelectedSkuIds();
 				this.getDialog().show();
 			}
 			else
@@ -70,49 +69,6 @@ export const AddSkusButton = {
 		{
 			this.shown = !this.shown;
 		},
-		setSelectedSkuIds(): void
-		{
-			this.selectedSkus.clear();
-			this.initialSkuIds.clear();
-
-			const minSkusResource = this.findResourceWithMinSkus(this.resources);
-			if (!minSkusResource)
-			{
-				return;
-			}
-
-			for (const sku of minSkusResource.skus)
-			{
-				if (this.resources.every(({ skus }) => skus.some(({ id }) => id === sku.id)))
-				{
-					this.selectedSkus.set(sku.id, sku);
-					this.initialSkuIds.add(sku.id);
-				}
-			}
-		},
-		findResourceWithMinSkus(resources: ResourceModel[]): ResourceModel
-		{
-			let min = Infinity;
-			let minResource = null;
-
-			for (const resource: ResourceModel of resources)
-			{
-				const count = resource.skus.length;
-
-				if (count === 1)
-				{
-					return resource;
-				}
-
-				if (count < min)
-				{
-					min = count;
-					minResource = resource;
-				}
-			}
-
-			return minResource;
-		},
 		getDialog(): Dialog
 		{
 			if (dialog instanceof Dialog)
@@ -123,7 +79,6 @@ export const AddSkusButton = {
 			dialog = new Dialog({
 				id: 'booking-sre-app__add-sku-dialog',
 				targetNode: this.$refs.button,
-				// preselectedItems: [...this.selectedSkuIds].map((id: number) => [EntitySelectorEntity.Product, id]),
 				width: 400,
 				enableSearch: true,
 				dropdownMode: true,

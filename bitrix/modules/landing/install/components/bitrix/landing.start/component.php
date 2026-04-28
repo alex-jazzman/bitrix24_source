@@ -8,6 +8,7 @@ use \Bitrix\Crm\WebForm\Preset;
 use \Bitrix\Landing\Rights;
 use \Bitrix\Landing\Block;
 use \Bitrix\Landing\Manager;
+use Bitrix\Landing\Site\Type;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Application;
 use \Bitrix\Main\Web\Uri;
@@ -50,15 +51,13 @@ Manager::setPageTitle(
 	Loc::getMessage('LANDING_CMP_TITLE')
 );
 
-if (!\Bitrix\Landing\Site\Type::isEnabled($arParams['TYPE']))
+if (!Type::isEnabled($arParams['TYPE']))
 {
 	Showerror(Loc::getMessage('LANDING_CMP_TYPE_IS_NOT_ENABLED'));
 	return;
 }
 
-\Bitrix\Landing\Site\Type::setScope(
-	$arParams['TYPE']
-);
+Type::setScope($arParams['TYPE']);
 
 // check rights
 \Bitrix\Landing\Role::checkRequiredRoles();
@@ -106,6 +105,10 @@ $defaultUrlTemplates404 = array(
 	'notes' => 'notes/',
 	'role_edit' => 'role/edit/#role_edit#/',
 	'folder_edit' => 'folder/edit/#folder_edit#/',
+	'vibe_new' => 'new/#vibe_module#/#vibe_embed#/',
+	'vibe_edit' => 'edit/#vibe_module#/#vibe_embed#/',
+	'vibe_settings' => 'settings/#vibe_module#/#vibe_embed#/',
+	'vibe_setting' => 'settings/#vibe_module#/#vibe_embed#/#setting_type#/',
 );
 $urlTpls = array(
 	'sites' => array(),
@@ -129,6 +132,10 @@ $urlTpls = array(
 	'notes' => array(),
 	'role_edit' => array('role_edit'),
 	'folder_edit' => array('folder_edit'),
+	'vibe_new' => array('vibe_module', 'vibe_embed'),
+	'vibe_edit' => array('vibe_module', 'vibe_embed'),
+	'vibe_settings' => array('vibe_module', 'vibe_embed'),
+	'vibe_setting' => array('vibe_module', 'vibe_embed', 'setting_type'),
 );
 
 // init vars
@@ -261,7 +268,7 @@ if ($arParams['SEF_MODE'] === 'Y')
 {
 	if (
 		isset($arParams['PAGE_URL_LANDING_VIEW'])
-		&& $arParams['TYPE'] !== 'MAINPAGE'
+		&& $arParams['TYPE'] !== Type::SCOPE_CODE_VIBE
 	)
 	{
 		$condition = $arParams['PAGE_URL_LANDING_VIEW'];

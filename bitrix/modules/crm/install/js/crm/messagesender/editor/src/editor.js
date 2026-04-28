@@ -127,11 +127,18 @@ export type Layout = {
 
 export type Preferences = {
 	channelsSort: ChannelPosition[],
+	channelsLastUsedFrom: ChannelLastUsedFrom[],
 };
 
 export type ChannelPosition = {
 	channelId: string,
 	isHidden: boolean,
+	lastUsedNumber: ?string,
+};
+
+export type ChannelLastUsedFrom = {
+	channelId: string,
+	fromId: string,
 };
 
 export type State = {
@@ -437,6 +444,7 @@ export class Editor extends EventEmitter
 					.setLogger(this.#locator.getLogger())
 					.setVariables({
 						channelsSort: this.#options.preferences?.channelsSort,
+						channelsLastUsedFrom: this.#options.preferences?.channelsLastUsedFrom,
 					}),
 			)
 			.addModel(
@@ -502,6 +510,7 @@ export class Editor extends EventEmitter
 				});
 				void this.#store?.dispatch('preferences/actualizeState', {
 					channelsSort: this.#options.preferences?.channelsSort,
+					channelsLastUsedFrom: this.#options.preferences?.channelsLastUsedFrom,
 				});
 			}).finally(() => {
 				void this.#store?.dispatch('application/setProgress', { isLoading: false });

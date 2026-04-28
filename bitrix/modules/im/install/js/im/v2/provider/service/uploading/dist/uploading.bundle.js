@@ -437,6 +437,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	            clientPreview: file.getClientPreview(),
 	            id,
 	            customData: {
+	              sendAsFile,
 	              ...options
 	            },
 	            treatImageAsFile: sendAsFile
@@ -448,6 +449,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        options: {
 	          id,
 	          customData: {
+	            sendAsFile,
 	            ...options
 	          },
 	          downloadUrl: URL.createObjectURL(file)
@@ -623,13 +625,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const dialogId = uploaderWrapper.getCustomData('dialogId');
 	    const text = uploaderWrapper.getCustomData('text');
 	    const tempMessageId = uploaderWrapper.getCustomData('tempMessageId');
+	    const sendAsFile = uploaderWrapper.getCustomData('sendAsFile');
 	    const binaryFiles = uploaderWrapper.getBinaryFiles();
 	    const {
 	      uploaderId: newUploaderId,
 	      loadAllComplete
 	    } = await this.addFiles({
 	      dialogId,
-	      files: binaryFiles
+	      files: binaryFiles,
+	      sendAsFile
 	    });
 	    void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('messages/deleteLoadingMessageByMessageId', {
 	      messageId: tempMessageId
@@ -874,14 +878,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const lastMessageId = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['messages/findLastChatMessageId'](message.chatId);
 	    if (main_core.Type.isString(lastMessageId) || main_core.Type.isNumber(lastMessageId)) {
 	      void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('recent/update', {
-	        id: chat.dialogId,
+	        dialogId: chat.dialogId,
 	        fields: {
 	          messageId: lastMessageId
 	        }
 	      });
 	    } else {
 	      void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('recent/hide', {
-	        id: chat.dialogId
+	        dialogId: chat.dialogId
 	      });
 	    }
 	  }

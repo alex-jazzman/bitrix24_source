@@ -6,8 +6,6 @@ jn.define('intranet/invite-new/src/department-chooser', (require, exports, modul
 	const { ChipButton, ChipButtonDesign, ChipButtonMode } = require('ui-system/blocks/chips/chip-button');
 	const { Color } = require('tokens');
 	const { DepartmentSelector } = require('selector/widget/entity/intranet/department');
-	const { Icon } = require('ui-system/blocks/icon');
-	const { UIMenu, UIMenuPosition } = require('layout/ui/menu');
 	const { Loc } = require('loc');
 	const { createTestIdGenerator } = require('utils/test');
 
@@ -56,12 +54,6 @@ jn.define('intranet/invite-new/src/department-chooser', (require, exports, modul
 		};
 
 		#onClick = () => {
-			if (this.props.department)
-			{
-				this.#openDepartmentContextMenu();
-
-				return;
-			}
 			this.#openDepartmentSelector();
 		};
 
@@ -108,45 +100,16 @@ jn.define('intranet/invite-new/src/department-chooser', (require, exports, modul
 				closeOnSelect: true,
 				events: {
 					onClose: (departments) => {
-						this.props.selectedDepartmentChanged?.(departments?.length > 0 ? departments[0] : null);
+						if (departments?.length > 0)
+						{
+							this.props.selectedDepartmentChanged?.(departments[0]);
+						}
 					},
 				},
 			});
 
 			this.departmentSelector.show({}, layout);
 		}
-
-		#openDepartmentContextMenu()
-		{
-			this.menu = new UIMenu(this.#getDepartmentMenuItems());
-			this.menu.show({
-				target: this.departmentChipButton,
-				position: UIMenuPosition.TOP,
-			});
-		}
-
-		#getDepartmentMenuItems = () => {
-			return [
-				{
-					id: 'choose',
-					testId: this.getTestId('department-menu-item-choose'),
-					title: Loc.getMessage('INTRANET_DEPARTMENT_MENU_ITEM_CHOOSE_TEXT_MSGVER_1'),
-					iconName: Icon.EDIT,
-					onItemSelected: () => {
-						this.#openDepartmentSelector();
-					},
-				},
-				{
-					id: 'clear',
-					testId: this.getTestId('department-menu-item-clear'),
-					title: Loc.getMessage('INTRANET_DEPARTMENT_MENU_ITEM_CLEAR_TEXT'),
-					iconName: Icon.CROSS,
-					onItemSelected: () => {
-						this.props.selectedDepartmentChanged?.(null);
-					},
-				},
-			];
-		};
 	}
 
 	module.exports = {

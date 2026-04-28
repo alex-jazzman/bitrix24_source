@@ -25,11 +25,13 @@ declare type ImFeatures = {
 	voteCreationAvailable: boolean,
 	aiFileTranscriptionAvailable: boolean,
 	mentionAllAvailable: boolean,
+	isCopilotFileUploadAvailable: boolean,
 	isCopilotMentionAvailable: boolean,
 	isCopilotReasoningAvailable: boolean,
 	videoNoteTranscriptionAvailable: boolean,
 	stickersAvailable: boolean,
 	aiAssistantMcpSelectorAvailable: boolean,
+	isAddingUserByMentionAvailable: boolean,
 }
 
 declare type UserInfo = {

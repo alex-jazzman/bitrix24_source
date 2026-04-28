@@ -57,16 +57,17 @@ jn.define('ai/mcp-selector/data-provider', (require, exports, module) => {
 
 		prepareResponseData(data)
 		{
-			const { items, disabledByAdmin, disabledByTariff } = data;
+			const { items, disabledByAdmin, disabledByTariff, disabledBySubscription } = data;
 
 			return {
 				items: items.map((item) => this.prepareItem({
 					...item,
 					onSelect: this.onItemSelect,
-					isDisabled: disabledByAdmin || disabledByTariff,
+					isDisabled: item.isDisabled || disabledByAdmin || disabledByTariff,
 				})),
 				disabledByAdmin,
 				disabledByTariff,
+				disabledBySubscription,
 			};
 		}
 

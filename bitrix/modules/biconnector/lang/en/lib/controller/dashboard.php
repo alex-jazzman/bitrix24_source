@@ -9,6 +9,7 @@ $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_COPIED_DASHBOARD_TITLE"] = '#DASHBOARD_T
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_COPY_ERROR"] = "Error copying dashboard. Please try again.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_DELETE_ERROR"] = "Cannot delete dashboard. Please try again.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_DELETE_ERROR_COPIED"] = "Please delete all copies of this dashboard before deleting it.";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_DELETE_ERROR_HAS_RELATED_ENTITIES"] = "Cannot delete dashboard installed from Market because the dashboard charts and datasets are in use by other dashboards in your Bitrix24.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_DELETE_ERROR_SYSTEM"] = "Cannot delete built-in dashboard.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_EMPTY_DASHBOARD_NAME"] = "New dashboard";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ERROR_NOT_FOUND"] = "Dashboard was not found.";

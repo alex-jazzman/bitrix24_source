@@ -1,8 +1,9 @@
 import type { AnimationItemTypes } from './types';
 
 export const PORT_SIZE = 9;
-export const NODE_HEADER_HEIGHT = 46;
-export const NODE_CONTENT_HEADER_HEIGHT = 14;
+export const CONNECTION_OFFSET = 30;
+export const CONNECTION_BEND_OFFSET = 30;
+export const CONNECTION_BORDER_RADIUS = 10;
 export const DELETE_BUTTON_SIZE = 22;
 export const GRID_SIZE = 100;
 export const STICKING_DISTANCE = 5;
@@ -28,12 +29,6 @@ export const HOOK_NAMES = {
 export const PORT_TYPES: { ... } = {
 	INPUT: 'input',
 	OUTPUT: 'output',
-};
-
-export const NODE_TYPES: { ... } = {
-	SIMPLE: 'simple',
-	TRIGGER: 'trigger',
-	COMPLEX: 'complex',
 };
 
 export const BLOCK_GROUP_DEFAULT_NAME = 'default';

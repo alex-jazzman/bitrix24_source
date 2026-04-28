@@ -22,10 +22,6 @@ export class MarkService
 	{
 		Logger.warn('MessageService: markMessage', messageId);
 		const { dialogId } = this.#store.getters['chats/getByChatId'](this.#chatId);
-		void this.#store.dispatch('recent/unread', {
-			id: dialogId,
-			action: true,
-		});
 		void this.#store.dispatch('chats/update', {
 			dialogId,
 			fields: { markedId: messageId },

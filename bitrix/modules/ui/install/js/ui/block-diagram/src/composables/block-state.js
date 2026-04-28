@@ -1,21 +1,39 @@
 import { computed, toValue } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
 import { BLOCK_INDEXES } from '../constants';
-import type { DiagramPort } from '../types';
+import type { DiagramBlock } from '../types';
+
+export type UseBlockStateOptions = {
+	block: DiagramBlock,
+	blockRef: HTMLElement,
+};
 
 export type UseBlockState = {
 	isHiglitedBlock: boolean;
 	isDisabled: boolean;
 	updatePortsPositions: () => void;
+	onMountedBlock: () => void;
+	onUnmountedBlock: () => void;
 };
 
-export function useBlockState(block): UseBlockState
+export function useBlockState(options: UseBlockStateOptions): UseBlockState
 {
 	const {
+		block,
+		blockRef,
+	} = options;
+	const {
+		blockElMap,
+		blocksRectMap,
 		highlitedBlockIds,
 		isDisabledBlockDiagram,
+		zoom,
+		transformX,
+		transformY,
+		blockDiagramLeft,
+		blockDiagramTop,
 		movingBlock,
-		updatePortPosition,
+		blockMounted,
 	} = useBlockDiagram();
 
 	const isHiglitedBlock = computed(() => {
@@ -40,18 +58,45 @@ export function useBlockState(block): UseBlockState
 		return { zIndex: BLOCK_INDEXES.STANDING };
 	});
 
-	function updatePortsPositions()
+	function onMountedBlock()
 	{
-		([...toValue(block).ports.input, ...toValue(block).ports.output])
-			.forEach((port: DiagramPort) => {
-				updatePortPosition(toValue(block).id, port.id);
-			});
+		if (!toValue(blockElMap).has(toValue(block).id))
+		{
+			toValue(blockElMap).set(toValue(block).id, toValue(blockRef));
+		}
+
+		const {
+			x,
+			y,
+			width,
+			height,
+		} = toValue(blockRef)?.getBoundingClientRect() ?? {};
+
+		blocksRectMap.value[toValue(block).id] = {
+			x: (x / toValue(zoom)) + toValue(transformX) - (toValue(blockDiagramLeft) / toValue(zoom)),
+			y: (y / toValue(zoom)) + toValue(transformY) - (toValue(blockDiagramTop) / toValue(zoom)),
+			width,
+			height,
+		};
+
+		blockMounted(toValue(block).id);
+	}
+
+	function onUnmountedBlock()
+	{
+		if (toValue(blockElMap).has(toValue(block).id))
+		{
+			toValue(blockElMap).delete(toValue(block).id);
+		}
+
+		delete blocksRectMap[toValue(block).id];
 	}
 
 	return {
 		isHiglitedBlock,
 		isDisabled,
 		blockZindex,
-		updatePortsPositions,
+		onMountedBlock,
+		onUnmountedBlock,
 	};
 }

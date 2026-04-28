@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -25,6 +26,7 @@ return [
 		'main.core',
 		'crm.timeline.tools',
 		'main.core.events',
+		'intranet.old-interface.intranet-common',
 	],
 	'skip_core' => false,
 ];

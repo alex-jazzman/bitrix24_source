@@ -137,6 +137,17 @@ this.BX.Disk = this.BX.Disk || {};
 	        }
 	      });
 	    }
+	  }, {
+	    key: "copyToMeAction",
+	    value: function copyToMeAction(id) {
+	      return main_core.ajax.runComponentAction(Backend.component, 'copyToMe', {
+	        mode: 'ajax',
+	        data: {
+	          trackedObjectId: id
+	        },
+	        analyticsLabel: Backend.component + '.copyToMe'
+	      });
+	    }
 	  }]);
 	  return Backend;
 	}();
@@ -749,6 +760,42 @@ this.BX.Disk = this.BX.Disk || {};
 	  return Item;
 	}(main_core_events.EventEmitter);
 
+	var ItemCopyToMe = /*#__PURE__*/function (_Item) {
+	  babelHelpers.inherits(ItemCopyToMe, _Item);
+	  function ItemCopyToMe(trackedObjectId, itemData) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, ItemCopyToMe);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemCopyToMe).call(this, trackedObjectId, itemData));
+	    if (!_this.data['onclick']) {
+	      _this.data['onclick'] = _this.copyToMe.bind(babelHelpers.assertThisInitialized(_this));
+	    }
+	    return _this;
+	  }
+	  babelHelpers.createClass(ItemCopyToMe, [{
+	    key: "copyToMe",
+	    value: function copyToMe() {
+	      var _this2 = this;
+	      Backend.copyToMeAction(this.trackedObjectId).then(function (response) {
+	        if (response.status === 'success') {
+	          var commonGrid = Options.getCommonGrid();
+	          commonGrid.reload();
+	        } else if (response.status === 'error') {
+	          _this2.showError(response.errors);
+	        }
+	      })["catch"](function (_ref) {
+	        var errors = _ref.errors;
+	        _this2.showError(errors);
+	      });
+	    }
+	  }], [{
+	    key: "detect",
+	    value: function detect(itemData) {
+	      return itemData['id'] === 'copyToMe';
+	    }
+	  }]);
+	  return ItemCopyToMe;
+	}(Item);
+
 	var ItemHistory = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemHistory, _Item);
 	  function ItemHistory(trackedObjectId, itemData) {
@@ -1090,7 +1137,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  return ItemDelete;
 	}(Item);
 
-	var itemMappings = [ItemOpen, ItemShareSection, ItemSharing, ItemInternalLink, ItemExternalLink, ItemHistory, ItemRename, ItemDelete];
+	var itemMappings = [ItemOpen, ItemShareSection, ItemSharing, ItemInternalLink, ItemExternalLink, ItemHistory, ItemRename, ItemDelete, ItemCopyToMe];
 	function getMenuItem(trackedObjectId, itemData) {
 	  var itemClassName = Item;
 	  itemMappings.forEach(function (itemClass) {

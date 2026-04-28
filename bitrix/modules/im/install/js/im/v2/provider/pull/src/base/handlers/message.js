@@ -5,11 +5,11 @@ import { CopilotManager } from 'im.v2.lib.copilot';
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 import { UserManager } from 'im.v2.lib.user';
-import { UuidManager } from 'im.v2.lib.uuid';
 import { InputActionListener } from 'im.v2.lib.input-action';
 import { EventType, DialogScrollThreshold, UserRole, ChatType } from 'im.v2.const';
 import { MessageService } from 'im.v2.provider.service.message';
 
+import { NewMessageManager } from '../../classes/new-message-manager';
 import { MessageDeleteManager } from './classes/message-delete-manager';
 
 import type { Store } from 'ui.vue3.vuex';
@@ -31,7 +31,7 @@ import type {
 	PrepareDeleteMessageParams,
 	RawReaction,
 } from '../../types/message';
-import type { PullExtraParams, RawFile, RawUser, RawMessage, RawChat } from '../../types/common';
+import type { RawFile, RawUser, RawMessage, RawChat } from '../../types/common';
 
 type UserId = number;
 
@@ -51,7 +51,7 @@ export class MessagePullHandler
 	{
 		Logger.warn('MessagePullHandler: handleMessageAdd', params);
 		this.#setMessageChat(params);
-		this.#setUsers(params);
+		this.#setUsers(params.users);
 		this.#setFiles(params);
 		this.#setAdditionalEntities(params);
 		this.#setCommentInfo(params);
@@ -208,32 +208,19 @@ export class MessagePullHandler
 		});
 	}
 
-	handleReadMessage(params: ReadMessageParams, extra: PullExtraParams)
+	handleReadMessage(params: ReadMessageParams)
 	{
 		Logger.warn('MessagePullHandler: handleReadMessage', params);
-		const uuidManager = UuidManager.getInstance();
-		if (uuidManager.hasActionUuid(extra.action_uuid))
-		{
-			Logger.warn('MessagePullHandler: handleReadMessage: we have this uuid, skip');
-			uuidManager.removeActionUuid(extra.action_uuid);
+		const { chatId, dialogId, viewedMessages, lastId } = params;
 
-			return;
-		}
+		void this.#store.dispatch('messages/readMessages', {
+			chatId,
+			messageIds: viewedMessages,
+		});
 
-		this.#store.dispatch('messages/readMessages', {
-			chatId: params.chatId,
-			messageIds: params.viewedMessages,
-		}).then(() => {
-			this.#store.dispatch('chats/update', {
-				dialogId: params.dialogId,
-				fields: {
-					counter: params.counter,
-					lastId: params.lastId,
-				},
-			});
-		}).catch((error) => {
-			// eslint-disable-next-line no-console
-			console.error('MessagePullHandler: error handling readMessage', error);
+		void this.#store.dispatch('chats/update', {
+			dialogId,
+			fields: { lastId },
 		});
 	}
 
@@ -252,7 +239,7 @@ export class MessagePullHandler
 	{
 		Logger.warn('MessagePullHandler: handlePinAdd', params);
 		this.#setFiles(params);
-		this.#setUsers(params);
+		this.#setUsers(params.users);
 		this.#store.dispatch('messages/store', params.additionalMessages);
 		this.#store.dispatch('messages/pin/add', {
 			chatId: params.pin.chatId,
@@ -276,31 +263,34 @@ export class MessagePullHandler
 	// helpers
 	#setMessageChat(params: MessageAddParams)
 	{
-		const chat = params.chat?.[params.chatId];
+		const manager = new NewMessageManager(params);
+
+		const chat = manager.getChat();
 		if (!chat)
 		{
 			return;
 		}
 
-		const chatToAdd = { ...params.chat[params.chatId], dialogId: params.dialogId };
+		const chatToAdd = { ...chat, dialogId: params.dialogId };
 		const dialogExists = Boolean(this.#getDialog(params.dialogId));
 		const messageWithoutNotification = !params.notify || params.message?.params?.NOTIFY === 'N';
 		if (!dialogExists && !messageWithoutNotification && !chatToAdd.role)
 		{
 			chatToAdd.role = UserRole.member;
 		}
-		this.#store.dispatch('chats/set', chatToAdd);
+
+		void this.#store.dispatch('chats/set', chatToAdd);
 	}
 
-	#setUsers(params: {users: {[userId: string]: RawUser} | []})
+	#setUsers(users: {[userId: string]: RawUser} | [])
 	{
-		if (!params.users)
+		if (!users)
 		{
 			return;
 		}
 
 		const userManager = new UserManager();
-		userManager.setUsersToModel(Object.values(params.users));
+		userManager.setUsersToModel(Object.values(users));
 	}
 
 	#setFiles(params: {files: {[fileId: string]: RawFile} | [], message?: RawMessage})
@@ -339,8 +329,10 @@ export class MessagePullHandler
 
 	#setCommentInfo(params: MessageAddParams): void
 	{
-		const chat: RawChat = params.chat?.[params.chatId];
-		if (!chat || chat.type !== ChatType.comment)
+		const manager = new NewMessageManager(params);
+
+		const chat = manager.getChat();
+		if (!chat || !manager.isCommentChat())
 		{
 			return;
 		}
@@ -397,29 +389,35 @@ export class MessagePullHandler
 		this.#store.dispatch('messages/setChatCollection', { messages: [newMessage] });
 	}
 
-	#updateDialog(params)
+	#updateDialog(params: MessageAddParams)
 	{
-		const dialog = this.#getDialog(params.dialogId, true);
+		const manager = new NewMessageManager(params);
+		const { dialogId, chatId, message } = params;
+
+		const dialog = this.#getDialog(dialogId, true);
 
 		const dialogFieldsToUpdate = {};
-		if (params.message.id > dialog.lastMessageId)
+		if (message.id > dialog.lastMessageId)
 		{
-			dialogFieldsToUpdate.lastMessageId = params.message.id;
+			dialogFieldsToUpdate.lastMessageId = message.id;
 		}
 
-		if (params.message.senderId === Core.getUserId() && params.message.id > dialog.lastReadId)
+		if (message.senderId === Core.getUserId() && message.id > dialog.lastReadId)
 		{
-			dialogFieldsToUpdate.lastId = params.message.id;
+			dialogFieldsToUpdate.lastId = message.id;
 		}
 
-		dialogFieldsToUpdate.counter = params.counter;
+		if (manager.isUserChat() && !dialog.chatId)
+		{
+			dialogFieldsToUpdate.chatId = chatId;
+		}
 
-		this.#store.dispatch('chats/update', {
-			dialogId: params.dialogId,
+		void this.#store.dispatch('chats/update', {
+			dialogId,
 			fields: dialogFieldsToUpdate,
 		});
-		this.#store.dispatch('chats/clearLastMessageViews', {
-			dialogId: params.dialogId,
+		void this.#store.dispatch('chats/clearLastMessageViews', {
+			dialogId,
 		});
 	}
 
@@ -544,7 +542,6 @@ export class MessagePullHandler
 				...baseParams,
 				newLastMessage: params.newLastMessage,
 				lastMessageViews: params.lastMessageViews,
-				counter: params.counter,
 			};
 		}
 

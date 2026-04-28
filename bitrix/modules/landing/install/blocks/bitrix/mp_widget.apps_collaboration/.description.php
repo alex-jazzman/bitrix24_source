@@ -8,8 +8,8 @@ use Bitrix\Main\Localization\Loc;
 
 $return = [
 	'block' => [
-		'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_APPS_COLLABORATION_NAME'),
-		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'mainpage'],
+		'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_APPS_COLLABORATION_NAME_NEW'),
+		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'vibe'],
 		'section' => ['widgets_columns'],
 		'system' => true,
 	],

@@ -72,4 +72,5 @@ $MESS["DOCUMENT_BUTTON_TEXT"] = "Документ";
 $MESS["DOCUMENT_BUTTON_TITLE"] = "Создать документ на основании компании";
 $MESS["COMPANY_DEDUPE_AUTOSEARCH"] = "Автоматический поиск дубликатов";
 $MESS["COMPANY_DEDUPE_HELP"] = "Как работать с дубликатами";
+$MESS["COMPANY_DETACH_OPEN_LINE"] = "Открепить компанию от всех чатов";
 ?>

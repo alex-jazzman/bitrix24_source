@@ -65,9 +65,7 @@ export class BannerFactory
 	{
 		const provider = new EnablePushOtpProvider(options);
 
-		return options.provideSmsOtp
-			? provider.full()
-			: provider.onlyPushOtp();
+		return provider.full();
 	}
 
 	static #sendAnalyticEvent(cElement: string): void

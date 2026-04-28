@@ -22,9 +22,12 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 			this.showMenuHandler = props.showMenuHandler;
 			this.styles = this.getStyles();
 
-			this.onItemClick = debounce((itemId, itemData, params) => {
-				this.props.itemDetailOpenHandler(itemId, itemData, params);
-			}, 100);
+			if (this.props.itemDetailOpenHandler)
+			{
+				this.onItemClick = debounce((itemId, itemData, params) => {
+					this.props.itemDetailOpenHandler(itemId, itemData, params);
+				}, 100);
+			}
 
 			this.onItemLongClick = (itemId, itemData, params) => {
 				if (this.props.onItemLongClick)

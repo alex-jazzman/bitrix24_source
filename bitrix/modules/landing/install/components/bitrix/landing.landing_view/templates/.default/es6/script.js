@@ -303,6 +303,7 @@ this.BX.Landing = this.BX.Landing || {};
 	var _registerListeners = /*#__PURE__*/new WeakSet();
 	var _backendAction = /*#__PURE__*/new WeakSet();
 	var _reloadPreviewWindow = /*#__PURE__*/new WeakSet();
+	var _getDocumentMetrics = /*#__PURE__*/new WeakSet();
 	var _scrollDevice = /*#__PURE__*/new WeakSet();
 	var _resolveDeviceByType = /*#__PURE__*/new WeakSet();
 	var _getPreviewNode = /*#__PURE__*/new WeakSet();
@@ -337,6 +338,7 @@ this.BX.Landing = this.BX.Landing || {};
 	  _classPrivateMethodInitSpec(this, _getPreviewNode);
 	  _classPrivateMethodInitSpec(this, _resolveDeviceByType);
 	  _classPrivateMethodInitSpec(this, _scrollDevice);
+	  _classPrivateMethodInitSpec(this, _getDocumentMetrics);
 	  _classPrivateMethodInitSpec(this, _reloadPreviewWindow);
 	  _classPrivateMethodInitSpec(this, _backendAction);
 	  _classPrivateMethodInitSpec(this, _registerListeners);
@@ -448,11 +450,24 @@ this.BX.Landing = this.BX.Landing || {};
 	    babelHelpers.classPrivateFieldGet(this, _previewWindow).location.href = babelHelpers.classPrivateFieldGet(this, _frameUrl) + '?ts=' + timestamp + '&scrollTo=' + blockIdPrefix + blockId;
 	  }
 	}
+	function _getDocumentMetrics2(doc) {
+	  var body = doc === null || doc === void 0 ? void 0 : doc.body;
+	  var documentElement = doc === null || doc === void 0 ? void 0 : doc.documentElement;
+	  if (!body || !documentElement) {
+	    return null;
+	  }
+	  return {
+	    scrollHeight: Math.max(body.scrollHeight, documentElement.scrollHeight, body.offsetHeight, documentElement.offsetHeight, body.clientHeight, documentElement.clientHeight),
+	    scrollTop: documentElement.scrollTop || body.scrollTop
+	  };
+	}
 	function _scrollDevice2(topInPercent) {
 	  if (babelHelpers.classPrivateFieldGet(this, _previewWindow)) {
-	    var _document = babelHelpers.classPrivateFieldGet(this, _previewWindow).document;
-	    var scrollHeight = Math.max(_document.body.scrollHeight, _document.documentElement.scrollHeight, _document.body.offsetHeight, _document.documentElement.offsetHeight, _document.body.clientHeight, _document.documentElement.clientHeight);
-	    babelHelpers.classPrivateFieldGet(this, _previewWindow).scroll(0, scrollHeight * topInPercent / 100);
+	    var metrics = _classPrivateMethodGet(this, _getDocumentMetrics, _getDocumentMetrics2).call(this, babelHelpers.classPrivateFieldGet(this, _previewWindow).document);
+	    if (!metrics) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldGet(this, _previewWindow).scroll(0, metrics.scrollHeight * topInPercent / 100);
 	  }
 	}
 	function _resolveDeviceByType2(deviceType) {
@@ -537,13 +552,18 @@ this.BX.Landing = this.BX.Landing || {};
 	  return maxHeight;
 	}
 	function _adjustPreviewScroll2() {
-	  var documentEditorFrame = babelHelpers.classPrivateFieldGet(this, _editorFrameWrapper).querySelector('iframe').contentWindow.document;
-	  var scrollHeight = Math.max(documentEditorFrame.body.scrollHeight, documentEditorFrame.documentElement.scrollHeight, documentEditorFrame.body.offsetHeight, documentEditorFrame.documentElement.offsetHeight, documentEditorFrame.body.clientHeight, documentEditorFrame.documentElement.clientHeight);
-	  var scrollTop = documentEditorFrame.documentElement.scrollTop || documentEditorFrame.body.scrollTop;
-	  _classPrivateMethodGet(this, _scrollDevice, _scrollDevice2).call(this, scrollTop / scrollHeight * 100);
+	  var _babelHelpers$classPr, _editorFrame$contentW;
+	  var editorFrame = (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _editorFrameWrapper)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.querySelector('iframe');
+	  var metrics = _classPrivateMethodGet(this, _getDocumentMetrics, _getDocumentMetrics2).call(this, editorFrame === null || editorFrame === void 0 ? void 0 : (_editorFrame$contentW = editorFrame.contentWindow) === null || _editorFrame$contentW === void 0 ? void 0 : _editorFrame$contentW.document);
+	  if (!metrics || metrics.scrollHeight <= 0) {
+	    return;
+	  }
+	  _classPrivateMethodGet(this, _scrollDevice, _scrollDevice2).call(this, metrics.scrollTop / metrics.scrollHeight * 100);
 	}
 	function _buildPreview2(options) {
+	  var _this4 = this;
 	  if (!babelHelpers.classPrivateFieldGet(this, _previewElement)) {
+	    var _babelHelpers$classPr2;
 	    babelHelpers.classPrivateFieldSet(this, _previewElement, DeviceUI.getPreview({
 	      frameUrl: options.frameUrl,
 	      clickHandler: _classPrivateMethodGet(this, _onClickDeviceSelector, _onClickDeviceSelector2).bind(this),
@@ -551,17 +571,29 @@ this.BX.Landing = this.BX.Landing || {};
 	    }));
 	    main_core.Dom.hide(babelHelpers.classPrivateFieldGet(this, _previewElement));
 	    this.target.appendChild(babelHelpers.classPrivateFieldGet(this, _previewElement));
-
-	    // #170065
-	    // this.#previewElement.querySelector('iframe').contentWindow.addEventListener('load', () => {
-	    if (!babelHelpers.classPrivateFieldGet(this, _previewWindow)) {
-	      babelHelpers.classPrivateFieldSet(this, _previewWindow, babelHelpers.classPrivateFieldGet(this, _previewElement).querySelector('iframe').contentWindow);
-	      var previewDocument = babelHelpers.classPrivateFieldGet(this, _previewElement).querySelector('iframe').contentWindow.document;
-	      main_core.Dom.removeClass(previewDocument.querySelector('html'), 'bx-no-touch');
-	      main_core.Dom.addClass(previewDocument.querySelector('html'), 'bx-touch');
+	    var editorFrame = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _editorFrameWrapper)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.querySelector('iframe');
+	    if (editorFrame) {
+	      main_core.Event.bind(editorFrame, 'load', function () {
+	        _classPrivateMethodGet(_this4, _adjustPreviewScroll, _adjustPreviewScroll2).call(_this4);
+	      });
+	    }
+	    var previewFrame = babelHelpers.classPrivateFieldGet(this, _previewElement).querySelector('iframe');
+	    if (previewFrame) {
+	      main_core.Event.bind(previewFrame, 'load', function () {
+	        var _previewFrame$content, _previewFrame$content2;
+	        babelHelpers.classPrivateFieldSet(_this4, _previewWindow, previewFrame.contentWindow);
+	        var previewHtml = (_previewFrame$content = previewFrame.contentWindow) === null || _previewFrame$content === void 0 ? void 0 : (_previewFrame$content2 = _previewFrame$content.document) === null || _previewFrame$content2 === void 0 ? void 0 : _previewFrame$content2.querySelector('html');
+	        if (previewHtml) {
+	          main_core.Dom.removeClass(previewHtml, 'bx-no-touch');
+	          main_core.Dom.addClass(previewHtml, 'bx-touch');
+	        }
+	        _classPrivateMethodGet(_this4, _adjustPreviewScroll, _adjustPreviewScroll2).call(_this4);
+	      });
+	      if (!babelHelpers.classPrivateFieldGet(this, _previewWindow)) {
+	        babelHelpers.classPrivateFieldSet(this, _previewWindow, previewFrame.contentWindow);
+	      }
 	    }
 	    _classPrivateMethodGet(this, _adjustPreviewScroll, _adjustPreviewScroll2).call(this);
-	    // });
 	  }
 	}
 	function _onClickDeviceSelector2() {

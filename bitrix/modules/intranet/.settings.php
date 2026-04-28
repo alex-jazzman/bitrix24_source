@@ -1,4 +1,5 @@
 <?php
+
 return [
 	'controllers' => [
 		'value' => [
@@ -133,6 +134,10 @@ return [
 						new \Bitrix\Intranet\Service\SiteOption(SITE_ID, 'bitrix24')
 					);
 				},
+			],
+			'intranet.absence.repository' => [
+				'className' => \Bitrix\Intranet\Internal\Integration\IBlock\AbsenceRepository::class,
+				'constructorParams' => [],
 			],
 		],
 		'readonly' => true,

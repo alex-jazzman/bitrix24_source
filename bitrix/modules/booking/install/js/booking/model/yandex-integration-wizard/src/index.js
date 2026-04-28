@@ -3,6 +3,5 @@ export type {
 	YandexIntegrationWizardState,
 	YandexIntegrationModel,
 	CatalogPermissions,
-	CatalogSkuEntityOptions,
 	YandexIntegrationSettings,
 } from './types';

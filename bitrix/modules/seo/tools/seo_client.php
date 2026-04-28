@@ -44,18 +44,6 @@ if (isset($_REQUEST["action"]) && $_REQUEST["action"] == 'web_hook')
 	}
 }
 
-if (isset($_REQUEST["action"]) && $_REQUEST["action"] === 'catalog_callback')
-{
-	if (CModule::IncludeModule("seo") && CModule::IncludeModule("socialservices"))
-	{
-		$serviceLocator = \Bitrix\Main\DI\ServiceLocator::getInstance();
-		if ($serviceLocator->has('seo.catalog.webhook.handler'))
-		{
-			$serviceLocator->get('seo.catalog.webhook.handler')->handle();
-		}
-	}
-}
-
 if(CModule::IncludeModule("socialservices") && CSocServAuthManager::CheckUniqueKey())
 {
 	if(isset($_REQUEST["authresult"]))

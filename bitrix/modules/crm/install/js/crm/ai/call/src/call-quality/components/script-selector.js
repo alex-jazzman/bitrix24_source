@@ -1,10 +1,10 @@
+import { NameService } from 'crm.ai.name-service';
 import { CallAssessmentSelector } from 'crm.copilot.call-assessment-selector';
 import { Router } from 'crm.router';
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { Dom, Loc, Runtime } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { HtmlFormatter } from 'ui.bbcode.formatter.html-formatter';
-import { SidePanel } from 'ui.sidepanel';
 import { ScriptSelectorDisplayStrategy } from '../script-selector-display-strategy';
 import { ViewMode } from './common/view-mode';
 
@@ -144,7 +144,7 @@ export const ScriptSelector = {
 				() => {
 					top.BX.UI.Hint.show(
 						target,
-						Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_DISABLED_DO_ASSESSMENT_HINT'),
+						Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_DISABLED_DO_ASSESSMENT_HINT', NameService.copilotNameReplacement()),
 						true,
 					);
 				},
@@ -240,6 +240,7 @@ export const ScriptSelector = {
 		},
 	},
 
+	// language=Vue
 	template: `
 		<div>
 			<div class="call-quality__script-selector__container">
@@ -275,7 +276,7 @@ export const ScriptSelector = {
 				</div>
 				<div v-else class="call-quality__script-text" ref="prompt">
 				</div>
-				
+
 				<div
 					v-if="isShowFooterButtons"
 					class="call-quality__script-footer"

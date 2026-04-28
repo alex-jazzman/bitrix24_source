@@ -10,7 +10,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Landing\Assets;
 use Bitrix\Landing\Manager;
-use Bitrix\Landing\Mainpage;
 use Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -46,8 +45,9 @@ else
 ?>
 
 <?php
-$isFeatureAvailable = Mainpage\Manager::isFeatureEnable() || Mainpage\Manager::isFreeTariffMode();
-if (!$isFeatureAvailable || !Mainpage\Manager::isAvailable())
+// todo: tricky logic, simplify
+$isFeatureAvailable = $arResult['IS_VIBE_FEATURE_AVAILABLE'] || $arResult['IS_VIBE_IS_FREE_TARIFF_MODE'];
+if (!$isFeatureAvailable || !$arResult['IS_VIBE_CREATED'])
 {
 ?>
 	<div class="landing-mainpage-disabled-container">
@@ -70,16 +70,7 @@ Manager::setPageView(
 	'no-all-paddings landing-tile no-background'
 );
 
-if (Loader::includeModule('intranet'))
-{
-	$publisher = new Intranet\MainPage\Publisher();
-	$isPublished =	$publisher->isPublished();
-	$settingLink = (new Bitrix\Intranet\Site\FirstPage\MainFirstPage())->getSettingsPath();
-}
-else
-{
-	$isPublished = false;
-}
+$isPublished = $arResult['IS_VIBE_PUBLISHED'] ?? false;
 
 // load extensions
 $extensions = [
@@ -133,8 +124,11 @@ if ($component->request('IFRAME'))
 <?php if (!$isPublished):?>
 	<div class="ui-alert ui-alert-warning ui-alert-icon-info ui-alert-close-animate">
 		<span class="ui-alert-message"><?= Loc::getMessage('LANDING_TPL_MAINPAGE_ALERT_TEXT'); ?>
-			<?php if (Manager::isAdmin()): ?>
-				<?= Loc::getMessage('LANDING_TPL_MAINPAGE_ALERT_TEXT_ADMIN_MSGVER_1', ['#LINK#' => $settingLink ?? '#']);?>
+			<?php if (isset($arResult['VIBE_SETTINGS_LINK'])): ?>
+				<?= Loc::getMessage(
+					'LANDING_TPL_MAINPAGE_ALERT_TEXT_ADMIN_MSGVER_1',
+					['#LINK#' => $arResult['VIBE_SETTINGS_LINK'] ]
+				) ?>
 			<?php endif; ?>
 		</span>
 		<span class="ui-alert-close-btn" onclick="this.parentNode.style.display = 'none';"></span>
@@ -161,8 +155,11 @@ $landing->view([
 	'check_permissions' => false
 ]);
 
-Manager::setPageTitle(Loc::getMessage('LANDING_TPL_MAINPAGE_TITLE'));
 Manager::initAssets($landing->getId());
+if (isset($arResult['VIBE_TITLE']))
+{
+	Manager::setPageTitle($arResult['VIBE_TITLE']);
+}
 ?>
 
 <script>

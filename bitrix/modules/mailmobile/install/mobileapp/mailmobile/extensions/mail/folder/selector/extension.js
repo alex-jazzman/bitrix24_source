@@ -6,8 +6,9 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 		setCurrentFolder,
 	} = require('mail/statemanager/redux/slices/folders');
 	const {
+		selectAll,
 		selectSystemFolders,
-		selectCustomFolders,
+		selectRootCustomFolders,
 		selectCurrentFolder,
 	} = require('mail/statemanager/redux/slices/folders/selector');
 	const store = require('statemanager/redux/store');
@@ -113,9 +114,9 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 			}
 
 			const systemFolders = selectSystemFolders(store.getState());
-			const customFolders = selectCustomFolders(store.getState());
+			const rootCustomFolders = selectRootCustomFolders(store.getState());
 
-			const firstFolder = systemFolders[0] || customFolders[0] || null;
+			const firstFolder = systemFolders[0] || rootCustomFolders[0] || null;
 
 			if (firstFolder)
 			{
@@ -174,36 +175,79 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 			);
 		}
 
+		buildChildrenMap()
+		{
+			const allFolders = selectAll(store.getState());
+			const map = new Map();
+
+			for (const folder of allFolders)
+			{
+				if (folder.parentId !== null)
+				{
+					if (!map.has(folder.parentId))
+					{
+						map.set(folder.parentId, []);
+					}
+
+					map.get(folder.parentId).push(folder);
+				}
+			}
+
+			return map;
+		}
+
 		renderSystemFolders()
 		{
 			const systemFolders = selectSystemFolders(store.getState());
-
-			const folders = systemFolders.map((folder) => this.renderFolderItem(folder));
+			const rootSystemFolders = systemFolders.filter((folder) => folder.parentId === null);
+			const childrenMap = this.buildChildrenMap();
 
 			return View(
 				{},
-				...folders,
+				...rootSystemFolders.flatMap((folder) => this.renderFolderWithChildren(folder, 0, childrenMap)),
 			);
 		}
 
 		renderCustomFolders()
 		{
-			const customFolders = selectCustomFolders(store.getState());
+			const rootCustomFolders = selectRootCustomFolders(store.getState());
 
-			if (customFolders.length === 0)
+			if (rootCustomFolders.length === 0)
 			{
 				return null;
 			}
+
+			const childrenMap = this.buildChildrenMap();
 
 			return View(
 				{
 					style: {},
 				},
-				...customFolders.map((folder) => this.renderFolderItem(folder)),
+				...rootCustomFolders.flatMap((folder) => this.renderFolderWithChildren(folder, 0, childrenMap)),
 			);
 		}
 
-		renderFolderItem(folder)
+		renderFolderWithChildren(folder, level, childrenMap, visited = new Set())
+		{
+			if (visited.has(folder.id))
+			{
+				return [];
+			}
+
+			visited.add(folder.id);
+
+			const children = childrenMap.get(folder.id) || [];
+			const elements = [this.renderFolderItem(folder, level)];
+
+			for (const child of children)
+			{
+				elements.push(...this.renderFolderWithChildren(child, level + 1, childrenMap, visited));
+			}
+
+			return elements;
+		}
+
+		renderFolderItem(folder, level = 0)
 		{
 			let isSelected = false;
 
@@ -225,6 +269,8 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 				unreadCount = '';
 			}
 
+			const nestingPadding = level * 20;
+
 			return View(
 				{
 					style: {
@@ -232,6 +278,7 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 						alignItems: 'center',
 						paddingVertical: 11.5,
 						paddingHorizontal: 12,
+						paddingLeft: 12 + nestingPadding,
 						backgroundColor: 'transparent',
 						borderRadius: 12,
 						marginBottom: 4,

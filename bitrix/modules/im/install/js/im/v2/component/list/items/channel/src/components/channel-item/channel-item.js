@@ -1,17 +1,16 @@
 import 'main.date';
 
-import { Core } from 'im.v2.application.core';
 import { ChatType, Settings, Layout } from 'im.v2.const';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { ChatTitle } from 'im.v2.component.elements.chat-title';
+import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
+import { CounterManager } from 'im.v2.lib.counter';
 
 import { MessageText } from './components/message-text';
-import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
 
 import './css/channel-item.css';
 
-import type { JsonObject } from 'main.core';
-import type { ImModelRecentItem, ImModelChat, ImModelMessage } from 'im.v2.model';
+import type { ImModelRecentItem, ImModelChat, ImModelMessage, ImModelLayout } from 'im.v2.model';
 
 // @vue/component
 export const ChannelItem = {
@@ -23,10 +22,6 @@ export const ChannelItem = {
 			required: true,
 		},
 	},
-	data(): JsonObject
-	{
-		return {};
-	},
 	computed:
 	{
 		AvatarSize: () => AvatarSize,
@@ -34,30 +29,29 @@ export const ChannelItem = {
 		{
 			return this.item;
 		},
-		formattedDate(): string
-		{
-			if (this.needsBirthdayPlaceholder)
-			{
-				return this.loc('IM_LIST_RECENT_BIRTHDAY_DATE');
-			}
-
-			return this.formatDate(this.message.date);
-		},
-		formattedCounter(): string
-		{
-			return this.dialog.counter > 99 ? '99+' : this.dialog.counter.toString();
-		},
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.recentItem.dialogId, true);
 		},
-		layout(): { name: string, entityId: string }
+		layout(): ImModelLayout
 		{
 			return this.$store.getters['application/getLayout'];
 		},
 		message(): ImModelMessage
 		{
 			return this.$store.getters['recent/getMessage'](this.recentItem.dialogId);
+		},
+		chatCounter(): number
+		{
+			return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
+		},
+		formattedDate(): string
+		{
+			return this.formatDate(this.message.date);
+		},
+		formattedCounter(): string
+		{
+			return CounterManager.formatCounter(this.chatCounter);
 		},
 		isUser(): boolean
 		{
@@ -75,23 +69,6 @@ export const ChannelItem = {
 			}
 
 			return this.layout.entityId === this.recentItem.dialogId;
-		},
-		isChatMuted(): boolean
-		{
-			if (this.isUser)
-			{
-				return false;
-			}
-
-			const isMuted = this.dialog.muteList.find((element) => {
-				return element === Core.getUserId();
-			});
-
-			return Boolean(isMuted);
-		},
-		needsBirthdayPlaceholder(): boolean
-		{
-			return this.$store.getters['recent/needsBirthdayPlaceholder'](this.recentItem.dialogId);
 		},
 		showLastMessage(): boolean
 		{

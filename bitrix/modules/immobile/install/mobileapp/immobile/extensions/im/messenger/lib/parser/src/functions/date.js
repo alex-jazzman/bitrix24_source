@@ -2,7 +2,6 @@
  * @module im/messenger/lib/parser/functions/date
  */
 jn.define('im/messenger/lib/parser/functions/date', (require, exports, module) => {
-	const { camelize } = require('utils/string');
 	const { DateFormatter, DateFormat } = require('im/messenger/lib/date-formatter');
 
 	const availableFormats = Object.keys(DateFormat);

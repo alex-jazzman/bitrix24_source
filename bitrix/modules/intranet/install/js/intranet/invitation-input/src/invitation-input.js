@@ -6,12 +6,17 @@ import './style.css';
 import type { InvitationProvider } from './provider/invitation-provider';
 import { InvitationToGroup } from './provider/invitation-to-group';
 import { InvitationToPortal } from './provider/invitation-to-portal';
+import { InvitationToDepartment } from './provider/invitation-to-department';
+import { InvitationToDepartmentGroup } from './provider/invitation-to-department-group';
 
 export type InvitationInputOptionType = {
 	placeholder: ?string,
 	minHeight: ?number,
 	showErrorBeforeSubmit: ?boolean,
 	showErrorAfterSubmit: ?boolean,
+	onReadySave: ?Function,
+	onUnreadySave: ?Function,
+	id: ?string,
 };
 
 export const InvitationInputType = Object.freeze({
@@ -33,6 +38,9 @@ export class InvitationInput extends EventEmitter
 	#minHeight: ?number = null;
 	#showErrorBeforeSubmit: boolean;
 	#showErrorAfterSubmit: boolean;
+	#onReadySave: ?Function;
+	#onUnreadySave: ?Function;
+	#id: string;
 
 	constructor(options: InvitationInputOptionType)
 	{
@@ -58,6 +66,9 @@ export class InvitationInput extends EventEmitter
 			&& Boolean(settings?.isInvitationByPhoneAvailable);
 		this.#isEmailEnabled = [InvitationInputType.ALL, InvitationInputType.EMAIL].includes(this.#inputType);
 		this.#placeholder = Type.isStringFilled(options?.placeholder) ? options.placeholder : this.#getDefaultPlaceholder();
+		this.#onReadySave = Type.isFunction(options?.onReadySave) ? options.onReadySave : null;
+		this.#onUnreadySave = Type.isFunction(options?.onUnreadySave) ? options.onUnreadySave : null;
+		this.#id = Type.isStringFilled(options?.id) ? options.id : BX.Text.getRandom(5);
 	}
 
 	changeLanguage(lang: string): void
@@ -121,7 +132,7 @@ export class InvitationInput extends EventEmitter
 	{
 		return this.#cache.remember('wrapper', () => {
 			return Tag.render`
-				<div class="intranet-invitation-wrapper"></div>
+				<div data-test-id="${this.#id}" class="intranet-invitation-wrapper"></div>
 			`;
 		});
 	}
@@ -139,6 +150,25 @@ export class InvitationInput extends EventEmitter
 	inviteToPortal(): Promise
 	{
 		const invitationProvider = new InvitationToPortal(this.#getPreparedUserList());
+
+		return this.#invite(invitationProvider);
+	}
+
+	inviteToDepartment(departmentIds: Array<number>): Promise
+	{
+		const invitationProvider = new InvitationToDepartment(this.#getPreparedUserList(), departmentIds);
+
+		return this.#invite(invitationProvider);
+	}
+
+	inviteToDepartmentGroup(departmentIds: Array<number>, groupIds: Array<number>, analyticsData: ?Object): Promise
+	{
+		const invitationProvider = new InvitationToDepartmentGroup({
+			users: this.#getPreparedUserList(),
+			analyticsData,
+			departmentIds,
+			groupIds,
+		});
 
 		return this.#invite(invitationProvider);
 	}
@@ -170,10 +200,10 @@ export class InvitationInput extends EventEmitter
 			}
 			else
 			{
-				invitationProvider.invite().then(() => {
+				invitationProvider.invite().then((response) => {
 					this.getTagSelector().removeTags();
 					this.#setUnreadySaveState();
-					resolve();
+					resolve(response);
 				}).catch((response) => {
 					if (this.#showErrorAfterSubmit)
 					{
@@ -250,12 +280,14 @@ export class InvitationInput extends EventEmitter
 	{
 		this.emit('onReadySave');
 		this.#isReadySendInvitation = true;
+		this.#onReadySave?.();
 	}
 
 	#setUnreadySaveState(): void
 	{
 		this.emit('onUnreadySave');
 		this.#isReadySendInvitation = false;
+		this.#onUnreadySave?.();
 	}
 
 	#getPhoneParser(): BX.PhoneNumberParser
@@ -269,7 +301,8 @@ export class InvitationInput extends EventEmitter
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER_PHONE');
 		}
-		else if (!this.#isPhoneEnabled && this.#isEmailEnabled)
+
+		if (!this.#isPhoneEnabled && this.#isEmailEnabled)
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER');
 		}
@@ -283,7 +316,8 @@ export class InvitationInput extends EventEmitter
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_PHONE');
 		}
-		else if (!this.#isPhoneEnabled && this.#isEmailEnabled)
+
+		if (!this.#isPhoneEnabled && this.#isEmailEnabled)
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE');
 		}
@@ -297,7 +331,8 @@ export class InvitationInput extends EventEmitter
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_PHONE');
 		}
-		else if (!this.#isPhoneEnabled && this.#isEmailEnabled)
+
+		if (!this.#isPhoneEnabled && this.#isEmailEnabled)
 		{
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_EMPTY_MESSAGE');
 		}

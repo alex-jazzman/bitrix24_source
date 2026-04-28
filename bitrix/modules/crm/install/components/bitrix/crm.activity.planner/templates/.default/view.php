@@ -14,6 +14,7 @@ $options = array(
 	'important' => $activity['PRIORITY'] == CCrmActivityPriority::High,
 	'isEditable' => !empty($arResult['IS_EDITABLE'])
 );
+\Bitrix\Main\UI\Extension::load('intranet.old-interface.intranet-common');
 $optionsJson = \Bitrix\Main\Web\Json::encode($options);
 ?>
 <div class="crm-task-list-wrapper" data-role="options" data-options="<?=htmlspecialcharsbx($optionsJson)?>">

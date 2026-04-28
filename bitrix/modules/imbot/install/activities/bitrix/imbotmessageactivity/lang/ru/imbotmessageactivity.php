@@ -12,3 +12,4 @@ $MESS['IMBOT_MESSAGE_ACTIVITY_PROPERTY_BOT_CODE'] = 'Уникальный код
 $MESS['IMBOT_MESSAGE_ACTIVITY_PROPERTY_AS_ERROR'] = 'Отобразить как ошибку';
 $MESS['IMBOT_MESSAGE_ACTIVITY_PROPERTY_CHAT_ID_OR_RECIPIENT_EMPTY'] = 'Получатель или чат не указан';
 $MESS['IMBOT_MESSAGE_ACTIVITY_PROPERTY_CHAT_ID'] = 'ID чата (приоритетнее получателя)';
+$MESS['IMBOT_MESSAGE_ACTIVITY_PROPERTY_AI_WARNING'] = 'Предупреждать об использовании AI';

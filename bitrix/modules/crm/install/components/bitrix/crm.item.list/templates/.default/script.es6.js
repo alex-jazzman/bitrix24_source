@@ -23,6 +23,7 @@ class ItemListComponent
 	// is the list is embedded in another entity detail tab
 	#isEmbedded: boolean = false;
 	#settingsButtonExtenderParams: ?SettingsButtonExtenderParams;
+	analytics: ?Object;
 
 	constructor(params): void
 	{
@@ -32,6 +33,7 @@ class ItemListComponent
 			this.entityTypeId = Text.toInteger(params.entityTypeId);
 			this.entityTypeName = params.entityTypeName;
 			this.categoryId = Text.toInteger(params.categoryId);
+			this.analytics = Type.isPlainObject(params.analytics) ? params.analytics : {};
 
 			if (Type.isString(params.gridId))
 			{
@@ -276,23 +278,25 @@ class ItemListComponent
 			buttons: MessageBoxButtons.YES_CANCEL,
 			onYes: (messageBox) => {
 				Ajax.runAction(
-					'crm.controller.item.delete', {
-						analyticsLabel: 'crmItemListDeleteItem',
+					'crm.controller.item.delete',
+					{
 						data:
 							{
 								entityTypeId,
 								id,
-							}
-				}).then(() => {
+								analytics: this.analytics,
+							},
+					},
+				).then(() => {
 					BX.UI.Notification.Center.notify({
-						content: Loc.getMessage('CRM_TYPE_ITEM_DELETE_NOTIFICATION')
+						content: Loc.getMessage('CRM_TYPE_ITEM_DELETE_NOTIFICATION'),
 					});
 
 					this.reloadGridAfterTimeout();
 				}).catch(this.showErrorsFromResponse.bind(this));
 
 				messageBox.close();
-			}
+			},
 		});
 	}
 

@@ -14,8 +14,7 @@ export const BaseGroupActionBar = {
 		},
 	},
 	emits: ['close'],
-	// eslint-disable-next-line flowtype/require-return-type
-	setup()
+	setup(): { Outline: typeof Outline }
 	{
 		return {
 			Outline,

@@ -545,7 +545,7 @@ this.BX = this.BX || {};
 	        case 'KNOWLEDGE':
 	        case 'GROUP':
 	          return 'kb';
-	        case 'MAINPAGE':
+	        case 'VIBE':
 	          return 'vibe';
 	        default:
 	          return 'site';

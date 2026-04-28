@@ -7,6 +7,9 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 	const { Indent, Color, Corner } = require('tokens');
 	const { Loc } = require('loc');
 	const { inAppUrl } = require('in-app-url');
+
+	const { MoreMenuAnalytics } = require('more-menu/analytics');
+
 	const { formatHHMMSS, toMs, parseHmsToSec, parseDateToSec } = require('utils/time');
 
 	const { Text3, Text4 } = require('ui-system/typography/text');
@@ -339,7 +342,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 						Line(93, 9),
 						Line(102, 9),
 					),
-					Line(100, 28, 0, 0, Corner.M.toNumber()),
+					Line(115, 36, 0, 0, Corner.M.toNumber()),
 				),
 			);
 		}
@@ -641,7 +644,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 			return Button({
 				testId: this.getTestId('pause-button'),
 				leftIcon: Icon.PAUSE,
-				size: ButtonSize.S,
+				size: ButtonSize.M,
 				design: ButtonDesign.OUTLINE_ACCENT_2,
 				onClick: () => {
 					this.pauseWorkTime();
@@ -660,7 +663,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 				return Button({
 					testId: this.getTestId('stop-button'),
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_STOP'),
-					size: ButtonSize.S,
+					size: ButtonSize.M,
 					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.openWorkTime();
@@ -678,7 +681,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 					testId: this.getTestId('reopen-button'),
 					leftIcon: Icon.REFRESH,
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_REOPEN'),
-					size: ButtonSize.S,
+					size: ButtonSize.M,
 					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.reopenWorkTime();
@@ -696,7 +699,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 					testId: this.getTestId('start-button'),
 					leftIcon: Icon.PLAY,
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_START'),
-					size: ButtonSize.S,
+					size: ButtonSize.M,
 					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.reopenWorkTime();
@@ -715,7 +718,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 					testId: this.getTestId('resume-button'),
 					leftIcon: Icon.PLAY,
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_RESUME'),
-					size: ButtonSize.S,
+					size: ButtonSize.M,
 					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.reopenWorkTime();
@@ -730,7 +733,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 			return Button({
 				testId: this.getTestId('stop-button'),
 				text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_STOP'),
-				size: ButtonSize.S,
+				size: ButtonSize.M,
 				design: ButtonDesign.FILLED,
 				onClick: this.closeWorkTime,
 				loading: this.state.isLoadingStart,
@@ -776,6 +779,8 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 				return;
 			}
 
+			MoreMenuAnalytics.sendPauseWorkDay();
+
 			this.setState({ isLoadingPause: true }, () => {
 				BX.rest.callMethod('timeman.pause', {
 					USER_ID: env.userId,
@@ -800,6 +805,15 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 			if (!this.canChangeWorkTime())
 			{
 				return;
+			}
+
+			if (this.isStart())
+			{
+				MoreMenuAnalytics.sendStartWorkDay();
+			}
+			else
+			{
+				MoreMenuAnalytics.sendResumeWorkDay();
 			}
 
 			this.setState({ isLoadingStart: true }, () => {
@@ -827,6 +841,8 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 			{
 				return;
 			}
+
+			MoreMenuAnalytics.sendFinishWorkDay();
 
 			this.setState({ isLoadingStart: true }, () => {
 				BX.rest.callMethod('timeman.close', {

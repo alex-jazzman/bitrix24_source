@@ -90,16 +90,6 @@
                         1769607919164
                     ],
                     [
-                        "A8818_1517_2285_5035:o0",
-                        "A8390_1403_5491_3191:i0",
-                        1769607954342
-                    ],
-                    [
-                        "A8818_1517_2285_5035:o1",
-                        "A2791_6744_4057_2793:i0",
-                        1769607974716
-                    ],
-                    [
                         "A9357_6827_8487_1164:o0",
                         "A3576_2396_4357_1064:i0",
                         1769608255719
@@ -288,6 +278,16 @@
                         "A4305_1971_3341_5521:o1",
                         "A5211_1550_1452_7827:i0",
                         1770203893586
+                    ],
+                    [
+                        "A8818_1517_2285_5035:o0",
+                        "A2791_6744_4057_2793:i0",
+                        1770968325496
+                    ],
+                    [
+                        "A8818_1517_2285_5035:o1",
+                        "A8390_1403_5491_3191:i0",
+                        1770968327235
                     ]
                 ]
             },
@@ -328,8 +328,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "TIMER",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -344,6 +344,7 @@
                         "returnType": "text",
                         "jsonSchema": "",
                         "jsonPath": null,
+                        "usePseudonymizer": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_3###",
                         "EditorComment": ""
                     },
@@ -382,8 +383,8 @@
                             "colorIndex": 0,
                             "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -419,8 +420,8 @@
                             "colorIndex": 0,
                             "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -510,8 +511,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "SETTINGS",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -533,8 +534,8 @@
                         "id": "A8390_1403_5491_3191",
                         "type": "simple",
                         "position": {
-                            "x": 1944,
-                            "y": -62
+                            "x": 1911,
+                            "y": 24
                         },
                         "dimensions": {
                             "width": 200,
@@ -558,8 +559,8 @@
                             "colorIndex": 1,
                             "frameColorName": null,
                             "icon": "MESSENGER",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -576,6 +577,7 @@
                         "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_1###",
                         "asError": "N",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_8###",
                         "EditorComment": ""
                     },
@@ -584,8 +586,8 @@
                         "id": "A5178_4266_1538_4667",
                         "type": "simple",
                         "position": {
-                            "x": 2251,
-                            "y": -62
+                            "x": 2207,
+                            "y": 23
                         },
                         "dimensions": {
                             "width": 292.1166687011719,
@@ -609,8 +611,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -627,6 +629,7 @@
                         "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_2###",
                         "asError": "Y",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_8###",
                         "EditorComment": ""
                     },
@@ -660,8 +663,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -703,8 +706,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -715,10 +718,13 @@
                     "Properties": {
                         "botId": "{=A2543_1458_1853_8456:ActualBotId}",
                         "botCode": "",
-                        "recipient": "{=A2543_1458_1853_8456:SenderId}",
+                        "recipient": [
+                            "{=A2543_1458_1853_8456:SenderId}"
+                        ],
                         "chatId": "{=A2543_1458_1853_8456:chatId}",
                         "message": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_3###",
                         "asError": "N",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_8###",
                         "EditorComment": ""
                     },
@@ -752,8 +758,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -800,8 +806,8 @@
                             "colorIndex": 1,
                             "frameColorName": null,
                             "icon": "CHATS",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -846,8 +852,8 @@
                             "colorIndex": 1,
                             "frameColorName": null,
                             "icon": "PLANNING_2",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -903,8 +909,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -921,6 +927,7 @@
                         "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_4###",
                         "asError": "Y",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_8###",
                         "EditorComment": ""
                     },
@@ -954,8 +961,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1049,8 +1056,8 @@
                             "colorIndex": 5,
                             "frameColorName": null,
                             "icon": "DATABASE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1060,23 +1067,23 @@
                     "Activated": "Y",
                     "Properties": {
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_12###",
+                        "EditorComment": "",
                         "mixedcondition": [
                             {
                                 "object": "A7210_5668_2147_6675",
-                                "field": "StorageId",
-                                "operator": ">",
-                                "value": 0,
+                                "field": "CreateErrorText",
+                                "operator": "!empty",
+                                "value": "",
                                 "joiner": 0
                             }
-                        ],
-                        "EditorComment": ""
+                        ]
                     },
                     "Document": null,
                     "Node": {
                         "id": "A8818_1517_2285_5035",
                         "type": "complex",
                         "position": {
-                            "x": 1577,
+                            "x": 1578,
                             "y": -55
                         },
                         "dimensions": {
@@ -1106,8 +1113,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1133,8 +1140,8 @@
                         "id": "A2791_6744_4057_2793",
                         "type": "simple",
                         "position": {
-                            "x": 1914,
-                            "y": 25
+                            "x": 1916,
+                            "y": -67
                         },
                         "dimensions": {
                             "width": 252.4499969482422,
@@ -1158,8 +1165,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "NOTIFICATION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1228,8 +1235,8 @@
                             "colorIndex": 5,
                             "frameColorName": null,
                             "icon": "DATA_READING",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1288,8 +1295,8 @@
                             "colorIndex": 5,
                             "frameColorName": null,
                             "icon": "PLUS_M",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1306,6 +1313,7 @@
                         "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_5###",
                         "asError": "N",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_8###",
                         "EditorComment": ""
                     },
@@ -1339,8 +1347,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1386,8 +1394,8 @@
                             "colorIndex": 1,
                             "frameColorName": null,
                             "icon": "PHONE_OUT",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1443,8 +1451,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1461,6 +1469,7 @@
                         "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_6###",
                         "asError": "Y",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_8###",
                         "EditorComment": ""
                     },
@@ -1469,7 +1478,7 @@
                         "id": "A2830_6595_4322_1457",
                         "type": "simple",
                         "position": {
-                            "x": 2744,
+                            "x": 2745,
                             "y": 182
                         },
                         "dimensions": {
@@ -1494,8 +1503,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1572,8 +1581,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1617,8 +1626,8 @@
                             "colorIndex": 1,
                             "frameColorName": null,
                             "icon": "TASK",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1633,6 +1642,7 @@
                         "returnType": "text",
                         "jsonSchema": "",
                         "jsonPath": null,
+                        "usePseudonymizer": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_19###",
                         "EditorComment": ""
                     },
@@ -1671,8 +1681,8 @@
                             "colorIndex": 0,
                             "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1728,8 +1738,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1744,6 +1754,7 @@
                         "returnType": "text",
                         "jsonSchema": "",
                         "jsonPath": null,
+                        "usePseudonymizer": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_20###",
                         "EditorComment": ""
                     },
@@ -1782,8 +1793,8 @@
                             "colorIndex": 0,
                             "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1798,6 +1809,7 @@
                         "returnType": "text",
                         "jsonSchema": "",
                         "jsonPath": null,
+                        "usePseudonymizer": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_21###",
                         "EditorComment": ""
                     },
@@ -1836,8 +1848,8 @@
                             "colorIndex": 0,
                             "frameColorName": null,
                             "icon": "AI_ROBOT",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1893,8 +1905,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -1911,6 +1923,7 @@
                         "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_7###",
                         "asError": "Y",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_8###",
                         "EditorComment": ""
                     },
@@ -1944,8 +1957,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -2001,8 +2014,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -2019,6 +2032,7 @@
                         "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_8###",
                         "asError": "Y",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_8###",
                         "EditorComment": ""
                     },
@@ -2052,8 +2066,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -2109,8 +2123,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -2166,8 +2180,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -2184,6 +2198,7 @@
                         "chatId": null,
                         "message": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_MESSAGE_9###",
                         "asError": "Y",
+                        "aiWarning": "N",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_8###",
                         "EditorComment": ""
                     },
@@ -2217,8 +2232,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -2274,8 +2289,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -2331,8 +2346,8 @@
                             "colorIndex": 3,
                             "frameColorName": null,
                             "icon": "CONDITION",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 },
@@ -2349,6 +2364,7 @@
                         "chatId": null,
                         "message": "{=A5681_5166_8586_9567:aiResult}",
                         "asError": "N",
+                        "aiWarning": "Y",
                         "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLAN_TITLE_8###",
                         "EditorComment": ""
                     },
@@ -2382,8 +2398,8 @@
                             "colorIndex": 2,
                             "frameColorName": null,
                             "icon": "GO_TO_MESSAGE",
-                            "updated": 1770273351043,
-                            "published": 1770273351043
+                            "updated": 1771527071389,
+                            "published": 1771527071389
                         }
                     }
                 }

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.AI = this.BX.Crm.AI || {};
-(function (exports,crm_integration_analytics,main_core,ui_analytics,ui_dialogs_messagebox) {
+(function (exports,crm_ai_nameService,crm_integration_analytics,main_core,ui_analytics,ui_dialogs_messagebox) {
 	'use strict';
 
 	/**
@@ -84,12 +84,11 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 	 * @memberof BX.Crm.AI.Feedback
 	 */
 	function createFeedbackMessageBox(options) {
+	  const popupText = main_core.Loc.getMessage('CRM_AI_FEEDBACK_POPUP_TEXT', crm_ai_nameService.NameService.copilotNameReplacement());
 	  const message = `
 		<div class="bx-crm-ai-feedback-popup-content">
 			<div class="bx-crm-ai-feedback-popup-content__icon"></div>
-			<div class="bx-crm-ai-feedback-popup-content__text">
-				${main_core.Loc.getMessage('CRM_AI_FEEDBACK_POPUP_TEXT')}
-			</div>
+			<div class="bx-crm-ai-feedback-popup-content__text">${popupText}</div>
 		</div>
 	`;
 	  return ui_dialogs_messagebox.MessageBox.create({
@@ -108,5 +107,5 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 	exports.showSendFeedbackPopup = showSendFeedbackPopup;
 	exports.createFeedbackMessageBox = createFeedbackMessageBox;
 
-}((this.BX.Crm.AI.Feedback = this.BX.Crm.AI.Feedback || {}),BX.Crm.Integration.Analytics,BX,BX.UI.Analytics,BX.UI.Dialogs));
+}((this.BX.Crm.AI.Feedback = this.BX.Crm.AI.Feedback || {}),BX.Crm.AI,BX.Crm.Integration.Analytics,BX,BX.UI.Analytics,BX.UI.Dialogs));
 //# sourceMappingURL=feedback.bundle.js.map

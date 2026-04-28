@@ -14,7 +14,6 @@ body {
 	--air-admin-panel-height: 0px;
 	--air-header-height: 58px;
 	--air-right-bar-width: 70px;
-	--air-app-min-width: 1260px;
 
 	--air-sidepanel-toolbar-right: 70px;
 	--air-sidepanel-toolbar-bottom: 15px;
@@ -28,6 +27,7 @@ body {
 
 	margin: 0;
 	overflow-y: scroll;
+	overflow-x: hidden;
 }
 
 body.air-fullscreen-mode {
@@ -45,18 +45,32 @@ body.air-fullscreen-mode #panel {
 	display: none;
 }
 
-body:has(#bx-panel.bx-panel-fixed),
 body:has(#bx-panel.bx-panel-fixed) {
 	--air-fixed-layout-top-shift: 147px;
 }
 
-body:has(#bx-panel.bx-panel-fixed.bx-panel-folded),
 body:has(#bx-panel.bx-panel-fixed.bx-panel-folded) {
 	--air-fixed-layout-top-shift: 39px;
 }
 
 .root {
-	min-width: var(--air-app-min-width);
+	--air-right-panel-width: 0px;
+
+	min-height: calc(100dvh - var(--air-fixed-layout-top-shift));
+	display: grid;
+
+	grid-template-columns: auto minmax(0, 1fr) auto var(--air-right-bar-width);
+	grid-template-rows: auto var(--air-topbar-height) minmax(0, 1fr) auto;
+	grid-template-areas:
+		"admin  admin  admin admin"
+		"left   header panel avatar"
+		"left   main   panel right"
+		"left   footer panel right"
+	;
+}
+
+.root.--right-panel-expanded {
+	--air-right-panel-width: 380px;
 }
 
 .connection-status {

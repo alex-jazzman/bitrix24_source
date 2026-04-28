@@ -54,6 +54,7 @@ jn.define('im/messenger/controller/messenger-header/config', (require, exports, 
 	/** @type {HeaderButtonsConfig} */
 	const taskConfig = {
 		rightButtons: [
+			searchButton,
 			notificationButton,
 			moreButton,
 		],

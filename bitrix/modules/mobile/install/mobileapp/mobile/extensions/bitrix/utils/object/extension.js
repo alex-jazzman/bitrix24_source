@@ -586,7 +586,8 @@ jn.define('utils/object', (require, exports, module) => {
 			result = md5(string);
 		}
 		catch
-		{}
+		{
+		}
 
 		return result;
 	}
@@ -614,9 +615,9 @@ jn.define('utils/object', (require, exports, module) => {
 	}
 
 	/**
-	 * @param {object} object``
-	 * @param {function(value: *, key: string): boolean} [predicate]
-	 * @returns {object}
+	 * @param {T} object
+	 * @param {(value: T[keyof T], key: keyof T) => boolean} [predicate]
+	 * @returns {Partial<T>}
 	 */
 	function omitBy(object, predicate = Boolean)
 	{
@@ -631,9 +632,9 @@ jn.define('utils/object', (require, exports, module) => {
 	}
 
 	/**
-	 * @param {object} object
-	 * @param {function(value: *, key: string): boolean} [predicate]
-	 * @returns {object}
+	 * @param {T} object
+	 * @param {(value: T[keyof T], key: keyof T) => boolean} [predicate]
+	 * @returns {Partial<T>}
 	 */
 	function pickBy(object, predicate = Boolean)
 	{

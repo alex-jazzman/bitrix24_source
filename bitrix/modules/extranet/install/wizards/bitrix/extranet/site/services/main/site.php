@@ -181,6 +181,17 @@ if (!defined("WIZARD_IS_RERUN") || WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)
 			'PATH' => WIZARD_SITE_DIR . 'tasks/comments.php',
 		]
 	);
+
+	$documentRoot = \Bitrix\Main\Loader::getDocumentRoot();
+	$c = \Bitrix\Main\Config\Configuration::getInstanceByPath($documentRoot . '/bitrix/routes/.settings.php');
+	$config = $c->get('routing')['config'] ?? [];
+
+	if (!in_array('extranet.php', $config, true))
+	{
+		$config[] = 'extranet.php';
+		$c->add('routing', ['config' => $config]);
+		$c->saveConfiguration();
+	}
 }
 else
 {

@@ -1,6 +1,6 @@
 <?php
 
-use Bitrix\Booking\Internals\Container;
+use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -10,8 +10,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $baseCurrencyId = '';
 if (\Bitrix\Main\Loader::includeModule('booking'))
 {
-	$provider = Container::getProviderManager()::getCurrentProvider();
-	$baseCurrencyId = $provider?->getDataProvider()?->getBaseCurrencyId() ?? '';
+	if (Loader::includeModule('crm'))
+	{
+		$baseCurrencyId = \CCrmCurrency::GetBaseCurrencyID() ?? '';
+	}
 }
 
 $currencies = [];

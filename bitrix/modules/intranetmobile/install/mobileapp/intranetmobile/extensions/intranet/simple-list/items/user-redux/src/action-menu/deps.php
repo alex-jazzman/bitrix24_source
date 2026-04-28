@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'assets/icons',
+		'layout/ui/menu',
 		'loc',
 		'statemanager/redux/store',
 		'user/account',

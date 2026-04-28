@@ -1,6 +1,7 @@
 import { Chip, ChipDesign, ChipSize } from 'ui.system.chip.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
+import 'ui.hint';
 
 import { InputSize, InputDesign } from './const';
 export { InputSize, InputDesign };
@@ -14,7 +15,7 @@ export const BInput = {
 		BIcon,
 		Chip,
 	},
-	expose: ['blur'],
+	expose: ['focus'],
 	props: {
 		modelValue: {
 			type: String,
@@ -92,6 +93,18 @@ export const BInput = {
 			type: Boolean,
 			default: false,
 		},
+		readonly: {
+			type: Boolean,
+			default: false,
+		},
+		type: {
+			type: String,
+			default: 'text',
+		},
+		copyable: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: [
 		'update:modelValue',
@@ -114,6 +127,7 @@ export const BInput = {
 	{
 		return {
 			focused: false,
+			passwordVisible: false,
 		};
 	},
 	computed: {
@@ -139,25 +153,36 @@ export const BInput = {
 				[InputSize.Sm]: ChipSize.Xs,
 			}[this.size];
 		},
+		currentInputType(): string
+		{
+			if (this.type === 'password' && this.passwordVisible)
+			{
+				return 'text';
+			}
+
+			return this.type;
+		},
+		passwordToggleAriaLabel(): string
+		{
+			const key = this.passwordVisible
+				? 'UI_SYSTEM_INPUT_HIDE_PASSWORD_ARIA'
+				: 'UI_SYSTEM_INPUT_SHOW_PASSWORD_ARIA'
+			;
+
+			return this.$Bitrix.Loc.getMessage(key);
+		},
 	},
 	mounted(): void
 	{
 		if (this.active && !this.clickable)
 		{
-			this.focusToInput();
+			this.focus();
 		}
 	},
 	methods: {
-		focusToInput(): void
+		focus(): void
 		{
-			const input = this.$refs.input;
-			if (!input)
-			{
-				return;
-			}
-
-			input.focus({ preventScroll: true });
-			input.setSelectionRange(input.value.length, input.value.length);
+			this.$refs.input?.focus({ preventScroll: true });
 		},
 		handleClick(event: MouseEvent): void
 		{
@@ -185,6 +210,26 @@ export const BInput = {
 			this.focused = false;
 			this.$emit('blur', event);
 		},
+		togglePasswordVisibility(): void
+		{
+			this.passwordVisible = !this.passwordVisible;
+		},
+		handleCopy(): void
+		{
+			if (this.modelValue && navigator.clipboard && window.isSecureContext)
+			{
+				navigator.clipboard.writeText(this.modelValue);
+			}
+
+			const button = this.$refs.copyButton;
+			if (button)
+			{
+				BX.UI.Hint.show(button, this.$Bitrix.Loc.getMessage('UI_SYSTEM_INPUT_COPIED'));
+				setTimeout(() => {
+					BX.UI.Hint.hide(button);
+				}, 1500);
+			}
+		},
 	},
 	template: `
 		<div
@@ -199,6 +244,7 @@ export const BInput = {
 					'--stretched': stretched,
 					'--active': active || focused,
 					'--error': error && !disabled,
+					'--readonly': readonly,
 				},
 			]">
 			<div v-if="label" class="ui-system-input-label" :class="{ '--inline': labelInline }">{{ label }}</div>
@@ -218,9 +264,10 @@ export const BInput = {
 					v-model="value"
 					class="ui-system-input-value --multi"
 					:style="{ resize }"
-					:placeholder="placeholder"
-					:disabled="disabled"
+					:placeholder
+					:disabled
 					:rows="rowsQuantity"
+					:readonly
 					ref="input"
 					@focus="handleFocus"
 					@blur="handleBlur"
@@ -231,18 +278,126 @@ export const BInput = {
 					v-model="value"
 					class="ui-system-input-value"
 					:style="{ '--placeholder-length': placeholder.length + 'ch' }"
-					:placeholder="placeholder"
-					:disabled="disabled"
+					:placeholder
+					:disabled
+					:type="currentInputType"
+					:readonly
 					ref="input"
 					@focus="handleFocus"
 					@blur="handleBlur"
 					@input="$emit('input', $event)"
 				/>
+				<button
+					v-if="copyable"
+					ref="copyButton"
+					type="button"
+					tabindex="0"
+					class="ui-system-input-action-btn --ui-hoverable-overlay"
+					:disabled="disabled"
+					:aria-label="$Bitrix.Loc.getMessage('UI_SYSTEM_INPUT_COPY_TO_CLIPBOARD_ARIA')"
+					@click.stop="handleCopy"
+				>
+					<BIcon :name="Outline.COPY"/>
+				</button>
+				<button
+					v-if="type === 'password'"
+					type="button"
+					tabindex="0"
+					class="ui-system-input-action-btn --ui-hoverable-overlay"
+					:disabled="disabled"
+					:aria-label="passwordToggleAriaLabel"
+					@click.stop="togglePasswordVisibility"
+				>
+					<BIcon :name="passwordVisible ? Outline.CROSSED_EYE : Outline.OBSERVER"/>
+				</button>
 				<BIcon v-if="withSearch" class="ui-system-input-cross" :name="Outline.SEARCH"/>
 				<BIcon v-if="withClear" class="ui-system-input-cross" :name="Outline.CROSS_L" @click.stop="$emit('clear')"/>
 				<BIcon v-if="dropdown" class="ui-system-input-dropdown" :name="Outline.CHEVRON_DOWN_L"/>
 			</div>
 			<div v-if="error?.trim() && !disabled" class="ui-system-input-label --error" :title="error">{{ error }}</div>
 		</div>
+	`,
+};
+
+// @vue/component
+export const PasswordField = {
+	name: 'PasswordField',
+	components: {
+		BInput,
+	},
+	expose: ['focus'],
+	props: {
+		modelValue: {
+			type: String,
+			default: '',
+		},
+		label: {
+			type: String,
+			default: '',
+		},
+		placeholder: {
+			type: String,
+			default: '',
+		},
+		error: {
+			type: String,
+			default: '',
+		},
+		size: {
+			type: String,
+			default: InputSize.Lg,
+		},
+		design: {
+			type: String,
+			default: InputDesign.Grey,
+		},
+		copyable: {
+			type: Boolean,
+			default: false,
+		},
+		stretched: {
+			type: Boolean,
+			default: false,
+		},
+		active: {
+			type: Boolean,
+			default: false,
+		},
+		readonly: {
+			type: Boolean,
+			default: false,
+		},
+	},
+	emits: [
+		'update:modelValue',
+		'focus',
+		'blur',
+		'input',
+	],
+	methods: {
+		focus(): void
+		{
+			this.$refs.input?.focus();
+		},
+	},
+	template: `
+		<BInput
+			ref="input"
+			:modelValue="modelValue"
+			@update:modelValue="$emit('update:modelValue', $event)"
+			type="password"
+			:label="label"
+			:placeholder="placeholder"
+			:error="error"
+			:size="size"
+			:design="design"
+			:copyable="copyable"
+			:stretched="stretched"
+			:active="active"
+			:readonly="readonly"
+			@focus="$emit('focus', $event)"
+			@blur="$emit('blur', $event)"
+			@input="$emit('input', $event)"
+		/>
 	`,
 };

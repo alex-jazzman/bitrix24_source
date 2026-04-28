@@ -1,6 +1,6 @@
 import { Dom, Loc, Reflection, Tag, Type, Text } from 'main.core';
 import { BaseCache, MemoryCache } from 'main.core.cache';
-import { BaseButton, Button } from 'ui.buttons';
+import { AirButtonStyle, BaseButton, Button } from 'ui.buttons';
 import { BaseView } from './base-view';
 import { PhoneFormatter } from 'ui.type';
 import './css/send-number.css';
@@ -15,7 +15,8 @@ export class SendNumberView extends BaseView
 	#changeClicked: boolean;
 	#forceChangeMode: boolean = false;
 	#container: BaseCache = new MemoryCache();
-	#button: Button;
+	#sendButton: Button;
+	#skipButton: Button;
 	#titleContainer: HTMLElement;
 	#errorContainer: HTMLElement;
 
@@ -26,7 +27,8 @@ export class SendNumberView extends BaseView
 		this.#phoneNumber = Type.isString(options.phoneNumber) ? PhoneFormatter.formatValue(options.phoneNumber) : '';
 		this.#isPhoneNumberConfirmed = options.isPhoneNumberConfirmed === true;
 		this.#changeClicked = false;
-		this.#button = this.#createSendBtn();
+		this.#sendButton = this.#createSendBtn();
+		this.#skipButton = SendNumberView.createSkipAddPhoneNumberButton(this);
 		this.#titleContainer = Tag.render`
 			<div class="intranet-push-otp-connect-popup__view-enter-code-subtitle">${Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_SUBTITLE')}</div>
 		`;
@@ -140,7 +142,8 @@ export class SendNumberView extends BaseView
 						<div class="intranet-push-otp-connect-popup__view-phone-number-phone"></div>
 					</div>
 					<div class="intranet-push-otp-connect-popup__view-button-container">
-						${this.#button.render()}
+						${this.#skipButton.render()}
+						${this.#sendButton.render()}
 					</div>
 				</div>
 			`;
@@ -163,7 +166,15 @@ export class SendNumberView extends BaseView
 				this.#cleanError();
 				if (!this.#changeClicked && this.#isPhoneNumberConfirmed && !this.#forceChangeMode)
 				{
-					this.#nextView('success');
+					this.emit(
+						'onNextView',
+						{
+							viewCode: 'success',
+							options: {
+								phoneNumber: this.#phoneNumber,
+							},
+						},
+					);
 
 					return;
 				}
@@ -174,11 +185,11 @@ export class SendNumberView extends BaseView
 
 	#sendNumber(): void
 	{
-		if (this.#button.isWaiting())
+		if (this.#sendButton.isWaiting())
 		{
 			return;
 		}
-		this.#button.setWaiting(true);
+		this.#sendButton.setWaiting(true);
 		BX.ajax.runAction('intranet.v2.Otp.changeAuthPhone', {
 			method: 'POST',
 			data: {
@@ -186,7 +197,7 @@ export class SendNumberView extends BaseView
 				phoneNumber: this.#phoneNumber,
 			},
 		}).then((response) => {
-			this.#button.setWaiting(false);
+			this.#sendButton.setWaiting(false);
 			if (response.data === true)
 			{
 				this.#isPhoneNumberConfirmed = false;
@@ -194,10 +205,10 @@ export class SendNumberView extends BaseView
 			}
 		}, (response) => {
 			this.#setError(response.errors);
-			this.#button.setWaiting(false);
+			this.#sendButton.setWaiting(false);
 		}).catch((response) => {
 			this.#setError(response.errors);
-			this.#button.setWaiting(false);
+			this.#sendButton.setWaiting(false);
 		});
 	}
 
@@ -236,9 +247,38 @@ export class SendNumberView extends BaseView
 	setForceChangeMode(force: boolean): void
 	{
 		this.#forceChangeMode = force;
-		if (force)
-		{
-			this.#phoneNumber = '';
-		}
+	}
+
+	isForceChangeMode(): boolean
+	{
+		return this.#forceChangeMode;
+	}
+
+	static createSkipAddPhoneNumberButton(view): Button
+	{
+		return new Button({
+			text: Loc.getMessage('INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_SKIP_ADD_PHONE_BTN'),
+			noCaps: true,
+			size: Button.Size.MD,
+			useAirDesign: true,
+			disabled: false,
+			style: AirButtonStyle.PLAIN_NO_ACCENT,
+			onclick: () => {
+				BX.userOptions.del('intranet', 'require_phone_confirmation');
+				if (view.isForceChangeMode())
+				{
+					view.emit('onParentClose');
+				}
+				else
+				{
+					view.emit(
+						'onNextView',
+						{
+							viewCode: 'success',
+						},
+					);
+				}
+			},
+		});
 	}
 }

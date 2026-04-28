@@ -20,7 +20,7 @@ $MESS["IMMOBILE_DIALOG_CREATOR_API_ERROR"] = "Во время создания �
 $MESS["IMMOBILE_DIALOG_CREATOR_RECENT_TEXT"] = "Недавние";
 $MESS['IMMOBILE_DIALOG_CREATOR_IS_YOU'] = '(Это вы)';
 $MESS['IMMOBILE_DIALOG_CREATOR_BRAND_NEW_LABEL'] = 'Новинка';
-$MESS['IMMOBILE_DIALOG_CREATOR_NEW_COPILOT'] = 'Чат с BitrixGPT';
+$MESS['IMMOBILE_DIALOG_CREATOR_NEW_COPILOT_MSGVER_1'] = 'Чат с #COPILOT_NAME#';
 $MESS['IMMOBILE_DIALOG_CREATOR_NEW_COPILOT_SUBTITLE_MSGVER_1'] = 'Для решения задач и генерации идей c AI';
 $MESS['IMMOBILE_DIALOG_CREATOR_INVITE_BANNER'] = 'Пригласите коллег';
 $MESS['IMMOBILE_DIALOG_CREATOR_INVITE_BANNER_SUBTITLE'] = 'Вместе вы быстрее оцените преимущества Битрикс24';
@@ -29,5 +29,3 @@ $MESS['IMMOBILE_DIALOG_CREATOR_INVITE_BANNER_SUBTITLE'] = 'Вместе вы б�
 
 $MESS['IMMOBILE_DIALOG_CREATOR_PARTICIPANTS_RECENT_TAB_NAME'] = 'Недавние';
 $MESS['IMMOBILE_DIALOG_CREATOR_PARTICIPANTS_DEPARTMENT_TAB_NAME'] = 'Отделы';
-
-

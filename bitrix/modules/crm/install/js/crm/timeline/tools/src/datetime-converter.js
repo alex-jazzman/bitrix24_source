@@ -1,3 +1,4 @@
+import { Cache, Extension } from 'main.core';
 import { DateTimeFormat, Timezone } from 'main.date';
 
 declare type DateTimeFormatOptions = {
@@ -45,6 +46,20 @@ export default class DatetimeConverter
 
 	toUserTime(): DatetimeConverter
 	{
+		const cache = new Cache.MemoryCache();
+		const timezone = cache.remember(`crm.timeline.tools.userTimezone`, () => {
+			return Extension.getSettings('crm.timeline.tools').get('userTimezone');
+		});
+		if (timezone)
+		{
+			const delta = this.#getTimezoneOffset(this.#datetime, timezone) - this.#getTimezoneOffset(new Date(), timezone);
+
+			if (delta)
+			{
+				this.#datetime.setSeconds(this.#datetime.getSeconds() + delta);
+			}
+		}
+
 		this.#datetime = Timezone.ServerTime.toUserDate(this.#datetime);
 
 		return this;
@@ -116,6 +131,14 @@ export default class DatetimeConverter
 	#isShowYear(): boolean
 	{
 		return this.#datetime.getFullYear() !== (Timezone.UserTime.getDate()).getFullYear();
+	}
+
+	#getTimezoneOffset(datetime, timezone): number
+	{
+		const dateInTimezone = new Date(datetime.toLocaleString('en-US', { timeZone: timezone }));
+		const offsetMs = dateInTimezone.getTime() - new Date(datetime.toLocaleString('en-US', { timeZone: 'UTC' })).getTime();
+
+		return  offsetMs / 1000;
 	}
 
 	toFormatString(format: string, now: Date, utc: boolean): string

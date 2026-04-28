@@ -2646,6 +2646,7 @@ body.kz .intranet-island-with-sidebar__sidebar {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	background-size: cover;
 }
 
 .intranet-account-card__avatar--email {

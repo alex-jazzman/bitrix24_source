@@ -501,28 +501,65 @@ if($isAdmin || $userPermissionsService->entityType()->canReadItemsInCategory(CCr
 		'ACTIONS' => $actions
 	);
 }
-$invoiceEntityTypeId = \CCrmOwnerType::SmartInvoice;
-if (InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
-{
-	$invoiceEntityTypeId = \CCrmOwnerType::Invoice;
-}
 
-if ($isAdmin || $userPermissionsService->entityType()->canReadItems($invoiceEntityTypeId))
+if ($isAdmin || $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::SmartInvoice))
 {
 	$actions = [];
-	if ($userPermissionsService->entityType()->canAddItems($invoiceEntityTypeId))
+	if ($userPermissionsService->entityType()->canAddItems(CCrmOwnerType::SmartInvoice))
 	{
 		$actions[] = [
 			'ID' => 'CREATE',
-			'URL' =>  $router->getItemDetailUrl($invoiceEntityTypeId),
+			'URL' =>  $router->getItemDetailUrl(CCrmOwnerType::SmartInvoice),
 		];
 	}
-	$entityName = \CCrmOwnerType::ResolveName($invoiceEntityTypeId);
+	$smartInvoiceItem = [
+		'ID' => CCrmOwnerType::SmartInvoiceName,
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdByEntityTypeId(CCrmOwnerType::SmartInvoice), //'menu_crm_' . mb_strtolower($entityName),
+		'NAME' => \CCrmOwnerType::GetCategoryCaption(CCrmOwnerType::SmartInvoice),
+		'URL' => $router->getItemListUrlInCurrentView(CCrmOwnerType::SmartInvoice),
+		'ICON' => 'invoice',
+		// if we pass an empty array create button still will be displayed
+		'ACTIONS' => empty($actions) ? null : $actions,
+	];
+
+	if (!RestrictionManager::getInvoicesRestriction()->hasPermission())
+	{
+		unset($smartInvoiceItem['URL']);
+		$smartInvoiceItem['IS_LOCKED'] = true;
+		$smartInvoiceItem['ON_CLICK'] = RestrictionManager::getInvoicesRestriction()->prepareFeaturePromoterScript();
+	}
+
+	$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
+		\CCrmOwnerType::SmartInvoice,
+		Bitrix\Crm\Counter\EntityCounterType::ALL,
+		$currentUserID,
+		$counterExtras
+	);
+
+	$smartInvoiceItem['COUNTER'] = $counter->getValue();
+	$smartInvoiceItem['COUNTER_ID'] = $counter->getCode();
+
+	$stdItems[CCrmOwnerType::SmartInvoiceName] = $smartInvoiceItem;
+}
+
+if (
+	InvoiceSettings::getCurrent()->isOldInvoicesEnabled()
+	&& ($isAdmin || $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Invoice))
+)
+{
+	$actions = [];
+	if ($userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Invoice))
+	{
+		$actions[] = [
+			'ID' => 'CREATE',
+			'URL' =>  $router->getItemDetailUrl(CCrmOwnerType::Invoice),
+		];
+	}
 	$invoiceItem = [
-		'ID' => $entityName,
-		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdByEntityTypeId($invoiceEntityTypeId), //'menu_crm_' . mb_strtolower($entityName),
-		'NAME' => \CCrmOwnerType::GetCategoryCaption($invoiceEntityTypeId),
-		'URL' => $router->getItemListUrlInCurrentView($invoiceEntityTypeId),
+		'ID' => CCrmOwnerType::InvoiceName,
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdByEntityTypeId(CCrmOwnerType::Invoice),
+		'NAME' => \CCrmOwnerType::GetCategoryCaption(CCrmOwnerType::Invoice),
+		'URL' => $router->getItemListUrlInCurrentView(CCrmOwnerType::Invoice),
 		'ICON' => 'invoice',
 		// if we pass an empty array create button still will be displayed
 		'ACTIONS' => empty($actions) ? null : $actions,
@@ -535,23 +572,7 @@ if ($isAdmin || $userPermissionsService->entityType()->canReadItems($invoiceEnti
 		$invoiceItem['ON_CLICK'] = RestrictionManager::getInvoicesRestriction()->prepareFeaturePromoterScript();
 	}
 
-	if (!InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
-	{
-		$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
-			\CCrmOwnerType::SmartInvoice,
-			Bitrix\Crm\Counter\EntityCounterType::ALL,
-			$currentUserID,
-			$counterExtras
-		);
-
-		if ($counter)
-		{
-			$invoiceItem['COUNTER'] = $counter->getValue();
-			$invoiceItem['COUNTER_ID'] = $counter->getCode();
-		}
-	}
-
-	$stdItems[\CCrmOwnerType::ResolveName($invoiceEntityTypeId)] = $invoiceItem;
+	$stdItems[CCrmOwnerType::InvoiceName] = $invoiceItem;
 }
 
 if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())

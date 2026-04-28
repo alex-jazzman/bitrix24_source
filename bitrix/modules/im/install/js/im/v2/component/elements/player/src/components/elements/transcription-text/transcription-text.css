@@ -1,6 +1,5 @@
 .bx-im-transcription-text__container {
 	--im-transcription-text__color_default-text: var(--im-color-palette-gray-90);
-	--im-transcription-text__color_error-text: var(--im-color-palette-gray-50);
 	--im-transcription-text__color_error-link: var(--im-color-accent-blue);
 	--im-transcription-text__color_disclaimer-text: #91A0C2;
 	--im-transcription-text__color_disclaimer-divider: #D4DDF1;
@@ -17,7 +16,7 @@
 }
 
 .bx-im-transcription-text__content .--error {
-	color: var(--im-transcription-text__color_error-text);
+	color: var(--ui-color-chat-other-base-1_1);
 }
 
 .bx-im-transcription-text__divider {

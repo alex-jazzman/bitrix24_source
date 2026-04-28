@@ -57,7 +57,21 @@ foreach ($dialog->getMap() as $fieldId => $field): ?>
 				<?= htmlspecialcharsbx((string)($field['Name'] ?? null)) ?>
 			</label>
 			<?php else: ?>
-				<?= $dialog->renderFieldControl(field: $field, renderMode: ($fieldId === CBPSignB2EDocumentActivity::PARAM_EMPLOYEE) ? FieldType::RENDER_MODE_DESIGNER : FieldType::RENDER_MODE_PUBLIC) ?>
+				<?php
+				$renderMode = in_array($fieldId, [
+					CBPSignB2EDocumentActivity::PARAM_EMPLOYEE,
+					CBPSignB2EDocumentActivity::PARAM_FILE,
+				], true)
+					? FieldType::RENDER_MODE_DESIGNER
+					: FieldType::RENDER_MODE_PUBLIC
+				;
+				$renderField = $field;
+				if ($fieldId === CBPSignB2EDocumentActivity::PARAM_FILE)
+				{
+					$renderField['Type'] = FieldType::STRING;
+				}
+				?>
+				<?= $dialog->renderFieldControl(field: $renderField, renderMode: $renderMode) ?>
 			<?php endif; ?>
 		</td>
 	</tr>

@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Crm\Component\Utils\OldEntityViewDisableHelper;
 use Bitrix\Main\Web\Json;
 
 /** @var array $arResult */
@@ -8,7 +7,7 @@ use Bitrix\Main\Web\Json;
 Bitrix\Main\UI\Extension::load('crm.old-entity-view.disable-alert');
 ?>
 
-<?php if (OldEntityViewDisableHelper::canShowAlert()): ?>
+<?php if ($arResult['canShowAlert']): ?>
 	<div id="crm-entity-disable-alert"></div>
 	<script>
 		BX.ready(() => {

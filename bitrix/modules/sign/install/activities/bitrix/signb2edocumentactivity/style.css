@@ -18,3 +18,8 @@
 	position: relative;
 	top: 3px;
 }
+
+.bizproc-automation-popup-settings .bizproc-type-control-file-selectable[name="file"] {
+	width: 100%;
+	box-sizing: border-box;
+}

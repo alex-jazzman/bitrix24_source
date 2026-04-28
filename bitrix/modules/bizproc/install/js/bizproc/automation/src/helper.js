@@ -22,6 +22,11 @@ export class Helper
 		});
 	}
 
+	static toJsonPayload(data: any): any
+	{
+		return JSON.parse(Helper.toJsonString(data));
+	}
+
 	static getResponsibleUserExpression(fields: Array<Object>): ?string
 	{
 		if (Type.isArray(fields))

@@ -950,6 +950,7 @@
 	font-weight: var(--ui-font-weight-regular, 400);
 	line-height: var(--ui-font-line-height-md);
 	margin-bottom: 45px;
+	margin-top: 0;
 	text-align: center;
 }
 

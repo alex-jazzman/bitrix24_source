@@ -71,7 +71,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      var container = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"sign-document-summary-wrapper\"></div>\n\t\t"])));
 	      for (var _i = 0, _Object$values = Object.values(this.items); _i < _Object$values.length; _i++) {
 	        var item = _Object$values[_i];
-	        var itemBlock = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"sign-document-summary\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _classPrivateMethodGet(this, _createDocumentDetails, _createDocumentDetails2).call(this, item), _classPrivateMethodGet(this, _createEditDocumentBtn, _createEditDocumentBtn2).call(this, item.id, item.uid));
+	        var itemBlock = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"sign-document-summary\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _classPrivateMethodGet(this, _createDocumentDetails, _createDocumentDetails2).call(this, item), _classPrivateMethodGet(this, _createEditDocumentBtn, _createEditDocumentBtn2).call(this, item));
 	        main_core.Dom.append(itemBlock, container);
 	      }
 	      return container;
@@ -140,7 +140,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    return;
 	  }
 	  main_core.Dom.replace(summaryNode.firstElementChild, _classPrivateMethodGet(this, _createDocumentDetails, _createDocumentDetails2).call(this, item));
-	  main_core.Dom.append(_classPrivateMethodGet(this, _createEditDocumentBtn, _createEditDocumentBtn2).call(this, item.id, item.uid), summaryNode);
+	  main_core.Dom.append(_classPrivateMethodGet(this, _createEditDocumentBtn, _createEditDocumentBtn2).call(this, item), summaryNode);
 	}
 	function _focusInput2(input) {
 	  var observer = new MutationObserver(function () {
@@ -195,8 +195,13 @@ this.BX.Sign = this.BX.Sign || {};
 	  }));
 	  return _modifyDocumentTitle3.apply(this, arguments);
 	}
-	function _createEditDocumentBtn2(id, uid) {
+	function _createEditDocumentBtn2(item) {
 	  var _this5 = this;
+	  if (item.hasPlaceholders) {
+	    return null;
+	  }
+	  var id = item.id;
+	  var uid = item.uid;
 	  return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span\n\t\t\t\tclass=\"", "\" data-id=\"", "\"\n\t\t\t\tonclick=\"", "\"\n\t\t\t>\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), buttonClassList.join(' '), id, function () {
 	    return _this5.emit('showEditor', {
 	      uid: uid

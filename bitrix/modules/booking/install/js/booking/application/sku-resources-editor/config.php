@@ -10,6 +10,8 @@ return [
 	'rel' => [
 		'ui.vue3',
 		'booking.component.mixin.loc-mixin',
+		'booking.model.resources',
+		'booking.model.resource-types',
 		'booking.model.sku-resources-editor',
 		'booking.component.ui-tabs',
 		'booking.lib.currency-format',
@@ -17,7 +19,9 @@ return [
 		'booking.lib.side-panel-instance',
 		'booking.provider.service.catalog-service-sku-service',
 		'main.core',
+		'booking.core',
 		'booking.lib.deep-to-raw',
+		'booking.provider.service.resource-dialog-service',
 		'ui.vue3.components.counter',
 		'ui.cnt',
 		'booking.component.button',
@@ -25,9 +29,7 @@ return [
 		'ui.entity-selector',
 		'ui.vue3.vuex',
 		'ui.icon-set.api.vue',
-		'booking.core',
 		'booking.const',
-		'booking.provider.service.resource-dialog-service',
 	],
 	'skip_core' => false,
 ];

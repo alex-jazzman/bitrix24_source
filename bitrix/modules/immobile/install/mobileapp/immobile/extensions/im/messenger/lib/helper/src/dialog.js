@@ -231,6 +231,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			return this.dialogModel.type === DialogType.open;
 		}
 
+		get isOpenlines()
+		{
+			return this.dialogModel.type === DialogType.lines;
+		}
+
 		get isGeneral()
 		{
 			return this.dialogModel.type === DialogType.general;
@@ -296,6 +301,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			}
 
 			if (this.isComment)
+			{
+				return false;
+			}
+
+			if (this.isOpenlines)
 			{
 				return false;
 			}

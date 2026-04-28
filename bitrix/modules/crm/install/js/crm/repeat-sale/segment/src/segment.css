@@ -89,6 +89,10 @@
 	width: auto;
 }
 
+.crm-repeat-sale__segment-field-title + .ui-ctl.ui-ctl-w50 {
+	padding-right: 4px;
+}
+
 .crm-repeat-sale__segment-ai-switcher-wrapper {
 	gap: 16px;
 	display: flex;
@@ -190,6 +194,7 @@
 	background: #EDF7FF;
 	border-radius: var(--ui-border-radius-xs);
 	align-items: center;
+	max-width: calc(100% - 37px);
 }
 
 .crm-repeat-sale__segment-dialog-field-icon {
@@ -211,6 +216,9 @@
 	text-overflow: ellipsis;
 	padding-left: 4px;
 	padding-right: 6px;
+}
+
+.crm-repeat-sale__segment-dialog-field-value.--max-size {
 	max-width: 200px;
 }
 

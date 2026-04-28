@@ -479,18 +479,44 @@ this.BX.UI = this.BX.UI || {};
 	    key: "handleTransitionEnd",
 	    value: function handleTransitionEnd(element, propertyName) {
 	      const properties = main_core.Type.isArray(propertyName) ? new Set(propertyName) : new Set([propertyName]);
-	      return new Promise(function (resolve) {
+	      const computed = getComputedStyle(element);
+	      const durations = computed.transitionDuration.split(',').map(v => parseFloat(v) * 1000);
+	      const delays = computed.transitionDelay.split(',').map(v => parseFloat(v) * 1000);
+	      const timeout = Math.max(...durations.map((d, i) => {
+	        var _ref, _delays$i;
+	        return d + ((_ref = (_delays$i = delays[i]) !== null && _delays$i !== void 0 ? _delays$i : delays[0]) !== null && _ref !== void 0 ? _ref : 0);
+	      }), 0) + 50;
+	      return new Promise(resolve => {
+	        let finished = false;
+	        let timer = null;
+	        const finish = event => {
+	          if (finished) {
+	            return;
+	          }
+	          finished = true;
+	          if (timer !== null) {
+	            clearTimeout(timer);
+	          }
+	          main_core.Event.unbind(element, 'transitionend', handler);
+	          resolve(event);
+	        };
 	        const handler = event => {
 	          if (event.target !== element || !properties.has(event.propertyName)) {
 	            return;
 	          }
 	          properties.delete(event.propertyName);
 	          if (properties.size === 0) {
-	            resolve(event);
-	            main_core.Event.unbind(element, 'transitionend', handler);
+	            finish(event);
 	          }
 	        };
+	        if (timeout <= 50) {
+	          queueMicrotask(() => finish(null));
+	          return;
+	        }
 	        main_core.Event.bind(element, 'transitionend', handler);
+	        timer = setTimeout(() => {
+	          finish(null);
+	        }, timeout);
 	      });
 	    }
 	  }, {
@@ -2243,6 +2269,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(this, "dynamicSearch", false);
 	    babelHelpers.defineProperty(this, "dynamicSearchMatchMode", 'exact');
 	    babelHelpers.defineProperty(this, "substituteEntityId", null);
+	    babelHelpers.defineProperty(this, "fillRecentItems", true);
 	    babelHelpers.defineProperty(this, "searchCacheLimits", []);
 	    babelHelpers.defineProperty(this, "filters", new Map());
 	    babelHelpers.defineProperty(this, "itemOptions", {});
@@ -2261,6 +2288,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.tagOptions = main_core.Type.isPlainObject(options.tagOptions) ? options.tagOptions : {};
 	    this.badgeOptions = main_core.Type.isArray(options.badgeOptions) ? options.badgeOptions : [];
 	    this.substituteEntityId = main_core.Type.isStringFilled(options.substituteEntityId) ? options.substituteEntityId : null;
+	    this.fillRecentItems = main_core.Type.isBoolean(options.fillRecentItems) ? options.fillRecentItems : true;
 	    if (main_core.Type.isArray(options.filters)) {
 	      options.filters.forEach(filterOptions => {
 	        this.addFilter(filterOptions);
@@ -2496,6 +2524,11 @@ this.BX.UI = this.BX.UI || {};
 	      return this.substituteEntityId;
 	    }
 	  }, {
+	    key: "shouldFillRecentItems",
+	    value: function shouldFillRecentItems() {
+	      return this.fillRecentItems;
+	    }
+	  }, {
 	    key: "toJSON",
 	    value: function toJSON() {
 	      return {
@@ -2505,7 +2538,8 @@ this.BX.UI = this.BX.UI || {};
 	        dynamicLoad: this.hasDynamicLoad(),
 	        dynamicSearch: this.hasDynamicSearch(),
 	        filters: this.getFilters(),
-	        substituteEntityId: this.getSubstituteEntityId()
+	        substituteEntityId: this.getSubstituteEntityId(),
+	        fillRecentItems: this.shouldFillRecentItems()
 	      };
 	    }
 	  }], [{
@@ -2944,7 +2978,10 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	      const badges = this.getEntity().getBadges(this);
 	      if (main_core.Type.isArray(badges)) {
-	        this.setBadges(badges);
+	        this.badges = [];
+	        badges.forEach(badge => {
+	          this.badges.push(new ItemBadge(badge));
+	        });
 	      } else {
 	        this.badges = [];
 	      }
@@ -8594,7 +8631,13 @@ this.BX.UI = this.BX.UI || {};
 	                if (itemOptions.nodeOptions) {
 	                  const item = this.getItem(itemOptions);
 	                  if (item) {
-	                    nodeOptionsMap.set(item, itemOptions.nodeOptions);
+	                    const nodeOptions = {
+	                      ...itemOptions.nodeOptions
+	                    };
+	                    delete nodeOptions.dynamic;
+	                    delete nodeOptions.open;
+	                    delete nodeOptions.itemOrder;
+	                    nodeOptionsMap.set(item, nodeOptions);
 	                  }
 	                }
 	              });

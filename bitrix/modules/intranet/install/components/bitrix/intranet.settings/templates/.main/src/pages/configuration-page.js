@@ -81,6 +81,11 @@ export class ConfigurationPage extends BaseSettingsPage
 			});
 			settingsSection.renderTo(contentNode);
 		}
+
+		if(BX.UI.Hint)
+		{
+			BX.UI.Hint.init(contentNode);
+		}
 	}
 
 	#buildDateTimeSection(): ?SettingsSection
@@ -433,30 +438,37 @@ export class ConfigurationPage extends BaseSettingsPage
 
 		if (this.hasValue('biconnectorDashboardLanguage'))
 		{
-			const alert = new BX.UI.Alert({
-				text: Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_LANGUAGE_HINT'),
-				inline: true,
-				size: BX.UI.Alert.Size.SMALL,
-				color: BX.UI.Alert.Color.PRIMARY,
-				animated: true,
-			});
-			const alertRow = new Row({
-				content: alert.getContainer(),
-				className: '--block',
-			});
+			const biconnectorLanguageOptions = this.getValue('biconnectorDashboardLanguage');
+			const hintMessage = Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_LANGUAGE_HINT_MSGVER_1');
+			if (hintMessage)
+			{
+				biconnectorLanguageOptions.label += ` <span data-hint="${hintMessage}" class="intranet-settings__ui-hint"></span>`;
+			}
 
-			const biconnectorLanguage = new Selector(this.getValue('biconnectorDashboardLanguage'));
+			const biconnectorLanguage = new Selector(biconnectorLanguageOptions);
 			const biconnectorLanguageRow = new Row({
-				separator: 'bottom',
 				className: '--block',
-			});
-
-			new SettingsRow({
-				row: alertRow,
-				parent: settingsSection,
 			});
 
 			ConfigurationPage.addToSectionHelper(biconnectorLanguage, settingsSection, biconnectorLanguageRow);
+		}
+
+		if (this.hasValue('biconnectorDashboardTimezone'))
+		{
+			const biconnectorDashboardTimezoneOptions = this.getValue('biconnectorDashboardTimezone');
+
+			const hintMessage = Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_TIMEZONE_HINT');
+			if (hintMessage)
+			{
+				biconnectorDashboardTimezoneOptions.label += ` <span data-hint="${hintMessage}" class="intranet-settings__ui-hint"></span>`;
+			}
+
+			const biconnectorTimezone = new Selector(biconnectorDashboardTimezoneOptions);
+			const biconnectorTimezoneRow = new Row({
+				className: '--block',
+			});
+
+			ConfigurationPage.addToSectionHelper(biconnectorTimezone, settingsSection, biconnectorTimezoneRow);
 		}
 
 		return settingsSection;

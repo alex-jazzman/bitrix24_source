@@ -1,13 +1,14 @@
+import { NameService } from 'crm.ai.name-service';
 import { Extension } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { InfoHelper } from 'ui.info-helper';
 
 import 'ui.forms';
-
-import { BasePage } from './base-page';
 import { TypeSelector } from '../common/availability/type-selector';
 import { availabilityType as availabilityTypeList } from '../enum/availability-type';
 import { TimePeriod as TimePeriodValidator } from './../../validator/time-period';
+
+import { BasePage } from './base-page';
 
 export const SettingsPage = {
 	extends: BasePage,
@@ -116,7 +117,7 @@ export const SettingsPage = {
 
 		pageDescription(): string
 		{
-			return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_DESCRIPTION');
+			return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_DESCRIPTION', NameService.copilotNameReplacement());
 		},
 
 		pageSectionSettingsCallType(): string
@@ -136,7 +137,7 @@ export const SettingsPage = {
 
 		pageSectionSettingsCheckDescription(): string
 		{
-			return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_DESCRIPTION');
+			return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_DESCRIPTION', NameService.copilotNameReplacement());
 		},
 
 		callTypes(): Array<Object>
@@ -205,7 +206,7 @@ export const SettingsPage = {
 
 		pageSectionSettingsAvailabilityDescription(): string
 		{
-			return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_AVAILABILITY_DESCRIPTION');
+			return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_AVAILABILITY_DESCRIPTION', NameService.copilotNameReplacement());
 		},
 
 		isCallAssessmentAvailabilityEnabled(): boolean
@@ -214,6 +215,7 @@ export const SettingsPage = {
 		},
 	},
 
+	// language=Vue
 	template: `
 		<div v-show="isActive">
 			<div class="crm-copilot__call-assessment_page-section">

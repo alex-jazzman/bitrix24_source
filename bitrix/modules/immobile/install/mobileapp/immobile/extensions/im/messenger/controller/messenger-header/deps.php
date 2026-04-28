@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'type',
 		'assets/icons',
 		'utils/object',
 		'im:messenger/loc',
@@ -11,6 +12,8 @@ return [
 		'im:messenger/api/notifications-opener',
 		'im:messenger/lib/widget/header-button',
 		'im:messenger/lib/read-all-chats',
+		'im:messenger/lib/widget/header-button/popup-create-button',
+		'im:messenger/controller/recent/manager',
 	],
 	'bundle' => [
 		'./src/button',

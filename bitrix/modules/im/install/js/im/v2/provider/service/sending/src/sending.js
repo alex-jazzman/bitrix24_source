@@ -321,7 +321,7 @@ export class SendingService
 		if (hasMessageText || hasMessageFile || hasMessageSticker)
 		{
 			void this.#store.dispatch('recent/update', {
-				id: message.dialogId,
+				dialogId: message.dialogId,
 				fields: { messageId: message.temporaryId },
 			});
 		}
@@ -387,7 +387,7 @@ export class SendingService
 			},
 		});
 		void this.#store.dispatch('recent/update', {
-			id: dialogId,
+			dialogId,
 			fields: { messageId: newId },
 		});
 

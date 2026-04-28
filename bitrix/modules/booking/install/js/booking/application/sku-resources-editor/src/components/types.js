@@ -4,7 +4,7 @@ import type { SkuResourcesEditorOptions } from 'booking.model.sku-resources-edit
 export type SkuResourcesEditorParams = {
 	title: string;
 	description: string | null;
-	resources: ResourceModel[];
 	options?: SkuResourcesEditorOptions;
+	loadData(): () => Promise<ResourceModel[]>;
 	save: (data) => void;
 }

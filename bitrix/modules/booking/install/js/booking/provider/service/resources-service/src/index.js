@@ -1,5 +1,10 @@
-import { mapModelToDto, mapDtoToModel } from './mappers';
+import { mapModelToDto, mapDtoToModel, mapResourceSkuRelationsDtoToModel } from './mappers';
 
 export { resourceService } from './resources-service';
-export const ResourceMappers = { mapModelToDto, mapDtoToModel };
-export type { ResourceDto } from './types';
+export const ResourceMappers = {
+	mapModelToDto,
+	mapDtoToModel,
+	mapResourceSkuRelationsDtoToModel,
+};
+
+export type { ResourceDto, ResourceSkuRelationsDto } from './types';

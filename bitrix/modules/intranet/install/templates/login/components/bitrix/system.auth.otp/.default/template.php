@@ -69,10 +69,11 @@ else
 <script>
 	BX.ready(() => {
 		const params = {
+			signedUserId: '<?= $arResult['SIGNED_USER_ID'] ?? '' ?>',
 			containerNode: document.querySelector("[data-role='otp-container']"),
 			authUrl: '<?= $arResult['AUTH_URL'] ?>',
-			authOtpHelpLink: '<?= htmlspecialcharsbx($arResult["AUTH_OTP_HELP_LINK"]) ?>',
-			authLoginUrl: '<?= htmlspecialcharsbx($arResult["AUTH_LOGIN_URL"]) ?>',
+			authOtpHelpLink: '<?= CUtil::JSUrlEscape($arResult["AUTH_OTP_HELP_LINK"]) ?>',
+			authLoginUrl: '<?= CUtil::JSUrlEscape($arResult["AUTH_LOGIN_URL"]) ?>',
 			rememberOtp: <?= $arResult['REMEMBER_OTP'] ? 'true' : 'false' ?>,
 			captchaCode: '<?= $arResult['CAPTCHA_CODE'] ?? '' ?>',
 			notShowLinks: <?= isset($arResult['NOT_SHOW_LINKS']) && $arResult['NOT_SHOW_LINKS'] ? 'true' : 'false' ?>,
@@ -85,8 +86,12 @@ else
 			currentStep: '<?= $arResult['CURRENT_STEP'] ?>',
 			recoveryCodesHelpLink: '<?= $arResult['RECOVERY_CODES_HELP_LINK'] ?>',
 			userDevice: <?= \Bitrix\Main\Web\Json::encode($arResult['USER_DEVICE']) ?>,
+			<?php else: ?>
+			userData: <?= \Bitrix\Main\Web\Json::encode($arResult['USER_DATA']) ?>,
+			accountChangeUrl: '<?= CUtil::JSUrlEscape($arResult['ACCOUNT_CHANGE_URL']) ?>',
 			<?php endif; ?>
 			errorMessage: '<?= CUtil::JSescape($arResult['ERROR_MESSAGE']) ?>',
+			canSendRequestRecoverAccess: <?= $arResult['CAN_SEND_REQUEST_RECOVER_ACCESS'] ? 'true' : 'false' ?>,
 		};
 		BX.Intranet.Login.OtpAuth.init(params);
 	});

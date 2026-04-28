@@ -123,7 +123,9 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		 */
 		async #getFirstPage()
 		{
-			const filter = this.filter;
+			const filter = {
+				...this.filter,
+			};
 			this.logger.log('#getFirstPage filter:', filter);
 			const page = await this.recentRepository.getListByDialogTypeFilter(filter);
 			this.logger.log('#getFirstPage loaded:', page);
@@ -136,7 +138,10 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		 */
 		async #getPage()
 		{
-			const filter = { ...this.filter, lastActivityDate: this.lastActivityDate };
+			const filter = {
+				...this.filter,
+				lastActivityDate: this.lastActivityDate,
+			};
 			this.logger.log('#getPage filter:', filter);
 			const page = await this.recentRepository.getListByDialogTypeFilter(filter);
 			this.logger.log('#getPage loaded:', page);

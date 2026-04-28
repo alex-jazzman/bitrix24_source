@@ -22,7 +22,10 @@ $request = $context->getRequest();
 Loc::loadMessages(__DIR__ . '/template.php');
 
 $templatePage = $this->getTemplatePage();
-$disableFrame = $templatePage === 'landing_view';
+$disableFrame = in_array($templatePage, [
+	'landing_view',
+	'vibe_edit',
+]);
 
 // iframe footer
 if ($request->get('IFRAME') == 'Y' && !$disableFrame)

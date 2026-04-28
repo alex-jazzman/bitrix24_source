@@ -38,7 +38,7 @@ export const Trial = {
 	methods: {
 		async showBanner(): Promise<void>
 		{
-			BannerDispatcher.critical.toQueue(async (onDone) => {
+			BannerDispatcher.high.toQueue(async (onDone) => {
 				const { TrialBanner } = await Runtime.loadExtension('booking.component.trial-banner');
 
 				this.bannerComponent = shallowRef(TrialBanner);

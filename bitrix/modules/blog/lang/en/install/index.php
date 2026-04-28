@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_INSTALL_NAME'] = "Blog";
 $MESS ['BLOG_INSTALL_DESCRIPTION'] = "With this module, you can set up, host and keep web logs on your site.";
 $MESS ['BLOG_INSTALL_TITLE'] = "Blog module installation";
@@ -14,4 +14,3 @@ $MESS ['BLI_INSTALL_EMAIL'] = "Create email templates";
 $MESS ['BLI_DELETE_EMAIL'] = "Delete email templates";
 $MESS ['BLI_INSTALL_404'] = "Install public files that use SEF mode";
 $MESS ['BLI_INSTALL_SMILES'] = "Install smiles";
-?>

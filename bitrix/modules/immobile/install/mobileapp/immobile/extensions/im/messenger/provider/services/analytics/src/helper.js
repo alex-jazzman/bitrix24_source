@@ -138,6 +138,11 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 				type = Analytics.Type.Dialog.aiAssistant;
 			}
 
+			if (dialogHelper?.isNotes)
+			{
+				type = Analytics.Type.Dialog.notes;
+			}
+
 			return `chatType_${type}`;
 		}
 

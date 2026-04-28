@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core) {
 	'use strict';
@@ -29,37 +30,41 @@ this.BX = this.BX || {};
 	    var _appItem$CODE;
 	    const appCode = (_appItem$CODE = appItem.CODE) != null ? _appItem$CODE : appItem.APP_CODE;
 	    if (appItem.IS_SITE_TEMPLATE === 'Y') {
-	      if (main_core.Type.isString(appItem.LANDING_TYPE) && appItem.LANDING_TYPE === 'VIBE') {
-	        return MarketLinks.vibeDetailLink(appCode, queryParams);
-	      }
-	      return MarketLinks.siteDetailLink(appCode, queryParams);
+	      const landingType = main_core.Type.isString(appItem.LANDING_TYPE) ? appItem.LANDING_TYPE : 'LANDING';
+	      return MarketLinks.getSiteDetailLink(appCode, landingType, queryParams);
 	    }
 	    const params = new URLSearchParams(queryParams).toString();
 	    const query = params.length ? '?' + params : '';
 	    return MAIN_DIR + 'detail/' + appCode + '/' + query;
 	  }
-	  static siteDetailLink(appCode, queryParams) {
+	  static getSiteDetailLink(appCode, landingType, queryParams) {
 	    var _queryParams$from;
 	    const from = (_queryParams$from = queryParams.from) != null ? _queryParams$from : '';
-	    let path = '/sites/site/edit/0/?IS_FRAME=Y&tpl=market/' + appCode + '&from=' + from;
-	    if (MarketLinks.siteTemplateUrn === false) {
-	      MarketLinks.siteTemplateUrn = new URLSearchParams(document.location.search).get("create_uri");
-	      if (!main_core.Type.isString(MarketLinks.siteTemplateUrn)) {
-	        MarketLinks.siteTemplateUrn = '';
-	      }
+	    const baseUri = MarketLinks.getSiteTemplateUri(landingType);
+	    const uri = new URL(baseUri, window.location.href);
+	    uri.searchParams.set('IS_FRAME', 'Y');
+	    uri.searchParams.set('tpl', 'market/' + appCode);
+	    if (from.length > 0) {
+	      uri.searchParams.set('from', from);
 	    }
-	    if (MarketLinks.siteTemplateUrn.length > 0 && MarketLinks.siteTemplateUrn.startsWith('/')) {
-	      let uri = new URL(MarketLinks.siteTemplateUrn, window.location.href);
-	      uri.searchParams.append('IS_FRAME', 'Y');
-	      uri.searchParams.append('tpl', 'market/' + appCode);
-	      path = uri.pathname + uri.search;
-	    }
-	    return path;
+	    return uri.pathname + uri.search;
 	  }
-	  static vibeDetailLink(appCode, queryParams) {
-	    var _queryParams$from2;
-	    const from = (_queryParams$from2 = queryParams.from) != null ? _queryParams$from2 : '';
-	    return '/vibe/new/?tpl=market/' + appCode + '&from=' + from;
+	  static getSiteTemplateUri(landingType) {
+	    if (MarketLinks.siteCurrentType === null) {
+	      MarketLinks.siteCurrentType = landingType;
+	      const uri = new URLSearchParams(document.location.search).get('create_uri');
+	      MarketLinks.siteTemplateUri = main_core.Type.isString(uri) && uri.startsWith('/') ? uri : '';
+	    }
+	    if (landingType !== MarketLinks.siteCurrentType || MarketLinks.siteTemplateUri.length <= 0) {
+	      return MarketLinks.getSiteTemplateDefaultUri(landingType);
+	    }
+	    return MarketLinks.siteTemplateUri;
+	  }
+	  static getSiteTemplateDefaultUri(landingType) {
+	    if (landingType === 'VIBE') {
+	      return '/welcome/new/';
+	    }
+	    return '/sites/site/edit/0/';
 	  }
 	  static openSiteTemplate(event, isSiteTemplate) {
 	    if (isSiteTemplate) {
@@ -70,7 +75,8 @@ this.BX = this.BX || {};
 	    }
 	  }
 	}
-	MarketLinks.siteTemplateUrn = false;
+	MarketLinks.siteTemplateUri = '';
+	MarketLinks.siteCurrentType = null;
 
 	exports.MarketLinks = MarketLinks;
 

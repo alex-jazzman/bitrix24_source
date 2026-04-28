@@ -8,3 +8,5 @@ $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_RETURN_DATE_LAST_MESSAGE'] = 
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_NAME_1'] = 'Отследить время принятия чата';
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_DESCRIPTION'] = 'Меняет стадию, если менеджер слишком поздно отреагирует на первое обращение клиента';
 $MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_CONDITION"] = "Поля чата";
+
+$MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_NODE_DESCRIPTION'] = 'Запускает процесс, если менеджер слишком поздно отреагирует на первое обращение клиента';

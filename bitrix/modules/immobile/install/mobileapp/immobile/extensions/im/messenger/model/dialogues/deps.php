@@ -25,5 +25,8 @@ return [
 		'./src/ai-assistant/model',
 		'./src/ai-assistant/validator',
 		'./src/ai-assistant/default-element',
+		'./src/openlines/model',
+		'./src/openlines/validator',
+		'./src/openlines/default-element',
 	],
 ];

@@ -33,6 +33,7 @@ export type BookingModel = {
 	externalData: DealData[],
 	messages: MessageModel[],
 	skus: SkuModel[],
+	payment: PaymentModel,
 };
 
 export type DealData = {
@@ -77,4 +78,10 @@ export type SkuModel = {
 	name: string,
 	price: number,
 	currencyId: string,
+};
+
+export type PaymentModel = {
+	id: number,
+	isPaid: boolean,
+	isPaidManually: boolean,
 };

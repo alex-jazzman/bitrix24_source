@@ -34,3 +34,39 @@ export type RecentRestResult = {
 	sessions: RawSession[],
 	additionalMessages: RawMessage[],
 }
+
+export type RawOpenLinesMeta = {
+	openlines: {
+		connector: RawConnector,
+		crm: RawCrm,
+		currentSession: RawCurrentSession,
+	},
+};
+
+export type RawConnector = {
+	connectorId: string,
+	lineId: number,
+	connectorChatId: number,
+	connectorUserId: number,
+}
+
+export type RawCrm = {
+	crmEnabled: boolean,
+	crmEntityType: string,
+	crmEntityId: number,
+	leadId: ?number,
+	companyId: ?number,
+	contactId: ?number,
+	dealId: ?number,
+}
+
+export type RawCurrentSession = {
+	sessionId: number,
+	pause: boolean,
+	waitAction: boolean,
+	blockDate: string,
+	blockReason: string,
+	silentMode: boolean,
+	dateCreate: string,
+	multidialog: boolean,
+}

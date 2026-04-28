@@ -201,7 +201,6 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 					this.store.dispatch('usersModel/set', modelData.users),
 					this.store.dispatch('dialoguesModel/set', modelData.dialogues),
 					this.store.dispatch('dialoguesModel/copilotModel/setCollection', modelData.copilot),
-					this.store.dispatch('counterModel/setList', { counterList: modelData.counterState }),
 					this.store.dispatch(recentAction, {
 						tab: this.recentLocator.get('id') ?? NavigationTabId.copilot,
 						itemList: modelData.recent,
@@ -218,7 +217,7 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 
 		/**
 		 * @param {immobileTabCopilotLoadResultCopilotList|imV2RecentCopilotResult} recentData
-		 * @return {{users,dialogues,recent,copilot,counterState}}
+		 * @return {{users,dialogues,recent,copilot}}
 		 */
 		prepareDataForModels(recentData)
 		{
@@ -227,7 +226,6 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 			let users = [];
 			const dialogues = [];
 			const recent = [];
-			const counterState = [];
 			const copilotChats = { ...copilotChatsInitial };
 
 			recentData.items.forEach((item) => {
@@ -239,7 +237,6 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 
 				dialogues.push(result.dialogue);
 				recent.push(result.recentItem);
-				counterState.push(result.counter);
 
 				if (result.updateCopilotChat)
 				{
@@ -259,14 +256,13 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 				dialogues,
 				recent,
 				copilot,
-				counterState,
 			};
 		}
 
 		/**
 		 * @param {RecentItemData} item
 		 * @param {Record<string,boolean>} copilotChats
-		 * @return {{user,dialogue,recentItem,counter,updateCopilotChat}}
+		 * @return {{user,dialogue,recentItem,updateCopilotChat}}
 		 */
 		processRecentItem(item, copilotChats)
 		{
@@ -280,7 +276,6 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 
 			const dialogue = this.buildDialogueItem(item);
 			const recentItem = ServerLoadUtils.prepareRecentItem(item);
-			const counter = ServerLoadUtils.buildCounterState(dialogue);
 
 			if (copilotChats[item.id])
 			{
@@ -291,7 +286,6 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 				user,
 				dialogue,
 				recentItem,
-				counter,
 				updateCopilotChat,
 			};
 		}
@@ -307,7 +301,6 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 			{
 				dialogItem = {
 					...item.chat,
-					counter: item.counter,
 					dialogId: item.id,
 				};
 				if (item.message)

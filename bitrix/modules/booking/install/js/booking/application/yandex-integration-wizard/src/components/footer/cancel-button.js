@@ -6,7 +6,7 @@ export const CancelButton = {
 	components: {
 		UiButton: Button,
 	},
-	setup(): Object
+	setup(): { ButtonSize: typeof ButtonSize, ButtonColor: typeof ButtonColor }
 	{
 		return {
 			ButtonSize,
@@ -15,10 +15,11 @@ export const CancelButton = {
 	},
 	template: `
 		<UiButton
-			class="yandex-integration-wizard__cancel-button"
+			class="booking-yiw__cancel-button"
 			:text="loc('YANDEX_WIZARD_FOOTER_CANCEL_BUTTON')"
 			:size="ButtonSize.LARGE"
 			:color="ButtonColor.LINK"
+			data-element="booking-yiw-btn-cancel"
 			noCaps
 		/>
 	`,

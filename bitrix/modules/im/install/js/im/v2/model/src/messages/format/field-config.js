@@ -1,17 +1,17 @@
 import { Type } from 'main.core';
 
 import { Utils } from 'im.v2.lib.utils';
+import { type FieldsConfig } from 'im.v2.model';
+import { MessageManager } from 'im.v2.lib.message';
 
-import { prepareComponentId, prepareAuthorId, prepareKeyboard } from './format-functions';
 import { convertToNumber, convertToString, isNumberOrString } from '../../utils/format';
-
-import type { FieldsConfig } from 'im.v2.model';
+import { prepareComponentId, prepareAuthorId, prepareKeyboard } from './format-functions';
 
 export const messageFieldsConfig: FieldsConfig = [
 	{
 		fieldName: ['id', 'temporaryId'],
 		targetFieldName: 'id',
-		checkFunction: [Type.isNumber, Utils.text.isTempMessage],
+		checkFunction: [Type.isNumber, MessageManager.isTempMessage],
 	},
 	{
 		fieldName: 'chatId',

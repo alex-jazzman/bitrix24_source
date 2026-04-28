@@ -12,4 +12,3 @@ $MESS["CPAD_DP_TIME_SELECT_DELAY"] = "Period";
 $MESS["CPAD_DP_TIME_SELECT_TIME"] = "Time";
 $MESS["CPAD_DP_TIME_SERVER"] = "Server time";
 $MESS["CPAD_DP_WRITE_TO_LOG"] = "Save pause information to workflow log";
-$MESS["CPAD_PD_TIMEOUT_LIMIT"] = "Minimum wait time";

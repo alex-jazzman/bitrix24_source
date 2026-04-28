@@ -75,7 +75,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      ui_autoLaunch.AutoLauncher.enable();
 	    }
 	    return new Promise(resolve => {
-	      ui_bannerDispatcher.BannerDispatcher.critical.toQueue(async onDone => {
+	      ui_bannerDispatcher.BannerDispatcher.high.toQueue(async onDone => {
 	        var _params$target;
 	        if (!((_params$target = params.target) != null && _params$target.offsetWidth)) {
 	          onDone();

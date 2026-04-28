@@ -6,6 +6,9 @@ $MESS['BOOKING_CRM_FORMS_CHANGE_DATE_BUTTON_CAPTION'] = 'Выбрать друг
 $MESS['BOOKING_CRM_FORMS_RESOURCE_NO_SLOTS_MESSAGE'] = 'Нет свободных слотов в этот день,#BR# попробуйте выбрать другую дату';
 $MESS['BOOKING_CRM_FORMS_RESOURCE_RESOURCE_NOT_WORKING_MESSAGE'] = 'Это выходной день, попробуйте выбрать другую дату';
 
+$MESS['BOOKING_CRM_FORMS_DEFAULT_SKU_FIELD_LABEL'] = 'Выберите услугу';
+$MESS['BOOKING_CRM_FORMS_DEFAULT_SKU_FIELD_PLACEHOLDER'] = 'Не выбрана';
+
 $MESS['BOOKING_CRM_FORMS_DEFAULT_RESOURCE_FIELD_LABEL'] = 'Выберите ресурс';
 $MESS['BOOKING_CRM_FORMS_DEFAULT_RESOURCE_FIELD_PLACEHOLDER'] = 'Не выбран';
 $MESS['BOOKING_CRM_FORMS_DEFAULT_RESOURCE_FIELD_HINT'] = 'Подобрали для вас ближайшие слоты самого свободного ресурса. Вы можете выбрать другой ресурс и более подходящие время и дату';

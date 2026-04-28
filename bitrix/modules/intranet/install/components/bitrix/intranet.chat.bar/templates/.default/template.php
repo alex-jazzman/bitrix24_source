@@ -9,9 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 \Bitrix\Main\UI\Extension::load('im.v2.application.quick-access');
 
-$frame = $this->createFrame('im')->begin('');
 $application = new Application();
-
 ?>
 <div class="im-chat-recent-list" id="bx-im-external-recent-list"></div>
 <script><?=$application->getTemplate(Application::QUICK_ACCESS_APP_NAME)?></script>
@@ -29,6 +27,3 @@ $APPLICATION->includeComponent(
 
 ?>
 </div>
-<?
-
-$frame->end();

@@ -146,6 +146,44 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 
 			return null;
 		},
+		processDetachOpenLine: function()
+		{
+			this._detetionConfirmDlgId = "entity_details_detach_open_line_confirm";
+			const dlg =
+				BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId)
+				?? BX.Crm.ConfirmationDialog.create(
+					this._detetionConfirmDlgId,
+					{
+						title: this.getMessage('detachOpenLineDialogTitle'),
+						content: this.getMessage('detachOpenLineDialogContent'),
+						acceptButtonTitle: this.getMessage('detachContinueButton'),
+						cancelButtonTitle: this.getMessage('detachCancelButton'),
+					},
+				);
+
+			dlg.open().then(BX.delegate(this.onDetachOpenLineConfirm, this));
+		},
+		detachOpenLine: function()
+		{
+			if (this._serviceUrl === "")
+			{
+				throw "Crm.EntityDetailManager: The 'serviceUrl' parameter is not defined or empty.";
+			}
+
+			BX.ajax(
+				{
+					url: this._serviceUrl,
+					method: "POST",
+					dataType: "json",
+					data:
+						{
+							"ACTION": "DETACH_OPEN_LINE",
+							"ACTION_ENTITY_ID": this._entityId
+						},
+					onsuccess: BX.delegate(this.onDetachOpenLineSuccess, this)
+				}
+			);
+		},
 		processRemoval: function()
 		{
 			this._detetionConfirmDlgId = "entity_details_deletion_confirm";
@@ -275,6 +313,15 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 
 			this.remove();
 		},
+		onDetachOpenLineConfirm: function(result)
+		{
+			if (BX.prop.getBoolean(result, "cancel", true))
+			{
+				return;
+			}
+
+			this.detachOpenLine();
+		},
 		extractUrlParamsFromEvent: function(callback)
 		{
 			return function(options)
@@ -289,6 +336,29 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 
 				callback(options);
 			};
+		},
+		onDetachOpenLineSuccess: function(result)
+		{
+			const isSuccess = BX.prop.getBoolean(result, "IS_SUCCESS", false);
+			if (!isSuccess)
+			{
+				const error = BX.prop.getString(result, "ERROR", "") ?? 'error';
+
+				BX.UI.Notification.Center.notify({
+					content: error,
+					position: 'top-right',
+					autoHideDelay: 5000,
+				});
+			}
+			else
+			{
+				window.location.reload()
+				window.top.BX.UI.Notification.Center.notify({
+					content: this.getMessage("detachOpenLineSuccess"),
+					position: 'top-right',
+					autoHideDelay: 5000,
+				});
+			}
 		},
 		onRemovalRequestSuccess: function(result)
 		{
@@ -1055,6 +1125,15 @@ if(typeof BX.Crm.EntityDetailTabManager === "undefined")
 		},
 		selectItem: function(item)
 		{
+			// hack to recover scroll due to Chrome compositor cache bug:
+			this._container.style.minHeight = '';
+			var contentHeight = this._container.offsetHeight;
+			if (!this._maxContentHeight || contentHeight > this._maxContentHeight)
+			{
+				this._maxContentHeight = contentHeight;
+			}
+			this._container.style.minHeight = this._maxContentHeight + 'px';
+
 			for(var i = 0, length = this._items.length; i < length; i++)
 			{
 				var currentItem = this._items[i];
@@ -1216,6 +1295,16 @@ if(typeof BX.Crm.EntityDetailTab === "undefined")
 					{
 						BX.removeClass(this._container, "crm-entity-section-tab-content-show");
 						this._container.style.cssText = "";
+
+						let manager = this._manager;
+						if (manager)
+						{
+							requestAnimationFrame(() => {
+								requestAnimationFrame(() => {
+									manager._container.style.minHeight = '';
+								});
+							});
+						}
 
 						BX.onCustomEvent(window, "onEntityDetailsTabShow", [ this ]);
 					},

@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Builder, Dictionary } from 'crm.integration.analytics';
 import { ajax as Ajax, Loc, Tag, Type } from 'main.core';
 import 'ui.design-tokens';
@@ -176,7 +177,7 @@ export class Start extends Base
 				: 'CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_CLIENTS'
 		);
 
-		const content = Loc.getMessage(code);
+		const content = Loc.getMessage(code, NameService.copilotNameReplacement(),);
 
 		return Tag.render`
 			<div class="crm-rs__w-body-description ${hasClients ? '--has-clients' : ''}">

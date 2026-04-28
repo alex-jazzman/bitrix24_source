@@ -37,7 +37,7 @@ export const SidebarFileTabGroups = Object.freeze({
 export const SidebarMainPanelBlock = {
 	support: 'support',
 	chat: 'chat',
-	notes: 'notes',
+	selfChat: 'selfChat',
 	user: 'user',
 	copilot: 'copilot',
 	copilotInfo: 'copilotInfo',

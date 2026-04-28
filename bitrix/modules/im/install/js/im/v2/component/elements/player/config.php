@@ -25,6 +25,7 @@ return [
 		'im.v2.component.animation',
 		'im.v2.const',
 		'im.v2.lib.parser',
+		'im.v2.lib.copilot',
 		'im.v2.lib.utils',
 	],
 	'skip_core' => true,

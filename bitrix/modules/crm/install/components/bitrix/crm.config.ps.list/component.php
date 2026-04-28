@@ -151,7 +151,7 @@ while ($paySystem = $dbPaySystems->fetch())
 	$tmpPS['DESCRIPTION'] = $tmpPS['~DESCRIPTION'] = $paySystem['DESCRIPTION'];
 	$tmpPS['LOGOTIP'] = $tmpPS['~LOGOTIP'] = $paySystem['LOGOTIP'];
 	$tmpPS['SORT'] = $tmpPS['~SORT'] = $paySystem['SORT'];
-	$tmpPS["HANDLER"] = $paySystem["ACTION_FILE"];
+	$tmpPS["HANDLER"] =  preg_replace("/[^a-zA-Z0-9_-]/", '', $paySystem["ACTION_FILE"] ?? '');
 
 	$postfix = '';
 	if (mb_strpos($paySystem["ACTION_FILE"], 'quote') !== false)

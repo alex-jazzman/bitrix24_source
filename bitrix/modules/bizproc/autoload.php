@@ -52,12 +52,13 @@ require_once __DIR__.DIRECTORY_SEPARATOR.'compatibility.php';
 include_once __DIR__."/classes/general/interface.php";
 
 $trackingServiceClass = \CBPTrackingService::class;
+$optUseRestrictedTracking = \Bitrix\Main\Config\Option::get('bizproc', 'use_restricted_tracking');
 if (
-	(
+	$optUseRestrictedTracking === 'Y'
+	|| (
 		\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
-		&& time() > mktime(0, 0, 0, 8, 1, 2024)
+		&& $optUseRestrictedTracking !== 'N'
 	)
-	|| \Bitrix\Main\Config\Option::get('bizproc', 'tmp_use_restricted_tracking') === 'Y'
 )
 {
 	$trackingServiceClass = \Bitrix\Bizproc\Service\RestrictedTracking::class;

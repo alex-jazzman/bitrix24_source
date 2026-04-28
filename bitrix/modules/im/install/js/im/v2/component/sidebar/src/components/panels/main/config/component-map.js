@@ -15,13 +15,13 @@ import { FileUnsortedListPreview } from '../blocks/file-unsorted-list';
 import { MultidialogPreview } from '../blocks/multidialog';
 import { TariffLimitPreview } from '../blocks/tariff-limit';
 import { CollabHelpdeskPreview } from '../blocks/collab-helpdesk';
-import { NotesPreview } from '../blocks/notes';
+import { SelfChatPreview } from '../blocks/self-chat';
 import { TaskPreview } from '../blocks/task';
 import { TaskCommentsHistory } from '../blocks/task-comments-history';
 
 export const ComponentMap = {
 	[SidebarMainPanelBlock.chat]: ChatPreview,
-	[SidebarMainPanelBlock.notes]: NotesPreview,
+	[SidebarMainPanelBlock.selfChat]: SelfChatPreview,
 	[SidebarMainPanelBlock.post]: PostPreview,
 	[SidebarMainPanelBlock.user]: UserPreview,
 	[SidebarMainPanelBlock.support]: SupportPreview,

@@ -13,6 +13,7 @@ import { DatasetPropertiesStep } from '../steps/dataset-properties';
 import { FieldsSettingsStep } from '../steps/fields-settings';
 import { ImportPreview } from '../steps/import-preview';
 import { BaseApp } from './base-app';
+import { RelatedExternalDatasetsStep } from '../steps/related-external-datasets';
 
 export const ExternalConnectionApp = {
 	extends: BaseApp,
@@ -32,6 +33,10 @@ export const ExternalConnectionApp = {
 					disabled: !this.$store.getters.isEditMode,
 					valid: true,
 					disabledElements: null,
+				},
+				externalDatasets: {
+					disabled: !this.$store.getters.isEditMode,
+					valid: true,
 				},
 			},
 			shownPopups: {
@@ -104,20 +109,20 @@ export const ExternalConnectionApp = {
 		},
 		importFailurePopupTitle()
 		{
-			return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER');
+			return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_EDIT_MSGVER_1') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_MSGVER_1');
 		},
 		importSuccessPopupTitle(): string
 		{
 			return this.isEditMode
-				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_EDIT').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title)
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title)
+				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_EDIT_MSGVER_1').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title)
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_MSGVER_1').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title)
 			;
 		},
 		importProgressPopupDescription()
 		{
 			return this.isEditMode
 				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_EDIT')
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION');
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_MSGVER_1');
 		},
 		loadFailurePopupTitle(): string
 		{
@@ -133,8 +138,16 @@ export const ExternalConnectionApp = {
 
 			if (!this.isEditMode && !this.isRestEntity)
 			{
-				articleCode = '23508958';
-				hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
+				if (this.sourceCode === '1c')
+				{
+					articleCode = '23508958';
+					hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
+				}
+				else
+				{
+					articleCode = '23508958';
+					hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_SQL';
+				}
 			}
 
 			if (this.isRestEntity && !this.connectionIsSupportMapping)
@@ -157,14 +170,14 @@ export const ExternalConnectionApp = {
 		{
 			return this.isEditMode
 				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TITLE_EDIT')
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TITLE_EXTERNAL')
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TITLE_EXTERNAL_MSGVER_1')
 			;
 		},
 		unsavedChangesPopupText(): string
 		{
 			return this.isEditMode
 				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT_EDIT')
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT_EXTERNAL')
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT_EXTERNAL_MSGVER_1')
 			;
 		},
 		emptyStateText(): string
@@ -184,6 +197,18 @@ export const ExternalConnectionApp = {
 		sourceType(): string
 		{
 			return 'external';
+		},
+		propertiesIsOpenInitially(): boolean
+		{
+			return this.getSectionConfig('properties', 'isOpenInitially');
+		},
+		fieldsIsOpenInitially(): boolean
+		{
+			return this.getSectionConfig('fields', 'isOpenInitially');
+		},
+		externalDatasetsIsOpenInitially(): boolean
+		{
+			return this.getSectionConfig('externalDatasets', 'isOpenInitially');
 		},
 	},
 	mounted()
@@ -318,8 +343,21 @@ export const ExternalConnectionApp = {
 		{
 			this.processLoadResponse(response);
 
-			this.$refs.propertiesStep.open();
-			this.$refs.fieldsStep.open();
+			if (this.getSectionConfig('properties', 'isOpenOnLoadData'))
+			{
+				this.$refs.propertiesStep.open();
+			}
+
+			if (this.getSectionConfig('fields', 'isOpenOnLoadData'))
+			{
+				this.$refs.fieldsStep.open();
+			}
+
+			if (this.getSectionConfig('externalDatasets', 'isOpenOnLoadData'))
+			{
+				this.$refs.externalDatasetsStep.open();
+			}
+
 			this.toggleStepState('properties', false);
 			if (this.isRestEntity && !this.connectionIsSupportMapping)
 			{
@@ -358,8 +396,21 @@ export const ExternalConnectionApp = {
 		{
 			this.processSyncResponse(response);
 
-			this.$refs.propertiesStep.open();
-			this.$refs.fieldsStep.open();
+			if (this.getSectionConfig('properties', 'isOpenOnLoadData'))
+			{
+				this.$refs.propertiesStep.open();
+			}
+
+			if (this.getSectionConfig('fields', 'isOpenOnLoadData'))
+			{
+				this.$refs.fieldsStep.open();
+			}
+
+			if (this.getSectionConfig('externalDatasets', 'isOpenOnLoadData'))
+			{
+				this.$refs.externalDatasetsStep.open();
+			}
+
 			this.toggleStepState('properties', false);
 			this.toggleStepState('fields', false);
 			this.$refs.propertiesStep.validate();
@@ -528,6 +579,7 @@ export const ExternalConnectionApp = {
 		ConnectionStep,
 		DatasetPropertiesStep,
 		FieldsSettingsStep,
+		RelatedExternalDatasetsStep,
 		ImportProgressPopup,
 		ImportSuccessPopup,
 		ImportFailurePopup,
@@ -552,7 +604,7 @@ export const ExternalConnectionApp = {
 						@validation="onStepValidation('connection', $event)"
 					/>
 					<DatasetPropertiesStep
-						:is-open-initially="isEditMode"
+						:is-open-initially="isEditMode && propertiesIsOpenInitially"
 						:disabled="steps.properties.disabled"
 						:reserved-names="appParams.reservedNames"
 						:name-max-length=230
@@ -562,7 +614,7 @@ export const ExternalConnectionApp = {
 						:dataset-source-code="'external_' + sourceCode"
 					/>
 					<FieldsSettingsStep
-						:is-open-initially="isEditMode"
+						:is-open-initially="isEditMode && fieldsIsOpenInitially"
 						:disabled="steps.fields.disabled"
 						:disabled-elements="steps.fields.disabledElements"
 						:source-type="sourceType"
@@ -574,14 +626,21 @@ export const ExternalConnectionApp = {
 						:sync-fields-props="syncFieldsProps"
 						@sync-fields="onSyncFields"
 					/>
+					<RelatedExternalDatasetsStep
+						:is-open-initially="isEditMode && externalDatasetsIsOpenInitially"
+						:disabled="steps.externalDatasets.disabled"
+						:is-superset-ready="appParams.isSupersetReady"
+						ref="externalDatasetsStep"
+					/>
 				</ImportConfig>
 			</template>
 			<template v-slot:right-panel>
-				<ImportPreview 
+				<ImportPreview
 					:empty-state-text="emptyStateText"
 					:is-loading="isLoading"
 					:error="previewError"
 					:needShowHeadersWithEmptyRows="true"
+					:source-type="sourceType"
 				/>
 			</template>
 		</AppLayout>
@@ -600,6 +659,7 @@ export const ExternalConnectionApp = {
 			:dataset-id="popupParams.savingSuccess.datasetId"
 			:dataset-link="popupParams.savingSuccess.link"
 			:show-more-button="!isEditMode"
+			:show-open-dataset-button="appParams.isSupersetReady"
 			@one-more-click="reload"
 		/>
 
@@ -639,7 +699,7 @@ export const ExternalConnectionApp = {
 			@close="togglePopup('fieldsSettingsChanges', false)"
 		>
 			<template v-slot:content>
-				<p>{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_MESSAGE_MSGVER_1') }}</p>
+				<p>{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_MESSAGE_MSGVER_2') }}</p>
 			</template>
 			<template v-slot:buttons>
 				<button @click="onConfirmFieldsSettingsChangesPopup" class="ui-btn ui-btn-md ui-btn-success">

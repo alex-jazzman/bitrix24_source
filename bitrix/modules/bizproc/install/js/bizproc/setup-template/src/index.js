@@ -2,19 +2,20 @@ import { Tag } from 'main.core';
 import { PULL } from 'pull.client';
 import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
 import { ActivatorAppComponent } from './component/app';
-import type { SetupActivityPushData } from './types';
+import type { SetupTemplateData } from './types';
 
 type SetupTemplateOptions = {
 	container: HTMLElement,
-	pushData: SetupActivityPushData,
+	pushData: SetupTemplateData,
 };
 
 export { ActivatorAppComponent } from './component/app';
 export { FormElement } from './component/item';
+export type { SetupTemplateData } from './types';
 
 export class SetupTemplate
 {
-	#pushData: SetupActivityPushData;
+	#pushData: SetupTemplateData;
 	#container: HTMLElement;
 	#application: ?VueCreateAppResult;
 	constructor(options: SetupTemplateOptions)
@@ -43,7 +44,7 @@ export class SetupTemplate
 		}
 	}
 
-	static createLayout(params: SetupActivityPushData): HTMLElement
+	static createLayout(params: SetupTemplateData): HTMLElement
 	{
 		const container = Tag.render`<div class="ui-sidepanel-layout"></div>`;
 		const app = new SetupTemplate({
@@ -55,7 +56,7 @@ export class SetupTemplate
 		return container;
 	}
 
-	static showSidePanel(params: SetupActivityPushData): void
+	static showSidePanel(params: SetupTemplateData): void
 	{
 		BX.SidePanel.Instance.open('bizproc:setup-template-fill', {
 			width: 700,
@@ -69,7 +70,7 @@ export class SetupTemplate
 		PULL.subscribe({
 			moduleId: 'bizproc',
 			command: 'setupTemplateActivityBlocks',
-			callback: (pushData: SetupActivityPushData): void => {
+			callback: (pushData: SetupTemplateData): void => {
 				SetupTemplate.showSidePanel(pushData);
 			},
 		});

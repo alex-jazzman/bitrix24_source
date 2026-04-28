@@ -110,7 +110,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 				SITE_ID: MessengerParams.get('SITE_ID', 's1'),
 				SITE_DIR: env.siteDir,
 				LANGUAGE_ID: MessengerParams.get('LANGUAGE_ID', 'en'),
-				STORED_EVENTS: PushHandler.getStoredPullEvents(),
+				STORED_EVENTS: new PushHandler().getStoredPullEvents(),
 				SEARCH_MIN_TOKEN_SIZE: MessengerParams.get('SEARCH_MIN_SIZE', 3),
 				WIDGET_CHAT_USERS_VERSION: MessengerParams.get('WIDGET_CHAT_USERS_VERSION', '1.0.0'),
 				WIDGET_CHAT_RECIPIENTS_VERSION: MessengerParams.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),

@@ -51,9 +51,11 @@ jn.define('im/messenger/controller/recent/manager', (require, exports, module) =
 
 		destructor()
 		{
+			console.log('RecentManager: before destructor');
 			this.recentGetter.getRecentLists().forEach((recentList) => {
 				recentList.removeAll();
 			});
+			console.log('RecentManager: after destructor');
 		}
 
 		/**

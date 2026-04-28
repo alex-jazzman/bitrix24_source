@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
-		'require-lazy',
+		'user-profile/tabs-preparer',
+		'feature',
 	],
 ];

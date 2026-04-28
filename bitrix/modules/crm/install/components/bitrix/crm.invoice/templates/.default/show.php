@@ -2,8 +2,19 @@
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 /** @var CMain $APPLICATION */
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+\Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
+
+$APPLICATION->IncludeComponent(
+	'bitrix:crm.entity.disable_alert',
+	'',
+	[
+		'ENTITY_TYPE_ID' => \CCrmOwnerType::Invoice,
+		'ENTITY_ID' => $arResult['VARIABLES']['invoice_id'],
+		'DISABLE_HELPER_CLASS' => \Bitrix\Crm\Component\DisableHelpers\OldInvoiceReadonlyHelper::class,
+	],
+);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',

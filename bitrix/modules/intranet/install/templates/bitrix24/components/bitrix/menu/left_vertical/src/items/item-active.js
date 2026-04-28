@@ -1,6 +1,5 @@
-import {Runtime, Uri} from 'main.core';
-import Item from './item'
-import ItemSystem from './item-system'
+import { Dom, Uri } from 'main.core';
+import Item from './item';
 type ActiveLink = {
 	priority: number,
 	url: string,
@@ -136,22 +135,43 @@ export default class ItemActive
 		{
 			this.item.container.classList.add('menu-item-active');
 
-			let parent = this.item.container.closest('[data-role="group-content"]');
-			let parentContainer;
-			while (parent)
+			const linkNode = this.item.container.querySelector('.menu-item-link');
+			const isInsideCollapsedGroup = this.#highlightParentGroups();
+			if (isInsideCollapsedGroup)
 			{
-				parentContainer = parent.parentNode.querySelector(`[data-id="${parent.getAttribute('data-group-id')}"]`);
-				if (parentContainer)
-				{
-					parentContainer.setAttribute('data-contains-active-item', 'Y');
-					if (parentContainer.getAttribute('data-collapse-mode') === 'collapsed')
-					{
-						parentContainer.classList.add('menu-item-active');
-					}
-				}
-				parent = parent.closest('[data-relo="group-content"]');
+				Dom.attr(linkNode, 'aria-current', null);
+			}
+			else
+			{
+				Dom.attr(linkNode, 'aria-current', 'page');
 			}
 		}
+	}
+
+	#highlightParentGroups(): boolean
+	{
+		let insideCollapsed = false;
+		let parent = this.item.container.closest('[data-role="group-content"]');
+		while (parent)
+		{
+			const parentContainer = parent.parentNode.querySelector(
+				`[data-id="${parent.getAttribute('data-group-id')}"]`,
+			);
+			if (parentContainer)
+			{
+				parentContainer.setAttribute('data-contains-active-item', 'Y');
+				if (parentContainer.getAttribute('data-collapse-mode') === 'collapsed')
+				{
+					parentContainer.classList.add('menu-item-active');
+					const groupLink = parentContainer.querySelector('.menu-item-link');
+					Dom.attr(groupLink, 'aria-current', 'page');
+					insideCollapsed = true;
+				}
+			}
+			parent = parent.closest('[data-relo="group-content"]');
+		}
+
+		return insideCollapsed;
 	}
 
 	unhighlight(item: ?Item): ?Item
@@ -160,23 +180,34 @@ export default class ItemActive
 		{
 			item = this.item;
 		}
+
 		if (item instanceof Item)
 		{
 			item.container.classList.remove('menu-item-active');
+
+			const linkNode = item.container.querySelector('.menu-item-link');
+			Dom.attr(linkNode, 'aria-current', null);
+
 			let parent = item.container.closest('[data-role="group-content"]');
-			let parentContainer;
 			while (parent)
 			{
-				parentContainer = parent.parentNode.querySelector(`[data-id="${parent.getAttribute('data-group-id')}"]`);
+				const parentContainer = parent.parentNode.querySelector(
+					`[data-id="${parent.getAttribute('data-group-id')}"]`,
+				);
+
 				if (parentContainer)
 				{
 					parentContainer.removeAttribute('data-contains-active-item');
 					parentContainer.classList.remove('menu-item-active');
+					const groupLink = parentContainer.querySelector('.menu-item-link');
+					Dom.attr(groupLink, 'aria-current', null);
 				}
 				parent = parent.closest('[data-relo="group-content"]');
 			}
+
 			return item;
 		}
+
 		return null;
 	}
 }

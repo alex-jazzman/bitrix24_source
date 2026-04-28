@@ -1,33 +1,20 @@
 import { Type } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 
-import { Core } from 'im.v2.application.core';
+import { RecentType } from 'im.v2.const';
+import { formatFieldsWithConfig } from 'im.v2.model';
+
+import { counterFieldsConfig } from './format/field-config';
 
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import type { RecentTypeItem } from 'im.v2.const';
+import type { CounterItem as ImModelCounter } from '../type/counter';
 
-import type { RecentItem as ImModelRecentItem } from '../type/recent-item';
-import type { Chat as ImModelChat } from '../type/chat';
+type CountersState = { collection: CountersCollection };
+type CountersCollection = { [chatId: string]: ImModelCounter };
 
-type CountersState = {
-	unloadedChatCounters: {[chatId: string]: number},
-	unloadedLinesCounters: {[chatId: string]: number},
-	unloadedCopilotCounters: {[chatId: string]: number},
-	unloadedCollabCounters: {[chatId: string]: number},
-	unloadedTaskCounters: {[chatId: string]: number},
-	commentCounters: CommentsCounters,
-};
-
-type CommentsCounters = {
-	[channelChatId: string]: {
-		[commentChatId: string]: number,
-	},
-}
-
-type CommentsCounterPayload = {
-	channelId: number,
-	commentChatId: number
-};
-
+/* eslint-disable sonarjs/prefer-immediate-return */
+// noinspection UnnecessaryLocalVariableJS
 export class CountersModel extends BuilderModel
 {
 	getName(): string
@@ -38,12 +25,19 @@ export class CountersModel extends BuilderModel
 	getState(): CountersState
 	{
 		return {
-			unloadedChatCounters: {},
-			unloadedLinesCounters: {},
-			unloadedCopilotCounters: {},
-			unloadedCollabCounters: {},
-			unloadedTaskCounters: {},
-			commentCounters: {},
+			collection: {},
+		};
+	}
+
+	getElementState(): ImModelCounter
+	{
+		return {
+			chatId: 0,
+			parentChatId: 0,
+			counter: 0,
+			isMarkedAsUnread: false,
+			isMuted: false,
+			recentSections: [],
 		};
 	}
 
@@ -51,142 +45,132 @@ export class CountersModel extends BuilderModel
 	getGetters(): GetterTree
 	{
 		return {
-			/** @function counters/getUnloadedChatCounters */
-			getUnloadedChatCounters: (state: CountersState): number => {
-				return state.unloadedChatCounters;
-			},
 			/** @function counters/getTotalChatCounter */
-			getTotalChatCounter: (state: CountersState): number => {
-				const recentCollection = Core.getStore().getters['recent/getRecentCollection'];
-				const loadedChatsCounter = this.#getLoadedChatsCounter(recentCollection);
-
-				let unloadedChatsCounter = 0;
-				Object.values(state.unloadedChatCounters).forEach((counter) => {
-					unloadedChatsCounter += counter;
-				});
-
-				const channelCommentsCounter = Core.getStore().getters['counters/getTotalCommentsCounter'];
-
-				return loadedChatsCounter + unloadedChatsCounter + channelCommentsCounter;
+			getTotalChatCounter: (state: CountersState, getters: GetterTree): number => {
+				return getters.getCounterByRecentType(RecentType.default);
 			},
 			/** @function counters/getTotalCopilotCounter */
-			getTotalCopilotCounter: (state: CountersState): number => {
-				const recentCollection = Core.getStore().getters['recent/getCopilotCollection'];
-				const loadedChatsCounter = this.#getLoadedChatsCounter(recentCollection);
-
-				let unloadedChatsCounter = 0;
-				Object.values(state.unloadedCopilotCounters).forEach((counter) => {
-					unloadedChatsCounter += counter;
-				});
-
-				return loadedChatsCounter + unloadedChatsCounter;
+			getTotalCopilotCounter: (state: CountersState, getters: GetterTree): number => {
+				return getters.getCounterByRecentType(RecentType.copilot);
 			},
 			/** @function counters/getTotalCollabCounter */
-			getTotalCollabCounter: (state: CountersState): number => {
-				const recentCollection = Core.getStore().getters['recent/getCollabCollection'];
-				const loadedChatsCounter = this.#getLoadedChatsCounter(recentCollection);
-
-				let unloadedChatsCounter = 0;
-				Object.values(state.unloadedCollabCounters).forEach((counter) => {
-					unloadedChatsCounter += counter;
-				});
-
-				return loadedChatsCounter + unloadedChatsCounter;
+			getTotalCollabCounter: (state: CountersState, getters: GetterTree): number => {
+				return getters.getCounterByRecentType(RecentType.collab);
 			},
 			/** @function counters/getTotalTaskCounter */
-			getTotalTaskCounter: (state: CountersState): number => {
-				const recentCollection = Core.getStore().getters['recent/getTaskCollection'];
-				const loadedChatsCounter = this.#getLoadedChatsCounter(recentCollection);
-
-				let unloadedChatsCounter = 0;
-				Object.values(state.unloadedTaskCounters).forEach((counter) => {
-					unloadedChatsCounter += counter;
-				});
-
-				return loadedChatsCounter + unloadedChatsCounter;
+			getTotalTaskCounter: (state: CountersState, getters: GetterTree): number => {
+				return getters.getCounterByRecentType(RecentType.taskComments);
 			},
 			/** @function counters/getTotalLinesCounter */
-			getTotalLinesCounter: (state: CountersState): number => {
-				let unloadedLinesCounter = 0;
-				Object.values(state.unloadedLinesCounters).forEach((counter) => {
-					unloadedLinesCounter += counter;
-				});
-
-				return unloadedLinesCounter;
+			getTotalLinesCounter: (state: CountersState, getters: GetterTree): number => {
+				return getters.getCounterByRecentType(RecentType.openlines);
 			},
-			/** @function counters/getSpecificLinesCounter */
-			getSpecificLinesCounter: (state: CountersState) => (chatId: number): number => {
-				if (!state.unloadedLinesCounters[chatId])
+			/** @function counters/getCounterByRecentType */
+			getCounterByRecentType: (state: CountersState) => (recentType: RecentTypeItem): number => {
+				let totalCount = 0;
+				const collection = state.collection;
+
+				for (const counterItem of Object.values(collection))
+				{
+					if (!this.#hasRecentType(collection, counterItem, recentType))
+					{
+						continue;
+					}
+
+					if (this.#isMuted(collection, counterItem))
+					{
+						continue;
+					}
+
+					totalCount += this.#resolveCounter(counterItem);
+				}
+
+				return totalCount;
+			},
+			/** @function counters/getTotalCounterByIds */
+			getTotalCounterByIds: (state: CountersState) => (chatIds: number[]): number => {
+				let totalCount = 0;
+				for (const chatId of chatIds)
+				{
+					const counterItem = state.collection[chatId];
+					if (!counterItem)
+					{
+						continue;
+					}
+
+					if (this.#isMuted(state.collection, counterItem))
+					{
+						continue;
+					}
+
+					totalCount += this.#resolveCounter(counterItem);
+				}
+
+				return totalCount;
+			},
+			/** @function counters/getChildrenTotalCounter */
+			getChildrenTotalCounter: (state: CountersState) => (parentChatId: number): number => {
+				if (parentChatId === 0)
 				{
 					return 0;
 				}
 
-				return state.unloadedLinesCounters[chatId];
-			},
-			/** @function counters/getTotalCommentsCounter */
-			getTotalCommentsCounter: (state: CountersState): number => {
-				let totalCounter = 0;
-				Object.entries(state.commentCounters).forEach(([channelChatId, channelCounters]) => {
-					const channel = this.#getChatByChatId(channelChatId);
-					if (this.#isChatMuted(channel))
+				let totalCount = 0;
+				for (const counterItem of Object.values(state.collection))
+				{
+					const hasRequiredParent = counterItem.parentChatId === parentChatId;
+					if (!hasRequiredParent)
 					{
-						return;
+						continue;
 					}
-					Object.values(channelCounters).forEach((commentCounter) => {
-						totalCounter += commentCounter;
-					});
-				});
 
-				return totalCounter;
+					totalCount += counterItem.counter;
+				}
+
+				return totalCount;
 			},
-			/** @function counters/getChannelComments */
-			getChannelComments: (state: CountersState) => (chatId: number): number[] => {
-				if (!state.commentCounters[chatId])
+			/** @function counters/getChildrenIdsWithCounter */
+			getChildrenIdsWithCounter: (state: CountersState) => (parentChatId: number): number[] => {
+				if (parentChatId === 0)
 				{
 					return [];
 				}
 
-				return state.commentCounters[chatId];
+				const childrenIdsWithCounter = [];
+				for (const counterItem of Object.values(state.collection))
+				{
+					const hasRequiredParent = counterItem.parentChatId === parentChatId;
+					if (!hasRequiredParent || counterItem.counter === 0)
+					{
+						continue;
+					}
+
+					childrenIdsWithCounter.push(counterItem.chatId);
+				}
+
+				return childrenIdsWithCounter;
 			},
-			/** @function counters/getChannelCommentsCounter */
-			getChannelCommentsCounter: (state: CountersState) => (chatId: number): number => {
-				if (!state.commentCounters[chatId])
+			/** @function counters/getCounterByChatId */
+			getCounterByChatId: (state: CountersState) => (chatId: number): number => {
+				const counterItem = state.collection[chatId];
+
+				if (!counterItem)
 				{
 					return 0;
 				}
 
-				let result = 0;
-				Object.values(state.commentCounters[chatId]).forEach((counter) => {
-					result += counter;
-				});
-
-				return result;
+				return counterItem.counter;
 			},
-			/** @function counters/getChatCounterByChatId */
-			getChatCounterByChatId: (state: CountersState) => (chatId: number): number => {
-				const recentCollection: ImModelRecentItem[] = Core.getStore().getters['recent/getRecentCollection'];
-				const recentItem = recentCollection.find((element) => {
-					const chat: ImModelChat = this.store.getters['chats/get'](element.dialogId, true);
+			/** @function counters/getUnreadStatus */
+			getUnreadStatus: (state: CountersState) => (chatId: number): boolean => {
+				const counterItem = state.collection[chatId];
 
-					return chat.chatId === chatId;
-				});
-
-				if (!recentItem)
+				if (!counterItem)
 				{
-					return state.unloadedChatCounters[chatId] ?? 0;
+					return false;
 				}
 
-				return this.#getRecentItemCounter(recentItem);
-			},
-			/** @function counters/getSpecificCommentsCounter */
-			getSpecificCommentsCounter: (state: CountersState) => (payload: CommentsCounterPayload): number => {
-				const { channelId, commentChatId } = payload;
-				if (!state.commentCounters[channelId])
-				{
-					return 0;
-				}
-
-				return state.commentCounters[channelId][commentChatId] ?? 0;
+				return counterItem.isMarkedAsUnread;
 			},
 		};
 	}
@@ -196,81 +180,71 @@ export class CountersModel extends BuilderModel
 	getActions(): ActionTree
 	{
 		return {
-			/** @function counters/setUnloadedChatCounters */
-			setUnloadedChatCounters: (store, payload: {[chatId: string]: number}) => {
-				if (!Type.isPlainObject(payload))
+			/** @function counters/setCounters */
+			setCounters: (store, payload: ImModelCounter[]) => {
+				if (!Type.isArray(payload))
 				{
 					return;
 				}
 
-				store.commit('setUnloadedChatCounters', payload);
+				const preparedItems = payload.map((counterItem) => {
+					const preparedItem = this.#formatFields(counterItem);
+
+					return {
+						...this.getElementState(),
+						...preparedItem,
+					};
+				});
+
+				store.commit('setCounters', preparedItems);
 			},
-			/** @function counters/setUnloadedLinesCounters */
-			setUnloadedLinesCounters: (store, payload: {[chatId: string]: number}) => {
-				if (!Type.isPlainObject(payload))
+			/** @function counters/setCounter */
+			setCounter: (store, payload: { chatId: number, counter: number }) => {
+				const { chatId } = payload;
+
+				const existingItem = store.state.collection[chatId];
+				if (!existingItem)
 				{
 					return;
 				}
 
-				store.commit('setUnloadedLinesCounters', payload);
+				store.commit('setCounter', payload);
 			},
-			/** @function counters/setUnloadedCopilotCounters */
-			setUnloadedCopilotCounters: (store, payload: {[chatId: string]: number}) => {
-				if (!Type.isPlainObject(payload))
+			/** @function counters/setUnreadStatus */
+			setUnreadStatus: (store, payload: { chatId: number, status: boolean }) => {
+				const { chatId } = payload;
+
+				const existingItem = store.state.collection[chatId];
+				if (!existingItem)
 				{
 					return;
 				}
 
-				store.commit('setUnloadedCopilotCounters', payload);
+				store.commit('setUnreadStatus', payload);
 			},
-			/** @function counters/setUnloadedCollabCounters */
-			setUnloadedCollabCounters: (store, payload: {[chatId: string]: number}) => {
-				if (!Type.isPlainObject(payload))
+			/** @function counters/setMuteStatus */
+			setMuteStatus: (store, payload: { chatId: number, status: boolean }) => {
+				const { chatId } = payload;
+
+				const existingItem = store.state.collection[chatId];
+				if (!existingItem)
 				{
 					return;
 				}
 
-				store.commit('setUnloadedCollabCounters', payload);
+				store.commit('setMuteStatus', payload);
 			},
-			/** @function counters/setUnloadedTaskCounters */
-			setUnloadedTaskCounters: (store, payload: {[chatId: string]: number}) => {
-				if (!Type.isPlainObject(payload))
-				{
-					return;
-				}
-
-				store.commit('setUnloadedTaskCounters', payload);
+			/** @function counters/clearByRecentType */
+			clearByRecentType: (store, payload: { recentType: RecentTypeItem }) => {
+				store.commit('clearByRecentType', payload);
 			},
-			/** @function counters/setCommentCounters */
-			setCommentCounters: (store, payload: CommentsCounters) => {
-				if (!Type.isPlainObject(payload))
-				{
-					return;
-				}
-
-				store.commit('setCommentCounters', payload);
+			/** @function counters/clearById */
+			clearById: (store, payload: { chatId: number }) => {
+				store.commit('clearById', payload);
 			},
-			/** @function counters/readAllChannelComments */
-			readAllChannelComments: (store, channelChatId: number) => {
-				if (!Type.isNumber(channelChatId))
-				{
-					return;
-				}
-
-				store.commit('readAllChannelComments', channelChatId);
-			},
-			/** @function counters/deleteForChannel */
-			deleteForChannel: (store, payload: {channelChatId: number, commentChatId?: number}) => {
-				if (!Type.isPlainObject(payload))
-				{
-					return;
-				}
-
-				store.commit('deleteForChannel', payload);
-			},
-			/** @function counters/clearUnloadedTaskCounters */
-			clearUnloadedTaskCounters: (store) => {
-				store.commit('clearUnloadedTaskCounters');
+			/** @function counters/clearByParentId */
+			clearByParentId: (store, payload: { parentChatId: number }) => {
+				store.commit('clearByParentId', payload);
 			},
 			/** @function counters/clear */
 			clear: (store) => {
@@ -282,154 +256,135 @@ export class CountersModel extends BuilderModel
 	getMutations(): MutationTree
 	{
 		return {
-			setUnloadedChatCounters: (state: CountersState, payload: {[chatId: string]: number}) => {
-				Object.entries(payload).forEach(([chatId, counter]) => {
-					if (counter === 0)
-					{
-						delete state.unloadedChatCounters[chatId];
-
-						return;
-					}
-					state.unloadedChatCounters[chatId] = counter;
+			setCounters: (state: CountersState, payload: ImModelCounter[]) => {
+				payload.forEach((counterItem) => {
+					state.collection[counterItem.chatId] = counterItem;
 				});
 			},
-			setUnloadedLinesCounters: (state: CountersState, payload: {[chatId: string]: number}) => {
-				Object.entries(payload).forEach(([chatId, counter]) => {
-					if (counter === 0)
-					{
-						delete state.unloadedLinesCounters[chatId];
+			setCounter: (state: CountersState, payload: { chatId: number, counter: number }) => {
+				const { chatId, counter } = payload;
 
-						return;
-					}
-					state.unloadedLinesCounters[chatId] = counter;
-				});
+				const existingItem = state.collection[chatId];
+				existingItem.counter = counter;
 			},
-			setUnloadedCopilotCounters: (state: CountersState, payload: {[chatId: string]: number}) => {
-				Object.entries(payload).forEach(([chatId, counter]) => {
-					if (counter === 0)
-					{
-						delete state.unloadedCopilotCounters[chatId];
+			setUnreadStatus: (state: CountersState, payload: { chatId: number, status: boolean }) => {
+				const { chatId, status } = payload;
 
-						return;
-					}
-					state.unloadedCopilotCounters[chatId] = counter;
-				});
+				const existingItem = state.collection[chatId];
+				existingItem.isMarkedAsUnread = status;
 			},
-			setUnloadedCollabCounters: (state: CountersState, payload: {[chatId: string]: number}) => {
-				Object.entries(payload).forEach(([chatId, counter]) => {
-					if (counter === 0)
-					{
-						delete state.unloadedCollabCounters[chatId];
+			setMuteStatus: (state: CountersState, payload: { chatId: number, status: boolean }) => {
+				const { chatId, status } = payload;
 
-						return;
-					}
-					state.unloadedCollabCounters[chatId] = counter;
-				});
+				const existingItem = state.collection[chatId];
+				existingItem.isMuted = status;
 			},
-			setUnloadedTaskCounters: (state: CountersState, payload: {[chatId: string]: number}) => {
-				Object.entries(payload).forEach(([chatId, counter]) => {
-					if (counter === 0)
-					{
-						delete state.unloadedTaskCounters[chatId];
+			clearByRecentType: (state: CountersState, payload: { recentType: RecentTypeItem }) => {
+				const { recentType } = payload;
+				const collection = state.collection;
 
-						return;
-					}
-					state.unloadedTaskCounters[chatId] = counter;
-				});
-			},
-			setCommentCounters: (state: CountersState, payload: CommentsCounters) => {
-				Object.entries(payload).forEach(([channelChatId, countersMap]) => {
-					if (!state.commentCounters[channelChatId])
-					{
-						state.commentCounters[channelChatId] = {};
-					}
-
-					const channelMap = state.commentCounters[channelChatId];
-					Object.entries(countersMap).forEach(([commentChatId, counter]) => {
-						if (counter === 0)
-						{
-							delete channelMap[commentChatId];
-
-							return;
-						}
-
-						channelMap[commentChatId] = counter;
-					});
-				});
-			},
-			readAllChannelComments: (state: CountersState, channelChatId: number) => {
-				delete state.commentCounters[channelChatId];
-			},
-			deleteForChannel: (state: CountersState, payload: {channelChatId: number, commentChatId?: number}) => {
-				const { channelChatId, commentChatId } = payload;
-				if (!state.commentCounters[channelChatId])
+				const idsToDelete = [];
+				for (const counterItem of Object.values(collection))
 				{
-					return;
+					if (!this.#hasRecentType(collection, counterItem, recentType))
+					{
+						continue;
+					}
+
+					idsToDelete.push(counterItem.chatId);
 				}
 
-				if (!commentChatId)
+				for (const chatId of idsToDelete)
 				{
-					delete state.commentCounters[channelChatId];
-
-					return;
+					delete collection[chatId];
 				}
-
-				delete state.commentCounters[channelChatId][commentChatId];
 			},
-			clearUnloadedTaskCounters: (state: CountersState) => {
-				state.unloadedTaskCounters = {};
+			clearById: (state: CountersState, payload: { chatId: number }) => {
+				const { chatId } = payload;
+				const collection = state.collection;
+
+				delete collection[chatId];
+
+				for (const counterItem of Object.values(collection))
+				{
+					const hasRequiredParent = counterItem.parentChatId === chatId;
+					if (!hasRequiredParent)
+					{
+						continue;
+					}
+
+					delete collection[counterItem.chatId];
+				}
+			},
+			clearByParentId: (state: CountersState, payload: { parentChatId: number }) => {
+				const { parentChatId } = payload;
+				const collection = state.collection;
+
+				for (const counterItem of Object.values(collection))
+				{
+					if (counterItem.parentChatId !== parentChatId)
+					{
+						continue;
+					}
+
+					delete collection[counterItem.chatId];
+				}
 			},
 			clear: (state: CountersState) => {
-				state.unloadedChatCounters = {};
-				state.unloadedLinesCounters = {};
-				state.unloadedCopilotCounters = {};
-				state.unloadedCollabCounters = {};
-				state.unloadedTaskCounters = {};
-				state.commentCounters = {};
+				state.collection = {};
 			},
 		};
 	}
 
-	#getChat(dialogId): ImModelChat
+	#hasRecentType(
+		collection: CountersCollection,
+		counterItem: ImModelCounter,
+		recentType: RecentTypeItem,
+	): boolean
 	{
-		return Core.getStore().getters['chats/get'](dialogId, true);
-	}
-
-	#getChatByChatId(chatId): ImModelChat
-	{
-		return Core.getStore().getters['chats/getByChatId'](chatId, true);
-	}
-
-	#isChatMuted(chat: ImModelChat): boolean
-	{
-		return chat.muteList.includes(Core.getUserId());
-	}
-
-	#getRecentItemCounter(recentItem: ImModelRecentItem): number
-	{
-		const chat = this.#getChat(recentItem.dialogId);
-		if (this.#isChatMuted(chat))
+		const hasRequiredType = counterItem.recentSections.includes(recentType);
+		if (hasRequiredType)
 		{
-			return 0;
+			return true;
 		}
-		const isMarked = recentItem.unread;
-		if (chat.counter === 0 && isMarked)
+
+		const parentChatId = counterItem.parentChatId;
+		const parentChat = collection[parentChatId];
+		const hasParentChat = parentChatId > 0 && parentChat;
+		if (!hasParentChat)
+		{
+			return false;
+		}
+
+		const parentHasRequiredType = parentChat.recentSections.includes(recentType);
+
+		return parentHasRequiredType;
+	}
+
+	#isMuted(collection: CountersCollection, counterItem: ImModelCounter): boolean
+	{
+		const parent = collection[counterItem.parentChatId];
+
+		return counterItem.isMuted || parent?.isMuted;
+	}
+
+	#resolveCounter(counterItem: ImModelCounter): number
+	{
+		if (counterItem.counter > 0)
+		{
+			return counterItem.counter;
+		}
+
+		if (counterItem.isMarkedAsUnread)
 		{
 			return 1;
 		}
 
-		return chat.counter;
+		return 0;
 	}
 
-	#getLoadedChatsCounter(recentCollection: ImModelRecentItem[]): number
+	#formatFields(counterItem: Partial<ImModelCounter>): ImModelCounter
 	{
-		let loadedChatsCounter = 0;
-
-		recentCollection.forEach((recentItem: ImModelRecentItem) => {
-			const recentItemCounter = this.#getRecentItemCounter(recentItem);
-			loadedChatsCounter += recentItemCounter;
-		});
-
-		return loadedChatsCounter;
+		return formatFieldsWithConfig(counterItem, counterFieldsConfig);
 	}
 }

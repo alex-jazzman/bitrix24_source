@@ -35,6 +35,7 @@ $arJSParams = [
 	'provideSmsOtp' => $arResult['PROVIDE_SMS_OTP'] === true,
 	'isOtpActive' => $arResult["OTP"]["IS_ACTIVE"] === true,
 	'isNotPushOtp' => $arResult['OTP']['TYPE'] !== \Bitrix\Security\Mfa\OtpType::Push,
+	'userId' => $arResult["OTP"]["USER_ID"] ?? null,
 ];
 ?>
 

@@ -1,15 +1,15 @@
 import { Cache, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { PopupComponentsMaker } from 'ui.popupcomponentsmaker';
-import { MainContent } from './content/main-content';
-import { FooterContent } from './content/footer-content';
-import { SecondaryContent } from './content/secondary-content';
-import { ApplicationContent } from './content/application-content';
-import { MobileAuthContent } from './content/mobile-auth-content';
 import { Analytics } from './analytics';
-import type { ConfigOptions, PopupOptions } from './types';
-import { ExtranetSecondaryContent } from './content/extranet-secondary-content';
 import { AnnualSummaryContent } from './content/annual-summary-content';
+import { ApplicationContent } from './content/application-content';
+import { ExtranetSecondaryContent } from './content/extranet-secondary-content';
+import { FooterContent } from './content/footer-content';
+import { MainContent } from './content/main-content';
+import { MobileAuthContent } from './content/mobile-auth-content';
+import { SecondaryContent } from './content/secondary-content';
+import type { ConfigOptions, PopupOptions } from './types';
 
 export class Popup extends EventEmitter
 {
@@ -74,6 +74,9 @@ export class Popup extends EventEmitter
 			popup.getPopup().subscribe('onClose', () => {
 				this.#popupsShowAfterBasePopup = [];
 				popup.getPopup().removeOverlay();
+			});
+			popup.getPopup().subscribe('onAfterClose', () => {
+				popup.getPopup().setContent(this.#cache.get('contentWrapper') ?? popup.getContentWrapper());
 			});
 			popup.getPopup().subscribe('onBeforeShow', setOverlay);
 			this.#cache.set('popup', popup);

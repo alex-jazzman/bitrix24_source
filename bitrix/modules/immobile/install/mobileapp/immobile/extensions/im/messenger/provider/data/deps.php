@@ -12,7 +12,6 @@ return [
 		'./src/base',
 		'./src/chat',
 		'./src/chat/deleter',
-		'./src/chat/entity-updater',
 		'./src/chat/getter',
 		'./src/message',
 		'./src/message/deleter',

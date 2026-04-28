@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.date',
 		'main.popup',
+		'sign.type',
 		'sign.v2.sign-settings',
 		'ui.sidepanel.layout',
 		'ui.uploader.tile-widget',

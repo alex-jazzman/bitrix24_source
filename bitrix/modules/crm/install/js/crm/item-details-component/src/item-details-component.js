@@ -33,6 +33,7 @@ export type ItemDetailsComponentParams = {
 	automationCheckAutomationTourGuideData: ?Object,
 	receiversJSONString: string,
 	categorySelectorTarget: ?string,
+	analytics: ?Object,
 };
 
 const BACKGROUND_COLOR = 'd3d7dc';
@@ -112,6 +113,7 @@ export class ItemDetailsComponent
 			this.isStageFlowActive = params.isStageFlowActive;
 			this.pullTag = params.pullTag;
 			this.bizprocStarterConfig = params.bizprocStarterConfig;
+			this.analyticsData = Type.isPlainObject(params.analytics) ? params.analytics : {};
 			this.automationCheckAutomationTourGuideData =
 				Type.isPlainObject(params.automationCheckAutomationTourGuideData)
 					? params.automationCheckAutomationTourGuideData
@@ -617,7 +619,7 @@ export class ItemDetailsComponent
 	// region EventHandlers
 	handleItemDelete(): void
 	{
-		if(this.isProgress)
+		if (this.isProgress)
 		{
 			return;
 		}
@@ -629,14 +631,16 @@ export class ItemDetailsComponent
 			onYes: (messageBox) => {
 				this.startProgress();
 				Ajax.runAction(
-					'crm.controller.item.delete', {
-						analyticsLabel: 'crmItemDetailsDeleteItem',
+					'crm.controller.item.delete',
+					{
 						data:
 							{
 								entityTypeId: this.entityTypeId,
 								id: this.id,
-							}
-					}).then( ({data}) => {
+								analytics: this.analyticsData,
+							},
+					},
+				).then(({ data }) => {
 					this.stopProgress();
 
 					let currentSlider: ?BX.SidePanel.Slider = null;
@@ -650,9 +654,9 @@ export class ItemDetailsComponent
 						if (Reflection.getClass('BX.Crm.EntityEvent'))
 						{
 							let eventParams = null;
-							if(currentSlider)
+							if (currentSlider)
 							{
-								eventParams = { "sliderUrl": currentSlider.getUrl() };
+								eventParams = { 'sliderUrl': currentSlider.getUrl() };
 							}
 							BX.Crm.EntityEvent.fireDelete(this.entityTypeId, this.id, '', eventParams);
 						}
@@ -670,7 +674,7 @@ export class ItemDetailsComponent
 				}).catch(this.showErrorsFromResponse.bind(this));
 
 				messageBox.close();
-			}
+			},
 		});
 	}
 

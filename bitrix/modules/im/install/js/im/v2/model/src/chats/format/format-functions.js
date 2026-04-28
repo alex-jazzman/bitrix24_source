@@ -1,6 +1,9 @@
+import { Text, Type } from 'main.core';
+
 import { Core } from 'im.v2.application.core';
 import { Utils } from 'im.v2.lib.utils';
-import { Text, Type, type JsonObject } from 'main.core';
+
+import type { JsonObject } from 'main.core';
 
 export const prepareManagerList = (managerList: number[] | string[]): number[] => {
 	const result = [];
@@ -44,42 +47,27 @@ export const prepareAvatar = (avatar: string): string => {
 	return result;
 };
 
-export const prepareMuteList = (muteList: Object[] | Object): Object[] => {
-	const result = [];
-
+export const prepareMuteStatus = (muteList: number[] | Record<userId, boolean>): boolean => {
 	if (Type.isArray(muteList))
 	{
-		muteList.forEach((rawUserId) => {
-			const userId = Number.parseInt(rawUserId, 10);
-			if (userId > 0)
-			{
-				result.push(userId);
-			}
-		});
-	}
-	else if (Type.isPlainObject(muteList))
-	{
-		Object.entries(muteList).forEach(([key, value]) => {
-			if (!value)
-			{
-				return;
-			}
-			const userId = Number.parseInt(key, 10);
-			if (userId > 0)
-			{
-				result.push(userId);
-			}
-		});
+		return muteList.includes(Core.getUserId());
 	}
 
-	return result;
+	if (Type.isPlainObject(muteList))
+	{
+		const currentUserEntry = muteList[Core.getUserId()];
+
+		return currentUserEntry === true;
+	}
+
+	return false;
 };
 
 type LastMessageViews = { countOfViewers: number, firstViewers: Object[], messageId: number };
 export const prepareLastMessageViews = (rawLastMessageViews: JsonObject): LastMessageViews => {
 	const {
 		countOfViewers,
-		firstViewers: rawFirstViewers,
+		firstViewers: rawFirstViewers = [],
 		messageId,
 	} = rawLastMessageViews;
 

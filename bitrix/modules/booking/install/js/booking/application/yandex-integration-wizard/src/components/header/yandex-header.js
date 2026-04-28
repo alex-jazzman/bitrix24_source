@@ -10,7 +10,7 @@ export const YandexIntegrationWizardLayoutHeader = {
 		EmptyRichLoc,
 		Icon,
 	},
-	setup(): Object
+	setup(): { IconSet: typeof IconSet, Outline: typeof Outline }
 	{
 		return {
 			IconSet,
@@ -27,55 +27,55 @@ export const YandexIntegrationWizardLayoutHeader = {
 		},
 	},
 	template: `
-		<div class="yandex-wizard__title">
+		<div class="booking-yiw__title">
 			{{ loc('YANDEX_WIZARD_TITLE') }}
 		</div>
-		<div class="yandex-wizard__info">
-			<div class="yandex-wizard__info-text">
-				<div class="yandex-wizard__info_icon-block">
-					<div class="yandex-wizard__info_icon"></div>
+		<div class="booking-yiw__info">
+			<div class="booking-yiw__info-text">
+				<div class="booking-yiw__info_icon-block">
+					<div class="booking-yiw__info_icon"></div>
 				</div>
-				<div class="yandex-wizard__info-text_block">
-					<div class="yandex-wizard__info-text_title">
+				<div class="booking-yiw__info-text_block">
+					<div class="booking-yiw__info-text_title">
 						<EmptyRichLoc
 							:message="loc('YANDEX_WIZARD_SUB_TITLE')"
 							:rules="['br']"
 						/>
 					</div>
-					<div class="yandex-wizard__info-text_points">
-						<div class="yandex-wizard__info-text_point">
-							<div class="yandex-wizard__info-text_point-icon">
+					<div class="booking-yiw__info-text_points">
+						<div class="booking-yiw__info-text_point">
+							<div class="booking-yiw__info-text_point-icon">
 								<Icon
 									:name="Outline.OBSERVER"
 									color="white"
 									:size="14"
 								/>
 							</div>
-							<div class="yandex-wizard__info-text_point-icon-text">
+							<div class="booking-yiw__info-text_point-icon-text">
 								{{ loc('YANDEX_WIZARD_POINT_1') }}
 							</div>
 						</div>
-						<div class="yandex-wizard__info-text_point">
-							<div class="yandex-wizard__info-text_point-icon">
+						<div class="booking-yiw__info-text_point">
+							<div class="booking-yiw__info-text_point-icon">
 								<Icon
 									:name="Outline.FLAG"
 									color="white"
 									:size="14"
 								/>
 							</div>
-							<div class="yandex-wizard__info-text_point-icon-text">
+							<div class="booking-yiw__info-text_point-icon-text">
 								{{ loc('YANDEX_WIZARD_POINT_2') }}
 							</div>
 						</div>
-						<div class="yandex-wizard__info-text_point">
-							<div class="yandex-wizard__info-text_point-icon">
+						<div class="booking-yiw__info-text_point">
+							<div class="booking-yiw__info-text_point-icon">
 								<Icon
 									:name="Outline.ONLINE_BOOKING"
 									color="white"
 									:size="14"
 								/>
 							</div>
-							<div class="yandex-wizard__info-text_point-icon-text">
+							<div class="booking-yiw__info-text_point-icon-text">
 								{{ loc('YANDEX_WIZARD_POINT_3') }}
 							</div>
 						</div>
@@ -83,7 +83,7 @@ export const YandexIntegrationWizardLayoutHeader = {
 				</div>
 			</div>
 			<img 
-				class="yandex-wizard__info-map"
+				class="booking-yiw__info-map"
 				:src="integrationMapsImageUrl"
 				:alt="loc('YANDEX_WIZARD_TITLE')"
 				draggable="false"

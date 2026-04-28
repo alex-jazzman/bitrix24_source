@@ -9,14 +9,9 @@ import { SettingsModel } from './nested-modules/settings/settings';
 import { TariffRestrictionsModel } from './nested-modules/tariff-restrictions/tariff-restrictions';
 
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
+import type { Layout as ImModelLayout } from '../type/layout';
 
-type ApplicationState = {
-	layout: {
-		name: string,
-		entityId: string,
-		contextId: number,
-	},
-};
+type ApplicationState = { layout: ImModelLayout };
 
 export class ApplicationModel extends BuilderModel
 {
@@ -49,7 +44,7 @@ export class ApplicationModel extends BuilderModel
 	{
 		return {
 			/** @function application/getLayout */
-			getLayout: (state) => {
+			getLayout: (state): ImModelLayout => {
 				return state.layout;
 			},
 			/** @function application/isChatOpen */

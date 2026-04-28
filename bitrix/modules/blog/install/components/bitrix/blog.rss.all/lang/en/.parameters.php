@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BR_NUM_POSTS'] = "Posts to emit";
 $MESS ['BR_PATH_TO_POST'] = "Template of a blog message page";
 $MESS ['BR_PATH_TO_USER'] = "Template of the blog user page path";
@@ -9,4 +9,3 @@ $MESS ['BR_PAGE_VAR'] = "Page variable";
 $MESS ['BR_GROUP_ID'] = "Blogs group identifier";
 $MESS ['BR_TYPE'] = "RSS format";
 $MESS ['B_VARIABLE_ALIASES'] = "Variable aliases";
-?>

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BPE_BLOG_URL"] = "Blog URL";
 $MESS["BPE_ID"] = "Message ID";
 $MESS["BPE_PATH_TO_BLOG"] = "Blog page path template";
@@ -37,4 +37,3 @@ $MESS["BPC_EDITOR_CODE_DEFAULT"] = "Default To Plain Text Editor Mode";
 $MESS["BPC_ALLOW_POST_CODE"] = "Use Message Symbolic Code As ID";
 $MESS["BPE_USE_GOOGLE_CODE"] = "Use external translation engine for messages";
 $MESS["BC_SEO_USE"] = "Use separate fields for SEO aware description";
-?>

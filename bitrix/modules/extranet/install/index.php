@@ -140,6 +140,7 @@ class extranet extends CModule
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/gadgets", $_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets", True, True);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/wizards", $_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards", True, True);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/services", $_SERVER["DOCUMENT_ROOT"]."/bitrix/services", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bitrix24/install/routes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/routes", true, true);
 		$extranetSiteId = COption::GetOptionString('extranet', 'extranet_site', false);
 
 		if ($extranetSiteId && !\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))

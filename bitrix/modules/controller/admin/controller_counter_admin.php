@@ -162,8 +162,14 @@ while ($arRes = $rsData->Fetch())
 	$row->AddViewField('NAME', '<a href="' . htmlspecialcharsbx($htmlLink) . '">' . htmlspecialcharsEx($arRes['NAME']) . '</a>');
 	$row->AddSelectField('COUNTER_TYPE', CControllerCounter::GetTypeArray());
 	$row->AddSelectField('COUNTER_FORMAT', CControllerCounter::GetFormatArray());
-	$row->AddViewField('COMMAND', '<pre>' . htmlspecialcharsEx($arRes['COMMAND']) . '</pre>');
-	$row->AddEditField('COMMAND', '<textarea cols="80" rows="15" name="' . htmlspecialcharsEx('FIELDS[' . $arRes['ID'] . '][COMMAND]') . '">' . htmlspecialcharsbx($arRes['COMMAND']) . '</textarea>');
+	if ($arRes['COMMAND_SOURCE'] === 'file')
+	{
+		$row->AddViewField('COMMAND', '<a href="/bitrix/admin/fileman_file_edit.php?path=' . urlencode($arRes['COMMAND_FILE']) . '&full_src=Y&lang=' . LANGUAGE_ID . '">' . htmlspecialcharsEx($arRes['COMMAND_FILE']) . '</a>:<br>' . highlight_string(file_get_contents($_SERVER['DOCUMENT_ROOT'] . $arRes['COMMAND_FILE']), 1));
+	}
+	else
+	{
+		$row->AddViewField('COMMAND', str_replace('<span style="color: #0000BB">&lt;?php&nbsp;</span>', '', highlight_string('<?php ' . $arRes['COMMAND'], 1)));
+	}
 
 	$arActions = [];
 

@@ -24,8 +24,8 @@ export const SyncFieldsPopup = {
 		getDescription(): string
 		{
 			return this.isChange
-				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_DESCRIPTION_CHANGED')
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_DESCRIPTION_NOT_CHANGED');
+				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_DESCRIPTION_CHANGED_MSGVER_1')
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_DESCRIPTION_NOT_CHANGED_MSGVER_1');
 		},
 		onClose()
 		{
@@ -38,7 +38,7 @@ export const SyncFieldsPopup = {
 	// language=Vue
 	template: `
 		<Popup id="syncFields" @close="this.onClose" :options="popupOptions" wrapper-class="generic-popup">
-			<h3 class="generic-popup__header">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_HEADER') }}</h3>
+			<h3 class="generic-popup__header">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SYNC_FIELDS_POPUP_HEADER_MSGVER_1') }}</h3>
 			<div class="generic-popup__content">
 				{{ getDescription() }}
 			</div>

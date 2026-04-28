@@ -1,5 +1,5 @@
 <?php
-$MESS["IMMOBILE_MESSENGER_PROMO_SIDEBAR_COPILOT_CHANGE_MODEL"] = "Use different roles and providers for more precise replies from CoPilot.";
+$MESS["IMMOBILE_MESSENGER_PROMO_SIDEBAR_COPILOT_CHANGE_MODEL_MSGVER_1"] = "Use different roles and providers for more precise replies from #COPILOT_NAME#.";
 $MESS["IMMOBILE_MESSENGER_PROMO_TASKS_TAB_RECENT_DESCRIPTION"] = "Browse your tasks like chats in a messenger. Instantly spot which task needs your input.";
 $MESS["IMMOBILE_MESSENGER_PROMO_VIDEO_NOTE_DESCRIPTION"] = "Video notes are now available.";
 $MESS["IMMOBILE_MESSENGER_PROMO_VIDEO_NOTE_TITLE"] = "Video notes";

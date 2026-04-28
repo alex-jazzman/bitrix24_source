@@ -143,7 +143,7 @@
 	padding-left: 6px;
 }
 
-.ui-system-input.--clickable .ui-system-input-container {
+.ui-system-input.--clickable:not(.--readonly) .ui-system-input-container {
 	cursor: pointer;
 }
 
@@ -212,7 +212,7 @@
 	color: var(--placeholder-color);
 }
 
-.ui-system-input.--clickable .ui-system-input-value {
+.ui-system-input.--clickable:not(.--readonly) .ui-system-input-value {
 	cursor: pointer;
 }
 
@@ -236,6 +236,48 @@
 
 .ui-system-input-cross:hover {
 	opacity: var(--ui-opacity-70);
+}
+
+
+.ui-system-input-action-btn {
+	--ui-color: var(--ui-color-design-outline-content-icon-secondary);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+}
+
+.ui-system-input-action-btn[hidden] {
+	display: none;
+}
+
+.ui-system-input-action-btn ~ .ui-system-input-action-btn {
+	margin-left: 4px;
+}
+
+.ui-system-input-action-btn .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color);
+}
+
+.ui-system-input-action-btn:hover .ui-icon-set,
+.ui-system-input-action-btn:focus-visible .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-hover);
+}
+
+.ui-system-input-action-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.ui-system-input.--disabled .ui-system-input-action-btn {
+	pointer-events: none;
+	--ui-color: var(--ui-color-design-outline-content-icon-secondary);
+	--ui-color-hover: var(--ui-color-design-outline-content-icon-secondary);
 }
 
 

@@ -84,35 +84,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return message.date.toISOString();
 	}
 
-	const GetterNameByRecentSection = {
-	  [im_v2_const.RecentType.taskComments]: 'recent/getTaskCollection',
-	  [im_v2_const.RecentType.default]: 'recent/getSortedCollection'
-	};
 	function getRecentListItems({
 	  withFakeUsers,
-	  searchConfig = {}
+	  searchRecentSection
 	}) {
-	  const getterName = getRecentGetterName(searchConfig == null ? void 0 : searchConfig.searchRecentSection);
-	  let recent = im_v2_application_core.Core.getStore().getters[getterName];
-	  recent = recent.filter(item => {
-	    if (withFakeUsers && item.isFakeElement) {
-	      return true;
-	    }
-	    return !item.isBirthdayPlaceholder && !item.isFakeElement;
+	  const recentSection = searchRecentSection != null ? searchRecentSection : im_v2_const.RecentType.default;
+	  const recentItems = im_v2_application_core.Core.getStore().getters['recent/getSortedCollection']({
+	    type: recentSection
 	  });
-	  return recent.map(({
+	  return recentItems.filter(item => filterRecentItem(item, withFakeUsers)).map(({
 	    dialogId
-	  }) => {
-	    return {
-	      dialogId,
-	      dateMessage: getRecentItemDate(dialogId)
-	    };
-	  });
+	  }) => buildSearchResultItem(dialogId));
 	}
-	function getRecentGetterName(searchRecentSection) {
-	  var _GetterNameByRecentSe;
-	  return (_GetterNameByRecentSe = GetterNameByRecentSection[searchRecentSection]) != null ? _GetterNameByRecentSe : GetterNameByRecentSection[im_v2_const.RecentType.default];
-	}
+	const filterRecentItem = (recentItem, withFakeUsers) => {
+	  if (withFakeUsers && recentItem.isFakeElement) {
+	    return true;
+	  }
+	  return !recentItem.isBirthdayPlaceholder && !recentItem.isFakeElement;
+	};
+	const buildSearchResultItem = dialogId => {
+	  return {
+	    dialogId,
+	    dateMessage: getRecentItemDate(dialogId)
+	  };
+	};
 
 	const collator = new Intl.Collator(undefined, {
 	  sensitivity: 'base'
@@ -206,7 +201,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _getRecentListItems2() {
 	  const recentListItems = getRecentListItems({
 	    withFakeUsers: true,
-	    searchConfig: babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig]
+	    searchRecentSection: babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig].searchRecentSection
 	  });
 	  return recentListItems.map(item => {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _prepareRecentItem)[_prepareRecentItem](item.dialogId, item.dateMessage);
@@ -298,6 +293,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (isChat && exclude.includes(im_v2_lib_search.EntitySearch.chats)) {
 	      return false;
 	    }
+
+	    // eslint-disable-next-line sonarjs/prefer-single-boolean-return
 	    if (isUser && exclude.includes(im_v2_lib_search.EntitySearch.users)) {
 	      return false;
 	    }
@@ -314,9 +311,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return type === im_v2_const.ChatType.user;
 	}
 
-	const MAX_USERS_IN_RECENT_SEARCH_LIST = 50;
+	const EntitySearch = {
+	  chats: 'chats',
+	  users: 'users'
+	};
+	const MAX_ENTITIES_IN_SEARCH_LIST = 100;
+	const MAX_USERS_IN_SEARCH_LIST_DEFAULT = 50;
+
 	function getUsersFromRecentItems({
-	  withFakeUsers
+	  withFakeUsers,
+	  userLimit = MAX_USERS_IN_SEARCH_LIST_DEFAULT
 	}) {
 	  return getRecentListItems({
 	    withFakeUsers
@@ -326,7 +330,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
 	    const user = im_v2_application_core.Core.getStore().getters['users/get'](dialogId, true);
 	    return chat.type === im_v2_const.ChatType.user && user.type !== im_v2_const.UserType.bot && user.id !== im_v2_application_core.Core.getUserId();
-	  }).slice(0, MAX_USERS_IN_RECENT_SEARCH_LIST);
+	  }).slice(0, userLimit);
 	}
 
 	const sortByDate = items => {
@@ -362,11 +366,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return dialog.extranet;
 	};
 
-	const EntitySearch = {
-	  chats: 'chats',
-	  users: 'users'
-	};
-
 	exports.getSearchConfig = getSearchConfig;
 	exports.EntityId = EntityId;
 	exports.StoreUpdater = StoreUpdater;
@@ -375,6 +374,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.getRecentListItems = getRecentListItems;
 	exports.sortByDate = sortByDate;
 	exports.EntitySearch = EntitySearch;
+	exports.MAX_ENTITIES_IN_SEARCH_LIST = MAX_ENTITIES_IN_SEARCH_LIST;
 
 }((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=search.bundle.js.map

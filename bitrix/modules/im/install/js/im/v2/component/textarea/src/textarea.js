@@ -21,6 +21,7 @@ import { InputAction } from 'im.v2.lib.input-action';
 import { SendButton } from 'im.v2.component.elements.send-button';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
 import { MessageManager } from 'im.v2.lib.message';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
 import { InputSenderService } from './classes/input-sender-service';
@@ -153,11 +154,20 @@ export const ChatTextarea = {
 		{
 			return this.text.trim() === '' && !this.editMode && !this.forwardMode;
 		},
+		baseTextareaPlaceholder(): string
+		{
+			if (FeatureManager.isFeatureAvailable(Feature.copilotActive))
+			{
+				return this.loc('IM_TEXTAREA_PLACEHOLDER_MSGVER_1');
+			}
+
+			return this.loc('IM_TEXTAREA_PLACEHOLDER_WITHOUT_AI');
+		},
 		textareaPlaceholder(): string
 		{
 			if (!this.placeholder)
 			{
-				return this.loc('IM_TEXTAREA_PLACEHOLDER_V3');
+				return this.baseTextareaPlaceholder;
 			}
 
 			return this.placeholder;
@@ -224,6 +234,8 @@ export const ChatTextarea = {
 		this.initSendingService();
 
 		EventEmitter.subscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
+		EventEmitter.subscribe(EventType.textarea.insertText, this.onInsertText);
+		EventEmitter.subscribe(EventType.textarea.getText, this.onGetText);
 
 		this.getEmitter().subscribe(EventType.textarea.sendMessage, this.onSendMessage);
 		this.getEmitter().subscribe(EventType.textarea.insertText, this.onInsertText);
@@ -253,6 +265,8 @@ export const ChatTextarea = {
 		this.unbindUploadingService();
 
 		EventEmitter.unsubscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
+		EventEmitter.unsubscribe(EventType.textarea.insertText, this.onInsertText);
+		EventEmitter.unsubscribe(EventType.textarea.getText, this.onGetText);
 
 		this.getEmitter().unsubscribe(EventType.textarea.sendMessage, this.onSendMessage);
 		this.getEmitter().unsubscribe(EventType.textarea.insertMention, this.onInsertMention);
@@ -266,6 +280,17 @@ export const ChatTextarea = {
 	},
 	methods:
 	{
+		onGetText(event: BaseEvent<{ dialogId: string }>): string
+		{
+			const { dialogId } = event.getData();
+
+			if (this.dialogId !== dialogId)
+			{
+				return '';
+			}
+
+			return this.text;
+		},
 		sendMessage()
 		{
 			this.text = this.text.trim();
@@ -1030,6 +1055,7 @@ export const ChatTextarea = {
 				:dialogId="dialogId"
 				:query="mentionQuery"
 				@close="closeMentionPopup"
+				@onFocusTextarea="focus"
 			/>
 			<FormatToolbar 
 				v-if="showFormatToolbar"

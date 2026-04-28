@@ -1,3 +1,5 @@
+import { Type } from 'main.core';
+
 import { Core } from 'booking.core';
 import { Model } from 'booking.const';
 import { deepToRaw } from 'booking.lib.deep-to-raw';
@@ -16,13 +18,26 @@ async function loadResourcesByIds(resourceIds: number[]): Promise<void>
 
 	try
 	{
-		await resourceDialogService.loadByIds(
-			resourceIds,
-			Date.now() / 1000,
+		const existingResources = $store.getters[`${Model.Resources}/getByIds`](resourceIds);
+
+		const existingIds = new Set(
+			existingResources
+				.filter((resource) => Type.isObject(resource) && 'id' in resource)
+				.map((resource) => resource.id),
 		);
-		const resources = deepToRaw($store.getters[`${Model.Resources}/getByIds`](resourceIds));
-		await $store.dispatch(`${Model.SkuResourcesEditor}/addResources`, resources);
-		await $store.dispatch(`${Model.SkuResourcesEditor}/addSkus`, getServicesCollection(resources));
+		const idsToLoad = resourceIds.filter((id) => !existingIds.has(id));
+
+		if (idsToLoad.length > 0)
+		{
+			await resourceDialogService.loadByIds(
+				idsToLoad,
+				Math.round(Date.now() / 1000),
+			);
+		}
+
+		const allResources = deepToRaw($store.getters[`${Model.Resources}/getByIds`](resourceIds));
+		await $store.dispatch(`${Model.SkuResourcesEditor}/addResources`, allResources);
+		await $store.dispatch(`${Model.SkuResourcesEditor}/addSkus`, getServicesCollection(allResources));
 	}
 	catch (error)
 	{

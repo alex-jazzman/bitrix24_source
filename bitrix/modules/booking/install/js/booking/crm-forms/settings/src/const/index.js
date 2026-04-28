@@ -1,1 +1,1 @@
-export { defaultBookingAutoSelectionForm, defaultBookingDefaultForm } from './booking-form';
+export { defaultBookingAutoSelectionForm, defaultBookingDefaultForm, defaultSkuBookingForm } from './booking-form';

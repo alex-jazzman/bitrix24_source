@@ -14,6 +14,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @global CMain $APPLICATION
  */
 
+\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
+
 $this->SetViewTarget('pagetitle', 100);
 \Bitrix\Main\UI\Extension::Load(["popup"]);
 foreach($arResult["ITEMS"] as $index => $item):

@@ -8,7 +8,6 @@ this.BX.Booking = this.BX.Booking || {};
 	  return {
 	    status: null,
 	    catalogPermissions: null,
-	    catalogSkuEntityOptions: {},
 	    isResourceSkuRelationsSaved: false,
 	    resources: [],
 	    cabinetLink: '',

@@ -58,6 +58,7 @@ DROP TABLE IF EXISTS `b_im_file_param`;
 DROP TABLE IF EXISTS `b_im_file_transcription`;
 DROP TABLE IF EXISTS `b_im_ai_transcribe_queue`;
 DROP TABLE IF EXISTS `b_im_sharing_link`;
+DROP TABLE IF EXISTS `b_im_event_log`;
 DROP TABLE IF EXISTS `b_im_sticker_recent`;
 DROP TABLE IF EXISTS `b_im_sticker`;
 DROP TABLE IF EXISTS `b_im_sticker_pack`;

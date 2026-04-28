@@ -274,7 +274,7 @@ class CBPMailActivity extends CBPActivity
 		$arCurrentValues = null,
 		$formName = '',
 		$popupWindow = null,
-		$siteId = ''
+		$siteId = '',
 	)
 	{
 		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(
@@ -287,14 +287,14 @@ class CBPMailActivity extends CBPActivity
 				'workflowVariables' => $arWorkflowVariables,
 				'currentValues' => $arCurrentValues,
 				'formName' => $formName,
-				'siteId' => $siteId
+				'siteId' => $siteId,
 			]
 		);
 
 		$dialog->setMap(self::getPropertiesMap($documentType));
 
 		$dialog->setRuntimeData([
-			'mailboxes' => (array)Main\Mail\Sender::prepareUserMailboxes()
+			'mailboxes' => (array)Main\Mail\Sender::prepareUserMailboxes(),
 		]);
 
 		return $dialog;
@@ -394,7 +394,7 @@ class CBPMailActivity extends CBPActivity
 		&$arWorkflowParameters,
 		&$arWorkflowVariables,
 		$arCurrentValues,
-		&$arErrors
+		&$arErrors,
 	)
 	{
 		$arErrors = [];
@@ -498,18 +498,26 @@ class CBPMailActivity extends CBPActivity
 		$properties['MailMessageEncoded'] = 0;
 		if ($properties['MailMessageType'] === 'html')
 		{
+			$mailText = $properties['MailText'];
 			$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 			$rawData = $request->getPostList()->getRaw('mail_text');
 			if ($rawData === null)
 			{
 				$rawData = (array)$request->getPostList()->getRaw('form_data');
-				$rawData = $rawData['mail_text'];
+				$rawData = $rawData['mail_text'] ?? '';
 			}
-			//TODO: fix for WAF, needs refactoring.
-			$rawData = \Bitrix\Bizproc\Automation\Helper::unConvertExpressions($rawData, $documentType);
 
-			$properties['MailText'] = self::encodeMailText($rawData);
-			$properties['MailMessageEncoded'] = 1;
+			if ($rawData)
+			{
+				//TODO: fix for WAF, needs refactoring.
+				$mailText = \Bitrix\Bizproc\Automation\Helper::unConvertExpressions($rawData, $documentType);
+			}
+
+			if (!empty($mailText))
+			{
+				$properties['MailText'] = self::encodeMailText($mailText);
+				$properties['MailMessageEncoded'] = 1;
+			}
 		}
 
 		$arCurrentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
@@ -745,7 +753,7 @@ class CBPMailActivity extends CBPActivity
 			{
 				$fromList[] = [
 					'name' => $address->getName(),
-					'email' => $address->getEmail()
+					'email' => $address->getEmail(),
 				];
 			}
 		}
@@ -759,7 +767,7 @@ class CBPMailActivity extends CBPActivity
 				{
 					$fromList[] = [
 						'name' => $address->getName(),
-						'email' => $address->getEmail()
+						'email' => $address->getEmail(),
 					];
 				}
 			}
@@ -839,8 +847,8 @@ class CBPMailActivity extends CBPActivity
 		$res = Main\Mail\Internal\SenderTable::getList(array(
 			'filter' => array(
 				'IS_CONFIRMED' => true,
-				'@EMAIL' => $emailsToCheck
-			)
+				'@EMAIL' => $emailsToCheck,
+			),
 		));
 
 		while ($item = $res->fetch())

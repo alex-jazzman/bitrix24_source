@@ -26,6 +26,7 @@ Extension::load([
 	'ui.fonts.opensans',
 	'sidepanel',
 	'ui.hint',
+	'intranet.old-interface.intranet-common',
 ]);
 
 $asset = Asset::getInstance();

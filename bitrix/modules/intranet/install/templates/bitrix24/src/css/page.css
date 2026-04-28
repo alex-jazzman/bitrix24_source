@@ -2,6 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	flex: 1;
+	min-width: 0;
 }
 
 .page__header {
@@ -47,6 +48,7 @@
 	align-items: normal;
 	justify-content: space-between;
 	flex: 1;
+	min-width: 0;
 }
 
 .no-page-header .page__workarea {
@@ -56,6 +58,7 @@
 .page__workarea-content {
 	padding: 15px;
 	flex: 1;
+	min-width: 0;
 	background-color: var(--ui-color-background-primary);
 	border-radius: var(--ui-border-radius-lg);
 	overflow: hidden;

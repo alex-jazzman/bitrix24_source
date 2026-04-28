@@ -6,6 +6,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\BizProc\Starter\CrmStarter;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
 use Bitrix\Main\Localization\Loc;
 
 class CBPCrmCopyDealActivity extends CBPActivity
@@ -172,19 +175,15 @@ class CBPCrmCopyDealActivity extends CBPActivity
 			);
 		}
 
-		if (COption::GetOptionString('crm', 'start_bp_within_bp', 'N') == 'Y')
-		{
-			$CCrmBizProc = new CCrmBizProc('DEAL');
-			if ($CCrmBizProc->CheckFields(false, true))
-			{
-				$CCrmBizProc->StartWorkflow($newDealId);
-			}
-		}
-
-		//Region automation
-		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $newDealId);
-		$starter->setContextToBizproc()->runOnAdd();
-		//End region
+		$starter = new CrmStarter(new DocumentDto(\CCrmOwnerType::Deal, (int)$newDealId));
+		$starter
+			->setContextModuleId('bizproc')
+			->runOnInnerDocumentAdd(
+				new RunDataDto(
+					actualFields: $fields,
+				)
+			)
+		;
 
 		return CBPActivityExecutionStatus::Closed;
 	}

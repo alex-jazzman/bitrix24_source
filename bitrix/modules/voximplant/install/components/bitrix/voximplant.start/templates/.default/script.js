@@ -463,11 +463,11 @@ BX.Voximplant.Start = {
 		balanceNode.title = params.balanceFormatted;
 	},
 
-	onRentButtonClick: function(packetSize)
+	onRentButtonClick: function(event, packetSize)
 	{
 		if (!this.isTelephonyAvailable)
 		{
-			BX.Voximplant.openLimitSlider('limit_contact_center_telephony_number_rent');
+			BX.Voximplant.openLimitPopup('limit_contact_center_telephony_number_rent', event);
 			return;
 		}
 		packetSize = parseInt(packetSize) || 1;

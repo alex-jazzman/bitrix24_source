@@ -36,13 +36,13 @@ describe('OpenLinesMessageManager', () => {
 			assert.equal(result, 'FeedbackFormMessage');
 		});
 
-		it('Should convert a custom OL message with a “form” form parameter to a SystemMessage', () => {
+		it('Should convert a custom OL message with a “form” form parameter to a DefaultMessage', () => {
 			const manager = createMessageManager('bx-imopenlines-form', {
 				imolForm: 'form',
 			});
 
 			const result = manager.getMessageComponent();
-			assert.equal(result, 'SystemMessage');
+			assert.equal(result, 'DefaultMessage');
 		});
 
 		it('Should return the current componentId if it is not in the list of OL messages that need to be replaced (componentForReplace)', () => {

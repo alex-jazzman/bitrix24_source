@@ -41,7 +41,15 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 
 		checkCanHaveAttachments()
 		{
-			return false;
+			return Feature.isAttachPickerForBitrixGPTAvailable;
+		}
+
+		/**
+		 * @returns {Array<string>}
+		 */
+		visibleAttachItems()
+		{
+			return [];
 		}
 
 		/**

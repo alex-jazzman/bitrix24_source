@@ -2371,6 +2371,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      accessCodesCache: {}
 	    };
 	  },
+	  dialog: null,
 	  computed: {
 	    selectedMember: {
 	      get() {
@@ -2396,6 +2397,15 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      }
 	      return (_this$selectedMember$2 = (_this$selectedMember2 = this.selectedMember) == null ? void 0 : (_this$selectedMember3 = _this$selectedMember2.member) == null ? void 0 : _this$selectedMember3.avatar) != null ? _this$selectedMember$2 : '/bitrix/js/ui/accessrights/v2/images/user-avatar.svg';
 	    },
+	    chipImage() {
+	      if (!this.selectedMemberAvatar) {
+	        return null;
+	      }
+	      return {
+	        src: this.selectedMemberAvatar,
+	        alt: this.selectedMemberName
+	      };
+	    },
 	    avatarBackgroundImage() {
 	      return `url(${encodeURI(this.selectedMemberAvatar)})`;
 	    },
@@ -2410,8 +2420,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    })
 	  },
 	  methods: {
-	    openUserSelector() {
-	      this.getSelectorService().createDialog({
+	    toggleUserSelector() {
+	      var _this$dialog, _this$dialog2;
+	      if ((_this$dialog = this.dialog) != null && _this$dialog.isOpen()) {
+	        this.dialog.hide();
+	        return;
+	      }
+	      (_this$dialog2 = this.dialog) != null ? _this$dialog2 : this.dialog = this.getSelectorService().createDialog({
 	        targetNode: this.$refs.userSelector,
 	        preselectedItems: this.selectedItems,
 	        multiple: false,
@@ -2419,10 +2434,14 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        hideOnDeselect: true,
 	        events: {
 	          'Item:onSelect': this.onMemberSelect,
-	          'Item:onDeselect': this.onMemberDeselect
+	          'Item:onDeselect': this.onMemberDeselect,
+	          onDestroy: () => {
+	            this.dialog = null;
+	          }
 	        },
 	        entities: this.getEntities()
-	      }).show();
+	      });
+	      this.dialog.show();
 	    },
 	    getEntities() {
 	      const entities = this.getSelectorService().entities();
@@ -2493,7 +2512,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      const entityTypes = ['user', 'department', 'structure-node'];
 	      return entityTypes.includes(item.entityId);
 	    },
-	    onMemberDeselect(event) {
+	    onMemberDeselect() {
 	      this.selectedMember = {
 	        id: SELECTED_ALL_USER_ID,
 	        entityId: SELECTED_ALL_USER_ID,
@@ -2526,10 +2545,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  template: `
 		<div ref="userSelector" class="ui-access-rights-v2-user-selector">
 			<Chip
-				:image="selectedMemberAvatar ? { src: selectedMemberAvatar, alt: selectedMemberName } : ''"
+				:image="chipImage"
 				:dropdown="true"
-				:text=selectedMemberName
-				@click="openUserSelector"
+				:text="selectedMemberName"
+				@click="toggleUserSelector"
 			/>
 		</div>
 	`

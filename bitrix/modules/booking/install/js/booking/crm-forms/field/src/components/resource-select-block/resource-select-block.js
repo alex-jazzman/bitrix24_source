@@ -1,3 +1,5 @@
+import { Event } from 'main.core';
+
 import { ResourceSelector } from './resource-selector';
 // eslint-disable-next-line no-unused-vars
 import type { Resource } from '../../types';
@@ -42,7 +44,7 @@ export const ResourceSelectBlock = {
 		},
 	},
 	emits: ['update:resourceId'],
-	data(): { dropdownOpened: false }
+	data(): { dropdownOpened: boolean }
 	{
 		return {
 			dropdownOpened: false,
@@ -77,8 +79,37 @@ export const ResourceSelectBlock = {
 			return this.dependencies.mixinDropdown.components['field-item-dropdown'];
 		},
 	},
+	watch: {
+		dropdownOpened(opened: boolean): void
+		{
+			if (opened)
+			{
+				Event.bind(window, 'click', this.handleClickOutOfSelector, true);
+			}
+			else
+			{
+				Event.unbind(window, 'click', this.handleClickOutOfSelector, true);
+			}
+		},
+	},
+	unmounted(): void
+	{
+		Event.unbind(window, 'click', this.handleClickOutOfSelector, true);
+	},
 	methods: {
-		toggleDropdown()
+		handleClickOutOfSelector(e: PointerEvent): void
+		{
+			if (
+				this.$refs.dropdown.$el?.contains(e.target)
+				|| this.$refs.tagSelector?.contains(e.target)
+			)
+			{
+				return;
+			}
+
+			this.closeDropdown();
+		},
+		toggleDropdown(): void
 		{
 			if (this.dropdownOpened)
 			{
@@ -94,7 +125,7 @@ export const ResourceSelectBlock = {
 
 			this.dropdownOpened = true;
 		},
-		closeDropdown()
+		closeDropdown(): void
 		{
 			setTimeout(() => {
 				this.dropdownOpened = false;
@@ -146,6 +177,7 @@ export const ResourceSelectBlock = {
 			<div class="b24-form-control-alert-message" style="top: 75px">{{ errorMessage }}</div>
 			<component
 				v-if="dropdownOpened"
+				ref="dropdown"
 				:is="fieldItemDropdownComponent"
 				:marginTop="0"
 				:visible="dropdownOpened"

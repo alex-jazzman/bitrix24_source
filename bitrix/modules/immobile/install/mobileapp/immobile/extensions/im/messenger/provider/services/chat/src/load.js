@@ -238,10 +238,6 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 
 			void await this.store.dispatch('dialoguesModel/set', dialogList);
 
-			void await this.store.dispatch('counterModel/setList', {
-				counterList: extractor.getCounterState(),
-			});
-
 			const collabPromise = this.store.dispatch('dialoguesModel/collabModel/set', extractor.getCollabInfo());
 
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());

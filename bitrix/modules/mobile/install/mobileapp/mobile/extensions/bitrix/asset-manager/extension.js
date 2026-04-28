@@ -76,10 +76,13 @@ jn.define('asset-manager', (require, exports, module) => {
 	 * @param {string} [filename]
 	 * @param {string} [folder]
 	 * @param {string} [moduleId]
+	 * @param {boolean} withTheme=true
 	 * @return {string}
 	 */
-	const makeLibraryImagePathByModule = (filename, folder, moduleId) => {
-		return `${RELATIVE_PATH}/${moduleId}mobile/extensions/${moduleId}/assets/${folder}/${AppTheme.id}/${filename}`;
+	const makeLibraryImagePathByModule = (filename, folder, moduleId, withTheme = true) => {
+		return withTheme
+			? `${RELATIVE_PATH}/${moduleId}mobile/extensions/${moduleId}/assets/${folder}/${AppTheme.id}/${filename}`
+			: `${RELATIVE_PATH}/${moduleId}mobile/extensions/${moduleId}/assets/${folder}/${filename}`;
 	};
 
 	/**
@@ -87,20 +90,21 @@ jn.define('asset-manager', (require, exports, module) => {
 	 * @param {string} [filename]
 	 * @param {string} folder
 	 * @param {string} moduleId
+	 * @param {boolean} withTheme=true
 	 * @return {string}
 	 */
-	const makeLibraryImagePath = (filename, folder, moduleId) => {
+	const makeLibraryImagePath = (filename, folder, moduleId, withTheme = true) => {
 		if (moduleId && folder)
 		{
-			return makeLibraryImagePathByModule(filename, folder, moduleId);
+			return makeLibraryImagePathByModule(filename, folder, moduleId, withTheme);
 		}
 
 		if (folder)
 		{
-			return `${IMAGE_PATH}/${folder}/${AppTheme.id}/${filename}`;
+			return withTheme ? `${IMAGE_PATH}/${folder}/${AppTheme.id}/${filename}` : `${IMAGE_PATH}/${folder}/${filename}`;
 		}
 
-		return `${IMAGE_PATH}/${AppTheme.id}/${filename}`;
+		return withTheme ? `${IMAGE_PATH}/${AppTheme.id}/${filename}` : `${IMAGE_PATH}/${filename}`;
 	};
 
 	module.exports = {

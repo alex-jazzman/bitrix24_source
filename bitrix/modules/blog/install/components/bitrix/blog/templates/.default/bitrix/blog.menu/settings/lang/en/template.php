@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_MENU_TITLE'] = "Blog";
 $MESS ['BLOG_MENU_ADD_MESSAGE'] = "New message";
 $MESS ['BLOG_MENU_ADD_MESSAGE_TITLE'] = "Add a new message";
@@ -12,4 +12,3 @@ $MESS ['BLOG_MENU_SETTINGS'] = "Settings";
 $MESS ['BLOG_MENU_SETTINGS_TITLE'] = "Edit blog settings";
 $MESS ['BLOG_MENU_MODERATION_MESSAGES'] = "Moderation";
 $MESS ['BLOG_MENU_MODERATION_MESSAGES_TITLE'] = "View Posts Awaiting Moderation";
-?>

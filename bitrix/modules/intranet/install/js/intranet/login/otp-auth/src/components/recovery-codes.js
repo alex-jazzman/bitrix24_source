@@ -2,6 +2,7 @@ import { Headline } from 'ui.system.typography.vue';
 import { RecoveryCodeInput } from './recovery-code-input';
 import { Captcha } from './captcha';
 import { sendData } from 'ui.analytics';
+import { useOtpCaptchaFlow } from '../composables/use-otp-captcha-flow';
 
 // @vue/component
 export const RecoveryCodes = {
@@ -51,18 +52,12 @@ export const RecoveryCodes = {
 		});
 	},
 	methods: {
+		...useOtpCaptchaFlow({
+			mainBlockVisibleKey: 'isRecoveryCodeBlockVisible',
+		}),
 		onSubmitForm(event)
 		{
-			if (this.captchaCode)
-			{
-				event.preventDefault();
-				this.showCaptcha();
-			}
-			else
-			{
-				this.isWaiting = true;
-				this.$emit('form-submit');
-			}
+			this.handleFormSubmit(event);
 		},
 		onRecoveryCodeChange(code)
 		{
@@ -71,31 +66,12 @@ export const RecoveryCodes = {
 		onRecoveryCodeComplete(code)
 		{
 			this.recoveryCode = code;
-			this.$nextTick(() => {
-				if (this.captchaCode)
-				{
-					this.showCaptcha();
-				}
-				else
-				{
-					this.isWaiting = true;
-					this.$emit('form-submit');
-					if (this.$refs.authForm)
-					{
-						this.$refs.authForm.submit();
-					}
-				}
-			});
+			this.handleCodeComplete(code);
 		},
-		showPushOtp()
+		showAlternativeMethods()
 		{
 			this.$emit('clear-errors');
-			this.$emit('back-to-push');
-		},
-		showCaptcha()
-		{
-			this.isRecoveryCodeBlockVisible = false;
-			this.isCaptchaBlockVisible = true;
+			this.$emit('show-alternatives');
 		},
 	},
 	template: `
@@ -107,7 +83,7 @@ export const RecoveryCodes = {
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
 
 			<div v-show="isRecoveryCodeBlockVisible" class="intranet-island-otp-push-recovery-codes__wrapper">
-				<div @click="showPushOtp" class="intranet-back-button">
+				<div @click="showAlternativeMethods" class="intranet-back-button">
 					<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow --recovery"></i>
 				</div>
 

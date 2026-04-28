@@ -66,3 +66,5 @@ $MESS['PHONE_CALL_B24_BANNER_TITLE_COMMON'] = 'Звоните прямо из Б
 $MESS['PHONE_CALL_B24_BANNER_FEATURE_1_COMMON'] = 'Входящие и исходящие звонки для работы с клиентами';
 $MESS['PHONE_CALL_B24_BANNER_FEATURE_2_COMMON'] = 'Можно арендовать номер или использовать свой';
 $MESS['PHONE_CALL_B24_BANNER_FEATURE_3_COMMON'] = 'Записи разговоров сохранятся в CRM';
+
+$MESS['M_PROFILE_PERMISSION_DENIED_TEXT'] = 'Нет прав на просмотр';

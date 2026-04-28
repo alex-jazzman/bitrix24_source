@@ -154,8 +154,10 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 		{
 			if (this.toolbarFactory)
 			{
-				void requireLazy('crm:onboarding').then(({ Onboarding, CaseName }) => {
-					if (Onboarding)
+				void requireLazy('crm:onboarding', false).then((ext) => {
+					const { Onboarding, CaseName } = ext;
+
+					if (Onboarding && CaseName)
 					{
 						void Onboarding.tryToShow(CaseName.ON_DEALS_AT_DIFFERENT_STAGES, {
 							targetRef: this.toolbarRef,
@@ -164,7 +166,10 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 							categoryId: this.getCurrentCategoryId(),
 						});
 					}
-				});
+				})
+					.catch((error) => {
+						console.error(error);
+					});
 			}
 		}
 

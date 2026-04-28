@@ -1,23 +1,29 @@
-import { Tag, Loc, Event, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { Tag, Loc } from 'main.core';
 import { Analytics } from '../analytics';
 import { InputRowFactory } from '../input-row-factory';
+import { RestoreFiredUsersPopup } from '../popup/restore-fired-users-popup';
 import { Page } from './page';
-import { TagSelector } from 'ui.entity-selector';
+import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
+import { InputRow } from '../elements/input-row';
+import { Transport } from '../transport';
+import DepartmentControl, { EntityType } from 'intranet.department-control';
+import { EventEmitter } from 'main.core.events';
 
 export class ExtranetPage extends Page
 {
 	#container: HTMLElement;
 	#inputsFactory: InputRowFactory;
-	#tagSelectorGroup: TagSelector;
-	#onClickAddInputRow: function;
+	#inputsRows: Array;
+	#transport: Transport;
+	#departmentControl: DepartmentControl;
 
 	constructor(options)
 	{
 		super();
+		this.#inputsRows = [];
+		this.#transport = options.transport;
 		this.#inputsFactory = options.inputsFactory instanceof InputRowFactory ? options.inputsFactory : null;
-		this.#tagSelectorGroup = options.tagSelectorGroup instanceof TagSelector ? options.tagSelectorGroup : null;
-		this.#onClickAddInputRow = Type.isFunction(options.onClickAddInputRow) ? options.onClickAddInputRow : null;
+		this.#departmentControl = options.departmentControl instanceof DepartmentControl ? options.departmentControl : null;
 	}
 
 	render(): HTMLElement
@@ -27,118 +33,126 @@ export class ExtranetPage extends Page
 			return this.#container;
 		}
 
+		const rowsContainer = Tag.render`
+			<div class="intranet-invite-form-rows-container"></div>
+		`;
+
+		for (let i = 0; i < 2; i++)
+		{
+			const inputsRow = this.#inputsFactory.createInputsRow(i);
+			this.#inputsRows.push(inputsRow);
+			inputsRow.renderTo(rowsContainer);
+		}
+
 		this.#container = Tag.render`
-			<div class="invite-wrap js-intranet-invitation-block" data-role="extranet-block">
-				<div class="invite-title-container">
-					<div class="invite-title-icon invite-title-icon-message">
-						<div class="ui-icon-set --earth"></div>
-					</div>
-					<div class="invite-title-text">${Loc.getMessage('INTRANET_INVITE_DIALOG_EXTRANET_TITLE')}</div>
+			<div class="intranet-invitation-block">
+				<div class="intranet-invitation-block__department-control">
+					<div class="intranet-invitation-block__department-control-inner">${this.#departmentControl.render()}</div>
 				</div>
-				<div class="invite-content-container">
-					<form method="POST" name="EXTRANET_DIALOG_FORM" class="invite-form-container">
-						<div class="invite-form-row" style="margin-bottom: 15px;">
-							<div class="invite-form-col">
-								<div class="ui-ctl-label-text">${Loc.getMessage('INTRANET_INVITE_DIALOG_EXTRANET_GROUP')}</div>
-								<div data-role="entity-selector-container"></div>
-							</div>
-						</div>
-						<div data-role="rows-container"></div>
-						<div class="invite-form-buttons">
-							<span class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-icon-add ui-btn-round" data-role="invite-more">
-								${Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MORE')}
-							</span>
-						</div>
-					</form>
+				<div class="intranet-invitation-block__content">
+					<span class="intranet-invitation-status__title ui-headline --sm">${Loc.getMessage('INTRANET_INVITE_DIALOG_SMS_INVITATION_TITLE')}</span>
+					${rowsContainer}
+					${this.#getAddButton(rowsContainer).render()}
+					<div class="intranet-invitation-block__footer">
+						${this.#getInviteButton().render()}
+					</div>
 				</div>
 			</div>
 		`;
 
-		this.#tagSelectorGroup?.renderTo(this.#container.querySelector('[data-role="entity-selector-container"]'));
-
-		this.#inputsFactory.renderInputRowsTo(
-			this.#container.querySelector('div[data-role="rows-container"]'),
-			3,
-		);
-
-		const moreButton = this.#container.querySelector("[data-role='invite-more']");
-		if (Type.isDomNode(moreButton))
-		{
-			Event.unbindAll(moreButton);
-			Event.bind(moreButton, 'click', () => {
-				this.#inputsFactory.renderInputRowTo(this.#container.querySelector('div[data-role="rows-container"]'));
-				if (this.#onClickAddInputRow)
-				{
-					this.#onClickAddInputRow();
-				}
-			});
-		}
-
 		return this.#container;
+	}
+
+	#getInviteButton(): Button
+	{
+		const inviteButton = new Button({
+			useAirDesign: true,
+			text: Loc.getMessage('BX24_INVITE_DIALOG_BUTTON_INVITE'),
+			style: AirButtonStyle.FILLED,
+			props: {
+				'data-test-id': 'invite-extranet-page-submit-button',
+			},
+			onclick: () => {
+				if (inviteButton.isWaiting())
+				{
+					return;
+				}
+
+				inviteButton.setState(ButtonState.WAITING);
+
+				this.#transport.send({
+					action: 'extranet',
+					data: {
+						invitations: this.#getEnteredInvitations(),
+						tab: 'email',
+						workgroupIds: this.#departmentControl.getAllValues()[EntityType.EXTRANET],
+					},
+					analyticsLabel: {
+						INVITATION_TYPE: 'extranet',
+						INVITATION_COUNT: this.#getEnteredInvitations().length,
+					},
+				}).then((response) => {
+					if (response.data.invitedUserIds.length > 0)
+					{
+						EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
+					}
+
+					this.#inputsRows.forEach((inputRow: InputRow) => {
+						inputRow.clear();
+					});
+					inviteButton.setState(null);
+
+					if (response.data.firedUserList && response.data.firedUserList.length > 0)
+					{
+						(new RestoreFiredUsersPopup({
+							userList: response.data.firedUserList,
+							isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
+							transport: this.#transport,
+						})).show();
+					}
+				}).catch((reject) => {
+					inviteButton.setState(null);
+				});
+			},
+		});
+
+		return inviteButton;
+	}
+
+	#getAddButton(rowsContainer: HTMLElement): Button
+	{
+		return new Button({
+			useAirDesign: true,
+			text: Loc.getMessage('INTRANET_INVITE_DIALOG_ADD_MORE'),
+			style: AirButtonStyle.PLAIN_ACCENT,
+			icon: BX.UI.IconSet.Outline.CIRCLE_PLUS,
+			props: {
+				'data-test-id': 'invite-extranet-page-add-more-button',
+			},
+			onclick: () => {
+				const inputsRow = this.#inputsFactory.createInputsRow();
+				this.#inputsRows.push(inputsRow);
+				inputsRow.renderTo(rowsContainer);
+			},
+		});
+	}
+
+	#getEnteredInvitations(): Array
+	{
+		const result = [];
+
+		this.#inputsRows.forEach((inputRow: InputRow) => {
+			if (!inputRow.isEmpty())
+			{
+				result.push(inputRow.getValue());
+			}
+		});
+
+		return result;
 	}
 
 	getAnalyticTab(): string
 	{
 		return Analytics.TAB_EXTRANET;
-	}
-
-	onSubmit(event: BaseEvent)
-	{
-		const formNode = this.render().querySelector('form');
-		const [items, errorInputData] = this.#inputsFactory.parseEmailAndPhone(formNode);
-
-		const errors = [];
-		if (errorInputData.length > 0)
-		{
-			errors.push(`${Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_VALIDATE_ERROR')}: ${errorInputData.join(', ')}`);
-		}
-
-		if (items.length <= 0)
-		{
-			errors.push(Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_EMPTY_ERROR'));
-		}
-		const context = event.getData()?.context;
-		if (errors.length > 0)
-		{
-			EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-				errors,
-			});
-
-			return;
-		}
-
-		const tagSelectorItems = this.#tagSelectorGroup.getDialog().getSelectedItems();
-		const projectIds = [];
-		tagSelectorItems.forEach((item) => {
-			const id = parseInt(item.getId(), 10);
-			projectIds.push(id);
-		});
-
-		const data = {
-			invitations: items,
-			workgroupIds: projectIds,
-			tab: 'email',
-		};
-
-		const analyticsLabel = {
-			INVITATION_TYPE: 'extranet',
-			INVITATION_COUNT: items.length,
-		};
-
-		EventEmitter.emit(context, 'BX.Intranet.Invitation:onSendData', {
-			action: 'extranet',
-			data,
-			analyticsLabel,
-		});
-	}
-
-	onInviteSuccess(event: BaseEvent)
-	{
-		this.render().querySelector('form')?.reset();
-	}
-
-	getSubmitButtonText(): ?string
-	{
-		return Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	}
 }

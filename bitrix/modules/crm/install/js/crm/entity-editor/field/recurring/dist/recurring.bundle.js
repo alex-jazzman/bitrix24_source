@@ -983,9 +983,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 	      const isBound = await this.bindClient();
 	      if (isBound) {
-	        var _this$currentCommunic, _this$currentCommunic2;
+	        var _this$currentCommunic, _selectedClientEmails;
 	        BX.Crm.EntityEditor.getDefault().reload();
-	        const id = (_this$currentCommunic = this.currentCommunications[0]) == null ? void 0 : (_this$currentCommunic2 = _this$currentCommunic.emails[0]) == null ? void 0 : _this$currentCommunic2.id;
+	        const selectedClientEmails = ((_this$currentCommunic = this.currentCommunications.find(communication => communication.entityId === this.selectedClient.entityId && communication.entityTypeId === this.selectedClient.entityTypeId)) == null ? void 0 : _this$currentCommunic.emails) || [];
+	        const id = (_selectedClientEmails = selectedClientEmails[0]) == null ? void 0 : _selectedClientEmails.id;
 	        if (id) {
 	          this.currentEmailIds.add(id);
 	          this.emitChanges();
@@ -2543,4 +2544,3 @@ this.BX.Crm = this.BX.Crm || {};
 
 }((this.BX.Crm.Field = this.BX.Crm.Field || {}),BX.Vue3,BX.Crm.Timeline,BX.Main,BX.Main,BX.UI.DatePicker,BX.UI,BX.UI.Mail,BX,BX.Event,BX.UI.EntitySelector,BX));
 //# sourceMappingURL=recurring.bundle.js.map
-

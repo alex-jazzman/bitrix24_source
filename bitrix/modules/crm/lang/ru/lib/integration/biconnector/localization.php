@@ -180,7 +180,7 @@ $MESS['CRM_ACTIVITY_RELATION_FIELD_OWNER_ID'] = "Идентификатор эл
 $MESS['CRM_ACTIVITY_RELATION_FIELD_OWNER_TYPE_ID'] = "Идентификатор типа элемента, к которому привязано дело";
 $MESS['CRM_ACTIVITY_RELATION_FIELD_CREATED_AT'] = "Дата создания дела";
 
-//CRM_AI_QUALITY_ASSESSMENT table/field for CoPilot quality assessment descriptions
+// CRM_AI_QUALITY_ASSESSMENT table/field for AI quality assessment descriptions
 $MESS['CRM_AI_QUALITY_ASSESSMENT_TABLE'] = "Оценки разговоров по скриптам";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ID'] = "ID оценки качества";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_CREATED_AT'] = "Дата создания";

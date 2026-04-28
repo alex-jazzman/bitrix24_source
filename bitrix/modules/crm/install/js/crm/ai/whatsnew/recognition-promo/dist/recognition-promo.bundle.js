@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.AI = this.BX.Crm.AI || {};
-(function (exports,main_core,main_popup,ui_buttons,ui_iconSet_api_core,ui_iconSet_main,ui_iconSet_actions,ui_lottie) {
+(function (exports,crm_ai_nameService,main_core,main_popup,ui_buttons,ui_iconSet_api_core,ui_iconSet_main,ui_iconSet_actions,ui_lottie) {
 	'use strict';
 
 	let _ = t => t,
@@ -118,6 +118,7 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 	  });
 	}
 	function _renderPopupContent2() {
+	  const headerTitle = main_core.Loc.getMessage('RECOGNITION_PROMO_TITLE', crm_ai_nameService.NameService.copilotNameReplacement());
 	  return main_core.Tag.render(_t || (_t = _`
 			<div class="crm__ai-recognition-promo">
 				<header class="crm__ai-recognition-promo_header">
@@ -125,9 +126,7 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 						<div class="crm__ai-recognition-promo_header-icon">
 							${0}
 						</div>
-						<h4 class="crm__ai-recognition-promo_header-title">
-							${0}
-						</h4>
+						<h4 class="crm__ai-recognition-promo_c">${0}</h4>
 					</div>
 					<div class="crm__ai-recognition-promo_header-close-button">
 						${0}
@@ -146,7 +145,7 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 					<label>${0}</label>
 				</div>
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderHeaderCopilotIcon)[_renderHeaderCopilotIcon](), main_core.Loc.getMessage('RECOGNITION_PROMO_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _renderHidePopupButton)[_renderHidePopupButton](), babelHelpers.classPrivateFieldLooseBase(this, _renderLottieAnimation)[_renderLottieAnimation](), babelHelpers.classPrivateFieldLooseBase(this, _renderContentText)[_renderContentText](), babelHelpers.classPrivateFieldLooseBase(this, _renderConnectTelephonyButton)[_renderConnectTelephonyButton](), babelHelpers.classPrivateFieldLooseBase(this, _renderRemindLaterButton)[_renderRemindLaterButton](), main_core.Loc.getMessage('RECOGNITION_PROMO_DONT_SHOW_AGAIN'));
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderHeaderCopilotIcon)[_renderHeaderCopilotIcon](), headerTitle, babelHelpers.classPrivateFieldLooseBase(this, _renderHidePopupButton)[_renderHidePopupButton](), babelHelpers.classPrivateFieldLooseBase(this, _renderLottieAnimation)[_renderLottieAnimation](), babelHelpers.classPrivateFieldLooseBase(this, _renderContentText)[_renderContentText](), babelHelpers.classPrivateFieldLooseBase(this, _renderConnectTelephonyButton)[_renderConnectTelephonyButton](), babelHelpers.classPrivateFieldLooseBase(this, _renderRemindLaterButton)[_renderRemindLaterButton](), main_core.Loc.getMessage('RECOGNITION_PROMO_DONT_SHOW_AGAIN'));
 	}
 	function _renderHeaderCopilotIcon2() {
 	  var _getComputedStyle$get;
@@ -235,7 +234,8 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 	    '[LINK1]': '<a ref="link1">',
 	    '[/LINK1]': '</a>',
 	    '[LINK2]': '<a ref="link2">',
-	    '[/LINK2]': '</a>'
+	    '[/LINK2]': '</a>',
+	    '#COPILOT_NAME#': crm_ai_nameService.NameService.copilotName()
 	  });
 	  const container = main_core.Tag.render(_t4 || (_t4 = _`
 			<div class="crm__ai-recognition-promo_content-description">
@@ -295,5 +295,5 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 
 	exports.RecognitionPromo = RecognitionPromo;
 
-}((this.BX.Crm.AI.Whatsnew = this.BX.Crm.AI.Whatsnew || {}),BX,BX.Main,BX.UI,BX.UI.IconSet,BX,BX,BX.UI));
+}((this.BX.Crm.AI.Whatsnew = this.BX.Crm.AI.Whatsnew || {}),BX.Crm.AI,BX,BX.Main,BX.UI,BX.UI.IconSet,BX,BX,BX.UI));
 //# sourceMappingURL=recognition-promo.bundle.js.map

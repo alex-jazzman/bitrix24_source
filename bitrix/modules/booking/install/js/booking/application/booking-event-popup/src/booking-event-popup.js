@@ -41,7 +41,7 @@ export class BookingEventPopup
 		}
 
 		await Core.init({
-			skipBookingCore: true,
+			skipCoreModels: true,
 			skipPull: true,
 		});
 		await Core.addDynamicModule(

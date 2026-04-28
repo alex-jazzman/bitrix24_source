@@ -2,6 +2,7 @@ import type { ResourceModel } from 'booking.model.resources';
 import { mapGetters } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
+import type { SkuResourcesEditorOptions } from 'booking.model.sku-resources-editor';
 
 import { SearchInput } from '../base/search-input/search-input';
 import { ResourcesItem } from './resources-item/resources-item';
@@ -68,6 +69,10 @@ export const ResourcesView = {
 
 			return groupedResources;
 		},
+		skusResourcesEditorOptions(): SkuResourcesEditorOptions
+		{
+			return this.$store.state[Model.SkuResourcesEditor].options;
+		},
 	},
 	methods: {
 		selectResource(resourceId: number): void
@@ -125,7 +130,9 @@ export const ResourcesView = {
 				@update:checked="toggleAll"
 			>
 				<template #button>
-					<AddResourcesButton/>
+					<AddResourcesButton
+						v-if="skusResourcesEditorOptions.editMode"
+					/>
 				</template>
 			</ResourcesBar>
 			<div class="booking-sre-app__resources-view__resources-list">

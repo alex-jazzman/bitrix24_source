@@ -153,6 +153,7 @@ export const TemplateNameInput = {
 				v-model="editedTitle"
 				ref="editInput"
 				class="ui-top-panel-editable-title-edit-input"
+				@keydown.enter.prevent="onSaveTitle"
 			/>
 			<div class="ui-top-panel-editable-title-edit-buttons">
 				<UiButton

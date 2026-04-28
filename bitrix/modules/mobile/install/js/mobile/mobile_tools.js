@@ -813,7 +813,25 @@
 					},
 				},
 				{
+					regExp: /\/disk\/boards\/(\d+)\/open\/?/i,
+					result: {
+						url,
+					},
+				},
+				{
 					regExp: /\/disk\/file\/([\da-z]+)(?:\/[^?]*)?(?:\?.*)?$/i,
+					result: {
+						url,
+					},
+				},
+				{
+					regExp: /\/disk\/file\/([^/?]+)(?:\?|$|\/)/i,
+					result: {
+						url,
+					},
+				},
+				{
+					regExp: /\/(board|sheet|pres|doc)\/([^/?]+)(?:\?|$|\/)/i,
 					result: {
 						url,
 					},

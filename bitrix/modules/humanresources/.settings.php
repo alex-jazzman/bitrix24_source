@@ -287,6 +287,9 @@ return [
 			'humanresources.public.service.nodeMemberService' => [
 				'className' => \Bitrix\HumanResources\Public\Service\NodeMemberService::class,
 			],
+			'humanresources.public.service.nodeService' => [
+				'className' => \Bitrix\HumanResources\Public\Service\NodeService::class,
+			],
 			'humanresources.private.internal.service.structure.roleService' => [
 				'className' => \Bitrix\HumanResources\Internals\Service\Structure\RoleService::class,
 			],

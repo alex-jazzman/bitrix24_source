@@ -7,11 +7,14 @@ jn.define('rest/run-action-executor', (require, exports, module) => {
 	const { Logger, LogType } = require('utils/logger');
 	const { toMD5 } = require('utils/object');
 
-	const logger = new Logger([
-		LogType.INFO,
-		LogType.ERROR,
-		LogType.WARN,
-	]);
+	const logger = new Logger(
+		[
+			LogType.INFO,
+			LogType.ERROR,
+			LogType.WARN,
+		],
+		true,
+	);
 
 	/**
 	 * @class RunActionExecutor

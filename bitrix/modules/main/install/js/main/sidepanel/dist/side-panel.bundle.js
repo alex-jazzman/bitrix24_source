@@ -4448,17 +4448,20 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "handleAnchorClick",
 	    value: function handleAnchorClick(event) {
-	      if (!this.isAnchorBinding()) {
+	      const link = this.extractLinkFromEvent(event);
+	      if (!link) {
 	        return;
 	      }
-	      const link = this.extractLinkFromEvent(event);
-	      if (!link || main_core.Dom.attr(link.anchor, 'data-slider-ignore-autobinding') !== null) {
+	      const rule = this.getUrlRule(link.url, link);
+	      if (!this.isAnchorBinding() && !(rule !== null && rule !== void 0 && rule.forceAnchorBinding)) {
+	        return;
+	      }
+	      if (main_core.Dom.attr(link.anchor, 'data-slider-ignore-autobinding') !== null) {
 	        return;
 	      }
 	      if (main_core.Dom.attr(event.target, 'data-slider-ignore-autobinding') !== null) {
 	        return;
 	      }
-	      const rule = this.getUrlRule(link.url, link);
 	      if (!this.isValidLink(rule, link)) {
 	        return;
 	      }

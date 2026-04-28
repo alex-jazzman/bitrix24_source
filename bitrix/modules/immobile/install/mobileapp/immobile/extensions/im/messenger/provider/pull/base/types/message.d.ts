@@ -6,6 +6,7 @@ import {CopilotRecentItemData} from "../../../../controller/recent/copilot/types
 import {RecentConfigSections} from "./recent";
 import {RawFile, RawMessage, RawPin, RawUser} from "./common";
 import {DialogId} from "../../../../types/common";
+import {OpenlinesSessionModelState} from "../../../../model/dialogues/src/openlines/type";
 
 export type MessagesAutoDeleteDelayParams = {
 	delay: number,
@@ -71,7 +72,6 @@ type MessagePullHandlerMessageDeleteV2Params = {
 	counter: number,
 	dialogId: string | number,
 	fromUserId: number,
-	counterType: string, // see im/messenger/const/counter
 	lastMessageViews: {
 		messageId: number,
 		firstViewers: Array<number>,
@@ -83,6 +83,10 @@ type MessagePullHandlerMessageDeleteV2Params = {
 	toUserId: number,
 	unread: boolean,
 	type: 'private' | 'chat',
+	recentConfig: {
+		chatId: number,
+		sections: RecentConfigSections,
+	},
 };
 
 export type NewLastMessageDataMessageDeleteV2Params = {
@@ -111,7 +115,6 @@ export type ReadMessageParams = {
 	viewedMessages: number[],
 	type: string,
 	parentChatId: number,
-	counterType: string
 };
 
 export type ReadMessageOpponentParams = {
@@ -145,10 +148,10 @@ type MessagePullHandlerUpdateDialogParams = {
 	chat: Record<number, Partial<DialoguesModelState>>,
 	userInChat: Record<number, Array<number>>,
 	copilot: CopilotRecentItemData,
-	messagesAutoDeleteConfigs: Array<messagesAutoDeleteConfigs>
+	messagesAutoDeleteConfigs: Array<MessagesAutoDeleteConfigs>
 }
 
-export type messagesAutoDeleteConfigs = {
+export type MessagesAutoDeleteConfigs = {
 	chatId: number,
 	delay: number,
 }
@@ -209,11 +212,10 @@ declare type MessageAddParams = {
 	chatId: number,
 	copilot: CopilotRecentItemData | null,
 	counter: number,
-	counterType: string, // see im/messenger/const/counter,
 	dateLastActivity: string,
 	dialogId: string,
 	files: {[fileId: string]: RawFile} | [],
-	lines: null,
+	lines: OpenlinesSessionModelState | null,
 	message: RawMessage,
 	messagesAutoDeleteConfigs: { delay: number, chatId: number }[],
 	multidialog: [],

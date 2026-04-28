@@ -52,6 +52,30 @@ jn.define('im/messenger/provider/services/chat/bot', (require, exports, module) 
 				)
 				.catch((error) => logger.error(`${this.constructor.name}.sendContext.catch:`, error));
 		}
+
+		/**
+		 * @param {MCPAuth['id']} authId
+		 * @return {Promise<any>}
+		 */
+		async sendAiAssistantMCPSelection(authId)
+		{
+			return runAction(
+				RestMethod.aiAssistantApiMCPHintSendSelectionHintOnce,
+				{
+					data: {
+						authId,
+					},
+				},
+			)
+				.then(
+					(response) => {
+						logger.log(`${this.constructor.name}.sendAiAssistantMCPSelection.response:`, response);
+
+						return response;
+					},
+				)
+				.catch((error) => logger.error(`${this.constructor.name}.sendAiAssistantMCPSelection.catch:`, error));
+		}
 	}
 
 	module.exports = {

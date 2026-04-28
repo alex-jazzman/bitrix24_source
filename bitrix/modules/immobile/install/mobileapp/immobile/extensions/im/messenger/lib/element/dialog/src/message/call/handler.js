@@ -70,7 +70,7 @@ jn.define('im/messenger/lib/element/dialog/message/call/handler', (require, expo
 			;
 
 			CallManager.getInstance().sendAnalyticsEvent(dialog.dialogId, analyticsElement, Analytics.Section.callMessage);
-			CallManager.getInstance().createVideoCall(dialog.dialogId);
+			void CallManager.getInstance().createVideoCall(dialog.dialogId);
 		}
 	}
 

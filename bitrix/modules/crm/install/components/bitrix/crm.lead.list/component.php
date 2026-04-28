@@ -1043,6 +1043,7 @@ foreach ($arFilter as $k => $v)
 		unset($arFilter[$k]);
 	}
 }
+Crm\Filter\FieldsTransform\DateTimeField::applyTimezoneOffset(CCrmOwnerType::Lead, $arFilter);
 
 \Bitrix\Crm\UI\Filter\EntityHandler::internalize($arResult['FILTER'], $arFilter);
 
@@ -1063,7 +1064,11 @@ if($actionData['ACTIVE'])
 				$DB->StartTransaction();
 
 				if($CCrmBizProc->Delete($ID)
-					&& $CCrmLead->Delete($ID, array('CHECK_DEPENDENCIES' => true, 'PROCESS_BIZPROC' => false)))
+					&& $CCrmLead->Delete($ID, [
+						'CHECK_DEPENDENCIES' => true,
+						'PROCESS_BIZPROC' => false,
+						'ANALYTICS' => $arParams['ANALYTICS'] ?? [],
+					]))
 				{
 					$DB->Commit();
 				}

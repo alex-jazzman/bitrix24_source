@@ -9,10 +9,11 @@ return [
 	'js' => 'dist/collab-list.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.lib.draft',
-		'im.v2.lib.utils',
 		'im.v2.component.elements.list-loading-state',
 		'im.v2.component.list.items.recent',
+		'im.v2.lib.draft',
+		'im.v2.lib.utils',
+		'im.v2.application.core',
 		'im.v2.const',
 		'im.v2.provider.service.recent',
 		'im.v2.lib.menu',

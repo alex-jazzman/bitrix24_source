@@ -1,4 +1,5 @@
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
+import { CounterManager } from 'im.v2.lib.counter';
 
 import './css/multidialog-item.css';
 
@@ -53,9 +54,9 @@ export const MultidialogItem = {
 		},
 		counter(): number
 		{
-			const counter = this.$store.getters['counters/getChatCounterByChatId'](this.chatId) ?? 0;
+			const counter = this.$store.getters['counters/getCounterByChatId'](this.chatId);
 
-			return counter > 99 ? '99+' : counter;
+			return CounterManager.formatCounter(counter);
 		},
 		formatDate(): string
 		{

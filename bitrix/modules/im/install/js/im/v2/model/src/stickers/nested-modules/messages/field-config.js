@@ -1,6 +1,8 @@
 import { Type } from 'main.core';
 
-import { isNumberOrString, type FieldsConfig } from 'im.v2.model';
+import { isNumberOrString } from '../../../utils/format';
+
+import type { FieldsConfig } from '../../../utils/validate';
 
 export const stickerMessagesConfig: FieldsConfig = [
 	{

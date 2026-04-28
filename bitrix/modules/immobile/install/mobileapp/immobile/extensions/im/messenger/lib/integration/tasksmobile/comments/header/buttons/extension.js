@@ -14,6 +14,7 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/header/buttons', (r
 	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Icon } = require('assets/icons');
+	const { Analytics } = require('im/messenger/const');
 
 	/** @type DialogHeaderButton */
 	const OpenTaskButton = {
@@ -87,7 +88,12 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/header/buttons', (r
 			switch (buttonId)
 			{
 				case CallAudioButton.id:
-					CallManager.getInstance().createAudioCall(this.dialogId);
+					CallManager.getInstance().sendAnalyticsEvent(
+						this.dialogId,
+						Analytics.Element.audiocall,
+						Analytics.Section.taskChat,
+					);
+					void CallManager.getInstance().createAudioCall(this.dialogId);
 					break;
 
 				case OpenTaskButton.id:

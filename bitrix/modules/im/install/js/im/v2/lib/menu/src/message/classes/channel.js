@@ -1,6 +1,6 @@
-import { MessageMenu, MenuSectionCode, NestedMenuSectionCode } from './message-base';
+import { type MenuItemOptions, type MenuSectionOptions } from 'ui.system.menu';
 
-import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
+import { MessageMenu, MenuSectionCode, NestedMenuSectionCode } from './message-base';
 
 export class ChannelMessageMenu extends MessageMenu
 {

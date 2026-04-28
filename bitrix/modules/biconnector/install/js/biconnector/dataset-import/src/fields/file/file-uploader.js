@@ -66,6 +66,10 @@ export const FileUploader = {
 		'parsingOptionsChanged',
 	],
 	computed: {
+		isDataFormatsEditable()
+		{
+			return !this.isEditMode || Boolean(this.$store.state.config.fileProperties.fileToken);
+		},
 		uploaderOptions()
 		{
 			return {
@@ -137,10 +141,17 @@ export const FileUploader = {
 		},
 		openDataFormatSlider()
 		{
-			FormatSelector.openSlider(this.$store.state.config.dataFormats, this.dataFormatTemplates, (selectedFormats) => {
-				this.$store.commit('setDataFormats', selectedFormats);
-				this.$emit('parsingOptionsChanged');
-			});
+			FormatSelector.openSlider(
+				this.$store.state.config.dataFormats,
+				this.dataFormatTemplates,
+				(selectedFormats) => {
+					this.$store.commit('setDataFormats', selectedFormats);
+					this.$emit('parsingOptionsChanged');
+				},
+				{
+					isEditable: this.isDataFormatsEditable,
+				},
+			);
 		},
 	},
 	template: `

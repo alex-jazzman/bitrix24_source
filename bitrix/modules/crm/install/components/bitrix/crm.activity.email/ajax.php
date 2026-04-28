@@ -324,7 +324,7 @@ class CrmActivityEmailAjax
 
 		if ($error === false)
 		{
-			Email::uncompressActivity($activity);
+			Email::uncompressActivityDescription($activity);
 
 			$activity['DESCRIPTION_HTML'] = Email::getDescriptionHtmlByActivityFields($activity);
 

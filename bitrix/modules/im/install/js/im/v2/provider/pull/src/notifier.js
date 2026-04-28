@@ -6,6 +6,7 @@ import { DesktopManager } from 'im.v2.lib.desktop';
 import { CallManager } from 'im.v2.lib.call';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 
+import type { ImModelChat } from 'im.v2.model';
 import type { MessageAddParams } from './types/message';
 import type { NotifyAddParams } from './types/notification';
 
@@ -149,7 +150,7 @@ export class NotifierPullHandler
 			return true;
 		}
 
-		const counter = this.store.getters['counters/getSpecificLinesCounter'](params.chatId);
+		const counter = this.store.getters['counters/getCounterByChatId'](params.chatId);
 
 		return counter === 0;
 	}
@@ -184,8 +185,7 @@ export class NotifierPullHandler
 			return false;
 		}
 
-		const dialog = this.store.getters['chats/get'](dialogId, true);
-		const isMuted = dialog.muteList.includes(Core.getUserId());
+		const { isMuted }: ImModelChat = this.store.getters['chats/get'](dialogId, true);
 
 		return !this.#isUserDnd() && !isMuted;
 	}

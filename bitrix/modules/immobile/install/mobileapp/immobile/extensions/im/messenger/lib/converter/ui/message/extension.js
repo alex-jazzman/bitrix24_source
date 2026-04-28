@@ -34,6 +34,7 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 		VideoNoteTextMessage,
 		StickerMessage,
 		DeletedStickerMessage,
+		AiBizprocMessage,
 	} = require('im/messenger/lib/element/dialog');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessageHelper } = require('im/messenger/lib/helper');
@@ -126,6 +127,11 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 			if (messageHelper.isError)
 			{
 				return new ErrorMessage(modelMessage, options);
+			}
+
+			if (messageHelper.isAiBizproc && Feature.isFootnoteMessageIdAvailable)
+			{
+				return new AiBizprocMessage(modelMessage, options);
 			}
 
 			if (modelMessage.params?.componentId === MessageParams.ComponentId.CopilotMessage)

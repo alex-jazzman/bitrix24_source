@@ -155,7 +155,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 
 			return navigationButton({
 				testId: 'button-create-copilot',
-				text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_COPILOT'),
+				text: Loc.getMessageWithCopilotBotName('IMMOBILE_DIALOG_CREATOR_NEW_COPILOT_MSGVER_1'),
 				subtitle: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_COPILOT_SUBTITLE_MSGVER_1'),
 				iconSvg: copilotIcon,
 				onClick: () => {

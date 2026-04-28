@@ -9,7 +9,7 @@ import {
 	prepareChatName,
 	prepareLastMessageViews,
 	prepareManagerList,
-	prepareMuteList,
+	prepareMuteStatus,
 } from './format-functions';
 
 import type { FieldsConfig } from 'im.v2.model';
@@ -36,12 +36,6 @@ export const chatFieldsConfig: FieldsConfig = [
 		fieldName: 'quoteId',
 		targetFieldName: 'quoteId',
 		checkFunction: Type.isNumber,
-	},
-	{
-		fieldName: 'counter',
-		targetFieldName: 'counter',
-		checkFunction: isNumberOrString,
-		formatFunction: convertToNumber,
 	},
 	{
 		fieldName: 'userCounter',
@@ -150,9 +144,14 @@ export const chatFieldsConfig: FieldsConfig = [
 	},
 	{
 		fieldName: 'muteList',
-		targetFieldName: 'muteList',
+		targetFieldName: 'isMuted',
 		checkFunction: [Type.isArray, Type.isPlainObject],
-		formatFunction: prepareMuteList,
+		formatFunction: prepareMuteStatus,
+	},
+	{
+		fieldName: 'isMuted',
+		targetFieldName: 'isMuted',
+		checkFunction: Type.isBoolean,
 	},
 	{
 		fieldName: 'inited',

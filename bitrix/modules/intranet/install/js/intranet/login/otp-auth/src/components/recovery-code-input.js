@@ -183,7 +183,7 @@ export const RecoveryCodeInput = {
 	},
 
 	template: `
-		<div class="intranet-verification-code">
+		<div class="intranet-verification-code --recovery-codes">
 			<alphanumeric-input
 				v-for="charPos in codeLength"
 				class="intranet-verification-code__char"

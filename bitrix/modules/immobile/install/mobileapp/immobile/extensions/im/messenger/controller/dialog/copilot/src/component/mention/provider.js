@@ -20,14 +20,12 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/provider', (
 			return (Number(user.id) !== MessengerParams.getUserId()) && !isCopilot;
 		}
 
-		initConfig() {
-			super.initConfig();
-			this.setOptionConfig();
-		}
-
-		setOptionConfig()
+		/**
+		 * @param {number} chatId
+		 */
+		setOptionConfig(chatId)
 		{
-			this.config.setOption({ exclude: ['chats', 'bots'] });
+			this.config.setOption({ exclude: ['chats', 'bots'], contextChatId: chatId });
 		}
 	}
 

@@ -3006,6 +3006,7 @@ class CAllCrmInvoice
 		$errMsg = [];
 		$bError = false;
 
+
 		$repeatSaleAiSegmentCalcAgent = '~CRM_REPEAT_SALE_AI_SEGMENT_CALC_AGENT';
 		if ((string)COption::GetOptionString('crm', $repeatSaleAiSegmentCalcAgent, 'N') === 'N')
 		{
@@ -4101,7 +4102,7 @@ class CAllCrmInvoice
 			{
 				global $APPLICATION;
 				$logger->critical('installExternalEntitiesError Add UF ' . $fieldName . ' to CRM_INVOICE error: ' .$APPLICATION->GetException()->GetString() . ' [' . $APPLICATION->GetException()->GetID() . ']');
-
+/*
 				$result->addError(
 					new Bitrix\Main\Error(
 						GetMessage(
@@ -4113,6 +4114,7 @@ class CAllCrmInvoice
 						)
 					)
 				);
+*/
 			}
 		}
 

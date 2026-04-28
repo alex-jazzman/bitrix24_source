@@ -2,6 +2,7 @@ import { ConnectPopup } from './connect-popup';
 import { QrView } from './view/qr-view';
 import { SendNumberView } from './view/send-number-view';
 import { EnablePushOtpProvider } from './enable-push-otp-provider';
+import { ReconnectQrView } from './view/reconnect-qr-view';
 import { RepeatingRequest } from './repeating-request';
 import { pauseOtpRequest, resumeOtpRequest } from './request';
 
@@ -10,6 +11,7 @@ export {
 	QrView,
 	SendNumberView,
 	EnablePushOtpProvider,
+	ReconnectQrView,
 	RepeatingRequest,
 	pauseOtpRequest,
 	resumeOtpRequest,

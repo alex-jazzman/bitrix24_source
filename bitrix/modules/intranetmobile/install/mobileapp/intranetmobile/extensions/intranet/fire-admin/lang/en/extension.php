@@ -15,6 +15,6 @@ $MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_CONFIRM_WORD"] = "Transfer";
 $MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_CONSENT_INSTRUCTION"] = "Type the word \"#CONFIRM_WORD#\" below to confirm your decision:";
 $MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_DESCRIPTION"] = "To confirm this action, an additional step is necessary to prevent accidental transfer of privileges.";
 $MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_ERROR_INPUT_TEXT"] = "Type the word \"#CONFIRM_WORD#\"";
-$MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_HINT"] = "You will lose your privileges to access Bitrix24 settings and parameters if you confirm the transfer.\n\nURL=#LINK#]#INITIATOR_NAME#[/URL] will be made the primary administrator.";
+$MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_HINT"] = "You will lose your privileges to access Bitrix24 settings and parameters if you confirm the transfer.\n\n[URL=#LINK#]#INITIATOR_NAME#[/URL] will be made the primary administrator.";
 $MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_REJECT_BUTTON"] = "Decline";
 $MESS["M_INTRANET_TRANSFER_ADMIN_RIGHTS_TITLE"] = "Confirm transferring privileges";

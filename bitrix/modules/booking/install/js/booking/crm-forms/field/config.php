@@ -9,11 +9,11 @@ return [
 	'css' => 'dist/field.bundle.css',
 	'js' => 'dist/field.bundle.js',
 	'rel' => [
-		'main.core',
 		'booking.const',
 		'booking.lib.segments',
-		'booking.lib.slot-ranges',
+		'main.core',
 		'ui.date-picker',
+		'booking.lib.slot-ranges',
 		'main.date',
 		'main.loader',
 		'booking.component.mixin.loc-mixin',

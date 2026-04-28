@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BC_BLOG_VAR"] = "Blog identifier variable";
 $MESS["BC_POST_VAR"] = "Blog message identifier variable";
 $MESS["BC_USER_VAR"] = "Blog user identifier variable";
@@ -83,4 +83,3 @@ $MESS["BC_SEO_D"] = "default fields";
 $MESS["BPC_IMAGE_MAX_SIZES_TEXT"] = "default";
 $MESS["BC_COMMENTS_LIST_VIEW"] = "Flat comments view";
 $MESS["BPC_AJAX_PAGINATION"] = "Use AJAX based page navigation in comments";
-?>

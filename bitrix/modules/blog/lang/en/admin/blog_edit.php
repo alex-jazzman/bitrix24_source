@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLBE_SAVE_ERROR"] = "Error saving blog settings";
 $MESS["BLBE_UPDATING"] = "Blog settings";
 $MESS["BLBE_ADDING"] = "New blog";
@@ -39,4 +39,3 @@ $MESS["BLBE_EDITOR_USE_FORMAT_HINT"] = "Tables, text alignment etc.";
 $MESS["BLBE_EDITOR_USE_VIDEO"] = "Allow users to add video";
 $MESS["BLBE_EDITOR_USE_VIDEO_HINT"] = "A corresponding option has to be enabled in the Blog module settings";
 $MESS["BLBE_EDITOR_USE_IMAGE_AND_FILES"] = "Enable file and image upload";
-?>

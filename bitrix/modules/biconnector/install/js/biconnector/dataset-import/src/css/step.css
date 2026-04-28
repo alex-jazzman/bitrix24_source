@@ -19,6 +19,8 @@
 
 .dataset-import-step .ui-section__header {
 	padding: 16px 16px 16px 12px;
+	display: flex;
+	align-items: center;
 }
 
 .dataset-import-step .ui-section__header .ui-section__collapse-icon {
@@ -33,6 +35,10 @@
 
 .dataset-import-step .ui-section__header .ui-section__title-icon {
 	order: 3;
+}
+
+.dataset-import-step .ui-section__header .step-block__header-right {
+	order: 4;
 }
 
 .dataset-import-step .ui-section__separator {

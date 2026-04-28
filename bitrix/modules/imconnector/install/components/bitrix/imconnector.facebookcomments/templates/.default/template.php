@@ -330,7 +330,7 @@ else
 								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_THERE_IS_NO_PAGE_WHERE_THE_ADMINISTRATOR')?>
 							</div>
 							<a href="https://www.facebook.com/pages/create/"
-							   class="webform-small-button webform-small-button-accept webform-small-button-accept-nomargin"
+							   class="ui-btn ui-btn-sm ui-btn-success" style="margin: 0;"
 							   target="_blank">
 								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_TO_CREATE_A_PAGE')?>
 							</a>

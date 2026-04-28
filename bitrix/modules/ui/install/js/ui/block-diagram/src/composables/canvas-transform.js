@@ -1,5 +1,5 @@
 import { ref, toValue, markRaw } from 'ui.vue3';
-import { Dom } from 'main.core';
+import { Dom, Browser } from 'main.core';
 import { useBlockDiagram } from './block-diagram';
 import { Canvas, Grid } from '../utils';
 
@@ -83,6 +83,9 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 		canvasWidth,
 		canvasHeight,
 		canvasInstance,
+		isBoxIntersection,
+		calculateIntersectedBlockIds,
+		waitForTransformEnd,
 	} = useBlockDiagram();
 
 	const dragOn = ref(false);
@@ -90,6 +93,7 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 	const zooming = ref(false);
 
 	let requestAnimationId = null;
+	let transformEndTimer = null;
 
 	function getCanvasStyleOptions(canvasStyle: CanvasStyle): CanvasStyle | null
 	{
@@ -125,9 +129,32 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 			zoom.value = payload.zoom;
 			canvasWidth.value = payload.width;
 			canvasHeight.value = payload.height;
+			if (toValue(isBoxIntersection))
+			{
+				calculateIntersectedBlockIds();
+				waitTransformEnd();
+			}
 		});
 
 		render();
+	}
+
+	function waitTransformEnd(): void
+	{
+		if (!waitForTransformEnd.value)
+		{
+			waitForTransformEnd.value = Promise.withResolvers();
+		}
+
+		if (transformEndTimer)
+		{
+			clearTimeout(transformEndTimer);
+		}
+
+		transformEndTimer = setTimeout(() => {
+			waitForTransformEnd.value.resolve();
+			waitForTransformEnd.value = null;
+		}, 150);
 	}
 
 	function onUnmounted(): void
@@ -185,7 +212,8 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 			? event.wheelDeltaY === -3 * event.deltaY
 			: event.deltaMode === 0;
 
-		if (event.ctrlKey)
+		const isCmd = Browser.isMac() && event.metaKey;
+		if (event.ctrlKey || isCmd)
 		{
 			const zoomChange = isTrackpad
 				? -event.deltaY * toValue(zoomSensitivity)

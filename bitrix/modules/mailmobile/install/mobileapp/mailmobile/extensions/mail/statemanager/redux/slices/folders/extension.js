@@ -11,7 +11,7 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 	const { changeReadStatusFulfilled, moveToFolderFulfilled } = require('mail/statemanager/redux/slices/folders/extra-reducer');
 
 	const preparePayload = (folders) => {
-		return folders.map((folder) => FolderModel.prepareReduxFolderFromServer(folder));
+		return FolderModel.prepareReduxFoldersFromServer(folders);
 	};
 
 	const defaultState = {
@@ -37,9 +37,9 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 				}),
 			},
 			folderUpdated: {
-				reducer: foldersListAdapter.upsertOne,
+				reducer: foldersListAdapter.upsertMany,
 				prepare: (folder) => ({
-					payload: FolderModel.prepareReduxFolderFromServer(folder),
+					payload: FolderModel.prepareReduxFoldersFromServer([folder]),
 				}),
 			},
 			setCurrentFolder: (state, { payload }) => {

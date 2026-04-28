@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (require, exports, module) => {
 	const { MentionManager } = require('im/messenger/controller/dialog/lib/mention');
 	const { CopilotMentionProvider } = require('im/messenger/controller/dialog/copilot/component/mention/provider');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, DialogType } = require('im/messenger/const');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('mention');
 
@@ -35,6 +35,14 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 		{
 			return {
 				dialogId: this.dialogId,
+				chatId: this.chatId,
+				canAddParticipants: this.canAddParticipants,
+				filter: {
+					dialogTypes: [
+						DialogType.private,
+						DialogType.user,
+					],
+				},
 				loadSearchProcessed: (dialogIdList, isStartServerSearch) => {
 					if (isStartServerSearch)
 					{
@@ -44,7 +52,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 							this.showLoader();
 						}
 
-						this.drawItems(this.filterOnlyUser(dialogIdList));
+						this.drawItems(dialogIdList);
 
 						return;
 					}
@@ -55,7 +63,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 						this.hideLoader();
 					}
 
-					this.drawItems(this.filterOnlyUser(dialogIdList));
+					this.drawItems(dialogIdList);
 				},
 				loadSearchComplete: (dialogIdList, query) => {
 					if (query !== this.curruntQuery)
@@ -68,19 +76,9 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 						logger.log('Mention: hide server loader');
 						this.hideLoader();
 					}
-					this.drawItems(this.filterOnlyUser(dialogIdList));
+					this.drawItems(dialogIdList);
 				},
 			};
-		}
-
-		/**
-		 * @desc filter item by string id 'chat'
-		 * @param {Array<string>} itemIdList
-		 * @return {Array<string>}
-		 */
-		filterOnlyUser(itemIdList)
-		{
-			return itemIdList.filter(((itemId) => !itemId.includes('chat')));
 		}
 
 		/**
@@ -99,6 +97,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 			this.view.textField.on(EventType.dialog.textField.focus, this.onFocusInput);
 			this.view.textField.on(EventType.dialog.textField.blur, this.onBlurInput);
 			this.view.mentionPanel.on(EventType.dialog.mentionPanel.itemTap, this.mentionItemSelectedHandler);
+			this.view.mentionPanel.on(EventType.dialog.mentionPanel.actionTap, this.mentionItemActionTapHandler);
 		}
 
 		/**
@@ -117,6 +116,7 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 			this.view.textField.off(EventType.dialog.textField.focus, this.onFocusInput);
 			this.view.textField.off(EventType.dialog.textField.blur, this.onBlurInput);
 			this.view.mentionPanel.off(EventType.dialog.mentionPanel.itemTap, this.mentionItemSelectedHandler);
+			this.view.mentionPanel.off(EventType.dialog.mentionPanel.actionTap, this.mentionItemActionTapHandler);
 		}
 
 		/**

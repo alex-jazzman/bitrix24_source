@@ -1,0 +1,15 @@
+.booking--crm-forms--skus-selector-sku {
+	display: flex;
+	justify-content: space-between;
+	align-items: start;
+	width: 100%;
+}
+
+.booking--crm-forms--skus-selector-sku-price {
+	font-weight: bold;
+	white-space: nowrap;
+}
+
+.booking-crm-forms-field-sku-selector-container {
+	margin-bottom: 0;
+}

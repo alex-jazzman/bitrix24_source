@@ -5,7 +5,7 @@ use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-Bitrix\Main\UI\Extension::load("ui.tooltip");
+Bitrix\Main\UI\Extension::load(["ui.tooltip", 'intranet.old-interface.intranet-common']);
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 

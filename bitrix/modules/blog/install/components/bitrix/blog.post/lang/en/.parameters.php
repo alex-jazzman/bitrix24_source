@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BP_BLOG_URL"] = "Blog URL";
 $MESS["BP_PATH_TO_BLOG"] = "Blog page path template";
 $MESS["BP_PATH_TO_BLOG_CATEGORY"] = "Blog page path template with the tag filter";
@@ -28,4 +28,3 @@ $MESS["BC_SEO_USE"] = "Use SEO";
 $MESS["BC_SEO_N"] = "never";
 $MESS["BC_SEO_Y"] = "use separate fields for description";
 $MESS["BC_SEO_D"] = "default fields";
-?>

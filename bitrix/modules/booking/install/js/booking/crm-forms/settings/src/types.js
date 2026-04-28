@@ -15,18 +15,23 @@ export type TemplateId = 'booking_auto_selection' | 'booking_any_resource' | 'bo
 export type BookingSettingsDataProperty = 'default' | 'autoSelection';
 
 export type BookingSettingsData = {
-	isAutoSelectionOn: boolean,
-	default: BookingDefaultForm,
-	autoSelection: BookingAutoSelectionForm,
+	isAutoSelectionOn: boolean;
+	default: BookingDefaultForm;
+	autoSelection: BookingAutoSelectionForm;
 }
 
 export type BookingForm = {
-	resourceIds: number[],
-	label: string,
-	textHeader: string,
-	hint: string,
-	isVisibleHint: boolean,
-	hasSlotsAllAvailableResources: boolean,
+	resources: { id: number, skus: number[] };
+	resourceIds: number[];
+	label: string;
+	textHeader: string;
+	hint: string;
+	isVisibleHint: boolean;
+	hasSlotsAllAvailableResources: boolean;
+	skuLabel: ?string;
+	skuTextHeader: ?string;
+	skuHint: ?string;
+	isVisibleSkuHint: ?boolean;
 }
 
 export type BookingAutoSelectionForm = BookingForm & {
@@ -34,3 +39,10 @@ export type BookingAutoSelectionForm = BookingForm & {
 }
 
 export type BookingDefaultForm = BookingForm;
+
+export interface ManagerField
+{
+	render(): HTMLElement;
+
+	updateCounter(): void;
+}

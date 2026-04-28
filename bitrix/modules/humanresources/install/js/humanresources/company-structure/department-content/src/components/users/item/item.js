@@ -64,7 +64,11 @@ export const UserListItem = {
 				return false;
 			}
 
-			return PermissionChecker.getInstance().checkMultipleUsersSettingsAvailable()
+			const isFeatureAvailable = PermissionChecker.getInstance().checkMultipleUsersBPSettingsAvailable()
+				|| PermissionChecker.getInstance().checkMultipleUsersReportSettingsAvailable()
+			;
+
+			return isFeatureAvailable
 				&& PermissionChecker.getInstance().hasPermission(PermissionActions.departmentSettingsEdit, this.focusedNode)
 			;
 		},

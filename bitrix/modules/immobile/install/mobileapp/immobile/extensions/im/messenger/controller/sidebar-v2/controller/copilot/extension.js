@@ -406,8 +406,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/copilot', (require, exp
 				styles: {
 					titleBadge: {
 						font: {
-							color: Color.accentMainSuccess,
-							fontSize: Typography.text6,
+							color: Color.accentMainSuccess.toHex(),
+							fontSize: Typography.text6.getValue().fontSize,
 						},
 					},
 				},

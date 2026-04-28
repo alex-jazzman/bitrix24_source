@@ -105,9 +105,28 @@ $logList = \Bitrix\BIConnector\LogTable::getList([
 	'order' => $arResult['SORT'],
 	'offset' => $nav->getOffset(),
 	'limit' => $nav->getLimit(),
-]);
-while ($data = $logList->fetch())
+])->fetchAll();
+
+$externalDatasets = \Bitrix\BIConnector\ExternalSource\Internal\ExternalDatasetTable::getList([
+	'select' => ['NAME'],
+	'filter' => [
+		'=NAME' => array_column($logList, 'SOURCE_ID'),
+	],
+])->fetchAll();
+
+$externalDatasets = array_column($externalDatasets, 'NAME');
+
+foreach($logList as $data)
 {
+	if (in_array($data['SOURCE_ID'], $externalDatasets))
+	{
+		$data['DATASET_TYPE'] = Loc::getMessage('CT_BBSU_COLUMN_DATASET_TYPE_CUSTOM');
+	}
+	else
+	{
+		$data['DATASET_TYPE'] = Loc::getMessage('CT_BBSU_COLUMN_DATASET_TYPE_SYSTEM');
+	}
+
 	$url = str_replace('#ID#', urlencode($data['KEY_ID']), $arParams['KEY_EDIT_URL']);
 	if (isset($data['ACCESS_KEY']))
 	{

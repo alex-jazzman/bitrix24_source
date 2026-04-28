@@ -238,7 +238,7 @@ while ($arRes = $rsData->Fetch())
 		break;
 	}
 
-	$row =& $lAdmin->AddRow($arRes['ID'], $arRes);
+	$row = $lAdmin->AddRow($arRes['ID'], $arRes);
 
 	$htmlLink = 'controller_member_edit.php?lang=' . LANGUAGE_ID . '&ID=' . urlencode($arRes['CONTROLLER_MEMBER_ID']);
 	$row->AddViewField('CONTROLLER_MEMBER_NAME', '[<a href="' . htmlspecialcharsbx($htmlLink) . '">' . htmlspecialcharsEx($arRes['CONTROLLER_MEMBER_ID']) . '</a>] ' . htmlspecialcharsEx($arRes['CONTROLLER_MEMBER_NAME']) . '</a>');

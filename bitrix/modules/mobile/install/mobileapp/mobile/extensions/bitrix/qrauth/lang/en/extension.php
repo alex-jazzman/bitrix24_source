@@ -13,5 +13,6 @@ $MESS["STEP_CAMERA_TITLE"] = "Scan the QR code";
 $MESS["STEP_OPEN_SITE_MSGVER_2"] = "Open this link on your computer:";
 $MESS["STEP_PRESS_CLOUD"] = "Click [B]Log in[/B] and [IMG WIDTH=\"18\" HEIGHT=\"18\"]#URL#[/IMG][B] QR code[/B]";
 $MESS["STEP_PRESS_SELF_HOSTED_MSGVER_2"] = "Click [B]Log in with QR code[/B] icon";
+$MESS["STEP_PRESS_SELF_HOSTED_MSGVER_3"] = "Click [B]Log in[/B] at the page's top right corner.";
 $MESS["STEP_SCAN"] = "Scan the QR code";
 $MESS["WRONG_QR"] = "QR code is incorrect";

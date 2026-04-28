@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Extension, Loc } from 'main.core';
 
 const ARTICLE_CODE = '23240682';
@@ -42,15 +43,22 @@ export const RecommendationBlock = {
 			return Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER_MSGVER_1', {
 				'#LINK_START#': `<a onclick='window.top.BX?.Helper?.show(\`redirect=detail&code=${code}\`)' href="#">`,
 				'#LINK_END#': '</a>',
+				'#COPILOT_NAME#': NameService.copilotName(),
 			});
+		},
+
+		explanationTitle(): string
+		{
+			return Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_TITLE', NameService.copilotNameReplacement());
 		},
 	},
 
+	// language=Vue
 	template: `
 		<div class="call-quality__explanation --copilot-content">
 			<div class="call-quality__explanation__container ">
 				<div class="call-quality__explanation-title">
-					{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_TITLE') }}
+					{{ explanationTitle }}
 				</div>
 				<div class="call-quality__explanation-text">
 					<div 

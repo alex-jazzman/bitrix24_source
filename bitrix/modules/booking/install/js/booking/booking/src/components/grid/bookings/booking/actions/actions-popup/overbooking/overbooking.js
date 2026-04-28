@@ -124,6 +124,7 @@ export const Overbooking = {
 				clients: this.clients,
 				counter: 0,
 				counters: [],
+				skus: [],
 				createdAt: Date.now(),
 				externalData: this.embedItems,
 				isConfirmed: false,

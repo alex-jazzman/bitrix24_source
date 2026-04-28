@@ -15,6 +15,7 @@ return [
 		'im:messenger/provider/pull/counter',
 		'im:messenger/provider/pull/dialog',
 		'im:messenger/provider/pull/message',
+		'im:messenger/provider/pull/openlines',
 		'im:messenger/provider/pull/recent',
 		'im:messenger/provider/pull/user',
 	],

@@ -16,9 +16,7 @@ return [
 		'layout/pure-component',
 		'layout/ui/collapsible-text',
 		'layout/ui/editable-text-block',
-		'layout/ui/fields',
 		'layout/ui/friendly-date',
-		'layout/ui/gratitude-list',
 		'layout/ui/fields/select',
 		'layout/ui/friendly-date/formatter-factory',
 		'layout/ui/user/card',
@@ -88,6 +86,8 @@ return [
 		'utils/copy',
 		'communication/email-menu',
 		'user-profile/analytics',
+		'ui-system/blocks/status-block',
+		'utils/random',
 	],
 	'bundle' => [
 		'./src/cache-manager',

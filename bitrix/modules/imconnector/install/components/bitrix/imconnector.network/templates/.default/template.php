@@ -292,7 +292,7 @@ elseif(!empty($arResult['ACTIVE_STATUS']))
 						</div>
 					</div>
 					<input type="submit"
-						   class="webform-small-button webform-small-button-accept"
+						   class="ui-btn ui-btn-sm ui-btn-success"
 						   name="<?=$arResult['CONNECTOR']?>_save"
 						   value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_SAVE')?>">
 				</div>

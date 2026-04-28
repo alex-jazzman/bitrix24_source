@@ -7,6 +7,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Kanban\ViewMode;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 
@@ -231,7 +232,12 @@ else
 		['HIDE_ICONS' => true]
 	);
 
-	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+	Container::getInstance()->getLocalization()->loadMessages();
+
+	$importUrl = Container::getInstance()->getRouter()->getImportUrl(CCrmOwnerType::Deal);
+	$importUrl->addParams([
+		'categoryId' => $categoryID,
+	]);
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
@@ -248,7 +254,7 @@ else
 					'c_sub_section' => $subSection,
 				],
 			],
-			'PATH_TO_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'],
+			'PATH_TO_IMPORT' => $importUrl,
 			'PATH_TO_DEAL_KANBANCATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'],
 			'PATH_TO_MERGE' => $arResult['PATH_TO_DEAL_MERGE'],
 			'HEADERS_SECTIONS' => [

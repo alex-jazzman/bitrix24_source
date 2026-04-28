@@ -11,6 +11,11 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		OpenDialogContextType,
 	} = require('im/messenger/const');
 
+	const componentWithoutNavigationStack = {
+		'/bitrix/mobileapp/mobile/components/bitrix/background/': true,
+		'/bitrix/mobileapp/mobile/components/bitrix/communication/': true,
+	};
+
 	/**
 	 * @class DialogOpener
 	 *
@@ -95,7 +100,9 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 				}
 
 				EntityReady.wait('chat').then(() => {
-					if (Type.isFunction(jnComponent.sendOpenRequest))
+					const isComponentWithNavigationStack = !componentWithoutNavigationStack[component.path];
+
+					if (Type.isFunction(jnComponent.sendOpenRequest) && isComponentWithNavigationStack)
 					{
 						jnComponent.sendOpenRequest(ComponentCode.imMessenger, {
 							[OpenRequest.dialog]: {

@@ -65,6 +65,55 @@ jn.define('more-menu/analytics', (require, exports, module) => {
 			}).send();
 		}
 
+		static sendMenuOpenEvent()
+		{
+			new this({
+				tool: 'intranet',
+				category: 'ava_menu',
+				event: 'menu_open',
+			}).send();
+		}
+
+		static sendStartWorkDay()
+		{
+			new this({
+				tool: 'timeman',
+				category: 'workday',
+				event: 'start_day',
+				c_element: 'ava_menu_button',
+			}).send();
+		}
+
+		static sendFinishWorkDay()
+		{
+			new this({
+				tool: 'timeman',
+				category: 'workday',
+				event: 'finish_day',
+				c_element: 'ava_menu_button',
+			}).send();
+		}
+
+		static sendPauseWorkDay()
+		{
+			new this({
+				tool: 'timeman',
+				category: 'workday',
+				event: 'break_start',
+				c_element: 'ava_menu_button',
+			}).send();
+		}
+
+		static sendResumeWorkDay()
+		{
+			new this({
+				tool: 'timeman',
+				category: 'workday',
+				event: 'resume_day',
+				c_element: 'ava_menu_button',
+			}).send();
+		}
+
 		static sendAhaMomentEvent(eventKey)
 		{
 			const eventConfig = AHA_ANALYTICS_EVENTS[eventKey];

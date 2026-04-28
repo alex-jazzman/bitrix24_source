@@ -143,4 +143,20 @@ export default class Backend
 				}
 			});
 	}
+
+	static copyToMeAction(id)
+	{
+		return ajax
+			.runComponentAction(
+				Backend.component,
+				'copyToMe',
+				{
+					mode: 'ajax',
+					data: {
+						trackedObjectId: id
+					},
+					analyticsLabel: Backend.component + '.copyToMe',
+				}
+			);
+	}
 }

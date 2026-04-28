@@ -81,10 +81,7 @@ if (!empty($_POST["save"]) && $canWrite && check_bitrix_sessid())
 {
 	$perms = array();
 	$errorMessage = '';
-	if (!isset($arErrors))
-	{
-		$arErrors = array();
-	}
+	$arErrors = [];
 	if (isset($_POST['perm']) && is_array($_POST['perm']))
 	{
 		foreach ($_POST['perm'] as $t => $v)

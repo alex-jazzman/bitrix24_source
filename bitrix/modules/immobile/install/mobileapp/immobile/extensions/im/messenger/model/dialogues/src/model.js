@@ -12,6 +12,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 	const { copilotModel } = require('im/messenger/model/dialogues/copilot/model');
 	const { collabModel } = require('im/messenger/model/dialogues/collab/model');
 	const { aiAssistantModel } = require('im/messenger/model/dialogues/ai-assistant/model');
+	const { openlinesModel } = require('im/messenger/model/dialogues/openlines/model');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { ModelUtils } = require('im/messenger/lib/utils');
@@ -29,6 +30,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 			copilotModel,
 			collabModel,
 			aiAssistantModel,
+			openlinesModel,
 		},
 		getters: {
 			/**
@@ -553,67 +555,6 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 					actionName: 'deleteFromModel',
 					data: {
 						dialogId: payload.dialogId,
-					},
-				});
-
-				return true;
-			},
-
-			/** @function dialoguesModel/decreaseCounter */
-			decreaseCounter: (store, payload) => {
-				/** @type {DialoguesModelState} */
-				const existingItem = store.state.collection[payload.dialogId];
-				if (!existingItem)
-				{
-					return false;
-				}
-
-				// for fix race condition
-				if (payload.lastId)
-				{
-					if (existingItem.lastReadId === payload.lastId && payload.count !== existingItem.counter)
-					{
-						store.commit('update', {
-							actionName: 'decreaseCounter',
-							data: {
-								dialogId: payload.dialogId,
-								fields: {
-									counter: payload.count,
-									previousCounter: existingItem.counter,
-								},
-							},
-						});
-
-						return true;
-					}
-
-					return false;
-				}
-
-				if (existingItem.counter === 100)
-				{
-					return true;
-				}
-
-				let decreasedCounter = existingItem.counter - payload.count;
-				if (decreasedCounter < 0)
-				{
-					decreasedCounter = 0;
-				}
-
-				if (decreasedCounter === existingItem.counter)
-				{
-					return false;
-				}
-
-				store.commit('update', {
-					actionName: 'decreaseCounter',
-					data: {
-						dialogId: payload.dialogId,
-						fields: {
-							counter: decreasedCounter,
-							previousCounter: existingItem.counter,
-						},
 					},
 				});
 

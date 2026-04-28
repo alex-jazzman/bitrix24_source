@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BGB_BLOG_COUNT'] = "Blogs per page";
 $MESS ['BGB_PATH_TO_BLOG'] = "Blog page path template";
 $MESS ['BGB_PATH_TO_POST'] = "Template of a blog message page";
@@ -12,4 +12,3 @@ $MESS ['BGB_SHOW_BLOG_WITHOUT_POSTS'] = "Also show empty blogs";
 $MESS ['B_VARIABLE_ALIASES'] = "Variable aliases";
 $MESS ['BC_DATE_TIME_FORMAT'] = "Date and time format";
 $MESS ['BB_NAV_TEMPLATE'] = "Paging template name";
-?>

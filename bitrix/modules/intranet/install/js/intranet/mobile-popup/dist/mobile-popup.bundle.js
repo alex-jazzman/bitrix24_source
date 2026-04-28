@@ -107,7 +107,7 @@ this.BX = this.BX || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isTablet)[_isTablet] && babelHelpers.classPrivateFieldLooseBase(this, _continueInTabletBrowserClicked)[_continueInTabletBrowserClicked] || !babelHelpers.classPrivateFieldLooseBase(this, _isTablet)[_isTablet] && babelHelpers.classPrivateFieldLooseBase(this, _continueInMobileBrowserClicked)[_continueInMobileBrowserClicked]) {
 	      return;
 	    }
-	    ui_bannerDispatcher.BannerDispatcher.critical.toQueue(onDone => {
+	    ui_bannerDispatcher.BannerDispatcher.high.toQueue(onDone => {
 	      var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
 	      babelHelpers.classPrivateFieldLooseBase(this, _calculatePopupPosition)[_calculatePopupPosition]();
 	      (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup))[_popup]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_popup] = babelHelpers.classPrivateFieldLooseBase(this, _createPopup)[_createPopup](onDone);

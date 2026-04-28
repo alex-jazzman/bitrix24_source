@@ -25,3 +25,9 @@ export const PROPERTY_TYPES: { [string]: string } = Object.freeze({
 export const SHARED_TOAST_TYPES = Object.freeze({
 	WARNING: 'warning',
 });
+
+export const COMPLEX_NODE_PORT_LABELS: { [string]: string } = Object.freeze({
+	inputRule: 'G',
+	outputRule: 'E',
+	connection: 'NG',
+});

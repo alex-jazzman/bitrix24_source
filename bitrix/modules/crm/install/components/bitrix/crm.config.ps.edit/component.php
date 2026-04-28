@@ -478,6 +478,10 @@ if (array_key_exists('AJAX', $_REQUEST) && $_REQUEST['AJAX'] == 'Y')
 }
 
 $io = CBXVirtualIo::GetInstance();
+if (\Bitrix\Sale\PaySystem\Manager::isRestHandler($arPaySys['ACTION_FILE'] ?? ''))
+{
+	unset($arPaySys['ACTION_FILE']);
+}
 $arPaySys['ACTION_FILE'] = $io->ExtractNameFromPath($arPaySys['ACTION_FILE'] ? $arPaySys['ACTION_FILE'] : 'bill');
 $arResult['PAY_SYSTEM_LIST'] = CCrmPaySystem::getActionsList();
 

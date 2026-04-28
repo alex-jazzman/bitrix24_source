@@ -4,7 +4,8 @@ use Bitrix\Main\Web\Uri;
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
 \Bitrix\Main\UI\Extension::load([
-	"calendar.util"
+	"calendar.util",
+	"intranet.old-interface.intranet-common",
 ]);
 $id = $arResult['ID'];
 $event = $arResult['EVENT'];

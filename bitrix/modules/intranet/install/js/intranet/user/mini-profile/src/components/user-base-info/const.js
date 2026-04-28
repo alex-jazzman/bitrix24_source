@@ -1,8 +1,9 @@
 import type { AvatarType } from 'ui.vue3.components.avatar';
-import type { UserRole } from '../../type';
+import type { UserRoleCodeType } from '../../type';
+import { UserRole } from '../../type';
 
-export const UserAvatarTypeByRole: Record<UserRole, AvatarType> = Object.freeze({
-	collaber: 'round-guest',
-	extranet: 'round-extranet',
-	employee: 'round',
+export const UserAvatarTypeByRole: Record<UserRoleCodeType, AvatarType> = Object.freeze({
+	[UserRole.Collaber]: 'round-guest',
+	[UserRole.Extranet]: 'round-extranet',
+	[UserRole.Employee]: 'round',
 });

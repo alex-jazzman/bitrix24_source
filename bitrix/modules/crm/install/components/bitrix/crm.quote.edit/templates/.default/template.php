@@ -6,7 +6,7 @@ global $APPLICATION;
 use \Bitrix\Crm\Conversion\EntityConverter;
 use \Bitrix\Crm\Category\DealCategory;
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 

@@ -1358,6 +1358,10 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	text-align: left;
 }
 
+.disk-detail-uf-form-buttons-fixed.--center {
+	text-align: center;
+}
+
 .disk-detail-uf-form-footer-container {
 	position: relative;
 	text-align: left;

@@ -76,15 +76,13 @@ jn.define('layout/ui/plan-restriction/demo-activation-success', (require, export
 				StatusBlock({
 					image: Image({
 						style: {
-							width: 108,
-							height: 108,
+							width: 132,
+							height: 132,
 						},
-						svg: {
-							uri: makeLibraryImagePath('demo-activation-success.svg', 'graphic'),
-						},
+						uri: makeLibraryImagePath('demo.png', 'volumetric'),
 					}),
 					title: Loc.getMessage('PLAN_RESTRICTION_DEMO_ACTIVATION_SUCCESS_TITLE'),
-					description: Loc.getMessage('PLAN_RESTRICTION_DEMO_ACTIVATION_SUCCESS_DESCRIPTION'),
+					description: Loc.getMessage('PLAN_RESTRICTION_DEMO_ACTIVATION_SUCCESS_DESCRIPTION_MSGVER_1'),
 					descriptionColor: Color.base1,
 					testId: 'DEMO_ACTIVATION_SUCCESS',
 				}),

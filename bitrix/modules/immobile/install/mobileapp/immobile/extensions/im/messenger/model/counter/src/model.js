@@ -1,14 +1,14 @@
 /* eslint-disable no-param-reassign */
 
 /**
- * @module im/messenger/model/counter/model
+ * @module im/messenger/model/counter/src/model
  */
-jn.define('im/messenger/model/counter/model', (require, exports, module) => {
+jn.define('im/messenger/model/counter/src/model', (require, exports, module) => {
 	const { Type } = require('type');
-	const { unique } = require('utils/array');
-	const { CounterType } = require('im/messenger/const');
-	const { counterDefaultElement } = require('im/messenger/model/counter/default-element');
-	const { validate } = require('im/messenger/model/counter/validator');
+	const { uniqBy } = require('utils/array');
+	const { RecentTab } = require('im/messenger/const');
+	const { counterDefaultElement } = require('im/messenger/model/counter/src/default-element');
+	const { normalize } = require('im/messenger/model/counter/src/normalizer');
 
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const logger = getLoggerWithContext('model--counter', 'CounterModel');
@@ -64,57 +64,6 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 			},
 
 			/**
-			 * @function counterModel/getCounterByCounterType
-			 * @return {number}
-			 */
-			getCounterByCounterType: (state) => ({ type, withDisabled = false }) => {
-
-				let counterStateList = Object.values(state.collection)
-					.filter((counterState) => {
-						return counterState.type === type;
-					})
-				;
-
-				if (!withDisabled)
-				{
-					counterStateList = counterStateList
-						.filter((counterState) => counterState.disabled === false)
-					;
-				}
-
-				return counterStateList
-					.reduce((counter, counterState) => counter + counterState.counter, 0)
-				;
-			},
-			/**
-			 * @function counterModel/getCounterByCounterTypeList
-			 * @return {number}
-			 */
-			getCounterByCounterTypeList: (state) => ({ typeList, withDisabled = false }) => {
-				if (!Type.isArrayFilled(typeList))
-				{
-					logger.error('getCounterWithoutCounterTypes: typeList is not filled array');
-
-					return 0;
-				}
-				let counterStateList = Object.values(state.collection)
-					.filter((counterState) => {
-						return typeList.includes(counterState.type);
-					})
-				;
-
-				if (!withDisabled)
-				{
-					counterStateList = counterStateList
-						.filter((counterState) => counterState.disabled === false)
-					;
-				}
-
-				return counterStateList
-					.reduce((counter, counterState) => counter + counterState.counter, 0)
-				;
-			},
-			/**
 			 * @function counterModel/getNumberChildCounters
 			 * @return {number}
 			 */
@@ -128,6 +77,30 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 					}, 0)
 				;
 			},
+
+			/**
+			 * @function counterModel/getCounterMarkedAsUnread
+			 * @return {Array<CounterModelState>}
+			 */
+			getCounterMarkedAsUnread: (state) => () => {
+				return Object.values(state.collection)
+					.filter((counterState) => counterState.isMarkedAsUnread)
+				;
+			},
+
+			/**
+			 * @function counterModel/getByRecentSection
+			 * @return {Array<CounterModelState>}
+			 */
+			getByRecentSection: (state) => (recentSection) => {
+				return Object.values(state.collection)
+					.filter((counterState) => {
+						return counterState.recentSections.includes(recentSection)
+							&& (counterState.counter > 0 || counterState.isMarkedAsUnread)
+						;
+					})
+				;
+			},
 		},
 		actions: {
 			/** @function counterModel/setList */
@@ -135,14 +108,7 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 				const {
 					/** @type {Array<CounterModelState>} */
 					counterList,
-					ignoreLock = false,
-					clearCollection = false,
 				} = payload;
-
-				if (clearCollection)
-				{
-					await store.dispatch('clear');
-				}
 
 				const preparedCounterStateList = [];
 				for (const counterState of counterList)
@@ -150,17 +116,6 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 					const chatId = counterState.chatId;
 					if (!Type.isNumber(chatId))
 					{
-						continue;
-					}
-
-					if (
-						Type.isPlainObject(store.state.collection[chatId])
-						&& store.state.collection[chatId].locked === true
-						&& ignoreLock === false
-					)
-					{
-						logger.log(`action setList. counter state for chatId ${chatId} is locked. skip`, counterState);
-
 						continue;
 					}
 
@@ -172,121 +127,19 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 					preparedCounterStateList.push({
 						...counterDefaultElement,
 						...store.state.collection[chatId],
-						...validate(modelCounter),
+						...normalize(modelCounter),
 					});
+				}
+
+				if (!Type.isArrayFilled(preparedCounterStateList))
+				{
+					return;
 				}
 
 				store.commit('set', {
 					actionName: 'set',
 					data: {
 						counterList: preparedCounterStateList,
-					},
-				});
-			},
-
-			/** @function counterModel/lockChatCounter */
-			lockChatCounter: (store, payload) => {
-				const { chatId } = payload;
-
-				if (!Type.isPlainObject(store.state.collection[chatId]))
-				{
-					return;
-				}
-
-				store.commit('setLock', {
-					actionName: 'blockChatCounter',
-					data: {
-						chatId,
-						locked: true,
-					},
-				});
-			},
-
-			/** @function counterModel/unlockChatCounter */
-			unlockChatCounter: (store, payload) => {
-				const { chatId } = payload;
-
-				if (!Type.isPlainObject(store.state.collection[chatId]))
-				{
-					return;
-				}
-
-				store.commit('setLock', {
-					actionName: 'unlockChatCounter',
-					data: {
-						chatId,
-						locked: false,
-					},
-				});
-			},
-
-			/** @function counterModel/disableChatCounter */
-			disableChatCounter: (store, payload) => {
-				const { chatId } = payload;
-
-				if (!Type.isPlainObject(store.state.collection[chatId]))
-				{
-					return;
-				}
-
-				store.commit('setDisable', {
-					actionName: 'disableChatCounter',
-					data: {
-						chatId,
-						disabled: true,
-					},
-				});
-			},
-
-			/** @function counterModel/enableChatCounter */
-			enableChatCounter: (store, payload) => {
-				const { chatId } = payload;
-
-				if (!Type.isPlainObject(store.state.collection[chatId]))
-				{
-					return;
-				}
-
-				store.commit('setDisable', {
-					actionName: 'enableChatCounter',
-					data: {
-						chatId,
-						disabled: false,
-					},
-				});
-			},
-
-			/** @function counterModel/setDisableChatCounter */
-			setDisableChatCounter: (store, payload) => {
-				const { chatId, disabled } = payload;
-
-				if (!Type.isPlainObject(store.state.collection[chatId]))
-				{
-					return;
-				}
-
-				store.commit('setDisable', {
-					actionName: 'setDisableChatCounter',
-					data: {
-						chatId,
-						disabled: Boolean(disabled),
-					},
-				});
-			},
-
-			/** @function counterModel/delete */
-			delete: (store, payload) => {
-				const { chatIdList } = payload;
-
-				if (!Type.isArrayFilled(chatIdList))
-				{
-					return;
-				}
-
-				store.commit('delete', {
-					actionName: 'delete',
-					data: {
-						chatIdList,
 					},
 				});
 			},
@@ -315,77 +168,143 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function counterModel/clear */
-			clear: (store) => {
-				const chatIdList = [];
-				Object.values(store.state.collection)
-					.forEach((counterState) => {
-						if (counterState.type === CounterType.openline)
+			/** @function counterModel/readAllChats */
+			readAllChats: (store) => {
+				/** @type {Array<CounterModelState>} */
+				const counterStatesToUpdate = [];
+				for (const counterState of Object.values(store.state.collection))
+				{
+					if (counterState.recentSections.includes(RecentTab.openlines))
+					{
+						continue;
+					}
+
+					if (counterState.counter > 0 || counterState.isMarkedAsUnread)
+					{
+						counterStatesToUpdate.push({
+							...counterState,
+							counter: 0,
+							isMarkedAsUnread: false,
+						});
+
+						if (counterState.parentChatId > 0) // need to update parent chat in recent
 						{
-							return;
+							counterStatesToUpdate.push({
+								...store.state.collection[counterState.parentChatId],
+								counter: 0,
+								isMarkedAsUnread: false,
+							});
 						}
+					}
+				}
 
-						if (counterState.counter > 0)
-						{
-							chatIdList.push(counterState.chatId);
-
-							if (counterState.parentChatId > 0) // need to update parent chat in recent
-							{
-								chatIdList.push(counterState.parentChatId);
-							}
-						}
-					})
-				;
-
-				const uniqueChatIdList = unique(chatIdList);
-				if (!Type.isArrayFilled(uniqueChatIdList))
+				const uniqueCounterStates = uniqBy(counterStatesToUpdate, 'chatId');
+				if (!Type.isArrayFilled(uniqueCounterStates))
 				{
 					return;
 				}
 
-				store.commit('delete', {
-					actionName: 'clear',
+				store.commit('set', {
+					actionName: 'readAllChats',
 					data: {
-						chatIdList: uniqueChatIdList,
+						counterList: uniqueCounterStates,
 					},
 				});
 			},
 
-			/** @function counterModel/clearByType */
-			clearByType: (store, payload) => {
-				const { type } = payload;
+			/** @function counterModel/readByRecentSection */
+			readByRecentSection: (store, payload) => {
+				const { recentSection } = payload;
 
-				const chatIdList = [];
-				Object.values(store.state.collection)
-					.forEach((counterState) => {
-						if (counterState.type !== type)
+				const counterStatesToUpdate = [];
+				for (const counterState of Object.values(store.state.collection))
+				{
+					if (counterState.counter === 0 || !counterState.isMarkedAsUnread)
+					{
+						continue;
+					}
+
+					const recentSections = counterState.recentSections;
+					if (Type.isArrayFilled(recentSections) && !recentSections.includes(recentSection))
+					{
+						continue;
+					}
+
+					if (counterState.recentSections.includes(recentSection))
+					{
+						counterStatesToUpdate.push({
+							...counterState,
+							counter: 0,
+							isMarkedAsUnread: false,
+						});
+
+						continue;
+					}
+
+					if (!Type.isArrayFilled(counterState.recentSections))
+					{
+						const parentState = store.state.collection[counterState.parentChatId];
+
+						if (Type.isPlainObject(parentState) && parentState.recentSections.includes(recentSection))
 						{
-							return;
+							counterStatesToUpdate.push({
+								...counterState,
+								counter: 0,
+								isMarkedAsUnread: false,
+							});
 						}
+					}
+				}
 
-						if (counterState.counter > 0)
-						{
-							chatIdList.push(counterState.chatId);
+				const uniqueCounterStates = uniqBy(counterStatesToUpdate, 'chatId');
+				if (!Type.isArrayFilled(uniqueCounterStates))
+				{
+					return;
+				}
 
-							if (counterState.parentChatId > 0) // need to update parent chat in recent
-							{
-								chatIdList.push(counterState.parentChatId);
-							}
-						}
-					})
-				;
+				store.commit('set', {
+					actionName: 'clearByRecentSection',
+					data: {
+						counterList: uniqueCounterStates,
+					},
+				});
+			},
 
-				const uniqueChatIdList = unique(chatIdList);
-				if (!Type.isArrayFilled(uniqueChatIdList))
+			/** @function counterModel/setMuted */
+			setMuted: (store, payload) => {
+				const { chatId, isMuted } = payload;
+
+				const counterState = store.state.collection[chatId]
+
+				if (!Type.isPlainObject(counterState))
+				{
+					return;
+				}
+
+				store.commit('set', {
+					actionName: 'setMuted',
+					data: {
+						counterList: [{
+							...counterState,
+							isMuted: Boolean(isMuted),
+						}],
+					},
+				});
+			},
+
+			/** @function counterModel/delete */
+			delete: (store, payload) => {
+				const { chatIdList } = payload;
+
+				if (!Type.isArrayFilled(chatIdList))
 				{
 					return;
 				}
 
 				store.commit('delete', {
-					actionName: 'clearByType',
+					actionName: 'delete',
 					data: {
-						type,
-						chatIdList: uniqueChatIdList,
+						chatIdList,
 					},
 				});
 			},
@@ -422,34 +341,6 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload<CounterSetLockData, CounterSetLockActions>} payload
-			 */
-			setLock: (state, payload) => {
-				logger.log('setLock mutation', payload);
-				const { chatId, locked } = payload.data;
-
-				state.collection[chatId] = {
-					...state.collection[chatId],
-					locked: Boolean(locked),
-				};
-			},
-
-			/**
-			 * @param state
-			 * @param {MutationPayload<CounterSetDisableData, CounterSetDisableActions>} payload
-			 */
-			setDisable: (state, payload) => {
-				logger.log('setDisable mutation', payload);
-				const { chatId, disabled } = payload.data;
-
-				state.collection[chatId] = {
-					...state.collection[chatId],
-					disabled: Boolean(disabled),
-				};
-			},
-
-			/**
-			 * @param state
 			 * @param {MutationPayload<CounterDeleteData, CounterDeleteActions>} payload
 			 */
 			delete: (state, payload) => {
@@ -460,7 +351,7 @@ jn.define('im/messenger/model/counter/model', (require, exports, module) => {
 				{
 					if (state.collection[chatId])
 					{
-						state.collection[chatId].counter = 0;
+						delete state.collection[chatId];
 					}
 				}
 			},

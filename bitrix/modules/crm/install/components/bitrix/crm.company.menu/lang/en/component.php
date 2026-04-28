@@ -34,6 +34,7 @@ $MESS["COMPANY_DELETE_DLG_BTNTITLE"] = "Delete";
 $MESS["COMPANY_DELETE_DLG_MESSAGE"] = "Are you sure you want to delete it?";
 $MESS["COMPANY_DELETE_DLG_TITLE"] = "Delete Company";
 $MESS["COMPANY_DELETE_TITLE"] = "Delete Company";
+$MESS["COMPANY_DETACH_OPEN_LINE"] = "Detach company from all chats";
 $MESS["COMPANY_EDIT"] = "Edit";
 $MESS["COMPANY_EDIT_TITLE"] = "Edit Company";
 $MESS["COMPANY_EXPORT"] = "Export Companies";

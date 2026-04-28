@@ -10,8 +10,8 @@ IncludeModuleLangFile(__FILE__);
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/statistic/stat_tools.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/statistic/ip_tools.php';
-/*patchlimitationmutatormark1*/
-$dbType = mb_strtolower($DB_test->type);
+
+$dbType = strtolower($DB_test->type);
 CModule::AddAutoloadClasses(
 	'statistic',
 	[

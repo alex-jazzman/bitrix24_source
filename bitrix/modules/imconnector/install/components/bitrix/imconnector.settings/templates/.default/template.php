@@ -18,7 +18,7 @@ Loc::loadMessages(__FILE__);
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
-	'intranet.old-interface.intranet-common',
+	'ui.buttons',
 ]);
 
 ?>

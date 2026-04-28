@@ -26,7 +26,7 @@ jn.define('im/messenger/lib/promotion/src/entities/copilot', (require, exports, 
 				AhaMoment.show({
 					targetRef,
 					testId: 'copilot-sidebar-aha',
-					description: Loc.getMessage('IMMOBILE_MESSENGER_PROMO_SIDEBAR_COPILOT_CHANGE_MODEL'),
+					description: Loc.getMessageWithCopilotBotName('IMMOBILE_MESSENGER_PROMO_SIDEBAR_COPILOT_CHANGE_MODEL_MSGVER_1'),
 					disableHideByOutsideClick: false,
 					closeButton: false,
 					fadeInDuration: 100,

@@ -5,7 +5,7 @@ $MESS["CRM_ACTIVITY_TODO_ADD_TITLE_DEFAULT"] = "Связаться с клиен
 $MESS["CRM_ACTIVITY_TODO_ADD_TITLE_WITH_PREFIX"] = "Запланировано: #TITLE#";
 $MESS["CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_ROLLED"] = "Что нужно сделать";
 $MESS["CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_MSGVER_1"] = "Опишите подробнее";
-$MESS["CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT_MSGVER_1"] = "Опишите подробнее или нажмите пробел для запуска CoPilot";
+$MESS["CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT_MSGVER_1"] = "Опишите подробнее или нажмите пробел для запуска #COPILOT_NAME#";
 $MESS["CRM_ACTIVITY_TODO_SHOW_ACTIONS_POPUP"] = "действия";
 
 $MESS["CRM_ACTIVITY_TODO_ACTIONS_CALENDAR"] = "Добавить в календарь";

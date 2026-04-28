@@ -404,9 +404,9 @@ jn.define('mail/chain', (require, exports, module) => {
 			this.layout = widget;
 
 			this.actions = {
-				replyButton: this.replyMessageAction.bind(this),
-				replyAllButton: this.replyAllMessageAction.bind(this),
-				forwardButton: this.forwardAction.bind(this),
+				replyButton: () => this.replyMessageAction(),
+				replyAllButton: () => this.replyAllMessageAction(),
+				forwardButton: () => this.forwardAction(),
 				moreButton: isCrmMessage ? this.showContextMenu.bind(this) : this.openMoreMenuAction.bind(this),
 			};
 

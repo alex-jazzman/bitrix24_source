@@ -21,6 +21,7 @@ type ItemDetails = {
 	entityId: number;
 	id: number;
 	isTemplate: boolean;
+	hasPlaceholders: boolean;
 	title: string;
 	uid: string;
 	urls: Array<string>;
@@ -169,7 +170,7 @@ export class DocumentSummary extends EventEmitter
 		}
 
 		Dom.replace(summaryNode.firstElementChild, this.#createDocumentDetails(item));
-		Dom.append(this.#createEditDocumentBtn(item.id, item.uid), summaryNode);
+		Dom.append(this.#createEditDocumentBtn(item), summaryNode);
 	}
 
 	#focusInput(input: HTMLElement)
@@ -209,8 +210,15 @@ export class DocumentSummary extends EventEmitter
 		this.items[uid].number = number;
 	}
 
-	#createEditDocumentBtn(id: number, uid: string): HTMLElement
+	#createEditDocumentBtn(item: ItemDetails): HTMLElement | null
 	{
+		if (item.hasPlaceholders)
+		{
+			return null;
+		}
+		const id = item.id;
+		const uid = item.uid;
+
 		return Tag.render`
 			<span
 				class="${buttonClassList.join(' ')}" data-id="${id}"
@@ -232,7 +240,7 @@ export class DocumentSummary extends EventEmitter
 			const itemBlock = Tag.render`
 				<div class="sign-document-summary">
 					${this.#createDocumentDetails(item)}
-					${this.#createEditDocumentBtn(item.id, item.uid)}
+					${this.#createEditDocumentBtn(item)}
 				</div>
 			`;
 

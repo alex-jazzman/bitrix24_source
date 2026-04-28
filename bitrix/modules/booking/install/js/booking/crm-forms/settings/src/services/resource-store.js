@@ -1,5 +1,4 @@
 import { crmFormService } from 'booking.provider.service.crm-form-service';
-
 import type { ResourceModel } from 'booking.model.resources';
 
 class ResourceStore

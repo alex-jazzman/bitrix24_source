@@ -1,0 +1,22 @@
+.editor-chart-block-control-menu-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.editor-chart-block-control-menu-item__action-code {
+	display: flex;
+	align-items: center;
+	padding: 0 10px;
+	height: 24px;
+	border: 1px solid var(--ui-color-gray-10);
+	border-radius: 6px;
+	background: var( --ui-color-base-white-fixed);
+}
+
+.editor-chart-block-control-menu-item__action-code_text {
+	line-height: 17px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--ui-color-gray-90);
+}

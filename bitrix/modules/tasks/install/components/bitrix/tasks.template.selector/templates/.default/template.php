@@ -7,6 +7,8 @@ if(!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 <?$APPLICATION->AddHeadScript('/bitrix/components/bitrix/tasks.task.selector/templates/.default/tasks.js');?>
 
+<?\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);?>
+
 <?$jsObjectName = 'O_'.$arResult["NAME"];?>
 
 <script>

@@ -1,6 +1,7 @@
 import { Dom, Tag } from 'main.core';
-import type { LicenseContentOptions } from '../types/options';
+import { type LicenseContentOptions } from '../types/options';
 import { Content } from './content';
+import { AdminRestrictedPopup } from '../popups/admin-restricted-popup';
 
 export class LicenseContent extends Content
 {
@@ -14,24 +15,24 @@ export class LicenseContent extends Content
 	{
 		return this.cache.remember('layout', () => {
 			return Tag.render`
-			<div data-id="license-widget-block-tariff"
-				class="license-widget-item license-widget-item--main ${this.getOptions().isExpired || this.getOptions().isAlmostExpired ? 'license-widget-item--expired' : ''}"
-			>
-				<div class="license-widget-inner ${this.getOptions().isDemo ? '--demo' : ''}">
-					<div class="license-widget-content">
-						${this.getMainIcon()}
-						<div class="license-widget-item-content">
-							<div class="license-widget-item-name">
-								<span>${this.getOptions().name}</span>
+				<div data-id="license-widget-block-tariff"
+					class="license-widget-item license-widget-item--main ${this.getOptions().isExpired || this.getOptions().isAlmostExpired ? 'license-widget-item--expired' : ''}"
+				>
+					<div class="license-widget-inner ${this.getOptions().isDemo ? '--demo' : ''}">
+						<div class="license-widget-content">
+							${this.getMainIcon()}
+							<div class="license-widget-item-content">
+								<div class="license-widget-item-name">
+									<span>${this.getOptions().name}</span>
+								</div>
+								${this.getOptions().isExpired ? this.getExpiredMessage() : this.getRemainderMessage()}
+								${this.getOptions().isExpired && this.getOptions().isAlmostBlocked ? this.getBlockMessage() : ''}
+								${this.getOptions().isAlmostBlocked ? '' : this.getLink()}
 							</div>
-							${this.getOptions().isExpired ? this.getExpiredMessage() : this.getRemainderMessage()}
-							${this.getOptions().isExpired && this.getOptions().isAlmostBlocked ? this.getBlockMessage() : ''}
-							${this.getOptions().isAlmostBlocked ? '' : this.getLink()}
 						</div>
+						${this.getOptions().button.isAvailable ? this.getButton() : ''}
 					</div>
-					${this.getOptions().button.isAvailable ? this.getButton() : ''}
 				</div>
-			</div>
 			`;
 		});
 	}
@@ -64,6 +65,20 @@ export class LicenseContent extends Content
 
 	getButton(): HTMLElement
 	{
+		if (this.getOptions().button.isAdminRestricted)
+		{
+			const onclick = (event) => {
+				event.preventDefault();
+				AdminRestrictedPopup.show(event.target);
+			};
+
+			return Tag.render`
+				<a href="#" onclick="${onclick}" class="license-widget-item-btn ${this.getOptions().isDemo && !this.getOptions().isAlmostExpired && !this.getOptions().isExpired ? 'license-widget-item-btn--green' : ''}">
+					${this.getOptions().button.text}
+				</a>
+			`;
+		}
+
 		if (this.getOptions().button.type === 'POST')
 		{
 			const onclick = () => {
@@ -139,8 +154,15 @@ export class LicenseContent extends Content
 
 	getLink(): HTMLElement
 	{
+		const onclick = this.getOptions().more.isAdminRestricted
+			? (event) => {
+				event.preventDefault();
+				AdminRestrictedPopup.show(event.target);
+			}
+			: () => {};
+
 		return Tag.render`
-			<a href="${this.getOptions().more.link}" class="license-widget-item-link-text" target="_blank">
+			<a href="${this.getOptions().more.link}" onclick="${onclick}" class="license-widget-item-link-text" target="_blank">
 				${this.getOptions().more.text}
 			</a>
 		`;

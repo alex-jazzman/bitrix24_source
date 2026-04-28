@@ -11,6 +11,7 @@ return [
 		'main.polyfill.core',
 		'im.v2.lib.utils',
 		'im.v2.component.elements.popup',
+		'im.v2.lib.counter',
 	],
 	'skip_core' => true,
 ];

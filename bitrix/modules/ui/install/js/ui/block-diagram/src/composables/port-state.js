@@ -17,9 +17,11 @@ export function usePortState(options): UsePortState
 		block,
 		port,
 		position = PORT_POSITION.LEFT,
+		index = 0,
 	} = options;
 
 	const {
+		waitAllBlocksMounted,
 		portsElMap,
 		portsRectMap,
 		zoom,
@@ -28,6 +30,9 @@ export function usePortState(options): UsePortState
 		blockDiagramTop,
 		blockDiagramLeft,
 		isDisabledBlockDiagram,
+		updatePortSegmentSizes,
+		portMounted,
+		waitForTransformEnd,
 	} = useBlockDiagram();
 
 	const isDisabled = computed((): boolean => {
@@ -82,6 +87,9 @@ export function usePortState(options): UsePortState
 			width,
 			height,
 			position,
+			firstSegmentSize: 0,
+			secondSegmentSize: 0,
+			secondSegmentSizeWithoutOffset: 0,
 		};
 	}
 
@@ -104,8 +112,11 @@ export function usePortState(options): UsePortState
 		}
 	}
 
-	function onMountedPort(): void
+	async function onMountedPort(): Promise<void>
 	{
+		// Workaround to fix connections render after they are in viewport. Should be removed later
+		await waitForTransformEnd.value?.promise;
+
 		addPortElement(
 			toValue(block).id,
 			toValue(port).id,
@@ -116,10 +127,27 @@ export function usePortState(options): UsePortState
 			toValue(port).id,
 			portRef,
 		);
+
+		waitAllBlocksMounted.value?.promise
+			.then(() => {
+				if (!(toValue(block).id in toValue(portsRectMap)))
+				{
+					return;
+				}
+
+				updatePortSegmentSizes(
+					toValue(block).id,
+					toValue(port).id,
+					index,
+				);
+				portMounted(toValue(block).id, toValue(port).id);
+			});
 	}
 
-	function onUnmountedPort(): void
+	async function onUnmountedPort(): Promise<void>
 	{
+		// Workaround to fix connections render after they are in viewport. Should be removed later
+		await waitForTransformEnd.value?.promise;
 		deletePortElement(toValue(block).id, toValue(port).id);
 		deletePortRect(toValue(block).id, toValue(port).id);
 	}

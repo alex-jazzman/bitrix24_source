@@ -39,7 +39,7 @@ Class dav extends CModule
 
 		if (!empty($errors))
 		{
-			$APPLICATION->ThrowException(implode("", $errors)); 
+			$APPLICATION->ThrowException(implode("", $errors));
 			return false;
 		}
 
@@ -51,34 +51,6 @@ Class dav extends CModule
 		RegisterModuleDependences("main", "OnBeforeUserTypeDelete", "dav", "CDavExchangeMail", "handleUserTypeDelete");
 		RegisterModuleDependences("main", "OnApplicationsBuildList", "main", '\Bitrix\Dav\Application', "onApplicationsBuildList", 100, "modules/dav/lib/application.php"); // main here is not a mistake
 
-
-		$arUrlRewrite = array();
-		if (file_exists($_SERVER['DOCUMENT_ROOT']."/urlrewrite.php"))
-			include($_SERVER['DOCUMENT_ROOT']."/urlrewrite.php");
-
-		$rule = array(
-			"CONDITION" => "#^/\\.well-known#",
-			"RULE" => "",
-			"ID" => "",
-			"PATH" => "/bitrix/groupdav.php",
-		);
-
-		$canAdd = true;
-		foreach ($arUrlRewrite as $r)
-		{
-			if ($r["CONDITION"] == $rule["CONDITION"])
-			{
-				$canAdd = false;
-				break;
-			}
-		}
-
-		if ($canAdd)
-		{
-			CUrlRewriter::Add($rule);
-		}
-
-
 		return true;
 	}
 
@@ -86,14 +58,13 @@ Class dav extends CModule
 	{
 		global $DB, $APPLICATION;
 		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = null;
 		if(array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y")
 		{
 			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/db/".$connection->getType()."/uninstall.sql");
 
 			if (!empty($errors))
 			{
-				$APPLICATION->ThrowException(implode("", $errors)); 
+				$APPLICATION->ThrowException(implode("", $errors));
 				return false;
 			}
 		}
@@ -176,7 +147,7 @@ Class dav extends CModule
 				"savedata" => $_REQUEST["savedata"],
 			));
 			$this->UnInstallFiles();
-			
+
 			$this->UnInstallEvents();
 
 			CBXFeatures::SetFeatureEnabled("DAV", false);

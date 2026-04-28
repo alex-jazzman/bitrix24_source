@@ -30,6 +30,7 @@ $MESS["UI_MAIL_SMTP_SLIDER_SENDER_LIMIT_SETTINGS"] = "Set daily email limit";
 $MESS["UI_MAIL_SMTP_SLIDER_SENDER_LIMIT_TITLE"] = "Daily limit:";
 $MESS["UI_MAIL_SMTP_SLIDER_SENDER_MAIN_SECTION_TITLE"] = "Sender properties";
 $MESS["UI_MAIL_SMTP_SLIDER_SENDER_NAME"] = "Name:";
+$MESS["UI_MAIL_SMTP_SLIDER_SENDER_USE_SENDER_NAME"] = "Use the same sender name for every message instead of the actual sender";
 $MESS["UI_MAIL_SMTP_SLIDER_SERVER"] = "Server:";
 $MESS["UI_MAIL_SMTP_SLIDER_SMTP_SECTION_TITLE"] = "SMTP server properties";
 $MESS["UI_MAIL_SMTP_SLIDER_SSL"] = "Use SSL";

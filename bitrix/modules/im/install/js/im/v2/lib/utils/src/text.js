@@ -1,7 +1,5 @@
 import { Type, Loc, Text, Dom } from 'main.core';
 
-import { FakeMessagePrefix, FakeDraftMessagePrefix } from 'im.v2.const';
-
 import { emojiRegex } from './emoji-regex';
 
 export const TextUtil = {
@@ -124,13 +122,6 @@ export const TextUtil = {
 		const uuidV4pattern = new RegExp(/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i);
 
 		return uuid.search(uuidV4pattern) === 0;
-	},
-
-	isTempMessage(messageId): boolean
-	{
-		return TextUtil.isUuidV4(messageId)
-			|| messageId.toString().startsWith(FakeMessagePrefix)
-			|| messageId.toString().startsWith(FakeDraftMessagePrefix);
 	},
 
 	checkUrl(url): boolean

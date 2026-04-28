@@ -28,6 +28,7 @@ export type UpsertOptions = {
 declare type CommonRenderServiceProps = {
 	sections: Array<string>,
 	defaultSection: string,
+	convertorExtension: (items: Array<RecentItem | object>) => Array<RecentWidgetItem | object>,
 	itemOptions?: {
 		showCounter: boolean,
 		showActions: boolean,

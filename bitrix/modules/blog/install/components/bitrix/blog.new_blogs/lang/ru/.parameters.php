@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_DESCR_SORT_1'] = "Первое поле для сортировки";
 $MESS ['BLOG_DESCR_SORT_2'] = "Второе поле для сортировки";
 $MESS ['BLOG_DESCR_SORT_ORDER'] = "Направление сортировки";

@@ -11,6 +11,7 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { RecentDataProvider } = require('im/messenger/provider/data');
 	const { ChatRecentUpdateManager } = require('im/messenger/provider/pull/lib/recent/chat/update-manager');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { NewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager');
@@ -136,7 +137,7 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 			}
 			this.logger.info('handleChatHide:', params, extra);
 
-			if (params.lines)
+			if (!Feature.isOpenlinesInMessengerAvailable && params.lines)
 			{
 				return;
 			}

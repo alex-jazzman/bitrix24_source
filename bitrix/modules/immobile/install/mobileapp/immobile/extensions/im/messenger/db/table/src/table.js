@@ -664,11 +664,13 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
-		drop()
+		async drop()
 		{
 			if (this.isSupported)
 			{
-				return this.table.drop();
+				await this.table.drop();
+
+				delete this.constructor.databaseTable;
 			}
 
 			return Promise.resolve();

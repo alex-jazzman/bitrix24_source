@@ -5885,124 +5885,162 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 	};
 	BX.Crm.EntityEditorClientLight.prototype.doPrepareContextMenuItems = function(menuItems)
 	{
+		const layoutType = this.getLayoutType();
+
 		menuItems.push({ delimiter: true });
 
-		if(this._enableLayoutTypeChange)
+		if (this._enableLayoutTypeChange)
 		{
-			var layoutType = this.getLayoutType();
-			if(layoutType === BX.Crm.EntityEditorClientLayoutType.companyContact
+			if (
+				layoutType === BX.Crm.EntityEditorClientLayoutType.companyContact
 				|| layoutType === BX.Crm.EntityEditorClientLayoutType.contactCompany
 			)
 			{
 				menuItems.push(
 					{
-						value: "set_layout_contact",
-						text: this.getMessage("disableCompany")
-					}
+						value: 'set_layout_contact',
+						text: this.getMessage('disableCompany'),
+					},
 				);
 
 				menuItems.push(
 					{
-						value: "set_layout_company",
-						text: this.getMessage("disableContact")
-					}
+						value: 'set_layout_company',
+						text: this.getMessage('disableContact'),
+					},
 				);
 			}
-			else if(layoutType === BX.Crm.EntityEditorClientLayoutType.company)
+			else if (layoutType === BX.Crm.EntityEditorClientLayoutType.company)
 			{
 				menuItems.push(
 					{
-						value: "set_layout_company_contact",
-						text: this.getMessage("enableContact")
-					}
+						value: 'set_layout_company_contact',
+						text: this.getMessage('enableContact'),
+					},
 				);
 			}
-			else if(layoutType === BX.Crm.EntityEditorClientLayoutType.contact)
+			else if (layoutType === BX.Crm.EntityEditorClientLayoutType.contact)
 			{
 				menuItems.push(
 					{
-						value: "set_layout_contact_company",
-						text: this.getMessage("enableCompany")
-					}
+						value: 'set_layout_contact_company',
+						text: this.getMessage('enableCompany'),
+					},
 				);
 			}
+
 			if (this.isClientFieldVisible('ADDRESS'))
 			{
 				menuItems.push(
 					{
-						value: "hide_client_field_address",
-						text: this.getMessage("disableAddress")
-					}
+						value: 'hide_client_field_address',
+						text: this.getMessage('disableAddress'),
+					},
 				);
 			}
 			else
 			{
 				menuItems.push(
 					{
-						value: "show_client_field_address",
-						text: this.getMessage("enableAddress")
-					}
+						value: 'show_client_field_address',
+						text: this.getMessage('enableAddress'),
+					},
 				);
 			}
+
 			if (this.isClientFieldVisible('REQUISITES'))
 			{
 				menuItems.push(
 					{
-						value: "hide_client_field_requisites",
-						text: this.getMessage("disableRequisites")
-					}
+						value: 'hide_client_field_requisites',
+						text: this.getMessage('disableRequisites'),
+					},
 				);
 			}
 			else
 			{
 				menuItems.push(
 					{
-						value: "show_client_field_requisites",
-						text: this.getMessage("enableRequisites")
-					}
+						value: 'show_client_field_requisites',
+						text: this.getMessage('enableRequisites'),
+					},
 				);
 			}
 
-			if(layoutType === BX.Crm.EntityEditorClientLayoutType.companyContact)
+			if (layoutType === BX.Crm.EntityEditorClientLayoutType.companyContact)
 			{
 				menuItems.push({ delimiter: true });
 				menuItems.push(
 					{
-						value: "set_layout_contact_company",
-						text: this.getMessage("displayContactAtFirst")
-					}
+						value: 'set_layout_contact_company',
+						text: this.getMessage('displayContactAtFirst'),
+					},
 				);
 			}
-			else if(layoutType === BX.Crm.EntityEditorClientLayoutType.contactCompany)
+			else if (layoutType === BX.Crm.EntityEditorClientLayoutType.contactCompany)
 			{
 				menuItems.push({ delimiter: true });
 				menuItems.push(
 					{
-						value: "set_layout_company_contact",
-						text: this.getMessage("displayCompanyAtFirst")
-					}
+						value: 'set_layout_company_contact',
+						text: this.getMessage('displayCompanyAtFirst'),
+					},
 				);
 			}
 
 			menuItems.push({ delimiter: true });
 		}
 
-		if(this.isQuickEditEnabled())
+		const isCompanyFieldInContact = (
+			layoutType === BX.Crm.EntityEditorClientLayoutType.company
+			&& this.getOwnerTypeId() === BX.CrmEntityType.enumeration.contact
+		);
+
+		const isContactFieldInCompany = (
+			layoutType === BX.Crm.EntityEditorClientLayoutType.contact
+			&& this.getOwnerTypeId() === BX.CrmEntityType.enumeration.company
+		);
+
+		if (isCompanyFieldInContact || isContactFieldInCompany)
+		{
+			if (this.isClientFieldVisible('REQUISITES'))
+			{
+				menuItems.push(
+					{
+						value: 'hide_client_field_requisites',
+						text: this.getMessage('disableRequisites'),
+					},
+				);
+			}
+			else
+			{
+				menuItems.push(
+					{
+						value: 'show_client_field_requisites',
+						text: this.getMessage('enableRequisites'),
+					},
+				);
+			}
+
+			menuItems.push({ delimiter: true });
+		}
+
+		if (this.isQuickEditEnabled())
 		{
 			menuItems.push(
 				{
-					value: "disable_quick_edit",
-					text: this.getMessage("disableQuickEdit")
-				}
+					value: 'disable_quick_edit',
+					text: this.getMessage('disableQuickEdit'),
+				},
 			);
 		}
 		else
 		{
 			menuItems.push(
 				{
-					value: "enable_quick_edit",
-					text: this.getMessage("enableQuickEdit")
-				}
+					value: 'enable_quick_edit',
+					text: this.getMessage('enableQuickEdit'),
+				},
 			);
 		}
 	};

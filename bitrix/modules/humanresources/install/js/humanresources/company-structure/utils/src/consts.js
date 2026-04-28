@@ -16,6 +16,7 @@ export const WizardApiEntityChangedDict: Record<string> = Object.freeze({
 export const NodeSettingsTypes: Record<string> = {
 	businessProcAuthority: 'BUSINESS_PROC_AUTHORITY',
 	reportsAuthority: 'REPORTS_AUTHORITY',
+	teamReportExceptions: 'TEAM_REPORT_EXCEPTIONS',
 };
 
 export const UserSettingsTypes: Record<string> = {

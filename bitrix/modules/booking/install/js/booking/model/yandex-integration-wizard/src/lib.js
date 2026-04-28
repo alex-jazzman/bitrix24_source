@@ -5,7 +5,6 @@ export function getEmptyIntegration(): YandexIntegrationModel
 	return {
 		status: null,
 		catalogPermissions: null,
-		catalogSkuEntityOptions: {},
 		isResourceSkuRelationsSaved: false,
 		resources: [],
 		cabinetLink: '',

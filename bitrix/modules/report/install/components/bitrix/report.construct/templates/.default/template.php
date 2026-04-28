@@ -4,7 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $APPLICATION->SetTitle(GetMessage('REPORT_CONSTRUCT'));
 
-CJSCore::Init(['ui.design-tokens', 'ui.fonts.opensans', 'report', 'socnetlogdest',]);
+CJSCore::Init(['ui.design-tokens', 'ui.fonts.opensans', 'report', 'socnetlogdest', 'intranet.old-interface.intranet-common',]);
 
 $jsClass = 'ReportConstructClass_'.$arResult['randomString'];
 

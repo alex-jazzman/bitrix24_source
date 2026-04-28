@@ -142,8 +142,8 @@ $arMenu[] = array(
 if ($diskEnabled === "Y" && \Bitrix\Main\Config\Option::get('disk', 'documents_enabled', 'N') === 'Y')
 {
 	$arMenu[] = array(
-		GetMessage("MENU_DISK_DOCUMENTS"),
-		"/company/personal/user/".$userId."/disk/documents/",
+		GetMessage("MENU_DISK_DOCUMENTS_MSGVER_1"),
+		"/company/personal/user/".$userId."/disk/documents/?st[tool]=docs&st[category]=docs&st[event]=open_section&st[c_section]=left_menu",
 		[],
 		array(
 			"menu_item_id" => "menu_documents",
@@ -278,6 +278,33 @@ if (
 			),
 			'menu_item_id' => 'menu_bi_constructor',
 			'top_menu_id' => 'top_menu_bi_constructor',
+		],
+		'',
+	];
+}
+
+$canReadNoteBase =
+	Loader::includeModule('note')
+	&& class_exists('\Bitrix\Note\Public\Service\AccessService')
+	&& \Bitrix\Note\Public\Service\AccessService::canAccess()
+;
+
+if (
+	$canReadNoteBase
+	&& ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_note_base')
+)
+{
+	$arMenu[] = [
+		Loc::getMessage('MENU_NOTE_BASE'),
+		'/note/',
+		[],
+		[
+			'real_link' => getLeftMenuItemLink(
+				'menu_note_base',
+				'/note/'
+			),
+			'menu_item_id' => 'menu_note_base',
+			'top_menu_id' => 'top_menu_note_base',
 		],
 		'',
 	];
@@ -590,16 +617,11 @@ if (Loader::includeModule("bitrix24"))
 {
 	$arMenu[] = array(
 		GetMessage("MENU_TARIFF"),
-		"/settings/",
+		"/settings/license.php?TARIFF_WIDGET=Y",
 		array(),
 		array(
-			"real_link" => getLeftMenuItemLink(
-				"top_menu_id_settings",
-				($GLOBALS['USER']->CanDoOperation('bitrix24_config') || \CBitrix24::canAllBuyLicense()) ? '/settings/license.php' : '/settings/license_all.php',
-			),
 			"class" => "menu-tariff",
 			"menu_item_id" => "menu_tariff",
-			"top_menu_id" => "top_menu_id_settings"
 		),
 		""
 	);

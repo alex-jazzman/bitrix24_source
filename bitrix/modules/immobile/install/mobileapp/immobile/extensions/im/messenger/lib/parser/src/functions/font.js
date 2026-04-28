@@ -21,7 +21,7 @@ jn.define('im/messenger/lib/parser/functions/font', (require, exports, module) =
 			text = parserUtils.recursiveReplace(text, /\[u]([^[]*(?:\[(?!u]|\/u])[^[]*)*)\[\/u]/ig, (whole, text) => text);
 			text = parserUtils.recursiveReplace(text, /\[i]([^[]*(?:\[(?!i]|\/i])[^[]*)*)\[\/i]/ig, (whole, text) => text);
 			text = parserUtils.recursiveReplace(text, /\[s]([^[]*(?:\[(?!s]|\/s])[^[]*)*)\[\/s]/ig, (whole, text) => text);
-			text = parserUtils.recursiveReplace(text, /\[size=(\d+)](.*?)\[\/size]/ig, (whole, number, text) => text);
+			text = parserUtils.recursiveReplace(text, /\[size=(\d+)(?:pt|px)?](.*?)\[\/size]/gis, (whole, number, text) => text);
 			text = parserUtils.recursiveReplace(text, /\[color=#([0-9a-f]{3}|[0-9a-f]{6})](.*?)\[\/color]/ig, (whole, hex, text) => text);
 
 			return text;

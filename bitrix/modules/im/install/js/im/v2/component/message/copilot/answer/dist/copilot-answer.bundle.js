@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core,im_v2_lib_utils,im_v2_lib_parser,im_v2_component_message_base,im_v2_component_message_elements,im_v2_lib_helpdesk,im_v2_lib_notifier) {
+(function (exports,main_core,im_v2_lib_utils,im_v2_lib_parser,im_v2_component_message_base,im_v2_component_message_elements,im_v2_lib_helpdesk,im_v2_lib_notifier,im_v2_lib_copilot) {
 	'use strict';
 
 	// @vue/component
@@ -47,11 +47,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return ((_this$message$compone = this.message.componentParams) == null ? void 0 : _this$message$compone.copilotError) === true;
 	    },
 	    warningText() {
-	      return this.loc('IM_MESSAGE_COPILOT_ANSWER_WARNING', {
+	      return this.loc('IM_MESSAGE_COPILOT_ANSWER_WARNING_MSGVER_1', {
 	        '#LINK_START#': '<a class="bx-im-message-copilot-answer__warning_more">',
-	        '#LINK_END#': '</a>'
+	        '#LINK_END#': '</a>',
+	        '#COPILOT_NAME#': this.copilotManager.getName()
 	      });
 	    }
+	  },
+	  created() {
+	    this.copilotManager = new im_v2_lib_copilot.CopilotManager();
 	  },
 	  methods: {
 	    async onCopyClick() {
@@ -110,5 +114,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CopilotMessage = CopilotMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=copilot-answer.bundle.js.map

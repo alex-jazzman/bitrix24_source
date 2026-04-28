@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Loader;
 
 /**
  * @var CMain $APPLICATION
@@ -46,7 +47,20 @@ $sourceList = $arResult['SOURCE_LIST'];
 		</div>
 
 		<?php
-			if ($source->isConnected()):
+			if (!$source->isAvailable()):
+		?>
+		<div class="biconnector-superset-source-list-card__second-connect">
+			<button
+				onclick="<?= $source->getOnClickConnectButtonScript() ?>"
+				class="biconnector-superset-source-list-card__second-connect-button ui-btn-icon-lock ui-btn ui-btn-light-border ui-btn-base-light  ui-btn-no-caps ui-btn-round ui-btn-sm"
+			>
+				<span class="biconnector-superset-source-list-card__second-connect-button-text">
+					<?= Loc::getMessage('BICONNECTOR_SUPERSET_SOURCE_CONNECT_LIST_ADD_CONNECTION_BUTTON_MSGVER_1') ?>
+				</span>
+			</button>
+		</div>
+		<?php
+			elseif ($source->isConnected()):
 		?>
 		<div class="biconnector-superset-source-list-card__second-connect">
 			<div class="biconnector-superset-source-list-card__second-connect-check-wrapper">

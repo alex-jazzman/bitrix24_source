@@ -12,5 +12,6 @@ return [
 		'im:messenger/lib/integration/callmobile/call-manager',
 		'im:messenger/lib/permission-manager',
 		'im:messenger/lib/feature',
+		'im:messenger/const',
 	],
 ];

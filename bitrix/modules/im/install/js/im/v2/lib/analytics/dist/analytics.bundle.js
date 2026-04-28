@@ -2,10 +2,10 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,im_v2_lib_analytics,im_v2_lib_messageComponent,ui_analytics,im_v2_application_core,im_v2_const) {
+(function (exports,main_core,im_v2_lib_analytics,im_v2_lib_messageComponent,im_v2_const,ui_analytics,im_v2_application_core) {
 	'use strict';
 
-	const PSEUDO_CHAT_TYPE_FOR_NOTES = 'notes';
+	const PSEUDO_SELF_CHAT_TYPE = 'notes';
 	const AI_ASSISTANT_CHAT_TYPE = 'chatType_aiAssistant';
 	const CopilotChatType = Object.freeze({
 	  private: 'chatType_private',
@@ -93,7 +93,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  leave: 'leave',
 	  useFormatToolbar: 'use_text_formatting',
 	  closeSearch: 'cancel_search',
-	  selectSearchRecent: 'click_recent_suggest'
+	  selectSearchRecent: 'click_recent_suggest',
+	  openTaskCard: 'open_task_description',
+	  addUser: 'add_mentioned_user'
 	});
 	const AnalyticsTool = Object.freeze({
 	  ai: 'ai',
@@ -169,7 +171,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  stickerPackPopup: 'stickerpack_popup',
 	  chatLayout: 'chat_tab',
 	  taskCommentsLayout: 'tasksTask_tab',
-	  notificationLayout: 'notification_tab'
+	  notificationLayout: 'notification_tab',
+	  mentionPopup: 'mention_popup'
 	});
 	const AnalyticsSubSection = Object.freeze({
 	  contextMenu: 'context_menu',
@@ -182,14 +185,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  membersPanel: 'user_list',
 	  recentContextMenu: 'recent_context_menu',
 	  recentChats: 'recent_chats',
-	  recentSearch: 'recent_search'
+	  recentSearch: 'recent_search',
+	  chatHeader: 'chat_header'
 	});
 	const AnalyticsElement = Object.freeze({
 	  initialBanner: 'initial_banner',
 	  videocall: 'videocall',
 	  audiocall: 'audiocall',
 	  startButton: 'start_button',
-	  more: 'more'
+	  more: 'more',
+	  taskButton: 'task_button'
 	});
 	const AnalyticsStatus = Object.freeze({
 	  success: 'success',
@@ -257,15 +262,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](dialogId);
 	}
 
-	function isNotes(dialogId) {
-	  return im_v2_application_core.Core.getStore().getters['chats/isNotes'](dialogId);
+	function isSelfChat(dialogId) {
+	  return im_v2_application_core.Core.getStore().getters['chats/isSelfChat'](dialogId);
 	}
 
 	const CUSTOM_CHAT_TYPE = 'custom';
 	const AI_ASSISTANT_CHAT_TYPE$1 = 'aiAssistant';
 	function getChatType(chat) {
-	  if (isNotes(chat.dialogId)) {
-	    return PSEUDO_CHAT_TYPE_FOR_NOTES;
+	  if (isSelfChat(chat.dialogId)) {
+	    return PSEUDO_SELF_CHAT_TYPE;
 	  }
 	  if (isAiAssistant(chat.dialogId)) {
 	    return AI_ASSISTANT_CHAT_TYPE$1;
@@ -991,7 +996,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const SelectRecipientSource = Object.freeze({
 	  recent: 'recent',
 	  searchResult: 'search_result',
-	  notes: 'notes'
+	  selfChat: 'notes'
 	});
 	var _hasSearchedBefore$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasSearchedBefore");
 	var _onSelectRecipient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelectRecipient");
@@ -1064,7 +1069,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  source
 	}) {
 	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
-	  const type = isNotes(dialogId) ? SelectRecipientSource.notes : source;
+	  const type = isSelfChat(dialogId) ? SelectRecipientSource.selfChat : source;
 	  ui_analytics.sendData({
 	    tool: AnalyticsTool.im,
 	    category: getCategoryByChatType(chat.type),
@@ -2019,6 +2024,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	}
 
+	class Mention {
+	  onClickAddToChat(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const chatType = getChatType(chat);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.chat,
+	      event: AnalyticsEvent.addUser,
+	      c_section: AnalyticsSection.mentionPopup,
+	      p1: `chatType_${chatType}`
+	    });
+	  }
+	}
+
+	class TaskComments {
+	  onOpenCard(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const chatType = getChatType(chat);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.chat,
+	      event: AnalyticsEvent.openTaskCard,
+	      c_section: AnalyticsSection.taskCommentsLayout,
+	      c_sub_section: AnalyticsSubSection.chatHeader,
+	      c_element: AnalyticsElement.taskButton,
+	      p1: `chatType_${chatType}`
+	    });
+	  }
+	}
+
 	var _excludedChats = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("excludedChats");
 	var _chatsWithTyping = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatsWithTyping");
 	var _currentTab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTab");
@@ -2064,6 +2099,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.recentContextMenu = new RecentContextMenu();
 	    this.formatToolbar = new FormatToolbar();
 	    this.recentSearch = new RecentSearch();
+	    this.mention = new Mention();
+	    this.taskComments = new TaskComments();
 	  }
 	  static getInstance() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
@@ -2114,7 +2151,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      c_section: `${currentLayout}_tab`,
 	      p2: getUserType()
 	    };
-	    if (!isNotes(dialog.dialogId)) {
+	    if (!isSelfChat(dialog.dialogId)) {
 	      params.p5 = `chatId_${dialog.chatId}`;
 	    }
 	    if (chatType === im_v2_const.ChatType.comment) {
@@ -2135,7 +2172,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    ui_analytics.sendData(params);
 	  }
 	  onTypeMessage(dialog) {
-	    if (!isNotes(dialog.dialogId) || babelHelpers.classPrivateFieldLooseBase(this, _chatsWithTyping)[_chatsWithTyping].has(dialog.dialogId)) {
+	    if (!isSelfChat(dialog.dialogId) || babelHelpers.classPrivateFieldLooseBase(this, _chatsWithTyping)[_chatsWithTyping].has(dialog.dialogId)) {
 	      return;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatsWithTyping)[_chatsWithTyping].add(dialog.dialogId);
@@ -2159,5 +2196,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.getCollabId = getCollabId;
 	exports.getUserType = getUserType;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Analytics,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.UI.Analytics,BX.Messenger.v2.Application));
 //# sourceMappingURL=analytics.bundle.js.map

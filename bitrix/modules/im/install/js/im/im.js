@@ -6510,7 +6510,7 @@ BX.MessengerChat.prototype.openMessenger = function(userId, params)
 				this.enableGroupChat? BX.create("a", {attrs: {href: "javascript:void(0);", title: BX.message("IM_M_CHAT_TITLE")}, props : { className : "bx-messenger-panel-button bx-messenger-panel-chat"}, html: BX.message("IM_M_CHAT_BTN_JOIN"), events : { click: BX.delegate(function(e){ this.openChatDialog({'type': 'CHAT_ADD', 'bind': BX.proxy_context}); BX.PreventDefault(e)}, this)}}): null,
 				this.popupMessengerPanelButtonCall1 = this.callButton(),
 				BX.create("span", { props : { className : "bx-messenger-panel-title"}, children: [
-					this.popupMessengerPanelTitle = BX.create('a', { props : { className : "bx-messenger-panel-title-link"+userTitleStyle}, attrs : { href : this.users[this.currentTab]? this.users[this.currentTab].profile: BX.MessengerCommon.getUserParam().profile, target: '_blank'}, html: this.users[this.currentTab]? this.users[this.currentTab].name: ''}),
+					this.popupMessengerPanelTitle = BX.create('a', { props : { className : "bx-messenger-panel-title-link"+userTitleStyle}, attrs : { href : this.users[this.currentTab]? this.users[this.currentTab].profile: BX.MessengerCommon.getUserParam().profile, target: '_blank'}, text: this.users[this.currentTab]? this.users[this.currentTab].name: ''}),
 					this.popupMessengerPanelLastDate = BX.create("span", { props : { className : "bx-messenger-panel-title-position"}, html: ''})
 				]}),
 				this.popupMessengerPanelStatus = BX.create("span", { props : { className : "bx-messenger-panel-desc"}, html: BX.MessengerCommon.getUserPosition(this.users[this.currentTab], false, true)})
@@ -7808,10 +7808,16 @@ BX.MessengerChat.prototype.dialogStatusRedraw = function(params)
 		BX.style(this.popupMessengerPanelAvatar, "background-color", (BX.MessengerCommon.isBlankAvatar(this.users[this.currentTab].avatar) && this.users[this.currentTab].color? this.users[this.currentTab].color: ""));
 
 		this.popupMessengerPanelTitle.href = this.users[this.currentTab].profile;
-		this.popupMessengerPanelTitle.innerHTML = this.users[this.currentTab].name;
+		// XSS fix: using textContent instead of innerHTML to safely render user name.
+		// htmlspecialcharsback() is needed because name may arrive pre-escaped from the server
+		// (e.g. "O&#039;Brien"), and textContent would display entities literally.
+		this.popupMessengerPanelTitle.textContent = BX.util.htmlspecialcharsback(this.users[this.currentTab].name);
 		if (this.BXIM.userId == this.currentTab)
 		{
-			this.popupMessengerPanelTitle.innerHTML = this.popupMessengerPanelTitle.innerHTML+' (<b><i>'+BX.message('IM_YOU')+'</i></b>)';
+			this.popupMessengerPanelTitle.appendChild(document.createTextNode(' ('));
+			var youLabel = BX.create('b', {children: [BX.create('i', {text: BX.message('IM_YOU')})]});
+			this.popupMessengerPanelTitle.appendChild(youLabel);
+			this.popupMessengerPanelTitle.appendChild(document.createTextNode(')'));
 		}
 
 		var funcUpdateLastDate = BX.delegate(function()
@@ -9129,13 +9135,14 @@ BX.MessengerChat.prototype.redrawChatHeader = function(params)
 			for (var i = 0; i < userInChat.length && i < maxCount; i++)
 			{
 				var user = this.users[userInChat[i]];
+				var safeName = BX.util.htmlspecialchars(BX.util.htmlspecialcharsback(user.name));
 				var avatarColor = BX.MessengerCommon.isBlankAvatar(user.avatar)? 'style="background-color: '+user.color+'"': '';
 				this.popupMessengerPanelUsers.innerHTML += '<span class="bx-messenger-panel-chat-user" data-userId="'+user.id+'">' +
 					'<span class="bx-notifier-popup-avatar bx-notifier-popup-avatar-status-'+BX.MessengerCommon.getUserStatus(user)+(this.chat[chatId].owner == user.id? ' bx-notifier-popup-avatar-owner': '')+(user.extranet && !user.connector? ' bx-notifier-popup-avatar-extranet':'')+'">' +
-						'<span class="bx-notifier-popup-avatar-img'+(BX.MessengerCommon.isBlankAvatar(user.avatar)? " bx-notifier-popup-avatar-img-default": "")+'" title="'+user.name+'" '+BX.MessengerCommon.getAvatarStyle(user)+'></span>' +
-						'<span class="bx-notifier-popup-avatar-status-icon" title="'+user.name+'"></span>'+
+						'<span class="bx-notifier-popup-avatar-img'+(BX.MessengerCommon.isBlankAvatar(user.avatar)? " bx-notifier-popup-avatar-img-default": "")+'" title="'+safeName+'" '+BX.MessengerCommon.getAvatarStyle(user)+'></span>' +
+						'<span class="bx-notifier-popup-avatar-status-icon" title="'+safeName+'"></span>'+
 					'</span>' +
-					'<span class="bx-notifier-popup-user-name'+(user.extranet && !user.connector? ' bx-messenger-panel-chat-user-name-extranet':'')+(user.connector? ' bx-messenger-panel-chat-user-name-lines':'')+(user.bot? ' bx-messenger-panel-chat-user-name-bot':'')+'">'+user.name+'</span>' +
+					'<span class="bx-notifier-popup-user-name'+(user.extranet && !user.connector? ' bx-messenger-panel-chat-user-name-extranet':'')+(user.connector? ' bx-messenger-panel-chat-user-name-lines':'')+(user.bot? ' bx-messenger-panel-chat-user-name-bot':'')+'">'+safeName+'</span>' +
 				'</span>';
 
 				showUser = true;
@@ -9147,12 +9154,12 @@ BX.MessengerChat.prototype.redrawChatHeader = function(params)
 			for (var i = 0; i < userInChat.length && i < maxCount; i++)
 			{
 				var user = this.users[userInChat[i]];
-
+				var safeName = BX.util.htmlspecialchars(BX.util.htmlspecialcharsback(user.name));
 				var avatarColor = BX.MessengerCommon.isBlankAvatar(user.avatar)? 'style="background-color: '+user.color+'"': '';
 				this.popupMessengerPanelUsers.innerHTML += '<span class="bx-messenger-panel-chat-user" data-userId="'+user.id+'">' +
 					'<span class="bx-notifier-popup-avatar bx-notifier-popup-avatar-status-'+BX.MessengerCommon.getUserStatus(user)+(this.chat[chatId].owner == user.id? ' bx-notifier-popup-avatar-owner': '')+(user.extranet? ' bx-notifier-popup-avatar-extranet':'')+'">' +
-						'<span class="bx-notifier-popup-avatar-img'+(BX.MessengerCommon.isBlankAvatar(user.avatar)? " bx-notifier-popup-avatar-img-default": "")+'" title="'+user.name+'" '+BX.MessengerCommon.getAvatarStyle(user)+'></span>' +
-					'<span class="bx-notifier-popup-avatar-status-icon" title="'+user.name+'"></span>'+
+						'<span class="bx-notifier-popup-avatar-img'+(BX.MessengerCommon.isBlankAvatar(user.avatar)? " bx-notifier-popup-avatar-img-default": "")+'" title="'+safeName+'" '+BX.MessengerCommon.getAvatarStyle(user)+'></span>' +
+					'<span class="bx-notifier-popup-avatar-status-icon" title="'+safeName+'"></span>'+
 					'</span>' +
 				'</span>';
 				showUser = true;

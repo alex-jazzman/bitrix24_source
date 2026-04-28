@@ -20,6 +20,11 @@ export class Analytic
 		this.#context = context;
 	}
 
+	getContext(): ?AnalyticContext
+	{
+		return this.#context;
+	}
+
 	addEvent(eventType: string, eventData: AnalyticsOptions): void
 	{
 		if (this.#context.isBitrix24)

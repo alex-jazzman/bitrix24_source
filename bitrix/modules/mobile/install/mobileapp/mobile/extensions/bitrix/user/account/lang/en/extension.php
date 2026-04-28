@@ -2,6 +2,6 @@
 $MESS["DELETE_ACCOUNT_CONTINUE"] = "CONTINUE";
 $MESS["DELETE_ACCOUNT_TITLE"] = "Delete user account";
 $MESS["DELETE_ACCOUNT_WARNING"] = "Attention!";
-$MESS["DISCLAIMER_DELETE_ACCOUNT"] = 'You will be forwarded to the User Profile Deletion Request that requires authentication.
-User profile deletion from the Bitrix24 Customer Account will occur within the period of 30 days and will entail termination of access to this Bitrix24 Customer Account.
-You can find details inside the User Profile Deletion Request.';
+$MESS["DISCLAIMER_DELETE_ACCOUNT"] = 'You will be redirected to a form where you can submit a request to delete the account. You will have to log in again to that account.
+The account will be deleted within 10 business days.
+More information will be available on the request form.';

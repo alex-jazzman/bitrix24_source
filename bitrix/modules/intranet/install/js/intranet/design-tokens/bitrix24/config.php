@@ -19,7 +19,7 @@ if (defined('ADMIN_SECTION') && ADMIN_SECTION === true)
 
 if (
 	!defined('SITE_TEMPLATE_ID')
-	|| !in_array(SITE_TEMPLATE_ID, ['bitrix24', 'air', 'desktop_app', 'login', 'pub', 'landing24', 'dashboard_detail'])
+	|| !in_array(SITE_TEMPLATE_ID, ['bitrix24', 'air', 'desktop_app', 'login', 'pub', 'landing24', 'dashboard_detail', 'note_document_detail'])
 )
 {
 	return [];

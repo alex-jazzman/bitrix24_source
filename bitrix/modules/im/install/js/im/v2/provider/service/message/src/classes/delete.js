@@ -115,13 +115,13 @@ export class DeleteService
 		const chat = this.#getChat();
 		if (!newLastId)
 		{
-			this.#store.dispatch('recent/hide', { id: chat.dialogId });
+			void this.#store.dispatch('recent/hide', { dialogId: chat.dialogId });
 
 			return;
 		}
 
-		this.#store.dispatch('recent/update', {
-			id: chat.dialogId,
+		void this.#store.dispatch('recent/update', {
+			dialogId: chat.dialogId,
 			fields: { messageId: newLastId },
 		});
 	}
@@ -159,13 +159,13 @@ export class DeleteService
 		if (recentItem.messageId === messageId)
 		{
 			const newLastId = this.#getPreviousMessageId(messageId);
-			this.#store.dispatch('recent/update', {
-				id: chat.dialogId,
+			void this.#store.dispatch('recent/update', {
+				dialogId: chat.dialogId,
 				fields: { messageId: newLastId },
 			});
 		}
 
-		this.#store.dispatch('messages/delete', {
+		void this.#store.dispatch('messages/delete', {
 			id: messageId,
 		});
 	}

@@ -239,7 +239,7 @@
 			{
 				if (params[2] !== undefined)
 				{
-					result = `${siteDir}mobile/bp/detail.php?task_id=${params[2]}`;
+					result = `${siteDir}company/personal/bizproc/${params[2]}/`;
 				}
 			}
 

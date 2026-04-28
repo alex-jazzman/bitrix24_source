@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BMNP_MESSAGE_COUNT"] = "Messages per page";
 $MESS["BMNP_MESSAGE_LENGTH"] = "Maximum message display length";
 $MESS["BMNP_PATH_TO_BLOG"] = "Blog page path template";
@@ -22,4 +22,3 @@ $MESS["BMNP_SORT_BY_VIEWS"] = "views";
 $MESS["BMNP_SORT_BY_RATING_TOTAL_VALUE"] = "post rating";
 $MESS["BMNP_SORT_BY_RATING_TOTAL_VOTES"] = "votes";
 $MESS ['BMNP_USE_SOCNET'] = "Used in Social Network";
-?>

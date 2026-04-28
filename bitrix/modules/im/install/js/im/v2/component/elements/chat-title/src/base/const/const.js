@@ -12,5 +12,5 @@ export const TitleIcons = {
 };
 
 export const ChatTitleType = {
-	notes: 'notes',
+	selfChat: 'selfChat',
 };

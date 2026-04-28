@@ -58,11 +58,7 @@ use Bitrix\Main\Localization\Loc;
 			<option value="h"<?= ($arCurrentValues["delay_type"] == "h") ? " selected" : "" ?>><?= GetMessage("CPAD_DP_TIME_H") ?></option>
 			<option value="d"<?= ($arCurrentValues["delay_type"] == "d") ? " selected" : "" ?>><?= GetMessage("CPAD_DP_TIME_D") ?></option>
 		</select>
-		<?
-		$delayMinLimit = CBPSchedulerService::getDelayMinLimit();
-		if ($delayMinLimit): ?>
-			<p style="color: red;">* <?= GetMessage("CPAD_PD_TIMEOUT_LIMIT") ?>: <?=CBPHelper::FormatTimePeriod($delayMinLimit)?></p>
-		<?php endif; ?>
+		<?= \CBPViewHelper::renderDelayLimitsInfo() ?>
 	</td>
 </tr>
 <tr id="tr_time_type_selector_time">
@@ -98,12 +94,6 @@ use Bitrix\Main\Localization\Loc;
 </tr>
 <?php endif ?>
 
-<tr>
-	<td align="right" width="40%"><?= htmlspecialcharsbx(Loc::getMessage("CPAD_DP_SORT")) ?></td>
-	<td width="60%">
-		<?= CBPDocument::ShowParameterField('int', 'Sort', $arCurrentValues["Sort"], ['maxlength' => CBPDelayActivity::DEFAULT_SORT]) ?>
-	</td>
-</tr>
 <script>
 	SetDelayMode(<?= (empty($arCurrentValues['delay_date'])) ? 'true' : 'false' ?>);
 </script>

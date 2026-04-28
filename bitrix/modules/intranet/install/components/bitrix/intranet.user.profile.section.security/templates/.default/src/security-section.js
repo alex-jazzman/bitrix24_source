@@ -3,6 +3,7 @@ import { Loc, Type, Text, Event } from 'main.core';
 import { Counter, CounterStyle } from 'ui.cnt';
 import { SidePanel } from 'main.sidepanel';
 import { sendData } from 'ui.analytics';
+import { LogoutAllConfirm } from 'intranet.logout-all-confirm';
 
 export class SecuritySection
 {
@@ -97,25 +98,9 @@ export class SecuritySection
 		BX.Intranet.UserProfile.Security.changeContent('otpConnected');
 	}
 
-	logoutAllRequest(): Promise
-	{
-		return BX.ajax.runAction('intranet.v2.Otp.logoutAll', {
-			data: {
-				signedUserId: this.#signedUserId,
-			},
-		});
-	}
-
 	logoutAll(): void
 	{
-		this.logoutAllRequest()?.then((response) => {
-			BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('INTRANET_USER_SECURITY_EXIT_SUCCESS'),
-				autoHide: true,
-				position: 'bottom-right',
-				closeButton: false,
-			});
-		});
+		(new LogoutAllConfirm()).show();
 	}
 
 	renderPhoneConfirmationCounter(wrapper: HTMLElement): void

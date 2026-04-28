@@ -455,12 +455,20 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 
 		#onReactionsTap = () => {
 			this.lastScrolledMessageIdWithReaction = this.#getNextMessageIdWithReactionToJump();
+			if (Type.isNil(this.lastScrolledMessageIdWithReaction))
+			{
+				return;
+			}
 
 			void this.#goToMessage(this.lastScrolledMessageIdWithReaction);
 		};
 
 		#onMentionsTap = () => {
 			this.lastScrolledMessageIdWitMention = this.#getNextMessageIdWithMentionToJump();
+			if (Type.isNil(this.lastScrolledMessageIdWitMention))
+			{
+				return;
+			}
 
 			void this.#goToMessage(this.lastScrolledMessageIdWitMention);
 		};
@@ -474,6 +482,9 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 			});
 		};
 
+		/**
+		 * @return {number|null}
+		 */
 		#getNextMessageIdWithReactionToJump = () => {
 			const reactions = this.store.getters['anchorModel/getByChatId'](this.getChatId(), AnchorType.reaction);
 			if (!Type.isArrayFilled(reactions))
@@ -489,6 +500,9 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 			return this.#getNextIdToJump(sortedMessageIds, this.lastScrolledMessageIdWithReaction);
 		};
 
+		/**
+		 * @return {number|null}
+		 */
 		#getNextMessageIdWithMentionToJump = () => {
 			const mentions = this.store.getters['anchorModel/getByChatId'](this.getChatId(), AnchorType.mention);
 			if (!Type.isArrayFilled(mentions))
@@ -504,6 +518,9 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 			return this.#getNextIdToJump(sortedMessageIds, this.lastScrolledMessageIdWithMention);
 		};
 
+		/**
+		 * @return {number}
+		 */
 		#getNextCommentChatIdToJump()
 		{
 			const commentChatIds = this.#getCommentChatIds();
@@ -513,6 +530,9 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 			return this.#getNextIdToJump(commentChatIds, this.lastScrolledCommentChatId);
 		}
 
+		/**
+		 * @return {number}
+		 */
 		#getCommentChatIds()
 		{
 			const counterList = this.store.getters['counterModel/getByParentChatId'](this.getChatId());
@@ -520,6 +540,11 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 			return counterList.map((counterState) => counterState.chatId);
 		}
 
+		/**
+		 * @param {number} sortedIds
+		 * @param {number?} lastId
+		 * @return {number}
+		 */
 		#getNextIdToJump(sortedIds, lastId) {
 			if (!lastId)
 			{
@@ -531,6 +556,9 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 			return Type.isArrayFilled(filteredIds) ? filteredIds[0] : sortedIds[0];
 		}
 
+		/**
+		 * @return {number|string}
+		 */
 		#goToMessage(messageId)
 		{
 			return this.contextManager?.goToMessageContext({

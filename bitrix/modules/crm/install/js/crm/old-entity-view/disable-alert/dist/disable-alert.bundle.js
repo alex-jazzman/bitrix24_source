@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,ui_dialogs_messagebox,ui_notification,ui_buttons,crm_router) {
+(function (exports,ui_designTokens,ui_designTokens_air,ui_dialogs_messagebox,ui_notification,ui_buttons,crm_router,main_core,ui_analytics,crm_integration_analytics) {
 	'use strict';
 
 	var _templateObject;
@@ -19,9 +19,9 @@ this.BX.Crm = this.BX.Crm || {};
 	var _showConfirmationPopup = /*#__PURE__*/new WeakSet();
 	var _getTitleText = /*#__PURE__*/new WeakSet();
 	var _getText = /*#__PURE__*/new WeakSet();
-	var DisableAlert = /*#__PURE__*/function () {
-	  function DisableAlert(options) {
-	    babelHelpers.classCallCheck(this, DisableAlert);
+	var OldEntityDisableAlertContent = /*#__PURE__*/function () {
+	  function OldEntityDisableAlertContent(alertContainer, options) {
+	    babelHelpers.classCallCheck(this, OldEntityDisableAlertContent);
 	    _classPrivateMethodInitSpec(this, _getText);
 	    _classPrivateMethodInitSpec(this, _getTitleText);
 	    _classPrivateMethodInitSpec(this, _showConfirmationPopup);
@@ -50,9 +50,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    if (!main_core.Type.isElementNode(options.alertContainer)) {
-	      throw new Error('OldCardLayout.DisableAlert: \'alertContainer\' must be a DOM element.');
-	    }
 	    if (!main_core.Type.isInteger(options.daysUntilDisable)) {
 	      throw new TypeError('OldCardLayout.DisableAlert: \'daysUntilDisable\' must be integer');
 	    }
@@ -68,16 +65,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    if (!main_core.Type.isString(options.previewHref)) {
 	      throw new TypeError('OldCardLayout.DisableAlert: \'previewHref\' must be string');
 	    }
-	    babelHelpers.classPrivateFieldSet(this, _alertContainer, options.alertContainer);
+	    babelHelpers.classPrivateFieldSet(this, _alertContainer, alertContainer);
 	    babelHelpers.classPrivateFieldSet(this, _daysUntilDisable, options.daysUntilDisable);
 	    babelHelpers.classPrivateFieldSet(this, _isAdmin, options.isAdmin);
 	    babelHelpers.classPrivateFieldSet(this, _lastTimeShownField, options.lastTimeShownField);
 	    babelHelpers.classPrivateFieldSet(this, _lastTimeShownOptionName, options.lastTimeShownOptionName);
 	    babelHelpers.classPrivateFieldSet(this, _previewHref, options.previewHref);
 	  }
-	  babelHelpers.createClass(DisableAlert, [{
-	    key: "render",
-	    value: function render() {
+	  babelHelpers.createClass(OldEntityDisableAlertContent, [{
+	    key: "createNode",
+	    value: function createNode() {
 	      var _this = this;
 	      var previewButton = new ui_buttons.Button({
 	        text: main_core.Loc.getMessage('CRM_OLD_CARD_LAYOUT_DISABLE_ALERT_SHOW_PREVIEW_TEXT'),
@@ -94,6 +91,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        root = _ref.root,
 	        buttonContainer = _ref.buttonContainer,
 	        closeButton = _ref.closeButton;
+	      var aboutLink = root.querySelector('.crm-old-layout-helpdesk-link');
+	      main_core.Event.bind(aboutLink, 'click', function () {
+	        top.BX.Helper.show('redirect=detail&code=26179574');
+	      });
 	      if (babelHelpers.classPrivateFieldGet(this, _isAdmin)) {
 	        var showConfirmationButton = new ui_buttons.Button({
 	          text: main_core.Loc.getMessage('CRM_OLD_CARD_LAYOUT_DISABLE_ALERT_ENABLE_NEW_LAYOUT_TEXT'),
@@ -107,13 +108,15 @@ this.BX.Crm = this.BX.Crm || {};
 	        showConfirmationButton.renderTo(buttonContainer);
 	      }
 	      main_core.Event.bind(closeButton, 'click', function () {
-	        BX.userOptions.save('crm', babelHelpers.classPrivateFieldGet(_this, _lastTimeShownField), babelHelpers.classPrivateFieldGet(_this, _lastTimeShownOptionName), Date.now());
+	        var currentTimeInMs = Date.now();
+	        var currentTimeInS = Math.round(currentTimeInMs / 1000);
+	        BX.userOptions.save('crm', babelHelpers.classPrivateFieldGet(_this, _lastTimeShownField), babelHelpers.classPrivateFieldGet(_this, _lastTimeShownOptionName), currentTimeInS);
 	        babelHelpers.classPrivateFieldGet(_this, _alertContainer).remove();
 	      });
-	      babelHelpers.classPrivateFieldGet(this, _alertContainer).append(root);
+	      return root;
 	    }
 	  }]);
-	  return DisableAlert;
+	  return OldEntityDisableAlertContent;
 	}();
 	function _sendEnableNewLayoutRequest2() {
 	  BX.ajax.runAction('crm.oldentityview.sunset.enableNewCardLayout').then(function () {
@@ -156,7 +159,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 	function _getText2() {
-	  var helpdeskLink = '<a class="crm-old-layout-helpdesk-link" href="javascript:top.BX.Helper.show(\'redirect=detail&code=26179574\');">';
+	  var helpdeskLink = '<a class="crm-old-layout-helpdesk-link">';
 	  var localPhraseCode = babelHelpers.classPrivateFieldGet(this, _isAdmin) ? 'CRM_OLD_CARD_LAYOUT_DISABLE_ALERT_TEXT' : 'CRM_OLD_CARD_LAYOUT_DISABLE_ALERT_ENABLE_NEW_LAYOUT_CONTACT_ADMIN';
 	  return main_core.Loc.getMessage(localPhraseCode, {
 	    '[helpdeskLink]': helpdeskLink,
@@ -164,7 +167,135 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 
+	var _templateObject$1;
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _alertContainer$1 = /*#__PURE__*/new WeakMap();
+	var _lastTimeShownField$1 = /*#__PURE__*/new WeakMap();
+	var _lastTimeShownOptionName$1 = /*#__PURE__*/new WeakMap();
+	var _getTitleText$1 = /*#__PURE__*/new WeakSet();
+	var _getText$1 = /*#__PURE__*/new WeakSet();
+	var OldInvoiceReadonlyAlertContent = /*#__PURE__*/function () {
+	  function OldInvoiceReadonlyAlertContent(alertContainer, options) {
+	    babelHelpers.classCallCheck(this, OldInvoiceReadonlyAlertContent);
+	    _classPrivateMethodInitSpec$1(this, _getText$1);
+	    _classPrivateMethodInitSpec$1(this, _getTitleText$1);
+	    _classPrivateFieldInitSpec$1(this, _alertContainer$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$1(this, _lastTimeShownField$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$1(this, _lastTimeShownOptionName$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    if (!main_core.Type.isString(options.lastTimeShownField)) {
+	      throw new TypeError('OldCardLayout.DisableAlert: \'lastTimeShownField\' must be string');
+	    }
+	    if (!main_core.Type.isString(options.lastTimeShownOptionName)) {
+	      throw new TypeError('OldCardLayout.DisableAlert: \'lastTimeShownOptionName\' must be string');
+	    }
+	    babelHelpers.classPrivateFieldSet(this, _alertContainer$1, alertContainer);
+	    babelHelpers.classPrivateFieldSet(this, _lastTimeShownField$1, options.lastTimeShownField);
+	    babelHelpers.classPrivateFieldSet(this, _lastTimeShownOptionName$1, options.lastTimeShownOptionName);
+	  }
+	  babelHelpers.createClass(OldInvoiceReadonlyAlertContent, [{
+	    key: "createNode",
+	    value: function createNode() {
+	      var _this = this;
+	      var _ref = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-old-layout-disable-alert\">\n\t\t\t\t<div class=\"crm-old-layout-left-part\">\n\t\t\t\t\t<span class=\"crm-old-layout-icon\"></span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-old-layout-right-part\">\n\t\t\t\t\t<h4 class=\"crm-old-layout-title ui-typography-heading-h4\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</h4>\n\t\t\t\t\t<p class=\"crm-old-layout-text ui-typography-text-md\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</p>\n\t\t\t\t</div>\n\t\t\t\t<button class=\"crm-old-layout-close-button\" ref=\"closeButton\">\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t"])), _classPrivateMethodGet$1(this, _getTitleText$1, _getTitleText2$1).call(this), _classPrivateMethodGet$1(this, _getText$1, _getText2$1).call(this)),
+	        root = _ref.root,
+	        closeButton = _ref.closeButton;
+	      var aboutLink = root.querySelector('.crm-old-layout-helpdesk-link');
+	      main_core.Event.bind(aboutLink, 'click', function () {
+	        top.BX.Helper.show('redirect=detail&code=14795982');
+	        ui_analytics.sendData(crm_integration_analytics.Builder.OldEntityView.OldInvoiceReadonly.ClickEvent.buildData());
+	      });
+	      main_core.Event.bind(closeButton, 'click', function () {
+	        var currentTimeInMs = Date.now();
+	        var currentTimeInS = Math.round(currentTimeInMs / 1000);
+	        BX.userOptions.save('crm', babelHelpers.classPrivateFieldGet(_this, _lastTimeShownField$1), babelHelpers.classPrivateFieldGet(_this, _lastTimeShownOptionName$1), currentTimeInS);
+	        babelHelpers.classPrivateFieldGet(_this, _alertContainer$1).remove();
+	        ui_analytics.sendData(crm_integration_analytics.Builder.OldEntityView.OldInvoiceReadonly.CloseEvent.buildData());
+	      });
+	      ui_analytics.sendData(crm_integration_analytics.Builder.OldEntityView.OldInvoiceReadonly.ViewEvent.buildData());
+	      return root;
+	    }
+	  }]);
+	  return OldInvoiceReadonlyAlertContent;
+	}();
+	function _getTitleText2$1() {
+	  return main_core.Loc.getMessage('CRM_OLD_CARD_LAYOUT_INVOICE_READONLY_ALERT_TITLE');
+	}
+	function _getText2$1() {
+	  var helpdeskLink = '<a class="crm-old-layout-helpdesk-link">';
+	  return main_core.Loc.getMessage('CRM_OLD_CARD_LAYOUT_INVOICE_READONLY_ALERT_TEXT', {
+	    '[helpdeskLink]': helpdeskLink,
+	    '[/helpdeskLink]': '</a>'
+	  });
+	}
+
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _alertContainer$2 = /*#__PURE__*/new WeakMap();
+	var _contentName = /*#__PURE__*/new WeakMap();
+	var _contentOptions = /*#__PURE__*/new WeakMap();
+	var _getContentByName = /*#__PURE__*/new WeakSet();
+	var DisableAlert = /*#__PURE__*/function () {
+	  function DisableAlert(options) {
+	    babelHelpers.classCallCheck(this, DisableAlert);
+	    _classPrivateMethodInitSpec$2(this, _getContentByName);
+	    _classPrivateFieldInitSpec$2(this, _alertContainer$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(this, _contentName, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(this, _contentOptions, {
+	      writable: true,
+	      value: void 0
+	    });
+	    if (!main_core.Type.isElementNode(options.alertContainer)) {
+	      throw new Error('OldCardLayout.DisableAlert: \'alertContainer\' must be a DOM element.');
+	    }
+	    if (!main_core.Type.isString(options.contentName)) {
+	      throw new TypeError('OldCardLayout.DisableAlert: \'contentName\' must be string');
+	    }
+	    if (!main_core.Type.isObject(options.contentOptions)) {
+	      throw new TypeError('OldCardLayout.DisableAlert: \'contentOptions\' must be object');
+	    }
+	    babelHelpers.classPrivateFieldSet(this, _alertContainer$2, options.alertContainer);
+	    babelHelpers.classPrivateFieldSet(this, _contentName, options.contentName);
+	    babelHelpers.classPrivateFieldSet(this, _contentOptions, options.contentOptions);
+	  }
+	  babelHelpers.createClass(DisableAlert, [{
+	    key: "render",
+	    value: function render() {
+	      var contentNode = _classPrivateMethodGet$2(this, _getContentByName, _getContentByName2).call(this, babelHelpers.classPrivateFieldGet(this, _contentName));
+	      babelHelpers.classPrivateFieldGet(this, _alertContainer$2).append(contentNode);
+	    }
+	  }]);
+	  return DisableAlert;
+	}();
+	function _getContentByName2(name) {
+	  switch (name) {
+	    case 'old-invoice-readonly':
+	      return new OldInvoiceReadonlyAlertContent(babelHelpers.classPrivateFieldGet(this, _alertContainer$2), babelHelpers.classPrivateFieldGet(this, _contentOptions)).createNode();
+	    default:
+	      return new OldEntityDisableAlertContent(babelHelpers.classPrivateFieldGet(this, _alertContainer$2), babelHelpers.classPrivateFieldGet(this, _contentOptions)).createNode();
+	  }
+	}
+
 	exports.DisableAlert = DisableAlert;
 
-}((this.BX.Crm.OldEntityView = this.BX.Crm.OldEntityView || {}),BX,BX.UI.Dialogs,BX,BX.UI,BX.Crm));
+}((this.BX.Crm.OldEntityView = this.BX.Crm.OldEntityView || {}),BX,BX,BX.UI.Dialogs,BX,BX.UI,BX.Crm,BX,BX.UI.Analytics,BX.Crm.Integration.Analytics));
 //# sourceMappingURL=disable-alert.bundle.js.map

@@ -41,7 +41,7 @@ final class Mail implements Tabable
 			'id' => $this->getId(),
 			'sort' => $this->defaultSortValue(),
 			'imageName' => $this->getIconId(),
-			'badgeCode' => $this->getId(),
+			'badgeCode' => $this->getCounterId(),
 			'component' => $this->getComponentParams(),
 		];
 	}
@@ -60,7 +60,7 @@ final class Mail implements Tabable
 			'params' => [
 				'id' => 'mail_tabs',
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
-				'counter' => 'mail_unseen',
+				'counter' => $this->getCounterId(),
 				'analytics' => Analytics::mail(),
 			],
 			'tag' => 'new',
@@ -144,6 +144,11 @@ final class Mail implements Tabable
 	public function getIconId(): string
 	{
 		return 'mail';
+	}
+
+	public function getCounterId(): string
+	{
+		return 'mail_unseen';
 	}
 
 	public function setContext($context)

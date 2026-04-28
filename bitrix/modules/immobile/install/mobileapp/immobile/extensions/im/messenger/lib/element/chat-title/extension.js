@@ -47,6 +47,27 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {number|string} dialogId
+		 * @param {{parentChannelName?: string}} options
+		 * @returns {ChatTitle}
+		 */
+		static createForComment(dialogId, { parentChannelName = '' } = {})
+		{
+			const instance = ChatTitle.createFromDialogId(dialogId);
+
+			if (!instance.name)
+			{
+				instance.name = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_COMMENT');
+				instance.dialogType = DialogType.comment;
+				instance.description = Loc.getMessage(
+					'IMMOBILE_ELEMENT_CHAT_TITLE_COMMENT_DETAIL_TEXT',
+				).replace('#CHANNEL_TITLE#', parentChannelName);
+			}
+
+			return instance;
+		}
+
+		/**
 		 *
 		 * @param {number|string} dialogId
 		 * @param {ChatTitleOptions} options
@@ -150,6 +171,11 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				case DialogType.collab:
 				{
 					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_COLLAB');
+				}
+
+				case DialogType.tasksTask:
+				{
+					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_TASK');
 				}
 
 				default:

@@ -8495,7 +8495,9 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 		}
 
 		$entity = self::getEntity();
-		$result = $entity->Delete($ID);
+		$result = $entity->Delete($ID, [
+			'ANALYTICS' => ['c_section' => Dictionary::SECTION_REST],
+		]);
 		if($result !== true)
 		{
 			$errors[] = $entity->LAST_ERROR;
@@ -9811,19 +9813,30 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 	}
 	protected function innerGetList($order, $filter, $select, $navigation, &$errors)
 	{
-		if(!is_array($order))
+		if (!is_array($order))
 		{
 			$order = array();
 		}
 
-		if(empty($order))
+		if (empty($order))
 		{
 			$order['START_TIME'] = 'ASC';
 		}
 
-		if(!is_array($select))
+		if (!is_array($select))
 		{
 			$select = array();
+		}
+
+		$selectHash = array_flip($select);
+		if (
+			isset($selectHash['DESCRIPTION'])
+			&& !isset($selectHash['*'])
+			&& !isset($selectHash['PROVIDER_ID'], $selectHash['PROVIDER_TYPE_ID'])
+		)
+		{
+			$select[] = 'PROVIDER_ID';
+			$select[] = 'PROVIDER_TYPE_ID';
 		}
 
 		//Proces storage aliases
@@ -10088,6 +10101,12 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 			}
 			unset($fields['STORAGE_ELEMENT_IDS']);
 		}
+
+		if (isset($fields['DESCRIPTION']))
+		{
+			\Bitrix\Crm\Activity\Provider\Email::uncompressActivityDescription($fields);
+		}
+
 		parent::externalizeFields($fields, $fieldsInfo);
 	}
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
@@ -10466,6 +10485,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 	public function addItem($ownerEntityID, $fields)
 	{
+		$userPermissionsService = Container::getInstance()->getUserPermissions();
+		$entityTypePermissions = $userPermissionsService->entityType();
+		$itemPermissions = $userPermissionsService->item();
+
 		$ownerEntityID = (int)$ownerEntityID;
 		if($ownerEntityID <= 0)
 		{
@@ -10480,7 +10503,6 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		$fieldInfos = $this->getFieldsInfo();
 		$this->internalizeFields($fields, $fieldInfos, array());
 
-		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		if(
 			$this->ownerEntityTypeID === CCrmOwnerType::Deal
 			&& $this->entityTypeID === CCrmOwnerType::Contact
@@ -10488,13 +10510,13 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		{
 			//DEAL -> CONTACT
 			$categoryID = CCrmDeal::GetCategoryID($ownerEntityID);
-			if($categoryID < 0)
+			if ($categoryID < 0)
 			{
 				throw new RestException(
-					!CCrmDeal::CheckUpdatePermission(0, $userPermissions) ? 'Access denied.' : 'Not found.'
+					!$entityTypePermissions->canUpdateItems(CCrmOwnerType::Deal) ? 'Access denied.' : 'Not found.'
 				);
 			}
-			elseif(!CCrmDeal::CheckUpdatePermission($ownerEntityID, $userPermissions, $categoryID))
+			elseif (!$itemPermissions->canUpdate(CCrmOwnerType::Deal, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -10514,6 +10536,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				throw new RestException("The parameter 'fields' is not valid.");
 			}
+			$this->checkReadPermissions(CCrmOwnerType::Contact, [$entityID]);
 
 			$items = DealContactTable::getDealBindings($ownerEntityID);
 			if(is_array(EntityBinding::findBindingByEntityID(CCrmOwnerType::Contact, $entityID, $items)))
@@ -10551,7 +10574,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			// LEAD -> CONTACT
-			if(!CCrmLead::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Lead, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -10571,6 +10594,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				throw new RestException("The parameter 'fields' is not valid.");
 			}
+			$this->checkReadPermissions(CCrmOwnerType::Contact, [$entityID]);
 
 			$items = LeadContactTable::getLeadBindings($ownerEntityID);
 			if(is_array(EntityBinding::findBindingByEntityID(CCrmOwnerType::Contact, $entityID, $items)))
@@ -10608,7 +10632,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			//QUOTE -> CONTACT
-			if(!CCrmQuote::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Quote, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -10628,6 +10652,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				throw new RestException("The parameter 'fields' is not valid.");
 			}
+			$this->checkReadPermissions(CCrmOwnerType::Contact, [$entityID]);
 
 			$items = QuoteContactTable::getQuoteBindings($ownerEntityID);
 			if(is_array(EntityBinding::findBindingByEntityID(CCrmOwnerType::Contact, $entityID, $items)))
@@ -10665,7 +10690,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			//CONTACT -> COMPANY
-			if(!CCrmContact::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if(!$itemPermissions->canUpdate(CCrmOwnerType::Contact, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -10685,6 +10710,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				throw new RestException("The parameter 'fields' is not valid.");
 			}
+			$this->checkReadPermissions(CCrmOwnerType::Company, [$entityID]);
 
 			$items = ContactCompanyTable::getContactBindings($ownerEntityID);
 			if(is_array(EntityBinding::findBindingByEntityID(CCrmOwnerType::Company, $entityID, $items)))
@@ -10722,7 +10748,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			//COMPANY -> CONTACT
-			if(!CCrmCompany::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Company, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -10742,6 +10768,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				throw new RestException("The parameter 'fields' is not valid.");
 			}
+			$this->checkReadPermissions(CCrmOwnerType::Contact, [$entityID]);
 
 			$items = ContactCompanyTable::getCompanyBindings($ownerEntityID);
 			if(is_array(EntityBinding::findBindingByEntityID(CCrmOwnerType::Contact, $entityID, $items)))
@@ -10782,6 +10809,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 	public function deleteItem($ownerEntityID, $fields)
 	{
+		$userPermissionsService = Container::getInstance()->getUserPermissions();
+		$entityTypePermissions = $userPermissionsService->entityType();
+		$itemPermissions = $userPermissionsService->item();
+
 		$ownerEntityID = (int)$ownerEntityID;
 		if($ownerEntityID <= 0)
 		{
@@ -10796,7 +10827,6 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		$fieldInfos = $this->getFieldsInfo();
 		$this->internalizeFields($fields, $fieldInfos, array());
 
-		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		if(
 			$this->ownerEntityTypeID === CCrmOwnerType::Deal
 			&& $this->entityTypeID === CCrmOwnerType::Contact
@@ -10807,10 +10837,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			if($categoryID < 0)
 			{
 				throw new RestException(
-					!CCrmDeal::CheckUpdatePermission(0, $userPermissions) ? 'Access denied.' : 'Not found.'
+					!$entityTypePermissions->canUpdateItems(CCrmOwnerType::Deal) ? 'Access denied.' : 'Not found.'
 				);
 			}
-			elseif(!CCrmDeal::CheckUpdatePermission($ownerEntityID, $userPermissions, $categoryID))
+			elseif (!$itemPermissions->canUpdate(CCrmOwnerType::Deal, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -10830,6 +10860,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				throw new RestException("The parameter 'fields' is not valid.");
 			}
+			$this->checkReadPermissions(CCrmOwnerType::Contact, [$entityID]);
 
 			$items = DealContactTable::getDealBindings($ownerEntityID);
 			$itemIndex = EntityBinding::findBindingIndexByEntityID(CCrmOwnerType::Contact, $entityID, $items);
@@ -10876,7 +10907,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			// LEAD -> CONTACT
-			if(!CCrmLead::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Lead, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -10896,6 +10927,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				throw new RestException("The parameter 'fields' is not valid.");
 			}
+			$this->checkReadPermissions(CCrmOwnerType::Contact, [$entityID]);
 
 			$items = LeadContactTable::getLeadBindings($ownerEntityID);
 			$itemIndex = EntityBinding::findBindingIndexByEntityID(CCrmOwnerType::Contact, $entityID, $items);
@@ -10942,7 +10974,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			//QUOTE -> CONTACT
-			if(!CCrmQuote::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Quote, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -10962,6 +10994,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				throw new RestException("The parameter 'fields' is not valid.");
 			}
+			$this->checkReadPermissions(CCrmOwnerType::Contact, [$entityID]);
 
 			$items = QuoteContactTable::getQuoteBindings($ownerEntityID);
 			$itemIndex = EntityBinding::findBindingIndexByEntityID(CCrmOwnerType::Contact, $entityID, $items);
@@ -11008,7 +11041,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			//CONTACT -> COMPANY
-			if(!CCrmContact::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Contact, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -11028,6 +11061,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				throw new RestException("The parameter 'fields' is not valid.");
 			}
+			$this->checkReadPermissions(CCrmOwnerType::Company, [$entityID]);
 
 			$items = ContactCompanyTable::getContactBindings($ownerEntityID);
 			$itemIndex = EntityBinding::findBindingIndexByEntityID(CCrmOwnerType::Company, $entityID, $items);
@@ -11074,7 +11108,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			//COMPANY -> CONTACT
-			if(!CCrmCompany::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Company, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -11094,6 +11128,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				throw new RestException("The parameter 'fields' is not valid.");
 			}
+			$this->checkReadPermissions(CCrmOwnerType::Contact, [$entityID]);
 
 			$items = ContactCompanyTable::getCompanyBindings($ownerEntityID);
 			$itemIndex = EntityBinding::findBindingIndexByEntityID(CCrmOwnerType::Contact, $entityID, $items);
@@ -11221,6 +11256,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 	public function setItems($ownerEntityID, $items)
 	{
+		$userPermissionsService = Container::getInstance()->getUserPermissions();
+		$entityTypePermissions = $userPermissionsService->entityType();
+		$itemPermissions = $userPermissionsService->item();
+
 		$ownerEntityID = (int)$ownerEntityID;
 		if($ownerEntityID <= 0)
 		{
@@ -11241,7 +11280,6 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			$effectiveItems[] = $item;
 		}
 
-		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		if(
 			$this->ownerEntityTypeID === CCrmOwnerType::Deal
 			&& $this->entityTypeID === CCrmOwnerType::Contact
@@ -11252,10 +11290,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			if($categoryID < 0)
 			{
 				throw new RestException(
-					!CCrmDeal::CheckUpdatePermission(0, $userPermissions) ? 'Access denied.' : 'Not found.'
+					!$entityTypePermissions->canUpdateItems(CCrmOwnerType::Deal) ? 'Access denied.' : 'Not found.'
 				);
 			}
-			elseif(!CCrmDeal::CheckUpdatePermission($ownerEntityID, $userPermissions, $categoryID))
+			elseif (!$itemPermissions->canUpdate(CCrmOwnerType::Deal, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -11292,6 +11330,15 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			if(!empty($removedItems))
 			{
+				$this->checkReadPermissions(CCrmOwnerType::Contact, $removedItems);
+			}
+			if(!empty($addedItems))
+			{
+				$this->checkReadPermissions(CCrmOwnerType::Contact, $addedItems);
+			}
+
+			if(!empty($removedItems))
+			{
 				DealContactTable::unbindContacts($ownerEntityID, $removedItems);
 			}
 
@@ -11308,7 +11355,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			// LEAD -> CONTACT
-			if(!CCrmLead::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Lead, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -11345,6 +11392,15 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			if(!empty($removedItems))
 			{
+				$this->checkReadPermissions(CCrmOwnerType::Contact, $removedItems);
+			}
+			if(!empty($addedItems))
+			{
+				$this->checkReadPermissions(CCrmOwnerType::Contact, $addedItems);
+			}
+
+			if(!empty($removedItems))
+			{
 				LeadContactTable::unbindContacts($ownerEntityID, $removedItems);
 			}
 
@@ -11361,7 +11417,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			//QUOTE -> CONTACT
-			if(!CCrmQuote::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Quote, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -11398,6 +11454,15 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			if(!empty($removedItems))
 			{
+				$this->checkReadPermissions(CCrmOwnerType::Contact, $removedItems);
+			}
+			if(!empty($addedItems))
+			{
+				$this->checkReadPermissions(CCrmOwnerType::Contact, $addedItems);
+			}
+
+			if(!empty($removedItems))
+			{
 				QuoteContactTable::unbindContacts($ownerEntityID, $removedItems);
 			}
 
@@ -11413,7 +11478,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			//CONTACT -> COMPANY
-			if(!CCrmContact::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Contact, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -11450,6 +11515,15 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			if(!empty($removedItems))
 			{
+				$this->checkReadPermissions(CCrmOwnerType::Company, $removedItems);
+			}
+			if(!empty($addedItems))
+			{
+				$this->checkReadPermissions(CCrmOwnerType::Company, $addedItems);
+			}
+
+			if(!empty($removedItems))
+			{
 				ContactCompanyTable::unbindCompanies($ownerEntityID, $removedItems);
 			}
 
@@ -11465,7 +11539,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		)
 		{
 			//COMPANY -> CONTACT
-			if(!CCrmCompany::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			if (!$itemPermissions->canUpdate(CCrmOwnerType::Company, $ownerEntityID))
 			{
 				throw new AccessException();
 			}
@@ -11502,6 +11576,15 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			if(!empty($removedItems))
 			{
+				$this->checkReadPermissions(CCrmOwnerType::Contact, $removedItems);
+			}
+			if(!empty($addedItems))
+			{
+				$this->checkReadPermissions(CCrmOwnerType::Contact, $addedItems);
+			}
+
+			if(!empty($removedItems))
+			{
 				ContactCompanyTable::unbindContacts($ownerEntityID, $removedItems);
 			}
 
@@ -11520,13 +11603,16 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 	public function deleteItems($ownerEntityID)
 	{
+		$userPermissionsService = Container::getInstance()->getUserPermissions();
+		$entityTypePermissions = $userPermissionsService->entityType();
+		$itemPermissions = $userPermissionsService->item();
+
 		$ownerEntityID = (int)$ownerEntityID;
 		if($ownerEntityID <= 0)
 		{
 			throw new RestException('The parameter ownerEntityID is invalid or not defined.');
 		}
 
-		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		if(
 			$this->ownerEntityTypeID === CCrmOwnerType::Deal
 			&& $this->entityTypeID === CCrmOwnerType::Contact
@@ -11536,10 +11622,13 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			if($categoryID < 0)
 			{
 				throw new RestException(
-					!CCrmDeal::CheckReadPermission(0, $userPermissions) ? 'Access denied' : 'Not found'
+					!$entityTypePermissions->canReadItems(CCrmOwnerType::Deal) ? 'Access denied' : 'Not found'
 				);
 			}
-			elseif(!CCrmDeal::CheckReadPermission($ownerEntityID, $userPermissions, $categoryID))
+			elseif (
+				!$itemPermissions->canRead(CCrmOwnerType::Deal, $ownerEntityID)
+				|| !$itemPermissions->canUpdate(CCrmOwnerType::Deal, $ownerEntityID)
+			)
 			{
 				throw new AccessException();
 			}
@@ -11553,7 +11642,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			&& $this->entityTypeID === CCrmOwnerType::Contact
 		)
 		{
-			if(!CCrmLead::CheckReadPermission($ownerEntityID, $userPermissions))
+			if (
+				!$itemPermissions->canRead(CCrmOwnerType::Lead, $ownerEntityID)
+				|| !$itemPermissions->canUpdate(CCrmOwnerType::Lead, $ownerEntityID)
+			)
 			{
 				throw new AccessException();
 			}
@@ -11567,7 +11659,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			&& $this->entityTypeID === CCrmOwnerType::Contact
 		)
 		{
-			if(!CCrmQuote::CheckReadPermission($ownerEntityID, $userPermissions))
+			if (
+				!$itemPermissions->canRead(CCrmOwnerType::Quote, $ownerEntityID)
+				|| !$itemPermissions->canUpdate(CCrmOwnerType::Quote, $ownerEntityID)
+			)
 			{
 				throw new AccessException();
 			}
@@ -11580,7 +11675,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			&& $this->entityTypeID === CCrmOwnerType::Company
 		)
 		{
-			if(!CCrmContact::CheckReadPermission($ownerEntityID, $userPermissions))
+			if (
+				!$itemPermissions->canRead(CCrmOwnerType::Contact, $ownerEntityID)
+				|| !$itemPermissions->canUpdate(CCrmOwnerType::Contact, $ownerEntityID)
+			)
 			{
 				throw new AccessException();
 			}
@@ -11593,7 +11691,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			&& $this->entityTypeID === CCrmOwnerType::Contact
 		)
 		{
-			if(!CCrmCompany::CheckReadPermission($ownerEntityID, $userPermissions))
+			if (
+				!$itemPermissions->canRead(CCrmOwnerType::Company, $ownerEntityID)
+				|| !$itemPermissions->canUpdate(CCrmOwnerType::Company, $ownerEntityID)
+			)
 			{
 				throw new AccessException();
 			}
@@ -11606,6 +11707,33 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		$entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
 
 		throw new RestException("The binding type '{$ownerEntityTypeName} - {$entityTypeName}' is not supported in current context.");
+	}
+
+	private function checkReadPermissions(int $entityTypeId, array $itemIds): bool
+	{
+		$itemUserPermissions = Container::getInstance()->getUserPermissions()->item();
+		foreach ($itemIds as $value)
+		{
+			$value = (int)$value;
+			if ($value < 0)
+			{
+				throw new RestException('Wrong value');
+			}
+
+			if ($value > 0 && !$itemUserPermissions->canRead($entityTypeId, $value))
+			{
+				throw new RestException(
+					sprintf(
+						'[%s #%s] %s',
+						\CCrmOwnerType::GetDescription($entityTypeId),
+						$value,
+						Loc::getMessage('CRM_COMMON_READ_ACCESS_DENIED')
+					)
+				);
+			}
+		}
+
+		return true;
 	}
 
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)

@@ -120,6 +120,8 @@ this.BX.UI = this.BX.UI || {};
 	    let selectorText = '';
 	    if (senderName && senderEmail) {
 	      selectorText = `${senderName} <${senderEmail}>`;
+	    } else if (senderEmail) {
+	      selectorText = `<${senderEmail}>`;
 	    }
 	    if (this.selectCallback && !babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]) {
 	      this.selectCallback(selectorText, '');

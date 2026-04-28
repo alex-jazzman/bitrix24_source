@@ -1,7 +1,7 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)die();
 
-\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.design-tokens', 'ui.fonts.opensans', 'ui.hint']);
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.design-tokens', 'ui.fonts.opensans', 'ui.hint', 'intranet.old-interface.intranet-common']);
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 
 $toolbarID =  $arParams['TOOLBAR_ID'];

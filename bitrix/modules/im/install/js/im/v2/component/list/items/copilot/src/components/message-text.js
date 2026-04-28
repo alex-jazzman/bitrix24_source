@@ -38,6 +38,10 @@ export const MessageText = {
 		{
 			return this.$store.getters['recent/getMessage'](this.recentItem.dialogId);
 		},
+		chatCounter(): number
+		{
+			return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
+		},
 		showLastMessage(): boolean
 		{
 			return this.$store.getters['application/settings/get'](Settings.recent.showLastMessage);
@@ -113,7 +117,7 @@ export const MessageText = {
 	template: `
 		<div class="bx-im-list-copilot-item__message_container">
 			<span class="bx-im-list-copilot-item__message_text">
-				<span v-if="recentItem.draft.text && dialog.counter === 0" v-html="preparedDraftContent"></span>
+				<span v-if="recentItem.draft.text && chatCounter === 0" v-html="preparedDraftContent"></span>
 				<span v-else-if="!showLastMessage">{{ hiddenMessageText }}</span>
 				<template v-else>
 					<span v-if="isLastMessageAuthor" class="bx-im-list-copilot-item__message_author-icon --self"></span>

@@ -35,3 +35,5 @@ $MESS["DISK_SETTINGS_B24_DOCS_UNREGISTER_BUTTON"] = "Отключить #NAME#";
 $MESS["BOARDS_REGISTER_TO_PROXY"] = "Подключить";
 $MESS["BOARDS_UNREGISTER_TO_PROXY"] = "Отключить";
 $MESS["DISK_SETTINGS_B24_DOCS_LIMIT_INFO"] = "Ограничение на количество одновременно редактируемых документов: #limit#.";
+$MESS["DISK_CUSTOM_SERVERS"] = "Собственный сервер документов";
+$MESS["DISK_ADMIN_CHANGE_DEFAULT_VIEWER_NOTIFICATION"] = "При смене просмотрщика документов все активные сессии работы с документами будут прерваны. Изменения в таких документах не сохранятся.";

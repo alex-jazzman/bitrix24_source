@@ -11,10 +11,10 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/utils',
 		'im:messenger/lib/element/recent',
-		'im:messenger/lib/converter/ui/recent',
 		'im:messenger/controller/recent/const',
 		'im:messenger/controller/recent/service/base',
 		'im:messenger/controller/recent/service/render/lib/queue',
 		'im:messenger/controller/recent/service/render/lib/section',
+		'im:messenger/controller/recent/service/render/lib/convertor/const',
 	],
 ];

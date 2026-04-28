@@ -28,6 +28,7 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 	const { ReadMessageQueueTable } = require('im/messenger/db/table/read-message-queue');
 	const { TranscriptTable } = require('im/messenger/db/table/transcript');
 	const { StickerTable } = require('im/messenger/db/table/sticker');
+	const { CounterPendingOperationInternalTable } = require('im/messenger/db/table/src/internal/counter-pending-operation');
 
 	module.exports = {
 		OptionTable,
@@ -54,5 +55,6 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 		ReadMessageQueueTable,
 		TranscriptTable,
 		StickerTable,
+		CounterPendingOperationInternalTable,
 	};
 });

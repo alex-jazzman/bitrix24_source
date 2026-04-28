@@ -23,6 +23,7 @@ jn.define('intranet/invite-opener-new/src/component-opener', (require, exports, 
 				adminConfirm,
 				isBitrix24Included,
 				isInviteWithLocalEmailAppEnabled,
+				availableRootDepartment = null,
 			} = props;
 
 			const analytics = new AnalyticsEvent()?.setSection(analyticsSection);
@@ -53,6 +54,7 @@ jn.define('intranet/invite-opener-new/src/component-opener', (require, exports, 
 				adminConfirm,
 				isBitrix24Included,
 				isInviteWithLocalEmailAppEnabled,
+				department: availableRootDepartment,
 			});
 		}
 	}

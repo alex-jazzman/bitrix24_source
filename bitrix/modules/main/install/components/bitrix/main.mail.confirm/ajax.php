@@ -69,6 +69,13 @@ class MainMailConfirmAjax
 			return $response;
 		}
 
+		$isAdmin = Main\Loader::includeModule('bitrix24') ? \CBitrix24::isPortalAdmin($USER->getId()) : $USER->isAdmin();
+		if ($USER->getId() !== $sender['USER_ID'] && !($sender['IS_PUBLIC'] && $isAdmin))
+		{
+			$error = getMessage('MAIN_MAIL_CONFIRM_AJAX_ERROR');
+			return $response;
+		}
+
 		if ($smtp = $sender['OPTIONS']['smtp'])
 		{
 			$response['smtp'] = [
@@ -200,6 +207,18 @@ class MainMailConfirmAjax
 		$senderId = $_REQUEST['id'];
 		if ($senderId && is_numeric($senderId))
 		{
+			$senderItem = Main\Mail\Internal\SenderTable::getById((int)$senderId)->fetch();
+			if (empty($senderItem))
+			{
+				$error = getMessage('MAIN_MAIL_CONFIRM_AJAX_ERROR');
+				return;
+			}
+			if ($USER->getId() !== $senderItem['USER_ID'] && !($senderItem['IS_PUBLIC'] && $isAdmin))
+			{
+				$error = getMessage('MAIN_MAIL_CONFIRM_AJAX_ERROR');
+				return;
+			}
+
 			$queryParams = [
 				'filter' => [
 					'=ID' => (int)$senderId,

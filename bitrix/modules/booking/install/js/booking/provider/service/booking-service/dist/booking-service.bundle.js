@@ -32,7 +32,8 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    note: () => booking.note,
 	    visitStatus: () => booking.visitStatus,
 	    externalData: () => booking.externalData,
-	    skus: () => booking.skus
+	    skus: () => booking.skus,
+	    payment: () => booking.payment
 	  };
 	  const dependentFields = new Map([['resources', ['resourcesIds']], ['datePeriod', ['dateFromTs', 'dateToTs']]]);
 	  return Object.keys(mappings).reduce((result, field) => {
@@ -71,7 +72,8 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    visitStatus: bookingDto.visitStatus,
 	    externalData: bookingDto.externalData,
 	    messages: (_bookingDto$messages = bookingDto.messages) != null && _bookingDto$messages.length ? bookingDto.messages : undefined,
-	    skus: bookingDto.skus
+	    skus: bookingDto.skus,
+	    payment: bookingDto.payment
 	  };
 	  return Object.fromEntries(Object.entries(booking).filter(([, value]) => !main_core.Type.isUndefined(value)));
 	}

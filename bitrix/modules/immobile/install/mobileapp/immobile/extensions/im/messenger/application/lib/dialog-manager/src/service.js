@@ -49,8 +49,9 @@ jn.define('im/messenger/application/lib/dialog-manager/service', (require, expor
 		}
 
 		/**
-		 * @param dialogId
+		 * @param {string} dialogId
 		 * @return {Promise<DialoguesModelState|null>}
+		 * @throws {Array<{code: string, message: string}>} REST API errors (e.g. ACCESS_DENIED, CHAT_NOT_FOUND)
 		 */
 		async getDialogByDialogId(dialogId)
 		{

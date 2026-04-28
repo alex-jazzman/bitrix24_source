@@ -18,6 +18,7 @@ export class DelayIntervalSelector
 	labelNode;
 	useAfterBasis;
 	minLimitM;
+	maxLimitD;
 	showWaitWorkDay;
 
 	delay;
@@ -38,6 +39,7 @@ export class DelayIntervalSelector
 			}
 			this.onchange = options.onchange;
 			this.minLimitM = options.minLimitM;
+			this.maxLimitD = options.maxLimitD;
 			this.showWaitWorkDay = options.showWaitWorkDay;
 		}
 	}
@@ -285,6 +287,19 @@ export class DelayIntervalSelector
 						content: Loc.getMessage('BIZPROC_AUTOMATION_DELAY_MIN_LIMIT_LABEL'),
 					});
 					this.delay.setValue(this.minLimitM);
+				}
+
+				if (
+					this.maxLimitD > 0
+					&& this.delay.basis === DelayInterval.BASIS_TYPE.CurrentDateTime
+					&& this.delay.valueType === 'd'
+					&& this.delay.value > this.maxLimitD
+				)
+				{
+					BX.UI.Notification.Center.notify({
+						content: Loc.getMessage('BIZPROC_AUTOMATION_DELAY_MAX_LIMIT_LABEL'),
+					});
+					this.delay.setValue(this.maxLimitD);
 				}
 			}
 			else

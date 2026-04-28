@@ -45,7 +45,7 @@ export type DialogWidgetItem = MediaGalleryDialogWidgetItem|FileGalleryDialogWid
 	FileDialogWidgetItem|ImageDialogWidgetItem|VideoDialogWidgetItem|AudioDialogWidgetItem|
 	CopilotDialogWidgetItem|CopilotPromptDialogWidgetItem|CopilotErrorDialogWidgetItem|
 	VoteDialogWidgetItem|CheckInDialogWidgetItem|CallDialogWidgetItem|BannerDialogWidgetItem|
-	VideoNoteDialogWidgetItem|VideoNoteTextDialogWidgetItem;
+	VideoNoteDialogWidgetItem|VideoNoteTextDialogWidgetItem|AiBizprocDialogWidgetItem;
 
 export type BaseDialogWidgetItem = {
 	align: 'center' | 'left' | 'right' | null,
@@ -180,6 +180,10 @@ export type BannerDialogWidgetItem = BaseDialogWidgetItem & {
 
 export type AiAssistantDialogWidgetItem = BaseDialogWidgetItem & {
 	buttons: MessageButton[],
+	footnote: MessageFootnote,
+}
+
+export type AiBizprocDialogWidgetItem = BaseDialogWidgetItem & {
 	footnote: MessageFootnote,
 }
 

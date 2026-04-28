@@ -1,6 +1,6 @@
 import { getUsersFromRecentItems } from 'im.v2.lib.search';
 
-import { MyNotes } from './my-notes';
+import { SelfChat } from './self-chat';
 import { CarouselUser } from './carousel-user';
 
 import '../css/recent-users-carousel.css';
@@ -10,7 +10,7 @@ const SHOW_USERS_LIMIT = 6;
 // @vue/component
 export const RecentUsersCarousel = {
 	name: 'RecentUsersCarousel',
-	components: { CarouselUser, MyNotes },
+	components: { CarouselUser, SelfChat },
 	emits: ['clickItem', 'openContextMenu'],
 	computed:
 	{
@@ -42,9 +42,7 @@ export const RecentUsersCarousel = {
 				</span>
 			</div>
 			<div class="bx-im-recent-users-carousel__users-container">
-				<MyNotes
-					@clickItem="$emit('clickItem', $event)" 
-				/>
+				<SelfChat @clickItem="$emit('clickItem', $event)" />
 				<CarouselUser
 					v-for="userDialogId in items"
 					:key="userDialogId"

@@ -1,5 +1,6 @@
 export type ResourcesState = {
 	collection: { [resourceId: string]: ResourceModel },
+	resourcesSkuRelations: ResourceSkuRelationsModel[],
 };
 
 export type ResourceModel = {
@@ -20,6 +21,8 @@ export type ResourceModel = {
 	createdAt: number,
 	updatedAt: number | null,
 	deletedAt: number | null,
+
+	senderCode: string,
 
 	// info
 	isInfoNotificationOn: boolean,
@@ -97,4 +100,26 @@ export type Skus = {
 	permissions: {
 		read: boolean,
 	},
+};
+
+export type ResourceSkuRelationsModel = {
+	avatar: {
+		id: number | null,
+		url: string | null,
+		encodedFile: string | null,
+	} | null,
+	id: number,
+	name: string,
+	skus: SkuRelations[],
+	typeId: number,
+};
+
+export type SkuRelations = {
+	id: number,
+	name: string,
+	price: number,
+	currencyId: string,
+	permissions: {
+		read: boolean,
+	}
 };

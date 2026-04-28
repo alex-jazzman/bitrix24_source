@@ -1,4 +1,3 @@
-import { Core } from 'im.v2.application.core';
 import { ChatAvatar, ChatAvatarType, AvatarSize } from 'im.v2.component.elements.avatar';
 import { ActionByRole, ChatType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -34,9 +33,9 @@ export const HeaderAvatar = {
 		{
 			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.avatar, this.dialogId);
 		},
-		isNotes(): boolean
+		isSelfChat(): boolean
 		{
-			return this.$store.getters['chats/isNotes'](this.dialogId);
+			return this.$store.getters['chats/isSelfChat'](this.dialogId);
 		},
 		userLink(): string
 		{
@@ -44,11 +43,11 @@ export const HeaderAvatar = {
 		},
 		avatarType(): string
 		{
-			return this.isNotes ? ChatAvatarType.notes : '';
+			return this.isSelfChat ? ChatAvatarType.selfChat : '';
 		},
 		needProfileLink(): boolean
 		{
-			return this.isUser && !this.isNotes;
+			return this.isUser && !this.isSelfChat;
 		},
 	},
 	methods:

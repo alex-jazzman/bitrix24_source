@@ -27,14 +27,14 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 $APPLICATION->IncludeComponent(
-	'bitrix:crm.lead.menu', 
-	'', 
+	'bitrix:crm.lead.menu',
+	'',
 	array(
 		'PATH_TO_LEAD_LIST' => $arResult['PATH_TO_LEAD_LIST'],
 		'PATH_TO_LEAD_SHOW' => $arResult['PATH_TO_LEAD_SHOW'],
 		'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'],
 		'PATH_TO_LEAD_CONVERT' => $arResult['PATH_TO_LEAD_CONVERT'],
-		'PATH_TO_LEAD_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],	
+		'PATH_TO_LEAD_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
 		'ELEMENT_ID' => $arResult['VARIABLES']['lead_id'],
 		'TYPE' => 'import'
 	),
@@ -43,8 +43,8 @@ $APPLICATION->IncludeComponent(
 
 <?
 $APPLICATION->IncludeComponent(
-	'bitrix:crm.lead.import', 
-	'', 
+	'bitrix:crm.lead.import',
+	'',
 	array(
 		'PATH_TO_LEAD_LIST' => $arResult['PATH_TO_LEAD_LIST'],
 		'PATH_TO_LEAD_CONVERT' => $arResult['PATH_TO_LEAD_IMPORT'],

@@ -4,7 +4,6 @@
 
 jn.define('im/messenger/lib/params', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('im/messenger/loc');
 
 	/**
 	 * @type {ImFeatures}
@@ -27,10 +26,12 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		voteCreationAvailable: false,
 		aiFileTranscriptionAvailable: false,
 		mentionAllAvailable: false,
+		isCopilotFileUploadAvailable: false,
 		isCopilotMentionAvailable: false,
 		isCopilotReasoningAvailable: false,
 		videoNoteTranscriptionAvailable: false,
 		aiAssistantMcpSelectorAvailable: false,
+		isAddingUserByMentionAvailable: false,
 	};
 
 	/**
@@ -40,22 +41,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 	{
 		/** @type {ImFeatures} */
 		#imFeatures;
-
-		constructor()
-		{
-			this.setAiAssistantStatusMessages();
-		}
-
-		setAiAssistantStatusMessages()
-		{
-			const configMessages = this.get('MESSAGES', {});
-			if ('AI_ASSISTANT' in configMessages)
-			{
-				Object.entries(configMessages.AI_ASSISTANT).forEach(([code, phase]) => {
-					Loc.setMessage(code, phase);
-				});
-			}
-		}
 
 		/**
 		 * @param {string} key
@@ -120,11 +105,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('IS_CHAT_LOCAL_STORAGE_AVAILABLE', false);
 		}
 
-		shouldShowChatV2UpdateHint()
-		{
-			return this.get('SHOULD_SHOW_CHAT_V2_UPDATE_HINT', false);
-		}
-
 		isCloud()
 		{
 			return this.get('IS_CLOUD', false);
@@ -149,6 +129,22 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		isAiAssistantMcpSelectorAvailable()
 		{
 			return this.get('IS_AI_ASSISTANT_MCP_SELECTOR_AVAILABLE', false);
+		}
+
+		/**
+		 * @return boolean
+		 */
+		isOpenlinesInMessengerAvailable()
+		{
+			return this.get('IS_OPENLINES_IN_MESSENGER_V2_AVAILABLE', false);
+		}
+
+		/**
+		 * @return boolean
+		 */
+		isRecentFilterAvailable()
+		{
+			return this.get('IS_RECENT_FILTER_AVAILABLE', false);
 		}
 
 		/**
@@ -260,6 +256,14 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('IS_TASKS_RECENT_LIST_AVAILABLE', false);
 		}
 
+		/**
+		 * @returns {string}
+		 */
+		getCopilotBotName()
+		{
+			return this.get('COPILOT_BOT_NAME', '');
+		}
+
 		canUseAudioPanel()
 		{
 			return Boolean(this.get('CAN_USE_AUDIO_PANEL', false));
@@ -282,7 +286,7 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		}
 
 		/**
-		 * @returns {string}
+		 * @returns {boolean}
 		 */
 		isAiTaskCreationUIAvailable()
 		{

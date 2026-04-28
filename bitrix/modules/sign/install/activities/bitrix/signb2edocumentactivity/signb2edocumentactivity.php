@@ -15,10 +15,10 @@ use Bitrix\Sign\Item;
 use Bitrix\Sign\Type\Member\Role;
 use Bitrix\Sign\Integration\CRM\Model\EventData;
 use Bitrix\Sign\Item\Document;
+use Bitrix\Sign\Item\Document\Config\DocumentBlankReplacementConfig;
 use Bitrix\Sign\Operation\Document\Template\Send;
 use Bitrix\Sign\Result\Operation\Document\Template\SendResult;
 use Bitrix\Sign\Service\Container;
-use Bitrix\Crm\Service\Context;
 
 /**
  * @property string[] $responsible
@@ -27,6 +27,7 @@ use Bitrix\Crm\Service\Context;
  * @property string[] $reviewer
  * @property string[] $editor
  * @property int $templateId
+ * @property mixed $file
  * @property string $isSubscriptionEnabled
  * @property int $documentId
  * @property string $documentStatus
@@ -34,6 +35,7 @@ use Bitrix\Crm\Service\Context;
 class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener
 {
 	public const PARAM_TEMPLATE_ID = 'templateId';
+	public const PARAM_FILE = 'file';
 	public const PARAM_RESPONSIBLE = 'responsible';
 	public const PARAM_EMPLOYEE = 'employee';
 	public const PARAM_REPRESENTATIVE = 'representative';
@@ -66,6 +68,10 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 		$this->setPropertiesTypes([
 			self::PARAM_TEMPLATE_ID => [
 				'Type' => FieldType::INT,
+			],
+			self::PARAM_FILE => [
+				'Type' => FieldType::FILE,
+				'Multiple' => false,
 			],
 			self::PARAM_RESPONSIBLE => [
 				'Type' => FieldType::USER,
@@ -104,6 +110,7 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 			self::PARAM_REVIEWER => null,
 			self::PARAM_EDITOR => null,
 			self::PARAM_TEMPLATE_ID => null,
+			self::PARAM_FILE => null,
 			self::PARAM_IS_SUBSCRIPTION_ENABLED => 'N',
 			//return
 			self::RETURN_PARAM_DOCUMENT_ID => null,
@@ -202,7 +209,27 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 		$representativeUserId = null;
 		$companyId = null;
 
-        $docId = $this->getDocumentId();
+		$rawFileValue = $this->getRawProperty(self::PARAM_FILE);
+		$parsedFileValue = $this->ParseValue($rawFileValue, 'file');
+		$fileId = self::normalizeFileValueToId($parsedFileValue);
+		if (!empty($parsedFileValue) && $fileId < 1)
+		{
+			$this->trackError(
+				Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_FILE_ID'),
+			);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$blankReplacementConfig = null;
+		if ($fileId > 0)
+		{
+			$blankReplacementConfig = new DocumentBlankReplacementConfig(
+				blankReplacementFileId: $fileId,
+			);
+		}
+
+		$docId = $this->getDocumentId();
 		$representativeRoleName = $this->getRoleName($this->representative);
 		$editorRoleName = $this->getRoleName($this->editor);
 
@@ -292,6 +319,7 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 			sendFromUserId: $sendFromUserId,
 			representativeUserId: $representativeUserId,
 			memberList: $prepareMemberListForTemplateSendOperationResult->members,
+			blankReplacementConfig: $blankReplacementConfig,
 		);
 
 		$bindingCollection = Document\BindingCollection::emptyList();
@@ -461,16 +489,36 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 			];
 		}
 
-		if (count($properties[self::PARAM_REVIEWER] ?? []) > Sign\Service\Sign\MemberService::MAX_REVIEWERS_COUNT)
+		$maxReviewersCount = (\Bitrix\Main\Loader::includeModule('sign') && class_exists(\Bitrix\Sign\Service\Sign\MemberService::class))
+			? \Bitrix\Sign\Service\Sign\MemberService::MAX_REVIEWERS_COUNT
+			: 20
+		;
+
+		if (count($properties[self::PARAM_REVIEWER] ?? []) > $maxReviewersCount)
 		{
 			$errors[] = [
 				"code" => "MaxReviewerLimitExceeded",
 				"parameter" => self::PARAM_TEMPLATE_ID,
 				"message" => Loc::getMessage(
 					'SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_MAX_REVIEWER_LIMIT_EXCEEDED',
-					['#LIMIT#' => Sign\Service\Sign\MemberService::MAX_REVIEWERS_COUNT],
+					['#LIMIT#' => $maxReviewersCount],
 				),
 			];
+		}
+
+		if (!empty($properties[self::PARAM_FILE]))
+		{
+			$fileValue = $properties[self::PARAM_FILE];
+			$isExpression = is_string($fileValue) && CBPDocument::isExpression($fileValue);
+			$isValidFileId = is_numeric($fileValue) && (int)$fileValue >= 1;
+			if (!$isExpression && !$isValidFileId)
+			{
+				$errors[] = [
+					"code" => "InvalidFileValue",
+					"parameter" => self::PARAM_FILE,
+					"message" => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_FILE_ID'),
+				];
+			}
 		}
 
 		return array_merge($errors, parent::validateProperties($properties, $user));
@@ -621,6 +669,14 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 				'Options' => [], // gets content with AJAX
 				'Required' => true,
 			],
+			self::PARAM_FILE => [
+				'Name' => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_FILE'),
+				'Hint' => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_FILE_HINT'),
+				'FieldName' => self::PARAM_FILE,
+				'Type' => FieldType::FILE,
+				'Multiple' => false,
+				'Required' => false,
+			],
 			self::PARAM_RESPONSIBLE => [
 				'Name' => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_RESPONSIBLE'),
 				'FieldName' => self::PARAM_RESPONSIBLE,
@@ -726,6 +782,9 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 				$arErrors,
 			),
 			self::PARAM_TEMPLATE_ID => $arCurrentValues[self::PARAM_TEMPLATE_ID] ?? '',
+			self::PARAM_FILE => $arCurrentValues[self::PARAM_FILE]
+				?? $arCurrentValues[self::PARAM_FILE . '_text']
+				?? '',
 			self::PARAM_IS_SUBSCRIPTION_ENABLED => in_array(
 				$arCurrentValues[self::PARAM_IS_SUBSCRIPTION_ENABLED] ?? null,
 				['Y', 'N'],
@@ -749,6 +808,26 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 		$arCurrentActivity["Properties"] = $arProperties;
 
 		return true;
+	}
+
+	private static function normalizeFileValueToId(mixed $value): int
+	{
+		if (is_array($value))
+		{
+			if (\CBPHelper::isAssociativeArray($value))
+			{
+				$value = array_keys($value);
+			}
+
+			$value = reset($value);
+		}
+
+		if (!is_numeric($value))
+		{
+			return 0;
+		}
+
+		return (int)$value;
 	}
 
 	private static function getPropertyValue(

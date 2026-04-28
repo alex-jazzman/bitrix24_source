@@ -16,6 +16,7 @@ import { BookingPullManager } from 'booking.provider.pull.booking-pull-manager';
 import { Filter } from 'booking.model.filter';
 import { FormsMenu } from 'booking.model.forms-menu';
 import { SaleChannels } from 'booking.model.sale-channels';
+import { SkuModel } from 'booking.model.sku';
 
 import { extractFeatures } from './lib';
 import type { BookingParams, InitCoreOptions } from './types';
@@ -68,7 +69,7 @@ class CoreApplication
 
 		this.#builder = Builder.init();
 
-		if (!options.skipBookingCore)
+		if (!options.skipCoreModels)
 		{
 			this.#builder.addModel(Bookings.create())
 				.addModel(MessageStatus.create())
@@ -110,6 +111,7 @@ class CoreApplication
 				.addModel(Filter.create())
 				.addModel(FormsMenu.create())
 				.addModel(SaleChannels.create())
+				.addModel(SkuModel.create())
 			;
 		}
 

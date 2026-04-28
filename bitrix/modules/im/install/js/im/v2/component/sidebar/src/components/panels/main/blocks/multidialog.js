@@ -1,4 +1,5 @@
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
+import { CounterManager } from 'im.v2.lib.counter';
 
 import '../css/multidialog.css';
 
@@ -30,7 +31,7 @@ export const MultidialogPreview = {
 		{
 			const counter = this.$store.getters['sidebar/multidialog/getTotalChatCounter'];
 
-			return counter > 99 ? '99+' : counter;
+			return CounterManager.formatCounter(counter);
 		},
 	},
 	methods:

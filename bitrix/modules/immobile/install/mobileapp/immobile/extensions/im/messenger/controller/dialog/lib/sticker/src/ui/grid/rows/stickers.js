@@ -13,6 +13,9 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 
 	const { StickerCreateView } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/element/create');
 	const { StickerView } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/element/sticker');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+
+	const logger = getLoggerWithContext('dialog--sticker', 'StickersRow');
 
 	/**
 	 * @class StickersRow
@@ -86,6 +89,8 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 				uri: sticker.uri,
 				isUploading: sticker.uploading,
 				id: sticker.id,
+				packId: sticker.packId,
+				packType: sticker.packType,
 				onClick: this.#clickStickerHandler,
 				onLongClick: this.#longClickStickerHandler,
 			});
@@ -108,25 +113,34 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 			return result;
 		}
 
-		#clickStickerHandler = (stickerId, ref) => {
+		/**
+		 * @param {StickerViewClickData} stickerData
+		 * @param ref
+		 */
+		#clickStickerHandler = (stickerData, ref) => {
+			logger.log('#clickStickerHandler', stickerData, ref);
 			const {
 				id,
 				packId,
 				packType,
-			} = this.props.stickers.find((sticker) => sticker.id === stickerId);
+			} = stickerData;
 
 			emitter.emit(StickerEventType.sticker.click, [id, packId, packType, ref]);
 		};
 
-		#longClickStickerHandler = (id, ref) => {
+		/**
+		 * @param {StickerViewClickData} stickerData
+		 * @param ref
+		 */
+		#longClickStickerHandler = (stickerData, ref) => {
 			const menu = new StickerMenu({
 				ui: ref,
 				actions: this.#getMenuActions(),
-				stickerData: this.props.stickers.find((sticker) => sticker.id === id),
+				stickerData,
 			});
 
 			menu.show();
-		}
+		};
 	}
 
 	module.exports = { StickersRow };

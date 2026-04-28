@@ -37,14 +37,14 @@ export const CommentsService = {
 
 	readAllChannelComments(channelDialogId: string): void
 	{
-		const chat: ImModelChat = Core.getStore().getters['chats/get'](channelDialogId, true);
-		const currentChannelCounter: number = Core.getStore().getters['counters/getChannelCommentsCounter'](chat.chatId);
+		const { chatId }: ImModelChat = Core.getStore().getters['chats/get'](channelDialogId, true);
+		const currentChannelCounter: number = Core.getStore().getters['counters/getChildrenTotalCounter'](chatId);
 		if (currentChannelCounter === 0)
 		{
 			return Promise.resolve();
 		}
 
-		void Core.getStore().dispatch('counters/readAllChannelComments', chat.chatId);
+		void Core.getStore().dispatch('counters/clearByParentId', { parentChatId: chatId });
 
 		return runAction(RestMethod.imV2ChatCommentReadAll, {
 			data: { dialogId: channelDialogId },

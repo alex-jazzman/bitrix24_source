@@ -1,6 +1,5 @@
 import { Extension, Type } from 'main.core';
 import { Store } from 'ui.vue3.vuex';
-import { OpenLinesManager } from 'imopenlines.v2.lib.openlines';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 
 import { Messenger } from 'im.public';
@@ -18,7 +17,6 @@ import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { ChatDataExtractor } from './chat-data-extractor';
 
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
-
 import type { ChatLoadRestResult, CommentInfoRestResult } from '../types/chat';
 
 const { callInstalled } = Extension.getSettings('im.v2.lib.call');
@@ -60,8 +58,9 @@ export class LoadService
 			dialogId,
 			messageLimit: MessageService.getMessageRequestLimit(),
 		};
+		const method = this.getLoadRestMethodName();
 
-		return this.#requestChat(RestMethod.imV2ChatLoad, params);
+		return this.#requestChat(method, params);
 	}
 
 	loadChatWithContext(dialogId: string, messageId: number): Promise
@@ -101,7 +100,6 @@ export class LoadService
 			autoJoin: true,
 			createIfNotExists: true,
 		};
-
 		const { chatId } = await this.#requestChat(RestMethod.imV2ChatLoad, params);
 
 		return this.#store.dispatch('messages/comments/set', {
@@ -137,6 +135,16 @@ export class LoadService
 			dialogId,
 			fields: { inited: false },
 		});
+	}
+
+	getLoadRestMethodName(): string
+	{
+		return RestMethod.imV2ChatLoad;
+	}
+
+	updateChatCustomModels(restResult: ChatLoadRestResult): Promise<void>[]
+	{
+		return [];
 	}
 
 	async #requestChat(actionName: string, params: Object<string, any>): Promise<{ dialogId: string, chatId: number }>
@@ -247,13 +255,6 @@ export class LoadService
 		const copilotManager = new CopilotManager();
 		const copilotPromise = copilotManager.handleChatLoadResponse(extractor.getCopilot());
 
-		let openLinesPromise = Promise.resolve();
-
-		if (OpenLinesManager)
-		{
-			openLinesPromise = OpenLinesManager.handleChatLoadResponse(extractor.getSession());
-		}
-
 		const collabPromise = this.#store.dispatch('chats/collabs/set', {
 			chatId: extractor.getChatId(),
 			collabInfo: extractor.getCollabInfo(),
@@ -264,16 +265,18 @@ export class LoadService
 			this.#store.dispatch('stickers/set', extractor.getStickers()),
 		]);
 
+		const customPromises = this.updateChatCustomModels(restResult);
+
 		await Promise.all([
 			chatsPromise,
 			filesPromise,
 			usersPromise,
 			messagesPromise,
 			copilotPromise,
-			openLinesPromise,
 			collabPromise,
 			autoDeletePromise,
 			stickersPromise,
+			...customPromises,
 		]);
 
 		return { dialogId: extractor.getDialogId(), chatId: extractor.getChatId() };

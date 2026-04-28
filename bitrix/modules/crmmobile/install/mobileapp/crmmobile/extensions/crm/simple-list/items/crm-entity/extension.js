@@ -64,23 +64,29 @@ jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 			setTimeout(() => {
 				if (this.communicationBlockRef)
 				{
-					void requireLazy('crm:onboarding').then(({ Onboarding, CaseName }) => {
-						if (Onboarding)
-						{
-							void Onboarding.tryToShow(
-								CaseName.ON_DEAL_CONTACT_FILLED,
-								{
-									entityType: this.params?.entityTypeName,
-									targetRef: this.communicationBlockRef,
-									methods: {
-										anotherTypes: Boolean(this.props.item.data[ClientType]),
-										telegram: this.telegramConnection,
-										openLines: this.openLinesAccess,
+					void requireLazy('crm:onboarding', false)
+						.then((ext) => {
+							const { Onboarding, CaseName } = ext;
+
+							if (Onboarding && CaseName)
+							{
+								void Onboarding.tryToShow(
+									CaseName.ON_DEAL_CONTACT_FILLED,
+									{
+										entityType: this.params?.entityTypeName,
+										targetRef: this.communicationBlockRef,
+										methods: {
+											anotherTypes: Boolean(this.props.item.data[ClientType]),
+											telegram: this.telegramConnection,
+											openLines: this.openLinesAccess,
+										},
 									},
-								},
-							);
-						}
-					});
+								);
+							}
+						})
+						.catch((error) => {
+							console.error(error);
+						});
 				}
 			}, 300);
 		}

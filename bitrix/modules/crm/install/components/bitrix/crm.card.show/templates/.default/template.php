@@ -15,6 +15,7 @@ Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'intranet.old-interface.intranet-common',
 ]);
 
 $isCopilotCallAssessmentEnabled = $arResult['isEnableCopilotReplacement'] ?? true;

@@ -1,4 +1,5 @@
 import { ajax, Cache, Dom, Loc, Reflection, Runtime, Type } from 'main.core';
+import { Counter } from 'ui.cnt';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MenuItem, PopupManager } from 'main.popup';
 import { AirButtonStyle, Button } from 'ui.buttons';
@@ -16,6 +17,7 @@ import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { BannerDispatcher } from 'ui.banner-dispatcher';
 import { Analytics, AnalyticActions } from './analytics';
 import { GroupPanel } from './group-panel';
+import Utils from './utils';
 
 export default class Menu
 {
@@ -35,6 +37,11 @@ export default class Menu
 	isMenuMouseEnterBlocked = false;
 	isMenuMouseLeaveBlocked = [];
 	isCollapsedMode = false;
+
+	// Responsive auto-collapse: forced by narrow viewport
+	isResponsiveCollapsed = false;
+	wasExpandedBeforeResponsive = false;
+	narrowViewportQuery = null;
 
 	constructor(params)
 	{
@@ -70,6 +77,8 @@ export default class Menu
 		this.groupPanel = new GroupPanel({
 			isExtranetInstalled: params.isExtranetInstalled !== 'N',
 		});
+
+		this.initResponsiveCollapse();
 
 		// Emulate document scroll because init() can be invoked after page load scroll
 		// (a hard reload with script at the bottom).
@@ -150,6 +159,7 @@ export default class Menu
 						onHiddenBlockIsHidden: this.onHiddenBlockIsHidden.bind(this),
 						onHiddenBlockIsEmpty: this.onHiddenBlockIsEmpty.bind(this),
 						onHiddenBlockIsNotEmpty: this.onHiddenBlockIsNotEmpty.bind(this),
+						onHiddenCounterUpdated: this.onHiddenCounterUpdated.bind(this),
 						onShow: () => { this.isMenuMouseLeaveBlocked.push('items'); },
 						onClose: () => { this.isMenuMouseLeaveBlocked.pop(); },
 					}
@@ -493,27 +503,27 @@ export default class Menu
 	{
 		const BannerDispatcher = Reflection.getClass('BX.UI.BannerDispatcher');
 
-		const handleBannerQueue = () => {
-			BannerDispatcher.critical.toQueue((onDone) => {
-				const presetController = this.getDefaultPresetController();
-				presetController.show('global');
-				presetController.getPopup().subscribe('onAfterClose', (event) => {
-					onDone();
-				});
-			});
-		};
-
 		if (BannerDispatcher)
 		{
-			handleBannerQueue();
+			this.addGlobalPresetToBannerDispatcher(BannerDispatcher);
 		}
 		else
 		{
-			const loadBannerDispatcherExtensionPromise = Runtime.loadExtension('ui.banner-dispatcher');
-			loadBannerDispatcherExtensionPromise.then(() => {
-				handleBannerQueue();
+			Runtime.loadExtension('ui.banner-dispatcher').then((exports) => {
+				this.addGlobalPresetToBannerDispatcher(exports.BannerDispatcher);
 			}).catch(() => {});
 		}
+	}
+
+	addGlobalPresetToBannerDispatcher(BannerDispatcher: BannerDispatcher)
+	{
+		BannerDispatcher.high.toQueue((onDone) => {
+			const presetController = this.getDefaultPresetController();
+			presetController.show('global');
+			presetController.getPopup().subscribe('onAfterClose', (event) => {
+				onDone();
+			});
+		});
 	}
 
 	handleShowHiddenClick()
@@ -524,13 +534,75 @@ export default class Menu
 	onHiddenBlockIsVisible()
 	{
 		Dom.addClass(this.menuMoreButton, 'menu-favorites-more-btn-open');
-		this.menuMoreButton.querySelector("#menu-more-btn-text").innerHTML = Loc.getMessage("more_items_hide");
+		Dom.attr(this.menuMoreButton, 'aria-expanded', 'true');
+		this.menuMoreButton.querySelector("#menu-more-btn-text").innerText = Loc.getMessage('more_items_hide');
+		Dom.attr(this.menuMoreButton, 'aria-label', Loc.getMessage('more_items_hide'));
+
+		this.#transferAriaCurrentFromMoreButton();
 	}
 
 	onHiddenBlockIsHidden()
 	{
 		Dom.removeClass(this.menuMoreButton, 'menu-favorites-more-btn-open');
-		this.menuMoreButton.querySelector("#menu-more-btn-text").innerHTML = Loc.getMessage("more_items_show");
+		Dom.attr(this.menuMoreButton, 'aria-expanded', 'false');
+		this.menuMoreButton.querySelector("#menu-more-btn-text").innerText = Loc.getMessage("more_items_show");
+		this.#syncMoreButtonAriaLabel();
+
+		this.#transferAriaCurrentToMoreButton();
+	}
+
+	#transferAriaCurrentFromMoreButton()
+	{
+		if (!this.menuMoreButton.hasAttribute('aria-current'))
+		{
+			return;
+		}
+
+		this.menuMoreButton.removeAttribute('aria-current');
+		const hiddenBlock = this.menuContainer.querySelector('#left-menu-hidden-items-block');
+		if (hiddenBlock)
+		{
+			const activeLink = hiddenBlock.querySelector('.menu-item-active .menu-item-link');
+			Dom.attr(activeLink, 'aria-current', 'page');
+		}
+	}
+
+	#transferAriaCurrentToMoreButton()
+	{
+		const hiddenBlock = this.menuContainer.querySelector('#left-menu-hidden-items-block');
+		if (!hiddenBlock)
+		{
+			return;
+		}
+
+		const activeLink = hiddenBlock.querySelector('.menu-item-active .menu-item-link');
+		if (activeLink)
+		{
+			Dom.attr(activeLink, 'aria-current', null);
+			Dom.attr(this.menuMoreButton, 'aria-current', 'page');
+		}
+	}
+
+	onHiddenCounterUpdated()
+	{
+		if (!Dom.hasClass(this.menuMoreButton, 'menu-favorites-more-btn-open'))
+		{
+			this.#syncMoreButtonAriaLabel();
+		}
+	}
+
+	#syncMoreButtonAriaLabel()
+	{
+		const buttonText = Loc.getMessage('more_items_show');
+		const counterNode = this.menuContainer.querySelector('#menu-hidden-counter');
+		const counter = Counter.initFromCounterNode(counterNode);
+		const counterValue = counter ? counter.getRealValue() : 0;
+
+		Dom.attr(
+			this.menuMoreButton,
+			'aria-label',
+			Item.getItemAriaLabel(buttonText, counterValue),
+		);
 	}
 
 	onHiddenBlockIsEmpty()
@@ -789,6 +861,14 @@ export default class Menu
 		{
 			return;
 		}
+
+		if (Utils.prefersReducedMotion())
+		{
+			this.switchToSlidingMode(true, true);
+
+			return;
+		}
+
 		this.slidingModeTimeoutId = setTimeout(function() {
 			this.slidingModeTimeoutId = 0;
 			this.switchToSlidingMode(true);
@@ -798,6 +878,14 @@ export default class Menu
 	handleBurgerClick(open)
 	{
 		this.getItemsController().switchToViewMode();
+
+		if (this.isResponsiveCollapsed)
+		{
+			// Narrow viewport: toggle sliding mode instead of expand/collapse
+			const isSliding = BX.hasClass(this.mainTable, 'menu-sliding-mode');
+			this.switchToSlidingMode(!isSliding);
+			return;
+		}
 
 		this.menuHeaderBurger.classList.add("menu-switcher-hover");
 
@@ -829,7 +917,7 @@ export default class Menu
 		this.stopSliding();
 		if (this.isMenuMouseLeaveBlocked.length <= 0)
 		{
-			this.switchToSlidingMode(false);
+			this.switchToSlidingMode(false, Utils.prefersReducedMotion());
 		}
 	}
 
@@ -906,11 +994,11 @@ export default class Menu
 				if (immediately !== true)
 				{
 					BX.addClass(this.mainTable, "menu-sliding-closing-mode");
+				}
 
-					if (Options.showLicenseButton)
-					{
-						this.#getLicenseButton().setCollapsed(true);
-					}
+				if (Options.showLicenseButton)
+				{
+					this.#getLicenseButton().setCollapsed(true);
 				}
 
 				BX.removeClass(this.mainTable, "menu-sliding-mode menu-sliding-opening-mode");
@@ -925,12 +1013,11 @@ export default class Menu
 			if (immediately !== true)
 			{
 				BX.addClass(this.mainTable, "menu-sliding-opening-mode");
-				if (Options.showLicenseButton)
-				{
-					setTimeout(() => {
-						this.#getLicenseButton().setCollapsed(false);
-					}, 50);
-				}
+			}
+
+			if (Options.showLicenseButton)
+			{
+				this.#getLicenseButton().setCollapsed(false);
 			}
 
 			BX.addClass(this.mainTable, "menu-sliding-mode");
@@ -945,6 +1032,52 @@ export default class Menu
 			BX.removeClass(this.mainTable, "menu-sliding-opening-mode menu-sliding-closing-mode");
 		}
 	}
+
+	// region Responsive auto-collapse
+	initResponsiveCollapse()
+	{
+		this.narrowViewportQuery = window.matchMedia('(max-width: 1024px)');
+		this.handleResponsiveChange(this.narrowViewportQuery);
+		this.narrowViewportQuery.addEventListener('change', this.handleResponsiveChange.bind(this));
+	}
+
+	handleResponsiveChange(event)
+	{
+		const isNarrow = event.matches;
+
+		if (isNarrow && !this.isResponsiveCollapsed)
+		{
+			// Viewport became narrow: force collapse without persisting to server
+			this.wasExpandedBeforeResponsive = !this.isCollapsedMode;
+
+			if (!this.isCollapsedMode)
+			{
+				this.isCollapsedMode = true;
+				Dom.addClass(this.mainTable, 'menu-collapsed-mode');
+
+				window.dispatchEvent(new Event('resize'));
+			}
+
+			this.isResponsiveCollapsed = true;
+		}
+		else if (!isNarrow && this.isResponsiveCollapsed)
+		{
+			// Viewport became wide: restore previous state
+			this.isResponsiveCollapsed = false;
+			this.switchToSlidingMode(false, true);
+
+			if (this.wasExpandedBeforeResponsive)
+			{
+				this.isCollapsedMode = false;
+				Dom.removeClass(this.mainTable, 'menu-collapsed-mode');
+
+				window.dispatchEvent(new Event('resize'));
+			}
+
+			this.wasExpandedBeforeResponsive = false;
+		}
+	}
+	// endregion
 
 	switchToScrollMode(enable)
 	{
@@ -967,6 +1100,12 @@ export default class Menu
 		}
 
 		const isOpen = !this.mainTable.classList.contains('menu-collapsed-mode');
+
+		// Block expanding when viewport forces collapsed mode
+		if (this.isResponsiveCollapsed && !isOpen)
+		{
+			return;
+		}
 
 		if (flag === isOpen || this.mainTable.classList.contains('menu-animation-mode'))
 		{
@@ -1006,6 +1145,45 @@ export default class Menu
 
 		const expandedMenuWidth = parseInt(getComputedStyle(this.menuContainer).getPropertyValue('--menu-width-expanded'), 10);
 		const collapsedMenuWidth = parseInt(getComputedStyle(this.menuContainer).getPropertyValue('--menu-width-collapsed'), 10);
+
+		if (Utils.prefersReducedMotion())
+		{
+			if (isOpen)
+			{
+				this.isCollapsedMode = true;
+				Dom.addClass(this.mainTable, 'menu-collapsed-mode');
+			}
+			else
+			{
+				this.isCollapsedMode = false;
+				Dom.removeClass(this.mainTable, 'menu-collapsed-mode');
+			}
+
+			if (Options.showLicenseButton)
+			{
+				this.#getLicenseButton().setCollapsed(isOpen);
+			}
+
+			Dom.attr(this.menuHeaderBurger, 'aria-expanded', isOpen ? 'false' : 'true');
+			Dom.attr(this.menuHeaderBurger, 'aria-label', Loc.getMessage(isOpen ? 'MENU_EXPAND' : 'MENU_COLLAPSE'));
+
+			Dom.removeClass(this.mainTable, 'menu-animation-mode menu-animation-opening-mode menu-animation-closing-mode');
+
+			this.releaseSliding();
+
+			if (BX.type.isFunction(fn))
+			{
+				fn();
+			}
+
+			Backend.toggleMenu(isOpen);
+
+			var event = document.createEvent("Event");
+			event.initEvent("resize", true, true);
+			window.dispatchEvent(event);
+
+			return;
+		}
 
 		(new BX.easing({
 			duration: 300,
@@ -1246,6 +1424,9 @@ export default class Menu
 					BX.removeClass(this.mainTable, "menu-collapsed-mode");
 				}
 
+				Dom.attr(this.menuHeaderBurger, 'aria-expanded', isOpen ? 'false' : 'true');
+				Dom.attr(this.menuHeaderBurger, 'aria-label', Loc.getMessage(isOpen ? 'MENU_EXPAND' : 'MENU_COLLAPSE'));
+
 				BX.removeClass(
 					this.mainTable,
 					"menu-animation-mode menu-animation-opening-mode menu-animation-closing-mode"
@@ -1436,6 +1617,18 @@ export default class Menu
 		}
 
 		this.getItemsController().updateCounters(counters, send);
+		this.#emitTotalCounter();
+	}
+
+	#emitTotalCounter(): void
+	{
+		let total = 0;
+		const items = this.menuContainer.querySelectorAll('.menu-item-block[data-role="item"] .ui-counter[id^="menu-counter-"]');
+		items.forEach((node) => {
+			total += Math.max(0, parseInt(node.dataset.value, 10) || 0);
+		});
+
+		BX.onCustomEvent('BX.Intranet.LeftMenu:onTotalCounterUpdate', [total]);
 	}
 	//endregion
 

@@ -63,7 +63,7 @@ class CIntranetUserProfileComponent extends UserProfile
 		$ownerUserId = (int) ($this->arParams["ID"] ?? 0);
 
 		$this->arResult["isCloud"] = Loader::includeModule("bitrix24");
-		$this->arResult['isFirstAdminConfirmationEnabled'] = Option::get('bitrix24', 'first_admin_confirmation', 'N') === 'Y';
+		$this->arResult['isFirstAdminConfirmationEnabled'] = Option::get('bitrix24', 'first_admin_confirmation', 'Y') === 'Y';
 
 		if ($this->arResult["isCloud"])
 		{
@@ -227,6 +227,12 @@ class CIntranetUserProfileComponent extends UserProfile
 		}
 
 		$personalSettings = $otpSettings?->getPersonalSettingsByUserId($userEntity->getId());
+
+		if (!$personalSettings)
+		{
+			return;
+		}
+
 		$otpUser = $personalSettings->getOtpInfo();
 		$otpSigner = new Integration\Main\OtpSigner();
 		$deactivateStatus = null;
@@ -242,6 +248,18 @@ class CIntranetUserProfileComponent extends UserProfile
 		{
 			[$deactivateStatus, $deactivateTitle] = $this->getDeactivateOtpStatusText($otpUser);
 		}
+		elseif (
+			!$otpUser->isActive
+			&& !$otpUser->dateDeactivate
+			&& $otpUser->isInitialized
+			&& $userEntity->getActive()
+			&& $personalSettings->isRequired()
+		)
+		{
+			$deactivateTitle = Loc::getMessage('INTRANET_USER_PROFILE_OTP_DEACTIVATED_MSGVER_1');
+		}
+
+		$mobilePush = Service\Otp\MobilePush::createByDefault();
 
 		$this->arResult['OTP'] = [
 			'canEdit' => $otpPermission->canEdit(),
@@ -252,6 +270,10 @@ class CIntranetUserProfileComponent extends UserProfile
 			'deactivateStatus' => $deactivateStatus ?? null,
 			'signedUserId' => $otpSigner->signUserId($userEntity->getId()),
 			'deactivateTitle' => $deactivateTitle,
+			'canSetLegacyOtpAllowed' => $mobilePush->isLegacyOtpAllowed()
+				&& !$mobilePush->isLegacyOtpAllowedByUserId($userEntity->getId())
+				&& $mobilePush->isDefault(),
+			'isLegacyOtpAllowed' => $mobilePush->isLegacyOtpAllowedByUserId($userEntity->getId()),
 		];
 	}
 

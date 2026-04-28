@@ -997,9 +997,6 @@ class crm extends CModule
 
 		RegisterModuleDependences('socialnetwork', 'OnFillSocNetLogEvents', 'crm', 'CCrmExternalSaleImport', 'OnFillSocNetLogEvents');
 
-		RegisterModuleDependences('tasks', 'OnBeforeTaskAdd', 'crm', 'CAllCrmActivity', 'OnBeforeTaskAdd');
-		RegisterModuleDependences('tasks', 'OnTaskAdd', 'crm', 'CAllCrmActivity', 'OnTaskAdd');
-		RegisterModuleDependences('tasks', 'OnTaskUpdate', 'crm', 'CAllCrmActivity', 'OnTaskUpdate');
 		RegisterModuleDependences('tasks', 'OnTaskDelete', 'crm', 'CAllCrmActivity', 'OnTaskDelete');
 
 		RegisterModuleDependences('webdav', 'OnFileDelete', 'crm', 'CCrmWebDavHelper', 'OnWebDavFileDelete');
@@ -1323,14 +1320,6 @@ class crm extends CModule
 		);
 
 		$eventManager->registerEventHandler(
-			'notifications',
-			'onMessageSuccessfullyUpdated',
-			'crm',
-			'\Bitrix\Crm\Integration\Booking\EventHandler',
-			'onMessageStatusUpdate'
-		);
-
-		$eventManager->registerEventHandler(
 			'sale',
 			'OnDeliveryRequestCreated',
 			'crm',
@@ -1632,14 +1621,6 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Rest\EventHandler',
 			'onUserFieldPlacementPrepareParams'
-		);
-
-		$eventManager->registerEventHandler(
-			'booking',
-			'onGetProvider',
-			'crm',
-			'\Bitrix\Crm\Integration\Booking\EventHandler',
-			'onGetProviderEventHandler'
 		);
 
 		$eventManager->registerEventHandler(
@@ -1994,9 +1975,6 @@ class crm extends CModule
 
 		UnRegisterModuleDependences("socialnetwork", "OnFillSocNetLogEvents", "crm", "CCrmExternalSaleImport", "OnFillSocNetLogEvents");
 
-		UnRegisterModuleDependences('tasks', 'OnBeforeTaskAdd', 'crm', 'CAllCrmActivity', 'OnBeforeTaskAdd');
-		UnRegisterModuleDependences('tasks', 'OnTaskAdd', 'crm', 'CAllCrmActivity', 'OnTaskAdd');
-		UnRegisterModuleDependences('tasks', 'OnTaskUpdate', 'crm', 'CAllCrmActivity', 'OnTaskUpdate');
 		UnRegisterModuleDependences('tasks', 'OnTaskDelete', 'crm', 'CAllCrmActivity', 'OnTaskDelete');
 
 		UnRegisterModuleDependences('webdav', 'OnFileDelete', 'crm', 'CCrmWebDavHelper', 'OnWebDavFileDelete');
@@ -2291,14 +2269,6 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Notification',
 			'onMessageStatusUpdated'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'notifications',
-			'onMessageSuccessfullyUpdated',
-			'crm',
-			'\Bitrix\Crm\Integration\Booking\EventHandler',
-			'onMessageStatusUpdate'
 		);
 
 		$eventManager->unRegisterEventHandler(
@@ -2604,14 +2574,6 @@ class crm extends CModule
 		);
 
 		$this->unRegisterBizprocEvents();
-
-		$eventManager->unRegisterEventHandler(
-			'booking',
-			'onGetProvider',
-			'crm',
-			'\Bitrix\Crm\Integration\Booking\EventHandler',
-			'onGetProviderEventHandler'
-		);
 
 		$eventManager->unRegisterEventHandler(
 			'booking',

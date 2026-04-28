@@ -21,17 +21,13 @@ export const ItemCounter = {
 		{
 			return this.$store.getters['chats/get'](this.item.dialogId);
 		},
-		openLinesCounter(): number
+		counter(): number
 		{
-			return this.$store.getters['counters/getSpecificLinesCounter'](this.dialog.chatId);
-		},
-		totalCounter(): number
-		{
-			return this.openLinesCounter;
+			return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
 		},
 		formattedCounter(): string
 		{
-			return this.formatCounter(this.totalCounter);
+			return this.formatCounter(this.counter);
 		},
 	},
 	methods:

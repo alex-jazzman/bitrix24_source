@@ -121,21 +121,21 @@ export const SkusResourceSelector = {
 			this.selector = null;
 			this.$refs.resourcesSelector.innerHTML = '';
 		},
-		select(resourceId: number)
+		select(resourceId: number): void
 		{
 			this.$emit('add', {
 				skuId: this.skuId,
 				resourceId,
 			});
 		},
-		deselect(resourceId: number)
+		deselect(resourceId: number): void
 		{
 			this.$emit('remove', {
 				skuId: this.skuId,
 				resourceId,
 			});
 		},
-		updateSelectedItems(resourcesIds: number[])
+		updateSelectedItems(resourcesIds: number[]): void
 		{
 			const items = this.selector.getDialog().getItems();
 			const selectedItemsIds = new Set(

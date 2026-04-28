@@ -7,77 +7,48 @@ export const BlockComplexPortPlaceholder = {
 	name: 'block-complex-port-placeholder',
 	props:
 	{
-		blockId:
+		title:
 		{
 			type: String,
 			required: true,
 		},
-		/** @type Array<Port> */
-		ports:
+		isOutput:
 		{
-			type: Array,
-			required: true,
+			type: Boolean,
+			default: false,
 		},
 	},
 	emits: ['addPort'],
-	setup(): { newConnection: Function, addConnection: Function }
+	setup(): { newConnection: Function }
 	{
-		const { newConnection, addConnection } = useBlockDiagram();
+		const { newConnection } = useBlockDiagram();
 
 		return {
 			newConnection,
-			addConnection,
 		};
-	},
-	computed:
-	{
-		title(): string
-		{
-			if (!this.ports)
-			{
-				return '';
-			}
-
-			const lastPort = this.ports[this.ports.length - 1];
-			const [label, num] = lastPort?.title.split(/(\d+)/) ?? ['G', 0];
-
-			return `${label}${Number(num) + 1}`;
-		},
 	},
 	methods:
 	{
 		onMouseUp(): void
 		{
-			if (!this.newConnection)
+			if (!this.newConnection || this.isOutput)
 			{
 				return;
 			}
 
 			this.$emit('addPort', this.title);
-			this.$nextTick(() => {
-				const addedPort = this.ports[this.ports.length - 1];
-				this.addConnection({
-					...this.newConnection,
-					targetBlockId: this.blockId,
-					targetPort: addedPort,
-					targetPortId: addedPort.id,
-				});
-			});
 		},
 	},
 	template: `
 		<div
-			class="complex-block-port-placeholder"
+			class="ui-block-diagram-port"
 			@mouseup="onMouseUp"
+		></div>
+		<span
+			class="complex-block-port-placeholder-title"
+			:class="{ '--output': isOutput }"
 		>
-			<svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#B1BBC7" xmlns="http://www.w3.org/2000/svg">
-				<circle cx="4.5" cy="4.5" r="4" fill="white" />
-				<rect x="4.25" y="2.25" width="0.5" height="4.5" rx="0.25" stroke-width="0.5"/>
-				<rect x="2.25" y="4.75" width="0.5" height="4.5" rx="0.25" transform="rotate(-90 2.25 4.75)" stroke-width="0.5"/>
-			</svg>
-			<span class="complex-block-port-placeholder__title">
-				{{ title }}
-			</span>
-		</div>
+			{{ title }}
+		</span>
 	`,
 };

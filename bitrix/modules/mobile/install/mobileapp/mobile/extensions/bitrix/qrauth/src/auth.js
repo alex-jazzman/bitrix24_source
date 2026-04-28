@@ -11,7 +11,7 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 	const { Color, Indent, Component } = require('tokens');
 	const { Link2 } = require('ui-system/blocks/link');
 	const { Card, CardDesign } = require('ui-system/layout/card');
-	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { Icon } = require('ui-system/blocks/icon');
 	const { Area } = require('ui-system/layout/area');
 	const { AreaList } = require('ui-system/layout/area-list');
 	const { Text2, Text4, Text6, BBCodeText } = require('ui-system/typography');
@@ -143,7 +143,7 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 		{
 			const areaHeight = {
 				hint: showHint ? 115 : 0,
-				content: 328,
+				content: 358,
 				button: 66,
 			};
 
@@ -351,19 +351,14 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 
 		renderStepTwo()
 		{
-			return View(
-				{
-					style: {
-						flexDirection: 'row',
-					},
+			return BBCodeText({
+				style: {
+					flex: 1,
 				},
-				BBCodeText({
-					size: 2,
-					color: Color.base2,
-					value: Loc.getMessage('STEP_PRESS_SELF_HOSTED_MSGVER_2'),
-				}),
-				this.renderRoundedQRView(),
-			);
+				size: 2,
+				color: Color.base2,
+				value: Loc.getMessage('STEP_PRESS_SELF_HOSTED_MSGVER_3'),
+			});
 		}
 
 		renderStepThree()
@@ -372,29 +367,6 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 				color: Color.base2,
 				text: Loc.getMessage('STEP_SCAN'),
 			});
-		}
-
-		renderRoundedQRView()
-		{
-			return View(
-				{
-					style: {
-						width: 22,
-						height: 22,
-						borderWidth: 1,
-						alignItems: 'center',
-						justifyContent: 'center',
-						marginLeft: Indent.XS.toNumber(),
-						borderColor: Color.bgSeparatorSecondary.toHex(),
-						borderRadius: Component.elementAccentCorner.toNumber(),
-					},
-				},
-				IconView({
-					size: 20,
-					icon: Icon.QR_CODE,
-					color: Color.base4,
-				}),
-			);
 		}
 
 		getDomain()

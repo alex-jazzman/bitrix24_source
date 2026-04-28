@@ -34,7 +34,8 @@ class AppBodyFiller extends FillerBase
 			'DETAIL_URL' => $detailUrl,
 			'APP_ID' => $app['ID'],
 			'APP_NAME' => $app['APP_NAME'],
-			'APP_STATUS' => Rest\AppTable::getAppStatusInfo($app, $detailUrl)
+			'APP_STATUS' => Rest\AppTable::getAppStatusInfo($app, $detailUrl),
+			'APP_TOKEN' => \CRestUtil::getApplicationToken($app),
 		];
 	}
 }

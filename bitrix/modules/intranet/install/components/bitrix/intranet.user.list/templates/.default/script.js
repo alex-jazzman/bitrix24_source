@@ -66,6 +66,11 @@
 		{
 			BX.SidePanel.Instance.open(this.invitationLink, {cacheable: false, allowChangeHistory: false})
 		},
+
+		showIntegratorInvitation()
+		{
+			BX.SidePanel.Instance.open(this.invitationLink + '&firstInvitationBlock=integrator', { cacheable: false, allowChangeHistory: false });
+		},
 	};
 
 	namespace.Toolbar = function(params)

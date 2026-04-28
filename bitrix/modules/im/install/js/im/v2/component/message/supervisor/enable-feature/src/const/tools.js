@@ -2,10 +2,14 @@ import { Loc } from 'main.core';
 
 import { Analytics } from 'im.v2.lib.analytics';
 import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
+import { CopilotManager } from 'im.v2.lib.copilot';
+import { EnableFeatures } from 'im.v2.component.message.supervisor.base';
 
 import { UserStatisticsLink as CheckInQrAuthPopup } from 'stafftrack.user-statistics-link';
 
-import { EnableFeatures } from 'im.v2.component.message.supervisor.base';
+import type { SupervisorComponentParams } from 'im.v2.component.message.supervisor.base';
+
+type SupervisorConfig = { [key: $Keys<typeof EnableFeatures>]: SupervisorComponentParams };
 
 const onOpenToolsSettings = (toolId: string) => {
 	return () => {
@@ -25,9 +29,20 @@ const openCheckInQrCode = () => {
 
 const onHelpClick = (ARTICLE_CODE: string) => openHelpdeskArticle(ARTICLE_CODE);
 
-export const metaData = {
+export const getMetaData = (): SupervisorConfig => {
+	const processedMetaData = {};
+	const name = (new CopilotManager()).getName();
+	Object.entries(rawMetaData).forEach(([key, meta]) => {
+		const title = meta.title.replaceAll('#COPILOT_NAME#', name);
+		processedMetaData[key] = { ...meta, title };
+	});
+
+	return processedMetaData;
+};
+
+const rawMetaData = {
 	[EnableFeatures.copilot]: {
-		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_COPILOT_TITLE'),
+		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_COPILOT_TITLE_MSGVER_1'),
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_COPILOT_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),

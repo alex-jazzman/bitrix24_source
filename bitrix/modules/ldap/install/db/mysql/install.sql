@@ -1,7 +1,7 @@
 create table b_ldap_server
 (
 	ID				int 			not null	auto_increment,
-	TIMESTAMP_X		timestamp		not null default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+	TIMESTAMP_X		timestamp		not null default CURRENT_TIMESTAMP,
 	NAME			varchar(255)	not null,
 	DESCRIPTION		text,
 	CODE			varchar(255),
@@ -52,4 +52,24 @@ create table b_ldap_group
 	primary key (LDAP_SERVER_ID, GROUP_ID, LDAP_GROUP_ID)
 );
 
+create table b_ldap_sync_session
+(
+	ID int not null auto_increment,
+	SERVER_ID int NOT NULL,
+	STATE varchar(20) NOT NULL,
+	STARTED_AT datetime NOT NULL,
+	UPDATED_AT datetime DEFAULT NULL,
+	FINISHED_AT datetime DEFAULT NULL,
+	PROGRESS text DEFAULT NULL,
+	MESSAGE varchar(255) DEFAULT NULL,
+	primary key (ID)
+);
 
+create table b_ldap_user_last_sync
+(
+	USER_ID int NOT NULL,
+	SERVER_ID int NOT NULL,
+	SESSION_ID int NOT NULL,
+	LAST_SYNC_AT datetime NOT NULL,
+	PRIMARY KEY (USER_ID, SERVER_ID)
+);

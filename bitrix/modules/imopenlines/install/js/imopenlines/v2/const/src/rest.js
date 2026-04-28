@@ -10,4 +10,8 @@ export const RestMethod = Object.freeze({
 	linesV2SessionStart: 'imopenlines.v2.Session.start',
 	linesV2SessionJoin: 'imopenlines.v2.Session.join',
 	linesV2SessionTransfer: 'imopenlines.v2.Session.transfer',
+	linesV2ChatLoad: 'imopenlines.v2.Chat.Load',
+	linesV2MessageAddSession: 'imopenlines.v2.Message.addSession',
+	linesV2SessionSetSilentMode: 'imopenlines.v2.Session.setSilentMode',
+	linesV2SessionGetSilentMode: 'imopenlines.v2.Session.isSilentMode',
 });

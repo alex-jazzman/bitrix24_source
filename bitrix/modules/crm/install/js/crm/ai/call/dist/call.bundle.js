@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_vue3,crm_ai_slider,crm_ai_textbox,ui_notification,crm_audioPlayer,pull_client,pull_queuemanager,ui_lottie,crm_copilot_callAssessmentSelector,crm_router,crm_timeline_tools,main_core_events,ui_bbcode_formatter_htmlFormatter,ui_sidepanel,ui_designTokens,main_core) {
+(function (exports,ui_vue3,crm_ai_slider,crm_ai_textbox,ui_notification,crm_audioPlayer,pull_client,pull_queuemanager,ui_lottie,crm_copilot_callAssessmentSelector,crm_router,crm_timeline_tools,main_core_events,ui_bbcode_formatter_htmlFormatter,ui_designTokens,crm_ai_nameService,main_core) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3;
@@ -169,7 +169,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      var content = main_core.Loc.getMessage('CRM_COPILOT_CALL_JOB_LANGUAGE_ATTENTION', {
 	        '#LANGUAGE_TITLE#': "<span style=\"text-transform: lowercase\">".concat(main_core.Text.encode(this.languageTitle), "</span>"),
 	        '[helpdesklink]': "<a href=\"##\" onclick=\"top.BX.Helper.show('redirect=detail&code=".concat(helpdeskCode, "');\">"),
-	        '[/helpdesklink]': '</a>'
+	        '[/helpdesklink]': '</a>',
+	        '#COPILOT_NAME#': crm_ai_nameService.NameService.copilotName()
 	      });
 	      return new crm_ai_textbox.Attention({
 	        preset: crm_ai_textbox.AttentionPresets.COPILOT,
@@ -377,7 +378,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.viewMode === ViewMode.usedCurrentVersionOfScript;
 	    },
 	    infoTitle: function infoTitle() {
-	      return this.viewMode === ViewMode.emptyScriptList ? main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_COMPLIANCE_EMPTY_SCRIPT_LIST_TITLE') : main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_COMPLIANCE_TITLE');
+	      return this.viewMode === ViewMode.emptyScriptList ? main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_COMPLIANCE_EMPTY_SCRIPT_LIST_TITLE', crm_ai_nameService.NameService.copilotNameReplacement()) : main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_COMPLIANCE_TITLE');
 	    },
 	    valueTitle: function valueTitle() {
 	      return this.viewMode === ViewMode.emptyScriptList ? main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_COMPLIANCE_EMPTY_SCRIPT_LIST_VALUE') : this.title;
@@ -413,7 +414,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  components: {
 	    Loader: Loader
 	  },
-	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ASSESSMENT_SETTINGS_PENDING_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div class=\"call-quality__explanation-loader__container\">\n\t\t\t\t\t\t<Loader />\n\t\t\t\t\t\t<div class=\"call-quality__explanation-loader__lottie-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ASSESSMENT_SETTINGS_PENDING_TEXT') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  computed: {
+	    pendingTitle: function pendingTitle() {
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ASSESSMENT_SETTINGS_PENDING_TITLE', crm_ai_nameService.NameService.copilotNameReplacement());
+	    }
+	  },
+	  // language=Vue
+	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ pendingTitle }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div class=\"call-quality__explanation-loader__container\">\n\t\t\t\t\t\t<Loader />\n\t\t\t\t\t\t<div class=\"call-quality__explanation-loader__lottie-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ASSESSMENT_SETTINGS_PENDING_TEXT') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var EmptyScriptListBlock = {
@@ -422,9 +429,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EMPTY_SCRIPT_LIST_TITLE');
 	    },
 	    text: function text() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EMPTY_SCRIPT_LIST_TEXT');
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EMPTY_SCRIPT_LIST_TEXT', crm_ai_nameService.NameService.copilotNameReplacement());
 	    }
 	  },
+	  // language=Vue
 	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ title }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\" v-html=\"text\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
@@ -441,10 +449,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  computed: {
 	    explanationText: function explanationText() {
-	      return main_core.Type.isStringFilled(this.errorText) ? this.errorText : main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TEXT');
+	      return main_core.Type.isStringFilled(this.errorText) ? this.errorText : main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TEXT', crm_ai_nameService.NameService.copilotNameReplacement());
+	    },
+	    errorTitle: function errorTitle() {
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TITLE', crm_ai_nameService.NameService.copilotNameReplacement());
 	    }
 	  },
-	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container --error\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div \n\t\t\t\t\tclass=\"call-quality__explanation-text\"\n\t\t\t\t\tv-html=\"explanationText\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  // language=Vue
+	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container --error\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ errorTitle }}\n\t\t\t\t</div>\n\t\t\t\t<div \n\t\t\t\t\tclass=\"call-quality__explanation-text\"\n\t\t\t\t\tv-html=\"explanationText\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var NotAssessmentScriptBlock = {
@@ -458,7 +470,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_NO_EXPLANATION_TITLE');
 	    },
 	    text: function text() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_NO_EXPLANATION_TEXT');
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_NO_EXPLANATION_TEXT', crm_ai_nameService.NameService.copilotNameReplacement());
 	    },
 	    buttonText: function buttonText() {
 	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_NO_EXPLANATION_ASSESSMENT');
@@ -481,7 +493,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_OLD_EXPLANATION_TITLE');
 	    },
 	    text: function text() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_OLD_EXPLANATION_TEXT');
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_OLD_EXPLANATION_TEXT', crm_ai_nameService.NameService.copilotNameReplacement());
 	    },
 	    buttonShowText: function buttonShowText() {
 	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_OLD_EXPLANATION_SHOW_ASSESSMENT');
@@ -497,7 +509,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  components: {
 	    Loader: Loader
 	  },
-	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_PENDING_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div class=\"call-quality__explanation-loader__container\">\n\t\t\t\t\t\t<Loader />\n\t\t\t\t\t\t<div class=\"call-quality__explanation-loader__lottie-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_PENDING_TEXT') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  computed: {
+	    pendingTitle: function pendingTitle() {
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_PENDING_TITLE', crm_ai_nameService.NameService.copilotNameReplacement());
+	    }
+	  },
+	  // language=Vue
+	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ pendingTitle }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div class=\"call-quality__explanation-loader__container\">\n\t\t\t\t\t\t<Loader />\n\t\t\t\t\t\t<div class=\"call-quality__explanation-loader__lottie-text\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_PENDING_TEXT') }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var ARTICLE_CODE = '23240682';
@@ -534,11 +552,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER_MSGVER_1', {
 	        '#LINK_START#': "<a onclick='window.top.BX?.Helper?.show(`redirect=detail&code=".concat(code, "`)' href=\"#\">"),
-	        '#LINK_END#': '</a>'
+	        '#LINK_END#': '</a>',
+	        '#COPILOT_NAME#': crm_ai_nameService.NameService.copilotName()
 	      });
+	    },
+	    explanationTitle: function explanationTitle() {
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_TITLE', crm_ai_nameService.NameService.copilotNameReplacement());
 	    }
 	  },
-	  template: "\n\t\t<div class=\"call-quality__explanation --copilot-content\">\n\t\t\t<div class=\"call-quality__explanation__container \">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div \n\t\t\t\t\t\tv-if=\"!useInRating\"\n\t\t\t\t\t\tclass=\"call-quality__explanation-badge\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_NOT_IN_RATING') }}\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"call-quality__explanation-badge-article ui-icon-set --help\"\n\t\t\t\t\t\t\t\t@click=\"showArticle\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<p>\n\t\t\t\t\t\t{{ summary }}\n\t\t\t\t\t</p>\n\t\t\t\t\t<p>\n\t\t\t\t\t\t{{ recommendations }}\n\t\t\t\t\t</p>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-disclaimer\" v-html=\"disclaimer\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  // language=Vue
+	  template: "\n\t\t<div class=\"call-quality__explanation --copilot-content\">\n\t\t\t<div class=\"call-quality__explanation__container \">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ explanationTitle }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t<div \n\t\t\t\t\t\tv-if=\"!useInRating\"\n\t\t\t\t\t\tclass=\"call-quality__explanation-badge\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_NOT_IN_RATING') }}\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"call-quality__explanation-badge-article ui-icon-set --help\"\n\t\t\t\t\t\t\t\t@click=\"showArticle\"\n\t\t\t\t\t\t\t></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<p>\n\t\t\t\t\t\t{{ summary }}\n\t\t\t\t\t</p>\n\t\t\t\t\t<p>\n\t\t\t\t\t\t{{ recommendations }}\n\t\t\t\t\t</p>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-disclaimer\" v-html=\"disclaimer\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var _templateObject$1, _templateObject2$1;
@@ -705,7 +728,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        events: {}
 	      };
 	      main_core.Runtime.debounce(function () {
-	        top.BX.UI.Hint.show(target, main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_DISABLED_DO_ASSESSMENT_HINT'), true);
+	        top.BX.UI.Hint.show(target, main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_DISABLED_DO_ASSESSMENT_HINT', crm_ai_nameService.NameService.copilotNameReplacement()), true);
 	      }, 150, this)();
 	    },
 	    isDisabledAssessmentButton: function isDisabledAssessmentButton() {
@@ -759,7 +782,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      main_core.Dom.append(this.formattedPrompt, this.$refs.prompt);
 	    }
 	  },
-	  template: "\n\t\t<div>\n\t\t\t<div class=\"call-quality__script-selector__container\">\n\t\t\t\t<div class=\"call-quality__script-selector__title\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_SELECTOR_TITLE') }}\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"call-quality__script-selector__selector-container\" ref=\"container\"></div>\n\t\t\t\t\t<div \n\t\t\t\t\t\tclass=\"call-quality__script-selector__article ui-icon-set --help\"\n\t\t\t\t\t\t@click=\"showArticle\"\n\t\t\t\t\t></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tv-if=\"this.isPromptChanged && isShowFooterButtons\"\n\t\t\t\tclass=\"call-quality__script-info__container\"\n\t\t\t>\n\t\t\t\t<span>{{scriptUpdatedAt}}</span>\n\t\t\t\t<button\n\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-no-caps ui-btn-round ui-btn-link ui-btn-active\"\n\t\t\t\t\t@click=\"onShowActualPrompt\"\n\t\t\t\t>\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_INFO_SHOW_NEW_PROMPT') }}\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t\t<div class=\"call-quality__script-container\">\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"isEmptyScriptListViewMode\"\n\t\t\t\t\tclass=\"call-quality__script-text\"\n\t\t\t\t>\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EMPTY_SCRIPT_LIST_PROMPT_TEXT') }}\n\t\t\t\t</div>\n\t\t\t\t<div v-else class=\"call-quality__script-text\" ref=\"prompt\">\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"isShowFooterButtons\"\n\t\t\t\t\tclass=\"call-quality__script-footer\"\n\t\t\t\t>\n\t\t\t\t\t<button \n\t\t\t\t\t\t:class=\"footerButtonClassList\"\n\t\t\t\t\t\t@click=\"doAssessment\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_ASSESSMENT_REPLY') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button \n\t\t\t\t\t\t:class=\"footerEditButtonClassList\"\n\t\t\t\t\t\t@click=\"onEditCallAssessmentSettings\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_EDIT') }}\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  // language=Vue
+	  template: "\n\t\t<div>\n\t\t\t<div class=\"call-quality__script-selector__container\">\n\t\t\t\t<div class=\"call-quality__script-selector__title\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_SELECTOR_TITLE') }}\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"call-quality__script-selector__selector-container\" ref=\"container\"></div>\n\t\t\t\t\t<div \n\t\t\t\t\t\tclass=\"call-quality__script-selector__article ui-icon-set --help\"\n\t\t\t\t\t\t@click=\"showArticle\"\n\t\t\t\t\t></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tv-if=\"this.isPromptChanged && isShowFooterButtons\"\n\t\t\t\tclass=\"call-quality__script-info__container\"\n\t\t\t>\n\t\t\t\t<span>{{scriptUpdatedAt}}</span>\n\t\t\t\t<button\n\t\t\t\t\tclass=\"ui-btn ui-btn-xs ui-btn-no-caps ui-btn-round ui-btn-link ui-btn-active\"\n\t\t\t\t\t@click=\"onShowActualPrompt\"\n\t\t\t\t>\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_INFO_SHOW_NEW_PROMPT') }}\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t\t<div class=\"call-quality__script-container\">\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"isEmptyScriptListViewMode\"\n\t\t\t\t\tclass=\"call-quality__script-text\"\n\t\t\t\t>\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EMPTY_SCRIPT_LIST_PROMPT_TEXT') }}\n\t\t\t\t</div>\n\t\t\t\t<div v-else class=\"call-quality__script-text\" ref=\"prompt\">\n\t\t\t\t</div>\n\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"isShowFooterButtons\"\n\t\t\t\t\tclass=\"call-quality__script-footer\"\n\t\t\t\t>\n\t\t\t\t\t<button \n\t\t\t\t\t\t:class=\"footerButtonClassList\"\n\t\t\t\t\t\t@click=\"doAssessment\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_ASSESSMENT_REPLY') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button \n\t\t\t\t\t\t:class=\"footerEditButtonClassList\"\n\t\t\t\t\t\t@click=\"onEditCallAssessmentSettings\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SCRIPT_EDIT') }}\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -1396,7 +1420,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function initDefaultOptions() {
 	      this.id = 'crm-copilot-summary';
 	      this.aiDataAction = 'crm.timeline.ai.getCopilotSummary';
-	      this.sliderTitle = main_core.Loc.getMessage('CRM_COMMON_COPILOT');
+	      this.sliderTitle = crm_ai_nameService.NameService.copilotName();
 	      this.sliderWidth = 520;
 	      this.textboxTitle = main_core.Loc.getMessage('CRM_COPILOT_CALL_SUMMARY_TITLE');
 	    }
@@ -1430,7 +1454,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function initDefaultOptions() {
 	      this.id = 'crm-copilot-transcript';
 	      this.aiDataAction = 'crm.timeline.ai.getCopilotTranscript';
-	      this.sliderTitle = main_core.Loc.getMessage('CRM_COMMON_COPILOT');
+	      this.sliderTitle = crm_ai_nameService.NameService.copilotName();
 	      this.sliderWidth = 730;
 	      this.textboxTitle = main_core.Loc.getMessage('CRM_COPILOT_CALL_TRANSCRIPT_TITLE');
 	    }
@@ -1457,5 +1481,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Call = Call;
 	exports.ActivityProvider = ActivityProvider;
 
-}((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX.Vue3,BX.Crm.AI,BX.Crm.AI,BX,BX.Crm,BX,BX.Pull,BX.UI,BX.Crm.Copilot,BX.Crm,BX.Crm.Timeline,BX.Event,BX.UI.BBCode.Formatter,BX,BX,BX));
+}((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX.Vue3,BX.Crm.AI,BX.Crm.AI,BX,BX.Crm,BX,BX.Pull,BX.UI,BX.Crm.Copilot,BX.Crm,BX.Crm.Timeline,BX.Event,BX.UI.BBCode.Formatter,BX,BX.Crm.AI,BX));
 //# sourceMappingURL=call.bundle.js.map

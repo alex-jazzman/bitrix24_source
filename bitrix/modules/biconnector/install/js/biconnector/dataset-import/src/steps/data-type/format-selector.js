@@ -10,6 +10,11 @@ type DropdownControlOptions = {
 	options: Option[],
 	fieldType: string,
 	selected: string,
+	isEditable: boolean,
+};
+
+type FormatSelectorOptions = {
+	isEditable?: boolean,
 };
 
 const OptionType = {
@@ -25,8 +30,15 @@ type Option = {
 
 export class FormatSelector
 {
-	static openSlider(selected: Object, dataFormatTemplates: DataFormatTemplate, onClose: function)
+	static openSlider(
+		selected: Object,
+		dataFormatTemplates: DataFormatTemplate,
+		onClose: function,
+		options: FormatSelectorOptions = {},
+	)
 	{
+		const isEditable = options.isEditable ?? true;
+
 		BX.SidePanel.Instance.open('biconnector:import-field-formats', {
 			width: 584,
 			contentCallback: () => {
@@ -35,10 +47,15 @@ export class FormatSelector
 					title: Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TITLE'),
 					content()
 					{
-						return FormatSelector.#getContent(selected, dataFormatTemplates);
+						return FormatSelector.#getContent(selected, dataFormatTemplates, isEditable);
 					},
 					buttons({ cancelButton, SaveButton })
 					{
+						if (!isEditable)
+						{
+							return [cancelButton];
+						}
+
 						return [
 							new SaveButton({
 								onclick: () => {
@@ -77,7 +94,7 @@ export class FormatSelector
 		return result;
 	}
 
-	static #getContent(selected: Object, dataFormatTemplates: DataFormatTemplate): HTMLElement
+	static #getContent(selected: Object, dataFormatTemplates: DataFormatTemplate, isEditable: boolean): HTMLElement
 	{
 		const formRoot = Tag.render`
 			<form class="ui-form" id="formatSelectorForm">
@@ -85,11 +102,21 @@ export class FormatSelector
 		`;
 
 		Dom.append(FormatSelector.#getDropdownControl({
+			title: Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TIMEZONE'),
+			subtitle: Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TIMEZONE_HINT'),
+			options: dataFormatTemplates[DataType.timezone],
+			fieldType: DataType.timezone,
+			selected: selected[DataType.timezone],
+			isEditable,
+		}), formRoot);
+
+		Dom.append(FormatSelector.#getDropdownControl({
 			title: Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATE'),
 			subtitle: Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATE_HINT'),
 			options: dataFormatTemplates[DataType.date],
 			fieldType: DataType.date,
 			selected: selected[DataType.date],
+			isEditable,
 		}), formRoot);
 
 		Dom.append(FormatSelector.#getDropdownControl({
@@ -98,6 +125,7 @@ export class FormatSelector
 			options: dataFormatTemplates[DataType.datetime],
 			fieldType: DataType.datetime,
 			selected: selected[DataType.datetime],
+			isEditable,
 		}), formRoot);
 
 		Dom.append(FormatSelector.#getDropdownControl({
@@ -106,6 +134,7 @@ export class FormatSelector
 			options: dataFormatTemplates[DataType.money],
 			fieldType: DataType.money,
 			selected: selected[DataType.money],
+			isEditable,
 		}), formRoot);
 
 		Dom.append(FormatSelector.#getDropdownControl({
@@ -114,6 +143,7 @@ export class FormatSelector
 			options: dataFormatTemplates[DataType.double],
 			fieldType: DataType.double,
 			selected: selected[DataType.double],
+			isEditable,
 		}), formRoot);
 
 		return Tag.render`
@@ -137,6 +167,11 @@ export class FormatSelector
 			<select class="ui-ctl-element" name="${options.fieldType}">
 			</select>
 		`;
+
+		if (!options.isEditable)
+		{
+			selectRoot.disabled = true;
+		}
 
 		let isCustomSelected = true;
 		let customElement = null;
@@ -170,17 +205,24 @@ export class FormatSelector
 					</div>
 				`;
 
-				Event.bind(selectRoot, 'change', (event) => {
-					const value = event.target.value;
-					if (value === 'custom')
-					{
-						Dom.removeClass(customOptionInput, 'format-selector__custom-value-input--hidden');
-					}
-					else
-					{
-						Dom.addClass(customOptionInput, 'format-selector__custom-value-input--hidden');
-					}
-				});
+				if (!options.isEditable)
+				{
+					customOptionInput.querySelector('input').disabled = true;
+				}
+				else
+				{
+					Event.bind(selectRoot, 'change', (event) => {
+						const value = event.target.value;
+						if (value === 'custom')
+						{
+							Dom.removeClass(customOptionInput, 'format-selector__custom-value-input--hidden');
+						}
+						else
+						{
+							Dom.addClass(customOptionInput, 'format-selector__custom-value-input--hidden');
+						}
+					});
+				}
 			}
 
 			Dom.append(optionElement, selectRoot);
@@ -210,7 +252,7 @@ export class FormatSelector
 						${options.subtitle}
 					</div>
 				</div>
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100 ${options.isEditable ? '' : 'ui-ctl-disabled'}">
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 					${selectRoot}
 				</div>

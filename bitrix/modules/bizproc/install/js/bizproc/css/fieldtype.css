@@ -348,3 +348,28 @@
 .bizproc-type-control-time {
 	width: 100%;
 }
+
+/* Migrated legacy upload button styles */
+.bizproc-type-control-file .webform-small-button {
+	display: inline-block;
+	box-sizing: border-box;
+	margin: 0 12px 0 0;
+	padding: 0 18px;
+	height: 39px;
+	outline: none;
+	border: none;
+	border-radius: 2px;
+	background: #ecedef;
+	box-shadow: 0 0 0 1px #c6cdd3 inset;
+	color: #7a818a;
+	vertical-align: middle;
+	text-decoration: none;
+	text-transform: uppercase;
+	text-shadow: none;
+	white-space: nowrap;
+	font: normal 12px/39px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
+	cursor: pointer;
+	transition: background-color 0.2s linear, color 0.2s linear;
+	-webkit-font-smoothing: antialiased;
+}

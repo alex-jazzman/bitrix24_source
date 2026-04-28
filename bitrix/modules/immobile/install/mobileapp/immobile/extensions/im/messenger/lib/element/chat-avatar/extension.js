@@ -72,6 +72,22 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			return new this(dialogId, options);
 		}
 
+		/**
+		 * @param {string || number} dialogId
+		 * @param {object} options
+		 * @return {ChatAvatar}
+		 */
+		static createForComment(dialogId, options = {})
+		{
+			const avatar = ChatAvatar.createFromDialogId(dialogId, options);
+			if (!avatar.type)
+			{
+				avatar.type = DialogType.comment;
+			}
+
+			return avatar;
+		}
+
 		constructor(dialogId, options = {})
 		{
 			this.options = options;

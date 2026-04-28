@@ -371,7 +371,10 @@ export default class Item
 		const badges = this.getEntity().getBadges(this);
 		if (Type.isArray(badges))
 		{
-			this.setBadges(badges);
+			this.badges = [];
+			badges.forEach((badge) => {
+				this.badges.push(new ItemBadge(badge));
+			});
 		}
 		else
 		{

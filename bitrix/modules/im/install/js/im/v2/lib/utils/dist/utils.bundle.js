@@ -342,9 +342,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const uuidV4pattern = new RegExp(/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i);
 	    return uuid.search(uuidV4pattern) === 0;
 	  },
-	  isTempMessage(messageId) {
-	    return TextUtil.isUuidV4(messageId) || messageId.toString().startsWith(im_v2_const.FakeMessagePrefix) || messageId.toString().startsWith(im_v2_const.FakeDraftMessagePrefix);
-	  },
 	  checkUrl(url) {
 	    const allowList = ["http:", "https:", "ftp:", "file:", "tel:", "callto:", "mailto:", "skype:", "viber:"];
 	    const checkCorrectStartLink = ['/', ...allowList].find(protocol => {

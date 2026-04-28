@@ -6,3 +6,5 @@ $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_NAME_2'] = 'Отследить перво
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_DESCRIPTION'] = 'Меняет стадию после первого обращения и помогает не упустить клиента';
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_PROPERTY_CONFIG'] = 'Выберите Открытую линию';
 $MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_DEFAULT_CONFIG'] = '[любая]';
+
+$MESS['CRM_AUTOMATION_TRIGGER_OPENLINE_NODE_DESCRIPTION'] = 'Запускает процесс после первого обращения клиента';

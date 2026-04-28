@@ -466,6 +466,25 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 				return null;
 			}
 
+			const items = [];
+
+			primaryActionButtons.forEach((button, index) => {
+				items.push(PrimaryButton({
+					...button,
+					testId: button.id,
+					style: {
+						marginLeft: index === 0 ? Indent.M.toNumber() : 0,
+						marginRight: primaryActionButtons.length - 1 === index ? Indent.M.toNumber() : 0,
+						...button.style,
+					},
+				}));
+
+				if (button.separatorAfter)
+				{
+					items.push(this.renderPrimaryActionSeparator());
+				}
+			});
+
 			return Area(
 				{
 					excludePaddingSide: {
@@ -482,24 +501,29 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 							height: 78,
 						},
 					},
-					...primaryActionButtons.map((btn, index) => PrimaryButton({
-						testId: btn.id,
-						testIdSuffix: btn.testIdSuffix,
-						title: btn.title,
-						icon: btn.icon,
-						disabled: btn.disabled,
-						counter: btn.counter,
-						selected: btn.selected,
-						onClick: btn.onClick,
-						renderCustomContent: btn.renderCustomContent,
-						ahaMoment: btn.ahaMoment,
-						style: {
-							marginLeft: index === 0 ? Indent.XL3.toNumber() : 0,
-							marginRight: primaryActionButtons.length - 1 === index ? Indent.XL3.toNumber() : 0,
-							...btn.style,
-						},
-					})),
+					...items,
 				),
+			);
+		}
+
+		renderPrimaryActionSeparator()
+		{
+			return View(
+				{
+					testId: 'separator',
+					style: {
+						height: '100%',
+						alignItems: 'center',
+						justifyContent: 'center',
+					},
+				},
+				View({
+					style: {
+						width: 1,
+						height: 32,
+						backgroundColor: Color.bgSeparatorPrimary.toHex(),
+					},
+				}),
 			);
 		}
 

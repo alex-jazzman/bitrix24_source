@@ -398,10 +398,26 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				}
 			break;
 			case 'employee':
-				if($arField['SHOW_FILTER'] !== 'N')
+				if ($arField['SHOW_FILTER'] !== 'N')
 				{
 					$arField['SHOW_FILTER'] = 'I'; // Force exact match for 'USER' field type
 				}
+
+				$resultDefaultValue = [];
+
+				$defaultValueRaw = $_POST['DEFAULT_VALUE'] ?? [];
+				$defaultValueRaw = is_array($defaultValueRaw) ? $defaultValueRaw : [$defaultValueRaw];
+
+				foreach ($defaultValueRaw as $defaultValue)
+				{
+					if (is_numeric($defaultValue) && (int)$defaultValue > 0)
+					{
+						$resultDefaultValue[] = (int)$defaultValue;
+					}
+				}
+
+				$arField['SETTINGS']['DEFAULT_VALUE'] = $resultDefaultValue;
+
 				break;
 			case 'address':
 				break;

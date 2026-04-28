@@ -36,7 +36,7 @@ export const OpenLinesContent = {
 		queueType(): ?QueueTypeName
 		{
 			const session = this.getSessionByDialogId(this.dialogId);
-			const queueType = this.$store.getters['queue/getTypeById'](session.queueId, true);
+			const queueType = this.$store.getters['openLines/queue/getTypeById'](session?.queueId, true);
 
 			return session ? queueType : null;
 		},
@@ -61,7 +61,7 @@ export const OpenLinesContent = {
 		},
 		getSessionByDialogId(dialogId: string): ?ImolModelSession
 		{
-			return this.$store.getters['recentOpenLines/getSession'](dialogId, true);
+			return this.$store.getters['openLines/recent/getSession'](dialogId, true);
 		},
 	},
 	template: `

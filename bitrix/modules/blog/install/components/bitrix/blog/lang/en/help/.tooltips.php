@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SEF_MODE_TIP"] = "Turns search engine friendly mode (SEF) on and enables the <nobr><i>Page URL management</i></nobr> fields.";
 $MESS["PATH_TO_SMILE_TIP"] = "The path to a folder contaning smileys.";
 $MESS["CACHE_TYPE_TIP"] = "<i>Auto</i>: the cache is valid during the time predefined in the cache settings;<br /><i>Cache</i>: always cache for the period specified in the next field;<br /><i>Do not cahce</i>: no caching is performed.";
@@ -48,4 +48,3 @@ $MESS["AJAX_OPTION_STYLE_TIP"] = "Specifies to download and process CSS styles o
 $MESS["AJAX_OPTION_HISTORY_TIP"] = "Allows \"Back\" and \"Forward\" browser buttons for AJAX transitions.";
 $MESS["AJAX_PAGINATION_TIP"] = "Only comments for the current page will be processed and returned in arResult array.<br>
 <b>Attention:</b> enabling this option may require changing the template.";
-?>

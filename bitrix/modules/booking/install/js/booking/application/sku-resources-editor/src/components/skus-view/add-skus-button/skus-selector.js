@@ -8,6 +8,7 @@ import { catalogServiceSkuService } from 'booking.provider.service.catalog-servi
 import { EntitySelectorEntity, Model } from 'booking.const';
 import type { ResourceModel } from 'booking.model.resources';
 import type { SkuInfo } from 'booking.model.sku-resources-editor';
+import type { CatalogSkuEntityOptions } from 'booking.model.sku';
 
 import { fetchResourcesBySkuIds } from '../../../lib/fetch-resources-by-skus';
 
@@ -36,20 +37,20 @@ export const SkusSelector = {
 		{
 			return this.skus.map(({ id }) => id);
 		},
-		catalogSkuEntityOptions(): Object
+		catalogSkuEntityOptions(): CatalogSkuEntityOptions
 		{
 			return this.$store.state[Model.SkuResourcesEditor].options.catalogSkuEntityOptions;
 		},
 	},
-	created()
+	created(): void
 	{
 		this.dialog = this.createDialog();
 	},
-	mounted()
+	mounted(): void
 	{
 		this.dialog.show();
 	},
-	unmounted()
+	unmounted(): void
 	{
 		this.dialog?.destroy();
 	},
@@ -115,7 +116,7 @@ export const SkusSelector = {
 				}
 			}
 		},
-		select(item: Item)
+		select(item: Item): void
 		{
 			if (this.selected.every(({ id }) => id !== item.id))
 			{
@@ -130,7 +131,7 @@ export const SkusSelector = {
 				});
 			}
 		},
-		deselected(item: Item)
+		deselected(item: Item): void
 		{
 			const itemId = item.id;
 			this.selected = this.selected.filter(({ id }) => id !== itemId);

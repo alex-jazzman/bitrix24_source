@@ -1,20 +1,19 @@
-import 'ui.icons.disk';
 import { Type } from 'main.core';
+import 'ui.icons.disk';
+import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
+import { ProgressBar, ProgressBarSize } from 'im.v2.component.elements.progressbar';
 import { FileViewerContext } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
-import { ProgressBar, ProgressBarSize } from 'im.v2.component.elements.progressbar';
+import { type ImModelFile } from 'im.v2.model';
 
 import '../../css/items/base-file.css';
-
-import type { ImModelFile } from 'im.v2.model';
 
 // @vue/component
 export const BaseFileItem = {
 	name: 'BaseFileItem',
-	components: { ProgressBar },
-	props:
-	{
+	components: { ProgressBar, BIcon },
+	props: {
 		id: {
 			type: [String, Number],
 			required: true,
@@ -25,9 +24,9 @@ export const BaseFileItem = {
 		},
 	},
 	emits: ['cancelClick'],
-	computed:
-	{
+	computed: {
 		ProgressBarSize: () => ProgressBarSize,
+		OutlineIcons: () => OutlineIcons,
 		file(): ImModelFile
 		{
 			return this.$store.getters['files/get'](this.id, true);
@@ -75,8 +74,7 @@ export const BaseFileItem = {
 			return Type.isStringFilled(this.file.urlPreview);
 		},
 	},
-	methods:
-	{
+	methods: {
 		download()
 		{
 			if (this.file.progress !== 100 || this.canBeOpenedWithViewer)
@@ -122,11 +120,13 @@ export const BaseFileItem = {
 					<div class="bx-im-base-file-item__size">{{ fileSize }}</div>
 				</div>
 			</div>
-			<div 
-				class="bx-im-base-file-item__download-icon"
+			<BIcon
+				:name="OutlineIcons.DOWNLOAD"
 				:class="{'--not-active': !isLoaded}"
-				@click="openContextMenu"
-			></div>
+				:hoverable="isLoaded"
+				class="bx-im-base-file-item__download-icon"
+				@click.stop="openContextMenu"
+			/>
 		</div>
 	`,
 };

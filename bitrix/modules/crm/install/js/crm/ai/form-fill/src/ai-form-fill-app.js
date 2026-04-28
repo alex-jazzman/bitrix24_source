@@ -1,10 +1,11 @@
 import { ActivityProvider, Call } from 'crm.ai.call';
+import { NameService } from 'crm.ai.name-service';
 import { Slider } from 'crm.ai.slider';
+import { Setting, Settings } from 'crm.integration.ui.settings';
 import { addCustomEvent, Loc, removeAllCustomEvents, Type } from 'main.core';
 import { Button } from 'ui.buttons';
 import { AiFormFillApplication } from './app';
 import SliderButtonsAdapter from './services/slider-buttons-adapter';
-import { Setting, Settings } from 'crm.integration.ui.settings';
 
 export let sliderButtonsAdapter: ?SliderButtonsAdapter = null;
 
@@ -136,7 +137,7 @@ class ConflictFieldsliderCreator
 
 		return new this.#copilotSliderClass({
 			content: () => `<div id="${this.#containerId}"></div>`,
-			sliderTitle: Loc.getMessage('CRM_AI_FORM_FILL_MERGER_TITLE'),
+			sliderTitle: Loc.getMessage('CRM_AI_FORM_FILL_MERGER_TITLE', NameService.copilotNameReplacement()),
 			label: this.#options.label,
 			extensions: ['crm.ai.form-fill', 'crm.entity-editor'],
 			url: this.#sliderUrl,

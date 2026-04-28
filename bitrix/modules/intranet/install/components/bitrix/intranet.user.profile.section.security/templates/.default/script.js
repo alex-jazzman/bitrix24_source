@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_sidepanel_layout,ui_cnt,main_sidepanel,intranet_notifyBanner_pushOtp,intranet_pushOtp_connectPopup,intranet_pushOtp_menu,ui_analytics,ui_buttons,main_core,main_popup) {
+(function (exports,ui_sidepanel_layout,ui_cnt,main_sidepanel,intranet_logoutAllConfirm,intranet_notifyBanner_pushOtp,intranet_pushOtp_connectPopup,intranet_pushOtp_menu,ui_analytics,ui_buttons,main_core,main_popup) {
 	'use strict';
 
 	var _id = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
@@ -190,23 +190,8 @@ this.BX = this.BX || {};
 	  reload() {
 	    BX.Intranet.UserProfile.Security.changeContent('otpConnected');
 	  }
-	  logoutAllRequest() {
-	    return BX.ajax.runAction('intranet.v2.Otp.logoutAll', {
-	      data: {
-	        signedUserId: babelHelpers.classPrivateFieldLooseBase(this, _signedUserId)[_signedUserId]
-	      }
-	    });
-	  }
 	  logoutAll() {
-	    var _this$logoutAllReques;
-	    (_this$logoutAllReques = this.logoutAllRequest()) == null ? void 0 : _this$logoutAllReques.then(response => {
-	      BX.UI.Notification.Center.notify({
-	        content: main_core.Loc.getMessage('INTRANET_USER_SECURITY_EXIT_SUCCESS'),
-	        autoHide: true,
-	        position: 'bottom-right',
-	        closeButton: false
-	      });
-	    });
+	    new intranet_logoutAllConfirm.LogoutAllConfirm().show();
 	  }
 	  renderPhoneConfirmationCounter(wrapper) {
 	    const counter = new ui_cnt.Counter({
@@ -309,7 +294,7 @@ this.BX = this.BX || {};
 	}
 	function _getConnectPopup2(options) {
 	  const provider = new intranet_pushOtp_connectPopup.EnablePushOtpProvider(options);
-	  return options.provideSmsOtp ? provider.full() : provider.onlyPushOtp();
+	  return provider.full();
 	}
 	function _sendAnalyticEvent2(cElement) {
 	  ui_analytics.sendData({
@@ -474,5 +459,5 @@ this.BX = this.BX || {};
 	exports.BannerFactory = BannerFactory;
 	exports.RestoreNetworkPassword = RestoreNetworkPassword;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.SidePanel,BX.UI,BX.SidePanel,BX.Intranet.NotifyBanner,BX.Intranet.PushOtp,BX.Intranet.PushOtp,BX.UI.Analytics,BX.UI,BX,BX.Main));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.SidePanel,BX.UI,BX.SidePanel,BX.Intranet,BX.Intranet.NotifyBanner,BX.Intranet.PushOtp,BX.Intranet.PushOtp,BX.UI.Analytics,BX.UI,BX,BX.Main));
 //# sourceMappingURL=script.js.map

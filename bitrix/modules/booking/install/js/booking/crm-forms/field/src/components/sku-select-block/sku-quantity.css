@@ -1,0 +1,12 @@
+.booking-crm-forms-field-sku-selector-quantity {
+	position: relative;
+	display: flex;
+	justify-content: end;
+	align-items: center;
+	border: 1px solid var(--b24-field-border-color);
+	border-top: none;
+	text-align: center;
+	min-height: 58px;
+	border-radius: 0 0 4px 4px;
+	margin-bottom: 12px;
+}

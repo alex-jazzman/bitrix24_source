@@ -246,9 +246,6 @@ export class Selector extends EventEmitter
 
 		return Tag.render`
 			<div class="crm-messagesender-channel-selector-banner-container">
-				<div class="crm-messagesender-channel-selector-banner-title">${
-					Loc.getMessage('CRM_MESSAGESENDER_CHANNEL_SELECTOR_RECOMMENDED')
-				}</div>
 				<div class="crm-messagesender-channel-selector-banner-list">${banners}</div>
 			</div>
 		`;

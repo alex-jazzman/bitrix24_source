@@ -6,7 +6,7 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	'use strict';
 
 	const OpenLinesLaunchResources = Object.freeze({
-	  models: imopenlines_v2_model.OpenLinesModels,
+	  models: [imopenlines_v2_model.OpenLinesModel],
 	  pullHandlers: imopenlines_v2_provider_pull.OpenLinesHandlers
 	});
 

@@ -2013,7 +2013,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      getBookingById: `${booking_const.Model.Bookings}/getById`
 	    }),
 	    catalogSkuEntityOptions() {
-	      return this.$store.state[booking_const.Model.Bookings].catalogSkuEntityOptions;
+	      return this.$store.state[booking_const.Model.Sku].catalogSkuEntityOptions;
 	    },
 	    bookings() {
 	      return this.getBookingById(this.id);

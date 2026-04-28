@@ -1,0 +1,63 @@
+.crm-item-import__wizard {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+
+	flex-grow: 1;
+	min-height: 0;
+
+	gap: 15px;
+}
+
+.crm-item-import__wizard-main {
+	flex-grow: 0;
+	min-height: 0;
+
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	margin: 0 20px;
+
+	box-shadow: 0 6px 12px 0 #0000000F;
+	border-radius: var(--ui-border-radius-3xl);
+	background-color: var(--ui-color-palette-white-base);
+}
+
+.crm-item-import__wizard-header {
+	flex-shrink: 0;
+
+	padding: 18px 28px;
+	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-05);
+}
+
+.crm-item-import__wizard-body {
+	flex-grow: 1;
+	overflow-y: auto;
+	min-height: 0;
+
+	padding: 0 28px;
+}
+
+.crm-item-import__wizard-body::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+	width: 5px;
+}
+
+.crm-item-import__wizard-body::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.11);
+	border-radius: 5px;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.crm-item-import__wizard-body::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.crm-item-import__wizard-footer {
+	flex-shrink: 0;
+	background: white;
+
+	padding: 15px 20px;
+}

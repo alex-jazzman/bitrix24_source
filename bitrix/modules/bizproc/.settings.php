@@ -7,6 +7,11 @@ use Bitrix\Bizproc\Integration\UI\EntitySelector\AutomationTemplateProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\DocumentProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\SystemProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\StorageProvider;
+use Bitrix\Bizproc\Internal\Service\Scheduler\Messenger\Model\WorkflowStartMessageTable;
+use Bitrix\Bizproc\Internal\Service\Scheduler\Messenger\Model\WorkflowResumeMessageTable;
+use Bitrix\Bizproc\Internal\Service\Scheduler\Messenger\Receiver\WorkflowStartReceiver;
+use Bitrix\Bizproc\Internal\Service\Scheduler\Messenger\Receiver\WorkflowResumeReceiver;
+use Bitrix\Main\Messenger\Internals\Broker\DbBroker;
 
 return [
 	'console' => [
@@ -131,6 +136,9 @@ return [
 			'bizproc.runtime.activitysearcher.searcher' => [
 				'className' => \Bitrix\Bizproc\Runtime\ActivitySearcher\Searcher::class,
 			],
+			'bizproc.service.eval' => [
+				'className' => \Bitrix\Bizproc\Internal\Service\EvalService::class,
+			],
 			'bizproc.container' => [
 				'className' => '\\Bitrix\\Bizproc\\Internal\\Container',
 			],
@@ -183,6 +191,15 @@ return [
 						\Bitrix\Bizproc\Internal\Container::getWorkflowStateRepository(),
 					];
 				},
+			],
+			'bizproc.service.trigger.scheduledTriggerService' => [
+				'className' => \Bitrix\Bizproc\Public\Service\Trigger\ScheduledTriggerService::class,
+			],
+			'bizproc.service.trigger.scheduleSyncService' => [
+				'className' => \Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleSyncService::class,
+			],
+			'bizproc.manager.trigger.scheduledTriggerAgent' => [
+				'className' => \Bitrix\Bizproc\Infrastructure\Agent\Trigger\ScheduledTriggerAgent::class,
 			],
 		]
 	],
@@ -253,16 +270,30 @@ return [
 		'value' => [
 			'brokers' => [
 				'workflow_db' => [
-					'type' => \Bitrix\Main\Messenger\Internals\Broker\DbBroker::TYPE_CODE,
+					'type' => DbBroker::TYPE_CODE,
 					'params' => [
-						'table' => \Bitrix\Bizproc\Internal\Service\Scheduler\Messenger\Model\WorkflowStartMessageTable::class,
+						'table' => WorkflowStartMessageTable::class,
+					]
+				],
+				'workflow_resume_db' => [
+					'type' => DbBroker::TYPE_CODE,
+					'params' => [
+						'table' => WorkflowResumeMessageTable::class,
 					]
 				]
 			],
 			'queues' => [
 				'start_workflow_queue' => [
 					'broker' => 'workflow_db',
-					'handler' => \Bitrix\Bizproc\Internal\Service\Scheduler\Messenger\Receiver\WorkflowStartReceiver::class,
+					'handler' => WorkflowStartReceiver::class,
+				],
+				'resume_workflow_queue' => [
+					'broker' => 'workflow_resume_db',
+					'handler' => WorkflowResumeReceiver::class,
+				],
+				'scheduled_trigger_queue' => [
+					'broker' => 'workflow_db',
+					'handler' => \Bitrix\Bizproc\Internal\Service\Trigger\Messenger\Receiver\ScheduledTriggerReceiver::class,
 				],
 			],
 		],

@@ -15,6 +15,7 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 		openChannel: 'openChannel',
 		collab: 'collab',
 		tasksTask: 'tasksTask',
+		openlines: 'lines',
 	});
 
 	const MessageStatus = Object.freeze({

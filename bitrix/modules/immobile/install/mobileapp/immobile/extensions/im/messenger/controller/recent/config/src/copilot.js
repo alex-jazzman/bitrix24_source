@@ -30,7 +30,7 @@ jn.define('im/messenger/controller/recent/config/copilot', (require, exports, mo
 				extension: 'im/messenger/controller/recent/service/floating-button/common',
 				props: {
 					onTap: async () => {
-						void openChatCreateByActiveRecentTab();
+						return openChatCreateByActiveRecentTab();
 					},
 				},
 			},
@@ -49,6 +49,7 @@ jn.define('im/messenger/controller/recent/config/copilot', (require, exports, mo
 				props: {
 					sections: ['pinned', 'general'],
 					defaultSection: 'general',
+					convertorExtension: 'im/messenger/controller/recent/service/render/lib/convertor/common',
 				},
 			},
 			[RecentServiceName.vuex]: {

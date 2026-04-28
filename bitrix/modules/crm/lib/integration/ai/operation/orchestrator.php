@@ -261,10 +261,7 @@ final class Orchestrator
 		}
 
 		$callAssessmentItem = ItemFactory::getByActivityId($activityId);
-		$checkerResult = CallAssessmentItemChecker::getInstance()
-			->setItem(ItemFactory::getByActivityId($activityId))
-			->run()
-		;
+		$checkerResult = CallAssessmentItemChecker::getInstance()->setItem($callAssessmentItem)->run();
 		if (!$checkerResult->isSuccess())
 		{
 			return null;
@@ -297,7 +294,7 @@ final class Orchestrator
 		if (is_null($transcriptResult))
 		{
 			$this->logger->error(
-				'{date}: Unable to autostart operation with type {operationType}: CoPilot call transcription not found' . PHP_EOL,
+				'{date}: Unable to autostart operation with type {operationType}: Call transcription not found' . PHP_EOL,
 				['operationType' => ScoreCall::TYPE_ID]
 			);
 

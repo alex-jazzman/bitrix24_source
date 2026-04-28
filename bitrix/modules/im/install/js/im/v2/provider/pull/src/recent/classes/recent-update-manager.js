@@ -4,9 +4,9 @@ import { UserManager } from 'im.v2.lib.user';
 import { Utils } from 'im.v2.lib.utils';
 
 import type { JsonObject } from 'main.core';
+import type { RecentTypeItem } from 'im.v2.const';
 import type { RecentPinChatParams, RecentUpdateParams } from '../../types/recent';
 
-type RecentTypeItem = $Values<typeof RecentType>;
 type RecentUpdateManagerParams = RecentUpdateParams | RecentPinChatParams;
 
 export class RecentUpdateManager
@@ -31,30 +31,14 @@ export class RecentUpdateManager
 		this.#applyRecentUpdateActions(sections, newRecentItem);
 	}
 
-	#applyRecentUpdateActions(sections: $Values<typeof RecentType>[], recentItem: JsonObject): void
+	#applyRecentUpdateActions(sections: RecentTypeItem[], recentItem: JsonObject): void
 	{
 		sections.forEach((recentSection) => {
-			const sectionConfig = this.#getRecentSectionConfig(recentSection);
-			if (!sectionConfig)
-			{
-				return;
-			}
-
-			void Core.getStore().dispatch(sectionConfig, recentItem);
+			void Core.getStore().dispatch('recent/setCollection', {
+				type: recentSection,
+				items: [recentItem],
+			});
 		});
-	}
-
-	#getRecentSectionConfig(section: RecentTypeItem): string
-	{
-		const handlers = {
-			[RecentType.default]: 'recent/setRecent',
-			[RecentType.copilot]: 'recent/setCopilot',
-			[RecentType.openChannel]: 'recent/setChannel',
-			[RecentType.collab]: 'recent/setCollab',
-			[RecentType.taskComments]: 'recent/setTask',
-		};
-
-		return handlers[section];
 	}
 
 	#setLastMessageInfo(): void
@@ -96,7 +80,7 @@ export class RecentUpdateManager
 
 	#setMessageChat(): void
 	{
-		const chat = { ...this.#params.chat, counter: this.#params.counter, dialogId: this.#getDialogId() };
+		const chat = { ...this.#params.chat, dialogId: this.#getDialogId() };
 		void Core.getStore().dispatch('chats/set', chat);
 	}
 

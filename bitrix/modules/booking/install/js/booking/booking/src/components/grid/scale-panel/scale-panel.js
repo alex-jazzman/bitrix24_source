@@ -1,40 +1,39 @@
-import { Dom, Event } from 'main.core';
+import { Dom, Event, Reflection, Type } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 
 import { Core } from 'booking.core';
-import { AhaMoment, HelpDesk } from 'booking.const';
+import { AhaMoment, Model } from 'booking.const';
 import { ahaMoments } from 'booking.lib.aha-moments';
-import { Maximize } from '../../../lib/maximize/maximize';
+
 import './scale-panel.css';
 
+// @vue/component
 export const ScalePanel = {
+	name: 'ScalePanel',
 	props: {
-		getColumnsContainer: Function,
+		getColumnsContainer: {
+			type: Function,
+			required: true,
+		},
 	},
 	data(): Object
 	{
 		return {
 			isSlider: Core.getParams().isSlider,
-			maximize: new Maximize({
-				onOverlayClick: () => this.collapse(),
-			}),
 			desiredZoom: this.$store.getters['interface/zoom'],
 			minZoom: 0.5,
 			maxZoom: 1,
+			hasFullscreenMode: false,
 		};
-	},
-	mounted(): void
-	{
-		if (location.hash === '#maximize')
-		{
-			void this.maximize.maximize();
-		}
 	},
 	computed: {
 		...mapGetters({
-			zoom: 'interface/zoom',
-			expanded: 'interface/expanded',
+			zoom: `${Model.Interface}/zoom`,
 		}),
+		expanded(): boolean
+		{
+			return this.$store.state[Model.Interface].expanded;
+		},
 		zoomFormatted(): string
 		{
 			return this.loc('BOOKING_BOOKING_ZOOM_PERCENT', {
@@ -42,12 +41,36 @@ export const ScalePanel = {
 			});
 		},
 	},
+	beforeMount(): void
+	{
+		const SiteTemplate = Reflection.getClass('BX.Intranet.Bitrix24.Template');
+		this.hasFullscreenMode = Type.isFunction(SiteTemplate?.toggleFullscreen);
+	},
+	mounted(): void
+	{
+		if (location.hash === '#maximize')
+		{
+			this.expand();
+		}
+	},
+	unmounted(): void
+	{
+		Event.unbind(window, 'mouseup', this.onMouseUp);
+	},
 	methods: {
+		syncExpandedState(): void
+		{
+			setTimeout(() => {
+				const expanded = BX.Intranet.Bitrix24.Template.isFullscreen();
+				this.$store.dispatch(`${Model.Interface}/setExpanded`, expanded);
+			}, 300);
+		},
 		expand(event: MouseEvent): void
 		{
 			if (location.hash === '#maximize' || this.isAnyModifierKeyPressed(event))
 			{
-				void this.maximize.maximize();
+				BX.Intranet.Bitrix24.Template.enterFullscreen();
+				this.syncExpandedState();
 			}
 			else
 			{
@@ -60,7 +83,8 @@ export const ScalePanel = {
 		},
 		collapse(): void
 		{
-			void this.maximize.minimize();
+			BX.Intranet.Bitrix24.Template.exitFullscreen();
+			this.syncExpandedState();
 		},
 		fitToScreen(): void
 		{
@@ -139,6 +163,7 @@ export const ScalePanel = {
 				text: this.loc('BOOKING_AHA_EXPAND_GRID_TEXT_MSGVER_1'),
 				target: this.$refs.expand,
 				top: true,
+				isPulsarTransparent: true,
 			});
 
 			ahaMoments.setShown(AhaMoment.ExpandGrid);
@@ -146,7 +171,7 @@ export const ScalePanel = {
 	},
 	template: `
 		<div class="booking-booking-grid-scale-panel">
-			<div v-if="!isSlider" class="booking-booking-grid-scale-panel-full-screen" ref="expand">
+			<div v-if="!isSlider && hasFullscreenMode" class="booking-booking-grid-scale-panel-full-screen" ref="expand">
 				<div v-if="expanded" class="ui-icon-set --collapse-diagonal" @click="collapse"></div>
 				<div v-else class="ui-icon-set --expand-diagonal" @click="expand"></div>
 			</div>

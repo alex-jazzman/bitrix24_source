@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_MODULE_NOT_INSTALL"] = "Blog module is not installed.";
 $MESS["B_B_MES_NO_BLOG"] = "Blog is not found";
 $MESS["BLOG_POST_EDIT"] = "Edit blog post";
@@ -21,4 +21,3 @@ $MESS["B_B_MES_NO_GROUP_ACTIVE"] = "This feature is unavailable for the social n
 $MESS["B_B_MES_NO_GROUP_RIGHTS"] = "Insufficient permission to create a post in the social network group.";
 $MESS["BLOG_EMPTY_TITLE_PLACEHOLDER"] = "Image";
 $MESS["B_B_PC_DUPLICATE_POST"] = "You have already added your post";
-?>

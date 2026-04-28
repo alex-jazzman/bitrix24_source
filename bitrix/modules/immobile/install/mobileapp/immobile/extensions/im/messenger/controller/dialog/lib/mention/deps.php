@@ -3,6 +3,8 @@
 return [
 	'extensions' => [
 		'type',
+		'device/connection',
+		'assets/icons',
 		'im:messenger/const',
 		'im:messenger/loc',
 		'im:messenger/lib/date-formatter',
@@ -11,8 +13,12 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
 		'im:messenger/lib/rest',
-		'im:messenger/controller/search/experimental',
+		'im:messenger/lib/chat-search',
+		'im:messenger/lib/emitter',
 		'im:messenger/lib/di/service-locator',
+		'im:messenger/lib/permission-manager',
+		'im:messenger/provider/services/chat',
+		'im:messenger/provider/services/analytics',
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/element/chat-title',
 	],

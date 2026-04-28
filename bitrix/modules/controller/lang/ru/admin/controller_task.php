@@ -31,6 +31,4 @@ $MESS["CTRLR_TASK_PROGRESS_BAR"] = "Выполнено:";
 $MESS["CTRLR_TASK_PROGRESS_BAR_FROM"] = "из";
 $MESS["CTRLR_TASK_REP_DELETE"] = "Ошибка повтора задачи";
 $MESS["CTRLR_TASK_BUTTON_START"] = "Начать выполнение";
-$MESS["CTRLR_TASK_ERR_LOCK"] = "Ошибка базы данных при блокировке задачи:";
-$MESS["CTRLR_TASK_ERR_LOCK_ADVICE"] = "Обратитесь к администратору базы данных для того, чтобы он дал права на выполнение пакета dbms_lock.";
 ?>

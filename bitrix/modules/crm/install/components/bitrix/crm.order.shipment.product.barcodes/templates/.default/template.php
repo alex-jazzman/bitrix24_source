@@ -20,6 +20,7 @@ Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.buttons',
+	'intranet.old-interface.intranet-common',
 ]);
 
 Asset::getInstance()->addCss('/bitrix/js/crm/css/slider.css');

@@ -23,7 +23,6 @@ this.BX = this.BX || {};
 	var _createB2eWelcomePopupWithTestSigning = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createB2eWelcomePopupWithTestSigning");
 	var _createB2eWelcomePopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createB2eWelcomePopup");
 	var _renderIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderIcon");
-	var _openSigningSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openSigningSlider");
 	var _createB2eNewDocumentButtonStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createB2eNewDocumentButtonStep");
 	var _createB2eTemplatesStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createB2eTemplatesStep");
 	var _createB2eKanbanRouteStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createB2eKanbanRouteStep");
@@ -45,9 +44,6 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _createB2eNewDocumentButtonStep, {
 	      value: _createB2eNewDocumentButtonStep2
-	    });
-	    Object.defineProperty(this, _openSigningSlider, {
-	      value: _openSigningSlider2
 	    });
 	    Object.defineProperty(this, _renderIcon, {
 	      value: _renderIcon2
@@ -72,6 +68,23 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: new sign_tour.Backend()
 	    });
+	  }
+	  static closeSettingsMenuAndOpenTestSigningSlider(event, item) {
+	    if (item && main_core.Type.isFunction(item.getMenuWindow)) {
+	      const window = item.getMenuWindow();
+	      if (window) {
+	        window.close();
+	        new Onboarding().openTestSigningSlider();
+	        return;
+	      }
+	    }
+
+	    // eslint-disable-next-line unicorn/no-this-assignment
+	    const menu = this;
+	    if (menu && main_core.Type.isFunction(menu.close)) {
+	      menu.close();
+	    }
+	    new Onboarding().openTestSigningSlider();
 	  }
 	  async startB2eWelcomeOnboarding(options) {
 	    const tourId = b2eWelcomeTourId;
@@ -113,7 +126,7 @@ this.BX = this.BX || {};
 	        className: `sign__b2e-onboarding-signing-test-banner-button ${options.showTariffSlider ? 'sign-b2e-js-tarriff-slider-trigger' : ''}`,
 	        events: options.showTariffSlider ? {} : {
 	          click: () => {
-	            babelHelpers.classPrivateFieldLooseBase(this, _openSigningSlider)[_openSigningSlider]();
+	            this.openTestSigningSlider();
 	          }
 	        }
 	      });
@@ -153,27 +166,39 @@ this.BX = this.BX || {};
 	      }]
 	    });
 	  }
+	  openTestSigningSlider() {
+	    BX.SidePanel.Instance.open('onboarding-signing-slider', {
+	      width: 750,
+	      contentCallback: () => {
+	        const containerId = 'onboarding-signing-slider-container';
+	        const container = main_core.Tag.render(_t2 || (_t2 = _`<div id="${0}"></div>`), containerId);
+	        const onboardingSignSettings = new sign_v2_b2e_signSettingsOnboarding.B2EOnboardingSignSettings();
+	        onboardingSignSettings.renderToContainer(container);
+	        return container;
+	      }
+	    });
+	  }
 	}
 	function _showCloseOnboardingSigningWarningPopup2() {
-	  const popupContent = main_core.Tag.render(_t2 || (_t2 = _`
+	  const popupContent = main_core.Tag.render(_t3 || (_t3 = _`
 			<div class="sign__b2e-close-onboarding-signing-warning-popup-content">
 				${0}
 			</div>
-		`), main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CONTENT'));
+		`), main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CONTENT_MSGVER_1'));
 	  const popup = new main_popup.Popup({
 	    id: 'sign__b2e-close-onboarding-signing-banner-warning-popup',
 	    content: popupContent,
 	    minHeigh: 180,
-	    width: 480,
+	    width: 400,
 	    padding: 20,
 	    contentColor: 'white',
 	    overlay: true,
 	    closeByEsc: true,
-	    closeIcon: true,
 	    buttons: [new ui_buttons.Button({
 	      id: 'sign__b2e-close-onboarding-signing-banner-warning-popup-confirm-button',
-	      text: main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CONFIRM_BUTTON'),
-	      color: ui_buttons.Button.Color.PRIMARY,
+	      text: main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CONFIRM_BUTTON_MSGVER_1'),
+	      useAirDesign: true,
+	      style: ui_buttons.Button.AirStyle.FILLED,
 	      events: {
 	        click: () => {
 	          popup.close();
@@ -182,15 +207,6 @@ this.BX = this.BX || {};
 	            banner.remove();
 	            babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].hideOnboardingSigningBanner();
 	          }
-	        }
-	      }
-	    }), new ui_buttons.Button({
-	      id: 'sign__b2e-close-onboarding-signing-banner-warning-popup-cancel-button',
-	      text: main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CANCEL_BUTTON'),
-	      color: ui_buttons.Button.Color.LINK,
-	      events: {
-	        click() {
-	          popup.close();
 	        }
 	      }
 	    })]
@@ -225,7 +241,7 @@ this.BX = this.BX || {};
 	      events: options.showTariffSlider ? {} : {
 	        click: () => {
 	          popup.close();
-	          babelHelpers.classPrivateFieldLooseBase(this, _openSigningSlider)[_openSigningSlider]();
+	          this.openTestSigningSlider();
 	        }
 	      }
 	    }));
@@ -256,7 +272,7 @@ this.BX = this.BX || {};
 	    padding: 20,
 	    overlay: true,
 	    buttons,
-	    content: main_core.Tag.render(_t3 || (_t3 = _`
+	    content: main_core.Tag.render(_t4 || (_t4 = _`
 				<div class="sign__onboarding-popup-content">
 					<div class="sign__onboarding-popup-content_header">
 						<div class="sign__onboarding-popup-content_header-title">
@@ -298,7 +314,7 @@ this.BX = this.BX || {};
 	        }
 	      }
 	    })],
-	    content: main_core.Tag.render(_t4 || (_t4 = _`
+	    content: main_core.Tag.render(_t5 || (_t5 = _`
 				<div class="sign__onboarding-popup-content">
 					<div class="sign__onboarding-popup-content_header">
 						<div class="sign__onboarding-popup-content_header-icon">
@@ -327,18 +343,6 @@ this.BX = this.BX || {};
 	    icon: ui_iconSet_api_core.Actions.PENCIL_DRAW
 	  });
 	  return icon.render();
-	}
-	function _openSigningSlider2() {
-	  BX.SidePanel.Instance.open('onboarding-signing-slider', {
-	    width: 750,
-	    contentCallback: () => {
-	      const containerId = 'onboarding-signing-slider-container';
-	      const container = main_core.Tag.render(_t5 || (_t5 = _`<div id="${0}"></div>`), containerId);
-	      const onboardingSignSettings = new sign_v2_b2e_signSettingsOnboarding.B2EOnboardingSignSettings();
-	      onboardingSignSettings.renderToContainer(container);
-	      return container;
-	    }
-	  });
 	}
 	function _createB2eNewDocumentButtonStep2(target, region) {
 	  const firstStepMsgTitle = region === 'ru' ? main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_STEP_CREATE_TITLE_RU') : main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_STEP_CREATE_TITLE');

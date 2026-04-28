@@ -16,6 +16,7 @@ jn.define('im/messenger/controller/dialog/lib/clipboard-image', (require, export
 		ImageMessage,
 		MediaGalleryMessage,
 	} = require('im/messenger/lib/element/dialog');
+	const { TextFormatManager } = require('im/messenger/controller/dialog/lib/text-format');
 
 	const logger = getLoggerWithContext('dialog--clipboard-image', 'ClipboardImageManager');
 
@@ -29,6 +30,9 @@ jn.define('im/messenger/controller/dialog/lib/clipboard-image', (require, export
 
 		/** @type {ClipboardImages} */
 		#images;
+
+		/** @type {TextFormatManager|null} */
+		#textFormatManager = null;
 
 		/**
 		 * @private
@@ -163,6 +167,12 @@ jn.define('im/messenger/controller/dialog/lib/clipboard-image', (require, export
 		};
 
 		#widgetRemovedHandler = () => {
+			if (this.#textFormatManager)
+			{
+				this.#textFormatManager.destructor();
+				this.#textFormatManager = null;
+			}
+
 			this.#images = null;
 			this.#widget = null;
 		};
@@ -178,6 +188,13 @@ jn.define('im/messenger/controller/dialog/lib/clipboard-image', (require, export
 			{
 				this.#widget.textField.setText(currentInputText);
 			}
+
+			this.#textFormatManager = new TextFormatManager({
+				textField: this.#widget.textField,
+				getDialogId: () => this.dialog?.getDialogId(),
+			});
+			this.#textFormatManager.init();
+			this.#textFormatManager.subscribeViewEvents();
 
 			this.#subscribeWidgetEvents();
 

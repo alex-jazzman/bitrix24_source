@@ -979,7 +979,8 @@
 					closeIcon : false,
 					closeByEsc : false,
 					noAllPaddings: true,
-					zIndex: 2000
+					zIndex: 2000,
+					focusTrap: false,
 				});
 
 				BX.style(this.popup.popupContainer, 'width', nodeRect.width + 'px');

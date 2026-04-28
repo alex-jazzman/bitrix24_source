@@ -24,7 +24,6 @@ $MESS["CONFIG_COLLECT_GEO_DATA_CONFIRM"] = "Please note that in certain jurisdic
 $MESS["CONFIG_COLLECT_GEO_DATA_OK"] = "Accept";
 $MESS["CONFIG_COMPANY_NAME"] = "Company name";
 $MESS["CONFIG_COMPANY_TITLE_NAME"] = "Company name to display in the header";
-$MESS["CONFIG_CREATE_OVERDUE_CHATS"] = "Create chat on overdue task with all task participants";
 $MESS["CONFIG_CULTURE_OTHER"] = "Other";
 $MESS["CONFIG_DATE_FORMAT"] = "Date format";
 $MESS["CONFIG_DEFAULT_TOALL"] = "Use \"All users\" as default recipient";

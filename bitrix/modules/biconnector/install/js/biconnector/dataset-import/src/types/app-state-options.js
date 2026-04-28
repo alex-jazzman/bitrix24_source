@@ -10,6 +10,9 @@ type DatasetProperties = {
 	description: String,
 	externalCode: String,
 	externalName: String,
+	externalDatasets?: Array,
+	createPhysicalDatasetUrl?: String,
+	createVirtualDatasetUrl?: String,
 };
 
 type FieldSettings = {
@@ -41,6 +44,8 @@ type ConnectionProperties = {
 	connectionName: String,
 	tableName: String,
 	connectionIsSupportMapping: Boolean,
+	createPhysicalDatasetUrl?: String,
+	createVirtualDatasetUrl?: String,
 };
 
 type Config = {

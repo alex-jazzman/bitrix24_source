@@ -2,7 +2,10 @@
  * @module im/messenger/view/dialog/text-field
  */
 jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
-	const { EventFilterType } = require('im/messenger/const');
+	const {
+		EventFilterType,
+		EventType,
+	} = require('im/messenger/const');
 
 	const { Feature } = require('im/messenger/lib/feature');
 	const { StateManager } = require('im/messenger/view/lib/state-manager');
@@ -13,6 +16,11 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 	 */
 	class DialogTextField extends ProxyView
 	{
+		#emitter = new JNEventEmitter();
+		#customEvents = new Set([
+			EventType.dialog.textField.textSet,
+		]);
+
 		/**
 		 * @constructor
 		 * @param {JNBaseClassInterface} ui
@@ -47,6 +55,40 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {string} eventName
+		 * @param {Function} handler
+		 * @return {this}
+		 */
+		on(eventName, handler)
+		{
+			if (this.#customEvents.has(eventName))
+			{
+				this.#emitter.on(eventName, handler);
+
+				return this;
+			}
+
+			return super.on(eventName, handler);
+		}
+
+		/**
+		 * @param {string} eventName
+		 * @param {Function} handler
+		 * @return {this}
+		 */
+		off(eventName, handler)
+		{
+			if (this.#customEvents.has(eventName))
+			{
+				this.#emitter.off(eventName, handler);
+
+				return this;
+			}
+
+			return super.off(eventName, handler);
+		}
+
+		/**
 		 * @param {string} text
 		 */
 		setText(text)
@@ -54,6 +96,7 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 			if (this.isUiAvailable())
 			{
 				this.ui.setText(text);
+				this.#emitter.emit(EventType.dialog.textField.textSet, [text ?? '']);
 			}
 		}
 
@@ -155,6 +198,7 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 			if (this.isUiAvailable())
 			{
 				this.ui.clear();
+				this.#emitter.emit(EventType.dialog.textField.textSet, ['']);
 			}
 		}
 
@@ -305,6 +349,29 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 			}
 
 			return Promise.resolve();
+		}
+
+		/**
+		 * @param {Array<TextAction>} actions
+		 */
+		setTextActions(actions)
+		{
+			if (this.isUiAvailable() && Feature.isChatDialogTextFieldActionsSupported)
+			{
+				this.ui.setTextActions(actions);
+			}
+		}
+
+		/**
+		 * @param {number} startIndex
+		 * @param {number} endIndex
+		 */
+		setSelectionRange(startIndex, endIndex)
+		{
+			if (this.isUiAvailable() && Feature.isChatDialogTextFieldActionsSupported)
+			{
+				this.ui.setSelectionRange(startIndex, endIndex);
+			}
 		}
 	}
 

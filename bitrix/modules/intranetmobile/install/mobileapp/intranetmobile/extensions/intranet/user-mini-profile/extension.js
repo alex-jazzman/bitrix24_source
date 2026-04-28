@@ -7,57 +7,17 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 
 	const MINI_PROFILE_COMPONENT_NAME = 'intranet:user-mini-profile';
 
+	/**
+	 * @class UserMiniProfile
+	 */
 	class UserMiniProfile
 	{
-		static init()
-		{
-			const isNeedToShowMiniProfile = Application.storage.get(`intranet.miniProfile.needToShow_${env.userId}`, null);
-
-			if (isNeedToShowMiniProfile === null || isNeedToShowMiniProfile === undefined)
-			{
-				const request = new RunActionExecutor('intranetmobile.userprofile.isNeedToShowMiniProfile', {});
-				request.call(false)
-					.then((response) => {
-						Application.storage.set(`intranet.miniProfile.needToShow_${env.userId}`, false);
-
-						if (response.data && response.data === true)
-						{
-							UserMiniProfile.showMiniProfile();
-						}
-						else
-						{
-							BX.postComponentEvent('userMiniProfileClosed', null);
-						}
-					})
-					.catch((error) => {
-						console.error(error);
-					});
-			}
-			else
-			{
-				BX.postComponentEvent('userMiniProfileClosed', null);
-			}
-		}
-
-		static showMiniProfile = async () => {
-			try
-			{
-				const profileDataResponse = await this.getProfileData();
-				const portalLogoResponse = await this.getPortalLogoData();
-
-				BackgroundUIManager.openComponent(
-					MINI_PROFILE_COMPONENT_NAME,
-					UserMiniProfile.openComponent.bind(null, portalLogoResponse, profileDataResponse),
-					1000,
-				);
-			}
-			catch (e)
-			{
-				console.error(e);
-			}
+		static tryShowComponent = async () => {
+			const userMiniProfile = new UserMiniProfile();
+			void userMiniProfile.openBackgroundComponent();
 		};
 
-		static openComponent(portalLogoResponse, profileDataResponse)
+		static openComponent(portalLogoParams, profileDataParams)
 		{
 			PageManager.openComponent('JSStackComponent', {
 				name: 'JSStackComponent',
@@ -78,19 +38,110 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 					},
 				},
 				params: {
-					portalLogoParams: portalLogoResponse.answer.result,
-					profileDataParams: profileDataResponse.answer.result,
+					portalLogoParams,
+					profileDataParams,
 				},
 			});
 		}
 
-		static getProfileData = async () => {
-			return BX.rest.callMethod('user.current');
+		async openBackgroundComponent()
+		{
+			try
+			{
+				const isNeedToShowMiniProfile = await this.isNeedToShowMiniProfile();
+				if (!isNeedToShowMiniProfile)
+				{
+					return;
+				}
+
+				BackgroundUIManager.openComponent(
+					MINI_PROFILE_COMPONENT_NAME,
+					this.openUserMiniProfile,
+					1000,
+				);
+			}
+			catch (e)
+			{
+				console.error(e);
+			}
+		}
+
+		openUserMiniProfile = async () => {
+			const { portalLogoParams, profileDataParams } = await this.getComponentParams();
+			void this.markMiniProfileAsShown();
+			void UserMiniProfile.openComponent(portalLogoParams, profileDataParams);
 		};
 
-		static getPortalLogoData = async () => {
-			return BX.rest.callMethod('intranet.portal.getLogo');
+		/**
+		 * @return {Promise<boolean>}
+		 */
+		async markMiniProfileAsShown()
+		{
+			const isMarked = await this.runAction('markMiniProfileAsShown');
+			if (isMarked)
+			{
+				Application.storage.set(this.getUserMiniProfileStorageKey(), false);
+
+				return true;
+			}
+
+			return false;
+		}
+
+		isNeedToShowMiniProfile = async () => {
+			const cachedValue = Application.storage.get(this.getUserMiniProfileStorageKey(), null);
+			if (cachedValue !== null && cachedValue !== undefined)
+			{
+				return cachedValue;
+			}
+
+			return this.runAction('isNeedToShowMiniProfile');
 		};
+
+		getUserMiniProfileStorageKey()
+		{
+			return `intranet.miniProfile.needToShow_${env.userId}`;
+		}
+
+		async runAction(action)
+		{
+			const request = new RunActionExecutor(`intranetmobile.userprofile.${action}`, {});
+
+			try
+			{
+				const response = await request.call(false);
+
+				return response?.data;
+			}
+			catch (e)
+			{
+				console.error(e);
+
+				return false;
+			}
+		}
+
+		async getComponentParams()
+		{
+			return new Promise((resolve, reject) => {
+				BX.rest.callBatch({
+					profileDataParams: ['user.current'],
+					portalLogoParams: ['intranet.portal.getLogo'],
+				}, (response) => {
+					if (response.error)
+					{
+						reject(response.error);
+
+						return;
+					}
+
+					resolve({
+						profileDataParams: response?.profileDataParams?.answer?.result,
+						portalLogoParams: response?.portalLogoParams?.answer?.result,
+					});
+				});
+			});
+		}
 	}
 
 	module.exports = {

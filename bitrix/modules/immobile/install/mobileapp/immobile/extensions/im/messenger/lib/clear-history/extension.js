@@ -2,7 +2,7 @@
  * @module im/messenger/lib/clear-history
  */
 jn.define('im/messenger/lib/clear-history', (require, exports, module) => {
-	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessageDataProvider } = require('im/messenger/provider/data');
 	const { recentDefaultElement } = require('im/messenger/model/recent');
@@ -24,10 +24,7 @@ jn.define('im/messenger/lib/clear-history', (require, exports, module) => {
 			await this.#updateDialoguesModel(store, dialogId);
 
 			const chatId = DialogHelper.getDialogModel(dialogId)?.chatId;
-			if (chatId)
-			{
-				await store.dispatch('counterModel/delete', { chatIdList: [chatId] });
-			}
+			await serviceLocator.get('counters-update-system').readChat(chatId);
 		}
 
 		static #updateDialoguesModel(store, dialogId)

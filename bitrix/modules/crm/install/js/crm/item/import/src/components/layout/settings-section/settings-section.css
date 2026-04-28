@@ -1,0 +1,24 @@
+.crm-item-import__settings-section {
+	display: flex;
+	flex-direction: column;
+}
+
+.crm-item-import__settings-section-container {
+	padding: 20px 0;
+}
+
+.crm-item-import__settings-section-title {
+	font-size: var(--ui-font-size-2xl);
+	color: var(--ui-color-text-primary);
+}
+
+.crm-item-import__settings-section-content {
+	padding: 0 0 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.crm-item-import__settings-section .crm-item-import__delimiter {
+	margin-bottom: 20px;
+}

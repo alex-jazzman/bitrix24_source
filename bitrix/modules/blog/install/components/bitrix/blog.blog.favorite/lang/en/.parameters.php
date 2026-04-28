@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BB_PATH_TO_POST'] = "Template of a blog message page";
 $MESS ['BB_PATH_TO_SMILE'] = "Path to folder with smileys, relative to the site root";
 $MESS ['BB_BLOG_VAR'] = "Blog identifier variable";
@@ -11,4 +11,3 @@ $MESS ['BMNP_MESSAGE_LENGTH'] = "Maximum message display length";
 $MESS ['BMNP_PREVIEW_WIDTH'] = "Preview image width";
 $MESS ['BMNP_PREVIEW_HEIGHT'] = "Preview image height";
 $MESS ['BC_DATE_TIME_FORMAT'] = "Date and time format";
-?>

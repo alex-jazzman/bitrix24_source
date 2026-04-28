@@ -1,5 +1,5 @@
+import { diagramStore as useDiagramStore, useBufferStore } from '../../../entities/blocks';
 import type { Point } from 'ui.block-diagram';
-import { diagramStore as useDiagramStore, BUFFER_CONTENT_TYPES, useBufferStore } from '../../../entities/blocks';
 import type { Block } from '../../../shared/types';
 
 export class CopyPaste
@@ -13,25 +13,41 @@ export class CopyPaste
 		this.#bufferStore = useBufferStore();
 	}
 
-	paste(point: Point): void
+	paste(point: Point): Block[]
 	{
-		const bufferContent = this.#bufferStore.getBufferContent();
-		if (!bufferContent)
+		const data = this.#bufferStore.getBufferContent();
+		if (!data)
 		{
-			return;
+			return [];
 		}
 
-		if (bufferContent.type === BUFFER_CONTENT_TYPES.BLOCK)
-		{
-			this.#pasteBlock(bufferContent.content, point);
-
-			return;
-		}
-
-		throw new Error('Unsupported buffer content type');
+		return this.#pasteGroup(data, point);
 	}
 
-	#pasteBlock(block: Block, point: Point): void
+	#pasteGroup({ blocks, connections }, point: Point): Block[]
+	{
+		if (blocks.length === 0)
+		{
+			return [];
+		}
+
+		const origin = { ...blocks[0].position };
+
+		const newBlocks = blocks.map((block) => {
+			const targetPoint = {
+				x: point.x + (block.position.x - origin.x),
+				y: point.y + (block.position.y - origin.y),
+			};
+
+			return this.#pasteBlock(block, targetPoint);
+		});
+
+		this.#pasteConnections(connections);
+
+		return newBlocks;
+	}
+
+	#pasteBlock(block: Block, point: Point): Block
 	{
 		const positionedBlock = {
 			...block,
@@ -39,5 +55,24 @@ export class CopyPaste
 		};
 		this.#diagramStore.addBlock(positionedBlock);
 		this.#diagramStore.updateBlockPublishStatus(positionedBlock);
+
+		return positionedBlock;
+	}
+
+	#pasteConnections(connections: Connection[]): void
+	{
+		if (connections.length === 0)
+		{
+			return;
+		}
+
+		this.#diagramStore.setConnections([
+			...this.#diagramStore.connections,
+			...connections,
+		]);
+
+		connections.forEach((item) => {
+			this.#diagramStore.setConnectionCurrentTimestamp(item.id);
+		});
 	}
 }

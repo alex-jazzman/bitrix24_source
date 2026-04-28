@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/sidebar-v2/search/src/analytics', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
 	const { Analytics } = require('im/messenger/const/analytics');
+	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 
 	/**
 	 * @class SidebarSearchAnalytics
@@ -100,7 +101,7 @@ jn.define('im/messenger/controller/sidebar-v2/search/src/analytics', (require, e
 
 			return new AnalyticsEvent()
 				.setTool('im')
-				.setCategory(this.dialogType)
+				.setCategory(AnalyticsHelper.getCategoryByChatType(this.dialogType))
 				.setSection(Analytics.Section.chatSidebar)
 				.setType(analyticsType ?? Analytics.Type.custom)
 			;

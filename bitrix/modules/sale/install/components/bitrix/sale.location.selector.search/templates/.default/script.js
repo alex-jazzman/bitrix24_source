@@ -87,8 +87,25 @@ if(typeof BX.Sale.component.location.selector.search == 'undefined' && typeof BX
 			}
 		});
 
+		if (opts.initializeByGlobalEvent === 'onAdminFilterInited')
+		{
+			if (BX.Sale.component.location.selector.search.isAdminFilterInit)
+			{
+				opts.initializeByGlobalEvent = null;
+			}
+			else
+			{
+				var scope = opts.globalEventScope === 'window' ? window : document;
+				BX.addCustomEvent(scope, opts.initializeByGlobalEvent, () => {
+					BX.Sale.component.location.selector.search.isAdminFilterInit = true;
+				});
+			}
+		}
 		this.handleInitStack(nf, BX.Sale.component.location.selector.search, opts);
 	}
+
+	BX.Sale.component.location.selector.search.isAdminFilterInit = false;
+
 	BX.extend(BX.Sale.component.location.selector.search, BX.ui.autoComplete);
 	BX.merge(BX.Sale.component.location.selector.search.prototype, {
 

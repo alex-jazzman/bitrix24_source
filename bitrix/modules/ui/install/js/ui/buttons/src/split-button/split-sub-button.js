@@ -126,6 +126,34 @@ export default class SplitSubButton extends BaseButton
 		});
 
 		this.#renderSwitcher(this.getContainer(), switcherOptions);
+
+		Dom.attr(this.getContainer(), 'tabindex', -1);
+	}
+
+	getContainer(): HTMLElement
+	{
+		const container = super.getContainer();
+
+		if (this.isSwitcherButton())
+		{
+			Dom.attr(this.button, 'tabindex', -1);
+		}
+
+		return container;
+	}
+
+	setDisabled(disabled: boolean = true): this
+	{
+		super.setDisabled(disabled);
+
+		if (this.isSwitcherButton())
+		{
+			this.setProps({
+				tabindex: -1,
+			});
+		}
+
+		return this;
 	}
 
 	getSwitcher(): Switcher

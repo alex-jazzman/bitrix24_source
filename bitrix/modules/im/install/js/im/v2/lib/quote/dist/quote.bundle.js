@@ -7,6 +7,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const QUOTE_DELIMITER = '-'.repeat(54);
 	const Quote = {
+	  wrapWithDelimiters(text) {
+	    return `${QUOTE_DELIMITER}\n${text}\n${QUOTE_DELIMITER}\n`;
+	  },
 	  sendQuoteEvent(payload) {
 	    const {
 	      text,
@@ -44,17 +47,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    } else {
 	      quoteContext = `#${dialog.dialogId}/${message.id}`;
 	    }
-	    return `${QUOTE_DELIMITER}\n` + `${quoteTitle} [${quoteDate}] ${quoteContext}\n` + `${quoteText}\n` + `${QUOTE_DELIMITER}\n`;
+	    const content = `${quoteTitle} [${quoteDate}] ${quoteContext}\n${quoteText}`;
+	    return this.wrapWithDelimiters(content);
 	  }
 	};
 	const getName = message => {
 	  let name = '';
 	  const copilotManager = new im_v2_lib_copilot.CopilotManager();
 	  if (copilotManager.isCopilotBot(message.authorId)) {
-	    name = copilotManager.getName({
-	      dialogId: message.authorId,
-	      messageId: message.id
-	    });
+	    name = copilotManager.getNameWithRole(message.id);
 	  } else {
 	    const user = im_v2_application_core.Core.getStore().getters['users/get'](message.authorId);
 	    name = user.name;

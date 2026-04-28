@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Location = this.BX.Location || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_vue3,crm_timeline_tools,ui_textEditor,ui_analytics,location_core,location_widget,ui_designTokens,calendar_planner,main_date,ui_infoHelper,calendar_controls,calendar_sectionmanager,ui_sidepanel,crm_clientSelector,ui_notification,ui_uploader_tileWidget,main_popup,crm_field_colorSelector,crm_field_pingSelector,main_core,main_core_events,ui_entitySelector,ui_vue3_directives_hint) {
+(function (exports,crm_ai_nameService,ui_vue3,crm_timeline_tools,ui_textEditor,ui_analytics,location_core,location_widget,calendar_planner,calendar_util,ui_designTokens,main_date,ui_infoHelper,calendar_controls,calendar_sectionmanager,ui_sidepanel,crm_clientSelector,ui_notification,ui_uploader_tileWidget,main_popup,crm_field_colorSelector,crm_field_pingSelector,main_core,main_core_events,ui_entitySelector,ui_vue3_directives_hint) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -1002,7 +1002,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      from,
 	      to,
 	      duration,
-	      plannerInstance: null,
 	      showLocation: (_this$settings$showLo = this.settings.showLocation) !== null && _this$settings$showLo !== void 0 ? _this$settings$showLo : false,
 	      locationId: null,
 	      timezoneName: this.settings.timezoneName,
@@ -1017,11 +1016,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  mounted() {
 	    this.$Bitrix.eventEmitter.subscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
 	    this.$Bitrix.eventEmitter.subscribe(Events.EVENT_DEADLINE_CHANGE, this.onDeadlineChange);
-	    this.showPlanner();
-	    this.getPlanner().selector.subscribe('onChange', this.handlePlannerSelectorChanges.bind(this));
-	    const userIds = this.selectedUsersIdsArray;
-	    const data = this.prepareUpdatePlannerData(userIds);
-	    this.updatePlanner(userIds, data);
 	    if (this.settings.showUserSelector && this.isFocused) {
 	      this.showUserSelectorDialog();
 	    }
@@ -1065,11 +1059,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      data.sectionSelectorReadOnly = false;
 	      if (main_core.Type.isObject(filledValues === null || filledValues === void 0 ? void 0 : filledValues.config)) {
 	        data.config = filledValues.config;
+	        void this.$nextTick(() => this.initPlanner());
 	      } else if (data.canUseCalendarSectionSelector) {
 	        void this.fetchConfig().then(response => {
 	          var _response$data, _data$config$readOnly;
 	          this.config = (_response$data = response.data) !== null && _response$data !== void 0 ? _response$data : {};
 	          this.sectionSelectorReadOnly = (_data$config$readOnly = data.config.readOnly) !== null && _data$config$readOnly !== void 0 ? _data$config$readOnly : false;
+	          calendar_util.Util.setUserSettings(this.config.userSettings);
 	          const hasSelectedSection = this.config.sections.some(section => section.ID === this.sectionId);
 	          if (this.sectionSelectorReadOnly && !hasSelectedSection) {
 	            var _this$plannerInstance;
@@ -1085,9 +1081,22 @@ this.BX.Crm = this.BX.Crm || {};
 	              this.sectionId = (_firstUserSection$ID = firstUserSection === null || firstUserSection === void 0 ? void 0 : firstUserSection.ID) !== null && _firstUserSection$ID !== void 0 ? _firstUserSection$ID : 0;
 	            }
 	          }
+	          void this.$nextTick(() => this.initPlanner());
 	        });
+	      } else {
+	        void this.$nextTick(() => this.initPlanner());
 	      }
 	      return data;
+	    },
+	    initPlanner() {
+	      if (this.plannerInstance) {
+	        return;
+	      }
+	      this.showPlanner();
+	      this.getPlanner().selector.subscribe('onChange', this.handlePlannerSelectorChanges.bind(this));
+	      const userIds = [...this.selectedUserIds];
+	      const data = this.prepareUpdatePlannerData(userIds);
+	      this.updatePlanner(userIds, data);
 	    },
 	    /* eslint-enable no-param-reassign */
 	    getId() {
@@ -1097,7 +1106,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.getPlanner().show();
 	    },
 	    getPlanner() {
-	      if (this.plannerInstance === null) {
+	      if (!this.plannerInstance) {
 	        this.plannerInstance = new calendar_planner.Planner({
 	          wrap: this.$refs.plannerContainer,
 	          compactMode: false,
@@ -1364,10 +1373,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        location,
 	        sectionId
 	      } = this;
+	      const microsecondsInSecond = 1000;
 	      return {
-	        from,
-	        to: from + duration,
-	        duration,
+	        from: main_date.Timezone.UserTime.toBrowser(from / microsecondsInSecond),
+	        to: main_date.Timezone.UserTime.toBrowser((from + duration) / microsecondsInSecond),
+	        duration: duration / microsecondsInSecond,
 	        selectedUserIds: [...this.getSelectedUserIds()],
 	        sectionId,
 	        location
@@ -1448,6 +1458,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  },
 	  created() {
+	    this.plannerInstance = null;
 	    this.$watch('ownerId', (newOwnerId, oldOwnerId) => {
 	      if (this.selectedUserIds.has(newOwnerId)) {
 	        const userIds = this.selectedUsersIdsArray;
@@ -3750,7 +3761,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        maxHeight: babelHelpers.classPrivateFieldGet(this, _popupMode) ? 126 : 600,
 	        content: babelHelpers.classPrivateFieldGet(this, _defaultDescription),
 	        placeholder: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_ROLLED'),
-	        paragraphPlaceholder: main_core.Loc.getMessage(main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(this, _copilotSettings)) ? 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT_MSGVER_1' : null),
+	        paragraphPlaceholder: main_core.Loc.getMessage(main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(this, _copilotSettings)) ? 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT_MSGVER_1' : null, crm_ai_nameService.NameService.copilotNameReplacement()),
 	        toolbar: [],
 	        floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'link', 'copilot'],
 	        collapsingMode: true,
@@ -4417,5 +4428,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.TodoEditorMode = TodoEditorMode;
 	exports.TodoEditorV2 = TodoEditorV2;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Vue3,BX.Crm.Timeline,BX.UI.TextEditor,BX.UI.Analytics,BX.Location.Core,BX.Location.Widget,BX,BX.Calendar,BX.Main,BX.UI,BX.Calendar.Controls,BX.Calendar,BX,BX.Crm,BX,BX.UI.Uploader,BX.Main,BX.Crm.Field,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector,BX.Vue3.Directives));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Crm.AI,BX.Vue3,BX.Crm.Timeline,BX.UI.TextEditor,BX.UI.Analytics,BX.Location.Core,BX.Location.Widget,BX.Calendar,BX.Calendar,BX,BX.Main,BX.UI,BX.Calendar.Controls,BX.Calendar,BX,BX.Crm,BX,BX.UI.Uploader,BX.Main,BX.Crm.Field,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector,BX.Vue3.Directives));
 //# sourceMappingURL=todo-editor-v2.bundle.js.map

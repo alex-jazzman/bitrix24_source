@@ -15,7 +15,10 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $arActivityDescription = (new ActivityDescription(
 	name: Loc::GetMessage('BP_FRA_DESCR_NAME'),
 	description: Loc::GetMessage('BP_FRA_DESCR_DESCR'),
-	type: [ ActivityType::ACTIVITY->value ],
+	type: [
+		ActivityType::ACTIVITY->value,
+		ActivityType::NODE->value,
+	],
 ))
 	->setCategory([
 		'ID' => 'other',
@@ -29,7 +32,7 @@ $arActivityDescription = (new ActivityDescription(
 		],
 	])
 	->setGroups([ActivityGroup::WORKFLOW->value])
-	->setColorIndex(ActivityColorIndex::GREY->value)
+	->setColorIndex(ActivityColorIndex::BLUE->value)
 	->setIcon(Outline::FLAG->name)
 	->toArray()
 ;

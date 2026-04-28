@@ -13,6 +13,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/reasoning',
 		'im:messenger/provider/services/analytics',
+		'im:messenger/provider/services/chat',
 	],
 	'bundle' => [
 		'./src/const/type',

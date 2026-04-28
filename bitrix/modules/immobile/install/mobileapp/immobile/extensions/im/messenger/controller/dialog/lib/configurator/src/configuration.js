@@ -68,8 +68,20 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configuration', (requ
 		},
 	};
 
+	const channelCommentDialogConfig = {
+		header: {
+			title: {
+				controller: {
+					extensionName: 'im:messenger/controller/dialog/lib/header/title/comments',
+					className: 'CommentsHeaderTitle',
+				},
+			},
+		},
+	};
+
 	module.exports = {
 		defaultConfig,
 		baseDialogConfig,
+		channelCommentDialogConfig,
 	};
 });

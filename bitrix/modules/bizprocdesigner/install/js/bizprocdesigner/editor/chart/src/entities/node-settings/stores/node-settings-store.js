@@ -1,10 +1,10 @@
 import { defineStore } from 'ui.vue3.pinia';
 import { Runtime, Type } from 'main.core';
 
-import { PORT_TYPES } from '../../../shared/constants';
+import { PORT_TYPES, COMPLEX_NODE_PORT_LABELS } from '../../../shared/constants';
 import type { Block, PortId, Port, ActivityData } from '../../../shared/types';
 
-import { createUniqueId } from '../../../shared/utils';
+import { createUniqueId, parsePortTitle } from '../../../shared/utils';
 import { complexNodeApi } from '../api';
 import { CONSTRUCTION_TYPES } from '../constants';
 
@@ -18,6 +18,7 @@ type NodesSettingsState = {
 	currentRuleId: string;
 	nodeSettings: NodeSettings | null;
 	block: Block | null,
+	lastFetchId: number,
 };
 
 type SyncOutputPorts = {
@@ -31,11 +32,6 @@ type PortParams = {
 	label: string,
 	portTitle?: string,
 };
-
-const PORT_LABELS = Object.freeze({
-	input: 'G',
-	output: 'E',
-});
 
 const PORT_POSITIONS = Object.freeze({
 	left: 'left',
@@ -53,11 +49,13 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		ports: null,
 		nodeSettings: null,
 		block: null,
+		lastFetchId: 0,
 	}),
 	actions:
 	{
 		async fetchNodeSettings(block: Block): Promise<void>
 		{
+			const fetchId = ++this.lastFetchId;
 			this.nodeSettings = {
 				title: block.node.title,
 				description: '',
@@ -72,6 +70,11 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				title: loadedTitle,
 				description,
 			} = await complexNodeApi.loadSettings(block.activity);
+
+			if (this.lastFetchId !== fetchId || !this.nodeSettings)
+			{
+				return;
+			}
 
 			if (Type.isStringFilled(loadedTitle))
 			{
@@ -97,7 +100,12 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				description,
 			};
 			this.prevSavedNodeSettings = Runtime.clone(this.nodeSettings);
-			this.ports = [...block.ports];
+			this.ports = [...block.ports].sort((a, b) => {
+				const { id: aId } = parsePortTitle(a.title);
+				const { id: bId } = parsePortTitle(b.title);
+
+				return aId - bId;
+			});
 			const rulesIds = new Set(this.nodeSettings.rules.keys());
 			this.ports.forEach((port) => {
 				if (port.type === PORT_TYPES.input && !rulesIds.has(port.id) && !port.isConnectionPort)
@@ -368,11 +376,23 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		{
 			const currentPorts = this.ports.filter((port) => port.type === type && !port.isConnectionPort);
 			const label = type === PORT_TYPES.input
-				? PORT_LABELS.input
-				: PORT_LABELS.output;
+				? COMPLEX_NODE_PORT_LABELS.inputRule
+				: COMPLEX_NODE_PORT_LABELS.outputRule;
 
 			const port = this.createPort(currentPorts, { portId, type, label, portTitle });
-			this.ports.push(port);
+			const addedPortId = parsePortTitle(port.title).id;
+			for (let i = currentPorts.length - 1; i >= 0; i--)
+			{
+				const currentPortId = parsePortTitle(currentPorts[i].title).id;
+				if (currentPortId < addedPortId)
+				{
+					this.ports.splice(this.ports.indexOf(currentPorts[i]) + 1, 0, port);
+
+					return;
+				}
+			}
+
+			this.ports.unshift(port);
 		},
 		addConnectionPort(portId: string, type: PortType): void
 		{
@@ -380,7 +400,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				? this.ports.filter((port) => port.type === PORT_TYPES.input)
 				: this.ports.filter((port) => port.type === PORT_TYPES.output);
 			const connectionPorts = currentPorts.filter((p) => p.isConnectionPort);
-			const port = this.createPort(connectionPorts, { portId, type, label: 'NG' });
+			const port = this.createPort(connectionPorts, { portId, type, label: COMPLEX_NODE_PORT_LABELS.connection });
 			this.ports.push({ ...port, isConnectionPort: true });
 		},
 		deletePort(portId: string): void

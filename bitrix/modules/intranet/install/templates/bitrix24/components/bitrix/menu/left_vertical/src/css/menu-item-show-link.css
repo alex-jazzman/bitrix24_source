@@ -13,6 +13,8 @@
 	font-weight: var(--ui-font-weight-bold, 700);
 	text-transform: uppercase;
 	cursor: pointer;
+	border: none;
+	background: none;
 }
 
 .menu-item-block:hover .menu-item-show-link {
@@ -48,4 +50,9 @@
 
 .menu-sliding-mode .menu-item-block .menu-item-show-link {
 	visibility: visible;
+}
+
+.menu-item-show-link:focus-visible {
+	outline: 2px solid;
+	outline-offset: 2px;
 }

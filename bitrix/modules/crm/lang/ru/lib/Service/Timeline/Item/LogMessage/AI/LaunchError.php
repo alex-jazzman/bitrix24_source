@@ -1,5 +1,5 @@
 <?php
-$MESS['CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE'] = 'CoPilot не смог выполнить запрос';
+$MESS['CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE'] = '#COPILOT_NAME# не смог выполнить запрос';
 $MESS['CRM_TIMELINE_LOG_LAUNCH_ERROR_TAG'] = 'Ошибка';
 $MESS['CRM_TIMELINE_LOG_LAUNCH_ERROR_THIRDPARTY_TAG'] = 'Ошибка AI';
 $MESS['CRM_TIMELINE_LOG_LAUNCH_ERROR_THIRDPARTY_TAG_TOOLTIP'] = 'Попробуйте ещё раз или выберите другую модель AI в настройках вашего Битрикс24';

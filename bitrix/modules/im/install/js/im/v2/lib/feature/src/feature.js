@@ -39,6 +39,8 @@ export const Feature = {
 	videoNoteTranscriptionAvailable: 'videoNoteTranscriptionAvailable',
 	chatSharedLinkAvailable: 'chatSharingLinkAvailable',
 	isCopilotFileUploadAvailable: 'isCopilotFileUploadAvailable',
+	isTaskCardAvailable: 'isMountedTasksCardAvailable',
+	isAddingUserByMentionAvailable: 'isAddingUserByMentionAvailable',
 };
 
 export const FeatureManager = {

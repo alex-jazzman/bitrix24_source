@@ -15,6 +15,7 @@ jn.define('im/messenger/lib/smile-manager', (require, exports, module) => {
 
 	/**
 	 * @class SmileManager
+	 * @implements {ISmileManager}
 	 */
 	class SmileManager
 	{

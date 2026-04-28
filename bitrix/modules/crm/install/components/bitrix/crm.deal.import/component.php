@@ -21,6 +21,8 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityT
 global $USER_FIELD_MANAGER;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Integration\Analytics\Builder\Block\LinkEvent;
+use Bitrix\Crm\Integration\Analytics\Builder\Import\CancelEvent;
+use Bitrix\Crm\Integration\Analytics\Builder\Import\CreateEvent;
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmDeal::$sUFEntityID);
@@ -579,6 +581,9 @@ else if (isset($_REQUEST['import']) && file_exists($_SESSION['CRM_IMPORT_FILE'] 
 		}
 	}
 
+	$_SESSION['CRM_IMPORT_SUCCESS_COUNT'] += $arResult['import'];
+	$_SESSION['CRM_IMPORT_ERROR_COUNT'] += $arResult['error'];
+
 	$_SESSION['CRM_IMPORT_FILE_POS'] = $filePos;
 	$_SESSION['CRM_IMPORT_FILE_FIRST_HEADER'] = false;
 
@@ -589,6 +594,13 @@ else if (isset($_REQUEST['import']) && file_exists($_SESSION['CRM_IMPORT_FILE'] 
 }
 else if(isset($_REQUEST['complete_import']))
 {
+	(new \Bitrix\Crm\Integration\Analytics\Builder\Import\CreateEvent())
+		->setEntityTypeId(CCrmOwnerType::Deal)
+		->setSuccessCount($_SESSION['CRM_IMPORT_SUCCESS_COUNT'])
+		->setErrorCount($_SESSION['CRM_IMPORT_ERROR_COUNT'])
+		->buildEvent()
+		->send();
+
 	$APPLICATION->RestartBuffer();
 	Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 	echo CUtil::PhpToJsObject(array('RESULT' => 'SUCCESS'));
@@ -679,6 +691,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 					$_SESSION['CRM_IMPORT_FILE_SEPORATOR'] = "\t";
 				elseif ($_POST['IMPORT_FILE_SEPORATOR'] == 'space')
 					$_SESSION['CRM_IMPORT_FILE_SEPORATOR'] = ' ';
+
+				$_SESSION['CRM_IMPORT_SUCCESS_COUNT'] = 0;
+				$_SESSION['CRM_IMPORT_ERROR_COUNT'] = 0;
 
 				require_once($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/main/classes/general/csv_data.php');
 
@@ -844,6 +859,12 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		}
 		else if ($arResult['STEP'] == 3)
 		{
+			(new CreateEvent())
+				->setEntityTypeId(CCrmOwnerType::Deal)
+				->setIsDoneButton()
+				->buildEvent()
+				->send();
+
 			@unlink($_SESSION['CRM_IMPORT_FILE']);
 			foreach ($_SESSION as $key => $value)
 				if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
@@ -869,6 +890,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	}
 	else if (isset($_POST['previous']))
 	{
+		if ($arResult['STEP'] !== 2)
+		{
+			(new CreateEvent())
+				->setEntityTypeId(CCrmOwnerType::Deal)
+				->setIsAgainButton()
+				->buildEvent()
+				->send();
+		}
+
 		@unlink($_SESSION['CRM_IMPORT_FILE']);
 		foreach ($_SESSION as $key => $value)
 			if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
@@ -882,6 +912,17 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		foreach ($_SESSION as $key => $value)
 			if(mb_strpos($key, 'CRM_IMPORT_FILE') !== false)
 				unset($_SESSION[$key]);
+
+		(new CancelEvent())
+			->setEntityTypeId(CCrmOwnerType::Deal)
+			->setStep(match ($arResult['STEP']) {
+				1 => CancelEvent::STEP_CONFIGURE_IMPORT_SETTINGS,
+				2 => CancelEvent::STEP_CONFIGURE_FIELD_RATIO,
+				3 => CancelEvent::STEP_IMPORT,
+			})
+			->buildEvent()
+			->send()
+		;
 
 		$categoryID = isset($_POST['category_id']) ? (int)$_POST['category_id'] : -1;
 		if($categoryID >= 0)

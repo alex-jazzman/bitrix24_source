@@ -278,7 +278,49 @@ class CBPMixedCondition extends CBPActivityCondition
 
 		$props = \CBPRuntime::getRuntime()->getActivityReturnProperties($activity);
 
-		return $props[$field] ?? null;
+		return self::resolveActivityProperty($props, $field);
+	}
+
+	private static function resolveActivityProperty(array $props, string $field): ?array
+	{
+		if (isset($props[$field]))
+		{
+			return $props[$field];
+		}
+
+		if (!str_contains($field, '.'))
+		{
+			return null;
+		}
+
+		[$parentField, $fieldName] = explode('.', $field, 2);
+		if (!isset($props[$parentField]))
+		{
+			return null;
+		}
+
+		$property = $props[$parentField];
+
+		if (($property['Type'] ?? '') === Bizproc\FieldType::DOCUMENT && $fieldName)
+		{
+			$documentType = CBPHelper::normalizeComplexDocumentId($property['Default']);
+			if ($documentType)
+			{
+				$documentService = CBPRuntime::getRuntime()->getDocumentService();
+				$documentFields = $documentService->getDocumentFields($documentType);
+
+				return $documentFields[$fieldName] ?? null;
+			}
+		}
+
+		if (($property['Type'] ?? '') === Bizproc\FieldType::JSON && isset($property['BaseType']))
+		{
+			$property['Type'] = $property['BaseType'];
+
+			return $property;
+		}
+
+		return null;
 	}
 
 	private static function findTemplateActivity(array $template, $id)

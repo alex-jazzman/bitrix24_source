@@ -59,12 +59,6 @@ export const StepBlock = {
 			};
 		},
 	},
-	methods: {
-		toggleCollapse(open: ?boolean)
-		{
-			this.section.toggle(open);
-		},
-	},
 	mounted()
 	{
 		const contentContainer = this.$refs.contentContainer;
@@ -78,6 +72,55 @@ export const StepBlock = {
 		section.append(this.$refs.content);
 		section.renderTo(contentContainer);
 		this.section = section;
+
+		this.$nextTick(() => {
+			this.updateHeaderRightContent();
+		});
+	},
+	methods: {
+		toggleCollapse(open: ?boolean)
+		{
+			this.section.toggle(open);
+		},
+		updateHeaderRightContent()
+		{
+			if (!this.section)
+			{
+				return;
+			}
+
+			const headerElement = this.section.getContent()?.querySelector('.ui-section__header');
+			if (!headerElement)
+			{
+				return;
+			}
+
+			const headerRightSlot = this.$refs.headerRightSlot;
+			const existingRightContent = headerElement.querySelector('.step-block__header-right');
+
+			if (headerRightSlot && headerRightSlot.children.length > 0)
+			{
+				// Create or find the container for the right content
+				let rightContentContainer = existingRightContent;
+				if (!rightContentContainer)
+				{
+					rightContentContainer = document.createElement('div');
+					rightContentContainer.className = 'step-block__header-right';
+					headerElement.appendChild(rightContentContainer);
+				}
+
+				rightContentContainer.innerHTML = '';
+				while (headerRightSlot.firstChild)
+				{
+					rightContentContainer.appendChild(headerRightSlot.firstChild);
+				}
+			}
+			else if (existingRightContent)
+			{
+				// If there is no slot, remove the container
+				existingRightContent.remove();
+			}
+		},
 	},
 	watch: {
 		title(newValue)
@@ -87,8 +130,22 @@ export const StepBlock = {
 				return;
 			}
 
-			this.section.getContent().querySelector('.ui-section__title').innerHTML = Text.encode(newValue);
+			const titleElement = this.section.getContent().querySelector('.ui-section__title');
+			if (titleElement)
+			{
+				titleElement.innerHTML = Text.encode(newValue);
+
+				this.$nextTick(() => {
+					this.updateHeaderRightContent();
+				});
+			}
 		},
+	},
+	updated()
+	{
+		this.$nextTick(() => {
+			this.updateHeaderRightContent();
+		});
 	},
 	components: {
 		StepHint,
@@ -102,6 +159,9 @@ export const StepBlock = {
 				<span v-html="hint"></span>
 			</StepHint>
 			<slot></slot>
+		</div>
+		<div ref="headerRightSlot">
+			<slot name="headerRightContent"></slot>
 		</div>
 	`,
 };

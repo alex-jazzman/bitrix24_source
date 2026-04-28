@@ -12,6 +12,7 @@ const DataType = {
 	double: 'double',
 	date: 'date',
 	datetime: 'datetime',
+	timezone: 'timezone',
 };
 
 const DataTypeDescriptions: Record<string, DataTypeDescription> = {

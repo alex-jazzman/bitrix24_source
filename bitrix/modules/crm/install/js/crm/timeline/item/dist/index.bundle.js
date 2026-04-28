@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,ui_imageStackSteps,crm_timeline_item,calendar_util,calendar_sharing_interface,ui_feedback_form,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_lottie,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_types,ui_hint,ui_designTokens,pull_client,crm_entityEditor_field_paymentDocuments,crm_ai_call,main_popup,ui_buttons,ui_infoHelper,im_public,crm_router,main_date,crm_timeline_tools,crm_activity_fileUploaderPopup,main_core_events,ui_entitySelector,ui_sidepanel,crm_integration_analytics,ui_dialogs_messagebox,main_core,ui_notification) {
+(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,ui_imageStackSteps,crm_timeline_item,calendar_util,calendar_sharing_interface,ui_feedback_form,location_core,main_loader,crm_timeline_editors_commentEditor,ui_bbcode_formatter_htmlFormatter,ui_textEditor,crm_ai_nameService,ui_lottie,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_types,ui_hint,ui_designTokens,pull_client,crm_entityEditor_field_paymentDocuments,crm_ai_call,main_popup,ui_buttons,ui_infoHelper,im_public,crm_router,main_date,crm_timeline_tools,crm_activity_fileUploaderPopup,main_core_events,ui_entitySelector,ui_sidepanel,crm_integration_analytics,ui_dialogs_messagebox,main_core,ui_notification) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -4578,9 +4578,6 @@ this.BX.Crm = this.BX.Crm || {};
 	var _handleCopilotError = /*#__PURE__*/new WeakSet();
 	var _showGenericError = /*#__PURE__*/new WeakSet();
 	var _showAdditionalInfo = /*#__PURE__*/new WeakSet();
-	var _handleSliderCode = /*#__PURE__*/new WeakSet();
-	var _showBoostLimitSlider = /*#__PURE__*/new WeakSet();
-	var _showFallbackBoostLimit = /*#__PURE__*/new WeakSet();
 	var _showInfoSlider = /*#__PURE__*/new WeakSet();
 	var _showFeedbackMessageBox = /*#__PURE__*/new WeakSet();
 	var _openFeedbackForm = /*#__PURE__*/new WeakSet();
@@ -4599,9 +4596,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _openFeedbackForm);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showFeedbackMessageBox);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showInfoSlider);
-	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showFallbackBoostLimit);
-	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showBoostLimitSlider);
-	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _handleSliderCode);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showAdditionalInfo);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _showGenericError);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _handleCopilotError);
@@ -4693,7 +4687,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _getCopilotButton2(item) {
 	  const aiCopilotBtn = item.getLayoutFooterButtonById('aiButton');
 	  if (!aiCopilotBtn) {
-	    throw new Error('"CoPilot" button is not found in layout');
+	    throw new Error('"AI button" component is not found in layout');
 	  }
 	  return aiCopilotBtn;
 	}
@@ -4731,7 +4725,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _showAdditionalInfo2(data, item) {
 	  if (_classPrivateMethodGet$a(this, _isSliderCodeExist, _isSliderCodeExist2).call(this, data)) {
-	    _classPrivateMethodGet$a(this, _handleSliderCode, _handleSliderCode2).call(this, data, item);
+	    _classPrivateMethodGet$a(this, _showInfoSlider, _showInfoSlider2).call(this, data.sliderCode);
 	  } else if (_classPrivateMethodGet$a(this, _isAiMarketplaceAppsExist, _isAiMarketplaceAppsExist2).call(this, data)) {
 	    _classPrivateMethodGet$a(this, _showMarketMessageBox, _showMarketMessageBox2).call(this);
 	  } else if (data.code === 'blocked_provider') {
@@ -4754,52 +4748,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodGet$a(this, _showFeedbackMessageBox, _showFeedbackMessageBox2).call(this);
 	  }
 	}
-	function _handleSliderCode2(data, item) {
-	  if (data.sliderCode === 'limit_boost_copilot') {
-	    void _classPrivateMethodGet$a(this, _showBoostLimitSlider, _showBoostLimitSlider2).call(this, item);
-	  } else {
-	    _classPrivateMethodGet$a(this, _showInfoSlider, _showInfoSlider2).call(this, data.sliderCode);
-	  }
-	}
-	async function _showBoostLimitSlider2(item) {
-	  try {
-	    var _item$getLayoutFooter, _item$getLayoutFooter2;
-	    const {
-	      ServiceWidget,
-	      Analytics
-	    } = await main_core.Runtime.loadExtension('baas.store');
-	    if (!ServiceWidget) {
-	      _classPrivateMethodGet$a(this, _showFallbackBoostLimit, _showFallbackBoostLimit2).call(this);
-	      return;
-	    }
-	    const serviceWidget = ServiceWidget === null || ServiceWidget === void 0 ? void 0 : ServiceWidget.getInstanceByCode('ai_copilot_token');
-	    const bindElement = (_item$getLayoutFooter = item.getLayoutFooterButtonById('aiButton')) === null || _item$getLayoutFooter === void 0 ? void 0 : (_item$getLayoutFooter2 = _item$getLayoutFooter.getUiButton()) === null || _item$getLayoutFooter2 === void 0 ? void 0 : _item$getLayoutFooter2.getContainer();
-	    serviceWidget.bind(bindElement, Analytics.CONTEXT_CRM);
-	    serviceWidget.show(bindElement);
-	    serviceWidget.getPopup().adjustPosition({
-	      forceTop: true
-	    });
-	  } catch {
-	    _classPrivateMethodGet$a(this, _showFallbackBoostLimit, _showFallbackBoostLimit2).call(this);
-	    await console.error('Cant load "baas.store" extension');
-	  }
-	}
-	function _showFallbackBoostLimit2() {
-	  if (this.useInfoHelper()) {
-	    var _BX, _BX$UI;
-	    (_BX = BX) === null || _BX === void 0 ? void 0 : (_BX$UI = _BX.UI) === null || _BX$UI === void 0 ? void 0 : _BX$UI.InfoHelper.show('limit_boost_copilot');
-	  } else {
-	    void ui_infoHelper.FeaturePromotersRegistry.getPromoter({
-	      code: 'limit_boost_copilot'
-	    }).show();
-	  }
-	}
 	function _showInfoSlider2(sliderCode) {
 	  if (sliderCode !== null && sliderCode !== void 0 && sliderCode.includes('redirect=detail&code')) {
 	    top.BX.Helper.show(sliderCode);
 	  } else if (this.useInfoHelper()) {
-	    var _BX2, _BX2$UI;
-	    (_BX2 = BX) === null || _BX2 === void 0 ? void 0 : (_BX2$UI = _BX2.UI) === null || _BX2$UI === void 0 ? void 0 : _BX2$UI.InfoHelper.show(sliderCode);
+	    var _BX, _BX$UI;
+	    (_BX = BX) === null || _BX === void 0 ? void 0 : (_BX$UI = _BX.UI) === null || _BX$UI === void 0 ? void 0 : _BX$UI.InfoHelper.show(sliderCode);
 	  } else {
 	    ui_infoHelper.FeaturePromotersRegistry.getPromoter({
 	      code: sliderCode
@@ -4808,11 +4762,11 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _showFeedbackMessageBox2() {
 	  ui_dialogs_messagebox.MessageBox.show({
-	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE'),
-	    message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT'),
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE', crm_ai_nameService.NameService.copilotNameReplacement()),
+	    message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT', crm_ai_nameService.NameService.copilotNameReplacement()),
 	    modal: true,
 	    buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-	    okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT'),
+	    okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT', crm_ai_nameService.NameService.copilotNameReplacement()),
 	    onOk: messageBox => {
 	      messageBox.close();
 	      _classPrivateMethodGet$a(this, _openFeedbackForm, _openFeedbackForm2).call(this);
@@ -4843,10 +4797,11 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _showMarketMessageBox2() {
 	  ui_dialogs_messagebox.MessageBox.show({
-	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE', crm_ai_nameService.NameService.copilotNameReplacement()),
 	    message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
 	      '[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
-	      '[/helpdesklink]': '</a>'
+	      '[/helpdesklink]': '</a>',
+	      '#COPILOT_NAME#': crm_ai_nameService.NameService.copilotName()
 	    }),
 	    modal: true,
 	    buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
@@ -5323,18 +5278,6 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	let EditableDescriptionHeight = function EditableDescriptionHeight() {
-	  babelHelpers.classCallCheck(this, EditableDescriptionHeight);
-	};
-	babelHelpers.defineProperty(EditableDescriptionHeight, "SHORT", 'short');
-	babelHelpers.defineProperty(EditableDescriptionHeight, "LONG", 'long');
-
-	let EditableDescriptionBackgroundColor = function EditableDescriptionBackgroundColor() {
-	  babelHelpers.classCallCheck(this, EditableDescriptionBackgroundColor);
-	};
-	babelHelpers.defineProperty(EditableDescriptionBackgroundColor, "YELLOW", 'yellow');
-	babelHelpers.defineProperty(EditableDescriptionBackgroundColor, "WHITE", 'white');
-
 	let EditableDescriptionAiStatus = function EditableDescriptionAiStatus() {
 	  babelHelpers.classCallCheck(this, EditableDescriptionAiStatus);
 	};
@@ -5383,10 +5326,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  computed: {
 	    text() {
 	      if (this.status === EditableDescriptionAiStatus.IN_PROGRESS) {
-	        return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER_PENDING');
+	        return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER_PENDING', crm_ai_nameService.NameService.copilotNameReplacement());
 	      }
 	      if (this.status === EditableDescriptionAiStatus.SUCCESS) {
-	        return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER');
+	        return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER', crm_ai_nameService.NameService.copilotNameReplacement());
 	      }
 	      return '';
 	    },
@@ -5414,6 +5357,18 @@ this.BX.Crm = this.BX.Crm || {};
 		</div>
 	`
 	};
+
+	let EditableDescriptionBackgroundColor = function EditableDescriptionBackgroundColor() {
+	  babelHelpers.classCallCheck(this, EditableDescriptionBackgroundColor);
+	};
+	babelHelpers.defineProperty(EditableDescriptionBackgroundColor, "YELLOW", 'yellow');
+	babelHelpers.defineProperty(EditableDescriptionBackgroundColor, "WHITE", 'white');
+
+	let EditableDescriptionHeight = function EditableDescriptionHeight() {
+	  babelHelpers.classCallCheck(this, EditableDescriptionHeight);
+	};
+	babelHelpers.defineProperty(EditableDescriptionHeight, "SHORT", 'short');
+	babelHelpers.defineProperty(EditableDescriptionHeight, "LONG", 'long');
 
 	const EditableDescription = {
 	  components: {
@@ -5684,7 +5639,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        removePlugins: ['BlockToolbar'],
 	        maxHeight: 600,
 	        content: this.bbcode,
-	        paragraphPlaceholder: this.$Bitrix.Loc.getMessage(main_core.Type.isPlainObject(this.copilotSettings) ? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT' : null),
+	        paragraphPlaceholder: this.$Bitrix.Loc.getMessage(main_core.Type.isPlainObject(this.copilotSettings) ? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT' : null, crm_ai_nameService.NameService.copilotNameReplacement()),
 	        toolbar: [],
 	        floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'link', 'copilot'],
 	        visualOptions: {
@@ -11545,5 +11500,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.UI,BX.Crm.Timeline,BX.Calendar,BX.Calendar.Sharing,BX.UI.Feedback,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.UI,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc,BX,BX,BX,BX.Crm,BX.Crm.AI,BX.Main,BX.UI,BX.UI,BX.Messenger.v2.Lib,BX.Crm,BX.Main,BX.Crm.Timeline,BX.Crm.Activity,BX.Event,BX.UI.EntitySelector,BX,BX.Crm.Integration.Analytics,BX.UI.Dialogs,BX,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.UI,BX.Crm.Timeline,BX.Calendar,BX.Calendar.Sharing,BX.UI.Feedback,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.BBCode.Formatter,BX.UI.TextEditor,BX.Crm.AI,BX.UI,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc,BX,BX,BX,BX.Crm,BX.Crm.AI,BX.Main,BX.UI,BX.UI,BX.Messenger.v2.Lib,BX.Crm,BX.Main,BX.Crm.Timeline,BX.Crm.Activity,BX.Event,BX.UI.EntitySelector,BX,BX.Crm.Integration.Analytics,BX.UI.Dialogs,BX,BX));
 //# sourceMappingURL=index.bundle.js.map

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['BLOG_DESCR_SORT_1'] = "Field for first sorting pass";
 $MESS ['BLOG_DESCR_SORT_2'] = "Field for second sorting pass";
 $MESS ['BLOG_DESCR_SORT_ORDER'] = "Direction for the first sorting pass";
@@ -19,4 +19,3 @@ $MESS ['BMN_PAGE_VAR'] = "Page variable";
 $MESS ['BLG_GROUP_ID'] = "Blogs group";
 $MESS ['BMN_PATH_TO_GROUP'] = "Group Profile Page URL Template";
 $MESS ['BMN_PATH_TO_GROUP_BLOG'] = "Group Blog Page URL Template";
-?>

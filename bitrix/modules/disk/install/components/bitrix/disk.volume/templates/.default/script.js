@@ -1221,7 +1221,7 @@ BX.Disk.MeasureClass = (function ()
 
 		if(!!startMeasureButton)
 		{
-			BX.addClass(startMeasureButton, 'ui-btn-clock');
+			BX.addClass(startMeasureButton, 'ui-btn-wait');
 			measureLink.disabled = true;
 
 			this.progressBarShow(0);
@@ -1238,14 +1238,14 @@ BX.Disk.MeasureClass = (function ()
 					messageConfirm: BX.message('DISK_VOLUME_MEASURE_CONFIRM') + "\n\n" + BX.message('DISK_VOLUME_MEASURE_CONFIRM_QUESTION'),
 					acceptButton: BX.message('DISK_VOLUME_MEASURE_ACCEPT'),
 					payload: function () {
-						BX.addClass(measureLink, 'ui-btn-clock');
+						BX.addClass(measureLink, 'ui-btn-wait');
 						window.location.href = url;
 					}
 				});
 			}
 			else
 			{
-				BX.addClass(measureLink, 'ui-btn-clock');
+				BX.addClass(measureLink, 'ui-btn-wait');
 				window.location.href = url;
 			}
 		}

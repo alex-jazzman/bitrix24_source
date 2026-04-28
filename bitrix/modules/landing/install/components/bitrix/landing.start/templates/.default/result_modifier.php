@@ -19,9 +19,24 @@ $request = $context->getRequest();
 // some pages we should open only in slider
 if ($request->get('IFRAME') !== 'Y' && $context->getServer()->getRequestMethod() === 'GET')
 {
-	if (!in_array($this->getPageName(), ['template', 'sites', 'site_show', 'landing_view', 'roles', 'role_edit', 'notes', 'ai']))
+	$templatesShowedOnFullPage = [
+		'template',
+		'sites',
+		'site_show',
+		'landing_view',
+		'roles',
+		'role_edit',
+		'notes',
+		'ai',
+		'vibe_new',
+		'vibe_edit',
+	];
+	if (!in_array($this->getPageName(), $templatesShowedOnFullPage, true))
 	{
-		$session->set('LANDING_OPEN_SIDE_PANEL', Application::getInstance()->getContext()->getRequest()->getRequestUri());
+		$session->set(
+			'LANDING_OPEN_SIDE_PANEL',
+			Application::getInstance()->getContext()->getRequest()->getRequestUri()
+		);
 
 		$url = $arParams['PAGE_URL_SITES'] ?? '/';
 		$sid = (int)($arResult['VARS']['site_show'] ?? 0);
@@ -72,7 +87,6 @@ if (in_array($this->getPageName(), ['site_domain', 'site_domain_switch', 'site_c
 Loc::loadMessages(__DIR__ . '/template.php');
 
 \Bitrix\Main\UI\Extension::load(['ajax', 'landing_master', 'bitrix24.phoneverify']);
-$disableFrame = $this->getPageName() == 'landing_view';
 
 ob_start();
 ?>
@@ -106,6 +120,10 @@ if ($arParams['SEF_MODE'] != 'Y')
 }
 
 // iframe header
+$disableFrame = in_array($this->getPageName(), [
+	'landing_view',
+	'vibe_edit',
+]);
 if ($request->get('IFRAME') == 'Y' && !$disableFrame)
 {
 	\Bitrix\Landing\Manager::getApplication()->restartBuffer();

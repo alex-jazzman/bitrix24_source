@@ -1,13 +1,13 @@
+import { type JsonObject } from 'main.core';
+
 import { Core } from 'im.v2.application.core';
-import { RestMethod } from 'im.v2.const';
-import { Logger } from 'im.v2.lib.logger';
+import { RestMethod, RecentType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { LayoutManager } from 'im.v2.lib.layout';
+import { Logger } from 'im.v2.lib.logger';
+import { type RawLegacyRecentItem } from 'im.v2.provider.service.types';
 
 import { RecentDataExtractor } from './classes/recent-data-extractor';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelRecentItem } from 'im.v2.model';
 
 export class LegacyRecentService
 {
@@ -32,11 +32,6 @@ export class LegacyRecentService
 	}
 
 	// region public
-	getCollection(): ImModelRecentItem[]
-	{
-		return Core.getStore().getters['recent/getRecentCollection'];
-	}
-
 	async loadFirstPage({ ignorePreloadedItems = false } = {}): Promise
 	{
 		if (this.dataIsPreloaded && !ignorePreloadedItems)
@@ -91,7 +86,7 @@ export class LegacyRecentService
 			return;
 		}
 
-		void Core.getStore().dispatch('recent/hide', { id: dialogId });
+		void Core.getStore().dispatch('recent/hide', { dialogId });
 
 		const chatIsOpened = Core.getStore().getters['application/isChatOpen'](dialogId);
 		if (chatIsOpened)
@@ -135,12 +130,16 @@ export class LegacyRecentService
 			LAST_MESSAGE_DATE: firstPage ? null : this.lastMessageDate,
 			GET_ORIGINAL_TEXT: 'Y',
 			PARSE_TEXT: 'Y',
+			WITH_COUNTERS: 'N',
 		};
 	}
 
-	getModelSaveMethod(): string
+	saveRecentItems(recentItems: RawLegacyRecentItem[]): Promise
 	{
-		return 'recent/setRecent';
+		return Core.getStore().dispatch('recent/setCollection', {
+			type: RecentType.default,
+			items: recentItems,
+		});
 	}
 
 	updateModels(rawData): Promise
@@ -164,7 +163,7 @@ export class LegacyRecentService
 		const autoDeletePromise = Core.getStore().dispatch('chats/autoDelete/set', messagesAutoDeleteConfigs);
 		const messagesPromise = Core.getStore().dispatch('messages/store', messages);
 		const filesPromise = Core.getStore().dispatch('files/set', files);
-		const recentPromise = Core.getStore().dispatch(this.getModelSaveMethod(), recentItems);
+		const recentPromise = this.saveRecentItems(recentItems);
 		const stickersPromise = Core.getStore().dispatch('stickers/messages/set', stickerMessages);
 		const copilotManager = new CopilotManager();
 		const copilotPromise = copilotManager.handleRecentListResponse(copilot);

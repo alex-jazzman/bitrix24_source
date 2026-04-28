@@ -34,6 +34,8 @@ class sign extends CModule
 			'OnUISelectorGetProviderByEntityType' => [[\Bitrix\Sign\Integration\Main\UiSelector\EventHandler::class, 'OnUISelectorGetProviderByEntityType']],
 			'OnAfterUserUpdate' => [[\Bitrix\Sign\Integration\Main\SignersListEventHandler::class, 'OnAfterUserUpdate']],
 			'OnAfterUserDelete' => [[\Bitrix\Sign\Integration\Main\SignersListEventHandler::class, 'OnAfterUserDelete']],
+			'OnAfterUserTypeAdd' => [[\Bitrix\Sign\Integration\Main\DocumentPlaceholderCacheEventHandler::class, 'onAfterAddField']],
+			'OnAfterUserTypeDelete' => [[\Bitrix\Sign\Integration\Main\DocumentPlaceholderCacheEventHandler::class, 'onAfterDeleteField']],
 		],
 		'pull' => [
 			'OnGetDependentModule' => [[\Bitrix\Sign\SignPullSchema::class, 'OnGetDependentModule']],

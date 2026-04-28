@@ -12,6 +12,10 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
 
+\Bitrix\Main\UI\Extension::load([
+	"intranet.old-interface.intranet-common",
+]);
+
 $id = $arParams['id'];
 
 $arDays = CCalendarSceleton::GetWeekDays();

@@ -91,6 +91,30 @@ $crmQueueValueContainerId = 'mail-crm-queue-value-container';
 
 $isCrmSwitcherChecked = !empty($mailbox['__crm']);
 
+$senderNameBlockHtml = '
+<div class="mail-connect-form-item ui-form-content">
+	<div class="ui-form-row">
+		<div class="ui-form-label" data-form-row-hidden="">
+			<label class="ui-ctl ui-ctl-checkbox ui-ctl-w100">
+				<input class="ui-ctl-element mail-connect-form-input mail-connect-form-input-check" type="checkbox"
+					name="fields[use_sender_name]" id="mail_connect_mb_use_sender_name_field" value="Y"
+					' . ($arParams['USE_SENDER_NAME'] ? ' checked' : '') . '
+				>
+				<div class="ui-ctl-label-text">' . htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_CONFIG_MAILBOX_USE_SENDER_NAME')) . '</div>
+			</label>
+		</div>
+		<div class="mail-connect-form-limit-hidden-input ui-form-row-hidden">
+			<div class="mail-connect-form-limit-input ui-form-row">
+				<label class="mail-connect-form-label" for="mail_connect_mb_sender_field">' . Loc::getMessage('MAIL_CLIENT_CONFIG_MAILBOX_USERNAME') . '</label>
+				<input class="mail-connect-form-input ui-ctl-element" type="text"
+					name="fields[sender]" id="mail_connect_mb_sender_field"
+					value="' . htmlspecialcharsbx($arParams['SENDER_NAME']) . '"
+				>
+			</div>
+		</div>
+	</div>
+</div>';
+
 ?>
 
 <div class="mail-connect mail-connect-slider">
@@ -298,6 +322,9 @@ $isCrmSwitcherChecked = !empty($mailbox['__crm']);
 								   onchange="this['__filled'] = this.value.length > 0; "
 								<? if (!empty($mailbox)): ?> value="<?=htmlspecialcharsbx($mailbox['NAME']) ?>" <? endif ?>>
 						</div>
+						<?php if (empty($arParams['IS_SMTP_AVAILABLE'])): ?>
+							<?= $senderNameBlockHtml ?>
+						<?php endif ?>
 						<? if (empty($settings['link'])): ?>
 							<div class="mail-connect-form-item">
 								<label class="mail-connect-form-label" for="mail_connect_mb_link_field"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_MAILBOX_LINK') ?></label>
@@ -320,11 +347,7 @@ $isCrmSwitcherChecked = !empty($mailbox['__crm']);
 						<div id="mail-connect-smtp-settings-title"></div>
 					</div>
 					<div class="mail-connect-form-items">
-						<div class="mail-connect-form-item">
-							<label class="mail-connect-form-label" for="mail_connect_mb_sender_field"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_MAILBOX_USERNAME') ?></label>
-							<input class="mail-connect-form-input" type="text" name="fields[sender]" id="mail_connect_mb_sender_field"
-								value="<?= htmlspecialcharsbx($arParams['SENDER_NAME']) ?>">
-						</div>
+						<?= $senderNameBlockHtml ?>
 						<div class="mail-connect-form-item ui-form-content">
 							<div class="ui-form-row">
 								<div class="ui-form-label" data-form-row-hidden="">
@@ -1221,6 +1244,15 @@ $arJsParams = [
 			});
 		}
 
+		const setSenderNameCheckbox = BX('mail_connect_mb_use_sender_name_field');
+		if (setSenderNameCheckbox)
+		{
+			BX.bind(setSenderNameCheckbox, 'click', () => {
+				const limitSmtpField = BX('mail_connect_mb_sender_field');
+				limitSmtpField.disabled = !setLimitCheckbox.checked;
+				setLimitCheckbox.value = setLimitCheckbox.checked === true ? 'Y' : 'N';
+			});
+		}
 
 		const setSmtpCheckbox = BX('mail_connect_mb_server_smtp_switch');
 		if (setSmtpCheckbox)

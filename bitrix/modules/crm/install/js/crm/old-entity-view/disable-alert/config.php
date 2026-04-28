@@ -8,13 +8,15 @@ return [
 	'css' => 'dist/disable-alert.bundle.css',
 	'js' => 'dist/disable-alert.bundle.js',
 	'rel' => [
-		'main.core',
+		'ui.design-tokens',
+		'ui.design-tokens.air',
 		'ui.dialogs.messagebox',
 		'ui.notification',
 		'ui.buttons',
 		'crm.router',
-		'ui.design-tokens',
-		'ui.design-tokens.air',
+		'main.core',
+		'ui.analytics',
+		'crm.integration.analytics',
 	],
 	'skip_core' => false,
 ];

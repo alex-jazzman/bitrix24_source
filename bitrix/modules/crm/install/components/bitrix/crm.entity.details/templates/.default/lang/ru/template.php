@@ -51,4 +51,14 @@ $MESS["CRM_ENT_DETAIL_DELETION_GO_TO_DETAILS"] = "Подробнее";
 $MESS["CRM_ENT_DETAIL_BIZPROC_STARTER_LABEL"] = "Бизнес-процессы";
 $MESS["CRM_ENT_DETAIL_DYNAMIC_CATEGORY_DLG_TITLE"] = "Настройка смарт-процесса";
 $MESS["CRM_ENT_DETAIL_DYNAMIC_CATEGORY_DLG_FIELD"] = "Воронка";
-
+$MESS["CRM_ENT_DETAIL_LEAD_DETACH_OPEN_LINE_DIALOG_TITLE"] = "Открепить лид от всех чатов?";
+$MESS["CRM_ENT_DETAIL_CONTACT_DETACH_OPEN_LINE_DIALOG_TITLE"] = "Открепить контакт от всех чатов?";
+$MESS["CRM_ENT_DETAIL_COMPANY_DETACH_OPEN_LINE_DIALOG_TITLE"] = "Открепить компанию от всех чатов?";
+$MESS["CRM_ENT_DETAIL_LEAD_DETACH_OPEN_LINE_DIALOG_MESSAGE"] = "Все данные сохранятся, но лид больше не будет прикрепляться к новым чатам в открытых линиях";
+$MESS["CRM_ENT_DETAIL_CONTACT_DETACH_OPEN_LINE_DIALOG_MESSAGE"] = "Все данные сохранятся, но контакт больше не будет прикрепляться к новым чатам в открытых линиях";
+$MESS["CRM_ENT_DETAIL_COMPANY_DETACH_OPEN_LINE_DIALOG_MESSAGE"] = "Все данные сохранятся, но компания больше не будет прикрепляться к новым чатам в открытых линиях";
+$MESS["CRM_ENT_DETAIL_LEAD_DETACH_OPEN_LINE_SUCCESS"] = "Лид откреплён от всех чатов";
+$MESS["CRM_ENT_DETAIL_CONTACT_DETACH_OPEN_LINE_SUCCESS"] = "Контакт откреплён от всех чатов";
+$MESS["CRM_ENT_DETAIL_COMPANY_DETACH_OPEN_LINE_SUCCESS"] = "Компания откреплена от всех чатов";
+$MESS["CRM_ENT_DETAIL_BUTTON_DETACH_CONTINUE"] = "Да, открепить";
+$MESS["CRM_ENT_DETAIL_BUTTON_DETACH_CANCEL"] = "Отмена";

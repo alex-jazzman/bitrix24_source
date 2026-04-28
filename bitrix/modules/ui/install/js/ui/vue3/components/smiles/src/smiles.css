@@ -8,7 +8,6 @@
 }
 
 .bx-ui-smiles-emoji-wrap, .bx-ui-smiles-set-grid {
-	padding: 20px 18px;
 	overflow: hidden;
 	overflow-y: auto;
 }
@@ -23,6 +22,7 @@
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
+	padding: 15px 20px 0 20px;
 }
 
 .bx-ui-smiles-emoji-grid, .bx-ui-smiles-set-grid {
@@ -195,7 +195,7 @@
 	min-height: 35px;
 	display: flex;
 	gap: 4px;
-	margin: 20px 16px 6px 16px;
+	padding-bottom: 6px;
 	justify-content: space-between;
 
 	overflow: hidden;
@@ -252,12 +252,14 @@
 	background-image: url('../images/smile-category-travel.svg');
 }
 
-.bx-ui-smiles-box ::-webkit-scrollbar {
+.bx-ui-smiles-box ::-webkit-scrollbar,
+.bx-ui-smiles-emoji-wrap ::-webkit-scrollbar {
 	height: 4px;
 	width: 4px;
 }
 
-.bx-ui-smiles-box ::-webkit-scrollbar-thumb {
+.bx-ui-smiles-box ::-webkit-scrollbar-thumb,
+.bx-ui-smiles-emoji-wrap ::-webkit-scrollbar-thumb {
 	background: #dde2e6;
 	border-radius: 5px;
 	cursor: pointer;

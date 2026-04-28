@@ -122,21 +122,6 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			return this.dialogTable.deleteByChatIdList(chatIdList);
 		}
 
-		async clearCounters()
-		{
-			if (!Feature.isLocalStorageEnabled)
-			{
-				return null;
-			}
-
-			return this.dialogTable.update({
-				fields: {
-					counter: 0,
-				},
-				filter: {},
-			});
-		}
-
 		async saveFromModel(dialogList)
 		{
 			const dialogListToAdd = [];
@@ -510,6 +495,26 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			logger.log('DialogRepository.getWasCompletelySyncByIdList complete: ', idList, result);
 
 			return result;
+		}
+
+		/**
+		 * @param {Partial<SearchOptions>} searchOptions
+		 * @param {DialoguesFilter | {}} filter
+		 *
+		 * @returns {Promise<{items: *[]}>}
+		 */
+		async searchByText({
+			searchOptions = {},
+			filter = {},
+		})
+		{
+			const {
+				searchText = '',
+				order = 'desc',
+				limit = 25,
+			} = searchOptions;
+
+			return this.dialogTable.searchByText(searchText, order, limit, filter);
 		}
 
 		/* endregion internal */

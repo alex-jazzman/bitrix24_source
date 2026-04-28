@@ -77,9 +77,7 @@ export class MessageDeleteManager
 
 	#prepareDialogUpdateFields(params: MessageDeleteCompletePreparedParams): DialogUpdateFieldsParams
 	{
-		const dialogUpdateFields = {
-			counter: params.counter,
-		};
+		const dialogUpdateFields = {};
 
 		const lastMessageWasDeleted = Boolean(params.newLastMessage);
 		if (lastMessageWasDeleted)

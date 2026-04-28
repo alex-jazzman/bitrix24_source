@@ -1,16 +1,17 @@
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+
+import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
+import { RecentType } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
 import { Utils } from 'im.v2.lib.utils';
-import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
+import { type ImModelRecentItem } from 'im.v2.model';
 
-import { CopilotItem } from './components/copilot-item';
-import { CopilotRecentService } from './classes/copilot-service';
 import { CopilotRecentMenu } from './classes/context-menu-manager';
+import { CopilotRecentService } from './classes/copilot-service';
+import { CopilotItem } from './components/copilot-item';
 
 import './css/copilot-list.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelRecentItem } from 'im.v2.model';
 
 // @vue/component
 export const CopilotList = {
@@ -26,34 +27,21 @@ export const CopilotList = {
 	},
 	computed:
 	{
-		collection(): ImModelRecentItem[]
-		{
-			return this.getRecentService().getCollection();
-		},
 		sortedItems(): ImModelRecentItem[]
 		{
-			return [...this.collection].sort((a, b) => {
-				const firstDate = this.$store.getters['recent/getSortDate'](a.dialogId);
-				const secondDate = this.$store.getters['recent/getSortDate'](b.dialogId);
-
-				return secondDate - firstDate;
-			});
+			return this.$store.getters['recent/getSortedCollection']({ type: RecentType.copilot });
 		},
 		pinnedItems(): ImModelRecentItem[]
 		{
-			return this.sortedItems.filter((item) => {
-				return item.pinned === true;
-			});
+			return this.sortedItems.filter((item) => item.pinned === true);
 		},
 		generalItems(): ImModelRecentItem[]
 		{
-			return this.sortedItems.filter((item) => {
-				return item.pinned === false;
-			});
+			return this.sortedItems.filter((item) => item.pinned === false);
 		},
 		isEmptyCollection(): boolean
 		{
-			return this.collection.length === 0;
+			return this.sortedItems.length === 0;
 		},
 	},
 	async created()

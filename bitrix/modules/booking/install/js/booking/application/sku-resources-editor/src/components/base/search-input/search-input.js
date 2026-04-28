@@ -20,8 +20,7 @@ export const SearchInput = {
 		},
 	},
 	emits: ['update:modelValue'],
-	// eslint-disable-next-line flowtype/require-return-type
-	setup()
+	setup(): { Outline: typeof Outline }
 	{
 		return {
 			Outline,

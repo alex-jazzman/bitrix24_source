@@ -39,7 +39,7 @@ $hasPermissionEdit = Translate\Permission::canEdit($USER);
 if (
 	$_SERVER["REQUEST_METHOD"] === "GET" &&
 	$hasPermissionEdit &&
-	$RestoreDefaults <> '' &&
+	$RestoreDefaults != '' &&
 	check_bitrix_sessid()
 )
 {
@@ -126,12 +126,12 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 if (
 	$_SERVER["REQUEST_METHOD"] == "POST" &&
-	$Update. $Apply. $RestoreDefaults <> '' &&
+	$Update. $Apply. $RestoreDefaults != '' &&
 	$hasPermissionEdit &&
 	check_bitrix_sessid()
 )
 {
-	if ($RestoreDefaults <> '')
+	if ($RestoreDefaults != '')
 	{
 		\COption::RemoveOption("translate");
 		$z = \CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
@@ -182,9 +182,9 @@ if (
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/group_rights.php");
 	ob_end_clean();
 
-	if ($_REQUEST["back_url_settings"] <> '')
+	if ($_REQUEST["back_url_settings"] != '')
 	{
-		if (($Apply <> '') || ($RestoreDefaults <> ''))
+		if (($Apply != '') || ($RestoreDefaults != ''))
 		{
 			LocalRedirect($APPLICATION->GetCurPage()."?mid=".urlencode($mid)."&lang=".LANGUAGE_ID."&mid_menu=1&back_url_settings=".urlencode($_REQUEST["back_url_settings"])."&".$tabControl->ActiveTabParam());
 		}
@@ -221,7 +221,7 @@ if (
 	<input <?=(!$hasPermissionEdit ? "disabled" : '')?> type="submit" name="Update" value="<?=Loc::getMessage("MAIN_SAVE")?>" title="<?=Loc::getMessage("MAIN_OPT_SAVE_TITLE")?>">
 	<input <?=(!$hasPermissionEdit ? "disabled" : '')?> type="submit" name="Apply" value="<?=Loc::getMessage("MAIN_OPT_APPLY")?>" title="<?=Loc::getMessage("MAIN_OPT_APPLY_TITLE")?>">
 	<?
-	if($_REQUEST["back_url_settings"] <> ''):
+	if($_REQUEST["back_url_settings"] != ''):
 		?>
 		<input <?if ($TRANS_RIGHT<Translate\Permission::WRITE) echo "disabled" ?> type="button" name="Cancel" value="<?=Loc::getMessage("MAIN_OPT_CANCEL")?>" title="<?=Loc::getMessage("MAIN_OPT_CANCEL_TITLE")?>" onclick="window.location='<?= htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"]))?>'">
 		<input type="hidden" name="back_url_settings" value="<?=htmlspecialcharsbx($_REQUEST["back_url_settings"])?>">

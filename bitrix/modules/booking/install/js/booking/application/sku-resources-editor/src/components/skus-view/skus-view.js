@@ -107,7 +107,7 @@ export const SkusView = {
 			>
 				<template #button>
 					<AddSkusButton
-						v-if="skusResourcesEditorOptions.canAdd && skusResourcesEditorOptions.catalogSkuEntityOptions"
+						v-if="skusResourcesEditorOptions.editMode && skusResourcesEditorOptions.catalogSkuEntityOptions"
 						:skus
 					/>
 				</template>

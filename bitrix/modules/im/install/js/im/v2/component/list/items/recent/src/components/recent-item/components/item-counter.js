@@ -1,5 +1,6 @@
 import { Core } from 'im.v2.application.core';
 import { ChatType, AnchorType } from 'im.v2.const';
+import { CounterManager } from 'im.v2.lib.counter';
 
 import type { ImModelChat, ImModelRecentItem, ImModelUser } from 'im.v2.model';
 
@@ -39,17 +40,25 @@ export const ItemCounters = {
 		{
 			return this.isUser && this.user.id === Core.getUserId();
 		},
+		isChatMarkedUnread(): boolean
+		{
+			return this.$store.getters['counters/getUnreadStatus'](this.dialog.chatId);
+		},
 		invitation(): { isActive: boolean, originator: number, canResend: boolean }
 		{
 			return this.recentItem.invitation;
 		},
 		totalCounter(): number
 		{
-			return this.dialog.counter + this.channelCommentsCounter;
+			return this.chatCounter + this.childrenCounter;
 		},
-		channelCommentsCounter(): number
+		chatCounter(): number
 		{
-			return this.$store.getters['counters/getChannelCommentsCounter'](this.dialog.chatId);
+			return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
+		},
+		childrenCounter(): number
+		{
+			return this.$store.getters['counters/getChildrenTotalCounter'](this.dialog.chatId);
 		},
 		formattedCounter(): string
 		{
@@ -63,15 +72,15 @@ export const ItemCounters = {
 		{
 			const noCounters = this.totalCounter === 0;
 
-			return this.recentItem.pinned && noCounters && !this.recentItem.unread;
+			return this.recentItem.pinned && noCounters && !this.isChatMarkedUnread;
 		},
 		showUnreadWithoutCounter(): boolean
 		{
-			return this.recentItem.unread && this.totalCounter === 0;
+			return this.isChatMarkedUnread && this.totalCounter === 0;
 		},
 		showUnreadWithCounter(): boolean
 		{
-			return this.recentItem.unread && this.totalCounter > 0;
+			return this.isChatMarkedUnread && this.totalCounter > 0;
 		},
 		showMention(): boolean
 		{
@@ -79,15 +88,24 @@ export const ItemCounters = {
 		},
 		showCounter(): boolean
 		{
-			const isSingleMessageWithMention = this.showMention && this.totalCounter === 1;
+			if (this.totalCounter === 0 || this.isSelfChat || this.isChatMarkedUnread)
+			{
+				return false;
+			}
 
-			return !isSingleMessageWithMention && !this.recentItem.unread && this.totalCounter > 0 && !this.isSelfChat;
+			const isSingleMessageWithMention = this.showMention && this.totalCounter === 1;
+			if (isSingleMessageWithMention)
+			{
+				return false;
+			}
+
+			return true;
 		},
 		containerClasses(): { [className: string]: boolean }
 		{
-			const commentsOnly = this.dialog.counter === 0 && this.channelCommentsCounter > 0;
-			const withComments = this.dialog.counter > 0 && this.channelCommentsCounter > 0;
-			const withMentionAndCounter = this.dialog.counter > 0 && this.showMention;
+			const commentsOnly = this.chatCounter === 0 && this.childrenCounter > 0;
+			const withComments = this.chatCounter > 0 && this.childrenCounter > 0;
+			const withMentionAndCounter = this.chatCounter > 0 && this.showMention;
 
 			return {
 				'--muted': this.isChatMuted,
@@ -101,7 +119,7 @@ export const ItemCounters = {
 	{
 		formatCounter(counter: number): string
 		{
-			return counter > 99 ? '99+' : counter.toString();
+			return CounterManager.formatCounter(counter);
 		},
 	},
 	template: `

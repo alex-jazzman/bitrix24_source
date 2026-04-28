@@ -8,16 +8,13 @@ jn.define('im/messenger/controller/recent/service/render/common', (require, expo
 	const { Loc } = require('im/messenger/loc');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Worker } = require('im/messenger/lib/helper');
-	const { RecentUiConverter } = require('im/messenger/lib/converter/ui/recent');
 	const { RecentItem } = require('im/messenger/lib/element/recent');
 	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
 	const { BaseUiRecentService } = require('im/messenger/controller/recent/service/base');
 	const { RenderQueue, QueueOperation, optimizeQueue } = require('im/messenger/controller/recent/service/render/lib/queue');
 	const { RecentEventType } = require('im/messenger/controller/recent/const');
 	const { RecentSection } = require('im/messenger/controller/recent/service/render/lib/section');
-
-	const LOADER_ITEM_TYPE = 'loading';
-	const CALL_ITEM_TYPE = 'call';
+	const { RecentItemType } = require('im/messenger/controller/recent/service/render/lib/convertor/const');
 
 	/**
 	 * @implements {IRenderService}
@@ -26,11 +23,14 @@ jn.define('im/messenger/controller/recent/service/render/common', (require, expo
 	 */
 	class CommonRenderService extends BaseUiRecentService
 	{
+		#convertToRecentItems;
+
 		onInit()
 		{
 			this.sections = this.props.sections ?? [];
 			this.defaultSection = this.props.defaultSection ?? '';
 			this.itemOptions = this.props.itemOptions ?? {};
+			this.#convertToRecentItems = require(this.props.convertorExtension);
 
 			this.queue = new RenderQueue();
 			this.handlerCollection = {
@@ -158,12 +158,12 @@ jn.define('im/messenger/controller/recent/service/render/common', (require, expo
 			const loader = {
 				id: loaderId,
 				title: Loc.getMessage('IMMOBILE_RECENT_RENDER_ITEM_LOADING'),
-				type: LOADER_ITEM_TYPE,
+				type: RecentItemType.loader,
 				unselectable: true,
 				params: {
 					disableTap: true,
 				},
-				sectionCode: 'general',
+				sectionCode: section,
 			};
 
 			this.upsertItems([loader]);
@@ -583,46 +583,6 @@ jn.define('im/messenger/controller/recent/service/render/common', (require, expo
 					element: item,
 				}))
 			;
-		}
-
-		/**
-		 * @param {Array<RecentItem | object>} items
-		 * @returns {Array<RecentWidgetItem | object>}
-		 */
-		#convertToRecentItems(items)
-		{
-			const loaders = [];
-			const itemsToConvert = [];
-			const callItems = [];
-
-			for (const item of items)
-			{
-				switch (item?.type)
-				{
-					case LOADER_ITEM_TYPE: {
-						loaders.push(item);
-						break;
-					}
-
-					case CALL_ITEM_TYPE: {
-						const { call, callStatus } = item;
-						callItems.push(RecentUiConverter.toCallItem(callStatus, call));
-						break;
-					}
-
-					default: {
-						itemsToConvert.push(item);
-					}
-				}
-			}
-
-			const converted = RecentUiConverter.toList(itemsToConvert, this.itemOptions);
-
-			return [
-				...callItems,
-				...converted,
-				...loaders,
-			];
 		}
 
 		/**

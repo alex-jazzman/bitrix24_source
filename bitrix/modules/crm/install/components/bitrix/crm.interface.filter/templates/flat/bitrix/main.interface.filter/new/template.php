@@ -7,6 +7,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)die();
 	'popup',
 	'date',
 	'fx',
+	'intranet.old-interface.intranet-common',
 ]);
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');

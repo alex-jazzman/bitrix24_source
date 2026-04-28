@@ -21,7 +21,7 @@ export const AvatarSizeMap = Object.freeze({
 });
 
 export const ChatAvatarType = {
-	notes: 'notes',
+	selfChat: 'selfChat',
 };
 
 export const EmptyAvatarType = Object.freeze({

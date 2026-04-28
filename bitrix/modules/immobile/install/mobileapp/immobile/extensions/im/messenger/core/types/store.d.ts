@@ -29,7 +29,13 @@ import {
 } from "../../model/anchor/src/types";
 import { TranscriptModelMutation, TranscriptModelActions } from "../../model/files/src/transcript/types";
 import { PlaybackModelActions, PlaybackModelMutation } from "../../model/messages/src/playback/types";
-import {StickerPackActionParams, StickerPackActions, StickerPackMutation} from "../../model/sticker-pack/src/types";
+import { StickerPackActionParams, StickerPackActions, StickerPackMutation } from "../../model/sticker-pack/src/types";
+import { OpenlinesModelActions, OpenlinesModelMutation } from "../../model/dialogues/src/openlines/type";
+import {
+	RecentFilteredModelActionParams,
+	RecentFilteredModelActions,
+	RecentFilteredModelMutation
+} from "../../model/recent/src/filter/types";
 
 export type MessengerStoreActions =
 	FilesModelActions
@@ -54,7 +60,9 @@ export type MessengerStoreActions =
 	| VoteModelActions
 	| AnchorModelActions
 	| TranscriptModelActions
+	| OpenlinesModelActions
 	| StickerPackActions
+	| RecentFilteredModelActions
 
 export type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -79,11 +87,14 @@ export type MessengerStoreMutation =
 	| VoteModelMutation
 	| AnchorModelMutation
 	| TranscriptModelMutation
+	| OpenlinesModelMutation
 	| StickerPackMutation
+	| RecentFilteredModelMutation
 
 export type AllActionParams =
 	StickerPackActionParams
 	& AnchorModelActionParams
+	& RecentFilteredModelActionParams
 ;
 
 export type ParamsForAction<T extends MessengerStoreActions> =

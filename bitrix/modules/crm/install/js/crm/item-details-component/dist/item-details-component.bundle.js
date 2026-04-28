@@ -48,6 +48,7 @@ this.BX = this.BX || {};
 	      this.isStageFlowActive = params.isStageFlowActive;
 	      this.pullTag = params.pullTag;
 	      this.bizprocStarterConfig = params.bizprocStarterConfig;
+	      this.analyticsData = main_core.Type.isPlainObject(params.analytics) ? params.analytics : {};
 	      this.automationCheckAutomationTourGuideData = main_core.Type.isPlainObject(params.automationCheckAutomationTourGuideData) ? params.automationCheckAutomationTourGuideData : null;
 	      if (main_core.Type.isString(params.receiversJSONString)) {
 	        this.receiversJSONString = params.receiversJSONString;
@@ -471,10 +472,10 @@ this.BX = this.BX || {};
 	        onYes: function onYes(messageBox) {
 	          _this5.startProgress();
 	          main_core.ajax.runAction('crm.controller.item.delete', {
-	            analyticsLabel: 'crmItemDetailsDeleteItem',
 	            data: {
 	              entityTypeId: _this5.entityTypeId,
-	              id: _this5.id
+	              id: _this5.id,
+	              analytics: _this5.analyticsData
 	            }
 	          }).then(function (_ref4) {
 	            var data = _ref4.data;
@@ -488,7 +489,7 @@ this.BX = this.BX || {};
 	                var eventParams = null;
 	                if (currentSlider) {
 	                  eventParams = {
-	                    "sliderUrl": currentSlider.getUrl()
+	                    'sliderUrl': currentSlider.getUrl()
 	                  };
 	                }
 	                BX.Crm.EntityEvent.fireDelete(_this5.entityTypeId, _this5.id, '', eventParams);

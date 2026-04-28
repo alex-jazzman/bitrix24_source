@@ -352,12 +352,7 @@ export class SettingsWidget extends EventEmitter
 		const onclick = () => {
 			this.getWidget().close();
 			BX.SidePanel.Instance.open(this.#mainPage.settingsPath);
-			BX.UI.Analytics.sendData({
-				tool: 'vibe',
-				category: 'vibe',
-				event: 'open_settings_main',
-				c_sub_section: 'from_widget_vibe_point',
-			});
+			// todo: add vibe analytic context sub_section = from_widget_vibe_point
 		};
 
 		const element = Tag.render`
@@ -367,7 +362,7 @@ export class SettingsWidget extends EventEmitter
 						<div class="ui-icon-set --home-page"></div>
 					</div>
 					<div class="intranet-settings-widget__title">
-						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_PAGE_TITLE')}
+						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_WELCOME_PAGE_TITLE')}
 					</div>
 				</div>
 				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>

@@ -1,8 +1,9 @@
-import { Core } from 'im.v2.application.core';
-import { LegacyRecentService } from 'im.v2.provider.service.recent';
+import { type JsonObject } from 'main.core';
 
-import type { JsonObject } from 'main.core';
-import type { ImModelRecentItem } from 'im.v2.model';
+import { Core } from 'im.v2.application.core';
+import { RecentType } from 'im.v2.const';
+import { LegacyRecentService } from 'im.v2.provider.service.recent';
+import { type RawLegacyRecentItem } from 'im.v2.provider.service.types';
 
 export class CopilotRecentService extends LegacyRecentService
 {
@@ -17,14 +18,12 @@ export class CopilotRecentService extends LegacyRecentService
 		};
 	}
 
-	getModelSaveMethod(): string
+	saveRecentItems(recentItems: RawLegacyRecentItem[]): Promise
 	{
-		return 'recent/setCopilot';
-	}
-
-	getCollection(): ImModelRecentItem[]
-	{
-		return Core.getStore().getters['recent/getCopilotCollection'];
+		return Core.getStore().dispatch('recent/setCollection', {
+			type: RecentType.copilot,
+			items: recentItems,
+		});
 	}
 
 	getExtractorOptions(): { withBirthdays?: boolean }

@@ -1,6 +1,5 @@
-import { AirButtonStyle, Button as UiButton, ButtonColor, ButtonSize, ButtonStyle } from 'booking.component.button';
 import { Model } from 'booking.const';
-import { Core } from 'booking.core';
+import { Button as UiButton, AirButtonStyle, ButtonColor, ButtonSize, ButtonStyle } from 'booking.component.button';
 
 import { IntegrationsPopup } from './integrations-popup/integrations-popup';
 
@@ -24,24 +23,15 @@ export const IntegrationsButton = {
 			ButtonColor,
 			ButtonSize,
 			ButtonStyle,
-			Core,
 		};
 	},
-	data(): {}
+	data(): { isPopupShown: boolean }
 	{
 		return {
 			isPopupShown: false,
 		};
 	},
 	computed: {
-		storeState(): string
-		{
-			return this.Core.getStore()?.state;
-		},
-		counters(): string
-		{
-			return this.storeState.counters.counters;
-		},
 		newYandexMapsCounter(): number
 		{
 			return this.$store.state[Model.Counters].counters.newYandexMaps;

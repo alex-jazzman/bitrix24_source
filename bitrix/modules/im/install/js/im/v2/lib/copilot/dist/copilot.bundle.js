@@ -103,21 +103,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    var _this$store$getters$c2, _this$store$getters$c3;
 	    return (_this$store$getters$c2 = this.store.getters['copilot/messages/getRole'](messageId)) == null ? void 0 : (_this$store$getters$c3 = _this$store$getters$c2.avatar) == null ? void 0 : _this$store$getters$c3.medium;
 	  }
-	  getName({
-	    dialogId,
-	    messageId
-	  }) {
-	    const {
-	      name: userName
-	    } = this.store.getters['users/get'](dialogId);
+	  getNameWithRole(messageId) {
+	    const copilotName = this.getName();
 	    const {
 	      default: isDefaultRole,
 	      name: roleName
 	    } = this.store.getters['copilot/messages/getRole'](messageId);
 	    if (isDefaultRole) {
-	      return userName;
+	      return copilotName;
 	    }
-	    return `${userName} (${roleName})`;
+	    return `${copilotName} (${roleName})`;
+	  }
+	  getName() {
+	    return this.store.getters['copilot/getName'];
 	  }
 	  getAIModelName(dialogId) {
 	    const isAIModelChangeAllowed = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAIModelChangeAllowed);

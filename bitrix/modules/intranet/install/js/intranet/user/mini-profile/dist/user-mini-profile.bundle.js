@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_core_cache,ui_vue3_components_button,ui_vue3,ui_iconSet_outline,humanresources_companyStructure_public,ui_vue3_components_menu,ui_iconSet_api_core,main_date,ui_notification,ui_vue3_components_richMenu,ui_iconSet_api_vue,ui_vue3_components_avatar,main_core_events,main_core,main_popup) {
+(function (exports,main_core_cache,ui_vue3_components_button,ui_vue3,ui_iconSet_outline,ui_iconSet_solid,humanresources_companyStructure_public,ui_vue3_components_menu,ui_vue3_directives_hint,ui_iconSet_api_core,main_date,ui_notification,ui_vue3_components_richMenu,ui_iconSet_api_vue,ui_vue3_components_avatar,main_core_events,main_core,main_popup) {
 	'use strict';
 
 	class Backend {
@@ -192,10 +192,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 			name="intranet-user-mini-profile-fade"
 			tag="div"
 			class="intranet-user-mini-profile__loader-transition-wrapper"
-			@enter="onEnter"
-			@beforeLeave="onBeforeLeave"
-			@afterLeave="onAfterLeave"
-			@afterEnter="onAfterEnter"
 		>
 			<div v-if="isLoading"
                  class="intranet-user-mini-profile__loader-transition-wrapper__loader"
@@ -225,7 +221,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	const IconSetMixin = {
 	  computed: {
 	    set: () => ui_iconSet_api_vue.Set,
-	    outlineSet: () => ui_iconSet_api_vue.Outline
+	    outlineSet: () => ui_iconSet_api_vue.Outline,
+	    solidSet: () => ui_iconSet_api_vue.Solid
 	  }
 	};
 
@@ -881,16 +878,128 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
+	let _ = t => t,
+	  _t,
+	  _t2;
+	const HelpArticleCode = 'redirect=detail&code=17980386';
+	function openHelper(event) {
+	  var _top$BX;
+	  event.preventDefault();
+	  if ((_top$BX = top.BX) != null && _top$BX.Helper) {
+	    top.BX.Helper.show(HelpArticleCode);
+	  }
+	}
+	function parseHintText() {
+	  const phrase = main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_FIRST_ADMIN_HINT');
+	  const parts = phrase.split('#HELP_LINK#');
+	  return {
+	    beforeText: parts[0] || null,
+	    linkText: parts[1] || null,
+	    afterText: parts[2] || null
+	  };
+	}
+	function createHintContent() {
+	  const hintText = parseHintText();
+	  const link = main_core.Tag.render(_t || (_t = _`
+		<a class="intranet-user-mini-profile__first-admin-badge_hint-link">${0}</a>
+	`), hintText.linkText);
+	  main_core.Event.bind(link, 'click', openHelper);
+	  return main_core.Tag.render(_t2 || (_t2 = _`
+		<div class="intranet-user-mini-profile__first-admin-badge_hint-content">
+			<div class="intranet-user-mini-profile__first-admin-badge_hint-content_hint-block">
+				<span>${0}</span>
+				<span>${0}</span>
+				<span>${0}</span>
+			</div>
+		</div>
+	`), hintText.beforeText, link, hintText.afterText);
+	}
+	function getFirstAdminHintParams() {
+	  return {
+	    interactivity: true,
+	    popupOptions: {
+	      id: `${PopupPrefixId}first-admin-hint-${main_core.Text.getRandom()}`,
+	      className: 'intranet-user-mini-profile__first-admin-badge_hint',
+	      darkMode: false,
+	      offsetTop: 2,
+	      background: 'var(--ui-color-bg-content-inapp)',
+	      padding: 6,
+	      angle: true,
+	      targetContainer: document.body,
+	      offsetLeft: 20,
+	      cacheable: false,
+	      content: createHintContent()
+	    }
+	  };
+	}
+
+	// @vue/component
+	const FirstAdminBadge = {
+	  name: 'FirstAdminBadge',
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  mixins: [LocMixin, IconSetMixin],
+	  methods: {
+	    getHintParams() {
+	      return getFirstAdminHintParams();
+	    }
+	  },
+	  template: `
+		<div
+			class="intranet-user-mini-profile__first-admin-badge"
+			data-test-id="usermp_first_admin"
+			v-hint="getHintParams"
+		>
+			<div
+				class="intranet-user-mini-profile__first-admin-badge_icon"
+				data-test-id="usermp_first-admin-title-icon"
+			>
+				<BIcon :name="solidSet.CROWN_1" :size="20"/>
+			</div>
+			<div class="intranet-user-mini-profile__first-admin-badge_title">
+				{{ loc('INTRANET_USER_MINI_PROFILE_ROLE_FIRST_ADMIN') }}
+			</div>
+		</div>
+	`
+	};
+
+	const UserRole = Object.freeze({
+	  FirstAdmin: 'firstAdmin',
+	  Admin: 'admin',
+	  Employee: 'employee',
+	  Integrator: 'integrator',
+	  Collaber: 'collaber',
+	  Extranet: 'extranet',
+	  Visitor: 'visitor',
+	  Email: 'email',
+	  Shop: 'shop',
+	  External: 'external'
+	});
+	const UserStatus = Object.freeze({
+	  Online: 'online',
+	  Offline: 'offline',
+	  DoNotDisturb: 'dnd',
+	  Vacation: 'vacation',
+	  Fired: 'fired'
+	});
+	const UserStatusToShow = Object.freeze({
+	  Vacation: UserStatus.Vacation
+	});
+
 	var _Extension$getSetting;
 	const UserRoleTitleByCode = {
-	  shop: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_SHOP'),
-	  email: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_EMAIL'),
-	  integrator: ((_Extension$getSetting = main_core.Extension.getSettings('intranet.user.mini-profile')) == null ? void 0 : _Extension$getSetting.isRenamedIntegrator) === 'Y' ? main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_INTEGRATOR_RENAMED') : main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_INTEGRATOR'),
-	  visitor: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_VISITOR')
+	  [UserRole.Shop]: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_SHOP'),
+	  [UserRole.Email]: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_EMAIL'),
+	  [UserRole.Integrator]: ((_Extension$getSetting = main_core.Extension.getSettings('intranet.user.mini-profile')) == null ? void 0 : _Extension$getSetting.isRenamedIntegrator) === 'Y' ? main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_INTEGRATOR_RENAMED') : main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_INTEGRATOR'),
+	  [UserRole.Visitor]: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_ROLE_VISITOR')
 	};
 
 	// @vue/component
-	const UserRole = {
+	const UserRole$1 = {
 	  name: 'UserRole',
 	  mixins: [LocMixin],
 	  props: {
@@ -921,37 +1030,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	};
 
 	const IconSettingByStatus = {
-	  online: {
-	    iconName: ui_iconSet_api_core.Outline.EARTH_WITH_CHECK,
-	    colorVar: '--ui-color-accent-main-success'
-	  },
-	  offline: {
-	    iconName: ui_iconSet_api_core.Outline.EARTH_WITH_CLOCK,
-	    colorVar: '--ui-color-accent-main-warning'
-	  },
-	  dnd: {
-	    iconName: ui_iconSet_api_core.Outline.EARTH_WITH_STOP,
-	    colorVar: '--ui-color-accent-main-alert'
-	  },
 	  vacation: {
 	    iconName: ui_iconSet_api_core.Outline.EARTH_WITH_TREE,
 	    colorVar: '--ui-color-accent-extra-aqua'
-	  },
-	  fired: {
-	    iconName: ui_iconSet_api_core.Outline.EARTH_WITH_CROSS,
-	    colorVar: '--ui-color-gray-50'
 	  }
 	};
 
-	const UserStatus = Object.freeze({
-	  Online: 'online',
-	  Offline: 'offline',
-	  DoNotDisturb: 'dnd',
-	  Vacation: 'vacation',
-	  Fired: 'fired'
-	});
-
 	class StatusService {
+	  static isSupportedToShow(statusCode) {
+	    return Object.values(UserStatusToShow).includes(statusCode);
+	  }
 	  static isSupported(statusCode) {
 	    return Object.values(UserStatus).includes(statusCode);
 	  }
@@ -977,14 +1065,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  computed: {
 	    iconSetting() {
 	      var _IconSettingByStatus$;
-	      let status = this.status;
-	      if (!main_core.Type.isStringFilled(status)) {
+	      if (!main_core.Type.isStringFilled(this.status) || !StatusService.isSupportedToShow(this.status)) {
 	        return null;
 	      }
-	      if (!StatusService.isSupported(status)) {
-	        status = StatusService.getFailoverStatus();
-	      }
-	      return (_IconSettingByStatus$ = IconSettingByStatus[status]) != null ? _IconSettingByStatus$ : null;
+	      return (_IconSettingByStatus$ = IconSettingByStatus[this.status]) != null ? _IconSettingByStatus$ : null;
 	    }
 	  },
 	  template: `
@@ -1147,9 +1231,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	};
 
 	const UserAvatarTypeByRole = Object.freeze({
-	  collaber: 'round-guest',
-	  extranet: 'round-extranet',
-	  employee: 'round'
+	  [UserRole.Collaber]: 'round-guest',
+	  [UserRole.Extranet]: 'round-extranet',
+	  [UserRole.Employee]: 'round'
 	});
 
 	// @vue/component
@@ -1157,13 +1241,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  name: 'UserBaseInfo',
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
-	    UserRole,
+	    UserRole: UserRole$1,
 	    UserStatusIcon,
 	    UserStatusDescription,
 	    RichMenuPopup: ui_vue3_components_richMenu.RichMenuPopup,
 	    UserTime,
 	    Avatar: ui_vue3_components_avatar.Avatar,
-	    BMenu: ui_vue3_components_menu.BMenu
+	    BMenu: ui_vue3_components_menu.BMenu,
+	    FirstAdminBadge
 	  },
 	  mixins: [LocMixin, IconSetMixin],
 	  props: {
@@ -1223,6 +1308,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    shouldShowMessengerActionButtons() {
 	      return ChatService.isMessengerAvailable() && this.canChat;
 	    },
+	    shouldShowFirstAdminBadge() {
+	      return this.info.role === UserRole.FirstAdmin;
+	    },
 	    currentUserId() {
 	      return Number(this.loc('USER_ID'));
 	    },
@@ -1256,7 +1344,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		<div class="intranet-user-mini-profile__base-info">
 			<div class="intranet-user-mini-profile__base-info__user">
 				<div class="intranet-user-mini-profile__base-info__user-avatar-wrapper">
-					<div 
+					<div
 						class="intranet-user-mini-profile__base-info__user-avatar"
 						data-test-id="usermp_avatar"
 						@click="openProfile"
@@ -1264,9 +1352,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 						<Avatar 
 							:type="avatarType"
 							:options="{
-								userName: info.name, 
-								size: 72, 
-								title: info.name, 
+								userName: info.name,
+								size: 72,
+								title: info.name,
 								picPath: info.avatar ? encodeURI(info.avatar) : undefined,
 							}"
 						/>
@@ -1278,21 +1366,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 				</div>
 				<div class="intranet-user-mini-profile__base-info__user-data">
 					<div class="intranet-user-mini-profile__base-info__user-data__name"
-						 :title="info.name"
-						 data-test-id="usermp_name"
-						 @click="openProfile"
+						:title="info.name"
+						data-test-id="usermp_name"
+						@click="openProfile"
 					>
 						{{ info.name }}
 					</div>
 					<div class="intranet-user-mini-profile__base-info__user-data__position"
-						 :title="info.workPosition"
-						 data-test-id="usermp_position"
+						:title="info.workPosition"
+						data-test-id="usermp_position"
 					>
 						{{ info.workPosition }}
 					</div>
+					<FirstAdminBadge v-if="shouldShowFirstAdminBadge"/>
 					<div class="intranet-user-mini-profile__base-info__user-data__status">
 						<UserStatusDescription v-if="info.status"
-							:personalGender="info.personalGender"   
+							:personalGender="info.personalGender"
 							:status="info.status"
 							data-test-id="usermp_status-description"
 						/>
@@ -1879,7 +1968,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        this.isError = true;
 	      }).finally(() => {
 	        this.isLoading = false;
-	        this.adjustPopup();
+	        this.$nextTick(() => {
+	          this.adjustPopup();
+	        });
 	      });
 	    }
 	    this.isExpanded = this.isShouldBeExpandedByInitial;
@@ -1894,6 +1985,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	      this.isExpanded = !this.isExpanded;
 	      InitialParamService.save(InitialParamDict.RightSideExpand, this.isExpanded ? 'Y' : 'N');
+	      this.$nextTick(() => {
+	        this.adjustPopup();
+	      });
 	    },
 	    adjustPopup() {
 	      var _this$popup;
@@ -1955,25 +2049,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 								/>
 							</template>
 						</div>
-						<CollapseTransition
-							@start="onCollapseStart"
-							@end="onCollapseEnd"
-							:initialHeight="$refs.leftColumn?.offsetHeight"
+						<div v-if="isShowStructure" 
+							class="intranet-user-mini-profile-wrapper__content__right-wrapper"
+							data-test-id="usermp_structure-wrapper"
 						>
-							<div v-if="isShowStructure" 
-								class="intranet-user-mini-profile-wrapper__content__right-wrapper"
-								data-test-id="usermp_structure-wrapper"
-							>
-								<Divider isVertical style="margin: 0 18px"/>
-								<div class="intranet-user-mini-profile-wrapper__column --right" data-test-id="usermp_structure-column">
-									<StructureViewList
-										:structure="backendData.structure"
-										:user="getUserData()"
-										data-test-id="usermp_structure-view-list"
-									/>
-								</div>
+							<Divider isVertical style="margin: 0 18px"/>
+							<div class="intranet-user-mini-profile-wrapper__column --right" data-test-id="usermp_structure-column">
+								<StructureViewList
+									:structure="backendData.structure"
+									:user="getUserData()"
+									data-test-id="usermp_structure-view-list"
+								/>
 							</div>
-						</CollapseTransition>
+						</div>
 					</div>
 				</LoaderTransition>
 			</template>
@@ -2150,8 +2238,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return [babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement], babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].getPopupContainer()];
 	}
 
-	let _ = t => t,
-	  _t;
+	let _$1 = t => t,
+	  _t$1;
 	const PopupPrefixId = 'intranet-user-mini-profile-';
 	const FixedAngleOffset = 23;
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
@@ -2245,7 +2333,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      targetContainer: document.body,
 	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].bindElement,
 	      maxWidth: 643,
-	      maxHeight: 497,
+	      maxHeight: 517,
 	      padding: 0,
 	      contentNoPaddings: true,
 	      angle: {
@@ -2262,7 +2350,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _getContainer2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('container', () => {
-	    return main_core.Tag.render(_t || (_t = _`
+	    return main_core.Tag.render(_t$1 || (_t$1 = _$1`
 				<div class="intranet-user-mini-profile --ui-context-content-light"></div>
 			`));
 	  });
@@ -2337,5 +2425,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.UserMiniProfileManager = UserMiniProfileManager;
 
-}((this.BX.Intranet.User = this.BX.Intranet.User || {}),BX.Cache,BX.Vue3.Components,BX.Vue3,BX,BX.Humanresources.CompanyStructure,BX.UI.Vue3.Components,BX.UI.IconSet,BX.Main,BX,BX.UI.Vue3.Components,BX.UI.IconSet,BX.UI.Vue3.Components,BX.Event,BX,BX.Main));
+}((this.BX.Intranet.User = this.BX.Intranet.User || {}),BX.Cache,BX.Vue3.Components,BX.Vue3,BX,BX,BX.Humanresources.CompanyStructure,BX.UI.Vue3.Components,BX.Vue3.Directives,BX.UI.IconSet,BX.Main,BX,BX.UI.Vue3.Components,BX.UI.IconSet,BX.UI.Vue3.Components,BX.Event,BX,BX.Main));
 //# sourceMappingURL=user-mini-profile.bundle.js.map

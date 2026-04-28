@@ -1,3 +1,4 @@
+import { NameService } from 'crm.ai.name-service';
 import { Loc, Type } from 'main.core';
 import { clientType as clientTypeEnum } from '../enum/client-type';
 import { BasePage } from './base-page';
@@ -65,10 +66,12 @@ export const ClientPage = {
 		{
 			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CLIENT_TITLE');
 		},
+
 		pageDescription(): string
 		{
-			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CLIENT_DESCRIPTION');
+			return Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_CLIENT_DESCRIPTION', NameService.copilotNameReplacement());
 		},
+
 		clientTypes(): Array<Object>
 		{
 			return [
@@ -96,6 +99,7 @@ export const ClientPage = {
 		},
 	},
 
+	// language=Vue
 	template: `
 		<div v-if="isActive">
 			<div class="crm-copilot__call-assessment_page-section">

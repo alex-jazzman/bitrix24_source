@@ -28,7 +28,7 @@ $document = [
 
 $arActivityDescription =
 	(new \Bitrix\Bizproc\Activity\ActivityDescription(
-		Loc::getMessage('BP_CRM_CRM_COMPANY_START_TRIGGER_NAME') ?? '',
+		Loc::getMessage('BP_CRM_CRM_COMPANY_START_TRIGGER_NAME_MSG_V1') ?? '',
 		Loc::getMessage('BP_CRM_CRM_COMPANY_START_TRIGGER_DESCR') ?? '',
 		[\Bitrix\Bizproc\Activity\Enum\ActivityType::TRIGGER->value],
 	))

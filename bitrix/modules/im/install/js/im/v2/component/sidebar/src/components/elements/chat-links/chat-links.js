@@ -1,6 +1,7 @@
 import { hint } from 'ui.vue3.directives.hint';
 
 import { SidebarDetailBlock, EventType } from 'im.v2.const';
+import { CounterManager } from 'im.v2.lib.counter';
 
 import './chat-links.css';
 
@@ -65,13 +66,7 @@ export const ChatLinks = {
 	{
 		getCounterString(counter: number): string
 		{
-			const MAX_COUNTER = 100;
-			if (counter >= MAX_COUNTER)
-			{
-				return '99+';
-			}
-
-			return counter.toString();
+			return CounterManager.formatCounter(counter);
 		},
 		onLinkClick()
 		{

@@ -26,7 +26,6 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		BackgroundUI,
 	} = require('im/messenger/const/background-ui');
 	const { ConnectionStatus } = require('im/messenger/const/connection-status');
-	const { CounterType } = require('im/messenger/const/counter');
 	const { EventType } = require('im/messenger/const/event-type');
 	const { EventFilterType } = require('im/messenger/const/event-filter');
 	const {
@@ -88,6 +87,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { CopilotRoleType } = require('im/messenger/const/copilot-role');
 	const { ComponentCode } = require('im/messenger/const/component-code');
 	const { Analytics } = require('im/messenger/const/analytics');
+	const { ChatEntityType } = require('im/messenger/const/src/chat-entity-link');
 	const { NavigationTabId } = require('im/messenger/const/navigation-tab');
 	const {
 		KeyboardButtonContext,
@@ -114,8 +114,12 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { RefreshMode } = require('im/messenger/const/refresher');
 	const { TranscriptStatus, TranscriptResponseStatus } = require('im/messenger/const/transcript-status');
 	const { MessengerComponentRequestMethod } = require('im/messenger/const/messenger-component-request-method');
+	const { OpenlineStatus } = require('im/messenger/const/openline');
 	const { RecordMediaType } = require('im/messenger/const/record-media-type');
 	const { UploaderClientEvent } = require('im/messenger/const/upload');
+	const { COUNTER_OVERFLOW_LIMIT } = require('im/messenger/const/src/counter');
+	const { ChatSearchSelectorSection } = require('im/messenger/const/chat-search-selector-section');
+	const { RecentFilterId } = require('im/messenger/const/recent-filter');
 
 	module.exports = {
 		AiAssistantButtonType,
@@ -123,6 +127,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		AppStatus,
 		AudioEvents,
 		Analytics,
+		ChatEntityType,
 		AttachType,
 		AttachPickerId,
 		AttachDescription,
@@ -136,7 +141,6 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		BotCommand,
 		BackgroundUI,
 		ConnectionStatus,
-		CounterType,
 		EventType,
 		EventFilterType,
 		ChatTypes,
@@ -211,7 +215,11 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		TranscriptStatus,
 		TranscriptResponseStatus,
 		MessengerComponentRequestMethod,
+		OpenlineStatus,
 		RecordMediaType,
 		UploaderClientEvent,
+		COUNTER_OVERFLOW_LIMIT,
+		ChatSearchSelectorSection,
+		RecentFilterId,
 	};
 });

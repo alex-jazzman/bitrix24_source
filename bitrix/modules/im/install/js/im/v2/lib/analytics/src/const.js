@@ -1,4 +1,4 @@
-export const PSEUDO_CHAT_TYPE_FOR_NOTES = 'notes';
+export const PSEUDO_SELF_CHAT_TYPE = 'notes';
 export const AI_ASSISTANT_CHAT_TYPE = 'chatType_aiAssistant';
 
 export const CopilotChatType = Object.freeze({
@@ -89,6 +89,8 @@ export const AnalyticsEvent = Object.freeze({
 	useFormatToolbar: 'use_text_formatting',
 	closeSearch: 'cancel_search',
 	selectSearchRecent: 'click_recent_suggest',
+	openTaskCard: 'open_task_description',
+	addUser: 'add_mentioned_user',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -169,6 +171,7 @@ export const AnalyticsSection = Object.freeze({
 	chatLayout: 'chat_tab',
 	taskCommentsLayout: 'tasksTask_tab',
 	notificationLayout: 'notification_tab',
+	mentionPopup: 'mention_popup',
 });
 
 export const AnalyticsSubSection = Object.freeze({
@@ -183,6 +186,7 @@ export const AnalyticsSubSection = Object.freeze({
 	recentContextMenu: 'recent_context_menu',
 	recentChats: 'recent_chats',
 	recentSearch: 'recent_search',
+	chatHeader: 'chat_header',
 });
 
 export const AnalyticsElement = Object.freeze({
@@ -191,6 +195,7 @@ export const AnalyticsElement = Object.freeze({
 	audiocall: 'audiocall',
 	startButton: 'start_button',
 	more: 'more',
+	taskButton: 'task_button',
 });
 
 export const AnalyticsStatus = Object.freeze({

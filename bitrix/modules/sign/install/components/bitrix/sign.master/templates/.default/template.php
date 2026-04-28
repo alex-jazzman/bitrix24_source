@@ -104,6 +104,7 @@ if ((!$document && \Bitrix\Sign\Config\Storage::instance()->isNewSignEnabled()) 
 				templateFolderId: <?= $arParams['TEMPLATE_FOLDER_ID'] ?? 0 ?>,
 				isOpenedAsFolder: <?= $arParams['IS_OPENED_AS_FOLDER'] ? 'true' : 'false' ?>,
 				fromTemplateFolder: <?= $arResult['FROM_TEMPLATE_FOLDER'] ? 'true' : 'false' ?>,
+				isPlaceholderDocumentEnabled: <?= ($arResult['IS_PLACEHOLDER_DOCUMENT_ENABLED'] ?? false) ? 'true' : 'false' ?>,
 				fromRobot: <?= \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('FROM_ROBOT') ? 'true' : 'false' ?>,
 					b2eDocumentLimitCount: <?= (int)($arResult['MAX_DOCUMENT_COUNT'] ?? 20) ?>,
 				},

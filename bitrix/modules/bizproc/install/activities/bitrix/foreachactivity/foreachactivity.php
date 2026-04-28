@@ -52,7 +52,7 @@ class CBPForEachActivity extends CBPCompositeActivity implements IBPActivityEven
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	public function OnEvent(CBPActivity $sender, $arEventParameters = array())
+	public function onEvent(CBPActivity $sender, $arEventParameters = [])
 	{
 		$sender->RemoveStatusChangeHandler(self::ClosedEvent, $this);
 

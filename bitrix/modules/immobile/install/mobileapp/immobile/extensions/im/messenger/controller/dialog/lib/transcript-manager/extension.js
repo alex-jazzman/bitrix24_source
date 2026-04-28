@@ -397,8 +397,8 @@ jn.define('im/messenger/controller/dialog/lib/transcript-manager', (require, exp
 		{
 			if (errorCode === 'LIMIT_IS_EXCEEDED_BAAS')
 			{
-				let text = Loc.getMessage(
-					'IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_BAAS_LIMIT_ERROR',
+				let text = Loc.getMessageWithCopilotBotName(
+					'IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_BAAS_LIMIT_ERROR_MSGVER_1',
 					{
 						'#LINK#': `[URL=${TRANSCRIPT_LIMIT_IS_EXCEEDED_BAAS_LINK}]`,
 						'#/LINK#': '[/URL]',

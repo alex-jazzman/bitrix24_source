@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Application;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -13,11 +15,14 @@ return [
 		'./dist/smiles.bundle.css',
 	],
 	'rel' => [
-		'main.polyfill.core',
 		'rest.client',
 		'ui.dexie',
+		'main.core',
 		'ui.vue3.directives.lazyload',
 		'ui.system.chip.vue',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
+	'settings' => [
+		'region' => Application::getInstance()->getLicense()->getRegion(),
+	],
 ];

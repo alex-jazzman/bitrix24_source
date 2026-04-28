@@ -825,8 +825,10 @@
 		tryToShowOnboardingCases(data = {})
 		{
 			void requireLazy('crm:onboarding', false)
-				.then(({ Onboarding, CaseName }) => {
-					if (Onboarding)
+				.then((ext) => {
+					const { Onboarding, CaseName } = ext;
+
+					if (Onboarding && CaseName)
 					{
 						const activeTab = this.getActiveTab();
 						const tabs = this.getTabItems();

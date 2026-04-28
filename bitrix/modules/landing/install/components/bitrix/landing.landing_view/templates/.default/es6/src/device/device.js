@@ -147,6 +147,29 @@ export class Device
 		}
 	}
 
+	#getDocumentMetrics(doc: ?Document): ?{ scrollHeight: number, scrollTop: number }
+	{
+		const body = doc?.body;
+		const documentElement = doc?.documentElement;
+
+		if (!body || !documentElement)
+		{
+			return null;
+		}
+
+		return {
+			scrollHeight: Math.max(
+				body.scrollHeight,
+				documentElement.scrollHeight,
+				body.offsetHeight,
+				documentElement.offsetHeight,
+				body.clientHeight,
+				documentElement.clientHeight,
+			),
+			scrollTop: documentElement.scrollTop || body.scrollTop,
+		};
+	}
+
 	/**
 	 * Scrolls preview window for some percent.
 	 *
@@ -156,15 +179,13 @@ export class Device
 	{
 		if (this.#previewWindow)
 		{
-			const document = this.#previewWindow.document;
+			const metrics = this.#getDocumentMetrics(this.#previewWindow.document);
+			if (!metrics)
+			{
+				return;
+			}
 
-			const scrollHeight = Math.max(
-				document.body.scrollHeight, document.documentElement.scrollHeight,
-				document.body.offsetHeight, document.documentElement.offsetHeight,
-				document.body.clientHeight, document.documentElement.clientHeight
-			);
-
-			this.#previewWindow.scroll(0, scrollHeight * topInPercent / 100);
+			this.#previewWindow.scroll(0, metrics.scrollHeight * topInPercent / 100);
 		}
 	}
 
@@ -302,15 +323,14 @@ export class Device
 	 */
 	#adjustPreviewScroll()
 	{
-		const documentEditorFrame = this.#editorFrameWrapper.querySelector('iframe').contentWindow.document;
-		const scrollHeight = Math.max(
-			documentEditorFrame.body.scrollHeight, documentEditorFrame.documentElement.scrollHeight,
-			documentEditorFrame.body.offsetHeight, documentEditorFrame.documentElement.offsetHeight,
-			documentEditorFrame.body.clientHeight, documentEditorFrame.documentElement.clientHeight
-		);
-		const scrollTop = documentEditorFrame.documentElement.scrollTop || documentEditorFrame.body.scrollTop;
+		const editorFrame = this.#editorFrameWrapper?.querySelector('iframe');
+		const metrics = this.#getDocumentMetrics(editorFrame?.contentWindow?.document);
+		if (!metrics || metrics.scrollHeight <= 0)
+		{
+			return;
+		}
 
-		this.#scrollDevice(scrollTop / scrollHeight * 100);
+		this.#scrollDevice(metrics.scrollTop / metrics.scrollHeight * 100);
 	}
 
 	/**
@@ -330,17 +350,37 @@ export class Device
 			Dom.hide(this.#previewElement);
 			this.target.appendChild(this.#previewElement);
 
-			// #170065
-			// this.#previewElement.querySelector('iframe').contentWindow.addEventListener('load', () => {
-			if (!this.#previewWindow)
+			const editorFrame = this.#editorFrameWrapper?.querySelector('iframe');
+			if (editorFrame)
 			{
-				this.#previewWindow = this.#previewElement.querySelector('iframe').contentWindow;
-				const previewDocument = this.#previewElement.querySelector('iframe').contentWindow.document
-				Dom.removeClass(previewDocument.querySelector('html'), 'bx-no-touch');
-				Dom.addClass(previewDocument.querySelector('html'), 'bx-touch');
+				Event.bind(editorFrame, 'load', () => {
+					this.#adjustPreviewScroll();
+				});
 			}
+
+			const previewFrame = this.#previewElement.querySelector('iframe');
+			if (previewFrame)
+			{
+				Event.bind(previewFrame, 'load', () => {
+					this.#previewWindow = previewFrame.contentWindow;
+
+					const previewHtml = previewFrame.contentWindow?.document?.querySelector('html');
+					if (previewHtml)
+					{
+						Dom.removeClass(previewHtml, 'bx-no-touch');
+						Dom.addClass(previewHtml, 'bx-touch');
+					}
+
+					this.#adjustPreviewScroll();
+				});
+
+				if (!this.#previewWindow)
+				{
+					this.#previewWindow = previewFrame.contentWindow;
+				}
+			}
+
 			this.#adjustPreviewScroll();
-			// });
 		}
 	}
 

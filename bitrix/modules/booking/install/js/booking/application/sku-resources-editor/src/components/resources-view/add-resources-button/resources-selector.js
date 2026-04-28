@@ -29,15 +29,15 @@ export const ResourcesSelector = {
 			selected: [],
 		};
 	},
-	created()
+	created(): void
 	{
 		this.createDialog();
 	},
-	mounted()
+	mounted(): void
 	{
 		this.dialog.show();
 	},
-	unmounted()
+	unmounted(): void
 	{
 		this.dialog?.destroy();
 	},
@@ -94,14 +94,9 @@ export const ResourcesSelector = {
 				{
 					item.setHidden(true);
 				}
-
-				if (!item.getAvatar())
-				{
-					item.setAvatar('/bitrix/js/booking/application/sku-resources-editor/images/resource-icon.svg');
-				}
 			}
 		},
-		select(item: Item)
+		select(item: Item): void
 		{
 			this.selected.push(item.getId());
 		},
