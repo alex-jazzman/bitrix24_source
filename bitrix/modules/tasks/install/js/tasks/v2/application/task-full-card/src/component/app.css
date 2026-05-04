@@ -19,6 +19,11 @@
 	background: var(--tasks-color-bg-drawer);
 }
 
+.tasks-full-card-main.--embedded {
+	width: 100%;
+	min-width: 432px;
+}
+
 @media (min-width: 1600px) {
 	.tasks-full-card-main {
 		width: 660px;

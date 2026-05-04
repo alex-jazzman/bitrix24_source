@@ -99,10 +99,21 @@ export const taskService = new class
 		}
 		catch (error)
 		{
-			console.error(Endpoint.TaskGet, error);
+			if (!this.#silentErrorMode)
+			{
+				console.error(Endpoint.TaskGet, error);
+			}
+
+			return {
+				task: null,
+				error: new Error(error.errors?.[0]?.code),
+			};
 		}
 
-		return this.getStoreTask(id);
+		return {
+			task: this.getStoreTask(id),
+			error: null,
+		};
 	}
 
 	async getCopy(id: number, tmpId: string): Promise<void>
@@ -114,7 +125,12 @@ export const taskService = new class
 			return;
 		}
 
-		const task = await this.get(id);
+		const { task } = await this.get(id);
+
+		if (!task)
+		{
+			return;
+		}
 
 		if (task.checklist?.length > 0)
 		{
@@ -204,7 +220,7 @@ export const taskService = new class
 
 	async onAfterTaskAdded(initialTask: TaskModel, data: TaskDto): void
 	{
-		this.insertStoreTask({ ...initialTask, id: data.id });
+		void this.insertStoreTask({ ...initialTask, id: data.id });
 
 		this.extractTask(data);
 
@@ -238,7 +254,7 @@ export const taskService = new class
 
 		if (initialTask.results?.length > 0)
 		{
-			await resultService.save(
+			void resultService.save(
 				data.id,
 				this.$store.getters[`${Model.Results}/getByIds`](initialTask.results),
 				true,
@@ -506,6 +522,48 @@ export const taskService = new class
 		}
 	}
 
+	async requestAccess(id: number): Promise<void>
+	{
+		try
+		{
+			const data = await apiClient.post(Endpoint.TaskAccessRequest, { task: { id } });
+
+			return {
+				accessRequest: data,
+				error: null,
+			};
+		}
+		catch (error)
+		{
+			if (!this.#silentErrorMode)
+			{
+				console.error(Endpoint.TaskAccessRequest, error);
+			}
+
+			return {
+				accessRequest: null,
+				error: new Error(error.errors?.[0]?.message),
+			};
+		}
+	}
+
+	async isAccessRequested(id: number): Promise<void>
+	{
+		try
+		{
+			return await apiClient.post(Endpoint.TaskAccessIsRequested, { task: { id } });
+		}
+		catch (error)
+		{
+			if (!this.#silentErrorMode)
+			{
+				console.error(Endpoint.TaskAccessIsRequested, error);
+			}
+
+			return false;
+		}
+	}
+
 	extractTask(data: TaskDto, ignoreContains: boolean = true): void
 	{
 		if (!data)
@@ -523,7 +581,8 @@ export const taskService = new class
 		const extractor = new TaskGetExtractor(data);
 
 		const task = extractor.getTask();
-		task.rights = { ...this.getStoreTask(task.id)?.rights, ...task.rights };
+		const currentTask = this.getStoreTask(task.id);
+		task.rights = { ...currentTask?.rights, ...task.rights };
 		if (ignoreContains)
 		{
 			[
@@ -541,6 +600,11 @@ export const taskService = new class
 			this.$store.dispatch(`${Model.Stages}/upsertMany`, extractor.getStages()),
 			this.$store.dispatch(`${Model.Users}/upsertMany`, extractor.getUsers()),
 		]);
+
+		if (task.numberOfReminders === 0 && (currentTask?.numberOfReminders ?? 0) > 0)
+		{
+			remindersService.clearForTask(task.id);
+		}
 
 		void fileService.get(data.id).list(data.fileIds);
 	}

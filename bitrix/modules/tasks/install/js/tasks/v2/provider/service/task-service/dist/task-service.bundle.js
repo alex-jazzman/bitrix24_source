@@ -26,7 +26,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    responsibleCollection: mapValue(responsibleIds, responsibleIds == null ? void 0 : responsibleIds.map(id => ({
 	      id
 	    }))),
-	    isMultitask: (responsibleIds == null ? void 0 : responsibleIds.length) > 1,
+	    isMultitask: mapValue(responsibleIds, (responsibleIds == null ? void 0 : responsibleIds.length) > 1),
 	    deadlineTs: mapValue(task.deadlineTs, Math.floor(task.deadlineTs / 1000)),
 	    deadlineAfter: mapValue(task.deadlineAfter, Math.floor(task.deadlineAfter / 1000)),
 	    needsControl: tasks_v2_core.Core.getParams().restrictions.control.available ? task.needsControl : false,
@@ -55,7 +55,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    flow: mapValue(task.flowId, {
 	      id: task.flowId
 	    }),
-	    priority: mapValue(task.isImportant, task.isImportant ? 'high' : 'low'),
+	    priority: mapValue(task.isImportant, task.isImportant ? 'high' : 'average'),
 	    status: task.status,
 	    statusChangedTs: mapValue(task.statusChangedTs, Math.floor(task.statusChangedTs / 1000)),
 	    accomplices: mapValue(task.accomplicesIds, (_task$accomplicesIds = task.accomplicesIds) == null ? void 0 : _task$accomplicesIds.map(id => ({
@@ -96,7 +96,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	}
 	function mapDtoToModel(taskDto) {
 	  var _taskDto$creator, _taskDto$parent$id, _taskDto$parent, _taskDto$base, _taskDto$containsSubT, _taskDto$group, _taskDto$stage, _taskDto$flow, _taskDto$accomplices, _taskDto$auditors, _taskDto$tags, _taskDto$inFavorite, _taskDto$inMute, _taskDto$userFields, _taskDto$permissions;
-	  const allowedNullFields = new Set(['maxDeadlineChangeDate', 'maxDeadlineChanges']);
+	  const allowedNullFields = new Set(['requireDeadlineChangeReason', 'maxDeadlineChangeDate', 'maxDeadlineChanges']);
 	  const task = {
 	    id: taskDto.id,
 	    title: taskDto.title,
@@ -545,9 +545,19 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      this.extractTask(data, ignoreContains);
 	      await this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/removePartiallyLoaded`, id);
 	    } catch (error) {
-	      console.error(tasks_v2_const.Endpoint.TaskGet, error);
+	      var _error$errors, _error$errors$;
+	      if (!babelHelpers.classPrivateFieldLooseBase(this, _silentErrorMode)[_silentErrorMode]) {
+	        console.error(tasks_v2_const.Endpoint.TaskGet, error);
+	      }
+	      return {
+	        task: null,
+	        error: new Error((_error$errors = error.errors) == null ? void 0 : (_error$errors$ = _error$errors[0]) == null ? void 0 : _error$errors$.code)
+	      };
 	    }
-	    return this.getStoreTask(id);
+	    return {
+	      task: this.getStoreTask(id),
+	      error: null
+	    };
 	  }
 	  async getCopy(id, tmpId) {
 	    var _task$checklist;
@@ -555,7 +565,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      await tasks_v2_provider_service_templateService.templateService.getCopy(tasks_v2_lib_idUtils.idUtils.boxTemplate(id), tmpId);
 	      return;
 	    }
-	    const task = await this.get(id);
+	    const {
+	      task
+	    } = await this.get(id);
+	    if (!task) {
+	      return;
+	    }
 	    if (((_task$checklist = task.checklist) == null ? void 0 : _task$checklist.length) > 0) {
 	      await tasks_v2_provider_service_checkListService.checkListService.load(id, tmpId);
 	    }
@@ -627,14 +642,14 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      await this.onAfterTaskAdded(task, data);
 	      return [data.id, null];
 	    } catch (error) {
-	      var _error$errors, _error$errors$;
+	      var _error$errors2, _error$errors2$;
 	      console.error(tasks_v2_const.Endpoint.TaskAdd, error);
-	      return [0, new Error((_error$errors = error.errors) == null ? void 0 : (_error$errors$ = _error$errors[0]) == null ? void 0 : _error$errors$.message)];
+	      return [0, new Error((_error$errors2 = error.errors) == null ? void 0 : (_error$errors2$ = _error$errors2[0]) == null ? void 0 : _error$errors2$.message)];
 	    }
 	  }
 	  async onAfterTaskAdded(initialTask, data) {
 	    var _initialTask$checklis, _initialTask$results;
-	    this.insertStoreTask({
+	    void this.insertStoreTask({
 	      ...initialTask,
 	      id: data.id
 	    });
@@ -651,7 +666,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      tasks_v2_provider_service_relationService.subTasksService.addStore(initialTask.id, userIds.map(id => `userTask${id}`));
 	    }
 	    if (((_initialTask$results = initialTask.results) == null ? void 0 : _initialTask$results.length) > 0) {
-	      await tasks_v2_provider_service_resultService.resultService.save(data.id, this.$store.getters[`${tasks_v2_const.Model.Results}/getByIds`](initialTask.results), true);
+	      void tasks_v2_provider_service_resultService.resultService.save(data.id, this.$store.getters[`${tasks_v2_const.Model.Results}/getByIds`](initialTask.results), true);
 	    }
 	    if (initialTask.relatedToTaskId) {
 	      void tasks_v2_provider_service_relationService.relatedTasksService.add(initialTask.relatedToTaskId, [data.id]);
@@ -717,9 +732,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      }
 	      return [data.id, null];
 	    } catch (error) {
-	      var _error$errors2, _error$errors2$;
+	      var _error$errors3, _error$errors3$;
 	      console.error(tasks_v2_const.Endpoint.TaskCopy, error);
-	      return [0, new Error((_error$errors2 = error.errors) == null ? void 0 : (_error$errors2$ = _error$errors2[0]) == null ? void 0 : _error$errors2$.message)];
+	      return [0, new Error((_error$errors3 = error.errors) == null ? void 0 : (_error$errors3$ = _error$errors3[0]) == null ? void 0 : _error$errors3$.message)];
 	    }
 	  }
 	  async addMultiTask(taskId, responsibleIds) {
@@ -859,8 +874,44 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      console.error(tasks_v2_const.Endpoint.TaskDelete, error);
 	    }
 	  }
+	  async requestAccess(id) {
+	    try {
+	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskAccessRequest, {
+	        task: {
+	          id
+	        }
+	      });
+	      return {
+	        accessRequest: data,
+	        error: null
+	      };
+	    } catch (error) {
+	      var _error$errors4, _error$errors4$;
+	      if (!babelHelpers.classPrivateFieldLooseBase(this, _silentErrorMode)[_silentErrorMode]) {
+	        console.error(tasks_v2_const.Endpoint.TaskAccessRequest, error);
+	      }
+	      return {
+	        accessRequest: null,
+	        error: new Error((_error$errors4 = error.errors) == null ? void 0 : (_error$errors4$ = _error$errors4[0]) == null ? void 0 : _error$errors4$.message)
+	      };
+	    }
+	  }
+	  async isAccessRequested(id) {
+	    try {
+	      return await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskAccessIsRequested, {
+	        task: {
+	          id
+	        }
+	      });
+	    } catch (error) {
+	      if (!babelHelpers.classPrivateFieldLooseBase(this, _silentErrorMode)[_silentErrorMode]) {
+	        console.error(tasks_v2_const.Endpoint.TaskAccessIsRequested, error);
+	      }
+	      return false;
+	    }
+	  }
 	  extractTask(data, ignoreContains = true) {
-	    var _data$rights, _this$getStoreTask2;
+	    var _data$rights, _currentTask$numberOf;
 	    if (!data) {
 	      return;
 	    }
@@ -870,14 +921,18 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    }
 	    const extractor = new TaskGetExtractor(data);
 	    const task = extractor.getTask();
+	    const currentTask = this.getStoreTask(task.id);
 	    task.rights = {
-	      ...((_this$getStoreTask2 = this.getStoreTask(task.id)) == null ? void 0 : _this$getStoreTask2.rights),
+	      ...(currentTask == null ? void 0 : currentTask.rights),
 	      ...task.rights
 	    };
 	    if (ignoreContains) {
 	      ['containsSubTasks', 'containsRelatedTasks', 'containsGanttLinks', 'containsPlacements'].forEach(prop => delete task[prop]);
 	    }
 	    void Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/upsert`, task), this.$store.dispatch(`${tasks_v2_const.Model.Flows}/upsert`, extractor.getFlow()), this.$store.dispatch(`${tasks_v2_const.Model.Groups}/insert`, extractor.getGroup()), this.$store.dispatch(`${tasks_v2_const.Model.Stages}/upsertMany`, extractor.getStages()), this.$store.dispatch(`${tasks_v2_const.Model.Users}/upsertMany`, extractor.getUsers())]);
+	    if (task.numberOfReminders === 0 && ((_currentTask$numberOf = currentTask == null ? void 0 : currentTask.numberOfReminders) != null ? _currentTask$numberOf : 0) > 0) {
+	      tasks_v2_provider_service_remindersService.remindersService.clearForTask(task.id);
+	    }
 	    void tasks_v2_provider_service_fileService.fileService.get(data.id).list(data.fileIds);
 	  }
 	  deleteStore(id) {

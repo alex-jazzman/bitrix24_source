@@ -1,5 +1,5 @@
 import { Dom, Reflection } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { type Slider, SidePanel } from 'main.sidepanel';
 
 export class ChatMenuBar
@@ -27,13 +27,15 @@ export class ChatMenuBar
 		EventEmitter.subscribe(this.#slider, 'SidePanel.Slider:onClosing', this.#handleSliderClosing.bind(this));
 		EventEmitter.subscribe(this.#slider, 'SidePanel.Slider:onCloseComplete', this.#handleSliderCloseComplete.bind(this));
 		EventEmitter.subscribe(this.#slider, 'SidePanel.Slider:onDestroy', this.#handleSliderDestroy.bind(this));
+		EventEmitter.subscribe(this.#slider, 'SidePanel.Slider:onLayout', this.#handleSliderLayout.bind(this));
 
 		EventEmitter.subscribe('SidePanel.Slider:onOpening', (event: BaseEvent) => {
 			const [sliderEvent] = event.getData();
 			if (sliderEvent.getSlider() !== this.#slider)
 			{
 				Dom.style(this.getContainer(), 'background', this.#slider.getOverlayBgColor());
-				Dom.style(this.getContainer(), 'box-shadow', `0px 0px 10px 3px ${this.#slider.getOverlayBgColor()}`);
+				Dom.style(this.getContainer(), 'box-shadow', `-10px 0px 10px 3px ${this.#slider.getOverlayBgColor()}`);
+				Dom.attr(this.getContainer(), 'inert', 'true');
 			}
 		});
 
@@ -42,6 +44,7 @@ export class ChatMenuBar
 			{
 				Dom.style(this.getContainer(), 'background', null);
 				Dom.style(this.getContainer(), 'box-shadow', null);
+				Dom.attr(this.getContainer(), 'inert', null);
 			}
 		});
 
@@ -95,6 +98,7 @@ export class ChatMenuBar
 		Dom.style(this.getContainer(), 'display', 'block');
 		Dom.style(this.getContainer(), 'background', null);
 		Dom.style(this.getContainer(), 'box-shadow', null);
+		Dom.attr(this.getContainer(), 'inert', null);
 
 		requestAnimationFrame(() => {
 			Dom.addClass(this.getContainer(), '--open');
@@ -112,6 +116,7 @@ export class ChatMenuBar
 		Dom.style(this.getContainer(), 'display', 'none');
 		Dom.style(this.getContainer(), 'background', null);
 		Dom.style(this.getContainer(), 'box-shadow', null);
+		Dom.attr(this.getContainer(), 'inert', null);
 	}
 
 	#handleSliderDestroy(): void
@@ -124,5 +129,10 @@ export class ChatMenuBar
 		const sliderZIndex = this.#slider.getZIndexComponent().getZIndex();
 
 		this.setZIndex(sliderZIndex + 1);
+	}
+
+	#handleSliderLayout(): void
+	{
+		Dom.style(this.getContainer(), 'width', `${this.#slider.getOverlay().offsetWidth}px`);
 	}
 }

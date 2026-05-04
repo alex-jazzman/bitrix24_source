@@ -13,6 +13,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    return Interface.create().setVariables({
 	      currentUserId: params.currentUser.id,
 	      stateFlags: params.stateFlags,
+	      templateStateFlags: params.templateStateFlags,
 	      deadlineUserOption: params.deadlineUserOption,
 	      taskUserFieldScheme: params.taskUserFieldScheme,
 	      templateUserFieldScheme: params.templateUserFieldScheme,
@@ -29,7 +30,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      titleFieldOffsetHeight: null,
 	      stateFlags: this.getVariable('stateFlags', {
 	        needsControl: false,
-	        matchesWorkTime: false
+	        matchesWorkTime: false,
+	        defaultRequireResult: false,
+	        allowsTimeTracking: false
+	      }),
+	      templateStateFlags: this.getVariable('templateStateFlags', {
+	        needsControl: false,
+	        matchesWorkTime: false,
+	        defaultRequireResult: false,
+	        allowsTimeTracking: false
 	      }),
 	      deadlineUserOption: this.getVariable('deadlineUserOption', {
 	        defaultDeadlineInSeconds: 0,
@@ -41,7 +50,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      checkListCompletionCallbacks: {},
 	      draggedCheckListId: null,
 	      taskUserFieldScheme: this.getVariable('taskUserFieldScheme', []),
-	      templateUserFieldScheme: this.getVariable('templateUserFieldScheme', [])
+	      templateUserFieldScheme: this.getVariable('templateUserFieldScheme', []),
+	      taskWithActiveTimer: null
 	    };
 	  }
 	  getGetters() {
@@ -56,6 +66,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      titleFieldOffsetHeight: state => state.titleFieldOffsetHeight,
 	      /** @function interface/stateFlags */
 	      stateFlags: state => state.stateFlags,
+	      /** @function interface/templateStateFlags */
+	      templateStateFlags: state => state.templateStateFlags,
 	      /** @function interface/deadlineUserOption */
 	      deadlineUserOption: state => state.deadlineUserOption,
 	      /** @function interface/defaultDeadlineTs */
@@ -82,7 +94,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      /** @function interface/taskUserFieldScheme */
 	      taskUserFieldScheme: state => state.taskUserFieldScheme,
 	      /** @function interface/templateUserFieldScheme */
-	      templateUserFieldScheme: state => state.templateUserFieldScheme
+	      templateUserFieldScheme: state => state.templateUserFieldScheme,
+	      /** @function interface/taskWithActiveTimer */
+	      taskWithActiveTimer: state => state.taskWithActiveTimer
 	    };
 	  }
 	  getActions() {
@@ -103,6 +117,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      /** @function interface/updateStateFlags */
 	      updateStateFlags: (store, stateFlags) => {
 	        store.commit('setStateFlags', stateFlags);
+	      },
+	      /** @function interface/updateTemplateStateFlags */
+	      updateTemplateStateFlags: (store, stateFlags) => {
+	        store.commit('setTemplateStateFlags', stateFlags);
 	      },
 	      /** @function interface/updateDeadlineUserOption */
 	      updateDeadlineUserOption: (store, deadlineUserOption) => {
@@ -145,6 +163,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      /** @function interface/updateTemplateUserFieldScheme */
 	      updateTemplateUserFieldScheme: (store, templateUserFieldScheme) => {
 	        store.commit('setTemplateUserFieldScheme', templateUserFieldScheme);
+	      },
+	      /** @function interface/setTaskWithActiveTimer */
+	      setTaskWithActiveTimer: (store, task) => {
+	        store.commit('setTaskWithActiveTimer', task);
 	      }
 	    };
 	  }
@@ -162,6 +184,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      setStateFlags: (state, stateFlags) => {
 	        state.stateFlags = {
 	          ...state.stateFlags,
+	          ...stateFlags
+	        };
+	      },
+	      setTemplateStateFlags: (state, stateFlags) => {
+	        state.templateStateFlags = {
+	          ...state.templateStateFlags,
 	          ...stateFlags
 	        };
 	      },
@@ -198,6 +226,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      },
 	      setTemplateUserFieldScheme: (state, templateUserFieldScheme) => {
 	        state.templateUserFieldScheme = templateUserFieldScheme;
+	      },
+	      setTaskWithActiveTimer: (state, task) => {
+	        state.taskWithActiveTimer = task;
 	      }
 	    };
 	  }

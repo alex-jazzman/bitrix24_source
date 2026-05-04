@@ -22,7 +22,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  inject: {
 	    task: {},
 	    taskId: {},
-	    isEdit: {}
+	    isEdit: {},
+	    isTemplate: {}
 	  },
 	  props: {
 	    bindElement: {
@@ -50,7 +51,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`,
-	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`
+	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`,
+	      templateStateFlags: `${tasks_v2_const.Model.Interface}/templateStateFlags`
 	    }),
 	    options() {
 	      return {
@@ -161,10 +163,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.$bitrix.eventEmitter.emit(tasks_v2_const.EventName.TimeTrackingChange);
 	      }
 	      if (!this.isEdit) {
-	        await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateStateFlags`, {
-	          allowsTimeTracking: this.localAllowsTimeTracking
-	        });
-	        void tasks_v2_provider_service_stateService.stateService.set(this.stateFlags);
+	        if (this.isTemplate) {
+	          await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateStateFlags`, {
+	            allowsTimeTracking: this.localAllowsTimeTracking
+	          });
+	          void tasks_v2_provider_service_stateService.stateService.setTemplateFlags(this.templateStateFlags);
+	        } else {
+	          await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateStateFlags`, {
+	            allowsTimeTracking: this.localAllowsTimeTracking
+	          });
+	          void tasks_v2_provider_service_stateService.stateService.set(this.stateFlags);
+	        }
 	      }
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        allowsTimeTracking: this.localAllowsTimeTracking,

@@ -1,5 +1,6 @@
 import { MenuManager } from 'main.popup';
 import type { MenuItemOptions } from 'main.popup';
+import { FeaturePromoter } from 'ui.info-helper';
 
 export type Data = {
 	dashboards: JSON,
@@ -12,6 +13,7 @@ export type Dashboard = {
 	title: string,
 	url: string,
 	isLocked: boolean,
+	isAvailableWithoutMarketSub: boolean,
 }
 
 export class BIAnalytics
@@ -80,6 +82,10 @@ export class BIAnalytics
 		{
 			this.#showTariffSlider();
 		}
+		else if (!dashboard.isAvailableWithoutMarketSub)
+		{
+			this.#openMarketInfoHelper();
+		}
 		else
 		{
 			window.open(dashboard.url, '_blank');
@@ -92,5 +98,10 @@ export class BIAnalytics
 		{
 			top.BX.UI.InfoHelper.show('limit_crm_BI_constructor');
 		}
+	}
+
+	#openMarketInfoHelper(): void
+	{
+		(new FeaturePromoter({ code: 'limit_benefit_market_active' })).show();
 	}
 }

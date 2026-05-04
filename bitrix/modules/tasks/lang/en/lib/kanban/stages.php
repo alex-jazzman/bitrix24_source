@@ -11,4 +11,6 @@ $MESS["TASKS_STAGE_PERIOD4"] = "Due next week";
 $MESS["TASKS_STAGE_PERIOD5"] = "No deadline";
 $MESS["TASKS_STAGE_PERIOD6"] = "Due over two weeks";
 $MESS["TASKS_STAGE_PERIOD7"] = "Completed";
+$MESS["TASKS_STAGE_PERSONAL_REVIEW"] = "Review";
+$MESS["TASKS_STAGE_PERSONAL_WORK_IN_PROGRESS"] = "In progress";
 $MESS["TASKS_STAGE_WORK"] = "In progress";

@@ -24,6 +24,7 @@ export const TaskSettings = {
 		task: {},
 		taskId: {},
 		isEdit: {},
+		isTemplate: {},
 	},
 	emits: [
 		'updateFlags',
@@ -51,6 +52,7 @@ export const TaskSettings = {
 	computed: {
 		...mapGetters({
 			stateFlags: `${Model.Interface}/stateFlags`,
+			templateStateFlags: `${Model.Interface}/templateStateFlags`,
 			deadlineUserOption: `${Model.Interface}/deadlineUserOption`,
 		}),
 		isDefaultDeadlineActive: {
@@ -172,7 +174,9 @@ export const TaskSettings = {
 	{
 		this.localDeadlineUserOption.defaultDeadlineInSeconds = this.deadlineUserOption.defaultDeadlineInSeconds;
 
-		if (this.isEdit)
+		const isCreationByTemplate = Boolean(this.task.templateId);
+
+		if (this.isEdit || isCreationByTemplate)
 		{
 			this.localFlags.needsControl = this.isTaskControlLocked ? false : this.task.needsControl;
 			this.localFlags.matchesWorkTime = this.isMatchesWorkTimeLocked ? false : this.task.matchesWorkTime;
@@ -180,6 +184,15 @@ export const TaskSettings = {
 			this.localDeadlineUserOption.canChangeDeadline = this.task.allowsChangeDeadline;
 			this.localDeadlineUserOption.maxDeadlineChangeDate = this.task.maxDeadlineChangeDate;
 			this.localDeadlineUserOption.maxDeadlineChanges = this.task.maxDeadlineChanges;
+		}
+		else if (this.isTemplate)
+		{
+			this.localFlags.needsControl = this.isTaskControlLocked
+				? false
+				: (this.templateStateFlags.needsControl ?? false);
+			this.localFlags.matchesWorkTime = this.isMatchesWorkTimeLocked
+				? false
+				: (this.templateStateFlags.matchesWorkTime ?? false);
 		}
 		else
 		{
@@ -213,6 +226,7 @@ export const TaskSettings = {
 				:featureId="taskControlFeatureId"
 			/>
 			<TaskSetting
+				v-if="!isTemplate"
 				v-model="isDefaultDeadlineActive"
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_LABEL')"
 			>
@@ -224,10 +238,11 @@ export const TaskSettings = {
 			</TaskSetting>
 			<TaskSetting
 				v-model="canChangeDeadline"
+				:hasContent="canChangeDeadline && !isTemplate"
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_DEADLINES_LABEL')"
 			>
 				<TaskDeadlineSettings
-					v-if="canChangeDeadline"
+					v-if="canChangeDeadline && !isTemplate"
 					@updateDeadlineUserOption="(data) => $emit('updateDeadlineUserOption', data)"
 					@freeze="$emit('freeze')"
 					@unfreeze="$emit('unfreeze')"
@@ -241,6 +256,7 @@ export const TaskSettings = {
 				:featureId="matchesWorkTimeFeatureId"
 			/>
 			<TaskSetting
+				v-if="!isTemplate"
 				v-model="autocompleteSubTasks"
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_AUTO_COMPLETE_SUBTASKS_LABEL')"
 				:lock="isAutocompleteSubTasksLocked"

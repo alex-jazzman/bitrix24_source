@@ -128,7 +128,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			moduleId: 'tasks',
 			userId: this.ownerId,
 			config: {
-				loadItemsDelay: 1000,
+				loadItemsDelay: 500,
 			},
 			additionalData: {},
 			events: {
@@ -204,6 +204,8 @@ BX.Tasks.Kanban.Grid.prototype = {
 			'task_update',
 			'task_view',
 			'task_remove',
+			'task_timer_start',
+			'task_timer_stop',
 		];
 
 		if (actions.includes(command))
@@ -311,6 +313,8 @@ BX.Tasks.Kanban.Grid.prototype = {
 			task_update: this.onPullTaskUpdate,
 			task_view: this.onPullTaskView,
 			task_remove: this.onPullTaskRemove,
+			task_timer_start: this.onPullTimerStart,
+			task_timer_stop: this.onPullTimerStop,
 		};
 
 		return new Promise((resolve, reject) => {
@@ -1518,6 +1522,32 @@ BX.Tasks.Kanban.Grid.prototype = {
 	onPullTaskRemove(eventParams, taskId)
 	{
 		this.removeItem(taskId);
+	},
+
+	onPullTimerStart(eventParams, taskId)
+	{
+		if (!this.hasItem(taskId))
+		{
+			return;
+		}
+
+		BX.TasksTimerManager.startTimer(taskId, {
+			timerStartedAtTs: eventParams.timerStartedAtTs,
+			timeElapsed: eventParams.timeElapsed,
+			timeSpentInLogs: eventParams.timeSpentInLogs,
+			timeEstimate: eventParams.timeEstimate,
+			userId: this.ownerId,
+		});
+	},
+
+	onPullTimerStop(eventParams, taskId)
+	{
+		if (!this.hasItem(taskId))
+		{
+			return;
+		}
+
+		BX.TasksTimerManager.stopTimer(taskId);
 	},
 
 	refreshTask: function(taskId)

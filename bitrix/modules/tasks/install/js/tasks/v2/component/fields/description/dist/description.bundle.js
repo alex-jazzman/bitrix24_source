@@ -45,12 +45,38 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        contextId: 'tasks_field_checklist'
 	      });
 	      const editorText = this.editor.getText() || 'empty';
-	      const checklistString = await aiCommandExecutor.makeChecklistFromText(editorText);
+	      let checklistString = null;
+	      try {
+	        checklistString = await aiCommandExecutor.makeChecklistFromText(editorText);
+	      } catch (errorResult) {
+	        var _this$$refs$checkList, _this$$refs$checkList2;
+	        const bindElement = (_this$$refs$checkList = (_this$$refs$checkList2 = this.$refs.checkListButton) == null ? void 0 : _this$$refs$checkList2.$el) != null ? _this$$refs$checkList : null;
+	        this.handleBaasError(errorResult, bindElement);
+	      }
 	      this.isAiCommandProcessing = false;
-	      this.handleCloseWithCheckList(checklistString);
+	      if (checklistString !== null) {
+	        this.handleCloseWithCheckList(checklistString);
+	      }
 	    },
 	    handleCloseWithCheckList(checklistString) {
 	      emitAddCheckListDebounced(this, checklistString);
+	    },
+	    async handleBaasError(errorResult, bindElement) {
+	      var _errorResult$errors, _firstError$code, _firstError$customDat, _firstError$customDat2;
+	      const {
+	        AjaxErrorHandler
+	      } = await main_core.Runtime.loadExtension('ai.ajax-error-handler');
+	      const firstError = errorResult == null ? void 0 : (_errorResult$errors = errorResult.errors) == null ? void 0 : _errorResult$errors[0];
+	      AjaxErrorHandler.handleTextGenerateError({
+	        baasOptions: {
+	          bindElement,
+	          context: 'tasks_field_checklist',
+	          useAngle: false
+	        },
+	        errorCode: (_firstError$code = firstError == null ? void 0 : firstError.code) != null ? _firstError$code : 'undefined_error',
+	        showSliderWithMsg: firstError == null ? void 0 : (_firstError$customDat = firstError.customData) == null ? void 0 : _firstError$customDat.showSliderWithMsg,
+	        sliderCode: firstError == null ? void 0 : (_firstError$customDat2 = firstError.customData) == null ? void 0 : _firstError$customDat2.sliderCode
+	      });
 	    }
 	  }
 	};
@@ -191,6 +217,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					<MoreButton :editor/>
 					<CopilotButton v-if="isCopilotEnabled" :editor/>
 					<CheckList
+						ref="checkListButton"
 						v-if="isCopilotEnabled"
 						:loading="isAiCommandProcessing"
 						@click="handleCheckListButtonClick"
@@ -330,6 +357,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    readonly() {
 	      return !this.task.rights.edit;
 	    },
+	    title() {
+	      var _this$task$title;
+	      return (_this$task$title = this.task.title) != null ? _this$task$title : '';
+	    },
 	    editor() {
 	      return this.entityTextEditor.getEditor();
 	    },
@@ -345,6 +376,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.handleTeleport(newValue);
 	    }
 	  },
+	  mounted() {
+	    if (!this.isEdit && this.title.length > 0) {
+	      this.handleEditorFocus(100);
+	    }
+	  },
 	  methods: {
 	    handleExpand() {
 	      this.$emit('expand');
@@ -357,11 +393,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	            blockSpaceInline: 'var(--ui-space-stack-xl)'
 	          });
 	        }, 100);
-	        setTimeout(() => {
-	          this.editor.focus(null, {
-	            defaultSelection: 'rootEnd'
-	          });
-	        }, 300);
+	        this.handleEditorFocus(300);
 	      } else {
 	        this.isNeedTeleport = false;
 	        this.editor.setMaxHeight(null);
@@ -369,6 +401,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          blockSpaceInline: 'var(--ui-space-stack-md2)'
 	        });
 	      }
+	    },
+	    handleEditorFocus(timeout) {
+	      setTimeout(() => {
+	        this.editor.focus(null, {
+	          defaultSelection: 'rootEnd'
+	        });
+	      }, timeout);
 	    }
 	  },
 	  template: `
@@ -399,6 +438,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							<MoreButton :editor/>
 							<CopilotButton v-if="isCopilotEnabled" :editor/>
 							<CheckList
+								ref="checkListButton"
 								v-if="isCopilotEnabled"
 								:loading="isAiCommandProcessing"
 								@click="handleCheckListButtonClick"
@@ -437,10 +477,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    files: {
 	      type: Array,
 	      required: true
-	    },
-	    isMiniFormShown: {
-	      type: Boolean,
-	      default: false
 	    }
 	  },
 	  emits: ['editButtonClick'],
@@ -490,7 +526,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:content="taskDescription"
 				:files
 				:readonly
-				:openByDefault="isMiniFormShown"
 				showFilesIndicator
 				:maxHeight="300"
 				v-model:opened="opened"
@@ -519,7 +554,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  inject: {
 	    task: {},
-	    taskId: {}
+	    taskId: {},
+	    embedded: {}
 	  },
 	  props: {
 	    sheetBindProps: {
@@ -548,11 +584,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    isDiskModuleInstalled() {
 	      return tasks_v2_core.Core.getParams().features.disk;
+	    },
+	    isExpanded() {
+	      return !this.embedded;
 	    }
 	  },
 	  template: `
 		<BottomSheet
-			isExpanded
+			:isExpanded
 			:padding="0"
 			:popupPadding="0"
 			:sheetBindProps
@@ -615,7 +654,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    return {
 	      checksum: '',
 	      isSaving: false,
-	      isMiniFormShown: false,
 	      enableSaveButton: false,
 	      hasFilesChanges: false,
 	      files: this.fileService.getFiles()
@@ -640,16 +678,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return !this.readonly || this.taskDescription.length > 0 || this.filesCount > 0 && !this.readonly;
 	    },
 	    shouldShowMiniForm() {
-	      if (this.readonly) {
-	        return false;
-	      }
-	      if (!this.isEdit) {
-	        return this.isMiniFormShown || this.task.description.length > 0;
-	      }
-	      return true;
+	      return !this.readonly;
 	    },
 	    shouldShowMiniFormButton() {
-	      return this.taskDescription.length === 0 && (!this.isEdit && !this.isMiniFormShown || this.isEdit && this.filesCount === 0);
+	      return this.isEdit && this.filesCount === 0 && this.taskDescription.length === 0;
 	    },
 	    shouldShowDescriptionPreview() {
 	      return this.isEdit && (this.taskDescription.length > 0 || this.filesCount > 0);
@@ -700,13 +732,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    async addCheckListFromSheet(checklistString) {
 	      await this.closeEditMode();
 	      this.addCheckList(checklistString);
-	    },
-	    handleMiniFormButtonClick() {
-	      if (this.isEdit) {
-	        this.openEditMode();
-	      } else {
-	        this.isMiniFormShown = true;
-	      }
 	    },
 	    async handleTextChanges() {
 	      if (this.isEdit) {
@@ -814,7 +839,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<MiniFormButton
 				v-if="shouldShowMiniFormButton"
 				:filesCount
-				@click="handleMiniFormButtonClick"
+				@click="openEditMode"
 			/>
 			<MiniForm
 				v-if="shouldShowMiniForm"
@@ -830,7 +855,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				v-if="shouldShowDescriptionPreview"
 				:taskId
 				:files
-				:isMiniFormShown
 				@editButtonClick="openEditMode"
 			/>
 		</div>

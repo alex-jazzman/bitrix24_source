@@ -1,0 +1,207 @@
+.intranet-fire-employee-wizard__popup .popup-window
+{
+	border-radius: 20px;
+	box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.21);
+	overflow: hidden;
+}
+
+.intranet-fire-employee-wizard__popup .popup-window-content
+{
+	background: transparent;
+	border-radius: var(--popup-window-border-radius);
+}
+
+.intranet-fire-employee-wizard
+{
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	max-height: calc(100vh - 32px);
+	overflow: auto;
+	padding: 13px 24px 24px;
+	background: linear-gradient(162deg, #ffcdcc 1%, #ffffff 32%);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+}
+
+.intranet-fire-employee-wizard__header
+{
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.intranet-fire-employee-wizard__question
+{
+	color: var(--ui-color-base-1, #333333);
+	font-size: var(--ui-font-size-2xl, 19px);
+	font-weight: var(--ui-font-weight-medium, 600);
+	line-height: 26px;
+	letter-spacing: -0.2px;
+}
+
+.intranet-fire-employee-wizard__close-button
+{
+	position: relative;
+	flex: 0 0 24px;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+}
+
+.intranet-fire-employee-wizard__close-button::before,
+.intranet-fire-employee-wizard__close-button::after
+{
+	content: '';
+	position: absolute;
+	top: 11px;
+	left: 4px;
+	width: 16px;
+	height: 1.5px;
+	border-radius: 999px;
+	background: #b4bcc8;
+}
+
+.intranet-fire-employee-wizard__close-button::before
+{
+	transform: rotate(45deg);
+}
+
+.intranet-fire-employee-wizard__close-button::after
+{
+	transform: rotate(-45deg);
+}
+
+.intranet-fire-employee-wizard__content
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg2, 22px);
+	padding-top: 12px;
+}
+
+.intranet-fire-employee-wizard__description
+{
+	color: var(--ui-color-base-0, #000000);
+	font-size: var(--ui-font-size-lg, 16px);
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	letter-spacing: -0.1px;
+}
+
+.intranet-fire-employee-wizard__notice
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md, 16px);
+	padding: 16px 20px;
+	border: 1px solid var(--ui-color-accent-soft-red-1, #ffcdcc);
+	border-radius: var(--ui-border-radius-2xl, 16px);
+	background: rgba(255, 255, 255, 0.14);
+}
+
+.intranet-fire-employee-wizard__notice-title
+{
+	color: var(--ui-color-base-0, #000000);
+	font-size: var(--ui-font-size-lg, 16px);
+	font-weight: var(--ui-font-weight-medium, 600);
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	letter-spacing: -0.05px;
+}
+
+.intranet-fire-employee-wizard__notice-text
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md, 16px);
+	color: var(--ui-color-base-0, #000000);
+	font-size: var(--ui-font-size-lg, 16px);
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	letter-spacing: -0.1px;
+}
+
+.intranet-fire-employee-wizard__notice-paragraph
+{
+	margin: 0;
+}
+
+.intranet-fire-employee-wizard__link,
+.intranet-fire-employee-wizard__link-text
+{
+	color: var(--ui-color-link-primary-base, #0154c8);
+	font-weight: var(--ui-font-weight-medium, 600);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.intranet-fire-employee-wizard__link:hover
+{
+	text-decoration: underline;
+}
+
+.intranet-fire-employee-wizard__actions
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 12px;
+	padding-top: 24px;
+}
+
+.intranet-fire-employee-wizard__button.ui-btn
+{
+	margin: 0;
+	border-radius: 10px;
+}
+
+.intranet-fire-employee-wizard__button--cancel.ui-btn
+{
+	min-height: 46px;
+	padding-left: 24px;
+	padding-right: 24px;
+}
+
+.intranet-fire-employee-wizard__button--outline.ui-btn
+{
+	min-height: 46px;
+	padding-left: 24px;
+	padding-right: 24px;
+}
+
+.intranet-fire-employee-wizard__button--plain.ui-btn
+{
+	min-height: 38px;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.intranet-fire-employee-wizard__button--plain.ui-btn .ui-btn-text
+{
+	font-size: var(--ui-font-size-md, 15px);
+	line-height: var(--ui-font-line-height-lg, 1.33);
+	letter-spacing: -0.05px;
+}
+
+@media (max-width: 767px)
+{
+	.intranet-fire-employee-wizard
+	{
+		padding: 20px;
+	}
+
+	.intranet-fire-employee-wizard__actions
+	{
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.intranet-fire-employee-wizard__button.ui-btn
+	{
+		width: 100%;
+		justify-content: center;
+	}
+}

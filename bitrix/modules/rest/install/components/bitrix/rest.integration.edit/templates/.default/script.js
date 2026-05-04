@@ -1,6 +1,6 @@
 ;(function ()
 {
-	var paramsWebHook = [];
+	var paramsWebHook = {};
 	BX.namespace('BX.rest.integration');
 	if (BX.rest.integration.edit)
 	{
@@ -828,46 +828,53 @@
 	BX.rest.integration.edit.makeCurlString = function ()
 	{
 		BX.rest.integration.edit.setMethodLink();
-		var webhookUrl = BX('rest-integration-form').querySelector('#webhookURL');
 
-		if (typeof paramsWebHook === 'object' && webhookUrl !== null)
+		const form = BX('rest-integration-form')
+		const webhookUrl = form.querySelector('#webhookURL');
+
+		if (webhookUrl === null)
 		{
-			var selectMethod, inputUri, paramsString;
-			for (var key in paramsWebHook)
-			{
-				paramsString = '';
-				if (
-					paramsWebHook.hasOwnProperty(key)
-					&& typeof paramsWebHook[key]['items'] === 'object'
-					&& paramsWebHook[key]['items'].length > 0
-				)
-				{
-					for (var i = 0; i < paramsWebHook[key]['items'].length; i++)
-					{
-						if (paramsString !== '')
-						{
-							paramsString += '&';
-						}
-						paramsString += paramsWebHook[key]['items'][i]['title'] + '=';
-						if (typeof paramsWebHook[key]['items'][i]['layout']['input']['value'] === 'string')
-						{
-							paramsString += encodeURIComponent(paramsWebHook[key]['items'][i]['layout']['input']['value']);
-						}
-					}
-				}
-				selectMethod = BX('rest-integration-form').querySelector('.integration-webhook-method-api-select input[name="QUERY['+key+'][METHOD]"]');
-				inputUri = BX('rest-integration-form').querySelector('.integration-curl-uri[data-key="'+key+'"]');
-				if (selectMethod !== null && inputUri !== null)
-				{
-					if (paramsString !== '')
-					{
-						paramsString = '?' + encodeURIComponent(paramsString);
-					}
-					inputUri.value = webhookUrl.value + selectMethod.value + '.json' + paramsString;
-				}
-			}
+			return;
 		}
 
+		Object.keys(paramsWebHook).forEach((key) => {
+
+			const selectedMethod = form.querySelector('[data-id="integration-webhook-method-api-select"] input[name="QUERY[' + key + '][METHOD]"]');
+			const inputUri = form.querySelector('[data-id="integration-webhook-curl"] input[data-key="' + key + '"]');
+
+			if (selectedMethod === null || inputUri === null)
+			{
+				return;
+			}
+
+			const queryStringParameters = new URLSearchParams();
+
+			if (BX.type.isArrayFilled(paramsWebHook[key].items))
+			{
+				paramsWebHook[key].items.forEach((item) => {
+					const itemValue =
+						BX.type.isStringFilled(item.layout.input.value)
+							? item.layout.input.value
+							: ''
+					;
+
+					queryStringParameters.append(
+						item.title,
+						itemValue
+					);
+				});
+			}
+
+			let queryString = queryStringParameters.toString();
+
+			if (queryString !== '')
+			{
+				queryString = '?' + queryString;
+			}
+
+			inputUri.value = webhookUrl.value + selectedMethod.value + '.json' + queryString;
+
+		});
 	};
 
 	BX.rest.integration.edit.setMethodLink = function ()
@@ -1175,6 +1182,9 @@
 		var modeServer = BX('rest-integration-form').querySelector('#applicationServer');
 		var modeZip = BX('rest-integration-form').querySelector('#applicationZip');
 		var appOnlyApi = BX('rest-integration-form').querySelector('#rest-integration-form input[name="APPLICATION_ONLY_API"]');
+
+		appOnlyApi.disabled = type === 'ZIP';
+
 		if (type === 'ZIP')
 		{
 			BX.hide(modeServer);

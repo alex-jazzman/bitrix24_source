@@ -325,6 +325,10 @@ return static function (RoutingConfigurator $routes) {
 		->default('extra', '')
 		->default('videoconf', 1)
 	;
+	$routes->any($siteDir . 'guest/{code}',
+		new PublicPageController($siteDir . 'guest/index.php'))
+		->where('code', '[a-zA-Z0-9]+')
+	;
 	$routes->any($siteDir . 'online/{alias}/{extra}',
 		new PublicPageController($siteDir . 'desktop_app/router.php'))
 		->where('alias', '[\.\-0-9a-zA-Z]+')
@@ -552,6 +556,7 @@ return static function (RoutingConfigurator $routes) {
 	;
 
 	// vibe
+	$routes->any($siteDir . 'vibe/', new PublicPageController($siteDir . 'welcome/index.php'));
 	$routes->any($siteDir . 'welcome/', new PublicPageController($siteDir . 'welcome/index.php'));
 	$routes->any($siteDir . 'welcome/edit/{moduleId}/{embedId}/', new PublicPageController($siteDir . 'welcome/edit/index.php'))
 		->where('moduleId', '[0-9a-zA-Z]+')

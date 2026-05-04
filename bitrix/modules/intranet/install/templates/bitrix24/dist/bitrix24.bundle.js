@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_popup,ui_buttons,intranet_avatarWidget,timeman_workTimeStateIcon,ui_infoHelper,bitrix24_licenseWidget,intranet_licenseWidget,pull_client,main_core_cache,main_core_events,intranet_widgetLoader,intranet_invitationWidget,ui_cnt,main_core) {
+(function (exports,main_popup,ui_buttons,ui_iconSet_api_core,main_loader,main_sidepanel,intranet_avatarWidget,timeman_workTimeStateIcon,ui_infoHelper,bitrix24_licenseWidget,intranet_licenseWidget,pull_client,main_core_cache,main_core_events,intranet_widgetLoader,intranet_invitationWidget,ui_cnt,main_core) {
 	'use strict';
 
 	let _ = t => t,
@@ -69,14 +69,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      style: ui_buttons.AirButtonStyle.FILLED,
 	      text: options.sendButtonText,
 	      useAirDesign: true,
-	      onclick: async button => {
-	        button.setClocking(true);
-	        const onSliderClose = () => {
-	          button.setClocking(false);
-	          top.BX.removeCustomEvent('SidePanel.Slider:onClose', onSliderClose);
-	        };
-	        top.BX.addCustomEvent('SidePanel.Slider:onClose', onSliderClose);
-	        await showIntegratorApplicationForm();
+	      onclick: () => {
+	        showIntegratorApplicationForm();
 	      }
 	    }).setWide(true)]
 	  };
@@ -568,7 +562,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	};
 
 	let _$5 = t => t,
-	  _t$5,
+	  _t$5;
+	const createRightSidebarSkeleton = () => {
+	  return main_core.Tag.render(_t$5 || (_t$5 = _$5`
+		<div class="right-sidebar-skeleton">
+			<div class="right-sidebar-skeleton__header"></div>
+			<div class="right-sidebar-skeleton__chat"></div>
+		</div>
+	`));
+	};
+
+	let _$6 = t => t,
+	  _t$6,
 	  _t2$4,
 	  _t3$3,
 	  _t4$2,
@@ -605,19 +610,41 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: new main_core_cache.MemoryCache()
 	    });
-	    if (this.isEnabled()) {
+	    if (Composite.isEnabled()) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
 	    }
 	  }
-	  isEnabled() {
+	  static isEnabled() {
 	    return !main_core.Type.isUndefined(window.frameRequestStart);
 	  }
-	  isReady() {
+	  static isReady() {
 	    var _window$BX, _window$BX$frameCache;
 	    return ((_window$BX = window.BX) == null ? void 0 : (_window$BX$frameCache = _window$BX.frameCache) == null ? void 0 : _window$BX$frameCache.frameDataInserted) === true || !main_core.Type.isUndefined(window.frameRequestFail);
 	  }
+	  static ready(callback) {
+	    if (!main_core.Type.isFunction(callback)) {
+	      return;
+	    }
+	    if (this.isEnabled()) {
+	      if (this.isReady()) {
+	        callback();
+	      } else {
+	        main_core_events.EventEmitter.subscribe('onFrameDataProcessed', callback);
+	        main_core_events.EventEmitter.subscribe('onFrameDataRequestFail', callback);
+	      }
+	    } else if (document.readyState === 'loading') {
+	      main_core.Event.ready(() => {
+	        callback();
+	      });
+	    } else {
+	      callback();
+	    }
+	  }
+	  static clearCache() {
+	    void main_core.ajax.runAction('intranet.composite.clearCache');
+	  }
 	  showLoader() {
-	    if (this.isReady()) {
+	    if (Composite.isReady()) {
 	      return;
 	    }
 	    const page = window.location.pathname;
@@ -637,12 +664,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader]();
 	  }
+	  showRightSidebarLoader() {
+	    const container = document.getElementById('app__right-panel');
+	    if (container) {
+	      main_core.Dom.append(createRightSidebarSkeleton(), container);
+	    }
+	  }
 	  getStubContainer() {
 	    return document.querySelector('#page-area');
 	  }
 	  getLoaderContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('loader', () => {
-	      return main_core.Tag.render(_t$5 || (_t$5 = _$5`
+	      return main_core.Tag.render(_t$6 || (_t$6 = _$6`
 				<div class="composite-skeleton-container">
 					<div class="composite-loader-container">
 						<svg class="composite-loader-circular" viewBox="25 25 50 50">
@@ -655,7 +688,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getLiveFeedSkeleton() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-skeleton', () => {
-	      return main_core.Tag.render(_t2$4 || (_t2$4 = _$5`
+	      return main_core.Tag.render(_t2$4 || (_t2$4 = _$6`
 				<div class="page top-menu-mode start-page no-background no-all-paddings no-page-header">
 					<div class="page__workarea">
 						<div class="page__sidebar">${0}</div>
@@ -667,7 +700,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getLiveFeedSidebar() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-sidebar', () => {
-	      return main_core.Tag.render(_t3$3 || (_t3$3 = _$5`
+	      return main_core.Tag.render(_t3$3 || (_t3$3 = _$6`
 				<div class="skeleton__white-bg-element skeleton__sidebar skeleton__intranet-ustat">
 					<div class="skeleton__graph-circle"></div>
 					<div class="skeleton__graph-right">
@@ -784,7 +817,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getLiveFeedWorkArea() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-work-area', () => {
-	      return main_core.Tag.render(_t4$2 || (_t4$2 = _$5`
+	      return main_core.Tag.render(_t4$2 || (_t4$2 = _$6`
 				<div class="skeleton__white-bg-element skeleton__feed-wrap">
 					<div class="skeleton__feed-wrap_header">
 						<div class="skeleton__feed-wrap_header-link --long"></div>
@@ -998,7 +1031,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  var _options$actionsBarOp;
 	  const actionsBarOptions = (_options$actionsBarOp = options == null ? void 0 : options.actionsBarOptions) != null ? _options$actionsBarOp : {};
 	  const showActionsBar = main_core.Type.isObject(options == null ? void 0 : options.actionsBarOptions) || (options == null ? void 0 : options.actionsBarOptions) === true;
-	  return main_core.Tag.render(_t5$2 || (_t5$2 = _$5`
+	  return main_core.Tag.render(_t5$2 || (_t5$2 = _$6`
 			<div class="grid-skeleton-wrapper">
 				${0}
 				${0}
@@ -1040,7 +1073,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  var _options$actionsBarOp2;
 	  const actionsBarOptions = (_options$actionsBarOp2 = options == null ? void 0 : options.actionsBarOptions) != null ? _options$actionsBarOp2 : {};
 	  const showActionsBar = main_core.Type.isObject(options == null ? void 0 : options.actionsBarOptions) || (options == null ? void 0 : options.actionsBarOptions) === true;
-	  return main_core.Tag.render(_t6$1 || (_t6$1 = _$5`
+	  return main_core.Tag.render(_t6$1 || (_t6$1 = _$6`
 			<div class="grid-skeleton-wrapper">
 				${0}
 				${0}
@@ -1056,7 +1089,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  main_core_events.EventEmitter.subscribe('onAjaxFailure', event => {
 	    const [reason, status] = event.getCompatData();
 	    const redirectUrl = `/auth/?backurl=${getBackUrl()}`;
-	    if (this.isEnabled() && (reason === 'auth' || reason === 'status' && status === 401)) {
+	    if (Composite.isEnabled() && (reason === 'auth' || reason === 'status' && status === 401)) {
 	      console.error('Auth ajax request failed', reason, status);
 	      top.location = redirectUrl;
 	    }
@@ -1431,94 +1464,649 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
+	let _$7 = t => t,
+	  _t$7,
+	  _t2$5;
 	var _EXPANDED_CLASS = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("EXPANDED_CLASS");
-	var _isExpanded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExpanded");
-	var _getRootElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRootElement");
-	var _getAvatarWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAvatarWrapper");
+	var _RESIZING_CLASS = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("RESIZING_CLASS");
+	var _DEFAULT_WIDTH = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("DEFAULT_WIDTH");
+	var _SS_WIDTH_KEY = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("SS_WIDTH_KEY");
+	var _SS_EXPANDED_KEY = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("SS_EXPANDED_KEY");
+	var _resizeObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resizeObserver");
+	var _resizeHandleEl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resizeHandleEl");
+	var _dragOverlayEl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dragOverlayEl");
+	var _isDragging = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDragging");
+	var _pendingTransitionEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pendingTransitionEvent");
+	var _dragStartX = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dragStartX");
+	var _dragStartWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dragStartWidth");
+	var _savedWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("savedWidth");
+	var _boundOnPointerDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("boundOnPointerDown");
+	var _boundOnPointerMove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("boundOnPointerMove");
+	var _boundOnPointerUp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("boundOnPointerUp");
+	var _boundOnTransitionEnd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("boundOnTransitionEnd");
+	var _getSavedWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSavedWidth");
+	var _startTransition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startTransition");
+	var _cancelTransition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cancelTransition");
+	var _onTransitionEnd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onTransitionEnd");
+	var _applySavedWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applySavedWidth");
+	var _initResizeHandle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initResizeHandle");
+	var _onPointerDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPointerDown");
+	var _onPointerMove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPointerMove");
+	var _onPointerUp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPointerUp");
+	var _showDragOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showDragOverlay");
+	var _hideDragOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideDragOverlay");
+	var _saveWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveWidth");
+	var _handleResizeObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResizeObserver");
+	var _saveExpandedToSessionStorage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveExpandedToSessionStorage");
+	var _saveWidthToSessionStorage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveWidthToSessionStorage");
+	var _subscribeToEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToEvents");
 	class RightPanel extends main_core_events.EventEmitter {
 	  constructor() {
 	    super();
-	    Object.defineProperty(this, _getAvatarWrapper, {
-	      value: _getAvatarWrapper2
+	    Object.defineProperty(this, _subscribeToEvents, {
+	      value: _subscribeToEvents2
 	    });
-	    Object.defineProperty(this, _getRootElement, {
-	      value: _getRootElement2
+	    Object.defineProperty(this, _saveWidthToSessionStorage, {
+	      value: _saveWidthToSessionStorage2
 	    });
-	    Object.defineProperty(this, _isExpanded, {
+	    Object.defineProperty(this, _saveExpandedToSessionStorage, {
+	      value: _saveExpandedToSessionStorage2
+	    });
+	    Object.defineProperty(this, _handleResizeObserver, {
+	      value: _handleResizeObserver2
+	    });
+	    Object.defineProperty(this, _saveWidth, {
+	      value: _saveWidth2
+	    });
+	    Object.defineProperty(this, _hideDragOverlay, {
+	      value: _hideDragOverlay2
+	    });
+	    Object.defineProperty(this, _showDragOverlay, {
+	      value: _showDragOverlay2
+	    });
+	    Object.defineProperty(this, _onPointerUp, {
+	      value: _onPointerUp2
+	    });
+	    Object.defineProperty(this, _onPointerMove, {
+	      value: _onPointerMove2
+	    });
+	    Object.defineProperty(this, _onPointerDown, {
+	      value: _onPointerDown2
+	    });
+	    Object.defineProperty(this, _initResizeHandle, {
+	      value: _initResizeHandle2
+	    });
+	    Object.defineProperty(this, _applySavedWidth, {
+	      value: _applySavedWidth2
+	    });
+	    Object.defineProperty(this, _onTransitionEnd, {
+	      value: _onTransitionEnd2
+	    });
+	    Object.defineProperty(this, _cancelTransition, {
+	      value: _cancelTransition2
+	    });
+	    Object.defineProperty(this, _startTransition, {
+	      value: _startTransition2
+	    });
+	    Object.defineProperty(this, _getSavedWidth, {
+	      value: _getSavedWidth2
+	    });
+	    Object.defineProperty(this, _resizeObserver, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _resizeHandleEl, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _dragOverlayEl, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _isDragging, {
 	      writable: true,
 	      value: false
 	    });
-	    this.setEventNamespace('BX.Intranet.Bitrix24.RightPanel');
+	    Object.defineProperty(this, _pendingTransitionEvent, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _dragStartX, {
+	      writable: true,
+	      value: 0
+	    });
+	    Object.defineProperty(this, _dragStartWidth, {
+	      writable: true,
+	      value: 0
+	    });
+	    Object.defineProperty(this, _savedWidth, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _boundOnPointerDown, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _boundOnPointerMove, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _boundOnPointerUp, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _boundOnTransitionEnd, {
+	      writable: true,
+	      value: void 0
+	    });
+	    this.setEventNamespace('BX.Intranet.Bitrix24.Template.RightPanel');
+	    babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerDown)[_boundOnPointerDown] = babelHelpers.classPrivateFieldLooseBase(this, _onPointerDown)[_onPointerDown].bind(this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerMove)[_boundOnPointerMove] = babelHelpers.classPrivateFieldLooseBase(this, _onPointerMove)[_onPointerMove].bind(this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerUp)[_boundOnPointerUp] = babelHelpers.classPrivateFieldLooseBase(this, _onPointerUp)[_onPointerUp].bind(this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _boundOnTransitionEnd)[_boundOnTransitionEnd] = babelHelpers.classPrivateFieldLooseBase(this, _onTransitionEnd)[_onTransitionEnd].bind(this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeToEvents)[_subscribeToEvents]();
 	  }
 	  getContainer() {
-	    return document.getElementById('app__right-panel');
-	  }
-	  expand() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
-	      return;
+	    const panel = document.getElementById('app__right-panel');
+	    if (panel !== null && babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver] === null) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver] = new ResizeObserver(babelHelpers.classPrivateFieldLooseBase(this, _handleResizeObserver)[_handleResizeObserver].bind(this));
+	      babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver].observe(panel);
 	    }
-	    const root = babelHelpers.classPrivateFieldLooseBase(this, _getRootElement)[_getRootElement]();
-	    if (!root) {
-	      return;
-	    }
-	    main_core.Dom.addClass(root, babelHelpers.classPrivateFieldLooseBase(RightPanel, _EXPANDED_CLASS)[_EXPANDED_CLASS]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = true;
-	    const avatarWrapper = babelHelpers.classPrivateFieldLooseBase(this, _getAvatarWrapper)[_getAvatarWrapper]();
-	    if (avatarWrapper) {
-	      main_core.Dom.addClass(avatarWrapper, '--collapsed');
-	    }
-	    const container = this.getContainer();
-	    if (container) {
-	      main_core.Event.bindOnce(container, 'transitionend', () => {
-	        this.emit('onExpand');
-	      });
-	    }
-	  }
-	  collapse() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
-	      return;
-	    }
-	    const root = babelHelpers.classPrivateFieldLooseBase(this, _getRootElement)[_getRootElement]();
-	    if (!root) {
-	      return;
-	    }
-	    main_core.Dom.removeClass(root, babelHelpers.classPrivateFieldLooseBase(RightPanel, _EXPANDED_CLASS)[_EXPANDED_CLASS]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = false;
-	    const avatarWrapper = babelHelpers.classPrivateFieldLooseBase(this, _getAvatarWrapper)[_getAvatarWrapper]();
-	    if (avatarWrapper && window.scrollY <= 20) {
-	      main_core.Dom.removeClass(avatarWrapper, '--collapsed');
-	    }
-	    const container = this.getContainer();
-	    if (container) {
-	      main_core.Event.bindOnce(container, 'transitionend', () => {
-	        this.emit('onCollapse');
-	      });
-	    }
+	    return panel;
 	  }
 	  isExpanded() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded];
+	    return main_core.Dom.hasClass(document.body, babelHelpers.classPrivateFieldLooseBase(RightPanel, _EXPANDED_CLASS)[_EXPANDED_CLASS]);
+	  }
+	  expand() {
+	    if (this.isExpanded()) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _cancelTransition)[_cancelTransition]();
+	    main_core.Dom.addClass(document.body, babelHelpers.classPrivateFieldLooseBase(RightPanel, _EXPANDED_CLASS)[_EXPANDED_CLASS]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _applySavedWidth)[_applySavedWidth]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _initResizeHandle)[_initResizeHandle]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _saveExpandedToSessionStorage)[_saveExpandedToSessionStorage](true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _saveWidthToSessionStorage)[_saveWidthToSessionStorage]();
+	    this.emit('onExpand');
+	    babelHelpers.classPrivateFieldLooseBase(this, _startTransition)[_startTransition]('onExpandComplete');
+	  }
+	  collapse() {
+	    if (!this.isExpanded()) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _cancelTransition)[_cancelTransition]();
+	    main_core.Dom.removeClass(document.body, [babelHelpers.classPrivateFieldLooseBase(RightPanel, _EXPANDED_CLASS)[_EXPANDED_CLASS], '--right-panel-no-transition', babelHelpers.classPrivateFieldLooseBase(RightPanel, _RESIZING_CLASS)[_RESIZING_CLASS]]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _saveExpandedToSessionStorage)[_saveExpandedToSessionStorage](false);
+	    this.emit('onCollapse');
+	    babelHelpers.classPrivateFieldLooseBase(this, _startTransition)[_startTransition]('onCollapseComplete');
 	  }
 	}
-	function _getRootElement2() {
-	  return document.querySelector('.root');
+	function _getSavedWidth2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _savedWidth)[_savedWidth] === null) {
+	    const parsed = parseInt(getComputedStyle(document.body).getPropertyValue('--air-right-panel-width'), 10);
+	    babelHelpers.classPrivateFieldLooseBase(this, _savedWidth)[_savedWidth] = parsed > 0 ? parsed : babelHelpers.classPrivateFieldLooseBase(RightPanel, _DEFAULT_WIDTH)[_DEFAULT_WIDTH];
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _savedWidth)[_savedWidth];
 	}
-	function _getAvatarWrapper2() {
-	  return document.querySelector('[data-id="bx-avatar-widget"]');
+	function _startTransition2(eventName) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _pendingTransitionEvent)[_pendingTransitionEvent] = eventName;
+	  const container = this.getContainer();
+	  if (container) {
+	    main_core.Event.bind(container, 'transitionend', babelHelpers.classPrivateFieldLooseBase(this, _boundOnTransitionEnd)[_boundOnTransitionEnd]);
+	  }
+	}
+	function _cancelTransition2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _pendingTransitionEvent)[_pendingTransitionEvent] = null;
+	  const container = this.getContainer();
+	  if (container) {
+	    main_core.Event.unbind(container, 'transitionend', babelHelpers.classPrivateFieldLooseBase(this, _boundOnTransitionEnd)[_boundOnTransitionEnd]);
+	  }
+	}
+	function _onTransitionEnd2(event) {
+	  if (event.target !== this.getContainer() || event.propertyName !== 'width') {
+	    return;
+	  }
+	  const eventName = babelHelpers.classPrivateFieldLooseBase(this, _pendingTransitionEvent)[_pendingTransitionEvent];
+	  babelHelpers.classPrivateFieldLooseBase(this, _cancelTransition)[_cancelTransition]();
+	  if (eventName) {
+	    this.emit(eventName);
+	  }
+	  window.dispatchEvent(new window.Event('resize'));
+	}
+	function _applySavedWidth2() {
+	  main_core.Dom.style(document.body, '--air-right-panel-width', `${babelHelpers.classPrivateFieldLooseBase(this, _getSavedWidth)[_getSavedWidth]()}px`);
+	}
+	function _initResizeHandle2() {
+	  const container = this.getContainer();
+	  if (!container || babelHelpers.classPrivateFieldLooseBase(this, _resizeHandleEl)[_resizeHandleEl]) {
+	    return;
+	  }
+	  const grabberIcon = new ui_iconSet_api_core.Icon({
+	    icon: ui_iconSet_api_core.Outline.DRAG_L,
+	    size: 18
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _resizeHandleEl)[_resizeHandleEl] = main_core.Tag.render(_t$7 || (_t$7 = _$7`
+			<div class="right-panel-resize-handle --ui-context-content-dark">
+				<div class="right-panel-resize-handle__grabber">
+					<div class="right-panel-resize-handle__grabber-icon">
+						${0}
+					</div>
+				</div>
+			</div>
+		`), grabberIcon.render());
+	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _resizeHandleEl)[_resizeHandleEl], container);
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _resizeHandleEl)[_resizeHandleEl], 'pointerdown', babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerDown)[_boundOnPointerDown]);
+	}
+	function _onPointerDown2(event) {
+	  event.preventDefault();
+	  const container = this.getContainer();
+	  if (!container) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _isDragging)[_isDragging] = true;
+	  babelHelpers.classPrivateFieldLooseBase(this, _dragStartX)[_dragStartX] = event.clientX;
+	  babelHelpers.classPrivateFieldLooseBase(this, _dragStartWidth)[_dragStartWidth] = container.getBoundingClientRect().width;
+	  main_core.Dom.addClass(document.body, babelHelpers.classPrivateFieldLooseBase(RightPanel, _RESIZING_CLASS)[_RESIZING_CLASS]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _showDragOverlay)[_showDragOverlay]();
+	  main_core.Event.bind(document, 'pointermove', babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerMove)[_boundOnPointerMove]);
+	  main_core.Event.bind(document, 'pointerup', babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerUp)[_boundOnPointerUp]);
+	}
+	function _onPointerMove2(event) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isDragging)[_isDragging]) {
+	    return;
+	  }
+	  const delta = babelHelpers.classPrivateFieldLooseBase(this, _dragStartX)[_dragStartX] - event.clientX;
+	  const newWidth = babelHelpers.classPrivateFieldLooseBase(this, _dragStartWidth)[_dragStartWidth] + delta;
+	  main_core.Dom.style(document.body, '--air-right-panel-width', `${newWidth}px`);
+	  const container = this.getContainer();
+	  if (container) {
+	    const actualWidth = container.getBoundingClientRect().width;
+	    if (actualWidth !== newWidth) {
+	      main_core.Dom.style(document.body, '--air-right-panel-width', `${actualWidth}px`);
+	    }
+	  }
+	}
+	function _onPointerUp2(event) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isDragging)[_isDragging]) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _isDragging)[_isDragging] = false;
+	  main_core.Dom.removeClass(document.body, babelHelpers.classPrivateFieldLooseBase(RightPanel, _RESIZING_CLASS)[_RESIZING_CLASS]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _hideDragOverlay)[_hideDragOverlay]();
+	  main_core.Event.unbind(document, 'pointermove', babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerMove)[_boundOnPointerMove]);
+	  main_core.Event.unbind(document, 'pointerup', babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerUp)[_boundOnPointerUp]);
+	  const container = this.getContainer();
+	  if (container && babelHelpers.classPrivateFieldLooseBase(this, _getSavedWidth)[_getSavedWidth]() !== container.getBoundingClientRect().width) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _savedWidth)[_savedWidth] = container.getBoundingClientRect().width;
+	    babelHelpers.classPrivateFieldLooseBase(this, _saveWidth)[_saveWidth]();
+	    window.dispatchEvent(new window.Event('resize'));
+	  }
+	}
+	function _showDragOverlay2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayEl)[_dragOverlayEl]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayEl)[_dragOverlayEl] = main_core.Tag.render(_t2$5 || (_t2$5 = _$7`
+				<div class="right-panel-drag-overlay"></div>
+			`));
+	  }
+	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayEl)[_dragOverlayEl], document.body);
+	}
+	function _hideDragOverlay2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayEl)[_dragOverlayEl]) {
+	    main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayEl)[_dragOverlayEl]);
+	  }
+	}
+	function _saveWidth2() {
+	  BX.userOptions.save('intranet', 'right_panel_width', null, String(babelHelpers.classPrivateFieldLooseBase(this, _getSavedWidth)[_getSavedWidth]()));
+	  babelHelpers.classPrivateFieldLooseBase(this, _saveWidthToSessionStorage)[_saveWidthToSessionStorage]();
+	  Composite.clearCache();
+	}
+	function _handleResizeObserver2() {
+	  this.emit('onResize');
+	}
+	function _saveExpandedToSessionStorage2(expanded) {
+	  try {
+	    sessionStorage.setItem(babelHelpers.classPrivateFieldLooseBase(RightPanel, _SS_EXPANDED_KEY)[_SS_EXPANDED_KEY], expanded ? 'Y' : 'N');
+	  } catch {/* sessionStorage may be unavailable */}
+	}
+	function _saveWidthToSessionStorage2() {
+	  try {
+	    sessionStorage.setItem(babelHelpers.classPrivateFieldLooseBase(RightPanel, _SS_WIDTH_KEY)[_SS_WIDTH_KEY], String(babelHelpers.classPrivateFieldLooseBase(this, _getSavedWidth)[_getSavedWidth]()));
+	  } catch {/* sessionStorage may be unavailable */}
+	}
+	function _subscribeToEvents2() {
+	  const clearComposite = () => Composite.clearCache();
+	  this.subscribe('onExpandComplete', clearComposite);
+	  this.subscribe('onCollapseComplete', clearComposite);
+	  Composite.ready(() => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _initResizeHandle)[_initResizeHandle]();
+	  });
 	}
 	Object.defineProperty(RightPanel, _EXPANDED_CLASS, {
 	  writable: true,
 	  value: '--right-panel-expanded'
 	});
+	Object.defineProperty(RightPanel, _RESIZING_CLASS, {
+	  writable: true,
+	  value: '--resizing'
+	});
+	Object.defineProperty(RightPanel, _DEFAULT_WIDTH, {
+	  writable: true,
+	  value: 380
+	});
+	Object.defineProperty(RightPanel, _SS_WIDTH_KEY, {
+	  writable: true,
+	  value: 'b24_right_panel_width'
+	});
+	Object.defineProperty(RightPanel, _SS_EXPANDED_KEY, {
+	  writable: true,
+	  value: 'b24_right_panel_expanded'
+	});
+
+	let _$8 = t => t,
+	  _t$8,
+	  _t2$6;
+	var _rightPanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightPanel");
+	var _rightBar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
+	var _siteTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("siteTemplate");
+	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _contentContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contentContainer");
+	var _vueApp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("vueApp");
+	var _isExpanded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExpanded");
+	var _chatExtensionPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatExtensionPromise");
+	var _showSidebar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSidebar");
+	var _initContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initContainer");
+	var _mountVueApp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mountVueApp");
+	var _loadChatExtension = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadChatExtension");
+	var _loadTheme = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadTheme");
+	var _destroy = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroy");
+	class RightPanelAiChat extends main_core_events.EventEmitter {
+	  constructor(rightPanel, rightBar, siteTemplate) {
+	    super();
+	    Object.defineProperty(this, _destroy, {
+	      value: _destroy2
+	    });
+	    Object.defineProperty(this, _loadTheme, {
+	      value: _loadTheme2
+	    });
+	    Object.defineProperty(this, _loadChatExtension, {
+	      value: _loadChatExtension2
+	    });
+	    Object.defineProperty(this, _mountVueApp, {
+	      value: _mountVueApp2
+	    });
+	    Object.defineProperty(this, _initContainer, {
+	      value: _initContainer2
+	    });
+	    Object.defineProperty(this, _showSidebar, {
+	      value: _showSidebar2
+	    });
+	    Object.defineProperty(this, _rightPanel, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _rightBar, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _siteTemplate, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _container, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _contentContainer, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _vueApp, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _isExpanded, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _chatExtensionPromise, {
+	      writable: true,
+	      value: null
+	    });
+	    this.setEventNamespace('BX.Intranet.Bitrix24.Template.RightPanelAiChat');
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel] = rightPanel;
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightBar)[_rightBar] = rightBar;
+	    babelHelpers.classPrivateFieldLooseBase(this, _siteTemplate)[_siteTemplate] = siteTemplate;
+	  }
+	  isExpanded() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded];
+	  }
+	  expand(params) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _loadTheme)[_loadTheme]().then(({
+	      ThemeManager,
+	      SpecialBackground
+	    }) => {
+	      if (!babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
+	        return;
+	      }
+	      const chatBackground = ThemeManager.getBackgroundStyleById(SpecialBackground.martaAI);
+	      if (!babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _initContainer)[_initContainer](chatBackground);
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _showSidebar)[_showSidebar]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _mountVueApp)[_mountVueApp](params.chatId);
+	      this.emit('onExpand');
+	      main_core_events.EventEmitter.subscribeOnce('IM.AiAssistantWidget:minimize', () => {
+	        this.collapse();
+	      });
+	    }).catch(error => {
+	      console.error('RightPanelAiChat: Failed to load theme:', error);
+	      babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = false;
+	    });
+	  }
+	  collapse() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = false;
+	    this.emit('onCollapse');
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel].subscribeOnce('onCollapseComplete', () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _rightBar)[_rightBar].resetBackground();
+	      babelHelpers.classPrivateFieldLooseBase(this, _siteTemplate)[_siteTemplate].resetAvatarBlockBackground();
+	      babelHelpers.classPrivateFieldLooseBase(this, _destroy)[_destroy]();
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel].collapse();
+	  }
+	  preload() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _loadChatExtension)[_loadChatExtension]();
+	  }
+	}
+	function _showSidebar2() {
+	  const sidebarContainer = babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel].getContainer();
+	  if (!sidebarContainer) {
+	    console.error('RightPanelAiChat: Sidebar container #app__right-panel not found');
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel].expand();
+	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], sidebarContainer);
+	}
+	function _initContainer2(chatBackground) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer] = main_core.Tag.render(_t$8 || (_t$8 = _$8`
+			<div class="right-panel-ai-chat__content"></div>
+		`));
+	  const loader = new main_loader.Loader({
+	    size: 144,
+	    color: 'rgba(255, 255, 255, 0.6)',
+	    target: babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer],
+	    offset: {
+	      top: '-50px'
+	    }
+	  });
+	  loader.show();
+	  babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = main_core.Tag.render(_t2$6 || (_t2$6 = _$8`
+			<div class="right-panel-ai-chat --ui-context-content-light">
+				${0}
+				<div class="right-panel-ai-chat__background"
+					style="
+						background-color: ${0};
+						background-image: ${0};
+						background-position: ${0};
+						background-repeat: ${0};
+						background-size: ${0};
+					"
+				></div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer], chatBackground.backgroundColor, chatBackground.backgroundImage, chatBackground.backgroundPosition, chatBackground.backgroundRepeat, chatBackground.backgroundSize);
+	}
+	async function _mountVueApp2(chatId) {
+	  try {
+	    const application = await babelHelpers.classPrivateFieldLooseBase(this, _loadChatExtension)[_loadChatExtension]();
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp] = application;
+	    application.mount({
+	      aiAssistantBotId: chatId,
+	      rootContainer: babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer]
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _siteTemplate)[_siteTemplate].setAvatarBlockBackground({
+	      backgroundColor: '#fff'
+	    });
+	  } catch (error) {
+	    console.error('RightPanelAiChat: Failed to mount chat widget:', error);
+	  }
+	}
+	function _loadChatExtension2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _chatExtensionPromise)[_chatExtensionPromise]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _chatExtensionPromise)[_chatExtensionPromise] = main_core.Runtime.loadExtension('im.v2.application.integration.ai-assistant-widget').then(() => {
+	      const LaunchApplication = BX.Messenger.v2.Application.Launch;
+	      const ChatEmbeddedApplication = BX.Messenger.v2.Application.ChatEmbeddedApplication;
+	      return LaunchApplication(ChatEmbeddedApplication.aiAssistantWidget);
+	    }).catch(error => {
+	      console.error('RightPanelAiChat: Failed to preload chat extension:', error);
+	      babelHelpers.classPrivateFieldLooseBase(this, _chatExtensionPromise)[_chatExtensionPromise] = null;
+	      throw error;
+	    });
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _chatExtensionPromise)[_chatExtensionPromise];
+	}
+	function _loadTheme2() {
+	  return main_core.Runtime.loadExtension('im.v2.lib.theme').then(exports => {
+	    return {
+	      ThemeManager: exports.ThemeManager,
+	      SpecialBackground: exports.SpecialBackground
+	    };
+	  });
+	}
+	function _destroy2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp].bitrixVue.unmount();
+	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp] = null;
+	  }
+	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = null;
+	  babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer] = null;
+	}
+
+	let _$9 = t => t,
+	  _t$9;
+	var _rightPanel$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightPanel");
+	var _rightBar$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
+	var _overlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("overlay");
+	class RightSidebar {
+	  constructor(panel, bar) {
+	    Object.defineProperty(this, _rightPanel$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _rightBar$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _overlay, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$1)[_rightPanel$1] = panel;
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1] = bar;
+	    panel.subscribe('onResize', () => {
+	      main_sidepanel.SidePanel.Instance.adjustLayout();
+	      this.adjustOverlay();
+	    });
+	    panel.subscribe('onExpand', () => {
+	      this.toggleContext();
+	    });
+	    panel.subscribe('onCollapse', () => {
+	      this.toggleContext();
+	    });
+	    panel.subscribe('onExpandComplete', () => {
+	      this.adjustOverlay();
+	    });
+	    panel.subscribe('onCollapseComplete', () => {
+	      this.adjustOverlay();
+	    });
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpening', () => {
+	      this.adjustOverlay();
+	      this.toggleContext();
+	    });
+	    const onClose = () => {
+	      if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() === 0) {
+	        this.adjustOverlay();
+	      }
+	      this.toggleContext();
+	    };
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', onClose);
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onDestroy', onClose);
+	  }
+	  getOverlay() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay] === null) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay] = main_core.Tag.render(_t$9 || (_t$9 = _$9`<div class="right-bar-overlay"></div>`));
+	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay], document.body);
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay];
+	  }
+	  setOverlayBackground(background) {
+	    main_core.Dom.style(this.getOverlay(), 'background', background);
+	  }
+	  adjustOverlay() {
+	    const rightPanel = babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$1)[_rightPanel$1].getContainer() || babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer();
+	    if (rightPanel === null) {
+	      return;
+	    }
+	    const windowWidth = main_core.Browser.isMobile() ? window.innerWidth : document.documentElement.clientWidth;
+	    const width = windowWidth - rightPanel.getBoundingClientRect().left;
+	    main_core.Dom.style(this.getOverlay(), 'width', `${width}px`);
+	  }
+	  toggleContext() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer() === null) {
+	      return;
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$1)[_rightPanel$1].isExpanded()) {
+	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer(), '--ui-context-edge-dark');
+	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer(), '--ui-context-edge-light');
+	    } else if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() > 0) {
+	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer(), '--ui-context-edge-dark');
+	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer(), '--ui-context-edge-light');
+	    } else {
+	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer(), ['--ui-context-edge-light', '--ui-context-edge-dark']);
+	    }
+	  }
+	}
 
 	var _leftMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("leftMenu");
-	var _rightBar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
+	var _rightBar$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
 	var _header = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("header");
 	var _footer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("footer");
 	var _composite = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("composite");
 	var _chatMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatMenu");
 	var _goTopButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("goTopButton");
 	var _collaborationMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collaborationMenu");
-	var _rightPanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightPanel");
+	var _rightPanel$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightPanel");
+	var _rightPanelAiChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightPanelAiChat");
+	var _rightSidebar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightSidebar");
 	var _supportViewTransition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("supportViewTransition");
 	var _enterFullscreen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enterFullscreen");
 	var _exitFullscreen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("exitFullscreen");
@@ -1561,7 +2149,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _rightBar, {
+	    Object.defineProperty(this, _rightBar$2, {
 	      writable: true,
 	      value: null
 	    });
@@ -1589,7 +2177,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _rightPanel, {
+	    Object.defineProperty(this, _rightPanel$2, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _rightPanelAiChat, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _rightSidebar, {
 	      writable: true,
 	      value: null
 	    });
@@ -1599,7 +2195,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _patchJSClock)[_patchJSClock]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _goTopButton$1)[_goTopButton$1] = new GoTopButton();
 	    babelHelpers.classPrivateFieldLooseBase(this, _leftMenu)[_leftMenu] = new LeftMenu();
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightBar)[_rightBar] = new RightBar({
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightBar$2)[_rightBar$2] = new RightBar({
 	      goTopButton: babelHelpers.classPrivateFieldLooseBase(this, _goTopButton$1)[_goTopButton$1]
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _header)[_header] = new Header();
@@ -1607,14 +2203,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _composite)[_composite] = new Composite();
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatMenu)[_chatMenu] = new ChatMenu();
 	    babelHelpers.classPrivateFieldLooseBase(this, _collaborationMenu)[_collaborationMenu] = new CollaborationMenu();
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel] = new RightPanel();
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$2)[_rightPanel$2] = new RightPanel();
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanelAiChat)[_rightPanelAiChat] = new RightPanelAiChat(babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$2)[_rightPanel$2], babelHelpers.classPrivateFieldLooseBase(this, _rightBar$2)[_rightBar$2], this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _rightSidebar)[_rightSidebar] = new RightSidebar(babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$2)[_rightPanel$2], babelHelpers.classPrivateFieldLooseBase(this, _rightBar$2)[_rightBar$2]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _applyUserAgentRules)[_applyUserAgentRules]();
 	  }
 	  getLeftMenu() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _leftMenu)[_leftMenu];
 	  }
 	  getRightBar() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _rightBar)[_rightBar];
+	    return babelHelpers.classPrivateFieldLooseBase(this, _rightBar$2)[_rightBar$2];
 	  }
 	  getHeader() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _header)[_header];
@@ -1632,7 +2230,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _collaborationMenu)[_collaborationMenu];
 	  }
 	  getRightPanel() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel];
+	    return babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$2)[_rightPanel$2];
+	  }
+	  getRightPanelAiChat() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _rightPanelAiChat)[_rightPanelAiChat];
+	  }
+	  getRightSidebar() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _rightSidebar)[_rightSidebar];
 	  }
 	  enterFullscreen() {
 	    if (this.isFullscreen()) {
@@ -1682,6 +2286,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  setAvatarBlockBackground(background) {
 	    var _background$backgroun, _background$backgroun2, _background$backgroun3, _background$backgroun4, _background$backgroun5;
+	    // hack for chat.js #showSidebar()
+	    this.getRightSidebar().toggleContext();
 	    main_core.Dom.style(document.getElementById('avatar-area'), {
 	      backgroundImage: (_background$backgroun = background == null ? void 0 : background.backgroundImage) != null ? _background$backgroun : null,
 	      backgroundColor: (_background$backgroun2 = background == null ? void 0 : background.backgroundColor) != null ? _background$backgroun2 : null,
@@ -1787,14 +2393,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	var _searchOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchOptions");
 	var _extensionLoaded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extensionLoaded");
-	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _container$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _button$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("button");
 	var _input = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
 	var _searchTitleInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchTitleInstance");
+	var _searchButtonLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchButtonLabel");
+	var _closeButtonLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeButtonLabel");
+	var _boundHandleKeyDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("boundHandleKeyDown");
 	var _handleButtonClick$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleButtonClick");
 	var _handleInputFocusOut = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleInputFocusOut");
+	var _handleKeyDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleKeyDown");
 	class SearchTitle {
 	  constructor(options) {
+	    Object.defineProperty(this, _handleKeyDown, {
+	      value: _handleKeyDown2
+	    });
 	    Object.defineProperty(this, _handleInputFocusOut, {
 	      value: _handleInputFocusOut2
 	    });
@@ -1809,7 +2422,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: false
 	    });
-	    Object.defineProperty(this, _container, {
+	    Object.defineProperty(this, _container$1, {
 	      writable: true,
 	      value: null
 	    });
@@ -1825,23 +2438,48 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = document.getElementById(options.containerId);
+	    Object.defineProperty(this, _searchButtonLabel, {
+	      writable: true,
+	      value: ''
+	    });
+	    Object.defineProperty(this, _closeButtonLabel, {
+	      writable: true,
+	      value: ''
+	    });
+	    Object.defineProperty(this, _boundHandleKeyDown, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1] = document.getElementById(options.containerId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1] = document.getElementById(options.buttonId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input] = document.getElementById(options.inputId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _searchOptions)[_searchOptions] = options.searchOptions;
+	    babelHelpers.classPrivateFieldLooseBase(this, _searchButtonLabel)[_searchButtonLabel] = options.searchButtonLabel || '';
+	    babelHelpers.classPrivateFieldLooseBase(this, _closeButtonLabel)[_closeButtonLabel] = options.closeButtonLabel || '';
+	    babelHelpers.classPrivateFieldLooseBase(this, _boundHandleKeyDown)[_boundHandleKeyDown] = babelHelpers.classPrivateFieldLooseBase(this, _handleKeyDown)[_handleKeyDown].bind(this);
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1], 'click', babelHelpers.classPrivateFieldLooseBase(this, _handleButtonClick$1)[_handleButtonClick$1].bind(this));
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'focusout', babelHelpers.classPrivateFieldLooseBase(this, _handleInputFocusOut)[_handleInputFocusOut].bind(this));
 	  }
 	  open() {
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], '--active');
+	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1], '--active');
 	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].disabled = false;
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'aria-hidden', null);
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'tabindex', null);
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1], 'aria-label', babelHelpers.classPrivateFieldLooseBase(this, _closeButtonLabel)[_closeButtonLabel]);
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1], 'aria-expanded', true);
+	    main_core.Event.bind(document, 'keydown', babelHelpers.classPrivateFieldLooseBase(this, _boundHandleKeyDown)[_boundHandleKeyDown]);
 	    setTimeout(() => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].focus();
 	    }, 200);
 	  }
 	  close() {
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], '--active');
+	    main_core.Event.unbind(document, 'keydown', babelHelpers.classPrivateFieldLooseBase(this, _boundHandleKeyDown)[_boundHandleKeyDown]);
+	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1], '--active');
 	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].disabled = true;
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'aria-hidden', true);
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'tabindex', -1);
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1], 'aria-label', babelHelpers.classPrivateFieldLooseBase(this, _searchButtonLabel)[_searchButtonLabel]);
+	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1], 'aria-expanded', false);
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _searchTitleInstance)[_searchTitleInstance] !== null) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _searchTitleInstance)[_searchTitleInstance].clearSearch();
 	      babelHelpers.classPrivateFieldLooseBase(this, _searchTitleInstance)[_searchTitleInstance].closeResult();
@@ -1849,7 +2487,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 	function _handleButtonClick2$1() {
-	  if (main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], '--active')) {
+	  if (main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1], '--active')) {
 	    this.close();
 	  } else {
 	    this.open();
@@ -1869,6 +2507,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].value) && event.relatedTarget !== babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1]) {
 	    this.close();
 	  }
+	}
+	function _handleKeyDown2(event) {
+	  if (event.key !== 'Escape') {
+	    return;
+	  }
+	  this.close();
+	  babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1].focus();
 	}
 
 	var _avatarWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("avatarWrapper");
@@ -1959,9 +2604,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _setHiddenAvatar2() {
 	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'opacity', '0');
+	  main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'aria-hidden', 'true');
 	}
 	function _setVisibleAvatar2() {
 	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'opacity', '1');
+	  main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'aria-hidden', 'false');
 	}
 	function _showWorkTimeState2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _getWorkTimeState)[_getWorkTimeState]().renderTo(babelHelpers.classPrivateFieldLooseBase(this, _getShortWorkTimeStateWrapper)[_getShortWorkTimeStateWrapper]());
@@ -2130,12 +2777,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	var _options$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _buttonWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonWrapper");
+	var _button$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("button");
 	var _cache$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _getExtensionWidgetName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getExtensionWidgetName");
 	var _openWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openWidget");
 	var _showWidget$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWidget");
 	var _getWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidget");
 	var _getWidgetLoader$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetLoader");
+	var _setAriaExpanded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAriaExpanded");
 	var _getContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
 	var _getCounter$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounter");
 	var _getCounterWrapper$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounterWrapper");
@@ -2150,6 +2799,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  static init(options) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = options;
 	    babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper] = document.querySelector('[data-id="licenseWidgetWrapper"]');
+	    babelHelpers.classPrivateFieldLooseBase(this, _button$2)[_button$2] = babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper].querySelector('button');
 	    babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlers)[_setEventHandlers]();
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.highlightIntegrator);
@@ -2174,7 +2824,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return 'intranet.license-widget';
 	}
 	function _openWidget2() {
-	  main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper]);
+	  main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _button$2)[_button$2]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded)[_setAriaExpanded](true);
 	  babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().createSkeletonFromConfig(babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].skeleton).show();
 	  main_core.Runtime.loadExtension([babelHelpers.classPrivateFieldLooseBase(this, _getExtensionWidgetName)[_getExtensionWidgetName]()]).then(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _showWidget$1)[_showWidget$1]();
@@ -2199,7 +2850,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _getWidget)[_getWidget]().setOptions(licenseData).show();
 	    babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().getPopup().adjustPosition();
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper], 'click', () => {
+	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _button$2)[_button$2], 'click', () => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _getWidget)[_getWidget]().show();
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
 	        babelHelpers.classPrivateFieldLooseBase(LicenseButton, _sendAnalytics)[_sendAnalytics]({
@@ -2223,12 +2874,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _getWidgetLoader2$1() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('widgetLoader', () => {
-	    return new intranet_widgetLoader.WidgetLoader({
+	    const loader = new intranet_widgetLoader.WidgetLoader({
 	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper],
 	      width: 385,
 	      id: 'bx-license-header-popup'
 	    });
+	    const popup = loader.getPopup();
+	    popup.subscribe('onShow', () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded)[_setAriaExpanded](true);
+	    });
+	    popup.subscribe('onClose', () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded)[_setAriaExpanded](false);
+	    });
+	    return loader;
 	  });
+	}
+	function _setAriaExpanded2(expanded) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _button$2)[_button$2].setAttribute('aria-expanded', String(expanded));
 	}
 	function _getContent2$1() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('content', () => {
@@ -2421,6 +3083,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	Object.defineProperty(LicenseButton, _getContent$1, {
 	  value: _getContent2$1
 	});
+	Object.defineProperty(LicenseButton, _setAriaExpanded, {
+	  value: _setAriaExpanded2
+	});
 	Object.defineProperty(LicenseButton, _getWidgetLoader$1, {
 	  value: _getWidgetLoader2$1
 	});
@@ -2444,16 +3109,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  writable: true,
 	  value: void 0
 	});
+	Object.defineProperty(LicenseButton, _button$2, {
+	  writable: true,
+	  value: void 0
+	});
 	Object.defineProperty(LicenseButton, _cache$1, {
 	  writable: true,
 	  value: new main_core_cache.MemoryCache()
 	});
 
 	var _buttonWrapper$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonWrapper");
+	var _button$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("button");
 	var _cache$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _options$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _showWidget$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWidget");
 	var _getWidgetLoader$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetLoader");
+	var _setAriaExpanded$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAriaExpanded");
 	var _getContent$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
 	var _setEventHandlers$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlers");
 	var _onReceiveCounterValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onReceiveCounterValue");
@@ -2465,8 +3136,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  static init(options) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2] = options;
 	    babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1] = document.querySelector('[data-id="invitationButton"]');
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1], 'click', () => {
-	      main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _button$3)[_button$3] = babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1].querySelector('button');
+	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _button$3)[_button$3], 'click', () => {
+	      main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _button$3)[_button$3]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded$1)[_setAriaExpanded$1](true);
 	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$2)[_getWidgetLoader$2]().createSkeletonFromConfig(options.skeleton).show();
 	      main_core.Runtime.loadExtension(['intranet.invitation-widget']).then(() => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _showWidget$2)[_showWidget$2]();
@@ -2486,19 +3159,30 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      loader: babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$2)[_getWidgetLoader$2]().getPopup(),
 	      ...response.data
 	    }).show();
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1], 'click', () => {
+	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _button$3)[_button$3], 'click', () => {
 	      intranet_invitationWidget.InvitationWidget.getInstance().show();
 	    });
 	  }).catch(() => {});
 	}
 	function _getWidgetLoader2$2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('widgetLoader', () => {
-	    return new intranet_widgetLoader.WidgetLoader({
+	    const loader = new intranet_widgetLoader.WidgetLoader({
 	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1],
 	      width: 350,
 	      id: 'bx-invitation-header-popup'
 	    });
+	    const popup = loader.getPopup();
+	    popup.subscribe('onShow', () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded$1)[_setAriaExpanded$1](true);
+	    });
+	    popup.subscribe('onClose', () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded$1)[_setAriaExpanded$1](false);
+	    });
+	    return loader;
 	  });
+	}
+	function _setAriaExpanded2$1(expanded) {
+	  main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _button$3)[_button$3], 'aria-expanded', expanded);
 	}
 	function _getContent2$2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('content', () => {
@@ -2600,6 +3284,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	Object.defineProperty(InvitationButton, _getContent$2, {
 	  value: _getContent2$2
 	});
+	Object.defineProperty(InvitationButton, _setAriaExpanded$1, {
+	  value: _setAriaExpanded2$1
+	});
 	Object.defineProperty(InvitationButton, _getWidgetLoader$2, {
 	  value: _getWidgetLoader2$2
 	});
@@ -2607,6 +3294,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  value: _showWidget2$2
 	});
 	Object.defineProperty(InvitationButton, _buttonWrapper$1, {
+	  writable: true,
+	  value: void 0
+	});
+	Object.defineProperty(InvitationButton, _button$3, {
 	  writable: true,
 	  value: void 0
 	});
@@ -2619,9 +3310,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  value: void 0
 	});
 
-	let _$6 = t => t,
-	  _t$6,
-	  _t2$5;
+	let _$a = t => t,
+	  _t$a,
+	  _t2$7;
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _initPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initPopup");
 	var _renderPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
@@ -2680,9 +3371,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  main_core.Event.bind(window, 'scroll', windowScrollHandler);
 	}
 	function _renderPopupContent2(languages) {
-	  const container = main_core.Tag.render(_t$6 || (_t$6 = _$6`<div class="intranet__language-popup_list"></div>`));
+	  const container = main_core.Tag.render(_t$a || (_t$a = _$a`<div class="intranet__language-popup_list"></div>`));
 	  Object.entries(languages).forEach(([languageCode, languageItem]) => {
-	    const languageItemElement = main_core.Tag.render(_t2$5 || (_t2$5 = _$6`
+	    const languageItemElement = main_core.Tag.render(_t2$7 || (_t2$7 = _$a`
 				<div class="intranet__language-popup_language-item">
 					<span class="intranet__language-popup_language-item-name">${0}</span>
 					<span class="intranet__language-popup_language-beta">${0}</span>
@@ -2739,5 +3430,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.LicenseButton = LicenseButton;
 	exports.AvatarButton = AvatarButton;
 
-}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX.Main,BX.UI,BX.Intranet,BX.Timeman,BX.UI,BX.Bitrix24,BX.Intranet,BX,BX.Cache,BX.Event,BX.Intranet,BX.Intranet,BX.UI,BX));
+}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX.Main,BX.UI,BX.UI.IconSet,BX,BX.SidePanel,BX.Intranet,BX.Timeman,BX.UI,BX.Bitrix24,BX.Intranet,BX,BX.Cache,BX.Event,BX.Intranet,BX.Intranet,BX.UI,BX));
 //# sourceMappingURL=bitrix24.bundle.js.map

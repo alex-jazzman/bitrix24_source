@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/status-service.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.dialogs.messagebox',
 		'tasks.v2.core',
 		'tasks.v2.const',
 		'tasks.v2.lib.analytics',

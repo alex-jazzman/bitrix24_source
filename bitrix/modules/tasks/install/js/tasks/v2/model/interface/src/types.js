@@ -1,8 +1,10 @@
 import type { UserDto } from 'tasks.v2.provider.service.user-service';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 export type InterfaceModelParams = {
 	currentUser: UserDto,
 	stateFlags: StateFlags,
+	templateStateFlags: StateFlags,
 	deadlineUserOption: DeadlineUserOption,
 	userOptions: {
 		fullCard: FullCardOptions | false,
@@ -16,6 +18,7 @@ export type InterfaceModelState = {
 	deadlineChangeCount: number,
 	titleFieldOffsetHeight: ?number,
 	stateFlags: StateFlags,
+	templateStateFlags: StateFlags,
 	deadlineUserOption: DeadlineUserOption,
 	deletingCheckListIds: { [key: number | string ]: number | string },
 	disableCheckListAnimations: boolean,
@@ -23,6 +26,7 @@ export type InterfaceModelState = {
 	draggedCheckListId: ?number | ?string,
 	taskUserFieldScheme: UserFieldScheme[],
 	templateUserFieldScheme: UserFieldScheme[],
+	taskWithActiveTimer: ?TaskModel,
 };
 
 export type DeadlineUserOption = {
@@ -49,6 +53,7 @@ export type StateFlags = {
 	needsControl: boolean,
 	matchesWorkTime: boolean,
 	allowsTimeTracking: boolean,
+	defaultRequireResult: boolean,
 };
 
 export type UserFieldScheme = {

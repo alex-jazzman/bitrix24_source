@@ -39,6 +39,7 @@ $isRenamedIntegrator = \Bitrix\Intranet\Public\Service\IntegratorService::create
 	'ui.fonts.inter',
 	'intranet.transfer-to-intranet',
 	'intranet.push-otp.menu',
+	'intranet.fire-employee-wizard',
 ]);
 
 CJSCore::Init("loader");
@@ -191,8 +192,6 @@ if (
 				}
 				?>
 				<?php if($arResult['User']['IS_FIRST_ADMIN'] && $arResult['isFirstAdminConfirmationEnabled']): ?>
-					<link rel="stylesheet" href="/bitrix/modules/ui/install/js/ui/icon-set/solid/style.css">
-
 					<div id="intranet-user-profile-portal-creator" class="intranet-user-profile-rank-item intranet-user-profile-rank-portal-creator">
 						<div class="ui-icon-set --s-crown-1 intranet-user-profile-portal-creator-icon"></div>
 					</div>

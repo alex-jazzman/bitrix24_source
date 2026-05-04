@@ -1,16 +1,17 @@
-import { sendData } from 'ui.analytics';
+import { Runtime } from 'main.core';
 
 export class Analytics
 {
 	#isAdmin: boolean;
 
-	constructor(isAdmin: boolean) {
+	constructor(isAdmin: boolean)
+	{
 		this.#isAdmin = isAdmin ? AnalyticUserRole.ADMIN : AnalyticUserRole.NOT_ADMIN;
 	}
 
 	sendSetCustomPreset()
 	{
-		sendData({
+		this.#sendData({
 			tool: AnalyticTool,
 			category: AnalyticCategory.MENU,
 			event: AnalyticEvent.SET,
@@ -22,7 +23,7 @@ export class Analytics
 
 	sendSetPreset(presetId: string, isPersonal: boolean, action)
 	{
-		sendData({
+		this.#sendData({
 			type: presetId,
 			event: isPersonal ? AnalyticEvent.CHANGE : AnalyticEvent.SELECT,
 			tool: AnalyticTool,
@@ -35,12 +36,23 @@ export class Analytics
 
 	sendClose()
 	{
-		sendData({
+		this.#sendData({
 			event: AnalyticEvent.SHOW,
 			tool: AnalyticTool,
 			category: AnalyticCategory.TOOL,
 			c_section: AnalyticSection.POPUP,
 		});
+	}
+
+	#sendData(data: any): void
+	{
+		Runtime.loadExtension('ui.analytics')
+			.then((exports) => {
+				exports.sendData(data);
+			})
+			.catch((err) => {
+				console.error(err);
+			});
 	}
 }
 

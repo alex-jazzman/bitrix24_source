@@ -22,7 +22,7 @@ Main\UI\Extension::load(['ui.icons.b24', 'sidepanel']);
 ?>
 
 <div class="air-header__button">
-	<button class="air-header-button" id="bx-help-block">
+	<button class="air-header-button" id="bx-help-block" aria-haspopup="dialog">
 		<i class="ui-icon-set --o-question air-header-button__icon"></i>
 		<span class="air-header-button__text"><?= Loc::getMessage('AUTH_HELP') ?></span>
 		<span class="air-header-button__counter" id="bx-help-notify"></span>
@@ -63,6 +63,23 @@ $notifyData = array_merge(\Bitrix\UI\InfoHelper::getParameters(), [
 				BX.Helper.show();
 			});
 		<?php endif;?>
+		<?php if ($arResult['SHOULD_SHOW_NEW_HELPER_NOTIFICATION'] === 'Y' && !$arResult['OPEN_HELPER_AFTER_PAGE_LOADING']): ?>
+			BX.ready(function() {
+				const helpBlock = BX('bx-help-block');
+
+				if (!helpBlock)
+				{
+					return;
+				}
+
+				BX.Runtime.loadExtension('intranet.helper-notification')
+					.then(function({HelperNotification}) {
+						(new HelperNotification({
+							bindElement: helpBlock,
+						})).show();
+					});
+			});
+		<?php endif; ?>
 		<?php
 		if (isset($notifyData['support_bot'], $_REQUEST['support_chat']) && ($notifyData['support_bot'] > 0))
 			echo 'BX.addCustomEvent("onImInit", function(BXIM) {BXIM.openMessenger('.$notifyData['support_bot'].');});';

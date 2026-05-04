@@ -246,7 +246,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      userFields: template.userFields,
 	      isForNewUser: template.isForNewUser,
 	      replicate: template.replicate,
-	      replicateParams: template.replicateParams
+	      replicateParams: template.replicateParams,
+	      requireResult: template.requireResult
 	    };
 	    fields.permissions = permissionBuilder.getPermissions(fields);
 	    if (main_core.Type.isArrayFilled(fields.userFields)) {

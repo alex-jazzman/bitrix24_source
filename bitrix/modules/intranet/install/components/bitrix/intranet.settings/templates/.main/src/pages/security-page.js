@@ -39,6 +39,7 @@ export class SecurityPage extends BaseSettingsPage
 		}
 
 		this.#buildDataLeakProtectionSection()?.renderTo(contentNode);
+		this.#buildRestIntegrationSection()?.renderTo(contentNode);
 
 		// if (isBitrix24)
 		// {
@@ -130,6 +131,42 @@ export class SecurityPage extends BaseSettingsPage
 					title: Loc.getMessage('INTRANET_SETTINGS_SECURITY_PUSH_OTP_BANNER_TITLE'),
 					text: Loc.getMessage('INTRANET_SETTINGS_SECURITY_PUSH_OTP_BANNER_TEXT'),
 					clickEnableBtn: () => {
+						if (!this.getValue('SECURITY_IS_USER_OTP_ACTIVE'))
+						{
+							const messageBox = MessageBox.create({
+								message: Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_MSGVER_1'),
+								modal: true,
+								useAirDesign: true,
+								popupOptions: {
+									closeByEsc: true,
+									autoHide: true,
+								},
+								buttons: [
+									new Button({
+										text: Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_BUTTON_MSGVER_1'),
+										style: AirButtonStyle.FILLED,
+										useAirDesign: true,
+										events: {
+											click: () => {
+												messageBox.close();
+												BX.SidePanel.Instance.open(this.getValue('SECURITY_OTP_PATH'));
+											},
+										},
+									}),
+									new CloseButton({
+										useAirDesign: true,
+										style: AirButtonStyle.PLAIN_NO_ACCENT,
+										onclick: () => {
+											messageBox.close();
+										},
+									}),
+								],
+							});
+							messageBox.show();
+
+							return;
+						}
+
 						this.getAnalytic()?.addEventEnablePushOtp();
 						Ajax.runAction('intranet.v2.Otp.activePushOtp').then(() => {
 							this.reload();
@@ -345,6 +382,33 @@ export class SecurityPage extends BaseSettingsPage
 				</a>
 			</span>
 		`;
+	}
+
+	#buildRestIntegrationSection(): ?SettingsSection
+	{
+		if (!this.hasValue('sectionRestIntegration'))
+		{
+			return;
+		}
+
+		const restSection = new Section(this.getValue('sectionRestIntegration'));
+
+		const settingsSection = new SettingsSection({
+			section: restSection,
+			parent: this,
+		});
+
+		if (this.hasValue('selectorIncomingWebhookCreateOwn'))
+		{
+			const webhookCreateOwnSelector = FieldFactory.createUserSelector({
+				...this.getValue('selectorIncomingWebhookCreateOwn'),
+				enableDepartments: true,
+			});
+
+			SecurityPage.addToSectionHelper(webhookCreateOwnSelector, settingsSection);
+		}
+
+		return settingsSection;
 	}
 
 	#buildAccessIPSection(): ?SettingsSection

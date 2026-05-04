@@ -90,6 +90,17 @@
 	padding-top: 24px;
 }
 
+.tasks-field-deadline-after-header {
+	display: flex;
+}
+
+.tasks-field-deadline-after-chips {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin: 15px 0;
+}
+
 .tasks-field-deadline-popup {
 	display: flex;
 	gap: var(--ui-space-inline-md2);
@@ -149,15 +160,4 @@
 .tasks-field-deadline-date-picker-hint {
 	padding-left: 12px;
 	padding-bottom: 4px;
-}
-
-.tasks-field-deadline-after-header {
-	display: flex;
-}
-
-.tasks-field-deadline-after-chips {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	margin: 15px 0;
 }

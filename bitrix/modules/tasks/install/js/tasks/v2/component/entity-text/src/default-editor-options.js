@@ -8,7 +8,7 @@ export const DefaultEditorOptions: TextEditorOptions = Object.freeze({
 	floatingToolbar: [
 		'bold', 'italic', 'underline', 'strikethrough', '|',
 		'numbered-list', 'bulleted-list', '|',
-		CHECK_LIST_BUTTON, 'link', 'spoiler', 'quote', 'code', 'copilot',
+		'link', 'spoiler', 'quote', 'code', 'copilot',
 	],
 	removePlugins: ['BlockToolbar'],
 	visualOptions: {
@@ -44,4 +44,13 @@ export const DefaultEditorOptions: TextEditorOptions = Object.freeze({
 	},
 	copilot: {},
 	paragraphPlaceholder: 'auto',
+});
+
+export const ExtendedEditorOptions: TextEditorOptions = Object.freeze({
+	...DefaultEditorOptions,
+	floatingToolbar: [
+		'bold', 'italic', 'underline', 'strikethrough', '|',
+		'numbered-list', 'bulleted-list', '|',
+		CHECK_LIST_BUTTON, 'link', 'spoiler', 'quote', 'code', 'copilot',
+	],
 });

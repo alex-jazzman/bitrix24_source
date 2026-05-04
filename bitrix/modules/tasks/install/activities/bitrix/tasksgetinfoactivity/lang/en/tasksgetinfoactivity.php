@@ -1,7 +1,7 @@
 <?php
 $MESS["TASKS_GET_INFO_FIELD_ERROR_INVALID_VALUE"] = "The value of \"#PROPERTY_NAME#\" is incorrect.";
 $MESS["TASKS_GET_INFO_FIELD_ERROR_INVALID_VALUE_IN_RANGE"] = "The value of \"#PROPERTY_NAME#\" must be in range of #MIN_VALUE# to #MAX_VALUE#.";
-$MESS["TASKS_GET_INFO_FIELD_MESSAGE_COUNT_LIMIT"] = "Maximum number of task chat messages:";
+$MESS["TASKS_GET_INFO_FIELD_MESSAGE_COUNT_LIMIT"] = "Maximum number of task chat messages";
 $MESS["TASKS_GET_INFO_FIELD_MESSAGE_COUNT_LIMIT_NAME"] = "Maximum number of chat messages:";
 $MESS["TASKS_GET_INFO_FIELD_MESSAGE_DAYS"] = "Maximum task chat message age (days):";
 $MESS["TASKS_GET_INFO_FIELD_MESSAGE_DAYS_NAME"] = "Maximum task chat message age, days:";
@@ -11,7 +11,7 @@ $MESS["TASKS_GET_INFO_FIELD_TASK_LIMIT"] = "Maximum number of tasks:";
 $MESS["TASKS_GET_INFO_FIELD_TASK_LIMIT_NAME"] = "Maximum number of tasks:";
 $MESS["TASKS_GET_INFO_FIELD_TASK_SELECT_FIELD"] = "Collect task properties:";
 $MESS["TASKS_GET_INFO_FIELD_TASK_SELECT_FIELD_NAME"] = "Collect task properties:";
-$MESS["TASKS_GET_INFO_FIELD_USER_ID"] = "User:";
+$MESS["TASKS_GET_INFO_FIELD_USER_ID"] = "User";
 $MESS["TASKS_GET_INFO_FIELD_USER_ID_NAME"] = "User:";
 $MESS["TASKS_GET_INFO_FIELD_USER_TASK_ROLE"] = "User role:";
 $MESS["TASKS_GET_INFO_FIELD_USER_TASK_ROLE_NAME"] = "User role:";

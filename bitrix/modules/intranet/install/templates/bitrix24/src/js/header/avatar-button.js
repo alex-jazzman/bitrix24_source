@@ -114,11 +114,13 @@ export class AvatarButton
 	static #setHiddenAvatar(): void
 	{
 		Dom.style(this.#avatarWrapper, 'opacity', '0');
+		Dom.attr(this.#avatarWrapper, 'aria-hidden', 'true');
 	}
 
 	static #setVisibleAvatar(): void
 	{
 		Dom.style(this.#avatarWrapper, 'opacity', '1');
+		Dom.attr(this.#avatarWrapper, 'aria-hidden', 'false');
 	}
 
 	static #showWorkTimeState(): void

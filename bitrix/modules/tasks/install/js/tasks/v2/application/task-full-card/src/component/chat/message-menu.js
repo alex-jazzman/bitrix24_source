@@ -2,8 +2,10 @@ import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Outline } from 'ui.icon-set.api.vue';
 
+import { Core } from 'tasks.v2.core';
 import { EventName } from 'tasks.v2.const';
 import { taskService } from 'tasks.v2.provider.service.task-service';
+import { resultService } from 'tasks.v2.provider.service.result-service';
 
 import type { MenuItemOptions } from 'ui.system.menu';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -22,7 +24,7 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 	{
 		if (
 			this.isDeletedMessage()
-			|| !this.isOwnMessage()
+			|| this.#isSystemMessage()
 			|| !this.#shouldShowAddResult()
 		)
 		{
@@ -37,11 +39,11 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 					taskId: this.getTaskId(),
 					messageId: this.context.id,
 					text: this.context.text,
-					authorId: this.context.authorId,
+					authorId: this.#getUserId()
 				});
 
 				this.close();
-			},
+			}
 		};
 	}
 
@@ -49,7 +51,7 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 	{
 		if (
 			this.isDeletedMessage()
-			|| !this.isOwnMessage()
+			|| this.#isSystemMessage()
 			|| !this.#shouldShowRemoveResult()
 		)
 		{
@@ -62,11 +64,11 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 			onClick: (): void => {
 				EventEmitter.emit(EventName.DeleteResultFromChat, {
 					taskId: this.getTaskId(),
-					resultId: this.#getMessageResultId(),
+					resultId: this.#getMessageResultIdForCurrentUser(),
 				});
 
 				this.close();
-			},
+			}
 		};
 	}
 
@@ -83,7 +85,12 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 			return false;
 		}
 
-		return !this.#getMessageResultId();
+		return this.#getMessageResultIdForCurrentUser() === 0;
+	}
+
+	#isSystemMessage(): boolean
+	{
+		return this.context.authorId === 0;
 	}
 
 	#shouldShowRemoveResult(): boolean
@@ -94,10 +101,10 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 			return false;
 		}
 
-		return this.#getMessageResultId() > 0;
+		return this.#getMessageResultIdForCurrentUser() > 0;
 	}
 
-	#getMessageResultId(): number
+	#getMessageResultIdForCurrentUser(): int
 	{
 		const task = this.#getTask();
 		if (!task)
@@ -112,7 +119,12 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 		{
 			if (boundMessageId !== null && Number(boundMessageId) === Number(messageId))
 			{
-				return Number(resultId);
+				const messageResult = resultService.getStoreResult(Number(resultId));
+
+				if (messageResult !== null && messageResult.author.id === this.#getUserId())
+				{
+					return messageResult.id;
+				}
 			}
 		}
 
@@ -122,5 +134,10 @@ export const TaskFullCardMessageMenu = (baseMenu) => class extends baseMenu
 	#getTask(): ?TaskModel
 	{
 		return taskService.getStoreTask(this.getTaskId());
+	}
+
+	#getUserId(): number
+	{
+		return Core.getParams().currentUser.id;
 	}
 };

@@ -19,6 +19,7 @@ export const ResultEditorSheet = {
 	},
 	inject: {
 		taskId: {},
+		embedded: {},
 	},
 	props: {
 		resultId: {
@@ -61,6 +62,10 @@ export const ResultEditorSheet = {
 		{
 			return Core.getParams().features.disk;
 		},
+		shouldShowResize(): boolean
+		{
+			return this.showResize && !this.embedded;
+		},
 	},
 	mounted(): void
 	{
@@ -92,9 +97,9 @@ export const ResultEditorSheet = {
 		>
 			<ResultEditor
 				:resultId
-				:content="result.text || ''"
 				:isResized
-				:showResize
+				:content="result.text || ''"
+				:showResize="shouldShowResize"
 				@close="$emit('close')"
 				@resize="isResized = !isResized"
 			/>

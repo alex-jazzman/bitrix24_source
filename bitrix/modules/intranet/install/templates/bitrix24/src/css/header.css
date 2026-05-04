@@ -139,7 +139,14 @@
 	}
 
 	.air-header-button__text {
-		display: none;
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 
 	.air-header-button {
@@ -188,7 +195,6 @@
 	line-height: var(--ui-font-line-height-3xs);
 	border: var(--air-header-button-border-width) solid var(--air-header-button-border-color);
 	border-radius: var(--ui-border-radius-lg);
-	outline: none;
 	cursor: pointer;
 	transition-timing-function: ease-in-out;
 	transition-property: background-color;
@@ -198,6 +204,7 @@
 .air-header-button:hover {
 	background: var(--air-header-button-bg-hover);
 	transition-duration: 0s;
+	outline: none;
 }
 
 .air-header-button:focus,

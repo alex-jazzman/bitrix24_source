@@ -108,8 +108,10 @@ export const App = {
 		...mapGetters({
 			titleFieldOffsetHeight: `${Model.Interface}/titleFieldOffsetHeight`,
 			currentUserId: `${Model.Interface}/currentUserId`,
+			deadlineUserOption: `${Model.Interface}/deadlineUserOption`,
 			defaultDeadlineTs: `${Model.Interface}/defaultDeadlineTs`,
 			stateFlags: `${Model.Interface}/stateFlags`,
+			templateStateFlags: `${Model.Interface}/templateStateFlags`,
 		}),
 		task(): TaskModel
 		{
@@ -194,16 +196,21 @@ export const App = {
 	},
 	created(): void
 	{
+		const flags = this.isTemplate ? this.templateStateFlags : this.stateFlags;
 		this.insert({
 			...this.initialTask,
 			id: this.taskId,
 			creatorId: this.currentUserId,
 			responsibleIds: [this.currentUserId],
 			deadlineTs: this.initialTask.deadlineTs ?? this.defaultDeadlineTs,
-			needsControl: this.stateFlags.needsControl ?? null,
-			matchesWorkTime: this.stateFlags.matchesWorkTime ?? null,
-			allowsTimeTracking: this.stateFlags.allowsTimeTracking ?? null,
-			requireResult: this.stateFlags.defaultRequireResult ?? false,
+			needsControl: flags.needsControl ?? null,
+			matchesWorkTime: flags.matchesWorkTime ?? null,
+			allowsTimeTracking: flags.allowsTimeTracking ?? null,
+			requireResult: Core.getParams().restrictions.requiredResult.available && (flags.defaultRequireResult ?? false),
+			allowsChangeDeadline: this.deadlineUserOption.canChangeDeadline,
+			requireDeadlineChangeReason: this.deadlineUserOption.requireDeadlineChangeReason,
+			maxDeadlineChangeDate: this.deadlineUserOption.maxDeadlineChangeDate,
+			maxDeadlineChanges: this.deadlineUserOption.maxDeadlineChanges,
 		});
 
 		void fileService.get(this.taskId).list(this.task.fileIds);

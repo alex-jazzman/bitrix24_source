@@ -6,6 +6,7 @@ import {ActiveSprint} from './view/active.sprint';
 import {CompletedSprint} from './view/completed.sprint';
 
 import {Culture, CultureData} from './utility/culture';
+import { EventEmitter } from 'main.core.events';
 
 type Params = {
 	viewName: string,
@@ -19,6 +20,10 @@ export class Entry
 		this.setParams(params);
 
 		this.buildView(params);
+
+		EventEmitter.emit('Tasks.Scrum.Entry:onInit', {
+			id: params.groupId,
+		});
 	}
 
 	setParams(params: Params)

@@ -12,6 +12,7 @@ use Bitrix\Tasks\Onboarding\Event\DeleteTaskEventListener;
 use Bitrix\Tasks\Onboarding\Event\ExpiredSoonEventListener;
 use Bitrix\Tasks\Onboarding\Event\UpdateTaskEventListener;
 use Bitrix\Tasks\Onboarding\Event\ViewTaskEventListener;
+use Bitrix\Tasks\V2\Internal\EventHandler\AccessRequest;
 use Bitrix\Tasks\V2\Internal\EventHandler\Reminder;
 
 $eventManager = EventManager::getInstance();
@@ -98,4 +99,13 @@ $eventManager->addEventHandler(
 		Reminder::onTaskUpdate($before, $after);
 	}
 );
+// endregion
+
+// region access
+$eventManager->addEventHandler(
+	'tasks',
+	'onTaskDelete',
+	static fn (int $taskId): EventResult => AccessRequest::OnTaskDelete($taskId)
+);
+
 // endregion

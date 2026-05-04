@@ -1,4 +1,4 @@
-import { Type, Tag, Dom, ajax as Ajax } from 'main.core';
+import { Type, Tag, Dom, Event, ajax as Ajax } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { PULL } from 'pull.client';
@@ -8,6 +8,7 @@ import { createToolbarSkeleton, type ToolbarSkeletonOptions } from './skeletons/
 import { createActionsBarSkeleton, type ActionsBarSkeletonOptions } from './skeletons/create-actions-bar-skeleton';
 import { createGridSkeleton } from './skeletons/create-grid-skeleton';
 import { createKanbanSkeleton } from './skeletons/create-kanban-skeleton';
+import { createRightSidebarSkeleton } from './skeletons/create-right-sidebar-skeleton';
 
 type GridSkeletonOptions = {
 	toolbarOptions?: ToolbarSkeletonOptions,
@@ -25,25 +26,61 @@ export class Composite
 
 	constructor()
 	{
-		if (this.isEnabled())
+		if (Composite.isEnabled())
 		{
 			this.#bindEvents();
 		}
 	}
 
-	isEnabled(): boolean
+	static isEnabled(): boolean
 	{
 		return !Type.isUndefined(window.frameRequestStart);
 	}
 
-	isReady(): boolean
+	static isReady(): boolean
 	{
 		return window.BX?.frameCache?.frameDataInserted === true || !Type.isUndefined(window.frameRequestFail);
 	}
 
+	static ready(callback: Function): void
+	{
+		if (!Type.isFunction(callback))
+		{
+			return;
+		}
+
+		if (this.isEnabled())
+		{
+			if (this.isReady())
+			{
+				callback();
+			}
+			else
+			{
+				EventEmitter.subscribe('onFrameDataProcessed', callback);
+				EventEmitter.subscribe('onFrameDataRequestFail', callback);
+			}
+		}
+		else if (document.readyState === 'loading')
+		{
+			Event.ready(() => {
+				callback();
+			});
+		}
+		else
+		{
+			callback();
+		}
+	}
+
+	static clearCache(): void
+	{
+		void Ajax.runAction('intranet.composite.clearCache');
+	}
+
 	showLoader(): void
 	{
-		if (this.isReady())
+		if (Composite.isReady())
 		{
 			return;
 		}
@@ -73,6 +110,15 @@ export class Composite
 		}
 
 		this.#showLoader();
+	}
+
+	showRightSidebarLoader(): void
+	{
+		const container = document.getElementById('app__right-panel');
+		if (container)
+		{
+			Dom.append(createRightSidebarSkeleton(), container);
+		}
 	}
 
 	#showLoader(skeleton: HTMLElement = null): void
@@ -217,7 +263,7 @@ export class Composite
 		EventEmitter.subscribe('onAjaxFailure', (event: BaseEvent) => {
 			const [reason, status] = event.getCompatData();
 			const redirectUrl = `/auth/?backurl=${getBackUrl()}`;
-			if (this.isEnabled() && (reason === 'auth' || (reason === 'status' && status === 401)))
+			if (Composite.isEnabled() && (reason === 'auth' || (reason === 'status' && status === 401)))
 			{
 				console.error('Auth ajax request failed', reason, status);
 				top.location = redirectUrl;

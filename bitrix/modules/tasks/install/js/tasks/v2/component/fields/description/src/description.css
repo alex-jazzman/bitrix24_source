@@ -138,7 +138,7 @@
 
 .tasks-card-description-editor-files {
 	flex-grow: 1;
-	padding: var(--ui-space-inset-xl) 0;
+	padding: var(--ui-space-inset-xl) 0 0;
 	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
 }
 

@@ -23,10 +23,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  emits: ['close'],
+	  data() {
+	    return {
+	      popupId: `tasks-hint-${main_core.Text.getRandom(10)}`
+	    };
+	  },
 	  computed: {
 	    popupOptions() {
 	      return {
-	        id: `tasks-hint-${main_core.Text.getRandom(10)}`,
+	        id: this.popupId,
 	        bindElement: this.bindElement,
 	        maxWidth: 320,
 	        offsetLeft: 40,

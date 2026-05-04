@@ -17,3 +17,18 @@
 .im-chat-recent-list {
 	height: 100%;
 }
+
+.right-bar-overlay {
+	display: none;
+	position: fixed;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 85px;
+	will-change: background;
+	z-index: -1;
+}
+
+.side-panel-disable-scrollbar .right-bar-overlay {
+	display: block;
+}

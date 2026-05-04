@@ -14,12 +14,17 @@ SliderManager.registerSliderClass(
 			const start = Math.round(overlayOpacity * intensity / 100).toString(16).padStart(2, 0);
 			const end = Math.round(100 * intensity / 100).toString(16).padStart(2, 0);
 
+			const defaultBg = `linear-gradient(to bottom, ${overlayBgColor}${start} 0%, ${overlayBgColor}${end} 100%)`;
+
+			const Template = Reflection.getClass('BX.Intranet.Bitrix24.Template');
+			Template?.getRightSidebar().setOverlayBackground(defaultBg);
+
 			if (slider.isMessengerSlider())
 			{
 				return `linear-gradient(to bottom, ${overlayBgColor}${end} 0%, ${overlayBgColor}${end} 35px, ${overlayBgColor}${start} 145px, ${overlayBgColor}${end} 100%)`;
 			}
 
-			return `linear-gradient(to bottom, ${overlayBgColor}${start} 0%, ${overlayBgColor}${end} 100%)`;
+			return defaultBg;
 		},
 		overlayOpacity: 52,
 		autoOffset: false,
@@ -28,7 +33,14 @@ SliderManager.registerSliderClass(
 	},
 	{
 		focusTrap: {
-			outsideExceptionSelectors: ['.aiassistant-marta', '#right-bar', '.side-panel-toolbar', '#im-chat-menu'],
+			outsideExceptionSelectors: [
+				'.aiassistant-marta',
+				'#right-bar',
+				'#avatar-area',
+				'.side-panel-toolbar',
+				'#im-chat-menu',
+				'#app__right-panel',
+			],
 			looped: false,
 		},
 		targetContainer: '#a11y-slider-container',

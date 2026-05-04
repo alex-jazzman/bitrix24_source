@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,tasks_flow_editForm,ui_dialogs_messagebox,ui_infoHelper,pull_queuemanager,tasks_flow_teamPopup,tasks_flow_taskQueue,tasks_clue,ui_manual,ui_notification,main_core_events,main_core,main_popup,tasks_flow_copilotAdvice) {
+(function (exports,tasks_flow_editForm,ui_dialogs_messagebox,pull_queuemanager,tasks_flow_teamPopup,tasks_flow_taskQueue,tasks_clue,ui_manual,ui_notification,main_core_events,ui_infoHelper,main_core,main_popup,tasks_flow_copilotAdvice) {
 	'use strict';
 
 	let _ = t => t,
@@ -1812,8 +1812,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _getMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMenuItems");
 	var _openDashboard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openDashboard");
 	var _showTariffSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showTariffSlider");
+	var _openMarketInfoHelper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openMarketInfoHelper");
 	class BIAnalytics {
 	  constructor(data) {
+	    Object.defineProperty(this, _openMarketInfoHelper, {
+	      value: _openMarketInfoHelper2
+	    });
 	    Object.defineProperty(this, _showTariffSlider, {
 	      value: _showTariffSlider2
 	    });
@@ -1879,6 +1883,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	function _openDashboard2(dashboard) {
 	  if (dashboard.isLocked) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _showTariffSlider)[_showTariffSlider]();
+	  } else if (!dashboard.isAvailableWithoutMarketSub) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _openMarketInfoHelper)[_openMarketInfoHelper]();
 	  } else {
 	    window.open(dashboard.url, '_blank');
 	  }
@@ -1887,6 +1893,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  if (top.BX && top.BX.UI && top.BX.UI.InfoHelper) {
 	    top.BX.UI.InfoHelper.show('limit_crm_BI_constructor');
 	  }
+	}
+	function _openMarketInfoHelper2() {
+	  new ui_infoHelper.FeaturePromoter({
+	    code: 'limit_benefit_market_active'
+	  }).show();
 	}
 
 	let _$1 = t => t,
@@ -1987,5 +1998,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 	exports.CopilotAdviceErrorPopup = CopilotAdviceErrorPopup;
 	exports.CopilotAdviceErrorTypes = CopilotAdviceErrorTypes;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Tasks.Flow,BX.UI.Dialogs,BX.UI,BX.Pull,BX.Tasks.Flow,BX.Tasks.Flow,BX.Tasks,BX.UI.Manual,BX,BX.Event,BX,BX.Main,BX.Tasks.Flow));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Tasks.Flow,BX.UI.Dialogs,BX.Pull,BX.Tasks.Flow,BX.Tasks.Flow,BX.Tasks,BX.UI.Manual,BX,BX.Event,BX.UI,BX,BX.Main,BX.Tasks.Flow));
 //# sourceMappingURL=script.js.map

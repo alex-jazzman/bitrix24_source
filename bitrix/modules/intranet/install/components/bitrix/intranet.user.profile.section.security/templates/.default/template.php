@@ -58,7 +58,7 @@ Extension::load([
 		</li>
 		<?php endif; ?>
 
-		<?php if ($arResult["OTP"]["IS_ENABLED"] === 'Y' && $arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
+		<?php if ($arResult["OTP"]["IS_ENABLED"] === 'Y' && $arResult["OTP"]["CAN_VIEW_OTP"] === 'Y'): ?>
 			<?php if (isset($arResult["OTP"]["IS_PUSH_OTP_NEW"]) && $arResult["OTP"]["IS_PUSH_OTP_NEW"] === 'Y'): ?>
 			<li id="notify-banner-push-otp"></li>
 			<?php endif; ?>
@@ -213,7 +213,7 @@ Extension::load([
 		const pswBtn = document.querySelector('#intranet-user-otp-security__change-password');
 		const securitySection = new BX.Intranet.SecuritySection({
 			signedParameters: '<?= $this->getComponent()->getSignedParameters()?>',
-			signedUserId: '<?= CUtil::JSEscape($arResult['OTP_PARAMS']['signedUserId'])?>',
+			signedUserId: '<?= CUtil::JSEscape($arResult['OTP_PARAMS']['signedUserId'] ?? '')?>',
 			userId: '<?= CUtil::JSEscape($arParams['USER_ID'])?>',
 			isCloud: <?= $arResult['IS_CLOUD'] ? 'true' : 'false' ?>,
 			passwordNetworkUrl: '<?= $arResult['PROFILE']['CHANGE_PASSWORD_URL'] ?? ''?>',
@@ -223,7 +223,7 @@ Extension::load([
 			passwordElement: pswBtn,
 		});
 
-		<?php if ($arResult["OTP"]["IS_ENABLED"] === 'Y' && $arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
+		<?php if ($arResult["OTP"]["IS_ENABLED"] === 'Y' && $arResult["OTP"]["CAN_VIEW_OTP"] === 'Y'): ?>
 		const params = {
 			...<?= Json::encode($arResult['OTP_PARAMS']) ?>,
 			title: '<?= \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_SECURITY_BANNER_TITLE_NEW')) ?>',

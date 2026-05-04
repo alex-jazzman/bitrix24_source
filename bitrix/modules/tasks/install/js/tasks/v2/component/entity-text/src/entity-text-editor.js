@@ -2,18 +2,17 @@ import { Runtime, Type, Loc, Event } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import { toRaw } from 'ui.vue3';
-import { FileEvent, getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
+import { FileEvent, getFilesFromDataTransfer, isFilePasted, type UploaderFile, type UploaderFileInfo } from 'ui.uploader.core';
 import { COMMAND_PRIORITY_NORMAL, PASTE_COMMAND } from 'ui.lexical.core';
 import { TextEditor, Plugins, type TextEditorOptions } from 'ui.text-editor';
-import type { UploaderFile, UploaderFileInfo } from 'ui.uploader.core';
-import type { VueUploaderAdapter } from 'ui.uploader.vue';
-import type { Store } from 'ui.vue3.vuex';
+import { type VueUploaderAdapter } from 'ui.uploader.vue';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'tasks.v2.core';
 import { EntitySelectorEntity } from 'tasks.v2.const';
 import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
 
-import { DefaultEditorOptions } from './default-editor-options';
+import { ExtendedEditorOptions } from './default-editor-options';
 import { CheckListPlugin } from './editor-plugins/check-list-plugin';
 
 export const EntityTextTypes = Object.freeze({
@@ -134,7 +133,7 @@ export class EntityTextEditor extends EventEmitter
 			copilot: this.#getCopilotParams(),
 		};
 
-		this.#editor = new TextEditor({ ...DefaultEditorOptions, ...additionalEditorOptions });
+		this.#editor = new TextEditor({ ...ExtendedEditorOptions, ...additionalEditorOptions });
 	}
 
 	setEditorText(content): void

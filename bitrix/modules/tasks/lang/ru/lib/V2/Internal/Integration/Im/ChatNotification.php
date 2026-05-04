@@ -101,23 +101,23 @@ $MESS["TASKS_IM_TASK_DEADLINE_REMOVED_F_MSGVER_1"] = "#USER# удалила кр
 $MESS["TASKS_IM_TASK_DEADLINE_REMOVED_REASON_M_MSGVER_1"] = "#USER# удалил крайний срок задачи [br][br] #REASON#";
 $MESS["TASKS_IM_TASK_DEADLINE_REMOVED_REASON_F_MSGVER_1"] = "#USER# удалила крайний срок задачи [br][br] #REASON#";
 
-$MESS["TASKS_IM_TASK_GROUP_ADDED_M"] = "#USER# добавил задачу в проект #NEW_GROUP#";
-$MESS["TASKS_IM_TASK_GROUP_ADDED_F"] = "#USER# добавила задачу в проект #NEW_GROUP#";
+$MESS["TASKS_IM_TASK_GROUP_ADDED_OR_CHANGED_GROUP_M"] = "#USER# добавил задачу в группу #GROUP#";
+$MESS["TASKS_IM_TASK_GROUP_ADDED_OR_CHANGED_GROUP_F"] = "#USER# добавилa задачу в группу #GROUP#";
 
-$MESS["TASKS_IM_TASK_GROUP_ADDED_SECRET_M"] = "#USER# добавил задачу в проект";
-$MESS["TASKS_IM_TASK_GROUP_ADDED_SECRET_F"] = "#USER# добавила задачу в проект";
+$MESS["TASKS_IM_TASK_GROUP_ADDED_OR_CHANGED_PROJECT_M"] = "#USER# добавил задачу в проект #GROUP#";
+$MESS["TASKS_IM_TASK_GROUP_ADDED_OR_CHANGED_PROJECT_F"] = "#USER# добавилa задачу в проект #GROUP#";
 
-$MESS["TASKS_IM_TASK_GROUP_CHANGED_M"] = "#USER# сменил проект для этой задачи с #OLD_GROUP# на #NEW_GROUP#";
-$MESS["TASKS_IM_TASK_GROUP_CHANGED_F"] = "#USER# сменила проект для этой задачи с #OLD_GROUP# на #NEW_GROUP#";
+$MESS["TASKS_IM_TASK_GROUP_ADDED_OR_CHANGED_COLLAB_M"] = "#USER# добавил задачу в коллабу #GROUP#";
+$MESS["TASKS_IM_TASK_GROUP_ADDED_OR_CHANGED_COLLAB_F"] = "#USER# добавилa задачу в коллабу #GROUP#";
 
-$MESS["TASKS_IM_TASK_GROUP_CHANGED_SECRET_M"] = "#USER# сменил проект для этой задачи";
-$MESS["TASKS_IM_TASK_GROUP_CHANGED_SECRET_F"] = "#USER# сменила проект для этой задачи";
+$MESS["TASKS_IM_TASK_GROUP_REMOVED_GROUP_M"] = "#USER# убрал задачу из группы #GROUP#";
+$MESS["TASKS_IM_TASK_GROUP_REMOVED_GROUP_F"] = "#USER#  убрала задачу из группы #GROUP#";
 
-$MESS["TASKS_IM_TASK_GROUP_REMOVED_M"] = "#USER# удалил задачу из проекта #GROUP#";
-$MESS["TASKS_IM_TASK_GROUP_REMOVED_F"] = "#USER# удалила задачу из проекта #GROUP#";
+$MESS["TASKS_IM_TASK_GROUP_REMOVED_PROJECT_M"] = "#USER# убрал задачу из проекта #GROUP#";
+$MESS["TASKS_IM_TASK_GROUP_REMOVED_PROJECT_F"] = "#USER#  убрала задачу из проекта #GROUP#";
 
-$MESS["TASKS_IM_TASK_GROUP_REMOVED_SECRET_M"] = "#USER# удалил задачу из проекта";
-$MESS["TASKS_IM_TASK_GROUP_REMOVED_SECRET_F"] = "#USER# удалила задачу из проекта";
+$MESS["TASKS_IM_TASK_GROUP_REMOVED_COLLAB_M"] = "#USER# убрал задачу из коллабы #GROUP#";
+$MESS["TASKS_IM_TASK_GROUP_REMOVED_COLLAB_F"] = "#USER#  убрала задачу из коллабы #GROUP#";
 
 $MESS["TASKS_IM_TASK_AUDITORS_NEW_M"] = "#USER# добавил наблюдателя(ей) #NEW_AUDITORS#";
 $MESS["TASKS_IM_TASK_AUDITORS_NEW_F"] = "#USER# добавила наблюдателя(ей) #NEW_AUDITORS#";
@@ -380,6 +380,9 @@ $MESS["TASKS_IM_TASK_DELETED"] = "#USER# удалил задачу #TASK_TITLE#"
 $MESS["TASKS_IM_TASK_DELETED_M"] = "#USER# удалил задачу #TASK_TITLE#";
 $MESS["TASKS_IM_TASK_DELETED_F"] = "#USER# удалила задачу #TASK_TITLE#";
 
+$MESS["TASKS_IM_TASK_STAGE_CHANGED_M"] = "#USER# изменил стадию на #NEW_STAGE#";
+$MESS["TASKS_IM_TASK_STAGE_CHANGED_F"] = "#USER# изменила стадию на #NEW_STAGE#";
+
 $MESS['TASKS_IM_AI_UNRESOLVED_DEADLINE'] = '#CREATOR#, BitrixGPT не смог определить, какой крайний срок установить у задачи';
 $MESS['TASKS_IM_AI_UNRESOLVED_RESPONSIBLE'] = '#CREATOR#, BitrixGPT не смог определить, кого нужно назначить исполнителем, поэтому назначил вас';
 $MESS['TASKS_IM_AI_UNRESOLVED_DEADLINE_AND_RESPONSIBLE'] = '#CREATOR#, BitrixGPT не смог определить, какой крайний срок установить у задачи и кого нужно назначить исполнителем, поэтому назначил вас';
@@ -413,3 +416,6 @@ $MESS["TASKS_IM_TASK_MARK_SET_POSITIVE_F"] = "#USER# положительно о
 $MESS["TASKS_IM_TASK_MARK_SET_NEGATIVE_M"] = "#USER# отрицательно оценил работу над задачей";
 $MESS["TASKS_IM_TASK_MARK_SET_NEGATIVE_F"] = "#USER# отрицательно оценила работу над задачей";
 
+
+$MESS['TASKS_IM_TASK_ACCESS_REQUESTED_M'] = '#USER# просит добавить его в наблюдатели';
+$MESS['TASKS_IM_TASK_ACCESS_REQUESTED_F'] = '#USER# просит добавить её в наблюдатели';

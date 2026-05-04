@@ -57,7 +57,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          closeClassName: '--close',
 	          closeAnimationType: 'animation'
 	        },
-	        autoHide: false
+	        autoHide: false,
+	        closeByEsc: false
 	      };
 	    }
 	  },

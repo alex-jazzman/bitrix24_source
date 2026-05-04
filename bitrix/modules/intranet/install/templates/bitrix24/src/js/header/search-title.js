@@ -8,6 +8,9 @@ export class SearchTitle
 	#button: HTMLElement = null;
 	#input: HTMLInputElement = null;
 	#searchTitleInstance = null;
+	#searchButtonLabel: string = '';
+	#closeButtonLabel: string = '';
+	#boundHandleKeyDown: Function = null;
 
 	constructor(options)
 	{
@@ -16,6 +19,9 @@ export class SearchTitle
 		this.#input = document.getElementById(options.inputId);
 
 		this.#searchOptions = options.searchOptions;
+		this.#searchButtonLabel = options.searchButtonLabel || '';
+		this.#closeButtonLabel = options.closeButtonLabel || '';
+		this.#boundHandleKeyDown = this.#handleKeyDown.bind(this);
 
 		Event.bind(this.#button, 'click', this.#handleButtonClick.bind(this));
 		Event.bind(this.#input, 'focusout', this.#handleInputFocusOut.bind(this));
@@ -26,6 +32,13 @@ export class SearchTitle
 		Dom.addClass(this.#container, '--active');
 
 		this.#input.disabled = false;
+		Dom.attr(this.#input, 'aria-hidden', null);
+		Dom.attr(this.#input, 'tabindex', null);
+
+		Dom.attr(this.#button, 'aria-label', this.#closeButtonLabel);
+		Dom.attr(this.#button, 'aria-expanded', true);
+
+		Event.bind(document, 'keydown', this.#boundHandleKeyDown);
 
 		setTimeout(() => {
 			this.#input.focus();
@@ -34,8 +47,15 @@ export class SearchTitle
 
 	close(): void
 	{
+		Event.unbind(document, 'keydown', this.#boundHandleKeyDown);
+
 		Dom.removeClass(this.#container, '--active');
 		this.#input.disabled = true;
+		Dom.attr(this.#input, 'aria-hidden', true);
+		Dom.attr(this.#input, 'tabindex', -1);
+
+		Dom.attr(this.#button, 'aria-label', this.#searchButtonLabel);
+		Dom.attr(this.#button, 'aria-expanded', false);
 
 		if (this.#searchTitleInstance !== null)
 		{
@@ -75,5 +95,16 @@ export class SearchTitle
 		{
 			this.close();
 		}
+	}
+
+	#handleKeyDown(event): void
+	{
+		if (event.key !== 'Escape')
+		{
+			return;
+		}
+
+		this.close();
+		this.#button.focus();
 	}
 }

@@ -11,13 +11,13 @@ use Bitrix\Main\Web\Json;
  * @var $arParams array
  */
 
-if (
-	!$arResult["OTP"]["USER_HAS_EDIT_RIGHTS"]
-	&& (int)\Bitrix\Intranet\CurrentUser::get()->getId() !== (int)$arParams["USER_ID"]
-)
-{
-	return;
-}
+$canActivateExistingOtp = (
+	$arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'
+	|| (
+		$arResult["OTP"]["CAN_ACTIVATE_OTP"] === 'Y'
+		&& $arResult["OTP"]["IS_EXIST"]
+	)
+);
 
 Extension::load([
 	"ui.buttons",
@@ -44,9 +44,12 @@ $arJSParams = [
 		<h2 class="ui-headline --lg --accent"> <?= Loc::getMessage('INTRANET_USER_OTP_DISABLED_TITLE') ?> </h2>
 		<p class="ui-text --md"> <?= Loc::getMessage('INTRANET_USER_OTP_DISABLED_DESCRIPTION') ?> </p>
 	</div>
+	<?php if ($canActivateExistingOtp): ?>
 	<div class="intranet-user-otp-disabled__footer" id="button-container"></div>
+	<?php endif; ?>
 </div>
 
+<?php if ($canActivateExistingOtp): ?>
 <script>
 	BX.ready(() => {
 		BX.Intranet.UserOtpConnected.init(<?= Json::encode($arJSParams)?>);
@@ -85,3 +88,4 @@ $arJSParams = [
 		enableButton.renderTo(BX('button-container'));
 	});
 </script>
+<?php endif; ?>

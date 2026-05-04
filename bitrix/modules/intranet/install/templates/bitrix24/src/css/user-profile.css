@@ -7,6 +7,9 @@
 	position: absolute;
 	right: var(--air-content-area-left-shift);
 	max-width: 120px;
+	padding: 0;
+	background: none;
+	border: none;
 	--wrapper-color: var(--ui-color-base-8);
 	--border-color: var(--ui-color-base-8);
 	--avatar-border-color: var(--ui-color-base-8);
@@ -51,12 +54,13 @@
 			opacity 0.3s ease-in-out;
 }
 
-.air-user-profile.--no-transition .air-user-profile__wrapper {
+.air-user-profile.--right-panel-no-transition .air-user-profile__wrapper {
 	transition: none;
 }
 
 .root:has(.app__right-bar:is(.--transparent, .--overlay-mode)) .app__avatar .air-user-profile__wrapper,
-.air-user-profile.--collapsed .air-user-profile__wrapper {
+.air-user-profile.--collapsed .air-user-profile__wrapper,
+body.--right-panel-expanded .app__avatar .air-user-profile__wrapper {
 	opacity: 0;
 	visibility: hidden;
 	max-width: 0;
@@ -67,6 +71,7 @@
 }
 
 .root:has(.app__right-bar:is(.--transparent, .--overlay-mode)) .app__avatar .air-user-profile-avatar__work-time-state-short,
+body.--right-panel-expanded .app__avatar .air-user-profile-avatar__work-time-state-short,
 .air-user-profile.--collapsed .air-user-profile-avatar__work-time-state-short {
 	opacity: 1;
 }

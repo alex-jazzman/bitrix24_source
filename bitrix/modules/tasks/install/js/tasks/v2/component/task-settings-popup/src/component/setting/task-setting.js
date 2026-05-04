@@ -22,6 +22,10 @@ export const TaskSetting = {
 			type: Boolean,
 			required: true,
 		},
+		hasContent: {
+			type: Boolean,
+			default: true,
+		},
 		label: {
 			type: String,
 			default: '',
@@ -105,7 +109,7 @@ export const TaskSetting = {
 					@click="handleLockClick"
 				/>
 			</div>
-			<div v-if="modelValue && $slots.default" class="tasks-task-setting-content">
+			<div v-if="modelValue && hasContent" class="tasks-task-setting-content">
 				<slot/>
 			</div>
 		</div>

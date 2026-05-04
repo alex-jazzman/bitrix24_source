@@ -25,8 +25,11 @@ import type { TaskModel } from 'tasks.v2.model.tasks';
 import { DeadlinePopup } from './deadline-popup/deadline-popup';
 import { DeadlineChangeReasonPopup } from './deadline-change-reason-popup/deadline-change-reason-popup';
 import { DeadlineAfterPopup } from './deadline-after-popup/deadline-after-popup';
+import { Presets } from './deadline-after-popup/deadline-after-popup-content';
 import { deadlineMeta } from './deadline-meta';
 import './deadline.css';
+
+const unitDurations = DurationFormat.getUnitDurations();
 
 // @vue/component
 export const Deadline = {
@@ -86,6 +89,7 @@ export const Deadline = {
 			coordinates: null,
 			saveCallback: null,
 			changeReason: '',
+			selectedPreset: null,
 		};
 	},
 	computed: {
@@ -242,8 +246,15 @@ export const Deadline = {
 		},
 	},
 	watch: {
-		isSettingsPopupShown(value): void
+		async isSettingsPopupShown(value): void
 		{
+			if (this.isTemplate && value === false)
+			{
+				await this.$nextTick();
+
+				this.recalculateDeadlineAfterFromPresets();
+			}
+
 			this.$emit('isSettingsPopupShown', value);
 		},
 	},
@@ -259,6 +270,11 @@ export const Deadline = {
 	created(): void
 	{
 		this.showErrorDebounce = Runtime.debounce(this.showError, 300);
+
+		if (this.isTemplate)
+		{
+			this.setCurrentPreset();
+		}
 	},
 	updated(): void
 	{
@@ -286,6 +302,10 @@ export const Deadline = {
 			{
 				this.showPopup();
 			}
+		},
+		handleApplyPreset(presetId: ?string): void
+		{
+			this.selectedPreset = Object.values(Presets).find((preset) => preset.id === presetId) ?? null;
 		},
 		showPopup(bindElement: HTMLElement, coordinates: { x: number, y: number }): void
 		{
@@ -366,7 +386,6 @@ export const Deadline = {
 		},
 		async setDeadline(dateTs: number): Promise<void>
 		{
-			this.dateTs = null;
 			if (this.isTemplate)
 			{
 				await taskService.update(this.taskId, { deadlineAfter: dateTs });
@@ -389,6 +408,33 @@ export const Deadline = {
 					this.showErrorDebounce(error);
 				}
 			}
+
+			this.dateTs = null;
+		},
+		recalculateDeadlineAfterFromPresets(): void
+		{
+			if (!this.selectedPreset)
+			{
+				return;
+			}
+
+			this.dateTs = this.calculateDayDuration() * this.selectedPreset.multiplier;
+
+			void this.saveDeadline();
+
+			this.$refs.deadline?.$el?.focus();
+		},
+		calculateDayDuration(): number
+		{
+			return this.task?.matchesWorkTime ? calendar.workdayDuration : unitDurations.d;
+		},
+		setCurrentPreset(): void
+		{
+			const dayDuration = this.calculateDayDuration();
+
+			this.selectedPreset = Object.values(Presets).find(
+				(preset) => this.deadlineTs === dayDuration * preset.multiplier,
+			) ?? null;
 		},
 		showError(error): void
 		{
@@ -443,7 +489,7 @@ export const Deadline = {
 					</TextMd>
 				</HoverPill>
 				<div
-					v-if="!isFlowFilledOnAdd && !isTemplate && !compact"
+					v-if="!isFlowFilledOnAdd && !compact"
 					class="tasks-field-deadline-settings-label"
 					ref="settings"
 				>
@@ -469,6 +515,7 @@ export const Deadline = {
 			v-model:deadlineAfter="dateTs"
 			:taskId
 			:bindElement
+			@update:presetId="handleApplyPreset"
 			@close="handleClose"
 		/>
 		<DeadlineChangeReasonPopup

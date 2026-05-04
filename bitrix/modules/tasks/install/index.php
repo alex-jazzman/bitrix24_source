@@ -231,6 +231,8 @@ class tasks extends CModule
 		// onboarding
 		$this->registerOnboardingEvents();
 
+		$this->registerAccessEvents();
+
 		// bizproc
 		$this->registerBizprocEvents();
 
@@ -558,6 +560,11 @@ class tasks extends CModule
 				'name' => '\Bitrix\Tasks\Integration\Recyclebin\AutoRemoveTaskAgent::execute();',
 				'nextExec' => ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, "FULL"),
 			],
+			[
+				'name' => '\Bitrix\Tasks\V2\Infrastructure\Agent\AccessRequestCleaner::execute();',
+				'nextExec' => \Bitrix\Main\Type\DateTime::createFromTimestamp(time() + (86400 - (time() % 86400)))->toString(),  // without daylight saving time, leap years, etc.
+				'period' => 'Y',
+			],
 		];
 		foreach ($agents as $agent)
 		{
@@ -865,6 +872,7 @@ class tasks extends CModule
 		// onboarding
 		$this->unRegisterOnboardingEvents();
 
+		$this->unRegisterAccessEvents();
 		//bizproc
 		$this->unRegisterBizprocEvents();
 
@@ -1162,7 +1170,7 @@ class tasks extends CModule
 		if (!empty($dependencyErrors))
 		{
 			$this->setInstallError(Loc::getMessage('TASKS_MODULE_INSTALL_ERROR_DEPENDENCIES', [
-				'#MODULES#' => implode(', ', $dependencyErrors)
+				'#MODULES#' => implode(', ', $dependencyErrors),
 			]));
 
 			$this->showInstallStep(1);
@@ -1258,6 +1266,32 @@ class tasks extends CModule
 			'tasks',
 			'\Bitrix\Tasks\Onboarding\Event\EventDispatcher',
 			'OnAfterUserDelete',
+		);
+	}
+
+	private function registerAccessEvents(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->registerEventHandler(
+			'main',
+			'OnAfterUserDelete',
+			'tasks',
+			'\Bitrix\Tasks\V2\Internal\EventHandler\AccessRequest',
+			'OnAfterUserDelete'
+		);
+	}
+
+	private function unRegisterAccessEvents(): void
+	{
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnAfterUserDelete',
+			'tasks',
+			'\Bitrix\Tasks\V2\Internal\EventHandler\AccessRequest',
+			'OnAfterUserDelete'
 		);
 	}
 

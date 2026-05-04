@@ -1126,10 +1126,12 @@ BX.Tasks.GridActions = {
 						return function() {
 							if (BX.hasClass(BX('task-timer-block-inner-' + taskId), 'task-timer-play'))
 							{
+								BX.Tasks.GridInstance.stopTimerPull();
 								BX.TasksTimerManager.stop(taskId);
 							}
 							else if (canStartTimeTracking)
 							{
+								BX.Tasks.GridInstance.stopTimerPull();
 								BX.TasksTimerManager.start(taskId);
 							}
 						};
@@ -1335,6 +1337,13 @@ BX.Tasks.GridActions = {
 					{
 						BX.removeClass(innerTimerBlock, 'task-timer-play');
 						BX.addClass(innerTimerBlock, 'task-timer-pause');
+						const valueBlock = BX('task-timer-block-value-' + selfTaskId);
+						if (valueBlock && valueBlock.textContent)
+						{
+							const parts = valueBlock.textContent.trim().split(' / ');
+							parts[0] = parts[0].replace(/^(\d+:\d+):\d+$/, '$1');
+							valueBlock.textContent = parts.join(' / ');
+						}
 					}
 					else if (switchStateTo === 'playing')
 					{
@@ -1508,6 +1517,7 @@ BX(function() {
 
 		this.isMyList = this.userId === this.ownerId;
 		this.canPin = this.isMyList;
+		this.skipTimerPush = false;
 
 		this.updateCanMove();
 		this.init(options);
@@ -1602,6 +1612,11 @@ BX(function() {
 			});
 		},
 
+		stopTimerPull()
+		{
+			this.skipTimerPush = true;
+		},
+
 		getPullItems(items, repository)
 		{
 			const pullItems = [];
@@ -1627,6 +1642,8 @@ BX(function() {
 				task_view: this.onPullTaskView,
 				task_remove: this.onPullTaskRemove,
 				user_option_changed: this.onUserOptionChanged,
+				task_timer_start: this.onTimerStart,
+				task_timer_stop: this.onTimerStop,
 			};
 
 			return new Promise((resolve, reject) => {
@@ -1990,6 +2007,80 @@ BX(function() {
 				default:
 					break;
 			}
+		},
+
+		onTimerStart: function(data, repository)
+		{
+			const taskId = data.taskId;
+			if (!this.isRowExist(Number(taskId)))
+			{
+				return;
+			}
+
+			if (this.skipTimerPush)
+			{
+				this.skipTimerPush = false;
+
+				return;
+			}
+
+			const onRowUpdate = (eventData) => {
+				const rowId = eventData.data?.id ?? eventData.id;
+				if (Number(rowId) !== Number(taskId))
+				{
+					return;
+				}
+
+				BX.removeCustomEvent('Tasks.Tasks.Grid:RowUpdate', onRowUpdate);
+
+				BX.TasksTimerManager.startTimer(taskId, {
+					timerStartedAtTs: data.timerStartedAtTs,
+					timeElapsed: data.timeElapsed,
+					timeSpentInLogs: data.timeSpentInLogs,
+					timeEstimate: data.timeEstimate,
+					userId: this.ownerId,
+				});
+			};
+			BX.addCustomEvent('Tasks.Tasks.Grid:RowUpdate', onRowUpdate);
+
+			this.checkTask(taskId, {
+				action: this.actions.taskUpdate,
+				userId: this.ownerId,
+			}, repository);
+		},
+
+		onTimerStop: function(data, repository)
+		{
+			const taskId = data.taskId;
+			if (!this.isRowExist(Number(taskId)))
+			{
+				return;
+			}
+
+			if (this.skipTimerPush)
+			{
+				this.skipTimerPush = false;
+
+				return;
+			}
+
+			const onRowUpdate = (eventData) => {
+				const rowId = eventData.data?.id ?? eventData.id;
+				if (Number(rowId) !== Number(taskId))
+				{
+					return;
+				}
+
+				BX.removeCustomEvent('Tasks.Tasks.Grid:RowUpdate', onRowUpdate);
+
+				BX.TasksTimerManager.stopTimer(taskId);
+			};
+			BX.addCustomEvent('Tasks.Tasks.Grid:RowUpdate', onRowUpdate);
+
+			this.checkTask(taskId, {
+				action: this.actions.taskUpdate,
+				userId: this.ownerId,
+			}, repository);
 		},
 
 		placeToNearTasks: function(taskId, taskData, parameters, repository)
@@ -3173,6 +3264,8 @@ this.BX = this.BX || {};
 	  TASK_UPDATE: 'task_update',
 	  TASK_VIEW: 'task_view',
 	  TASK_REMOVE: 'task_remove',
+	  TASK_TIMER_START: 'task_timer_start',
+	  TASK_TIMER_STOP: 'task_timer_stop',
 	  USER_OPTION_CHANGED: 'user_option_changed'
 	});
 

@@ -11,6 +11,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Localization\Loc;
 
 Extension::load([
 	'intranet.widget-loader',
@@ -29,7 +30,14 @@ if (!empty($arResult['avatar']))
 $this->setFrameMode(true);
 ?>
 
-<div data-testid="user-id-<?= (int)$arResult['userId'] ?>" class="air-user-profile --no-transition <?= $workTimeClass ?>" data-id="bx-avatar-widget">
+<button
+	data-testid="user-id-<?= (int)$arResult['userId'] ?>"
+	class="air-user-profile --no-transition <?= $workTimeClass ?>"
+	data-id="bx-avatar-widget"
+	aria-haspopup="dialog"
+	aria-expanded="false"
+	aria-label="<?= Loc::getMessage('AVATAR_WIDGET_ARIA'); ?>"
+>
 	<div class="air-user-profile__wrapper">
 		<div class="air-user-profile-avatar__work-time-state">
 			<i class="ui-icon-set air-user-profile-avatar__work-time-icon"></i>
@@ -45,7 +53,7 @@ $this->setFrameMode(true);
 		<div class="air-user-profile-avatar__counter"></div>
 		<div class="air-user-profile-avatar__work-time-state-short"></div>
 	</div>
-</div>
+</button>
 <script>
 	BX.ready(() => {
 		const avatarWrapper = document.querySelector('[data-id="bx-avatar-widget"]');

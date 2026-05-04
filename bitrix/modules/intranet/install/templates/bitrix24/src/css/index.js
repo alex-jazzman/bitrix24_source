@@ -7,6 +7,8 @@ import './logo.css';
 import './search.css';
 import './user-profile.css';
 import './right-bar.css';
+import './right-panel.css';
+import './right-panel-ai-chat.css';
 import './chat-bar.css';
 import './composite.css';
 import './composite-feed-skeleton.css';

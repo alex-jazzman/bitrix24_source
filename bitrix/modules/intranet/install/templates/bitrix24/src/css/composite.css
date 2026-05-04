@@ -1,6 +1,6 @@
 .composite-skeleton-container {
-	position: absolute;
-	inset: 0;
+	position: relative;
+	flex: 1;
 }
 
 .composite-loader-container {

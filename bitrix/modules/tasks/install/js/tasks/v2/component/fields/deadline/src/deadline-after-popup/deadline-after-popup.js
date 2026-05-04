@@ -19,12 +19,16 @@ export const DeadlineAfterPopup = {
 			type: [Number, null],
 			required: true,
 		},
+		presetId: {
+			type: [String, null],
+			default: null,
+		},
 		bindElement: {
 			type: HTMLElement,
 			required: true,
 		},
 	},
-	emits: ['update:deadlineAfter', 'close'],
+	emits: ['update:deadlineAfter', 'update:presetId', 'close'],
 	computed: {
 		options(): PopupOptions
 		{
@@ -39,9 +43,10 @@ export const DeadlineAfterPopup = {
 		},
 	},
 	methods: {
-		handleUpdate(dateTs: number): void
+		handleUpdate(preset: { id: string, duration: number }): void
 		{
-			this.$emit('update:deadlineAfter', dateTs);
+			this.$emit('update:deadlineAfter', preset.duration);
+			this.$emit('update:presetId', preset.id);
 		},
 	},
 	template: `

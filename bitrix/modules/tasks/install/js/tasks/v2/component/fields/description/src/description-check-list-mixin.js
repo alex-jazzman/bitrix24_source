@@ -40,7 +40,6 @@ export const DescriptionCheckListMixin = {
 			{
 				return;
 			}
-
 			this.isAiCommandProcessing = true;
 
 			const { CommandExecutor } = await Runtime.loadExtension('ai.command-executor');
@@ -51,15 +50,43 @@ export const DescriptionCheckListMixin = {
 			});
 
 			const editorText = this.editor.getText() || 'empty';
-			const checklistString = await aiCommandExecutor.makeChecklistFromText(editorText);
+			let checklistString = null;
+			try
+			{
+				checklistString = await aiCommandExecutor.makeChecklistFromText(editorText);
+			}
+			catch (errorResult)
+			{
+				const bindElement = this.$refs.checkListButton?.$el ?? null;
+				this.handleBaasError(errorResult, bindElement);
+			}
 
 			this.isAiCommandProcessing = false;
 
-			this.handleCloseWithCheckList(checklistString);
+			if (checklistString !== null)
+			{
+				this.handleCloseWithCheckList(checklistString);
+			}
 		},
 		handleCloseWithCheckList(checklistString: string): void
 		{
 			emitAddCheckListDebounced(this, checklistString);
 		},
+		async handleBaasError(errorResult, bindElement): void
+		{
+			const { AjaxErrorHandler } = await Runtime.loadExtension('ai.ajax-error-handler');
+			const firstError = errorResult?.errors?.[0];
+
+			AjaxErrorHandler.handleTextGenerateError({
+				baasOptions: {
+					bindElement,
+					context: 'tasks_field_checklist',
+					useAngle: false,
+				},
+				errorCode: firstError?.code ?? 'undefined_error',
+				showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
+				sliderCode: firstError?.customData?.sliderCode,
+			});
+		}
 	},
 };

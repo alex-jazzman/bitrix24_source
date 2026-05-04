@@ -47,6 +47,7 @@ export const Results = {
 		task: {},
 		taskId: {},
 		isEdit: {},
+		isTemplate: {},
 	},
 	props: {
 		isSheetShown: {
@@ -83,6 +84,7 @@ export const Results = {
 	computed: {
 		...mapGetters({
 			stateFlags: `${Model.Interface}/stateFlags`,
+			templateStateFlags: `${Model.Interface}/templateStateFlags`,
 		}),
 		requireResult(): boolean
 		{
@@ -153,16 +155,23 @@ export const Results = {
 		},
 		menuItems(): MenuItemOptions[]
 		{
-			return [
-				{
+			const items = [];
+
+			if (!this.isTemplate)
+			{
+				items.push({
 					title: this.loc('TASKS_V2_RESULT_ADD'),
 					icon: Outline.PLUS_L,
 					onClick: this.openAddResultSheet,
 					dataset: {
 						id: `MenuResultAdd-${this.taskId}`,
 					},
-				},
-				this.requireResult && {
+				});
+			}
+
+			if (this.requireResult)
+			{
+				items.push({
 					title: this.loc('TASKS_V2_RESULT_NOT_REQUIRED'),
 					design: 'alert',
 					icon: Outline.CROSS_L,
@@ -170,8 +179,11 @@ export const Results = {
 					dataset: {
 						id: `MenuResultNotRequire-${this.taskId}`,
 					},
-				},
-				!this.requireResult && {
+				});
+			}
+			else
+			{
+				items.push({
 					title: this.loc('TASKS_V2_RESULT_REQUIRE'),
 					icon: Outline.WINDOW_FLAG,
 					isLocked: this.isLocked,
@@ -179,8 +191,10 @@ export const Results = {
 					dataset: {
 						id: `MenuResultRequire-${this.taskId}`,
 					},
-				},
-			];
+				});
+			}
+
+			return items;
 		},
 		isLocked(): boolean
 		{
@@ -246,7 +260,7 @@ export const Results = {
 		},
 		handleTitleClick(): void
 		{
-			if (!this.isLoading)
+			if (!this.isLoading && !this.isTemplate)
 			{
 				this.openAddResultSheet();
 			}
@@ -295,7 +309,18 @@ export const Results = {
 		{
 			void taskService.update(this.taskId, { requireResult });
 
-			if (!this.isEdit)
+			if (this.isEdit)
+			{
+				return;
+			}
+
+			if (this.isTemplate)
+			{
+				await this.$store.dispatch(`${Model.Interface}/updateTemplateStateFlags`, { defaultRequireResult: requireResult });
+
+				void stateService.setTemplateFlags(this.templateStateFlags);
+			}
+			else
 			{
 				await this.$store.dispatch(`${Model.Interface}/updateStateFlags`, { defaultRequireResult: requireResult });
 
@@ -474,6 +499,7 @@ export const Results = {
 				>
 					<div
 						class="tasks-field-results-title"
+						:class="{ '--non-clickable': isTemplate }"
 						@click="handleTitleClick"
 					>
 						<div
@@ -490,7 +516,7 @@ export const Results = {
 							<BIcon :name="Outline.WINDOW_FLAG"/>
 							<TextMd accent>{{ emptyResultTitle }}</TextMd>
 						</div>
-						<div class="tasks-field-results-title-actions">
+						<div class="tasks-field-results-title-actions print-ignore">
 							<BIcon
 								v-if="showMoreIcon"
 								class="tasks-field-results-title-icon"

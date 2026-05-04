@@ -12,3 +12,6 @@ $MESS['TASKS_STAGE_PERIOD7'] = 'Завершены';
 $MESS['TASKS_STAGE_MP_1'] = 'Не спланированы';
 $MESS['TASKS_STAGE_MP_2'] = 'Сделаю на неделе';
 $MESS['TASKS_STAGE_ERROR_CANT_DELETE_FIRST'] = 'Нельзя удалить первую стадию. Передвиньте стадию, чтобы удалить.';
+
+$MESS['TASKS_STAGE_PERSONAL_WORK_IN_PROGRESS'] = 'В работе';
+$MESS['TASKS_STAGE_PERSONAL_REVIEW'] = 'На проверке';

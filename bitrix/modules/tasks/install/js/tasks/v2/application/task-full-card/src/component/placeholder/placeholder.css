@@ -27,25 +27,19 @@
 }
 .tasks-full-card-placeholder__img-container {
 	padding: 5px 0 10px 0;
-	max-width: 210px;
+	max-width: 269px;
 	line-height: 0;
 }
 .tasks-full-card-placeholder__img {
-	max-width: 100%;
+	width: 269px;
+	height: 195px;
 }
 .tasks-full-card-placeholder__head {
 	padding: 5px 0 5px 0;
-	line-height: 26px;
-	font-size: 19px;
-	color: var(--ui-color-base-1);
 }
 .tasks-full-card-placeholder__descr {
 	padding: 5px 0 5px 0;
-	line-height: 21px;
-	font-size: 16px;
-	color: var(--ui-color-base-2);
 }
 .tasks-full-card-placeholder__action-container {
 	padding: 15px 0 5px 0;
 }
-.tasks-full-card-placeholder__action {}

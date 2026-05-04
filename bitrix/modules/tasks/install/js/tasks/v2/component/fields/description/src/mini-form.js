@@ -83,6 +83,10 @@ export const MiniForm = {
 		{
 			return !this.task.rights.edit;
 		},
+		title(): string
+		{
+			return this.task.title ?? '';
+		},
 		editor(): TextEditor
 		{
 			return this.entityTextEditor.getEditor();
@@ -97,17 +101,24 @@ export const MiniForm = {
 		},
 	},
 	watch: {
-		isSheetShown(newValue): void
+		isSheetShown(newValue: boolean): void
 		{
 			this.handleTeleport(newValue);
 		},
+	},
+	mounted(): void
+	{
+		if (!this.isEdit && this.title.length > 0)
+		{
+			this.handleEditorFocus(100);
+		}
 	},
 	methods: {
 		handleExpand(): void
 		{
 			this.$emit('expand');
 		},
-		handleTeleport(isSheetShown): void
+		handleTeleport(isSheetShown: boolean): void
 		{
 			if (isSheetShown === true)
 			{
@@ -116,9 +127,7 @@ export const MiniForm = {
 					this.editor.setVisualOptions({ blockSpaceInline: 'var(--ui-space-stack-xl)' });
 				}, 100);
 
-				setTimeout(() => {
-					this.editor.focus(null, { defaultSelection: 'rootEnd' });
-				}, 300);
+				this.handleEditorFocus(300);
 			}
 			else
 			{
@@ -126,6 +135,12 @@ export const MiniForm = {
 				this.editor.setMaxHeight(null);
 				this.editor.setVisualOptions({ blockSpaceInline: 'var(--ui-space-stack-md2)' });
 			}
+		},
+		handleEditorFocus(timeout: number): void
+		{
+			setTimeout(() => {
+				this.editor.focus(null, { defaultSelection: 'rootEnd' });
+			}, timeout);
 		},
 	},
 	template: `
@@ -156,6 +171,7 @@ export const MiniForm = {
 							<MoreButton :editor/>
 							<CopilotButton v-if="isCopilotEnabled" :editor/>
 							<CheckList
+								ref="checkListButton"
 								v-if="isCopilotEnabled"
 								:loading="isAiCommandProcessing"
 								@click="handleCheckListButtonClick"

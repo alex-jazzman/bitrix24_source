@@ -6,6 +6,7 @@ import { apiClient } from 'tasks.v2.lib.api-client';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { UserMappers } from 'tasks.v2.provider.service.user-service';
 import type { ElapsedTimeModel } from 'tasks.v2.model.elapsed-times';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { UserModel } from 'tasks.v2.model.users';
 import type { UserDto } from 'tasks.v2.provider.service.user-service';
 
@@ -14,6 +15,13 @@ import { mapDtoToModel, mapModelToDto } from './mappers';
 export class TimeTrackingService
 {
 	#state: { [taskId: number]: { page: number, size: number, isLoading: boolean, hasMore: boolean } } = {};
+
+	async getTaskWithActiveTimer(): ?TaskModel
+	{
+		const task = await apiClient.post(Endpoint.TaskTrackingTaskWithActiveTimer, {});
+
+		void this.$store.dispatch(`${Model.Interface}/setTaskWithActiveTimer`, task);
+	}
 
 	async list(taskId: number, options: { reset?: boolean, size?: number } = {}): Promise<void>
 	{

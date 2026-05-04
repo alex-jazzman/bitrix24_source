@@ -40,6 +40,7 @@ Extension::load([
 	'ui.analytics',
 	'ui.navigationpanel',
 	'ui.feedback.form',
+	'tasks.external-scrum',
 ]);
 
 Extension::load('date');

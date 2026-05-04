@@ -1,5 +1,5 @@
 import { Text, Event, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { type BaseEvent } from 'main.core.events';
 
 import { mapGetters } from 'ui.vue3.vuex';
 import { BMenu, type MenuOptions, type MenuItemOptions } from 'ui.vue3.components.menu';
@@ -16,8 +16,8 @@ import { resultService } from 'tasks.v2.provider.service.result-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { stateService } from 'tasks.v2.provider.service.state-service';
 import { UserMappers, type UserDto } from 'tasks.v2.provider.service.user-service';
-import type { UserModel } from 'tasks.v2.model.users';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type UserModel } from 'tasks.v2.model.users';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 import { resultsMeta } from './results-meta';
 import { ResultEditorSheet } from './components/result-editor-sheet/result-editor-sheet';
@@ -35,6 +35,7 @@ export const ResultsChip = {
 		isEdit: {},
 		analytics: {},
 		cardType: {},
+		isTemplate: {},
 	},
 	props: {
 		isSheetShown: {
@@ -65,6 +66,7 @@ export const ResultsChip = {
 		...mapGetters({
 			currentUserId: `${Model.Interface}/currentUserId`,
 			stateFlags: `${Model.Interface}/stateFlags`,
+			templateStateFlags: `${Model.Interface}/templateStateFlags`,
 		}),
 		design(): string
 		{
@@ -88,7 +90,7 @@ export const ResultsChip = {
 				minWidth: 240,
 				items: this.menuItems,
 				autoHide: true,
-				closeByEsc: true,
+				closeByEsc: false,
 			};
 		},
 		menuItems(): MenuItemOptions[]
@@ -144,7 +146,7 @@ export const ResultsChip = {
 				return;
 			}
 
-			if (!this.isEdit && !this.isLocked)
+			if (this.isTemplate || (!this.isEdit && !this.isLocked))
 			{
 				this.requireResult();
 
@@ -160,14 +162,16 @@ export const ResultsChip = {
 				this.openAddResultSheet();
 			}
 		},
-		async handleAddResultFromChat(event): void
+		async handleAddResultFromChat(event: BaseEvent): void
 		{
 			const { taskId, messageId, text, authorId } = event.data;
 
-			if (taskId !== this.taskId)
+			if (taskId !== this.taskId || event.isDefaultPrevented())
 			{
 				return;
 			}
+
+			event.preventDefault();
 
 			const payload = {
 				text: Type.isStringFilled(text) ? text : this.loc('TASKS_V2_RESULT_DEFAULT_TITLE_FROM_MESSAGE'),
@@ -201,14 +205,16 @@ export const ResultsChip = {
 				subSection: Analytics.SubSection.Chat,
 			});
 		},
-		handleDeleteResultFromChat(event): void
+		handleDeleteResultFromChat(event: BaseEvent): void
 		{
 			const { taskId, resultId } = event.data;
 
-			if (taskId !== this.taskId)
+			if (taskId !== this.taskId || event.isDefaultPrevented())
 			{
 				return;
 			}
+
+			event.preventDefault();
 
 			void resultService.delete(resultId);
 		},
@@ -245,7 +251,18 @@ export const ResultsChip = {
 
 			void taskService.update(this.taskId, { requireResult: true });
 
-			if (!this.isEdit)
+			if (this.isEdit)
+			{
+				return;
+			}
+
+			if (this.isTemplate)
+			{
+				await this.$store.dispatch(`${Model.Interface}/updateTemplateStateFlags`, { defaultRequireResult: true });
+
+				void stateService.setTemplateFlags(this.templateStateFlags);
+			}
+			else
 			{
 				await this.$store.dispatch(`${Model.Interface}/updateStateFlags`, { defaultRequireResult: true });
 
@@ -272,10 +289,12 @@ export const ResultsChip = {
 		{
 			const { taskId, text } = event.getData();
 
-			if (this.taskId !== taskId)
+			if (this.taskId !== taskId || event.isDefaultPrevented())
 			{
 				return;
 			}
+
+			event.preventDefault();
 
 			this.openAddResultSheet(text);
 		},

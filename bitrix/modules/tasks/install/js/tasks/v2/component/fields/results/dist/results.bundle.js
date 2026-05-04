@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_iconSet_animated,tasks_v2_lib_ahaMoments,tasks_v2_component_elements_hint,tasks_v2_lib_highlighter,ui_vue3,ui_vue3_directives_hint,tasks_v2_component_elements_userAvatar,tasks_v2_component_elements_userFieldWidgetComponent,ui_system_skeleton_vue,tasks_v2_component_dropZone,tasks_v2_component_elements_bottomSheet,ui_textEditor,tasks_v2_lib_calendar,tasks_v2_provider_service_fileService,tasks_v2_component_entityText,ui_system_typography_vue,ui_vue3_components_button,main_core,main_core_events,ui_vue3_vuex,ui_vue3_components_menu,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_lib_analytics,tasks_v2_lib_showLimit,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_resultService,tasks_v2_provider_service_taskService,tasks_v2_provider_service_stateService,tasks_v2_provider_service_userService) {
+(function (exports,ui_iconSet_animated,tasks_v2_lib_ahaMoments,tasks_v2_component_elements_hint,tasks_v2_lib_highlighter,ui_vue3,ui_vue3_directives_hint,tasks_v2_component_elements_userAvatar,tasks_v2_component_elements_userFieldWidgetComponent,ui_system_skeleton_vue,main_core_events,tasks_v2_component_dropZone,tasks_v2_component_elements_bottomSheet,ui_textEditor,tasks_v2_lib_calendar,tasks_v2_provider_service_fileService,tasks_v2_component_entityText,ui_system_typography_vue,ui_vue3_components_button,main_core,ui_vue3_vuex,ui_vue3_components_menu,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_lib_analytics,tasks_v2_lib_showLimit,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_resultService,tasks_v2_provider_service_taskService,tasks_v2_provider_service_stateService,tasks_v2_provider_service_userService) {
 	'use strict';
 
 	const resultsMeta = Object.freeze({
@@ -374,6 +374,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  directives: {
 	    hint: ui_vue3_directives_hint.hint
 	  },
+	  inject: {
+	    embedded: {}
+	  },
 	  props: {
 	    resultId: {
 	      type: [Number, String],
@@ -567,7 +570,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						@click.stop="isMenuShown = true"
 					/>
 					<BIcon
-						v-if="isSticky"
+						v-if="isSticky && !embedded"
 						class="tasks-field-results-title-icon --big"
 						:name="resizeIcon"
 						hoverable
@@ -924,7 +927,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    ResultEditor
 	  },
 	  inject: {
-	    taskId: {}
+	    taskId: {},
+	    embedded: {}
 	  },
 	  props: {
 	    resultId: {
@@ -961,6 +965,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    isDiskModuleInstalled() {
 	      return tasks_v2_core.Core.getParams().features.disk;
+	    },
+	    shouldShowResize() {
+	      return this.showResize && !this.embedded;
 	    }
 	  },
 	  mounted() {
@@ -990,9 +997,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		>
 			<ResultEditor
 				:resultId
-				:content="result.text || ''"
 				:isResized
-				:showResize
+				:content="result.text || ''"
+				:showResize="shouldShowResize"
 				@close="$emit('close')"
 				@resize="isResized = !isResized"
 			/>
@@ -1291,7 +1298,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  inject: {
 	    task: {},
 	    taskId: {},
-	    isEdit: {}
+	    isEdit: {},
+	    isTemplate: {}
 	  },
 	  props: {
 	    isSheetShown: {
@@ -1325,7 +1333,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
-	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`
+	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`,
+	      templateStateFlags: `${tasks_v2_const.Model.Interface}/templateStateFlags`
 	    }),
 	    requireResult() {
 	      var _this$task;
@@ -1382,30 +1391,39 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      };
 	    },
 	    menuItems() {
-	      return [{
-	        title: this.loc('TASKS_V2_RESULT_ADD'),
-	        icon: ui_iconSet_api_vue.Outline.PLUS_L,
-	        onClick: this.openAddResultSheet,
-	        dataset: {
-	          id: `MenuResultAdd-${this.taskId}`
-	        }
-	      }, this.requireResult && {
-	        title: this.loc('TASKS_V2_RESULT_NOT_REQUIRED'),
-	        design: 'alert',
-	        icon: ui_iconSet_api_vue.Outline.CROSS_L,
-	        onClick: this.handleUnrequireResult,
-	        dataset: {
-	          id: `MenuResultNotRequire-${this.taskId}`
-	        }
-	      }, !this.requireResult && {
-	        title: this.loc('TASKS_V2_RESULT_REQUIRE'),
-	        icon: ui_iconSet_api_vue.Outline.WINDOW_FLAG,
-	        isLocked: this.isLocked,
-	        onClick: this.handleRequireResult,
-	        dataset: {
-	          id: `MenuResultRequire-${this.taskId}`
-	        }
-	      }];
+	      const items = [];
+	      if (!this.isTemplate) {
+	        items.push({
+	          title: this.loc('TASKS_V2_RESULT_ADD'),
+	          icon: ui_iconSet_api_vue.Outline.PLUS_L,
+	          onClick: this.openAddResultSheet,
+	          dataset: {
+	            id: `MenuResultAdd-${this.taskId}`
+	          }
+	        });
+	      }
+	      if (this.requireResult) {
+	        items.push({
+	          title: this.loc('TASKS_V2_RESULT_NOT_REQUIRED'),
+	          design: 'alert',
+	          icon: ui_iconSet_api_vue.Outline.CROSS_L,
+	          onClick: this.handleUnrequireResult,
+	          dataset: {
+	            id: `MenuResultNotRequire-${this.taskId}`
+	          }
+	        });
+	      } else {
+	        items.push({
+	          title: this.loc('TASKS_V2_RESULT_REQUIRE'),
+	          icon: ui_iconSet_api_vue.Outline.WINDOW_FLAG,
+	          isLocked: this.isLocked,
+	          onClick: this.handleRequireResult,
+	          dataset: {
+	            id: `MenuResultRequire-${this.taskId}`
+	          }
+	        });
+	      }
+	      return items;
 	    },
 	    isLocked() {
 	      return !tasks_v2_core.Core.getParams().restrictions.requiredResult.available;
@@ -1454,7 +1472,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.openResultSheet(0);
 	    },
 	    handleTitleClick() {
-	      if (!this.isLoading) {
+	      if (!this.isLoading && !this.isTemplate) {
 	        this.openAddResultSheet();
 	      }
 	    },
@@ -1492,7 +1510,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        requireResult
 	      });
-	      if (!this.isEdit) {
+	      if (this.isEdit) {
+	        return;
+	      }
+	      if (this.isTemplate) {
+	        await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateStateFlags`, {
+	          defaultRequireResult: requireResult
+	        });
+	        void tasks_v2_provider_service_stateService.stateService.setTemplateFlags(this.templateStateFlags);
+	      } else {
 	        await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateStateFlags`, {
 	          defaultRequireResult: requireResult
 	        });
@@ -1633,6 +1659,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				>
 					<div
 						class="tasks-field-results-title"
+						:class="{ '--non-clickable': isTemplate }"
 						@click="handleTitleClick"
 					>
 						<div
@@ -1649,7 +1676,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							<BIcon :name="Outline.WINDOW_FLAG"/>
 							<TextMd accent>{{ emptyResultTitle }}</TextMd>
 						</div>
-						<div class="tasks-field-results-title-actions">
+						<div class="tasks-field-results-title-actions print-ignore">
 							<BIcon
 								v-if="showMoreIcon"
 								class="tasks-field-results-title-icon"
@@ -1719,7 +1746,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    taskId: {},
 	    isEdit: {},
 	    analytics: {},
-	    cardType: {}
+	    cardType: {},
+	    isTemplate: {}
 	  },
 	  props: {
 	    isSheetShown: {
@@ -1747,7 +1775,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`,
-	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`
+	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`,
+	      templateStateFlags: `${tasks_v2_const.Model.Interface}/templateStateFlags`
 	    }),
 	    design() {
 	      return this.isSelected ? ui_system_chip_vue.ChipDesign.ShadowAccent : ui_system_chip_vue.ChipDesign.ShadowNoAccent;
@@ -1768,7 +1797,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        minWidth: 240,
 	        items: this.menuItems,
 	        autoHide: true,
-	        closeByEsc: true
+	        closeByEsc: false
 	      };
 	    },
 	    menuItems() {
@@ -1812,7 +1841,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.highlightField();
 	        return;
 	      }
-	      if (!this.isEdit && !this.isLocked) {
+	      if (this.isTemplate || !this.isEdit && !this.isLocked) {
 	        this.requireResult();
 	        return;
 	      }
@@ -1829,9 +1858,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        text,
 	        authorId
 	      } = event.data;
-	      if (taskId !== this.taskId) {
+	      if (taskId !== this.taskId || event.isDefaultPrevented()) {
 	        return;
 	      }
+	      event.preventDefault();
 	      const payload = {
 	        text: main_core.Type.isStringFilled(text) ? text : this.loc('TASKS_V2_RESULT_DEFAULT_TITLE_FROM_MESSAGE'),
 	        author: this.getUserDto(authorId),
@@ -1866,9 +1896,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        taskId,
 	        resultId
 	      } = event.data;
-	      if (taskId !== this.taskId) {
+	      if (taskId !== this.taskId || event.isDefaultPrevented()) {
 	        return;
 	      }
+	      event.preventDefault();
 	      void tasks_v2_provider_service_resultService.resultService.delete(resultId);
 	    },
 	    openAddResultSheet(text = null) {
@@ -1897,7 +1928,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        requireResult: true
 	      });
-	      if (!this.isEdit) {
+	      if (this.isEdit) {
+	        return;
+	      }
+	      if (this.isTemplate) {
+	        await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateStateFlags`, {
+	          defaultRequireResult: true
+	        });
+	        void tasks_v2_provider_service_stateService.stateService.setTemplateFlags(this.templateStateFlags);
+	      } else {
 	        await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateStateFlags`, {
 	          defaultRequireResult: true
 	        });
@@ -1921,9 +1960,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        taskId,
 	        text
 	      } = event.getData();
-	      if (this.taskId !== taskId) {
+	      if (this.taskId !== taskId || event.isDefaultPrevented()) {
 	        return;
 	      }
+	      event.preventDefault();
 	      this.openAddResultSheet(text);
 	    }
 	  },
@@ -1953,5 +1993,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.ResultEditorSheet = ResultEditorSheet;
 	exports.resultsMeta = resultsMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Vue3,BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.System.Skeleton.Vue,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Elements,BX.UI.TextEditor,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component,BX.UI.System.Typography.Vue,BX.Vue3.Components,BX,BX.Event,BX.Vue3.Vuex,BX.UI.Vue3.Components,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Vue3,BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.System.Skeleton.Vue,BX.Event,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Elements,BX.UI.TextEditor,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component,BX.UI.System.Typography.Vue,BX.Vue3.Components,BX,BX.Vue3.Vuex,BX.UI.Vue3.Components,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=results.bundle.js.map

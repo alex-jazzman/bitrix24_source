@@ -47,6 +47,7 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			needsControl: false,
 			matchesWorkTime: false,
 			allowsTimeTracking: false,
+			defaultRequireResult: false,
 		});
 
 		const deadlineUserOption: DeadlineUserOption = this.getVariable('deadlineUserOption', {
@@ -120,7 +121,7 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			},
 			isFavorite: false,
 			isMuted: false,
-			requireResult: false,
+			requireResult: stateFlags.defaultRequireResult,
 			userFields: [],
 			permissions: null,
 		};

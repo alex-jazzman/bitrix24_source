@@ -145,6 +145,14 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      console.error('Reminder.delete', error);
 	    }
 	  }
+	  clearForTask(taskId) {
+	    const userId = tasks_v2_core.Core.getParams().currentUser.id;
+	    const reminderIds = this.$store.getters[`${tasks_v2_const.Model.Reminders}/getIds`](taskId, userId);
+	    if (reminderIds.length > 0) {
+	      void this.$store.dispatch(`${tasks_v2_const.Model.Reminders}/deleteMany`, reminderIds);
+	    }
+	    delete babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache][taskId];
+	  }
 	  get $store() {
 	    return tasks_v2_core.Core.getStore();
 	  }

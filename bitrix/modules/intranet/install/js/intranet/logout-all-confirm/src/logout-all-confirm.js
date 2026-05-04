@@ -68,7 +68,7 @@ export class LogoutAllConfirm
 											},
 										),
 										autoHide: true,
-										position: 'bottom-right',
+										position: 'top-right',
 										closeButton: false,
 										useAirDesign: true,
 									});

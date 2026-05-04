@@ -18,9 +18,9 @@ export class CollabContent extends Content
 	{
 		return {
 			html: this.getOptions().awaitData.then((response) => {
-				const { Messenger, CreatableChat } = response;
+				const { Messenger } = response;
 				this.#openChat = () => {
-					Messenger.openChatCreation(CreatableChat.collab);
+					Messenger.openChatCreation('collab');
 					Analytics.sendCreateCollab();
 				};
 

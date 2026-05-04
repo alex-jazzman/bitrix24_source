@@ -47,7 +47,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    const stateFlags = this.getVariable('stateFlags', {
 	      needsControl: false,
 	      matchesWorkTime: false,
-	      allowsTimeTracking: false
+	      allowsTimeTracking: false,
+	      defaultRequireResult: false
 	    });
 	    const deadlineUserOption = this.getVariable('deadlineUserOption', {
 	      canChangeDeadline: false,
@@ -119,7 +120,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      },
 	      isFavorite: false,
 	      isMuted: false,
-	      requireResult: false,
+	      requireResult: stateFlags.defaultRequireResult,
 	      userFields: [],
 	      permissions: null
 	    };

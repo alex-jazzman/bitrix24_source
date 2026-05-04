@@ -426,11 +426,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 </nav>
 
 <?php if ($showAiAssistantWidget): ?>
-	<div class="menu-items-ai-assistant-stub menu-items-block__scope">
-		<?php
-			$APPLICATION->includeComponent("bitrix:aiassistant.widget", ".default", [], $this);
-		?>
-	</div>
+	<div class="menu-items-ai-assistant-stub menu-items-block__scope"></div>
 <?php endif; ?>
 
 <div class="menu-items-stub menu-items-block__scope"></div>

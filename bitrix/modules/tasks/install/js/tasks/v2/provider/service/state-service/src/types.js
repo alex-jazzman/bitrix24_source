@@ -5,6 +5,13 @@ export type State = {
 	needsControl: boolean,
 	matchesWorkTime: boolean,
 	defaultRequireResult: boolean,
-	defaultDeadline: DeadlineUserOption,
+	defaultDeadline?: DeadlineUserOption,
+	allowsTimeTracking: boolean,
+};
+
+export type StateFlags = {
+	needsControl: boolean,
+	matchesWorkTime: boolean,
+	defaultRequireResult: boolean,
 	allowsTimeTracking: boolean,
 };

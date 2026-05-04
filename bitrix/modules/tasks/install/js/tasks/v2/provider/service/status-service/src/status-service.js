@@ -1,4 +1,5 @@
-import { Event } from 'main.core';
+import { Event, Loc } from 'main.core';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import { Core } from 'tasks.v2.core';
 import { EventName, Model, TaskStatus, Endpoint } from 'tasks.v2.const';
@@ -8,6 +9,7 @@ import { apiClient } from 'tasks.v2.lib.api-client';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { resultService } from 'tasks.v2.provider.service.result-service';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 export const statusService = new class
 {
@@ -31,6 +33,40 @@ export const statusService = new class
 	}
 
 	async startTimer(id: number, analyticsParams: Object = {}): Promise<void>
+	{
+		const taskWithActiveTimer: ?TaskModel = Core.getStore().getters[`${Model.Interface}/taskWithActiveTimer`];
+		if (taskWithActiveTimer)
+		{
+			return new Promise((resolve) => {
+				MessageBox.show({
+					useAirDesign: true,
+					message: Loc.getMessage('TASKS_V2_STATUS_TIMER_WARNING', {
+						'#TITLE#': taskWithActiveTimer.title,
+					}),
+					buttons: MessageBoxButtons.OK_CANCEL,
+					okCaption: Loc.getMessage('TASKS_V2_STATUS_TIMER_WARNING_OK'),
+					onOk: async (dialog) => {
+						dialog.close();
+						await this.#doStartTimer(id, analyticsParams);
+						resolve();
+					},
+					popupOptions: {
+						closeByEsc: false,
+						autoHide: false,
+						events: {
+							onClose: () => {
+								resolve();
+							},
+						},
+					},
+				});
+			});
+		}
+
+		return this.#doStartTimer(id, analyticsParams);
+	}
+
+	async #doStartTimer(id: number, analyticsParams: Object): Promise<void>
 	{
 		await this.#updateStatus(id, Endpoint.TaskTrackingTimerStart, TaskStatus.InProgress);
 

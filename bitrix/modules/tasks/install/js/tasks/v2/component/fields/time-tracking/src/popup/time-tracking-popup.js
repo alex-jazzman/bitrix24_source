@@ -36,6 +36,7 @@ export const TaskTrackingPopup = {
 		task: {},
 		taskId: {},
 		isEdit: {},
+		isTemplate: {},
 	},
 	props: {
 		bindElement: {
@@ -66,6 +67,7 @@ export const TaskTrackingPopup = {
 		...mapGetters({
 			currentUserId: `${Model.Interface}/currentUserId`,
 			stateFlags: `${Model.Interface}/stateFlags`,
+			templateStateFlags: `${Model.Interface}/templateStateFlags`,
 		}),
 		options(): PopupOptions
 		{
@@ -215,12 +217,24 @@ export const TaskTrackingPopup = {
 
 			if (!this.isEdit)
 			{
-				await this.$store.dispatch(
-					`${Model.Interface}/updateStateFlags`,
-					{ allowsTimeTracking: this.localAllowsTimeTracking },
-				);
+				if (this.isTemplate)
+				{
+					await this.$store.dispatch(
+						`${Model.Interface}/updateTemplateStateFlags`,
+						{ allowsTimeTracking: this.localAllowsTimeTracking },
+					);
 
-				void stateService.set(this.stateFlags);
+					void stateService.setTemplateFlags(this.templateStateFlags);
+				}
+				else
+				{
+					await this.$store.dispatch(
+						`${Model.Interface}/updateStateFlags`,
+						{ allowsTimeTracking: this.localAllowsTimeTracking },
+					);
+
+					void stateService.set(this.stateFlags);
+				}
 			}
 
 			void taskService.update(this.taskId, {

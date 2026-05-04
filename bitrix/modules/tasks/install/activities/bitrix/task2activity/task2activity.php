@@ -104,6 +104,8 @@ class CBPTask2Activity extends CBPActivity implements
 	public function Execute()
 	{
 		$documentType = $this->getDocumentType();
+		$documentId = $this->getDocumentId();
+		$moduleId = $documentId[0] ?? null;
 
 		$this->HoldToClose = CBPHelper::getBool($this->HoldToClose);
 		$this->AUTO_LINK_TO_CRM_ENTITY = CBPHelper::getBool($this->AUTO_LINK_TO_CRM_ENTITY);
@@ -129,6 +131,7 @@ class CBPTask2Activity extends CBPActivity implements
 				Dictionary::EVENT_ENTITY_CREATE,
 				$this,
 				$documentType[2] ?? '',
+				$moduleId,
 			);
 		}
 
@@ -413,14 +416,17 @@ class CBPTask2Activity extends CBPActivity implements
 				);
 			}
 
-			// todo: use \Bitrix\Tasks\Item\Task here
+			// todo: change to tasks v2 add command
 			$task = CTaskItem::add(
-				$arFieldsChecked, \Bitrix\Tasks\Util\User::getAdminId(), [
-									'SPAWNED_BY_WORKFLOW' => true,
-									'SKIP_TIMEZONE' => [
-										'DEADLINE',
-									],
-								]
+				$arFieldsChecked,
+				(int)$arFieldsChecked['CREATED_BY'],
+				[
+					'SPAWNED_BY_WORKFLOW' => true,
+					'SKIP_TIMEZONE' => [
+						'DEADLINE',
+					],
+					'CHECK_ACCESS' => false,
+				],
 			);
 			$result = $task->getId();
 		}

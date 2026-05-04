@@ -1,5 +1,5 @@
 import { Event, Text, Type, Uri, Loc, Runtime } from 'main.core';
-import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { EventEmitter, BaseEvent } from 'main.core.events';
 import { SidePanel, type Slider, type SliderEvent } from 'main.sidepanel';
 import type { Popup } from 'main.popup';
 
@@ -56,6 +56,7 @@ export class TaskFullCard
 			...TaskMappers.mapSliderDataToModel({ ...queryParams, ...slider.getRequestParams() }),
 			...this.#params,
 			...(['tasks_planning', 'tasks_kanban_sprint'].includes(queryParams.SCOPE) ? { deadlineTs: 0 } : {}),
+			embedded: false,
 		};
 
 		this.#params.groupId ||= Core.getParams().defaultCollab?.id || undefined;
@@ -71,19 +72,51 @@ export class TaskFullCard
 		openedCards.add(this.#params.taskId);
 	}
 
+	async mountEmbedded(container: HTMLElement): Promise<void>
+	{
+		this.#params = {
+			...this.#params,
+			embedded: true,
+		};
+
+		this.#subscribe();
+
+		this.#application = await this.#mountApplication(container);
+
+		openedCards.add(this.#params.taskId);
+	}
+
 	unmount(): void
 	{
 		this.#unmountApplication();
 
 		this.#unsubscribe();
 
-		if (this.#needToReloadGrid && BX.Tasks.Util)
+		if (this.#needToReloadGrid)
 		{
 			const id = this.#params.taskId;
-			BX.Tasks.Util.fireGlobalTaskEvent('UPDATE', { ID: id }, { STAY_AT_PAGE: true }, { id });
+
+			EventEmitter.emit(EventName.LegacyTasksTaskEvent, new BaseEvent({
+				data: id,
+				compatData: [
+					'UPDATE',
+					{
+						task: { ID: id },
+						taskUgly: { id },
+						options: { STAY_AT_PAGE: true },
+					},
+				],
+			}));
 		}
 
 		openedCards.delete(this.#params.taskId);
+	}
+
+	unmountEmbedded(): void
+	{
+		this.#unmountApplication();
+
+		this.#unsubscribe();
 	}
 
 	onClose(event: SliderEvent): void
@@ -112,6 +145,7 @@ export class TaskFullCard
 	onCloseComplete(): void
 	{
 		this.unmount();
+
 		if (this.#shouldCloseComplete && this.#params.closeCompleteUrl)
 		{
 			location.href = this.#params.closeCompleteUrl;
@@ -122,12 +156,21 @@ export class TaskFullCard
 	{
 		await Core.init();
 
-		const { taskId, analytics, url, link, closeCompleteUrl, ...initialTask } = this.#params;
+		const {
+			taskId,
+			analytics,
+			url,
+			link,
+			closeCompleteUrl,
+			embedded,
+			...initialTask
+		} = this.#params;
 
 		const application = BitrixVue.createApp(App, {
 			id: taskId,
 			initialTask: Object.fromEntries(Object.entries(initialTask).filter(([, value]) => !Type.isNil(value))),
 			analytics,
+			embedded,
 		});
 
 		application.mixin(locMixin);
@@ -260,7 +303,7 @@ export class TaskFullCard
 
 	#updateSliderTitle(title: string): void
 	{
-		if (Type.isStringFilled(title))
+		if (this.#slider && Type.isStringFilled(title))
 		{
 			this.#slider.setTitle(title);
 			SidePanel.Instance.updateBrowserTitle();
@@ -268,14 +311,14 @@ export class TaskFullCard
 	}
 
 	#onTryClose = (event: BaseEvent): void => {
-		if (event.getData().taskId === this.#params.taskId)
+		if (this.#slider && event.getData().taskId === this.#params.taskId)
 		{
 			this.#slider.close();
 		}
 	};
 
 	#onClose = (event: BaseEvent): void => {
-		if (event.getData().taskId === this.#params.taskId)
+		if (this.#slider && event.getData().taskId === this.#params.taskId)
 		{
 			this.#isCloseConfirmed = true;
 			this.#slider.close();

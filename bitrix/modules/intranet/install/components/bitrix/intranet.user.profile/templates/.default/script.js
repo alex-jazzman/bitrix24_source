@@ -331,7 +331,7 @@
 				menuItems.push({
 					text: itemText,
 					className: 'menu-popup-no-icon',
-					onclick: BX.proxy(function() {
+					onclick: BX.proxy(function(event, item) {
 						BX.proxy_context.popupWindow.close();
 						if (!this.isFireUserEnabled && !this.isIntegratorUser)
 						{
@@ -339,14 +339,21 @@
 						}
 						else
 						{
-							this.showConfirmPopup(
-								BX.message('INTRANET_USER_PROFILE_FIRE_CONFIRM'),
-								this.prepareFire.bind(this),
-								BX.message('INTRANET_USER_PROFILE_YES_FIRE'),
-								BX.message('INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1'),
-								'fire',
-								BX.message('INTRANET_USER_PROFILE_FIRE_POPUP_TITLE'),
-							);
+							const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
+							BX.Intranet.FireWizardConfigProvider.fetch(this.userId).then((response) => {
+								this.hideLoader({ loader });
+								const wizard = new BX.Intranet.FireEmployeeWizard({
+									...response.data,
+									onConfirm: (data) => {
+										BX.Intranet.MoveWebhookRequest.send(this.userId, data)
+											.then(this.prepareFire.bind(this))
+											.catch((error) => console.warn(error));
+									},
+								});
+								wizard.show();
+							}).catch(() => {
+								this.hideLoader({ loader });
+							});
 						}
 					}, this),
 				});

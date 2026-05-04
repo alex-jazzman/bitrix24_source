@@ -1,7 +1,8 @@
-import { Type, Loc, ajax } from 'main.core';
+import { Type, Loc, ajax, Runtime } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { ErrorCollection } from 'ui.form-elements.field';
 import { FirstAdminGuard } from 'bitrix24.first-admin-guard';
+import { FireEmployeeWizard, MoveWebhookRequest } from 'intranet.fire-employee-wizard';
 
 export type SetSortType = {
 	menuId: ?string,
@@ -184,9 +185,26 @@ export class GridManager
 			return;
 		}
 
-		if (action === 'fire' || action === 'deleteOrFire')
+		if ((action === 'fire' || action === 'deleteOrFire'))
 		{
-			this.handleFirstAdminFireSingle(userId, params.userFullName, params.currentUserId, action);
+			this.#grid.getLoader().show();
+			this.runFireWizard(userId).then((response) => {
+				this.#grid.getLoader().hide();
+				const wizard = new FireEmployeeWizard({
+					...response.data,
+					onConfirm: (data) => {
+						MoveWebhookRequest.send(userId, data).then(() => {
+							this.handleFirstAdminFireSingle(userId, params.userFullName, params.currentUserId, () => {
+								this.executeUserAction(userId, action, data);
+							});
+						}).catch((error) => console.warn(error));
+					},
+				});
+				wizard.show();
+			}).catch((response) => {
+				this.#grid.getLoader().hide();
+				console.warn(response);
+			});
 		}
 		else
 		{
@@ -196,14 +214,13 @@ export class GridManager
 		}
 	}
 
-	handleFirstAdminFireSingle(userId: number, userFullName: ?string, currentUserId: ?number, action: string = 'fire'): void
+	handleFirstAdminFireSingle(
+		userId: number,
+		userFullName: ?string,
+		currentUserId: ?number,
+		fallbackAction: function,
+	): void
 	{
-		const fallbackAction = () => {
-			this.confirmUser(action, () => {
-				this.executeUserAction(userId, action);
-			});
-		};
-
 		if (!this.isCloud || !this.isFirstAdminConfirmationEnabled)
 		{
 			fallbackAction();
@@ -212,76 +229,61 @@ export class GridManager
 		}
 
 		this.checkIfFirstAdmin(userId).then((isFirstAdmin) => {
-			if (isFirstAdmin)
+			if (!isFirstAdmin)
 			{
-				const guard = new FirstAdminGuard(
-					userFullName || '',
-					currentUserId || 0,
-					userId,
-				);
+				throw new Error('User is not first admin');
+			}
+			const guard = new FirstAdminGuard(
+				userFullName || '',
+				currentUserId || 0,
+				userId,
+			);
 
-				guard.confirmAction(
-					'bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest',
-					() => {
-						ajax.runAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest', {
-							data: {
-								userId: Number(currentUserId),
-								toUser: Number(userId),
-							},
-						})
-							.then((response) => {
-								if (response.status === 'success')
-								{
-									BX.UI.Notification.Center.notify({
-										content: Loc.getMessage(
-											'INTRANET_USER_LIST_FIRST_GROUP_ACTION_FIRST_ADMIN_REQUEST_SENT',
-											{
-												'[b]': '<b>',
-												'[/b]': '</b>',
-												'[br]': '<br>',
-											},
-										),
-										autoHide: true,
-										autoHideDelay: 3000,
-										useAirDesign: true,
-									});
-								}
-							})
-							.catch(() => {
-								ErrorCollection.showSystemError('An error occurred while sending fire request');
-							});
-					},
-					() => {},
-				);
-			}
-			else
-			{
-				fallbackAction();
-			}
+			guard.confirmAction(
+				'bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest',
+				() => {
+					this.firstAdminConfirm({
+						userId: Number(currentUserId),
+						toUser: Number(userId),
+					});
+				},
+				() => {},
+			);
 		}).catch(() => {
 			fallbackAction();
 		});
 	}
 
-	executeUserAction(userId: number, action: string): void
+	firstAdminConfirm(data)
 	{
-		const row = this.#grid.getRows().getById(userId);
-		row?.stateLoad();
-
-		if (['fire', 'restore', 'deleteOrFire'].includes(action))
-		{
-			ajax.runAction(`intranet.v2.User.${action}`, {
-				data: {
-					userId,
-				},
-			}).then(() => {
-				row?.update();
-			}).catch((response) => {
-				row?.stateUnload();
-				const errors = response.errors.map((error) => error.message);
-				ErrorCollection.showSystemError(errors.join('<br>'));
+		ajax.runAction('bitrix24.v2.FirstAdmin.FirstAdminRightsController.sendFireRequest', {
+			data,
+		}).then((response) => {
+			if (response.status === 'success')
+			{
+				BX.UI.Notification.Center.notify({
+					content: Loc.getMessage(
+						'INTRANET_USER_LIST_FIRST_GROUP_ACTION_FIRST_ADMIN_REQUEST_SENT',
+						{
+							'[b]': '<b>',
+							'[/b]': '</b>',
+							'[br]': '<br>',
+						},
+					),
+					autoHide: true,
+					autoHideDelay: 3000,
+					useAirDesign: true,
+				});
+			}
+		})
+			.catch(() => {
+				ErrorCollection.showSystemError('An error occurred while sending fire request');
 			});
-		}
+	}
+
+	executeUserAction(userId: number, action: string, options = {}): void
+	{
+		this.createHandlerByAction(action).call(this, userId, action, options);
 	}
 
 	confirmUser(action: ?string, callBack: function)
@@ -295,6 +297,65 @@ export class GridManager
 				callBack();
 				messageBox.close();
 			},
+		});
+	}
+
+	executeFireAction(userId: number, action: string): void
+	{
+		const row = this.#grid.getRows().getById(userId);
+		row?.stateLoad();
+		ajax.runAction(`intranet.v2.User.${action}`, {
+			data: {
+				userId,
+			},
+		}).then(() => {
+			row?.update();
+		}).catch((response) => {
+			row?.stateUnload();
+			const errors = response.errors.map((error) => error.message);
+			ErrorCollection.showSystemError(errors.join('<br>'));
+		});
+	}
+
+	executeRestoreAction(userId: number, action: string): void
+	{
+		const row = this.#grid.getRows().getById(userId);
+		row?.stateLoad();
+
+		ajax.runAction('intranet.v2.User.restore', {
+			data: {
+				userId,
+			},
+		}).then(() => {
+			row?.update();
+		}).catch((response) => {
+			row?.stateUnload();
+			const errors = response.errors.map((error) => error.message);
+			ErrorCollection.showSystemError(errors.join('<br>'));
+		});
+	}
+
+	createHandlerByAction(action: string): function
+	{
+		const handlers = {
+			fire: this.executeFireAction,
+			deleteOrFire: this.executeFireAction,
+			restore: this.executeRestoreAction,
+		};
+
+		const handler = handlers[action];
+		if (!Type.isFunction(handler))
+		{
+			throw new TypeError(`Handler is not defined for action ${action}`);
+		}
+
+		return handler;
+	}
+
+	runFireWizard(userId: number): Promise
+	{
+		return Runtime.loadExtension('intranet.fire-employee-wizard').then(({ FireWizardConfigProvider }) => {
+			return FireWizardConfigProvider.fetch(userId);
 		});
 	}
 

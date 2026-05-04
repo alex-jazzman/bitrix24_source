@@ -7,7 +7,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 require_once($_SERVER["DOCUMENT_ROOT"] . $componentPath . "/analytics.php");
 
-use Bitrix\Bitrix24\CurrentUser;
 use Bitrix\Bitrix24\Integration\Network\RegisterSettingsSynchronizer;
 use Bitrix\Intranet\Component\UserProfile;
 use Bitrix\Intranet\Entity\User;
@@ -289,7 +288,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	{
 		$access = UserAccessController::createByDefault();
 
-		return ($access->check(UserActionDictionary::RESTORE));
+		return $access->check(UserActionDictionary::RESTORE);
 	}
 
 	private function isSelectedDepartments(
@@ -412,7 +411,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		Intranet\Public\Type\Collection\InvitationCollection $invitationCollection,
 		?Intranet\Entity\Collection\DepartmentCollection $departmentCollection = null,
 		array $workgroupIds = [],
-		?array $firedUserList = []
+		?array $firedUserList = [],
 	): array
 	{
 		$departmentCollection ??= $this->getDefaultDepartmentCollection();
@@ -577,7 +576,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	public function extranetAction(
 		Intranet\Public\Type\Collection\InvitationCollection $invitationCollection,
 		array $workgroupIds = [],
-		?array $firedUserList = []
+		?array $firedUserList = [],
 	): array
 	{
 		if (!$this->isExtranetInstalled())
@@ -823,7 +822,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		{
 			$firedUserList = array_map(
 				fn($user) => ['login' => $user['login']],
-				$firedUserList
+				$firedUserList,
 			);
 		}
 
@@ -848,7 +847,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 * @throws \Bitrix\Main\ObjectNotFoundException
 	 */
-	public function getInviteLinkAction(array $departmentsId = [], string $analyticsType = ''): AjaxJson
+	public function getInviteLinkAction(
+		array $departmentsId = [],
+		array $workgroupIds = [],
+		string $analyticsType = ''
+	): AjaxJson
 	{
 		$departmentsId = array_map(fn($departmentId) => (int)$departmentId, $departmentsId);
 		$departmentsId = array_filter($departmentsId, fn($departmentId) => $departmentId > 0);
@@ -864,11 +867,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 				'tool' => 'Invitation',
 				'category' => 'invitation_by_link',
 				'event' => 'openLink',
-				'type' => in_array($analyticsType, ['by_link', 'by_local_email_program']) ?  $analyticsType : '',
+				'type' => in_array($analyticsType, ['by_link', 'by_local_email_program']) ? $analyticsType : '',
 			],
 		];
 
-		$linkGenerator = Intranet\Service\InviteLinkGenerator::createByDepartmentsIds($departmentsId, $analyticsParams);
+		$linkGenerator = Intranet\Service\InviteLinkGenerator::createByDepartmentsIds($departmentsId, $workgroupIds, $analyticsParams);
 		$link = $linkGenerator->getShortLink();
 
 		return AjaxJson::createSuccess([

@@ -42,7 +42,7 @@ class CSecurityUserOtpInitAjaxController extends \Bitrix\Main\Engine\Controller
 				$binarySecret = pack('H*', $secret);
 			}
 			$otp
-				->regenerate($binarySecret)
+				->regenerate($binarySecret, $otp->getType())
 				->syncParameters($sync1, $sync2)
 				->save()
 			;

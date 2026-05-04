@@ -219,8 +219,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this4 = this;
 	      return new Promise(function (resolve, reject) {
 	        var dod = new tasks_scrum_dod.Dod({
-	          groupId: _this4.groupId,
-	          taskId: taskId
+	          taskId: taskId,
+	          groupId: _this4.groupId
 	        });
 	        dod.subscribe('resolve', function () {
 	          return resolve();

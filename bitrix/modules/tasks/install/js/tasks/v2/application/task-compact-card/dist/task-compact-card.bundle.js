@@ -250,8 +250,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    ...ui_vue3_vuex.mapGetters({
 	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`,
 	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`,
+	      deadlineUserOption: `${tasks_v2_const.Model.Interface}/deadlineUserOption`,
 	      defaultDeadlineTs: `${tasks_v2_const.Model.Interface}/defaultDeadlineTs`,
-	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`
+	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`,
+	      templateStateFlags: `${tasks_v2_const.Model.Interface}/templateStateFlags`
 	    }),
 	    task() {
 	      return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
@@ -320,17 +322,22 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    }
 	  },
 	  created() {
-	    var _this$initialTask$dea, _this$stateFlags$need, _this$stateFlags$matc, _this$stateFlags$allo, _this$stateFlags$defa, _this$group, _this$initialTask$aud, _this$initialTask, _this$initialTask$aud2, _this$initialTask$acc, _this$initialTask2, _this$initialTask2$ac;
+	    var _this$initialTask$dea, _flags$needsControl, _flags$matchesWorkTim, _flags$allowsTimeTrac, _flags$defaultRequire, _this$group, _this$initialTask$aud, _this$initialTask, _this$initialTask$aud2, _this$initialTask$acc, _this$initialTask2, _this$initialTask2$ac;
+	    const flags = this.isTemplate ? this.templateStateFlags : this.stateFlags;
 	    this.insert({
 	      ...this.initialTask,
 	      id: this.taskId,
 	      creatorId: this.currentUserId,
 	      responsibleIds: [this.currentUserId],
 	      deadlineTs: (_this$initialTask$dea = this.initialTask.deadlineTs) != null ? _this$initialTask$dea : this.defaultDeadlineTs,
-	      needsControl: (_this$stateFlags$need = this.stateFlags.needsControl) != null ? _this$stateFlags$need : null,
-	      matchesWorkTime: (_this$stateFlags$matc = this.stateFlags.matchesWorkTime) != null ? _this$stateFlags$matc : null,
-	      allowsTimeTracking: (_this$stateFlags$allo = this.stateFlags.allowsTimeTracking) != null ? _this$stateFlags$allo : null,
-	      requireResult: (_this$stateFlags$defa = this.stateFlags.defaultRequireResult) != null ? _this$stateFlags$defa : false
+	      needsControl: (_flags$needsControl = flags.needsControl) != null ? _flags$needsControl : null,
+	      matchesWorkTime: (_flags$matchesWorkTim = flags.matchesWorkTime) != null ? _flags$matchesWorkTim : null,
+	      allowsTimeTracking: (_flags$allowsTimeTrac = flags.allowsTimeTracking) != null ? _flags$allowsTimeTrac : null,
+	      requireResult: tasks_v2_core.Core.getParams().restrictions.requiredResult.available && ((_flags$defaultRequire = flags.defaultRequireResult) != null ? _flags$defaultRequire : false),
+	      allowsChangeDeadline: this.deadlineUserOption.canChangeDeadline,
+	      requireDeadlineChangeReason: this.deadlineUserOption.requireDeadlineChangeReason,
+	      maxDeadlineChangeDate: this.deadlineUserOption.maxDeadlineChangeDate,
+	      maxDeadlineChanges: this.deadlineUserOption.maxDeadlineChanges
 	    });
 	    void tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
 	    tasks_v2_lib_analytics.analytics.sendClickCreate(this.analytics, {

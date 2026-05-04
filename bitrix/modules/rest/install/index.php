@@ -157,6 +157,19 @@ class rest extends CModule
 		\CAgent::AddAgent('\Bitrix\Rest\Configuration\Structure::clearContentAgent();', 'rest', 'N', 86400);
 		\CAgent::AddAgent('\Bitrix\Rest\Helper::recoveryAgents();','rest','N',604800);
 
+		\Bitrix\Rest\Internal\Model\AccessPermissionTable::addInsertIgnoreMulti([
+			[
+				'ENTITY_TYPE' => \Bitrix\Rest\Internal\Entity\Access\EntityType::IncomingWebhook->value,
+				'ACCESS_CODE' => 'UA',
+				'PERMISSION' => \Bitrix\Rest\Internal\Entity\Access\PermissionType::CreateOwn->value,
+			],
+			[
+				'ENTITY_TYPE' => \Bitrix\Rest\Internal\Entity\Access\EntityType::IncomingWebhook->value,
+				'ACCESS_CODE' => 'UA',
+				'PERMISSION' => \Bitrix\Rest\Internal\Entity\Access\PermissionType::ManageOwn->value,
+			],
+		], true);
+
 		return true;
 	}
 

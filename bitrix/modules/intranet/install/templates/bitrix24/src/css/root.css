@@ -25,9 +25,29 @@ body {
 	--air-footer-min-height: 76px;
 	--air-topbar-height: 58px;
 
+	--air-right-panel-width: 0px;
+	--air-right-panel-expanded: 0;
+
 	margin: 0;
 	overflow-y: scroll;
 	overflow-x: hidden;
+}
+
+body.--right-panel-expanded {
+	--air-right-panel-width: 380px;
+	--air-right-panel-expanded: 1;
+
+	--air-sidepanel-toolbar-right: var(--air-sidepanel-toolbar-right-shifted);
+	--air-sidepanel-toolbar-bottom: var(--air-sidepanel-toolbar-bottom-shifted);
+}
+
+body.--right-panel-expanded.--right-panel-no-transition .root,
+body.--right-panel-expanded.--resizing .root {
+	grid-template-columns: auto minmax(0, 1fr) var(--air-right-panel-width) var(--air-right-bar-width);
+}
+
+body.--right-panel-expanded.--right-panel-no-transition .root:has(.app__right-panel) {
+	grid-template-columns: auto minmax(0, 1fr) auto var(--air-right-bar-width);
 }
 
 body.air-fullscreen-mode {
@@ -54,8 +74,6 @@ body:has(#bx-panel.bx-panel-fixed.bx-panel-folded) {
 }
 
 .root {
-	--air-right-panel-width: 0px;
-
 	min-height: calc(100dvh - var(--air-fixed-layout-top-shift));
 	display: grid;
 
@@ -67,10 +85,6 @@ body:has(#bx-panel.bx-panel-fixed.bx-panel-folded) {
 		"left   main   panel right"
 		"left   footer panel right"
 	;
-}
-
-.root.--right-panel-expanded {
-	--air-right-panel-width: 380px;
 }
 
 .connection-status {

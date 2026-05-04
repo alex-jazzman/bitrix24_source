@@ -16,7 +16,7 @@ $mainButton = new License\Widget\Content\MainButton();
 ?>
 
 <div class="air-header__button" data-id="licenseWidgetWrapper">
-	<button class="air-header-button">
+	<button class="air-header-button" aria-haspopup="dialog" aria-expanded="false">
 		<i class="ui-icon-set --o-tariff-scaner air-header-button__icon"></i>
 		<span class="air-header-button__text"><?= $mainButton->getText() ?></span>
 		<span class="air-header-button__counter"></span>

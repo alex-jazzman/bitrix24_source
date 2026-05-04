@@ -125,7 +125,9 @@ export const TaskDeadlineSettings = {
 	},
 	created(): void
 	{
-		if (this.isEdit)
+		const isCreationByTemplate = Boolean(this.task.templateId);
+
+		if (this.isEdit || isCreationByTemplate)
 		{
 			this.localDeadlineUserOption.requireDeadlineChangeReason = this.task.requireDeadlineChangeReason;
 			this.localDeadlineUserOption.maxDeadlineChangeDate = this.task.maxDeadlineChangeDate;

@@ -1899,3 +1899,7 @@ form.profile-post-form {
 	margin-bottom: 17px;
 	text-align: center;
 }
+
+#intranet-user-profile-portal-creator {
+	background-color: var(--ui-color-accent-main-primary);
+}

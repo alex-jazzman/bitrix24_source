@@ -80,7 +80,7 @@ if (defined('AIR_TEMPLATE_HIDE_CHAR_BAR') && !defined('BX_IM_FULLSCREEN'))
 Loc::loadMessages(__DIR__ . '/site_template.php');
 
 ?><!DOCTYPE html>
-<html<? if (LANGUAGE_ID === 'tr'):?> lang="<?=LANGUAGE_ID?>"<? endif ?>>
+<html lang="<?=AirTemplate::getLang()?>">
 <head>
 <? if ($isBitrix24Cloud): ?>
 <meta name="apple-itunes-app" content="app-id=561683423">
@@ -96,20 +96,22 @@ $asset->addJs(SITE_TEMPLATE_PATH . '/dist/bitrix24.bundle.js', true);
 AirTemplate::showHeadAssets();
 
 $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapsed-mode' : '';
+
 ?>
 <title><? if (!$isCompositeMode) $APPLICATION->showTitle() ?></title>
 </head>
-<body class="<?= AirTemplate::getBodyClasses() ?>"><?
+<body class="<?= AirTemplate::getBodyClasses() ?>" <?= AirTemplate::getBodyAttributes() ?>><?
+	AirTemplate::restoreRightPanelBodyState();
 	AirTemplate::showBodyAssets();
 	$frame = new StaticArea('title');
 	$frame->startDynamicArea();
-		?><script>
+		?><script data-skip-moving="true">
 			document.title = "<? AirTemplate::showJsTitle() ?>";
 			document.body.classList.add(<?= AirTemplate::getCompositeBodyClasses() ?>);
 		</script><?
 	$frame->finishDynamicArea();
 ?>
-<div id="a11y-slider-container"></div>
+<div id="a11y-slider-container" style="display: contents"></div>
 <div class="root<?= $layoutMode ?> js-app">
 	<? if ((!$isBitrix24Cloud || $USER->isAdmin()) && !defined('SKIP_SHOW_PANEL')): ?>
 	<div id="panel"><? $APPLICATION->showPanel() ?></div>
@@ -234,7 +236,7 @@ $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapse
 		</div>
 	</header>
 	<div class="app__avatar" id="avatar-area">
-		<?php $APPLICATION->includeComponent('bitrix:intranet.avatar.widget', '', []) ?>
+		<?php $APPLICATION->includeComponent('bitrix:intranet.avatar.widget', '', [], false, ['HIDE_ICONS' => 'Y']) ?>
 	</div>
 	<div class="app__page" id="page-area"><?
 		$dynamicArea = new StaticArea("page-area");
@@ -250,10 +252,5 @@ $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapse
 				<div class="page__actions"><? $APPLICATION->showViewContent('below_pagetitle') ?></div>
 			</header>
 			<div class="page__workarea">
-				<div class="page__sidebar" id="sidebar"><?
-					$APPLICATION->showViewContent('sidebar');
-					$APPLICATION->showViewContent('sidebar_tools_1');
-					$APPLICATION->showViewContent('sidebar_tools_2');
-				?></div>
 				<main id="air-workarea-content" class="page__workarea-content<?
 					$GLOBALS['APPLICATION']->addBufferContent([AirTemplate::class, 'getWorkAreaContent'])?>"><?

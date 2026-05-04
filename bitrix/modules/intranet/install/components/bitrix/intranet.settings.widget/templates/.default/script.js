@@ -1,103 +1,84 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,intranet_widgetLoader) {
+(function (exports, main_core, intranet_widgetLoader) {
 	'use strict';
 
-	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
-	var _widgetLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("widgetLoader");
-	var _isBitrix = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24");
-	var _isAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdmin");
-	var _isRequisite = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRequisite");
-	var _isMainPageAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMainPageAvailable");
-	var _node = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("node");
-	var _getWidgetLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetLoader");
-	var _load = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("load");
+	function _classPrivateMethodInitSpec(e, a) { _checkPrivateRedeclaration(e, a), a.add(e); }
+	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration(e, t), t.set(e, a); }
+	function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
+	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand(s, a), r), r; }
+	function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	var _widgetLoader = /*#__PURE__*/new WeakMap();
+	var _isBitrix = /*#__PURE__*/new WeakMap();
+	var _isAdmin = /*#__PURE__*/new WeakMap();
+	var _isRequisite = /*#__PURE__*/new WeakMap();
+	var _isMainPageAvailable = /*#__PURE__*/new WeakMap();
+	var _node = /*#__PURE__*/new WeakMap();
+	var _SettingsWidgetLoader_brand = /*#__PURE__*/new WeakSet();
 	class SettingsWidgetLoader {
 	  constructor(params) {
-	    Object.defineProperty(this, _load, {
-	      value: _load2
-	    });
-	    Object.defineProperty(this, _getWidgetLoader, {
-	      value: _getWidgetLoader2
-	    });
-	    Object.defineProperty(this, _widgetLoader, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isBitrix, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _isAdmin, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _isRequisite, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _isMainPageAvailable, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _node, {
-	      writable: true,
-	      value: false
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] = params['isBitrix24'];
-	    babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] = params['isAdmin'];
-	    babelHelpers.classPrivateFieldLooseBase(this, _isRequisite)[_isRequisite] = params['isRequisite'];
-	    babelHelpers.classPrivateFieldLooseBase(this, _isMainPageAvailable)[_isMainPageAvailable] = params['isMainPageAvailable'];
+	    _classPrivateMethodInitSpec(this, _SettingsWidgetLoader_brand);
+	    _classPrivateFieldInitSpec(this, _widgetLoader, void 0);
+	    _classPrivateFieldInitSpec(this, _isBitrix, false);
+	    _classPrivateFieldInitSpec(this, _isAdmin, false);
+	    _classPrivateFieldInitSpec(this, _isRequisite, false);
+	    _classPrivateFieldInitSpec(this, _isMainPageAvailable, false);
+	    _classPrivateFieldInitSpec(this, _node, false);
+	    _classPrivateFieldSet(_isBitrix, this, params['isBitrix24']);
+	    _classPrivateFieldSet(_isAdmin, this, params['isAdmin']);
+	    _classPrivateFieldSet(_isRequisite, this, params['isRequisite']);
+	    _classPrivateFieldSet(_isMainPageAvailable, this, params['isMainPageAvailable']);
 	  }
 	  showOnce(node) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _node)[_node] = node;
-	    const popup = babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().getPopup();
+	    _classPrivateFieldSet(_node, this, node);
+	    const popup = _assertClassBrand(_SettingsWidgetLoader_brand, this, _getWidgetLoader).call(this).getPopup();
 	    popup.show();
 	    const popupContainer = popup.getPopupContainer();
 	    if (popupContainer.getBoundingClientRect().left < 30) {
 	      popupContainer.style.left = '30px';
 	    }
-	    (typeof BX.Intranet.SettingsWidget !== 'undefined' ? Promise.resolve() : babelHelpers.classPrivateFieldLooseBase(this, _load)[_load]()).then(() => {
+	    (typeof BX.Intranet.SettingsWidget !== 'undefined' ? Promise.resolve() : _assertClassBrand(_SettingsWidgetLoader_brand, this, _load).call(this)).then(() => {
 	      if (typeof BX.Intranet.SettingsWidget !== 'undefined') {
 	        BX.Intranet.SettingsWidget.bindAndShow(node);
 	      }
 	    });
 	  }
 	  static init(options) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] = new this(options);
+	    if (!_assertClassBrand(SettingsWidgetLoader, this, _instance)._) {
+	      _instance._ = _assertClassBrand(SettingsWidgetLoader, this, new this(options));
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
+	    return _assertClassBrand(SettingsWidgetLoader, this, _instance)._;
 	  }
 	}
-	function _getWidgetLoader2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _widgetLoader)[_widgetLoader]) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _widgetLoader)[_widgetLoader];
+	function _getWidgetLoader() {
+	  if (_classPrivateFieldGet(_widgetLoader, this)) {
+	    return _classPrivateFieldGet(_widgetLoader, this);
 	  }
 	  const widgetLoader = new intranet_widgetLoader.WidgetLoader({
 	    id: "bx-settings-header-popup",
-	    bindElement: babelHelpers.classPrivateFieldLooseBase(this, _node)[_node],
+	    bindElement: _classPrivateFieldGet(_node, this),
 	    width: 374
 	  });
 	  widgetLoader.addHeaderSkeleton();
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isRequisite)[_isRequisite]) {
+	  if (_classPrivateFieldGet(_isRequisite, this)) {
 	    widgetLoader.addItemSkeleton(22);
 	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isMainPageAvailable)[_isMainPageAvailable]) {
+	  if (_classPrivateFieldGet(_isMainPageAvailable, this)) {
 	    widgetLoader.addItemSkeleton(22);
 	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin]) {
+	  if (_classPrivateFieldGet(_isAdmin, this)) {
 	    widgetLoader.addSplitItemSkeleton(22);
 	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix]) {
+	  if (_classPrivateFieldGet(_isBitrix, this)) {
 	    widgetLoader.addItemSkeleton(22);
 	  }
 	  widgetLoader.addItemSkeleton(22);
 	  widgetLoader.addFooterSkeleton();
-	  babelHelpers.classPrivateFieldLooseBase(this, _widgetLoader)[_widgetLoader] = widgetLoader;
-	  return babelHelpers.classPrivateFieldLooseBase(this, _widgetLoader)[_widgetLoader];
+	  _classPrivateFieldSet(_widgetLoader, this, widgetLoader);
+	  return _classPrivateFieldGet(_widgetLoader, this);
 	}
-	function _load2() {
+	function _load() {
 	  return new Promise(resolve => {
 	    main_core.ajax.runComponentAction('bitrix:intranet.settings.widget', 'getWidgetComponent', {
 	      mode: 'class'
@@ -114,19 +95,18 @@ this.BX = this.BX || {};
 	    }).then(() => {
 	      if (typeof BX.Intranet.SettingsWidget !== 'undefined') {
 	        setTimeout(() => {
-	          BX.Intranet.SettingsWidget.bindWidget(babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]());
+	          BX.Intranet.SettingsWidget.bindWidget(_assertClassBrand(_SettingsWidgetLoader_brand, this, _getWidgetLoader).call(this));
 	          resolve();
 	        }, 0);
 	      }
 	    });
 	  });
 	}
-	Object.defineProperty(SettingsWidgetLoader, _instance, {
-	  writable: true,
-	  value: void 0
-	});
+	var _instance = {
+	  _: void 0
+	};
 
 	exports.SettingsWidgetLoader = SettingsWidgetLoader;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX,BX.Intranet));
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Intranet);
 //# sourceMappingURL=script.js.map

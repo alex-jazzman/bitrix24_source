@@ -16,6 +16,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Rest;
 
 Extension::load(
 	[
@@ -77,17 +78,23 @@ elseif (!empty($arResult['MANIFEST']['IMPORT_DESCRIPTION_START']))
 {
 	$description = $arResult['MANIFEST']['IMPORT_DESCRIPTION_START'];
 }
+elseif (($arParams['APP']['TYPE'] ?? null) === Rest\AppTable::TYPE_BIC_DASHBOARD && empty($arParams['MODE']))
+{
+	$description = null;
+}
 else
 {
 	$description =
-		(!empty($arParams['APP']))
-		? 'REST_CONFIGURATION_IMPORT_INSTALL_APP_DESCRIPTION'
-		: 'REST_CONFIGURATION_IMPORT_INSTALL_DESCRIPTION'
+		!empty($arParams['APP'])
+			? 'REST_CONFIGURATION_IMPORT_INSTALL_APP_DESCRIPTION'
+			: 'REST_CONFIGURATION_IMPORT_INSTALL_DESCRIPTION'
 	;
-	if (isset($arParams['MODE']) && $arParams['MODE'])
+
+	if (!empty($arParams['MODE']))
 	{
 		$description .= '_' . $arParams['MODE'];
 	}
+
 	$description = Loc::getMessage($description);
 }
 
@@ -143,9 +150,10 @@ if (isset($arResult['MANIFEST']['INSTALL_STEP']) && $arResult['MANIFEST']['INSTA
 			<span class="ui-btn ui-btn-lg ui-btn-default start_later_btn"><?=Loc::getMessage("REST_CONFIGURATION_IMPORT_INSTALL_LATER_BTN") ?></span>
 		<? endif;?>
 	</div>
-	<div class="rest-configuration-info"><?=htmlspecialcharsbx($description)?></div>
+	<div class="rest-configuration-info"><?=htmlspecialcharsbx($description ?? '')?></div>
 	<div class="rest-configuration-errors"></div>
 	<script>
+		BX.message(<?=Json::encode($messageList)?>);
 		BX.ready(function () {
 			BX.Rest.Configuration.Install.init(<?=Json::encode([
 				'id' => $containerId,
@@ -157,6 +165,5 @@ if (isset($arResult['MANIFEST']['INSTALL_STEP']) && $arResult['MANIFEST']['INSTA
 				'from' => $arResult['FROM'],
 			])?>);
 		});
-		BX.message(<?=Json::encode($messageList)?>);
 	</script>
 </div>

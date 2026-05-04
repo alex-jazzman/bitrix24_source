@@ -87,6 +87,7 @@ export class LinkPage extends Page
 				action: 'getInviteLink',
 				data: {
 					departmentsId: this.#departmentControl.getValues(),
+					workgroupIds: this.#departmentControl.getGroupValues(),
 					analyticsType: 'by_link',
 				},
 			},

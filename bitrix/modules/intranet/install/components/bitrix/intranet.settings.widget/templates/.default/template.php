@@ -14,9 +14,16 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 ?>
 
-<div id="intranet-settings-widget-open-button_<?=$arResult['NUMBER']?>" class="intranet-settings-widget__logo-btn" data-role="holding_widget_pointer">
+<button
+	id="intranet-settings-widget-open-button_<?=$arResult['NUMBER']?>"
+	class="intranet-settings-widget__logo-btn"
+	data-role="holding_widget_pointer"
+	aria-label="<?= Loc::getMessage('INTRANET_SETTINGS_WIDGET_BUTTON_ARIA') ?>"
+	aria-haspopup="dialog"
+	aria-expanded="false"
+>
 	<i class="ui-icon-set --settings"></i>
-</div>
+</button>
 <?php
 $frame = $this->createFrame()->begin("");
 ?>
@@ -26,6 +33,7 @@ $frame = $this->createFrame()->begin("");
 		const button = BX('intranet-settings-widget-open-button_<?=$arResult['NUMBER']?>');
 		const bindCallbackInitial = () => {
 			BX.unbindAll(button);
+			BX.Dom.attr(button, 'aria-expanded', 'true');
 			BX.Intranet.SettingsWidgetLoader.init({
 				isRequisite: <?= Json::encode($arResult['IS_REQUISITE']) ?>,
 				isBitrix24: <?= Json::encode($arResult['IS_BITRIX24']) ?>,

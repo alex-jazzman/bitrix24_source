@@ -33,15 +33,25 @@ $containerId = CUtil::JSEscape($containerId);
 
 <div class="air-header__search ui-icon-set__scope" id="air-header-search">
 	<div class="air-header__search-container">
-		<form class="air-header__search-form" method="get" name="search-form" onsubmit="return false;" id="<?=$containerId?>">
+		<form class="air-header__search-form" method="get" name="search-form" onsubmit="return false;" id="<?=$containerId?>" role="search">
 			<input
 				type="text"
 				class="air-header__search-input"
 				autocomplete="off"
 				id="<?=$inputId?>"
-				placeholder = "<?=GetMessage("CT_BST_SEARCH_HINT")?>"
+				placeholder="<?=GetMessage("CT_BST_SEARCH_HINT")?>"
+				disabled
+				aria-hidden="true"
+				tabindex="-1"
 			>
-			<div class="air-header__search-icon" id="air-header-search-icon" tabindex="-1"></div>
+			<button
+				type="button"
+				id="air-header-search-button"
+				class="air-header__search-button"
+				aria-label="<?=GetMessageJS("CT_BST_SEARCH_BUTTON") ?>"
+			>
+				<span class="air-header__search-icon"></span>
+			</button>
 		</form>
 	</div>
 </div>
@@ -64,8 +74,10 @@ $containerId = CUtil::JSEscape($containerId);
 
 	new BX.Intranet.Bitrix24.SearchTitle({
 		containerId: 'air-header-search',
-		buttonId: 'air-header-search-icon',
+		buttonId: 'air-header-search-button',
 		inputId: '<?=$inputId?>',
+		searchButtonLabel: '<?=GetMessageJS("CT_BST_SEARCH_BUTTON")?>',
+		closeButtonLabel: '<?=GetMessageJS("CT_BST_SEARCH_CLOSE_BUTTON")?>',
 		searchOptions: {
 			AJAX_PAGE: '<?=CUtil::JSEscape(POST_FORM_ACTION_URI)?>',
 			CONTAINER_ID: '<?=$containerId?>',

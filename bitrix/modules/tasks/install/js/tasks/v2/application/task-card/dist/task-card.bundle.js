@@ -81,6 +81,23 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    };
 	    BX.SidePanel.Instance.open((_params$url = params.url) != null ? _params$url : this.getUrl(params.taskId), options);
 	  }
+	  static async embedFullCard(params) {
+	    let card = null;
+	    const exports = await load('tasks.v2.application.task-full-card');
+	    card = new exports.TaskFullCard(params);
+	    return {
+	      mount: container => {
+	        var _card3;
+	        return (_card3 = card) == null ? void 0 : _card3.mountEmbedded(container);
+	      },
+	      unmount: () => {
+	        var _card4;
+	        return (_card4 = card) == null ? void 0 : _card4.unmountEmbedded();
+	      },
+	      taskId: params == null ? void 0 : params.taskId,
+	      taskUrl: TaskCard.getUrl(params.taskId)
+	    };
+	  }
 	  static getUrl(entityId, groupId) {
 	    const template = String(entityId).split('template')[1];
 	    const id = Number(template) || template || entityId;

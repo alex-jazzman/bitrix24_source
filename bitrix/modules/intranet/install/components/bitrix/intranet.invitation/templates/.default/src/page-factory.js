@@ -84,8 +84,8 @@ export class PageFactory
 		return new LinkPage({
 			...this.#options,
 			departmentControl: this.createDepartmentControl(
-				Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION'),
-				[EntityType.DEPARTMENT],
+				Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_WITH_GROUP'),
+				[EntityType.DEPARTMENT, EntityType.GROUP],
 			),
 		});
 	}

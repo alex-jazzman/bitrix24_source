@@ -50,7 +50,7 @@ export class InviteEmailPopup
 		switch (this.#inviteType)
 		{
 			case InviteType.EMAIL:
-				return Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_PLACEHOLDER');
+				return Loc.getMessage('INTRANET_INVITE_DIALOG_INVITE_POPUP_INPUT_EMAIL_PLACEHOLDER');
 			case InviteType.PHONE:
 				return Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_PHONE_PLACEHOLDER');
 			case InviteType.ALL:

@@ -85,7 +85,7 @@ this.BX = this.BX || {};
 	                  '#TITLE#': `<span style="font-size: 14px; font-weight: 500;line-height: 19px;">${main_core.Loc.getMessage('INTRANET_LOGOUT_ALL_CONFIRM_NOTIFY_TITLE')}</span>`
 	                }),
 	                autoHide: true,
-	                position: 'bottom-right',
+	                position: 'top-right',
 	                closeButton: false,
 	                useAirDesign: true
 	              });

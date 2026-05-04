@@ -48,7 +48,8 @@ import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { templateService } from 'tasks.v2.provider.service.template-service';
 import { deadlineService } from 'tasks.v2.provider.service.deadline-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { timeTrackingService } from 'tasks.v2.provider.service.time-tracking-service';
+import type { TaskModel, TimerModel } from 'tasks.v2.model.tasks';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 import type { SheetBindProps } from 'tasks.v2.component.elements.bottom-sheet';
@@ -103,6 +104,7 @@ export const App = {
 		return {
 			settings: Core.getParams(),
 			analytics: this.analytics,
+			embedded: this.embedded,
 			cardType: CardType.Full,
 			/** @type { TaskModel } */
 			task: computed((): TaskModel => taskService.getStoreTask(this.taskId)),
@@ -127,6 +129,10 @@ export const App = {
 		analytics: {
 			type: Object,
 			default: () => ({}),
+		},
+		embedded: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	setup(): Object
@@ -163,15 +169,21 @@ export const App = {
 			creationError: false,
 			taskInitial: null,
 			placeholderImgUrl: null,
+			taskGetError: null,
+			isAccessRequested: true,
+			accessRequestError: null,
 		};
 	},
 	computed: {
 		...mapGetters({
+			deadlineUserOption: `${Model.Interface}/deadlineUserOption`,
 			defaultDeadlineTs: `${Model.Interface}/defaultDeadlineTs`,
 			fullCardWidth: `${Model.Interface}/fullCardWidth`,
 			stateFlags: `${Model.Interface}/stateFlags`,
+			templateStateFlags: `${Model.Interface}/templateStateFlags`,
 			taskUserFieldScheme: `${Model.Interface}/taskUserFieldScheme`,
 			templateUserFieldScheme: `${Model.Interface}/templateUserFieldScheme`,
+			currentUserId: `${Model.Interface}/currentUserId`,
 		}),
 		task(): TaskModel
 		{
@@ -180,6 +192,10 @@ export const App = {
 		group(): GroupModel
 		{
 			return this.$store.getters[`${Model.Groups}/getById`](this.task.groupId);
+		},
+		timer(): ?TimerModel
+		{
+			return this.task.timers?.find((timer: TimerModel) => timer.userId === this.currentUserId);
 		},
 		checklist(): CheckListModel[]
 		{
@@ -248,7 +264,12 @@ export const App = {
 		},
 		defaultRequireResult(): boolean
 		{
-			return this.isTemplate ? false : (this.stateFlags.defaultRequireResult ?? false);
+			if (this.isTemplate)
+			{
+				return this.templateStateFlags.defaultRequireResult ?? false;
+			}
+
+			return this.stateFlags.defaultRequireResult ?? false;
 		},
 		// eslint-disable-next-line max-lines-per-function,sonarjs/cognitive-complexity
 		fields(): AppField[]
@@ -322,7 +343,7 @@ export const App = {
 					component: EmailDate,
 					printIgnore: !this.task.email,
 				},
-				!this.isTemplate && {
+				{
 					chip: {
 						component: ResultsChip,
 						props: {
@@ -653,9 +674,24 @@ export const App = {
 		},
 		placeholderOptions(): any
 		{
+			if (this.taskGetError?.message === 'access_denied')
+			{
+				return {
+					imgSrc: this.iconUrl,
+					head: Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_TITLE_NO_RIGHTS_TITLE'),
+					description: Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_TITLE_NOT_FOUND_DESCRIPTION'),
+					action: {
+						text: Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACTION_REQUEST_ACCESS'),
+						disabled: this.isAccessRequested,
+						click: this.requestAccess,
+						hint: this.accessRequestError,
+					},
+				};
+			}
+
 			return {
-				imgSrc: this.iconUrl,
-				head: Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_TITLE_NO_RIGHTS'),
+				imgSrc: this.notFoundUrl,
+				head: Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_TITLE_NOT_FOUND_TITLE'),
 			};
 		},
 		isReplicateTemplate(): boolean
@@ -757,16 +793,29 @@ export const App = {
 	{
 		if (!this.isEdit && !this.task)
 		{
+			const initialTemplate = {};
+			const flags = this.isTemplate ? this.templateStateFlags : this.stateFlags;
+			if (this.isTemplate)
+			{
+				initialTemplate.requireDeadlineChangeReason = false;
+				initialTemplate.allowsChangeDeadline = false;
+			}
+
 			await taskService.insertStoreTask({
 				...this.initialTask,
 				id: this.taskId,
 				creatorId: Core.getParams().currentUser.id,
 				responsibleIds: [Core.getParams().currentUser.id],
 				deadlineTs: this.initialTask.deadlineTs ?? this.defaultDeadlineTs,
-				needsControl: this.stateFlags.needsControl ?? null,
-				matchesWorkTime: this.stateFlags.matchesWorkTime ?? null,
-				allowsTimeTracking: this.stateFlags.allowsTimeTracking ?? null,
+				needsControl: flags.needsControl ?? null,
+				matchesWorkTime: flags.matchesWorkTime ?? null,
+				allowsTimeTracking: flags.allowsTimeTracking ?? null,
 				requireResult: Core.getParams().restrictions.requiredResult.available && this.defaultRequireResult,
+				allowsChangeDeadline: this.deadlineUserOption.canChangeDeadline,
+				requireDeadlineChangeReason: this.deadlineUserOption.requireDeadlineChangeReason,
+				maxDeadlineChangeDate: this.deadlineUserOption.maxDeadlineChangeDate,
+				maxDeadlineChanges: this.deadlineUserOption.maxDeadlineChanges,
+				...initialTemplate,
 			});
 
 			if (this.initialTask.copiedFromId)
@@ -791,15 +840,30 @@ export const App = {
 
 		if (this.isEdit && (!this.task || this.isPartiallyLoaded))
 		{
-			await taskService.get(this.taskId);
+			taskService.setSilentErrorMode(true);
+
+			const { error } = await taskService.get(this.taskId);
+
+			taskService.setSilentErrorMode(false);
+
+			this.taskGetError = error;
 		}
 
 		if (!this.task)
 		{
 			this.isLoading = false;
 
+			this.isAccessRequested = await taskService.isAccessRequested(this.taskId);
+
+			this.accessRequestError = this.isAccessRequested
+				? Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACCESS_ALREADY_REQUESTED')
+				: null
+			;
+
 			return;
 		}
+
+		this.isAccessRequested = false;
 
 		await fileService.get(this.taskId).list(this.task.fileIds);
 
@@ -808,6 +872,11 @@ export const App = {
 		if (!this.isTemplate && !this.canChangeDeadlineWithoutLimitation && this.task.maxDeadlineChanges)
 		{
 			void deadlineService.updateDeadlineChangeCount(this.task.id);
+		}
+
+		if (this.isEdit && this.task.rights.timeTracking && !this.timer)
+		{
+			void timeTrackingService.getTaskWithActiveTimer();
 		}
 
 		entityTextEditor.get(
@@ -837,6 +906,7 @@ export const App = {
 
 		this.renderSkeleton();
 		this.iconUrl = (await import('../images/marshmallow_sad_pink_with_orange_lock.png')).default;
+		this.notFoundUrl = (await import('../images/marshmallow_confused_pink_with_blue_magnifier.png')).default;
 	},
 	unmounted(): void
 	{
@@ -1049,10 +1119,18 @@ export const App = {
 		{
 			if (this.$refs.skeleton)
 			{
-				const skeletonPath = '/bitrix/js/tasks/v2/application/task-card/src/skeleton-full.html?v=1';
-				const templateSkeletonPath = '/bitrix/js/tasks/v2/application/task-card/src/skeleton-template.html?v=1';
+				let path = '/bitrix/js/tasks/v2/application/task-card/src/skeleton-full.html?v=1';
 
-				void renderSkeleton(this.isTemplate ? templateSkeletonPath : skeletonPath, this.$refs.skeleton);
+				if (this.embedded)
+				{
+					path = '/bitrix/js/tasks/v2/application/task-card/src/skeleton-full-embedded.html?v=1';
+				}
+				else if (this.isTemplate)
+				{
+					path = '/bitrix/js/tasks/v2/application/task-card/src/skeleton-template.html?v=1';
+				}
+
+				void renderSkeleton(path, this.$refs.skeleton);
 			}
 		},
 		sendAddTaskAnalytics(isSuccess: boolean, checklists: CheckListModel[]): void
@@ -1121,6 +1199,21 @@ export const App = {
 				taskId: this.taskId,
 			});
 		},
+
+		async requestAccess(): Promise<void>
+		{
+			const { accessRequest, error } = await taskService.requestAccess(this.taskId);
+
+			this.isAccessRequested = true;
+			this.accessRequestError = error?.message || Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACCESS_ALREADY_REQUESTED');
+
+			Notifier.notifyViaBrowserProvider({
+				id: 'tasks-request-accessed',
+				text: Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACCESS_REQUESTED_NOTIFICATION'),
+			});
+
+			return accessRequest;
+		},
 	},
 	template: `
 		<div
@@ -1133,8 +1226,11 @@ export const App = {
 				<div
 					ref="main"
 					class="tasks-full-card-main print-background-white"
-					:class="{ '--overlay': isBottomSheetShown }"
-					:style="{ width: (isTemplate ? '100%' : fullCardWidth + 'px') }"
+					:class="{ 
+						'--overlay': isBottomSheetShown,
+						'--embedded': embedded,
+					}"
+					:style="{ width: ((isTemplate || embedded) ? '100%' : fullCardWidth + 'px'),}"
 				>
 					<div class="tasks-full-card-content" :data-task-card-scroll="taskId" ref="scrollContent">
 						<div ref="title">
@@ -1171,7 +1267,7 @@ export const App = {
 									<FieldList :fields="emailFields"/>
 								</div>
 								<div
-									v-if="!isTemplate && (task.requireResult || wasFilled(TaskField.Results))"
+									v-if="task.requireResult || wasFilled(TaskField.Results)"
 									class="tasks-full-card-field-container  --custom"
 									:class="{ 
 										'print-ignore': shouldIgnoreResultPrint,
@@ -1332,7 +1428,7 @@ export const App = {
 						:entityType="EntityTypes.Task"
 					/>
 				</div>
-				<Chat v-if="!isTemplate"/>
+				<Chat v-if="!isTemplate && !embedded"/>
 			</template>
 			<template v-else-if="isLoading">
 				<div ref="skeleton" style="width: 100%;"/>
@@ -1341,7 +1437,7 @@ export const App = {
 				v-else
 				:imgSrc="placeholderOptions.imgSrc"
 				:head="placeholderOptions.head"
-				:descr="placeholderOptions.descr"
+				:description="placeholderOptions.description"
 				:action="placeholderOptions.action"
 			/>
 		</div>

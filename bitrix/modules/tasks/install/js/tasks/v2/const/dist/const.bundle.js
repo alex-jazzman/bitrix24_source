@@ -398,6 +398,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  TaskUpdate: 'Task.update',
 	  TaskDelete: 'Task.delete',
 	  TaskAccessGet: 'Task.Access.get',
+	  TaskAccessRequest: 'Task.Access.request',
+	  TaskAccessIsRequested: 'Task.Access.isRequested',
 	  TaskDescriptionUpdate: 'Task.Description.update',
 	  TaskDescriptionForceUpdate: 'Task.Description.forceUpdate',
 	  TaskFavoriteAdd: 'Task.Favorite.add',
@@ -435,6 +437,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  TaskStatusRenew: 'Task.Status.renew',
 	  TaskTrackingTimerStart: 'Task.Tracking.Timer.start',
 	  TaskTrackingTimerStop: 'Task.Tracking.Timer.stop',
+	  TaskTrackingTaskWithActiveTimer: 'Task.Tracking.Timer.getTaskWithActiveTimer',
 	  TaskDeadlineGetDeadlineChangeCount: 'Task.Deadline.getDeadlineChangeCount',
 	  TaskDeadlineCleanChangeLog: 'Task.Deadline.cleanChangeLog',
 	  TaskTimeTrackingAdd: 'Task.Tracking.ElapsedTime.add',
@@ -476,7 +479,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  TemplateDelete: 'Template.delete',
 	  TaskFromTemplateGet: 'Template.Task.get',
 	  TaskFromTemplateAdd: 'Template.Task.add',
-	  TemplateHistoryGetCount: 'Template.History.getCount'
+	  TemplateHistoryGetCount: 'Template.History.getCount',
+	  TemplateStateSet: 'Template.State.set'
 	});
 
 	const UserFieldType = Object.freeze({

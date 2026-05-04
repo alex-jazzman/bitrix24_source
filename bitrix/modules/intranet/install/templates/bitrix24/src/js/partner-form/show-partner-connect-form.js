@@ -97,16 +97,8 @@ async function showPartnerFormPopup(options: ShowPartnerFormPopupOptions): Popup
 				style: AirButtonStyle.FILLED,
 				text: options.sendButtonText,
 				useAirDesign: true,
-				onclick: async (button: Button) => {
-					button.setClocking(true);
-
-					const onSliderClose = () => {
-						button.setClocking(false);
-						top.BX.removeCustomEvent('SidePanel.Slider:onClose', onSliderClose);
-					};
-
-					top.BX.addCustomEvent('SidePanel.Slider:onClose', onSliderClose);
-					await showIntegratorApplicationForm();
+				onclick: () => {
+					showIntegratorApplicationForm();
 				},
 			}).setWide(true),
 		],

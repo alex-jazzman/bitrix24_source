@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,main_sidepanel,ui_vue3_mixins_locMixin,ui_system_skeleton,tasks_v2_lib_analytics,tasks_v2_component_elements_fieldList,tasks_v2_component_elements_contentResizer,tasks_v2_component_dropZone,tasks_v2_component_entityText,tasks_v2_component_userFieldsSlider,tasks_v2_component_fields_description,tasks_v2_component_fields_creator,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_status,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_component_fields_group,tasks_v2_component_fields_flow,tasks_v2_component_fields_accomplices,tasks_v2_component_fields_auditors,tasks_v2_component_fields_tags,tasks_v2_component_fields_crm,tasks_v2_component_fields_datePlan,tasks_v2_component_fields_timeTracking,tasks_v2_component_fields_subTasks,tasks_v2_component_fields_parentTask,tasks_v2_component_fields_relatedTasks,tasks_v2_component_fields_gantt,tasks_v2_component_fields_results,tasks_v2_component_fields_reminders,tasks_v2_component_fields_replication,tasks_v2_component_fields_email,tasks_v2_component_fields_userFields,tasks_v2_component_fields_placements,tasks_v2_component_fields_createdDate,tasks_v2_provider_service_fileService,tasks_v2_provider_service_deadlineService,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,ui_notificationManager,tasks_v2_lib_highlighter,ui_system_chip_vue,tasks_v2_core,tasks_v2_component_addTaskButton,ui_vue3,ui_system_skeleton_vue,ui_system_typography_vue,tasks_v2_component_elements_hint,tasks_v2_lib_ahaMoments,tasks_v2_component_markTaskButton,main_core_events,ui_vue3_vuex,ui_system_menu_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_application_taskCard,tasks_v2_const,tasks_v2_lib_userSelectorDialog,tasks_v2_lib_showLimit,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,tasks_v2_provider_service_templateService,tasks_v2_provider_service_statusService,ui_vue3_components_button,main_core,ui_dialogs_messagebox) {
+(function (exports,main_sidepanel,ui_vue3_mixins_locMixin,ui_system_skeleton,tasks_v2_lib_analytics,tasks_v2_component_elements_fieldList,tasks_v2_component_elements_contentResizer,tasks_v2_component_dropZone,tasks_v2_component_entityText,tasks_v2_component_userFieldsSlider,tasks_v2_component_fields_description,tasks_v2_component_fields_creator,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_status,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_component_fields_group,tasks_v2_component_fields_flow,tasks_v2_component_fields_accomplices,tasks_v2_component_fields_auditors,tasks_v2_component_fields_tags,tasks_v2_component_fields_crm,tasks_v2_component_fields_datePlan,tasks_v2_component_fields_timeTracking,tasks_v2_component_fields_subTasks,tasks_v2_component_fields_parentTask,tasks_v2_component_fields_relatedTasks,tasks_v2_component_fields_gantt,tasks_v2_component_fields_results,tasks_v2_component_fields_reminders,tasks_v2_component_fields_replication,tasks_v2_component_fields_email,tasks_v2_component_fields_userFields,tasks_v2_component_fields_placements,tasks_v2_component_fields_createdDate,tasks_v2_provider_service_fileService,tasks_v2_provider_service_deadlineService,tasks_v2_provider_service_timeTrackingService,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,ui_notificationManager,tasks_v2_provider_service_resultService,tasks_v2_lib_highlighter,ui_system_chip_vue,tasks_v2_core,tasks_v2_component_addTaskButton,ui_vue3,ui_system_skeleton_vue,tasks_v2_lib_ahaMoments,tasks_v2_component_markTaskButton,main_core_events,ui_vue3_vuex,ui_system_menu_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_application_taskCard,tasks_v2_const,tasks_v2_lib_userSelectorDialog,tasks_v2_lib_showLimit,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,tasks_v2_provider_service_templateService,tasks_v2_provider_service_statusService,ui_vue3_components_button,ui_vue3_directives_hint,ui_system_typography_vue,tasks_v2_component_elements_hint,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	const sectionPersonal = 'sectionPersonal';
@@ -307,22 +307,63 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	};
 
 	// @vue/component
+	const OpenFullCard = {
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  inject: {
+	    taskId: {},
+	    task: {}
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  computed: {
+	    tooltip() {
+	      return () => tasks_v2_component_elements_hint.tooltip({
+	        text: this.loc('TASKS_V2_TASK_FULL_CARD_OPEN_FULL'),
+	        popupOptions: {
+	          offsetLeft: this.$el.offsetWidth / 2
+	        },
+	        timeout: 500
+	      });
+	    },
+	    link() {
+	      return tasks_v2_application_taskCard.TaskCard.getUrl(this.taskId);
+	    }
+	  },
+	  template: `
+		<a :href="link" class="tasks-full-card-header-open-full" v-hint="tooltip">
+			<BIcon :name="Outline.GO_TO_L" hoverable/>
+		</a>
+	`
+	};
+
+	// @vue/component
 	const TaskHeader = {
 	  name: 'TaskFullCardHeader',
 	  components: {
 	    TitleField: tasks_v2_component_fields_title.Title,
 	    Importance: tasks_v2_component_fields_importance.Importance,
-	    BurgerMenu
+	    BurgerMenu,
+	    OpenFullCard
 	  },
 	  inject: {
 	    isEdit: {},
-	    isTemplate: {}
+	    isTemplate: {},
+	    embedded: {}
 	  },
 	  template: `
 		<div class="tasks-full-card-header">
 			<TitleField/>
 			<Importance/>
 			<BurgerMenu v-if="!isTemplate && isEdit"/>
+			<OpenFullCard v-if="embedded"/>
 		</div>
 	`
 	};
@@ -381,25 +422,31 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	 */
 	// eslint-disable-next-line max-lines-per-function
 	const TaskFullCardMessageMenu = baseMenu => {
-	  var _shouldShowAddResult, _shouldShowRemoveResult, _getMessageResultId, _getTask;
-	  return _shouldShowAddResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowAddResult"), _shouldShowRemoveResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowRemoveResult"), _getMessageResultId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessageResultId"), _getTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTask"), class extends baseMenu {
+	  var _shouldShowAddResult, _isSystemMessage, _shouldShowRemoveResult, _getMessageResultIdForCurrentUser, _getTask, _getUserId;
+	  return _shouldShowAddResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowAddResult"), _isSystemMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSystemMessage"), _shouldShowRemoveResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowRemoveResult"), _getMessageResultIdForCurrentUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessageResultIdForCurrentUser"), _getTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTask"), _getUserId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserId"), class extends baseMenu {
 	    constructor(...args) {
 	      super(...args);
+	      Object.defineProperty(this, _getUserId, {
+	        value: _getUserId2
+	      });
 	      Object.defineProperty(this, _getTask, {
 	        value: _getTask2
 	      });
-	      Object.defineProperty(this, _getMessageResultId, {
-	        value: _getMessageResultId2
+	      Object.defineProperty(this, _getMessageResultIdForCurrentUser, {
+	        value: _getMessageResultIdForCurrentUser2
 	      });
 	      Object.defineProperty(this, _shouldShowRemoveResult, {
 	        value: _shouldShowRemoveResult2
+	      });
+	      Object.defineProperty(this, _isSystemMessage, {
+	        value: _isSystemMessage2
 	      });
 	      Object.defineProperty(this, _shouldShowAddResult, {
 	        value: _shouldShowAddResult2
 	      });
 	    }
 	    getAddResultItem() {
-	      if (this.isDeletedMessage() || !this.isOwnMessage() || !babelHelpers.classPrivateFieldLooseBase(this, _shouldShowAddResult)[_shouldShowAddResult]()) {
+	      if (this.isDeletedMessage() || babelHelpers.classPrivateFieldLooseBase(this, _isSystemMessage)[_isSystemMessage]() || !babelHelpers.classPrivateFieldLooseBase(this, _shouldShowAddResult)[_shouldShowAddResult]()) {
 	        return null;
 	      }
 	      return {
@@ -410,14 +457,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	            taskId: this.getTaskId(),
 	            messageId: this.context.id,
 	            text: this.context.text,
-	            authorId: this.context.authorId
+	            authorId: babelHelpers.classPrivateFieldLooseBase(this, _getUserId)[_getUserId]()
 	          });
 	          this.close();
 	        }
 	      };
 	    }
 	    getRemoveResultItem() {
-	      if (this.isDeletedMessage() || !this.isOwnMessage() || !babelHelpers.classPrivateFieldLooseBase(this, _shouldShowRemoveResult)[_shouldShowRemoveResult]()) {
+	      if (this.isDeletedMessage() || babelHelpers.classPrivateFieldLooseBase(this, _isSystemMessage)[_isSystemMessage]() || !babelHelpers.classPrivateFieldLooseBase(this, _shouldShowRemoveResult)[_shouldShowRemoveResult]()) {
 	        return null;
 	      }
 	      return {
@@ -426,7 +473,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        onClick: () => {
 	          main_core_events.EventEmitter.emit(tasks_v2_const.EventName.DeleteResultFromChat, {
 	            taskId: this.getTaskId(),
-	            resultId: babelHelpers.classPrivateFieldLooseBase(this, _getMessageResultId)[_getMessageResultId]()
+	            resultId: babelHelpers.classPrivateFieldLooseBase(this, _getMessageResultIdForCurrentUser)[_getMessageResultIdForCurrentUser]()
 	          });
 	          this.close();
 	        }
@@ -441,16 +488,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    if (!task) {
 	      return false;
 	    }
-	    return !babelHelpers.classPrivateFieldLooseBase(this, _getMessageResultId)[_getMessageResultId]();
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getMessageResultIdForCurrentUser)[_getMessageResultIdForCurrentUser]() === 0;
+	  }
+	  function _isSystemMessage2() {
+	    return this.context.authorId === 0;
 	  }
 	  function _shouldShowRemoveResult2() {
 	    const task = babelHelpers.classPrivateFieldLooseBase(this, _getTask)[_getTask]();
 	    if (!task) {
 	      return false;
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getMessageResultId)[_getMessageResultId]() > 0;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getMessageResultIdForCurrentUser)[_getMessageResultIdForCurrentUser]() > 0;
 	  }
-	  function _getMessageResultId2() {
+	  function _getMessageResultIdForCurrentUser2() {
 	    const task = babelHelpers.classPrivateFieldLooseBase(this, _getTask)[_getTask]();
 	    if (!task) {
 	      return 0;
@@ -459,13 +509,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    const messageId = this.context.id;
 	    for (const [resultId, boundMessageId] of Object.entries(map)) {
 	      if (boundMessageId !== null && Number(boundMessageId) === Number(messageId)) {
-	        return Number(resultId);
+	        const messageResult = tasks_v2_provider_service_resultService.resultService.getStoreResult(Number(resultId));
+	        if (messageResult !== null && messageResult.author.id === babelHelpers.classPrivateFieldLooseBase(this, _getUserId)[_getUserId]()) {
+	          return messageResult.id;
+	        }
 	      }
 	    }
 	    return 0;
 	  }
 	  function _getTask2() {
 	    return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.getTaskId());
+	  }
+	  function _getUserId2() {
+	    return tasks_v2_core.Core.getParams().currentUser.id;
 	  }
 	};
 
@@ -1394,7 +1450,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    updateSecondaryButton() {
 	      void this.$nextTick(() => {
-	        const inProgress = this.task.rights.timeTracking ? this.getCompleteButton(this.timer ? '' : ui_vue3_components_button.AirButtonStyle.OUTLINE) : null;
+	        const inProgress = this.task.rights.timeTracking ? this.getCompleteButton(this.timer ? null : ui_vue3_components_button.AirButtonStyle.OUTLINE) : null;
 	        const statuses = {
 	          [tasks_v2_const.TaskStatus.Pending]: this.getCompleteButton(ui_vue3_components_button.AirButtonStyle.OUTLINE),
 	          [tasks_v2_const.TaskStatus.InProgress]: inProgress
@@ -1524,7 +1580,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	// @vue/component
 	const Placeholder = {
 	  components: {
-	    UiButton: ui_vue3_components_button.Button
+	    UiButton: ui_vue3_components_button.Button,
+	    HeadlineMd: ui_system_typography_vue.HeadlineMd,
+	    TextLg: ui_system_typography_vue.TextLg
+	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
 	  },
 	  props: {
 	    imgSrc: {
@@ -1535,7 +1596,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      type: String,
 	      default: ''
 	    },
-	    descr: {
+	    description: {
 	      type: String,
 	      default: ''
 	    },
@@ -1553,7 +1614,22 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  data() {
 	    return {};
 	  },
-	  computed: {},
+	  computed: {
+	    tooltip() {
+	      var _this$action;
+	      if (!((_this$action = this.action) != null && _this$action.hint)) {
+	        return null;
+	      }
+	      return () => tasks_v2_component_elements_hint.tooltip({
+	        text: this.action.hint,
+	        popupOptions: {
+	          bindElement: this.$refs.actionContainer,
+	          offsetLeft: this.$refs.actionContainer.offsetWidth / 2,
+	          maxWidth: 300
+	        }
+	      });
+	    }
+	  },
 	  methods: {},
 	  template: `
 		<div class="tasks-full-card-placeholder">
@@ -1561,11 +1637,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				<div v-if="imgSrc" class="tasks-full-card-placeholder__img-container">
 					<img :src="imgSrc" alt="noAccess" class="tasks-full-card-placeholder__img"/>
 				</div>
-				<h3 v-if="head" class="tasks-full-card-placeholder__head">{{ head }}</h3>
-				<p v-if="descr" class="tasks-full-card-placeholder__descr">{{ descr }}</p>
-				<div class="tasks-full-card-placeholder__action-container">
+				<HeadlineMd v-if="head" class="tasks-full-card-placeholder__head">{{ head }}</HeadlineMd>
+				<TextLg v-if="description" class="tasks-full-card-placeholder__descr">{{ description }}</TextLg>
+				<div v-if="action" v-hint="tooltip" class="tasks-full-card-placeholder__action-container" ref="actionContainer">
 					<UiButton
-						v-if="action"
 						class="tasks-full-card-placeholder__action"
 						:text="action.text"
 						:size="ButtonSize.MEDIUM"
@@ -1618,6 +1693,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    return {
 	      settings: tasks_v2_core.Core.getParams(),
 	      analytics: this.analytics,
+	      embedded: this.embedded,
 	      cardType: tasks_v2_const.CardType.Full,
 	      /** @type { TaskModel } */
 	      task: ui_vue3.computed(() => tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId)),
@@ -1642,6 +1718,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    analytics: {
 	      type: Object,
 	      default: () => ({})
+	    },
+	    embedded: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  setup() {
@@ -1675,22 +1755,32 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      isLoading: true,
 	      creationError: false,
 	      taskInitial: null,
-	      placeholderImgUrl: null
+	      placeholderImgUrl: null,
+	      taskGetError: null,
+	      isAccessRequested: true,
+	      accessRequestError: null
 	    };
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
+	      deadlineUserOption: `${tasks_v2_const.Model.Interface}/deadlineUserOption`,
 	      defaultDeadlineTs: `${tasks_v2_const.Model.Interface}/defaultDeadlineTs`,
 	      fullCardWidth: `${tasks_v2_const.Model.Interface}/fullCardWidth`,
 	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`,
+	      templateStateFlags: `${tasks_v2_const.Model.Interface}/templateStateFlags`,
 	      taskUserFieldScheme: `${tasks_v2_const.Model.Interface}/taskUserFieldScheme`,
-	      templateUserFieldScheme: `${tasks_v2_const.Model.Interface}/templateUserFieldScheme`
+	      templateUserFieldScheme: `${tasks_v2_const.Model.Interface}/templateUserFieldScheme`,
+	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
 	    }),
 	    task() {
 	      return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
 	    },
 	    group() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Groups}/getById`](this.task.groupId);
+	    },
+	    timer() {
+	      var _this$task$timers;
+	      return (_this$task$timers = this.task.timers) == null ? void 0 : _this$task$timers.find(timer => timer.userId === this.currentUserId);
 	    },
 	    checklist() {
 	      if (!this.task.checklist) {
@@ -1733,7 +1823,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    defaultRequireResult() {
 	      var _this$stateFlags$defa;
-	      return this.isTemplate ? false : (_this$stateFlags$defa = this.stateFlags.defaultRequireResult) != null ? _this$stateFlags$defa : false;
+	      if (this.isTemplate) {
+	        var _this$templateStateFl;
+	        return (_this$templateStateFl = this.templateStateFlags.defaultRequireResult) != null ? _this$templateStateFl : false;
+	      }
+	      return (_this$stateFlags$defa = this.stateFlags.defaultRequireResult) != null ? _this$stateFlags$defa : false;
 	    },
 	    // eslint-disable-next-line max-lines-per-function,sonarjs/cognitive-complexity
 	    fields() {
@@ -1796,7 +1890,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: tasks_v2_component_fields_email.emailMeta.dateTitle,
 	        component: tasks_v2_component_fields_email.EmailDate,
 	        printIgnore: !this.task.email
-	      }, !this.isTemplate && {
+	      }, {
 	        chip: {
 	          component: tasks_v2_component_fields_results.ResultsChip,
 	          props: {
@@ -2048,9 +2142,23 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return ((_this$initialTask = this.initialTask) == null ? void 0 : _this$initialTask.copiedFromId) && !tasks_v2_lib_idUtils.idUtils.isReal((_this$task = this.task) == null ? void 0 : _this$task.id);
 	    },
 	    placeholderOptions() {
+	      var _this$taskGetError;
+	      if (((_this$taskGetError = this.taskGetError) == null ? void 0 : _this$taskGetError.message) === 'access_denied') {
+	        return {
+	          imgSrc: this.iconUrl,
+	          head: main_core.Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_TITLE_NO_RIGHTS_TITLE'),
+	          description: main_core.Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_TITLE_NOT_FOUND_DESCRIPTION'),
+	          action: {
+	            text: main_core.Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACTION_REQUEST_ACCESS'),
+	            disabled: this.isAccessRequested,
+	            click: this.requestAccess,
+	            hint: this.accessRequestError
+	          }
+	        };
+	      }
 	      return {
-	        imgSrc: this.iconUrl,
-	        head: main_core.Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_TITLE_NO_RIGHTS')
+	        imgSrc: this.notFoundUrl,
+	        head: main_core.Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_TITLE_NOT_FOUND_TITLE')
 	      };
 	    },
 	    isReplicateTemplate() {
@@ -2126,17 +2234,28 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  async created() {
 	    var _this$task4;
 	    if (!this.isEdit && !this.task) {
-	      var _this$initialTask$dea, _this$stateFlags$need, _this$stateFlags$matc, _this$stateFlags$allo, _this$group3, _this$initialTask$aud, _this$initialTask2, _this$initialTask2$au, _this$initialTask$acc, _this$initialTask3, _this$initialTask3$ac;
+	      var _this$initialTask$dea, _flags$needsControl, _flags$matchesWorkTim, _flags$allowsTimeTrac, _this$group3, _this$initialTask$aud, _this$initialTask2, _this$initialTask2$au, _this$initialTask$acc, _this$initialTask3, _this$initialTask3$ac;
+	      const initialTemplate = {};
+	      const flags = this.isTemplate ? this.templateStateFlags : this.stateFlags;
+	      if (this.isTemplate) {
+	        initialTemplate.requireDeadlineChangeReason = false;
+	        initialTemplate.allowsChangeDeadline = false;
+	      }
 	      await tasks_v2_provider_service_taskService.taskService.insertStoreTask({
 	        ...this.initialTask,
 	        id: this.taskId,
 	        creatorId: tasks_v2_core.Core.getParams().currentUser.id,
 	        responsibleIds: [tasks_v2_core.Core.getParams().currentUser.id],
 	        deadlineTs: (_this$initialTask$dea = this.initialTask.deadlineTs) != null ? _this$initialTask$dea : this.defaultDeadlineTs,
-	        needsControl: (_this$stateFlags$need = this.stateFlags.needsControl) != null ? _this$stateFlags$need : null,
-	        matchesWorkTime: (_this$stateFlags$matc = this.stateFlags.matchesWorkTime) != null ? _this$stateFlags$matc : null,
-	        allowsTimeTracking: (_this$stateFlags$allo = this.stateFlags.allowsTimeTracking) != null ? _this$stateFlags$allo : null,
-	        requireResult: tasks_v2_core.Core.getParams().restrictions.requiredResult.available && this.defaultRequireResult
+	        needsControl: (_flags$needsControl = flags.needsControl) != null ? _flags$needsControl : null,
+	        matchesWorkTime: (_flags$matchesWorkTim = flags.matchesWorkTime) != null ? _flags$matchesWorkTim : null,
+	        allowsTimeTracking: (_flags$allowsTimeTrac = flags.allowsTimeTracking) != null ? _flags$allowsTimeTrac : null,
+	        requireResult: tasks_v2_core.Core.getParams().restrictions.requiredResult.available && this.defaultRequireResult,
+	        allowsChangeDeadline: this.deadlineUserOption.canChangeDeadline,
+	        requireDeadlineChangeReason: this.deadlineUserOption.requireDeadlineChangeReason,
+	        maxDeadlineChangeDate: this.deadlineUserOption.maxDeadlineChangeDate,
+	        maxDeadlineChanges: this.deadlineUserOption.maxDeadlineChanges,
+	        ...initialTemplate
 	      });
 	      if (this.initialTask.copiedFromId) {
 	        await tasks_v2_provider_service_taskService.taskService.getCopy(this.initialTask.copiedFromId, this.taskId);
@@ -2153,16 +2272,27 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    }
 	    await this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/clearFieldsFilled`, this.taskId);
 	    if (this.isEdit && (!this.task || this.isPartiallyLoaded)) {
-	      await tasks_v2_provider_service_taskService.taskService.get(this.taskId);
+	      tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(true);
+	      const {
+	        error
+	      } = await tasks_v2_provider_service_taskService.taskService.get(this.taskId);
+	      tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(false);
+	      this.taskGetError = error;
 	    }
 	    if (!this.task) {
 	      this.isLoading = false;
+	      this.isAccessRequested = await tasks_v2_provider_service_taskService.taskService.isAccessRequested(this.taskId);
+	      this.accessRequestError = this.isAccessRequested ? main_core.Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACCESS_ALREADY_REQUESTED') : null;
 	      return;
 	    }
+	    this.isAccessRequested = false;
 	    await tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
 	    this.isLoading = false;
 	    if (!this.isTemplate && !this.canChangeDeadlineWithoutLimitation && this.task.maxDeadlineChanges) {
 	      void tasks_v2_provider_service_deadlineService.deadlineService.updateDeadlineChangeCount(this.task.id);
+	    }
+	    if (this.isEdit && this.task.rights.timeTracking && !this.timer) {
+	      void tasks_v2_provider_service_timeTrackingService.timeTrackingService.getTaskWithActiveTimer();
 	    }
 	    tasks_v2_component_entityText.entityTextEditor.get(this.taskId, tasks_v2_component_entityText.EntityTextTypes.Task, {
 	      content: (_this$task4 = this.task) == null ? void 0 : _this$task4.description
@@ -2185,6 +2315,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.FullCardHasChanges, this.handleHasChanges);
 	    this.renderSkeleton();
 	    this.iconUrl = (await Promise.resolve().then(function () { return marshmallow_sad_pink_with_orange_lock$1; })).default;
+	    this.notFoundUrl = (await Promise.resolve().then(function () { return marshmallow_confused_pink_with_blue_magnifier$1; })).default;
 	  },
 	  unmounted() {
 	    main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.FullCardHasChanges, this.handleHasChanges);
@@ -2336,9 +2467,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    renderSkeleton() {
 	      if (this.$refs.skeleton) {
-	        const skeletonPath = '/bitrix/js/tasks/v2/application/task-card/src/skeleton-full.html?v=1';
-	        const templateSkeletonPath = '/bitrix/js/tasks/v2/application/task-card/src/skeleton-template.html?v=1';
-	        void ui_system_skeleton.renderSkeleton(this.isTemplate ? templateSkeletonPath : skeletonPath, this.$refs.skeleton);
+	        let path = '/bitrix/js/tasks/v2/application/task-card/src/skeleton-full.html?v=1';
+	        if (this.embedded) {
+	          path = '/bitrix/js/tasks/v2/application/task-card/src/skeleton-full-embedded.html?v=1';
+	        } else if (this.isTemplate) {
+	          path = '/bitrix/js/tasks/v2/application/task-card/src/skeleton-template.html?v=1';
+	        }
+	        void ui_system_skeleton.renderSkeleton(path, this.$refs.skeleton);
 	      }
 	    },
 	    sendAddTaskAnalytics(isSuccess, checklists) {
@@ -2400,6 +2535,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        cardType: tasks_v2_const.CardType.Full,
 	        taskId: this.taskId
 	      });
+	    },
+	    async requestAccess() {
+	      const {
+	        accessRequest,
+	        error
+	      } = await tasks_v2_provider_service_taskService.taskService.requestAccess(this.taskId);
+	      this.isAccessRequested = true;
+	      this.accessRequestError = (error == null ? void 0 : error.message) || main_core.Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACCESS_ALREADY_REQUESTED');
+	      ui_notificationManager.Notifier.notifyViaBrowserProvider({
+	        id: 'tasks-request-accessed',
+	        text: main_core.Loc.getMessage('TASKS_V2_TASK_FULL_CARD_PLACEHOLDER_ACCESS_REQUESTED_NOTIFICATION')
+	      });
+	      return accessRequest;
 	    }
 	  },
 	  template: `
@@ -2413,8 +2561,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				<div
 					ref="main"
 					class="tasks-full-card-main print-background-white"
-					:class="{ '--overlay': isBottomSheetShown }"
-					:style="{ width: (isTemplate ? '100%' : fullCardWidth + 'px') }"
+					:class="{ 
+						'--overlay': isBottomSheetShown,
+						'--embedded': embedded,
+					}"
+					:style="{ width: ((isTemplate || embedded) ? '100%' : fullCardWidth + 'px'),}"
 				>
 					<div class="tasks-full-card-content" :data-task-card-scroll="taskId" ref="scrollContent">
 						<div ref="title">
@@ -2451,7 +2602,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 									<FieldList :fields="emailFields"/>
 								</div>
 								<div
-									v-if="!isTemplate && (task.requireResult || wasFilled(TaskField.Results))"
+									v-if="task.requireResult || wasFilled(TaskField.Results)"
 									class="tasks-full-card-field-container  --custom"
 									:class="{ 
 										'print-ignore': shouldIgnoreResultPrint,
@@ -2612,7 +2763,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						:entityType="EntityTypes.Task"
 					/>
 				</div>
-				<Chat v-if="!isTemplate"/>
+				<Chat v-if="!isTemplate && !embedded"/>
 			</template>
 			<template v-else-if="isLoading">
 				<div ref="skeleton" style="width: 100%;"/>
@@ -2621,7 +2772,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				v-else
 				:imgSrc="placeholderOptions.imgSrc"
 				:head="placeholderOptions.head"
-				:descr="placeholderOptions.descr"
+				:description="placeholderOptions.description"
 				:action="placeholderOptions.action"
 			/>
 		</div>
@@ -2784,7 +2935,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _onTryClose, {
 	      writable: true,
 	      value: event => {
-	        if (event.getData().taskId === babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId) {
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] && event.getData().taskId === babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId) {
 	          babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].close();
 	        }
 	      }
@@ -2792,7 +2943,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _onClose, {
 	      writable: true,
 	      value: event => {
-	        if (event.getData().taskId === babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId) {
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] && event.getData().taskId === babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId) {
 	          babelHelpers.classPrivateFieldLooseBase(this, _isCloseConfirmed)[_isCloseConfirmed] = true;
 	          babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].close();
 	        }
@@ -2899,7 +3050,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _params)[_params],
 	      ...(['tasks_planning', 'tasks_kanban_sprint'].includes(queryParams.SCOPE) ? {
 	        deadlineTs: 0
-	      } : {})
+	      } : {}),
+	      embedded: false
 	    };
 	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]).groupId || (_babelHelpers$classPr4.groupId = ((_Core$getParams$defau = tasks_v2_core.Core.getParams().defaultCollab) == null ? void 0 : _Core$getParams$defau.id) || undefined);
 	    babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] = slider;
@@ -2908,20 +3060,40 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = await babelHelpers.classPrivateFieldLooseBase(this, _mountApplication)[_mountApplication](slider.getContentContainer());
 	    openedCards.add(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId);
 	  }
+	  async mountEmbedded(container) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = {
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _params)[_params],
+	      embedded: true
+	    };
+	    babelHelpers.classPrivateFieldLooseBase(this, _subscribe)[_subscribe]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = await babelHelpers.classPrivateFieldLooseBase(this, _mountApplication)[_mountApplication](container);
+	    openedCards.add(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId);
+	  }
 	  unmount() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _unmountApplication)[_unmountApplication]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _unsubscribe)[_unsubscribe]();
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _needToReloadGrid)[_needToReloadGrid] && BX.Tasks.Util) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _needToReloadGrid)[_needToReloadGrid]) {
 	      const id = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId;
-	      BX.Tasks.Util.fireGlobalTaskEvent('UPDATE', {
-	        ID: id
-	      }, {
-	        STAY_AT_PAGE: true
-	      }, {
-	        id
-	      });
+	      main_core_events.EventEmitter.emit(tasks_v2_const.EventName.LegacyTasksTaskEvent, new main_core_events.BaseEvent({
+	        data: id,
+	        compatData: ['UPDATE', {
+	          task: {
+	            ID: id
+	          },
+	          taskUgly: {
+	            id
+	          },
+	          options: {
+	            STAY_AT_PAGE: true
+	          }
+	        }]
+	      }));
 	    }
 	    openedCards.delete(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId);
+	  }
+	  unmountEmbedded() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _unmountApplication)[_unmountApplication]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _unsubscribe)[_unsubscribe]();
 	  }
 	  onClose(event) {
 	    var _allChanges$find;
@@ -2959,12 +3131,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    url,
 	    link,
 	    closeCompleteUrl,
+	    embedded,
 	    ...initialTask
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params];
 	  const application = ui_vue3.BitrixVue.createApp(App, {
 	    id: taskId,
 	    initialTask: Object.fromEntries(Object.entries(initialTask).filter(([, value]) => !main_core.Type.isNil(value))),
-	    analytics
+	    analytics,
+	    embedded
 	  });
 	  application.mixin(ui_vue3_mixins_locMixin.locMixin);
 	  application.use(tasks_v2_core.Core.getStore());
@@ -3011,7 +3185,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  main_sidepanel.SidePanel.Instance.resetBrowserHistory();
 	}
 	function _updateSliderTitle2(title) {
-	  if (main_core.Type.isStringFilled(title)) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] && main_core.Type.isStringFilled(title)) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].setTitle(title);
 	    main_sidepanel.SidePanel.Instance.updateBrowserTitle();
 	  }
@@ -3023,7 +3197,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		default: marshmallow_sad_pink_with_orange_lock
 	});
 
+	var marshmallow_confused_pink_with_blue_magnifier = "/bitrix/js/tasks/v2/application/task-full-card/dist/images/marshmallow_confused_pink_with_blue_magnifier.png";
+
+	var marshmallow_confused_pink_with_blue_magnifier$1 = /*#__PURE__*/Object.freeze({
+		default: marshmallow_confused_pink_with_blue_magnifier
+	});
+
 	exports.TaskFullCard = TaskFullCard;
 
-}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.SidePanel,BX.Vue3.Mixins,BX.UI.System,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.UI.NotificationManager,BX.Tasks.V2.Lib,BX.UI.System.Chip.Vue,BX.Tasks.V2,BX.Tasks.V2.Component,BX.Vue3,BX.UI.System.Skeleton.Vue,BX.UI.System.Typography.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Component,BX.Event,BX.Vue3.Vuex,BX.UI.System.Menu,BX.UI.IconSet,BX,BX.Tasks.V2.Application,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Vue3.Components,BX,BX.UI.Dialogs));
+}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.SidePanel,BX.Vue3.Mixins,BX.UI.System,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.UI.NotificationManager,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX.UI.System.Chip.Vue,BX.Tasks.V2,BX.Tasks.V2.Component,BX.Vue3,BX.UI.System.Skeleton.Vue,BX.Tasks.V2.Lib,BX.Tasks.V2.Component,BX.Event,BX.Vue3.Vuex,BX.UI.System.Menu,BX.UI.IconSet,BX,BX.Tasks.V2.Application,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Vue3.Components,BX.Vue3.Directives,BX.UI.System.Typography.Vue,BX.Tasks.V2.Component.Elements,BX,BX.UI.Dialogs));
 //# sourceMappingURL=task-full-card.bundle.js.map

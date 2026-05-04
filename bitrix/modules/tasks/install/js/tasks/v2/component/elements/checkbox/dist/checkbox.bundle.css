@@ -30,6 +30,7 @@
 	border: var(--ui-border-width-medium) solid var(--ui-color-divider-default);
 	border-radius: var(--ui-border-radius-2xs, 4px);
 	cursor: pointer;
+	box-sizing: content-box;
 }
 
 .tasks-card-checkbox.--disabled input + span {

@@ -83,6 +83,7 @@ export const templateService = new class
 			isForNewUser: template.isForNewUser,
 			replicate: template.replicate,
 			replicateParams: template.replicateParams,
+			requireResult: template.requireResult,
 		};
 
 		fields.permissions = permissionBuilder.getPermissions(fields);

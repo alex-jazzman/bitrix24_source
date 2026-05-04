@@ -34,6 +34,7 @@ return  [
 			'update_task_search_index' => [
 				'handler' => UpdateSearchIndex::class,
 			],
+			// TODO: Remove when UpdateTopic queue is completely empty.
 			'update_task_topic' => [
 				'handler' => UpdateTopic::class
 			],

@@ -5,6 +5,7 @@ import { EntitySelectorEntity, Model } from 'tasks.v2.const';
 import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
 import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
+import { templateService } from 'tasks.v2.provider.service.template-service';
 import type { FlowModel } from 'tasks.v2.model.flows';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 

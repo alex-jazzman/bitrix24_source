@@ -3,14 +3,17 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,main_core,tasks_v2_core,tasks_v2_const,tasks_v2_lib_analytics,tasks_v2_lib_scrumManager,tasks_v2_lib_apiClient,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,tasks_v2_provider_service_resultService) {
+(function (exports,main_core,ui_dialogs_messagebox,tasks_v2_core,tasks_v2_const,tasks_v2_lib_analytics,tasks_v2_lib_scrumManager,tasks_v2_lib_apiClient,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,tasks_v2_provider_service_resultService) {
 	'use strict';
 
-	var _updateStatus;
-	const statusService = new (_updateStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateStatus"), class {
+	var _doStartTimer, _updateStatus;
+	const statusService = new (_doStartTimer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("doStartTimer"), _updateStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateStatus"), class {
 	  constructor() {
 	    Object.defineProperty(this, _updateStatus, {
 	      value: _updateStatus2
+	    });
+	    Object.defineProperty(this, _doStartTimer, {
+	      value: _doStartTimer2
 	    });
 	  }
 	  async start(id) {
@@ -26,10 +29,34 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    }
 	  }
 	  async startTimer(id, analyticsParams = {}) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, tasks_v2_const.Endpoint.TaskTrackingTimerStart, tasks_v2_const.TaskStatus.InProgress);
-	    tasks_v2_lib_analytics.analytics.sendAutoTimeTracking(analyticsParams, {
-	      taskId: id
-	    });
+	    const taskWithActiveTimer = tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.Interface}/taskWithActiveTimer`];
+	    if (taskWithActiveTimer) {
+	      return new Promise(resolve => {
+	        ui_dialogs_messagebox.MessageBox.show({
+	          useAirDesign: true,
+	          message: main_core.Loc.getMessage('TASKS_V2_STATUS_TIMER_WARNING', {
+	            '#TITLE#': taskWithActiveTimer.title
+	          }),
+	          buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	          okCaption: main_core.Loc.getMessage('TASKS_V2_STATUS_TIMER_WARNING_OK'),
+	          onOk: async dialog => {
+	            dialog.close();
+	            await babelHelpers.classPrivateFieldLooseBase(this, _doStartTimer)[_doStartTimer](id, analyticsParams);
+	            resolve();
+	          },
+	          popupOptions: {
+	            closeByEsc: false,
+	            autoHide: false,
+	            events: {
+	              onClose: () => {
+	                resolve();
+	              }
+	            }
+	          }
+	        });
+	      });
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _doStartTimer)[_doStartTimer](id, analyticsParams);
 	  }
 	  async disapprove(id) {
 	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, tasks_v2_const.Endpoint.TaskStatusDisapprove, tasks_v2_const.TaskStatus.Pending);
@@ -85,6 +112,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, tasks_v2_const.Endpoint.TaskStatusRenew, tasks_v2_const.TaskStatus.Pending);
 	  }
 	})();
+	async function _doStartTimer2(id, analyticsParams) {
+	  await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, tasks_v2_const.Endpoint.TaskTrackingTimerStart, tasks_v2_const.TaskStatus.InProgress);
+	  tasks_v2_lib_analytics.analytics.sendAutoTimeTracking(analyticsParams, {
+	    taskId: id
+	  });
+	}
 	async function _updateStatus2(id, action, status) {
 	  const taskBeforeUpdate = tasks_v2_provider_service_taskService.taskService.getStoreTask(id);
 	  if (!tasks_v2_lib_idUtils.idUtils.isReal(id)) {
@@ -111,5 +144,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 
 	exports.statusService = statusService;
 
-}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX,BX.UI.Dialogs,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=status-service.bundle.js.map

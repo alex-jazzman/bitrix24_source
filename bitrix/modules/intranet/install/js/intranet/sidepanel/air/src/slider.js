@@ -1,7 +1,9 @@
-import { Reflection, Dom, Event, Type, Browser, ZIndexManager } from 'main.core';
+import { Reflection, Dom, Event, Type, Browser } from 'main.core';
 import { Slider as BaseSlider, SidePanel, type OuterBoundary, type SliderOptions } from 'main.sidepanel';
-import { ChatMenuBar } from './chat-menu-bar';
+
 import { type ThemePicker } from 'intranet.theme-picker';
+
+import { ChatMenuBar } from './chat-menu-bar';
 
 const MENU_COLLAPSED_WIDTH = 65;
 const MENU_EXPANDED_WIDTH = 240;
@@ -21,7 +23,10 @@ export class Slider extends BaseSlider
 		{
 			options.hideControls = false;
 			options.autoOffset = false;
+			options.customRightBoundary = null;
 		}
+
+		options.customRightBoundary = null;
 
 		super(url, options);
 
@@ -36,13 +41,6 @@ export class Slider extends BaseSlider
 		this.adjustBackgroundSize();
 		Event.bind(window, 'resize', this.#onWindowResize);
 
-		if (this.getRightBar() && !this.isMessengerSlider())
-		{
-			const stack = ZIndexManager.getOrAddStack(document.body);
-			stack.register(this.getRightBar());
-			Dom.addClass(this.getRightBar(), '--ui-context-edge-dark --overlay-mode');
-		}
-
 		return true;
 	}
 
@@ -50,29 +48,6 @@ export class Slider extends BaseSlider
 	{
 		this.resetBackgroundSize();
 		Event.unbind(window, 'resize', this.#onWindowResize);
-
-		if (this.getRightBar())
-		{
-			const stack = ZIndexManager.getOrAddStack(document.body);
-			stack.unregister(this.getRightBar());
-			Dom.removeClass(this.getRightBar(), '--ui-context-edge-dark --overlay-mode');
-			Dom.style(this.getRightBar(), 'z-index', null); // ZIndexManager may not remove z-index, so we do it manually
-		}
-	}
-
-	open(): boolean
-	{
-		const opened = super.open();
-		if (this.getRightBar() && opened)
-		{
-			const stack = ZIndexManager.getOrAddStack(document.body);
-			if (!this.isMessengerSlider() && !Slider.isMessengerOpen() && !Slider.isVideoCallOpen())
-			{
-				stack.bringToFront(this.getRightBar());
-			}
-		}
-
-		return opened;
 	}
 
 	static isMessengerOpen(): boolean
@@ -129,9 +104,19 @@ export class Slider extends BaseSlider
 		return CallManager && CallManager.getInstance().hasCurrentCall();
 	}
 
-	getRightBar(): HTMLElement
+	getRightBar(): HTMLElement | null
 	{
 		return document.getElementById('right-bar');
+	}
+
+	getRightPanel(): HTMLElement | null
+	{
+		return document.getElementById('app__right-panel');
+	}
+
+	isRightPanelOpen(): boolean
+	{
+		return this.getRightPanel()?.offsetWidth > 0;
 	}
 
 	getLeftBoundary(): number
@@ -153,7 +138,37 @@ export class Slider extends BaseSlider
 
 	getRightBoundary(): number
 	{
-		return 0;
+		const viewer = Reflection.getClass('BX.UI.Viewer.Instance');
+		if (viewer && viewer.isOpen())
+		{
+			return 0;
+		}
+
+		if (
+			!this.isRightPanelOpen()
+			&& (this.isMessengerSlider() || Slider.isMessengerOpenBeforeSlider(this) || Slider.isVideoCallOpen())
+		)
+		{
+			return 0;
+		}
+
+		const rightPanel = this.getRightPanel() || this.getRightBar();
+		if (rightPanel === null)
+		{
+			return 0;
+		}
+
+		const leftOffset = rightPanel.getBoundingClientRect().left;
+		if (leftOffset === 0)
+		{
+			return 0;
+		}
+
+		// const rightMargin = Slider.#verticalScrollWidth + rightBarWidth;
+
+		const windowWidth = Browser.isMobile() ? window.innerWidth : document.documentElement.clientWidth;
+
+		return windowWidth - leftOffset;
 	}
 
 	getTopBoundary(): number
@@ -171,12 +186,11 @@ export class Slider extends BaseSlider
 			};
 		}
 
-		const rightBarWidth = this.getRightBar()?.offsetWidth || 0;
-		const rightMargin = Slider.#verticalScrollWidth + rightBarWidth;
+		const rightMargin = Slider.#verticalScrollWidth > 0 ? 0 : 18;
 
 		return {
 			top: 16,
-			right: rightMargin,
+			right: this.isRightPanelOpen() ? 18 : (this.getRightBar()?.offsetWidth > 0 ? 0 : rightMargin),
 		};
 	}
 

@@ -36,6 +36,11 @@ $isCollaber = (
 AirTemplate::tryApplyDefaultTopMenu();
 
 			?></main>
+			<div class="page__sidebar" id="sidebar"><?
+				$APPLICATION->showViewContent('sidebar');
+				$APPLICATION->showViewContent('sidebar_tools_1');
+				$APPLICATION->showViewContent('sidebar_tools_2');
+			?></div>
 			</div>
 		</div><?
 			$dynamicArea = StaticArea::getCurrentDynamicArea();
@@ -121,8 +126,8 @@ AirTemplate::tryApplyDefaultTopMenu();
 			</div>
 		</div>
 	</footer>
-	<? if (AirTemplate::shouldShowImBar()): ?>
 	<div class="app__right-bar" id="right-bar">
+		<? if (AirTemplate::shouldShowImBar()): ?>
 		<div class="air-chat-bar"><?php
 			$dynamicArea = new StaticArea('chat-bar');
 			$dynamicArea->setAssetMode(AssetMode::STANDARD);
@@ -130,9 +135,19 @@ AirTemplate::tryApplyDefaultTopMenu();
 			$APPLICATION->includeComponent('bitrix:intranet.chat.bar', '');
 			$dynamicArea->finishDynamicArea();
 		?></div>
+		<? endif ?>
 	</div>
-	<? endif ?>
-	<div class="app__right-panel" id="app__right-panel"></div>
+	<div class="app__right-panel" id="app__right-panel"><?php
+		if (ModuleManager::isModuleInstalled('aiassistant')):
+			$dynamicArea = new StaticArea('aiassistant');
+			$dynamicArea->setAssetMode(AssetMode::STANDARD);
+			$dynamicArea->setContainerId('app__right-panel');
+			$dynamicArea->setStub('<script>BX.Intranet.Bitrix24.Template.getComposite().showRightSidebarLoader()</script>');
+			$dynamicArea->startDynamicArea();
+			$APPLICATION->includeComponent('bitrix:aiassistant.widget', '.default');
+			$dynamicArea->finishDynamicArea();
+		endif;
+	?></div>
 	<div class="app__go-top-button" id="goTopButtonWrapper">
 	<?
 		$goTopButton = AirTemplate::getGoTopButton();

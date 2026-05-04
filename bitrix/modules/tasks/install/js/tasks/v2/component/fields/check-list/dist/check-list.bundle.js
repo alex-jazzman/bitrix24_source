@@ -852,6 +852,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		<div
 			class="tasks-check-list-list"
 			:class="{ '--default': loading || isFilledEmpty }"
+			data-field-container
+			:data-task-field-id="checkListMeta.id"
 		>
 			<div
 				class="tasks-check-list-list-content"
@@ -3838,8 +3840,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        display: 'flex'
 	      },
 	      isItemPanelFreeze: false,
-	      itemPanelTopOffset: this.isAutonomous ? 5 : 2,
-	      itemPanelTopLimit: this.isAutonomous ? 450 : 700,
 	      itemsRefs: {},
 	      isForwardMenuShown: false,
 	      forwardMenuSectionCode: 'createSection',
@@ -4500,21 +4500,34 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	    },
 	    updatePanelPosition() {
-	      if (this.itemPanelIsShown === false) {
+	      var _this$$refs$panel;
+	      if (this.itemPanelIsShown === false || !this.currentItem) {
 	        return;
 	      }
-	      const itemRef = this.$refs.list.querySelector([`[data-id="${this.currentItem.id}"]`]);
-	      const panelRect = main_core.Dom.getPosition(this.$refs.panel.$el);
-	      const listRect = main_core.Dom.getPosition(this.$refs.list);
-	      const itemRect = main_core.Dom.getRelativePosition(itemRef, this.$refs.list);
+	      const list = this.$refs.list;
+	      const panel = (_this$$refs$panel = this.$refs.panel) == null ? void 0 : _this$$refs$panel.$el;
+	      if (!list || !panel) {
+	        return;
+	      }
+	      const itemRef = list.querySelector([`[data-id="${this.currentItem.id}"]`]);
+	      if (!itemRef) {
+	        return;
+	      }
+	      const panelRect = main_core.Dom.getPosition(panel);
+	      const listRect = main_core.Dom.getPosition(list);
+	      const itemRect = main_core.Dom.getRelativePosition(itemRef, list);
 	      const isParentItem = this.currentItem.parentId === 0;
 	      const paddingOffset = 18;
+	      const listScrollTop = list.scrollTop;
+	      const listVisibleBottom = listScrollTop + list.clientHeight;
 	      const panelWidth = panelRect.width === 0 ? 304 : panelRect.width;
+	      const panelHeight = panelRect.height === 0 ? 40 : panelRect.height;
 	      const top = itemRect.top - 28;
 	      const topLimitValue = isParentItem ? -30 : 40;
-	      const panelVisible = top > topLimitValue && top < this.itemPanelTopLimit;
+	      const panelTopLimit = listVisibleBottom - panelHeight;
+	      const panelVisible = top > topLimitValue && top < panelTopLimit;
 	      const topPopupLimitValue = isParentItem ? 0 : 70;
-	      const popupVisible = top > topPopupLimitValue && top < this.itemPanelTopLimit;
+	      const popupVisible = top > topPopupLimitValue && top < listVisibleBottom;
 	      if (!popupVisible) {
 	        this.shownPopups.forEach(popup => {
 	          popup.close();

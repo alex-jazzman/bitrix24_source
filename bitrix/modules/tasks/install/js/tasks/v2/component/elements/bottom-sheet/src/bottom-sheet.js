@@ -67,6 +67,7 @@ export const BottomSheet = {
 					closeAnimationType: 'animation',
 				},
 				autoHide: false,
+				closeByEsc: false,
 			};
 		},
 	},

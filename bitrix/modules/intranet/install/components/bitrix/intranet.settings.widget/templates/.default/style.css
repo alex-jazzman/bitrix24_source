@@ -5,7 +5,14 @@
 	margin-left: 2px;
 	min-width: 24px;
 	height: 24px;
+	padding: 0;
 	cursor: pointer;
+	background: none;
+	border: none;
+}
+
+.intranet-settings-widget__logo-btn:focus-visible {
+	border-radius: 4px;
 }
 
 .intranet-settings-widget__logo-btn .ui-icon-set {

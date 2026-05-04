@@ -21,6 +21,7 @@ export const DescriptionSheet = {
 	inject: {
 		task: {},
 		taskId: {},
+		embedded: {},
 	},
 	props: {
 		sheetBindProps: {
@@ -54,10 +55,14 @@ export const DescriptionSheet = {
 		{
 			return Core.getParams().features.disk;
 		},
+		isExpanded(): boolean
+		{
+			return !this.embedded;
+		},
 	},
 	template: `
 		<BottomSheet
-			isExpanded
+			:isExpanded
 			:padding="0"
 			:popupPadding="0"
 			:sheetBindProps

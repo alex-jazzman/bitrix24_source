@@ -59,6 +59,17 @@ BX.Intranet.SearchTitle = function(arParams)
 		{
 			this.RESULT = document.body.appendChild(document.createElement("DIV"));
 			this.RESULT.className = 'title-search-result title-search-result-header search-title-top-result-header';
+			this.RESULT.id = 'title-search-result';
+			this.RESULT.setAttribute('role', 'listbox');
+			this.RESULT.setAttribute('aria-label', BX.message('GLOBAL_SEARCH') || 'Search results');
+
+			if (_this.INPUT)
+			{
+				_this.INPUT.setAttribute('role', 'combobox');
+				_this.INPUT.setAttribute('aria-autocomplete', 'list');
+				_this.INPUT.setAttribute('aria-controls', 'title-search-result');
+				_this.INPUT.setAttribute('aria-expanded', 'false');
+			}
 		}
 	};
 
@@ -398,7 +409,9 @@ BX.Intranet.SearchTitle = function(arParams)
 			attrs: {
 				className: "search-title-top-item search-title-top-item-js" + (this.selectedItemDataId == currentItem.ITEM_ID ? " search-title-top-item-selected" : ""),
 				title: (typeof currentItem.CHAIN != 'undefined' && BX.type.isArray(currentItem.CHAIN) ? currentItem.CHAIN.join(' -> ') : ''),
-				'bx-search-item-id': currentItem.ITEM_ID
+				'bx-search-item-id': currentItem.ITEM_ID,
+				role: 'option',
+				'aria-selected': this.selectedItemDataId == currentItem.ITEM_ID ? 'true' : 'false'
 			},
 			children: [
 				BX.create('a', {
@@ -580,6 +593,11 @@ BX.Intranet.SearchTitle = function(arParams)
 
 	this.BuildEntities = function (result)
 	{
+		if (_this.INPUT && _this.INPUT.disabled)
+		{
+			return;
+		}
+
 		var crmContact = [];
 		var crmCompany= [];
 		var crmDeal= [];
@@ -981,6 +999,11 @@ BX.Intranet.SearchTitle = function(arParams)
 
 	this.ShowResult = function(result, showWaiter, afterAjax)
 	{
+		if (_this.INPUT && _this.INPUT.disabled)
+		{
+			return;
+		}
+
 		_this.CreateResultWrap();
 		/* modified */
 		var ieTop = 0;
@@ -1031,10 +1054,14 @@ BX.Intranet.SearchTitle = function(arParams)
 					}, _this));
 
 					_this.RESULT.style.display = 'block';
+					_this.RESULT.removeAttribute('aria-hidden');
+					if (_this.INPUT) { _this.INPUT.setAttribute('aria-expanded', 'true'); }
 				}
 				else
 				{
 					_this.RESULT.style.display = 'block';
+					_this.RESULT.removeAttribute('aria-hidden');
+					if (_this.INPUT) { _this.INPUT.setAttribute('aria-expanded', 'true'); }
 				}
 
 
@@ -1296,12 +1323,15 @@ BX.Intranet.SearchTitle = function(arParams)
 		switch (keyCode)
 		{
 			case 27: // escape key - close search div
-				_this.RESULT.style.display = 'none';
+				_this.closeResult();
 				break;
 
 			case 40: // down key - navigate down on search results
 				if(_this.RESULT.style.display == 'none')
+				{
 					_this.RESULT.style.display = 'block';
+					_this.RESULT.removeAttribute('aria-hidden');
+				}
 
 				var items = BX.findChildren(_this.RESULT, {"className" : "search-title-top-item-js"}, true);
 
@@ -1409,7 +1439,10 @@ BX.Intranet.SearchTitle = function(arParams)
 
 			case 38: // up key - navigate up on search results
 				if(_this.RESULT.style.display == 'none')
+				{
 					_this.RESULT.style.display = 'block';
+					_this.RESULT.removeAttribute('aria-hidden');
+				}
 
 				if (this.selectedItemDataId !== null)
 				{
@@ -1615,6 +1648,7 @@ BX.Intranet.SearchTitle = function(arParams)
 			return;
 
 		BX.addClass(element, "search-title-top-item-selected");
+		element.setAttribute('aria-selected', 'true');
 		_this.selectedItemDataId = element.getAttribute("bx-search-item-id");
 
 		//check for toggle block
@@ -1631,6 +1665,7 @@ BX.Intranet.SearchTitle = function(arParams)
 			return;
 
 		BX.removeClass(element, "search-title-top-item-selected");
+		element.setAttribute('aria-selected', 'false');
 
 		//check for toggle block
 		var isGlobalSearchBlock = BX.findParent(element, {className: "search-title-top-block-tools"}, true);
@@ -1658,6 +1693,7 @@ BX.Intranet.SearchTitle = function(arParams)
 		if(_this.RESULT && _this.RESULT.innerHTML.length)
 		{
 			_this.RESULT.style.display = 'block';
+			_this.RESULT.removeAttribute('aria-hidden');
 		}
 
 		BX.onCustomEvent(this, "Intranet.Search.Title:onFocusAction", ["gain"]);
@@ -1764,7 +1800,7 @@ BX.Intranet.SearchTitle = function(arParams)
 
 			if (_this.RESULT)
 			{
-				_this.RESULT.style.display = 'none';
+				_this.closeResult();
 			}
 		}
 	};
@@ -1893,7 +1929,20 @@ BX.Intranet.SearchTitle = function(arParams)
 	this.clearSearch = function()
 	{
 		this.INPUT.value = "";
-		this.onKeyUp();
+		this.searchStarted = false;
+		this.blockAjax = true;
+
+		if (this.xhr)
+		{
+			this.xhr.abort();
+			this.xhr = null;
+		}
+
+		if (this.CONTAINER)
+		{
+			BX.addClass(this.CONTAINER.parentNode.parentNode, "header-search-empty");
+			BX.removeClass(this.CONTAINER.parentNode.parentNode, "header-search-not-empty");
+		}
 	};
 
 	this.closeResult = function()
@@ -1901,6 +1950,17 @@ BX.Intranet.SearchTitle = function(arParams)
 		if (this.RESULT)
 		{
 			this.RESULT.style.display = 'none';
+			this.RESULT.setAttribute('aria-hidden', 'true');
+		}
+		if (this.INPUT)
+		{
+			this.INPUT.setAttribute('aria-expanded', 'false');
+		}
+
+		if (this.xhr)
+		{
+			this.xhr.abort();
+			this.xhr = null;
 		}
 	};
 
@@ -1913,7 +1973,7 @@ BX.Intranet.SearchTitle = function(arParams)
 		)
 		{
 			setTimeout(function() {
-				_this.RESULT.style.display = 'none';
+				_this.closeResult();
 			}, 250);
 		}
 	};

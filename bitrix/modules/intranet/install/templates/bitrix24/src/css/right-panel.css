@@ -1,0 +1,61 @@
+.right-panel-resize-handle {
+	position: absolute;
+	left: -4px;
+	top: 0;
+	width: 12px;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: col-resize;
+	z-index: 11;
+}
+
+.right-panel-resize-handle__grabber {
+	--ui-icon-set__icon-color: var(--ui-color-design-filled-na-content);
+
+	width: 12px;
+	height: 36px;
+	position: relative;
+	left: 4px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	mask-image: url('../../images/grabber.svg');
+	mask-position: center center;
+	mask-size: contain;
+	background-color: var(--ui-color-design-filled-na-bg);
+	opacity: 0;
+	transition: opacity 0.2s ease-in-out;
+	pointer-events: none;
+}
+
+.right-panel-resize-handle__grabber-icon {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+}
+
+.right-panel-resize-handle:hover .right-panel-resize-handle__grabber {
+	opacity: 1;
+}
+
+body.--resizing .right-panel-resize-handle .right-panel-resize-handle__grabber {
+	opacity: 0;
+	transition: none;
+}
+
+.right-panel-drag-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	cursor: col-resize;
+	user-select: none;
+}
+
+body.--resizing .app__right-panel,
+body.--resizing .app__header,
+body.--resizing .app__page {
+	transition-duration: 0s;
+}

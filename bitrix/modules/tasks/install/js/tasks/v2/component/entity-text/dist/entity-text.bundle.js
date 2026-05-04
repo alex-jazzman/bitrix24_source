@@ -43,7 +43,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	const DefaultEditorOptions = Object.freeze({
 	  toolbar: [],
-	  floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'numbered-list', 'bulleted-list', '|', CHECK_LIST_BUTTON, 'link', 'spoiler', 'quote', 'code', 'copilot'],
+	  floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'numbered-list', 'bulleted-list', '|', 'link', 'spoiler', 'quote', 'code', 'copilot'],
 	  removePlugins: ['BlockToolbar'],
 	  visualOptions: {
 	    borderWidth: 0,
@@ -75,6 +75,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  },
 	  copilot: {},
 	  paragraphPlaceholder: 'auto'
+	});
+	const ExtendedEditorOptions = Object.freeze({
+	  ...DefaultEditorOptions,
+	  floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'numbered-list', 'bulleted-list', '|', CHECK_LIST_BUTTON, 'link', 'spoiler', 'quote', 'code', 'copilot']
 	});
 
 	const EntityTextTypes = Object.freeze({
@@ -230,7 +234,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      copilot: babelHelpers.classPrivateFieldLooseBase(this, _getCopilotParams)[_getCopilotParams]()
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor] = new ui_textEditor.TextEditor({
-	      ...DefaultEditorOptions,
+	      ...ExtendedEditorOptions,
 	      ...additionalEditorOptions
 	    });
 	  }
@@ -392,6 +396,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  }
 	};
 
+	const mountedAreas = new Map();
+
 	// @vue/component
 	const EntityTextArea = {
 	  components: {
@@ -429,7 +435,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  },
 	  data() {
 	    return {
-	      files: this.fileService.getFiles()
+	      files: this.fileService.getFiles(),
+	      isActiveRenderer: true,
+	      editorRenderKey: 0
 	    };
 	  },
 	  computed: {
@@ -460,18 +468,57 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    this.editor = this.entityTextEditor.getEditor();
 	  },
 	  mounted() {
-	    this.fileService.subscribe('onFileAdd', this.onFileAdd);
-	    this.fileService.subscribe('onFileRemove', this.onFileRemove);
-	    this.entityTextEditor.subscribe('editorChanged', this.onEditorChange);
-	    this.entityTextEditor.subscribe('editorBlurred', this.onEditorBlur);
+	    this.registerArea();
+	    this.subscribeEvents();
 	  },
 	  unmounted() {
-	    this.fileService.unsubscribe('onFileAdd', this.onFileAdd);
-	    this.fileService.unsubscribe('onFileRemove', this.onFileRemove);
-	    this.entityTextEditor.unsubscribe('editorChanged', this.onEditorChange);
-	    this.entityTextEditor.unsubscribe('editorBlurred', this.onEditorBlur);
+	    this.unregisterArea();
+	    this.unsubscribeEvents();
 	  },
 	  methods: {
+	    subscribeEvents() {
+	      this.fileService.subscribe('onFileAdd', this.onFileAdd);
+	      this.fileService.subscribe('onFileRemove', this.onFileRemove);
+	      this.entityTextEditor.subscribe('editorChanged', this.onEditorChange);
+	      this.entityTextEditor.subscribe('editorBlurred', this.onEditorBlur);
+	    },
+	    unsubscribeEvents() {
+	      this.fileService.unsubscribe('onFileAdd', this.onFileAdd);
+	      this.fileService.unsubscribe('onFileRemove', this.onFileRemove);
+	      this.entityTextEditor.unsubscribe('editorChanged', this.onEditorChange);
+	      this.entityTextEditor.unsubscribe('editorBlurred', this.onEditorBlur);
+	    },
+	    registerArea() {
+	      const key = this.getAreaKey(this.entityId, this.entityType);
+	      if (!mountedAreas.has(key)) {
+	        mountedAreas.set(key, new Set());
+	      }
+	      mountedAreas.get(key).forEach(instance => {
+	        instance.setActiveRenderer(false);
+	      });
+	      mountedAreas.get(key).add(this);
+	      this.setActiveRenderer(true);
+	    },
+	    unregisterArea() {
+	      const key = this.getAreaKey(this.entityId, this.entityType);
+	      const areas = mountedAreas.get(key);
+	      if (!areas) {
+	        return;
+	      }
+	      areas.delete(this);
+	      if (areas.size === 0) {
+	        mountedAreas.delete(key);
+	      } else {
+	        [...areas].pop().setActiveRenderer(true);
+	      }
+	    },
+	    setActiveRenderer(active) {
+	      const wasInactive = !this.isActiveRenderer;
+	      this.isActiveRenderer = active;
+	      if (active && wasInactive) {
+	        this.editorRenderKey++;
+	      }
+	    },
 	    onFileAdd() {
 	      this.$emit('filesChange');
 	    },
@@ -487,11 +534,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    handleInsertFile(event) {
 	      const fileInfo = event.getData().item;
 	      this.entityTextEditor.insertFile(fileInfo);
+	    },
+	    getAreaKey(entityId, entityType) {
+	      return `${entityType}:${entityId}`;
 	    }
 	  },
 	  template: `
 		<div class="tasks-entity-text-area-wrapper" ref="editorWrapper">
-			<TextEditorComponent :editorInstance="editor">
+			<TextEditorComponent v-if="isActiveRenderer" :key="editorRenderKey" :editorInstance="editor">
 				<template v-if="filesCount > 0" #footer>
 					<div class="tasks-entity-text-area-files" ref="filesWrapper">
 						<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
@@ -739,7 +789,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      if (!this.selectionMade) {
 	        const target = event.target;
 	        const isLinkClick = target.tagName === 'A' || target.closest('a');
-	        if (!isLinkClick) {
+	        const isButtonClick = target.tagName === 'BUTTON' || target.closest('button');
+	        const isImageClick = target.tagName === 'IMG' || target.closest('img');
+	        const isVideoClick = target.tagName === 'VIDEO' || target.closest('video');
+	        if (!isLinkClick && !isButtonClick && !isImageClick && !isVideoClick) {
 	          this.onPreviewClick();
 	        }
 	      }

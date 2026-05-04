@@ -214,8 +214,11 @@ export const EntityCollapsibleText = {
 			{
 				const target = event.target;
 				const isLinkClick = target.tagName === 'A' || target.closest('a');
+				const isButtonClick = target.tagName === 'BUTTON' || target.closest('button');
+				const isImageClick = target.tagName === 'IMG' || target.closest('img');
+				const isVideoClick = target.tagName === 'VIDEO' || target.closest('video');
 
-				if (!isLinkClick)
+				if (!isLinkClick && !isButtonClick && !isImageClick && !isVideoClick)
 				{
 					this.onPreviewClick();
 				}

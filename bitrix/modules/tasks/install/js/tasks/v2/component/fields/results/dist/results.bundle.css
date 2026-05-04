@@ -49,6 +49,10 @@
 	cursor: pointer;
 }
 
+.tasks-field-results-title.--non-clickable {
+	cursor: default;
+}
+
 .tasks-field-results-title.--list-mode {
 	padding-top: var(--ui-space-stack-md2);
 	padding-bottom: var(--ui-space-stack-md2);

@@ -200,7 +200,10 @@ Loc::loadMessages(__FILE__);
 								<div class="integration-row-input-title">
 									<?=Loc::getMessage('REST_INTEGRATION_EDIT_GENERATOR_LABEL_SELECTOR_REST_METHOD')?>
 								</div>
-								<div class="integration-webhook-method-api-select ui-ctl ui-ctl-textbox ui-ctl-w100">
+								<div
+									data-id="integration-webhook-method-api-select"
+									class="integration-webhook-method-api-select ui-ctl ui-ctl-textbox ui-ctl-w100"
+								>
 									<?
 									$APPLICATION->IncludeComponent(
 										"bitrix:rest.integration.selector",
@@ -280,7 +283,10 @@ Loc::loadMessages(__FILE__);
 									</a>
 								<? endif; ?>
 							</div>
-							<div class="integration-row integration-row-padding-right">
+							<div
+								data-id="integration-webhook-curl"
+								class="integration-row integration-row-padding-right"
+							>
 								<div class="integration-row-input-title">
 									<?=Loc::getMessage('REST_INTEGRATION_EDIT_GENERATOR_LABEL_GENERATED_URL')?>
 								</div>

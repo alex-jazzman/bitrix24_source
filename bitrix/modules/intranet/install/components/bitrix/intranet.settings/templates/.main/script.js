@@ -4348,6 +4348,7 @@ this.BX = this.BX || {};
 	var _isPushOtpProvider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPushOtpProvider");
 	var _isHighPromoteModePushOtp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isHighPromoteModePushOtp");
 	var _getOldOTPDescriptionText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOldOTPDescriptionText");
+	var _buildRestIntegrationSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildRestIntegrationSection");
 	var _buildAccessIPSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildAccessIPSection");
 	var _getEmptyUserSelectorRow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmptyUserSelectorRow");
 	var _getEmptyAccessIpRow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmptyAccessIpRow");
@@ -4395,6 +4396,9 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _buildAccessIPSection, {
 	      value: _buildAccessIPSection2
 	    });
+	    Object.defineProperty(this, _buildRestIntegrationSection, {
+	      value: _buildRestIntegrationSection2
+	    });
 	    Object.defineProperty(this, _getOldOTPDescriptionText, {
 	      value: _getOldOTPDescriptionText2
 	    });
@@ -4441,24 +4445,25 @@ this.BX = this.BX || {};
 	    return 'security';
 	  }
 	  appendSections(contentNode) {
-	    var _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
+	    var _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5;
 	    const isBitrix24 = this.hasValue('IS_BITRIX_24') && this.getValue('IS_BITRIX_24');
 	    if (this.hasValue('SECURITY_OTP_ENABLED') && this.getValue('SECURITY_OTP_ENABLED')) {
 	      var _babelHelpers$classPr;
 	      (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _buildOTPSection)[_buildOTPSection]()) == null ? void 0 : _babelHelpers$classPr.renderTo(contentNode);
 	    }
 	    (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _buildDataLeakProtectionSection)[_buildDataLeakProtectionSection]()) == null ? void 0 : _babelHelpers$classPr2.renderTo(contentNode);
+	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _buildRestIntegrationSection)[_buildRestIntegrationSection]()) == null ? void 0 : _babelHelpers$classPr3.renderTo(contentNode);
 
 	    // if (isBitrix24)
 	    // {
 	    // 	this.#buildPasswordRecoverySection().renderTo(contentNode);
 	    // }
-	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _buildDevicesHistorySection)[_buildDevicesHistorySection]()) == null ? void 0 : _babelHelpers$classPr3.renderTo(contentNode);
-	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _buildEventLogSection)[_buildEventLogSection]()) == null ? void 0 : _babelHelpers$classPr4.renderTo(contentNode);
+	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _buildDevicesHistorySection)[_buildDevicesHistorySection]()) == null ? void 0 : _babelHelpers$classPr4.renderTo(contentNode);
+	    (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _buildEventLogSection)[_buildEventLogSection]()) == null ? void 0 : _babelHelpers$classPr5.renderTo(contentNode);
 	    if (isBitrix24) {
-	      var _babelHelpers$classPr5, _babelHelpers$classPr6;
-	      (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _buildAccessIPSection)[_buildAccessIPSection]()) == null ? void 0 : _babelHelpers$classPr5.renderTo(contentNode);
-	      (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _buildBlackListSection)[_buildBlackListSection]()) == null ? void 0 : _babelHelpers$classPr6.renderTo(contentNode);
+	      var _babelHelpers$classPr6, _babelHelpers$classPr7;
+	      (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _buildAccessIPSection)[_buildAccessIPSection]()) == null ? void 0 : _babelHelpers$classPr6.renderTo(contentNode);
+	      (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _buildBlackListSection)[_buildBlackListSection]()) == null ? void 0 : _babelHelpers$classPr7.renderTo(contentNode);
 	    }
 	  }
 	}
@@ -4527,6 +4532,36 @@ this.BX = this.BX || {};
 	        text: main_core.Loc.getMessage('INTRANET_SETTINGS_SECURITY_PUSH_OTP_BANNER_TEXT'),
 	        clickEnableBtn: () => {
 	          var _this$getAnalytic;
+	          if (!this.getValue('SECURITY_IS_USER_OTP_ACTIVE')) {
+	            const messageBox = ui_dialogs_messagebox.MessageBox.create({
+	              message: main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_MSGVER_1'),
+	              modal: true,
+	              useAirDesign: true,
+	              popupOptions: {
+	                closeByEsc: true,
+	                autoHide: true
+	              },
+	              buttons: [new ui_buttons.Button({
+	                text: main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_BUTTON_MSGVER_1'),
+	                style: ui_buttons.AirButtonStyle.FILLED,
+	                useAirDesign: true,
+	                events: {
+	                  click: () => {
+	                    messageBox.close();
+	                    BX.SidePanel.Instance.open(this.getValue('SECURITY_OTP_PATH'));
+	                  }
+	                }
+	              }), new ui_buttons.CloseButton({
+	                useAirDesign: true,
+	                style: ui_buttons.AirButtonStyle.PLAIN_NO_ACCENT,
+	                onclick: () => {
+	                  messageBox.close();
+	                }
+	              })]
+	            });
+	            messageBox.show();
+	            return;
+	          }
 	          (_this$getAnalytic = this.getAnalytic()) == null ? void 0 : _this$getAnalytic.addEventEnablePushOtp();
 	          main_core.ajax.runAction('intranet.v2.Otp.activePushOtp').then(() => {
 	            this.reload();
@@ -4701,6 +4736,24 @@ this.BX = this.BX || {};
 				</a>
 			</span>
 		`;
+	}
+	function _buildRestIntegrationSection2() {
+	  if (!this.hasValue('sectionRestIntegration')) {
+	    return;
+	  }
+	  const restSection = new ui_section.Section(this.getValue('sectionRestIntegration'));
+	  const settingsSection = new ui_formElements_field.SettingsSection({
+	    section: restSection,
+	    parent: this
+	  });
+	  if (this.hasValue('selectorIncomingWebhookCreateOwn')) {
+	    const webhookCreateOwnSelector = ui_formElements_view.FieldFactory.createUserSelector({
+	      ...this.getValue('selectorIncomingWebhookCreateOwn'),
+	      enableDepartments: true
+	    });
+	    SecurityPage.addToSectionHelper(webhookCreateOwnSelector, settingsSection);
+	  }
+	  return settingsSection;
 	}
 	function _buildAccessIPSection2() {
 	  if (!this.hasValue('sectionAccessIp')) {

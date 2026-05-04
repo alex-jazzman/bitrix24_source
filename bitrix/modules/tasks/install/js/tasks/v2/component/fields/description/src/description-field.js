@@ -59,7 +59,6 @@ export const DescriptionField = {
 		return {
 			checksum: '',
 			isSaving: false,
-			isMiniFormShown: false,
 			enableSaveButton: false,
 			hasFilesChanges: false,
 			files: this.fileService.getFiles(),
@@ -91,26 +90,11 @@ export const DescriptionField = {
 		},
 		shouldShowMiniForm(): boolean
 		{
-			if (this.readonly)
-			{
-				return false;
-			}
-
-			if (!this.isEdit)
-			{
-				return this.isMiniFormShown || this.task.description.length > 0;
-			}
-
-			return true;
+			return !this.readonly;
 		},
 		shouldShowMiniFormButton(): boolean
 		{
-			return this.taskDescription.length === 0
-				&& (
-					(!this.isEdit && !this.isMiniFormShown)
-					|| (this.isEdit && this.filesCount === 0)
-				)
-			;
+			return this.isEdit && this.filesCount === 0 && this.taskDescription.length === 0;
 		},
 		shouldShowDescriptionPreview(): boolean
 		{
@@ -177,17 +161,6 @@ export const DescriptionField = {
 			await this.closeEditMode();
 
 			this.addCheckList(checklistString);
-		},
-		handleMiniFormButtonClick(): void
-		{
-			if (this.isEdit)
-			{
-				this.openEditMode();
-			}
-			else
-			{
-				this.isMiniFormShown = true;
-			}
 		},
 		async handleTextChanges(): void
 		{
@@ -331,7 +304,7 @@ export const DescriptionField = {
 			<MiniFormButton
 				v-if="shouldShowMiniFormButton"
 				:filesCount
-				@click="handleMiniFormButtonClick"
+				@click="openEditMode"
 			/>
 			<MiniForm
 				v-if="shouldShowMiniForm"
@@ -347,7 +320,6 @@ export const DescriptionField = {
 				v-if="shouldShowDescriptionPreview"
 				:taskId
 				:files
-				:isMiniFormShown
 				@editButtonClick="openEditMode"
 			/>
 		</div>

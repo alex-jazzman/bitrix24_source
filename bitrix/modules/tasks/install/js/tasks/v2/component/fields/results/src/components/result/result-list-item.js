@@ -39,6 +39,9 @@ export const ResultListItem = {
 		TextSm,
 	},
 	directives: { hint },
+	inject: {
+		embedded: {},
+	},
 	props: {
 		resultId: {
 			type: [Number, String],
@@ -271,7 +274,7 @@ export const ResultListItem = {
 						@click.stop="isMenuShown = true"
 					/>
 					<BIcon
-						v-if="isSticky"
+						v-if="isSticky && !embedded"
 						class="tasks-field-results-title-icon --big"
 						:name="resizeIcon"
 						hoverable

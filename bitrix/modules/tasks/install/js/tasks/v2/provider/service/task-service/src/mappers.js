@@ -28,7 +28,7 @@ export function mapModelToDto(task: TaskModel): TaskDto
 		createdTs: mapValue(task.createdTs, Math.floor(task.createdTs / 1000)),
 		responsible: mapValue(responsibleIds, responsibleIds?.length < 2 ? { id: responsibleIds?.[0] ?? 0 } : user),
 		responsibleCollection: mapValue(responsibleIds, responsibleIds?.map((id: number): UserDto => ({ id }))),
-		isMultitask: responsibleIds?.length > 1,
+		isMultitask: mapValue(responsibleIds, responsibleIds?.length > 1),
 		deadlineTs: mapValue(task.deadlineTs, Math.floor(task.deadlineTs / 1000)),
 		deadlineAfter: mapValue(task.deadlineAfter, Math.floor(task.deadlineAfter / 1000)),
 		needsControl: Core.getParams().restrictions.control.available ? task.needsControl : false,
@@ -47,7 +47,7 @@ export function mapModelToDto(task: TaskModel): TaskDto
 		epicId: task.epicId,
 		storyPoints: task.storyPoints,
 		flow: mapValue(task.flowId, { id: task.flowId }),
-		priority: mapValue(task.isImportant, task.isImportant ? 'high' : 'low'),
+		priority: mapValue(task.isImportant, task.isImportant ? 'high' : 'average'),
 		status: task.status,
 		statusChangedTs: mapValue(task.statusChangedTs, Math.floor(task.statusChangedTs / 1000)),
 		accomplices: mapValue(task.accomplicesIds, task.accomplicesIds?.map((id: number): UserDto => ({ id }))),
@@ -95,6 +95,7 @@ export function mapModelToDto(task: TaskModel): TaskDto
 export function mapDtoToModel(taskDto: TaskDto): TaskModel
 {
 	const allowedNullFields = new Set([
+		'requireDeadlineChangeReason',
 		'maxDeadlineChangeDate',
 		'maxDeadlineChanges',
 	]);

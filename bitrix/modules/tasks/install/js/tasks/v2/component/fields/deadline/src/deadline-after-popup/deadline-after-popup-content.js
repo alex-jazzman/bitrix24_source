@@ -13,6 +13,13 @@ import './deadline-after-popup.css';
 
 const unitDurations = DurationFormat.getUnitDurations();
 
+export const Presets = Object.freeze({
+	DAY_1: { id: '1d', multiplier: 1 },
+	DAYS_3: { id: '3d', multiplier: 3 },
+	WEEK: { id: '7d', multiplier: 7 },
+	WEEKS_2: { id: '14d', multiplier: 14 },
+});
+
 // @vue/component
 export const DeadlineAfterPopupContent = {
 	components: {
@@ -56,7 +63,7 @@ export const DeadlineAfterPopupContent = {
 			},
 			set(deadlineAfter: number): number
 			{
-				this.$emit('update', deadlineAfter);
+				this.$emit('update', { id: null, duration: deadlineAfter });
 			},
 		},
 		task(): TaskModel
@@ -69,19 +76,23 @@ export const DeadlineAfterPopupContent = {
 
 			return [
 				{
-					duration: dayDuration,
+					...Presets.DAY_1,
+					duration: dayDuration * Presets.DAY_1.multiplier,
 					title: new DurationFormat(unitDurations.d).format(),
 				},
 				{
-					duration: dayDuration * 3,
+					...Presets.DAYS_3,
+					duration: dayDuration * Presets.DAYS_3.multiplier,
 					title: new DurationFormat(unitDurations.d * 3).format(),
 				},
 				{
-					duration: dayDuration * 7,
+					...Presets.WEEK,
+					duration: dayDuration * Presets.WEEK.multiplier,
 					title: this.loc('TASKS_V2_DEADLINE_A_WEEK'),
 				},
 				{
-					duration: dayDuration * 14,
+					...Presets.WEEKS_2,
+					duration: dayDuration * Presets.WEEKS_2.multiplier,
 					title: this.loc('TASKS_V2_DEADLINE_TWO_WEEKS'),
 				},
 			];
@@ -92,9 +103,9 @@ export const DeadlineAfterPopupContent = {
 		this.deadlineAfter = this.task?.deadlineAfter;
 	},
 	methods: {
-		applyPreset(duration: number): void
+		applyPreset(preset: { id: string, duration: number }): void
 		{
-			this.duration = duration;
+			this.$emit('update', preset);
 			this.$emit('close');
 		},
 	},
@@ -104,12 +115,12 @@ export const DeadlineAfterPopupContent = {
 			<QuestionMark :hintText="loc('TASKS_V2_DEADLINE_AFTER_HINT')"/>
 		</div>
 		<div class="tasks-field-deadline-after-chips">
-			<template v-for="preset in presets" :key="preset.title">
+			<template v-for="preset in presets" :key="preset.id">
 				<Chip
 					:text="preset.title"
 					:design="ChipDesign.Outline"
 					:compact="false"
-					@click="applyPreset(preset.duration)"
+					@click="applyPreset(preset)"
 				/>
 			</template>
 		</div>

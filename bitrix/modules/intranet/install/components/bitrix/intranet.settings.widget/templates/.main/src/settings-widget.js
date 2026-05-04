@@ -88,6 +88,7 @@ export class SettingsWidget extends EventEmitter
 
 		this.#widgetPopup.getPopup().subscribe('onClose', () => {
 			Event.unbindAll(this.getWidget().getPopup().getPopupContainer(), 'click');
+			this.#updateAriaExpanded(false);
 		});
 
 		widgetLoader.clearBeforeInsertContent();
@@ -157,6 +158,7 @@ export class SettingsWidget extends EventEmitter
 		if (popup.isShown())
 		{
 			popup.close();
+			this.#updateAriaExpanded(false);
 		}
 		else
 		{
@@ -177,6 +179,7 @@ export class SettingsWidget extends EventEmitter
 		}
 
 		this.setTarget(targetNode);
+		this.#updateAriaExpanded(true);
 	}
 
 	getWidget(): PopupComponentsMaker
@@ -580,5 +583,13 @@ export class SettingsWidget extends EventEmitter
 		`;
 
 		return this.#prepareElement(element);
+	}
+
+	#updateAriaExpanded(expanded: boolean): void
+	{
+		if (this.#target)
+		{
+			Dom.attr(this.#target, 'aria-expanded', expanded);
+		}
 	}
 }

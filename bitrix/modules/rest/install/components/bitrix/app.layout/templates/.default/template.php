@@ -95,10 +95,6 @@ elseif(isset($arParams['MOBILE']) && $arParams['MOBILE'] == 'Y')
 	$frameStyle[] = 'width: 100%';
 	//$frameStyle[] = 'height: 100%';
 }
-elseif($arParams['POPUP'])
-{
-	$frameStyle[] = 'height: calc(100% - 4px)';
-}
 
 if($arParams['PLACEMENT'] !== \Bitrix\Rest\PlacementTable::PLACEMENT_DEFAULT)
 {

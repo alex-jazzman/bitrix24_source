@@ -14,9 +14,7 @@ use Bitrix\Tasks\Flow\Integration\Socialnetwork\GroupService;
 use Bitrix\Tasks\Flow\Kanban\BizProcService;
 use Bitrix\Tasks\Flow\Migration\Access\Repository\RoleRepository;
 use Bitrix\Tasks\Flow\Migration\Access\Repository\RoleRepositoryInterface;
-use Bitrix\Tasks\Flow\Provider\DepartmentExistsProvider;
 use Bitrix\Tasks\Flow\Provider\FlowMemberFacade;
-use Bitrix\Tasks\Flow\Provider\UserStatusProvider;
 use Bitrix\Tasks\Flow\Template\Access\Permission\TemplatePermissionService;
 use Bitrix\Tasks\Internals\Counter\CounterService;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
@@ -78,8 +76,11 @@ use Bitrix\Tasks\V2\Internal\Repository\InMemoryTaskParameterRepository;
 use Bitrix\Tasks\V2\Internal\Repository\InMemoryTaskRepository;
 use Bitrix\Tasks\V2\Internal\Repository\InMemoryTaskTagRepository;
 use Bitrix\Tasks\V2\Internal\Repository\InMemoryTaskUserOptionRepository;
+use Bitrix\Tasks\V2\Internal\Repository\InMemoryTimerRepository;
 use Bitrix\Tasks\V2\Internal\Repository\SystemHistoryRepository;
 use Bitrix\Tasks\V2\Internal\Repository\SystemHistoryRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\TaskAccessRequestRepository;
+use Bitrix\Tasks\V2\Internal\Repository\TaskAccessRequestRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\Template\AccessEntityRepository;
 use Bitrix\Tasks\V2\Internal\Repository\Template\AccessEntityRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\Template\InMemoryTemplateRepository;
@@ -125,6 +126,8 @@ use Bitrix\Tasks\V2\Internal\Repository\Template\RelatedTaskTemplateRepository;
 use Bitrix\Tasks\V2\Internal\Repository\Template\RelatedTaskTemplateRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\Template\SubTemplateRepository;
 use Bitrix\Tasks\V2\Internal\Repository\Template\SubTemplateRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateParameterRepository;
+use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateParameterRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplatePermissionRepository;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplatePermissionRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateReadRepository;
@@ -132,7 +135,6 @@ use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateReadRepositoryInterface
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateTagRepository;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateTagRepositoryInterface;
-use Bitrix\Tasks\V2\Internal\Repository\TimerRepository;
 use Bitrix\Tasks\V2\Internal\Repository\TimerRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\UserFieldSchemeRepository;
 use Bitrix\Tasks\V2\Internal\Repository\UserFieldSchemeRepositoryInterface;
@@ -275,7 +277,7 @@ return [
 			'className' => CacheDeadlineUserOptionRepository::class,
 		],
 		TimerRepositoryInterface::class => [
-			'className' => TimerRepository::class,
+			'className' => InMemoryTimerRepository::class,
 		],
 		PlannerRepositoryInterface::class => [
 			'className' => PlannerRepository::class,
@@ -390,6 +392,12 @@ return [
 		],
 		LoggerInterface::class => [
 			'className' => Logger::class,
+		],
+		TemplateParameterRepositoryInterface::class => [
+			'className' => TemplateParameterRepository::class,
+		],
+		TaskAccessRequestRepositoryInterface::class => [
+			'className' => TaskAccessRequestRepository::class,
 		],
 		// endregion
 

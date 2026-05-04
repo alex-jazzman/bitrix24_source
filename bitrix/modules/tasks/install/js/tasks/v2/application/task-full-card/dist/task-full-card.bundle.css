@@ -19,6 +19,11 @@
 	background: var(--tasks-color-bg-drawer);
 }
 
+.tasks-full-card-main.--embedded {
+	width: 100%;
+	min-width: 432px;
+}
+
 @media (min-width: 1600px) {
 	.tasks-full-card-main {
 		width: 660px;
@@ -241,6 +246,19 @@
 	padding: 19px calc(22px - var(--scrollbar-width)) var(--padding-bottom) 22px;
 }
 
+.tasks-full-card-header-open-full {
+	display: flex;
+	align-items: center;
+	height: 27px;
+	margin-left: 6px;
+	cursor: pointer;
+}
+
+.tasks-full-card-header-open-full .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+	--ui-icon-set__icon-size: 25px;
+}
+
 .tasks-task-settings-hint {
 	display: flex;
 	flex-direction: row;
@@ -383,28 +401,22 @@
 }
 .tasks-full-card-placeholder__img-container {
 	padding: 5px 0 10px 0;
-	max-width: 210px;
+	max-width: 269px;
 	line-height: 0;
 }
 .tasks-full-card-placeholder__img {
-	max-width: 100%;
+	width: 269px;
+	height: 195px;
 }
 .tasks-full-card-placeholder__head {
 	padding: 5px 0 5px 0;
-	line-height: 26px;
-	font-size: 19px;
-	color: var(--ui-color-base-1);
 }
 .tasks-full-card-placeholder__descr {
 	padding: 5px 0 5px 0;
-	line-height: 21px;
-	font-size: 16px;
-	color: var(--ui-color-base-2);
 }
 .tasks-full-card-placeholder__action-container {
 	padding: 15px 0 5px 0;
 }
-.tasks-full-card-placeholder__action {}
 
 .tasks-full-card-header-burger {
 	flex-shrink: 0;

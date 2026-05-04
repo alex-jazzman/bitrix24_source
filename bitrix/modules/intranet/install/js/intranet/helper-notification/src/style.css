@@ -1,0 +1,61 @@
+.intranet-helper-notification-popup {
+	display: flex;
+	flex-direction: row;
+	padding: 0;
+	align-items: flex-end;
+}
+
+.intranet-helper-notification-popup:before {
+	content: '';
+	background-image: image-set(
+		url(image/helper-notification-background.png) 1x,
+		url(image/helper-notification-background@2x.png) 2x
+	);
+	background-position: center;
+	background-repeat: no-repeat;
+	height: 132px;
+	width: 116px;
+	border-radius: 18px 0 0 18px;
+}
+
+.intranet-helper-notification-popup:after {
+	content: '';
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	background-image: url(image/helper-notification-background-flash.svg);
+	background-position: center;
+	background-repeat: no-repeat;
+	height: 145px;
+	width: 120px;
+	z-index: -1;
+}
+
+.intranet-helper-notification {
+	gap: 6px;
+	display: flex;
+	flex-direction: column;
+	padding: 0 var(--ui-space-inset-md2) 4px 12px;
+	margin: 12px 20px 16px 0;
+}
+
+.intranet-helper-notification__title {
+	color: var(--ui-color-base-0);
+}
+
+.intranet-helper-notification__description {
+	color: var(--ui-color-base-2);
+}
+
+.intranet-helper-notification__close-icon {
+	position: absolute;
+	cursor: pointer;
+	right: 4px;
+	top: 4px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary-alt-2);
+	--ui-icon-set__icon-size: 24px;
+}
+
+.intranet-helper-notification__close-icon:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-0);
+}

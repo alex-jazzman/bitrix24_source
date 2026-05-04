@@ -125,6 +125,7 @@ export const DescriptionEditor = {
 					<MoreButton :editor/>
 					<CopilotButton v-if="isCopilotEnabled" :editor/>
 					<CheckList
+						ref="checkListButton"
 						v-if="isCopilotEnabled"
 						:loading="isAiCommandProcessing"
 						@click="handleCheckListButtonClick"

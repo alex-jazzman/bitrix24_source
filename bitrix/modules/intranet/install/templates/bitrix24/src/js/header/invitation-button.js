@@ -1,5 +1,5 @@
 import { BaseCache, MemoryCache } from 'main.core.cache';
-import { ajax, Event, Runtime, Type, Loc } from 'main.core';
+import { ajax, Event, Runtime, Type, Loc, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { WidgetLoader } from 'intranet.widget-loader';
 import { InvitationWidget } from 'intranet.invitation-widget';
@@ -15,6 +15,7 @@ type InvitationButtonOptions = {
 export class InvitationButton
 {
 	static #buttonWrapper: HTMLElement;
+	static #button: HTMLElement;
 	static #cache: BaseCache<any> = new MemoryCache();
 	static #options: InvitationButtonOptions;
 
@@ -22,9 +23,11 @@ export class InvitationButton
 	{
 		this.#options = options;
 		this.#buttonWrapper = document.querySelector('[data-id="invitationButton"]');
+		this.#button = this.#buttonWrapper.querySelector('button');
 
-		Event.bind(this.#buttonWrapper, 'click', () => {
-			Event.unbindAll(this.#buttonWrapper);
+		Event.bind(this.#button, 'click', () => {
+			Event.unbindAll(this.#button);
+			this.#setAriaExpanded(true);
 			this.#getWidgetLoader()
 				.createSkeletonFromConfig(options.skeleton)
 				.show();
@@ -50,7 +53,8 @@ export class InvitationButton
 				loader: this.#getWidgetLoader().getPopup(),
 				...response.data,
 			}).show();
-			Event.bind(this.#buttonWrapper, 'click', () => {
+
+			Event.bind(this.#button, 'click', () => {
 				InvitationWidget.getInstance().show();
 			});
 		}).catch(() => {});
@@ -59,12 +63,27 @@ export class InvitationButton
 	static #getWidgetLoader(): WidgetLoader
 	{
 		return this.#cache.remember('widgetLoader', () => {
-			return new WidgetLoader({
+			const loader = new WidgetLoader({
 				bindElement: this.#buttonWrapper,
 				width: 350,
 				id: 'bx-invitation-header-popup',
 			});
+
+			const popup = loader.getPopup();
+			popup.subscribe('onShow', () => {
+				this.#setAriaExpanded(true);
+			});
+			popup.subscribe('onClose', () => {
+				this.#setAriaExpanded(false);
+			});
+
+			return loader;
 		});
+	}
+
+	static #setAriaExpanded(expanded: boolean): void
+	{
+		Dom.attr(this.#button, 'aria-expanded', expanded);
 	}
 
 	static #getContent(): Promise

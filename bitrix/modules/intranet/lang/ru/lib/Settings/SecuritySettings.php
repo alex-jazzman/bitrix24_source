@@ -25,3 +25,5 @@ $MESS["INTRANET_SETTINGS_FIELD_BADGE_WATER_MARKS_SOON"] = 'Скоро';
 $MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_USER_SELECT"] = "Выберите, кому запретить";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY_MSGVER_1"] = "Сохраняйте конфиденциальность внутренней переписки. Сотрудники смогут пересылать сообщения друг другу внутри приложения, но копировать и отправлять текст за пределы Битрикс24 будет нельзя.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT_MSGVER_1"] = "При попытке сделать скриншот сотрудники увидят сообщение о запрете, скриншот не сохранится. Это защитит конфиденциальные данные от утечки, вся информация останется внутри компании.";
+$MESS['INTRANET_SETTINGS_SECTION_TITLE_REST_INTEGRATION'] = 'Интеграции Битрикс24';
+$MESS['INTRANET_SETTINGS_FIELD_LABEL_REST_CREATE_ACCESS_INHOOK'] = 'Кому разрешить создавать входящие вебхуки';

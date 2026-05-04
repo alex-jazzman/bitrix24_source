@@ -32,10 +32,6 @@ export const DescriptionPreview = {
 			type: Array,
 			required: true,
 		},
-		isMiniFormShown: {
-			type: Boolean,
-			default: false,
-		},
 	},
 	emits: ['editButtonClick'],
 	setup(props): { task: TaskModel, uploaderAdapter: VueUploaderAdapter }
@@ -89,7 +85,6 @@ export const DescriptionPreview = {
 				:content="taskDescription"
 				:files
 				:readonly
-				:openByDefault="isMiniFormShown"
 				showFilesIndicator
 				:maxHeight="300"
 				v-model:opened="opened"

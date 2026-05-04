@@ -20,6 +20,7 @@ return [
 		'tasks.v2.core',
 		'tasks.v2.lib.entity-selector-dialog',
 		'tasks.v2.provider.service.group-service',
+		'tasks.v2.provider.service.template-service',
 		'ui.system.chip.vue',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',

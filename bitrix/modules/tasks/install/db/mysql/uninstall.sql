@@ -167,3 +167,7 @@ DROP TABLE IF EXISTS b_tasks_task_chat;
 DROP TABLE IF EXISTS b_tasks_deadline_change_log;
 
 DROP TABLE IF EXISTS b_tasks_result_message;
+
+DROP TABLE IF EXISTS b_tasks_template_parameter;
+
+DROP TABLE IF EXISTS b_tasks_task_access_request;

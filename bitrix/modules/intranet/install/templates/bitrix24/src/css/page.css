@@ -43,12 +43,14 @@
 }
 
 .page__workarea {
-	display: flex;
-	flex-direction: row;
-	align-items: normal;
-	justify-content: space-between;
+	display: grid;
+	grid-template-columns: 1fr auto;
 	flex: 1;
 	min-width: 0;
+}
+
+.start-page .page__workarea {
+	grid-template-columns: 1fr 282px;
 }
 
 .no-page-header .page__workarea {

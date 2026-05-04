@@ -1,177 +1,83 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_label,main_core_events,main_core,ui_popupcomponentsmaker,intranet_widgetLoader) {
+(function (exports, main_core, ui_popupcomponentsmaker, main_core_events) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2;
-	var _companyId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("companyId");
-	var _requisiteId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requisiteId");
-	var _isConnected = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isConnected");
-	var _isPublic = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPublic");
-	var _publicUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("publicUrl");
-	var _editUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("editUrl");
-	var _requisiteElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requisiteElement");
-	var _requisitesPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requisitesPopup");
-	var _requisiteButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requisiteButton");
-	var _updateOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateOptions");
-	var _updateElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateElement");
-	var _getRequisiteSettingsButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRequisiteSettingsButton");
-	var _getRequisitesPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRequisitesPopup");
-	var _getButtonText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonText");
-	var _getRequisiteButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRequisiteButton");
-	var _handleButtonOnclick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleButtonOnclick");
-	var _handleOpenRequisite = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleOpenRequisite");
-	var _handleCreateLanding = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCreateLanding");
-	var _createLanding = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createLanding");
-	var _handleEditRequisite = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEditRequisite");
-	var _handleCreateCompany = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCreateCompany");
-	var _getRequisites = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRequisites");
+	var _templateObject$1, _templateObject2$1;
+	function _classPrivateMethodInitSpec$1(e, a) { _checkPrivateRedeclaration$1(e, a), a.add(e); }
+	function _classPrivateFieldInitSpec$1(e, t, a) { _checkPrivateRedeclaration$1(e, t), t.set(e, a); }
+	function _checkPrivateRedeclaration$1(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet$1(s, a) { return s.get(_assertClassBrand$1(s, a)); }
+	function _classPrivateFieldSet$1(s, a, r) { return s.set(_assertClassBrand$1(s, a), r), r; }
+	function _assertClassBrand$1(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	var _companyId = /*#__PURE__*/new WeakMap();
+	var _requisiteId = /*#__PURE__*/new WeakMap();
+	var _isConnected = /*#__PURE__*/new WeakMap();
+	var _isPublic = /*#__PURE__*/new WeakMap();
+	var _publicUrl = /*#__PURE__*/new WeakMap();
+	var _editUrl = /*#__PURE__*/new WeakMap();
+	var _requisiteElement = /*#__PURE__*/new WeakMap();
+	var _requisitesPopup = /*#__PURE__*/new WeakMap();
+	var _requisiteButton = /*#__PURE__*/new WeakMap();
+	var _RequisiteSection_brand = /*#__PURE__*/new WeakSet();
 	class RequisiteSection extends main_core_events.EventEmitter {
 	  constructor(_options) {
 	    super();
-	    Object.defineProperty(this, _getRequisites, {
-	      value: _getRequisites2
-	    });
-	    Object.defineProperty(this, _handleCreateCompany, {
-	      value: _handleCreateCompany2
-	    });
-	    Object.defineProperty(this, _handleEditRequisite, {
-	      value: _handleEditRequisite2
-	    });
-	    Object.defineProperty(this, _createLanding, {
-	      value: _createLanding2
-	    });
-	    Object.defineProperty(this, _handleCreateLanding, {
-	      value: _handleCreateLanding2
-	    });
-	    Object.defineProperty(this, _handleOpenRequisite, {
-	      value: _handleOpenRequisite2
-	    });
-	    Object.defineProperty(this, _handleButtonOnclick, {
-	      value: _handleButtonOnclick2
-	    });
-	    Object.defineProperty(this, _getRequisiteButton, {
-	      value: _getRequisiteButton2
-	    });
-	    Object.defineProperty(this, _getButtonText, {
-	      value: _getButtonText2
-	    });
-	    Object.defineProperty(this, _getRequisitesPopup, {
-	      value: _getRequisitesPopup2
-	    });
-	    Object.defineProperty(this, _getRequisiteSettingsButton, {
-	      value: _getRequisiteSettingsButton2
-	    });
-	    Object.defineProperty(this, _updateElement, {
-	      value: _updateElement2
-	    });
-	    Object.defineProperty(this, _updateOptions, {
-	      value: _updateOptions2
-	    });
-	    Object.defineProperty(this, _companyId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _requisiteId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isConnected, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isPublic, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _publicUrl, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _editUrl, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _requisiteElement, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _requisitesPopup, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _requisiteButton, {
-	      writable: true,
-	      value: void 0
-	    });
+	    _classPrivateMethodInitSpec$1(this, _RequisiteSection_brand);
+	    _classPrivateFieldInitSpec$1(this, _companyId, void 0);
+	    _classPrivateFieldInitSpec$1(this, _requisiteId, void 0);
+	    _classPrivateFieldInitSpec$1(this, _isConnected, void 0);
+	    _classPrivateFieldInitSpec$1(this, _isPublic, void 0);
+	    _classPrivateFieldInitSpec$1(this, _publicUrl, void 0);
+	    _classPrivateFieldInitSpec$1(this, _editUrl, void 0);
+	    _classPrivateFieldInitSpec$1(this, _requisiteElement, void 0);
+	    _classPrivateFieldInitSpec$1(this, _requisitesPopup, void 0);
+	    _classPrivateFieldInitSpec$1(this, _requisiteButton, void 0);
 	    if (_options) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _updateOptions)[_updateOptions](_options);
+	      _assertClassBrand$1(_RequisiteSection_brand, this, _updateOptions).call(this, _options);
 	      top.BX.addCustomEvent('onLocalStorageSet', params => {
 	        var _params$key;
-	        const eventName = (_params$key = params == null ? void 0 : params.key) != null ? _params$key : null;
+	        const eventName = (_params$key = params === null || params === void 0 ? void 0 : params.key) !== null && _params$key !== void 0 ? _params$key : null;
 	        if (eventName === 'onCrmEntityUpdate' || eventName === 'onCrmEntityCreate' || eventName === 'BX.Crm.RequisiteSliderDetails:onSave') {
-	          babelHelpers.classPrivateFieldLooseBase(this, _getRequisites)[_getRequisites]().then(() => {
-	            babelHelpers.classPrivateFieldLooseBase(this, _updateElement)[_updateElement]();
+	          _assertClassBrand$1(_RequisiteSection_brand, this, _getRequisites).call(this).then(() => {
+	            _assertClassBrand$1(_RequisiteSection_brand, this, _updateElement).call(this);
 	          });
 	        }
 	      });
 	    }
 	  }
 	  getElement() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _requisiteElement)[_requisiteElement]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _requisiteElement)[_requisiteElement] = main_core.Tag.render(_t || (_t = _`
-				<div class="intranet-settings-widget__business-card intranet-settings-widget_box" data-testid="settings-widget-block-requisite">
-					<div class="intranet-settings-widget__business-card_head intranet-settings-widget_inner">
-						<div class="intranet-settings-widget_icon-box --gray">
-							<div class="ui-icon-set --customer-card-1"></div>
-						</div>
-						<div class="intranet-settings-widget__title" data-role="requisite-widget-title">
-							${0}
-						</div>
-						<i class="ui-icon-set --help" onclick="BX.Helper.show('redirect=detail&code=18213326')"></i>
-					</div>
-
-					<div class="intranet-settings-widget__business-card_footer">
-						${0}
-						${0}
-					</div>
-				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _isConnected)[_isConnected] ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_SITE_TITLE') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _getRequisiteButton)[_getRequisiteButton]().getContainer(), babelHelpers.classPrivateFieldLooseBase(this, _companyId)[_companyId] ? babelHelpers.classPrivateFieldLooseBase(this, _getRequisiteSettingsButton)[_getRequisiteSettingsButton]() : '');
+	    if (!_classPrivateFieldGet$1(_requisiteElement, this)) {
+	      _classPrivateFieldSet$1(_requisiteElement, this, main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"intranet-settings-widget__business-card intranet-settings-widget_box\" data-testid=\"settings-widget-block-requisite\">\n\t\t\t\t\t<div class=\"intranet-settings-widget__business-card_head intranet-settings-widget_inner\">\n\t\t\t\t\t\t<div class=\"intranet-settings-widget_icon-box --gray\">\n\t\t\t\t\t\t\t<div class=\"ui-icon-set --customer-card-1\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"intranet-settings-widget__title\" data-role=\"requisite-widget-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<i class=\"ui-icon-set --help\" onclick=\"BX.Helper.show('redirect=detail&code=18213326')\"></i>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div class=\"intranet-settings-widget__business-card_footer\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), _classPrivateFieldGet$1(_isConnected, this) ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_SITE_TITLE') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_TITLE'), _assertClassBrand$1(_RequisiteSection_brand, this, _getRequisiteButton).call(this).getContainer(), _classPrivateFieldGet$1(_companyId, this) ? _assertClassBrand$1(_RequisiteSection_brand, this, _getRequisiteSettingsButton).call(this) : ''));
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _requisiteElement)[_requisiteElement];
+	    return _classPrivateFieldGet$1(_requisiteElement, this);
 	  }
 	}
-	function _updateOptions2(options) {
+	function _updateOptions(options) {
 	  var _options$companyId, _options$requisiteId;
-	  babelHelpers.classPrivateFieldLooseBase(this, _companyId)[_companyId] = (_options$companyId = options.companyId) != null ? _options$companyId : 0;
-	  babelHelpers.classPrivateFieldLooseBase(this, _requisiteId)[_requisiteId] = (_options$requisiteId = options.requisiteId) != null ? _options$requisiteId : 0;
-	  babelHelpers.classPrivateFieldLooseBase(this, _isConnected)[_isConnected] = main_core.Type.isBoolean(options.isConnected) ? options.isConnected : false;
-	  babelHelpers.classPrivateFieldLooseBase(this, _isPublic)[_isPublic] = main_core.Type.isBoolean(options.isPublic) ? options.isPublic : false;
-	  babelHelpers.classPrivateFieldLooseBase(this, _publicUrl)[_publicUrl] = main_core.Type.isString(options.publicUrl) ? options.publicUrl : '';
-	  babelHelpers.classPrivateFieldLooseBase(this, _editUrl)[_editUrl] = main_core.Type.isString(options.editUrl) ? options.editUrl : '';
+	  _classPrivateFieldSet$1(_companyId, this, (_options$companyId = options.companyId) !== null && _options$companyId !== void 0 ? _options$companyId : 0);
+	  _classPrivateFieldSet$1(_requisiteId, this, (_options$requisiteId = options.requisiteId) !== null && _options$requisiteId !== void 0 ? _options$requisiteId : 0);
+	  _classPrivateFieldSet$1(_isConnected, this, main_core.Type.isBoolean(options.isConnected) ? options.isConnected : false);
+	  _classPrivateFieldSet$1(_isPublic, this, main_core.Type.isBoolean(options.isPublic) ? options.isPublic : false);
+	  _classPrivateFieldSet$1(_publicUrl, this, main_core.Type.isString(options.publicUrl) ? options.publicUrl : '');
+	  _classPrivateFieldSet$1(_editUrl, this, main_core.Type.isString(options.editUrl) ? options.editUrl : '');
 	}
-	function _updateElement2() {
+	function _updateElement() {
 	  const currentElement = this.getElement();
-	  babelHelpers.classPrivateFieldLooseBase(this, _requisiteElement)[_requisiteElement] = null;
-	  babelHelpers.classPrivateFieldLooseBase(this, _requisiteButton)[_requisiteButton] = null;
+	  _classPrivateFieldSet$1(_requisiteElement, this, null);
+	  _classPrivateFieldSet$1(_requisiteButton, this, null);
 	  main_core.Dom.replace(currentElement, this.getElement());
 	}
-	function _getRequisiteSettingsButton2() {
+	function _getRequisiteSettingsButton() {
 	  const onclickRequisitesSettings = () => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getRequisitesPopup)[_getRequisitesPopup]().show();
+	    _assertClassBrand$1(_RequisiteSection_brand, this, _getRequisitesPopup).call(this).show();
 	  };
-	  return main_core.Tag.render(_t2 || (_t2 = _`
-			<span onclick="${0}" class="intranet-settings-widget__requisite-btn">
-				<i class='ui-icon-set --more-information'></i>
-			</span>
-		`), onclickRequisitesSettings);
+	  return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span onclick=\"", "\" class=\"intranet-settings-widget__requisite-btn\">\n\t\t\t\t<i class='ui-icon-set --more-information'></i>\n\t\t\t</span>\n\t\t"])), onclickRequisitesSettings);
 	}
-	function _getRequisitesPopup2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _requisitesPopup)[_requisitesPopup]) {
+	function _getRequisitesPopup() {
+	  if (!_classPrivateFieldGet$1(_requisitesPopup, this)) {
 	    const onclickCopyLink = () => {
-	      if (BX.clipboard.copy(babelHelpers.classPrivateFieldLooseBase(this, _publicUrl)[_publicUrl])) {
+	      if (BX.clipboard.copy(_classPrivateFieldGet$1(_publicUrl, this))) {
 	        BX.UI.Notification.Center.notify({
 	          content: main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPIED_POPUP'),
 	          position: 'top-left',
@@ -180,52 +86,37 @@ this.BX = this.BX || {};
 	      }
 	    };
 	    const onclickConfigureSite = () => {
-	      window.open(babelHelpers.classPrivateFieldLooseBase(this, _editUrl)[_editUrl], '_blank');
-	      babelHelpers.classPrivateFieldLooseBase(this, _requisitesPopup)[_requisitesPopup].close();
+	      window.open(_classPrivateFieldGet$1(_editUrl, this), '_blank');
+	      _classPrivateFieldGet$1(_requisitesPopup, this).close();
 	      SettingsWidget.close();
 	    };
 	    let copyLinkButton = null;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _publicUrl)[_publicUrl]) {
+	    if (_classPrivateFieldGet$1(_publicUrl, this)) {
 	      copyLinkButton = {
-	        html: `
-							<div class="intranet-settings-widget__popup-item">
-								<div class="ui-icon-set --link-3"></div> 
-								<div class="intranet-settings-widget__popup-name">${main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPY_LINK_BUTTON')}</div>
-							</div>
-						`,
+	        html: "\n\t\t\t\t\t\t\t<div class=\"intranet-settings-widget__popup-item\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon-set --link-3\"></div> \n\t\t\t\t\t\t\t\t<div class=\"intranet-settings-widget__popup-name\">".concat(main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPY_LINK_BUTTON'), "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"),
 	        onclick: onclickCopyLink
 	      };
 	    }
 	    let configureSiteButton = null;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _editUrl)[_editUrl]) {
+	    if (_classPrivateFieldGet$1(_editUrl, this)) {
 	      configureSiteButton = {
-	        html: `
-							<div class="intranet-settings-widget__popup-item">
-								<div class="ui-icon-set --paint-1"></div> 
-								<div class="intranet-settings-widget__popup-name">${main_core.Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_CUTAWAY_SITE_BUTTON')}</div>
-							</div>
-						`,
+	        html: "\n\t\t\t\t\t\t\t<div class=\"intranet-settings-widget__popup-item\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon-set --paint-1\"></div> \n\t\t\t\t\t\t\t\t<div class=\"intranet-settings-widget__popup-name\">".concat(main_core.Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_CUTAWAY_SITE_BUTTON'), "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"),
 	        onclick: onclickConfigureSite
 	      };
 	    }
 	    const onclickConfigureRequisites = () => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _requisitesPopup)[_requisitesPopup]) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _requisitesPopup)[_requisitesPopup].close();
+	      if (_classPrivateFieldGet$1(_requisitesPopup, this)) {
+	        _classPrivateFieldGet$1(_requisitesPopup, this).close();
 	      }
 	      SettingsWidget.close();
-	      BX.SidePanel.Instance.open(`/crm/company/details/${babelHelpers.classPrivateFieldLooseBase(this, _companyId)[_companyId]}/?init_mode=edit&rqedit=y`);
+	      BX.SidePanel.Instance.open("/crm/company/details/".concat(_classPrivateFieldGet$1(_companyId, this), "/?init_mode=edit&rqedit=y"));
 	    };
 	    const configureRequisiteButton = {
-	      html: `
-						<div class="intranet-settings-widget__popup-item">
-							<div class="ui-icon-set --pencil-40"></div>
-							<div class="intranet-settings-widget__popup-name">${main_core.Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_REQUISITE_BUTTON')}</div>
-						</div>
-					`,
+	      html: "\n\t\t\t\t\t\t<div class=\"intranet-settings-widget__popup-item\">\n\t\t\t\t\t\t\t<div class=\"ui-icon-set --pencil-40\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings-widget__popup-name\">".concat(main_core.Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_REQUISITE_BUTTON'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"),
 	      onclick: onclickConfigureRequisites
 	    };
 	    const popupWidth = 240;
-	    babelHelpers.classPrivateFieldLooseBase(this, _requisitesPopup)[_requisitesPopup] = BX.PopupMenu.create('requisites-settings', event.currentTarget, [copyLinkButton, configureRequisiteButton, configureSiteButton], {
+	    _classPrivateFieldSet$1(_requisitesPopup, this, BX.PopupMenu.create('requisites-settings', event.currentTarget, [copyLinkButton, configureRequisiteButton, configureSiteButton], {
 	      closeByEsc: true,
 	      autoHide: true,
 	      width: popupWidth,
@@ -237,60 +128,60 @@ this.BX = this.BX || {};
 	        onShow: () => {
 	          setTimeout(() => {
 	            main_core.Event.bindOnce(SettingsWidget.getInstance().getWidget().getPopup().getPopupContainer(), 'click', () => {
-	              babelHelpers.classPrivateFieldLooseBase(this, _requisitesPopup)[_requisitesPopup].close();
+	              _classPrivateFieldGet$1(_requisitesPopup, this).close();
 	            });
 	          }, 0);
 	        }
 	      }
-	    });
+	    }));
 	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _requisitesPopup)[_requisitesPopup];
+	  return _classPrivateFieldGet$1(_requisitesPopup, this);
 	}
-	function _getButtonText2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isConnected)[_isConnected]) {
+	function _getButtonText() {
+	  if (_classPrivateFieldGet$1(_isConnected, this)) {
 	    return main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_REDIRECT_TO_REQUISITE_BUTTON');
 	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _companyId)[_companyId] > 0 && babelHelpers.classPrivateFieldLooseBase(this, _requisiteId)[_requisiteId] > 0) {
+	  if (_classPrivateFieldGet$1(_companyId, this) > 0 && _classPrivateFieldGet$1(_requisiteId, this) > 0) {
 	    return main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_CREATE_LANDING');
 	  }
 	  return main_core.Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_REQUISITE_BUTTON');
 	}
-	function _getRequisiteButton2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _requisiteButton)[_requisiteButton]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _requisiteButton)[_requisiteButton] = new BX.UI.Button({
+	function _getRequisiteButton() {
+	  if (!_classPrivateFieldGet$1(_requisiteButton, this)) {
+	    _classPrivateFieldSet$1(_requisiteButton, this, new BX.UI.Button({
 	      id: 'requisite-btn',
-	      text: babelHelpers.classPrivateFieldLooseBase(this, _getButtonText)[_getButtonText](),
+	      text: _assertClassBrand$1(_RequisiteSection_brand, this, _getButtonText).call(this),
 	      noCaps: true,
-	      onclick: babelHelpers.classPrivateFieldLooseBase(this, _handleButtonOnclick)[_handleButtonOnclick].bind(this),
+	      onclick: _assertClassBrand$1(_RequisiteSection_brand, this, _handleButtonOnclick).bind(this),
 	      className: 'ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light'
-	    });
+	    }));
 	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _requisiteButton)[_requisiteButton];
+	  return _classPrivateFieldGet$1(_requisiteButton, this);
 	}
-	function _handleButtonOnclick2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isConnected)[_isConnected]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _handleOpenRequisite)[_handleOpenRequisite]();
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _companyId)[_companyId] > 0) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _requisiteId)[_requisiteId] > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _handleCreateLanding)[_handleCreateLanding]();
+	function _handleButtonOnclick() {
+	  if (_classPrivateFieldGet$1(_isConnected, this)) {
+	    _assertClassBrand$1(_RequisiteSection_brand, this, _handleOpenRequisite).call(this);
+	  } else if (_classPrivateFieldGet$1(_companyId, this) > 0) {
+	    if (_classPrivateFieldGet$1(_requisiteId, this) > 0) {
+	      _assertClassBrand$1(_RequisiteSection_brand, this, _handleCreateLanding).call(this);
 	    } else {
-	      babelHelpers.classPrivateFieldLooseBase(this, _handleEditRequisite)[_handleEditRequisite]();
+	      _assertClassBrand$1(_RequisiteSection_brand, this, _handleEditRequisite).call(this);
 	    }
 	  } else {
-	    babelHelpers.classPrivateFieldLooseBase(this, _handleCreateCompany)[_handleCreateCompany]();
+	    _assertClassBrand$1(_RequisiteSection_brand, this, _handleCreateCompany).call(this);
 	  }
 	}
-	function _handleOpenRequisite2() {
+	function _handleOpenRequisite() {
 	  SettingsWidget.close();
-	  window.open(babelHelpers.classPrivateFieldLooseBase(this, _publicUrl)[_publicUrl], '_blank');
+	  window.open(_classPrivateFieldGet$1(_publicUrl, this), '_blank');
 	}
-	function _handleCreateLanding2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _getRequisiteButton)[_getRequisiteButton]().setWaiting(true);
-	  babelHelpers.classPrivateFieldLooseBase(this, _createLanding)[_createLanding]().then(() => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _requisitesPopup)[_requisitesPopup] = null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _requisiteButton)[_requisiteButton] = null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _updateElement)[_updateElement]();
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isPublic)[_isPublic]) {
+	function _handleCreateLanding() {
+	  _assertClassBrand$1(_RequisiteSection_brand, this, _getRequisiteButton).call(this).setWaiting(true);
+	  _assertClassBrand$1(_RequisiteSection_brand, this, _createLanding).call(this).then(() => {
+	    _classPrivateFieldSet$1(_requisitesPopup, this, null);
+	    _classPrivateFieldSet$1(_requisiteButton, this, null);
+	    _assertClassBrand$1(_RequisiteSection_brand, this, _updateElement).call(this);
+	    if (!_classPrivateFieldGet$1(_isPublic, this)) {
 	      const errorPopup = new Popup('public-landing-error', this.getElement().querySelector('[data-role="requisite-widget-title"]'), {
 	        autoHide: true,
 	        closeByEsc: true,
@@ -314,247 +205,122 @@ this.BX = this.BX || {};
 	    }
 	  });
 	}
-	function _createLanding2() {
+	function _createLanding() {
 	  return new Promise(resolve => {
 	    main_core.ajax.runComponentAction('bitrix:intranet.settings.widget', 'createRequisiteLanding', {
 	      mode: 'class'
-	    }).then(({
-	      data: {
-	        isConnected,
-	        isPublic,
-	        publicUrl,
-	        editUrl
-	      }
-	    }) => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _isConnected)[_isConnected] = isConnected;
-	      babelHelpers.classPrivateFieldLooseBase(this, _isPublic)[_isPublic] = isPublic;
-	      babelHelpers.classPrivateFieldLooseBase(this, _publicUrl)[_publicUrl] = publicUrl;
-	      babelHelpers.classPrivateFieldLooseBase(this, _editUrl)[_editUrl] = editUrl;
+	    }).then(_ref => {
+	      let {
+	        data: {
+	          isConnected,
+	          isPublic,
+	          publicUrl,
+	          editUrl
+	        }
+	      } = _ref;
+	      _classPrivateFieldSet$1(_isConnected, this, isConnected);
+	      _classPrivateFieldSet$1(_isPublic, this, isPublic);
+	      _classPrivateFieldSet$1(_publicUrl, this, publicUrl);
+	      _classPrivateFieldSet$1(_editUrl, this, editUrl);
 	      resolve();
 	    });
 	  });
 	}
-	function _handleEditRequisite2() {
+	function _handleEditRequisite() {
 	  SettingsWidget.close();
-	  BX.SidePanel.Instance.open(`/crm/company/details/${babelHelpers.classPrivateFieldLooseBase(this, _companyId)[_companyId]}/?init_mode=edit&rqedit=y`);
+	  BX.SidePanel.Instance.open("/crm/company/details/".concat(_classPrivateFieldGet$1(_companyId, this), "/?init_mode=edit&rqedit=y"));
 	}
-	function _handleCreateCompany2() {
+	function _handleCreateCompany() {
 	  SettingsWidget.close();
 	  BX.SidePanel.Instance.open('/crm/company/details/0/?mycompany=y&rqedit=y');
 	}
-	function _getRequisites2() {
+	function _getRequisites() {
 	  return new Promise(resolve => {
 	    main_core.ajax.runComponentAction('bitrix:intranet.settings.widget', 'getRequisites', {
 	      mode: 'class'
-	    }).then(({
-	      data: {
-	        requisite
-	      }
-	    }) => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _updateOptions)[_updateOptions](requisite);
+	    }).then(_ref2 => {
+	      let {
+	        data: {
+	          requisite
+	        }
+	      } = _ref2;
+	      _assertClassBrand$1(_RequisiteSection_brand, this, _updateOptions).call(this, requisite);
 	      resolve();
 	    });
 	  });
 	}
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2$1,
-	  _t3,
-	  _t4,
-	  _t5,
-	  _t6,
-	  _t7,
-	  _t8,
-	  _t9,
-	  _t10,
-	  _t11,
-	  _t12,
-	  _t13,
-	  _t14;
-	var _widgetPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("widgetPopup");
-	var _target = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("target");
-	var _otp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("otp");
-	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
-	var _marketUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("marketUrl");
-	var _theme = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("theme");
-	var _holding = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("holding");
-	var _holdingWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("holdingWidget");
-	var _isBitrix = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24");
-	var _isFreeLicense = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isFreeLicense");
-	var _isAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdmin");
-	var _requisite = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requisite");
-	var _requisiteSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requisiteSection");
-	var _settingsUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("settingsUrl");
-	var _isRenameable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRenameable");
-	var _mainPage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mainPage");
-	var _setOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setOptions");
-	var _setHoldingOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setHoldingOptions");
-	var _getItemsList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemsList");
-	var _drawItemsList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("drawItemsList");
-	var _getLinkHeaderIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLinkHeaderIcon");
-	var _getEditHeaderIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEditHeaderIcon");
-	var _getHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHeader");
-	var _applyTheme = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyTheme");
-	var _getFooter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFooter");
-	var _prepareElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareElement");
-	var _getMainPageElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMainPageElement");
-	var _getRequisitesElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRequisitesElement");
-	var _getHoldingsElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHoldingsElement");
-	var _getHoldingWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHoldingWidget");
-	var _getEmptyHoldingsElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmptyHoldingsElement");
-	var _getSecurityAndSettingsElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSecurityAndSettingsElement");
-	var _getSecurityElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSecurityElement");
-	var _getGeneralSettingsElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getGeneralSettingsElement");
-	var _getMigrateElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMigrateElement");
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject0, _templateObject1, _templateObject10, _templateObject11, _templateObject12;
+	function _classPrivateMethodInitSpec(e, a) { _checkPrivateRedeclaration(e, a), a.add(e); }
+	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration(e, t), t.set(e, a); }
+	function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
+	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand(s, a), r), r; }
+	function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	var _widgetPopup = /*#__PURE__*/new WeakMap();
+	var _target = /*#__PURE__*/new WeakMap();
+	var _otp = /*#__PURE__*/new WeakMap();
+	var _marketUrl = /*#__PURE__*/new WeakMap();
+	var _theme = /*#__PURE__*/new WeakMap();
+	var _holding = /*#__PURE__*/new WeakMap();
+	var _holdingWidget = /*#__PURE__*/new WeakMap();
+	var _isBitrix = /*#__PURE__*/new WeakMap();
+	var _isFreeLicense = /*#__PURE__*/new WeakMap();
+	var _isAdmin = /*#__PURE__*/new WeakMap();
+	var _requisite = /*#__PURE__*/new WeakMap();
+	var _requisiteSection = /*#__PURE__*/new WeakMap();
+	var _settingsUrl = /*#__PURE__*/new WeakMap();
+	var _isRenameable = /*#__PURE__*/new WeakMap();
+	var _mainPage = /*#__PURE__*/new WeakMap();
+	var _SettingsWidget_brand = /*#__PURE__*/new WeakSet();
 	class SettingsWidget extends main_core_events.EventEmitter {
 	  constructor(_options) {
 	    super();
-	    Object.defineProperty(this, _getMigrateElement, {
-	      value: _getMigrateElement2
-	    });
-	    Object.defineProperty(this, _getGeneralSettingsElement, {
-	      value: _getGeneralSettingsElement2
-	    });
-	    Object.defineProperty(this, _getSecurityElement, {
-	      value: _getSecurityElement2
-	    });
-	    Object.defineProperty(this, _getSecurityAndSettingsElement, {
-	      value: _getSecurityAndSettingsElement2
-	    });
-	    Object.defineProperty(this, _getEmptyHoldingsElement, {
-	      value: _getEmptyHoldingsElement2
-	    });
-	    Object.defineProperty(this, _getHoldingWidget, {
-	      value: _getHoldingWidget2
-	    });
-	    Object.defineProperty(this, _getHoldingsElement, {
-	      value: _getHoldingsElement2
-	    });
-	    Object.defineProperty(this, _getRequisitesElement, {
-	      value: _getRequisitesElement2
-	    });
-	    Object.defineProperty(this, _getMainPageElement, {
-	      value: _getMainPageElement2
-	    });
-	    Object.defineProperty(this, _prepareElement, {
-	      value: _prepareElement2
-	    });
-	    Object.defineProperty(this, _getFooter, {
-	      value: _getFooter2
-	    });
-	    Object.defineProperty(this, _applyTheme, {
-	      value: _applyTheme2
-	    });
-	    Object.defineProperty(this, _getHeader, {
-	      value: _getHeader2
-	    });
-	    Object.defineProperty(this, _getEditHeaderIcon, {
-	      value: _getEditHeaderIcon2
-	    });
-	    Object.defineProperty(this, _getLinkHeaderIcon, {
-	      value: _getLinkHeaderIcon2
-	    });
-	    Object.defineProperty(this, _drawItemsList, {
-	      value: _drawItemsList2
-	    });
-	    Object.defineProperty(this, _getItemsList, {
-	      value: _getItemsList2
-	    });
-	    Object.defineProperty(this, _setHoldingOptions, {
-	      value: _setHoldingOptions2
-	    });
-	    Object.defineProperty(this, _setOptions, {
-	      value: _setOptions2
-	    });
-	    Object.defineProperty(this, _widgetPopup, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _target, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _otp, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _marketUrl, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _theme, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _holding, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _holdingWidget, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isBitrix, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _isFreeLicense, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _isAdmin, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _requisite, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _requisiteSection, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _settingsUrl, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isRenameable, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _mainPage, {
-	      writable: true,
-	      value: void 0
-	    });
+	    _classPrivateMethodInitSpec(this, _SettingsWidget_brand);
+	    _classPrivateFieldInitSpec(this, _widgetPopup, void 0);
+	    _classPrivateFieldInitSpec(this, _target, void 0);
+	    _classPrivateFieldInitSpec(this, _otp, void 0);
+	    _classPrivateFieldInitSpec(this, _marketUrl, void 0);
+	    _classPrivateFieldInitSpec(this, _theme, void 0);
+	    _classPrivateFieldInitSpec(this, _holding, null);
+	    _classPrivateFieldInitSpec(this, _holdingWidget, void 0);
+	    _classPrivateFieldInitSpec(this, _isBitrix, false);
+	    _classPrivateFieldInitSpec(this, _isFreeLicense, false);
+	    _classPrivateFieldInitSpec(this, _isAdmin, void 0);
+	    _classPrivateFieldInitSpec(this, _requisite, void 0);
+	    _classPrivateFieldInitSpec(this, _requisiteSection, void 0);
+	    _classPrivateFieldInitSpec(this, _settingsUrl, void 0);
+	    _classPrivateFieldInitSpec(this, _isRenameable, void 0);
+	    _classPrivateFieldInitSpec(this, _mainPage, void 0);
 	    this.setEventNamespace('BX.Intranet.SettingsWidget');
-	    babelHelpers.classPrivateFieldLooseBase(this, _marketUrl)[_marketUrl] = _options.marketUrl;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] = _options.isBitrix24;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isFreeLicense)[_isFreeLicense] = _options.isFreeLicense;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] = _options.isAdmin;
-	    babelHelpers.classPrivateFieldLooseBase(this, _requisite)[_requisite] = _options.requisite;
-	    babelHelpers.classPrivateFieldLooseBase(this, _settingsUrl)[_settingsUrl] = _options.settingsPath;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isRenameable)[_isRenameable] = _options.isRenameable;
-	    babelHelpers.classPrivateFieldLooseBase(this, _mainPage)[_mainPage] = _options.mainPage;
-	    babelHelpers.classPrivateFieldLooseBase(this, _requisiteSection)[_requisiteSection] = new RequisiteSection(_options.requisite);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setOptions)[_setOptions](_options);
+	    _classPrivateFieldSet(_marketUrl, this, _options.marketUrl);
+	    _classPrivateFieldSet(_isBitrix, this, _options.isBitrix24);
+	    _classPrivateFieldSet(_isFreeLicense, this, _options.isFreeLicense);
+	    _classPrivateFieldSet(_isAdmin, this, _options.isAdmin);
+	    _classPrivateFieldSet(_requisite, this, _options.requisite);
+	    _classPrivateFieldSet(_settingsUrl, this, _options.settingsPath);
+	    _classPrivateFieldSet(_isRenameable, this, _options.isRenameable);
+	    _classPrivateFieldSet(_mainPage, this, _options.mainPage);
+	    _classPrivateFieldSet(_requisiteSection, this, new RequisiteSection(_options.requisite));
+	    _assertClassBrand(_SettingsWidget_brand, this, _setOptions).call(this, _options);
 	  }
 	  setTarget(target) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _target)[_target] = target;
+	    _classPrivateFieldSet(_target, this, target);
 	    return this;
 	  }
 	  setWidgetLoader(widgetLoader) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _widgetPopup)[_widgetPopup] = new ui_popupcomponentsmaker.PopupComponentsMaker({
+	    _classPrivateFieldSet(_widgetPopup, this, new ui_popupcomponentsmaker.PopupComponentsMaker({
 	      width: 374,
 	      popupLoader: widgetLoader.getPopup(),
 	      useAngle: false
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _widgetPopup)[_widgetPopup].getPopup().subscribe('onClose', () => {
+	    }));
+	    _classPrivateFieldGet(_widgetPopup, this).getPopup().subscribe('onClose', () => {
 	      main_core.Event.unbindAll(this.getWidget().getPopup().getPopupContainer(), 'click');
+	      _assertClassBrand(_SettingsWidget_brand, this, _updateAriaExpanded).call(this, false);
 	    });
 	    widgetLoader.clearBeforeInsertContent();
-	    babelHelpers.classPrivateFieldLooseBase(this, _getItemsList)[_getItemsList]().then(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _drawItemsList)[_drawItemsList]();
+	    _assertClassBrand(_SettingsWidget_brand, this, _getItemsList).call(this).then(() => {
+	      _assertClassBrand(_SettingsWidget_brand, this, _drawItemsList).call(this);
 	    });
 	    return this;
 	  }
@@ -575,13 +341,13 @@ this.BX = this.BX || {};
 	    return instance;
 	  }
 	  static init(options) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] === null) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] = new this(options);
+	    if (_assertClassBrand(SettingsWidget, this, _instance)._ === null) {
+	      _instance._ = _assertClassBrand(SettingsWidget, this, new this(options));
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
+	    return _assertClassBrand(SettingsWidget, this, _instance)._;
 	  }
 	  static getInstance() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
+	    return _assertClassBrand(SettingsWidget, this, _instance)._;
 	  }
 	  static close() {
 	    const instance = this.getInstance();
@@ -593,6 +359,7 @@ this.BX = this.BX || {};
 	    const popup = this.getWidget().getPopup();
 	    if (popup.isShown()) {
 	      popup.close();
+	      _assertClassBrand(_SettingsWidget_brand, this, _updateAriaExpanded).call(this, false);
 	    } else {
 	      this.show(targetNode);
 	    }
@@ -607,60 +374,63 @@ this.BX = this.BX || {};
 	      });
 	    }
 	    this.setTarget(targetNode);
+	    _assertClassBrand(_SettingsWidget_brand, this, _updateAriaExpanded).call(this, true);
 	  }
 	  getWidget() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _widgetPopup)[_widgetPopup];
+	    return _classPrivateFieldGet(_widgetPopup, this);
 	  }
 	}
-	function _setOptions2(options) {
-	  options.theme ? babelHelpers.classPrivateFieldLooseBase(this, _theme)[_theme] = options.theme : null;
-	  options.otp ? babelHelpers.classPrivateFieldLooseBase(this, _otp)[_otp] = options.otp : null;
-	  options.holding ? babelHelpers.classPrivateFieldLooseBase(this, _setHoldingOptions)[_setHoldingOptions](options.holding) : null;
+	function _setOptions(options) {
+	  options.theme ? _classPrivateFieldSet(_theme, this, options.theme) : null;
+	  options.otp ? _classPrivateFieldSet(_otp, this, options.otp) : null;
+	  options.holding ? _assertClassBrand(_SettingsWidget_brand, this, _setHoldingOptions).call(this, options.holding) : null;
 	}
-	function _setHoldingOptions2(options) {
+	function _setHoldingOptions(options) {
 	  var _options$isHolding, _options$affiliate, _options$canBeHolding, _options$canBeAffilia;
 	  if (!main_core.Type.isPlainObject(options)) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _holding)[_holding] = null;
+	    _classPrivateFieldSet(_holding, this, null);
 	    return;
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _holding)[_holding] = {
-	    isHolding: (_options$isHolding = options.isHolding) != null ? _options$isHolding : false,
-	    affiliate: (_options$affiliate = options.affiliate) != null ? _options$affiliate : null,
-	    canBeHolding: (_options$canBeHolding = options.canBeHolding) != null ? _options$canBeHolding : false,
-	    canBeAffiliate: (_options$canBeAffilia = options.canBeAffiliate) != null ? _options$canBeAffilia : false
-	  };
+	  _classPrivateFieldSet(_holding, this, {
+	    isHolding: (_options$isHolding = options.isHolding) !== null && _options$isHolding !== void 0 ? _options$isHolding : false,
+	    affiliate: (_options$affiliate = options.affiliate) !== null && _options$affiliate !== void 0 ? _options$affiliate : null,
+	    canBeHolding: (_options$canBeHolding = options.canBeHolding) !== null && _options$canBeHolding !== void 0 ? _options$canBeHolding : false,
+	    canBeAffiliate: (_options$canBeAffilia = options.canBeAffiliate) !== null && _options$canBeAffilia !== void 0 ? _options$canBeAffilia : false
+	  });
 	}
-	function _getItemsList2(reload = false) {
-	  if (reload === true || typeof babelHelpers.classPrivateFieldLooseBase(this, _theme)[_theme] === 'undefined') {
+	function _getItemsList() {
+	  let reload = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+	  if (reload === true || typeof _classPrivateFieldGet(_theme, this) === 'undefined') {
 	    return new Promise(resolve => {
 	      main_core.ajax.runComponentAction('bitrix:intranet.settings.widget', 'getData', {
 	        mode: 'class'
-	      }).then(({
-	        data: {
-	          theme,
-	          otp,
-	          holding
-	        }
-	      }) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _theme)[_theme] = theme;
-	        babelHelpers.classPrivateFieldLooseBase(this, _otp)[_otp] = otp;
-	        babelHelpers.classPrivateFieldLooseBase(this, _setHoldingOptions)[_setHoldingOptions](holding);
+	      }).then(_ref => {
+	        let {
+	          data: {
+	            theme,
+	            otp,
+	            holding
+	          }
+	        } = _ref;
+	        _classPrivateFieldSet(_theme, this, theme);
+	        _classPrivateFieldSet(_otp, this, otp);
+	        _assertClassBrand(_SettingsWidget_brand, this, _setHoldingOptions).call(this, holding);
 	        resolve();
 	      });
 	    });
 	  }
 	  return Promise.resolve();
 	}
-	function _drawItemsList2() {
+	function _drawItemsList() {
 	  const container = this.getWidget().getPopup().getPopupContainer();
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getHeader)[_getHeader](), container);
-	  const content = [babelHelpers.classPrivateFieldLooseBase(this, _requisite)[_requisite] && babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] ? babelHelpers.classPrivateFieldLooseBase(this, _getRequisitesElement)[_getRequisitesElement]() : null, babelHelpers.classPrivateFieldLooseBase(this, _mainPage)[_mainPage].isAvailable ? babelHelpers.classPrivateFieldLooseBase(this, _getMainPageElement)[_getMainPageElement]() : null, babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] ? babelHelpers.classPrivateFieldLooseBase(this, _getSecurityAndSettingsElement)[_getSecurityAndSettingsElement]() : null, babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] ? babelHelpers.classPrivateFieldLooseBase(this, _getHoldingsElement)[_getHoldingsElement]() : null, babelHelpers.classPrivateFieldLooseBase(this, _getMigrateElement)[_getMigrateElement]()];
+	  main_core.Dom.append(_assertClassBrand(_SettingsWidget_brand, this, _getHeader).call(this), container);
+	  const content = [_classPrivateFieldGet(_requisite, this) && _classPrivateFieldGet(_isAdmin, this) ? _assertClassBrand(_SettingsWidget_brand, this, _getRequisitesElement).call(this) : null, _classPrivateFieldGet(_mainPage, this).isAvailable ? _assertClassBrand(_SettingsWidget_brand, this, _getMainPageElement).call(this) : null, _classPrivateFieldGet(_isAdmin, this) ? _assertClassBrand(_SettingsWidget_brand, this, _getSecurityAndSettingsElement).call(this) : null, _classPrivateFieldGet(_isBitrix, this) ? _assertClassBrand(_SettingsWidget_brand, this, _getHoldingsElement).call(this) : null, _assertClassBrand(_SettingsWidget_brand, this, _getMigrateElement).call(this)];
 	  content.forEach(element => {
 	    main_core.Dom.append(element, container);
 	  });
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getFooter)[_getFooter](), container);
+	  main_core.Dom.append(_assertClassBrand(_SettingsWidget_brand, this, _getFooter).call(this), container);
 	}
-	function _getLinkHeaderIcon2() {
+	function _getLinkHeaderIcon() {
 	  const onclickCopyLink = () => {
 	    if (BX.clipboard.copy(window.location.origin)) {
 	      BX.UI.Notification.Center.notify({
@@ -670,56 +440,46 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  };
-	  return main_core.Tag.render(_t$1 || (_t$1 = _$1`<span class='ui-icon-set --link-3 intranet-settings-widget__header-btn' onclick="${0}"></span>`), onclickCopyLink);
+	  return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<span class='ui-icon-set --link-3 intranet-settings-widget__header-btn' onclick=\"", "\"></span>"])), onclickCopyLink);
 	}
-	function _getEditHeaderIcon2() {
+	function _getEditHeaderIcon() {
 	  const onclickEditLink = () => {
 	    this.getWidget().close();
-	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _settingsUrl)[_settingsUrl] + '?analyticContext=widget_settings_settings&page=portal&option=subDomainName');
+	    BX.SidePanel.Instance.open(_classPrivateFieldGet(_settingsUrl, this) + '?analyticContext=widget_settings_settings&page=portal&option=subDomainName');
 	  };
-	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`<span class='ui-icon-set --pencil-40 intranet-settings-widget__header-btn' onclick="${0}"></span>`), onclickEditLink);
+	  return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<span class='ui-icon-set --pencil-40 intranet-settings-widget__header-btn' onclick=\"", "\"></span>"])), onclickEditLink);
 	}
-	function _getHeader2() {
-	  const header = main_core.Tag.render(_t3 || (_t3 = _$1`
-				<div class="intranet-settings-widget__header">
-					<div class="intranet-settings-widget__header_inner">
-						<span class="intranet-settings-widget__header-name">${0}</span>
-						${0}
-					</div>
-				</div>
-			`), window.location.host, babelHelpers.classPrivateFieldLooseBase(this, _isRenameable)[_isRenameable] ? babelHelpers.classPrivateFieldLooseBase(this, _getEditHeaderIcon)[_getEditHeaderIcon]() : babelHelpers.classPrivateFieldLooseBase(this, _getLinkHeaderIcon)[_getLinkHeaderIcon]());
-	  babelHelpers.classPrivateFieldLooseBase(this, _applyTheme)[_applyTheme](header, babelHelpers.classPrivateFieldLooseBase(this, _theme)[_theme]);
+	function _getHeader() {
+	  const header = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"intranet-settings-widget__header\">\n\t\t\t\t\t<div class=\"intranet-settings-widget__header_inner\">\n\t\t\t\t\t\t<span class=\"intranet-settings-widget__header-name\">", "</span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), window.location.host, _classPrivateFieldGet(_isRenameable, this) ? _assertClassBrand(_SettingsWidget_brand, this, _getEditHeaderIcon).call(this) : _assertClassBrand(_SettingsWidget_brand, this, _getLinkHeaderIcon).call(this));
+	  _assertClassBrand(_SettingsWidget_brand, this, _applyTheme).call(this, header, _classPrivateFieldGet(_theme, this));
 	  const adaptedEmptyHeader = new ui_popupcomponentsmaker.PopupComponentsMakerItem({
 	    withoutBackground: true,
 	    html: header
 	  }).getContainer();
 	  main_core.Dom.addClass(adaptedEmptyHeader, '--widget-header');
-	  main_core_events.EventEmitter.subscribe('BX.Intranet.Bitrix24:ThemePicker:onThemeApply', ({
-	    data: {
-	      theme
-	    }
-	  }) => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _applyTheme)[_applyTheme](header, theme);
+	  main_core_events.EventEmitter.subscribe('BX.Intranet.Bitrix24:ThemePicker:onThemeApply', _ref2 => {
+	    let {
+	      data: {
+	        theme
+	      }
+	    } = _ref2;
+	    _assertClassBrand(_SettingsWidget_brand, this, _applyTheme).call(this, header, theme);
 	  });
 	  return adaptedEmptyHeader;
 	}
-	function _applyTheme2(container, theme) {
-	  const previewImage = `url('${main_core.Text.encode(theme.previewImage)}')`;
+	function _applyTheme(container, theme) {
+	  const previewImage = "url('".concat(main_core.Text.encode(theme.previewImage), "')");
 	  main_core.Dom.style(container, 'backgroundImage', previewImage);
 	  main_core.Dom.removeClass(container, 'bitrix24-dark-theme bitrix24-light-theme');
 	  const themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-dark-theme' : 'bitrix24-light-theme';
 	  main_core.Dom.addClass(container, themeClass);
 	}
-	function _getFooter2() {
+	function _getFooter() {
 	  const onclickOpenPartnerOrder = () => {
 	    this.getWidget().close();
 	    BX.UI.InfoHelper.show('info_implementation_request');
 	  };
-	  const partnerOrder = main_core.Tag.render(_t4 || (_t4 = _$1`
-			<span class="intranet-settings-widget__footer-item" onclick="${0}">
-				${0}
-			</span>
-		`), onclickOpenPartnerOrder, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_ORDER_PARTNER_LINK_MSGVER_1'));
+	  const partnerOrder = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"intranet-settings-widget__footer-item\" onclick=\"", "\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), onclickOpenPartnerOrder, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_ORDER_PARTNER_LINK_MSGVER_1'));
 	  const onclickWhereToBegin = () => {
 	    if (top.BX.Helper) {
 	      this.getWidget().close();
@@ -729,26 +489,16 @@ this.BX = this.BX || {};
 	  const onclickSupport = () => {
 	    if (top.BX.Helper) {
 	      this.getWidget().close();
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _isFreeLicense)[_isFreeLicense]) {
+	      if (_classPrivateFieldGet(_isFreeLicense, this)) {
 	        BX.UI.InfoHelper.show('limit_support_bitrix');
 	      } else {
 	        BX.Helper.show('redirect=detail&code=12925062');
 	      }
 	    }
 	  };
-	  return main_core.Tag.render(_t5 || (_t5 = _$1`
-				<div class="intranet-settings-widget__footer">
-					${0}
-					<span class="intranet-settings-widget__footer-item" onclick="${0}">
-						${0}
-					</span>
-					<span class="intranet-settings-widget__footer-item" onclick="${0}">
-						${0}
-					</span>
-				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] ? partnerOrder : '', onclickWhereToBegin, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_WHERE_TO_BEGIN_LINK'), onclickSupport, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SUPPORT_BUTTON'));
+	  return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"intranet-settings-widget__footer\">\n\t\t\t\t\t", "\n\t\t\t\t\t<span class=\"intranet-settings-widget__footer-item\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"intranet-settings-widget__footer-item\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])), _classPrivateFieldGet(_isBitrix, this) ? partnerOrder : '', onclickWhereToBegin, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_WHERE_TO_BEGIN_LINK'), onclickSupport, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SUPPORT_BUTTON'));
 	}
-	function _prepareElement2(element) {
+	function _prepareElement(element) {
 	  const item = this.getWidget().getItem({
 	    html: element
 	  });
@@ -756,191 +506,100 @@ this.BX = this.BX || {};
 	  main_core.Dom.addClass(node, '--widget-item');
 	  return node;
 	}
-	function _getMainPageElement2() {
+	function _getMainPageElement() {
 	  const onclick = () => {
 	    this.getWidget().close();
-	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _mainPage)[_mainPage].settingsPath);
+	    BX.SidePanel.Instance.open(_classPrivateFieldGet(_mainPage, this).settingsPath);
 	    // todo: add vibe analytic context sub_section = from_widget_vibe_point
 	  };
-
-	  const element = main_core.Tag.render(_t6 || (_t6 = _$1`
-			<div onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-main-page">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box --green">
-						<div class="ui-icon-set --home-page"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
-						${0}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</div>
-		`), onclick, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_WELCOME_PAGE_TITLE'));
-	  return babelHelpers.classPrivateFieldLooseBase(this, _prepareElement)[_prepareElement](element);
+	  const element = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div onclick=\"", "\" class=\"intranet-settings-widget_box --clickable\" data-testid=\"settings-widget-block-main-page\">\n\t\t\t\t<div class=\"intranet-settings-widget_inner\">\n\t\t\t\t\t<div class=\"intranet-settings-widget_icon-box --green\">\n\t\t\t\t\t\t<div class=\"ui-icon-set --home-page\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"intranet-settings-widget__title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"intranet-settings-widget__arrow-btn ui-icon-set --arrow-right\"></div>\n\t\t\t</div>\n\t\t"])), onclick, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_WELCOME_PAGE_TITLE'));
+	  return _assertClassBrand(_SettingsWidget_brand, this, _prepareElement).call(this, element);
 	}
-	function _getRequisitesElement2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _prepareElement)[_prepareElement](babelHelpers.classPrivateFieldLooseBase(this, _requisiteSection)[_requisiteSection].getElement());
+	function _getRequisitesElement() {
+	  return _assertClassBrand(_SettingsWidget_brand, this, _prepareElement).call(this, _classPrivateFieldGet(_requisiteSection, this).getElement());
 	}
-	function _getHoldingsElement2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] !== true || babelHelpers.classPrivateFieldLooseBase(this, _holding)[_holding] === null) {
+	function _getHoldingsElement() {
+	  if (_classPrivateFieldGet(_isBitrix, this) !== true || _classPrivateFieldGet(_holding, this) === null) {
 	    return null;
 	  }
-	  if (!main_core.Type.isPlainObject(babelHelpers.classPrivateFieldLooseBase(this, _holding)[_holding].affiliate)) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getEmptyHoldingsElement)[_getEmptyHoldingsElement]();
+	  if (!main_core.Type.isPlainObject(_classPrivateFieldGet(_holding, this).affiliate)) {
+	    return _assertClassBrand(_SettingsWidget_brand, this, _getEmptyHoldingsElement).call(this);
 	  }
-	  const affiliate = babelHelpers.classPrivateFieldLooseBase(this, _holding)[_holding].affiliate;
+	  const affiliate = _classPrivateFieldGet(_holding, this).affiliate;
 	  const onclickOpen = () => {
 	    this.getWidget().close();
-	    babelHelpers.classPrivateFieldLooseBase(this, _getHoldingWidget)[_getHoldingWidget]().show(babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]);
+	    _assertClassBrand(_SettingsWidget_brand, this, _getHoldingWidget).call(this).show(_classPrivateFieldGet(_target, this));
 	  };
-	  const element = main_core.Tag.render(_t7 || (_t7 = _$1`
-		<div class="intranet-settings-widget__branch" onclick="${0}">
-			<div class="intranet-settings-widget__branch-icon_box">
-				<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
-			</div>
-			<div class="intranet-settings-widget__branch_content">
-				<div class="intranet-settings-widget__branch-title">
-					${0}
-				</div>
-				<div class="intranet-settings-widget__title">
-					${0}
-				</div>
-			</div>
-			<div class="intranet-settings-widget__branch-btn_box">
-				<button class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">
-					${0}
-				</button>
-			</div>
-		</div>
-		`), onclickOpen, affiliate.isHolding ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_BRANCH') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECONDARY_BRANCH'), affiliate.name, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCHES'));
-	  return babelHelpers.classPrivateFieldLooseBase(this, _prepareElement)[_prepareElement](element);
+	  const element = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"intranet-settings-widget__branch\" onclick=\"", "\">\n\t\t\t<div class=\"intranet-settings-widget__branch-icon_box\">\n\t\t\t\t<div class=\"ui-icon-set intranet-settings-widget__branch-icon --filial-network\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"intranet-settings-widget__branch_content\">\n\t\t\t\t<div class=\"intranet-settings-widget__branch-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"intranet-settings-widget__title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"intranet-settings-widget__branch-btn_box\">\n\t\t\t\t<button class=\"ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light\">\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t\t"])), onclickOpen, affiliate.isHolding ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_BRANCH') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECONDARY_BRANCH'), affiliate.name, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCHES'));
+	  return _assertClassBrand(_SettingsWidget_brand, this, _prepareElement).call(this, element);
 	}
-	function _getHoldingWidget2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _holdingWidget)[_holdingWidget]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _holdingWidget)[_holdingWidget] = BX.Intranet.HoldingWidget.getInstance();
+	function _getHoldingWidget() {
+	  if (!_classPrivateFieldGet(_holdingWidget, this)) {
+	    _classPrivateFieldSet(_holdingWidget, this, BX.Intranet.HoldingWidget.getInstance());
 	    const onclickClose = () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _holdingWidget)[_holdingWidget].getWidget().close();
+	      _classPrivateFieldGet(_holdingWidget, this).getWidget().close();
 	      this.show();
 	    };
-	    const holdingWidgetCloseBtn = main_core.Tag.render(_t8 || (_t8 = _$1`
-				<div class="intranet-settings-widget__close-btn">
-					<div onclick="${0}" class="ui-icon-set --arrow-left intranet-settings-widget__close-btn_icon"></div>
-					<div class="intranet-settings-widget__close-btn_name">${0}</div>
-				</div>
-			`), onclickClose, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCH_LIST'));
-	    babelHelpers.classPrivateFieldLooseBase(this, _holdingWidget)[_holdingWidget].getWidget().getPopup().getContentContainer().prepend(holdingWidgetCloseBtn);
+	    const holdingWidgetCloseBtn = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"intranet-settings-widget__close-btn\">\n\t\t\t\t\t<div onclick=\"", "\" class=\"ui-icon-set --arrow-left intranet-settings-widget__close-btn_icon\"></div>\n\t\t\t\t\t<div class=\"intranet-settings-widget__close-btn_name\">", "</div>\n\t\t\t\t</div>\n\t\t\t"])), onclickClose, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCH_LIST'));
+	    _classPrivateFieldGet(_holdingWidget, this).getWidget().getPopup().getContentContainer().prepend(holdingWidgetCloseBtn);
 	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _holdingWidget)[_holdingWidget];
+	  return _classPrivateFieldGet(_holdingWidget, this);
 	}
-	function _getEmptyHoldingsElement2() {
-	  if (!main_core.Type.isPlainObject(babelHelpers.classPrivateFieldLooseBase(this, _holding)[_holding])) {
+	function _getEmptyHoldingsElement() {
+	  if (!main_core.Type.isPlainObject(_classPrivateFieldGet(_holding, this))) {
 	    return null;
 	  }
-	  const title = babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_FILIAL_NETWORK') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_FILIAL_NETWORK_UNAVAILABLE');
-	  const buttonText = babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_FILIAL_SETTINGS') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_FILIAL_ABOUT');
+	  const title = _classPrivateFieldGet(_isAdmin, this) ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_FILIAL_NETWORK') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_FILIAL_NETWORK_UNAVAILABLE');
+	  const buttonText = _classPrivateFieldGet(_isAdmin, this) ? main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_FILIAL_SETTINGS') : main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_FILIAL_ABOUT');
 	  const onclickOpen = () => {
 	    this.getWidget().close();
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _holding)[_holding].canBeHolding) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _getHoldingWidget)[_getHoldingWidget]().show(babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]);
+	    if (_classPrivateFieldGet(_holding, this).canBeHolding) {
+	      _assertClassBrand(_SettingsWidget_brand, this, _getHoldingWidget).call(this).show(_classPrivateFieldGet(_target, this));
 	    } else {
 	      BX.UI.InfoHelper.show('limit_office_multiple_branches');
 	    }
 	  };
-	  const lockIcon = main_core.Tag.render(_t9 || (_t9 = _$1`
-			<div class="intranet-settings-widget__branch-lock-icon_box">
-				<div class="ui-icon-set intranet-settings-widget__branch-lock-icon --lock"></div>
-			</div>
-		`));
-	  const element = main_core.Tag.render(_t10 || (_t10 = _$1`
-			<div class="intranet-settings-widget__branch" onclick="${0}" data-testid="settings-widget-block-filial-network">
-				<div class="intranet-settings-widget__branch-icon_box">
-					<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
-					${0}
-				</div>
-				<div class="intranet-settings-widget__branch_content">
-					<div class="intranet-settings-widget__title">${0}</div>
-				</div>
-				<div class="intranet-settings-widget__branch-btn_box">
-					<button class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">${0}</button>
-				</div>
-			</div>
-		`), onclickOpen, !babelHelpers.classPrivateFieldLooseBase(this, _holding)[_holding].canBeHolding ? lockIcon : '', title, buttonText);
-	  return babelHelpers.classPrivateFieldLooseBase(this, _prepareElement)[_prepareElement](element);
+	  const lockIcon = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings-widget__branch-lock-icon_box\">\n\t\t\t\t<div class=\"ui-icon-set intranet-settings-widget__branch-lock-icon --lock\"></div>\n\t\t\t</div>\n\t\t"])));
+	  const element = main_core.Tag.render(_templateObject0 || (_templateObject0 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings-widget__branch\" onclick=\"", "\" data-testid=\"settings-widget-block-filial-network\">\n\t\t\t\t<div class=\"intranet-settings-widget__branch-icon_box\">\n\t\t\t\t\t<div class=\"ui-icon-set intranet-settings-widget__branch-icon --filial-network\"></div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"intranet-settings-widget__branch_content\">\n\t\t\t\t\t<div class=\"intranet-settings-widget__title\">", "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"intranet-settings-widget__branch-btn_box\">\n\t\t\t\t\t<button class=\"ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light\">", "</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), onclickOpen, !_classPrivateFieldGet(_holding, this).canBeHolding ? lockIcon : '', title, buttonText);
+	  return _assertClassBrand(_SettingsWidget_brand, this, _prepareElement).call(this, element);
 	}
-	function _getSecurityAndSettingsElement2() {
-	  return main_core.Tag.render(_t11 || (_t11 = _$1`
-			<div class="intranet-settings-widget_inline-box">
-				${0}
-				${0}
-			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _getSecurityElement)[_getSecurityElement](), babelHelpers.classPrivateFieldLooseBase(this, _getGeneralSettingsElement)[_getGeneralSettingsElement]());
+	function _getSecurityAndSettingsElement() {
+	  return main_core.Tag.render(_templateObject1 || (_templateObject1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings-widget_inline-box\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), _assertClassBrand(_SettingsWidget_brand, this, _getSecurityElement).call(this), _assertClassBrand(_SettingsWidget_brand, this, _getGeneralSettingsElement).call(this));
 	}
-	function _getSecurityElement2() {
+	function _getSecurityElement() {
 	  const onclick = () => {
 	    this.getWidget().close();
-	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _settingsUrl)[_settingsUrl] + '?page=security&analyticContext=widget_settings_settings');
+	    BX.SidePanel.Instance.open(_classPrivateFieldGet(_settingsUrl, this) + '?page=security&analyticContext=widget_settings_settings');
 	  };
-	  const element = main_core.Tag.render(_t12 || (_t12 = _$1`
-			<span onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-security">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box ${0}">
-						<div class="ui-icon-set --shield"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
-						${0}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</span>
-		`), onclick, babelHelpers.classPrivateFieldLooseBase(this, _otp)[_otp].IS_ACTIVE === 'Y' ? '--green' : '--yellow', main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_SECURITY_TITLE'));
-	  return babelHelpers.classPrivateFieldLooseBase(this, _prepareElement)[_prepareElement](element);
+	  const element = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span onclick=\"", "\" class=\"intranet-settings-widget_box --clickable\" data-testid=\"settings-widget-block-security\">\n\t\t\t\t<div class=\"intranet-settings-widget_inner\">\n\t\t\t\t\t<div class=\"intranet-settings-widget_icon-box ", "\">\n\t\t\t\t\t\t<div class=\"ui-icon-set --shield\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"intranet-settings-widget__title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"intranet-settings-widget__arrow-btn ui-icon-set --arrow-right\"></div>\n\t\t\t</span>\n\t\t"])), onclick, _classPrivateFieldGet(_otp, this).IS_ACTIVE === 'Y' ? '--green' : '--yellow', main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_SECURITY_TITLE'));
+	  return _assertClassBrand(_SettingsWidget_brand, this, _prepareElement).call(this, element);
 	}
-	function _getGeneralSettingsElement2() {
+	function _getGeneralSettingsElement() {
 	  const onclick = () => {
 	    this.getWidget().close();
-	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _settingsUrl)[_settingsUrl] + '?analyticContext=widget_settings_settings');
+	    BX.SidePanel.Instance.open(_classPrivateFieldGet(_settingsUrl, this) + '?analyticContext=widget_settings_settings');
 	  };
-	  const element = main_core.Tag.render(_t13 || (_t13 = _$1`
-			<span onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-general-settings">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box --gray">
-						<div class="ui-icon-set --settings-2"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
-						${0}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</span>
-		`), onclick, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_SETTINGS_TITLE'));
-	  return babelHelpers.classPrivateFieldLooseBase(this, _prepareElement)[_prepareElement](element);
+	  const element = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span onclick=\"", "\" class=\"intranet-settings-widget_box --clickable\" data-testid=\"settings-widget-block-general-settings\">\n\t\t\t\t<div class=\"intranet-settings-widget_inner\">\n\t\t\t\t\t<div class=\"intranet-settings-widget_icon-box --gray\">\n\t\t\t\t\t\t<div class=\"ui-icon-set --settings-2\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"intranet-settings-widget__title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"intranet-settings-widget__arrow-btn ui-icon-set --arrow-right\"></div>\n\t\t\t</span>\n\t\t"])), onclick, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_SETTINGS_TITLE'));
+	  return _assertClassBrand(_SettingsWidget_brand, this, _prepareElement).call(this, element);
 	}
-	function _getMigrateElement2() {
+	function _getMigrateElement() {
 	  const onclick = () => {
 	    this.getWidget().close();
-	    BX.SidePanel.Instance.open(`${babelHelpers.classPrivateFieldLooseBase(this, _marketUrl)[_marketUrl]}category/migration/`);
+	    BX.SidePanel.Instance.open("".concat(_classPrivateFieldGet(_marketUrl, this), "category/migration/"));
 	  };
-	  const element = main_core.Tag.render(_t14 || (_t14 = _$1`
-			<div onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-migrate">
-				<div class="intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box --gray">
-						<div class="ui-icon-set --market-1"></div>
-					</div>
-					<div class="intranet-settings-widget__title">
-						${0}
-					</div>
-				</div>
-				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
-			</div>
-		`), onclick, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_MIGRATION_TITLE'));
-	  return babelHelpers.classPrivateFieldLooseBase(this, _prepareElement)[_prepareElement](element);
+	  const element = main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div onclick=\"", "\" class=\"intranet-settings-widget_box --clickable\" data-testid=\"settings-widget-block-migrate\">\n\t\t\t\t<div class=\"intranet-settings-widget_inner\">\n\t\t\t\t\t<div class=\"intranet-settings-widget_icon-box --gray\">\n\t\t\t\t\t\t<div class=\"ui-icon-set --market-1\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"intranet-settings-widget__title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"intranet-settings-widget__arrow-btn ui-icon-set --arrow-right\"></div>\n\t\t\t</div>\n\t\t"])), onclick, main_core.Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_MIGRATION_TITLE'));
+	  return _assertClassBrand(_SettingsWidget_brand, this, _prepareElement).call(this, element);
 	}
-	Object.defineProperty(SettingsWidget, _instance, {
-	  writable: true,
-	  value: null
-	});
+	function _updateAriaExpanded(expanded) {
+	  if (_classPrivateFieldGet(_target, this)) {
+	    main_core.Dom.attr(_classPrivateFieldGet(_target, this), 'aria-expanded', expanded);
+	  }
+	}
+	var _instance = {
+	  _: null
+	};
 
 	exports.SettingsWidget = SettingsWidget;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX.Event,BX,BX.UI,BX.Intranet));
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.UI, BX.Event);
 //# sourceMappingURL=script.js.map

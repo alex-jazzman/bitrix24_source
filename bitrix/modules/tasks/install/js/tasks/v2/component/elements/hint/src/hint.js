@@ -23,11 +23,17 @@ export const Hint = {
 		},
 	},
 	emits: ['close'],
+	data(): Object
+	{
+		return {
+			popupId: `tasks-hint-${Text.getRandom(10)}`,
+		};
+	},
 	computed: {
 		popupOptions(): PopupOptions
 		{
 			return {
-				id: `tasks-hint-${Text.getRandom(10)}`,
+				id: this.popupId,
 				bindElement: this.bindElement,
 				maxWidth: 320,
 				offsetLeft: 40,

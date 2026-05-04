@@ -18,7 +18,7 @@ Extension::load(['intranet.widget-loader']);
 ?>
 
 <div class="air-header__button" data-id="invitationButton">
-	<button class="air-header-button">
+	<button class="air-header-button" aria-haspopup="dialog" aria-expanded="false">
 		<i class="ui-icon-set --o-add-person air-header-button__icon"></i>
 		<span class="air-header-button__text"><?=Loc::getMessage('INTRANET_INVITATION_WIDGET_INVITE')?></span>
 		<span class="air-header-button__counter invitation-widget-counter"></span>

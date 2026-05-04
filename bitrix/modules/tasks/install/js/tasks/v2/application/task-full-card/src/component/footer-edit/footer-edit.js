@@ -303,7 +303,7 @@ export const FooterEdit = {
 		{
 			void this.$nextTick(() => {
 				const inProgress = this.task.rights.timeTracking
-					? this.getCompleteButton(this.timer ? '' : AirButtonStyle.OUTLINE)
+					? this.getCompleteButton(this.timer ? null : AirButtonStyle.OUTLINE)
 					: null;
 
 				const statuses = {

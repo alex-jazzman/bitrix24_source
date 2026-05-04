@@ -9,7 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 global $APPLICATION;
 
-\Bitrix\Main\Ui\Extension::load(['ui.info-helper']);
+\Bitrix\Main\UI\Extension::load(['ui.info-helper']);
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty(

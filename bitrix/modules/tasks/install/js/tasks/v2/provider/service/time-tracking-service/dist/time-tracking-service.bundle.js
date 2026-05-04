@@ -43,6 +43,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      value: {}
 	    });
 	  }
+	  async getTaskWithActiveTimer() {
+	    const task = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskTrackingTaskWithActiveTimer, {});
+	    void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/setTaskWithActiveTimer`, task);
+	  }
 	  async list(taskId, options = {}) {
 	    if (!Number.isInteger(taskId)) {
 	      return;

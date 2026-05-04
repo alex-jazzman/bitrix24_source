@@ -13,8 +13,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _handleSliderCloseComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderCloseComplete");
 	var _handleSliderDestroy = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderDestroy");
 	var _handleZIndexChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleZIndexChange");
+	var _handleSliderLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderLayout");
 	class ChatMenuBar {
 	  constructor(slider) {
+	    Object.defineProperty(this, _handleSliderLayout, {
+	      value: _handleSliderLayout2
+	    });
 	    Object.defineProperty(this, _handleZIndexChange, {
 	      value: _handleZIndexChange2
 	    });
@@ -57,17 +61,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider], 'SidePanel.Slider:onClosing', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderClosing)[_handleSliderClosing].bind(this));
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider], 'SidePanel.Slider:onCloseComplete', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderCloseComplete)[_handleSliderCloseComplete].bind(this));
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider], 'SidePanel.Slider:onDestroy', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderDestroy)[_handleSliderDestroy].bind(this));
+	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider], 'SidePanel.Slider:onLayout', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderLayout)[_handleSliderLayout].bind(this));
 	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpening', event => {
 	      const [sliderEvent] = event.getData();
 	      if (sliderEvent.getSlider() !== babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider]) {
 	        main_core.Dom.style(this.getContainer(), 'background', babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].getOverlayBgColor());
-	        main_core.Dom.style(this.getContainer(), 'box-shadow', `0px 0px 10px 3px ${babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].getOverlayBgColor()}`);
+	        main_core.Dom.style(this.getContainer(), 'box-shadow', `-10px 0px 10px 3px ${babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].getOverlayBgColor()}`);
+	        main_core.Dom.attr(this.getContainer(), 'inert', 'true');
 	      }
 	    });
 	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClosing', () => {
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] === main_sidepanel.SidePanel.Instance.getPreviousSlider()) {
 	        main_core.Dom.style(this.getContainer(), 'background', null);
 	        main_core.Dom.style(this.getContainer(), 'box-shadow', null);
+	        main_core.Dom.attr(this.getContainer(), 'inert', null);
 	      }
 	    });
 	    main_core_events.EventEmitter.subscribe('IM.Layout:onLayoutChange', () => {
@@ -107,6 +114,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  main_core.Dom.style(this.getContainer(), 'display', 'block');
 	  main_core.Dom.style(this.getContainer(), 'background', null);
 	  main_core.Dom.style(this.getContainer(), 'box-shadow', null);
+	  main_core.Dom.attr(this.getContainer(), 'inert', null);
 	  requestAnimationFrame(() => {
 	    main_core.Dom.addClass(this.getContainer(), '--open');
 	  });
@@ -119,6 +127,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  main_core.Dom.style(this.getContainer(), 'display', 'none');
 	  main_core.Dom.style(this.getContainer(), 'background', null);
 	  main_core.Dom.style(this.getContainer(), 'box-shadow', null);
+	  main_core.Dom.attr(this.getContainer(), 'inert', null);
 	}
 	function _handleSliderDestroy2() {
 	  this.reset();
@@ -126,6 +135,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _handleZIndexChange2() {
 	  const sliderZIndex = babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].getZIndexComponent().getZIndex();
 	  this.setZIndex(sliderZIndex + 1);
+	}
+	function _handleSliderLayout2() {
+	  main_core.Dom.style(this.getContainer(), 'width', `${babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].getOverlay().offsetWidth}px`);
 	}
 
 	const MENU_COLLAPSED_WIDTH = 65;
@@ -143,7 +155,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (isMessenger) {
 	      options.hideControls = false;
 	      options.autoOffset = false;
+	      options.customRightBoundary = null;
 	    }
+	    options.customRightBoundary = null;
 	    super(url, options);
 	    Object.defineProperty(this, _handleWindowResize, {
 	      value: _handleWindowResize2
@@ -163,33 +177,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(Slider, _verticalScrollWidth)[_verticalScrollWidth] = window.innerWidth - document.documentElement.clientWidth;
 	    this.adjustBackgroundSize();
 	    main_core.Event.bind(window, 'resize', babelHelpers.classPrivateFieldLooseBase(this, _onWindowResize)[_onWindowResize]);
-	    if (this.getRightBar() && !this.isMessengerSlider()) {
-	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
-	      stack.register(this.getRightBar());
-	      main_core.Dom.addClass(this.getRightBar(), '--ui-context-edge-dark --overlay-mode');
-	    }
 	    return true;
 	  }
 	  resetHacks() {
 	    this.resetBackgroundSize();
 	    main_core.Event.unbind(window, 'resize', babelHelpers.classPrivateFieldLooseBase(this, _onWindowResize)[_onWindowResize]);
-	    if (this.getRightBar()) {
-	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
-	      stack.unregister(this.getRightBar());
-	      main_core.Dom.removeClass(this.getRightBar(), '--ui-context-edge-dark --overlay-mode');
-	      main_core.Dom.style(this.getRightBar(), 'z-index', null); // ZIndexManager may not remove z-index, so we do it manually
-	    }
-	  }
-
-	  open() {
-	    const opened = super.open();
-	    if (this.getRightBar() && opened) {
-	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
-	      if (!this.isMessengerSlider() && !Slider.isMessengerOpen() && !Slider.isVideoCallOpen()) {
-	        stack.bringToFront(this.getRightBar());
-	      }
-	    }
-	    return opened;
 	  }
 	  static isMessengerOpen() {
 	    const MessengerSlider = main_core.Reflection.getClass('BX.Messenger.v2.Lib.MessengerSlider');
@@ -227,6 +219,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  getRightBar() {
 	    return document.getElementById('right-bar');
 	  }
+	  getRightPanel() {
+	    return document.getElementById('app__right-panel');
+	  }
+	  isRightPanelOpen() {
+	    var _this$getRightPanel;
+	    return ((_this$getRightPanel = this.getRightPanel()) == null ? void 0 : _this$getRightPanel.offsetWidth) > 0;
+	  }
 	  getLeftBoundary() {
 	    const windowWidth = main_core.Browser.isMobile() ? window.innerWidth : document.documentElement.clientWidth;
 	    if (windowWidth < 1260) {
@@ -236,7 +235,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return LeftMenu != null && LeftMenu.isCollapsed() || this.isMessengerSlider() ? MENU_COLLAPSED_WIDTH : MENU_EXPANDED_WIDTH;
 	  }
 	  getRightBoundary() {
-	    return 0;
+	    const viewer = main_core.Reflection.getClass('BX.UI.Viewer.Instance');
+	    if (viewer && viewer.isOpen()) {
+	      return 0;
+	    }
+	    if (!this.isRightPanelOpen() && (this.isMessengerSlider() || Slider.isMessengerOpenBeforeSlider(this) || Slider.isVideoCallOpen())) {
+	      return 0;
+	    }
+	    const rightPanel = this.getRightPanel() || this.getRightBar();
+	    if (rightPanel === null) {
+	      return 0;
+	    }
+	    const leftOffset = rightPanel.getBoundingClientRect().left;
+	    if (leftOffset === 0) {
+	      return 0;
+	    }
+
+	    // const rightMargin = Slider.#verticalScrollWidth + rightBarWidth;
+
+	    const windowWidth = main_core.Browser.isMobile() ? window.innerWidth : document.documentElement.clientWidth;
+	    return windowWidth - leftOffset;
 	  }
 	  getTopBoundary() {
 	    return 0;
@@ -249,11 +267,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        right: 18
 	      };
 	    }
-	    const rightBarWidth = ((_this$getRightBar = this.getRightBar()) == null ? void 0 : _this$getRightBar.offsetWidth) || 0;
-	    const rightMargin = babelHelpers.classPrivateFieldLooseBase(Slider, _verticalScrollWidth)[_verticalScrollWidth] + rightBarWidth;
+	    const rightMargin = babelHelpers.classPrivateFieldLooseBase(Slider, _verticalScrollWidth)[_verticalScrollWidth] > 0 ? 0 : 18;
 	    return {
 	      top: 16,
-	      right: rightMargin
+	      right: this.isRightPanelOpen() ? 18 : ((_this$getRightBar = this.getRightBar()) == null ? void 0 : _this$getRightBar.offsetWidth) > 0 ? 0 : rightMargin
 	    };
 	  }
 	  adjustBackgroundSize() {
@@ -319,10 +336,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    const overlayOpacity = slider.getOverlayOpacity();
 	    const start = Math.round(overlayOpacity * intensity / 100).toString(16).padStart(2, 0);
 	    const end = Math.round(100 * intensity / 100).toString(16).padStart(2, 0);
+	    const defaultBg = `linear-gradient(to bottom, ${overlayBgColor}${start} 0%, ${overlayBgColor}${end} 100%)`;
+	    const Template = main_core.Reflection.getClass('BX.Intranet.Bitrix24.Template');
+	    Template == null ? void 0 : Template.getRightSidebar().setOverlayBackground(defaultBg);
 	    if (slider.isMessengerSlider()) {
 	      return `linear-gradient(to bottom, ${overlayBgColor}${end} 0%, ${overlayBgColor}${end} 35px, ${overlayBgColor}${start} 145px, ${overlayBgColor}${end} 100%)`;
 	    }
-	    return `linear-gradient(to bottom, ${overlayBgColor}${start} 0%, ${overlayBgColor}${end} 100%)`;
+	    return defaultBg;
 	  },
 	  overlayOpacity: 52,
 	  autoOffset: false,
@@ -330,7 +350,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  newWindowLabel: true
 	}, {
 	  focusTrap: {
-	    outsideExceptionSelectors: ['.aiassistant-marta', '#right-bar', '.side-panel-toolbar', '#im-chat-menu'],
+	    outsideExceptionSelectors: ['.aiassistant-marta', '#right-bar', '#avatar-area', '.side-panel-toolbar', '#im-chat-menu', '#app__right-panel'],
 	    looped: false
 	  },
 	  targetContainer: '#a11y-slider-container',

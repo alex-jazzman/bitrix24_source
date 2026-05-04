@@ -997,3 +997,22 @@ create table if not exists b_tasks_result_message (
 
 create index if not exists ix_b_tasks_result_message_message_id on b_tasks_result_message (MESSAGE_ID);
 
+CREATE TABLE IF NOT EXISTS b_tasks_template_parameter (
+	ID int not null generated always as identity,
+	TEMPLATE_ID int not null,
+	CODE int not null,
+	VALUE varchar(10) default null,
+
+	primary key (ID)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ix_tasks_template_parameter_unique ON b_tasks_template_parameter (TEMPLATE_ID, CODE, VALUE);
+
+create table if not exists b_tasks_task_access_request (
+	TASK_ID int not null,
+	USER_ID int not null,
+	CREATED_DATE timestamp(0) default now(),
+
+	primary key (TASK_ID, USER_ID)
+);
+create index ix_b_tasks_task_access_request_created_date on b_tasks_task_access_request (CREATED_DATE);

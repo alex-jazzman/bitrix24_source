@@ -1010,3 +1010,21 @@ create table if not exists b_tasks_result_message (
 	index ix_b_tasks_result_message_message_id (MESSAGE_ID)
 );
 
+CREATE TABLE IF NOT EXISTS b_tasks_template_parameter (
+	ID int not null auto_increment,
+	TEMPLATE_ID int not null,
+	CODE int not null,
+	VALUE varchar(10) default null,
+	PRIMARY KEY (ID),
+	UNIQUE INDEX ix_tasks_template_parameter_unique (TEMPLATE_ID, CODE, VALUE)
+);
+
+create table if not exists b_tasks_task_access_request (
+	TASK_ID int not null,
+	USER_ID int not null,
+	CREATED_DATE datetime default now(),
+
+	primary key (TASK_ID, USER_ID),
+	index ix_b_tasks_task_access_request_created_date (CREATED_DATE)
+);
+

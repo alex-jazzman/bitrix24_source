@@ -131,6 +131,18 @@ export class RemindersService
 		}
 	}
 
+	clearForTask(taskId: number): void
+	{
+		const userId = Core.getParams().currentUser.id;
+		const reminderIds = this.$store.getters[`${Model.Reminders}/getIds`](taskId, userId);
+		if (reminderIds.length > 0)
+		{
+			void this.$store.dispatch(`${Model.Reminders}/deleteMany`, reminderIds);
+		}
+
+		delete this.#cache[taskId];
+	}
+
 	get $store(): Store
 	{
 		return Core.getStore();

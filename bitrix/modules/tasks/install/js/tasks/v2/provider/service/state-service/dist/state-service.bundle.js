@@ -12,6 +12,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      state
 	    });
 	  }
+	  async setTemplateFlags(flags) {
+	    await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateStateSet, {
+	      flags
+	    });
+	  }
 	}
 	const stateService = new StateService();
 

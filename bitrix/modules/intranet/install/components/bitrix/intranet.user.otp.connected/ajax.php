@@ -39,15 +39,30 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 	{
 		global $USER;
 
-		if (
-			$USER->GetID() == $this->userId
-			|| $USER->CanDoOperation('security_edit_user_otp')
-		)
-		{
-			return true;
-		}
+		return (int)$USER->GetID() === (int)$this->userId;
+	}
 
-		return false;
+	protected function canDeactivateOtp()
+	{
+		global $USER;
+
+		return (int)$USER->GetID() === (int)$this->userId
+			|| $USER->CanDoOperation('security_edit_user_otp');
+	}
+
+	protected function canActivateOtp()
+	{
+		global $USER;
+
+		return (int)$USER->GetID() === (int)$this->userId
+			|| $USER->CanDoOperation('security_edit_user_otp');
+	}
+
+	protected function canDeferOtp()
+	{
+		global $USER;
+
+		return $USER->CanDoOperation('security_edit_user_otp');
 	}
 
 	protected function isIntegrator()
@@ -76,7 +91,7 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 		}
 
 		if (
-			!$this->canEditOtp()
+			!$this->canDeactivateOtp()
 			|| $this->isIntegrator()
 		)
 		{
@@ -115,7 +130,7 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 			return false;
 		}
 
-		if (!$this->canEditOtp())
+		if (!$this->canActivateOtp())
 		{
 			$this->addError(new \Bitrix\Main\Error("No rights"));
 			return false;
@@ -141,7 +156,7 @@ class CIntranetUserOtpConnectedAjaxController extends \Bitrix\Main\Engine\Contro
 			return false;
 		}
 
-		if (!$this->canEditOtp())
+		if (!$this->canDeferOtp())
 		{
 			$this->addError(new \Bitrix\Main\Error("No rights"));
 			return false;

@@ -463,8 +463,10 @@
 	overflow: auto;
 }
 
-.app-layout-subscribe-slider-modifier #workarea-content .app-frame-layout {
-	height: calc(100% - 4px);
+.ui-side-panel-wrap-workarea .app-frame-layout .app-frame,
+.side-panel .app-frame-layout .app-frame {
+	display: block;
+	border-radius: unset;
 }
 
 .app-layout-subscribe-slider-modifier #workarea-content.ui-side-panel-wrap-workarea,

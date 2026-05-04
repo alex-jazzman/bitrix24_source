@@ -38,12 +38,14 @@ export class LicenseButton
 {
 	static #options: LicenseButtonOptions;
 	static #buttonWrapper: HTMLElement;
+	static #button: HTMLElement;
 	static #cache: BaseCache<any> = new MemoryCache();
 
 	static init(options: LicenseButtonOptions): void
 	{
 		this.#options = options;
 		this.#buttonWrapper = document.querySelector('[data-id="licenseWidgetWrapper"]');
+		this.#button = this.#buttonWrapper.querySelector('button');
 		this.#setEventHandlers();
 
 		if (this.#options.isCloud)
@@ -82,7 +84,8 @@ export class LicenseButton
 
 	static #openWidget(): void
 	{
-		Event.unbindAll(this.#buttonWrapper);
+		Event.unbindAll(this.#button);
+		this.#setAriaExpanded(true);
 		this.#getWidgetLoader()
 			.createSkeletonFromConfig(this.#options.skeleton)
 			.show();
@@ -114,7 +117,7 @@ export class LicenseButton
 
 			this.#getWidget().setOptions(licenseData).show();
 			this.#getWidgetLoader().getPopup().adjustPosition();
-			Event.bind(this.#buttonWrapper, 'click', () => {
+			Event.bind(this.#button, 'click', () => {
 				this.#getWidget().show();
 
 				if (this.#options.isCloud)
@@ -146,12 +149,27 @@ export class LicenseButton
 	static #getWidgetLoader(): WidgetLoader
 	{
 		return this.#cache.remember('widgetLoader', () => {
-			return new WidgetLoader({
+			const loader = new WidgetLoader({
 				bindElement: this.#buttonWrapper,
 				width: 385,
 				id: 'bx-license-header-popup',
 			});
+
+			const popup = loader.getPopup();
+			popup.subscribe('onShow', () => {
+				this.#setAriaExpanded(true);
+			});
+			popup.subscribe('onClose', () => {
+				this.#setAriaExpanded(false);
+			});
+
+			return loader;
 		});
+	}
+
+	static #setAriaExpanded(expanded: boolean): void
+	{
+		this.#button.setAttribute('aria-expanded', String(expanded));
 	}
 
 	static #getContent(): Promise

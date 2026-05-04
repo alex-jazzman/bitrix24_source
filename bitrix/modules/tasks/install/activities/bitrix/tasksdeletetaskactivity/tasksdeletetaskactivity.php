@@ -25,7 +25,7 @@ class CBPTasksDeleteTaskActivity extends CBPDeleteDocumentActivity
 
 		$documentType = $this->getDocumentType()[2];
 		$documentId = $this->getDocumentId();
-		$taskId = $documentId[2];
+		[$moduleId, $entity, $taskId] = array_pad(is_array($documentId) ? $documentId : [], 3, null);
 
 		$canDelete = false;
 
@@ -81,6 +81,7 @@ class CBPTasksDeleteTaskActivity extends CBPDeleteDocumentActivity
 					Dictionary::EVENT_ENTITY_DELETE,
 					$this,
 					$documentType ?? '',
+					$moduleId,
 				);
 			}
 		}

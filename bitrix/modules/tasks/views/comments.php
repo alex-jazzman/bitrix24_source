@@ -7,6 +7,7 @@
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Integration\Forum\Task\Comment;
 use Bitrix\Tasks\V2\Public\Service\LinkService;
@@ -30,17 +31,33 @@ if ($taskId <= 0)
 	echo 'Task not found';
 }
 
-Extension::load([
+$extensionList = [
+	'ui.sidepanel',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.tooltip',
 	'ui.viewer',
-	'disk.document',
-	'disk.viewer.actions',
-	'disk.viewer.document-item',
-	'disk.viewer.board-item',
-	'loader',
-]);
+	'ui.hint',
+];
+
+if (Loader::includeModule('disk'))
+{
+	Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.uf.file/templates/.default/script.js');
+
+	$extensionList = [
+		...$extensionList,
+		'ajax',
+		'core',
+		'disk_external_loader',
+		'disk.document',
+		'disk.viewer.document-item',
+		'disk.viewer.board-item',
+		'disk.viewer.actions',
+		'loader',
+	];
+}
+
+Extension::load($extensionList);
 
 if ($request->get('IFRAME') === 'Y')
 {
@@ -82,7 +99,6 @@ else
 	$commentsPath = $linkService->getForumComments($taskId);
 	$listPath = $linkService->getListTask($userId);
 
-	Extension::load('ui.sidepanel');
 	?>
 	<script>
 		BX.ready(function() {

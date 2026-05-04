@@ -878,7 +878,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _getPlaceholder2() {
 	  switch (babelHelpers.classPrivateFieldLooseBase(this, _inviteType)[_inviteType]) {
 	    case InviteType.EMAIL:
-	      return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_EMAIL_PLACEHOLDER');
+	      return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_INVITE_POPUP_INPUT_EMAIL_PLACEHOLDER');
 	    case InviteType.PHONE:
 	      return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_REGISTER_INPUT_PHONE_PLACEHOLDER');
 	    case InviteType.ALL:
@@ -2315,6 +2315,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    action: 'getInviteLink',
 	    data: {
 	      departmentsId: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3].getValues(),
+	      workgroupIds: babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3].getGroupValues(),
 	      analyticsType: 'by_link'
 	    }
 	  }, reject => {
@@ -3232,7 +3233,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  createLinkPage() {
 	    return new LinkPage({
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _options)[_options],
-	      departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION'), [DepartmentControl.EntityType.DEPARTMENT])
+	      departmentControl: this.createDepartmentControl(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION_WITH_GROUP'), [DepartmentControl.EntityType.DEPARTMENT, DepartmentControl.EntityType.GROUP])
 	    });
 	  }
 	  createLinkDisabledPage() {

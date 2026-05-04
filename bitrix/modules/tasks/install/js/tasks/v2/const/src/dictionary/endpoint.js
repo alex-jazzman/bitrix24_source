@@ -5,6 +5,8 @@ export const Endpoint = Object.freeze({
 	TaskUpdate: 'Task.update',
 	TaskDelete: 'Task.delete',
 	TaskAccessGet: 'Task.Access.get',
+	TaskAccessRequest: 'Task.Access.request',
+	TaskAccessIsRequested: 'Task.Access.isRequested',
 	TaskDescriptionUpdate: 'Task.Description.update',
 	TaskDescriptionForceUpdate: 'Task.Description.forceUpdate',
 	TaskFavoriteAdd: 'Task.Favorite.add',
@@ -42,6 +44,7 @@ export const Endpoint = Object.freeze({
 	TaskStatusRenew: 'Task.Status.renew',
 	TaskTrackingTimerStart: 'Task.Tracking.Timer.start',
 	TaskTrackingTimerStop: 'Task.Tracking.Timer.stop',
+	TaskTrackingTaskWithActiveTimer: 'Task.Tracking.Timer.getTaskWithActiveTimer',
 	TaskDeadlineGetDeadlineChangeCount: 'Task.Deadline.getDeadlineChangeCount',
 	TaskDeadlineCleanChangeLog: 'Task.Deadline.cleanChangeLog',
 	TaskTimeTrackingAdd: 'Task.Tracking.ElapsedTime.add',
@@ -84,4 +87,5 @@ export const Endpoint = Object.freeze({
 	TaskFromTemplateGet: 'Template.Task.get',
 	TaskFromTemplateAdd: 'Template.Task.add',
 	TemplateHistoryGetCount: 'Template.History.getCount',
+	TemplateStateSet: 'Template.State.set',
 });

@@ -32,6 +32,7 @@ export const TaskSettingsPopup = {
 		task: {},
 		taskId: {},
 		isEdit: {},
+		isTemplate: {},
 	},
 	props: {
 		bindElement: {
@@ -59,6 +60,7 @@ export const TaskSettingsPopup = {
 	computed: {
 		...mapGetters({
 			stateFlags: `${Model.Interface}/stateFlags`,
+			templateStateFlags: `${Model.Interface}/templateStateFlags`,
 			deadlineUserOption: `${Model.Interface}/deadlineUserOption`,
 		}),
 		options(): PopupOptions
@@ -99,10 +101,22 @@ export const TaskSettingsPopup = {
 						{ defaultDeadlineInSeconds: this.pendingDeadlineUserOption.defaultDeadlineInSeconds },
 					);
 
-					void stateService.set({
-						defaultDeadline: this.deadlineUserOption,
-					});
+					if (!this.isTemplate)
+					{
+						void stateService.set({
+							defaultDeadline: this.deadlineUserOption,
+						});
+					}
 				}
+			}
+			else if (this.isTemplate)
+			{
+				await this.$store.dispatch(
+					`${Model.Interface}/updateTemplateStateFlags`,
+					this.pendingFlagsData,
+				);
+
+				void stateService.setTemplateFlags(this.templateStateFlags);
 			}
 			else
 			{
@@ -124,12 +138,12 @@ export const TaskSettingsPopup = {
 				});
 			}
 
+			this.$emit('close');
+
 			await taskService.update(this.taskId, {
 				...this.pendingFlagsData,
 				...this.pendingDeadlineUserOption,
 			});
-
-			this.$emit('close');
 
 			this.saving = false;
 		},
@@ -163,7 +177,7 @@ export const TaskSettingsPopup = {
 					<div class="tasks-task-settings-popup-title">
 						{{ loc('TASKS_V2_TASK_SETTINGS_POPUP_TITLE') }}
 					</div>
-					<QuestionMark :hintText="loc('TASKS_V2_TASK_SETTINGS_POPUP_TITLE_HINT')"/>
+					<QuestionMark v-if="!isTemplate" :hintText="loc('TASKS_V2_TASK_SETTINGS_POPUP_TITLE_HINT')"/>
 				</div>
 				<BIcon
 					:name="Outline.CROSS_L"

@@ -71,9 +71,11 @@ $arJSParams = [
 								<?= $arResult["OTP"]["DEVICE_INFO"]['displayModel']?>
 							</div>
 							<?php endif; ?>
+							<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
 							<a class="intranet-user-otp-list__change-btn ui-link ui-link-secondary ui-link-dashed" onclick="BX.Intranet.UserOtpConnected.getPopupOtpProvider().onlyPushOtp().show()">
 								<?= Loc::getMessage('INTRANET_USER_OTP_LIST_CHANGE_BTN')?>
 							</a>
+							<?php endif; ?>
 						</div>
 				</div>
 				<div class="intranet-user-otp-list__section-row-description">
@@ -97,21 +99,27 @@ $arJSParams = [
 								data-hint="<?= Loc::getMessage('INTRANET_USER_OTP_LIST_SMS_HINT') ?>"
 								data-hint-no-icon="true"
 								class="ui-hint ui-icon-set --o-alert-accent"
+								<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
 								onclick="BX.Intranet.UserOtpConnected.getPopupOtpProvider().onlySmsOtpConfirm().show()"
+								<?php endif; ?>
 							></div>
 							<?php elseif (empty($arResult['OTP']['PHONE_NUMBER'])): ?>
 								<div
 									data-hint="<?= Loc::getMessage('INTRANET_USER_OTP_LIST_SMS_HINT_WITHOUT_CONNECT') ?>"
 									data-hint-no-icon="true"
 									class="ui-hint ui-icon-set --o-alert-accent"
+									<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
 									onclick="BX.Intranet.UserOtpConnected.getPopupOtpProvider().onlySmsOtpChange().show()"
+									<?php endif; ?>
 								></div>
 							<?php endif; ?>
 							<?= $arResult['OTP']['PHONE_NUMBER'] ?? '' ?>
 						</div>
+						<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
 						<a class="intranet-user-otp-list__change-btn ui-link ui-link-secondary ui-link-dashed" onclick="BX.Intranet.UserOtpConnected.getPopupOtpProvider().onlySmsOtpChange().show()">
 							<?= !empty($arResult['OTP']['PHONE_NUMBER']) ? Loc::getMessage('INTRANET_USER_OTP_LIST_CHANGE_BTN') : Loc::getMessage('INTRANET_USER_OTP_LIST_ADD_PHONE_NUMBER_BTN') ?>
 						</a>
+						<?php endif; ?>
 					</div>
 				</div>
 				<div class="intranet-user-otp-list__section-row-description">
@@ -133,17 +141,11 @@ $arJSParams = [
 	</ul>
 
 	<div class="intranet-user-otp__footer">
-		<?php if (!$arResult["OTP"]["IS_ACTIVE"] && $arResult["OTP"]["IS_EXIST"]): ?>
+		<?php if ($arResult["OTP"]["CAN_ACTIVATE_OTP"] === 'Y' && !$arResult["OTP"]["IS_ACTIVE"] && $arResult["OTP"]["IS_EXIST"]): ?>
 			<a class="intranet-user-otp-list__disable-link ui-link ui-link-dashed" href="#" onclick="resumeOtp()">
 				<?= Loc::getMessage('INTRANET_USER_OTP_LIST_ENABLE_DEF_BTN')?>
 			</a>
-		<?php elseif (
-			$arResult["OTP"]["IS_ACTIVE"]
-			&& (
-				$arResult["OTP"]["USER_HAS_EDIT_RIGHTS"]
-				|| !$arResult["OTP"]["IS_MANDATORY"]
-			)
-		): ?>
+		<?php elseif ($arResult["OTP"]["IS_ACTIVE"] && $arResult["OTP"]["CAN_DEACTIVATE_OTP"] === 'Y'): ?>
 			<a class="intranet-user-otp-list__disable-link intranet-user-otp-list__disable-link--alert ui-link ui-link-dashed" href="#" onclick="pauseOtp(this)">
 				<?= Loc::getMessage('INTRANET_USER_OTP_LIST_DISABLE_DEF_BTN')?>
 			</a>
@@ -153,10 +155,13 @@ $arJSParams = [
 
 <script>
 	BX.ready(function () {
+		<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
 		BX.Intranet.UserOtpConnected.init(<?= CUtil::PhpToJSObject($arJSParams)?>);
+		<?php endif; ?>
 		BX.UI.Hint.init(BX('intranet-user-otp'));
 	});
 
+	<?php if ($arResult["OTP"]["CAN_DEACTIVATE_OTP"] === 'Y'): ?>
 	function pauseOtp(element)
 	{
 		const callback = (item) => {
@@ -173,7 +178,9 @@ $arJSParams = [
 
 		menu.show();
 	}
+	<?php endif; ?>
 
+	<?php if ($arResult["OTP"]["CAN_ACTIVATE_OTP"] === 'Y'): ?>
 	function resumeOtp()
 	{
 		BX.Intranet.UserOtpConnected
@@ -181,4 +188,5 @@ $arJSParams = [
 			.resumeOtpRequest()
 			.then(() => BX.SidePanel.Instance.reload());
 	}
+	<?php endif; ?>
 </script>

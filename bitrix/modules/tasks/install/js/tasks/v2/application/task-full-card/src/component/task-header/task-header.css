@@ -4,3 +4,16 @@
 	--padding-bottom: 12px;
 	padding: 19px calc(22px - var(--scrollbar-width)) var(--padding-bottom) 22px;
 }
+
+.tasks-full-card-header-open-full {
+	display: flex;
+	align-items: center;
+	height: 27px;
+	margin-left: 6px;
+	cursor: pointer;
+}
+
+.tasks-full-card-header-open-full .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+	--ui-icon-set__icon-size: 25px;
+}

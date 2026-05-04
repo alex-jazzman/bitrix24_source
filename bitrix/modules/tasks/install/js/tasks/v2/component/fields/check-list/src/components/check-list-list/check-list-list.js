@@ -133,6 +133,8 @@ export const CheckListList = {
 		<div
 			class="tasks-check-list-list"
 			:class="{ '--default': loading || isFilledEmpty }"
+			data-field-container
+			:data-task-field-id="checkListMeta.id"
 		>
 			<div
 				class="tasks-check-list-list-content"

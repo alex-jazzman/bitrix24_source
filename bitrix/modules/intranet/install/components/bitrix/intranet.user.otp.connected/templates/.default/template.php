@@ -35,17 +35,17 @@ use Bitrix\Main\Localization\Loc;
 				<?= GetMessage("INTRANET_USER_OTP_ACTIVE")?>
 			</span>
 
-			<?if ($arResult["OTP"]["USER_HAS_EDIT_RIGHTS"]|| !$arResult["OTP"]["IS_MANDATORY"]):?>
+			<?php if ($arResult["OTP"]["CAN_DEACTIVATE_OTP"] === 'Y'): ?>
 				<a class="intranet-user-otp-con-top-status-link" href="javascript:void(0)" data-role="intranet-otp-deactivate">
 					<?= GetMessage("INTRANET_USER_OTP_DEACTIVATE")?>
 				</a>
-			<?endif?>
+			<?php endif; ?>
 		</div>
 
-		<?if ($USER->GetID() == $arParams["USER_ID"]):?>
+		<?php if ($USER->GetID() == $arParams["USER_ID"] && $arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
 			<a class="ui-btn ui-btn-light-border" href="javascript:void(0)" data-role="intranet-otp-change-phone"><?= GetMessage("INTRANET_USER_OTP_CHANGE_PHONE_1")?></a>
 			<div id="notify-banner-push-otp"></div>
-		<?endif?>
+		<?php endif; ?>
 	<?php
 	}
 	elseif (
@@ -61,16 +61,18 @@ use Bitrix\Main\Localization\Loc;
 			if ($arResult["OTP"]["IS_EXIST"])
 			{
 			?>
+				<?php if ($arResult["OTP"]["CAN_ACTIVATE_OTP"] === 'Y'): ?>
 				<a class="intranet-user-otp-con-top-status-link" href="javascript:void(0)" onclick="BX.Intranet.UserOtpConnected.activateUserOtp()"><?= GetMessage("INTRANET_USER_OTP_ACTIVATE")?></a>
+				<?php endif; ?>
 			<?php
 			}
 			else
 			{
-				if ($USER->GetID() == $arParams["USER_ID"]):?>
+				if ($USER->GetID() == $arParams["USER_ID"] && $arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'):?>
 					<a class="intranet-user-otp-con-top-status-link" href="javascript:void(0)" data-role="intranet-otp-change-phone">
 						<?= GetMessage("INTRANET_USER_OTP_SETUP")?>
 					</a>
-				<?else:?>
+				<?php elseif ($arResult["OTP"]["CAN_ACTIVATE_OTP"] === 'Y'): ?>
 					<a class="intranet-user-otp-con-top-status-link" href="javascript:void(0)" data-role="intranet-otp-defer">
 						<?= GetMessage("INTRANET_USER_OTP_PROROGUE")?>
 					</a>
@@ -79,7 +81,7 @@ use Bitrix\Main\Localization\Loc;
 			?>
 		</div>
 
-		<?if ($arResult["OTP"]["IS_EXIST"] && $USER->GetID() == $arParams["USER_ID"]):?>
+		<?if ($arResult["OTP"]["IS_EXIST"] && $USER->GetID() == $arParams["USER_ID"] && $arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'):?>
 			<a class="ui-btn ui-btn-light-border" href="javascript:void(0)" data-role="intranet-otp-change-phone">
 				<?= GetMessage("INTRANET_USER_OTP_CHANGE_PHONE_1")?>
 			</a>
@@ -111,10 +113,12 @@ use Bitrix\Main\Localization\Loc;
 				<?= GetMessage("INTRANET_USER_OTP_NOT_ACTIVE")?>
 			</span>
 
+			<?php if ($arResult["OTP"]["CAN_ACTIVATE_OTP"] === 'Y'): ?>
 			<a class="intranet-user-otp-con-top-status-link" href="javascript:void(0)" onclick="BX.Intranet.UserOtpConnected.activateUserOtp()"><?= GetMessage("INTRANET_USER_OTP_ACTIVATE")?></a>
+			<?php endif; ?>
 		</div>
 		<?php
-		if ($USER->GetID() == $arParams["USER_ID"])
+		if ($USER->GetID() == $arParams["USER_ID"] && $arResult["OTP"]["CAN_EDIT_OTP"] === 'Y')
 		{
 		?>
 			<a class="ui-btn ui-btn-light-border" href="javascript:void(0)" data-role="intranet-otp-change-phone">
@@ -149,7 +153,7 @@ use Bitrix\Main\Localization\Loc;
 			</span>
 		</div>
 		<?php
-		if ($USER->GetID() == $arParams["USER_ID"])
+		if ($USER->GetID() == $arParams["USER_ID"] && $arResult["OTP"]["CAN_EDIT_OTP"] === 'Y')
 		{
 			?>
 			<a class="ui-btn ui-btn-light-border" href="javascript:void(0)" data-role="intranet-otp-change-phone">
@@ -188,4 +192,3 @@ $arJSParams = [
 		BX.Intranet.UserOtpConnected.init(<?= CUtil::PhpToJSObject($arJSParams)?>);
 	});
 </script>
-

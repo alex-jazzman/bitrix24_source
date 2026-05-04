@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_navigationpanel,ui_analytics,ui_shortView,ui_entitySelector,ui_hint,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,main_core,main_core_events,ui_buttons) {
+(function (exports,ui_navigationpanel,ui_analytics,ui_shortView,ui_entitySelector,ui_hint,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,main_core,ui_buttons,main_core_events) {
 	'use strict';
 
 	var SidePanel = /*#__PURE__*/function (_EventEmitter) {
@@ -11578,6 +11578,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classCallCheck(this, Entry);
 	    this.setParams(params);
 	    this.buildView(params);
+	    main_core_events.EventEmitter.emit('Tasks.Scrum.Entry:onInit', {
+	      id: params.groupId
+	    });
 	  }
 	  babelHelpers.createClass(Entry, [{
 	    key: "setParams",
@@ -11690,5 +11693,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Entry = Entry;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI,BX.UI.Analytics,BX.UI.ShortView,BX.UI.EntitySelector,BX,BX,BX.Main,BX.UI.Dialogs,BX.UI.DragAndDrop,BX,BX,BX,BX.Event,BX.UI));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI,BX.UI.Analytics,BX.UI.ShortView,BX.UI.EntitySelector,BX,BX,BX.Main,BX.UI.Dialogs,BX.UI.DragAndDrop,BX,BX,BX,BX.UI,BX.Event));
 //# sourceMappingURL=script.js.map

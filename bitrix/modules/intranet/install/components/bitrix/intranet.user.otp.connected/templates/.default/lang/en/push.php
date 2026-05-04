@@ -10,5 +10,5 @@ $MESS["INTRANET_USER_OTP_LIST_SMS"] = "SMS code";
 $MESS["INTRANET_USER_OTP_LIST_SMS_DESCRIPTION"] = "SMS code to confirm login if you don't have access to the app.";
 $MESS["INTRANET_USER_OTP_LIST_SMS_HINT"] = "Confirm this number or provide a new one to receive login confirmation codes.";
 $MESS["INTRANET_USER_OTP_LIST_SMS_HINT_WITHOUT_CONNECT"] = "Specify phone number to receive login confirmation codes.";
-$MESS["INTRANET_USER_OTP_RECOVERY_TOOLTIP_DESCRIPTION"] = "You can use the recovery codes in the event the trusted device is not available.";
+$MESS["INTRANET_USER_OTP_RECOVERY_TOOLTIP_DESCRIPTION"] = "You can use the recovery codes if your trusted device isn’t available.";
 $MESS["INTRANET_USER_OTP_RECOVERY_TOOLTIP_TITLE"] = "Make sure you're stocked on recovery codes";

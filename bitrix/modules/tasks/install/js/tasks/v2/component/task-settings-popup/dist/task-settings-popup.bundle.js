@@ -19,6 +19,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      type: Boolean,
 	      required: true
 	    },
+	    hasContent: {
+	      type: Boolean,
+	      default: true
+	    },
 	    label: {
 	      type: String,
 	      default: ''
@@ -92,7 +96,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					@click="handleLockClick"
 				/>
 			</div>
-			<div v-if="modelValue && $slots.default" class="tasks-task-setting-content">
+			<div v-if="modelValue && hasContent" class="tasks-task-setting-content">
 				<slot/>
 			</div>
 		</div>
@@ -359,7 +363,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    }
 	  },
 	  created() {
-	    if (this.isEdit) {
+	    const isCreationByTemplate = Boolean(this.task.templateId);
+	    if (this.isEdit || isCreationByTemplate) {
 	      this.localDeadlineUserOption.requireDeadlineChangeReason = this.task.requireDeadlineChangeReason;
 	      this.localDeadlineUserOption.maxDeadlineChangeDate = this.task.maxDeadlineChangeDate;
 	      this.localDeadlineUserOption.maxDeadlineChanges = this.task.maxDeadlineChanges;
@@ -533,7 +538,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  inject: {
 	    task: {},
 	    taskId: {},
-	    isEdit: {}
+	    isEdit: {},
+	    isTemplate: {}
 	  },
 	  emits: ['updateFlags', 'updateDeadlineUserOption', 'freeze', 'unfreeze'],
 	  setup() {},
@@ -555,6 +561,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`,
+	      templateStateFlags: `${tasks_v2_const.Model.Interface}/templateStateFlags`,
 	      deadlineUserOption: `${tasks_v2_const.Model.Interface}/deadlineUserOption`
 	    }),
 	    isDefaultDeadlineActive: {
@@ -655,12 +662,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  },
 	  created() {
 	    this.localDeadlineUserOption.defaultDeadlineInSeconds = this.deadlineUserOption.defaultDeadlineInSeconds;
-	    if (this.isEdit) {
+	    const isCreationByTemplate = Boolean(this.task.templateId);
+	    if (this.isEdit || isCreationByTemplate) {
 	      this.localFlags.needsControl = this.isTaskControlLocked ? false : this.task.needsControl;
 	      this.localFlags.matchesWorkTime = this.isMatchesWorkTimeLocked ? false : this.task.matchesWorkTime;
 	      this.localDeadlineUserOption.canChangeDeadline = this.task.allowsChangeDeadline;
 	      this.localDeadlineUserOption.maxDeadlineChangeDate = this.task.maxDeadlineChangeDate;
 	      this.localDeadlineUserOption.maxDeadlineChanges = this.task.maxDeadlineChanges;
+	    } else if (this.isTemplate) {
+	      var _this$templateStateFl, _this$templateStateFl2;
+	      this.localFlags.needsControl = this.isTaskControlLocked ? false : (_this$templateStateFl = this.templateStateFlags.needsControl) != null ? _this$templateStateFl : false;
+	      this.localFlags.matchesWorkTime = this.isMatchesWorkTimeLocked ? false : (_this$templateStateFl2 = this.templateStateFlags.matchesWorkTime) != null ? _this$templateStateFl2 : false;
 	    } else {
 	      this.localFlags.needsControl = this.stateFlags.needsControl;
 	      this.localFlags.matchesWorkTime = this.stateFlags.matchesWorkTime;
@@ -688,6 +700,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				:featureId="taskControlFeatureId"
 			/>
 			<TaskSetting
+				v-if="!isTemplate"
 				v-model="isDefaultDeadlineActive"
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_DEADLINE_LABEL')"
 			>
@@ -699,10 +712,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 			</TaskSetting>
 			<TaskSetting
 				v-model="canChangeDeadline"
+				:hasContent="canChangeDeadline && !isTemplate"
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_DEADLINES_LABEL')"
 			>
 				<TaskDeadlineSettings
-					v-if="canChangeDeadline"
+					v-if="canChangeDeadline && !isTemplate"
 					@updateDeadlineUserOption="(data) => $emit('updateDeadlineUserOption', data)"
 					@freeze="$emit('freeze')"
 					@unfreeze="$emit('unfreeze')"
@@ -716,6 +730,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				:featureId="matchesWorkTimeFeatureId"
 			/>
 			<TaskSetting
+				v-if="!isTemplate"
 				v-model="autocompleteSubTasks"
 				:label="loc('TASKS_V2_TASK_SETTINGS_POPUP_AUTO_COMPLETE_SUBTASKS_LABEL')"
 				:lock="isAutocompleteSubTasksLocked"
@@ -738,7 +753,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  inject: {
 	    task: {},
 	    taskId: {},
-	    isEdit: {}
+	    isEdit: {},
+	    isTemplate: {}
 	  },
 	  props: {
 	    bindElement: {
@@ -764,6 +780,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      stateFlags: `${tasks_v2_const.Model.Interface}/stateFlags`,
+	      templateStateFlags: `${tasks_v2_const.Model.Interface}/templateStateFlags`,
 	      deadlineUserOption: `${tasks_v2_const.Model.Interface}/deadlineUserOption`
 	    }),
 	    options() {
@@ -791,10 +808,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDeadlineUserOption`, {
 	            defaultDeadlineInSeconds: this.pendingDeadlineUserOption.defaultDeadlineInSeconds
 	          });
-	          void tasks_v2_provider_service_stateService.stateService.set({
-	            defaultDeadline: this.deadlineUserOption
-	          });
+	          if (!this.isTemplate) {
+	            void tasks_v2_provider_service_stateService.stateService.set({
+	              defaultDeadline: this.deadlineUserOption
+	            });
+	          }
 	        }
+	      } else if (this.isTemplate) {
+	        await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTemplateStateFlags`, this.pendingFlagsData);
+	        void tasks_v2_provider_service_stateService.stateService.setTemplateFlags(this.templateStateFlags);
 	      } else {
 	        await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateStateFlags`, this.pendingFlagsData);
 	        await this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDeadlineUserOption`, this.pendingDeadlineUserOption);
@@ -806,11 +828,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          allowsTimeTracking: this.stateFlags.allowsTimeTracking
 	        });
 	      }
+	      this.$emit('close');
 	      await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        ...this.pendingFlagsData,
 	        ...this.pendingDeadlineUserOption
 	      });
-	      this.$emit('close');
 	      this.saving = false;
 	    },
 	    handleFlagsUpdate(updatedData) {
@@ -841,7 +863,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					<div class="tasks-task-settings-popup-title">
 						{{ loc('TASKS_V2_TASK_SETTINGS_POPUP_TITLE') }}
 					</div>
-					<QuestionMark :hintText="loc('TASKS_V2_TASK_SETTINGS_POPUP_TITLE_HINT')"/>
+					<QuestionMark v-if="!isTemplate" :hintText="loc('TASKS_V2_TASK_SETTINGS_POPUP_TITLE_HINT')"/>
 				</div>
 				<BIcon
 					:name="Outline.CROSS_L"

@@ -695,6 +695,45 @@
 		});
 	};
 
+	BX.TasksTimerManager.startTimer = function(taskId, timer)
+	{
+		const nowInSeconds = Math.floor(Date.now() / 1000);
+		const timerStartedAt = Number(timer.timerStartedAtTs) || null;
+		const elapsedSeconds = timerStartedAt
+			? nowInSeconds - timerStartedAt
+			: (Number(timer.timeElapsed) || 0);
+
+		const timerStartedAtOrDefault = timerStartedAt ?? (nowInSeconds - elapsedSeconds);
+
+		BX.onCustomEvent(window, 'onTaskTimerChange', [{
+			module: 'tasks',
+			action: 'start_timer',
+			taskId: Number(taskId),
+			taskData: {
+				ID: Number(taskId),
+				TIME_SPENT_IN_LOGS: Number(timer.timeSpentInLogs) || 0,
+				TIME_ESTIMATE: Number(timer.timeEstimate) || 0,
+				ALLOW_TIME_TRACKING: 'Y',
+			},
+			timerData: {
+				TASK_ID: Number(taskId),
+				USER_ID: timer.userId,
+				TIMER_STARTED_AT: timerStartedAtOrDefault,
+				RUN_TIME: elapsedSeconds,
+			},
+		}]);
+	};
+
+	BX.TasksTimerManager.stopTimer = function(taskId)
+	{
+		BX.onCustomEvent(window, 'onTaskTimerChange', [{
+			module: 'tasks',
+			action: 'stop_timer',
+			taskId,
+			taskData: { ID: taskId },
+		}]);
+	};
+
 
 	BX.TasksTimerManager.__doStart = function(taskId)
 	{

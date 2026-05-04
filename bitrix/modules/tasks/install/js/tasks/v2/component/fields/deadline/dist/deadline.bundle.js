@@ -474,6 +474,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	};
 
 	const unitDurations = main_date.DurationFormat.getUnitDurations();
+	const Presets = Object.freeze({
+	  DAY_1: {
+	    id: '1d',
+	    multiplier: 1
+	  },
+	  DAYS_3: {
+	    id: '3d',
+	    multiplier: 3
+	  },
+	  WEEK: {
+	    id: '7d',
+	    multiplier: 7
+	  },
+	  WEEKS_2: {
+	    id: '14d',
+	    multiplier: 14
+	  }
+	});
 
 	// @vue/component
 	const DeadlineAfterPopupContent = {
@@ -514,7 +532,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        return this.deadlineAfter;
 	      },
 	      set(deadlineAfter) {
-	        this.$emit('update', deadlineAfter);
+	        this.$emit('update', {
+	          id: null,
+	          duration: deadlineAfter
+	        });
 	      }
 	    },
 	    task() {
@@ -524,16 +545,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      var _this$task;
 	      const dayDuration = (_this$task = this.task) != null && _this$task.matchesWorkTime ? tasks_v2_lib_calendar.calendar.workdayDuration : unitDurations.d;
 	      return [{
-	        duration: dayDuration,
+	        ...Presets.DAY_1,
+	        duration: dayDuration * Presets.DAY_1.multiplier,
 	        title: new main_date.DurationFormat(unitDurations.d).format()
 	      }, {
-	        duration: dayDuration * 3,
+	        ...Presets.DAYS_3,
+	        duration: dayDuration * Presets.DAYS_3.multiplier,
 	        title: new main_date.DurationFormat(unitDurations.d * 3).format()
 	      }, {
-	        duration: dayDuration * 7,
+	        ...Presets.WEEK,
+	        duration: dayDuration * Presets.WEEK.multiplier,
 	        title: this.loc('TASKS_V2_DEADLINE_A_WEEK')
 	      }, {
-	        duration: dayDuration * 14,
+	        ...Presets.WEEKS_2,
+	        duration: dayDuration * Presets.WEEKS_2.multiplier,
 	        title: this.loc('TASKS_V2_DEADLINE_TWO_WEEKS')
 	      }];
 	    }
@@ -543,8 +568,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    this.deadlineAfter = (_this$task2 = this.task) == null ? void 0 : _this$task2.deadlineAfter;
 	  },
 	  methods: {
-	    applyPreset(duration) {
-	      this.duration = duration;
+	    applyPreset(preset) {
+	      this.$emit('update', preset);
 	      this.$emit('close');
 	    }
 	  },
@@ -554,12 +579,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<QuestionMark :hintText="loc('TASKS_V2_DEADLINE_AFTER_HINT')"/>
 		</div>
 		<div class="tasks-field-deadline-after-chips">
-			<template v-for="preset in presets" :key="preset.title">
+			<template v-for="preset in presets" :key="preset.id">
 				<Chip
 					:text="preset.title"
 					:design="ChipDesign.Outline"
 					:compact="false"
-					@click="applyPreset(preset.duration)"
+					@click="applyPreset(preset)"
 				/>
 			</template>
 		</div>
@@ -588,12 +613,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      type: [Number, null],
 	      required: true
 	    },
+	    presetId: {
+	      type: [String, null],
+	      default: null
+	    },
 	    bindElement: {
 	      type: HTMLElement,
 	      required: true
 	    }
 	  },
-	  emits: ['update:deadlineAfter', 'close'],
+	  emits: ['update:deadlineAfter', 'update:presetId', 'close'],
 	  computed: {
 	    options() {
 	      return {
@@ -607,8 +636,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  methods: {
-	    handleUpdate(dateTs) {
-	      this.$emit('update:deadlineAfter', dateTs);
+	    handleUpdate(preset) {
+	      this.$emit('update:deadlineAfter', preset.duration);
+	      this.$emit('update:presetId', preset.id);
 	    }
 	  },
 	  template: `
@@ -626,6 +656,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  id: tasks_v2_const.TaskField.Deadline,
 	  title: main_core.Loc.getMessage('TASKS_V2_DEADLINE_TITLE')
 	});
+
+	const unitDurations$1 = main_date.DurationFormat.getUnitDurations();
 
 	// @vue/component
 	const Deadline = {
@@ -684,7 +716,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      externalBindElement: null,
 	      coordinates: null,
 	      saveCallback: null,
-	      changeReason: ''
+	      changeReason: '',
+	      selectedPreset: null
 	    };
 	  },
 	  computed: {
@@ -797,7 +830,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  watch: {
-	    isSettingsPopupShown(value) {
+	    async isSettingsPopupShown(value) {
+	      if (this.isTemplate && value === false) {
+	        await this.$nextTick();
+	        this.recalculateDeadlineAfterFromPresets();
+	      }
 	      this.$emit('isSettingsPopupShown', value);
 	    }
 	  },
@@ -810,6 +847,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  created() {
 	    this.showErrorDebounce = main_core.Runtime.debounce(this.showError, 300);
+	    if (this.isTemplate) {
+	      this.setCurrentPreset();
+	    }
 	  },
 	  updated() {
 	    tasks_v2_lib_heightTransition.heightTransition.animate(this.$refs.container);
@@ -833,6 +873,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (!this.readonly) {
 	        this.showPopup();
 	      }
+	    },
+	    handleApplyPreset(presetId) {
+	      var _Object$values$find;
+	      this.selectedPreset = (_Object$values$find = Object.values(Presets).find(preset => preset.id === presetId)) != null ? _Object$values$find : null;
 	    },
 	    showPopup(bindElement, coordinates) {
 	      this.dateTs = this.deadlineTs;
@@ -887,7 +931,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      await this.setDeadline(0);
 	    },
 	    async setDeadline(dateTs) {
-	      this.dateTs = null;
 	      if (this.isTemplate) {
 	        await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	          deadlineAfter: dateTs
@@ -905,6 +948,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          this.showErrorDebounce(error);
 	        }
 	      }
+	      this.dateTs = null;
+	    },
+	    recalculateDeadlineAfterFromPresets() {
+	      var _this$$refs$deadline4, _this$$refs$deadline5;
+	      if (!this.selectedPreset) {
+	        return;
+	      }
+	      this.dateTs = this.calculateDayDuration() * this.selectedPreset.multiplier;
+	      void this.saveDeadline();
+	      (_this$$refs$deadline4 = this.$refs.deadline) == null ? void 0 : (_this$$refs$deadline5 = _this$$refs$deadline4.$el) == null ? void 0 : _this$$refs$deadline5.focus();
+	    },
+	    calculateDayDuration() {
+	      var _this$task;
+	      return (_this$task = this.task) != null && _this$task.matchesWorkTime ? tasks_v2_lib_calendar.calendar.workdayDuration : unitDurations$1.d;
+	    },
+	    setCurrentPreset() {
+	      var _Object$values$find2;
+	      const dayDuration = this.calculateDayDuration();
+	      this.selectedPreset = (_Object$values$find2 = Object.values(Presets).find(preset => this.deadlineTs === dayDuration * preset.multiplier)) != null ? _Object$values$find2 : null;
 	    },
 	    showError(error) {
 	      ui_notificationManager.Notifier.notifyViaBrowserProvider({
@@ -958,7 +1020,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					</TextMd>
 				</HoverPill>
 				<div
-					v-if="!isFlowFilledOnAdd && !isTemplate && !compact"
+					v-if="!isFlowFilledOnAdd && !compact"
 					class="tasks-field-deadline-settings-label"
 					ref="settings"
 				>
@@ -984,6 +1046,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			v-model:deadlineAfter="dateTs"
 			:taskId
 			:bindElement
+			@update:presetId="handleApplyPreset"
 			@close="handleClose"
 		/>
 		<DeadlineChangeReasonPopup

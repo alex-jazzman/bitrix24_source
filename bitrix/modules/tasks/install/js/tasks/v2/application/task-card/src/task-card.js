@@ -10,10 +10,18 @@ import type { TaskModel } from 'tasks.v2.model.tasks';
 
 export type Params = TaskModel & {
 	taskId?: number,
+	embedded?: boolean,
 	analytics: AnalyticsParams,
 	url?: string,
 	link?: LinkOptions,
 	closeCompleteUrl?: string,
+};
+
+export type EmbedParams = {
+	mount: () => void,
+	unmount: () => void,
+	taskId: number | string,
+	taskUrl: string,
 };
 
 export type AnalyticsParams = {
@@ -144,6 +152,22 @@ export class TaskCard
 		};
 
 		BX.SidePanel.Instance.open(params.url ?? this.getUrl(params.taskId), options);
+	}
+
+	static async embedFullCard(params: Params): Promise<EmbedParams>
+	{
+		let card = null;
+
+		const exports = await load('tasks.v2.application.task-full-card');
+
+		card = new exports.TaskFullCard(params);
+
+		return {
+			mount: (container: HTMLElement) => card?.mountEmbedded(container),
+			unmount: () => card?.unmountEmbedded(),
+			taskId: params?.taskId,
+			taskUrl: TaskCard.getUrl(params.taskId),
+		};
 	}
 
 	static getUrl(entityId: number | string, groupId: number): string

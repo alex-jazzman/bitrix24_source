@@ -15,6 +15,7 @@ import type {
 	StateFlags,
 	UserFieldScheme,
 } from './types';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 export class Interface extends BuilderModel
 {
@@ -25,6 +26,7 @@ export class Interface extends BuilderModel
 		return Interface.create().setVariables({
 			currentUserId: params.currentUser.id,
 			stateFlags: params.stateFlags,
+			templateStateFlags: params.templateStateFlags,
 			deadlineUserOption: params.deadlineUserOption,
 			taskUserFieldScheme: params.taskUserFieldScheme,
 			templateUserFieldScheme: params.templateUserFieldScheme,
@@ -46,6 +48,14 @@ export class Interface extends BuilderModel
 			stateFlags: this.getVariable('stateFlags', {
 				needsControl: false,
 				matchesWorkTime: false,
+				defaultRequireResult: false,
+				allowsTimeTracking: false,
+			}),
+			templateStateFlags: this.getVariable('templateStateFlags', {
+				needsControl: false,
+				matchesWorkTime: false,
+				defaultRequireResult: false,
+				allowsTimeTracking: false,
 			}),
 			deadlineUserOption: this.getVariable('deadlineUserOption', {
 				defaultDeadlineInSeconds: 0,
@@ -58,6 +68,7 @@ export class Interface extends BuilderModel
 			draggedCheckListId: null,
 			taskUserFieldScheme: this.getVariable('taskUserFieldScheme', []),
 			templateUserFieldScheme: this.getVariable('templateUserFieldScheme', []),
+			taskWithActiveTimer: null,
 		};
 	}
 
@@ -73,7 +84,9 @@ export class Interface extends BuilderModel
 			/** @function interface/titleFieldOffsetHeight */
 			titleFieldOffsetHeight: (state: InterfaceModelState): number => state.titleFieldOffsetHeight,
 			/** @function interface/stateFlags */
-			stateFlags: (state: InterfaceModelState): DeadlineUserOption => state.stateFlags,
+			stateFlags: (state: InterfaceModelState): StateFlags => state.stateFlags,
+			/** @function interface/templateStateFlags */
+			templateStateFlags: (state: InterfaceModelState): StateFlags => state.templateStateFlags,
 			/** @function interface/deadlineUserOption */
 			deadlineUserOption: (state: InterfaceModelState): DeadlineUserOption => state.deadlineUserOption,
 			/** @function interface/defaultDeadlineTs */
@@ -107,6 +120,8 @@ export class Interface extends BuilderModel
 			taskUserFieldScheme: (state: InterfaceModelState): UserFieldScheme[] => state.taskUserFieldScheme,
 			/** @function interface/templateUserFieldScheme */
 			templateUserFieldScheme: (state: InterfaceModelState): UserFieldScheme[] => state.templateUserFieldScheme,
+			/** @function interface/taskWithActiveTimer */
+			taskWithActiveTimer: (state: InterfaceModelState): ?TaskModel => state.taskWithActiveTimer,
 		};
 	}
 
@@ -129,6 +144,10 @@ export class Interface extends BuilderModel
 			/** @function interface/updateStateFlags */
 			updateStateFlags: (store, stateFlags: Partial<StateFlags>) => {
 				store.commit('setStateFlags', stateFlags);
+			},
+			/** @function interface/updateTemplateStateFlags */
+			updateTemplateStateFlags: (store, stateFlags: Partial<StateFlags>) => {
+				store.commit('setTemplateStateFlags', stateFlags);
 			},
 			/** @function interface/updateDeadlineUserOption */
 			updateDeadlineUserOption: (store, deadlineUserOption: Partial<DeadlineUserOption>) => {
@@ -166,6 +185,10 @@ export class Interface extends BuilderModel
 			updateTemplateUserFieldScheme: (store, templateUserFieldScheme: UserFieldScheme[]) => {
 				store.commit('setTemplateUserFieldScheme', templateUserFieldScheme);
 			},
+			/** @function interface/setTaskWithActiveTimer */
+			setTaskWithActiveTimer: (store, task: ?TaskModel) => {
+				store.commit('setTaskWithActiveTimer', task);
+			},
 		};
 	}
 
@@ -184,6 +207,12 @@ export class Interface extends BuilderModel
 			setStateFlags: (state: InterfaceModelState, stateFlags: Partial<StateFlags>) => {
 				state.stateFlags = {
 					...state.stateFlags,
+					...stateFlags,
+				};
+			},
+			setTemplateStateFlags: (state: InterfaceModelState, stateFlags: Partial<StateFlags>) => {
+				state.templateStateFlags = {
+					...state.templateStateFlags,
 					...stateFlags,
 				};
 			},
@@ -217,6 +246,9 @@ export class Interface extends BuilderModel
 			},
 			setTemplateUserFieldScheme: (state: InterfaceModelState, templateUserFieldScheme: UserFieldScheme[]) => {
 				state.templateUserFieldScheme = templateUserFieldScheme;
+			},
+			setTaskWithActiveTimer: (state: InterfaceModelState, task: ?TaskModel) => {
+				state.taskWithActiveTimer = task;
 			},
 		};
 	}

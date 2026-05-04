@@ -1,5 +1,6 @@
 import { Type, Reflection, Runtime, Dom, Browser } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
+
 import { ChatMenu } from './chat-menu';
 import { Composite } from './composite';
 import { LeftMenu } from './left-menu';
@@ -9,6 +10,8 @@ import { Footer } from './footer';
 import { GoTopButton } from './go-top-button';
 import { CollaborationMenu } from './collaboration-menu';
 import { RightPanel } from './right-panel';
+import { RightPanelAiChat } from './right-panel-ai-chat';
+import { RightSidebar } from './right-sidebar';
 
 export class SiteTemplate
 {
@@ -21,6 +24,8 @@ export class SiteTemplate
 	#goTopButton: GoTopButton | null = null;
 	#collaborationMenu: CollaborationMenu | null = null;
 	#rightPanel: RightPanel | null = null;
+	#rightPanelAiChat: RightPanelAiChat | null = null;
+	#rightSidebar: RightSidebar | null = null;
 
 	constructor()
 	{
@@ -41,6 +46,8 @@ export class SiteTemplate
 		this.#chatMenu = new ChatMenu();
 		this.#collaborationMenu = new CollaborationMenu();
 		this.#rightPanel = new RightPanel();
+		this.#rightPanelAiChat = new RightPanelAiChat(this.#rightPanel, this.#rightBar, this);
+		this.#rightSidebar = new RightSidebar(this.#rightPanel, this.#rightBar);
 
 		this.#applyUserAgentRules();
 	}
@@ -83,6 +90,16 @@ export class SiteTemplate
 	getRightPanel(): RightPanel
 	{
 		return this.#rightPanel;
+	}
+
+	getRightPanelAiChat(): RightPanelAiChat
+	{
+		return this.#rightPanelAiChat;
+	}
+
+	getRightSidebar(): RightSidebar
+	{
+		return this.#rightSidebar;
 	}
 
 	enterFullscreen(): void
@@ -156,6 +173,9 @@ export class SiteTemplate
 
 	setAvatarBlockBackground(background: BackgroundStyle): void
 	{
+		// hack for chat.js #showSidebar()
+		this.getRightSidebar().toggleContext();
+
 		Dom.style(document.getElementById('avatar-area'), {
 			backgroundImage: background?.backgroundImage ?? null,
 			backgroundColor: background?.backgroundColor ?? null,
