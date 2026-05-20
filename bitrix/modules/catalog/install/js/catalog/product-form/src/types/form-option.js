@@ -43,8 +43,6 @@ export type FormOption = {
 	isCatalogPriceEditEnabled: boolean,
 	isCatalogPriceSaveEnabled: boolean,
 	fieldHints: {},
-	facebookFailProducts?: Array,
-	isAllowedFacebookRegion: boolean,
 	ownerId: ?number,
 	ownerTypeId: ?number,
 	dialogId: ?string,

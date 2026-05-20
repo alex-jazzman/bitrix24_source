@@ -96,6 +96,7 @@ export default class MainPostForm extends EventEmitter
 			if (container)
 			{
 				container.setAttribute('data-bx-button-status', 'active');
+				container.setAttribute('aria-expanded', 'true');
 			}
 		}
 	}
@@ -108,6 +109,7 @@ export default class MainPostForm extends EventEmitter
 			if (container)
 			{
 				container.removeAttribute('data-bx-button-status');
+				container.setAttribute('aria-expanded', 'false');
 			}
 		}
 	}
@@ -529,6 +531,9 @@ export default class MainPostForm extends EventEmitter
 			'OnAddButton',
 			[{ BODY: this.#createDocumentButton, ID: 'disk-document' }, 'file'],
 		);
+
+		const container = this.#createDocumentButton.closest('[data-id="disk-document"]');
+		container?.setAttribute('aria-expanded', 'false');
 	}
 
 	#handleButtonClick(): void
@@ -561,6 +566,9 @@ export default class MainPostForm extends EventEmitter
 		{
 			this.deselectFileButton();
 		}
+
+		const fileButton = this.#eventObject?.querySelector('[data-id="file"]');
+		fileButton?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 	}
 
 	#handleDocumentPanelToggle(event: BaseEvent): void

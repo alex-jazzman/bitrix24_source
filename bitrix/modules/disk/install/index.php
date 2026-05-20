@@ -175,11 +175,16 @@ Class disk extends CModule
 
 		self::tryToEnableZipNginx();
 
-		CAgent::AddAgent(
-			name: 'Bitrix\Disk\Infrastructure\Agent\SwitchOnlyOfficeServersTypeAgent::run();',
-			module: 'disk',
-			interval: 300,
-		);
+		if (IsModuleInstalled('bitrix24'))
+		{
+			CAgent::AddAgent(
+				name: 'Bitrix\Disk\Infrastructure\Agent\SwitchOnlyOfficeServersTypeAgent::run();',
+				module: 'disk',
+				interval: 300,
+				next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
+				existError: false,
+			);
+		}
 
 		return true;
 	}

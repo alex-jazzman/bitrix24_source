@@ -604,24 +604,6 @@ create table if not exists b_catalog_product_compilation
 	index IX_CAT_COMPILATION_DEAL_ID(DEAL_ID)
 );
 
-create table if not exists b_catalog_exported_product
-(
-	ID int not null auto_increment,
-	PRODUCT_ID int not null,
-	SERVICE_ID varchar(100) not null,
-	TIMESTAMP_X datetime not null,
-	ERROR text null,
-	primary key (ID),
-	index IX_CAT_PR_EXP_PRID_SVID(PRODUCT_ID, SERVICE_ID)
-);
-
-create table if not exists b_catalog_exported_product_queue
-(
-	QUEUE_ID int not null,
-	PRODUCT_IDS text not null,
-	primary key (QUEUE_ID)
-);
-
 CREATE TABLE IF NOT EXISTS b_catalog_role
 (
 	ID INT UNSIGNED NOT NULL AUTO_INCREMENT,

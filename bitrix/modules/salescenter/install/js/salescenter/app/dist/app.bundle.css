@@ -2593,33 +2593,6 @@
 	border-bottom: 1px dashed rgba(var(--ui-color-base-70-rgb), 0.4);
 }
 
-.salescenter-app-catalog-facebook-connection-popup .salescenter-app-catalog-facebook-connection-popup--container {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
-	padding: 0 3px 4px 3px;
-}
-
-.salescenter-app-catalog-facebook-connection-popup .salescenter-app-catalog-facebook-connection-popup--title {
-	-webkit-box-ordinal-group: 0;
-	    -ms-flex-order: -1;
-	        order: -1;
-	font: var(--ui-font-weight-bold) 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #535c69;
-	text-align: center;
-}
-
-.salescenter-app-catalog-facebook-connection-popup .salescenter-app-catalog-facebook-connection-popup--button-container {
-	margin-top: 15px;
-	padding-top: 15px;
-	border-top: 1px solid rgba(var(--ui-color-base-90-rgb), var(--ui-opacity-10));
-	text-align: center;
-}
-
 .salescenter-app-explanation {
 	display: -webkit-box;
 	display: -ms-flexbox;

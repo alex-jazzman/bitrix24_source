@@ -323,37 +323,35 @@ else
 </div>
 <? $isBitrix24Template && $this->endViewTarget(); ?>
 
-<? if($arResult['STATUS_BIZPROC'] && $arResult['WORKFLOW_TEMPLATES']) { ?>
+<?php if($arResult['STATUS_BIZPROC'] && isset($arResult['WORKFLOW_TEMPLATES'])) { ?>
 	<div style="display:none;">
 		<form id="parametersFormBp">
 		<div id="divStartBizProc" class="bx-disk-form-bizproc-start-div">
 			<table class="bx-disk-form-bizproc-start-table">
 				<col class="bx-disk-col-table-left">
 				<col class="bx-disk-col-table-right">
-				<? if(!empty($arResult['WORKFLOW_TEMPLATES'])) {
-					if($arResult['BIZPROC_PARAMETERS']) {?>
+				<?php if (!empty($arResult['WORKFLOW_TEMPLATES'])) {
+					if ($arResult['BIZPROC_PARAMETERS']) {?>
 						<tr>
 							<td class="bx-disk-form-bizproc-start-td-title" colspan="2">
 								<?= Loc::getMessage('DISK_FOLDER_LIST_LABEL_START_BIZPROC') ?>
 							</td>
 						</tr>
 						<tr id="errorTr">
-							<td id="errorTd" class="bx-disk-form-bizproc-start-td-error" colspan="2">
-
-							</td>
+							<td id="errorTd" class="bx-disk-form-bizproc-start-td-error" colspan="2"></td>
 						</tr>
-					<? }
+					<?php }
 					foreach($arResult['WORKFLOW_TEMPLATES'] as $workflowTemplate)
 					{
-						if(!empty($workflowTemplate['PARAMETERS'])) { ?>
+						if (!empty($workflowTemplate['PARAMETERS'])) { ?>
 							<tr>
 								<td class="bx-disk-form-bizproc-start-td-name-bizproc" colspan="2">
-									<?= $workflowTemplate['NAME'] ?>
+									<?= htmlspecialcharsbx($workflowTemplate['NAME']) ?>
 									<input type="hidden" value="1" name="checkBp" />
 									<input type="hidden" value="create" name="autoExecute" />
 								</td>
 							</tr>
-						<?CBPDocument::StartWorkflowParametersShow($workflowTemplate['ID'], $workflowTemplate['PARAMETERS'], 'formAutoloadBizProc', false);
+						<?php CBPDocument::StartWorkflowParametersShow($workflowTemplate['ID'], $workflowTemplate['PARAMETERS'], 'formAutoloadBizProc', false);
 						}else { ?>
 							<tr>
 								<td class="bx-disk-form-bizproc-start-td-name-bizproc" colspan="2">
@@ -361,7 +359,7 @@ else
 									<input type="hidden" value="create" name="autoExecute" />
 								</td>
 							</tr>
-						<? }
+						<?php }
 					}
 				}
 				?>
@@ -369,7 +367,7 @@ else
 		</div>
 		</form>
 	</div>
-<? } ?>
+<?php } ?>
 
 <script>
 BX.message({

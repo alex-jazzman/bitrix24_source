@@ -551,9 +551,14 @@
 	    flex-wrap: wrap;
 }
 
-.salescenter-delivery-path-control .ui-ctl-icon-loader {
-	border-right: 1px solid #c6cdd3;
+.salescenter-delivery-path-control .ui-ctl-icon-loader,
+.salescenter-delivery-path-control .ui-ctl-icon-search,
+.salescenter-delivery-path-control .ui-ctl-icon-clear {
 	right: 0;
+}
+
+.salescenter-address-input-textbox {
+	width: 100%;
 }
 
 .sale-address-control-top-margin-width-820 {
@@ -1387,12 +1392,6 @@ textarea.ui-ctl-element.salescenter-delivery-comment-textarea {
 	-webkit-box-flex: 1;
 	    -ms-flex: 1;
 	        flex: 1;
-}
-
-.sale-address-control-path-input-wrapper input.ui-ctl-element {
-	border-right: none;
-	border-radius: 2px 0 0 2px;
-	padding-right: 0 !important;
 }
 
 .sale-address-control-path-input-clear {

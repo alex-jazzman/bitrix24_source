@@ -29,13 +29,21 @@ export class VibePage extends BaseSettingsPage
 	appendSections(contentNode: HTMLElement): void
 	{
 		let subSection = 'from_settings';
-		const analyticContext = this.getAnalytic()?.getContext();
+		const analyticContext = this.#getAnalyticContext();
+
 		if (
-			Type.isString(analyticContext.analyticContext)
-			&& analyticContext.analyticContext === 'widget_settings_settings'
+			analyticContext !== null
+			&& Type.isString(analyticContext.analyticContext)
 		)
 		{
-			subSection = 'from_widget_vibe_point';
+			if (analyticContext.analyticContext === 'widget_settings_settings_mainpage')
+			{
+				subSection = 'from_widget_vibe_point';
+			}
+			else if (analyticContext.analyticContext === 'from_custom_point')
+			{
+				subSection = 'from_custom_point';
+			}
 		}
 
 		this.#sendAnalytic({
@@ -51,6 +59,27 @@ export class VibePage extends BaseSettingsPage
 			});
 			vibeSection.appendSections(contentNode);
 		});
+	}
+
+	#getAnalyticContext(): void
+	{
+		const analytic = this.getAnalytic?.();
+		if (!analytic)
+		{
+			return null;
+		}
+
+		if (Type.isFunction(analytic.getContext))
+		{
+			return analytic.getContext();
+		}
+
+		if (Type.isPlainObject(analytic) && !Type.isNil(analytic.context))
+		{
+			return analytic.context;
+		}
+
+		return null;
 	}
 
 	#sendAnalytic(data: Object): void

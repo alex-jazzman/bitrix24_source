@@ -152,14 +152,7 @@ export default {
 		},
 		submitButtonLabel()
 		{
-			return this.editable && !this.$root.$app?.compilation
-				? Loc.getMessage('SALESCENTER_SEND')
-				: Loc.getMessage('SALESCENTER_RESEND')
-			;
-		},
-		isFacebookForm()
-		{
-			return this.$root.$app?.connector === 'facebook' && this.$root.$app?.isAllowedFacebookRegion;
+			return Loc.getMessage('SALESCENTER_SEND');
 		},
 		isShowDocumentSelector()
 		{
@@ -260,10 +253,6 @@ export default {
 		onSend(event)
 		{
 			this.$emit('stage-block-send-on-send', event);
-		},
-		onSendCompilationLinkToFacebook(event)
-		{
-			this.$emit('stage-block-send-on-send-compilation-link-to-facebook', event);
 		},
 		changeProvider(value)
 		{
@@ -380,10 +369,8 @@ export default {
 			/>
 			<send-block
 				@on-submit="onSend"
-				@on-submit-compilation-link-to-facebook="onSendCompilationLinkToFacebook"
 				:buttonEnabled="isSendAllowed"
 				:buttonLabel="submitButtonLabel"
-				:isFacebookForm="isFacebookForm"
 				:showWhatClientSeesControl="false"
 			/>
 			<timeline-block

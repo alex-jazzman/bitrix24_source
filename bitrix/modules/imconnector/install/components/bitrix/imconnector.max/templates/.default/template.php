@@ -231,6 +231,19 @@ else
 							</button>
 						</div>
 					</form>
+					<div class="imconnector-step-text imconnector-field-legal-docs-title">
+						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_MAX_LEGAL_DOCS_TITLE') ?>
+					</div>
+					<div class="imconnector-step-text">
+						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_MAX_LEGAL_DOCS', [
+							'#LICENCE_LINK_START#' => '<a href="https://business.max.ru/static/docs/general_licence.docx" target="_blank" class="imconnector-field-box-link">',
+							'#LICENCE_LINK_END#' => '</a>',
+							'#TERMS_LINK_START#' => '<a href="https://legal.max.ru/ps" target="_blank" class="imconnector-field-box-link">',
+							'#TERMS_LINK_END#' => '</a>',
+							'#PRIVACY_LINK_START#' => '<a href="https://legal.max.ru/pp" target="_blank" class="imconnector-field-box-link">',
+							'#PRIVACY_LINK_END#' => '</a>',
+						]) ?>
+					</div>
 				</div>
 			<?php endif; ?>
 			<?php

@@ -54,10 +54,6 @@ export default {
 		{
 			return this.$root.$app.isOrderPublicUrlAvailable;
 		},
-		compilation()
-		{
-			return this.$root.$app.compilation;
-		},
 		wrapperClass()
 		{
 			return {'salescenter-app-wrapper-fade': this.isFaded};

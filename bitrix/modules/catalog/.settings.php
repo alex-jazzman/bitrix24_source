@@ -61,13 +61,6 @@ return [
 					],
 				],
 				[
-					'entityId' => 'brand',
-					'provider' => [
-						'moduleId' => 'catalog',
-						'className' => '\\Bitrix\\Catalog\\v2\\Integration\\UI\\EntitySelector\\BrandProvider',
-					],
-				],
-				[
 					'entityId' => 'contractor',
 					'provider' => [
 						'moduleId' => 'catalog',

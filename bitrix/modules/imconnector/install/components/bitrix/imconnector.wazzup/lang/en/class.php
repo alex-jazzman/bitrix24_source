@@ -13,6 +13,7 @@ $MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_CONNECT_MSGVER_1"] = "A test connection w
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_DATA_SAVE"] = "No data to save.";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_SAVE"] = "An error occurred while saving. Please check the entered data and try again.";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_SAVE_MSGVER_1"] = "An error occurred while saving. Please check the entered data and try again.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_OAUTH_TOKEN_REVOKED"] = "Your session has expired. Please authorize again.";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_OK_CONNECT"] = "Test connection successful.";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_OK_CONNECT_MSGVER_1"] = "Test connection successful.";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_OK_SAVE"] = "Data saved successfully.";

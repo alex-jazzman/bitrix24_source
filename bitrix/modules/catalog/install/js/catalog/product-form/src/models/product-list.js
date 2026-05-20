@@ -64,7 +64,6 @@ export class ProductList extends VuexBuilderModel
 				isCustomPrice: 'N',
 				additionalFields: [],
 				properties: [],
-				brands: [],
 				weight: 0,
 				dimensions: {},
 			},

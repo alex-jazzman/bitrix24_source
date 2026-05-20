@@ -309,6 +309,7 @@ export class ProductSearchInputBarcode extends ProductSearchInputDefault
 
 	destroy(): void
 	{
+		super.destroy();
 		Event.unbind(this.getNameInput(), 'focus', this.onFocusHandler);
 		Event.unbind(this.getNameInput(), 'blur', this.onBlurHandler);
 	}
@@ -437,7 +438,6 @@ export class ProductSearchInputBarcode extends ProductSearchInputDefault
 
 			if (
 				!this.settingsCollection.get('isShowedBarcodeSpotlightInfo')
-				&& this.settingsCollection.get('isAllowedShowBarcodeSpotlightInfo')
 				&& this.selector.getConfig('ENABLE_INFO_SPOTLIGHT', true)
 			)
 			{

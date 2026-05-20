@@ -2207,7 +2207,7 @@ class AjaxProcessor
 
 	/* * * * * * * accessory methods * * * * * * * */
 
-	protected function getDemandedFields(array $demandedFields, array $incomingFields, \Bitrix\Sale\Order $order = null)
+	protected function getDemandedFields(array $demandedFields, array $incomingFields, ?\Bitrix\Sale\Order $order = null)
 	{
 		$result = array();
 		$userId = isset($incomingFields["USER_ID"]) && intval($incomingFields["USER_ID"]) > 0 ? intval($incomingFields["USER_ID"])  : 0;
@@ -2361,7 +2361,7 @@ class AjaxProcessor
 	 * @throws ArgumentNullException
 	 * @throws UserMessageException
 	 */
-	protected function getOrder(array $formData, Result &$result = null)
+	protected function getOrder(array $formData, ?Result &$result = null)
 	{
 		/** @var Sale\Order $orderClass */
 		$orderClass = $this->registry->getOrderClassName();

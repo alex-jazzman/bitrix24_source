@@ -14,4 +14,7 @@ return [
 		'disk:statemanager/redux/slices/files',
 		'disk:statemanager/redux/slices/files/selector',
 	],
+	'bundle' => [
+		'./src/utils',
+	],
 ];

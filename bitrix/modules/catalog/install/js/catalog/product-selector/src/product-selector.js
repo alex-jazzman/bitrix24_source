@@ -348,9 +348,6 @@ export class ProductSelector extends EventEmitter
 			return;
 		}
 
-		this.defineWrapperClass(wrapper);
-		wrapper.innerHTML = '';
-
 		const block = Tag.render`<div class="catalog-product-field-inner"></div>`;
 		Dom.append(this.layoutNameBlock(), block);
 
@@ -360,6 +357,9 @@ export class ProductSelector extends EventEmitter
 		}
 
 		Dom.append(this.getErrorContainer(), block);
+
+		this.defineWrapperClass(wrapper);
+		wrapper.innerHTML = '';
 
 		if (!this.isViewMode())
 		{
@@ -662,6 +662,11 @@ export class ProductSelector extends EventEmitter
 
 	#createSearchInput(): ProductSearchInputBase
 	{
+		if (this.getType() !== ProductSelector.INPUT_FIELD_BARCODE && this.searchInput)
+		{
+			this.searchInput.destroy();
+		}
+
 		if (this.placement)
 		{
 			return new ProductSearchInputPlacement(

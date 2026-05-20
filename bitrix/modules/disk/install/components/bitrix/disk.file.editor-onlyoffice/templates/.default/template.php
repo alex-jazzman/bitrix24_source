@@ -61,7 +61,6 @@ Extension::load([
 	'popup',
     'ui.dialogs.messagebox',
 	'ui.icon-set.main',
-	'ui.feedback.form',
 	'disk.onlyoffice-promo-actions',
 	'disk.url-cleaner',
 ]);
@@ -196,8 +195,6 @@ if (Context::getCurrent()->getLanguage() !== 'ru')
 $boostButtonContainerId = 'oo-editor-boost-button-container';
 
 $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
-
-$limitSlider = $arResult['LIMIT_SLIDER'] ?? null;
 ?>
 <style>
 	.ui-popupcomponentsmaker__header {
@@ -208,6 +205,30 @@ $limitSlider = $arResult['LIMIT_SLIDER'] ?? null;
 		background: rgb(73, 127, 228);
 		background: #467cdf;
 	}
+
+	.ui-popupcomponentsmaker-header-tariff__icon,
+	.ui-popupcomponentsmaker-header-tariff__more,
+	.ui-popupcomponentsmaker-header-tariff__title,
+	.ui-popupcomponentsmaker-header-tariff__subtitle,
+	.ui-popupcomponentsmaker-header-tariff__message-wrapper .ui-popupcomponentsmaker-header-tariff__title,
+	.ui-popupcomponentsmaker-header-tariff__message-wrapper .ui-popupcomponentsmaker-header-tariff__subtitle {
+		color: #fff;
+	}
+
+	.ui-popupcomponentsmaker-header-tariff__icon .ui-icon-set {
+		background-color: #fff;
+	}
+
+	.ui-popupcomponentsmaker-header-tariff__icon {
+		--ui-icon-set__icon-size: 35px;
+		margin-right: 5px;
+	}
+
+	.ui-popupcomponentsmaker-header-tariff__message-wrapper .ui-popupcomponentsmaker-header-tariff__text,
+	.ui-popupcomponentsmaker-header-tariff__message-wrapper .ui-popupcomponentsmaker-header-tariff__subtitle {
+		color: #f2f2f2;
+	}
+
 </style>
 <div data-id="<?= $containerId ?>-wrapper">
 	<div class="disk-fe-office-header">
@@ -293,16 +314,4 @@ $limitSlider = $arResult['LIMIT_SLIDER'] ?? null;
 			forceReloadPopupOkButton: '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_POPUP_OK_BUTTON')) ?>',
 		},
 	});
-
-	<?php if ($limitSlider === 'infoHelper'): ?>
-	BX.UI.InfoHelper.show('<?= $arResult['LIMIT_SLIDER_INFO_HELPER_CODE'] ?>');
-	<?php elseif ($limitSlider === 'feedbackForm'): ?>
-	BX.UI.Feedback.Form.open(
-		{
-			id: Math.random()+'',
-			forms: <?= $arResult['LIMIT_SLIDER_FEEDBACK_FORM_PARAMS']['forms'] ?>,
-			presets: <?= $arResult['LIMIT_SLIDER_FEEDBACK_FORM_PARAMS']['presets'] ?>,
-		}
-	);
-	<?php endif; ?>
 </script>

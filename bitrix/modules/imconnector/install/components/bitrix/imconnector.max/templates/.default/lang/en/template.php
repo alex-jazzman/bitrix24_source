@@ -17,8 +17,10 @@ $MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_2"] = "The CRM helps guide clie
 $MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_3"] = "You respond to clients quickly and wherever they prefer.";
 $MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_4"] = "Client questions are automatically distributed among managers based on queue rules.";
 $MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_SUBTITLE"] = "Respond to clients wherever they are comfortable and used to. If clients prefer to contact you in MAX, give them that option. You'll see, clients will appreciate it.";
-$MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_SUBTITLE_MSGVER_1"] = "Respond to clients wherever they are comfortable and used to. If clients prefer to contact you in MAX, give them that option. You'll see, clients will appreciate it.";
 $MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_SUBTITLE_LINK"] = "#LINK_START#Use your own chat bot#LINK_END# with Max messenger.";
+$MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_SUBTITLE_MSGVER_1"] = "Respond to clients wherever they are comfortable and used to. If clients prefer to contact you in MAX, give them that option. You'll see, clients will appreciate it.";
 $MESS["IMCONNECTOR_COMPONENT_MAX_INDEX_TITLE"] = "Chat with clients in MAX";
 $MESS["IMCONNECTOR_COMPONENT_MAX_INFO"] = "Information";
 $MESS["IMCONNECTOR_COMPONENT_MAX_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Instructions</span> for connecting MAX:";
+$MESS["IMCONNECTOR_COMPONENT_MAX_LEGAL_DOCS"] = "#LICENCE_LINK_START#General license#LICENCE_LINK_END#, #TERMS_LINK_START#User agreement#TERMS_LINK_END#, #PRIVACY_LINK_START#Privacy policy#PRIVACY_LINK_END#";
+$MESS["IMCONNECTOR_COMPONENT_MAX_LEGAL_DOCS_TITLE"] = "Read MAX documentation:";

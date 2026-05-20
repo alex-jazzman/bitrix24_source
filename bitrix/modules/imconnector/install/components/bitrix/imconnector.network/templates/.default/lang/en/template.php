@@ -12,6 +12,7 @@ $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_4"] = "Avatar";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_4_DESCRIPTION_1"] = "Unique avatar will let your clients find you faster.";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_4_DESCRIPTION_2"] = "Upload avatar";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_4_DESCRIPTION_3"] = "Delete picture";
+$MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_4_HINT"] = "JPG and PNG files are supported, maximum 5000 pixels in both dimensions.";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_5"] = "Searchable";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_6"] = "Search code";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FIELD_6_TIP"] = "This code lets users find your open channel in the messanger, even if not available for search.";

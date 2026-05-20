@@ -247,8 +247,8 @@ export default class MapPopup extends EventEmitter
 	#extractLatLon(address: Address): ?Array
 	{
 		let result = null;
-		let lat;
-		let lon;
+		let lat = null;
+		let lon = null;
 
 		if (address.latitude && address.longitude)
 		{

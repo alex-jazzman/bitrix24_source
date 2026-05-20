@@ -341,6 +341,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      const container = babelHelpers.classPrivateFieldLooseBase(this, _createDocumentButton)[_createDocumentButton].closest('[data-id="disk-document"]');
 	      if (container) {
 	        container.setAttribute('data-bx-button-status', 'active');
+	        container.setAttribute('aria-expanded', 'true');
 	      }
 	    }
 	  }
@@ -349,6 +350,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      const container = babelHelpers.classPrivateFieldLooseBase(this, _createDocumentButton)[_createDocumentButton].closest('[data-id="disk-document"]');
 	      if (container) {
 	        container.removeAttribute('data-bx-button-status');
+	        container.setAttribute('aria-expanded', 'false');
 	      }
 	    }
 	  }
@@ -665,6 +667,8 @@ this.BX.Disk = this.BX.Disk || {};
 	    BODY: babelHelpers.classPrivateFieldLooseBase(this, _createDocumentButton)[_createDocumentButton],
 	    ID: 'disk-document'
 	  }, 'file']);
+	  const container = babelHelpers.classPrivateFieldLooseBase(this, _createDocumentButton)[_createDocumentButton].closest('[data-id="disk-document"]');
+	  container == null ? void 0 : container.setAttribute('aria-expanded', 'false');
 	}
 	function _handleButtonClick2() {
 	  const container = babelHelpers.classPrivateFieldLooseBase(this, _createDocumentButton)[_createDocumentButton].closest('[data-id="disk-document"]');
@@ -675,12 +679,15 @@ this.BX.Disk = this.BX.Disk || {};
 	  }
 	}
 	function _handleUploaderPanelToggle2(event) {
+	  var _babelHelpers$classPr;
 	  const isOpen = event.getData().isOpen;
 	  if (isOpen) {
 	    this.selectFileButton();
 	  } else {
 	    this.deselectFileButton();
 	  }
+	  const fileButton = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _eventObject)[_eventObject]) == null ? void 0 : _babelHelpers$classPr.querySelector('[data-id="file"]');
+	  fileButton == null ? void 0 : fileButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 	}
 	function _handleDocumentPanelToggle2(event) {
 	  const isOpen = event.getData().isOpen;

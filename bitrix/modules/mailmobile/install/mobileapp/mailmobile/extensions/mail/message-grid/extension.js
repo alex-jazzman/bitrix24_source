@@ -780,6 +780,8 @@ jn.define('mail/message-grid', (require, exports, module) => {
 		};
 
 		#onTabSelected = (tab) => {
+			BX.postComponentEvent('mail.message-grid:onTabSelected', [{ tabId: tab.id }]);
+
 			const currentFolder = selectCurrentFolder(store.getState());
 
 			if (tab.id === FILTER_PRESET_UNREAD

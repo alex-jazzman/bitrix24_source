@@ -14,21 +14,11 @@ export default {
 			type: Boolean,
 			required: true,
 		},
-		isFacebookForm: {
-			type: Boolean,
-			required: false,
-			default: false,
-		},
 	},
 	computed: {
 		buttonClass()
 		{
 			return {'salescenter-app-payment-by-sms-item-disabled': this.buttonEnabled === false};
-		},
-		showSubmitCompilationLinkToFacebookButton()
-		{
-			const isCompilationMode = this.$store.getters['orderCreation/isCompilationMode'];
-			return this.isFacebookForm && isCompilationMode;
 		},
 	},
 	methods: {
@@ -39,10 +29,6 @@ export default {
 		submit(event)
 		{
 			this.$emit('on-submit', event);
-		},
-		submitCompilationLinkToFacebook(event)
-		{
-			this.$emit('on-submit-compilation-link-to-facebook', event);
 		},
 	},
 	template: `
@@ -64,13 +50,6 @@ export default {
 								class="ui-btn ui-btn-lg ui-btn-success ui-btn-round"
 							>
 								{{buttonLabel}}
-							</div>
-							<div
-								v-if="showSubmitCompilationLinkToFacebookButton"
-								@click="submitCompilationLinkToFacebook($event)"
-								class="ui-btn ui-btn-lg ui-btn-light-border ui-btn-round"
-							>
-								${Loc.getMessage('SALESCENTER_SEND_COMPILATION_LINK_TO_FACEBOOK')}
 							</div>
 							<div
 								v-if="showWhatClientSeesControl"

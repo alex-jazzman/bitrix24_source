@@ -516,8 +516,8 @@ this.BX.Location = this.BX.Location || {};
 	}
 	function _extractLatLon2(address) {
 	  var result = null;
-	  var lat;
-	  var lon;
+	  var lat = null;
+	  var lon = null;
 	  if (address.latitude && address.longitude) {
 	    lat = address.latitude;
 	    lon = address.longitude;

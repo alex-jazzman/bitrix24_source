@@ -238,14 +238,33 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 			return;
 		}
 
-		$workflowParameters = array();
-		$search = 'bizproc';
-		foreach ($this->request->getPostList() as $idParameter => $valueParameter)
+		$parametersAreSigned = false;
+		if (
+			$this->request->getPost('workflowParameters')
+			&& is_string($this->request->getPost('workflowParameters'))
+			&& \Bitrix\Main\Loader::includeModule('bizproc')
+		)
 		{
-			$res = mb_strpos($idParameter, $search);
-			if ($res === 0)
+			$workflowParameters = [];
+			$signedWorkflowParameters = $this->request->getPost('workflowParameters');
+			$unsignedWorkflowParameters = CBPDocument::unSignParameters($signedWorkflowParameters);
+			if ($unsignedWorkflowParameters)
 			{
-				$workflowParameters[$idParameter] = $valueParameter;
+				$parametersAreSigned = true;
+				$workflowParameters = $unsignedWorkflowParameters;
+			}
+		}
+		else
+		{
+			$workflowParameters = [];
+			$search = 'bizproc';
+			foreach ($this->request->getPostList() as $idParameter => $valueParameter)
+			{
+				$res = mb_strpos($idParameter, $search);
+				if ($res === 0)
+				{
+					$workflowParameters[$idParameter] = $valueParameter;
+				}
 			}
 		}
 
@@ -254,7 +273,8 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 			\Bitrix\Disk\BizProcDocument::runAfterCreateWithInputParameters(
 				$file->getStorageId(),
 				$file->getId(),
-				$workflowParameters
+				$workflowParameters,
+				$parametersAreSigned
 			);
 		}
 		elseif($this->request->getPost('autoExecute') === 'edit')
@@ -262,7 +282,8 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 			\Bitrix\Disk\BizProcDocument::runAfterEditWithInputParameters(
 				$file->getStorageId(),
 				$file->getId(),
-				$workflowParameters
+				$workflowParameters,
+				$parametersAreSigned
 			);
 		}
 	}

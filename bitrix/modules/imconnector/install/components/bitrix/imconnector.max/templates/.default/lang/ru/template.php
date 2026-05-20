@@ -23,3 +23,5 @@ $MESS['IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_1'] = 'Контакты и пе
 $MESS['IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_2'] = 'CRM помогает вести клиента по воронке продаж';
 $MESS['IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_3'] = 'Вы отвечаете клиентам быстро и там, где им удобно';
 $MESS['IMCONNECTOR_COMPONENT_MAX_INDEX_LIST_ITEM_4'] = 'Вопросы от клиентов автоматически распределяются между менеджерами по правилам очереди';
+$MESS['IMCONNECTOR_COMPONENT_MAX_LEGAL_DOCS_TITLE'] = 'Ознакомьтесь с документами MAX:';
+$MESS['IMCONNECTOR_COMPONENT_MAX_LEGAL_DOCS'] = '#LICENCE_LINK_START#Общие условия лицензии#LICENCE_LINK_END#, #TERMS_LINK_START#Пользовательское соглашение#TERMS_LINK_END#, #PRIVACY_LINK_START#Политика конфиденциальности#PRIVACY_LINK_END#';

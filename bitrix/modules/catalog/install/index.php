@@ -207,14 +207,6 @@ class catalog extends CModule
 		);
 
 		$eventManager->registerEventHandler(
-			'seo',
-			'OnCatalogWebhook',
-			'catalog',
-			'\Bitrix\Catalog\v2\Integration\Seo\Facebook\FacebookFacade',
-			'onCatalogWebhookHandler'
-		);
-
-		$eventManager->registerEventHandler(
 			'sale',
 			'OnSaleCheckPrepareData',
 			'catalog',
@@ -547,14 +539,6 @@ class catalog extends CModule
 		$eventManager->unRegisterEventHandler('report', 'onDefaultBoardsCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onDefaultBoardsCollect');
 		$eventManager->unRegisterEventHandler('report', 'onReportsCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onReportHandlerCollect');
 		$eventManager->unRegisterEventHandler('report', 'onReportViewCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onViewsCollect');
-
-		$eventManager->unRegisterEventHandler(
-			'seo',
-			'OnCatalogWebhook',
-			'catalog',
-			'\Bitrix\Catalog\v2\Integration\Seo\Facebook\FacebookFacade',
-			'onCatalogWebhookHandler'
-		);
 
 		$eventManager->unRegisterEventHandler(
 			'sale',

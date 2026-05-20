@@ -5,9 +5,12 @@
 	var repo = [];
 	BX.DiskUpload = function(params)
 	{
-		this.bp = params['bp'];
-		this.bpParameters = params['bpParameters'];
-		this.bpParametersRequired = params['bpParametersRequired'];
+		this.bp = params.bp;
+		this.bpParameters = params.bpParameters;
+		this.bpParametersRequired = params.bpParametersRequired;
+		this.signedDocumentType = params.signedDocumentType;
+		this.signedDocumentId = params.signedDocumentId;
+
 		this.storageId = params["storageId"];
 		this.ajaxUrl = '/bitrix/components/bitrix/disk.folder.list/ajax.php';
 		this.CID = params["CID"];
@@ -184,26 +187,44 @@
 				}
 			}
 		},
-		onItemIsAdded : function()
+		onItemIsAdded : async function()
 		{
 			if (this.popup)
-				this.popup.show();
-			else if(this.bp && this.bpParameters)
 			{
-				var content = BX.findChildren(this.nodeContent);
+				this.popup.show();
+			}
+			else if (this.bp && this.bpParameters)
+			{
+				const content = BX.findChildren(this.nodeContent);
+
+				let showAutoStartParametersSlider = null;
+				await this.loadBPStarter()
+					.then(({ callback }) => {
+						showAutoStartParametersSlider = callback;
+					})
+					.catch(() => {})
+				;
+
 				content.unshift(BX('parametersFormBp'));
+
 				this.popup = BX.Disk.modalWindow({
 					modalId: 'bx-dfu-upload-' + this.CID,
 					closeIcon: false,
 					title: BX.message('DFU_UPLOAD_TITLE1'),
 					contentClassName: ' tac bx-disk-upload-file',
 					withoutWindowManager: true,
-					content: content,
-					events : {
-						onPopupFirstShow : this._onUploadWindowFirstShow,
+					content,
+					events: {
+						onPopupFirstShow: this._onUploadWindowFirstShow,
+						onPopupShow: () => {
+							if (showAutoStartParametersSlider)
+							{
+								showAutoStartParametersSlider();
+							}
+						},
 						onPopupClose: function () {
 							BX.reload();
-						}
+						},
 					},
 					zIndex: -200,
 					htmlButtons: [
@@ -290,6 +311,119 @@
 
 			BX.removeCustomEvent(this.agent, "onItemIsAdded", this._onItemIsAdded);
 		},
+		async loadBPStarter() {
+			const contentNode = BX('divStartBizProc');
+			if (!contentNode || !this.signedDocumentType)
+			{
+				return Promise.reject();
+			}
+
+			let showParametersSliderCallback = null;
+			let slider = null;
+			let button = null;
+
+			await BX.Runtime.loadExtension('bizproc.workflow.starter').then(({ Starter }) => {
+				if (Starter)
+				{
+					// see CBPDocumentEventType::Create = 1; CBPDocumentEventType::Edit = 2;
+					const autoExecuteType = BX.Type.isStringFilled(this.signedDocumentId) ? 2 : 1;
+
+					const starter = new Starter({
+						signedDocumentType: this.signedDocumentType,
+						signedDocumentId: this.signedDocumentId,
+					});
+
+					const renderHiddenFields = () => {
+						return BX.Tag.render`
+							<div>
+								<input type="hidden" value="1" name="checkBp"/>
+								<input
+									type="hidden"
+									value="${autoExecuteType === 1 ? 'create' : 'edit'}"
+									name="autoExecute"
+								/>
+							</div>
+						`;
+					};
+
+					const rememberParametersCallback = ({ parameters }) => {
+						if (parameters)
+						{
+							BX.Dom.clean(contentNode);
+							BX.Dom.append(
+								BX.Tag.render`
+									<div>
+										<input
+											type="hidden"
+											name="workflowParameters"
+											value="${BX.Text.encode(parameters)}"
+										/>
+										${renderHiddenFields()}
+									</div>
+								`,
+								contentNode,
+							);
+							button.setText(BX.Loc.getMessage('DFU_CHANGE_BP_PARAMETERS'));
+						}
+					};
+
+					showParametersSliderCallback = (b, event) => {
+						if (event && event.preventDefault)
+						{
+							event.preventDefault();
+						}
+
+						if (slider)
+						{
+							BX.SidePanel.Instance.open(slider.getUrl());
+
+							return;
+						}
+
+						starter.showAutoStartParametersPopup(autoExecuteType, {
+							callback: rememberParametersCallback,
+						});
+
+						slider = BX.SidePanel.Instance.getTopSlider();
+						if (slider)
+						{
+							slider.setCacheable(true);
+							BX.Event.EventEmitter.subscribe(slider, 'SidePanel.Slider:onCloseComplete', () => {
+								const dictionary = slider.getData();
+								if (dictionary && dictionary.has('data'))
+								{
+									rememberParametersCallback({
+										parameters: dictionary.get('data').signedParameters || null,
+									});
+								}
+							});
+						}
+					};
+
+					BX.Dom.clean(contentNode);
+					BX.Dom.append(renderHiddenFields(), contentNode);
+
+					button = new BX.UI.Button({
+						text: BX.Loc.getMessage('DFU_FILL_BP_PARAMETERS'),
+						color: BX.UI.Button.Color.PRIMARY,
+						size: BX.UI.Button.Size.SMALL,
+						events: {
+							click: showParametersSliderCallback,
+						},
+					});
+					BX.Dom.prepend(button.render(), BX('parametersFormBp'));
+					BX.Dom.style(BX('parametersFormBp'), 'text-align', 'left');
+				}
+			})
+				.catch(() => {})
+			;
+
+			return (
+				showParametersSliderCallback
+					? Promise.resolve({ callback: showParametersSliderCallback })
+					: Promise.reject()
+			);
+		},
 		onStartBizproc : function()
 		{
 			if(BX('formPostAjax').getElementsByTagName('div').length)
@@ -339,7 +473,11 @@
 					{
 						agent.submit();
 						BX('formPostAjax').removeChild(BX('divStartBizProc'));
-						BX('errorTd').innerHTML = '';
+						if (BX('errorTd'))
+						{
+							BX('errorTd').innerHTML = '';
+						}
+
 						if(!BX.hasClass(BX('bx-disk-savebp-button'), 'bx-hide-button'))
 						{
 							BX.toggleClass(BX('bx-disk-upload-button'), 'bx-hide-button');
@@ -412,7 +550,7 @@
 		{
 			if (!this.agent.getItem(item.id))
 			{
-				return;	
+				return;
 			}
 			item.__progressBar = BX(item.id + 'Progress');
 			if (item.__progressBar)

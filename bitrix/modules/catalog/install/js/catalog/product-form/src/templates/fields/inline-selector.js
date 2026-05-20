@@ -49,14 +49,6 @@ Vue.component(
 		{
 			changeProductSelectorImageRequire(event: BaseEvent)
 			{
-				const isCompilationMode = event.getData()?.isCompilationMode;
-				const isFacebookForm = event.getData()?.isFacebookForm;
-
-				this.productSelector.setConfig(
-					'ENABLE_EMPTY_IMAGES_ERROR',
-					isCompilationMode && isFacebookForm,
-				);
-
 				this.productSelector.checkEmptyImageError();
 				this.productSelector.layoutErrors();
 			},
@@ -71,13 +63,6 @@ Vue.component(
 					fields.PRICE = this.getField('basePrice');
 					fields.CURRENCY = this.options.currency;
 				}
-
-				const basketItemOfferId = this.basketItem.offerId;
-				const facebookFailProducts = this.options.facebookFailProducts;
-				const hasFacebookError = (
-					Type.isObject(facebookFailProducts)
-					&& facebookFailProducts.hasOwnProperty(basketItemOfferId)
-				);
 
 				const selectorOptions = {
 					iblockId: this.options.iblockId,
@@ -107,7 +92,6 @@ Vue.component(
 							: ProductSelector.FULL_VIEW_FORMAT
 						,
 					},
-					failedProduct: hasFacebookError,
 					mode: this.editable ? ProductSelector.MODE_EDIT : ProductSelector.MODE_VIEW,
 					fields,
 				};
@@ -174,7 +158,6 @@ Vue.component(
 						MEASURE_CODE: data.fields.MEASURE_CODE,
 						MEASURE_NAME: data.fields.MEASURE_NAME,
 						MORE_PHOTO: data.morePhoto,
-						BRANDS: data.fields.BRANDS,
 						IS_NEW: data.isNew,
 					};
 

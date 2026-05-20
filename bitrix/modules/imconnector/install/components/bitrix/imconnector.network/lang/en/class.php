@@ -1,4 +1,5 @@
 <?php
+$MESS["IMCONNECTOR_COMPONENT_NETWORK_FILE_EXCEEDS_MAX_SIZE"] = "Your image is too large. Use images under 5000 by 5000 pixels.";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FILE_IS_NOT_A_SUPPORTED_TYPE"] = "File upload error. Only .JPG and .PNG files are supported.";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_MODULE_IMCONNECTOR_NOT_INSTALLED"] = "The External Messenger Connectors Module is not installed";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_MODULE_IMOPENLINES_NOT_INSTALLED"] = "The Open Channels Module is not active";

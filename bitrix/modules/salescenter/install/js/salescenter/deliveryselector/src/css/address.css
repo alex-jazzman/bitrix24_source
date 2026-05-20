@@ -145,35 +145,6 @@
 	flex: 1;
 }
 
-.sale-address-control-path-input-wrapper input.ui-ctl-element {
-	border-right: none;
-	border-radius: 2px 0 0 2px;
-	padding-right: 0 !important;
-}
-
-.sale-address-control-path-input-clear {
-	position: relative;
-	border: 1px solid #bfc4c7;
-	height: 37px;
-	margin: -1px 0 0 1px;
-	border-radius: 0 2px 2px 0;
-	border-left: none;
-	transition: .25s !important;
-	animation: none !important;
-}
-
-input:focus + .sale-address-control-path-input-clear,
-input:hover + .sale-address-control-path-input-clear {
-	border-color: #66afe9;
-	opacity: 1;
-}
-
-.ui-ctl-danger .sale-address-control-path-input-clear,
-.ui-ctl-danger:hover .sale-address-control-path-input-clear {
-	border-color: #ff5752;
-	opacity: 1;
-}
-
 .sale-address-control-old {
 	flex: 1;
 	flex-basis: 100%;

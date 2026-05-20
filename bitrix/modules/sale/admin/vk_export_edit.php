@@ -134,14 +134,32 @@ if (defined('LANG') && LANG != 'ru')
 
 ///////////////////////////////////////////////////////////////////
 //get and save AUTH CODE
-if (isset($request["code"]) && !empty($request["code"]) && $exportId)
+if (isset($request['code']) && !empty($request['code']) && $exportId)
 {
-	$vkSettings["OAUTH"]["CODE"] = $request["code"];
-	$vkSettings["OAUTH"]["CODE_TIME"] = time();    //set expires time for code
+	if ($vkSettings['OAUTH']['STATE'] !== $request['state'])
+	{
+		try
+		{
+			$logger = new Vk\Logger($exportId);
+			$logger->addError('VK_INVALID_STATE');
+		}
+		catch (Vk\ExecuteException $e){}
 
-	$tokenUrl = $vk->getTokenUrl($exportId, $currPageSettingsTabUrl, $vkSettings["OAUTH"]["CODE"]);
-	$http = new HttpClient();
-	$responseStr = $http->get($tokenUrl);
+		LocalRedirect("sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANGUAGE_ID);
+	}
+
+	$vkSettings['OAUTH']['CODE'] = $request['code'];
+	$vkSettings['OAUTH']['CODE_TIME'] = time();    //set expires time for code
+	$vkSettings['OAUTH']['DEVICE_ID'] = $request['device_id'];
+
+	$tokenUrl = $vk->getTokenUrl();
+	$tokenParams = $vk->getTokenParams($currPageSettingsTabUrl, $vkSettings);
+	$responseStr = '';
+	if ($tokenParams)
+	{
+		$http = new HttpClient();
+		$responseStr = $http->post($tokenUrl, $tokenParams);
+	}
 
 //	check answer from VK
 	if ($responseStr == '')
@@ -309,7 +327,14 @@ else
 {
 	$authButtonText = "SALE_VK_SETTINGS_ACCESS_TOKEN_GET_BUTTON";
 }
-$authUrl = $vk->getAuthUrl($exportId, $currPageSettingsTabUrl);
+$authUrl = '';
+if ($exportId)
+{
+	$vkSettings['OAUTH']['CODE_VERIFIER'] = $vk->generateCodeVerifier();
+	$vkSettings['OAUTH']['STATE'] = $vk->generateState();
+	$vk->saveSettings(['SETTINGS' => $vkSettings, 'EXPORT_ID' => $exportId]);
+	$authUrl = $vk->getAuthUrl($currPageSettingsTabUrl, $vkSettings);
+}
 
 
 

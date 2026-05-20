@@ -189,15 +189,6 @@ return [
 		],
 		'readonly' => true,
 	],
-	'extendableTariffs' => [
-		'value' => [
-			'std',
-			'pro100',
-			'ent250',
-			'ent500',
-		],
-		'readonly' => true,
-	],
 	'customServers' => [
 		'value' => [
 			'r7' => [

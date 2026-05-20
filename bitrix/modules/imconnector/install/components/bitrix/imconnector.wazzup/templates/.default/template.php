@@ -4,6 +4,7 @@
 
 <?php
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\ImConnector\Connector;
 
@@ -33,6 +34,10 @@ if ($arParams['INDIVIDUAL_USE'] !== 'Y')
 $placeholder = ' placeholder="' . Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_PLACEHOLDER') . '"';
 $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 ?>
+
+<script>
+	window.WAZZUP_OAUTH_TRUSTED_ORIGINS = <?= Json::encode($arResult['OAUTH_TRUSTED_ORIGINS']) ?>;
+</script>
 
 	<form action="<?= $arResult['URL']['DELETE']; ?>" method="post" id="form_delete_<?= $arResult['CONNECTOR']; ?>">
 		<input type="hidden" name="<?= $arResult['CONNECTOR']; ?>_form" value="true">
@@ -134,11 +139,10 @@ $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 		<?php endif; ?>
 	</div>
 
-	<?php include 'messages.php'; ?>
-
 	<?php if (!empty($arResult['STATUS'])): ?>
+		<?php include 'messages.php'; ?>
 		<?php include 'info.php'; ?>
-	<?php else: ?>
+	<?php elseif (empty($arResult['ACTIVE_STATUS'])): ?>
 		<div class="imconnector-field-container">
 			<div class="imconnector-field-section">
 				<?php include 'connection-help.php'; ?>
@@ -167,7 +171,7 @@ $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_CONNECTED'); ?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_FINAL_FORM_DESCRIPTION_MGSVER_1'); ?>
+						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_FINAL_FORM_DESCRIPTION_MSGVER_1'); ?>
 					</div>
 				<?php endif; ?>
 			</div>
@@ -175,18 +179,17 @@ $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 
 		<?php include 'messages.php'; ?>
 
-		<div class="imconnector-field-section imconnector-field-section-control">
-			<div class="imconnector-field-box">
+		<?php if (!empty($arResult['HAS_API_KEY'])): ?>
+			<div class="imconnector-field-section imconnector-field-section-control">
 				<form action="<?= $arResult['URL']['SIMPLE_FORM_EDIT']; ?>"
 					method="post"
-					class="imconnector-field-control-box-border"
 				>
 					<input type="hidden" name="<?= $arResult['CONNECTOR']; ?>_form" value="true">
 					<input type="hidden" name="<?= $arResult['CONNECTOR']; ?>_active">
 					<?= bitrix_sessid_post(); ?>
 
 					<div class="imconnector-step-text">
-						<label for="imconnector-wazzup-auth-token">
+						<label for="imconnector-wazzup-api-key">
 							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_API_KEY_MSGVER_1'); ?>
 						</label>
 					</div>
@@ -194,12 +197,12 @@ $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 						class="imconnector-field-control-input"
 						id="imconnector-wazzup-api-key"
 						name="api_key"
-							<?php if (isset($arResult['placeholder']['api_key'])): ?>
-								value="<?= htmlspecialcharsbx($arResult['placeholder']['api_key']); ?>"
-								disabled
-							<?php else: ?>
-								value="<?= htmlspecialcharsbx($arResult['FORM']['api_key']); ?>"
-							<?php endif; ?>
+						<?php if (isset($arResult['placeholder']['api_key'])): ?>
+							value="<?= htmlspecialcharsbx($arResult['placeholder']['api_key']); ?>"
+							disabled
+						<?php else: ?>
+							value="<?= htmlspecialcharsbx($arResult['FORM']['api_key']); ?>"
+						<?php endif; ?>
 					>
 
 					<?php if (!empty($arResult['CHANNELS'])): ?>
@@ -208,11 +211,14 @@ $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_CHANNEL'); ?>
 							</label>
 						</div>
-						<select class="imconnector-field-control-input imconnector-field-control-select" id="imconnector-wazzup-channel" name="channel">
+						<select class="imconnector-field-control-input imconnector-field-control-select"
+							id="imconnector-wazzup-channel"
+							name="channel"
+						>
 							<?php foreach ($arResult['CHANNELS'] as $channel): ?>
-								<?php if ($channel['state'] == 'active'): ?>
+								<?php if ($channel['state'] === 'active'): ?>
 									<option value="<?= htmlspecialcharsbx($channel['channelId']); ?>"
-										<?= $channel === $arResult['FORM']['channel'] ? 'selected' : ''; ?>
+										<?= $channel['channelId'] === $arResult['FORM']['channel'] ? 'selected' : ''; ?>
 									>
 										<?= htmlspecialcharsbx($channel['title']); ?>: <?= htmlspecialcharsbx($channel['name']); ?>
 									</option>
@@ -231,27 +237,110 @@ $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 							class="imconnector-field-control-input"
 							id="imconnector-wazzup-channel-fake"
 							name="channel-fake"
-							value="<?= $arResult['placeholder']['channel']; ?>"
+							value="<?= htmlspecialcharsbx($arResult['placeholder']['channel']); ?>"
 							disabled
 						>
 					<?php endif; ?>
 
-					<div class="imconnector-step-text">
-						<button class="ui-btn ui-btn-success"
+					<div class="imconnector-field-control-btn" style="margin-top: 20px;">
+						<button class="ui-btn ui-btn-success imconnector-field-control-btn-right"
 								id="webform-small-button-have"
+								type="submit"
 								name="<?= $arResult['CONNECTOR']; ?>_save"
-								value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT'); ?>">
-							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT'); ?>
+								value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_SAVE'); ?>">
+							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_SAVE'); ?>
 						</button>
 					</div>
 				</form>
 			</div>
 
-			<?php if (empty($arResult['INFO_CONNECTION'])): ?>
-				<?php include 'connection-help.php'; ?>
-			<?php else: ?>
-				<?php include 'info.php'; ?>
-			<?php endif; ?>
-		</div>
+		<?php elseif (!empty($arResult['HAS_OAUTH_TOKENS']) && !empty($arResult['CHANNELS']) && empty($arResult['NO_AVAILABLE_CHANNELS'])): ?>
+			<div class="imconnector-field-section imconnector-field-section-control">
+				<form action="<?= $arResult['URL']['SIMPLE_FORM_EDIT']; ?>"
+					method="post"
+				>
+					<input type="hidden" name="<?= $arResult['CONNECTOR']; ?>_form" value="true">
+					<input type="hidden" name="<?= $arResult['CONNECTOR']; ?>_active">
+					<?= bitrix_sessid_post(); ?>
+
+					<div class="imconnector-step-text">
+						<label for="imconnector-wazzup-channel">
+							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_CHANNEL'); ?>
+						</label>
+					</div>
+					<select class="imconnector-field-control-input imconnector-field-control-select"
+						id="imconnector-wazzup-channel"
+						name="channel"
+						required
+					>
+						<option value=""><?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_SELECT_CHANNEL'); ?></option>
+						<?php foreach ($arResult['CHANNELS'] as $channel): ?>
+							<?php if ($channel['state'] == 'active'): ?>
+								<option value="<?= htmlspecialcharsbx($channel['channelId']); ?>">
+									<?= htmlspecialcharsbx($channel['title']); ?>: <?= htmlspecialcharsbx($channel['name']); ?>
+								</option>
+							<?php endif; ?>
+						<?php endforeach; ?>
+					</select>
+
+					<div class="imconnector-field-control-btn" style="margin-top: 20px;">
+						<button class="ui-btn ui-btn-success imconnector-field-control-btn-right"
+								id="imconnector-wazzup-oauth-save"
+								type="submit"
+								name="<?= $arResult['CONNECTOR']; ?>_save"
+								value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_SAVE'); ?>"
+								disabled>
+							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_SAVE'); ?>
+						</button>
+					</div>
+				</form>
+			</div>
+
+		<?php elseif (!empty($arResult['HAS_OAUTH_TOKENS'])): ?>
+			<div class="imconnector-field-container">
+				<div class="imconnector-field-section">
+					<div class="imconnector-field-main-title">
+						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_NO_CHANNELS_TITLE') ?>
+					</div>
+					<div class="imconnector-field-box">
+						<div class="imconnector-field-box-content">
+							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_NO_CHANNELS_DESC') ?>
+						</div>
+					</div>
+					<div class="imconnector-field-social-connector">
+						<div class="connector-icon ui-icon ui-icon-service-<?= $iconCode ?> imconnector-field-social-connector-icon"><i></i></div>
+						<div class="ui-btn ui-btn-light-border"
+							onclick="return openWazzupOAuthPopup('<?= htmlspecialcharsbx(CUtil::JSEscape($arResult['FORM']['authorization_url'])) ?>');">
+							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_OAUTH_BUTTON') ?>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		<?php else: ?>
+			<div class="imconnector-field-container">
+				<div class="imconnector-field-section">
+					<div class="imconnector-field-main-title">
+						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_AUTHORIZATION') ?>
+					</div>
+					<div class="imconnector-field-box">
+						<div class="imconnector-field-box-content">
+							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_LOG_IN_OAUTH') ?>
+						</div>
+					</div>
+					<div class="imconnector-field-social-connector">
+						<div class="connector-icon ui-icon ui-icon-service-<?= $iconCode ?> imconnector-field-social-connector-icon"><i></i></div>
+						<div class="ui-btn ui-btn-light-border"
+							onclick="return openWazzupOAuthPopup('<?= htmlspecialcharsbx(CUtil::JSEscape($arResult['FORM']['authorization_url'])) ?>');">
+							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_WAZZUP_OAUTH_BUTTON') ?>
+						</div>
+					</div>
+				</div>
+			</div>
+		<?php endif; ?>
+
+		<?php if (!empty($arResult['INFO_CONNECTION'])): ?>
+			<?php include 'info.php'; ?>
+		<?php endif; ?>
 	</div>
 <?php endif; ?>

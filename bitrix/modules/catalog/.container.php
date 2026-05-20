@@ -10,9 +10,6 @@ use Bitrix\Catalog\v2\Image\ImageFactory;
 use Bitrix\Catalog\v2\Image\ImageRepository;
 use Bitrix\Catalog\v2\Image\MorePhotoImage;
 use Bitrix\Catalog\v2\Image\PreviewImage;
-use Bitrix\Catalog\v2\Integration\Seo\Facebook\FacebookFacade;
-use Bitrix\Catalog\v2\Integration\Seo\Facebook\FacebookProductProcessor;
-use Bitrix\Catalog\v2\Integration\Seo\Facebook\FacebookProductRepository;
 use Bitrix\Catalog\v2\IoC\Container;
 use Bitrix\Catalog\v2\IoC\Dependency;
 use Bitrix\Catalog\v2\MeasureRatio\MeasureRatioCollection;
@@ -132,8 +129,4 @@ return [
 	StoreProductFactory::STORE_PRODUCT_COLLECTION => StoreProductCollection::class,
 
 	'sku.tree' => SkuTree::class,
-
-	'integration.seo.facebook.facade' => FacebookFacade::class,
-	'integration.seo.facebook.product.processor' => FacebookProductProcessor::class,
-	'integration.seo.facebook.product.repository' => FacebookProductRepository::class,
 ];

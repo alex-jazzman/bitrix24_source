@@ -26,7 +26,3 @@ $MESS["BT_MOD_CATALOG_ERR_BEFORE_DEL_TITLE"] = "Ошибка при удален
 $MESS["BT_MOD_CATALOG_ERR_CANNOT_DEACTIVE_SKU_PROPERTY"] = "Свойство ##SKU_PROPERTY_ID# нельзя деактивировать, т.к. оно является связкой инфоблока товаров ##PRODUCT_IBLOCK_ID# и торговых предложений ##IBLOCK_ID#";
 $MESS["BT_MOD_CATALOG_ERR_CANNOT_SET_MULTIPLE_SKU_PROPERTY"] = "Свойство ##SKU_PROPERTY_ID# нельзя сделать множественным, т.к. оно является связкой инфоблока товаров ##PRODUCT_IBLOCK_ID# и торговых предложений ##IBLOCK_ID#";
 $MESS["BT_MOD_CATALOG_ERR_CANNOT_CHANGE_TYPE_SKU_PROPERTY"] = "Нельзя изменить тип свойства ##SKU_PROPERTY_ID#, т.к. оно является связкой инфоблока товаров ##PRODUCT_IBLOCK_ID# и торговых предложений ##IBLOCK_ID#";
-$MESS["BT_MOD_CATALOG_ERR_CANNOT_DELETE_BRAND_PROPERTY"] = "Нельзя удалить свойство \"Бренд\". Это системное свойство используется для отправки товаров в открытых линиях.";
-$MESS["BT_MOD_CATALOG_ERR_CANNOT_CHANGE_BRAND_PROPERTY_NAME"] = "Нельзя изменить название свойства \"Бренд\". Это системное свойство используется для отправки товаров в открытых линиях.";
-$MESS["BT_MOD_CATALOG_ERR_CANNOT_CHANGE_BRAND_PROPERTY_CODE"] = "Нельзя изменить код свойства \"Бренд\". Это системное свойство используется для отправки товаров в открытых линиях.";
-$MESS["BT_MOD_CATALOG_ERR_CANNOT_CHANGE_BRAND_PROPERTY_MULTIPLE"] = "Нельзя изменить множественность свойства \"Бренд\". Это системное свойство используется для отправки товаров в открытых линиях.";

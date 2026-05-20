@@ -16,7 +16,6 @@ import "./fields/price";
 import "./fields/discount";
 import "./fields/tax";
 import "./fields/inline-selector";
-import "./fields/brand";
 import "./fields/result-sum";
 import {ProductModel} from "catalog.product-model";
 
@@ -59,7 +58,6 @@ Vue.component(config.templateRowName,
 					result: FormInputCode.RESULT,
 					discount: FormInputCode.DISCOUNT,
 					tax: FormInputCode.TAX,
-					brand: FormInputCode.BRAND,
 					measure: FormInputCode.MEASURE,
 				},
 				errorCodes: {
@@ -67,8 +65,7 @@ Vue.component(config.templateRowName,
 					emptyImage: FormErrorCode.EMPTY_IMAGE,
 					emptyQuantity: FormErrorCode.EMPTY_QUANTITY,
 					emptyPrice: FormErrorCode.EMPTY_PRICE,
-					emptyBrand: FormErrorCode.EMPTY_BRAND,
-				}
+				},
 			};
 		},
 		created()
@@ -110,7 +107,6 @@ Vue.component(config.templateRowName,
 						NAME: this.basketItem.fields?.name || '',
 						MODULE: this.basketItem.fields?.module || '',
 						PROPERTIES: this.basketItem.fields?.properties || {},
-						BRAND: this.basketItem.fields?.brand || {},
 						PRODUCT_ID: this.basketItem.fields?.productId,
 						ID: this.basketItem.fields?.skuId || this.basketItem.fields?.productId,
 						SKU_ID: this.basketItem.fields?.skuId,
@@ -197,7 +193,6 @@ Vue.component(config.templateRowName,
 						measureCode: modelFields.MEASURE_CODE || '',
 						measureName: modelFields.MEASURE_NAME || '',
 						properties: modelFields.PROPERTIES || {},
-						brands: modelFields.BRANDS || [],
 						taxId: modelFields.TAX_ID,
 						type: modelFields.TYPE,
 						morePhoto: modelFields.MORE_PHOTO,
@@ -237,7 +232,6 @@ Vue.component(config.templateRowName,
 					);
 					this.processFields(fields);
 					this.setCalculatedFields(fields);
-					this.$emit('onInlineSelectorProductChange', this.basketItem.fields.brands);
 				},
 				onProductSelect()
 				{
@@ -250,10 +244,6 @@ Vue.component(config.templateRowName,
 				},
 				onProductClear()
 				{
-					if (Type.isPlainObject(this.options.facebookFailProducts))
-					{
-						delete this.options.facebookFailProducts[this.basketItem.offerId];
-					}
 					/*const fields = this.model.getCalculator().calculatePrice(0);
 
 					fields.BASE_PRICE = 0;
@@ -344,17 +334,6 @@ Vue.component(config.templateRowName,
 						this.changeRowData({sum: fields.SUM});
 					}
 				},
-				changeBrand(eventData): void
-				{
-					const brands = Type.isArray(eventData.resultValues) ? eventData.resultValues : [];
-					const isSelectedByProductChange = eventData.isSelectedByProductChange;
-					this.processFields({ BRANDS: brands });
-
-					if (!isSelectedByProductChange)
-					{
-						this.saveCatalogField(['BRANDS']);
-					}
-				},
 				onChangeQuantity(quantity: number): void
 				{
 					this.model.getCalculator().setFields();
@@ -421,10 +400,6 @@ Vue.component(config.templateRowName,
 				},
 				removeItem()
 				{
-					if (Type.isPlainObject(this.options.facebookFailProducts))
-					{
-						delete this.options.facebookFailProducts[this.basketItem.offerId];
-					}
 					this.$emit('removeItem', {
 						index: this.basketItemIndex
 					});
@@ -439,7 +414,7 @@ Vue.component(config.templateRowName,
 				},
 				isCompilationMode(): boolean
 				{
-					return this.mode === FormMode.COMPILATION_READ_ONLY || this.mode === FormMode.COMPILATION;
+					return this.mode === FormMode.COMPILATION;
 				},
 				getPriceValue()
 				{
@@ -589,10 +564,6 @@ Vue.component(config.templateRowName,
 				{
 					return this.showDiscountBlock && this.basketItem.showDiscount === 'Y';
 				},
-				getBrandsSelectorId(): string
-				{
-					return this.basketItem.selectorId + '_brands';
-				},
 				getPriceExclusive(): ?number
 				{
 					return this.basketItem.fields.priceExclusive || this.basketItem.fields.price
@@ -658,7 +629,7 @@ Vue.component(config.templateRowName,
 				},
 				isReadOnly(): boolean
 				{
-					return this.mode === FormMode.READ_ONLY || this.mode === FormMode.COMPILATION_READ_ONLY;
+					return this.mode === FormMode.READ_ONLY;
 				},
 				getErrorsText(): string
 				{
@@ -667,24 +638,6 @@ Vue.component(config.templateRowName,
 						: ''
 					;
 					const basketItemOfferId = this.basketItem.offerId;
-					const facebookFailProducts = this.options.facebookFailProducts;
-					const facebookFailProductErrorText = Type.isObject(facebookFailProducts)
-						? facebookFailProducts[basketItemOfferId]
-						: null
-					;
-
-					if (facebookFailProductErrorText)
-					{
-						if (errorText)
-						{
-							errorText += '<br>';
-						}
-						errorText +=
-							Loc.getMessage('CATALOG_FORM_FACEBOOK_ERROR')
-							+ ':<br>'
-							+ facebookFailProductErrorText
-						;
-					}
 
 					return errorText;
 				},
@@ -718,31 +671,6 @@ Vue.component(config.templateRowName,
 							@saveCatalogField="saveCatalogField"
 						/>
 					</div>
-					<div
-						v-if="isVisibleBlock(blocks.brand)"
-						class="catalog-pf-product-input-brand-wrapper"
-						v-bind:class="[
-							{ 'catalog-pf-product-input-brand-wrapper-readonly': this.isReadOnly},
-							{ 'catalog-pf-product-input-brand-wrapper-readonly-no-sku': this.isReadOnly && !this.hasSku}
-						]"
-					>
-						<div class="catalog-pf-product-item-section">
-							<div class="catalog-pf-product-label">{{localize.CATALOG_FORM_BRAND_TITLE}}</div>
-						</div>
-						<${config.templateFieldBrand}
-							:brands="basketItem.fields.brands"
-							:selectorId="getBrandsSelectorId"
-							:hasError="hasError(errorCodes.emptyBrand)"
-							:options="options"
-							:editable="isEditableField(blocks.brand)"
-							@changeBrand="changeBrand"
-							@saveCatalogField="saveCatalogField"
-						/>
-						<div v-if="hasError(errorCodes.emptyBrand)" class="catalog-pf-product-item-section">
-							<div class="catalog-product-error">{{localize.CATALOG_FORM_ERROR_EMPTY_BRAND_1}}</div>
-						</div>
-					</div>
-	
 				</div>
 				<div class="catalog-pf-product-item--right">
 					<div class="catalog-pf-product-item-section">

@@ -24,32 +24,6 @@ $isEnabledQrAuth = $isInstallMobileApp || (bool)\CUserOptions::GetOption('produc
 
 $isShowedBarcodeSpotlightInfo = \CUserOptions::GetOption('spotlight', 'view_date_selector_barcode_scanner_info');
 
-$isAllowedShowBarcodeSpotlightInfo = false;
-if (
-	!$isShowedBarcodeSpotlightInfo
-	&& \Bitrix\Main\Loader::includeModule('catalog')
-	&& \Bitrix\Main\Loader::includeModule('iblock')
-)
-{
-	$catalogId = CCrmCatalog::GetDefaultID();
-	$product = \CIBlockElement::GetList(
-		false,
-		['IBLOCK_ID' => $catalogId],
-		false,
-		['nTopCount' => 1],
-		['ID']
-	)->Fetch();
-	$hasProducts = !empty($product);
-
-	$arrivalDocuments = StoreDocumentTable::getRow([
-		'select' => ['ID'],
-		'filter' => ['=DOC_TYPE' => StoreDocumentTable::TYPE_ARRIVAL],
-	]);
-	$hasArrivalDocuments = !empty($arrivalDocuments);
-
-	$isAllowedShowBarcodeSpotlightInfo = $hasProducts && $hasArrivalDocuments;
-}
-
 return [
 	'css' => 'dist/product-selector.bundle.css',
 	'js' => 'dist/product-selector.bundle.js',
@@ -82,7 +56,6 @@ return [
 		'isInstallMobileApp' => $isInstallMobileApp,
 		'isEnabledQrAuth' => $isEnabledQrAuth,
 		'isShowedBarcodeSpotlightInfo' => $isShowedBarcodeSpotlightInfo,
-		'isAllowedShowBarcodeSpotlightInfo' => $isAllowedShowBarcodeSpotlightInfo,
 		'errorAdminHint' =>
 			Loader::includeModule('bitrix24')
 				? Loc::getMessage('CATALOG_SELECTOR_SEARCH_POPUP_DISABLED_ADMIN_B4_HINT')

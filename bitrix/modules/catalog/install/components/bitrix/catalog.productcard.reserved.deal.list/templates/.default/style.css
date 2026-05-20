@@ -16,3 +16,8 @@
 {
 	height: calc(100vh - 100px) !important;
 }
+
+.ui-side-panel-wrap-workarea.ui-page-slider-workarea-content-padding
+{
+	background-color: transparent;
+}

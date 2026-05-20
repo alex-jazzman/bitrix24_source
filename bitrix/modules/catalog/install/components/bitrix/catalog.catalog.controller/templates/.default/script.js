@@ -18,6 +18,7 @@
 						condition: [
 							'/shop/settings/cat_section_edit/',
 							'/shop/settings/cat_product_edit/',
+							'/shop/settings/userfield_edit/',
 						],
 						handler: this.adjustSidePanelOpener,
 					},

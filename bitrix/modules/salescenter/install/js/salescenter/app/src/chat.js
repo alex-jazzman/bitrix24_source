@@ -350,11 +350,6 @@ export default {
 				this.isShowPayment = true;
 				this.isShowPreview = false;
 
-				if (this.compilation)
-				{
-					return;
-				}
-
 				let title = this.getPaymentItemTitle() || this.localize.SALESCENTER_DEFAULT_TITLE;
 
 				this.setPageTitle(title);
@@ -418,11 +413,7 @@ export default {
 			{
 				return (this.currentPage && this.isShowPreview && this.currentPage.id === page.id);
 			},
-			sendCompilationLinkToFacebook(event)
-			{
-				this.send(event, 'n',true)
-			},
-			send(event, skipPublicMessage = 'n', sendCompilationLinkToFacebook = false)
+			send(event, skipPublicMessage = 'n')
 			{
 				if(!this.isAllowedSubmitButton)
 				{
@@ -432,7 +423,7 @@ export default {
 				{
 					if (this.$store.getters['orderCreation/isCompilationMode'])
 					{
-						this.$root.$app.sendCompilation(event.target, sendCompilationLinkToFacebook);
+						this.$root.$app.sendCompilation(event.target);
 					}
 					else
 					{
@@ -653,10 +644,7 @@ export default {
 
 			sendButtonLabel()
 			{
-				return this.editable && !this.$root.$app?.compilation
-					? Loc.getMessage('SALESCENTER_SEND')
-					: Loc.getMessage('SALESCENTER_RESEND')
-					;
+				return Loc.getMessage('SALESCENTER_SEND');
 			},
 
 			pagesSubmenuHeight()
@@ -766,12 +754,6 @@ export default {
 				}
 				return this.currentPage;
 			},
-			showSubmitCompilationLinkToFacebookButton()
-			{
-				const isCompilationMode = this.$store.getters['orderCreation/isCompilationMode'];
-
-				return this.$root.$app.connector === 'facebook' && this.$root.$app.isAllowedFacebookRegion && isCompilationMode;
-			},
 			isNoPaymentSystemsBannerVisible()
 			{
 				return this.$root.$app.options.showPaySystemSettingBanner;
@@ -793,14 +775,9 @@ export default {
 		>
 			<div class="ui-sidepanel-sidebar salescenter-app-sidebar" ref="sidebar">
 				<ul class="ui-sidepanel-menu" ref="sidepanelMenu">
-					<li v-if="this.$root.$app.isPaymentCreationAvailable && !this.compilation" :class="{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}" class="ui-sidepanel-menu-item" @click="showPaymentForm">
+					<li v-if="this.$root.$app.isPaymentCreationAvailable" :class="{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}" class="ui-sidepanel-menu-item" @click="showPaymentForm">
 						<a class="ui-sidepanel-menu-link">
 							<div class="ui-sidepanel-menu-link-text">{{getPaymentItemTitle()}}</div>
-						</a>
-					</li>
-					<li v-if="this.compilation" :class="{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}" class="ui-sidepanel-menu-item" @click="showPaymentForm">
-						<a class="ui-sidepanel-menu-link">
-							<div class="ui-sidepanel-menu-link-text">{{this.compilation.TITLE_TAB}}</div>
 						</a>
 					</li>
 					<li :class="{'salescenter-app-sidebar-menu-active': isPagesOpen}" class="ui-sidepanel-menu-item">
@@ -911,21 +888,12 @@ export default {
 						v-if="isShowPayment && !isShowStartInfo"
 						:key="order.basketVersion"
 						@stage-block-send-on-send="send($event)"
-						@stage-block-send-on-send-compilation-link-to-facebook="sendCompilationLinkToFacebook($event)"
 					/>
 		        </template>
 			</div>
 			<div class="ui-button-panel-wrapper salescenter-button-panel" ref="buttonsPanel">
 				<div class="ui-button-panel">
 					<button :class="{'ui-btn-disabled': !this.isAllowedSubmitButton}" class="ui-btn ui-btn-md ui-btn-success" @click="send($event)">{{sendButtonLabel}}</button>
-					<button
-						v-if="showSubmitCompilationLinkToFacebookButton"
-						:class="{'ui-btn-disabled': !this.isAllowedSubmitButton}"
-						class="ui-btn ui-btn-md ui-btn-light-border"
-						@click="sendCompilationLinkToFacebook($event)"
-					>
-						{{localize.SALESCENTER_SEND_COMPILATION_LINK_TO_FACEBOOK}}
-					</button>
 					<button class="ui-btn ui-btn-md ui-btn-link" @click="close">{{localize.SALESCENTER_CANCEL}}</button>
 					<button v-if="isShowPayment && !isShowStartInfo && !this.$root.$app.isPaymentsLimitReached && this.$root.$app.isWithOrdersMode" class="ui-btn ui-btn-md ui-btn-link btn-send-crm" @click="send($event, 'y')">{{localize.SALESCENTER_SAVE_ORDER}}</button>
 				</div>

@@ -11,7 +11,7 @@ import { PopupMenu } from 'main.popup';
 
 import { PriceCalculator } from './price.calculator';
 import { AccessDeniedInput } from './access.denied.input';
-import { FieldScheme, ProductCalculator} from 'catalog.product-calculator';
+import { FieldScheme, ProductCalculator } from 'catalog.product-calculator';
 
 type Action = {
 	type: string,
@@ -90,7 +90,7 @@ export class Row
 		this.id = id;
 	}
 
-	getSettings()
+	getSettings(): Object
 	{
 		return this.settings;
 	}
@@ -889,20 +889,20 @@ export class Row
 			.getCalculator()
 			.setFields(this.#getCalculateProductFields())
 			.setSettings(this.getEditor().getSettings())
-			;
+		;
 	}
 
 	#getCalculateProductFields(): FieldScheme
 	{
 		return {
-			'PRICE': this.getPrice(),
-			'BASE_PRICE': this.getBasePrice(),
-			'PRICE_EXCLUSIVE': this.getPriceExclusive(),
-			'PRICE_NETTO': this.getPriceNetto(),
-			'PRICE_BRUTTO': this.getPriceBrutto(),
-			'QUANTITY': this.getQuantity(),
-			'TAX_INCLUDED': this.getTaxIncluded(),
-			'TAX_RATE': this.getTaxRate()
+			PRICE: this.getPrice(),
+			BASE_PRICE: this.getBasePrice(),
+			PRICE_EXCLUSIVE: this.getPriceExclusive(),
+			PRICE_NETTO: this.getPriceNetto(),
+			PRICE_BRUTTO: this.getPriceBrutto(),
+			QUANTITY: this.getQuantity(),
+			TAX_INCLUDED: this.getTaxIncluded(),
+			TAX_RATE: this.getTaxRate(),
 		};
 	}
 
@@ -1592,7 +1592,7 @@ export class Row
 	updateUiCurrencyFields()
 	{
 		const currencyText = this.getEditor().getCurrencyText();
-		const currencyId = `${this.getEditor().getCurrencyId()}`;
+		const currencyId = String(this.getEditor().getCurrencyId());
 
 		const currencyFieldNames = ['BASE_PRICE_CURRENCY', 'PURCHASING_PRICE_CURRENCY'];
 		currencyFieldNames.forEach((name) => {
@@ -1643,7 +1643,7 @@ export class Row
 		}
 	}
 
-	getUiFieldName(field)
+	getUiFieldName(field): string | null
 	{
 		let result = null;
 
@@ -1667,7 +1667,7 @@ export class Row
 		return result;
 	}
 
-	getUiFieldType(field)
+	getUiFieldType(field): string | null
 	{
 		const moneyFields = ['BASE_PRICE', 'PURCHASING_PRICE', 'TOTAL_PRICE'];
 		if (moneyFields.includes(field))
@@ -1706,17 +1706,17 @@ export class Row
 		return this.getEditor().parseFloat(value, precision, defaultValue);
 	}
 
-	getPricePrecision()
+	getPricePrecision(): number
 	{
 		return this.getEditor().getPricePrecision();
 	}
 
-	getQuantityPrecision()
+	getQuantityPrecision(): number
 	{
 		return this.getEditor().getQuantityPrecision();
 	}
 
-	getCommonPrecision()
+	getCommonPrecision(): number
 	{
 		return this.getEditor().getCommonPrecision();
 	}
@@ -1757,7 +1757,7 @@ export class Row
 		this.resetExternalActions();
 	}
 
-	isEmptyRow()
+	isEmptyRow(): boolean
 	{
 		return (
 			!Type.isStringFilled(this.getField('NAME', '').trim())
@@ -1825,7 +1825,7 @@ export class Row
 		return !this.getModel().isService();
 	}
 
-	#isRowAccessDenied()
+	#isRowAccessDenied(): boolean
 	{
 		return this.getField('ACCESS_DENIED') === true;
 	}
@@ -1871,7 +1871,7 @@ export class Row
 		}
 	}
 
-	#isPurchasingPriceAccessDenied()
+	#isPurchasingPriceAccessDenied(): boolean
 	{
 		return this.getField('ACCESS_DENIED_TO_PURCHASING_PRICE') === true;
 	}

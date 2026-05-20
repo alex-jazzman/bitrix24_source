@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/onlyoffice-promo-actions.bundle.js',
 	namespace: 'BX.Disk.OnlyOfficePromoActions',
 	browserslist: true,
-	minification: true,
 };

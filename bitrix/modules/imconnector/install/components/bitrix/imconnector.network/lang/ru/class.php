@@ -7,3 +7,4 @@ $MESS["IMCONNECTOR_COMPONENT_NETWORK_OK_SAVE"] = "Данные успешно с
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_NO_SAVE"] = "Возникла ошибка при сохранении. Проверьте корректность введенных данных и попробуйте еще раз";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_NO_ACTIVE"] = "Ошибка при активации коннектора";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_FILE_IS_NOT_A_SUPPORTED_TYPE"] = "Попытка загрузить файл не поддерживаемого типа. Допустимо использовать только .jpg и .png";
+$MESS["IMCONNECTOR_COMPONENT_NETWORK_FILE_EXCEEDS_MAX_SIZE"] = "Изображение слишком большое. Максимальный допустимый размер — до 5000 пикселей в ширину и в высоту";

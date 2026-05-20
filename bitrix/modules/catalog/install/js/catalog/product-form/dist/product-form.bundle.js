@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_designTokens,ui_fonts_opensans,currency,ui_layoutForm,ui_forms,ui_buttons,ui_common,ui_alerts,catalog_productSelector,ui_entitySelector,catalog_productModel,ui_vue_vuex,main_popup,main_loader,ui_messagecard,ui_vue_components_hint,ui_notification,ui_infoHelper,main_qrcode,clipboard,helper,ui_hint,ui_dialogs_messagebox,ui_vue,main_core,main_core_events,currency_currencyCore,catalog_productCalculator) {
+(function (exports,ui_designTokens,ui_fonts_opensans,currency,ui_layoutForm,ui_forms,ui_buttons,ui_common,ui_alerts,catalog_productSelector,catalog_productModel,ui_vue_vuex,main_popup,main_loader,ui_messagecard,ui_vue_components_hint,ui_notification,ui_infoHelper,main_qrcode,clipboard,helper,ui_hint,ui_dialogs_messagebox,ui_vue,main_core,main_core_events,currency_currencyCore,catalog_productCalculator) {
 	'use strict';
 
 	class FormElementPosition {}
@@ -58,7 +58,6 @@ this.BX = this.BX || {};
 	        isCustomPrice: 'N',
 	        additionalFields: [],
 	        properties: [],
-	        brands: [],
 	        weight: 0,
 	        dimensions: {}
 	      },
@@ -232,7 +231,6 @@ this.BX = this.BX || {};
 	  templateFieldQuantity: 'bx-field-quantity',
 	  templateFieldDiscount: 'bx-field-discount',
 	  templateFieldTax: 'bx-field-tax',
-	  templateFieldBrand: 'bx-field-brand',
 	  templateSummaryTotal: 'bx-summary-total',
 	  moduleId: 'catalog'
 	});
@@ -245,7 +243,6 @@ this.BX = this.BX || {};
 	FormInputCode.RESULT = 'result';
 	FormInputCode.DISCOUNT = 'discount';
 	FormInputCode.TAX = 'tax';
-	FormInputCode.BRAND = 'brand';
 	FormInputCode.MEASURE = 'measure';
 
 	class FormErrorCode {}
@@ -253,14 +250,12 @@ this.BX = this.BX || {};
 	FormErrorCode.EMPTY_IMAGE = 1;
 	FormErrorCode.EMPTY_QUANTITY = 2;
 	FormErrorCode.EMPTY_PRICE = 3;
-	FormErrorCode.EMPTY_BRAND = 4;
 	FormErrorCode.IS_NULLABLE_PRICE = 5;
 
 	class FormMode {}
 	FormMode.REGULAR = 'REGULAR';
 	FormMode.READ_ONLY = 'READ_ONLY';
 	FormMode.COMPILATION = 'COMPILATION';
-	FormMode.COMPILATION_READ_ONLY = 'COMPILATION_READ_ONLY';
 
 	ui_vue.Vue.component(config.templateFieldQuantity, {
 	  /**
@@ -667,10 +662,6 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    changeProductSelectorImageRequire(event) {
-	      var _event$getData, _event$getData2;
-	      const isCompilationMode = (_event$getData = event.getData()) == null ? void 0 : _event$getData.isCompilationMode;
-	      const isFacebookForm = (_event$getData2 = event.getData()) == null ? void 0 : _event$getData2.isFacebookForm;
-	      this.productSelector.setConfig('ENABLE_EMPTY_IMAGES_ERROR', isCompilationMode && isFacebookForm);
 	      this.productSelector.checkEmptyImageError();
 	      this.productSelector.layoutErrors();
 	    },
@@ -682,9 +673,6 @@ this.BX = this.BX || {};
 	        fields.PRICE = this.getField('basePrice');
 	        fields.CURRENCY = this.options.currency;
 	      }
-	      const basketItemOfferId = this.basketItem.offerId;
-	      const facebookFailProducts = this.options.facebookFailProducts;
-	      const hasFacebookError = main_core.Type.isObject(facebookFailProducts) && facebookFailProducts.hasOwnProperty(basketItemOfferId);
 	      const selectorOptions = {
 	        iblockId: this.options.iblockId,
 	        basePriceId: this.options.basePriceId,
@@ -707,7 +695,6 @@ this.BX = this.BX || {};
 	          URL_BUILDER_CONTEXT: this.options.urlBuilderContext,
 	          VIEW_FORMAT: this.options.isShortProductViewFormat ? catalog_productSelector.ProductSelector.SHORT_VIEW_FORMAT : catalog_productSelector.ProductSelector.FULL_VIEW_FORMAT
 	        },
-	        failedProduct: hasFacebookError,
 	        mode: this.editable ? catalog_productSelector.ProductSelector.MODE_EDIT : catalog_productSelector.ProductSelector.MODE_VIEW,
 	        fields
 	      };
@@ -760,7 +747,6 @@ this.BX = this.BX || {};
 	          MEASURE_CODE: data.fields.MEASURE_CODE,
 	          MEASURE_NAME: data.fields.MEASURE_NAME,
 	          MORE_PHOTO: data.morePhoto,
-	          BRANDS: data.fields.BRANDS,
 	          IS_NEW: data.isNew
 	        };
 	        this.$emit('onProductChange', fields);
@@ -786,178 +772,6 @@ this.BX = this.BX || {};
 	  template: `
 			<div class='catalog-pf-product-item-section' :id='selectorId' ref='selectorWrapper'></div>
 		`
-	});
-
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3;
-	ui_vue.Vue.component(config.templateFieldBrand, {
-	  /**
-	   * @emits 'changeBrand' {values: Array<any>}
-	   */
-
-	  props: {
-	    brands: [Array, String],
-	    options: Object,
-	    editable: Boolean,
-	    hasError: Boolean,
-	    selectorId: String
-	  },
-	  data() {
-	    return {
-	      cache: new main_core.Cache.MemoryCache()
-	    };
-	  },
-	  created() {
-	    if (this.editable) {
-	      this.selector = new ui_entitySelector.TagSelector({
-	        id: this.selectorId,
-	        dialogOptions: {
-	          id: this.selectorId,
-	          context: 'CATALOG_BRANDS',
-	          // enableSearch: true,
-	          preselectedItems: this.getPreselectedBrands(),
-	          events: {
-	            'Item:onSelect': this.onBrandChange.bind(this),
-	            'Item:onDeselect': this.onBrandChange.bind(this),
-	            'Search:onItemCreateAsync': this.createBrand.bind(this)
-	          },
-	          searchTabOptions: {
-	            stub: true,
-	            stubOptions: {
-	              title: main_core.Tag.message(_t || (_t = _`${0}`), 'CATALOG_FORM_BRAND_SELECTOR_IS_EMPTY_TITLE'),
-	              subtitle: main_core.Tag.message(_t2 || (_t2 = _`${0}`), 'CATALOG_FORM_BRAND_SELECTOR_IS_EMPTY_SUBTITLE'),
-	              arrow: true
-	            }
-	          },
-	          searchOptions: {
-	            allowCreateItem: true
-	          },
-	          entities: [{
-	            id: 'brand',
-	            options: {
-	              iblockId: this.options.iblockId
-	            },
-	            dynamicSearch: true,
-	            dynamicLoad: true
-	          }]
-	        }
-	      });
-	      this.isSelectedByProductChange = false;
-	      this.$parent.$on('onInlineSelectorProductChange', this.selectCurrentBrands.bind(this));
-	    }
-	  },
-	  mounted() {
-	    if (this.editable) {
-	      this.selector.renderTo(this.$refs.brandSelectorWrapper);
-	    } else {
-	      this.brands.forEach((brand, brandIndex, brands) => {
-	        const separator = brandIndex < brands.length - 1 ? ',&nbsp;' : '';
-	        this.$refs.brandSelectorWrapper.appendChild(main_core.Tag.render(_t3 || (_t3 = _`
-					<span>
-						<span
-							class="catalog-pf-product-input-brand-read-only-item"
-							style="background-image:url('${0}');"
-						></span>
-						${0}
-					</span>
-				`), brand['IMAGE_SRC'], brand['NAME'] + separator));
-	      });
-	    }
-	  },
-	  methods: {
-	    selectCurrentBrands(brands) {
-	      this.isSelectedByProductChange = true;
-	      this.brands = brands;
-	      if (this.selector.getDialog().isLoaded()) {
-	        this.selector.getDialog().deselectAll();
-	        this.selectDialogItems();
-	      } else {
-	        this.selector.getDialog().load();
-	        main_core_events.EventEmitter.subscribe(this.selector.getDialog(), 'onLoad', this.selectDialogItems.bind(this));
-	      }
-	    },
-	    selectDialogItems() {
-	      this.brands.forEach(brand => {
-	        const item = this.selector.getDialog().getItem({
-	          id: brand['VALUE'],
-	          entityId: 'brand'
-	        });
-	        item.select();
-	      });
-	      this.isSelectedByProductChange = false;
-	    },
-	    getPreselectedBrands() {
-	      if (!main_core.Type.isArray(this.brands) || this.brands.length === 0) {
-	        return [];
-	      }
-	      return this.brands.map(item => {
-	        return ['brand', item['VALUE']];
-	      });
-	    },
-	    onBrandChange(event) {
-	      const items = event.getTarget().getSelectedItems();
-	      const resultValues = [];
-	      if (main_core.Type.isArray(items)) {
-	        items.forEach(item => {
-	          resultValues.push({
-	            'VALUE': item.getId(),
-	            'NAME': item.getTitle(),
-	            'IMAGE_SRC': item.getAvatar()
-	          });
-	        });
-	      }
-	      const eventData = {
-	        resultValues: resultValues,
-	        isSelectedByProductChange: this.isSelectedByProductChange
-	      };
-	      this.$emit('changeBrand', eventData);
-	    },
-	    createBrand(event) {
-	      const {
-	        searchQuery
-	      } = event.getData();
-	      const iblockId = this.options.iblockId;
-	      return new Promise((resolve, reject) => {
-	        const dialog = event.getTarget();
-	        const fields = {
-	          name: searchQuery.getQuery(),
-	          iblockId
-	        };
-	        dialog.showLoader();
-	        main_core.ajax.runAction('catalog.productForm.createBrand', {
-	          data: {
-	            fields
-	          }
-	        }).then(response => {
-	          dialog.hideLoader();
-	          const item = dialog.addItem({
-	            id: response.data.id,
-	            entityId: 'brand',
-	            title: searchQuery.getQuery(),
-	            tabs: dialog.getRecentTab().getId()
-	          });
-	          if (item) {
-	            item.select();
-	          }
-	          dialog.hide();
-	          resolve();
-	        }).catch(() => reject());
-	      });
-	    }
-	  },
-	  computed: {
-	    localize() {
-	      return ui_vue.Vue.getFilteredPhrases('CATALOG_');
-	    }
-	  },
-	  // language=Vue
-	  template: `
-		<div class="catalog-pf-product-control ui-ctl-w100" v-bind:class="{ 'ui-ctl-danger': hasError }">
-			<div class="catalog-pf-product-input-wrapper" ref="brandSelectorWrapper" :id="selectorId"></div>
-		</div>
-	`
 	});
 
 	ui_vue.Vue.component(config.templateFieldResultSum, {
@@ -1059,15 +873,13 @@ this.BX = this.BX || {};
 	        result: FormInputCode.RESULT,
 	        discount: FormInputCode.DISCOUNT,
 	        tax: FormInputCode.TAX,
-	        brand: FormInputCode.BRAND,
 	        measure: FormInputCode.MEASURE
 	      },
 	      errorCodes: {
 	        emptyProductSelector: FormErrorCode.EMPTY_PRODUCT_SELECTOR,
 	        emptyImage: FormErrorCode.EMPTY_IMAGE,
 	        emptyQuantity: FormErrorCode.EMPTY_QUANTITY,
-	        emptyPrice: FormErrorCode.EMPTY_PRICE,
-	        emptyBrand: FormErrorCode.EMPTY_BRAND
+	        emptyPrice: FormErrorCode.EMPTY_PRICE
 	      }
 	    };
 	  },
@@ -1091,7 +903,7 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    prepareModelFields() {
-	      var _this$basketItem$fiel, _this$basketItem$fiel2, _this$basketItem$fiel3, _this$basketItem$fiel4, _this$basketItem$fiel5, _this$basketItem$fiel6, _this$basketItem$fiel7, _this$basketItem$fiel8;
+	      var _this$basketItem$fiel, _this$basketItem$fiel2, _this$basketItem$fiel3, _this$basketItem$fiel4, _this$basketItem$fiel5, _this$basketItem$fiel6, _this$basketItem$fiel7;
 	      const defaultFields = this.basketItem.fields;
 	      const defaultPrice = main_core.Text.toNumber(defaultFields.price);
 	      let basePrice = defaultFields.basePrice ? defaultFields.basePrice : defaultFields.price;
@@ -1102,10 +914,9 @@ this.BX = this.BX || {};
 	        NAME: ((_this$basketItem$fiel = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel.name) || '',
 	        MODULE: ((_this$basketItem$fiel2 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel2.module) || '',
 	        PROPERTIES: ((_this$basketItem$fiel3 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel3.properties) || {},
-	        BRAND: ((_this$basketItem$fiel4 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel4.brand) || {},
-	        PRODUCT_ID: (_this$basketItem$fiel5 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel5.productId,
-	        ID: ((_this$basketItem$fiel6 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel6.skuId) || ((_this$basketItem$fiel7 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel7.productId),
-	        SKU_ID: (_this$basketItem$fiel8 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel8.skuId,
+	        PRODUCT_ID: (_this$basketItem$fiel4 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel4.productId,
+	        ID: ((_this$basketItem$fiel5 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel5.skuId) || ((_this$basketItem$fiel6 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel6.productId),
+	        SKU_ID: (_this$basketItem$fiel7 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel7.skuId,
 	        QUANTITY: main_core.Text.toNumber(defaultFields.quantity),
 	        BASE_PRICE: basePrice,
 	        PRICE: defaultPrice,
@@ -1123,15 +934,15 @@ this.BX = this.BX || {};
 	      };
 	    },
 	    initModel() {
-	      var _this$basketItem$fiel9, _this$basketItem$fiel10, _this$basketItem$fiel11;
-	      const productId = main_core.Text.toNumber((_this$basketItem$fiel9 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel9.productId);
-	      const skuId = main_core.Text.toNumber((_this$basketItem$fiel10 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel10.skuId);
+	      var _this$basketItem$fiel8, _this$basketItem$fiel9, _this$basketItem$fiel10;
+	      const productId = main_core.Text.toNumber((_this$basketItem$fiel8 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel8.productId);
+	      const skuId = main_core.Text.toNumber((_this$basketItem$fiel9 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel9.skuId);
 	      const model = new catalog_productModel.ProductModel({
 	        iblockId: main_core.Text.toNumber(this.options.iblockId),
 	        basePriceId: main_core.Text.toNumber(this.options.basePriceId),
 	        currency: this.options.currency,
 	        isStoreCollectable: false,
-	        isSimpleModel: main_core.Type.isStringFilled((_this$basketItem$fiel11 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel11.name) && productId <= 0 && skuId <= 0,
+	        isSimpleModel: main_core.Type.isStringFilled((_this$basketItem$fiel10 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel10.name) && productId <= 0 && skuId <= 0,
 	        fields: this.prepareModelFields()
 	      });
 	      main_core_events.EventEmitter.subscribe(model, 'onErrorsChange', this.onErrorsChange);
@@ -1178,7 +989,6 @@ this.BX = this.BX || {};
 	        measureCode: modelFields.MEASURE_CODE || '',
 	        measureName: modelFields.MEASURE_NAME || '',
 	        properties: modelFields.PROPERTIES || {},
-	        brands: modelFields.BRANDS || [],
 	        taxId: modelFields.TAX_ID,
 	        type: modelFields.TYPE,
 	        morePhoto: modelFields.MORE_PHOTO
@@ -1210,7 +1020,6 @@ this.BX = this.BX || {};
 	      });
 	      this.processFields(fields);
 	      this.setCalculatedFields(fields);
-	      this.$emit('onInlineSelectorProductChange', this.basketItem.fields.brands);
 	    },
 	    onProductSelect() {
 	      this.changeProductFields({
@@ -1221,9 +1030,6 @@ this.BX = this.BX || {};
 	      });
 	    },
 	    onProductClear() {
-	      if (main_core.Type.isPlainObject(this.options.facebookFailProducts)) {
-	        delete this.options.facebookFailProducts[this.basketItem.offerId];
-	      }
 	      /*const fields = this.model.getCalculator().calculatePrice(0);
 	      	fields.BASE_PRICE = 0;
 	      fields.NAME = '';
@@ -1233,7 +1039,6 @@ this.BX = this.BX || {};
 	      fields.MODULE = '';
 	      	this.setCalculatedFields(fields);*/
 	    },
-
 	    onChangeSum(sum) {
 	      const priceItem = sum / main_core.Text.toNumber(this.basketItem.fields.quantity);
 	      if (this.isEditablePrice()) {
@@ -1299,16 +1104,6 @@ this.BX = this.BX || {};
 	        });
 	      }
 	    },
-	    changeBrand(eventData) {
-	      const brands = main_core.Type.isArray(eventData.resultValues) ? eventData.resultValues : [];
-	      const isSelectedByProductChange = eventData.isSelectedByProductChange;
-	      this.processFields({
-	        BRANDS: brands
-	      });
-	      if (!isSelectedByProductChange) {
-	        this.saveCatalogField(['BRANDS']);
-	      }
-	    },
 	    onChangeQuantity(quantity) {
 	      this.model.getCalculator().setFields();
 	      this.processFields(this.model.getCalculator().calculateQuantity(quantity));
@@ -1358,9 +1153,6 @@ this.BX = this.BX || {};
 	      return calculatedFields;
 	    },
 	    removeItem() {
-	      if (main_core.Type.isPlainObject(this.options.facebookFailProducts)) {
-	        delete this.options.facebookFailProducts[this.basketItem.offerId];
-	      }
 	      this.$emit('removeItem', {
 	        index: this.basketItemIndex
 	      });
@@ -1372,7 +1164,7 @@ this.BX = this.BX || {};
 	      return main_core.Type.isArray(this.options.visibleBlocks) && this.options.visibleBlocks.includes(code);
 	    },
 	    isCompilationMode() {
-	      return this.mode === FormMode.COMPILATION_READ_ONLY || this.mode === FormMode.COMPILATION;
+	      return this.mode === FormMode.COMPILATION;
 	    },
 	    getPriceValue() {
 	      if (this.isCompilationMode()) {
@@ -1461,9 +1253,6 @@ this.BX = this.BX || {};
 	    showDiscount() {
 	      return this.showDiscountBlock && this.basketItem.showDiscount === 'Y';
 	    },
-	    getBrandsSelectorId() {
-	      return this.basketItem.selectorId + '_brands';
-	    },
 	    getPriceExclusive() {
 	      return this.basketItem.fields.priceExclusive || this.basketItem.fields.price;
 	    },
@@ -1504,19 +1293,11 @@ this.BX = this.BX || {};
 	      return this.taxIncluded === 'Y';
 	    },
 	    isReadOnly() {
-	      return this.mode === FormMode.READ_ONLY || this.mode === FormMode.COMPILATION_READ_ONLY;
+	      return this.mode === FormMode.READ_ONLY;
 	    },
 	    getErrorsText() {
 	      let errorText = this.basketItem.errors.length !== 0 && !this.model.isEmpty() && this.model.isChanged() ? main_core.Loc.getMessage('CATALOG_PRODUCT_MODEL_ERROR_NOTIFICATION') : '';
 	      const basketItemOfferId = this.basketItem.offerId;
-	      const facebookFailProducts = this.options.facebookFailProducts;
-	      const facebookFailProductErrorText = main_core.Type.isObject(facebookFailProducts) ? facebookFailProducts[basketItemOfferId] : null;
-	      if (facebookFailProductErrorText) {
-	        if (errorText) {
-	          errorText += '<br>';
-	        }
-	        errorText += main_core.Loc.getMessage('CATALOG_FORM_FACEBOOK_ERROR') + ':<br>' + facebookFailProductErrorText;
-	      }
 	      return errorText;
 	    },
 	    hasSku() {
@@ -1548,31 +1329,6 @@ this.BX = this.BX || {};
 							@saveCatalogField="saveCatalogField"
 						/>
 					</div>
-					<div
-						v-if="isVisibleBlock(blocks.brand)"
-						class="catalog-pf-product-input-brand-wrapper"
-						v-bind:class="[
-							{ 'catalog-pf-product-input-brand-wrapper-readonly': this.isReadOnly},
-							{ 'catalog-pf-product-input-brand-wrapper-readonly-no-sku': this.isReadOnly && !this.hasSku}
-						]"
-					>
-						<div class="catalog-pf-product-item-section">
-							<div class="catalog-pf-product-label">{{localize.CATALOG_FORM_BRAND_TITLE}}</div>
-						</div>
-						<${config.templateFieldBrand}
-							:brands="basketItem.fields.brands"
-							:selectorId="getBrandsSelectorId"
-							:hasError="hasError(errorCodes.emptyBrand)"
-							:options="options"
-							:editable="isEditableField(blocks.brand)"
-							@changeBrand="changeBrand"
-							@saveCatalogField="saveCatalogField"
-						/>
-						<div v-if="hasError(errorCodes.emptyBrand)" class="catalog-pf-product-item-section">
-							<div class="catalog-product-error">{{localize.CATALOG_FORM_ERROR_EMPTY_BRAND_1}}</div>
-						</div>
-					</div>
-	
 				</div>
 				<div class="catalog-pf-product-item--right">
 					<div class="catalog-pf-product-item-section">
@@ -1674,22 +1430,19 @@ this.BX = this.BX || {};
 
 	class FormCompilationType {}
 	FormCompilationType.REGULAR = 'REGULAR';
-	FormCompilationType.FACEBOOK = 'FACEBOOK';
 
 	class FormHelpdeskCode {}
-	FormHelpdeskCode.COMPILATION_FACEBOOK = 13856526;
 	FormHelpdeskCode.COMMON_COMPILATION = 13841876;
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2$1,
-	  _t3$1,
+	let _ = t => t,
+	  _t,
+	  _t2,
+	  _t3,
 	  _t4,
 	  _t5,
 	  _t6,
 	  _t7,
-	  _t8,
-	  _t9;
+	  _t8;
 	ui_vue.Vue.component(config.templatePanelCompilation, {
 	  props: {
 	    compilationOptions: Object,
@@ -1698,22 +1451,14 @@ this.BX = this.BX || {};
 	  created() {
 	    this.popup = null;
 	    this.compilationLink = null;
-	    const moreMessageButton = main_core.Tag.render(_t$1 || (_t$1 = _$1`
+	    const moreMessageButton = main_core.Tag.render(_t || (_t = _`
 			<a class="ui-btn ui-btn-primary">${0}</a>
 		`), this.localize.CATALOG_FORM_COMPILATION_INFO_BUTTON_MORE);
 	    main_core.Event.bind(moreMessageButton, 'click', this.openHelpDesk);
 	    let header = '';
 	    let description = '';
-	    if (this.isFacebookForm()) {
-	      header = this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_TITLE_FACEBOOK;
-	      description = main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
-				<p>${0}</p>
-				<p>${0}</p>
-			`), this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_BODY_FACEBOOK_FIRST_BLOCK, this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_BODY_FACEBOOK_SECOND_BLOCK);
-	    } else {
-	      header = this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_TITLE;
-	      description = this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_BODY_MARKETING_2;
-	    }
+	    header = this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_TITLE;
+	    description = this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_BODY_MARKETING_2;
 	    this.message = new ui_messagecard.MessageCard({
 	      id: 'compilationInfo',
 	      header,
@@ -1733,19 +1478,12 @@ this.BX = this.BX || {};
 	    };
 	  },
 	  methods: {
-	    isFacebookForm() {
-	      return this.compilationOptions.type === FormCompilationType.FACEBOOK;
-	    },
 	    openHelpDesk() {
-	      this.helpdeskCode = this.isFacebookForm() ? FormHelpdeskCode.COMPILATION_FACEBOOK : FormHelpdeskCode.COMMON_COMPILATION;
+	      this.helpdeskCode = FormHelpdeskCode.COMMON_COMPILATION;
 	      top.BX.Helper.show('redirect=detail&code=' + this.helpdeskCode);
 	    },
 	    showPopup(event) {
 	      if (this.compilationOptions.disabledSwitcher) {
-	        return;
-	      }
-	      if (this.isFacebookForm()) {
-	        this.openHelpDesk();
 	        return;
 	      }
 	      if (this.popup instanceof main_popup.Popup) {
@@ -1802,7 +1540,7 @@ this.BX = this.BX || {};
 	      if (!this.compilationLink) {
 	        return '';
 	      }
-	      const buttonCopy = main_core.Tag.render(_t3$1 || (_t3$1 = _$1`
+	      const buttonCopy = main_core.Tag.render(_t2 || (_t2 = _`
 				<div class="catalog-pf-product-qr-popup-copy">${0}</div>
 			`), this.localize.CATALOG_FORM_COMPILATION_QR_COPY);
 	      main_core.Event.bind(buttonCopy, 'click', () => {
@@ -1812,8 +1550,8 @@ this.BX = this.BX || {};
 	          autoHideDelay: 2000
 	        });
 	      });
-	      const qrWrapper = main_core.Tag.render(_t4 || (_t4 = _$1`<div class="catalog-pf-product-qr-popup-image"></div>`));
-	      const content = main_core.Tag.render(_t5 || (_t5 = _$1`
+	      const qrWrapper = main_core.Tag.render(_t3 || (_t3 = _`<div class="catalog-pf-product-qr-popup-image"></div>`));
+	      const content = main_core.Tag.render(_t4 || (_t4 = _`
 					<div class="catalog-pf-product-qr-popup">
 						<div class="catalog-pf-product-qr-popup-content">
 							<div class="catalog-pf-product-qr-popup-text">${0}</div>
@@ -1840,10 +1578,10 @@ this.BX = this.BX || {};
 	      this.$root.$app.changeFormOption('isCompilationMode', value);
 	    },
 	    getOnBeforeCreationStorePopupContent() {
-	      const loaderContent = main_core.Tag.render(_t6 || (_t6 = _$1`
+	      const loaderContent = main_core.Tag.render(_t5 || (_t5 = _`
 				<div class="catalog-product-form-popup--loader-block"></div>
 			`));
-	      const node = main_core.Tag.render(_t7 || (_t7 = _$1`
+	      const node = main_core.Tag.render(_t6 || (_t6 = _`
 				<div class="catalog-product-form-popup--container">
 					<div class="catalog-product-form-popup--title">${0}</div>
 					${0}
@@ -1859,13 +1597,13 @@ this.BX = this.BX || {};
 	      return node;
 	    },
 	    getOnAfterCreationStorePopupContent(creationStorePopup) {
-	      const continueButton = main_core.Tag.render(_t8 || (_t8 = _$1`
+	      const continueButton = main_core.Tag.render(_t7 || (_t7 = _`
 				<button class="ui-btn ui-btn-md ui-btn-primary">
 					${0}
 				</button>
 			`), main_core.Loc.getMessage('CATALOG_FORM_POPUP_AFTER_MARKET_CREATING_CONTINUE'));
 	      main_core.Event.bind(continueButton, 'click', this.closeCreationStorePopup.bind(this, creationStorePopup));
-	      return main_core.Tag.render(_t9 || (_t9 = _$1`
+	      return main_core.Tag.render(_t8 || (_t8 = _`
 				<div class="catalog-product-form-popup--container">
 					<div class="catalog-product-form-popup--title">${0}</div>
 					<div class="catalog-product-form-popup--loader-block catalog-product-form-popup--done"></div>
@@ -1955,10 +1693,10 @@ this.BX = this.BX || {};
 	`
 	});
 
-	let _$2 = t => t,
-	  _t$2,
-	  _t2$2,
-	  _t3$2,
+	let _$1 = t => t,
+	  _t$1,
+	  _t2$1,
+	  _t3$1,
 	  _t4$1;
 	ui_vue.Vue.component(config.templatePanelButtons, {
 	  /**
@@ -2131,14 +1869,14 @@ this.BX = this.BX || {};
 	    },
 	    getSettingItem(item) {
 	      var _item$disabled;
-	      const input = main_core.Tag.render(_t$2 || (_t$2 = _$2`
+	      const input = main_core.Tag.render(_t$1 || (_t$1 = _$1`
 					<input type="checkbox"  class="ui-ctl-element">
 				`));
 	      input.checked = item.checked;
 	      input.disabled = (_item$disabled = item.disabled) != null ? _item$disabled : false;
 	      input.dataset.settingId = item.id;
-	      const hintNode = main_core.Type.isStringFilled(item.hint) ? main_core.Tag.render(_t2$2 || (_t2$2 = _$2`<span class="catalog-product-form-setting-hint" data-hint="${0}"></span>`), item.hint) : '';
-	      const setting = main_core.Tag.render(_t3$2 || (_t3$2 = _$2`
+	      const hintNode = main_core.Type.isStringFilled(item.hint) ? main_core.Tag.render(_t2$1 || (_t2$1 = _$1`<span class="catalog-product-form-setting-hint" data-hint="${0}"></span>`), item.hint) : '';
+	      const setting = main_core.Tag.render(_t3$1 || (_t3$1 = _$1`
 				<label class="ui-ctl ui-ctl-checkbox ui-ctl-w100">
 					${0}
 					<div class="ui-ctl-label-text ${0}">${0}${0}</div>
@@ -2170,7 +1908,7 @@ this.BX = this.BX || {};
 	      return items;
 	    },
 	    prepareSettingsContent() {
-	      const content = main_core.Tag.render(_t4$1 || (_t4$1 = _$2`
+	      const content = main_core.Tag.render(_t4$1 || (_t4$1 = _$1`
 					<div class='catalog-pf-product-config-popup'></div>
 				`));
 	      this.settings.forEach(item => {
@@ -2266,8 +2004,8 @@ this.BX = this.BX || {};
 	`
 	});
 
-	let _$3 = t => t,
-	  _t$3;
+	let _$2 = t => t,
+	  _t$2;
 	ui_vue.Vue.component(config.templateSummaryTotal, {
 	  props: {
 	    currency: {
@@ -2283,7 +2021,7 @@ this.BX = this.BX || {};
 	  computed: {
 	    formattedSum() {
 	      var _this$sumAdditionalCl;
-	      const element = main_core.Tag.render(_t$3 || (_t$3 = _$3`<span class="catalog-pf-text ${0}">${0}</span>`), (_this$sumAdditionalCl = this.sumAdditionalClass) != null ? _this$sumAdditionalCl : '', this.sum);
+	      const element = main_core.Tag.render(_t$2 || (_t$2 = _$2`<span class="catalog-pf-text ${0}">${0}</span>`), (_this$sumAdditionalCl = this.sumAdditionalClass) != null ? _this$sumAdditionalCl : '', this.sum);
 	      return currency_currencyCore.CurrencyCore.getPriceControl(element, this.currency);
 	    }
 	  },
@@ -2337,10 +2075,10 @@ this.BX = this.BX || {};
 	      return this.options.showResults !== false;
 	    },
 	    showButtonsTop() {
-	      return this.options.singleProductMode !== true && this.mode !== FormMode.READ_ONLY && this.mode !== FormMode.COMPILATION_READ_ONLY && this.options.buttonsPosition !== FormElementPosition.BOTTOM;
+	      return this.options.singleProductMode !== true && this.mode !== FormMode.READ_ONLY && this.options.buttonsPosition !== FormElementPosition.BOTTOM;
 	    },
 	    showButtonsBottom() {
-	      return this.options.singleProductMode !== true && this.mode !== FormMode.READ_ONLY && this.mode !== FormMode.COMPILATION_READ_ONLY && this.options.buttonsPosition === FormElementPosition.BOTTOM;
+	      return this.options.singleProductMode !== true && this.mode !== FormMode.READ_ONLY && this.options.buttonsPosition === FormElementPosition.BOTTOM;
 	    },
 	    showResultBlock() {
 	      return this.showResults || this.enableAddButtons;
@@ -2454,8 +2192,8 @@ this.BX = this.BX || {};
 `
 	});
 
-	let _$4 = t => t,
-	  _t$4;
+	let _$3 = t => t,
+	  _t$3;
 	var _onBasketChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onBasketChange");
 	var _checkRequiredFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkRequiredFields");
 	var _changeCompilationModeSetting = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeCompilationModeSetting");
@@ -2478,7 +2216,7 @@ this.BX = this.BX || {};
 	    this.defaultOptions = Object.assign({}, this.options);
 	    this.editable = true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _setMode)[_setMode](FormMode.REGULAR);
-	    this.wrapper = main_core.Tag.render(_t$4 || (_t$4 = _$4`<div class=""></div>`));
+	    this.wrapper = main_core.Tag.render(_t$3 || (_t$3 = _$3`<div class=""></div>`));
 	    if (main_core.Text.toNumber(options.iblockId) <= 0) {
 	      return;
 	    }
@@ -2525,7 +2263,6 @@ this.BX = this.BX || {};
 	      fieldHints: settingsCollection.get('fieldHints'),
 	      compilationFormType: FormCompilationType.REGULAR,
 	      compilationFormOption: {},
-	      facebookFailProducts: null,
 	      ownerId: null,
 	      ownerTypeId: null,
 	      dialogId: null,
@@ -2699,8 +2436,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      main_core_events.EventEmitter.emit(this, 'onChangeCompilationMode', {
-	        isCompilationMode: value === 'Y',
-	        isFacebookForm: this.options.compilationFormType === FormCompilationType.FACEBOOK
+	        isCompilationMode: value === 'Y'
 	      });
 	      const mode = value === 'Y' ? FormMode.COMPILATION : FormMode.REGULAR;
 	      babelHelpers.classPrivateFieldLooseBase(this, _changeCompilationModeSetting)[_changeCompilationModeSetting](mode);
@@ -2731,17 +2467,9 @@ this.BX = this.BX || {};
 	  getTotal() {
 	    this.store.dispatch('productList/getTotal');
 	  }
-	  setEditable(editable, isCompilationMode) {
+	  setEditable(editable) {
 	    this.editable = editable;
-	    if (!editable && !isCompilationMode) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setMode)[_setMode](FormMode.READ_ONLY);
-	    } else if (!editable && isCompilationMode) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setMode)[_setMode](FormMode.COMPILATION_READ_ONLY);
-	    } else if (editable && isCompilationMode) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setMode)[_setMode](FormMode.COMPILATION);
-	    } else {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setMode)[_setMode](FormMode.REGULAR);
-	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _setMode)[_setMode](editable ? FormMode.REGULAR : FormMode.READ_ONLY);
 	  }
 	  hasErrors() {
 	    if (!this.store) {
@@ -2789,14 +2517,6 @@ this.BX = this.BX || {};
 	          });
 	        }
 	        break;
-	      case FormInputCode.BRAND:
-	        if (!main_core.Type.isArray(product.fields.brands) || product.fields.brands.length === 0) {
-	          result.errors.push({
-	            code: FormErrorCode.EMPTY_BRAND,
-	            message: main_core.Loc.getMessage('CATALOG_FORM_ERROR_EMPTY_BRAND_1')
-	          });
-	        }
-	        break;
 	      case FormInputCode.IMAGE_EDITOR:
 	        if (!main_core.Type.isObject(product.fields.morePhoto) || Object.keys(product.fields.morePhoto).length === 0) {
 	          result.errors.push({
@@ -2822,18 +2542,10 @@ this.BX = this.BX || {};
 	  this.mode = mode;
 	  if (mode === FormMode.READ_ONLY) {
 	    this.options.editableFields = [];
-	  } else if (mode === FormMode.COMPILATION_READ_ONLY) {
-	    this.options.editableFields = [];
-	    this.options.visibleBlocks = [FormInputCode.PRODUCT_SELECTOR, FormInputCode.IMAGE_EDITOR, FormInputCode.PRICE, FormInputCode.BRAND];
-	    this.options.showResults = false;
 	  } else if (mode === FormMode.COMPILATION) {
-	    this.options.editableFields = [FormInputCode.PRODUCT_SELECTOR, FormInputCode.BRAND];
+	    this.options.editableFields = [FormInputCode.PRODUCT_SELECTOR];
 	    this.options.visibleBlocks = this.defaultOptions.visibleBlocks;
-	    if (this.options.compilationFormType === FormCompilationType.FACEBOOK) {
-	      this.options.visibleBlocks = [FormInputCode.PRODUCT_SELECTOR, FormInputCode.IMAGE_EDITOR, FormInputCode.PRICE, FormInputCode.BRAND];
-	    } else {
-	      this.options.visibleBlocks = this.defaultOptions.visibleBlocks;
-	    }
+	    this.options.visibleBlocks = this.defaultOptions.visibleBlocks;
 	    this.options.showResults = false;
 	  } else {
 	    mode = FormMode.REGULAR;
@@ -2847,9 +2559,6 @@ this.BX = this.BX || {};
 	  this.options.requiredFields = [];
 	  if (mode === FormMode.COMPILATION) {
 	    const compilationRequiredFields = [FormInputCode.PRODUCT_SELECTOR, FormInputCode.PRICE];
-	    if (this.options.compilationFormType === FormCompilationType.FACEBOOK) {
-	      compilationRequiredFields.push(FormInputCode.IMAGE_EDITOR, FormInputCode.BRAND);
-	    }
 	    this.options.requiredFields = this.options.visibleBlocks.filter(item => compilationRequiredFields.includes(item));
 	  }
 	  main_core_events.EventEmitter.emit(this, 'ProductForm:onModeChange', {
@@ -2860,5 +2569,5 @@ this.BX = this.BX || {};
 	exports.ProductForm = ProductForm;
 	exports.FormMode = FormMode;
 
-}((this.BX.Catalog = this.BX.Catalog || {}),BX,BX,BX,BX.UI,BX,BX.UI,BX,BX.UI,BX.Catalog,BX.UI.EntitySelector,BX.Catalog,BX,BX.Main,BX,BX.UI,window,BX,BX.UI,BX,BX,BX,BX,BX.UI.Dialogs,BX,BX,BX.Event,BX.Currency,BX.Catalog));
+}((this.BX.Catalog = this.BX.Catalog || {}),BX,BX,BX,BX.UI,BX,BX.UI,BX,BX.UI,BX.Catalog,BX.Catalog,BX,BX.Main,BX,BX.UI,window,BX,BX.UI,BX,BX,BX,BX,BX.UI.Dialogs,BX,BX,BX.Event,BX.Currency,BX.Catalog));
 //# sourceMappingURL=product-form.bundle.js.map

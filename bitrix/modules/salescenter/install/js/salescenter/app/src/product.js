@@ -11,16 +11,11 @@ export default {
 	mounted()
 	{
 		const editable = this.$root.$app.options.templateMode !== 'view';
-		const isCompilationMode = this.$root.$app.compilation !== null;
 
 		this.$root.$emit('on-change-editable', editable);
 		if (this.productForm)
 		{
-			this.productForm.setEditable(editable, isCompilationMode);
-		}
-
-		if (this.productForm)
-		{
+			this.productForm.setEditable(editable);
 			const formWrapper = this.$root.$el.querySelector('.salescenter-app-form-wrapper');
 			formWrapper.appendChild(this.productForm.layout());
 		}
@@ -65,8 +60,6 @@ export default {
 				fieldHints: this.$root.$app.options.fieldHints,
 				hideUnselectedProperties: (this.$root.$app.options.templateMode === 'view'),
 				showCompilationModeSwitcher: this.showCompilationModeSwitcher(),
-				compilationFormType: this.$root.$app.connector === 'facebook' && this.$root.$app.isAllowedFacebookRegion ? 'FACEBOOK' : 'REGULAR',
-				facebookFailProducts: this.$root.$app.compilation?.FAIL_PRODUCTS,
 				ownerId: this.$root.$app.options.ownerId,
 				ownerTypeId: this.$root.$app.options.ownerTypeId,
 				dialogId: this.$root.$app.options.dialogId,
@@ -133,7 +126,7 @@ export default {
 		onProductFormModeChange(event: BaseEvent)
 		{
 			const mode = event.getData().mode;
-			if (mode === FormMode.COMPILATION || mode === FormMode.COMPILATION_READ_ONLY)
+			if (mode === FormMode.COMPILATION)
 			{
 				this.$store.commit('orderCreation/enableCompilationMode');
 			}
@@ -250,17 +243,14 @@ export default {
 			const productIds = basketItems.map((basketItem) => {
 				return basketItem.skuId;
 			});
-			const compilationId = this.$root.$app.compilation
-				? this.$root.$app.compilation.ID
-				: this.$root.$app.newCompilationId
-			;
-			if (compilationId)
+			const newCompilationId = this.$root.$app.newCompilationId;
+			if (newCompilationId)
 			{
 				Ajax.runAction(
 					'salescenter.compilation.updateCompilation',
 					{
 						data: {
-							compilationId,
+							newCompilationId,
 							productIds,
 						},
 					},

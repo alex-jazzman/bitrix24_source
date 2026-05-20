@@ -1,19 +1,19 @@
 import { OneCPlanRestrictionSlider } from 'catalog.tool-availability-manager';
-import {ajax, Cache, Dom, Event, Reflection, Runtime, Text, Type, Loc} from 'main.core';
-import {BaseEvent, EventEmitter} from 'main.core.events';
-import {Row} from './product.list.row';
-import {PageEventsManager} from './page.events.manager';
+import { ajax, Cache, Dom, Event, Reflection, Runtime, Text, Type, Loc } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Row } from './product.list.row';
+import { PageEventsManager } from './page.events.manager';
 import SettingsPopup from './settings.button';
-import {CurrencyCore} from 'currency.currency-core';
-import {ProductSelector} from 'catalog.product-selector';
-import {StoreSelector} from "catalog.store-selector";
+import { CurrencyCore } from 'currency.currency-core';
+import { ProductSelector } from 'catalog.product-selector';
+import { StoreSelector } from 'catalog.store-selector';
 import HintPopup from './hint.popup';
-import ProductListController from "catalog.document-card";
-import {ProductModel} from "catalog.product-model";
-import {FieldHintManager} from "./field.hint.manager";
-import {Guide} from "ui.tour";
-import {UI} from 'ui.notification';
-import "ui.hint";
+import ProductListController from 'catalog.document-card';
+import { ProductModel } from 'catalog.product-model';
+import { FieldHintManager } from './field.hint.manager';
+import { Guide } from 'ui.tour';
+import { UI } from 'ui.notification';
+import 'ui.hint';
 
 const GRID_TEMPLATE_ROW = 'template_0';
 const DEFAULT_PRECISION: number = 2;
@@ -39,7 +39,7 @@ export class Editor
 	settings: Object;
 	controller: ?ProductListController;
 	container: ?HTMLElement;
-	form: ?HTMLElement
+	form: ?HTMLElement;
 	products: Row[] = [];
 	productsWasInitiated = false;
 	pageEventsManager: PageEventsManager;
@@ -51,7 +51,7 @@ export class Editor
 		productChange: 'productChange',
 		productListChanged: 'productListChanged',
 		updateListField: 'listField',
-		updateTotal: 'total'
+		updateTotal: 'total',
 	};
 
 	updateFieldForList = null;
@@ -100,7 +100,7 @@ export class Editor
 
 		this.#fieldHintManager = new FieldHintManager(this.getContainer(), this.getGrid.bind(this));
 
-		EventEmitter.emit( 'DocumentProductListController', [this]);
+		EventEmitter.emit('DocumentProductListController', [this]);
 
 		this.#initSupportCustomRowActions();
 		this.subscribeDomEvents();
@@ -113,7 +113,6 @@ export class Editor
 				BX.UI.Hint.init(buttonBlock);
 			})
 		;
-
 	}
 
 	subscribeDomEvents()
@@ -131,7 +130,7 @@ export class Editor
 				Event.bind(
 					addButton,
 					'click',
-					this.productRowAddHandler
+					this.productRowAddHandler,
 				);
 			});
 
@@ -141,7 +140,7 @@ export class Editor
 					Event.bind(
 						addButton,
 						'click',
-						this.productRowCreateHandler
+						this.productRowCreateHandler,
 					);
 				});
 			}
@@ -150,7 +149,7 @@ export class Editor
 				Event.bind(
 					configButton,
 					'click',
-					this.showSettingsPopupHandler
+					this.showSettingsPopupHandler,
 				);
 			});
 
@@ -158,7 +157,7 @@ export class Editor
 				Event.bind(
 					configButton,
 					'click',
-					this.showBarcodeSettingsPopupHandler
+					this.showBarcodeSettingsPopupHandler,
 				);
 			});
 		}
@@ -174,7 +173,7 @@ export class Editor
 				Event.unbind(
 					selectButton,
 					'click',
-					this.productSelectionPopupHandler
+					this.productSelectionPopupHandler,
 				);
 			});
 
@@ -182,7 +181,7 @@ export class Editor
 				Event.unbind(
 					createButton,
 					'click',
-					this.productRowCreateHandler
+					this.productRowCreateHandler,
 				);
 			});
 
@@ -190,7 +189,7 @@ export class Editor
 				Event.unbind(
 					addButton,
 					'click',
-					this.productRowAddHandler
+					this.productRowAddHandler,
 				);
 			});
 
@@ -198,7 +197,7 @@ export class Editor
 				Event.unbind(
 					configButton,
 					'click',
-					this.showSettingsPopupHandler
+					this.showSettingsPopupHandler,
 				);
 			});
 		}
@@ -301,8 +300,8 @@ export class Editor
 
 		this.products.forEach((product) => {
 			const item = {
-				fields: {...product.fields},
-				rowId: product.fields.ROW_ID
+				fields: { ...product.fields },
+				rowId: product.fields.ROW_ID,
 			};
 			items.push(item);
 		});
@@ -311,8 +310,7 @@ export class Editor
 	}
 
 	handleEditorSubmit(event: BaseEvent)
-	{
-	}
+	{}
 
 	handleProductListFocus(event: BaseEvent)
 	{
@@ -328,7 +326,7 @@ export class Editor
 			if (product.isEmptyRow())
 			{
 				listHaveEmptyRows = true;
-				this.focusProductSelector(product.fields['ROW_ID']);
+				this.focusProductSelector(product.fields.ROW_ID);
 				break;
 			}
 		}
@@ -374,14 +372,14 @@ export class Editor
 
 		this.getGrid().reloadTable(
 			'POST',
-			{useProductsFromRequest},
-			() => this.actionUpdateTotalData({isInternalChanging})
+			{ useProductsFromRequest },
+			() => this.actionUpdateTotalData({ isInternalChanging }),
 		);
 	}
 
 	/*
 		keep in mind different actions for this handler:
-		- native reload by grid actions (columns settings, etc)		- products from request
+		- native reload by grid actions (columns settings, etc.)		- products from request
 		- rollback													- products from db			this.reloadGrid(false)
 	 */
 	handleOnBeforeGridRequest(event: BaseEvent)
@@ -393,7 +391,7 @@ export class Editor
 			return;
 		}
 
-		// reload by native grid actions (columns settings, etc), otherwise by this.reloadGrid()
+		// reload by native grid actions (columns settings, etc.), otherwise by this.reloadGrid()
 		const isNativeAction = !('useProductsFromRequest' in eventArgs.data);
 		const useProductsFromRequest = isNativeAction ? true : eventArgs.data.useProductsFromRequest;
 
@@ -425,11 +423,11 @@ export class Editor
 					return;
 				}
 
-				this.actionUpdateTotalData({isInternalChanging: false});
+				this.actionUpdateTotalData({ isInternalChanging: false });
 				if (isDeletingRequest)
 				{
 					this.executeActions([
-						{type: this.actions.productListChanged},
+						{ type: this.actions.productListChanged },
 					]);
 				}
 			});
@@ -462,14 +460,14 @@ export class Editor
 		{
 			this.refreshSortFields();
 			this.numerateRows();
-			this.executeActions([{type: this.actions.productListChanged}]);
+			this.executeActions([{ type: this.actions.productListChanged }]);
 		}
 	}
 
 	initPageEventsManager(): void
 	{
 		const componentId = this.getSettingValue('componentId');
-		this.pageEventsManager = new PageEventsManager({id: componentId});
+		this.pageEventsManager = new PageEventsManager({ id: componentId });
 	}
 
 	getPageEventsManager(): PageEventsManager
@@ -562,6 +560,7 @@ export class Editor
 		{
 			return;
 		}
+
 		if (this.controller)
 		{
 			this.controller.clearProductList();
@@ -592,7 +591,7 @@ export class Editor
 
 	setSettings(settings)
 	{
-		this.settings = settings ? settings : {};
+		this.settings = settings || {};
 	}
 
 	getSettingValue(name: string, defaultValue)
@@ -663,6 +662,7 @@ export class Editor
 	setCurrencyId(currencyId): Promise
 	{
 		this.setSettingValue('currencyId', currencyId);
+
 		return CurrencyCore.loadCurrencyFormat(currencyId);
 	}
 
@@ -710,8 +710,8 @@ export class Editor
 								products,
 								currencyId,
 								oldCurrencyId,
-							}
-						}
+							},
+						},
 					)
 						.then(this.onCalculatePricesResponse.bind(this));
 				}
@@ -798,6 +798,7 @@ export class Editor
 		}
 
 		const format = CurrencyCore.getCurrencyFormat(currencyId);
+
 		return format && format.FORMAT_STRING.replace(/(^|[^&])#/, '$1').trim() || '';
 	}
 
@@ -927,6 +928,7 @@ export class Editor
 			{
 				result = defaultValue;
 			}
+
 			if (isNegative)
 			{
 				result = -result;
@@ -1014,7 +1016,7 @@ export class Editor
 		{
 			container.appendChild(Dom.create(
 				'input',
-				{attrs: {type: "hidden", name: fieldName}}
+				{ attrs: { type: 'hidden', name: fieldName } },
 			));
 		}
 	}
@@ -1080,7 +1082,7 @@ export class Editor
 
 		for (let item of list)
 		{
-			const fields = {...item.fields};
+			const fields = { ...item.fields };
 			this.products.push(new Row(item.rowId, fields, this.getSettingValue('rowSettings', {}), this));
 		}
 
@@ -1094,7 +1096,7 @@ export class Editor
 	{
 		this.products.forEach((product, index) => {
 			product.setRowNumber(index + 1);
-		})
+		});
 	}
 
 	getGrid(): ?BX.Main.Grid
@@ -1104,7 +1106,7 @@ export class Editor
 
 			if (!Reflection.getClass('BX.Main.gridManager.getInstanceById'))
 			{
-				throw Error(`Cannot find grid with '${gridId}' id.`)
+				throw Error(`Cannot find grid with '${gridId}' id.`);
 			}
 
 			return BX.Main.gridManager.getInstanceById(gridId);
@@ -1196,7 +1198,7 @@ export class Editor
 		return this.products
 			.filter((product) => product.getModel().getErrorCollection().hasErrors())
 			.length > 0
-			;
+		;
 	}
 
 	handleFieldChange(event)
@@ -1309,6 +1311,7 @@ export class Editor
 
 		this.initializeNewProductRow(newId, anchorProduct);
 		this.getGrid().bindOnRowEvents();
+
 		return newId;
 	}
 
@@ -1326,8 +1329,7 @@ export class Editor
 	}
 
 	handleProductRowCreate(): void
-	{
-	}
+	{}
 
 	handleShowBarcodeSettingsPopup()
 	{
@@ -1354,7 +1356,7 @@ export class Editor
 			return new SettingsPopup(
 				this.getContainer().querySelector('.catalog-document-product-list-add-block-active [data-role="product-list-settings-button"]'),
 				this.getSettingValue('popupSettings', []),
-				this
+				this,
 			);
 		});
 	}
@@ -1420,7 +1422,7 @@ export class Editor
 		const originalTemplateData = data[GRID_TEMPLATE_ROW];
 		const customEditData = this.prepareCustomEditData(originalTemplateData, newId);
 
-		this.setOriginalTemplateEditData({...originalTemplateData, ...customEditData})
+		this.setOriginalTemplateEditData({ ...originalTemplateData, ...customEditData });
 
 		return originalTemplateData;
 	}
@@ -1438,7 +1440,7 @@ export class Editor
 				{
 					customEditData[i] = originalEditData[i].replace(
 						new RegExp(templateIdMask, 'g'),
-						newId
+						newId,
 					);
 				}
 				else if (Type.isPlainObject(originalEditData[i]))
@@ -1467,17 +1469,16 @@ export class Editor
 			fields = {
 				...this.getSettingValue('templateItemFields', {}),
 				...{
-					CURRENCY: this.getCurrencyId()
-				}
+					CURRENCY: this.getCurrencyId(),
+				},
 			};
 		}
 
 		if (Type.isNil(anchorProduct) && this.products.length > 0)
 		{
-			const previousRow =
-				this.getSettingValue('newRowPosition') === 'bottom'
-					? this.products[this.products.length - 1]
-					: this.products[0]
+			const previousRow = this.getSettingValue('newRowPosition') === 'bottom'
+				? this.products[this.products.length - 1]
+				: this.products[0]
 			;
 			const stores = this.getSettingValue('stores', {});
 			const storeFields = previousRow.getSettingValue('storeHeaderMap', {});
@@ -1499,13 +1500,13 @@ export class Editor
 		fields.ROW_ID = newId;
 		if (Type.isObject(fields.IMAGE_INFO))
 		{
-			delete(fields.IMAGE_INFO.input);
+			delete (fields.IMAGE_INFO.input);
 		}
 		const product = new Row(
 			rowId,
 			fields,
 			this.getSettingValue('rowSettings', {}),
-			this
+			this,
 		);
 
 		if (anchorProduct instanceof Row)
@@ -1622,7 +1623,7 @@ export class Editor
 
 	handleOnProductClear(event: BaseEvent)
 	{
-		const {selectorId, rowId} = event.getData();
+		const { selectorId, rowId } = event.getData();
 
 		const product = this.getProductByRowId(rowId);
 		if (product && product.getSelector().getId() === selectorId)
@@ -1845,10 +1846,10 @@ export class Editor
 		});
 
 		const totalBeforeTax = totalCost - totalTax;
-		this.setTotalData({totalCost, totalBeforeTax, totalTax});
+		this.setTotalData({ totalCost, totalBeforeTax, totalTax });
 	}
 
-	getProductsFields(fields: Array = [])
+	getProductsFields(fields: Array = []): Array
 	{
 		const productFields = [];
 
@@ -1993,22 +1994,22 @@ export class Editor
 
 		this.addFirstRowIfEmpty();
 		this.executeActions([
-			{type: this.actions.productListChanged},
-			{type: this.actions.updateTotal}
+			{ type: this.actions.productListChanged },
+			{ type: this.actions.updateTotal },
 		]);
 	}
 
 	copyRow(row: Row): void
 	{
-		this.addProductRow(row)
+		this.addProductRow(row);
 		this.refreshSortFields();
 		this.numerateRows();
 
 		EventEmitter.emit('Grid::thereEditedRows', []);
 
 		this.executeActions([
-			{type: this.actions.productListChanged},
-			{type: this.actions.updateTotal}
+			{ type: this.actions.productListChanged },
+			{ type: this.actions.updateTotal },
 		]);
 	}
 
@@ -2055,25 +2056,25 @@ export class Editor
 	{
 		this.products.forEach((product) => {
 			product.getBarcodeSelector()?.removeSpotlight();
-		})
+		});
 
-		this.setSettingValue('showBarcodeSpotlightInfo',false);
+		this.setSettingValue('showBarcodeSpotlightInfo', false);
 	}
 
 	closeBarcodeQrAuths(): void
 	{
 		this.products.forEach((product) => {
 			product.getBarcodeSelector()?.removeQrAuth();
-		})
+		});
 
-		this.setSettingValue('showBarcodeQrAuth',false);
+		this.setSettingValue('showBarcodeQrAuth', false);
 	}
 
 	enableSendBarcodeMobilePush(): void
 	{
 		this.products.forEach((product) => {
 			product.getBarcodeSelector()?.setConfig('IS_INSTALLED_MOBILE_APP', true);
-		})
+		});
 
 		this.setSettingValue('isInstalledMobileApp', true);
 	}
@@ -2123,7 +2124,7 @@ export class Editor
 		}
 	}
 
-	getActiveHint(): Guide|null
+	getActiveHint(): Guide | null
 	{
 		return this.#fieldHintManager.getActiveHint();
 	}
@@ -2151,7 +2152,7 @@ export class Editor
 			return;
 		}
 
-		const selectedRows  = this.getGrid().getRows().getSelected();
+		const selectedRows = this.getGrid().getRows().getSelected();
 		if (selectedRows.length === 0)
 		{
 			return;
@@ -2176,14 +2177,13 @@ export class Editor
 			});
 
 			const documentTypeMoving = 'M';
-			const messageId =
-				this.settings.documentType !== documentTypeMoving
-					? 'CATALOG_DOCUMENT_PRODUCT_LIST_ACTION_STORE_CHANGED_HINT'
-					: 'CATALOG_DOCUMENT_PRODUCT_LIST_ACTION_' + actionId + '_CHANGED_HINT'
+			const messageId = this.settings.documentType !== documentTypeMoving
+				? 'CATALOG_DOCUMENT_PRODUCT_LIST_ACTION_STORE_CHANGED_HINT'
+				: 'CATALOG_DOCUMENT_PRODUCT_LIST_ACTION_' + actionId + '_CHANGED_HINT'
 			;
 
 			UI.Notification.Center.notify({
-				content: Loc.getMessage(messageId, {'#STORE_NAME#': Text.encode(actionStoreName)}),
+				content: Loc.getMessage(messageId, { '#STORE_NAME#': Text.encode(actionStoreName) }),
 				autoHide: true,
 				autoHideDelay: 4000,
 			});

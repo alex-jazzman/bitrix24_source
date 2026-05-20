@@ -92,7 +92,6 @@ class ProductForm
 			fieldHints: settingsCollection.get('fieldHints'),
 			compilationFormType: FormCompilationType.REGULAR,
 			compilationFormOption: {},
-			facebookFailProducts: null,
 			ownerId: null,
 			ownerTypeId: null,
 			dialogId: null,
@@ -294,15 +293,6 @@ class ProductForm
 						});
 					}
 					break;
-				case FormInputCode.BRAND:
-					if (!Type.isArray(product.fields.brands) || product.fields.brands.length === 0)
-					{
-						result.errors.push({
-							code: FormErrorCode.EMPTY_BRAND,
-							message: Loc.getMessage('CATALOG_FORM_ERROR_EMPTY_BRAND_1'),
-						});
-					}
-					break;
 				case FormInputCode.IMAGE_EDITOR:
 					if (!Type.isObject(product.fields.morePhoto) || Object.keys(product.fields.morePhoto).length === 0)
 					{
@@ -399,7 +389,6 @@ class ProductForm
 
 			EventEmitter.emit(this, 'onChangeCompilationMode', {
 				isCompilationMode: value === 'Y',
-				isFacebookForm: this.options.compilationFormType === FormCompilationType.FACEBOOK,
 			});
 			const mode = (value === 'Y') ? FormMode.COMPILATION : FormMode.REGULAR;
 			this.#changeCompilationModeSetting(mode);
@@ -458,25 +447,10 @@ class ProductForm
 		this.store.dispatch('productList/getTotal');
 	}
 
-	setEditable(editable, isCompilationMode): void
+	setEditable(editable): void
 	{
 		this.editable = editable;
-		if (!editable && !isCompilationMode)
-		{
-			this.#setMode(FormMode.READ_ONLY);
-		}
-		else if (!editable && isCompilationMode)
-		{
-			this.#setMode(FormMode.COMPILATION_READ_ONLY);
-		}
-		else if (editable && isCompilationMode)
-		{
-			this.#setMode(FormMode.COMPILATION);
-		}
-		else
-		{
-			this.#setMode(FormMode.REGULAR);
-		}
+		this.#setMode(editable ? FormMode.REGULAR : FormMode.READ_ONLY);
 	}
 
 	#setMode(mode: FormMode): void
@@ -486,37 +460,14 @@ class ProductForm
 		{
 			this.options.editableFields = [];
 		}
-		else if (mode === FormMode.COMPILATION_READ_ONLY)
-		{
-			this.options.editableFields = [];
-			this.options.visibleBlocks = [
-				FormInputCode.PRODUCT_SELECTOR,
-				FormInputCode.IMAGE_EDITOR,
-				FormInputCode.PRICE,
-				FormInputCode.BRAND,
-			];
-			this.options.showResults = false;
-		}
 		else if (mode === FormMode.COMPILATION)
 		{
 			this.options.editableFields = [
-				FormInputCode.PRODUCT_SELECTOR, FormInputCode.BRAND,
+				FormInputCode.PRODUCT_SELECTOR,
 			];
 			this.options.visibleBlocks = this.defaultOptions.visibleBlocks;
 
-			if (this.options.compilationFormType === FormCompilationType.FACEBOOK)
-			{
-				this.options.visibleBlocks = [
-					FormInputCode.PRODUCT_SELECTOR,
-					FormInputCode.IMAGE_EDITOR,
-					FormInputCode.PRICE,
-					FormInputCode.BRAND,
-				];
-			}
-			else
-			{
-				this.options.visibleBlocks = this.defaultOptions.visibleBlocks;
-			}
+			this.options.visibleBlocks = this.defaultOptions.visibleBlocks;
 
 			this.options.showResults = false;
 		}
@@ -539,10 +490,6 @@ class ProductForm
 			const compilationRequiredFields = [
 				FormInputCode.PRODUCT_SELECTOR, FormInputCode.PRICE,
 			];
-			if (this.options.compilationFormType === FormCompilationType.FACEBOOK)
-			{
-				compilationRequiredFields.push(FormInputCode.IMAGE_EDITOR, FormInputCode.BRAND);
-			}
 			this.options.requiredFields = this.options.visibleBlocks.filter(
 				item => compilationRequiredFields.includes(item),
 			);

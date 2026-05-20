@@ -2,12 +2,15 @@
 
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\Component;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+Loader::requireModule('iblock');
 
 class CatalogIblockSectionFieldController extends Controller
 {

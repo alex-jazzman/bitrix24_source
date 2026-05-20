@@ -80,7 +80,6 @@ Vue.component(config.templateName,
 		{
 			return this.options.singleProductMode !== true
 				&& this.mode !== FormMode.READ_ONLY
-				&& this.mode !== FormMode.COMPILATION_READ_ONLY
 				&& this.options.buttonsPosition !== FormElementPosition.BOTTOM
 			;
 		},
@@ -89,7 +88,6 @@ Vue.component(config.templateName,
 		{
 			return this.options.singleProductMode !== true
 				&& this.mode !== FormMode.READ_ONLY
-				&& this.mode !== FormMode.COMPILATION_READ_ONLY
 				&& this.options.buttonsPosition === FormElementPosition.BOTTOM
 			;
 		},

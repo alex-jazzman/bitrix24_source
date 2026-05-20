@@ -1043,6 +1043,10 @@ span.imconnector-public-link-inner-copy-button-item {
 	border-bottom: 1px dashed #2067b0;
 }
 
+.imconnector-field-legal-docs-title {
+	padding: 0;
+}
+
 .imconnector-field-more-info-block {
 	position: absolute;
 	bottom: 0px;

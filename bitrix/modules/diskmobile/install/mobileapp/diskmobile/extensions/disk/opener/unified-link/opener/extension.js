@@ -6,9 +6,10 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 	const { isEmpty } = require('utils/object');
 	const { FileType } = require('disk/enum');
 	const { withCurrentDomain } = require('utils/url');
+	const { requireLazy } = require('require-lazy');
 	const { getUnifiedLinkData } = require('disk/opener/unified-link/rest');
 
-	const supportedFileTypes = new Set([FileType.FLIPCHART, FileType.DOCUMENT]);
+	const supportedFileTypes = new Set([FileType.FLIPCHART, FileType.DOCUMENT, FileType.PDF]);
 
 	/**
 	 * @class UnifiedOpener
@@ -58,7 +59,7 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 		{
 			if (!this.#isSupportedFileType(fileData.typeFile))
 			{
-				console.warn('UnifiedOpener: Unsupported file type - ', fileData.typeFile);
+				console.warn('UnifiedOpener: Unsupported file type -', fileData.typeFile);
 
 				return null;
 			}

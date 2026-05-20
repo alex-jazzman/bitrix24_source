@@ -15,6 +15,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 
@@ -23,6 +24,8 @@ Loader::includeModule('ui');
 Extension::load('ui.hint');
 
 global $APPLICATION;
+
+$APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 
 $APPLICATION->SetTitle(
 	Loc::getMessage(
@@ -35,10 +38,11 @@ $APPLICATION->IncludeComponent(
 	'',
 	[
 		'INTERNAL_FILTER' => $arResult['DEALS_FILTER'],
+		'EXTENDED_INTERNAL_MODE' => true,
 		'ENABLE_TOOLBAR' => true,
 		'GRID_ID_SUFFIX' => 'PRODUCT_CARD',
 		'HIDE_FILTER' => true,
-	]
+	],
 );
 
 Toolbar::deleteFavoriteStar();
@@ -47,5 +51,8 @@ Toolbar::addAfterTitleHtml(
 );
 ?>
 <script>
+	BX.ready(() => {
+		BX.CrmEntityManager.entityCreateUrls = <?= Json::encode($arResult['ENTITY_CREATE_URLS']) ?>;
+	});
 	BX.UI.Hint.init(document.querySelector('.pagetitle-inner-container'));
 </script>

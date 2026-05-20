@@ -1,6 +1,6 @@
-import {type BaseEvent, EventEmitter} from 'main.core.events';
-import ProductListController from "./product-list/controller";
-import DocumentCardController from "./card/controller";
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+import ProductListController from './product-list/controller';
+import DocumentCardController from './card/controller';
 
 export default class ControllersFactory
 {

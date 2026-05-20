@@ -1224,7 +1224,7 @@ this.BX.Catalog.Store = this.BX.Catalog.Store || {};
 	    value: function updateUiCurrencyFields() {
 	      var _this12 = this;
 	      var currencyText = this.getEditor().getCurrencyText();
-	      var currencyId = "".concat(this.getEditor().getCurrencyId());
+	      var currencyId = String(this.getEditor().getCurrencyId());
 	      var currencyFieldNames = ['BASE_PRICE_CURRENCY', 'PURCHASING_PRICE_CURRENCY'];
 	      currencyFieldNames.forEach(function (name) {
 	        var dropdownValues = [];
@@ -1557,14 +1557,14 @@ this.BX.Catalog.Store = this.BX.Catalog.Store || {};
 	}
 	function _getCalculateProductFields2() {
 	  return {
-	    'PRICE': this.getPrice(),
-	    'BASE_PRICE': this.getBasePrice(),
-	    'PRICE_EXCLUSIVE': this.getPriceExclusive(),
-	    'PRICE_NETTO': this.getPriceNetto(),
-	    'PRICE_BRUTTO': this.getPriceBrutto(),
-	    'QUANTITY': this.getQuantity(),
-	    'TAX_INCLUDED': this.getTaxIncluded(),
-	    'TAX_RATE': this.getTaxRate()
+	    PRICE: this.getPrice(),
+	    BASE_PRICE: this.getBasePrice(),
+	    PRICE_EXCLUSIVE: this.getPriceExclusive(),
+	    PRICE_NETTO: this.getPriceNetto(),
+	    PRICE_BRUTTO: this.getPriceBrutto(),
+	    QUANTITY: this.getQuantity(),
+	    TAX_INCLUDED: this.getTaxIncluded(),
+	    TAX_RATE: this.getTaxRate()
 	  };
 	}
 	function _handleProductErrorsChange2() {
@@ -2382,7 +2382,7 @@ this.BX.Catalog.Store = this.BX.Catalog.Store || {};
 	          var product = _step3.value;
 	          if (product.isEmptyRow()) {
 	            listHaveEmptyRows = true;
-	            this.focusProductSelector(product.fields['ROW_ID']);
+	            this.focusProductSelector(product.fields.ROW_ID);
 	            break;
 	          }
 	        }
@@ -2436,7 +2436,7 @@ this.BX.Catalog.Store = this.BX.Catalog.Store || {};
 	    }
 	    /*
 	    	keep in mind different actions for this handler:
-	    	- native reload by grid actions (columns settings, etc)		- products from request
+	    	- native reload by grid actions (columns settings, etc.)		- products from request
 	    	- rollback													- products from db			this.reloadGrid(false)
 	     */
 	  }, {
@@ -2451,7 +2451,7 @@ this.BX.Catalog.Store = this.BX.Catalog.Store || {};
 	        return;
 	      }
 
-	      // reload by native grid actions (columns settings, etc), otherwise by this.reloadGrid()
+	      // reload by native grid actions (columns settings, etc.), otherwise by this.reloadGrid()
 	      var isNativeAction = !('useProductsFromRequest' in eventArgs.data);
 	      var useProductsFromRequest = isNativeAction ? true : eventArgs.data.useProductsFromRequest;
 	      eventArgs.url = this.getReloadUrl();
@@ -2631,7 +2631,7 @@ this.BX.Catalog.Store = this.BX.Catalog.Store || {};
 	  }, {
 	    key: "setSettings",
 	    value: function setSettings(settings) {
-	      this.settings = settings ? settings : {};
+	      this.settings = settings || {};
 	    }
 	  }, {
 	    key: "getSettingValue",
@@ -2995,7 +2995,7 @@ this.BX.Catalog.Store = this.BX.Catalog.Store || {};
 	      if (main_core.Type.isElementNode(container) && main_core.Type.isStringFilled(fieldName)) {
 	        container.appendChild(main_core.Dom.create('input', {
 	          attrs: {
-	            type: "hidden",
+	            type: 'hidden',
 	            name: fieldName
 	          }
 	        }));

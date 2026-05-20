@@ -1,6 +1,9 @@
 <?php
+$MESS["IMCONNECTOR_COMPONENT_SETTINGS_TO_SAVE"] = "Save settings";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_API_KEY"] = "API Key:";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_API_KEY_MSGVER_1"] = "API Key:";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_AUTHORIZATION"] = "Authorize";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_AUTHORIZATION_FAILED"] = "Could not log in. Please try again.";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_CHANGE_ANY_TIME"] = "You can change or disconnect at any time.";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_CHANGE_ANY_TIME_MSGVER_1"] = "You can change or disconnect at any time.";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_CHANNEL"] = "Channel:";
@@ -22,4 +25,9 @@ $MESS["IMCONNECTOR_COMPONENT_WAZZUP_INDEX_TITLE"] = "Chat with clients on WhatsA
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_INFO"] = "Information";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Instructions</span> for connecting WhatsApp and Telegram:";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_I_KNOW_TOKEN"] = "I know the token";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_LOG_IN_OAUTH"] = "Log in to your Wazzup account.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_CHANNELS_DESC"] = "Your Wazzup account does not have active channels. Add a channel in your Wazzup account and log in here again.";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_NO_CHANNELS_TITLE"] = "No channels";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_OAUTH_BUTTON"] = "Log in";
+$MESS["IMCONNECTOR_COMPONENT_WAZZUP_SELECT_CHANNEL"] = "Select a channel to connect";
 $MESS["IMCONNECTOR_COMPONENT_WAZZUP_TESTED"] = "Testing the connection";

@@ -487,9 +487,14 @@
 	flex-wrap: wrap;
 }
 
-.salescenter-delivery-path-control .ui-ctl-icon-loader {
-	border-right: 1px solid #c6cdd3;
+.salescenter-delivery-path-control .ui-ctl-icon-loader,
+.salescenter-delivery-path-control .ui-ctl-icon-search,
+.salescenter-delivery-path-control .ui-ctl-icon-clear {
 	right: 0;
+}
+
+.salescenter-address-input-textbox {
+	width: 100%;
 }
 
 .sale-address-control-top-margin-width-820 {

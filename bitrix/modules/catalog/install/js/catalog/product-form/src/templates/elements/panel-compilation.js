@@ -35,19 +35,8 @@ Vue.component(config.templatePanelCompilation,
 
 		let header = '';
 		let description = '';
-		if (this.isFacebookForm())
-		{
-			header = this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_TITLE_FACEBOOK;
-			description = Tag.render`
-				<p>${this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_BODY_FACEBOOK_FIRST_BLOCK}</p>
-				<p>${this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_BODY_FACEBOOK_SECOND_BLOCK}</p>
-			`;
-		}
-		else
-		{
-			header = this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_TITLE;
-			description = this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_BODY_MARKETING_2;
-		}
+		header = this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_TITLE;
+		description = this.localize.CATALOG_FORM_COMPILATION_INFO_MESSAGE_BODY_MARKETING_2;
 
 		this.message = new MessageCard({
 			id: 'compilationInfo',
@@ -72,17 +61,9 @@ Vue.component(config.templatePanelCompilation,
 	},
 	methods:
 	{
-		isFacebookForm()
-		{
-			return this.compilationOptions.type === FormCompilationType.FACEBOOK;
-		},
 		openHelpDesk()
 		{
-			this.helpdeskCode =
-				this.isFacebookForm()
-					? FormHelpdeskCode.COMPILATION_FACEBOOK
-					: FormHelpdeskCode.COMMON_COMPILATION
-			;
+			this.helpdeskCode = FormHelpdeskCode.COMMON_COMPILATION;
 
 			top.BX.Helper.show('redirect=detail&code=' + this.helpdeskCode);
 		},
@@ -90,12 +71,6 @@ Vue.component(config.templatePanelCompilation,
 		{
 			if (this.compilationOptions.disabledSwitcher)
 			{
-				return;
-			}
-
-			if (this.isFacebookForm())
-			{
-				this.openHelpDesk();
 				return;
 			}
 

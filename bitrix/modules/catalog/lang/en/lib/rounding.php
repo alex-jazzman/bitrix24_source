@@ -1,5 +1,6 @@
-<?
+<?php
 $MESS["ROUNDING_ENTITY_ID_FIELD"] = "Rounding rule ID";
+$MESS["ROUNDING_ENTITY_CATALOG_GROUP_ID_FIELD"] = "Price type ID";
 $MESS["ROUNDING_ENTITY_CURRENCY_FIELD"] = "Currency";
 $MESS["ROUNDING_ENTITY_PRICE_FIELD"] = "Minimum price";
 $MESS["ROUNDING_ENTITY_ROUND_TYPE_FIELD"] = "Type of rounding";
@@ -11,4 +12,3 @@ $MESS["ROUNDING_ENTITY_TIMESTAMP_X_FIELD"] = "Modified on";
 $MESS["ROUNDING_TYPE_ROUND_MATH"] = "Use math rules";
 $MESS["ROUNDING_TYPE_ROUND_UP"] = "In your favor";
 $MESS["ROUNDING_TYPE_ROUND_DOWN"] = "In customer's favor";
-?>

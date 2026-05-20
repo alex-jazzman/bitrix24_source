@@ -1,2 +1,178 @@
-this.BX=this.BX||{},this.BX.Disk=this.BX.Disk||{},function(e,s,i,t,o,a){"use strict";var l=babelHelpers.classPrivateFieldLooseKey("canEditBeRestrictedByTariff"),r=babelHelpers.classPrivateFieldLooseKey("notifyLimitReached"),n=babelHelpers.classPrivateFieldLooseKey("isActionDefined"),c=babelHelpers.classPrivateFieldLooseKey("showPopupWithSlider"),d=babelHelpers.classPrivateFieldLooseKey("showSlider"),b=babelHelpers.classPrivateFieldLooseKey("showForm"),h=babelHelpers.classPrivateFieldLooseKey("showBoostPromo"),p=babelHelpers.classPrivateFieldLooseKey("getExtensionParam");function u(){return!babelHelpers.classPrivateFieldLooseBase(this,p)[p]("canUseEditByTariff")}function f(){s.ajax.runAction("disk.api.limitEncounter.documentEditSession",{})}function y(){return null!==this.action}function P(e){e||console.error("OnlyofficePromoActions: target is not defined for slider with popup action");const s=new a.PopupLimits({bindElement:e,isLimitEdit:!this.isCreate,submitButtonCallback:()=>{const e=babelHelpers.classPrivateFieldLooseBase(this,d)[d]();""!==e&&(s.hide(),BX.UI.Analytics.sendData({tool:"docs",category:"docs",event:"limit_popup_click",type:"sliderId_"+e,...this.analytics}))}});s.show(),BX.UI.Analytics.sendData({tool:"docs",category:"docs",event:"limit_popup_show",...this.analytics})}function v(){var e;const s=(null==(e=this.action)?void 0:e.code)||"";return""===s?"":(i.InfoHelper.show(s),s)}function B(){t.Form.open(this.action.params)}function m(e,s){if(e){const i=o.Factory.getSessionBoostWidget().bindTo(e);s&&i.setOverlay(),i.show()}else console.error("OnlyofficePromoActions: target is not defined for boost promo action")}function L(e){return s.Extension.getSettings("disk.onlyoffice-promo-actions").get(e)}e.OnlyOfficePromoActions=class{constructor(e=!1,s=null){Object.defineProperty(this,p,{value:L}),Object.defineProperty(this,h,{value:m}),Object.defineProperty(this,b,{value:B}),Object.defineProperty(this,d,{value:v}),Object.defineProperty(this,c,{value:P}),Object.defineProperty(this,n,{value:y}),Object.defineProperty(this,r,{value:f}),Object.defineProperty(this,l,{value:u}),this.action=null,this.isCreate=!1,this.analytics=null,this.isCreate=e,this.analytics=s,this.action=babelHelpers.classPrivateFieldLooseBase(this,p)[p]("action"),this.documentEditSessionLimit=BX.Disk.OnlyOfficeSessionRestrictions.DocumentEditSessionLimit.getInstance()}shouldShow(){return babelHelpers.classPrivateFieldLooseBase(this,n)[n]()&&(babelHelpers.classPrivateFieldLooseBase(this,l)[l]()||this.documentEditSessionLimit.isExceeded())}show(e,s){var i;if(!babelHelpers.classPrivateFieldLooseBase(this,n)[n]())return;const t=null==(i=this.action)?void 0:i.type;let o=!0;switch(t){case"slider":babelHelpers.classPrivateFieldLooseBase(this,d)[d]();break;case"sliderWithPopup":babelHelpers.classPrivateFieldLooseBase(this,c)[c](e);break;case"form":babelHelpers.classPrivateFieldLooseBase(this,b)[b]();break;case"boost":babelHelpers.classPrivateFieldLooseBase(this,h)[h](e,s);break;default:o=!1,console.error("Unknown promo action type: "+t)}o&&babelHelpers.classPrivateFieldLooseBase(this,r)[r]()}}}(this.BX.Disk.OnlyOfficePromoActions=this.BX.Disk.OnlyOfficePromoActions||{},BX,BX.UI,BX.UI.Feedback,BX.Disk.PromoBoost,BX.Disk);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Disk = this.BX.Disk || {};
+(function (exports, main_core, ui_infoHelper, ui_feedback_form, disk_promoBoost, disk_popupLimits) {
+	'use strict';
+
+	class OnlyOfficePromoActions {
+		action = null;
+		isCreate = false;
+		analytics = null;
+		constructor(isCreate = false, analytics = null) {
+			this.isCreate = isCreate;
+			this.analytics = analytics;
+			this.action = this.#getExtensionParam('action');
+			this.documentEditSessionLimit = BX.Disk.OnlyOfficeSessionRestrictions.DocumentEditSessionLimit.getInstance();
+		}
+		shouldShow() {
+			return this.#isActionDefined() && (this.#canEditBeRestrictedByTariff() || this.documentEditSessionLimit.isExceeded());
+		}
+		#canEditBeRestrictedByTariff() {
+			return !this.#getExtensionParam('canUseEditByTariff');
+		}
+		show(target, needOverlay) {
+			if (!this.#isActionDefined()) {
+				return;
+			}
+			const actionType = this.action?.type;
+			let limitReached = true;
+			switch (actionType) {
+				case 'slider':
+					this.#showSlider();
+					break;
+				case 'sliderWithPopup':
+					this.#showPopupWithSlider(target);
+					break;
+				case 'form':
+					this.#showForm();
+					break;
+				case 'formWithPopup':
+					this.#showPopupWithForm(target);
+					break;
+				case 'boost':
+					this.#showBoostPromo(target, needOverlay);
+					break;
+				case 'link':
+					this.#showPopupWithLink(target);
+					break;
+				default:
+					limitReached = false;
+					console.error(`Unknown promo action type: ${actionType}`);
+			}
+			if (limitReached) {
+				this.#notifyLimitReached();
+			}
+		}
+		#notifyLimitReached() {
+			main_core.ajax.runAction('disk.api.limitEncounter.documentEditSession', {});
+		}
+		#isActionDefined() {
+			return this.action !== null;
+		}
+		#showPopupWithSlider(target) {
+			if (!target) {
+				console.error('OnlyofficePromoActions: target is not defined for slider with popup action');
+			}
+			const popupLimits = new disk_popupLimits.PopupLimits({
+				bindElement: target,
+				isLimitEdit: !this.isCreate,
+				submitButtonCallback: () => {
+					const sliderCode = this.#showSlider();
+					if (sliderCode !== '') {
+						popupLimits.hide();
+						BX.UI.Analytics.sendData({
+							tool: 'docs',
+							category: 'docs',
+							event: 'limit_popup_click',
+							type: `sliderId_${sliderCode}`,
+							...this.analytics
+						});
+					}
+				}
+			});
+			popupLimits.show();
+			BX.UI.Analytics.sendData({
+				tool: 'docs',
+				category: 'docs',
+				event: 'limit_popup_show',
+				...this.analytics
+			});
+		}
+		#showSlider() {
+			const sliderCode = this.action?.code || '';
+			if (sliderCode === '') {
+				return '';
+			}
+			ui_infoHelper.InfoHelper.show(sliderCode);
+			return sliderCode;
+		}
+		#showForm() {
+			ui_feedback_form.Form.open(this.action.params);
+		}
+		#showPopupWithForm(target) {
+			if (!target) {
+				console.error('OnlyofficePromoActions: target is not defined for slider with popup action');
+			}
+			const popupLimits = new disk_popupLimits.PopupLimits({
+				bindElement: target,
+				isLimitEdit: !this.isCreate,
+				submitButtonCallback: () => {
+					popupLimits.hide();
+					ui_feedback_form.Form.open(this.action.params);
+					BX.UI.Analytics.sendData({
+						tool: 'docs',
+						category: 'docs',
+						event: 'limit_popup_click',
+						type: 'feedback',
+						...this.analytics
+					});
+				}
+			});
+			popupLimits.show();
+			BX.UI.Analytics.sendData({
+				tool: 'docs',
+				category: 'docs',
+				event: 'limit_popup_show',
+				...this.analytics
+			});
+		}
+		#showBoostPromo(target, needOverlay) {
+			if (target) {
+				const widget = disk_promoBoost.Factory.getSessionBoostWidget().bindTo(target);
+				if (needOverlay) {
+					widget.setOverlay();
+				}
+				widget.show();
+			} else {
+				console.error('OnlyofficePromoActions: target is not defined for boost promo action');
+			}
+		}
+		#showPopupWithLink(target) {
+			const url = this.action.params?.url ?? null;
+			if (typeof url !== 'string' || url === '') {
+				throw new Error('invalid url');
+			}
+			const popupLimits = new disk_popupLimits.PopupLimits({
+				bindElement: target,
+				isLimitEdit: !this.isCreate,
+				submitButtonCallback: () => {
+					const isNewTab = this.action.params?.isNewTab ?? true;
+					const urlTarget = isNewTab ? '_blank' : '_self';
+					popupLimits.hide();
+					window.open(url, urlTarget);
+					BX.UI.Analytics.sendData({
+						tool: 'docs',
+						category: 'docs',
+						event: 'limit_popup_click',
+						type: 'helpdesk',
+						...this.analytics
+					});
+				}
+			});
+			popupLimits.show();
+			BX.UI.Analytics.sendData({
+				tool: 'docs',
+				category: 'docs',
+				event: 'limit_popup_show',
+				...this.analytics
+			});
+		}
+		#getExtensionParam(paramName) {
+			return main_core.Extension.getSettings('disk.onlyoffice-promo-actions').get(paramName);
+		}
+	}
+
+	exports.OnlyOfficePromoActions = OnlyOfficePromoActions;
+
+})(this.BX.Disk.OnlyOfficePromoActions = this.BX.Disk.OnlyOfficePromoActions || {}, BX, BX.UI, BX.UI.Feedback, BX.Disk.PromoBoost, BX.Disk);
 //# sourceMappingURL=onlyoffice-promo-actions.bundle.js.map

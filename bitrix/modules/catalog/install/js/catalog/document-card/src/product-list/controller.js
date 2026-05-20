@@ -1,6 +1,4 @@
-import {Loc} from 'main.core';
-import {BaseEvent, EventEmitter} from 'main.core.events'
-import DocumentCard from "../card/card";
+import { BaseEvent, EventEmitter } from 'main.core.events';
 
 export default class ProductListController extends BX.UI.EntityEditorController
 {

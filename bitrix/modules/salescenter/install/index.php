@@ -127,14 +127,6 @@ class salescenter extends CModule
 		);
 
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler(
-			'catalog',
-			'onFacebookCompilationExportFinished',
-			'salescenter',
-			'\Bitrix\SalesCenter\Controller\Compilation',
-			'onFacebookCompilationExportFinishedHandler'
-		);
-
-		\Bitrix\Main\EventManager::getInstance()->registerEventHandler(
 			'sale',
 			'OnSaleAfterPsServiceProcessRequest',
 			'salescenter',
@@ -249,14 +241,6 @@ class salescenter extends CModule
 			'salescenter',
 			'\Bitrix\SalesCenter\Integration\CrmManager',
 			'onSendCompilation'
-		);
-
-		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler(
-			'catalog',
-			'onFacebookCompilationExportFinished',
-			'salescenter',
-			'\Bitrix\SalesCenter\Controller\Compilation',
-			'onFacebookCompilationExportFinishedHandler'
 		);
 
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler(

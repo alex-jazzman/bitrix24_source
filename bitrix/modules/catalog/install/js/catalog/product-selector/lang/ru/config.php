@@ -1,4 +1,5 @@
 <?php
+
 $MESS["CATALOG_SELECTOR_VIEW_NAME_TITLE"] = "Наименование товара";
 $MESS["CATALOG_SELECTOR_BEFORE_SEARCH_TITLE"] = "Найти или создать новый товар";
 $MESS["CATALOG_SELECTOR_RECENT_TAB_STUB_TITLE"] = "Введите название товара";
@@ -20,7 +21,6 @@ $MESS["CATALOG_SELECTOR_SEARCH_POPUP_FOOTER_BARCODE_CHANGE"] = "изменить
 $MESS["CATALOG_SELECTOR_SAVING_NOTIFICATION_NAME"] = "Название товара будет сохранено в каталоге.";
 $MESS["CATALOG_SELECTOR_SAVING_NOTIFICATION_BARCODE"] = "Штрихкод товара будет сохранен в каталоге.";
 $MESS["CATALOG_SELECTOR_SEARCH_POPUP_FOOTER_CREATE_WITH_BARCODE"] = "Создать товар со штрихкодом:";
-$MESS["CATALOG_SELECTOR_SEARCH_POPUP_FOOTER_CHANGE"] = "изменить название";
 $MESS["CATALOG_SELECTOR_BEFORE_SEARCH_BARCODE_TITLE"] = "Найти товар по штрихкоду";
 $MESS["CATALOG_SELECTOR_VIEW_BARCODE_TITLE"] = "Найти товар по штрихкоду";
 $MESS["CATALOG_SELECTOR_NEW_BARCODE_PRODUCT_NAME"] = "Новый товар штрихкод";

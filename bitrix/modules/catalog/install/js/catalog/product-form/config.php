@@ -60,7 +60,6 @@ return [
 		'ui.common',
 		'ui.alerts',
 		'catalog.product-selector',
-		'ui.entity-selector',
 		'catalog.product-model',
 		'ui.vue.vuex',
 		'main.popup',

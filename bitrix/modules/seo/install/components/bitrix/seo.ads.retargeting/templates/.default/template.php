@@ -73,6 +73,7 @@ $multiClients = array_key_exists('CLIENTS', $arParams['PROVIDER']);
 						'color' => Color::LIGHT_BORDER,
 					]))
 						->addAttribute("id", "seo-ads-login-btn")
+						->addAttribute("type", "button")
 						->render(false)
 					;
 				?>

@@ -217,8 +217,9 @@ elseif(!empty($arResult['ACTIVE_STATUS']))
 									</div>
 									<div class="imconnector-public-link-settings-inner-upload-field imconnector-public-link-settings-inner-upload-description">
 										<button class="imconnector-public-link-settings-inner-upload-button"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_FIELD_4_DESCRIPTION_2')?></button>
-										<input type="file" name="avatar" class="imconnector-public-link-settings-inner-upload-item">
+										<input type="file" name="avatar" accept="image/png, image/jpeg" class="imconnector-public-link-settings-inner-upload-item">
 									</div>
+									<span data-hint="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_FIELD_4_HINT')?>" class="ui-hint" style="vertical-align: top"></span>
 									<span id="avatar_text" class="imconnector-public-link-settings-inner-upload-info"></span>
 									<?
 									if(!empty($arResult['FORM']['AVATAR']))

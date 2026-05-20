@@ -280,53 +280,54 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 	</div>
 </div>
 
-<? if($arParams['STATUS_BIZPROC']&&!empty($arResult['WORKFLOW_TEMPLATES'])) { ?>
+<?php if ($arParams['STATUS_BIZPROC'] && isset($arResult['WORKFLOW_TEMPLATES'])) { ?>
 <div style="display:none;">
 	<form id="parametersFormBp">
 	<div id="divStartBizProc" class="bx-disk-form-bizproc-start-div">
 		<table class="bx-disk-form-bizproc-start-table">
 			<col class="bx-disk-col-table-left">
 			<col class="bx-disk-col-table-right">
-			<? if(!empty($arResult['WORKFLOW_TEMPLATES'])) {
-				if($arResult['BIZPROC_PARAMETERS']) {?>
-					<tr>
-						<td class="bx-disk-form-bizproc-start-td-title" colspan="2">
-							<?= Loc::getMessage('DISK_FILE_VIEW_BIZPROC_LABEL_START') ?>
-						</td>
-					</tr>
-					<tr id="errorTr">
-						<td id="errorTd" class="bx-disk-form-bizproc-start-td-error" colspan="2">
-
-						</td>
-					</tr>
-				<? }
-				foreach($arResult['WORKFLOW_TEMPLATES'] as $workflowTemplate)
+			<?php if ($arResult['BIZPROC_PARAMETERS']) { ?>
+				<tr>
+					<td class="bx-disk-form-bizproc-start-td-title" colspan="2">
+						<?= Loc::getMessage('DISK_FILE_VIEW_BIZPROC_LABEL_START') ?>
+					</td>
+				</tr>
+				<tr id="errorTr">
+					<td id="errorTd" class="bx-disk-form-bizproc-start-td-error" colspan="2"></td>
+				</tr>
+				<?php }
+				foreach ($arResult['WORKFLOW_TEMPLATES'] as $workflowTemplate)
 				{
-					if(!empty($workflowTemplate['PARAMETERS'])) { ?>
+					if (!empty($workflowTemplate['PARAMETERS'])) { ?>
 						<tr>
 							<td class="bx-disk-form-bizproc-start-td-name-bizproc" colspan="2">
-								<?= $workflowTemplate['NAME'] ?>
+								<?= htmlspecialcharsbx($workflowTemplate['NAME']) ?>
 								<input type="hidden" value="1" name="checkBp" />
 								<input type="hidden" value="edit" name="autoExecute" />
 							</td>
 						</tr>
-						<?CBPDocument::StartWorkflowParametersShow($workflowTemplate['ID'], $workflowTemplate['PARAMETERS'], 'formAutoloadBizProc', false);
-					}else { ?>
+						<?php CBPDocument::StartWorkflowParametersShow(
+							$workflowTemplate['ID'],
+							$workflowTemplate['PARAMETERS'],
+							'formAutoloadBizProc',
+							false
+						);
+					} else { ?>
 						<tr>
 							<td class="bx-disk-form-bizproc-start-td-name-bizproc" colspan="2">
 								<input type="hidden" value="1" name="checkBp" />
 								<input type="hidden" value="edit" name="autoExecute" />
 							</td>
 						</tr>
-					<? }
+					<?php }
 				}
-			}
 			?>
 		</table>
 	</div>
 	</form>
 </div>
-<? } ?>
+<?php } ?>
 <?
 $APPLICATION->IncludeComponent(
 	'bitrix:disk.file.upload',

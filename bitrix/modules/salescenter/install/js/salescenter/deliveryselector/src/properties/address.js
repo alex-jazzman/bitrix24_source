@@ -211,12 +211,9 @@ export default
 		{
 			return {
 				'ui-ctl': true,
-				'ui-ctl-textbox': true,
-				'ui-ctl-danger': this.needsClarification,
 				'ui-ctl-w100': true,
-				'ui-ctl-after-icon': true,
-				'sale-address-control-top-margin-5 sale-address-control-top-margin-width-820': this.isEditMode
-			}
+				'sale-address-control-top-margin-5 sale-address-control-top-margin-width-820': this.isEditMode,
+			};
 		},
 		mapMarkerClass()
 		{
@@ -232,7 +229,6 @@ export default
 				'ui-ctl-icon-btn': true,
 				'ui-ctl-icon-search': (this.rightIcon === 'search'),
 				'ui-ctl-icon-clear': (this.rightIcon === 'clear'),
-				'sale-address-control-path-input-clear': true,
 			};
 		},
 		needsClarification()
@@ -404,27 +400,30 @@ export default
 				>
 					<div :class="wrapperClass">
 						<div
-							v-show="isLoading"
-							class="ui-ctl-after ui-ctl-icon-loader"
-						></div>
-						<div
 							v-show="isEditMode" 
 							ref="autocomplete-menu"
 							class="sale-address-control-path-input-wrapper"
 						>
-							<input
-								@click="onControlClicked"
-								@focus="onControlFocus"
-								ref="input-node"
-								type="text"
-								class="ui-ctl-element"
-							/>
-							<div
-								v-show="!isLoading && isEditMode"
-								@click="clearAddress"
-								@mouseover.stop.prevent=""
-								:class="rightIconClass"
-							></div>
+							<div class="ui-ctl ui-ctl-textbox ui-ctl-after-icon salescenter-address-input-textbox">
+								<input
+									@click="onControlClicked"
+									@focus="onControlFocus"
+									ref="input-node"
+									type="text"
+									class="ui-ctl-element"
+									:class="{ '--error': needsClarification }"
+								/>
+								<div
+									v-show="!isLoading"
+									@click="clearAddress"
+									@mouseover.stop.prevent=""
+									:class="rightIconClass"
+								></div>
+								<div
+									v-show="isLoading"
+									class="ui-ctl-after ui-ctl-icon-loader"
+								></div>
+							</div>
 							<span
 								v-show="needsClarification"
 								@mouseover.stop.prevent=""
@@ -434,7 +433,7 @@ export default
 								{{localize.SALE_DELIVERY_SERVICE_SELECTOR_CLARIFY_ADDRESS}}
 							</span>
 						</div>
-						<div v-show="!isEditMode"class="sale-address-control-path-input-wrapper">
+						<div v-show="!isEditMode" class="sale-address-control-path-input-wrapper">
 							<span
 								@click="switchToEditMode"
 								type="text"

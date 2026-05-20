@@ -51,8 +51,14 @@ export class OnlyOfficePromoActions
 			case 'form':
 				this.#showForm();
 				break;
+			case 'formWithPopup':
+				this.#showPopupWithForm(target);
+				break;
 			case 'boost':
 				this.#showBoostPromo(target, needOverlay);
+				break;
+			case 'link':
+				this.#showPopupWithLink(target);
 				break;
 			default:
 				limitReached = false;
@@ -128,6 +134,39 @@ export class OnlyOfficePromoActions
 		Form.open(this.action.params);
 	}
 
+	#showPopupWithForm(target): void
+	{
+		if (!target)
+		{
+			console.error('OnlyofficePromoActions: target is not defined for form with popup action');
+		}
+
+		const popupLimits = new PopupLimits({
+			bindElement: target,
+			isLimitEdit: !this.isCreate,
+			submitButtonCallback: () => {
+				popupLimits.hide();
+				Form.open(this.action.params);
+
+				BX.UI.Analytics.sendData({
+					tool: 'docs',
+					category: 'docs',
+					event: 'limit_popup_click',
+					type: 'feedback',
+					...this.analytics,
+				});
+			},
+		});
+
+		popupLimits.show();
+		BX.UI.Analytics.sendData({
+			tool: 'docs',
+			category: 'docs',
+			event: 'limit_popup_show',
+			...this.analytics,
+		});
+	}
+
 	#showBoostPromo(target, needOverlay): void
 	{
 		if (target)
@@ -146,6 +185,44 @@ export class OnlyOfficePromoActions
 		{
 			console.error('OnlyofficePromoActions: target is not defined for boost promo action');
 		}
+	}
+
+	#showPopupWithLink(target): void
+	{
+		const url = this.action.params?.url ?? null;
+
+		if (typeof url !== 'string' || url === '')
+		{
+			throw new Error('invalid url');
+		}
+
+		const popupLimits = new PopupLimits({
+			bindElement: target,
+			isLimitEdit: !this.isCreate,
+			submitButtonCallback: () => {
+				const isNewTab = this.action.params?.isNewTab ?? true;
+				const urlTarget = isNewTab ? '_blank' : '_self';
+
+				popupLimits.hide();
+				window.open(url, urlTarget);
+
+				BX.UI.Analytics.sendData({
+					tool: 'docs',
+					category: 'docs',
+					event: 'limit_popup_click',
+					type: 'helpdesk',
+					...this.analytics,
+				});
+			},
+		});
+
+		popupLimits.show();
+		BX.UI.Analytics.sendData({
+			tool: 'docs',
+			category: 'docs',
+			event: 'limit_popup_show',
+			...this.analytics,
+		});
 	}
 
 	#getExtensionParam(paramName: string): any

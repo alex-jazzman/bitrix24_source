@@ -128,48 +128,33 @@ export class VibeSection extends EventEmitter
 			// todo: bannerCode, isEnable
 		});
 
-		const mainSection = new SettingsSection({
-			parent: this,
-			title: 'check',
-			titleIconClasses: 'ui-icon-set --feed-bold',
-			section,
-		});
-
-		const secondarySection = new SettingsSection({
-			parent: this,
-			section,
-		});
-
-		const content = Tag.render`
-			<div>
-				${this.#getMainTemplate()}		
-			</div>
-		`;
-		mainSection.getSectionView().append(
-			(new Row({
-				content,
-			})).render(),
-		);
-
 		if (this.#isPageExists)
 		{
-			const secondaryContent = Tag.render`
-				<div>
-					${this.#getSecondaryTemplate()}			
-				</div>
-			`;
-			secondarySection.getSectionView().append(
+			const pageSection = new SettingsSection({
+				section,
+			});
+
+			pageSection.getSectionView().append(
 				(new Row({
-					content: secondaryContent,
+					content: this.#getSecondaryTemplate(),
 				})).render(),
 			);
 		}
 
+		const mainSection = new SettingsSection({
+			section,
+		});
+
+		mainSection.getSectionView().append(
+			(new Row({
+				content: this.#getMainTemplate(),
+			})).render(),
+		);
+
+		section.renderTo(contentNode);
+
 		this.#bindButtonEvents();
 		this.#bindSliderCloseEvent();
-
-		secondarySection.renderTo(contentNode);
-		mainSection.renderTo(contentNode);
 	}
 
 	#getMainTemplate(): HTMLElement

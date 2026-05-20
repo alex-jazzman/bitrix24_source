@@ -7,7 +7,7 @@ jn.define('mail/in-app-url/routes', (require, exports, module) => {
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = (inAppUrl) => {
-		inAppUrl.register('/mail/message/:threadId\\?source=:source', eventOpenMessageHandler)
+		inAppUrl.register('/mail/message/:threadId(\\?source=:source)?$', eventOpenMessageHandler)
 			.name('mail:message:open');
 		inAppUrl.register('/mail/list/:threadId', eventOpenMailboxHandler)
 			.name('mail:mailbox:open');
@@ -24,7 +24,7 @@ jn.define('mail/in-app-url/routes', (require, exports, module) => {
 			componentParams: {
 				isCrmMessage: 0,
 				threadId,
-				source,
+				source: source ?? 'mail',
 			},
 		});
 	};

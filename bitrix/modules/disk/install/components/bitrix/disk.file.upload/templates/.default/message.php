@@ -1,4 +1,10 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Main\Localization\Loc;
 $this->IncludeLangFile("message.php");
 $title = Loc::getMessage("DFU_UPLOAD_TITLE2", array(
@@ -17,6 +23,8 @@ $m = array(
 <script>
 	BX.message({
 		DFU_SAVE_BP : '<?=getMessageJS("DFU_SAVE_BP_DIALOG")?>',
+		DFU_FILL_BP_PARAMETERS: '<?= getMessageJS('DFU_FILL_BP_PARAMETERS') ?>',
+		DFU_CHANGE_BP_PARAMETERS: '<?= getMessageJS('DFU_CHANGE_BP_PARAMETERS') ?>',
 		DFU_CLOSE : '<?=getMessageJS("DFU_CLOSE")?>',
 		DFU_UPLOAD : '<?=getMessageJS("DFU_UPLOAD")?>',
 		DFU_UPLOAD_TITLE1 : '<?=getMessageJS("DFU_UPLOAD_TITLE1")?>',

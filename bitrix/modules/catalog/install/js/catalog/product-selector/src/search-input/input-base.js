@@ -28,7 +28,12 @@ export class ProductSearchInputBase
 		this.inputName = options.inputName || ProductSelector.INPUT_FIELD_NAME;
 		this.loadedSelectedItem = null;
 
-		this.handleSearchInput = Runtime.debounce(this.searchInDialog, 500, this);
+		this.clickNameInputHandler = this.handleClickNameInput.bind(this);
+		this.searchInDialogHandler = Runtime.debounce(this.searchInDialog, 500, this);
+		this.nameInputBlurHandler = this.#handleNameInputBlur.bind(this);
+		this.nameInputKeyDownHandler = this.handleNameInputKeyDown.bind(this);
+		this.iconsSwitchingOnNameInputHandler = this.#handleIconsSwitchingOnNameInput.bind(this);
+		this.nameInputChangeHandler = this.#handleNameInputChange.bind(this);
 	}
 
 	layout(): HTMLElement
@@ -52,10 +57,10 @@ export class ProductSearchInputBase
 			);
 			Dom.append(this.getSearchIcon(), block);
 
-			Event.bind(this.getNameInput(), 'click', this.handleClickNameInput.bind(this));
-			Event.bind(this.getNameInput(), 'input', this.handleSearchInput);
-			Event.bind(this.getNameInput(), 'blur', this.#handleNameInputBlur.bind(this));
-			Event.bind(this.getNameInput(), 'keydown', this.handleNameInputKeyDown.bind(this));
+			Event.bind(this.getNameInput(), 'click', this.clickNameInputHandler);
+			Event.bind(this.getNameInput(), 'input', this.searchInDialogHandler);
+			Event.bind(this.getNameInput(), 'blur', this.nameInputBlurHandler);
+			Event.bind(this.getNameInput(), 'keydown', this.nameInputKeyDownHandler);
 
 			this.dialogMode = this.model.isCatalogExisted()
 				? DialogMode.SHOW_PRODUCT_ITEM
@@ -71,9 +76,9 @@ export class ProductSearchInputBase
 			Dom.append(this.#getArrowIcon(), block);
 		}
 
-		Event.bind(this.getNameInput(), 'click', this.#handleIconsSwitchingOnNameInput.bind(this));
-		Event.bind(this.getNameInput(), 'input', this.#handleIconsSwitchingOnNameInput.bind(this));
-		Event.bind(this.getNameInput(), 'change', this.#handleNameInputChange.bind(this));
+		Event.bind(this.getNameInput(), 'click', this.iconsSwitchingOnNameInputHandler);
+		Event.bind(this.getNameInput(), 'input', this.iconsSwitchingOnNameInputHandler);
+		Event.bind(this.getNameInput(), 'change', this.nameInputChangeHandler);
 
 		Dom.append(this.getNameBlock(), block);
 
@@ -210,7 +215,15 @@ export class ProductSearchInputBase
 	{}
 
 	destroy(): void
-	{}
+	{
+		Event.unbind(this.getNameInput(), 'click', this.clickNameInputHandler);
+		Event.unbind(this.getNameInput(), 'input', this.searchInDialogHandler);
+		Event.unbind(this.getNameInput(), 'blur', this.nameInputBlurHandler);
+		Event.unbind(this.getNameInput(), 'keydown', this.nameInputKeyDownHandler);
+		Event.unbind(this.getNameInput(), 'click', this.iconsSwitchingOnNameInputHandler);
+		Event.unbind(this.getNameInput(), 'input', this.iconsSwitchingOnNameInputHandler);
+		Event.unbind(this.getNameInput(), 'change', this.nameInputChangeHandler);
+	}
 
 	showItems(): void
 	{
@@ -470,6 +483,7 @@ export class ProductSearchInputBase
 
 	#clearInputCache(): void
 	{
+		this.destroy();
 		this.cache.delete('dialog');
 		this.cache.delete('nameBlock');
 		this.cache.delete('nameInput');

@@ -115,6 +115,7 @@
 					moduleId: 'landing',
 					contextId: this.getContext(),
 					category: 'landing',
+					responseFormat: 'html',
 				});
 				this.copilot.subscribe('finish-init', this.finishInitHandler.bind(this));
 				this.copilot.subscribe('save', this.saveHandler.bind(this));

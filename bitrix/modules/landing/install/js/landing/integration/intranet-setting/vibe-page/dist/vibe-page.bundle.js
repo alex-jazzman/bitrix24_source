@@ -25,9 +25,7 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	  _t17,
 	  _t18,
 	  _t19,
-	  _t20,
-	  _t21,
-	  _t22;
+	  _t20;
 	var _iconDefaultSet = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("iconDefaultSet");
 	var _iconDefaultIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("iconDefaultIcon");
 	var _title = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("title");
@@ -301,41 +299,26 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	      // todo: bannerCode, isEnable
 	    });
 
-	    const mainSection = new ui_formElements_field.SettingsSection({
-	      parent: this,
-	      title: 'check',
-	      titleIconClasses: 'ui-icon-set --feed-bold',
-	      section
-	    });
-	    const secondarySection = new ui_formElements_field.SettingsSection({
-	      parent: this,
-	      section
-	    });
-	    const content = main_core.Tag.render(_t || (_t = _`
-			<div>
-				${0}		
-			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _getMainTemplate)[_getMainTemplate]());
-	    mainSection.getSectionView().append(new ui_section.Row({
-	      content
-	    }).render());
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isPageExists)[_isPageExists]) {
-	      const secondaryContent = main_core.Tag.render(_t2 || (_t2 = _`
-				<div>
-					${0}			
-				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _getSecondaryTemplate)[_getSecondaryTemplate]());
-	      secondarySection.getSectionView().append(new ui_section.Row({
-	        content: secondaryContent
+	      const pageSection = new ui_formElements_field.SettingsSection({
+	        section
+	      });
+	      pageSection.getSectionView().append(new ui_section.Row({
+	        content: babelHelpers.classPrivateFieldLooseBase(this, _getSecondaryTemplate)[_getSecondaryTemplate]()
 	      }).render());
 	    }
+	    const mainSection = new ui_formElements_field.SettingsSection({
+	      section
+	    });
+	    mainSection.getSectionView().append(new ui_section.Row({
+	      content: babelHelpers.classPrivateFieldLooseBase(this, _getMainTemplate)[_getMainTemplate]()
+	    }).render());
+	    section.renderTo(contentNode);
 	    babelHelpers.classPrivateFieldLooseBase(this, _bindButtonEvents)[_bindButtonEvents]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _bindSliderCloseEvent)[_bindSliderCloseEvent]();
-	    secondarySection.renderTo(contentNode);
-	    mainSection.renderTo(contentNode);
 	  }
 	  getInfoTemplate() {
-	    this.infoTemplate = main_core.Tag.render(_t3 || (_t3 = _`
+	    this.infoTemplate = main_core.Tag.render(_t || (_t = _`
 			<div class="intranet-settings__vibe-info">
 				<div class="intranet-settings__vibe-info-title">
 					${0}
@@ -375,7 +358,7 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	    return this.infoTemplate;
 	  }
 	  getInfoSuccessTemplate() {
-	    this.infoSuccessTemplate = main_core.Tag.render(_t4 || (_t4 = _`
+	    this.infoSuccessTemplate = main_core.Tag.render(_t2 || (_t2 = _`
 			<div class="intranet-settings__vibe-info --success">
 				<div class="intranet-settings__vibe-info-title">
 					${0}				
@@ -415,12 +398,12 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	    return this.infoSuccessTemplate;
 	  }
 	  renderLockElement() {
-	    return main_core.Tag.render(_t5 || (_t5 = _`<span class="intranet-settings-mp-icon ui-icon-set --lock"></span>`));
+	    return main_core.Tag.render(_t3 || (_t3 = _`<span class="intranet-settings-mp-icon ui-icon-set --lock"></span>`));
 	  }
 	}
 	function _getMainTemplate2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _mainTemplate)[_mainTemplate]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _mainTemplate)[_mainTemplate] = main_core.Tag.render(_t6 || (_t6 = _`
+	    babelHelpers.classPrivateFieldLooseBase(this, _mainTemplate)[_mainTemplate] = main_core.Tag.render(_t4 || (_t4 = _`
 				<div class="intranet-settings__vibe-template">
 					<div class="intranet-settings__vibe-icon-box">
 						<div class="intranet-settings__vibe-icon"></div>
@@ -462,13 +445,13 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	function _getSecondaryTemplate2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _secondaryTemplate)[_secondaryTemplate]) {
 	    var _babelHelpers$classPr;
-	    const previewImg = babelHelpers.classPrivateFieldLooseBase(this, _previewImg)[_previewImg] ? main_core.Tag.render(_t7 || (_t7 = _`
+	    const previewImg = babelHelpers.classPrivateFieldLooseBase(this, _previewImg)[_previewImg] ? main_core.Tag.render(_t5 || (_t5 = _`
 					<img 
 						src="${0}"
 						class="intranet-settings__vibe-preview" 
 					/>
 				`), babelHelpers.classPrivateFieldLooseBase(this, _previewImg)[_previewImg]) : '';
-	    babelHelpers.classPrivateFieldLooseBase(this, _secondaryTemplate)[_secondaryTemplate] = main_core.Tag.render(_t8 || (_t8 = _`
+	    babelHelpers.classPrivateFieldLooseBase(this, _secondaryTemplate)[_secondaryTemplate] = main_core.Tag.render(_t6 || (_t6 = _`
 				<div class="intranet-settings__vibe-template --secondary-template">
 					<div class="intranet-settings__vibe-preview-box">
 						${0}
@@ -495,7 +478,7 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	}
 	function _getButtonMainSettings2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonMainSettings)[_buttonMainSettings]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonMainSettings)[_buttonMainSettings] = main_core.Tag.render(_t9 || (_t9 = _`
+	    babelHelpers.classPrivateFieldLooseBase(this, _buttonMainSettings)[_buttonMainSettings] = main_core.Tag.render(_t7 || (_t7 = _`
 				<button class="intranet-settings-btn-settings">
 					<div class="ui-icon-set --more"></div>
 				</button>
@@ -505,7 +488,7 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	}
 	function _getButtonSecondarySettings2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonSecondarySettings)[_buttonSecondarySettings]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonSecondarySettings)[_buttonSecondarySettings] = main_core.Tag.render(_t10 || (_t10 = _`
+	    babelHelpers.classPrivateFieldLooseBase(this, _buttonSecondarySettings)[_buttonSecondarySettings] = main_core.Tag.render(_t8 || (_t8 = _`
 				<button class="intranet-settings-btn-settings">
 					<div class="ui-icon-set --more"></div>
 				</button>
@@ -516,7 +499,7 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	function _showImportPopup2() {
 	  var _babelHelpers$classPr2;
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _importPopup)[_importPopup]) {
-	    const htmlContent = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? main_core.Tag.render(_t11 || (_t11 = _`<span>${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_VIBE_IMPORT_POPUP')) : main_core.Tag.render(_t12 || (_t12 = _`
+	    const htmlContent = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? main_core.Tag.render(_t9 || (_t9 = _`<span>${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_VIBE_IMPORT_POPUP')) : main_core.Tag.render(_t10 || (_t10 = _`
 					<span class="intranet-settings-vibe-popup-item">
 						${0} ${0}
 					</span>
@@ -543,7 +526,7 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	function _showExportPopup2() {
 	  var _babelHelpers$classPr3;
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _exportPopup)[_exportPopup]) {
-	    const htmlContent = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? main_core.Tag.render(_t13 || (_t13 = _`<span>${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_VIBE_EXPORT_POPUP')) : main_core.Tag.render(_t14 || (_t14 = _`
+	    const htmlContent = babelHelpers.classPrivateFieldLooseBase(this, _canEdit)[_canEdit] ? main_core.Tag.render(_t11 || (_t11 = _`<span>${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_VIBE_EXPORT_POPUP')) : main_core.Tag.render(_t12 || (_t12 = _`
 					<span class="intranet-settings-vibe-popup-item --disabled">
 						${0} ${0}
 					</span>
@@ -735,13 +718,13 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	    return null;
 	  }
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonEdit)[_buttonEdit]) {
-	    const buttonEdit = main_core.Tag.render(_t15 || (_t15 = _`
+	    const buttonEdit = main_core.Tag.render(_t13 || (_t13 = _`
 			
 				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue">
 					${0}
 				</button>
 			`), main_core.Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_EDIT'));
-	    const buttonEditLock = main_core.Tag.render(_t16 || (_t16 = _`
+	    const buttonEditLock = main_core.Tag.render(_t14 || (_t14 = _`
 				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue --disabled">
 					${0}
 					${0}
@@ -753,13 +736,13 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	}
 	function _getButtonPublish2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonPublish)[_buttonPublish]) {
-	    const renderNode = main_core.Tag.render(_t17 || (_t17 = _`
+	    const renderNode = main_core.Tag.render(_t15 || (_t15 = _`
 				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
 						${0}">
 					${0}
 				</button>
 			`), babelHelpers.classPrivateFieldLooseBase(this, _isPageExists)[_isPageExists] ? 'ui-btn-primary' : '--light-blue', main_core.Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_PUBLIC'));
-	    const renderNodeLock = main_core.Tag.render(_t18 || (_t18 = _`
+	    const renderNodeLock = main_core.Tag.render(_t16 || (_t16 = _`
 				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --disabled
 						${0}">
 					${0}
@@ -772,7 +755,7 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	}
 	function _getButtonWithdraw2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonWithdraw)[_buttonWithdraw]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonWithdraw)[_buttonWithdraw] = main_core.Tag.render(_t19 || (_t19 = _`
+	    babelHelpers.classPrivateFieldLooseBase(this, _buttonWithdraw)[_buttonWithdraw] = main_core.Tag.render(_t17 || (_t17 = _`
 				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
 						${0}">
 					${0}
@@ -786,7 +769,7 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	    return null;
 	  }
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonPartners)[_buttonPartners]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonPartners)[_buttonPartners] = main_core.Tag.render(_t20 || (_t20 = _`
+	    babelHelpers.classPrivateFieldLooseBase(this, _buttonPartners)[_buttonPartners] = main_core.Tag.render(_t18 || (_t18 = _`
 				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-gray">
 					${0}
 				</button>
@@ -800,12 +783,12 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	  }
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _buttonMarket)[_buttonMarket]) {
 	    const buttonColor = babelHelpers.classPrivateFieldLooseBase(this, _isPageExists)[_isPageExists] ? '--light-blue' : 'ui-btn-primary';
-	    const renderNode = main_core.Tag.render(_t21 || (_t21 = _`
+	    const renderNode = main_core.Tag.render(_t19 || (_t19 = _`
 				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${0}">
 					${0}
 				</button>
 			`), buttonColor, main_core.Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_MARKET'));
-	    const renderNodeLock = main_core.Tag.render(_t22 || (_t22 = _`
+	    const renderNodeLock = main_core.Tag.render(_t20 || (_t20 = _`
 				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${0} --disabled">
 					${0}
 					${0}
@@ -911,12 +894,16 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	});
 
 	var _metrika = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("metrika");
+	var _getAnalyticContext = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAnalyticContext");
 	var _sendAnalytic$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytic");
 	class VibePage extends ui_formElements_field.BaseSettingsPage {
 	  constructor() {
 	    super();
 	    Object.defineProperty(this, _sendAnalytic$1, {
 	      value: _sendAnalytic2$1
+	    });
+	    Object.defineProperty(this, _getAnalyticContext, {
+	      value: _getAnalyticContext2
 	    });
 	    this.titlePage = '';
 	    this.descriptionPage = '';
@@ -932,11 +919,14 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	    return 'welcome';
 	  }
 	  appendSections(contentNode) {
-	    var _this$getAnalytic;
 	    let subSection = 'from_settings';
-	    const analyticContext = (_this$getAnalytic = this.getAnalytic()) == null ? void 0 : _this$getAnalytic.getContext();
-	    if (main_core.Type.isString(analyticContext.analyticContext) && analyticContext.analyticContext === 'widget_settings_settings') {
-	      subSection = 'from_widget_vibe_point';
+	    const analyticContext = babelHelpers.classPrivateFieldLooseBase(this, _getAnalyticContext)[_getAnalyticContext]();
+	    if (analyticContext !== null && main_core.Type.isString(analyticContext.analyticContext)) {
+	      if (analyticContext.analyticContext === 'widget_settings_settings_mainpage') {
+	        subSection = 'from_widget_vibe_point';
+	      } else if (analyticContext.analyticContext === 'from_custom_point') {
+	        subSection = 'from_custom_point';
+	      }
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytic$1)[_sendAnalytic$1]({
 	      event: 'open_settings_main',
@@ -952,6 +942,20 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	    });
 	  }
 	}
+	function _getAnalyticContext2() {
+	  var _this$getAnalytic;
+	  const analytic = (_this$getAnalytic = this.getAnalytic) == null ? void 0 : _this$getAnalytic.call(this);
+	  if (!analytic) {
+	    return null;
+	  }
+	  if (main_core.Type.isFunction(analytic.getContext)) {
+	    return analytic.getContext();
+	  }
+	  if (main_core.Type.isPlainObject(analytic) && !main_core.Type.isNil(analytic.context)) {
+	    return analytic.context;
+	  }
+	  return null;
+	}
 	function _sendAnalytic2$1(data) {
 	  if (!main_core.Type.isString(data.event)) {
 	    return;
@@ -964,5 +968,7 @@ this.BX.Landing.Integration = this.BX.Landing.Integration || {};
 	  return new VibePage();
 	});
 
-}((this.BX.Landing.Integration['Intranet-setting'] = this.BX.Landing.Integration['Intranet-setting'] || {}),BX.Landing,BX,BX.Event,BX.Main,BX.UI,BX,BX.UI,BX.UI.FormElements));
+	exports.VibePage = VibePage;
+
+}((this.BX.Landing.Integration.IntranetSetting = this.BX.Landing.Integration.IntranetSetting || {}),BX.Landing,BX,BX.Event,BX.Main,BX.UI,BX,BX.UI,BX.UI.FormElements));
 //# sourceMappingURL=vibe-page.bundle.js.map

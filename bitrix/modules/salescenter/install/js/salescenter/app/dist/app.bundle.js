@@ -260,18 +260,14 @@ this.BX = this.BX || {};
 	  mixins: [MixinTemplatesType],
 	  mounted: function mounted() {
 	    var editable = this.$root.$app.options.templateMode !== 'view';
-	    var isCompilationMode = this.$root.$app.compilation !== null;
 	    this.$root.$emit('on-change-editable', editable);
 	    if (this.productForm) {
-	      this.productForm.setEditable(editable, isCompilationMode);
-	    }
-	    if (this.productForm) {
+	      this.productForm.setEditable(editable);
 	      var formWrapper = this.$root.$el.querySelector('.salescenter-app-form-wrapper');
 	      formWrapper.appendChild(this.productForm.layout());
 	    }
 	  },
 	  created: function created() {
-	    var _this$$root$$app$comp;
 	    this.refreshId = null;
 	    var defaultCurrency = this.$root.$app.options.currencyCode || '';
 	    this.$store.dispatch('orderCreation/setCurrency', defaultCurrency);
@@ -303,8 +299,6 @@ this.BX = this.BX || {};
 	      fieldHints: this.$root.$app.options.fieldHints,
 	      hideUnselectedProperties: this.$root.$app.options.templateMode === 'view',
 	      showCompilationModeSwitcher: this.showCompilationModeSwitcher(),
-	      compilationFormType: this.$root.$app.connector === 'facebook' && this.$root.$app.isAllowedFacebookRegion ? 'FACEBOOK' : 'REGULAR',
-	      facebookFailProducts: (_this$$root$$app$comp = this.$root.$app.compilation) === null || _this$$root$$app$comp === void 0 ? void 0 : _this$$root$$app$comp.FAIL_PRODUCTS,
 	      ownerId: this.$root.$app.options.ownerId,
 	      ownerTypeId: this.$root.$app.options.ownerTypeId,
 	      dialogId: this.$root.$app.options.dialogId,
@@ -340,7 +334,7 @@ this.BX = this.BX || {};
 	    },
 	    onProductFormModeChange: function onProductFormModeChange(event) {
 	      var mode = event.getData().mode;
-	      if (mode === catalog_productForm.FormMode.COMPILATION || mode === catalog_productForm.FormMode.COMPILATION_READ_ONLY) {
+	      if (mode === catalog_productForm.FormMode.COMPILATION) {
 	        this.$store.commit('orderCreation/enableCompilationMode');
 	      } else {
 	        this.$store.commit('orderCreation/disableCompilationMode');
@@ -426,11 +420,11 @@ this.BX = this.BX || {};
 	      var productIds = basketItems.map(function (basketItem) {
 	        return basketItem.skuId;
 	      });
-	      var compilationId = this.$root.$app.compilation ? this.$root.$app.compilation.ID : this.$root.$app.newCompilationId;
-	      if (compilationId) {
+	      var newCompilationId = this.$root.$app.newCompilationId;
+	      if (newCompilationId) {
 	        main_core.ajax.runAction('salescenter.compilation.updateCompilation', {
 	          data: {
-	            compilationId: compilationId,
+	            newCompilationId: newCompilationId,
 	            productIds: productIds
 	          }
 	        });
@@ -1217,11 +1211,6 @@ this.BX = this.BX || {};
 	    showWhatClientSeesControl: {
 	      type: Boolean,
 	      required: true
-	    },
-	    isFacebookForm: {
-	      type: Boolean,
-	      required: false,
-	      "default": false
 	    }
 	  },
 	  computed: {
@@ -1229,10 +1218,6 @@ this.BX = this.BX || {};
 	      return {
 	        'salescenter-app-payment-by-sms-item-disabled': this.buttonEnabled === false
 	      };
-	    },
-	    showSubmitCompilationLinkToFacebookButton: function showSubmitCompilationLinkToFacebookButton() {
-	      var isCompilationMode = this.$store.getters['orderCreation/isCompilationMode'];
-	      return this.isFacebookForm && isCompilationMode;
 	    }
 	  },
 	  methods: {
@@ -1241,12 +1226,9 @@ this.BX = this.BX || {};
 	    },
 	    submit: function submit(event) {
 	      this.$emit('on-submit', event);
-	    },
-	    submitCompilationLinkToFacebook: function submitCompilationLinkToFacebook(event) {
-	      this.$emit('on-submit-compilation-link-to-facebook', event);
 	    }
 	  },
-	  template: "\n\t\t<div\n\t\t\t:class=\"buttonClass\"\n\t\t\tclass=\"salescenter-app-payment-by-sms-item-show salescenter-app-payment-by-sms-item salescenter-app-payment-by-sms-item-send\"\n\t\t>\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-counter\">\n\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-counter-rounder\"></div>\n\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-counter-line\"></div>\n\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-counter-number\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"\">\n\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container\">\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment\">\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment-inline\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t@click=\"submit($event)\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-lg ui-btn-success ui-btn-round\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{buttonLabel}}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-if=\"showSubmitCompilationLinkToFacebookButton\"\n\t\t\t\t\t\t\t\t@click=\"submitCompilationLinkToFacebook($event)\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-lg ui-btn-light-border ui-btn-round\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_SEND_COMPILATION_LINK_TO_FACEBOOK'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-if=\"showWhatClientSeesControl\"\n\t\t\t\t\t\t\t\t@click=\"showWhatClientSees\"\n\t\t\t\t\t\t\t\tclass=\"salescenter-app-add-item-link\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_WHAT_DOES_CLIENT_SEE'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t")
+	  template: "\n\t\t<div\n\t\t\t:class=\"buttonClass\"\n\t\t\tclass=\"salescenter-app-payment-by-sms-item-show salescenter-app-payment-by-sms-item salescenter-app-payment-by-sms-item-send\"\n\t\t>\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-counter\">\n\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-counter-rounder\"></div>\n\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-counter-line\"></div>\n\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-counter-number\"></div>\n\t\t\t</div>\n\t\t\t<div class=\"\">\n\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container\">\n\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment\">\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-payment-inline\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t@click=\"submit($event)\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-lg ui-btn-success ui-btn-round\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{buttonLabel}}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tv-if=\"showWhatClientSeesControl\"\n\t\t\t\t\t\t\t\t@click=\"showWhatClientSees\"\n\t\t\t\t\t\t\t\tclass=\"salescenter-app-add-item-link\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_TEMPLATE_WHAT_DOES_CLIENT_SEE'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t")
 	};
 
 	var TimeLine = {
@@ -1660,12 +1642,7 @@ this.BX = this.BX || {};
 	      return this.stages.cashbox.hasOwnProperty('tiles');
 	    },
 	    submitButtonLabel: function submitButtonLabel() {
-	      var _this$$root$$app;
-	      return this.editable && !((_this$$root$$app = this.$root.$app) !== null && _this$$root$$app !== void 0 && _this$$root$$app.compilation) ? main_core.Loc.getMessage('SALESCENTER_SEND') : main_core.Loc.getMessage('SALESCENTER_RESEND');
-	    },
-	    isFacebookForm: function isFacebookForm() {
-	      var _this$$root$$app2, _this$$root$$app3;
-	      return ((_this$$root$$app2 = this.$root.$app) === null || _this$$root$$app2 === void 0 ? void 0 : _this$$root$$app2.connector) === 'facebook' && ((_this$$root$$app3 = this.$root.$app) === null || _this$$root$$app3 === void 0 ? void 0 : _this$$root$$app3.isAllowedFacebookRegion);
+	      return main_core.Loc.getMessage('SALESCENTER_SEND');
 	    },
 	    isShowDocumentSelector: function isShowDocumentSelector() {
 	      return this.$root.$app.hasOwnProperty('documentSelector');
@@ -1735,9 +1712,6 @@ this.BX = this.BX || {};
 	    onSend: function onSend(event) {
 	      this.$emit('stage-block-send-on-send', event);
 	    },
-	    onSendCompilationLinkToFacebook: function onSendCompilationLinkToFacebook(event) {
-	      this.$emit('stage-block-send-on-send-compilation-link-to-facebook', event);
-	    },
 	    changeProvider: function changeProvider(value) {
 	      this.$root.$app.sendingMethodDesc.provider = value;
 	      BX.userOptions.save('salescenter', 'payment_sms_provider_options', 'latest_selected_provider', value);
@@ -1768,7 +1742,7 @@ this.BX = this.BX || {};
 	  beforeUpdate: function beforeUpdate() {
 	    this.initCounter();
 	  },
-	  template: "\n\t\t<div>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t\t@on-product-form-mode-change=\"onProductFormModeChange\"\n\t\t\t/>\n\t\t\t<chat-message-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t\t:selectedMode=\"stages.message.selectedMode\"\n\t\t\t\t:messageSenderData=\"stages.message.messageSenderData\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<delivery-block\n\t\t\t\tv-if=\"stages.delivery && !stages.delivery.isHidden\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.delivery.status\"\n\t\t\t\t:tiles=\"stages.delivery.tiles\"\n\t\t\t\t:installed=\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"true\"\n\t\t\t\t:initialCollapseState=\"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<document-selector-block\n\t\t\t\tv-if=\"isShowDocumentSelector\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:templateAddUrl=\"stages.documentSelector.templateAddUrl\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:stageOnDeliveryFinished=\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t:isDeliveryStageVisible=\"stages.delivery && stages.delivery.installed\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t@on-submit-compilation-link-to-facebook=\"onSendCompilationLinkToFacebook\"\n\t\t\t\t:buttonEnabled=\"isSendAllowed\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t\t:isFacebookForm=\"isFacebookForm\"\n\t\t\t\t:showWhatClientSeesControl=\"false\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t\t@on-product-form-mode-change=\"onProductFormModeChange\"\n\t\t\t/>\n\t\t\t<chat-message-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t\t:selectedMode=\"stages.message.selectedMode\"\n\t\t\t\t:messageSenderData=\"stages.message.messageSenderData\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<delivery-block\n\t\t\t\tv-if=\"stages.delivery && !stages.delivery.isHidden\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.delivery.status\"\n\t\t\t\t:tiles=\"stages.delivery.tiles\"\n\t\t\t\t:installed=\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"true\"\n\t\t\t\t:initialCollapseState=\"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<document-selector-block\n\t\t\t\tv-if=\"isShowDocumentSelector\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:templateAddUrl=\"stages.documentSelector.templateAddUrl\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:stageOnDeliveryFinished=\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t:isDeliveryStageVisible=\"stages.delivery && stages.delivery.installed\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"isSendAllowed\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t\t:showWhatClientSeesControl=\"false\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
 	var ComponentMixin = {
@@ -1814,9 +1788,6 @@ this.BX = this.BX || {};
 	  computed: {
 	    isOrderPublicUrlAvailable: function isOrderPublicUrlAvailable() {
 	      return this.$root.$app.isOrderPublicUrlAvailable;
-	    },
-	    compilation: function compilation() {
-	      return this.$root.$app.compilation;
 	    },
 	    wrapperClass: function wrapperClass() {
 	      return {
@@ -2198,9 +2169,6 @@ this.BX = this.BX || {};
 	    showPaymentForm: function showPaymentForm() {
 	      this.isShowPayment = true;
 	      this.isShowPreview = false;
-	      if (this.compilation) {
-	        return;
-	      }
 	      var title = this.getPaymentItemTitle() || this.localize.SALESCENTER_DEFAULT_TITLE;
 	      this.setPageTitle(title);
 	    },
@@ -2255,18 +2223,14 @@ this.BX = this.BX || {};
 	    isPageSelected: function isPageSelected(page) {
 	      return this.currentPage && this.isShowPreview && this.currentPage.id === page.id;
 	    },
-	    sendCompilationLinkToFacebook: function sendCompilationLinkToFacebook(event) {
-	      this.send(event, 'n', true);
-	    },
 	    send: function send(event) {
 	      var skipPublicMessage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'n';
-	      var sendCompilationLinkToFacebook = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 	      if (!this.isAllowedSubmitButton) {
 	        return;
 	      }
 	      if (this.isShowPayment && !this.isShowStartInfo) {
 	        if (this.$store.getters['orderCreation/isCompilationMode']) {
-	          this.$root.$app.sendCompilation(event.target, sendCompilationLinkToFacebook);
+	          this.$root.$app.sendCompilation(event.target);
 	        } else {
 	          this.$root.$app.sendPayment(event.target, skipPublicMessage);
 	        }
@@ -2447,8 +2411,7 @@ this.BX = this.BX || {};
 	      return null;
 	    },
 	    sendButtonLabel: function sendButtonLabel() {
-	      var _this$$root$$app;
-	      return this.editable && !((_this$$root$$app = this.$root.$app) !== null && _this$$root$$app !== void 0 && _this$$root$$app.compilation) ? main_core.Loc.getMessage('SALESCENTER_SEND') : main_core.Loc.getMessage('SALESCENTER_RESEND');
+	      return main_core.Loc.getMessage('SALESCENTER_SEND');
 	    },
 	    pagesSubmenuHeight: function pagesSubmenuHeight() {
 	      if (this.isPagesOpen) {
@@ -2514,10 +2477,6 @@ this.BX = this.BX || {};
 	      }
 	      return this.currentPage;
 	    },
-	    showSubmitCompilationLinkToFacebookButton: function showSubmitCompilationLinkToFacebookButton() {
-	      var isCompilationMode = this.$store.getters['orderCreation/isCompilationMode'];
-	      return this.$root.$app.connector === 'facebook' && this.$root.$app.isAllowedFacebookRegion && isCompilationMode;
-	    },
 	    isNoPaymentSystemsBannerVisible: function isNoPaymentSystemsBannerVisible() {
 	      return this.$root.$app.options.showPaySystemSettingBanner;
 	    },
@@ -2532,7 +2491,7 @@ this.BX = this.BX || {};
 	      return state.orderCreation;
 	    }
 	  })),
-	  template: "\n\t\t<div\n\t\t\t:class=\"wrapperClass\"\n\t\t\t:style=\"wrapperStyle\"\n\t\t\tclass=\"salescenter-app-wrapper salescenter-app-chat-wrapper\"\n\t\t>\n\t\t\t<div class=\"ui-sidepanel-sidebar salescenter-app-sidebar\" ref=\"sidebar\">\n\t\t\t\t<ul class=\"ui-sidepanel-menu\" ref=\"sidepanelMenu\">\n\t\t\t\t\t<li v-if=\"this.$root.$app.isPaymentCreationAvailable && !this.compilation\" :class=\"{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}\" class=\"ui-sidepanel-menu-item\" @click=\"showPaymentForm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{getPaymentItemTitle()}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.compilation\" :class=\"{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}\" class=\"ui-sidepanel-menu-item\" @click=\"showPaymentForm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{this.compilation.TITLE_TAB}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isPagesOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"isPagesOpen = !isPagesOpen;\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAGES}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: pagesSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"!page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isWithOrdersMode\" @click=\"showOrdersList\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDERS}}</div>\n\t\t\t\t\t\t\t<span class=\"ui-sidepanel-counter\" ref=\"ordersCounter\" v-show=\"ordersCount > 0\">{{ordersCount}}</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isWithOrdersMode\" @click=\"showOrderAdd\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDER_ADD}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"!this.$root.$app.isWithOrdersMode\" @click=\"showPaymentsList\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENTS}}</div>\n\t\t\t\t\t\t\t<span class=\"ui-sidepanel-counter\" ref=\"paymentsCounter\" v-show=\"paymentsCount > 0\">{{paymentsCount}}</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isCatalogAvailable\" @click=\"showCatalog\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_CATALOG}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isFormsOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"onFormsClick();\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_FORMS_ALL}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isFormsOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: formsSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t :class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event, true)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-right-side\">\n\t\t\t\t<div class=\"salescenter-app-page-header\" v-show=\"isShowPreview && !isShowStartInfo\">\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-dropdown ui-btn-xs\" @click=\"showActionsPopup($event)\">{{localize.SALESCENTER_RIGHT_ACTIONS_BUTTON}}</div>\n\t\t\t\t\t<div class=\"salescenter-btn-delimiter salescenter-btn-action\"></div>\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-xs ui-btn-icon-edit\" @click=\"editPage\">{{localize.SALESCENTER_RIGHT_ACTION_EDIT}}</div>\n\t\t\t\t</div>\n\t\t\t\t<start\n\t\t\t\t\tv-if=\"isShowStartInfo && mode !== ModeDictionary.terminalPayment\"\n\t\t\t\t\t@on-successfully-connected=\"onSuccessfullyConnected\"\n\t\t\t\t>\n\t\t\t\t</start>\n\t\t\t\t<template v-else-if=\"isFrameError && isShowPreview\">\n\t\t\t\t\t<div class=\"salescenter-app-page-content salescenter-app-lost\">\n\t\t\t\t\t\t<div class=\"salescenter-app-lost-block ui-title-1 ui-text-center ui-color-medium\">{{localize.SALESCENTER_ERROR_TITLE}}</div>\n\t\t\t\t\t\t<div v-if=\"currentPage.isFrameDenied === true\" class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_RIGHT_FRAME_DENIED}}</div>\n\t\t\t\t\t\t<div v-else-if=\"currentPage.isActive !== true\" class=\"salescenter-app-lost-helper salescenter-app-not-active ui-color-medium\">{{localize.SALESCENTER_RIGHT_NOT_ACTIVE}}</div>\n\t\t\t\t\t\t<div v-else class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_ERROR_TEXT}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div v-show=\"isShowPreview && !isShowStartInfo && !isFrameError\" class=\"salescenter-app-page-content\">\n\t\t\t\t\t<template v-for=\"page in pages\">\n\t\t\t\t\t\t<iframe class=\"salescenter-app-demo\" v-show=\"currentPage && currentPage.id == page.id\" :src=\"getFrameSource(page)\" frameborder=\"0\" @error=\"onFrameError(page.id)\" @load=\"onFrameLoad(page.id)\" :key=\"page.id\"></iframe>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"salescenter-app-demo-overlay\" :class=\"{\n\t\t\t\t\t\t'salescenter-app-demo-overlay-loading': this.isShowLoader\n\t\t\t\t\t}\">\n\t\t\t\t\t\t<div v-show=\"isShowLoader\" ref=\"previewLoader\"></div>\n\t\t\t\t\t\t<div v-if=\"lastModified\" class=\"salescenter-app-demo-overlay-modification\">{{lastModified}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t    <template v-if=\"this.$root.$app.isPaymentsLimitReached\">\n\t\t\t        <div ref=\"paymentsLimit\" v-show=\"isShowPayment && !isShowStartInfo\"></div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<chat-receiving-payment\n\t\t\t\t\t\tv-if=\"isShowPayment && !isShowStartInfo\"\n\t\t\t\t\t\t:key=\"order.basketVersion\"\n\t\t\t\t\t\t@stage-block-send-on-send=\"send($event)\"\n\t\t\t\t\t\t@stage-block-send-on-send-compilation-link-to-facebook=\"sendCompilationLinkToFacebook($event)\"\n\t\t\t\t\t/>\n\t\t        </template>\n\t\t\t</div>\n\t\t\t<div class=\"ui-button-panel-wrapper salescenter-button-panel\" ref=\"buttonsPanel\">\n\t\t\t\t<div class=\"ui-button-panel\">\n\t\t\t\t\t<button :class=\"{'ui-btn-disabled': !this.isAllowedSubmitButton}\" class=\"ui-btn ui-btn-md ui-btn-success\" @click=\"send($event)\">{{sendButtonLabel}}</button>\n\t\t\t\t\t<button\n\t\t\t\t\t\tv-if=\"showSubmitCompilationLinkToFacebookButton\"\n\t\t\t\t\t\t:class=\"{'ui-btn-disabled': !this.isAllowedSubmitButton}\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-light-border\"\n\t\t\t\t\t\t@click=\"sendCompilationLinkToFacebook($event)\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{localize.SALESCENTER_SEND_COMPILATION_LINK_TO_FACEBOOK}}\n\t\t\t\t\t</button>\n\t\t\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-link\" @click=\"close\">{{localize.SALESCENTER_CANCEL}}</button>\n\t\t\t\t\t<button v-if=\"isShowPayment && !isShowStartInfo && !this.$root.$app.isPaymentsLimitReached && this.$root.$app.isWithOrdersMode\" class=\"ui-btn ui-btn-md ui-btn-link btn-send-crm\" @click=\"send($event, 'y')\">{{localize.SALESCENTER_SAVE_ORDER}}</button>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"this.order.errors.length > 0\" ref=\"errorBlock\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div\n\t\t\t:class=\"wrapperClass\"\n\t\t\t:style=\"wrapperStyle\"\n\t\t\tclass=\"salescenter-app-wrapper salescenter-app-chat-wrapper\"\n\t\t>\n\t\t\t<div class=\"ui-sidepanel-sidebar salescenter-app-sidebar\" ref=\"sidebar\">\n\t\t\t\t<ul class=\"ui-sidepanel-menu\" ref=\"sidepanelMenu\">\n\t\t\t\t\t<li v-if=\"this.$root.$app.isPaymentCreationAvailable\" :class=\"{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}\" class=\"ui-sidepanel-menu-item\" @click=\"showPaymentForm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{getPaymentItemTitle()}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isPagesOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"isPagesOpen = !isPagesOpen;\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAGES}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: pagesSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"!page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isWithOrdersMode\" @click=\"showOrdersList\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDERS}}</div>\n\t\t\t\t\t\t\t<span class=\"ui-sidepanel-counter\" ref=\"ordersCounter\" v-show=\"ordersCount > 0\">{{ordersCount}}</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isWithOrdersMode\" @click=\"showOrderAdd\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDER_ADD}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"!this.$root.$app.isWithOrdersMode\" @click=\"showPaymentsList\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENTS}}</div>\n\t\t\t\t\t\t\t<span class=\"ui-sidepanel-counter\" ref=\"paymentsCounter\" v-show=\"paymentsCount > 0\">{{paymentsCount}}</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isCatalogAvailable\" @click=\"showCatalog\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_CATALOG}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isFormsOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"onFormsClick();\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_FORMS_ALL}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isFormsOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: formsSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t :class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event, true)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-right-side\">\n\t\t\t\t<div class=\"salescenter-app-page-header\" v-show=\"isShowPreview && !isShowStartInfo\">\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-dropdown ui-btn-xs\" @click=\"showActionsPopup($event)\">{{localize.SALESCENTER_RIGHT_ACTIONS_BUTTON}}</div>\n\t\t\t\t\t<div class=\"salescenter-btn-delimiter salescenter-btn-action\"></div>\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-xs ui-btn-icon-edit\" @click=\"editPage\">{{localize.SALESCENTER_RIGHT_ACTION_EDIT}}</div>\n\t\t\t\t</div>\n\t\t\t\t<start\n\t\t\t\t\tv-if=\"isShowStartInfo && mode !== ModeDictionary.terminalPayment\"\n\t\t\t\t\t@on-successfully-connected=\"onSuccessfullyConnected\"\n\t\t\t\t>\n\t\t\t\t</start>\n\t\t\t\t<template v-else-if=\"isFrameError && isShowPreview\">\n\t\t\t\t\t<div class=\"salescenter-app-page-content salescenter-app-lost\">\n\t\t\t\t\t\t<div class=\"salescenter-app-lost-block ui-title-1 ui-text-center ui-color-medium\">{{localize.SALESCENTER_ERROR_TITLE}}</div>\n\t\t\t\t\t\t<div v-if=\"currentPage.isFrameDenied === true\" class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_RIGHT_FRAME_DENIED}}</div>\n\t\t\t\t\t\t<div v-else-if=\"currentPage.isActive !== true\" class=\"salescenter-app-lost-helper salescenter-app-not-active ui-color-medium\">{{localize.SALESCENTER_RIGHT_NOT_ACTIVE}}</div>\n\t\t\t\t\t\t<div v-else class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_ERROR_TEXT}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div v-show=\"isShowPreview && !isShowStartInfo && !isFrameError\" class=\"salescenter-app-page-content\">\n\t\t\t\t\t<template v-for=\"page in pages\">\n\t\t\t\t\t\t<iframe class=\"salescenter-app-demo\" v-show=\"currentPage && currentPage.id == page.id\" :src=\"getFrameSource(page)\" frameborder=\"0\" @error=\"onFrameError(page.id)\" @load=\"onFrameLoad(page.id)\" :key=\"page.id\"></iframe>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"salescenter-app-demo-overlay\" :class=\"{\n\t\t\t\t\t\t'salescenter-app-demo-overlay-loading': this.isShowLoader\n\t\t\t\t\t}\">\n\t\t\t\t\t\t<div v-show=\"isShowLoader\" ref=\"previewLoader\"></div>\n\t\t\t\t\t\t<div v-if=\"lastModified\" class=\"salescenter-app-demo-overlay-modification\">{{lastModified}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t    <template v-if=\"this.$root.$app.isPaymentsLimitReached\">\n\t\t\t        <div ref=\"paymentsLimit\" v-show=\"isShowPayment && !isShowStartInfo\"></div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<chat-receiving-payment\n\t\t\t\t\t\tv-if=\"isShowPayment && !isShowStartInfo\"\n\t\t\t\t\t\t:key=\"order.basketVersion\"\n\t\t\t\t\t\t@stage-block-send-on-send=\"send($event)\"\n\t\t\t\t\t/>\n\t\t        </template>\n\t\t\t</div>\n\t\t\t<div class=\"ui-button-panel-wrapper salescenter-button-panel\" ref=\"buttonsPanel\">\n\t\t\t\t<div class=\"ui-button-panel\">\n\t\t\t\t\t<button :class=\"{'ui-btn-disabled': !this.isAllowedSubmitButton}\" class=\"ui-btn ui-btn-md ui-btn-success\" @click=\"send($event)\">{{sendButtonLabel}}</button>\n\t\t\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-link\" @click=\"close\">{{localize.SALESCENTER_CANCEL}}</button>\n\t\t\t\t\t<button v-if=\"isShowPayment && !isShowStartInfo && !this.$root.$app.isPaymentsLimitReached && this.$root.$app.isWithOrdersMode\" class=\"ui-btn ui-btn-md ui-btn-link btn-send-crm\" @click=\"send($event, 'y')\">{{localize.SALESCENTER_SAVE_ORDER}}</button>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"this.order.errors.length > 0\" ref=\"errorBlock\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
@@ -4941,15 +4900,8 @@ this.BX = this.BX || {};
 	  return MobileAppInstallPopup;
 	}();
 
-	var _templateObject$2, _templateObject2, _templateObject3, _templateObject4;
-	var instances = new Map();
+	var _templateObject$2;
 	var App = /*#__PURE__*/function () {
-	  babelHelpers.createClass(App, null, [{
-	    key: "getByDialogId",
-	    value: function getByDialogId(dialogId) {
-	      return instances.get(dialogId) || null;
-	    }
-	  }]);
 	  function App() {
 	    var _this = this;
 	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
@@ -4964,7 +4916,6 @@ this.BX = this.BX || {};
 	      isCatalogAvailable: false,
 	      isOrderPublicUrlExists: false,
 	      isWithOrdersMode: true,
-	      compilation: null,
 	      documentSelector: DocumentSelectorParams | null
 	    };
 	    babelHelpers.classCallCheck(this, App);
@@ -4993,7 +4944,6 @@ this.BX = this.BX || {};
 	    this.orderPublicUrl = '';
 	    this.fileControl = options.fileControl;
 	    this.currencyCode = options.currencyCode;
-	    this.compilation = null;
 	    this.newCompilationId = null;
 	    this.assignedById = options.assignedById;
 	    this.isPhoneConfirmed = options.isPhoneConfirmed;
@@ -5056,12 +5006,8 @@ this.BX = this.BX || {};
 	    if (!main_core.Type.isUndefined(options.sendingMethodDesc)) {
 	      this.sendingMethodDesc = this.options.sendingMethodDesc;
 	    }
-	    if (main_core.Type.isObject(options.compilation)) {
-	      this.compilation = options.compilation;
-	    }
 	    this.isPaymentCreationAvailable = this.sessionId > 0 && this.dialogId.length > 0 || this.ownerTypeId && this.ownerId;
 	    this.connector = main_core.Type.isString(options.connector) ? options.connector : '';
-	    this.isAllowedFacebookRegion = main_core.Type.isBoolean(options.isAllowedFacebookRegion) ? options.isAllowedFacebookRegion : false;
 	    if (main_core.Type.isPlainObject(options.documentSelector)) {
 	      this.documentSelector = options.documentSelector;
 	      this.documentSelector.paymentId = this.options.paymentId;
@@ -5076,8 +5022,6 @@ this.BX = this.BX || {};
 	    })["catch"](function (error) {
 	      return App.showError(error);
 	    });
-	    main_core_events.EventEmitter.subscribe(window.parent, 'onSendCompilationChatButtonClick', this.sendCompilation.bind(this));
-	    instances.set(this.dialogId, this);
 	  }
 	  babelHelpers.createClass(App, [{
 	    key: "sendMessageAnalytic",
@@ -5427,16 +5371,12 @@ this.BX = this.BX || {};
 	    key: "sendCompilation",
 	    value: function sendCompilation() {
 	      var buttonEvent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-	      var sendCompilationLinkToFacebook = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      if (!this.isPaymentCreationAvailable) {
 	        this.closeApplication();
-	        return null;
+	        return;
 	      }
 	      if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress) {
-	        return null;
-	      }
-	      if (!this.isAllowedFacebookRegion) {
-	        sendCompilationLinkToFacebook = true;
+	        return;
 	      }
 	      this.startProgress(buttonEvent);
 	      var options = {
@@ -5447,8 +5387,7 @@ this.BX = this.BX || {};
 	        ownerId: this.ownerId,
 	        connector: this.connector,
 	        sessionId: this.sessionId,
-	        sendCompilationLinkToFacebook: sendCompilationLinkToFacebook,
-	        compilationId: this.compilation ? this.compilation.ID : this.newCompilationId,
+	        compilationId: this.newCompilationId,
 	        editable: this.options.templateMode === 'create',
 	        messageData: this.store.getters['orderCreation/getMessageData']
 	      };
@@ -5458,44 +5397,12 @@ this.BX = this.BX || {};
 	      if (this.stageOnDeliveryFinished !== null) {
 	        options.stageOnDeliveryFinished = this.stageOnDeliveryFinished;
 	      }
-	      if (this.connector === 'facebook' && this.isAllowedFacebookRegion && !sendCompilationLinkToFacebook) {
-	        this.sendCompilationToFacebook(buttonEvent, options);
-	      } else {
-	        this.sendCompilationAjaxAction(buttonEvent, options);
-	      }
-	    }
-	  }, {
-	    key: "sendCompilationToFacebook",
-	    value: function sendCompilationToFacebook(buttonEvent, options) {
-	      var _this8 = this;
-	      main_core.ajax.runComponentAction('bitrix:salescenter.app', 'getFacebookSettingsPath', {
-	        mode: 'class',
-	        data: {
-	          dialogId: this.dialogId
-	        }
-	      }).then(function (response) {
-	        var facebookSettingsPath = response.data;
-	        if (facebookSettingsPath) {
-	          _this8.stopProgress(buttonEvent);
-	          _this8.showFacebookCatalogConnectionPopup(buttonEvent, facebookSettingsPath);
-	        } else {
-	          main_core.ajax.runAction('salescenter.compilation.sendFacebookModerationWaitingNotification', {
-	            data: {
-	              options: options
-	            }
-	          }).then(function (result) {
-	            _this8.sendCompilationAjaxAction(buttonEvent, options);
-	            _this8.store.dispatch('orderCreation/resetBasket');
-	            _this8.closeApplication();
-	            _this8.stopProgress(buttonEvent);
-	          });
-	        }
-	      });
+	      this.sendCompilationAjaxAction(buttonEvent, options);
 	    }
 	  }, {
 	    key: "publishShop",
 	    value: function publishShop() {
-	      var _this9 = this;
+	      var _this8 = this;
 	      if (!this.isPhoneConfirmed) {
 	        return;
 	      }
@@ -5503,9 +5410,9 @@ this.BX = this.BX || {};
 	      landing_backend.Backend.getInstance().action('Site::publication', {
 	        id: salescenter_manager.Manager.connectedSiteId
 	      }).then(function () {
-	        _this9.slider.reload();
+	        _this8.slider.reload();
 	      })["catch"](function (data) {
-	        _this9.getLoader().hide();
+	        _this8.getLoader().hide();
 	        if (data.type === 'error' && !main_core.Type.isUndefined(data.result[0])) {
 	          var errorCode = data.result[0].error;
 	          switch (errorCode) {
@@ -5526,12 +5433,12 @@ this.BX = this.BX || {};
 	              }
 	            case 'PHONE_NOT_CONFIRMED':
 	              {
-	                _this9.showPhoneConfirmPopup();
+	                _this8.showPhoneConfirmPopup();
 	                break;
 	              }
 	            case 'EMAIL_NOT_CONFIRMED':
 	              {
-	                _this9.showEmailConfirmPopup();
+	                _this8.showEmailConfirmPopup();
 	                break;
 	              }
 	            default:
@@ -5545,7 +5452,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "confirmPhoneNumber",
 	    value: function confirmPhoneNumber() {
-	      var _this10 = this;
+	      var _this9 = this;
 	      if (!BX.Type.isObject(bitrix24_phoneverify.PhoneVerify)) {
 	        return;
 	      }
@@ -5553,7 +5460,7 @@ this.BX = this.BX || {};
 	        mandatory: false,
 	        callback: function callback(verified) {
 	          if (verified) {
-	            _this10.isPhoneConfirmed = true;
+	            _this9.isPhoneConfirmed = true;
 	            main_core_events.EventEmitter.emit('BX.Salescenter.App::onPhoneConfirmed');
 	          }
 	        }
@@ -5562,10 +5469,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showPhoneConfirmPopup",
 	    value: function showPhoneConfirmPopup() {
-	      var _this11 = this;
+	      var _this10 = this;
 	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('SALESCENTER_PHONE_CONFIRMATION_POPUP_MESSAGE'), main_core.Loc.getMessage('SALESCENTER_PHONE_CONFIRMATION_POPUP_TITLE'), function (messageBox) {
 	        messageBox.close();
-	        _this11.confirmPhoneNumber();
+	        _this10.confirmPhoneNumber();
 	      }, main_core.Loc.getMessage('SALESCENTER_CONFIRMATION_POPUP_OK_CAPTION'), function (messageBox) {
 	        return messageBox.close();
 	      }, main_core.Loc.getMessage('SALESCENTER_CONFIRMATION_POPUP_CANCEL_CAPTION'));
@@ -5581,52 +5488,9 @@ this.BX = this.BX || {};
 	      }, main_core.Loc.getMessage('SALESCENTER_CONFIRMATION_POPUP_CANCEL_CAPTION'));
 	    }
 	  }, {
-	    key: "showFacebookCatalogConnectionPopup",
-	    value: function showFacebookCatalogConnectionPopup(buttonEvent, facebookSettingsPath) {
-	      if (!this.facebookCatalogConnectionPopup) {
-	        this.facebookCatalogConnectionPopup = new main_popup.Popup({
-	          className: 'salescenter-app-catalog-facebook-connection-popup',
-	          content: this.getFacebookCatalogConnectionPopupContent(buttonEvent, facebookSettingsPath),
-	          width: 500,
-	          overlay: true,
-	          offsetTop: 0,
-	          offsetLeft: 0,
-	          padding: 17,
-	          animation: 'fading-slide',
-	          angle: false,
-	          closeIcon: {
-	            top: '5px',
-	            right: '5px'
-	          }
-	        });
-	      }
-	      this.facebookCatalogConnectionPopup.show();
-	    }
-	  }, {
-	    key: "getFacebookCatalogConnectionPopupContent",
-	    value: function getFacebookCatalogConnectionPopupContent(buttonEvent, facebookSettingsPath) {
-	      var setFacebookCatalogConnectionButton = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-primary\">\n\t\t\t\t", "\n\t\t\t</button>\n\t\t"])), main_core.Loc.getMessage('SALESCENTER_FACEBOOK_CATALOG_POPUP_SET_BUTTON'));
-	      main_core.Event.bind(setFacebookCatalogConnectionButton, 'click', this.setFacebookCatalogConnectionPopupHandler.bind(this, facebookSettingsPath));
-	      var sendLinkToB24CompilationButton = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-light-border\">\n\t\t\t\t", "\n\t\t\t</button>\n\t\t"])), main_core.Loc.getMessage('SALESCENTER_FACEBOOK_CATALOG_POPUP_SEND_B24_COMPILATION_LINK_BUTTON'));
-	      main_core.Event.bind(sendLinkToB24CompilationButton, 'click', this.sendLinkToB24CompilationButtonPopupHandler.bind(this, buttonEvent));
-	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"salescenter-app-catalog-facebook-connection-popup--container\">\n\t\t\t\t<div class=\"salescenter-app-catalog-facebook-connection-popup--title\">", "</div>\n\t\t\t\t<div class=\"salescenter-app-catalog-facebook-connection-popup--button-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('SALESCENTER_FACEBOOK_CATALOG_POPUP_TITLE_1'), setFacebookCatalogConnectionButton, sendLinkToB24CompilationButton);
-	    }
-	  }, {
-	    key: "setFacebookCatalogConnectionPopupHandler",
-	    value: function setFacebookCatalogConnectionPopupHandler(facebookSettingsPath) {
-	      BX.SidePanel.Instance.open(facebookSettingsPath);
-	      this.facebookCatalogConnectionPopup.close();
-	    }
-	  }, {
-	    key: "sendLinkToB24CompilationButtonPopupHandler",
-	    value: function sendLinkToB24CompilationButtonPopupHandler(buttonEvent) {
-	      this.facebookCatalogConnectionPopup.close();
-	      this.sendCompilation(buttonEvent, true);
-	    }
-	  }, {
 	    key: "sendCompilationAjaxAction",
 	    value: function sendCompilationAjaxAction(buttonEvent, options) {
-	      var _this12 = this;
+	      var _this11 = this;
 	      var basketItems = this.store.getters['orderCreation/getBasket']();
 	      var productIds = basketItems.map(function (basketItem) {
 	        return basketItem.skuId;
@@ -5638,27 +5502,27 @@ this.BX = this.BX || {};
 	        },
 	        analyticsLabel: 'salescenterCreateCompilation'
 	      }).then(function (result) {
-	        _this12.sendMessageAnalytic();
-	        _this12.store.dispatch('orderCreation/resetBasket');
-	        _this12.stopProgress(buttonEvent);
+	        _this11.sendMessageAnalytic();
+	        _this11.store.dispatch('orderCreation/resetBasket');
+	        _this11.stopProgress(buttonEvent);
 	        if (result.data && result.data.compilation) {
-	          _this12.slider.data.set('action', 'sendCompilation');
-	          _this12.slider.data.set('compilation', result.data.compilation);
+	          _this11.slider.data.set('action', 'sendCompilation');
+	          _this11.slider.data.set('compilation', result.data.compilation);
 	        }
-	        _this12.closeApplication();
-	        _this12.emitGlobalEvent('salescenter.app:oncompilationcreated');
+	        _this11.closeApplication();
+	        _this11.emitGlobalEvent('salescenter.app:oncompilationcreated');
 	      })["catch"](function (data) {
 	        data.errors.forEach(function (error) {
 	          alert(error.message);
 	        });
-	        _this12.stopProgress(buttonEvent);
+	        _this11.stopProgress(buttonEvent);
 	        App.showError(data);
 	      });
 	    }
 	  }, {
 	    key: "sendShipment",
 	    value: function sendShipment(buttonEvent) {
-	      var _this13 = this;
+	      var _this12 = this;
 	      if (!this.isPaymentCreationAvailable) {
 	        this.closeApplication();
 	        return null;
@@ -5689,30 +5553,30 @@ this.BX = this.BX || {};
 	        },
 	        analyticsLabel: 'salescenterCreateShipment'
 	      }).then(function (result) {
-	        _this13.store.dispatch('orderCreation/resetBasket');
-	        _this13.stopProgress(buttonEvent);
+	        _this12.store.dispatch('orderCreation/resetBasket');
+	        _this12.stopProgress(buttonEvent);
 	        if (result.data) {
 	          if (result.data.order) {
-	            _this13.slider.data.set('order', result.data.order);
+	            _this12.slider.data.set('order', result.data.order);
 	          }
 	          if (result.data.deal) {
-	            _this13.slider.data.set('deal', result.data.deal);
+	            _this12.slider.data.set('deal', result.data.deal);
 	          }
 	        }
-	        _this13.closeApplication();
-	        _this13.emitGlobalEvent('salescenter.app:onshipmentcreated');
+	        _this12.closeApplication();
+	        _this12.emitGlobalEvent('salescenter.app:onshipmentcreated');
 	      })["catch"](function (data) {
 	        data.errors.forEach(function (error) {
 	          alert(error.message);
 	        });
-	        _this13.stopProgress(buttonEvent);
+	        _this12.stopProgress(buttonEvent);
 	        App.showError(data);
 	      });
 	    }
 	  }, {
 	    key: "sendPayment",
 	    value: function sendPayment(buttonEvent) {
-	      var _this14 = this;
+	      var _this13 = this;
 	      var skipPublicMessage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'n';
 	      if (!this.isPaymentCreationAvailable) {
 	        this.closeApplication();
@@ -5770,9 +5634,9 @@ this.BX = this.BX || {};
 	          skipPublicMessage: skipPublicMessage
 	        }
 	      }).then(function (result) {
-	        _this14.sendMessageAnalytic();
-	        _this14.store.dispatch('orderCreation/resetBasket');
-	        _this14.stopProgress(buttonEvent);
+	        _this13.sendMessageAnalytic();
+	        _this13.store.dispatch('orderCreation/resetBasket');
+	        _this13.stopProgress(buttonEvent);
 	        if (skipPublicMessage === 'y') {
 	          var notify = {
 	            content: main_core.Loc.getMessage('SALESCENTER_ORDER_CREATE_NOTIFICATION').replace('#ORDER_ID#', result.data.order.number)
@@ -5788,39 +5652,39 @@ this.BX = this.BX || {};
 	          BX.UI.Notification.Center.notify(notify);
 	          salescenter_manager.Manager.showOrdersList({
 	            orderId: result.data.order.id,
-	            ownerId: _this14.ownerId,
-	            ownerTypeId: _this14.ownerTypeId,
-	            context: _this14.context
+	            ownerId: _this13.ownerId,
+	            ownerTypeId: _this13.ownerTypeId,
+	            context: _this13.context
 	          });
 	        } else {
-	          _this14.slider.data.set('action', 'sendPayment');
-	          _this14.slider.data.set('order', result.data.order);
+	          _this13.slider.data.set('action', 'sendPayment');
+	          _this13.slider.data.set('order', result.data.order);
 	          if (result.data.deal) {
-	            _this14.slider.data.set('deal', result.data.deal);
+	            _this13.slider.data.set('deal', result.data.deal);
 	          }
 	          if (result.data.entity) {
-	            _this14.slider.data.set('entity', result.data.entity);
+	            _this13.slider.data.set('entity', result.data.entity);
 	          }
-	          _this14.closeApplication();
+	          _this13.closeApplication();
 	        }
-	        _this14.emitGlobalEvent('salescenter.app:onpaymentcreated');
+	        _this13.emitGlobalEvent('salescenter.app:onpaymentcreated');
 	      })["catch"](function (data) {
 	        data.errors.forEach(function (error) {
 	          top.BX.UI.Notification.Center.notify({
 	            content: main_core.Text.encode(error.message)
 	          });
 	        });
-	        _this14.stopProgress(buttonEvent);
+	        _this13.stopProgress(buttonEvent);
 	        App.showError(data);
-	        if (_this14.needCloseApplication(data.errors)) {
-	          _this14.closeApplication();
+	        if (_this13.needCloseApplication(data.errors)) {
+	          _this13.closeApplication();
 	        }
 	      });
 	    }
 	  }, {
 	    key: "sendTerminalPayment",
 	    value: function sendTerminalPayment(buttonEvent) {
-	      var _this15 = this;
+	      var _this14 = this;
 	      if (!this.isPaymentCreationAvailable) {
 	        this.closeApplication();
 	        return null;
@@ -5852,32 +5716,32 @@ this.BX = this.BX || {};
 	          context: this.context
 	        }
 	      }).then(function (result) {
-	        _this15.store.dispatch('orderCreation/resetBasket');
-	        _this15.stopProgress(buttonEvent);
-	        _this15.slider.data.set('action', 'sendPayment');
-	        _this15.slider.data.set('order', result.data.order);
+	        _this14.store.dispatch('orderCreation/resetBasket');
+	        _this14.stopProgress(buttonEvent);
+	        _this14.slider.data.set('action', 'sendPayment');
+	        _this14.slider.data.set('order', result.data.order);
 	        if (result.data.deal) {
-	          _this15.slider.data.set('deal', result.data.deal);
+	          _this14.slider.data.set('deal', result.data.deal);
 	        }
 	        if (result.data.entity) {
-	          _this15.slider.data.set('entity', result.data.entity);
+	          _this14.slider.data.set('entity', result.data.entity);
 	        }
 	        if (isMobileInstalledForResponsible) {
-	          _this15.closeApplication();
+	          _this14.closeApplication();
 	        } else {
-	          _this15.showMobileAppInstallLinkPopup();
+	          _this14.showMobileAppInstallLinkPopup();
 	        }
-	        _this15.emitGlobalEvent('salescenter.app:onterminalpaymentcreated');
+	        _this14.emitGlobalEvent('salescenter.app:onterminalpaymentcreated');
 	      })["catch"](function (data) {
 	        data.errors.forEach(function (error) {
 	          top.BX.UI.Notification.Center.notify({
 	            content: main_core.Text.encode(error.message)
 	          });
 	        });
-	        _this15.stopProgress(buttonEvent);
+	        _this14.stopProgress(buttonEvent);
 	        App.showError(data);
-	        if (_this15.needCloseApplication(data.errors)) {
-	          _this15.closeApplication();
+	        if (_this14.needCloseApplication(data.errors)) {
+	          _this14.closeApplication();
 	        }
 	      });
 	    }
@@ -5895,7 +5759,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateTerminalPayment",
 	    value: function updateTerminalPayment(buttonEvent) {
-	      var _this16 = this;
+	      var _this15 = this;
 	      if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress) {
 	        return null;
 	      }
@@ -5913,28 +5777,28 @@ this.BX = this.BX || {};
 	          context: this.context
 	        }
 	      }).then(function (result) {
-	        _this16.store.dispatch('orderCreation/resetBasket');
-	        _this16.stopProgress(buttonEvent);
-	        _this16.slider.data.set('action', 'sendPayment');
-	        _this16.slider.data.set('order', result.data.order);
+	        _this15.store.dispatch('orderCreation/resetBasket');
+	        _this15.stopProgress(buttonEvent);
+	        _this15.slider.data.set('action', 'sendPayment');
+	        _this15.slider.data.set('order', result.data.order);
 	        if (result.data.deal) {
-	          _this16.slider.data.set('deal', result.data.deal);
+	          _this15.slider.data.set('deal', result.data.deal);
 	        }
 	        if (result.data.entity) {
-	          _this16.slider.data.set('entity', result.data.entity);
+	          _this15.slider.data.set('entity', result.data.entity);
 	        }
-	        _this16.closeApplication();
-	        _this16.emitGlobalEvent('salescenter.app:onterminalpaymentupdated');
+	        _this15.closeApplication();
+	        _this15.emitGlobalEvent('salescenter.app:onterminalpaymentupdated');
 	      })["catch"](function (data) {
 	        data.errors.forEach(function (error) {
 	          top.BX.UI.Notification.Center.notify({
 	            content: main_core.Text.encode(error.message)
 	          });
 	        });
-	        _this16.stopProgress(buttonEvent);
+	        _this15.stopProgress(buttonEvent);
 	        App.showError(data);
-	        if (_this16.needCloseApplication(data.errors)) {
-	          _this16.closeApplication();
+	        if (_this15.needCloseApplication(data.errors)) {
+	          _this15.closeApplication();
 	        }
 	      });
 	    }
@@ -5944,7 +5808,7 @@ this.BX = this.BX || {};
 	      var popupIconClass = this.options.currentLanguage === 'ru' ? 'salescenter-popup-qr__icon --ru' : 'salescenter-popup-qr__icon';
 
 	      // the mobile app popup goes here
-	      var popupContent = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"salescenter-popup-qr__box\">\n\t\t\t\t<div class=\"salescenter-popup-qr__title\">", "</div>\n\t\t\t\t<div class=\"salescenter-popup-qr__desc\">", "</div>\n\t\t\t\t<div class=\"salescenter-popup-qr__content\">\n\t\t\t\t\t<div class=\"salescenter-popup-qr__code\"></div>\n\t\t\t\t\t<ul class=\"salescenter-popup-qr__list\">\n\t\t\t\t\t\t<li class=\"salescenter-popup-qr__list_item\">", "</li>\n\t\t\t\t\t\t<li class=\"salescenter-popup-qr__list_item\">", "</li>\n\t\t\t\t\t\t<li class=\"salescenter-popup-qr__list_item\">", "</li>\n\t\t\t\t\t\t<li class=\"salescenter-popup-qr__list_item\">", "</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<div class=\"salescenter-popup-qr__icon_box\">\n\t\t\t\t\t\t<div class=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\n\t\t"])), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_TITLE'), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_DESC'), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_1'), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_2'), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_3'), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_4'), popupIconClass);
+	      var popupContent = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"salescenter-popup-qr__box\">\n\t\t\t\t<div class=\"salescenter-popup-qr__title\">", "</div>\n\t\t\t\t<div class=\"salescenter-popup-qr__desc\">", "</div>\n\t\t\t\t<div class=\"salescenter-popup-qr__content\">\n\t\t\t\t\t<div class=\"salescenter-popup-qr__code\"></div>\n\t\t\t\t\t<ul class=\"salescenter-popup-qr__list\">\n\t\t\t\t\t\t<li class=\"salescenter-popup-qr__list_item\">", "</li>\n\t\t\t\t\t\t<li class=\"salescenter-popup-qr__list_item\">", "</li>\n\t\t\t\t\t\t<li class=\"salescenter-popup-qr__list_item\">", "</li>\n\t\t\t\t\t\t<li class=\"salescenter-popup-qr__list_item\">", "</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<div class=\"salescenter-popup-qr__icon_box\">\n\t\t\t\t\t\t<div class=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\n\t\t"])), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_TITLE'), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_DESC'), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_1'), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_2'), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_3'), main_core.Loc.getMessage('SALESCENTER_TERMINAL_QR_POPUP_LIST_ITEM_4'), popupIconClass);
 	      var mobilePopup = new main_popup.Popup({
 	        className: 'salescenter-popup-qr__wrap',
 	        content: popupContent,
@@ -5991,7 +5855,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "resendPayment",
 	    value: function resendPayment(buttonEvent) {
-	      var _this17 = this;
+	      var _this16 = this;
 	      if (!this.isPaymentCreationAvailable) {
 	        this.closeApplication();
 	        return null;
@@ -6023,15 +5887,15 @@ this.BX = this.BX || {};
 	          context: this.context
 	        }
 	      }).then(function (result) {
-	        _this17.sendMessageAnalytic();
-	        _this17.stopProgress(buttonEvent);
-	        _this17.closeApplication();
-	        _this17.emitGlobalEvent('salescenter.app:onpaymentresend');
+	        _this16.sendMessageAnalytic();
+	        _this16.stopProgress(buttonEvent);
+	        _this16.closeApplication();
+	        _this16.emitGlobalEvent('salescenter.app:onpaymentresend');
 	      })["catch"](function (data) {
 	        data.errors.forEach(function (error) {
 	          alert(error.message);
 	        });
-	        _this17.stopProgress(buttonEvent);
+	        _this16.stopProgress(buttonEvent);
 	        App.showError(data);
 	      });
 	    }

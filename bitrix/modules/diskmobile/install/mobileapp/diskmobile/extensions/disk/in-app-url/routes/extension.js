@@ -2,24 +2,13 @@
  * @module disk/in-app-url/routes
  */
 jn.define('disk/in-app-url/routes', (require, exports, module) => {
-	const { showToast } = require('toast');
-	const { URL } = require('utils/url');
-	const { Loc } = require('loc');
-	const { openFolder } = require('disk/opener/folder');
-	const { fetchObjectWithRights } = require('disk/rights');
-	const store = require('statemanager/redux/store');
-	const { filesUpsertedFromServer } = require('disk/statemanager/redux/slices/files');
-	const { selectById } = require('disk/statemanager/redux/slices/files/selector');
-	const { dispatch } = store;
+	const {
+		fetchTargetFolder,
+		getDecodedEntityPath,
+		openObject,
+	} = require('disk/in-app-url/routes/src/utils');
 	const { boardOpener } = require('disk/opener/board');
 	const { unifiedOpener } = require('disk/opener/unified-link/opener');
-
-	const {
-		openNativeViewer,
-		getNativeViewerMediaType,
-		getExtension,
-		getMimeType,
-	} = require('utils/file');
 
 	const EntityType = {
 		COMMON: 'common',
@@ -27,83 +16,13 @@ jn.define('disk/in-app-url/routes', (require, exports, module) => {
 		GROUP: 'group',
 	};
 
-	function openFile(file)
-	{
-		openNativeViewer({
-			fileType: getNativeViewerMediaType(getMimeType(getExtension(file.name), file.name)),
-			url: file.links.download,
-			name: file.name,
-		});
-	}
-
-	async function openObject(diskObjectId)
-	{
-		const diskObject = await fetchObjectWithRights(diskObjectId);
-
-		if (!diskObject)
-		{
-			showToast({
-				message: Loc.getMessage('M_DISK_IN_APP_URL_FILE_NOT_FOUND'),
-			});
-		}
-
-		if (diskObject.isFolder)
-		{
-			void openFolder(diskObject.id);
-
-			return;
-		}
-
-		openFile(diskObject);
-	}
-
-	async function fetchTargetFolder(path, entityType, entityId)
-	{
-		try
-		{
-			const response = await BX.ajax.runAction('diskmobile.Common.getFolderByPath', {
-				data: {
-					path,
-					entityType,
-					entityId,
-				},
-			});
-
-			if (response.errors.length > 0)
-			{
-				console.error(response.errors);
-
-				return null;
-			}
-
-			const diskObject = response.data.diskObject;
-			dispatch(filesUpsertedFromServer([diskObject]));
-
-			return selectById(store.getState(), diskObject.id);
-		}
-		catch (e)
-		{
-			showToast({
-				message: Loc.getMessage('M_DISK_IN_APP_URL_FOLDER_NOT_FOUND'),
-			});
-			console.error(e);
-		}
-
-		return null;
-	}
-
-	function getDecodedEntityPath(url)
-	{
-		return decodeURI(URL(url).pathname).split('/path')[1];
-	}
-
 	/**
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = (inAppUrl) => {
 		inAppUrl.register(
 			'/bitrix/tools/disk/focus.php',
-			(params, { queryParams, url }) => {
+			(params, { queryParams }) => {
 				const id = queryParams?.objectId || queryParams?.folderId;
 				if (id)
 				{
@@ -149,6 +68,10 @@ jn.define('disk/in-app-url/routes', (require, exports, module) => {
 
 		inAppUrl
 			.addRoute('/disk/file/:uniqueCode(?=\\?|$|/)')
+			.addRoute('/board/:uniqueCode(?=\\?|$|/)')
+			.addRoute('/sheet/:uniqueCode(?=\\?|$|/)')
+			.addRoute('/pres/:uniqueCode(?=\\?|$|/)')
+			.addRoute('/doc/:uniqueCode(?=\\?|$|/)')
 			.handler(({ uniqueCode }, { context = {}, url, queryParams }) => {
 				void unifiedOpener({ uniqueCode, url, queryParams, ...context }).catch(console.error);
 			})
