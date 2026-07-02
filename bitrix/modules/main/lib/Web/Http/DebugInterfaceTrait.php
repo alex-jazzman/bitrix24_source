@@ -1,0 +1,35 @@
+<?php
+
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage main
+ * @copyright 2001-2024 Bitrix
+ */
+
+namespace Bitrix\Main\Web\Http;
+
+use Bitrix\Main\Web\HttpDebug;
+
+trait DebugInterfaceTrait
+{
+	protected int $debugLevel = HttpDebug::DEFAULT;
+
+	/**
+	 * Sets debug level using HttpDebug::* constants.
+	 * @param int $debugLevel
+	 */
+	public function setDebugLevel(int $debugLevel)
+	{
+		$this->debugLevel = $debugLevel;
+	}
+
+	/**
+	 * Returns the current level.
+	 * @return int HttpDebug::* constants
+	 */
+	public function getDebugLevel(): int
+	{
+		return $this->debugLevel;
+	}
+}

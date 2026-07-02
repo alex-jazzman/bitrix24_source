@@ -1,0 +1,471 @@
+<?php
+
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage main
+ * @copyright 2001-2026 Bitrix
+ */
+
+namespace Bitrix\Main;
+
+class EventManager
+{
+	protected const CACHE_ID = 'b_module_to_module_v1';
+	protected const CACHE_DIR = 'b_module_to_module';
+
+	/**
+	 * @var EventManager
+	 */
+	protected static $instance;
+	protected $handlers = [];
+	protected $isHandlersLoaded = false;
+
+	protected function __construct()
+	{
+	}
+
+	/**
+	 * @static
+	 * @return EventManager
+	 */
+	public static function getInstance()
+	{
+		if (!isset(self::$instance))
+		{
+			$c = __CLASS__;
+			self::$instance = new $c;
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * @static
+	 * @param EventManager $instance
+	 */
+	public static function setInstance($instance)
+	{
+		$c = __CLASS__;
+		if ($instance instanceof $c)
+		{
+			self::$instance = $instance;
+		}
+	}
+
+	protected function addEventHandlerInternal($fromModuleId, $eventType, $callback, $includeFile, $sort, $version)
+	{
+		$event = [
+			'FROM_MODULE_ID' => $fromModuleId,
+			'MESSAGE_ID' => $eventType,
+			'CALLBACK' => $callback,
+			'SORT' => (int)$sort,
+			'FULL_PATH' => $includeFile,
+			'VERSION' => $version,
+			'TO_NAME' => $this->formatEventName(['CALLBACK' => $callback]),
+		];
+
+		$fromModuleId = strtoupper($fromModuleId);
+		$eventType = strtoupper($eventType);
+
+		if (!isset($this->handlers[$fromModuleId]) || !is_array($this->handlers[$fromModuleId]))
+		{
+			$this->handlers[$fromModuleId] = [];
+		}
+
+		$events = &$this->handlers[$fromModuleId];
+
+		if (empty($events[$eventType]) || !is_array($events[$eventType]))
+		{
+			$events[$eventType] = [$event];
+			$eventHandlerKey = 0;
+		}
+		else
+		{
+			$newEvents = [];
+			$eventHandlerKey = max(array_keys($events[$eventType])) + 1;
+
+			foreach ($events[$eventType] as $key => $value)
+			{
+				if ($value['SORT'] > $event['SORT'])
+				{
+					$newEvents[$eventHandlerKey] = $event;
+				}
+
+				$newEvents[$key] = $value;
+			}
+			$newEvents[$eventHandlerKey] = $event;
+			$events[$eventType] = $newEvents;
+		}
+
+		return $eventHandlerKey;
+	}
+
+	public function addEventHandler($fromModuleId, $eventType, $callback, $includeFile = false, $sort = 100)
+	{
+		return $this->addEventHandlerInternal($fromModuleId, $eventType, $callback, $includeFile, $sort, 2);
+	}
+
+	/**
+	 * @param $fromModuleId
+	 * @param $eventType
+	 * @param $callback
+	 * @param bool $includeFile
+	 * @param int $sort
+	 * @return int
+	 */
+	public function addEventHandlerCompatible($fromModuleId, $eventType, $callback, $includeFile = false, $sort = 100)
+	{
+		return $this->addEventHandlerInternal($fromModuleId, $eventType, $callback, $includeFile, $sort, 1);
+	}
+
+	public function removeEventHandler($fromModuleId, $eventType, $iEventHandlerKey)
+	{
+		$fromModuleId = strtoupper($fromModuleId);
+		$eventType = strtoupper($eventType);
+
+		if (isset($this->handlers[$fromModuleId][$eventType][$iEventHandlerKey]))
+		{
+			unset($this->handlers[$fromModuleId][$eventType][$iEventHandlerKey]);
+			return true;
+		}
+
+		return false;
+	}
+
+	public function unRegisterEventHandler($fromModuleId, $eventType, $toModuleId, $toClass = '', $toMethod = '', $toPath = '', $toMethodArg = [])
+	{
+		$toMethodArg = (!is_array($toMethodArg) || empty($toMethodArg) ? '' : serialize($toMethodArg));
+
+		$connection = Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		$sql =
+			"DELETE FROM b_module_to_module " .
+			"WHERE FROM_MODULE_ID='" . $sqlHelper->forSql($fromModuleId) . "'" .
+			"	AND MESSAGE_ID='" . $sqlHelper->forSql($eventType) . "' " .
+			"	AND TO_MODULE_ID='" . $sqlHelper->forSql($toModuleId) . "' " .
+			(($toClass != '') ? " AND TO_CLASS='" . $sqlHelper->forSql($toClass) . "' " : " AND (TO_CLASS='' OR TO_CLASS IS NULL) ") .
+			(($toMethod != '') ? " AND TO_METHOD='" . $sqlHelper->forSql($toMethod) . "'" : " AND (TO_METHOD='' OR TO_METHOD IS NULL) ") .
+			(($toPath != '' && $toPath !== 1/*controller disconnect correction*/) ? " AND TO_PATH='" . $sqlHelper->forSql($toPath) . "'" : " AND (TO_PATH='' OR TO_PATH IS NULL) ") .
+			(($toMethodArg != '') ? " AND TO_METHOD_ARG='" . $sqlHelper->forSql($toMethodArg) . "'" : " AND (TO_METHOD_ARG='' OR TO_METHOD_ARG IS NULL) ");
+
+		$connection->queryExecute($sql);
+
+		if ($connection->getAffectedRowsCount() > 0)
+		{
+			$this->clearLoadedHandlers();
+		}
+	}
+
+	public function registerEventHandler($fromModuleId, $eventType, $toModuleId, $toClass = '', $toMethod = '', $sort = 100, $toPath = '', $toMethodArg = [])
+	{
+		$this->registerEventHandlerInternal($fromModuleId, $eventType, $toModuleId, $toClass, $toMethod, $sort, $toPath, $toMethodArg, 2);
+	}
+
+	public function registerEventHandlerCompatible($fromModuleId, $eventType, $toModuleId, $toClass = '', $toMethod = '', $sort = 100, $toPath = '', $toMethodArg = [])
+	{
+		$this->registerEventHandlerInternal($fromModuleId, $eventType, $toModuleId, $toClass, $toMethod, $sort, $toPath, $toMethodArg, 1);
+	}
+
+	protected function registerEventHandlerInternal($fromModuleId, $eventType, $toModuleId, $toClass, $toMethod, $sort, $toPath, $toMethodArg, $version)
+	{
+		$toMethodArg = (!is_array($toMethodArg) || empty($toMethodArg) ? '' : serialize($toMethodArg));
+		$sort = intval($sort);
+		$version = intval($version);
+
+		$uniqueID = md5(mb_strtolower($fromModuleId . '.' . $eventType . '.' . $toModuleId . '.' . $toPath . '.' . $toClass . '.' . $toMethod . '.' . $toMethodArg . '.' . $version));
+
+		$connection = Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		$fromModuleId = $sqlHelper->forSql($fromModuleId);
+		$eventType = $sqlHelper->forSql($eventType);
+		$toModuleId = $sqlHelper->forSql($toModuleId);
+		$toClass = $sqlHelper->forSql($toClass);
+		$toMethod = $sqlHelper->forSql($toMethod);
+		$toPath = $sqlHelper->forSql($toPath);
+		$toMethodArg = $sqlHelper->forSql($toMethodArg);
+
+		$fields = '(SORT, FROM_MODULE_ID, MESSAGE_ID, TO_MODULE_ID, TO_CLASS, TO_METHOD, TO_PATH, TO_METHOD_ARG, VERSION, UNIQUE_ID)';
+		$values = "(" . $sort . ", '" . $fromModuleId . "', '" . $eventType . "', '" . $toModuleId . "', " . "   '" . $toClass . "', '" . $toMethod . "', '" . $toPath . "', '" . $toMethodArg . "', " . $version . ", '" . $uniqueID . "')";
+		$sql = $sqlHelper->getInsertIgnore('b_module_to_module', $fields, 'VALUES ' . $values);
+
+		$connection->queryExecute($sql);
+
+		if ($connection->getAffectedRowsCount() > 0)
+		{
+			$this->clearLoadedHandlers();
+		}
+	}
+
+	protected function formatEventName($event)
+	{
+		$name = '';
+		if (isset($event['CALLBACK']))
+		{
+			if (is_array($event['CALLBACK']))
+			{
+				$name .= (is_object($event['CALLBACK'][0]) ? get_class($event['CALLBACK'][0]) : $event['CALLBACK'][0]) . '::' . $event['CALLBACK'][1];
+			}
+			elseif (is_callable($event['CALLBACK']))
+			{
+				$name .= 'callable';
+			}
+			else
+			{
+				$name .= $event['CALLBACK'];
+			}
+		}
+		else
+		{
+			$name .= $event['TO_CLASS'] . '::' . $event['TO_METHOD'];
+		}
+		if (!empty($event['TO_MODULE_ID']))
+		{
+			$name .= ' (' . $event['TO_MODULE_ID'] . ')';
+		}
+		return $name;
+	}
+
+	protected function loadEventHandlers()
+	{
+		$cache = Application::getInstance()->getManagedCache();
+
+		if ($cache->read(3600, self::CACHE_ID, self::CACHE_DIR))
+		{
+			$dbHandlers = $cache->get(self::CACHE_ID);
+
+			if (!is_array($dbHandlers))
+			{
+				$dbHandlers = [];
+			}
+		}
+		else
+		{
+			$connection = Application::getConnection();
+
+			$result = $connection->query("
+				SELECT FROM_MODULE_ID, MESSAGE_ID, SORT, TO_MODULE_ID, TO_PATH,
+					TO_CLASS, TO_METHOD, TO_METHOD_ARG, VERSION
+				FROM b_module_to_module m2m
+					INNER JOIN b_module m ON (m2m.TO_MODULE_ID = m.ID)
+				ORDER BY SORT
+			");
+
+			$dbHandlers = [];
+			while ($handler = $result->fetch())
+			{
+				$toName = $this->formatEventName([
+					'TO_MODULE_ID' => $handler['TO_MODULE_ID'],
+					'TO_CLASS' => $handler['TO_CLASS'],
+					'TO_METHOD' => $handler['TO_METHOD'],
+				]);
+				$fromModuleId = strtoupper($handler['FROM_MODULE_ID']);
+				$messageId = strtoupper($handler['MESSAGE_ID']);
+				$toMethodArg = $handler['TO_METHOD_ARG'] != '' ? unserialize($handler['TO_METHOD_ARG'], ['allowed_classes' => false]) : [];
+
+				$dbHandlers[$fromModuleId][$messageId][] = [
+					'SORT' => (int)$handler['SORT'],
+					'TO_MODULE_ID' => $handler['TO_MODULE_ID'],
+					'TO_PATH' => $handler['TO_PATH'],
+					'TO_CLASS' => $handler['TO_CLASS'],
+					'TO_METHOD' => $handler['TO_METHOD'],
+					'TO_METHOD_ARG' => $toMethodArg,
+					'VERSION' => $handler['VERSION'],
+					'TO_NAME' => $toName,
+					'FROM_DB' => true,
+				];
+			}
+
+			$cache->set(self::CACHE_ID, $dbHandlers);
+		}
+
+		$handlers = $this->handlers;
+
+		$this->handlers = array_merge_recursive($this->handlers, $dbHandlers);
+
+		if (!empty($handlers))
+		{
+			// need to re-sort because of AddEventHandler() calls (before loadEventHandlers)
+			foreach (array_keys($handlers) as $moduleId)
+			{
+				foreach (array_keys($handlers[$moduleId]) as $event)
+				{
+					uasort(
+						$this->handlers[$moduleId][$event],
+						function ($a, $b) {
+							if ($a['SORT'] == $b['SORT'])
+							{
+								return 0;
+							}
+							return ($a['SORT'] < $b['SORT'] ? -1 : 1);
+						}
+					);
+				}
+			}
+		}
+
+		$this->isHandlersLoaded = true;
+	}
+
+	public function clearLoadedHandlers()
+	{
+		$managedCache = Application::getInstance()->getManagedCache();
+		$managedCache->clean(self::CACHE_ID, self::CACHE_DIR);
+
+		foreach ($this->handlers as $module => $types)
+		{
+			foreach ($types as $type => $events)
+			{
+				foreach ($events as $i => $event)
+				{
+					if (isset($event['FROM_DB']) && $event['FROM_DB'])
+					{
+						unset($this->handlers[$module][$type][$i]);
+					}
+				}
+			}
+		}
+		$this->isHandlersLoaded = false;
+	}
+
+	public function findEventHandlers($eventModuleId, $eventType, ?array $filter = null)
+	{
+		if (!$this->isHandlersLoaded)
+		{
+			$this->loadEventHandlers();
+		}
+
+		$eventModuleId = strtoupper($eventModuleId);
+		$eventType = strtoupper($eventType);
+
+		if (!isset($this->handlers[$eventModuleId]) || !isset($this->handlers[$eventModuleId][$eventType]))
+		{
+			return [];
+		}
+
+		$handlers = $this->handlers[$eventModuleId][$eventType];
+		if (!is_array($handlers))
+		{
+			return [];
+		}
+
+		if (is_array($filter) && !empty($filter))
+		{
+			$handlersTmp = $handlers;
+			$handlers = [];
+			foreach ($handlersTmp as $handler)
+			{
+				if (isset($handler['TO_MODULE_ID']) && in_array($handler['TO_MODULE_ID'], $filter))
+				{
+					$handlers[] = $handler;
+				}
+			}
+		}
+
+		return $handlers;
+	}
+
+	public function send(Event $event)
+	{
+		$handlers = $this->findEventHandlers($event->getModuleId(), $event->getEventType(), $event->getFilter());
+		foreach ($handlers as $handler)
+		{
+			$this->sendToEventHandler($handler, $event);
+		}
+	}
+
+	protected function sendToEventHandler(array $handler, Event $event)
+	{
+		try
+		{
+			$result = true;
+			$includeResult = true;
+
+			$event->addDebugInfo($handler);
+
+			if (!empty($handler['TO_MODULE_ID']) && ($handler['TO_MODULE_ID'] != 'main'))
+			{
+				$result = Loader::includeModule($handler['TO_MODULE_ID']);
+			}
+			elseif (!empty($handler['TO_PATH']))
+			{
+				$path = ltrim($handler['TO_PATH'], '/');
+				if (($path = Loader::getLocal($path)) !== false)
+				{
+					$includeResult = include_once($path);
+				}
+			}
+			elseif (!empty($handler['FULL_PATH']) && IO\File::isFileExists($handler['FULL_PATH']))
+			{
+				$includeResult = include_once($handler['FULL_PATH']);
+			}
+
+			$event->addDebugInfo($result);
+
+			if ($result)
+			{
+				if (!empty($handler['TO_METHOD_ARG']) && is_array($handler['TO_METHOD_ARG']))
+				{
+					$args = $handler['TO_METHOD_ARG'];
+				}
+				else
+				{
+					$args = [];
+				}
+
+				if ($handler['VERSION'] > 1)
+				{
+					$args[] = $event;
+				}
+				else
+				{
+					$args = array_merge($args, array_values($event->getParameters()));
+				}
+
+				$callback = null;
+				if (isset($handler['CALLBACK']))
+				{
+					$callback = $handler['CALLBACK'];
+				}
+				elseif (!empty($handler['TO_CLASS']) && !empty($handler['TO_METHOD']) && class_exists($handler['TO_CLASS']))
+				{
+					$callback = [$handler['TO_CLASS'], $handler['TO_METHOD']];
+				}
+
+				if ($callback != null)
+				{
+					$result = call_user_func_array($callback, $args);
+				}
+				else
+				{
+					$result = $includeResult;
+				}
+
+				if (($result != null) && !($result instanceof EventResult))
+				{
+					$result = new EventResult(EventResult::UNDEFINED, $result, $handler['TO_MODULE_ID'] ?? null);
+				}
+
+				$event->addDebugInfo($result);
+
+				if ($result != null)
+				{
+					$event->addResult($result);
+				}
+			}
+		}
+		catch (\Exception $ex)
+		{
+			if ($event->isDebugOn())
+			{
+				$event->addException($ex);
+			}
+			else
+			{
+				throw $ex;
+			}
+		}
+	}
+}
